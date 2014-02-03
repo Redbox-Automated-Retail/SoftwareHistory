@@ -1,0 +1,243 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.DirectoryServices;
+using System.IO;
+using System.Linq;
+using System.Security;
+using System.Security.Principal;
+using System.Windows.Forms;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.IDE;
+using Redbox.Lua;
+
+namespace Redbox.KioskEngine.Kernel;
+
+internal static class ProcessFunctions
+{
+	private static char[] AdminPassword = new char[10] { 'W', 'i', 'A', 'M', 's', 'o', 'c', 'a', 'P', '?' };
+
+	[KernelFunction(Name = "kernel.startprocess")]
+	internal static int LaunchProcess(string processName, string args, bool hiddenProcess)
+	{
+		string defaultAdmin = "rbadmin";
+		try
+		{
+			WindowsIdentity current = WindowsIdentity.GetCurrent();
+			WindowsPrincipal windowsPrincipal = new WindowsPrincipal(current);
+			if (windowsPrincipal.IsInRole(WindowsBuiltInRole.Administrator))
+			{
+				LogHelper.Instance.Log($"Launch {processName} {args} as user");
+				return LaunchProcessInner(processName, args, null, useAdminPassword: false, hiddenProcess);
+			}
+			List<string> allAdministrators = GetAllAdministrators();
+			if (allAdministrators.Count() < 1)
+			{
+				LogHelper.Instance.Log("No Admin Accounts Dectected - Launching with reduced privileges.");
+				return LaunchProcessInner(processName, args, null, useAdminPassword: false, hiddenProcess);
+			}
+			if (allAdministrators.Find((string x) => x.ToLower() == defaultAdmin) != null)
+			{
+				LogHelper.Instance.Log($"Launch {processName} {args} as {defaultAdmin}");
+				return LaunchProcessInner(processName, args, defaultAdmin, useAdminPassword: true, hiddenProcess);
+			}
+			LogHelper.Instance.Log($"Launch {processName} {args} as {allAdministrators[0]}");
+			return LaunchProcessInner(processName, args, allAdministrators[0], useAdminPassword: false, hiddenProcess);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Error in Kernel Function LaunchProcess.", e);
+		}
+		return -1;
+	}
+
+	[KernelFunction(Name = "kernel.killprocessbyid")]
+	internal static void KillProcessById(int processId)
+	{
+		try
+		{
+			LaunchProcess("TaskKill.exe", $"/f /pid {processId}", hiddenProcess: true);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Error in Kernel Function KillProcessId.", e);
+		}
+	}
+
+	[KernelFunction(Name = "kernel.starthiddenprocess")]
+	internal static int LaunchHiddenProcess(string processName, string args)
+	{
+		try
+		{
+			LaunchProcess(processName, args, hiddenProcess: true);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Error in Kernel Function LaunchProcess.", e);
+		}
+		return -1;
+	}
+
+	[KernelFunction(Name = "kernel.listrunningprocesses")]
+	internal static LuaTable ListRunningProcesses()
+	{
+		int num = 0;
+		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
+		Process[] processes = Process.GetProcesses();
+		foreach (Process process in processes)
+		{
+			LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
+			luaTable2["id"] = process.Id;
+			luaTable2["name"] = process.ProcessName;
+			luaTable2["memory"] = $"{process.WorkingSet64 / 1000:#,###}K";
+			luaTable[num] = luaTable2;
+			num++;
+		}
+		return luaTable;
+	}
+
+	[KernelFunction(Name = "kernel.listpidrundll32s")]
+	internal static LuaTable ListRunningRunDLL32Processes()
+	{
+		int num = 0;
+		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
+		Process[] processes = Process.GetProcesses();
+		foreach (Process process in processes)
+		{
+			if (string.CompareOrdinal(process.ProcessName.ToLower(), 0, "rundll32", 0, "rundll32".Length) == 0)
+			{
+				luaTable[num++] = process.Id;
+			}
+		}
+		return luaTable;
+	}
+
+	[KernelFunction(Name = "kernel.showtaskmanager")]
+	internal static void ShowTaskManager(LuaTable processNamesToIgnore, KillHandler killHandler)
+	{
+		TaskManagerForm form = new TaskManagerForm();
+		if (processNamesToIgnore != null)
+		{
+			form.ProcessNamesToIgnore = processNamesToIgnore.ToList<string>();
+		}
+		form.Kill += delegate
+		{
+			LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
+			int num = 1;
+			foreach (Process selectedProcess in form.SelectedProcesses)
+			{
+				LuaTable value = new LuaTable(KernelService.Instance.LuaRuntime)
+				{
+					["pid"] = selectedProcess.Id,
+					["window_title"] = selectedProcess.MainWindowTitle,
+					["process_name"] = selectedProcess.ProcessName,
+					["start_time"] = selectedProcess.StartTime.ToString(),
+					["memory"] = $"{selectedProcess.WorkingSet64 / 1000:#,###}K"
+				};
+				luaTable[num++] = value;
+			}
+			if (killHandler != null && killHandler(luaTable))
+			{
+				form.RefreshList();
+			}
+		};
+		form.Show();
+	}
+
+	[KernelFunction(Name = "kernel.showtaskrunner")]
+	internal static void ShowTaskRunner(LuaFunction runProcessHandler)
+	{
+		TaskRunnerForm form = new TaskRunnerForm();
+		form.Run += delegate
+		{
+			if (runProcessHandler != null)
+			{
+				runProcessHandler.Call(form.ProcessToRun);
+			}
+		};
+		form.Show();
+	}
+
+	internal static void Reset()
+	{
+		Application.OpenForms["TaskManagerForm"]?.Close();
+		Application.OpenForms["TaskRunnerForm"]?.Close();
+	}
+
+	private static int LaunchProcessInner(string programPath, string args, string userName, bool useAdminPassword, bool hiddenProcess)
+	{
+		try
+		{
+			ProcessStartInfo processStartInfo = new ProcessStartInfo();
+			processStartInfo.FileName = programPath;
+			processStartInfo.Arguments = args;
+			processStartInfo.WindowStyle = (hiddenProcess ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal);
+			processStartInfo.CreateNoWindow = hiddenProcess;
+			ProcessStartInfo processStartInfo2 = processStartInfo;
+			if (useAdminPassword)
+			{
+				processStartInfo2.UserName = userName;
+				SecureString pass = new SecureString();
+				LinqExtensions.ForEach(AdminPassword, delegate(char x)
+				{
+					pass.AppendChar(x);
+				});
+				processStartInfo2.Password = pass;
+				processStartInfo2.UseShellExecute = false;
+				if (string.IsNullOrEmpty(Path.GetExtension(processStartInfo2.FileName)))
+				{
+					processStartInfo2.FileName += ".exe";
+				}
+				if (!File.Exists(Path.Combine(processStartInfo2.WorkingDirectory, processStartInfo2.FileName)))
+				{
+					string text = System.Environment.GetEnvironmentVariable("SystemRoot");
+					if (string.IsNullOrEmpty(text))
+					{
+						text = "c:\\windows";
+					}
+					string text2 = Path.Combine(text, processStartInfo2.FileName);
+					if (File.Exists(text2))
+					{
+						processStartInfo2.FileName = text2;
+					}
+				}
+			}
+			Process process = Process.Start(processStartInfo2);
+			if (process != null)
+			{
+				return process.Id;
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Error in Kernel Function LaunchProcess.", e);
+		}
+		return -1;
+	}
+
+	private static List<string> GetAllAdministrators()
+	{
+		List<string> list = new List<string>();
+		DirectoryEntry directoryEntry = new DirectoryEntry("WinNT://" + System.Environment.MachineName);
+		DirectoryEntry directoryEntry2 = directoryEntry.Children.Find("administrators", "group");
+		try
+		{
+			object obj = directoryEntry2.Invoke("members", null);
+			foreach (object item in (IEnumerable)obj)
+			{
+				DirectoryEntry directoryEntry3 = new DirectoryEntry(item);
+				if (directoryEntry3.SchemaClassName == "User")
+				{
+					list.Add(directoryEntry3.Name);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Failed to get list of administrators", e, LogEntryType.Error);
+		}
+		return list.Distinct().ToList();
+	}
+}

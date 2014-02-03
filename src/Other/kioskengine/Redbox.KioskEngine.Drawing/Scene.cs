@@ -1,0 +1,354 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using Redbox.KioskEngine.ComponentModel;
+
+namespace Redbox.KioskEngine.Drawing;
+
+public class Scene : IScene, IDisposable
+{
+	private Image m_backgroundImage;
+
+	private Color m_backgroundColor;
+
+	private bool m_isDrawingSuspended;
+
+	private LinkedList<IActor> m_actors;
+
+	private List<Rectangle> m_dirtyRectangles;
+
+	private readonly object m_syncObject = new object();
+
+	public int ActiveHitHandlers
+	{
+		get
+		{
+			int num = 0;
+			for (LinkedListNode<IActor> linkedListNode = Actors.Last; linkedListNode != null; linkedListNode = linkedListNode.Previous)
+			{
+				IActor value = linkedListNode.Value;
+				if ((value.HitFlags & HitTestFlags.Enabled) != HitTestFlags.None && value.Visible && value.Enabled && value.HitExists)
+				{
+					num++;
+				}
+			}
+			return num;
+		}
+	}
+
+	public int Width { get; private set; }
+
+	public int Height { get; private set; }
+
+	public string Name { get; private set; }
+
+	public Color BackgroundColor
+	{
+		get
+		{
+			return m_backgroundColor;
+		}
+		set
+		{
+			if (!(m_backgroundColor == value))
+			{
+				m_backgroundColor = value;
+				MakeDirty(null);
+			}
+		}
+	}
+
+	public Image BackgroundImage
+	{
+		get
+		{
+			return m_backgroundImage;
+		}
+		set
+		{
+			m_backgroundImage = value;
+			MakeDirty(null);
+		}
+	}
+
+	internal Bitmap BackBuffer { get; set; }
+
+	internal Rectangle Bounds { get; set; }
+
+	internal bool IsDirty { get; set; }
+
+	public List<Rectangle> DirtyRectangles
+	{
+		get
+		{
+			if (m_dirtyRectangles == null)
+			{
+				m_dirtyRectangles = new List<Rectangle>();
+			}
+			return m_dirtyRectangles;
+		}
+	}
+
+	public LinkedList<IActor> Actors
+	{
+		get
+		{
+			if (m_actors == null)
+			{
+				m_actors = new LinkedList<IActor>();
+			}
+			return m_actors;
+		}
+	}
+
+	public Scene(string name, int width, int height, Color backgroundColor)
+	{
+		Name = name;
+		Width = width;
+		Height = height;
+		BackgroundColor = backgroundColor;
+		Bounds = new Rectangle(0, 0, Width, Height);
+	}
+
+	public void Clear()
+	{
+		lock (m_syncObject)
+		{
+			foreach (IActor actor in Actors)
+			{
+				actor.Scene = null;
+				actor.ClearHit();
+			}
+			Actors.Clear();
+			MakeDirty(null);
+		}
+		BackgroundImage = null;
+	}
+
+	public IActor HitTest(int x, int y)
+	{
+		for (LinkedListNode<IActor> linkedListNode = Actors.Last; linkedListNode != null; linkedListNode = linkedListNode.Previous)
+		{
+			IActor value = linkedListNode.Value;
+			if ((value.HitFlags & HitTestFlags.Enabled) != HitTestFlags.None && value.Visible && value.Enabled)
+			{
+				Rectangle hitTestRectangle = ((Actor)value).GetHitTestRectangle();
+				Rectangle rect = new Rectangle(x, y, 2, 2);
+				if (hitTestRectangle.IntersectsWith(rect))
+				{
+					((Actor)value).RaiseHit();
+					return value;
+				}
+			}
+			if ((value.HitFlags & HitTestFlags.Obstruction) != HitTestFlags.None)
+			{
+				break;
+			}
+		}
+		return null;
+	}
+
+	public IActor CreateActor()
+	{
+		return new Actor();
+	}
+
+	public void Dispose()
+	{
+		foreach (IActor actor in Actors)
+		{
+			actor.Dispose();
+		}
+		if (BackBuffer != null)
+		{
+			BackBuffer.Dispose();
+		}
+	}
+
+	public void Render(Graphics context, out bool changed)
+	{
+		changed = false;
+		if (!IsDirty || m_isDrawingSuspended)
+		{
+			return;
+		}
+		try
+		{
+			DrawBackground(context, Bounds);
+			for (LinkedListNode<IActor> linkedListNode = Actors.First; linkedListNode != null; linkedListNode = linkedListNode.Next)
+			{
+				linkedListNode.Value.Render(context);
+			}
+		}
+		finally
+		{
+			changed = true;
+			IsDirty = false;
+		}
+	}
+
+	public void ResumeDrawing()
+	{
+		m_isDrawingSuspended = false;
+	}
+
+	public void SuspendDrawing()
+	{
+		m_isDrawingSuspended = true;
+		DirtyRectangles.Clear();
+		IsDirty = true;
+	}
+
+	public IActor Remove(string name)
+	{
+		lock (m_syncObject)
+		{
+			IActor actor = null;
+			foreach (IActor actor2 in Actors)
+			{
+				if (string.Compare(actor2.Name, name, ignoreCase: true) == 0)
+				{
+					actor = actor2;
+					break;
+				}
+			}
+			if (actor == null)
+			{
+				return null;
+			}
+			actor.Scene = null;
+			Actors.Remove(actor);
+			MakeDirty(new Rectangle[1] { actor.Bounds });
+			return actor;
+		}
+	}
+
+	public void Remove(IActor actor)
+	{
+		lock (m_syncObject)
+		{
+			actor.Scene = null;
+			Actors.Remove(actor);
+			MakeDirty(new Rectangle[1] { actor.Bounds });
+		}
+	}
+
+	public void AddLast(IActor actor)
+	{
+		lock (m_syncObject)
+		{
+			actor.Scene = this;
+			Actors.AddLast(actor);
+			MakeDirty(new Rectangle[1] { actor.Bounds });
+		}
+	}
+
+	public void AddFirst(IActor actor)
+	{
+		lock (m_syncObject)
+		{
+			actor.Scene = this;
+			Actors.AddFirst(actor);
+			MakeDirty(new Rectangle[1] { actor.Bounds });
+		}
+	}
+
+	public IActor GetActor(string name)
+	{
+		lock (m_syncObject)
+		{
+			foreach (IActor actor in Actors)
+			{
+				if (string.Compare(actor.Name, name, ignoreCase: true) == 0)
+				{
+					return actor;
+				}
+			}
+			return null;
+		}
+	}
+
+	public List<IActor> GetActorByTag(string tag)
+	{
+		List<IActor> list = new List<IActor>();
+		lock (m_syncObject)
+		{
+			foreach (IActor actor in Actors)
+			{
+				if (actor.Tag != null && !string.IsNullOrEmpty(actor.Tag.ToString()))
+				{
+					List<string> list2 = new List<string>(actor.Tag.ToString().Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries));
+					if (list2.Contains(tag))
+					{
+						list.Add(actor);
+					}
+				}
+			}
+			return list;
+		}
+	}
+
+	public IActor GetActorByTabOrder(int tabOrder)
+	{
+		IActor result = null;
+		lock (m_syncObject)
+		{
+			foreach (IActor actor in Actors)
+			{
+				if (actor.TabOrder.HasValue && actor.TabOrder == tabOrder)
+				{
+					result = actor;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	public void MakeDirty(Rectangle[] rectangles)
+	{
+		if (m_isDrawingSuspended)
+		{
+			return;
+		}
+		IsDirty = true;
+		if (rectangles == null || rectangles.Length == 0)
+		{
+			return;
+		}
+		lock (m_syncObject)
+		{
+			foreach (Rectangle item in rectangles)
+			{
+				if (!DirtyRectangles.Contains(item))
+				{
+					DirtyRectangles.Add(item);
+				}
+			}
+		}
+	}
+
+	internal void DrawBackground(Graphics context, Rectangle rect)
+	{
+		if (BackgroundImage != null)
+		{
+			context.DrawImage(BackgroundImage, rect, rect.Left, rect.Top, rect.Width, rect.Height, GraphicsUnit.Pixel);
+			return;
+		}
+		using SolidBrush brush = new SolidBrush(BackgroundColor);
+		context.FillRectangle(brush, rect.Left, rect.Top, rect.Width, rect.Height);
+	}
+
+	internal List<IActor> GetDirtyActors()
+	{
+		List<IActor> list = new List<IActor>();
+		foreach (IActor actor in Actors)
+		{
+			if (actor.IsDirty)
+			{
+				list.Add(actor);
+			}
+		}
+		return list;
+	}
+}

@@ -1,0 +1,70 @@
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Xml;
+using Redbox.REDS.Framework;
+
+namespace Redbox.KioskEngine.ComponentModel;
+
+public interface IResourceBundleService
+{
+	IResourceBundleSet ActiveBundleSet { get; }
+
+	IResourceBundle ActiveBundle { get; }
+
+	IEnumerable<IBundleSpecifier> Bundles { get; }
+
+	IResourceBundleFilter Filter { get; }
+
+	string SwitchStatusMessage { get; set; }
+
+	string DefaultBundleName { get; set; }
+
+	string[] SearchPath { get; set; }
+
+	bool ShowDebugger { get; set; }
+
+	bool SetSwitchToBundle(IResourceBundle bundle);
+
+	bool IsPendingBundleSwitch();
+
+	ErrorList Switch(out IResourceBundle previousBundle);
+
+	ErrorList LoadBundles();
+
+	ErrorList Activate(string productName, string productVersion);
+
+	ErrorList ActivateDefaultBundle();
+
+	ErrorList Deactivate();
+
+	void Restart();
+
+	Font GetFont(string resourceName, out bool resourceFound);
+
+	bool HasActiveBundle();
+
+	IResourceBundle GetBundle(IBundleSpecifier bundleSpecifier);
+
+	IResource GetResource(string resourceName);
+
+	IResource GetManifest(out IManifestInfo manifestInfo);
+
+	ReadOnlyCollection<IResource> GetResources(string typeName);
+
+	ReadOnlyCollection<IResource> GetResourcesUnfiltered(string typeName);
+
+	IDictionary<string, IResourceType> GetResourceTypes();
+
+	XmlNode GetXml(string resourceName);
+
+	string GetMovie(string resourceName);
+
+	byte[] GetSound(string resourceName);
+
+	string GetScript(string resourceName);
+
+	Image GetBitmap(string resourceName);
+
+	ReadOnlyCollection<object> ExecuteScript(string resourceName);
+}

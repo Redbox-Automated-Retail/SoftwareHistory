@@ -1,0 +1,266 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Text;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
+using Redbox.Lua;
+
+namespace Redbox.KioskEngine.Kernel;
+
+internal static class QueueFunctions
+{
+	[KernelFunction(Name = "kernel.queuependingrentalcount")]
+	internal static int GetPendingRentalCount(string productFamily)
+	{
+		ErrorList errors;
+		return InnerGetPendingRentalCount(productFamily, out errors);
+	}
+
+	[KernelFunction(Name = "kernel.queuependingrentalcount2")]
+	internal static LuaTable GetPendingRentalCount2()
+	{
+		int num = InnerGetPendingRentalCount(null, out var errors);
+		LuaTable luaTable = BuildResultTable(errors);
+		luaTable["count"] = num;
+		return luaTable;
+	}
+
+	[KernelFunction(Name = "kernel.queuecounts")]
+	internal static LuaTable GetQueueCounts()
+	{
+		ErrorList errors;
+		return InnerQueueCounts(out errors);
+	}
+
+	[KernelFunction(Name = "kernel.queuecounts2")]
+	internal static LuaTable GetQueueCounts2()
+	{
+		LuaTable value = InnerQueueCounts(out var errors);
+		LuaTable luaTable = BuildResultTable(errors);
+		luaTable["counts"] = value;
+		return luaTable;
+	}
+
+	[KernelFunction(Name = "kernel.queuestopworker")]
+	internal static void StopQueueWorker()
+	{
+		ServiceLocator.Instance.GetService<IQueueService>()?.StopQueueWorker();
+	}
+
+	[KernelFunction(Name = "kernel.queuestartworker")]
+	internal static void StartQueueWorker()
+	{
+		ServiceLocator.Instance.GetService<IQueueService>()?.StartQueueWorker();
+	}
+
+	[KernelFunction(Name = "kernel.queueclear")]
+	internal static LuaTable ClearQueue()
+	{
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service != null)
+		{
+			return BuildResultTable(service.Clear());
+		}
+		return null;
+	}
+
+	[KernelFunction(Name = "kernel.queuegetallmessages")]
+	internal static LuaTable GetAllMessages()
+	{
+		LuaTable table = new LuaTable(KernelService.Instance.LuaRuntime);
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service == null)
+		{
+			return table;
+		}
+		int index = 1;
+		ErrorList errors = service.ForEach(delegate(IMessage m)
+		{
+			table[index++] = CreateMessageTable(m);
+		});
+		LuaTable luaTable = BuildResultTable(errors);
+		luaTable["messages"] = table;
+		return table;
+	}
+
+	[KernelFunction(Name = "kernel.queuegetmessages")]
+	internal static LuaTable GetMessagesByType(string type)
+	{
+		LuaTable table = new LuaTable(KernelService.Instance.LuaRuntime);
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service == null)
+		{
+			return table;
+		}
+		int index = 1;
+		ErrorList errors = service.ForEach(delegate(IMessage m)
+		{
+			table[index++] = CreateMessageTable(m);
+		}, type);
+		LuaTable luaTable = BuildResultTable(errors);
+		luaTable["messages"] = table;
+		return table;
+	}
+
+	[KernelFunction(Name = "kernel.queuedequeue")]
+	internal static LuaTable Dequeue(LuaFunction predicate)
+	{
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service == null)
+		{
+			return null;
+		}
+		ErrorList errors = service.Dequeue(delegate(IMessage m)
+		{
+			if (predicate == null)
+			{
+				return false;
+			}
+			ReadOnlyCollection<object> readOnlyCollection = predicate.Call(CreateMessageTable(m));
+			return readOnlyCollection != null && readOnlyCollection.Count > 0 && (bool)readOnlyCollection[0];
+		});
+		return BuildResultTable(errors);
+	}
+
+	[KernelFunction(Name = "kernel.queueisworkerstarted")]
+	internal static bool IsWorkerStarted()
+	{
+		return ServiceLocator.Instance.GetService<IQueueService>()?.IsWorkerStarted() ?? false;
+	}
+
+	[KernelFunction(Name = "kernel.queuedeletemessage")]
+	internal static LuaTable DeleteMessage(int id)
+	{
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service != null)
+		{
+			return BuildResultTable(service.DeleteMessage(id));
+		}
+		return null;
+	}
+
+	[KernelFunction(Name = "kernel.queuedeletemessagesbytype")]
+	internal static LuaTable DeleteMessageByType(string type)
+	{
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service != null)
+		{
+			return BuildResultTable(service.DeleteMessageByType(type));
+		}
+		return null;
+	}
+
+	private static int InnerGetPendingRentalCount(string productFamily, out ErrorList errors)
+	{
+		errors = new ErrorList();
+		int count = 0;
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service == null)
+		{
+			return count;
+		}
+		ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+		if (service2 == null || !service2.HasValidData())
+		{
+			return count;
+		}
+		string currentCardHashId = service2.GenerateCardHashId();
+		errors = service.ForEach(delegate(IMessage m)
+		{
+			Dictionary<string, object> dictionary = StringExtensions.ToDictionary(Encoding.ASCII.GetString(m.Data));
+			if (dictionary.ContainsKey("CreditCard"))
+			{
+				IDictionary<string, object> dictionary2 = (IDictionary<string, object>)dictionary["CreditCard"];
+				if ((!dictionary2.ContainsKey("CardId") || string.Compare((string)dictionary2["CardId"], currentCardHashId) == 0) && dictionary.ContainsKey("Contents"))
+				{
+					IDictionary<string, object> dictionary3 = (IDictionary<string, object>)dictionary["Contents"];
+					if (dictionary3.ContainsKey("rental"))
+					{
+						IDictionary<string, object> dictionary4 = (IDictionary<string, object>)dictionary3["rental"];
+						ArrayList arrayList = (ArrayList)dictionary4["Items"];
+						foreach (IDictionary<string, object> item in arrayList)
+						{
+							if (!item.ContainsKey("VendStatus") || string.Compare((string)item["VendStatus"], "Vended", ignoreCase: true) == 0)
+							{
+								if (!string.IsNullOrEmpty(productFamily))
+								{
+									if (item.ContainsKey("ProductFamily") && string.Compare((string)item["ProductFamily"], productFamily, ignoreCase: true) == 0)
+									{
+										count++;
+									}
+								}
+								else
+								{
+									count++;
+								}
+							}
+						}
+					}
+				}
+			}
+		}, "Reconcile");
+		return count;
+	}
+
+	private static LuaTable InnerQueueCounts(out ErrorList errors)
+	{
+		errors = new ErrorList();
+		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
+		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+		if (service == null)
+		{
+			return luaTable;
+		}
+		Dictionary<string, int> counts = new Dictionary<string, int>();
+		errors = service.ForEach(delegate(IMessage m)
+		{
+			if (counts.ContainsKey(m.Type))
+			{
+				int num = counts[m.Type];
+				counts[m.Type] = num + 1;
+			}
+			else
+			{
+				counts[m.Type] = 1;
+			}
+		});
+		foreach (KeyValuePair<string, int> item in counts)
+		{
+			luaTable[item.Key] = item.Value;
+		}
+		return luaTable;
+	}
+
+	private static LuaTable CreateMessageTable(IMessage message)
+	{
+		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
+		luaTable["id"] = message.ID;
+		luaTable["data"] = message.Data;
+		luaTable["type"] = message.Type;
+		luaTable["priority"] = message.Priority;
+		luaTable["created_on"] = message.CreatedOn.ToString("yyyyMMddHHmmss");
+		return luaTable;
+	}
+
+	private static LuaTable BuildResultTable(ErrorList errors)
+	{
+		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
+		luaTable["success"] = !errors.ContainsError();
+		LuaTable luaTable2 = (LuaTable)(luaTable["errors"] = new LuaTable(KernelService.Instance.LuaRuntime));
+		if (!errors.ContainsError())
+		{
+			return luaTable;
+		}
+		int num = 1;
+		foreach (Redbox.KioskEngine.ComponentModel.Error error in errors)
+		{
+			LuaTable luaTable4 = new LuaTable(KernelService.Instance.LuaRuntime);
+			luaTable4["code"] = error.Code;
+			luaTable4["description"] = error.Description;
+			luaTable4["details"] = error.Details;
+			luaTable2[num++] = luaTable4;
+		}
+		return luaTable;
+	}
+}
