@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -8,7 +7,6 @@ using System.Windows.Forms;
 using System.Xml;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -221,12 +219,11 @@ public class EditSlotData : Form
 			}
 			bool flag = direction == Direction.Up || direction == Direction.Down;
 			int num = (flag ? (CurrentEY + result) : (CurrentEX + result));
-			string text2 = string.Format("MOVEABS AXIS={0} UNITS={1}", flag ? "Y" : "X", num);
+			string statement = string.Format("MOVEABS AXIS={0} UNITS={1}", flag ? "Y" : "X", num);
 			m_OutputListBox.Items.Insert(0, $"MOVE {direction.ToString().ToUpper()} {text} UNITS - New Location {num} ...");
-			HardwareJob val2 = default(HardwareJob);
-			HardwareCommandResult val = Service.ExecuteImmediate(text2, ref val2);
-			val = val2.WaitForCompletion();
-			if (((ClientCommandResult)(object)val).Success)
+			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, out var job);
+			hardwareCommandResult = job.WaitForCompletion();
+			if (hardwareCommandResult.Success)
 			{
 				if (flag)
 				{
@@ -236,18 +233,16 @@ public class EditSlotData : Form
 				{
 					CurrentEX = num;
 				}
-				Stack<string> stack = default(Stack<string>);
-				val = val2.GetStack(ref stack);
+				hardwareCommandResult = job.GetStack(out var stack);
 				ListBox.ObjectCollection items;
 				(items = m_OutputListBox.Items)[0] = string.Concat(items[0], stack.Pop());
 				int position = 0;
 				CommonFunctions.GetMotionControlPosition(Axis.X, Service, out position);
 				CommonFunctions.GetMotionControlPosition(Axis.Y, Service, out position);
-				HardwareJob val3 = default(HardwareJob);
-				Service.ExecuteImmediate(RinglightActive ? "RINGLIGHT ON" : "RINGLIGHT OFF", ref val3);
-				Service.ExecuteImmediate(SensorbarActive ? "SENSOR PICKER-ON" : "SENSOR PICKER-OFF", ref val3);
+				Service.ExecuteImmediate(RinglightActive ? "RINGLIGHT ON" : "RINGLIGHT OFF", out var job2);
+				Service.ExecuteImmediate(SensorbarActive ? "SENSOR PICKER-ON" : "SENSOR PICKER-OFF", out job2);
 				IncrementChange();
-				return ((ClientCommandResult)(object)val).Success;
+				return hardwareCommandResult.Success;
 			}
 			ListBox.ObjectCollection items2;
 			(items2 = m_OutputListBox.Items)[0] = string.Concat(items2[0], "Failed - UNABLE TO CONNECT TO HAL");
@@ -377,7 +372,7 @@ public class EditSlotData : Form
 		{
 			SensorbarActive = false;
 		}
-		if (!(button.Tag is string text))
+		if (!(button.Tag is string statement))
 		{
 			return;
 		}
@@ -393,15 +388,13 @@ public class EditSlotData : Form
 		}
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.Append(string.Concat(button.Tag, " ... "));
-		HardwareJob val = default(HardwareJob);
-		if (!((ClientCommandResult)(object)Service.ExecuteImmediate(text, ref val)).Success)
+		if (!Service.ExecuteImmediate(statement, out var job).Success)
 		{
 			NotifyCommunicationProblem();
 			return;
 		}
-		Stack<string> stack2 = default(Stack<string>);
-		HardwareCommandResult stack = val.GetStack(ref stack2);
-		if (!((ClientCommandResult)(object)stack).Success)
+		HardwareCommandResult stack = job.GetStack(out var stack2);
+		if (!stack.Success)
 		{
 			NotifyCommunicationProblem();
 			return;
@@ -538,9 +531,8 @@ public class EditSlotData : Form
 	{
 		if (Service != null)
 		{
-			HardwareJob val = default(HardwareJob);
-			Service.ExecuteImmediate("RINGLIGHT OFF", ref val);
-			Service.ExecuteImmediate("SENSOR PICKER-OFF", ref val);
+			Service.ExecuteImmediate("RINGLIGHT OFF", out var job);
+			Service.ExecuteImmediate("SENSOR PICKER-OFF", out job);
 		}
 	}
 

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Xml;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -75,7 +74,7 @@ public class ExternalDeviceConfiguration
 		{
 			Document.Save("c:\\config-save.xml");
 		}
-		return ((ClientCommandResult)(object)Service.SetConfiguration("controller", Document.OuterXml)).Success;
+		return Service.SetConfiguration("controller", Document.OuterXml).Success;
 	}
 
 	public ExternalDeviceConfiguration()
@@ -97,9 +96,9 @@ public class ExternalDeviceConfiguration
 	private bool GetConfigFromHAL()
 	{
 		HardwareCommandResult configuration = Service.GetConfiguration("controller");
-		if (((ClientCommandResult)(object)configuration).Success)
+		if (configuration.Success)
 		{
-			string xml = ((ClientCommandResult)(object)configuration).CommandMessages[0];
+			string xml = configuration.CommandMessages[0];
 			Document = new XmlDocument();
 			Document.LoadXml(xml);
 			return true;

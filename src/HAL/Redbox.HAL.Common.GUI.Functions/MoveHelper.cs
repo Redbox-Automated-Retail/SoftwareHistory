@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -28,13 +27,12 @@ public class MoveHelper
 	public string[] ReadLimits(HardwareService service)
 	{
 		List<string> list = new List<string>();
-		HardwareJob val = CommonFunctions.ExecuteInstruction(service, "MOTIONCONTROL READLIMITS");
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(service, "MOTIONCONTROL READLIMITS");
+		if (hardwareJob == null)
 		{
 			return list.ToArray();
 		}
-		Stack<string> stack = default(Stack<string>);
-		if (((ClientCommandResult)(object)val.GetStack(ref stack)).Errors.Count > 0)
+		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
 		{
 			return list.ToArray();
 		}
@@ -61,11 +59,10 @@ public class MoveHelper
 		{
 			mode = "NORMAL";
 		}
-		string text = $"MOVE DECK={deck} SLOT={slot} MODE={mode}";
-		HardwareJob job = default(HardwareJob);
-		HardwareCommandResult val = service.ExecuteImmediate(text, (int?)64000, ref job);
+		string statement = $"MOVE DECK={deck} SLOT={slot} MODE={mode}";
+		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(statement, 64000, out var job);
 		MoveHelperResult moveHelperResult = new MoveHelperResult();
-		if (!((ClientCommandResult)(object)val).Success)
+		if (!hardwareCommandResult.Success)
 		{
 			moveHelperResult.MoveResultMessage = "SERVICE DOWN";
 			return moveHelperResult;

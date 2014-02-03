@@ -1,12 +1,12 @@
-# MS HAL Tester revision 0 (no code name)
+# Caddyshack (1.3.0.84)
 
-- Product: MS HAL Tester
+- Product: MS HAL Tester 1.3.0.84
 - Date (first download in the snapshots): 2014-02-03
-- Store labels: none
+- Store labels: kop-ms-hal-tester-Caddyshack 1.0
 - Package revisions:
   - `kop-tools` revision 8 (`18DECD8CDFB6598E25343A7222AF74AFB7C4101D`)
   - `kop-hal-install` revision 9 (`8B2E0934A974C6E2A2BCDC47F5A8B973E4ECED08`)
-  - `kop-ms-hal-tester` revision 0 (`7F4D5B1BC3508567EDC29D68A8FDEE7A4F893B5B`)
+  - `kop-ms-hal-tester` revision 8 (`054D7EDF69ED7B7A7B99B5BFAB676008FAEA8F49`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -41,6 +41,7 @@
 | `thin.hs` |  |  | `C041159372C884C22C703191FFE21F74ED9F269C` | exact |
 | `unload-thin.hs` |  |  | `B9BBF4F31E01F6452438F1DE2C8AC4983EAE1F24` | exact |
 | `vend-unknown.hs` |  |  | `F3C0D2A628A4D0D3F14C444029B536DBF9C07473` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.3.0.84 | `0DA20E3BD55A959E6E12CD8F6E94312DEDD04CA7` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `002BFD282CA697D55D4D40EA08CBC4100B92D817` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

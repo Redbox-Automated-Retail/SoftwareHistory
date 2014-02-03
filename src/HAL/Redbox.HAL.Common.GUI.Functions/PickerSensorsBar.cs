@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -116,13 +115,12 @@ public class PickerSensorsBar : UserControl
 		try
 		{
 			string instruction = "SENSOR READ PICKER-SENSOR=1..6";
-			HardwareJob val = CommonFunctions.ExecuteInstruction(Service, instruction);
-			if (val == null)
+			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, instruction);
+			if (hardwareJob == null)
 			{
 				return;
 			}
-			Stack<string> stack = default(Stack<string>);
-			if (!((ClientCommandResult)(object)val.GetStack(ref stack)).Success)
+			if (!hardwareJob.GetStack(out var stack).Success)
 			{
 				readError = true;
 				return;

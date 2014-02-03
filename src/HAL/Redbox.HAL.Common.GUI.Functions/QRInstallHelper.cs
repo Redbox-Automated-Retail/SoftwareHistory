@@ -7,7 +7,6 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -125,12 +124,12 @@ public class QRInstallHelper : UserControl
 
 	private bool QuickReturnInstalled()
 	{
-		HardwareJob val = CommonFunctions.ExecuteInstruction(m_hardwareService, "QUICKRETURN ISINSTALLED");
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "QUICKRETURN ISINSTALLED");
+		if (hardwareJob == null)
 		{
 			return false;
 		}
-		return CommonFunctions.GetTopOfStack(val) == "TRUE";
+		return CommonFunctions.GetTopOfStack(hardwareJob) == "TRUE";
 	}
 
 	private void SetToolButtonState(bool enabled)
@@ -230,9 +229,8 @@ public class QRInstallHelper : UserControl
 	private bool UpdateConfiguration(bool install, int? newComPort)
 	{
 		string arg = (newComPort.HasValue ? $"COM{newComPort.Value}" : "NONE");
-		HardwareJob val2 = default(HardwareJob);
-		HardwareCommandResult val = m_hardwareService.ExecuteImmediate($"SETCFG \"QuickReturnComPort\" \"{arg}\" TYPE=CONTROLLER", ref val2);
-		if (!((ClientCommandResult)(object)val).Success)
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate($"SETCFG \"QuickReturnComPort\" \"{arg}\" TYPE=CONTROLLER", out var _);
+		if (!hardwareCommandResult.Success)
 		{
 			return false;
 		}
@@ -294,13 +292,11 @@ public class QRInstallHelper : UserControl
 
 	private void m_checkStatus_Click(object sender, EventArgs e)
 	{
-		HardwareJob val2 = default(HardwareJob);
-		HardwareCommandResult val = m_hardwareService.ExecuteImmediate("QUICKRETURN CHECKATTBUTTON", ref val2);
-		if (((ClientCommandResult)(object)val).Success)
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN CHECKATTBUTTON", out var job);
+		if (hardwareCommandResult.Success)
 		{
-			Stack<string> stack2 = default(Stack<string>);
-			HardwareCommandResult stack = val2.GetStack(ref stack2);
-			if (((ClientCommandResult)(object)stack).Success)
+			HardwareCommandResult stack = job.GetStack(out var stack2);
+			if (stack.Success)
 			{
 				if (stack2.Count > 1)
 				{
@@ -371,11 +367,10 @@ public class QRInstallHelper : UserControl
 
 	private void ExecuteInstruction(string instruction)
 	{
-		HardwareJob job = default(HardwareJob);
-		HardwareCommandResult val = m_hardwareService.ExecuteImmediate(instruction, ref job);
-		if (((ClientCommandResult)(object)val).Success)
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate(instruction, out var job);
+		if (hardwareCommandResult.Success)
 		{
-			WriteToCommandOutput(val, job);
+			WriteToCommandOutput(hardwareCommandResult, job);
 		}
 		else
 		{
@@ -398,9 +393,8 @@ public class QRInstallHelper : UserControl
 
 	private void WriteToCommandOutput(HardwareCommandResult result, HardwareJob job)
 	{
-		Stack<string> stack2 = default(Stack<string>);
-		HardwareCommandResult stack = job.GetStack(ref stack2);
-		if (((ClientCommandResult)(object)stack).Success)
+		HardwareCommandResult stack = job.GetStack(out var stack2);
+		if (stack.Success)
 		{
 			if (stack2.Count > 0)
 			{
@@ -420,14 +414,13 @@ public class QRInstallHelper : UserControl
 
 	private void button3_Click_2(object sender, EventArgs e)
 	{
-		HardwareJob val2 = default(HardwareJob);
-		HardwareCommandResult val = m_hardwareService.ExecuteImmediate("QUICKRETURN POLLSTATUS", ref val2);
-		Stack<string> stack = default(Stack<string>);
-		if (!((ClientCommandResult)(object)val).Success)
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN POLLSTATUS", out var job);
+		Stack<string> stack;
+		if (!hardwareCommandResult.Success)
 		{
 			m_suspendJobTB.Text = "COMM Error";
 		}
-		else if (((ClientCommandResult)(object)val2.GetStack(ref stack)).Success)
+		else if (job.GetStack(out stack).Success)
 		{
 			string text = stack.Pop();
 			m_suspendJobTB.Text = text;
@@ -440,22 +433,19 @@ public class QRInstallHelper : UserControl
 
 	private void button4_Click_1(object sender, EventArgs e)
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Expected O, but got Unknown
 		StartTimeForm startTimeForm = new StartTimeForm();
 		if (startTimeForm.ShowDialog() != DialogResult.Cancel)
 		{
-			HardwareJobSchedule val = new HardwareJobSchedule();
-			val.StartTime = startTimeForm.StartTime.Value;
-			val.Priority = (HardwareJobPriority)2;
-			HardwareJobSchedule val2 = val;
-			HardwareJob val4 = default(HardwareJob);
-			HardwareCommandResult val3 = m_hardwareService.ScheduleJob("quick-return-restart", string.Empty, false, val2, ref val4);
-			if (((ClientCommandResult)(object)val3).Success)
+			HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
+			hardwareJobSchedule.StartTime = startTimeForm.StartTime.Value;
+			hardwareJobSchedule.Priority = HardwareJobPriority.High;
+			HardwareJobSchedule schedule = hardwareJobSchedule;
+			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("quick-return-restart", string.Empty, enableDebugging: false, schedule, out var job);
+			if (hardwareCommandResult.Success)
 			{
-				val4.Pend();
+				job.Pend();
 			}
-			m_suspendJobTB.Text = (((ClientCommandResult)(object)val3).Success ? "SUCCESS" : "COMMAND ERROR");
+			m_suspendJobTB.Text = (hardwareCommandResult.Success ? "SUCCESS" : "COMMAND ERROR");
 			Application.DoEvents();
 		}
 	}
@@ -532,17 +522,15 @@ public class QRInstallHelper : UserControl
 
 	private void StartDevice()
 	{
-		HardwareJob val2 = default(HardwareJob);
-		HardwareCommandResult val = m_hardwareService.ExecuteImmediate("QUICKRETURN RESTART", ref val2);
-		if (!((ClientCommandResult)(object)val).Success)
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN RESTART", out var job);
+		if (!hardwareCommandResult.Success)
 		{
 			m_suspendJobTB.Text = "COMMAND FAILED.";
 			Application.DoEvents();
 		}
 		else
 		{
-			Stack<string> stack = default(Stack<string>);
-			val2.GetStack(ref stack);
+			job.GetStack(out var stack);
 			m_suspendJobTB.Text = ((stack.Count > 0) ? stack.Pop() : "COMMAND ERROR");
 			Application.DoEvents();
 		}
@@ -550,9 +538,8 @@ public class QRInstallHelper : UserControl
 
 	private void StopDevice()
 	{
-		HardwareJob val2 = default(HardwareJob);
-		HardwareCommandResult val = m_hardwareService.ExecuteImmediate("QUICKRETURN HALTPOLL", ref val2);
-		m_suspendJobTB.Text = (((ClientCommandResult)(object)val).Success ? "STOPPED" : "RUNNING");
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN HALTPOLL", out var _);
+		m_suspendJobTB.Text = (hardwareCommandResult.Success ? "STOPPED" : "RUNNING");
 		ClearPortTextBox();
 		Application.DoEvents();
 	}

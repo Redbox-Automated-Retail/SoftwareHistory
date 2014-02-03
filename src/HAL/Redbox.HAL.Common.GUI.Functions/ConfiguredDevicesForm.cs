@@ -121,13 +121,13 @@ public class ConfiguredDevicesForm : Form
 
 	private bool IceQubeBoardConfigured()
 	{
-		HardwareJob val = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} ISCONFIGURED", "ICEQUBEBOARD"));
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} ISCONFIGURED", "ICEQUBEBOARD"));
+		if (hardwareJob == null)
 		{
 			m_iceQubeExchangerLabel.Text = "Command failed - unknown configuration.";
 			return false;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(val);
+		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
 		bool flag = false;
 		try
 		{
@@ -141,13 +141,13 @@ public class ConfiguredDevicesForm : Form
 
 	private bool AuxPowerBoardConfigured()
 	{
-		HardwareJob val = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} ISCONFIGURED", "AUXPOWERRELAYBOARD"));
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} ISCONFIGURED", "AUXPOWERRELAYBOARD"));
+		if (hardwareJob == null)
 		{
 			m_powerRelayConfiguredLabel.Text = "Command failed - unknown configuration.";
 			return false;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(val);
+		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
 		bool flag = false;
 		try
 		{
@@ -162,13 +162,13 @@ public class ConfiguredDevicesForm : Form
 	private void m_configureQubeButton_Click(object sender, EventArgs e)
 	{
 		bool flag = IceQubeBoardConfigured();
-		HardwareJob val = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} {1}", "ICEQUBEBOARD", flag ? "DISABLE" : "ENABLE"));
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} {1}", "ICEQUBEBOARD", flag ? "DISABLE" : "ENABLE"));
+		if (hardwareJob == null)
 		{
 			m_iceQubeExchangerLabel.Text = "Command failed - unknown configuration.";
 			return;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(val);
+		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
 		try
 		{
 			flag = bool.Parse(topOfStack);
@@ -183,13 +183,13 @@ public class ConfiguredDevicesForm : Form
 	private void m_configureAuxBoardButton_Click(object sender, EventArgs e)
 	{
 		bool flag = AuxPowerBoardConfigured();
-		HardwareJob val = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} {1}", "AUXPOWERRELAYBOARD", flag ? "DISABLE" : "ENABLE"));
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, string.Format("{0} {1}", "AUXPOWERRELAYBOARD", flag ? "DISABLE" : "ENABLE"));
+		if (hardwareJob == null)
 		{
 			m_iceQubeExchangerLabel.Text = "Command failed - unknown configuration.";
 			return;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(val);
+		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
 		try
 		{
 			flag = bool.Parse(topOfStack);
@@ -212,14 +212,14 @@ public class ConfiguredDevicesForm : Form
 				return;
 			}
 			string instruction = string.Format("{0} {1}", "AUXPOWERRELAYBOARD", tagFromButton);
-			HardwareJob val = CommonFunctions.ExecuteInstruction(Service, instruction);
-			if (val == null)
+			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, instruction);
+			if (hardwareJob == null)
 			{
 				m_auxRelayOutput.Text = "Instruction failed.";
 			}
 			else
 			{
-				m_auxRelayOutput.Text = CommonFunctions.GetTopOfStack(val);
+				m_auxRelayOutput.Text = CommonFunctions.GetTopOfStack(hardwareJob);
 			}
 		}
 	}
@@ -235,14 +235,14 @@ public class ConfiguredDevicesForm : Form
 				return;
 			}
 			string instruction = string.Format("{0} {1}", "ICEQUBEBOARD", tagFromButton);
-			HardwareJob val = CommonFunctions.ExecuteInstruction(Service, instruction);
-			if (val == null)
+			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, instruction);
+			if (hardwareJob == null)
 			{
 				m_qubeTextBox.Text = "Instruction failed.";
 			}
 			else
 			{
-				m_qubeTextBox.Text = CommonFunctions.GetTopOfStack(val);
+				m_qubeTextBox.Text = CommonFunctions.GetTopOfStack(hardwareJob);
 			}
 		}
 	}

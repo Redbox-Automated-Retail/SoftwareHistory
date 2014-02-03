@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -117,12 +116,12 @@ public class ConfigurationManager
 		{
 			return false;
 		}
-		HardwareCommandResult val = Service.SetConfiguration("controller", Doc.OuterXml);
-		if (((ClientCommandResult)(object)val).Success && refresh)
+		HardwareCommandResult hardwareCommandResult = Service.SetConfiguration("controller", Doc.OuterXml);
+		if (hardwareCommandResult.Success && refresh)
 		{
 			LoadConfiguration();
 		}
-		return ((ClientCommandResult)(object)val).Success;
+		return hardwareCommandResult.Success;
 	}
 
 	public void ResetChangeCount()
@@ -142,11 +141,11 @@ public class ConfigurationManager
 	private void LoadConfiguration()
 	{
 		HardwareCommandResult configuration = Service.GetConfiguration("controller");
-		if (!((ClientCommandResult)(object)configuration).Success)
+		if (!configuration.Success)
 		{
 			throw new Exception("Unable to get configuration from HAL.");
 		}
-		LoadConfigurationFromString(((ClientCommandResult)(object)configuration).CommandMessages[0]);
+		LoadConfigurationFromString(configuration.CommandMessages[0]);
 	}
 
 	private void LoadConfigurationFromString(string raw)

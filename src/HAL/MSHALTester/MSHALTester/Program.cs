@@ -1,0 +1,51 @@
+using System;
+using System.Windows.Forms;
+using Redbox.HAL.Core;
+
+namespace Redbox.HAL.MSHALTester;
+
+public class Program : IDisposable
+{
+	public static string Version = "1.0.3.x";
+
+	private NamedLock m_instanceLock;
+
+	private static Guid m_applicationGuid = new Guid("{8609B87B-126E-489a-98E9-6818639534DF}");
+
+	[STAThread]
+	public static void Main(string[] args)
+	{
+		Version = typeof(Program).Assembly.GetName().Version.ToString();
+		using Program program = new Program();
+		program.m_instanceLock = new NamedLock(m_applicationGuid.ToString(), LockScope.Local);
+		if (!program.m_instanceLock.IsOwned)
+		{
+			MessageBox.Show("Only one instance of the MS HAL tester is allowed to run.");
+			return;
+		}
+		Application.EnableVisualStyles();
+		Application.SetCompatibleTextRenderingDefault(defaultValue: false);
+		bool secure = false;
+		for (int i = 0; i < args.Length; i++)
+		{
+			if (args[i].Equals("--secure", StringComparison.CurrentCultureIgnoreCase))
+			{
+				secure = true;
+			}
+			else
+			{
+				TesterLog.Instance.Log($"Unrecognized option {args[i]}", LogEntryType.Error);
+			}
+		}
+		Form1 mainForm = new Form1(secure);
+		Application.Run(mainForm);
+	}
+
+	public void Dispose()
+	{
+		if (m_instanceLock != null)
+		{
+			m_instanceLock.Dispose();
+		}
+	}
+}

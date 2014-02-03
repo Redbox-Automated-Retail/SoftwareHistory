@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -94,9 +93,9 @@ public class ImmediateCommand
 	internal static string FormatMessageFromJobResult(HardwareCommandResult result)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
-		for (int i = 0; i < ((ClientCommandResult)(object)result).CommandMessages.Count - 1; i++)
+		for (int i = 0; i < result.CommandMessages.Count - 1; i++)
 		{
-			stringBuilder.AppendLine(((ClientCommandResult)(object)result).CommandMessages[i]);
+			stringBuilder.AppendLine(result.CommandMessages[i]);
 		}
 		return stringBuilder.ToString();
 	}

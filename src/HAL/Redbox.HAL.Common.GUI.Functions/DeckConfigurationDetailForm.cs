@@ -5,7 +5,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Xml;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -405,7 +404,7 @@ public class DeckConfigurationDetailForm : Form
 	{
 		HardwareCommandResult inventoryState = Service.GetInventoryState();
 		XmlDocument xmlDocument = new XmlDocument();
-		xmlDocument.LoadXml(((ClientCommandResult)(object)inventoryState).CommandMessages[0]);
+		xmlDocument.LoadXml(inventoryState.CommandMessages[0]);
 		foreach (int newExcludedQuad in newExcludedQuads)
 		{
 			XmlNode node = deckNode.ChildNodes[newExcludedQuad];

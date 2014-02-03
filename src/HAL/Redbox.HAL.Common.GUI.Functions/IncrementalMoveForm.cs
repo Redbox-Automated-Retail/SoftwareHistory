@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -112,16 +111,15 @@ public class IncrementalMoveForm : Form
 			if (CommonFunctions.GetMotionControlPosition((Axis == "X") ? Redbox.HAL.Common.GUI.Functions.Axis.X : Redbox.HAL.Common.GUI.Functions.Axis.Y, Service, out var position))
 			{
 				int num = Units + position;
-				string text = $"MOVEABS AXIS={Axis} UNITS={num} SENSOR-CHECK=FALSE";
-				HardwareJob val2 = default(HardwareJob);
-				HardwareCommandResult val = Service.ExecuteImmediate(text, ref val2);
-				if (!((ClientCommandResult)(object)val).Success)
+				string statement = $"MOVEABS AXIS={Axis} UNITS={num} SENSOR-CHECK=FALSE";
+				HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, out var job);
+				if (!hardwareCommandResult.Success)
 				{
 					Log.Log("Execute immediate failed ... ", LogEntryType.Error);
 				}
 				else
 				{
-					val = val2.WaitForCompletion();
+					hardwareCommandResult = job.WaitForCompletion();
 				}
 			}
 		}

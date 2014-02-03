@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -16,28 +15,21 @@ public class ReadBarcodeResult
 
 	public static ReadBarcodeResult ReadBarcodeOfDiskInPicker(HardwareService service)
 	{
-		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Expected O, but got Unknown
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Expected O, but got Unknown
-		HardwareJobSchedule val = new HardwareJobSchedule();
-		val.StartTime = DateTime.Now;
-		val.Priority = (HardwareJobPriority)1;
-		HardwareJobSchedule val2 = val;
-		HardwareJob val4 = default(HardwareJob);
-		HardwareCommandResult val3 = service.ScheduleJob("read-barcode", "MS read barcode", false, val2, ref val4);
-		if (!((ClientCommandResult)(object)val3).Success)
+		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
+		hardwareJobSchedule.StartTime = DateTime.Now;
+		hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
+		HardwareJobSchedule schedule = hardwareJobSchedule;
+		HardwareCommandResult hardwareCommandResult = service.ScheduleJob("read-barcode", "MS read barcode", enableDebugging: false, schedule, out var job);
+		if (!hardwareCommandResult.Success)
 		{
 			return CreateErrorResult();
 		}
-		ClientHelper val5 = new ClientHelper();
-		HardwareJobStatus val6 = default(HardwareJobStatus);
-		if (!val5.WaitForJob(val4, ref val6))
+		ClientHelper clientHelper = new ClientHelper();
+		if (!clientHelper.WaitForJob(job, out var _))
 		{
 			return CreateErrorResult();
 		}
-		ProgramResult[] results = default(ProgramResult[]);
-		if (!((ClientCommandResult)(object)val4.GetResults(ref results)).Success)
+		if (!job.GetResults(out var results).Success)
 		{
 			return CreateErrorResult();
 		}
@@ -46,24 +38,22 @@ public class ReadBarcodeResult
 
 	public static ReadBarcodeResult FromResults(ProgramResult[] results)
 	{
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0017: Expected O, but got Unknown
 		ReadBarcodeResult readBarcodeResult = new ReadBarcodeResult();
-		foreach (ProgramResult val in results)
+		foreach (ProgramResult programResult in results)
 		{
-			if (val.Code.Equals("Read-ID", StringComparison.CurrentCultureIgnoreCase))
+			if (programResult.Code.Equals("Read-ID", StringComparison.CurrentCultureIgnoreCase))
 			{
-				readBarcodeResult.Barcode = (val.ItemID.IsUnknown() ? val.ItemID.Metadata : val.ItemID.Barcode);
+				readBarcodeResult.Barcode = (programResult.ItemID.IsUnknown() ? programResult.ItemID.Metadata : programResult.ItemID.Barcode);
 			}
-			else if (val.Code.Equals("ReadTime", StringComparison.CurrentCultureIgnoreCase))
+			else if (programResult.Code.Equals("ReadTime", StringComparison.CurrentCultureIgnoreCase))
 			{
-				readBarcodeResult.ScanTime = val.Message;
+				readBarcodeResult.ScanTime = programResult.Message;
 			}
-			else if (val.Code.Equals("NumBarcodes", StringComparison.CurrentCultureIgnoreCase))
+			else if (programResult.Code.Equals("NumBarcodes", StringComparison.CurrentCultureIgnoreCase))
 			{
-				readBarcodeResult.Count = val.Message;
+				readBarcodeResult.Count = programResult.Message;
 			}
-			else if (val.Code == "DuplicateDetected")
+			else if (programResult.Code == "DuplicateDetected")
 			{
 				readBarcodeResult.IsDuplicate = true;
 			}

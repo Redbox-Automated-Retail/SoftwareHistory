@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Xml;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
@@ -57,23 +56,21 @@ public static class CommonFunctions
 			obj = "MOTIONCONTROL XPOS";
 			break;
 		}
-		string text = (string)obj;
-		HardwareJob val2 = default(HardwareJob);
-		HardwareCommandResult val = service.ExecuteImmediate(text, ref val2);
-		val2.WaitForCompletion();
-		Stack<string> stack = default(Stack<string>);
-		val = val2.GetStack(ref stack);
+		string statement = (string)obj;
+		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(statement, out var job);
+		job.WaitForCompletion();
+		hardwareCommandResult = job.GetStack(out var stack);
 		position = 0;
 		bool result = false;
-		string text2 = null;
-		if (!((ClientCommandResult)(object)val).Success)
+		string text = null;
+		if (!hardwareCommandResult.Success)
 		{
 			return false;
 		}
 		if (stack.Count >= 1)
 		{
-			text2 = stack.Pop();
-			result = int.TryParse(text2, out position);
+			text = stack.Pop();
+			result = int.TryParse(text, out position);
 		}
 		return result;
 	}
@@ -90,23 +87,19 @@ public static class CommonFunctions
 
 	public static HardwareService ConfigureCommunication(string strProtocol)
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Expected O, but got Unknown
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Expected O, but got Unknown
 		if (Helper == null)
 		{
 			Helper = new ClientHelper();
 		}
 		try
 		{
-			HardwareService val = Helper.AutoConnect();
-			if (val != null)
+			HardwareService hardwareService = Helper.AutoConnect();
+			if (hardwareService != null)
 			{
-				return val;
+				return hardwareService;
 			}
-			IPCProtocol iPCProtocol = IPCProtocol.Parse(strProtocol);
-			return new HardwareService(iPCProtocol);
+			IPCProtocol protocol = IPCProtocol.Parse(strProtocol);
+			return new HardwareService(protocol);
 		}
 		catch (UriFormatException)
 		{
@@ -116,24 +109,24 @@ public static class CommonFunctions
 
 	public static HardwareJob ExecuteInstruction(HardwareService service, string instruction)
 	{
-		HardwareJob result = null;
-		HardwareCommandResult val = service.ExecuteImmediate(instruction, ref result);
-		if (!((ClientCommandResult)(object)val).Success)
+		HardwareJob job = null;
+		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(instruction, out job);
+		if (!hardwareCommandResult.Success)
 		{
 			return null;
 		}
-		return result;
+		return job;
 	}
 
 	public static HardwareJob ExecuteInstruction(HardwareService service, string instruction, int timeout)
 	{
-		HardwareJob result = null;
-		HardwareCommandResult val = service.ExecuteImmediate(instruction, (int?)timeout, ref result);
-		if (!((ClientCommandResult)(object)val).Success)
+		HardwareJob job = null;
+		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(instruction, timeout, out job);
+		if (!hardwareCommandResult.Success)
 		{
 			return null;
 		}
-		return result;
+		return job;
 	}
 
 	private static string[] GetStackEntriesInner(HardwareJob job, int depth)
@@ -143,9 +136,8 @@ public static class CommonFunctions
 		{
 			array[i] = string.Empty;
 		}
-		Stack<string> stack2 = default(Stack<string>);
-		HardwareCommandResult stack = job.GetStack(ref stack2);
-		if (((ClientCommandResult)(object)stack).Success && stack2.Count >= depth)
+		HardwareCommandResult stack = job.GetStack(out var stack2);
+		if (stack.Success && stack2.Count >= depth)
 		{
 			for (int j = 0; j < depth; j++)
 			{

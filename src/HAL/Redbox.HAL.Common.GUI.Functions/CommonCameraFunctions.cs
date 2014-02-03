@@ -9,12 +9,12 @@ public static class CommonCameraFunctions
 {
 	public static bool IRCameraConfigured(HardwareService service)
 	{
-		HardwareJob val = CommonFunctions.ExecuteInstruction(service, "CAMERA IRCAMERA");
-		if (val == null)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(service, "CAMERA IRCAMERA");
+		if (hardwareJob == null)
 		{
 			return false;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(val);
+		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
 		return bool.Parse(topOfStack);
 	}
 
