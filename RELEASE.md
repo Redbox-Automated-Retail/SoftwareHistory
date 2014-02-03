@@ -1,16 +1,45 @@
-# HAL revision 5 (no code name)
+# Caddyshack (1.3.0.84)
 
-- Product: HAL
+- Product: HAL 1.3.0.84
 - Date (first download in the snapshots): 2014-02-03
-- Store labels: none
+- Store labels: kop-hal-install-Caddyshack 1.0
 - Package revisions:
   - `kop-tools` revision 8 (`18DECD8CDFB6598E25343A7222AF74AFB7C4101D`)
-  - `kop-hal-install` revision 5 (`C088D6CB6B20418480D329A1F6C94EA29B11F90E`)
+  - `kop-hal-install` revision 9 (`8B2E0934A974C6E2A2BCDC47F5A8B973E4ECED08`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `HalUtilities.exe` | HalUtilities | 1.3.0.84 | `E24A2A1878833350BB42E91EEFE3A4B4EB00911B` | exact |
 | `beforeactivate.lua` |  |  | `ACF9154BC88826643EC0EE3CFA2C824DE34B4B83` | exact |
+| `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.3.0.84 | `1B293C7E435820246E13A430885E144AB64C2F77` | exact |
+| `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.84 | `10A57BF1665C8B43C833F819F06A83D9103A1114` | exact |
+| `Redbox.HAL.ICameraPlugin.Vidcap.dll` | Redbox.HAL.ICameraPlugin.Vidcap | 1.3.0.84 | `5149FE482859152955EBF81AFB66207436715188` | exact |
+| `CameraTuner.exe` | CameraTuner | 1.3.0.84 | `C601C900E8A2EA347BD4139866BB0AFFF789273C` | exact |
+| `HAL.PackageInstaller.exe` | HAL.PackageInstaller | 1.3.0.84 | `6E8B73F2C815238122CD352A843F4A609F39CFE0` | exact |
+| `halmgmtc.exe` | halmgmtc | 1.3.0.84 | `9B7869938682D441DC6190D8F250BB2E8F88C4CE` | exact |
+| `halsvc-win32.exe` | halsvc-win32 | 1.3.0.84 | `038986267B504F908469450C493112EFED3EDAFE` | exact |
+| `Redbox.HAL.Camera.Framework.dll` | Redbox.HAL.Camera.Framework | 1.3.0.84 | `32C83BA9F98D189C98675E3754889DD248B197A0` | exact |
+| `Redbox.HAL.ClearimageV1.dll` | Redbox.HAL.ClearimageV1 | 1.3.0.84 | `A2346CFAD4D63B86469B32B31467AFE25B641195` | exact |
+| `Redbox.HAL.Controller.Framework.dll` | Redbox.HAL.Controller.Framework | 1.3.0.84 | `9E457525E6682FAC88D6F9EC1A2FDFC830C09286` | exact |
+| `Redbox.HAL.Core.dll` | Redbox.HAL.Core | 1.3.0.84 | `7D2F1B27773F71D307CB455AB5B467507A0A95A9` | exact |
+| `Redbox.HAL.DataMatrix.Framework.dll` | Redbox.HAL.DataMatrix.Framework | 1.3.0.84 | `451161027808A992C8DDCF1DB54F158F97510CEA` | exact |
+| `Redbox.HAL.DataStorage.dll` | Redbox.HAL.DataStorage | 1.3.0.84 | `C6F44284C648D7260EA9E1EC9309B0504BEC2E7E` | exact |
+| `Redbox.HAL.IPC.Framework.dll` | Redbox.HAL.IPC.Framework | 1.3.0.84 | `132A34D627606CC55C7638513E794682FE08BF6F` | exact |
+| `Redbox.HAL.Script.Framework.dll` | Redbox.HAL.Script.Framework | 1.3.0.84 | `74A6309D6DF6081D4E6133477E4F4460451EA12F` | exact |
+| `Redbox.HAL.Service.Framework.dll` | Redbox.HAL.Service.Framework | 1.3.0.84 | `E9D8D28E3FD7D10F230494F15FCF323E28A939BF` | exact |
+| `check-picker.hs` |  |  | `F0F9A250109643DA38322192473AB723CCE0B09D` | exact |
+| `clean-vmz.hs` |  |  | `B300D39361816E4A404D8482B5C7CEF8ED0A6E1D` | exact |
+| `clear-picker.hs` |  |  | `C675764B77F1868861E55AF147355F98ED8FAFFC` | exact |
+| `qlm-unload.hs` |  |  | `B206916C4190D0F7DB6BDF2A7562A3798BB27C46` | exact |
+| `quick-return-restart.hs` |  |  | `04B992271945D2C84D47D781A00F0FDB9741F388` | exact |
+| `quick-return-setup.hs` |  |  | `3F2A0B3D1A983786F8AE0BA23918C55BDCE883EE` | exact |
+| `return-unknown.hs` |  |  | `231D3984A0340AFD6EAB9604714404D3D7FB6ACF` | exact |
+| `sync-locations.hs` |  |  | `1E315A3E5C18B4136586EB39F10496DA26C688E9` | exact |
+| `sync.hs` |  |  | `4C03694C1C4AF71DCF3C41F59F33921559C03154` | exact |
+| `thin-vmz.hs` |  |  | `F9C679859C642AB071E7C3967366164B2B3720C2` | exact |
+| `thin.hs` |  |  | `C041159372C884C22C703191FFE21F74ED9F269C` | exact |
+| `unload-thin.hs` |  |  | `B9BBF4F31E01F6452438F1DE2C8AC4983EAE1F24` | exact |
+| `vend-unknown.hs` |  |  | `F3C0D2A628A4D0D3F14C444029B536DBF9C07473` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |
 | `inventoryimport.exe` | inventoryimport | 1.0.0.0 | `28D6B66932DC3BDAB5BE777AC107606E314D6BBD` | exact |
 | `kioskutil.exe` | kioskutil | 2.5.0.13 | `A1B02E3B5C8FA91B522514734C73040B8523903E` | exact |
