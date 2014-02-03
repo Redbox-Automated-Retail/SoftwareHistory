@@ -1,14 +1,15 @@
-# Rental bundles revision 0 (no code name)
+# Rental bundles revision 2 (no code name)
 
 - Product: Rental bundles
 - Date (first download in the snapshots): 2014-02-03
 - Store labels: none
 - Package revisions:
-  - `kop-rental-bundles` revision 0 (`9BCDFDE1D3C56FEB2525D972834F7FDFBB077114`)
+  - `kop-rental-bundles` revision 2 (`D7F59B2E433D6BADBBC011868B3445BCD15F06F6`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `cp.bundle` |  |  | `3EAE1A0F3A2B347BE0E1270A56D6ECD796EE34D7` | exact |
+| `library-rental-common.bundle` |  |  | `2969BC0FD7DD615539FB5035C844AC4989AC2F7E` | exact |
 | `library-tickets.bundle` |  |  | `ECFD750E36F174FF4B58AFFA0A43C0F96DFA3CEF` | exact |
 
 ## Notes
