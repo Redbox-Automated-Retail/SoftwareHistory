@@ -1,13 +1,14 @@
-# HAL Utilities revision 0 (no code name)
+# Caddyshack (1.3.0.84)
 
-- Product: HAL Utilities
+- Product: HAL Utilities 1.3.0.84
 - Date (first download in the snapshots): 2014-02-03
-- Store labels: none
+- Store labels: kop-tools-Caddyshack 1.0
 - Package revisions:
-  - `kop-tools` revision 0 (`7DD7DE2BF0E90F66D576A573E16A8EB45BB415D5`)
+  - `kop-tools` revision 8 (`18DECD8CDFB6598E25343A7222AF74AFB7C4101D`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
+| `HalUtilities.exe` | HalUtilities | 1.3.0.84 | `E24A2A1878833350BB42E91EEFE3A4B4EB00911B` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |
 | `inventoryimport.exe` | inventoryimport | 1.0.0.0 | `28D6B66932DC3BDAB5BE777AC107606E314D6BBD` | exact |
 | `kioskutil.exe` | kioskutil | 2.5.0.13 | `A1B02E3B5C8FA91B522514734C73040B8523903E` | exact |
