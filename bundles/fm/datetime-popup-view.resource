@@ -1,0 +1,353 @@
+<?xml version="1.0"?>
+<resource type="view">
+  <property name="name" value="datetime_popup_view" />
+  <aspect name="content">
+    <scene name="DatetimePopup"
+      clear="false"
+      onEnter="datetime_popup_view_enter"
+      viewWindow="149,62,726,642" >
+
+ 		<actor
+		name="background"
+		x="0"
+		y="0"
+		width="726"
+		height="642"
+		backgroundColor="Gray"
+		strokeWeight="3.0"
+		borderColor="192,192,192"
+		cornerSize="10,10"
+		optionFlags="Background, DrawBorder"
+        hitFlags="Enabled, Obstruction"
+		/>
+
+		<actor
+		name="title_area"
+		x="2"
+		y="2"
+		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
+		backgroundColor="DarkRed"
+		text="  Job Start Time"
+		foregroundColor="White"
+		verticalAlignment="center"
+		font="medium_larger_font"
+		cornerSize="10,10"
+		width="721"
+		height="50"
+		/>
+
+		<actor
+		name="close_area"
+		x="649"
+		y="0"
+		width="77"
+		height="52"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		foregroundColor="White"
+		backgroundColor="192,192,192"
+		cornerSize="10,10"
+		font="medium_larger_font"
+		text= "X"
+		onHit="go_back"
+		hitFlags="Enabled"
+		optionFlags="Background, Text, DrawRoundedCorners"
+		/>
+
+      <actor
+		name="time_groupbox"
+		x="67"
+		y="107"
+		width="601"
+		height="160"
+		cornerSize="10,10"
+		strokeWeight="2.0"
+		borderColor="white"
+		optionFlags="DrawBorder"
+		visible="true"
+		enabled="true" />
+
+      <actor
+        name="time_groupbox_label"
+        x="80"
+        y="90"
+        width="200"
+        height="20"
+        text="HOURS : MINUTES"
+        font="small_font"
+        verticalAlignment="near"
+        horizontalAlignment="near"
+        optionFlags="Text"
+        foregroundColor="black"
+        visible="true"
+        enabled="true"/>
+
+      <actor
+		name="hour_button"
+		x="79"
+		y="139"
+		width="135"
+		height="109"
+		strokeWeight="3.0"
+		borderColor="64,64,64"
+		backgroundColor="192,192,192"
+		foregroundColor="black"
+		optionFlags="Background, Text, DrawBorder"
+		hitFlags="Enabled"
+		font="extra_large_font"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="add_time"
+		tag="01:00:00"
+		text="1"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="colon_label"
+		x="205"
+		y="104"
+		width="100"
+		height="181"
+		font="extra_large_font"
+		optionFlags="Text, TextShadow"
+		foregroundColor="black"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		text=":"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="minute_button"
+		x="299"
+		y="139"
+		width="135"
+		height="109"
+		strokeWeight="3.0"
+		borderColor="64,64,64"
+		backgroundColor="192,192,192"
+		foregroundColor="black"
+		optionFlags="Background, Text, DrawBorder"
+		font="extra_large_font"
+		hitFlags="Enabled"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="add_time"
+		tag="00:05:00"
+		text="45"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="meridiem_button"
+		x="520"
+		y="139"
+		width="135"
+		height="109"
+		strokeWeight="3.0"
+		borderColor="64,64,64"
+		backgroundColor="192,192,192"
+		foregroundColor="black"
+		optionFlags="Background, Text, DrawBorder"
+		font="extra_large_font"
+		hitFlags="Enabled"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="add_time"
+		tag="12:00:00"
+		text="AM"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="date_groupbox"
+		x="67"
+		y="310"
+		width="601"
+		height="185"
+		cornerSize="10,10"
+		strokeWeight="2.0"
+		borderColor="white"
+		optionFlags="DrawBorder"
+		visible="true"
+		enabled="true" />
+
+      <actor
+        name="date_groupbox_label"
+        x="80"
+        y="293"
+        width="200"
+        height="20"
+        text="MONTH / DAY / YEAR"
+        font="small_font"
+        verticalAlignment="near"
+        horizontalAlignment="near"
+        optionFlags="Text"
+        foregroundColor="black"
+        visible="true"
+        enabled="true"/>
+
+      <actor
+		name="month_button"
+		x="79"
+		y="325"
+		width="135"
+		height="109"
+		strokeWeight="3.0"
+		borderColor="64,64,64"
+		backgroundColor="192,192,192"
+		foregroundColor="black"
+		optionFlags="Background, Text, DrawBorder"
+		hitFlags="Enabled"
+		font="extra_large_font"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="add_time"
+		tag="1.0.00:00:00"
+		text="5"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="slash_label"
+		x="205"
+		y="289"
+		width="100"
+		height="181"
+		font="extra_large_font"
+		optionFlags="Text, TextShadow"
+		foregroundColor="black"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		text="/"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="day_button"
+		x="299"
+		y="325"
+		width="135"
+		height="109"
+		strokeWeight="3.0"
+		borderColor="64,64,64"
+		backgroundColor="192,192,192"
+		foregroundColor="black"
+		optionFlags="Background, Text, DrawBorder"
+		font="extra_large_font"
+		hitFlags="Enabled"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="add_time"
+		tag="1.00:00:00"
+		text="31"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="slash2_label"
+		x="434"
+		y="289"
+		width="100"
+		height="181"
+		font="extra_large_font"
+		optionFlags="Text, TextShadow"
+		foregroundColor="black"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		text="/"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="year_button"
+		x="520"
+		y="325"
+		width="135"
+		height="109"
+		strokeWeight="3.0"
+		borderColor="64,64,64"
+		backgroundColor="192,192,192"
+		foregroundColor="black"
+		optionFlags="Background, Text, DrawBorder"
+		font="extra_large_font"
+		hitFlags="Enabled"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="add_time"
+		tag="1.0.0.00:00:00"
+		text="09"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="datetime_display"
+		x="70"
+		y="436"
+		width="598"
+		height="57"
+		font="medium_large_font"
+		optionFlags="Text"
+		foregroundColor="black"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		visible="true"
+		enabled="true" />
+
+	  <actor
+		name="footer"
+		x="2"
+		y="530"
+		optionFlags="Background, DrawRoundedCorners"
+		backgroundColor="64,64,64"
+		cornerSize="10,10"
+		width="721"
+		height="110"
+		/>
+
+      <actor
+		name="reset_button"
+		x="62"
+		y="555"
+		width="144"
+		height="65"
+		backgroundColor="DarkRed"
+		strokeWeight="2.0"
+		borderColor="White"
+		cornerSize="10,10"
+        optionFlags="Background, Text, TextShadow, DrawBorder"
+		font="medium_large_font"
+		hitFlags="Enabled"
+		foregroundColor="white"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="datetime_reset"
+		text="Immediate"
+		visible="true"
+		enabled="true" />
+
+      <actor
+		name="ok_button"
+		x="220"
+		y="555"
+		width="144"
+		height="65"
+		backgroundColor="DarkRed"
+		strokeWeight="2.0"
+		borderColor="White"
+		cornerSize="10,10"
+        optionFlags="Background, Text, TextShadow, DrawBorder"
+		font="medium_large_font"
+		hitFlags="Enabled"
+		foregroundColor="white"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		onHit="update_schedule"
+		text="Enter"
+		visible="true"
+		enabled="true" />
+			  
+    </scene>
+  </aspect>
+</resource>

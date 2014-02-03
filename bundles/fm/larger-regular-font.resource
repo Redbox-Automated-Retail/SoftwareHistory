@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<resource type="font">
+    <property name="name" value="larger_regular_font" />
+    <property name="font_family" value="Tahoma" />
+    <property name="point_size" value="26" />
+    <property name="font_style" value="Regular" />
+</resource>
