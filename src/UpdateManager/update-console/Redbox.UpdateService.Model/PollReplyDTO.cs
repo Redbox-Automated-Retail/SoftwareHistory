@@ -1,0 +1,45 @@
+using System.Collections.Generic;
+
+namespace Redbox.UpdateService.Model;
+
+internal class PollReplyDTO
+{
+	public PollReplyType PRT { get; set; }
+
+	public int SId { get; set; }
+
+	public string D { get; set; }
+
+	public static List<PollReplyDTO> GetPollReplyDTOList(List<PollReply> list)
+	{
+		List<PollReplyDTO> list2 = new List<PollReplyDTO>();
+		foreach (PollReply item in list)
+		{
+			list2.Add(GetPollReplyDTO(item));
+		}
+		return list2;
+	}
+
+	public static PollReplyDTO GetPollReplyDTO(PollReply pollReply)
+	{
+		PollReplyDTO pollReplyDTO = new PollReplyDTO();
+		pollReplyDTO.PRT = pollReply.PollReplyType;
+		pollReplyDTO.SId = pollReply.SyncId;
+		pollReplyDTO.D = pollReply.Data;
+		return pollReplyDTO;
+	}
+
+	public static List<PollReply> GetPollReplyList(List<PollReplyDTO> list)
+	{
+		List<PollReply> list2 = new List<PollReply>();
+		foreach (PollReplyDTO item in list)
+		{
+			PollReply pollReply = new PollReply();
+			list2.Add(pollReply);
+			pollReply.PollReplyType = item.PRT;
+			pollReply.SyncId = item.SId;
+			pollReply.Data = item.D;
+		}
+		return list2;
+	}
+}

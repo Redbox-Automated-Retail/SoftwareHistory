@@ -1,0 +1,3 @@
+namespace Redbox.Core;
+
+internal delegate bool Redbox_002ECommand_002ETokenizer2091_002EControlCallback(Redbox_002ECommand_002ETokenizer2091_002ECtrlTypes ctrlType);
