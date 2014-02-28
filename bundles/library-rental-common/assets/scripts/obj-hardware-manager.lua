@@ -171,28 +171,94 @@ run_thin_vmz_job = function( label, jobname )
 end
 
 run_thin_vmz_job2 = function( label, jobname, rebalances, exclude_barcodes )
-	kernel.log( "Enqueue callback for " .. jobname )
-	kernel.callbackenqueue(
-		function( label, jobname )
-			local hardwareManager = newhardwaremanager()
-			kernel.log( "Execute " .. jobname )
-			local barcodesToBin, barcodesToVmz = get_vmz_thin_barcodes( exclude_barcodes )
-			if rebalances == nil then rebalances = {} end
-			if #barcodesToBin == 0
-			and #barcodesToVmz == 0 
-			and #rebalances == 0 then
-				kernel.log(">  There are no Thinned/Rebalance discs at this time, thin request cancelled.")
-			else
-				kernel.log(">  Found " ..tostring(#barcodesToBin) .. " thinned discs to be sent to Bin.")
-				kernel.log(">  Found " ..tostring(#rebalances) .. " rebalance discs to be sent to VMZ.")
-				kernel.log(">  Found " ..tostring(#barcodesToVmz) .. " thinned discs to be sent to VMZ.")
-				local schedule = newdatetime()
-				hardwareManager:vmz_thin2( label, schedule.backing, barcodesToBin, rebalances, barcodesToVmz )
+	-- Run GetInventoryStats in order to determine if the rebalance job barcode list need to be modified
+	local hardwareManager = newhardwaremanager()
+	hardwareManager:get_inventory_stats( function( results )
+		-- Shorthand Vars from results
+		local KioskIsFull = false
+		local DumpBinCapacity = 0
+		local DumpBinCount = 0
+		local DumpBinRemainingCapacity = 0
+
+		-- Process the get_inventory_stats results
+		for k,v in ipairs( results ) do
+			if v.code == "DumpBinCount" then
+				DumpBinCount = tonumber(v.message)
+			elseif v.code == "DumpBinCapacity" then
+				DumpBinCapacity = tonumber(v.message)
+			elseif v.code == "MachineFull" then
+				KioskIsFull = true
 			end
-			-- Remove job from the Kiosk Engine scheduler as these are one-time run jobs (for now)
-			scheduler_services.remove_entry( jobname )
+		end
+		DumpBinRemainingCapacity = DumpBinCapacity - DumpBinCount
+		
+		kernel.log( "Enqueue callback for " .. jobname )
+		kernel.callbackenqueue(
+			function( label, jobname )
+				kernel.log( "Execute " .. jobname )
+				local barcodesToBin, barcodesToVmz = get_vmz_thin_barcodes( exclude_barcodes )
+				if rebalances == nil then rebalances = {} end
+				if #barcodesToBin == 0
+				and #barcodesToVmz == 0 
+				and #rebalances == 0 then
+					kernel.log( ">  There are no Thinned/Rebalance discs at this time, thin request cancelled." )
+					kernel.log( ">  Running clean_vmz.")
+					hardwareManager:clean_vmz( nil )
+				else
+				
+					if KioskIsFull and DumpBinRemainingCapacity > 0 then
+						-- Determine the max # of disks that could/should be moved to the dumpbin
+						local MinToDumpBin = MakeRoomBuffer
+						if ( MinToDumpBin > DumpBinRemainingCapacity ) then
+							MinToDumpBin = DumpBinRemainingCapacity
+						end
+
+						if #barcodesToBin > MinToDumpBin then
+							-- Send a subset of barcodesToBin
+							kernel.log( "Restricting barcodes_to_bin from: " .. tostring(#barcodesToBin) .. " to: " .. tostring(MinToDumpBin) )
+							for k,v in ipairs( barcodesToBin ) do
+								-- list is pre-sorted, keep the end of the list
+								if k <= #barcodesToBin - MinToDumpBin then
+									barcodesToBin[k] = nil
+								end
+							end
+						elseif #barcodesToBin < MinToDumpBin and #barcodesToVmz > 0 then
+							-- Increase the number to the dumpbin by including some thins (barcodesToVmz)
+							local NumBarcodesToAdd = MinToDumpBin - #barcodesToBin
+							for  k,v in ipairs( barcodesToVmz ) do
+								if NumBarcodesToAdd > 0 then
+									-- Ensure the barcode is not a Rebalance
+									local rebalanceBarcode = false
+									for k2,v2 in ipairs( rebalances ) do
+										if v.barcode == v2.barcode then
+											kernel.log( "> Skipping rebalance barcode: " .. tostring(v.barcode) )
+											rebalanceBarcode = true
+											break
+										end
+									end
+									if rebalanceBarcode == false then
+										kernel.log( "> Moving barcode: " .. tostring(v.barcode) .. " from barcodes_to_vmz to barcodes_to_bin." )
+										table.insert( barcodesToBin, 1, v )
+										barcodesToVmz[ k ] = nil
+										NumBarcodesToAdd = NumBarcodesToAdd - 1
+									end
+								end
+							end
+						end
+						
+					end
+
+					kernel.log(">  Found " ..tostring(#barcodesToBin) .. " thinned discs to be sent to Bin.")
+					kernel.log(">  Found " ..tostring(#rebalances) .. " rebalance discs to be sent to VMZ.")
+					kernel.log(">  Found " ..tostring(#barcodesToVmz) .. " thinned discs to be sent to VMZ.")
+					local schedule = newdatetime()
+					hardwareManager:vmz_thin2( label, schedule.backing, barcodesToBin, rebalances, barcodesToVmz )
+				end
+				-- Remove job from the Kiosk Engine scheduler as these are one-time run jobs (for now)
+				scheduler_services.remove_entry( jobname )
 		end,
 		{ label, jobname } )
+	end )
 end
 
 run_qlm_unload_thin_job = function( label, jobname )
@@ -914,7 +980,13 @@ function newhardwaremanager()
 	t.vmz_thin2 = function( self, label, schedule, barcodes_to_bin, barcodes_to_rebalance, barcodes_to_vmz )
 		local result = kernel.hardwarevmzthin2(
 			nil,
-			nil,
+			function( jobid, status )
+				if status == "Completed"
+				or status == "Errored" then
+					kernel.log( "> hardwarevmzthin2 complete, now running clean_vmz")
+					self:clean_vmz( nil )
+				end
+			end,
 			label,
 			schedule,
 			barcodes_to_bin,
@@ -1421,6 +1493,26 @@ function newhardwaremanager()
 
 	t.get_barcodes_in_bin = function( self, on_complete )
 		local result = kernel.getbarcodesinbin(
+			nil,
+			function( jobid, status )
+				if( has_job_ended( status ) ) then
+					local job_result = kernel.hardwaregetprogramresults( jobid )
+					if on_complete ~= nil then
+						on_complete( job_result.results )
+					end
+					kernel.hardwaretrashjob( jobid )
+				end
+			end )
+
+		if result.success == false then
+			self:show_hardware_errors( result )
+			return false
+		end
+		return true
+	end
+
+	t.get_inventory_stats = function( self, on_complete )
+		local result = kernel.getinventorystats(
 			nil,
 			function( jobid, status )
 				if( has_job_ended( status ) ) then

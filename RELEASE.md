@@ -1,16 +1,16 @@
-# Rental bundles revision 4 (no code name)
+# Dracula SR (2014-02-28)
 
 - Product: Rental bundles
 - Date (first download in the snapshots): 2014-02-28
-- Store labels: none
+- Store labels: kop-rental-bundles-DraculaSR
 - Package revisions:
-  - `kop-rental-bundles` revision 4 (`8B466E160CAC5950F9B3509664F5DF54F0FF9220`)
+  - `kop-rental-bundles` revision 5 (`DEA07375C8DBE4D49CB514821948CFBEAE09732E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `cp.bundle` |  |  | `8FEA5C8F07F66D4D6832869BE094791B8B8EAE15` | exact |
 | `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | exact |
-| `library-rental-common.bundle` |  |  | `2969BC0FD7DD615539FB5035C844AC4989AC2F7E` | stale (listed version 3E9BB182A7… has no content) |
+| `library-rental-common.bundle` |  |  | `149497682D160548299A7D8BE6AE3E8A434A2FC1` | exact |
 | `library-tickets.bundle` |  |  | `ECFD750E36F174FF4B58AFFA0A43C0F96DFA3CEF` | exact |
 | `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | exact |
 

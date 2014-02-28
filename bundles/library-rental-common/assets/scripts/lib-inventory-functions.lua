@@ -419,11 +419,17 @@ function get_barcodes_for_products( products, exclude_list )
 	for k, v in UnplayableProduct:pairs() do
 		used_barcodes[k] = true
 	end
+	
+	-- Get a list of barcodes in the RebalanceOut list
+	rebalances_raw = get_rebalance_barcodes_raw()
+	
 	for k, v in ipairs( products ) do
 		if v.barcode == nil then
 			local work_table = {}
 			local in_kiosk_and_not_available = false
 			local barcodes_table = ProductToBarcode[v.product_id] or {}
+			local title_rebalances = {}
+			local num_title_rebalances = 0
 			for each_barcode, cached_info in pairs( barcodes_table ) do
 				if cached_info ~= nil then
 					if used_barcodes[each_barcode] == nil
@@ -432,6 +438,10 @@ function get_barcodes_for_products( products, exclude_list )
 						table.insert(
 							work_table,
 							{ barcode = each_barcode, turns = disc_info.total_rental_count } )
+						if rebalances_raw[ each_barcode ] == true then
+							title_rebalances[ tostring(each_barcode) ] = true
+							num_title_rebalances = num_title_rebalances + 1
+						end
 					else
 						in_kiosk_and_not_available = true
 					end
@@ -448,6 +458,17 @@ function get_barcodes_for_products( products, exclude_list )
 					barcode = work_table[#work_table].barcode
 				else
 					barcode = work_table[1].barcode
+
+					-- if the selected barcode is a rebalance, try to assign a barcode not in the rebalance list
+					if rebalances_raw[ barcode ] == true
+					and num_title_rebalances < #work_table then
+						for key, work_table_item in ipairs( work_table ) do
+							if title_rebalances[ tostring(work_table_item.barcode) ] == nil then
+								barcode = work_table_item.barcode
+								break
+							end
+						end
+					end
 				end
 				table.insert( barcodes_to_vend,	barcode )
 				v.barcode = barcode
@@ -718,6 +739,20 @@ function get_rebalance_barcodes( inside_vmz, outside_vmz, on_complete )
 	local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.json.inuse"
 	local rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
 	barcodes_vmz_status ( inside_vmz, outside_vmz, rebalance_out_inuse_data, on_complete )
+end
+
+function get_rebalance_barcodes_raw()
+	local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.json.inuse"
+	local rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
+	local raw_data = {}
+
+	if rebalance_out_inuse_data ~= nil then
+		for k, v in ipairs(rebalance_out_inuse_data) do
+			raw_data[ tostring(v.Barcode) ] = true
+		end
+	end
+	
+	return raw_data
 end
 
 function barcodes_vmz_status ( inside_vmz, outside_vmz, barcode_list, on_complete )
