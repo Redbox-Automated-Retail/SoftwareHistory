@@ -20,7 +20,12 @@ public static class CardTypeHelper
 
 	public static CardType? GetCardType(string cardNumber)
 	{
-		if (m_rbGiftCard.IsRedboxGiftCard(cardNumber))
+		return GetCardType(cardNumber, checkGCRanges: true);
+	}
+
+	public static CardType? GetCardType(string cardNumber, bool checkGCRanges)
+	{
+		if (checkGCRanges && m_rbGiftCard.IsRedboxGiftCard(cardNumber))
 		{
 			return CardType.RedboxGiftCard;
 		}

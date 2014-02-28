@@ -566,7 +566,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 				SendKeys.Send("{%}B24931070601{^}JOE/COOL                {^}1608041103263?;249931070601=1608041103263?");
 				break;
 			case '@':
-				SendKeys.Send("{%}B6010562000017685{^}JOE/COOL                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
+				SendKeys.Send("{%}B6010562000017685{^}REDBOX                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
 				break;
 			}
 		}

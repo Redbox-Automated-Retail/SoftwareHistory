@@ -69,6 +69,18 @@ internal static class HardwareFunctions
 		return CreateResultTable(jobId, barcodesInBin);
 	}
 
+	[KernelFunction(Name = "kernel.getinventorystats")]
+	internal static LuaTable GetInventoryStats(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler)
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		if (service == null)
+		{
+			return null;
+		}
+		ErrorList inventoryStats = service.GetInventoryStats(eventHandler, statusChangeHandler, out var jobId);
+		return CreateResultTable(jobId, inventoryStats);
+	}
+
 	[KernelFunction(Name = "kernel.vmzmerchsummary")]
 	internal static LuaTable VMZMerchSummary(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler)
 	{

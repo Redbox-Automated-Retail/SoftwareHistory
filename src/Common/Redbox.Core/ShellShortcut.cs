@@ -88,8 +88,8 @@ public class ShellShortcut : IDisposable
 	}
 
 	[ComImport]
-	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	[Guid("0000010B-0000-0000-C000-000000000046")]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	private interface IPersistFile
 	{
 		void GetClassID(out Guid pClassID);

@@ -389,11 +389,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
 		}
-		List<BinRange> redboxGiftCardBinRanges = GetRedboxGiftCardBinRanges();
-		if (redboxGiftCardBinRanges != null)
-		{
-			CardTypeHelper.Initialize(redboxGiftCardBinRanges);
-		}
 		InitializePreferencePages();
 		errorList.AddRange(SchedulerService.Instance.Initialize());
 		errorList.AddRange(DataStoreService.Instance.Initialize());
@@ -798,32 +793,5 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			}
 		}
 		return errorList;
-	}
-
-	private static List<BinRange> GetRedboxGiftCardBinRanges()
-	{
-		List<BinRange> list = null;
-		try
-		{
-			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-			if (service != null && service.TryGetValue<string>("system", "General", "RedboxGiftCardBinRanges", out var value))
-			{
-				string[] array = value.Split(',');
-				if (array.Length % 2 == 0)
-				{
-					list = new List<BinRange>();
-					for (int i = 0; i < array.Length; i += 2)
-					{
-						list.Add(new BinRange(int.Parse(array[i]), int.Parse(array[i + 1])));
-					}
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Invalid BIN range.", e);
-			list = null;
-		}
-		return list;
 	}
 }

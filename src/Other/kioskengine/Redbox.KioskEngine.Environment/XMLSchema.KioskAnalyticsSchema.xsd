@@ -125,6 +125,14 @@
                   <xs:attribute name="response" type="xs:string" />
                 </xs:complexType>
               </xs:element>
+              <xs:element name="resvAuthorize" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:attribute name="approved" type="xs:string" />
+                  <xs:attribute name="online" type="xs:string" />
+                  <xs:attribute name="timestamp" type="xs:string" />
+                  <xs:attribute name="response" type="xs:string" />
+                </xs:complexType>
+              </xs:element>
             </xs:sequence>
           </xs:complexType>
         </xs:element>

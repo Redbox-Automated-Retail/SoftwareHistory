@@ -71,6 +71,11 @@ public class TrackData
 			}
 			if (array2[0].Substring(0, 6) == "601056")
 			{
+				if (trackData.FirstName.ToUpper() != "REDBOX" && trackData.LastName.ToUpper() != "REDBOX")
+				{
+					errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("T007", "Invalid Redbox Card name provided in track data.", "Valid Redbox Card name is required."));
+					return errorList;
+				}
 				if (array2[1].Length < 20)
 				{
 					errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("T006", "Track data will fail First Data account number parsing.", "Valid track data is required."));
@@ -78,8 +83,12 @@ public class TrackData
 				}
 				LogHelper.Instance.Log("Using First Data account number parsing.");
 				trackData.AccountNumber = CardHelper.CopyToSecure(array2[1].Substring(12, 1) + array2[1].Substring(14, 2) + array2[0].Substring(6, 9) + array2[1].Substring(16, 4));
+				trackData.CardType = Redbox.Core.CardType.RedboxGiftCard;
 			}
-			trackData.CardType = CardTypeHelper.GetCardType(CardHelper.ExtractFromSecure(trackData.AccountNumber));
+			if (trackData.CardType != Redbox.Core.CardType.RedboxGiftCard)
+			{
+				trackData.CardType = CardTypeHelper.GetCardType(CardHelper.ExtractFromSecure(trackData.AccountNumber), checkGCRanges: false);
+			}
 			if (!trackData.CardType.HasValue)
 			{
 				errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("T003", "Invalid PAN provided in track data stream; unknown bin range.", "A valid PAN is required."));

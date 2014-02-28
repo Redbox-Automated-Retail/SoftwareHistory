@@ -6,6 +6,10 @@ public class BinRange
 
 	public int EndingRange { get; private set; }
 
+	public BinRange()
+	{
+	}
+
 	public BinRange(int startingRange, int endingRange)
 	{
 		StartingRange = startingRange;

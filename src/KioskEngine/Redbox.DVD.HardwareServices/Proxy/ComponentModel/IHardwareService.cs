@@ -57,6 +57,8 @@ internal interface IHardwareService
 
 	ErrorList GetBarcodesInBin(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
+	ErrorList GetInventoryStats(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
+
 	ErrorList VMZMerchSummary(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList FileMarkerDisk(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, int markerDeck, int markerSlot, out string jobId);

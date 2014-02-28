@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyFileVersion("1.3.7.10")]
+[assembly: AssemblyFileVersion("1.3.9.4")]
 [assembly: Guid("634e3550-62dc-49b1-9e32-c38a06de43b5")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
@@ -13,4 +13,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("Redbox.KioskEngine.ComponentModel")]
 [assembly: AssemblyCopyright("Copyright © Redbox 2011")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyVersion("1.3.7.10")]
+[assembly: AssemblyVersion("1.3.9.4")]

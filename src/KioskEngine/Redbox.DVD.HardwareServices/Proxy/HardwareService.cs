@@ -675,6 +675,25 @@ internal class HardwareService : IHardwareService
 		return errorList;
 	}
 
+	public Redbox.KioskEngine.ComponentModel.ErrorList GetInventoryStats(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
+	{
+		jobId = null;
+		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
+		HardwareCommandResult inventoryStats = Service.GetInventoryStats(new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Highest
+		}, out var job);
+		if (!inventoryStats.Success)
+		{
+			inventoryStats.Errors.AddToLocalErrorList(errorList);
+		}
+		else
+		{
+			jobId = ConfigureJob(job, eventHandler, statusChangeHandler, errorList);
+		}
+		return errorList;
+	}
+
 	public Redbox.KioskEngine.ComponentModel.ErrorList VMZRemovedThins(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
 	{
 		jobId = null;
