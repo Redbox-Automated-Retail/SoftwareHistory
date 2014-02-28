@@ -1,18 +1,18 @@
-# Caddyshack (2014-02-03)
+# Rental bundles revision 4 (no code name)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2014-02-03
-- Store labels: kop-rental-bundles-Caddyshack
+- Date (first download in the snapshots): 2014-02-28
+- Store labels: none
 - Package revisions:
-  - `kop-rental-bundles` revision 3 (`20396968AB5C2CDD18FE76C0D6904C25061FB4CC`)
+  - `kop-rental-bundles` revision 4 (`8B466E160CAC5950F9B3509664F5DF54F0FF9220`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `3EAE1A0F3A2B347BE0E1270A56D6ECD796EE34D7` | exact |
-| `fm.bundle` |  |  | `EC2A8348DC0C8F22DC1F2E0168FE2694F522F4EF` | exact |
-| `library-rental-common.bundle` |  |  | `2969BC0FD7DD615539FB5035C844AC4989AC2F7E` | exact |
+| `cp.bundle` |  |  | `8FEA5C8F07F66D4D6832869BE094791B8B8EAE15` | exact |
+| `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | exact |
+| `library-rental-common.bundle` |  |  | `2969BC0FD7DD615539FB5035C844AC4989AC2F7E` | stale (listed version 3E9BB182A7… has no content) |
 | `library-tickets.bundle` |  |  | `ECFD750E36F174FF4B58AFFA0A43C0F96DFA3CEF` | exact |
-| `ra-2.x.bundle` |  |  | `09786C3DAFE10EAFFB9CBD92A830361E9352C517` | exact |
+| `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | exact |
 
 ## Notes
 

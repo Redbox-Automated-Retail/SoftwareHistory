@@ -75,10 +75,10 @@
 			<column name="offline_rental_limit_exceeded_message_header">You're at the limit!</column>
 			<column name="offline_rental_limit_exceeded_message">You can rent up to 3 discs, and only 1 can be a game.&#10;&#10;Please remove discs from your cart to continue.</column>
 
-			<column name="game_limit_exceeded_message_header">You're at the limit!</column>
-			<column name="game_limit_exceeded_message">New customers can rent 3 discs, and only 1 can be a game.&#10;&#10;Existing customers can rent 5 discs, and only 2 can be games.&#10;&#10;Please remove discs from your cart to continue.</column>
-			<column name="rental_limit_exceeded_message_header">You're at the limit!</column>
-			<column name="rental_limit_exceeded_message">New customers can rent 3 discs, and only 1 can be a game.&#10;&#10;Existing customers can rent 5 discs, and only 2 can be games.&#10;&#10;Please remove discs from your cart to continue.</column>
+			<column name="game_limit_exceeded_message_header">You’ve reached the limit.</column>
+			<column name="game_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 can be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 can be games.&#10;&#10;To continue, please remove something from your cart.</column>
+			<column name="rental_limit_exceeded_message_header">You’ve reached the limit.</column>
+			<column name="rental_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 can be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 can be games.&#10;&#10;To continue, please remove something from your cart.</column>
 
 			<column name="inventory_error">Sorry, there was a problem with one of your items. Please select another.</column>
 			<column name="vend_error_title">Transaction Error</column>

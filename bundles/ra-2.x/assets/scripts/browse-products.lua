@@ -13,4 +13,3 @@ else
 	browse_view_name = "browse_view"
 end
 view_show_safe( browse_view_name )
-view_analytics_event( "productsShown", tostring( total_products_shown ) )

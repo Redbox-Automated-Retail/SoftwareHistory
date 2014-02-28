@@ -76,9 +76,9 @@
 			<column name="offline_rental_limit_exceeded_message">Se permite alquilar 3 artículos al máximo, lo cual se incluye 1 juego.&#10;&#10;Por favor saque artículos del carrito para continuar.</column>
 
 			<column name="game_limit_exceeded_message_header">Sobrepasó el límite</column>
-			<column name="game_limit_exceeded_message">Se permite clientes nuevos alquilar 3 artículos al máximo, lo cual se incluye 1 juego.&#10;&#10;Se permite clientes existentes alquilar 5 artículos al máximo, lo cual se incluye 2 juegos.&#10;&#10;Por favor saque artículos del carrito para continuar.</column>
+			<column name="game_limit_exceeded_message">Lo sentimos, hay un límite de de 3 películas y 1 juego al máximo con una tarjeta usada la primera vez con Redbox.&#10;&#10;Se permite 5 películas y 2 juegos al máximo con tarjetas previamente usada con Redbox.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
 			<column name="rental_limit_exceeded_message_header">Sobrepasó el límite</column>
-			<column name="rental_limit_exceeded_message">Se permite clientes nuevos alquilar 3 artículos al máximo, lo cual se incluye 1 juego.&#10;&#10;Se permite clientes existentes alquilar 5 artículos al máximo, lo cual se incluye 2 juegos.&#10;&#10;Por favor saque artículos del carrito para continuar.</column>
+			<column name="rental_limit_exceeded_message">Lo sentimos, hay un límite de 3 películas y 1 juego al máximo con una tarjeta usada la primera vez con Redbox.&#10;&#10;Se permite 5 películas y 2 juegos al máximo con tarjetas previamente usada con Redbox.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
 
 			<column name="inventory_error">Lo sentimos, no era un problema con uno de sus artículos. Por favor, seleccione otro.</column>
 			<column name="vend_error_title">Error en la Transacción</column>
