@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Redbox.HAL.Core;
 
 namespace HALUtilities;
 
@@ -232,8 +233,7 @@ internal class ConversionController
 			else if ("-version".Equals(args[i], StringComparison.CurrentCultureIgnoreCase))
 			{
 				string value = args[++i];
-				ConverterType type = (ConverterType)Enum.Parse(typeof(ConverterType), value, ignoreCase: true);
-				m_type = type;
+				m_type = Enum<ConverterType>.ParseIgnoringCase(value, ConverterType.None);
 			}
 			else if ("-i".Equals(args[i], StringComparison.CurrentCultureIgnoreCase))
 			{

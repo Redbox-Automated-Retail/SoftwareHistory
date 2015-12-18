@@ -18,8 +18,6 @@ internal class ScriptMode : IDisposable
 
 	private readonly IConsole m_console;
 
-	private HardwareJob m_immediateModeJob;
-
 	private HardwareService m_hardwareService;
 
 	private static ClientHelper m_helper;
@@ -89,8 +87,12 @@ internal class ScriptMode : IDisposable
 			m_console.Write("> ");
 			string statement = Console.ReadLine();
 			flag = ExecuteStatement(statement);
+			HardwareCommandResult job = m_hardwareService.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job2);
+			if (job.Success && job2.GetStack(out var stack).Success)
+			{
+				FormatStack(stack, m_console);
+			}
 		}
-		ShowStack();
 		return 0;
 	}
 
@@ -186,15 +188,6 @@ internal class ScriptMode : IDisposable
 		}
 		FormatStack(stack, console);
 		return true;
-	}
-
-	private void ShowStack()
-	{
-		HardwareCommandResult job = m_hardwareService.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out m_immediateModeJob);
-		if (job.Success && m_immediateModeJob.GetStack(out var stack).Success)
-		{
-			FormatStack(stack, m_console);
-		}
 	}
 
 	private void ExecuteScriptCommands(string file)

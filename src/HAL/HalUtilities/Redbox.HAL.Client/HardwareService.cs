@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Core;
@@ -10,6 +11,8 @@ public sealed class HardwareService
 {
 	private const int DefaultTimeout = 60000;
 
+	private readonly Version ClientVersion;
+
 	private IPCProtocol m_protocol;
 
 	public int? CommandTimeout { get; set; }
@@ -19,6 +22,7 @@ public sealed class HardwareService
 	public HardwareService(IPCProtocol protocol)
 	{
 		m_protocol = protocol;
+		ClientVersion = typeof(HardwareService).Assembly.GetName().Version;
 	}
 
 	public HardwareCommandResult Init(HardwareJobSchedule schedule, out HardwareJob job)
@@ -29,6 +33,19 @@ public sealed class HardwareService
 	public HardwareCommandResult Unload(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJobInner("qlm-unload", schedule, out job);
+	}
+
+	public HardwareCommandResult CleanZone(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJobInner("clean-vmz", schedule, out job);
+	}
+
+	public HardwareCommandResult CleanZone(out HardwareJob job)
+	{
+		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
+		hardwareJobSchedule.Priority = HardwareJobPriority.Low;
+		HardwareJobSchedule schedule = hardwareJobSchedule;
+		return ScheduleJobInner("clean-vmz", schedule, out job);
 	}
 
 	public HardwareCommandResult Thin(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
@@ -42,27 +59,43 @@ public sealed class HardwareService
 		return hardwareCommandResult;
 	}
 
-	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] toZone, HardwareJobSchedule schedule, out HardwareJob job)
+	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
 		}
-		PushArray(toZone, job);
+		PushArray(thins, job);
+		PushArray(null, job);
 		PushArray(rebalance, job);
 		PushArray(toBin, job);
 		return hardwareCommandResult;
 	}
 
-	public HardwareCommandResult ThinVMZ(string[] toBin, string[] toZone, HardwareJobSchedule schedule, out HardwareJob job)
+	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thinRedeploys, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
 		}
-		PushArray(toZone, job);
+		PushArray(thins, job);
+		PushArray(thinRedeploys, job);
+		PushArray(rebalance, job);
+		PushArray(toBin, job);
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult ThinVMZ(string[] toBin, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
+		if (!hardwareCommandResult.Success)
+		{
+			return hardwareCommandResult;
+		}
+		PushArray(thins, job);
+		PushArray(null, job);
 		PushArray(null, job);
 		PushArray(toBin, job);
 		return hardwareCommandResult;
@@ -89,6 +122,35 @@ public sealed class HardwareService
 				job.Push(loc.Deck);
 			}
 			job.Push(locs.Count);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult SyncUnknowns(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ExecuteServiceCommand("SERVICE sync-unknowns");
+		job = (hardwareCommandResult.Success ? HardwareJob.Parse(this, hardwareCommandResult.CommandMessages[0]) : null);
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult PrepUnloadZone(int rotation, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-zone-for-unload", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(0);
+			job.Push(rotation);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult PrepUnloadZone(int rotation, int deckCount, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-zone-for-unload", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(deckCount);
+			job.Push(rotation);
 		}
 		return hardwareCommandResult;
 	}
@@ -184,6 +246,11 @@ public sealed class HardwareService
 		return hardwareCommandResult;
 	}
 
+	public HardwareCommandResult VMZDetail(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJobInner("vmz-details", schedule, out job);
+	}
+
 	public HardwareCommandResult VMZMerchSummary(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJobInner("vmz-merch-summary", schedule, out job);
@@ -198,6 +265,11 @@ public sealed class HardwareService
 			job.Push(deck);
 		}
 		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult NotifyMaintModeState(bool goingIntoMM)
+	{
+		return ExecuteCommand($"SERVICE mm-status status: '{goingIntoMM.ToString()}'");
 	}
 
 	public HardwareCommandResult GetNonThinsInVMZ(HardwareJobSchedule schedule, out HardwareJob job)
@@ -541,6 +613,17 @@ public sealed class HardwareService
 		return hardwareCommandResult;
 	}
 
+	public HardwareCommandResult GetKioskID(out string id)
+	{
+		id = "UNKNOWN";
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand("SERVICE get-kiosk-id");
+		if (hardwareCommandResult.Success)
+		{
+			id = hardwareCommandResult.CommandMessages[0];
+		}
+		return hardwareCommandResult;
+	}
+
 	public HardwareCommandResult GetQuickReturnStatus(out string status)
 	{
 		status = null;
@@ -626,5 +709,20 @@ public sealed class HardwareService
 			job.Push(array);
 			job.Push(array.Length);
 		}
+	}
+
+	private bool ValidateVersion()
+	{
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand("SERVICE get-version");
+		if (!hardwareCommandResult.Success)
+		{
+			return false;
+		}
+		Version version = new Version(hardwareCommandResult.CommandMessages[0]);
+		if (ClientVersion.Major == version.Major && ClientVersion.Minor == version.Minor)
+		{
+			return ClientVersion.Build == version.Build;
+		}
+		return false;
 	}
 }

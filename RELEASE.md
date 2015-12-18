@@ -1,16 +1,16 @@
-# Caddyshack (1.3.0.84)
+# X-Men (1.4.0.245)
 
-- Product: MS HAL Tester 1.3.0.84
-- Date (first download in the snapshots): 2014-02-03
-- Store labels: kop-ms-hal-tester-Caddyshack 1.0
+- Product: HAL Utilities 1.4.0.245
+- Date (first download in the snapshots): 2015-12-18
+- Store labels: kop-tools-X-Men
 - Package revisions:
-  - `kop-tools` revision 8 (`18DECD8CDFB6598E25343A7222AF74AFB7C4101D`)
+  - `kop-tools` revision 22 (`A5E52A494499BDECC9AEC39F3994DA6A73842CFC`)
   - `kop-hal-install` revision 9 (`8B2E0934A974C6E2A2BCDC47F5A8B973E4ECED08`)
   - `kop-ms-hal-tester` revision 8 (`054D7EDF69ED7B7A7B99B5BFAB676008FAEA8F49`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.3.0.84 | `E24A2A1878833350BB42E91EEFE3A4B4EB00911B` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.4.0.245 | `8C359A71AB518710385F9323BCE6AEB1910C97A9` | exact |
 | `beforeactivate.lua` |  |  | `ACF9154BC88826643EC0EE3CFA2C824DE34B4B83` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.3.0.84 | `1B293C7E435820246E13A430885E144AB64C2F77` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.84 | `10A57BF1665C8B43C833F819F06A83D9103A1114` | exact |

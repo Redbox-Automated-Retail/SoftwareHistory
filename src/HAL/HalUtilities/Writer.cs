@@ -4,15 +4,15 @@ using System.Text;
 
 namespace HALUtilities;
 
-internal class Writer
+internal sealed class Writer
 {
-	private string m_outputFile;
+	private readonly string OutputFile;
 
 	internal Writer(string outputFile)
 	{
 		if (!string.IsNullOrEmpty(outputFile))
 		{
-			m_outputFile = outputFile;
+			OutputFile = outputFile;
 			return;
 		}
 		throw new ArgumentException("File name must be valid.");
@@ -20,7 +20,7 @@ internal class Writer
 
 	internal void WritePicArray(byte[,] arr)
 	{
-		using StreamWriter streamWriter = new StreamWriter(m_outputFile);
+		using StreamWriter streamWriter = new StreamWriter(OutputFile);
 		StringBuilder stringBuilder = new StringBuilder();
 		int num = DeviceConfiguration.Instance.DevicePixelWidth >> 3;
 		for (int i = 0; i < DeviceConfiguration.Instance.DeviceHeight; i++)
@@ -48,7 +48,7 @@ internal class Writer
 	internal void WriteBooleanArray(bool[,] pixels)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
-		using StreamWriter streamWriter = new StreamWriter(m_outputFile);
+		using StreamWriter streamWriter = new StreamWriter(OutputFile);
 		for (int i = 0; i < DeviceConfiguration.Instance.DeviceHeight; i++)
 		{
 			for (int j = 0; j < DeviceConfiguration.Instance.DevicePixelWidth; j += 4)
@@ -79,7 +79,7 @@ internal class Writer
 
 	internal void WriteFormattedBinaryArray(byte[] rawBytes)
 	{
-		using BinaryWriter binaryWriter = new BinaryWriter(File.Open(m_outputFile, FileMode.CreateNew));
+		using BinaryWriter binaryWriter = new BinaryWriter(File.Open(OutputFile, FileMode.CreateNew));
 		int num = (DeviceConfiguration.Instance.DevicePixelWidth >> 3) - 1;
 		int num2 = 0;
 		int num3 = 0;
@@ -99,7 +99,7 @@ internal class Writer
 
 	internal void WriteRawBytes(byte[] rawBytes)
 	{
-		using BinaryWriter binaryWriter = new BinaryWriter(File.Open(m_outputFile, FileMode.CreateNew));
+		using BinaryWriter binaryWriter = new BinaryWriter(File.Open(OutputFile, FileMode.CreateNew));
 		for (int i = 0; i < rawBytes.Length; i++)
 		{
 			binaryWriter.Write(rawBytes[i]);
@@ -108,7 +108,7 @@ internal class Writer
 
 	internal void WriteRawBytes2(byte[] rawBytes)
 	{
-		using StreamWriter streamWriter = new StreamWriter(m_outputFile);
+		using StreamWriter streamWriter = new StreamWriter(OutputFile);
 		for (int i = 0; i < rawBytes.Length; i++)
 		{
 			streamWriter.Write(rawBytes[i]);

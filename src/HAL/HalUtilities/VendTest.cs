@@ -11,7 +11,7 @@ internal class VendTest
 {
 	private AutoResetEvent Waiter = new AutoResetEvent(initialState: false);
 
-	private List<InventoryLocation> m_locs = new List<InventoryLocation>();
+	private List<IInventoryLocation> m_locs = new List<IInventoryLocation>();
 
 	private HardwareService Service { get; set; }
 
@@ -40,7 +40,7 @@ internal class VendTest
 		{
 			console.WriteLine("Starting iteration {0}", i);
 			GenerateList(clientHelper, console);
-			InventoryLocation inventoryLocation = null;
+			IInventoryLocation inventoryLocation = null;
 			do
 			{
 				inventoryLocation = SelectTargetLocation();
@@ -51,7 +51,6 @@ internal class VendTest
 				list.Add(inventoryLocation.Location);
 				if (!Service.Vend(list, new HardwareJobSchedule
 				{
-					StartTime = DateTime.Now,
 					Priority = HardwareJobPriority.High
 				}, out var job).Success)
 				{
@@ -83,13 +82,13 @@ internal class VendTest
 
 	private void GenerateList(ClientHelper helper, IConsole console)
 	{
-		List<InventoryLocation> list = KioskInventory.Load(Service, console);
-		if (list.Count == 0)
+		using KioskInventory kioskInventory = new KioskInventory();
+		if (kioskInventory.DeckInventory.Count == 0)
 		{
 			console.WriteLine("Unable to get inventory from service.");
 			Environment.Exit(-1);
 		}
-		foreach (InventoryLocation item in list)
+		foreach (IInventoryLocation item in kioskInventory.DeckInventory)
 		{
 			if (!(item.Matrix == "EMPTY"))
 			{
@@ -98,7 +97,7 @@ internal class VendTest
 		}
 	}
 
-	private InventoryLocation SelectTargetLocation()
+	private IInventoryLocation SelectTargetLocation()
 	{
 		if (0 >= m_locs.Count)
 		{
@@ -106,7 +105,7 @@ internal class VendTest
 		}
 		Random random = new Random(DateTime.Now.Millisecond);
 		int index = random.Next(0, m_locs.Count - 1);
-		InventoryLocation result = m_locs[index];
+		IInventoryLocation result = m_locs[index];
 		m_locs.RemoveAt(index);
 		return result;
 	}

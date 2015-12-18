@@ -2,13 +2,9 @@ using System;
 
 namespace Redbox.HAL.Client;
 
-public class InventoryLocation
+internal sealed class InventoryLocation : IInventoryLocation
 {
 	public Location Location { get; private set; }
-
-	public int Deck => Location.Deck;
-
-	public int Slot => Location.Slot;
 
 	public string Matrix { get; private set; }
 

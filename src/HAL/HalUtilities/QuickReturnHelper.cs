@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
 
@@ -76,10 +75,6 @@ internal sealed class QuickReturnHelper
 
 	private StringBuilder m_hardwareIDBuffer;
 
-	private DateTime? m_rebootWindowStart = null;
-
-	private DateTime? m_rebootTime = null;
-
 	private readonly string[] QuickReturnCounters = new string[3] { "QuickReturnAttention", "QuickReturnNoInsertDisk", "QuickReturnSuccessful" };
 
 	private string TimeStamp => $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
@@ -123,30 +118,6 @@ internal sealed class QuickReturnHelper
 			m_hardwareIDBuffer = new StringBuilder("");
 			m_hardwareIDBuffer.Capacity = 1000;
 			return m_hardwareIDBuffer;
-		}
-	}
-
-	private DateTime RebootWindowStart => m_rebootWindowStart.Value;
-
-	private DateTime? KioskRebootTime
-	{
-		get
-		{
-			string secretValue = RegistryOptions.Instance.GetSecretValue<string>("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store", "RebootTime");
-			if (!string.IsNullOrEmpty(secretValue))
-			{
-				try
-				{
-					m_rebootTime = DateTime.Parse(secretValue);
-					m_rebootWindowStart = m_rebootTime.Value.Subtract(new TimeSpan(0, 15, 0));
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("Parsing kiosk reboot time failed.", e);
-					m_rebootTime = null;
-				}
-			}
-			return m_rebootTime;
 		}
 	}
 
@@ -262,21 +233,28 @@ internal sealed class QuickReturnHelper
 
 	internal bool ProperlyConfigured(HardwareService service, TextWriter writer)
 	{
-		List<string> errors = new List<string>();
+		List<string> list = new List<string>();
 		try
 		{
-			return ProperlyConfiguredInner(service, errors);
+			return ProperlyConfiguredInner(service, list);
 		}
 		finally
 		{
-			LogErrors(writer, errors);
+			if (list.Count > 0)
+			{
+				foreach (string item in list)
+				{
+					writer.WriteLine("{0} {1}", TimeStamp, item);
+				}
+			}
+			list.Clear();
 		}
 	}
 
-	internal void UpdateEEPROM(HardwareService service, int waitTime)
+	internal void UpdateEEPROM(ClientHelper helper, int waitTime)
 	{
 		List<string> errors = new List<string>();
-		UpdateEEPROMInner(service, errors, waitTime);
+		UpdateEEPROMInner(helper, errors, waitTime);
 		LogEEPROMErrors(errors);
 	}
 
@@ -354,67 +332,25 @@ internal sealed class QuickReturnHelper
 		errors.Clear();
 	}
 
-	private void LogErrors(TextWriter writer, List<string> errors)
+	private bool UpdateEEPROMInner(ClientHelper helper, List<string> errors, int waitTime)
 	{
-		if (errors.Count > 0)
-		{
-			foreach (string error in errors)
-			{
-				writer.WriteLine("{0} {1}", TimeStamp, error);
-			}
-		}
-		errors.Clear();
-	}
-
-	private bool UpdateEEPROMInner(HardwareService service, List<string> errors, int waitTime)
-	{
-		if (KioskRebootTime.HasValue)
-		{
-			DateTime now = DateTime.Now;
-			if (now >= RebootWindowStart && now <= KioskRebootTime.Value)
-			{
-				errors.Add($"Time {FormatTime(now)} is within 15 minute reboot window of {FormatTime(KioskRebootTime.Value)}; not updating QR.");
-				return false;
-			}
-		}
-		if (service == null)
+		HardwareService hardwareService = helper.AutoConnect();
+		if (hardwareService == null)
 		{
 			errors.Add("Unable to talk to service.");
 			return false;
 		}
-		HardwareJob job = null;
-		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate("QUICKRETURN HALTPOLL", 30000, out job);
-		if (!hardwareCommandResult.Success)
+		using UpdateQREEPROMJob updateQREEPROMJob = new UpdateQREEPROMJob(hardwareService);
+		updateQREEPROMJob.Run();
+		if (HardwareJobStatus.Completed == updateQREEPROMJob.EndStatus)
 		{
-			foreach (Error error in hardwareCommandResult.Errors)
-			{
-				errors.Add($"[{error.Code}] {error.Description} :\n{error.Details}");
-			}
-			return false;
+			return true;
 		}
-		job.WaitForCompletion();
-		Thread.Sleep(5000);
-		HardwareCommandResult hardwareCommandResult2 = service.ExecuteImmediate("QUICKRETURN UPDATEEEPROM", waitTime, out job);
-		if (!hardwareCommandResult2.Success)
+		foreach (Error error in updateQREEPROMJob.Errors)
 		{
-			foreach (Error error2 in hardwareCommandResult2.Errors)
-			{
-				errors.Add($"[{error2.Code}] {error2.Description} :\n{error2.Details}");
-			}
-			return false;
+			errors.Add($"[{error.Code}] {error.Description} :\n{error.Details}");
 		}
-		job.WaitForCompletion();
-		Thread.Sleep(5000);
-		HardwareCommandResult hardwareCommandResult3 = service.ExecuteImmediate("QUICKRETURN RESTART", 30000, out job);
-		if (!hardwareCommandResult3.Success)
-		{
-			foreach (Error error3 in hardwareCommandResult3.Errors)
-			{
-				errors.Add($"[{error3.Code}] {error3.Description} :\n{error3.Details}");
-			}
-			return false;
-		}
-		return true;
+		return false;
 	}
 
 	private void LogFormatted(string msg, params object[] items)

@@ -5,7 +5,7 @@ namespace HALUtilities;
 
 public class Converter
 {
-	private ConverterType m_converterType;
+	private readonly ConverterType m_converterType;
 
 	public Converter(ConverterType ctype)
 	{

@@ -23,13 +23,13 @@ internal sealed class Settings : ApplicationSettingsBase
 	[ApplicationScopedSetting]
 	public int TouchDriverWakeup => (int)this["TouchDriverWakeup"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("15000")]
-	[ApplicationScopedSetting]
 	public int TouchDriverResetTimeout => (int)this["TouchDriverResetTimeout"];
 
-	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
 	[DefaultSettingValue("False")]
+	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	public bool DebugHardware => (bool)this["DebugHardware"];
 }
