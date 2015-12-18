@@ -1,18 +1,19 @@
-# Dracula SR (2014-02-28)
+# Rental bundles revision 6 (no code name)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2014-02-28
-- Store labels: kop-rental-bundles-DraculaSR
+- Date (first download in the snapshots): 2015-12-18
+- Store labels: none
 - Package revisions:
-  - `kop-rental-bundles` revision 5 (`DEA07375C8DBE4D49CB514821948CFBEAE09732E`)
+  - `kop-rental-bundles` revision 6 (`A81F42467D068295CC0B11749872BAD4FB4B6D8B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `8FEA5C8F07F66D4D6832869BE094791B8B8EAE15` | exact |
-| `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | exact |
-| `library-rental-common.bundle` |  |  | `149497682D160548299A7D8BE6AE3E8A434A2FC1` | exact |
+| `cp.bundle` |  |  | `8FEA5C8F07F66D4D6832869BE094791B8B8EAE15` | stale (listed version C5098FD8F8… has no content) |
+| `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | stale (listed version B5B580B759… has no content) |
+| `library-rental-common.bundle` |  |  | `149497682D160548299A7D8BE6AE3E8A434A2FC1` | stale (listed version A2B61C0650… has no content) |
 | `library-tickets.bundle` |  |  | `ECFD750E36F174FF4B58AFFA0A43C0F96DFA3CEF` | exact |
-| `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | exact |
+| `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | stale (listed version DDFC945FED… has no content) |
+| `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
 
