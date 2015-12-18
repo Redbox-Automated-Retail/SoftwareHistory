@@ -1,0 +1,35 @@
+using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Core;
+
+namespace Redbox.HAL.Script.Framework;
+
+[NativeJob(ProgramName = "update-qr-eeprom", Operand = "UPDATE-QR-EEPROM")]
+internal sealed class UpdateQREEPROMJob : NativeJobAdapter
+{
+	protected override void ExecuteInner()
+	{
+		if (!QuickReturnDevice.Instance.IsConfigured)
+		{
+			return;
+		}
+		if (!ExecutionEngine.Instance.OutsideRebootWindow())
+		{
+			AddError("The job is close to reboot.");
+			return;
+		}
+		QuickReturnPoller.Instance.Shutdown();
+		PerfFunctions.Wait(5000);
+		if (QuickReturnDevice.Instance.UpdateDeviceImages() == 0)
+		{
+			AddError("Unable to update device images; check service logs.");
+			return;
+		}
+		PerfFunctions.Wait(5000);
+		QuickReturnPoller.Instance.Start();
+	}
+
+	internal UpdateQREEPROMJob(ExecutionResult result, ExecutionContext context)
+		: base(result, context)
+	{
+	}
+}

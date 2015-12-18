@@ -4,32 +4,30 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class IncInstruction : Instruction
+public sealed class IncInstruction : Instruction
 {
 	public override string Mnemonic => "INC";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 0 || tokensAfterMnemonic.Count > 1)
+		if (operandTokens.Count != 1)
 		{
-			AddError("C002", "Expectd a symbol to increment.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expectd a symbol to increment.");
 		}
-		else if (CheckAssignment(tokensAfterMnemonic[0].Type, result.Errors))
+		else
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			CheckAssignment(operandTokens[0].Type, result);
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Token token = base.Operands[0];
 		if (token.Type != TokenType.Symbol)
 		{
 			return;
 		}
-		object obj = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(token.Value, result.Errors);
+		object obj = context.GetSymbolValue(token.Value, result.Errors);
 		if (obj == null || result.Errors.Count > 0)
 		{
 			return;
@@ -52,6 +50,6 @@ public class IncInstruction : Instruction
 			++num2;
 			obj = num2;
 		}
-		ExecutionEngine.Instance.ActiveContext.SetSymbolValue(token.Value, Convert.ChangeType(obj, type));
+		context.SetSymbolValue(token.Value, Convert.ChangeType(obj, type));
 	}
 }

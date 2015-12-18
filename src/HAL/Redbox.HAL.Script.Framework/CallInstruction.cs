@@ -4,41 +4,28 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class CallInstruction : Instruction
+public sealed class CallInstruction : Instruction
 {
 	public override string Mnemonic => "CALL";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1 || operandTokens[0].Type != TokenType.StringLiteral)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral)
-			{
-				AddError("C002", "Expected a string literal.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-		}
-		else
-		{
-			AddError("C002", "Expected a string literal.", result.Errors);
+			result.AddInvalidOperandError($"{Mnemonic} Expected a string literal.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		string value = base.Operands[0].Value;
-		ProgramInstruction program = ExecutionEngine.Instance.ActiveContext.GetProgram(value);
+		ProgramInstruction program = context.GetProgram(value);
 		if (program == null)
 		{
-			AddError("E002", $"The program '{value}' was not found in the execution context program cache.", result.Errors);
+			result.AddError(ExecutionErrors.MissingProgram, $"The program '{value}' was not found in the execution context program cache.");
 			return;
 		}
-		ExecutionEngine.Instance.ActiveContext.Registers.PushCallFrame(value, program);
+		context.Registers.PushCallFrame(value, program);
 		result.RestartAtCurrentIP = true;
 	}
 }

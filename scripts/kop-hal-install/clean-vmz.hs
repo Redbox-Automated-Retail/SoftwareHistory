@@ -2,10 +2,17 @@
         # Clean VMZ Aggregate Instruction
         # Copyright (C) 2012 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.3.0.84
+	# VERSION 1.4.0.246
         #
 	
 	APPLOG		CONFIGURE	SUBDIRECTORY="VMZ"
+	
+	VMZ IS-CONFIGURED
+	POP	VMZ-CONFIGURED
+	IF FALSE == VMZ-CONFIGURED
+		APPLOG  "The clean-vmz job is not supported on non-VMZ machines."
+		EXIT		"The clean-vmz job is not supported on non-VMZ machines."
+	ENDIF
 	
 	HOMEY
 	POP                 HOMEY-RESULT
@@ -23,6 +30,8 @@
 	ENDIF
 	
 	SET	TRANSFERRED-DISKS	0
+
+	VMZ REGISTER-CLEAN
 	
 _MAIN_LOOP:
 		VMZ		CLEAN-SLOT

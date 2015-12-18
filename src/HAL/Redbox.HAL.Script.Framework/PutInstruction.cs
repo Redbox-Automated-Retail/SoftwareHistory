@@ -5,9 +5,9 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class PutInstruction : Instruction
+public sealed class PutInstruction : Instruction
 {
-	protected static class KeyNames
+	private static class KeyNames
 	{
 		public const string Peek = "PEEK";
 
@@ -18,15 +18,11 @@ public class PutInstruction : Instruction
 
 	public override string Mnemonic => "PUT";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
-	{
-		base.OnParse(tokens, result);
-		base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-	}
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		if (ExecutionEngine.Instance.ActiveContext.StackDepth == 0)
+		if (context.StackDepth == 0)
 		{
 			AddError("E004", "The PUT instruction expects a valid string literal ID on the stack.", result.Errors);
 			return;
@@ -41,13 +37,13 @@ public class PutInstruction : Instruction
 		{
 			bool.TryParse(keyValuePair2.Value, out var _);
 		}
-		if (!(ExecutionEngine.Instance.ActiveContext.PopTop() is string id))
+		if (!(context.PopTop() is string id))
 		{
 			AddError("E004", "The PUT instruction expects a valid string literal ID on the stack.", result.Errors);
 			return;
 		}
-		PutResult putResult = ControllerService.Instance.Put(id, ExecutionEngine.Instance.ActiveContext.AppLog);
-		ExecutionEngine.Instance.ActiveContext.PushTop(putResult.ToString().ToUpper());
-		ExecutionEngine.Instance.ActiveContext.PushTop(1);
+		PutResult putResult = ControllerService.Instance.Put(id, context.AppLog);
+		context.PushTop(putResult.ToString().ToUpper());
+		context.PushTop(1);
 	}
 }

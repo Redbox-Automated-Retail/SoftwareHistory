@@ -5,29 +5,57 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class GetInstruction : Instruction
+public sealed class GetInstruction : Instruction
 {
-	protected static class KeyNames
+	private sealed class GetInstructionObserver : IGetObserver
 	{
-		public const string Peek = "PEEK";
+		private readonly bool TestSlot;
 
-		public const string HomeOnFailure = "HOMEONFAILURE";
+		public bool OnEmpty(GetResult gr, Deck deck, int slot)
+		{
+			if (!TestSlot)
+			{
+				return true;
+			}
+			LocationTestResult locationTestResult = Gripper.Peek();
+			string message = $"GET disk at Deck = {deck.Number} Slot = {slot} shows SLOTEMPTY; PEEK returns {locationTestResult.ToString()}";
+			LogHelper.Instance.Log(message, LogEntryType.Info);
+			if (!locationTestResult.TestOk || locationTestResult.PeekResult == GripperPeekResult.Full)
+			{
+				gr.UpdateCode(GetResultCode.ItemStuck);
+				deck.UpdateEmptyStuck(slot);
+				return false;
+			}
+			return true;
+		}
 
-		public const string Center = "CENTER";
+		public void OnStuck(GetResult gr, Deck deck, int slot)
+		{
+			if (TestSlot)
+			{
+				deck.UpdateEmptyStuck(slot);
+			}
+		}
+
+		internal GetInstructionObserver(bool test)
+		{
+			TestSlot = test && ControllerConfiguration.Instance.TestSlotOnEmpty;
+		}
 	}
 
 	public override string Mnemonic => "GET";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0 && tokensAfterMnemonic[0].IsKeyValuePair)
+		if (operandTokens.Count > 0 && !operandTokens[0].IsKeyValuePair)
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.AddInvalidOperandError($"The {Mnemonic} instruction expects an optional key-value pair.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("PEEK");
 		if (keyValuePair != null)
@@ -40,11 +68,11 @@ public class GetInstruction : Instruction
 		{
 			flag = result3;
 		}
-		bool testOnEmpty = false;
+		bool test = false;
 		KeyValuePair keyValuePair3 = base.Operands.GetKeyValuePair("TESTONEMPTY");
 		if (keyValuePair3 != null && bool.TryParse(keyValuePair3.Value, out var result4))
 		{
-			testOnEmpty = result4;
+			test = result4;
 		}
 		bool flag2 = false;
 		KeyValuePair keyValuePair4 = base.Operands.GetKeyValuePair("GET-RT");
@@ -52,20 +80,21 @@ public class GetInstruction : Instruction
 		{
 			flag2 = result5;
 		}
-		if (ExecutionEngine.Instance.ActiveContext.IsImmediate && ControllerConfiguration.Instance.Mode == ControllerMode.Normal)
+		if (context.IsImmediate && ControllerConfiguration.Instance.Mode == ControllerMode.Normal)
 		{
-			testOnEmpty = true;
+			test = true;
 		}
-		GetResult getResult = ControllerService.Instance.Get(testOnEmpty, ExecutionEngine.Instance.ActiveContext.AppLog);
+		GetInstructionObserver observer = new GetInstructionObserver(test);
+		GetResult getResult = ControllerService.Instance.Get(observer, context.AppLog);
 		if (getResult.Success && flag)
 		{
 			ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
 		}
 		if (flag2)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(GetDateRepresentation(getResult.ReturnTime));
+			context.PushTop(GetDateRepresentation(getResult.ReturnTime));
 		}
-		ExecutionEngine.Instance.ActiveContext.PushTop(getResult.Previous);
-		ExecutionEngine.Instance.ActiveContext.PushTop(getResult.ToString().ToUpper());
+		context.PushTop(getResult.Previous);
+		context.PushTop(getResult.ToString().ToUpper());
 	}
 }

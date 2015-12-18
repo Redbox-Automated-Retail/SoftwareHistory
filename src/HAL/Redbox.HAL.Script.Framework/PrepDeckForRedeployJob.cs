@@ -4,13 +4,14 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class PrepDeckForRedeployJob : NativeJobAdapter
+[NativeJob(ProgramName = "prep-deck-for-redeploy", Operand = "PREP-DECK-FOR-REDEPLOY")]
+internal sealed class PrepDeckForRedeployJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		int top = GetTop<int>();
 		int num = 0;
-		bool flag = ControllerConfiguration.Instance.MerchandizingMode != MerchandizingMode.QLM;
+		bool isVMZMachine = ControllerConfiguration.Instance.IsVMZMachine;
 		for (int i = 0; i < top; i++)
 		{
 			int top2 = GetTop<int>();
@@ -20,22 +21,27 @@ internal class PrepDeckForRedeployJob : NativeJobAdapter
 				LogHelper.Instance.Log("Invalid deck '{0}' specified to prep redeploy deck job.", top2);
 				continue;
 			}
-			if (!flag && deck.IsQlmDeck)
+			if (!isVMZMachine && deck.IsQlmDeck)
 			{
 				LogHelper.Instance.Log("Deck specified '{0}' is QLM; will not alter.", top2);
 				continue;
 			}
-			int start = ((!flag) ? 1 : VMZ.Instance.EndsWithSlot(deck));
+			int start = ((!isVMZMachine) ? 1 : (VMZ.Instance.Bounds.End + 1));
 			Range range = new Range(start, deck.NumberOfSlots);
 			List<int> list = deck.SwapEmptyWith("UNKNOWN", MerchFlags.None, range);
 			foreach (int item in list)
 			{
-				ResultHelper.Instance.CreateResult("LocationChanged", "The location was set to UNKNOWN", top2, item, null, null, null);
+				base.Context.CreateResult("LocationChanged", "The location was set to UNKNOWN", top2, item, null, null, null);
 			}
 			num += list.Count;
 			LogHelper.Instance.Log("Inventory: changed {0} empty slots on deck {1} to UNKNOWN", list.Count, top2);
 			list.Clear();
 		}
-		ResultHelper.Instance.CreateInfoResult("LocationChangedCount", num.ToString());
+		base.Context.CreateInfoResult("LocationChangedCount", num.ToString());
+	}
+
+	internal PrepDeckForRedeployJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

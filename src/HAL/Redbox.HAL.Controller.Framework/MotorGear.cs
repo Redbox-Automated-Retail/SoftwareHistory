@@ -14,8 +14,8 @@ public class MotorGear
 	[Description("The Pulse Ratio in pulse units.  Each Pulse Ratio unit is multiplied by 4096, then multiplied by the multiplied Step Ratio, and finally added to the Encoder Ratio value.")]
 	public int PulseRatio { get; private set; }
 
-	[Description("The Encoder Ratio in encoder units.")]
 	[DisplayName("Encoder Ratio")]
+	[Description("The Encoder Ratio in encoder units.")]
 	public int EncoderRatio { get; private set; }
 
 	[DisplayName("Step Resolution")]

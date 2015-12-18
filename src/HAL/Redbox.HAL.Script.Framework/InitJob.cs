@@ -1,14 +1,16 @@
 using System.Diagnostics;
 using System.IO;
-using Redbox.HAL.Camera.Framework;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataMatrix.Framework;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class InitJob : NativeJobAdapter
+[NativeJob(ProgramName = "init", Operand = "INIT")]
+internal sealed class InitJob : NativeJobAdapter
 {
-	private const int MinPortWakeupTime = 60000;
+	private bool CameraStarted;
 
 	private static int? m_emulatedInitWaitTime = null;
 
@@ -20,11 +22,8 @@ internal class InitJob : NativeJobAdapter
 			{
 				return m_emulatedInitWaitTime.Value;
 			}
-			m_emulatedInitWaitTime = RegistryOptions.Instance.GetSecretValue<int?>("SOFTWARE\\Redbox\\HAL", "EmuInitWait");
-			if (!m_emulatedInitWaitTime.HasValue)
-			{
-				m_emulatedInitWaitTime = 10000;
-			}
+			IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
+			m_emulatedInitWaitTime = dataStore.GetValue("EmuInitWait", 10000);
 			return m_emulatedInitWaitTime.Value;
 		}
 	}
@@ -37,134 +36,157 @@ internal class InitJob : NativeJobAdapter
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			PerfFunctions.Wait(EmulatedInitWaitTime);
+			if (base.Context.ID == ExecutionEngine.Instance.InitJob.ID)
+			{
+				string text = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "CameraTuner.exe");
+				if (File.Exists(text))
+				{
+					Process cameraTuner = Process.Start(text, "-snaptest");
+					PerfFunctions.Wait(60000);
+					HandleCameraStartup(cameraTuner);
+				}
+			}
+			IScannerDevice configuredDevice = ScannerDeviceFactory.GetConfiguredDevice();
+			bool flag = configuredDevice.Start();
+			string text2 = $"CAMERA START returned {flag}";
+			applicationLog.Write(text2);
+			LogHelper.Instance.Log(text2, LogEntryType.Info);
 			return;
 		}
 		applicationLog.Write("RESET controller boards.");
 		if (base.Context.ID == ExecutionEngine.Instance.InitJob.ID)
 		{
-			int num = ControllerConfiguration.Instance.COMPortInitSleepTime;
-			if (num < 60000)
-			{
-				num = 60000;
-			}
-			PerfFunctions.Wait(num);
+			PerfFunctions.Wait(ControllerConfiguration.Instance.MinInitWakeupTime);
 			LogHelper.Instance.Log("Wait for COM ports complete.", LogEntryType.Info);
 		}
 		if (instance.Reset())
 		{
 			applicationLog.Write("Reset of the boards timed out.");
 			LogHelper.Instance.Log("RESET instruction returned timeout; maybe communication error?", LogEntryType.Error);
-			SendMessage("RESET instruction returned timeout.");
-			ResultHelper.Instance.CreateInfoResult("RESET", "RESET instruction timed out.");
+			base.Context.Send("RESET instruction returned timeout.");
+			base.Context.CreateInfoResult("RESET", "RESET instruction timed out.");
 			AddError("RESET instruction returned timeout.");
 			return;
 		}
 		try
 		{
-			Platform platform = RuntimeService.Instance.GetPlatform();
-			Process cameraTuner = null;
-			if (platform != Platform.Windows7 && base.Context.ID == ExecutionEngine.Instance.InitJob.ID && ControllerConfiguration.Instance.FixCameraOnInit2)
+			Process cameraTuner2 = null;
+			if (base.Context.ID == ExecutionEngine.Instance.InitJob.ID && TryToFixCamera())
 			{
-				string fileName = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "CameraTuner.exe");
-				cameraTuner = Process.Start(fileName, "-snaptest");
+				LogHelper.Instance.Log($"[Init, {base.Context.ID}]:Start camera check process.");
+				string text3 = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "CameraTuner.exe");
+				if (File.Exists(text3))
+				{
+					cameraTuner2 = Process.Start(text3, "-snaptest");
+				}
+				else
+				{
+					LogHelper.Instance.Log("The CameraTuner program doesn't exist.", LogEntryType.Error);
+				}
 			}
 			applicationLog.Write("RESET completed successfully; get controller board VERSION stamps.");
-			SendMessage("GET VERSION INFO");
-			string machineRevision = instance.GetMachineRevision(out var versions);
+			base.Context.Send("GET VERSION INFO");
+			string boardVersions = ControlSystem.Instance.GetBoardVersions(out var versions);
 			if (versions[versions.Length - 1] == "TIMEOUT")
 			{
 				applicationLog.Write("The Version instruction timed out.");
 				LogHelper.Instance.Log("VERSION instruction returned timeout.", LogEntryType.Error);
-				SendMessage("VERSION instruction returned timeout.");
-				ResultHelper.Instance.CreateInfoResult("VERSION", "VERSION instruction timed out.");
+				base.Context.Send("VERSION instruction returned timeout.");
+				base.Context.CreateInfoResult("VERSION", "VERSION instruction timed out.");
 				AddError("VERSION instruction returned timeout.");
 				return;
 			}
-			for (int num2 = versions.Length - 1; num2 >= 0; num2--)
+			for (int num = versions.Length - 1; num >= 0; num--)
 			{
-				if (versions[num2] != null)
-				{
-					ResultHelper.Instance.CreateInfoResult("VERSION INFO", versions[num2].Trim());
-				}
+				base.Context.CreateInfoResult("VERSION INFO", versions[num].Trim());
 			}
-			ResultHelper.Instance.CreateInfoResult("VERSION INFO", machineRevision);
+			base.Context.CreateInfoResult("VERSION INFO", boardVersions);
 			applicationLog.Write("Deactivate audio, close track, close vend door");
-			SendMessage("SET START STATE");
-			instance.SetAudio(on: false);
-			SendMessage("TEST TRACK");
-			Track.Instance.Open();
+			base.Context.Send("SET START STATE");
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.AudioOff);
+			base.Context.Send("TEST TRACK");
+			Track.Open();
 			PerfFunctions.Wait(200);
-			Track.Instance.Close();
+			Track.Close();
 			PerfFunctions.Wait(200);
-			if (base.Track.Open())
+			if (Track.Open())
 			{
 				applicationLog.Write("TRACK OPEN timed out.");
-				ResultHelper.Instance.CreateInfoResult("TRACK OPEN FAILED", "The TRACK OPEN instruction timed out.");
+				base.Context.CreateInfoResult("TRACK OPEN FAILED", "The TRACK OPEN instruction timed out.");
 				AddError("TRACK OPEN instruction failed.");
 				return;
 			}
 			PerfFunctions.Wait(200);
-			if (base.Track.Close())
+			if (Track.Close())
 			{
 				applicationLog.Write("TRACK CLOSE timed out.");
-				ResultHelper.Instance.CreateInfoResult("TRACK CLOSE FAILED", "The TRACK CLOSE instruction timed out.");
+				base.Context.CreateInfoResult("TRACK CLOSE FAILED", "The TRACK CLOSE instruction timed out.");
 				AddError("TRACK CLOSE instruction failed.");
 				return;
 			}
 			PerfFunctions.Wait(200);
 			applicationLog.Write("Ensure the gripper is not obstructed.");
-			SendMessage("CHECK OBSTRUCTIONS");
-			if (!instance.IsGripperClear())
+			base.Context.Send("CHECK OBSTRUCTIONS");
+			if (!Gripper.IsClear())
 			{
 				if (instance.Location.IsValid)
 				{
-					ResultHelper.Instance.CreateResult(StackEnd.Top, "PICKER OBSTRUCTED", "The picker is obstructed and cannot be moved.", instance.Location.Deck, instance.Location.Slot, null, null, null);
+					base.Context.CreateResult(StackEnd.Top, "PICKER OBSTRUCTED", "The picker is obstructed and cannot be moved.", instance.Location.Deck, instance.Location.Slot, null, null, null);
 				}
-				string text = "The picker is obstructed and cannot be moved.";
-				applicationLog.Write(text);
-				LogHelper.Instance.Log(text, LogEntryType.Error);
-				AddError(text);
+				string text4 = "The picker is obstructed and cannot be moved.";
+				applicationLog.Write(text4);
+				LogHelper.Instance.Log(text4, LogEntryType.Error);
+				AddError(text4);
 				return;
 			}
-			using (MotionController motionController = MotionController.GetController())
+			MotionController controller = MotionController.GetController();
+			using (HomeAxesResult homeAxesResult = controller.InitAxes(applicationLog))
 			{
-				using HomeAxesResult homeAxesResult = motionController.InitAxes(applicationLog);
 				if (!homeAxesResult.Succeded)
 				{
 					foreach (Error error in homeAxesResult.ErrorList)
 					{
 						base.Result.Errors.Add(error);
-						ResultHelper.Instance.CreateInfoResult("InitError", error.Details);
+						base.Context.CreateInfoResult("InitError", error.Details);
 					}
 					return;
 				}
 			}
-			HandleCameraStartup(cameraTuner);
-			bool flag = CameraService.Instance.Start();
-			string text2 = $"CAMERA START returned {flag}";
-			applicationLog.Write(text2);
-			LogHelper.Instance.Log(text2, LogEntryType.Info);
-			PerfFunctions.Wait(500);
-			PickerStatus pickerStatus = HelperFunctions.CheckPicker(base.Result, null);
+			HandleCameraStartup(cameraTuner2);
+			StartCamera();
+			PickerStatus pickerStatus = HelperFunctions.CheckPicker(base.Result, base.Context, null);
 			if (pickerStatus != PickerStatus.Empty)
 			{
 				AddError("Failed to put disk away.");
 				return;
 			}
 			applicationLog.Write("Move to the vend position.");
-			SendMessage("MOVE TO VEND");
+			base.Context.Send("MOVE TO VEND");
 			MotionResult motionResult = instance.MoveToVend(MoveMode.Get, base.AppLog);
 			if (motionResult != MotionResult.Success)
 			{
-				ResultHelper.Instance.CreateInfoResult(StackEnd.Top, motionResult.ToString().ToUpper(), "There was an error executing the MOVEVEND instruction.");
+				base.Context.CreateInfoResult(StackEnd.Top, motionResult.ToString().ToUpper(), "There was an error executing the MOVEVEND instruction.");
 				AddError("The MOVEVEND instruction failed.");
 			}
 		}
 		finally
 		{
-			CameraService.Instance.Start();
+			StartCamera();
 			applicationLog.Write("Initialization complete.");
-			SendMessage("INIT STOP");
+			base.Context.Send("INIT STOP");
+		}
+	}
+
+	private void StartCamera()
+	{
+		if (!CameraStarted)
+		{
+			CameraStarted = true;
+			IScannerDevice configuredDevice = ScannerDeviceFactory.GetConfiguredDevice();
+			bool flag = configuredDevice.Start();
+			string text = $"CAMERA START returned {flag}";
+			base.AppLog.Write(text);
+			LogHelper.Instance.Log(text, LogEntryType.Info);
 		}
 	}
 
@@ -186,44 +208,70 @@ internal class InitJob : NativeJobAdapter
 			LogHelper.Instance.Log($"Camera tuner exited with code {cameraTuner.ExitCode}", LogEntryType.Info);
 			num = cameraTuner.ExitCode;
 		}
-		if (num == 0)
+		try
 		{
-			return;
-		}
-		LogHelper.Instance.Log("No snapshot was generated from tuner; reset camera.", LogEntryType.Info);
-		using DeviceHelper helper = new DeviceHelper(debug: false);
-		CameraInfo cameraInfo = new CameraInfo(helper);
-		if (cameraInfo.FindActiveCamera())
-		{
-			LogHelper.Instance.Log("Found camera {0}", cameraInfo.Revision.ToString());
-			if (cameraInfo.Revision == KnownCameras.ThirdGen || cameraInfo.Revision == KnownCameras.FourthGen)
+			if (num == 0)
 			{
-				LogHelper.Instance.Log("The running driver for the camera {0}", cameraInfo.CorrectDriverRunning() ? "is correct" : "is not correct.");
+				return;
 			}
-			if (DeviceStatus.Enabled == cameraInfo.Status)
+			LogHelper.Instance.Log("No snapshot was generated from tuner; reset camera.", LogEntryType.Info);
+			using DeviceHelper helper = new DeviceHelper(debug: false);
+			CameraInfo cameraInfo = new CameraInfo(helper);
+			if (cameraInfo.FindActiveCamera())
 			{
-				bool flag = cameraInfo.ResetDriver();
-				LogHelper.Instance.Log(" RESET camera returned {0}", flag ? "OK" : "FAILURE");
-			}
-			else if (DeviceStatus.Disabled == cameraInfo.Status && ControllerConfiguration.Instance.CheckGen4CameraOnInit)
-			{
-				LogHelper.Instance.Log("The camera appears not to be enabled.");
-				bool flag2 = true;
-				if (KnownCameras.FourthGen == cameraInfo.Revision)
+				LogHelper.Instance.Log("Found camera {0}", cameraInfo.Revision.ToString());
+				if (cameraInfo.Revision == KnownCameras.ThirdGen || cameraInfo.Revision == KnownCameras.FourthGen)
 				{
-					flag2 = cameraInfo.CorrectDriverRunning();
-					LogHelper.Instance.Log("Driver {0} for camera {1}", flag2 ? "matched" : "didn't match", cameraInfo.Revision.ToString());
+					LogHelper.Instance.Log("The running driver for the camera {0}", cameraInfo.CorrectDriverRunning() ? "is correct" : "is not correct.");
 				}
-				if (flag2)
+				if (DeviceStatus.Enabled == cameraInfo.Status)
 				{
-					cameraInfo.SetCameraState(DeviceState.Enable);
-					PerfFunctions.SpinWait(3000);
+					bool flag = cameraInfo.ResetDriver();
+					LogHelper.Instance.Log(" RESET camera returned {0}", flag ? "OK" : "FAILURE");
+				}
+				else if (DeviceStatus.Disabled == cameraInfo.Status && ControllerConfiguration.Instance.CheckGen4CameraOnInit)
+				{
+					LogHelper.Instance.Log("The camera appears not to be enabled.");
+					bool flag2 = true;
+					if (KnownCameras.FourthGen == cameraInfo.Revision)
+					{
+						flag2 = cameraInfo.CorrectDriverRunning();
+						LogHelper.Instance.Log("Driver {0} for camera {1}", flag2 ? "matched" : "didn't match", cameraInfo.Revision.ToString());
+					}
+					if (flag2)
+					{
+						cameraInfo.SetCameraState(DeviceState.Enable);
+						PerfFunctions.SpinWait(3000);
+					}
 				}
 			}
+			else
+			{
+				LogHelper.Instance.Log("Unable to find any active cameras in the device list.", LogEntryType.Error);
+			}
 		}
-		else
+		finally
 		{
-			LogHelper.Instance.Log("Unable to find any active cameras in the device list.", LogEntryType.Error);
+			cameraTuner.Dispose();
 		}
+	}
+
+	internal InitJob(ExecutionResult r, ExecutionContext c)
+		: base(r, c)
+	{
+	}
+
+	private bool TryToFixCamera()
+	{
+		if (BarcodeConfiguration.Instance.ScannerService == ScannerServices.Cortex)
+		{
+			return false;
+		}
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
+		if (dataStore.GetValue("FixCamOnWES7", def: false))
+		{
+			return ControllerConfiguration.Instance.FixCameraOnInit2;
+		}
+		return false;
 	}
 }

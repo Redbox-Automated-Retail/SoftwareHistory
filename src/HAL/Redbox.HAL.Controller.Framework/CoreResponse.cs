@@ -5,11 +5,15 @@ namespace Redbox.HAL.Controller.Framework;
 
 public sealed class CoreResponse
 {
+	internal readonly AddressSelector Selector;
+
 	private bool m_communicationError;
 
-	private string m_commandResponse;
+	private string m_commandResponse = string.Empty;
 
 	private readonly char[] TrimChars = Environment.NewLine.ToCharArray();
+
+	public string CommErrorDiagnostic { get; internal set; }
 
 	public bool TimedOut { get; internal set; }
 
@@ -30,8 +34,6 @@ public sealed class CoreResponse
 		}
 	}
 
-	public string CommErrorDiagnostic { get; internal set; }
-
 	public string OpCodeResponse
 	{
 		get
@@ -40,11 +42,22 @@ public sealed class CoreResponse
 		}
 		internal set
 		{
-			m_commandResponse = Fixup(value);
+			if (value == null)
+			{
+				m_commandResponse = string.Empty;
+				return;
+			}
+			string text = value.TrimEnd(TrimChars);
+			m_commandResponse = text.TrimStart(TrimChars);
 		}
 	}
 
-	public bool IsBitSet(int bit)
+	internal bool IsSensorSet(AuxSensor sensor)
+	{
+		return IsBitSet((int)sensor);
+	}
+
+	internal bool IsBitSet(int bit)
 	{
 		if (string.IsNullOrEmpty(OpCodeResponse))
 		{
@@ -61,25 +74,13 @@ public sealed class CoreResponse
 
 	internal static CoreResponse MakeErrorResponse()
 	{
-		CoreResponse coreResponse = new CoreResponse();
+		CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
 		coreResponse.CommunicationError = true;
 		return coreResponse;
 	}
 
-	internal static CoreResponse MakeEmulated(bool timeout)
+	internal CoreResponse(AddressSelector selector)
 	{
-		CoreResponse coreResponse = new CoreResponse();
-		coreResponse.TimedOut = timeout;
-		return coreResponse;
-	}
-
-	internal CoreResponse()
-	{
-	}
-
-	private string Fixup(string v)
-	{
-		string text = v.TrimEnd(TrimChars);
-		return text.TrimStart(TrimChars);
+		Selector = selector;
 	}
 }

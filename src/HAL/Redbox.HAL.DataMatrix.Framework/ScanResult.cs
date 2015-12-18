@@ -1,30 +1,81 @@
 using System;
 using System.Collections.Generic;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
 public sealed class ScanResult
 {
-	private const string EncryptedSecretToken = "2PiCFxFlrO8=";
-
-	private const string DefaultMatrix = "UNKNOWN";
-
 	private List<string> m_rawCodes = new List<string>();
 
-	private string m_decryptedToken;
+	private static string m_decryptedToken;
 
-	public string ScannedMatrix { get; private set; }
+	private int m_secureCodeCount;
+
+	public string ScannedMatrix
+	{
+		get
+		{
+			if (m_rawCodes.Count == 0)
+			{
+				return "UNKNOWN";
+			}
+			if (BarcodeConfiguration.Instance.EnableInfared)
+			{
+				if (m_secureCodeCount <= 0)
+				{
+					return "UNKNOWN";
+				}
+				return m_rawCodes[0];
+			}
+			return m_rawCodes[0];
+		}
+	}
 
 	public TimeSpan ExecutionTime { get; internal set; }
 
-	public bool FoundSecureCode { get; private set; }
+	public bool FoundSecureCode => m_secureCodeCount > 0;
 
-	public int ScannedCodes => m_rawCodes.Count;
+	public int SecureCount => m_secureCodeCount;
 
-	public string[] RawCodes => m_rawCodes.ToArray();
+	public SnapResult SnapResult { get; private set; }
 
-	private string SecretToken
+	public bool SnapOk => SnapResult.SnapOk;
+
+	public int ReadCount
+	{
+		get
+		{
+			if (!BarcodeConfiguration.Instance.EnableInfared)
+			{
+				return m_rawCodes.Count;
+			}
+			if (m_secureCodeCount != 0)
+			{
+				return m_rawCodes.Count;
+			}
+			return 0;
+		}
+	}
+
+	public bool ReadCode
+	{
+		get
+		{
+			if (!BarcodeConfiguration.Instance.EnableInfared)
+			{
+				return m_rawCodes.Count > 0;
+			}
+			if (m_rawCodes.Count > 0)
+			{
+				return m_secureCodeCount > 0;
+			}
+			return false;
+		}
+	}
+
+	private static string SecretToken
 	{
 		get
 		{
@@ -37,44 +88,56 @@ public sealed class ScanResult
 		}
 	}
 
-	public ScanResult()
+	public RawReadResult ToRawReadResult()
 	{
-		ExecutionTime = default(TimeSpan);
-		ScannedMatrix = "UNKNOWN";
+		return new RawReadResult((m_rawCodes.Count > 0) ? m_rawCodes[0] : "UNKNOWN", ExecutionTime, SnapResult.SnapOk);
+	}
+
+	public ScanResult()
+		: this(new SnapResult())
+	{
+	}
+
+	internal void NewSnapResult(SnapResult result)
+	{
+		SnapResult = result;
 	}
 
 	internal void FromResult(IScanResult sr)
 	{
-		string[] readCodes = sr.ReadCodes;
-		foreach (string code in readCodes)
-		{
-			AddCode(code);
-		}
+		AddCodes(sr.ReadCodes);
 		ExecutionTime = sr.ExecutionTime;
 	}
 
 	internal void ResetOnException()
 	{
 		m_rawCodes.Clear();
-		ScannedMatrix = "UNKNOWN";
+		m_secureCodeCount = 0;
 		ExecutionTime = default(TimeSpan);
 	}
 
-	internal void AddCode(string code)
+	internal void AddCodes(IEnumerable<string> codes)
 	{
-		if (SecretToken.Equals(code, StringComparison.CurrentCultureIgnoreCase))
+		foreach (string code in codes)
 		{
-			FoundSecureCode = true;
-			return;
-		}
-		List<string> list = BarcodeConfiguration.Instance.ComputeFilterList();
-		foreach (string item in list)
-		{
-			if (!item.Equals(code, StringComparison.CurrentCultureIgnoreCase))
+			if (SecretToken.Equals(code, StringComparison.CurrentCultureIgnoreCase))
 			{
-				m_rawCodes.Add(code);
-				ScannedMatrix = code;
+				m_secureCodeCount++;
+				continue;
+			}
+			foreach (string computeFilter in BarcodeConfiguration.Instance.ComputeFilterList)
+			{
+				if (!computeFilter.Equals(code, StringComparison.CurrentCultureIgnoreCase))
+				{
+					m_rawCodes.Add(code);
+				}
 			}
 		}
+	}
+
+	internal ScanResult(SnapResult snapResult)
+	{
+		ExecutionTime = default(TimeSpan);
+		SnapResult = snapResult;
 	}
 }

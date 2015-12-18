@@ -17,8 +17,8 @@ public class SensorView : UserControl
 
 	private Button m_sensorReadButton;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool[] Sensors
 	{
 		get
@@ -32,8 +32,8 @@ public class SensorView : UserControl
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public static SensorView Instance
 	{
 		get

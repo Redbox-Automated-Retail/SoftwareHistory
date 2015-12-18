@@ -9,53 +9,37 @@ public class VersionInstruction : Instruction
 {
 	public override string Mnemonic => "VERSION";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count <= 1)
+		if (operandTokens.Count > 1)
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-		else
-		{
-			AddError("C002", "The VERSION instruction supports an optional operand indicating the target board.", result.Errors);
+			result.AddInvalidOperandError("The VERSION instruction supports an optional operand indicating the target board.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands.Count == 1)
 		{
 			Token token = base.Operands[0];
-			KnownBoards knownBoards;
-			try
-			{
-				knownBoards = Enum<KnownBoards>.ParseIgnoringCase(token.Value, KnownBoards.None);
-			}
-			catch (Exception)
+			ControlBoards controlBoards = Enum<ControlBoards>.ParseIgnoringCase(token.Value, ControlBoards.None);
+			if (controlBoards == ControlBoards.None)
 			{
 				result.Errors.Add(Error.NewError("E001", "Unrecognized board option.", $"The option {token.Value} is not a board."));
 				return;
 			}
-			if (knownBoards == KnownBoards.None)
-			{
-				result.Errors.Add(Error.NewError("E001", "Unrecognized board option.", $"The option {token.Value} is not a board."));
-				return;
-			}
-			string boardVersion = SerialBoard.Instance.GetBoardVersion(knownBoards);
-			ExecutionEngine.Instance.ActiveContext.PushTop(boardVersion);
+			string boardVersion = ControlSystem.Instance.GetBoardVersion(controlBoards);
+			context.PushTop(boardVersion);
 			return;
 		}
-		string machineRevision = ControllerService.Instance.GetMachineRevision(out var versions);
+		string boardVersions = ControlSystem.Instance.GetBoardVersions(out var versions);
 		string[] array = versions;
-		foreach (string text in array)
+		foreach (string instance in array)
 		{
-			if (text != null)
-			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(text.Trim());
-			}
+			context.PushTop(instance);
 		}
-		ExecutionEngine.Instance.ActiveContext.PushTop($"REVISION {machineRevision}");
+		context.PushTop($"REVISION {boardVersions}");
 	}
 }

@@ -4,41 +4,32 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class MessageInstruction : Instruction
+public sealed class MessageInstruction : Instruction
 {
 	public override string Mnemonic => "MSG";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count >= 1)
+		if (operandTokens.Count < 1)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral && tokensAfterMnemonic[0].Type != TokenType.ConstSymbol)
-			{
-				AddError("C002", "Expected a string literal and any number of optional subtitution parameters.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a string literal and any number of optional subtitution parameters.");
 		}
-		else
+		else if (operandTokens[0].Type != TokenType.StringLiteral && operandTokens[0].Type != TokenType.ConstSymbol)
 		{
-			AddError("C002", "Expected a string literal and any number of optional subtitution parameters.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a string literal and any number of optional subtitution parameters.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands.Count > 0)
 		{
-			object[] args = ConvertSymbolsToParameterArray(result.Errors);
+			object[] args = ConvertSymbolsToParameterArray(result.Errors, context);
 			if (!result.Errors.ContainsError())
 			{
-				string format = ((base.Operands[0].Type == TokenType.StringLiteral) ? base.Operands[0].Value : ((string)ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors)));
+				string format = ((base.Operands[0].Type == TokenType.StringLiteral) ? base.Operands[0].Value : ((string)context.GetSymbolValue(base.Operands[0].Value, result.Errors)));
 				string message = string.Format(format, args);
-				ExecutionEngine.Instance.ActiveContext.Send(message);
+				context.Send(message);
 			}
 		}
 	}

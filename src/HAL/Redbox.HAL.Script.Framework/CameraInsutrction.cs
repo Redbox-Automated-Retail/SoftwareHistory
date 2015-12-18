@@ -1,57 +1,14 @@
 using System;
 using System.IO;
-using Redbox.HAL.Camera.Framework;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
 public class CameraInsutrction : Instruction
 {
-	protected static class Commands
-	{
-		public const string Center = "CENTER";
-
-		public const string Start = "START";
-
-		public const string Stop = "STOP";
-
-		public const string Snap = "SNAP";
-
-		public const string Status = "STATUS";
-
-		public const string ShowProperties = "SHOWPROPERTIES";
-
-		public const string IsWorking = "ISWORKING";
-
-		public const string IRCamera = "IRCAMERA";
-
-		public const string ConfigureIR = "CONFIGUREIR";
-
-		public const string Reset = "RESET";
-
-		public static bool IsValidCommand(string cmd)
-		{
-			switch (cmd.ToUpper())
-			{
-			case "CENTER":
-			case "SNAP":
-			case "STOP":
-			case "START":
-			case "STATUS":
-			case "SHOWPROPERTIES":
-			case "ISWORKING":
-			case "IRCAMERA":
-			case "CONFIGUREIR":
-			case "RESET":
-				return true;
-			default:
-				return false;
-			}
-		}
-	}
-
 	protected static class ResultCodes
 	{
 		public const string TimedOut = "CAPTURE TIMED OUT";
@@ -61,152 +18,179 @@ public class CameraInsutrction : Instruction
 		public const string Success = "SUCCESS";
 	}
 
+	private enum ExpectedOperand
+	{
+		None,
+		Center,
+		Start,
+		Stop,
+		Snap,
+		Status,
+		ShowProperties,
+		IsWorking,
+		IRCamera,
+		Reset,
+		Disable,
+		Enable,
+		ResetReturnCounter,
+		ReturnErrorCount,
+		SnapDecode,
+		ClearStats,
+		ScanForPort,
+		DumpCortexStats
+	}
+
 	public override string Mnemonic => "CAMERA";
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return Commands.IsValidCommand(operand);
+		return IsValidOperand(operand);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0)
+		if (operandTokens[0].Type != TokenType.Symbol || !IsValidOperand(operandTokens[0].Value))
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol || !Commands.IsValidCommand(tokensAfterMnemonic[0].Value))
-			{
-				AddError("C002", string.Format("Unrecognized operand {0}; Expected a symbol: START, STOP, SNAP, STATUS, and an optional CENTER={TRUE|FALSE} operand.", tokensAfterMnemonic[0].Value), result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddInvalidOperandError(string.Format("Unrecognized operand {0}; Expected a symbol: START, STOP, SNAP, STATUS, and an optional CENTER={TRUE|FALSE} operand.", operandTokens[0].Value));
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		bool flag = false;
-		if (FindBooleanOperand("CENTER".ToString().ToUpper(), result, out var boolValue))
+		if (FindBooleanOperand(ExpectedOperand.Center.ToString().ToUpper(), result, out var boolValue))
 		{
 			flag = boolValue;
 		}
-		foreach (Token operand in base.Operands)
+		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
-			if (operand.Value.Equals("SHOWPROPERTIES"))
+		case ExpectedOperand.ShowProperties:
+			AddError("E999", $"The operand '{base.Operands[0].Value}' is deprecated.", result.Errors);
+			break;
+		case ExpectedOperand.Disable:
+		{
+			using DeviceHelper helper2 = new DeviceHelper(debug: true);
+			CameraInfo cameraInfo2 = new CameraInfo(helper2);
+			if (!cameraInfo2.FindActiveCamera())
 			{
-				AddError("E999", $"The operand '{operand.Value}' is deprecated.", result.Errors);
-				break;
+				context.PushTop("NO CAMERA");
 			}
-			if (operand.Value.Equals("RESET"))
+			else
 			{
-				continue;
+				context.PushTop(cameraInfo2.SetCameraState(DeviceState.Disable));
 			}
-			if (operand.Value.Equals("IRCAMERA"))
-			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(DataMatrixHelper.Instance.IRCameraConfigured);
-				break;
-			}
-			if (operand.Value.Equals("CONFIGUREIR"))
-			{
-				if (!GetKeyValuePairValue<string>("STATE", out var val, result.Errors))
-				{
-					val = "on";
-				}
-				DataMatrixHelper.Instance.IRCameraConfigured = (val.Equals("on", StringComparison.CurrentCultureIgnoreCase) ? true : false);
-				ExecutionEngine.Instance.ActiveContext.PushTop(DataMatrixHelper.Instance.IRCameraConfigured);
-				break;
-			}
-			if (operand.Value.Equals("STATUS"))
-			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(CameraService.Instance.IsRunning ? "RUNNING" : "STOPPED");
-				break;
-			}
-			if (operand.Value.Equals("START"))
-			{
-				if (flag)
-				{
-					ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
-				}
-				bool flag2 = CameraService.Instance.Start();
-				ExecutionEngine.Instance.ActiveContext.PushTop(flag2);
-				break;
-			}
-			if (operand.Value.Equals("STOP"))
-			{
-				bool boolValue2 = false;
-				FindBooleanOperand("FORCE", result, out boolValue2);
-				if (boolValue2)
-				{
-					CameraService.Instance.TurnOffCamera();
-				}
-				else
-				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(CameraService.Instance.Stop());
-				}
-				break;
-			}
-			if (operand.Value.Equals("SNAP"))
-			{
-				if (CameraConfiguration.Instance.Mode == CameraMode.Emulated)
-				{
-					if (CameraEmulationState.Instance.ExpectedStartCaptureResult == null)
-					{
-						ExecutionEngine.Instance.ActiveContext.PushTop("CAPTURE ERROR");
-						break;
-					}
-					ExecutionEngine.Instance.ActiveContext.PushTop(CameraEmulationState.Instance.ExpectedStartCaptureResult);
-					ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
-				}
-				else
-				{
-					DataMatrixHelper.Instance.CameraSnap(out var path);
-					PushResultToStack(path);
-				}
-				break;
-			}
-			if (!operand.Value.Equals("ISWORKING", StringComparison.CurrentCultureIgnoreCase))
-			{
-				continue;
-			}
-			using (new CameraHelper(10000))
-			{
-				try
-				{
-					PickerBoard.Instance.SetSensors(on: true);
-					if (DataMatrixHelper.Instance.CameraSnap(out var path2) == CameraResult.CaptureError)
-					{
-						ExecutionEngine.Instance.ActiveContext.PushTop("CAPTURE ERROR");
-						break;
-					}
-					if (ImageHelper.Instance.ImageIsBlack(path2))
-					{
-						ExecutionEngine.Instance.ActiveContext.PushTop("BLACK-IMAGE");
-						break;
-					}
-					ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
-				}
-				finally
-				{
-					PickerBoard.Instance.SetSensors(on: false);
-				}
-			}
+			break;
 		}
-	}
-
-	private void PushResultToStack(string path)
-	{
-		if (string.IsNullOrEmpty(path) || !File.Exists(path))
+		case ExpectedOperand.Enable:
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop("CAPTURE ERROR");
-			string msg = "CAMERA CAPTURE returned a capture error.";
-			ExecutionEngine.Instance.ActiveContext.AppLog.Write(msg, LogEntryType.Error);
+			using DeviceHelper helper = new DeviceHelper(debug: true);
+			CameraInfo cameraInfo = new CameraInfo(helper);
+			if (!cameraInfo.FindActiveCamera())
+			{
+				context.PushTop("NO CAMERA");
+			}
+			else
+			{
+				context.PushTop(cameraInfo.SetCameraState(DeviceState.Enable));
+			}
+			break;
 		}
-		else
+		case ExpectedOperand.IRCamera:
+			context.PushTop(BarcodeConfiguration.Instance.EnableInfared);
+			break;
+		case ExpectedOperand.Status:
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(path);
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			IScannerDevice configuredDevice4 = ScannerDeviceFactory.GetConfiguredDevice();
+			context.PushTop(configuredDevice4.IsConnected ? "RUNNING" : "STOPPED");
+			break;
+		}
+		case ExpectedOperand.Start:
+		{
+			if (flag)
+			{
+				ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+			}
+			IScannerDevice configuredDevice2 = ScannerDeviceFactory.GetConfiguredDevice();
+			context.PushTop(configuredDevice2.Start());
+			break;
+		}
+		case ExpectedOperand.Stop:
+		{
+			bool boolValue2 = false;
+			FindBooleanOperand("FORCE", result, out boolValue2);
+			IScannerDevice configuredDevice5 = ScannerDeviceFactory.GetConfiguredDevice();
+			if (boolValue2)
+			{
+				configuredDevice5.TurnOff();
+				context.PushTop(true);
+			}
+			else
+			{
+				context.PushTop(configuredDevice5.Stop());
+			}
+			break;
+		}
+		case ExpectedOperand.Snap:
+		{
+			IScannerDevice configuredDevice3 = ScannerDeviceFactory.GetConfiguredDevice();
+			SnapResult snapResult = configuredDevice3.Snap();
+			if (!snapResult.SnapOk)
+			{
+				context.PushTop("CAPTURE ERROR");
+				string msg = "CAMERA CAPTURE returned a capture error.";
+				context.AppLog.Write(msg, LogEntryType.Error);
+			}
+			else
+			{
+				context.PushTop(snapResult.Path);
+				context.PushTop("SUCCESS");
+			}
+			break;
+		}
+		case ExpectedOperand.IsWorking:
+			AddError("E666", "IS-WORKING is a deprecated operand", result.Errors);
+			break;
+		case ExpectedOperand.ResetReturnCounter:
+			ReturnJob.ResetCameraErrorCounter();
+			break;
+		case ExpectedOperand.ReturnErrorCount:
+			context.PushTop(ReturnJob.CameraErrorCount);
+			break;
+		case ExpectedOperand.SnapDecode:
+		{
+			using Scanner scanner = new Scanner();
+			ScanResult scanResult = scanner.Read();
+			context.PushTop(scanResult.ScannedMatrix);
+			break;
+		}
+		case ExpectedOperand.ClearStats:
+		{
+			KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("SERVICE");
+			string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
+			if (result.Errors.Count <= 0)
+			{
+				ScannerServices scannerServices = Enum<ScannerServices>.ParseIgnoringCase(keyValuePairValue, ScannerServices.Emulated);
+				if (ScannerServices.Emulated != scannerServices)
+				{
+					CameraStatistics.RemoveCameraStats(scannerServices);
+				}
+			}
+			break;
+		}
+		case ExpectedOperand.DumpCortexStats:
+		{
+			string path = Path.Combine(ControllerConfiguration.Instance.KioskLogsPath, "Service");
+			CameraStatistics.DumpStats(Path.Combine(path, "CortexDecodeStats.txt"), ScannerServices.Cortex);
+			break;
+		}
+		case ExpectedOperand.ScanForPort:
+		{
+			IScannerDevice configuredDevice = ScannerDeviceFactory.GetConfiguredDevice();
+			context.PushTop(configuredDevice.FindInstalledPort());
+			break;
+		}
+		case ExpectedOperand.Reset:
+			break;
 		}
 	}
 
@@ -222,15 +206,8 @@ public class CameraInsutrction : Instruction
 		return false;
 	}
 
-	private bool ShouldWait(ExecutionResult result, out bool waitValue)
+	private bool IsValidOperand(string operand)
 	{
-		waitValue = false;
-		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("WAIT");
-		if (keyValuePair != null && bool.TryParse(keyValuePair.Value, out var result2))
-		{
-			waitValue = result2;
-			return true;
-		}
-		return true;
+		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 }

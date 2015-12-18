@@ -2,34 +2,32 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class GetVMZInfoJob : NativeJobAdapter
+[NativeJob(ProgramName = "vmz-merch-summary", Operand = "VMZ-MERCH-SUMMARY")]
+internal sealed class GetVMZInfoJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		VMZSearchResult result = default(VMZSearchResult);
-		VMZ.Instance.FindLastLocation(MerchFlags.Rebalance, ref result);
-		if (!result.Found)
+		foreach (MerchFlags item in SegmentManager.Instance.DecreasingPriorityOrder)
 		{
-			ResultHelper.Instance.CreateInfoResult("NoRebalances", "There are no rebalances in the VMZ.");
+			MerchSegment merchSegment = MerchSegmentFactory.Get(item);
+			merchSegment.FindHigh(ref result);
+			if (!result.Found)
+			{
+				base.Context.CreateInfoResult($"No{item.ToString()}s", $"There are no {item.ToString()} in the VMZ.");
+				continue;
+			}
+			string code = $"VMZ{item.ToString()}Count";
+			int num = merchSegment.ItemCount();
+			base.Context.CreateInfoResult(code, num.ToString());
+			string code2 = $"Last{item.ToString()}Info";
+			base.Context.CreateResult(code2, $"The high {item.ToString()} was found.", result.Deck, result.Slot, result.Location.Matrix, null, null);
 		}
-		else
-		{
-			int countInZone = VMZ.Instance.GetCountInZone(MerchFlags.Rebalance);
-			ResultHelper.Instance.CreateInfoResult("VMZRebalanceCount", countInZone.ToString());
-			ResultHelper.Instance.CreateResult("LastRebalanceInfo", "The high rebalance was found.", result.Deck, result.Slot, result.Location.Matrix, null, null);
-		}
-		VMZSearchResult result2 = default(VMZSearchResult);
-		VMZ.Instance.FindLastLocation(MerchFlags.Thin, ref result2);
-		if (!result2.Found)
-		{
-			ResultHelper.Instance.CreateInfoResult("NoThins", "There are no rebalances in the VMZ.");
-		}
-		else
-		{
-			int countInZone2 = VMZ.Instance.GetCountInZone(MerchFlags.Thin);
-			ResultHelper.Instance.CreateInfoResult("VMZThinCount", countInZone2.ToString());
-			ResultHelper.Instance.CreateResult("LastThinInfo", "The high thin was found.", result2.Deck, result2.Slot, result2.Location.Matrix, null, null);
-		}
-		ResultHelper.Instance.CreateInfoResult("DumpBinInventoryCount", DumpBin.Instance.CurrentCount().ToString());
+		base.Context.CreateInfoResult("DumpBinInventoryCount", DumpBin.Instance.CurrentCount().ToString());
+	}
+
+	internal GetVMZInfoJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

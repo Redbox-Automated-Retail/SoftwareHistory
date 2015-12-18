@@ -18,13 +18,9 @@ public class VCDevice3 : IVideoSource
 
 	private int framesReceived;
 
-	private long bytesReceived;
-
 	private VideoCapabilities videoResolution;
 
 	private VideoCapabilities snapshotResolution;
-
-	private bool provideSnapshots;
 
 	private Thread thread;
 
@@ -34,17 +30,17 @@ public class VCDevice3 : IVideoSource
 
 	private bool needToSetVideoInput;
 
-	private bool m_simulateTrigger;
-
 	private object sourceObject;
+
+	private readonly int GrabWaitTime;
+
+	private readonly bool Debug;
 
 	private readonly object sync = new object();
 
 	private readonly object m_listLock = new object();
 
 	private bool? isCrossbarAvailable = null;
-
-	private bool? m_debug = null;
 
 	private VideoInput[] crossbarVideoInputs;
 
@@ -107,18 +103,6 @@ public class VCDevice3 : IVideoSource
 		}
 	}
 
-	public bool ProvideSnapshots
-	{
-		get
-		{
-			return provideSnapshots;
-		}
-		set
-		{
-			provideSnapshots = value;
-		}
-	}
-
 	public virtual string Source => deviceMoniker;
 
 	public int FramesReceived
@@ -127,16 +111,6 @@ public class VCDevice3 : IVideoSource
 		{
 			int result = framesReceived;
 			framesReceived = 0;
-			return result;
-		}
-	}
-
-	public long BytesReceived
-	{
-		get
-		{
-			long result = bytesReceived;
-			bytesReceived = 0L;
 			return result;
 		}
 	}
@@ -259,17 +233,7 @@ public class VCDevice3 : IVideoSource
 
 	public object SourceObject => sourceObject;
 
-	private bool Debug
-	{
-		get
-		{
-			if (!m_debug.HasValue)
-			{
-				m_debug = RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "DebugDS", def: false);
-			}
-			return m_debug.Value;
-		}
-	}
+	private bool Triggered { get; set; }
 
 	public event NewFrameEventHandler SnapshotFrame;
 
@@ -287,9 +251,11 @@ public class VCDevice3 : IVideoSource
 
 	public event PlayingFinishedEventHandler PlayingFinished;
 
-	public VCDevice3(string deviceMoniker)
+	public VCDevice3(string deviceMoniker, int snapTimeout, bool debug)
 	{
 		this.deviceMoniker = deviceMoniker;
+		GrabWaitTime = snapTimeout;
+		Debug = debug;
 	}
 
 	public bool Start()
@@ -304,7 +270,6 @@ public class VCDevice3 : IVideoSource
 			return false;
 		}
 		framesReceived = 0;
-		bytesReceived = 0L;
 		isCrossbarAvailable = null;
 		needToSetVideoInput = true;
 		stopEvent = new ManualResetEvent(initialState: false);
@@ -387,7 +352,7 @@ public class VCDevice3 : IVideoSource
 		{
 			LogHelper.Instance.Log("[DirectShow] Simulate trigger.");
 		}
-		m_simulateTrigger = true;
+		Triggered = true;
 	}
 
 	private void WorkerThread()
@@ -398,7 +363,6 @@ public class VCDevice3 : IVideoSource
 	private void WorkerThread(bool runGraph)
 	{
 		ReasonToFinishPlaying reason = ReasonToFinishPlaying.StoppedByUser;
-		int secretValue = RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "FrameWait", 500);
 		SampleGrabber sampleGrabber = new SampleGrabber(OnNewFrame);
 		object obj = null;
 		object obj2 = null;
@@ -516,7 +480,7 @@ public class VCDevice3 : IVideoSource
 							crossbarVideoInput = GetCurrentCrossbarInput(iAMCrossbar);
 						}
 					}
-					if (!m_simulateTrigger)
+					if (!Triggered)
 					{
 						continue;
 					}
@@ -525,9 +489,9 @@ public class VCDevice3 : IVideoSource
 						ReceivedFrames.Clear();
 					}
 					sampleGrabber.Grab = true;
-					Thread.Sleep(secretValue);
-					bool simulateTrigger = (sampleGrabber.Grab = false);
-					m_simulateTrigger = simulateTrigger;
+					Thread.Sleep(GrabWaitTime);
+					Triggered = false;
+					sampleGrabber.Grab = false;
 					if (Debug)
 					{
 						LogHelper.Instance.Log("There are {0} frames in the list.", ReceivedFrames.Count);
@@ -541,6 +505,11 @@ public class VCDevice3 : IVideoSource
 						else
 						{
 							LogHelper.Instance.Log("[DirectShow] There are no captured frames from the device.");
+							if (mediaEventEx != null && mediaEventEx.GetEvent(out lEventCode, out lParam, out lParam2, 0) == 0)
+							{
+								mediaEventEx.FreeEventParams(lEventCode, lParam, lParam2);
+								LogHelper.Instance.Log(">> [DirectShow]Event: {0}", lEventCode.ToString());
+							}
 						}
 						foreach (Bitmap receivedFrame in ReceivedFrames)
 						{
@@ -760,14 +729,13 @@ public class VCDevice3 : IVideoSource
 	private void OnNewFrame(Bitmap image)
 	{
 		framesReceived++;
-		bytesReceived += image.Width * image.Height * (System.Drawing.Image.GetPixelFormatSize(image.PixelFormat) >> 3);
 		if (!Monitor.TryEnter(m_listLock))
 		{
 			return;
 		}
 		try
 		{
-			if (!stopEvent.WaitOne(0, exitContext: false) && m_simulateTrigger)
+			if (!stopEvent.WaitOne(0, exitContext: false) && Triggered)
 			{
 				ReceivedFrames.Add((Bitmap)image.Clone());
 			}

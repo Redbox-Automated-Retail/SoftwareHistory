@@ -1,4 +1,3 @@
-using System;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -6,61 +5,13 @@ namespace Redbox.HAL.Script.Framework;
 
 internal abstract class NativeJobAdapter
 {
-	private enum CameraIPCMethod
-	{
-		None,
-		File,
-		Message
-	}
-
-	private const string SecCamera = "c:\\Program Files\\Redbox\\SecCamera";
-
-	private static CameraIPCMethod? m_cameraMethod = null;
-
-	internal ExecutionResult Result { get; set; }
-
-	internal ExecutionContext Context { get; set; }
-
-	internal string Name { get; set; }
-
 	protected ApplicationLog AppLog => Context.AppLog;
 
-	protected VendDoor VendDoor => VendDoor.Instance;
+	protected ControllerService Controller => ControllerService.Instance;
 
-	protected Track Track => Track.Instance;
+	protected ExecutionResult Result { get; private set; }
 
-	protected PickerBoard PickerBoard => PickerBoard.Instance;
-
-	protected AuxBoard AuxBoard => AuxBoard.Instance;
-
-	protected Gripper Gripper => Gripper.Instance;
-
-	private static CameraIPCMethod CameraMethod
-	{
-		get
-		{
-			if (m_cameraMethod.HasValue)
-			{
-				return m_cameraMethod.Value;
-			}
-			try
-			{
-				m_cameraMethod = SecretOptions.Instance.GetValue("EnableSecureCamera", CameraIPCMethod.None);
-			}
-			catch
-			{
-				m_cameraMethod = CameraIPCMethod.None;
-				SecretOptions.Instance.SetValue("EnableSecureCamera", CameraIPCMethod.None);
-			}
-			LogHelper.Instance.Log("SecureCameraMode: {0}", m_cameraMethod.Value.ToString());
-			return m_cameraMethod.Value;
-		}
-	}
-
-	internal void Execute()
-	{
-		ExecuteInner();
-	}
+	protected ExecutionContext Context { get; private set; }
 
 	protected abstract void ExecuteInner();
 
@@ -69,22 +20,18 @@ internal abstract class NativeJobAdapter
 		Result.Errors.Add(Error.NewError("E999", "Execution context error.", errMsg));
 	}
 
-	protected void SendMessage(string msg)
+	protected bool ResetMotionController()
 	{
-		Context.Send(msg);
+		bool flag = MotionController.Reset(AppLog, quick: true);
+		HardwareCorrectionStats.InsertStat(CorrectionType.Arcus, flag, Context.ID);
+		return flag;
 	}
 
-	protected bool DiskIsUnknown(string barcode, out bool isBackward)
+	protected bool ResetMotionControllerChecked()
 	{
-		isBackward = false;
-		if (barcode == "UNKNOWN")
+		if (ControllerConfiguration.Instance.RestartControllerDuringUserJobs)
 		{
-			return true;
-		}
-		if (barcode == "redbox")
-		{
-			isBackward = true;
-			return true;
+			return ResetMotionController();
 		}
 		return false;
 	}
@@ -95,41 +42,54 @@ internal abstract class NativeJobAdapter
 		{
 			return false;
 		}
-		return ControllerService.Instance.Get(testOnEmpty: false, AppLog).Success;
+		return ControllerService.Instance.Get(AppLog).Success;
 	}
 
 	protected bool MoveAndPut(int deck, int slot, string id)
 	{
-		if (MoveTo(deck, slot, MoveMode.Put) != MotionResult.Success)
+		if (ControllerService.Instance.MoveTo(deck, slot, MoveMode.Put, AppLog) != MotionResult.Success)
 		{
 			return false;
 		}
 		return ControllerService.Instance.Put(id, AppLog).Success;
 	}
 
-	protected MotionResult HomeAxis(Axis axis)
+	protected MotionResult CorrectiveMoveVend(MoveMode mode)
 	{
-		return ControllerService.Instance.HomeAxis(axis, AppLog);
+		MotionResult motionResult = ControllerService.Instance.MoveToVend(mode, AppLog);
+		if (MotionResult.ArcusNotResponsive == motionResult)
+		{
+			if (ResetMotionControllerChecked())
+			{
+				return ControllerService.Instance.MoveToVend(mode, AppLog);
+			}
+			return MotionResult.ArcusNotResponsive;
+		}
+		return motionResult;
 	}
 
-	protected MotionResult MoveVend(MoveMode mode)
+	protected MotionResult CorrectiveMove(int deck, int slot, MoveMode mode)
 	{
-		return ControllerService.Instance.MoveToVend(mode, AppLog);
+		MotionResult motionResult = ControllerService.Instance.MoveTo(deck, slot, mode, AppLog);
+		if (MotionResult.ArcusNotResponsive == motionResult)
+		{
+			if (ResetMotionControllerChecked())
+			{
+				return ControllerService.Instance.MoveTo(deck, slot, mode, AppLog);
+			}
+			return MotionResult.ArcusNotResponsive;
+		}
+		return motionResult;
 	}
 
-	protected MotionResult MoveTo(int deck, int slot, MoveMode mode)
+	protected MotionResult CorrectiveMove(Location loc, MoveMode mode)
 	{
-		return ControllerService.Instance.MoveTo(deck, slot, mode, AppLog);
-	}
-
-	protected MotionResult MoveTo(Location loc, MoveMode mode)
-	{
-		return ControllerService.Instance.MoveTo(loc, mode, AppLog);
+		return CorrectiveMove(loc.Deck, loc.Slot, mode);
 	}
 
 	protected T GetTop<T>()
 	{
-		return (T)Context.PopTop();
+		return (T)ConversionHelper.ChangeType(Context.PopTop(), typeof(T));
 	}
 
 	protected bool ContextSwitchRequested()
@@ -148,10 +108,14 @@ internal abstract class NativeJobAdapter
 		return false;
 	}
 
-	protected void Yield(int milliseconds)
+	protected NativeJobAdapter(ExecutionResult result, ExecutionContext context)
 	{
-		DateTime value = DateTime.Now.AddMilliseconds(milliseconds);
-		Context.StartTime = value;
-		ExecutionEngine.Instance.PerformContextSwitch(runtimeOnly: false);
+		Result = result;
+		Context = context;
+	}
+
+	internal void Execute()
+	{
+		ExecuteInner();
 	}
 }

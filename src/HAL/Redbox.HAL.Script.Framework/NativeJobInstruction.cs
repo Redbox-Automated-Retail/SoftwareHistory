@@ -4,23 +4,16 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class NativeJobInstruction : Instruction
+public sealed class NativeJobInstruction : Instruction
 {
 	public override string Mnemonic => "NATIVEJOB";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		base.Operands.AddRange(tokensAfterMnemonic);
-	}
-
-	protected override void OnExecute(ExecutionResult result)
-	{
-		ExecutionContext activeContext = ExecutionEngine.Instance.ActiveContext;
-		NativeJobAdapter nativeJobAdapter = NativeJobFactory.Instance.MakeJobFromOperand(activeContext, result, base.Operands[0].Value);
+		NativeJobAdapter nativeJobAdapter = ExecutionEngine.Instance.MakeJobFromOperand(context, result, base.Operands[0].Value);
 		if (nativeJobAdapter == null)
 		{
-			result.Errors.Add(Error.NewError("E777", "Unrecognized job.", $"The job \"{base.Operands[0].Value}\" is not recognized as a native job."));
+			result.Errors.Add(Error.NewError("E777", "Unrecognized job.", $"The job \"{base.Operands[0].Value}\" is not in the native job cache."));
 		}
 		else
 		{

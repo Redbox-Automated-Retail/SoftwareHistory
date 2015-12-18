@@ -5,58 +5,51 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class QlmDoorInstruction : Instruction
+public sealed class QlmDoorInstruction : Instruction
 {
-	protected static class Commands
+	private enum QlmOperands
 	{
-		public const string Lock = "LOCK";
-
-		public const string Unlock = "UNLOCK";
-
-		public const string Status = "STATUS";
+		None,
+		Lock,
+		Unlock,
+		Status
 	}
 
 	public override string Mnemonic => "QLMDOOR";
 
-	private QLM QLM => QLM.Instance;
-
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol || (string.Compare(tokensAfterMnemonic[0].Value, "LOCK", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "UNLOCK", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "STATUS", ignoreCase: true) != 0))
-			{
-				AddError("C002", "Expected a symbol: LOCK, UNLOCK, or STATUS.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddMissingOperandError("Expected a symbol: LOCK, UNLOCK.");
+			return;
 		}
-		else
+		QlmOperands qlmOperands = Enum<QlmOperands>.ParseIgnoringCase(operandTokens[0].Value, QlmOperands.None);
+		if (operandTokens[0].Type != TokenType.Symbol || qlmOperands == QlmOperands.None)
 		{
-			AddError("C002", "Expected a symbol: LOCK, UNLOCK.", result.Errors);
+			result.AddInvalidOperandError("Expected a symbol: LOCK, UNLOCK, or STATUS.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Token token = base.Operands[0];
 		if (token.Type == TokenType.Symbol)
 		{
-			if (string.Compare(token.Value, "LOCK", ignoreCase: true) == 0)
+			switch (Enum<QlmOperands>.ParseIgnoringCase(token.Value, QlmOperands.None))
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.SetDoorLock(locked: true)));
-			}
-			else if (string.Compare(token.Value, "UNLOCK", ignoreCase: true) == 0)
-			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.SetDoorLock(locked: false)));
-			}
-			else if (string.Compare(token.Value, "STATUS", ignoreCase: true) == 0)
-			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(QLM.GetDoorStatus().ToString().ToUpper());
+			case QlmOperands.Lock:
+				context.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.SetDoorLock(locked: true)));
+				break;
+			case QlmOperands.Unlock:
+				context.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.SetDoorLock(locked: false)));
+				break;
+			case QlmOperands.Status:
+				context.PushTop(QLM.GetDoorStatus().ToString().ToUpper());
+				break;
+			default:
+				result.AddError(ExecutionErrors.InvalidSymbolValue, $"The symbol {token.Value} is invalid.");
+				break;
 			}
 		}
 	}

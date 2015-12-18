@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 

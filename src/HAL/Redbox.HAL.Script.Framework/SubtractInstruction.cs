@@ -4,36 +4,30 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class SubtractInstruction : Instruction
+public sealed class SubtractInstruction : Instruction
 {
 	public override string Mnemonic => "SUB";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 0 || tokensAfterMnemonic.Count > 2)
+		if (operandTokens.Count != 2)
 		{
-			AddError("C002", "Expectd a symbol as target of the subtraction and either a numeric literal or symbol as the subtrand.", result.Errors);
+			result.AddInvalidOperandError("Expectd a symbol as target of the subtraction and either a numeric literal or symbol as the subtrand.");
 		}
-		else if (tokensAfterMnemonic[0].Type != TokenType.Symbol)
+		else if (operandTokens[0].Type != TokenType.Symbol)
 		{
-			AddError("C002", "Expected a (non-CONST) symbol as target of the subtraction operation.", result.Errors);
+			result.AddInvalidOperandError("Expected a (non-CONST) symbol as target of the subtraction operation.");
 		}
-		else if (tokensAfterMnemonic[1].Type != TokenType.NumericLiteral && tokensAfterMnemonic[1].Type != TokenType.Symbol && tokensAfterMnemonic[1].Type != TokenType.ConstSymbol)
+		else if (operandTokens[1].Type != TokenType.NumericLiteral && operandTokens[1].Type != TokenType.Symbol && operandTokens[1].Type != TokenType.ConstSymbol)
 		{
-			AddError("C002", "Expectd either a numeric literal or symbol as the subtrand.", result.Errors);
-		}
-		else
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.AddInvalidOperandError("Expectd either a numeric literal or symbol as the subtrand.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Token token = base.Operands[0];
-		object obj = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(token.Value, result.Errors);
+		object obj = context.GetSymbolValue(token.Value, result.Errors);
 		if (obj == null || result.Errors.Count > 0)
 		{
 			return;
@@ -46,7 +40,7 @@ public class SubtractInstruction : Instruction
 		}
 		else if (token2.Type == TokenType.Symbol || token2.Type == TokenType.ConstSymbol)
 		{
-			obj2 = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(token2.Value, result.Errors);
+			obj2 = context.GetSymbolValue(token2.Value, result.Errors);
 			if (obj2 == null || result.Errors.Count > 0)
 			{
 				return;
@@ -66,6 +60,6 @@ public class SubtractInstruction : Instruction
 		{
 			obj = decimal.Subtract((decimal)obj, (decimal)obj2);
 		}
-		ExecutionEngine.Instance.ActiveContext.SetSymbolValue(token.Value, obj);
+		context.SetSymbolValue(token.Value, obj);
 	}
 }

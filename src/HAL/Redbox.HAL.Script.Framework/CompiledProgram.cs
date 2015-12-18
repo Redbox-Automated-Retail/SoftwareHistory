@@ -1,10 +1,10 @@
 namespace Redbox.HAL.Script.Framework;
 
-public class CompiledProgram
+public sealed class CompiledProgram
 {
-	public ProgramInstruction ParseTree { get; set; }
+	public readonly ProgramInstruction ParseTree;
 
-	public ExecutionResult CompilerResult { get; set; }
+	public readonly ExecutionResult CompilerResult;
 
 	public override string ToString()
 	{
@@ -13,5 +13,11 @@ public class CompiledProgram
 			return "Cached";
 		}
 		return $"Errors: {CompilerResult.Errors.ErrorCount}, Warnings: {CompilerResult.Errors.WarningCount}";
+	}
+
+	internal CompiledProgram(ExecutionResult compileResult, ProgramInstruction tree)
+	{
+		ParseTree = tree;
+		CompilerResult = compileResult;
 	}
 }

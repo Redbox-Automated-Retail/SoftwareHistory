@@ -1,5 +1,6 @@
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -21,7 +22,7 @@ internal class VMZHelperFunctions
 
 	internal const string NoVMZSlots = "NOVMZSLOTS";
 
-	private DumpBin m_dumpSlot;
+	private readonly DumpBin m_dumpSlot;
 
 	private static readonly Location ViewableLocation = new Location(3, 86);
 
@@ -31,27 +32,31 @@ internal class VMZHelperFunctions
 
 	internal ExecutionContextStatus LastCleanStatus { get; set; }
 
-	internal static MotionResult MoveViewable()
+	internal static MotionResult MoveViewable(ExecutionContext context)
 	{
-		return ControllerService.Instance.MoveTo(ViewableLocation, MoveMode.None, ExecutionEngine.Instance.ActiveContext.AppLog);
+		return ControllerService.Instance.MoveTo(ViewableLocation, MoveMode.None, context.AppLog);
 	}
 
-	internal MerchandizeResult UnloadDisc(ExecutionResult result)
+	internal MerchandizeResult UnloadDisc(ExecutionResult result, ExecutionContext context)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return MerchandizeResult.Success;
 		}
-		_ = ExecutionEngine.Instance.ActiveContext;
-		Location location = VMZ.Instance.FindNextUnloadLocation();
-		if (location == null)
+		Location loc = null;
+		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		{
+			loc = deck.FindMatching(MerchFlags.Unload);
+			return null == loc;
+		});
+		if (loc == null)
 		{
 			return MerchandizeResult.UnloadsCleared;
 		}
-		MerchandizeResult merchandizeResult = UnloadHelper.Instance.UnloadDisk(result, location.Deck, location.Slot);
+		MerchandizeResult merchandizeResult = new UnloadHelper(context).UnloadDisk(result, loc.Deck, loc.Slot);
 		if (merchandizeResult != MerchandizeResult.Success)
 		{
-			ServiceLogHelper.Instance.WriteFormattedMessage(LogEntryType.Info, "Unload disk returned status {0}", merchandizeResult.ToString());
+			context.ServiceLog("Unload disk returned status {0}", merchandizeResult.ToString());
 		}
 		return merchandizeResult;
 	}

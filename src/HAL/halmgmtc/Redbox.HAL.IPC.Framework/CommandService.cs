@@ -87,7 +87,7 @@ public class CommandService
 
 	private static bool GetTokenizer(string input, CommandResult result, CommandContext context, out CommandTokenizer tokenizer)
 	{
-		input = MacroContainer.Instance.ExpandConstantMacros(input);
+		input = RuntimeService.Instance.ExpandConstantMacros(input);
 		tokenizer = new CommandTokenizer(0, input);
 		tokenizer.Tokenize();
 		if (tokenizer.Tokens.HasOnlyComments())

@@ -5,35 +5,21 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class LookupInstruction : Instruction
+public sealed class LookupInstruction : Instruction
 {
-	protected static class ResultCodes
-	{
-		public const string Found = "FOUND";
-
-		public const string NotFound = "NOT FOUND";
-	}
-
 	public override string Mnemonic => "LOOKUP";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1 || (operandTokens[0].Type != TokenType.StringLiteral && operandTokens[0].Type != TokenType.Symbol))
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral && tokensAfterMnemonic[0].Type != TokenType.Symbol)
-			{
-				AddError("C002", "Expected a string literal or symbol.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a string literal or symbol.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		string text = null;
 		if (base.Operands.Count == 1)
@@ -41,7 +27,7 @@ public class LookupInstruction : Instruction
 			Token token = base.Operands[0];
 			if (token.Type == TokenType.Symbol)
 			{
-				text = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(token.Value, result.Errors) as string;
+				text = context.GetSymbolValue(token.Value, result.Errors) as string;
 				if (result.Errors.Count > 0)
 				{
 					return;
@@ -52,23 +38,23 @@ public class LookupInstruction : Instruction
 				text = token.Value;
 			}
 		}
-		else if (ExecutionEngine.Instance.ActiveContext.StackDepth > 0)
+		else if (context.StackDepth > 0)
 		{
-			text = ExecutionEngine.Instance.ActiveContext.PopTop() as string;
+			text = context.PopTop() as string;
 		}
 		if (text != null)
 		{
-			Location location = ControllerService.Instance.Lookup(text);
+			Location location = InventoryService.Instance.Lookup(text);
 			if (location == null)
 			{
-				ExecutionEngine.Instance.ActiveContext.AppLog.LogLookupFailure(text);
-				ExecutionEngine.Instance.ActiveContext.PushTop("NOT FOUND");
+				context.AppLog.LogLookupFailure(text);
+				context.PushTop("NOT FOUND");
 			}
 			else
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(location.Slot);
-				ExecutionEngine.Instance.ActiveContext.PushTop(location.Deck);
-				ExecutionEngine.Instance.ActiveContext.PushTop("FOUND");
+				context.PushTop(location.Slot);
+				context.PushTop(location.Deck);
+				context.PushTop("FOUND");
 			}
 		}
 		else

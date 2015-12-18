@@ -3,34 +3,28 @@ using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class WatchdogPoller : ScriptPoller
+[Poller(Name = "Watchdog")]
+internal sealed class WatchdogPoller : ScriptPoller
 {
-	private const int BackDays = 60;
+	private readonly IPersistentMap DataMap;
 
-	private const int BackDaysForImages = 168;
+	private int m_gcCount;
 
 	private DateTime? m_lastReset = null;
 
-	private readonly string[] SupportCounters = new string[12]
-	{
-		"FingerCloseTimeout", "FingerOpenTimeout", "FingerRentTimeout", "GripperExtendTimeout", "GripperRetractTimeout", "QlmDisengageTimeout", "QlmEngageTimeout", "TrackCloseTimeout", "TrackOpenTimeout", "VendDoorCloseTimeout",
-		"VendDoorRentTimeout", "HomeYOnInventoryError"
-	};
+	protected override int PollSleep => 1800000;
 
-	internal static WatchdogPoller Instance => Singleton<WatchdogPoller>.Instance;
-
-	protected override string ThreadName => "Job Cleaner";
+	protected override string ThreadName => "Watchdog Poller";
 
 	protected override string JobName => "job-watchdog";
 
 	protected override string JobLabel => "Watchdog process";
 
 	protected override ProgramPriority Priority => ProgramPriority.Normal;
-
-	protected override bool IsConfigured => true;
 
 	private DateTime? LastCounterReset
 	{
@@ -40,7 +34,7 @@ internal class WatchdogPoller : ScriptPoller
 			{
 				return m_lastReset.Value;
 			}
-			string value = SecretOptions.Instance.GetValue("LastCounterReset", "NONE");
+			string value = DataMap.GetValue("LastCounterReset", "NONE");
 			if (value == "NONE")
 			{
 				return m_lastReset = null;
@@ -58,66 +52,58 @@ internal class WatchdogPoller : ScriptPoller
 		set
 		{
 			m_lastReset = value;
-			SecretOptions.Instance.SetValue("LastCounterReset", (!m_lastReset.HasValue) ? "NONE" : m_lastReset.Value.ToString());
+			DataMap.SetValue("LastCounterReset", (!m_lastReset.HasValue) ? "NONE" : m_lastReset.Value.ToString());
 		}
 	}
 
-	protected override void ExecuteInner()
+	protected override bool CoreExecute()
 	{
-		int num = 0;
-		while (!PollEvent.WaitOne(1800000))
+		int num = TrimLogs();
+		if (num > 0)
 		{
-			int num2 = TrimLogs();
-			if (num2 > 0)
-			{
-				LogHelper.Instance.Log($"Watchdog removed {num2} files", LogEntryType.Info);
-			}
-			ResetCounters();
-			if (++num > 2 && ExecutionEngine.Instance.ActiveContext == null)
-			{
-				GC.Collect();
-				num = 0;
-			}
-			List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
-			if (list.Count == 0)
-			{
-				break;
-			}
-			int num3 = CleanErroredJobs();
-			if (num3 > 0)
-			{
-				LogHelper.Instance.Log($"Watchdog cleaned {num3} errored jobs.", LogEntryType.Info);
-			}
-			num3 = CleanupJobs();
-			if (num3 > 0)
-			{
-				LogHelper.Instance.Log($"Watchdog cleaned {num3} jobs.", LogEntryType.Info);
-			}
+			LogHelper.Instance.Log($"Watchdog removed {num} files", LogEntryType.Info);
 		}
+		ResetCounters();
+		if (++m_gcCount > 2 && ExecutionEngine.Instance.ActiveContext == null)
+		{
+			GC.Collect();
+			m_gcCount = 0;
+		}
+		int num2 = CleanErroredJobs();
+		if (num2 > 0)
+		{
+			LogHelper.Instance.Log($"Watchdog cleaned {num2} errored jobs.", LogEntryType.Info);
+		}
+		num2 = CleanupJobs();
+		if (num2 > 0)
+		{
+			LogHelper.Instance.Log($"Watchdog cleaned {num2} jobs.", LogEntryType.Info);
+		}
+		return true;
 	}
 
-	protected override bool ShouldScheduleJob()
+	private WatchdogPoller()
 	{
-		return false;
+		DataMap = StoreManager.Instance.GetDataStore();
 	}
 
 	private int CleanErroredJobs()
 	{
 		DateTime now = DateTime.Now;
 		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
-		int count = list.Count;
+		int num = 0;
 		try
 		{
 			foreach (ExecutionContext item in list)
 			{
 				if (!(item.Status != ExecutionContextStatus.Errored) && !item.IsImmediate && now >= item.CreatedOn.AddDays(5.0))
 				{
+					num++;
 					item.Trash();
 				}
 			}
 			ExecutionEngine.Instance.CleanupJobs(force: false);
-			int num = ExecutionEngine.Instance.ContextCount();
-			return count - num;
+			return num;
 		}
 		catch (Exception e)
 		{
@@ -138,16 +124,16 @@ internal class WatchdogPoller : ScriptPoller
 		{
 			return num;
 		}
-		string[] directories = Directory.GetDirectories(ApplicationLog.LogsDirectory);
+		string[] directories = Directory.GetDirectories(ControllerConfiguration.Instance.KioskLogsPath);
 		string[] array = directories;
 		foreach (string text in array)
 		{
 			if (!text.Contains("Service") && !text.Contains("ErrorLogs"))
 			{
-				num += TrimFilesInSubdirectory(text, "*.log", 60);
+				num += TrimFilesInSubdirectory(text, "*.log", ControllerConfiguration.Instance.ApplogDayAge);
 			}
 		}
-		return num + TrimFilesInSubdirectory("c:\\Program Files\\Redbox\\HALService\\Video", "*.jpg", 168);
+		return num + TrimFilesInSubdirectory("c:\\Program Files\\Redbox\\HALService\\Video", "*.jpg", ControllerConfiguration.Instance.WatchdogImageDayAge);
 	}
 
 	private int TrimFilesInSubdirectory(string directory, string filePattern, int ageInDays)
@@ -210,7 +196,7 @@ internal class WatchdogPoller : ScriptPoller
 		DateTime now = DateTime.Now;
 		int num = 1;
 		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
-		int count = list.Count;
+		int num2 = 0;
 		try
 		{
 			foreach (ExecutionContext item in list)
@@ -228,13 +214,13 @@ internal class WatchdogPoller : ScriptPoller
 					}
 					if (now >= dateTime.AddHours(num))
 					{
+						num2++;
 						item.Trash();
 					}
 				}
 			}
 			ExecutionEngine.Instance.CleanupJobs(force: false);
-			int num2 = ExecutionEngine.Instance.ContextCount();
-			return count - num2;
+			return num2;
 		}
 		catch (Exception e)
 		{
@@ -245,27 +231,22 @@ internal class WatchdogPoller : ScriptPoller
 
 	private void ResetCounters()
 	{
-		DateTime now = DateTime.Now;
-		if ((LastCounterReset.HasValue && !(LastCounterReset.Value.Date != now.Date)) || !DateRange.NowIsBetweenHours(0, 1))
+		if (!ControllerConfiguration.Instance.ResetTimeoutCountersWeekly)
 		{
+			LogHelper.Instance.Log("Watchdog is configured to not reset timeout counters weekly.");
 			return;
 		}
-		LastCounterReset = now;
-		LogHelper.Instance.Log("Watchdog resetting counters.");
-		CounterManager.Instance.Reset("EmptyOrStuckCount");
-		CounterManager.Instance.Reset("ReturnCameraFailures");
-		if (now.DayOfWeek == DayOfWeek.Sunday)
+		DateTime now = DateTime.Now;
+		if ((!LastCounterReset.HasValue || LastCounterReset.Value.Date != now.Date) && DateRange.NowIsBetweenHours(0, 1))
 		{
-			LogHelper.Instance.Log("Reset timeout counters.", LogEntryType.Info);
-			string[] supportCounters = SupportCounters;
-			foreach (string name in supportCounters)
+			LastCounterReset = now;
+			LogHelper.Instance.Log("Watchdog resetting counters.");
+			CounterManager.Instance.Reset("EmptyOrStuckCount");
+			if (now.DayOfWeek == DayOfWeek.Sunday)
 			{
-				CounterManager.Instance.Reset(name);
+				LogHelper.Instance.Log("Reset timeout counters.", LogEntryType.Info);
+				HardwareSupport.ResetCounters();
 			}
 		}
-	}
-
-	private WatchdogPoller()
-	{
 	}
 }

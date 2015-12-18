@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using Redbox.HAL.CameraTuner.Properties;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.CameraTuner;
@@ -50,7 +51,7 @@ public class Program : IDisposable
 		{
 			Environment.Exit(10);
 		}
-		if (RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "TunerFailure", def: false))
+		if (Settings.Default.EmulatedTunerFailure)
 		{
 			Environment.Exit(2);
 		}

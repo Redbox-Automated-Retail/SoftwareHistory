@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Redbox.HAL.Core;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
@@ -9,8 +9,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("symbol")]
 public sealed class SymbolCommand
 {
-	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	[Usage("SYMBOL show job: job-id")]
+	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	[CommandForm(Name = "show")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
@@ -29,8 +29,8 @@ public sealed class SymbolCommand
 	}
 
 	[Description("Clears the execution engine's symbol list.")]
-	[Usage("SYMBOL clear job: job-id")]
 	[CommandForm(Name = "clear")]
+	[Usage("SYMBOL clear job: job-id")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);

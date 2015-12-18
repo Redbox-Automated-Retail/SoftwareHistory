@@ -5,28 +5,21 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class HomeYInstruction : Instruction
+public sealed class HomeYInstruction : Instruction
 {
 	public override string Mnemonic => "HOMEY";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count != 0)
+		if (operandTokens.Count != 0 && (operandTokens.Count != 1 || !operandTokens[0].IsKeyValuePair || !IsOperandValid(operandTokens[0].Value)))
 		{
-			if (tokensAfterMnemonic.Count == 1 && tokensAfterMnemonic[0].IsKeyValuePair && IsOperandValid(tokensAfterMnemonic[0].Value))
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-			else
-			{
-				AddError("C002", "The HOMEY mnemonic supports the CLEARGRIPPER key value pair.", result.Errors);
-			}
+			result.AddInvalidOperandError("The HOMEY mnemonic supports the CLEARGRIPPER key value pair.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		bool flag = true;
 		if (base.Operands.Count == 1)
@@ -39,11 +32,11 @@ public class HomeYInstruction : Instruction
 		}
 		if (flag)
 		{
-			Gripper.Instance.ClearFront();
+			Gripper.ClearFront();
 		}
-		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.Y, ExecutionEngine.Instance.ActiveContext.AppLog);
+		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.Y, context.AppLog);
 		string instance = motionResult.ToString().ToUpper();
-		ExecutionEngine.Instance.ActiveContext.PushTop(instance);
+		context.PushTop(instance);
 	}
 
 	private bool IsOperandValid(string op)

@@ -3,14 +3,17 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class TestIceQubeExchangerJob : NativeJobAdapter
+[NativeJob(ProgramName = "check-iceqube-board", Operand = "CHECK-ICEQUBE-BOARD")]
+internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: true, "IceQubeBoard");
 		if (!IceQubeBoard.Instance.ShouldRetry())
 		{
-			applicationLog.Write("The board is in persistent error; no further queries.", LogEntryType.Info);
+			string msg = "The board is in persistent error; no further queries.";
+			applicationLog.Write(msg);
+			base.Context.ServiceLog(msg);
 			AddError("IceQube board in persistent error state.");
 			return;
 		}
@@ -40,5 +43,10 @@ internal class TestIceQubeExchangerJob : NativeJobAdapter
 				AddError("Unable to reset IceQube board.");
 			}
 		}
+	}
+
+	internal TestIceQubeExchangerJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

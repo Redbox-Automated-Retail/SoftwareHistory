@@ -4,8 +4,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 public class TransferResult
 {
-	public bool NoEmptySlots { get; set; }
-
 	public bool ReturnedToSource { get; internal set; }
 
 	public bool GetOk
@@ -118,9 +116,25 @@ public class TransferResult
 		}
 	}
 
-	internal GetResult GetResult { get; set; }
+	public GetResult GetResult { get; internal set; }
 
-	internal PutResult PutResult { get; set; }
+	public PutResult PutResult { get; internal set; }
+
+	public static TransferResult EmulatedSuccessResult(Location source, Location dest)
+	{
+		TransferResult transferResult = new TransferResult();
+		transferResult.TransferredItem = new TransferredItem
+		{
+			Source = source,
+			Destination = dest
+		};
+		Deck deck = DecksManager.Instance.GetDeck(dest.Deck);
+		deck.SetSlotId(dest.Slot, source.Matrix, source.Flags, null);
+		deck.UpdateMerchFlag(source.Flags, dest.Slot);
+		deck = DecksManager.Instance.GetDeck(source.Deck);
+		deck.ResetLocation(source.Slot);
+		return transferResult;
+	}
 
 	internal void TransferDone(Location src, Location dest)
 	{

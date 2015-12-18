@@ -1,10 +1,10 @@
 namespace Redbox.HAL.Script.Framework;
 
-public class ExecutionStatus
+public sealed class ExecutionStatus
 {
 	public ExecutionContextStatus Value { get; internal set; }
 
-	public ExecutionContextStatus? NextValue { get; set; }
+	internal ExecutionContextStatus? NextValue { get; set; }
 
 	public static bool operator ==(ExecutionStatus status, ExecutionContextStatus right)
 	{
@@ -18,27 +18,6 @@ public class ExecutionStatus
 	public static bool operator !=(ExecutionStatus status, ExecutionContextStatus right)
 	{
 		return !(status == right);
-	}
-
-	public void Promote()
-	{
-		Value = NextValue.Value;
-		NextValue = null;
-	}
-
-	public bool ShouldPromote()
-	{
-		if (NextValue.HasValue)
-		{
-			return Value != NextValue;
-		}
-		return false;
-	}
-
-	public void Promote(ExecutionContextStatus value)
-	{
-		Value = value;
-		NextValue = null;
 	}
 
 	public override string ToString()
@@ -62,5 +41,25 @@ public class ExecutionStatus
 	public override int GetHashCode()
 	{
 		return Value.GetHashCode();
+	}
+
+	internal bool ShouldPromote()
+	{
+		if (NextValue.HasValue)
+		{
+			return Value != NextValue;
+		}
+		return false;
+	}
+
+	internal void Promote()
+	{
+		Promote(NextValue.Value);
+	}
+
+	internal void Promote(ExecutionContextStatus value)
+	{
+		Value = value;
+		NextValue = null;
 	}
 }

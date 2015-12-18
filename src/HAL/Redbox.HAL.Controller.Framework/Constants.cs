@@ -2,46 +2,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 public static class Constants
 {
-	public static class Communications
-	{
-		public const int ReadTimeOutInMilliSeconds = 5000;
-	}
-
-	public static class PersistentState
-	{
-		public const string BaseKey = "SOFTWARE\\Redbox\\HAL";
-
-		public const string StateKey = "SOFTWARE\\Redbox\\HAL\\State";
-
-		public const string StoreKey = "SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
-
-		internal const string Emulated = "Emulated";
-
-		internal const string Live = "Live";
-	}
-
-	public static class Inventory
-	{
-		public const string Empty = "EMPTY";
-
-		public const string Unknown = "UNKNOWN";
-
-		public const string Duplicate = "(DUPLICATE)";
-
-		public const string Backwards = "redbox";
-
-		public const string DeckOutOfRange = "DECK OUT OF RANGE";
-
-		public const string SlotOutOfRange = "SLOT OUT OF RANGE";
-	}
-
-	public static class GetAMovieLegacyFiles
-	{
-		public const string SlotData = "C:\\gamp\\SlotData.dat";
-
-		public const string SystemData = "C:\\gamp\\SystemData.dat";
-	}
-
 	public static class MoveConstants
 	{
 		public const string CurrentXPosition = "EX";
@@ -51,12 +11,6 @@ public static class Constants
 
 	public static class CounterNames
 	{
-		public const string CorrectedCommErrorsCounter = "MCCorrectedCommErrors";
-
-		public const string UnCorrectedCommErrorsCounter = "MCUnCorrectedCommErrors";
-
-		public const string MotionControlCommCounter = "MCCommFailures";
-
 		public const string CameraCaptureFailureCounter = "CameraCaptureFailures";
 
 		public const string EmptyOrStuckCounter = "EmptyOrStuckCount";
@@ -94,18 +48,5 @@ public static class Constants
 		public const string QlmDisengageTimeout = "QlmDisengageTimeout";
 
 		public const string IceQubeResetFailures = "IceQubeResetFailures";
-
-		public const string HomeYOnInventoryError = "HomeYOnInventoryError";
-
-		public const string ReturnCameraFailures = "ReturnCameraFailures";
-	}
-
-	public static bool IsKnownInventoryToken(string id)
-	{
-		if (string.Compare(id, "UNKNOWN", ignoreCase: true) != 0 && string.Compare(id, "redbox", ignoreCase: true) != 0)
-		{
-			return string.Compare(id, "EMPTY", ignoreCase: true) == 0;
-		}
-		return true;
 	}
 }

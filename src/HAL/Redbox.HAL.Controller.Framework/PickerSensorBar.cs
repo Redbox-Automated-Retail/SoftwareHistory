@@ -2,68 +2,29 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal class PickerSensorBar
+internal static class PickerSensorBar
 {
-	private static readonly int[] m_pickerSensorBits = new int[6] { 13, 11, 15, 10, 14, 9 };
-
-	internal static PickerSensorBar Instance => Singleton<PickerSensorBar>.Instance;
-
-	internal CoreResponse Read()
+	internal static PickerSensorReadResult ReadSensors()
 	{
 		try
 		{
-			CoreResponse coreResponse = CoreController.ExecuteSingleControllerCommand(CommandType.SensorBarOn);
+			CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.SensorBarOn);
 			if (coreResponse.CommunicationError)
 			{
-				return coreResponse;
+				return new PickerSensorReadResult(coreResponse);
 			}
 			PerfFunctions.SpinWait(10);
-			CoreResponse result = CoreController.ExecuteSingleControllerCommand(CommandType.SensorBarRead);
+			CoreResponse response = ControlSystem.Instance.ExecuteControllerCommand(CommandType.ReadPickerInputs);
 			PerfFunctions.SpinWait(10);
-			return result;
+			return new PickerSensorReadResult(response);
 		}
 		finally
 		{
-			CoreController.ExecuteSingleControllerCommand(CommandType.SensorBarOff);
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.SensorBarOff);
 		}
 	}
 
-	internal CoreResponse TurnOn()
-	{
-		return CoreController.ExecuteSingleControllerCommand(CommandType.SensorBarOn);
-	}
-
-	internal CoreResponse TurnOff()
-	{
-		return CoreController.ExecuteSingleControllerCommand(CommandType.SensorBarOff);
-	}
-
-	internal PickerSensorReadResult ReadSensors()
-	{
-		PickerSensorReadResult pickerSensorReadResult = new PickerSensorReadResult();
-		pickerSensorReadResult.ReadError = false;
-		PickerSensorReadResult pickerSensorReadResult2 = pickerSensorReadResult;
-		pickerSensorReadResult2.Sensors = new bool[m_pickerSensorBits.Length];
-		int num = 0;
-		CoreResponse coreResponse = Read();
-		if (coreResponse.CommunicationError)
-		{
-			pickerSensorReadResult2.ReadError = true;
-			for (int i = 0; i < m_pickerSensorBits.Length; i++)
-			{
-				pickerSensorReadResult2.Sensors[i] = true;
-			}
-			return pickerSensorReadResult2;
-		}
-		int[] pickerSensorBits = m_pickerSensorBits;
-		foreach (int bit in pickerSensorBits)
-		{
-			pickerSensorReadResult2.Sensors[num++] = coreResponse.IsBitSet(bit);
-		}
-		return pickerSensorReadResult2;
-	}
-
-	internal bool[] ReadAsFlags()
+	internal static bool[] ReadAsFlags()
 	{
 		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
 		{
@@ -79,7 +40,7 @@ internal class PickerSensorBar
 		return ReadSensors().Sensors;
 	}
 
-	internal bool WaitSensor(PickerSensor lowSensor, bool state, int timeout)
+	internal static bool WaitSensor(PickerSensor lowSensor, bool state, int timeout)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -113,7 +74,7 @@ internal class PickerSensorBar
 		return result;
 	}
 
-	internal bool WaitToClear(PickerSensor lowSensor, PickerSensor highSensor, int timeout)
+	internal static bool WaitToClear(PickerSensor lowSensor, PickerSensor highSensor, int timeout)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -160,9 +121,5 @@ internal class PickerSensorBar
 			}
 		}
 		return result;
-	}
-
-	private PickerSensorBar()
-	{
 	}
 }

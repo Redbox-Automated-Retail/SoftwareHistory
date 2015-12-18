@@ -1,17 +1,57 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using ClearImage;
 using RBDM;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-internal class ClearImageReaderV2 : IClearImageReader, IBarcodeReader
+internal class ClearImageReaderV2 : IBarcodeReader
 {
-	private bool IsLicensed { get; set; }
+	private sealed class ClearImageScanResult : IScanResult, IDisposable
+	{
+		private bool m_disposed;
 
-	private clsRBDM TheReader { get; set; }
+		private readonly List<string> m_rawCodes = new List<string>();
 
-	public IScanResult Scan(string file, int expectedCodes)
+		public TimeSpan ExecutionTime { get; set; }
+
+		public string[] ReadCodes => m_rawCodes.ToArray();
+
+		public void Dispose()
+		{
+			if (!m_disposed)
+			{
+				m_disposed = true;
+				m_rawCodes.Clear();
+			}
+		}
+
+		public ClearImageScanResult()
+		{
+			ExecutionTime = default(TimeSpan);
+		}
+
+		internal void ResetOnException()
+		{
+			m_rawCodes.Clear();
+			ExecutionTime = default(TimeSpan);
+		}
+
+		internal void AddCode(string code)
+		{
+			m_rawCodes.Add(code);
+		}
+	}
+
+	private readonly clsRBDM TheReader;
+
+	public bool IsLicensed { get; private set; }
+
+	public IScanResult Scan(string file)
 	{
 		ClearImageScanResult clearImageScanResult = new ClearImageScanResult();
 		if (!IsLicensed)
@@ -29,7 +69,7 @@ internal class ClearImageReaderV2 : IClearImageReader, IBarcodeReader
 				int num = 0;
 				using (ExecutionTimer executionTimer = new ExecutionTimer())
 				{
-					num = TheReader.Find(expectedCodes);
+					num = TheReader.Find(BarcodeConfiguration.Instance.ExpectedCodes);
 					executionTimer.Stop();
 					clearImageScanResult.ExecutionTime = executionTimer.Elapsed;
 				}
@@ -65,25 +105,27 @@ internal class ClearImageReaderV2 : IClearImageReader, IBarcodeReader
 		return clearImageScanResult;
 	}
 
-	public bool Init(int data)
+	internal ClearImageReaderV2()
 	{
 		LogHelper.Instance.Log("Clearimage v2 reader.init()");
+		Module module = GetType().Module;
+		int hModule = Marshal.GetHINSTANCE(module).ToInt32();
 		CiServer ciServer = new CiServerClass();
 		try
 		{
-			ciServer.OpenExt(data, 74391114, 0);
+			ciServer.OpenExt(hModule, 74391114, 0);
 			TheReader = new clsRBDM
 			{
 				Ci = ciServer,
 				Image = ciServer.CreateImage()
 			};
-			return IsLicensed = true;
+			IsLicensed = true;
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in BarcodeReader.InitializeClearImage.  Calling CiServer.OpenExt to send license key failed.", e);
 			TheReader = null;
-			return false;
+			IsLicensed = false;
 		}
 	}
 }

@@ -248,9 +248,10 @@ public class TouchScreenAccess : UserControl
 		using (Manager.MakeAspect(sender))
 		{
 			Button button = sender as Button;
-			if (button.Tag != null && !(button.Tag.ToString() == string.Empty) && button.Tag is string instruction)
+			string text = button.Tag as string;
+			if (!string.IsNullOrEmpty(text))
 			{
-				ExecuteInstruction(instruction);
+				ExecuteInstruction(text);
 			}
 		}
 	}
@@ -467,7 +468,6 @@ public class TouchScreenAccess : UserControl
 		{
 			Application.DoEvents();
 			HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-			hardwareJobSchedule.StartTime = DateTime.Now;
 			hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
 			HardwareJobSchedule schedule = hardwareJobSchedule;
 			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.ScheduleJob("push-in-dvd", string.Empty, enableDebugging: false, schedule, out var job);
@@ -512,8 +512,10 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(ProfileManager.Instance.Service);
-			ExecuteInstruction($"GRIPPER PUT-DISC-AWAY BARCODE=\"{readBarcodeResult.Barcode}\"");
+			ClientHelper clientHelper = new ClientHelper();
+			HardwareService service = clientHelper.AutoConnect();
+			PutInEmptySlotResult putInEmptySlotResult = new PutInEmptySlotResult(service);
+			putInEmptySlotResult.Run();
 		}
 	}
 
@@ -522,14 +524,12 @@ public class TouchScreenAccess : UserControl
 		using (Manager.MakeAspect(sender))
 		{
 			Location location = CommonFunctions.CurrentLocation();
-			if (location != null)
+			if (location == null)
 			{
-				ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(ProfileManager.Instance.Service);
-				string instruction = $"MOVE DECK={location.Deck} SLOT={location.Slot} MODE=PUT";
-				HardwareJob hardwareJob = ExecuteInstruction(instruction);
-				hardwareJob.Push(readBarcodeResult.Barcode);
-				hardwareJob = ExecuteInstruction("PUT");
+				return;
 			}
+			using PutInLocationResult putInLocationResult = new PutInLocationResult(ProfileManager.Instance.Service, location.Deck, location.Slot);
+			putInLocationResult.Run();
 		}
 	}
 
@@ -540,23 +540,12 @@ public class TouchScreenAccess : UserControl
 			MoveToForm moveToForm = new MoveToForm();
 			moveToForm.DisableModes();
 			moveToForm.Text = "Get From Location";
-			if (moveToForm.ShowDialog() == DialogResult.OK && moveToForm.Deck.HasValue && moveToForm.Slot.HasValue)
+			if (moveToForm.ShowDialog() != DialogResult.OK || !moveToForm.Deck.HasValue || !moveToForm.Slot.HasValue)
 			{
-				HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.ScheduleJob("get-and-center", string.Empty, enableDebugging: false, new HardwareJobSchedule
-				{
-					Priority = HardwareJobPriority.High,
-					StartTime = DateTime.Now
-				}, out var job);
-				CommonFunctions.ProcessCommandResult(hardwareCommandResult);
-				if (hardwareCommandResult.Success)
-				{
-					job.Push(moveToForm.Deck.Value, moveToForm.Slot.Value);
-					job.Resume();
-					Application.DoEvents();
-					hardwareCommandResult = job.WaitForCompletion();
-					CommonFunctions.ProcessCommandResult(hardwareCommandResult);
-				}
+				return;
 			}
+			using GetAndCenterResult getAndCenterResult = new GetAndCenterResult(ProfileManager.Instance.Service, moveToForm.Deck.Value, moveToForm.Slot.Value, center: true);
+			getAndCenterResult.Run();
 		}
 	}
 
@@ -1457,7 +1446,7 @@ public class TouchScreenAccess : UserControl
 		this.m_systemResetButton.Name = "m_systemResetButton";
 		this.m_systemResetButton.Size = new System.Drawing.Size(150, 75);
 		this.m_systemResetButton.TabIndex = 0;
-		this.m_systemResetButton.Tag = "RESET";
+		this.m_systemResetButton.Tag = "SERIALBOARD RESET";
 		this.m_systemResetButton.Text = "Reset";
 		this.m_systemResetButton.UseVisualStyleBackColor = false;
 		this.m_systemResetButton.Click += new System.EventHandler(OnSimpleCommandButton);

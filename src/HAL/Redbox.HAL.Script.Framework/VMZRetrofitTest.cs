@@ -2,7 +2,8 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class VMZRetrofitTest : NativeJobAdapter
+[NativeJob(ProgramName = "test-retrofit-deck", Operand = "TEST-RETROFIT-DECK")]
+internal sealed class VMZRetrofitTest : NativeJobAdapter
 {
 	private readonly int[] TestSlots = new int[5] { 16, 31, 46, 61, 76 };
 
@@ -16,7 +17,7 @@ internal class VMZRetrofitTest : NativeJobAdapter
 				applicationLog.Write("HAL is running emulated - do not run job.");
 				return;
 			}
-			if (QLM.Instance.Deck != null)
+			if (QLM.Deck != null)
 			{
 				applicationLog.Write("The kiosk is still configured for a QLM - bail test.");
 				AddError("Kiosk Misconfiguration.");
@@ -99,6 +100,11 @@ internal class VMZRetrofitTest : NativeJobAdapter
 			}
 			DumpBin.Instance.ResetCount();
 		}
+	}
+
+	internal VMZRetrofitTest(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 
 	private bool FileToBin(int deck)

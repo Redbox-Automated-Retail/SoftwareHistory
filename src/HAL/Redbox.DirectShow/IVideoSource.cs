@@ -6,8 +6,6 @@ public interface IVideoSource
 
 	int FramesReceived { get; }
 
-	long BytesReceived { get; }
-
 	bool IsRunning { get; }
 
 	event NewFrameEventHandler NewFrame;

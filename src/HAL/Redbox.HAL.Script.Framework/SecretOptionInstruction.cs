@@ -1,11 +1,11 @@
 using System;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class SecretOptionInstruction : Instruction
+public sealed class SecretOptionInstruction : Instruction
 {
 	private enum Operation
 	{
@@ -19,38 +19,37 @@ public class SecretOptionInstruction : Instruction
 
 	public override string Mnemonic => "SECRETOPTION";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		int count = tokens.GetTokensAfterMnemonic().Count;
-		if (count > 0)
+		string value = operandTokens[0].Value;
+		if (!OperationRecognized(result, value))
 		{
-			string value = tokens.GetTokensAfterMnemonic()[0].Value;
-			if (OperationRecognized(result, value))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
+			result.AddInvalidOperandError($"The {value} is unrecognized.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Operation operation = ComputeOperation(result, base.Operands[0].Value);
-		if (!LocateKey(result, out var key))
+		if (!LocateKey(result, context, out var key))
 		{
 			AddError("E001", "Missing 'NAME' operand.", result.Errors);
 			return;
 		}
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
 		string val = null;
-		LocateValue(result, out val);
+		LocateValue(result, context, out val);
 		switch (operation)
 		{
 		case Operation.Remove:
-			SecretOptions.Instance.RemoveOption(key);
+			dataStore.Remove(key);
 			break;
 		case Operation.Get:
-			PushRetrieved(SecretOptions.Instance.GetValue<string>(key));
+		{
+			string value = dataStore.GetValue(key, string.Empty);
+			context.PushTop(string.IsNullOrEmpty(value) ? "UNKNOWN" : value);
 			break;
+		}
 		case Operation.GetEncrypted:
 			result.Errors.Add(Error.NewError("E666", "Unsuppported operation.", "The get encrypted operation on SecretOptions is not supported."));
 			break;
@@ -61,7 +60,7 @@ public class SecretOptionInstruction : Instruction
 			}
 			else
 			{
-				SecretOptions.Instance.SetValue(key, val);
+				dataStore.SetValue(key, val);
 			}
 			break;
 		case Operation.SetEncrypted:
@@ -70,15 +69,10 @@ public class SecretOptionInstruction : Instruction
 		}
 	}
 
-	private void PushRetrieved(string val)
-	{
-		ExecutionEngine.Instance.ActiveContext.PushTop(string.IsNullOrEmpty(val) ? "UNKNOWN" : val);
-	}
-
-	private bool LocateKey(ExecutionResult result, out string key)
+	private bool LocateKey(ExecutionResult result, ExecutionContext context, out string key)
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("NAME");
-		key = GetKeyValuePairValue<string>(keyValuePair, result.Errors);
+		key = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
 		if (result.Errors.Count <= 0)
 		{
 			return true;
@@ -86,10 +80,10 @@ public class SecretOptionInstruction : Instruction
 		return false;
 	}
 
-	private bool LocateValue(ExecutionResult result, out string val)
+	private bool LocateValue(ExecutionResult result, ExecutionContext context, out string val)
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("VALUE");
-		val = GetKeyValuePairValue<string>(keyValuePair, result.Errors);
+		val = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
 		if (result.Errors.Count <= 0)
 		{
 			return true;
@@ -104,17 +98,14 @@ public class SecretOptionInstruction : Instruction
 
 	private Operation ComputeOperation(ExecutionResult result, string operation)
 	{
-		Operation operation2 = Operation.None;
-		try
+		Operation operation2 = Enum<Operation>.ParseIgnoringCase(operation, Operation.None);
+		if (operation2 != Operation.None)
 		{
-			return (Operation)Enum.Parse(typeof(Operation), operation, ignoreCase: true);
+			return operation2;
 		}
-		catch (ArgumentException)
-		{
-			string message = $"Unrecognized OPERATION argument: {operation}";
-			LogHelper.Instance.Log(message, LogEntryType.Info);
-			AddError("E001", message, result.Errors);
-			return Operation.None;
-		}
+		string message = $"Unrecognized OPERATION argument: {operation}";
+		LogHelper.Instance.Log(message, LogEntryType.Info);
+		AddError("E001", message, result.Errors);
+		return Operation.None;
 	}
 }

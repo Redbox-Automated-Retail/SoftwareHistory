@@ -5,219 +5,158 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class LocInstruction : Instruction
+public sealed class LocInstruction : Instruction
 {
-	private const string ExcludedSlotsKey = "__ExcludedSlots__";
-
-	private static int PearsonCount;
-
-	public override string Mnemonic => "LOC";
-
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	private static class Keys
 	{
-		base.OnParse(tokens, result);
-		int count = tokens.GetTokensAfterMnemonic().Count;
-		if (count > 0)
+		internal const string ClearReturnTime = "CLEARRETURNTIME";
+
+		internal const string IncrementStuck = "INC-STUCK";
+
+		internal const string ClearStuck = "CLEAR-STUCK";
+
+		internal const string Reset = "RESET";
+
+		internal const string GetInfo = "GET-INFO";
+
+		internal const string GetReturnTime = "GETRETURNTIME";
+
+		internal const string MarkReturnTime = "MARKRETURNTIME";
+
+		internal const string AtDrumLocation = "AT-DRUM-LOC";
+
+		internal const string SetInventory = "SETINVENTORY";
+
+		internal const string ResetReturnTime = "RESETRT";
+
+		internal const string Timestamp = "TIMESTAMP";
+
+		internal const string SetReturnTime = "SETRETURNTIME";
+
+		internal const string IsExcluded = "IS-EXCLUDED";
+
+		internal const string SlotType = "SLOTTYPE";
+
+		internal static bool Recognized(string s)
 		{
-			string value = tokens.GetTokensAfterMnemonic()[0].Value;
-			if (count == 1 && value.Equals("GET-EXCLUDED", StringComparison.CurrentCultureIgnoreCase))
+			if (string.Compare(s, "CLEARRETURNTIME", ignoreCase: true) != 0 && string.Compare(s, "INC-STUCK", ignoreCase: true) != 0 && string.Compare(s, "CLEAR-STUCK", ignoreCase: true) != 0 && string.Compare(s, "RESET", ignoreCase: true) != 0 && string.Compare(s, "GET-INFO", ignoreCase: true) != 0 && string.Compare(s, "GETRETURNTIME", ignoreCase: true) != 0 && string.Compare(s, "MARKRETURNTIME", ignoreCase: true) != 0 && string.Compare(s, "AT-DRUM-LOC", ignoreCase: true) != 0 && string.Compare(s, "SETINVENTORY", ignoreCase: true) != 0 && string.Compare(s, "RESETRT", ignoreCase: true) != 0 && string.Compare(s, "TIMESTAMP", ignoreCase: true) != 0 && string.Compare(s, "SETRETURNTIME", ignoreCase: true) != 0 && string.Compare(s, "IS-EXCLUDED", ignoreCase: true) != 0)
 			{
-				base.Operands.Add(tokens.GetTokensAfterMnemonic()[0]);
+				return string.Compare(s, "SLOTTYPE", ignoreCase: true) == 0;
 			}
-			else if (value.Equals("SLOTTYPE", StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("IS-EXCLUDED".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("COMPUTE-EXCLUDED-LOCS".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("AT-DRUM-LOC".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("CLEARRETURNTIME".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("MARKRETURNTIME".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("GETRETURNTIME".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("SETRETURNTIME".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("SETINVENTORY".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("GET-INFO".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("RESET".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("RESETRT".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("SETID".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("SYNC".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("MOVE-GET".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("TIMESTAMP".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("MOVE-PUT".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("MOVE-PUT".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("INC-STUCK".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else if ("CLEAR-STUCK".Equals(value, StringComparison.CurrentCultureIgnoreCase))
-			{
-				base.Operands.AddRange(tokens.GetTokensAfterMnemonic());
-			}
-			else
-			{
-				AddError("C002", "The LOC instruction supports an optional GET-EXCLUDED or SLOTTYPE operand.", result.Errors);
-			}
+			return true;
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	public override string Mnemonic => "LOC";
+
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
+	{
+		if (!Keys.Recognized(operandTokens[0].Value))
+		{
+			result.AddError(ExecutionErrors.InvalidOperand, $"The '{operandTokens[0].Value}' operand is not recognized.");
+		}
+	}
+
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands.Count >= 1)
 		{
 			Location location;
 			if (base.Operands[0].Value.Equals("CLEARRETURNTIME"))
 			{
-				SetReturnTime(result, null, leaveResult: true);
+				SetReturnTime(result, null, leaveResult: true, context);
 			}
 			else if (base.Operands[0].Value.Equals("INC-STUCK"))
 			{
-				if (!GetLocation(result, out location))
+				if (!GetLocation(result, context, out location))
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
+					context.PushTop("ERROR");
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(location.IncrementEmptyStuck() ? "SUCCESS" : "ERROR");
+					context.PushTop(location.IncrementEmptyStuck() ? "SUCCESS" : "ERROR");
 				}
 			}
 			else if (base.Operands[0].Value.Equals("CLEAR-STUCK"))
 			{
-				if (!GetLocation(result, out location))
+				if (!GetLocation(result, context, out location))
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
+					context.PushTop("ERROR");
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(location.ResetEmptyStuck() ? "SUCCESS" : "ERROR");
+					context.PushTop(location.ResetEmptyStuck() ? "SUCCESS" : "ERROR");
 				}
 			}
 			else if (base.Operands[0].Value.Equals("RESET"))
 			{
-				GetLocation(result, out var deck, out var slot);
-				Deck deck2 = DecksManager.Instance.GetDeck(deck);
-				ExecutionEngine.Instance.ActiveContext.PushTop(deck2.ResetLocation(slot) ? "SUCCESS" : "ERROR");
+				GetLocation(result, context, out var location2);
+				context.PushTop(location2.Reset() ? "SUCCESS" : "ERROR");
 			}
 			else if (base.Operands[0].Value.Equals("GET-INFO"))
 			{
-				if (GetLocation(result, out var deck3, out var slot2))
+				if (GetLocation(result, context, out var location3))
 				{
-					Deck deck4 = DecksManager.Instance.GetDeck(deck3);
-					int emptyStuckCount = deck4.GetEmptyStuckCount(slot2);
-					ExecutionEngine.Instance.ActiveContext.PushTop(emptyStuckCount);
-					string merchDescription = deck4.GetMerchDescription(slot2);
-					ExecutionEngine.Instance.ActiveContext.PushTop(merchDescription);
-					DateTime? returnTime = deck4.GetReturnTime(slot2);
-					ExecutionEngine.Instance.ActiveContext.PushTop(GetDateRepresentation(returnTime));
-					string idForSlot = deck4.GetIdForSlot(slot2);
-					ExecutionEngine.Instance.ActiveContext.PushTop(idForSlot);
-					ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+					int stuckCount = location3.StuckCount;
+					context.PushTop(stuckCount);
+					string instance = location3.Flags.ToString();
+					context.PushTop(instance);
+					DateTime? returnTime = location3.ReturnTime;
+					context.PushTop(GetDateRepresentation(returnTime));
+					string matrix = location3.Matrix;
+					context.PushTop(matrix);
+					context.PushTop("SUCCESS");
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
+					context.PushTop("ERROR");
 				}
 			}
 			else if (base.Operands[0].Value.Equals("GETRETURNTIME"))
 			{
-				if (GetLocation(result, out var deck5, out var slot3))
+				if (GetLocation(result, context, out var location4))
 				{
-					Deck deck6 = DecksManager.Instance.GetDeck(deck5);
-					DateTime? returnTime2 = deck6.GetReturnTime(slot3);
-					ExecutionEngine.Instance.ActiveContext.PushTop(GetDateRepresentation(returnTime2));
+					context.PushTop(GetDateRepresentation(location4.ReturnTime));
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
+					context.PushTop("ERROR");
 				}
 			}
 			else if (base.Operands[0].Value.Equals("MARKRETURNTIME"))
 			{
-				SetReturnTime(result, DateTime.Now, leaveResult: true);
+				SetReturnTime(result, DateTime.Now, leaveResult: true, context);
 			}
 			else if (base.Operands[0].Value.Equals("AT-DRUM-LOC"))
 			{
 				if (ControllerService.Instance.Location.IsValid)
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(true);
+					context.PushTop(true);
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(false);
+					context.PushTop(false);
 				}
 			}
 			else if (base.Operands[0].Value.Equals("SETINVENTORY"))
 			{
 				KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("ID");
-				string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors);
+				string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
 				if (result.Errors.Count > 0)
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("FAILURE");
+					context.PushTop("FAILURE");
 					return;
 				}
-				bool flag = SetBarcode(result, keyValuePairValue);
-				ExecutionEngine.Instance.ActiveContext.PushTop(flag ? "SUCCESS" : "FAILURE");
-			}
-			else if (base.Operands[0].Value.Equals("SETID"))
-			{
-				if (base.Operands[1].Type != TokenType.StringLiteral)
+				if (!GetLocation(result, context, out var deck, out var slot))
 				{
-					AddError("E999", "SETID expects a string literal.", result.Errors);
+					LogHelper.Instance.Log("Unable to get deck and slot information.", LogEntryType.Error);
+					context.PushTop("FAILURE");
 				}
-				else if (!SetBarcode(result, base.Operands[1].Value))
-				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
-				}
+				Deck deck2 = DecksManager.Instance.GetDeck(deck);
+				deck2.SetSlotMatrix(slot, keyValuePairValue);
+				context.PushTop("SUCCESS");
 			}
 			else if (base.Operands[0].Value.Equals("RESETRT"))
 			{
@@ -234,12 +173,12 @@ public class LocInstruction : Instruction
 				}
 				else
 				{
-					SetReturnTime(result, result2, leaveResult: true);
+					SetReturnTime(result, result2, leaveResult: true, context);
 				}
 			}
 			else if (base.Operands[0].Value.Equals("TIMESTAMP"))
 			{
-				SetReturnTime(result, DateTime.Now, leaveResult: false);
+				SetReturnTime(result, DateTime.Now, leaveResult: false, context);
 			}
 			else if (base.Operands[0].Value.Equals("SETRETURNTIME"))
 			{
@@ -248,7 +187,7 @@ public class LocInstruction : Instruction
 					LogHelper.Instance.Log("Location SETRETURNTIME - Operand expected to be a symbol", LogEntryType.Error);
 					AddError("E999", "Unspecified context exit; check the logs.", result.Errors);
 				}
-				string text = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[1].Value, result.Errors) as string;
+				string text = context.GetSymbolValue(base.Operands[1].Value, result.Errors) as string;
 				if (!"NONE".Equals(text))
 				{
 					if (!DateTime.TryParse(text, out var result3))
@@ -258,31 +197,31 @@ public class LocInstruction : Instruction
 					}
 					else
 					{
-						SetReturnTime(result, result3, leaveResult: true);
+						SetReturnTime(result, result3, leaveResult: true, context);
 					}
 				}
 			}
 			else if (base.Operands[0].Value.Equals("IS-EXCLUDED"))
 			{
-				if (GetLocation(result, out var location2))
+				if (GetLocation(result, context, out var location5))
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(location2.IsExcluded);
-					ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+					context.PushTop(location5.IsExcluded);
+					context.PushTop("SUCCESS");
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("LocationOutOfRange".ToUpper());
+					context.PushTop("LocationOutOfRange".ToUpper());
 				}
 			}
 			else if (base.Operands[0].Value.Equals("SLOTTYPE"))
 			{
-				if (!GetLocation(result, out var location3))
+				if (!GetLocation(result, context, out var location6))
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop("UNKNOWN");
+					context.PushTop("UNKNOWN");
 				}
 				else
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(location3.IsWide ? "WIDE" : "NOTWIDE");
+					context.PushTop(location6.IsWide ? "WIDE" : "NOTWIDE");
 				}
 			}
 			else
@@ -292,95 +231,38 @@ public class LocInstruction : Instruction
 		}
 		else if (ControllerService.Instance.IsAtVendLocation)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop("VENDDOOR");
-			ExecutionEngine.Instance.ActiveContext.PushTop("VENDDOOR");
+			context.PushTop("VENDDOOR");
+			context.PushTop("VENDDOOR");
 		}
 		else if (!ControllerService.Instance.Location.IsValid)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop("UNDEFINED");
-			ExecutionEngine.Instance.ActiveContext.PushTop("UNDEFINED");
+			context.PushTop("UNDEFINED");
+			context.PushTop("UNDEFINED");
 		}
 		else
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(ControllerService.Instance.Location.Slot);
-			ExecutionEngine.Instance.ActiveContext.PushTop(ControllerService.Instance.Location.Deck);
+			context.PushTop(ControllerService.Instance.Location.Slot);
+			context.PushTop(ControllerService.Instance.Location.Deck);
 		}
 	}
 
 	protected override bool IsOperandRecognized(string op)
 	{
-		return IsRecognizedOperand(op);
+		return Keys.Recognized(op);
 	}
 
-	private void SetReturnTime(ExecutionResult result, DateTime? newTime, bool leaveResult)
+	private void SetReturnTime(ExecutionResult result, DateTime? newTime, bool leaveResult, ExecutionContext context)
 	{
-		if (!GetLocation(result, out var deck, out var slot))
+		if (!GetLocation(result, context, out var location))
 		{
 			LogHelper.Instance.Log("Unable to get deck and slot information.", LogEntryType.Error);
-			ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
+			context.PushTop("ERROR");
 			return;
 		}
-		Deck deck2 = DecksManager.Instance.GetDeck(deck);
-		bool flag = deck2.UpdateReturnTime(slot, newTime);
+		bool flag = location.UpdateReturnTime(newTime);
 		if (leaveResult)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(flag);
-		}
-	}
-
-	private bool SetBarcode(ExecutionResult result, string id)
-	{
-		if (!GetLocation(result, out var deck, out var slot))
-		{
-			LogHelper.Instance.Log("Unable to get deck and slot information.", LogEntryType.Error);
-			return false;
-		}
-		Deck deck2 = DecksManager.Instance.GetDeck(deck);
-		deck2.SetSlotMatrix(slot, id);
-		return true;
-	}
-
-	private bool IsRecognizedOperand(string op)
-	{
-		switch (op.ToUpper())
-		{
-		case "SLOTTYPE":
-		case "GET-EXCLUDED":
-		case "IS-EXCLUDED":
-		case "CLEARRETURNTIME":
-		case "MARKRETURNTIME":
-		case "GETRETURNTIME":
-		case "SETRETURNTIME":
-		case "GET-INFO":
-		case "RESETRT":
-		case "SETID":
-		case "SYNC":
-		case "MOVE-GET":
-		case "MOVE-PUT":
-		case "SETINVENTORY":
-		case "RESET":
-		case "TIMESTAMP":
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	private static string GetNextPearson()
-	{
-		switch (PearsonCount)
-		{
-		case 0:
-			PearsonCount++;
-			return "APPLE STORE";
-		case 1:
-			PearsonCount++;
-			return "CRAWLSPACE";
-		case 2:
-			PearsonCount = 0;
-			return "PICKING UP CANS IN ROAD.";
-		default:
-			return "HOW DO I KNOW?";
+			context.PushTop(flag);
 		}
 	}
 }

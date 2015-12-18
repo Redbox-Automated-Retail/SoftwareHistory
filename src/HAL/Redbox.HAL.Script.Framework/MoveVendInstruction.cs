@@ -5,34 +5,25 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class MoveVendInstruction : Instruction
+public sealed class MoveVendInstruction : Instruction
 {
-	protected static class KeyNames
-	{
-		public const string Mode = "MODE";
+	private const string Mode = "MODE";
 
-		public const string ResetOnCommunicationFailure = "RESETONCOMMERROR";
-	}
+	private const string ResetOnCommunicationFailure = "RESETONCOMMERROR";
 
 	public override string Mnemonic => "MOVEVEND";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count != 0)
+		if (operandTokens.Count > 2)
 		{
-			if (tokensAfterMnemonic.Count <= 2)
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-			else
-			{
-				AddError("C002", "Expected either no arguments, or single key value pair MODE=GET.", result.Errors);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected either no arguments, or single key value pair MODE=GET.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		MoveMode mode = MoveMode.None;
 		if (base.Operands.Count > 0)
@@ -49,8 +40,8 @@ public class MoveVendInstruction : Instruction
 			new ErrorList();
 			bool.TryParse(keyValuePair2.Value, out var _);
 		}
-		MotionResult motionResult = ControllerService.Instance.MoveToVend(mode, ExecutionEngine.Instance.ActiveContext.AppLog);
+		MotionResult motionResult = ControllerService.Instance.MoveToVend(mode, context.AppLog);
 		string instance = motionResult.ToString().ToUpper();
-		ExecutionEngine.Instance.ActiveContext.PushTop(instance);
+		context.PushTop(instance);
 	}
 }

@@ -4,5 +4,6 @@ internal enum FileDiscIterationResult
 {
 	Continue,
 	NextLocation,
-	Halt
+	Halt,
+	RetryLocation
 }

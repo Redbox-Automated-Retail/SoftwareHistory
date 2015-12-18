@@ -4,5 +4,6 @@ internal enum PanelIndex
 {
 	QuickReturn,
 	AuxBoardRelay,
-	IceQubeBoard
+	IceQubeBoard,
+	CortexCamera
 }

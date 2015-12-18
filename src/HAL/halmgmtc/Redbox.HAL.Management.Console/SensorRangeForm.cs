@@ -54,8 +54,8 @@ public class SensorRangeForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? End
 	{
 		get

@@ -3,10 +3,10 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
-using Redbox.HAL.Core;
 using Redbox.HAL.Management.Console.Properties;
 
 namespace Redbox.HAL.Management.Console;
@@ -203,7 +203,7 @@ public class Form1 : Form
 
 	public Form1()
 	{
-		EnvironmentHelper.IsLocked = !RegistryOptions.Instance.GetSecretValue<bool>("SOFTWARE\\Redbox\\HAL Management Console", "DeveloperMode");
+		EnvironmentHelper.IsLocked = !Settings.Default.DeveloperMode;
 		InitializeToolBars();
 		LoadConfiguration();
 		InitializeComponent();
@@ -289,7 +289,15 @@ public class Form1 : Form
 			HardwareService service = ProfileManager.Instance.Service;
 			if (service != null)
 			{
-				Redbox.HAL.Common.GUI.Functions.CommonFunctions.ExecuteInstruction(service, "ROLLER STOP");
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.AppendLine(" VENDDOOR CLOSE");
+				stringBuilder.AppendLine(" GRIPPER RENT");
+				stringBuilder.AppendLine(" GRIPPER RETRACT");
+				stringBuilder.AppendLine(" SENSOR PICKER-OFF");
+				stringBuilder.AppendLine(" ROLLER STOP");
+				stringBuilder.AppendLine(" RINGLIGHT OFF");
+				stringBuilder.AppendLine(" CLEAR");
+				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			}
 			Application.Exit();
 		}
@@ -697,30 +705,6 @@ public class Form1 : Form
 			CommonFunctions.ProcessCommandResult(result);
 			EnvironmentHelper.IsLocked = EnvironmentHelper.IsLocked;
 		};
-		ToolStripItem toolStripItem = new ToolStripButton();
-		toolStripItem.Text = "Vend Test Form";
-		string file = Settings.Default.VendTestLocation;
-		if (!File.Exists(file))
-		{
-			toolStripItem.Text = "Vend Test Form - Missing";
-			toolStripItem.Enabled = false;
-		}
-		else
-		{
-			toolStripItem.Click += delegate
-			{
-				if (!File.Exists(file))
-				{
-					MessageBox.Show("ERROR: Unable to find Vend Test Tool!", "ERROR");
-				}
-				else
-				{
-					Process.Start(file);
-				}
-			};
-		}
-		toolsToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
-		toolsToolStripMenuItem.DropDownItems.Add(toolStripItem);
 	}
 
 	protected override void Dispose(bool disposing)

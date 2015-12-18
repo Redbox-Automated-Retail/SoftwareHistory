@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Xml;
 using Redbox.HAL.Core;
 using Redbox.HAL.DataStorage;
@@ -58,7 +59,11 @@ public sealed class Deck
 
 	private const int SlotsPerQuadrantSparseDeck = 6;
 
+	private readonly ReaderWriterLockSlim Lock = new ReaderWriterLockSlim();
+
 	private DeckData[] m_inventoryData;
+
+	private readonly List<Quadrant> m_quadrants = new List<Quadrant>();
 
 	public int Number { get; private set; }
 
@@ -78,11 +83,19 @@ public sealed class Deck
 
 	public int SlotsPerQuadrant { get; private set; }
 
-	public Quadrant[] Quadrants { get; private set; }
+	public Quadrant[] Quadrants
+	{
+		get
+		{
+			return m_quadrants.ToArray();
+		}
+		private set
+		{
+			m_quadrants.AddRange(value);
+		}
+	}
 
 	internal bool IsSparse => NumberOfSlots == 72;
-
-	private object Lock { get; set; }
 
 	private bool TrackProblemLocations
 	{
@@ -94,6 +107,77 @@ public sealed class Deck
 			}
 			return false;
 		}
+	}
+
+	private IDataStore Store => StoreManager.Instance.FindByName("HALData.vdb3");
+
+	public override int GetHashCode()
+	{
+		return Number;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (!(obj is Deck deck))
+		{
+			return false;
+		}
+		return deck == this;
+	}
+
+	public static bool operator !=(Deck lhs, Deck rhs)
+	{
+		return !(lhs == rhs);
+	}
+
+	public static bool operator ==(Deck lhs, Deck rhs)
+	{
+		if (object.ReferenceEquals(lhs, rhs))
+		{
+			return true;
+		}
+		if ((object)lhs == null || (object)rhs == null)
+		{
+			return false;
+		}
+		if (lhs.YOffset != rhs.YOffset)
+		{
+			return false;
+		}
+		if (lhs.NumberOfSlots != rhs.NumberOfSlots)
+		{
+			return false;
+		}
+		if (lhs.IsQlmDeck != rhs.IsQlmDeck)
+		{
+			return false;
+		}
+		if (lhs.SlotWidth != rhs.SlotWidth)
+		{
+			return false;
+		}
+		if (lhs.SellThruOffset != rhs.SellThruOffset)
+		{
+			return false;
+		}
+		if (lhs.ApproachOffset != rhs.ApproachOffset)
+		{
+			return false;
+		}
+		if (lhs.Quadrants.Length != rhs.Quadrants.Length)
+		{
+			return false;
+		}
+		for (int i = 0; i < lhs.Quadrants.Length; i++)
+		{
+			Quadrant quadrant = lhs.Quadrants[i];
+			Quadrant quadrant2 = rhs.Quadrants[i];
+			if (quadrant.Offset != quadrant2.Offset || quadrant.IsExcluded != quadrant2.IsExcluded)
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public Deck(int number, int yoffset, bool isQlmDeck, int? approachOffset, int numberOfSlots, decimal slotWidth, int? sellThruSlots, int? sellThruOffset, Quadrant[] quadrantOffsets)
@@ -111,7 +195,6 @@ public sealed class Deck
 			new Quadrant(780)
 		};
 		SlotsPerQuadrant = NumberOfSlots / Quadrants.Length;
-		Lock = new object();
 	}
 
 	public static Deck FromXmlNode(XmlNode node)
@@ -193,36 +276,61 @@ public sealed class Deck
 
 	public List<int> SwapEmptyWith(string id, MerchFlags flags, Range range)
 	{
-		lock (Lock)
+		List<int> list = new List<int>();
+		IDataStore store = Store;
+		if (store == null)
 		{
-			return SwapWithEmptyInner(id, flags, range);
+			return list;
 		}
-	}
-
-	public List<int> SwapEmptyWith(string id, MerchFlags flags)
-	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
-			Range slots = new Range(1, NumberOfSlots);
-			return SwapWithEmptyInner(id, flags, slots);
+			using Transaction transaction = new Transaction(TransactionType.Update);
+			for (int i = range.Start - 1; i < range.End; i++)
+			{
+				if (m_inventoryData[i].ID == "EMPTY" && !m_inventoryData[i].Excluded)
+				{
+					m_inventoryData[i].ID = id;
+					m_inventoryData[i].MerchFlags = flags;
+					transaction.Enqueue(m_inventoryData[i].UpdateCommand(store));
+					list.Add(i + 1);
+				}
+			}
+			if (transaction.Execute(store) != list.Count)
+			{
+				LogHelper.Instance.Log("[SwapEmptyWith]WARNING: transaction failed.", LogEntryType.Error);
+				list.Clear();
+			}
+			return list;
 		}
 	}
 
 	public void MarkInventory(string id)
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
 			for (int i = 0; i < NumberOfSlots; i++)
 			{
 				m_inventoryData[i].ID = id;
 			}
-			InventoryManager.Instance.UpdateDeckInventory(this, id);
+			IDataStore store = Store;
+			if (store == null)
+			{
+				return;
+			}
+			string format = "UPDATE {0} SET ID = '{1}' WHERE  Deck = '{2}'";
+			using Transaction transaction = new Transaction(TransactionType.Update);
+			string statement = string.Format(format, "Inventory_v1", id, Number);
+			transaction.Enqueue(statement);
+			if (transaction.Execute(Store) != NumberOfSlots)
+			{
+				LogHelper.Instance.Log($"There was an error setting the inventory on deck {Number} to {id}", LogEntryType.Info);
+			}
 		}
 	}
 
 	public int FindId(string id)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			for (int i = 0; i < m_inventoryData.Length; i++)
 			{
@@ -235,32 +343,11 @@ public sealed class Deck
 		}
 	}
 
-	public bool ResetLocation(int slot)
-	{
-		lock (Lock)
-		{
-			DeckData data = m_inventoryData[slot - 1];
-			return ResetDataInner(data);
-		}
-	}
-
-	public bool FillResult(GetResult gr, int slot, bool reset)
-	{
-		lock (Lock)
-		{
-			DeckData deckData = m_inventoryData[slot - 1];
-			gr.Previous = deckData.ID;
-			gr.ReturnTime = deckData.ReturnDate;
-			gr.Flags = deckData.MerchFlags;
-			return !reset || ResetDataInner(deckData);
-		}
-	}
-
 	public bool RemoveInventory()
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
-			InventoryManager.Instance.RemoveEntries(this, new Range(1, NumberOfSlots));
+			Remove(new Range(1, NumberOfSlots));
 			m_inventoryData = null;
 			return true;
 		}
@@ -268,31 +355,34 @@ public sealed class Deck
 
 	public bool Add()
 	{
-		lock (Lock)
+		IDataStore store = Store;
+		if (store == null)
+		{
+			return false;
+		}
+		using (new WithWriteLock(Lock))
 		{
 			m_inventoryData = new DeckData[NumberOfSlots];
-			using Transaction txn = new Transaction(TransactionType.Insert);
+			using Transaction transaction = new Transaction(TransactionType.Insert);
 			for (int i = 0; i < NumberOfSlots; i++)
 			{
-				m_inventoryData[i] = new DeckData
+				m_inventoryData[i] = new DeckData(Number, i + 1)
 				{
-					Deck = Number,
-					Slot = i + 1,
 					ID = "EMPTY",
 					ReturnDate = null,
 					Excluded = false,
 					EmptyStuckCount = 0,
 					MerchFlags = MerchFlags.None
 				};
-				InventoryManager.Instance.EnqueueInsert(txn, m_inventoryData[i]);
+				transaction.Enqueue(m_inventoryData[i].InsertCommand(store));
 			}
-			return InventoryManager.Instance.ExecuteTransaction(txn);
+			return transaction.Execute(Store) == NumberOfSlots;
 		}
 	}
 
 	public string GetIdForSlot(int slot)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			if (!IsSlotValid(slot))
 			{
@@ -339,79 +429,104 @@ public sealed class Deck
 		return (int)((decimal)offset + num4);
 	}
 
-	public Quadrant FindContainingQuadrant(int slot)
-	{
-		return FindQuadrantThatContainsSlot(slot);
-	}
-
-	public bool UpdateReturnTime(int slot, DateTime? newDate)
-	{
-		lock (Lock)
-		{
-			if (!newDate.HasValue && !m_inventoryData[slot - 1].ReturnDate.HasValue)
-			{
-				return true;
-			}
-			m_inventoryData[slot - 1].ReturnDate = newDate;
-			return InventoryManager.Instance.UpdateSlot(m_inventoryData[slot - 1]);
-		}
-	}
-
-	public DateTime? GetReturnTime(int slot)
-	{
-		lock (Lock)
-		{
-			return m_inventoryData[slot - 1].ReturnDate;
-		}
-	}
-
 	public bool UpdateOnTransfer(int slot, MerchFlags flags, DateTime? newTime)
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
 			DeckData deckData = m_inventoryData[slot - 1];
 			deckData.MerchFlags = flags;
 			deckData.ReturnDate = newTime;
-			return InventoryManager.Instance.UpdateSlot(deckData);
+			return UpdateStore(deckData);
 		}
 	}
 
 	public bool ClearMerchFlag(int slot)
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
 			DeckData deckData = m_inventoryData[slot - 1];
 			deckData.MerchFlags = MerchFlags.None;
-			return InventoryManager.Instance.UpdateSlot(deckData);
+			return UpdateStore(deckData);
 		}
 	}
 
-	public string GetMerchDescription(int slot)
+	public bool UpdateEmptyStuck(int slot)
 	{
-		lock (Lock)
+		if (!TrackProblemLocations)
 		{
-			return m_inventoryData[slot - 1].MerchFlags.ToString();
+			return false;
+		}
+		using (new WithWriteLock(Lock))
+		{
+			DeckData deckData = m_inventoryData[slot - 1];
+			deckData.EmptyStuckCount++;
+			ProblemLocationsLog.Instance.LogFormattedMessage("Incrementing Deck = {0} Slot = {1}; current stuck count = {2}", Number, slot, deckData.EmptyStuckCount);
+			if (deckData.EmptyStuckCount >= ControllerConfiguration.Instance.MarkLocationUnknownThreshold && deckData.ID != "UNKNOWN")
+			{
+				ProblemLocationsLog.Instance.LogFormattedMessage("Error threshold met: set inventory to {0} at Deck = {1} Slot = {2}", "UNKNOWN", Number, slot);
+				deckData.ID = "UNKNOWN";
+			}
+			return UpdateStore(deckData);
 		}
 	}
 
 	public int GetEmptyStuckCount(int slot)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			return TrackProblemLocations ? m_inventoryData[slot - 1].EmptyStuckCount : 0;
 		}
 	}
 
-	public bool MarkSlotEmpty(int slot)
+	public bool Exclude(List<int> slots)
 	{
-		SetSlotId(slot, "EMPTY");
-		return true;
+		IDataStore store = Store;
+		if (store == null)
+		{
+			return false;
+		}
+		using (new WithWriteLock(Lock))
+		{
+			using Transaction transaction = new Transaction(TransactionType.Update);
+			foreach (int slot in slots)
+			{
+				m_inventoryData[slot - 1].Reset();
+				m_inventoryData[slot - 1].Excluded = true;
+				transaction.Enqueue(m_inventoryData[slot - 1].UpdateCommand(store));
+			}
+			return transaction.Execute(Store) == slots.Count;
+		}
 	}
 
-	public bool MarkSlotUnknown(int slot)
+	public bool UnExclude(List<int> slots)
 	{
-		SetSlotId(slot, "UNKNOWN");
-		return true;
+		IDataStore store = Store;
+		if (store == null)
+		{
+			return false;
+		}
+		using (new WithWriteLock(Lock))
+		{
+			using Transaction transaction = new Transaction(TransactionType.Update);
+			foreach (int slot in slots)
+			{
+				m_inventoryData[slot - 1].Excluded = false;
+				transaction.Enqueue(m_inventoryData[slot - 1].UpdateCommand(store));
+			}
+			return transaction.Execute(Store) == slots.Count;
+		}
+	}
+
+	public bool UpdateFromResult(GetResult result, int slot)
+	{
+		using (new WithWriteLock(Lock))
+		{
+			DeckData deckData = m_inventoryData[slot - 1];
+			deckData.ID = result.Previous;
+			deckData.ReturnDate = result.ReturnTime;
+			deckData.MerchFlags = result.Flags;
+			return UpdateStore(deckData);
+		}
 	}
 
 	public bool SetSlotMatrix(int slot, string matrix)
@@ -429,9 +544,43 @@ public sealed class Deck
 		return false;
 	}
 
+	public bool Reset(string id)
+	{
+		bool flag = id == "EMPTY";
+		using (new WithWriteLock(Lock))
+		{
+			using Transaction transaction = new Transaction(TransactionType.Update);
+			for (int i = 0; i < NumberOfSlots; i++)
+			{
+				m_inventoryData[i].Reset();
+				if (!flag)
+				{
+					m_inventoryData[i].ID = id;
+				}
+				transaction.Enqueue(m_inventoryData[i].UpdateCommand(Store));
+			}
+			return transaction.Execute(Store) == NumberOfSlots;
+		}
+	}
+
+	public Location FindMatching(MerchFlags flags)
+	{
+		using (new WithReadLock(Lock))
+		{
+			for (int i = 0; i < NumberOfSlots; i++)
+			{
+				if (m_inventoryData[i].MerchFlags == flags)
+				{
+					return new Location(Number, i + 1);
+				}
+			}
+			return null;
+		}
+	}
+
 	internal static bool IsSuspiciousId(string id)
 	{
-		if (Constants.IsKnownInventoryToken(id))
+		if (InventoryConstants.IsKnownInventoryToken(id))
 		{
 			return false;
 		}
@@ -449,11 +598,116 @@ public sealed class Deck
 		}
 	}
 
+	internal void Copy(Deck newProperties)
+	{
+		using (new WithWriteLock(Lock))
+		{
+			YOffset = newProperties.YOffset;
+			IsQlmDeck = newProperties.IsQlmDeck;
+			SlotWidth = newProperties.SlotWidth;
+			SellThruOffset = newProperties.SellThruOffset;
+			ApproachOffset = newProperties.ApproachOffset;
+			int numberOfSlots = NumberOfSlots;
+			NumberOfSlots = newProperties.NumberOfSlots;
+			if (numberOfSlots < newProperties.NumberOfSlots)
+			{
+				Range range = new Range(numberOfSlots + 1, NumberOfSlots);
+				if (!AddEntries(range))
+				{
+					LogHelper.Instance.Log($"Unable to add entries {range.Start} -> {range.End} on deck {Number}", LogEntryType.Error);
+				}
+				else if (IsQlmDeck && !newProperties.IsQlmDeck)
+				{
+					ResetRange(new Range(1, numberOfSlots));
+				}
+			}
+			else if (numberOfSlots > newProperties.NumberOfSlots)
+			{
+				Range slots = new Range(newProperties.NumberOfSlots + 1, numberOfSlots);
+				RemoveEntries(slots);
+			}
+			m_quadrants.Clear();
+			m_quadrants.AddRange(newProperties.Quadrants);
+			IDataStore store = Store;
+			if (store == null)
+			{
+				return;
+			}
+			Quadrant[] quadrants = Quadrants;
+			foreach (Quadrant quadrant in quadrants)
+			{
+				using Transaction transaction = new Transaction(TransactionType.Update);
+				for (int j = quadrant.Slots.Start; j <= quadrant.Slots.End; j++)
+				{
+					if (m_inventoryData[j - 1].Excluded != quadrant.IsExcluded)
+					{
+						m_inventoryData[j - 1].Excluded = quadrant.IsExcluded;
+						transaction.Enqueue(m_inventoryData[j - 1].UpdateCommand(store));
+					}
+				}
+				transaction.Execute(store);
+			}
+		}
+	}
+
+	internal void Fill(GetResult gr, int slot)
+	{
+		using (new WithWriteLock(Lock))
+		{
+			DeckData deckData = m_inventoryData[slot - 1];
+			gr.Previous = deckData.ID;
+			gr.ReturnTime = deckData.ReturnDate;
+			gr.Flags = deckData.MerchFlags;
+		}
+	}
+
+	internal bool ResetLocation(int slot)
+	{
+		using (new WithWriteLock(Lock))
+		{
+			DeckData deckData = m_inventoryData[slot - 1];
+			deckData.Reset();
+			return UpdateStore(deckData);
+		}
+	}
+
+	internal bool MarkSlotUnknown(int slot)
+	{
+		SetSlotId(slot, "UNKNOWN");
+		return true;
+	}
+
+	internal bool UpdateReturnTime(int slot, DateTime? newDate)
+	{
+		using (new WithWriteLock(Lock))
+		{
+			if (!newDate.HasValue && !m_inventoryData[slot - 1].ReturnDate.HasValue)
+			{
+				return true;
+			}
+			m_inventoryData[slot - 1].ReturnDate = newDate;
+			return UpdateStore(m_inventoryData[slot - 1]);
+		}
+	}
+
+	internal DateTime? GetReturnTime(int slot)
+	{
+		using (new WithReadLock(Lock))
+		{
+			return m_inventoryData[slot - 1].ReturnDate;
+		}
+	}
+
 	internal int BulkUpdate(List<Location> locs, string newId, MerchFlags newFlags)
 	{
-		lock (Lock)
+		IDataStore store = Store;
+		if (store == null)
 		{
-			using Transaction txn = new Transaction(TransactionType.Update);
+			return 0;
+		}
+		using (new WithWriteLock(Lock))
+		{
+			using Transaction transaction = new Transaction(TransactionType.Update);
 			foreach (Location loc in locs)
 			{
 				if (loc.Deck != Number)
@@ -464,38 +718,34 @@ public sealed class Deck
 				int num = loc.Slot - 1;
 				m_inventoryData[num].ID = newId;
 				m_inventoryData[num].MerchFlags = newFlags;
-				InventoryManager.Instance.EnqueueUpdate(txn, m_inventoryData[num]);
+				transaction.Enqueue(m_inventoryData[num].UpdateCommand(store));
 			}
-			return InventoryManager.Instance.ExecuteTransaction(txn) ? locs.Count : 0;
+			return (transaction.Execute(Store) == locs.Count) ? locs.Count : 0;
 		}
 	}
 
 	internal string SetSlotId(int slot, string id)
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
-			string iD = m_inventoryData[slot - 1].ID;
-			m_inventoryData[slot - 1].ID = id;
-			if (!InventoryManager.Instance.UpdateSlot(m_inventoryData[slot - 1]))
-			{
-				LogHelper.Instance.Log($"SetSlotId: Deck={Number}, Slot={slot}, ID={id} (previous = {iD}) returned FAILURE", LogEntryType.Error);
-			}
-			return iD;
+			DateTime? returnDate = m_inventoryData[slot - 1].ReturnDate;
+			MerchFlags merchFlags = m_inventoryData[slot - 1].MerchFlags;
+			return UpdateSlotInner(slot, id, merchFlags, returnDate);
 		}
 	}
 
-	internal void CopyData(Deck deck)
+	internal string SetSlotId(int slot, string id, MerchFlags flags, DateTime? rv)
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
-			m_inventoryData = deck.m_inventoryData;
+			return UpdateSlotInner(slot, id, flags, rv);
 		}
 	}
 
 	internal int GetEmptyCount()
 	{
 		int num = 0;
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			DeckData[] inventoryData = m_inventoryData;
 			foreach (DeckData deckData in inventoryData)
@@ -509,50 +759,48 @@ public sealed class Deck
 		}
 	}
 
-	internal List<Location> GetUnknownLocations()
+	internal void GetUnknownLocations(List<Location> list)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
-			return MatchInventory("UNKNOWN");
+			MatchMatrix("UNKNOWN", list);
 		}
 	}
 
-	internal List<Location> GetEmptyLocations()
+	internal void GetEmptyLocations(List<Location> list)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
-			return MatchInventory("EMPTY");
-		}
-	}
-
-	internal void ApplyQuadrantExcludes()
-	{
-		lock (Lock)
-		{
-			Quadrant[] quadrants = Quadrants;
-			foreach (Quadrant quadrant in quadrants)
-			{
-				ExcludeRange(quadrant.Slots, quadrant.IsExcluded);
-			}
+			MatchMatrix("EMPTY", list);
 		}
 	}
 
 	internal bool ImportInventory(List<DeckData> data)
 	{
-		lock (Lock)
+		IDataStore store = Store;
+		if (store == null)
 		{
-			if (!InventoryManager.Instance.BulkUpdate(data))
+			return false;
+		}
+		using (new WithWriteLock(Lock))
+		{
+			using (Transaction transaction = new Transaction(TransactionType.Update))
 			{
-				return false;
+				foreach (DeckData datum in data)
+				{
+					transaction.Enqueue(datum.UpdateCommand(store));
+				}
+				if (transaction.Execute(Store) != data.Count)
+				{
+					return false;
+				}
 			}
 			m_inventoryData = new DeckData[NumberOfSlots];
 			for (int i = 0; i < NumberOfSlots; i++)
 			{
 				DeckData deckData = data[i];
-				m_inventoryData[i] = new DeckData
+				m_inventoryData[i] = new DeckData(Number, i + 1)
 				{
-					Deck = Number,
-					Slot = i + 1,
 					ID = deckData.ID,
 					ReturnDate = deckData.ReturnDate,
 					Excluded = deckData.Excluded,
@@ -566,7 +814,7 @@ public sealed class Deck
 
 	internal void WriteInventoryData(XmlTextWriter writer)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			DeckData[] inventoryData = m_inventoryData;
 			foreach (DeckData deckData in inventoryData)
@@ -578,41 +826,25 @@ public sealed class Deck
 		}
 	}
 
-	internal bool UpdateEmptyStuck(int slot)
-	{
-		if (!TrackProblemLocations)
-		{
-			return false;
-		}
-		lock (Lock)
-		{
-			DeckData deckData = m_inventoryData[slot - 1];
-			ProblemLocationsLog.Instance.LogFormattedMessage("Incrementing Deck = {0} Slot = {1} with problem type ; current error count = {3}", Number, slot, deckData.EmptyStuckCount);
-			if (++deckData.EmptyStuckCount >= ControllerConfiguration.Instance.MarkLocationUnknownThreshold && deckData.ID != "UNKNOWN")
-			{
-				ProblemLocationsLog.Instance.LogFormattedMessage("Error threshold met: set inventory to {0} at Deck = {1} Slot = {2}", "UNKNOWN", Number, slot);
-				deckData.ID = "UNKNOWN";
-			}
-			return InventoryManager.Instance.UpdateSlot(deckData);
-		}
-	}
-
 	internal bool ResetEmptyStuckCount(int slot)
 	{
 		if (!TrackProblemLocations)
 		{
 			return false;
 		}
-		lock (Lock)
+		using (new WithUpgradeableReadLock(Lock))
 		{
 			DeckData deckData = m_inventoryData[slot - 1];
 			if (deckData.EmptyStuckCount == 0)
 			{
 				return true;
 			}
-			deckData.EmptyStuckCount = 0;
-			ProblemLocationsLog.Instance.LogFormattedMessage("Resetting Deck = {0} Slot = {1}", Number, slot);
-			return InventoryManager.Instance.UpdateSlot(deckData);
+			using (new WithWriteLock(Lock))
+			{
+				deckData.EmptyStuckCount = 0;
+				ProblemLocationsLog.Instance.LogFormattedMessage("Resetting Deck = {0} Slot = {1}", Number, slot);
+				return UpdateStore(deckData);
+			}
 		}
 	}
 
@@ -622,7 +854,7 @@ public sealed class Deck
 		{
 			return false;
 		}
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			return m_inventoryData[slot - 1].EmptyStuckCount >= ControllerConfiguration.Instance.MarkLocationUnknownThreshold;
 		}
@@ -630,25 +862,40 @@ public sealed class Deck
 
 	internal MerchFlags GetMerchFlags(int slot)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			return m_inventoryData[slot - 1].MerchFlags;
 		}
 	}
 
+	internal DeckData FindFirst(string id)
+	{
+		using (new WithReadLock(Lock))
+		{
+			for (int i = 0; i < NumberOfSlots; i++)
+			{
+				if (m_inventoryData[i].ID == id)
+				{
+					return m_inventoryData[i];
+				}
+			}
+			return m_inventoryData[NumberOfSlots - 1];
+		}
+	}
+
 	internal bool UpdateMerchFlag(MerchFlags flags, int slot)
 	{
-		lock (Lock)
+		using (new WithWriteLock(Lock))
 		{
 			DeckData deckData = m_inventoryData[slot - 1];
 			deckData.MerchFlags = flags;
-			return InventoryManager.Instance.UpdateSlot(deckData);
+			return UpdateStore(deckData);
 		}
 	}
 
 	internal bool IsExcluded(int slot)
 	{
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			return m_inventoryData[slot - 1].Excluded;
 		}
@@ -657,7 +904,7 @@ public sealed class Deck
 	internal int GetExcludedCount()
 	{
 		int num = 0;
-		lock (Lock)
+		using (new WithReadLock(Lock))
 		{
 			for (int i = 0; i < m_inventoryData.Length; i++)
 			{
@@ -672,40 +919,35 @@ public sealed class Deck
 
 	internal void ExcludeSlot(int slot, bool excluded)
 	{
-		lock (Lock)
+		using (new WithUpgradeableReadLock(Lock))
 		{
 			DeckData deckData = m_inventoryData[slot - 1];
-			if (deckData.Excluded != excluded)
+			if (deckData.Excluded == excluded)
+			{
+				return;
+			}
+			using (new WithWriteLock(Lock))
 			{
 				deckData.Excluded = excluded;
-				InventoryManager.Instance.UpdateSlot(deckData);
+				if (excluded)
+				{
+					deckData.Reset();
+				}
+				UpdateStore(deckData);
 			}
-		}
-	}
-
-	internal void ResetRange(Range slots)
-	{
-		lock (Lock)
-		{
-			using Transaction txn = new Transaction(TransactionType.Update);
-			for (int i = slots.Start; i <= slots.End; i++)
-			{
-				DeckData deckData = m_inventoryData[i - 1];
-				deckData.ID = "EMPTY";
-				deckData.ReturnDate = null;
-				deckData.EmptyStuckCount = 0;
-				deckData.MerchFlags = MerchFlags.None;
-				InventoryManager.Instance.EnqueueUpdate(txn, deckData);
-			}
-			InventoryManager.Instance.ExecuteTransaction(txn);
 		}
 	}
 
 	internal void ResetRange(Range slots, string id, MerchFlags flags)
 	{
-		lock (Lock)
+		IDataStore store = Store;
+		if (store == null)
 		{
-			using Transaction txn = new Transaction(TransactionType.Update);
+			return;
+		}
+		using (new WithWriteLock(Lock))
+		{
+			using Transaction transaction = new Transaction(TransactionType.Update);
 			for (int i = slots.Start; i <= slots.End; i++)
 			{
 				DeckData deckData = m_inventoryData[i - 1];
@@ -713,59 +955,29 @@ public sealed class Deck
 				deckData.ReturnDate = null;
 				deckData.EmptyStuckCount = 0;
 				deckData.MerchFlags = flags;
-				InventoryManager.Instance.EnqueueUpdate(txn, deckData);
+				transaction.Enqueue(deckData.UpdateCommand(store));
 			}
-			InventoryManager.Instance.ExecuteTransaction(txn);
-		}
-	}
-
-	internal bool AddEntries(Range slots)
-	{
-		lock (Lock)
-		{
-			DeckData[] inventoryData = m_inventoryData;
-			m_inventoryData = new DeckData[NumberOfSlots];
-			Array.Copy(inventoryData, m_inventoryData, inventoryData.Length);
-			using Transaction txn = new Transaction(TransactionType.Insert);
-			for (int i = slots.Start; i <= slots.End; i++)
+			if (transaction.Execute(Store) != slots.Size)
 			{
-				m_inventoryData[i - 1] = new DeckData
-				{
-					Deck = Number,
-					Slot = i,
-					ID = "EMPTY",
-					ReturnDate = null,
-					Excluded = false,
-					EmptyStuckCount = 0
-				};
-				InventoryManager.Instance.EnqueueInsert(txn, m_inventoryData[i - 1]);
+				LogHelper.Instance.Log("[ResetRange]: update affected rows did not match range size.");
 			}
-			return InventoryManager.Instance.ExecuteTransaction(txn);
-		}
-	}
-
-	internal void RemoveEntries(Range slots)
-	{
-		lock (Lock)
-		{
-			DeckData[] inventoryData = m_inventoryData;
-			m_inventoryData = new DeckData[NumberOfSlots];
-			for (int i = 0; i < NumberOfSlots; i++)
-			{
-				m_inventoryData[i] = inventoryData[i];
-			}
-			InventoryManager.Instance.RemoveEntries(this, slots);
 		}
 	}
 
 	internal void LoadData()
 	{
-		List<DeckData> list = null;
-		try
+		List<DeckData> list = new List<DeckData>();
+		using (new DisposeableList<DeckData>(list))
 		{
-			lock (Lock)
+			IDataStore store = Store;
+			if (store == null)
 			{
-				list = InventoryManager.Instance.LoadDeck(Number);
+				LogHelper.Instance.Log("Unable to find a store to load data from.");
+				throw new ApplicationException("No data stores found.");
+			}
+			using (new WithWriteLock(Lock))
+			{
+				LoadFromStore(list);
 				if (list.Count == NumberOfSlots)
 				{
 					m_inventoryData = list.ToArray();
@@ -773,34 +985,98 @@ public sealed class Deck
 				}
 				LogHelper.Instance.Log($"LoadInventory: res.count = {list.Count}; deck count = {NumberOfSlots}; deleting deck & initializing to EMPTY", LogEntryType.Error);
 				Range slots = new Range(1, list.Count);
-				InventoryManager.Instance.RemoveEntries(this, slots);
-				using Transaction txn = new Transaction(TransactionType.Insert);
+				Remove(slots);
+				using Transaction transaction = new Transaction(TransactionType.Insert);
 				m_inventoryData = new DeckData[NumberOfSlots];
 				for (int i = 0; i < NumberOfSlots; i++)
 				{
-					m_inventoryData[i] = new DeckData
+					m_inventoryData[i] = new DeckData(Number, i + 1)
 					{
-						Deck = Number,
-						Slot = i + 1,
 						ID = "EMPTY",
 						ReturnDate = null,
 						Excluded = false,
 						EmptyStuckCount = 0
 					};
-					InventoryManager.Instance.EnqueueInsert(txn, m_inventoryData[i]);
+					transaction.Enqueue(m_inventoryData[i].InsertCommand(store));
 				}
-				InventoryManager.Instance.ExecuteTransaction(txn);
+				transaction.Execute(Store);
 			}
-		}
-		finally
-		{
-			list?.Clear();
 		}
 	}
 
 	internal void Dump()
 	{
 		LogHelper.Instance.Log("Deck {0} Number of Slots {1} Y-offset {2}", Number, NumberOfSlots, YOffset.ToString());
+	}
+
+	private void MatchMatrix(string matrix, List<Location> toFill)
+	{
+		for (int i = 0; i < m_inventoryData.Length; i++)
+		{
+			if (!m_inventoryData[i].Excluded && m_inventoryData[i].ID == matrix)
+			{
+				toFill.Add(new Location(Number, i + 1));
+			}
+		}
+	}
+
+	internal void RemoveEntries(Range slots)
+	{
+		DeckData[] inventoryData = m_inventoryData;
+		m_inventoryData = new DeckData[NumberOfSlots];
+		for (int i = 0; i < NumberOfSlots; i++)
+		{
+			m_inventoryData[i] = inventoryData[i];
+		}
+		Remove(slots);
+	}
+
+	private bool AddEntries(Range slots)
+	{
+		IDataStore store = Store;
+		if (store == null)
+		{
+			return false;
+		}
+		DeckData[] inventoryData = m_inventoryData;
+		m_inventoryData = new DeckData[NumberOfSlots];
+		Array.Copy(inventoryData, m_inventoryData, inventoryData.Length);
+		using Transaction transaction = new Transaction(TransactionType.Insert);
+		for (int i = slots.Start; i <= slots.End; i++)
+		{
+			m_inventoryData[i - 1] = new DeckData(Number, i)
+			{
+				ID = "EMPTY",
+				ReturnDate = null,
+				Excluded = false,
+				EmptyStuckCount = 0
+			};
+			transaction.Enqueue(m_inventoryData[i - 1].InsertCommand(store));
+		}
+		return transaction.Execute(Store) == slots.Size;
+	}
+
+	private void ResetRange(Range slots)
+	{
+		IDataStore store = Store;
+		if (store == null)
+		{
+			return;
+		}
+		using Transaction transaction = new Transaction(TransactionType.Update);
+		for (int i = slots.Start; i <= slots.End; i++)
+		{
+			DeckData deckData = m_inventoryData[i - 1];
+			deckData.ID = "EMPTY";
+			deckData.ReturnDate = null;
+			deckData.EmptyStuckCount = 0;
+			deckData.MerchFlags = MerchFlags.None;
+			transaction.Enqueue(deckData.UpdateCommand(store));
+		}
+		if (transaction.Execute(Store) != slots.Size)
+		{
+			LogHelper.Instance.Log("[ResetRange]: update affected rows did not match range size.");
+		}
 	}
 
 	private Quadrant FindQuadrantThatContainsSlot(int slot)
@@ -820,61 +1096,69 @@ public sealed class Deck
 		return null;
 	}
 
-	private void ExcludeRange(Range slots, bool excluded)
+	private void LoadFromStore(List<DeckData> list)
 	{
-		using Transaction transaction = new Transaction(TransactionType.Update);
-		for (int i = slots.Start; i <= slots.End; i++)
+		IDataStore store = Store;
+		if (store == null)
 		{
-			if (m_inventoryData[i - 1].Excluded != excluded)
-			{
-				int num = (excluded ? 1 : 0);
-				transaction.Enqueue($"UPDATE {InventoryManager.Instance.TableName} SET Excluded = '{num}' WHERE Deck = '{Number}' AND Slot = '{i}'");
-				m_inventoryData[i - 1].Excluded = excluded;
-			}
+			return;
 		}
-		InventoryManager.Instance.ExecuteTransaction(transaction);
+		string query = string.Format("SELECT Slot, ID, LastReturnTime, Excluded, EmptyStuckCount, MerchFlags FROM [{0}] where Deck={1}", "Inventory_v1", Number);
+		store.ExectuteSelectQuery(delegate(IDataReader reader)
+		{
+			DateTime? returnDate = null;
+			string text = reader.ReadString(2);
+			if (!string.IsNullOrEmpty(text))
+			{
+				try
+				{
+					returnDate = DateTime.Parse(text);
+				}
+				catch
+				{
+					returnDate = null;
+				}
+			}
+			DeckData item = new DeckData(Number, reader.ReadInt(0))
+			{
+				ID = reader.ReadString(1),
+				ReturnDate = returnDate,
+				Excluded = reader.ReadBoolean(3),
+				EmptyStuckCount = reader.ReadInt(4),
+				MerchFlags = (MerchFlags)reader.ReadInt64(5)
+			};
+			list.Add(item);
+		}, query);
+		list.Sort((DeckData x, DeckData y) => x.Slot.CompareTo(y.Slot));
 	}
 
-	private bool ResetDataInner(DeckData data)
+	private string UpdateSlotInner(int slot, string id, MerchFlags flags, DateTime? dt)
 	{
-		data.ReturnDate = null;
-		data.ID = "EMPTY";
-		data.EmptyStuckCount = 0;
-		data.MerchFlags = MerchFlags.None;
-		return InventoryManager.Instance.UpdateSlot(data);
+		string iD = m_inventoryData[slot - 1].ID;
+		m_inventoryData[slot - 1].ID = id;
+		m_inventoryData[slot - 1].MerchFlags = flags;
+		m_inventoryData[slot - 1].ReturnDate = dt;
+		if (!UpdateStore(m_inventoryData[slot - 1]))
+		{
+			LogHelper.Instance.Log($"SetSlotId: Deck={Number}, Slot={slot}, ID={id} (previous = {iD}) returned FAILURE", LogEntryType.Error);
+		}
+		return iD;
 	}
 
-	private List<int> SwapWithEmptyInner(string newId, MerchFlags newFlags, Range slots)
+	private bool UpdateStore(DeckData data)
 	{
-		List<int> list = new List<int>();
-		using Transaction txn = new Transaction(TransactionType.Update);
-		for (int i = slots.Start - 1; i < slots.End; i++)
-		{
-			if (m_inventoryData[i].ID == "EMPTY" && !m_inventoryData[i].Excluded)
-			{
-				m_inventoryData[i].ID = newId;
-				m_inventoryData[i].MerchFlags = newFlags;
-				InventoryManager.Instance.EnqueueUpdate(txn, m_inventoryData[i]);
-				list.Add(i + 1);
-			}
-		}
-		if (!InventoryManager.Instance.ExecuteTransaction(txn))
-		{
-			list.Clear();
-		}
-		return list;
+		IDataStore dataStore = StoreManager.Instance.FindByName("HALData.vdb3");
+		return dataStore?.Update(data.UpdateCommand(dataStore)) ?? false;
 	}
 
-	private List<Location> MatchInventory(string toMatch)
+	private bool Remove(Range slots)
 	{
-		List<Location> list = new List<Location>();
-		for (int i = 0; i < m_inventoryData.Length; i++)
+		IDataStore dataStore = StoreManager.Instance.FindByName("HALData.vdb3");
+		if (dataStore == null)
 		{
-			if (!m_inventoryData[i].Excluded && m_inventoryData[i].ID == toMatch)
-			{
-				list.Add(new Location(Number, i + 1));
-			}
+			return false;
 		}
-		return list;
+		string deleteQuery = string.Format("DELETE FROM {0} WHERE Deck = '{1}' AND Slot >= '{2}' and Slot <= '{3}'", "Inventory_v1", Number, slots.Start, slots.End);
+		return dataStore.Delete(deleteQuery) == slots.Size;
 	}
 }

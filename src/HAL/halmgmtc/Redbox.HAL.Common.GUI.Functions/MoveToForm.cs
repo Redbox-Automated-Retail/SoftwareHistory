@@ -51,8 +51,8 @@ public class MoveToForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? Slot
 	{
 		get

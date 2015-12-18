@@ -4,82 +4,53 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class LogInstruction : Instruction
+public sealed class LogInstruction : Instruction
 {
-	protected static class KeyNames
-	{
-		public const string EntryType = "ENTRYTYPE";
-	}
+	private const string EntryType = "ENTRYTYPE";
 
 	public override string Mnemonic => "LOG";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0)
+		if (operandTokens.Count == 0 || (operandTokens[0].Type != TokenType.StringLiteral && operandTokens[0].Type != TokenType.Symbol))
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral && tokensAfterMnemonic[0].Type != TokenType.Symbol)
-			{
-				result.Errors.Add(Error.NewError("C002", "Expected a string literal and any number of optional substitution parameters.", "Correct the statement and recompile."));
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a string literal and any number of optional substitution parameters.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		if (base.Operands.Count > 0)
+		if (base.Operands.Count <= 0)
 		{
-			object[] args = ConvertSymbolsToParameterArray(result.Errors);
-			if (result.Errors.Count > 0)
+			return;
+		}
+		object[] args = ConvertSymbolsToParameterArray(result.Errors, context);
+		if (result.Errors.Count > 0)
+		{
+			return;
+		}
+		LogEntryType type = LogEntryType.Info;
+		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("ENTRYTYPE");
+		if (keyValuePair != null)
+		{
+			type = Enum<LogEntryType>.ParseIgnoringCase(keyValuePair.Value, LogEntryType.Info);
+		}
+		string text = base.Operands[0].Value;
+		if (base.Operands[0].Type == TokenType.Symbol)
+		{
+			object symbolValue = context.GetSymbolValue(base.Operands[0].Value, result.Errors);
+			if (symbolValue == null || result.Errors.Count > 0)
 			{
 				return;
 			}
-			LogEntryType type = LogEntryType.Info;
-			KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("ENTRYTYPE");
-			if (keyValuePair != null)
+			text = symbolValue as string;
+			if (text == null)
 			{
-				type = Enum<LogEntryType>.ParseIgnoringCase(keyValuePair.Value, LogEntryType.Info);
-			}
-			ILogger logger = ExecutionEngine.Instance.Logger;
-			if (logger == null)
-			{
+				result.Errors.Add(Error.NewError("E001", "Incorrect type argument.", "The symbol specified for LOG is not a string type."));
 				return;
 			}
-			string text = base.Operands[0].Value;
-			if (base.Operands[0].Type == TokenType.Symbol)
-			{
-				object symbolValue = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors);
-				if (symbolValue == null || result.Errors.Count > 0)
-				{
-					return;
-				}
-				text = symbolValue as string;
-				if (text == null)
-				{
-					result.Errors.Add(Error.NewError("E001", "Incorrect type argument.", "The symbol specified for LOG is not a string type."));
-					return;
-				}
-			}
-			string toPrint = string.Format(text, args);
-			logger.Log(GetFormattedMessage(toPrint), type);
 		}
-		else if (ExecutionEngine.Instance.ActiveContext.StackDepth > 0)
-		{
-			object obj = ExecutionEngine.Instance.ActiveContext.PopTop();
-			if (obj != null)
-			{
-				ExecutionEngine.Instance.Logger?.Log(GetFormattedMessage(obj.ToString()), LogEntryType.Info);
-			}
-		}
-	}
-
-	private string GetFormattedMessage(string toPrint)
-	{
-		return $"[{ExecutionEngine.Instance.ActiveContext.ProgramName}, {ExecutionEngine.Instance.ActiveContext.ID}]: {toPrint}";
+		string text2 = string.Format(text, args);
+		LogHelper.Instance.Log(type, "[{0}, {1}]: {2}", context.ProgramName, context.ID, text2);
 	}
 }

@@ -311,7 +311,8 @@ public class EditSlotData : Form
 	{
 		try
 		{
-			MoveHelperResult moveHelperResult = MoveHelper.Instance.MoveTo(Service, deck, slot, null, readLimits: true);
+			MoveHelper moveHelper = new MoveHelper(Service);
+			MoveHelperResult moveHelperResult = moveHelper.MoveTo(deck, slot, null, readLimits: true);
 			if (moveHelperResult.MoveOk)
 			{
 				m_moveStatusTB.Text = moveHelperResult.MoveResultMessage;

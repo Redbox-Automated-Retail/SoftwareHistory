@@ -4,36 +4,30 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class DecInstruction : Instruction
+public sealed class DecInstruction : Instruction
 {
 	public override string Mnemonic => "DEC";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 0 || tokensAfterMnemonic.Count > 1)
+		if (operandTokens.Count != 1)
 		{
-			AddError("C002", "Expectd a symbol to decrement.", result.Errors);
+			result.AddInvalidOperandError($"The {Mnemonic} instruction expects one operand.");
 		}
-		else if (tokensAfterMnemonic[0].Type == TokenType.ConstSymbol)
+		else if (operandTokens[0].Type == TokenType.ConstSymbol)
 		{
-			AddError("C002", "Illegal attempt to " + Mnemonic + " a CONST symbol.", result.Errors);
-		}
-		else
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.AddError(ExecutionErrors.InvalidOperand, "Illegal attempt to " + Mnemonic + " a CONST symbol.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Token token = base.Operands[0];
 		if (token.Type != TokenType.Symbol)
 		{
 			return;
 		}
-		object obj = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(token.Value, result.Errors);
+		object obj = context.GetSymbolValue(token.Value, result.Errors);
 		if (obj == null || result.Errors.Count > 0)
 		{
 			return;
@@ -56,6 +50,6 @@ public class DecInstruction : Instruction
 			--num2;
 			obj = num2;
 		}
-		ExecutionEngine.Instance.ActiveContext.SetSymbolValue(token.Value, Convert.ChangeType(obj, type));
+		context.SetSymbolValue(token.Value, Convert.ChangeType(obj, type));
 	}
 }

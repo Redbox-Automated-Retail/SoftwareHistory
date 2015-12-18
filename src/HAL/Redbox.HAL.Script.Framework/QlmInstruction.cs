@@ -5,9 +5,9 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class QlmInstruction : Instruction
+public sealed class QlmInstruction : Instruction
 {
-	protected static class Commands
+	private static class Commands
 	{
 		public const string Engage = "ENGAGE";
 
@@ -34,32 +34,27 @@ public class QlmInstruction : Instruction
 
 	public override string Mnemonic => "QLM";
 
-	private static QLM QLM => QLM.Instance;
-
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1 || tokensAfterMnemonic.Count == 2)
+		if (operandTokens.Count == 1 || operandTokens.Count == 2)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol || (string.Compare(tokensAfterMnemonic[0].Value, "ENGAGE", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "DISENGAGE", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "LIFT", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "DROP", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "HALT", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "ENDQLMOP", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "CLEAR-PICKER", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "UNLOAD-DISK", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "THIN-DISK", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "SETUP", ignoreCase: true) != 0 && string.Compare(tokensAfterMnemonic[0].Value, "STATUS", ignoreCase: true) != 0))
+			if (operandTokens[0].Type != TokenType.Symbol || (string.Compare(operandTokens[0].Value, "ENGAGE", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "DISENGAGE", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "LIFT", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "DROP", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "HALT", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "ENDQLMOP", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "CLEAR-PICKER", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "UNLOAD-DISK", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "THIN-DISK", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "SETUP", ignoreCase: true) != 0 && string.Compare(operandTokens[0].Value, "STATUS", ignoreCase: true) != 0))
 			{
-				AddError("C002", "Expected a symbol: ENGAGE, DISENGAGE, HALT, UP, DOWN or STATUS.", result.Errors);
+				result.AddError(ExecutionErrors.InvalidOperand, "Expected a symbol: ENGAGE, DISENGAGE, HALT, UP, DOWN or STATUS.");
 			}
 			else
 			{
-				base.Operands.AddRange(tokensAfterMnemonic);
+				base.Operands.AddRange(operandTokens);
 			}
 		}
 		else
 		{
-			AddError("C002", "Expected a symbol: ENGAGE, DISENGAGE, UP, DOWN or HALT.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a symbol: ENGAGE, DISENGAGE, UP, DOWN or HALT.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		ExecutionContext activeContext = ExecutionEngine.Instance.ActiveContext;
 		Token token = base.Operands[0];
 		if (token.Type != TokenType.Symbol)
 		{
@@ -73,16 +68,16 @@ public class QlmInstruction : Instruction
 		}
 		if (string.Compare(token.Value, "HALT", ignoreCase: true) == 0)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.HaltOperation()));
+			context.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.HaltOperation()));
 		}
 		else if (string.Compare(token.Value, "ENGAGE", ignoreCase: true) == 0)
 		{
-			QlmMotionResult qlmMotionResult = QLM.Engage(home, activeContext.AppLog);
+			QlmMotionResult qlmMotionResult = QLM.Engage(home, context.AppLog);
 			if (QlmMotionResult.Success == qlmMotionResult)
 			{
-				MerchandizingHelper.Instance.CorrectMotionControlCommunication();
+				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(qlmMotionResult.ToString().ToUpper());
+			context.PushTop(qlmMotionResult.ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "LIFT", ignoreCase: true) == 0)
 		{
@@ -94,16 +89,16 @@ public class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "DISENGAGE", ignoreCase: true) == 0)
 		{
-			QlmMotionResult qlmMotionResult2 = QLM.Disengage(home, activeContext.AppLog);
+			QlmMotionResult qlmMotionResult2 = QLM.Disengage(home, context.AppLog);
 			if (QlmMotionResult.Success == qlmMotionResult2)
 			{
-				MerchandizingHelper.Instance.CorrectMotionControlCommunication();
+				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(qlmMotionResult2.ToString().ToUpper());
+			context.PushTop(qlmMotionResult2.ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "STATUS", ignoreCase: true) == 0)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(QLM.GetStatus().ToString().ToUpper());
+			context.PushTop(QLM.GetStatus().ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "ENDQLMOP", ignoreCase: true) == 0)
 		{
@@ -111,27 +106,20 @@ public class QlmInstruction : Instruction
 			KeyValuePair keyValuePair2 = base.Operands.GetKeyValuePair("MOVE-EC");
 			if (keyValuePair2 != null)
 			{
-				string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair2, result.Errors);
+				string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair2, result.Errors, context);
 				if (result.Errors.Count == 0)
 				{
-					try
-					{
-						failCode = (MotionResult)Enum.Parse(typeof(MotionResult), keyValuePairValue, ignoreCase: true);
-					}
-					catch (ArgumentException)
-					{
-						failCode = MotionResult.Success;
-					}
+					failCode = Enum<MotionResult>.ParseIgnoringCase(keyValuePairValue, MotionResult.Success);
 				}
 			}
-			if (MerchandizingHelper.Instance.CleanupJob(result, failCode))
+			if (MerchandizingHelper.Instance.CleanupJob(result, context, failCode))
 			{
-				MerchandizingHelper.Instance.CorrectMotionControlCommunication();
+				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
 			}
 		}
 		else if (string.Compare(token.Value, "CLEAR-PICKER") == 0)
 		{
-			UnloadHelper.Instance.CheckAndClearPicker(result);
+			new UnloadHelper(context).CheckAndClearPicker(result);
 		}
 		else if (string.Compare(token.Value, "SETUP") == 0)
 		{
@@ -141,24 +129,24 @@ public class QlmInstruction : Instruction
 			{
 				checkSlots = result3;
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(MerchandizingHelper.Instance.Setup(result, checkSlots));
+			context.PushTop(MerchandizingHelper.Instance.Setup(result, checkSlots, context));
 		}
 		else if (string.Compare(token.Value, "UNLOAD-DISK") == 0)
 		{
-			int num = CurrentSlot(result);
+			int num = CurrentSlot(result, context);
 			if (num != 0)
 			{
-				if (!ControllerService.Instance.EmptyCountExceeds(0))
+				if (!InventoryService.Instance.EmptyCountExceeds(0))
 				{
-					ExecutionEngine.Instance.ActiveContext.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
+					context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
 				}
-				MerchandizeResult merchandizeResult = UnloadHelper.Instance.UnloadDisk(result, QLM.Deck.Number, num);
+				MerchandizeResult merchandizeResult = new UnloadHelper(context).UnloadDisk(result, QLM.Deck.Number, num);
 				string text = merchandizeResult.ToString().ToUpper();
 				if (merchandizeResult != MerchandizeResult.Success)
 				{
-					ServiceLogHelper.Instance.WriteFormattedMessage(LogEntryType.Info, "Unload-Disc returned status {0}", text);
+					context.ServiceLog("Unload-Disc returned status {0}", text);
 				}
-				ExecutionEngine.Instance.ActiveContext.PushTop(text);
+				context.PushTop(text);
 			}
 		}
 		else
@@ -167,21 +155,21 @@ public class QlmInstruction : Instruction
 			{
 				return;
 			}
-			string iD = GetID(result);
+			string iD = GetID(result, context);
 			if (!string.IsNullOrEmpty(iD))
 			{
-				MerchandizeResult merchandizeResult2 = ThinHelper.MakeInstance(result).ThinDisk(iD, MerchFlags.None);
+				MerchandizeResult merchandizeResult2 = ThinHelper.MakeInstance(result, context).ThinDisk(iD, MerchFlags.None);
 				string text2 = merchandizeResult2.ToString().ToUpper();
 				if (merchandizeResult2 != MerchandizeResult.Success)
 				{
-					ServiceLogHelper.Instance.WriteFormattedMessage(LogEntryType.Info, "thin-disk returned status {0}", text2);
+					context.ServiceLog("thin-disk returned status {0}", text2);
 				}
-				ExecutionEngine.Instance.ActiveContext.PushTop(text2);
+				context.PushTop(text2);
 			}
 		}
 	}
 
-	private int CurrentSlot(ExecutionResult result)
+	private int CurrentSlot(ExecutionResult result, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("CURRENT-SLOT");
 		if (keyValuePair == null)
@@ -189,7 +177,7 @@ public class QlmInstruction : Instruction
 			result.Errors.Add(Error.NewError("E099", "Missing operand.", "The CURRENT-SLOT operand is missing."));
 			return 0;
 		}
-		int keyValuePairValue = GetKeyValuePairValue<int>(keyValuePair, result.Errors);
+		int keyValuePairValue = GetKeyValuePairValue<int>(keyValuePair, result.Errors, context);
 		if (result.Errors.Count != 0)
 		{
 			return 0;

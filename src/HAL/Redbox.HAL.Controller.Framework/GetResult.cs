@@ -2,8 +2,10 @@ using System;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class GetResult
+public sealed class GetResult
 {
+	private GetResultCode Code;
+
 	public bool Success
 	{
 		get
@@ -32,17 +34,13 @@ public class GetResult
 
 	public bool ItemStuck => Code == GetResultCode.ItemStuck;
 
-	public LocationTestResult PeekResult { get; internal set; }
+	public PickerHardwareError HardwareError { get; private set; }
 
 	public string Previous { get; internal set; }
 
 	public DateTime? ReturnTime { get; internal set; }
 
 	public MerchFlags Flags { get; internal set; }
-
-	internal GetResultCode Code { get; set; }
-
-	internal PickerHardwareError HardwareError { get; set; }
 
 	public static GetResult MakeEmulatedSlotEmpty()
 	{
@@ -57,17 +55,26 @@ public class GetResult
 
 	public override string ToString()
 	{
-		if (HardwareError != PickerHardwareError.Success)
+		if (HardwareError == PickerHardwareError.Success)
 		{
-			return HardwareError.ToString();
+			return Code.ToString();
 		}
-		return Code.ToString();
+		return HardwareError.ToString();
+	}
+
+	public void UpdateCode(GetResultCode newCode)
+	{
+		Code = newCode;
+	}
+
+	public void SetHardwareError(PickerHardwareError error)
+	{
+		HardwareError = error;
 	}
 
 	internal GetResult()
 	{
-		Code = GetResultCode.Success;
-		HardwareError = PickerHardwareError.Success;
 		Previous = "UNKNOWN";
+		HardwareError = PickerHardwareError.Success;
 	}
 }

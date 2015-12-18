@@ -2,11 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class SyscallInstruction : Instruction
+public sealed class SyscallInstruction : Instruction
 {
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	internal struct TokPriv1Luid
@@ -80,22 +81,18 @@ public class SyscallInstruction : Instruction
 
 	public override string Mnemonic => "SYSCALL";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1 && tokensAfterMnemonic[0].Type == TokenType.Symbol)
+		if (operandTokens.Count != 1 || operandTokens[0].Type != TokenType.Symbol)
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-		else
-		{
-			AddError("C002", "Expected a system call to execute", result.Errors);
+			result.AddInvalidOperandError("Expected a system call to execute");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		string value = base.Operands[0].Value;
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
 		if ("GC".Equals(value, StringComparison.CurrentCultureIgnoreCase))
 		{
 			GC.Collect();
@@ -106,10 +103,9 @@ public class SyscallInstruction : Instruction
 			{
 				return;
 			}
-			ExecutionContext activeContext = ExecutionEngine.Instance.ActiveContext;
-			if (activeContext.IsImmediate)
+			if (context.IsImmediate)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("ERROR");
+				context.PushTop("ERROR");
 				return;
 			}
 			if (!ControllerConfiguration.Instance.RebootKioskDuringQlm)
@@ -118,8 +114,7 @@ public class SyscallInstruction : Instruction
 				AddError("E005", "Kiosk reboot is not configured.", result.Errors);
 				return;
 			}
-			bool flag = true;
-			if (RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL", "CheckRebootTime") ?? true)
+			if (dataStore.GetValue("CheckRebootTime", def: true))
 			{
 				TimeSpan timeSpan = new TimeSpan(0, 0, 0);
 				TimeSpan timeSpan2 = new TimeSpan(5, 0, 0);
@@ -128,17 +123,17 @@ public class SyscallInstruction : Instruction
 				{
 					string text = $"Cannot reboot - the current time {DateTime.Now.ToShortTimeString()} is not within 12 am - 5 am.";
 					LogHelper.Instance.Log(text, LogEntryType.Info);
-					ApplicationLog appLog = ExecutionEngine.Instance.ActiveContext.AppLog;
+					ApplicationLog appLog = context.AppLog;
 					appLog.Write(text);
 					AddError("E005", "Kiosk reboot now allowed because of time constraint.", result.Errors);
 					return;
 				}
 			}
-			activeContext.DeferredStatusChangeRequested = ExecutionContextStatus.Suspended;
+			context.DeferredStatusChangeRequested = ExecutionContextStatus.Suspended;
 			ExecutionEngine.Instance.PerformContextSwitch(runtimeOnly: false);
 			if (!Shutdown(ShutdownFlags.Reboot | ShutdownFlags.ForceIfHung, ShutdownReason.FlagPlanned))
 			{
-				ApplicationLog appLog2 = ExecutionEngine.Instance.ActiveContext.AppLog;
+				ApplicationLog appLog2 = context.AppLog;
 				appLog2.Write("Unable to execute a reboot.");
 				LogHelper.Instance.Log("Call to reboot kiosk failed.", LogEntryType.Error);
 				AddError("E005", "Request to reboot failed.", result.Errors);
@@ -163,8 +158,7 @@ public class SyscallInstruction : Instruction
 
 	public static bool Shutdown(ShutdownFlags flags, ShutdownReason reason)
 	{
-		bool? secretValue = RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL", "SimulateRebootFailure");
-		if (secretValue.HasValue && secretValue.Value)
+		if (StoreManager.Instance.GetDataStore().GetValue("SimulateRebootFailure", def: false))
 		{
 			LogHelper.Instance.Log("Simulating reboot failure to service ...", LogEntryType.Error);
 			return false;

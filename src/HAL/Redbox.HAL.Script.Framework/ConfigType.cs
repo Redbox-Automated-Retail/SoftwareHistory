@@ -1,8 +1,8 @@
 namespace Redbox.HAL.Script.Framework;
 
-public enum ConfigType
+internal enum ConfigType
 {
-	Barcode = 1,
+	Unknown = 1,
 	Camera,
 	Controller,
 	Script

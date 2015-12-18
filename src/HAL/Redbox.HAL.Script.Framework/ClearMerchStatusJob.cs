@@ -2,6 +2,7 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
+[NativeJob(ProgramName = "clear-merch-status", Operand = "CLEAR-MERCH-STATUS")]
 internal sealed class ClearMerchStatusJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
@@ -9,7 +10,7 @@ internal sealed class ClearMerchStatusJob : NativeJobAdapter
 		int num = 0;
 		try
 		{
-			if (MerchandizingMode.VMZ_Gen2 != ControllerConfiguration.Instance.MerchandizingMode)
+			if (!ControllerConfiguration.Instance.IsVMZMachine)
 			{
 				return;
 			}
@@ -17,22 +18,23 @@ internal sealed class ClearMerchStatusJob : NativeJobAdapter
 			for (int i = 0; i < top; i++)
 			{
 				string top2 = GetTop<string>();
-				Location location = ControllerService.Instance.Lookup(top2);
-				if (location != null && VMZ.Instance.LocInCompressedZone(location))
+				Location location = InventoryService.Instance.Lookup(top2);
+				if (location != null && SegmentManager.Instance.InCompressedZone(location) && !SegmentManager.Instance.IsNonThinType(location.Flags))
 				{
-					MerchFlags flags = location.Flags;
-					if (MerchFlags.Thin == flags || MerchFlags.Rebalance == flags)
-					{
-						ServiceLogHelper.Instance.WriteInfoMessage("The flags at {0} are changed from {1} -> None", location.ToString(), flags.ToString());
-						location.ChangeMerchFlags(MerchFlags.None);
-						num++;
-					}
+					base.Context.ServiceLog("The flags at {0} are changed from {1} -> None", location.ToString(), location.Flags.ToString());
+					location.ChangeMerchFlags(MerchFlags.None);
+					num++;
 				}
 			}
 		}
 		finally
 		{
-			ResultHelper.Instance.CreateInfoResult("MerchFlagsResetCount", num.ToString());
+			base.Context.CreateInfoResult("MerchFlagsResetCount", num.ToString());
 		}
+	}
+
+	internal ClearMerchStatusJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

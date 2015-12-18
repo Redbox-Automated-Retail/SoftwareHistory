@@ -35,8 +35,8 @@ public class NumberPad : UserControl
 
 	private TextBox m_textBox;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string Number
 	{
 		get

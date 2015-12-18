@@ -13,10 +13,6 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public class ExecutionContext : IMessageSink, ISerializable
 {
-	public delegate void ContextStatusChange(ExecutionContextStatus newStatus);
-
-	public delegate void MessageHandler(string msg);
-
 	internal class ScriptMessage
 	{
 		public string Message { get; set; }
@@ -38,33 +34,49 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 	}
 
+	private const string ResultPrefix = "RESULT";
+
+	private const string EmptyItemToken = "~";
+
 	public readonly ExecutionStatus Status = new ExecutionStatus();
 
-	public ContextStatusChange StatusChangeCallback;
+	public readonly IDictionary<string, object> SymbolTable = new Dictionary<string, object>();
 
-	private Deque<object> m_dataStack;
+	internal readonly ApplicationLog AppLog;
+
+	internal readonly IDictionary<string, ProgramInstruction> ProgramCache = new Dictionary<string, ProgramInstruction>();
+
+	internal readonly Deque<ScriptMessage> Messages = new Deque<ScriptMessage>();
+
+	internal readonly ReaderWriterLockSlim ResultsLock = new ReaderWriterLockSlim();
+
+	private DateTime? LastEventTime;
+
+	private bool IsCooperative;
 
 	private ProgramPriority m_priority;
 
-	private Deque<ScriptMessage> m_messages;
-
 	private ConnectionState m_connectionState;
-
-	private EventWaitHandle m_completionWaitHandle;
-
-	private IDictionary<string, object> m_symbolTable;
-
-	private IDictionary<string, ProgramInstruction> m_programCache;
 
 	private string m_contextDirectory;
 
-	private List<string> m_receivedSignals;
+	private SignalHandler Handler;
 
-	private List<string> m_jobResults;
+	private readonly EventWaitHandle CompletionWaitHandle = new EventWaitHandle(initialState: false, EventResetMode.AutoReset);
 
-	private ApplicationLog m_appLog;
+	private readonly object Lock = new object();
 
-	private int m_currentResult;
+	private readonly Deque<object> DataStack = new Deque<object>();
+
+	private readonly ReaderWriterLockSlim SignalsLock = new ReaderWriterLockSlim();
+
+	private readonly List<string> CachedSignals = new List<string>();
+
+	private readonly List<string> CachedResults = new List<string>();
+
+	private readonly List<IStatusChangeObserver> Observers = new List<IStatusChangeObserver>();
+
+	private readonly ReaderWriterLockSlim ObserverLock = new ReaderWriterLockSlim();
 
 	public string ID { get; private set; }
 
@@ -73,6 +85,8 @@ public class ExecutionContext : IMessageSink, ISerializable
 	public string Label { get; set; }
 
 	public int StackDepth => DataStack.Count;
+
+	public int ResultCount => CachedResults.Count;
 
 	public bool IsComplete
 	{
@@ -140,78 +154,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 	}
 
-	public IDictionary<string, object> SymbolTable
-	{
-		get
-		{
-			if (m_symbolTable == null)
-			{
-				m_symbolTable = new Dictionary<string, object>();
-			}
-			return m_symbolTable;
-		}
-		private set
-		{
-			m_symbolTable = value;
-		}
-	}
-
-	public ManualResetEvent SignalEvent { get; private set; }
-
-	internal ApplicationLog AppLog
-	{
-		get
-		{
-			if (m_appLog == null)
-			{
-				LogHelper.Instance.Log($"The applog isn't set for context {ID}; creating new.", LogEntryType.Info);
-				m_appLog = new ApplicationLog(this);
-			}
-			return m_appLog;
-		}
-		set
-		{
-			m_appLog = value;
-		}
-	}
-
 	internal ExecutionContextStatus? DeferredStatusChangeRequested { get; set; }
-
-	internal IDictionary<string, ProgramInstruction> ProgramCache
-	{
-		get
-		{
-			if (m_programCache == null)
-			{
-				m_programCache = new Dictionary<string, ProgramInstruction>();
-			}
-			return m_programCache;
-		}
-	}
-
-	internal EventWaitHandle CompletionWaitHandle
-	{
-		get
-		{
-			if (m_completionWaitHandle == null)
-			{
-				m_completionWaitHandle = new EventWaitHandle(initialState: false, EventResetMode.AutoReset);
-			}
-			return m_completionWaitHandle;
-		}
-	}
-
-	internal Deque<ScriptMessage> Messages
-	{
-		get
-		{
-			if (m_messages == null)
-			{
-				m_messages = new Deque<ScriptMessage>();
-			}
-			return m_messages;
-		}
-	}
 
 	internal string ContextDirectory
 	{
@@ -226,49 +169,28 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 	}
 
-	internal List<string> CachedResults
+	internal bool IsAutoScheduled
 	{
 		get
 		{
-			if (m_jobResults == null)
+			if (!SymbolTable.ContainsKey("_EE_AUTOSCHEDULED"))
 			{
-				m_jobResults = new List<string>();
+				return SymbolTable.ContainsKey("_CHECK_RUNTIME");
 			}
-			return m_jobResults;
+			return true;
 		}
-	}
-
-	private Deque<object> DataStack
-	{
-		get
+		set
 		{
-			if (m_dataStack == null)
+			if (!SymbolTable.ContainsKey("_EE_AUTOSCHEDULED"))
 			{
-				m_dataStack = new Deque<object>();
+				SymbolTable.Add("_EE_AUTOSCHEDULED", true);
 			}
-			return m_dataStack;
 		}
 	}
-
-	private DateTime? LastEventTime { get; set; }
-
-	private List<string> ReceivedSignals
-	{
-		get
-		{
-			if (m_receivedSignals == null)
-			{
-				m_receivedSignals = new List<string>();
-			}
-			return m_receivedSignals;
-		}
-	}
-
-	private bool IsCooperative { get; set; }
 
 	public void Save()
 	{
-		lock (this)
+		lock (Lock)
 		{
 			try
 			{
@@ -276,13 +198,11 @@ public class ExecutionContext : IMessageSink, ISerializable
 				{
 					return;
 				}
-				string path = Path.Combine(ExecutionEngine.Instance.DataDirectory, "contexts");
-				string text = Path.Combine(path, ID);
 				try
 				{
-					if (!Directory.Exists(text))
+					if (!Directory.Exists(ContextDirectory))
 					{
-						Directory.CreateDirectory(text);
+						Directory.CreateDirectory(ContextDirectory);
 					}
 				}
 				catch (Exception e)
@@ -292,7 +212,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 				}
 				try
 				{
-					using FileStream serializationStream = File.OpenWrite(Path.Combine(text, "ctx.data"));
+					using FileStream serializationStream = File.OpenWrite(Path.Combine(ContextDirectory, "ctx.data"));
 					BinaryFormatter binaryFormatter = new BinaryFormatter();
 					binaryFormatter.Serialize(serializationStream, this);
 				}
@@ -332,11 +252,18 @@ public class ExecutionContext : IMessageSink, ISerializable
 		{
 			return true;
 		}
-		while (!CompletionWaitHandle.WaitOne(50, exitContext: false) && !IsComplete)
+		try
 		{
-			Thread.Sleep(0);
+			while (!CompletionWaitHandle.WaitOne(50, exitContext: false) && !IsComplete)
+			{
+				Thread.Sleep(0);
+			}
+			return true;
 		}
-		return true;
+		catch (ObjectDisposedException)
+		{
+			return true;
+		}
 	}
 
 	public void Pend()
@@ -356,11 +283,14 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 		LogHelper.Instance.Log($"context {ID} ( {ProgramName} ) being trashed", LogEntryType.Info);
 		ChangeStatus(ExecutionContextStatus.Garbage);
-		CleanupLog();
-		if (CachedResults.Count > 0)
+		using (new WithWriteLock(ResultsLock))
 		{
-			CachedResults.Clear();
+			if (CachedResults.Count > 0)
+			{
+				CachedResults.Clear();
+			}
 		}
+		SignalsLock.Dispose();
 	}
 
 	public void Resurrect()
@@ -430,7 +360,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 			{
 				if (Registers.ActiveFrame.IP != null)
 				{
-					Registers.ActiveFrame.IP.Execute(Result);
+					Registers.ActiveFrame.IP.Execute(Result, this);
 				}
 				if (Result.Errors.ContainsError())
 				{
@@ -466,15 +396,6 @@ public class ExecutionContext : IMessageSink, ISerializable
 			Result.UpdateExecutionTime(executionTimer.Elapsed);
 			SendStatusMessage(Status.Value);
 			Save();
-			CleanupLog();
-			if (IsComplete)
-			{
-				CompletionWaitHandle.Set();
-				if (!IsImmediate)
-				{
-					CleanupHardware();
-				}
-			}
 		}
 		catch (Exception ex)
 		{
@@ -483,17 +404,31 @@ public class ExecutionContext : IMessageSink, ISerializable
 			Status.Promote(ExecutionContextStatus.Errored);
 			Result.UpdateExecutionTime(executionTimer.Elapsed);
 			Save();
-			CleanupHardware();
-			CleanupLog();
-			CompletionWaitHandle.Set();
 		}
 		finally
 		{
 			executionTimer.Dispose();
-			if (IsComplete && !IsImmediate)
+			if (IsComplete)
 			{
-				LogHelper.Instance.Log($"Job {ProgramName} ID {ID} ends with status {Status.ToString()}", LogEntryType.Info);
+				CompletionWaitHandle.Set();
+				if (!IsImmediate)
+				{
+					CleanupHardware();
+					string msg = $"Job {ProgramName} ID {ID} ends with status {Status.ToString()}";
+					LogHelper.Instance.Log(msg);
+					AppLog.Write(msg);
+					CompletionWaitHandle.Close();
+				}
 			}
+			AppLog.Close();
+		}
+	}
+
+	public IEnumerable<string> EnumerateResults()
+	{
+		foreach (string cachedResult in CachedResults)
+		{
+			yield return cachedResult;
 		}
 	}
 
@@ -601,32 +536,95 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 	}
 
-	public void AddSignalMessage(string msg)
+	public void RegisterHandler(SignalHandler handler)
 	{
-		lock (this)
+		using (new WithUpgradeableReadLock(SignalsLock))
 		{
-			ReceivedSignals.Add(msg);
-			SignalEvent.Set();
+			if (handler == null || Handler != null)
+			{
+				return;
+			}
+			using (new WithWriteLock(SignalsLock))
+			{
+				Handler = handler;
+				foreach (string cachedSignal in CachedSignals)
+				{
+					Handler(cachedSignal);
+				}
+				CachedSignals.Clear();
+			}
 		}
 	}
 
-	public string GetPendingSignal()
+	public void Signal(string signal)
 	{
-		lock (this)
+		using (new WithUpgradeableReadLock(SignalsLock))
 		{
-			if (ReceivedSignals.Count > 0)
+			if (Handler != null)
 			{
-				string result = ReceivedSignals[0];
-				ReceivedSignals.RemoveAt(0);
-				return result;
+				Handler(signal);
+				return;
 			}
-			return string.Empty;
+			using (new WithWriteLock(SignalsLock))
+			{
+				CachedSignals.Add(signal);
+			}
+		}
+	}
+
+	internal void AddObserver(IStatusChangeObserver o)
+	{
+		using (new WithWriteLock(ObserverLock))
+		{
+			Observers.Add(o);
+		}
+	}
+
+	internal void RemoveObserver(IStatusChangeObserver o)
+	{
+		using (new WithWriteLock(ObserverLock))
+		{
+			Observers.Remove(o);
+		}
+	}
+
+	internal void ServiceLog(string fmt, params object[] stuff)
+	{
+		if (!IsImmediate)
+		{
+			ServiceLog(string.Format(fmt, stuff), LogEntryType.Info);
+		}
+	}
+
+	internal void ServiceLog(string msg)
+	{
+		if (!IsImmediate)
+		{
+			ServiceLog(msg, LogEntryType.Info);
+		}
+	}
+
+	internal void ServiceLog(LogEntryType type, string fmt, params object[] stuff)
+	{
+		if (!IsImmediate)
+		{
+			string msg = string.Format(fmt, stuff);
+			ServiceLog(msg, type);
+		}
+	}
+
+	internal void ServiceLog(string msg, LogEntryType type)
+	{
+		if (!IsImmediate)
+		{
+			msg = $"[{ProgramName}, {ID}]: {msg}";
+			LogHelper.Instance.Log(msg, type);
 		}
 	}
 
 	internal void Delete()
 	{
-		lock (this)
+		lock (Lock)
 		{
 			try
 			{
@@ -637,20 +635,6 @@ public class ExecutionContext : IMessageSink, ISerializable
 				LogHelper.Instance.Log($"Unable to delete context directory {ContextDirectory}", e);
 			}
 		}
-	}
-
-	internal bool CleanupLog()
-	{
-		if (AppLog == null)
-		{
-			return false;
-		}
-		if (IsComplete)
-		{
-			AppLog.Write($"Job has finished with status {Status.ToString().ToUpper()}");
-		}
-		AppLog.Close();
-		return true;
 	}
 
 	internal bool FlushMessages()
@@ -696,8 +680,81 @@ public class ExecutionContext : IMessageSink, ISerializable
 
 	internal void CleanupHardware()
 	{
-		PickerBoard.Instance.StopRoller();
-		ControllerService.Instance.ToggleRingLight(RinglightState.Off, null);
+		PickerBoard.SetSensors(on: false);
+		PickerBoard.StopRoller();
+		PickerBoard.ToggleRingLight(RinglightState.Off, null);
+	}
+
+	internal string CreateCameraCaptureErrorResult()
+	{
+		return CreateResult(StackEnd.Bottom, "CameraCaptureFailure", "The CAMERA CAPTURE instruction failed.", null, null, null, null, null);
+	}
+
+	internal string CreateItemStuckResult(string id)
+	{
+		return CreateResult(StackEnd.Bottom, "ItemStuckInGripper", "There is an item stuck in the gripper", null, null, id, null, null);
+	}
+
+	internal string CreateMoveErrorResult()
+	{
+		return CreateResult(StackEnd.Bottom, "MachineError", "There was an error executing the MOVE instruction.", null, null, null, null, null);
+	}
+
+	internal string CreateMoveErrorResult(int deck, int slot)
+	{
+		return CreateResult(StackEnd.Bottom, "MachineError", "There was an error executing the MOVE instruction.", deck, slot, null, null, null);
+	}
+
+	internal string CreateInfoResult(StackEnd end, string code, string message)
+	{
+		return CreateResult(end, code, message, null, null, null, null, null);
+	}
+
+	internal string CreateInfoResult(string code, string message)
+	{
+		return CreateResult(StackEnd.Bottom, code, message, null, null, null, null, null);
+	}
+
+	internal string CreateInfoResult(string code, string message, string id)
+	{
+		return CreateResult(StackEnd.Bottom, code, message, null, null, id, null, null);
+	}
+
+	internal string CreateResult(string code, string message, int? deck, int? slot, string item, DateTime? returnTime, string previousID)
+	{
+		return CreateResult(StackEnd.Bottom, code, message, deck, slot, item, returnTime, previousID);
+	}
+
+	internal string CreateResult(StackEnd end, string code, string message, int? deck, int? slot, string item, DateTime? returnTime, string previousID)
+	{
+		if (IsImmediate)
+		{
+			return string.Empty;
+		}
+		using (new WithWriteLock(ResultsLock))
+		{
+			string text = "~";
+			if (deck.HasValue && slot.HasValue)
+			{
+				text = $"{deck},{slot}";
+			}
+			string text2 = "~";
+			if (returnTime.HasValue)
+			{
+				text2 = returnTime.ToString();
+			}
+			Guid guid = Guid.NewGuid();
+			DateTime now = DateTime.Now;
+			string text3 = item ?? "~";
+			string text4 = previousID ?? "~";
+			if (message.Contains("'"))
+			{
+				message = message.Replace('\'', ' ');
+			}
+			string text5 = string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}", "RESULT", guid, now, code, text, text3, message, text2, text4);
+			CachedResults.Add(text5);
+			return text5;
+		}
 	}
 
 	internal ExecutionContext(string id, string programName)
@@ -709,7 +766,6 @@ public class ExecutionContext : IMessageSink, ISerializable
 		Result = new ExecutionResult();
 		ConnectionState = ConnectionState.Disconnected;
 		AppLog = new ApplicationLog(this);
-		SignalEvent = new ManualResetEvent(initialState: false);
 	}
 
 	void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
@@ -718,9 +774,8 @@ public class ExecutionContext : IMessageSink, ISerializable
 		{
 			return;
 		}
-		lock (this)
+		lock (Lock)
 		{
-			info.AddValue("ResultIndex", m_currentResult);
 			info.AddValue("IsCooperative", IsCooperative);
 			info.AddValue("ID", ID);
 			info.AddValue("Label", Label);
@@ -817,15 +872,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 				}
 				info.AddValue("Programs", stringBuilder6.ToString());
 			}
-			bool isValid = AppLog.IsValid;
-			info.AddValue("AppHasLog", isValid);
-			if (isValid)
-			{
-				info.AddValue("AppLogDirectory", AppLog.Directory);
-				info.AddValue("AppLogName", AppLog.FileName);
-				info.AddValue("AppLogFlushOnWrite", AppLog.FlushOnWrite);
-				info.AddValue("AppLogAppendToExisting", AppLog.AppendToExisting);
-			}
+			AppLog.Serialize(info);
 		}
 	}
 
@@ -841,8 +888,6 @@ public class ExecutionContext : IMessageSink, ISerializable
 			LogHelper.Instance.Log("Unable to hydrate context due to serialization exception", e);
 			IsCooperative = true;
 		}
-		SignalEvent = new ManualResetEvent(initialState: false);
-		AppLog = new ApplicationLog(this);
 		ConnectionState = ConnectionState.Disconnected;
 		Result = new ExecutionResult();
 		Registers = new Registers();
@@ -852,15 +897,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 		EnableDebugging = info.GetBoolean("EnableDebugging");
 		ID = info.GetString("ID");
 		string value = info.GetString("Priority");
-		try
-		{
-			Priority = Enum<ProgramPriority>.Parse(value, ProgramPriority.Normal);
-		}
-		catch (Exception)
-		{
-			Priority = ProgramPriority.Normal;
-		}
-		m_currentResult = info.GetInt32("ResultIndex");
+		Priority = Enum<ProgramPriority>.ParseIgnoringCase(value, ProgramPriority.Normal);
 		string value2 = info.GetString("Status");
 		Status.NextValue = Enum<ExecutionContextStatus>.ParseIgnoringCase(value2, ExecutionContextStatus.Stopped);
 		if (Status.NextValue == ExecutionContextStatus.Running)
@@ -977,21 +1014,18 @@ public class ExecutionContext : IMessageSink, ISerializable
 				Registers.CallStack.Push(callFrame);
 			}
 		}
-		if (info.GetBoolean("AppHasLog"))
-		{
-			AppLog.Directory = info.GetString("AppLogDirectory");
-			AppLog.FileName = info.GetString("AppLogName");
-			AppLog.AppendToExisting = info.GetBoolean("AppLogAppendToExisting");
-			AppLog.FlushOnWrite = info.GetBoolean("AppLogFlushOnWrite");
-		}
+		AppLog = ApplicationLog.Deserialize(info, this);
 	}
 
 	private void SendStatusMessage(ExecutionContextStatus status)
 	{
 		Send($">STATUS CHANGE< {status}");
-		if (StatusChangeCallback != null)
+		using (new WithReadLock(ObserverLock))
 		{
-			StatusChangeCallback(status);
+			foreach (IStatusChangeObserver observer in Observers)
+			{
+				observer.StatusChange(status);
+			}
 		}
 	}
 
@@ -1022,7 +1056,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 
 	private void ChangeStatus(ExecutionContextStatus status)
 	{
-		lock (this)
+		lock (Lock)
 		{
 			if (Status == ExecutionContextStatus.Running)
 			{

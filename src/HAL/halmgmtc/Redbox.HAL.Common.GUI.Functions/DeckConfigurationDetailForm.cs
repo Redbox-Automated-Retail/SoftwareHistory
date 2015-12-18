@@ -76,8 +76,8 @@ public class DeckConfigurationDetailForm : Form
 
 	private DataGridViewCheckBoxColumn Excluded;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool AllowSlotDataEdit
 	{
 		get
@@ -92,8 +92,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? Number
 	{
 		get
@@ -114,8 +114,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? YOffset
 	{
 		get
@@ -136,8 +136,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? NumberOfSlots
 	{
 		get
@@ -158,8 +158,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public decimal? SlotWidth
 	{
 		get
@@ -180,8 +180,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? SellThruSlots
 	{
 		get
@@ -202,8 +202,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? SellThruOffset
 	{
 		get
@@ -224,8 +224,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? ApproachOffset
 	{
 		get
@@ -246,8 +246,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? SlotsPerQuadrant
 	{
 		get
@@ -268,8 +268,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool IsQlmDeck
 	{
 		get

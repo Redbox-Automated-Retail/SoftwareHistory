@@ -2,23 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
 public sealed class ControllerEmulationState : EmulationStateConfig
 {
-	private const string SubDirectory = "SimulatedData";
+	public readonly CircularList<bool> ExpectedIsPickerFullResult = new CircularList<bool>();
 
-	private const string SerializedFileName = "SimulatedVendData.ser";
+	private readonly string DataDirectory;
 
-	private const string VendedIdsKey = "VendedIds";
-
-	private string m_dataDirectory;
-
-	private string m_backingFile;
-
-	private CircularList<bool> m_expectedIsPickerFullResult;
+	private readonly string BackingFile;
 
 	private Location m_expectedLookupResult;
 
@@ -102,8 +97,6 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public bool ExpectedWaitForPickerSensorsToClearResult { get; set; }
 
-	public PickerEdgeCheckResult ExpectedCheckPickerEdgesResult { get; set; }
-
 	public bool ExpectedQlmInBayStatus { get; set; }
 
 	public string ExpectedSetSlotIdPreviousIdResult { get; set; }
@@ -112,53 +105,12 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public Location ExpectedLookupResult => m_expectedLookupResult;
 
-	public CircularList<bool> ExpectedIsPickerFullResult
-	{
-		get
-		{
-			if (m_expectedIsPickerFullResult == null)
-			{
-				m_expectedIsPickerFullResult = new CircularList<bool>();
-			}
-			return m_expectedIsPickerFullResult;
-		}
-	}
-
-	private string DataDirectory
-	{
-		get
-		{
-			if (m_dataDirectory == null)
-			{
-				string dataDirectory = ControllerConfiguration.Instance.DataDirectory;
-				m_dataDirectory = Path.Combine(dataDirectory, "SimulatedData");
-			}
-			return m_dataDirectory;
-		}
-	}
-
-	private string BackingFile
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(m_backingFile))
-			{
-				m_backingFile = Path.Combine(DataDirectory, "SimulatedVendData.ser");
-			}
-			return m_backingFile;
-		}
-	}
-
 	public void Reset()
 	{
 		ExpectedIsTrackClosedResult = true;
 		ExpectedIsGripperClearResult = true;
 		ExpectedIsVendDoorClosedResult = true;
-		ExpectedGetResult = new GetResult
-		{
-			Code = GetResultCode.Success,
-			HardwareError = PickerHardwareError.Success
-		};
+		ExpectedGetResult = new GetResult();
 		ExpectedPutResult = new PutResult();
 		ExpectedVersions = new string[3] { "H101 Emulated controller board.", "H001 Emulated controller board.", "H002 Emulated controller board." };
 		ExpectedIsAuxSensorBlocked = new bool[12];
@@ -170,7 +122,6 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 		ExpectedMoveToVendResult = MotionResult.Success;
 		ExpectedMoveAbsoluteResult = MotionResult.Success;
 		ExpectedGetQlmDoorStatusResult = QlmDoorStatus.Closed;
-		ExpectedCheckPickerEdgesResult = PickerEdgeCheckResult.Clear;
 		ExpectedIsPickerFullResult.Clear();
 		ExpectedIsPickerFullResult.AddRange(new bool[2] { false, true });
 		QlmMotionResult expectedDisengageQlmResult = (ExpectedEngageQlmResult = QlmMotionResult.Success);
@@ -227,32 +178,37 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	private ControllerEmulationState()
 	{
+		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
+		DataDirectory = Path.Combine(path, "SimulatedData");
+		BackingFile = Path.Combine(DataDirectory, "SimulatedVendData.ser");
 		CheckOrCreateBackingStoreDirectory(log: true);
 		Reset();
 	}
 
 	private List<string> Load()
 	{
+		List<string> list = new List<string>();
 		if (!CheckOrCreateBackingStoreDirectory(log: false))
 		{
-			return new List<string>();
+			return list;
 		}
-		List<string> list = null;
 		if (!File.Exists(BackingFile))
 		{
 			LogHelper.Instance.Log("There is not a simulated vend stack to deserialize.");
-			return new List<string>();
+			return list;
 		}
 		try
 		{
 			using FileStream serializationStream = File.OpenRead(BackingFile);
 			BinaryFormatter binaryFormatter = new BinaryFormatter();
-			return (List<string>)binaryFormatter.Deserialize(serializationStream);
+			list = (List<string>)binaryFormatter.Deserialize(serializationStream);
+			return list;
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Unable to deserialize simulation vended stack.", e);
-			return new List<string>();
+			list.Clear();
+			return list;
 		}
 	}
 
@@ -262,7 +218,7 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 		{
 			return;
 		}
-		using FileStream serializationStream = File.OpenWrite(Path.Combine(DataDirectory, "SimulatedVendData.ser"));
+		using FileStream serializationStream = File.OpenWrite(BackingFile);
 		BinaryFormatter binaryFormatter = new BinaryFormatter();
 		binaryFormatter.Serialize(serializationStream, m_vendedIds);
 	}

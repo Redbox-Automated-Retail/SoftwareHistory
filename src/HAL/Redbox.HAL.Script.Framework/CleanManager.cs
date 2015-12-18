@@ -3,18 +3,27 @@ using System.Collections.Generic;
 using System.Timers;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class CleanManager
+internal sealed class CleanManager : IStatusChangeObserver
 {
-	private TimeSpan? m_stopTime = null;
+	private readonly IPersistentMap PersistentMap;
+
+	private readonly object Lock = new object();
+
+	private readonly RedboxTimer CleanTimer;
+
+	private readonly TimeSpan CleanEnd = new TimeSpan(4, 0, 0);
 
 	private TimeSpan? m_startTime = null;
 
 	private string m_scheduledCleanID;
 
 	private DateTime? m_lastCleanDate = null;
+
+	private DateTime? m_lastUserClean = null;
 
 	internal static CleanManager Instance => Singleton<CleanManager>.Instance;
 
@@ -26,7 +35,7 @@ internal class CleanManager
 			{
 				return m_lastCleanDate.Value;
 			}
-			string value = SecretOptions.Instance.GetValue("LastVMZClean", "NONE");
+			string value = PersistentMap.GetValue("LastVMZClean", "NONE");
 			if (value == "NONE")
 			{
 				return m_lastCleanDate = null;
@@ -44,7 +53,37 @@ internal class CleanManager
 		set
 		{
 			m_lastCleanDate = value;
-			SecretOptions.Instance.SetValue("LastVMZClean", (!m_lastCleanDate.HasValue) ? "NONE" : m_lastCleanDate.Value.ToString());
+			PersistentMap.SetValue("LastVMZClean", (!m_lastCleanDate.HasValue) ? "NONE" : m_lastCleanDate.Value.ToString());
+		}
+	}
+
+	private DateTime? LastUserCleanDate
+	{
+		get
+		{
+			if (m_lastUserClean.HasValue)
+			{
+				return m_lastUserClean.Value;
+			}
+			string value = PersistentMap.GetValue("LastUserClean", "NONE");
+			if (value == "NONE")
+			{
+				return m_lastUserClean = null;
+			}
+			try
+			{
+				m_lastUserClean = DateTime.Parse(value);
+				return m_lastUserClean;
+			}
+			catch
+			{
+				return m_lastUserClean = null;
+			}
+		}
+		set
+		{
+			m_lastUserClean = value;
+			PersistentMap.SetValue("LastUserClean", (!m_lastUserClean.HasValue) ? "NONE" : m_lastUserClean.Value.ToString());
 		}
 	}
 
@@ -56,7 +95,7 @@ internal class CleanManager
 			{
 				return m_scheduledCleanID;
 			}
-			m_scheduledCleanID = SecretOptions.Instance.GetValue("ScheduledCleanID", "<NONE>");
+			m_scheduledCleanID = PersistentMap.GetValue("ScheduledCleanID", "<NONE>");
 			if (!(m_scheduledCleanID == "<NONE>"))
 			{
 				return m_scheduledCleanID;
@@ -66,405 +105,42 @@ internal class CleanManager
 		set
 		{
 			m_scheduledCleanID = value;
-			SecretOptions.Instance.SetValue("ScheduledCleanID", (m_scheduledCleanID == null) ? "<NONE>" : m_scheduledCleanID);
+			PersistentMap.SetValue("ScheduledCleanID", (m_scheduledCleanID == null) ? "<NONE>" : m_scheduledCleanID);
 		}
 	}
 
-	private TimeSpan CleanEnd
+	private TimeSpan? StartTime
 	{
 		get
 		{
-			if (!m_stopTime.HasValue)
-			{
-				m_stopTime = new TimeSpan(4, 0, 0);
-			}
-			return m_stopTime.Value;
-		}
-	}
-
-	private TimeSpan StartTime
-	{
-		get
-		{
-			if (!RandomizeCleanStart)
-			{
-				m_startTime = new TimeSpan(2, 0, 0);
-				return m_startTime.Value;
-			}
 			if (m_startTime.HasValue)
 			{
 				return m_startTime.Value;
 			}
-			string value = SecretOptions.Instance.GetValue("ScheduledCleanStart", "<NONE>");
-			int num;
-			int minutes;
+			string value = PersistentMap.GetValue("ScheduledCleanStart", "<NONE>");
 			if ("<NONE>" == value)
 			{
-				Random random = new Random();
-				num = random.Next(1, 3);
-				minutes = 0;
-				if (num < 11)
-				{
-					minutes = random.Next(0, 60);
-				}
+				return null;
 			}
-			else
-			{
-				string[] array = value.Split(':');
-				num = (int.TryParse(array[0], out var result) ? result : 2);
-				minutes = (int.TryParse(array[1], out result) ? result : 0);
-			}
-			m_startTime = new TimeSpan(num, minutes, 0);
+			string[] array = value.Split(':');
+			int hours = (int.TryParse(array[0], out var result) ? result : 2);
+			int minutes = (int.TryParse(array[1], out result) ? result : 0);
+			m_startTime = new TimeSpan(hours, minutes, 0);
 			return m_startTime.Value;
 		}
 		set
 		{
-			if (RandomizeCleanStart)
+			m_startTime = value;
+			string value2 = "<NONE>";
+			if (m_startTime.HasValue)
 			{
-				m_startTime = value;
-				string value2 = "<NONE>";
-				if (m_startTime.HasValue)
-				{
-					value2 = $"{m_startTime.Value.Hours}:{m_startTime.Value.Seconds}";
-				}
-				SecretOptions.Instance.SetValue("ScheduledCleanStart", value2);
+				value2 = $"{m_startTime.Value.Hours}:{m_startTime.Value.Minutes}";
 			}
+			PersistentMap.SetValue("ScheduledCleanStart", value2);
 		}
 	}
 
-	private RedboxTimer CleanTimer { get; set; }
-
-	private bool RandomizeCleanStart { get; set; }
-
-	internal CleanResult CleanSlot()
-	{
-		ExecutionContext activeContext = ExecutionEngine.Instance.ActiveContext;
-		_ = ThinHelper.Debug;
-		CleanResult result = default(CleanResult);
-		VMZSearchResult result2 = default(VMZSearchResult);
-		VMZSearchResult result3 = default(VMZSearchResult);
-		VMZ.Instance.FindLastLocation(MerchFlags.Rebalance, ref result3);
-		VMZ.Instance.FindLastLocation(MerchFlags.Thin, ref result2);
-		VMZIterator vmzLoc = default(VMZIterator);
-		if (!result2.Found && !result3.Found)
-		{
-			if (ThinHelper.Debug)
-			{
-				LogHelper.Instance.Log("There are no thin types in the zone; process it all!");
-			}
-			vmzLoc.ResetToFirst();
-			ProcessZone(ref vmzLoc, ref result);
-			return result;
-		}
-		Location location = null;
-		if (result3.Found)
-		{
-			location = VMZ.Instance.FindEmptyInteriorToHighThinType(ref result3);
-			if (location != null)
-			{
-				if (ThinHelper.Debug)
-				{
-					LogHelper.Instance.Log("CleanSlot: empty location {0} interior to high rebalance {1}; move.", location.ToString(), result3.ToString());
-				}
-				TransferResult result4 = ControllerService.Instance.Transfer(result3.Location, location, activeContext.AppLog);
-				result.Accumulate(result4);
-				return result;
-			}
-			if (ThinHelper.Debug)
-			{
-				LogHelper.Instance.Log("There are no empties interior to high rebalance.");
-			}
-			List<Location> list = VMZ.Instance.FindNonThinsInteriorTo(ref result3);
-			if (list.Count > 0)
-			{
-				foreach (Location item in list)
-				{
-					if (!item.IsStuck)
-					{
-						SwapNonWithHigh(result3.Location, item, ref result);
-						return result;
-					}
-				}
-			}
-			if (ThinHelper.Debug)
-			{
-				LogHelper.Instance.Log("There are no non-thins interior to high rebalance.");
-			}
-		}
-		if (result2.Found)
-		{
-			location = (result3.Found ? VMZ.Instance.FindEmptyInteriorToHighThinType(ref result2, ref result3) : VMZ.Instance.FindEmptyInteriorToHighThinType(ref result2));
-			if (location != null)
-			{
-				if (ThinHelper.Debug)
-				{
-					LogHelper.Instance.Log("CleanSlot: empty location {0} interior to high thin {1}; move.", location.ToString(), result2.ToString());
-				}
-				TransferResult result5 = ControllerService.Instance.Transfer(result2.Location, location, ExecutionEngine.Instance.ActiveContext.AppLog);
-				result.Accumulate(result5);
-				return result;
-			}
-			if (ThinHelper.Debug)
-			{
-				LogHelper.Instance.Log("There are no empties interior to high thin.");
-			}
-			List<Location> list2 = (result3.Found ? VMZ.Instance.FindNonThinsInteriorTo(ref result2, result3.Location) : VMZ.Instance.FindNonThinsInteriorTo(ref result2));
-			if (list2.Count > 0)
-			{
-				foreach (Location item2 in list2)
-				{
-					if (!item2.IsStuck)
-					{
-						SwapNonWithHigh(result2.Location, item2, ref result);
-						return result;
-					}
-				}
-			}
-			if (ThinHelper.Debug)
-			{
-				LogHelper.Instance.Log("There are no non-thins interior to high thin.");
-			}
-		}
-		if (ThinHelper.Debug)
-		{
-			LogHelper.Instance.Log("No interior non-thin or empty; process the rest of the zone.");
-		}
-		if (result2.Found)
-		{
-			vmzLoc.ResetTo(ref result2);
-		}
-		else
-		{
-			vmzLoc.ResetTo(ref result3);
-		}
-		ProcessZone(ref vmzLoc, ref result);
-		return result;
-	}
-
-	internal void ProcessZone(ref VMZIterator vmzLoc, ref CleanResult result)
-	{
-		_ = ExecutionEngine.Instance.ActiveContext.AppLog;
-		while (true)
-		{
-			if (vmzLoc.IsEmpty)
-			{
-				if (!vmzLoc.Up())
-				{
-					result.VisitedAllSlots = true;
-					return;
-				}
-				continue;
-			}
-			if (!vmzLoc.IsStuck && !vmzLoc.IsThinType)
-			{
-				break;
-			}
-			if (vmzLoc.IsStuck)
-			{
-				ServiceLogHelper.Instance.WriteInfoMessage("ProcessZone: don't process location {0} stuckFlags {1}", vmzLoc.ToString(), vmzLoc.IsStuck.ToString());
-			}
-			if (!vmzLoc.Up())
-			{
-				result.VisitedAllSlots = true;
-				return;
-			}
-		}
-		List<Location> list = VMZ.Instance.FindEmptyOutsideOf(vmzLoc);
-		if (list.Count == 0)
-		{
-			ServiceLogHelper.Instance.WriteInfoMessage($"ProcessZone: no empty found outside of {vmzLoc.ToString()}");
-			result.NoEmptySlots = true;
-		}
-		else
-		{
-			TransferResult result2 = ControllerService.Instance.Transfer(vmzLoc.Location, list, ExecutionEngine.Instance.ActiveContext.AppLog);
-			result.Accumulate(result2);
-		}
-	}
-
-	internal void HaltScheduledClean()
-	{
-		lock (this)
-		{
-			FindCleanJob()?.Terminate();
-		}
-	}
-
-	internal bool ScheduledCleanIsRunning()
-	{
-		lock (this)
-		{
-			ExecutionContext executionContext = FindCleanJob();
-			return executionContext != null && !executionContext.IsComplete;
-		}
-	}
-
-	internal bool ScheduledCleanIsRunningOutsideWindow()
-	{
-		return !NowInCleanWindow();
-	}
-
-	internal void Init()
-	{
-		if (ControllerConfiguration.Instance.MerchandizingMode == MerchandizingMode.QLM)
-		{
-			return;
-		}
-		ConfigureTimer();
-		DateTime now = DateTime.Now;
-		if (!NowInCleanWindow())
-		{
-			return;
-		}
-		if (!LastCleanDate.HasValue)
-		{
-			LogHelper.Instance.Log("There is no last clean date.");
-			ExecutionContext executionContext = FindCleanJob();
-			if (executionContext == null)
-			{
-				LogHelper.Instance.Log("No running clean; schedule job.");
-				ScheduleDefaultClean();
-			}
-			else if (executionContext.IsComplete)
-			{
-				if (!executionContext.StartTime.HasValue)
-				{
-					LogHelper.Instance.Log("I found a completed job without a start time; schedule clean.");
-					ScheduleDefaultClean();
-				}
-				else if (executionContext.StartTime.Value < now)
-				{
-					LogHelper.Instance.Log("I found a completed job started on {0} at {1}.", executionContext.StartTime.Value.ToShortDateString(), executionContext.StartTime.Value.ToShortTimeString());
-					ScheduleDefaultClean();
-				}
-				else
-				{
-					LastCleanDate = new DateTime(now.Year, now.Month, now.Day, 2, 0, 0);
-					ScheduledCleanID = null;
-				}
-			}
-			else
-			{
-				LastCleanDate = new DateTime(now.Year, now.Month, now.Day, 2, 0, 0);
-				LogHelper.Instance.Log("I found a running clean; attach to it.");
-				ScheduledCleanID = executionContext.ID;
-				executionContext.StatusChangeCallback = (ExecutionContext.ContextStatusChange)Delegate.Combine(executionContext.StatusChangeCallback, new ExecutionContext.ContextStatusChange(JobDone));
-			}
-			return;
-		}
-		LogHelper.Instance.Log("Last clean date: {0} at {1}", LastCleanDate.Value.ToShortDateString(), LastCleanDate.Value.ToShortTimeString());
-		if (LastCleanDate.Value.Date == now.Date)
-		{
-			ExecutionContext executionContext2 = FindCleanJob();
-			if (executionContext2 == null || executionContext2.IsComplete)
-			{
-				ScheduledCleanID = null;
-				return;
-			}
-			LogHelper.Instance.Log("I found running clean today; attach to it.");
-			executionContext2.StatusChangeCallback = (ExecutionContext.ContextStatusChange)Delegate.Combine(executionContext2.StatusChangeCallback, new ExecutionContext.ContextStatusChange(JobDone));
-			return;
-		}
-		ExecutionContext executionContext3 = FindCleanJob();
-		if (executionContext3 == null)
-		{
-			LogHelper.Instance.Log("There is no clean running; schedule default.");
-			ScheduleDefaultClean();
-		}
-		else if (executionContext3.IsComplete)
-		{
-			if (!executionContext3.StartTime.HasValue)
-			{
-				LogHelper.Instance.Log("I found a completed clean without a start time; schedule clean.");
-				ScheduleDefaultClean();
-				return;
-			}
-			DateTime value = executionContext3.StartTime.Value;
-			DateTime? lastCleanDate = LastCleanDate;
-			if (value < lastCleanDate)
-			{
-				LogHelper.Instance.Log("I found a completed job started on {0} at {1}; schedule a clean.", executionContext3.StartTime.Value.ToShortDateString(), executionContext3.StartTime.Value.ToShortTimeString());
-				ScheduleDefaultClean();
-			}
-			else
-			{
-				ScheduledCleanID = null;
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("There is still a running clean; attach to it..");
-			ScheduledCleanID = executionContext3.ID;
-			executionContext3.StatusChangeCallback = (ExecutionContext.ContextStatusChange)Delegate.Combine(executionContext3.StatusChangeCallback, new ExecutionContext.ContextStatusChange(JobDone));
-		}
-	}
-
-	private void SwapNonWithHigh(Location highThin, Location nonThin, ref CleanResult result)
-	{
-		ExecutionContext activeContext = ExecutionEngine.Instance.ActiveContext;
-		List<Location> list = VMZ.Instance.FindEmptyOutsideOfCompressedZone();
-		if (list.Count == 0)
-		{
-			if (ThinHelper.Debug)
-			{
-				LogHelper.Instance.Log("There are no empty slots available.");
-			}
-			result.NoEmptySlots = true;
-			return;
-		}
-		if (ThinHelper.Debug)
-		{
-			LogHelper.Instance.Log("SwapNonWithHigh: move {0} out and high {1} in.", nonThin.ToString(), highThin.ToString());
-		}
-		_ = nonThin.Matrix;
-		TransferResult transferResult = ControllerService.Instance.Transfer(nonThin, list, activeContext.AppLog);
-		if (!transferResult.Transferred && !transferResult.SourceEmpty)
-		{
-			result.Accumulate(transferResult);
-			return;
-		}
-		TransferResult result2 = ControllerService.Instance.Transfer(highThin, nonThin, activeContext.AppLog);
-		result.Accumulate(result2);
-	}
-
-	private void ConfigureTimer()
-	{
-		if (!CleanTimer.Started)
-		{
-			CleanTimer.ScheduleAtNext(StartTime);
-		}
-	}
-
-	private void CleanTimerFired(object source, ElapsedEventArgs e)
-	{
-		LogHelper.Instance.Log("Clean VMZ timer firing.");
-		ScheduleDefaultClean();
-		CleanTimer.Disable();
-		ConfigureTimer();
-	}
-
-	private void ScheduleDefaultClean()
-	{
-		lock (this)
-		{
-			DateTime now = DateTime.Now;
-			if ((!LastCleanDate.HasValue || LastCleanDate.Value.Date != now.Date) && NowInCleanWindow())
-			{
-				ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("clean-vmz", "Automated clean VMZ", DateTime.Now, ProgramPriority.BelowNormal);
-				if (executionContext != null && !executionContext.Result.Errors.ContainsError())
-				{
-					executionContext.StatusChangeCallback = (ExecutionContext.ContextStatusChange)Delegate.Combine(executionContext.StatusChangeCallback, new ExecutionContext.ContextStatusChange(JobDone));
-					executionContext.SymbolTable.Add("_CHECK_RUNTIME", true);
-					LogHelper.Instance.Log("Auto-schedule clean VMZ job ( ID = {0} ).", executionContext.ID);
-					ScheduledCleanID = executionContext.ID;
-					executionContext.Resume();
-					LastCleanDate = DateTime.Now;
-				}
-			}
-		}
-	}
-
-	private void JobDone(ExecutionContextStatus status)
+	public void StatusChange(ExecutionContextStatus status)
 	{
 		if (ExecutionContextStatus.Completed == status || ExecutionContextStatus.Errored == status || ExecutionContextStatus.Stopped == status)
 		{
@@ -473,20 +149,274 @@ internal class CleanManager
 		}
 	}
 
-	private ExecutionContext FindCleanJob()
+	internal void RandomizeCleanTime()
+	{
+		if (ControllerConfiguration.Instance.EnableAutoVMZClean)
+		{
+			DateTime? nextFireTime = CleanTimer.NextFireTime;
+			CleanTimer.Disable();
+			StartTime = RandomizeStart();
+			ConfigureTimer();
+			DateTime? nextFireTime2 = CleanTimer.NextFireTime;
+			if (!nextFireTime2.HasValue)
+			{
+				LogHelper.Instance.Log("RandomizeClean: there is no next fire date.", LogEntryType.Error);
+			}
+			else if (nextFireTime.HasValue && nextFireTime2.Value.Date == nextFireTime.Value.Date && DateTime.Now.Date == nextFireTime2.Value.Date && nextFireTime2.Value < nextFireTime.Value && nextFireTime2.Value < DateTime.Now)
+			{
+				ScheduleDefaultClean();
+			}
+		}
+	}
+
+	internal void Register(ExecutionContext ctx)
+	{
+		if (ControllerConfiguration.Instance.EnableAutoVMZClean && !ctx.IsAutoScheduled)
+		{
+			LastUserCleanDate = DateTime.Now;
+		}
+	}
+
+	internal void CleanSlot(ref CleanResult result, ExecutionContext context, SegmentManager manager)
+	{
+		MerchTransferManager merchTransferManager = new MerchTransferManager(context, ThinHelper.Debug);
+		try
+		{
+			using VMZIterator vMZIterator = new VMZIterator();
+			_ = context.AppLog;
+			do
+			{
+				if (vMZIterator.IsEmpty)
+				{
+					if (!CompressToEmpty(vMZIterator, manager, merchTransferManager, ref result))
+					{
+						return;
+					}
+				}
+				else if (vMZIterator.Location.IsStuck)
+				{
+					context.ServiceLog("CleanManager: don't process location {0} stuckFlags {1}", vMZIterator.Location.ToString(), vMZIterator.Location.IsStuck.ToString());
+				}
+				else if (manager.IsNonThinType(vMZIterator.Flags))
+				{
+					MerchandizeResult merchandizeResult = manager.MoveNonThin(vMZIterator.Location, vMZIterator.Location, merchTransferManager);
+					if (merchandizeResult == MerchandizeResult.Success)
+					{
+						CompressToEmpty(vMZIterator, manager, merchTransferManager, ref result);
+						return;
+					}
+					if (MerchandizeResult.MachineFull == merchandizeResult)
+					{
+						result.VisitedAllSlots = true;
+						return;
+					}
+					if (MerchandizeResult.EmptyStuck != merchandizeResult)
+					{
+						result.Process(merchandizeResult);
+						return;
+					}
+				}
+			}
+			while (vMZIterator.Up());
+			result.VisitedAllSlots = true;
+		}
+		finally
+		{
+			result.Accumulate(merchTransferManager);
+		}
+	}
+
+	internal bool ScheduledCleanIsRunningOutsideWindow()
+	{
+		if (!ControllerConfiguration.Instance.EnableAutoVMZClean)
+		{
+			return false;
+		}
+		return !NowInCleanWindow();
+	}
+
+	internal void Init()
+	{
+		if (!ControllerConfiguration.Instance.IsVMZMachine || !ControllerConfiguration.Instance.EnableAutoVMZClean)
+		{
+			return;
+		}
+		try
+		{
+			ControllerConfiguration.Instance.ConfigurationChangeStart += ConfigurationUpdateStart;
+			ControllerConfiguration.Instance.ConfigurationChangeEnd += ConfigurationUpdateFinish;
+			ExecutionContext executionContext = FindAnyAutoClean();
+			if (executionContext == null)
+			{
+				ScheduledCleanID = null;
+				if (NowInCleanWindow())
+				{
+					ScheduleDefaultClean();
+				}
+				return;
+			}
+			ScheduledCleanID = (executionContext.IsComplete ? null : executionContext.ID);
+			if (!LastCleanDate.HasValue && executionContext.ExecutionStart.HasValue)
+			{
+				LastCleanDate = executionContext.ExecutionStart.Value;
+			}
+			else if (NowInCleanWindow())
+			{
+				ScheduleDefaultClean();
+			}
+		}
+		finally
+		{
+			ConfigureTimer();
+		}
+	}
+
+	private void ConfigurationUpdateStart()
+	{
+		LogHelper.Instance.Log("CleanManager.ConfigurationUpdateStart()");
+		if (CleanTimer.Started)
+		{
+			CleanTimer.Disable();
+		}
+	}
+
+	private bool CompressToEmpty(VMZIterator iterator, SegmentManager manager, MerchTransferManager xferMgr, ref CleanResult result)
+	{
+		MerchSegment merchSegment = manager.FindContainingOrHigher(iterator);
+		if (merchSegment == null)
+		{
+			if (ThinHelper.Debug)
+			{
+				LogHelper.Instance.Log("[CleanSlot] Did not find an enclosing segment for location {0}", iterator.Location.ToString());
+			}
+			return true;
+		}
+		if (ThinHelper.Debug)
+		{
+			LogHelper.Instance.Log("[CleanSlot] Found enclosing segment [flags = {0}] for location {1}", merchSegment.Flags.ToString(), iterator.Location.ToString());
+		}
+		VMZSearchResult result2 = default(VMZSearchResult);
+		merchSegment.FindHigh(ref result2);
+		if (result2.Location.IsStuck)
+		{
+			return true;
+		}
+		MerchandizeResult merchandizeResult = manager.MoveThin(result2.Location, iterator.Location, xferMgr);
+		result.Process(merchandizeResult);
+		return MerchandizeResult.EmptyStuck == merchandizeResult;
+	}
+
+	private void ConfigurationUpdateFinish()
+	{
+		LogHelper.Instance.Log("CleanManager.ConfigurationUpdateFinish()");
+		if (ControllerConfiguration.Instance.EnableAutoVMZClean)
+		{
+			ConfigureTimer();
+		}
+	}
+
+	private TimeSpan RandomizeStart()
+	{
+		int hours = 2;
+		int minutes = 0;
+		DateTime now = DateTime.Now;
+		DateTime dateTime = new DateTime(now.Year, now.Month, now.Day, 1, 30, 0);
+		DateTime dateTime2 = new DateTime(now.Year, now.Month, now.Day, 3, 0, 0);
+		TimeSpan timeSpan = dateTime2 - dateTime;
+		Random random = new Random();
+		DateRange dateRange = DateRange.FromDateRange(dateTime, dateTime2);
+		for (int i = 0; i < 10; i++)
+		{
+			TimeSpan timeSpan2 = new TimeSpan(0, random.Next(0, (int)timeSpan.TotalMinutes), 0);
+			DateTime value = dateTime + timeSpan2;
+			if (dateRange.Includes(value))
+			{
+				hours = value.Hour;
+				minutes = value.Minute;
+				break;
+			}
+		}
+		return new TimeSpan(hours, minutes, 0);
+	}
+
+	private void ConfigureTimer()
+	{
+		if (!CleanTimer.Started)
+		{
+			CleanTimer.ScheduleAtNext(StartTime.Value);
+		}
+	}
+
+	private void CleanTimerFired(object source, ElapsedEventArgs e)
+	{
+		LogHelper.Instance.Log("Clean VMZ timer firing.");
+		if (ControllerConfiguration.Instance.EnableAutoVMZClean)
+		{
+			ScheduleDefaultClean();
+			CleanTimer.Disable();
+			ConfigureTimer();
+		}
+	}
+
+	private void ScheduleDefaultClean()
+	{
+		lock (Lock)
+		{
+			DateTime now = DateTime.Now;
+			if ((LastCleanDate.HasValue && !(LastCleanDate.Value.Date != now.Date)) || !NowInCleanWindow())
+			{
+				return;
+			}
+			if (LastUserCleanDate.HasValue)
+			{
+				DateRange dateRange = DateRange.FromDateRange(now.Date, now);
+				if (dateRange.Includes(LastUserCleanDate.Value))
+				{
+					LogHelper.Instance.Log("There was a user clean prior to now; do not schedule an auto-clean.");
+					return;
+				}
+			}
+			ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("clean-vmz", "Automated clean VMZ", DateTime.Now, ProgramPriority.BelowNormal);
+			if (executionContext != null && !executionContext.Result.Errors.ContainsError())
+			{
+				LastCleanDate = DateTime.Now;
+				executionContext.AddObserver(this);
+				executionContext.IsAutoScheduled = true;
+				LogHelper.Instance.Log("Auto-schedule clean VMZ job ( ID = {0} ).", executionContext.ID);
+				ScheduledCleanID = executionContext.ID;
+				executionContext.Resume();
+			}
+		}
+	}
+
+	private ExecutionContext FindAnyAutoClean()
 	{
 		string scheduledCleanID = ScheduledCleanID;
-		if (string.IsNullOrEmpty(scheduledCleanID))
+		if (!string.IsNullOrEmpty(scheduledCleanID))
 		{
-			return null;
+			ExecutionContext job = ExecutionEngine.Instance.GetJob(scheduledCleanID);
+			if (job != null)
+			{
+				return job;
+			}
 		}
-		return ExecutionEngine.Instance.GetJob(scheduledCleanID);
+		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
+		foreach (ExecutionContext item in list)
+		{
+			if (item.ProgramName == "clean-vmz" && item.IsAutoScheduled)
+			{
+				return item;
+			}
+		}
+		return null;
 	}
 
 	private bool NowInCleanWindow()
 	{
 		TimeSpan timeOfDay = DateTime.Now.TimeOfDay;
-		if (timeOfDay >= StartTime)
+		TimeSpan value = timeOfDay;
+		TimeSpan? startTime = StartTime;
+		if (value >= startTime)
 		{
 			return timeOfDay < CleanEnd;
 		}
@@ -495,6 +425,11 @@ internal class CleanManager
 
 	private CleanManager()
 	{
+		PersistentMap = StoreManager.Instance.GetDataStore();
 		CleanTimer = new RedboxTimer("Clean VMZ", CleanTimerFired);
+		if (!StartTime.HasValue)
+		{
+			StartTime = RandomizeStart();
+		}
 	}
 }

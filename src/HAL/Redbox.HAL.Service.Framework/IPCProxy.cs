@@ -8,15 +8,41 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Service.Framework;
 
-public class IPCProxy
+public sealed class IPCProxy : IDisposable
 {
 	private IPCServiceHost m_listener;
 
-	private ManualResetEvent m_waitObject = new ManualResetEvent(initialState: false);
+	private bool Disposed;
 
-	public static IPCProxy Instance => Singleton<IPCProxy>.Instance;
+	private readonly IPCProtocol Protocol;
 
-	public IPCProtocol Protocol { get; private set; }
+	private readonly ManualResetEvent m_waitObject = new ManualResetEvent(initialState: false);
+
+	public bool ProtocolValid => Protocol != null;
+
+	public static IPCProxy Parse(string protocol)
+	{
+		IPCProtocol iPCProtocol = null;
+		try
+		{
+			iPCProtocol = IPCProtocol.Parse(protocol);
+		}
+		catch (UriFormatException e)
+		{
+			LogHelper.Instance.Log("ProtocolURI is malformed.", e);
+			iPCProtocol = null;
+		}
+		return new IPCProxy(iPCProtocol);
+	}
+
+	public void Dispose()
+	{
+		if (!Disposed)
+		{
+			Disposed = true;
+			StopListener();
+		}
+	}
 
 	public void StartListener()
 	{
@@ -24,7 +50,6 @@ public class IPCProxy
 		{
 			throw new Exception("Expected a parsed protocol.");
 		}
-		LogHelper.Instance.Log($"Starting server listener on channel type {Protocol.Channel.ToString()}");
 		if (Protocol.Channel == ChannelType.NamedPipe)
 		{
 			RunPipeListener();
@@ -42,21 +67,6 @@ public class IPCProxy
 			m_listener.Stop();
 		}
 		m_waitObject.Set();
-	}
-
-	public bool ParseProtocol(string protocol)
-	{
-		try
-		{
-			Protocol = IPCProtocol.Parse(protocol);
-			return true;
-		}
-		catch (UriFormatException e)
-		{
-			LogHelper.Instance.Log("ProtocolURI is malformed; please fix. HAL service is exiting.", e);
-			Protocol = null;
-			return false;
-		}
 	}
 
 	public bool ExecuteStartupFile(string serviceStartup)
@@ -99,7 +109,8 @@ public class IPCProxy
 		m_listener.Start();
 	}
 
-	private IPCProxy()
+	private IPCProxy(IPCProtocol protocol)
 	{
+		Protocol = protocol;
 	}
 }

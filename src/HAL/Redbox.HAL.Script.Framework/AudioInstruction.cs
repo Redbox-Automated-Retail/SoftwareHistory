@@ -5,65 +5,33 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class AudioInstruction : Instruction
+public sealed class AudioInstruction : Instruction
 {
-	protected static class Commands
+	private enum AudioOperands
 	{
-		public const string On = "ON";
-
-		public const string Off = "OFF";
+		None,
+		On,
+		Off
 	}
 
 	public override string Mnemonic => "AUDIO";
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return IsValidOperand(operand);
+		return AudioOperands.None != Enum<AudioOperands>.ParseIgnoringCase(operand, AudioOperands.None);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (Enum<AudioOperands>.ParseIgnoringCase(operandTokens[0].Value, AudioOperands.None) == AudioOperands.None)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol || !IsValidOperand(tokensAfterMnemonic[0].Value))
-			{
-				AddError("C002", "Expected a symbol: ON, OFF.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-		}
-		else
-		{
-			AddError("C002", "Expected a symbol: ON, OFF.", result.Errors);
+			result.Errors.Add(Error.NewError("C001", "Unexpected form", $"The operand {operandTokens[0].Value} for AUDIO isn't recognized."));
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		Token token = base.Operands[0];
-		if (token.Type == TokenType.Symbol)
-		{
-			if (string.Compare(token.Value, "ON", ignoreCase: true) == 0)
-			{
-				ControllerService.Instance.SetAudio(on: true);
-			}
-			else if (string.Compare(token.Value, "OFF", ignoreCase: true) == 0)
-			{
-				ControllerService.Instance.SetAudio(on: false);
-			}
-		}
-	}
-
-	private bool IsValidOperand(string op)
-	{
-		if (string.Compare(op, "ON", ignoreCase: true) != 0)
-		{
-			return string.Compare(op, "OFF", ignoreCase: true) == 0;
-		}
-		return true;
+		AudioOperands audioOperands = Enum<AudioOperands>.ParseIgnoringCase(base.Operands[0].Value, AudioOperands.None);
+		ControlSystem.Instance.ExecuteControllerCommand((AudioOperands.Off == audioOperands) ? CommandType.AudioOff : CommandType.AudioOn);
 	}
 }

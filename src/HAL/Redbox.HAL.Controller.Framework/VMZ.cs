@@ -1,21 +1,24 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class VMZ : IDisposable
+public sealed class VMZ : IDisposable
 {
+	private bool Disposed;
+
 	private readonly Range m_slots = new Range(1, 15);
 
 	private readonly Location[] m_thinPattern;
 
 	public static VMZ Instance => Singleton<VMZ>.Instance;
 
-	internal int LastIndex => m_thinPattern.Length - 1;
+	public Location First => m_thinPattern[0];
 
-	private bool Disposed { get; set; }
+	public Range Bounds => new Range(m_slots.Start, m_slots.End);
+
+	internal int LastIndex => m_thinPattern.Length - 1;
 
 	public void Dispose()
 	{
@@ -25,144 +28,6 @@ public class VMZ : IDisposable
 	~VMZ()
 	{
 		DisposeInner(fromDispose: false);
-	}
-
-	public int EndsWithSlot(Deck deck)
-	{
-		return m_slots.End + 1;
-	}
-
-	public int GetCountInZone(MerchFlags flags)
-	{
-		int num = 0;
-		Location[] thinPattern = m_thinPattern;
-		foreach (Location location in thinPattern)
-		{
-			if (location.Flags == flags)
-			{
-				num++;
-			}
-		}
-		return num;
-	}
-
-	public List<Location> GetThinItems()
-	{
-		List<Location> list = new List<Location>();
-		Location[] thinPattern = m_thinPattern;
-		foreach (Location location in thinPattern)
-		{
-			if (IsThinType(location.Flags))
-			{
-				list.Add(location);
-			}
-		}
-		return list;
-	}
-
-	public List<Location> GetNonThinItemsInCompressedZone()
-	{
-		List<Location> list = new List<Location>();
-		VMZSearchResult result = default(VMZSearchResult);
-		FindHighThinTypeDisk(ref result);
-		if (!result.Found)
-		{
-			return list;
-		}
-		Location[] thinPattern = m_thinPattern;
-		foreach (Location location in thinPattern)
-		{
-			if (location.Equals(result.Location))
-			{
-				break;
-			}
-			if (!IsThinType(location.Flags) && !location.IsEmpty)
-			{
-				list.Add(location);
-			}
-		}
-		return list;
-	}
-
-	public bool LocInCompressedZone(Location target)
-	{
-		VMZSearchResult result = default(VMZSearchResult);
-		FindHighThinTypeDisk(ref result);
-		if (!result.Found)
-		{
-			return false;
-		}
-		Location[] thinPattern = m_thinPattern;
-		foreach (Location location in thinPattern)
-		{
-			if (location.Equals(result.Location))
-			{
-				return location.Equals(target);
-			}
-			if (location.Equals(target))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public List<string> GetState()
-	{
-		List<string> rv = new List<string>();
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
-		{
-			for (int i = m_slots.Start; i <= m_slots.End; i++)
-			{
-				string item = $"Deck {deck.Number} Slot {i} Inventory {deck.GetIdForSlot(i)} Flags {deck.GetMerchFlags(i).ToString()}";
-				rv.Add(item);
-			}
-			return true;
-		});
-		return rv;
-	}
-
-	public void DumpZone()
-	{
-		StreamWriter log = new StreamWriter(GetDumpFile());
-		try
-		{
-			log.WriteLine("-- Dump VMZ Locations --");
-			DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
-			{
-				for (int i = m_slots.Start; i <= m_slots.End; i++)
-				{
-					MerchFlags merchFlags = deck.GetMerchFlags(i);
-					log.WriteLine("Deck {0} Slot {1} Inventory {2} Flags {3} Stuck {4}", deck.Number, i, deck.GetIdForSlot(i), merchFlags.ToString(), deck.GetEmptyStuckCount(i));
-				}
-				return true;
-			});
-		}
-		finally
-		{
-			if (log != null)
-			{
-				((IDisposable)log).Dispose();
-			}
-		}
-	}
-
-	public void DumpZone(IFormattedLog log)
-	{
-		if (!ControllerConfiguration.Instance.DumpVMZState)
-		{
-			return;
-		}
-		log.WriteFormatted("-- Dump VMZ Locations --");
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
-		{
-			for (int i = m_slots.Start; i <= m_slots.End; i++)
-			{
-				MerchFlags merchFlags = deck.GetMerchFlags(i);
-				log.WriteFormatted("Deck {0} Slot {1} Inventory {2} Flags {3} Stuck {4}", deck.Number, i, deck.GetIdForSlot(i), merchFlags.ToString(), deck.GetEmptyStuckCount(i));
-			}
-			return true;
-		});
 	}
 
 	public int ReserveUnload(int lowDeck)
@@ -184,117 +49,81 @@ public class VMZ : IDisposable
 		return reserved;
 	}
 
-	public Location FindNextUnloadLocation()
-	{
-		Location[] thinPattern = m_thinPattern;
-		foreach (Location location in thinPattern)
-		{
-			if (MerchFlags.Unload == location.Flags)
-			{
-				return location;
-			}
-		}
-		return null;
-	}
-
-	public List<Location> FindEmptyOutsideOfCompressedZone()
-	{
-		VMZSearchResult res = default(VMZSearchResult);
-		FindHighTypeInner(MerchFlags.Thin, ref res);
-		if (!res.Found)
-		{
-			FindHighTypeInner(MerchFlags.Rebalance, ref res);
-			if (!res.Found)
-			{
-				return FindFarthestEmptyOutsideOf(m_thinPattern[0]);
-			}
-		}
-		return FindFarthestEmptyOutsideOf(res.Location);
-	}
-
-	public List<Location> FindEmptyOutsideOf(VMZIterator iter)
-	{
-		return FindFarthestEmptyOutsideOf(m_thinPattern[iter.Index]);
-	}
-
-	public bool DiskInteriorToTop(MerchFlags flags, Location loc)
-	{
-		if (!SlotInMerchQuadrant(loc.Slot))
-		{
-			return false;
-		}
-		VMZSearchResult res = default(VMZSearchResult);
-		FindHighTypeInner(flags, ref res);
-		if (!res.Found)
-		{
-			return false;
-		}
-		if (loc.Equals(res.Location))
-		{
-			return true;
-		}
-		return LocIsLowerThan(loc, res.Location);
-	}
-
-	public Location FindEmptyInteriorToHighThinType(ref VMZSearchResult result)
-	{
-		return FindEmptyBetween(0, result.Index);
-	}
-
-	public Location FindEmptyInteriorToHighThinType(ref VMZSearchResult upper, ref VMZSearchResult lower)
-	{
-		return FindEmptyBetween(lower.Index + 1, upper.Index);
-	}
-
-	public List<Location> FindThinTypeInteriorTo(MerchFlags type, ref VMZSearchResult start)
+	public List<Location> FindFarthestEmptyOutsideOf(Location top)
 	{
 		List<Location> list = new List<Location>();
-		for (int i = 0; i < start.Index; i++)
+		int returnSlotBuffer = ControllerConfiguration.Instance.ReturnSlotBuffer;
+		int num = ControllerConfiguration.Instance.GetMachineEmptyCount() - returnSlotBuffer;
+		if (num <= 0)
 		{
-			Location location = m_thinPattern[i];
-			if (location.Flags == type)
+			LogHelper.Instance.Log("FindFarthestEmptyOutsideOf: There are no empty slots available.");
+			return list;
+		}
+		if (num > ControllerConfiguration.Instance.PutAwayItemAttempts)
+		{
+			num = ControllerConfiguration.Instance.PutAwayItemAttempts;
+		}
+		foreach (ESPNode item in ControllerConfiguration.Instance.ESPHelper.EmptyPattern)
+		{
+			Location location = item;
+			if (!top.Equals(location))
 			{
-				list.Add(location);
+				if (location.IsEmpty)
+				{
+					list.Add(location);
+				}
+				if (list.Count == num)
+				{
+					break;
+				}
+				continue;
 			}
+			break;
 		}
 		return list;
 	}
 
-	public List<Location> FindNonThinsInteriorTo(ref VMZSearchResult start)
+	public void ForAllBetweenDo(Predicate<Location> callback, ref VMZSearchResult end)
 	{
-		List<Location> list = new List<Location>();
-		for (int i = 0; i < start.Index; i++)
+		if (end.Index >= 0 && end.Index < m_thinPattern.Length)
 		{
-			Location location = m_thinPattern[i];
-			if (!IsThinType(location.Flags) && !location.IsEmpty)
-			{
-				list.Add(location);
-			}
+			Execute(callback, 0, end.Index);
 		}
-		return list;
 	}
 
-	public List<Location> FindNonThinsInteriorTo(ref VMZSearchResult start, Location lowBound)
+	public void ForAllBetweenDo(Predicate<Location> callback, ref VMZSearchResult low, ref VMZSearchResult high)
 	{
-		List<Location> list = new List<Location>();
-		for (int num = start.Index - 1; num >= 0; num--)
+		if (low.Index >= 0 && low.Index < m_thinPattern.Length && high.Index >= 0 && high.Index < m_thinPattern.Length)
+		{
+			Execute(callback, low.Index, high.Index);
+		}
+	}
+
+	public void FindFirstLocation(MerchFlags flags, ref VMZSearchResult result)
+	{
+		for (int i = 0; i < m_thinPattern.Length; i++)
+		{
+			if (m_thinPattern[i].Flags == flags)
+			{
+				result.Index = i;
+				return;
+			}
+		}
+		result.Invalidate();
+	}
+
+	public void FindHighestLocation(MerchFlags flags, ref VMZSearchResult result)
+	{
+		for (int num = m_thinPattern.Length - 1; num >= 0; num--)
 		{
 			Location location = m_thinPattern[num];
-			if (location.Equals(lowBound))
+			if (location.Flags == flags)
 			{
-				break;
-			}
-			if (!IsThinType(location.Flags) && !location.IsEmpty)
-			{
-				list.Add(location);
+				result.Index = num;
+				return;
 			}
 		}
-		return list;
-	}
-
-	public void FindLastLocation(MerchFlags flags, ref VMZSearchResult result)
-	{
-		FindHighTypeInner(flags, ref result);
+		result.Invalidate();
 	}
 
 	public int ResetCompressedZone(ref VMZSearchResult high)
@@ -302,89 +131,66 @@ public class VMZ : IDisposable
 		int num = 0;
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		int deckCount = DecksManager.Instance.DeckCount;
-		List<Location>[] array = new List<Location>[deckCount];
+		List<Location>[] locs = new List<Location>[deckCount];
 		for (int i = 0; i < deckCount; i++)
 		{
-			array[i] = new List<Location>();
+			locs[i] = new List<Location>();
 		}
 		try
 		{
-			Location[] thinPattern = m_thinPattern;
-			foreach (Location location in thinPattern)
+			Execute(delegate(Location loc)
 			{
-				if (high.Location.Equals(location))
+				if (!loc.IsEmpty)
 				{
-					array[location.Deck - 1].Add(location);
-					break;
+					locs[loc.Deck - 1].Add(loc);
 				}
-				if (!location.IsEmpty)
-				{
-					array[location.Deck - 1].Add(location);
-				}
-			}
-			for (int k = 0; k < array.Length; k++)
+				return true;
+			}, 0, high.Index);
+			for (int num2 = 0; num2 < locs.Length; num2++)
 			{
-				if (array[k].Count > 0)
+				if (locs[num2].Count > 0)
 				{
-					Deck deck = DecksManager.Instance.GetDeck(k + 1);
-					num += deck.BulkUpdate(array[k], "EMPTY", MerchFlags.None);
+					Deck deck = DecksManager.Instance.GetDeck(num2 + 1);
+					num += deck.BulkUpdate(locs[num2], "EMPTY", MerchFlags.None);
 				}
 			}
 		}
 		finally
 		{
-			List<Location>[] array2 = array;
-			foreach (List<Location> list in array2)
+			List<Location>[] array = locs;
+			foreach (List<Location> list in array)
 			{
 				list.Clear();
 			}
-			array = null;
+			locs = null;
 		}
 		executionTimer.Stop();
 		LogHelper.Instance.Log("VMZ.ClearZone: reset {0} locations ( time = {1}ms ).", num, executionTimer.ElapsedMilliseconds);
 		return num;
 	}
 
-	public bool LocIsInVMZ(Location loc)
+	public void DumpZone(IFormattedLog log)
 	{
-		return SlotInMerchQuadrant(loc.Slot);
-	}
-
-	public bool MarkLocationAs(Location loc, MerchFlags flags)
-	{
-		if (!SlotInMerchQuadrant(loc.Slot))
+		if (!ControllerConfiguration.Instance.DumpVMZState)
 		{
-			return false;
+			return;
 		}
-		return DecksManager.Instance.GetDeck(loc.Deck).UpdateMerchFlag(flags, loc.Slot);
-	}
-
-	public bool IsThinType(MerchFlags flags)
-	{
-		if (MerchFlags.Rebalance != flags)
+		log.WriteFormatted("-- Dump VMZ Locations --");
+		using VMZIterator vMZIterator = new VMZIterator();
+		do
 		{
-			return MerchFlags.Thin == flags;
+			log.WriteFormatted("Deck {0} Slot {1} Inventory {2} Flags {3} Stuck {4}", vMZIterator.Location.Deck, vMZIterator.Location.Slot, vMZIterator.Location.Matrix, vMZIterator.Location.Flags.ToString(), vMZIterator.Location.StuckCount);
 		}
-		return true;
-	}
-
-	internal void Initialize()
-	{
-		LogHelper.Instance.Log("VMZ.Initialize()", LogEntryType.Info);
+		while (vMZIterator.Up());
 	}
 
 	internal Location LocationAt(int idx)
 	{
-		if (idx < 0 || idx >= m_thinPattern.Length)
+		if (idx >= 0 && idx < m_thinPattern.Length)
 		{
-			return null;
+			return m_thinPattern[idx];
 		}
-		return m_thinPattern[idx];
-	}
-
-	internal bool LocIsInVMZ(ControllerLocation loc)
-	{
-		return SlotInMerchQuadrant(loc.Slot);
+		return null;
 	}
 
 	internal int FindIndex(Location loc)
@@ -416,102 +222,11 @@ public class VMZ : IDisposable
 		return loc.Slot < highMark.Slot;
 	}
 
-	private void FindHighThinTypeDisk(ref VMZSearchResult result)
+	private void Execute(Predicate<Location> match, int startIndex, int endIndex)
 	{
-		FindHighTypeInner(MerchFlags.Thin, ref result);
-		if (!result.Found)
+		for (int i = startIndex; i <= endIndex && match(m_thinPattern[i]); i++)
 		{
-			FindHighTypeInner(MerchFlags.Rebalance, ref result);
 		}
-	}
-
-	private void FindHighTypeInner(MerchFlags flags, ref VMZSearchResult res)
-	{
-		for (int num = m_thinPattern.Length - 1; num >= 0; num--)
-		{
-			Location location = m_thinPattern[num];
-			if (location.Flags == flags)
-			{
-				res.Index = num;
-				return;
-			}
-		}
-		res.Clear();
-	}
-
-	private string GetDumpFile()
-	{
-		DateTime now = DateTime.Now;
-		string path = $"m{now.Month}d{now.Day}y{now.Year}_h{now.Hour}m{now.Minute}s{now.Second}t{now.Millisecond}.txt";
-		string path2 = Path.Combine(ControllerConfiguration.Instance.KioskLogsPath, "VMZ");
-		string text = Path.Combine(path2, path);
-		if (File.Exists(text))
-		{
-			try
-			{
-				File.Delete(text);
-			}
-			catch (Exception arg)
-			{
-				Console.WriteLine("couldn't delete file.", arg);
-			}
-		}
-		return text;
-	}
-
-	private Location FindEmptyBetween(int start, int end)
-	{
-		for (int i = start; i < end; i++)
-		{
-			if (m_thinPattern[i].IsEmpty)
-			{
-				return m_thinPattern[i];
-			}
-		}
-		return null;
-	}
-
-	private bool SlotInMerchQuadrant(int slot)
-	{
-		if (slot >= m_slots.Start)
-		{
-			return slot <= m_slots.End;
-		}
-		return false;
-	}
-
-	private List<Location> FindFarthestEmptyOutsideOf(Location top)
-	{
-		List<Location> list = new List<Location>();
-		int returnSlotBuffer = ControllerConfiguration.Instance.ReturnSlotBuffer;
-		int num = ControllerConfiguration.Instance.GetMachineEmptyCount() - returnSlotBuffer;
-		if (num <= 0)
-		{
-			LogHelper.Instance.Log("FindFarthestEmptyOutsideOf: There are no empty slots available.");
-			return list;
-		}
-		if (num > ControllerConfiguration.Instance.PutAwayItemAttempts)
-		{
-			num = ControllerConfiguration.Instance.PutAwayItemAttempts;
-		}
-		ESPNode[] emptyPattern = ESPHelper.Instance.EmptyPattern;
-		foreach (ESPNode eSPNode in emptyPattern)
-		{
-			Location location = eSPNode;
-			if (top.Equals(location))
-			{
-				break;
-			}
-			if (location.IsEmpty)
-			{
-				list.Add(location);
-			}
-			if (list.Count == num)
-			{
-				break;
-			}
-		}
-		return list;
 	}
 
 	private void DisposeInner(bool fromDispose)

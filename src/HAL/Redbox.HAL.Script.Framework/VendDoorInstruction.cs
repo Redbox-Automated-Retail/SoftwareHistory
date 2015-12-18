@@ -5,79 +5,64 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class VendDoorInstruction : Instruction
+public sealed class VendDoorInstruction : Instruction
 {
-	protected static class Commands
+	private enum DoorCommands
 	{
-		public const string Open = "OPEN";
-
-		public const string Rent = "RENT";
-
-		public const string Close = "CLOSE";
-
-		public const string Status = "STATUS";
+		None,
+		Open,
+		Rent,
+		Close,
+		Status
 	}
 
 	public override string Mnemonic => "VENDDOOR";
-
-	private static VendDoor VendDoor => VendDoor.Instance;
 
 	protected override bool IsOperandRecognized(string operand)
 	{
 		return IsOperandValid(operand);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol || !IsOperandValid(tokensAfterMnemonic[0].Value))
-			{
-				AddError("C002", "Expected a symbol: OPEN, CLOSE, RENT, or STATUS.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddMissingOperandError("Expected a symbol: OPEN, CLOSE, RENT, or STATUS.");
 		}
-		else
+		else if (operandTokens[0].Type != TokenType.Symbol || !IsOperandValid(operandTokens[0].Value))
 		{
-			AddError("C002", "Expected a symbol: OPEN, CLOSE, RENT, or STATUS.", result.Errors);
+			result.AddInvalidOperandError("Expected a symbol: OPEN, CLOSE, RENT, or STATUS.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Token token = base.Operands[0];
 		if (token.Type == TokenType.Symbol)
 		{
-			if (string.Compare(token.Value, "STATUS", ignoreCase: true) == 0)
+			switch (Enum<DoorCommands>.ParseIgnoringCase(token.Value, DoorCommands.None))
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(VendDoor.IsClosed() ? "CLOSED" : "OPEN");
-			}
-			else if (string.Compare(token.Value, "OPEN", ignoreCase: true) == 0)
-			{
-				HandleTimeoutOrCommmError(VendDoor.TestOpen());
-			}
-			else if (string.Compare(token.Value, "RENT", ignoreCase: true) == 0)
-			{
-				HandleTimeoutOrCommmError(VendDoor.TestRent());
-			}
-			else if (string.Compare(token.Value, "CLOSE", ignoreCase: true) == 0)
-			{
-				HandleTimeoutOrCommmError(VendDoor.TestClose());
+			case DoorCommands.Status:
+				context.PushTop(VendDoor.IsClosed() ? "CLOSED" : "OPEN");
+				break;
+			case DoorCommands.Open:
+				HandleTimeoutOrCommmError(VendDoor.TestOpen(), context);
+				break;
+			case DoorCommands.Rent:
+				HandleTimeoutOrCommmError(VendDoor.TestRent(), context);
+				break;
+			case DoorCommands.Close:
+				HandleTimeoutOrCommmError(VendDoor.TestClose(), context);
+				break;
+			default:
+				result.AddError(ExecutionErrors.InvalidSymbolValue, $"The value {token.Value} is unrecognized.");
+				break;
 			}
 		}
 	}
 
 	private bool IsOperandValid(string op)
 	{
-		if (string.Compare(op, "OPEN", ignoreCase: true) != 0 && string.Compare(op, "RENT", ignoreCase: true) != 0 && string.Compare(op, "CLOSE", ignoreCase: true) != 0)
-		{
-			return string.Compare(op, "STATUS", ignoreCase: true) == 0;
-		}
-		return true;
+		return Enum<DoorCommands>.ParseIgnoringCase(op, DoorCommands.None) != DoorCommands.None;
 	}
 }

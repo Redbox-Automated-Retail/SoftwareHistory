@@ -1,27 +1,19 @@
 using System;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class HomeXInstruction : Instruction
+public sealed class HomeXInstruction : Instruction
 {
 	public override string Mnemonic => "HOMEX";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
-	{
-		base.OnParse(tokens, result);
-		if (tokens.GetTokensAfterMnemonic().Count > 0)
-		{
-			AddError("C002", "The HOMEX mnemonic does not support operands.", result.Errors);
-		}
-	}
+	protected override ExpectedOperands Expected => ExpectedOperands.None;
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.X, ExecutionEngine.Instance.ActiveContext.AppLog);
+		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.X, context.AppLog);
 		string instance = motionResult.ToString().ToUpper();
-		ExecutionEngine.Instance.ActiveContext.PushTop(instance);
+		context.PushTop(instance);
 	}
 }

@@ -1,10 +1,11 @@
 using System;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
+using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class TesterReadDiskJob : NativeJobAdapter
+[NativeJob(ProgramName = "read-barcode", Operand = "READ-BARCODE")]
+internal sealed class TesterReadDiskJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
@@ -13,29 +14,41 @@ internal class TesterReadDiskJob : NativeJobAdapter
 			PushResults(TimeSpan.FromMilliseconds(0.34), 4, "999999");
 			return;
 		}
-		using (new CameraHelper(1000))
+		if (!PickerBoard.IsFull())
 		{
-			PerfFunctions.Wait(1000);
-			ReadDiskResult readDiskResult = DataMatrixHelper.Instance.ReadDiscInPicker(CenterDiskMethod.VendDoorAndBack);
-			if (ReadDiscStatus.CaptureError == readDiskResult.ReadStatus)
-			{
-				ResultHelper.Instance.CreateCameraCaptureErrorResult();
-				PushResults(default(TimeSpan), 0, "UNKNOWN");
-				return;
-			}
-			PushResults(readDiskResult.ReadTime, readDiskResult.FoundCodes, readDiskResult.Matrix);
-			if (ControllerConfiguration.Instance.IsBarcodeDuplicate(readDiskResult.Matrix, out var _))
-			{
-				ResultHelper.Instance.CreateInfoResult("DuplicateDetected", "The read ID is a duplicate.", readDiskResult.Matrix);
-			}
+			base.Context.CreateInfoResult("NoDisk", "The picker is empty.");
+			return;
 		}
+		using Scanner scanner = new Scanner();
+		ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+		ScanResult scanResult = scanner.Read();
+		if (!scanResult.SnapOk)
+		{
+			base.Context.CreateCameraCaptureErrorResult();
+			PushResults(default(TimeSpan), 0, "UNKNOWN");
+			return;
+		}
+		PushResults(scanResult.ExecutionTime, scanResult.ReadCount, scanResult.ScannedMatrix);
+		if (InventoryService.Instance.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
+		{
+			base.Context.CreateInfoResult("DuplicateDetected", "The read ID is a duplicate.", scanResult.ScannedMatrix);
+		}
+	}
+
+	internal TesterReadDiskJob(ExecutionResult r, ExecutionContext c)
+		: base(r, c)
+	{
 	}
 
 	private void PushResults(TimeSpan ts, int readCodes, string id)
 	{
 		string message = $"{ts.Seconds}.{ts.Milliseconds} s";
-		ResultHelper.Instance.CreateInfoResult("ReadTime", message);
-		ResultHelper.Instance.CreateInfoResult("NumBarcodes", readCodes.ToString());
-		ResultHelper.Instance.CreateResult("Read-ID", "Id read.", null, null, id, null, null);
+		base.Context.CreateInfoResult("ReadTime", message);
+		if (readCodes > BarcodeConfiguration.Instance.ExpectedCodes && BarcodeConfiguration.Instance.FilterExcessReadCodes)
+		{
+			readCodes = BarcodeConfiguration.Instance.ExpectedCodes;
+		}
+		base.Context.CreateInfoResult("NumBarcodes", readCodes.ToString());
+		base.Context.CreateResult("Read-ID", "Id read.", null, null, id, null, null);
 	}
 }

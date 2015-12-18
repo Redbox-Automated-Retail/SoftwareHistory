@@ -3,12 +3,13 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class FullFastTest : NativeJobAdapter
+[NativeJob(ProgramName = "quick-sync-test", Operand = "QUICK-SYNC-TEST")]
+internal sealed class FullFastTest : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		ApplicationLog appLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "Sync", flushOnWrite: false, "fast-test");
-		ServiceLogHelper.Instance.WriteInfoMessage("Begin fast sync.");
+		base.Context.ServiceLog("Begin fast sync.");
 		ControllerService service = ControllerService.Instance;
 		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
 		{
@@ -22,7 +23,7 @@ internal class FullFastTest : NativeJobAdapter
 					return false;
 				}
 				PerfFunctions.Wait(1000);
-				GetResult getResult = service.Get(testOnEmpty: false, appLog);
+				GetResult getResult = service.Get(appLog);
 				if (!getResult.IsSlotEmpty)
 				{
 					if (!getResult.Success)
@@ -50,5 +51,10 @@ internal class FullFastTest : NativeJobAdapter
 			}
 			return true;
 		});
+	}
+
+	internal FullFastTest(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

@@ -4,7 +4,7 @@ using ICSharpCode.SharpZipLib.Zip;
 
 namespace Redbox.HAL.Core;
 
-public class ZipCompressionAlgorithm : CompressionAlgorithm
+public sealed class ZipCompressionAlgorithm : CompressionAlgorithm
 {
 	public override byte[] Compress(byte[] source)
 	{

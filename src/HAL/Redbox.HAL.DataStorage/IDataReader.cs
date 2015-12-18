@@ -15,4 +15,6 @@ public interface IDataReader
 	DateTime? ReadDateTime(int idx);
 
 	bool IsNull(int idx);
+
+	decimal ReadDecimal(int idx);
 }

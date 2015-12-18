@@ -1,24 +1,44 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class ArcusMotionController : MotionController
+internal sealed class ArcusMotionController : MotionController
 {
 	internal delegate bool MotorStopped(int status);
 
-	private const int ExpectedArcusAllQueryLength = 1;
-
 	private const string HaltMotorCommand = "RSTOP";
 
-	private bool? m_debugEnabled = null;
+	private const string NopCommand = "NOP";
 
-	private object m_lock = new object();
+	private const string WaitCommand = "WAIT";
 
-	private List<string> m_movePreamble;
+	private const string WaitAfterHomeCommand = "WAITH";
+
+	private const string HomeXCommand = "HOMEX";
+
+	private const string WaitYDropBackCommand = "WAITYDB";
+
+	private const string WaitXYCommand = "WAITXY";
+
+	private readonly bool DebugEnabled;
+
+	private readonly PortModes Mode;
+
+	private readonly object m_lock = new object();
+
+	private readonly List<string> m_movePreamble = new List<string>();
+
+	private readonly string[] CommOkCommand = new string[1] { "$" };
+
+	private readonly DeviceDescriptor m_arcusDescriptor;
+
+	private RedboxSerialPort Port;
 
 	private string m_waitXCommand;
 
@@ -32,103 +52,15 @@ public sealed class ArcusMotionController : MotionController
 
 	private string m_correctiveToleranceCommand;
 
-	private DeviceDescriptor m_arcusDescriptor;
-
 	private static ArcusMotionController m_instance;
 
 	internal bool XAxisHomed { get; private set; }
 
 	internal bool YAxisHomed { get; private set; }
 
-	private bool DebugEnabled
-	{
-		get
-		{
-			if (m_debugEnabled.HasValue)
-			{
-				return m_debugEnabled.Value;
-			}
-			m_debugEnabled = RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL", "ArcusDebug") ?? false;
-			return m_debugEnabled.Value;
-		}
-	}
-
-	private MotionControlChannel Channel { get; set; }
-
-	public override bool CheckAndCorrect(IFormattedLog log)
-	{
-		if (!ReadLimitsRaw(out var _, out var lower))
-		{
-			return false;
-		}
-		if (!lower)
-		{
-			return true;
-		}
-		log.WriteFormatted("Lower limit shows blocked; execute init.");
-		InitializeCommunication();
-		using HomeAxesResult homeAxesResult = InitAxes(log);
-		return homeAxesResult.Succeded;
-	}
-
-	public override bool Restart(IFormattedLog appLog)
-	{
-		int millisecondsTimeout = 3000;
-		Thread.Sleep(millisecondsTimeout);
-		InitializeCommunication();
-		using HomeAxesResult homeAxesResult = InitAxes(appLog);
-		if (homeAxesResult.Succeded)
-		{
-			appLog.WriteFormatted("RestartMotionControl: SUCCESS");
-			return true;
-		}
-		return false;
-	}
-
-	public override bool ResetDeviceDriver()
-	{
-		ClosePortInner();
-		Thread.Sleep(3000);
-		using (DeviceHelper deviceHelper = new DeviceHelper())
-		{
-			if (deviceHelper.ResetDriver(m_arcusDescriptor))
-			{
-				return true;
-			}
-		}
-		Process process = null;
-		bool flag = false;
-		try
-		{
-			process = Process.Start("c:\\Program Files\\Redbox\\hal-tools\\halutilities.exe", "-resetProteus");
-			process.WaitForExit();
-			flag = process.ExitCode == 0;
-			string text = string.Format("{0} corrected an Arcus communication error.", flag ? "Successfully" : "Unsuccessfully");
-			WriteToLog(text);
-			if (!flag)
-			{
-				LogHelper.Instance.Log(text, LogEntryType.Error);
-			}
-			else if (ControllerConfiguration.Instance.CountHardwareErrors)
-			{
-				CounterManager.Instance.Increment("MCCorrectedCommErrors");
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Unable to reset Proteus driver.", e);
-			if (ControllerConfiguration.Instance.CountHardwareErrors)
-			{
-				CounterManager.Instance.Increment("MCUnCorrectedCommErrors");
-			}
-			flag = false;
-		}
-		return flag;
-	}
-
 	public override bool CommunicationOk()
 	{
-		string[] array = OnSendCommands(new string[1] { "$" });
+		string[] array = OnSendCommands(CommOkCommand);
 		string text = array[0];
 		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 		{
@@ -141,17 +73,50 @@ public sealed class ArcusMotionController : MotionController
 		return text.StartsWith("OK");
 	}
 
-	protected override void InitializeCommandInner()
+	public override bool GetCurrentLocation(Axis axis, ref MoveTarget target)
 	{
-		OnSendCommands(m_initCommand);
+		string instruction = ((axis == Axis.X) ? "EX" : "PY");
+		if (!GetArcusPosition(instruction, out var position))
+		{
+			return false;
+		}
+		if (axis == Axis.X)
+		{
+			target.XCoordinate = position;
+		}
+		else if (Axis.Y == axis)
+		{
+			target.YCoordinate = position;
+		}
+		return true;
 	}
 
-	protected override HomeAxesResult InitAxesInner(IFormattedLog appLog)
+	public override bool IsMotorErrored(Axis axis, out MotionResult status)
+	{
+		status = MotionResult.Success;
+		if (Axis.XY == axis || Axis.Y == axis)
+		{
+			string s = OnSendCommands(new string[2] { "MIOY", "MECLEARY" })[0].Trim();
+			if (int.TryParse(s, out var result))
+			{
+				status = MotionResult.Error;
+				if (result > 0)
+				{
+					return result < 8;
+				}
+				return false;
+			}
+			return false;
+		}
+		return false;
+	}
+
+	protected override HomeAxesResult InitAxesInner(IFormattedLog appLog, bool quick)
 	{
 		HomeAxesResult homeAxesResult = new HomeAxesResult();
 		appLog.WriteFormatted("Home the X motor.");
-		Gripper.Instance.ClearFront();
-		for (int i = 0; i < 2; i++)
+		int num = (quick ? 1 : 2);
+		for (int i = 0; i < num; i++)
 		{
 			MotionResult motionResult = HomeAxis(Axis.X);
 			if (motionResult != MotionResult.Success)
@@ -190,12 +155,12 @@ public sealed class ArcusMotionController : MotionController
 	{
 		bool xAxisHomed = (YAxisHomed = false);
 		XAxisHomed = xAxisHomed;
-		return Channel.ClosePort();
+		return Port.Close();
 	}
 
 	protected override bool IsInitializedInner()
 	{
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode || !ControllerConfiguration.Instance.ValidateControllerHomeStatus)
+		if (!ControllerConfiguration.Instance.ValidateControllerHomeStatus)
 		{
 			return true;
 		}
@@ -232,7 +197,7 @@ public sealed class ArcusMotionController : MotionController
 
 	protected override MotionResult HomeAxisInner(Axis axis)
 	{
-		LogHelper.Instance.Log($"Home axis {axis.ToString()}", LogEntryType.Info);
+		LogHelper.Instance.Log("Home axis {0}", axis.ToString());
 		if (axis != Axis.X)
 		{
 			return HomeYAxis();
@@ -240,49 +205,30 @@ public sealed class ArcusMotionController : MotionController
 		return HomeXAxis();
 	}
 
-	protected override bool GetCurrentLocationInner(Axis axis, ref MoveTarget target)
-	{
-		string instruction = ((axis == Axis.X) ? "EX" : "PY");
-		if (!GetArcusPosition(instruction, out var position))
-		{
-			return false;
-		}
-		if (axis == Axis.X)
-		{
-			target.XCoordinate = position;
-		}
-		else if (Axis.Y == axis)
-		{
-			target.YCoordinate = position;
-		}
-		return true;
-	}
-
 	protected override MotionResult MoveToVendInner(MoveMode mode)
 	{
 		int num = ControllerConfiguration.Instance.VendYPosition;
-		if (ControllerConfiguration.Instance.VendPositionReceiveOffset.HasValue)
+		if (ControllerConfiguration.Instance.VendPositionReceiveOffset != 0)
 		{
 			switch (mode)
 			{
 			case MoveMode.Get:
-				num -= ControllerConfiguration.Instance.VendPositionReceiveOffset.Value;
+				num -= ControllerConfiguration.Instance.VendPositionReceiveOffset;
 				break;
 			case MoveMode.Put:
-				num += ControllerConfiguration.Instance.VendPositionReceiveOffset.Value;
+				num += ControllerConfiguration.Instance.VendPositionReceiveOffset;
 				break;
 			}
 		}
 		if (ControllerConfiguration.Instance.QueryPositionForVendMove)
 		{
 			MoveTarget target = default(MoveTarget);
-			if (GetCurrentLocationInner(Axis.Y, ref target) && target.YCoordinate.Value == num)
+			if (GetCurrentLocation(Axis.Y, ref target) && target.YCoordinate.Value == num)
 			{
 				if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 				{
 					LogHelper.Instance.Log($"Picker currently at position Y = {target.YCoordinate.Value}", LogEntryType.Info);
 				}
-				ControllerService.Instance.IsAtVendLocation = true;
 				return MotionResult.Success;
 			}
 		}
@@ -290,105 +236,21 @@ public sealed class ArcusMotionController : MotionController
 		{
 			return MotionResult.Error;
 		}
-		MotionResult motionResult = MoveAbsoluteInternal(Axis.Y, num, null);
-		ControllerService.Instance.IsAtVendLocation = motionResult == MotionResult.Success;
-		return motionResult;
-	}
-
-	protected override MotionResult ControllerErrorStatusInner(Axis axis)
-	{
-		if (!DoorSensors.Instance.SensorsEnabled)
-		{
-			return MotionResult.Success;
-		}
-		int num = 1;
-		string[] commands = new string[1] { "???" };
-		MotionResult motionResult = MotionResult.InvalidResponse;
-		string[] array = OnSendCommands(commands);
-		int num2 = 28;
-		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
-		{
-			WriteToLog(string.Format("Query response: {0}", array));
-		}
-		motionResult = DecodeMotionResponse(array, num);
-		if (motionResult != MotionResult.Success)
-		{
-			return motionResult;
-		}
-		if (array.Length != num)
-		{
-			return MotionResult.InvalidResponse;
-		}
-		string[] array2 = array[0].Trim().Split(',');
-		if (array2.Length < num2)
-		{
-			LogHelper.Instance.Log("the length of the ??? query is less than 19.", LogEntryType.Error);
-			return MotionResult.InvalidResponse;
-		}
-		string s = array2[num2 - 1].TrimEnd('.');
-		if (!int.TryParse(s, out var result))
-		{
-			LogHelper.Instance.Log($"The enable output status entry returned an unexpected value {array2[18]}", LogEntryType.Error);
-			return MotionResult.InvalidResponse;
-		}
-		if (result > 3)
-		{
-			LogHelper.Instance.Log($"Enable output status returned {result} (unexpected value)", LogEntryType.Error);
-			return MotionResult.InvalidResponse;
-		}
-		MotionResult motionResult2 = MotionResult.InvalidResponse;
-		switch (result)
-		{
-		case 2:
-			motionResult2 = MotionResult.FrontDoor;
-			break;
-		case 3:
-			motionResult2 = MotionResult.Success;
-			break;
-		}
-		if (motionResult2 != MotionResult.Success)
-		{
-			LogHelper.Instance.Log($"ControllerErrorStatus returned an error status {motionResult2.ToString()}", LogEntryType.Info);
-		}
-		return motionResult2;
+		return MoveAbsoluteInternal(Axis.Y, num, null);
 	}
 
 	protected override string[] ReadLimitsInner()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return new string[2] { "UPPER LIMIT: CLEAR", "LOWER LIMIT: BLOCKED" };
-		}
 		if (!ReadLimitsRaw(out var upper, out var lower))
 		{
 			return new string[1] { "INVALID QUERY RESPONSE" };
 		}
-		LogHelper.Instance.Log($"Upper = {upper}, lower = {lower}", LogEntryType.Info);
+		LogHelper.Instance.Log("Upper = {0}, lower = {1}", upper, lower);
 		return new string[2]
 		{
 			string.Format("UPPER LIMIT: {0}", upper ? "BLOCKED" : "CLEAR"),
 			string.Format("LOWER LIMIT: {0}", lower ? "BLOCKED" : "CLEAR")
 		};
-	}
-
-	protected override bool IsMotorErroredInner(Axis axis, out MotionResult status)
-	{
-		status = MotionResult.Success;
-		if (Axis.XY == axis || Axis.Y == axis)
-		{
-			string s = OnSendCommands(new string[2] { "MIOY", "MECLEARY" })[0].Trim();
-			if (int.TryParse(s, out var result))
-			{
-				status = MotionResult.Error;
-				if (result > 0)
-				{
-					return result < 8;
-				}
-				return false;
-			}
-			return false;
-		}
-		return false;
 	}
 
 	internal static ArcusMotionController MakeInstance()
@@ -398,6 +260,44 @@ public sealed class ArcusMotionController : MotionController
 			m_instance = new ArcusMotionController();
 		}
 		return m_instance;
+	}
+
+	internal override bool ResetDeviceDriver()
+	{
+		ClosePortInner();
+		Thread.Sleep(3000);
+		using (DeviceHelper deviceHelper = new DeviceHelper())
+		{
+			if (deviceHelper.ResetDriver(m_arcusDescriptor))
+			{
+				return true;
+			}
+		}
+		Process process = null;
+		bool flag = false;
+		try
+		{
+			process = Process.Start("c:\\Program Files\\Redbox\\hal-tools\\halutilities.exe", "-resetProteus");
+			process.WaitForExit();
+			flag = process.ExitCode == 0;
+			string text = string.Format("{0} corrected an Arcus communication error.", flag ? "Successfully" : "Unsuccessfully");
+			WriteToLog(text);
+			if (!flag)
+			{
+				LogHelper.Instance.Log(text, LogEntryType.Error);
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Unable to reset Proteus driver.", e);
+			flag = false;
+		}
+		return flag;
+	}
+
+	internal override void InitializeCommunication()
+	{
+		OnSendCommands(m_initCommand);
 	}
 
 	internal void ComputeMoveCommands()
@@ -426,8 +326,8 @@ public sealed class ArcusMotionController : MotionController
 			"I11=2"
 		};
 		m_correctiveToleranceCommand = $"I7={(ControllerConfiguration.Instance.WidenArcusTolerance ? 5 : 2)}";
-		m_movePreamble = null;
-		m_movePreamble = new List<string>
+		m_movePreamble.Clear();
+		m_movePreamble.AddRange(new string[10]
 		{
 			"$",
 			"RSTOP",
@@ -439,7 +339,7 @@ public sealed class ArcusMotionController : MotionController
 			"ABS",
 			"I7=15",
 			"I2=3136"
-		};
+		});
 		m_waitXCommand = $"WAITX {ControllerConfiguration.Instance.MoveTimeout}";
 		m_waitYCommand = $"WAITY {ControllerConfiguration.Instance.MoveTimeout}";
 		m_waitXYCommand = $"WAITXY {ControllerConfiguration.Instance.MoveTimeout}";
@@ -448,7 +348,7 @@ public sealed class ArcusMotionController : MotionController
 
 	internal string WaitMotor(Axis axis, int? timeOut, MotorStopped motorRunning)
 	{
-		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusReadWait);
+		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusMotorQueryPause);
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		string command = "MST" + axis.ToString().ToUpper();
 		while (true)
@@ -498,10 +398,10 @@ public sealed class ArcusMotionController : MotionController
 		{
 			List<string> list = new List<string>();
 			int num = 0;
-			if (!Channel.Open())
+			if (!Port.Open())
 			{
-				LogHelper.Instance.Log($"MotionControl: unable to open port {Channel.Name}.", LogEntryType.Error);
-				Channel.ClosePort();
+				LogHelper.Instance.Log($"MotionControl: unable to open port {Port.Name}.", LogEntryType.Error);
+				Port.Close();
 				return new string[1] { "COMMUNICATION ERROR" };
 			}
 			int num2 = num;
@@ -527,7 +427,7 @@ public sealed class ArcusMotionController : MotionController
 				num2++;
 				num++;
 			}
-			Channel.ResetBuffers();
+			Port.ResetBuffers();
 			return list.ToArray();
 		}
 	}
@@ -546,11 +446,6 @@ public sealed class ArcusMotionController : MotionController
 	private MotionResult HomeXAxis()
 	{
 		XAxisHomed = false;
-		string text = "HOMEX-";
-		if (ControllerConfiguration.Instance.XHomeMethod == XHomeMethod.Encoder)
-		{
-			text = "ZHOMEX-";
-		}
 		string[] array = new string[18]
 		{
 			"$",
@@ -565,7 +460,7 @@ public sealed class ArcusMotionController : MotionController
 			"PX=0",
 			"I2=3072",
 			"WAITX 5000",
-			text,
+			"HOMEX-",
 			"WAITHX 64000",
 			"I2=3136",
 			"I7=15",
@@ -603,10 +498,10 @@ public sealed class ArcusMotionController : MotionController
 			"EY=0",
 			"PY=0"
 		});
-		if (ControllerConfiguration.Instance.HomeYDropBack.HasValue)
+		if (ControllerConfiguration.Instance.HomeYDropBack != 0)
 		{
-			int? num = ControllerConfiguration.Instance.HomeYDropBack;
-			if (Math.Sign(num.Value) == 1)
+			int num = ControllerConfiguration.Instance.HomeYDropBack;
+			if (Math.Sign(num) == 1)
 			{
 				num = -num;
 			}
@@ -624,7 +519,7 @@ public sealed class ArcusMotionController : MotionController
 		{
 			return motionResult;
 		}
-		if (ControllerConfiguration.Instance.HomeYDropBack.HasValue && array[num2] == "TIMEOUT")
+		if (ControllerConfiguration.Instance.HomeYDropBack != 0 && array[num2] == "TIMEOUT")
 		{
 			return MotionResult.Timeout;
 		}
@@ -726,7 +621,39 @@ public sealed class ArcusMotionController : MotionController
 
 	private string SendCommandInner(string command)
 	{
-		return Channel.SendCommand(command);
+		bool flag = LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug) || DebugEnabled;
+		StringBuilder stringBuilder = (flag ? new StringBuilder() : null);
+		if (flag)
+		{
+			stringBuilder.AppendFormat("ArcusMotionController: Instruction={0}", command);
+		}
+		using IChannelResponse channelResponse = Port.SendRecv(command, ControllerConfiguration.Instance.MotionControllerTimeout);
+		switch (Mode)
+		{
+		case PortModes.Callback:
+			if (-1 == channelResponse.GetIndex(4))
+			{
+				LogHelper.Instance.Log("ArcusMotionControl.SendCommand(): response was incomplete.");
+				return "COMMUNICATION ERROR";
+			}
+			break;
+		case PortModes.Async:
+			if (!channelResponse.CommOk)
+			{
+				LogHelper.Instance.Log("ArcusMotionControl.SendCommand(): channel error returned {0}", channelResponse.Error);
+				return "COMMUNICATION ERROR";
+			}
+			break;
+		}
+		int index = channelResponse.GetIndex(13);
+		int count = ((index == -1) ? (channelResponse.RawResponse.Length - 1) : index);
+		string text = Encoding.ASCII.GetString(channelResponse.RawResponse, 0, count);
+		if (flag)
+		{
+			stringBuilder.AppendFormat(", ChannelError = {0}, Response={1}", channelResponse.Error, text);
+			WriteToLog(stringBuilder.ToString());
+		}
+		return text;
 	}
 
 	private bool GetArcusPosition(string instruction, out int position)
@@ -742,22 +669,7 @@ public sealed class ArcusMotionController : MotionController
 			return false;
 		}
 		string s = text.Substring(text.IndexOf('=') + 1);
-		if (int.TryParse(s, out position))
-		{
-			return true;
-		}
-		return false;
-	}
-
-	private bool SetArcusPosition(string instruction, int position)
-	{
-		string text = instruction + "=" + position;
-		OnSendCommands(new string[1] { text });
-		if (GetArcusPosition(instruction, out var position2) && position2 == position)
-		{
-			return true;
-		}
-		return false;
+		return int.TryParse(s, out position);
 	}
 
 	private MotionResult DecodeMotionResponse(string[] motionResult, int expectedCount)
@@ -891,11 +803,11 @@ public sealed class ArcusMotionController : MotionController
 
 	private bool IsResponseAnError(string response)
 	{
-		if ("TIMEOUT" == response || "COMMUNICATION ERROR" == response || "DOOR OPEN" == response)
+		if (!("TIMEOUT" == response) && !("COMMUNICATION ERROR" == response))
 		{
-			return true;
+			return "DOOR OPEN" == response;
 		}
-		return false;
+		return true;
 	}
 
 	private bool ReadLimitsRaw(out bool upper, out bool lower)
@@ -937,9 +849,20 @@ public sealed class ArcusMotionController : MotionController
 
 	private ArcusMotionController()
 	{
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
 		ControllerConfiguration.Instance.ConfigurationChangeEnd += ComputeMoveCommands;
 		ComputeMoveCommands();
-		Channel = new MotionControlChannel(this, DebugEnabled);
+		DebugEnabled = dataStore.GetValue("ArcusDebug", def: false);
+		RedboxSerialPortConfiguration conf = new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.MotionControllerPortName)
+		{
+			WriteTerminator = RedboxSerialPort.WriteCharsCRNull,
+			WritePause = ControllerConfiguration.Instance.ArcusWritePause,
+			WriteTimeout = ControllerConfiguration.Instance.MotionControllerTimeout,
+			Test = (IChannelResponse response) => response.GetIndex(4) != -1
+		};
+		Mode = dataStore.GetValue("ArcusPortMode", PortModes.Async);
+		Port = RedboxSerialPort.Create(conf, Mode, "Motion Control");
+		Port.EnableDebugging = DebugEnabled;
 		m_arcusDescriptor = new DeviceDescriptor("1589", "a001", "Proteus XES");
 	}
 }

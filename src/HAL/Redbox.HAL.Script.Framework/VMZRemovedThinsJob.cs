@@ -1,48 +1,44 @@
-using System.Collections.Generic;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class VMZRemovedThinsJob : NativeJobAdapter
+[NativeJob(ProgramName = "vmz-removed-thins", Operand = "VMZ-REMOVED-THINS")]
+internal sealed class VMZRemovedThinsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "VMZ", flushOnWrite: false, "vmz-removed-disks");
 		applicationLog.Write("** Remove thins from VMZ **");
 		VMZ.Instance.DumpZone(applicationLog);
-		int emptyCount = ControllerConfiguration.Instance.GetEmptyCount();
-		List<Location> thinItems = VMZ.Instance.GetThinItems();
-		try
+		int totalEmptyNow = InventoryService.Instance.GetEmptyCount();
+		VMZSearchResult high = default(VMZSearchResult);
+		SegmentManager.Instance.FindHighest(ref high);
+		if (high.Found)
 		{
-			foreach (Location item in thinItems)
+			VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
 			{
-				ResultHelper.Instance.CreateResult("ThinTransferSuccessful", "The disk was removed from the VMZ.", item.Deck, item.Slot, item.Matrix, null, null);
-				string code = "ThinDiskRemovedFromVMZ";
-				if (item.Flags == MerchFlags.Rebalance)
+				if (loc.IsEmpty)
 				{
-					code = "RebalanceDiskRemovedFromVMZ";
+					return true;
 				}
-				ResultHelper.Instance.CreateResult(code, "Disk merchandizing metadata.", item.Deck, item.Slot, item.Matrix, null, null);
-			}
+				if (SegmentManager.Instance.IsThinType(loc.Flags))
+				{
+					base.Context.CreateResult("ThinTransferSuccessful", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.Matrix, null, null);
+					base.Context.CreateResult($"{loc.Flags.ToString()}DiskRemovedFromVMZ", "Disk merchandizing metadata.", loc.Deck, loc.Slot, loc.Matrix, null, null);
+				}
+				else
+				{
+					base.Context.CreateResult("NonThinRemoved", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.Matrix, null, null);
+				}
+				totalEmptyNow++;
+				return true;
+			}, ref high);
 		}
-		finally
-		{
-			emptyCount += thinItems.Count;
-			thinItems.Clear();
-		}
-		thinItems = VMZ.Instance.GetNonThinItemsInCompressedZone();
-		try
-		{
-			foreach (Location item2 in thinItems)
-			{
-				ResultHelper.Instance.CreateResult("NonThinRemoved", "The disk was removed from the VMZ.", item2.Deck, item2.Slot, item2.Matrix, null, null);
-			}
-		}
-		finally
-		{
-			emptyCount += thinItems.Count;
-			thinItems.Clear();
-		}
-		ResultHelper.Instance.CreateInfoResult("MachineEmptySlots", emptyCount.ToString());
+		base.Context.CreateInfoResult("MachineEmptySlots", totalEmptyNow.ToString());
+	}
+
+	internal VMZRemovedThinsJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

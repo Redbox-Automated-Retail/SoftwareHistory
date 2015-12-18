@@ -16,6 +16,13 @@ public class Instruction : ICloneable<Instruction>
 		Conditional
 	}
 
+	protected enum ExpectedOperands
+	{
+		None,
+		Optional,
+		AtLeastOne
+	}
+
 	protected const string SuccessMessage = "SUCCESS";
 
 	protected const string FailureMessage = "FAILURE";
@@ -71,6 +78,8 @@ public class Instruction : ICloneable<Instruction>
 	public int X { get; internal set; }
 
 	public int Y { get; internal set; }
+
+	protected virtual ExpectedOperands Expected => ExpectedOperands.AtLeastOne;
 
 	internal virtual Branch BranchType => Branch.None;
 
@@ -177,18 +186,17 @@ public class Instruction : ICloneable<Instruction>
 		return GetByLineNumber(this, lineNumber);
 	}
 
-	public void Execute(ExecutionResult result)
+	public void Execute(ExecutionResult result, ExecutionContext context)
 	{
 		try
 		{
-			OnExecute(result);
+			OnExecute(result, context);
 		}
 		catch (Exception ex)
 		{
-			string text = string.Format("Program '{0}', Line {1}: An unhandled exception was raised by the execution engine.", (ExecutionEngine.Instance.ActiveContext != null) ? ExecutionEngine.Instance.ActiveContext.Registers.ActiveFrame.ProgramName : "Idle", LineNumber);
+			string text = string.Format("Program '{0}', Line {1}: An unhandled exception was raised by the execution engine.", (context != null) ? context.Registers.ActiveFrame.ProgramName : "Idle", LineNumber);
 			result.Errors.Add(Error.NewError("E001", text, ex.ToString()));
 			LogHelper.Instance.Log(text, ex);
-			CleanUpResources();
 		}
 	}
 
@@ -246,23 +254,6 @@ public class Instruction : ICloneable<Instruction>
 		return instruction;
 	}
 
-	public bool ExecuteInstruction(ExecutionResult result)
-	{
-		try
-		{
-			ExecutionEngine.Instance.ActiveContext.Registers.ActiveFrame.PC = TrueBranchTarget;
-			CoreExecute(result);
-			return true;
-		}
-		catch (Exception ex)
-		{
-			result.Errors.Add(Error.NewError("E001", $"Line {LineNumber}: An unhandled exception was raised by the execution engine.", ex.ToString()));
-			LogHelper.Instance.Log("An instruction threw an unhandled exception.", ex);
-			CleanUpResources();
-		}
-		return false;
-	}
-
 	internal bool OperandRecognized(string operand)
 	{
 		if (operand.Equals("TRUE") || operand.Equals("FALSE"))
@@ -272,11 +263,31 @@ public class Instruction : ICloneable<Instruction>
 		return IsOperandRecognized(operand);
 	}
 
-	protected virtual void OnParse(TokenList tokens, ExecutionResult result)
+	protected void OnParse(TokenList tokens, ExecutionResult result)
 	{
+		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
+		if (Expected == ExpectedOperands.None)
+		{
+			if (tokensAfterMnemonic.Count > 0)
+			{
+				result.AddInvalidOperandError($"The {Mnemonic} instruction doesn't expect operands.");
+			}
+		}
+		else if (ExpectedOperands.AtLeastOne == Expected && tokensAfterMnemonic.Count == 0)
+		{
+			result.AddMissingOperandError($"The {Mnemonic} instruction expects at least one operand.");
+		}
+		else if (ExpectedOperands.Optional != Expected || tokensAfterMnemonic.Count != 0)
+		{
+			ParseOperands(tokensAfterMnemonic, result);
+			if (!result.Errors.ContainsError())
+			{
+				Operands.AddRange(tokensAfterMnemonic);
+			}
+		}
 	}
 
-	protected virtual void OnExecute(ExecutionResult result)
+	protected virtual void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 	}
 
@@ -285,37 +296,30 @@ public class Instruction : ICloneable<Instruction>
 		return false;
 	}
 
-	protected virtual bool CoreExecute(ExecutionResult result)
+	protected virtual void ParseOperands(TokenList operands, ExecutionResult result)
 	{
-		OnExecute(result);
-		return true;
 	}
 
 	protected void LogIncorrectBranch(string targetMnemonic, ExecutionResult result)
 	{
 	}
 
-	protected void LogInstructionError(string form, string message)
-	{
-		LogHelper.Instance.Log($"The {form} instruction failed (line {LineNumber} of script {ExecutionEngine.Instance.ActiveContext.ProgramName}): {message}", LogEntryType.Error);
-	}
-
-	protected bool CheckAssignment(TokenType type, ErrorList errors)
+	protected bool CheckAssignment(TokenType type, ExecutionResult result)
 	{
 		if (type == TokenType.ConstSymbol)
 		{
-			AddError("C002", "Illegal attempt to " + Mnemonic + " value to CONST symbol.", errors);
+			result.AddError(ExecutionErrors.InvalidAssignment, "Illegal attempt to " + Mnemonic + " value to CONST symbol.");
 			return false;
 		}
 		return true;
 	}
 
-	protected bool GetLocation(ExecutionResult result, out Location location)
+	protected bool GetLocation(ExecutionResult result, ExecutionContext context, out Location location)
 	{
 		int deck = -1;
 		int slot = -1;
 		location = null;
-		if (!GetLocationInner(result, out deck, out slot))
+		if (!GetLocationInner(result, context, out deck, out slot))
 		{
 			return false;
 		}
@@ -323,12 +327,12 @@ public class Instruction : ICloneable<Instruction>
 		return true;
 	}
 
-	protected bool GetLocation(ExecutionResult result, out int deck, out int slot)
+	protected bool GetLocation(ExecutionResult result, ExecutionContext context, out int deck, out int slot)
 	{
-		return GetLocationInner(result, out deck, out slot);
+		return GetLocationInner(result, context, out deck, out slot);
 	}
 
-	protected string GetID(ExecutionResult result)
+	protected string GetID(ExecutionResult result, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = Operands.GetKeyValuePair("ID");
 		if (keyValuePair == null)
@@ -336,7 +340,7 @@ public class Instruction : ICloneable<Instruction>
 			result.Errors.Add(Error.NewError("E099", "Missing operand.", "The ID operand is missing."));
 			return null;
 		}
-		string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors);
+		string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
 		if (result.Errors.Count != 0)
 		{
 			return string.Empty;
@@ -344,37 +348,22 @@ public class Instruction : ICloneable<Instruction>
 		return keyValuePairValue;
 	}
 
-	protected bool GetBoolKVPValue(ErrorList list, string op, bool defValue)
-	{
-		KeyValuePair keyValuePair = Operands.GetKeyValuePair(op);
-		if (keyValuePair == null)
-		{
-			return defValue;
-		}
-		bool keyValuePairValue = GetKeyValuePairValue<bool>(keyValuePair, list);
-		if (list.Count == 0)
-		{
-			return keyValuePairValue;
-		}
-		return defValue;
-	}
-
-	protected void HandleTimeoutOrCommmError(CoreResponse response)
+	protected void HandleTimeoutOrCommmError(CoreResponse response, ExecutionContext context)
 	{
 		if (response.CommunicationError)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(response.CommErrorDiagnostic);
+			context.PushTop(response.CommErrorDiagnostic);
 		}
 		else
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(response.TimedOut ? "TIMEOUT" : "SUCCESS");
+			context.PushTop(response.TimedOut ? "TIMEOUT" : "SUCCESS");
 		}
 	}
 
-	protected int? GetDeckOperand(ErrorList errors)
+	protected int? GetDeckOperand(ErrorList errors, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = Operands.GetKeyValuePair("DECK");
-		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, errors);
+		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, errors, context);
 		if (errors.Count > 0)
 		{
 			return null;
@@ -382,7 +371,7 @@ public class Instruction : ICloneable<Instruction>
 		return keyValuePairValue;
 	}
 
-	internal object[] ConvertSymbolsToParameterArray(ErrorList errors)
+	internal object[] ConvertSymbolsToParameterArray(ErrorList errors, ExecutionContext context)
 	{
 		List<object> list = new List<object>();
 		for (int i = 1; i < Operands.Count; i++)
@@ -393,7 +382,7 @@ public class Instruction : ICloneable<Instruction>
 				object obj = token.ConvertValue();
 				if ((token.Type == TokenType.Symbol || token.Type == TokenType.ConstSymbol) && token.Value.Equals(obj))
 				{
-					obj = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(token.Value, errors);
+					obj = context.GetSymbolValue(token.Value, errors);
 				}
 				list.Add(obj);
 			}
@@ -401,7 +390,7 @@ public class Instruction : ICloneable<Instruction>
 		return list.ToArray();
 	}
 
-	internal bool GetKeyValuePairValue<T>(string key, out T val, ErrorList errors)
+	internal bool GetKeyValuePairValue<T>(string key, out T val, ErrorList errors, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = Operands.GetKeyValuePair(key);
 		if (keyValuePair == null)
@@ -409,11 +398,11 @@ public class Instruction : ICloneable<Instruction>
 			val = default(T);
 			return false;
 		}
-		val = GetKeyValuePairValue<T>(keyValuePair, errors);
+		val = GetKeyValuePairValue<T>(keyValuePair, errors, context);
 		return true;
 	}
 
-	internal T GetKeyValuePairValue<T>(KeyValuePair keyValuePair, ErrorList errors)
+	internal T GetKeyValuePairValue<T>(KeyValuePair keyValuePair, ErrorList errors, ExecutionContext context)
 	{
 		if (keyValuePair == null)
 		{
@@ -426,7 +415,7 @@ public class Instruction : ICloneable<Instruction>
 		}
 		else if (keyValuePair.Type == TokenType.Symbol || keyValuePair.Type == TokenType.ConstSymbol)
 		{
-			object symbolValue = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(keyValuePair.Value, errors);
+			object symbolValue = context.GetSymbolValue(keyValuePair.Value, errors);
 			if (symbolValue != null)
 			{
 				value = symbolValue;
@@ -458,10 +447,10 @@ public class Instruction : ICloneable<Instruction>
 		return "TIMEOUT";
 	}
 
-	internal int? GetNullableNumericOperand(ExecutionResult result, string name)
+	internal int? GetNullableNumericOperand(ExecutionResult result, string name, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = Operands.GetKeyValuePair(name);
-		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors);
+		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return null;
@@ -478,7 +467,7 @@ public class Instruction : ICloneable<Instruction>
 		return "NONE";
 	}
 
-	internal int? GetTimeOutValue(ErrorList errors)
+	internal int? GetTimeOutValue(ErrorList errors, ExecutionContext context)
 	{
 		int? result = null;
 		KeyValuePair keyValuePair = Operands.GetKeyValuePair("TIMEOUT");
@@ -488,7 +477,7 @@ public class Instruction : ICloneable<Instruction>
 		}
 		if (keyValuePair.Type == TokenType.Symbol || keyValuePair.Type == TokenType.ConstSymbol)
 		{
-			return (int?)ExecutionEngine.Instance.ActiveContext.GetSymbolValue(keyValuePair.Value, errors);
+			return (int?)context.GetSymbolValue(keyValuePair.Value, errors);
 		}
 		if (keyValuePair.Type == TokenType.NumericLiteral && int.TryParse(keyValuePair.Value, out var result2))
 		{
@@ -535,11 +524,6 @@ public class Instruction : ICloneable<Instruction>
 		return null;
 	}
 
-	internal static void CleanUpResources()
-	{
-		PickerBoard.Instance.SetSensors(on: false);
-	}
-
 	internal bool IsSymbolic(Token tok)
 	{
 		if (tok.Type != TokenType.ConstSymbol)
@@ -568,18 +552,18 @@ public class Instruction : ICloneable<Instruction>
 		return true;
 	}
 
-	private bool GetLocationInner(ExecutionResult result, out int deck, out int slot)
+	private bool GetLocationInner(ExecutionResult result, ExecutionContext context, out int deck, out int slot)
 	{
 		deck = -1;
 		slot = -1;
-		int? deckOperand = GetDeckOperand(result.Errors);
+		int? deckOperand = GetDeckOperand(result.Errors, context);
 		if (!deckOperand.HasValue)
 		{
 			return false;
 		}
 		deck = deckOperand.Value;
 		KeyValuePair keyValuePair = Operands.GetKeyValuePair("SLOT");
-		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors);
+		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return false;

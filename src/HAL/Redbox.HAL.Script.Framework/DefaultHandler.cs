@@ -13,10 +13,6 @@ internal class DefaultHandler : IFileDiskHandler
 		return FileDiscIterationResult.Continue;
 	}
 
-	public void StartNewLocation(ExecutionResult result, string idInPicker)
-	{
-	}
-
 	public void DiskFiled(ExecutionResult result, string idInPicker, int deck, int slot, bool isDuplicate)
 	{
 	}

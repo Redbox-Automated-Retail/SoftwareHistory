@@ -1,6 +1,8 @@
+using System;
+
 namespace Redbox.HAL.Controller.Framework;
 
-public class Location
+public sealed class Location : ILocation
 {
 	private int m_deck;
 
@@ -22,21 +24,15 @@ public class Location
 
 	public bool IsStuck => _Deck.GetEmptyStuckCount(m_slot) > 0;
 
-	public bool IsInVMZ
-	{
-		get
-		{
-			if (MerchandizingMode.VMZ_Gen2 != ControllerConfiguration.Instance.MerchandizingMode)
-			{
-				return false;
-			}
-			return VMZ.Instance.LocIsInVMZ(this);
-		}
-	}
+	public int StuckCount => _Deck.GetEmptyStuckCount(m_slot);
 
 	public bool IsWide => _Deck.IsSlotSellThru(m_slot);
 
 	public bool IsExcluded => _Deck.IsExcluded(m_slot);
+
+	public DateTime? ReturnTime => _Deck.GetReturnTime(m_slot);
+
+	public bool IsSecure => SpecialLocationLocatorService.Instance.FindByLocation(this)?.IsSecureLocation ?? false;
 
 	private Deck _Deck => DecksManager.Instance.GetDeck(m_deck);
 
@@ -81,6 +77,27 @@ public class Location
 	public bool ResetEmptyStuck()
 	{
 		return _Deck.ResetEmptyStuckCount(m_slot);
+	}
+
+	public bool UpdateReturnTime(DateTime? newDT)
+	{
+		return _Deck.UpdateReturnTime(m_slot, newDT);
+	}
+
+	public bool MarkUnknown()
+	{
+		return _Deck.MarkSlotUnknown(m_slot);
+	}
+
+	public bool ResetFrom(GetResult result)
+	{
+		_Deck.SetSlotId(m_slot, result.Previous, result.Flags, result.ReturnTime);
+		return true;
+	}
+
+	public bool Reset()
+	{
+		return _Deck.ResetLocation(m_slot);
 	}
 
 	public Location(int deck, int slot)

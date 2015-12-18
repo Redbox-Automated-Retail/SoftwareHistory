@@ -5,5 +5,6 @@ public enum MerchFlags : long
 	None,
 	Thin,
 	Unload,
-	Rebalance
+	Rebalance,
+	ThinRedeploy
 }

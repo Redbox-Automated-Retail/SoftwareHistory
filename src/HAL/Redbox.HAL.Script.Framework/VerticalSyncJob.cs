@@ -2,7 +2,8 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class VerticalSyncJob : NativeJobAdapter
+[NativeJob(ProgramName = "vertical-sync", Operand = "VERTSYNC")]
+internal sealed class VerticalSyncJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
@@ -16,21 +17,21 @@ internal class VerticalSyncJob : NativeJobAdapter
 			{
 				return true;
 			}
-			MotionResult motionResult = MoveTo(deck.Number, slot, MoveMode.Get);
+			MotionResult motionResult = ControllerService.Instance.MoveTo(deck.Number, slot, MoveMode.Get, base.AppLog);
 			if (motionResult != MotionResult.Success)
 			{
 				HandleError(deck.Number, slot, $"Move error: {motionResult.ToString()}.");
 				errors++;
 				return false;
 			}
-			GetResult getResult = ControllerService.Instance.Get(testOnEmpty: false, base.AppLog);
+			GetResult getResult = ControllerService.Instance.Get(base.AppLog);
 			if (!getResult.Success)
 			{
 				HandleError(deck.Number, slot, "Retrieving the disk failed.");
 				errors++;
 				return false;
 			}
-			if (MoveTo(deck.Number, slot, MoveMode.Put) != MotionResult.Success)
+			if (ControllerService.Instance.MoveTo(deck.Number, slot, MoveMode.Put, base.AppLog) != MotionResult.Success)
 			{
 				HandleError(deck.Number, slot, "Move to PUT position failed.");
 				errors++;
@@ -47,14 +48,19 @@ internal class VerticalSyncJob : NativeJobAdapter
 		if (errors <= 0)
 		{
 			applicationLog.Write("The sync completed successfully.");
-			ResultHelper.Instance.CreateInfoResult("SyncSuccess", "The test succeeded.");
+			base.Context.CreateInfoResult("SyncSuccess", "The test succeeded.");
 			ControllerService.Instance.MoveToVend(MoveMode.Get, applicationLog);
 		}
 	}
 
+	internal VerticalSyncJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
+	}
+
 	private void HandleError(int deck, int slot, string msg)
 	{
-		ResultHelper.Instance.CreateResult("SyncFailure", msg, deck, slot, null, null, null);
+		base.Context.CreateResult("SyncFailure", msg, deck, slot, null, null, null);
 		AddError("Job error.");
 	}
 }

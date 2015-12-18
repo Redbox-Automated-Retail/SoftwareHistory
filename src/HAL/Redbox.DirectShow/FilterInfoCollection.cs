@@ -2,13 +2,56 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
+using Microsoft.Win32;
 using Redbox.DirectShow.Interop;
+using Redbox.HAL.Core;
 
 namespace Redbox.DirectShow;
 
 public class FilterInfoCollection : CollectionBase
 {
+	private static bool? m_useOldOption = null;
+
 	public FilterInfo this[int index] => (FilterInfo)base.InnerList[index];
+
+	private static bool UseOld
+	{
+		get
+		{
+			if (m_useOldOption.HasValue)
+			{
+				return m_useOldOption.Value;
+			}
+			RegistryKey registryKey = null;
+			try
+			{
+				registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\HAL");
+				if (registryKey == null)
+				{
+					m_useOldOption = false;
+					return m_useOldOption.Value;
+				}
+				object value = registryKey.GetValue("UseOldEnumerator");
+				if (value == null)
+				{
+					m_useOldOption = false;
+					return m_useOldOption.Value;
+				}
+				bool value2 = (bool)ConversionHelper.ChangeType(value, typeof(bool));
+				m_useOldOption = value2;
+				return m_useOldOption.Value;
+			}
+			catch (Exception)
+			{
+				m_useOldOption = false;
+				return m_useOldOption.Value;
+			}
+			finally
+			{
+				registryKey?.Close();
+			}
+		}
+	}
 
 	public FilterInfoCollection(Guid category)
 	{
@@ -35,12 +78,22 @@ public class FilterInfoCollection : CollectionBase
 				throw new ApplicationException("No devices of the category");
 			}
 			IntPtr zero = IntPtr.Zero;
-			while (enumMoniker.Next(1, array, zero) == 0 && array[0] != null)
+			while (enumMoniker.Next(1, array, zero) == 0)
 			{
-				FilterInfo value = new FilterInfo(array[0]);
-				base.InnerList.Add(value);
-				Marshal.ReleaseComObject(array[0]);
-				array[0] = null;
+				if (array[0] == null)
+				{
+					if (UseOld)
+					{
+						break;
+					}
+				}
+				else
+				{
+					FilterInfo value = new FilterInfo(array[0]);
+					base.InnerList.Add(value);
+					Marshal.ReleaseComObject(array[0]);
+					array[0] = null;
+				}
 			}
 			base.InnerList.Sort();
 		}

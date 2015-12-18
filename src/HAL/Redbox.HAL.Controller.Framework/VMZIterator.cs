@@ -1,8 +1,9 @@
+using System;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public struct VMZIterator
+public sealed class VMZIterator : IDisposable
 {
 	public Location Location => VMZ.Instance.LocationAt(Index);
 
@@ -10,11 +11,19 @@ public struct VMZIterator
 
 	public bool IsStuck => VMZ.Instance.LocationAt(Index).IsStuck;
 
-	public bool IsThinType => VMZ.Instance.IsThinType(Flags);
-
 	public MerchFlags Flags => VMZ.Instance.LocationAt(Index).Flags;
 
 	internal int Index { get; private set; }
+
+	private bool Disposed { get; set; }
+
+	public void Dispose()
+	{
+		if (!Disposed)
+		{
+			Disposed = true;
+		}
+	}
 
 	public override string ToString()
 	{
@@ -65,13 +74,31 @@ public struct VMZIterator
 		return true;
 	}
 
-	public bool Down()
+	public void Invalidate()
 	{
-		if (Index <= 0)
+		Index = -1;
+	}
+
+	public IteratorComareResult RelativeTo(ref VMZSearchResult sr)
+	{
+		if (Index < sr.Index)
 		{
-			return false;
+			return IteratorComareResult.Below;
 		}
-		Index--;
-		return true;
+		if (Index <= sr.Index)
+		{
+			return IteratorComareResult.Equal;
+		}
+		return IteratorComareResult.Above;
+	}
+
+	public VMZIterator(ref VMZSearchResult result)
+	{
+		Index = result.Index;
+	}
+
+	public VMZIterator()
+	{
+		ResetToFirst();
 	}
 }

@@ -7,6 +7,14 @@ namespace Redbox.HAL.IPC.Framework;
 
 public abstract class AbstractPipeClientSession : IDisposable
 {
+	protected readonly StringBuilder ReadBuilder = new StringBuilder();
+
+	protected readonly string ID;
+
+	protected readonly string PipeName;
+
+	private readonly BasePipeChannel Channel;
+
 	private int? m_timeout;
 
 	public int Timeout
@@ -23,15 +31,7 @@ public abstract class AbstractPipeClientSession : IDisposable
 
 	public bool IsConnected => Channel.Connected;
 
-	protected StringBuilder ReadBuilder { get; private set; }
-
-	protected string ID { get; private set; }
-
 	protected bool Disposed { get; private set; }
-
-	protected string PipeName { get; private set; }
-
-	private BasePipeChannel Channel { get; set; }
 
 	public void Dispose()
 	{
@@ -71,7 +71,6 @@ public abstract class AbstractPipeClientSession : IDisposable
 	protected AbstractPipeClientSession(string id, string pipeName)
 	{
 		Channel = new ClientPipeChannel(pipeName);
-		ReadBuilder = new StringBuilder();
 		ID = id;
 		PipeName = pipeName;
 	}

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyFileVersion("1.3.0.84")]
+[assembly: AssemblyFileVersion("1.4.0.246")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("4e400c7a-2d34-4938-9f3f-0bc5aec8a8b3")]
 [assembly: AssemblyTitle("Hardware Abstraction Layer (HAL) Service")]
@@ -13,4 +13,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("Redbox Automated Retail LLC")]
 [assembly: AssemblyProduct("Hardware Abstraction Layer (HAL) Service")]
 [assembly: AssemblyCopyright("Copyright (C) 2008 Redbox Automated Retail LLC")]
-[assembly: AssemblyVersion("1.3.0.84")]
+[assembly: AssemblyVersion("1.4.0.246")]

@@ -8,8 +8,6 @@ internal interface IFileDiskHandler
 
 	FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, MotionResult moveResult, int deck, int slot);
 
-	void StartNewLocation(ExecutionResult result, string idInPicker);
-
 	void DiskFiled(ExecutionResult result, string idInPicker, int deck, int slot, bool isDuplicate);
 
 	FileDiscIterationResult BeforeNextPut(ExecutionResult result, PutResult putResult, string idInPicker, int deck, int slot);

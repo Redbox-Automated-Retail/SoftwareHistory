@@ -3,58 +3,35 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
 public sealed class DumpBin : SpecialLocation
 {
-	private const string DumpBinCounterName = "DUMPBIN";
-
 	private const string DumpBinPutFailureCounter = "DUMPBINPUTFAIL";
 
-	private bool? m_isActive = null;
+	internal readonly Location RotationLocation;
 
-	private Location m_putLocation;
-
-	private Location m_rotationLoc;
+	private bool m_initialized;
 
 	private int m_currentCount;
 
+	private readonly Location m_putLocation;
+
 	public static DumpBin Instance => Singleton<DumpBin>.Instance;
 
-	public bool Active
-	{
-		get
-		{
-			if (m_isActive.HasValue)
-			{
-				return m_isActive.Value;
-			}
-			m_isActive = SecretOptions.Instance.GetValue("DumpSlotEnabled", defValue: false);
-			base.CanMoveTo = m_isActive.Value;
-			return m_isActive.Value;
-		}
-		internal set
-		{
-			m_isActive = value;
-			SecretOptions.Instance.SetValue("DumpSlotEnabled", m_isActive.Value);
-			base.CanMoveTo = m_isActive.Value;
-		}
-	}
+	public bool Active => ControllerConfiguration.Instance.IsVMZMachine;
 
 	public Location PutLocation
 	{
 		get
 		{
-			if (!Active)
-			{
-				return null;
-			}
-			if (m_putLocation != null)
+			if (Active)
 			{
 				return m_putLocation;
 			}
-			return m_putLocation = new Location(base.Deck.Value, base.Slots.Start + 1);
+			return null;
 		}
 	}
 
@@ -90,7 +67,7 @@ public sealed class DumpBin : SpecialLocation
 		return false;
 	}
 
-	public bool IsBin(SearchLocation loc)
+	public bool IsBin(ControllerLocation loc)
 	{
 		if (loc.Deck != base.Deck)
 		{
@@ -137,7 +114,7 @@ public sealed class DumpBin : SpecialLocation
 
 	public List<DumpBinEntry> GetContents()
 	{
-		return CountersDBManager.Instance.GetBarcodesInBin();
+		return DumpBinEntry.GetBarcodesInBin();
 	}
 
 	public bool ResetCount()
@@ -164,18 +141,12 @@ public sealed class DumpBin : SpecialLocation
 		{
 			LogHelper.Instance.Log("Failed to log dump bin contents.", e);
 		}
-		bool result = CountersDBManager.Instance.CodesRemoved(m_currentCount);
-		m_currentCount = 0;
-		Counter counter = CounterManager.Instance.Find("DUMPBIN");
-		if (counter == null)
+		if (!DumpBinEntry.CodesRemoved(m_currentCount))
 		{
 			return false;
 		}
-		if (CounterManager.Instance.ResetCounter(counter))
-		{
-			return result;
-		}
-		return false;
+		m_currentCount = 0;
+		return true;
 	}
 
 	public void DumpContents(IFormattedLog log)
@@ -184,7 +155,7 @@ public sealed class DumpBin : SpecialLocation
 		{
 			return;
 		}
-		List<DumpBinEntry> barcodesInBin = CountersDBManager.Instance.GetBarcodesInBin();
+		List<DumpBinEntry> barcodesInBin = DumpBinEntry.GetBarcodesInBin();
 		log.WriteFormatted("-- Dump bin inventory: {0} items in bin. --", barcodesInBin.Count);
 		foreach (DumpBinEntry item in barcodesInBin)
 		{
@@ -229,15 +200,21 @@ public sealed class DumpBin : SpecialLocation
 
 	internal bool AddToInventory(string id)
 	{
-		CountersDBManager.Instance.UpdateBinWithBarcode(id);
+		if (!DumpBinEntry.AddEntry(id))
+		{
+			return false;
+		}
 		m_currentCount++;
-		return CounterManager.Instance.Increment("DUMPBIN") != null;
+		return true;
 	}
 
 	internal void Initialize()
 	{
-		Active = true;
-		m_currentCount = CounterManager.Instance.Find("DUMPBIN")?.Value ?? Capacity;
+		if (!m_initialized)
+		{
+			m_initialized = true;
+			m_currentCount = DumpBinEntry.ItemsCount();
+		}
 	}
 
 	internal override bool ExcludeFromESP(Deck deck, int slot)
@@ -258,27 +235,20 @@ public sealed class DumpBin : SpecialLocation
 		return true;
 	}
 
-	internal Location RotationTo()
-	{
-		if (m_rotationLoc == null)
-		{
-			m_rotationLoc = new Location(DecksManager.Instance.DeckCount, 1);
-		}
-		return m_rotationLoc;
-	}
-
 	private bool IsFullInner()
 	{
-		if (!Active)
+		if (Active)
 		{
-			return true;
+			return m_currentCount >= Capacity;
 		}
-		return m_currentCount >= Capacity;
+		return true;
 	}
 
 	private DumpBin()
 		: base("DumpBin", DecksManager.Instance.DeckCount, new Range(82, 84))
 	{
 		base.IsSecureLocation = true;
+		RotationLocation = new Location(DecksManager.Instance.DeckCount, 1);
+		m_putLocation = new Location(base.Deck.Value, base.Slots.Start + 1);
 	}
 }

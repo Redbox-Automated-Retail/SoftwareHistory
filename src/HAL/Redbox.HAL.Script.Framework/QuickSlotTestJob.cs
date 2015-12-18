@@ -2,7 +2,8 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class QuickSlotTestJob : NativeJobAdapter
+[NativeJob(ProgramName = "quick-deck-test", Operand = "QUICK-DECK-TEST")]
+internal sealed class QuickSlotTestJob : NativeJobAdapter
 {
 	private readonly int[] TestSlots = new int[2] { 30, 60 };
 
@@ -42,5 +43,10 @@ internal class QuickSlotTestJob : NativeJobAdapter
 			}
 			return true;
 		});
+	}
+
+	internal QuickSlotTestJob(ExecutionResult r, ExecutionContext c)
+		: base(r, c)
+	{
 	}
 }

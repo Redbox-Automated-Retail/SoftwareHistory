@@ -19,7 +19,7 @@ public sealed class QuickReturnDevice
 		RedArrow
 	}
 
-	public enum Mode
+	public enum LEDMode
 	{
 		Unknown,
 		On,
@@ -38,7 +38,7 @@ public sealed class QuickReturnDevice
 	{
 		internal LED Led { get; set; }
 
-		internal Mode Mode { get; set; }
+		internal LEDMode Mode { get; set; }
 	}
 
 	private class QuickReturnState
@@ -57,27 +57,27 @@ public sealed class QuickReturnDevice
 			LedStates.Add(new LedState
 			{
 				Led = LED.GreenButton,
-				Mode = Mode.Off
+				Mode = LEDMode.Off
 			});
 			LedStates.Add(new LedState
 			{
 				Led = LED.RedButton,
-				Mode = Mode.Off
+				Mode = LEDMode.Off
 			});
 			LedStates.Add(new LedState
 			{
 				Led = LED.GreenArrow,
-				Mode = Mode.Off
+				Mode = LEDMode.Off
 			});
 			LedStates.Add(new LedState
 			{
 				Led = LED.RedArrow,
-				Mode = Mode.Off
+				Mode = LEDMode.Off
 			});
 			LedStates.Add(new LedState
 			{
 				Led = LED.Background,
-				Mode = Mode.Off
+				Mode = LEDMode.Off
 			});
 		}
 
@@ -87,134 +87,66 @@ public sealed class QuickReturnDevice
 		}
 	}
 
-	private const int SideTerminalPixelWidth = 240;
+	private const int PageSize = 2048;
 
-	private const int SideTerminalPixelHeight = 128;
+	private const string MemorySize = "1FFF";
 
-	private const int ChamferTerminalPixelWidth = 128;
+	private const string GraphicsWidth = "10";
 
-	private const int ChamferTerminalPixelHeight = 128;
+	private const int MaxPages = 16;
 
-	private const int StartGraphicsAddress = 0;
+	private const string PreferredDisplayAddress = "0800";
 
-	private const int ChamferPageSize = 2048;
+	private readonly string ImagesDirectory;
 
-	private const string DefaultPort = "COM4";
+	private readonly string StateFile;
 
-	private const int ChamferMaxPages = 16;
+	private readonly string GraphicsPath;
 
-	private const string ChamferGraphicsSize = "10";
-
-	private const string ChamferMemorySize = "1FFF";
-
-	private const string PortTag = "Port";
-
-	private const string DeviceNameTag = "QRTerminal";
+	private RedboxSerialPort Port;
 
 	private int m_currentGraphicsAddress;
 
-	private string m_preferredDisplayAddress = "0800";
+	private readonly RedboxSerialPortConfiguration Configuration;
 
-	private string m_imagesDirectory;
-
-	private string m_stateTable;
-
-	private string m_version;
-
-	private Dictionary<string, object> m_configAttributes = new Dictionary<string, object>();
+	private readonly object Lock = new object();
 
 	private readonly List<QuickReturnState> States = new List<QuickReturnState>();
 
-	private string m_grfPath;
-
 	public static QuickReturnDevice Instance => Singleton<QuickReturnDevice>.Instance;
 
-	public string Version
+	public bool IsConfigured
 	{
 		get
 		{
-			if (string.IsNullOrEmpty(m_version))
+			string quickReturnComPort = ControllerConfiguration.Instance.QuickReturnComPort;
+			if (!string.IsNullOrEmpty(quickReturnComPort))
 			{
-				CoreResponse coreResponse = CoreController.ExecuteCoreCommand(new CoreCommand(CommandType.SideTerminalVersion, Port));
-				m_version = (coreResponse.CommunicationError ? (m_version = "COMMUNICATION ERROR") : coreResponse.OpCodeResponse.TrimStart());
+				return quickReturnComPort.StartsWith("COM", StringComparison.CurrentCultureIgnoreCase);
 			}
-			return m_version;
+			return false;
 		}
 	}
 
-	public int BaudRate => 115200;
-
-	public bool IsConfigured => Port != null;
-
-	internal RedboxSerialPort Port { get; private set; }
-
-	private string QuickReturnCommonFiles { get; set; }
-
-	private int PageSize => 2048;
-
-	private string MemorySize => "1FFF";
-
-	private string GraphicsWidth => "10";
-
-	private int MaxPages => 16;
-
-	private string ImagesDirectory
+	public string ProbePort()
 	{
-		get
+		string result = "NONE";
+		RedboxSerialPort redboxSerialPort = PortManager.Instance.Scan(Configuration, TestPort, PortModes.Async);
+		if (redboxSerialPort != null)
 		{
-			if (string.IsNullOrEmpty(m_imagesDirectory))
-			{
-				m_imagesDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr-chamfer");
-			}
-			return m_imagesDirectory;
+			result = redboxSerialPort.Name;
+			redboxSerialPort.Dispose();
 		}
-	}
-
-	private string StateFile
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(m_stateTable))
-			{
-				m_stateTable = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr.state");
-			}
-			return m_stateTable;
-		}
-	}
-
-	private string GraphicsPath
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(m_grfPath))
-			{
-				m_grfPath = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr-chamfer");
-			}
-			return m_grfPath;
-		}
-	}
-
-	public static QuickReturnDevice MakeExternalInstance()
-	{
-		return new QuickReturnDevice();
+		return result;
 	}
 
 	public void ConfigurationChange()
 	{
-		if (Port != null)
-		{
-			Port.Dispose();
-			Port = null;
-		}
-		ConfigurePort();
+		ClosePort();
 	}
 
 	public void DumpStateTable()
 	{
-		if (States == null)
-		{
-			return;
-		}
 		foreach (QuickReturnState state in States)
 		{
 			state.Dump();
@@ -223,20 +155,29 @@ public sealed class QuickReturnDevice
 
 	public bool ClosePort()
 	{
-		if (Port == null)
+		lock (Lock)
 		{
-			return false;
+			if (Port == null)
+			{
+				return false;
+			}
+			Port.Dispose();
+			Port = null;
+			return true;
 		}
-		LogHelper.Instance.Log($"QR Poller: shutting down port {Port.Name}", LogEntryType.Info);
-		return Port.ClosePort();
 	}
 
 	public bool Reset()
 	{
-		lock (this)
+		lock (Lock)
 		{
 			States.Clear();
 			m_currentGraphicsAddress = 0;
+			if (!OpenPort())
+			{
+				LogHelper.Instance.Log("Could not find a port for the Quick Return device.");
+				return false;
+			}
 			LogHelper.Instance.Log(">> QuickReturnDevice.Reset()", LogEntryType.Debug);
 			Thread.Sleep(2000);
 			if (!ExecuteQRCommand(CommandType.SetTextColumns, "1E"))
@@ -244,9 +185,9 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log("Unable to set text columns.", LogEntryType.Error);
 				return false;
 			}
-			if (!ExecuteQRCommand(CommandType.SetGraphicsColumns, GraphicsWidth))
+			if (!ExecuteQRCommand(CommandType.SetGraphicsColumns, "10"))
 			{
-				LogHelper.Instance.Log($"Unable to set graphics columns to {GraphicsWidth}", LogEntryType.Error);
+				LogHelper.Instance.Log(string.Format("Unable to set graphics columns to {0}", "10"), LogEntryType.Error);
 				return false;
 			}
 			if (!ExecuteQRCommand(CommandType.TurnOffGreenArrowLed))
@@ -275,7 +216,7 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log("Unable to set text page pointer.", LogEntryType.Error);
 				return false;
 			}
-			if (!ExecuteQRCommand(CommandType.SetStartGraphicsPagePointer, m_preferredDisplayAddress))
+			if (!ExecuteQRCommand(CommandType.SetStartGraphicsPagePointer, "0800"))
 			{
 				LogHelper.Instance.Log("Unable to set text page pointer.", LogEntryType.Error);
 				return false;
@@ -300,7 +241,8 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log("Unable to set write pointer to 0000.", LogEntryType.Error);
 				return false;
 			}
-			string version = Version;
+			CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, Port));
+			string arg = (coreResponse.CommunicationError ? "COMMUNICATION ERROR" : coreResponse.OpCodeResponse.TrimStart());
 			if (!ReadStateTable(StateFile))
 			{
 				LogHelper.Instance.Log($"Unable to read state file {StateFile}", LogEntryType.Info);
@@ -308,16 +250,29 @@ public sealed class QuickReturnDevice
 			}
 			ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0000");
 			ExecuteQRCommand(CommandType.ClearDisplayMemory, "1FFF");
-			LogHelper.Instance.Log($"<< QuickReturnDevice.Reset() ({version})", LogEntryType.Debug);
+			LogHelper.Instance.Log($"<< QuickReturnDevice.Reset() ({arg})", LogEntryType.Debug);
 			return true;
 		}
 	}
 
 	public int UpdateDeviceImages()
 	{
-		ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0000");
-		ExecuteQRCommand(CommandType.SetEEPROMPointer, "0000");
-		ExecuteQRCommand(CommandType.SetEEPROMReadSize, "0010");
+		if (Port == null && !OpenPort())
+		{
+			return 0;
+		}
+		if (!ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0000"))
+		{
+			return 0;
+		}
+		if (!ExecuteQRCommand(CommandType.SetEEPROMPointer, "0000"))
+		{
+			return 0;
+		}
+		if (!ExecuteQRCommand(CommandType.SetEEPROMReadSize, "0010"))
+		{
+			return 0;
+		}
 		string[] files = Directory.GetFiles(ImagesDirectory, "*.grf");
 		Array.Sort(files);
 		int result = 0;
@@ -331,6 +286,7 @@ public sealed class QuickReturnDevice
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Unable to back up state file.", e);
+			return 0;
 		}
 		using (StreamWriter streamWriter = new StreamWriter(StateFile))
 		{
@@ -338,7 +294,10 @@ public sealed class QuickReturnDevice
 			foreach (string text2 in array)
 			{
 				string[] data = ReadStringFile(text2);
-				LoadData(data, string.Empty, GraphicWriteTarget.EEPROM);
+				if (LoadData(data, string.Empty, GraphicWriteTarget.EEPROM) == 0)
+				{
+					return 0;
+				}
 				string fileName = Path.GetFileName(text2);
 				streamWriter.WriteLine($"{fileName}={result++}");
 			}
@@ -354,61 +313,54 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log("Unable to delete backup defs file.", e2);
 			}
 		}
-		string arg = "UNKNOWN";
-		if (Port != null)
-		{
-			Port.ClosePort();
-			try
-			{
-				arg = (Port.IsOpen ? "open" : "closed");
-			}
-			catch
-			{
-				arg = "UNKNOWN";
-			}
-		}
-		LogHelper.Instance.Log($"Update EEPROM complete - port status is {arg}.", LogEntryType.Info);
+		ClosePort();
+		LogHelper.Instance.Log("Update device images complete.");
 		return result;
 	}
 
 	public void ShowStates(int waitTime)
 	{
 		ExecuteQRCommand(CommandType.SetGraphicsOnlyDisplayMode);
-		ExecuteQRCommand(CommandType.SetStartGraphicsPagePointer, m_preferredDisplayAddress);
-		ExecuteQRCommand(CommandType.SetMemoryWritePointer, m_preferredDisplayAddress);
+		ExecuteQRCommand(CommandType.SetStartGraphicsPagePointer, "0800");
+		ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0800");
 		foreach (QuickReturnState state in States)
 		{
-			ExecuteQRCommand(CommandType.SetMemoryWritePointer, m_preferredDisplayAddress);
+			ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0800");
 			ExecuteQRCommand(CommandType.SetEEPROMPointer, state.GraphicsAddress);
-			ExecuteQRCommand(CommandType.SetEEPROMReadSize, ConvertIntToHexString(PageSize));
+			ExecuteQRCommand(CommandType.SetEEPROMReadSize, ConvertIntToHexString(2048));
 			ExecuteQRCommand(CommandType.LoadFromEEPROMToDisplayMemory);
 			Thread.Sleep(waitTime);
 		}
 	}
 
-	public object GetOption(string optionName)
-	{
-		return null;
-	}
-
 	public bool ClearAttentionButtonStatus()
 	{
-		return ExecuteQRCommand(CommandType.ClearQRButtonStatus);
+		lock (Lock)
+		{
+			return ExecuteQRCommand(CommandType.ClearQRButtonStatus);
+		}
 	}
 
 	public bool CheckAttButton(out bool commError)
 	{
-		commError = false;
-		CoreResponse coreResponse = CoreController.ExecuteCoreCommand(new CoreCommand(CommandType.ReadQRButton, Port));
-		LogHelper.Instance.Log(string.Format("QR status returned {0}", (coreResponse != null) ? coreResponse.OpCodeResponse : "COMMUNICATION ERROR"), LogEntryType.Debug);
-		if (coreResponse.CommunicationError)
+		lock (Lock)
 		{
-			LogHelper.Instance.Log("CheckAttButton: there was a timeout or communication error with the device.", LogEntryType.Error);
-			commError = true;
-			return false;
+			commError = false;
+			if (Port == null)
+			{
+				return false;
+			}
+			CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CoreCommand.Create(CommandType.ReadQRButton, Port));
+			LogHelper.Instance.Log(string.Format("QR status returned {0}", (coreResponse != null) ? coreResponse.OpCodeResponse : "COMMUNICATION ERROR"), LogEntryType.Debug);
+			if (coreResponse.CommunicationError)
+			{
+				LogHelper.Instance.Log("CheckAttButton: there was a timeout or communication error with the device.", LogEntryType.Error);
+				commError = true;
+				return false;
+			}
+			string text = coreResponse.OpCodeResponse.TrimStart();
+			return text.StartsWith("02");
 		}
-		string text = coreResponse.OpCodeResponse.TrimStart();
-		return text.StartsWith("02");
 	}
 
 	public bool TurnOnLED(LED led, bool blink)
@@ -440,34 +392,37 @@ public sealed class QuickReturnDevice
 
 	public bool TurnOffLED(LED led)
 	{
-		CommandType commandType = CommandType.TurnOffGreenButtonLed;
-		switch (led)
+		lock (Lock)
 		{
-		case LED.GreenButton:
-			commandType = CommandType.TurnOffGreenButtonLed;
-			break;
-		case LED.RedButton:
-			commandType = CommandType.TurnOffRedButtonLed;
-			break;
-		case LED.GreenArrow:
-			commandType = CommandType.TurnOffGreenArrowLed;
-			break;
-		case LED.RedArrow:
-			commandType = CommandType.TurnOffRedArrowLed;
-			break;
-		case LED.Background:
-			commandType = CommandType.TurnOffBackLight;
-			break;
-		default:
-			LogHelper.Instance.Log($"Invalid option for LED: {led}", LogEntryType.Error);
-			return false;
+			CommandType commandType = CommandType.TurnOffGreenButtonLed;
+			switch (led)
+			{
+			case LED.GreenButton:
+				commandType = CommandType.TurnOffGreenButtonLed;
+				break;
+			case LED.RedButton:
+				commandType = CommandType.TurnOffRedButtonLed;
+				break;
+			case LED.GreenArrow:
+				commandType = CommandType.TurnOffGreenArrowLed;
+				break;
+			case LED.RedArrow:
+				commandType = CommandType.TurnOffRedArrowLed;
+				break;
+			case LED.Background:
+				commandType = CommandType.TurnOffBackLight;
+				break;
+			default:
+				LogHelper.Instance.Log($"Invalid option for LED: {led}", LogEntryType.Error);
+				return false;
+			}
+			return ExecuteQRCommand(commandType);
 		}
-		return ExecuteQRCommand(commandType);
 	}
 
 	public bool CreateState(string name, string file, string ledStates)
 	{
-		lock (this)
+		lock (Lock)
 		{
 			QuickReturnState quickReturnState = States.Find((QuickReturnState each) => string.Compare(name.ToUpper(), each.Name, ignoreCase: true) == 0);
 			if (quickReturnState != null)
@@ -481,9 +436,9 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log($"State {name} already defined; returning.", LogEntryType.Debug);
 				return true;
 			}
-			if (!ExecuteQRCommand(CommandType.SetGraphicsColumns, GraphicsWidth))
+			if (!ExecuteQRCommand(CommandType.SetGraphicsColumns, "10"))
 			{
-				LogHelper.Instance.Log("CreateState: unable to set graphics columns to " + GraphicsWidth, LogEntryType.Error);
+				LogHelper.Instance.Log("CreateState: unable to set graphics columns to 10", LogEntryType.Error);
 				return false;
 			}
 			if (!ExecuteQRCommand(CommandType.SetGraphicsOnlyDisplayMode))
@@ -499,7 +454,7 @@ public sealed class QuickReturnDevice
 			string[] data = null;
 			if (!string.IsNullOrEmpty(file))
 			{
-				data = ReadFile(file);
+				data = ReadStringFile(file);
 			}
 			List<LedState> list2 = ParseLedStates(ledStates);
 			if (list2.Count > 0)
@@ -509,7 +464,7 @@ public sealed class QuickReturnDevice
 			}
 			if (LoadData(data, quickReturnState.GraphicsAddress, GraphicWriteTarget.Display) > 0)
 			{
-				m_currentGraphicsAddress += PageSize;
+				m_currentGraphicsAddress += 2048;
 			}
 			States.Add(quickReturnState);
 			LogHelper.Instance.Log($"Created state {quickReturnState.Name}, graphics addr = {quickReturnState.GraphicsAddress}", LogEntryType.Info);
@@ -519,17 +474,21 @@ public sealed class QuickReturnDevice
 
 	public bool DisplayState(string name)
 	{
-		lock (this)
+		lock (Lock)
 		{
+			if (Port == null)
+			{
+				return false;
+			}
 			QuickReturnState quickReturnState = States.Find((QuickReturnState each) => string.Compare(name.ToUpper(), each.Name, ignoreCase: true) == 0);
 			if (quickReturnState == null)
 			{
 				LogHelper.Instance.Log($"Unable to find state {name.ToUpper()}; bailing.", LogEntryType.Error);
 				return false;
 			}
-			if (!ExecuteQRCommand(CommandType.SetMemoryWritePointer, m_preferredDisplayAddress))
+			if (!ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0800"))
 			{
-				LogHelper.Instance.Log($"State {quickReturnState.Name}: unable to set graphics page pointer to {m_preferredDisplayAddress}", LogEntryType.Error);
+				LogHelper.Instance.Log(string.Format("State {0}: unable to set graphics page pointer to {1}", quickReturnState.Name, "0800"), LogEntryType.Error);
 				return false;
 			}
 			if (!ExecuteQRCommand(CommandType.SetEEPROMPointer, quickReturnState.GraphicsAddress))
@@ -537,7 +496,7 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log($"State {quickReturnState.Name}: unable to set EEPROM pointer to {quickReturnState.GraphicsAddress}", LogEntryType.Error);
 				return false;
 			}
-			string text = ConvertIntToHexString(PageSize);
+			string text = ConvertIntToHexString(2048);
 			if (!ExecuteQRCommand(CommandType.SetEEPROMReadSize, text))
 			{
 				LogHelper.Instance.Log($"State {quickReturnState.Name}: unable to set EEPROM read size {text}", LogEntryType.Error);
@@ -550,9 +509,9 @@ public sealed class QuickReturnDevice
 			}
 			foreach (LedState ledState in quickReturnState.LedStates)
 			{
-				if (ledState.Mode == Mode.On || ledState.Mode == Mode.Blink)
+				if (ledState.Mode == LEDMode.On || ledState.Mode == LEDMode.Blink)
 				{
-					if (!TurnOnLED(ledState.Led, ledState.Mode == Mode.Blink))
+					if (!TurnOnLED(ledState.Led, ledState.Mode == LEDMode.Blink))
 					{
 						return false;
 					}
@@ -566,7 +525,47 @@ public sealed class QuickReturnDevice
 		}
 	}
 
-	public int LoadData(string[] data, string address, GraphicWriteTarget target)
+	private string ConvertIntToHexString(int i)
+	{
+		return $"{i:x4}".ToUpper();
+	}
+
+	private bool SetGraphicWidth(string width)
+	{
+		LogHelper.Instance.Log($"Setting width to {width}", LogEntryType.Info);
+		return ExecuteQRCommand(CommandType.SetGraphicsColumns, width);
+	}
+
+	private bool ClearAllDisplayMemory()
+	{
+		ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0000");
+		return ExecuteQRCommand(CommandType.ClearDisplayMemory, "1FFF");
+	}
+
+	private string[] ReadStringFile(string fileName)
+	{
+		if (string.IsNullOrEmpty(fileName))
+		{
+			return new string[0];
+		}
+		string path = Path.Combine(GraphicsPath, fileName);
+		List<string> list = new List<string>();
+		using (StreamReader streamReader = new StreamReader(path))
+		{
+			string text = "";
+			while (text != null)
+			{
+				text = streamReader.ReadLine();
+				if (text != null)
+				{
+					list.Add(text.Trim());
+				}
+			}
+		}
+		return list.ToArray();
+	}
+
+	private int LoadData(string[] data, string address, GraphicWriteTarget target)
 	{
 		bool flag = false;
 		if (!string.IsNullOrEmpty(address))
@@ -604,61 +603,6 @@ public sealed class QuickReturnDevice
 		return num;
 	}
 
-	public string[] ReadFile(string fileName)
-	{
-		return ReadStringFile(fileName);
-	}
-
-	public static string ConvertShortToHex(short number)
-	{
-		string text = number.ToString("X");
-		if (number < 16)
-		{
-			text = $"0{text}";
-		}
-		return text;
-	}
-
-	private string ConvertIntToHexString(int i)
-	{
-		return $"{i:x4}".ToUpper();
-	}
-
-	private bool SetGraphicWidth(string width)
-	{
-		LogHelper.Instance.Log($"Setting width to {width}", LogEntryType.Info);
-		return ExecuteQRCommand(CommandType.SetGraphicsColumns, width);
-	}
-
-	private bool ClearAllDisplayMemory()
-	{
-		ExecuteQRCommand(CommandType.SetMemoryWritePointer, "0000");
-		return ExecuteQRCommand(CommandType.ClearDisplayMemory, MemorySize);
-	}
-
-	private string[] ReadStringFile(string fileName)
-	{
-		if (string.IsNullOrEmpty(fileName))
-		{
-			return new string[0];
-		}
-		string path = Path.Combine(GraphicsPath, fileName);
-		List<string> list = new List<string>();
-		using (StreamReader streamReader = new StreamReader(path))
-		{
-			string text = "";
-			while (text != null)
-			{
-				text = streamReader.ReadLine();
-				if (text != null)
-				{
-					list.Add(text.Trim());
-				}
-			}
-		}
-		return list.ToArray();
-	}
-
 	private List<LedState> ParseLedStates(string states)
 	{
 		List<LedState> list = new List<LedState>();
@@ -670,9 +614,9 @@ public sealed class QuickReturnDevice
 			if (array3[0].StartsWith("led", StringComparison.CurrentCultureIgnoreCase) && array3[1].StartsWith("mode", StringComparison.CurrentCultureIgnoreCase))
 			{
 				string value = array3[0].Split('=')[1];
-				LED led = Enum<LED>.Parse(value, LED.Background);
+				LED led = Enum<LED>.ParseIgnoringCase(value, LED.Background);
 				string value2 = array3[1].Split('=')[1];
-				Mode mode = Enum<Mode>.Parse(value2, Mode.Unknown);
+				LEDMode mode = Enum<LEDMode>.ParseIgnoringCase(value2, LEDMode.Unknown);
 				list.Add(new LedState
 				{
 					Led = led,
@@ -685,22 +629,34 @@ public sealed class QuickReturnDevice
 
 	private QuickReturnDevice()
 	{
-		ConfigurePort();
+		Configuration = new RedboxSerialPortConfiguration();
+		Configuration.Test = ResponseValid;
+		ImagesDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr-chamfer");
+		StateFile = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr.state");
+		GraphicsPath = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr-chamfer");
 	}
 
 	private bool ExecuteQRCommand(CommandType type, string format)
 	{
-		return ExecuteCommand(new CoreCommand(type, Port, format));
+		if (Port == null)
+		{
+			return false;
+		}
+		return ExecuteCommand(CoreCommand.Create(type, Port, format));
 	}
 
 	private bool ExecuteQRCommand(CommandType type)
 	{
-		return ExecuteCommand(new CoreCommand(type, Port));
+		if (Port == null)
+		{
+			return false;
+		}
+		return ExecuteCommand(CoreCommand.Create(type, Port));
 	}
 
 	private bool ExecuteCommand(CoreCommand command)
 	{
-		CoreResponse coreResponse = CoreController.ExecuteCoreCommand(command);
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(command);
 		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 		{
 			LogHelper.Instance.Log(string.Format("The command {0} returned {1}", command.Command, (coreResponse == null) ? "ERROR" : coreResponse.OpCodeResponse), LogEntryType.Debug);
@@ -719,7 +675,7 @@ public sealed class QuickReturnDevice
 		return flag;
 	}
 
-	private bool ResponseValid(ChannelResponse response)
+	private bool ResponseValid(IChannelResponse response)
 	{
 		string text = Encoding.ASCII.GetString(response.RawResponse);
 		if (string.IsNullOrEmpty(text))
@@ -760,7 +716,7 @@ public sealed class QuickReturnDevice
 					}
 					QuickReturnState quickReturnState = new QuickReturnState();
 					quickReturnState.Name = text2.ToUpper();
-					quickReturnState.GraphicsAddress = ConvertIntToHexString(result * PageSize);
+					quickReturnState.GraphicsAddress = ConvertIntToHexString(result * 2048);
 					QuickReturnState item = quickReturnState;
 					States.Add(item);
 				}
@@ -769,16 +725,30 @@ public sealed class QuickReturnDevice
 		return true;
 	}
 
-	private void ConfigurePort()
+	private bool OpenPort()
 	{
-		string quickReturnComPort = ControllerConfiguration.Instance.QuickReturnComPort;
-		if (string.IsNullOrEmpty(ControllerConfiguration.Instance.QuickReturnComPort) || !quickReturnComPort.StartsWith("COM", StringComparison.CurrentCultureIgnoreCase))
+		if (!IsConfigured)
 		{
-			Port = null;
-			return;
+			return false;
 		}
-		RedboxSerialPortConfiguration redboxSerialPortConfiguration = new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.QuickReturnComPort);
-		redboxSerialPortConfiguration.Test = ResponseValid;
-		Port = new RedboxSerialPort(redboxSerialPortConfiguration);
+		Port = PortManager.Instance.Scan(ControllerConfiguration.Instance.QuickReturnComPort, Configuration, TestPort, PortModes.Async);
+		return Port != null;
+	}
+
+	private bool TestPort(RedboxSerialPort port)
+	{
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, port));
+		if (coreResponse.CommunicationError)
+		{
+			LogHelper.Instance.Log("[QuickReturn Scan test] There was a communication error trying to chat to the port.");
+			return false;
+		}
+		if (coreResponse.OpCodeResponse.Contains("Leiwe"))
+		{
+			LogHelper.Instance.Log("[QuickReturn Scan test] Received recognized response '{0}'", coreResponse.OpCodeResponse);
+			return true;
+		}
+		LogHelper.Instance.Log("[QuickReturn Scan test] Did not recognize response '{0}'.", coreResponse.OpCodeResponse);
+		return false;
 	}
 }

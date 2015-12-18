@@ -4,28 +4,8 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public abstract class MotionController : IDisposable
+public abstract class MotionController
 {
-	public const string NopCommand = "NOP";
-
-	public const string WaitCommand = "WAIT";
-
-	public const string WaitAfterHomeCommand = "WAITH";
-
-	public const string WaitAfterHomeYCommand = "WAITHY";
-
-	public const string WaitAfterHomeXCommand = "WAITHX";
-
-	public const string HomeXCommand = "HOMEX";
-
-	public const string WaitXCommand = "WAITX";
-
-	public const string WaitYCommand = "WAITY";
-
-	public const string WaitYDropBackCommand = "WAITYDB";
-
-	public const string WaitXYCommand = "WAITXY";
-
 	internal const string SuccessResponse = "OK";
 
 	internal const string TimeoutResponse = "TIMEOUT";
@@ -59,15 +39,38 @@ public abstract class MotionController : IDisposable
 
 	public static MotionController GetController()
 	{
-		if (ControllerConfiguration.Instance.MotionControllerType == MotionControllerType.Arcus)
+		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
 		{
 			if (m_instance == null)
 			{
-				m_instance = ArcusMotionController.MakeInstance();
+				m_instance = new EmulatedMotionController();
 			}
 			return m_instance;
 		}
-		return null;
+		if (m_instance == null)
+		{
+			m_instance = ArcusMotionController.MakeInstance();
+		}
+		return m_instance;
+	}
+
+	public static bool Reset(IFormattedLog log, bool quick)
+	{
+		MotionController controller = GetController();
+		if (!controller.ResetDeviceDriver())
+		{
+			LogHelper.Instance.Log("[Reset Hardware]: ResetDevice driver returned FALSE");
+			return false;
+		}
+		controller.InitializeCommunication();
+		if (!controller.CommunicationOk())
+		{
+			LogHelper.Instance.Log("[Reset Hardware]: After reset, channel still down. I'm sorry.");
+			return false;
+		}
+		using HomeAxesResult homeAxesResult = controller.InitAxes(log, quick);
+		LogHelper.Instance.Log("[Reset Hardware]: Restart returned {0}", homeAxesResult.Succeded);
+		return homeAxesResult.Succeded;
 	}
 
 	public string[] ReadLimits()
@@ -75,17 +78,7 @@ public abstract class MotionController : IDisposable
 		return ReadLimitsInner();
 	}
 
-	public void Dispose()
-	{
-	}
-
-	public abstract bool ResetDeviceDriver();
-
 	public abstract bool CommunicationOk();
-
-	public abstract bool CheckAndCorrect(IFormattedLog log);
-
-	public abstract bool Restart(IFormattedLog log);
 
 	public bool IsInitialized()
 	{
@@ -117,17 +110,8 @@ public abstract class MotionController : IDisposable
 		{
 			return motionResult;
 		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedMoveAbsoluteResult;
-		}
 		ControllerService.Instance.ResetLocation();
-		MotionResult motionResult2 = MoveToTargetInner(target);
-		if (MotionResult.ArcusNotResponsive == motionResult2)
-		{
-			IncrementCommunicationErrorCtr();
-		}
-		return motionResult2;
+		return MoveToTargetInner(target);
 	}
 
 	public MotionResult HomeAxis(Axis axis)
@@ -141,88 +125,33 @@ public abstract class MotionController : IDisposable
 		{
 			return motionResult;
 		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			if (axis != Axis.X)
-			{
-				return ControllerEmulationState.Instance.ExpectedHomeYResult;
-			}
-			return ControllerEmulationState.Instance.ExpectedHomeXResult;
-		}
 		ControllerService.Instance.ResetLocation();
 		MotionResult motionResult2 = HomeAxisInner(axis);
 		if (motionResult2 != MotionResult.Success)
 		{
 			LogHelper.Instance.Log(LogEntryType.Error, "The HOME{0} failed with status {1}", axis.ToString().ToUpper(), motionResult2.ToString().ToUpper());
 		}
-		if (MotionResult.ArcusNotResponsive == motionResult2)
-		{
-			IncrementCommunicationErrorCtr();
-		}
 		return motionResult2;
 	}
 
-	public MotionResult MoveToVend(MoveMode mode)
-	{
-		if (!IsInitializedInner())
-		{
-			return MotionResult.MotorNotHomed;
-		}
-		MotionResult motionResult = CanMove();
-		if (motionResult != MotionResult.Success)
-		{
-			return motionResult;
-		}
-		ControllerService.Instance.ResetLocation();
-		MotionResult motionResult2 = MoveToVendInner(mode);
-		if (MotionResult.ArcusNotResponsive == motionResult2)
-		{
-			IncrementCommunicationErrorCtr();
-		}
-		return motionResult2;
-	}
+	public abstract bool GetCurrentLocation(Axis axis, ref MoveTarget target);
 
-	public bool GetCurrentLocation(Axis axis, ref MoveTarget target)
-	{
-		return GetCurrentLocationInner(axis, ref target);
-	}
-
-	public bool IsMotorErrored(Axis axis, out MotionResult status)
-	{
-		return IsMotorErroredInner(axis, out status);
-	}
-
-	public void InitializeCommunication()
-	{
-		InitializeCommandInner();
-	}
+	public abstract bool IsMotorErrored(Axis axis, out MotionResult status);
 
 	public HomeAxesResult InitAxes(IFormattedLog log)
 	{
-		return InitAxesInner(log);
+		return InitAxes(log, quick: false);
 	}
 
-	internal MotionResult ControllerErrorStatus(Axis axis)
+	public HomeAxesResult InitAxes(IFormattedLog log, bool quick)
 	{
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			return MotionResult.Success;
-		}
-		return ControllerErrorStatusInner(axis);
-	}
-
-	internal void WriteToLog(string msg)
-	{
-		DateTime now = DateTime.Now;
-		string value = $"{now.ToShortDateString()} {now.ToShortTimeString()} {msg}";
-		LogFile.WriteLine(value);
+		Gripper.ClearFront();
+		return InitAxesInner(log, quick);
 	}
 
 	protected abstract bool ClosePortInner();
 
-	protected abstract HomeAxesResult InitAxesInner(IFormattedLog log);
-
-	protected abstract void InitializeCommandInner();
+	protected abstract HomeAxesResult InitAxesInner(IFormattedLog log, bool quick);
 
 	protected abstract bool IsInitializedInner();
 
@@ -230,13 +159,7 @@ public abstract class MotionController : IDisposable
 
 	protected abstract MotionResult MoveToVendInner(MoveMode mode);
 
-	protected abstract bool IsMotorErroredInner(Axis axis, out MotionResult status);
-
-	protected abstract MotionResult ControllerErrorStatusInner(Axis axis);
-
 	protected abstract MotionResult HomeAxisInner(Axis axis);
-
-	protected abstract bool GetCurrentLocationInner(Axis axis, ref MoveTarget target);
 
 	protected abstract string[] ReadLimitsInner();
 
@@ -265,11 +188,29 @@ public abstract class MotionController : IDisposable
 		return MotionResult.Success;
 	}
 
-	private void IncrementCommunicationErrorCtr()
+	internal MotionResult MoveToVend(MoveMode mode)
 	{
-		if (ControllerConfiguration.Instance.CountHardwareErrors)
+		if (!IsInitializedInner())
 		{
-			CounterManager.Instance.Increment("MCCommFailures");
+			return MotionResult.MotorNotHomed;
 		}
+		MotionResult motionResult = CanMove();
+		if (motionResult != MotionResult.Success)
+		{
+			return motionResult;
+		}
+		ControllerService.Instance.ResetLocation();
+		return MoveToVendInner(mode);
 	}
+
+	internal void WriteToLog(string msg)
+	{
+		DateTime now = DateTime.Now;
+		string value = $"{now.ToShortDateString()} {now.ToShortTimeString()} {msg}";
+		LogFile.WriteLine(value);
+	}
+
+	internal abstract bool ResetDeviceDriver();
+
+	internal abstract void InitializeCommunication();
 }

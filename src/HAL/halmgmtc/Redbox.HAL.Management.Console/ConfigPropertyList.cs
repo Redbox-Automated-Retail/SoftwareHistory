@@ -34,13 +34,9 @@ public class ConfigPropertyList : UserControl
 
 	private DataGridViewCellStyle m_defaultStyle;
 
-	private XmlDocument m_barcode;
-
 	private XmlDocument m_camera;
 
 	private XmlDocument m_controller;
-
-	private List<ConfigItem> m_barcodeConfig;
 
 	private List<ConfigItem> m_cameraConfig;
 
@@ -94,7 +90,6 @@ public class ConfigPropertyList : UserControl
 			m_descriptionLabel.Text = string.Empty;
 			m_configItemListBox.Items.Clear();
 			m_propertyDataGridView.Rows.Clear();
-			m_barcode = null;
 			m_camera = null;
 			m_controller = null;
 		};
@@ -107,12 +102,6 @@ public class ConfigPropertyList : UserControl
 		m_configItemListBox.Items.Clear();
 		m_propertyDataGridView.Rows.Clear();
 		m_descriptionLabel.Text = string.Empty;
-		m_barcodeConfig = new List<ConfigItem>();
-		m_barcode = LoadConfigurationInner(Configuration.Barcode, m_barcodeConfig);
-		if (m_barcode != null)
-		{
-			m_configItemListBox.Items.Add(Configuration.Barcode);
-		}
 		m_cameraConfig = new List<ConfigItem>();
 		m_camera = LoadConfigurationInner(Configuration.Camera, m_cameraConfig);
 		if (m_camera != null)
@@ -130,46 +119,32 @@ public class ConfigPropertyList : UserControl
 
 	public void Save()
 	{
-		if (m_barcodeConfig != null)
+		if (m_cameraConfig != null)
 		{
-			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.SetConfiguration("barcode", m_barcode.InnerXml);
+			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.SetConfiguration("camera", m_camera.InnerXml);
 			CommonFunctions.ProcessCommandResult(hardwareCommandResult);
 			if (!hardwareCommandResult.Success)
 			{
 				SaveFailed();
 				return;
 			}
-			foreach (ConfigItem item in m_barcodeConfig)
+			foreach (ConfigItem item in m_cameraConfig)
 			{
 				item.DefaultValue = item.Value;
 			}
 		}
-		if (m_cameraConfig != null)
+		if (m_controllerConfig != null)
 		{
-			HardwareCommandResult hardwareCommandResult2 = ProfileManager.Instance.Service.SetConfiguration("camera", m_camera.InnerXml);
+			HardwareCommandResult hardwareCommandResult2 = ProfileManager.Instance.Service.SetConfiguration("controller", m_controller.InnerXml);
 			CommonFunctions.ProcessCommandResult(hardwareCommandResult2);
 			if (!hardwareCommandResult2.Success)
 			{
 				SaveFailed();
 				return;
 			}
-			foreach (ConfigItem item2 in m_cameraConfig)
+			foreach (ConfigItem item2 in m_controllerConfig)
 			{
 				item2.DefaultValue = item2.Value;
-			}
-		}
-		if (m_controllerConfig != null)
-		{
-			HardwareCommandResult hardwareCommandResult3 = ProfileManager.Instance.Service.SetConfiguration("controller", m_controller.InnerXml);
-			CommonFunctions.ProcessCommandResult(hardwareCommandResult3);
-			if (!hardwareCommandResult3.Success)
-			{
-				SaveFailed();
-				return;
-			}
-			foreach (ConfigItem item3 in m_controllerConfig)
-			{
-				item3.DefaultValue = item3.Value;
 			}
 		}
 		m_propertyDataGridView.SuspendLayout();
@@ -321,9 +296,6 @@ public class ConfigPropertyList : UserControl
 	{
 		switch ((Configuration)m_configItemListBox.SelectedIndex)
 		{
-		case Configuration.Barcode:
-			PopulateDataGrid(m_barcodeConfig);
-			break;
 		case Configuration.Camera:
 		{
 			PopulateDataGrid(m_cameraConfig);
@@ -413,10 +385,6 @@ public class ConfigPropertyList : UserControl
 
 	private void OnReset(object sender, EventArgs e)
 	{
-		m_barcodeConfig.FindAll((ConfigItem x) => !x.ReadOnly && x.CustomEditor == null).ForEach(delegate(ConfigItem x)
-		{
-			x.Value = x.DefaultValue;
-		});
 		m_cameraConfig.FindAll((ConfigItem x) => !x.ReadOnly && x.CustomEditor == null).ForEach(delegate(ConfigItem x)
 		{
 			x.Value = x.DefaultValue;

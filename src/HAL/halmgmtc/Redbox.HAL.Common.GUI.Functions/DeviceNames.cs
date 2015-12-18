@@ -4,5 +4,5 @@ internal class DeviceNames
 {
 	internal const string AuxRelayBoard = "AUXPOWERRELAYBOARD";
 
-	internal const string IceQubeBoard = "ICEQUBEBOARD";
+	internal const string IceQubeBoard = "AIRXCHGR";
 }

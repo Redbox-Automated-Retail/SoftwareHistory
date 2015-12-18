@@ -11,7 +11,7 @@ namespace Redbox.HAL.Management.Console;
 
 public static class JobHelper
 {
-	private static MyLock m_jobListLock = new MyLock();
+	private static SimpleLock m_jobListLock = new SimpleLock();
 
 	private static BindingList<ProgramEvent> m_programEventsList;
 

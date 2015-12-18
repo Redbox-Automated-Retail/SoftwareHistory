@@ -4,37 +4,33 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class PrintInstruction : Instruction
+public sealed class PrintInstruction : Instruction
 {
 	public override string Mnemonic => "PRINT";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count >= 1 && tokensAfterMnemonic[0].Type != TokenType.StringLiteral)
+		if (operandTokens[0].Type != TokenType.StringLiteral)
 		{
-			AddError("C002", "Expected a string literal and any number of optional subtitution parameters.", result.Errors);
-		}
-		else
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a string literal and any number of optional subtitution parameters.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands.Count > 0)
 		{
-			object[] arg = ConvertSymbolsToParameterArray(result.Errors);
+			object[] arg = ConvertSymbolsToParameterArray(result.Errors, context);
 			if (result.Errors.Count <= 0)
 			{
 				Console.WriteLine(base.Operands[0].Value, arg);
 			}
 		}
-		else if (ExecutionEngine.Instance.ActiveContext.StackDepth > 0)
+		else if (context.StackDepth > 0)
 		{
-			object obj = ExecutionEngine.Instance.ActiveContext.PopTop();
+			object obj = context.PopTop();
 			if (obj != null)
 			{
 				Console.WriteLine(obj);

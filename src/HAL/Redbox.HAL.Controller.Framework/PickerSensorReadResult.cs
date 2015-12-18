@@ -1,42 +1,51 @@
+using System.Text;
+using Redbox.HAL.Core;
+
 namespace Redbox.HAL.Controller.Framework;
 
-public class PickerSensorReadResult
+public sealed class PickerSensorReadResult
 {
-	public bool ReadError { get; internal set; }
+	public readonly bool ReadError;
 
-	public bool[] Sensors { get; internal set; }
+	public readonly bool[] Sensors;
 
-	public bool IsFull
+	internal readonly int BlockedCount;
+
+	private static readonly int[] PickerSensorBits = new int[6] { 13, 11, 15, 10, 14, 9 };
+
+	public bool IsFull => BlockedCount > 0;
+
+	internal void LogSensorState()
 	{
-		get
-		{
-			if (Sensors == null || Sensors.Length == 0)
-			{
-				return true;
-			}
-			return BlockedCount() > 0;
-		}
+		LogSensorState(LogEntryType.Info);
 	}
 
-	internal int BlockedCount()
+	internal void LogSensorState(LogEntryType type)
 	{
-		int num = 0;
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append("PickerSensors: ");
 		for (int i = 0; i < Sensors.Length; i++)
 		{
-			if (Sensors[i])
-			{
-				num++;
-			}
+			stringBuilder.Append(string.Format("{0} = {1};", i + 1, Sensors[i] ? "BLOCKED" : "CLEAR"));
 		}
-		return num;
+		LogHelper.Instance.Log(stringBuilder.ToString(), type);
 	}
 
-	internal string SensorStatus(int idx)
+	internal PickerSensorReadResult(CoreResponse response)
 	{
-		if (!Sensors[idx])
+		ReadError = response.CommunicationError;
+		Sensors = new bool[PickerSensorBits.Length];
+		if (ReadError)
 		{
-			return "CLEAR";
+			LogHelper.Instance.Log("[Picker Sensor Read Result] Communication error.");
 		}
-		return "BLOCKED";
+		for (int i = 0; i < PickerSensorBits.Length; i++)
+		{
+			Sensors[i] = response.CommunicationError || response.IsBitSet(PickerSensorBits[i]);
+			if (Sensors[i])
+			{
+				BlockedCount++;
+			}
+		}
 	}
 }

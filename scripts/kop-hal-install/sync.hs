@@ -2,7 +2,7 @@
         # SYNC Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.3.0.84
+	# VERSION 1.4.0.246
         #
 
 	LOG			"Begin sync request."
@@ -15,8 +15,15 @@
 	IF	"ACTIVE" == QR-STATUS
 		SET	YIELD-TIME	2000
 	ENDIF
+	
+	
+	GRIPPER		CHECK-PICKER
+	POP		CP-RESULT
+	IF		"EMPTY" != CP-RESULT
+		EXIT	"Unable to clear the picker."
+	ENDIF
         
-	DECK		MAXSLOTS DECK=1
+	DECK		MAXSLOTS NUMBER=1
 	POP         MAX-SLOT-PER-DECK
         
 	POP			START-DECK

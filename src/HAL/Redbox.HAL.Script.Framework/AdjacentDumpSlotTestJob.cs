@@ -2,6 +2,7 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
+[NativeJob(ProgramName = "adjacent-bin-test", Operand = "ADJACENT-BIN-TEST")]
 internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 {
 	private readonly int[] SourceDiskSlots = new int[2] { 30, 60 };
@@ -9,7 +10,7 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "AdjacentDumpSlotTest");
-		Deck deck = QLM.Instance.Deck;
+		Deck deck = QLM.Deck;
 		if (deck != null)
 		{
 			applicationLog.Write("The kiosk shows a QLM configuration - go no further.");
@@ -57,6 +58,11 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 		{
 			AddError("Test failure!");
 		}
+	}
+
+	internal AdjacentDumpSlotTestJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 
 	private bool FileToBin(int deck)

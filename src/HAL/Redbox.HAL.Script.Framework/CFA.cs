@@ -7,8 +7,6 @@ public class CFA
 	public enum CFAInternalsVersion
 	{
 		None,
-		Block,
-		BruteForce,
 		Mock
 	}
 
@@ -43,16 +41,7 @@ public class CFA
 
 	internal static CFAInternals Initialize(CFAInternalsVersion version, ExecutionResult result)
 	{
-		CFAInternals cFAInternals = null;
-		switch (version)
-		{
-		case CFAInternalsVersion.Block:
-			cFAInternals = new BlockInternals();
-			break;
-		case CFAInternalsVersion.Mock:
-			cFAInternals = new CFAInternalsMock();
-			break;
-		}
+		CFAInternals cFAInternals = new CFAInternalsMock();
 		cFAInternals.Initialize(result);
 		return cFAInternals;
 	}

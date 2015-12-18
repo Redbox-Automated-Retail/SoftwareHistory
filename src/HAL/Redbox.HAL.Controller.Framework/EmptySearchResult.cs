@@ -6,20 +6,18 @@ namespace Redbox.HAL.Controller.Framework;
 
 public class EmptySearchResult : IDisposable
 {
-	private List<Location> m_emptySlots = new List<Location>();
+	public readonly List<Location> EmptyLocations = new List<Location>();
 
 	private bool m_disposed;
 
-	public List<Location> EmptyLocations => m_emptySlots;
-
-	public int FoundEmpty => m_emptySlots.Count;
+	public int FoundEmpty => EmptyLocations.Count;
 
 	public void Dispose()
 	{
 		if (!m_disposed)
 		{
 			m_disposed = true;
-			m_emptySlots.Clear();
+			EmptyLocations.Clear();
 			GC.SuppressFinalize(this);
 		}
 	}
@@ -37,36 +35,34 @@ public class EmptySearchResult : IDisposable
 		{
 			num = ControllerConfiguration.Instance.PutAwayItemAttempts;
 		}
-		ESPNode[] emptyPattern = ESPHelper.Instance.EmptyPattern;
-		foreach (ESPNode eSPNode in emptyPattern)
+		foreach (ESPNode item in ControllerConfiguration.Instance.ESPHelper.EmptyPattern)
 		{
-			Deck deck = DecksManager.Instance.GetDeck(eSPNode.Deck);
-			string idForSlot = deck.GetIdForSlot(eSPNode.Slot);
+			Deck deck = DecksManager.Instance.GetDeck(item.Deck);
+			string idForSlot = deck.GetIdForSlot(item.Slot);
 			if ("EMPTY" == idForSlot)
 			{
-				m_emptySlots.Add(new Location(deck.Number, eSPNode.Slot));
-				if (m_emptySlots.Count == num)
+				EmptyLocations.Add(new Location(deck.Number, item.Slot));
+				if (EmptyLocations.Count == num)
 				{
 					break;
 				}
 			}
 		}
-		return m_emptySlots.Count > 0;
+		return EmptyLocations.Count > 0;
 	}
 
 	public bool FindOneEmpty()
 	{
-		ESPNode[] emptyPattern = ESPHelper.Instance.EmptyPattern;
-		foreach (ESPNode eSPNode in emptyPattern)
+		foreach (ESPNode item in ControllerConfiguration.Instance.ESPHelper.EmptyPattern)
 		{
-			Deck deck = DecksManager.Instance.GetDeck(eSPNode.Deck);
-			string idForSlot = deck.GetIdForSlot(eSPNode.Slot);
+			Deck deck = DecksManager.Instance.GetDeck(item.Deck);
+			string idForSlot = deck.GetIdForSlot(item.Slot);
 			if ("EMPTY" == idForSlot)
 			{
-				m_emptySlots.Add(new Location(deck.Number, eSPNode.Slot));
+				EmptyLocations.Add(new Location(deck.Number, item.Slot));
 				break;
 			}
 		}
-		return m_emptySlots.Count > 0;
+		return EmptyLocations.Count > 0;
 	}
 }

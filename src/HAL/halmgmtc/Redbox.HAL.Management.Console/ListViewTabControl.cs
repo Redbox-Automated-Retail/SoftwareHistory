@@ -7,7 +7,7 @@ namespace Redbox.HAL.Management.Console;
 
 public class ListViewTabControl : UserControl
 {
-	private static MyLock m_lock = new MyLock();
+	private readonly SimpleLock Lock = new SimpleLock();
 
 	private TabControl m_listViews;
 
@@ -100,7 +100,7 @@ public class ListViewTabControl : UserControl
 		{
 			return;
 		}
-		if (!m_lock.TryLock())
+		if (!Lock.TryLock())
 		{
 			LogHelper.Instance.Log("Attempting to Refresh Listview but it was already locked.  Dropping Request.", LogEntryType.Error);
 			return;
@@ -113,7 +113,7 @@ public class ListViewTabControl : UserControl
 		}
 		finally
 		{
-			m_lock.Unlock();
+			Lock.Unlock();
 		}
 	}
 

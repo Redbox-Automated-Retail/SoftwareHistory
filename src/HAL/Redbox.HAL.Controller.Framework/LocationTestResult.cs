@@ -1,7 +1,11 @@
 namespace Redbox.HAL.Controller.Framework;
 
-public class LocationTestResult
+public sealed class LocationTestResult
 {
+	public readonly Deck Deck;
+
+	public readonly int Slot;
+
 	public bool TestOk => PickerHardwareError.Success == Error;
 
 	public GripperPeekResult PeekResult { get; internal set; }
@@ -17,9 +21,11 @@ public class LocationTestResult
 		return PeekResult.ToString().ToUpper();
 	}
 
-	internal LocationTestResult()
+	internal LocationTestResult(int deck, int slot)
 	{
 		Error = PickerHardwareError.Success;
 		PeekResult = GripperPeekResult.Empty;
+		Deck = DecksManager.Instance.GetDeck(deck);
+		Slot = slot;
 	}
 }

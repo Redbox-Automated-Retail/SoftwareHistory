@@ -61,19 +61,10 @@ public static class ProcessHelper
 		LogHelper.Instance.Log("    Paged memory size: {0} bytes", currentProcess.PagedMemorySize64);
 	}
 
-	private static string ProcessName(string name)
-	{
-		int num = name.LastIndexOf(".exe");
-		if (-1 != num)
-		{
-			return name.Substring(0, num);
-		}
-		return name;
-	}
-
 	private static bool ProcessIsRunningInner(string name)
 	{
-		name = ProcessName(name);
+		int num = name.LastIndexOf(".exe");
+		name = ((-1 == num) ? name : name.Substring(0, num));
 		Process[] processesByName = Process.GetProcessesByName(name);
 		if (processesByName.Length != 0)
 		{

@@ -5,11 +5,13 @@ namespace Redbox.HAL.Core;
 
 public sealed class RedboxTimer
 {
+	private readonly Timer Timer;
+
 	public bool Started => Timer.Enabled;
 
 	public string Name { get; private set; }
 
-	private Timer Timer { get; set; }
+	public DateTime? NextFireTime { get; private set; }
 
 	public void ScheduleAtNext(int hour, int minute)
 	{
@@ -32,6 +34,7 @@ public sealed class RedboxTimer
 	public void Disable()
 	{
 		Timer.Enabled = false;
+		NextFireTime = null;
 	}
 
 	public RedboxTimer(string name, ElapsedEventHandler handler)
@@ -47,14 +50,16 @@ public sealed class RedboxTimer
 		if (now.TimeOfDay < span)
 		{
 			double totalMilliseconds = span.Subtract(now.TimeOfDay).TotalMilliseconds;
-			LogHelper.Instance.Log("Timer {0} should fire {1}ms from now.", Name, totalMilliseconds);
+			NextFireTime = new DateTime(now.Year, now.Month, now.Day, span.Hours, span.Minutes, 0);
+			LogHelper.Instance.Log("Timer {0} should fire {1} {2} ( {3}ms from now ).", Name, NextFireTime.Value.ToShortDateString(), NextFireTime.Value.ToShortTimeString(), totalMilliseconds);
 			StartTimer(totalMilliseconds);
 		}
 		else
 		{
-			DateTime dateTime = new DateTime(now.Year, now.Month, now.Day, span.Hours, span.Minutes, 0).AddDays(1.0);
-			LogHelper.Instance.Log("Timer {0} should fire on {1} {2}", Name, dateTime.ToShortDateString(), dateTime.ToShortTimeString());
-			StartTimer(dateTime.Subtract(now).TotalMilliseconds);
+			DateTime value = new DateTime(now.Year, now.Month, now.Day, span.Hours, span.Minutes, 0).AddDays(1.0);
+			NextFireTime = value;
+			LogHelper.Instance.Log("Timer {0} should fire on {1} {2}", Name, value.ToShortDateString(), value.ToShortTimeString());
+			StartTimer(value.Subtract(now).TotalMilliseconds);
 		}
 	}
 

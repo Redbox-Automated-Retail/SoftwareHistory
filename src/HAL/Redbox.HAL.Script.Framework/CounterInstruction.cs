@@ -1,14 +1,14 @@
 using System;
-using System.IO;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class CounterInstruction : Instruction
+public sealed class CounterInstruction : Instruction
 {
-	protected enum Ops
+	private enum Ops
 	{
 		None,
 		Increment,
@@ -19,113 +19,80 @@ public class CounterInstruction : Instruction
 		ShowTimeouts
 	}
 
-	private const string LogName = "Timeouts.log";
-
-	private readonly string[] SupportCounters = new string[12]
-	{
-		"FingerCloseTimeout", "FingerOpenTimeout", "FingerRentTimeout", "GripperExtendTimeout", "GripperRetractTimeout", "QlmDisengageTimeout", "QlmEngageTimeout", "TrackCloseTimeout", "TrackOpenTimeout", "VendDoorCloseTimeout",
-		"VendDoorRentTimeout", "HomeYOnInventoryError"
-	};
-
 	public override string Mnemonic => "COUNTER";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0 && tokensAfterMnemonic[0].IsKeyValuePair)
+		if (!operandTokens[0].IsKeyValuePair)
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.AddInvalidOperandError($"The {Mnemonic} instruction expected at least a key-value pair.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("NAME");
-		string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors);
+		string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
 		string value = base.Operands[1].Value;
-		Ops ops = Ops.None;
-		try
+		switch (Enum<Ops>.ParseIgnoringCase(value, Ops.None))
 		{
-			ops = (Ops)Enum.Parse(typeof(Ops), value, ignoreCase: true);
+		case Ops.None:
+		{
+			string message = $"Unrecognized operation: {value}";
+			AddError("E001", message, result.Errors);
+			break;
 		}
-		catch (ArgumentException)
-		{
-			string text = $"Unrecognized operation: {value}";
-			ServiceLogHelper.Instance.WriteInfoMessage(text);
-			AddError("E001", text, result.Errors);
-			return;
-		}
-		switch (ops)
-		{
 		case Ops.Create:
-			ExecutionEngine.Instance.ActiveContext.PushTop(CounterManager.Instance.Exists(keyValuePairValue) ? "SUCCESS" : "FAILURE");
+			context.PushTop(CounterManager.Instance.Exists(keyValuePairValue) ? "SUCCESS" : "FAILURE");
 			break;
 		case Ops.Decrement:
 		{
-			Counter counter3 = CounterManager.Instance.Decrement(keyValuePairValue);
-			if (counter3 == null)
+			Counter counter = CounterManager.Instance.Decrement(keyValuePairValue);
+			if (counter == null)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("FAILURE");
+				context.PushTop("FAILURE");
 				break;
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(counter3.Value);
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			context.PushTop(counter.Value);
+			context.PushTop("SUCCESS");
 			break;
 		}
 		case Ops.Increment:
 		{
-			Counter counter3 = CounterManager.Instance.Find(keyValuePairValue);
-			if (counter3 == null)
+			Counter counter = CounterManager.Instance.Find(keyValuePairValue);
+			if (counter == null)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("FAILURE");
+				context.PushTop("FAILURE");
 				break;
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(counter3.Value);
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			context.PushTop(counter.Value);
+			context.PushTop("SUCCESS");
 			break;
 		}
 		case Ops.Get:
 		{
-			Counter counter3 = CounterManager.Instance.Find(keyValuePairValue);
-			if (counter3 == null)
+			if (keyValuePairValue.Equals("DUMPBIN", StringComparison.CurrentCultureIgnoreCase))
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("FAILURE");
+				context.PushTop(DumpBin.Instance.CurrentCount());
+				context.PushTop("SUCCESS");
 				break;
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(counter3.Value);
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			Counter counter = CounterManager.Instance.Find(keyValuePairValue);
+			if (counter == null)
+			{
+				context.PushTop("FAILURE");
+				break;
+			}
+			context.PushTop(counter.Value);
+			context.PushTop("SUCCESS");
 			break;
 		}
 		case Ops.Reset:
-			ExecutionEngine.Instance.ActiveContext.PushTop((CounterManager.Instance.Reset(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
+			context.PushTop((CounterManager.Instance.Reset(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
 			break;
 		case Ops.ShowTimeouts:
-		{
-			string path = Path.Combine(ControllerConfiguration.Instance.KioskLogsPath, "ErrorLogs");
-			string path2 = Path.Combine(path, "Timeouts.log");
-			using StreamWriter streamWriter = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
-			streamWriter.WriteLine("Counter sample on {0} {1}", DateTime.Now.ToShortTimeString(), DateTime.Now.ToShortDateString());
-			string[] supportCounters = SupportCounters;
-			foreach (string text2 in supportCounters)
-			{
-				int num = 0;
-				Counter counter = CounterManager.Instance.Find(text2);
-				if (counter != null)
-				{
-					num = counter.Value;
-				}
-				streamWriter.WriteLine($" {text2}: {num}");
-			}
-			Counter counter2 = CounterManager.Instance.Find("EmptyOrStuckCount");
-			int num2 = 0;
-			if (counter2 != null)
-			{
-				num2 = counter2.Value;
-			}
-			streamWriter.WriteLine(string.Format(" {0}: {1}", "EmptyOrStuckCount", num2));
-			streamWriter.WriteLine();
+			HardwareSupport.LogCurrent();
 			break;
-		}
 		}
 	}
 }

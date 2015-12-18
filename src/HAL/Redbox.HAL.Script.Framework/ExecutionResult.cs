@@ -3,21 +3,9 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-public class ExecutionResult
+public sealed class ExecutionResult
 {
-	private ErrorList m_errors;
-
-	public ErrorList Errors
-	{
-		get
-		{
-			if (m_errors == null)
-			{
-				m_errors = new ErrorList();
-			}
-			return m_errors;
-		}
-	}
+	public readonly ErrorList Errors = new ErrorList();
 
 	public TimeSpan? ExecutionTime { get; set; }
 
@@ -43,5 +31,21 @@ public class ExecutionResult
 		{
 			ExecutionTime += timeSpan;
 		}
+	}
+
+	internal void AddMissingOperandError(string details)
+	{
+		AddError(ExecutionErrors.MissingOperand, details);
+	}
+
+	internal void AddInvalidOperandError(string details)
+	{
+		AddError(ExecutionErrors.InvalidOperand, details);
+	}
+
+	internal void AddError(ExecutionErrors error, string details)
+	{
+		Error item = Error.NewError(ExecutionErrorsTable.ErrorCodeTable[error], ExecutionErrorsTable.ErrorTable[error], details);
+		Errors.Add(item);
 	}
 }

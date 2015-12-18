@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 
 namespace Redbox.HAL.Core;
 
@@ -302,27 +301,22 @@ public class DeviceHelper : IDisposable
 	public bool ResetByName(string deviceName)
 	{
 		int resetPauseTime = ResetPauseTime;
-		ManualResetEvent manualResetEvent = new ManualResetEvent(initialState: false);
 		if (!SetDeviceStateInner(DeviceClass.Ports, DeviceState.Disable, deviceName, MatchType.DeviceDescription))
 		{
 			return false;
 		}
-		manualResetEvent.WaitOne(resetPauseTime);
+		PerfFunctions.Wait(resetPauseTime);
 		if (!SetDeviceStateInner(DeviceClass.USB, DeviceState.Disable, deviceName, MatchType.DeviceDescription))
 		{
 			return false;
 		}
-		manualResetEvent.WaitOne(resetPauseTime);
+		PerfFunctions.Wait(resetPauseTime);
 		if (!SetDeviceStateInner(DeviceClass.USB, DeviceState.Enable, deviceName, MatchType.DeviceDescription))
 		{
 			return false;
 		}
-		manualResetEvent.WaitOne(resetPauseTime);
-		if (!SetDeviceStateInner(DeviceClass.Ports, DeviceState.Enable, deviceName, MatchType.DeviceDescription))
-		{
-			return false;
-		}
-		return true;
+		PerfFunctions.Wait(resetPauseTime);
+		return SetDeviceStateInner(DeviceClass.Ports, DeviceState.Enable, deviceName, MatchType.DeviceDescription);
 	}
 
 	public DeviceStatus FindDeviceStatus(Guid deviceClazz, DeviceDescriptor deviceInfo)
@@ -429,6 +423,50 @@ public class DeviceHelper : IDisposable
 					}
 					break;
 				}
+			}
+			return ProcessDeviceInfoResult.Continue;
+		});
+	}
+
+	public void FindDeviceWithVid(DeviceClass clazz, string vid, List<string> errors, List<string> devMatches)
+	{
+		int lastError = 0;
+		StringBuilder clazzNameBuffer = MakeBuffer();
+		char[] separator = new char[1] { '&' };
+		EnumerateDevices(Guid.Empty, 6u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
+		{
+			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
+			{
+				lastError = Marshal.GetLastWin32Error();
+				errors.Add($"SetupDiGetDeviceRegisProperty returned {lastError} searching for class.");
+				return ProcessDeviceInfoResult.Error;
+			}
+			if (clazz.ToString() != clazzNameBuffer.ToString())
+			{
+				return ProcessDeviceInfoResult.Continue;
+			}
+			string item;
+			string text = (item = QueryHardwareId(devInfo, ref did, out lastError));
+			if (!text.ToLower().StartsWith("vid"))
+			{
+				int num = text.IndexOf("vid");
+				if (num == -1)
+				{
+					errors.Add("Invalid string.");
+					return ProcessDeviceInfoResult.Error;
+				}
+				text = text.Substring(num).ToLower();
+			}
+			string[] array = text.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+			if (array.Length < 2)
+			{
+				LogHelper.Instance.Log("The HWID '{0}' is malformed.", text);
+				return ProcessDeviceInfoResult.Continue;
+			}
+			string text2 = array[0].Substring(4);
+			if (text2 == vid)
+			{
+				devMatches.Add(item);
 			}
 			return ProcessDeviceInfoResult.Continue;
 		});

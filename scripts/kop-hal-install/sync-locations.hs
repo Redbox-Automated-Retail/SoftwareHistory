@@ -1,7 +1,7 @@
 	# sync-locations.hs
 	# Copyright (C) 2011 Redbox Automated Retail, LLC
 	# All Rights Reserved
-	# VERSION 1.3.0.84
+	# VERSION 1.4.0.246
 	#
 		
 	LOG			"Begin sync-locations request."
@@ -14,7 +14,7 @@
 	GETCFG		"MarkDuplicatesUnknown" TYPE=Controller
 	POP			MARK-DUP-UNK
         
-	DECK		MAXSLOTS DECK=1
+	DECK		MAXSLOTS NUMBER=1
 	POP         MAX-SLOT-PER-DECK
     
 	POP			LOCATION-COUNT

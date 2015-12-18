@@ -4,21 +4,21 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class ResultInstruction : Instruction
+public sealed class ResultInstruction : Instruction
 {
 	public static class Prefixes
 	{
 		public const string ResultPrefix = "RESULT";
 	}
 
-	protected static class StackEnds
+	private static class StackEnds
 	{
 		public const string Bottom = "bottom";
 
 		public const string Top = "top";
 	}
 
-	protected static class KeyNames
+	private static class KeyNames
 	{
 		public const string End = "END";
 
@@ -39,38 +39,29 @@ public class ResultInstruction : Instruction
 
 	public override string Mnemonic => "RESULT";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count >= 2)
+		if (operandTokens.Count < 2)
 		{
-			if (tokens.GetKeyValuePair("CODE") == null || tokens.GetKeyValuePair("MESSAGE") == null)
-			{
-				AddError("C002", $"Expected key value parameters CODE=c and MESSAGE=m. (line {base.LineNumber})", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddInvalidOperandError("Expected the key value parameters CODE=c and MESSAGE=m.  Optional pairs can be: DECK=n, SLOT=n, and END=BOTTOM|TOP.");
 		}
-		else
+		else if (operandTokens.GetKeyValuePair("CODE") == null || operandTokens.GetKeyValuePair("MESSAGE") == null)
 		{
-			AddError("C002", "Expected the key value parameters CODE=c and MESSAGE=m.  Optional pairs can be: DECK=n, SLOT=n, and END=BOTTOM|TOP.", result.Errors);
+			result.AddInvalidOperandError($"Expected key value parameters CODE=c and MESSAGE=m. (line {base.LineNumber})");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("END");
 		bool flag = keyValuePair != null && string.Compare(keyValuePair.Value, "bottom", ignoreCase: true) == 0;
-		string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("CODE"), result.Errors);
-		string keyValuePairValue2 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("MESSAGE"), result.Errors);
-		int? keyValuePairValue3 = GetKeyValuePairValue<int?>(base.Operands.GetKeyValuePair("DECK"), result.Errors);
-		int? keyValuePairValue4 = GetKeyValuePairValue<int?>(base.Operands.GetKeyValuePair("SLOT"), result.Errors);
-		string keyValuePairValue5 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("ITEM"), result.Errors);
-		string keyValuePairValue6 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("RETURNTIME"), result.Errors);
-		string keyValuePairValue7 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("PREVIOUS"), result.Errors);
+		string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("CODE"), result.Errors, context);
+		string keyValuePairValue2 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("MESSAGE"), result.Errors, context);
+		int? keyValuePairValue3 = GetKeyValuePairValue<int?>(base.Operands.GetKeyValuePair("DECK"), result.Errors, context);
+		int? keyValuePairValue4 = GetKeyValuePairValue<int?>(base.Operands.GetKeyValuePair("SLOT"), result.Errors, context);
+		string keyValuePairValue5 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("ITEM"), result.Errors, context);
+		string keyValuePairValue6 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("RETURNTIME"), result.Errors, context);
+		string keyValuePairValue7 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair("PREVIOUS"), result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return;
@@ -91,6 +82,6 @@ public class ResultInstruction : Instruction
 				returnTime = result2;
 			}
 		}
-		ResultHelper.Instance.CreateResult(flag ? StackEnd.Bottom : StackEnd.Top, keyValuePairValue, keyValuePairValue2, keyValuePairValue3, keyValuePairValue4, keyValuePairValue5, returnTime, keyValuePairValue7);
+		context.CreateResult(flag ? StackEnd.Bottom : StackEnd.Top, keyValuePairValue, keyValuePairValue2, keyValuePairValue3, keyValuePairValue4, keyValuePairValue5, returnTime, keyValuePairValue7);
 	}
 }

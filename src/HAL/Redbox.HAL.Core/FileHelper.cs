@@ -30,6 +30,10 @@ public static class FileHelper
 
 	public static bool SafeDeleteFile(string path)
 	{
+		if (string.IsNullOrEmpty(path) || !File.Exists(path))
+		{
+			return false;
+		}
 		bool flag = false;
 		try
 		{
@@ -94,10 +98,16 @@ public static class FileHelper
 			return null;
 		}
 		byte[] array = null;
-		using FileStream fileStream = StreamBase.OpenFile(fileName);
+		using FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
 		array = new byte[fileStream.Length];
 		fileStream.Read(array, 0, (int)fileStream.Length);
 		return array;
+	}
+
+	public static string GenerateUniqueFile(string suffix)
+	{
+		DateTime now = DateTime.Now;
+		return $"m{now.Month}d{now.Day}y{now.Year}_h{now.Hour}m{now.Minute}s{now.Second}t{now.Millisecond}.{suffix}";
 	}
 
 	[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]

@@ -3,8 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace Redbox.DirectShow.Interop;
 
-[Flags]
 [ComVisible(false)]
+[Flags]
 public enum VideoControlFlags
 {
 	FlipHorizontal = 1,

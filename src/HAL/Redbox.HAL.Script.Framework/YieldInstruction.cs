@@ -4,42 +4,35 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class YieldInstruction : Instruction
+public sealed class YieldInstruction : Instruction
 {
 	public override string Mnemonic => "YIELD";
 
 	public override bool IsCooperativeMultitask => true;
+
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
 
 	protected override bool IsOperandRecognized(string operand)
 	{
 		return "RUNTIME-ONLY".Equals(operand);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count != 0)
+		if (operandTokens.Count != 0 && operandTokens[0].Type != TokenType.NumericLiteral && !operandTokens[0].IsSymbolOrConst)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.NumericLiteral && !tokensAfterMnemonic[0].IsSymbolOrConst)
-			{
-				AddError("C002", "Expected a numeric literal.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddInvalidOperandError("Expected a numeric literal.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands.Count == 1)
 		{
 			double? num = null;
 			if (base.Operands[0].IsSymbolOrConst)
 			{
-				object symbolValue = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors);
+				object symbolValue = context.GetSymbolValue(base.Operands[0].Value, result.Errors);
 				if (symbolValue == null || result.Errors.Count > 0)
 				{
 					return;
@@ -56,7 +49,7 @@ public class YieldInstruction : Instruction
 			if (num.HasValue)
 			{
 				DateTime value = DateTime.Now.AddMilliseconds(num.Value);
-				ExecutionEngine.Instance.ActiveContext.StartTime = value;
+				context.StartTime = value;
 			}
 		}
 		ExecutionEngine.Instance.PerformContextSwitch(runtimeOnly: false);

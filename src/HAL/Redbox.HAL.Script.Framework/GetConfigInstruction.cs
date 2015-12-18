@@ -1,5 +1,4 @@
 using System;
-using Redbox.HAL.Camera.Framework;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 using Redbox.HAL.DataMatrix.Framework;
@@ -7,28 +6,19 @@ using Redbox.HAL.DataMatrix.Framework;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class GetConfigInstruction : Instruction
+public sealed class GetConfigInstruction : Instruction
 {
 	public override string Mnemonic => "GETCFG";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0)
+		if (operandTokens.Count < 2 || operandTokens[0].Type != TokenType.StringLiteral)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral)
-			{
-				AddError("C002", "Expected a string literal.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddInvalidOperandError("Expected a string literal operand.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		ConfigType configType = ConfigType.Controller;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("TYPE");
@@ -36,7 +26,7 @@ public class GetConfigInstruction : Instruction
 		{
 			configType = Enum<ConfigType>.ParseIgnoringCase(keyValuePair.Value, ConfigType.Controller);
 		}
-		object[] args = ConvertSymbolsToParameterArray(result.Errors);
+		object[] args = ConvertSymbolsToParameterArray(result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return;
@@ -47,11 +37,8 @@ public class GetConfigInstruction : Instruction
 		{
 			switch (configType)
 			{
-			case ConfigType.Barcode:
-				obj = BarcodeConfiguration.Instance.GetPropertyByName(text);
-				break;
 			case ConfigType.Camera:
-				obj = CameraConfiguration.Instance.GetPropertyByName(text);
+				obj = BarcodeConfiguration.Instance.GetPropertyByName(text);
 				break;
 			case ConfigType.Controller:
 				obj = ControllerConfiguration.Instance.GetPropertyByName(text);
@@ -69,7 +56,7 @@ public class GetConfigInstruction : Instruction
 		}
 		if (obj != null)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(obj);
+			context.PushTop(obj);
 		}
 	}
 }

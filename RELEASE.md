@@ -1,45 +1,46 @@
-# 1.3.0.84 (no code name)
+# X-Men (1.4.0.246)
 
-- Product: HAL 1.3.0.84
+- Product: HAL 1.4.0.246
 - Date (first download in the snapshots): 2015-12-18
-- Store labels: none
+- Store labels: kop-hal-install-X-Men
 - Package revisions:
   - `kop-tools` revision 22 (`A5E52A494499BDECC9AEC39F3994DA6A73842CFC`)
-  - `kop-hal-install` revision 20 (`89999D39C3EDE78B782917D9AB28502E02BD8FB9`)
+  - `kop-hal-install` revision 31 (`8542054E6CF6805DA0BC3443612EF390929F9D02`)
   - `kop-ms-hal-tester` revision 8 (`054D7EDF69ED7B7A7B99B5BFAB676008FAEA8F49`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `HalUtilities.exe` | HalUtilities | 1.4.0.245 | `8C359A71AB518710385F9323BCE6AEB1910C97A9` | exact |
 | `beforeactivate.lua` |  |  | `06B47DDAB43B054ECF43CF997FF078F687CF7171` | exact |
-| `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.3.0.84 | `1B293C7E435820246E13A430885E144AB64C2F77` | stale (listed version 1A4F5AC6FC… has no content) |
+| `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.4.0.246 | `6F67B9396CC02FFAC1FF07A994DD24479DB1D8F5` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |
 | `Redbox.HAL.ICameraPlugin.Vidcap.dll` | Redbox.HAL.ICameraPlugin.Vidcap | 1.3.0.119 | `95CFFEAB28433C2BFFACD3FA187D20F7592A5BEE` | exact |
-| `CameraTuner.exe` | CameraTuner | 1.3.0.84 | `C601C900E8A2EA347BD4139866BB0AFFF789273C` | stale (listed version 19874A3C79… has no content) |
-| `HAL.PackageInstaller.exe` | HAL.PackageInstaller | 1.3.0.84 | `6E8B73F2C815238122CD352A843F4A609F39CFE0` | stale (listed version 57C226C6B5… has no content) |
-| `halmgmtc.exe` | halmgmtc | 1.3.0.84 | `9B7869938682D441DC6190D8F250BB2E8F88C4CE` | stale (listed version 797D37B668… has no content) |
-| `halsvc-win32.exe` | halsvc-win32 | 1.3.0.84 | `038986267B504F908469450C493112EFED3EDAFE` | stale (listed version AE5AF2A0D1… has no content) |
+| `CameraTuner.exe` | CameraTuner | 1.4.0.246 | `D578F35C95695B303B5B8EFE0E999FAEC39CF3E3` | exact |
+| `HAL.PackageInstaller.exe` | HAL.PackageInstaller | 1.4.0.246 | `94ED938AC55F90C0CF90E1369E47162215B15957` | exact |
+| `halmgmtc.exe` | halmgmtc | 1.4.0.246 | `91E863B93FF57FE40297305E1FBCC91A50CF445B` | exact |
+| `halsvc-win32.exe` | halsvc-win32 | 1.4.0.246 | `E7178B0EFF5A2D72173F192C0AAB0BBAC2F74CD6` | exact |
 | `Redbox.HAL.Camera.Framework.dll` | Redbox.HAL.Camera.Framework | 1.3.0.119 | `FB97B63A1FE5CD18223D4CF2658887476E8DDC01` | exact |
 | `Redbox.HAL.ClearimageV1.dll` | Redbox.HAL.ClearimageV1 | 1.3.0.119 | `4C0B8ADFEC5568F9332E27924AA26476614AE11A` | exact |
-| `Redbox.HAL.Controller.Framework.dll` | Redbox.HAL.Controller.Framework | 1.3.0.84 | `9E457525E6682FAC88D6F9EC1A2FDFC830C09286` | stale (listed version A8E57B27D9… has no content) |
-| `Redbox.HAL.Core.dll` | Redbox.HAL.Core | 1.3.0.84 | `7D2F1B27773F71D307CB455AB5B467507A0A95A9` | stale (listed version B711FCC01B… has no content) |
-| `Redbox.HAL.DataMatrix.Framework.dll` | Redbox.HAL.DataMatrix.Framework | 1.3.0.84 | `451161027808A992C8DDCF1DB54F158F97510CEA` | stale (listed version 84A6059E3D… has no content) |
-| `Redbox.HAL.DataStorage.dll` | Redbox.HAL.DataStorage | 1.3.0.84 | `C6F44284C648D7260EA9E1EC9309B0504BEC2E7E` | stale (listed version 3BC48C56C6… has no content) |
-| `Redbox.HAL.IPC.Framework.dll` | Redbox.HAL.IPC.Framework | 1.3.0.84 | `132A34D627606CC55C7638513E794682FE08BF6F` | stale (listed version 7382FB0866… has no content) |
-| `Redbox.HAL.Script.Framework.dll` | Redbox.HAL.Script.Framework | 1.3.0.84 | `74A6309D6DF6081D4E6133477E4F4460451EA12F` | stale (listed version 7F4FE300E3… has no content) |
-| `Redbox.HAL.Service.Framework.dll` | Redbox.HAL.Service.Framework | 1.3.0.84 | `E9D8D28E3FD7D10F230494F15FCF323E28A939BF` | stale (listed version DBDDA31A24… has no content) |
-| `check-picker.hs` |  |  | `F0F9A250109643DA38322192473AB723CCE0B09D` | stale (listed version 4509FE9C90… has no content) |
-| `clean-vmz.hs` |  |  | `B300D39361816E4A404D8482B5C7CEF8ED0A6E1D` | stale (listed version 65E6029825… has no content) |
+| `Redbox.HAL.Configuration.dll` | Redbox.HAL.Configuration | 1.4.0.246 | `B33E9EC74220211B9FEC8A5CE187206F2B82CC17` | exact |
+| `Redbox.HAL.Controller.Framework.dll` | Redbox.HAL.Controller.Framework | 1.4.0.246 | `725D6637A77B015F52355ABC73AECF17684D5848` | exact |
+| `Redbox.HAL.Core.dll` | Redbox.HAL.Core | 1.4.0.246 | `44B4EE51F6624E42A441B0037F6A41E5C36E0C4C` | exact |
+| `Redbox.HAL.DataMatrix.Framework.dll` | Redbox.HAL.DataMatrix.Framework | 1.4.0.246 | `8C187F1788B5ACEAE6304067639D91C78A6221A9` | exact |
+| `Redbox.HAL.DataStorage.dll` | Redbox.HAL.DataStorage | 1.4.0.246 | `5D62CA13E716E1FE4EF3C0253613EAB492024E84` | exact |
+| `Redbox.HAL.IPC.Framework.dll` | Redbox.HAL.IPC.Framework | 1.4.0.246 | `CF8B244F14B0FF6288DE7CE4DC85B682194F524A` | exact |
+| `Redbox.HAL.Script.Framework.dll` | Redbox.HAL.Script.Framework | 1.4.0.246 | `9CDE64B6D41138CD98621019211C3164233AEE5D` | exact |
+| `Redbox.HAL.Service.Framework.dll` | Redbox.HAL.Service.Framework | 1.4.0.246 | `57A828F23BA65F0CA76C8C0FA7AEBBD117AAAEA1` | exact |
+| `check-picker.hs` |  |  | `050306C9792F48370477838E89F4F85314F7B3EB` | exact |
+| `clean-vmz.hs` |  |  | `EF2DD8D5A5C089A6469A855BBE0365E719018806` | exact |
 | `clear-picker.hs` |  |  | `2B2F0948C7BDEDDFB983F0E34B09E09C1DF1F913` | exact |
-| `qlm-unload.hs` |  |  | `B206916C4190D0F7DB6BDF2A7562A3798BB27C46` | stale (listed version 8BD3071AF3… has no content) |
+| `qlm-unload.hs` |  |  | `956A71CBF9805A613A97459CB9B0685FFE9865EF` | exact |
 | `quick-return-restart.hs` |  |  | `5677AE6C2892D15860C0E5FF9AC48F5895F502EB` | exact |
 | `quick-return-setup.hs` |  |  | `3A9733D3E7F1A5C10CA84D825154BF19C2321BE1` | exact |
 | `return-unknown.hs` |  |  | `4765FC03268247F4785FAFE6AA0D26830AF75867` | exact |
-| `sync-locations.hs` |  |  | `1E315A3E5C18B4136586EB39F10496DA26C688E9` | stale (listed version 50CD705A08… has no content) |
-| `sync.hs` |  |  | `4C03694C1C4AF71DCF3C41F59F33921559C03154` | stale (listed version E0A8F19E30… has no content) |
-| `thin-vmz.hs` |  |  | `F9C679859C642AB071E7C3967366164B2B3720C2` | stale (listed version 508BB54682… has no content) |
-| `thin.hs` |  |  | `C041159372C884C22C703191FFE21F74ED9F269C` | stale (listed version 7A638639BA… has no content) |
-| `unload-thin.hs` |  |  | `B9BBF4F31E01F6452438F1DE2C8AC4983EAE1F24` | stale (listed version 1320A30621… has no content) |
+| `sync-locations.hs` |  |  | `3DF1E61062E235968B00D5DCA4A8DE8C1445D53F` | exact |
+| `sync.hs` |  |  | `6EB77FC060921E1F2580BE6D958AFD73C0DA3A8D` | exact |
+| `thin-vmz.hs` |  |  | `2684EA2FC4F4A0CE7CA2867F39DF201596A752A2` | exact |
+| `thin.hs` |  |  | `6CD72F1A51A9353DF8957133CB67E534C0E7CA17` | exact |
+| `unload-thin.hs` |  |  | `4D3C32B17DD85E7A3BF2652A62CDB463DA8D8DEF` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
 | `MSHALTester.exe` | MSHALTester | 1.3.0.84 | `0DA20E3BD55A959E6E12CD8F6E94312DEDD04CA7` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |

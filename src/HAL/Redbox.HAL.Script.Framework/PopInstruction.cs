@@ -4,37 +4,30 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class PopInstruction : Instruction
+public sealed class PopInstruction : Instruction
 {
 	public override string Mnemonic => "POP";
 
 	internal override bool CreatesVariableDef => true;
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override ExpectedOperands Expected => ExpectedOperands.Optional;
+
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count >= 0 && tokensAfterMnemonic.Count <= 2)
+		if (operandTokens.Count == 0 || operandTokens.Count > 2)
 		{
-			if (tokensAfterMnemonic.Count >= 1 && !tokensAfterMnemonic[0].IsSymbolOrConst && tokensAfterMnemonic[0].Type != TokenType.NumericLiteral)
-			{
-				AddError("C002", "Expected no operand or a symbol operand, with an optional DEPTH=n key value pair.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected one symbol to receive top of stack, with an optional DEPTH=n key value pair.");
 		}
-		else
+		else if (operandTokens.Count >= 1 && !operandTokens[0].IsSymbolOrConst && operandTokens[0].Type != TokenType.NumericLiteral)
 		{
-			AddError("C002", "Expected one symbol to receive top of stack, with an optional DEPTH=n key value pair.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected no operand or a symbol operand, with an optional DEPTH=n key value pair.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		object value = null;
-		int? num = GetKeyValuePairValue<int?>(base.Operands.GetKeyValuePair("DEPTH"), result.Errors);
+		int? num = GetKeyValuePairValue<int?>(base.Operands.GetKeyValuePair("DEPTH"), result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return;
@@ -43,24 +36,24 @@ public class PopInstruction : Instruction
 		{
 			num = 1;
 		}
-		if (ExecutionEngine.Instance.ActiveContext.StackDepth >= num)
+		if (context.StackDepth >= num)
 		{
 			for (int i = 0; i < num; i++)
 			{
-				value = ExecutionEngine.Instance.ActiveContext.PopTop();
+				value = context.PopTop();
 			}
 			if (base.Operands.Count != 0)
 			{
 				Token token = base.Operands[0];
 				if (token.Type == TokenType.Symbol)
 				{
-					ExecutionEngine.Instance.ActiveContext.SetSymbolValue(token.Value, value);
+					context.SetSymbolValue(token.Value, value);
 				}
 			}
 		}
 		else
 		{
-			AddError("E002", $"The specified DEPTH of {num} exceeds the current depth of the stack: {ExecutionEngine.Instance.ActiveContext.StackDepth}.", result.Errors);
+			AddError("E002", $"The specified DEPTH of {num} exceeds the current depth of the stack: {context.StackDepth}.", result.Errors);
 		}
 	}
 }

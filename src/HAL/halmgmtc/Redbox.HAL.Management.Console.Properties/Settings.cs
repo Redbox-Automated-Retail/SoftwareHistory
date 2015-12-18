@@ -5,46 +5,46 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.Management.Console.Properties;
 
-[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "10.0.0.0")]
 [CompilerGenerated]
+[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "10.0.0.0")]
 internal sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
 
 	public static Settings Default => defaultInstance;
 
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
 	[DefaultSettingValue("120000")]
+	[DebuggerNonUserCode]
 	public int ImmediateInstructionTimeout => (int)this["ImmediateInstructionTimeout"];
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("rcp-p://127.0.0.1:7001")]
+	[ApplicationScopedSetting]
 	public string NewConnectionURL => (string)this["NewConnectionURL"];
 
+	[DefaultSettingValue("Red")]
 	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
-	[DefaultSettingValue("Red")]
 	public string ButtonRunningColor => (string)this["ButtonRunningColor"];
 
 	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
 	[DefaultSettingValue("")]
+	[ApplicationScopedSetting]
 	public string ButtonCompleteColor => (string)this["ButtonCompleteColor"];
 
 	[ApplicationScopedSetting]
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("rcp://localhost:7001")]
+	[DebuggerNonUserCode]
 	public string DefaultConnectionURL => (string)this["DefaultConnectionURL"];
 
 	[DebuggerNonUserCode]
-	[DefaultSettingValue("thin,qlm-unload,unload-thin,sync,sync-locations,quick-return")]
 	[ApplicationScopedSetting]
+	[DefaultSettingValue("thin,thin-vmz,qlm-unload,unload-thin,sync,sync-locations,quick-return")]
 	public string SecureJob => (string)this["SecureJob"];
 
-	[ApplicationScopedSetting]
+	[DefaultSettingValue("False")]
 	[DebuggerNonUserCode]
-	[DefaultSettingValue("VendTestForm.exe")]
-	public string VendTestLocation => (string)this["VendTestLocation"];
+	[ApplicationScopedSetting]
+	public bool DeveloperMode => (bool)this["DeveloperMode"];
 }

@@ -1,14 +1,31 @@
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class QLM
+public static class QLM
 {
-	public static QLM Instance => Singleton<QLM>.Instance;
+	private const int LifterTimeout = 120000;
 
-	public Deck Deck => DecksManager.Instance.Decks.Find((Deck each) => each.IsQlmDeck);
+	public static Deck Deck
+	{
+		get
+		{
+			Deck rv = null;
+			DecksManager.Instance.ForAllDecksDo(delegate(Deck d)
+			{
+				if (d.IsQlmDeck)
+				{
+					rv = d;
+					return false;
+				}
+				return true;
+			});
+			return rv;
+		}
+	}
 
-	public bool SetDoorLock(bool locked)
+	public static bool SetDoorLock(bool locked)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -21,7 +38,7 @@ public sealed class QLM
 		return true;
 	}
 
-	public QlmDoorStatus GetDoorStatus()
+	public static QlmDoorStatus GetDoorStatus()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -30,14 +47,14 @@ public sealed class QLM
 		return QlmDoorStatus.Closed;
 	}
 
-	public QlmStatus GetStatus()
+	public static QlmStatus GetStatus()
 	{
 		return StatusInner();
 	}
 
-	public QlmMotionResult Engage(bool home, IFormattedLog log)
+	public static QlmMotionResult Engage(bool home, IFormattedLog log)
 	{
-		if (ControllerConfiguration.Instance.MerchandizingMode != MerchandizingMode.QLM)
+		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			return QlmMotionResult.Timeout;
 		}
@@ -45,12 +62,16 @@ public sealed class QLM
 		{
 			return QlmMotionResult.HomeXTimeout;
 		}
-		Deck?.MarkInventory("UNKNOWN");
+		Deck deck = Deck;
+		if (deck != null)
+		{
+			deck.MarkInventory("UNKNOWN");
+		}
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedEngageQlmResult;
 		}
-		CoreResponse coreResponse = CoreController.ExecuteSingleWaitableCommand(CommandType.QlmEngage, 120000);
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmEngage, 120000);
 		if (coreResponse.TimedOut)
 		{
 			CounterManager.Instance.Increment("QlmEngageTimeout");
@@ -60,9 +81,9 @@ public sealed class QLM
 		return result;
 	}
 
-	public QlmMotionResult Disengage(bool home, IFormattedLog log)
+	public static QlmMotionResult Disengage(bool home, IFormattedLog log)
 	{
-		if (ControllerConfiguration.Instance.MerchandizingMode != MerchandizingMode.QLM)
+		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			return QlmMotionResult.Timeout;
 		}
@@ -70,12 +91,16 @@ public sealed class QLM
 		{
 			return QlmMotionResult.HomeXTimeout;
 		}
-		Deck?.MarkInventory("UNKNOWN");
+		Deck deck = Deck;
+		if (deck != null)
+		{
+			deck.MarkInventory("UNKNOWN");
+		}
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedDisengageQlmResult;
 		}
-		CoreResponse coreResponse = CoreController.ExecuteSingleWaitableCommand(CommandType.QlmDisengage, 120000);
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
 		if (coreResponse.TimedOut)
 		{
 			CounterManager.Instance.Increment("QlmDisengageTimeout");
@@ -85,63 +110,62 @@ public sealed class QLM
 		return result;
 	}
 
-	public void Drop()
+	public static void Drop()
 	{
-		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && ControllerConfiguration.Instance.MerchandizingMode == MerchandizingMode.QLM)
+		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && !ControllerConfiguration.Instance.IsVMZMachine)
 		{
-			CoreController.ExecuteSingleControllerCommand(CommandType.QlmDisengage);
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmDisengage);
 		}
 	}
 
-	public void Lift()
+	public static void Lift()
 	{
-		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && ControllerConfiguration.Instance.MerchandizingMode == MerchandizingMode.QLM)
+		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && !ControllerConfiguration.Instance.IsVMZMachine)
 		{
-			CoreController.ExecuteSingleControllerCommand(CommandType.QlmEngage);
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmEngage);
 		}
 	}
 
-	public bool HaltOperation()
+	public static bool HaltOperation()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedQlmHaltResult;
 		}
-		if (ControllerConfiguration.Instance.MerchandizingMode != MerchandizingMode.QLM)
+		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			return true;
 		}
-		return CoreController.ExecuteSingleControllerCommand(CommandType.QlmHalt).TimedOut;
+		return ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmHalt).TimedOut;
 	}
 
-	internal bool ExtendForGet()
+	internal static bool ExtendForGet()
 	{
 		int qlmExtendTime = ControllerConfiguration.Instance.QlmExtendTime;
 		if (ControllerConfiguration.Instance.QlmTimedExtend)
 		{
-			Gripper.Instance.TimedExtend(qlmExtendTime);
+			Gripper.TimedExtend(qlmExtendTime);
 		}
 		else
 		{
-			CoreController.ExecuteSingleWaitableCommand(CommandType.GripperExtend, ControllerConfiguration.Instance.QlmExtendTime);
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.GripperExtend, ControllerConfiguration.Instance.QlmExtendTime);
 		}
 		return true;
 	}
 
-	private QlmStatus StatusInner()
+	private static QlmStatus StatusInner()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedGetQlmStatusResult;
 		}
-		CoreResponse coreResponse = AuxBoard.Instance.ReadInputs();
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.AuxSensorsRead);
 		if (coreResponse.CommunicationError)
 		{
-			LogHelper.Instance.Log($"QLM Status - Aux board not responsive: {coreResponse.CommErrorDiagnostic}", LogEntryType.Info);
 			return QlmStatus.AuxNotResponsive;
 		}
-		bool flag = AuxBoard.Instance.IsSensorBlocked(AuxSensor.QlmPresence, coreResponse);
-		if (AuxBoard.Instance.IsSensorBlocked(AuxSensor.QlmUp, coreResponse) && flag)
+		bool flag = coreResponse.IsSensorSet(AuxSensor.QlmPresence);
+		if (coreResponse.IsSensorSet(AuxSensor.QlmUp) && flag)
 		{
 			return QlmStatus.Engaged;
 		}
@@ -152,17 +176,13 @@ public sealed class QLM
 		return QlmStatus.Disengaged;
 	}
 
-	private void LogResult(IFormattedLog log, QlmMotionResult result, string state)
+	private static void LogResult(IFormattedLog log, QlmMotionResult result, string state)
 	{
 		string msg = $"QLM {state} returned status {result.ToString().ToUpper()}.";
 		log.WriteFormatted(msg, (result != QlmMotionResult.Success) ? LogEntryType.Error : LogEntryType.Info);
 		if (result != QlmMotionResult.Success)
 		{
-			AuxBoard.Instance.LogInputs(LogEntryType.Error);
+			ControlSystem.Instance.LogInputs(ControlBoards.Aux, LogEntryType.Error);
 		}
-	}
-
-	private QLM()
-	{
 	}
 }

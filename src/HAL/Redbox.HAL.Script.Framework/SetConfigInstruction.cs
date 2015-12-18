@@ -1,5 +1,4 @@
 using System;
-using Redbox.HAL.Camera.Framework;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 using Redbox.HAL.DataMatrix.Framework;
@@ -7,28 +6,19 @@ using Redbox.HAL.DataMatrix.Framework;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class SetConfigInstruction : Instruction
+public sealed class SetConfigInstruction : Instruction
 {
 	public override string Mnemonic => "SETCFG";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0)
+		if (operandTokens[0].Type != TokenType.StringLiteral)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral)
-			{
-				AddError("C002", "Expected a string literal.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddInvalidOperandError("Expected a string literal.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		ConfigType configType = ConfigType.Controller;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("TYPE");
@@ -36,17 +26,14 @@ public class SetConfigInstruction : Instruction
 		{
 			configType = Enum<ConfigType>.ParseIgnoringCase(keyValuePair.Value, ConfigType.Controller);
 		}
-		object[] value = ConvertSymbolsToParameterArray(result.Errors);
+		object[] value = ConvertSymbolsToParameterArray(result.Errors, context);
 		if (result.Errors.Count <= 0)
 		{
 			string value2 = base.Operands[0].Value;
 			switch (configType)
 			{
-			case ConfigType.Barcode:
-				BarcodeConfiguration.Instance.SetPropertyByName(value2, value);
-				break;
 			case ConfigType.Camera:
-				CameraConfiguration.Instance.SetPropertyByName(value2, value);
+				BarcodeConfiguration.Instance.SetPropertyByName(value2, value);
 				break;
 			case ConfigType.Controller:
 				ControllerConfiguration.Instance.SetPropertyByName(value2, value);

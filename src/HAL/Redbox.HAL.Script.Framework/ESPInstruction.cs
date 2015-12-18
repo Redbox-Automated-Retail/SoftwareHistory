@@ -9,14 +9,15 @@ public class ESPInstruction : Instruction
 {
 	public override string Mnemonic => "ESP";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operands, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		base.Operands.AddRange(tokensAfterMnemonic);
+		if (operands.Count != 1)
+		{
+			result.AddInvalidOperandError($"The {Mnemonic} instruction expects one operand.");
+		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (string.Compare(base.Operands[0].Value, "DUMP", ignoreCase: true) == 0)
 		{

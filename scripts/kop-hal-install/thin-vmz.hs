@@ -2,7 +2,7 @@
         # THIN VMZ Aggregate Instruction
         # Copyright (C) 2012 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.3.0.84
+	# VERSION 1.4.0.246
         #
 	
 	APPLOG		CONFIGURE	SUBDIRECTORY="VMZ"
@@ -66,7 +66,7 @@ _START_REBALANCE:
 	
 	POP					REBALANCE-ITEMS
 	LOG                 "Thinning {0} rebalance items to the VMZ." REBALANCE-ITEMS
-	APPLOG                 "Thinning {0} rebalalnce items to the VMZ." REBALANCE-ITEMS
+	APPLOG                 "Thinning {0} rebalance items to the VMZ." REBALANCE-ITEMS
 	DO					REBALANCE-ITEMS
 		POP				ID-TO-THIN
 		
@@ -102,8 +102,55 @@ _START_REBALANCE:
 		YIELD
 	LOOP
 	
+	APPLOG	"Successfully placed {0} disks to the VMZ."   REBALANCED-DISKS
+	
+	SET		REDEPLOYED-DISKS 0
+	
+	SET		THIN-JOB-STATUS	"SUCCESS"
+	
+	APPLOG	"Start thin of redeploy disks."  
+	
+	POP					REDEPLOY-ITEMS
+	LOG                 "Thinning {0} redeploy items to the VMZ." REDEPLOY-ITEMS
+	APPLOG                 "Thinning {0} redeploy items to the VMZ." REDEPLOY-ITEMS
+	DO					REDEPLOY-ITEMS
+		POP				ID-TO-THIN
+		
+		VMZ		THIN-REDEPLOY	ID=ID-TO-THIN
+		POP				THIN-RESULT
+		
+		IF	"MACHINEFULL" == THIN-RESULT
+			JUMP		_VMZ_THIN_DONE
+		ENDIF
+		
+		IF	"VMZFULL" == THIN-RESULT
+			SET		TEMP-REDEP	REDEPLOYED-DISKS
+			INC		TEMP-REDEP
+			SUB		REDEPLOYED-DISKS	TEMP-REDEP
+			POP		DEPTH=REBALANCE-ITEMS
+			JUMP		_THIN_DISKS
+		ENDIF
+		
+		IF	"TRANSFERFAILURE" == THIN-RESULT
+			SET		THIN-JOB-STATUS	THIN-RESULT
+			JUMP		_VMZ_THIN_DONE
+		ENDIF
+	
+		IF	"HARDWAREERROR" == THIN-RESULT
+			RESULT			CODE="MachineError" MESSAGE="There was a hardware error thinning the disk." END=BOTTOM
+			EXIT		"There was a hardware error during the thin."
+		ENDIF
+		
+		IF	"SUCCESS" == THIN-RESULT
+			INC		REDEPLOYED-DISKS
+		ENDIF
+			
+		YIELD
+	LOOP
+	
+	APPLOG	"Successfully placed {0} redeployed disks to the VMZ."   REDEPLOYED-DISKS
+	
 _THIN_DISKS:
-	APPLOG	"Successfully placed {0} rebalance disks to the VMZ."   REBALANCED-DISKS
 	
 	SET		THINNED-DISCS	0
 	POP					ITEMS-TO-THIN

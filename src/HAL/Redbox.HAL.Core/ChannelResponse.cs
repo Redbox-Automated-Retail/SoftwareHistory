@@ -4,44 +4,25 @@ using System.Threading;
 
 namespace Redbox.HAL.Core;
 
-public sealed class ChannelResponse : IDisposable
+internal sealed class ChannelResponse : IChannelResponse, IDisposable
 {
-	private enum ChannelError
-	{
-		Success,
-		ChannelClosed,
-		CommunicationError
-	}
+	internal readonly byte[] Buffer;
 
-	public bool CommOk => Error == ChannelError.Success;
+	private bool Disposed;
+
+	private readonly List<byte> PortResponse = new List<byte>();
+
+	private readonly EventWaitHandle ReadEvent = new EventWaitHandle(initialState: false, EventResetMode.ManualReset);
+
+	public bool CommOk { get; private set; }
 
 	public byte[] RawResponse => PortResponse.ToArray();
 
-	public string CommError => Error.ToString();
+	public string Error { get; private set; }
 
 	public bool ReponseValid { get; internal set; }
 
 	public bool PortTimeout { get; private set; }
-
-	internal AutoResetEvent ReadEvent { get; private set; }
-
-	internal byte[] ReadBuffer { get; private set; }
-
-	private ChannelError Error { get; set; }
-
-	private bool Disposed { get; set; }
-
-	private List<byte> PortResponse { get; set; }
-
-	public static bool EndsWithEOT(ChannelResponse response)
-	{
-		byte[] rawResponse = response.RawResponse;
-		if (rawResponse.Length >= 1)
-		{
-			return -1 != ByteHelper.IndexOf(rawResponse, 4);
-		}
-		return false;
-	}
 
 	public void Dispose()
 	{
@@ -54,40 +35,69 @@ public sealed class ChannelResponse : IDisposable
 		}
 	}
 
-	internal static ChannelResponse NewChannel()
+	public int GetIndex(byte b)
 	{
-		return new ChannelResponse();
+		byte[] array = PortResponse.ToArray();
+		if (array == null || array.Length == 0)
+		{
+			return -1;
+		}
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (array[i] == b)
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	internal void SetCommunicationError()
 	{
-		UpdateErrorState(ChannelError.CommunicationError);
+		Error = "CommunicationError";
+		CommOk = false;
 	}
 
 	internal void SetClosedError()
 	{
-		UpdateErrorState(ChannelError.ChannelClosed);
+		Error = "ChannelClosed";
+		CommOk = false;
 	}
 
-	internal void Accumulate(int count)
+	internal void Accumulate(int len)
 	{
-		for (int i = 0; i < count; i++)
+		Accumulate(Buffer, len);
+	}
+
+	internal void Accumulate(byte[] bytes, int len)
+	{
+		for (int i = 0; i < len; i++)
 		{
-			PortResponse.Add(ReadBuffer[i]);
+			PortResponse.Add(bytes[i]);
 		}
 	}
 
-	private void UpdateErrorState(ChannelError err)
+	internal bool Wait(int timeout)
 	{
-		Error = err;
-		PortResponse.Clear();
+		return ReadEvent.WaitOne(timeout);
 	}
 
-	private ChannelResponse()
+	internal void ReadEnd()
 	{
-		Error = ChannelError.Success;
-		ReadEvent = new AutoResetEvent(initialState: false);
-		ReadBuffer = new byte[256];
-		PortResponse = new List<byte>();
+		if (!Disposed)
+		{
+			ReadEvent.Set();
+		}
+	}
+
+	internal ChannelResponse()
+		: this(0)
+	{
+	}
+
+	internal ChannelResponse(int bufferSize)
+	{
+		CommOk = true;
+		Buffer = ((bufferSize <= 0) ? null : new byte[bufferSize]);
 	}
 }

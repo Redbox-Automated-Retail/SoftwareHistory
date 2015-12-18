@@ -5,9 +5,9 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class RollerInstruction : Instruction
+public sealed class RollerInstruction : Instruction
 {
-	protected static class Commands
+	private static class Commands
 	{
 		public const string In = "IN";
 
@@ -23,38 +23,25 @@ public class RollerInstruction : Instruction
 		return IsOperandValid(operand);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0)
+		if (!operandTokens[0].IsKeyValuePair && operandTokens[0].Type != TokenType.Symbol && IsOperandValid(operandTokens[0].Value))
 		{
-			if (!tokensAfterMnemonic[0].IsKeyValuePair && tokensAfterMnemonic[0].Type != TokenType.Symbol && IsOperandValid(tokensAfterMnemonic[0].Value))
-			{
-				AddError("C002", "Expected a symbol: IN, OUT, or STOP.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-		}
-		else
-		{
-			AddError("C002", "Expected a symbol: IN, OUT, STOP and optional key value pairs POS=1..6, WAIT=TRUE|FALSE, TIMEOUT=n.", result.Errors);
+			result.AddInvalidOperandError("Expected a symbol: IN, OUT, or STOP.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		GetWaitFlag();
-		int? num = GetTimeOutValue(result.Errors);
+		int? num = GetTimeOutValue(result.Errors, context);
 		Token token = base.Operands[0];
 		if (token.IsKeyValuePair)
 		{
 			KeyValuePair keyValuePair = (KeyValuePair)token.ConvertValue();
 			if (keyValuePair.Value.Equals("PISITION"))
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("It aint spelled like that, dumbass.");
+				context.PushTop("It aint spelled like that, dumbass.");
 				return;
 			}
 			RollerPosition position = RollerPosition.Position4;
@@ -66,22 +53,22 @@ public class RollerInstruction : Instruction
 			{
 				num = 8000;
 			}
-			bool timedOut = PickerBoard.Instance.RollerToPosition(position, num.Value);
-			ExecutionEngine.Instance.ActiveContext.PushTop(Instruction.ConvertTimeoutBoolToMessage(timedOut));
+			bool timedOut = PickerBoard.RollerToPosition(position, num.Value);
+			context.PushTop(Instruction.ConvertTimeoutBoolToMessage(timedOut));
 		}
 		else if (token.Type == TokenType.Symbol)
 		{
 			if (string.Compare(token.Value, "IN", ignoreCase: true) == 0)
 			{
-				PickerBoard.Instance.StartRollerIn();
+				PickerBoard.StartRollerIn();
 			}
 			else if (string.Compare(token.Value, "OUT", ignoreCase: true) == 0)
 			{
-				PickerBoard.Instance.StartRollerOut();
+				PickerBoard.StartRollerOut();
 			}
 			else if (string.Compare(token.Value, "STOP", ignoreCase: true) == 0)
 			{
-				PickerBoard.Instance.StopRoller();
+				PickerBoard.StopRoller();
 			}
 		}
 	}

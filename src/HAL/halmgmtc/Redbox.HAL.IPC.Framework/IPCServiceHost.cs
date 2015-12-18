@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -8,13 +9,29 @@ namespace Redbox.HAL.IPC.Framework;
 
 public abstract class IPCServiceHost
 {
+	private const int StateRunning = 1;
+
+	private const int StateStopped = 0;
+
 	private static IPCServiceHost m_serviceHost;
+
+	private int m_aliveState;
 
 	private readonly object m_sessionLockObject = new object();
 
 	private readonly IList<ISession> m_sessions = new List<ISession>();
 
-	public bool Alive { get; set; }
+	public bool Alive
+	{
+		get
+		{
+			return Thread.VolatileRead(ref m_aliveState) == 1;
+		}
+		set
+		{
+			Interlocked.Exchange(ref m_aliveState, value ? 1 : 0);
+		}
+	}
 
 	public IPCProtocol Protocol { get; protected set; }
 
@@ -28,7 +45,7 @@ public abstract class IPCServiceHost
 
 	public SslProtocols EncryptionProtocol { get; set; }
 
-	protected bool LogDetailedMessages { get; private set; }
+	public bool LogDetailedMessages { get; set; }
 
 	public static IPCServiceHost Create(IPCProtocol protocol, string product, string version, string copyright, int minThreads, int maxThreads)
 	{
@@ -91,10 +108,5 @@ public abstract class IPCServiceHost
 	protected IPCServiceHost()
 	{
 		EncryptionProtocol = SslProtocols.None;
-		bool? secretValue = RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL", "IPCDetailedMessages");
-		if (secretValue.HasValue)
-		{
-			LogDetailedMessages = secretValue.Value;
-		}
 	}
 }

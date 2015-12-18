@@ -1,11 +1,12 @@
 using System;
 using System.IO;
+using System.Runtime.Serialization;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class ApplicationLog : IFormattedLog
+internal sealed class ApplicationLog : IFormattedLog
 {
 	private const int MaxFileSize = 1024000;
 
@@ -13,35 +14,21 @@ internal class ApplicationLog : IFormattedLog
 
 	private const int BackDaysForImages = 168;
 
-	private object m_lock = new object();
+	internal readonly ExecutionContext Context;
 
-	internal string Directory { get; set; }
+	private bool m_open;
 
-	internal string FileName { get; set; }
+	private bool Configured;
 
-	internal ExecutionContext Context { get; private set; }
+	private TextWriter Log = StreamWriter.Null;
 
-	internal bool AppendToExisting { get; set; }
+	private string Directory;
 
-	internal bool FlushOnWrite { get; set; }
+	private string FileName;
 
-	internal bool IsValid
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(Directory))
-			{
-				return !string.IsNullOrEmpty(FileName);
-			}
-			return false;
-		}
-	}
+	internal bool AppendToExisting { get; private set; }
 
-	internal static string LogsDirectory => ControllerConfiguration.Instance.KioskLogsPath;
-
-	private string TimeStamp => $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
-
-	private TextWriter Log { get; set; }
+	internal bool FlushOnWrite { get; private set; }
 
 	public void WriteFormatted(string msg)
 	{
@@ -65,72 +52,49 @@ internal class ApplicationLog : IFormattedLog
 		Write(msg, type);
 	}
 
-	internal static ApplicationLog ConfigureLog(ExecutionContext ctx, bool logAppends, string subDirectory, bool flushOnWrite, string overrideName)
+	internal void Serialize(SerializationInfo info)
 	{
-		string fileName = ((!logAppends) ? $"{ctx.ProgramName}-{ctx.ID}.log" : $"{(string.IsNullOrEmpty(overrideName) ? ctx.ProgramName : overrideName)}.log");
-		if (MerchandizingMode.VMZ_Gen2 == ControllerConfiguration.Instance.MerchandizingMode && ctx.ProgramName.Equals("qlm-unload"))
+		info.AddValue("AppHasLog", Configured);
+		if (Configured)
 		{
-			fileName = $"VMZ-Unload-{ctx.ID}.log";
+			info.AddValue("AppLogDirectory", Directory);
+			info.AddValue("AppLogName", FileName);
+			info.AddValue("AppLogFlushOnWrite", FlushOnWrite);
+			info.AddValue("AppLogAppendToExisting", AppendToExisting);
 		}
-		string text = LogsDirectory;
-		if (!string.IsNullOrEmpty(subDirectory))
+	}
+
+	internal static ApplicationLog Deserialize(SerializationInfo info, ExecutionContext context)
+	{
+		ApplicationLog applicationLog = new ApplicationLog(context);
+		if (!info.GetBoolean("AppHasLog"))
 		{
-			text = Path.Combine(LogsDirectory, subDirectory);
-			if (!System.IO.Directory.Exists(text))
-			{
-				try
-				{
-					System.IO.Directory.CreateDirectory(text);
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("Unable to create subdirectory.", e);
-					text = LogsDirectory;
-				}
-			}
+			return applicationLog;
 		}
-		ApplicationLog applicationLog = ctx.AppLog;
-		if (applicationLog == null)
-		{
-			LogHelper.Instance.Log($"The app {ctx.ProgramName} doesn't have an existing app log object.", LogEntryType.Error);
-			ApplicationLog applicationLog2 = (ctx.AppLog = new ApplicationLog(ctx));
-			applicationLog = applicationLog2;
-		}
-		applicationLog.Directory = text;
-		applicationLog.FileName = fileName;
-		applicationLog.FlushOnWrite = flushOnWrite;
-		applicationLog.AppendToExisting = logAppends;
-		applicationLog.Context = ctx;
-		applicationLog.Open();
+		applicationLog.Directory = info.GetString("AppLogDirectory");
+		applicationLog.FileName = info.GetString("AppLogName");
+		applicationLog.AppendToExisting = info.GetBoolean("AppLogAppendToExisting");
+		applicationLog.FlushOnWrite = info.GetBoolean("AppLogFlushOnWrite");
+		applicationLog.Configured = true;
 		return applicationLog;
 	}
 
-	internal static ApplicationLog ConfigureSublog(string name, string subDirectory)
+	internal static ApplicationLog ConfigureLog(ExecutionContext ctx, bool logAppends, string subDirectory, bool flushOnWrite, string overrideName)
+	{
+		string fileName = ((!logAppends) ? $"{ctx.ProgramName}-{ctx.ID}.log" : $"{(string.IsNullOrEmpty(overrideName) ? ctx.ProgramName : overrideName)}.log");
+		if (ControllerConfiguration.Instance.IsVMZMachine && ctx.ProgramName.Equals("qlm-unload"))
+		{
+			fileName = $"VMZ-Unload-{ctx.ID}.log";
+		}
+		ctx.AppLog.ConfigureAndOpen(subDirectory, fileName, flushOnWrite, logAppends);
+		return ctx.AppLog;
+	}
+
+	internal static ApplicationLog ConfigureAdditionalLog(string name, string subDirectory, ExecutionContext context)
 	{
 		string fileName = $"{name}.log";
-		string text = LogsDirectory;
-		if (!string.IsNullOrEmpty(subDirectory))
-		{
-			text = Path.Combine(LogsDirectory, subDirectory);
-			if (!System.IO.Directory.Exists(text))
-			{
-				try
-				{
-					System.IO.Directory.CreateDirectory(text);
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("Unable to create subdirectory.", e);
-					text = LogsDirectory;
-				}
-			}
-		}
-		ApplicationLog applicationLog = new ApplicationLog(ExecutionEngine.Instance.ActiveContext);
-		applicationLog.Directory = text;
-		applicationLog.FileName = fileName;
-		applicationLog.FlushOnWrite = false;
-		applicationLog.AppendToExisting = true;
-		applicationLog.Open();
+		ApplicationLog applicationLog = new ApplicationLog(context);
+		applicationLog.ConfigureAndOpen(subDirectory, fileName, flushOnWrite: false, appends: true);
 		return applicationLog;
 	}
 
@@ -146,60 +110,30 @@ internal class ApplicationLog : IFormattedLog
 		Write(msg, LogEntryType.Error);
 	}
 
-	internal void LogCaptureProblem(LogEntryType type)
+	internal void LogCaptureProblem()
 	{
-		Write("No image was captured.", type);
+		WriteAndFlush("No image was captured.");
 	}
 
 	internal void Write(string msg)
 	{
-		lock (m_lock)
-		{
-			WriteInner(msg);
-		}
+		WriteAndFlush(msg);
 	}
 
 	internal void Write(string msg, LogEntryType type)
 	{
-		lock (m_lock)
-		{
-			WriteInner(msg);
-			WriteToServiceLog(msg, type);
-		}
+		WriteAndFlush(msg);
+		Context.ServiceLog(msg, type);
 	}
 
 	internal void Close()
 	{
-		lock (m_lock)
+		if (m_open)
 		{
-			if (Log != null)
-			{
-				Log.Flush();
-				Log.Close();
-				Log = null;
-			}
-		}
-	}
-
-	internal void Flush()
-	{
-		lock (m_lock)
-		{
-			if (Log != null)
-			{
-				Log.Flush();
-			}
-		}
-	}
-
-	internal void Open()
-	{
-		lock (m_lock)
-		{
-			if (IsValid)
-			{
-				OpenInner();
-			}
+			Log.Flush();
+			Log.Close();
+			m_open = false;
+			Log = StreamWriter.Null;
 		}
 	}
 
@@ -208,42 +142,65 @@ internal class ApplicationLog : IFormattedLog
 		Context = ctx;
 	}
 
-	private void WriteToServiceLog(string msg, LogEntryType type)
+	internal bool Open()
 	{
-		ServiceLogHelper.Instance.WriteMessage(msg, type);
+		if (!Configured)
+		{
+			return false;
+		}
+		if (m_open)
+		{
+			return true;
+		}
+		string text = Path.Combine(Directory, FileName);
+		try
+		{
+			Log = new StreamWriter(File.Open(text, FileMode.Append, FileAccess.Write, FileShare.Read));
+			return m_open = true;
+		}
+		catch (Exception)
+		{
+			LogHelper.Instance.Log($"Unable to open file {text}", LogEntryType.Error);
+			Log = StreamWriter.Null;
+			return false;
+		}
 	}
 
-	private void OpenInner()
+	private void ConfigureAndOpen(string directory, string fileName, bool flushOnWrite, bool appends)
 	{
-		lock (m_lock)
+		string kioskLogsPath = ControllerConfiguration.Instance.KioskLogsPath;
+		string text = kioskLogsPath;
+		if (!string.IsNullOrEmpty(directory))
 		{
-			if (Log != null)
+			text = Path.Combine(kioskLogsPath, directory);
+			if (!System.IO.Directory.Exists(text))
 			{
-				LogHelper.Instance.Log($"The application log for job {Context.ID} is open (file name = {FileName})");
-				return;
-			}
-			string text = Path.Combine(Directory, FileName);
-			if (AppendToExisting && File.Exists(text))
-			{
-				FileInfo fileInfo = new FileInfo(text);
-				if (fileInfo.Length >= 1024000)
+				try
 				{
-					CreateBackup(text);
+					System.IO.Directory.CreateDirectory(text);
+				}
+				catch (Exception e)
+				{
+					LogHelper.Instance.Log("Unable to create subdirectory.", e);
+					text = kioskLogsPath;
 				}
 			}
-			try
+		}
+		Configured = true;
+		Directory = text;
+		FileName = fileName;
+		FlushOnWrite = flushOnWrite;
+		AppendToExisting = appends;
+		string text2 = Path.Combine(Directory, FileName);
+		if (AppendToExisting && File.Exists(text2))
+		{
+			FileInfo fileInfo = new FileInfo(text2);
+			if (fileInfo.Length >= 1024000)
 			{
-				Log = new StreamWriter(File.Open(text, FileMode.Append, FileAccess.Write, FileShare.Read))
-				{
-					AutoFlush = FlushOnWrite
-				};
-			}
-			catch (Exception)
-			{
-				LogHelper.Instance.Log($"Unable to open file {text}", LogEntryType.Error);
-				Log = null;
+				CreateBackup(text2);
 			}
 		}
+		Open();
 	}
 
 	private void CreateBackup(string originalPath)
@@ -261,17 +218,17 @@ internal class ApplicationLog : IFormattedLog
 		}
 	}
 
-	private void WriteInner(string msg)
+	private void WriteAndFlush(string msg)
 	{
-		if (Log == null)
-		{
-			return;
-		}
 		try
 		{
-			string timeStamp = TimeStamp;
-			string value = (AppendToExisting ? $"{timeStamp} {Context.ID} {msg}" : $"{DateTime.Now.ToShortTimeString()} {DateTime.Now.ToShortDateString()} {msg}");
+			string arg = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
+			string value = (AppendToExisting ? $"{arg} {Context.ID} {msg}" : $"{DateTime.Now.ToShortTimeString()} {DateTime.Now.ToShortDateString()} {msg}");
 			Log.WriteLine(value);
+			if (FlushOnWrite)
+			{
+				Log.Flush();
+			}
 		}
 		catch (Exception e)
 		{

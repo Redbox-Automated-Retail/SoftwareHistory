@@ -5,55 +5,42 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class DeckInstruction : Instruction
+public sealed class DeckInstruction : Instruction
 {
 	private enum DeckOperands
 	{
 		None,
-		MaxSlots
+		MaxSlots,
+		Reset
 	}
 
 	public override string Mnemonic => "DECK";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count < 1)
+		if (Enum<DeckOperands>.ParseIgnoringCase(operandTokens[0].Value, DeckOperands.None) == DeckOperands.None)
 		{
-			result.Errors.Add(Error.NewError("C001", "Unexpected form", "The INVENTORY instruction expects a deck, slot and SET operands."));
-		}
-		else if (!ValidateOperand(tokensAfterMnemonic[0].Value))
-		{
-			result.Errors.Add(Error.NewError("C001", "Unexpected form", $"The operand {tokensAfterMnemonic[0].Value} for DECK isn't recognized."));
-		}
-		else
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.Errors.Add(Error.NewError("C001", "Unexpected form", $"The operand {operandTokens[0].Value} for DECK isn't recognized."));
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		DeckOperands deckOperands = Enum<DeckOperands>.ParseIgnoringCase(base.Operands[0].Value, DeckOperands.None);
-		int? nullableNumericOperand = GetNullableNumericOperand(result, "DECK");
+		int? nullableNumericOperand = GetNullableNumericOperand(result, "NUMBER", context);
+		if (!nullableNumericOperand.HasValue)
+		{
+			AddError("E777", "Missing 'NUMBER' operand to DECK.", result.Errors);
+			return;
+		}
+		Deck deck = DecksManager.Instance.GetDeck(nullableNumericOperand.Value);
 		if (deckOperands == DeckOperands.MaxSlots)
 		{
-			Deck deck = DecksManager.Instance.GetDeck(nullableNumericOperand.Value);
-			ExecutionEngine.Instance.ActiveContext.PushTop(deck.NumberOfSlots);
+			context.PushTop(deck.NumberOfSlots);
 		}
-	}
-
-	private bool ValidateOperand(string operand)
-	{
-		try
+		else if (DeckOperands.Reset == deckOperands)
 		{
-			Enum.Parse(typeof(DeckOperands), operand, ignoreCase: true);
-			return true;
-		}
-		catch
-		{
-			return false;
+			deck.Reset("EMPTY");
 		}
 	}
 }

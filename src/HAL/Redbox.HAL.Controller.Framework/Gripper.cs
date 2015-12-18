@@ -1,26 +1,25 @@
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class Gripper
+public static class Gripper
 {
 	private const int OpTries = 2;
 
-	public static Gripper Instance => Singleton<Gripper>.Instance;
-
-	public CoreResponse TestFinger(GripperFingerState state)
+	public static CoreResponse TestFinger(GripperFingerState state)
 	{
 		return SetFingerInner(state);
 	}
 
-	public CoreResponse TestRetract()
+	public static CoreResponse TestRetract()
 	{
 		return RetractInner();
 	}
 
-	public CoreResponse TestExtend()
+	public static CoreResponse TestExtend()
 	{
-		CoreResponse coreResponse = ExtendToSensorInner(null);
+		CoreResponse coreResponse = ExtendToSensorInner(null, check: true);
 		if (coreResponse.TimedOut)
 		{
 			RetractInner();
@@ -28,30 +27,30 @@ public class Gripper
 		return coreResponse;
 	}
 
-	public void TimedExtend(int? timeout)
+	public static void TimedExtend(int? timeout)
 	{
 		TimedExtendInner((!timeout.HasValue) ? ControllerConfiguration.Instance.PushTime : timeout.Value);
 	}
 
-	public bool ExtendArmToSensor()
+	public static bool ExtendArmToSensor()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedSetGripperArmResult;
 		}
-		return ExtendToSensorInner(null).TimedOut;
+		return ExtendToSensorInner(null, check: true).TimedOut;
 	}
 
-	public bool PushToSensor(int timeout)
+	public static bool PushToSensor(int timeout)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedSetGripperArmResult;
 		}
-		return PushToSensorInner(timeout).TimedOut;
+		return ExtendToSensorInner(timeout, check: false).TimedOut;
 	}
 
-	public bool RetractArm()
+	public static bool RetractArm()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -60,7 +59,7 @@ public class Gripper
 		return RetractInner().TimedOut;
 	}
 
-	public bool SetFinger(GripperFingerState state)
+	public static bool SetFinger(GripperFingerState state)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -69,7 +68,69 @@ public class Gripper
 		return SetFingerInner(state).TimedOut;
 	}
 
-	public bool ClearFront()
+	public static bool IsClear()
+	{
+		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
+		{
+			return ControllerEmulationState.Instance.ExpectedIsGripperClearResult;
+		}
+		if (Track.CloseIfOpen())
+		{
+			return false;
+		}
+		for (int num = 2; num > 0; num--)
+		{
+			PickerEdgeCheckResult pickerEdgeCheckResult = CheckPickerEdges();
+			if (PickerEdgeCheckResult.Clear != pickerEdgeCheckResult)
+			{
+				LogHelper.Instance.Log($" IsGripperClear: check edge result = {pickerEdgeCheckResult.ToString()}", LogEntryType.Info);
+			}
+			switch (pickerEdgeCheckResult)
+			{
+			case PickerEdgeCheckResult.JustOutOfSlot:
+				try
+				{
+					PickerBoard.StartRollerIn();
+					PushWithArm(ControllerConfiguration.Instance.PushTime);
+					PushIntoSlot();
+				}
+				finally
+				{
+					PickerBoard.StopRoller();
+				}
+				break;
+			case PickerEdgeCheckResult.OverhangEnds:
+				return false;
+			case PickerEdgeCheckResult.OverhangLeft:
+				SetFinger(GripperFingerState.Rent);
+				PickerBoard.RollerToPosition(RollerPosition.Position5, 8000);
+				break;
+			case PickerEdgeCheckResult.OverhangRight:
+				SetFinger(GripperFingerState.Rent);
+				try
+				{
+					if (ControllerService.Instance.IsAtVendLocation && !VendDoor.IsClosed())
+					{
+						VendDoor.Rent();
+					}
+					PickerBoard.RollerToPosition(RollerPosition.Position3, 3000);
+				}
+				finally
+				{
+					if (!VendDoor.IsClosed())
+					{
+						VendDoor.Close();
+					}
+				}
+				break;
+			default:
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool ClearFront()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -93,7 +154,7 @@ public class Gripper
 		}
 		if (ControllerConfiguration.Instance.GripperToSensorOnPut)
 		{
-			PushToSensorInner(ControllerConfiguration.Instance.PushTime);
+			ExtendToSensorInner(ControllerConfiguration.Instance.PushTime, check: false);
 		}
 		else
 		{
@@ -113,7 +174,7 @@ public class Gripper
 		}
 		if (ControllerConfiguration.Instance.GripperToSensorOnPut)
 		{
-			PushToSensorInner(ControllerConfiguration.Instance.PushTime);
+			ExtendToSensorInner(ControllerConfiguration.Instance.PushTime, check: false);
 		}
 		else
 		{
@@ -130,24 +191,52 @@ public class Gripper
 		return true;
 	}
 
-	public LocationTestResult Peek()
+	public static LocationTestResult Peek()
 	{
 		LogHelper.Instance.Log(">> ControllerService.GripperPeek", LogEntryType.Info);
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
-			LocationTestResult locationTestResult = new LocationTestResult();
+			LocationTestResult locationTestResult = new LocationTestResult(1, 1);
 			locationTestResult.PeekResult = ControllerEmulationState.Instance.ExpectedGripperPeekResult;
 			return locationTestResult;
 		}
-		return PeekInner();
+		LocationTestResult locationTestResult2 = new LocationTestResult(ControllerService.Instance.Location.Deck, ControllerService.Instance.Location.Slot);
+		if (ControllerService.Instance.Location.IsWideSlot)
+		{
+			PickerHardwareError pickerHardwareError = SettleDiskInSlot();
+			if (pickerHardwareError != PickerHardwareError.Success)
+			{
+				locationTestResult2.Error = pickerHardwareError;
+				return locationTestResult2;
+			}
+		}
+		if (SetFingerInner(GripperFingerState.Closed).TimedOut)
+		{
+			locationTestResult2.Error = PickerHardwareError.GripperCloseTimeout;
+			return locationTestResult2;
+		}
+		bool timedOut = ExtendToSensorInner(ControllerConfiguration.Instance.TestExtendTime, check: true).TimedOut;
+		if (RetractInner().TimedOut)
+		{
+			locationTestResult2.Error = PickerHardwareError.GripperRetractTimeout;
+			return locationTestResult2;
+		}
+		if (SetFingerInner(GripperFingerState.Rent).TimedOut)
+		{
+			locationTestResult2.Error = PickerHardwareError.GripperRentTimeout;
+			return locationTestResult2;
+		}
+		locationTestResult2.Error = PickerHardwareError.Success;
+		locationTestResult2.PeekResult = ((!timedOut) ? GripperPeekResult.Empty : GripperPeekResult.Full);
+		return locationTestResult2;
 	}
 
-	public GripperErrorModes PushInDisk()
+	public static GripperErrorModes PushInDisk()
 	{
 		return PushIntoSlot();
 	}
 
-	internal GripperErrorModes PushWithArm(int timeout)
+	internal static GripperErrorModes PushWithArm(int timeout)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -159,7 +248,7 @@ public class Gripper
 		}
 		if (ControllerConfiguration.Instance.GripperToSensorOnPut)
 		{
-			PushToSensorInner(timeout);
+			ExtendToSensorInner(timeout, check: false);
 		}
 		else
 		{
@@ -176,7 +265,7 @@ public class Gripper
 		return GripperErrorModes.Success;
 	}
 
-	internal GripperErrorModes PushIntoSlot()
+	internal static GripperErrorModes PushIntoSlot()
 	{
 		GripperErrorModes gripperErrorModes = PushWithArm(ControllerConfiguration.Instance.RollInExtendTime);
 		if (gripperErrorModes != GripperErrorModes.Success)
@@ -195,7 +284,7 @@ public class Gripper
 		return GripperErrorModes.Success;
 	}
 
-	internal PickerHardwareError PullFromLocation(int pulls)
+	internal static PickerHardwareError PullFromLocation(int pulls)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -214,12 +303,12 @@ public class Gripper
 			}
 			if (ControllerService.Instance.Location.IsQlmDeck)
 			{
-				QLM.Instance.ExtendForGet();
+				QLM.ExtendForGet();
 			}
-			else if (ExtendToSensorInner(null).TimedOut)
+			else if (ExtendToSensorInner(null, check: true).TimedOut)
 			{
 				ResetForSecondExtend();
-				if (ExtendToSensorInner(null).TimedOut)
+				if (ExtendToSensorInner(null, check: true).TimedOut)
 				{
 					RetractInner();
 					return PickerHardwareError.GripperExtendTimeout;
@@ -241,7 +330,7 @@ public class Gripper
 		return PickerHardwareError.Success;
 	}
 
-	internal PickerHardwareError SettleDiskInSlot()
+	internal static PickerHardwareError SettleDiskInSlot()
 	{
 		try
 		{
@@ -249,10 +338,10 @@ public class Gripper
 			{
 				return PickerHardwareError.GripperOpenTimeout;
 			}
-			if (ExtendToSensorInner(null).TimedOut)
+			if (ExtendToSensorInner(null, check: true).TimedOut)
 			{
 				ResetForSecondExtend();
-				if (ExtendToSensorInner(null).TimedOut)
+				if (ExtendToSensorInner(null, check: true).TimedOut)
 				{
 					RetractInner();
 					return PickerHardwareError.GripperExtendTimeout;
@@ -279,28 +368,10 @@ public class Gripper
 		}
 	}
 
-	internal GripperFingerState GetFingerState()
-	{
-		CoreResponse coreResponse = CoreController.ExecuteSingleControllerCommand(CommandType.SensorBarRead);
-		if (coreResponse.IsBitSet(4))
-		{
-			return GripperFingerState.Closed;
-		}
-		if (coreResponse.IsBitSet(6))
-		{
-			return GripperFingerState.Rent;
-		}
-		if (!coreResponse.IsBitSet(5))
-		{
-			return GripperFingerState.Unknown;
-		}
-		return GripperFingerState.Open;
-	}
-
-	internal bool CheckForMove(out MotionResult result)
+	internal static bool CheckForMove(out MotionResult result)
 	{
 		result = MotionResult.Success;
-		string[] array = PickerBoard.Instance.ReadInputs();
+		string[] array = ControlSystem.Instance.ReadInputs(ControlBoards.Picker);
 		if (array.Length == 0)
 		{
 			return false;
@@ -327,14 +398,14 @@ public class Gripper
 		if (array[0] == "1" && array[1] == "1")
 		{
 			LogHelper.Instance.Log("MOVE: can't move because extend/retract both triggered.", LogEntryType.Error);
-			PickerBoard.Instance.LogInputs(LogEntryType.Error);
+			ControlSystem.Instance.LogInputs(ControlBoards.Picker, LogEntryType.Error);
 			result = MotionResult.SensorError;
 			return false;
 		}
 		return true;
 	}
 
-	internal void TimedExtendInner(int timeout)
+	internal static void TimedExtendInner(int timeout)
 	{
 		try
 		{
@@ -342,49 +413,39 @@ public class Gripper
 			{
 				LogHelper.Instance.Log($"ExtendGripperArmForTime {timeout} ms", LogEntryType.Debug);
 			}
-			CoreController.ExecuteSingleControllerCommand(CommandType.ExtendGripperArmForTime);
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.ExtendGripperArmForTime);
 			PerfFunctions.Wait(timeout);
 		}
 		finally
 		{
-			CoreController.ExecuteSingleControllerCommand(CommandType.GripperExtendHalt);
+			ControlSystem.Instance.ExecuteControllerCommand(CommandType.GripperExtendHalt);
 		}
 	}
 
-	private LocationTestResult PeekInner()
+	internal static PickerEdgeCheckResult CheckPickerEdges()
 	{
-		LocationTestResult locationTestResult = new LocationTestResult();
-		if (ControllerService.Instance.Location.IsWideSlot)
+		PickerEdgeCheckResult result = PickerEdgeCheckResult.Clear;
+		bool[] sensors = PickerBoard.ReadSensors().Sensors;
+		if (sensors[0] && !sensors[1] && !sensors[2] && !sensors[3] && !sensors[4] && !sensors[5])
 		{
-			PickerHardwareError pickerHardwareError = SettleDiskInSlot();
-			if (pickerHardwareError != PickerHardwareError.Success)
-			{
-				locationTestResult.Error = pickerHardwareError;
-				return locationTestResult;
-			}
+			result = PickerEdgeCheckResult.JustOutOfSlot;
 		}
-		if (SetFingerInner(GripperFingerState.Closed).TimedOut)
+		else if (sensors[0] && sensors[5])
 		{
-			locationTestResult.Error = PickerHardwareError.GripperCloseTimeout;
-			return locationTestResult;
+			result = PickerEdgeCheckResult.OverhangEnds;
 		}
-		bool timedOut = ExtendToSensorInner(ControllerConfiguration.Instance.TestExtendTime).TimedOut;
-		if (RetractInner().TimedOut)
+		else if (sensors[0] && !sensors[5])
 		{
-			locationTestResult.Error = PickerHardwareError.GripperRetractTimeout;
-			return locationTestResult;
+			result = PickerEdgeCheckResult.OverhangLeft;
 		}
-		if (SetFingerInner(GripperFingerState.Rent).TimedOut)
+		else if (sensors[5] && !sensors[0])
 		{
-			locationTestResult.Error = PickerHardwareError.GripperRentTimeout;
-			return locationTestResult;
+			result = PickerEdgeCheckResult.OverhangRight;
 		}
-		locationTestResult.Error = PickerHardwareError.Success;
-		locationTestResult.PeekResult = ((!timedOut) ? GripperPeekResult.Empty : GripperPeekResult.Full);
-		return locationTestResult;
+		return result;
 	}
 
-	private CoreResponse SetFingerInner(GripperFingerState state)
+	private static CoreResponse SetFingerInner(GripperFingerState state)
 	{
 		CommandType type = CommandType.GripperClose;
 		switch (state)
@@ -402,7 +463,7 @@ public class Gripper
 		CoreResponse coreResponse = null;
 		for (int i = 0; i < 2; i++)
 		{
-			coreResponse = CoreController.ExecuteSingleWaitableCommand(type, 5000);
+			coreResponse = ControlSystem.Instance.ExecuteControllerCommand(type, 5000);
 			if (coreResponse.CommunicationError)
 			{
 				LogHelper.Instance.Log("Communication error during finger operation", LogEntryType.Error);
@@ -414,7 +475,7 @@ public class Gripper
 			}
 		}
 		LogHelper.Instance.Log($"RetryableFingerFunction {state.ToString().ToUpper()} timed out, even after {2} tries.", LogEntryType.Error);
-		PickerBoard.Instance.LogInputs(LogEntryType.Error);
+		ControlSystem.Instance.LogInputs(ControlBoards.Picker, LogEntryType.Error);
 		switch (state)
 		{
 		case GripperFingerState.Closed:
@@ -430,28 +491,17 @@ public class Gripper
 		return coreResponse;
 	}
 
-	private CoreResponse PushToSensorInner(int timeout)
+	private static CoreResponse ExtendToSensorInner(int? to, bool check)
 	{
-		CoreResponse coreResponse = CoreController.ExecuteSingleWaitableCommand(CommandType.GripperExtend, timeout);
-		if (coreResponse.CommunicationError)
-		{
-			LogHelper.Instance.Log("Communication error for gripper extend.", LogEntryType.Debug);
-		}
-		return coreResponse;
-	}
-
-	private CoreResponse ExtendToSensorInner(int? to)
-	{
-		_ = ControllerService.Instance.Location;
-		if (!to.HasValue)
-		{
-			to = ControllerConfiguration.Instance.GripperArmExtendRetractTimeout;
-		}
 		if (ControllerService.Instance.Location.IsQlmDeck)
 		{
 			to = ControllerConfiguration.Instance.QlmExtendTime;
 		}
-		CoreResponse coreResponse = CoreController.ExecuteSingleWaitableCommand(CommandType.GripperExtend, to.Value);
+		else if (!to.HasValue)
+		{
+			to = ControllerConfiguration.Instance.GripperArmExtendRetractTimeout;
+		}
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.GripperExtend, to.Value);
 		if (!coreResponse.TimedOut)
 		{
 			return coreResponse;
@@ -461,20 +511,23 @@ public class Gripper
 			LogHelper.Instance.Log("Communication error during gripper extend.", LogEntryType.Error);
 			return coreResponse;
 		}
-		string[] array = PickerBoard.Instance.ReadInputs();
-		if (array.Length > 0 && array[0] == "1")
+		if (check)
 		{
-			LogHelper.Instance.Log("GripperExtend status returned timeout; however, picker sensors read shows the forward sensor reached.", LogEntryType.Info);
-			coreResponse.TimedOut = false;
-			return coreResponse;
+			string[] array = ControlSystem.Instance.ReadInputs(ControlBoards.Picker);
+			if (array.Length > 0 && array[0] == "1")
+			{
+				LogHelper.Instance.Log("GripperExtend status returned timeout; however, picker sensors read shows the forward sensor reached.", LogEntryType.Info);
+				coreResponse.TimedOut = false;
+				return coreResponse;
+			}
+			LogHelper.Instance.Log("SetGripperArm( Extend ) timed out.", LogEntryType.Error);
+			ControlSystem.Instance.LogInputs(ControlBoards.Picker, LogEntryType.Error);
+			CounterManager.Instance.Increment("GripperExtendTimeout");
 		}
-		LogHelper.Instance.Log("SetGripperArm( Extend ) timed out.", LogEntryType.Error);
-		PickerBoard.Instance.LogInputs(LogEntryType.Error);
-		CounterManager.Instance.Increment("GripperExtendTimeout");
 		return coreResponse;
 	}
 
-	private GripperFingerState ComputeFingerStateForGet()
+	private static GripperFingerState ComputeFingerStateForGet()
 	{
 		if (!ControllerService.Instance.Location.IsWideSlot)
 		{
@@ -483,7 +536,7 @@ public class Gripper
 		return GripperFingerState.Open;
 	}
 
-	private void ResetForSecondExtend()
+	private static void ResetForSecondExtend()
 	{
 		RetractInner();
 		SetFingerInner(GripperFingerState.Closed);
@@ -492,13 +545,13 @@ public class Gripper
 		SetFingerInner(gripperFingerState);
 	}
 
-	private CoreResponse RetractInner()
+	private static CoreResponse RetractInner()
 	{
 		CoreResponse coreResponse = null;
 		int gripperArmExtendRetractTimeout = ControllerConfiguration.Instance.GripperArmExtendRetractTimeout;
 		for (int i = 0; i < 2; i++)
 		{
-			coreResponse = CoreController.ExecuteSingleWaitableCommand(CommandType.GripperRetract, gripperArmExtendRetractTimeout);
+			coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.GripperRetract, gripperArmExtendRetractTimeout);
 			if (coreResponse.CommunicationError)
 			{
 				LogHelper.Instance.Log("Communication error during gripper retract.", LogEntryType.Error);
@@ -509,19 +562,15 @@ public class Gripper
 				return coreResponse;
 			}
 		}
-		string[] array = PickerBoard.Instance.ReadInputs();
+		string[] array = ControlSystem.Instance.ReadInputs(ControlBoards.Picker);
 		if (array.Length > 0 && array[1] == "1")
 		{
 			LogHelper.Instance.Log("GripperRetract status returned timeout; however, picker sensors read shows the sensor tripped.", LogEntryType.Info);
 			return coreResponse;
 		}
 		LogHelper.Instance.Log($"SetGripperArm( RETRACT ) timed out after {2} retries.", LogEntryType.Error);
-		PickerBoard.Instance.LogInputs(LogEntryType.Error);
+		ControlSystem.Instance.LogInputs(ControlBoards.Picker, LogEntryType.Error);
 		CounterManager.Instance.Increment("GripperRetractTimeout");
 		return coreResponse;
-	}
-
-	private Gripper()
-	{
 	}
 }

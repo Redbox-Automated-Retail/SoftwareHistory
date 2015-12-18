@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class ControllerLocation
+public sealed class ControllerLocation : ILocation
 {
 	private int? m_deck = null;
 

@@ -1,8 +1,9 @@
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class Track
+public static class Track
 {
 	private enum TrackState
 	{
@@ -14,25 +15,23 @@ public class Track
 
 	private const int ClosedBit = 2;
 
-	public static Track Instance => Singleton<Track>.Instance;
+	private static TrackState State;
 
-	private TrackState State { get; set; }
-
-	public CoreResponse TestClose()
+	public static CoreResponse TestClose()
 	{
 		return RetryableTrackCommand(TrackState.Closed);
 	}
 
-	public CoreResponse TestOpen()
+	public static CoreResponse TestOpen()
 	{
 		if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
 		{
 			return RetryableTrackCommand(TrackState.Open);
 		}
-		return CoreResponse.MakeEmulated(timeout: false);
+		return CoreResponse.MakeErrorResponse();
 	}
 
-	public bool Close()
+	public static bool Close()
 	{
 		if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
 		{
@@ -41,7 +40,7 @@ public class Track
 		return false;
 	}
 
-	public bool Open()
+	public static bool Open()
 	{
 		if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
 		{
@@ -50,7 +49,7 @@ public class Track
 		return false;
 	}
 
-	public bool Cycle()
+	public static bool Cycle()
 	{
 		if (!RetryableTrackCommand(TrackState.Open).TimedOut)
 		{
@@ -59,16 +58,12 @@ public class Track
 		return true;
 	}
 
-	public bool IsTrackOpen(bool read)
+	public static bool IsTrackOpen(bool read)
 	{
-		if (!read)
-		{
-			return TrackState.Open == State;
-		}
-		return ReadTrackState(3);
+		return TrackState.Open == State;
 	}
 
-	internal bool OpenIfClosed()
+	internal static bool OpenIfClosed()
 	{
 		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
 		{
@@ -81,7 +76,7 @@ public class Track
 		return false;
 	}
 
-	internal bool CloseIfOpen()
+	internal static bool CloseIfOpen()
 	{
 		if (State != TrackState.Closed)
 		{
@@ -90,13 +85,13 @@ public class Track
 		return false;
 	}
 
-	private CoreResponse RetryableTrackCommand(TrackState state)
+	private static CoreResponse RetryableTrackCommand(TrackState state)
 	{
 		CoreResponse coreResponse = null;
 		CommandType type = ((state == TrackState.Open) ? CommandType.TrackOpen : CommandType.TrackClose);
 		for (int i = 0; i < 2; i++)
 		{
-			coreResponse = CoreController.ExecuteSingleWaitableCommand(type, 5000);
+			coreResponse = ControlSystem.Instance.ExecuteControllerCommand(type, 5000);
 			if (coreResponse.CommunicationError)
 			{
 				LogHelper.Instance.Log($"Communication error during track {state.ToString().ToUpper()} operation.", LogEntryType.Error);
@@ -109,7 +104,7 @@ public class Track
 			}
 		}
 		LogHelper.Instance.Log($"Timeout error during track {state.ToString().ToUpper()} operation.", LogEntryType.Error);
-		PickerBoard.Instance.LogInputs(LogEntryType.Error);
+		ControlSystem.Instance.LogInputs(ControlBoards.Picker, LogEntryType.Error);
 		if (state == TrackState.Closed)
 		{
 			CounterManager.Instance.Increment("TrackCloseTimeout");
@@ -119,14 +114,5 @@ public class Track
 			CounterManager.Instance.Increment("TrackOpenTimeout");
 		}
 		return coreResponse;
-	}
-
-	private bool ReadTrackState(int bit)
-	{
-		return PickerBoard.Instance.IsInputBlocked(bit);
-	}
-
-	private Track()
-	{
 	}
 }

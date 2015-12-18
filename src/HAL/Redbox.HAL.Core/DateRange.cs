@@ -40,6 +40,11 @@ public class DateRange : IRange<DateTime>
 		return new DateRange(start, end).Includes(DateTime.Now);
 	}
 
+	public static DateRange FromDateRange(DateTime start, DateTime end)
+	{
+		return new DateRange(start, end);
+	}
+
 	public bool Includes(DateTime value)
 	{
 		if (Start <= value)

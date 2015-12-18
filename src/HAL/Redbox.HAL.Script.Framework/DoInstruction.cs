@@ -4,7 +4,7 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class DoInstruction : Instruction
+public sealed class DoInstruction : Instruction
 {
 	public override bool BeginsContext => true;
 
@@ -25,33 +25,24 @@ public class DoInstruction : Instruction
 		return true;
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.NumericLiteral && !tokensAfterMnemonic[0].IsSymbolOrConst)
-			{
-				AddError("C002", "Expected a numeric literal or (CONST) symbol.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "The DO mnemonic requires a single numeric literal or symbol.");
 		}
-		else
+		else if (operandTokens[0].Type != TokenType.NumericLiteral && !operandTokens[0].IsSymbolOrConst)
 		{
-			AddError("C002", "The DO mnemonic requires a single numeric literal or symbol.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a numeric literal or (CONST) symbol.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		object obj = base.Operands[0].Value;
 		if (base.Operands[0].Type == TokenType.Symbol)
 		{
-			obj = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors);
+			obj = context.GetSymbolValue(base.Operands[0].Value, result.Errors);
 			if (obj == null || result.Errors.Count > 0)
 			{
 				return;

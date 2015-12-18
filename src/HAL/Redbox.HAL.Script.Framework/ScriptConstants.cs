@@ -7,8 +7,6 @@ public static class ScriptConstants
 		public const string Type = "TYPE";
 
 		public const string Depth = "DEPTH";
-
-		public const string AccessCode = "ACCESS-CODE";
 	}
 
 	public static class ProgramNames

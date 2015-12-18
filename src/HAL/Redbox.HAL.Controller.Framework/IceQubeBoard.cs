@@ -1,14 +1,11 @@
 using System.Threading;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class IceQubeBoard
+public sealed class IceQubeBoard
 {
-	private const string ConfigurationKey = "IceQubeExchanger";
-
-	private bool? m_isActive = null;
-
 	public static IceQubeBoard Instance => Singleton<IceQubeBoard>.Instance;
 
 	public FanStatus FanState { get; private set; }
@@ -17,22 +14,11 @@ public class IceQubeBoard
 	{
 		get
 		{
-			if (m_isActive.HasValue)
-			{
-				return m_isActive.Value;
-			}
-			m_isActive = SecretOptions.Instance.GetValue("IceQubeExchanger", defValue: false);
-			if (FanState == FanStatus.Unknown)
-			{
-				FanState = ((!m_isActive.Value) ? FanStatus.NotConfigured : FanStatus.On);
-			}
-			return m_isActive.Value;
+			return ControllerConfiguration.Instance.EnableIceQubePolling;
 		}
 		set
 		{
-			m_isActive = value;
-			FanState = ((!m_isActive.Value) ? FanStatus.NotConfigured : FanStatus.On);
-			SecretOptions.Instance.SetValue("IceQubeExchanger", m_isActive.Value);
+			ControllerConfiguration.Instance.SetPropertyByName("EnableIceQubePolling", new object[1] { value });
 		}
 	}
 
@@ -54,7 +40,7 @@ public class IceQubeBoard
 				LogHelper.Instance.Log("Fan is already on - bypass.");
 				return;
 			}
-			LatchOff();
+			ToggleLatch(on: false);
 			Thread.Sleep(500);
 			Reset();
 		}
@@ -69,7 +55,7 @@ public class IceQubeBoard
 				LogHelper.Instance.Log("Fan is already off - bypass.");
 				return;
 			}
-			LatchOn();
+			ToggleLatch(on: true);
 			Thread.Sleep(10500);
 		}
 	}
@@ -78,8 +64,7 @@ public class IceQubeBoard
 	{
 		if (Configured)
 		{
-			CoreController.ExecuteSingleControllerCommand(CommandType.IceQubeAlarmResetOn);
-			FanState = FanStatus.Off;
+			ToggleLatch(on: true);
 		}
 	}
 
@@ -87,8 +72,7 @@ public class IceQubeBoard
 	{
 		if (Configured)
 		{
-			CoreController.ExecuteSingleControllerCommand(CommandType.IceQubeAlarmResetOff);
-			FanState = FanStatus.On;
+			ToggleLatch(on: false);
 		}
 	}
 
@@ -103,9 +87,9 @@ public class IceQubeBoard
 			return IceQubeBoardStatus.NotConfigured;
 		}
 		int millisecondsTimeout = 1500;
-		LatchOn();
+		ToggleLatch(on: true);
 		Thread.Sleep(millisecondsTimeout);
-		LatchOff();
+		ToggleLatch(on: false);
 		Thread.Sleep(millisecondsTimeout);
 		return CheckStatusInner();
 	}
@@ -142,9 +126,30 @@ public class IceQubeBoard
 		CounterManager.Instance.Increment("IceQubeResetFailures");
 	}
 
+	public void ConfigurationUpdateFinish()
+	{
+		FanState = ((!Configured) ? FanStatus.NotConfigured : FanStatus.On);
+	}
+
+	public void ConfigurationChangeStart()
+	{
+		FanState = FanStatus.Unknown;
+	}
+
+	private void ToggleLatch(bool on)
+	{
+		ControlSystem.Instance.ExecuteControllerCommand(on ? CommandType.QlmDoorUnlock : CommandType.QlmDoorLock);
+		FanState = (on ? FanStatus.Off : FanStatus.On);
+	}
+
 	private IceQubeBoardStatus CheckStatusInner()
 	{
-		if (!AuxBoard.Instance.IsSensorBlocked(AuxSensor.QlmBayDoor))
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		if (coreResponse.CommunicationError)
+		{
+			return IceQubeBoardStatus.Error;
+		}
+		if (!coreResponse.IsSensorSet(AuxSensor.QlmBayDoor))
 		{
 			return IceQubeBoardStatus.Error;
 		}
@@ -153,6 +158,6 @@ public class IceQubeBoard
 
 	private IceQubeBoard()
 	{
-		FanState = FanStatus.Unknown;
+		FanState = ((!ControllerConfiguration.Instance.EnableIceQubePolling) ? FanStatus.NotConfigured : FanStatus.On);
 	}
 }

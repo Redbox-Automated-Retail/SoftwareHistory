@@ -1,29 +1,26 @@
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class VendDoor
+public static class VendDoor
 {
-	public static VendDoor Instance => Singleton<VendDoor>.Instance;
-
-	public CoreResponse TestRent()
+	public static CoreResponse TestRent()
 	{
 		return RetryableVendDoorCommand(VendDoorState.Rent, retry: true);
 	}
 
-	public CoreResponse TestClose()
+	public static CoreResponse TestClose()
 	{
 		return RetryableVendDoorCommand(VendDoorState.Closed, retry: true);
 	}
 
-	public CoreResponse TestOpen()
+	public static CoreResponse TestOpen()
 	{
-		CoreResponse coreResponse = new CoreResponse();
-		coreResponse.CommunicationError = true;
-		return coreResponse;
+		return CoreResponse.MakeErrorResponse();
 	}
 
-	public bool IsClosed()
+	public static bool IsClosed()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -32,22 +29,22 @@ public class VendDoor
 		return VendDoorIsInState(VendDoorState.Closed);
 	}
 
-	public bool Close()
+	public static bool Close()
 	{
 		return SetVendDoorInner(VendDoorState.Closed, retry: true);
 	}
 
-	public bool Open()
+	public static bool Open()
 	{
 		return true;
 	}
 
-	public bool Rent()
+	public static bool Rent()
 	{
 		return SetVendDoorInner(VendDoorState.Rent, retry: false);
 	}
 
-	internal bool VendDoorIsInState(VendDoorState state)
+	internal static bool VendDoorIsInState(VendDoorState state)
 	{
 		int bit = -1;
 		switch (state)
@@ -62,7 +59,7 @@ public class VendDoor
 			bit = 4;
 			break;
 		}
-		CoreResponse coreResponse = CoreController.ExecuteSingleControllerCommand(CommandType.AuxSensorsRead);
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.AuxSensorsRead);
 		if (coreResponse.CommunicationError)
 		{
 			LogHelper.Instance.Log("Read AUX sensors failed.", LogEntryType.Error);
@@ -71,7 +68,7 @@ public class VendDoor
 		return coreResponse.IsBitSet(bit);
 	}
 
-	private bool SetVendDoorInner(VendDoorState state, bool retry)
+	private static bool SetVendDoorInner(VendDoorState state, bool retry)
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -84,7 +81,7 @@ public class VendDoor
 		return false;
 	}
 
-	private CoreResponse RetryableVendDoorCommand(VendDoorState state, bool retry)
+	private static CoreResponse RetryableVendDoorCommand(VendDoorState state, bool retry)
 	{
 		CommandType commandType = CommandType.VendDoorClose;
 		CommandType unknownCommand = CommandType.UnknownVendDoorOpenCommand;
@@ -106,7 +103,7 @@ public class VendDoor
 		CoreResponse coreResponse = null;
 		for (int i = 0; i < num; i++)
 		{
-			coreResponse = CoreController.ExecuteSingleWaitableCommand(commandType, 5500);
+			coreResponse = ControlSystem.Instance.ExecuteControllerCommand(commandType, 5500);
 			if (coreResponse.CommunicationError)
 			{
 				string message = $"Communication error during vend door {state.ToString().ToUpper()}";
@@ -118,9 +115,9 @@ public class VendDoor
 				if (state == VendDoorState.Closed)
 				{
 					PerfFunctions.Wait(70);
-					CoreController.ExecuteSingleControllerCommand(CommandType.UnknownVendDoorCloseCommand);
+					ControlSystem.Instance.ExecuteControllerCommand(CommandType.UnknownVendDoorCloseCommand);
 					PerfFunctions.Wait(70);
-					CoreController.ExecuteSingleControllerCommand(CommandType.VendDoorKillCommand);
+					ControlSystem.Instance.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
 					PerfFunctions.Wait(50);
 				}
 			}
@@ -138,7 +135,7 @@ public class VendDoor
 		}
 		string message2 = $"SetVendDoor {state.ToString()} timed out after {num} tries.";
 		LogHelper.Instance.Log(message2, LogEntryType.Error);
-		AuxBoard.Instance.LogInputs(LogEntryType.Error);
+		ControlSystem.Instance.LogInputs(ControlBoards.Aux, LogEntryType.Error);
 		switch (state)
 		{
 		case VendDoorState.Closed:
@@ -151,7 +148,7 @@ public class VendDoor
 		return coreResponse;
 	}
 
-	private bool MoveToVendSensor(VendDoorState state, CommandType doorCommand, CommandType unknownCommand)
+	private static bool MoveToVendSensor(VendDoorState state, CommandType doorCommand, CommandType unknownCommand)
 	{
 		if (!ControllerConfiguration.Instance.MoveVendDoorToAuxSensor)
 		{
@@ -162,20 +159,16 @@ public class VendDoor
 			return true;
 		}
 		PerfFunctions.SpinWait(200);
-		CoreController.ExecuteSingleControllerCommand(unknownCommand);
+		ControlSystem.Instance.ExecuteControllerCommand(unknownCommand);
 		PerfFunctions.SpinWait(100);
-		CoreController.ExecuteSingleControllerCommand(CommandType.VendDoorKillCommand);
+		ControlSystem.Instance.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
 		PerfFunctions.SpinWait(100);
-		CoreResponse coreResponse = CoreController.ExecuteSingleWaitableCommand(doorCommand, 5000);
+		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(doorCommand, 5000);
 		if (coreResponse.CommunicationError)
 		{
 			return false;
 		}
 		PerfFunctions.SpinWait(100);
 		return !coreResponse.TimedOut;
-	}
-
-	private VendDoor()
-	{
 	}
 }

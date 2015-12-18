@@ -1,10 +1,9 @@
 using System;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class LoopInstruction : Instruction
+public sealed class LoopInstruction : Instruction
 {
 	public override bool EndsContext => true;
 
@@ -12,21 +11,14 @@ public class LoopInstruction : Instruction
 
 	internal override Branch BranchType => Branch.Conditional;
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
-	{
-		base.OnParse(tokens, result);
-		if (tokens.GetTokensAfterMnemonic().Count > 0)
-		{
-			AddError("C002", "The LOOP mnemonic does not support operands.", result.Errors);
-		}
-	}
+	protected override ExpectedOperands Expected => ExpectedOperands.None;
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		ExecutionEngine.Instance.ActiveContext.Registers.ActiveFrame.X--;
-		if (ExecutionEngine.Instance.ActiveContext.Registers.ActiveFrame.X != 0)
+		context.Registers.ActiveFrame.X--;
+		if (context.Registers.ActiveFrame.X != 0)
 		{
-			ExecutionEngine.Instance.ActiveContext.Registers.ActiveFrame.ResetPC();
+			context.Registers.ActiveFrame.ResetPC();
 			result.RestartAtCurrentIP = true;
 		}
 	}

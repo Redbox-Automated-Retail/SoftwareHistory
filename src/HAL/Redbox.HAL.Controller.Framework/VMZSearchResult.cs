@@ -42,11 +42,6 @@ public struct VMZSearchResult
 
 	internal int Index { get; set; }
 
-	public void Clear()
-	{
-		Index = -1;
-	}
-
 	public override string ToString()
 	{
 		if (!Found)
@@ -54,5 +49,20 @@ public struct VMZSearchResult
 			return "None";
 		}
 		return $"Deck = {Deck} Slot = {Slot} Flags = {Location.Flags.ToString()}";
+	}
+
+	public void ResetTo(Location location)
+	{
+		Index = VMZ.Instance.FindIndex(location);
+	}
+
+	public void ResetToFirst()
+	{
+		Index = 0;
+	}
+
+	public void Invalidate()
+	{
+		Index = -1;
 	}
 }

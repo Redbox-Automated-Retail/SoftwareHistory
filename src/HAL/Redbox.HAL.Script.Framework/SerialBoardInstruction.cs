@@ -5,7 +5,7 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class SerialBoardInstruction : Instruction
+public sealed class SerialBoardInstruction : Instruction
 {
 	private enum ExpectedOperand
 	{
@@ -16,50 +16,24 @@ public class SerialBoardInstruction : Instruction
 
 	public override string Mnemonic => "SERIALBOARD";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 0)
-		{
-			AddError("C002", "Expected one operand.", result.Errors);
-		}
-		else
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-	}
-
-	protected override void OnExecute(ExecutionResult result)
-	{
-		switch (ConvertToOperand(base.Operands[0].Value))
+		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
 		case ExpectedOperand.None:
-			ServiceLogHelper.Instance.WriteFormattedMessage(LogEntryType.Info, "SerialBoardInstruction: converted '{0}' to operand None", base.Operands[0].Value);
+			context.ServiceLog("SerialBoardInstruction: converted '{0}' to operand None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.ClosePort:
-			ExecutionEngine.Instance.ActiveContext.PushTop(SerialBoard.Instance.ClosePort(3000) ? "SUCCESS" : "FAILURE");
+			context.PushTop(ControlSystem.Instance.ClosePort(500) ? "SUCCESS" : "FAILURE");
 			break;
 		case ExpectedOperand.Reset:
-			HandleTimeoutOrCommmError(SerialBoard.Instance.Reset());
+			HandleTimeoutOrCommmError(ControlSystem.Instance.Initialize(), context);
 			break;
 		}
 	}
 
 	private bool IsValidOperand(string operand)
 	{
-		return ConvertToOperand(operand) != ExpectedOperand.None;
-	}
-
-	private ExpectedOperand ConvertToOperand(string operand)
-	{
-		ExpectedOperand expectedOperand = ExpectedOperand.None;
-		try
-		{
-			return (ExpectedOperand)Enum.Parse(typeof(ExpectedOperand), operand, ignoreCase: true);
-		}
-		catch (ArgumentException)
-		{
-			return ExpectedOperand.None;
-		}
+		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 }

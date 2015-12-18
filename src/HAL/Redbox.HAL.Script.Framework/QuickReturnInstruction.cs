@@ -2,11 +2,12 @@ using System;
 using System.IO;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-internal class QuickReturnInstruction : Instruction
+public sealed class QuickReturnInstruction : Instruction
 {
 	internal enum Forms
 	{
@@ -29,7 +30,8 @@ internal class QuickReturnInstruction : Instruction
 		IsInstalled,
 		DumpCounters,
 		ClosePort,
-		DumpStateTable
+		DumpStateTable,
+		FindDevice
 	}
 
 	internal enum Attributes
@@ -61,43 +63,37 @@ internal class QuickReturnInstruction : Instruction
 		}
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count < 1)
-		{
-			AddError("C002", "QuickReturn expects some arguments", result.Errors);
-			return;
-		}
-		Forms forms = CheckForm(tokensAfterMnemonic[0].Value);
+		Forms forms = CheckForm(operandTokens[0].Value);
 		if (forms == Forms.Unknown)
 		{
-			AddError("C002", $"Unknown form of QuickReturn: {tokensAfterMnemonic[0].Value}", result.Errors);
+			result.AddInvalidOperandError($"Unknown form of QuickReturn: {operandTokens[0].Value}");
 			return;
 		}
 		string text = string.Empty;
 		switch (forms)
 		{
 		case Forms.State:
-			if (tokensAfterMnemonic.Count < 2 || tokensAfterMnemonic.GetKeyValuePair(Attributes.Name.ToString().ToUpper()) == null)
+			if (operandTokens.Count < 2 || operandTokens.GetKeyValuePair(Attributes.Name.ToString().ToUpper()) == null)
 			{
 				text = $"{Forms.State.ToString().ToUpper()} form requires a {Attributes.Name.ToString()} operand.";
 			}
 			break;
 		case Forms.LedState:
 		{
-			if (tokensAfterMnemonic.Count < 2)
+			if (operandTokens.Count < 2)
 			{
 				text = $"{Forms.LedState.ToString().ToUpper()} form requires a {Attributes.Mode.ToString()} operand and {Attributes.Led.ToString()} operand.";
 				break;
 			}
 			bool flag = false;
 			bool flag2 = false;
-			if (tokensAfterMnemonic.GetKeyValuePair(Attributes.Mode.ToString().ToUpper()) != null)
+			if (operandTokens.GetKeyValuePair(Attributes.Mode.ToString().ToUpper()) != null)
 			{
 				flag = true;
 			}
-			if (tokensAfterMnemonic.GetKeyValuePair(Attributes.Led.ToString().ToUpper()) != null)
+			if (operandTokens.GetKeyValuePair(Attributes.Led.ToString().ToUpper()) != null)
 			{
 				flag2 = true;
 			}
@@ -108,13 +104,13 @@ internal class QuickReturnInstruction : Instruction
 			break;
 		}
 		case Forms.DefState:
-			if (tokensAfterMnemonic.Count < 2 || tokensAfterMnemonic.GetKeyValuePair(Attributes.Name.ToString().ToUpper()) == null)
+			if (operandTokens.Count < 2 || operandTokens.GetKeyValuePair(Attributes.Name.ToString().ToUpper()) == null)
 			{
 				text = string.Format("{0} form requires at least a {0} operand and {1} operand (optional {2} operand).", Forms.DefState.ToString(), Attributes.Name.ToString(), Attributes.File.ToString(), Attributes.Text.ToString());
 			}
 			break;
 		case Forms.GetConfig:
-			if (tokensAfterMnemonic.Count < 2)
+			if (operandTokens.Count < 2)
 			{
 				text = $"{forms.ToString().ToUpper()} form requires a configuration option operand.";
 			}
@@ -122,15 +118,11 @@ internal class QuickReturnInstruction : Instruction
 		}
 		if (!string.IsNullOrEmpty(text))
 		{
-			AddError("C002", text, result.Errors);
-		}
-		else
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
+			result.AddInvalidOperandError(text);
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands.Count == 0)
 		{
@@ -146,34 +138,32 @@ internal class QuickReturnInstruction : Instruction
 			QuickReturnDevice.Instance.DumpStateTable();
 			break;
 		case Forms.IsInstalled:
-			ExecutionEngine.Instance.ActiveContext.PushTop(QuickReturnDevice.Instance.IsConfigured.ToString().ToUpper());
+			context.PushTop(QuickReturnDevice.Instance.IsConfigured.ToString().ToUpper());
 			break;
 		case Forms.Restart:
-			if (QuickReturnPoller.Instance.QuickReturnPollerEnabled)
+			if (QuickReturnPoller.Instance.Running)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+				context.PushTop("SUCCESS");
 				break;
 			}
-			QuickReturnPoller.Instance.Startup();
-			ExecutionEngine.Instance.ActiveContext.PushTop(QuickReturnPoller.Instance.QuickReturnPollerEnabled ? "SUCCESS" : "FAILURE");
+			QuickReturnPoller.Instance.Start();
+			context.PushTop(QuickReturnPoller.Instance.Running ? "SUCCESS" : "FAILURE");
 			break;
 		case Forms.Help:
-			ExecutionEngine.Instance.ActiveContext.PushTop("NOT IMPLEMENTED");
+			context.PushTop("NOT IMPLEMENTED");
 			break;
 		case Forms.PollStatus:
-			ExecutionEngine.Instance.ActiveContext.PushTop(QuickReturnPoller.Instance.QuickReturnPollerEnabled ? "ACTIVE" : "INACTIVE");
+			context.PushTop(QuickReturnPoller.Instance.Running ? "ACTIVE" : "INACTIVE");
 			break;
 		case Forms.DisableUI:
 		case Forms.HaltPoll:
 			QuickReturnPoller.Instance.Shutdown();
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			context.PushTop("SUCCESS");
 			break;
 		case Forms.GetConfig:
-		{
-			string value = base.Operands[1].Value;
-			ExecutionEngine.Instance.ActiveContext.PushTop(QuickReturnDevice.Instance.GetOption(value));
+			_ = base.Operands[1].Value;
+			AddError("E777", "The 'GetConfig' Operand is not supported.", result.Errors);
 			break;
-		}
 		case Forms.LogReturn:
 			LogHelper.Instance.Log($"Return via QuickReturn terminal on: {DateTime.Now}", LogEntryType.Info);
 			break;
@@ -182,25 +172,25 @@ internal class QuickReturnInstruction : Instruction
 			bool flag5 = QuickReturnDevice.Instance.CheckAttButton(out var commError);
 			if (commError)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("FAILURE");
+				context.PushTop("FAILURE");
 				break;
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(flag5 ? "SET" : "CLEAR");
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			context.PushTop(flag5 ? "SET" : "CLEAR");
+			context.PushTop("SUCCESS");
 			break;
 		}
 		case Forms.ClearAttButton:
-			ExecutionEngine.Instance.ActiveContext.PushTop(QuickReturnDevice.Instance.ClearAttentionButtonStatus() ? "SUCCESS" : "FAILURE");
+			context.PushTop(QuickReturnDevice.Instance.ClearAttentionButtonStatus() ? "SUCCESS" : "FAILURE");
 			break;
 		case Forms.Reset:
 		{
 			bool flag4 = QuickReturnDevice.Instance.Reset();
-			ExecutionEngine.Instance.ActiveContext.PushTop(flag4);
+			context.PushTop(flag4);
 			break;
 		}
 		case Forms.State:
 		{
-			string keyValuePairValue4 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Name.ToString().ToUpper()), result.Errors);
+			string keyValuePairValue4 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Name.ToString().ToUpper()), result.Errors, context);
 			if (keyValuePairValue4 == null || !QuickReturnDevice.Instance.DisplayState(keyValuePairValue4))
 			{
 				AddError("E002", "Unable to set state: maybe state is not defined?", result.Errors);
@@ -208,17 +198,17 @@ internal class QuickReturnInstruction : Instruction
 			}
 			else
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+				context.PushTop("SUCCESS");
 			}
 			break;
 		}
 		case Forms.DefState:
 		{
-			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Name.ToString().ToUpper()), result.Errors);
-			string keyValuePairValue2 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.File.ToString().ToUpper()), result.Errors);
-			string keyValuePairValue3 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.LedStates.ToString().ToUpper()), result.Errors);
+			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Name.ToString().ToUpper()), result.Errors, context);
+			string keyValuePairValue2 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.File.ToString().ToUpper()), result.Errors, context);
+			string keyValuePairValue3 = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.LedStates.ToString().ToUpper()), result.Errors, context);
 			bool flag3 = QuickReturnDevice.Instance.CreateState(keyValuePairValue, keyValuePairValue2, keyValuePairValue3);
-			ExecutionEngine.Instance.ActiveContext.PushTop(flag3);
+			context.PushTop(flag3);
 			break;
 		}
 		case Forms.LedState:
@@ -226,14 +216,14 @@ internal class QuickReturnInstruction : Instruction
 			bool flag = false;
 			try
 			{
-				QuickReturnDevice.LED lED = GetLED(result);
+				QuickReturnDevice.LED lED = GetLED(result, context);
 				if (lED == QuickReturnDevice.LED.Unknown)
 				{
 					AddError("E001", "Invalid LED key-value pair.", result.Errors);
 					break;
 				}
-				QuickReturnDevice.Mode mode = GetMode(result);
-				if (mode == QuickReturnDevice.Mode.Unknown)
+				QuickReturnDevice.LEDMode mode = GetMode(result, context);
+				if (mode == QuickReturnDevice.LEDMode.Unknown)
 				{
 					AddError("E001", "Invalid MODE token.", result.Errors);
 					break;
@@ -242,10 +232,10 @@ internal class QuickReturnInstruction : Instruction
 				bool blink = false;
 				switch (mode)
 				{
-				case QuickReturnDevice.Mode.Blink:
+				case QuickReturnDevice.LEDMode.Blink:
 					flag2 = (blink = true);
 					break;
-				case QuickReturnDevice.Mode.On:
+				case QuickReturnDevice.LEDMode.On:
 					flag2 = true;
 					break;
 				}
@@ -254,13 +244,13 @@ internal class QuickReturnInstruction : Instruction
 			}
 			finally
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(flag);
+				context.PushTop(flag);
 			}
 		}
 		case Forms.UpdateEEPROM:
 		{
 			int num = QuickReturnDevice.Instance.UpdateDeviceImages();
-			ExecutionEngine.Instance.ActiveContext.PushTop(num);
+			context.PushTop(num);
 			break;
 		}
 		case Forms.ClosePort:
@@ -287,6 +277,12 @@ internal class QuickReturnInstruction : Instruction
 			LogCounterValue(writer, "QuickReturnSuccessful", "Successful returns");
 			break;
 		}
+		case Forms.FindDevice:
+		{
+			string instance = QuickReturnDevice.Instance.ProbePort();
+			context.PushTop(instance);
+			break;
+		}
 		}
 	}
 
@@ -303,25 +299,22 @@ internal class QuickReturnInstruction : Instruction
 
 	private Forms CheckForm(string token)
 	{
-		Forms forms = Forms.Unknown;
-		try
+		Forms forms = Enum<Forms>.ParseIgnoringCase(token, Forms.Unknown);
+		if (forms != Forms.Unknown)
 		{
-			return (Forms)Enum.Parse(typeof(Forms), token, ignoreCase: true);
+			return forms;
 		}
-		catch (ArgumentException)
-		{
-			string message = $"Unrecognized FORM argument: {token}";
-			LogHelper.Instance.Log(message, LogEntryType.Error);
-			return Forms.Unknown;
-		}
+		string message = $"Unrecognized FORM argument: {token}";
+		LogHelper.Instance.Log(message, LogEntryType.Error);
+		return Forms.Unknown;
 	}
 
-	private QuickReturnDevice.LED GetLED(ExecutionResult result)
+	private QuickReturnDevice.LED GetLED(ExecutionResult result, ExecutionContext context)
 	{
 		try
 		{
-			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Led.ToString().ToUpper()), result.Errors);
-			return (QuickReturnDevice.LED)Enum.Parse(typeof(QuickReturnDevice.LED), keyValuePairValue, ignoreCase: true);
+			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Led.ToString().ToUpper()), result.Errors, context);
+			return Enum<QuickReturnDevice.LED>.ParseIgnoringCase(keyValuePairValue, QuickReturnDevice.LED.Unknown);
 		}
 		catch (Exception)
 		{
@@ -329,31 +322,28 @@ internal class QuickReturnInstruction : Instruction
 		}
 	}
 
-	private QuickReturnDevice.Mode GetMode(ExecutionResult result)
+	private QuickReturnDevice.LEDMode GetMode(ExecutionResult result, ExecutionContext context)
 	{
 		try
 		{
-			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Mode.ToString().ToUpper()), result.Errors);
-			return (QuickReturnDevice.Mode)Enum.Parse(typeof(QuickReturnDevice.Mode), keyValuePairValue, ignoreCase: true);
+			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Mode.ToString().ToUpper()), result.Errors, context);
+			return Enum<QuickReturnDevice.LEDMode>.ParseIgnoringCase(keyValuePairValue, QuickReturnDevice.LEDMode.Unknown);
 		}
 		catch (Exception)
 		{
-			return QuickReturnDevice.Mode.Unknown;
+			return QuickReturnDevice.LEDMode.Unknown;
 		}
 	}
 
 	private Attributes CheckAttribute(string token)
 	{
-		Attributes attributes = Attributes.Unknown;
-		try
+		Attributes attributes = Enum<Attributes>.ParseIgnoringCase(token, Attributes.Unknown);
+		if (attributes != Attributes.Unknown)
 		{
-			return (Attributes)Enum.Parse(typeof(Attributes), token, ignoreCase: true);
+			return attributes;
 		}
-		catch (ArgumentException)
-		{
-			string message = $"Unrecognized Attribute argument: {token}";
-			LogHelper.Instance.Log(message, LogEntryType.Error);
-			return Attributes.Unknown;
-		}
+		string message = $"Unrecognized Attribute argument: {token}";
+		LogHelper.Instance.Log(message, LogEntryType.Error);
+		return Attributes.Unknown;
 	}
 }

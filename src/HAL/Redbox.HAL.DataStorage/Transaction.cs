@@ -3,18 +3,22 @@ using System.Collections.Generic;
 
 namespace Redbox.HAL.DataStorage;
 
-public sealed class Transaction : IDisposable
+public struct Transaction : IDisposable
 {
-	private TransactionType m_txType;
+	private readonly TransactionType m_txType;
 
-	private VistaDBHelper m_helper;
+	private readonly List<string> m_statements;
 
-	private List<string> m_statements = new List<string>();
+	private bool m_disposed;
 
 	public void Dispose()
 	{
-		m_statements.Clear();
-		GC.SuppressFinalize(this);
+		if (!m_disposed)
+		{
+			m_disposed = true;
+			m_statements.Clear();
+			GC.SuppressFinalize(this);
+		}
 	}
 
 	public void Enqueue(string statement)
@@ -22,41 +26,31 @@ public sealed class Transaction : IDisposable
 		m_statements.Add(statement);
 	}
 
-	public bool Execute()
+	public int Execute(IDataStore store)
 	{
-		return ExecuteInner(m_helper);
-	}
-
-	public bool Execute(VistaDBHelper helper)
-	{
-		return ExecuteInner(helper);
-	}
-
-	public Transaction(VistaDBHelper helper, TransactionType type)
-	{
-		m_txType = type;
-		m_helper = helper;
+		if (store == null || m_statements.Count == 0)
+		{
+			return 0;
+		}
+		if (TransactionType.Update == m_txType)
+		{
+			return store.BulkUpdate(m_statements);
+		}
+		if (TransactionType.Insert == m_txType)
+		{
+			return store.BulkInsert(m_statements);
+		}
+		if (TransactionType.Delete == m_txType)
+		{
+			return store.BulkDelete(m_statements);
+		}
+		return 0;
 	}
 
 	public Transaction(TransactionType type)
 	{
+		m_disposed = false;
 		m_txType = type;
-	}
-
-	private bool ExecuteInner(VistaDBHelper helper)
-	{
-		if (TransactionType.Update == m_txType)
-		{
-			return helper.BulkUpdate(m_statements) == m_statements.Count;
-		}
-		if (TransactionType.Insert == m_txType)
-		{
-			return helper.BulkInsert(m_statements) == m_statements.Count;
-		}
-		if (TransactionType.Delete == m_txType)
-		{
-			return helper.BulkDelete(m_statements) == m_statements.Count;
-		}
-		return false;
+		m_statements = new List<string>();
 	}
 }

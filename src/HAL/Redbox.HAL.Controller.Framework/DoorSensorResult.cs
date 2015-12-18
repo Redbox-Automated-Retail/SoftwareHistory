@@ -4,6 +4,6 @@ public enum DoorSensorResult
 {
 	Ok,
 	FrontDoor,
-	RearDoor,
-	AuxReadError
+	AuxReadError,
+	SoftwareOverride
 }

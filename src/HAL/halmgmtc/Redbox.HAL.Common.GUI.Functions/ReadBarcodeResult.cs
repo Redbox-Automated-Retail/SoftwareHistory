@@ -1,10 +1,23 @@
 using System;
+using System.Collections.Generic;
 using Redbox.HAL.Client;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
-public class ReadBarcodeResult
+public sealed class ReadBarcodeResult
 {
+	private sealed class ReadDiskJob : JobExecutor
+	{
+		protected override string JobName => "read-barcode";
+
+		protected override string Label => "MS read barcode";
+
+		internal ReadDiskJob(HardwareService service)
+			: base(service)
+		{
+		}
+	}
+
 	public bool IsDuplicate { get; private set; }
 
 	public string ScanTime { get; private set; }
@@ -15,45 +28,37 @@ public class ReadBarcodeResult
 
 	public static ReadBarcodeResult ReadBarcodeOfDiskInPicker(HardwareService service)
 	{
-		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-		hardwareJobSchedule.StartTime = DateTime.Now;
-		hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-		HardwareJobSchedule schedule = hardwareJobSchedule;
-		HardwareCommandResult hardwareCommandResult = service.ScheduleJob("read-barcode", "MS read barcode", enableDebugging: false, schedule, out var job);
-		if (!hardwareCommandResult.Success)
+		using ReadDiskJob readDiskJob = new ReadDiskJob(service);
+		readDiskJob.Run();
+		if (readDiskJob.EndStatus == HardwareJobStatus.Errored || readDiskJob.Errors.ContainsError())
 		{
 			return CreateErrorResult();
 		}
-		ClientHelper clientHelper = new ClientHelper();
-		if (!clientHelper.WaitForJob(job, out var _))
-		{
-			return CreateErrorResult();
-		}
-		if (!job.GetResults(out var results).Success)
-		{
-			return CreateErrorResult();
-		}
-		return FromResults(results);
+		return FromResults(readDiskJob.Results);
 	}
 
-	public static ReadBarcodeResult FromResults(ProgramResult[] results)
+	public static ReadBarcodeResult FromResults(List<ProgramResult> results)
 	{
-		ReadBarcodeResult readBarcodeResult = new ReadBarcodeResult();
-		foreach (ProgramResult programResult in results)
+		if (results.Count == 0)
 		{
-			if (programResult.Code.Equals("Read-ID", StringComparison.CurrentCultureIgnoreCase))
+			return CreateErrorResult();
+		}
+		ReadBarcodeResult readBarcodeResult = new ReadBarcodeResult();
+		foreach (ProgramResult result in results)
+		{
+			if (result.Code.Equals("Read-ID", StringComparison.CurrentCultureIgnoreCase))
 			{
-				readBarcodeResult.Barcode = (programResult.ItemID.IsUnknown() ? programResult.ItemID.Metadata : programResult.ItemID.Barcode);
+				readBarcodeResult.Barcode = (result.ItemID.IsUnknown() ? result.ItemID.Metadata : result.ItemID.Barcode);
 			}
-			else if (programResult.Code.Equals("ReadTime", StringComparison.CurrentCultureIgnoreCase))
+			else if (result.Code.Equals("ReadTime", StringComparison.CurrentCultureIgnoreCase))
 			{
-				readBarcodeResult.ScanTime = programResult.Message;
+				readBarcodeResult.ScanTime = result.Message;
 			}
-			else if (programResult.Code.Equals("NumBarcodes", StringComparison.CurrentCultureIgnoreCase))
+			else if (result.Code.Equals("NumBarcodes", StringComparison.CurrentCultureIgnoreCase))
 			{
-				readBarcodeResult.Count = programResult.Message;
+				readBarcodeResult.Count = result.Message;
 			}
-			else if (programResult.Code == "DuplicateDetected")
+			else if (result.Code == "DuplicateDetected")
 			{
 				readBarcodeResult.IsDuplicate = true;
 			}

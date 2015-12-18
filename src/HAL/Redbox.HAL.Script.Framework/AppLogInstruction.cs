@@ -4,7 +4,7 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class AppLogInstruction : Instruction
+public sealed class AppLogInstruction : Instruction
 {
 	private enum OperandArgs
 	{
@@ -21,38 +21,25 @@ public class AppLogInstruction : Instruction
 		return operand.Equals("CONFIGURE");
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0)
+		if (!operandTokens[0].Value.Equals("CONFIGURE") && operandTokens[0].Type != TokenType.StringLiteral && operandTokens[0].Type != TokenType.Symbol && operandTokens[0].Type != TokenType.ConstSymbol)
 		{
-			if (tokensAfterMnemonic[0].Value.Equals("CONFIGURE"))
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-			else if (tokensAfterMnemonic[0].Type != TokenType.StringLiteral && tokensAfterMnemonic[0].Type != TokenType.Symbol && tokensAfterMnemonic[0].Type != TokenType.ConstSymbol)
-			{
-				result.Errors.Add(Error.NewError("C002", "Expected a string literal and any number of optional substitution parameters.", "Correct the statement and recompile."));
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddInvalidOperandError("Expected a string literal and any number of optional substitution parameters.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		if (base.Operands[0].Value.Equals("CONFIGURE"))
 		{
-			Configure(result);
+			Configure(result, context);
 			return;
 		}
 		string text = base.Operands[0].Value;
 		if (base.Operands[0].Type == TokenType.Symbol || base.Operands[0].Type == TokenType.ConstSymbol)
 		{
-			object symbolValue = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors);
+			object symbolValue = context.GetSymbolValue(base.Operands[0].Value, result.Errors);
 			if (symbolValue == null || result.Errors.Count > 0)
 			{
 				return;
@@ -60,21 +47,21 @@ public class AppLogInstruction : Instruction
 			text = symbolValue as string;
 			if (text == null)
 			{
-				result.Errors.Add(Error.NewError("E001", "Incorrect type argument.", "The symbol specified for APPLOG is not a string type."));
+				result.AddError(ExecutionErrors.InvalidSymbolValue, "The symbol specified for APPLOG is not a string type.");
 				return;
 			}
 		}
-		object[] args = ConvertSymbolsToParameterArray(result.Errors);
+		object[] args = ConvertSymbolsToParameterArray(result.Errors, context);
 		if (result.Errors.Count <= 0)
 		{
 			string msg = string.Format(text, args);
-			ExecutionEngine.Instance.ActiveContext.AppLog?.Write(msg);
+			context.AppLog?.Write(msg);
 		}
 	}
 
-	private void Configure(ExecutionResult result)
+	private void Configure(ExecutionResult result, ExecutionContext context)
 	{
-		ConvertSymbolsToParameterArray(result.Errors);
+		ConvertSymbolsToParameterArray(result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return;
@@ -86,7 +73,7 @@ public class AppLogInstruction : Instruction
 			_ = keyValuePair.Value;
 			if (keyValuePair.Type == TokenType.ConstSymbol || keyValuePair.Type == TokenType.Symbol)
 			{
-				_ = (string)ExecutionEngine.Instance.ActiveContext.GetSymbolValue(keyValuePair.Value, result.Errors);
+				_ = (string)context.GetSymbolValue(keyValuePair.Value, result.Errors);
 				if (result.Errors.ContainsError())
 				{
 					return;
@@ -107,7 +94,7 @@ public class AppLogInstruction : Instruction
 			string text = keyValuePair3.Value;
 			if (keyValuePair3.Type == TokenType.ConstSymbol || keyValuePair3.Type == TokenType.Symbol)
 			{
-				text = (string)ExecutionEngine.Instance.ActiveContext.GetSymbolValue(keyValuePair3.Value, result.Errors);
+				text = (string)context.GetSymbolValue(keyValuePair3.Value, result.Errors);
 				if (result.Errors.ContainsError())
 				{
 					return;
@@ -115,6 +102,6 @@ public class AppLogInstruction : Instruction
 			}
 			subDirectory = text;
 		}
-		ApplicationLog.ConfigureLog(ExecutionEngine.Instance.ActiveContext, logAppends, subDirectory, flushOnWrite, null);
+		ApplicationLog.ConfigureLog(context, logAppends, subDirectory, flushOnWrite, null);
 	}
 }

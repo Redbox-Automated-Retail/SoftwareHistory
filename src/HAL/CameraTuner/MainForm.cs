@@ -137,9 +137,10 @@ public class MainForm : Form
 				ReadWaiter.WaitOne();
 				if (m_shouldSnap && CurrentImage != null)
 				{
-					ScanResult scanResult = instance.Scan(CurrentImage, HasIR ? 7 : 4);
+					ScanResult scanResult = new ScanResult();
+					instance.Scan(CurrentImage, scanResult);
 					CurrentImage = null;
-					m_numberOfBarcodesBox.Text = scanResult.ScannedCodes.ToString();
+					m_numberOfBarcodesBox.Text = scanResult.ReadCount.ToString();
 					m_decodeTimeBox.Text = $"{scanResult.ExecutionTime.Seconds}.{scanResult.ExecutionTime.Milliseconds} s";
 					if (HasIR)
 					{
@@ -171,7 +172,7 @@ public class MainForm : Form
 			WriteErrorText("Found no devices.");
 			return;
 		}
-		videoDevice = new PlayerDevice(videoDevices[0].MonikerString);
+		videoDevice = new PlayerDevice(videoDevices[0].MonikerString, 500, debug: false);
 		if (videoDevice == null)
 		{
 			if (SnapOnly)

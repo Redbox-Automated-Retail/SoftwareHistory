@@ -6,6 +6,7 @@ using System.ServiceProcess;
 using System.Threading;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 using Redbox.HAL.Script.Framework;
 using Redbox.HAL.Service.Framework;
 using log4net;
@@ -14,27 +15,33 @@ namespace Redbox.HAL.Service.Win32;
 
 public class HALService : ServiceBase, ILogger
 {
-	internal const string InitProgram = "init";
+	private enum PowerState
+	{
+		Normal,
+		Suspended
+	}
 
-	internal const string StopMessage = "Stop Hardware Abstraction Layer (HAL) Service.";
+	private const string StopMessage = "Stop Hardware Abstraction Layer (HAL) Service.";
 
-	internal const string StartMessage = "Start Hardware Abstraction Layer (HAL) Service";
-
-	internal const string ServiceMoniker = "HalSvc$Default";
+	private const string StartMessage = "Start Hardware Abstraction Layer (HAL) Service";
 
 	private const string ConfigurationFile = "HAL.xml";
 
 	private string ServiceURI = "rcp://127.0.0.1:7001";
 
+	private Thread ListenerThread;
+
+	private IPCProxy Proxy;
+
+	private PowerState State;
+
 	private static readonly ILog m_errorLog = LogManager.GetLogger("ErrorLog");
 
 	private static readonly ILog m_log = LogManager.GetLogger("ServiceLog");
 
-	private static string m_assemblyDir;
+	private readonly object PowerStateLock = new object();
 
 	private IContainer components;
-
-	private Thread ListenerThread { get; set; }
 
 	public HALService()
 	{
@@ -123,22 +130,28 @@ public class HALService : ServiceBase, ILogger
 	protected override bool OnPowerEvent(PowerBroadcastStatus powerStatus)
 	{
 		LogHelper.Instance.Log("Stop service request from OnPowerEvent; powerStatus = {0}.", powerStatus.ToString());
-		switch (powerStatus)
+		lock (PowerStateLock)
 		{
-		case PowerBroadcastStatus.QuerySuspend:
-			StopService();
-			return true;
-		case PowerBroadcastStatus.ResumeCritical:
-		case PowerBroadcastStatus.ResumeSuspend:
-		case PowerBroadcastStatus.ResumeAutomatic:
-		{
-			ExecutionResult executionResult = new ExecutionResult();
-			bool result = !executionResult.Errors.ContainsError();
-			StartService();
-			return result;
-		}
-		default:
-			return base.OnPowerEvent(powerStatus);
+			switch (powerStatus)
+			{
+			case PowerBroadcastStatus.Suspend:
+				if (State == PowerState.Normal)
+				{
+					ExecutionEngine.Teardown();
+					ControllerService.Instance.ParkHardware();
+					State = PowerState.Suspended;
+				}
+				return true;
+			case PowerBroadcastStatus.ResumeSuspend:
+				if (PowerState.Suspended == State)
+				{
+					StartEngine();
+					State = PowerState.Normal;
+				}
+				return true;
+			default:
+				return base.OnPowerEvent(powerStatus);
+			}
 		}
 	}
 
@@ -151,11 +164,12 @@ public class HALService : ServiceBase, ILogger
 
 	internal void StopService()
 	{
-		ExecutionEngine.Instance.Shutdown();
-		ControllerConfiguration.Instance.Shutdown();
+		ExecutionEngine.Teardown();
+		ControllerService.Instance.ParkHardware();
+		StoreManager.Instance.CloseStores();
 		Log("Stop Hardware Abstraction Layer (HAL) Service.", LogEntryType.Info);
 		WriteEventLogEntry("Stop Hardware Abstraction Layer (HAL) Service.", EventLogEntryType.Information);
-		IPCProxy.Instance.StopListener();
+		Proxy.Dispose();
 	}
 
 	internal void StartService()
@@ -170,21 +184,19 @@ public class HALService : ServiceBase, ILogger
 		string message = string.Format("{0} version {1} (.NET version {2}; OS = {3})", "Start Hardware Abstraction Layer (HAL) Service", typeof(HALService).Assembly.GetName().Version, Environment.Version.ToString(), RuntimeService.Instance.GetPlatform().ToString());
 		try
 		{
-			m_assemblyDir = Path.GetDirectoryName(typeof(HALService).Assembly.Location);
 			LogHelper.Instance.Logger = this;
 			Log(message, LogEntryType.Info);
 			WriteEventLogEntry("Start Hardware Abstraction Layer (HAL) Service", EventLogEntryType.Information);
-			MacroContainer.Instance.Values["RunningPath"] = m_assemblyDir;
-			ExecutionEngine.Instance.Logger = this;
-			ExecutionEngine.Instance.Initialize();
-			if (!IPCProxy.Instance.ParseProtocol(ServiceURI))
+			StoreManager.Instance.Initialize();
+			Proxy = IPCProxy.Parse(ServiceURI);
+			if (!Proxy.ProtocolValid)
 			{
 				string text = "ProtocolURI is malformed; please fix. HAL service is exiting.";
 				Log(text, LogEntryType.Fatal);
 				WriteEventLogEntry(text, EventLogEntryType.Error);
 				return;
 			}
-			string path = Path.Combine(m_assemblyDir, "HAL.xml");
+			string path = RuntimeService.Instance.RuntimePath("HAL.xml");
 			ConfigurationCommand configurationCommand = new ConfigurationCommand();
 			ErrorList errorList = configurationCommand.LoadConfiguration(path);
 			if (errorList.ContainsError())
@@ -194,19 +206,14 @@ public class HALService : ServiceBase, ILogger
 					Log($"Error = {item}", LogEntryType.Info);
 				}
 				Halt("Failed to load configuration.");
-				return;
 			}
-			string fullPath = Path.GetFullPath(m_assemblyDir + "\\..\\Scripts");
-			ErrorList errorList2 = ExecutionEngine.Instance.CompileBaseScripts(fullPath);
-			if (errorList2.ContainsError())
+			else
 			{
-				Halt("Failed to load base scripts.");
-				return;
+				StartEngine();
+				string serviceStartup = RuntimeService.Instance.RuntimePath("ServiceStartup.txt");
+				Proxy.ExecuteStartupFile(serviceStartup);
+				Proxy.StartListener();
 			}
-			ExecutionEngine.Instance.ExecuteStartupInit();
-			string serviceStartup = Path.Combine(m_assemblyDir, "ServiceStartup.txt");
-			IPCProxy.Instance.ExecuteStartupFile(serviceStartup);
-			IPCProxy.Instance.StartListener();
 		}
 		catch (Exception e)
 		{
@@ -218,6 +225,21 @@ public class HALService : ServiceBase, ILogger
 	{
 		string msg2 = $"{msg}: {exception.Message} ({exception.StackTrace})";
 		LogServiceError(msg2);
+	}
+
+	private void StartEngine()
+	{
+		ErrorList errorList = new ErrorList();
+		string fullPath = Path.GetFullPath(RuntimeService.Instance.AssemblyDirectory + "\\..\\Scripts");
+		ExecutionEngine.NewEngine(fullPath, errorList);
+		if (errorList.ContainsError())
+		{
+			Halt("Failed to load base scripts.");
+		}
+		else
+		{
+			ExecutionEngine.Instance.ExecuteStartupInit();
+		}
 	}
 
 	private void Halt(string msg)

@@ -4,7 +4,7 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class JumpInstruction : Instruction
+public sealed class JumpInstruction : Instruction
 {
 	public override string Mnemonic => "JUMP";
 
@@ -12,36 +12,18 @@ public class JumpInstruction : Instruction
 
 	internal override string TargetLabel => base.Operands[0].Value;
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1 || operandTokens[0].Type != TokenType.Symbol)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol)
-			{
-				AddError("C002", "Expected a symbol that equates to a label name.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
-		}
-		else
-		{
-			AddError("C002", "Expected a symbol that equates to a label name.", result.Errors);
+			result.AddInvalidOperandError($"The {Mnemonic} instruction expects a symbol that equates to a label name.");
 		}
 	}
 
-	protected override bool CoreExecute(ExecutionResult result)
-	{
-		return true;
-	}
-
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		Token token = base.Operands[0];
-		if (token.Type == TokenType.Symbol && !ExecutionEngine.Instance.ActiveContext.Registers.JumpToLabel(token.Value))
+		if (token.Type == TokenType.Symbol && !context.Registers.JumpToLabel(token.Value))
 		{
 			AddError("E002", "The label " + token.Value + " does not exist.", result.Errors);
 		}

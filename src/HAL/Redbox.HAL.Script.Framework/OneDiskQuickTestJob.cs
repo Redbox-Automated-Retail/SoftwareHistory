@@ -2,7 +2,8 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class OneDiskQuickTestJob : NativeJobAdapter
+[NativeJob(ProgramName = "one-disk-quick-deck-test", Operand = "ONE-DISK-QUICK-DECK-TEST")]
+internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 {
 	private readonly int[] TestSlots = new int[2] { 30, 60 };
 
@@ -23,26 +24,8 @@ internal class OneDiskQuickTestJob : NativeJobAdapter
 				return false;
 			}
 			Deck deck2 = DecksManager.Instance.GetDeck(deck.Number + 1);
-			if (deck2 == null)
+			if (deck2 == null || deck2.IsQlmDeck)
 			{
-				if (!MoveAndPut(1, 1, "UNKNOWN"))
-				{
-					AddError("Unable to place the disk back into the source slot.");
-					errors++;
-					return false;
-				}
-				ControllerService.Instance.MoveToVend(MoveMode.Get, base.AppLog);
-				return true;
-			}
-			if (deck2.IsQlmDeck)
-			{
-				if (!MoveAndPut(1, 1, "UNKNOWN"))
-				{
-					AddError("Unable to place the disk back into the source slot.");
-					errors++;
-					return false;
-				}
-				ControllerService.Instance.MoveToVend(MoveMode.Get, appLog);
 				return true;
 			}
 			if (!MoveAndPut(deck2.Number, 1, "UNKNOWN"))
@@ -61,6 +44,11 @@ internal class OneDiskQuickTestJob : NativeJobAdapter
 			}
 			ControllerService.Instance.MoveToVend(MoveMode.Get, appLog);
 		}
+	}
+
+	internal OneDiskQuickTestJob(ExecutionResult r, ExecutionContext c)
+		: base(r, c)
+	{
 	}
 
 	private bool TestDeck(Deck deck)

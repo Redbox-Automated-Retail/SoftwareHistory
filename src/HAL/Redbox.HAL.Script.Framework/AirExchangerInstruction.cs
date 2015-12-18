@@ -13,7 +13,12 @@ public sealed class AirExchangerInstruction : Instruction
 		IsConfigured,
 		FanOn,
 		FanOff,
-		FanStatus
+		FanStatus,
+		Enable,
+		Disable,
+		ResetFailureCounter,
+		BoardStatus,
+		Reset
 	}
 
 	public override string Mnemonic => "AIRXCHGR";
@@ -23,33 +28,23 @@ public sealed class AirExchangerInstruction : Instruction
 		return IsValidOperand(operand);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count <= 0)
+		if (!IsValidOperand(operandTokens[0].Value))
 		{
-			result.Errors.Add(Error.NewError("C002", "Expected one operand.", "Correct the statement and recompile."));
-		}
-		else if (IsValidOperand(tokensAfterMnemonic[0].Value))
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-		else
-		{
-			result.Errors.Add(Error.NewError("C002", $"Unexpected operand '{tokensAfterMnemonic[0].Value}'", "Correct the statement and recompile."));
+			result.AddInvalidOperandError($"Unexpected operand '{operandTokens[0].Value}'");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		switch (ConvertToOperand(base.Operands[0].Value))
+		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
 		case ExpectedOperand.None:
-			ServiceLogHelper.Instance.WriteFormattedMessage(LogEntryType.Info, "{0} instruction: converted '{1}' to operand None", Mnemonic, base.Operands[0].Value);
+			context.ServiceLog("{0} instruction: converted '{1}' to operand None", Mnemonic, base.Operands[0].Value);
 			break;
 		case ExpectedOperand.IsConfigured:
-			ExecutionEngine.Instance.ActiveContext.PushTop(IceQubeBoard.Instance.Configured);
+			context.PushTop(IceQubeBoard.Instance.Configured);
 			break;
 		case ExpectedOperand.FanOn:
 			IceQubeBoard.Instance.TurnOnFan();
@@ -57,27 +52,32 @@ public sealed class AirExchangerInstruction : Instruction
 		case ExpectedOperand.FanOff:
 			IceQubeBoard.Instance.TurnOffFan();
 			break;
+		case ExpectedOperand.Enable:
+			IceQubeBoard.Instance.Configured = true;
+			context.PushTop(IceQubeBoard.Instance.Configured);
+			break;
+		case ExpectedOperand.Disable:
+			IceQubeBoard.Instance.TurnOnFan();
+			IceQubeBoard.Instance.Configured = false;
+			context.PushTop(IceQubeBoard.Instance.Configured);
+			break;
 		case ExpectedOperand.FanStatus:
-			ExecutionEngine.Instance.ActiveContext.PushTop(IceQubeBoard.Instance.FanState.ToString().ToUpper());
+			context.PushTop(IceQubeBoard.Instance.FanState.ToString().ToUpper());
+			break;
+		case ExpectedOperand.ResetFailureCounter:
+			IceQubeBoard.Instance.ResetFailureCount();
+			break;
+		case ExpectedOperand.BoardStatus:
+			context.PushTop(IceQubeBoard.Instance.CheckStatus().ToString().ToUpper());
+			break;
+		case ExpectedOperand.Reset:
+			context.PushTop(IceQubeBoard.Instance.Reset().ToString().ToUpper());
 			break;
 		}
 	}
 
 	private bool IsValidOperand(string operand)
 	{
-		return ConvertToOperand(operand) != ExpectedOperand.None;
-	}
-
-	private ExpectedOperand ConvertToOperand(string operand)
-	{
-		ExpectedOperand expectedOperand = ExpectedOperand.None;
-		try
-		{
-			return (ExpectedOperand)Enum.Parse(typeof(ExpectedOperand), operand, ignoreCase: true);
-		}
-		catch (ArgumentException)
-		{
-			return ExpectedOperand.None;
-		}
+		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 }

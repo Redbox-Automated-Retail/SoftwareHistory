@@ -7,7 +7,7 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public class IfInstruction : Instruction
 {
-	protected static class Constants
+	private static class Constants
 	{
 		internal static class Operands
 		{
@@ -46,38 +46,29 @@ public class IfInstruction : Instruction
 		return false;
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 3)
+		if (operandTokens.Count != 3)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.Symbol && tokensAfterMnemonic[1].Type != TokenType.Operator)
-			{
-				AddError("C002", "Expected a symbol and relational or equality operator.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddError(ExecutionErrors.InvalidOperand, "The IF mnemonic requires a symbol, followed by a relational or equality operator and a comparand.");
 		}
-		else
+		else if (operandTokens[0].Type != TokenType.Symbol && operandTokens[1].Type != TokenType.Operator)
 		{
-			AddError("C002", "The IF mnemonic requires a symbol, followed by a relational or equality operator and a comparand.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected a symbol and relational or equality operator.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		IComparable comparable = (IComparable)base.Operands[0].ConvertValue();
 		if ((base.Operands[0].Type == TokenType.Symbol || base.Operands[0].Type == TokenType.ConstSymbol) && base.Operands[0].Value.Equals(comparable))
 		{
-			comparable = (IComparable)ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors);
+			comparable = (IComparable)context.GetSymbolValue(base.Operands[0].Value, result.Errors);
 		}
 		IComparable comparable2 = (IComparable)base.Operands[2].ConvertValue();
 		if ((base.Operands[2].Type == TokenType.Symbol || base.Operands[2].Type == TokenType.ConstSymbol) && base.Operands[2].Value.Equals(comparable2))
 		{
-			comparable2 = (IComparable)ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[2].Value, result.Errors);
+			comparable2 = (IComparable)context.GetSymbolValue(base.Operands[2].Value, result.Errors);
 		}
 		if (comparable != null && comparable2 != null && comparable.GetType() != comparable2.GetType())
 		{

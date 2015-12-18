@@ -5,123 +5,60 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class CoreCommand
+internal sealed class CoreCommand
 {
-	public int? Timeout { get; private set; }
+	internal readonly int OperationTimeout;
 
-	public int? StatusBit { get; private set; }
+	internal readonly RedboxSerialPort Port;
 
-	public string Command { get; private set; }
+	internal readonly int? StatusBit;
 
-	public CommandType Type { get; private set; }
+	internal readonly int CommandWait;
 
-	public int CommandWait { get; private set; }
+	internal readonly string ResetCommand;
 
-	public string ResetCommand { get; private set; }
+	internal readonly AddressSelector Address;
 
-	public object[] Parameters { get; private set; }
+	internal readonly int WaitPauseTime;
 
-	public bool WaitForCompletion { get; private set; }
+	internal string Command { get; private set; }
 
-	public AddressSelector Address { get; private set; }
-
-	public AddressSelector? StatusAddress { get; private set; }
-
-	public int? WaitPauseTime { get; private set; }
-
-	internal RedboxSerialPort Port { get; private set; }
-
-	private static bool IsMultiprocessor { get; set; }
-
-	public static CoreCommand MakeCommand(CommandType type, params object[] parms)
+	internal static CoreCommand Create(CommandType type, int? timeout, RedboxSerialPort port)
 	{
-		return new CoreCommand(type, null, parms);
+		return new CoreCommand(type, timeout, port);
 	}
 
-	internal CoreCommand(CommandType type, RedboxSerialPort port)
-		: this(type, waitForCompletion: false, null, port, null)
+	internal static CoreCommand Create(CommandType type, RedboxSerialPort port)
 	{
+		return new CoreCommand(type, null, port);
 	}
 
-	internal CoreCommand(CommandType type, RedboxSerialPort port, params object[] parms)
-		: this(type, waitForCompletion: false, null, port, parms)
+	internal static CoreCommand Create(CommandType type, RedboxSerialPort port, params object[] args)
 	{
-	}
-
-	internal CoreCommand(CommandType type, bool waitForCompletion, int? timeout, RedboxSerialPort port, params object[] parms)
-	{
-		Port = port;
-		Type = type;
-		Timeout = timeout;
-		Parameters = parms;
-		WaitForCompletion = waitForCompletion;
-		FieldInfo field = typeof(CommandType).GetField(Type.ToString());
-		if (field == null)
-		{
-			return;
-		}
-		CommandPropertiesAttribute properties = CommandPropertiesAttribute.GetProperties(field, ControllerConfiguration.Instance.Revision ?? "A");
-		if (properties != null)
-		{
-			if (properties.Timeout != -1 && !Timeout.HasValue)
-			{
-				Timeout = properties.Timeout;
-			}
-			if (properties.StatusBit != -1)
-			{
-				StatusBit = properties.StatusBit;
-			}
-			Command = properties.Command;
-			Address = properties.Address;
-			ResetCommand = properties.ResetCommand;
-			if (properties.StatusAddress != AddressSelector.None)
-			{
-				StatusAddress = properties.StatusAddress;
-			}
-			CommandWait = 8000;
-			if (properties.CommandWait != -1)
-			{
-				CommandWait = properties.CommandWait;
-			}
-			if (-1 != properties.WaitPauseTime)
-			{
-				WaitPauseTime = properties.WaitPauseTime;
-			}
-			if (IsMultiprocessor && properties.MultiProcWaitTime != -1)
-			{
-				WaitPauseTime = properties.MultiProcWaitTime;
-			}
-		}
-	}
-
-	public string GetFormattedCommand()
-	{
-		string text = Command;
-		if (text.IndexOf("{") != -1 && Parameters.Length > 0)
-		{
-			text = string.Format(Command, Parameters);
-		}
-		return text;
+		CoreCommand coreCommand = new CoreCommand(type, null, port);
+		coreCommand.Command = string.Format(coreCommand.Command, args);
+		return coreCommand;
 	}
 
 	internal CoreResponse Execute()
 	{
-		CoreResponse coreResponse = SendCommand(Address, GetFormattedCommand(), CommandWait);
-		if (coreResponse.CommunicationError)
+		if (ControllerConfiguration.Instance.EnableCommandTrace)
+		{
+			LogHelper.Instance.Log("[CoreCommand] Executing command {0}", Command);
+		}
+		CoreResponse coreResponse = SendCommand(Command);
+		if (coreResponse.CommunicationError || !StatusBit.HasValue)
 		{
 			return coreResponse;
 		}
-		if (StatusBit.HasValue && WaitForCompletion)
+		coreResponse.TimedOut = WaitForCommand();
+		if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
 		{
-			coreResponse.TimedOut = WaitForCommand();
-			if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
+			string[] array = ResetCommand.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			string[] array2 = array;
+			foreach (string command in array2)
 			{
-				string[] array = ResetCommand.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-				string[] array2 = array;
-				foreach (string command in array2)
-				{
-					SendCommand(Address, command, CommandWait);
-				}
+				SendCommand(command);
 			}
 		}
 		return coreResponse;
@@ -129,49 +66,52 @@ public sealed class CoreCommand
 
 	internal bool WaitForCommand()
 	{
-		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, WaitPauseTime.HasValue ? WaitPauseTime.Value : 0);
+		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, WaitPauseTime);
+		if (ControllerConfiguration.Instance.EnableCommandTrace)
+		{
+			LogHelper.Instance.Log("[WaitForCommand] Start.");
+		}
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		do
 		{
-			if (WaitPauseTime.HasValue)
+			PerfFunctions.SpinWait(timespan);
+			CoreResponse coreResponse = SendCommand("S");
+			if (coreResponse.CommunicationError)
 			{
-				PerfFunctions.SpinWait(timespan);
+				return true;
 			}
-			CoreResponse coreResponse = SendCommand(StatusAddress ?? Address, "S", 8000);
 			if (!coreResponse.IsBitSet(StatusBit.Value))
 			{
 				return false;
 			}
 		}
-		while (!Timeout.HasValue || !(executionTimer.ElapsedMilliseconds > Timeout));
-		executionTimer.Stop();
-		LogHelper.Instance.Log($"CoreCommand.WaitForCommand timed out: CommandType = {Type}, threadTimer.ElapsedMilliseconds = {executionTimer.ElapsedMilliseconds}, Timeout = {Timeout}", LogEntryType.Debug);
+		while (executionTimer.ElapsedMilliseconds <= OperationTimeout);
 		return true;
 	}
 
-	internal CoreResponse SendCommand(AddressSelector address, string command, int readWait)
+	internal CoreResponse SendCommand(string command)
 	{
-		CoreResponse coreResponse = new CoreResponse();
+		CoreResponse coreResponse = new CoreResponse(Address);
 		Port.ResetBuffers();
-		using (ChannelResponse channelResponse = Port.WriteCommand(address.ToString(), 20000))
+		using (IChannelResponse channelResponse = Port.SendRecv(Address.ToString(), 5000))
 		{
 			coreResponse.CommunicationError = !channelResponse.CommOk;
 			if (!channelResponse.CommOk)
 			{
-				LogHelper.Instance.Log("Selector on address {0} timed out; port = {1}.", address.ToString(), Port.Name);
-				coreResponse.CommErrorDiagnostic = ComputeCommunicationError(address);
+				LogHelper.Instance.Log("[SendCommand] Selector on address {0} timed out; port = {1}.", Address.ToString(), Port.Name);
+				coreResponse.CommErrorDiagnostic = ComputeCommunicationError(Address);
 				return coreResponse;
 			}
 		}
 		Port.ResetBuffers();
-		using ChannelResponse channelResponse2 = Port.WriteCommand(command, readWait);
+		using IChannelResponse channelResponse2 = Port.SendRecv(command, CommandWait);
 		coreResponse.CommunicationError = !channelResponse2.CommOk;
 		if (channelResponse2.CommOk)
 		{
 			coreResponse.OpCodeResponse = Encoding.ASCII.GetString(channelResponse2.RawResponse);
-			if (Port.EnableDebugging && command != "S")
+			if (ControllerConfiguration.Instance.EnableCommandTrace)
 			{
-				LogHelper.Instance.Log("Corecommand: Command {0} Response {1}", command, coreResponse.OpCodeResponse);
+				LogHelper.Instance.Log("[SendCommand] Command {0} Response {1}", command, coreResponse.OpCodeResponse);
 			}
 		}
 		return coreResponse;
@@ -179,8 +119,7 @@ public sealed class CoreCommand
 
 	private string ComputeCommunicationError(AddressSelector address)
 	{
-		string arg = BoardName(address);
-		string text = $"{arg} is not responsive.";
+		string text = $"{BoardName(address)} is not responsive.";
 		LogHelper.Instance.Log(text, LogEntryType.Error);
 		return text;
 	}
@@ -198,8 +137,35 @@ public sealed class CoreCommand
 		};
 	}
 
-	static CoreCommand()
+	private CoreCommand(CommandType type, int? timeout, RedboxSerialPort port)
 	{
-		IsMultiprocessor = false;
+		Port = port;
+		FieldInfo field = typeof(CommandType).GetField(type.ToString());
+		if (field == null)
+		{
+			LogHelper.Instance.Log("[CoreCommand] Could not locate type field on {0}", type.ToString());
+			return;
+		}
+		CommandPropertiesAttribute properties = CommandPropertiesAttribute.GetProperties(field);
+		if (properties == null)
+		{
+			LogHelper.Instance.Log("[CoreCommand] Could not locate PropertiesAttribute on {0}", type.ToString());
+			return;
+		}
+		Command = properties.Command;
+		Address = properties.Address;
+		ResetCommand = properties.ResetCommand;
+		WaitPauseTime = ((-1 != properties.WaitPauseTime) ? properties.WaitPauseTime : 0);
+		OperationTimeout = timeout ?? 0;
+		StatusBit = null;
+		if (-1 != properties.StatusBit)
+		{
+			StatusBit = properties.StatusBit;
+			if (OperationTimeout == 0 || WaitPauseTime == 0)
+			{
+				LogHelper.Instance.Log("[CoreCommand] On CommandType {0} there is a status bit but Timeout = {1} and WaitPause = {2}", type.ToString(), OperationTimeout, WaitPauseTime);
+			}
+		}
+		CommandWait = ((-1 != properties.CommandWait) ? properties.CommandWait : 8000);
 	}
 }

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Controller.Framework;
 
-public enum PickerEdgeCheckResult
+internal enum PickerEdgeCheckResult
 {
 	Clear = 1,
 	JustOutOfSlot,

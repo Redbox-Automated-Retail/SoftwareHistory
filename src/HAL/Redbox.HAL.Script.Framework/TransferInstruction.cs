@@ -5,53 +5,36 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class TransferInstruction : Instruction
+public sealed class TransferInstruction : Instruction
 {
-	protected static class KeyNames
-	{
-		public const string GetPeek = "GET-PEEK";
+	private const string SourceDeck = "SRC-DECK";
 
-		public const string PutPeek = "PUT-PEEK";
+	private const string SourceSlot = "SRC-SLOT";
 
-		public const string SourceDeck = "SRC-DECK";
+	private const string DestDeck = "DEST-DECK";
 
-		public const string SourceSlot = "SRC-SLOT";
-
-		public const string DestDeck = "DEST-DECK";
-
-		public const string DestSlot = "DEST-SLOT";
-
-		public const string HomeOnFailure = "HOMEONFAILURE";
-
-		public const string ID = "ID";
-	}
+	private const string DestSlot = "DEST-SLOT";
 
 	public override string Mnemonic => "XFER";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0 && tokensAfterMnemonic.Count <= 7)
+		if (operandTokens.Count != 4)
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-		else
-		{
-			AddError("C002", "Expected key value pair SRC-DECK=y, SRC-SLOT=x, DEST-DECK=y, DEST-SLOT=x. The values of x and y may be numeric literals or symbols.", result.Errors);
+			result.AddInvalidOperandError("Expected key value pair SRC-DECK=y, SRC-SLOT=x, DEST-DECK=y, DEST-SLOT=x. The values of x and y may be numeric literals or symbols.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		if (PickerBoard.Instance.IsFull())
+		if (PickerBoard.IsFull())
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop("PICKERFULL");
+			context.PushTop("PICKERFULL");
 			LogHelper.Instance.Log("XFER: the picker is full - bail.");
 			return;
 		}
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("SRC-DECK");
-		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors);
+		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
 		if (!keyValuePairValue.HasValue)
 		{
 			AddError("E004", "Source deck or source slot are undefined, reissue the XFER instruction specifying both source deck and slot values.", result.Errors);
@@ -59,7 +42,7 @@ public class TransferInstruction : Instruction
 		}
 		int value = keyValuePairValue.Value;
 		KeyValuePair keyValuePair2 = base.Operands.GetKeyValuePair("SRC-SLOT");
-		int? keyValuePairValue2 = GetKeyValuePairValue<int?>(keyValuePair2, result.Errors);
+		int? keyValuePairValue2 = GetKeyValuePairValue<int?>(keyValuePair2, result.Errors, context);
 		if (!keyValuePairValue2.HasValue)
 		{
 			AddError("E004", "Source deck or source slot are undefined, reissue the XFER instruction specifying both source deck and slot values.", result.Errors);
@@ -67,9 +50,9 @@ public class TransferInstruction : Instruction
 		}
 		int value2 = keyValuePairValue2.Value;
 		KeyValuePair keyValuePair3 = base.Operands.GetKeyValuePair("DEST-DECK");
-		int? keyValuePairValue3 = GetKeyValuePairValue<int?>(keyValuePair3, result.Errors);
+		int? keyValuePairValue3 = GetKeyValuePairValue<int?>(keyValuePair3, result.Errors, context);
 		KeyValuePair keyValuePair4 = base.Operands.GetKeyValuePair("DEST-SLOT");
-		int? keyValuePairValue4 = GetKeyValuePairValue<int?>(keyValuePair4, result.Errors);
+		int? keyValuePairValue4 = GetKeyValuePairValue<int?>(keyValuePair4, result.Errors, context);
 		if (result.Errors.Count > 0)
 		{
 			return;
@@ -82,15 +65,15 @@ public class TransferInstruction : Instruction
 		Location location = new Location(value, value2);
 		Location location2 = new Location(keyValuePairValue3.Value, keyValuePairValue4.Value);
 		LogHelper.Instance.Log("XFER: {0} to {1}", location.ToString(), location2.ToString());
-		ApplicationLog appLog = ExecutionEngine.Instance.ActiveContext.AppLog;
+		ApplicationLog appLog = context.AppLog;
 		TransferResult transferResult = ControllerService.Instance.Transfer(location, location2, appLog);
 		if (transferResult.Transferred)
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop("SUCCESS");
+			context.PushTop("SUCCESS");
 		}
 		else
 		{
-			ExecutionEngine.Instance.ActiveContext.PushTop(transferResult.FailedError.ToUpper());
+			context.PushTop(transferResult.FailedError.ToUpper());
 		}
 	}
 }

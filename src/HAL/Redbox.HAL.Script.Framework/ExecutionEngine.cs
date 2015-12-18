@@ -3,106 +3,58 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
+using System.Timers;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
-public class ExecutionEngine
+public sealed class ExecutionEngine : IStatusChangeObserver
 {
-	private class TimeComparer : IComparer<ExecutionContext>
-	{
-		public int Compare(ExecutionContext left, ExecutionContext right)
-		{
-			return left.CreatedOn.CompareTo(right.CreatedOn);
-		}
-	}
+	internal readonly string DataDirectory;
 
-	private readonly object ContextLock = new object();
+	private bool SchedulerEnabled;
 
-	private TimeSpan? m_rebootWindowStart = null;
+	private bool ContextSwitchRequested;
 
-	private TimeSpan? m_rebootTime = null;
+	private Thread SchedulerThread;
 
-	private bool m_checkedRebootTime;
+	private bool PrintedRebootDiagnostic;
 
-	private string m_dataDirectory;
+	private readonly ReaderWriterLockSlim ContextLock = new ReaderWriterLockSlim();
 
-	private ExecutionContextList m_contexts;
+	private readonly ExecutionContextList Contexts = new ExecutionContextList();
 
-	private ExecutionContext m_immediateModeContext;
+	private readonly object ModeLock = new object();
 
-	private readonly string[] NonSchedulableJobsWithinReboot = new string[6] { "qlm-unload", "thin", "unload-thin", "sync", "thin-vmz", "clean-vmz" };
+	private readonly ManualResetEvent SchedulerResetEvent = new ManualResetEvent(initialState: false);
+
+	private readonly ProgramCache ProgramCache = new ProgramCache();
+
+	private readonly string[] NonSchedulableJobsWithinReboot = new string[7] { "qlm-unload", "thin", "unload-thin", "sync", "sync-locations", "thin-vmz", "clean-vmz" };
 
 	private readonly string[] SingletonJobs = new string[1] { "clean-vmz" };
 
-	private IDictionary<string, CompiledProgram> m_programCache;
+	private readonly RedboxTimer RebootWakeupTimer;
 
-	public static ExecutionEngine Instance => Singleton<ExecutionEngine>.Instance;
+	private readonly TimeSpan? RebootWindowStart = null;
 
-	public ExecutionContext ActiveContext { get; set; }
+	private ExecutionContext m_immediateModeContext;
 
-	public ILogger Logger { get; set; }
+	private EngineModes m_currentMode = EngineModes.Normal;
+
+	private static readonly object InstanceLock = new object();
+
+	public static ExecutionEngine Instance { get; private set; }
+
+	public ExecutionContext ActiveContext { get; private set; }
 
 	internal ExecutionContext InitJob { get; set; }
 
-	internal string DataDirectory
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(m_dataDirectory))
-			{
-				m_dataDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
-			}
-			return m_dataDirectory;
-		}
-	}
+	internal TimeSpan? KioskRebootTime { get; private set; }
 
-	internal TimeSpan? KioskRebootTime
-	{
-		get
-		{
-			if (m_checkedRebootTime)
-			{
-				return m_rebootTime;
-			}
-			m_checkedRebootTime = true;
-			int rebootExecutionPreventionWindow = ControllerConfiguration.Instance.RebootExecutionPreventionWindow;
-			if (rebootExecutionPreventionWindow <= 0)
-			{
-				m_rebootTime = null;
-				m_rebootWindowStart = null;
-				return null;
-			}
-			string secretValue = RegistryOptions.Instance.GetSecretValue<string>("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store", "RebootTime");
-			if (!string.IsNullOrEmpty(secretValue))
-			{
-				try
-				{
-					m_rebootTime = TimeSpan.Parse(secretValue);
-					m_rebootWindowStart = m_rebootTime.Value.Subtract(new TimeSpan(0, rebootExecutionPreventionWindow, 0));
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("Parsing kiosk reboot time failed.", e);
-					m_rebootTime = null;
-				}
-			}
-			return m_rebootTime;
-		}
-	}
-
-	private IDictionary<string, CompiledProgram> ProgramCache
-	{
-		get
-		{
-			if (m_programCache == null)
-			{
-				m_programCache = new Dictionary<string, CompiledProgram>();
-			}
-			return m_programCache;
-		}
-	}
+	internal EngineModes Mode => m_currentMode;
 
 	private ExecutionContext ImmediateModeContext
 	{
@@ -116,40 +68,58 @@ public class ExecutionEngine
 					Label = "HAL Script Immediate Mode"
 				};
 			}
-			lock (ContextLock)
+			using (new WithUpgradeableReadLock(ContextLock))
 			{
 				if (!Contexts.Contains(m_immediateModeContext))
 				{
-					Contexts.Add(m_immediateModeContext);
+					using (new WithWriteLock(ContextLock))
+					{
+						Contexts.Add(m_immediateModeContext);
+					}
 				}
 			}
 			return m_immediateModeContext;
 		}
 	}
 
-	private ExecutionContextList Contexts
+	public static ExecutionEngine NewEngine(string scriptsPath, ErrorList errors)
 	{
-		get
+		lock (InstanceLock)
 		{
-			if (m_contexts == null)
+			if (Instance == null)
 			{
-				m_contexts = new ExecutionContextList();
+				Instance = new ExecutionEngine();
+				Instance.Initialize(scriptsPath, errors);
+				LogHelper.Instance.Log("Execution service version {0} initialized.", typeof(ExecutionEngine).Assembly.GetName().Version);
 			}
-			return m_contexts;
+			return Instance;
 		}
 	}
 
-	private ManualResetEvent SchedulerResetEvent { get; set; }
+	public void StatusChange(ExecutionContextStatus status)
+	{
+		if (ExecutionContextStatus.Completed == status || ExecutionContextStatus.Errored == status)
+		{
+			PollerManager.Instance.RegisterPollers();
+			CleanManager.Instance.Init();
+		}
+	}
 
-	private bool ContextSwitchRequested { get; set; }
-
-	private Thread SchedulerThread { get; set; }
-
-	private bool SchedulerEnabled { get; set; }
-
-	private TimeSpan RebootWindowStart => m_rebootWindowStart.Value;
-
-	private bool PrintedRebootDiagnostic { get; set; }
+	public static void Teardown()
+	{
+		lock (InstanceLock)
+		{
+			if (Instance != null)
+			{
+				if (Instance.InitJob != null)
+				{
+					Instance.InitJob.RemoveObserver(Instance);
+				}
+				Instance.Shutdown();
+				Instance = null;
+			}
+		}
+	}
 
 	public string GetInitJobStatus()
 	{
@@ -168,164 +138,23 @@ public class ExecutionEngine
 	{
 		LogHelper.Instance.Log("Schedule init job", LogEntryType.Info);
 		InitJob = ScheduleJob("init", "HAL Service Startup: Init", DateTime.Now, ProgramPriority.High);
-		InitJob.StatusChangeCallback = HandleStartupInitStatusChange;
+		InitJob.AddObserver(this);
 		InitJob.Resume();
-	}
-
-	public void Initialize()
-	{
-		ControllerConfiguration.Instance.ConfigurationChangeStart += ConfigurationUpdateStart;
-		ControllerConfiguration.Instance.ConfigurationChangeEnd += ConfigurationUpdateFinish;
-		LoadJobs();
-		CleanupJobs(force: false);
-		SchedulerResetEvent = new ManualResetEvent(initialState: false);
-		SchedulerThread = new Thread(ProcessScheduler)
-		{
-			Name = "HAL Script Scheduler",
-			IsBackground = true
-		};
-		SchedulerThread.SetApartmentState(ApartmentState.STA);
-		SchedulerThread.Start();
-		SchedulerEnabled = true;
-	}
-
-	public void Shutdown()
-	{
-		Instance.Compile("CAMERA STOP FORCE=TRUE", "$$$immediate$$$");
-		ExecutionContext executionContext = ExecuteImmediate();
-		executionContext.WaitForCompletion();
-		QuickReturnPoller.Instance.Shutdown();
-		MotionControlSafetyPoller.Instance.Shutdown(joinThread: false);
-		WatchdogPoller.Instance.Shutdown(joinThread: false);
-		TSMonitor.Instance.Stop();
-		SchedulerEnabled = false;
-		SuspendAll(force: true);
-		while (ActiveContext != null)
-		{
-			Thread.Sleep(0);
-		}
-		LogHelper.Instance.Log("ExecutionEngine.Shutdown() complete.");
 	}
 
 	public ExecutionResult Compile(string programSource, string programName)
 	{
-		return CompileStringSource(programName, programSource);
+		return ProgramCache.CompileStringSource(programName, programSource);
 	}
 
 	public ExecutionResult Compile(Stream stream, string programName)
 	{
-		return CompileInner(stream, programName);
-	}
-
-	public void LoadJobs()
-	{
-		lock (ContextLock)
-		{
-			string path = Path.Combine(DataDirectory, "contexts");
-			try
-			{
-				if (!Directory.Exists(path))
-				{
-					LogHelper.Instance.Log("Contexts directory doesn't exist; creating.", LogEntryType.Debug);
-					Directory.CreateDirectory(path);
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("Unable to create contexts directory.", e);
-			}
-			string[] directories = Directory.GetDirectories(path);
-			string[] array = directories;
-			foreach (string text in array)
-			{
-				string path2 = Path.Combine(text, "ctx.data");
-				ExecutionContext executionContext = null;
-				try
-				{
-					using (FileStream serializationStream = File.OpenRead(path2))
-					{
-						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						executionContext = (ExecutionContext)binaryFormatter.Deserialize(serializationStream);
-					}
-					if (executionContext != null)
-					{
-						Contexts.Add(executionContext);
-					}
-				}
-				catch
-				{
-					LogHelper.Instance.Log("Unable to load context {0}; deleting.", text);
-					try
-					{
-						Directory.Delete(text, recursive: true);
-					}
-					catch (Exception e2)
-					{
-						LogHelper.Instance.Log(" >> Can't delete: ", e2);
-					}
-				}
-			}
-			foreach (ExecutionContext context in Contexts)
-			{
-				if (context.Status.Value == ExecutionContextStatus.Suspended)
-				{
-					if (context.StartTime.HasValue)
-					{
-						int num = DateTime.Compare(context.StartTime.Value, DateTime.Now);
-						if (num >= 0)
-						{
-							if (context.StartTime.Value < DateTime.Now.AddMinutes(5.0))
-							{
-								context.StartTime = DateTime.Now.AddMinutes(5.0);
-							}
-							context.Status.NextValue = ExecutionContextStatus.Pending;
-							context.Status.Promote();
-							LogHelper.Instance.Log("Promoting job {0} ({1}) to PENDING.", context.ID, context.ProgramName);
-						}
-					}
-					else if (context.ProgramName.Equals("init") || context.ProgramName.Equals("return") || context.ProgramName.Equals("vend") || context.ProgramName == "soft-sync")
-					{
-						context.Status.NextValue = ExecutionContextStatus.Garbage;
-						context.Status.Promote();
-					}
-				}
-				else if (context.Status.Value == ExecutionContextStatus.Pending && context.ProgramName == "init")
-				{
-					LogHelper.Instance.Log("Job {0} ( {1} ) is in pending status at initialization; mark it garbage.", context.ID, context.ProgramName);
-					context.Status.NextValue = ExecutionContextStatus.Garbage;
-					context.Status.Promote();
-				}
-			}
-			if (!ContainsExecuting("qlm-unload"))
-			{
-				FindYoungestJobAndPend("qlm-unload", 5);
-			}
-			if (!ContainsExecuting("thin"))
-			{
-				FindYoungestJobAndPend("thin", 5);
-			}
-			if (!ContainsExecuting("thin") && !ContainsExecuting("qlm-unload") && !ContainsExecuting("unload-thin"))
-			{
-				FindYoungestJobAndPend("unload-thin", 5);
-			}
-			if (!ContainsExecuting("sync"))
-			{
-				FindYoungestJobAndPend("sync", 5);
-			}
-			if (!ContainsExecuting("thin-vmz"))
-			{
-				FindYoungestJobAndPend("thin-vmz", 5);
-			}
-			if (!ContainsExecuting("clean-vmz"))
-			{
-				FindYoungestJobAndPend("clean-vmz", 5);
-			}
-		}
+		return ProgramCache.CompileInner(stream, programName);
 	}
 
 	public void CleanupJobs(bool force)
 	{
-		lock (ContextLock)
+		using (new WithWriteLock(ContextLock))
 		{
 			IEnumerable<ExecutionContext> enumerable = Contexts.EnumerateGarbage(force);
 			foreach (ExecutionContext item in enumerable)
@@ -341,23 +170,16 @@ public class ExecutionEngine
 
 	public ExecutionContext GetJob(string jobId)
 	{
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
-			foreach (ExecutionContext context in Contexts)
-			{
-				if (context.ID == jobId)
-				{
-					return context;
-				}
-			}
-			return null;
+			return GetJobInner(jobId);
 		}
 	}
 
 	public ExecutionContext[] GetJobByLabel(string label)
 	{
 		List<ExecutionContext> list = new List<ExecutionContext>();
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
 			foreach (ExecutionContext context in Contexts)
 			{
@@ -370,19 +192,10 @@ public class ExecutionEngine
 		}
 	}
 
-	public bool RemoveJob(string jobId)
-	{
-		ExecutionContext job = GetJob(jobId);
-		lock (ContextLock)
-		{
-			return job != null && Contexts.Remove(job);
-		}
-	}
-
 	public List<ExecutionContext> SafeGetJobList()
 	{
 		List<ExecutionContext> list = new List<ExecutionContext>();
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
 			foreach (ExecutionContext context in Contexts)
 			{
@@ -402,12 +215,13 @@ public class ExecutionEngine
 		executionContext.Priority = priority;
 		executionContext.Label = label;
 		ExecutionContext executionContext2 = executionContext;
-		if (!ProgramCache.ContainsKey(progName))
+		CompiledProgram program = ProgramCache.GetProgram(progName);
+		if (program == null)
 		{
 			executionContext2.Result.Errors.Add(Error.NewError("E001", $"The program '{progName}' was not found in the program cache.", "Recompile the program which will place it in the program cache."));
 			return executionContext2;
 		}
-		lock (ContextLock)
+		using (new WithUpgradeableReadLock(ContextLock))
 		{
 			if (IsSingletonJob(progName))
 			{
@@ -422,9 +236,11 @@ public class ExecutionEngine
 					}
 				}
 			}
-			CompiledProgram compiledProgram = ProgramCache[progName];
-			executionContext2.CopyProgramAndReferences(progName, compiledProgram.ParseTree);
-			Contexts.Add(executionContext2);
+			executionContext2.CopyProgramAndReferences(progName, program.ParseTree);
+			using (new WithWriteLock(ContextLock))
+			{
+				Contexts.Add(executionContext2);
+			}
 		}
 		executionContext2.Save();
 		return executionContext2;
@@ -433,34 +249,21 @@ public class ExecutionEngine
 	public ExecutionContext ExecuteImmediate()
 	{
 		ImmediateModeContext.Reset();
-		if (!ProgramCache.ContainsKey("$$$immediate$$$") || ProgramCache["$$$immediate$$$"].CompilerResult.Errors.ContainsError())
+		CompiledProgram program = ProgramCache.GetProgram("$$$immediate$$$");
+		if (program == null || program.CompilerResult.Errors.ContainsError())
 		{
 			ImmediateModeContext.Result.Errors.Add(Error.NewError("E001", string.Format("The program '{0}' was not found in the program cache.", "$$$immediate$$$"), "Recompile the program which will place it in the program cache."));
 			return ImmediateModeContext;
 		}
-		ImmediateModeContext.CopyProgramAndReferences("$$$immediate$$$", ProgramCache["$$$immediate$$$"].ParseTree);
+		ImmediateModeContext.CopyProgramAndReferences("$$$immediate$$$", program.ParseTree);
 		ImmediateModeContext.Priority = ProgramPriority.Immediate;
 		ImmediateModeContext.Resume();
 		return ImmediateModeContext;
 	}
 
-	public IEnumerable<ExecutionContext> EnumerateContexts()
-	{
-		List<ExecutionContext> contexts = new List<ExecutionContext>(Contexts);
-		contexts.Sort((ExecutionContext x, ExecutionContext y) => x.Priority.CompareTo(y.Priority));
-		foreach (ExecutionContext item in contexts)
-		{
-			yield return item;
-		}
-	}
-
 	public ProgramInstruction GetProgram(string programName)
 	{
-		if (!ProgramCache.ContainsKey(programName))
-		{
-			return null;
-		}
-		return ProgramCache[programName].ParseTree;
+		return ProgramCache.GetProgram(programName)?.ParseTree;
 	}
 
 	public void PerformContextSwitch(bool runtimeOnly)
@@ -476,7 +279,7 @@ public class ExecutionEngine
 
 	public void RemoveProgram(string programName)
 	{
-		ProgramCache.Remove(programName);
+		ProgramCache.RemoveProgram(programName);
 	}
 
 	public bool IsImmediateJobPending()
@@ -491,11 +294,15 @@ public class ExecutionEngine
 	public string[] GetPrograms()
 	{
 		List<string> list = new List<string>();
-		foreach (string key in ProgramCache.Keys)
+		List<string> list2 = ProgramCache.ProgramList();
+		using (new DisposeableList<string>(list2))
 		{
-			if (!key.StartsWith("$"))
+			foreach (string item in list2)
 			{
-				list.Add($"{key}|{ProgramCache[key]}|{false}");
+				if (!item.StartsWith("$"))
+				{
+					list.Add($"{item}|{ProgramCache.GetProgram(item)}|{false}");
+				}
 			}
 		}
 		return list.ToArray();
@@ -503,7 +310,7 @@ public class ExecutionEngine
 
 	public void ResumeAll()
 	{
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
 			foreach (ExecutionContext context in Contexts)
 			{
@@ -517,7 +324,7 @@ public class ExecutionEngine
 
 	public void SuspendAll(bool force)
 	{
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
 			foreach (ExecutionContext context in Contexts)
 			{
@@ -541,14 +348,14 @@ public class ExecutionEngine
 		}
 	}
 
-	public void SuspendDevices()
+	public void ChangeMode(EngineModes mode)
 	{
-		QuickReturnPoller.Instance.Shutdown();
-	}
-
-	public void RestartDevices()
-	{
-		QuickReturnPoller.Instance.Startup();
+		lock (ModeLock)
+		{
+			m_currentMode = mode;
+			LogHelper.Instance.Log("[Execution Engine]: Change mode to {0}", m_currentMode.ToString());
+			PollerManager.Instance.OnEngineModeChange(m_currentMode);
+		}
 	}
 
 	public string GetActiveContextProgramName()
@@ -560,58 +367,19 @@ public class ExecutionEngine
 		return ActiveContext.Registers.ActiveFrame.ProgramName;
 	}
 
-	public ErrorList CompileBaseScripts(string basePath)
+	internal NativeJobAdapter MakeJobFromOperand(ExecutionContext ctx, ExecutionResult result, string key)
 	{
-		ErrorList errorList = new ErrorList();
-		Dictionary<string, string> nativeJobs = NativeJobFactory.Instance.NativeJobs;
-		foreach (string key in nativeJobs.Keys)
-		{
-			string text = key;
-			string programSource = nativeJobs[key];
-			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
-			{
-				LogHelper.Instance.Log($"Compile native program {text}", LogEntryType.Info);
-			}
-			ExecutionResult executionResult = CompileStringSource(text, programSource);
-			errorList.AddRange(executionResult.Errors);
-			if (!executionResult.Errors.ContainsError())
-			{
-				continue;
-			}
-			LogHelper.Instance.Log($"There were errors compiling native script {text}", LogEntryType.Error);
-			foreach (Error error in executionResult.Errors)
-			{
-				LogHelper.Instance.Log(error.ToString(), LogEntryType.Error);
-			}
-		}
-		string[] files = Directory.GetFiles(basePath, "*.hs");
-		string[] array = files;
-		foreach (string text2 in array)
-		{
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(text2);
-			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
-			{
-				LogHelper.Instance.Log($"Compile program {fileNameWithoutExtension} from file {text2}", LogEntryType.Info);
-			}
-			using MemoryStream stream = new MemoryStream(FileHelper.ReadToBuffer(text2));
-			ExecutionResult executionResult2 = CompileInner(stream, fileNameWithoutExtension);
-			errorList.AddRange(executionResult2.Errors);
-			if (!executionResult2.Errors.ContainsError())
-			{
-				continue;
-			}
-			LogHelper.Instance.Log($"There were errors compiling script {fileNameWithoutExtension}", LogEntryType.Error);
-			foreach (Error error2 in executionResult2.Errors)
-			{
-				LogHelper.Instance.Log(error2.ToString(), LogEntryType.Error);
-			}
-		}
-		return errorList;
+		return ProgramCache.MakeJobFromOperand(ctx, result, key);
+	}
+
+	internal bool OutsideRebootWindow()
+	{
+		return CanSchedule();
 	}
 
 	internal int ContextCount()
 	{
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
 			return Contexts.Count;
 		}
@@ -646,6 +414,28 @@ public class ExecutionEngine
 
 	private ExecutionEngine()
 	{
+		RebootWakeupTimer = new RedboxTimer("Reboot Wakeup", RestartJobs);
+		DataDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
+		int rebootExecutionPreventionWindow = ControllerConfiguration.Instance.RebootExecutionPreventionWindow;
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore(PersistentMapTypes.Engine);
+		if (rebootExecutionPreventionWindow <= 0)
+		{
+			return;
+		}
+		string value = dataStore.GetValue("RebootTime", string.Empty);
+		if (!string.IsNullOrEmpty(value))
+		{
+			try
+			{
+				KioskRebootTime = TimeSpan.Parse(value);
+				RebootWindowStart = KioskRebootTime.Value.Subtract(new TimeSpan(0, rebootExecutionPreventionWindow, 0));
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("Parsing kiosk reboot time failed.", e);
+				KioskRebootTime = (RebootWindowStart = null);
+			}
+		}
 	}
 
 	private bool IsSingletonJob(string name)
@@ -663,7 +453,7 @@ public class ExecutionEngine
 
 	private void SuspendCritical(bool force)
 	{
-		lock (ContextLock)
+		using (new WithReadLock(ContextLock))
 		{
 			foreach (ExecutionContext context in Contexts)
 			{
@@ -697,13 +487,18 @@ public class ExecutionEngine
 
 	private bool CanSchedule()
 	{
-		if (!KioskRebootTime.HasValue)
+		if (!KioskRebootTime.HasValue || !RebootWindowStart.HasValue)
 		{
 			return true;
 		}
 		TimeSpan timeOfDay = DateTime.Now.TimeOfDay;
-		if (timeOfDay >= RebootWindowStart && timeOfDay <= KioskRebootTime.Value)
+		if (timeOfDay >= RebootWindowStart.Value && timeOfDay <= KioskRebootTime.Value)
 		{
+			if (!RebootWakeupTimer.Started)
+			{
+				TimeSpan span = KioskRebootTime.Value.Add(new TimeSpan(0, 5, 0));
+				RebootWakeupTimer.ScheduleAtNext(span);
+			}
 			if (!PrintedRebootDiagnostic)
 			{
 				LogHelper.Instance.Log($"Time {FormatTime(timeOfDay)} is within 10 minute reboot window of {FormatTime(KioskRebootTime.Value)}; disabling scheduler.", LogEntryType.Info);
@@ -722,168 +517,185 @@ public class ExecutionEngine
 	private ExecutionContext[] GetByName(string name)
 	{
 		List<ExecutionContext> list = new List<ExecutionContext>();
-		foreach (ExecutionContext context in Contexts)
+		using (new WithReadLock(ContextLock))
 		{
-			if (context.ProgramName.Equals(name))
+			foreach (ExecutionContext context in Contexts)
 			{
-				list.Add(context);
+				if (context.ProgramName.Equals(name))
+				{
+					list.Add(context);
+				}
 			}
+			return list.ToArray();
 		}
-		return list.ToArray();
 	}
 
 	private void ConfigurationUpdateStart()
 	{
 		LogHelper.Instance.Log("ExecutionEngine::ConfigurationUpdateStart()");
-		IceQubeBoardPoller.Instance.Shutdown(joinThread: false);
-		QuickReturnPoller.Instance.Shutdown();
-		TSMonitor.Instance.Stop();
+		PollerManager.Instance.ConfigurationUpdateStart();
 	}
 
 	private void ConfigurationUpdateFinish()
 	{
 		LogHelper.Instance.Log("ExecutionEngine::ConfigurationUpdateFinish()");
-		IceQubeBoardPoller.Instance.Start();
-		QuickReturnDevice.Instance.ConfigurationChange();
-		QuickReturnPoller.Instance.Startup();
-		TSMonitor.Instance.Start();
-	}
-
-	private bool ContainsExecuting(string name)
-	{
-		ExecutionContext[] byName = GetByName(name);
-		if (byName.Length == 0)
-		{
-			return false;
-		}
-		ExecutionContext[] array = byName;
-		foreach (ExecutionContext executionContext in array)
-		{
-			if (executionContext.Status.Value == ExecutionContextStatus.Pending || executionContext.Status.Value == ExecutionContextStatus.Running)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void FindYoungestJobAndPend(string jobName, int minutesInFuture)
-	{
-		ExecutionContext[] byName = GetByName(jobName);
-		if (byName.Length == 0)
-		{
-			return;
-		}
-		Array.Sort(byName, new TimeComparer());
-		ExecutionContext executionContext = null;
-		int num = byName.Length - 1;
-		while (num >= 0)
-		{
-			executionContext = byName[num];
-			if (executionContext.IsComplete)
-			{
-				executionContext = null;
-				num--;
-				continue;
-			}
-			if (executionContext.Status.Value != ExecutionContextStatus.Pending && executionContext.Status.Value != ExecutionContextStatus.Running)
-			{
-				break;
-			}
-			return;
-		}
-		if (executionContext == null || executionContext.IsComplete)
-		{
-			return;
-		}
-		_ = DateTime.Now;
-		if (executionContext.StartTime.HasValue)
-		{
-			if (executionContext.StartTime.Value < DateTime.Now.AddMinutes(minutesInFuture))
-			{
-				executionContext.StartTime = DateTime.Now.AddMinutes(minutesInFuture);
-			}
-		}
-		else
-		{
-			executionContext.StartTime = DateTime.Now.AddMinutes(minutesInFuture);
-		}
-		LogHelper.Instance.Log($"Pending youngest job (name {executionContext.ProgramName}, ID={executionContext.ID})", LogEntryType.Debug);
-		executionContext.Status.NextValue = ExecutionContextStatus.Pending;
-		executionContext.Status.Promote();
+		PollerManager.Instance.ConfigurationUpdateFinish();
 	}
 
 	private string GetUniqueId()
 	{
-		for (int i = 0; i < 8; i++)
+		using (new WithReadLock(ContextLock))
 		{
-			string text = IdHelper.GeneratePseudoUniqueId(8);
-			if (text != ScriptConstants.ExecutionContexts.ImmediateModeContext && Contexts.GetByID(text) == null)
+			for (int i = 0; i < 8; i++)
 			{
-				return text;
+				string text = IdHelper.GeneratePseudoUniqueId(8);
+				if (text != ScriptConstants.ExecutionContexts.ImmediateModeContext && Contexts.GetByID(text) == null)
+				{
+					return text;
+				}
 			}
 		}
-		throw new ExecutionEngineException("Unable to generate a unique ID for ExecutionContext.");
+		throw new ApplicationException("Unable to generate a unique ID for ExecutionContext.");
 	}
 
-	private ExecutionResult CompileStringSource(string programName, string programSource)
+	private void RestartJobs(object source, ElapsedEventArgs e)
 	{
-		using MemoryStream memoryStream = new MemoryStream();
-		using StreamWriter streamWriter = new StreamWriter(memoryStream);
-		streamWriter.WriteLine(programSource);
-		streamWriter.Flush();
-		memoryStream.Seek(0L, SeekOrigin.Begin);
-		return CompileInner(memoryStream, programName);
+		RebootWakeupTimer.Disable();
+		RestartYoungest(1);
 	}
 
-	private ExecutionResult CompileInner(Stream stream, string programName)
+	private void RestartYoungest(int delay)
 	{
-		if (!ProgramCache.ContainsKey(programName))
+		string[] nonSchedulableJobsWithinReboot = NonSchedulableJobsWithinReboot;
+		foreach (string name in nonSchedulableJobsWithinReboot)
 		{
-			return CompileProgramInner(stream, programName);
+			ExecutionContext[] byName = GetByName(name);
+			if (byName.Length == 0)
+			{
+				continue;
+			}
+			Array.Sort(byName, (ExecutionContext left, ExecutionContext right) => left.CreatedOn.CompareTo(right.CreatedOn));
+			ExecutionContext executionContext = null;
+			for (int num = byName.Length - 1; num >= 0; num--)
+			{
+				executionContext = byName[num];
+				if (!executionContext.IsComplete)
+				{
+					_ = DateTime.Now;
+					if (!executionContext.StartTime.HasValue || executionContext.StartTime.Value < DateTime.Now.AddMinutes(delay))
+					{
+						executionContext.StartTime = DateTime.Now.AddMinutes(delay);
+					}
+					LogHelper.Instance.Log($"[Execution Engine] Restarting job {executionContext.ProgramName} ( ID = {executionContext.ID} )");
+					executionContext.Status.NextValue = ExecutionContextStatus.Pending;
+					executionContext.Status.Promote();
+					break;
+				}
+			}
 		}
-		if (programName.Equals("$$$immediate$$$", StringComparison.CurrentCultureIgnoreCase))
-		{
-			return CompileProgramInner(stream, programName);
-		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Normal && ControllerConfiguration.Instance.AllowProgramCacheReplacement2)
-		{
-			LogHelper.Instance.Log($"Allow replacement of program {programName} - allow cache replacement2 is true.", LogEntryType.Info);
-			return CompileProgramInner(stream, programName);
-		}
-		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
-		{
-			LogHelper.Instance.Log($"Not allowing replacement of program {programName}", LogEntryType.Info);
-		}
-		ExecutionResult executionResult = new ExecutionResult();
-		executionResult.ExecutionTime = new TimeSpan(0L);
-		return executionResult;
 	}
 
-	private ExecutionResult CompileProgramInner(Stream stream, string programName)
+	private void LoadJobs()
 	{
-		ExecutionResult executionResult = new Compiler(stream, programName).Compile(out var compiledProgram);
-		ProgramCache[programName] = new CompiledProgram
+		using (new WithWriteLock(ContextLock))
 		{
-			ParseTree = compiledProgram,
-			CompilerResult = executionResult
+			string path = Path.Combine(DataDirectory, "contexts");
+			try
+			{
+				if (!Directory.Exists(path))
+				{
+					LogHelper.Instance.Log("Contexts directory doesn't exist; creating.", LogEntryType.Debug);
+					Directory.CreateDirectory(path);
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("Unable to create contexts directory.", e);
+			}
+			string[] directories = Directory.GetDirectories(path);
+			string[] array = directories;
+			foreach (string text in array)
+			{
+				string path2 = Path.Combine(text, "ctx.data");
+				ExecutionContext executionContext = null;
+				try
+				{
+					using (FileStream serializationStream = File.OpenRead(path2))
+					{
+						BinaryFormatter binaryFormatter = new BinaryFormatter();
+						executionContext = (ExecutionContext)binaryFormatter.Deserialize(serializationStream);
+					}
+					if (executionContext != null)
+					{
+						if (executionContext.Status.Value == ExecutionContextStatus.Suspended && (executionContext.ProgramName.Equals("init") || executionContext.ProgramName.Equals("return") || executionContext.ProgramName.Equals("vend") || executionContext.ProgramName == "soft-sync"))
+						{
+							LogHelper.Instance.Log("Job {0} ( {1} ) is in pending status at initialization; mark it garbage.", executionContext.ID, executionContext.ProgramName);
+							executionContext.Status.NextValue = ExecutionContextStatus.Garbage;
+							executionContext.Status.Promote();
+						}
+						Contexts.Add(executionContext);
+					}
+				}
+				catch
+				{
+					LogHelper.Instance.Log("Unable to load context {0}; deleting.", text);
+					try
+					{
+						Directory.Delete(text, recursive: true);
+					}
+					catch (Exception e2)
+					{
+						LogHelper.Instance.Log(" >> Can't delete: ", e2);
+					}
+				}
+			}
+		}
+	}
+
+	private void Initialize(string scriptsPath, ErrorList errors)
+	{
+		ControllerConfiguration.Instance.ConfigurationChangeStart += ConfigurationUpdateStart;
+		ControllerConfiguration.Instance.ConfigurationChangeEnd += ConfigurationUpdateFinish;
+		ProgramCache.CompilePrograms(scriptsPath, errors);
+		LoadJobs();
+		RestartYoungest(5);
+		CleanupJobs(force: false);
+		SchedulerThread = new Thread(ProcessScheduler)
+		{
+			Name = "HAL Script Scheduler",
+			IsBackground = true
 		};
-		return executionResult;
+		SchedulerThread.SetApartmentState(ApartmentState.STA);
+		SchedulerThread.Start();
+		SchedulerEnabled = true;
 	}
 
-	private void HandleStartupInitStatusChange(ExecutionContextStatus status)
+	private void Shutdown()
 	{
-		if (ExecutionContextStatus.Completed == status || ExecutionContextStatus.Errored == status)
+		Compile("CAMERA STOP FORCE=TRUE", "$$$immediate$$$");
+		ExecutionContext executionContext = ExecuteImmediate();
+		executionContext.WaitForCompletion();
+		PollerManager.Instance.Shutdown();
+		ControllerConfiguration.Instance.ConfigurationChangeStart -= ConfigurationUpdateStart;
+		ControllerConfiguration.Instance.ConfigurationChangeEnd -= ConfigurationUpdateFinish;
+		SchedulerEnabled = false;
+		SuspendAll(force: true);
+		while (ActiveContext != null)
 		{
-			MotionControlSafetyPoller.Instance.Start();
-			WatchdogPoller.Instance.Start();
-			CleanManager.Instance.Init();
-			TSMonitor.Instance.Start();
-			if (ExecutionContextStatus.Completed == status)
+			Thread.Sleep(0);
+		}
+		LogHelper.Instance.Log("ExecutionEngine.Shutdown() complete.");
+	}
+
+	private ExecutionContext GetJobInner(string id)
+	{
+		foreach (ExecutionContext context in Contexts)
+		{
+			if (context.ID == id)
 			{
-				QuickReturnPoller.Instance.Startup();
-				IceQubeBoardPoller.Instance.Start();
+				return context;
 			}
 		}
+		return null;
 	}
 }

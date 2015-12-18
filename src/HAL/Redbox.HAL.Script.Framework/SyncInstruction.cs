@@ -4,38 +4,36 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class SyncInstruction : Instruction
+public sealed class SyncInstruction : Instruction
 {
-	public override string Mnemonic => "SYNC";
-
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	private enum SyncType
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		base.Operands.AddRange(tokensAfterMnemonic);
+		None,
+		Standard,
+		Location
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	public override string Mnemonic => "SYNC";
+
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		if (!GetLocation(result, out var location))
+		if (!GetLocation(result, context, out var location))
 		{
 			return;
 		}
-		SyncType type = SyncType.Standard;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("TYPE");
+		SyncType syncType = SyncType.Standard;
 		if (keyValuePair != null)
 		{
-			try
-			{
-				type = (SyncType)Enum.Parse(typeof(SyncType), keyValuePair.Value, ignoreCase: true);
-			}
-			catch
+			syncType = Enum<SyncType>.ParseIgnoringCase(keyValuePair.Value, SyncType.None);
+			if (syncType == SyncType.None)
 			{
 				result.Errors.Add(Error.NewError("E777", "Unrecognized sync type.", $"Unrecognized sync type {keyValuePair}"));
 				return;
 			}
 		}
-		SyncResult syncResult = SyncHelper.Instance.SyncSlot(result, location, type);
-		ExecutionEngine.Instance.ActiveContext.PushTop(syncResult.ToString().ToUpper());
+		SyncDecorator syncDecorator = null;
+		SyncResult syncResult = SyncHelper.SyncSlot(decorator: (SyncType.Location != syncType) ? ((SyncDecorator)new StandardSyncDecorator(context, result, location)) : ((SyncDecorator)new SyncLocationDecorator(context, result, location)), result: result, context: context, loc: location);
+		context.PushTop(syncResult.ToString().ToUpper());
 	}
 }

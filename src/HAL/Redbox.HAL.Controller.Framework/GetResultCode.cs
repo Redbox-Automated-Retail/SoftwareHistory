@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Controller.Framework;
 
-internal enum GetResultCode
+public enum GetResultCode
 {
 	Success,
 	PickerFull,

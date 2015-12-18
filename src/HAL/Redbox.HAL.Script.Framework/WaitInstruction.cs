@@ -4,38 +4,29 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class WaitInstruction : Instruction
+public sealed class WaitInstruction : Instruction
 {
 	public override string Mnemonic => "WAIT";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count == 1)
+		if (operandTokens.Count != 1)
 		{
-			if (tokensAfterMnemonic[0].Type != TokenType.NumericLiteral && tokensAfterMnemonic[0].Type != TokenType.Symbol)
-			{
-				AddError("C002", "Expected a numeric literal or symbol.", result.Errors);
-			}
-			else
-			{
-				base.Operands.AddRange(tokensAfterMnemonic);
-			}
+			result.AddMissingOperandError("The WAIT mnemonic requires a single numeric literal or symbol.");
 		}
-		else
+		else if (operandTokens[0].Type != TokenType.NumericLiteral && operandTokens[0].Type != TokenType.Symbol)
 		{
-			AddError("C002", "The WAIT mnemonic requires a single numeric literal or symbol.", result.Errors);
+			result.AddInvalidOperandError("Expected a numeric literal or symbol.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		int ms = 0;
 		object obj = base.Operands[0].Value;
 		if (base.Operands[0].Type == TokenType.Symbol)
 		{
-			obj = ExecutionEngine.Instance.ActiveContext.GetSymbolValue(base.Operands[0].Value, result.Errors);
+			obj = context.GetSymbolValue(base.Operands[0].Value, result.Errors);
 			if (obj == null)
 			{
 				return;

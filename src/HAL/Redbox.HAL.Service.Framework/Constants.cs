@@ -2,11 +2,6 @@ namespace Redbox.HAL.Service.Framework;
 
 public static class Constants
 {
-	public static class Macros
-	{
-		public const string RunningPath = "RunningPath";
-	}
-
 	public static class SymbolNames
 	{
 		public const string Force = "force";
@@ -58,8 +53,6 @@ public static class Constants
 		public const string LoadForm = "load";
 
 		public const string CameraConfiguration = "camera";
-
-		public const string BarcodeConfiguration = "barcode";
 
 		public const string GetInventoryStateForm = "get-inventory-state";
 

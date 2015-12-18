@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -46,7 +46,8 @@ public class Compiler
 		int num2 = 0;
 		Deque<string> deque = new Deque<string>();
 		ConstTokens = new Dictionary<string, bool>();
-		bool value = SecretOptions.Instance.GetValue("Compiler.EnablePreprocessor", defValue: true);
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
+		bool value = dataStore.GetValue("Compiler.EnablePreprocessor", def: true);
 		ControlFlowAnalyzer = CFA.Initialize(CFAVersion, executionResult);
 		Instruction instruction = null;
 		using (TextReader textReader = new StreamReader(Stream))
@@ -216,7 +217,7 @@ public class Compiler
 		{
 			compiledProgram.IsCooperative = num > 0;
 		}
-		if (SecretOptions.Instance.GetValue("Compiler.DumpCompiledProgram", defValue: false) && compiledProgram != null)
+		if (dataStore.GetValue("Compiler.DumpCompiledProgram", def: false) && compiledProgram != null)
 		{
 			InstructionList instructions = compiledProgram.Instructions;
 			using TextWriter textWriter = new StreamWriter("C:\\temp\\" + ProgramName + ".preprocessed");

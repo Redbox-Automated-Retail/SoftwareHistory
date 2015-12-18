@@ -6,9 +6,11 @@ public interface ICameraPlugin
 {
 	bool IsRunning { get; }
 
+	bool SupportsReset { get; }
+
 	bool Start();
 
-	string Snap();
+	void Snap(string file);
 
 	bool Stop();
 

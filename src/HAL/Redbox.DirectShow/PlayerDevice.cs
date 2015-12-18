@@ -14,13 +14,9 @@ public class PlayerDevice : IVideoSource
 
 	private int framesReceived;
 
-	private long bytesReceived;
-
 	private VideoCapabilities videoResolution;
 
 	private VideoCapabilities snapshotResolution;
-
-	private bool provideSnapshots;
 
 	private Thread thread;
 
@@ -56,7 +52,9 @@ public class PlayerDevice : IVideoSource
 
 	private static Dictionary<string, VideoInput[]> cacheCrossbarVideoInputs = new Dictionary<string, VideoInput[]>();
 
-	private bool? m_debug = null;
+	private readonly bool Debug;
+
+	private readonly int GrabTime;
 
 	private readonly List<Bitmap> ReceivedFrames = new List<Bitmap>();
 
@@ -115,18 +113,6 @@ public class PlayerDevice : IVideoSource
 		}
 	}
 
-	public bool ProvideSnapshots
-	{
-		get
-		{
-			return provideSnapshots;
-		}
-		set
-		{
-			provideSnapshots = value;
-		}
-	}
-
 	public virtual string Source
 	{
 		get
@@ -149,16 +135,6 @@ public class PlayerDevice : IVideoSource
 		{
 			int result = framesReceived;
 			framesReceived = 0;
-			return result;
-		}
-	}
-
-	public long BytesReceived
-	{
-		get
-		{
-			long result = bytesReceived;
-			bytesReceived = 0L;
 			return result;
 		}
 	}
@@ -321,18 +297,6 @@ public class PlayerDevice : IVideoSource
 
 	public object SourceObject => sourceObject;
 
-	private bool Debug
-	{
-		get
-		{
-			if (!m_debug.HasValue)
-			{
-				m_debug = RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "DebugDS", def: false);
-			}
-			return m_debug.Value;
-		}
-	}
-
 	public event NewFrameEventHandler NewFrame;
 
 	public event NewFrameEventHandler SnapshotFrame;
@@ -341,9 +305,11 @@ public class PlayerDevice : IVideoSource
 
 	public event PlayingFinishedEventHandler PlayingFinished;
 
-	public PlayerDevice(string deviceMoniker)
+	public PlayerDevice(string deviceMoniker, int grabTime, bool debug)
 	{
 		this.deviceMoniker = deviceMoniker;
+		GrabTime = grabTime;
+		Debug = debug;
 	}
 
 	public bool Start()
@@ -356,7 +322,6 @@ public class PlayerDevice : IVideoSource
 				return false;
 			}
 			framesReceived = 0;
-			bytesReceived = 0L;
 			isCrossbarAvailable = null;
 			needToSetVideoInput = true;
 			stopEvent = new ManualResetEvent(initialState: false);
@@ -593,7 +558,6 @@ public class PlayerDevice : IVideoSource
 	private void WorkerThread(bool runGraph)
 	{
 		ReasonToFinishPlaying reason = ReasonToFinishPlaying.StoppedByUser;
-		int secretValue = RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "FrameWait", 500);
 		SampleGrabber sampleGrabber = new SampleGrabber(OnNewFrame);
 		sampleGrabber.Grab = true;
 		object obj = null;
@@ -718,7 +682,7 @@ public class PlayerDevice : IVideoSource
 							ReceivedFrames.Clear();
 						}
 						sampleGrabber.Grab = true;
-						Thread.Sleep(secretValue);
+						Thread.Sleep(GrabTime);
 						bool simulateTrigger = (sampleGrabber.Grab = false);
 						m_simulateTrigger = simulateTrigger;
 						if (Debug)
@@ -983,7 +947,6 @@ public class PlayerDevice : IVideoSource
 	private void OnNewFrame(Bitmap image)
 	{
 		framesReceived++;
-		bytesReceived += image.Width * image.Height * (System.Drawing.Image.GetPixelFormatSize(image.PixelFormat) >> 3);
 		if (!stopEvent.WaitOne(0, exitContext: false) && NewFrame != null)
 		{
 			NewFrame(this, new NewFrameEventArgs(image));

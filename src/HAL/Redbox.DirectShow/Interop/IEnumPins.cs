@@ -3,8 +3,8 @@
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("56A86892-0AD4-11CE-B03A-0020AF0BA770")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IEnumPins
 {
 	[PreserveSig]

@@ -3,12 +3,13 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class FastSyncSingleSlotJob : NativeJobAdapter
+[NativeJob(ProgramName = "quick-single-sync", Operand = "QUICK-SINGLE-SYNC")]
+internal sealed class FastSyncSingleSlotJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		ApplicationLog log = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "Sync", flushOnWrite: false, "single-fast-sync");
-		ServiceLogHelper.Instance.WriteInfoMessage("Begin fast sync.");
+		base.Context.ServiceLog("Begin fast sync.");
 		ControllerService instance = ControllerService.Instance;
 		int top = GetTop<int>();
 		int top2 = GetTop<int>();
@@ -24,7 +25,7 @@ internal class FastSyncSingleSlotJob : NativeJobAdapter
 				break;
 			}
 			PerfFunctions.Wait(1000);
-			GetResult getResult = instance.Get(testOnEmpty: false, log);
+			GetResult getResult = instance.Get(log);
 			if (!getResult.IsSlotEmpty)
 			{
 				if (!getResult.Success)
@@ -50,5 +51,10 @@ internal class FastSyncSingleSlotJob : NativeJobAdapter
 				PerfFunctions.Wait(1000);
 			}
 		}
+	}
+
+	internal FastSyncSingleSlotJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

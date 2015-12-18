@@ -4,84 +4,47 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal abstract class ScriptPoller
+internal abstract class ScriptPoller : IStatusChangeObserver
 {
+	private const int Polling = 1;
+
+	private const int NotPolling = 0;
+
 	protected readonly ManualResetEvent JobCompletionHandle = new ManualResetEvent(initialState: false);
 
-	protected readonly AutoResetEvent PollEvent = new AutoResetEvent(initialState: false);
+	protected readonly ManualResetEvent PollEvent = new ManualResetEvent(initialState: false);
 
-	private object m_enabledBarrier = new object();
+	private readonly object SyncLock = new object();
 
-	private bool m_running;
-
-	internal bool Running
-	{
-		get
-		{
-			lock (m_enabledBarrier)
-			{
-				return m_running;
-			}
-		}
-		set
-		{
-			lock (m_enabledBarrier)
-			{
-				m_running = value;
-			}
-		}
-	}
+	private int m_pollingState;
 
 	protected abstract string ThreadName { get; }
 
 	protected abstract string JobName { get; }
 
-	protected abstract string JobLabel { get; }
+	protected virtual string JobLabel => string.Empty;
 
-	protected abstract bool IsConfigured { get; }
+	protected virtual bool IsConfigured => true;
+
+	protected abstract int PollSleep { get; }
 
 	protected abstract ProgramPriority Priority { get; }
 
 	protected Thread PollerThread { get; private set; }
 
-	internal void Start()
+	internal bool Running
 	{
-		if (IsConfigured)
+		get
 		{
-			CreatePollerThread();
+			return Thread.VolatileRead(ref m_pollingState) == 1;
+		}
+		set
+		{
+			Interlocked.Exchange(ref m_pollingState, value ? 1 : 0);
 		}
 	}
 
-	internal void Shutdown(bool joinThread)
-	{
-		if (Running)
-		{
-			Running = false;
-			PollEvent.Set();
-			if (joinThread && PollerThread != null)
-			{
-				PollerThread.Join();
-			}
-			PollerThread = null;
-		}
-	}
-
-	protected virtual ExecutionContext ScheduleAndBlockOnJob()
-	{
-		if (!ShouldScheduleJob())
-		{
-			return null;
-		}
-		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob(JobName, JobLabel, DateTime.Now, Priority);
-		executionContext.StatusChangeCallback = HandleStatusChange;
-		executionContext.Resume();
-		JobCompletionHandle.WaitOne();
-		executionContext.StatusChangeCallback = null;
-		JobCompletionHandle.Reset();
-		return executionContext;
-	}
-
-	protected virtual void HandleStatusChange(ExecutionContextStatus status)
+	public void StatusChange(ExecutionContextStatus status)
 	{
 		if (IsComplete(status))
 		{
@@ -89,10 +52,27 @@ internal abstract class ScriptPoller
 		}
 	}
 
-	protected virtual bool ShouldScheduleJob()
+	protected virtual ExecutionContext ScheduleAndBlockOnJob()
+	{
+		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob(JobName, JobLabel, DateTime.Now, Priority);
+		executionContext.AddObserver(this);
+		executionContext.Resume();
+		JobCompletionHandle.WaitOne();
+		executionContext.RemoveObserver(this);
+		JobCompletionHandle.Reset();
+		return executionContext;
+	}
+
+	protected virtual bool OnPollStart()
 	{
 		return true;
 	}
+
+	protected virtual void OnPollDone()
+	{
+	}
+
+	protected abstract bool CoreExecute();
 
 	protected bool IsComplete(ExecutionContextStatus status)
 	{
@@ -103,16 +83,77 @@ internal abstract class ScriptPoller
 		return true;
 	}
 
-	protected abstract void ExecuteInner();
+	internal virtual void OnConfigChangeStart()
+	{
+	}
+
+	internal virtual void OnConfigChangeComplete()
+	{
+	}
+
+	internal virtual void OnEngineModeChange(EngineModes newMode)
+	{
+	}
+
+	internal virtual void Initialize()
+	{
+	}
+
+	internal void Start()
+	{
+		lock (SyncLock)
+		{
+			if (IsConfigured && !Running)
+			{
+				PollEvent.Reset();
+				JobCompletionHandle.Reset();
+				Running = true;
+				PollerThread = new Thread(Execute)
+				{
+					Name = ThreadName,
+					IsBackground = true
+				};
+				PollerThread.SetApartmentState(ApartmentState.STA);
+				PollerThread.Start();
+			}
+		}
+	}
+
+	internal void Shutdown()
+	{
+		Shutdown(joinThread: true);
+	}
+
+	internal void Shutdown(bool joinThread)
+	{
+		lock (SyncLock)
+		{
+			if (IsConfigured && Running)
+			{
+				Running = false;
+				PollEvent.Set();
+				if (joinThread && PollerThread != null && !PollerThread.Join(5000))
+				{
+					LogHelper.Instance.Log("Shutdown: the thread did not join.");
+				}
+				PollerThread = null;
+				LogHelper.Instance.Log("[{0}] is shutdown.", ThreadName);
+			}
+		}
+	}
 
 	private void Execute()
 	{
 		try
 		{
 			LogHelper.Instance.Log("Start of the {0} thread.", ThreadName);
-			ExecuteInner();
-			Running = false;
-			LogHelper.Instance.Log("{0} thread exiting.", ThreadName);
+			if (OnPollStart())
+			{
+				while (Running && CoreExecute() && !PollEvent.WaitOne(PollSleep))
+				{
+				}
+				OnPollDone();
+			}
 		}
 		catch (Exception e)
 		{
@@ -120,22 +161,8 @@ internal abstract class ScriptPoller
 		}
 		finally
 		{
-			Shutdown(joinThread: false);
-		}
-	}
-
-	private void CreatePollerThread()
-	{
-		if (!Running)
-		{
-			Running = true;
-			PollerThread = new Thread(Execute)
-			{
-				Name = ThreadName,
-				IsBackground = true
-			};
-			PollerThread.SetApartmentState(ApartmentState.STA);
-			PollerThread.Start();
+			LogHelper.Instance.Log("{0} thread exiting.", ThreadName);
+			Running = false;
 		}
 	}
 }

@@ -1,5 +1,7 @@
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
 
@@ -20,24 +22,24 @@ public static class CommonCameraFunctions
 
 	public static void LaunchAndWaitForTuner(HardwareService service)
 	{
-		if (service == null)
+		if (service != null)
 		{
-			return;
-		}
-		bool flag = IRCameraConfigured(service);
-		string text = "c:\\Program Files\\Redbox\\halservice\\bin\\CameraTuner.exe";
-		if (File.Exists(text))
-		{
-			CommonFunctions.ExecuteInstruction(service, "CAMERA STOP FORCE=TRUE");
-			CommonFunctions.ExecuteInstruction(service, "RINGLIGHT ON");
-			if (Platform.Windows7 == RuntimeService.Instance.GetPlatform())
+			bool flag = IRCameraConfigured(service);
+			string text = "c:\\Program Files\\Redbox\\halservice\\bin\\CameraTuner.exe";
+			if (File.Exists(text))
 			{
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.Append("CAMERA STOP FORCE=TRUE" + Environment.NewLine);
+				stringBuilder.Append("RINGLIGHT ON" + Environment.NewLine);
+				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var job);
 				PerfFunctions.SpinWait(5000);
+				Process process = Process.Start(text, flag ? "-secure" : string.Empty);
+				process.WaitForExit();
+				stringBuilder = new StringBuilder();
+				stringBuilder.Append("RINGLIGHT OFF" + Environment.NewLine);
+				stringBuilder.Append("CAMERA START" + Environment.NewLine);
+				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out job);
 			}
-			Process process = Process.Start(text, flag ? "-secure" : string.Empty);
-			process.WaitForExit();
-			CommonFunctions.ExecuteInstruction(service, "RINGLIGHT OFF");
-			CommonFunctions.ExecuteInstruction(service, "CAMERA START");
 		}
 	}
 }

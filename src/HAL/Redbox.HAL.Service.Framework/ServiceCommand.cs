@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
+using Redbox.HAL.DataStorage;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
@@ -16,9 +18,9 @@ public sealed class ServiceCommand
 {
 	private static Random m_random = new Random((int)DateTime.Now.Ticks);
 
-	[CommandForm(Name = "hardware-status")]
-	[Usage("SERVICE hardware-status")]
 	[Description("Queries the state of the hardware.")]
+	[Usage("SERVICE hardware-status")]
+	[CommandForm(Name = "hardware-status")]
 	public void Status(CommandContext context)
 	{
 		if (ExecutionEngine.Instance.IsImmediateJobPending())
@@ -41,27 +43,41 @@ public sealed class ServiceCommand
 	[CommandForm(Name = "mm-status")]
 	[Usage("SERVICE mm-status status: enabled")]
 	[Description("")]
-	public void Status(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "status")] bool enabled)
+	public void ChangeMMStatus(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "status")] bool enabled)
 	{
-		if (enabled)
-		{
-			ExecutionEngine.Instance.SuspendDevices();
-		}
-		else
-		{
-			ExecutionEngine.Instance.RestartDevices();
-		}
+		ExecutionEngine.Instance.ChangeMode((!enabled) ? EngineModes.Normal : EngineModes.Maintenance);
+	}
+
+	[Description("")]
+	[CommandForm(Name = "merch-mode")]
+	[Usage("SERVICE merch-mode status: enabled")]
+	public void ChangeMerchModeStatus(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "status")] bool enabled)
+	{
+		ExecutionEngine.Instance.ChangeMode((!enabled) ? EngineModes.Normal : EngineModes.Merchandizing);
+	}
+
+	[Usage("SERVICE diagnostic-mode status: enabled")]
+	[CommandForm(Name = "diagnostic-mode")]
+	[Description("")]
+	public void ChangeDiagnosticModeStatus(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "status")] bool enabled)
+	{
+		ExecutionEngine.Instance.ChangeMode((!enabled) ? EngineModes.Normal : EngineModes.Diagnostic);
 	}
 
 	[CommandForm(Name = "sync-unknowns")]
-	[Description("")]
 	[Usage("SERVICE sync-unknowns")]
+	[Description("")]
 	public void SyncUnknowns(CommandContext context)
 	{
+		List<Location> unknowns = InventoryService.Instance.GetUnknowns();
+		if (unknowns.Count == 0)
+		{
+			LogHelper.Instance.Log("Service unknown sync: there are no UNKNOWNS. Nice job!");
+			return;
+		}
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("sync-locations", "UNKNOWN inventory sync.", DateTime.Now, ProgramPriority.Low);
 		executionContext.EnableDebugging = false;
-		List<Location> unknowns = ControllerConfiguration.Instance.GetUnknowns();
-		try
+		using (new DisposeableList<Location>(unknowns))
 		{
 			foreach (Location item in unknowns)
 			{
@@ -69,24 +85,26 @@ public sealed class ServiceCommand
 				executionContext.PushTop(item.Deck);
 			}
 			executionContext.PushTop(unknowns.Count);
-			LogHelper.Instance.Log("Service unknown sync: sync {0} locations ( job ID = {1} ).", unknowns.Count, executionContext.ID);
-		}
-		finally
-		{
-			unknowns.Clear();
+			LogHelper.Instance.Log("Service unknown sync: {0} locations ( job ID = {1} ).", unknowns.Count, executionContext.ID);
 		}
 		executionContext.Pend();
+		CommandHelper.FormatJob(executionContext, context);
 	}
 
 	[Description("")]
-	[CommandForm(Name = "sync-empty")]
 	[Usage("SERVICE sync-empty")]
+	[CommandForm(Name = "sync-empty")]
 	public void SyncEmpty(CommandContext context)
 	{
+		List<Location> emptySlots = InventoryService.Instance.GetEmptySlots();
+		if (emptySlots.Count == 0)
+		{
+			LogHelper.Instance.Log("SyncEmpty: there are no empty slots.");
+			return;
+		}
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("sync-locations", "EMPTY inventory sync.", DateTime.Now, ProgramPriority.Low);
 		executionContext.EnableDebugging = false;
-		List<Location> emptySlots = ControllerConfiguration.Instance.GetEmptySlots();
-		try
+		using (new DisposeableList<Location>(emptySlots))
 		{
 			foreach (Location item in emptySlots)
 			{
@@ -94,17 +112,14 @@ public sealed class ServiceCommand
 				executionContext.PushTop(item.Deck);
 			}
 			executionContext.PushTop(emptySlots.Count);
-			LogHelper.Instance.Log("Service empty sync: sync {0} locations ( job ID = {1} ).", emptySlots.Count, executionContext.ID);
-		}
-		finally
-		{
-			emptySlots.Clear();
+			LogHelper.Instance.Log("Service empty sync: {0} locations ( job ID = {1} ).", emptySlots.Count, executionContext.ID);
 		}
 		executionContext.Pend();
+		CommandHelper.FormatJob(executionContext, context);
 	}
 
-	[CommandForm(Name = "full-sync")]
 	[Usage("SERVICE full-sync")]
+	[CommandForm(Name = "full-sync")]
 	[Description("")]
 	public void FullSync(CommandContext context)
 	{
@@ -122,6 +137,7 @@ public sealed class ServiceCommand
 		executionContext.PushTop(deck2.Number);
 		LogHelper.Instance.Log("Service executing full sync ( job ID = {0} ).", executionContext.ID);
 		executionContext.Pend();
+		CommandHelper.FormatJob(executionContext, context);
 	}
 
 	[Description("")]
@@ -129,12 +145,35 @@ public sealed class ServiceCommand
 	[CommandForm(Name = "update-gamp")]
 	public void UpdateGamp(CommandContext context, [CommandKeyValue(KeyName = "backup-directory")] string backupDirectory)
 	{
-		ControllerConfiguration.Instance.UpdateGamp(backupDirectory);
+		List<List<int>> newData = new List<List<int>>();
+		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		{
+			List<int> list = new List<int> { deck.YOffset };
+			Quadrant[] quadrants = deck.Quadrants;
+			foreach (Quadrant quadrant in quadrants)
+			{
+				list.Add(quadrant.Offset);
+			}
+			newData.Add(list);
+			return true;
+		});
+		GampBackupResult gampBackupResult = GampHelper.Instance.WriteSlotDataFile(newData, createBackup: true);
+		if (!string.IsNullOrEmpty(backupDirectory) && Directory.Exists(backupDirectory))
+		{
+			try
+			{
+				string fileName = Path.GetFileName(gampBackupResult.BackupFile);
+				File.Move(gampBackupResult.BackupFile, Path.Combine(backupDirectory, fileName));
+			}
+			catch
+			{
+			}
+		}
 	}
 
-	[Usage("SERVICE test-ipc-xfer size: payloadSize")]
-	[CommandForm(Name = "test-ipc-xfer")]
 	[Description("")]
+	[CommandForm(Name = "test-ipc-xfer")]
+	[Usage("SERVICE test-ipc-xfer size: payloadSize")]
 	public void TestIPCTransfer(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "size")] int payloadSize)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
@@ -149,17 +188,17 @@ public sealed class ServiceCommand
 		context.Messages.Add(text);
 	}
 
+	[Usage("SERVICE test-comm")]
 	[CommandForm(Name = "test-comm")]
 	[Description("")]
-	[Usage("SERVICE test-comm")]
 	public void TestIPCTransfer(CommandContext context)
 	{
 		context.Messages.Add("ACK");
 	}
 
-	[Description("")]
 	[CommandForm(Name = "quick-sync")]
 	[Usage("SERVICE quick-sync")]
+	[Description("")]
 	public void QuickSync(CommandContext context)
 	{
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("quick-sync-test", "Quick full sync", DateTime.Now, ProgramPriority.Low);
@@ -168,11 +207,61 @@ public sealed class ServiceCommand
 		executionContext.Pend();
 	}
 
-	[CommandForm(Name = "last-user-job")]
 	[Description("")]
+	[CommandForm(Name = "last-user-job")]
 	[Usage("SERVICE last-user-job")]
 	public void LastUserJob(CommandContext context)
 	{
-		context.Messages.Add((!UserJobMonitor.Instance.LastJob.HasValue) ? "NONE" : UserJobMonitor.Instance.LastJob.ToString());
+		context.Messages.Add("NONE");
+	}
+
+	[CommandForm(Name = "get-version")]
+	[Description("")]
+	[Usage("SERVICE get-version")]
+	public void GetServiceVersion(CommandContext context)
+	{
+		context.Messages.Add(typeof(ServiceCommand).Assembly.GetName().Version.ToString());
+	}
+
+	[Description("")]
+	[CommandForm(Name = "get-kiosk-id")]
+	[Usage("SERVICE get-kiosk-id")]
+	public void GetKioskID(CommandContext context)
+	{
+		IPersistentMap dataStore = StoreManager.Instance.GetDataStore(PersistentMapTypes.Engine);
+		string value = dataStore.GetValue("ID", "UKNOWN");
+		context.Messages.Add(value);
+	}
+
+	[Description("")]
+	[Usage("SERVICE reset-support-counters")]
+	[CommandForm(Name = "reset-support-counters")]
+	public void ResetSupportCounters(CommandContext context)
+	{
+		HardwareSupport.ResetCounters();
+	}
+
+	[Usage("SERVICE mark-kiosk-empty")]
+	[Description("")]
+	[CommandForm(Name = "mark-kiosk-empty")]
+	public void MarkKioskEmpty(CommandContext context)
+	{
+		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		{
+			deck.Reset("EMPTY");
+			return true;
+		});
+	}
+
+	[CommandForm(Name = "mark-kiosk-unknown")]
+	[Description("")]
+	[Usage("SERVICE mark-kiosk-unknown")]
+	public void MarkKioskUnknown(CommandContext context)
+	{
+		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		{
+			deck.Reset("UNKNOWN");
+			return true;
+		});
 	}
 }

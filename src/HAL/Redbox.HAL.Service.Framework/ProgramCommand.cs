@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
@@ -11,8 +12,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("program")]
 public sealed class ProgramCommand
 {
-	[CommandForm(Name = "compile")]
 	[Usage("PROGRAM compile path: 'C:\\temp\\my-script.hs' [name: program-name] [requires-client-connection: true|false]")]
+	[CommandForm(Name = "compile")]
 	public void Compile(CommandContext context, [CommandKeyValue(IsRequired = true)] string path, string name, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
 		if (string.IsNullOrEmpty(path))
@@ -21,20 +22,20 @@ public sealed class ProgramCommand
 		}
 		else
 		{
-			CompileProgram(context.Errors, name, path, requiresClientConnection ?? false);
+			CompileProgram(context.Errors, name, path);
 		}
 	}
 
-	[Usage("PROGRAM remove name: progam-name")]
 	[CommandForm(Name = "remove")]
+	[Usage("PROGRAM remove name: progam-name")]
 	public void Remove(CommandContext context, [CommandKeyValue(IsRequired = true)] string name)
 	{
 		ExecutionEngine.Instance.RemoveProgram(name);
 		RewriteServiceStartup();
 	}
 
-	[CommandForm(Name = "add-search-path")]
 	[Usage("PROGRAM add-search-path paths: 'c:\\path1;c:\\path1\\path2'")]
+	[CommandForm(Name = "add-search-path")]
 	public void AddSearchPath(CommandContext context, [CommandKeyValue(IsRequired = true)] string paths)
 	{
 		Compiler.AppendSearchPath(paths);
@@ -44,7 +45,7 @@ public sealed class ProgramCommand
 	[Usage("PROGRAM get name: program-name")]
 	public void Get(CommandContext context, [CommandKeyValue(IsRequired = true)] string name)
 	{
-		string fileName = MacroContainer.Instance.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		string fileName = RuntimeService.Instance.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		ProtocolHelper.FormatCompressedBytes(FileHelper.ReadToBuffer(fileName), context);
 	}
 
@@ -52,9 +53,9 @@ public sealed class ProgramCommand
 	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
 	public void Set(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
-		string path = MacroContainer.Instance.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		string path = RuntimeService.Instance.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		File.WriteAllBytes(path, data);
-		CompileProgram(context.Errors, name, path, requiresClientConnection ?? false);
+		CompileProgram(context.Errors, name, path);
 		RewriteServiceStartup();
 	}
 
@@ -72,7 +73,7 @@ public sealed class ProgramCommand
 		context.Messages.AddRange(ExecutionEngine.Instance.GetPrograms());
 	}
 
-	private static void CompileProgram(ErrorList errors, string programName, string path, bool requiresClientConnection)
+	private static void CompileProgram(ErrorList errors, string programName, string path)
 	{
 		if (!File.Exists(path))
 		{
@@ -90,7 +91,7 @@ public sealed class ProgramCommand
 
 	private static void RewriteServiceStartup()
 	{
-		string path = MacroContainer.Instance.ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
+		string path = RuntimeService.Instance.ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
 		List<string> list = new List<string>(File.ReadAllLines(path));
 		int num = list.FindIndex((string each) => each.Contains("[["));
 		int num2 = list.FindIndex((string each) => each.Contains("]]"));

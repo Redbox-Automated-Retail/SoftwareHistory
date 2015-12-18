@@ -1,14 +1,13 @@
 using System;
-using System.Text;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class MoveInstruction : Instruction
+public sealed class MoveInstruction : Instruction
 {
-	protected static class KeyNames
+	private static class KeyNames
 	{
 		public const string Deck = "DECK";
 
@@ -20,32 +19,20 @@ public class MoveInstruction : Instruction
 
 		public const string Password = "PASSWORD";
 
-		public const string CCW = "CCW";
-
-		public const string CW = "CW";
-
-		public const string ResetOnCommunicationFailure = "RESETONCOMMERROR";
-
 		public const string SlotOffset = "SLOT-OFFSET";
 	}
 
 	public override string Mnemonic => "MOVE";
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count > 0 && tokensAfterMnemonic.Count <= 4)
+		if (operandTokens.Count == 0 || operandTokens.Count > 4)
 		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-		else
-		{
-			AddError("C002", "Expected key value pair DECK=y, SLOT=x, MODE=m.  The values of x and y may be numeric literals or symbols.", result.Errors);
+			result.AddError(ExecutionErrors.InvalidOperand, "Expected key value pair DECK=y, SLOT=x, MODE=m.  The values of x and y may be numeric literals or symbols.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		MoveMode mode = MoveMode.None;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("MODE");
@@ -56,20 +43,20 @@ public class MoveInstruction : Instruction
 		KeyValuePair keyValuePair2 = base.Operands.GetKeyValuePair("SLOT-OFFSET");
 		if (base.Operands.Count == 1 && keyValuePair2 != null)
 		{
-			int keyValuePairValue = GetKeyValuePairValue<int>(keyValuePair2, result.Errors);
+			int keyValuePairValue = GetKeyValuePairValue<int>(keyValuePair2, result.Errors, context);
 			if (result.Errors.Count > 0)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(MotionResult.Error.ToString().ToUpper());
+				context.PushTop(MotionResult.Error.ToString().ToUpper());
 				return;
 			}
 			if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(MotionResult.Error.ToString().ToUpper());
+				context.PushTop(MotionResult.Error.ToString().ToUpper());
 				return;
 			}
 			if (!IsLocationValid())
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(MotionResult.Error.ToString().ToUpper());
+				context.PushTop(MotionResult.Error.ToString().ToUpper());
 				return;
 			}
 			int slot = ControllerService.Instance.Location.Slot;
@@ -79,105 +66,44 @@ public class MoveInstruction : Instruction
 			{
 				num = deck.NumberOfSlots - Math.Abs(num);
 			}
-			MotionResult motionResult = ControllerService.Instance.MoveTo(deck.Number, num, MoveMode.None, ExecutionEngine.Instance.ActiveContext.AppLog);
+			MotionResult motionResult = ControllerService.Instance.MoveTo(deck.Number, num, MoveMode.None, context.AppLog);
 			string text = $"MOVE Deck = {deck.Number} Slot = {num} returned {motionResult.ToString().ToUpper()}";
-			ExecutionEngine.Instance.ActiveContext.AppLog.Write(text);
+			context.AppLog.Write(text);
 			LogHelper.Instance.Log(text, LogEntryType.Info);
 			if (motionResult == MotionResult.Success)
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(keyValuePairValue);
+				context.PushTop(keyValuePairValue);
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(motionResult.ToString().ToUpper());
-			return;
-		}
-		KeyValuePair keyValuePair3 = base.Operands.GetKeyValuePair("LOCATION");
-		string keyValuePairValue2 = GetKeyValuePairValue<string>(keyValuePair3, result.Errors);
-		if (!string.IsNullOrEmpty(keyValuePairValue2))
-		{
-			if (ExecutionEngine.Instance.ActiveContext.IsImmediate)
-			{
-				KeyValuePair keyValuePair4 = base.Operands.GetKeyValuePair("PASSWORD");
-				string keyValuePairValue3 = GetKeyValuePairValue<string>(keyValuePair4, result.Errors);
-				if (string.IsNullOrEmpty(keyValuePairValue3))
-				{
-					AddError("E004", "No password was specified to move to location.", result.Errors);
-					return;
-				}
-				SpecialLocation specialLocation = SpecialLocationLocatorService.Instance.FindByName(keyValuePairValue2);
-				if (specialLocation == null)
-				{
-					AddError("E004", "The specified location was not found.", result.Errors);
-					return;
-				}
-				string text2 = StringExtensions.EncryptToBase64(keyValuePairValue3);
-				if (!(text2 == specialLocation.EncryptedPassword))
-				{
-					AddError("E004", "An invalid password was specified to move to location.", result.Errors);
-					return;
-				}
-			}
-			MotionResult motionResult2 = ControllerService.Instance.MoveToLocation(keyValuePairValue2, mode, ExecutionEngine.Instance.ActiveContext.AppLog);
-			string text3 = motionResult2.ToString().ToUpper();
-			if (motionResult2 != MotionResult.Success)
-			{
-				string form = $"{Mnemonic} LOCATION=\"{keyValuePairValue2}\" returned {text3}";
-				LogInstructionError(form, text3);
-			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(text3);
-			return;
-		}
-		if (!GetLocation(result, out var location))
-		{
-			AddError("E004", "Deck or slot are undefined, and no location specified; reissue the MOVE instruction specifying both deck and slot values or the location.", result.Errors);
-			return;
-		}
-		ExecutionContext activeContext = ExecutionEngine.Instance.ActiveContext;
-		if (activeContext.IsImmediate && ControllerService.Instance.IsLocationSecure(location))
-		{
-			string instance = MotionResult.InvalidMoveToSecureLocation.ToString().ToUpper();
-			ExecutionEngine.Instance.ActiveContext.PushTop(instance);
-			return;
-		}
-		KeyValuePair keyValuePair5 = base.Operands.GetKeyValuePair("RESETONCOMMERROR");
-		if (keyValuePair5 != null)
-		{
-			new ErrorList();
-			bool.TryParse(keyValuePair5.Value, out var _);
-		}
-		if (IsNextMoveSimulationTimeout("SimMoveTimeout"))
-		{
-			PerfFunctions.Wait(5000);
-			activeContext.PushTop(MotionResult.Timeout.ToString().ToUpper());
+			context.PushTop(motionResult.ToString().ToUpper());
 		}
 		else
 		{
-			MotionResult motionResult3 = ControllerService.Instance.MoveTo(location, mode, ExecutionEngine.Instance.ActiveContext.AppLog);
-			activeContext.PushTop(motionResult3.ToString().ToUpper());
+			KeyValuePair keyValuePair3 = base.Operands.GetKeyValuePair("LOCATION");
+			string keyValuePairValue2 = GetKeyValuePairValue<string>(keyValuePair3, result.Errors, context);
+			Location location;
+			if (!string.IsNullOrEmpty(keyValuePairValue2))
+			{
+				AddError("E004", "The LOCATION operand is no longer supported.", result.Errors);
+			}
+			else if (!GetLocation(result, context, out location))
+			{
+				AddError("E004", "Deck or slot are undefined, and no location specified; reissue the MOVE instruction specifying both deck and slot values or the location.", result.Errors);
+			}
+			else if (context.IsImmediate && location.IsSecure)
+			{
+				string instance = MotionResult.InvalidMoveToSecureLocation.ToString().ToUpper();
+				context.PushTop(instance);
+			}
+			else
+			{
+				MotionResult motionResult2 = ControllerService.Instance.MoveTo(location, mode, context.AppLog);
+				context.PushTop(motionResult2.ToString().ToUpper());
+			}
 		}
 	}
 
 	private bool IsLocationValid()
 	{
 		return ControllerService.Instance.Location.IsValid;
-	}
-
-	private bool IsNextMoveSimulationTimeout(string kvp)
-	{
-		string secretValue = RegistryOptions.Instance.GetSecretValue<string>("SOFTWARE\\Redbox\\HAL", kvp);
-		if (string.IsNullOrEmpty(secretValue))
-		{
-			return false;
-		}
-		string[] array = secretValue.Split(new char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-		if (array.Length > 0)
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			for (int i = 1; i < array.Length; i++)
-			{
-				stringBuilder.Append(array[i] + ";");
-			}
-			RegistryOptions.Instance.SetSecretValue("SOFTWARE\\Redbox\\HAL", kvp, stringBuilder.ToString());
-		}
-		return array[0] == "T";
 	}
 }

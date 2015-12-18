@@ -3,44 +3,64 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class IceQubeBoardPoller : ScriptPoller
+[Poller(Name = "IceQubeBoard")]
+internal sealed class IceQubeBoardPoller : ScriptPoller
 {
-	internal static IceQubeBoardPoller Instance => Singleton<IceQubeBoardPoller>.Instance;
-
 	protected override string ThreadName => "IceQube Board Poller";
 
 	protected override ProgramPriority Priority => ProgramPriority.High;
-
-	protected override string JobLabel => "None";
 
 	protected override string JobName => "check-iceqube-board";
 
 	protected override bool IsConfigured => IceQubeBoard.Instance.Configured;
 
-	private int PollInterval { get; set; }
+	protected override int PollSleep => 600000;
 
-	protected override void ExecuteInner()
+	internal static IceQubeBoardPoller Instance => PollerManager.Instance.Locate("IceQubeBoard") as IceQubeBoardPoller;
+
+	protected override bool CoreExecute()
 	{
-		if (!IceQubeBoard.Instance.Configured)
+		ExecutionContext executionContext = ScheduleAndBlockOnJob();
+		if (executionContext.Status == ExecutionContextStatus.Errored)
 		{
-			LogHelper.Instance.Log("The IceQubeBoard is not configured - bail poller.", LogEntryType.Info);
-			Shutdown(joinThread: false);
-			return;
+			LogHelper.Instance.Log(LogEntryType.Error, "Query job ( ID {0} ) errored; halt polling.", executionContext.ID);
+			return false;
 		}
-		while (!PollEvent.WaitOne(PollInterval))
+		executionContext.Trash();
+		return true;
+	}
+
+	internal override void OnEngineModeChange(EngineModes newMode)
+	{
+		switch (newMode)
 		{
-			ExecutionContext executionContext = ScheduleAndBlockOnJob();
-			if (executionContext.Status == ExecutionContextStatus.Errored)
-			{
-				LogHelper.Instance.Log(LogEntryType.Error, "Query job ( ID {0} ) errored; halt polling.", executionContext.ID);
-				Shutdown(joinThread: false);
-			}
-			executionContext.Trash();
+		case EngineModes.Normal:
+			Start();
+			break;
+		case EngineModes.Maintenance:
+		case EngineModes.Diagnostic:
+		case EngineModes.Merchandizing:
+			Shutdown();
+			break;
 		}
+	}
+
+	internal override void OnConfigChangeComplete()
+	{
+		IceQubeBoard.Instance.ConfigurationUpdateFinish();
+		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
+		{
+			Start();
+		}
+	}
+
+	internal override void OnConfigChangeStart()
+	{
+		Shutdown();
+		IceQubeBoard.Instance.ConfigurationChangeStart();
 	}
 
 	private IceQubeBoardPoller()
 	{
-		PollInterval = RegistryOptions.Instance.GetSecretValue<int?>("SOFTWARE\\Redbox\\HAL", "IceQubeSleepTime") ?? 600000;
 	}
 }

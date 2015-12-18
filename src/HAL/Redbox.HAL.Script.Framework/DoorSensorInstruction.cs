@@ -6,7 +6,7 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class DoorSensorInstruction : Instruction
+public sealed class DoorSensorInstruction : Instruction
 {
 	private enum ExpectedOperand
 	{
@@ -24,37 +24,27 @@ public class DoorSensorInstruction : Instruction
 		return IsValidOperand(operand);
 	}
 
-	protected override void OnParse(TokenList tokens, ExecutionResult result)
+	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		base.OnParse(tokens, result);
-		TokenList tokensAfterMnemonic = tokens.GetTokensAfterMnemonic();
-		if (tokensAfterMnemonic.Count <= 0)
+		if (!IsValidOperand(operandTokens[0].Value))
 		{
-			result.Errors.Add(Error.NewError("C002", "Expected a 'Query' or 'IsConfigured' operand.", "Correct the statement and recompile."));
-		}
-		else if (IsValidOperand(tokensAfterMnemonic[0].Value))
-		{
-			base.Operands.AddRange(tokensAfterMnemonic);
-		}
-		else
-		{
-			result.Errors.Add(Error.NewError("C002", "Expected a 'Query' or 'IsConfigured' operand.", "Correct the statement and recompile."));
+			result.AddInvalidOperandError("Expected a 'Query' or 'IsConfigured' operand.");
 		}
 	}
 
-	protected override void OnExecute(ExecutionResult result)
+	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		switch (ConvertToOperand(base.Operands[0].Value))
+		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
 		case ExpectedOperand.None:
-			ServiceLogHelper.Instance.WriteFormattedMessage(LogEntryType.Info, "DoorSensor instruction: converted '{0}' to operand None", base.Operands[0].Value);
+			context.ServiceLog("DoorSensor instruction: converted '{0}' to operand None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.IsConfigured:
-			ExecutionEngine.Instance.ActiveContext.PushTop(DoorSensors.Instance.SensorsEnabled);
+			context.PushTop(DoorSensors.Instance.SensorsEnabled);
 			break;
 		case ExpectedOperand.SoftwareOverride:
 		{
-			if (!GetKeyValuePairValue<string>("OVERRIDE", out var val, result.Errors))
+			if (!GetKeyValuePairValue<string>("OVERRIDE", out var val, result.Errors, context))
 			{
 				val = "off";
 			}
@@ -65,41 +55,35 @@ public class DoorSensorInstruction : Instruction
 			{
 				streamWriter.WriteLine(flag ? $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors have a software override in place: they are not active - *UNCHECKED MOVEMENT IS POSSIBLE*." : $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors do not have a software override; they are active.");
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(DoorSensors.Instance.SensorsEnabled);
+			context.PushTop(DoorSensors.Instance.SensorsEnabled);
 			break;
 		}
 		case ExpectedOperand.Query:
-		{
-			string[] array = DoorSensors.Instance.QueryStateForDisplay();
-			string[] array2 = array;
-			foreach (string instance in array2)
+			switch (DoorSensors.Instance.QueryStateForDisplay())
 			{
-				ExecutionEngine.Instance.ActiveContext.PushTop(instance);
+			case DoorSensorResult.AuxReadError:
+				context.PushTop("AUX board not responsive.");
+				break;
+			case DoorSensorResult.FrontDoor:
+				context.PushTop("FRONT DOOR OPEN");
+				break;
+			case DoorSensorResult.Ok:
+				context.PushTop("FRONT DOOR CLOSED");
+				break;
+			case DoorSensorResult.SoftwareOverride:
+				context.PushTop("OVERRIDE IN PLACE.");
+				break;
 			}
-			ExecutionEngine.Instance.ActiveContext.PushTop(array.Length);
+			context.PushTop(1);
 			break;
-		}
 		case ExpectedOperand.Status:
-			ExecutionEngine.Instance.ActiveContext.PushTop(DoorSensors.Instance.Query().ToString().ToUpper());
+			context.PushTop(DoorSensors.Instance.Query().ToString().ToUpper());
 			break;
 		}
 	}
 
 	private bool IsValidOperand(string operand)
 	{
-		return ConvertToOperand(operand) != ExpectedOperand.None;
-	}
-
-	private ExpectedOperand ConvertToOperand(string operand)
-	{
-		ExpectedOperand expectedOperand = ExpectedOperand.None;
-		try
-		{
-			return (ExpectedOperand)Enum.Parse(typeof(ExpectedOperand), operand, ignoreCase: true);
-		}
-		catch (ArgumentException)
-		{
-			return ExpectedOperand.None;
-		}
+		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 }

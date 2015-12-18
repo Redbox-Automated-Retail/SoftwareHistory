@@ -3,7 +3,8 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal class LoadBinJob : NativeJobAdapter
+[NativeJob(ProgramName = "load-bin", Operand = "LOAD-BIN")]
+internal sealed class LoadBinJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
@@ -36,7 +37,7 @@ internal class LoadBinJob : NativeJobAdapter
 			if (LoadBy.Barcode == loadBy)
 			{
 				string top3 = GetTop<string>();
-				location = ControllerService.Instance.Lookup(top3);
+				location = InventoryService.Instance.Lookup(top3);
 				if (location == null)
 				{
 					continue;
@@ -48,19 +49,19 @@ internal class LoadBinJob : NativeJobAdapter
 				int top5 = GetTop<int>();
 				location = new Location(top4, top5);
 			}
-			if (MoveTo(location, MoveMode.Get) != MotionResult.Success)
+			if (ControllerService.Instance.MoveTo(location, MoveMode.Get, base.AppLog) != MotionResult.Success)
 			{
 				AddError("There was an error during the move.");
 				return;
 			}
-			GetResult getResult = ControllerService.Instance.Get(testOnEmpty: false, base.AppLog);
+			GetResult getResult = ControllerService.Instance.Get(base.AppLog);
 			if (!getResult.Success)
 			{
 				AddError("Unable to fetch disk from drum.");
 				return;
 			}
 			Location location2 = DumpBin.Instance.MoveableLocation();
-			if (MoveTo(location2.Deck, location2.Slot, MoveMode.Put) != MotionResult.Success)
+			if (ControllerService.Instance.MoveTo(location2.Deck, location2.Slot, MoveMode.Put, base.AppLog) != MotionResult.Success)
 			{
 				AddError("There was an error during the move.");
 				return;
@@ -75,5 +76,10 @@ internal class LoadBinJob : NativeJobAdapter
 		{
 			AddError("Unable to move to vend.");
 		}
+	}
+
+	internal LoadBinJob(ExecutionResult r, ExecutionContext c)
+		: base(r, c)
+	{
 	}
 }
