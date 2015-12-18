@@ -12,11 +12,7 @@ public class LocalChangeSet
 
 	public bool HashChanges()
 	{
-		if (m_updates.Count <= 0)
-		{
-			return m_newFiles.Count > 0;
-		}
-		return true;
+		return m_updates.Count > 0 || m_newFiles.Count > 0;
 	}
 
 	public bool AddUpdateToFile(long id, string localPath, string displayName)
