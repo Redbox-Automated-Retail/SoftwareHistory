@@ -6,23 +6,15 @@ internal interface ICameraPlugin
 {
 	bool IsRunning { get; }
 
+	bool SupportsReset { get; }
+
 	bool Start();
 
-	string Snap();
+	void Snap(string file);
 
 	bool Stop();
 
-	string StartCapture();
-
-	void StopCapture();
-
 	void TurnOff();
-
-	void ShowProperties();
-
-	string[] GetCameraDeviceNames();
-
-	string[] GetVideoCompressors();
 
 	void InitWithProperties(IDictionary<string, object> properties);
 }

@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 

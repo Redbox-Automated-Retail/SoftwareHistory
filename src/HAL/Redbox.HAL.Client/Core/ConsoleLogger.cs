@@ -2,23 +2,23 @@ using System;
 
 namespace Redbox.HAL.Core;
 
-internal class ConsoleLogger : ILogger
+internal sealed class ConsoleLogger : ILogger
 {
 	public void Log(string message, Exception e)
 	{
-		Console.WriteLine(message);
+		WriteFormatted(message);
 		Console.WriteLine(e.Message);
 		Console.WriteLine(e.StackTrace);
 	}
 
 	public void Log(string message, LogEntryType type)
 	{
-		Console.WriteLine(message);
+		WriteFormatted(message);
 	}
 
 	public void Log(string message, Exception e, LogEntryType type)
 	{
-		Console.WriteLine(message);
+		WriteFormatted(message);
 		Console.WriteLine(e.Message);
 		Console.WriteLine(e.StackTrace);
 	}
@@ -26,5 +26,12 @@ internal class ConsoleLogger : ILogger
 	public bool IsLevelEnabled(LogEntryType entryLogLevel)
 	{
 		return true;
+	}
+
+	private void WriteFormatted(string msg)
+	{
+		DateTime now = DateTime.Now;
+		msg = $"{now.ToShortDateString()} {now.ToShortTimeString()} {msg}";
+		Console.WriteLine(msg);
 	}
 }

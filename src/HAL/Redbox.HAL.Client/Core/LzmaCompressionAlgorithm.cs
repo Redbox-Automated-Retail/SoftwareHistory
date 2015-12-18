@@ -2,7 +2,7 @@ using SevenZip.Compression.LZMA;
 
 namespace Redbox.HAL.Core;
 
-internal class LzmaCompressionAlgorithm : CompressionAlgorithm
+internal sealed class LzmaCompressionAlgorithm : CompressionAlgorithm
 {
 	public override byte[] Compress(byte[] source)
 	{

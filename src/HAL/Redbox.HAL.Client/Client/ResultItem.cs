@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Client;
 
-public class ResultItem
+public sealed class ResultItem
 {
 	private string m_rawResult;
 

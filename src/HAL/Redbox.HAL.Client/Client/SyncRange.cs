@@ -2,7 +2,7 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Client;
 
-public class SyncRange
+public sealed class SyncRange
 {
 	public int EndDeck { get; set; }
 

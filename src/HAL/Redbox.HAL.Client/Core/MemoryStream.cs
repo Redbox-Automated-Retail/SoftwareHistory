@@ -2,7 +2,7 @@ using System.IO;
 
 namespace Redbox.HAL.Core;
 
-internal class MemoryStream : StreamBase
+internal sealed class MemoryStream : StreamBase
 {
 	internal byte[] GetBuffer()
 	{

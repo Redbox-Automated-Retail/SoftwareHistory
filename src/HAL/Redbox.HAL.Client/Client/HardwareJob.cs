@@ -8,7 +8,7 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Client;
 
-public class HardwareJob
+public sealed class HardwareJob
 {
 	public string ID { get; internal set; }
 

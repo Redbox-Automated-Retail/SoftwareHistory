@@ -1,5 +1,5 @@
 using System.Reflection;
-using Redbox.HAL.Core;
+using Redbox.HAL.Configuration;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;

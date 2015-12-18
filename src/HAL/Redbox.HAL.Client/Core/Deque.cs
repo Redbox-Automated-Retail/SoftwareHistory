@@ -4,7 +4,7 @@ using Wintellect.PowerCollections;
 
 namespace Redbox.HAL.Core;
 
-internal class Deque<T>
+internal sealed class Deque<T>
 {
 	private Wintellect.PowerCollections.Deque<T> m_impl = new Wintellect.PowerCollections.Deque<T>();
 

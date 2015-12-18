@@ -39,8 +39,8 @@ internal class FormMethodParameter
 		}
 		byte[] array = MetaData.BinaryEncoding switch
 		{
-			BinaryEncoding.Hex => value.HexToBytes(), 
-			BinaryEncoding.Base64 => value.Base64ToBytes(), 
+			BinaryEncoding.Hex => StringExtensions.HexToBytes(value), 
+			BinaryEncoding.Base64 => StringExtensions.Base64ToBytes(value), 
 			BinaryEncoding.Ascii95 => throw new NotImplementedException("Ascii95 support is not implemented."), 
 			_ => throw new ArgumentException("The named paramete accepts binary data and the command form method doesn't specify a valid BinaryEncoding."), 
 		};

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Redbox.HAL.Client;
 
-public class ProgramResult
+public sealed class ProgramResult
 {
 	public Guid ID { get; internal set; }
 
@@ -104,7 +104,7 @@ public class ProgramResult
 		return stringBuilder.ToString();
 	}
 
-	protected ProgramResult()
+	private ProgramResult()
 	{
 	}
 }

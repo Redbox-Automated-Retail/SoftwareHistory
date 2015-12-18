@@ -5,33 +5,23 @@ namespace Redbox.HAL.Core;
 
 internal static class XmlNodeExtensions
 {
-	public static void SelectSingleNodeAndSetValue<T>(this XmlNode node, string path, T value)
-	{
-		GetTargetNode(node, path).InnerText = value.ToString();
-	}
-
-	public static void SelectSingleNodeAndSetInnerXml<T>(this XmlNode node, string path, T instance)
+	public static void SelectSingleNodeAndSetInnerXml<T>(XmlNode node, string path, T instance)
 	{
 		GetTargetNode(node, path).InnerXml = instance.ToString();
 	}
 
-	public static T GetNodeValue<T>(this XmlNode node)
+	public static void SelectSingleNodeAndSetValue<T>(XmlNode node, string path, T value)
 	{
-		return node.GetNodeValue(default(T));
+		GetTargetNode(node, path).InnerText = value.ToString();
 	}
 
-	public static T GetAttributeValue<T>(this XmlNode node, string attributeName)
-	{
-		return node.GetAttributeValue(attributeName, default(T));
-	}
-
-	public static T GetAttributeValue<T>(this XmlNode node, string attributeName, T defaultValue)
+	public static T GetAttributeValue<T>(XmlNode node, string attributeName, T defaultValue)
 	{
 		try
 		{
 			if (node != null && node.Attributes[attributeName] != null)
 			{
-				return (T)ConversionHelper.ChangeType(MacroContainer.Instance.ExpandConstantMacros(node.Attributes[attributeName].Value), typeof(T));
+				return (T)ConversionHelper.ChangeType(RuntimeService.Instance.ExpandConstantMacros(node.Attributes[attributeName].Value), typeof(T));
 			}
 		}
 		catch (ArgumentException)
@@ -40,29 +30,13 @@ internal static class XmlNodeExtensions
 		return defaultValue;
 	}
 
-	public static void SetAttributeValue<T>(this XmlNode node, string attributeName, T value)
-	{
-		XmlAttribute xmlAttribute = node.Attributes[attributeName];
-		if (xmlAttribute != null && !typeof(T).IsValueType && value == null)
-		{
-			node.Attributes.Remove(xmlAttribute);
-			return;
-		}
-		if (xmlAttribute == null)
-		{
-			xmlAttribute = node.OwnerDocument.CreateAttribute(attributeName);
-			node.Attributes.Append(xmlAttribute);
-		}
-		xmlAttribute.Value = value.ToString();
-	}
-
-	public static T GetNodeValue<T>(this XmlNode node, T defaultValue)
+	public static T GetNodeValue2<T>(XmlNode node, T defaultValue)
 	{
 		try
 		{
 			if (node != null && !string.IsNullOrEmpty(node.InnerText))
 			{
-				return (T)ConversionHelper.ChangeType(MacroContainer.Instance.ExpandConstantMacros(node.InnerText), typeof(T));
+				return (T)ConversionHelper.ChangeType(RuntimeService.Instance.ExpandConstantMacros(node.InnerText), typeof(T));
 			}
 		}
 		catch (ArgumentException)

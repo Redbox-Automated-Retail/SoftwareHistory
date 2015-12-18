@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Client;
 
-public class HardwareJobSchedule
+public sealed class HardwareJobSchedule
 {
 	public DateTime? StartTime { get; set; }
 

@@ -1,40 +1,35 @@
 using System;
 using System.ServiceProcess;
-using System.Threading;
 
 namespace Redbox.HAL.Core;
 
-internal class ServiceHelper
+internal static class ServiceHelper
 {
 	public const string HALService = "halsvc$default";
 
 	private const int ServiceTimeout = 30000;
 
-	private ManualResetEvent m_waitEvent = new ManualResetEvent(initialState: false);
-
-	public static ServiceHelper Instance => Singleton<ServiceHelper>.Instance;
-
-	public bool StopHALService(bool check)
+	public static bool StopHALService(bool check)
 	{
 		return StopServiceInner("halsvc$default", null, check);
 	}
 
-	public bool StopService(string name, int? to, bool checkRunning)
+	public static bool StopService(string name, int? to, bool checkRunning)
 	{
 		return StopServiceInner(name, to, checkRunning);
 	}
 
-	public bool StartHALService()
+	public static bool StartHALService()
 	{
 		return StartServiceInner("halsvc$default", 30000);
 	}
 
-	public bool StartService(string name, int? to)
+	public static bool StartService(string name, int? to)
 	{
 		return StartServiceInner(name, to);
 	}
 
-	public bool ServiceIsRunning(string name)
+	public static bool ServiceIsRunning(string name)
 	{
 		try
 		{
@@ -47,7 +42,7 @@ internal class ServiceHelper
 		}
 	}
 
-	public string ServiceStatus(string name)
+	public static string ServiceStatus(string name)
 	{
 		try
 		{
@@ -59,12 +54,12 @@ internal class ServiceHelper
 		}
 	}
 
-	private TimeSpan GetTimeout(int? to)
+	private static TimeSpan GetTimeout(int? to)
 	{
 		return TimeSpan.FromMilliseconds((!to.HasValue) ? 30000 : to.Value);
 	}
 
-	private bool StopServiceInner(string name, int? to, bool checkRunning)
+	private static bool StopServiceInner(string name, int? to, bool checkRunning)
 	{
 		ServiceController serviceController = new ServiceController(name);
 		try
@@ -79,8 +74,8 @@ internal class ServiceHelper
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			do
 			{
-				m_waitEvent.WaitOne(1500);
-				if (!ProcessHelper.Instance.ProcessIsRunning(name))
+				PerfFunctions.Wait(1500);
+				if (!ProcessHelper.ProcessIsRunning(name))
 				{
 					return true;
 				}
@@ -95,7 +90,7 @@ internal class ServiceHelper
 		}
 	}
 
-	private bool StartServiceInner(string name, int? to)
+	private static bool StartServiceInner(string name, int? to)
 	{
 		ServiceController serviceController = new ServiceController(name);
 		try
@@ -109,9 +104,5 @@ internal class ServiceHelper
 		{
 			return false;
 		}
-	}
-
-	private ServiceHelper()
-	{
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -34,7 +35,6 @@ internal class CommandRepository
 		string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 		List<string> list2 = new List<string>();
 		list2.AddRange(Directory.GetFiles(directoryName, "*.dll"));
-		list2.AddRange(Directory.GetFiles(directoryName, "*.exe"));
 		foreach (string item in list2)
 		{
 			try

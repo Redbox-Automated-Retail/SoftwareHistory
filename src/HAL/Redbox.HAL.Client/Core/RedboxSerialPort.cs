@@ -5,25 +5,37 @@ using System.Threading;
 
 namespace Redbox.HAL.Core;
 
-internal class RedboxSerialPort : IDisposable
+internal abstract class RedboxSerialPort : IDisposable
 {
 	public delegate bool ResponseComplete(ChannelResponse response);
 
-	public static readonly byte[] WriteCharsEOTNull = new byte[2] { 13, 0 };
+	public static readonly byte[] WriteCharsCRNull = new byte[2] { 13, 0 };
 
-	public static readonly byte[] WriteCharsEOT = new byte[1] { 13 };
+	public static readonly byte[] WriteCharsCR = new byte[1] { 13 };
 
-	public SerialPort Port { get; private set; }
+	protected readonly SerialPort Port;
+
+	protected readonly int WritePause;
+
+	protected string FriendlyName;
+
+	private readonly int ReadTimeout;
+
+	private readonly int WriteTimeout;
+
+	private readonly int OpenWait;
+
+	private bool Disposed;
 
 	public bool IsOpen
 	{
 		get
 		{
-			if (Port != null)
+			if (Port == null)
 			{
-				return Port.IsOpen;
+				return false;
 			}
-			return false;
+			return PortIsOpen();
 		}
 	}
 
@@ -43,50 +55,75 @@ internal class RedboxSerialPort : IDisposable
 
 	public byte[] WriteTerminator { get; private set; }
 
-	private ResponseComplete Validate { get; set; }
+	public ResponseComplete Validate { get; set; }
 
-	private ManualResetEvent PortWaiter { get; set; }
+	protected abstract PortModes Mode { get; }
 
-	private bool Disposed { get; set; }
+	public static RedboxSerialPort Create(RedboxSerialPortConfiguration conf, PortModes mode, string friendly)
+	{
+		RedboxSerialPort redboxSerialPort = Create(conf, mode);
+		redboxSerialPort.FriendlyName = friendly;
+		return redboxSerialPort;
+	}
+
+	public static RedboxSerialPort Create(RedboxSerialPortConfiguration conf, PortModes mode)
+	{
+		RedboxSerialPort result = null;
+		switch (mode)
+		{
+		case PortModes.Async:
+			result = new AsyncReadPort(conf);
+			break;
+		case PortModes.Callback:
+			result = new CallbackReadPort(conf);
+			break;
+		}
+		return result;
+	}
 
 	public void Dispose()
 	{
+		if (EnableDebugging)
+		{
+			LogHelper.Instance.Log("RDBX serial port: dispose port {0}", Name);
+		}
 		DisposeInner(fromDispose: true);
 	}
 
 	~RedboxSerialPort()
 	{
+		if (EnableDebugging)
+		{
+			LogHelper.Instance.Log("RDBX serial port: dispose port {0} (finalizer)", Name);
+		}
 		DisposeInner(fromDispose: false);
 	}
 
-	public RedboxSerialPort(RedboxSerialPortConfiguration conf)
-	{
-		WriteTerminator = conf.WriteTerminator;
-		Validate = conf.Test;
-		PortWaiter = new ManualResetEvent(initialState: false);
-		ConfigurePort(conf);
-	}
-
-	public bool ClosePort()
+	public bool Close()
 	{
 		if (Port == null || !Port.IsOpen)
 		{
 			return false;
 		}
-		Port.RtsEnable = true;
-		Port.DtrEnable = false;
 		try
 		{
+			Port.RtsEnable = true;
+			Port.DtrEnable = false;
 			Port.Close();
 			if (Port.IsOpen)
 			{
 				LogHelper.Instance.Log("PortManager.SafeClosePort {0}: port is still open.", Port.PortName);
 				return false;
 			}
-			if (EnableDebugging)
+			if (string.IsNullOrEmpty(FriendlyName))
 			{
-				LogHelper.Instance.Log("PortManager.SafeClosePort {0}: success.", Port.PortName);
+				LogHelper.Instance.Log("The port {0} is closed.", Port.PortName);
 			}
+			else
+			{
+				LogHelper.Instance.Log("The {0} port ({1}) is closed.", FriendlyName, Port.PortName);
+			}
+			CloseInner();
 			return true;
 		}
 		catch (Exception e)
@@ -96,14 +133,50 @@ internal class RedboxSerialPort : IDisposable
 		}
 	}
 
-	public bool Open()
-	{
-		return OpenInner(-1, -1);
-	}
+	public abstract bool Open();
 
-	public bool Open(int readTimeout, int writeTimeout)
+	public abstract ChannelResponse SendRecv(byte[] bytes, int readTimeout);
+
+	protected bool OpenInner()
 	{
-		return OpenInner(readTimeout, writeTimeout);
+		if (Port == null)
+		{
+			LogHelper.Instance.Log("RedboxSerialPort: no port is configured.");
+			return false;
+		}
+		if (PortIsOpen())
+		{
+			return true;
+		}
+		try
+		{
+			Port.Open();
+			Port.ReadTimeout = ReadTimeout;
+			Port.WriteTimeout = WriteTimeout;
+			Port.RtsEnable = true;
+			Port.DtrEnable = true;
+			Thread.Sleep(OpenWait);
+			if (string.IsNullOrEmpty(FriendlyName))
+			{
+				LogHelper.Instance.Log("The port {0} is open in mode {1}.", Port.PortName, Mode.ToString());
+			}
+			else
+			{
+				LogHelper.Instance.Log("The {0} port ({1}) is open in mode {2}.", FriendlyName, Port.PortName, Mode.ToString());
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("RedboxSerialPort.Open() caught an exception.", e);
+			return false;
+		}
+		if (ResetPortBuffers(resetOut: true))
+		{
+			PortManager.Instance.Register(Name);
+			return true;
+		}
+		Close();
+		return false;
 	}
 
 	public bool ResetBuffers()
@@ -111,112 +184,20 @@ internal class RedboxSerialPort : IDisposable
 		return ResetPortBuffers(resetOut: false);
 	}
 
-	public ChannelResponse WriteCommand(string command, int readTimeout)
+	public ChannelResponse SendRecv(string command, int readTimeout)
 	{
-		ChannelResponse channelResponse = ChannelResponse.NewChannel();
-		try
-		{
-			if (!Port.IsOpen)
-			{
-				LogHelper.Instance.Log("Port.WriteCommand: the port was closed.", LogEntryType.Error);
-				channelResponse.SetClosedError();
-				return channelResponse;
-			}
-			if (EnableDebugging)
-			{
-				LogHelper.Instance.Log("Port.WriteCommand: {0}", command);
-			}
-			Port.Write(command);
-			Port.Write(WriteTerminator, 0, WriteTerminator.Length);
-			PortWaiter.WaitOne(10);
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Port.WriteCommand() caught an exception.", e);
-			channelResponse.SetCommunicationError();
-			return channelResponse;
-		}
-		ReadInner(channelResponse);
-		if (!channelResponse.ReadEvent.WaitOne(readTimeout))
-		{
-			if (EnableDebugging)
-			{
-				string text = Encoding.ASCII.GetString(channelResponse.RawResponse);
-				LogHelper.Instance.Log("*** Read timeout; buffer: {0}", text);
-				channelResponse.DumpResponseBuffer();
-			}
-			LogHelper.Instance.Log("Communication ERROR: port read timed out", LogEntryType.Error);
-			channelResponse.SetCommunicationError();
-		}
-		return channelResponse;
+		return SendRecv(Encoding.ASCII.GetBytes(command), readTimeout);
 	}
 
-	private void DisposeInner(bool fromDispose)
+	protected virtual void CloseInner()
 	{
-		if (!Disposed)
-		{
-			Disposed = true;
-			ClosePort();
-			Port.Dispose();
-			Port = null;
-			GC.SuppressFinalize(this);
-		}
 	}
 
-	private bool OpenInner(int readTimeout, int writeTimeout)
+	protected virtual void CoreDispose()
 	{
-		if (Port == null)
-		{
-			LogHelper.Instance.Log("RedboxSerialPort: no port is configured.");
-			return false;
-		}
-		try
-		{
-			if (Port.IsOpen)
-			{
-				return true;
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("PortManager.Open: IsOpen generated an exception.", e);
-			return false;
-		}
-		for (int i = 0; i < 3; i++)
-		{
-			try
-			{
-				Port.Open();
-				Port.ReadTimeout = readTimeout;
-				Port.WriteTimeout = writeTimeout;
-				Port.RtsEnable = true;
-				Port.DtrEnable = true;
-				PortWaiter.WaitOne(3000, exitContext: false);
-				bool isOpen = Port.IsOpen;
-				if (EnableDebugging)
-				{
-					LogHelper.Instance.Log("RedboxSerialPort.Open port {0}: {1}.", Port.PortName, isOpen ? "success" : "EPIC failure.");
-				}
-				if (isOpen)
-				{
-					break;
-				}
-			}
-			catch (Exception e2)
-			{
-				LogHelper.Instance.Log("RedboxSerialPort.Open() caught an exception.", e2);
-				return false;
-			}
-		}
-		if (ResetPortBuffers(resetOut: true))
-		{
-			return true;
-		}
-		ClosePort();
-		return false;
 	}
 
-	private bool ResetPortBuffers(bool resetOut)
+	protected bool ResetPortBuffers(bool resetOut)
 	{
 		try
 		{
@@ -239,54 +220,70 @@ internal class RedboxSerialPort : IDisposable
 		}
 	}
 
-	private void PortDataReceived(object sender, SerialDataReceivedEventArgs args)
+	protected bool PortIsOpen()
 	{
-	}
-
-	private void ReadInner(ChannelResponse response)
-	{
+		string text = (string.IsNullOrEmpty(FriendlyName) ? Name : FriendlyName);
 		try
 		{
-			Port.BaseStream.BeginRead(response.ReadBuffer, 0, response.ReadBuffer.Length, EndReadCallback, response);
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("CoreCommand: read caught an exception.", e);
-		}
-	}
-
-	private void EndReadCallback(IAsyncResult result)
-	{
-		int num = 0;
-		ChannelResponse channelResponse = null;
-		try
-		{
-			channelResponse = (ChannelResponse)result.AsyncState;
-			num = Port.BaseStream.EndRead(result);
-			if (num == 0)
+			if (Port.IsOpen)
 			{
-				LogHelper.Instance.Log("SerialPort {0}: received 0 bytes in read.", Port.PortName);
-				channelResponse.ReadEvent.Set();
-				return;
+				return true;
 			}
 		}
-		catch (Exception e)
+		catch (ArgumentNullException e)
 		{
-			LogHelper.Instance.Log("Port.EndReadCallback caught an exception.", e);
-			return;
+			LogHelper.Instance.Log($"[RedboxSerialPort] {text} IsOpen generated an argument NULL exception.", e);
+			return false;
 		}
-		channelResponse.Accumulate(num);
-		if (!Validate(channelResponse))
+		catch (ArgumentException e2)
 		{
-			ReadInner(channelResponse);
-			return;
+			LogHelper.Instance.Log($"[RedboxSerialPort] {text} IsOpen generated an argument exception.", e2);
+			return false;
 		}
-		channelResponse.ReponseValid = true;
-		channelResponse.ReadEvent.Set();
+		catch
+		{
+			LogHelper.Instance.Log("[RedboxSerialPort] {0} IsOpen generated an unhandled exception.", text);
+			return false;
+		}
+		return false;
 	}
 
-	private void ConfigurePort(RedboxSerialPortConfiguration conf)
+	protected string AsString(byte[] array)
 	{
+		StringBuilder stringBuilder = new StringBuilder(array.Length * 2);
+		foreach (byte b in array)
+		{
+			stringBuilder.AppendFormat("{0:x2}", b);
+		}
+		return stringBuilder.ToString();
+	}
+
+	protected RedboxSerialPort(RedboxSerialPortConfiguration conf)
+	{
+		WriteTerminator = conf.WriteTerminator;
+		Validate = conf.Test;
 		Port = new SerialPort(conf.PortName, conf.Baud, conf.Parity, conf.DataBits, conf.StopBits);
+		if (conf.ReceiveBufferSize.HasValue)
+		{
+			Port.ReadBufferSize = conf.ReceiveBufferSize.Value;
+		}
+		WritePause = conf.WritePause;
+		ReadTimeout = conf.ReadTimeout;
+		WriteTimeout = conf.WriteTimeout;
+		OpenWait = conf.OpenWait;
+	}
+
+	private void DisposeInner(bool fromDispose)
+	{
+		if (!Disposed)
+		{
+			Disposed = true;
+			CoreDispose();
+			Close();
+			string name = Name;
+			Port.Dispose();
+			PortManager.Instance.Remove(name);
+			GC.SuppressFinalize(this);
+		}
 	}
 }

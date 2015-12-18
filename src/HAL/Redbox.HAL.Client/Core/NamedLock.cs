@@ -4,40 +4,37 @@ using System.Threading;
 
 namespace Redbox.HAL.Core;
 
-internal class NamedLock : IDisposable
+internal sealed class NamedLock : IDisposable
 {
-	private bool m_ownsMutex;
-
 	private Mutex m_instanceMutex;
 
 	private readonly string m_name;
 
 	private readonly LockScope m_scope;
 
+	public bool IsOwned { get; private set; }
+
 	public NamedLock(string name, LockScope scope)
 	{
 		m_name = name;
 		m_scope = scope;
-		AcquireLock();
-	}
-
-	public bool Exists()
-	{
-		if (m_instanceMutex != null)
+		try
 		{
-			return m_ownsMutex;
+			m_instanceMutex = new Mutex(initiallyOwned: false, string.Format(CultureInfo.InvariantCulture, "{0}\\{1}", m_scope, m_name), out var createdNew);
+			IsOwned = createdNew;
 		}
-		return false;
+		catch
+		{
+			IsOwned = false;
+		}
 	}
 
 	public void Dispose()
 	{
-		m_instanceMutex.Close();
-		m_instanceMutex = null;
-	}
-
-	internal void AcquireLock()
-	{
-		m_instanceMutex = new Mutex(initiallyOwned: false, string.Format(CultureInfo.InvariantCulture, "{0}\\{1}", m_scope, m_name), out m_ownsMutex);
+		if (m_instanceMutex != null)
+		{
+			m_instanceMutex.Close();
+			m_instanceMutex = null;
+		}
 	}
 }

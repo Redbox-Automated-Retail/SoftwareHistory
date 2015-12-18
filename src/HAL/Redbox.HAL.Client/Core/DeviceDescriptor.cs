@@ -1,3 +1,5 @@
+using System;
+
 namespace Redbox.HAL.Core;
 
 internal class DeviceDescriptor
@@ -9,6 +11,10 @@ internal class DeviceDescriptor
 	public string Product { get; private set; }
 
 	public string Friendlyname { get; private set; }
+
+	public DriverDescriptor DriverInfo { get; private set; }
+
+	public Guid DeviceGuid { get; private set; }
 
 	public override string ToString()
 	{
@@ -24,5 +30,15 @@ internal class DeviceDescriptor
 		Vendor = v;
 		Product = p;
 		Friendlyname = friendly;
+		DeviceGuid = Guid.Empty;
+	}
+
+	public DeviceDescriptor(string v, string p, string friendly, DriverDescriptor desc, Guid deviceGuid)
+	{
+		Vendor = v;
+		Product = p;
+		Friendlyname = friendly;
+		DriverInfo = desc;
+		DeviceGuid = deviceGuid;
 	}
 }

@@ -26,7 +26,7 @@ internal class PipeShutdown : AbstractPipeClientSession
 	protected override List<string> ProcessRawMessage()
 	{
 		List<string> list = new List<string>();
-		list.Add(base.ReadBuilder.ToString());
+		list.Add(ReadBuilder.ToString());
 		return list;
 	}
 

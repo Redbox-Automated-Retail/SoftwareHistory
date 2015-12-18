@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Core;
 
-internal class NullCompressionAlgorithm : CompressionAlgorithm
+internal sealed class NullCompressionAlgorithm : CompressionAlgorithm
 {
 	public override byte[] Compress(byte[] source)
 	{

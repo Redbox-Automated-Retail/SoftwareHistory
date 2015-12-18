@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Redbox.HAL.Core;
 
-internal class ChannelResponse : IDisposable
+internal sealed class ChannelResponse : IDisposable
 {
 	private enum ChannelError
 	{
@@ -12,6 +12,8 @@ internal class ChannelResponse : IDisposable
 		ChannelClosed,
 		CommunicationError
 	}
+
+	private readonly List<byte> PortResponse = new List<byte>();
 
 	public bool CommOk => Error == ChannelError.Success;
 
@@ -31,16 +33,26 @@ internal class ChannelResponse : IDisposable
 
 	private bool Disposed { get; set; }
 
-	private List<byte> PortResponse { get; set; }
-
-	public static bool ResponseEndsWithCR(ChannelResponse response)
+	public static bool EndsWithEOT(ChannelResponse response)
 	{
-		byte[] rawResponse = response.RawResponse;
-		if (rawResponse.Length >= 1)
+		return -1 != response.IndexOf(4);
+	}
+
+	public int IndexOf(byte b)
+	{
+		byte[] array = PortResponse.ToArray();
+		if (array == null || array.Length == 0)
 		{
-			return -1 != rawResponse.IndexOf(13);
+			return -1;
 		}
-		return false;
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (array[i] == b)
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	public void Dispose()
@@ -56,7 +68,12 @@ internal class ChannelResponse : IDisposable
 
 	internal static ChannelResponse NewChannel()
 	{
-		return new ChannelResponse();
+		return new ChannelResponse(createBuffer: true);
+	}
+
+	internal static ChannelResponse NewChannel(bool createBuffer)
+	{
+		return new ChannelResponse(createBuffer);
 	}
 
 	internal void SetCommunicationError()
@@ -69,6 +86,14 @@ internal class ChannelResponse : IDisposable
 		UpdateErrorState(ChannelError.ChannelClosed);
 	}
 
+	internal void Accumulate(byte[] bytes, int len)
+	{
+		for (int i = 0; i < len; i++)
+		{
+			PortResponse.Add(bytes[i]);
+		}
+	}
+
 	internal void Accumulate(int count)
 	{
 		for (int i = 0; i < count; i++)
@@ -77,22 +102,18 @@ internal class ChannelResponse : IDisposable
 		}
 	}
 
-	internal void DumpResponseBuffer()
-	{
-		LogHelper.Instance.Log("Raw response buffer: {0}", RawResponse.AsString());
-	}
-
 	private void UpdateErrorState(ChannelError err)
 	{
 		Error = err;
-		PortResponse.Clear();
 	}
 
-	private ChannelResponse()
+	private ChannelResponse(bool createBuffer)
 	{
 		Error = ChannelError.Success;
 		ReadEvent = new AutoResetEvent(initialState: false);
-		ReadBuffer = new byte[256];
-		PortResponse = new List<byte>();
+		if (createBuffer)
+		{
+			ReadBuffer = new byte[256];
+		}
 	}
 }

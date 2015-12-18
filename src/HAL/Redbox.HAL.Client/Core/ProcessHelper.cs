@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Redbox.HAL.Core;
 
-internal class ProcessHelper
+internal static class ProcessHelper
 {
 	public const string HalServiceProcess = "halsvc-win32.exe";
 
@@ -11,9 +11,7 @@ internal class ProcessHelper
 
 	public const string ConsoleProcess = "halsvc-console.exe";
 
-	public static ProcessHelper Instance => Singleton<ProcessHelper>.Instance;
-
-	public ProcessStartInfo SetupDefaultProcessInfo(string processName)
+	public static ProcessStartInfo SetupDefaultProcessInfo(string processName)
 	{
 		ProcessStartInfo processStartInfo = new ProcessStartInfo(processName);
 		processStartInfo.UserName = null;
@@ -21,7 +19,7 @@ internal class ProcessHelper
 		return processStartInfo;
 	}
 
-	public bool KillProcess(string name)
+	public static bool KillProcess(string name)
 	{
 		Process[] processesByName = Process.GetProcessesByName(name);
 		if (processesByName.Length == 0)
@@ -43,33 +41,30 @@ internal class ProcessHelper
 		return true;
 	}
 
-	public bool HALProcessRunning()
+	public static bool HALProcessRunning()
 	{
 		return ProcessIsRunningInner("halsvc-win32.exe");
 	}
 
-	public bool ProcessIsRunning(string name)
+	public static bool ProcessIsRunning(string name)
 	{
 		return ProcessIsRunningInner(name);
 	}
 
-	private ProcessHelper()
+	public static void DumpProcessMemoryMetrics()
 	{
+		Process currentProcess = Process.GetCurrentProcess();
+		LogHelper.Instance.Log(" --- Memory dump --- ");
+		LogHelper.Instance.Log("    Working set: {0} bytes", currentProcess.WorkingSet64);
+		LogHelper.Instance.Log("    VM size: {0} bytes", currentProcess.VirtualMemorySize64);
+		LogHelper.Instance.Log("    Private memory size: {0} bytes", currentProcess.PrivateMemorySize64);
+		LogHelper.Instance.Log("    Paged memory size: {0} bytes", currentProcess.PagedMemorySize64);
 	}
 
-	private string ProcessName(string name)
+	private static bool ProcessIsRunningInner(string name)
 	{
 		int num = name.LastIndexOf(".exe");
-		if (-1 != num)
-		{
-			return name.Substring(0, num);
-		}
-		return name;
-	}
-
-	private bool ProcessIsRunningInner(string name)
-	{
-		name = ProcessName(name);
+		name = ((-1 == num) ? name : name.Substring(0, num));
 		Process[] processesByName = Process.GetProcessesByName(name);
 		if (processesByName.Length != 0)
 		{

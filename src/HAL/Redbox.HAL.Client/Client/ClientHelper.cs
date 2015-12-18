@@ -82,6 +82,10 @@ public class ClientHelper
 
 	public HardwareService AutoConnect()
 	{
+		if (Service != null)
+		{
+			return Service;
+		}
 		Service = ConnectInner(Constants.HALIPCStrings.TcpServer);
 		if (Service != null)
 		{
@@ -171,6 +175,12 @@ public class ClientHelper
 	public ClientHelper()
 	{
 		Sink = NullSink.Instance;
+	}
+
+	public ClientHelper(HardwareService service)
+	{
+		Sink = NullSink.Instance;
+		Service = service;
 	}
 
 	private bool WaitForInitInner()

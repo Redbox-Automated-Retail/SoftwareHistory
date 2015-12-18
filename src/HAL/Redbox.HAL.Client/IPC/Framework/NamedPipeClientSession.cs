@@ -54,12 +54,12 @@ internal sealed class NamedPipeClientSession : AbstractPipeClientSession
 
 	private string GetNextBufferLine()
 	{
-		string text = base.ReadBuilder.ToString();
+		string text = ReadBuilder.ToString();
 		int num = text.IndexOf(Environment.NewLine);
 		if (num != -1)
 		{
 			string text2 = text.Substring(0, num + Environment.NewLine.Length);
-			base.ReadBuilder.Remove(0, num + Environment.NewLine.Length);
+			ReadBuilder.Remove(0, num + Environment.NewLine.Length);
 			return text2.Trim();
 		}
 		return string.Empty;

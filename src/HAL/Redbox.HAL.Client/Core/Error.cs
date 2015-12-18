@@ -4,7 +4,7 @@ using System.Text;
 namespace Redbox.HAL.Core;
 
 [Serializable]
-public class Error
+public sealed class Error
 {
 	private readonly string m_code;
 
@@ -24,7 +24,7 @@ public class Error
 
 	public static Error Parse(string error)
 	{
-		string code = error.ExtractCodeFromBrackets("[", "]");
+		string code = StringExtensions.ExtractCodeFromBrackets(error, "[", "]");
 		int startIndex = error.IndexOf("]");
 		string text = error.Substring(startIndex);
 		string[] array = text.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);

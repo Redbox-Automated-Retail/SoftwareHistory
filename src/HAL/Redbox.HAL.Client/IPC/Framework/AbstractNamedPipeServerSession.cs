@@ -9,25 +9,13 @@ namespace Redbox.HAL.IPC.Framework;
 
 internal abstract class AbstractNamedPipeServerSession
 {
-	private bool? m_logToConsole = null;
-
 	public IDictionary<string, object> Properties { get; private set; }
 
 	public ParameterDictionary Context { get; private set; }
 
 	protected abstract string WelcomeMessage { get; }
 
-	protected bool LogToConsole
-	{
-		get
-		{
-			if (!m_logToConsole.HasValue)
-			{
-				m_logToConsole = RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL", "PipeLogToConsole");
-			}
-			return m_logToConsole ?? false;
-		}
-	}
+	protected bool LogToConsole => false;
 
 	protected bool IsSecure => false;
 

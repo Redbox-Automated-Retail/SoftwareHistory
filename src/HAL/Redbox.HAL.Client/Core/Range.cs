@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Redbox.HAL.Core;
 
-public class Range
+public sealed class Range
 {
 	public int Size => End - Start + 1;
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -32,44 +31,7 @@ internal static class StringExtensions
 
 	internal static readonly char[] PropertyPathSeparators = new char[1] { '.' };
 
-	public static T ToEnum<T>(this string value)
-	{
-		return Enum<T>.Parse(value, default(T));
-	}
-
-	public static byte[] ReadToBuffer(this string fileName)
-	{
-		if (fileName == null)
-		{
-			return null;
-		}
-		byte[] array = null;
-		using FileStream fileStream = StreamBase.OpenFile(fileName);
-		array = new byte[fileStream.Length];
-		fileStream.Read(array, 0, (int)fileStream.Length);
-		return array;
-	}
-
-	public static IDictionary<string, string> GetNameValuePairs(this string source)
-	{
-		IDictionary<string, string> dictionary = new Dictionary<string, string>();
-		MatchCollection matchCollection = Regex.Matches(source, "(?n:((?<name>[\\w-_]*)=(?<val>[\\w-_\\\\\\/\\(\\)\\,'\\.\\s]*)))");
-		foreach (Match item in matchCollection)
-		{
-			Group obj = item.Groups["name"];
-			Group obj2 = item.Groups["val"];
-			if (obj.Captures.Count == obj2.Captures.Count)
-			{
-				for (int i = 0; i < obj.Captures.Count; i++)
-				{
-					dictionary[obj.Captures[i].Value] = obj2.Captures[i].Value;
-				}
-			}
-		}
-		return dictionary;
-	}
-
-	public static string RemoveString(this string value, string token)
+	public static string RemoveString(string value, string token)
 	{
 		int num = value.IndexOf(token);
 		if (num <= -1)
@@ -79,43 +41,7 @@ internal static class StringExtensions
 		return value.Remove(num, token.Length);
 	}
 
-	public static string InnerTrim(this string value)
-	{
-		StringBuilder stringBuilder = new StringBuilder();
-		bool flag = false;
-		foreach (char c in value)
-		{
-			if (!char.IsControl(c))
-			{
-				if (flag)
-				{
-					stringBuilder.Append(' ');
-					flag = false;
-				}
-				stringBuilder.Append(c);
-			}
-			else
-			{
-				flag = true;
-			}
-		}
-		return stringBuilder.ToString();
-	}
-
-	public static string GetOnlyDigits(this string value)
-	{
-		StringBuilder stringBuilder = new StringBuilder();
-		foreach (char c in value)
-		{
-			if (char.IsDigit(c))
-			{
-				stringBuilder.Append(c);
-			}
-		}
-		return stringBuilder.ToString();
-	}
-
-	public static byte[] HexToBytes(this string source)
+	public static byte[] HexToBytes(string source)
 	{
 		List<byte> list = new List<byte>();
 		int num = 0;
@@ -129,27 +55,29 @@ internal static class StringExtensions
 		return list.ToArray();
 	}
 
-	public static byte[] Base64ToBytes(this string source)
+	public static byte[] Base64ToBytes(string source)
 	{
 		return Convert.FromBase64String(source);
 	}
 
-	public static string EncryptToBase64(this string source)
+	public static string EncryptToBase64(string source)
 	{
-		return Encoding.UTF8.GetBytes(source).Encrypt().ToBase64();
+		byte[] bytes = Encoding.UTF8.GetBytes(source);
+		return ByteHelper.ToBase64(ByteHelper.Encrypt(bytes));
 	}
 
-	public static string DecryptFromBase64(this string source)
+	public static string DecryptFromBase64(string source)
 	{
-		return Encoding.UTF8.GetString(source.Base64ToBytes().Decrypt());
+		byte[] inputArray = Base64ToBytes(source);
+		return Encoding.UTF8.GetString(ByteHelper.Decrypt(inputArray));
 	}
 
-	public static object GetValueForPath(this string path, object rootObject)
+	public static object GetValueForPath(string path, object rootObject)
 	{
 		return GetObjectFromPath(path, rootObject, null);
 	}
 
-	public static void SetValueForPath(this string path, object rootObject, object value)
+	public static void SetValueForPath(string path, object rootObject, object value)
 	{
 		object objectFromPath = GetObjectFromPath(path, rootObject, 1);
 		if (objectFromPath != null)
@@ -160,7 +88,7 @@ internal static class StringExtensions
 		}
 	}
 
-	public static Type ToType(this string typeName)
+	public static Type ToType(string typeName)
 	{
 		return Type.GetType(typeName);
 	}
@@ -168,6 +96,51 @@ internal static class StringExtensions
 	public static object ExtractIndex(string part)
 	{
 		return ExtractIndexInternal(part);
+	}
+
+	public static string ExtractCodeFromBrackets(string value, string prefix, string postfix)
+	{
+		int num = 0;
+		int num2 = -1;
+		int num3 = -1;
+		int num4 = 0;
+		do
+		{
+			string text = string.Empty;
+			if (num4 + prefix.Length < value.Length)
+			{
+				text = value.Substring(num4, prefix.Length);
+			}
+			string text2 = string.Empty;
+			if (num4 + text2.Length < value.Length)
+			{
+				text2 = value.Substring(num4, postfix.Length);
+			}
+			if (text == prefix)
+			{
+				if (num2 == -1)
+				{
+					num2 = num4 + prefix.Length;
+				}
+				num++;
+			}
+			else if (text2 == postfix)
+			{
+				num--;
+				if (num == 0)
+				{
+					num3 = num4 - postfix.Length;
+					break;
+				}
+			}
+			num4++;
+		}
+		while (num4 < value.Length);
+		if (num2 == -1 || num3 == -1)
+		{
+			return null;
+		}
+		return value.Substring(num2, num3 - num2 + postfix.Length);
 	}
 
 	internal static object ExtractIndexInternal(string part)

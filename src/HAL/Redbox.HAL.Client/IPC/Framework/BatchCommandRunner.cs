@@ -43,11 +43,7 @@ internal class BatchCommandRunner : ISession, IMessageSink
 	public BatchCommandRunner(StreamReader reader)
 	{
 		m_reader = reader;
-		bool? secretValue = RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL", "IPCDetailedMessages");
-		if (secretValue.HasValue)
-		{
-			LogDetailedMessages = secretValue.Value;
-		}
+		LogDetailedMessages = false;
 	}
 
 	public bool Send(string message)

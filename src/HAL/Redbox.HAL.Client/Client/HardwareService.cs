@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Core;
@@ -6,9 +7,11 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Client;
 
-public class HardwareService
+public sealed class HardwareService
 {
 	private const int DefaultTimeout = 60000;
+
+	private readonly Version ClientVersion;
 
 	private IPCProtocol m_protocol;
 
@@ -19,6 +22,7 @@ public class HardwareService
 	public HardwareService(IPCProtocol protocol)
 	{
 		m_protocol = protocol;
+		ClientVersion = typeof(HardwareService).Assembly.GetName().Version;
 	}
 
 	public HardwareCommandResult Init(HardwareJobSchedule schedule, out HardwareJob job)
@@ -29,6 +33,20 @@ public class HardwareService
 	public HardwareCommandResult Unload(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJobInner("qlm-unload", schedule, out job);
+	}
+
+	public HardwareCommandResult CleanZone(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJobInner("clean-vmz", schedule, out job);
+	}
+
+	public HardwareCommandResult CleanZone(out HardwareJob job)
+	{
+		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
+		hardwareJobSchedule.StartTime = DateTime.Now;
+		hardwareJobSchedule.Priority = HardwareJobPriority.Low;
+		HardwareJobSchedule schedule = hardwareJobSchedule;
+		return ScheduleJobInner("clean-vmz", schedule, out job);
 	}
 
 	public HardwareCommandResult Thin(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
@@ -42,27 +60,43 @@ public class HardwareService
 		return hardwareCommandResult;
 	}
 
-	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] toZone, HardwareJobSchedule schedule, out HardwareJob job)
+	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
 		}
-		PushArray(toZone, job);
+		PushArray(thins, job);
+		PushArray(null, job);
 		PushArray(rebalance, job);
 		PushArray(toBin, job);
 		return hardwareCommandResult;
 	}
 
-	public HardwareCommandResult ThinVMZ(string[] toBin, string[] toZone, HardwareJobSchedule schedule, out HardwareJob job)
+	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thinRedeploys, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
 		}
-		PushArray(toZone, job);
+		PushArray(thins, job);
+		PushArray(thinRedeploys, job);
+		PushArray(rebalance, job);
+		PushArray(toBin, job);
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult ThinVMZ(string[] toBin, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
+		if (!hardwareCommandResult.Success)
+		{
+			return hardwareCommandResult;
+		}
+		PushArray(thins, job);
+		PushArray(null, job);
 		PushArray(null, job);
 		PushArray(toBin, job);
 		return hardwareCommandResult;
@@ -76,23 +110,6 @@ public class HardwareService
 	public HardwareCommandResult GetInventoryStats(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJobInner("get-inventory-stats", schedule, out job);
-	}
-
-	public HardwareCommandResult PrepDeckForRedeploy(string deckNumber, HardwareJobSchedule schedule, out HardwareJob job)
-	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-deck-for-redeploy", schedule, out job);
-		if (hardwareCommandResult.Success)
-		{
-			int result = -1;
-			if (!int.TryParse(deckNumber, out result))
-			{
-				hardwareCommandResult.Errors.Add(Error.NewError("C001", $"Invalid deck number '{deckNumber}' passed to prep deck.", "The specified deck argument is not an integer. Try again."));
-				return hardwareCommandResult;
-			}
-			job.Push(result);
-			job.Push(1);
-		}
-		return hardwareCommandResult;
 	}
 
 	public HardwareCommandResult ResetLocations(List<Location> locs, HardwareJobSchedule schedule, out HardwareJob job)
@@ -110,22 +127,52 @@ public class HardwareService
 		return hardwareCommandResult;
 	}
 
+	public HardwareCommandResult SyncUnknowns(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ExecuteServiceCommand("SERVICE sync-unknowns");
+		job = (hardwareCommandResult.Success ? HardwareJob.Parse(this, hardwareCommandResult.CommandMessages[0]) : null);
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult PrepUnloadZone(int rotation, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-zone-for-unload", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(0);
+			job.Push(rotation);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult PrepUnloadZone(int rotation, int deckCount, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-zone-for-unload", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(deckCount);
+			job.Push(rotation);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult PrepDeckForRedeploy(string deckNumber, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-deck-for-redeploy", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(deckNumber);
+			job.Push(1);
+		}
+		return hardwareCommandResult;
+	}
+
 	public HardwareCommandResult PrepForRedeploy(string[] decks, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-deck-for-redeploy", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
-			foreach (string text in decks)
-			{
-				int result = -1;
-				if (!int.TryParse(text, out result))
-				{
-					hardwareCommandResult.Errors.Add(Error.NewError("C001", $"Invalid deck number '{text}' passed to prep deck.", "The specified deck argument is not an integer. Try again."));
-					return hardwareCommandResult;
-				}
-				job.Push(result);
-			}
-			job.Push(decks.Length);
+			PushArray(decks, job);
 		}
 		return hardwareCommandResult;
 	}
@@ -200,6 +247,11 @@ public class HardwareService
 		return hardwareCommandResult;
 	}
 
+	public HardwareCommandResult VMZDetail(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJobInner("vmz-details", schedule, out job);
+	}
+
 	public HardwareCommandResult VMZMerchSummary(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJobInner("vmz-merch-summary", schedule, out job);
@@ -214,6 +266,11 @@ public class HardwareService
 			job.Push(deck);
 		}
 		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult NotifyMaintModeState(bool goingIntoMM)
+	{
+		return ExecuteCommand($"SERVICE mm-status status: '{goingIntoMM.ToString()}'");
 	}
 
 	public HardwareCommandResult GetNonThinsInVMZ(HardwareJobSchedule schedule, out HardwareJob job)
@@ -328,7 +385,7 @@ public class HardwareService
 	public HardwareCommandResult SetConfiguration(string name, string xmlConfig)
 	{
 		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
-		return ExecuteCommand($"CONFIG set name: '{name}' data: '{inputArray.ToBase64()}'");
+		return ExecuteCommand($"CONFIG set name: '{name}' data: '{ByteHelper.ToBase64(inputArray)}'");
 	}
 
 	public HardwareCommandResult LoadConfiguration(string path)
@@ -357,7 +414,7 @@ public class HardwareService
 	public HardwareCommandResult SetInventoryState(string xml)
 	{
 		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
-		return ExecuteCommand($"CONFIG set-inventory-state data: '{inputArray.ToBase64()}'");
+		return ExecuteCommand($"CONFIG set-inventory-state data: '{ByteHelper.ToBase64(inputArray)}'");
 	}
 
 	public HardwareCommandResult GetProgramScript(string programName)
@@ -368,7 +425,7 @@ public class HardwareService
 	public HardwareCommandResult SetProgramScript(string programName, string script)
 	{
 		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
-		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{inputArray.ToBase64()}'");
+		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{ByteHelper.ToBase64(inputArray)}'");
 	}
 
 	public HardwareCommandResult SetProgramRequiresClientConnection(string programName, bool requiresClientConnection)
@@ -538,7 +595,7 @@ public class HardwareService
 	public HardwareCommandResult ExecuteImmediateProgram(byte[] bytes, out HardwareJob job)
 	{
 		job = null;
-		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB execute-immediate-base64 statement: '{bytes.ToBase64()}'");
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB execute-immediate-base64 statement: '{ByteHelper.ToBase64(bytes)}'");
 		if (hardwareCommandResult.Success)
 		{
 			job = HardwareJob.Parse(this, hardwareCommandResult.CommandMessages[0]);
@@ -557,6 +614,17 @@ public class HardwareService
 		return hardwareCommandResult;
 	}
 
+	public HardwareCommandResult GetKioskID(out string id)
+	{
+		id = "UNKNOWN";
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand("SERVICE get-kiosk-id");
+		if (hardwareCommandResult.Success)
+		{
+			id = hardwareCommandResult.CommandMessages[0];
+		}
+		return hardwareCommandResult;
+	}
+
 	public HardwareCommandResult GetQuickReturnStatus(out string status)
 	{
 		status = null;
@@ -568,9 +636,19 @@ public class HardwareService
 		return hardwareCommandResult;
 	}
 
-	public HardwareCommandResult NotifyMaintModeState(bool goingIntoMM)
+	public HardwareCommandResult ServiceUnknownSync()
 	{
-		return ExecuteCommand($"SERVICE mm-status status: '{goingIntoMM.ToString()}'");
+		return ExecuteCommand("SERVICE sync-unknowns");
+	}
+
+	public HardwareCommandResult ServiceEmptySync()
+	{
+		return ExecuteCommand("SERVICE sync-empty");
+	}
+
+	public HardwareCommandResult FullSync()
+	{
+		return ExecuteCommand("SERVICE full-sync");
 	}
 
 	public HardwareCommandResult TestSomeData(int dataSize)
@@ -632,5 +710,20 @@ public class HardwareService
 			job.Push(array);
 			job.Push(array.Length);
 		}
+	}
+
+	private bool ValidateVersion()
+	{
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand("SERVICE get-version");
+		if (!hardwareCommandResult.Success)
+		{
+			return false;
+		}
+		Version version = new Version(hardwareCommandResult.CommandMessages[0]);
+		if (ClientVersion.Major == version.Major && ClientVersion.Minor == version.Minor)
+		{
+			return ClientVersion.Build == version.Build;
+		}
+		return false;
 	}
 }

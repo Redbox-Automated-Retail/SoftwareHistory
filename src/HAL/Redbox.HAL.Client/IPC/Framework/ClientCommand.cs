@@ -216,7 +216,7 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 				stringBuilder.Replace("|*", string.Empty);
 				stringBuilder.Replace("*|", string.Empty);
 				string text = stringBuilder.ToString();
-				string text2 = text.ExtractCodeFromBrackets("[", "]");
+				string text2 = StringExtensions.ExtractCodeFromBrackets(text, "[", "]");
 				if (text2 != null)
 				{
 					string[] array = text.Substring(text2.Length + 2).Split("|".ToCharArray());
@@ -233,12 +233,12 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 			else if (result.CommandMessages[i].StartsWith("LZMA|"))
 			{
 				CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm.Decompress(result.CommandMessages[i].Substring(5).Base64ToBytes()));
+				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm.Decompress(StringExtensions.Base64ToBytes(result.CommandMessages[i].Substring(5))));
 			}
 			else if (result.CommandMessages[i].StartsWith("GZIP|"))
 			{
 				CompressionAlgorithm algorithm2 = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
-				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm2.Decompress(result.CommandMessages[i].Substring(5).Base64ToBytes()));
+				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm2.Decompress(StringExtensions.Base64ToBytes(result.CommandMessages[i].Substring(5))));
 			}
 		}
 		return list;

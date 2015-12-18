@@ -7,5 +7,6 @@ internal enum DeviceClass
 	USB,
 	Image,
 	Monitor,
-	HIDClass
+	HIDClass,
+	Mouse
 }
