@@ -51,4 +51,8 @@ public class ReservationCart3
 	public decimal TaxRate { get; set; }
 
 	public string Zip { get; set; }
+
+	public bool IsMnp { get; set; }
+
+	public bool IsMdv { get; set; }
 }
