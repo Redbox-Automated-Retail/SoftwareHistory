@@ -5,6 +5,14 @@
 	# VERSION @BUILD_VERSION@
         #
                 
+	GRIPPER STATUS
+	POP		GRIPPER-STATUS
+	
+	IF "EMPTY" == GRIPPER-STATUS
+		RESULT	CODE="EmptyPicker" MESSAGE="No disk in picker."
+		JUMP 	_END
+	ENDIF
+		
         MOVEVEND	
         POP		MOVE-RESULT
 	IF	MOVE-RESULT != "SUCCESS"
