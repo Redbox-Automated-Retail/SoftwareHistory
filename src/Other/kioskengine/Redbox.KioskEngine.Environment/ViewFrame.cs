@@ -368,15 +368,18 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 					actorProperties.BackgroundColor = Color.DarkRed;
 					actorProperties.Width = 32;
 					actorProperties.Height = 32;
-					actorProperties.OptionFlags |= RenderOptionFlags.DrawBorder;
+					ActorProperties actorProperties2 = actorProperties;
+					actorProperties2.OptionFlags |= RenderOptionFlags.DrawBorder;
 					actorProperties.ErrorText = $"Bitmap resource '{text2}' not found.";
 					Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V004", $"{attributeValue3}.image: Bitmap resource '{text2}' not found.", $"Actor {attributeValue3} is referencing a bitmap resource named '{text2}' that was not found."));
 				}
 			}
 			if (ViewWindow.HasValue)
 			{
-				actorProperties.X += ViewWindow.Value.X;
-				actorProperties.Y += ViewWindow.Value.Y;
+				ActorProperties actorProperties2 = actorProperties;
+				actorProperties2.X += ViewWindow.Value.X;
+				actorProperties2 = actorProperties;
+				actorProperties2.Y += ViewWindow.Value.Y;
 			}
 			m_actors[attributeValue3] = actorProperties;
 		}

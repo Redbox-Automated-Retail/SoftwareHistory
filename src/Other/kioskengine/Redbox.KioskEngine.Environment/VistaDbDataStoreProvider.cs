@@ -116,13 +116,13 @@ internal class VistaDbDataStoreProvider : DataStoreProvider
 					vistaDBTable.Next();
 				}
 			}
-			return dictionary;
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log($"Exception in VistaDbDataStoreProvider.OnGetAll({dataStore},{tableName})", e);
 			throw;
 		}
+		return dictionary;
 	}
 
 	protected override void OnDrop(string dataStore, string tableName)
@@ -310,10 +310,6 @@ internal class VistaDbDataStoreProvider : DataStoreProvider
 
 	private static object InternalGet(IVistaDBTable table, string keyName)
 	{
-		if (!table.Find($"Key: '{keyName}'", "IX_Key", partialMatching: false, softPosition: false))
-		{
-			return null;
-		}
-		return table.CurrentRow["Value"].Value;
+		return table.Find($"Key: '{keyName}'", "IX_Key", partialMatching: false, softPosition: false) ? table.CurrentRow["Value"].Value : null;
 	}
 }

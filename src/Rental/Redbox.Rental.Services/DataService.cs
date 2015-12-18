@@ -379,6 +379,44 @@ public class DataService : IDataService
 		return errorList;
 	}
 
+	public bool GetIsProductThinned(long productId)
+	{
+		bool result = false;
+		PerformActionWhileLocked(delegate
+		{
+			TitleCache value = null;
+			if (_dataServiceInstance != null && _dataServiceInstance.CacheDataInstance != null && _dataServiceInstance.CacheDataInstance.Titles.TryGetValue(productId, out value) && value != null)
+			{
+				foreach (string key in value.BarcodeProducts.Keys)
+				{
+					if (value.BarcodeProducts[key] != null && value.BarcodeProducts[key].Status == "Thinned")
+					{
+						result = true;
+					}
+				}
+			}
+		});
+		return result;
+	}
+
+	private ErrorList PerformActionWhileLocked(Action action)
+	{
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				action();
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.PerformActionWhileLocked", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
 	private void WaitForFirstLoad()
 	{
 		if (_manualResetEvent == null)

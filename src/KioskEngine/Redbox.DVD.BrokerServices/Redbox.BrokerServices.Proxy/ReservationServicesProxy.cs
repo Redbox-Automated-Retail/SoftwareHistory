@@ -31,13 +31,11 @@ internal class ReservationServicesProxy : IReservationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Services", "LiveCall", value);
 		}
 	}
 
@@ -45,13 +43,11 @@ internal class ReservationServicesProxy : IReservationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -59,13 +55,11 @@ internal class ReservationServicesProxy : IReservationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -130,8 +124,7 @@ internal class ReservationServicesProxy : IReservationServices
 					}
 					anon.Items[pickupResult.Key] = anon2;
 				}
-				IQueueService service3 = ServiceLocator.Instance.GetService<IQueueService>();
-				errorList = service3.Enqueue(200, "Pickup", anon);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Pickup", anon);
 			}
 			catch (Exception e)
 			{
@@ -141,8 +134,8 @@ internal class ReservationServicesProxy : IReservationServices
 			{
 				try
 				{
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service4 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -153,7 +146,7 @@ internal class ReservationServicesProxy : IReservationServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service4.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -184,8 +177,7 @@ internal class ReservationServicesProxy : IReservationServices
 					LogHelper.Instance.Log("Enqueue call to remote IReservationServices.ModResvPickup, URL: {0}", serviceProxy.GetProperty<string>("Url"));
 				}
 				IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-				IShoppingSessionService service3 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-				IShoppingSession session = service3.GetSession(sessionId);
+				IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 				if (session == null)
 				{
 					LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
@@ -239,8 +231,7 @@ internal class ReservationServicesProxy : IReservationServices
 						}
 						anon.Items[group.Key] = anon2;
 					}
-					IQueueService service4 = ServiceLocator.Instance.GetService<IQueueService>();
-					errorList = service4.Enqueue(200, "ModResvPickup", anon);
+					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "ModResvPickup", anon);
 				}
 			}
 			catch (Exception e)
@@ -251,8 +242,8 @@ internal class ReservationServicesProxy : IReservationServices
 			{
 				try
 				{
-					ICallbackService service5 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service5 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -263,7 +254,7 @@ internal class ReservationServicesProxy : IReservationServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service5.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -294,8 +285,7 @@ internal class ReservationServicesProxy : IReservationServices
 					LogHelper.Instance.Log("Enqueue call to remote IReservationServices.Expire, URL: {0}", serviceProxy.GetProperty<string>("Url"));
 				}
 				IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-				IQueueService service3 = ServiceLocator.Instance.GetService<IQueueService>();
-				errorList = service3.Enqueue(200, "Expire", new
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Expire", new
 				{
 					MessageType = "Expire",
 					MessageId = Guid.NewGuid(),
@@ -313,8 +303,8 @@ internal class ReservationServicesProxy : IReservationServices
 			{
 				try
 				{
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service4 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -325,7 +315,7 @@ internal class ReservationServicesProxy : IReservationServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service4.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -451,8 +441,7 @@ internal class ReservationServicesProxy : IReservationServices
 											TransactionDate = transactionDate,
 											ReferenceNumber = Convert.ToInt64(item["ReferenceNumber"])
 										};
-										IDictionary<string, object> dictionary4 = (IDictionary<string, object>)item["Contents"];
-										foreach (KeyValuePair<string, object> item2 in dictionary4)
+										foreach (KeyValuePair<string, object> item2 in (IDictionary<string, object>)item["Contents"])
 										{
 											List<string> barcodes = new List<string>();
 											Array.ForEach(((ArrayList)item2.Value).ToArray(), delegate(object item)

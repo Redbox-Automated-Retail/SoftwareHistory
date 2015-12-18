@@ -23,9 +23,9 @@ internal sealed class ResultCallbackEntry : ICallbackEntry, IDisposable
 		if (Parameters != null)
 		{
 			object[] parameters = Parameters;
-			foreach (object obj in parameters)
+			for (int i = 0; i < parameters.Length; i++)
 			{
-				if (obj is IDisposable disposable)
+				if (parameters[i] is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}

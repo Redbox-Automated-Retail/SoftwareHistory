@@ -45,8 +45,7 @@ public class ResourceEditorWindow : DockContent
 		string key = "text_editor_" + m_resource.Name;
 		if (m_panel.Controls.ContainsKey(key))
 		{
-			TextEditor textEditor = (TextEditor)m_panel.Controls[key];
-			textEditor.SetCurrentDebugLine(lineNumber, error);
+			((TextEditor)m_panel.Controls[key]).SetCurrentDebugLine(lineNumber, error);
 		}
 	}
 
@@ -110,8 +109,7 @@ public class ResourceEditorWindow : DockContent
 				}
 				else if (eachAspect["editor_type"] == "view")
 				{
-					XmlLinkedNode xmlLinkedNode2 = Resource.GetAspect(eachAspect.Name).GetContent() as XmlLinkedNode;
-					XmlNode xmlNode = xmlLinkedNode2.SelectSingleNode("scene");
+					XmlNode xmlNode = (Resource.GetAspect(eachAspect.Name).GetContent() as XmlLinkedNode).SelectSingleNode("scene");
 					_ = xmlNode.Attributes["name"].Value;
 					ServiceLocator.Instance.GetService<IRenderingService>();
 					IViewService service = ServiceLocator.Instance.GetService<IViewService>();
@@ -186,8 +184,7 @@ public class ResourceEditorWindow : DockContent
 					else if (eachAspect["editor_type"] == "bitmap")
 					{
 						System.Windows.Forms.PictureBox pictureBox2 = new System.Windows.Forms.PictureBox();
-						byte[] buffer = (byte[])Resource.GetAspect("content").GetContent();
-						MemoryStream stream = new MemoryStream(buffer);
+						MemoryStream stream = new MemoryStream((byte[])Resource.GetAspect("content").GetContent());
 						pictureBox2.Image = Image.FromStream(stream);
 						pictureBox2.Dock = DockStyle.Fill;
 						m_panel.Controls.Add(pictureBox2);

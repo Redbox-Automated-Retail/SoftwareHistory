@@ -55,7 +55,7 @@ public class TrackData
 					trackData.FirstName = matchCollection[0].Groups[0].Value;
 				}
 			}
-			else if (array.Length > 0)
+			else if (array.Length != 0)
 			{
 				trackData.Track1.Clear();
 				trackData.Track2 = CardHelper.CopyToSecure(array[0]);

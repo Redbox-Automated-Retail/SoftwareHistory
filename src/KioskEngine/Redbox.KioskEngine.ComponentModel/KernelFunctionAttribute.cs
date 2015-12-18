@@ -18,24 +18,25 @@ public class KernelFunctionAttribute : Attribute
 	{
 		List<KernelFunctionInfo> list = new List<KernelFunctionInfo>();
 		Type[] types = assembly.GetTypes();
-		foreach (Type type in types)
+		for (int i = 0; i < types.Length; i++)
 		{
-			MethodInfo[] methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+			MethodInfo[] methods = types[i].GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 			foreach (MethodInfo methodInfo in methods)
 			{
 				DescriptionAttribute descriptionAttribute = (DescriptionAttribute)Attribute.GetCustomAttribute(methodInfo, typeof(DescriptionAttribute));
 				ObsoleteAttribute obsoleteAttribute = (ObsoleteAttribute)Attribute.GetCustomAttribute(methodInfo, typeof(ObsoleteAttribute));
 				KernelFunctionAttribute[] array = (KernelFunctionAttribute[])Attribute.GetCustomAttributes(methodInfo, typeof(KernelFunctionAttribute));
-				if (array != null && array.Length > 0)
+				if (array != null && array.Length != 0)
 				{
-					KernelFunctionInfo kernelFunctionInfo = new KernelFunctionInfo();
-					kernelFunctionInfo.Method = methodInfo;
-					kernelFunctionInfo.Extension = extension;
-					kernelFunctionInfo.Description = descriptionAttribute?.Description;
-					kernelFunctionInfo.DeprecationWarning = obsoleteAttribute?.Message;
-					KernelFunctionInfo kernelFunctionInfo2 = kernelFunctionInfo;
-					kernelFunctionInfo2.InnerAttributes.AddRange(array);
-					list.Add(kernelFunctionInfo2);
+					KernelFunctionInfo kernelFunctionInfo = new KernelFunctionInfo
+					{
+						Method = methodInfo,
+						Extension = extension,
+						Description = descriptionAttribute?.Description,
+						DeprecationWarning = obsoleteAttribute?.Message
+					};
+					kernelFunctionInfo.InnerAttributes.AddRange(array);
+					list.Add(kernelFunctionInfo);
 				}
 			}
 		}

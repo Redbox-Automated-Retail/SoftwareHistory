@@ -17,16 +17,15 @@ public static class ActorFunctions
 			return;
 		}
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
-		IScene scene = service2.GetScene("Default");
+		IScene scene = ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default");
 		if (scene == null)
 		{
 			return;
 		}
-		IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
+		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
 		IActor actor = scene.CreateActor();
 		actor.Name = actorName;
-		IViewFrame viewFrame = service3.PeekViewFrame();
+		IViewFrame viewFrame = service2.PeekViewFrame();
 		if (viewFrame != null && viewFrame.ViewWindow.HasValue)
 		{
 			actor.X = x + viewFrame.ViewWindow.Value.X;
@@ -90,15 +89,15 @@ public static class ActorFunctions
 			if (image.StartsWith("cache:"))
 			{
 				string text2 = image.Substring(6);
-				IBitmapCacheService service4 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-				if (service4 == null)
+				IBitmapCacheService service3 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+				if (service3 == null)
 				{
 					actor.OptionFlags |= RenderOptionFlags.DrawBorder;
 					actor.ErrorText = "IBitmapCacheService not available from ServiceLocator.";
 				}
 				else
 				{
-					Image image2 = service4.GetImage(text2);
+					Image image2 = service3.GetImage(text2);
 					if (image2 == null)
 					{
 						actor.OptionFlags |= RenderOptionFlags.DrawBorder;
@@ -330,8 +329,7 @@ public static class ActorFunctions
 		IActor actor = GetActor(actorName);
 		if (actor != null)
 		{
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IViewFrame viewFrame = service.PeekViewFrame();
+			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame();
 			if (viewFrame != null && viewFrame.ViewWindow.HasValue)
 			{
 				actor.X = x + viewFrame.ViewWindow.Value.X;
@@ -393,8 +391,7 @@ public static class ActorFunctions
 		IActor actor = GetActor(actorName);
 		if (actor != null)
 		{
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IViewFrame viewFrame = service.PeekViewFrame();
+			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame();
 			if (viewFrame != null && viewFrame.ViewWindow.HasValue)
 			{
 				actor.X = x + viewFrame.ViewWindow.Value.X;
@@ -412,8 +409,7 @@ public static class ActorFunctions
 		IActor actor = GetActor(actorName);
 		if (actor != null)
 		{
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IViewFrame viewFrame = service.PeekViewFrame();
+			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame();
 			if (viewFrame != null && viewFrame.ViewWindow.HasValue)
 			{
 				actor.Y = y + viewFrame.ViewWindow.Value.Y;
@@ -471,8 +467,7 @@ public static class ActorFunctions
 	[KernelFunction(Name = "kernel.measureactortext")]
 	public static LuaTable MeasureActorText(string actorName)
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		IScene scene = service.GetScene("Default");
+		IScene scene = ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default");
 		if (scene == null || string.IsNullOrEmpty(actorName))
 		{
 			return null;
@@ -527,15 +522,13 @@ public static class ActorFunctions
 	[KernelFunction(Name = "kernel.removeactor")]
 	public static void RemoveActor(string actorName)
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		service.GetScene("Default")?.Remove(actorName)?.Dispose();
+		ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.Remove(actorName)?.Dispose();
 	}
 
 	[KernelFunction(Name = "kernel.removeactors")]
 	public static void RemoveActors(LuaTable actorNames)
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		IScene scene = service.GetScene("Default");
+		IScene scene = ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default");
 		if (scene == null || actorNames == null)
 		{
 			return;
@@ -552,8 +545,7 @@ public static class ActorFunctions
 	[KernelFunction(Name = "kernel.clearactors")]
 	public static void ClearActors()
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		service.GetScene("Default")?.Clear();
+		ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.Clear();
 	}
 
 	[KernelFunction(Name = "kernel.centeractorx")]
@@ -618,9 +610,7 @@ public static class ActorFunctions
 	public static LuaTable GetActorsByTag(string tag)
 	{
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		IScene scene = service.GetScene("Default");
-		List<IActor> actorByTag = scene.GetActorByTag(tag);
+		List<IActor> actorByTag = ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default").GetActorByTag(tag);
 		int num = 1;
 		foreach (IActor item in actorByTag)
 		{
@@ -633,9 +623,7 @@ public static class ActorFunctions
 	[KernelFunction(Name = "kernel.getactorbytaborder")]
 	public static string GetActorByTabOrder(int tabOrder)
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		IScene scene = service.GetScene("Default");
-		return scene.GetActorByTabOrder(tabOrder)?.Name;
+		return ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default").GetActorByTabOrder(tabOrder)?.Name;
 	}
 
 	[KernelFunction(Name = "kernel.getactortag")]
@@ -762,7 +750,7 @@ public static class ActorFunctions
 			return "0, 0, 0, 0";
 		}
 		Rectangle value = actor.TextRegion.Value;
-		return value.X + ", " + value.Y + ", " + value.Width + ", " + value.Height;
+		return (value.X + ", " + value.Y + ", " + value.Width + ", " + value.Height) ?? "";
 	}
 
 	[KernelFunction(Name = "kernel.getactoropacity")]
@@ -773,8 +761,7 @@ public static class ActorFunctions
 
 	public static IActor GetActor(string name)
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		return service.GetScene("Default")?.GetActor(name);
+		return ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.GetActor(name);
 	}
 
 	private static Color? GetColorFromValue(object value)

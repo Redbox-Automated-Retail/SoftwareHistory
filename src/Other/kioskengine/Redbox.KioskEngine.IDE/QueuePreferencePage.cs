@@ -129,15 +129,15 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		try
 		{
 			Cursor = Cursors.WaitCursor;
-			SaveFileDialog saveFileDialog = new SaveFileDialog();
-			saveFileDialog.Title = "Export Message File";
-			saveFileDialog.DefaultExt = ".xml";
-			saveFileDialog.Filter = "XML Files (*.xml)|*.xml";
-			SaveFileDialog saveFileDialog2 = saveFileDialog;
-			DialogResult dialogResult = saveFileDialog2.ShowDialog();
-			if (dialogResult == DialogResult.OK)
+			SaveFileDialog saveFileDialog = new SaveFileDialog
 			{
-				service.ExportToXml(saveFileDialog2.FileName);
+				Title = "Export Message File",
+				DefaultExt = ".xml",
+				Filter = "XML Files (*.xml)|*.xml"
+			};
+			if (saveFileDialog.ShowDialog() == DialogResult.OK)
+			{
+				service.ExportToXml(saveFileDialog.FileName);
 			}
 		}
 		finally
@@ -296,8 +296,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 
 	private void SetButtonState()
 	{
-		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		bool flag = service.IsWorkerStarted();
+		bool flag = ServiceLocator.Instance.GetService<IQueueService>().IsWorkerStarted();
 		m_startQueueWorkerToolStripButton.Enabled = !flag;
 		m_stopQueueWorkerToolStripButton.Enabled = flag;
 	}
@@ -311,8 +310,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_queueListView.SelectedItems.Count != 0)
 		{
-			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-			service.Update(int.Parse(m_queueListView.SelectedItems[0].SubItems[0].Text), m_syntaxDocument.Text);
+			ServiceLocator.Instance.GetService<IQueueService>().Update(int.Parse(m_queueListView.SelectedItems[0].SubItems[0].Text), m_syntaxDocument.Text);
 			RefreshList();
 		}
 	}

@@ -20,15 +20,14 @@ public class DynamicPropertyGrid : VisualHint.SmartPropertyGrid.PropertyGrid
 		{
 			ToolTipText = "Refresh"
 		};
-		EventHandler value = delegate(object sender, EventArgs e)
+		toolStripButton.Click += delegate(object sender, EventArgs e)
 		{
 			if (RefreshGrid != null)
 			{
 				RefreshGrid(sender, e);
 			}
 		};
-		toolStripButton.Click += value;
-		ToolStripLabel value2 = new ToolStripLabel("Filter:");
+		ToolStripLabel value = new ToolStripLabel("Filter:");
 		ToolStripTextBox toolStripTextBox = new ToolStripTextBox("filter")
 		{
 			BorderStyle = BorderStyle.None,
@@ -36,7 +35,7 @@ public class DynamicPropertyGrid : VisualHint.SmartPropertyGrid.PropertyGrid
 		};
 		base.Toolbar.Items.Add(toolStripButton);
 		base.Toolbar.Items.Add(new ToolStripSeparator());
-		base.Toolbar.Items.Add(value2);
+		base.Toolbar.Items.Add(value);
 		base.Toolbar.Items.Add(toolStripTextBox);
 		toolStripTextBox.TextChanged += delegate(object sender, EventArgs e)
 		{

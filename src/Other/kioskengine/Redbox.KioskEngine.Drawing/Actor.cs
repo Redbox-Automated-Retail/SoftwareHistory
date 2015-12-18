@@ -577,8 +577,9 @@ public class Actor : IActor, IDisposable
 		graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
 		Rectangle textRegion = GetTextRegion(forTranslation: false);
 		StringFormat stringFormat = (StringFormat)StringFormat.GenericTypographic.Clone();
-		SizeF size = graphics.MeasureString(service.ExpandProperties(Text), Font, new SizeF(textRegion.Width, textRegion.Height), stringFormat, out var charactersFitted, out var linesFilled);
-		return new MeasureTextResult(size, charactersFitted, linesFilled);
+		int charactersFitted;
+		int linesFilled;
+		return new MeasureTextResult(graphics.MeasureString(service.ExpandProperties(Text), Font, new SizeF(textRegion.Width, textRegion.Height), stringFormat, out charactersFitted, out linesFilled), charactersFitted, linesFilled);
 	}
 
 	public void CenterHorizontally()
@@ -698,7 +699,7 @@ public class Actor : IActor, IDisposable
 				context.PixelOffsetMode = PixelOffsetMode.Half;
 				context.TextRenderingHint = TextRenderingHint.AntiAlias;
 			}
-			if (TabStops != null && TabStops.Length > 0)
+			if (TabStops != null && TabStops.Length != 0)
 			{
 				stringFormat.SetTabStops(0f, TabStops);
 			}
@@ -707,8 +708,7 @@ public class Actor : IActor, IDisposable
 				stringFormat.Trimming |= StringTrimming.EllipsisCharacter;
 			}
 			Rectangle textRegion = GetTextRegion(hasValue2);
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			string s = service.ExpandProperties(Text);
+			string s = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(Text);
 			if (hasValue2)
 			{
 				context.TranslateTransform(TextTranslationPoint.Value.X, TextTranslationPoint.Value.Y);
@@ -723,7 +723,7 @@ public class Actor : IActor, IDisposable
 				context.DrawString(s, Font, brush3, new Rectangle(textRegion.Left + 1, textRegion.Top + 1, textRegion.Width, textRegion.Height), stringFormat);
 			}
 			context.DrawString(s, Font, brush2, textRegion, stringFormat);
-			if (hasValue2 || hasValue)
+			if (hasValue2 | hasValue)
 			{
 				context.ResetTransform();
 			}
@@ -866,8 +866,7 @@ public class Actor : IActor, IDisposable
 
 	private static Color GetAlphaRampedColor(Color color, float opacity)
 	{
-		int alpha = (int)Math.Ceiling(255f * opacity);
-		return Color.FromArgb(alpha, color);
+		return Color.FromArgb((int)Math.Ceiling(255f * opacity), color);
 	}
 
 	private void DrawRoundedRect(Graphics g, Pen p, float x, float y, float width, float height, float radius, bool fill)

@@ -43,8 +43,7 @@ public class CallStackToolWindow : ToolWindow
 
 	private void InnerRefreshCallStack()
 	{
-		IDebugService service = ServiceLocator.Instance.GetService<IDebugService>();
-		CallStackEntry[] callStack = ((LuaDebugger)service.DebuggerInstance).GetCallStack();
+		CallStackEntry[] callStack = ((LuaDebugger)ServiceLocator.Instance.GetService<IDebugService>().DebuggerInstance).GetCallStack();
 		m_listView.BeginUpdate();
 		m_listView.Items.Clear();
 		CallStackEntry[] array = callStack;

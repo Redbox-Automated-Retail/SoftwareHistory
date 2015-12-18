@@ -280,8 +280,7 @@ public class IdeMainForm : Form
 	{
 		InitializeComponent();
 		m_localsToolWindow.Text = "Locals";
-		SymbolsToolWindow localsToolWindow = m_localsToolWindow;
-		EventHandler value = delegate
+		m_localsToolWindow.RefreshRequested += delegate
 		{
 			IDebugService service = ServiceLocator.Instance.GetService<IDebugService>();
 			if (service.DebuggerInstance != null)
@@ -289,7 +288,6 @@ public class IdeMainForm : Form
 				m_localsToolWindow.ShowSymbols("Locals", ((LuaDebugger)service.DebuggerInstance).GetLocalVars());
 			}
 		};
-		localsToolWindow.RefreshRequested += value;
 		m_globalsToolWindow.Text = "Globals";
 		m_globalsToolWindow.RefreshRequested += delegate
 		{
@@ -304,13 +302,12 @@ public class IdeMainForm : Form
 		base.Load += delegate
 		{
 			ToolStripManager.LoadSettings(this);
-			IUserSettingsStore service = ServiceLocator.Instance.GetService<IUserSettingsStore>();
-			byte[] value2 = service.GetValue<byte[]>("Shell", "DockLayout");
-			if (value2 == null)
+			byte[] value = ServiceLocator.Instance.GetService<IUserSettingsStore>().GetValue<byte[]>("Shell", "DockLayout");
+			if (value == null)
 			{
 				return;
 			}
-			using MemoryStream stream = new MemoryStream(value2);
+			using MemoryStream stream = new MemoryStream(value);
 			m_dockPanel.LoadFromXml(stream, delegate(string s)
 			{
 				if (s == typeof(TimersToolWindow).ToString())
@@ -322,9 +319,9 @@ public class IdeMainForm : Form
 					string[] array = s.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 					if (array.Length == 2)
 					{
-						SymbolsToolWindow symbolsToolWindow = ((array[1] == "Locals") ? m_localsToolWindow : m_globalsToolWindow);
-						symbolsToolWindow.RefreshSymbols();
-						return symbolsToolWindow;
+						SymbolsToolWindow obj = ((array[1] == "Locals") ? m_localsToolWindow : m_globalsToolWindow);
+						obj.RefreshSymbols();
+						return obj;
 					}
 				}
 				if (s == typeof(ImmediateToolWindow).ToString())
@@ -378,26 +375,23 @@ public class IdeMainForm : Form
 	{
 		ResourceEditorWindow resourceEditorWindow = new ResourceEditorWindow();
 		resourceEditorWindow.Resource = resource;
-		ResourceEditorWindow resourceEditorWindow2 = resourceEditorWindow;
-		resourceEditorWindow2.Show(m_dockPanel);
+		resourceEditorWindow.Show(m_dockPanel);
 	}
 
 	public void OpenResourceEditor(IResource resource, int lineNumber)
 	{
 		ResourceEditorWindow resourceEditorWindow = new ResourceEditorWindow();
 		resourceEditorWindow.Resource = resource;
-		ResourceEditorWindow resourceEditorWindow2 = resourceEditorWindow;
-		resourceEditorWindow2.SetDebugState(lineNumber, null);
-		resourceEditorWindow2.Show(m_dockPanel);
+		resourceEditorWindow.SetDebugState(lineNumber, null);
+		resourceEditorWindow.Show(m_dockPanel);
 	}
 
 	public void OpenResourceEditor(IResource resource, int lineNumber, string error)
 	{
 		ResourceEditorWindow resourceEditorWindow = new ResourceEditorWindow();
 		resourceEditorWindow.Resource = resource;
-		ResourceEditorWindow resourceEditorWindow2 = resourceEditorWindow;
-		resourceEditorWindow2.SetDebugState(lineNumber, error);
-		resourceEditorWindow2.Show(m_dockPanel);
+		resourceEditorWindow.SetDebugState(lineNumber, error);
+		resourceEditorWindow.Show(m_dockPanel);
 	}
 
 	public static void LogToOutputWindow(string message)
@@ -423,15 +417,13 @@ public class IdeMainForm : Form
 
 	private void OnNewProject(object sender, EventArgs e)
 	{
-		NewProjectForm newProjectForm = new NewProjectForm();
-		newProjectForm.ShowDialog();
+		new NewProjectForm().ShowDialog();
 		_ = 1;
 	}
 
 	private void OnNewResource(object sender, EventArgs e)
 	{
-		NewResourceForm newResourceForm = new NewResourceForm();
-		newResourceForm.ShowDialog();
+		new NewResourceForm().ShowDialog();
 		_ = 1;
 	}
 
@@ -518,8 +510,7 @@ public class IdeMainForm : Form
 
 	private void OnShowOptions(object sender, EventArgs e)
 	{
-		PreferencesManager preferencesManager = new PreferencesManager();
-		preferencesManager.ShowDialog();
+		new PreferencesManager().ShowDialog();
 	}
 
 	protected override void Dispose(bool disposing)

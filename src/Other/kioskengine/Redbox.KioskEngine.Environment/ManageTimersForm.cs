@@ -8,7 +8,7 @@ namespace Redbox.KioskEngine.Environment;
 
 public class ManageTimersForm : Form
 {
-	private IContainer components;
+	private IContainer components = null;
 
 	private Button m_closeButton;
 

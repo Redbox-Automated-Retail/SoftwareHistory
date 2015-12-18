@@ -25,9 +25,7 @@ internal static class ProcessFunctions
 		string defaultAdmin = "rbadmin";
 		try
 		{
-			WindowsIdentity current = WindowsIdentity.GetCurrent();
-			WindowsPrincipal windowsPrincipal = new WindowsPrincipal(current);
-			if (windowsPrincipal.IsInRole(WindowsBuiltInRole.Administrator))
+			if (new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
 			{
 				LogHelper.Instance.Log($"Launch {processName} {args} as user");
 				return LaunchProcessInner(processName, args, null, useAdminPassword: false, hiddenProcess);
@@ -58,22 +56,24 @@ internal static class ProcessFunctions
 	{
 		try
 		{
-			ProcessStartInfo processStartInfo = new ProcessStartInfo();
-			processStartInfo.FileName = process;
-			processStartInfo.Arguments = arguments;
-			processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			processStartInfo.CreateNoWindow = true;
-			ProcessStartInfo startInfo = processStartInfo;
-			Process process2 = new Process();
-			process2.StartInfo = startInfo;
-			Process process3 = process2;
-			LogHelper.Instance.Log("Launching {0}, args={1}, timeout={2}.", process, arguments, timeout);
-			process3.Start();
-			process3.WaitForExit(timeout);
-			if (process3.HasExited)
+			ProcessStartInfo startInfo = new ProcessStartInfo
 			{
-				LogHelper.Instance.Log("Launched successfully, ExitCode={0}.", process3.ExitCode);
-				return process3.ExitCode;
+				FileName = process,
+				Arguments = arguments,
+				WindowStyle = ProcessWindowStyle.Hidden,
+				CreateNoWindow = true
+			};
+			Process process2 = new Process
+			{
+				StartInfo = startInfo
+			};
+			LogHelper.Instance.Log("Launching {0}, args={1}, timeout={2}.", process, arguments, timeout);
+			process2.Start();
+			process2.WaitForExit(timeout);
+			if (process2.HasExited)
+			{
+				LogHelper.Instance.Log("Launched successfully, ExitCode={0}.", process2.ExitCode);
+				return process2.ExitCode;
 			}
 			LogHelper.Instance.Log("HasExited=false, possible timeout.");
 		}
@@ -201,41 +201,42 @@ internal static class ProcessFunctions
 	{
 		try
 		{
-			ProcessStartInfo processStartInfo = new ProcessStartInfo();
-			processStartInfo.FileName = programPath;
-			processStartInfo.Arguments = args;
-			processStartInfo.WindowStyle = (hiddenProcess ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal);
-			processStartInfo.CreateNoWindow = hiddenProcess;
-			ProcessStartInfo processStartInfo2 = processStartInfo;
+			ProcessStartInfo processStartInfo = new ProcessStartInfo
+			{
+				FileName = programPath,
+				Arguments = args,
+				WindowStyle = (hiddenProcess ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal),
+				CreateNoWindow = hiddenProcess
+			};
 			if (useAdminPassword)
 			{
-				processStartInfo2.UserName = userName;
+				processStartInfo.UserName = userName;
 				SecureString pass = new SecureString();
 				LinqExtensions.ForEach(AdminPassword, delegate(char x)
 				{
 					pass.AppendChar(x);
 				});
-				processStartInfo2.Password = pass;
-				processStartInfo2.UseShellExecute = false;
-				if (string.IsNullOrEmpty(Path.GetExtension(processStartInfo2.FileName)))
+				processStartInfo.Password = pass;
+				processStartInfo.UseShellExecute = false;
+				if (string.IsNullOrEmpty(Path.GetExtension(processStartInfo.FileName)))
 				{
-					processStartInfo2.FileName += ".exe";
+					processStartInfo.FileName += ".exe";
 				}
-				if (!File.Exists(Path.Combine(processStartInfo2.WorkingDirectory, processStartInfo2.FileName)))
+				if (!File.Exists(Path.Combine(processStartInfo.WorkingDirectory, processStartInfo.FileName)))
 				{
 					string text = System.Environment.GetEnvironmentVariable("SystemRoot");
 					if (string.IsNullOrEmpty(text))
 					{
 						text = "c:\\windows";
 					}
-					string text2 = Path.Combine(text, processStartInfo2.FileName);
+					string text2 = Path.Combine(text, processStartInfo.FileName);
 					if (File.Exists(text2))
 					{
-						processStartInfo2.FileName = text2;
+						processStartInfo.FileName = text2;
 					}
 				}
 			}
-			Process process = Process.Start(processStartInfo2);
+			Process process = Process.Start(processStartInfo);
 			if (process != null)
 			{
 				return process.Id;
@@ -251,17 +252,15 @@ internal static class ProcessFunctions
 	private static List<string> GetAllAdministrators()
 	{
 		List<string> list = new List<string>();
-		DirectoryEntry directoryEntry = new DirectoryEntry("WinNT://" + System.Environment.MachineName);
-		DirectoryEntry directoryEntry2 = directoryEntry.Children.Find("administrators", "group");
+		DirectoryEntry directoryEntry = new DirectoryEntry("WinNT://" + System.Environment.MachineName).Children.Find("administrators", "group");
 		try
 		{
-			object obj = directoryEntry2.Invoke("members", null);
-			foreach (object item in (IEnumerable)obj)
+			foreach (object item in (IEnumerable)directoryEntry.Invoke("members", null))
 			{
-				DirectoryEntry directoryEntry3 = new DirectoryEntry(item);
-				if (directoryEntry3.SchemaClassName == "User")
+				DirectoryEntry directoryEntry2 = new DirectoryEntry(item);
+				if (directoryEntry2.SchemaClassName == "User")
 				{
-					list.Add(directoryEntry3.Name);
+					list.Add(directoryEntry2.Name);
 				}
 			}
 		}

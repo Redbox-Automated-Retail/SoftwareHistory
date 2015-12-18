@@ -20,11 +20,7 @@ public class IndoorElo : GenericTouchScreen
 			{
 				return ControlApplication;
 			}
-			if (!File.Exists(AlternateControlApplication))
-			{
-				return string.Empty;
-			}
-			return AlternateControlApplication;
+			return File.Exists(AlternateControlApplication) ? AlternateControlApplication : string.Empty;
 		}
 	}
 

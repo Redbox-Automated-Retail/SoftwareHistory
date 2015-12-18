@@ -29,10 +29,6 @@ public class StyleSheetStyle : IStyleSheetStyle
 
 	public IStyleSheetState GetState(string name)
 	{
-		if (!m_states.ContainsKey(name))
-		{
-			return null;
-		}
-		return m_states[name];
+		return m_states.ContainsKey(name) ? m_states[name] : null;
 	}
 }

@@ -9,8 +9,8 @@ using System.Runtime.CompilerServices;
 namespace Redbox.KioskEngine.IDE.Properties;
 
 [GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
-[CompilerGenerated]
 [DebuggerNonUserCode]
+[CompilerGenerated]
 internal class Resources
 {
 	private static ResourceManager resourceMan;
@@ -22,10 +22,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.KioskEngine.IDE.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.KioskEngine.IDE.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}
@@ -44,437 +43,101 @@ internal class Resources
 		}
 	}
 
-	internal static Bitmap Bundle
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Bundle", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Bundle => (Bitmap)ResourceManager.GetObject("Bundle", resourceCulture);
 
-	internal static Bitmap CallStack
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("CallStack", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap CallStack => (Bitmap)ResourceManager.GetObject("CallStack", resourceCulture);
 
-	internal static Bitmap Clean
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Clean", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Clean => (Bitmap)ResourceManager.GetObject("Clean", resourceCulture);
 
-	internal static Bitmap Copy
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Copy", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Copy => (Bitmap)ResourceManager.GetObject("Copy", resourceCulture);
 
-	internal static Bitmap Critical
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Critical", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Critical => (Bitmap)ResourceManager.GetObject("Critical", resourceCulture);
 
-	internal static Bitmap Cross
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Cross", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Cross => (Bitmap)ResourceManager.GetObject("Cross", resourceCulture);
 
-	internal static Bitmap Cube
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Cube", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Cube => (Bitmap)ResourceManager.GetObject("Cube", resourceCulture);
 
-	internal static Bitmap Cut
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Cut", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Cut => (Bitmap)ResourceManager.GetObject("Cut", resourceCulture);
 
-	internal static Bitmap DebugBreakpoint
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugBreakpoint", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugBreakpoint => (Bitmap)ResourceManager.GetObject("DebugBreakpoint", resourceCulture);
 
-	internal static Bitmap DebugBreakpointClear
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugBreakpointClear", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugBreakpointClear => (Bitmap)ResourceManager.GetObject("DebugBreakpointClear", resourceCulture);
 
-	internal static Bitmap Debugger
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Debugger", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Debugger => (Bitmap)ResourceManager.GetObject("Debugger", resourceCulture);
 
-	internal static Bitmap DebugPause
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugPause", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugPause => (Bitmap)ResourceManager.GetObject("DebugPause", resourceCulture);
 
-	internal static Bitmap DebugPlay
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugPlay", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugPlay => (Bitmap)ResourceManager.GetObject("DebugPlay", resourceCulture);
 
-	internal static Bitmap DebugStepInto
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugStepInto", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugStepInto => (Bitmap)ResourceManager.GetObject("DebugStepInto", resourceCulture);
 
-	internal static Bitmap DebugStepOut
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugStepOut", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugStepOut => (Bitmap)ResourceManager.GetObject("DebugStepOut", resourceCulture);
 
-	internal static Bitmap DebugStepOver
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugStepOver", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugStepOver => (Bitmap)ResourceManager.GetObject("DebugStepOver", resourceCulture);
 
-	internal static Bitmap DebugStop
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DebugStop", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DebugStop => (Bitmap)ResourceManager.GetObject("DebugStop", resourceCulture);
 
-	internal static Bitmap Delete
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Delete", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Delete => (Bitmap)ResourceManager.GetObject("Delete", resourceCulture);
 
-	internal static Bitmap Dependencies
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Dependencies", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Dependencies => (Bitmap)ResourceManager.GetObject("Dependencies", resourceCulture);
 
-	internal static Bitmap ErrorList
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("ErrorList", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap ErrorList => (Bitmap)ResourceManager.GetObject("ErrorList", resourceCulture);
 
-	internal static Bitmap Execute
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Execute", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Execute => (Bitmap)ResourceManager.GetObject("Execute", resourceCulture);
 
-	internal static Bitmap Filter
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Filter", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Filter => (Bitmap)ResourceManager.GetObject("Filter", resourceCulture);
 
-	internal static Bitmap Folder
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Folder", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Folder => (Bitmap)ResourceManager.GetObject("Folder", resourceCulture);
 
-	internal static Bitmap FolderClosed
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("FolderClosed", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap FolderClosed => (Bitmap)ResourceManager.GetObject("FolderClosed", resourceCulture);
 
-	internal static Bitmap ImmediateWindow
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("ImmediateWindow", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap ImmediateWindow => (Bitmap)ResourceManager.GetObject("ImmediateWindow", resourceCulture);
 
-	internal static Bitmap Information
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Information", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Information => (Bitmap)ResourceManager.GetObject("Information", resourceCulture);
 
-	internal static Bitmap Minus
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Minus", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Minus => (Bitmap)ResourceManager.GetObject("Minus", resourceCulture);
 
-	internal static Bitmap NewDocument
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("NewDocument", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap NewDocument => (Bitmap)ResourceManager.GetObject("NewDocument", resourceCulture);
 
-	internal static Bitmap Open
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Open", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Open => (Bitmap)ResourceManager.GetObject("Open", resourceCulture);
 
-	internal static Bitmap Output
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Output", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Output => (Bitmap)ResourceManager.GetObject("Output", resourceCulture);
 
-	internal static Bitmap PageSetup
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("PageSetup", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap PageSetup => (Bitmap)ResourceManager.GetObject("PageSetup", resourceCulture);
 
-	internal static Bitmap Paste
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Paste", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Paste => (Bitmap)ResourceManager.GetObject("Paste", resourceCulture);
 
-	internal static Bitmap Plus
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Plus", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Plus => (Bitmap)ResourceManager.GetObject("Plus", resourceCulture);
 
-	internal static Bitmap Print
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Print", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Print => (Bitmap)ResourceManager.GetObject("Print", resourceCulture);
 
-	internal static Bitmap Properties
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Properties", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Properties => (Bitmap)ResourceManager.GetObject("Properties", resourceCulture);
 
-	internal static Bitmap RedboxBoxLogo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("RedboxBoxLogo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap RedboxBoxLogo => (Bitmap)ResourceManager.GetObject("RedboxBoxLogo", resourceCulture);
 
-	internal static Bitmap RedboxNameLogo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("RedboxNameLogo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap RedboxNameLogo => (Bitmap)ResourceManager.GetObject("RedboxNameLogo", resourceCulture);
 
-	internal static Bitmap Redo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Redo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Redo => (Bitmap)ResourceManager.GetObject("Redo", resourceCulture);
 
-	internal static Bitmap Refresh
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Refresh", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Refresh => (Bitmap)ResourceManager.GetObject("Refresh", resourceCulture);
 
-	internal static Bitmap Save
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Save", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Save => (Bitmap)ResourceManager.GetObject("Save", resourceCulture);
 
-	internal static Bitmap SaveAll
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("SaveAll", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap SaveAll => (Bitmap)ResourceManager.GetObject("SaveAll", resourceCulture);
 
-	internal static Bitmap SaveAs
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("SaveAs", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap SaveAs => (Bitmap)ResourceManager.GetObject("SaveAs", resourceCulture);
 
-	internal static Bitmap Sitemap
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Sitemap", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Sitemap => (Bitmap)ResourceManager.GetObject("Sitemap", resourceCulture);
 
-	internal static Bitmap Timers
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Timers", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Timers => (Bitmap)ResourceManager.GetObject("Timers", resourceCulture);
 
-	internal static Bitmap Tools
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Tools", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Tools => (Bitmap)ResourceManager.GetObject("Tools", resourceCulture);
 
-	internal static Bitmap Undo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Undo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Undo => (Bitmap)ResourceManager.GetObject("Undo", resourceCulture);
 
-	internal static Bitmap Views
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Views", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Views => (Bitmap)ResourceManager.GetObject("Views", resourceCulture);
 
-	internal static Bitmap Warning
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Warning", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Warning => (Bitmap)ResourceManager.GetObject("Warning", resourceCulture);
 
 	internal Resources()
 	{

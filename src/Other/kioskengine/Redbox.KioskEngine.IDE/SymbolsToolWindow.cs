@@ -24,16 +24,14 @@ public class SymbolsToolWindow : ToolWindow
 		{
 			if (e.PropertyEnum.Property.Tag is LuaTable luaTable)
 			{
-				DebuggerVariableForm debuggerVariableForm = new DebuggerVariableForm
-				{
-					VariableName = e.PropertyEnum.Property.Name,
-					VariableValue = luaTable.ToString()
-				};
+				DebuggerVariableForm debuggerVariableForm = new DebuggerVariableForm();
+				debuggerVariableForm.VariableName = e.PropertyEnum.Property.Name;
+				debuggerVariableForm.VariableValue = luaTable.ToString();
 				debuggerVariableForm.ShowDialog();
 			}
 			else
 			{
-				LuaFunction luaFunction = e.PropertyEnum.Property.Tag as LuaFunction;
+				_ = e.PropertyEnum.Property.Tag is LuaFunction;
 			}
 		};
 		m_dynamicPropertyGrid.PropertyExpanded += delegate(object sender, PropertyExpandedEventArgs e)
@@ -128,12 +126,13 @@ public class SymbolsToolWindow : ToolWindow
 				if (!(var.Name == "package"))
 				{
 					object adjustedValue = GetAdjustedValue(var.Value, out var type, out var _);
-					List<Attribute> list = new List<Attribute>();
-					list.Add(new DefaultValueAttribute(adjustedValue));
-					List<Attribute> list2 = list;
-					LuaTable luaTable = var.Value as LuaTable;
-					PropertyEnumerator propertyEnumerator = grid.AppendManagedProperty(underCategory, num++, var.Name, type, adjustedValue, string.Empty, list2.ToArray());
-					if (luaTable != null)
+					List<Attribute> list = new List<Attribute>
+					{
+						new DefaultValueAttribute(adjustedValue)
+					};
+					LuaTable obj = var.Value as LuaTable;
+					PropertyEnumerator propertyEnumerator = grid.AppendManagedProperty(underCategory, num++, var.Name, type, adjustedValue, string.Empty, list.ToArray());
+					if (obj != null)
 					{
 						propertyEnumerator.Property.Tag = var.Value;
 						propertyEnumerator.Property.Feel = grid.GetRegisteredFeel("button");
@@ -165,10 +164,11 @@ public class SymbolsToolWindow : ToolWindow
 		foreach (object key in table.Keys)
 		{
 			object adjustedValue = GetAdjustedValue(table[key], out var type, out var _);
-			List<Attribute> list = new List<Attribute>();
-			list.Add(new DefaultValueAttribute(adjustedValue));
-			List<Attribute> list2 = list;
-			PropertyEnumerator propertyEnumerator = grid.AppendManagedProperty(parentEnumerator, id++, key.ToString(), type, adjustedValue, key.ToString(), list2.ToArray());
+			List<Attribute> list = new List<Attribute>
+			{
+				new DefaultValueAttribute(adjustedValue)
+			};
+			PropertyEnumerator propertyEnumerator = grid.AppendManagedProperty(parentEnumerator, id++, key.ToString(), type, adjustedValue, key.ToString(), list.ToArray());
 			if (table[key] is LuaTable tag)
 			{
 				propertyEnumerator.Property.Tag = tag;

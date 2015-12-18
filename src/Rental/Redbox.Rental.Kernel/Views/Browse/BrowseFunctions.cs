@@ -8,6 +8,7 @@ using Redbox.Lua;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Services.KioskProduct;
+using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Kernel.Views.Browse;
 
@@ -22,11 +23,11 @@ public static class BrowseFunctions
 	private static Dictionary<string, TopMenuControl> _topMenuControls = new Dictionary<string, TopMenuControl>();
 
 	[KernelFunction(Name = "kernel.draw_images_set")]
-	internal static void DrawImagesSet(string browseSetName, string browseFilterMode, string browseSelectedSort, string browseFilterSelectedFamily, LuaTable products, int pageNumber, string gotoGroupName, string selectedGroupName, Action<int> onPageNumberChanged, Action<int> onProductsShown, Action<LuaTable> onItemSelected, Action<string> onAddItemSelected, Action<int, LuaTable> onUpdateItemMapping, Func<LuaTable, bool> onIsProductSelected, Func<LuaTable, bool> onIsProductInStock, Func<LuaTable, bool> onIsProductThinned, Func<bool> isShoppingCartFull, Func<LuaTable, string> onGetTestPrice, Func<LuaTable, string> onGetEarlyReleaseDate, Func<bool> isTitleMarketingMode, Func<bool> onIsComingSoonOptinEnabled, Func<LuaTable, bool> onIsComingSoonProductRegistered, Action<LuaTable> onRegisterEmailReminder, Action<LuaTable> onUnregisterEmailReminder)
+	internal static void DrawImagesSet(string browseSetName, string browseFilterSelectedFamily, LuaTable products, int pageNumber, string gotoGroupName, string selectedGroupName, Action<int> onPageNumberChanged, Action<int> onProductsShown, Action<LuaTable> onItemSelected, Action<string> onAddItemSelected, Action<int, LuaTable> onUpdateItemMapping, Func<LuaTable, bool> onIsProductSelected, Func<LuaTable, bool> onIsProductInStock, Func<bool> isShoppingCartFull, Func<LuaTable, string> onGetTestPrice, Func<LuaTable, string> onGetEarlyReleaseDate, Func<bool> isTitleMarketingMode, Func<bool> onIsComingSoonOptinEnabled, Func<LuaTable, bool> onIsComingSoonProductRegistered, Action<LuaTable> onRegisterEmailReminder, Action<LuaTable> onUnregisterEmailReminder)
 	{
 		ClearOldActors(browseSetName);
-		BrowseViewFilter browseViewFilter = browseFilterMode.ConvertToBrowseViewFilter();
-		BrowseSort browseSort = browseSelectedSort.ConvertToBrowseSort(browseViewFilter);
+		BrowseViewFilter browseMode = Session.Instance.BrowseState.BrowseMode;
+		BrowseSort browseSort = Session.Instance.BrowseState.BrowseSelectedSort.ConvertToBrowseSort(browseMode);
 		TitleFamily titleFamily = browseFilterSelectedFamily.ConvertToTitleFamily();
 		List<IBrowseItem> list = CreateBrowseItems(products, selectedGroupName);
 		LuaInterfacedBrowseControl productBrowseControl;
@@ -58,11 +59,11 @@ public static class BrowseFunctions
 			productBrowseControl.IsShoppingCartFull = isShoppingCartFull;
 			productBrowseControl.OnIsProductSelected = onIsProductSelected;
 			productBrowseControl.OnIsProductInStock = onIsProductInStock;
-			productBrowseControl.OnIsProductThinned = onIsProductThinned;
+			productBrowseControl.OnIsProductThinned = IsProductThinned;
 			productBrowseControl.OnGetTestPrice = onGetTestPrice;
 			productBrowseControl.OnGetEarlyReleaseDate = onGetEarlyReleaseDate;
 			productBrowseControl.IsTitleMarketingMode = isTitleMarketingMode;
-			productBrowseControl.BrowseViewFilter = browseViewFilter;
+			productBrowseControl.BrowseViewFilter = browseMode;
 			productBrowseControl.BrowseSort = browseSort;
 			productBrowseControl.BrowseTitleFamily = titleFamily;
 			productBrowseControl.OnIsComingSoonOptinEnabled = onIsComingSoonOptinEnabled;
@@ -402,11 +403,10 @@ public static class BrowseFunctions
 				}
 				MovieOrGameBrowseItem movieOrGameBrowseItem = browseItem as MovieOrGameBrowseItem;
 				List<IKioskProduct> products = null;
-				long result = 0L;
-				long.TryParse(luaTable["product_id"].ToString(), out result);
-				if (result != 0L)
+				long? productIdFromLuaTable = GetProductIdFromLuaTable(luaTable);
+				if (productIdFromLuaTable.HasValue && productIdFromLuaTable != 0)
 				{
-					List<long> include = new List<long> { result };
+					List<long> include = new List<long> { productIdFromLuaTable.Value };
 					dataService.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, include, null, isADAView: false, out products);
 					if (products.Count > 0 && products[0] is ITitleProduct)
 					{
@@ -713,5 +713,38 @@ public static class BrowseFunctions
 			groupHeaderBrowseItem.IsSelected = text == selectedGroupName;
 			groupHeaderBrowseItem = null;
 		}
+	}
+
+	private static bool IsProductThinned(LuaTable luaKioskProduct)
+	{
+		return IsProductThinned(GetProductIdFromLuaTable(luaKioskProduct) ?? 0);
+	}
+
+	[KernelFunction(Name = "kernel.is_product_thinned")]
+	private static bool IsProductThinned(long productId)
+	{
+		if (ServiceLocator.Instance.GetService(typeof(IDataService)) is IDataService dataService)
+		{
+			return dataService.GetIsProductThinned(productId);
+		}
+		return false;
+	}
+
+	private static long? GetProductIdFromLuaTable(LuaTable luaTable)
+	{
+		long? result = null;
+		if (luaTable != null)
+		{
+			object obj = luaTable["product_id"];
+			if (obj != null)
+			{
+				long result2 = 0L;
+				if (long.TryParse(obj.ToString(), out result2))
+				{
+					result = result2;
+				}
+			}
+		}
+		return result;
 	}
 }

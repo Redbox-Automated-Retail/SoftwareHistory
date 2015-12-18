@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -98,8 +97,7 @@ public class ProjectExplorerToolWindow : ToolWindow
 		IIdeService service = ServiceLocator.Instance.GetService<IIdeService>();
 		if (service != null)
 		{
-			IdeMainForm ideMainForm = (IdeMainForm)service.MainForm;
-			ideMainForm.PropertiesWindow.SetObject(e.Node.Tag);
+			((IdeMainForm)service.MainForm).PropertiesWindow.SetObject(e.Node.Tag);
 		}
 	}
 
@@ -141,15 +139,15 @@ public class ProjectExplorerToolWindow : ToolWindow
 			foreach (KeyValuePair<string, IResourceType> item in resourceTypes)
 			{
 				TreeNode treeNode2 = new TreeNode(item.Key, 3, 3);
-				List<IResource> allResources = bundle.GetAllResources(item.Key);
-				foreach (IResource item2 in allResources)
+				foreach (IResource allResource in bundle.GetAllResources(item.Key))
 				{
-					string text = item2["program_name"] as string;
-					string text2 = (string.IsNullOrEmpty(text) ? item2.Name : $"{item2.Name} '{text}'");
+					string text = allResource["program_name"] as string;
+					string obj = (string.IsNullOrEmpty(text) ? allResource.Name : $"{allResource.Name} '{text}'");
 					ResourceTypeIcons resourceTypeIcons = Enum<ResourceTypeIcons>.ParseIgnoringCase(item.Key, ResourceTypeIcons.invalid);
-					TreeNode treeNode3 = new TreeNode(text2, (int)resourceTypeIcons, (int)resourceTypeIcons);
-					treeNode3.Tag = item2;
-					TreeNode node = treeNode3;
+					TreeNode node = new TreeNode(obj, (int)resourceTypeIcons, (int)resourceTypeIcons)
+					{
+						Tag = allResource
+					};
 					treeNode2.Nodes.Add(node);
 				}
 				if (treeNode2.Nodes.Count > 0)
@@ -174,8 +172,7 @@ public class ProjectExplorerToolWindow : ToolWindow
 	{
 		m_treeView.BeginUpdate();
 		m_treeView.Nodes.Clear();
-		SortedDictionary<string, object> aPIDictionary = GetAPIDictionary();
-		foreach (KeyValuePair<string, object> item in aPIDictionary)
+		foreach (KeyValuePair<string, object> item in GetAPIDictionary())
 		{
 			TreeNode treeNode = new TreeNode(item.Key, 17, 17);
 			if (item.Value is SortedDictionary<string, object> sortedDictionary)
@@ -206,22 +203,21 @@ public class ProjectExplorerToolWindow : ToolWindow
 		IKernelFunctionRegistryService service = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
 		if (service != null)
 		{
-			ReadOnlyCollection<KernelFunctionInfo> kernelFunctions = service.GetKernelFunctions();
-			foreach (KernelFunctionInfo item in kernelFunctions)
+			foreach (KernelFunctionInfo kernelFunction in service.GetKernelFunctions())
 			{
-				if (!sortedDictionary.ContainsKey(item.Extension))
+				if (!sortedDictionary.ContainsKey(kernelFunction.Extension))
 				{
-					sortedDictionary.Add(item.Extension, new SortedDictionary<string, object>());
+					sortedDictionary.Add(kernelFunction.Extension, new SortedDictionary<string, object>());
 				}
-				if (sortedDictionary[item.Extension] is SortedDictionary<string, object> sortedDictionary2)
+				if (sortedDictionary[kernelFunction.Extension] is SortedDictionary<string, object> sortedDictionary2)
 				{
-					if (!sortedDictionary2.ContainsKey(item.Method.DeclaringType.FullName))
+					if (!sortedDictionary2.ContainsKey(kernelFunction.Method.DeclaringType.FullName))
 					{
-						sortedDictionary2.Add(item.Method.DeclaringType.FullName, new SortedDictionary<string, object>());
+						sortedDictionary2.Add(kernelFunction.Method.DeclaringType.FullName, new SortedDictionary<string, object>());
 					}
-					if (sortedDictionary2[item.Method.DeclaringType.FullName] is SortedDictionary<string, object> sortedDictionary3 && !sortedDictionary3.ContainsKey(item.Attributes[0].Name))
+					if (sortedDictionary2[kernelFunction.Method.DeclaringType.FullName] is SortedDictionary<string, object> sortedDictionary3 && !sortedDictionary3.ContainsKey(kernelFunction.Attributes[0].Name))
 					{
-						sortedDictionary3.Add(item.Attributes[0].Name, item);
+						sortedDictionary3.Add(kernelFunction.Attributes[0].Name, kernelFunction);
 					}
 				}
 			}

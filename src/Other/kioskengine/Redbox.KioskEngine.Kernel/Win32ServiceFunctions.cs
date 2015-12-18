@@ -23,10 +23,7 @@ internal static class Win32ServiceFunctions
 			{
 				return null;
 			}
-			string text = (string)registryKey.GetValue("ImagePath");
-			text = text.TrimStart('"');
-			text = text.TrimEnd('"');
-			return Path.GetDirectoryName(text);
+			return Path.GetDirectoryName(((string)registryKey.GetValue("ImagePath")).TrimStart('"').TrimEnd('"'));
 		}
 		catch (Exception ex)
 		{

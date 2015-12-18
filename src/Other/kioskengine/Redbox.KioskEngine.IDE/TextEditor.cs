@@ -67,9 +67,10 @@ public class TextEditor : UserControl
 		}
 		if (!string.IsNullOrEmpty(error) && string.Compare(error, "breakpoint hit", ignoreCase: true) != 0)
 		{
-			VisualTip visualTip = new VisualTip(error, "REDS Engine Runtime Error");
-			visualTip.FooterText = $"The error occurred on or near line: {lineNumber}.";
-			VisualTip tip = visualTip;
+			VisualTip tip = new VisualTip(error, "REDS Engine Runtime Error")
+			{
+				FooterText = $"The error occurred on or near line: {lineNumber}."
+			};
 			Point point = m_syntaxBoxControl.PointToScreen(m_syntaxBoxControl.Cursor.HotSpot);
 			m_visualTipProvider.ShowTip(tip, new Rectangle(point.X + 250, point.Y, 100, 100));
 		}

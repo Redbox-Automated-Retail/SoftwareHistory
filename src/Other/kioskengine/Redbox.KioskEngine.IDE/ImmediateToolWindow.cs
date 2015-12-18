@@ -30,8 +30,7 @@ public class ImmediateToolWindow : ToolWindow
 	{
 		try
 		{
-			IDebugService service = ServiceLocator.Instance.GetService<IDebugService>();
-			ReadOnlyCollection<object> readOnlyCollection = ((LuaDebugger)service.DebuggerInstance).Lua.DoString(e.Command);
+			ReadOnlyCollection<object> readOnlyCollection = ((LuaDebugger)ServiceLocator.Instance.GetService<IDebugService>().DebuggerInstance).Lua.DoString(e.Command);
 			if (readOnlyCollection == null || readOnlyCollection.Count == 0)
 			{
 				m_shellControl.WriteText("nil");

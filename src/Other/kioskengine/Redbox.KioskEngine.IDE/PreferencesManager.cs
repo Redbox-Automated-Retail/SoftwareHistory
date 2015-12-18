@@ -34,8 +34,7 @@ public class PreferencesManager : Form
 		if (!DeactivateCurrentPage())
 		{
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			DialogResult dialogResult = MessageBox.Show("There are unsaved changes because of errors.\n\nWould you like to correct them or close the window and lose your changes?", service.ExpandProperties("${ProductName} ${ProductVersion}"), MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk);
-			if (dialogResult == DialogResult.Yes)
+			if (MessageBox.Show("There are unsaved changes because of errors.\n\nWould you like to correct them or close the window and lose your changes?", service.ExpandProperties("${ProductName} ${ProductVersion}"), MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk) == DialogResult.Yes)
 			{
 				return;
 			}
@@ -47,8 +46,7 @@ public class PreferencesManager : Form
 	private void OnAfterSelect(object sender, TreeViewEventArgs e)
 	{
 		e.Node.SelectedImageIndex = e.Node.ImageIndex;
-		IUserSettingsStore service = ServiceLocator.Instance.GetService<IUserSettingsStore>();
-		service.SetValue("Shell\\Preferences", "CurrentSelection", m_treeView.SelectedNode.FullPath);
+		ServiceLocator.Instance.GetService<IUserSettingsStore>().SetValue("Shell\\Preferences", "CurrentSelection", m_treeView.SelectedNode.FullPath);
 		m_pagePanel.Controls.Clear();
 		if (e.Node.Tag is IPreferencePage { Host: not null } preferencePage)
 		{
@@ -140,12 +138,21 @@ public class PreferencesManager : Form
 			foreach (string item in list)
 			{
 				TreeNode[] array = ((treeNode == null) ? m_treeView.Nodes.Find(item, searchAllChildren: false) : treeNode.Nodes.Find(item, searchAllChildren: false));
-				if (array.Length > 0)
+				if (array.Length != 0)
 				{
 					treeNode = array[0];
 					continue;
 				}
-				treeNode = ((treeNode == null) ? m_treeView.Nodes.Add(item, item) : treeNode.Nodes.Add(item, item));
+				TreeNode treeNode2;
+				if (treeNode != null)
+				{
+					treeNode2 = treeNode.Nodes.Add(item, item);
+				}
+				else
+				{
+					treeNode2 = m_treeView.Nodes.Add(item, item);
+				}
+				treeNode = treeNode2;
 				if (item == list[list.Count - 1])
 				{
 					treeNode.Tag = preferencePage;

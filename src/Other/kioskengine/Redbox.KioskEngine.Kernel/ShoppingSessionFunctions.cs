@@ -346,11 +346,7 @@ internal static class ShoppingSessionFunctions
 	[KernelFunction(Name = "kernel.sessionsave2")]
 	internal static void SaveSession(string sessionId)
 	{
-		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		if (service != null)
-		{
-			IShoppingSession session = service.GetSession(sessionId);
-		}
+		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
 	}
 
 	[KernelFunction(Name = "kernel.sessionsetlineitemstatus2")]
@@ -411,16 +407,6 @@ internal static class ShoppingSessionFunctions
 	[KernelFunction(Name = "kernel.sessiongetstatus")]
 	internal static string GetSessionStatus(string sessionId)
 	{
-		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		if (service == null)
-		{
-			return null;
-		}
-		IShoppingSession session = service.GetSession(sessionId);
-		if (session == null)
-		{
-			return null;
-		}
-		return session.Status.ToString();
+		return ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.Status.ToString();
 	}
 }

@@ -18,8 +18,7 @@ public static class BundleFunctions
 	{
 		try
 		{
-			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			service.Activate(productName, productVersion);
+			ServiceLocator.Instance.GetService<IResourceBundleService>().Activate(productName, productVersion);
 		}
 		catch (Exception e)
 		{
@@ -32,8 +31,7 @@ public static class BundleFunctions
 	{
 		try
 		{
-			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			service.ActivateDefaultBundle();
+			ServiceLocator.Instance.GetService<IResourceBundleService>().ActivateDefaultBundle();
 		}
 		catch (Exception e)
 		{
@@ -136,8 +134,7 @@ public static class BundleFunctions
 	[KernelFunction(Name = "kernel.gettable")]
 	internal static LuaTable GetTable(string name)
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		XmlNode xml = service.GetXml(name);
+		XmlNode xml = ServiceLocator.Instance.GetService<IResourceBundleService>().GetXml(name);
 		if (xml == null)
 		{
 			return null;
@@ -180,8 +177,7 @@ public static class BundleFunctions
 	[KernelFunction(Name = "kernel.getdictionary")]
 	public static LuaTable GetDictionary(string name)
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		XmlNode xml = service.GetXml(name);
+		XmlNode xml = ServiceLocator.Instance.GetService<IResourceBundleService>().GetXml(name);
 		if (xml == null)
 		{
 			return null;
@@ -221,32 +217,28 @@ public static class BundleFunctions
 	[KernelFunction(Name = "kernel.getfilter")]
 	internal static string GetFilterProperty(string name)
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter[name];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter[name];
 	}
 
 	[KernelFunction(Name = "kernel.setfilter")]
 	internal static void SetFilterProperty(string name, string value)
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.Filter[name] = value;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter[name] = value;
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	[KernelFunction(Name = "kernel.getvendor")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetVendor()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["vendor"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["vendor"];
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	[KernelFunction(Name = "kernel.setvendor")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetVendor(string vendor)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.Filter["vendor"] = vendor;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["vendor"] = vendor;
 		ResetCurrentView();
 	}
 
@@ -254,17 +246,15 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetMarket()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["market"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["market"];
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	[KernelFunction(Name = "kernel.setmarket")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetMarket(string market)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.Filter["market"] = market;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["market"] = market;
 		ResetCurrentView();
 	}
 
@@ -272,8 +262,7 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetStoreNumber()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["store_number"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["store_number"];
 	}
 
 	[KernelFunction(Name = "kernel.setstorenumber")]
@@ -281,35 +270,31 @@ public static class BundleFunctions
 	internal static void SetStoreNumber(string storeNumber)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.Filter["store_number"] = storeNumber;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["store_number"] = storeNumber;
 		ResetCurrentView();
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	[KernelFunction(Name = "kernel.getculture")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetCulture()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["culture"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["culture"];
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	[KernelFunction(Name = "kernel.setculture")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetCulture(string culture)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.Filter["culture"] = culture;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["culture"] = culture;
 		ResetCurrentView();
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	[KernelFunction(Name = "kernel.getenvironment")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetEnvironment()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["environment"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["environment"];
 	}
 
 	[KernelFunction(Name = "kernel.setenvironment")]
@@ -317,47 +302,41 @@ public static class BundleFunctions
 	internal static void SetEnvironment(string environment)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.Filter["environment"] = environment;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["environment"] = environment;
 		ResetCurrentView();
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	[KernelFunction(Name = "kernel.getruntime")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetRuntime()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["runtime"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["runtime"];
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	[KernelFunction(Name = "kernel.getplatform")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetPlatform()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["platform"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["platform"];
 	}
 
 	[KernelFunction(Name = "kernel.getapplication")]
 	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
 	internal static string GetApplication()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.Filter["application"];
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["application"];
 	}
 
 	[KernelFunction(Name = "kernel.getswitchstatusmessage")]
 	internal static string GetSwitchStatusMessage()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		return service.SwitchStatusMessage;
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().SwitchStatusMessage;
 	}
 
 	[KernelFunction(Name = "kernel.setswitchstatusmessage")]
 	internal static void SetSwitchStatusMessage(string message)
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.SwitchStatusMessage = message;
+		ServiceLocator.Instance.GetService<IResourceBundleService>().SwitchStatusMessage = message;
 	}
 
 	[KernelFunction(Name = "kernel.isculturevalid")]

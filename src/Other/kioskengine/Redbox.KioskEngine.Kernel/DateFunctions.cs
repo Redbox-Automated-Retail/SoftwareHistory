@@ -57,15 +57,16 @@ public static class DateFunctions
 
 	private static LuaTable ToLuaTable(DateTime? workingDate)
 	{
-		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		luaTable["month"] = workingDate.Value.Month;
-		luaTable["day"] = workingDate.Value.Day;
-		luaTable["year"] = workingDate.Value.Year;
-		luaTable["hour"] = workingDate.Value.Hour;
-		luaTable["min"] = workingDate.Value.Minute;
-		luaTable["sec"] = workingDate.Value.Second;
-		luaTable["wday"] = (int)(workingDate.Value.DayOfWeek + 1);
-		return luaTable;
+		return new LuaTable(KernelService.Instance.LuaRuntime)
+		{
+			["month"] = workingDate.Value.Month,
+			["day"] = workingDate.Value.Day,
+			["year"] = workingDate.Value.Year,
+			["hour"] = workingDate.Value.Hour,
+			["min"] = workingDate.Value.Minute,
+			["sec"] = workingDate.Value.Second,
+			["wday"] = (int)(workingDate.Value.DayOfWeek + 1)
+		};
 	}
 
 	[KernelFunction(Name = "kernel.datecompare")]
@@ -110,10 +111,9 @@ public static class DateFunctions
 	public static bool ParseDateString(string dateString, out DateTime date)
 	{
 		string[] formats = new string[3] { "yyyyMMdd", "yyyyMMddHHmm", "yyyyMMddHHmmss" };
-		bool flag = false;
-		flag = DateTime.TryParseExact(dateString, formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out var result);
-		date = result;
-		return flag;
+		bool result = DateTime.TryParseExact(dateString, formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out var result2);
+		date = result2;
+		return result;
 	}
 
 	[KernelFunction(Name = "kernel.getelapsedhours")]
@@ -156,12 +156,12 @@ public static class DateFunctions
 	[KernelFunction(Name = "kernel.gettimezone")]
 	internal static string GetTimezone()
 	{
-		string text = (TimeZone.CurrentTimeZone.IsDaylightSavingTime(DateTime.Now) ? TimeZone.CurrentTimeZone.DaylightName : TimeZone.CurrentTimeZone.StandardName);
+		string obj = (TimeZone.CurrentTimeZone.IsDaylightSavingTime(DateTime.Now) ? TimeZone.CurrentTimeZone.DaylightName : TimeZone.CurrentTimeZone.StandardName);
 		StringBuilder stringBuilder = new StringBuilder();
-		string[] array = text.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-		foreach (string text2 in array)
+		string[] array = obj.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+		foreach (string text in array)
 		{
-			stringBuilder.Append(text2[0]);
+			stringBuilder.Append(text[0]);
 		}
 		return stringBuilder.ToString();
 	}

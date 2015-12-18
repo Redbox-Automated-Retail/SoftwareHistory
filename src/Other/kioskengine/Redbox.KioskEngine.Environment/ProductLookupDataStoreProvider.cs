@@ -22,11 +22,12 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 		using Archive archive = Archive.Open(DataStoreProvider.GetPath(dataStore));
 		if (tableName == "Version")
 		{
-			switch (keyName)
+			if (keyName == "origin_machine")
 			{
-			case "origin_machine":
 				return "{ name = '" + archive.GetOriginMachine().Trim() + "' }";
-			case "generated_on":
+			}
+			if (keyName == "generated_on")
+			{
 				return "{ date = '" + archive.GetCreatedOn().Trim() + "' }";
 			}
 		}
@@ -49,35 +50,33 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
 	{
-		_ = tableName == "Version";
+		if (!(tableName == "Version"))
+		{
+		}
 	}
 
 	protected override ReadOnlyCollection<string> OnGetKeys(string dataStore, string tableName)
 	{
-		switch (tableName)
+		if (!(tableName == "Version"))
 		{
-		case "Version":
-		{
-			List<string> list2 = new List<string>();
-			list2.Add("origin_machine");
-			list2.Add("generated_on");
-			return list2.AsReadOnly();
-		}
-		case "BarcodeToProduct":
-		{
-			List<string> list = new List<string>();
-			using (Archive archive = Archive.Open(DataStoreProvider.GetPath(dataStore)))
+			if (tableName == "BarcodeToProduct")
 			{
-				for (int i = 0; i < Math.Min(1000L, archive.GetNumberOfRecords()); i++)
+				List<string> list = new List<string>();
+				using (Archive archive = Archive.Open(DataStoreProvider.GetPath(dataStore)))
 				{
-					list.Add(archive[i].Barcode);
+					for (int i = 0; i < Math.Min(1000L, archive.GetNumberOfRecords()); i++)
+					{
+						list.Add(archive[i].Barcode);
+					}
 				}
+				return list.AsReadOnly();
 			}
-			return list.AsReadOnly();
-		}
-		default:
 			return new List<string>().AsReadOnly();
 		}
+		List<string> list2 = new List<string>();
+		list2.Add("origin_machine");
+		list2.Add("generated_on");
+		return list2.AsReadOnly();
 	}
 
 	protected override ReadOnlyCollection<string> OnGetTables(string dataStore)

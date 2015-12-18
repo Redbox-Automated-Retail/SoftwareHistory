@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
@@ -31,6 +32,10 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		public string lpData;
 	}
 
+	private int _keyId = 99999;
+
+	private bool _useStoreCertificate = false;
+
 	private const char TrackEnd = '?';
 
 	private const char TrackStart = '%';
@@ -43,7 +48,9 @@ public class HostForm : Form, IFlashService, ITrackDataService
 
 	private bool m_isCursorHidden;
 
-	private IContainer components;
+	private IContainer components = null;
+
+	public int KeyId => _keyId;
 
 	private Stack<FlashMovie> FlashMovies
 	{
@@ -81,7 +88,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		base.ShowInTaskbar = service.GetValue("Ide", "ShowKioskEngineInTaskBar", defaultValue: false);
 		string value = service.GetValue<string>("Store", "Environment", null);
 		bool value2 = service.GetValue("Ide", "ShowChrome", defaultValue: false);
-		if (value.Equals("Development", StringComparison.OrdinalIgnoreCase) && value2)
+		if (value.Equals("Development", StringComparison.OrdinalIgnoreCase) & value2)
 		{
 			base.FormBorderStyle = FormBorderStyle.FixedSingle;
 			base.ControlBox = true;
@@ -108,11 +115,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 
 	public string PeekFlashMovie()
 	{
-		if (FlashMovies.Count != 0)
-		{
-			return Path.GetFileNameWithoutExtension(FlashMovies.Peek().FileName);
-		}
-		return null;
+		return (FlashMovies.Count == 0) ? null : Path.GetFileNameWithoutExtension(FlashMovies.Peek().FileName);
 	}
 
 	public void PopFlashMovie()
@@ -194,6 +197,11 @@ public class HostForm : Form, IFlashService, ITrackDataService
 
 	public int GetKeyId()
 	{
+		return _keyId;
+	}
+
+	private int GetBundleKeyId()
+	{
 		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
 		if (manifest == null || manifest["public_key"] == null)
 		{
@@ -210,6 +218,62 @@ public class HostForm : Form, IFlashService, ITrackDataService
 			return 99999;
 		}
 		return (int)resource["key_id"];
+	}
+
+	public void RefreshCertificate()
+	{
+		int num = 0;
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (service != null && service.TryGetValue<int>("system", "General", "CertificateName", out var value))
+		{
+			num = value;
+		}
+		if (num == 0)
+		{
+			_keyId = GetBundleKeyId();
+			_useStoreCertificate = false;
+		}
+		else
+		{
+			_keyId = num;
+			_useStoreCertificate = true;
+		}
+		if (_useStoreCertificate && GetStoreCertificate() == null)
+		{
+			_keyId = GetBundleKeyId();
+			_useStoreCertificate = false;
+		}
+	}
+
+	private string Encrypt(SecureString value)
+	{
+		if (_useStoreCertificate)
+		{
+			X509Certificate2 storeCertificate = GetStoreCertificate();
+			return (value != null) ? CardHelper.EncryptCreditCardFromCertificate(value, storeCertificate) : null;
+		}
+		string bundleCertificateXML = GetBundleCertificateXML();
+		if (bundleCertificateXML == null)
+		{
+			return null;
+		}
+		return (value != null) ? CardHelper.EncryptCreditCardFromXmlKey(value, bundleCertificateXML) : null;
+	}
+
+	private X509Certificate2 GetStoreCertificate()
+	{
+		return Redbox.KioskEngine.Environment.CertificateHelper.GetCertificateBySubjectName(StoreName.My, StoreLocation.LocalMachine, _keyId.ToString());
+	}
+
+	private string GetBundleCertificateXML()
+	{
+		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
+		if (manifest == null || manifest["public_key"] == null)
+		{
+			return null;
+		}
+		XmlNode xml = ResourceBundleService.Instance.GetXml((string)manifest["public_key"]);
+		return xml.InnerXml;
 	}
 
 	public void ClearNotify()
@@ -230,17 +294,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		{
 			return null;
 		}
-		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
-		if (manifest == null || manifest["public_key"] == null)
-		{
-			return null;
-		}
-		XmlNode xml = ResourceBundleService.Instance.GetXml((string)manifest["public_key"]);
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return CardHelper.EncryptCreditCardFromXmlKey(TrackDataContainer.Track1, xml.InnerXml);
+		return Encrypt(TrackDataContainer.Track1);
 	}
 
 	public string GetTrack2()
@@ -249,17 +303,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		{
 			return null;
 		}
-		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
-		if (manifest == null || manifest["public_key"] == null)
-		{
-			return null;
-		}
-		XmlNode xml = ResourceBundleService.Instance.GetXml((string)manifest["public_key"]);
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return CardHelper.EncryptCreditCardFromXmlKey(TrackDataContainer.Track2, xml.InnerXml);
+		return Encrypt(TrackDataContainer.Track2);
 	}
 
 	public string GetNumber()
@@ -268,80 +312,42 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		{
 			return null;
 		}
-		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
-		if (manifest == null || manifest["public_key"] == null)
-		{
-			return null;
-		}
-		XmlNode xml = ResourceBundleService.Instance.GetXml((string)manifest["public_key"]);
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return CardHelper.EncryptCreditCardFromXmlKey(TrackDataContainer.AccountNumber, xml.InnerXml);
+		return Encrypt(TrackDataContainer.AccountNumber);
 	}
 
 	public bool HasValidData()
 	{
-		if (TrackDataErrors != null && TrackDataContainer != null)
-		{
-			return !TrackDataErrors.ContainsError();
-		}
-		return false;
+		return TrackDataErrors != null && TrackDataContainer != null && !TrackDataErrors.ContainsError();
 	}
 
 	public string GetFirstName()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.FirstName;
+		return (TrackDataContainer != null) ? TrackDataContainer.FirstName : null;
 	}
 
 	public string GetLastName()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.LastName;
+		return (TrackDataContainer != null) ? TrackDataContainer.LastName : null;
 	}
 
 	public string GetLastFour()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.LastFour;
+		return (TrackDataContainer != null) ? TrackDataContainer.LastFour : null;
 	}
 
 	public CardType? GetCardType()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.CardType;
+		return (TrackDataContainer != null) ? TrackDataContainer.CardType : ((CardType?)null);
 	}
 
 	public string GetExpiryMonth()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.ExpiryMonth;
+		return (TrackDataContainer != null) ? TrackDataContainer.ExpiryMonth : null;
 	}
 
 	public string GetExpiryYear()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.ExpiryYear;
+		return (TrackDataContainer != null) ? TrackDataContainer.ExpiryYear : null;
 	}
 
 	public void StopTrackParsing()
@@ -362,11 +368,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 
 	public string GenerateCardHashId()
 	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return CardHelper.GenerateCardId(TrackDataContainer.AccountNumber);
+		return (TrackDataContainer != null) ? CardHelper.GenerateCardId(TrackDataContainer.AccountNumber) : null;
 	}
 
 	protected override void WndProc(ref Message m)
@@ -556,7 +558,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		}
 		if (e.KeyChar == '`')
 		{
-			ResourceBundleService.Instance.GetManifest(out var manifestInfo);
+			IResource manifest = ResourceBundleService.Instance.GetManifest(out var manifestInfo);
 			string text = ResourceBundleService.Instance.Filter["view_name"];
 			if (manifestInfo.ProductName != "Rental Application" || (manifestInfo.ProductName == "Rental Application" && (text == "start_view" || text == "welcome_view")))
 			{

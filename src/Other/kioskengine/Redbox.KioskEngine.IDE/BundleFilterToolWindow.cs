@@ -21,15 +21,13 @@ public class BundleFilterToolWindow : ToolWindow
 	public BundleFilterToolWindow()
 	{
 		InitializeComponent();
-		DynamicPropertyGrid dynamicPropertyGrid = m_dynamicPropertyGrid;
-		VisualHint.SmartPropertyGrid.PropertyGrid.PropertyChangedEventHandler value = delegate(object sender, VisualHint.SmartPropertyGrid.PropertyChangedEventArgs e)
+		m_dynamicPropertyGrid.PropertyChanged += delegate(object sender, VisualHint.SmartPropertyGrid.PropertyChangedEventArgs e)
 		{
 			if (e.PropertyEnum.Property.Tag is IPropertyType propertyType)
 			{
 				base.BundleService.Filter[propertyType.Name] = e.PropertyEnum.Property.Value.GetValue() as string;
 			}
 		};
-		dynamicPropertyGrid.PropertyChanged += value;
 	}
 
 	public void RefreshFilters()
@@ -59,10 +57,8 @@ public class BundleFilterToolWindow : ToolWindow
 				continue;
 			}
 			List<IPropertyType> list2 = new List<IPropertyType>();
-			IPropertyType each;
-			foreach (IPropertyType item in filterProperties)
+			foreach (IPropertyType each in filterProperties)
 			{
-				each = item;
 				if (list.Find((string eachName) => each.Name == eachName) == null)
 				{
 					list2.Add(each);
@@ -74,10 +70,9 @@ public class BundleFilterToolWindow : ToolWindow
 				continue;
 			}
 			PropertyEnumerator underCategory = m_dynamicPropertyGrid.AppendRootCategory(num++, resourceType.Key);
-			foreach (IPropertyType item2 in list2)
+			foreach (IPropertyType item in list2)
 			{
-				PropertyEnumerator propertyEnumerator = m_dynamicPropertyGrid.AppendManagedProperty(underCategory, num++, $"{item2.Label} ({item2.Name})", item2.Type, service.Filter[item2.Name], item2.Description ?? string.Empty, new DefaultValueAttribute(item2.DefaultValue));
-				propertyEnumerator.Property.Tag = item2;
+				m_dynamicPropertyGrid.AppendManagedProperty(underCategory, num++, $"{item.Label} ({item.Name})", item.Type, service.Filter[item.Name], item.Description ?? string.Empty, new DefaultValueAttribute(item.DefaultValue)).Property.Tag = item;
 			}
 		}
 		m_dynamicPropertyGrid.EndUpdate();

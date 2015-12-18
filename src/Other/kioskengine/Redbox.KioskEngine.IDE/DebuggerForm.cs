@@ -205,9 +205,10 @@ public class DebuggerForm : Form
 		SetCurrentDebugLine(lineNumber, (!string.IsNullOrEmpty(error)) ? text : null);
 		if (!string.IsNullOrEmpty(error) && string.Compare(error, "breakpoint hit", ignoreCase: true) != 0)
 		{
-			VisualTip visualTip = new VisualTip(error, "REDS Engine Runtime Error");
-			visualTip.FooterText = $"The error occurred on or near line: {lineNumber}.";
-			VisualTip tip = visualTip;
+			VisualTip tip = new VisualTip(error, "REDS Engine Runtime Error")
+			{
+				FooterText = $"The error occurred on or near line: {lineNumber}."
+			};
 			Point point = m_syntaxBoxControl.PointToScreen(m_syntaxBoxControl.Cursor.HotSpot);
 			m_visualTipProvider.ShowTip(tip, new Rectangle(point.X + 250, point.Y, 100, 100));
 		}
@@ -310,17 +311,21 @@ public class DebuggerForm : Form
 		try
 		{
 			Cursor = Cursors.WaitCursor;
-			switch (m_tabControl.SelectedTab.Text)
+			string text = m_tabControl.SelectedTab.Text;
+			if (!(text == "Globals"))
 			{
-			case "Globals":
+				if (text == "Call Stack")
+				{
+					RefreshCallStack();
+				}
+				else
+				{
+					RefreshLocalList();
+				}
+			}
+			else
+			{
 				RefreshGlobalList();
-				break;
-			case "Call Stack":
-				RefreshCallStack();
-				break;
-			default:
-				RefreshLocalList();
-				break;
 			}
 		}
 		finally
@@ -341,8 +346,7 @@ public class DebuggerForm : Form
 		{
 			RefreshResourceTree();
 			RefreshTabs();
-			IUserSettingsStore service = ServiceLocator.Instance.GetService<IUserSettingsStore>();
-			string value = service.GetValue<string>("Debugger", "SelectedNodePath");
+			string value = ServiceLocator.Instance.GetService<IUserSettingsStore>().GetValue<string>("Debugger", "SelectedNodePath");
 			SelectNodePath(value);
 			SetDebuggerState();
 			SetBreakpointState();
@@ -352,8 +356,7 @@ public class DebuggerForm : Form
 
 	private void OnAfterSelect(object sender, TreeViewEventArgs e)
 	{
-		IUserSettingsStore service = ServiceLocator.Instance.GetService<IUserSettingsStore>();
-		service.SetValue("Debugger", "SelectedNodePath", e.Node.FullPath);
+		ServiceLocator.Instance.GetService<IUserSettingsStore>().SetValue("Debugger", "SelectedNodePath", e.Node.FullPath);
 	}
 
 	private void OnFormClosing(object sender, FormClosingEventArgs e)
@@ -650,8 +653,8 @@ public class DebuggerForm : Form
 			foreach (LuaDebugBreakpoint breakpoint in item.Breakpoints)
 			{
 				LuaDebugBreakpoint workingBreakpoint = breakpoint;
-				ToolStripMenuItem toolStripMenuItem = (ToolStripMenuItem)m_breakpointsToolStripMenuItem.DropDownItems.Add($"Script: {item.FileName}, Line: {breakpoint.Line}");
-				toolStripMenuItem.Click += delegate(object o, EventArgs e)
+				ToolStripMenuItem obj = (ToolStripMenuItem)m_breakpointsToolStripMenuItem.DropDownItems.Add($"Script: {item.FileName}, Line: {breakpoint.Line}");
+				obj.Click += delegate(object o, EventArgs e)
 				{
 					try
 					{
@@ -676,7 +679,7 @@ public class DebuggerForm : Form
 						m_refreshingBreakpoints = false;
 					}
 				};
-				toolStripMenuItem.Checked = breakpoint.Enabled;
+				obj.Checked = breakpoint.Enabled;
 				flag = true;
 			}
 		}
@@ -840,35 +843,37 @@ public class DebuggerForm : Form
 		Dictionary<string, bool> dictionary = new Dictionary<string, bool>();
 		foreach (IResource resource in ActiveBundleSet.GetResources("view", Filter))
 		{
-			TreeNode treeNode4 = new TreeNode(resource.Name, 4, 4);
-			treeNode4.Name = resource.Name;
-			treeNode4.Tag = resource;
-			TreeNode treeNode5 = treeNode4;
-			TreeNode treeNode6 = new TreeNode("Actors", 6, 6);
-			treeNode6.Name = treeNode6.Text;
-			XmlNode xmlNode = (XmlNode)resource.GetAspect("content").GetContent();
-			XmlNode xmlNode2 = xmlNode.ChildNodes[0];
-			string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(xmlNode2, "onEnter");
+			TreeNode treeNode4 = new TreeNode(resource.Name, 4, 4)
+			{
+				Name = resource.Name,
+				Tag = resource
+			};
+			TreeNode treeNode5 = new TreeNode("Actors", 6, 6);
+			treeNode5.Name = treeNode5.Text;
+			XmlNode xmlNode = ((XmlNode)resource.GetAspect("content").GetContent()).ChildNodes[0];
+			string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onEnter");
 			if (!string.IsNullOrEmpty(attributeValue))
 			{
 				dictionary[attributeValue] = true;
-				TreeNode treeNode7 = new TreeNode($"onEnter: {attributeValue}", 7, 7);
-				treeNode7.Tag = ActiveBundleSet.GetResource(attributeValue, Filter);
-				TreeNode treeNode8 = treeNode7;
-				treeNode8.Name = treeNode8.Text;
-				treeNode5.Nodes.Add(treeNode8);
+				TreeNode treeNode6 = new TreeNode($"onEnter: {attributeValue}", 7, 7)
+				{
+					Tag = ActiveBundleSet.GetResource(attributeValue, Filter)
+				};
+				treeNode6.Name = treeNode6.Text;
+				treeNode4.Nodes.Add(treeNode6);
 			}
-			string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode2, "onLeave");
+			string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onLeave");
 			if (!string.IsNullOrEmpty(attributeValue2))
 			{
 				dictionary[attributeValue2] = true;
-				TreeNode treeNode9 = new TreeNode($"onLeave: {attributeValue2}", 7, 7);
-				treeNode9.Tag = ActiveBundleSet.GetResource(attributeValue2, Filter);
-				TreeNode treeNode10 = treeNode9;
-				treeNode10.Name = treeNode10.Text;
-				treeNode5.Nodes.Add(treeNode10);
+				TreeNode treeNode7 = new TreeNode($"onLeave: {attributeValue2}", 7, 7)
+				{
+					Tag = ActiveBundleSet.GetResource(attributeValue2, Filter)
+				};
+				treeNode7.Name = treeNode7.Text;
+				treeNode4.Nodes.Add(treeNode7);
 			}
-			XmlNodeList xmlNodeList = xmlNode2.SelectNodes("actor");
+			XmlNodeList xmlNodeList = xmlNode.SelectNodes("actor");
 			if (xmlNodeList != null)
 			{
 				foreach (XmlNode item in xmlNodeList)
@@ -878,29 +883,31 @@ public class DebuggerForm : Form
 					{
 						dictionary[attributeValue3] = true;
 						string attributeValue4 = XmlNodeExtensions.GetAttributeValue<string>(item, "name");
-						TreeNode treeNode11 = new TreeNode($"{attributeValue4}: {attributeValue3}", 7, 7);
-						treeNode11.Tag = ActiveBundleSet.GetResource(attributeValue3, Filter);
-						TreeNode treeNode12 = treeNode11;
-						treeNode12.Name = treeNode12.Text;
-						treeNode6.Nodes.Add(treeNode12);
+						TreeNode treeNode8 = new TreeNode($"{attributeValue4}: {attributeValue3}", 7, 7)
+						{
+							Tag = ActiveBundleSet.GetResource(attributeValue3, Filter)
+						};
+						treeNode8.Name = treeNode8.Text;
+						treeNode5.Nodes.Add(treeNode8);
 					}
 				}
 			}
-			if (treeNode6.Nodes.Count > 0)
+			if (treeNode5.Nodes.Count > 0)
 			{
-				treeNode5.Nodes.Add(treeNode6);
+				treeNode4.Nodes.Add(treeNode5);
 			}
-			treeNode2.Nodes.Add(treeNode5);
+			treeNode2.Nodes.Add(treeNode4);
 		}
 		treeNode.Nodes.Add(treeNode3);
 		foreach (IResource resource2 in ActiveBundleSet.GetResources("script", Filter))
 		{
 			if (!dictionary.ContainsKey(resource2.Name))
 			{
-				TreeNode treeNode13 = new TreeNode(resource2.Name, 7, 7);
-				treeNode13.Name = resource2.Name;
-				treeNode13.Tag = resource2;
-				TreeNode node2 = treeNode13;
+				TreeNode node2 = new TreeNode(resource2.Name, 7, 7)
+				{
+					Name = resource2.Name,
+					Tag = resource2
+				};
 				treeNode3.Nodes.Add(node2);
 			}
 		}

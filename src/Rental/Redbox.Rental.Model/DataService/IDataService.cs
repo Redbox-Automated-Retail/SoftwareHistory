@@ -32,4 +32,6 @@ public interface IDataService
 	ErrorList GetCollection(long collectionId, out ICollectionProduct collection);
 
 	ErrorList GetCollectionProducts(out List<IKioskProduct> products);
+
+	bool GetIsProductThinned(long productId);
 }

@@ -275,13 +275,9 @@ public class Scene : IScene, IDisposable
 		{
 			foreach (IActor actor in Actors)
 			{
-				if (actor.Tag != null && !string.IsNullOrEmpty(actor.Tag.ToString()))
+				if (actor.Tag != null && !string.IsNullOrEmpty(actor.Tag.ToString()) && new List<string>(actor.Tag.ToString().Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries)).Contains(tag))
 				{
-					List<string> list2 = new List<string>(actor.Tag.ToString().Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries));
-					if (list2.Contains(tag))
-					{
-						list.Add(actor);
-					}
+					list.Add(actor);
 				}
 			}
 			return list;

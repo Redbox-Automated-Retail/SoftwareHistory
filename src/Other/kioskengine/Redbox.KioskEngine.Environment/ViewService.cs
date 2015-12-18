@@ -46,7 +46,7 @@ public class ViewService : IViewService
 
 	public void ShowFrameInDebug()
 	{
-		ServiceLocator.Instance.GetService<IRenderingService>();
+		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		IViewFrame viewFrame = InnerStack.Peek();
 		LogHelper.Instance.Log("Showing view '{0}' from TOS in DEBUG window: clear = {1}, viewWindow = {2}, width = {3}, height = {4}, scene = {5}, onEnter = {6}, onLeave = {7}.", viewFrame.ViewName, viewFrame.Clear, viewFrame.ViewWindow, viewFrame.Width, viewFrame.Height, viewFrame.SceneName, viewFrame.OnEnterResourceName, viewFrame.OnLeaveResourceName);
 		viewFrame.UpdateScene();

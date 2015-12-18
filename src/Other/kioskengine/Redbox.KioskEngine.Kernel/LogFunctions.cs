@@ -50,8 +50,7 @@ internal static class LogFunctions
 
 	private static void LogToOutputWindow(string message)
 	{
-		IIdeService service = ServiceLocator.Instance.GetService<IIdeService>();
-		if (service != null)
+		if (ServiceLocator.Instance.GetService<IIdeService>() != null)
 		{
 			IdeMainForm.LogToOutputWindow(message);
 		}

@@ -189,14 +189,13 @@ public class DataStorePreferencePage : UserControl, IPreferencePageHost
 			DataTable dataTable = new DataTable();
 			dataTable.Columns.Add("Key", typeof(string));
 			dataTable.Columns.Add("Value", typeof(string));
-			ReadOnlyCollection<string> keys = service.GetKeys(fileNameWithoutExtension, tableName);
-			foreach (string item in keys)
+			foreach (string key in service.GetKeys(fileNameWithoutExtension, tableName))
 			{
 				DataRow dataRow = dataTable.NewRow();
 				dataTable.Rows.Add(dataRow);
 				dataRow.BeginEdit();
-				dataRow["Key"] = item;
-				dataRow["Value"] = service.Get(fileNameWithoutExtension, tableName, item);
+				dataRow["Key"] = key;
+				dataRow["Value"] = service.Get(fileNameWithoutExtension, tableName, key);
 				dataRow.EndEdit();
 				dataRow.AcceptChanges();
 			}
@@ -220,12 +219,10 @@ public class DataStorePreferencePage : UserControl, IPreferencePageHost
 			Cursor = Cursors.WaitCursor;
 			m_storeToolStripComboBox.BeginUpdate();
 			m_storeToolStripComboBox.Items.Clear();
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			string path = service.ExpandProperties("${RunningPath}\\..\\data");
-			string[] files = Directory.GetFiles(path, "*.data");
-			foreach (string path2 in files)
+			string[] files = Directory.GetFiles(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties("${RunningPath}\\..\\data"), "*.data");
+			foreach (string path in files)
 			{
-				m_storeToolStripComboBox.Items.Add(Path.GetFileName(path2));
+				m_storeToolStripComboBox.Items.Add(Path.GetFileName(path));
 			}
 			if (m_storeToolStripComboBox.Items.Count > 0)
 			{
@@ -252,21 +249,16 @@ public class DataStorePreferencePage : UserControl, IPreferencePageHost
 			m_currentRowIndex = null;
 			m_syntaxDocument.Clear();
 		}
-		if (m_currentRowIndex == e.RowIndex)
+		if (m_currentRowIndex != e.RowIndex)
 		{
-			return;
-		}
-		if (m_currentRowIndex.HasValue && m_currentRowIndex != e.RowIndex)
-		{
-			string text = m_dataGridView[1, m_currentRowIndex.Value].Value as string;
-			if (text != m_syntaxDocument.Text)
+			if (m_currentRowIndex.HasValue && m_currentRowIndex != e.RowIndex && m_dataGridView[1, m_currentRowIndex.Value].Value as string != m_syntaxDocument.Text)
 			{
 				m_dataGridView[1, m_currentRowIndex.Value].Value = m_syntaxDocument.Text;
 				m_dataGridView.Rows[m_currentRowIndex.Value].HeaderCell.Value = "*";
 			}
+			m_currentRowIndex = e.RowIndex;
+			m_syntaxDocument.Text = m_dataGridView[1, e.RowIndex].FormattedValue as string;
 		}
-		m_currentRowIndex = e.RowIndex;
-		m_syntaxDocument.Text = m_dataGridView[1, e.RowIndex].FormattedValue as string;
 	}
 
 	private void OnFind(object sender, EventArgs e)
@@ -281,12 +273,23 @@ public class DataStorePreferencePage : UserControl, IPreferencePageHost
 		if (findKeyValueForm.ShowDialog() == DialogResult.OK && m_dataGridView.DataSource is DataTable dataTable)
 		{
 			m_syntaxDocument.Clear();
-			DataRow[] array = ((findKeyValueForm.SearchType == KeyValueSearchType.Key) ? dataTable.Select($"[Key] = '{findKeyValueForm.SearchFor}'") : dataTable.Select($"[Value] LIKE '%{findKeyValueForm.SearchFor}%'"));
-			DataTable dataTable2 = new DataTable();
-			dataTable2.Columns.Add("Key", typeof(string));
-			dataTable2.Columns.Add("Value", typeof(string));
-			DataRow[] array2 = array;
-			foreach (DataRow dataRow in array2)
+			DataRow[] obj = ((findKeyValueForm.SearchType == KeyValueSearchType.Key) ? dataTable.Select($"[Key] = '{findKeyValueForm.SearchFor}'") : dataTable.Select($"[Value] LIKE '%{findKeyValueForm.SearchFor}%'"));
+			DataTable dataTable2 = new DataTable
+			{
+				Columns = 
+				{
+					{
+						"Key",
+						typeof(string)
+					},
+					{
+						"Value",
+						typeof(string)
+					}
+				}
+			};
+			DataRow[] array = obj;
+			foreach (DataRow dataRow in array)
 			{
 				dataTable2.Rows.Add(dataRow[0], dataRow[1]);
 			}

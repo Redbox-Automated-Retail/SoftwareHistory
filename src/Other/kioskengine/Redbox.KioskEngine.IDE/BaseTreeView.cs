@@ -83,8 +83,7 @@ public class BaseTreeView : TreeView
 		TreeNode treeNode = null;
 		TreeNode treeNode2 = null;
 		string[] array = path.Split(base.PathSeparator.ToCharArray());
-		string[] array2 = array;
-		foreach (string label in array2)
+		foreach (string label in array)
 		{
 			treeNode = FindTreeNode((treeNode == null) ? base.Nodes : treeNode.Nodes, label);
 			if (treeNode == null)

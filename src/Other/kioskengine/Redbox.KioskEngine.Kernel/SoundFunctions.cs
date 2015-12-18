@@ -8,8 +8,7 @@ internal static class SoundFunctions
 	[KernelFunction(Name = "kernel.soundstop")]
 	internal static void StopSound()
 	{
-		ISoundService service = ServiceLocator.Instance.GetService<ISoundService>();
-		service.StopPlay();
+		ServiceLocator.Instance.GetService<ISoundService>().StopPlay();
 	}
 
 	[KernelFunction(Name = "kernel.ttsrepeat")]
@@ -22,8 +21,7 @@ internal static class SoundFunctions
 	internal static void PlaySoundSync(string resourceName)
 	{
 		ISoundService service = ServiceLocator.Instance.GetService<ISoundService>();
-		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		byte[] sound = service2.GetSound(resourceName);
+		byte[] sound = ServiceLocator.Instance.GetService<IResourceBundleService>().GetSound(resourceName);
 		if (sound != null)
 		{
 			service.PlaySync(sound);

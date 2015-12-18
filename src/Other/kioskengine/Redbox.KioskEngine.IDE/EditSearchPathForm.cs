@@ -34,8 +34,8 @@ public class EditSearchPathForm : Form
 
 	private Button m_cancelButton;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public List<string> SearchPath { get; set; }
 
 	public EditSearchPathForm()
@@ -65,13 +65,13 @@ public class EditSearchPathForm : Form
 
 	private void OnBrowse(object sender, EventArgs e)
 	{
-		FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-		folderBrowserDialog.SelectedPath = m_pathTextBox.Text;
-		FolderBrowserDialog folderBrowserDialog2 = folderBrowserDialog;
-		DialogResult dialogResult = folderBrowserDialog2.ShowDialog();
-		if (dialogResult == DialogResult.OK)
+		FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
 		{
-			m_pathTextBox.Text = folderBrowserDialog2.SelectedPath;
+			SelectedPath = m_pathTextBox.Text
+		};
+		if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+		{
+			m_pathTextBox.Text = folderBrowserDialog.SelectedPath;
 		}
 	}
 

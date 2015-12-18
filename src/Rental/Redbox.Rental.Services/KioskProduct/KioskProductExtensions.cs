@@ -169,11 +169,11 @@ public static class KioskProductExtensions
 		{
 			return BrowseViewFilter.All;
 		}
-		if (filter.Equals("for-sale", StringComparison.CurrentCultureIgnoreCase))
+		if (filter.Equals("for-sale", StringComparison.CurrentCultureIgnoreCase) || filter.Equals(BrowseViewFilter.ForSale.ToString(), StringComparison.CurrentCultureIgnoreCase))
 		{
 			return BrowseViewFilter.ForSale;
 		}
-		if (filter.Equals("coming-soon", StringComparison.CurrentCultureIgnoreCase))
+		if (filter.Equals("coming-soon", StringComparison.CurrentCultureIgnoreCase) || filter.Equals(BrowseViewFilter.ComingSoon.ToString(), StringComparison.CurrentCultureIgnoreCase))
 		{
 			return BrowseViewFilter.ComingSoon;
 		}

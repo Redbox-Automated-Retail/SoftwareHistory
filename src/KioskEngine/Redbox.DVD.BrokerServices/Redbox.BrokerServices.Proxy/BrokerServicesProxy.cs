@@ -39,13 +39,11 @@ internal class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Services", "BrokerServicesTimeout", 30000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Services", "BrokerServicesTimeout", 30000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Services", "BrokerServicesTimeout", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Services", "BrokerServicesTimeout", value);
 			RegisterChannel();
 			if (m_kioskId.HasValue && !string.IsNullOrEmpty(m_versionPricingDictionary))
 			{
@@ -58,13 +56,11 @@ internal class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Services", "BrokerServicesURL", "gtcp://blt.accessredbox.net:7890/RegistrationBroker/Default.rem");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Services", "BrokerServicesURL", "gtcp://blt.accessredbox.net:7890/RegistrationBroker/Default.rem");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Services", "BrokerServicesURL", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Services", "BrokerServicesURL", value);
 		}
 	}
 
@@ -110,94 +106,97 @@ internal class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 
 	public ReservationResult Reserve(ReservationCart cart)
 	{
-		ReservationCallbackEntry reservationCallbackEntry = new ReservationCallbackEntry();
-		reservationCallbackEntry.Cart = cart;
-		ReservationCallbackEntry reservationCallbackEntry2 = reservationCallbackEntry;
+		ReservationCallbackEntry reservationCallbackEntry = new ReservationCallbackEntry
+		{
+			Cart = cart
+		};
 		try
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
 			if (service != null)
 			{
-				service.EnqueueCallback(reservationCallbackEntry2);
-				reservationCallbackEntry2.ResetEvent.WaitOne();
+				service.EnqueueCallback(reservationCallbackEntry);
+				reservationCallbackEntry.ResetEvent.WaitOne();
 				LogHelper.Instance.Log("BrokerServicesProxy.Reserve execution time: {0}", executionTimer.Elapsed);
 			}
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in BrokerServicesProxy.Reserve.", e);
-			reservationCallbackEntry2.BrokerResult.ErrorMessage = "An error ocurred during reserve.";
-			reservationCallbackEntry2.ResetEvent.Set();
+			reservationCallbackEntry.BrokerResult.ErrorMessage = "An error ocurred during reserve.";
+			reservationCallbackEntry.ResetEvent.Set();
 		}
 		finally
 		{
-			reservationCallbackEntry2.ResetEvent.Close();
+			reservationCallbackEntry.ResetEvent.Close();
 		}
-		return reservationCallbackEntry2.BrokerResult;
+		return reservationCallbackEntry.BrokerResult;
 	}
 
 	public ReservationResult Reserve2(ReservationCart2 cart)
 	{
-		ReservationCallbackEntry2 reservationCallbackEntry = new ReservationCallbackEntry2();
-		reservationCallbackEntry.Cart = cart;
-		ReservationCallbackEntry2 reservationCallbackEntry2 = reservationCallbackEntry;
+		ReservationCallbackEntry2 reservationCallbackEntry = new ReservationCallbackEntry2
+		{
+			Cart = cart
+		};
 		try
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
 			if (service != null)
 			{
-				service.EnqueueCallback(reservationCallbackEntry2);
-				reservationCallbackEntry2.ResetEvent.WaitOne();
+				service.EnqueueCallback(reservationCallbackEntry);
+				reservationCallbackEntry.ResetEvent.WaitOne();
 				LogHelper.Instance.Log("BrokerServicesProxy.Reserve2 execution time: {0}", executionTimer.Elapsed);
 			}
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in BrokerServicesProxy.Reserve2.", e);
-			reservationCallbackEntry2.BrokerResult.ErrorMessage = "An error ocurred during reserve2.";
-			reservationCallbackEntry2.ResetEvent.Set();
+			reservationCallbackEntry.BrokerResult.ErrorMessage = "An error ocurred during reserve2.";
+			reservationCallbackEntry.ResetEvent.Set();
 		}
 		finally
 		{
-			reservationCallbackEntry2.ResetEvent.Close();
+			reservationCallbackEntry.ResetEvent.Close();
 		}
-		return reservationCallbackEntry2.BrokerResult;
+		return reservationCallbackEntry.BrokerResult;
 	}
 
 	public ReservationResult Reserve3(ReservationCart3 cart)
 	{
-		ReservationCallbackEntry3 reservationCallbackEntry = new ReservationCallbackEntry3();
-		reservationCallbackEntry.Cart = cart;
-		ReservationCallbackEntry3 reservationCallbackEntry2 = reservationCallbackEntry;
+		ReservationCallbackEntry3 reservationCallbackEntry = new ReservationCallbackEntry3
+		{
+			Cart = cart
+		};
 		try
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
 			if (service != null)
 			{
-				service.EnqueueCallback(reservationCallbackEntry2);
-				reservationCallbackEntry2.ResetEvent.WaitOne();
+				service.EnqueueCallback(reservationCallbackEntry);
+				reservationCallbackEntry.ResetEvent.WaitOne();
 				LogHelper.Instance.Log("BrokerServicesProxy.Reserve3 execution time: {0}", executionTimer.Elapsed);
 			}
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in BrokerServicesProxy.Reserve3.", e);
-			reservationCallbackEntry2.BrokerResult.ErrorMessage = "An error ocurred during reserve3.";
-			reservationCallbackEntry2.ResetEvent.Set();
+			reservationCallbackEntry.BrokerResult.ErrorMessage = "An error ocurred during reserve3.";
+			reservationCallbackEntry.ResetEvent.Set();
 		}
 		finally
 		{
-			reservationCallbackEntry2.ResetEvent.Close();
+			reservationCallbackEntry.ResetEvent.Close();
 		}
-		return reservationCallbackEntry2.BrokerResult;
+		return reservationCallbackEntry.BrokerResult;
 	}
 
 	private BrokerServicesProxy()
 	{
-		GenuineChannelsGlobalEventHandler value = delegate(object sender, GenuineEventArgs args)
+		GenuineGlobalEventProvider.GenuineChannelsGlobalEvent += delegate(object sender, GenuineEventArgs args)
 		{
 			try
 			{
@@ -221,7 +220,6 @@ internal class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 				LogHelper.Instance.Log("An unhandled exception was raised in GenuineGlobalEventProvider.GenuineChannelsGlobalEvent.", e);
 			}
 		};
-		GenuineGlobalEventProvider.GenuineChannelsGlobalEvent += value;
 		RegisterChannel();
 	}
 
@@ -282,8 +280,7 @@ internal class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 				HostInformation hostInformation = GenuineUtility.FetchHostInformationFromMbr((MarshalByRefObject)m_broker);
 				if (hostInformation != null)
 				{
-					ITransportContext transportContext = GenuineUtility.FetchTransportContextFromMbr((MarshalByRefObject)m_broker);
-					transportContext.KnownHosts.ReleaseHostResources(hostInformation, new ApplicationException("Manual client disconnection."));
+					GenuineUtility.FetchTransportContextFromMbr((MarshalByRefObject)m_broker).KnownHosts.ReleaseHostResources(hostInformation, new ApplicationException("Manual client disconnection."));
 					m_broker = null;
 				}
 			}
@@ -302,17 +299,18 @@ internal class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 			{
 				UnregisterChannel();
 			}
-			ListDictionary listDictionary = new ListDictionary();
-			listDictionary.Add("ConnectTimeout", 5000);
-			listDictionary.Add("MaxTotalSize", 500000);
-			listDictionary.Add("MaxContentSize", 500000);
-			listDictionary.Add("MaxQueuedItems", 500000);
-			listDictionary.Add("ReconnectionTries", 1);
-			listDictionary.Add("InvocationTimeout", Timeout);
-			listDictionary.Add("MaxTimeSpanToReconnect", 30000);
-			listDictionary.Add("SleepBetweenReconnections", 5000);
-			listDictionary.Add("PersistentConnectionSendPingAfterInactivity", 20000);
-			ListDictionary properties = listDictionary;
+			ListDictionary properties = new ListDictionary
+			{
+				{ "ConnectTimeout", 5000 },
+				{ "MaxTotalSize", 500000 },
+				{ "MaxContentSize", 500000 },
+				{ "MaxQueuedItems", 500000 },
+				{ "ReconnectionTries", 1 },
+				{ "InvocationTimeout", Timeout },
+				{ "MaxTimeSpanToReconnect", 30000 },
+				{ "SleepBetweenReconnections", 5000 },
+				{ "PersistentConnectionSendPingAfterInactivity", 20000 }
+			};
 			m_channel = new GenuineTcpChannel(properties, new BinaryClientFormatterSinkProvider(), new BinaryServerFormatterSinkProvider());
 			ChannelServices.RegisterChannel(m_channel, ensureSecurity: false);
 		}

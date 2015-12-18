@@ -29,6 +29,9 @@ public class LowLevelMouseHook : WindowsHook
 
 	protected override void Dispose(bool disposing)
 	{
+		if (disposing)
+		{
+		}
 		m_handle = IntPtr.Zero;
 	}
 }

@@ -102,8 +102,7 @@ public class LoginForm : Form
 			m_userIdTextBox.Enabled = false;
 			m_passwordTextBox.Enabled = false;
 			Application.DoEvents();
-			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-			LuaTable luaTable = (LuaTable)service.NewTable();
+			LuaTable luaTable = (LuaTable)ServiceLocator.Instance.GetService<IKernelService>().NewTable();
 			luaTable["user_id"] = m_userIdTextBox.Text;
 			luaTable["password"] = m_passwordTextBox.Text;
 			try

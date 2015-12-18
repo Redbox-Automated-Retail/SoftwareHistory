@@ -91,12 +91,13 @@ public class NewProjectForm : Form
 
 	private void OnBrowse(object sender, EventArgs e)
 	{
-		FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-		folderBrowserDialog.SelectedPath = m_locationTextBox.Text;
-		FolderBrowserDialog folderBrowserDialog2 = folderBrowserDialog;
-		if (folderBrowserDialog2.ShowDialog() == DialogResult.OK)
+		FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
 		{
-			m_locationTextBox.Text = folderBrowserDialog2.SelectedPath;
+			SelectedPath = m_locationTextBox.Text
+		};
+		if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+		{
+			m_locationTextBox.Text = folderBrowserDialog.SelectedPath;
 		}
 	}
 

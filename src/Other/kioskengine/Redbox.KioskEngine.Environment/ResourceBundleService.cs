@@ -42,11 +42,7 @@ public class ResourceBundleService : IResourceBundleService
 		get
 		{
 			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			if (service != null)
-			{
-				return service.GetValue("Core", "BundleSearchPath", new string[1] { "..\\bundles" });
-			}
-			return new string[1] { "..\\bundles" };
+			return (service != null) ? service.GetValue("Core", "BundleSearchPath", new string[1] { "..\\bundles" }) : new string[1] { "..\\bundles" };
 		}
 		set
 		{
@@ -290,7 +286,7 @@ public class ResourceBundleService : IResourceBundleService
 				return errorList;
 			}
 			string[] files = Directory.GetFiles(item, "*.bundle");
-			if (files.Length > 0)
+			if (files.Length != 0)
 			{
 				string[] array = files;
 				foreach (string text2 in array)
@@ -407,44 +403,38 @@ public class ResourceBundleService : IResourceBundleService
 
 	public IResourceBundle GetBundle(IBundleSpecifier bundleSpecifier)
 	{
-		InnerBundles.GetBundle(bundleSpecifier.Name, bundleSpecifier.Version.ToString(), out var bundle, out var _);
-		return bundle;
+		Redbox.REDS.Framework.ErrorList bundle = InnerBundles.GetBundle(bundleSpecifier.Name, bundleSpecifier.Version.ToString(), out var bundle2, out var _);
+		return bundle2;
 	}
 
 	public IResource GetResource(string resourceName)
 	{
-		if (ActiveBundleSet == null)
-		{
-			return null;
-		}
-		return ActiveBundleSet.GetResource(resourceName, Filter);
+		return (ActiveBundleSet != null) ? ActiveBundleSet.GetResource(resourceName, Filter) : null;
 	}
 
 	public ReadOnlyCollection<IResource> GetResources(string typeName)
 	{
-		if (ActiveBundleSet == null)
-		{
-			return new List<IResource>().AsReadOnly();
-		}
-		return ActiveBundleSet.GetResources(typeName, Filter);
+		return (ActiveBundleSet != null) ? ActiveBundleSet.GetResources(typeName, Filter) : new List<IResource>().AsReadOnly();
 	}
 
 	public ReadOnlyCollection<IResource> GetResourcesUnfiltered(string typeName)
 	{
-		if (ActiveBundleSet == null)
-		{
-			return new List<IResource>().AsReadOnly();
-		}
-		return ActiveBundleSet.GetResourcesUnfiltered(typeName);
+		return (ActiveBundleSet != null) ? ActiveBundleSet.GetResourcesUnfiltered(typeName) : new List<IResource>().AsReadOnly();
 	}
 
 	public IDictionary<string, IResourceType> GetResourceTypes()
 	{
+		IDictionary<string, IResourceType> result;
 		if (ActiveBundleSet == null)
 		{
-			return new Dictionary<string, IResourceType>();
+			IDictionary<string, IResourceType> dictionary = new Dictionary<string, IResourceType>();
+			result = dictionary;
 		}
-		return ActiveBundleSet.GetResourceTypes();
+		else
+		{
+			result = ActiveBundleSet.GetResourceTypes();
+		}
+		return result;
 	}
 
 	public Font GetFont(string resourceName, out bool resourceFound)
@@ -486,11 +476,7 @@ public class ResourceBundleService : IResourceBundleService
 	public IResource GetManifest(out IManifestInfo manifestInfo)
 	{
 		manifestInfo = null;
-		if (ActiveBundle == null)
-		{
-			return null;
-		}
-		return ActiveBundle.GetManifest(Filter, out manifestInfo);
+		return (ActiveBundle != null) ? ActiveBundle.GetManifest(Filter, out manifestInfo) : null;
 	}
 
 	public XmlNode GetXml(string resourceName)

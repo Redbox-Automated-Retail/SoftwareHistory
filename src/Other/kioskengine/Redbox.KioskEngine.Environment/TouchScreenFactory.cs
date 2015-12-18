@@ -15,7 +15,7 @@ public class TouchScreenFactory
 		try
 		{
 			LogHelper.Instance.Log("Detecting touch screen model");
-			if (OutdoorElo.GetDriverProcess().Length > 0)
+			if (OutdoorElo.GetDriverProcess().Length != 0)
 			{
 				LogHelper.Instance.Log("Detected outdoor ELO");
 				m_touchScreen = new OutdoorElo();

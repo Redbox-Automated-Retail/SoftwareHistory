@@ -266,8 +266,7 @@ public sealed class KernelService : IKernelService, IDisposable
 		{
 			return false;
 		}
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		string script = service.GetScript(resourceName);
+		string script = ServiceLocator.Instance.GetService<IResourceBundleService>().GetScript(resourceName);
 		if (script == null)
 		{
 			return false;

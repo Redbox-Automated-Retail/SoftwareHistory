@@ -46,8 +46,7 @@ internal static class ImageFunctions
 		{
 			if (!name.StartsWith("cache:"))
 			{
-				IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-				service2.GetBitmap(name);
+				ServiceLocator.Instance.GetService<IResourceBundleService>().GetBitmap(name);
 			}
 			else
 			{

@@ -335,9 +335,9 @@ public class MovieOrGameBrowseItem(LuaTable luaTable) : LuaBasedBrowseItem(luaTa
 
 	private Rectangle ComputeFlagTextSizeAndPosition()
 	{
-		int num = 3;
+		int num = -2;
 		int num2 = 3;
-		int num3 = 118;
+		int num3 = 128;
 		int num4 = 20;
 		double num5 = (double)_imageSizeAndPosition.Width / Convert.ToDouble(148);
 		double num6 = (double)_imageSizeAndPosition.Height / Convert.ToDouble(205);

@@ -5,7 +5,7 @@ namespace Redbox.KioskEngine.Environment;
 
 public class DebugService : IDebugService
 {
-	private bool m_isApplicationRunning;
+	private bool m_isApplicationRunning = false;
 
 	public static DebugService Instance => Singleton<DebugService>.Instance;
 
@@ -46,9 +46,9 @@ public class DebugService : IDebugService
 	{
 		if (IsEnabled)
 		{
-			ServiceLocator.Instance.GetService<IResourceBundleService>();
-			IIdeService service = ServiceLocator.Instance.GetService<IIdeService>();
-			service.ActivateDebugger(null, 1, null);
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			IIdeService service2 = ServiceLocator.Instance.GetService<IIdeService>();
+			service2.ActivateDebugger(null, 1, null);
 		}
 	}
 
@@ -56,9 +56,9 @@ public class DebugService : IDebugService
 	{
 		if (IsEnabled)
 		{
-			ServiceLocator.Instance.GetService<IResourceBundleService>();
-			IIdeService service = ServiceLocator.Instance.GetService<IIdeService>();
-			service.ActivateDebugger(resourceName, 1, null);
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			IIdeService service2 = ServiceLocator.Instance.GetService<IIdeService>();
+			service2.ActivateDebugger(resourceName, 1, null);
 		}
 	}
 
@@ -66,9 +66,9 @@ public class DebugService : IDebugService
 	{
 		if (IsEnabled)
 		{
-			ServiceLocator.Instance.GetService<IResourceBundleService>();
-			IIdeService service = ServiceLocator.Instance.GetService<IIdeService>();
-			service.ActivateDebugger(resourceName, lineNumber, error);
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			IIdeService service2 = ServiceLocator.Instance.GetService<IIdeService>();
+			service2.ActivateDebugger(resourceName, lineNumber, error);
 		}
 	}
 
@@ -82,13 +82,12 @@ public class DebugService : IDebugService
 	private DebugService()
 	{
 		IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-		DebuggerStopping value = delegate(string source, int lineNumber, string action)
+		service.DebuggerStopping += delegate(string source, int lineNumber, string action)
 		{
 			if (lineNumber != -1 && action == "Run")
 			{
 				ActivateDebugger(source, lineNumber, "Breakpoint hit");
 			}
 		};
-		service.DebuggerStopping += value;
 	}
 }

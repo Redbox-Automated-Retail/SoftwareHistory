@@ -38,7 +38,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	internal Dictionary<string, AnalyticsSession> m_analyticsSessions = new Dictionary<string, AnalyticsSession>();
 
-	private int m_working;
+	private int m_working = 0;
 
 	public static SessionAnalyticsService Instance => Singleton<SessionAnalyticsService>.Instance;
 
@@ -171,6 +171,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
+			ErrorList errorList = null;
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -203,7 +204,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				}
 				if (!validationErrored)
 				{
-					service2.Enqueue(priority, "KioskAnalytics", new
+					errorList = service2.Enqueue(priority, "KioskAnalytics", new
 					{
 						MessageType = "KioskAnalytics",
 						MessageId = Guid.NewGuid(),
@@ -238,11 +239,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	public bool IsOpen(string sessionId)
 	{
-		if (!m_analyticsSessions.ContainsKey(sessionId))
-		{
-			return false;
-		}
-		return m_analyticsSessions[sessionId].isOpen;
+		return m_analyticsSessions.ContainsKey(sessionId) && m_analyticsSessions[sessionId].isOpen;
 	}
 
 	public bool SessionExists(string sessionId)
@@ -418,31 +415,19 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	private XElement GetLastNode(string parentNodeName)
 	{
-		if (ActiveSession != null)
-		{
-			return GetLastNode(parentNodeName, ActiveSession);
-		}
-		return null;
+		return (ActiveSession == null) ? null : GetLastNode(parentNodeName, ActiveSession);
 	}
 
 	private XElement GetLastNode(string parentNodeName, XDocument document)
 	{
 		IEnumerable<XElement> source = document.Descendants(parentNodeName);
-		if (!source.Any())
-		{
-			return null;
-		}
-		return source.Last();
+		return source.Any() ? source.Last() : null;
 	}
 
 	private XElement GetLastNode(string parentNodeName, string sessionID)
 	{
 		AnalyticsSession analyticsSession = (m_analyticsSessions.ContainsKey(sessionID) ? m_analyticsSessions[sessionID] : null);
-		if (analyticsSession == null)
-		{
-			return null;
-		}
-		return GetLastNode(parentNodeName, analyticsSession.document);
+		return (analyticsSession != null) ? GetLastNode(parentNodeName, analyticsSession.document) : null;
 	}
 
 	private static string CompressString(string text)

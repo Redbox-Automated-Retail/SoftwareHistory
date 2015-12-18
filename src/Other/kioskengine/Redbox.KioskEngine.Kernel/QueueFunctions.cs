@@ -75,12 +75,10 @@ internal static class QueueFunctions
 			return table;
 		}
 		int index = 1;
-		ErrorList errors = service.ForEach(delegate(IMessage m)
+		BuildResultTable(service.ForEach(delegate(IMessage m)
 		{
 			table[index++] = CreateMessageTable(m);
-		});
-		LuaTable luaTable = BuildResultTable(errors);
-		luaTable["messages"] = table;
+		}))["messages"] = table;
 		return table;
 	}
 
@@ -94,12 +92,10 @@ internal static class QueueFunctions
 			return table;
 		}
 		int index = 1;
-		ErrorList errors = service.ForEach(delegate(IMessage m)
+		BuildResultTable(service.ForEach(delegate(IMessage m)
 		{
 			table[index++] = CreateMessageTable(m);
-		}, type);
-		LuaTable luaTable = BuildResultTable(errors);
-		luaTable["messages"] = table;
+		}, type))["messages"] = table;
 		return table;
 	}
 
@@ -111,7 +107,7 @@ internal static class QueueFunctions
 		{
 			return null;
 		}
-		ErrorList errors = service.Dequeue(delegate(IMessage m)
+		return BuildResultTable(service.Dequeue(delegate(IMessage m)
 		{
 			if (predicate == null)
 			{
@@ -119,8 +115,7 @@ internal static class QueueFunctions
 			}
 			ReadOnlyCollection<object> readOnlyCollection = predicate.Call(CreateMessageTable(m));
 			return readOnlyCollection != null && readOnlyCollection.Count > 0 && (bool)readOnlyCollection[0];
-		});
-		return BuildResultTable(errors);
+		}));
 	}
 
 	[KernelFunction(Name = "kernel.queueisworkerstarted")]
@@ -177,16 +172,14 @@ internal static class QueueFunctions
 					IDictionary<string, object> dictionary3 = (IDictionary<string, object>)dictionary["Contents"];
 					if (dictionary3.ContainsKey("rental"))
 					{
-						IDictionary<string, object> dictionary4 = (IDictionary<string, object>)dictionary3["rental"];
-						ArrayList arrayList = (ArrayList)dictionary4["Items"];
-						foreach (IDictionary<string, object> item in arrayList)
+						foreach (IDictionary<string, object> item in (ArrayList)((IDictionary<string, object>)dictionary3["rental"])["Items"])
 						{
 							if (!item.ContainsKey("VendStatus") || string.Compare((string)item["VendStatus"], "Vended", ignoreCase: true) == 0)
 							{
 								if (item.ContainsKey("MultiDisc") && string.Compare(item["MultiDisc"].ToString(), "true", ignoreCase: true) == 0 && item.ContainsKey("Prices"))
 								{
-									IDictionary<string, object> dictionary6 = (IDictionary<string, object>)item["Prices"];
-									if (dictionary6.ContainsKey("initialnight") && (string.Compare(dictionary6["initialnight"].ToString(), "0") == 0 || string.Compare(dictionary6["initialnight"].ToString(), "0.0") == 0))
+									IDictionary<string, object> dictionary5 = (IDictionary<string, object>)item["Prices"];
+									if (dictionary5.ContainsKey("initialnight") && (string.Compare(dictionary5["initialnight"].ToString(), "0") == 0 || string.Compare(dictionary5["initialnight"].ToString(), "0.0") == 0))
 									{
 										continue;
 									}
@@ -242,13 +235,14 @@ internal static class QueueFunctions
 
 	private static LuaTable CreateMessageTable(IMessage message)
 	{
-		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		luaTable["id"] = message.ID;
-		luaTable["data"] = message.Data;
-		luaTable["type"] = message.Type;
-		luaTable["priority"] = message.Priority;
-		luaTable["created_on"] = message.CreatedOn.ToString("yyyyMMddHHmmss");
-		return luaTable;
+		return new LuaTable(KernelService.Instance.LuaRuntime)
+		{
+			["id"] = message.ID,
+			["data"] = message.Data,
+			["type"] = message.Type,
+			["priority"] = message.Priority,
+			["created_on"] = message.CreatedOn.ToString("yyyyMMddHHmmss")
+		};
 	}
 
 	private static LuaTable BuildResultTable(ErrorList errors)

@@ -11,99 +11,85 @@ internal static class InputFunctions
 	[KernelFunction(Name = "kernel.clearidlenotify")]
 	internal static void ClearIdleNotify()
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.ClearIdleHandlers();
+		ServiceLocator.Instance.GetService<IInputService>().ClearIdleHandlers();
 	}
 
 	[KernelFunction(Name = "kernel.registeridlenotify")]
 	internal static void RegisterIdleNotify(string name, IdleEventHandler idleHandler)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RegisterIdleHandler(name, idleHandler);
+		ServiceLocator.Instance.GetService<IInputService>().RegisterIdleHandler(name, idleHandler);
 	}
 
 	[KernelFunction(Name = "kernel.removeidlenotify")]
 	internal static void RemoveIdleNotify(string name)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RemoveIdleHandler(name);
+		ServiceLocator.Instance.GetService<IInputService>().RemoveIdleHandler(name);
 	}
 
 	[KernelFunction(Name = "kernel.clearactivatednotify")]
 	internal static void ClearActivatedNotify()
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.ClearActivatedHandlers();
+		ServiceLocator.Instance.GetService<IInputService>().ClearActivatedHandlers();
 	}
 
 	[KernelFunction(Name = "kernel.removeactivatednotify")]
 	internal static void RemoveActivatedNotify(string name)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RemoveActivatedHandler(name);
+		ServiceLocator.Instance.GetService<IInputService>().RemoveActivatedHandler(name);
 	}
 
 	[KernelFunction(Name = "kernel.registeractivatednotify")]
 	internal static void RegisterActivatedNotify(string name, ActivatedEventHandler activatedHandler)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RegisterActivatedHandler(name, activatedHandler);
+		ServiceLocator.Instance.GetService<IInputService>().RegisterActivatedHandler(name, activatedHandler);
 	}
 
 	[KernelFunction(Name = "kernel.clearclicknotify")]
 	internal static void ClearClickNotify()
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.ClearMouseClickHandlers();
+		ServiceLocator.Instance.GetService<IInputService>().ClearMouseClickHandlers();
 	}
 
 	[KernelFunction(Name = "kernel.registerclicknotify")]
 	internal static void RegisterMouseClickNotify(string name, MouseClickHandler mouseClickHandler)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RegisterMouseClickHandler(name, mouseClickHandler);
+		ServiceLocator.Instance.GetService<IInputService>().RegisterMouseClickHandler(name, mouseClickHandler);
 	}
 
 	[KernelFunction(Name = "kernel.removeclicknotify")]
 	internal static void RemoveMouseClickNotify(string name)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RemoveMouseClickHandler(name);
+		ServiceLocator.Instance.GetService<IInputService>().RemoveMouseClickHandler(name);
 	}
 
 	[KernelFunction(Name = "kernel.clearkeypressnotify")]
 	internal static void ClearKeyPressNotify()
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.ClearKeyPressHandlers();
+		ServiceLocator.Instance.GetService<IInputService>().ClearKeyPressHandlers();
 	}
 
 	[KernelFunction(Name = "kernel.registerkeypressnotify")]
 	internal static void RegisterKeyPressNotify(string name, KeyPressHandler keyPressHandler)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RegisterKeyPressHandler(name, keyPressHandler);
+		ServiceLocator.Instance.GetService<IInputService>().RegisterKeyPressHandler(name, keyPressHandler);
 	}
 
 	[KernelFunction(Name = "kernel.removekeypressnotify")]
 	internal static void RemoveKeyPressNotify(string name)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RemoveKeyPressHandler(name);
+		ServiceLocator.Instance.GetService<IInputService>().RemoveKeyPressHandler(name);
 	}
 
 	[KernelFunction(Name = "kernel.cleardoubleclicknotify")]
 	internal static void ClearDoubleClickNotify()
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.ClearMouseDoubleClickHandlers();
+		ServiceLocator.Instance.GetService<IInputService>().ClearMouseDoubleClickHandlers();
 	}
 
 	[KernelFunction(Name = "kernel.registerdoubleclicknotify")]
 	internal static void RegisterDoubleClickNotify(string name, MouseClickHandler mouseClickHandler)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.RegisterMouseDoubleClickHandler(name, mouseClickHandler);
+		ServiceLocator.Instance.GetService<IInputService>().RegisterMouseDoubleClickHandler(name, mouseClickHandler);
 	}
 
 	[KernelFunction(Name = "kernel.showmouse")]
@@ -121,11 +107,13 @@ internal static class InputFunctions
 	[KernelFunction(Name = "kernel.getmouseposscreen")]
 	internal static LuaTable GetMousePositionInScreen()
 	{
-		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		luaTable["x"] = Cursor.Position.X;
-		luaTable["y"] = Cursor.Position.Y;
+		LuaTable result = new LuaTable(KernelService.Instance.LuaRuntime)
+		{
+			["x"] = Cursor.Position.X,
+			["y"] = Cursor.Position.Y
+		};
 		KernelService.Instance.LuaRuntime["mouse_position"] = null;
-		return luaTable;
+		return result;
 	}
 
 	[KernelFunction(Name = "kernel.getmousepos")]
@@ -161,8 +149,7 @@ internal static class InputFunctions
 	internal static string Confirm(string message)
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		DialogResult dialogResult = MessageBox.Show(message, service.ExpandProperties("${ProductName} ${ProductVersion}"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
-		return dialogResult.ToString();
+		return MessageBox.Show(message, service.ExpandProperties("${ProductName} ${ProductVersion}"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question).ToString();
 	}
 
 	[KernelFunction(Name = "kernel.showmessage")]

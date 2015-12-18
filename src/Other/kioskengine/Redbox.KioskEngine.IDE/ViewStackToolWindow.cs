@@ -73,8 +73,7 @@ public class ViewStackToolWindow : ToolWindow
 		try
 		{
 			Cursor = Cursors.WaitCursor;
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			service.Push(((IResource)comboBox.SelectedItem).Name);
+			ServiceLocator.Instance.GetService<IViewService>().Push(((IResource)comboBox.SelectedItem).Name);
 			RefreshStackList();
 		}
 		finally
@@ -88,8 +87,7 @@ public class ViewStackToolWindow : ToolWindow
 		try
 		{
 			Cursor = Cursors.WaitCursor;
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			service.Pop();
+			ServiceLocator.Instance.GetService<IViewService>().Pop();
 			RefreshStackList();
 		}
 		finally
@@ -103,8 +101,7 @@ public class ViewStackToolWindow : ToolWindow
 		try
 		{
 			Cursor = Cursors.WaitCursor;
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			service.PopDiscard();
+			ServiceLocator.Instance.GetService<IViewService>().PopDiscard();
 			RefreshStackList();
 		}
 		finally
@@ -118,8 +115,7 @@ public class ViewStackToolWindow : ToolWindow
 		try
 		{
 			Cursor = Cursors.WaitCursor;
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			service.Show();
+			ServiceLocator.Instance.GetService<IViewService>().Show();
 			RefreshStackList();
 		}
 		finally
@@ -139,8 +135,7 @@ public class ViewStackToolWindow : ToolWindow
 		ComboBox comboBox = (ComboBox)m_viewResourceToolStripComboBox.Control;
 		comboBox.BeginUpdate();
 		comboBox.Items.Clear();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		foreach (IResource resource in service.GetResources("view"))
+		foreach (IResource resource in ServiceLocator.Instance.GetService<IResourceBundleService>().GetResources("view"))
 		{
 			comboBox.Items.Add(resource);
 		}
@@ -151,17 +146,17 @@ public class ViewStackToolWindow : ToolWindow
 	{
 		m_stackListView.BeginUpdate();
 		m_stackListView.Items.Clear();
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		foreach (IViewFrame item in service.Stack)
+		foreach (IViewFrame item in ServiceLocator.Instance.GetService<IViewService>().Stack)
 		{
-			ListViewItem listViewItem = new ListViewItem(item.ViewName);
-			listViewItem.Tag = item;
-			ListViewItem listViewItem2 = listViewItem;
-			listViewItem2.SubItems.Add(item.SceneName);
-			listViewItem2.SubItems.Add(item.Clear.ToString());
-			listViewItem2.SubItems.Add(item.Width.ToString());
-			listViewItem2.SubItems.Add(item.Height.ToString());
-			m_stackListView.Items.Add(listViewItem2);
+			ListViewItem listViewItem = new ListViewItem(item.ViewName)
+			{
+				Tag = item
+			};
+			listViewItem.SubItems.Add(item.SceneName);
+			listViewItem.SubItems.Add(item.Clear.ToString());
+			listViewItem.SubItems.Add(item.Width.ToString());
+			listViewItem.SubItems.Add(item.Height.ToString());
+			m_stackListView.Items.Add(listViewItem);
 		}
 		m_stackListView.EndUpdate();
 		m_popToolStripButton.Enabled = m_stackListView.Items.Count > 0;

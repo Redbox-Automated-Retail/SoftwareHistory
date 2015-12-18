@@ -23,8 +23,7 @@ internal class ReservationCallbackEntry3 : ICallbackEntry
 
 	public void Invoke()
 	{
-		string json = Cart.ToJson();
-		Dictionary<string, object> dictionary = json.ToObject<Dictionary<string, object>>();
+		Dictionary<string, object> dictionary = Cart.ToJson().ToObject<Dictionary<string, object>>();
 		if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
 		{
 			dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
@@ -81,9 +80,18 @@ internal class ReservationCallbackEntry3 : ICallbackEntry
 			leading = 0;
 			trailing = 0;
 		}
-		string text = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
-		string text2 = ((trailing > 0) ? msgText.Substring(msgText.Length - trailing, trailing) : string.Empty);
+		string obj = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
+		string text;
+		if (trailing <= 0)
+		{
+			text = string.Empty;
+		}
+		else
+		{
+			text = msgText.Substring(msgText.Length - trailing, trailing);
+		}
+		string text2 = text;
 		string text3 = new string(newChar, msgText.Length - (leading + trailing));
-		return text + text3 + text2;
+		return obj + text3 + text2;
 	}
 }

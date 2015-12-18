@@ -32,9 +32,9 @@ public static class FormAspects
 						Rectangle rectangle = new Rectangle((Point)converter2.ConvertFromString(array[1]), (Size)converter.ConvertFromString(array[2]));
 						bool flag = false;
 						Screen[] allScreens = Screen.AllScreens;
-						foreach (Screen screen in allScreens)
+						for (int i = 0; i < allScreens.Length; i++)
 						{
-							if (screen.WorkingArea.IntersectsWith(rectangle))
+							if (allScreens[i].WorkingArea.IntersectsWith(rectangle))
 							{
 								flag = true;
 								break;

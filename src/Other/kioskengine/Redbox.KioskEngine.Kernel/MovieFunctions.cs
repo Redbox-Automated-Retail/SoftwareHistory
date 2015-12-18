@@ -24,8 +24,7 @@ internal static class MovieFunctions
 		Rectangle? rectangle = location.ToRectangle();
 		if (rectangle.HasValue)
 		{
-			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			string movie = service2.GetMovie(name);
+			string movie = ServiceLocator.Instance.GetService<IResourceBundleService>().GetMovie(name);
 			if (movie != null)
 			{
 				service.PushFlashMovie(movie, rectangle.Value);
@@ -46,8 +45,7 @@ internal static class MovieFunctions
 		IFlashService service = ServiceLocator.Instance.GetService<IFlashService>();
 		if (service != null)
 		{
-			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			string movie = service2.GetMovie(name);
+			string movie = ServiceLocator.Instance.GetService<IResourceBundleService>().GetMovie(name);
 			if (movie != null)
 			{
 				service.SwitchTopMovie(movie);

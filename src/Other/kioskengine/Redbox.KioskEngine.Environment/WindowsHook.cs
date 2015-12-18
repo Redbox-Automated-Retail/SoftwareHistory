@@ -13,7 +13,7 @@ public abstract class WindowsHook : IDisposable
 
 	private IntPtr m_handle = IntPtr.Zero;
 
-	private bool m_disposed;
+	private bool m_disposed = false;
 
 	public bool IsHooked => m_handle != IntPtr.Zero;
 
@@ -61,6 +61,9 @@ public abstract class WindowsHook : IDisposable
 
 	protected virtual void Dispose(bool disposing)
 	{
+		if (disposing)
+		{
+		}
 		UnhookWindowsHookEx(m_handle);
 		m_handle = IntPtr.Zero;
 		m_disposed = true;

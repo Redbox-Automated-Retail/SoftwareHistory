@@ -70,8 +70,8 @@ public class SelectBundleForm : Form
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public IResourceBundle SelectedBundle { get; set; }
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string SearchPath
 	{
 		get
@@ -171,14 +171,14 @@ public class SelectBundleForm : Form
 
 	private void OnEditSearchPath(object sender, EventArgs e)
 	{
-		string[] collection = m_searchPathToolStripTextBox.Text.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-		List<string> searchPath = new List<string>(collection);
-		EditSearchPathForm editSearchPathForm = new EditSearchPathForm();
-		editSearchPathForm.SearchPath = searchPath;
-		EditSearchPathForm editSearchPathForm2 = editSearchPathForm;
-		if (editSearchPathForm2.ShowDialog() == DialogResult.OK)
+		List<string> searchPath = new List<string>(m_searchPathToolStripTextBox.Text.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
+		EditSearchPathForm editSearchPathForm = new EditSearchPathForm
 		{
-			m_searchPathToolStripTextBox.Text = EnumerableExtensions.Join(editSearchPathForm2.SearchPath, ";");
+			SearchPath = searchPath
+		};
+		if (editSearchPathForm.ShowDialog() == DialogResult.OK)
+		{
+			m_searchPathToolStripTextBox.Text = EnumerableExtensions.Join(editSearchPathForm.SearchPath, ";");
 			RefreshList();
 		}
 	}
@@ -197,8 +197,7 @@ public class SelectBundleForm : Form
 	{
 		BundleDependencyForm bundleDependencyForm = new BundleDependencyForm();
 		bundleDependencyForm.BundleSpecifier = m_appBundlesListView.SelectedItems[0].Tag as IBundleSpecifier;
-		BundleDependencyForm bundleDependencyForm2 = bundleDependencyForm;
-		bundleDependencyForm2.ShowDialog();
+		bundleDependencyForm.ShowDialog();
 	}
 
 	private void RefreshList()

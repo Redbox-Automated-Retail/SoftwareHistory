@@ -128,11 +128,7 @@ internal sealed class ShoppingCart : IShoppingCart
 	public IShoppingCartLineItemGroup GetGroup(string name)
 	{
 		LogHelper.Instance.Log("Get Group '{0}' on Shopping Cart for Shopping Session '{1}'", name, ShoppingSessionId);
-		if (!Groups.ContainsKey(name))
-		{
-			return null;
-		}
-		return Groups[name];
+		return Groups.ContainsKey(name) ? Groups[name] : null;
 	}
 
 	public void SetGroup(string groupName, decimal taxRate, decimal subTotal, decimal discountedSubtotal, decimal taxAmount, decimal grandTotal)

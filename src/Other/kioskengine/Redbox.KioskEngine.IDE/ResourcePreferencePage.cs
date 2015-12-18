@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
@@ -63,10 +62,9 @@ public class ResourcePreferencePage : UserControl, IPreferencePageHost
 			return;
 		}
 		m_resourceTypeCombo.Items.Clear();
-		IDictionary<string, IResourceType> resourceTypes = service.GetResourceTypes();
-		foreach (KeyValuePair<string, IResourceType> item in resourceTypes)
+		foreach (KeyValuePair<string, IResourceType> resourceType in service.GetResourceTypes())
 		{
-			m_resourceTypeCombo.Items.Add(item.Key);
+			m_resourceTypeCombo.Items.Add(resourceType.Key);
 		}
 	}
 
@@ -88,14 +86,13 @@ public class ResourcePreferencePage : UserControl, IPreferencePageHost
 		{
 			return;
 		}
-		ReadOnlyCollection<IResource> resourcesUnfiltered = service.GetResourcesUnfiltered(m_resourceTypeCombo.Text);
-		IEnumerable<IResource> enumerable = resourcesUnfiltered.Where((IResource r) => r.Name == m_resourceNameTextBox.Text);
+		IEnumerable<IResource> enumerable = from r in service.GetResourcesUnfiltered(m_resourceTypeCombo.Text)
+			where r.Name == m_resourceNameTextBox.Text
+			select r;
 		IResourceBundleFilter filter = service.Filter;
 		List<ScoredResource> list = new List<ScoredResource>();
-		IResource each;
-		foreach (IResource item in enumerable)
+		foreach (IResource each in enumerable)
 		{
-			each = item;
 			int num = 0;
 			if (!IsResourceEffective(each))
 			{
@@ -110,13 +107,9 @@ public class ResourcePreferencePage : UserControl, IPreferencePageHost
 				{
 					num++;
 				}
-				else
+				else if (list2.Count((IPropertyType eachFilter) => each.PropertyEquals2(eachFilter.Name, (eachFilter.Name.Substring(0, 2) == "!=") ? filter[eachFilter.Name.Substring(2)] : filter[eachFilter.Name])) == list2.Count)
 				{
-					int num2 = list2.Count((IPropertyType eachFilter) => each.PropertyEquals2(eachFilter.Name, (eachFilter.Name.Substring(0, 2) == "!=") ? filter[eachFilter.Name.Substring(2)] : filter[eachFilter.Name]));
-					if (num2 == list2.Count)
-					{
-						num += list2.Sum((IPropertyType eachFilter) => eachFilter.FilterScore);
-					}
+					num += list2.Sum((IPropertyType eachFilter) => eachFilter.FilterScore);
 				}
 			}
 			list.Add(new ScoredResource
@@ -126,12 +119,12 @@ public class ResourcePreferencePage : UserControl, IPreferencePageHost
 			});
 		}
 		list.Sort((ScoredResource x, ScoredResource y) => y.Score.CompareTo(x.Score));
-		foreach (ScoredResource item2 in list)
+		foreach (ScoredResource item in list)
 		{
 			ListViewItem value = new ListViewItem(new string[2]
 			{
-				item2.Resource.StorageEntry.Name,
-				item2.Score.ToString()
+				item.Resource.StorageEntry.Name,
+				item.Score.ToString()
 			});
 			m_scoredResourceListView.Items.Add(value);
 		}
@@ -161,9 +154,9 @@ public class ResourcePreferencePage : UserControl, IPreferencePageHost
 		}
 		if (dateTime2.HasValue)
 		{
-			DateTime value2 = now;
-			DateTime? dateTime4 = dateTime2;
-			if (value2 > dateTime4)
+			DateTime value = now;
+			DateTime? dateTime3 = dateTime2;
+			if (value > dateTime3)
 			{
 				return false;
 			}
@@ -211,9 +204,9 @@ public class ResourcePreferencePage : UserControl, IPreferencePageHost
 		}
 		if (timeSpan2.HasValue)
 		{
-			TimeSpan timeOfDay2 = now.TimeOfDay;
-			TimeSpan? timeSpan4 = timeSpan2;
-			if (timeOfDay2 > timeSpan4)
+			TimeSpan timeOfDay = now.TimeOfDay;
+			TimeSpan? timeSpan3 = timeSpan2;
+			if (timeOfDay > timeSpan3)
 			{
 				return false;
 			}

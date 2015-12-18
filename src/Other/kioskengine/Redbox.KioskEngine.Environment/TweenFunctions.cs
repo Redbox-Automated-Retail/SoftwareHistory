@@ -32,11 +32,7 @@ internal static class TweenFunctions
 
 	internal static float ExecuteTween(TweenType type, float time, float begin, float change, float duration)
 	{
-		if (Functors.ContainsKey(type))
-		{
-			return Functors[type](time, begin, change, duration);
-		}
-		return 0f;
+		return (!Functors.ContainsKey(type)) ? 0f : Functors[type](time, begin, change, duration);
 	}
 
 	[TweenFunction(Type = TweenType.Linear)]
@@ -64,7 +60,10 @@ internal static class TweenFunctions
 		{
 			return change / 2f * time * time + begin;
 		}
-		return (0f - change) / 2f * (--time * (time - 2f) - 1f) + begin;
+		float num = (0f - change) / 2f;
+		float num2 = time - 1f;
+		time = num2;
+		return num * (num2 * (time - 2f) - 1f) + begin;
 	}
 
 	[TweenFunction(Type = TweenType.EaseInCubic)]

@@ -7,9 +7,9 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.KioskEngine.Kernel.Properties;
 
-[CompilerGenerated]
 [GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [DebuggerNonUserCode]
+[CompilerGenerated]
 internal class Resources
 {
 	private static ResourceManager resourceMan;
@@ -21,10 +21,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.KioskEngine.Kernel.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.KioskEngine.Kernel.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}

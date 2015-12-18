@@ -9,8 +9,7 @@ internal static class TimerFunctions
 	[KernelFunction(Name = "kernel.timerwait")]
 	internal static void TimerWait(int milliseconds)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.Wait(milliseconds);
+		ServiceLocator.Instance.GetService<ITimerService>().Wait(milliseconds);
 	}
 
 	[KernelFunction(Name = "kernel.timercreate")]
@@ -36,51 +35,44 @@ internal static class TimerFunctions
 	[KernelFunction(Name = "kernel.timerstop")]
 	internal static void StopTimer(string name)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.GetTimer(name)?.Stop();
+		ServiceLocator.Instance.GetService<ITimerService>().GetTimer(name)?.Stop();
 	}
 
 	[KernelFunction(Name = "kernel.timerstart")]
 	internal static void StartTimer(string name)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.GetTimer(name)?.Start();
+		ServiceLocator.Instance.GetService<ITimerService>().GetTimer(name)?.Start();
 	}
 
 	[KernelFunction(Name = "kernel.timerstartall")]
 	internal static void StartAllTimers()
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.StartAll();
+		ServiceLocator.Instance.GetService<ITimerService>().StartAll();
 	}
 
 	[KernelFunction(Name = "kernel.timerstopall")]
 	internal static void StopAllTimers()
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.StopAll();
+		ServiceLocator.Instance.GetService<ITimerService>().StopAll();
 	}
 
 	[KernelFunction(Name = "kernel.timerremove")]
 	internal static void RemoveTimer(string name)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.RemoveTimer(name);
+		ServiceLocator.Instance.GetService<ITimerService>().RemoveTimer(name);
 	}
 
 	[KernelFunction(Name = "kernel.timerexists")]
 	internal static bool TimerExists(string name)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		return service.GetTimer(name) != null;
+		return ServiceLocator.Instance.GetService<ITimerService>().GetTimer(name) != null;
 	}
 
 	[KernelFunction(Name = "kernel.gettimerperiod")]
 	internal static int? GetTimerPeriod(string name)
 	{
 		int? result = 0;
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		ITimer timer = service.GetTimer(name);
+		ITimer timer = ServiceLocator.Instance.GetService<ITimerService>().GetTimer(name);
 		if (timer != null)
 		{
 			return timer.Period;
@@ -91,8 +83,7 @@ internal static class TimerFunctions
 	[KernelFunction(Name = "kernel.set_timer_period_and_duetime")]
 	internal static void GetTimerPeriod(string timerName, int? period, int? dueTime)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		ITimer timer = service.GetTimer(timerName);
+		ITimer timer = ServiceLocator.Instance.GetService<ITimerService>().GetTimer(timerName);
 		if (timer != null)
 		{
 			timer.Period = period;
@@ -102,7 +93,6 @@ internal static class TimerFunctions
 
 	internal static void Reset()
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.Reset();
+		ServiceLocator.Instance.GetService<ITimerService>().Reset();
 	}
 }

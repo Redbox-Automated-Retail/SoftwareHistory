@@ -88,8 +88,7 @@ public class TimersToolWindow : ToolWindow
 		{
 			if (selectedItem.Tag is ITimer timer)
 			{
-				ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-				service.RemoveTimer(timer.Name);
+				ServiceLocator.Instance.GetService<ITimerService>().RemoveTimer(timer.Name);
 			}
 		}
 		RefreshList();
@@ -97,8 +96,7 @@ public class TimersToolWindow : ToolWindow
 
 	private void OnClear(object sender, EventArgs e)
 	{
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		service.Reset();
+		ServiceLocator.Instance.GetService<ITimerService>().Reset();
 	}
 
 	private void OnSelectedTimerChanged(object sender, EventArgs e)
@@ -136,16 +134,16 @@ public class TimersToolWindow : ToolWindow
 	{
 		m_listView.BeginUpdate();
 		m_listView.Items.Clear();
-		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		foreach (ITimer timer in service.Timers)
+		foreach (ITimer timer in ServiceLocator.Instance.GetService<ITimerService>().Timers)
 		{
-			ListViewItem listViewItem = new ListViewItem(timer.Name);
-			listViewItem.Tag = timer;
-			ListViewItem listViewItem2 = listViewItem;
-			listViewItem2.SubItems.Add(timer.DueTime.ToString());
-			listViewItem2.SubItems.Add(timer.Period.ToString());
-			listViewItem2.SubItems.Add(timer.Enabled ? "Enabled" : "Disabled");
-			m_listView.Items.Add(listViewItem2);
+			ListViewItem listViewItem = new ListViewItem(timer.Name)
+			{
+				Tag = timer
+			};
+			listViewItem.SubItems.Add(timer.DueTime.ToString());
+			listViewItem.SubItems.Add(timer.Period.ToString());
+			listViewItem.SubItems.Add(timer.Enabled ? "Enabled" : "Disabled");
+			m_listView.Items.Add(listViewItem);
 		}
 		m_listView.EndUpdate();
 		RefreshButtonState();

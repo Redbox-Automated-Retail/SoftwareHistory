@@ -9,6 +9,8 @@ public interface ITrackDataService
 
 	int GetKeyId();
 
+	void RefreshCertificate();
+
 	void ClearData();
 
 	void ClearNotify();

@@ -65,8 +65,7 @@ public static class EnvironmentFunctions
 	public static bool CanSwitch()
 	{
 		LogHelper.Instance.Log("Start CanSwitch Check");
-		IKernelExtensionService service = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-		bool flag = service.CanSwitch(out var _);
+		bool flag = ServiceLocator.Instance.GetService<IKernelExtensionService>().CanSwitch(out var _);
 		LogHelper.Instance.Log("CanSwitch: {0}", flag);
 		return flag;
 	}

@@ -78,8 +78,7 @@ internal static class PathFunctions
 	private static bool HasInvalidChars(string path)
 	{
 		char[] invalidPathChars = Path.GetInvalidPathChars();
-		char[] array = invalidPathChars;
-		foreach (char value in array)
+		foreach (char value in invalidPathChars)
 		{
 			if (path.IndexOf(value) >= 0)
 			{

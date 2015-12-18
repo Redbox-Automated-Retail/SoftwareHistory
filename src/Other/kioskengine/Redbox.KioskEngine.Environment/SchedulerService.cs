@@ -44,11 +44,7 @@ public class SchedulerService : ISchedulerService
 			{
 				return false;
 			}
-			if (JobName == schedulerEntry.JobName)
-			{
-				return CronExpression == schedulerEntry.CronExpression;
-			}
-			return false;
+			return JobName == schedulerEntry.JobName && CronExpression == schedulerEntry.CronExpression;
 		}
 
 		public override int GetHashCode()
@@ -238,8 +234,8 @@ public class SchedulerService : ISchedulerService
 			jobDetail.JobDataMap["function_name"] = entry.FunctionName;
 			jobDetail.JobDataMap["parameters"] = entry.Parameters;
 			CronTrigger cronTrigger = new CronTrigger($"{entry.JobName}-trigger", "cron", entry.JobName, "kiosk-engine", entry.StartTime, entry.EndTime, entry.CronExpression);
-			string misfireInstruction;
-			if ((misfireInstruction = entry.MisfireInstruction) != null && misfireInstruction == "DoNothing")
+			string misfireInstruction = entry.MisfireInstruction;
+			if (misfireInstruction == "DoNothing")
 			{
 				cronTrigger.MisfireInstruction = 2;
 			}

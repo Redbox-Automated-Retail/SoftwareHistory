@@ -8,42 +8,36 @@ internal static class ScreenSaverFunctions
 	[KernelFunction(Name = "kernel.screensaverisactive")]
 	internal static bool IsScreenSaverActive()
 	{
-		IScreenSaverService service = ServiceLocator.Instance.GetService<IScreenSaverService>();
-		return service.IsScreenSaverActive();
+		return ServiceLocator.Instance.GetService<IScreenSaverService>().IsScreenSaverActive();
 	}
 
 	[KernelFunction(Name = "kernel.screensaverisrunning")]
 	internal static bool IsScreenSaverRunning()
 	{
-		IScreenSaverService service = ServiceLocator.Instance.GetService<IScreenSaverService>();
-		return service.IsScreenSaverRunning();
+		return ServiceLocator.Instance.GetService<IScreenSaverService>().IsScreenSaverRunning();
 	}
 
 	[KernelFunction(Name = "kernel.screensavergettimeout")]
 	internal static int GetScreenSaverTimeout()
 	{
-		IScreenSaverService service = ServiceLocator.Instance.GetService<IScreenSaverService>();
-		return service.GetScreenSaverTimeout();
+		return ServiceLocator.Instance.GetService<IScreenSaverService>().GetScreenSaverTimeout();
 	}
 
 	[KernelFunction(Name = "kernel.screensaversettimeout")]
 	internal static void SetScreenSaverTimeout(int timeout)
 	{
-		IScreenSaverService service = ServiceLocator.Instance.GetService<IScreenSaverService>();
-		service.SetScreenSaverTimeout(timeout);
+		ServiceLocator.Instance.GetService<IScreenSaverService>().SetScreenSaverTimeout(timeout);
 	}
 
 	[KernelFunction(Name = "kernel.screensaverdisable")]
 	internal static void DisableScreenSaver()
 	{
-		IScreenSaverService service = ServiceLocator.Instance.GetService<IScreenSaverService>();
-		service.DisableScreenSaver();
+		ServiceLocator.Instance.GetService<IScreenSaverService>().DisableScreenSaver();
 	}
 
 	[KernelFunction(Name = "kernel.screensaverenable")]
 	internal static void EnableScreenSaver()
 	{
-		IScreenSaverService service = ServiceLocator.Instance.GetService<IScreenSaverService>();
-		service.EnableScreenSaver();
+		ServiceLocator.Instance.GetService<IScreenSaverService>().EnableScreenSaver();
 	}
 }

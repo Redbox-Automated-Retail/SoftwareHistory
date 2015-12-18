@@ -27,12 +27,7 @@ public class BundleDependencyForm : Form
 
 	private void OnLoad(object sender, EventArgs e)
 	{
-		if (BundleSpecifier == null)
-		{
-			return;
-		}
-		IResource manifest = BundleSpecifier.Instance.GetManifest(BundleSpecifier.Instance.CreateFilter(), out var manifestInfo);
-		if (manifest == null || manifestInfo == null)
+		if (BundleSpecifier == null || BundleSpecifier.Instance.GetManifest(BundleSpecifier.Instance.CreateFilter(), out var manifestInfo) == null || manifestInfo == null)
 		{
 			return;
 		}

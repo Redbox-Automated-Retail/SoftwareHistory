@@ -17,10 +17,7 @@ using Redbox.REDS.Framework;
 using Redbox.Rental.Data;
 using Redbox.Rental.Kernel;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
-using Redbox.Rental.Model.KioskData;
-using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Services;
 using WindowsInput;
 
@@ -201,7 +198,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	public void RegisterMouseDoubleClickHandler(string name, MouseClickHandler handler)
 	{
-		m_mouseDoubleClickHandlers.ContainsKey(name);
+		if (!m_mouseDoubleClickHandlers.ContainsKey(name))
+		{
+		}
 	}
 
 	public void RemoveMouseDoubleClickHandler(string name)
@@ -268,7 +267,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public void SetFileContent(string fileName, byte[] data, bool overwrite)
 	{
 		string path = Path.Combine(GetCachePath(), fileName);
-		if (!File.Exists(path) || overwrite)
+		if (!File.Exists(path) | overwrite)
 		{
 			File.WriteAllBytes(path, data);
 		}
@@ -277,7 +276,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public void SetFileContent(string fileName, string data, bool overwrite)
 	{
 		string path = Path.Combine(GetCachePath(), fileName);
-		if (!File.Exists(path) || overwrite)
+		if (!File.Exists(path) | overwrite)
 		{
 			File.WriteAllText(path, data);
 		}
@@ -297,21 +296,13 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public byte[] GetFileContent(string fileName)
 	{
 		string path = Path.Combine(GetCachePath(), fileName);
-		if (File.Exists(path))
-		{
-			return File.ReadAllBytes(path);
-		}
-		return null;
+		return (!File.Exists(path)) ? null : File.ReadAllBytes(path);
 	}
 
 	public string GetFileContentAsString(string fileName)
 	{
 		string path = Path.Combine(GetCachePath(), fileName);
-		if (File.Exists(path))
-		{
-			return File.ReadAllText(path);
-		}
-		return null;
+		return (!File.Exists(path)) ? null : File.ReadAllText(path);
 	}
 
 	public void ShutDown()
@@ -404,11 +395,11 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 		if (service2 != null)
 		{
-			if (service2.TryGetValue<bool>("system", "General", "KioskAnalytics", out var value) && value)
+			if (service2.TryGetValue<bool>("system", "General", "KioskAnalytics", out var value) & value)
 			{
 				ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
 			}
-			if (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value2) && value2)
+			if (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value2) & value2)
 			{
 				ServiceLocator.Instance.AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
 			}
@@ -462,14 +453,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList InitializeRedboxRental()
 	{
-		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Expected O, but got Unknown
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Expected O, but got Unknown
-		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009d: Expected O, but got Unknown
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Expected O, but got Unknown
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		try
 		{
@@ -481,9 +464,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			ServiceLocator.Instance.AddService(typeof(IStoreManager), storeManagerService);
 			KernelHelperService kernelHelperService = new KernelHelperService();
 			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
-			BlockListData val = new BlockListData(service);
-			ServiceLocator.Instance.AddService(typeof(IBlockListData), val);
-			BlockListService instance2 = new BlockListService((IStoreManager)storeManagerService, (IBlockListData)(object)val);
+			BlockListData blockListData = new BlockListData(service);
+			ServiceLocator.Instance.AddService(typeof(IBlockListData), blockListData);
+			BlockListService instance2 = new BlockListService(storeManagerService, blockListData);
 			ServiceLocator.Instance.AddService(typeof(IBlockList), instance2);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
@@ -492,7 +475,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			ServiceLocator.Instance.AddService(typeof(IInventory), instance3);
 			string directoryName = Path.GetDirectoryName(typeof(DataService).Assembly.Location);
 			string dataPath = Path.Combine(directoryName, "..\\data");
-			DataService dataService = new DataService(service, (IDataServiceInstance)new DataServiceInstance(), (IProfileData)new ProfileData(dataPath, "ProfileImages\\"), (ICacheData)new CacheData(), (IKioskData)new KioskData(service));
+			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(dataPath, "ProfileImages\\"), new CacheData(), new KioskData(service));
 			ServiceLocator.Instance.AddService(typeof(IDataService), dataService);
 			dataService.Initialize();
 			dataService.Start();
@@ -811,14 +794,13 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	private EngineApplication()
 	{
-		SessionEndingEventHandler value = delegate
+		SystemEvents.SessionEnding += delegate
 		{
 			if (base.MainForm != null)
 			{
 				base.MainForm.Close();
 			}
 		};
-		SystemEvents.SessionEnding += value;
 		Application.ThreadException += delegate(object sender, ThreadExceptionEventArgs e)
 		{
 			try
@@ -857,12 +839,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	private static Redbox.KioskEngine.ComponentModel.ErrorList InitializeConfiguration()
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		ServiceLocator.Instance.GetService<IMacroService>();
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service != null)
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (service2 != null)
 		{
 			LogHelper.Instance.Log("Starting Update Manager Configuration Service.");
-			errorList.AddRange(service.Start());
+			errorList.AddRange(service2.Start());
 			string directoryName = Path.GetDirectoryName(typeof(DataStoreService).Assembly.Location);
 			string path = Path.Combine(directoryName, "..\\data");
 			DirectoryInfo directoryInfo = new DirectoryInfo(path);
@@ -873,7 +855,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				foreach (FileInfo fileInfo in array)
 				{
 					LogHelper.Instance.Log("> adding " + fileInfo.Name);
-					errorList.AddRange(service.Add(Path.GetFileNameWithoutExtension(fileInfo.Name), fileInfo.FullName, "default"));
+					errorList.AddRange(service2.Add(Path.GetFileNameWithoutExtension(fileInfo.Name), fileInfo.FullName, "default"));
 				}
 			}
 			catch (Exception e)

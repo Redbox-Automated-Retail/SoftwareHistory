@@ -30,8 +30,7 @@ internal static class FileFunctions
 	{
 		if (File.Exists(filePath))
 		{
-			RegExFileEditor regExFileEditor = new RegExFileEditor(filePath, backup: true, "saved");
-			regExFileEditor.Replace(pattern, token, newvalue);
+			new RegExFileEditor(filePath, backup: true, "saved").Replace(pattern, token, newvalue);
 		}
 	}
 
@@ -79,8 +78,7 @@ internal static class FileFunctions
 			{
 				json = streamReader.ReadToEnd();
 			}
-			Dictionary<string, object> items = StringExtensions.ToObject<Dictionary<string, object>>(json);
-			LinqExtensions.ForEach(items, delegate(KeyValuePair<string, object> x)
+			LinqExtensions.ForEach(StringExtensions.ToObject<Dictionary<string, object>>(json), delegate(KeyValuePair<string, object> x)
 			{
 				new LuaTable(KernelService.Instance.LuaRuntime);
 				table[x.Key] = x.Value;

@@ -23,8 +23,7 @@ internal static class CallbackFunctions
 	{
 		if (func != null)
 		{
-			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-			service.EnqueueCallback(new SimpleCallback
+			ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new SimpleCallback
 			{
 				Function = func,
 				Parameters = parms
@@ -65,8 +64,7 @@ internal static class CallbackFunctions
 			}
 			luaTable.Dispose();
 		}
-		ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-		service.EnqueueCallback(new SimpleCallback
+		ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new SimpleCallback
 		{
 			Function = func,
 			EnableDebugger = enableDebugger,

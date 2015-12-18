@@ -45,12 +45,13 @@ internal static class ViewFunctions
 		}
 		if (viewFrame.ViewWindow.HasValue)
 		{
-			LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-			luaTable["x"] = viewFrame.ViewWindow.Value.X;
-			luaTable["y"] = viewFrame.ViewWindow.Value.Y;
-			luaTable["width"] = viewFrame.ViewWindow.Value.Width;
-			luaTable["height"] = viewFrame.ViewWindow.Value.Height;
-			return luaTable;
+			return new LuaTable(KernelService.Instance.LuaRuntime)
+			{
+				["x"] = viewFrame.ViewWindow.Value.X,
+				["y"] = viewFrame.ViewWindow.Value.Y,
+				["width"] = viewFrame.ViewWindow.Value.Width,
+				["height"] = viewFrame.ViewWindow.Value.Height
+			};
 		}
 		return null;
 	}

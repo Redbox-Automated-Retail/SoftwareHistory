@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Redbox.Core;
 
@@ -58,6 +59,29 @@ public static class CardHelper
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in CardHHelper.EncryptCreditCardFromXmlKey.", e);
+		}
+		finally
+		{
+			rSACryptoServiceProvider?.Clear();
+		}
+		return null;
+	}
+
+	public static string EncryptCreditCardFromCertificate(SecureString cardNumber, X509Certificate2 certificate)
+	{
+		if (cardNumber.Length == 0)
+		{
+			return null;
+		}
+		RSACryptoServiceProvider rSACryptoServiceProvider = null;
+		try
+		{
+			rSACryptoServiceProvider = (RSACryptoServiceProvider)certificate.PublicKey.Key;
+			return Convert.ToBase64String(rSACryptoServiceProvider.Encrypt(Encoding.ASCII.GetBytes(ExtractFromSecure(cardNumber)), fOAEP: false));
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in CardHHelper.EncryptCreditCardFromCertificate.", e);
 		}
 		finally
 		{

@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 namespace NetFwTypeLib;
 
 [ComImport]
-[Guid("644EFD52-CCF9-486C-97A2-39F352570B30")]
 [TypeLibType(4160)]
+[Guid("644EFD52-CCF9-486C-97A2-39F352570B30")]
 public interface INetFwAuthorizedApplications : IEnumerable
 {
 	[DispId(1)]

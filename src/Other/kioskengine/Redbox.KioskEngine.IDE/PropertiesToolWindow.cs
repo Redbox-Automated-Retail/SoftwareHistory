@@ -55,7 +55,7 @@ public class PropertiesToolWindow : ToolWindow
 		m_dynamicPropertyGrid.BeginUpdate();
 		m_dynamicPropertyGrid.Clear();
 		int num = 2;
-		IResourceBundle resourceBundle = instance as IResourceBundle;
+		_ = instance is IResourceBundle;
 		if (instance is IResource resource)
 		{
 			Dictionary<string, PropertyEnumerator> dictionary = new Dictionary<string, PropertyEnumerator>();
@@ -95,8 +95,7 @@ public class PropertiesToolWindow : ToolWindow
 						}
 						else
 						{
-							PropertyEnumerator propertyEnumerator3 = m_dynamicPropertyGrid.AppendManagedProperty(propertyEnumerator2 ?? propertyEnumerator, num++, propName, property.Type, typedValue, property.Description ?? string.Empty, new DefaultValueAttribute(typedValue2));
-							propertyEnumerator3.Property.Tag = new PropertyHandler
+							m_dynamicPropertyGrid.AppendManagedProperty(propertyEnumerator2 ?? propertyEnumerator, num++, propName, property.Type, typedValue, property.Description ?? string.Empty, new DefaultValueAttribute(typedValue2)).Property.Tag = new PropertyHandler
 							{
 								Properties = 
 								{
@@ -119,7 +118,7 @@ public class PropertiesToolWindow : ToolWindow
 				resourceType = resourceType.SuperType;
 			}
 		}
-		IResourceType resourceType2 = instance as IResourceType;
+		_ = instance is IResourceType;
 		if (instance is KernelFunctionInfo kernelFunctionInfo)
 		{
 			Dictionary<string, PropertyEnumerator> dictionary2 = new Dictionary<string, PropertyEnumerator>();

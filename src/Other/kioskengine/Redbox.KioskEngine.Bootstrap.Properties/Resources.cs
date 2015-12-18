@@ -21,7 +21,7 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
 				ResourceManager resourceManager = new ResourceManager("Redbox.KioskEngine.Bootstrap.Properties.Resources", typeof(Resources).Assembly);
 				resourceMan = resourceManager;

@@ -43,11 +43,11 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private XmlNode m_currentSpeech;
 
-	private int m_speechRate;
+	private int m_speechRate = 0;
 
 	private int m_speechVolume = 80;
 
-	private int m_working;
+	private int m_working = 0;
 
 	private Dictionary<string, Delegate> m_keyHandlers = new Dictionary<string, Delegate>();
 
@@ -254,21 +254,21 @@ public class TextToSpeechService : ITextToSpeechService
 			return;
 		}
 		service2.RemoveTimer("TTSTimer");
-		XmlNodeExtensions.GetAttributeValue(speechPart, "loop", defaultValue: false);
-		int attributeValue3 = XmlNodeExtensions.GetAttributeValue(speechPart, "startPause", 0);
+		bool attributeValue3 = XmlNodeExtensions.GetAttributeValue(speechPart, "loop", defaultValue: false);
+		int attributeValue4 = XmlNodeExtensions.GetAttributeValue(speechPart, "startPause", 0);
 		TimerCallback callback = delegate
 		{
 			ProcessSpeechPart(speechPart);
 		};
-		if (attributeValue3 == 0)
+		if (attributeValue4 == 0)
 		{
 			LogHelper.Instance.Log("TTS((> no delay startPause = 0 - passing directly to SayTTs");
 			ProcessSpeechPart(speechPart);
 		}
 		else
 		{
-			LogHelper.Instance.Log("TTS((> dueTime = " + attributeValue3);
-			ITimer timer = service2.CreateTimer("TTSTimer", attributeValue3, null, callback);
+			LogHelper.Instance.Log("TTS((> dueTime = " + attributeValue4);
+			ITimer timer = service2.CreateTimer("TTSTimer", attributeValue4, null, callback);
 			timer.Start();
 		}
 	}
@@ -308,24 +308,24 @@ public class TextToSpeechService : ITextToSpeechService
 					{
 					case "TTSVolumeUp":
 					{
-						Action value6 = delegate
+						Action value9 = delegate
 						{
 							TTSVolumeUp();
 							string speech = ((textNode != null) ? textNode.InnerText : "Volume Up");
 							SayTTS(speech);
 						};
-						m_keyHandlers.Add(attributeValue2, value6);
+						m_keyHandlers.Add(attributeValue2, value9);
 						break;
 					}
 					case "TTSVolumeDown":
 					{
-						Action value9 = delegate
+						Action value8 = delegate
 						{
 							TTSVolumeDown();
 							string speech = ((textNode != null) ? textNode.InnerText : "Volume Down");
 							SayTTS(speech);
 						};
-						m_keyHandlers.Add(attributeValue2, value9);
+						m_keyHandlers.Add(attributeValue2, value8);
 						break;
 					}
 					case "TTSFaster":
@@ -340,27 +340,27 @@ public class TextToSpeechService : ITextToSpeechService
 					}
 					case "TTSSlower":
 					{
-						Action value4 = delegate
+						Action value6 = delegate
 						{
 							TTSSlower();
 							SayTTS("Slower");
 						};
-						m_keyHandlers.Add(attributeValue2, value4);
+						m_keyHandlers.Add(attributeValue2, value6);
 						break;
 					}
 					case "TTSRepeatSpeechPart":
 					{
-						Action value3 = delegate
+						Action value5 = delegate
 						{
 							int attributeValue3 = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
 							RunSpeechPart(m_speechControl[attributeValue3]);
 						};
-						m_keyHandlers.Add(attributeValue2, value3);
+						m_keyHandlers.Add(attributeValue2, value5);
 						break;
 					}
 					case "TTSSkipToSpeechPart":
 					{
-						Action value8 = delegate
+						Action value4 = delegate
 						{
 							if (skipToNode != null)
 							{
@@ -371,12 +371,12 @@ public class TextToSpeechService : ITextToSpeechService
 								}
 							}
 						};
-						m_keyHandlers.Add(attributeValue2, value8);
+						m_keyHandlers.Add(attributeValue2, value4);
 						break;
 					}
 					case "TTSNextSpeechPart":
 					{
-						Action value5 = delegate
+						Action value3 = delegate
 						{
 							int attributeValue3 = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
 							if (attributeValue3 + 1 <= m_speechControl.GetUpperBound(0))
@@ -385,7 +385,7 @@ public class TextToSpeechService : ITextToSpeechService
 								RunSpeechPart(m_speechControl[attributeValue3 + 1]);
 							}
 						};
-						m_keyHandlers.Add(attributeValue2, value5);
+						m_keyHandlers.Add(attributeValue2, value3);
 						break;
 					}
 					case "TTSNextAudioSnippet":

@@ -24,9 +24,9 @@ public class PictureBox : UserControl
 
 	private void InitializeComponent()
 	{
-		System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Redbox.KioskEngine.IDE.PictureBox));
+		System.ComponentModel.ComponentResourceManager componentResourceManager = new System.ComponentModel.ComponentResourceManager(typeof(Redbox.KioskEngine.IDE.PictureBox));
 		base.SuspendLayout();
-		resources.ApplyResources(this, "$this");
+		componentResourceManager.ApplyResources(this, "$this");
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		this.MaximumSize = new System.Drawing.Size(580, 260);
 		base.Name = "PictureBox";

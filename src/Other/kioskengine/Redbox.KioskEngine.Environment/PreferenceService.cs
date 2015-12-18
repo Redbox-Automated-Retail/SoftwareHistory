@@ -32,11 +32,7 @@ public class PreferenceService : IPreferenceService
 		{
 			return default(T);
 		}
-		if (preferencePage.Target != PreferencePageTarget.LocalSystem)
-		{
-			return UserSettingsStore.Instance.GetValue<T>(preferencePage.SettingPath, settingName);
-		}
-		return MachineSettingsStore.Instance.GetValue<T>(preferencePage.SettingPath, settingName);
+		return (preferencePage.Target == PreferencePageTarget.LocalSystem) ? MachineSettingsStore.Instance.GetValue<T>(preferencePage.SettingPath, settingName) : UserSettingsStore.Instance.GetValue<T>(preferencePage.SettingPath, settingName);
 	}
 
 	public void SetValue(string pageName, string settingName, object value)
@@ -85,11 +81,7 @@ public class PreferenceService : IPreferenceService
 
 	public IPreferencePage GetPreferencePage(string pageName)
 	{
-		if (!Pages.ContainsKey(pageName))
-		{
-			return null;
-		}
-		return Pages[pageName];
+		return Pages.ContainsKey(pageName) ? Pages[pageName] : null;
 	}
 
 	private PreferenceService()

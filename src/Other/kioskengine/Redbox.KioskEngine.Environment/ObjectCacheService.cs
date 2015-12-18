@@ -12,11 +12,7 @@ public class ObjectCacheService : IObjectCacheService
 
 	public T GetObject<T>(string name)
 	{
-		if (!m_objects.ContainsKey(name))
-		{
-			return default(T);
-		}
-		return (T)ConversionHelper.ChangeType(m_objects[name], typeof(T));
+		return m_objects.ContainsKey(name) ? ((T)ConversionHelper.ChangeType(m_objects[name], typeof(T))) : default(T);
 	}
 
 	public void SetObject<T>(string name, T value)

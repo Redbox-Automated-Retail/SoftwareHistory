@@ -13,11 +13,7 @@ public class StyleSheetState : IStyleSheetState
 	{
 		get
 		{
-			if (!m_properties.ContainsKey(key))
-			{
-				return null;
-			}
-			return m_properties[key];
+			return m_properties.ContainsKey(key) ? m_properties[key] : null;
 		}
 		internal set
 		{

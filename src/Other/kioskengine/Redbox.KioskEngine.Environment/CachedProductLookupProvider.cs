@@ -14,11 +14,12 @@ internal class CachedProductLookupProvider : CachedDataStoreProvider
 		using MemoryArchive memoryArchive = MemoryArchive.Open(DataStoreProvider.GetPath(dataStore));
 		if (tableName == "Version")
 		{
-			switch (keyName)
+			if (keyName == "origin_machine")
 			{
-			case "origin_machine":
 				return "{ name = '" + memoryArchive.GetOriginMachine().Trim() + "' }";
-			case "generated_on":
+			}
+			if (keyName == "generated_on")
+			{
 				return "{ date = '" + memoryArchive.GetCreatedOn().Trim() + "' }";
 			}
 		}
@@ -41,37 +42,35 @@ internal class CachedProductLookupProvider : CachedDataStoreProvider
 
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
 	{
-		_ = tableName == "Version";
+		if (!(tableName == "Version"))
+		{
+		}
 	}
 
 	protected override ReadOnlyCollection<string> OnGetKeys(string dataStore, string tableName)
 	{
-		switch (tableName)
+		if (!(tableName == "Version"))
 		{
-		case "Version":
-		{
-			List<string> list2 = new List<string>();
-			list2.Add("origin_machine");
-			list2.Add("generated_on");
-			return list2.AsReadOnly();
-		}
-		case "BarcodeToProduct":
-		{
-			List<string> list = new List<string>();
-			Dictionary<string, Dictionary<string, object>> cachedDataStoreCreate = GetCachedDataStoreCreate(dataStore);
-			if (cachedDataStoreCreate.ContainsKey(tableName))
+			if (tableName == "BarcodeToProduct")
 			{
-				Dictionary<string, object> dictionary = cachedDataStoreCreate[tableName];
-				foreach (KeyValuePair<string, object> item in dictionary)
+				List<string> list = new List<string>();
+				Dictionary<string, Dictionary<string, object>> cachedDataStoreCreate = GetCachedDataStoreCreate(dataStore);
+				if (cachedDataStoreCreate.ContainsKey(tableName))
 				{
-					list.Add(item.Key);
+					Dictionary<string, object> dictionary = cachedDataStoreCreate[tableName];
+					foreach (KeyValuePair<string, object> item in dictionary)
+					{
+						list.Add(item.Key);
+					}
 				}
+				return list.AsReadOnly();
 			}
-			return list.AsReadOnly();
-		}
-		default:
 			return new List<string>().AsReadOnly();
 		}
+		List<string> list2 = new List<string>();
+		list2.Add("origin_machine");
+		list2.Add("generated_on");
+		return list2.AsReadOnly();
 	}
 
 	protected override ReadOnlyCollection<string> OnGetTables(string dataStore)

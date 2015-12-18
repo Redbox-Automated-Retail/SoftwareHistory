@@ -43,11 +43,7 @@ public class FontCacheService : IFontCacheService, IDisposable
 
 	public Font GetFont(string name)
 	{
-		if (!Fonts.ContainsKey(name))
-		{
-			return null;
-		}
-		return Fonts[name];
+		return Fonts.ContainsKey(name) ? Fonts[name] : null;
 	}
 
 	public Font RegisterFont(string name, string familyName, float size, FontStyle style)
@@ -65,14 +61,14 @@ public class FontCacheService : IFontCacheService, IDisposable
 			return font;
 		}
 		FontFamily fontFamily = null;
-		if (PrivateFonts.Families.Length > 0)
+		if (PrivateFonts.Families.Length != 0)
 		{
 			fontFamily = PrivateFonts.Families.ToList().Find((FontFamily f) => f.Name.Equals(familyName, StringComparison.CurrentCultureIgnoreCase));
 		}
 		if (fontFamily == null)
 		{
 			IntPtr intPtr = Marshal.AllocCoTaskMem(data.Length);
-			AddFontMemResourceEx(data, data.Length, IntPtr.Zero, out var _);
+			IntPtr intPtr2 = AddFontMemResourceEx(data, data.Length, IntPtr.Zero, out var _);
 			Marshal.Copy(data, 0, intPtr, data.Length);
 			PrivateFonts.AddMemoryFont(intPtr, data.Length);
 			Marshal.FreeCoTaskMem(intPtr);

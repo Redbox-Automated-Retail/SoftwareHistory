@@ -33,11 +33,11 @@ public class QueueService : IQueueService, IDisposable
 
 	internal const int DefaultQueueReadPeriodMax = 30000;
 
-	private const string EncryptedPrefix = "RedboxEncrypted";
-
 	private Timer m_queueTimer;
 
 	private volatile bool m_isProcessingMessage;
+
+	private const string EncryptedPrefix = "RedboxEncrypted";
 
 	public static QueueService Instance => Singleton<QueueService>.Instance;
 
@@ -557,11 +557,7 @@ public class QueueService : IQueueService, IDisposable
 		byte[] array = new byte[4];
 		rNGCryptoServiceProvider.GetBytes(array);
 		int num = BitConverter.ToInt32(array, 0);
-		if (min != max)
-		{
-			return min + Math.Abs(num % (max - min));
-		}
-		return min;
+		return (min == max) ? min : (min + Math.Abs(num % (max - min)));
 	}
 
 	private byte[] ToEncryptedMessage(object message)

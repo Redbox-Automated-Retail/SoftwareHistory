@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace NetFwTypeLib;
 
 [ComImport]
-[TypeLibType(4160)]
 [Guid("174A0DDA-E9F9-449D-993B-21AB667CA456")]
+[TypeLibType(4160)]
 public interface INetFwProfile
 {
 	[DispId(1)]
