@@ -229,7 +229,10 @@ function newactivitymanager()
 	end
 
 	t.activities.open_kaseya_config = function( self, parms )
-		self:launch_external_process( "notepad.exe", "c:\\Program Files\\Kaseya\\Agent\\KaseyaD.ini" )
+		local kaseya_path = kernel.storesvcs_getkaseyainipath()
+		if kaseya_path ~= nil then
+			self:launch_external_process( "notepad.exe", kaseya_path )
+		end
 	end
 
 	t.activities.open_camera_directory = function( self, parms )

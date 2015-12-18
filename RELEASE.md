@@ -1,18 +1,18 @@
-# Rental bundles revision 6 (no code name)
+# Rental bundles revision 28 (no code name)
 
 - Product: Rental bundles
 - Date (first download in the snapshots): 2015-12-18
 - Store labels: none
 - Package revisions:
-  - `kop-rental-bundles` revision 6 (`A81F42467D068295CC0B11749872BAD4FB4B6D8B`)
+  - `kop-rental-bundles` revision 28 (`9DF0CFC570D7B4A8975E50EDE77C39CB4AA4E966`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `8FEA5C8F07F66D4D6832869BE094791B8B8EAE15` | stale (listed version C5098FD8F8… has no content) |
-| `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | stale (listed version B5B580B759… has no content) |
-| `library-rental-common.bundle` |  |  | `149497682D160548299A7D8BE6AE3E8A434A2FC1` | stale (listed version A2B61C0650… has no content) |
+| `cp.bundle` |  |  | `A5402F8BFF78ABEEF956FB499EDFA7C68F8EAD88` | exact |
+| `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | stale (listed version D5140C6E63… has no content) |
+| `library-rental-common.bundle` |  |  | `149497682D160548299A7D8BE6AE3E8A434A2FC1` | stale (listed version 1D53D73388… has no content) |
 | `library-tickets.bundle` |  |  | `ECFD750E36F174FF4B58AFFA0A43C0F96DFA3CEF` | exact |
-| `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | stale (listed version DDFC945FED… has no content) |
+| `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | stale (listed version 3144B96432… has no content) |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

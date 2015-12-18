@@ -109,8 +109,8 @@ kernel.showlogin(
 			initialize()
 		end
 		local function failed_login( user_id, response )
-			kernel.logto( "UserLoginLog", "Control Panel | LOGIN FAILED for user: ".. user_id .. ", reason: " .. response )
-			kernel.logto( "ControlPanelActionLog", "Control Panel | LOGIN FAILED for user: ".. user_id .. ", reason: " .. response )
+			kernel.logto( "UserLoginLog", "Control Panel | LOGIN FAILED, reason: " .. response )
+			kernel.logto( "ControlPanelActionLog", "Control Panel | LOGIN FAILED, reason: " .. response )
 			--kernel.log(
 			--	"Control Panel Authentication failed for user: "..
 			--	user_id ..

@@ -225,8 +225,8 @@ function newkioskconfigurationmanager()
                       else
                           local progress_manager = newprogressmanager()
                           progress_manager:start(
-                              726,
-                              635 )
+                              768,
+                              642 )
                           kernel_function(
                               parms,
                               function( result, data )
@@ -670,9 +670,9 @@ function newkioskconfigurationmanager()
 		self.current = "finish"
 		self.previous = "confirm"
 		
-		local path = "C:\\Program Files\\Kaseya\\Agent\\KaseyaD.ini"
+		local path = kernel.storesvcs_getkaseyainipath()
 		kernel.replaceinfile(
-			"C:\\Program Files\\Kaseya\\Agent\\KaseyaD.ini",
+			path,
 			"User_Name\\s+(?<KaseyaId>[\\w|\\-|\\.]+)",
 			"KaseyaId",
 			"Redbox-".. self.selected_store.id .. "." .. self.selected_store.kaseya_market_name )
@@ -715,21 +715,34 @@ function newkioskconfigurationmanager()
 			"Store",
 			"Duetime",
 			self.selected_store.due_time )
-
-		local messagebox = newmessageboxmanager()
-		callbacks = {}
-		callbacks[messagebox.ButtonYES] = function()
-			kernel.startprocess( "shutdown.exe", "-r -t 0", false )
-		end
-		callbacks[messagebox.ButtonNO] = function()
-			view_goback()
-		end
-		messagebox:show(
-			"Do you want to reboot the kiosk now?",
-			messagebox.ButtonTypeYESNO,
-			messagebox.IconTypeQuestion,
-			callbacks )
-
+		
+		local progress_manager = newprogressmanager()
+		progress_manager:start( 768, 642 )
+		kernel.storesvcs_getopsmarket(
+			self.selected_store.id,
+			function( result )
+				local path = "C:\\Program Files\\Redbox\\Reds\\Installers\\" .. result.properties.kaseya_server .. "Install.exe"
+				local args = "/s /r /v /g=redbox." .. result.properties.ops_market .. " /m=redbox-" .. self.selected_store.id
+				
+				kernel.startprocesswaitforexit( path, args, 20000 )
+				progress_manager:stop()
+				
+				local messagebox = newmessageboxmanager()
+				callbacks = {}
+				callbacks[messagebox.ButtonYES] = function()
+					kernel.startprocess( "shutdown.exe", "-r -t 0", false )
+				end
+				callbacks[messagebox.ButtonNO] = function()
+					view_goback()
+				end
+				messagebox:show(
+					"Do you want to reboot the kiosk now?",
+					messagebox.ButtonTypeYESNO,
+					messagebox.IconTypeQuestion,
+					callbacks
+				)
+			end
+		)
 	end
 
 	t.transitions.cache = {}

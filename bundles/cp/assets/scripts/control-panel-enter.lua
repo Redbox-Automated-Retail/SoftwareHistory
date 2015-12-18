@@ -25,4 +25,8 @@ else
 	kernel.setactortext( "start_maintenance_mode", "Turn Maintenance Mode On" )
 end
 
+if kernel.iswindows7() == true then
+	kernel.hideactor( "open_hyper_terminal" )
+end
+
 KeyNavigationManager:initialize()
