@@ -77,8 +77,16 @@ public sealed class KernelService : IKernelService
 
 	public ReadOnlyCollection<object> ExecuteChunk(string chunk)
 	{
+		bool locked;
+		return ExecuteChunkLockCheck(chunk, out locked);
+	}
+
+	public ReadOnlyCollection<object> ExecuteChunkLockCheck(string chunk, out bool locked)
+	{
+		locked = false;
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
+			locked = true;
 			ErrorList errorList = new ErrorList();
 			errorList.Add(Error.NewError("KernelService.ExecuteChunck(chunk)", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return null;
@@ -200,7 +208,7 @@ public sealed class KernelService : IKernelService
 			{
 			case ShutdownType.Reboot:
 				_performedShutdown = true;
-				ShutdownTool.Shutdown(ShutdownFlags.Reboot | ShutdownFlags.ForceIfHung, ShutdownReason.FlagPlanned);
+				ShutdownTool.Shutdown(ShutdownFlags.Reboot | ShutdownFlags.Force | ShutdownFlags.ForceIfHung, ShutdownReason.FlagPlanned);
 				break;
 			case ShutdownType.Shutdown:
 				_performedShutdown = true;

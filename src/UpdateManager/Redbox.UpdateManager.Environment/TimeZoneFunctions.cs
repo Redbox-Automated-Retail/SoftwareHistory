@@ -9,6 +9,29 @@ namespace Redbox.UpdateManager.Environment;
 public static class TimeZoneFunctions
 {
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+	private struct TimeZoneInformation
+	{
+		[MarshalAs(UnmanagedType.I4)]
+		public int Bias;
+
+		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+		public string StandardName;
+
+		public SystemTime StandardDate;
+
+		[MarshalAs(UnmanagedType.I4)]
+		public int StandardBias;
+
+		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+		public string DaylightName;
+
+		public SystemTime DaylightDate;
+
+		[MarshalAs(UnmanagedType.I4)]
+		public int DaylightBias;
+	}
+
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 	private struct DynamicTimeZoneInformation
 	{
 		[MarshalAs(UnmanagedType.I4)]
@@ -55,6 +78,8 @@ public static class TimeZoneFunctions
 		public ushort Millisecond;
 	}
 
+	private static readonly bool IsOsVistaOrGreater = System.Environment.OSVersion.Version.Major >= 6;
+
 	public static bool SetTime(DateTime dateTime)
 	{
 		if (dateTime.AddMinutes(-5.0) < DateTime.UtcNow && DateTime.UtcNow < dateTime.AddMinutes(5.0))
@@ -93,39 +118,39 @@ public static class TimeZoneFunctions
 		}
 		try
 		{
-			DynamicTimeZoneInformation lpTimeZoneInformation = new DynamicTimeZoneInformation
-			{
-				StandardName = timeZoneInfo.StandardName,
-				DaylightName = timeZoneInfo.DaylightName,
-				StandardBias = 0,
-				Bias = (int)timeZoneInfo.BaseUtcOffset.Negate().TotalMinutes
-			};
 			TimeZoneInfo.AdjustmentRule[] adjustmentRules = timeZoneInfo.GetAdjustmentRules();
-			TimeZoneInfo.AdjustmentRule adjustmentRule = adjustmentRules.FirstOrDefault((TimeZoneInfo.AdjustmentRule ar) => ar.DateStart < DateTime.UtcNow && ar.DateEnd > DateTime.UtcNow);
-			if (adjustmentRule == null)
+			TimeZoneInfo.AdjustmentRule currentAdjustmentRule = adjustmentRules.FirstOrDefault((TimeZoneInfo.AdjustmentRule ar) => ar.DateStart < DateTime.UtcNow && ar.DateEnd > DateTime.UtcNow);
+			bool flag = false;
+			LogHelper.Instance.Log("Attempting to change timezone from " + TimeZoneInfo.Local.DisplayName + " to " + timeZoneInfo.DisplayName, LogEntryType.Debug);
+			if (IsOsVistaOrGreater)
 			{
-				lpTimeZoneInformation.DaylightDate = (lpTimeZoneInformation.StandardDate = new SystemTime
+				DynamicTimeZoneInformation info = new DynamicTimeZoneInformation
 				{
-					Year = 0,
-					Month = 0,
-					DayOfWeek = 0,
-					Day = 0,
-					Hour = 0,
-					Minute = 0,
-					Second = 0,
-					Millisecond = 0
-				});
-				lpTimeZoneInformation.DaylightBias = 0;
+					StandardName = timeZoneInfo.StandardName,
+					DaylightName = timeZoneInfo.DaylightName,
+					StandardBias = 0,
+					Bias = (int)timeZoneInfo.BaseUtcOffset.Negate().TotalMinutes,
+					TimeZoneKeyName = timeZoneInfo.StandardName,
+					DynamicDaylightTimeDisabled = false
+				};
+				SetAdjustmentRules(ref info, currentAdjustmentRule);
+				TokenPrivilegesAccess.EnablePrivilege("SeTimeZonePrivilege");
+				flag = SetDynamicTimeZoneInformation(ref info);
+				TokenPrivilegesAccess.DisablePrivilege("SeTimeZonePrivilege");
 			}
 			else
 			{
-				lpTimeZoneInformation.StandardDate = adjustmentRule.DaylightTransitionEnd.ToSystemTime();
-				lpTimeZoneInformation.DaylightDate = adjustmentRule.DaylightTransitionStart.ToSystemTime();
-				lpTimeZoneInformation.DaylightBias = (int)adjustmentRule.DaylightDelta.Negate().TotalMinutes;
+				TimeZoneInformation info2 = new TimeZoneInformation
+				{
+					StandardName = timeZoneInfo.StandardName,
+					DaylightName = timeZoneInfo.DaylightName,
+					StandardBias = 0,
+					Bias = (int)timeZoneInfo.BaseUtcOffset.Negate().TotalMinutes
+				};
+				SetAdjustmentRules(ref info2, currentAdjustmentRule);
+				flag = SetTimeZoneInformation(ref info2);
+				DeleteDisableAutoDaylightTimeSet();
 			}
-			LogHelper.Instance.Log("Attempting to change timezone from " + TimeZoneInfo.Local.DisplayName + " to " + timeZoneInfo.DisplayName, LogEntryType.Debug);
-			bool flag = SetDynamicTimeZoneInformation(ref lpTimeZoneInformation);
-			DeleteDisableAutoDaylightTimeSet();
 			LogHelper.Instance.Log("TimeZone change success: " + flag, LogEntryType.Debug);
 			return flag;
 		}
@@ -133,6 +158,56 @@ public static class TimeZoneFunctions
 		{
 			LogHelper.Instance.Log("Unhandled exception in SetTimeZone", e, LogEntryType.Error);
 			return false;
+		}
+	}
+
+	private static void SetAdjustmentRules(ref TimeZoneInformation info, TimeZoneInfo.AdjustmentRule currentAdjustmentRule)
+	{
+		if (currentAdjustmentRule == null)
+		{
+			info.DaylightDate = (info.StandardDate = new SystemTime
+			{
+				Year = 0,
+				Month = 0,
+				DayOfWeek = 0,
+				Day = 0,
+				Hour = 0,
+				Minute = 0,
+				Second = 0,
+				Millisecond = 0
+			});
+			info.DaylightBias = 0;
+		}
+		else
+		{
+			info.StandardDate = currentAdjustmentRule.DaylightTransitionEnd.ToSystemTime();
+			info.DaylightDate = currentAdjustmentRule.DaylightTransitionStart.ToSystemTime();
+			info.DaylightBias = (int)currentAdjustmentRule.DaylightDelta.Negate().TotalMinutes;
+		}
+	}
+
+	private static void SetAdjustmentRules(ref DynamicTimeZoneInformation info, TimeZoneInfo.AdjustmentRule currentAdjustmentRule)
+	{
+		if (currentAdjustmentRule == null)
+		{
+			info.DaylightDate = (info.StandardDate = new SystemTime
+			{
+				Year = 0,
+				Month = 0,
+				DayOfWeek = 0,
+				Day = 0,
+				Hour = 0,
+				Minute = 0,
+				Second = 0,
+				Millisecond = 0
+			});
+			info.DaylightBias = 0;
+		}
+		else
+		{
+			info.StandardDate = currentAdjustmentRule.DaylightTransitionEnd.ToSystemTime();
+			info.DaylightDate = currentAdjustmentRule.DaylightTransitionStart.ToSystemTime();
+			info.DaylightBias = (int)currentAdjustmentRule.DaylightDelta.Negate().TotalMinutes;
 		}
 	}
 
@@ -202,6 +277,9 @@ public static class TimeZoneFunctions
 
 	[DllImport("Kernel32.dll", EntryPoint = "SetSystemTime", SetLastError = true)]
 	private static extern bool Win32SetSystemTime(ref SystemTime sysTime);
+
+	[DllImport("Kernel32.dll", CharSet = CharSet.Auto)]
+	private static extern bool SetTimeZoneInformation(ref TimeZoneInformation lpTimeZoneInformation);
 
 	[DllImport("Kernel32.dll", CharSet = CharSet.Auto)]
 	private static extern bool SetDynamicTimeZoneInformation(ref DynamicTimeZoneInformation lpTimeZoneInformation);

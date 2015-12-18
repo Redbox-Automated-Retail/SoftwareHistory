@@ -72,9 +72,9 @@ public class StatusMessageService : IPollRequestReply, IStatusMessageService
 	public ErrorList GetPollRequest(out List<PollRequest> pollRequests)
 	{
 		pollRequests = new List<PollRequest>();
+		ErrorList errorList = new ErrorList();
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
 			errorList.Add(Error.NewError("StatusMessageService.GetPollRequest", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return errorList;
 		}
@@ -92,11 +92,15 @@ public class StatusMessageService : IPollRequestReply, IStatusMessageService
 				service.Dequeue(QueueLabel);
 			}
 		}
+		catch (Exception e)
+		{
+			errorList.Add(Error.NewError("StatusMessageService", "Unhandled exception occurred in GetPollRequest.", e));
+		}
 		finally
 		{
 			_lock.ExitWriteLock();
 		}
-		return new ErrorList();
+		return errorList;
 	}
 
 	public ErrorList ProcessPollReply(List<PollReply> pollReplyList)

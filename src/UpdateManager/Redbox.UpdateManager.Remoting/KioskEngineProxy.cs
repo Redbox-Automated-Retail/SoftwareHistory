@@ -78,7 +78,7 @@ public class KioskEngineProxy
 					stringBuilder.AppendLine($"Details: {error.Details}\n");
 				}
 			}
-			LogHelper.Instance.Log("IPC command \"{0}\" to host \"{1}\" failed.  {2}", LogEntryType.Error, command, IpcHostUrl, stringBuilder.ToString());
+			LogHelper.Instance.Log($"IPC command \"{command}\" to host \"{IpcHostUrl}\" failed.  {stringBuilder.ToString()}", LogEntryType.Error);
 		}
 		return clientCommandResult;
 	}

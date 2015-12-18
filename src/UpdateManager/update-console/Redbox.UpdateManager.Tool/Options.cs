@@ -28,8 +28,8 @@ public class Options
 	[Description("Executes the script specified in the store updater kernel. All other options ignored.")]
 	public string Script { get; set; }
 
-	[Option(LongName = "hash", ShortName = "h")]
 	[Description("Desired version for an update.")]
+	[Option(LongName = "hash", ShortName = "h")]
 	public string Hash { get; set; }
 
 	[Option(LongName = "kaseya-id", ShortName = "k")]
@@ -64,8 +64,8 @@ public class Options
 	[Description("The name of the tree to operate on. Required for update")]
 	public string Tree { get; set; }
 
-	[Option(LongName = "update", ShortName = "u")]
 	[Description("Updates the tree given in name to the the revision specified in hash or head if none.")]
+	[Option(LongName = "update", ShortName = "u")]
 	public bool Update { get; set; }
 
 	[Description("work filter to use when getting work from server.")]
@@ -88,8 +88,8 @@ public class Options
 	[Option(LongName = "repository-name")]
 	public string RepositoryName { get; set; }
 
-	[Description("Formats and outputs a repository file. Valid values: active, current, label, revlog.")]
 	[Option(LongName = "dump")]
+	[Description("Formats and outputs a repository file. Valid values: active, current, label, revlog.")]
 	public string Dump { get; set; }
 
 	private Options()

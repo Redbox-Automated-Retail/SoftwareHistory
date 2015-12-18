@@ -45,4 +45,9 @@ internal static class Enum<T>
 		}
 		return list;
 	}
+
+	public static T ToObject(object o)
+	{
+		return (T)Enum.ToObject(typeof(T), o);
+	}
 }

@@ -12,5 +12,6 @@ internal enum PollReplyType
 	Work,
 	DownloadFile,
 	StoreScheduleInfo,
-	StoreFileChangeSet
+	StoreFileChangeSet,
+	FileSetChangeSet
 }

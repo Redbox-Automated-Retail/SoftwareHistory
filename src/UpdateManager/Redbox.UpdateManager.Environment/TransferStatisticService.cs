@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Redbox.Core;
 using Redbox.UpdateManager.ComponentModel;
 using Redbox.UpdateService.Client;
@@ -12,20 +13,27 @@ public class TransferStatisticService : IPollRequestReply
 
 	public ErrorList GetPollRequest(out List<PollRequest> pollRequestList)
 	{
-		ErrorList result = new ErrorList();
 		pollRequestList = new List<PollRequest>();
-		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		for (TransferStatisticReport transferStatisticReport = service.Peek<TransferStatisticReport>("statistic"); transferStatisticReport != null; transferStatisticReport = service.Peek<TransferStatisticReport>("statistic"))
+		ErrorList errorList = new ErrorList();
+		try
 		{
-			PollRequest pollRequest = new PollRequest();
-			pollRequest.PollRequestType = PollRequestType.TransferStatisticReport;
-			pollRequest.Data = ObjectExtensions.ToJson(transferStatisticReport);
-			PollRequest item = pollRequest;
-			pollRequestList.Add(item);
-			LogHelper.Instance.Log("Enqueued transfer statistics for revision: {0}", transferStatisticReport.ChangeSet);
-			service.Dequeue("statistic");
+			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+			for (TransferStatisticReport transferStatisticReport = service.Peek<TransferStatisticReport>("statistic"); transferStatisticReport != null; transferStatisticReport = service.Peek<TransferStatisticReport>("statistic"))
+			{
+				PollRequest pollRequest = new PollRequest();
+				pollRequest.PollRequestType = PollRequestType.TransferStatisticReport;
+				pollRequest.Data = ObjectExtensions.ToJson(transferStatisticReport);
+				PollRequest item = pollRequest;
+				pollRequestList.Add(item);
+				LogHelper.Instance.Log("Enqueued transfer statistics for revision: {0}", transferStatisticReport.ChangeSet);
+				service.Dequeue("statistic");
+			}
 		}
-		return result;
+		catch (Exception e)
+		{
+			errorList.Add(Error.NewError("StatusMessageService", "Unhandled exception occurred in GetPollRequest.", e));
+		}
+		return errorList;
 	}
 
 	public ErrorList ProcessPollReply(List<PollReply> pollReplyList)

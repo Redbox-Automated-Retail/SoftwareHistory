@@ -107,8 +107,8 @@ internal class ShellShortcut : IDisposable
 	}
 
 	[ComImport]
-	[Guid("000214EE-0000-0000-C000-000000000046")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	[Guid("000214EE-0000-0000-C000-000000000046")]
 	private interface IShellLinkA
 	{
 		void GetPath([Out][MarshalAs(UnmanagedType.LPStr)] StringBuilder pszFile, int cchMaxPath, out WIN32_FIND_DATAA pfd, SLGP_FLAGS fFlags);
@@ -149,8 +149,8 @@ internal class ShellShortcut : IDisposable
 	}
 
 	[ComImport]
-	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	[Guid("000214F9-0000-0000-C000-000000000046")]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	private interface IShellLinkW
 	{
 		void GetPath([Out][MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszFile, int cchMaxPath, out WIN32_FIND_DATAW pfd, SLGP_FLAGS fFlags);

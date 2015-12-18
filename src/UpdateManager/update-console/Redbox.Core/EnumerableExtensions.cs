@@ -11,7 +11,7 @@ internal static class EnumerableExtensions
 		List<string> list2 = new List<string>();
 		foreach (T item in list)
 		{
-			list2.Add(item.ToString());
+			list2.Add((item == null) ? "(null)" : item.ToString());
 		}
 		return string.Join(separator, list2.ToArray());
 	}

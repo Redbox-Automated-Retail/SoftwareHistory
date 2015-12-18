@@ -5,7 +5,7 @@ using Redbox.Core;
 namespace Redbox.Tokenizer.Framework;
 
 [Serializable]
-internal class SimpleTokenList : List<SimpleToken>, Redbox_002ECommand_002ETokenizer2125_002EICloneable<SimpleTokenList>
+internal class SimpleTokenList : List<SimpleToken>, Redbox_002ECommand_002ETokenizer2108_002EICloneable<SimpleTokenList>
 {
 	public SimpleTokenList()
 	{

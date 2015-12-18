@@ -10,6 +10,10 @@ internal class NullConsole : IConsole, IDisposable
 	{
 	}
 
+	public void Write(string format, params object[] parms)
+	{
+	}
+
 	public void WriteLine()
 	{
 	}

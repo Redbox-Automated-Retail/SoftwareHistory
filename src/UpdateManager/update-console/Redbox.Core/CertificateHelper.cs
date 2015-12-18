@@ -20,13 +20,17 @@ internal static class CertificateHelper
 		{
 			return null;
 		}
-		X509Store x509Store = new X509Store(storeName, storeLocation);
-		x509Store.Open(OpenFlags.ReadOnly);
-		X509Certificate2Collection x509Certificate2Collection = x509Store.Certificates.Find(X509FindType.FindBySubjectName, subjectName, validOnly: false);
-		if (x509Certificate2Collection.Count <= 0)
+		X509Store x509Store = null;
+		try
 		{
-			return null;
+			x509Store = new X509Store(storeName, storeLocation);
+			x509Store.Open(OpenFlags.ReadOnly);
+			X509Certificate2Collection x509Certificate2Collection = x509Store.Certificates.Find(X509FindType.FindBySubjectName, subjectName, validOnly: false);
+			return (x509Certificate2Collection.Count > 0) ? x509Certificate2Collection[0] : null;
 		}
-		return x509Certificate2Collection[0];
+		finally
+		{
+			x509Store?.Close();
+		}
 	}
 }

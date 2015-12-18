@@ -34,7 +34,7 @@ public class Updater
 		macroService["Scripts"] = Path.Combine(directoryName, "..\\scripts");
 		macroService["WorkingDirectory"] = directoryName;
 		WindowsTaskScheduler.Instance.Initialize();
-		KioskEngineService.Instance.Initialize(Settings.Default.KioskEnginePath);
+		KioskEngineService.Instance.Initialize(Settings.Default.KioskEnginePath, Settings.Default.KioskEngineUrl);
 		Redbox.UpdateManager.Remoting.UpdateService.Instance.Initialize(updateServiceUrl, TimeSpan.FromSeconds(120.0), StoreNumber, Settings.Default.MinimumRetryDelay);
 		KernelService.Instance.Initialize();
 		if (IsServiceRunning())

@@ -99,7 +99,7 @@ public static class KioskEngineFunctions
 	}
 
 	[KernelFunction(Name = "kernel.kioskengineshutdownblocking")]
-	internal static LuaTable ShutdownBlocking(int timeout, int tries)
+	public static LuaTable ShutdownBlocking(int timeout, int tries)
 	{
 		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
 		ErrorList errorList = service.Shutdown(timeout, tries);

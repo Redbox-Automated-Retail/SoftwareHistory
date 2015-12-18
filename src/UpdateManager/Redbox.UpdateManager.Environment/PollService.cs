@@ -23,10 +23,20 @@ public class PollService : IPollService
 
 	public ErrorList ServerPoll()
 	{
-		return ServerPoll(m_poll);
+		return ServerPoll(suppressHealthUpdate: false);
+	}
+
+	public ErrorList ServerPoll(bool suppressHealthUpdate)
+	{
+		return ServerPoll(m_poll, suppressHealthUpdate);
 	}
 
 	public ErrorList ServerPoll(IPoll poll)
+	{
+		return ServerPoll(poll, suppressHealthUpdate: false);
+	}
+
+	public ErrorList ServerPoll(IPoll poll, bool suppressHealthUpdate)
 	{
 		ErrorList errorList = new ErrorList();
 		LogHelper.Instance.Log("Entering PollService.ServerPoll, using poll type " + poll.GetType());
@@ -73,8 +83,11 @@ public class PollService : IPollService
 			{
 				errorList.AddRange(errorList2);
 			}
-			IHealthService service2 = ServiceLocator.Instance.GetService<IHealthService>();
-			service2.Update("UPDATE_SERVICE_SERVERPOLL");
+			if (!suppressHealthUpdate)
+			{
+				IHealthService service2 = ServiceLocator.Instance.GetService<IHealthService>();
+				service2.Update("UPDATE_SERVICE_SERVERPOLL");
+			}
 			if (pollReplyList != null && pollReplyList.Count > 0)
 			{
 				ErrorList errorList3 = ConfigFileService.Instance.ProcessPollReply((from pr in pollReplyList.ToList()

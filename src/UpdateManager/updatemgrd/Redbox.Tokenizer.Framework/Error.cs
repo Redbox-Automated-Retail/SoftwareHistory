@@ -24,7 +24,7 @@ internal class Error
 
 	public static Error Parse(string error)
 	{
-		string code = Redbox_002ECommand_002ETokenizer2125_002EGlobalStringExtensions.ExtractCodeFromBrackets(error, "[", "]");
+		string code = Redbox_002ECommand_002ETokenizer2108_002EGlobalStringExtensions.ExtractCodeFromBrackets(error, "[", "]");
 		int startIndex = error.IndexOf("]");
 		string text = error.Substring(startIndex);
 		string[] array = text.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);

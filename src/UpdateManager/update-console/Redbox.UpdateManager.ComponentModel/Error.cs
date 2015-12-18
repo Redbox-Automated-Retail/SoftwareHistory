@@ -46,12 +46,20 @@ internal class Error
 			stringBuilder.AppendFormat("\r\n\r\nInner Exception:\r\n---------------------------\r\n{0}\r\n", e.InnerException);
 		}
 		stringBuilder.AppendFormat("\r\n\r\nStack Trace:\r\n----------------------------\r\n{0}\r\n", e.StackTrace);
+		LogHelper.Instance.Log($"{code} - {description}", e, LogEntryType.Error);
 		return new Error(code, description, stringBuilder.ToString(), isWarning: false);
 	}
 
 	public static Error NewError(string code, string description, string details)
 	{
+		LogHelper.Instance.Log($"{code} - {description} - {details}", LogEntryType.Error);
 		return new Error(code, description, details, isWarning: false);
+	}
+
+	public static Error NewError(string code, string description)
+	{
+		LogHelper.Instance.Log($"{code} - {description}", LogEntryType.Error);
+		return new Error(code, description, string.Empty, isWarning: false);
 	}
 
 	public static Error NewWarning(string code, string description, string details)

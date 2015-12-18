@@ -8,6 +8,8 @@ internal interface IConsole : IDisposable
 
 	void Write(string value);
 
+	void Write(string format, params object[] parms);
+
 	void WriteLine();
 
 	void WriteLine(object value);

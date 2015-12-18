@@ -27,6 +27,30 @@ internal static class Int32Extensions
 		return stringBuilder.ToString();
 	}
 
+	public static bool NotInRanges(this int number, Pair<int, int>[] ranges)
+	{
+		return !number.BetweenAnyRange(ranges);
+	}
+
+	public static bool BetweenAnyRange(this int theNumber, Pair<int, int>[] ranges)
+	{
+		bool flag = false;
+		for (int i = 0; i < ranges.Length; i++)
+		{
+			flag = flag || theNumber.Between(ranges[i].First, ranges[i].Second);
+		}
+		return flag;
+	}
+
+	public static bool Between(this int theNumber, int min, int max)
+	{
+		if (theNumber >= min)
+		{
+			return theNumber <= max;
+		}
+		return false;
+	}
+
 	[DllImport("shlwapi.dll", CharSet = CharSet.Auto)]
 	private static extern long StrFormatByteSize(long fileSize, [MarshalAs(UnmanagedType.LPTStr)] StringBuilder buffer, int bufferSize);
 }

@@ -136,7 +136,7 @@ public static class SystemFunctions
 	}
 
 	[KernelFunction(Name = "kernel.shouldreboot")]
-	internal static bool ShouldReboot()
+	public static bool ShouldReboot()
 	{
 		TimeSpan timeSpan = TimeSpan.FromMilliseconds(System.Environment.TickCount & 0x7FFFFFFF);
 		TimeSpan timeSpan2 = TimeSpan.FromHours(1.0);

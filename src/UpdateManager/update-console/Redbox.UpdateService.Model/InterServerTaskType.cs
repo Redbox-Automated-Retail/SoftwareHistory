@@ -9,5 +9,6 @@ internal enum InterServerTaskType
 	ClearAllStoreInfoSyncIds,
 	ClearAllSyncIds,
 	UpdateDownloadList,
-	UpdateClientRepositoryData
+	UpdateClientRepositoryData,
+	CreateFileSetChangeSet
 }

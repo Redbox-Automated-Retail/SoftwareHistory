@@ -4,6 +4,8 @@ namespace Redbox.Core;
 
 internal interface ILogger
 {
+	string LoggerName { get; }
+
 	void Configure();
 
 	void Configure(string path);

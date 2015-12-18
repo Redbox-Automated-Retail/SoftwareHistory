@@ -16,6 +16,7 @@ using Redbox.UpdateManager.DownloadService;
 using Redbox.UpdateManager.Environment;
 using Redbox.UpdateManager.FileCache;
 using Redbox.UpdateManager.FileSets;
+using Redbox.UpdateManager.Kernel;
 
 namespace Redbox.UpdateManager.Daemon;
 
@@ -29,6 +30,10 @@ public class UpdateManagerService : ServiceBase
 
 	private const string ServiceApplicationId = "{C423B0E3-95B3-4191-B326-AB3EA516F825}";
 
+	public DateTime? ScriptLockedSince = null;
+
+	public bool ScriptLockedNeedsReboot;
+
 	private Thread m_thread;
 
 	private IPCServiceHost m_listener;
@@ -39,6 +44,7 @@ public class UpdateManagerService : ServiceBase
 
 	public UpdateManagerService()
 	{
+		LogHelper.Instance.Log("UpdateService constructor");
 		InitializeComponent();
 	}
 
@@ -77,7 +83,10 @@ public class UpdateManagerService : ServiceBase
 
 	internal void StartService()
 	{
+		LogHelper.Instance.Log("Aquiring namedlock");
 		m_instanceLock = new NamedLock("{C423B0E3-95B3-4191-B326-AB3EA516F825}", LockScope.Local);
+		LogHelper.Instance.Log("Finished Aquiring namedlock");
+		LogHelper.Instance.Log("Starting main thread");
 		m_thread = new Thread(ExecuteListener);
 		m_thread.TrySetApartmentState(ApartmentState.MTA);
 		m_thread.Start();
@@ -85,69 +94,79 @@ public class UpdateManagerService : ServiceBase
 
 	internal void StopService()
 	{
+		LogHelper.Instance.Log("Stopping service");
 		Redbox.UpdateManager.Domain.UpdateManagerService.Instance.RunShutdownScript();
+		try
+		{
+			LogHelper.Instance.Log("Stopping Certificate service");
+			CertificateService.Instance.Stop();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Error stopping Certificate service.", e);
+		}
 		try
 		{
 			LogHelper.Instance.Log("Stopping fileset service");
 			FileSetService.Instance.Stop();
 		}
-		catch (Exception e)
+		catch (Exception e2)
 		{
-			LogHelper.Instance.Log("Error stopping fileset service.", e);
+			LogHelper.Instance.Log("Error stopping fileset service.", e2);
 		}
 		try
 		{
 			LogHelper.Instance.Log("Stopping Download service");
 			Redbox.UpdateManager.DownloadService.DownloadService.Instance.Stop();
 		}
-		catch (Exception e2)
+		catch (Exception e3)
 		{
-			LogHelper.Instance.Log("Error stopping Download service.", e2);
+			LogHelper.Instance.Log("Error stopping Download service.", e3);
 		}
 		try
 		{
 			LogHelper.Instance.Log("Stopping downloadfile service");
 			DownloadFileService.Instance.Stop();
 		}
-		catch (Exception e3)
+		catch (Exception e4)
 		{
-			LogHelper.Instance.Log("Error stopping downloadfile service.", e3);
+			LogHelper.Instance.Log("Error stopping downloadfile service.", e4);
 		}
 		try
 		{
 			LogHelper.Instance.Log("Stopping health service");
 			HealthService.Instance.Stop();
 		}
-		catch (Exception e4)
+		catch (Exception e5)
 		{
-			LogHelper.Instance.Log("Error stopping health service.", e4);
+			LogHelper.Instance.Log("Error stopping health service.", e5);
 		}
 		try
 		{
 			LogHelper.Instance.Log("Stopping work service");
 			WorkService.Instance.Stop();
 		}
-		catch (Exception e5)
+		catch (Exception e6)
 		{
-			LogHelper.Instance.Log("Error stopping work service.", e5);
+			LogHelper.Instance.Log("Error stopping work service.", e6);
 		}
 		try
 		{
 			LogHelper.Instance.Log("Stop Update Manager Service.", LogEntryType.Info);
 			EventLog.WriteEntry("Stop Update Manager Service.", EventLogEntryType.Information);
 		}
-		catch (Exception e6)
+		catch (Exception e7)
 		{
-			LogHelper.Instance.Log("Error writing stop message to event log.", e6);
+			LogHelper.Instance.Log("Error writing stop message to event log.", e7);
 		}
 		try
 		{
 			Redbox.UpdateManager.Domain.UpdateManagerService.Instance.StopScheduler();
 			Redbox.UpdateManager.Domain.UpdateManagerService.Instance.Dispose();
 		}
-		catch (Exception e7)
+		catch (Exception e8)
 		{
-			LogHelper.Instance.Log("Unhandled exception while stopping scheduler or disposing Update Manager Domain.", e7);
+			LogHelper.Instance.Log("Unhandled exception while stopping scheduler or disposing Update Manager Domain.", e8);
 		}
 		try
 		{
@@ -156,9 +175,9 @@ public class UpdateManagerService : ServiceBase
 				m_listener.Stop();
 			}
 		}
-		catch (Exception e8)
+		catch (Exception e9)
 		{
-			LogHelper.Instance.Log("Unhandled exception in StopService.", e8);
+			LogHelper.Instance.Log("Unhandled exception in StopService.", e9);
 		}
 		try
 		{
@@ -167,9 +186,9 @@ public class UpdateManagerService : ServiceBase
 				m_instanceLock.Dispose();
 			}
 		}
-		catch (Exception e9)
+		catch (Exception e10)
 		{
-			LogHelper.Instance.Log("Unhandled exception in releasing instance lock.", e9);
+			LogHelper.Instance.Log("Unhandled exception in releasing instance lock.", e10);
 		}
 	}
 
@@ -229,6 +248,9 @@ public class UpdateManagerService : ServiceBase
 			string rootPath3 = macroService.ExpandProperties("${RunningPath}\\..\\.store\\.filesets");
 			FileSetService.Instance.Initialize(rootPath3);
 			FileSetService.Instance.Start();
+			LogHelper.Instance.Log("Certificate service starting");
+			CertificateService.Instance.Initialize();
+			CertificateService.Instance.Start();
 		}
 		catch (Exception e2)
 		{
@@ -240,6 +262,85 @@ public class UpdateManagerService : ServiceBase
 	{
 		try
 		{
+			HealthService.Instance.Add("UPDATE_SERVICE_SCRIPT_LOCKED", TimeSpan.FromSeconds(60.0), delegate
+			{
+				try
+				{
+					bool flag = true;
+					object value = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store", "HealthServiceScriptCheck", "true");
+					if (value != null && value is string && bool.TryParse(value as string, out var result))
+					{
+						flag = result;
+					}
+					if (flag)
+					{
+						IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
+						service.ExecuteChunkLockCheck("kernel.log(\"Heath Check Script - locked check\")", out var locked);
+						if (locked)
+						{
+							LogHelper.Instance.Log("Health CheckScript - execution is locked");
+							if (!ScriptLockedSince.HasValue)
+							{
+								ScriptLockedSince = DateTime.Now;
+							}
+							if (SystemFunctions.ShouldReboot())
+							{
+								ScriptLockedNeedsReboot = true;
+								LogHelper.Instance.Log("Health Check Script - execution is locked and needs reboot is true");
+							}
+							TimeSpan timeSpan = DateTime.Now - ScriptLockedSince.Value;
+							LogHelper.Instance.Log("Health Check Script - has been locked for {0} minutes", Math.Round(timeSpan.TotalMinutes));
+							if (timeSpan > TimeSpan.FromHours(1.0))
+							{
+								LogHelper.Instance.Log("Health Check Script - execution has been locked for more than an hour");
+								if (ScriptLockedNeedsReboot)
+								{
+									LogHelper.Instance.Log("Health Check Script - attempting reboot");
+									object value2 = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store", "RunInitialSync", "false");
+									bool flag2 = false;
+									if (value2 != null && value2 is string && bool.TryParse(value2 as string, out var result2))
+									{
+										flag2 = result2;
+									}
+									if (flag2)
+									{
+										LogHelper.Instance.Log("Health Check Script - Service Watchdog: shouldreboot is true; initial_sync_flag is true; exiting");
+									}
+									else
+									{
+										IKioskEngineService service2 = ServiceLocator.Instance.GetService<IKioskEngineService>();
+										Redbox.UpdateManager.ComponentModel.ErrorList errorList = service2.Shutdown(15000, 2);
+										if (errorList.ContainsError())
+										{
+											errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error error)
+											{
+												LogHelper.Instance.Log("{0} Details: {1}", error, error.Details);
+											});
+											ProcessFunctions.KillProcessByName("kioskengine");
+										}
+										LogHelper.Instance.Log("Health Check Script - Setting kiosk to reboot");
+										KernelService.Instance.ShutdownType = ShutdownType.Reboot;
+										KernelService.Instance.PerformShutdown();
+									}
+								}
+								else
+								{
+									LogHelper.Instance.Log("Health Check Script - reboot has not passed yet");
+								}
+							}
+						}
+						else
+						{
+							ScriptLockedSince = null;
+							ScriptLockedNeedsReboot = false;
+						}
+					}
+				}
+				catch (Exception e2)
+				{
+					LogHelper.Instance.Log("(UMS995) Health Check Script - Error running", e2);
+				}
+			});
 			HealthService.Instance.Add("UPDATE_SERVICE_SERVERPOLL", TimeSpan.FromMinutes(17.0), delegate
 			{
 				try
@@ -257,7 +358,7 @@ public class UpdateManagerService : ServiceBase
 						IPollService service = ServiceLocator.Instance.GetService<IPollService>();
 						if (service != null)
 						{
-							Redbox.UpdateManager.ComponentModel.ErrorList errorList = service.ServerPoll();
+							Redbox.UpdateManager.ComponentModel.ErrorList errorList = service.ServerPoll(suppressHealthUpdate: true);
 							{
 								foreach (Redbox.UpdateManager.ComponentModel.Error item in errorList)
 								{

@@ -179,10 +179,13 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 				{
 					errors.AddRange(item.ProcessDownloadFile());
 				}
-				errors.AddRange(WuaDownloadFile.StartDownloads());
-				errors.AddRange(WuaDownloadFile.StartInstalls());
-				ErrorList asyncErrors = WuaDownloadFile.GetAsyncErrors();
-				errors.AddRange(asyncErrors);
+				if (downloadFiles.Any((IDownloadFile item) => item is WuaDownloadFile))
+				{
+					errors.AddRange(WuaDownloadFile.StartDownloads());
+					errors.AddRange(WuaDownloadFile.StartInstalls());
+					ErrorList asyncErrors = WuaDownloadFile.GetAsyncErrors();
+					errors.AddRange(asyncErrors);
+				}
 				errors.AddRange(BitsDownloadFile.Cleanup());
 				if (RebootRequired)
 				{

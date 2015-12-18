@@ -20,6 +20,8 @@ internal interface IKernelService
 
 	ReadOnlyCollection<object> ExecuteChunk(string chunk);
 
+	ReadOnlyCollection<object> ExecuteChunkLockCheck(string chunk, out bool locked);
+
 	ReadOnlyCollection<object> ExecuteChunk(string chunk, bool reset);
 
 	ReadOnlyCollection<object> ExecuteChunkNoLock(string chunk, bool reset, string resultTableName, out Dictionary<object, object> result, out bool scriptCompleted);

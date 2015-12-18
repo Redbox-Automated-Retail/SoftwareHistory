@@ -12,5 +12,7 @@ internal enum CardType : byte
 	[CardCode(Code = "MC")]
 	MasterCard,
 	[CardCode(Code = "VI")]
-	Visa
+	Visa,
+	[CardCode(Code = "RGC")]
+	RedboxGiftCard
 }

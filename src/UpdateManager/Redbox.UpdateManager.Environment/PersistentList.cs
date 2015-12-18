@@ -115,7 +115,7 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 
 	public void Clear()
 	{
-		Directory.Delete(m_path);
+		Directory.Delete(m_path, recursive: true);
 		EnsureDirectoryExists();
 	}
 

@@ -5,7 +5,6 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 
 namespace Redbox.Core;
 
@@ -202,43 +201,37 @@ internal static class StringExtensions
 
 	public static T ToObject<T>(this string json)
 	{
-		JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer();
-		javaScriptSerializer.MaxJsonLength = int.MaxValue;
-		JavaScriptSerializer javaScriptSerializer2 = javaScriptSerializer;
-		javaScriptSerializer2.RegisterConverters(new JavaScriptConverter[2]
-		{
-			new DateTimeConverter(),
-			new TimeSpanConverter()
-		});
-		return javaScriptSerializer2.Deserialize<T>(json);
+		return JavaScriptConverterRegistry.Instance.GetSerializer().Deserialize<T>(json);
 	}
 
 	public static object ToObject(this string json, Type type)
 	{
-		JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer();
-		javaScriptSerializer.MaxJsonLength = int.MaxValue;
-		JavaScriptSerializer javaScriptSerializer2 = javaScriptSerializer;
-		javaScriptSerializer2.RegisterConverters(new JavaScriptConverter[2]
-		{
-			new DateTimeConverter(),
-			new TimeSpanConverter()
-		});
-		return javaScriptSerializer2.Deserialize(type, json);
+		return JavaScriptConverterRegistry.Instance.GetSerializer().Deserialize(type, json);
 	}
 
 	public static string ToLastFour(this string cardNumber)
+	{
+		return cardNumber.ToLastFour(pad: true);
+	}
+
+	public static string ToLastFour(this string cardNumber, bool pad)
 	{
 		if (cardNumber == null || cardNumber.Length <= 4)
 		{
 			return cardNumber;
 		}
 		int num = cardNumber.Length - 4;
+		string text = cardNumber.Substring(num);
+		if (!pad)
+		{
+			return text;
+		}
 		StringBuilder stringBuilder = new StringBuilder();
 		for (int i = 0; i < num; i++)
 		{
 			stringBuilder.Append("X");
 		}
-		stringBuilder.Append(cardNumber.Substring(num));
+		stringBuilder.Append(text);
 		return stringBuilder.ToString();
 	}
 
@@ -276,6 +269,20 @@ internal static class StringExtensions
 		{
 			action(obj);
 		}
+	}
+
+	public static int? ToInt32(this string numberToConvert)
+	{
+		if (!int.TryParse(numberToConvert, out var result))
+		{
+			return null;
+		}
+		return result;
+	}
+
+	public static string SafePadLeft(this string theString, int length, char padCharacter)
+	{
+		return theString?.PadLeft(length, padCharacter);
 	}
 
 	private static object GetObjectFromPath(string path, object rootObject, int? depthAdjust)

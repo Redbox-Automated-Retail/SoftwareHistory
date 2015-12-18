@@ -55,6 +55,7 @@ internal class WorkerPool
 		{
 			Thread thread = new Thread(ItemWorker);
 			thread.Name = $"{PoolName} #{i}";
+			thread.IsBackground = true;
 			Thread thread2 = thread;
 			thread2.Start();
 		}

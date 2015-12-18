@@ -9,4 +9,9 @@ internal static class LogHelperExtensions
 	{
 		return new SimpleLog4NetLogger(type);
 	}
+
+	public static MultiLog4NetLogger CreateMultiLog4NetLogger(this LogHelper helper, string loggerName)
+	{
+		return new MultiLog4NetLogger(loggerName);
+	}
 }

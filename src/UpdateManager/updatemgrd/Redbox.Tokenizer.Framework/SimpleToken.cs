@@ -4,7 +4,7 @@ using Redbox.Core;
 namespace Redbox.Tokenizer.Framework;
 
 [Serializable]
-internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002ETokenizer2125_002EICloneable<SimpleToken>
+internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002ETokenizer2108_002EICloneable<SimpleToken>
 {
 	public bool IsKeyValuePair { get; private set; }
 
@@ -62,7 +62,7 @@ internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002E
 		}
 		if (base.Type == SimpleTokenType.Operator && base.Value.IndexOf("..") != -1)
 		{
-			return new Redbox_002ECommand_002ETokenizer2125_002ERange(base.Value);
+			return new Redbox_002ECommand_002ETokenizer2108_002ERange(base.Value);
 		}
 		if (string.Compare(base.Value, bool.TrueString, ignoreCase: true) == 0)
 		{

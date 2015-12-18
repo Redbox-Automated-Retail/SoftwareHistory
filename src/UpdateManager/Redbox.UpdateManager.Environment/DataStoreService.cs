@@ -2,7 +2,6 @@
 using System.IO;
 using System.Reflection;
 using Redbox.Core;
-using Redbox.JSONPrettyPrinter;
 using Redbox.UpdateManager.ComponentModel;
 
 namespace Redbox.UpdateManager.Environment;
@@ -58,7 +57,7 @@ public class DataStoreService : IDataStoreService
 		string path = FormatFilePath(id);
 		lock (m_writeLock)
 		{
-			File.WriteAllText(path, PrettyPrinter.GetPrettyString(o));
+			File.WriteAllText(path, o);
 		}
 	}
 
@@ -69,7 +68,18 @@ public class DataStoreService : IDataStoreService
 		{
 			return default(T);
 		}
-		return StringExtensions.ToObject<T>(raw);
+		T result;
+		try
+		{
+			return StringExtensions.ToObject<T>(raw);
+		}
+		catch (Exception e)
+		{
+			result = default(T);
+			Delete(id);
+			LogHelper.Instance.LogException("DataStoreService.Get<T> - An exception occurred deserializing an object. Deleting file.", e);
+		}
+		return result;
 	}
 
 	public string GetRaw(Guid id)

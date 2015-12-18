@@ -100,7 +100,7 @@ internal sealed class FunctionFactory
 			{
 				throw new EvaluatorException(text, Location.UnknownLocation);
 			}
-			Redbox_002EMacros1938_002ELogHelper.Instance.Log($"{text}", Redbox_002EMacros1938_002ELogEntryType.Info);
+			Redbox_002EMacros1955_002ELogHelper.Instance.Log($"{text}", Redbox_002EMacros1955_002ELogEntryType.Info);
 		}
 	}
 
@@ -135,14 +135,14 @@ internal sealed class FunctionFactory
 					}
 					return true;
 				}
-				Redbox_002EMacros1938_002ELogHelper.Instance.Log($"Ignoring functions in type \"{type.AssemblyQualifiedName}\": no prefix was set.", Redbox_002EMacros1938_002ELogEntryType.Info);
+				Redbox_002EMacros1955_002ELogHelper.Instance.Log($"Ignoring functions in type \"{type.AssemblyQualifiedName}\": no prefix was set.", Redbox_002EMacros1955_002ELogEntryType.Info);
 				return false;
 			}
 			return false;
 		}
 		catch
 		{
-			Redbox_002EMacros1938_002ELogHelper.Instance.Log($"Failure scanning \"{type.AssemblyQualifiedName}\" for functions.", Redbox_002EMacros1938_002ELogEntryType.Error);
+			Redbox_002EMacros1955_002ELogHelper.Instance.Log($"Failure scanning \"{type.AssemblyQualifiedName}\" for functions.", Redbox_002EMacros1955_002ELogEntryType.Error);
 			throw;
 		}
 	}

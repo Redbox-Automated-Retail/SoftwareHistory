@@ -33,6 +33,8 @@ internal class ErrorForm : Form
 
 	private Panel m_bottomPanel;
 
+	private Button m_closeButton;
+
 	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string Message
@@ -47,8 +49,8 @@ internal class ErrorForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public IEnumerable Errors
 	{
 		get
@@ -65,6 +67,12 @@ internal class ErrorForm : Form
 	public ErrorForm()
 	{
 		InitializeComponent();
+	}
+
+	private void OnClose(object sender, EventArgs e)
+	{
+		base.DialogResult = DialogResult.OK;
+		Close();
 	}
 
 	private void OnSelectedErrorChanged(object sender, EventArgs e)
@@ -152,6 +160,7 @@ internal class ErrorForm : Form
 		this.m_topPanel = new System.Windows.Forms.Panel();
 		this.m_splitter = new System.Windows.Forms.Splitter();
 		this.m_bottomPanel = new System.Windows.Forms.Panel();
+		this.m_closeButton = new System.Windows.Forms.Button();
 		this.m_messagePanel.SuspendLayout();
 		this.m_topPanel.SuspendLayout();
 		this.m_bottomPanel.SuspendLayout();
@@ -177,7 +186,7 @@ internal class ErrorForm : Form
 		this.m_errorListView.FullRowSelect = true;
 		this.m_errorListView.Location = new System.Drawing.Point(3, 3);
 		this.m_errorListView.Name = "m_errorListView";
-		this.m_errorListView.Size = new System.Drawing.Size(536, 183);
+		this.m_errorListView.Size = new System.Drawing.Size(536, 160);
 		this.m_errorListView.SmallImageList = this.m_imageList;
 		this.m_errorListView.TabIndex = 2;
 		this.m_errorListView.UseCompatibleStateImageBehavior = false;
@@ -196,17 +205,17 @@ internal class ErrorForm : Form
 		this.m_detailTextBox.Multiline = true;
 		this.m_detailTextBox.Name = "m_detailTextBox";
 		this.m_detailTextBox.ReadOnly = true;
-		this.m_detailTextBox.Size = new System.Drawing.Size(536, 160);
+		this.m_detailTextBox.Size = new System.Drawing.Size(536, 132);
 		this.m_detailTextBox.TabIndex = 4;
 		this.m_topPanel.Controls.Add(this.m_errorListView);
 		this.m_topPanel.Dock = System.Windows.Forms.DockStyle.Top;
 		this.m_topPanel.Location = new System.Drawing.Point(0, 19);
 		this.m_topPanel.Name = "m_topPanel";
 		this.m_topPanel.Padding = new System.Windows.Forms.Padding(3, 3, 3, 1);
-		this.m_topPanel.Size = new System.Drawing.Size(542, 187);
+		this.m_topPanel.Size = new System.Drawing.Size(542, 164);
 		this.m_topPanel.TabIndex = 5;
 		this.m_splitter.Dock = System.Windows.Forms.DockStyle.Top;
-		this.m_splitter.Location = new System.Drawing.Point(0, 206);
+		this.m_splitter.Location = new System.Drawing.Point(0, 183);
 		this.m_splitter.MinSize = 100;
 		this.m_splitter.Name = "m_splitter";
 		this.m_splitter.Size = new System.Drawing.Size(542, 3);
@@ -214,15 +223,25 @@ internal class ErrorForm : Form
 		this.m_splitter.TabStop = false;
 		this.m_bottomPanel.Controls.Add(this.m_detailTextBox);
 		this.m_bottomPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-		this.m_bottomPanel.Location = new System.Drawing.Point(0, 209);
+		this.m_bottomPanel.Location = new System.Drawing.Point(0, 186);
 		this.m_bottomPanel.Name = "m_bottomPanel";
 		this.m_bottomPanel.Padding = new System.Windows.Forms.Padding(3, 1, 3, 3);
-		this.m_bottomPanel.Size = new System.Drawing.Size(542, 164);
+		this.m_bottomPanel.Size = new System.Drawing.Size(542, 136);
 		this.m_bottomPanel.TabIndex = 7;
+		this.m_closeButton.Dock = System.Windows.Forms.DockStyle.Bottom;
+		this.m_closeButton.Location = new System.Drawing.Point(0, 322);
+		this.m_closeButton.Name = "m_closeButton";
+		this.m_closeButton.Size = new System.Drawing.Size(542, 51);
+		this.m_closeButton.TabIndex = 8;
+		this.m_closeButton.Text = "Close";
+		this.m_closeButton.UseVisualStyleBackColor = true;
+		this.m_closeButton.Click += new System.EventHandler(OnClose);
+		base.AcceptButton = this.m_closeButton;
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.ClientSize = new System.Drawing.Size(542, 373);
 		base.Controls.Add(this.m_bottomPanel);
+		base.Controls.Add(this.m_closeButton);
 		base.Controls.Add(this.m_splitter);
 		base.Controls.Add(this.m_topPanel);
 		base.Controls.Add(this.m_messagePanel);

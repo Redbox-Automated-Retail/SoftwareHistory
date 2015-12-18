@@ -70,36 +70,7 @@ public class UpdateService : IUpdateService
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList UploadFile(string path)
 	{
-		Redbox.UpdateManager.ComponentModel.ErrorList errors = new Redbox.UpdateManager.ComponentModel.ErrorList();
-		if (!File.Exists(path))
-		{
-			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("F999", "File not found.", new FileNotFoundException("File not found.", path)));
-			return errors;
-		}
-		Upload upload;
-		using (Redbox.UpdateService.Client.UpdateService updateService = GetService())
-		{
-			ClientCommandResult clientCommandResult = updateService.UploadFile(m_storeNumber, Path.GetFileName(path), out upload);
-			if (!clientCommandResult.Success)
-			{
-				clientCommandResult.Errors.ForEach(delegate(Redbox.IPC.Framework.Error e)
-				{
-					errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(e.Code, e.Description, e.Details));
-				});
-				return errors;
-			}
-		}
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		errors.AddRange(service.CreateUploadJob($"<~Upload for file {path} with upload id {upload.ID}.~>", out var job));
-		if (errors.ContainsError())
-		{
-			return errors;
-		}
-		errors.AddRange(job.AddItem(upload.Url, path));
-		errors.AddRange(job.Resume());
-		IDataStoreService service2 = ServiceLocator.Instance.GetService<IDataStoreService>();
-		service2.Set(job.ID, upload);
-		return errors;
+		return new Redbox.UpdateManager.ComponentModel.ErrorList();
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList AddGroupToRepository(string group, string name)
@@ -602,7 +573,7 @@ public class UpdateService : IUpdateService
 		response = new Dictionary<string, string>();
 		using (Redbox.UpdateService.Client.UpdateService updateService = GetService())
 		{
-			ClientCommandResult clientCommandResult = updateService.StartStoreInstaller(repositoryHash, frontEndVersion);
+			ClientCommandResult clientCommandResult = updateService.StartStoreInstaller("installer", repositoryHash, frontEndVersion);
 			if (clientCommandResult.Success)
 			{
 				response = StringExtensions.ToDictionary(clientCommandResult.CommandMessages[0]).ToDictionary((KeyValuePair<string, object> k) => k.Key, (KeyValuePair<string, object> v) => v.Value as string);
@@ -627,7 +598,7 @@ public class UpdateService : IUpdateService
 			do
 			{
 				LogHelper.Instance.Log($"Sending log to server try #{num}: {datum.Key}:{datum.Value} ");
-				clientCommandResult = updateService.InstallerLog(guid, datum.Key, datum.Value);
+				clientCommandResult = updateService.InstallerLog("installer", guid, datum.Key, datum.Value);
 				if (!clientCommandResult.Success)
 				{
 					errorList.AddRange(clientCommandResult.Errors.Select((Redbox.IPC.Framework.Error e) => Redbox.UpdateManager.ComponentModel.Error.NewError(e.Code, e.Description, e.Details)));
@@ -645,7 +616,7 @@ public class UpdateService : IUpdateService
 		using (Redbox.UpdateService.Client.UpdateService updateService = GetService())
 		{
 			LogHelper.Instance.Log($"Sending log to server: {name}:{value} ");
-			ClientCommandResult clientCommandResult = updateService.InstallerLog(guid, name, value);
+			ClientCommandResult clientCommandResult = updateService.InstallerLog("installer", guid, name, value);
 			if (!clientCommandResult.Success)
 			{
 				errorList.AddRange(clientCommandResult.Errors.Select((Redbox.IPC.Framework.Error e) => Redbox.UpdateManager.ComponentModel.Error.NewError(e.Code, e.Description, e.Details)));
@@ -727,7 +698,7 @@ public class UpdateService : IUpdateService
 				if (ex != null)
 				{
 					LogHelper.Instance.Log("Script Id: {0} caused an exception.", work.ID);
-					Redbox_002EUpdateManager_002ERemoting2108_002E_003C_003Ef__AnonymousType0<bool, bool, string> instance = new Redbox_002EUpdateManager_002ERemoting2108_002E_003C_003Ef__AnonymousType0<bool, bool, string>(Result: false, Exception: true, ex.Message);
+					Redbox_002EUpdateManager_002ERemoting2091_002E_003C_003Ef__AnonymousType0<bool, bool, string> instance = new Redbox_002EUpdateManager_002ERemoting2091_002E_003C_003Ef__AnonymousType0<bool, bool, string>(Result: false, Exception: true, ex.Message);
 					service2.Enqueue("script", new ResultEntry
 					{
 						ID = work.ID,

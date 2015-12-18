@@ -54,24 +54,24 @@ internal sealed class Settings : ApplicationSettingsBase
 	[DebuggerNonUserCode]
 	public int TrimWorkingSetInterval => (int)this["TrimWorkingSetInterval"];
 
-	[ApplicationScopedSetting]
-	[DefaultSettingValue("00:00:30")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("00:00:30")]
+	[ApplicationScopedSetting]
 	public TimeSpan UpdateServiceTimeout => (TimeSpan)this["UpdateServiceTimeout"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("${Scripts}\\shutdown.lua")]
-	[ApplicationScopedSetting]
 	public string ShutdownScriptPath => (string)this["ShutdownScriptPath"];
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("60")]
+	[ApplicationScopedSetting]
 	public int MinimumRetryDelay => (int)this["MinimumRetryDelay"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("http://bundle-dev-02:8002")]
-	[ApplicationScopedSetting]
 	public string WcfUpdateServiceUrl => (string)this["WcfUpdateServiceUrl"];
 
 	[DebuggerNonUserCode]

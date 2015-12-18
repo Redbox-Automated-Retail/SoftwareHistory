@@ -10,5 +10,6 @@ internal enum PollRequestType
 	StatusMessage,
 	TransferStatisticReport,
 	GiveMeRepositoryChangesets,
-	StoreFiles
+	StoreFiles,
+	FileSets
 }

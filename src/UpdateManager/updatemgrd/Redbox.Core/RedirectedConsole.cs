@@ -34,6 +34,11 @@ internal class RedirectedConsole : IConsole, IDisposable
 		m_writer.Write(value);
 	}
 
+	public void Write(string format, params object[] parms)
+	{
+		m_writer.Write(format, parms);
+	}
+
 	public void WriteLine()
 	{
 		m_writer.WriteLine();

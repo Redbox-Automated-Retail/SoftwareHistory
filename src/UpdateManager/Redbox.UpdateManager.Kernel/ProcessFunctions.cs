@@ -107,7 +107,7 @@ public static class ProcessFunctions
 	}
 
 	[KernelFunction(Name = "kernel.killprocessbyname")]
-	internal static void KillProcessByName(string name)
+	public static void KillProcessByName(string name)
 	{
 		Process[] processes = Process.GetProcesses();
 		processes.FirstOrDefault((Process p) => string.Compare(p.ProcessName, name, ignoreCase: true) == 0)?.Kill();

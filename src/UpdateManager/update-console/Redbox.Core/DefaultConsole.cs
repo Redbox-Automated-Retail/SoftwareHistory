@@ -28,6 +28,11 @@ internal class DefaultConsole : IConsole, IDisposable
 		Console.Write(value);
 	}
 
+	public void Write(string format, params object[] parms)
+	{
+		Console.Write(format, parms);
+	}
+
 	public void WriteLine()
 	{
 		Console.WriteLine();

@@ -29,23 +29,30 @@ internal static class ConversionHelper
 		{
 			return null;
 		}
-		if (convertToType.IsEnum && value is string)
+		if (convertToType.IsEnum)
 		{
-			FlagsAttribute[] array = (FlagsAttribute[])convertToType.GetCustomAttributes(typeof(FlagsAttribute), inherit: false);
-			if (array != null && array.Length > 0)
+			if (value is string)
 			{
-				int num = 0;
-				string text = (string)value;
-				string[] array2 = text.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-				string[] array3 = array2;
-				foreach (string text2 in array3)
+				FlagsAttribute[] array = (FlagsAttribute[])convertToType.GetCustomAttributes(typeof(FlagsAttribute), inherit: false);
+				if (array != null && array.Length > 0)
 				{
-					object value2 = Enum.Parse(convertToType, text2.Trim(), ignoreCase: true);
-					num |= Convert.ToInt32(value2);
+					int num = 0;
+					string text = (string)value;
+					string[] array2 = text.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+					string[] array3 = array2;
+					foreach (string text2 in array3)
+					{
+						object value2 = Enum.Parse(convertToType, text2.Trim(), ignoreCase: true);
+						num |= Convert.ToInt32(value2);
+					}
+					return Enum.ToObject(convertToType, num);
 				}
-				return num;
+				return Enum.Parse(convertToType, (string)value, ignoreCase: true);
 			}
-			return Enum.Parse(convertToType, (string)value, ignoreCase: true);
+			if (value is int || value is byte || value is long || value is short || value is float || value is double)
+			{
+				return Enum.ToObject(convertToType, Convert.ToInt32(value));
+			}
 		}
 		if (convertToType == typeof(Type) && value is string)
 		{

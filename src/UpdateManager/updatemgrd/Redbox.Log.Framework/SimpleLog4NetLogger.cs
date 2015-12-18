@@ -8,9 +8,13 @@ namespace Redbox.Log.Framework;
 
 internal class SimpleLog4NetLogger : ILogger
 {
+	private string m_loggerName;
+
 	private ILog m_log;
 
 	private readonly Type m_logType;
+
+	public string LoggerName => m_loggerName;
 
 	private ILog LoggerInstance
 	{
@@ -27,6 +31,7 @@ internal class SimpleLog4NetLogger : ILogger
 	public SimpleLog4NetLogger(Type type)
 	{
 		m_logType = type;
+		m_loggerName = "SimpleLog4NetLogger";
 	}
 
 	public void Configure()
