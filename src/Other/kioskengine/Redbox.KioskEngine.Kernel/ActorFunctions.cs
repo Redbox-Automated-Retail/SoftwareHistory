@@ -7,10 +7,10 @@ using Redbox.Lua;
 
 namespace Redbox.KioskEngine.Kernel;
 
-internal static class ActorFunctions
+public static class ActorFunctions
 {
 	[KernelFunction(Name = "kernel.createactor")]
-	internal static void CreateActor(string actorName, bool addToFront, int x, int y, int width, int height, string text, string font, string image, object backgroundColor, object foregroundColor, object textRegion, object textTranslationPoint, object textRotationAngle, object hotSpot, string renderOptions, string hitOptions)
+	public static void CreateActor(string actorName, bool addToFront, int x, int y, int width, int height, string text, string font, string image, object backgroundColor, object foregroundColor, object textRegion, object textTranslationPoint, object textRotationAngle, object hotSpot, string renderOptions, string hitOptions)
 	{
 		if (string.IsNullOrEmpty(actorName))
 		{
@@ -58,15 +58,14 @@ internal static class ActorFunctions
 		{
 			actor.ForegroundColor = colorFromValue2.Value;
 		}
-		LuaTable luaTable2 = textRegion as LuaTable;
-		if (luaTable2 != null)
+		if (textRegion is LuaTable luaTable2)
 		{
 			actor.TextRegion = luaTable2.ToRectangle();
 			luaTable2.Dispose();
 		}
 		if (hotSpot is LuaTable luaTable3)
 		{
-			actor.HotSpot = luaTable2.ToRectangle();
+			actor.HotSpot = luaTable3.ToRectangle();
 			luaTable3.Dispose();
 		}
 		if (!string.IsNullOrEmpty(renderOptions))
@@ -138,13 +137,13 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.markactordirty")]
-	internal static void MarkActorDirty(string actorName)
+	public static void MarkActorDirty(string actorName)
 	{
 		GetActor(actorName)?.MarkDirty();
 	}
 
 	[KernelFunction(Name = "kernel.setactortag")]
-	internal static void SetActorTag(string actorName, object tag)
+	public static void SetActorTag(string actorName, object tag)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -154,7 +153,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactortext")]
-	internal static void SetActorText(string actorName, string text)
+	public static void SetActorText(string actorName, string text)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -164,7 +163,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorhtml")]
-	internal static void SetActorHtml(string actorName, string html)
+	public static void SetActorHtml(string actorName, string html)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -174,7 +173,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setrelativeactor")]
-	internal static void SetReleativeToActor(string actorName, string relativeActor)
+	public static void SetReleativeToActor(string actorName, string relativeActor)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -184,7 +183,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactortextalignx")]
-	internal static void SetActorTextAlignX(string actorName, string alignment)
+	public static void SetActorTextAlignX(string actorName, string alignment)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -194,7 +193,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactortextaligny")]
-	internal static void SetActorTextAlignY(string actorName, string alignment)
+	public static void SetActorTextAlignY(string actorName, string alignment)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -204,7 +203,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorforegroundcolor")]
-	internal static void SetActorForegroundColor(string actorName, object foregroundColor)
+	public static void SetActorForegroundColor(string actorName, object foregroundColor)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null && foregroundColor != null)
@@ -218,7 +217,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorbackgroundcolor")]
-	internal static void SetActorBackgroundColor(string actorName, object backgroundColor)
+	public static void SetActorBackgroundColor(string actorName, object backgroundColor)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null && backgroundColor != null)
@@ -232,7 +231,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorgradienttargetcolor")]
-	internal static void SetActorGradientTargetColor(string actorName, object gradientTargetColor)
+	public static void SetActorGradientTargetColor(string actorName, object gradientTargetColor)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null && gradientTargetColor != null)
@@ -246,7 +245,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorgradientangle")]
-	internal static void SetActorGradientAngle(string actorName, float gradientAngle)
+	public static void SetActorGradientAngle(string actorName, float gradientAngle)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -256,7 +255,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorimage")]
-	internal static void SetActorImage(string actorName, string resourceName)
+	public static void SetActorImage(string actorName, string resourceName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null && !string.IsNullOrEmpty(resourceName))
@@ -275,7 +274,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.isactorimageset")]
-	internal static bool IsActorImageSet(string actorName)
+	public static bool IsActorImageSet(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor == null)
@@ -286,19 +285,19 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.isactorvisible")]
-	internal static bool IsActorVisible(string actorName)
+	public static bool IsActorVisible(string actorName)
 	{
 		return GetActor(actorName)?.Visible ?? false;
 	}
 
 	[KernelFunction(Name = "kernel.isactorenabled")]
-	internal static bool IsActorEnabled(string actorName)
+	public static bool IsActorEnabled(string actorName)
 	{
 		return GetActor(actorName)?.Enabled ?? false;
 	}
 
 	[KernelFunction(Name = "kernel.clearactorimage")]
-	internal static void ClearActorImage(string actorName)
+	public static void ClearActorImage(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor == null)
@@ -316,7 +315,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactoropacity")]
-	internal static void SetActorOpacity(string actorName, float opacity)
+	public static void SetActorOpacity(string actorName, float opacity)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -326,7 +325,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorlocation")]
-	internal static void SetActorLocation(string actorName, int x, int y)
+	public static void SetActorLocation(string actorName, int x, int y)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -347,7 +346,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorframe")]
-	internal static void SetActorFrame(string actorName)
+	public static void SetActorFrame(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -357,19 +356,19 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getactorx")]
-	internal static int GetActorX(string actorName)
+	public static int GetActorX(string actorName)
 	{
 		return GetActor(actorName)?.X ?? 0;
 	}
 
 	[KernelFunction(Name = "kernel.getactory")]
-	internal static int GetActorY(string actorName)
+	public static int GetActorY(string actorName)
 	{
 		return GetActor(actorName)?.Y ?? 0;
 	}
 
 	[KernelFunction(Name = "kernel.moveactorx")]
-	internal static void MoveActorX(string actorName, int pixels)
+	public static void MoveActorX(string actorName, int pixels)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -379,7 +378,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.moveactory")]
-	internal static void MoveActorY(string actorName, int pixels)
+	public static void MoveActorY(string actorName, int pixels)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -389,7 +388,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorx")]
-	internal static void SetActorX(string actorName, int x)
+	public static void SetActorX(string actorName, int x)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -408,7 +407,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactory")]
-	internal static void SetActorY(string actorName, int y)
+	public static void SetActorY(string actorName, int y)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -427,19 +426,19 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getactorheight")]
-	internal static int GetActorHeight(string actorName)
+	public static int GetActorHeight(string actorName)
 	{
 		return GetActor(actorName)?.Height ?? 0;
 	}
 
 	[KernelFunction(Name = "kernel.getactorwidth")]
-	internal static int GetActorWidth(string actorName)
+	public static int GetActorWidth(string actorName)
 	{
 		return GetActor(actorName)?.Width ?? 0;
 	}
 
 	[KernelFunction(Name = "kernel.setactorheight")]
-	internal static void SetActorHeight(string actorName, int height)
+	public static void SetActorHeight(string actorName, int height)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -449,7 +448,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactorwidth")]
-	internal static void SetActorWidth(string actorName, int width)
+	public static void SetActorWidth(string actorName, int width)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -459,7 +458,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setactordimension")]
-	internal static void SetActorDimension(string actorName, int width, int height)
+	public static void SetActorDimension(string actorName, int width, int height)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -470,7 +469,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.measureactortext")]
-	internal static LuaTable MeasureActorText(string actorName)
+	public static LuaTable MeasureActorText(string actorName)
 	{
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		IScene scene = service.GetScene("Default");
@@ -494,7 +493,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.hideactor")]
-	internal static void HideActor(string actorName)
+	public static void HideActor(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -504,7 +503,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.showactor")]
-	internal static void ShowActor(string actorName)
+	public static void ShowActor(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -513,15 +512,27 @@ internal static class ActorFunctions
 		}
 	}
 
+	public static void SetActorVisible(string actorName, bool value)
+	{
+		if (value)
+		{
+			ShowActor(actorName);
+		}
+		else
+		{
+			HideActor(actorName);
+		}
+	}
+
 	[KernelFunction(Name = "kernel.removeactor")]
-	internal static void RemoveActor(string actorName)
+	public static void RemoveActor(string actorName)
 	{
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		service.GetScene("Default")?.Remove(actorName)?.Dispose();
 	}
 
 	[KernelFunction(Name = "kernel.removeactors")]
-	internal static void RemoveActors(LuaTable actorNames)
+	public static void RemoveActors(LuaTable actorNames)
 	{
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		IScene scene = service.GetScene("Default");
@@ -539,26 +550,26 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.clearactors")]
-	internal static void ClearActors()
+	public static void ClearActors()
 	{
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		service.GetScene("Default")?.Clear();
 	}
 
 	[KernelFunction(Name = "kernel.centeractorx")]
-	internal static void CenterActorX(string actorName)
+	public static void CenterActorX(string actorName)
 	{
 		GetActor(actorName)?.CenterHorizontally();
 	}
 
 	[KernelFunction(Name = "kernel.centeractory")]
-	internal static void CenterActorY(string actorName)
+	public static void CenterActorY(string actorName)
 	{
 		GetActor(actorName)?.CenterVertically();
 	}
 
 	[KernelFunction(Name = "kernel.enableactor")]
-	internal static void EnableActor(string actorName)
+	public static void EnableActor(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -568,7 +579,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.disableactor")]
-	internal static void DisableActor(string actorName)
+	public static void DisableActor(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -578,7 +589,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.registeractorhitnotify")]
-	internal static void RegisterActorHitNotify(string actorName, HitHandler hitHandler)
+	public static void RegisterActorHitNotify(string actorName, HitHandler hitHandler)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor == null)
@@ -598,13 +609,13 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.executehitnotify")]
-	internal static void ExecuteHitNotify(string actorName)
+	public static void ExecuteHitNotify(string actorName)
 	{
 		GetActor(actorName)?.RaiseHit();
 	}
 
 	[KernelFunction(Name = "kernel.getactorsbytag")]
-	internal static LuaTable GetActorsByTag(string tag)
+	public static LuaTable GetActorsByTag(string tag)
 	{
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
@@ -620,7 +631,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getactorbytaborder")]
-	internal static string GetActorByTabOrder(int tabOrder)
+	public static string GetActorByTabOrder(int tabOrder)
 	{
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		IScene scene = service.GetScene("Default");
@@ -628,19 +639,19 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getactortag")]
-	internal static object GetActorTag(string name)
+	public static object GetActorTag(string name)
 	{
 		return GetActor(name)?.Tag;
 	}
 
 	[KernelFunction(Name = "kernel.getactortext")]
-	internal static string GetActorText(string name)
+	public static string GetActorText(string name)
 	{
 		return GetActor(name)?.Text;
 	}
 
 	[KernelFunction(Name = "kernel.setactortabstops")]
-	internal static void SetActorTabStops(string name, object tabStops)
+	public static void SetActorTabStops(string name, object tabStops)
 	{
 		IActor actor = GetActor(name);
 		if (actor != null && tabStops is LuaTable luaTable)
@@ -651,13 +662,13 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.gettaborder")]
-	internal static int? GetTabOrder(string actorName)
+	public static int? GetTabOrder(string actorName)
 	{
 		return GetActor(actorName)?.TabOrder;
 	}
 
 	[KernelFunction(Name = "kernel.settaborder")]
-	internal static void SetTabOrder(string actorName, int tabOrder)
+	public static void SetTabOrder(string actorName, int tabOrder)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -667,7 +678,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setbordercolor")]
-	internal static void SetBorderColor(string actorName, object value)
+	public static void SetBorderColor(string actorName, object value)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -681,7 +692,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setborderstrokeweight")]
-	internal static void SetBorderStrokeWeight(string actorName, float weight)
+	public static void SetBorderStrokeWeight(string actorName, float weight)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -691,7 +702,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.setcornersize")]
-	internal static void SetCornerSize(string actorName, int width, int height)
+	public static void SetCornerSize(string actorName, int width, int height)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -701,7 +712,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.clearcornersize")]
-	internal static void ClearCornerSize(string actorName)
+	public static void ClearCornerSize(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor != null)
@@ -711,13 +722,13 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getlasthitactortag")]
-	internal static object GetLastHitActorTag()
+	public static object GetLastHitActorTag()
 	{
 		return ServiceLocator.Instance.GetService<IViewService>()?.LastHitActorTag;
 	}
 
 	[KernelFunction(Name = "kernel.setlasthitactortag")]
-	internal static void SetLastHitActorTag(string actorTag)
+	public static void SetLastHitActorTag(string actorTag)
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		if (service != null)
@@ -727,13 +738,13 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getlasthitactorname")]
-	internal static string GetLastHitActorName()
+	public static string GetLastHitActorName()
 	{
 		return ServiceLocator.Instance.GetService<IViewService>()?.LastHitActorName;
 	}
 
 	[KernelFunction(Name = "kernel.setlasthitactorname")]
-	internal static void SetLastHitActorName(string actorName)
+	public static void SetLastHitActorName(string actorName)
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		if (service != null)
@@ -743,7 +754,7 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getactortextregion")]
-	internal static string GetActorTextRegion(string actorName)
+	public static string GetActorTextRegion(string actorName)
 	{
 		IActor actor = GetActor(actorName);
 		if (actor == null)
@@ -755,9 +766,15 @@ internal static class ActorFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getactoropacity")]
-	internal static float GetActorOpacity(string actorName)
+	public static float GetActorOpacity(string actorName)
 	{
 		return GetActor(actorName)?.Opacity ?? 1f;
+	}
+
+	public static IActor GetActor(string name)
+	{
+		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
+		return service.GetScene("Default")?.GetActor(name);
 	}
 
 	private static Color? GetColorFromValue(object value)
@@ -776,11 +793,5 @@ internal static class ActorFunctions
 			return Color.FromName(name);
 		}
 		return null;
-	}
-
-	private static IActor GetActor(string name)
-	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		return service.GetScene("Default")?.GetActor(name);
 	}
 }

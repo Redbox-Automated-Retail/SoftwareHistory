@@ -22,4 +22,14 @@ internal static class VersionFunctions
 	{
 		return System.Environment.OSVersion.ToString();
 	}
+
+	[KernelFunction(Name = "kernel.iswindows7")]
+	internal static bool IsWindows7()
+	{
+		if (System.Environment.OSVersion.Version.Major == 6)
+		{
+			return System.Environment.OSVersion.Version.Minor == 1;
+		}
+		return false;
+	}
 }

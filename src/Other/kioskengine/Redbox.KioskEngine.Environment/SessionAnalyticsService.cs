@@ -55,7 +55,10 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 		try
 		{
 			AnalyticsSession analyticsSession = new AnalyticsSession(sessionId, sessionType);
-			XDocument document = new XDocument(new XDeclaration("1.0", "utf-8", "yes"), new XElement("session", new XElement("sessionId", sessionId), new XElement("sessionType", sessionType.ToString()), new XElement("sessionStart", analyticsSession.startTime.ToString("yyyy/MM/dd HH:mm:ss:ms")), new XElement("shoppingCart", new XElement("cartItems"), new XElement("ticketItems")), new XElement("promoCodes"), new XElement("authorizations"), new XElement("views")));
+			XDocument document = new XDocument(new XDeclaration("1.0", "utf-8", "yes"), new XElement("session", new XElement("sessionId", sessionId), new XElement("sessionType", sessionType.ToString()), new XElement("sessionStart", analyticsSession.startTime.ToString("yyyy/MM/dd HH:mm:ss:ms")), new XElement("shoppingCart", new object[1]
+			{
+				new XElement("cartItems")
+			}), new XElement("promoCodes"), new XElement("authorizations"), new XElement("views")));
 			analyticsSession.document = document;
 			m_analyticsSessions.Add(sessionId, analyticsSession);
 			ActiveSession = sessionId;

@@ -7,8 +7,8 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.KioskEngine.Bootstrap.Properties;
 
-[DebuggerNonUserCode]
 [GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+[DebuggerNonUserCode]
 [CompilerGenerated]
 internal class Resources
 {

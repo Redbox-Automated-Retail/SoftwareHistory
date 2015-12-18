@@ -165,6 +165,18 @@ public static class EnvironmentFunctions
 		m_showMaintenanceViewHandler = showMaintenanceView;
 	}
 
+	[KernelFunction(Name = "kernel.registercorruptdb")]
+	internal static void RegisterCorruptDbHandler(CorruptDbCallback callback)
+	{
+		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RegisterCorruptDbCallback(callback);
+	}
+
+	[KernelFunction(Name = "kernel.unregistercorruptdb")]
+	internal static void UnRegisterCorruptDbHandler()
+	{
+		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.UnRegisterCorruptDbCallback();
+	}
+
 	[KernelFunction(Name = "kernel.registerdatastoreerrorhandler")]
 	internal static void RegisterDataStoreErrorHandler(LuaFunction handleDataStoreErrors)
 	{

@@ -1,7 +1,5 @@
 using System;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
@@ -87,53 +85,5 @@ internal static class ImageFunctions
 			LogHelper.Instance.Log("*** Unable to parse Lua Rectangle passed to kernel.writetextonimage: {0}", ex.Message);
 		}
 		service.RegisterImageWithText(outputToImageName, textToDisplay, service2.GetFont(font, out var _), service2.GetBitmap(baseImageName), textLocation);
-	}
-
-	[KernelFunction(Name = "kernel.drawimageonimage")]
-	internal static bool DrawImageOnImage(string imageCacheName, string baseImageName, string outputToImageName, LuaTable rectangle)
-	{
-		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-		if (service == null)
-		{
-			throw new SystemException("IBitmapCacheService is not registered.");
-		}
-		if (service.GetImage(outputToImageName) != null)
-		{
-			return true;
-		}
-		IDataCacheService service2 = ServiceLocator.Instance.GetService<IDataCacheService>();
-		if (service2 == null)
-		{
-			throw new SystemException("IDataCacheService is not registered.");
-		}
-		byte[] array = service2.GetContent(DataCacheType.Image, imageCacheName);
-		IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (array == null)
-		{
-			Image image = service.GetImage(imageCacheName);
-			if (image == null)
-			{
-				image = service3.GetBitmap(imageCacheName);
-			}
-			if (image != null)
-			{
-				MemoryStream memoryStream = new MemoryStream();
-				image.Save(memoryStream, ImageFormat.Png);
-				array = memoryStream.ToArray();
-			}
-		}
-		Rectangle imageLocation = default(Rectangle);
-		try
-		{
-			imageLocation.X = int.Parse(rectangle["X"].ToString());
-			imageLocation.Y = int.Parse(rectangle["Y"].ToString());
-			imageLocation.Width = int.Parse(rectangle["Width"].ToString());
-			imageLocation.Height = int.Parse(rectangle["Height"].ToString());
-		}
-		catch (Exception ex)
-		{
-			LogHelper.Instance.Log("*** Unable to parse Lua Rectangle passed to kernel.drawimageonimage: {0}", ex.Message);
-		}
-		return service.RegisterImageWithImage(outputToImageName, array, service3.GetBitmap(baseImageName), imageLocation) != null;
 	}
 }

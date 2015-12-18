@@ -62,16 +62,16 @@ public class SelectBundleForm : Form
 
 	private ToolStripButton m_dependenciesToolStripButton;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool ShowDebugger => m_breakOnStartToolStripButton.Checked;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public IResourceBundle SelectedBundle { get; set; }
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public string SearchPath
 	{
 		get

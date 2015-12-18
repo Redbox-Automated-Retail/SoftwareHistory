@@ -183,6 +183,14 @@ internal static class QueueFunctions
 						{
 							if (!item.ContainsKey("VendStatus") || string.Compare((string)item["VendStatus"], "Vended", ignoreCase: true) == 0)
 							{
+								if (item.ContainsKey("MultiDisc") && string.Compare(item["MultiDisc"].ToString(), "true", ignoreCase: true) == 0 && item.ContainsKey("Prices"))
+								{
+									IDictionary<string, object> dictionary6 = (IDictionary<string, object>)item["Prices"];
+									if (dictionary6.ContainsKey("initialnight") && (string.Compare(dictionary6["initialnight"].ToString(), "0") == 0 || string.Compare(dictionary6["initialnight"].ToString(), "0.0") == 0))
+									{
+										continue;
+									}
+								}
 								if (!string.IsNullOrEmpty(productFamily))
 								{
 									if (item.ContainsKey("ProductFamily") && string.Compare((string)item["ProductFamily"], productFamily, ignoreCase: true) == 0)

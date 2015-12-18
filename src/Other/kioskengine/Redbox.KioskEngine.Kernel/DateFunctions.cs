@@ -6,7 +6,7 @@ using Redbox.Lua;
 
 namespace Redbox.KioskEngine.Kernel;
 
-internal static class DateFunctions
+public static class DateFunctions
 {
 	[KernelFunction(Name = "kernel.dateadd")]
 	internal static LuaTable DateAdd(LuaTable date, string interval)
@@ -97,7 +97,7 @@ internal static class DateFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getelapseddays")]
-	internal static object GetElapsedDays(string startDateString, string endDateString)
+	public static object GetElapsedDays(string startDateString, string endDateString)
 	{
 		string[] formats = new string[3] { "yyyyMMdd", "yyyyMMddHHmm", "yyyyMMddHHmmss" };
 		if (DateTime.TryParseExact(startDateString, formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out var result) && DateTime.TryParseExact(endDateString, formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out var result2))
@@ -105,6 +105,15 @@ internal static class DateFunctions
 			return (result2 - result).TotalDays;
 		}
 		return null;
+	}
+
+	public static bool ParseDateString(string dateString, out DateTime date)
+	{
+		string[] formats = new string[3] { "yyyyMMdd", "yyyyMMddHHmm", "yyyyMMddHHmmss" };
+		bool flag = false;
+		flag = DateTime.TryParseExact(dateString, formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out var result);
+		date = result;
+		return flag;
 	}
 
 	[KernelFunction(Name = "kernel.getelapsedhours")]

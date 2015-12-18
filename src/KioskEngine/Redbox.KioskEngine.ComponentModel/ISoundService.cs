@@ -2,8 +2,6 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface ISoundService
 {
-	bool TTSEnabled { get; }
-
 	void PlaySync(byte[] buffer);
 
 	void PlayAsync(byte[] buffer);
@@ -15,8 +13,4 @@ public interface ISoundService
 	bool StopPlay();
 
 	void Reset();
-
-	void SayTTS(string speech);
-
-	void SilenceTTS();
 }

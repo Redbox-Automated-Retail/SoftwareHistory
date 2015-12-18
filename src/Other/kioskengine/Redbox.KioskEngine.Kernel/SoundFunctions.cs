@@ -12,6 +12,12 @@ internal static class SoundFunctions
 		service.StopPlay();
 	}
 
+	[KernelFunction(Name = "kernel.ttsrepeat")]
+	internal static void TTSRepeat()
+	{
+		ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSRepeatSequence();
+	}
+
 	[KernelFunction(Name = "kernel.soundplaysync")]
 	internal static void PlaySoundSync(string resourceName)
 	{
@@ -33,26 +39,6 @@ internal static class SoundFunctions
 		if (sound != null)
 		{
 			service2.PlayAsync(sound);
-		}
-	}
-
-	[KernelFunction(Name = "kernel.soundsaytts")]
-	internal static void SoundSayTTS(string speech)
-	{
-		ISoundService service = ServiceLocator.Instance.GetService<ISoundService>();
-		if (service.TTSEnabled)
-		{
-			service.SayTTS(speech);
-		}
-	}
-
-	[KernelFunction(Name = "kernel.soundsilencetts")]
-	internal static void SoundSilenceTTS()
-	{
-		ISoundService service = ServiceLocator.Instance.GetService<ISoundService>();
-		if (service.TTSEnabled)
-		{
-			service.SilenceTTS();
 		}
 	}
 }

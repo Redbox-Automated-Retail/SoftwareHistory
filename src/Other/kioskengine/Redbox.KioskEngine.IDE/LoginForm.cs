@@ -72,7 +72,7 @@ public class LoginForm : Form
 
 	public void ShowError(string message)
 	{
-		m_errorProvider.SetError(m_userIdTextBox, message);
+		m_errorProvider.SetError(m_userIdTextBox, "Invalid UserName / Password");
 		m_spinnerPictureBox.Visible = false;
 		m_userIdTextBox.Enabled = true;
 		m_passwordTextBox.Enabled = true;

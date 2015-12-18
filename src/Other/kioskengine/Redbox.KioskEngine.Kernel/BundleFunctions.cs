@@ -11,7 +11,7 @@ using Redbox.REDS.Framework;
 
 namespace Redbox.KioskEngine.Kernel;
 
-internal static class BundleFunctions
+public static class BundleFunctions
 {
 	[KernelFunction(Name = "kernel.activatebundle")]
 	internal static void ActivateBundle(string productName, string productVersion)
@@ -178,7 +178,7 @@ internal static class BundleFunctions
 	}
 
 	[KernelFunction(Name = "kernel.getdictionary")]
-	internal static LuaTable GetDictionary(string name)
+	public static LuaTable GetDictionary(string name)
 	{
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		XmlNode xml = service.GetXml(name);
@@ -258,8 +258,8 @@ internal static class BundleFunctions
 		return service.Filter["market"];
 	}
 
-	[KernelFunction(Name = "kernel.setmarket")]
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
+	[KernelFunction(Name = "kernel.setmarket")]
 	internal static void SetMarket(string market)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
@@ -286,16 +286,16 @@ internal static class BundleFunctions
 		ResetCurrentView();
 	}
 
-	[KernelFunction(Name = "kernel.getculture")]
 	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
+	[KernelFunction(Name = "kernel.getculture")]
 	internal static string GetCulture()
 	{
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		return service.Filter["culture"];
 	}
 
-	[KernelFunction(Name = "kernel.setculture")]
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
+	[KernelFunction(Name = "kernel.setculture")]
 	internal static void SetCulture(string culture)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
@@ -312,8 +312,8 @@ internal static class BundleFunctions
 		return service.Filter["environment"];
 	}
 
-	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	[KernelFunction(Name = "kernel.setenvironment")]
+	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetEnvironment(string environment)
 	{
 		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
@@ -330,8 +330,8 @@ internal static class BundleFunctions
 		return service.Filter["runtime"];
 	}
 
-	[KernelFunction(Name = "kernel.getplatform")]
 	[Obsolete("Kernel function is deprecated in favor of kernel.getfilter.")]
+	[KernelFunction(Name = "kernel.getplatform")]
 	internal static string GetPlatform()
 	{
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();

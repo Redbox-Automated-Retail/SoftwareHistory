@@ -177,20 +177,6 @@ internal static class CommandHelper
 		}
 	}
 
-	[EngineCommand(Name = "ExportSessions")]
-	internal static void ExportSessions(string[] parms)
-	{
-		try
-		{
-			LogHelper.Instance.Log("WM_COPYDATA: Export sessions to file: {0}", parms[0]);
-			ServiceLocator.Instance.GetService<IShoppingSessionService>()?.ExporToXml(parms[0]);
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An unhandled exception was raised in ProcessCommandMessage.ExportSessions.", e);
-		}
-	}
-
 	private static void ExecuteCommand(string name, string[] parms)
 	{
 		if (!m_commands.ContainsKey(name))

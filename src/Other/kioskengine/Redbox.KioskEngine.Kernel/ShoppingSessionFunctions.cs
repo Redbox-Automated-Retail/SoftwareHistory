@@ -79,7 +79,7 @@ internal static class ShoppingSessionFunctions
 	[KernelFunction(Name = "kernel.sessionaddlineitem2")]
 	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices)
 	{
-		AddLineItem(sessionId, groupName, barcode, status, price, quantity, prices, string.Empty, string.Empty, ItemSourceType.Browse.ToString());
+		AddLineItem4(sessionId, groupName, barcode, status, price, quantity, prices, string.Empty, string.Empty, ItemSourceType.Browse.ToString());
 	}
 
 	[KernelFunction(Name = "kernel.sessionsave")]
@@ -166,6 +166,12 @@ internal static class ShoppingSessionFunctions
 		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.ClearDiscount();
 	}
 
+	[KernelFunction(Name = "kernel.sessionsetblocklisted")]
+	internal static void SetBlocklisted(string sessionId, bool value)
+	{
+		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetBlocklisted(value);
+	}
+
 	[KernelFunction(Name = "kernel.sessionsetusecredits")]
 	internal static void SetUseCredits(string sessionId, CreditElection value)
 	{
@@ -202,7 +208,7 @@ internal static class ShoppingSessionFunctions
 	}
 
 	[KernelFunction(Name = "kernel.sessionaddlineitem3")]
-	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices, string productFamily, string productType)
+	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices, string productFamily, string productType, bool multiDisc)
 	{
 		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
 		if (service == null)
@@ -228,11 +234,12 @@ internal static class ShoppingSessionFunctions
 		{
 			shoppingCartLineItem.SetPrice(key.ToString(), Convert.ToDecimal(prices[key]));
 		}
+		shoppingCartLineItem.SetMultiDisc(multiDisc);
 		prices.Dispose();
 	}
 
 	[KernelFunction(Name = "kernel.sessionaddlineitem4")]
-	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices, string productFamily, string productType, string sourceType)
+	internal static void AddLineItem4(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices, string productFamily, string productType, string sourceType)
 	{
 		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
 		if (service == null)
@@ -261,10 +268,89 @@ internal static class ShoppingSessionFunctions
 		prices.Dispose();
 	}
 
+	[KernelFunction(Name = "kernel.sessionaddlineitem5")]
+	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices, string productFamily, string productType, string sourceType, LuaTable blurayUpsell)
+	{
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service == null)
+		{
+			return;
+		}
+		IShoppingSession session = service.GetSession(sessionId);
+		if (session == null)
+		{
+			return;
+		}
+		IShoppingCartLineItemGroup shoppingCartLineItemGroup = session.ShoppingCart.GetGroup(groupName);
+		if (shoppingCartLineItemGroup == null)
+		{
+			return;
+		}
+		IShoppingCartLineItem shoppingCartLineItem = shoppingCartLineItemGroup.AddLineItem(barcode, Enum<LineItemStatus>.ParseIgnoringCase(status, LineItemStatus.Pending), price, quantity, productFamily, productType, Enum<ItemSourceType>.ParseIgnoringCase(sourceType, ItemSourceType.Browse));
+		if (shoppingCartLineItem == null || prices == null || blurayUpsell == null)
+		{
+			return;
+		}
+		foreach (object key in prices.Keys)
+		{
+			shoppingCartLineItem.SetPrice(key.ToString(), Convert.ToDecimal(prices[key]));
+		}
+		if (blurayUpsell.Keys.Count > 0)
+		{
+			shoppingCartLineItem.SetBlurayUpsell("ProductGroupId", Convert.ToInt32(blurayUpsell["product_group_id"]));
+			shoppingCartLineItem.SetBlurayUpsell("Offer", blurayUpsell["offer"].ToString());
+			shoppingCartLineItem.SetBlurayUpsell("TitleId", Convert.ToInt64(blurayUpsell["title_id"]));
+		}
+		prices.Dispose();
+		blurayUpsell.Dispose();
+	}
+
+	[KernelFunction(Name = "kernel.sessionaddlineitem6")]
+	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices, string productFamily, string productType, string sourceType, LuaTable blurayUpsell, bool multiDisc)
+	{
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service == null)
+		{
+			return;
+		}
+		IShoppingSession session = service.GetSession(sessionId);
+		if (session == null)
+		{
+			return;
+		}
+		IShoppingCartLineItemGroup shoppingCartLineItemGroup = session.ShoppingCart.GetGroup(groupName);
+		if (shoppingCartLineItemGroup == null)
+		{
+			return;
+		}
+		IShoppingCartLineItem shoppingCartLineItem = shoppingCartLineItemGroup.AddLineItem(barcode, Enum<LineItemStatus>.ParseIgnoringCase(status, LineItemStatus.Pending), price, quantity, productFamily, productType, Enum<ItemSourceType>.ParseIgnoringCase(sourceType, ItemSourceType.Browse));
+		if (shoppingCartLineItem == null || prices == null || blurayUpsell == null)
+		{
+			return;
+		}
+		foreach (object key in prices.Keys)
+		{
+			shoppingCartLineItem.SetPrice(key.ToString(), Convert.ToDecimal(prices[key]));
+		}
+		if (blurayUpsell.Keys.Count > 0)
+		{
+			shoppingCartLineItem.SetBlurayUpsell("ProductGroupId", Convert.ToInt32(blurayUpsell["product_group_id"]));
+			shoppingCartLineItem.SetBlurayUpsell("Offer", blurayUpsell["offer"].ToString());
+			shoppingCartLineItem.SetBlurayUpsell("TitleId", Convert.ToInt64(blurayUpsell["title_id"]));
+		}
+		shoppingCartLineItem.SetMultiDisc(multiDisc);
+		prices.Dispose();
+		blurayUpsell.Dispose();
+	}
+
 	[KernelFunction(Name = "kernel.sessionsave2")]
 	internal static void SaveSession(string sessionId)
 	{
-		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.Save();
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service != null)
+		{
+			IShoppingSession session = service.GetSession(sessionId);
+		}
 	}
 
 	[KernelFunction(Name = "kernel.sessionsetlineitemstatus2")]

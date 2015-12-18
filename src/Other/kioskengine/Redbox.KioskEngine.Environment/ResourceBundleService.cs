@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -19,6 +20,8 @@ public class ResourceBundleService : IResourceBundleService
 	private string m_applicationPath;
 
 	private BundleCollection m_innerBundles;
+
+	private Dictionary<string, Assembly> _asseblies = new Dictionary<string, Assembly>();
 
 	public static ResourceBundleService Instance => Singleton<ResourceBundleService>.Instance;
 
@@ -214,16 +217,23 @@ public class ResourceBundleService : IResourceBundleService
 				}
 				if (!errorList.ContainsError())
 				{
-					IKernelFunctionRegistryService service5 = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
-					service4.RegisterFunctions(service5.GetKernelFunctions());
+					IKernelFunctionRegistryService kernelFunctionRegistryService = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
+					if (kernelFunctionRegistryService != null)
+					{
+						LinqExtensions.ForEach(_asseblies, delegate(KeyValuePair<string, Assembly> pair)
+						{
+							kernelFunctionRegistryService.RegisterKernelFunctions(pair.Value, pair.Key);
+						});
+					}
+					service4.RegisterFunctions(kernelFunctionRegistryService.GetKernelFunctions());
 					if (ShowDebugger)
 					{
 						ShowDebugger = false;
-						IDebugService service6 = ServiceLocator.Instance.GetService<IDebugService>();
-						if (service6 != null)
+						IDebugService service5 = ServiceLocator.Instance.GetService<IDebugService>();
+						if (service5 != null)
 						{
-							service6.IsApplicationRunning = false;
-							service6.ActivateDebugger();
+							service5.IsApplicationRunning = false;
+							service5.ActivateDebugger();
 						}
 					}
 					else
@@ -241,8 +251,8 @@ public class ResourceBundleService : IResourceBundleService
 							service4.ExecuteApplication();
 						}
 					}
-					ICallbackService service7 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service7.Resume();
+					ICallbackService service6 = ServiceLocator.Instance.GetService<ICallbackService>();
+					service6.Resume();
 				}
 			}
 			LogHelper.Instance.Log("Time to switch bundle: {0}", executionTimer.Elapsed);
@@ -594,5 +604,10 @@ public class ResourceBundleService : IResourceBundleService
 		service14.Reset();
 		service.Reset();
 		service10.CloseAllStores();
+	}
+
+	public void RegisterAssemblyFunctions(string name, Assembly assembly)
+	{
+		_asseblies[name] = assembly;
 	}
 }

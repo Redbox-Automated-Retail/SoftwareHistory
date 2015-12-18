@@ -33,6 +33,8 @@ public class QueueService : IQueueService, IDisposable
 
 	internal const int DefaultQueueReadPeriodMax = 30000;
 
+	private const string EncryptedPrefix = "RedboxEncrypted";
+
 	private Timer m_queueTimer;
 
 	private volatile bool m_isProcessingMessage;
@@ -178,34 +180,6 @@ public class QueueService : IQueueService, IDisposable
 		return errorList;
 	}
 
-	public ErrorList Peek(out object instance)
-	{
-		ErrorList errorList = new ErrorList();
-		instance = null;
-		if (Connection == null)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q998", "No database connection available.", "The initialization of the service may have failed; please reinitialize the Queue Service."));
-			return errorList;
-		}
-		try
-		{
-			using VistaDBCommand vistaDBCommand = new VistaDBCommand();
-			vistaDBCommand.Connection = Connection;
-			vistaDBCommand.CommandText = "SELECT TOP 1 * FROM Queue ORDER BY Priority DESC, ID ASC";
-			using VistaDBDataReader vistaDBDataReader = vistaDBCommand.ExecuteReader();
-			if (vistaDBDataReader.Read())
-			{
-				instance = Encoding.ASCII.GetString((byte[])vistaDBDataReader["Data"]);
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An unhandled exception was raised in QueueService.Peek", e);
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "An unhandled exception was raised in QueueService.Peek.", e));
-		}
-		return errorList;
-	}
-
 	public ErrorList GetDepth(out int count)
 	{
 		ErrorList errorList = new ErrorList();
@@ -245,13 +219,14 @@ public class QueueService : IQueueService, IDisposable
 			vistaDBCommand.CommandText = "INSERT INTO Queue( Priority, Type, Data ) VALUES( @Priority, @Type, @Data )";
 			vistaDBCommand.Parameters.Add("@Type", type);
 			vistaDBCommand.Parameters.Add("@Priority", priority);
-			vistaDBCommand.Parameters.Add("@Data", Encoding.ASCII.GetBytes(ObjectExtensions.ToJson(message)));
+			vistaDBCommand.Parameters.Add("@Data", ToEncryptedMessage(message));
 			vistaDBCommand.ExecuteNonQuery();
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in QueueService.Enqueue.", e);
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "An unhandled exception was raised in QueueService.Enqueue.", e));
+			HandleCorruptDatabase();
 		}
 		return errorList;
 	}
@@ -273,20 +248,16 @@ public class QueueService : IQueueService, IDisposable
 			vistaDBCommand.CommandText = "INSERT INTO Queue( Priority, Type, Data ) VALUES( @Priority, @Type, @Data ); SELECT @@IDENTITY;";
 			vistaDBCommand.Parameters.Add("@Type", type);
 			vistaDBCommand.Parameters.Add("@Priority", priority);
-			vistaDBCommand.Parameters.Add("@Data", Encoding.ASCII.GetBytes(ObjectExtensions.ToJson(message)));
+			vistaDBCommand.Parameters.Add("@Data", ToEncryptedMessage(message));
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("QID", Convert.ToInt32(vistaDBCommand.ExecuteScalar()).ToString(), "used to get unique value of queued softsync"));
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in QueueService.EnqueueOnlyOne.", e);
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "An unhandled exception was raised in QueueService.EnqueueOnlyOne.", e));
+			HandleCorruptDatabase();
 		}
 		return errorList;
-	}
-
-	public ErrorList Update(int id, object message)
-	{
-		return Update(id, ObjectExtensions.ToJson(message));
 	}
 
 	public ErrorList Update(int id, string message)
@@ -303,13 +274,14 @@ public class QueueService : IQueueService, IDisposable
 			vistaDBCommand.Connection = Connection;
 			vistaDBCommand.CommandText = "UPDATE Queue SET Data = @Data WHERE ID = @Id";
 			vistaDBCommand.Parameters.Add("@Id", id);
-			vistaDBCommand.Parameters.Add("@Data", Encoding.ASCII.GetBytes(message));
+			vistaDBCommand.Parameters.Add("@Data", ToEncryptedMessage(message));
 			vistaDBCommand.ExecuteNonQuery();
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in QueueService.Update.", e);
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "An unhandled exception was raised in QueueService.EnqueueOnlyOne.", e));
+			HandleCorruptDatabase();
 		}
 		return errorList;
 	}
@@ -330,14 +302,7 @@ public class QueueService : IQueueService, IDisposable
 			using VistaDBDataReader vistaDBDataReader = vistaDBCommand.ExecuteReader();
 			while (vistaDBDataReader.Read())
 			{
-				action(new Message
-				{
-					ID = (int)vistaDBDataReader["ID"],
-					Type = (string)vistaDBDataReader["Type"],
-					CreatedOn = (DateTime)vistaDBDataReader["CreatedOn"],
-					Data = (byte[])vistaDBDataReader["Data"],
-					Priority = (byte)vistaDBDataReader["Priority"]
-				});
+				action(ToMessage(vistaDBDataReader));
 			}
 		}
 		catch (Exception e)
@@ -365,14 +330,7 @@ public class QueueService : IQueueService, IDisposable
 			using VistaDBDataReader vistaDBDataReader = vistaDBCommand.ExecuteReader();
 			while (vistaDBDataReader.Read())
 			{
-				action(new Message
-				{
-					ID = (int)vistaDBDataReader["ID"],
-					Type = (string)vistaDBDataReader["Type"],
-					CreatedOn = (DateTime)vistaDBDataReader["CreatedOn"],
-					Data = (byte[])vistaDBDataReader["Data"],
-					Priority = (byte)vistaDBDataReader["Priority"]
-				});
+				action(ToMessage(vistaDBDataReader));
 			}
 		}
 		catch (Exception e)
@@ -432,7 +390,7 @@ public class QueueService : IQueueService, IDisposable
 		{
 			using VistaDBCommand vistaDBCommand = new VistaDBCommand();
 			vistaDBCommand.Connection = Connection;
-			if (DateTime.UtcNow.Hour > 22 || DateTime.UtcNow.Hour < 3)
+			if (DateTime.Now.Hour >= 1 && DateTime.Now.Hour < 5)
 			{
 				vistaDBCommand.CommandText = "SELECT TOP 1 ID, Type, Priority, Data, CreatedOn FROM Queue ORDER BY Priority DESC, ID ASC;";
 			}
@@ -445,14 +403,7 @@ public class QueueService : IQueueService, IDisposable
 			{
 				return errorList;
 			}
-			if (!predicate(new Message
-			{
-				ID = (int)vistaDBDataReader["ID"],
-				Type = (string)vistaDBDataReader["Type"],
-				CreatedOn = (DateTime)vistaDBDataReader["CreatedOn"],
-				Data = (byte[])vistaDBDataReader["Data"],
-				Priority = (byte)vistaDBDataReader["Priority"]
-			}))
+			if (!predicate(ToMessage(vistaDBDataReader)))
 			{
 				return errorList;
 			}
@@ -466,6 +417,7 @@ public class QueueService : IQueueService, IDisposable
 		{
 			LogHelper.Instance.Log("An unhandled exception was rasied in QueueService.Dequeue.", e);
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "An unhandled exception was raised in QueueService.Dequeue.", e));
+			HandleCorruptDatabase();
 		}
 		return errorList;
 	}
@@ -552,6 +504,53 @@ public class QueueService : IQueueService, IDisposable
 	{
 	}
 
+	private void HandleCorruptDatabase()
+	{
+		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
+		if (service == null)
+		{
+			return;
+		}
+		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+		IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		bool hasCorruptedDatabase = service.HasCorruptedDatabase;
+		service.CorruptDbDetected("message.data");
+		if (hasCorruptedDatabase)
+		{
+			return;
+		}
+		try
+		{
+			var instance = new
+			{
+				MessageType = "KioskAlert",
+				MessageId = Guid.NewGuid(),
+				KioskId = int.Parse(service3.Filter["store_number"]),
+				EngineVersion = service2["EngineVersion"],
+				BundleVersion = service2["ProductVersion"],
+				SubType = "mm:DataStoreError, SOFT-FILE01",
+				Detail = "<h2>Kiosk Engine Data File Error</h2><p>There was an error accessing or updating the database: [ message.data ] <br><br>Placing Kiosk into Maintenance Mode.<br>SOFT-FILE01</p>",
+				Type = "ApplicationCrash",
+				Time = DateTime.Now
+			};
+			if (ProcessMessage != null)
+			{
+				ProcessMessage(new Message
+				{
+					ID = 0,
+					Type = "KioskAlert",
+					CreatedOn = DateTime.Now,
+					Data = Encoding.ASCII.GetBytes(ObjectExtensions.ToJson(instance)),
+					Priority = 200
+				});
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("HandleCorruptDatabase: Error creating and sending KioskAlert message.", e);
+		}
+	}
+
 	private static int GetRandomNumber(int min, int max)
 	{
 		RNGCryptoServiceProvider rNGCryptoServiceProvider = new RNGCryptoServiceProvider();
@@ -563,5 +562,49 @@ public class QueueService : IQueueService, IDisposable
 			return min + Math.Abs(num % (max - min));
 		}
 		return min;
+	}
+
+	private byte[] ToEncryptedMessage(object message)
+	{
+		return ToEncryptedMessage(ObjectExtensions.ToJson(message));
+	}
+
+	private byte[] ToEncryptedMessage(string message)
+	{
+		byte[] array = ByteArrayExtensions.Encrypt(Encoding.ASCII.GetBytes(message));
+		byte[] array2 = new byte["RedboxEncrypted".Length + array.Length];
+		byte[] bytes = Encoding.ASCII.GetBytes("RedboxEncrypted");
+		Buffer.BlockCopy(bytes, 0, array2, 0, bytes.Length);
+		Buffer.BlockCopy(array, 0, array2, bytes.Length, array.Length);
+		return array2;
+	}
+
+	private byte[] FromEncryptedMessage(byte[] data)
+	{
+		byte[] bytes = Encoding.ASCII.GetBytes("RedboxEncrypted");
+		if (data.Length > bytes.Length)
+		{
+			byte[] array = new byte[bytes.Length];
+			Buffer.BlockCopy(data, 0, array, 0, array.Length);
+			string value = Encoding.ASCII.GetString(array);
+			if ("RedboxEncrypted".Equals(value))
+			{
+				byte[] array2 = new byte[data.Length - bytes.Length];
+				Buffer.BlockCopy(data, bytes.Length, array2, 0, array2.Length);
+				return ByteArrayExtensions.Decrypt(array2);
+			}
+		}
+		return data;
+	}
+
+	private IMessage ToMessage(VistaDBDataReader reader)
+	{
+		Message message = new Message();
+		message.ID = (int)reader["ID"];
+		message.Type = (string)reader["Type"];
+		message.CreatedOn = (DateTime)reader["CreatedOn"];
+		message.Data = FromEncryptedMessage((byte[])reader["Data"]);
+		message.Priority = (byte)reader["Priority"];
+		return message;
 	}
 }

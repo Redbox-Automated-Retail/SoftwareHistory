@@ -12,15 +12,11 @@ public interface IQueueService : IDisposable
 
 	ErrorList Clear();
 
-	ErrorList Peek(out object instance);
-
 	ErrorList GetDepth(out int count);
 
 	ErrorList Enqueue(byte priority, string type, object message);
 
 	ErrorList EnqueueOnlyOne(byte priority, string type, object message);
-
-	ErrorList Update(int id, object message);
 
 	ErrorList Update(int id, string message);
 

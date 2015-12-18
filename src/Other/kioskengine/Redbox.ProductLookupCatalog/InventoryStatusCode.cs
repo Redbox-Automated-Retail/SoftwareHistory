@@ -8,5 +8,7 @@ public enum InventoryStatusCode : byte
 	Thinned,
 	PR1,
 	PR2,
-	Fraud
+	Fraud,
+	Rebalancing,
+	Redeployment
 }

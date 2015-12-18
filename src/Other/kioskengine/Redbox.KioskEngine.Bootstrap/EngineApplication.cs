@@ -14,6 +14,14 @@ using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.IDE;
 using Redbox.KioskEngine.Kernel;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Data;
+using Redbox.Rental.Kernel;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.Cache;
+using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskData;
+using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Services;
 using WindowsInput;
 
 namespace Redbox.KioskEngine.Bootstrap;
@@ -34,6 +42,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 		public Point p;
 	}
+
+	private string m_corruptDbName;
+
+	private bool m_enableMaintenanceMode;
+
+	private bool checkMainFormStatus;
 
 	private NamedLock m_instanceLock;
 
@@ -67,6 +81,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		}
 	}
 
+	public bool HasCorruptedDatabase => !string.IsNullOrEmpty(m_corruptDbName);
+
 	internal static bool IsApplicationIdle
 	{
 		get
@@ -75,8 +91,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			return !PeekMessage(out msg, IntPtr.Zero, 0u, 0u, 0u);
 		}
 	}
-
-	private bool checkMainFormStatus { get; set; }
 
 	public void Reset()
 	{
@@ -341,6 +355,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public Redbox.KioskEngine.ComponentModel.ErrorList Initialize()
 	{
 		FirewallHelper.CreateFirewallExemptions();
+		m_enableMaintenanceMode = false;
+		m_corruptDbName = "";
 		ConfigureDefaultMacros();
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		LogHelper.Instance.Log("Engine start up.");
@@ -384,10 +400,18 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.AddService(typeof(IScreenSaverService), ScreenSaverService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IStyleSheetService), StyleSheetService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IKernelFunctionRegistryService), KernelFunctionRegistryService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IProductLookupCatalogService), new ProductLookupCatalogService());
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service2 != null && service2.TryGetValue<bool>("system", "General", "KioskAnalytics", out var value) && value)
+		if (service2 != null)
 		{
-			ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
+			if (service2.TryGetValue<bool>("system", "General", "KioskAnalytics", out var value) && value)
+			{
+				ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
+			}
+			if (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value2) && value2)
+			{
+				ServiceLocator.Instance.AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
+			}
 		}
 		InitializePreferencePages();
 		errorList.AddRange(SchedulerService.Instance.Initialize());
@@ -406,6 +430,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			errorList.AddRange(errorList2);
 		}
+		errorList.AddRange(InitializeRedboxRental());
 		errorList2 = ResourceBundleService.Instance.LoadBundles();
 		if (errorList2.ContainsError())
 		{
@@ -435,6 +460,56 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		return errorList;
 	}
 
+	public Redbox.KioskEngine.ComponentModel.ErrorList InitializeRedboxRental()
+	{
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Expected O, but got Unknown
+		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Expected O, but got Unknown
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009d: Expected O, but got Unknown
+		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Expected O, but got Unknown
+		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
+		try
+		{
+			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
+			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
+			MarketingConfigurationManager instance = new MarketingConfigurationManager(service2);
+			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), instance);
+			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
+			ServiceLocator.Instance.AddService(typeof(IStoreManager), storeManagerService);
+			KernelHelperService kernelHelperService = new KernelHelperService();
+			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
+			BlockListData val = new BlockListData(service);
+			ServiceLocator.Instance.AddService(typeof(IBlockListData), val);
+			BlockListService instance2 = new BlockListService((IStoreManager)storeManagerService, (IBlockListData)(object)val);
+			ServiceLocator.Instance.AddService(typeof(IBlockList), instance2);
+			InventoryData inventoryData = new InventoryData(kernelHelperService);
+			inventoryData.Initialize();
+			ServiceLocator.Instance.AddService(typeof(IInventoryData), inventoryData);
+			InventoryService instance3 = new InventoryService(inventoryData);
+			ServiceLocator.Instance.AddService(typeof(IInventory), instance3);
+			string directoryName = Path.GetDirectoryName(typeof(DataService).Assembly.Location);
+			string dataPath = Path.Combine(directoryName, "..\\data");
+			DataService dataService = new DataService(service, (IDataServiceInstance)new DataServiceInstance(), (IProfileData)new ProfileData(dataPath, "ProfileImages\\"), (ICacheData)new CacheData(), (IKioskData)new KioskData(service));
+			ServiceLocator.Instance.AddService(typeof(IDataService), dataService);
+			dataService.Initialize();
+			dataService.Start();
+			dataService.RefreshIfNeeded();
+			IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			service3.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
+			RedboxRentalService redboxRentalService = new RedboxRentalService();
+			ServiceLocator.Instance.AddService(typeof(IRedboxRental), redboxRentalService);
+			errorList.AddRange(redboxRentalService.Initialize());
+		}
+		catch (Exception ex)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("EngineApplication.InitializeRedboxRental", ex.Message, ""));
+		}
+		return errorList;
+	}
+
 	public void ThreadSafeHostUpdate(MethodInvoker invoker)
 	{
 		if (base.MainForm.InvokeRequired)
@@ -460,6 +535,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public void FlagForSafeShutdown()
 	{
 		EnvironmentFunctions.FlagForSafeShutdown();
+	}
+
+	public void CorruptDbDetected(string dbName)
+	{
+		m_corruptDbName = dbName;
+		m_enableMaintenanceMode = true;
 	}
 
 	protected override void Dispose(bool disposing)
@@ -614,6 +695,15 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			TweenService.Instance.UpdateTweens();
 			while (executionTimer.ElapsedMilliseconds < 10 && CallbackService.Instance.InvokeNextCallback())
 			{
+			}
+			if (m_enableMaintenanceMode)
+			{
+				IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+				if (service != null && m_corruptDbName.Length > 0)
+				{
+					service.RaiseCorruptDb(m_corruptDbName);
+					m_enableMaintenanceMode = false;
+				}
 			}
 			RenderScene();
 			int num = (int)(33 - executionTimer.ElapsedMilliseconds);

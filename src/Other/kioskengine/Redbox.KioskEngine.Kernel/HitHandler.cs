@@ -1,3 +1,3 @@
 namespace Redbox.KioskEngine.Kernel;
 
-internal delegate void HitHandler();
+public delegate void HitHandler();

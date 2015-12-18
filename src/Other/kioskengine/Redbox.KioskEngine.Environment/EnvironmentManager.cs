@@ -12,6 +12,8 @@ public class EnvironmentManager : IEnvironmentNotificationService
 {
 	private HardwareChangeCallback m_hardwareChangeCallback;
 
+	private CorruptDbCallback m_corruptDbCallback;
+
 	private readonly IDictionary<string, ConfigurationCallback> m_configurationCallbacks = new Dictionary<string, ConfigurationCallback>();
 
 	public static EnvironmentManager Instance => Singleton<EnvironmentManager>.Instance;
@@ -151,6 +153,31 @@ public class EnvironmentManager : IEnvironmentNotificationService
 	public void UnregisterConfigurationCallback(string name)
 	{
 		m_configurationCallbacks.Remove(name);
+	}
+
+	public void UnRegisterCorruptDbCallback()
+	{
+		m_corruptDbCallback = null;
+	}
+
+	public void RegisterCorruptDbCallback(CorruptDbCallback callback)
+	{
+		m_corruptDbCallback = callback;
+	}
+
+	public void RaiseCorruptDb(string dbName)
+	{
+		try
+		{
+			if (m_corruptDbCallback != null)
+			{
+				m_corruptDbCallback(dbName);
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseCorruptDb.", e);
+		}
 	}
 
 	public void UnregisterHardwareChangeCallback()

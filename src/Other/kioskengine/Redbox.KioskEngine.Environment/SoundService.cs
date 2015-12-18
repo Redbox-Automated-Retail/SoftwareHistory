@@ -1,4 +1,3 @@
-using System.Speech.Synthesis;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
@@ -6,11 +5,7 @@ namespace Redbox.KioskEngine.Environment;
 
 public class SoundService : ISoundService
 {
-	private SpeechSynthesizer m_reader;
-
 	public static SoundService Instance => Singleton<SoundService>.Instance;
-
-	public bool TTSEnabled => true;
 
 	public void Reset()
 	{
@@ -43,38 +38,7 @@ public class SoundService : ISoundService
 		return SimpleSound.StopPlay();
 	}
 
-	public void SayTTS(string speech)
-	{
-		if (m_reader != null)
-		{
-			m_reader.Dispose();
-		}
-		if (!string.IsNullOrEmpty(speech) && HeadphoneConnected())
-		{
-			m_reader = new SpeechSynthesizer();
-			m_reader.SpeakAsync(speech);
-			m_reader.SpeakCompleted += ReaderSpeakCompleted;
-		}
-	}
-
-	public void SilenceTTS()
-	{
-		if (m_reader != null)
-		{
-			m_reader.Dispose();
-		}
-	}
-
 	private SoundService()
 	{
-	}
-
-	private void ReaderSpeakCompleted(object sender, SpeakCompletedEventArgs e)
-	{
-	}
-
-	private bool HeadphoneConnected()
-	{
-		return true;
 	}
 }

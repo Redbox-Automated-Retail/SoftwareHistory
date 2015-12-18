@@ -53,6 +53,37 @@ internal static class ProcessFunctions
 		return -1;
 	}
 
+	[KernelFunction(Name = "kernel.startprocesswaitforexit")]
+	internal static int StartProcessWaitForExit(string process, string arguments, int timeout)
+	{
+		try
+		{
+			ProcessStartInfo processStartInfo = new ProcessStartInfo();
+			processStartInfo.FileName = process;
+			processStartInfo.Arguments = arguments;
+			processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+			processStartInfo.CreateNoWindow = true;
+			ProcessStartInfo startInfo = processStartInfo;
+			Process process2 = new Process();
+			process2.StartInfo = startInfo;
+			Process process3 = process2;
+			LogHelper.Instance.Log("Launching {0}, args={1}, timeout={2}.", process, arguments, timeout);
+			process3.Start();
+			process3.WaitForExit(timeout);
+			if (process3.HasExited)
+			{
+				LogHelper.Instance.Log("Launched successfully, ExitCode={0}.", process3.ExitCode);
+				return process3.ExitCode;
+			}
+			LogHelper.Instance.Log("HasExited=false, possible timeout.");
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in ProcessFunctions.StartProcessWaitForExit.", e);
+		}
+		return -1;
+	}
+
 	[KernelFunction(Name = "kernel.killprocessbyid")]
 	internal static void KillProcessById(int processId)
 	{

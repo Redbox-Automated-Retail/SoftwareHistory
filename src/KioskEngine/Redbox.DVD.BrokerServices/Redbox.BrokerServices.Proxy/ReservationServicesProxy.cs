@@ -85,7 +85,7 @@ internal class ReservationServicesProxy : IReservationServices
 		BrokerServicesProxy.Instance.Reset();
 	}
 
-	public void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, RemoteServiceCallback callback)
+	public void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -109,6 +109,7 @@ internal class ReservationServicesProxy : IReservationServices
 					Email = emailAddress,
 					KioskId = int.Parse(storeNumber),
 					ReferenceNumber = referenceNumber,
+					Blocklisted = isBlocklisted,
 					Items = new Dictionary<string, object>()
 				};
 				foreach (KeyValuePair<string, ReadOnlyCollection<IProductItem>> pickupResult in pickupResults)
@@ -122,6 +123,7 @@ internal class ReservationServicesProxy : IReservationServices
 						var item = new
 						{
 							Barcode = item2.Barcode,
+							MultiDisc = item2.MultiDisc,
 							VendStatus = item2.Status.ToVendStatus()
 						};
 						anon2.Items.Add(item);
@@ -372,13 +374,21 @@ internal class ReservationServicesProxy : IReservationServices
 		dictionary["Runtime"] = "Kiosk Engine";
 		dictionary["Version"] = AssemblyInfoHelper.GetVersion(Assembly.GetExecutingAssembly());
 		dictionary["PricingPolicy"] = prices;
-		dictionary["GiftCardsEnabled"] = true;
+		dictionary["GiftCardsEnabled"] = false;
 		dictionary["RecoOnPickup"] = false;
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service != null && service.TryGetValue<bool>("system", "General", "RecommendationOnPickup", out var value))
+		if (service != null)
 		{
-			dictionary["RecoOnPickup"] = value;
+			if (service.TryGetValue<bool>("system", "General", "GiftCardsEnabled", out var value))
+			{
+				dictionary["GiftCardsEnabled"] = value;
+			}
+			if (service.TryGetValue<bool>("system", "General", "RecommendationOnPickup", out var value2))
+			{
+				dictionary["RecoOnPickup"] = value2;
+			}
 		}
+		dictionary["Features"] = Features.MultiDiscVend;
 		if (int.TryParse(storeNumber, out var result))
 		{
 			RequestCallback3 = reservationRequestCallback;

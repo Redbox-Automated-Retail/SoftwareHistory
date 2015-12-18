@@ -7,5 +7,7 @@ internal class ProductItem : IProductItem
 {
 	public string Barcode { get; set; }
 
+	public bool MultiDisc { get; set; }
+
 	public LineItemStatus Status { get; set; }
 }

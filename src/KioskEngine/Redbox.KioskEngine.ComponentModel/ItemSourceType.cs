@@ -5,5 +5,6 @@ public enum ItemSourceType
 	Reservation,
 	Recommendation,
 	Wishlist,
-	Browse
+	Browse,
+	BlurayUpsell
 }

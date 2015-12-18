@@ -121,6 +121,7 @@ public class ViewService : IViewService
 		viewFrame.RaiseOnEnter();
 		m_viewShownOn = DateTime.Now;
 		m_lastShownView = viewFrame.ViewName;
+		ServiceLocator.Instance.GetService<ITextToSpeechService>()?.RunSpeechWorkflow("tts_" + viewFrame.ViewName);
 		if (viewFrame.Errors.ContainsError())
 		{
 			ErrorForm errorForm = new ErrorForm();

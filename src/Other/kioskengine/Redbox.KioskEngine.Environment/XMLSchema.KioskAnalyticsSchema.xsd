@@ -31,41 +31,6 @@
                   </xs:sequence>
                 </xs:complexType>
               </xs:element>
-              <xs:element name="ticketItems" minOccurs="1" maxOccurs="1">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="ticketItem" minOccurs="0" maxOccurs="unbounded">
-                      <xs:complexType>
-                        <xs:attribute name="removed" type="xs:string" />
-                        <xs:attribute name="eventID" type="xs:string" />
-                        <xs:attribute name="productionID" type="xs:string" />
-                        <xs:attribute name="ticketGroupID" type="xs:string" />
-                        <xs:attribute name="ticketGroupType" type="xs:string" />
-                        <xs:attribute name="SuggestionType" type="xs:string" />
-                        <xs:attribute name="genreID" type="xs:string" />
-                        <xs:attribute name="row" type="xs:string" />
-                        <xs:attribute name="section" type="xs:string" />
-                        <xs:attribute name="sourceType" type="xs:string" />
-                      </xs:complexType>
-                    </xs:element>
-                    <xs:element name="priceCodes" minOccurs="0" maxOccurs="1">
-                      <xs:complexType>
-                        <xs:sequence>
-                          <xs:element name="priceCode" minOccurs="0" maxOccurs="unbounded">
-                            <xs:complexType>
-                              <xs:attribute name="priceCodeId" type="xs:string" />
-                              <xs:attribute name="quantity" type="xs:string" />
-                              <xs:attribute name="pricePerTicket" type="xs:string" />
-                              <xs:attribute name="feePerTicket" type="xs:string" />
-                              <xs:attribute name="taxPerTicket" type="xs:string" />
-                            </xs:complexType>
-                          </xs:element>
-                        </xs:sequence>
-                      </xs:complexType>
-                    </xs:element>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
               <xs:element name="subTotal" type="xs:string" minOccurs="0" maxOccurs="1"/>
               <xs:element name="taxAmount" type="xs:string" minOccurs="0" maxOccurs="1"/>
               <xs:element name="grandTotal" type="xs:string" minOccurs="0" maxOccurs="1"/>
@@ -89,7 +54,7 @@
         </xs:element>
         <xs:element name="authorizations" minOccurs="0" maxOccurs="1">
           <xs:complexType>
-            <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
               <xs:element name="cardSwipe" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:attribute name="result" type="xs:string" />
@@ -133,7 +98,7 @@
                   <xs:attribute name="response" type="xs:string" />
                 </xs:complexType>
               </xs:element>
-            </xs:sequence>
+            </xs:choice>
           </xs:complexType>
         </xs:element>
         <xs:element name="views" minOccurs="1" maxOccurs="1">
@@ -174,7 +139,6 @@
         <xs:element name="culture" type="xs:string" minOccurs="1" maxOccurs="1" />
         <xs:element name="market" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="banner" type="xs:string" minOccurs="0" maxOccurs="1" />
-        <xs:element name="tickets" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="return" minOccurs="0" maxOccurs="1">
           <xs:complexType>
             <xs:all>

@@ -40,5 +40,11 @@ public interface IEnvironmentNotificationService
 
 	void RegisterHardwareChangeCallback(HardwareChangeCallback callback);
 
+	void UnRegisterCorruptDbCallback();
+
+	void RegisterCorruptDbCallback(CorruptDbCallback callback);
+
+	void RaiseCorruptDb(string dbName);
+
 	EnvironmentNotificationType ProcessNotification(ref Message msg);
 }

@@ -186,11 +186,6 @@ public class DataStorePreferencePage : UserControl, IPreferencePageHost
 			m_syntaxDocument.Clear();
 			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(m_storeToolStripComboBox.SelectedItem.ToString());
 			string tableName = m_tableToolStripComboBox.SelectedItem.ToString();
-			if (string.Compare(fileNameWithoutExtension, "tickets-profile", ignoreCase: true) == 0)
-			{
-				m_dataGridView.DataSource = null;
-				return;
-			}
 			DataTable dataTable = new DataTable();
 			dataTable.Columns.Add("Key", typeof(string));
 			dataTable.Columns.Add("Value", typeof(string));

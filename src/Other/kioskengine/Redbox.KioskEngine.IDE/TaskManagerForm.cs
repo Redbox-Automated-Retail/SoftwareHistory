@@ -30,8 +30,8 @@ public class TaskManagerForm : Form
 
 	private Button m_refreshButton;
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public IList<Process> SelectedProcesses
 	{
 		get

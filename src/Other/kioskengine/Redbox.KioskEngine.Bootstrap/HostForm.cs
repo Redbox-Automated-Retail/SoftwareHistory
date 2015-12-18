@@ -79,6 +79,14 @@ public class HostForm : Form, IFlashService, ITrackDataService
 			m_isCursorHidden = true;
 		}
 		base.ShowInTaskbar = service.GetValue("Ide", "ShowKioskEngineInTaskBar", defaultValue: false);
+		string value = service.GetValue<string>("Store", "Environment", null);
+		bool value2 = service.GetValue("Ide", "ShowChrome", defaultValue: false);
+		if (value.Equals("Development", StringComparison.OrdinalIgnoreCase) && value2)
+		{
+			base.FormBorderStyle = FormBorderStyle.FixedSingle;
+			base.ControlBox = true;
+			MaximumSize = Size.Empty;
+		}
 		TrackDataBuffer = new SecureString();
 	}
 
@@ -514,6 +522,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 
 	private void OnKeyPress(object sender, KeyPressEventArgs e)
 	{
+		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		if (e.KeyChar == '\u001b')
 		{
 			Close();
@@ -555,7 +564,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 			}
 			e.Handled = true;
 		}
-		else if (AllowTrackDataParsing)
+		else if (AllowTrackDataParsing && service != null && service.Filter["environment"] != "Production")
 		{
 			switch (e.KeyChar)
 			{

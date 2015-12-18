@@ -10,6 +10,8 @@ public interface IShoppingCart
 
 	string LastFour { get; }
 
+	bool Blocklisted { get; }
+
 	string LastName { get; }
 
 	string FirstName { get; }
@@ -35,8 +37,6 @@ public interface IShoppingCart
 	ShoppingCartType Type { get; }
 
 	IDictionary<string, IShoppingCartLineItemGroup> Groups { get; }
-
-	void Save(Guid shoppingSessionId);
 
 	void SetDiscount(string code, decimal value);
 
@@ -65,4 +65,6 @@ public interface IShoppingCart
 	void SetReferenceNumber(long referenceNumber);
 
 	IShoppingCartLineItemGroup GetGroup(string name);
+
+	void SetBlocklisted(bool value);
 }

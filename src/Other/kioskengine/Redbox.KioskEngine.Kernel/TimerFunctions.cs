@@ -75,6 +75,31 @@ internal static class TimerFunctions
 		return service.GetTimer(name) != null;
 	}
 
+	[KernelFunction(Name = "kernel.gettimerperiod")]
+	internal static int? GetTimerPeriod(string name)
+	{
+		int? result = 0;
+		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
+		ITimer timer = service.GetTimer(name);
+		if (timer != null)
+		{
+			return timer.Period;
+		}
+		return result;
+	}
+
+	[KernelFunction(Name = "kernel.set_timer_period_and_duetime")]
+	internal static void GetTimerPeriod(string timerName, int? period, int? dueTime)
+	{
+		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
+		ITimer timer = service.GetTimer(timerName);
+		if (timer != null)
+		{
+			timer.Period = period;
+			timer.DueTime = dueTime;
+		}
+	}
+
 	internal static void Reset()
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();

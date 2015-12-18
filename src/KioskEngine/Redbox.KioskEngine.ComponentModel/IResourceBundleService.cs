@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Reflection;
 using System.Xml;
 using Redbox.REDS.Framework;
 
@@ -67,4 +68,6 @@ public interface IResourceBundleService
 	Image GetBitmap(string resourceName);
 
 	ReadOnlyCollection<object> ExecuteScript(string resourceName);
+
+	void RegisterAssemblyFunctions(string name, Assembly assembly);
 }
