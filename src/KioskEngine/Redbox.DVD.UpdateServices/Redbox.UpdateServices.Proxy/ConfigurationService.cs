@@ -166,23 +166,23 @@ internal class ConfigurationService : IConfigurationService
 	public bool TryGetConfigurationData(string key, string category, string setting, out ConfigurationData value)
 	{
 		value = null;
-		bool flag = ConfigurationClient.Instance.TryGetConfigurationData(key, category, setting, out var value2);
-		if (flag)
+		bool num = ConfigurationClient.Instance.TryGetConfigurationData(key, category, setting, out var value2);
+		if (num)
 		{
 			value = ToConfigurationData(value2);
 		}
-		return flag;
+		return num;
 	}
 
 	public bool TryGetConfigurationData(string key, string setting, out ConfigurationData value)
 	{
 		value = null;
-		bool flag = ConfigurationClient.Instance.TryGetConfigurationData(key, setting, out var value2);
-		if (flag)
+		bool num = ConfigurationClient.Instance.TryGetConfigurationData(key, setting, out var value2);
+		if (num)
 		{
 			value = ToConfigurationData(value2);
 		}
-		return flag;
+		return num;
 	}
 
 	public bool GetAllConfigurationData(string key, out List<ConfigurationData> list)
@@ -233,19 +233,20 @@ internal class ConfigurationService : IConfigurationService
 
 	private static ConfigurationData ToConfigurationData(ClientConfigurationData data)
 	{
-		ConfigurationData configurationData = new ConfigurationData();
-		configurationData.CategoryID = data.CategoryID;
-		configurationData.CategoryName = data.CategoryName;
-		configurationData.SettingName = data.SettingName;
-		configurationData.SettingDataType = data.SettingDataType;
-		configurationData.DefaultTypeName = data.DefaultTypeName;
-		configurationData.DefaultTypeRank = data.DefaultTypeRank;
-		configurationData.DefaultTypeDataType = data.DefaultTypeDataType;
-		configurationData.DefaultTypeKey = data.DefaultTypeKey;
-		configurationData.DefaultTypeValue = data.DefaultTypeValue;
-		configurationData.Value = data.Value;
-		configurationData.EffectiveTime = data.EffectiveTime;
-		configurationData.ExpireTime = data.ExpireTime;
-		return configurationData;
+		return new ConfigurationData
+		{
+			CategoryID = data.CategoryID,
+			CategoryName = data.CategoryName,
+			SettingName = data.SettingName,
+			SettingDataType = data.SettingDataType,
+			DefaultTypeName = data.DefaultTypeName,
+			DefaultTypeRank = data.DefaultTypeRank,
+			DefaultTypeDataType = data.DefaultTypeDataType,
+			DefaultTypeKey = data.DefaultTypeKey,
+			DefaultTypeValue = data.DefaultTypeValue,
+			Value = data.Value,
+			EffectiveTime = data.EffectiveTime,
+			ExpireTime = data.ExpireTime
+		};
 	}
 }

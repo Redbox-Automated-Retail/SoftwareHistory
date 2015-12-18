@@ -11,13 +11,10 @@ internal class ResponseCodeAttribute : Attribute
 
 	public static object GetFieldsForResponseCode(Type type, string code)
 	{
-		Type nullableTypeIfWrapped = ConversionHelper.GetNullableTypeIfWrapped(type);
-		FieldInfo[] fields = nullableTypeIfWrapped.GetFields();
-		FieldInfo[] array = fields;
-		foreach (FieldInfo fieldInfo in array)
+		FieldInfo[] fields = ConversionHelper.GetNullableTypeIfWrapped(type).GetFields();
+		foreach (FieldInfo fieldInfo in fields)
 		{
-			ResponseCodeAttribute responseCodes = GetResponseCodes(fieldInfo, code);
-			if (responseCodes != null)
+			if (GetResponseCodes(fieldInfo, code) != null)
 			{
 				return fieldInfo.GetValue(null);
 			}
@@ -36,8 +33,8 @@ internal class ResponseCodeAttribute : Attribute
 				return responseCodeAttribute;
 			}
 		}
-		ResponseCodeAttribute[] array3 = array;
-		foreach (ResponseCodeAttribute responseCodeAttribute2 in array3)
+		array2 = array;
+		foreach (ResponseCodeAttribute responseCodeAttribute2 in array2)
 		{
 			if (responseCodeAttribute2.Name == "*")
 			{

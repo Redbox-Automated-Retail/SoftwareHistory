@@ -46,13 +46,11 @@ internal class UpdateManagerServiceProxy : IUpdateManagerService
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "UpdateManagerServiceTimeout", 600000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "UpdateManagerServiceTimeout", 600000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "UpdateManagerServiceTimeout", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "UpdateManagerServiceTimeout", value);
 			ResetService();
 		}
 	}
@@ -61,13 +59,11 @@ internal class UpdateManagerServiceProxy : IUpdateManagerService
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "UpdateManagerServiceURL", "rcp://localhost:7004");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "UpdateManagerServiceURL", "rcp://localhost:7004");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "UpdateManagerServiceURL", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "UpdateManagerServiceURL", value);
 			ResetService();
 		}
 	}
@@ -81,8 +77,7 @@ internal class UpdateManagerServiceProxy : IUpdateManagerService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList ForceScheduleEvent(string eventName, out bool isRunning)
 	{
-		ClientCommandResult clientCommandResult = m_service.ForceScheduleEvent(eventName, out isRunning);
-		return MakeLocalErrorList(clientCommandResult.Errors);
+		return MakeLocalErrorList(m_service.ForceScheduleEvent(eventName, out isRunning).Errors);
 	}
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList GetDownloadState(out ReadOnlyCollection<IDownloadData> downloads)

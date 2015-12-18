@@ -15,8 +15,7 @@ internal static class ConfigurationServiceFunctions
 		{
 			return null;
 		}
-		ErrorList errors = new ErrorList();
-		LuaTable luaTable = CreateResultTable(errors);
+		LuaTable luaTable = CreateResultTable(new ErrorList());
 		if (service.TryGetConfigurationData(configFile, categoryName, settingName, out var value))
 		{
 			luaTable["value"] = value.Value;

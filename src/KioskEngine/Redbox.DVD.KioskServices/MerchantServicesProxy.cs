@@ -20,13 +20,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "LiveCall", value);
 		}
 	}
 
@@ -34,13 +32,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Auth Services", "LiveCall", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Auth Services", "LiveCall", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Auth Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Auth Services", "LiveCall", value);
 		}
 	}
 
@@ -48,13 +44,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -62,13 +56,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Auth Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Auth Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Auth Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Auth Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -76,13 +68,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "MaximumShoppingCartItems", 3);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "MaximumShoppingCartItems", 3);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "MaximumShoppingCartItems", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "MaximumShoppingCartItems", value);
 		}
 	}
 
@@ -90,13 +80,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -104,13 +92,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Auth Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Auth Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Auth Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Auth Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -118,13 +104,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "AuthorizeResponse", AuthorizeResponse.Approved);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "AuthorizeResponse", AuthorizeResponse.Approved);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "AuthorizeResponse", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "AuthorizeResponse", value);
 		}
 	}
 
@@ -132,13 +116,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Reservation Auth Services", "AuthorizeResponse", AuthorizeResponse.Approved);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Reservation Auth Services", "AuthorizeResponse", AuthorizeResponse.Approved);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Reservation Auth Services", "AuthorizeResponse", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Auth Services", "AuthorizeResponse", value);
 		}
 	}
 
@@ -146,13 +128,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", value);
 		}
 	}
 
@@ -160,13 +140,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "EnableQueueBasedRentalLimit", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "EnableQueueBasedRentalLimit", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "EnableQueueBasedRentalLimit", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EnableQueueBasedRentalLimit", value);
 		}
 	}
 
@@ -174,13 +152,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "EnforeShoppingCartItemLimit", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "EnforeShoppingCartItemLimit", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "EnforeShoppingCartItemLimit", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EnforeShoppingCartItemLimit", value);
 		}
 	}
 
@@ -188,13 +164,23 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "HasCustomerProfile", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "HasCustomerProfile", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "HasCustomerProfile", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "HasCustomerProfile", value);
+		}
+	}
+
+	public bool IsRBI
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "IsRBI", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "IsRBI", value);
 		}
 	}
 
@@ -202,13 +188,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "CPFirstName", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "CPFirstName", string.Empty);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "CPFirstName", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "CPFirstName", value);
 		}
 	}
 
@@ -216,13 +200,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "CPLastName", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "CPLastName", string.Empty);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "CPLastName", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "CPLastName", value);
 		}
 	}
 
@@ -230,13 +212,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "EmailAddress", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "EmailAddress", string.Empty);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "EmailAddress", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EmailAddress", value);
 		}
 	}
 
@@ -244,13 +224,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "ConfirmationStatus", ConfirmationStatus.DoNotShow);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "ConfirmationStatus", ConfirmationStatus.DoNotShow);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "ConfirmationStatus", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "ConfirmationStatus", value);
 		}
 	}
 
@@ -258,13 +236,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "UserOffers", new List<string>().ToArray());
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "UserOffers", new List<string>().ToArray());
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "UserOffers", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "UserOffers", value);
 		}
 	}
 
@@ -272,13 +248,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "GCLiveCall", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "GCLiveCall", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "GCLiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "GCLiveCall", value);
 		}
 	}
 
@@ -286,13 +260,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "GCSimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "GCSimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "GCSimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "GCSimulateCommunicationFailure", value);
 		}
 	}
 
@@ -300,13 +272,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "GCSimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "GCSimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "GCSimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "GCSimulateServerBusyFailure", value);
 		}
 	}
 
@@ -314,13 +284,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "GCAuthorizeResponse", GCAuthorizeResponse.Approved);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "GCAuthorizeResponse", GCAuthorizeResponse.Approved);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "GCAuthorizeResponse", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "GCAuthorizeResponse", value);
 		}
 	}
 
@@ -328,13 +296,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "Exists", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "Exists", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "Exists", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "Exists", value);
 		}
 	}
 
@@ -342,13 +308,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "GCStatusType", GiftCardStatus.None);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "GCStatusType", GiftCardStatus.None);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "GCStatusType", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "GCStatusType", value);
 		}
 	}
 
@@ -356,13 +320,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "Balance", "0.00");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "Balance", "0.00");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "Balance", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "Balance", value);
 		}
 	}
 
@@ -370,13 +332,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "MaxDiscs", 2);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "MaxDiscs", 2);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "MaxDiscs", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "MaxDiscs", value);
 		}
 	}
 
@@ -384,13 +344,11 @@ internal class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Merchant Services", "MaxGames", 0);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "MaxGames", 0);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Merchant Services", "MaxGames", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "MaxGames", value);
 		}
 	}
 
@@ -423,6 +381,7 @@ internal class MerchantServicesProxy : IMerchantServices
 					MessageType = "Reconcile",
 					MessageId = Guid.NewGuid(),
 					IsOffline = isOffline,
+					Blocklisted = session.ShoppingCart.Blocklisted,
 					Email = session.ShoppingCart.Email,
 					EngineVersion = macroService["EngineVersion"],
 					BundleVersion = macroService["ProductVersion"],
@@ -495,19 +454,24 @@ internal class MerchantServicesProxy : IMerchantServices
 							ProductFamily = item.ProductFamily,
 							ProductType = item.ProductType,
 							Prices = new Dictionary<string, decimal>(),
-							VendStatus = item.Status.ToVendStatus()
+							VendStatus = item.Status.ToVendStatus(),
+							BlurayUpsell = new Dictionary<string, object>(),
+							MultiDisc = item.MultiDisc
 						};
 						foreach (KeyValuePair<string, decimal> price in item.Prices)
 						{
 							string key = price.Key.Replace("_", string.Empty);
 							anon3.Prices[key] = price.Value;
 						}
+						foreach (KeyValuePair<string, object> item2 in item.BlurayUpsell)
+						{
+							anon3.BlurayUpsell[item2.Key] = item2.Value;
+						}
 						anon2.Items.Add(anon3);
 					}
 					anon.Contents[group.Key] = anon2;
 				}
-				IQueueService service3 = ServiceLocator.Instance.GetService<IQueueService>();
-				errorList = service3.Enqueue(200, "Reconcile", anon);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Reconcile", anon);
 			}
 			catch (Exception e)
 			{
@@ -517,8 +481,8 @@ internal class MerchantServicesProxy : IMerchantServices
 			{
 				try
 				{
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service4 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -529,7 +493,7 @@ internal class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service4.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -552,8 +516,7 @@ internal class MerchantServicesProxy : IMerchantServices
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			IShoppingSession session = service.GetSession(sessionId);
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -566,14 +529,14 @@ internal class MerchantServicesProxy : IMerchantServices
 					if (!StoreServicesProxy.Instance.IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.Authorize, URL: {0}", KioskServicesProxy.Instance.Url);
-						IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
+						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var anon = new
 						{
 							MessageType = "Authorize",
 							MessageId = Guid.NewGuid(),
-							EngineVersion = service2["EngineVersion"],
-							BundleVersion = service2["ProductVersion"],
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
 							DiscountCode = session.ShoppingCart.DiscountCode,
 							DiscountValue = session.ShoppingCart.DiscountValue,
@@ -581,19 +544,19 @@ internal class MerchantServicesProxy : IMerchantServices
 							{
 								{
 									"KeyId",
-									service3.GetKeyId()
+									service2.GetKeyId()
 								},
 								{
 									"Number",
-									service3.GetNumber()
+									service2.GetNumber()
 								},
 								{
 									"CardType",
-									service3.GetCardType()
+									service2.GetCardType()
 								},
 								{
 									"CardId",
-									service3.GenerateCardHashId()
+									service2.GenerateCardHashId()
 								},
 								{
 									"Track2",
@@ -647,12 +610,18 @@ internal class MerchantServicesProxy : IMerchantServices
 									Barcode = item2.Barcode,
 									ProductFamily = item2.ProductFamily,
 									ProductType = item2.ProductType,
-									Prices = new Dictionary<string, decimal>()
+									Prices = new Dictionary<string, decimal>(),
+									BlurayUpsell = new Dictionary<string, object>(),
+									MultiDisc = item2.MultiDisc
 								};
 								foreach (KeyValuePair<string, decimal> price in item2.Prices)
 								{
 									string key = price.Key.Replace("_", string.Empty);
 									anon3.Prices[key] = price.Value;
+								}
+								foreach (KeyValuePair<string, object> item3 in item2.BlurayUpsell)
+								{
+									anon3.BlurayUpsell[item3.Key] = item3.Value;
 								}
 								anon2.Items.Add(anon3);
 							}
@@ -680,6 +649,7 @@ internal class MerchantServicesProxy : IMerchantServices
 						{
 							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
+							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
 						Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("CreditSummary") ? (dictionary["CreditSummary"] as Dictionary<string, object>) : null);
 						if (dictionary3 != null)
@@ -687,15 +657,15 @@ internal class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["total_credits_applied"] = dictionary3["TotalCreditsApplied"];
 							remoteServiceResult.Properties["total_credits_available"] = dictionary3["TotalCreditsAvailable"];
 						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
 						Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
 						if (arrayList != null)
 						{
 							int num = 1;
-							foreach (Dictionary<string, object> item3 in arrayList)
+							foreach (Dictionary<string, object> item4 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item3["Name"]);
+								dictionary4.Add("offer_" + num, item4["Name"]);
 								num++;
 							}
 						}
@@ -726,17 +696,14 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-						autoResetEvent.WaitOne(1000);
+						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.Authorize.");
-					Random random = new Random();
-					int num2 = random.Next(1, 3);
-					AutoResetEvent autoResetEvent2 = new AutoResetEvent(initialState: false);
-					autoResetEvent2.WaitOne(num2 * 1000);
+					int num2 = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
@@ -772,6 +739,7 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["email"] = EmailAddress;
 						remoteServiceResult.Properties["first_name"] = CPFirstName;
 						remoteServiceResult.Properties["last_name"] = CPLastName;
+						remoteServiceResult.Properties["is_rbi"] = IsRBI;
 						remoteServiceResult.Properties["total_credits_applied"] = 0;
 						if (AuthorizeResponse == AuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
 						{
@@ -805,8 +773,7 @@ internal class MerchantServicesProxy : IMerchantServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !LiveCall;
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service4.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -828,8 +795,7 @@ internal class MerchantServicesProxy : IMerchantServices
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			IShoppingSession session = service.GetSession(sessionId);
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -842,14 +808,14 @@ internal class MerchantServicesProxy : IMerchantServices
 					if (!StoreServicesProxy.Instance.IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.GCAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
-						IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
+						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var anon = new
 						{
 							MessageType = "GCAuthorize",
 							MessageId = Guid.NewGuid(),
-							EngineVersion = service2["EngineVersion"],
-							BundleVersion = service2["ProductVersion"],
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
 							DiscountCode = session.ShoppingCart.DiscountCode,
 							DiscountValue = session.ShoppingCart.DiscountValue,
@@ -857,19 +823,19 @@ internal class MerchantServicesProxy : IMerchantServices
 							{
 								{
 									"KeyId",
-									service3.GetKeyId()
+									service2.GetKeyId()
 								},
 								{
 									"Number",
-									service3.GetNumber()
+									service2.GetNumber()
 								},
 								{
 									"CardType",
-									service3.GetCardType()
+									service2.GetCardType()
 								},
 								{
 									"CardId",
-									service3.GenerateCardHashId()
+									service2.GenerateCardHashId()
 								},
 								{
 									"Track2",
@@ -919,12 +885,17 @@ internal class MerchantServicesProxy : IMerchantServices
 									Barcode = item2.Barcode,
 									ProductFamily = item2.ProductFamily,
 									ProductType = item2.ProductType,
-									Prices = new Dictionary<string, decimal>()
+									Prices = new Dictionary<string, decimal>(),
+									BlurayUpsell = new Dictionary<string, object>()
 								};
 								foreach (KeyValuePair<string, decimal> price in item2.Prices)
 								{
 									string key = price.Key.Replace("_", string.Empty);
 									anon3.Prices[key] = price.Value;
+								}
+								foreach (KeyValuePair<string, object> item3 in item2.BlurayUpsell)
+								{
+									anon3.BlurayUpsell[item3.Key] = item3.Value;
 								}
 								anon2.Items.Add(anon3);
 							}
@@ -952,6 +923,7 @@ internal class MerchantServicesProxy : IMerchantServices
 						{
 							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
+							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
 						Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("CreditSummary") ? (dictionary["CreditSummary"] as Dictionary<string, object>) : null);
 						if (dictionary3 != null)
@@ -959,15 +931,15 @@ internal class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["total_credits_applied"] = dictionary3["TotalCreditsApplied"];
 							remoteServiceResult.Properties["total_credits_available"] = dictionary3["TotalCreditsAvailable"];
 						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
 						Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
 						if (arrayList != null)
 						{
 							int num = 1;
-							foreach (Dictionary<string, object> item3 in arrayList)
+							foreach (Dictionary<string, object> item4 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item3["Name"]);
+								dictionary4.Add("offer_" + num, item4["Name"]);
 								num++;
 							}
 						}
@@ -976,7 +948,7 @@ internal class MerchantServicesProxy : IMerchantServices
 						if (dictionary6 != null)
 						{
 							remoteServiceResult.Properties["gift_card_exists"] = (bool)dictionary6["Exists"];
-							remoteServiceResult.Properties["gift_card_status"] = ((GiftCardStatus)dictionary6["Status"]).ToString();
+							remoteServiceResult.Properties["gift_card_status"] = ((GiftCardStatus)dictionary6["Status"]/*cast due to constrained. prefix*/).ToString();
 							remoteServiceResult.Properties["gift_card_balance"] = dictionary6["Balance"].ToString();
 							remoteServiceResult.Properties["gift_card_max_discs"] = dictionary6["MaxDiscs"];
 							remoteServiceResult.Properties["gift_card_max_games"] = dictionary6["MaxGames"];
@@ -1007,17 +979,14 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-						autoResetEvent.WaitOne(1000);
+						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.GCAuthorize.");
-					Random random = new Random();
-					int num2 = random.Next(1, 3);
-					AutoResetEvent autoResetEvent2 = new AutoResetEvent(initialState: false);
-					autoResetEvent2.WaitOne(num2 * 1000);
+					int num2 = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
@@ -1053,6 +1022,7 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["email"] = EmailAddress;
 						remoteServiceResult.Properties["first_name"] = CPFirstName;
 						remoteServiceResult.Properties["last_name"] = CPLastName;
+						remoteServiceResult.Properties["is_rbi"] = IsRBI;
 						remoteServiceResult.Properties["total_credits_applied"] = 0;
 						if (GCAuthorizeResponse == GCAuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
 						{
@@ -1091,8 +1061,7 @@ internal class MerchantServicesProxy : IMerchantServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !GCLiveCall;
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service4.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -1114,8 +1083,7 @@ internal class MerchantServicesProxy : IMerchantServices
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			IShoppingSession session = service.GetSession(sessionId);
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -1128,14 +1096,14 @@ internal class MerchantServicesProxy : IMerchantServices
 					if (!StoreServicesProxy.Instance.IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ReservationAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
-						IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
+						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var anon = new
 						{
 							MessageType = "ResvAuth",
 							MessageId = Guid.NewGuid(),
-							EngineVersion = service2["EngineVersion"],
-							BundleVersion = service2["ProductVersion"],
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
 							DiscountCode = session.ShoppingCart.DiscountCode,
 							DiscountValue = session.ShoppingCart.DiscountValue,
@@ -1143,19 +1111,19 @@ internal class MerchantServicesProxy : IMerchantServices
 							{
 								{
 									"KeyId",
-									service3.GetKeyId()
+									service2.GetKeyId()
 								},
 								{
 									"Number",
-									service3.GetNumber()
+									service2.GetNumber()
 								},
 								{
 									"CardType",
-									service3.GetCardType()
+									service2.GetCardType()
 								},
 								{
 									"CardId",
-									service3.GenerateCardHashId()
+									service2.GenerateCardHashId()
 								},
 								{
 									"Track2",
@@ -1251,7 +1219,7 @@ internal class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["total_credits_applied"] = dictionary3["TotalCreditsApplied"];
 							remoteServiceResult.Properties["total_credits_available"] = dictionary3["TotalCreditsAvailable"];
 						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
 						Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
 						if (arrayList != null)
@@ -1290,17 +1258,14 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-						autoResetEvent.WaitOne(1000);
+						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.ReservationAuthorize.");
-					Random random = new Random();
-					int num2 = random.Next(1, 3);
-					AutoResetEvent autoResetEvent2 = new AutoResetEvent(initialState: false);
-					autoResetEvent2.WaitOne(num2 * 1000);
+					int num2 = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
@@ -1369,8 +1334,7 @@ internal class MerchantServicesProxy : IMerchantServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !LiveCall;
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service4.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -1392,8 +1356,7 @@ internal class MerchantServicesProxy : IMerchantServices
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			IShoppingSession session = service.GetSession(sessionId);
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -1406,32 +1369,32 @@ internal class MerchantServicesProxy : IMerchantServices
 					if (!StoreServicesProxy.Instance.IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ValidatePickup, URL: {0}", KioskServicesProxy.Instance.Url);
-						IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
+						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var message = new
 						{
 							MessageType = "PickupValidation",
 							MessageId = Guid.NewGuid(),
-							EngineVersion = service2["EngineVersion"],
-							BundleVersion = service2["ProductVersion"],
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(StoreServicesProxy.Instance.StoreNumber),
 							CreditCard = new Dictionary<string, object>
 							{
 								{
 									"KeyId",
-									service3.GetKeyId()
+									service2.GetKeyId()
 								},
 								{
 									"Number",
-									service3.GetNumber()
+									service2.GetNumber()
 								},
 								{
 									"CardType",
-									service3.GetCardType()
+									service2.GetCardType()
 								},
 								{
 									"CardId",
-									service3.GenerateCardHashId()
+									service2.GenerateCardHashId()
 								},
 								{
 									"Track2",
@@ -1495,17 +1458,14 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = true;
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = false;
-						AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-						autoResetEvent.WaitOne(1000);
+						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.ValidatePickup.");
-					Random random = new Random();
-					int num = random.Next(1, 3);
-					AutoResetEvent autoResetEvent2 = new AutoResetEvent(initialState: false);
-					autoResetEvent2.WaitOne(num * 1000);
+					int num = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					if (SimulateServerBusyError)
 					{
@@ -1551,8 +1511,7 @@ internal class MerchantServicesProxy : IMerchantServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !LiveCall;
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service4.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -1573,11 +1532,9 @@ internal class MerchantServicesProxy : IMerchantServices
 
 	private string ExtractFromSecure(SecureString value)
 	{
-		IntPtr intPtr = default(IntPtr);
 		try
 		{
-			intPtr = Marshal.SecureStringToBSTR(value);
-			return Marshal.PtrToStringBSTR(intPtr);
+			return Marshal.PtrToStringBSTR(Marshal.SecureStringToBSTR(value));
 		}
 		catch
 		{

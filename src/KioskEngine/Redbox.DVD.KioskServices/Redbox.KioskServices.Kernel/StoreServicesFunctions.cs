@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
@@ -90,6 +92,28 @@ internal static class StoreServicesFunctions
 		});
 	}
 
+	[KernelFunction(Name = "kernel.storesvcs_getopsmarket")]
+	internal static void GetOpsMarket(string storeNumber, LuaFunction completeCallback)
+	{
+		IStoreServices service = ServiceLocator.Instance.GetService<IStoreServices>();
+		if (service == null)
+		{
+			return;
+		}
+		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
+		if (callbackService != null)
+		{
+			service.GetOpsMarket(storeNumber, delegate(IRemoteServiceResult r)
+			{
+				callbackService.EnqueueCallback(new ResultCallbackEntry
+				{
+					Function = completeCallback,
+					Parameters = new LuaTable[1] { r.AsTable() }
+				});
+			});
+		}
+	}
+
 	[KernelFunction(Name = "kernel.storesvcs_shouldreboot")]
 	internal static bool ShouldReboot()
 	{
@@ -156,7 +180,57 @@ internal static class StoreServicesFunctions
 	[KernelFunction(Name = "kernel.storesvcs_issinglebilling")]
 	internal static bool IsSingleBilling(byte? collectionMethod)
 	{
-		CollectionMethod value = (CollectionMethod)collectionMethod.Value;
-		return (value & CollectionMethod.AuthorizeOnly) != 0;
+		return (collectionMethod.Value & 4) != 0;
+	}
+
+	[KernelFunction(Name = "kernel.storesvcs_getkaseyainipath")]
+	internal static string GetKaseyainiPath()
+	{
+		try
+		{
+			List<string> list = new List<string>();
+			string[] directories = Directory.GetDirectories("C:\\Program Files\\Kaseya\\", "RDBX*", SearchOption.TopDirectoryOnly);
+			for (int i = 0; i < directories.Length; i++)
+			{
+				string text = Path.Combine(directories[i], "KaseyaD.ini");
+				if (File.Exists(text))
+				{
+					list.Add(text);
+				}
+			}
+			string text2 = list.OrderByDescending((string p) => File.GetLastWriteTimeUtc(p)).FirstOrDefault();
+			LogHelper.Instance.Log("KaseyaD.ini path: {0}", text2);
+			return text2;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in StoreServicesFunctions.GetKaseyainiPath.", e);
+		}
+		return null;
+	}
+
+	[KernelFunction(Name = "kernel.storesvcs_getopsmarketandkaseyaserverfromfile")]
+	internal static LuaTable GetOpsMarketAndKaseyaServerFromFile(string path)
+	{
+		try
+		{
+			string[] array = File.ReadAllLines(path);
+			string text = Array.Find(array, (string p) => p.StartsWith("User_Name")).RemoveString("User_Name").TrimStart();
+			string text2 = Array.Find(array, (string p) => p.StartsWith("Server_Name")).RemoveString("Server_Name").TrimStart();
+			LogHelper.Instance.Log("KaseyaD.ini values: User_Name = {0}, Server_Name = {1}", text, text2);
+			char[] separator = new char[1] { '.' };
+			string text3 = text.Split(separator, 3, StringSplitOptions.None)[1];
+			string text4 = text2.Split(separator, 3, StringSplitOptions.None)[0].Substring(2, 1).Insert(0, "Kaseya");
+			LogHelper.Instance.Log("KaseyaD.ini parsed values: ops_market = {0}, kaseya_server = {1}", text3, text4);
+			LuaTable obj = (LuaTable)ServiceLocator.Instance.GetService<IKernelService>().NewTable();
+			obj["ops_market"] = text3;
+			obj["kaseya_server"] = text4;
+			return obj;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in StoreServicesFunctions.GetOpsMarketAndKaseyaServerFromFile.", e);
+		}
+		return null;
 	}
 }

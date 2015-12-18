@@ -64,13 +64,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "LiveCall", value);
 		}
 	}
 
@@ -78,13 +76,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Store", "RunInitialSync", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "RunInitialSync", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "RunInitialSync", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "RunInitialSync", value);
 		}
 	}
 
@@ -92,13 +88,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Store", "StandAlone", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "StandAlone", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "StandAlone", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "StandAlone", value);
 		}
 	}
 
@@ -106,13 +100,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Store", "ID", "N/A");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "ID", "N/A");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "ID", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "ID", value);
 		}
 	}
 
@@ -120,17 +112,15 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue<string>("Store", "Environment", null);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue<string>("Store", "Environment", null);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "Environment", value);
-			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			if (service2 != null)
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "Environment", value);
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			if (service != null)
 			{
-				service2.Filter["environment"] = value;
+				service.Filter["environment"] = value;
 			}
 		}
 	}
@@ -139,17 +129,15 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue<string>("Store", "Application", null);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue<string>("Store", "Application", null);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "Application", value);
-			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			if (service2 != null)
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "Application", value);
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			if (service != null)
 			{
-				service2.Filter["application"] = value;
+				service.Filter["application"] = value;
 			}
 		}
 	}
@@ -171,8 +159,7 @@ internal class StoreServicesProxy : IStoreServices
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "RebootTime", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "RebootTime", value);
 		}
 	}
 
@@ -180,13 +167,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "PendingStates", new string[0]);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "PendingStates", new string[0]);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "PendingStates", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "PendingStates", value);
 		}
 	}
 
@@ -194,13 +179,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "PendingBanners", new string[0]);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "PendingBanners", new string[0]);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "PendingBanners", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "PendingBanners", value);
 		}
 	}
 
@@ -208,13 +191,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "PendingStores", new string[0]);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "PendingStores", new string[0]);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "PendingStores", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "PendingStores", value);
 		}
 	}
 
@@ -222,13 +203,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Store", "InitialSyncType", "Foreground");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "InitialSyncType", "Foreground");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "InitialSyncType", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "InitialSyncType", value);
 		}
 	}
 
@@ -236,13 +215,11 @@ internal class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Store", "SynchronizeTimeToServer", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "SynchronizeTimeToServer", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Store", "SynchronizeTimeToServer", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "SynchronizeTimeToServer", value);
 		}
 	}
 
@@ -524,6 +501,81 @@ internal class StoreServicesProxy : IStoreServices
 						Callback = completeCallback,
 						Result = remoteServiceResult,
 						Message = "Invoking completeCallback from StoreServicesProxy.GetPendingStores."
+					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	public void GetOpsMarket(string storeNumber, RemoteServiceCallback completeCallback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				if (LiveCall)
+				{
+					if (HealthServicesProxy.Instance.IsOnline && !HealthServicesProxy.Instance.IsServerBusy && !Instance.IsStandAlone)
+					{
+						LogHelper.Instance.Log("Live call to remote IStoreServices.GetOpsMarket, URL: {0}", KioskServicesProxy.Instance.Url);
+						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
+						{
+							MessageType = "GetOpsMarket",
+							MessageId = Guid.NewGuid(),
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
+							KioskId = int.Parse(storeNumber)
+						});
+						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+						remoteServiceResult.Properties["is_online"] = true;
+						remoteServiceResult.Properties["ops_market"] = (dictionary.ContainsKey("OpsMarket") ? dictionary["OpsMarket"] : "UnNamed");
+						remoteServiceResult.Properties["kaseya_server"] = (dictionary.ContainsKey("KaseyaServer") ? dictionary["KaseyaServer"] : "Kaseya6");
+					}
+					else
+					{
+						LogHelper.Instance.Log("IsOnline is false or stand alone, not issuing realtime call to IStoreServices.GetOpsMarket.", LogEntryType.Info);
+						remoteServiceResult.Success = true;
+						remoteServiceResult.Properties["is_online"] = false;
+						remoteServiceResult.Properties["ops_market"] = "UnNamed";
+						remoteServiceResult.Properties["kaseya_server"] = "Kaseya6";
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("Simulating call to IStoreServices.GetOpsMarket.", LogEntryType.Info);
+					remoteServiceResult.Success = true;
+					remoteServiceResult.Properties["is_online"] = false;
+					remoteServiceResult.Properties["ops_market"] = "UnNamed";
+					remoteServiceResult.Properties["kaseya_server"] = "Kaseya6";
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in StoreServicesProxy.GetOpsMarket.", e);
+				remoteServiceResult.Success = false;
+				remoteServiceResult.Properties["is_online"] = false;
+				remoteServiceResult.Properties["ops_market"] = "UnNamed";
+				remoteServiceResult.Properties["kaseya_server"] = "Kaseya6";
+			}
+			finally
+			{
+				try
+				{
+					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
+					remoteServiceResult.Properties["stand_alone"] = Instance.IsStandAlone;
+					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = completeCallback,
+						Result = remoteServiceResult,
+						Message = "Invoking completeCallback from StoreServicesProxy.GetOpsMarket."
 					});
 				}
 				finally

@@ -17,13 +17,11 @@ internal class MarketingOptinServicesProxy : IMarketingOptinServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Marketing Optin Services", "LiveCall", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "LiveCall", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Marketing Optin Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "LiveCall", value);
 		}
 	}
 
@@ -31,14 +29,12 @@ internal class MarketingOptinServicesProxy : IMarketingOptinServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			string value = service.GetValue("Remote Services\\Marketing Optin Services", "ConfirmationStatusCode", "DoNotShow");
+			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "ConfirmationStatusCode", "DoNotShow");
 			return (ConfirmationStatus)Enum.Parse(typeof(ConfirmationStatus), value, ignoreCase: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Marketing Optin Services", "ConfirmationStatusCode", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "ConfirmationStatusCode", value);
 		}
 	}
 
@@ -46,13 +42,11 @@ internal class MarketingOptinServicesProxy : IMarketingOptinServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Marketing Optin Services", "SimulateCommunicationsFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "SimulateCommunicationsFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Marketing Optin Services", "SimulateCommunicationsFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "SimulateCommunicationsFailure", value);
 		}
 	}
 
@@ -121,8 +115,7 @@ internal class MarketingOptinServicesProxy : IMarketingOptinServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
-					ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-					service.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -168,7 +161,7 @@ internal class MarketingOptinServicesProxy : IMarketingOptinServices
 					UseMessageControl = false
 				});
 				remoteServiceResult.Success = dictionary2.ContainsKey("Success") && (bool)dictionary2["Success"];
-				remoteServiceResult.Properties["confirmation_status"] = ((ConfirmationStatus)dictionary2["ConfirmationStatus"]).ToString();
+				remoteServiceResult.Properties["confirmation_status"] = ((ConfirmationStatus)dictionary2["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString();
 			}
 			catch (Exception e)
 			{
@@ -180,8 +173,7 @@ internal class MarketingOptinServicesProxy : IMarketingOptinServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service3.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,

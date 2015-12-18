@@ -18,13 +18,11 @@ internal class PromotionServicesProxy : IPromotionServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Promotion Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Promotion Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Promotion Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Promotion Services", "LiveCall", value);
 		}
 	}
 
@@ -32,13 +30,11 @@ internal class PromotionServicesProxy : IPromotionServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Promotion Services", "PromoCodes", new string[0]);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Promotion Services", "PromoCodes", new string[0]);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Promotion Services", "PromoCodes", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Promotion Services", "PromoCodes", value);
 		}
 	}
 
@@ -46,13 +42,11 @@ internal class PromotionServicesProxy : IPromotionServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Promotion Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Promotion Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Promotion Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Promotion Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -60,13 +54,11 @@ internal class PromotionServicesProxy : IPromotionServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Promotion Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Promotion Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Promotion Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Promotion Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -103,8 +95,7 @@ internal class PromotionServicesProxy : IPromotionServices
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
 				string cardHash = string.Empty;
-				ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
-				string text = service3.GenerateCardHashId();
+				string text = ServiceLocator.Instance.GetService<ITrackDataService>().GenerateCardHashId();
 				if (sendCardHash && text != null)
 				{
 					cardHash = text;
@@ -129,8 +120,8 @@ internal class PromotionServicesProxy : IPromotionServices
 			{
 				try
 				{
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service4 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -141,7 +132,7 @@ internal class PromotionServicesProxy : IPromotionServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service4.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -204,6 +195,10 @@ internal class PromotionServicesProxy : IPromotionServices
 						remoteServiceResult.Properties["response"] = PromotionValidationResponse.Valid.ToString();
 						remoteServiceResult.Properties["amount"] = (dictionary.ContainsKey("Amount") ? dictionary["Amount"] : ((object)1));
 						remoteServiceResult.Properties["promotion_intent"] = (dictionary.ContainsKey("PromotionIntentCode") ? dictionary["PromotionIntentCode"] : PromotionIntentCode.FixedValue.ToString());
+						remoteServiceResult.Properties["rent_qty"] = (dictionary.ContainsKey("RentQty") ? dictionary["RentQty"] : ((object)0));
+						remoteServiceResult.Properties["rent_format"] = (dictionary.ContainsKey("RentFormat") ? dictionary["RentFormat"] : null);
+						remoteServiceResult.Properties["get_qty"] = (dictionary.ContainsKey("GetQty") ? dictionary["GetQty"] : ((object)0));
+						remoteServiceResult.Properties["get_format"] = (dictionary.ContainsKey("GetFormat") ? dictionary["GetFormat"] : null);
 						if (dictionary.ContainsKey("ServerName"))
 						{
 							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
@@ -272,10 +267,8 @@ internal class PromotionServicesProxy : IPromotionServices
 				Interlocked.Increment(ref m_working);
 				remoteServiceResult.Properties["store"] = storeNumber;
 				remoteServiceResult.Properties["code"] = promotionCode;
-				Random random = new Random();
-				int num = random.Next(1, 5);
-				AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-				autoResetEvent.WaitOne(num * 1000);
+				int num = new Random().Next(1, 5);
+				new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 				PromotionValidationResponse response;
 				PromotionIntentCode intent;
 				decimal amount;
@@ -306,6 +299,10 @@ internal class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["amount"] = amount;
 					remoteServiceResult.Properties["promotion_intent"] = intent.ToString();
 					remoteServiceResult.Properties["response"] = response.ToString();
+					remoteServiceResult.Properties["rent_qty"] = 0;
+					remoteServiceResult.Properties["rent_format"] = null;
+					remoteServiceResult.Properties["get_qty"] = 0;
+					remoteServiceResult.Properties["get_format"] = null;
 				}
 				else
 				{
@@ -313,6 +310,10 @@ internal class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["amount"] = 0;
 					remoteServiceResult.Properties["promotion_intent"] = PromotionIntentCode.FixedValue.ToString();
 					remoteServiceResult.Properties["response"] = PromotionValidationResponse.CodeNotValid.ToString();
+					remoteServiceResult.Properties["rent_qty"] = 0;
+					remoteServiceResult.Properties["rent_format"] = null;
+					remoteServiceResult.Properties["get_qty"] = 0;
+					remoteServiceResult.Properties["get_format"] = null;
 				}
 			}
 			catch (Exception e)
@@ -351,9 +352,9 @@ internal class PromotionServicesProxy : IPromotionServices
 			return false;
 		}
 		string[] promoCodes = PromoCodes;
-		foreach (string text in promoCodes)
+		for (int i = 0; i < promoCodes.Length; i++)
 		{
-			string[] array = text.Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+			string[] array = promoCodes[i].Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
 			if (array.Length >= 4 && string.Compare(array[0], promotionCode, ignoreCase: true) == 0)
 			{
 				decimal.TryParse(array[1], out amount);

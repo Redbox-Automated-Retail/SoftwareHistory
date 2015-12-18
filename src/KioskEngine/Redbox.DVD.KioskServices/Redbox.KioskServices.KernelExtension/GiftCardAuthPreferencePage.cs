@@ -72,8 +72,8 @@ public class GiftCardAuthPreferencePage : UserControl, IPreferencePageHost
 		m_gcauthorizeResponseTypeComboBox.SelectedIndex = m_gcauthorizeResponseTypeComboBox.FindString(MerchantServicesProxy.Instance.GCAuthorizeResponse.ToString());
 		m_existsCheckBox.Checked = MerchantServicesProxy.Instance.Exists;
 		m_gcstatusTypeComboBox.Items.Clear();
-		string[] names2 = Enum.GetNames(typeof(GiftCardStatus));
-		foreach (string item2 in names2)
+		names = Enum.GetNames(typeof(GiftCardStatus));
+		foreach (string item2 in names)
 		{
 			m_gcstatusTypeComboBox.Items.Add(item2);
 		}

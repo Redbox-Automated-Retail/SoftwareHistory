@@ -11,7 +11,7 @@ internal enum DigitalServicesResponse
 	GCRentalLimitExceeded,
 	[ResponseCode(Name = "(C999)")]
 	RemotingException,
-	[ResponseCode(Name = "(A009)")]
 	[ResponseCode(Name = "(U001)")]
+	[ResponseCode(Name = "(A009)")]
 	Error
 }

@@ -34,13 +34,11 @@ internal class HardwareService : IHardwareService
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "HardwareServiceURL", "rcp://localhost:7001");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "HardwareServiceURL", "rcp://localhost:7001");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "HardwareServiceURL", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "HardwareServiceURL", value);
 			Reset();
 		}
 	}
@@ -49,13 +47,11 @@ internal class HardwareService : IHardwareService
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "HardwareServiceTimeout", 600000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "HardwareServiceTimeout", 600000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "HardwareServiceTimeout", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "HardwareServiceTimeout", value);
 			Reset();
 		}
 	}
@@ -65,15 +61,26 @@ internal class HardwareService : IHardwareService
 	public bool CanSwitch()
 	{
 		IEnumerable<Redbox.HAL.Client.HardwareJob> enumerable = m_activeJobs.Where((Redbox.HAL.Client.HardwareJob item) => string.Compare(item.ProgramName, "return", ignoreCase: true) == 0);
-		bool flag = !enumerable.Any() && m_working == 0;
-		if (!flag)
+		int num;
+		if (!enumerable.Any())
 		{
-			enumerable.ForEach(delegate(Redbox.HAL.Client.HardwareJob item)
+			num = ((m_working == 0) ? 1 : 0);
+			if (num != 0)
 			{
-				LogHelper.Instance.Log("Return Job {0} Running", item.ID);
-			});
+				goto IL_0076;
+			}
 		}
-		return flag;
+		else
+		{
+			num = 0;
+		}
+		enumerable.ForEach(delegate(Redbox.HAL.Client.HardwareJob item)
+		{
+			LogHelper.Instance.Log("Return Job {0} Running", item.ID);
+		});
+		goto IL_0076;
+		IL_0076:
+		return (byte)num != 0;
 	}
 
 	public void Reset()
@@ -578,42 +585,16 @@ internal class HardwareService : IHardwareService
 		return errorList;
 	}
 
-	public Redbox.KioskEngine.ComponentModel.ErrorList VmzThin(string label, DateTime? startTime, string[] barcodesToBin, string[] barcodesToVmz, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
+	public Redbox.KioskEngine.ComponentModel.ErrorList VmzThin(string label, DateTime? startTime, string[] barcodesToBin, string[] rebalances, string[] redeployments, string[] barcodesToVmz, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
 	{
 		jobId = null;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		if (barcodesToBin.Length == 0 && barcodesToVmz.Length == 0)
+		if (barcodesToBin.Length == 0 && rebalances.Length == 0 && redeployments.Length == 0 && barcodesToVmz.Length == 0)
 		{
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("H004", "Thin requires at least one barcode in the list.", "Correct the values provided so that at least one barcode is provided."));
 			return errorList;
 		}
-		HardwareCommandResult hardwareCommandResult = Service.ThinVMZ(barcodesToBin, barcodesToVmz, new HardwareJobSchedule
-		{
-			StartTime = startTime,
-			Priority = HardwareJobPriority.BelowNormal
-		}, out var job);
-		if (!hardwareCommandResult.Success)
-		{
-			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
-		}
-		else
-		{
-			jobId = ConfigureJob(job, eventHandler, statusChangeHandler, errorList);
-			job.SetLabel(label);
-		}
-		return errorList;
-	}
-
-	public Redbox.KioskEngine.ComponentModel.ErrorList VmzThin(string label, DateTime? startTime, string[] barcodesToBin, string[] barcodesToRebalance, string[] barcodesToVmz, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
-	{
-		jobId = null;
-		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		if (barcodesToBin.Length == 0 && barcodesToVmz.Length == 0 && barcodesToRebalance.Length == 0)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("H004", "Thin requires at least one barcode in the list.", "Correct the values provided so that at least one barcode is provided."));
-			return errorList;
-		}
-		HardwareCommandResult hardwareCommandResult = Service.ThinVMZ(barcodesToBin, barcodesToRebalance, barcodesToVmz, new HardwareJobSchedule
+		HardwareCommandResult hardwareCommandResult = Service.ThinVMZ(barcodesToBin, rebalances, redeployments, barcodesToVmz, new HardwareJobSchedule
 		{
 			StartTime = startTime,
 			Priority = HardwareJobPriority.BelowNormal
@@ -1113,7 +1094,7 @@ internal class HardwareService : IHardwareService
 	public Redbox.KioskEngine.ComponentModel.ErrorList SuspendAllJobsForMaintenance()
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		if (SuspendedMaintenanceModeJobs != null && SuspendedMaintenanceModeJobs.Length > 0)
+		if (SuspendedMaintenanceModeJobs != null && SuspendedMaintenanceModeJobs.Length != 0)
 		{
 			return errorList;
 		}
@@ -1241,6 +1222,29 @@ internal class HardwareService : IHardwareService
 		return errorList;
 	}
 
+	public Redbox.KioskEngine.ComponentModel.ErrorList PrepUnloadZone(int rotation, int last_deck, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
+	{
+		jobId = null;
+		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
+		HardwareCommandResult hardwareCommandResult = null;
+		hardwareCommandResult = ((last_deck != 0) ? Service.PrepUnloadZone(rotation, last_deck, new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Highest
+		}, out var job) : Service.PrepUnloadZone(rotation, new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Highest
+		}, out job));
+		if (!hardwareCommandResult.Success)
+		{
+			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
+		}
+		else
+		{
+			jobId = ConfigureJob(job, eventHandler, statusChangeHandler, errorList);
+		}
+		return errorList;
+	}
+
 	internal string ConfigureJob(Redbox.HAL.Client.HardwareJob job, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, Redbox.KioskEngine.ComponentModel.ErrorList errors)
 	{
 		m_activeJobs.Add(job);
@@ -1251,22 +1255,17 @@ internal class HardwareService : IHardwareService
 				ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
 				if (eventHandler != null && service != null)
 				{
-					switch (message)
+					if (message == "ReturnEnd" || message == "DisableCancel")
 					{
-					case "ReturnEnd":
-					case "DisableCancel":
-					{
-						HardwareEventCallback hardwareEventCallback = new HardwareEventCallback
-						{
-							EventHandler = eventHandler,
-							TimeStamp = timeStamp.ToString(),
-							JobId = j.ID,
-							Message = message
-						};
+						HardwareEventCallback hardwareEventCallback = new HardwareEventCallback();
+						hardwareEventCallback.EventHandler = eventHandler;
+						hardwareEventCallback.TimeStamp = timeStamp.ToString();
+						hardwareEventCallback.JobId = j.ID;
+						hardwareEventCallback.Message = message;
 						hardwareEventCallback.Invoke();
-						break;
 					}
-					default:
+					else
+					{
 						service.EnqueueCallback(new HardwareEventCallback
 						{
 							EventHandler = eventHandler,
@@ -1274,7 +1273,6 @@ internal class HardwareService : IHardwareService
 							JobId = j.ID,
 							Message = message
 						});
-						break;
 					}
 				}
 			}

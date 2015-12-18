@@ -61,8 +61,7 @@ public class HardwareServicesHost : IKernelExtensionHost, IDisposable
 			errorForm.Errors = errorList;
 			errorForm.Text = "HAL Script Compilation Errors";
 			errorForm.Message = "One or more HAL Script resources failed to compile:";
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.Show();
+			errorForm.Show();
 		}
 		return result;
 	}

@@ -77,8 +77,8 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 			m_responseTypeComboBox.Items.Add(item);
 		}
 		m_promoIntentComboBox.Items.Clear();
-		string[] names2 = Enum.GetNames(typeof(PromotionIntentCode));
-		foreach (string item2 in names2)
+		names = Enum.GetNames(typeof(PromotionIntentCode));
+		foreach (string item2 in names)
 		{
 			m_promoIntentComboBox.Items.Add(item2);
 		}
@@ -89,10 +89,10 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 		m_simulateCommunicationsFailureCheckBox.Checked = PromotionServicesProxy.Instance.SimulateCommunicationsFailure;
 		m_promoCodeListView.BeginUpdate();
 		m_promoCodeListView.Items.Clear();
-		string[] promoCodes = PromotionServicesProxy.Instance.PromoCodes;
-		foreach (string text in promoCodes)
+		names = PromotionServicesProxy.Instance.PromoCodes;
+		for (int i = 0; i < names.Length; i++)
 		{
-			string[] array = text.Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+			string[] array = names[i].Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
 			if (array.Length >= 4)
 			{
 				ListViewItem listViewItem = new ListViewItem(array[0]);

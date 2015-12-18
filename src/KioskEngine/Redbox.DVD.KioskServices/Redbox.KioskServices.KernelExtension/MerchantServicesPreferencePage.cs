@@ -68,6 +68,8 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private Label label6;
 
+	private CheckBox m_isRBICheckBox;
+
 	public MerchantServicesPreferencePage()
 	{
 		InitializeComponent();
@@ -99,16 +101,17 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		m_cpFirstNameTextBox.Text = MerchantServicesProxy.Instance.CPFirstName;
 		m_cpLastNameTextBox.Text = MerchantServicesProxy.Instance.CPLastName;
 		m_EmailAddressTextBox.Text = MerchantServicesProxy.Instance.EmailAddress;
+		m_isRBICheckBox.Checked = MerchantServicesProxy.Instance.IsRBI;
 		m_confirmationStatusComboBox.Items.Clear();
-		string[] names2 = Enum.GetNames(typeof(ConfirmationStatus));
-		foreach (string item2 in names2)
+		names = Enum.GetNames(typeof(ConfirmationStatus));
+		foreach (string item2 in names)
 		{
 			m_confirmationStatusComboBox.Items.Add(item2);
 		}
 		m_confirmationStatusComboBox.SelectedIndex = m_confirmationStatusComboBox.FindString(MerchantServicesProxy.Instance.ConfirmationStatus.ToString());
 		m_offersListBox.Items.Clear();
-		string[] userOffers = MerchantServicesProxy.Instance.UserOffers;
-		foreach (string item3 in userOffers)
+		names = MerchantServicesProxy.Instance.UserOffers;
+		foreach (string item3 in names)
 		{
 			m_offersListBox.Items.Add(item3);
 		}
@@ -226,6 +229,14 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
+	private void OnIsRBICheckChanged(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			MerchantServicesProxy.Instance.IsRBI = m_isRBICheckBox.Checked;
+		}
+	}
+
 	private void m_addOfferButton_Click(object sender, EventArgs e)
 	{
 		if (m_isLoaded && !string.IsNullOrEmpty(m_addOfferTextBox.Text))
@@ -284,6 +295,7 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_EmailAddressTextBox = new System.Windows.Forms.TextBox();
 		this.label6 = new System.Windows.Forms.Label();
 		this.m_confirmationStatusComboBox = new System.Windows.Forms.ComboBox();
+		this.m_isRBICheckBox = new System.Windows.Forms.CheckBox();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
 		this.m_queueBasedRentalLimitCheckBox.AutoSize = true;
@@ -372,16 +384,16 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_headerLabel.Text = "  Kiosk Services: Payment Auth. && Customer Lookup";
 		this.m_headerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 		this.m_OffersLabel.AutoSize = true;
-		this.m_OffersLabel.Location = new System.Drawing.Point(31, 394);
+		this.m_OffersLabel.Location = new System.Drawing.Point(31, 416);
 		this.m_OffersLabel.Name = "m_OffersLabel";
 		this.m_OffersLabel.Size = new System.Drawing.Size(38, 13);
 		this.m_OffersLabel.TabIndex = 42;
 		this.m_OffersLabel.Text = "Offers:";
-		this.m_addOfferTextBox.Location = new System.Drawing.Point(75, 391);
+		this.m_addOfferTextBox.Location = new System.Drawing.Point(75, 413);
 		this.m_addOfferTextBox.Name = "m_addOfferTextBox";
 		this.m_addOfferTextBox.Size = new System.Drawing.Size(330, 20);
 		this.m_addOfferTextBox.TabIndex = 43;
-		this.m_addOfferButton.Location = new System.Drawing.Point(416, 391);
+		this.m_addOfferButton.Location = new System.Drawing.Point(416, 413);
 		this.m_addOfferButton.Name = "m_addOfferButton";
 		this.m_addOfferButton.Size = new System.Drawing.Size(75, 23);
 		this.m_addOfferButton.TabIndex = 44;
@@ -389,12 +401,12 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_addOfferButton.UseVisualStyleBackColor = true;
 		this.m_addOfferButton.Click += new System.EventHandler(m_addOfferButton_Click);
 		this.m_offersListBox.FormattingEnabled = true;
-		this.m_offersListBox.Location = new System.Drawing.Point(75, 417);
+		this.m_offersListBox.Location = new System.Drawing.Point(75, 439);
 		this.m_offersListBox.Name = "m_offersListBox";
 		this.m_offersListBox.ScrollAlwaysVisible = true;
 		this.m_offersListBox.Size = new System.Drawing.Size(330, 69);
 		this.m_offersListBox.TabIndex = 45;
-		this.m_deleteOfferButton.Location = new System.Drawing.Point(416, 463);
+		this.m_deleteOfferButton.Location = new System.Drawing.Point(416, 485);
 		this.m_deleteOfferButton.Name = "m_deleteOfferButton";
 		this.m_deleteOfferButton.Size = new System.Drawing.Size(75, 23);
 		this.m_deleteOfferButton.TabIndex = 46;
@@ -443,20 +455,29 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_EmailAddressTextBox.TabIndex = 52;
 		this.m_EmailAddressTextBox.Leave += new System.EventHandler(EmailAddressTextBox_Leave);
 		this.label6.AutoSize = true;
-		this.label6.Location = new System.Drawing.Point(31, 345);
+		this.label6.Location = new System.Drawing.Point(31, 367);
 		this.label6.Name = "label6";
 		this.label6.Size = new System.Drawing.Size(101, 13);
 		this.label6.TabIndex = 54;
 		this.label6.Text = "Confirmation Status:";
 		this.m_confirmationStatusComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 		this.m_confirmationStatusComboBox.FormattingEnabled = true;
-		this.m_confirmationStatusComboBox.Location = new System.Drawing.Point(169, 342);
+		this.m_confirmationStatusComboBox.Location = new System.Drawing.Point(169, 364);
 		this.m_confirmationStatusComboBox.Name = "m_confirmationStatusComboBox";
 		this.m_confirmationStatusComboBox.Size = new System.Drawing.Size(317, 21);
 		this.m_confirmationStatusComboBox.TabIndex = 55;
 		this.m_confirmationStatusComboBox.SelectedIndexChanged += new System.EventHandler(OnSelectedConfirmationStatusChanged);
+		this.m_isRBICheckBox.AutoSize = true;
+		this.m_isRBICheckBox.Location = new System.Drawing.Point(53, 325);
+		this.m_isRBICheckBox.Name = "m_isRBICheckBox";
+		this.m_isRBICheckBox.Size = new System.Drawing.Size(52, 17);
+		this.m_isRBICheckBox.TabIndex = 64;
+		this.m_isRBICheckBox.Text = "IsRBI";
+		this.m_isRBICheckBox.UseVisualStyleBackColor = true;
+		this.m_isRBICheckBox.CheckedChanged += new System.EventHandler(OnIsRBICheckChanged);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.m_isRBICheckBox);
 		base.Controls.Add(this.m_confirmationStatusComboBox);
 		base.Controls.Add(this.label6);
 		base.Controls.Add(this.label5);
@@ -483,7 +504,7 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		base.Controls.Add(this.m_simulateCommunicationsFailureCheckBox);
 		base.Controls.Add(this.m_liveCallCheckBox);
 		base.Name = "MerchantServicesPreferencePage";
-		base.Size = new System.Drawing.Size(542, 506);
+		base.Size = new System.Drawing.Size(542, 533);
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).EndInit();
 		base.ResumeLayout(false);
 		base.PerformLayout();

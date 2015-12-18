@@ -82,8 +82,7 @@ internal static class IRemoteServiceResultExtensions
 
 	private static LuaTable ConvertDictionary(Dictionary<string, object> properties)
 	{
-		IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-		LuaTable luaTable = (LuaTable)service.NewTable();
+		LuaTable luaTable = (LuaTable)ServiceLocator.Instance.GetService<IKernelService>().NewTable();
 		foreach (string key in properties.Keys)
 		{
 			object obj = properties[key];

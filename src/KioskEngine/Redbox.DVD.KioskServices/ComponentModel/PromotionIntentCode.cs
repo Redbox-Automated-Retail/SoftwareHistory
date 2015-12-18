@@ -7,5 +7,6 @@ internal enum PromotionIntentCode
 	FirstNightGame,
 	FixedValue,
 	PercentOffCartTotal,
-	FirstNightGameGameRequired
+	FirstNightGameGameRequired,
+	RxGx
 }

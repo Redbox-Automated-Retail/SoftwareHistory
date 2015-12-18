@@ -1,0 +1,651 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Redbox.Rental.Model.KioskProduct;
+
+namespace Redbox.Rental.Services.KioskProduct;
+
+public static class KioskProductExtensions
+{
+	public static List<ITitleProduct> InCartTitleProductFilters(this List<ITitleProduct> source, TitleFamily titleFamily, TitleType titleType, List<long> include, List<long> exclude)
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		if (titleType == TitleType.Bluray)
+		{
+			list.AddRange(from item in source.FilterToBlueray()
+				select (item));
+		}
+		else
+		{
+			switch (titleFamily)
+			{
+			case TitleFamily.All:
+				list.AddRange(source);
+				break;
+			case TitleFamily.Movies:
+				list.AddRange(source.Where((ITitleProduct item) => item.IsMovie));
+				break;
+			case TitleFamily.Games:
+				list.AddRange(source.Where((ITitleProduct item) => item.IsGame));
+				break;
+			}
+			if (titleType != TitleType.All)
+			{
+				list = list.Where((ITitleProduct item) => item.ApplyTitleTypeFilter(titleType)).ToList();
+			}
+		}
+		if ((include != null && include.Count > 0) || (exclude != null && exclude.Count > 0))
+		{
+			list = list.FilterInCarts(include, exclude);
+		}
+		return list;
+	}
+
+	public static List<ITitleProduct> FilterInCarts(this List<ITitleProduct> list, List<long> include, List<long> exclude)
+	{
+		if (include != null || exclude != null)
+		{
+			list = list.FilterToTitles();
+			if (include != null && include.Count() > 0)
+			{
+				list = list.Where((ITitleProduct item) => item.HasTitle(include)).ToList();
+			}
+			else if (exclude != null && exclude.Count() > 0)
+			{
+				list = list.Where((ITitleProduct item) => !item.HasTitle(exclude)).ToList();
+			}
+		}
+		return list;
+	}
+
+	public static List<ITitleProduct> FilterToBlueray(this List<ITitleProduct> kioskProducts)
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		kioskProducts.ForEach(delegate(ITitleProduct item)
+		{
+			if (item is TitleRollupProduct)
+			{
+				list.AddRange(((TitleRollupProduct)item).KioskProducts.FilterToBlueray());
+			}
+			if (item is MDVProduct && ((MDVProduct)item).TitleType == TitleType.Bluray)
+			{
+				list.Add(item);
+			}
+			if (item is TitleProduct && ((TitleProduct)item).TitleType == TitleType.Bluray)
+			{
+				list.Add(item);
+			}
+		});
+		return list;
+	}
+
+	public static List<ITitleProduct> FilterToTitles(this List<ITitleProduct> kioskProducts)
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		kioskProducts.ForEach(delegate(ITitleProduct item)
+		{
+			if (item is TitleRollupProduct)
+			{
+				list.AddRange(((TitleRollupProduct)item).KioskProducts.FilterToTitles());
+			}
+			if (item is MDVProduct || item is TitleProduct)
+			{
+				list.Add(item);
+			}
+		});
+		return list;
+	}
+
+	public static bool ApplyTitleTypeFilter(this ITitleProduct titleProduct, TitleType titleType)
+	{
+		return titleProduct.TitleType == titleType;
+	}
+
+	public static bool ApplyGenreFilter(this ITitleProduct titleProduct, long genreFilter)
+	{
+		return titleProduct.Genres.Contains(genreFilter);
+	}
+
+	public static List<ITitleProduct> OrderList(this List<ITitleProduct> source, BrowseSort browseSort)
+	{
+		return browseSort switch
+		{
+			BrowseSort.MerchandiseDate => (from item in source
+				orderby item.SortMerchandise, item.SortBoxOfficeGross descending, item.SortName descending
+				select item).ToList(), 
+			BrowseSort.Alpha => source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList(), 
+			_ => (from item in source
+				orderby item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
+				select item).ToList(), 
+		};
+	}
+
+	public static TitleFamily ToFamily(this TitleType titleType)
+	{
+		if (TitleProductTypes.MovieFamilyTitleTypes.Any((TitleType item) => item == titleType))
+		{
+			return TitleFamily.Movies;
+		}
+		if (TitleProductTypes.GameFamilyTitleTypes.Any((TitleType item) => item == titleType))
+		{
+			return TitleFamily.Games;
+		}
+		return TitleFamily.Movies;
+	}
+
+	public static long? ConvertToGenre(this string selectedGenre)
+	{
+		if (string.IsNullOrEmpty(selectedGenre) || selectedGenre.Equals("All", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return null;
+		}
+		if (!long.TryParse(selectedGenre, out var result))
+		{
+			return null;
+		}
+		return result;
+	}
+
+	public static BrowseSort ConvertToBrowseSort(this string selectedSort, BrowseViewFilter browseViewFilter)
+	{
+		if (selectedSort.Equals("alpha", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return BrowseSort.Alpha;
+		}
+		if (browseViewFilter == BrowseViewFilter.ComingSoon)
+		{
+			return BrowseSort.MerchandiseDate;
+		}
+		return BrowseSort.SortDate;
+	}
+
+	public static BrowseViewFilter ConvertToBrowseViewFilter(this string filter)
+	{
+		if (filter.Equals("All", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return BrowseViewFilter.All;
+		}
+		if (filter.Equals("Newest", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return BrowseViewFilter.All;
+		}
+		if (filter.Equals("for-sale", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return BrowseViewFilter.ForSale;
+		}
+		if (filter.Equals("coming-soon", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return BrowseViewFilter.ComingSoon;
+		}
+		return BrowseViewFilter.All;
+	}
+
+	public static TitleFamily ConvertToTitleFamily(this string family)
+	{
+		if (family.Equals("Movies", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleFamily.Movies;
+		}
+		if (family.Equals("Games", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleFamily.Games;
+		}
+		family.Equals("All", StringComparison.CurrentCultureIgnoreCase);
+		return TitleFamily.All;
+	}
+
+	public static TitleType ConvertToTitleType(this string type)
+	{
+		if (type.Equals("All", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.All;
+		}
+		if (type.Equals("DVD", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.DVD;
+		}
+		if (type.Equals("BLURAY", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.Bluray;
+		}
+		if (type.Equals("BLU-RAY", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.Bluray;
+		}
+		if (type.Equals("Xbox 360", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.Xbox360;
+		}
+		if (type.Equals("PS3", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PS3;
+		}
+		if (type.Equals("XBOX ONE", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.XboxOne;
+		}
+		if (type.Equals("WII", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.Wii;
+		}
+		if (type.Equals("WII U", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.WiiU;
+		}
+		if (type.Equals("PS4", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PS4;
+		}
+		if (type.Equals("PSP", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PSP;
+		}
+		if (type.Equals("PS2", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PS2;
+		}
+		if (type.Equals("PC", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PC;
+		}
+		if (type.Equals("DS", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.DS;
+		}
+		return TitleType.All;
+	}
+
+	public static List<IKioskProduct> ToKioskProducts(this List<ITitleProduct> products)
+	{
+		List<IKioskProduct> list = new List<IKioskProduct>();
+		products.ForEach(delegate(ITitleProduct item)
+		{
+			list.Add(item);
+		});
+		return list;
+	}
+
+	public static List<ITitleProduct> ToTitleProducts(this List<IKioskProduct> products)
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		products.ForEach(delegate(IKioskProduct item)
+		{
+			if (item is ITitleProduct)
+			{
+				list.Add((ITitleProduct)item);
+			}
+		});
+		return list;
+	}
+
+	public static List<Dictionary<string, object>> ToDictionary(this List<IKioskProduct> products)
+	{
+		List<Dictionary<string, object>> result = new List<Dictionary<string, object>>();
+		products.ForEach(delegate(IKioskProduct p)
+		{
+			if (p is TitleProduct)
+			{
+				result.Add((p as TitleProduct).ToDictionary());
+			}
+			else if (p is MDVProduct)
+			{
+				result.Add((p as MDVProduct).ToDictionary());
+			}
+			else if (p is TitleRollupProduct)
+			{
+				result.Add((p as TitleRollupProduct).ToDictionary());
+			}
+			else if (p is CollectionProduct)
+			{
+				result.Add((p as CollectionProduct).ToDictionary());
+			}
+		});
+		return result;
+	}
+
+	public static List<Dictionary<string, object>> ToDictionary(this List<IKioskProduct> products, TitleFamily titleFamily, TitleType titleType, List<long> include, List<long> exclude)
+	{
+		List<Dictionary<string, object>> result = new List<Dictionary<string, object>>();
+		products.ForEach(delegate(IKioskProduct p)
+		{
+			if (p is TitleProduct)
+			{
+				result.Add((p as TitleProduct).ToDictionary());
+			}
+			else if (p is MDVProduct)
+			{
+				result.Add((p as MDVProduct).ToDictionary());
+			}
+			else if (p is TitleRollupProduct)
+			{
+				result.Add((p as TitleRollupProduct).ToDictionary());
+			}
+			else if (p is CollectionProduct)
+			{
+				result.Add((p as CollectionProduct).ToDictionary(titleFamily, titleType, include, exclude));
+			}
+		});
+		return result;
+	}
+
+	public static List<Dictionary<string, object>> ToDictionary(this List<ITitleProduct> products)
+	{
+		List<Dictionary<string, object>> result = new List<Dictionary<string, object>>();
+		products.ForEach(delegate(ITitleProduct p)
+		{
+			if (p is TitleProduct)
+			{
+				result.Add((p as TitleProduct).ToDictionary());
+			}
+			else if (p is MDVProduct)
+			{
+				result.Add((p as MDVProduct).ToDictionary());
+			}
+			else if (p is TitleRollupProduct)
+			{
+				result.Add((p as TitleRollupProduct).ToDictionary());
+			}
+		});
+		return result;
+	}
+
+	public static Dictionary<string, object> ToDictionary(this IKioskProduct product)
+	{
+		if (product is TitleRollupProduct)
+		{
+			return (product as TitleRollupProduct).ToDictionary();
+		}
+		if (product is TitleProduct)
+		{
+			return (product as TitleProduct).ToDictionary();
+		}
+		if (product is MDVProduct)
+		{
+			return (product as MDVProduct).ToDictionary();
+		}
+		if (product is CollectionProduct)
+		{
+			return (product as CollectionProduct).ToDictionary();
+		}
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
+		{
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription
+		};
+	}
+
+	public static Dictionary<string, object> ToDictionary(this IKioskProduct product, TitleFamily titleFamily, TitleType titleType, List<long> include, List<long> exclude)
+	{
+		if (product is TitleRollupProduct)
+		{
+			return (product as TitleRollupProduct).ToDictionary();
+		}
+		if (product is TitleProduct)
+		{
+			return (product as TitleProduct).ToDictionary();
+		}
+		if (product is MDVProduct)
+		{
+			return (product as MDVProduct).ToDictionary();
+		}
+		if (product is CollectionProduct)
+		{
+			return (product as CollectionProduct).ToDictionary(titleFamily, titleType, include, exclude);
+		}
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
+		{
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription
+		};
+	}
+
+	public static Dictionary<string, object> ToDictionary(this ITitleProduct product)
+	{
+		if (product is TitleRollupProduct)
+		{
+			return (product as TitleRollupProduct).ToDictionary();
+		}
+		if (product is TitleProduct)
+		{
+			return (product as TitleProduct).ToDictionary();
+		}
+		if (product is MDVProduct)
+		{
+			return (product as MDVProduct).ToDictionary();
+		}
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
+		{
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription
+		};
+	}
+
+	public static Dictionary<string, object> ToDictionary(this TitleProduct product)
+	{
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
+		{
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription,
+			["collections"] = product.Collections,
+			["product_id"] = product.ProductId,
+			["stars"] = product.Stars,
+			["starring"] = product.Starring,
+			["running_time"] = product.RunningTime,
+			["product_type_id"] = product.ProductTypeId,
+			["rating_id"] = product.RatingId,
+			["long_name"] = product.LongName,
+			["sort_name"] = product.SortName,
+			["image_file"] = product.ImageFile,
+			["description"] = product.Description,
+			["genres"] = product.Genres.ToGenreDictionary(),
+			["release_date"] = product.ReleaseDate,
+			["box_office_gross"] = product.BoxOfficeGross,
+			["directors"] = product.Directors,
+			["coming_soon_days"] = product.ComingSoonDays,
+			["sort_date"] = product.SortDate,
+			["national_street_date"] = product.NationalStreetDate,
+			["closed_captioned"] = product.ClosedCaptioned,
+			["merchandise_date"] = product.MerchandiseDate,
+			["do_not_rent_date"] = product.DoNotRentDate,
+			["sell_thru"] = product.SellThru,
+			["sell_thru_new"] = product.SellThruNew,
+			["sellthru_date"] = product.SellThruDate,
+			["sellthru_price"] = product.SellThruPrice,
+			["disc_number"] = product.DiscNumber,
+			["sub_platform_id"] = product.SubPlatformId,
+			["number_of_players_text"] = product.NumberOfPlayersText,
+			["do_not_rent"] = product.DoNotRent,
+			["can_be_sold"] = product.CanBeSold,
+			["is_available"] = product.IsAvailable,
+			["coming_soon"] = product.ComingSoon,
+			["in_stock"] = product.InStock,
+			["show_out_of_stock"] = product.ShowOutOfStock,
+			["is_game"] = product.IsGame,
+			["is_movie"] = product.IsMovie,
+			["title_rollup_product_group_id"] = product.TitleRollupProductGroupId
+		};
+	}
+
+	public static Dictionary<long, object> ToGenreDictionary(this List<long> genres)
+	{
+		Dictionary<long, object> result = new Dictionary<long, object>();
+		genres.ForEach(delegate(long g)
+		{
+			result[g] = true;
+		});
+		return result;
+	}
+
+	public static Dictionary<string, object> ToDictionary(this MDVProduct product)
+	{
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
+		{
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription,
+			["collections"] = product.Collections,
+			["product_id"] = product.ProductId,
+			["stars"] = product.Stars,
+			["starring"] = product.Starring,
+			["running_time"] = product.RunningTime,
+			["product_type_id"] = product.ProductTypeId,
+			["rating_id"] = product.RatingId,
+			["long_name"] = product.LongName,
+			["sort_name"] = product.SortName,
+			["image_file"] = product.ImageFile,
+			["description"] = product.Description,
+			["genres"] = product.Genres.ToGenreDictionary(),
+			["release_date"] = product.ReleaseDate,
+			["box_office_gross"] = product.BoxOfficeGross,
+			["directors"] = product.Directors,
+			["coming_soon_days"] = product.ComingSoonDays,
+			["sort_date"] = product.SortDate,
+			["national_street_date"] = product.NationalStreetDate,
+			["closed_captioned"] = product.ClosedCaptioned,
+			["merchandise_date"] = product.MerchandiseDate,
+			["do_not_rent_date"] = product.DoNotRentDate,
+			["sell_thru"] = product.SellThru,
+			["sell_thru_new"] = product.SellThruNew,
+			["sellthru_date"] = product.SellThruDate,
+			["sellthru_price"] = product.SellThruPrice,
+			["disc_number"] = product.DiscNumber,
+			["sub_platform_id"] = product.SubPlatformId,
+			["number_of_players_text"] = product.NumberOfPlayersText,
+			["do_not_rent"] = product.DoNotRent,
+			["can_be_sold"] = product.CanBeSold,
+			["is_available"] = product.IsAvailable,
+			["coming_soon"] = product.ComingSoon,
+			["in_stock"] = product.InStock,
+			["show_out_of_stock"] = product.ShowOutOfStock,
+			["kiosk_products"] = product.TitleProducts.ToKioskProducts().ToDictionary(),
+			["is_game"] = product.IsGame,
+			["is_movie"] = product.IsMovie,
+			["title_rollup_product_group_id"] = product.TitleRollupProductGroupId
+		};
+	}
+
+	public static Dictionary<string, object> ToDictionary(this TitleRollupProduct product)
+	{
+		Dictionary<string, object> dict = new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase);
+		dict["kiosk_product_type"] = (int)product.KioskProductType;
+		dict["product_name"] = product.ProductName;
+		dict["product_description"] = product.ProductDescription;
+		dict["collections"] = product.Collections;
+		dict["product_id"] = product.ProductId;
+		dict["stars"] = product.Stars;
+		dict["starring"] = product.Starring;
+		dict["running_time"] = product.RunningTime;
+		dict["product_type_id"] = product.ProductTypeId;
+		dict["rating_id"] = product.RatingId;
+		dict["long_name"] = product.LongName;
+		dict["sort_name"] = product.SortName;
+		dict["image_file"] = product.ImageFile;
+		dict["description"] = product.Description;
+		dict["genres"] = product.Genres.ToGenreDictionary();
+		dict["release_date"] = product.ReleaseDate;
+		dict["box_office_gross"] = product.BoxOfficeGross;
+		dict["directors"] = product.Directors;
+		dict["coming_soon_days"] = product.ComingSoonDays;
+		dict["sort_date"] = product.SortDate;
+		dict["national_street_date"] = product.NationalStreetDate;
+		dict["closed_captioned"] = product.ClosedCaptioned;
+		dict["merchandise_date"] = product.MerchandiseDate;
+		dict["do_not_rent_date"] = product.DoNotRentDate;
+		dict["sell_thru"] = product.SellThru;
+		dict["sell_thru_new"] = product.SellThruNew;
+		dict["sellthru_date"] = product.SellThruDate;
+		dict["sellthru_price"] = product.SellThruPrice;
+		dict["disc_number"] = product.DiscNumber;
+		dict["sub_platform_id"] = product.SubPlatformId;
+		dict["number_of_players_text"] = product.NumberOfPlayersText;
+		dict["do_not_rent"] = product.DoNotRent;
+		dict["is_game"] = product.IsGame;
+		dict["is_movie"] = product.IsMovie;
+		dict["can_be_sold"] = product.CanBeSold;
+		dict["is_available"] = product.IsAvailable;
+		dict["coming_soon"] = product.ComingSoon;
+		dict["in_stock"] = product.InStock;
+		dict["show_out_of_stock"] = product.ShowOutOfStock;
+		dict["kiosk_products"] = product.KioskProducts.ToDictionary();
+		dict["dvd_index"] = 0;
+		dict["blu_ray_index"] = 0;
+		int index = 1;
+		product.KioskProducts.ForEach(delegate(ITitleProduct item)
+		{
+			if (item.TitleType == TitleType.DVD)
+			{
+				dict["dvd_index"] = index;
+			}
+			else if (item.TitleType == TitleType.Bluray)
+			{
+				dict["blu_ray_index"] = index;
+			}
+			index++;
+		});
+		return dict;
+	}
+
+	public static Dictionary<string, object> ToDictionary(this CollectionProduct product)
+	{
+		return product.ToDictionary(TitleFamily.All, TitleType.All, new List<long>(), new List<long>());
+	}
+
+	public static Dictionary<string, object> ToDictionary(this CollectionProduct product, TitleFamily titleFamily, TitleType titleType, List<long> include, List<long> exclude)
+	{
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
+		{
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription,
+			["image_file"] = product.ImageFile,
+			["id"] = product.Id,
+			["name"] = product.Name,
+			["sort_order"] = product.SortOrder,
+			["effective_start_date"] = product.EffectiveStartDate,
+			["effective_end_date"] = product.EffectiveEndDate,
+			["legal_info"] = product.LegalInfo,
+			["is_top_20"] = product.IsTop20,
+			["kiosk_products"] = product.KioskProducts.ToDictionary(),
+			["available_kiosk_products"] = product.AvailableKioskProducts.ToDictionary(),
+			["can_show"] = product.CanShow,
+			["incart_available_kiosk_products"] = product.GetInCartAvailableKioskProducts(titleFamily, titleType, include, exclude).ToDictionary(),
+			["incart_can_show"] = product.GetInCartCanShow(titleFamily, titleType, include, exclude)
+		};
+	}
+
+	public static bool HasTitle(this ITitleProduct product, List<long> titles)
+	{
+		if (product is TitleRollupProduct)
+		{
+			return (product as TitleRollupProduct).HasTitle(titles);
+		}
+		if (product is TitleProduct)
+		{
+			return (product as TitleProduct).HasTitle(titles);
+		}
+		if (product is MDVProduct)
+		{
+			return (product as MDVProduct).HasTitle(titles);
+		}
+		return false;
+	}
+
+	public static bool HasTitle(this TitleProduct product, List<long> titles)
+	{
+		return titles.Contains(product.ProductId);
+	}
+
+	public static bool HasTitle(this MDVProduct product, List<long> titles)
+	{
+		return product.TitleProducts.Any((ITitleProduct tp) => titles.Contains(tp.ProductId));
+	}
+
+	public static bool HasTitle(this TitleRollupProduct product, List<long> titles)
+	{
+		return product.KioskProducts.Any((ITitleProduct kp) => kp.HasTitle(titles));
+	}
+}

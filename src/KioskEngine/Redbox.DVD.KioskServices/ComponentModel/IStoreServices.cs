@@ -14,6 +14,8 @@ internal interface IStoreServices
 
 	void GetPendingBanners(int stateId, RemoteServiceCallback completeCallback);
 
+	void GetOpsMarket(string storeNumber, RemoteServiceCallback completeCallback);
+
 	DateTime? GetRebootTime();
 
 	bool ShouldRunInitialSync();

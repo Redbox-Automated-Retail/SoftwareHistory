@@ -30,13 +30,11 @@ internal class KioskServicesProxy
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "KioskServicesProtocol", KioskServicesProtocol.Remoting);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "KioskServicesProtocol", KioskServicesProtocol.Remoting);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "KioskServicesProtocol", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "KioskServicesProtocol", value);
 			RegisterChannel();
 		}
 	}
@@ -45,13 +43,11 @@ internal class KioskServicesProxy
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "KioskServicesTimeout", 30000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "KioskServicesTimeout", 30000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "KioskServicesTimeout", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "KioskServicesTimeout", value);
 			RegisterChannel();
 		}
 	}
@@ -60,13 +56,11 @@ internal class KioskServicesProxy
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Store Services", "KioskServicesURL", "https://bl2.accessredbox.net/KioskServices/MessageService.rem");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "KioskServicesURL", "https://bl2.accessredbox.net/KioskServices/MessageService.rem");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Store Services", "KioskServicesURL", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "KioskServicesURL", value);
 		}
 	}
 
@@ -82,10 +76,19 @@ internal class KioskServicesProxy
 			leading = 0;
 			trailing = 0;
 		}
-		string text = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
-		string text2 = ((trailing > 0) ? msgText.Substring(msgText.Length - trailing, trailing) : string.Empty);
+		string obj = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
+		string text;
+		if (trailing <= 0)
+		{
+			text = string.Empty;
+		}
+		else
+		{
+			text = msgText.Substring(msgText.Length - trailing, trailing);
+		}
+		string text2 = text;
 		string text3 = new string(newChar, msgText.Length - (leading + trailing));
-		return text + text3 + text2;
+		return obj + text3 + text2;
 	}
 
 	public IDictionary<string, object> ExecuteMessage(string jsonRequest)
@@ -93,115 +96,115 @@ internal class KioskServicesProxy
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		if (string.IsNullOrEmpty(Url) || string.IsNullOrEmpty(jsonRequest))
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary["Success"] = false;
-			return dictionary;
+			return new Dictionary<string, object> { ["Success"] = false };
 		}
 		try
 		{
-			Dictionary<string, object> dictionary2 = jsonRequest.ToObject<Dictionary<string, object>>();
-			if (dictionary2.ContainsKey("Password") && dictionary2["Password"] != null)
+			Dictionary<string, object> dictionary = jsonRequest.ToObject<Dictionary<string, object>>();
+			if (dictionary.ContainsKey("Username") && dictionary["Username"] != null)
 			{
-				dictionary2.Remove("Password");
+				dictionary.Remove("Username");
 			}
-			if (dictionary2.ContainsKey("Email") && dictionary2["Email"] != null)
+			if (dictionary.ContainsKey("Password") && dictionary["Password"] != null)
 			{
-				dictionary2["Email"] = ObfuscateMessageData(dictionary2["Email"].ToString(), 'x', 1, 0);
+				dictionary.Remove("Password");
 			}
-			if (dictionary2.ContainsKey("CardHash") && dictionary2["CardHash"] != null)
+			if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
 			{
-				dictionary2.Remove("CardHash");
+				dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
 			}
-			if (dictionary2.ContainsKey("OptInItems") && dictionary2["OptInItems"] != null)
+			if (dictionary.ContainsKey("CardHash") && dictionary["CardHash"] != null)
 			{
-				ArrayList arrayList = dictionary2["OptInItems"] as ArrayList;
-				foreach (object item in arrayList)
+				dictionary.Remove("CardHash");
+			}
+			if (dictionary.ContainsKey("OptInItems") && dictionary["OptInItems"] != null)
+			{
+				foreach (object item in dictionary["OptInItems"] as ArrayList)
 				{
-					Dictionary<string, object> dictionary3 = item as Dictionary<string, object>;
-					if (dictionary3.ContainsKey("OptInMethodData") && dictionary3["OptInMethodData"] != null)
+					Dictionary<string, object> dictionary2 = item as Dictionary<string, object>;
+					if (dictionary2.ContainsKey("OptInMethodData") && dictionary2["OptInMethodData"] != null)
 					{
-						dictionary3["OptInMethodData"] = ObfuscateMessageData(dictionary3["OptInMethodData"].ToString(), 'x', 1, 0);
+						dictionary2["OptInMethodData"] = ObfuscateMessageData(dictionary2["OptInMethodData"].ToString(), 'x', 1, 0);
 					}
 				}
 			}
-			if (dictionary2.ContainsKey("CreditCard"))
+			if (dictionary.ContainsKey("CreditCard"))
 			{
-				Dictionary<string, object> dictionary4 = (Dictionary<string, object>)dictionary2["CreditCard"];
-				dictionary4.Remove("CardId");
-				dictionary4.Remove("Track2");
-				dictionary4.Remove("Number");
-				if (dictionary4.ContainsKey("LastFour") && dictionary4["LastFour"] != null)
+				Dictionary<string, object> dictionary3 = (Dictionary<string, object>)dictionary["CreditCard"];
+				dictionary3.Remove("CardId");
+				dictionary3.Remove("Track2");
+				dictionary3.Remove("Number");
+				if (dictionary3.ContainsKey("LastFour") && dictionary3["LastFour"] != null)
 				{
-					dictionary4["LastFour"] = ObfuscateMessageData(dictionary4["LastFour"].ToString(), '#', 0, 1);
+					dictionary3["LastFour"] = ObfuscateMessageData(dictionary3["LastFour"].ToString(), '#', 0, 1);
 				}
-				if (dictionary4.ContainsKey("LastName") && dictionary4["LastName"] != null)
+				if (dictionary3.ContainsKey("LastName") && dictionary3["LastName"] != null)
 				{
-					dictionary4["LastName"] = ObfuscateMessageData(dictionary4["LastName"].ToString(), 'x', 2, 0);
+					dictionary3["LastName"] = ObfuscateMessageData(dictionary3["LastName"].ToString(), 'x', 2, 0);
 				}
+				if (dictionary3.ContainsKey("FirstName") && dictionary3["FirstName"] != null)
+				{
+					dictionary3["FirstName"] = ObfuscateMessageData(dictionary3["FirstName"].ToString(), 'x', 1, 0);
+				}
+				if (dictionary3.ContainsKey("PostalCode") && dictionary3["PostalCode"] != null)
+				{
+					dictionary3["PostalCode"] = ObfuscateMessageData(dictionary3["PostalCode"].ToString(), '#', 0, 1);
+				}
+				if (dictionary3.ContainsKey("ExpirationYear") && dictionary3["ExpirationYear"] != null)
+				{
+					dictionary3["ExpirationYear"] = ObfuscateMessageData(dictionary3["ExpirationYear"].ToString(), '#', 0, 0);
+				}
+				if (dictionary3.ContainsKey("ExpirationMonth") && dictionary3["ExpirationMonth"] != null)
+				{
+					dictionary3["ExpirationMonth"] = ObfuscateMessageData(dictionary3["ExpirationMonth"].ToString(), '#', 0, 0);
+				}
+			}
+			string text = dictionary.ToJson();
+			string prettyString = PrettyPrinter.GetPrettyString(text);
+			LogHelper.Instance.Log("KioskServicesProxy JSON request: {0}", (prettyString.Length <= 10000) ? prettyString : text);
+			string text2 = PerformRemoteMessage(jsonRequest);
+			dictionary = text2.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
+			if (dictionary.ContainsKey("CustomerProfile"))
+			{
+				Dictionary<string, object> dictionary4 = (Dictionary<string, object>)dictionary["CustomerProfile"];
 				if (dictionary4.ContainsKey("FirstName") && dictionary4["FirstName"] != null)
 				{
 					dictionary4["FirstName"] = ObfuscateMessageData(dictionary4["FirstName"].ToString(), 'x', 1, 0);
 				}
-				if (dictionary4.ContainsKey("PostalCode") && dictionary4["PostalCode"] != null)
-				{
-					dictionary4["PostalCode"] = ObfuscateMessageData(dictionary4["PostalCode"].ToString(), '#', 0, 1);
-				}
-				if (dictionary4.ContainsKey("ExpirationYear") && dictionary4["ExpirationYear"] != null)
-				{
-					dictionary4["ExpirationYear"] = ObfuscateMessageData(dictionary4["ExpirationYear"].ToString(), '#', 0, 0);
-				}
-				if (dictionary4.ContainsKey("ExpirationMonth") && dictionary4["ExpirationMonth"] != null)
-				{
-					dictionary4["ExpirationMonth"] = ObfuscateMessageData(dictionary4["ExpirationMonth"].ToString(), '#', 0, 0);
-				}
 			}
-			string text = dictionary2.ToJson();
-			string prettyString = PrettyPrinter.GetPrettyString(text);
-			LogHelper.Instance.Log("KioskServicesProxy JSON request: {0}", (prettyString.Length <= 10000) ? prettyString : text);
-			string text2 = PerformRemoteMessage(jsonRequest);
-			dictionary2 = text2.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
-			if (dictionary2.ContainsKey("CustomerProfile"))
+			if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
 			{
-				Dictionary<string, object> dictionary5 = (Dictionary<string, object>)dictionary2["CustomerProfile"];
-				if (dictionary5.ContainsKey("FirstName") && dictionary5["FirstName"] != null)
-				{
-					dictionary5["FirstName"] = ObfuscateMessageData(dictionary5["FirstName"].ToString(), 'x', 1, 0);
-				}
+				dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
 			}
-			if (dictionary2.ContainsKey("Email") && dictionary2["Email"] != null)
+			if (dictionary.ContainsKey("email") && dictionary["email"] != null)
 			{
-				dictionary2["Email"] = ObfuscateMessageData(dictionary2["Email"].ToString(), 'x', 1, 0);
+				dictionary["email"] = ObfuscateMessageData(dictionary["email"].ToString(), 'x', 1, 0);
 			}
-			if (dictionary2.ContainsKey("email") && dictionary2["email"] != null)
+			if (dictionary.ContainsKey("CustomerProfileLastName") && dictionary["CustomerProfileLastName"] != null)
 			{
-				dictionary2["email"] = ObfuscateMessageData(dictionary2["email"].ToString(), 'x', 1, 0);
+				dictionary["CustomerProfileLastName"] = ObfuscateMessageData(dictionary["CustomerProfileLastName"].ToString(), 'x', 2, 0);
 			}
-			if (dictionary2.ContainsKey("CustomerProfileLastName") && dictionary2["CustomerProfileLastName"] != null)
+			if (dictionary.ContainsKey("CustomerProfileFirstName") && dictionary["CustomerProfileFirstName"] != null)
 			{
-				dictionary2["CustomerProfileLastName"] = ObfuscateMessageData(dictionary2["CustomerProfileLastName"].ToString(), 'x', 2, 0);
+				dictionary["CustomerProfileFirstName"] = ObfuscateMessageData(dictionary["CustomerProfileFirstName"].ToString(), 'x', 1, 0);
 			}
-			if (dictionary2.ContainsKey("CustomerProfileFirstName") && dictionary2["CustomerProfileFirstName"] != null)
-			{
-				dictionary2["CustomerProfileFirstName"] = ObfuscateMessageData(dictionary2["CustomerProfileFirstName"].ToString(), 'x', 1, 0);
-			}
-			string input = dictionary2.ToJson();
+			string input = dictionary.ToJson();
 			LogHelper.Instance.Log("KioskServicesProxy JSON response: {0}", PrettyPrinter.GetPrettyString(input));
 			LogHelper.Instance.Log("KioskServicesProxy call execution time: {0}", executionTimer.Elapsed);
 			if (!string.IsNullOrEmpty(text2))
 			{
 				return text2.ToDictionary();
 			}
-			Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
-			dictionary6["Success"] = false;
-			return dictionary6;
+			return new Dictionary<string, object> { ["Success"] = false };
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in KioskServicesProxy.ExecuteMessage.", e);
-			Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
-			dictionary7["Success"] = false;
-			dictionary7["ExceptionRaised"] = true;
-			return dictionary7;
+			return new Dictionary<string, object>
+			{
+				["Success"] = false,
+				["ExceptionRaised"] = true
+			};
 		}
 	}
 
@@ -243,10 +246,11 @@ internal class KioskServicesProxy
 		}
 		if (Protocol == KioskServicesProtocol.Remoting)
 		{
-			ListDictionary listDictionary = new ListDictionary();
-			listDictionary.Add("port", 0);
-			listDictionary.Add("timeout", Timeout);
-			ListDictionary properties = listDictionary;
+			ListDictionary properties = new ListDictionary
+			{
+				{ "port", 0 },
+				{ "timeout", Timeout }
+			};
 			LogHelper.Instance.Log("Registering remoting channel with timeout {0}", Timeout);
 			m_channel = new HttpChannel(properties, new BinaryClientFormatterSinkProvider(), new BinaryServerFormatterSinkProvider());
 			ChannelServices.RegisterChannel(m_channel, ensureSecurity: false);
@@ -275,8 +279,7 @@ internal class KioskServicesProxy
 			requestStream.Close();
 			using WebResponse webResponse = webRequest.GetResponse();
 			using StreamReader streamReader = new StreamReader(webResponse.GetResponseStream());
-			string str = streamReader.ReadToEnd();
-			return HttpUtility.UrlDecode(str);
+			return HttpUtility.UrlDecode(streamReader.ReadToEnd());
 		}
 		IMessageService messageService = (IMessageService)Activator.GetObject(typeof(IMessageService), Url);
 		if (messageService == null)

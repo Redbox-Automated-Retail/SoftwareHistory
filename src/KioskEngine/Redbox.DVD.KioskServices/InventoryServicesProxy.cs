@@ -19,13 +19,11 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Inventory Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Inventory Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "LiveCall", value);
 		}
 	}
 
@@ -33,13 +31,11 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Inventory Services", "EnableOutOfStockDisplay", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "EnableOutOfStockDisplay", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Inventory Services", "EnableOutOfStockDisplay", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "EnableOutOfStockDisplay", value);
 		}
 	}
 
@@ -47,13 +43,11 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Inventory Services", "EnableSellThruOfUsed", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "EnableSellThruOfUsed", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Inventory Services", "EnableSellThruOfUsed", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "EnableSellThruOfUsed", value);
 		}
 	}
 
@@ -61,13 +55,11 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Inventory Services", "EnableSellThruOfNew", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "EnableSellThruOfNew", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Inventory Services", "EnableSellThruOfnew", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "EnableSellThruOfnew", value);
 		}
 	}
 
@@ -75,13 +67,11 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Inventory Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Inventory Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -89,13 +79,11 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Inventory Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Inventory Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -188,8 +176,7 @@ internal class InventoryServicesProxy : IInventoryServices
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.BackwardsDiscReturn, URL: {0}", KioskServicesProxy.Instance.Url);
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-				errorList = service2.Enqueue(200, "Return", new
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Return", new
 				{
 					MessageType = "Return",
 					MessageId = Guid.NewGuid(),
@@ -211,8 +198,8 @@ internal class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -223,7 +210,7 @@ internal class InventoryServicesProxy : IInventoryServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -260,8 +247,7 @@ internal class InventoryServicesProxy : IInventoryServices
 					BundleVersion = service["ProductVersion"],
 					Discs = new List<IInventoryItem>(items)
 				};
-				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-				errorList = service2.EnqueueOnlyOne(200, "SoftSync", message);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().EnqueueOnlyOne(200, "SoftSync", message);
 				Redbox.KioskEngine.ComponentModel.Error error = errorList.Find((Redbox.KioskEngine.ComponentModel.Error err) => err.Code == "QID");
 				if (error != null)
 				{
@@ -276,8 +262,8 @@ internal class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -290,7 +276,7 @@ internal class InventoryServicesProxy : IInventoryServices
 							remoteServiceResult.Properties["softsync_queue_id"] = num.ToString();
 							remoteServiceResult.Properties["message_guid"] = messageId.ToString();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -416,8 +402,7 @@ internal class InventoryServicesProxy : IInventoryServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service2.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -434,12 +419,13 @@ internal class InventoryServicesProxy : IInventoryServices
 
 	public IInventoryItem CreateInventoryItem(string barcode, int? deck, int? slot, InventoryItemStatus status)
 	{
-		InventoryItem inventoryItem = new InventoryItem();
-		inventoryItem.Barcode = barcode;
-		inventoryItem.Deck = deck;
-		inventoryItem.Slot = slot;
-		inventoryItem.Status = status;
-		return inventoryItem;
+		return new InventoryItem
+		{
+			Barcode = barcode,
+			Deck = deck,
+			Slot = slot,
+			Status = status
+		};
 	}
 
 	public void MarkAsUnplayable(string storeNumber, string barcode, string email, string returnTime, RemoteServiceCallback completeCallback)
@@ -471,8 +457,7 @@ internal class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-					service.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -522,8 +507,7 @@ internal class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service2.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -548,8 +532,7 @@ internal class InventoryServicesProxy : IInventoryServices
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.FmaDiscAction, URL: {0}", KioskServicesProxy.Instance.Url);
 				string text = jobTimeStamp.Substring(0, 4) + "-" + jobTimeStamp.Substring(4, 2) + "-" + jobTimeStamp.Substring(6, 2);
-				string text2 = text;
-				text = text2 + " " + jobTimeStamp.Substring(8, 2) + ":" + jobTimeStamp.Substring(10, 2) + ":00";
+				text = text + " " + jobTimeStamp.Substring(8, 2) + ":" + jobTimeStamp.Substring(10, 2) + ":00";
 				DateTime result = default(DateTime);
 				if (!DateTime.TryParse(text, null, DateTimeStyles.AssumeLocal, out result))
 				{
@@ -586,8 +569,7 @@ internal class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service2.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,

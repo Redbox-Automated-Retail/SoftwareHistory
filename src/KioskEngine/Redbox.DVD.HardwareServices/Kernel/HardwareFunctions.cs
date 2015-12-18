@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
@@ -126,9 +127,9 @@ internal static class HardwareFunctions
 			return null;
 		}
 		List<string> list = new List<string>();
-		foreach (object value in barcodes.Values)
+		foreach (LuaTable value in barcodes.Values)
 		{
-			string item = (string)((LuaTable)value)["barcode"];
+			string item = (string)value["barcode"];
 			if (!list.Contains(item))
 			{
 				list.Add(item);
@@ -147,9 +148,9 @@ internal static class HardwareFunctions
 			return null;
 		}
 		List<string> list = new List<string>();
-		foreach (object value in barcodes.Values)
+		foreach (LuaTable value in barcodes.Values)
 		{
-			string item = (string)((LuaTable)value)["barcode"];
+			string item = (string)value["barcode"];
 			if (!list.Contains(item))
 			{
 				list.Add(item);
@@ -337,20 +338,15 @@ internal static class HardwareFunctions
 		{
 			return;
 		}
-		ITimer timer = timerService.CreateTimer(jobid, 1500, -1, delegate
+		timerService.CreateTimer(jobid, 1500, -1, delegate
 		{
 			IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
-			if (service != null)
+			if (service != null && (service.GetSchedulerStatus(out var status).ContainsError() || status == jobid || status == "Idle"))
 			{
-				ErrorList schedulerStatus = service.GetSchedulerStatus(out var status);
-				if (schedulerStatus.ContainsError() || status == jobid || status == "Idle")
-				{
-					timerService.RemoveTimer(jobid);
-					idleHandler(status);
-				}
+				timerService.RemoveTimer(jobid);
+				idleHandler(status);
 			}
-		});
-		timer.Start();
+		}).Start();
 	}
 
 	[KernelFunction(Name = "kernel.hardwarenotifymaintmodestate")]
@@ -457,9 +453,9 @@ internal static class HardwareFunctions
 			return null;
 		}
 		List<string> list = new List<string>();
-		foreach (object value in inventory.Values)
+		foreach (LuaTable value in inventory.Values)
 		{
-			string item = (string)((LuaTable)value)["barcode"];
+			string item = (string)value["barcode"];
 			if (!list.Contains(item))
 			{
 				list.Add(item);
@@ -472,76 +468,30 @@ internal static class HardwareFunctions
 	}
 
 	[KernelFunction(Name = "kernel.hardwarevmzthin")]
-	internal static LuaTable VmzThin(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, string label, LuaTable startTime, LuaTable barcodesToBin, LuaTable barcodesToVmz)
+	internal static LuaTable VmzThin(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, string label, LuaTable startTime, LuaTable barcodesToBin, LuaTable rebalances, LuaTable redeployments, LuaTable barcodesToVmz)
 	{
 		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
 		if (service == null)
 		{
 			return null;
 		}
-		List<string> list = new List<string>();
-		foreach (object value in barcodesToBin.Values)
-		{
-			string item = (string)((LuaTable)value)["barcode"];
-			if (!list.Contains(item))
-			{
-				list.Add(item);
-			}
-		}
-		List<string> list2 = new List<string>();
-		foreach (object value2 in barcodesToVmz.Values)
-		{
-			string item2 = (string)((LuaTable)value2)["barcode"];
-			if (!list2.Contains(item2))
-			{
-				list2.Add(item2);
-			}
-		}
-		ErrorList errors = service.VmzThin(label, startTime.ToDateTime(), list.ToArray(), list2.ToArray(), eventHandler, statusChangeHandler, out var jobId);
+		string[] barcodesToThin = ((barcodesToBin != null) ? (from LuaTable r in barcodesToBin.Values
+			where r != null
+			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+		string[] rebalances2 = ((rebalances != null) ? (from LuaTable r in rebalances.Values
+			where r != null
+			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+		string[] redeployments2 = ((redeployments != null) ? (from LuaTable r in redeployments.Values
+			where r != null
+			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+		string[] barcodesToVmz2 = ((barcodesToVmz != null) ? (from LuaTable r in barcodesToVmz.Values
+			where r != null
+			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+		ErrorList errors = service.VmzThin(label, startTime.ToDateTime(), barcodesToThin, rebalances2, redeployments2, barcodesToVmz2, eventHandler, statusChangeHandler, out var jobId);
 		startTime.Dispose();
 		barcodesToBin.Dispose();
-		barcodesToVmz.Dispose();
-		return CreateResultTable(jobId, errors);
-	}
-
-	[KernelFunction(Name = "kernel.hardwarevmzthin2")]
-	internal static LuaTable VmzThin2(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, string label, LuaTable startTime, LuaTable barcodesToBin, LuaTable barcodesToRebalance, LuaTable barcodesToVmz)
-	{
-		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
-		if (service == null)
-		{
-			return null;
-		}
-		List<string> list = new List<string>();
-		foreach (object value in barcodesToBin.Values)
-		{
-			string item = (string)((LuaTable)value)["barcode"];
-			if (!list.Contains(item))
-			{
-				list.Add(item);
-			}
-		}
-		List<string> list2 = new List<string>();
-		foreach (object value2 in barcodesToRebalance.Values)
-		{
-			string item2 = (string)((LuaTable)value2)["barcode"];
-			if (!list2.Contains(item2))
-			{
-				list2.Add(item2);
-			}
-		}
-		List<string> list3 = new List<string>();
-		foreach (object value3 in barcodesToVmz.Values)
-		{
-			string item3 = (string)((LuaTable)value3)["barcode"];
-			if (!list3.Contains(item3))
-			{
-				list3.Add(item3);
-			}
-		}
-		ErrorList errors = service.VmzThin(label, startTime.ToDateTime(), list.ToArray(), list2.ToArray(), list3.ToArray(), eventHandler, statusChangeHandler, out var jobId);
-		startTime.Dispose();
-		barcodesToBin.Dispose();
+		rebalances.Dispose();
+		redeployments.Dispose();
 		barcodesToVmz.Dispose();
 		return CreateResultTable(jobId, errors);
 	}
@@ -555,9 +505,9 @@ internal static class HardwareFunctions
 			return null;
 		}
 		List<string> list = new List<string>();
-		foreach (object value in inventory.Values)
+		foreach (LuaTable value in inventory.Values)
 		{
-			string item = (string)((LuaTable)value)["barcode"];
+			string item = (string)value["barcode"];
 			if (!list.Contains(item))
 			{
 				list.Add(item);
@@ -578,9 +528,9 @@ internal static class HardwareFunctions
 			return null;
 		}
 		List<string> list = new List<string>();
-		foreach (object value in decksToChange.Values)
+		foreach (LuaTable value in decksToChange.Values)
 		{
-			string text = (string)((LuaTable)value)["deck"];
+			string text = (string)value["deck"];
 			if (!string.IsNullOrEmpty(text) && !list.Contains(text))
 			{
 				list.Add(text);
@@ -877,6 +827,19 @@ internal static class HardwareFunctions
 			return null;
 		}
 		ErrorList errors = service.ReadFraudDisc(eventHandler, statusChangeHandler, out var jobId);
+		return CreateResultTable(jobId, errors);
+	}
+
+	[KernelFunction(Name = "kernel.hardwareprepunloadzone")]
+	internal static LuaTable HardwarePrepUnloadZone(int rotation, int last_deck, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler)
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		if (service == null)
+		{
+			return null;
+		}
+		LogHelper.Instance.Log($"kernel.hardwareprepunloadzone| rotation:{rotation} last_deck:{last_deck}");
+		ErrorList errors = service.PrepUnloadZone(rotation, last_deck, eventHandler, statusChangeHandler, out var jobId);
 		return CreateResultTable(jobId, errors);
 	}
 

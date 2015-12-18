@@ -119,24 +119,23 @@ public class ConfigPreferencePage : UserControl, IPreferencePageHost
 			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 			if (service != null)
 			{
-				foreach (object checkedItem in m_categoriesListBox.CheckedItems)
+				foreach (string checkedItem in m_categoriesListBox.CheckedItems)
 				{
-					string category = (string)checkedItem;
 					List<string> list = new List<string>();
-					service.GetSettingNames(text, category, out list);
+					service.GetSettingNames(text, checkedItem, out list);
 					foreach (string item in list)
 					{
 						if (m_checkboxActiveOnly.Checked)
 						{
 							ConfigurationData value = new ConfigurationData();
-							if (service.TryGetConfigurationData(text, category, item, out value))
+							if (service.TryGetConfigurationData(text, checkedItem, item, out value))
 							{
 								m_configValuesListView.Items.Add(CreateListItem(value));
 							}
 							continue;
 						}
 						List<ConfigurationData> list2 = new List<ConfigurationData>();
-						service.GetAllConfigurationData(text, category, item, out list2);
+						service.GetAllConfigurationData(text, checkedItem, item, out list2);
 						foreach (ConfigurationData item2 in list2)
 						{
 							m_configValuesListView.Items.Add(CreateListItem(item2));

@@ -60,13 +60,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "LiveCall", value);
 		}
 	}
 
@@ -74,13 +72,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "PingPeriod", 300000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "PingPeriod", 300000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "PingPeriod", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "PingPeriod", value);
 			StopPingTimer();
 			StartPingTimer();
 		}
@@ -90,13 +86,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "IsOnline", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "IsOnline", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "IsOnline", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "IsOnline", value);
 		}
 	}
 
@@ -104,13 +98,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "IsServerBusy", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "IsServerBusy", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "IsServerBusy", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "IsServerBusy", value);
 		}
 	}
 
@@ -118,13 +110,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "SmtpServer", "corpsmtp01.rb.local");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "SmtpServer", "corpsmtp01.rb.local");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "SmtpServer", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "SmtpServer", value);
 		}
 	}
 
@@ -132,13 +122,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "Recipients", "");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "Recipients", "");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "Recipients", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "Recipients", value);
 		}
 	}
 
@@ -146,13 +134,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "RemoteServicesStatus", "Normal");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "RemoteServicesStatus", "Normal");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "RemoteServicesStatus", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "RemoteServicesStatus", value);
 		}
 	}
 
@@ -160,13 +146,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -174,13 +158,11 @@ internal class HealthServicesProxy : IHealthServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Health Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Health Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -280,8 +262,7 @@ internal class HealthServicesProxy : IHealthServices
 				{
 					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAlert, URL: {0}", KioskServicesProxy.Instance.Url);
 					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-					errorList = service2.Enqueue(byte.MaxValue, "KioskAlert", new
+					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(byte.MaxValue, "KioskAlert", new
 					{
 						MessageType = "KioskAlert",
 						MessageId = Guid.NewGuid(),
@@ -300,8 +281,7 @@ internal class HealthServicesProxy : IHealthServices
 					if (Recipients != null && Recipients != string.Empty)
 					{
 						MailMessage message2 = new MailMessage("deddie@redbox.com", Recipients, $"Test Alert: {alertType}, Kiosk ID: {storeNumber}, Date Time: {dateTime}", message);
-						SmtpClient smtpClient = new SmtpClient(SmtpServer);
-						smtpClient.Send(message2);
+						new SmtpClient(SmtpServer).Send(message2);
 					}
 					else
 					{
@@ -317,8 +297,8 @@ internal class HealthServicesProxy : IHealthServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -329,7 +309,7 @@ internal class HealthServicesProxy : IHealthServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -357,8 +337,7 @@ internal class HealthServicesProxy : IHealthServices
 				{
 					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAuditEvent, URL: {0}", KioskServicesProxy.Instance.Url);
 					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-					errorList = service2.Enqueue(254, "AuditEvent", new
+					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "AuditEvent", new
 					{
 						MessageType = "AuditEvent",
 						MessageId = Guid.NewGuid(),
@@ -376,8 +355,7 @@ internal class HealthServicesProxy : IHealthServices
 				{
 					LogHelper.Instance.Log("Simulating enqueue to IHealthServices.SendAuditEvent", LogEntryType.Info);
 					MailMessage message2 = new MailMessage("deddie@redbox.com", Recipients, $"Test Audit Event: {eventType}, Kiosk ID: {storeNumber}, Date Time: {logDate}, User Name: {userName}, Source: {source}", message);
-					SmtpClient smtpClient = new SmtpClient(SmtpServer);
-					smtpClient.Send(message2);
+					new SmtpClient(SmtpServer).Send(message2);
 				}
 			}
 			catch (Exception e)
@@ -388,8 +366,8 @@ internal class HealthServicesProxy : IHealthServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -400,7 +378,7 @@ internal class HealthServicesProxy : IHealthServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,

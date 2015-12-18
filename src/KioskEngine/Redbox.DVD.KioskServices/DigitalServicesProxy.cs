@@ -28,13 +28,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "LiveCall", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "LiveCall", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "LiveCall", value);
 		}
 	}
 
@@ -42,13 +40,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -56,13 +52,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -70,13 +64,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "DigitalServicesResponse", DigitalServicesResponse.Valid);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "DigitalServicesResponse", DigitalServicesResponse.Valid);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "DigitalServicesResponse", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "DigitalServicesResponse", value);
 		}
 	}
 
@@ -84,13 +76,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "HasProfile", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "HasProfile", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "HasProfile", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "HasProfile", value);
 		}
 	}
 
@@ -98,13 +88,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "TotalCreditsAvailable", 10);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "TotalCreditsAvailable", 10);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "TotalCreditsAvailable", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "TotalCreditsAvailable", value);
 		}
 	}
 
@@ -112,13 +100,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "CPFirstName", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "CPFirstName", string.Empty);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "CPFirstName", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "CPFirstName", value);
 		}
 	}
 
@@ -126,13 +112,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "CPLastName", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "CPLastName", string.Empty);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "CPLastName", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "CPLastName", value);
 		}
 	}
 
@@ -140,13 +124,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "EmailAddress", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "EmailAddress", string.Empty);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "EmailAddress", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "EmailAddress", value);
 		}
 	}
 
@@ -154,13 +136,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "HasCustomerProfile", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "HasCustomerProfile", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "HasCustomerProfile", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "HasCustomerProfile", value);
 		}
 	}
 
@@ -168,13 +148,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "IsEligible", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "IsEligible", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "IsEligible", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "IsEligible", value);
 		}
 	}
 
@@ -182,13 +160,11 @@ internal class DigitalServicesProxy : IDigitalServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Digital Services", "CanCreateProfile", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Digital Services", "CanCreateProfile", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Digital Services", "CanCreateProfile", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Digital Services", "CanCreateProfile", value);
 		}
 	}
 
@@ -221,21 +197,20 @@ internal class DigitalServicesProxy : IDigitalServices
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			IShoppingSession session = service.GetSession(sessionId);
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
 				Interlocked.Increment(ref m_working);
 				if (LiveCall)
 				{
 					LogHelper.Instance.Log("Live call to remote IDigitalServices.GetCustomer, URL: {0}", KioskServicesProxy.Instance.Url);
-					IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 					var message = new
 					{
 						MessageType = "GetCustomer",
 						MessageId = Guid.NewGuid(),
-						EngineVersion = service2["EngineVersion"],
-						BundleVersion = service2["ProductVersion"],
+						EngineVersion = service["EngineVersion"],
+						BundleVersion = service["ProductVersion"],
 						KioskId = int.Parse(session.StoreNumber),
 						CardId = cardId
 					};
@@ -265,10 +240,8 @@ internal class DigitalServicesProxy : IDigitalServices
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IDigitalServices.GetCustomer.");
-					Random random = new Random();
-					int num = random.Next(1, 3);
-					AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-					autoResetEvent.WaitOne(num * 1000);
+					int num = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 					if (SimulateServerBusyError)
 					{
 						remoteServiceResult.Success = false;
@@ -312,8 +285,7 @@ internal class DigitalServicesProxy : IDigitalServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service3.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -334,22 +306,21 @@ internal class DigitalServicesProxy : IDigitalServices
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			IShoppingSession session = service.GetSession(sessionId);
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
 				Interlocked.Increment(ref m_working);
 				if (LiveCall)
 				{
 					LogHelper.Instance.Log("Live call to remote IDigitalServices.CreateRBIFreeTrial, URL: {0}", KioskServicesProxy.Instance.Url);
-					IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-					ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
+					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+					ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 					var message = new
 					{
 						MessageType = "RBiFreeTrialRequest",
 						MessageId = Guid.NewGuid(),
-						EngineVersion = service2["EngineVersion"],
-						BundleVersion = service2["ProductVersion"],
+						EngineVersion = service["EngineVersion"],
+						BundleVersion = service["ProductVersion"],
 						KioskId = int.Parse(session.StoreNumber),
 						UseMessageControl = true,
 						RequestStatus = status,
@@ -357,19 +328,19 @@ internal class DigitalServicesProxy : IDigitalServices
 						{
 							{
 								"KeyId",
-								service3.GetKeyId()
+								service2.GetKeyId()
 							},
 							{
 								"Number",
-								service3.GetNumber()
+								service2.GetNumber()
 							},
 							{
 								"CardType",
-								service3.GetCardType()
+								service2.GetCardType()
 							},
 							{
 								"CardId",
-								service3.GenerateCardHashId()
+								service2.GenerateCardHashId()
 							},
 							{
 								"Track2",
@@ -385,7 +356,7 @@ internal class DigitalServicesProxy : IDigitalServices
 							},
 							{
 								"PostalCode",
-								session.ShoppingCart.PostalCode ?? service2["JVHardTake:KeyPad:Text"]
+								session.ShoppingCart.PostalCode ?? service["JVHardTake:KeyPad:Text"]
 							},
 							{
 								"ExpirationYear",
@@ -417,10 +388,8 @@ internal class DigitalServicesProxy : IDigitalServices
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IDigitalServices.CreateRBIFreeTrial.");
-					Random random = new Random();
-					int num = random.Next(1, 3);
-					AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-					autoResetEvent.WaitOne(num * 1000);
+					int num = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 					if (SimulateServerBusyError)
 					{
 						remoteServiceResult.Success = false;
@@ -461,8 +430,7 @@ internal class DigitalServicesProxy : IDigitalServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service4.EnqueueCallback(new RemoteServiceCallbackEntry
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
@@ -580,6 +548,7 @@ internal class DigitalServicesProxy : IDigitalServices
 							Barcode = item.Barcode,
 							ProductFamily = item.ProductFamily,
 							ProductType = item.ProductType,
+							MultiDisc = item.MultiDisc,
 							Prices = new Dictionary<string, decimal>()
 						};
 						foreach (KeyValuePair<string, decimal> price in item.Prices)
@@ -687,10 +656,8 @@ internal class DigitalServicesProxy : IDigitalServices
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				Random random = new Random();
-				int num = random.Next(1, 5);
-				AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-				autoResetEvent.WaitOne(num * 1000);
+				int num = new Random().Next(1, 5);
+				new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 				if (SimulateServerBusyError)
 				{
 					remoteServiceResult.Success = false;
@@ -775,11 +742,9 @@ internal class DigitalServicesProxy : IDigitalServices
 
 	private string ExtractFromSecure(SecureString value)
 	{
-		IntPtr intPtr = default(IntPtr);
 		try
 		{
-			intPtr = Marshal.SecureStringToBSTR(value);
-			return Marshal.PtrToStringBSTR(intPtr);
+			return Marshal.PtrToStringBSTR(Marshal.SecureStringToBSTR(value));
 		}
 		catch
 		{

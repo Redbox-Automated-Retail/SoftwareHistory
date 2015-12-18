@@ -45,9 +45,7 @@ internal interface IHardwareService
 
 	ErrorList QlmThin(string label, DateTime? startTime, string[] ids, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
-	ErrorList VmzThin(string label, DateTime? startTime, string[] barcodesToThin, string[] barcodesToVmz, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
-
-	ErrorList VmzThin(string label, DateTime? startTime, string[] barcodesToThin, string[] barcodesToRebalance, string[] barcodesToVmz, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
+	ErrorList VmzThin(string label, DateTime? startTime, string[] barcodesToThin, string[] rebalances, string[] redeployments, string[] barcodesToVmz, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList QlmUnloadAndThin(string label, DateTime? startTime, string[] ids, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
@@ -110,4 +108,6 @@ internal interface IHardwareService
 	ErrorList ReadFraudDisc(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList PrepForRedeploy(string[] decksToChange, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
+
+	ErrorList PrepUnloadZone(int rotation, int last_deck, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 }

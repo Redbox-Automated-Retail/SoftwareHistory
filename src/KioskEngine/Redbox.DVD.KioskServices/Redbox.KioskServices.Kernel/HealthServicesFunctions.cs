@@ -92,27 +92,26 @@ internal static class HealthServicesFunctions
 	[KernelFunction(Name = "kernel.getsoftwareversions")]
 	internal static LuaTable GetSoftwareVersions()
 	{
-		IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-		LuaTable luaTable = (LuaTable)service.NewTable();
-		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+		LuaTable luaTable = (LuaTable)ServiceLocator.Instance.GetService<IKernelService>().NewTable();
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		if (service != null)
+		{
+			luaTable["Kiosk Engine"] = service["EngineVersion"];
+			luaTable["Hal Service"] = service["HALServiceVersion"] ?? "Not Found";
+			luaTable["Hal Client"] = service["HALVersion"] ?? "Not Found";
+		}
+		IKernelExtensionService service2 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
 		if (service2 != null)
 		{
-			luaTable["Kiosk Engine"] = service2["EngineVersion"];
-			luaTable["Hal Service"] = service2["HALServiceVersion"] ?? "Not Found";
-			luaTable["Hal Client"] = service2["HALVersion"] ?? "Not Found";
-		}
-		IKernelExtensionService service3 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-		if (service3 != null)
-		{
-			foreach (IKernelExtension extension in service3.Extensions)
+			foreach (IKernelExtension extension in service2.Extensions)
 			{
 				luaTable["[Extension] " + extension.Name] = extension.Version;
 			}
 		}
-		IResourceBundleService service4 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (service4 != null)
+		IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		if (service3 != null)
 		{
-			foreach (IBundleSpecifier bundle in service4.Bundles)
+			foreach (IBundleSpecifier bundle in service3.Bundles)
 			{
 				string key = "[" + bundle.Type.ToString() + " bundle] " + bundle.Name;
 				luaTable[key] = bundle.Version.ToString();

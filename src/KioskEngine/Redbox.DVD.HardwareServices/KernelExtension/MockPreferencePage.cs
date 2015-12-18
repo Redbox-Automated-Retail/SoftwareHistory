@@ -84,8 +84,7 @@ public class MockPreferencePage : UserControl, IPreferencePageHost
 	{
 		m_scripts.Clear();
 		string[] value = preferencePage.GetValue("MockScripts", new string[0]);
-		string[] array = value;
-		foreach (string json in array)
+		foreach (string json in value)
 		{
 			m_scripts.Add(json.ToObject<Script>());
 		}
@@ -175,8 +174,7 @@ public class MockPreferencePage : UserControl, IPreferencePageHost
 			scriptEditorForm.ScenarioName = script.Scenario;
 			scriptEditorForm.RunTime = script.RunTime;
 			scriptEditorForm.Code = script.Code;
-			ScriptEditorForm scriptEditorForm2 = scriptEditorForm;
-			scriptEditorForm2.ShowDialog();
+			scriptEditorForm.ShowDialog();
 			RefreshList();
 		}
 	}
@@ -195,14 +193,15 @@ public class MockPreferencePage : UserControl, IPreferencePageHost
 			m_listView.Items.Clear();
 			foreach (Script script in m_scripts)
 			{
-				ListViewItem listViewItem = new ListViewItem(script.Scenario);
-				listViewItem.Tag = script;
-				ListViewItem listViewItem2 = listViewItem;
-				listViewItem2.SubItems.Add(script.Name);
-				listViewItem2.SubItems.Add(script.RunTime);
-				listViewItem2.SubItems.Add(script.Code.Length.FormatAsByteSize());
-				listViewItem2.BackColor = (script.IsActive ? Color.Yellow : m_listView.BackColor);
-				m_listView.Items.Add(listViewItem2);
+				ListViewItem listViewItem = new ListViewItem(script.Scenario)
+				{
+					Tag = script
+				};
+				listViewItem.SubItems.Add(script.Name);
+				listViewItem.SubItems.Add(script.RunTime);
+				listViewItem.SubItems.Add(script.Code.Length.FormatAsByteSize());
+				listViewItem.BackColor = (script.IsActive ? Color.Yellow : m_listView.BackColor);
+				m_listView.Items.Add(listViewItem);
 			}
 			m_listView.EndUpdate();
 			m_listView.ResumeLayout();

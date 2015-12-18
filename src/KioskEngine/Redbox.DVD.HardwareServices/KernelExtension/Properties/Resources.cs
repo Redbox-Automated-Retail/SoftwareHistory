@@ -22,10 +22,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.HardwareServices.KernelExtension.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.HardwareServices.KernelExtension.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}
@@ -44,77 +43,21 @@ internal class Resources
 		}
 	}
 
-	internal static Bitmap Clean
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Clean", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Clean => (Bitmap)ResourceManager.GetObject("Clean", resourceCulture);
 
-	internal static Bitmap Edit
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Edit", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Edit => (Bitmap)ResourceManager.GetObject("Edit", resourceCulture);
 
-	internal static Bitmap Execute
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Execute", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Execute => (Bitmap)ResourceManager.GetObject("Execute", resourceCulture);
 
-	internal static Bitmap Minus
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Minus", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Minus => (Bitmap)ResourceManager.GetObject("Minus", resourceCulture);
 
-	internal static Bitmap Open
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Open", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Open => (Bitmap)ResourceManager.GetObject("Open", resourceCulture);
 
-	internal static Bitmap Plus
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Plus", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Plus => (Bitmap)ResourceManager.GetObject("Plus", resourceCulture);
 
-	internal static Bitmap Refresh
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Refresh", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Refresh => (Bitmap)ResourceManager.GetObject("Refresh", resourceCulture);
 
-	internal static Bitmap SaveAs
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("SaveAs", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap SaveAs => (Bitmap)ResourceManager.GetObject("SaveAs", resourceCulture);
 
 	internal Resources()
 	{

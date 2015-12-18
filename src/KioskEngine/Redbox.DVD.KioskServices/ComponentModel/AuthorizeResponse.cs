@@ -23,13 +23,15 @@ internal enum AuthorizeResponse
 	CodeNotValidAtThisLocation,
 	[ResponseCode(Name = "(A008)")]
 	ProcesorError,
-	[ResponseCode(Name = "(A009)")]
 	[ResponseCode(Name = "(U001)")]
+	[ResponseCode(Name = "(A009)")]
 	Error,
 	[ResponseCode(Name = "(D004)")]
 	NewCustomerOnly,
 	[ResponseCode(Name = "(A010)")]
 	GameLimitExceeded,
 	[ResponseCode(Name = "(A014)")]
-	CheckIfCustomerWantsToUseCredits
+	CheckIfCustomerWantsToUseCredits,
+	[ResponseCode(Name = "(A024)")]
+	EnforceAccertify
 }

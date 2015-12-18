@@ -54,8 +54,7 @@ internal static class UpdateManagerServiceFunctions
 			return null;
 		}
 		LuaTable luaTable = CreateResultTable(service.ExecuteCommand(command, out var messages));
-		IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
-		LuaTable luaTable2 = (LuaTable)service2.NewTable();
+		LuaTable luaTable2 = (LuaTable)ServiceLocator.Instance.GetService<IKernelService>().NewTable();
 		int num = 1;
 		foreach (string item in messages)
 		{

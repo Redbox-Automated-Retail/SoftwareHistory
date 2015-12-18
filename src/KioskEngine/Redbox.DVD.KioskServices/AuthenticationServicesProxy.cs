@@ -25,13 +25,11 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Authentication Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Authentication Services", "LiveCall", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Authentication Services", "LiveCall", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Authentication Services", "LiveCall", value);
 		}
 	}
 
@@ -39,13 +37,11 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Authentication Services", "Users", new string[0]);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Authentication Services", "Users", new string[0]);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Authentication Services", "Users", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Authentication Services", "Users", value);
 		}
 	}
 
@@ -53,13 +49,11 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Authentication Services", "SimulateServerBusyFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Authentication Services", "SimulateServerBusyFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Authentication Services", "SimulateServerBusyFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Authentication Services", "SimulateServerBusyFailure", value);
 		}
 	}
 
@@ -67,13 +61,11 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Authentication Services", "EnableLocalAccountCaching", defaultValue: true);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Authentication Services", "EnableLocalAccountCaching", defaultValue: true);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Authentication Services", "EnableLocalAccountCaching", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Authentication Services", "EnableLocalAccountCaching", value);
 		}
 	}
 
@@ -81,13 +73,11 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Authentication Services", "SimulateCommunicationFailure", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Authentication Services", "SimulateCommunicationFailure", defaultValue: false);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Authentication Services", "SimulateCommunicationFailure", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Authentication Services", "SimulateCommunicationFailure", value);
 		}
 	}
 
@@ -212,10 +202,8 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				Random random = new Random();
-				int num = random.Next(1, 5);
-				AutoResetEvent autoResetEvent = new AutoResetEvent(initialState: false);
-				autoResetEvent.WaitOne(num * 1000);
+				int num = new Random().Next(1, 5);
+				new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 				remoteServiceResult.Properties["store_number"] = storeNumber;
 				if (SimulateServerBusyError)
 				{
@@ -287,9 +275,9 @@ internal class AuthenticationServicesProxy : IAuthenticationServices
 			return;
 		}
 		string[] users = Users;
-		foreach (string text in users)
+		for (int i = 0; i < users.Length; i++)
 		{
-			string[] array = text.Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+			string[] array = users[i].Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
 			if (array.Length >= 2 && string.Compare(array[0], userName, ignoreCase: true) == 0)
 			{
 				response = Enum<AuthenticationResponse>.ParseIgnoringCase(array[1], AuthenticationResponse.Valid);

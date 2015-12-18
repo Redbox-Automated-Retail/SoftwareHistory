@@ -73,10 +73,10 @@ public class AuthSvcsPreferencePage : UserControl, IPreferencePageHost
 		m_simulateCommunicationsFailureCheckBox.Checked = AuthenticationServicesProxy.Instance.SimulateCommunicationsFailure;
 		m_usersListView.BeginUpdate();
 		m_usersListView.Items.Clear();
-		string[] users = AuthenticationServicesProxy.Instance.Users;
-		foreach (string text in users)
+		names = AuthenticationServicesProxy.Instance.Users;
+		for (int i = 0; i < names.Length; i++)
 		{
-			string[] array = text.Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+			string[] array = names[i].Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
 			if (array.Length >= 2)
 			{
 				ListViewItem listViewItem = new ListViewItem(array[0]);
