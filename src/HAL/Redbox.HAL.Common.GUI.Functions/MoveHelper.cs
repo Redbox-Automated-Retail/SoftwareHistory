@@ -1,33 +1,37 @@
 using System.Collections.Generic;
 using Redbox.HAL.Client;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
 public class MoveHelper
 {
-	public static MoveHelper Instance => Singleton<MoveHelper>.Instance;
+	private readonly HardwareService Service;
 
-	public MoveHelperResult MoveTo(HardwareService service, int deck, int slot, string mode)
+	public MoveHelper(HardwareService service)
 	{
-		return MoveToInner(service, deck, slot, mode);
+		Service = service;
 	}
 
-	public MoveHelperResult MoveTo(HardwareService service, int deck, int slot, string mode, bool readLimits)
+	public MoveHelperResult MoveTo(int deck, int slot, string mode)
 	{
-		MoveHelperResult moveHelperResult = MoveToInner(service, deck, slot, mode);
+		return MoveTo(Service, deck, slot, mode);
+	}
+
+	public MoveHelperResult MoveTo(int deck, int slot, string mode, bool readLimits)
+	{
+		MoveHelperResult moveHelperResult = MoveTo(Service, deck, slot, mode);
 		if (!readLimits)
 		{
 			return moveHelperResult;
 		}
-		moveHelperResult.Limits = ReadLimits(service);
+		moveHelperResult.Limits = ReadLimits();
 		return moveHelperResult;
 	}
 
-	public string[] ReadLimits(HardwareService service)
+	public string[] ReadLimits()
 	{
 		List<string> list = new List<string>();
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(service, "MOTIONCONTROL READLIMITS");
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, "MOTIONCONTROL READLIMITS");
 		if (hardwareJob == null)
 		{
 			return list.ToArray();
@@ -53,7 +57,7 @@ public class MoveHelper
 		return list.ToArray();
 	}
 
-	private MoveHelperResult MoveToInner(HardwareService service, int deck, int slot, string mode)
+	private MoveHelperResult MoveTo(HardwareService service, int deck, int slot, string mode)
 	{
 		if (string.IsNullOrEmpty(mode))
 		{
@@ -69,9 +73,5 @@ public class MoveHelper
 		}
 		moveHelperResult.MoveResultMessage = CommonFunctions.GetTopOfStack(job);
 		return moveHelperResult;
-	}
-
-	private MoveHelper()
-	{
 	}
 }

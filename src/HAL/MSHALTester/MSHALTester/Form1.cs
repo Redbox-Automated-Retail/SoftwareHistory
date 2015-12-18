@@ -7,7 +7,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using System.Xml;
 using Microsoft.Win32;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
@@ -27,12 +26,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		Down
 	}
 
-	private delegate void SetTextCallback(string s);
-
 	private enum FanState
 	{
 		On,
 		Off
+	}
+
+	private enum CameraState
+	{
+		Unknown,
+		Started,
+		Stopped
 	}
 
 	private const int MinimumSensor = 1;
@@ -45,9 +49,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private const string UtilitiesProgram = "c:\\Program Files\\Redbox\\hal-tools\\HalUtilities.exe";
 
-	private const string IceQubeBoardMnemonic = "ICEQUBEBOARD";
-
 	private const string ExchangerMnemonic = "AIRXCHGR";
+
+	private ImageViewer ImageViewer;
 
 	private Color m_sensorEnabledColor = Color.Green;
 
@@ -63,9 +67,33 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private bool m_secure;
 
-	private int m_funMessageCount = -1;
-
 	private string CounterFile = "c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log";
+
+	private bool LegacyCamera;
+
+	private bool FormDisposed;
+
+	private ClientHelper Helper;
+
+	private ButtonAspectsManager Manager;
+
+	private bool RinglightOn;
+
+	private CameraState StateOfCamera;
+
+	private readonly string Version;
+
+	private readonly TesterLog TesterLog;
+
+	private bool FanConfigured;
+
+	private int? m_returnErrorCount = null;
+
+	private readonly byte[] CameraSnapImmediate;
+
+	private bool PickProgramCompiled;
+
+	private RadioButton m_offsetGetRadioButton;
 
 	private IContainer components;
 
@@ -165,9 +193,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private Button button26;
 
-	private Button button25;
+	private Button m_startButtonCamera;
 
-	private Button button24;
+	private Button m_snapImageButton;
 
 	private Button m_homeYButton;
 
@@ -275,6 +303,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private Button m_fanButton;
 
+	private Button m_testArcusCommButton;
+
+	private TextBox m_getOffsetTB;
+
+	private Button m_getWithOffset;
+
+	private RadioButton m_getOffYRadio;
+
+	private RadioButton m_getOffXRadio;
+
 	public bool CheckForHAL { get; set; }
 
 	private string ServicePath
@@ -357,13 +395,32 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private bool DoorSensorsConfigured { get; set; }
 
-	private bool FormDisposed { get; set; }
-
-	private ClientHelper Helper { get; set; }
-
-	private ButtonAspectsManager Manager { get; set; }
-
-	private bool FanConfigured { get; set; }
+	private int CameraInError
+	{
+		get
+		{
+			if (!m_returnErrorCount.HasValue)
+			{
+				HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "CAMERA RETURNERRORCOUNT");
+				if (hardwareJob == null)
+				{
+					m_returnErrorCount = 0;
+				}
+				else
+				{
+					try
+					{
+						m_returnErrorCount = int.Parse(CommonFunctions.GetTopOfStack(hardwareJob));
+					}
+					catch
+					{
+						m_returnErrorCount = 0;
+					}
+				}
+			}
+			return m_returnErrorCount.Value;
+		}
+	}
 
 	public void WriteMessage(string msg)
 	{
@@ -379,13 +436,23 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	public Form1(bool secure)
 	{
 		InitializeComponent();
+		Version = typeof(Form1).Assembly.GetName().Version.ToString();
 		m_secure = secure;
 		if (Settings.Default.CheckForRunningHAL && !ProcessHelper.HALProcessRunning() && !ProcessHelper.ProcessIsRunning("halsvc-console.exe"))
 		{
 			WriteToOutput("The HAL process is not running.");
 			return;
 		}
-		TesterLog.Instance.Log(string.Format("Tester Log startup; form {0} in secure mode.", m_secure ? "is" : "isn't"), LogEntryType.Info);
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.AppendLine("CLEAR");
+		stringBuilder.AppendLine(" RINGLIGHT ON");
+		stringBuilder.AppendLine(" CAMERA SNAP");
+		stringBuilder.AppendLine(" RINGLIGHT OFF");
+		CameraSnapImmediate = Encoding.ASCII.GetBytes(stringBuilder.ToString());
+		m_offsetGetRadioButton = m_getOffXRadio;
+		m_offsetGetRadioButton.Checked = true;
+		TesterLog = new TesterLog();
+		LogHelper.Instance.Log("Tester Log startup; form {0} in secure mode.", m_secure ? "is" : "isn't");
 		ConfigureChannel(_test: false);
 		m_runningCommandButtonColor = Color.Red;
 		base.FormClosing += OnFormClosing;
@@ -410,9 +477,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			BackColor = backColor;
 		}
 		Manager = new ButtonAspectsManager();
-		m_versionTextBox.Text = Program.Version;
-		string secretValue = RegistryOptions.Instance.GetSecretValue<string>("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store", "ID");
-		m_kioskIDTextBox.Text = (string.IsNullOrEmpty(secretValue) ? "UNKNOWN" : secretValue);
+		m_versionTextBox.Text = Version;
+		string id = "UNKNOWN";
+		if (!m_hardwareService.GetKioskID(out id).Success)
+		{
+			id = "UNKNOWN";
+		}
+		m_kioskIDTextBox.Text = id;
 		if (Helper.BootstrapInitRunning())
 		{
 			WriteToLogFile("bootstrap init still running - render ui & wait.");
@@ -431,30 +502,18 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		StopJobs();
 		CompileScripts();
-		if (!m_secure)
+		m_takeDiskButton.Enabled = m_secure;
+		if (m_secure)
+		{
+			m_takeDiskButton.Text = (Settings.Default.DeveloperMode ? "Engineering Tests" : "Unknown Count");
+		}
+		else
 		{
 			m_deckConfigurationButton.Visible = false;
 			m_advancedMode.Visible = false;
 			m_sensorCheckBox.Visible = false;
-			m_takeDiskButton.Visible = false;
 		}
-		else if (!CommonFunctions.DeveloperMode)
-		{
-			m_takeDiskButton.Visible = false;
-		}
-		Button[] array = FormButtons();
-		foreach (Button button in array)
-		{
-			button.Enabled = true;
-		}
-		ToggleQlmButtons();
-		ConfigureFan();
-		if (FanConfigured)
-		{
-			m_fanButton.Enabled = true;
-			SetFanButtonState();
-		}
-		ComputeMachineDensity();
+		ChangeUIAfterconfig();
 		Application.DoEvents();
 	}
 
@@ -482,15 +541,119 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		WriteToOutput($"{msg}: {response}");
 	}
 
-	private void CheckAxesStatus()
+	private void ChangeUIAfterconfig()
 	{
-		string text = ExecuteInstructionWithResult("MOTIONCONTROL INITSTATUS", logResult: false);
-		WriteToOutput(string.Format("The controller {0} inited.", (text == "OK") ? "was" : "was not"));
+		Button[] array = FormButtons();
+		foreach (Button button in array)
+		{
+			button.Enabled = true;
+		}
+		MachineConfiguration machineConfiguration = new MachineConfiguration(m_hardwareService);
+		machineConfiguration.Run();
+		string text = "NONE";
+		foreach (ProgramResult result in machineConfiguration.Results)
+		{
+			switch (result.Code)
+			{
+			case "MachineConfig":
+				IsDenseMachine = result.Message == "Sparse";
+				break;
+			case "CameraConfig":
+				LegacyCamera = result.Message == "Legacy";
+				break;
+			case "MerchMode":
+				VMZConfigured = result.Message == "VMZ";
+				break;
+			case "DoorSensors":
+				DoorSensorsConfigured = result.Message == "On";
+				break;
+			case "QuickReturn":
+				HasQuickReturn = result.Message == "Configured";
+				break;
+			case "DoorSensorStatus":
+				text = result.Message;
+				break;
+			case "AirExchangerConfigured":
+				FanConfigured = result.Message == "Configured";
+				break;
+			}
+		}
+		if (VMZConfigured)
+		{
+			WriteToOutput("The kiosk is configured for a VMZ.");
+		}
+		if (DoorSensorsConfigured)
+		{
+			WriteToOutput("The kiosk is configured for door sensors.");
+			if (text != "OK")
+			{
+				WriteToOutput($"WARNING: DoorSensor status returned {text} (door may be open!)");
+			}
+		}
+		else
+		{
+			WriteToOutput($"Door sensor configuration shows: NOT CONFIGURED.");
+		}
+		if (HasQuickReturn)
+		{
+			WriteToOutput("The kiosk is configured for a quick return device.");
+		}
+		if (!LegacyCamera)
+		{
+			m_cameraPreview.Enabled = false;
+			m_startButtonCamera.Enabled = true;
+			ToggleNonLegacyStart();
+		}
+		ChangeQlmPanelState();
+		if (FanConfigured)
+		{
+			m_fanButton.Enabled = true;
+			SetFanButtonState();
+		}
+		DisplayInventoryStats(first: true);
+		m_cameraWorkingButton.Enabled = CameraInError > 0;
+	}
+
+	private void ToggleNonLegacyStart()
+	{
+		if (StateOfCamera == CameraState.Unknown)
+		{
+			string text = ExecuteInstructionWithResult("CAMERA STATUS", logResult: false);
+			if (string.IsNullOrEmpty(text))
+			{
+				WriteToOutput("Could not find current camera status.");
+				return;
+			}
+			StateOfCamera = ((text == "RUNNING") ? CameraState.Started : CameraState.Stopped);
+		}
+		m_startButtonCamera.Text = ((StateOfCamera == CameraState.Stopped) ? "Start Camera" : "Stop Camera");
+	}
+
+	private void DisplayInventoryStats(bool first)
+	{
+		InventoryStatsJob inventoryStatsJob = new InventoryStatsJob(m_hardwareService);
+		inventoryStatsJob.Run();
+		foreach (ProgramResult result in inventoryStatsJob.Results)
+		{
+			if (result.Code == "TotalEmptyCount")
+			{
+				WriteToOutput($"  EMPTY slots: {result.Message}");
+			}
+			else if (result.Code == "UnknownCount")
+			{
+				WriteToOutput($"  UNKNOWN slots: {result.Message}");
+			}
+		}
+		WriteToOutput("Inventory Stats: ");
 	}
 
 	private void CompileScripts()
 	{
 		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "Scripts");
+		if (!Directory.Exists(path))
+		{
+			return;
+		}
 		string[] files = Directory.GetFiles(path, "*.hs");
 		string[] array = files;
 		foreach (string path2 in array)
@@ -536,14 +699,95 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		using (Manager.MakeAspect(sender))
 		{
 			string text = ExecuteInstructionWithResult("HOMEY CLEARGRIPPER=TRUE", logResult: false);
-			if (text != "SUCCESS")
+			if (!string.IsNullOrEmpty(text))
 			{
-				WriteToOutput($"The HOMEY function failed with error {text}");
+				if (text != "SUCCESS")
+				{
+					WriteToOutput($"The HOMEY function failed with error {text}");
+				}
+				else
+				{
+					CommonFunctions.ExecuteInstruction(m_hardwareService, "QLM DROP", 120000);
+				}
+			}
+		}
+	}
+
+	private void OnDoSnap(object sender, EventArgs args)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			if (!m_hardwareService.ExecuteImmediateProgram(CameraSnapImmediate, out var job).Success)
+			{
+				WriteToOutput("Command error.");
+				return;
+			}
+			string topOfStack = CommonFunctions.GetTopOfStack(job);
+			if ("SUCCESS" == topOfStack)
+			{
+				string[] stackEntries = CommonFunctions.GetStackEntries(job, 2);
+				if (ImageViewer == null)
+				{
+					ImageViewer = new ImageViewer();
+					ImageViewer.FormClosing += OnImageViewClosing;
+				}
+				else
+				{
+					ImageViewer.Hide();
+				}
+				ImageViewer.DisplayFile(stackEntries[1]);
+				ImageViewer.Show();
 			}
 			else
 			{
-				CommonFunctions.ExecuteInstruction(m_hardwareService, "QLM DROP", 120000);
+				WriteToOutput("CAMERA CAPTURE error. I'm sorry!");
 			}
+		}
+	}
+
+	private void OnImageViewClosing(object sender, FormClosingEventArgs args)
+	{
+		ImageViewer = null;
+	}
+
+	private void ToggleRinglight()
+	{
+		string instruction = (RinglightOn ? "RINGLIGHT ON" : "RINGLIGHT OFF");
+		CommonFunctions.ExecuteInstruction(m_hardwareService, instruction);
+	}
+
+	private void OnStartCamera(object sender, EventArgs args)
+	{
+		ButtonAspects buttonAspects = Manager.MakeAspect(sender);
+		try
+		{
+			if (LegacyCamera)
+			{
+				RinglightOn = !RinglightOn;
+				ToggleRinglight();
+				buttonAspects.Button.Text = (RinglightOn ? "Turn Ringlight Off" : "Turn Ringlight On");
+			}
+			else if (StateOfCamera != CameraState.Unknown)
+			{
+				string instruction = ((CameraState.Started == StateOfCamera) ? "CAMERA STOP FORCE=TRUE" : "CAMERA START");
+				CameraState cameraState = ((CameraState.Started != StateOfCamera) ? CameraState.Started : CameraState.Stopped);
+				HardwareJob job = CommonFunctions.ExecuteInstruction(m_hardwareService, instruction);
+				string topOfStack = CommonFunctions.GetTopOfStack(job);
+				if ("TRUE".Equals(topOfStack, StringComparison.CurrentCultureIgnoreCase))
+				{
+					WriteToOutput($"Changed the camera state to {cameraState.ToString()}.");
+					StateOfCamera = cameraState;
+					ToggleNonLegacyStart();
+				}
+				else
+				{
+					WriteToOutput($"Couldn't change camera state to {cameraState.ToString()}.I'm sorry!");
+				}
+			}
+		}
+		finally
+		{
+			((IDisposable)buttonAspects/*cast due to constrained. prefix*/).Dispose();
 		}
 	}
 
@@ -579,29 +823,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		}
 	}
 
-	private void OnDontPressButton(object sender, EventArgs e)
-	{
-		using (Manager.MakeAspect(sender))
-		{
-			LogMessage("And another one pressed the \"Don't press me!\" button.");
-			for (int i = 0; i < 4; i++)
-			{
-				if (i % 2 == 0)
-				{
-					BackColor = Color.Pink;
-				}
-				else
-				{
-					BackColor = Color.Red;
-				}
-				Application.DoEvents();
-				Thread.Sleep(1000);
-			}
-			MessageBox.Show("I told you not to press it.", "BYE!");
-			Environment.Exit(-1);
-		}
-	}
-
 	private void OnRunQlmDisengage(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
@@ -616,48 +837,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			{
 				return;
 			}
-			HardwareJob job = null;
-			try
+			using TestRetrofitDeck testRetrofitDeck = new TestRetrofitDeck(m_hardwareService);
+			testRetrofitDeck.Run();
+			if (HardwareJobStatus.Completed == testRetrofitDeck.EndStatus)
 			{
-				HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-				hardwareJobSchedule.StartTime = DateTime.Now;
-				hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-				HardwareJobSchedule schedule = hardwareJobSchedule;
-				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("test-retrofit-deck", string.Empty, enableDebugging: false, schedule, out job);
-				HardwareJobStatus endStatus;
-				if (!hardwareCommandResult.Success)
-				{
-					WriteToOutput("Unable to schedule job.");
-				}
-				else if (!Helper.WaitForJob(job, out endStatus))
-				{
-					WriteToOutput("Unable to wait for job.");
-				}
-				else if (endStatus == HardwareJobStatus.Completed)
-				{
-					WriteToOutput("Test succeeded.");
-				}
-				else
-				{
-					WriteToOutput("The test failed.");
-				}
+				WriteToOutput("Test succeeded.");
 			}
-			catch (Exception)
+			else
 			{
-				WriteToOutput("ERROR: job failed.");
+				WriteToOutput("The test failed.");
 			}
-			finally
-			{
-				job?.Trash();
-			}
-		}
-	}
-
-	private void OnTestSummary(object s, EventArgs e)
-	{
-		using (Manager.MakeAspect(s))
-		{
-			WriteToOutput("I don't do anything yet - FAIL.");
 		}
 	}
 
@@ -672,47 +861,34 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				return;
 			}
 			WriteToOutput(" One or more boards not responsive - issue RESET.");
-			string arg = ExecuteInstructionAndGetResult("RESET SERIAL CLOSEPORT=TRUE");
-			WriteToOutput($" RESET returned {arg}");
+			using (ResetControlSystemJob resetControlSystemJob = new ResetControlSystemJob(m_hardwareService))
+			{
+				resetControlSystemJob.Run();
+				foreach (ProgramResult result in resetControlSystemJob.Results)
+				{
+					WriteToOutput(result.Message);
+				}
+				if (resetControlSystemJob.EndStatus == HardwareJobStatus.Errored)
+				{
+					return;
+				}
+			}
 			TestBoards();
 		}
 	}
 
 	private bool TestBoards()
 	{
-		int num = 0;
-		CommonFunctions.ExecuteInstruction(m_hardwareService, "CLEAR");
-		string text = ExecuteInstructionAndGetResult("VERSION SERIAL");
-		if ("TIMEOUT" == text)
+		using BoardTestJob boardTestJob = new BoardTestJob(m_hardwareService);
+		boardTestJob.Run();
+		foreach (ProgramResult result in boardTestJob.Results)
 		{
-			num++;
-			WriteToOutput(" SER board not responsive.");
+			if (result.Code == "VersionResult")
+			{
+				WriteToOutput(result.Message);
+			}
 		}
-		else
-		{
-			WriteToOutput(" SER board responsive.");
-		}
-		text = ExecuteInstructionAndGetResult("VERSION AUX");
-		if ("TIMEOUT" == text)
-		{
-			WriteToOutput(" AUX board not responsive.");
-			num++;
-		}
-		else
-		{
-			WriteToOutput(" AUX board responsive.");
-		}
-		text = ExecuteInstructionAndGetResult("VERSION PICKER");
-		if ("TIMEOUT" == text)
-		{
-			WriteToOutput(" PCB not responsive.");
-			num++;
-		}
-		else
-		{
-			WriteToOutput(" PCB responsive.");
-		}
-		return 0 == num;
+		return boardTestJob.EndStatus == HardwareJobStatus.Completed;
 	}
 
 	private void WriteToOutput(string msg)
@@ -965,57 +1141,53 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		Application.DoEvents();
 	}
 
-	private HardwareJob[] GetJobs()
+	private List<HardwareJob> GetJobs()
 	{
+		List<HardwareJob> list = new List<HardwareJob>();
 		HardwareCommandResult jobs = m_hardwareService.GetJobs(out var jobs2);
 		if (!jobs.Success)
 		{
-			return null;
+			WriteToOutput("Unable to read job list - JOBS MAY BE ACTIVE!");
+			return list;
 		}
-		return jobs2;
+		list.AddRange(jobs2);
+		return list;
 	}
 
 	private void StopJobs()
 	{
 		int num = 0;
-		HardwareJob[] jobs = GetJobs();
-		if (jobs == null)
+		List<HardwareJob> jobs = GetJobs();
+		using (new DisposeableList<HardwareJob>(jobs))
 		{
-			WriteToOutput("Unable to read job list - JOBS MAY BE ACTIVE!");
-			return;
-		}
-		HardwareJob[] array = jobs;
-		foreach (HardwareJob hardwareJob in array)
-		{
-			if (hardwareJob.ProgramName.Equals("self-healer", StringComparison.CurrentCultureIgnoreCase))
+			foreach (HardwareJob item in jobs)
 			{
-				if (hardwareJob.Suspend().Success)
+				if (item.ProgramName.Equals("self-healer", StringComparison.CurrentCultureIgnoreCase))
 				{
-					m_stoppedJobs.Add(hardwareJob);
-					WriteToOutput($"Suspended job {hardwareJob.ProgramName} ID = {hardwareJob.ID}");
+					if (item.Suspend().Success)
+					{
+						m_stoppedJobs.Add(item);
+						WriteToOutput($"Suspended job {item.ProgramName} ID = {item.ID}");
+					}
+					else
+					{
+						WriteToOutput("Unable to stop job " + item.ProgramName);
+					}
 				}
-				else
+				else if ((item.Status == HardwareJobStatus.Pending || item.Status == HardwareJobStatus.Running) && !item.ProgramName.Equals("job-watchdog"))
 				{
-					WriteToOutput("Unable to stop job " + hardwareJob.ProgramName);
+					num++;
 				}
 			}
-			else if ((hardwareJob.Status == HardwareJobStatus.Pending || hardwareJob.Status == HardwareJobStatus.Running) && !hardwareJob.ProgramName.Equals("job-watchdog"))
+			if (num > 0)
 			{
-				num++;
+				WriteToOutput("WARNING: jobs are currently running or pending.");
 			}
-		}
-		if (num > 0)
-		{
-			WriteToOutput("WARNING: jobs are currently running or pending.");
-		}
-		else
-		{
-			WriteToOutput("There are no jobs running or pending.");
-		}
-		CommonFunctions.ExecuteInstruction(m_hardwareService, "ICEQUBEBOARD HALTPOLL");
-		if (Settings.Default.DisableQuickReturn)
-		{
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "QUICKRETURN HALTPOLL");
+			else
+			{
+				WriteToOutput("There are no jobs running or pending.");
+			}
+			m_hardwareService.ExecuteServiceCommand("SERVICE diagnostic-mode status: true");
 		}
 	}
 
@@ -1073,14 +1245,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			string servicePath = ServicePath;
-			if (string.IsNullOrEmpty(servicePath))
+			if (LegacyCamera)
 			{
-				WriteToOutput("Unable to locate service path; cannot launch amcap.");
-			}
-			else
-			{
-				CommonCameraFunctions.LaunchAndWaitForTuner(m_hardwareService);
+				string servicePath = ServicePath;
+				if (string.IsNullOrEmpty(servicePath))
+				{
+					WriteToOutput("Unable to locate service path; cannot launch amcap.");
+				}
+				else
+				{
+					CommonCameraFunctions.LaunchAndWaitForTuner(m_hardwareService);
+				}
 			}
 		}
 	}
@@ -1101,27 +1276,26 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			return;
 		}
+		if (ImageViewer != null)
+		{
+			ImageViewer.Dispose();
+		}
 		FormDisposed = true;
 		WriteToOutput("Cleanup Hardware.");
 		Application.DoEvents();
 		if (m_hardwareService != null)
 		{
-			if (FanConfigured)
-			{
-				CommonFunctions.ExecuteInstruction(m_hardwareService, "ICEQUBEBOARD RESTARTPOLL");
-				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANON", "AIRXCHGR"));
-			}
-			if (Settings.Default.DisableQuickReturn)
-			{
-				CommonFunctions.ExecuteInstruction(m_hardwareService, "QUICKRETURN RESTART");
-			}
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "VENDDOOR CLOSE");
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "GRIPPER RENT");
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "GRIPPER RETRACT");
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "SENSOR PICKER-OFF");
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "ROLLER STOP");
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "RINGLIGHT OFF");
-			CommonFunctions.ExecuteInstruction(m_hardwareService, "CLEAR");
+			m_hardwareService.ExecuteServiceCommand("SERVICE diagnostic-mode status: false");
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine(string.Format(" {0} FANON", "AIRXCHGR"));
+			stringBuilder.AppendLine(" VENDDOOR CLOSE");
+			stringBuilder.AppendLine(" GRIPPER RENT");
+			stringBuilder.AppendLine(" GRIPPER RETRACT");
+			stringBuilder.AppendLine(" SENSOR PICKER-OFF");
+			stringBuilder.AppendLine(" ROLLER STOP");
+			stringBuilder.AppendLine(" RINGLIGHT OFF");
+			stringBuilder.AppendLine(" CLEAR");
+			m_hardwareService.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			WriteToOutput("Restart suspended jobs.");
 			Application.DoEvents();
 			foreach (HardwareJob stoppedJob in m_stoppedJobs)
@@ -1129,7 +1303,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				stoppedJob.Pend();
 			}
 		}
-		TesterLog.Instance.Dispose();
+		TesterLog.Dispose();
 		Application.Exit();
 	}
 
@@ -1137,40 +1311,23 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("init", "MS Tester Init", enableDebugging: false, new HardwareJobSchedule
-			{
-				Priority = HardwareJobPriority.Highest,
-				StartTime = DateTime.Now
-			}, out var job);
-			HardwareJobStatus endStatus;
-			ErrorList errors;
-			if (!hardwareCommandResult.Success)
-			{
-				WriteToOutput("Unable to schedule init job.");
-			}
-			else if (!Helper.WaitForJob(job, out endStatus))
-			{
-				WriteToOutput("Unable to schedule init job.");
-			}
-			else if (endStatus == HardwareJobStatus.Completed)
+			using InitJob initJob = new InitJob(m_hardwareService);
+			initJob.Run();
+			if (HardwareJobStatus.Completed == initJob.EndStatus)
 			{
 				WriteToOutput("Init succeeded.");
 			}
-			else if (job.GetErrors(out errors).Success)
+			else
 			{
-				if (errors.Count <= 0)
+				if (initJob.Errors.Count <= 0)
 				{
 					return;
 				}
-				foreach (Error item in errors)
+				foreach (Error error in initJob.Errors)
 				{
-					WriteToOutput(item.Details);
+					WriteToOutput(error.Details);
 				}
 				WriteToOutput("Init didn't succeed; errors follow:");
-			}
-			else
-			{
-				WriteToOutput("Unable to read job errors.");
 			}
 		}
 	}
@@ -1195,13 +1352,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				return;
 			}
 			int num = 0;
-			string text = ExecuteInstructionAndGetResult("VERSION AUX");
+			string text = ExecuteInstructionWithResult("VERSION AUX", logResult: false);
 			if ("TIMEOUT" == text)
 			{
 				WriteToOutput("Move: AUX board not responsive.");
 				num++;
 			}
-			text = ExecuteInstructionAndGetResult("VERSION PICKER");
+			text = ExecuteInstructionWithResult("VERSION PICKER", logResult: false);
 			if ("TIMEOUT" == text)
 			{
 				WriteToOutput("Move: PCB not responsive.");
@@ -1241,8 +1398,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			int num2 = int.Parse(m_sourceSlotTextBox.Text);
 			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("sync-locations", "Tester Location Sync", enableDebugging: false, new HardwareJobSchedule
 			{
-				Priority = HardwareJobPriority.Highest,
-				StartTime = DateTime.Now
+				Priority = HardwareJobPriority.Highest
 			}, out var job);
 			if (!hardwareCommandResult.Success)
 			{
@@ -1286,37 +1442,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			if (!ValidateSourceDeckSlot())
 			{
 				WriteToOutput(Resources.SourceDeckSlotInvalid);
+				return;
 			}
-			else
+			using PutInLocationResult putInLocationResult = new PutInLocationResult(m_hardwareService, FromTextBox(m_sourceDeckTextBox), FromTextBox(m_sourceSlotTextBox));
+			putInLocationResult.Run();
+			foreach (ProgramResult result in putInLocationResult.Results)
 			{
-				if (!MoveInner(m_sourceDeckTextBox.Text, m_sourceSlotTextBox.Text, "PUT", writeToStack: true))
-				{
-					return;
-				}
-				ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(m_hardwareService);
-				string arg = ComputeBarcodeForLocation(readBarcodeResult.Barcode);
-				HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate($"PUSH \"{arg}\"", out var job);
-				if (!hardwareCommandResult.Success)
-				{
-					WriteToOutput("OnPut: unable to push stack value.");
-					return;
-				}
-				job.WaitForCompletion();
-				hardwareCommandResult = m_hardwareService.ExecuteImmediate("PUT", 90000, out job);
-				if (!hardwareCommandResult.Success)
-				{
-					LogServiceError(hardwareCommandResult);
-					return;
-				}
-				string[] stackEntries = CommonFunctions.GetStackEntries(job, 2);
-				if (stackEntries.Length == 2)
-				{
-					WriteToOutput("PUT " + stackEntries[1]);
-				}
-				else
-				{
-					WriteToOutput("PUT Failed.");
-				}
+				WriteToOutput(result.Message);
 			}
 		}
 	}
@@ -1369,57 +1501,22 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "GRIPPER STATUS");
-			if (hardwareJob == null)
+			using VendDiskInPickerJob vendDiskInPickerJob = new VendDiskInPickerJob(m_hardwareService);
+			vendDiskInPickerJob.Run();
+			foreach (ProgramResult result in vendDiskInPickerJob.Results)
 			{
-				WriteToOutput("Command failed.");
-				return;
-			}
-			string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-			if ("EMPTY".Equals(topOfStack, StringComparison.CurrentCultureIgnoreCase))
-			{
-				WriteToOutput("No disk in picker.");
-				return;
-			}
-			HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-			hardwareJobSchedule.StartTime = DateTime.Now;
-			hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-			HardwareJobSchedule schedule = hardwareJobSchedule;
-			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("ms-vend-disk-in-picker", string.Empty, enableDebugging: false, schedule, out var job);
-			if (!hardwareCommandResult.Success)
-			{
-				WriteToOutput("Vend DVD failed.");
-			}
-			else
-			{
-				if (!Helper.WaitForJob(job, out var _))
+				WriteToOutput(result.Code);
+				if (result.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
 				{
+					WriteToOutput("Disk was taken.");
 					return;
 				}
-				if (job.GetResults(out var results).Success)
+				if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
 				{
-					ProgramResult[] array = results;
-					foreach (ProgramResult programResult in array)
-					{
-						WriteToOutput(programResult.Code);
-						if (programResult.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
-						{
-							WriteToOutput("Disk was taken.");
-							return;
-						}
-						if (programResult.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
-						{
-							WriteToOutput("There was a HW error: " + programResult.Message);
-						}
-					}
-					WriteToOutput("Disk not taken - pulled back in.");
+					WriteToOutput("There was a HW error: " + result.Message);
 				}
-				else
-				{
-					WriteToOutput("Failed to get sync results.");
-				}
-				m_hardwareService.TrashJob(job.ID);
 			}
+			WriteToOutput("Disk not taken - pulled back in.");
 		}
 	}
 
@@ -1427,61 +1524,24 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			try
+			using PushInDvdJob pushInDvdJob = new PushInDvdJob(m_hardwareService);
+			pushInDvdJob.Run();
+			int num = 0;
+			foreach (ProgramResult result in pushInDvdJob.Results)
 			{
-				HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-				hardwareJobSchedule.StartTime = DateTime.Now;
-				hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-				HardwareJobSchedule schedule = hardwareJobSchedule;
-				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("push-in-dvd", string.Empty, enableDebugging: false, schedule, out var job);
-				if (!hardwareCommandResult.Success)
+				if (result.Code == "MachineError")
 				{
-					WriteToOutput("Unable to run job push-in-dvd");
-					return;
+					num++;
+					WriteToOutput(result.Message);
 				}
-				job.Resume();
-				job.WaitForCompletion();
-				string iD = job.ID;
-				hardwareCommandResult = m_hardwareService.GetJob(iD, out job);
-				if (!hardwareCommandResult.Success)
-				{
-					WriteToOutput("Unable to get job status");
-					return;
-				}
-				if (!job.GetResults(out var results).Success)
-				{
-					WriteToOutput($"Error getting stack for push-dvd job {job.ID}");
-					return;
-				}
-				int num = 0;
-				ProgramResult[] array = results;
-				foreach (ProgramResult programResult in array)
-				{
-					if (programResult.Code == "MachineError")
-					{
-						num++;
-						WriteToOutput(programResult.Message);
-					}
-				}
-				if (num == 0)
-				{
-					WriteToOutput("push-in-dvd SUCCESS");
-				}
-				else
-				{
-					string arg = "ERROR";
-					if (job.GetSymbols(out var symbols).Success && symbols.ContainsKey("ERROR-STATE"))
-					{
-						arg = symbols["ERROR-STATE"];
-					}
-					WriteToOutput($"push-in-dvd {arg}");
-				}
-				m_hardwareService.TrashJob(job.ID);
 			}
-			catch (Exception)
+			if (num == 0)
 			{
-				WriteToOutput("ERROR: push-dvd-in failed.");
+				WriteToOutput("push-in-dvd SUCCESS");
+				return;
 			}
+			string arg = (pushInDvdJob.Symbols.ContainsKey("ERROR-STATE") ? pushInDvdJob.Symbols["ERROR-STATE"] : "ERROR");
+			WriteToOutput($"push-in-dvd {arg}");
 		}
 	}
 
@@ -1489,52 +1549,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("GRIPPER STATUS", out var job);
-			if (!hardwareCommandResult.Success)
+			PutInEmptySlotResult putInEmptySlotResult = new PutInEmptySlotResult(m_hardwareService);
+			putInEmptySlotResult.Run();
+			foreach (ProgramResult result in putInEmptySlotResult.Results)
 			{
-				WriteToOutput("PutInEmpty: couldn't execute gripper clear.");
-				return;
-			}
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
-			if (topOfStack.Equals("EMPTY"))
-			{
-				WriteToOutput("Gripper is empty.");
-				return;
-			}
-			hardwareCommandResult = m_hardwareService.ExecuteImmediate("FINDEMPTY", out job);
-			if (!hardwareCommandResult.Success)
-			{
-				WriteToOutput("Execute of FINDEMPTY failed.");
-				return;
-			}
-			string[] stackEntries = CommonFunctions.GetStackEntries(job, 3);
-			if (stackEntries.Length != 3 || !stackEntries[0].Equals("FOUND"))
-			{
-				WriteToOutput("Empty slot not found.");
-			}
-			else
-			{
-				if (!MoveInner(stackEntries[1], stackEntries[2], "PUT", writeToStack: true))
-				{
-					return;
-				}
-				ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(m_hardwareService);
-				job.Push(readBarcodeResult.Barcode);
-				HardwareCommandResult hardwareCommandResult2 = m_hardwareService.ExecuteImmediate("PUT", 90000, out job);
-				if (!hardwareCommandResult2.Success)
-				{
-					WriteToOutput("Put Failed - See Service Logs");
-					return;
-				}
-				string[] stackEntries2 = CommonFunctions.GetStackEntries(job, 2);
-				if (stackEntries2[1].Equals("SUCCESS", StringComparison.CurrentCultureIgnoreCase))
-				{
-					WriteToOutput($"Filed deck={stackEntries[1]}, slot={stackEntries[2]}, id={readBarcodeResult.Barcode}");
-				}
-				else
-				{
-					WriteToOutput($"PUT failed at deck={stackEntries[1]}, slot={stackEntries[2]}, status={stackEntries2[1]}");
-				}
+				WriteToOutput(result.Message);
 			}
 		}
 	}
@@ -1746,136 +1765,51 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			try
+			using MSPullInDvdJob mSPullInDvdJob = new MSPullInDvdJob(m_hardwareService);
+			mSPullInDvdJob.Run();
+			if (mSPullInDvdJob.EndStatus == HardwareJobStatus.Completed)
 			{
-				HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-				hardwareJobSchedule.StartTime = DateTime.Now;
-				hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-				HardwareJobSchedule schedule = hardwareJobSchedule;
-				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("ms-pull-in-dvd", string.Empty, enableDebugging: false, schedule, out var job);
-				if (!hardwareCommandResult.Success)
-				{
-					WriteToOutput("Unable to run job ms-pull-in-dvd");
-					return;
-				}
-				job.Resume();
-				job.WaitForCompletion();
-				string iD = job.ID;
-				hardwareCommandResult = m_hardwareService.GetJob(iD, out job);
-				if (!hardwareCommandResult.Success)
-				{
-					WriteToOutput("Unable to get job status");
-					return;
-				}
-				_ = job.Status;
-				if (job.GetStack(out var stack).Errors.Count > 0)
-				{
-					WriteToOutput($"Error getting stack for ms-pull-in-dvd job {job.ID}");
-					return;
-				}
-				for (int i = 0; i < stack.Count - 1; i++)
-				{
-					stack.Pop();
-				}
-				string text = stack.Pop();
-				m_hardwareService.TrashJob(job.ID);
-				WriteToOutput("pull-dvd-in " + text);
+				WriteToOutput("pull-dvd-in SUCCESS");
+				return;
 			}
-			catch (Exception)
+			foreach (ProgramResult result in mSPullInDvdJob.Results)
 			{
-				WriteToOutput("ERROR: pull-dvd-in failed.");
+				if (result.Code == "InvalidJobUse")
+				{
+					WriteToOutput("pull-dvd-in is intended for a disk stuck in the picker.");
+					WriteToOutput("Please use the 'GET' function instead.");
+					break;
+				}
+				if (result.Code == "MachineError")
+				{
+					WriteToOutput("pull-dvd-in " + result.Message);
+				}
 			}
 		}
 	}
 
 	private void button65_Click(object sender, EventArgs e)
 	{
-		EngineeringForm engineeringForm = new EngineeringForm(Helper, m_hardwareService, Manager);
-		engineeringForm.ShowDialog();
+		if (Settings.Default.DeveloperMode)
+		{
+			EngineeringForm engineeringForm = new EngineeringForm(Helper, m_hardwareService, Manager);
+			engineeringForm.ShowDialog();
+			return;
+		}
+		using (Manager.MakeAspect(sender))
+		{
+			DisplayInventoryStats(first: false);
+		}
 	}
 
 	private void button67_Click(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			ConfiguredDevicesForm configuredDevicesForm = new ConfiguredDevicesForm(m_hardwareService, TesterLog.Instance.CoreLog);
+			ConfiguredDevicesForm configuredDevicesForm = new ConfiguredDevicesForm(m_hardwareService, TesterLog.CoreLog);
 			configuredDevicesForm.ShowDialog();
-			ConfigureFan();
-			SetFanButtonState();
+			ChangeUIAfterconfig();
 		}
-	}
-
-	private void ToggleQlmButtons()
-	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "VMZ IS-CONFIGURED", 120000);
-		if (hardwareJob == null)
-		{
-			WriteToOutput("VMZ query failed.");
-			return;
-		}
-		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
-		{
-			WriteToOutput("Error getting stack.");
-			return;
-		}
-		string text = stack.Peek();
-		VMZConfigured = text.Equals("TRUE", StringComparison.CurrentCultureIgnoreCase);
-		if (VMZConfigured)
-		{
-			WriteToOutput("The kiosk is configured for a VMZ.");
-		}
-		hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "DOORSENSORS ISCONFIGURED", 120000);
-		if (hardwareJob == null)
-		{
-			WriteToOutput("DOORSENSOR query failed.");
-			DoorSensorsConfigured = false;
-		}
-		else if (hardwareJob.GetStack(out stack).Errors.Count > 0)
-		{
-			WriteToOutput("Error getting stack.");
-			DoorSensorsConfigured = false;
-		}
-		else
-		{
-			text = stack.Peek();
-			DoorSensorsConfigured = text.Equals("TRUE", StringComparison.CurrentCultureIgnoreCase);
-			if (DoorSensorsConfigured)
-			{
-				WriteToOutput("The kiosk is configured for door sensors.");
-				string text2 = ReadDoorSensorStatus();
-				if (text2 != "OK")
-				{
-					WriteToOutput($"WARNING: DoorSensor status returned {text2} (door may be open!)");
-				}
-			}
-			else
-			{
-				string arg = (text.Equals("true", StringComparison.CurrentCultureIgnoreCase) ? "CONFIGURED" : "NOT CONFIGURED");
-				WriteToOutput($"Door sensor configuration shows: {arg}.");
-			}
-		}
-		hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "QUICKRETURN ISINSTALLED");
-		if (hardwareJob == null)
-		{
-			WriteToOutput("Quickreturn query failed.");
-			HasQuickReturn = false;
-		}
-		else if (hardwareJob.GetStack(out stack).Errors.Count > 0)
-		{
-			WriteToOutput("Error getting stack.");
-			HasQuickReturn = false;
-		}
-		else
-		{
-			text = stack.Peek();
-			HasQuickReturn = text.Equals("TRUE", StringComparison.CurrentCultureIgnoreCase);
-			if (HasQuickReturn)
-			{
-				WriteToOutput("The kiosk is configured for a quick return device.");
-			}
-		}
-		ChangeQlmPanelState();
-		Application.DoEvents();
 	}
 
 	private void ChangeQlmPanelState()
@@ -1893,17 +1827,15 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		m_qlmEngageButton.Text = "Query Door Sensors";
 		m_qlmDisengageButton.Enabled = true;
 		m_qlmDisengageButton.Text = "Test deck 8.";
-		HideQlmButtons();
-	}
-
-	private void HideQlmButtons()
-	{
-		bool visible = false;
-		m_qlmCaseStatusButton.Visible = visible;
-		m_qlmDownButton.Visible = visible;
-		m_qlmStopButton.Visible = visible;
-		m_qlmUpButton.Visible = visible;
-		m_qlmDoorStatus.Visible = visible;
+		Button qlmCaseStatusButton = m_qlmCaseStatusButton;
+		Button qlmDownButton = m_qlmDownButton;
+		Button qlmStopButton = m_qlmStopButton;
+		Button qlmUpButton = m_qlmUpButton;
+		bool flag = (m_qlmDoorStatus.Visible = false);
+		bool flag3 = (qlmUpButton.Visible = flag);
+		bool flag5 = (qlmStopButton.Visible = flag3);
+		bool visible = (qlmDownButton.Visible = flag5);
+		qlmCaseStatusButton.Visible = visible;
 	}
 
 	private void ToggleQLMButtons(bool show)
@@ -1918,18 +1850,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		m_qlmTestButton.Enabled = show;
 	}
 
-	private string ComputeBarcodeForLocation(string read)
-	{
-		int num = int.Parse(m_sourceDeckTextBox.Text);
-		int num2 = int.Parse(m_sourceSlotTextBox.Text);
-		string result = read;
-		if (IsDenseMachine && num == 7 && num2 % 6 == 0)
-		{
-			result = "EMPTY";
-		}
-		return result;
-	}
-
 	private string ExecuteInstructionWithResult(string inst)
 	{
 		return ExecuteInstructionWithResult(inst, logResult: true);
@@ -1937,70 +1857,22 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private string ExecuteInstructionWithResult(string inst, bool logResult)
 	{
-		if (!string.IsNullOrEmpty(inst))
-		{
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, inst, 120000);
-			if (hardwareJob != null)
-			{
-				string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-				WriteToOutput(inst + " - " + topOfStack);
-				return topOfStack;
-			}
-			WriteToOutput("Command failed.");
-		}
-		else
-		{
-			WriteToOutput($"{inst} failed.");
-		}
-		return null;
-	}
-
-	private string ExecuteInstructionAndGetResult(string inst)
-	{
 		if (string.IsNullOrEmpty(inst))
 		{
 			return string.Empty;
 		}
 		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, inst, 120000);
-		if (hardwareJob == null)
+		if (hardwareJob != null)
 		{
-			return string.Empty;
-		}
-		return CommonFunctions.GetTopOfStack(hardwareJob);
-	}
-
-	private void ComputeMachineDensity()
-	{
-		HardwareCommandResult configuration = m_hardwareService.GetConfiguration("controller");
-		if (!configuration.Success)
-		{
-			WriteToOutput("Unable to determine machine configuration - assume 90 slots.");
-			return;
-		}
-		string xml = configuration.CommandMessages[0];
-		XmlDocument xmlDocument = new XmlDocument();
-		xmlDocument.LoadXml(xml);
-		XmlNodeList xmlNodeList = xmlDocument.DocumentElement.SelectNodes("property");
-		foreach (XmlNode item in xmlNodeList)
-		{
-			XmlNode namedItem = item.Attributes.GetNamedItem("display-name");
-			if (namedItem == null || !namedItem.Value.Equals("Decks"))
+			string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
+			if (logResult)
 			{
-				continue;
+				WriteToOutput(inst + " - " + topOfStack);
 			}
-			foreach (XmlNode childNode in item.ChildNodes)
-			{
-				if (childNode.Name.Equals("Deck"))
-				{
-					int num = int.Parse(childNode.Attributes.GetNamedItem("Number").Value);
-					int num2 = int.Parse(childNode.Attributes.GetNamedItem("NumberOfSlots").Value);
-					if (num == 7 && num2 == 72)
-					{
-						IsDenseMachine = true;
-					}
-				}
-			}
+			return topOfStack;
 		}
+		WriteToOutput("Command failed.");
+		return string.Empty;
 	}
 
 	private bool JobCompletedWithoutError(HardwareJob job)
@@ -2021,44 +1893,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		return true;
 	}
 
-	private string GetNextFun()
-	{
-		m_funMessageCount++;
-		return m_funMessageCount switch
-		{
-			0 => "All the journeys...", 
-			1 => "Of this great adventure...", 
-			2 => "It didn't always feel that way...", 
-			3 => "I wouldn't trade them...", 
-			4 => "Because I made them...", 
-			5 => "The best I could - that's enough to say.", 
-			6 => "Some days were dark.", 
-			7 => "I wish that I could live it all again", 
-			8 => "Some nights were bright.", 
-			9 => "I wish that I could live it all again.", 
-			10 => "All the highlights", 
-			11 => "Of that Headlong Flight", 
-			12 => "Holding on with all my might", 
-			13 => "To what I felt back then", 
-			14 => "I wish that I could do it all again!", 
-			15 => "I have stoked the fire on the big steel wheels.", 
-			16 => "Steered the airship right across the stars.", 
-			17 => "I learned to fight, I learned to love, I learned to feel", 
-			18 => "Oh I wish that I could live it all again!", 
-			19 => "(Guitar intro)", 
-			20 => "All the treasures, the gold & glory", 
-			21 => "It didn't always feel that way", 
-			22 => "I don't regret it", 
-			23 => "I'll never forget it", 
-			24 => "I wouldn't trade tomorrow for today", 
-			25 => "Some days were dark.", 
-			26 => "I wish that I could live it all again", 
-			27 => "Some nights were bright", 
-			28 => "I wish that I could live it all again", 
-			_ => "Sorry, I  know it's boring.", 
-		};
-	}
-
 	private void button66_Click(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
@@ -2066,7 +1900,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			try
 			{
 				HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-				hardwareJobSchedule.StartTime = DateTime.Now;
 				hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
 				HardwareJobSchedule schedule = hardwareJobSchedule;
 				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("hardware-status", string.Empty, enableDebugging: false, schedule, out var job);
@@ -2117,7 +1950,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			try
 			{
 				HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-				hardwareJobSchedule.StartTime = DateTime.Now;
 				hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
 				HardwareJobSchedule schedule = hardwareJobSchedule;
 				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("reset-motioncontrol", string.Empty, enableDebugging: false, schedule, out var job);
@@ -2131,15 +1963,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					WriteToOutput("Unable to run job reset-arcus");
 					return;
 				}
-				if (job.GetSymbols(out var symbols).Success)
+				if (job.GetResults(out var results).Success)
 				{
-					foreach (string key in symbols.Keys)
+					ProgramResult[] array = results;
+					foreach (ProgramResult programResult in array)
 					{
-						if (key.StartsWith("MSTESTER-SYMBOL"))
-						{
-							WriteToOutput(symbols[key]);
-						}
+						WriteToOutput(programResult.Message);
 					}
+				}
+				else
+				{
+					WriteToOutput("Command failure.");
 				}
 				m_hardwareService.TrashJob(job.ID);
 			}
@@ -2167,38 +2001,26 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private void button19_Click(object sender, EventArgs e)
 	{
-		if (GetDVD(sender))
-		{
-			OnReadDiskInPicker(sender, EventArgs.Empty);
-		}
+		GetDVD(sender);
+		OnReadDiskInPicker(sender, EventArgs.Empty);
 	}
 
-	private bool GetDVD(object sender)
+	private void GetDVD(object sender)
 	{
 		using (Manager.MakeAspect(sender))
 		{
 			if (!ValidateSourceDeckSlot())
 			{
 				WriteToOutput(Resources.SourceDeckSlotInvalid);
-				return false;
+				return;
 			}
-			if (!MoveInner(m_sourceDeckTextBox.Text, m_sourceSlotTextBox.Text, "GET", writeToStack: true))
+			using GetAndCenterResult getAndCenterResult = new GetAndCenterResult(m_hardwareService, FromTextBox(m_sourceDeckTextBox), FromTextBox(m_sourceSlotTextBox), center: false);
+			getAndCenterResult.Run();
+			WriteMessage("GetDVD ended with status {0}", getAndCenterResult.EndStatus.ToString());
+			foreach (ProgramResult result in getAndCenterResult.Results)
 			{
-				return false;
+				WriteToOutput(result.Message);
 			}
-			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("GET", out var job);
-			if (!hardwareCommandResult.Success)
-			{
-				LogServiceError(hardwareCommandResult);
-				return false;
-			}
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
-			if (!"SUCCESS".Equals(topOfStack, StringComparison.CurrentCultureIgnoreCase))
-			{
-				WriteToOutput($"GET returned error status {topOfStack}");
-				return false;
-			}
-			return true;
 		}
 	}
 
@@ -2212,41 +2034,18 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				m_errorProvider.SetError(m_sourceSlotTextBox, "Need a valid slot!");
 				return;
 			}
-			HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-			hardwareJobSchedule.StartTime = DateTime.Now;
-			hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-			HardwareJobSchedule schedule = hardwareJobSchedule;
-			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("vertical-sync", string.Empty, enableDebugging: false, schedule, out var job);
-			if (!hardwareCommandResult.Success)
-			{
-				WriteToOutput("Unable to run job vertical-sync");
-				return;
-			}
-			int num = int.Parse(m_sourceSlotTextBox.Text);
-			job.Push(num);
-			if (!Helper.WaitForJob(job, out var endStatus))
-			{
-				WriteToOutput("Unable to run job ms-vertical-sync.");
-				return;
-			}
-			if (endStatus == HardwareJobStatus.Completed)
+			int slot = int.Parse(m_sourceSlotTextBox.Text);
+			using VerticalSync verticalSync = new VerticalSync(m_hardwareService, slot);
+			verticalSync.Run();
+			if (HardwareJobStatus.Completed == verticalSync.EndStatus)
 			{
 				WriteToOutput("The job completed successfully.");
+				return;
 			}
-			else
+			foreach (ProgramResult result in verticalSync.Results)
 			{
-				if (!job.GetResults(out var results).Success)
-				{
-					WriteToOutput($"Unable to read the results for job {job.ID}");
-					return;
-				}
-				ProgramResult[] array = results;
-				foreach (ProgramResult programResult in array)
-				{
-					WriteToOutput($"Failure at Deck {programResult.Deck} Slot {programResult.Slot} MSG: {programResult.Message}");
-				}
+				WriteToOutput($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
 			}
-			m_hardwareService.TrashJob(job.ID);
 		}
 	}
 
@@ -2254,12 +2053,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "CAMERA ISWORKING");
-			if (hardwareJob != null)
+			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("CAMERA RESETRETURNCOUNTER", out var _);
+			if (hardwareCommandResult.Success)
 			{
-				string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-				string msg = ((topOfStack == "SUCCESS") ? "CAMERA is working" : $"CAMERA is NOT working: error {topOfStack}");
-				WriteToOutput(msg);
+				WriteToOutput("Return counter reset.");
+				m_cameraWorkingButton.Enabled = false;
 			}
 			else
 			{
@@ -2304,33 +2102,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private string[] ReadLimits()
 	{
-		List<string> list = new List<string>();
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "MOTIONCONTROL READLIMITS");
-		if (hardwareJob == null)
+		MoveHelper moveHelper = new MoveHelper(m_hardwareService);
+		string[] array = moveHelper.ReadLimits();
+		if (array.Length == 0)
 		{
 			WriteToOutput("Command failed.");
-			return list.ToArray();
 		}
-		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
-		{
-			WriteToOutput("Error getting stack.");
-			return list.ToArray();
-		}
-		string s = stack.Peek();
-		try
-		{
-			int num = int.Parse(s);
-			stack.Pop();
-			for (int i = 0; i < num; i++)
-			{
-				list.Add(stack.Pop());
-			}
-		}
-		catch
-		{
-			WriteToOutput("Error processing stack.");
-		}
-		return list.ToArray();
+		return array;
 	}
 
 	private void ReadDoorSensors()
@@ -2362,30 +2140,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		}
 	}
 
-	private string ReadDoorSensorStatus()
-	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "DOORSENSORS STATUS");
-		if (hardwareJob == null)
-		{
-			WriteToOutput("Command failed.");
-			return "UNKNOWN";
-		}
-		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
-		{
-			WriteToOutput("Error getting stack.");
-			return "UNKNOWN";
-		}
-		try
-		{
-			return stack.Pop();
-		}
-		catch
-		{
-			WriteToOutput("Error processing stack.");
-			return "UNKNOWN";
-		}
-	}
-
 	private void button22_Click(object sender, EventArgs e)
 	{
 		if (m_hardwareService.ServiceUnknownSync().Success)
@@ -2403,36 +2157,30 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		m_errorProvider.Clear();
 		using (Manager.MakeAspect(sender))
 		{
-			JobResult jobResult = null;
 			if (!VMZConfigured)
 			{
-				jobResult = WaitForJob("qlm-test-sync", null);
-				if (jobResult.Results != null)
+				using (QlmTestSyncJob qlmTestSyncJob = new QlmTestSyncJob(m_hardwareService))
 				{
-					ProgramResult[] results = jobResult.Results;
-					foreach (ProgramResult programResult in results)
+					qlmTestSyncJob.Run();
+					foreach (ProgramResult result in qlmTestSyncJob.Results)
 					{
-						WriteToOutput($"Failure at Deck {programResult.Deck} Slot {programResult.Slot} MSG: {programResult.Message}");
+						WriteToOutput($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
 					}
+					return;
 				}
-				return;
 			}
-			jobResult = WaitForJob("put-disk-in-picker-in-bin", null);
-			if (jobResult.Results == null)
+			using PutDiskInPickerInBinJob putDiskInPickerInBinJob = new PutDiskInPickerInBinJob(m_hardwareService);
+			putDiskInPickerInBinJob.Run();
+			foreach (ProgramResult result2 in putDiskInPickerInBinJob.Results)
 			{
-				return;
-			}
-			ProgramResult[] results2 = jobResult.Results;
-			foreach (ProgramResult programResult2 in results2)
-			{
-				if (programResult2.Code == "PutToBinOK")
+				if (result2.Code == "PutToBinOK")
 				{
-					string arg = (programResult2.ItemID.IsUnknown() ? programResult2.ItemID.Metadata : programResult2.ItemID.Barcode);
+					string arg = (result2.ItemID.IsUnknown() ? result2.ItemID.Metadata : result2.ItemID.Barcode);
 					WriteToOutput($"The disk ID = {arg} was put into the bin.");
 				}
 				else
 				{
-					WriteToOutput($"Job failed: detailed message = {programResult2.Message}");
+					WriteToOutput($"Job failed: detailed message = {result2.Message}");
 				}
 			}
 		}
@@ -2466,52 +2214,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		LogFormattedMessage(", execution time = {0}", result.ExecutionTime);
 	}
 
-	private JobResult WaitForJob(string name, HardwareJobSchedule _schedule)
-	{
-		JobResult jobResult = new JobResult();
-		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-		hardwareJobSchedule.StartTime = DateTime.Now;
-		hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-		HardwareJobSchedule schedule = hardwareJobSchedule;
-		if (_schedule != null)
-		{
-			schedule = _schedule;
-		}
-		jobResult.Result = m_hardwareService.ScheduleJob(name, string.Empty, enableDebugging: false, schedule, out var job);
-		if (!jobResult.Result.Success)
-		{
-			WriteToOutput($"Unable to schedule job {name}");
-			return jobResult;
-		}
-		if (!Helper.WaitForJob(job, out var _))
-		{
-			WriteToOutput($"Unable to run job {name}.");
-			return jobResult;
-		}
-		if (!job.GetResults(out var results).Success)
-		{
-			WriteToOutput($"Unable to read the results for job {job.ID}");
-			jobResult.Results = null;
-		}
-		else
-		{
-			jobResult.Results = results;
-		}
-		m_hardwareService.TrashJob(job.ID);
-		return jobResult;
-	}
-
 	private Button[] FormButtons()
 	{
-		return new Button[65]
+		return new Button[68]
 		{
-			m_openLogsButton, m_clearOutputButton, m_readPosButton, m_runInitButton, m_homeXButton, m_homeYButton, m_resetProteusButton, button57, button5, button47,
-			button50, button51, button53, button54, m_qlmTestButton, button22, button66, button20, m_showTimeoutLogButton, m_readLimitsButton,
-			button36, button37, button38, button39, button64, button31, button32, button33, button34, button35,
-			button28, button29, button30, m_qlmEngageButton, m_qlmDisengageButton, m_qlmStopButton, m_qlmCaseStatusButton, m_qlmUpButton, m_qlmDownButton, m_qlmDoorStatus,
-			button24, button25, m_cameraPreview, m_cameraWorkingButton, button19, button26, button7, button8, button10, button11,
-			button12, button13, button16, button14, button17, button18, button1, button2, button3, button4,
-			m_advancedMode, m_configureDevicesButton, m_takeDiskButton, m_closeSerialButton, m_deckConfigurationButton
+			m_openLogsButton, m_clearOutputButton, m_readPosButton, m_runInitButton, m_homeXButton, m_homeYButton, m_resetProteusButton, m_testArcusCommButton, button57, button5,
+			button47, button50, button51, button53, button54, m_qlmTestButton, button22, button66, button20, m_showTimeoutLogButton,
+			m_readLimitsButton, button36, button37, button38, button39, button64, button31, button32, button33, button34,
+			button35, button28, button29, button30, m_qlmEngageButton, m_qlmDisengageButton, m_qlmStopButton, m_qlmCaseStatusButton, m_qlmUpButton, m_qlmDownButton,
+			m_qlmDoorStatus, m_snapImageButton, m_startButtonCamera, m_cameraPreview, m_cameraWorkingButton, button19, button26, button7, button8, button10,
+			button11, button12, button13, button16, button14, button17, button18, button1, button2, button3,
+			button4, m_advancedMode, m_configureDevicesButton, m_takeDiskButton, m_closeSerialButton, m_deckConfigurationButton, m_takeDiskButton, m_getWithOffset
 		};
 	}
 
@@ -2526,35 +2239,26 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			if (fanState == FanState.On)
 			{
-				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANOFF", "ICEQUBEBOARD"));
+				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANOFF", "AIRXCHGR"));
 				WriteToOutput("Xchanger fan should be off.");
 			}
 			else
 			{
-				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANON", "ICEQUBEBOARD"));
+				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANON", "AIRXCHGR"));
 				WriteToOutput("Xchanger fan should be on.");
 			}
 		}
 		SetFanButtonState();
 	}
 
-	private void ConfigureFan()
+	private int FromTextBox(TextBox tb)
 	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "ICEQUBEBOARD ISCONFIGURED");
-		if (hardwareJob == null)
+		int result = -1;
+		if (!int.TryParse(tb.Text, out result))
 		{
-			FanConfigured = false;
-			return;
+			return -1;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-		try
-		{
-			FanConfigured = bool.Parse(topOfStack);
-		}
-		catch
-		{
-			FanConfigured = false;
-		}
+		return result;
 	}
 
 	private void SetFanButtonState()
@@ -2590,6 +2294,171 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		}
 	}
 
+	private void button6_Click_1(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			m_errorProvider.Clear();
+			int num = FromTextBox(m_sourceDeckTextBox);
+			int num2 = FromTextBox(m_sourceSlotTextBox);
+			if (-1 == num || -1 == num2)
+			{
+				m_errorProvider.SetError(m_sourceDeckTextBox, "Must provide a deck/slot value.");
+				return;
+			}
+			if (string.IsNullOrEmpty(m_getOffsetTB.Text))
+			{
+				GetDVD(sender);
+				return;
+			}
+			if (m_getOffXRadio == null)
+			{
+				WriteToOutput("Please specify an axis.");
+				m_errorProvider.SetError(m_getOffsetTB, "Please specify an axis.");
+			}
+			m_hardwareService.ExecuteImmediate("CLEAR", out var job);
+			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("GRIPPER STATUS", out job);
+			if (!hardwareCommandResult.Success)
+			{
+				WriteToOutput("Unable to communicate with service.");
+				return;
+			}
+			string topOfStack = CommonFunctions.GetTopOfStack(job);
+			if ("FULL".Equals(topOfStack, StringComparison.CurrentCultureIgnoreCase))
+			{
+				WriteToOutput("The gripper is full - clear picker & try again.");
+				return;
+			}
+			MoveHelper moveHelper = new MoveHelper(m_hardwareService);
+			MoveHelperResult moveHelperResult = moveHelper.MoveTo(num, num2, "GET");
+			if (moveHelperResult.MoveResultMessage != "SUCCESS")
+			{
+				WriteToOutput($"MOVE failure - error = {moveHelperResult.MoveResultMessage}");
+				return;
+			}
+			string text = m_offsetGetRadioButton.Tag as string;
+			if (!int.TryParse(m_getOffsetTB.Text, out var result))
+			{
+				WriteToOutput($"Could not decode {m_getOffsetTB.Text} as offset.");
+				return;
+			}
+			int position = 0;
+			int num3 = 0;
+			int num4 = 0;
+			if ("X" == text)
+			{
+				if (Math.Abs(result) > 50)
+				{
+					WriteToOutput($"Offset {m_getOffsetTB.Text} exceeds 50 units.");
+					return;
+				}
+				if (!GetArcusPosition("MOTIONCONTROL XPOS", out position))
+				{
+					WriteToOutput("Cannot get current X position.");
+					return;
+				}
+				num3 = position;
+				position = num3 + result;
+			}
+			else if ("Y" == text)
+			{
+				if (Math.Abs(result) > 500)
+				{
+					WriteToOutput($"Offset {m_getOffsetTB.Text} exceeds 500 units.");
+					return;
+				}
+				if (!GetArcusPosition("MOTIONCONTROL YPOS", out position))
+				{
+					WriteToOutput("Cannot get current Y position.");
+					return;
+				}
+				num4 = position;
+				position = num4 + result;
+			}
+			string statement = $"MOVEABS AXIS={text} UNITS={position}";
+			hardwareCommandResult = m_hardwareService.ExecuteImmediate(statement, out job);
+			if (!hardwareCommandResult.Success)
+			{
+				WriteToOutput("Communication error");
+				return;
+			}
+			topOfStack = CommonFunctions.GetTopOfStack(job);
+			if ("SUCCESS" != topOfStack)
+			{
+				WriteToOutput($"MOVEABS failed with status {topOfStack}");
+				return;
+			}
+			m_hardwareService.ExecuteImmediate("CLEAR", out job);
+			if (!PickProgramCompiled)
+			{
+				byte[] pick_at_offset = Resources.pick_at_offset;
+				HardwareCommandResult programs = m_hardwareService.GetPrograms();
+				foreach (string commandMessage in programs.CommandMessages)
+				{
+					if (commandMessage.StartsWith("pick_at_offset"))
+					{
+						PickProgramCompiled = true;
+						break;
+					}
+				}
+				if (!PickProgramCompiled)
+				{
+					string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "pick_at_offset.hs");
+					using (File.CreateText(path))
+					{
+					}
+					File.WriteAllBytes(path, pick_at_offset);
+					HardwareCommandResult hardwareCommandResult2 = m_hardwareService.CompileProgram(path, "pick_at_offset", requiresClientConnection: false);
+					if (!hardwareCommandResult2.Success)
+					{
+						WriteToOutput("Failed to compile program.");
+						return;
+					}
+					PickProgramCompiled = true;
+					FileHelper.SafeDeleteFile(path);
+				}
+			}
+			hardwareCommandResult = m_hardwareService.ScheduleJob("pick_at_offset", string.Empty, enableDebugging: false, new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.Highest
+			}, out var job2);
+			if (!hardwareCommandResult.Success)
+			{
+				WriteToOutput("Unable to schedule pick job.");
+				return;
+			}
+			LogHelper.Instance.Log("Scheduling pick job ID {0} with units {1} on axis {2}", job2.ID, position, text);
+			job2.Push(num2);
+			job2.Push(num);
+			Helper.WaitForJob(job2, out var endStatus);
+			ProgramResult[] results;
+			if (HardwareJobStatus.Completed == endStatus)
+			{
+				WriteToOutput("GET was successful.");
+			}
+			else if (job2.GetResults(out results).Success)
+			{
+				ProgramResult[] array = results;
+				foreach (ProgramResult programResult in array)
+				{
+					WriteToOutput($"GET failed: {programResult.Code} ({programResult.Message})");
+				}
+			}
+			else
+			{
+				WriteToOutput("Unable to retrieve job results.");
+			}
+		}
+	}
+
+	private void radioButton_CheckedChanged(object sender, EventArgs e)
+	{
+		if (sender is RadioButton { Checked: not false } radioButton)
+		{
+			m_offsetGetRadioButton = radioButton;
+		}
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -2603,6 +2472,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		this.components = new System.ComponentModel.Container();
 		this.groupBox2 = new System.Windows.Forms.GroupBox();
+		this.m_testArcusCommButton = new System.Windows.Forms.Button();
 		this.m_resetProteusButton = new System.Windows.Forms.Button();
 		this.m_homeYButton = new System.Windows.Forms.Button();
 		this.m_homeXButton = new System.Windows.Forms.Button();
@@ -2669,6 +2539,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_sourceSlotTextBox = new System.Windows.Forms.TextBox();
 		this.m_sourceDeckTextBox = new System.Windows.Forms.TextBox();
 		this.groupBox11 = new System.Windows.Forms.GroupBox();
+		this.m_getOffYRadio = new System.Windows.Forms.RadioButton();
+		this.m_getOffXRadio = new System.Windows.Forms.RadioButton();
+		this.m_getOffsetTB = new System.Windows.Forms.TextBox();
+		this.m_getWithOffset = new System.Windows.Forms.Button();
 		this.m_sensorCheckBox = new System.Windows.Forms.CheckBox();
 		this.label16 = new System.Windows.Forms.Label();
 		this.label15 = new System.Windows.Forms.Label();
@@ -2683,8 +2557,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.button19 = new System.Windows.Forms.Button();
 		this.m_cameraPreview = new System.Windows.Forms.Button();
 		this.button26 = new System.Windows.Forms.Button();
-		this.button25 = new System.Windows.Forms.Button();
-		this.button24 = new System.Windows.Forms.Button();
+		this.m_startButtonCamera = new System.Windows.Forms.Button();
+		this.m_snapImageButton = new System.Windows.Forms.Button();
 		this.m_outputBox = new System.Windows.Forms.ListBox();
 		this.m_clearOutputButton = new System.Windows.Forms.Button();
 		this.label14 = new System.Windows.Forms.Label();
@@ -2718,6 +2592,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.groupBox1.SuspendLayout();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
+		this.groupBox2.Controls.Add(this.m_testArcusCommButton);
 		this.groupBox2.Controls.Add(this.m_resetProteusButton);
 		this.groupBox2.Controls.Add(this.m_homeYButton);
 		this.groupBox2.Controls.Add(this.m_homeXButton);
@@ -2729,6 +2604,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.groupBox2.TabIndex = 1;
 		this.groupBox2.TabStop = false;
 		this.groupBox2.Text = "Init";
+		this.m_testArcusCommButton.BackColor = System.Drawing.Color.LightGray;
+		this.m_testArcusCommButton.Enabled = false;
+		this.m_testArcusCommButton.Location = new System.Drawing.Point(204, 21);
+		this.m_testArcusCommButton.Name = "m_testArcusCommButton";
+		this.m_testArcusCommButton.Size = new System.Drawing.Size(93, 43);
+		this.m_testArcusCommButton.TabIndex = 6;
+		this.m_testArcusCommButton.Tag = "MOTIONCONTROL COMSTATUS";
+		this.m_testArcusCommButton.Text = "Test Proteus Comm";
+		this.m_testArcusCommButton.UseVisualStyleBackColor = false;
+		this.m_testArcusCommButton.Click += new System.EventHandler(OnExecuteInstructionWithResult);
 		this.m_resetProteusButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_resetProteusButton.Enabled = false;
 		this.m_resetProteusButton.Location = new System.Drawing.Point(204, 79);
@@ -2812,7 +2697,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.button50.Name = "button50";
 		this.button50.Size = new System.Drawing.Size(93, 45);
 		this.button50.TabIndex = 3;
-		this.button50.Tag = "RESET SERIAL";
+		this.button50.Tag = "SERIALBOARD RESET";
 		this.button50.Text = "Reset";
 		this.button50.UseVisualStyleBackColor = false;
 		this.button50.Click += new System.EventHandler(OnExecuteInstructionWithResult);
@@ -3335,6 +3220,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_sourceDeckTextBox.Name = "m_sourceDeckTextBox";
 		this.m_sourceDeckTextBox.Size = new System.Drawing.Size(38, 20);
 		this.m_sourceDeckTextBox.TabIndex = 0;
+		this.groupBox11.Controls.Add(this.m_getOffYRadio);
+		this.groupBox11.Controls.Add(this.m_getOffXRadio);
+		this.groupBox11.Controls.Add(this.m_getOffsetTB);
+		this.groupBox11.Controls.Add(this.m_getWithOffset);
 		this.groupBox11.Controls.Add(this.m_sensorCheckBox);
 		this.groupBox11.Controls.Add(this.label16);
 		this.groupBox11.Controls.Add(this.label15);
@@ -3345,10 +3234,43 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.groupBox11.Controls.Add(this.button1);
 		this.groupBox11.Location = new System.Drawing.Point(720, 381);
 		this.groupBox11.Name = "groupBox11";
-		this.groupBox11.Size = new System.Drawing.Size(271, 164);
+		this.groupBox11.Size = new System.Drawing.Size(271, 194);
 		this.groupBox11.TabIndex = 10;
 		this.groupBox11.TabStop = false;
 		this.groupBox11.Text = "X/Y Moves";
+		this.m_getOffYRadio.AutoSize = true;
+		this.m_getOffYRadio.Location = new System.Drawing.Point(81, 171);
+		this.m_getOffYRadio.Name = "m_getOffYRadio";
+		this.m_getOffYRadio.Size = new System.Drawing.Size(32, 17);
+		this.m_getOffYRadio.TabIndex = 18;
+		this.m_getOffYRadio.TabStop = true;
+		this.m_getOffYRadio.Tag = "Y";
+		this.m_getOffYRadio.Text = "Y";
+		this.m_getOffYRadio.UseVisualStyleBackColor = true;
+		this.m_getOffYRadio.CheckedChanged += new System.EventHandler(radioButton_CheckedChanged);
+		this.m_getOffXRadio.AutoSize = true;
+		this.m_getOffXRadio.Location = new System.Drawing.Point(81, 154);
+		this.m_getOffXRadio.Name = "m_getOffXRadio";
+		this.m_getOffXRadio.Size = new System.Drawing.Size(32, 17);
+		this.m_getOffXRadio.TabIndex = 17;
+		this.m_getOffXRadio.TabStop = true;
+		this.m_getOffXRadio.Tag = "X";
+		this.m_getOffXRadio.Text = "X";
+		this.m_getOffXRadio.UseVisualStyleBackColor = true;
+		this.m_getOffXRadio.CheckedChanged += new System.EventHandler(radioButton_CheckedChanged);
+		this.m_getOffsetTB.Location = new System.Drawing.Point(6, 165);
+		this.m_getOffsetTB.Name = "m_getOffsetTB";
+		this.m_getOffsetTB.Size = new System.Drawing.Size(66, 20);
+		this.m_getOffsetTB.TabIndex = 16;
+		this.m_getWithOffset.BackColor = System.Drawing.Color.LightGray;
+		this.m_getWithOffset.Enabled = false;
+		this.m_getWithOffset.Location = new System.Drawing.Point(162, 142);
+		this.m_getWithOffset.Name = "m_getWithOffset";
+		this.m_getWithOffset.Size = new System.Drawing.Size(103, 46);
+		this.m_getWithOffset.TabIndex = 15;
+		this.m_getWithOffset.Text = "Get With Offset";
+		this.m_getWithOffset.UseVisualStyleBackColor = false;
+		this.m_getWithOffset.Click += new System.EventHandler(button6_Click_1);
 		this.m_sensorCheckBox.AutoSize = true;
 		this.m_sensorCheckBox.Location = new System.Drawing.Point(6, 134);
 		this.m_sensorCheckBox.Name = "m_sensorCheckBox";
@@ -3404,7 +3326,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_encoderUnitsTextBox.TabIndex = 1;
 		this.button1.BackColor = System.Drawing.Color.LightGray;
 		this.button1.Enabled = false;
-		this.button1.Location = new System.Drawing.Point(0, 55);
+		this.button1.Location = new System.Drawing.Point(6, 54);
 		this.button1.Name = "button1";
 		this.button1.Size = new System.Drawing.Size(75, 40);
 		this.button1.TabIndex = 0;
@@ -3426,8 +3348,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.groupBox12.Controls.Add(this.button19);
 		this.groupBox12.Controls.Add(this.m_cameraPreview);
 		this.groupBox12.Controls.Add(this.button26);
-		this.groupBox12.Controls.Add(this.button25);
-		this.groupBox12.Controls.Add(this.button24);
+		this.groupBox12.Controls.Add(this.m_startButtonCamera);
+		this.groupBox12.Controls.Add(this.m_snapImageButton);
 		this.groupBox12.Location = new System.Drawing.Point(328, 621);
 		this.groupBox12.Name = "groupBox12";
 		this.groupBox12.Size = new System.Drawing.Size(370, 107);
@@ -3440,9 +3362,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_cameraWorkingButton.Name = "m_cameraWorkingButton";
 		this.m_cameraWorkingButton.Size = new System.Drawing.Size(93, 40);
 		this.m_cameraWorkingButton.TabIndex = 5;
-		this.m_cameraWorkingButton.Text = "Is Camera Working?";
+		this.m_cameraWorkingButton.Text = "Reset CCF Counter";
 		this.m_cameraWorkingButton.UseVisualStyleBackColor = false;
-		this.m_cameraWorkingButton.Visible = false;
 		this.m_cameraWorkingButton.Click += new System.EventHandler(m_cameraWorkingButton_Click);
 		this.button19.BackColor = System.Drawing.Color.LightGray;
 		this.button19.Enabled = false;
@@ -3471,26 +3392,26 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.button26.Text = "Read Disk In Picker";
 		this.button26.UseVisualStyleBackColor = false;
 		this.button26.Click += new System.EventHandler(OnReadDiskInPicker);
-		this.button25.BackColor = System.Drawing.Color.LightGray;
-		this.button25.Enabled = false;
-		this.button25.Location = new System.Drawing.Point(10, 62);
-		this.button25.Name = "button25";
-		this.button25.Size = new System.Drawing.Size(93, 40);
-		this.button25.TabIndex = 1;
-		this.button25.Tag = "RINGLIGHT OFF";
-		this.button25.Text = "Turn Ringlight Off";
-		this.button25.UseVisualStyleBackColor = false;
-		this.button25.Click += new System.EventHandler(OnExecuteInstruction);
-		this.button24.BackColor = System.Drawing.Color.LightGray;
-		this.button24.Enabled = false;
-		this.button24.Location = new System.Drawing.Point(10, 16);
-		this.button24.Name = "button24";
-		this.button24.Size = new System.Drawing.Size(93, 40);
-		this.button24.TabIndex = 0;
-		this.button24.Tag = "RINGLIGHT ON";
-		this.button24.Text = "Turn Ringlight On";
-		this.button24.UseVisualStyleBackColor = false;
-		this.button24.Click += new System.EventHandler(OnExecuteInstruction);
+		this.m_startButtonCamera.BackColor = System.Drawing.Color.LightGray;
+		this.m_startButtonCamera.Enabled = false;
+		this.m_startButtonCamera.Location = new System.Drawing.Point(10, 62);
+		this.m_startButtonCamera.Name = "m_startButtonCamera";
+		this.m_startButtonCamera.Size = new System.Drawing.Size(93, 40);
+		this.m_startButtonCamera.TabIndex = 1;
+		this.m_startButtonCamera.Tag = "";
+		this.m_startButtonCamera.Text = "Turn Ringlight On";
+		this.m_startButtonCamera.UseVisualStyleBackColor = false;
+		this.m_startButtonCamera.Click += new System.EventHandler(OnStartCamera);
+		this.m_snapImageButton.BackColor = System.Drawing.Color.LightGray;
+		this.m_snapImageButton.Enabled = false;
+		this.m_snapImageButton.Location = new System.Drawing.Point(10, 16);
+		this.m_snapImageButton.Name = "m_snapImageButton";
+		this.m_snapImageButton.Size = new System.Drawing.Size(93, 40);
+		this.m_snapImageButton.TabIndex = 0;
+		this.m_snapImageButton.Tag = "";
+		this.m_snapImageButton.Text = "Snap";
+		this.m_snapImageButton.UseVisualStyleBackColor = false;
+		this.m_snapImageButton.Click += new System.EventHandler(OnDoSnap);
 		this.m_outputBox.Font = new System.Drawing.Font("Arial", 8.25f, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 		this.m_outputBox.FormattingEnabled = true;
 		this.m_outputBox.HorizontalScrollbar = true;
@@ -3516,31 +3437,31 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.label14.Text = "Output";
 		this.m_advancedMode.BackColor = System.Drawing.Color.LightGray;
 		this.m_advancedMode.Enabled = false;
-		this.m_advancedMode.Location = new System.Drawing.Point(720, 559);
+		this.m_advancedMode.Location = new System.Drawing.Point(718, 581);
 		this.m_advancedMode.Name = "m_advancedMode";
 		this.m_advancedMode.Size = new System.Drawing.Size(132, 40);
 		this.m_advancedMode.TabIndex = 16;
 		this.m_advancedMode.Text = "Advanced Mode";
 		this.m_advancedMode.UseVisualStyleBackColor = false;
 		this.m_advancedMode.Click += new System.EventHandler(button15_Click);
-		this.m_versionTextBox.Location = new System.Drawing.Point(859, 655);
+		this.m_versionTextBox.Location = new System.Drawing.Point(859, 677);
 		this.m_versionTextBox.Name = "m_versionTextBox";
 		this.m_versionTextBox.ReadOnly = true;
 		this.m_versionTextBox.Size = new System.Drawing.Size(100, 20);
 		this.m_versionTextBox.TabIndex = 17;
 		this.label19.AutoSize = true;
-		this.label19.Location = new System.Drawing.Point(717, 663);
+		this.label19.Location = new System.Drawing.Point(717, 684);
 		this.label19.Name = "label19";
 		this.label19.Size = new System.Drawing.Size(78, 13);
 		this.label19.TabIndex = 18;
 		this.label19.Text = "Tester Version:";
 		this.label20.AutoSize = true;
-		this.label20.Location = new System.Drawing.Point(717, 683);
+		this.label20.Location = new System.Drawing.Point(717, 709);
 		this.label20.Name = "label20";
 		this.label20.Size = new System.Drawing.Size(50, 13);
 		this.label20.TabIndex = 19;
 		this.label20.Text = "Kiosk ID:";
-		this.m_kioskIDTextBox.Location = new System.Drawing.Point(859, 676);
+		this.m_kioskIDTextBox.Location = new System.Drawing.Point(859, 703);
 		this.m_kioskIDTextBox.Name = "m_kioskIDTextBox";
 		this.m_kioskIDTextBox.ReadOnly = true;
 		this.m_kioskIDTextBox.Size = new System.Drawing.Size(100, 20);
@@ -3615,7 +3536,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_errorProvider.ContainerControl = this;
 		this.m_deckConfigurationButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_deckConfigurationButton.Enabled = false;
-		this.m_deckConfigurationButton.Location = new System.Drawing.Point(859, 559);
+		this.m_deckConfigurationButton.Location = new System.Drawing.Point(856, 581);
 		this.m_deckConfigurationButton.Name = "m_deckConfigurationButton";
 		this.m_deckConfigurationButton.Size = new System.Drawing.Size(132, 40);
 		this.m_deckConfigurationButton.TabIndex = 23;
@@ -3624,7 +3545,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_deckConfigurationButton.Click += new System.EventHandler(button58_Click);
 		this.m_takeDiskButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_takeDiskButton.Enabled = false;
-		this.m_takeDiskButton.Location = new System.Drawing.Point(720, 605);
+		this.m_takeDiskButton.Location = new System.Drawing.Point(718, 627);
 		this.m_takeDiskButton.Name = "m_takeDiskButton";
 		this.m_takeDiskButton.Size = new System.Drawing.Size(132, 44);
 		this.m_takeDiskButton.TabIndex = 27;
@@ -3642,7 +3563,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_openLogsButton.Click += new System.EventHandler(button59_Click);
 		this.m_configureDevicesButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_configureDevicesButton.Enabled = false;
-		this.m_configureDevicesButton.Location = new System.Drawing.Point(859, 605);
+		this.m_configureDevicesButton.Location = new System.Drawing.Point(856, 627);
 		this.m_configureDevicesButton.Name = "m_configureDevicesButton";
 		this.m_configureDevicesButton.Size = new System.Drawing.Size(132, 44);
 		this.m_configureDevicesButton.TabIndex = 29;

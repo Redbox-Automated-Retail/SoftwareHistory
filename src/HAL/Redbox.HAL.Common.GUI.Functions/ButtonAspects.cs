@@ -4,13 +4,13 @@ using System.Windows.Forms;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
-public sealed class ButtonAspects : IDisposable
+public struct ButtonAspects : IDisposable
 {
-	private Color RunningColor { get; set; }
+	public readonly Button Button;
 
-	private Color CompleteColor { get; set; }
+	private readonly Color RunningColor;
 
-	private Button Button { get; set; }
+	private readonly Color CompleteColor;
 
 	public void Dispose()
 	{
@@ -23,13 +23,15 @@ public sealed class ButtonAspects : IDisposable
 
 	internal ButtonAspects(Button b, Color running)
 	{
+		Button = b;
 		RunningColor = running;
-		CompleteColor = b.BackColor;
-		if (b != null)
+		if (Button == null)
 		{
-			Button = b;
-			Button.BackColor = RunningColor;
-			Application.DoEvents();
+			CompleteColor = Color.LightGray;
+			return;
 		}
+		CompleteColor = Button.BackColor;
+		Button.BackColor = RunningColor;
+		Application.DoEvents();
 	}
 }

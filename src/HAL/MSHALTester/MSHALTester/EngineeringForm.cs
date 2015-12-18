@@ -17,6 +17,8 @@ public class EngineeringForm : Form
 
 	private HardwareJob m_rotationJob;
 
+	private readonly object Lock = new object();
+
 	private IContainer components;
 
 	private Button button1;
@@ -34,6 +36,26 @@ public class EngineeringForm : Form
 	private ConfigurationPanel configurationPanel1;
 
 	private GroupBox Configuration;
+
+	private Button button4;
+
+	private Button button5;
+
+	private CheckBox m_generateDateCB;
+
+	private GroupBox groupBox1;
+
+	private GroupBox groupBox2;
+
+	private Button m_vendUnknownButton;
+
+	private Label label2;
+
+	private Label label1;
+
+	private TextBox m_vendslot;
+
+	private TextBox m_vendDeck;
 
 	private HardwareService Service { get; set; }
 
@@ -115,7 +137,7 @@ public class EngineeringForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			lock (this)
+			lock (Lock)
 			{
 				byte[] rotationTest = Resources.RotationTest;
 				HardwareCommandResult programs = Service.GetPrograms();
@@ -152,8 +174,7 @@ public class EngineeringForm : Form
 				}
 				HardwareCommandResult hardwareCommandResult2 = Service.ScheduleJob(text, "Engineering rotation test", enableDebugging: false, new HardwareJobSchedule
 				{
-					Priority = HardwareJobPriority.Highest,
-					StartTime = DateTime.Now
+					Priority = HardwareJobPriority.Highest
 				}, out m_rotationJob);
 				if (!hardwareCommandResult2.Success)
 				{
@@ -170,7 +191,7 @@ public class EngineeringForm : Form
 
 	private void WaitforRotation()
 	{
-		lock (this)
+		lock (Lock)
 		{
 			if (!Helper.WaitForJob(m_rotationJob, out var _))
 			{
@@ -204,8 +225,81 @@ public class EngineeringForm : Form
 	{
 		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
 		hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-		hardwareJobSchedule.StartTime = DateTime.Now;
 		return hardwareJobSchedule;
+	}
+
+	private void button4_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			string param = "NONE";
+			if (m_generateDateCB.Checked)
+			{
+				param = DateTime.Now.Subtract(new TimeSpan(1, 0, 0, 0)).ToString();
+			}
+			ScheduleReturnUnknown(param);
+			m_generateDateCB.Checked = false;
+		}
+	}
+
+	private void button5_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			ScheduleReturnUnknown("FMA-INSERT");
+		}
+	}
+
+	private bool ScheduleReturnUnknown(string param)
+	{
+		HardwareCommandResult hardwareCommandResult = Service.ReturnUnknown(MakeSchedule(), param, out var job);
+		if (!hardwareCommandResult.Success)
+		{
+			return false;
+		}
+		Helper.WaitForJob(job, out var _);
+		PopulateResults(job, showMsg: true);
+		return true;
+	}
+
+	private void m_vendUnknownButton_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			if (!string.IsNullOrEmpty(m_vendDeck.Text) && !string.IsNullOrEmpty(m_vendslot.Text))
+			{
+				int deck = int.Parse(m_vendDeck.Text);
+				int slot = int.Parse(m_vendslot.Text);
+				HardwareCommandResult hardwareCommandResult = Service.VendUnknown(deck, slot, MakeSchedule(), out var job);
+				if (hardwareCommandResult.Success)
+				{
+					Helper.WaitForJob(job, out var _);
+					PopulateResults(job, showMsg: true);
+				}
+			}
+		}
+	}
+
+	private void PopulateResults(HardwareJob job, bool showMsg)
+	{
+		job.GetResults(out var results);
+		ProgramResult[] array = results;
+		foreach (ProgramResult programResult in array)
+		{
+			string text = "NONE";
+			if (programResult.ItemID != null && programResult.ItemID.RawResult != null)
+			{
+				text = programResult.ItemID.RawResult;
+			}
+			if (showMsg)
+			{
+				m_outputBox.Items.Insert(0, $"Code: {programResult.Code} Msg: {programResult.Message} Deck = {programResult.Deck} Slot = {programResult.Slot} ID: {text}");
+			}
+			else
+			{
+				m_outputBox.Items.Insert(0, $"Code: {programResult.Code} Deck = {programResult.Deck} Slot = {programResult.Slot} ID: {text}");
+			}
+		}
 	}
 
 	protected override void Dispose(bool disposing)
@@ -225,9 +319,21 @@ public class EngineeringForm : Form
 		this.button3 = new System.Windows.Forms.Button();
 		this.m_exitButton = new System.Windows.Forms.Button();
 		this.m_clearOutputButton = new System.Windows.Forms.Button();
-		this.configurationPanel1 = new Redbox.HAL.Common.GUI.Functions.ConfigurationPanel();
 		this.Configuration = new System.Windows.Forms.GroupBox();
+		this.button4 = new System.Windows.Forms.Button();
+		this.button5 = new System.Windows.Forms.Button();
+		this.m_generateDateCB = new System.Windows.Forms.CheckBox();
+		this.configurationPanel1 = new Redbox.HAL.Common.GUI.Functions.ConfigurationPanel();
+		this.groupBox1 = new System.Windows.Forms.GroupBox();
+		this.groupBox2 = new System.Windows.Forms.GroupBox();
+		this.m_vendUnknownButton = new System.Windows.Forms.Button();
+		this.m_vendDeck = new System.Windows.Forms.TextBox();
+		this.m_vendslot = new System.Windows.Forms.TextBox();
+		this.label1 = new System.Windows.Forms.Label();
+		this.label2 = new System.Windows.Forms.Label();
 		this.Configuration.SuspendLayout();
+		this.groupBox1.SuspendLayout();
+		this.groupBox2.SuspendLayout();
 		base.SuspendLayout();
 		this.button1.Location = new System.Drawing.Point(12, 12);
 		this.button1.Name = "button1";
@@ -269,10 +375,6 @@ public class EngineeringForm : Form
 		this.m_clearOutputButton.TabIndex = 5;
 		this.m_clearOutputButton.Text = "Clear Output";
 		this.m_clearOutputButton.UseVisualStyleBackColor = true;
-		this.configurationPanel1.Location = new System.Drawing.Point(6, 19);
-		this.configurationPanel1.Name = "configurationPanel1";
-		this.configurationPanel1.Size = new System.Drawing.Size(350, 484);
-		this.configurationPanel1.TabIndex = 6;
 		this.Configuration.Controls.Add(this.configurationPanel1);
 		this.Configuration.Location = new System.Drawing.Point(15, 249);
 		this.Configuration.Name = "Configuration";
@@ -280,9 +382,84 @@ public class EngineeringForm : Form
 		this.Configuration.TabIndex = 7;
 		this.Configuration.TabStop = false;
 		this.Configuration.Text = "groupBox1";
+		this.button4.Location = new System.Drawing.Point(6, 19);
+		this.button4.Name = "button4";
+		this.button4.Size = new System.Drawing.Size(115, 74);
+		this.button4.TabIndex = 8;
+		this.button4.Text = "Return Unknown";
+		this.button4.UseVisualStyleBackColor = true;
+		this.button4.Click += new System.EventHandler(button4_Click);
+		this.button5.Location = new System.Drawing.Point(150, 19);
+		this.button5.Name = "button5";
+		this.button5.Size = new System.Drawing.Size(98, 74);
+		this.button5.TabIndex = 9;
+		this.button5.Text = "FMA Insert";
+		this.button5.UseVisualStyleBackColor = true;
+		this.button5.Click += new System.EventHandler(button5_Click);
+		this.m_generateDateCB.AutoSize = true;
+		this.m_generateDateCB.Location = new System.Drawing.Point(6, 99);
+		this.m_generateDateCB.Name = "m_generateDateCB";
+		this.m_generateDateCB.Size = new System.Drawing.Size(96, 17);
+		this.m_generateDateCB.TabIndex = 10;
+		this.m_generateDateCB.Text = "Generate Date";
+		this.m_generateDateCB.UseVisualStyleBackColor = true;
+		this.configurationPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+		this.configurationPanel1.Location = new System.Drawing.Point(3, 16);
+		this.configurationPanel1.Name = "configurationPanel1";
+		this.configurationPanel1.Size = new System.Drawing.Size(350, 446);
+		this.configurationPanel1.TabIndex = 6;
+		this.groupBox1.Controls.Add(this.m_generateDateCB);
+		this.groupBox1.Controls.Add(this.button5);
+		this.groupBox1.Controls.Add(this.button4);
+		this.groupBox1.Location = new System.Drawing.Point(399, 362);
+		this.groupBox1.Name = "groupBox1";
+		this.groupBox1.Size = new System.Drawing.Size(271, 143);
+		this.groupBox1.TabIndex = 11;
+		this.groupBox1.TabStop = false;
+		this.groupBox1.Text = "Return Tests";
+		this.groupBox2.Controls.Add(this.label2);
+		this.groupBox2.Controls.Add(this.label1);
+		this.groupBox2.Controls.Add(this.m_vendslot);
+		this.groupBox2.Controls.Add(this.m_vendDeck);
+		this.groupBox2.Controls.Add(this.m_vendUnknownButton);
+		this.groupBox2.Location = new System.Drawing.Point(405, 523);
+		this.groupBox2.Name = "groupBox2";
+		this.groupBox2.Size = new System.Drawing.Size(265, 188);
+		this.groupBox2.TabIndex = 12;
+		this.groupBox2.TabStop = false;
+		this.groupBox2.Text = "Vend Tests";
+		this.m_vendUnknownButton.Location = new System.Drawing.Point(6, 19);
+		this.m_vendUnknownButton.Name = "m_vendUnknownButton";
+		this.m_vendUnknownButton.Size = new System.Drawing.Size(109, 65);
+		this.m_vendUnknownButton.TabIndex = 0;
+		this.m_vendUnknownButton.Text = "Vend Unknown";
+		this.m_vendUnknownButton.UseVisualStyleBackColor = true;
+		this.m_vendUnknownButton.Click += new System.EventHandler(m_vendUnknownButton_Click);
+		this.m_vendDeck.Location = new System.Drawing.Point(57, 90);
+		this.m_vendDeck.Name = "m_vendDeck";
+		this.m_vendDeck.Size = new System.Drawing.Size(52, 20);
+		this.m_vendDeck.TabIndex = 1;
+		this.m_vendslot.Location = new System.Drawing.Point(57, 116);
+		this.m_vendslot.Name = "m_vendslot";
+		this.m_vendslot.Size = new System.Drawing.Size(52, 20);
+		this.m_vendslot.TabIndex = 2;
+		this.label1.AutoSize = true;
+		this.label1.Location = new System.Drawing.Point(6, 97);
+		this.label1.Name = "label1";
+		this.label1.Size = new System.Drawing.Size(33, 13);
+		this.label1.TabIndex = 3;
+		this.label1.Text = "Deck";
+		this.label2.AutoSize = true;
+		this.label2.Location = new System.Drawing.Point(10, 121);
+		this.label2.Name = "label2";
+		this.label2.Size = new System.Drawing.Size(25, 13);
+		this.label2.TabIndex = 4;
+		this.label2.Text = "Slot";
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.ClientSize = new System.Drawing.Size(728, 826);
+		base.Controls.Add(this.groupBox2);
+		base.Controls.Add(this.groupBox1);
 		base.Controls.Add(this.Configuration);
 		base.Controls.Add(this.m_clearOutputButton);
 		base.Controls.Add(this.m_exitButton);
@@ -293,6 +470,10 @@ public class EngineeringForm : Form
 		base.Name = "EngineeringForm";
 		this.Text = "EngineeringForm";
 		this.Configuration.ResumeLayout(false);
+		this.groupBox1.ResumeLayout(false);
+		this.groupBox1.PerformLayout();
+		this.groupBox2.ResumeLayout(false);
+		this.groupBox2.PerformLayout();
 		base.ResumeLayout(false);
 	}
 }

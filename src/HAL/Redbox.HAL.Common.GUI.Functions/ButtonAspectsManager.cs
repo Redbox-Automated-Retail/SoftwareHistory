@@ -5,7 +5,7 @@ namespace Redbox.HAL.Common.GUI.Functions;
 
 public sealed class ButtonAspectsManager
 {
-	private Color Running { get; set; }
+	private readonly Color Running;
 
 	public ButtonAspectsManager(Color running)
 	{
@@ -13,16 +13,13 @@ public sealed class ButtonAspectsManager
 	}
 
 	public ButtonAspectsManager()
+		: this(Color.Red)
 	{
-		Running = Color.Red;
 	}
 
 	public ButtonAspects MakeAspect(object button)
 	{
-		if (!(button is Button b))
-		{
-			return null;
-		}
+		Button b = button as Button;
 		return new ButtonAspects(b, Running);
 	}
 }

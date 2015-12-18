@@ -1,7 +1,6 @@
 using System;
 using System.Xml;
 using Redbox.HAL.Client;
-using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
@@ -10,22 +9,7 @@ public static class CommonFunctions
 {
 	private const int SellThruSlotWidth = 466;
 
-	private static bool? m_developerMode = null;
-
 	public static ClientHelper Helper { get; private set; }
-
-	public static bool DeveloperMode
-	{
-		get
-		{
-			if (m_developerMode.HasValue)
-			{
-				return m_developerMode.Value;
-			}
-			m_developerMode = RegistryOptions.Instance.GetSecretValue<bool?>("SOFTWARE\\Redbox\\HAL Management Console", "DeveloperMode") ?? false;
-			return m_developerMode.Value;
-		}
-	}
 
 	public static bool ComputeQuadrants(decimal? startOffset, int? numberOfQuadrants, int? sellThruSlots, int? sellThruOffset, int? slotsPerQuadrant, decimal? slotWidth, XmlNode deckNode)
 	{

@@ -75,13 +75,13 @@ internal class TesterLog : ILogger, IDisposable
 		return true;
 	}
 
+	internal TesterLog()
+	{
+		LogHelper.Instance.Logger = this;
+	}
+
 	private void WriteFormatted(string msg)
 	{
 		LogFile.WriteLine("{0}: {1}", DateTime.Now, msg);
-	}
-
-	private TesterLog()
-	{
-		LogHelper.Instance.Logger = this;
 	}
 }

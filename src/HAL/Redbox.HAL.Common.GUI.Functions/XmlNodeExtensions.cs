@@ -63,7 +63,7 @@ public static class XmlNodeExtensions
 		{
 			if (node != null && !string.IsNullOrEmpty(node.InnerText))
 			{
-				return (T)ConversionHelper.ChangeType(MacroContainer.Instance.ExpandConstantMacros(node.InnerText), typeof(T));
+				return (T)ConversionHelper.ChangeType(RuntimeService.Instance.ExpandConstantMacros(node.InnerText), typeof(T));
 			}
 		}
 		catch (ArgumentException)

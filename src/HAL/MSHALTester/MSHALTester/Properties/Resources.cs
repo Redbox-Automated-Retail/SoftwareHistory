@@ -7,8 +7,8 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.MSHALTester.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [DebuggerNonUserCode]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [CompilerGenerated]
 internal class Resources
 {
@@ -44,6 +44,15 @@ internal class Resources
 	}
 
 	internal static string DestDeckSlotInvalid => ResourceManager.GetString("DestDeckSlotInvalid", resourceCulture);
+
+	internal static byte[] pick_at_offset
+	{
+		get
+		{
+			object obj = ResourceManager.GetObject("pick_at_offset", resourceCulture);
+			return (byte[])obj;
+		}
+	}
 
 	internal static byte[] RotationTest
 	{

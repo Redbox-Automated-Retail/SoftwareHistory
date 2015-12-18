@@ -37,8 +37,8 @@ public class DeckConfigurationForm : Form
 
 	private Button m_exitButton;
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public ConfigurationManager Manager { get; private set; }
 
 	public DeckConfigurationForm(HardwareService service, bool allowInventoryUpdate, ConfigurationManager cm)

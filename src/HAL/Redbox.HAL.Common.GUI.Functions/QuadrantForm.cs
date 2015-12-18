@@ -49,8 +49,8 @@ public class QuadrantForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? StartSlot
 	{
 		get
@@ -71,8 +71,8 @@ public class QuadrantForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? EndSlot
 	{
 		get

@@ -49,8 +49,8 @@ public class ComputeQuadrantsForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? NumberOfQuadrants
 	{
 		get

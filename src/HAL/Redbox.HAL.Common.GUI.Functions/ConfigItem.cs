@@ -1,16 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Xml;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
-public class ConfigItem
+public sealed class ConfigItem
 {
 	private object m_value;
 
-	public bool ReadOnly { get; set; }
+	public bool ReadOnly { get; private set; }
 
-	public string Name { get; set; }
+	public string Name { get; private set; }
 
 	public object Value
 	{
@@ -25,23 +25,23 @@ public class ConfigItem
 		}
 	}
 
-	public string Description { get; set; }
+	public string Description { get; private set; }
 
 	public object DefaultValue { get; set; }
 
 	public string DisplayName { get; set; }
 
-	public string CategoryName { get; set; }
+	public string CategoryName { get; private set; }
 
-	public List<string> ValidValues { get; set; }
+	public List<string> ValidValues { get; private set; }
 
-	public int ValidValuesCount { get; set; }
+	public int ValidValuesCount { get; private set; }
 
-	public string CustomEditor { get; set; }
+	public string CustomEditor { get; private set; }
 
-	public Type ItemType { get; set; }
+	public Type ItemType { get; private set; }
 
-	public XmlNode Node { get; set; }
+	public XmlNode Node { get; private set; }
 
 	public ConfigItem(XmlNode node)
 	{

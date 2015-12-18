@@ -1,12 +1,12 @@
-# 1.3.0.84 (no code name)
+# X-Men (1.4.0.245)
 
-- Product: MS HAL Tester 1.3.0.84
+- Product: MS HAL Tester 1.4.0.245
 - Date (first download in the snapshots): 2015-12-18
-- Store labels: none
+- Store labels: kop-ms-hal-tester-X-Men
 - Package revisions:
   - `kop-tools` revision 22 (`A5E52A494499BDECC9AEC39F3994DA6A73842CFC`)
   - `kop-hal-install` revision 31 (`8542054E6CF6805DA0BC3443612EF390929F9D02`)
-  - `kop-ms-hal-tester` revision 12 (`B7332B8FE375F562A1B2B45BC065215274A6CF31`)
+  - `kop-ms-hal-tester` revision 22 (`7FE5C41982F44F1B401C74CFEBA1CA9DCD80E8ED`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -42,7 +42,7 @@
 | `thin.hs` |  |  | `6CD72F1A51A9353DF8957133CB67E534C0E7CA17` | exact |
 | `unload-thin.hs` |  |  | `4D3C32B17DD85E7A3BF2652A62CDB463DA8D8DEF` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.3.0.84 | `0DA20E3BD55A959E6E12CD8F6E94312DEDD04CA7` | stale (listed version 81AA0D1896… has no content) |
+| `MSHALTester.exe` | MSHALTester | 1.4.0.245 | `7EF7E80ADD7916FB4864114F440228C9D4BEA994` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |
