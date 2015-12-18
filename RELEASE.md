@@ -4,24 +4,24 @@
 - Date (first download in the snapshots): 2015-12-18
 - Store labels: none
 - Package revisions:
-  - `kop-v2-engine` revision 17 (`0F114418D7256EBEBB0E79E378E0114B81463FC8`)
+  - `kop-v2-engine` revision 20 (`C340845BBC07C154EB970609165D25255A9D7322`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `afteractivate.lua` |  |  | `A9223FA611EF64D0E9B13BBD8DDAE30E84AA2349` | stale (listed version E021BA54A9… has no content) |
+| `afteractivate.lua` |  |  | `38A9040764D599DC61C07F437FAEC7C99595897C` | exact |
 | `beforeactivate.lua` |  |  | `8E41E91CF8469874639907FCC1807E83D0D8D4C7` | exact |
-| `kioskengine.exe` | kioskengine | 1.3.9.4 | `2B3E804EB0F9657B32845F1A9D5CBD542EB8504B` | stale (listed version C2ADFD31FC… has no content) |
+| `kioskengine.exe` | kioskengine | 1.3.9.4 | `2B3E804EB0F9657B32845F1A9D5CBD542EB8504B` | stale (listed version A43356DBD2… has no content) |
 | `Redbox.Core.dll` | Redbox.Core | 1.0.4.27 | `D95929DED1515F9EE86698F5B12B857FDB5BBC69` | exact |
-| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.3.9.4 | `64E9A085261958C2708CB11AA97182B255D43DCA` | stale (listed version DD0791FEFE… has no content) |
+| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.3.9.4 | `64E9A085261958C2708CB11AA97182B255D43DCA` | stale (listed version DF2EA1874D… has no content) |
 | `Redbox.Lua.dll` | Redbox.Lua | 1.1.0.4 | `37C092F757AE7B0154851F9D5D9CA443D72636C4` | exact |
 | `Redbox.REDS.Framework.dll` | Redbox.REDS.Framework | 1.1.4.1 | `BBA4B0D747F9BCB16A1D58F349AB521F25D2D3A0` | exact |
 | `Redbox.Services.KioskBrokerServices.KioskShared.dll` | Redbox.Services.KioskBrokerServices.KioskShared | 0.0.63.0 | `54D42D7A780132FB3C7E5A12DB05F643D4005230` | stale (listed version 4A63DB1C19… has no content) |
 | `redscc.exe` | redscc | 1.1.4.1 | `39F8E9824CADDB59F103D56F7F123380DF95F37B` | exact |
-| `Redbox.DVD.BrokerServices.dll` | Redbox.DVD.BrokerServices | 1.3.9.4 | `C868DBDEA60AB22BCD119E89BCC7D95D7C28EDA0` | stale (listed version 018927A8B2… has no content) |
-| `Redbox.DVD.HardwareServices.dll` | Redbox.DVD.HardwareServices | 1.3.9.4 | `88DAFE973F25AF8B9738D6766074375C3D340667` | stale (listed version 0F50CBF750… has no content) |
-| `Redbox.DVD.KioskServices.dll` | Redbox.DVD.KioskServices | 1.3.9.4 | `F2E8C7577895F03033FEC4B601ACFF12EF9EA82A` | stale (listed version 4E7E48D9DF… has no content) |
+| `Redbox.DVD.BrokerServices.dll` | Redbox.DVD.BrokerServices | 1.3.9.4 | `C868DBDEA60AB22BCD119E89BCC7D95D7C28EDA0` | stale (listed version 2F33EE2DC1… has no content) |
+| `Redbox.DVD.HardwareServices.dll` | Redbox.DVD.HardwareServices | 1.3.9.4 | `88DAFE973F25AF8B9738D6766074375C3D340667` | stale (listed version D6D4C39716… has no content) |
+| `Redbox.DVD.KioskServices.dll` | Redbox.DVD.KioskServices | 1.3.9.4 | `F2E8C7577895F03033FEC4B601ACFF12EF9EA82A` | stale (listed version 0FAD1A1576… has no content) |
 | `Redbox.DVD.TicketServices.dll` | Redbox.DVD.TicketServices | 1.3.9.4 | `2E21A724DC97281D305A0DC3E94D4B2B013FB93D` | exact |
-| `Redbox.DVD.UpdateServices.dll` | Redbox.DVD.UpdateServices | 1.3.9.4 | `30A4DEF82B38D66F7BEC9D758533E423CAEAF074` | stale (listed version 0D357AD56F… has no content) |
+| `Redbox.DVD.UpdateServices.dll` | Redbox.DVD.UpdateServices | 1.3.9.4 | `30A4DEF82B38D66F7BEC9D758533E423CAEAF074` | stale (listed version F2B0A2F114… has no content) |
 | `Redbox.HAL.Client.dll` | Redbox.HAL.Client | 1.4.0.156 | `1FE27CFD01A4F4475576DD31856F9148F8D442B0` | exact |
 | `Redbox.UpdateManager.Client.dll` | Redbox.UpdateManager.Client | 2.5.0.6 | `AD11D4DBC0DE36A615E7F2122BD752287A30534E` | exact |
 
