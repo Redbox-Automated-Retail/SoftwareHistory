@@ -232,8 +232,8 @@
 				foregroundColor="black"
 				horizontalAlignment="far"
 				optionFlags="Text" />
-				
-			<actor
+
+      <actor
 				name="credits_left"
 				x="592"
 				y="470"

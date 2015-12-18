@@ -14,8 +14,6 @@ SyncAlertManager = newalertmanager()
 
 result_summary = { ["count_undefined"] = 0, ["count_unknown"] = 0, ["count_empty"] = 0, ["count_success"] = 0, ["count_excluded"] = 0 }
 
-AirExchangerCommandRunning = false
-
 StoreID = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
 StoreManager = newstoremanager()
 StoreManager:init()
@@ -29,8 +27,15 @@ VMZMerchFlowTimeOut = kernel.config_getvalue(
 	"system",
 	"General",
 	"VMZMerchFlowTimeOut" ) or 900000 -- 15 minutes represented in seconds
+VMZMerchFlowEnabled = true
 
 VerboseLogging = kernel.getmachinevalueordefault( "Store", "VerboseLogging", "False" ) == "True"
+
+UnloadDelayMinutes = tonumber( kernel.config_getvalue(
+	"system",
+	"General",
+	"UnloadDelayMinutes" ) or 60 )		
+kernel.log("UnloadDelayMinutes: "..UnloadDelayMinutes)
 
 
 kernel.registerconfigurationcallback(

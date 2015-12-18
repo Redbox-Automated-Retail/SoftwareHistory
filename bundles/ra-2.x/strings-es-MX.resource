@@ -37,10 +37,13 @@
 			<column name="promo_code_validating_message">Por favor espere, estamos confirmando la promoción</column>
 			<column name="promo_code_error_title">Error De Promoción</column>
 			<column name="promo_code_transaction_error_title">Error en la Promoción</column>
-			<column name="promo_code_not_valid_message">Lo sentimos, la promoción no es válida. Por favor intente de nuevo o use otra promoción.</column>
-			<column name="promo_code_already_used_message">Lo sentimos, la promoción se ha expirada.</column>
+			<column name="promo_code_not_valid_message_title">No encontramos esa código.</column>
+			<column name="promo_code_not_valid_message">Lo sentimos. Chequealo y asegurar que lo marcó bien.&#10;&#10;También asegurar que no se expiró.</column>
+			<column name="promo_code_already_used_message_title">Ya se la usó</column>
+			<column name="promo_code_already_used_message">Lo sentimos.  El código ya parece utilizado.</column>
 			<column name="promo_code_not_valid_location_message">Lo sentimos, su promoción no es válida en ciertas localidades y este no es una.</column>
-			<column name="promo_code_validation_failure_message">Lo sentimos, Redbox no puede procesar su promoción en este momento. Favor de intentar más tarde.</column>
+			<column name="promo_code_validation_failure_message_title">Error técnica</column>
+			<column name="promo_code_validation_failure_message">Lo sentimos, estamos teniendo dificultades técnicas.&#10;&#10;Por favor, intentalo de nuevo, o por otra quiosco.</column>
 			<column name="promo_code_new_customer_only_message">Lo sentimos, esta promoción solamente es válida para clientes nuevos y al parecer usted ha usado Redbox anteriormente.</column>
 			<column name="promo_code_game_required_title">¡Añade un juego!</column>
 			<column name="promo_code_game_required_message">Se aplica la promoción a un juego.  Añade un juego al carrito, volver a entrar el código, y recibiría el primer día gratis.</column>
@@ -81,8 +84,8 @@
 			<column name="rental_limit_exceeded_message">Lo sentimos, hay un límite de 3 películas y 1 juego al máximo con una tarjeta usada la primera vez con Redbox.&#10;&#10;Se permite 5 películas y 2 juegos al máximo con tarjetas previamente usada con Redbox.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
 
 			<column name="inventory_error">Lo sentimos, no era un problema con uno de sus artículos. Por favor, seleccione otro.</column>
-			<column name="vend_error_title">Error en la Transacción</column>
-			<column name="vend_error_message">Lo sentimos, ha ocurrido un problema con su transacción. Favor de regresar más tarde o usar otro Redbox.&#10;&#10;No se realizarán cargos a su tarjeta por los artículos que no recibió.</column>
+			<column name="vend_error_title">Error técnica</column>
+			<column name="vend_error_message">Lo sentimos, estamos teniendo dificultades técnicas. Por favor, intentalo de nuevo, o por otra quiosco.&#10;&#10;No le cargarímos a los discos los cuales no salieron, pero es posible que veas una carga en su tarjeta de autoriza, lo cual desapareciera aparte de 3-5 días.</column>
 			<column name="vend_quick_return_wait">Redbox le agradece por su paciencia mientras acepta una devolución.&#10;&#10;Distribuirá sus artículos lo más pronto que&#10;sea posible.</column>
 
 			<column name="confirm_purchase_message">Elegió comprar este DVD, lo cuál se vende en embalaje Redbox y no del estudio&#10;Redbox no acepta devoluciones y es una venta final.&#10;Presione "Comprar previamente visto," para continuar, o "Cancela."</column>
@@ -122,8 +125,8 @@
 			<column name="subplatform_warning">Su selección del juego se requiere la tecnología:&#10;{0}&#10;</column>
 			<column name="subplatform_for">para</column>
 
-			<column name="blu_ray_alert_title">Escogió Un Disco Blu-ray&#8482;!</column>
-			<column name="bly_ray_alert">Ha seleccionado un disco Blu-ray que no podrá ser reproducido en un reproductor DVD típico.</column>
+			<column name="blu_ray_alert_title">¡Escogió Un Disco Blu-ray&#8482;!</column>
+			<column name="bly_ray_alert">Se require un lector Blu-ray, PS3, PS4, o un Xbox One.</column>
 			<column name="purchase_new_warning">Que sepa que compare artículo(s) que se venden en un cartón Redbox manga, y no el envase original.&#10;&#10;Por favor, llame 1.866.REDBOX3 (1.866.733.2693) con cualquier pregunta. Marque CONTINUAR para proceder.</column>
 			<column name="purchase_warning">Oye, estás a punto de comprar un producto previamente visto que vendrá en un estuche resistente de alquiler de Redbox duradera, no el paquete original.</column>
 
@@ -173,6 +176,7 @@
 
 			<column name="Movies_ALL">TODAS PELÍCULAS</column>
 			<column name="Games_ALL">TODOS LOS JUEGOS</column>
+			<column name="Collections">COLECCIÓNES</column>
 
 			<column name="select_a_platform">Seleccione una consola</column>
 			<column name="view_all_games">A TODOS JUEGOS</column>
@@ -264,13 +268,19 @@
 
 			<column name="credit_lable_bottom_text">Marca 'PAGAR' o 'UTILIZE CRÉDITOS' para aceptar los términos.</column>
 
-			<column name="credits_remaining">Tienes {0} créditos disponible.&#10;&#10;¿Seguro que quieres utilizar su tajeta?</column>
-			<column name="pay_with_credits">NO, PREFIERO UTILIZAR MIS CRÉDITOS</column>
+			<column name="credits_remaining_singular_header">¡Tiene 1 crédito disponible!</column>
+			<column name="credits_remaining_singular_body">¿Quiere utilizarlo?</column>
+			<column name="credits_remaining_plural_header">¡Tiene {0} créditos disponible!</column>
+			<column name="credits_remaining_plural_body">¿Quiere utilizarlos?</column>
+			<column name="pay_with_credits_yes">SÍ, UTILIZA&#10;MIS CRÉDITO(S)</column>
+			<column name="pay_with_credits_no">NO, PAGO CON&#10;TARJETA</column>
 
 			<column name="price_tag">Precio:</column>
 			<column name="first_day_price">Primer Día:</column>
 			<column name="extra_day_price">Días Adicionales:</column>
 			<column name="price_a_day">por día</column>
+			<column name="blu_ray">Blu-ray</column>
+			<column name="dvd">DVD</column>
 
 			<column name="a_day">por día</column>
 			<column name="first_day">primer día</column>
@@ -301,9 +311,12 @@
 			<column name="burn_in_view_label">Toque aquí para alquiler o devolver</column>
 
 			<column name="email_optin_offer_message">¿Quieres información acerca esta?</column>
+			<column name="email_optin_button_text">CORREO</column>
+			<column name="email_optin_reminder_set_button_text">ANOTADA</column>
 
 			<column name="cart_full_header">Su Caja Esta Llena</column>
 			<column name="cart_full_body">Finaliza ahora o hacer cambios.</column>
+			<column name="check_out_button_text">CAJA ({0})</column>
 
 			<column name="abe_mode_text">             Acceso para discapacitadas.</column>
 			<column name="abe_mode_description">Todas las siguientes pantallas se modificaron para cumplir con los requisitos de la ley de acceso para personas discapacitadas. Para proseguir utilice los botones de navegación a continuación.&#10;&#10;Para comprar boletos de eventos con acceso para personas discapacitadas, contáctese con nuestro equipo de atención al cliente llamando al 1.866.REDBOX3 (1.866.733.2693) o en redbox.com/help.</column>
@@ -328,6 +341,31 @@
 			
 			<column name="free_trial_offer_text">Want to sign up for a free trial now?</column>
 			<column name="free_trial_email_presentation_text">Please confirm or edit your info:</column>
+			
+			<column name="blu_ray_upsell_unselected_header">¡Escoge y actualizarlo a Blu-ray!</column>
+			<column name="blu_ray_upsell_unselected_message">Por favor escoge al menos 1 película a actualizarlo.</column>
+			
+			<column name="accertify_enforce_accertify_header">Tarjeta no aprobada para juegos.</column>
+			<column name="accertify_enforce_accertify_message">Para continuar, por favor intente otro método de pago&#10;o retire los juegos de su carrito.</column>
+
+			<column name="mini_cart_purchase_text">COMPRA</column>
+			<column name="mini_cart_discs_text">{0} DISCOS</column>
+			
+			<column name="title_rollup_overlay_unavailable_text">NO DISPONIBLE</column>
+			<column name="title_rollup_overlay_cart_text">{0}&#10;EN CARRITO</column>
+			<column name="title_rollup_overlay_oos_text">{0}&#10;AGOTADO</column>
+			<column name="title_rollup_overlay_buy_text">COMPRE {0}&#10;{1}{2}</column>
+			<column name="title_rollup_overlay_add_text">+ {0}</column>
+
+			<column name="carousel_add_item_to_cart_button_for_collection">VER TODO</column>		
+			<column name="add_to_cart_label">Presione     para agregarlo al carrito</column>			
+			<column name="add_to_cart_ada_label">Seleccione la pintura o el n&#250;mero y alquilelo.</column>			
+
+			<column name="collections_popup_text">¿No puedes encontrar algo que te guste? Mira nuestras colecciónes</column>			
+			<column name="collections_popup_see_all_collections">VER TODAS LAS COLECCIÓNES</column>
+			
+			<column name="rxgx_use_promo_button">USAR PROMO</column>
+			<column name="rxgx_do_not_use_promo_button">NO USAR PROMO</column>
 		</row>
     </aspect>
 </resource>

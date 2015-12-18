@@ -31,9 +31,6 @@ kernel.registeractorhitnotify(
 		if ShoppingCart ~= nil then
 			ShoppingCart:close_analytics( "True" )
 			ShoppingCart:abandon( "User chose to abandon session." )
-			if ShoppingCart.TicketsCart ~= nil then
-				ShoppingCart.TicketsCart:reset_cart()
-			end
 			ShoppingCart = newshoppingcart()
 			ShoppingCart:start_new()
 			ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart

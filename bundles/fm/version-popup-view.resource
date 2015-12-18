@@ -25,7 +25,7 @@
 		x="0"
 		y="0"
 		width="726"
-		height="642"
+		height="662"
 		backgroundColor="Gray"
 		strokeWeight="3.0"
 		borderColor="192,192,192"
@@ -40,7 +40,7 @@
 		y="2"
 		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
 		backgroundColor="DarkRed"
-		text="  Software Versions - Dracula"
+		text="  Software Versions - The Martian"
 		foregroundColor="White"
 		verticalAlignment="center"
 		font="medium_larger_font"
@@ -80,7 +80,7 @@
 
 		<actor
 		name="store_id"
-		x="220"
+		x="270"
 		y="60"
 		width="400"
 		height="16"
@@ -103,7 +103,7 @@
 
 		<actor
 		name="engine_version"
-		x="220"
+		x="270"
 		y="85"
 		width="400"
 		height="25"
@@ -127,7 +127,7 @@
 
 		<actor
 		name="hal_versions"
-		x="220"
+		x="270"
 		y="110"
 		width="400"
 		height="25"
@@ -151,7 +151,7 @@
 
 		<actor
 		name="inventory_version"
-		x="220"
+		x="270"
 		y="135"
 		width="400"
 		height="25"
@@ -175,7 +175,7 @@
 
 		<actor
 		name="profile_version"
-		x="220"
+		x="270"
 		y="160"
 		width="400"
 		height="25"
@@ -186,20 +186,20 @@
 		text="${ProfileVersion}" />
 
 		<actor
-		name="thin_version_label"
+		name="rapid_status_version_label"
 		x="40"
 		y="185"
-		width="110"
+		width="400"
 		height="25"
 		foregroundColor="white"
 		horizontalAlignment="near"
 		font="medium_font"
 		optionFlags="Text, TextShadow"
-		text="Thin Data: " />
+		text="Rapid Status Data: " />
 
 		<actor
-		name="thin_version"
-		x="220"
+		name="rapid_status_version"
+		x="270"
 		y="185"
 		width="400"
 		height="25"
@@ -207,10 +207,10 @@
 		foregroundColor="white"
 		font="medium_font"
 		optionFlags="Text, TextShadow"
-		text="${ThinVersion}" />
+		text="${RapidStatusVersion}" />
 
 		<actor
-		name="rebalance_version_label"
+		name="inventory_action_version_label"
 		x="40"
 		y="210"
 		width="400"
@@ -219,11 +219,11 @@
 		horizontalAlignment="near"
 		font="medium_font"
 		optionFlags="Text, TextShadow"
-		text="Rebalance Data: " />
+		text="InventoryAction Data: " />
 
 		<actor
-		name="rebalance_version"
-		x="220"
+		name="inventory_action_version"
+		x="270"
 		y="210"
 		width="400"
 		height="25"
@@ -231,7 +231,7 @@
 		foregroundColor="white"
 		font="medium_font"
 		optionFlags="Text, TextShadow"
-		text="${RebalancesVersion}" />
+		text="${InventoryActionVersion}" />
 
     </scene>
   </aspect>

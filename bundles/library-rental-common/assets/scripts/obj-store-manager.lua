@@ -28,11 +28,27 @@ function newstoremanager()
 		return self.store.return_time
 	end
 
+	t.get_store_zip = function ( self )
+		if self.store == nil then
+			return 0
+		else
+			return self.store.zip or 0
+		end
+	end
+
+	t.get_store_market_id = function ( self )
+		if self.store == nil then
+			return 0
+		else
+			return self.store.market_id or 0
+		end
+	end
+	
 	t.get_rental_tax_rate = function( self )
 		if self.store == nil then
 			return 0
 		end
-		if self.store.state == "MD" then
+		if self.store.state == "MD" or self.store.state == "SC" then
 			return 0
 		else
 			return self.store.rental_tax_rate or 0
@@ -43,7 +59,7 @@ function newstoremanager()
 		if self.store == nil then
 			return 0
 		end
-		if self.store.state == "MD" then
+		if self.store.state == "MD" or self.store.state == "SC" then
 			return 0
 		else
 			return self.store.purchase_tax_rate or 0
@@ -145,50 +161,61 @@ function newstoremanager()
 		end
 	end
 	
-	t.refresh_rapid_thins = function( self )
-		if use_rapid_thin_file() == false then
-			kernel.log( "RapidThin file is old, does not exist, or contians no data. Rapid thin refresh skipped." )
-			return
-		end
-			
+	t.refresh_rapid_statuses = function( self )
 		local count_POS = 0
 		local count_PRD = 0
-		for k, v in RapidThinBarcodes:pairs() do
-			local barcodes = ProductToBarcode[ v.product_id ]
-			if barcodes ~= nil and barcodes[k] ~= nil then
-				if barcodes[k].status ~= "Reserved" and barcodes[k].status ~= v.status then
-					if v.status == "Thinned"
-					and RebalancesUnThinInuse ~= nil 
-					and RebalancesUnThinInuse[ k ] ~= nil then
-						kernel.log(" > Unthin detected in refresh_rapid_thins: " .. tostring( k ) )
-						barcodes[k].status = "Known"
-					else
+		local barcodes_to_unmerchandize = {}
+
+		local rapid_status_all = kernel.rental_inventory_get_rapidstatus_all()
+		if rapid_status_all ~= nil then
+			for k, v in pairs( rapid_status_all ) do
+				local barcodes = ProductToBarcode[ v.product_id ]
+				if barcodes ~= nil and barcodes[k] ~= nil then
+					if barcodes[k].status ~= "Reserved" and barcodes[k].status ~= v.status then
 						barcodes[k].status = v.status 
 						count_PRD = count_PRD + 1
 					end
+					ProductToBarcode[ v.product_id ] = barcodes
 				end
-				ProductToBarcode[ v.product_id ] = barcodes
 			end
-		end
-
-		for position_key, position_info in BarcodePosition:pairs() do
-			local rapid_thin = RapidThinBarcodes[ position_info.barcode ]
-			if rapid_thin ~= nil then
-				if rapid_thin.status == "Thinned"
-				and RebalancesUnThinInuse ~= nil 
-				and RebalancesUnThinInuse[ position_info.barcode ] ~= nil then
-					kernel.log(" > Unthin detected in refresh_rapid_thins: " .. tostring( position_info.barcode ) )
+			
+			for position_key, position_info in BarcodePosition:pairs() do
+				local rapid_status = rapid_status_all[ position_info.barcode ]
+				if rapid_status ~= nil then
+					position_info.status = rapid_status.status
+					BarcodePosition[position_key] = position_info
+					count_POS = count_POS + 1
+				elseif position_info.status == "Rebalancing" or position_info.status == "Redeployment" or position_info.status == "Thinned" then
+					local row = {}
+					row.barcode = position_info.barcode
+					table.insert( barcodes_to_unmerchandize, row )
 					position_info.status = "Known"
-				else
-					position_info.status = rapid_thin.status
+					BarcodePosition[position_key] = position_info
+					kernel.log("Adding barcode: " .. tostring(row.barcode) .. " to barcodes_to_unmerchandize")
 				end
-				BarcodePosition[position_key] = position_info
-				count_POS = count_POS + 1
+
+				local do_not_rent_date = nil
+				if BarcodeToProduct[position_info.barcode] ~= nil and BarcodeToProduct[position_info.barcode].product_id ~= nil then
+					local product_id = BarcodeToProduct[position_info.barcode].product_id
+					if MasterProductCatalog[product_id] ~= nil and MasterProductCatalog[product_id].do_not_rent_date ~= nil then
+						do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
+					end
+				end
+				if do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then
+					position_info.status = "DNR"
+					BarcodePosition[position_key] = position_info
+				end
+			end
+			
+			if #barcodes_to_unmerchandize > 0 then
+				local hardware_manager = newhardwaremanager()
+				kernel.log( "Calling clear_merch_status on " .. tostring(#barcodes_to_unmerchandize) .. " barcodes" )
+				hardware_manager:clear_merch_status( barcodes_to_unmerchandize, nil )
 			end
 		end
-		kernel.log( "RapidThin refresh updated " .. tostring( count_POS ) .. " barcode position records." )
-		kernel.log( "RapidThin refresh updated " .. tostring( count_PRD ) .. " product to barcode records." )
-	end		
+		kernel.log( "RapidStatus refresh updated " .. tostring( count_POS ) .. " barcode position records." )
+		kernel.log( "RapidStatus refresh updated " .. tostring( count_PRD ) .. " product to barcode records." )
+	end
 	
 	t.is_single_billing = function( self )
 		if self.store ~= nil and self.store.collection_method ~= nil then

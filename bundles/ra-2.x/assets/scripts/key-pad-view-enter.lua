@@ -5,6 +5,11 @@
 --
 show_email_confirmation = nil
 local text = kernel.getmacro( "KeyPad:Text" )
+
+if TextToSpeechEnabled == true then
+	kernel.setmacro( "TTSKeyPad:Text", text )
+end
+
 if  text ~= nil
 and string.len( text ) >= key_pad_minimum_length then
 	kernel.enableactor( "next_button" )

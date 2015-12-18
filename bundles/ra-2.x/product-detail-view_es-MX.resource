@@ -92,7 +92,7 @@
 				visible="false"
 				optionFlags="Image, Text, TextShadow" />
 
-			<actor
+			<!--actor
 				name="banner"
 				x="74"
 				y="580"
@@ -104,7 +104,7 @@
 				horizontalAlignment="center"
 				visible="false"
 				text="${ProductDetail:ProductType}"
-				optionFlags="Image, Text" />
+				optionFlags="Image, Text" /-->
 
 			<actor
 				name="coming_soon_violator"
@@ -192,7 +192,7 @@
 
 			<actor
 				name="selected_product_running_time"
-				x="650"
+				x="602"
 				y="136"
 				width="40"
 				height="22"
@@ -207,7 +207,7 @@
 
 			<actor
 				name="selected_product_national_street_date"
-				x="698"
+				x="650"
 				y="136"
 				width="42"
 				height="22"
@@ -222,7 +222,7 @@
 
 			<actor
 				name="selected_product_CC"
-				x="748"
+				x="700"
 				y="136"
 				width="48"
 				height="22"
@@ -284,7 +284,7 @@
 				name="category"
 				x="625"
 				y="510"
-				width="146"
+				width="300"
 				height="20"
 				optionFlags="Text"
 				font="font_vag_light_11"
@@ -333,15 +333,6 @@
 				text="${ProductDetail:FirstNightPrice}" />
 
 			<actor
-				name="first_night_price_a_day"
-				x="673"
-				y="531"
-				Enabled="false"
-				optionFlags="Text"
-				font="font_vag_light_11"
-				text="por d&#237;a" />
-
-			<actor
 				name="extra_night_price_label"
 				x="546"
 				y="551"
@@ -355,7 +346,7 @@
 				y="551"
 				optionFlags="Text"
 				font="font_vag_light_11"
-				text="${ProductDetail:ExtraNightPrice} por d&#237;a" />				
+				text="${ProductDetail:ExtraNightPrice}" />				
 
 			<actor
 				name="return_time_label"
@@ -448,34 +439,56 @@
 				text="*Textea “Locate” a 727272 y recibiría al máximo 2 mensajes. Reciba al máximo 2 mensajes por semana. Cargos de mensajes y de data se aplican. Textea STOP a quitarse de recibir mensajes, o HELP para recibir ayuda." />		
 
 			<actor
-				name="buy_used_dvd_button"
-				x="690"
+				name="collection_button"
+				x="240"
+				y="645"
+				width="276"
+				height="70"
+				cornerSize="33,33"
+				font="font_bryant_bold_18"
+				text="VER LA COLECCIÓN&#10;RELACIONADA"
+				visible="true"
+				style="gray_button_white_border_style" />
+
+			<actor
+				name="buy_used_product_button"
+				x="536"
+				y="635"
+				width="88"
+				height="88"
+				cornerSize="47,47"
+				text="COMPRA"
+				font="font_target_small_medium"
+				style="kiosk_2_blue_button_style" />
+
+			<actor
+				name="buy_other_product_button"
+				x="691"
 				y="630"
 				width="94"
 				height="94"
 				cornerSize="47,47"
 				text="COMPRA"
 				textRegion="0,17,94,45"
-				font="font_bryant_bold_16"
-				style="round_blue_with_blue_border_button_style" />
+				font="font_target_small_medium"
+				style="kiosk_2_blue_button_style" />
 
 			<actor
-				name="buy_used_amount_label"
+				name="buy_other_product_amount_label"
 				x="690"
 				y="670"
 				width="94"
 				height="45"
 				foregroundColor="White"
 				text="${ProductDetail:PurchasePrice}"
-				font="font_bryant_bold_16"
+				font="font_target_small_medium"
 				visible="true"
 				verticalAlignment="center"
 				horizontalAlignment="center"
-				optionFlags="Text"	/>
-				
+				optionFlags="Text"	/>				
 			<actor
 				name="back_button"
-				x="536"
+				x="74"
 				y="644"
 				width="146"
 				height="70"
@@ -487,7 +500,7 @@
 
 			<actor
 				name="back_button_arrow"
-				x="550"
+				x="90"
 				y="666"
 				hitFlags="Enabled"
 				tag="back"
@@ -496,7 +509,7 @@
 				optionFlags="image" />
 
 			<actor
-				name="add_button"
+				name="add_button_other_product"
 				x="792"
 				y="644"
 				width="146"
@@ -507,11 +520,137 @@
 				style="red_button_style" />
 
 			<actor
-				name="plus_button"
+				name="plus_button_other_product"
 				x="800"
 				y="670"
 				width="20"
 				height="20"
+				hitFlags="Enabled"
+				image="image_plus"
+				optionFlags="Image" />
+
+			<actor
+				name="add_button_dvd"
+				x="642"
+				y="644"
+				width="146"
+				height="70"
+				cornerSize="35,35"
+				font="font_bryant_bold_24"
+				text="   DVD"
+				style="red_button_style" />
+
+			<actor
+				name="dvd_in_cart"
+				x="664"
+				y="631"
+				height="70"
+				width="100"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="DVD"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="dvd_in_cart2"
+				x="640"
+				y="656"
+				height="70"
+				width="150"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_target_small_14"
+				text="EN CARRITO"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="dvd_out_of_stock"
+				x="660"
+				y="644"
+				height="70"
+				width="110"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="DVD AGOTADO"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="plus_button_dvd"
+				x="670"
+				y="668"
+				width="22"
+				height="22"
+				hitFlags="Enabled"
+				image="image_plus"
+				optionFlags="Image" />
+
+			<actor
+				name="add_button_bluray"
+				x="806"
+				y="644"
+				width="194"
+				height="70"
+				cornerSize="35,35"
+				font="font_bryant_bold_24"
+				text="   BLU-RAY"
+				style="blue_button_style" />
+
+			<actor
+				name="bluray_in_cart"
+				x="823"
+				y="631"
+				height="70"
+				width="160"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="BLU-RAY"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="bluray_in_cart2"
+				x="823"
+				y="656"
+				height="70"
+				width="160"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_target_small_14"
+				text="EN CARRITO"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="bluray_out_of_stock"
+				x="828"
+				y="644"
+				height="70"
+				width="150"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="BLU-RAY AGOTADO"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="plus_button_bluray"
+				x="824"
+				y="668"
+				width="22"
+				height="22"
 				hitFlags="Enabled"
 				image="image_plus"
 				optionFlags="Image" />

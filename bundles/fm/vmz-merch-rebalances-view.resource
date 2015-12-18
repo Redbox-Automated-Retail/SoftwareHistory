@@ -4,8 +4,6 @@
   <property name="active_flag" value="active" />
   <aspect name="content">
 	<scene name="VMZMerchRebalances"
-		cached="false"
-		clear="false"
 		width="1024"
 		height="768"
 		backgroundColor="transparent"		
@@ -26,9 +24,9 @@
 	<actor
 		name="popup_background"
 		x="100"
-		y="120"
+		y="70"
 		width="824"
-		height="528"
+		height="628"
 		backgroundColor="LightGray"
 		strokeWeight="3.0"
 		borderColor="White"
@@ -37,7 +35,7 @@
 	<actor
 		name="rebalance_header_area"
 		x="100"
-		y="120"
+		y="70"
 		textregion="40,3,300,44"
 		optionFlags="Background"
 		backgroundColor="DarkRed"	
@@ -48,7 +46,7 @@
 	<actor
 		name="rebalance_header_area_text"
 		x="130"
-		y="120"
+		y="70"
 		width="784"
 		height="50"
 		optionFlags="Text, TextShadow"
@@ -60,7 +58,7 @@
 	<actor
 		name="rebalance_title_area"
 		x="130"
-		y="180"
+		y="130"
 		optionFlags="Text"
 		text="${VMZRebalance:Title}"
 		foregroundColor="Black"
@@ -73,8 +71,8 @@
 	<actor
 		name="rebalance_background_body_area"
 		x="130"
-		y="240"
-		height="270"
+		y="190"
+		height="370"
 		width="764"
 		optionFlags="Background, DrawBorder"
 		backgroundColor="White"
@@ -87,7 +85,7 @@
 	<actor
 		name="rebalance_column_headers_area"
 		x="130"
-		y="240"
+		y="190"
 		height="40"
 		width="764"
 		optionFlags="Background"
@@ -98,7 +96,7 @@
 	<actor
 		name="rebalance_column_headers_square_off_area"
 		x="131"
-		y="255"
+		y="205"
 		height="27"
 		width="762"
 		optionFlags="Background"
@@ -108,9 +106,9 @@
 	<actor
 		name="scroll_bar_background"
 		x="841"
-		y="283"
+		y="233"
 		width="50"
-		height="224"
+		height="324"
 		backgroundColor="180,180,180"
 		cornerSize="10,10"
 		optionFlags="Background"
@@ -119,7 +117,7 @@
 	<actor
 		name="scroll_up_background"		
 		x="846"
-		y="288"
+		y="238"
 		width="40"
 		height="40"
 		cornerSize="5,5"
@@ -130,7 +128,7 @@
 	<actor
 		name="rebalance_scroll_up"
 		x="850"
-		y="292"
+		y="242"
 		width="32"
 		height="32"
 		image="image_scroll_up"
@@ -142,7 +140,7 @@
 	<actor
 		name="scroll_down_background"		
 		x="846"
-		y="463"
+		y="513"
 		width="40"
 		height="40"
 		cornerSize="5,5"
@@ -153,7 +151,7 @@
 	<actor
 		name="rebalance_scroll_down"
 		x="850"
-		y="467"
+		y="517"
 		width="32"
 		height="32"
 		image="image_scroll_down"
@@ -165,7 +163,7 @@
 	<actor
 		name="rebalance_scroll_track"		
 		x="846"
-		y="333"
+		y="283"
 		width="40"
 		height="40"
 		cornerSize="5,5"
@@ -176,7 +174,7 @@
 	<actor
 		name="rebalance_quantity_header_text"
 		x="145"
-		y="240"
+		y="190"
 		width="105"
 		height="40"
 		text="${VMZRebalance:QuantityHeader}"
@@ -190,7 +188,7 @@
 	<actor
 		name="rebalance_title_header_text"
 		x="260"
-		y="240"
+		y="190"
 		width="105"
 		height="40"
 		text="${VMZRebalance:TitleHeader}"
@@ -203,9 +201,9 @@
 	<actor
 		name="rebalance_quantity_text_line1"
 		x="145"
-		y="292"
+		y="242"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -216,9 +214,9 @@
 	<actor
 		name="rebalance_quantity_text_line2"
 		x="145"
-		y="318"
+		y="267"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -229,9 +227,9 @@
 	<actor
 		name="rebalance_quantity_text_line3"
 		x="145"
-		y="344"
+		y="292"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -242,9 +240,9 @@
 	<actor
 		name="rebalance_quantity_text_line4"
 		x="145"
-		y="370"
+		y="317"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -255,9 +253,9 @@
 	<actor
 		name="rebalance_quantity_text_line5"
 		x="145"
-		y="396"
+		y="342"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -268,9 +266,9 @@
 	<actor
 		name="rebalance_quantity_text_line6"
 		x="145"
-		y="422"
+		y="367"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -281,9 +279,9 @@
 	<actor
 		name="rebalance_quantity_text_line7"
 		x="145"
-		y="448"
+		y="392"
 		width="105"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -294,9 +292,61 @@
 	<actor
 		name="rebalance_quantity_text_line8"
 		x="145"
-		y="474"
+		y="417"
 		width="105"
-		height="26"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_quantity_text_line9"
+		x="145"
+		y="442"
+		width="105"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_quantity_text_line10"
+		x="145"
+		y="467"
+		width="105"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_quantity_text_line11"
+		x="145"
+		y="492"
+		width="105"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="center"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_quantity_text_line12"
+		x="145"
+		y="517"
+		width="105"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -307,9 +357,9 @@
 	<actor
 		name="rebalance_title_text_line1"
 		x="260"
-		y="292"
+		y="242"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -320,9 +370,9 @@
 	<actor
 		name="rebalance_title_text_line2"
 		x="260"
-		y="318"
+		y="267"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -333,9 +383,9 @@
 	<actor
 		name="rebalance_title_text_line3"
 		x="260"
-		y="344"
+		y="292"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -346,9 +396,9 @@
 	<actor
 		name="rebalance_title_text_line4"
 		x="260"
-		y="370"
+		y="317"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -359,9 +409,9 @@
 	<actor
 		name="rebalance_title_text_line5"
 		x="260"
-		y="396"
+		y="342"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -372,9 +422,9 @@
 	<actor
 		name="rebalance_title_text_line6"
 		x="260"
-		y="422"
+		y="367"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -385,9 +435,9 @@
 	<actor
 		name="rebalance_title_text_line7"
 		x="260"
-		y="448"
+		y="392"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -398,9 +448,9 @@
 	<actor
 		name="rebalance_title_text_line8"
 		x="260"
-		y="474"
+		y="417"
 		width="580"
-		height="26"
+		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
 		verticalAlignment="center"
@@ -409,23 +459,75 @@
 		visible="true" />
 		
 	<actor
+		name="rebalance_title_text_line9"
+		x="260"
+		y="442"
+		width="580"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="near"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_title_text_line10"
+		x="260"
+		y="467"
+		width="580"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="near"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_title_text_line11"
+		x="260"
+		y="492"
+		width="580"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="near"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
+		name="rebalance_title_text_line12"
+		x="260"
+		y="517"
+		width="580"
+		height="25"
+		foregroundColor="Black"
+		optionFlags="Text, ElideText"
+		verticalAlignment="center"
+		horizontalAlignment="near"
+		font="medium_large_font"
+		visible="true" />
+
+	<actor
 		name="rebalance_instructions_area"
 		x="140"
-		y="547"
+		y="575"
 		optionFlags="Text"
 		text="${VMZRebalance:Instructions}"
 		foregroundColor="Black"
 		verticalAlignment="center"
 		font="medium_font"
 		width="575"
-		height="75"
+		height="110"
 		visible="true" />
 
 	<!-- Buttons -->	
 	<actor
 		name="rebalance_close_button"
 		x="733"
-		y="540"
+		y="590"
 		width="160"
 		height="80"
 		text="${VMZRebalance:CloseButton}"

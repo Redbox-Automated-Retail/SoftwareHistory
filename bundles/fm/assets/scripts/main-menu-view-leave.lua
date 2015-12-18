@@ -4,4 +4,3 @@
 -- All Rights Reserved
 --
 
-kernel.timerremove("air_exchanger_toggle_timer")

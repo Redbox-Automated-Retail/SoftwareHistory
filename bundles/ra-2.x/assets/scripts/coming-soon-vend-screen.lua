@@ -64,7 +64,7 @@ local draw_one_tile = function( index, product, dimensions )
 	if product.image_file == nil then
 		error("Product image file cannot be nil!" )
 	end
-	if product.release_date == nil then
+	if product.merchandise_date == nil then
 		error("Product release date cannot be nil!" )
 	end
 	if dimensions == nil then dimensions = get_box_dimensions( 1 ) end
@@ -78,7 +78,7 @@ local draw_one_tile = function( index, product, dimensions )
 	-- The image must be registered in cache before it can be used from cache
 	local source_image_name = "missing_box_art"
 	local thumbnail_name = "missing_box_art-thumbnail"
-	local image_registered = kernel.registerimagefromcache(
+	local image_registered = kernel.dataserviceregisterimage(
 		product.image_file,
 		product.image_file )
 	if image_registered then
@@ -104,9 +104,9 @@ local draw_one_tile = function( index, product, dimensions )
 	
 	local release_date = string.format(
 		"%s/%s/%s",
-		string.sub(product.release_date, 5, 6 ),
-		string.sub(product.release_date, 7, 8 ),
-		string.sub(product.release_date, 1, 4 ))
+		string.sub(product.merchandise_date, 5, 6 ),
+		string.sub(product.merchandise_date, 7, 8 ),
+		string.sub(product.merchandise_date, 1, 4 ))
 			
 	coming_soon_scene_manager:add_actor(
 		string.format( vend_screen_tile_text_actor_mask, index ),
@@ -233,9 +233,9 @@ function draw_coming_soon_products(products)
 					
 			local release_date = string.format(
 			"%s/%s/%s",
-			string.sub(catalog_entry.release_date, 5, 6 ),
-			string.sub(catalog_entry.release_date, 7, 8 ),
-			string.sub(catalog_entry.release_date, 1, 4 ))	
+			string.sub(catalog_entry.merchandise_date, 5, 6 ),
+			string.sub(catalog_entry.merchandise_date, 7, 8 ),
+			string.sub(catalog_entry.merchandise_date, 1, 4 ))	
 			
 			kernel.setactortext(title_release_date,release_date)
 				

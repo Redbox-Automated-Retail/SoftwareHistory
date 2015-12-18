@@ -95,7 +95,7 @@ kernel.invsvcs_getrentalcount(
 		RentedDiscs = count
 		kernel.setactortext(
 			"rented_discs_value",
-			tostring(count) .. " *" )
+			tostring(count) )
 end )
 
 if maintenance_mode == nil then
@@ -119,16 +119,17 @@ elseif maintenance_mode == false then
 end
 
 -- All stats values will be refreshed each time the page loads
-kernel.setactortext( "rented_discs_value", tostring(RentedDiscs) .. " *" )
+kernel.setactortext( "rented_discs_value", tostring(RentedDiscs) )
 kernel.setactortext( "empty_slots_value", tostring(EmptySlots) )
 kernel.setactortext( "empty_case_count_value", tostring(getinventorycountbyproductid( 1139 )) )
 kernel.setactortext( "unknown_count_value", tostring(getinventorycount( "Unknown" )) )
-kernel.setactortext( "thin_discs_count_value", tostring(getinventorycount( "Thinned" ) + getinventorycount( "DNR" )) )
 kernel.setactortext( "fraud_discs_count_value", tostring( getinventorycount( "Fraud" ) ) )
 kernel.setactortext( "damaged_discs_count_value", tostring(getinventorycount( "Damaged" )) )
 kernel.setactortext( "distinct_title_count_value", tostring(getdistincttitlescount()) )
 kernel.setactortext( "reserved_disc_count_value", tostring(getreservationscount()) )
-kernel.setactortext( "rebalance_disc_count_value", "Checking..." )
+kernel.setactortext( "rebalance_disc_count_value", "..." )
+kernel.setactortext( "thin_redeploys_outside_vmz_value", "..." )
+kernel.setactortext( "thins_outside_vmz_value", "..." )
 get_rebalance_barcodes( true, true, function(rebalance_barcodes)
 	kernel.setactortext( "rebalance_disc_count_value", tostring(#rebalance_barcodes) )
 end)
@@ -178,61 +179,18 @@ KeyPadController.on_show = nil
 LastReadBarcode = nil
 sort = {}
 
-if VMZEnabledMachine == true then 
-	qlm_info = newvmzinfo()
-	qlm_info.on_load = function() 
-		kernel.setactortext( "info_label", tostring(qlm_info) )
-	end
-else
-	qlm_info = newqlminfo()
-	qlm_info.on_load = function()
-		kernel.setactortext( "info_label", tostring(qlm_info) )
-		if qlm_info.bay_status == "ERROR" or qlm_info.bay_status == "EMPTY" then
-			kernel.setactorforegroundcolor( "engage_button", "gray" )
-			kernel.setactorforegroundcolor( "disengage_button", "gray" )
-			kernel.disableactor( "engage_button" )
-			kernel.disableactor( "disengage_button" )
-		end
-	end
-end
-
-function verify_door_status()
-	Hardware_Manager:executeimmediate(
-		"DOORSENSORS STATUS",
-		false,
-		function( command, success, stack )
-			if success then
-				kernel.log( "DOORSENSORS STATUS:".. tostring( stack[1] ) )
-				if stack[1] == "OK" then
-					DoorStatus = "Closed"
-				else
-					DoorStatus = "Open"
-				end
-			else
-				DoorStatus = "Open"
-			end
-			kernel.setactortext( "door_status_button", "Door Status:\nDoor ".. DoorStatus )
-			kernel.enableactor( "door_status_button" )
-		end
-	)
-end
-
-if IsDoorSensorConfigured then
-	kernel.showactor( "door_status_button" )
-	verify_door_status()
-end
-
 ForcedAirExchangerConfigured = kernel.config_getvalue(
 	"system",
 	"General",
 	"ForceAirExchangerConfiguration" ) == true
-	
+
 --Check if Air Exchanger is Configured
-local AirExchangerQuery = function()
+local air_exchanger_query = function()
 	HardwareManager:executeimmediate(
 		"AIRXCHGR ISCONFIGURED",
 		false,
 		function( command, success, stack )
+			local IsAirExchangerConfigured = false
 			if success then
 				IsAirExchangerConfigured = false
 				kernel.log( "Air Exchanger Callback stack[1]: ".. tostring( stack[1] ) )
@@ -268,17 +226,12 @@ local AirExchangerQuery = function()
 						
 						kernel.showactor( "air_exchanger_button" )
 						kernel.registeractorhitnotify( "air_exchanger_button", function()
-							AirExchangerCommandRunning = true
-							kernel.setactorforegroundcolor("air_exchanger_button", "gray" )
-							kernel.setactortext( "air_exchanger_button", "Toggling Exchanger" )
-							kernel.disableactor( "air_exchanger_button" )
 							if AirExchangerFanOn then
 								Hardware_Manager:executeimmediate( "AIRXCHGR FANOFF", false, function( command3, success3, stack3)
 									kernel.setactortext( "air_exchanger_button", "Turn On\nAir Exchanger Fan" )
 									kernel.setactorforegroundcolor( "air_exchanger_button", "white" )
 									kernel.enableactor( "air_exchanger_button" )
 									kernel.log( "Air Exchanger has been turned OFF" )
-									AirExchangerCommandRunning = false
 									AirExchangerFanOn = false
 								end)
 							else
@@ -287,7 +240,6 @@ local AirExchangerQuery = function()
 									kernel.setactorforegroundcolor( "air_exchanger_button", "white" )
 									kernel.enableactor( "air_exchanger_button" )
 									kernel.log( "Air Exchanger has been turned ON" )
-									AirExchangerCommandRunning = false
 									AirExchangerFanOn = true
 								end)
 							end
@@ -298,20 +250,66 @@ local AirExchangerQuery = function()
 		end)
 end
 
-air_exchanger_toggle_timer = newidletimer( "air_exchanger_toggle_timer" )
-air_exchanger_toggle_timer:initialize(
-	1000,
-	function()
-		air_exchanger_toggle_timer:stop()
-		if AirExchangerCommandRunning then
-			air_exchanger_toggle_timer:reset()
-			air_exchanger_toggle_timer:start()
-		else
-			AirExchangerQuery()
+function verify_door_status()
+	Hardware_Manager:executeimmediate(
+		"DOORSENSORS STATUS",
+		false,
+		function( command, success, stack )
+			local DoorStatus = "Failed"
+			if success then
+				kernel.log( "DOORSENSORS STATUS:".. tostring( stack[1] ) )
+				if stack[1] == "OK" then
+					DoorStatus = "Closed"
+				else
+					DoorStatus = "Open"
+				end
+			end
+			kernel.setactortext( "door_status_button", "Door Status:\nDoor ".. DoorStatus )
+			kernel.enableactor( "door_status_button" )
+			air_exchanger_query()
 		end
-	end)
-air_exchanger_toggle_timer:start()
+	)
+end
 
+function begin_page_status_queries()
+	if IsDoorSensorConfigured then
+		kernel.showactor( "door_status_button" )
+		verify_door_status()
+	else
+		air_exchanger_query()
+	end
+end
 
+if VMZEnabledMachine == true then 
+	qlm_info = newvmzinfo()
+	qlm_info.on_load = function() 
+		kernel.setactortext( "info_label", tostring( qlm_info ) )
+		begin_page_status_queries()
+	end
+else
+	qlm_info = newqlminfo()
+	qlm_info.on_load = function()
+		kernel.setactortext( "info_label", tostring( qlm_info ) )
+		if qlm_info.bay_status == "ERROR" or qlm_info.bay_status == "EMPTY" then
+			kernel.setactorforegroundcolor( "engage_button", "gray" )
+			kernel.setactorforegroundcolor( "disengage_button", "gray" )
+			kernel.disableactor( "engage_button" )
+			kernel.disableactor( "disengage_button" )
+		end
+		begin_page_status_queries()
+	end
+end
 
+if qlm_info.loaded == false then
+	local progress_mgr = newprogressmanager()
+	progress_mgr:start( false )
+	qlm_info:load( progress_mgr )
+else
+	if VMZEnabledMachine == true then
+		qlm_info:refresh()
+	end
+	kernel.setactortext( "info_label", tostring( qlm_info ) )
+end
+
+	
 

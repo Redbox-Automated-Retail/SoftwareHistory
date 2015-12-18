@@ -2,13 +2,14 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Field Maintenance Application" />
-  <property name="product_version" value="1.6.5.4" />
+  <property name="product_version" value="1.10.0.2" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
     <value>Content Pricing,*</value>
     <value>Content Promotion,*</value>
     <value>Library Rental Common,*</value>
     <value>Content In-Cart Run Data,*</value>
+    <value>Content Email Opt-In,*</value>
   </property>
   <aspect name="schema">
     <resourceType name="root">

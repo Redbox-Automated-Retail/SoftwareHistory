@@ -157,19 +157,12 @@ local result = hardware_manager:return_unknown(
 								function( result )
 									if result.success == true then
 										local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
-
-										local new_status = "Known"
-										if use_rapid_thin_file() == true
-										and RapidThinBarcodes[ v.item_id ] ~= nil then
-											new_status = RapidThinBarcodes[ v.item_id ].status
-										end
 										
-										if new_status == "Thinned"
-										and RebalancesUnThinInuse ~= nil 
-										and RebalancesUnThinInuse[ v.item_id ] ~= nil then
-											kernel.log(" > Unthin detected in FMA -> inventory-insert-disc.lua: " .. tostring( v.item_id ) )
-											new_status = "Known"
-										end 
+										local new_status = "Known"
+										local rapid_status = kernel.rental_inventory_get_rapidstatus( v.item_id )
+										if rapid_status ~= nil then
+											new_status = rapid_status.status
+										end
 										
 										BarcodePosition[deck_slot_key] = { ["barcode"] = tostring( v.item_id ), ["status"] = new_status }
 										local barcodes = ProductToBarcode[product.product_id]

@@ -74,10 +74,9 @@ function newreturnmanager( shopping_cart )
 			ABE_ON = false
 			view_unwindtobottom_safe( "ReturnManager:show_success_message switch_culture_unwind()" )
 		end
-
-		self.shopping_cart:commit(
-			"User successfully returned product with barcode: " .. tostring( item_id ),
-			true )
+		if self.shopping_cart ~= nil and self.shopping_cart.session_id ~= nil then
+			self.shopping_cart:commit( "User successfully returned product with barcode: " .. tostring( item_id ), true )
+		end
 		self.message_view_manager:show()
 		self.message_view_manager:set_title( strings.title_thanks )
 		self.message_view_manager:set_message( strings.inventory_updated_message )
@@ -426,7 +425,7 @@ function newreturnmanager( shopping_cart )
 		-- only run a thin if the job hasn't been scheduled or is running yet
 		if (not is_thin_vmz_running) and (not is_thin_vmz_running2) then
 			local label = "thin scheduled due to low slot availability"
-			local barcodesToBin, barcodesToVmz = get_vmz_thin_barcodes()
+			local barcodesToBin, rebalances, redeployments, barcodesToVmz = get_vmz_thin_barcodes()
 			
 			-- There could be many thins, only schedule to thin, up to the number of MakeRoomBuffer or DumpBinRemainingCapacity
 			local MaxToDumpBin = MakeRoomBuffer
@@ -438,21 +437,8 @@ function newreturnmanager( shopping_cart )
 			-- Maintain the proper processing order of DNR's, Dammaged, Fraud, then thins
 			restricted_barcodes_to_bin = {}
 			barcodesInBin = tonumber("0")
-			-- Take bottom X disks from barcodesToVmz
-			if ( #barcodesToBin < MaxToDumpBin ) then
-				local X = MaxToDumpBin - #barcodesToBin
-				local iStart = #barcodesToVmz - X
-				if iStart < 0 then
-					iStart = 0
-				end
-				for i, v in ipairs(barcodesToVmz) do
-					if ( tonumber(i) > iStart and barcodesInBin < MaxToDumpBin ) then
-						table.insert( restricted_barcodes_to_bin, v )
-						barcodesInBin = barcodesInBin + 1
-					end
-				end
-			end
-			-- Take bottom X disks from barcodesToBin
+
+			-- Take X disks from barcodesToBin
 			local iStart = #barcodesToBin - MaxToDumpBin
 			if iStart < 0 then
 				iStart = 0
@@ -463,14 +449,41 @@ function newreturnmanager( shopping_cart )
 					barcodesInBin = barcodesInBin + 1
 				end
 			end
+			
+			-- Take X disks from barcodesToVmz (but not reblances)
+			local rebalances_raw = get_rebalance_barcodes_raw()
+			local redeploys_raw = get_redeploy_barcodes_raw()
+			for i, v in ipairs(barcodesToVmz) do
+				if ( barcodesInBin < MaxToDumpBin ) then
+					if ( rebalances_raw[ v.barcode ] == nil and redeploys_raw[ v.barcode ] == nil ) then
+						table.insert( restricted_barcodes_to_bin, 1, v )
+						barcodesInBin = barcodesInBin + 1
+					end
+				else
+					break
+				end
+			end
+
+			-- Take X disks from redeployments (but not reblances)
+			for i, v in ipairs(redeployments) do
+				if ( barcodesInBin < MaxToDumpBin ) then
+					table.insert( restricted_barcodes_to_bin, 1, v )
+					barcodesInBin = barcodesInBin + 1
+				else
+					break
+				end
+			end
+
 			if ( barcodesInBin > 0 ) then
 				barcodesToBin = restricted_barcodes_to_bin
 			end
 
 			if MaxToDumpBin > 0 then
 				if #barcodesToBin > 0 then
+					rebalances = {} -- ensure rebalances is an empty list
+					redeployments = {} -- ensure redeployments is an empty list
 					barcodesToVmz = {} -- ensure the barcodesToVmz is an empty list
-					HardwareManager:vmz_thin( label, schedule_time.backing, barcodesToBin, barcodesToVmz )
+					HardwareManager:vmz_thin( label, schedule_time, barcodesToBin, rebalances, redeployments, barcodesToVmz )
 				else
 					kernel.log("Tried to schedule a thin-vmz job, but there were no disks to dump!")
 				end

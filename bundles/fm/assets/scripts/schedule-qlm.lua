@@ -112,15 +112,8 @@ kernel.callbackenqueue(
 						thin_schedule = schedule_time + "00:01:00"
 					end
 					if job_type == "VMZ" then
-						local barcodesToBin, barcodesToVmz = get_vmz_thin_barcodes()
-						if #barcodesToBin == 0
-						and #barcodesToVmz == 0 then
-							kernel.log(">  There are no Thinned discs at this time, thin request cancelled.")
-						else
-							kernel.log(">  Found " ..tostring(#barcodesToBin) .. " thinned discs to be sent to Bin.")
-							kernel.log(">  Found " ..tostring(#barcodesToVmz) .. " thinned discs to be sent to VMZ.")
-							hardware:vmz_thin( label, thin_schedule.backing, barcodesToBin, barcodesToVmz )
-						end
+						local jobname = "vmzthin-" .. tostring( thin_schedule )
+						run_thin_vmz_job(label, jobname, thin_schedule.backing)
 					else
 						local barcodes = get_thin_barcodes()
 						if #barcodes == 0 then

@@ -79,11 +79,22 @@ get_inventory_statistics = function()
 	local damaged = 0
 	local wrongtitles = 0
 	local total_disks = 0
-
+	local unmatched = 0
+	
+	local all_unmatched_multi_disc_barcodes = get_all_unmatched_multi_disc_barcodes()
+	local function is_unmatched( barcode )
+		for _, unmatched_barcode in ipairs( all_unmatched_multi_disc_barcodes ) do
+			if barcode == unmatched_barcode then
+				return true
+			end
+		end
+		return false
+	end
+	
 	for pos, disc in BarcodePosition:pairs() do
 		local fields = {}
 		string.gsub(pos, "@*(%w+)@*", function(values) table.insert(fields,values) end )
-
+		
 		if false == is_qlm_deck( fields[1] ) then
 			local barcode = disc["barcode"]
 			local status = disc["status"]
@@ -104,7 +115,7 @@ get_inventory_statistics = function()
 			if status == "Unknown Title" then
 				white_unknowns = white_unknowns + 1
 			end
-			if status == "Thinned" or status == "PR1" or status == "PR2" then
+			if status == "Thinned" or status == "PR1" or status == "PR2" or status == "Redeployment" or status == "Rebalancing" then
 			    thin_discs = thin_discs + 1
 			end
 			if status == "Damaged" then
@@ -112,6 +123,9 @@ get_inventory_statistics = function()
 			end
 			if status == "Wrong Title" then
 			    wrongtitles = wrongtitles + 1
+			end
+			if status ~= "Damaged" and status ~= "DNR" and status ~= "Fraud" and status ~= "Reserved" and is_unmatched( barcode ) == true then
+				unmatched = unmatched + 1
 			end
 		end
 	end
@@ -136,6 +150,9 @@ get_inventory_statistics = function()
     kernel.healthsvcs_enqueuestatistic(
 		"TotalDiscs",
 		total_disks )
+    kernel.healthsvcs_enqueuestatistic(
+		"UnmatchedInKiosk",
+		unmatched )
 end
 
 UpdateVSMImpression = function( vsm_program_name )
@@ -198,19 +215,30 @@ update_profile_inventory_stats = function()
 end
 
 update_vmz_inventory_statistics = function()
-	local hwmgr = newhardwaremanager()
-	local result = hwmgr:executeimmediate( "COUNTER NAME=\"DUMPBIN\" GET",
-		true,
-		function( command, success, stack, errors )
-			if success and stack[1] == "SUCCESS" then
-				kernel.healthsvcs_enqueuestatistic( "DumpBin", stack[2] )
+	local hardware_manager = newhardwaremanager()
+	hardware_manager:get_inventory_stats(
+		function( job_result )
+			local dump_bin_count = 0
+			for k, v in ipairs( job_result ) do
+				if v.code == "DumpBinCount" then
+					dump_bin_count = tonumber( v.message )
+				end
 			end
-		end )
-
-	get_rebalance_barcodes( true, true, function( available_rebalances ) 
-		kernel.log("update_vmz_inventory_statistics - available_rebalances insideVmz and outsideVmz: " .. tostring(#available_rebalances))
-		kernel.healthsvcs_enqueuestatistic( "RebalancesInKiosk", tostring(#available_rebalances) )
-	end)
+			kernel.healthsvcs_enqueuestatistic( "DumpBin", dump_bin_count )
+		end
+	)
+	
+	get_rebalance_barcodes( true, true,
+		function( available_rebalances )
+			local count = 0
+			for k, v in pairs( available_rebalances ) do
+				count = count + 1
+			end		
+		
+			kernel.log( "update_vmz_inventory_statistics - available_rebalances insideVmz and outsideVmz: " .. tostring( count ) )
+			kernel.healthsvcs_enqueuestatistic( "RebalancesInKiosk", tostring( count ) )
+		end
+	)
 end
 
 get_version_statistics = function()

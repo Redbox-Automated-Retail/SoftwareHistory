@@ -3,7 +3,6 @@
 -- All Rights Reserved
 --
 
-total_products_shown = nil
 browse_filter_alpha_selected = nil
 browse_rent_or_sellthru = "rent"
 

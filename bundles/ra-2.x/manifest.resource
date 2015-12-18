@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Rental Application" />
-  <property name="product_version" value="2.3.9.6" />
+  <property name="product_version" value="2.9.0.8" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
     <value>Content Pricing,*</value>
@@ -10,8 +10,10 @@
     <value>Content Vend Screen Marketing,*</value>
     <value>Content Legal,*</value>
     <value>Library Rental Common,*</value>
-    <value>Library Tickets,*</value>
     <value>Content In-Cart Run Data,*</value>
+    <value>Content Email Opt-In,*</value>
+    <value>Content Speech,*</value>
+    <value>Content Banner Marketing,*</value>
   </property>
   <property name="public_key" value="public_key" />
   <aspect name="schema">
@@ -26,7 +28,6 @@
       <propertyType name="application" type="System.String" isFilter="true" score="3" label="Application" category="Filters" />
       <propertyType name="store_number" type="System.String" isFilter="true" score="4" label="Store Number" category="Filters" />
       <propertyType name="ada_accessible" type="System.String" isFilter="true" score="3" label="ADA Accessible" category="Filters" />
-      <propertyType name="alternate_start_view" type="System.String" isFilter="true" score="5" label="Alternate Start View" category="Filters" />
       <propertyType name="name" type="System.String" label="Name" category="Common" />
       <propertyType name="version" type="System.String" label="Version" category="Common" />
       <propertyType name="created_by" type="System.String" label="Created By" category="Common" />

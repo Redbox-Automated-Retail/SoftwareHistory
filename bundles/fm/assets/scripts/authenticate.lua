@@ -42,8 +42,8 @@ kernel.authsvcs_authenticateuser(
 			view_show( "main_menu_view" )
 		else
 			--kernel.log( "FMA failed for user: ".. username .. " with reason code: " .. r.properties.response )
-			kernel.logto( "UserLoginLog", "Field Maintenance | LOGIN FAILED for user: ".. username .. ", reason: " .. r.properties.response )
-			kernel.logto( "FieldMaintenanceActionLog", "Field Maintenance | LOGIN FAILED for user: ".. username .. ", reason: " .. r.properties.response )
+			kernel.logto( "UserLoginLog", "Field Maintenance | LOGIN FAILED, reason: " .. r.properties.response )
+			kernel.logto( "FieldMaintenanceActionLog", "Field Maintenance | LOGIN FAILED, reason: " .. r.properties.response )
 			kernel.showactor( "message_label" )
 			kernel.markactordirty( "message_label" )
 		end

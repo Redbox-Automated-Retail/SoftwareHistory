@@ -43,26 +43,23 @@ else
     kernel.setmacro( "InventoryVersion", "N/A" )
 end
 
-local path = kernel.getmacro( "RunningPath" ) .. "..\\..\\Data\\"
-local rebalancesversion = path .. "RebalanceVersion.json"
-local versionDate = kernel.tablefromfileserializeddictionary( rebalancesversion )
-if versionDate ~= nil and versionDate["VersionTimeStampUTC"] ~= nil then
+local rapid_status_creation_time = kernel.rental_inventory_get_rapid_status_modification_time( "MMMM d h:mm tt" )
+if rapid_status_creation_time ~= nil then
     kernel.setmacro(
-        "RebalancesVersion",
-        string.format( "%s %s", kernel.tolocaltime( versionDate["VersionTimeStampUTC"], "MMMM d h:mm tt" ), timezone ) )
+        "RapidStatusVersion",
+        string.format( "%s %s", rapid_status_creation_time, timezone ) )
 else
-    kernel.setmacro( "RebalancesVersion", "none" )
+    kernel.setmacro( "RapidStatusVersion", "none" )
 end
 
-
-if use_rapid_thin_file() == true then
-	kernel.setmacro(
-		"ThinVersion",
-		string.format( "%s %s %s", RapidThinVersion.origin_machine.name, kernel.tolocaltime( RapidThinVersion.generated_on.date, "MMMM d h:mm tt" ), timezone ) )
+local inventory_action_creation_time = kernel.rental_inventory_get_inventory_action_modification_time( "MMMM d h:mm tt" )
+if inventory_action_creation_time ~= nil then
+    kernel.setmacro(
+        "InventoryActionVersion",
+        string.format( "%s %s", inventory_action_creation_time, timezone ) )
 else
-	kernel.setmacro( "ThinVersion", kernel.getmacro( "InventoryVersion") )
+    kernel.setmacro( "InventoryActionVersion", "none" )
 end
-
 
 local DisplayData = function (rows, x, y)
 	for k, v in pairs(rows) do

@@ -11,10 +11,26 @@ if kernel.getlasthitactorname() == "online_pickup_button"
 or kernel.getlasthitactorname() == "online_red_box_label"
 or kernel.getlasthitactorname() == "online_pickup_label" then
 	swipe_movie_resource = "swipe_onlinepickup_movie"
+	if TextToSpeechEnabled == true then
+		kernel.setmacro( "TTS:SwipeTitle", "Swipe your card to pick up your reservation." )
+		kernel.setmacro( "TTS:SwipeMessage", "You can swipe your card up or down.  It doesn't matter." )
+	end
 elseif credit_button_hit then
 	swipe_movie_resource = "swipe_subscribers_movie"
+	if TextToSpeechEnabled == true then
+		kernel.setmacro( "TTS:SwipeTitle", "Let's see those credits." )
+		kernel.setmacro( "TTS:SwipeMessage", "To pay with credits, swipe a card up or down, that's associated with your account." )
+	end
 else
 	swipe_movie_resource = "swipe_movie"
+	if TextToSpeechEnabled == true then
+		kernel.setmacro( "TTS:SwipeTitle", "Ready. Set. Swipe!" )
+		kernel.setmacro( "TTS:SwipeMessage", "You can swipe your card up or down - it doesn't matter." )
+	end
+end
+
+if TextToSpeechEnabled == true then
+	kernel.ttsrepeat();  -- the titles and assests have been set and toggled
 end
 
 kernel.pushmovie( swipe_movie_resource, { x = 0, y = 112, width = 1024, height = 543 } )

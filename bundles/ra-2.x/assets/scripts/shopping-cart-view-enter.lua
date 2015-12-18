@@ -1,24 +1,30 @@
 --
 -- shopping-cart-view-enter.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- Copyright (C) 2015 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
+kernel.set_session_value("BrowseState.CollectionsPopupShown", true)
+
+initialize_idle_timer()
 idle_timer:start()
+
+ShoppingCart:remove_multi_disc_discs()
+
 shopping_cart_scene_manager = newscenemanager()
 ShoppingCart:show_cart_table()
 
 local current_filter_alpha_selected
 credit_button_hit = false
 
-
+local promo_code = kernel.rental_promotion_get_promotion()
 if EnableCreditsButton 
 and ShoppingCart.in_cart_promo_offer_made == true 
 and	ShoppingCart.in_cart_promo_offer_cancel == false then
 	kernel.hideactor( "credits_button" )
 elseif EnableCreditsButton 
 and HideCreditsButtonOnPromoUse 
-and ShoppingCart.promo_code ~= nil then	
+and promo_code ~= nil then	
 	kernel.hideactor( "credits_button" )
 elseif EnableCreditsButton then
 	kernel.showactor( "credits_button" )
@@ -36,6 +42,9 @@ if DisplayModifiedShoppingCart == true then
 	kernel.setmacro( "ShoppingCart:DvdDays", dvd_pricing_table.non_return_days + 1 )
 	kernel.setmacro( "ShoppingCart:BlurayDays", bluray_pricing_table.non_return_days + 1 )
 	kernel.setmacro( "ShoppingCart:GamesDays", games_pricing_table.non_return_days + 1 )
+	if TextToSpeechEnabled == true then
+		kernel.setmacro( "TTS:passive_sale_note", kernel.getactortext("passive_sale_note") )
+	end
 	kernel.showactor( "passive_sale_note" )
 	
 	kernel.setactortextalignx( "promo_code_amount", "far" )
@@ -48,7 +57,7 @@ if DisplayModifiedShoppingCart == true then
 	kernel.moveactorx( "total_amount", -10 )
 end
 
-if StoreManager.store ~= nil and StoreManager.store.state ~= nil and StoreManager.store.state == "MD" then
+if StoreManager.store ~= nil and StoreManager.store.state ~= nil and ( StoreManager.store.state == "MD" or StoreManager.store.state == "SC" ) then
 	kernel.hideactor( "label_sub_total" )
 	kernel.hideactor( "sub_total_amount" )
 	kernel.hideactor( "label_tax" )
@@ -60,16 +69,69 @@ if StoreManager.store ~= nil and StoreManager.store.state ~= nil and StoreManage
 end
 
 function show_offer_or_proceed_checkout()
-	if PromptForCredits ~= true then
+	local promo_code = kernel.rental_promotion_get_promotion()
+	if PromptForCredits ~= true
+	or promo_code ~= nil then
+		kernel.log( "Setting session_use_credits to OptedOut" )
 		ShoppingCart:set_use_credits( "OptedOut" )
 	else
+		kernel.log( "PromptForCredits is true, setting session_use_credits to NotSpecified" )
 		ShoppingCart:set_use_credits( "NotSpecified" )
 	end
-	if CartQualifiesForInCartOffer( ShoppingCart )
-	and ShoppingCart.in_cart_promo_offer_made == false then
-		view_show_safe( "in_cart_offer_message_view" )
+	
+	if promo_code ~= nil and promo_code.intent == "RxGx" then
+		ShoppingCart:validate_cart_update_promo_code(
+			function( cart_promo_info )
+				kernel.executescript( "check_out" )
+			end,
+			function( cart_promo_info )
+				local message_view_manager = newmessageviewmanager()
+				message_view_manager:show()
+				message_view_manager:set_message_header( "Oops" )
+				if kernel.getculture() == "es-MX" then
+					message_view_manager:set_message( cart_promo_info.title_spanish .. "\n\n" .. cart_promo_info.message_spanish )
+				else
+					message_view_manager:set_message( cart_promo_info.title_english .. "\n\n" .. cart_promo_info.message_english )
+				end
+				message_view_manager:hide_first_button()
+				message_view_manager:show_third_button( strings.rxgx_use_promo_button,
+					function()
+						view_analytics_event( "buttonPress", "keepPromo" )
+						message_view_manager:hide()
+						view_show( "browse_view" )
+					end
+				)
+				message_view_manager:show_fourth_button( strings.rxgx_do_not_use_promo_button,
+					function()
+						view_analytics_event( "buttonPress", "removePromo" )
+						message_view_manager:hide()
+						ShoppingCart:clear_promo_code()
+						
+						if free_in_cart_template_is_running() == false
+                        and CartQualifiesForInCartOffer( ShoppingCart )
+						and ShoppingCart.in_cart_promo_offer_made == false then
+							view_show_safe( "in_cart_offer_message_view" )
+						else
+							kernel.executescript( "check_out" )
+						end
+					end
+				)
+				message_view_manager:start_timer(
+					function()
+						message_view_manager:hide()
+					end
+				)
+				view_analytics_event( "context", "rxgxWarning" )
+			end
+		)
 	else
-		kernel.executescript( "check_out" )
+        if free_in_cart_template_is_running() == false
+		and CartQualifiesForInCartOffer( ShoppingCart )
+		and ShoppingCart.in_cart_promo_offer_made == false then
+			view_show_safe( "in_cart_offer_message_view" )
+		else
+			kernel.executescript( "check_out" )
+		end
 	end
 end
 
@@ -99,8 +161,8 @@ local function setcategory(selectedfamily,genre)
 		browse_filter_family_tracker:set_family_type( "ALL" )
 		browse_filter_genre_selected = genre
 		browse_filter_alpha_selected = nil
-		browse_selected_sort = "Newest"
-		browse_filter_mode = "all"
+		kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		set_number = 1
 		kernel.executescript( "browse_products" )
 end

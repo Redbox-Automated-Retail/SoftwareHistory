@@ -27,4 +27,7 @@ kernel.timerstart( "email_next_timer" )
 set_email_view_text = function( text )
 	kernel.setmacro( "EmailText", text )
 	kernel.markactordirty( "email_message" )
+	if TextToSpeechEnabled then
+		kernel.ttsrepeat();  -- assests have been set and toggled
+	end
 end

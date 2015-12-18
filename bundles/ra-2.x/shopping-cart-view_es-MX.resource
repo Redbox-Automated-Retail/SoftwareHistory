@@ -303,7 +303,7 @@
 				optionFlags="Text"
 				font="font_akzidenz_bold_small"
 				foregroundColor="white" />
-				
+      
 			<actor
 				name="label_bottom"
 				x="580"

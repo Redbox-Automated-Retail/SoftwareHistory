@@ -69,6 +69,11 @@ function newscenemanager()
 			if parms.gradientAngle ~= nil then
 				kernel.setactorgradientangle( name, parms.gradientAngle )
 			end
+			if parms.visible ~= nil and parms.visible == true then
+				kernel.showactor( name )
+			elseif parms.visible ~= nil and parms.visible == false then
+				kernel.hideactor( name )
+			end
 			
 			table.insert( self.actors, name )
 		end,

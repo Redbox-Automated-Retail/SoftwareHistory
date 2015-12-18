@@ -164,6 +164,18 @@
 				style="red_button_style" />
 				
 			<actor
+				name="fourth_button"
+				x="190"
+				y="578"
+				width="171"
+				height="66"
+				cornerSize="32,19" 
+				font="font_target_small_medium"
+				text=""
+				visible="false"	
+				style="red_button_style" />
+				
+			<actor
 				name="back_button_arrow"
 				x="212"
 				y="600"

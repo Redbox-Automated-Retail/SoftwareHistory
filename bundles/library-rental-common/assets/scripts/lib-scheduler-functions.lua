@@ -102,32 +102,32 @@ end
 stats_run_daily_timer = function()
 	--Runs once per day
 	kernel.log( "STATS daily timer executing..." )
-
+	
 	--QuickReturn
 	if quick_return_is_running == true then
 		QuickReturnCounter:submit()
 		kernel.log("Got quick return stats")
 	end
-
+	
 	--Kiosk Capacity
 	get_kiosk_capacity()
 	kernel.log("Got Kiosk Capacity")
-
+	
 	--VSMImpressions
 	get_vsm_statistics()
 	kernel.log("Got VSM stats")
-
+	
 	--Versions
 	get_version_statistics()
 	kernel.log( "Got Versions" )
-
+	
 	--Create duplicate barcode alert
 	kernel.log( "Duplicate barcode daily timer executing..." )
 	local total_dupes = 0
 	for k, v in DuplicateBarcodes:pairs() do
 		total_dupes = total_dupes + 1
 	end
-
+	
 	if DuplicateBarcodes == nil or total_dupes < 1 then
 		kernel.log( "> no duplicate barcodes found, alert will not be sent." )
 	else
@@ -151,5 +151,31 @@ stats_run_daily_timer = function()
 		kernel.log( "Sent duplicate barcode alert" )
 		DuplicateBarcodes:clear()
 	end
-
+	
+	--compare GetOpsMarket result to KaseyaD.ini
+	kernel.storesvcs_getopsmarket(
+		StoreManager:get_number(),
+		function( result )
+			local kaseya_path = kernel.storesvcs_getkaseyainipath()
+			local kaseya_info = kernel.storesvcs_getopsmarketandkaseyaserverfromfile( kaseya_path )
+			
+			if kaseya_path == null then
+				kernel.log( "Unable to locate KaseyaD.ini path, not reinstalling Kaseya." )
+			elseif kaseya_info == null
+			or ( kaseya_info ~= null and ( kaseya_info.ops_market == null or kaseya_info.kaseya_server == null ) ) then
+				kernel.log( "Unable to parse KaseyaD.ini, not reinstalling Kaseya." )
+			elseif result.properties.ops_market == "UnNamed" and result.properties.kaseya_server == "Kaseya6" then
+				kernel.log( "GetOpsMarket returned UnNamed and Kaseya6, not reinstalling Kaseya." )			
+			elseif string.lower( kaseya_info.ops_market ) ~= string.lower( result.properties.ops_market ) or string.lower( kaseya_info.kaseya_server ) ~= string.lower( result.properties.kaseya_server ) then
+				kernel.log( "KaseyaD.ini and GetOpsMarket have different values, reinstalling Kaseya." )
+				
+				local path = "C:\\Program Files\\Redbox\\Reds\\Installers\\" .. result.properties.kaseya_server .. "Install.exe"
+				local args = "/s /r /v /g=redbox." .. result.properties.ops_market .. " /m=redbox-" .. StoreManager:get_number()
+				
+				kernel.startprocesswaitforexit( path, args, 20000 )
+			else
+				kernel.log( "KaseyaD.ini and GetOpsMarket have the same values, not reinstalling Kaseya." )
+			end
+		end
+	)
 end

@@ -28,9 +28,8 @@
 	lib_datetime,
 	obj_progress_manager,
 	swipe_functions,
-	tickets_lib_data_store_functions,
-	tickets_shopping_cart,
-	free_trial_please_wait_functions">
+	free_trial_please_wait_functions,
+	lib_inventory_functions">
     <property name="name" value="application_startup" />
     <aspect name="content" file="assets/scripts/application-startup.lua" />
 </resource>

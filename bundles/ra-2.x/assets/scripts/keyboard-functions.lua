@@ -63,7 +63,13 @@ function newkeyboardmanager()
 					kernel.setactorx("eight_button",599)
 					kernel.setactorx("nine_button",675)
 					kernel.setactorx("zero_button",751)
+					if TextToSpeechEnabled == true then
+						self:set_marketing( "" )
+					end
 				end
+			end
+			if TextToSpeechEnabled == true then
+				kernel.ttsrepeat();  -- assests have been updated
 			end
 		end,
 
@@ -82,6 +88,10 @@ function newkeyboardmanager()
 				return
 			end
 			timeout = timeout or 8000
+			if TextToSpeechEnabled == true then
+				timeout = TTSTimeoutKeyboardView
+			end
+			
 			self.idle_timer = newidletimer( "keyboard-idle-timer" )
 			self.idle_timer:initialize(
 				timeout,
@@ -112,6 +122,9 @@ function newkeyboardmanager()
 				return
 			end
 			timeout = timeout or 8000
+			if TextToSpeechEnabled == true then
+				timeout = TTSTimeoutKeyboardView
+			end
 			kernel.timercreate(
 				"keyboard_timer",
 				timeout,
@@ -228,6 +241,9 @@ function newkeyboardmanager()
 		set_value = function( self, value )
 			kernel.setmacro( "KeyBoard:Text", value or "" )
 			kernel.markactordirty( "text_label" )
+			if TextToSpeechEnabled == true then
+				kernel.ttsrepeat();  -- assests have been updated
+			end
 		end,
 
 		get_error = function( self )
@@ -237,6 +253,9 @@ function newkeyboardmanager()
 		set_error = function( self, value )
 			kernel.setmacro( "KeyBoard:ErrorLabel", value or "" )
 			kernel.markactordirty( "error_label" )
+			if TextToSpeechEnabled == true then
+				kernel.ttsrepeat();  -- assests have been updated
+			end
 		end,
 
 		get_message = function( self )

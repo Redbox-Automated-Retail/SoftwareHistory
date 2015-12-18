@@ -4,6 +4,6 @@
 -- All Rights Reserved
 --
 
-browse_filter_mode = "alpha"
+kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 alpha_scene_manager = newscenemanager()
 view_show_safe( "browse_filter_alpha_view" )

@@ -26,13 +26,24 @@ vmz_merch_rebalances_timer:initialize(
 )
 vmz_merch_rebalances_timer:start()
 
-local titles_per_page = 8
+local titles_per_page = 12
 local current_page = 0
-local scroll_top = 333
-local scroll_bottom = 419
+local scroll_top = 283
+local scroll_bottom = 469
 
 -- Get the Rebalance Titles
 local titles = ( vmz_merch_flow_functions or {} ).rebalance_in_data or {}
+local total_rebalance_in_titles = 0
+
+local function calculate_rebalance_ins()
+	local _master_product_catalaog = MasterProductCatalog
+	for _, v in ipairs( titles ) do
+		local product = _master_product_catalaog[v.TitleId]
+		if v.Quantity ~= nil and v.Quantity > 0 and product ~= nil then
+			total_rebalance_in_titles = total_rebalance_in_titles + v.Quantity
+		end
+	end
+end
 
 local function display_rebalances()
 	local _master_product_catalaog = MasterProductCatalog
@@ -47,7 +58,7 @@ local function display_rebalances()
 			local product = _master_product_catalaog[titles[i].TitleId]
 				if titles[i].Quantity ~= nil and titles[i].Quantity > 0 then
 					kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), 
-										tostring( titles[i].Quantity ) )
+										tostring( product ~= nil and titles[i].Quantity or "0" ) )
 					kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), 
 										tostring( product ~= nil and product.long_name 
 											or "**Title Information Not Found**"  ) )
@@ -63,11 +74,17 @@ local function display_rebalances()
 	if titles_per_page >= #titles then
 		-- all titles fit on first page, hide scroll bar assets
 		kernel.disableactor( "rebalance_scroll_up" )
-		kernel.hideactor( "rebalance_scroll_track" )
 		kernel.disableactor( "rebalance_scroll_down" )
 		kernel.disableactor( "scroll_up_background" )
 		kernel.disableactor( "scroll_down_background" )
 		kernel.disableactor( "scroll_bar_background" )
+		kernel.disableactor( "rebalance_scroll_track" )
+		kernel.hideactor( "rebalance_scroll_up" )
+		kernel.hideactor( "rebalance_scroll_down" )
+		kernel.hideactor( "scroll_up_background" )
+		kernel.hideactor( "scroll_down_background" )
+		kernel.hideactor( "scroll_bar_background" )
+		kernel.hideactor( "rebalance_scroll_track" )
 	else
 		local scroll_pos = 0
 		if current_page == 0 then
@@ -115,8 +132,10 @@ kernel.registeractorhitnotify(
 	end
 )
 
+calculate_rebalance_ins()
+local rebalance_instructions = "Total Quantity: " .. tostring( total_rebalance_in_titles ) .. "\n\n"
+kernel.setmacro( "VMZRebalance:Instructions", rebalance_instructions .. tostring(strings["rebalance_instructions"]) )
 kernel.setmacro( "VMZRebalance:Title", tostring(strings["rebalance_header"]) )
-kernel.setmacro( "VMZRebalance:Instructions", tostring(strings["rebalance_instructions"]) )
 kernel.setmacro( "VMZRebalance:CloseButton", tostring(strings["rebalance_close_button"]) )
 kernel.setmacro( "VMZRebalance:QuantityHeader", tostring(strings["rebalance_column_quantity"]) )
 kernel.setmacro( "VMZRebalance:TitleHeader", tostring(strings["rebalance_column_title"]) )

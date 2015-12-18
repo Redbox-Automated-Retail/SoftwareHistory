@@ -18,6 +18,8 @@ function newvmzinfo()
 	t.last_thin_unavailable = false
 	t.thins_outside_vmz_count = 0
 	t.thins_outside_vmz_count_completed = false;
+	t.redeploys_outside_vmz_count = 0
+	t.redeploys_outside_vmz_count_completed = false;
 
 	--note the immediate call in the immediate call is to prevent the 2 immediates fighting over which gets to run
 	t.load = function(self, progress_mgr)
@@ -26,14 +28,25 @@ function newvmzinfo()
 		self.last_thin_unavailable = false
 		self.thins_outside_vmz_count = 0
 		self.thins_outside_vmz_count_completed = false
+		self.redeploys_outside_vmz_count = 0
+		self.redeploys_outside_vmz_count_completed = false;
 
 		-- Determine the # of thins outside the VMZ
-		local total_thins_list = get_thin_barcodes()
+		local total_thins_list = get_thin_barcodes2()
 		barcodes_vmz_status ( false, true, total_thins_list, function( result_list )
 			self.thins_outside_vmz_count_completed = true
 			self.thins_outside_vmz_count = #result_list
-			kernel.setactortext("thins_outside_vmz_label", "Thins outside the VMZ: " .. tostring(self.thins_outside_vmz_count))
-			kernel.markactordirty("thins_outside_vmz_label")
+			kernel.setactortext("thins_outside_vmz_value", tostring(self.thins_outside_vmz_count))
+			kernel.markactordirty("thins_outside_vmz_value")
+		end)
+		
+		local total_redeploy_list = kernel.rental_inventory_get_rapidstatus_by_status("Redeployment");
+		local redeploy_table = {}
+		barcodes_vmz_status ( false, true, total_redeploy_list, function( result_list )
+			self.redeploys_outside_vmz_count_completed = true
+			self.redeploys_outside_vmz_count = #result_list
+			kernel.setactortext("thin_redeploys_outside_vmz_value", tostring(self.redeploys_outside_vmz_count))
+			kernel.markactordirty("thin_redeploys_outside_vmz_value")
 		end)
 
 		local result = self.hardware_mgr:executeimmediate(
@@ -165,25 +178,23 @@ function newvmzinfo()
 	
 	t.failed_update_text = function( self )
 		kernel.setactortext("dump_bin_label","Unable to read VMZ data")
-		kernel.setactortext("last_thin_label","Close and re-open VMZ management to try again")
 		kernel.setactorforegroundcolor("dump_bin_label","Red")
-		kernel.setactorforegroundcolor("last_thin_label","Red")
 	end
 
 	t.success_update_text = function( self )
 		kernel.setactorforegroundcolor("dump_bin_label","Black")
-		kernel.setactorforegroundcolor("last_thin_label","Black")
 		kernel.setactortext("dump_bin_label","Discs in Dump Bin: " .. self.bin_count)
-		if self.thin_deck == 0 or self.thin_slot == 0 then
-			kernel.setactortext("last_thin_label","No thins in the VMZ.")
-		else
-			kernel.setactortext("last_thin_label","Last thin at Deck: " .. self.thin_deck .. " Slot: " .. self.thin_slot)
-		end
-		kernel.showactor("thins_outside_vmz_label")
+		kernel.showactor("thins_outside_vmz_value")
 		if self.thins_outside_vmz_count_completed then
-			kernel.setactortext("thins_outside_vmz_label", "Thins outside the VMZ: " .. tostring(self.thins_outside_vmz_count))
+			kernel.setactortext("thins_outside_vmz_value", tostring(self.thins_outside_vmz_count))
 		else
-			kernel.setactortext("thins_outside_vmz_label", "Thins outside the VMZ: Calculating...")
+			kernel.setactortext("thins_outside_vmz_value", "NA")
+		end
+		kernel.showactor("thin_redeploys_outside_vmz_value")
+		if self.redeploys_outside_vmz_count_completed then
+			kernel.setactortext("thin_redeploys_outside_vmz_value", tostring(self.redeploys_outside_vmz_count))
+		else
+			kernel.setactortext("thin_redeploys_outside_vmz_value", "NA")
 		end
 	end
 

@@ -35,7 +35,7 @@
 		/>
 		
 	  <actor
-		name="close_area"
+		name="merch_close_area"
 		x="940"
 		y="0"
 		width="84"
@@ -89,8 +89,64 @@
 		foregroundColor="White"
 		font="font_target_small"
 		visible="true" />
+			
+	<actor
+		name="disc_image"
+		x="65"
+		y="310"
+		width="300"
+		height="250"
+		optionFlags="Image"
+		visible="false" />
 	
+	<!--hack for multi format text in rebalances screen-->
+	<actor
+		name="load_redeployment_body_text"
+		x="50"
+		y="265"
+		width="964"
+		text="${VMZMerchFlow:RedploymentBody}"
+		optionFlags="Text, TextShadow"
+		foregroundColor="White"
+		font="font_target_medium_bold"
+		visible="true" />
+
+	<actor
+		name="quantity_body_text"
+		x="142"
+		y="265"
+		width="70"
+		text="${VMZMerchFlow:QuantityBody}"
+		optionFlags="Text, TextShadow"
+		foregroundColor="Black"
+		horizontalAlignment="center"
+		font="font_target_medium_bold"
+		visible="true" />
+
+	<actor
+		name="remaining_load_rebalances_body_text"
+		x="50"
+		y="365"
+		width="964"
+		text="${VMZMerchFlow:RemainingBody}"
+		optionFlags="Text, TextShadow"
+		foregroundColor="White"
+		font="font_target_small"
+		visible="true" />
+
 	<!-- Buttons -->	
+	<actor
+		name="alternate_button"
+		x="60"
+		y="638"
+		width="180"
+		height="80"
+		text="${VMZMerchFlow:AlternateButton}"
+		font="medium_large_font"
+		cornerSize="15,15"
+		style="yellow_button_style"
+		visible="false" />
+
 	<actor
 		name="vend_button"
 		x="564"

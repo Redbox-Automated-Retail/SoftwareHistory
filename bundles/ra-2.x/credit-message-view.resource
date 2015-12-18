@@ -35,6 +35,19 @@
 				optionFlags="Background, DrawBorder" />
 				
 			<actor
+				name="message_header_label"
+				x="190"
+				y="142"
+				width="644"
+				height="45"
+				text="${MessageHeaderText}"
+				font="font_target_medium_large"
+				foregroundColor="181,18,27"
+				horizontalAlignment="near"
+				optionFlags="Text"
+				visible="false" />
+
+			<actor
 				name="credit_message_label"
 				x="190"
 				y="229"
@@ -50,11 +63,11 @@
 				name="credit_first_button"
 				x="190"
 				y="578"
-				width="205"
+				width="220"
 				height="69"
 				text=""
 				cornerSize="32,15"
-				font="font_target_small_medium"
+				font="font_target_small_button_overlays"
 				visible="false"
 				style="light_gray_with_gray_border_button_style" />
 				
@@ -69,6 +82,7 @@
 				text=""
 				visible="false"
 				style="red_button_style" />
+				
 		</scene>
 	</aspect>
 </resource>

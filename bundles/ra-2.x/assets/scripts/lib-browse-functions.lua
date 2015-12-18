@@ -1,24 +1,19 @@
 --
 -- lib-browse-functions.lua
--- Copyright (C) 2010 Redbox Automated Retail, LLC.
+-- Copyright (C) 2015 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
 browse_filtered_products_table = {}
-movie_product_map = {}
 local x=80
 local y=80
-local max_set_number
-local total_images_count
-local alpha_opacity = 0.2
-local browse_opacity = 0.4
 local rated_movie_in_cart = false
 local blu_ray_movie_in_cart = false
 local rated_game_in_cart = false
 local subplatform_game_in_cart = false
 local purchase_product_in_cart = false
 local subplatform_message = ""
-local customer_selected_product_id
+
 
 AlphaRanges = {
 	{ range_name = "A - D", ranges = { A = true, B = true, C = true, D = true } },
@@ -203,17 +198,6 @@ function show_or_hide_for_sale_button()
 	end
 end
 
-function remove_movie_from_selected_product_map( actor_name )
-	local movie_to_remove_index = string.sub( actor_name, string.find( actor_name, "%d" ), #actor_name )
-	local i = movie_to_remove_index + 0
-	while ( i <= #selected_movies_list ) do
-		movie_product_map[ "selectedmovie_" .. i ] = movie_product_map[ "selectedmovie_" .. i + 1 ]
-		i = i + 1
-	end
-	movie_product_map[ "selectedmovie_" .. i-1 ] = nil
-	movie_product_map[ "selectedmovie_" .. i ] = nil
-end
-
 ProductFamilies.new_selection_tracker = function( self, default )
 	local t = {
 		selected_family = default or "Movies",
@@ -240,108 +224,11 @@ ProductFamilies.new_selection_tracker = function( self, default )
 	return t
 end
 
-function set_actors_opacity( value )
-	kernel.setactoropacity( "movie_11", value )
-	kernel.setactoropacity( "movie_12", value )
-	kernel.setactoropacity( "movie_13", value )
-	kernel.setactoropacity( "movie_14", value )
-end
-
 function show_browse_view( total_count )
-	highlight_sort_button( browse_selected_sort )
-	total_images_count = total_count
+    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
 	ProductCatalog:show_filtered_grid()
-end
-
-highlight_tab = function( tab_number )
-	for i = 1, 7 do
-		if tab_number == i then
-			kernel.setactorbackgroundcolor("tab_" .. tostring( i ), {["r"] = 143, ["g"] = 10, ["b"] = 10})
-			kernel.setactorgradienttargetcolor("tab_" .. tostring( i ), {["r"] = 170, ["g"] = 37, ["b"] = 37})
-		else
-			kernel.setactorbackgroundcolor("tab_" .. tostring( i ), {["r"] = 88, ["g"] = 85, ["b"] = 85})
-			kernel.setactorgradienttargetcolor("tab_" .. tostring( i ), {["r"] = 51, ["g"] = 48, ["b"] = 48})
-		end
-	end
-end
-
-load_shopping_cart = function()
-	if #ShoppingCart.items > 0 then
-		selected_products_list = {}
-		local count = total_images_count
-		if count == 18 then
-			count = count + 2
-		end
-
-		for k, v in ipairs( ShoppingCart.items ) do
-			local product = MasterProductCatalog[ v.product_id ]
-			if product ~= nil then
-				table.insert( selected_products_list, product )
-				movie_product_map[ "selectedmovie_" .. k ] = product
-				draw_image( product, "selectedmovie_" .. k )
-				kernel.showactor( "selectedmovie_" .. k .. "_border" )
-				--Display purchase flag on mini-cart
-				if v.action == "purchase" then
-					kernel.showactor( "selectedmovie_" .. k .. "_flag" )
-				else
-					kernel.hideactor( "selectedmovie_" .. k .. "_flag" )
-				end
-
-				-- Pre-offer titles cannot be removed from the Title Marketing screen
-				if ShoppingCart.in_cart_title_marketing == false
-				or v.add_sequence == "post_offer"
-				then
-					kernel.showactor( "cancel_" .. k )
-				end
-
-				for i = 1, count do
-					local browse_item = movie_product_map[ "movie_".. tostring( i ) ]
-					if browse_item ~= nil and browse_item.product_id == product.product_id then
-						local product_history = ProductHistory[ product.product_id ]
-
-						if product.product_id ~= 1139
-						or ( product.product_id == 1139 and ProductCatalog:in_stock( product.product_id, product_history ) == false )
-						then
-							if browse_selected_sort == "alpha" then
-								kernel.setactoropacity("movie_" .. tostring( i ), alpha_opacity )
-							else
-								kernel.setactoropacity("movie_" .. tostring( i ), browse_opacity )
-							end
-							kernel.disableactor( "flag_" .. tostring( i ) )
-							kernel.disableactor( "banner_" .. tostring( i ) )
-							kernel.hideactor( "add_movie_" .. tostring( i ) )
-							kernel.disableactor( "add_movie_lower_" .. tostring( i ) )
-						end
-						break
-					end
-				end
-			end
-		end
-
-		if #selected_products_list  == 5 then
-			for i = 1, count do
-				if browse_selected_sort == "alpha" then
-					kernel.setactoropacity( "movie_" .. tostring( i ), alpha_opacity )
-				else
-					if  browse_selected_sort ~= "coming-soon" then
-						kernel.setactoropacity( "movie_" .. tostring( i ), browse_opacity )
-					end
-				end
-				kernel.disableactor( "flag_" .. tostring( i ) )
-				kernel.disableactor( "banner_" .. tostring( i ) )
-				kernel.hideactor( "add_movie_" .. tostring( i ) )
-				kernel.disableactor( "add_movie_lower_" .. tostring( i ) )
-			end
-		end
-
-		if kernel.getculture() == "en-US" then
-			kernel.setactortext( "my_rentals_button", "CHECK OUT (" .. #ShoppingCart.items .. ")" )
-		elseif kernel.getculture() == "es-MX" then
-			kernel.setactortext( "my_rentals_button", "CAJA (" .. #ShoppingCart.items .. ")" )
-		end
-
-		kernel.hideactor( "add_to_cart_label" )
-		kernel.hideactor( "add_to_cart_label_image" )
+	if (kernel.getfilter( "ada_accessible" ) == "True") then
+		draw_ada_control()
 	end
 end
 
@@ -364,75 +251,7 @@ game_allowed_to_be_shown = function( product_type )
 	return true
 end
 
-ProductCatalog.filter_products_title_marketing = function( self )
-	--cache globals to locals for improved performance
-	local _ProductTypes = ProductTypes
-	local _ProductFamilies = ProductFamilies
-	local _History = ProductHistory
-	local _MasterProductCatalog = MasterProductCatalog
-
-	local products = {}
-	filtered_product_all_family = {}
-
-	local AddValidProductToResult = function( product_id )
-		local product_type = nil
-		local product = _MasterProductCatalog[ product_id ]
-		if product == nil then
-			return
-		end
-
-		local history = _History[ product_id ]
-		local do_not_rent_flag = false
-		product_type = _ProductTypes[product.product_type_id]
-		if product.do_not_rent_date ~= nil then
-			do_not_rent_flag = product.do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" )
-		end
-		local cache = self[ product.product_id ]
-		if cache ~= nil then
-			product.can_be_sold = false -- Customers should not be making purchases from the Title Marketing view
-			product.is_available = cache.is_available == nil and false or cache.is_available
-		end
-		if self:in_stock( product.product_id, history )
-		and product.is_available == true
-		and do_not_rent_flag == false
-		and ( product_type.product_family_id ~= 2 or game_allowed_to_be_shown( product_type ) == true )
-		then
-			table.insert( products, product )
-			table.insert( filtered_product_all_family, product )
-		end
-	end
-
-	local _in_cart = GetInCartPromoAction()
-	if _in_cart ~= nil then
-		if _in_cart.product_id_list ~= nil then
-			local title_list = string.split( _in_cart.product_id_list, "," )
-			for _, v in ipairs( title_list ) do
-				AddValidProductToResult( v )
-			end
-		elseif _in_cart.exclude_id_list ~= nil
-		and #_in_cart.exclude_id_list > 0 then
-			for k, v in self:pairs() do
-				if inlist( _in_cart.exclude_id_list, v.product_id, "," ) == false then
-					AddValidProductToResult( v.product_id )
-				end
-			end
-		end
-	end
-
-	return products
-
-end
-
-ProductCatalog.filter_products = function( self )
-	--cache globals to locals for improved performance
-	local _ProductTypes = ProductTypes
-	local _ShoppingCart = ShoppingCart
-	local _ProductFamilies = ProductFamilies
-	local _History = ProductHistory
-	local _MasterProductCatalog = MasterProductCatalog
-	local products = {}
-	filtered_product_all_family = {}
-	-- Check in-cart include title and exclude title lists no longer limited to use in Title Marketing browse mode
+ProductCatalog.filter_products = function(self)
 	local _in_cart = GetInCartPromoAction()
 	local _incart_include_titles = {}
 	local _incart_exclude_titles = {}
@@ -466,196 +285,27 @@ ProductCatalog.filter_products = function( self )
 		_incart_include_titles = nil
 		_incart_exclude_titles = nil
 	end
-
-
-	for k, v in self:pairs() do
-		local product_type = nil
-		local product = _MasterProductCatalog[ v.product_id ]
-		local history = _History[ v.product_id ]
-		local do_not_rent_flag = false
-		if product ~= nil then
-			product_type = _ProductTypes[product.product_type_id]
-		end
-		if product ~= nil and product.do_not_rent_date ~= nil then
-			do_not_rent_flag = product.do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" )
-		end
-		if  product ~= nil
-		and product_type ~= nil
-		and ( product_type.product_family_id ~= 2 or game_allowed_to_be_shown( product_type ) == true )
-		and do_not_rent_flag == false
-		and history ~= nil then
-			local product_family = _ProductFamilies[product_type.product_family_id]
-
-			--add in cache state variables...
-			local cache = self[ product.product_id ]
-			if cache ~= nil then
-				product.can_be_sold = cache.can_be_sold == nil and false or cache.can_be_sold
-				product.is_available = cache.is_available == nil and false or cache.is_available
-				product.is_coming_soon = cache.is_coming_soon or false
-			end
-
-			if   browse_filter_family_tracker:is_match( product_family.product_family_name, product_type.product_type_name )
-			and (browse_filter_genre_selected == nil or browse_filter_genre_selected == "ALL" or product.genres[browse_filter_genre_selected] == true)
-			and (browse_filter_alpha_selected == nil  or browse_filter_alpha_selected==string.sub( product.sort_name, 1, 1) or browse_filter_alpha_selected==string.upper(string.sub( product.sort_name, 1, 1)) or (browse_filter_alpha_selected == "0-9" and ( AlphaRanges[8].ranges[tonumber(string.sub( product.sort_name, 1, 1 ))])))
-			and (browse_rent_or_sellthru == "rent" or (browse_rent_or_sellthru == "sellthru" and product.can_be_sold) )
-			and product.sell_thru_new ~= true
-			and browse_filter_mode ~= "for-sale"
-			then
-				if browse_filter_mode == "coming-soon" and ( product_type.product_family_id == 1 or product_type.product_family_id == 2 ) then
-						if product.is_coming_soon == true and v.product_id ~= 1139 then
-							table.insert(products, product)
-						end
-				else
-					if (self:in_stock( v.product_id, history)
-					or self:out_of_stock_within_expiration_date( v.product_id, history ) == true
-					or is_product_id_selected(v.product_id) == true)
-					and product.is_available == true
-					and ( _incart_include_titles == nil or _incart_include_titles[v.product_id] ~= nil )
-					and ( _incart_exclude_titles == nil or _incart_exclude_titles[v.product_id] == nil )
-					then
-						table.insert(products, product)
-					end
-				end
-			end
-
-			if   (browse_filter_genre_selected == nil or browse_filter_genre_selected == "ALL" or product.genres[browse_filter_genre_selected] == true)
-			and  (browse_filter_alpha_selected == nil or browse_filter_alpha_selected==string.sub( product.sort_name, 1, 1 ))
-			and product.sell_thru_new ~= true
-			then
-				if browse_filter_mode == "coming-soon" and ( product_type.product_family_id == 1 or product_type.product_family_id == 2 ) then
-						if product.is_coming_soon == true and v.product_id ~= 1139 then
-							table.insert(filtered_product_all_family, product)
-						end
-				else
-					if (self:in_stock( v.product_id, history)
-					or self:out_of_stock_within_expiration_date( v.product_id, history ) == true
-					or is_product_id_selected(v.product_id) == true)
-					and product.is_available == true
-					and ( _incart_include_titles == nil or _incart_include_titles[v.product_id] ~= nil )
-					and ( _incart_exclude_titles == nil or _incart_exclude_titles[v.product_id] == nil )
-					then
-						if browse_filter_mode == "for-sale" then
-							if  browse_filter_family_tracker.selected_family == "Movies" and product_family.product_family_name == "Movies"
-							then
-								local price_purchase = StoreManager:get_purchase_price()
-								if price_purchase ~= nil
-								and price_purchase > 0
-								and product.sell_thru == true
-								and product.can_be_sold then
-									table.insert( products, product )
-								end
-							elseif browse_filter_family_tracker.selected_family == "Games" and product_family.product_family_name == "Games"
-							then
-								local price_purchase = StoreManager.PricingManager:get_adjusted_price( product.sellthru_price )
-								if price_purchase ~= nil
-								and price_purchase > 0
-								and product.sell_thru == true
-								and product.sellthru_date ~= nil
-								and product.sellthru_date <= get_current_date_string( "%4d%02d%02d%02d%02d" )
-								and product.can_be_sold  then
-									table.insert( products, product )
-								end
-							end
-						else
-							table.insert(filtered_product_all_family, product)
-						end
-					end
-				end
-			end
-		else
-			--kernel.log( "WARNING! ProductCatalog.filter_products couldn't find: v.product_id = " .. tostring( v.product_id ) )
-		end
-	end
-
-	table.sort(
-		products,
-		function( a, b )
-			if browse_selected_sort == "alpha" then
-				return tostring( string.lower( a.sort_name ) ) < tostring( string.lower( b.sort_name ) )
-			else
-				if browse_selected_sort == "coming-soon" then
-					if tostring( a.release_date ) ~= tostring( b.release_date ) then
-						-- Coming soonest before those coming later
-						return tostring( a.release_date ) < tostring( b.release_date )
-					end
-				else
-					if tostring( a.sort_date ) ~= tostring( b.sort_date ) then
-						-- Newest to Oldest
-						return tostring( a.sort_date ) > tostring( b.sort_date )
-					end
-				end
-				if tonumber( a.box_office_gross ) ~= tonumber( b.box_office_gross ) then
-					return tonumber( a.box_office_gross ) > tonumber( b.box_office_gross )
-				else
-					return tostring( string.lower( a.sort_name ) ) < tostring( string.lower( b.sort_name ) )
-				end
-			end
-		end
-	)
-
-	if #products == 0 then
-		-- No products available for the sort, display an appropriate message
-		if browse_filter_family_tracker.selected_family == "Games" then 
-			kernel.setactortext( "filter_empty_text", strings.filter_games_empty )
-		else
-			kernel.setactortext( "filter_empty_text", strings.filter_movies_empty )
-		end
-
-		if DisableGames
-		or ProductCatalog:in_stock_games_count() == 0 then
-			kernel.setactorimage( "image_filter_empty_background", "image_filter_empty_background_no_notch" )
-		else
-			kernel.setactorimage( "image_filter_empty_background", "image_filter_empty_background" )
-		end
-		kernel.showactor( "image_filter_empty_background" )
-		kernel.showactor( "filter_empty_text" )
-	else
-		-- ensure the filter empty assets are hidden
-		kernel.hideactor( "image_filter_empty_background" )
-		kernel.hideactor( "filter_empty_text" )
-	end
 	
-	return products
+	return kernel.rental_get_products(
+		kernel.get_session_value("BrowseState.BrowseFilterMode"),
+		browse_filter_family_tracker.selected_family,
+		browse_filter_family_tracker:get_family_type(),
+        kernel.get_session_value("BrowseState.BrowseSelectedSort"),
+		browse_filter_genre_selected,
+		_incart_include_titles,
+		_incart_exclude_titles,
+		kernel.getfilter( "ada_accessible" ) == "True")
+		
 end
 
--- adjust the product list to bring the dvd editions appear before the blu-ray editions of a title.
 ProductCatalog.filter_grid = function( self )
 
-	if ShoppingCart.in_cart_title_marketing == true then
-		browse_filtered_products = self:filter_products_title_marketing()
-	else
-		browse_filtered_products = self:filter_products()
-	end
-
-	for i, v in ipairs( browse_filtered_products ) do
-		if v.product_type_id == 2 then
-			for j, k in ipairs( browse_filtered_products ) do
-			if k.long_name ~= nil then
-				local current_long_name = string.sub( v.long_name, 0, string.len( v.long_name ) - 10 )
-					if k.long_name == current_long_name then
-						if j > i then
-							table.insert( browse_filtered_products, j + 1, v )
-							table.remove( browse_filtered_products, i )
-						elseif j < i then
-							table.insert( browse_filtered_products, j + 1, v )
-							table.remove( browse_filtered_products, i + 1 )
-						end
-						break
-					end
-				end
-			end
-		end
-	end
-
-	if browse_selected_sort ~= "alpha" then
+	browse_filtered_products = self:filter_products()
+    if kernel.get_session_value("BrowseState.BrowseSelectedSort") ~= "alpha" then
 		local In_stock_products = {}
 		local Out_of_stock_products = {}
 		for i, v in ipairs( browse_filtered_products ) do
-			local product_history = ProductHistory[ v.product_id ]
-			if ProductCatalog:in_stock( v.product_id, product_history ) == false
-			and is_product_selected( v )==false
-			and v.is_available == true
-			then
+			if (v.in_stock == false and v.show_out_of_stock == true) then
 				table.insert( Out_of_stock_products, v )
 			else
 				table.insert( In_stock_products, v )
@@ -668,6 +318,7 @@ ProductCatalog.filter_grid = function( self )
 		browse_filtered_products = In_stock_products
 	end
 	alpha_filtered_products = browse_filtered_products
+
 	return browse_filtered_products
 end
 
@@ -699,26 +350,8 @@ ProductCatalog.set_title_marketing_view = function( self )
 	kernel.setactorgradienttargetcolor("bg_box_top", {["r"] = 143, ["g"] = 10, ["b"] = 10})
 	kernel.setactorbackgroundcolor("bg_box_top", {["r"] = 0, ["g"] = 0, ["b"] = 0})
 	kernel.hideactor( "bg_box_bottom" )
-	kernel.setactory( "left_page_shadow", 0 )
-	kernel.setactorheight( "left_page_shadow", 570 )
-	kernel.setactory( "right_page_shadow", 0 )
-	kernel.setactorheight( "right_page_shadow", 570 )
 	kernel.setactortext( "title_marketing_h1", kernel.getmacro( "InCartPromoHeaderMessage" ) )
 	kernel.showactor( "title_marketing_h1" )
-
-	-- Hide all the tabs at the top
-	kernel.hideactor( "tab_1" )
-	kernel.hideactor( "tab_2" )
-	kernel.hideactor( "tab_2_text_a" )
-	kernel.hideactor( "tab_2_text_b" )
-	kernel.hideactor( "tab_3" )
-	kernel.hideactor( "tab_4" )
-	kernel.hideactor( "tab_5" )
-	kernel.hideactor( "tab_6" )
-	kernel.hideactor( "tab_7" )
-	kernel.hideactor( "tab_switch_product_family_border" )
-	kernel.hideactor( "tab_switch_product_family" )
-	kernel.hideactor( "image_next_white_arrow" )
 
 	-- Hide all sort and filter buttons
 	kernel.hideactor( "newest_button" )
@@ -737,122 +370,22 @@ ProductCatalog.set_title_marketing_view = function( self )
 	kernel.hideactor( "startover_arrow" )
 end
 
-draw_pagination_dots = function()
-	if set_number > 0 and max_set_number > 0 then
-		kernel.showactor( "browse_pagination_text" )
-		kernel.showactor( "browse_pagination_L_image" )
-		kernel.showactor( "browse_pagination_of_text" )
-		kernel.showactor( "browse_pagination_R_image" )
-		kernel.setactortext( "browse_pagination_L_image", set_number )
-		kernel.setactortext( "browse_pagination_R_image", max_set_number )
-	end
-end
-
-remove_pagination_dots = function()
-	kernel.hideactor( "browse_pagination_text" )
-	kernel.hideactor( "browse_pagination_L_image" )
-	kernel.hideactor( "browse_pagination_of_text" )
-	kernel.hideactor( "browse_pagination_R_image" )
-end
-
-function refresh_barriers()
-	for i=1,20,1 do
-		kernel.removeactor("barrier_"..i)
-		kernel.removeactor("barrier_label_"..i)
-		kernel.removeactor("movie_"..i)
-		kernel.removeactor("movie_"..i .."_title")
-		kernel.removeactor("add_movie_"..i)
-	end
-
-	for i=1,21,1 do
-		kernel.removeactor("separator_"..i)
-	end
-	x=80
-	y=80
-end
-
-function draw_barriers()
-local x1=70
-local y1=60
-	for i=1,21,1 do
-		if ( i == 8 ) then
-			x1=370
-			y1=60
-		end
-		if ( i == 15 ) then
-			x1=670
-			y1=60
-		end
-
-		aplha_scene_manager:add_actor(
-			"separator_" ..i,
-			x1,
-			y1+70,
-			280,
-			1,
-			{
-				renderOptions = "Background",
-				backgroundColor= {["r"] = 163, ["g"] = 163, ["b"] = 163}
-			}
-		)
-		y1=y1+70
-	end
-end
-
-move_left = function( total_count )
-	set_number = set_number - 1
-	total_images_count = total_count
-	if browse_selected_sort=="alpha" then
-		draw_images_set( browse_filtered_products_table )
-	else
-		draw_images_set( alpha_filtered_products )
-	end
-	draw_pagination_dots()
-end
-
-move_right = function( total_count )
-	set_number = set_number + 1
-	total_images_count = total_count
-	if browse_selected_sort=="alpha" then
-		draw_images_set( browse_filtered_products_table )
-	else
-		draw_images_set( alpha_filtered_products )
-	end
-	draw_pagination_dots()
-end
-
 draw_image = function( product_to_draw, control_to_draw )
 	if browse_filter_family_tracker.selected_family == "Movies" then
-		if kernel.getculture() == "es-MX" then
-			source_image_name = "image_movie_missing_box_art_es_MX"
-		else
-			source_image_name = "image_movie_missing_box_art"
-		end
+		source_image_name = "image_movie_missing_box_art"
 	elseif browse_filter_family_tracker.selected_family == "Games" then
-		if kernel.getculture() == "es-MX" then
-			source_image_name = "image_game_missing_box_art_es_MX"
-		else
-			source_image_name = "image_game_missing_box_art"
-		end
+		source_image_name = "image_game_missing_box_art"
 	end
 
 	if product_to_draw ~= nil then
-		local image_registered = kernel.registerimagefromcache(	product_to_draw.image_file,	product_to_draw.image_file )
+		local image_registered = kernel.dataserviceregisterimage(	product_to_draw.image_file,	product_to_draw.image_file )
 		if image_registered then
 			source_image_name = string.format( "cache:%s", product_to_draw.image_file )
 		else
 			if ProductTypes[product_to_draw.product_type_id].product_family_id == 1 then
-				if kernel.getculture() == "es-MX" then
-					source_image_name = "image_movie_missing_box_art_es_MX"
-				else
-					source_image_name = "image_movie_missing_box_art"
-				end
+				source_image_name = "image_movie_missing_box_art"
 			elseif ProductTypes[product_to_draw.product_type_id].product_family_id == 2 then
-				if kernel.getculture() == "es-MX" then
-					source_image_name = "image_game_missing_box_art_es_MX"
-				else
-					source_image_name = "image_game_missing_box_art"
-				end
+				source_image_name = "image_game_missing_box_art"
 			end
 		end
 		kernel.showactor( control_to_draw )
@@ -861,30 +394,8 @@ draw_image = function( product_to_draw, control_to_draw )
 	end
 end
 
-find_empty_index = function()
-	local index = 1
-	while index < 6 do
-		if movie_product_map[ "selectedmovie_" .. tostring(index) ] ~= nil then
-			index = index + 1
-		else
-			return index
-		end
-	end
-	return 0
-end
-
 is_product_selected = function( product )
-	if product == nil then
-		return false
-	end
-	local is_selected = false
-	for k, v in ipairs( ShoppingCart.items ) do
-		if v.product_id == product.product_id then
-			is_selected = true
-			break
-		end
-	end
-	return is_selected
+	return ShoppingCart:contains_all_title_rollup_movie_group( product )
 end
 
 is_product_id_selected = function( product_id )
@@ -899,6 +410,10 @@ is_product_id_selected = function( product_id )
 end
 
 function highlight_sort_button( sort_name )
+	if TextToSpeechEnabled == true then
+		kernel.setmacro( "TTS:BrowsingFilter", sort_name )
+	end
+
 	local width = kernel.getactorwidth( "selected_button" )
 	show_or_hide_for_sale_button()
 	kernel.setactorwidth( "selected_button", 94 )
@@ -1016,7 +531,7 @@ check_product_availability = function()
 		return
 	end
 
-	highlight_sort_button( browse_selected_sort )
+    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
 end
 
 ProductCatalog.is_product_available = function( self, sort_name )
@@ -1094,6 +609,20 @@ ProductCatalog.show_sort_buttons = function( self )
 	kernel.setactorbackgroundcolor( "center_gray_background", {["r"] = 167, ["g"] = 167, ["b"] = 167} )
 	kernel.setactorgradienttargetcolor( "center_gray_background", {["r"] = 167, ["g"] = 167, ["b"] = 167} )
 	
+	if TextToSpeechEnabled == true then
+		if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.setmacro( "TTS:SwitchToFamily", strings.Games )
+			kernel.setmacro( "TTS:BrowsingFamily", strings.Movies )
+			kernel.setmacro( "TTS:BrowsingFamilySingular", "movie" )
+		else
+			kernel.setmacro( "TTS:SwitchToFamily", strings.Movies )
+			kernel.setmacro( "TTS:BrowsingFamily", strings.Games )
+			kernel.setmacro( "TTS:BrowsingFamilySingular", "game" )
+		end
+		kernel.setmacro( "TTS:FilterOptions", "Various Options" )
+		kernel.ttsrepeat() -- assets have been set and toggled
+	end
+	
 	if browse_filter_family_tracker.selected_family == "Movies" then
 		kernel.showactor( "abc_button" )
 		kernel.showactor( "blu_ray_button" )
@@ -1106,44 +635,27 @@ ProductCatalog.show_sort_buttons = function( self )
 		kernel.hideactor( "wii_u_button" )
 		kernel.setbordercolor( "abc_button", "white" )
 
-		local function enable_games()
-			kernel.setactortext( "tab_switch_product_family", strings.To_Games )
-		end
-
-		local function disable_games()
-			kernel.showactor( "tab_no_switch_product_family" )
-			kernel.hideactor( "tab_switch_product_family" )
-			kernel.hideactor( "tab_switch_product_family_border" )
-			kernel.hideactor( "image_next_white_arrow" )
-		end
-
 		if not DisableGames then
 			kernel.log( "Games are enabled." )
-			if ProductCatalog.in_stock_games_count() == 0 then
+			if ProductCatalog:in_stock_games_count() == 0 then
 				kernel.log( "Not Enough games in kiosk. Disabling Games tab." )
-				disable_games()
+				--disable_games()
 			else
-				enable_games()
+				--enable_games()
 			end
 		else
 			kernel.log( "Games are disabled. Disabling Games tab." )
-			disable_games()
+			--disable_games()
 		end
 
-		-- TOP 20 had top be split so we can increase the size of the 20
-		-- The original tab_2 text has to be cleared as it is used by the Games Tabs
-		kernel.setactortext( "tab_2", "" )
-		kernel.showactor( "tab_2_text_a" )
-		kernel.showactor( "tab_2_text_b" )
-		kernel.setactortext( "tab_2_text_a", strings.genre_1093a )
-		kernel.setactortext( "tab_2_text_b", strings.genre_1093b )
-		
-		kernel.setactortext( "tab_1", strings.Movies_ALL )
-		kernel.setactortext( "tab_3", strings.genre_1000 )
-		kernel.setactortext( "tab_4", strings.genre_1005 )
-		kernel.setactortext( "tab_5", strings.genre_1009 )
-		kernel.setactortext( "tab_6", strings.genre_1004 )
-		kernel.setactortext( "tab_7", strings.genre_1006 )
+		if TextToSpeechEnabled == true then
+			kernel.setmacro( "TTS:TabName_2", strings.genre_1093a .. " " .. strings.genre_1093b )
+			kernel.setmacro( "TTS:TabName_3", strings.genre_1000 )
+			kernel.setmacro( "TTS:TabName_4", strings.genre_1005 )
+			kernel.setmacro( "TTS:TabName_5", strings.genre_1009 )
+			kernel.setmacro( "TTS:TabName_6", strings.genre_1004 )
+			kernel.setmacro( "TTS:TabName_7", strings.genre_1006 )
+		end
 
 		if kernel.getfilter( "ada_accessible" ) == "True" then
 			kernel.setactorx( "blu_ray_button", 342 )
@@ -1164,7 +676,7 @@ ProductCatalog.show_sort_buttons = function( self )
 		kernel.setbordercolor( "newest_button", "white" )
 		kernel.setbordercolor( "for_sale_button", "white" )
 
-		if browse_selected_sort == "alpha" then
+        if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
 			kernel.setactorbackgroundcolor( "bg_box_top", "black" )
 		else
 			kernel.setactorbackgroundcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
@@ -1172,13 +684,7 @@ ProductCatalog.show_sort_buttons = function( self )
 			kernel.setactorgradienttargetcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
 			kernel.setactorgradienttargetcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
 			kernel.setactory( "bg_box_bottom", 318 )
-			kernel.hideactor( "left_page_shadow" )
-			kernel.hideactor( "right_page_shadow" )
-			kernel.showactor( "paddle_shadow" )
 			kernel.setactory( "center_gray_background", 563 )
-			kernel.setactorforegroundcolor( "browse_pagination_L_image", {["r"] = 60, ["g"] = 57, ["b"] = 57} )
-			kernel.setactorforegroundcolor( "browse_pagination_of_text", {["r"] = 60, ["g"] = 57, ["b"] = 57} )
-			kernel.setactorforegroundcolor( "browse_pagination_R_image", {["r"] = 60, ["g"] = 57, ["b"] = 57} )
 		end
 	else
 		-- GAMES
@@ -1259,35 +765,88 @@ ProductCatalog.show_sort_buttons = function( self )
 		enable_filter_button( "newest_button" )
 		align_filter_buttons() --sets x coords in centered manner
 		
-		kernel.setactortext("tab_switch_product_family", strings.To_Movies)
-		kernel.setactortext("tab_1", strings.Games_ALL)
-		kernel.hideactor( "tab_2_text_a" )
-		kernel.hideactor( "tab_2_text_b" )
-		kernel.setactortext("tab_2", strings.genre_1026)
-		kernel.setactortext("tab_3", strings.genre_1006)
-		kernel.setactortext("tab_4", strings.genre_1028)
-		kernel.setactortext("tab_5", strings.genre_1030)
-		kernel.setactortext("tab_6", strings.genre_1034)
-		kernel.setactortext("tab_7", strings.genre_1036)
+		if TextToSpeechEnabled == true then
+			kernel.setmacro( "TTS:TabName_2", strings.genre_1026 )
+			kernel.setmacro( "TTS:TabName_3", strings.genre_1006 )
+			kernel.setmacro( "TTS:TabName_4", strings.genre_1028 )
+			kernel.setmacro( "TTS:TabName_5", strings.genre_1030 )
+			kernel.setmacro( "TTS:TabName_6", strings.genre_1034 )
+			kernel.setmacro( "TTS:TabName_7", strings.genre_1036 )
+		end
 
-		--if browse_selected_sort == "alpha" then
-		--	kernel.setactorbackgroundcolor( "bg_box_top", "black" )
-		--else
-			kernel.setactorbackgroundcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactorbackgroundcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactorgradienttargetcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactorgradienttargetcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactory( "bg_box_bottom", 318 )
-			kernel.hideactor( "left_page_shadow" )
-			kernel.hideactor( "right_page_shadow" )
-			kernel.showactor( "paddle_shadow" )
-			kernel.setactory( "center_gray_background", 563 )
-			kernel.setactorforegroundcolor( "browse_pagination_L_image", {["r"] = 60, ["g"] = 57, ["b"] = 57} )
-			kernel.setactorforegroundcolor( "browse_pagination_of_text", {["r"] = 60, ["g"] = 57, ["b"] = 57} )
-			kernel.setactorforegroundcolor( "browse_pagination_R_image", {["r"] = 60, ["g"] = 57, ["b"] = 57} )
-		--end
+		kernel.setactorbackgroundcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
+		kernel.setactorbackgroundcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
+		kernel.setactorgradienttargetcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
+		kernel.setactorgradienttargetcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
+		kernel.setactory( "bg_box_bottom", 318 )
+		kernel.setactory( "center_gray_background", 563 )
 	end
-	highlight_sort_button( browse_selected_sort )
+	
+	if TextToSpeechEnabled == true then
+		-- Set TTS:Filter buttons based on what are showing
+		local filter_num = 1
+		if kernel.isactorvisible( "blu_ray_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("blu_ray_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "blu_ray_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "newest_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("newest_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "newest_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "abc_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("abc_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "abc_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "for_sale_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("for_sale_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "for_sale_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "xbox_360_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("xbox_360_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "xbox_360_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "xbox_one_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("xbox_one_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "xbox_one_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "ps3_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("ps3_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "ps3_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "ps4_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("ps4_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "ps4_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "wii_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("wii_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "wii_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "wii_u_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("wii_u_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "wii_u_button" )
+			filter_num = filter_num + 1
+		end
+		if kernel.isactorvisible( "coming_soon_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("coming_soon_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "coming_soon_button" )
+			filter_num = filter_num + 1
+		end
+
+		if TextToSpeechEnabled == true then
+			kernel.ttsrepeat();  -- the titles and assests have been set and toggled
+		end
+	end
+	
+    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
 end
 
 function display_banner( type_name, productfamilytype, actor_count ) --Matt Will there be banners? no longer used?
@@ -1312,144 +871,6 @@ function display_banner( type_name, productfamilytype, actor_count ) --Matt Will
 		kernel.setactorimage( "banner_" .. tostring( actor_count ), "image_banner_" .. type_name )
 	else
 		kernel.hideactor( "banner_" .. tostring( actor_count ) )
-	end
-end
-
-function is_product_thinned( product_id )
-	product_barcodes = ProductToBarcode[ product_id ]
-	if product_barcodes ~= nil then
-		for k, v in pairs( product_barcodes ) do
-			if v.status == "Thinned" then
-				return true
-			end
-		end
-	end
-	return false
-end
-
-local function display_flag( product, index )
-	if product == nil then
-		return
-	end
-
-	if ShoppingCart.in_cart_promo_offer_made == true
-	and ShoppingCart.in_cart_title_marketing == true
-	then
-		-- Mingle #3981 do not show flags in special title marketing mode
-		return
-	end
-
-	local releaseDate = string.sub( product.release_date, 1, 8 )
-	local calculatedSortDate = string.sub( product.sort_date, 1, 8 )
-	local days = kernel.getelapseddays( releaseDate, get_current_date_string( "%4d%02d%02d" ) )
-	local daysByCalculatedSortDate = kernel.getelapseddays( calculatedSortDate, get_current_date_string( "%4d%02d%02d" ) )
-	local product_history = ProductHistory[ product.product_id ]
-	local is_cart_empty = find_empty_index()
-
-	local show_flag_data = function( index, image, text, show_add_button )
-		kernel.showactor( "flag_" .. tostring( index ) )
-		kernel.setactorimage( "flag_" .. tostring( index ), image )
-		kernel.setactortext( "flag_" .. tostring( index ), text )
-		if show_add_button == true then
-			kernel.showactor("add_movie_" .. tostring(index))
-			kernel.enableactor("add_movie_lower_" .. tostring(index))
-		else
-			kernel.hideactor( "add_movie_" .. tostring(index ) )
-			kernel.disableactor( "add_movie_lower_" .. tostring(index ) )
-		end
-	end
-
-	-- Coming Soon
-	if product.is_available == false then
-		show_flag_data( index, "image_flag_blue_small", strings.flag_coming_soon, false )
-		return
-	end
-
-	-- Out of Stock
-	if ProductCatalog:in_stock( product.product_id, product_history ) == false
-	and is_product_selected( product ) == false
-	and product.is_available == true
-	then
-		show_flag_data( index, "image_flag_gray_small", strings.flag_out_of_stock, false )
-		return
-	end
-
-	-- Award Winner
-	if product.genres[1002] ~= nil
-	and not is_product_selected( product ) then
-		show_flag_data( index, "image_flag_gold_small", strings.flag_award_winner, true  )
-		return
-	end
-
-	-- Early Release Titles
-	if StoreManager.PricingManager:is_early_released( product )
-	and StoreManager.PricingManager:is_alternate_priced( product.product_id )
-	and not is_product_selected( product ) then
-		local product_pricing = StoreManager.PricingManager:get_product_price( product.product_id )
-		local first_night_string = "$3"
-		if product_pricing.initial_night ~= nil then
-			first_night_string = string.format( "%s%.2f", strings.currency_symbol, product_pricing.initial_night )
-		end
-		show_flag_data( index, "image_flag_red_small", string.gsub( strings.flag_price_test, "{0}", first_night_string ), true )
-		return
-	end
-
-	-- Back Again Titles
-	if daysByCalculatedSortDate <= 14
-	and product.genres[1025] ~= nil
-	and browse_filter_family_tracker.selected_family ~= "Games"
-	and not is_product_selected( product ) then
-		show_flag_data( index, "image_flag_red_small", strings.flag_back_again, true )
-		return
-	end
-
-	-- Classics
-	if daysByCalculatedSortDate <= 14
-	and product.genres[1095] ~= nil
-	and browse_filter_family_tracker.selected_family ~= "Movies"
-	and not is_product_selected( product ) then
-		show_flag_data( index, "image_flag_red_small", strings.flag_classics, true )
-		return
-	end
-
-	-- New Releases
-	if days <= 28
-	and not is_product_selected( product ) then
-	--and browse_filter_family_tracker.selected_family ~= "Games" then -- Per Holly Joshi 9-Sep-2011 Email
-		show_flag_data( index, "image_flag_red_small", strings.flag_new, true )
-		return
-	end
-
-	-- Empty Case
-	if product.product_id == 1139 then
-		if ProductCatalog:in_stock(product.product_id, product_history ) == false then
-			show_flag_data( index, "image_flag_gray_small", strings.flag_out_of_stock, false )
-		else
-			kernel.hideactor( "flag_" .. tostring( index ) )
-			kernel.showactor( "add_movie_" .. tostring( index ) )
-			kernel.enableactor( "add_movie_lower_" .. tostring( index ) )
-		end
-		return
-	end
-
-	-- Last Chance
-	if days >= 105
-	and not is_product_selected( product )
-	and browse_filter_family_tracker.selected_family ~= "Games"
-	and is_product_thinned( product.product_id ) == true
-	then
-		show_flag_data( index, "image_flag_orange_small", strings.flag_last_chance, true )
-		return
-	end
-
-	-- Default is to hide the flag and allow user to add to cart unless cart is full
-	kernel.hideactor( "flag_" .. tostring( index ) )
-	if is_cart_empty < 0 or is_cart_empty > 5 then
-		kernel.showactor( "add_movie_" .. tostring( index ) )
-		kernel.enableactor( "add_movie_lower_" .. tostring( index ) )
-	else
-		kernel.hideactor( "add_movie_" .. tostring( index ) )
-		kernel.disableactor( "add_movie_lower_" .. tostring( index ) )
 	end
 end
 
@@ -1480,563 +901,175 @@ alpha_filter_list = function( browse_alpha_products )
 	return alpha_final_list
 end
 
-function add_actor_to_alphaview(type,position,x,y)
-	if type == "barrier_label" then
-		aplha_scene_manager:add_actor(
-			"barrier_label_" ..position,
-			x,
-			y+72,
-			30,
-			30,
-			{
-				renderOptions = "Text",
-				foregroundColor ="black",
-				horizontalAlignment = "center",
-				verticalAlignment ="center",
-				font = "font_akzidenz_bold_small"
-			}
-		)
-	elseif type == "movie" then
-		aplha_scene_manager:add_actor(
-			"movie_" ..tostring( position ),
-			x,
-			y+57,
-			40,
-			56,
-			{
-				renderOptions = "Image, DrawBorder, Background",
-				borderColor = { 60,56,57 },
-				backgroundColor = "0,0,0",
-				hotSpot = "0,0,230,60",
-				strokeWeight = 1,
-				hitOptions="Enabled"
-			}
-		)
-	elseif type == "title" then
-		aplha_scene_manager:add_actor(
-			"movie_" ..tostring( position ) .."_title",
-			x+60,
-			y+75,
-			190,
-			30,
-			{
-				font = "font_akzidenz_regular_smaller_13",
-				foregroundColor = "black",
-				optionFlags = "Text",
-				hitOptions="Enabled"
-			}
-		)
-	elseif type == "add_movie" then
-		aplha_scene_manager:add_actor(
-			"add_movie_" ..tostring( position ),
-			x+235,
-			y+65,
-			43,
-			43,
-			{
-				hotSpot = "-10, -10, 60, 60",
-				image ="image_add_to_cart",
-				hitOptions="Enabled"
-			}
-		)
+show_product_detail_view = function(product)
+	browse_selection_selected_product = product
+	product_detail_shown_from_view = kernel.peekview()
+	view_show( "product_detail_view" )
+end
+
+local page_number_changed = function(new_page_number)
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
+	end
+	if new_page_number < set_number then
+		view_analytics_event( "pageChange", "browse-page-back" )
+	else
+		view_analytics_event( "pageChange", "browse-page-next" )
+	end
+	local page_number_is_different = set_number ~= new_page_number
+	set_number = new_page_number
+	if kernel.getfilter( "ada_accessible" ) == "True" then
+		draw_ada_control()
+	end
+
+	if page_number_is_different then
+		increment_paddle_click_count()
 	end
 end
 
-local function register_add_movie_hit()
-	-- Add movie Plus signs
-	for i = 1, 20 do
-			if i ~= 7 or i ~= 13 then
-				kernel.registeractorhitnotify(
-					"add_movie_" .. tostring( i ),
-					function()
-						view_analytics_event( "buttonPress", "shopping-cart-add-item" )
-						selected_movie = "movie_" .. tostring( i )
-						if browse_filter_mode == "for-sale" then
-							browse_selection_cart_action = "purchase"
-						else
-							browse_selection_cart_action = "rental"
-						end
-						item_added_from_view = kernel.peekview()
-						add_item_tocart( 21 )
-					end
-				)
-			end
+increment_paddle_click_count = function ()
+	-- collection popup browse paddle click counter logic
+	if marketing_config ~= nil and marketing_config.collections_popup_paddle_clicks ~= nil and marketing_config.collections_popup_paddle_clicks > 0 then
+		local paddle_click_count = kernel.add_to_session_value("BrowseState.PaddleClickCount", 1) 
+		if paddle_click_count ~= nil and paddle_click_count >= marketing_config.collections_popup_paddle_clicks then
+			kernel.set_session_value("BrowseState.PaddleClickCount", 0)
+			check_collections_popup("interaction")
 		end
+	end
+end
+
+is_product_in_stock = function (product)
+	return ProductCatalog:in_stock( product.product_id, ProductHistory[ product.product_id ] )
+end
+
+is_shopping_cart_full = function ()
+	return #ShoppingCart.items == 5
+end
+
+update_products_shown = function( products_shown )
+	view_analytics_event( "productsShown", tostring( products_shown ) )
+end
+
+get_test_price = function (product) 
+	local result = nil
+	if StoreManager.PricingManager:is_early_released( product )	and StoreManager.PricingManager:is_alternate_priced( product.product_id ) then
+		local product_pricing = StoreManager.PricingManager:get_product_price( product.product_id )
+		local first_night_string = "$3"
+		if product_pricing.initial_night ~= nil then
+			first_night_string = string.format( "%s%.2f", strings.currency_symbol, product_pricing.initial_night )
+		end
+		result = first_night_string
+	end
+	return result
+end
+
+get_early_release_date2 = function (product)
+	return StoreManager.PricingManager:get_early_release_date( product )
+end
+
+is_title_marketing_mode = function ()
+	return ShoppingCart.in_cart_promo_offer_made == true and ShoppingCart.in_cart_title_marketing == true
+end
+
+is_coming_soon_item_registered = function (product)
+	return ShoppingCart.coming_soon_optin:indexof_optin_item( product.product_id ) > 0
+end
+
+is_coming_soon_optin_enabled = function()
+	return ComingSoonOptIn
+end
+
+register_email_reminder = function (product)
+	if ShoppingCart.coming_soon_optin.email_address == nil then
+		local coming_soon_optin_keyboard_manager = newkeyboardmanager()
+		coming_soon_optin_keyboard_manager:init( 64 )
+		coming_soon_optin_keyboard_manager:set_message( strings.coming_soon_email_optin_email_prompt_message )
+		coming_soon_optin_keyboard_manager:set_marketing( strings.coming_soon_email_optin_email_marketing_message )
+		show_email_confirmation = false
+		coming_soon_optin_keyboard_manager:set_validate_event(
+			function( text )
+				local coming_soon_optin_email_validator = newemailvalidator()
+				if coming_soon_optin_email_validator.validate_email( text ) == false then
+					return strings.email_error_message
+				end
+				return nil
+			end
+		)
+		coming_soon_optin_keyboard_manager:set_enter_event(
+			function()
+				ShoppingCart.coming_soon_optin.email_address = coming_soon_optin_keyboard_manager:get_value()
+				table.insert( ShoppingCart.coming_soon_optin.optin_items,
+					{
+						item_id = tostring( product.product_id ),
+						item_type = "KioskRentalTitleID",
+						optin_method_type = "EmailAddress",
+						optin_method_data = ShoppingCart.coming_soon_optin.email_address,
+						template_name = "EmailTemplate",
+						campaign_name = "ComingSoonRentalCampaign"
+					}
+				)
+				view_goback_safe( "coming soon email optin email entry screen - next button" )
+			end
+		)
+		coming_soon_optin_keyboard_manager:show( strings.email_tag )
+	else
+		table.insert( ShoppingCart.coming_soon_optin.optin_items,
+			{
+				item_id = tostring( product.product_id ),
+				item_type = "KioskRentalTitleID",
+				optin_method_type = "EmailAddress",
+				optin_method_data = ShoppingCart.coming_soon_optin.email_address,
+				template_name = "EmailTemplate",
+				campaign_name = "ComingSoonRentalCampaign"
+			}
+		)
+		draw_images_set( browse_filtered_products )
+	end
+end
+
+unregister_email_reminder = function(product)
+	table.remove( ShoppingCart.coming_soon_optin.optin_items, ShoppingCart.coming_soon_optin:indexof_optin_item( product.product_id ) )
+	draw_images_set( browse_filtered_products )
 end
 
 draw_images_set = function( filtered_products_list )
-	if browse_selected_sort == "alpha" 
-	and #filtered_products_list > 0 then
-		draw_barriers()
-	end
+	kernel.draw_images_set(
+		"Main",
+		browse_filter_family_tracker.selected_family,
+		filtered_products_list,
+		set_number,
+		browse_goto_alpha,
+		browse_filter_alpha_selected,
+		page_number_changed,
+		update_products_shown, 
+		show_product_detail_view,
+		add_movie_on_hit,
+		nil,
+		is_product_selected,
+		is_product_in_stock,
+		is_shopping_cart_full,
+		get_test_price,
+		get_early_release_date2,
+		is_title_marketing_mode,
+		is_coming_soon_optin_enabled,
+		is_coming_soon_item_registered,
+		register_email_reminder,
+		unregister_email_reminder)
 
-	max_set_number = math.ceil( #filtered_products_list / total_images_count )
-	kernel.enableactor( "left_arrow_button" )
-	kernel.enableactor( "right_arrow_button" )
-	x=80
-	y=80
-	if set_number ~= 0 then
-		if max_set_number > 0 then
-			kernel.showactor( "left_arrow_button" )
-			kernel.showactor( "right_arrow_button" )
-		else
-			kernel.hideactor( "left_arrow_button" )
-			kernel.hideactor( "right_arrow_button" )
-		end
-
-		local start_image_number = ( set_number * total_images_count ) - ( total_images_count - 1 )
-		local end_image_number = set_number * total_images_count
-		local left_upper_image_number = 0
-		local left_bottom_image_number = 0
-		local right_upper_image_number = 0
-		local right_bottom_image_number = 0
-		if browse_selected_sort ~= "alpha" then
-			left_upper_image_number = ( set_number * 10 ) - 15
-			left_bottom_image_number = ( set_number * 10 ) - 10
-			right_upper_image_number = ( set_number * 10 ) + 1
-			right_bottom_image_number = ( set_number * 10 ) + 6
-		end
-		local required_image_list = {}
-
-		for i = 1, 10 do
-			movie_product_map[ "movie_".. i ] = nil
-		end
-
-		local i = 1
-		for k, v in ipairs( filtered_products_list ) do
-			if k >= start_image_number and k <= end_image_number and browse_selected_sort ~= "alpha" then
-				table.insert( required_image_list, v)
-				if browse_selected_sort == "alpha" then
-					if i == 7 or i == 14 then i = i + 1 end
-				end
-				movie_product_map[ "movie_"..i ] = v
-				i = i + 1
-			end
-		end
-
-		if browse_selected_sort=="alpha" then
-			for k, v in ipairs( filtered_products_list ) do
-				if k >= start_image_number and k <= end_image_number then
-					if v == "" then
-						if i == 7 or i == 14 then i = i + 1 end
-						table.insert( required_image_list, "" )
-						movie_product_map[ "movie_"..i ] = v
-						i = i + 1
-					else
-						table.insert( required_image_list, v )
-						if i == 7 or i == 14 then i = i + 1 end
-						movie_product_map[ "movie_"..i ] = v
-						i = i + 1
-					end
-				end
-			end
-		end
-		if browse_selected_sort == "alpha" and i < 20 then
-			while i <= 20 do
-				if browse_selected_sort == "alpha" then
-					if i == 7 or i == 14 then i = i + 1 end
-				end
-				movie_product_map[ "movie_" .. i ] = nil
-				i = i + 1
-			end
-		elseif i < 10 then
-			while i <= 10 do
-				movie_product_map[ "movie_" .. i ] = nil
-				i = i + 1
-			end
-		end
-
-		--draw the image that are in visible region
-		local images_count = #required_image_list
-		local position = 1
-		local headers_counted = 0
-		local displayed_barrier_tags = 0
-
-		for k, v in ipairs( required_image_list ) do
-			local is_cart_empty = find_empty_index()
-			if ( k == 7 ) then
-				x=380
-				y=80
-			end
-			if ( k == 13 ) then
-				x=675
-				y=80
-			end
-			if ( k == 7 or k == 13 ) and browse_selected_sort == "alpha" then
-				position = position + 1
-				headers_counted = headers_counted + 1
-			end
-
-			if v == ""  then
-				kernel.hideactor( "add_movie_" .. position )
-				kernel.disableactor( "add_movie_lower_" .. position )
-				kernel.hideactor( "movie_" .. position )
-				kernel.hideactor( "movie_" .. position .. "_title" )
-				kernel.showactor( "barrier_" .. position )
-				kernel.showactor( "barrier_label_" .. position )
-				local displaycharacter
-				if k < #required_image_list then
-					displaycharacter = string.upper( string.sub( required_image_list[ k + 1 ].sort_name, 0, 1) )
-					if AlphaRanges[8].ranges[ tonumber( displaycharacter ) ] ~= nil then
-						displaycharacter = "#"
-					end
-					if browse_selected_sort == "alpha" then
-						add_actor_to_alphaview( "barrier_label", position, x, y )
-						y=y+70
-						kernel.setactorbackgroundcolor("separator_" ..position + 1, {["r"] = 0, ["g"] = 0, ["b"] = 0})
-						kernel.setactorheight("separator_" ..position + 1, 2)
-
-					end
-					displayed_barrier_tags = displayed_barrier_tags + 1
-					kernel.setactortext( "barrier_label_" .. position, displaycharacter )
-				else
-					for i, j in pairs( browse_filtered_products ) do
-						if required_image_list[ k - 1 ].sort_name == j.sort_name then
-							local label_name=string.upper( string.sub( browse_filtered_products[ i + 1 ].sort_name, 0, 1 ) )
-							if browse_selected_sort == "alpha" then
-								add_actor_to_alphaview( "barrier_label", position, x, y )
-								y=y+70
-							end
-							kernel.setactortext( "barrier_label_" .. position, label_name )
-							displayed_barrier_tags = displayed_barrier_tags + 1
-							break
-						end
-					end
-				end
-				kernel.registeractorhitnotify(
-					"movie_" .. tostring( position ),
-					function()
-					end
-				)
-			else
-				if browse_selected_sort == "alpha" then
-					add_actor_to_alphaview( "movie", position, x, y )
-				else
-					kernel.showactor( "add_movie_" .. position )
-					kernel.enableactor( "add_movie_lower_" .. position )
-					kernel.showactor( "movie_" .. position )
-					kernel.showactor( "movie_" .. position .. "_title" )
-				end
-				is_selected = is_product_selected( v )
-				draw_image( v, "movie_" .. tostring( position ) )
-				kernel.registeractorhitnotify( "movie_" .. tostring( position ),
-					function()
-						browse_selection_selected_product = v
-						product_detail_shown_from_view = kernel.peekview()
-						view_show( "product_detail_view" )
-					end
-				)
-			end
-			if v ~= "" then
-				if browse_selected_sort == "alpha" then
-					add_actor_to_alphaview( "title", position, x, y )
-					local movie_title = required_image_list[ k ].long_name
-					if string.len( movie_title ) > 18 then
-						local index = 1
-						local indexoflastspace = 0
-						movie_title  = string.sub( movie_title, 0, 19 )
-						while indexoflastspace < 19 do
-							local j = string.find( movie_title, "%s", index )
-							if j == nil then
-								break
-							end
-							index = j + 1
-							indexoflastspace = j
-						end
-						movie_title  = string.sub( movie_title, 0, indexoflastspace - 1 ) .. "..."
-					else
-						movie_title  = string.sub( movie_title, 0, 18 )
-					end
-					kernel.setactortext( "movie_" ..tostring( position ) .."_title", movie_title )
-					kernel.registeractorhitnotify( "movie_" ..tostring( position ) .."_title",
-						function()
-							browse_selection_selected_product = v
-							product_detail_shown_from_view = kernel.peekview()
-							view_show( "product_detail_view" )
-						end
-					)
-					add_actor_to_alphaview( "add_movie", position, x, y )
-					kernel.registeractorhitnotify(
-						"add_movie_" .. tostring( position ),
-						function()
-							view_analytics_event( "buttonPress", "shopping-cart-add-item" )
-							selected_movie = "movie_" .. tostring( i )
-							browse_selection_cart_action = "rental"
-							item_added_from_view = kernel.peekview()
-							add_item_tocart( 21 )
-						end
-					)
-					y=y+70
-				else
-					--display banner
-					local product_type = ProductTypes[ v.product_type_id ]
-					if browse_filter_mode ~= "coming-soon" then
-						kernel.hideactor( "banner_coming_soon_" .. tostring( position ) )
-						kernel.hideactor( "button_email_reminder_" .. tostring( position ) )
-						kernel.hideactor( "button_email_reminder_set_" .. tostring( position ) )
-						display_banner( product_type.product_type_name, product_type.product_family_id, position )
-						--display flag
-						display_flag( v, position )
-					end
-				end
-			end
-
-			position = position + 1
-
-			if v.product_id ~= 1139 then
-				--check if the movie is already selected or out of stock
-				if is_selected == true or ProductCatalog:in_stock( v.product_id, product_history ) == false or v.is_available == false then
-					kernel.hideactor( "add_movie_" .. tostring( position - 1 ) )
-					kernel.disableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-					if browse_selected_sort == "alpha" then
-						kernel.setactoropacity( "movie_" .. tostring( position - 1 ), alpha_opacity )
-					else
-						kernel.setactoropacity( "movie_" .. tostring( position - 1 ), browse_opacity )
-					end
-				else
-					kernel.showactor( "add_movie_" .. tostring( position - 1 ) )
-					kernel.setactoropacity( "movie_" .. tostring( position - 1 ), 1 )
-					if is_cart_empty < 1 or is_cart_empty > 5 then
-						kernel.hideactor( "add_movie_" .. tostring( position - 1 ) )
-						kernel.disableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-						if browse_selected_sort == "alpha" then
-							kernel.setactoropacity( "movie_" .. tostring( position - 1 ), alpha_opacity )
-						else
-							kernel.setactoropacity( "movie_" .. tostring( position - 1 ), browse_opacity )
-						end
-					else
-						kernel.showactor( "add_movie_" .. tostring( position - 1 ) )
-						kernel.enableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-						kernel.setactoropacity( "movie_" .. tostring( position - 1 ), 1 )
-					end
-				end
-				if browse_filter_mode == "coming-soon" then
-					local coming_soon_release_date = StoreManager.PricingManager:get_early_release_date( v )
-					local release_date = getmonth( string.sub( coming_soon_release_date, 5, 6 ) ) .. " " .. string.sub( coming_soon_release_date, 7, 8 )
-					kernel.setactoropacity( "movie_" .. tostring( position - 1 ), 1)
-					kernel.hideactor( "add_movie_" .. tostring( position - 1 ) )
-					kernel.disableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-					kernel.hideactor( "flag_" .. tostring( position - 1 ) )
-					kernel.showactor( "banner_" .. tostring( position - 1 ) )
-					kernel.setactortext( "banner_" .. tostring( position - 1 ), strings.coming_label_Upper .. " " .. release_date )
-					kernel.setactorimage( "banner_" .. tostring( position - 1 ), "image_banner_coming_soon" )
-					if ComingSoonOptIn == true then
-						local pos = position - 1
-						kernel.registeractorhitnotify( "button_email_reminder_" .. tostring( position - 1 ),
-							function()
-								if ShoppingCart.coming_soon_optin.email_address == nil then
-									local coming_soon_optin_keyboard_manager = newkeyboardmanager()
-									coming_soon_optin_keyboard_manager:init( 64 )
-									coming_soon_optin_keyboard_manager:set_message( strings.coming_soon_email_optin_email_prompt_message )
-									coming_soon_optin_keyboard_manager:set_marketing( strings.coming_soon_email_optin_email_marketing_message )
-									show_email_confirmation = false
-									coming_soon_optin_keyboard_manager:set_validate_event(
-										function( text )
-											local coming_soon_optin_email_validator = newemailvalidator()
-											if coming_soon_optin_email_validator.validate_email( text ) == false then
-												return strings.email_error_message
-											end
-											return nil
-										end
-									)
-									coming_soon_optin_keyboard_manager:set_enter_event(
-										function()
-											ShoppingCart.coming_soon_optin.email_address = coming_soon_optin_keyboard_manager:get_value()
-											table.insert( ShoppingCart.coming_soon_optin.optin_items,
-												{
-													item_id = tostring( v.product_id ),
-													item_type = "KioskRentalTitleID",
-													optin_method_type = "EmailAddress",
-													optin_method_data = ShoppingCart.coming_soon_optin.email_address,
-													template_name = "EmailTemplate",
-													campaign_name = "ComingSoonRentalCampaign"
-												}
-											)
-											view_goback_safe( "coming soon email optin email entry screen - next button" )
-										end
-									)
-									coming_soon_optin_keyboard_manager:show( strings.email_tag )
-								else
-									table.insert( ShoppingCart.coming_soon_optin.optin_items,
-										{
-											item_id = tostring( v.product_id ),
-											item_type = "KioskRentalTitleID",
-											optin_method_type = "EmailAddress",
-											optin_method_data = ShoppingCart.coming_soon_optin.email_address,
-											template_name = "EmailTemplate",
-											campaign_name = "ComingSoonRentalCampaign"
-										}
-									)
-									kernel.hideactor( "button_email_reminder_" .. tostring( pos ) )
-									kernel.showactor( "button_email_reminder_set_" .. tostring( pos ) )
-								end
-							end
-						)
-						kernel.registeractorhitnotify( "button_email_reminder_set_" .. tostring( position - 1 ),
-							function()
-								table.remove( ShoppingCart.coming_soon_optin.optin_items, ShoppingCart.coming_soon_optin:indexof_optin_item( v.product_id ) )
-								kernel.showactor( "button_email_reminder_" .. tostring( pos ) )
-								kernel.hideactor( "button_email_reminder_set_" .. tostring( pos ) )
-							end
-						)
-						kernel.hideactor( "banner_" .. tostring( position - 1 ) )
-						kernel.showactor( "banner_coming_soon_" .. tostring( position - 1 ) )
-						if ShoppingCart.coming_soon_optin:indexof_optin_item( v.product_id ) > 0 then
-							kernel.hideactor( "button_email_reminder_" .. tostring( position - 1 ) )
-							kernel.showactor( "button_email_reminder_set_" .. tostring( position - 1 ) )
-						else
-							kernel.showactor( "button_email_reminder_" .. tostring( position - 1 ) )
-							kernel.hideactor( "button_email_reminder_set_" .. tostring( position - 1 ) )
-						end
-						release_date = string.sub( coming_soon_release_date, 5, 6 ) .. "/" .. string.sub( coming_soon_release_date, 7, 8 )
-						if string.sub( release_date, 1, 1 ) == "0" then
-							release_date = string.sub( release_date, 2 )
-						end
-						kernel.setactortext( "banner_coming_soon_" .. tostring( position - 1 ), strings.coming_label .. " " .. release_date )
-						kernel.setactorimage( "banner_coming_soon_" .. tostring( position - 1 ), "image_banner_coming_soon_grey" )
-					end
-				end
-
-			elseif v.product_id == 1139 then
-				local product_history = ProductHistory[ v.product_id ]
-				if ProductCatalog:in_stock( v.product_id, product_history ) == false then
-					if browse_selected_sort == "alpha" then
-						kernel.setactoropacity( "movie_" .. tostring( position - 1 ), alpha_opacity )
-					else
-						kernel.setactoropacity( "movie_" .. tostring( position - 1 ), browse_opacity )
-					end
-					kernel.disableactor( "flag_" .. tostring( position - 1 ) )
-					kernel.disableactor( "banner_" .. tostring( position - 1 ) )
-					kernel.hideactor( "add_movie_" .. tostring( position - 1 ) )
-					kernel.disableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-				else
-					if is_cart_empty < 1 or is_cart_empty > 5 then
-						kernel.hideactor( "add_movie_" .. tostring( position - 1 ) )
-						kernel.disableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-						if browse_selected_sort == "alpha" then
-							kernel.setactoropacity( "movie_" .. tostring( position - 1 ), alpha_opacity )
-						else
-							kernel.setactoropacity( "movie_" .. tostring( position - 1 ), browse_opacity )
-						end
-					else
-						kernel.showactor( "add_movie_" .. tostring( position - 1 ) )
-						kernel.enableactor( "add_movie_lower_" .. tostring( position - 1 ) )
-						kernel.setactoropacity ("movie_" .. tostring( position - 1 ), 1 )
-					end
-				end
-			end
-		end
-
-		if browse_selected_sort == "alpha" then
-			total_products_shown = position - headers_counted - displayed_barrier_tags - 1
-			if ( total_products_shown < 0 ) then
-				total_products_shown = 0
-			end
-		else
-			total_products_shown = position - 1
-		end
-		view_analytics_event( "productsShown", tostring( total_products_shown ) )
-
-		if images_count < total_images_count then
-			local images_left = images_count + 1
-			local count = total_images_count
-			if count == 18 then
-				count = count + 2
-			end
-			if ( images_count > 6 and images_count <= 12 ) and browse_selected_sort == "alpha" then
-				images_left = images_left + 1
-			elseif( images_count > 12 and images_count <= 18 ) and browse_selected_sort == "alpha" then
-				images_left = images_left + 2
-			end
-			while images_left <= count do
-				kernel.clearactorimage( "movie_" .. tostring( images_left ) )
-				kernel.hideactor( "movie_" .. tostring( images_left ) )
-				kernel.hideactor( "add_movie_" .. tostring( images_left ) )
-				kernel.disableactor( "add_movie_lower_" .. tostring( images_left ) )
-				kernel.hideactor( "banner_" .. tostring( images_left ) )
-				kernel.hideactor( "banner_coming_soon_" .. tostring( images_left ) )
-				kernel.hideactor( "button_email_reminder_" .. tostring( images_left ) )
-				kernel.hideactor( "button_email_reminder_set_" .. tostring( images_left ) )
-				kernel.hideactor( "flag_" .. tostring( images_left ) )
-				kernel.setactortext( "movie_" .. tostring( images_left ), "" )
-				if browse_selected_sort == "alpha" then
-					kernel.setactortext( "movie_" .. tostring( images_left ) .. "_title", "" )
-				end
-				kernel.setactorbackgroundcolor( "separator_" .. tostring( images_left ), "dimgray" )
-				kernel.registeractorhitnotify(
-					"movie_" .. tostring( images_left ),
-					function()
-					end
-				)
-				images_left = images_left + 1
-			end
-		end
-
-		if browse_selected_sort ~= "alpha" then
-			if #filtered_products_list > 0 then
-				--draw the border images
-				draw_image( filtered_products_list[ left_upper_image_number ], "movie_11" )
-				draw_image( filtered_products_list[ left_bottom_image_number ], "movie_12" )
-				draw_image( filtered_products_list[ right_upper_image_number ], "movie_13" )
-				draw_image( filtered_products_list[ right_bottom_image_number ], "movie_14" )
-			else
-				kernel.clearactorimage( "movie_11" )
-				kernel.clearactorimage( "movie_12" )
-				kernel.clearactorimage( "movie_13" )
-				kernel.clearactorimage( "movie_14" )
-				kernel.hideactor( "movie_11" )
-				kernel.hideactor( "movie_12" )
-				kernel.hideactor( "movie_13" )
-				kernel.hideactor( "movie_14" )
-			end
-		end
-	end
-
-	if set_number == 1 then
-		kernel.hideactor( "left_arrow_button" )
-		if browse_selected_sort ~= "alpha" then
-			kernel.clearactorimage( "movie_11" )
-			kernel.clearactorimage( "movie_12" )
-			kernel.hideactor( "movie_11" )
-			kernel.hideactor( "movie_12" )
-		end
-	end
-	if set_number == max_set_number then
-		kernel.hideactor( "right_arrow_button" )
-		if browse_selected_sort ~= "alpha" then
-			kernel.clearactorimage( "movie_13" )
-			kernel.clearactorimage( "movie_14" )
-			kernel.hideactor( "movie_13" )
-			kernel.hideactor( "movie_14" )
-		end
-	end
-	if browse_selected_sort == "alpha" then
-		register_add_movie_hit()
-	end
-end
+	browse_goto_alpha = nil
+end 
 
 ProductCatalog.show_selection_grid = function( self )
-	-- cache globals to locals for improved performance
-	local _ProductTypes = ProductTypes
-	local _ProductCatalog = ProductCatalog
-	local _ProductFamilies = ProductFamilies
-	local _ProductHistory = ProductHistory
-	local _ProductTypesMetaData = ProductTypesMetaData
-	local _browse_pager = browse_pager
-	local _selection_grid_scene_manager = selection_grid_scene_manager
-	local _browse_filtered_products = browse_filtered_products
-	remove_pagination_dots()
-	if browse_selected_sort == "alpha" then
+    if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
 		browse_filtered_products_table = alpha_filter_list( browse_filtered_products )
 		draw_images_set( browse_filtered_products_table )
 	else
-		draw_images_set( _browse_filtered_products )
+		draw_images_set( browse_filtered_products )
 	end
-	draw_pagination_dots()
 end
 
 get_product_from_actor = function( actor_name )
-	return movie_product_map[ actor_name ]
+	return kernel.get_product_from_actor(actor_name)
 end
 
 --The full cart popup will be shown after a delay of 50 ms so that the browse screen completes rendering and all the movies in the mini cart are displayed.
@@ -2044,7 +1077,6 @@ fullcart_popup_timer = newidletimer( "fullcart_popup_timer" )
 fullcart_popup_timer:initialize(
 	50,
 	function()
-		disable_backgroundactors()
 		view_show_safe( "cartfull_message_view" )
 		fullcart_popup_timer:stop()
 	end
@@ -2053,11 +1085,6 @@ show_shopping_cart_full = function()
 	fullcart_popup_timer:start()
 end
 
---show_shopping_cart_full = function()
---	disable_backgroundactors()
---	view_show_safe( "cartfull_message_view" )
---end
-
 hide_shopping_cart_full = function()
 	kernel.hideactor( "cart_full_background" )
 	kernel.hideactor( "cart_full_label_border" )
@@ -2065,266 +1092,79 @@ hide_shopping_cart_full = function()
 	kernel.hideactor( "cart_full_label_text" )
 	kernel.hideactor( "cart_full_image" )
 	kernel.hideactor( "cart_full_cancel_button" )
-	enable_backgroundactors()
-	highlight_sort_button( browse_selected_sort )
+    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
 	browse_is_cart_full_open = false
 end
 
-add_movie = function( total_count )
-	local selected_index = string.sub( selected_movie, 7 )
+add_movie = function( product_to_add )
 	local selected_product = get_product_from_actor( selected_movie )
-	if (selected_product.product_id ~= customer_selected_product_id) then
-		return
+	if product_to_add ~= nil then
+		selected_product = product_to_add
 	end
+
 	browse_selection_selected_product = selected_product
 	--If Redbox empty case setting action as purchase
-	if selected_product.product_id == 1139 or browse_filter_mode == "for-sale" then
+    if selected_product.product_id == 1139 or (kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" and (kernel.peekview() == "browse_view" or kernel.peekview() == "purchase_message_view" or kernel.peekview() == "browse_view_ada_accessible")) then
 		browse_selection_cart_action = "purchase"
 	else
 		browse_selection_cart_action = "rental"
 	end
-
 	kernel.executescript( "add_to_cart" )
-
-	local empty_index = find_empty_index()
-	if empty_index ~= 0 then
-		selected_movies_list[ empty_index ] = selected_product
-		movie_product_map[ "selectedmovie_".. empty_index ] = selected_product
-		draw_image( selected_product, "selectedmovie_" .. empty_index )
-		kernel.showactor( "selectedmovie_" .. empty_index .. "_border" )
-		kernel.showactor( "cancel_" .. empty_index )
+ 	refresh_current_page()
 		
-		if browse_selection_cart_action == "purchase" then
-			kernel.showactor( "selectedmovie_" .. empty_index .. "_flag" )
-		end
-
-		--Checking if the selected product is redbox empty case and not hiding the add button
-		if selected_product.product_id ~= 1139 then
-			if browse_selected_sort == "alpha" then
-				kernel.setactoropacity( selected_movie, alpha_opacity )
-			else
-				kernel.setactoropacity( selected_movie, browse_opacity )
-			end
-
-			kernel.disableactor( "flag_" .. selected_index )
-			kernel.disableactor( "banner_" .. selected_index )
-			kernel.hideactor( "add_movie_" .. selected_index )
-			kernel.disableactor( "add_movie_lower_" .. selected_index )
-		elseif selected_product.product_id == 1139 then
-			local product_history = ProductHistory[ selected_product.product_id ]
-
-			if ProductCatalog:in_stock( selected_product.product_id, product_history ) == false then
-				if browse_selected_sort == "alpha" then
-					kernel.setactoropacity( "movie_" .. selected_index, alpha_opacity )
-				else
-					kernel.setactoropacity( "movie_" .. selected_index, browse_opacity )
-				end
-				kernel.disableactor( "flag_" .. selected_index )
-				kernel.disableactor( "banner_" .. selected_index )
-				kernel.hideactor( "add_movie_".. selected_index )
-				kernel.disableactor( "add_movie_lower_".. selected_index )
-			end
-		end
-
-		--display flag
-		display_flag( selected_product, selected_index )
-
-		if kernel.getculture() == "en-US" then
-			kernel.setactortext( "my_rentals_button", "CHECK OUT (" .. #ShoppingCart.items .. ")" )
-		elseif kernel.getculture() == "es-MX" then
-			kernel.setactortext( "my_rentals_button", "CAJA (" .. #ShoppingCart.items .. ")" )
-		end
-
-		kernel.hideactor( "add_to_cart_label" )
-		kernel.hideactor( "add_to_cart_label_image" )
-	end
-
-	local index = 1
-	while index < 6 do
-		if movie_product_map[ "selectedmovie_" .. index ] ~= nil then
-			index = index + 1
-		else
-			return
-		end
-	end
-
-	local count = 1
-	if index == 6 then
-		while count < total_count do
-			if count ~= 7 or count ~= 13 then
-				kernel.hideactor( "add_movie_".. count )
-				kernel.disableactor( "add_movie_lower_".. count )
-				if browse_selected_sort == "alpha" then
-					kernel.setactoropacity( "movie_".. count, alpha_opacity )
-				else
-					kernel.setactoropacity( "movie_".. count, browse_opacity )
-				end
-			end
-			count = count + 1
-		end
-	end
 	if #ShoppingCart.items == 5
 	and browse_is_cart_full_open == false
 	and shopping_cart_full_message_shown == false then
 		show_shopping_cart_full()
 	end
+
 end
+
 
 function getmonth( month )
 	local months = { "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" }
 	return months[ tonumber( month ) ]
 end
 
-remove_movie = function( total_count )
-	local selected_index = string.sub( selected_movie, 15 )
-	local selected_product = get_product_from_actor( selected_movie )
-
-	--removing movie from cart
-	for k, v in ipairs( ShoppingCart.items ) do
-		if selected_product.product_id == v.product_id then
-			ShoppingCart:remove_item( k )
-			break
-		end
-	end
-
-	local is_present = false
-	local desired_actor_count = 1
-	while( desired_actor_count <= total_count ) do
-		if movie_product_map[ "movie_" .. desired_actor_count ] == selected_product then
-			is_present = true
-			break
-		end
-		desired_actor_count = desired_actor_count + 1
-	end
-
-	if is_present then
-		kernel.enableactor( "movie_" .. desired_actor_count )
-		kernel.setactoropacity( "movie_" .. desired_actor_count, 1 )
-		kernel.enableactor( "flag_" .. desired_actor_count )
-		kernel.showactor( "add_movie_" .. desired_actor_count )
-		kernel.enableactor( "add_movie_lower_" .. desired_actor_count )
-		kernel.registeractorhitnotify(
-			"movie_" .. tostring( desired_actor_count ),
-			function()
-				browse_selection_selected_product = selected_product
-				product_detail_shown_from_view = kernel.peekview()
-				view_show( "product_detail_view" )
-			end
-		)
-
-		--display flag
-		display_flag( selected_product, desired_actor_count )
-	end
-
-	selected_index = selected_index + 1
-	while( selected_index < 6 ) do
-		if movie_product_map[ "selectedmovie_" .. selected_index ] ~= nil then
-			selected_movie = "selectedmovie_" .. selected_index
-			local desired_product = get_product_from_actor( selected_movie )
-			movie_product_map[ "selectedmovie_" .. selected_index - 1 ] = desired_product
-			if ShoppingCart.items[selected_index - 1].action == "purchase" then
-				kernel.showactor( "selectedmovie_" .. selected_index - 1 .. "_flag")
-			else
-				kernel.hideactor( "selectedmovie_" .. selected_index - 1 .. "_flag")
-			end
-			draw_image( desired_product, "selectedmovie_" .. selected_index - 1 )
-			selected_index = selected_index + 1
-		else
-			break
-		end
-	end
-	movie_product_map[ "selectedmovie_".. selected_index - 1 ] = nil
-	kernel.hideactor( "selectedmovie_" .. selected_index - 1 .. "_border" )
-	kernel.hideactor( "cancel_" .. selected_index - 1 )
-	kernel.clearactorimage( "selectedmovie_" .. selected_index -1 )
-	kernel.hideactor( "selectedmovie_" .. selected_index - 1 .. "_flag")
-
-	local empty_index = find_empty_index()
-
-	if empty_index == 0 then
-		kernel.showactor( "add_to_cart_label" )
-		kernel.showactor( "add_to_cart_label_image" )
-	end
-
-	for k,v in ipairs( selected_movies_list ) do
-		if selected_product.product_id == v.product_id then
-			table.remove( selected_movies_list, k )
-			break
-		end
-	end
-
-	if kernel.getculture() == "en-US" then
-		kernel.setactortext( "my_rentals_button", "CHECK OUT (" .. #ShoppingCart.items .. ")" )
-	elseif kernel.getculture() == "es-MX" then
-		kernel.setactortext( "my_rentals_button", "CAJA (" .. #ShoppingCart.items .. ")" )
-	end
-
-	--add + button to other images in the screen except the selected images
-	local listed_images_count = 1
-	while listed_images_count <= total_count do
-		local prod = get_product_from_actor( "movie_" .. listed_images_count )
-		if prod ~= nil and prod.product_id ~= 1139 then
-			local is_selected = is_product_selected( prod )
-			local product_history = ProductHistory[ prod.product_id ]
-			if is_selected == false
-			and movie_product_map[ "movie_" .. listed_images_count ] ~= nil then
-				if ProductCatalog:in_stock( prod.product_id, product_history ) == true
-				and prod.is_available == true then
-					kernel.showactor( "add_movie_" .. listed_images_count )
-					kernel.enableactor( "add_movie_lower_" .. listed_images_count )
-					kernel.setactoropacity( "movie_" .. listed_images_count, 1 )
-					kernel.registeractorhitnotify(
-						"movie_" .. tostring( listed_images_count ),
-						function()
-							browse_selection_selected_product = prod
-							view_analytics_event( "buttonPress", "productSelected," .. tostring( prod.product_id ) )
-							product_detail_shown_from_view = kernel.peekview()
-							view_show( "product_detail_view" )
-						end
-					)
-				end
-			end
-		elseif prod ~= nil and prod.product_id == 1139 then
-			local product_history = ProductHistory[ prod.product_id ]
-			if ProductCatalog:in_stock( prod.product_id, product_history ) == false then
-				if browse_selected_sort == "alpha" then
-					kernel.setactoropacity( "movie_" .. listed_images_count, alpha_opacity )
-				else
-					kernel.setactoropacity( "movie_" .. listed_images_count, browse_opacity )
-				end
-				kernel.disableactor( "flag_" .. listed_images_count )
-				kernel.disableactor( "banner_" .. listed_images_count )
-				kernel.hideactor( "add_movie_" .. listed_images_count )
-				kernel.disableactor( "add_movie_lower_" .. listed_images_count )
-			else
-				kernel.enableactor( "movie_" .. listed_images_count )
-				kernel.setactoropacity( "movie_" .. listed_images_count, 1)
-				kernel.hideactor( "flag_" .. listed_images_count )
-				kernel.enableactor( "banner_" .. listed_images_count )
-				kernel.showactor( "add_movie_" .. listed_images_count )
-				kernel.enableactor( "add_movie_lower_" .. listed_images_count )
-			end
-		end
-		listed_images_count = listed_images_count + 1
-	end
-
-	if empty_index == 1 then
-		kernel.showactor( "add_to_cart_label" )
-		kernel.showactor( "add_to_cart_label_image" )
-	end
-	hide_shopping_cart_full()
-	highlight_sort_button( browse_selected_sort )
-
-	if browse_selected_sort ~= "alpha" then
-		set_actors_opacity(1)
+refresh_current_page = function()
+	if kernel.peekview() == "browse_view_collection" then
+		draw_collection_view()
+	elseif kernel.peekview() == "browse_view_collections" then
+		draw_collections_view()
+	elseif kernel.peekview() == "browse_view_ada_accessible" then
+		draw_images_set( alpha_filtered_products )
+		draw_action_bar()
+		draw_ada_control()
+    elseif kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
+		draw_images_set( browse_filtered_products_table )
+		draw_action_bar_and_mini_cart("browse_filter_alpha_view")
+		highlight_alphabets()
+	else
+		draw_images_set( alpha_filtered_products )
+		draw_action_bar_and_mini_cart("browse_view")
 	end
 end
 
-function add_item_tocart( i )
-	local selected_product = get_product_from_actor( selected_movie )
-	customer_selected_product_id = selected_product.product_id
-	if selected_movie ~= nil
-	and StoreManager.PricingManager:is_early_released( get_product_from_actor( selected_movie ) ) then
+remove_movie = function( selected_product )
+	--removing movie from cart
+	if (selected_product ~= nil) then
+		for k, v in ipairs( ShoppingCart.items ) do
+			if selected_product.product_id == v.product_id then
+				ShoppingCart:remove_item( k )
+				break
+			end
+		end
+	end
+
+	refresh_current_page()
+	hide_shopping_cart_full()
+    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
+
+end
+
+function add_item_to_cart( selected_product )
+	if selected_product ~= nil
+	and StoreManager.PricingManager:is_early_released( selected_product ) then
 
 		local message_view_manager = newmessageviewmanager()
 		message_view_manager:hide( true )
@@ -2365,18 +1205,22 @@ function add_item_tocart( i )
 			end )
 		idle_timer:start()
 	else
-		check_for_warning_popups( check_alert_table, selected_movie, i )
+		check_for_warning_popups( check_alert_table, selected_movie, 11, selected_product )
 	end
 end
 
 warning_popup_timer = newidletimer("warning_popup_timer")
+local warning_popup_timeout = 15000
+if TextToSpeechEnabled == true then
+	warning_popup_timeout = 60000
+end
 warning_popup_timer:initialize(
-	15000,
+	warning_popup_timeout,
 	function()
 		hide_warning_popup()
 	end )
 
-function check_for_warning_popups( check_alert_table, selected_movie, i )
+function check_for_warning_popups( check_alert_table, selected_movie, i, product_to_check )
 
 	local _MasterProductCatalog = MasterProductCatalog
 	local _ProductFamilies = ProductFamilies
@@ -2392,7 +1236,9 @@ function check_for_warning_popups( check_alert_table, selected_movie, i )
 	rated_movie_in_cart = false
 	rated_game_in_cart = false
 
-	if i == nil then
+	if product_to_check ~= nil then
+		selected_product = product_to_check
+	elseif i == nil then
 		selected_product = selected_movie
 	else
 		selected_product = get_product_from_actor( selected_movie )
@@ -2460,7 +1306,7 @@ function check_for_warning_popups( check_alert_table, selected_movie, i )
 	if browse_selection_cart_action == "purchase" and selected_product.product_id ~= 1139 then
 		purchase_product_in_cart = true
 	end
-	show_warning_alert( check_alert_table, selected_movie, i )
+	show_warning_alert( check_alert_table, selected_movie, i, product_to_check )
 end
 
 local function show_warning_header()
@@ -2475,7 +1321,7 @@ local function show_warning_header()
 	end
 end
 
-function show_warning_alert( check_alert_table, selected_movie, i )
+function show_warning_alert( check_alert_table, selected_movie, i, product_to_check )
 	if ( check_alert_table.movie_mature_warning_shown == false and rated_movie_in_cart == true )
 	or ( check_alert_table.mature_game_warning_shown == false and rated_game_in_cart == true ) then
 		local analytics_view_name = "rrated_message_view"
@@ -2496,16 +1342,16 @@ function show_warning_alert( check_alert_table, selected_movie, i )
 					check_alert_table.mature_game_warning_shown = true
 				end
 				if blu_ray_movie_in_cart == true and check_alert_table.blu_ray_warning_shown == false then
-					show_blu_ray_alert( check_alert_table, selected_movie, i )
+					show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
 					kernel.setactoropacity( "bluray_scene_background" , 0 )
 				elseif subplatform_game_in_cart == true then
-					show_sub_platform_warning( check_alert_table, selected_movie, i )
+					show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
 				elseif purchase_product_in_cart == true then
-					show_purchase_warning( check_alert_table, selected_movie, i )
+					show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
 					kernel.setactoropacity( "purchase_scene_background" , 0 )
 				else
 					warning_popup_timer:stop()
-					add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action )
+					add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
 				end
 			end
 		)
@@ -2524,41 +1370,23 @@ function show_warning_alert( check_alert_table, selected_movie, i )
 			end
 		)
 	elseif blu_ray_movie_in_cart == true and check_alert_table.blu_ray_warning_shown == false then
-		show_blu_ray_alert( check_alert_table, selected_movie, i )
+		show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
 	elseif subplatform_game_in_cart == true then
-		show_sub_platform_warning( check_alert_table, selected_movie, i )
+		show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
 	elseif purchase_product_in_cart == true then
-		show_purchase_warning( check_alert_table, selected_movie, i )
+		show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
 	else
-		add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action )
+		add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
 	end
 end
 
 function hide_warning_popup()
 	view_unwindto_safe( item_added_from_view, true, "Message view Timed out." )
 	warning_popup_timer:stop()
-
-	if item_added_from_view ~= "product_detail_view"
-	and item_added_from_view ~= Start_Over_View_Name then
-		if #ShoppingCart.items == 5 then
-			disable_backgroundactors()
-		else
-			enable_backgroundactors()
-			highlight_sort_button( browse_selected_sort )
-		end
-		if browse_selected_sort == "alpha" then
-			refresh_barriers()
-			draw_images_set( browse_filtered_products_table )
-		end
-	end
 end
 
 function show_warning_popup()
 	warning_popup_timer:start()
-	for i = 1,5,1 do
-		kernel.disableactor( "cancel_" .. i)
-	end
-	disable_backgroundactors()
 	kernel.showactor( "scene_background" )
 	kernel.showactor( "center_background" )
 	kernel.showactor( "rating_label" )
@@ -2568,7 +1396,7 @@ function show_warning_popup()
 	kernel.showactor( "continue_button" )
 end
 
-function show_blu_ray_alert( check_alert_table,selected_movie, i )
+function show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
 	warning_popup_timer:start()
 	view_show_safe( "bluray_message_view" )
 	warning_popup_timer:start()
@@ -2584,12 +1412,12 @@ function show_blu_ray_alert( check_alert_table,selected_movie, i )
 			warning_popup_timer:stop()
 			check_alert_table.blu_ray_warning_shown = true
 			if purchase_product_in_cart == true then
-				show_purchase_warning( check_alert_table, selected_movie, i )
+				show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
 				kernel.setactoropacity( "purchase_scene_background" , 0 )
 					-- Need to bail here or else lower part of routine will hide the puchase warning before user sees it
 				return
 			else
-				add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action )
+				add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
 			end
 		end
 	)
@@ -2611,7 +1439,7 @@ function show_blu_ray_alert( check_alert_table,selected_movie, i )
 	)
 end
 
-function show_sub_platform_warning( check_alert_table,selected_movie,i )
+function show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
 	view_show_safe( "subplatform_message_view" )
 	show_warning_header()
 	warning_popup_timer:start()
@@ -2625,9 +1453,9 @@ function show_sub_platform_warning( check_alert_table,selected_movie,i )
 			warning_popup_timer:stop()
 			check_alert_table.sub_platform_warning_shown = true
 			if purchase_product_in_cart == true then
-				show_purchase_warning( check_alert_table, selected_movie, i )
+				show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
 			else
-				add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action )
+				add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
 			end
 		end
 	)
@@ -2647,7 +1475,7 @@ function show_sub_platform_warning( check_alert_table,selected_movie,i )
 	)
 end
 
-function show_purchase_warning( check_alert_table, selected_movie, i )
+function show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
 	view_show_safe( "purchase_message_view" )
 	warning_popup_timer:start()
 	show_warning_header()
@@ -2665,7 +1493,7 @@ function show_purchase_warning( check_alert_table, selected_movie, i )
 		"warning_continue_button",
 		function()
 			warning_popup_timer:stop()
-			add_item_to_shopping_cart(selected_movie,  i, browse_selection_cart_action )
+			add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
 		end
 	)
 	kernel.registeractorhitnotify(
@@ -2687,7 +1515,7 @@ function show_purchase_warning( check_alert_table, selected_movie, i )
 	view_analytics_event( "context", "purchaseWarning" )
 end
 
-function add_item_to_shopping_cart( selected_movie, i, action )
+function add_item_to_shopping_cart( selected_movie, i, action, product_to_add )
 	if ShoppingCart.pickup_recommendations_shown == true then
 		-- Add directly to the cart then unwind  ('add_movie' has screen specific toggling)
 		ShoppingCart:add_item( selected_movie, 1, action, "Recommendation" )
@@ -2701,113 +1529,10 @@ function add_item_to_shopping_cart( selected_movie, i, action )
 			kernel.executescript( "browse_products" )
 		end
 	else
-		add_movie( i )
+		add_movie( product_to_add )
 		view_unwindto_safe( item_added_from_view, true, "Item added" )
 	end
 	browse_selection_cart_action = "rental"
-end
-
-function disable_backgroundactors()
-	kernel.disableactor( "left_arrow_button" )
-	kernel.disableactor( "right_arrow_button" )
-	kernel.disableactor( "tab_switch_product_family" )
-	kernel.disableactor( "startover_button" )
-	kernel.disableactor( "my_rentals_button" )
-	kernel.hideactor( "newest_button" )
-	kernel.hideactor( "abc_button" )
-	kernel.hideactor( "coming_soon_button" )
-	kernel.hideactor( "selected_button" )
-	if browse_filter_family_tracker.selected_family == "Movies" then
-		kernel.hideactor( "blu_ray_button" )
-		kernel.hideactor( "paddle_shadow" )
-	elseif browse_filter_family_tracker.selected_family == "Games" then
-		kernel.hideactor( "xbox_360_button" )
-		kernel.hideactor( "xbox_one_button" )
-		kernel.hideactor( "ps3_button" )
-		kernel.hideactor( "ps4_button" )
-		kernel.hideactor( "wii_button" )
-		kernel.hideactor( "wii_u_button" )
-	end
-	for i = 1, 7 do
-		kernel.disableactor( "tab_" .. tostring( i ) )
-	end
-
-	if browse_selected_sort == "alpha" then
-		for k, v in ipairs( alpha_table ) do
-			kernel.disableactor( v .. "_label" )
-			kernel.setactorforegroundcolor( v .. "_label", "gray" )
-		end
-		for i = 1, 20, 1 do
-			kernel.disableactor( "movie_" .. tostring( i ) )
-			kernel.disableactor( "add_movie_" .. tostring( i ) )
-			if i == 7 or i == 14 then
-				i = i + 1
-			end
-		end
-	else
-		for i = 1, 14, 1 do
-			kernel.disableactor( "movie_" .. tostring( i ) )
-			kernel.disableactor( "add_movie_" .. tostring( i ) )
-			kernel.hideactor( "add_movie_lower_" .. tostring( i ) )
-		end
-	end
-
-	kernel.disableactor( "left_arrow_button" )
-	kernel.disableactor( "right_arrow_button" )
-end
-
-function enable_backgroundactors()
-	kernel.enableactor( "left_arrow_button" )
-	kernel.enableactor( "right_arrow_button" )
-	kernel.enableactor( "tab_switch_product_family" )
-	kernel.enableactor( "startover_button" )
-	kernel.enableactor( "my_rentals_button" )
-	if ShoppingCart.in_cart_title_marketing == false then
-		kernel.showactor( "newest_button" )
-		kernel.showactor( "coming_soon_button" )
-		kernel.showactor( "selected_button" )
-		if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "abc_button" )
-			kernel.showactor( "blu_ray_button" )
-			kernel.showactor( "paddle_shadow" )
-			kernel.setbordercolor( "startover_button", "white" )
-		elseif browse_filter_family_tracker.selected_family == "Games" then
-			--kernel.showactor( "xbox_360_button" )
-			--kernel.showactor( "xbox_one_button" )
-			--kernel.showactor( "ps3_button" )
-			--kernel.showactor( "ps4_button" )
-			--kernel.showactor( "wii_button" )
-			--kernel.showactor( "wii_u_button" )
-		end
-	end
-
-	for i = 1, 7 do
-		kernel.enableactor( "tab_" .. tostring( i ) )
-	end
-
-	if browse_selected_sort == "alpha" and browse_filter_family_tracker.selected_family ~= "Games" then
-		for k, v in ipairs( alpha_table ) do
-			kernel.enableactor( v .. "_label" )
-		end
-		for i = 1, 20, 1 do
-			kernel.enableactor( "movie_" .. tostring( i ) )
-			kernel.enableactor( "add_movie_" .. tostring( i ) )
-			if i == 7 or i == 14 then
-				i = i + 1
-			end
-			i = i + 1
-		end
-		highlight_alphabets()
-	else
-		for i = 1, 14, 1 do
-			kernel.enableactor( "movie_" .. tostring( i ) )
-			kernel.enableactor( "add_movie_" .. tostring( i ) )
-			kernel.showactor( "add_movie_lower_" .. tostring( i ) )
-		end
-	end
-
-	kernel.enableactor( "left_arrow_button" )
-	kernel.enableactor( "right_arrow_button" )
 end
 
 function display_alpha_screen_layout()
@@ -2816,11 +1541,6 @@ function display_alpha_screen_layout()
 	kernel.hideactor( "bg_box_top" )
 	for k,v in ipairs( alpha_table ) do
 		kernel.setactorbackgroundcolor( v .. "_label", "black" )
-	end
-	for i= 1, 20, 1 do
-		kernel.setactorforegroundcolor( "movie_" .. i .. "_title", "black" )
-		kernel.setactorbackgroundcolor( "barrier_"..i,"black" )
-		kernel.setactorbackgroundcolor( "barrier_label_"..i, "black" )
 	end
 end
 
@@ -2831,3 +1551,493 @@ is_dnr_disc = function( product )
 	end
 	return do_not_rent_flag
 end
+
+function newtitlerollupoverlay()
+	local t = {}
+	
+	t.scene_manager = newscenemanager()
+	
+	t.show = function( self, x, y, width, height, modal, dvd_product, dvd_button_on_hit_function, blu_ray_product, blu_ray_button_on_hit_function, cancel_button_on_hit_function, timeout_function, purchase )
+		if x == nil or x < 0 or x > 1024
+		or y == nil or y < 0 or y > 768
+		or width == nil or width < 75 or width > 1024
+		or height == nil or height < 35 or height > 768
+		then
+			return
+		end
+		
+		local button_width = width / 1.25
+		local button_height = height / 4
+		local button_x = x + ( ( width - button_width ) / 2 )
+		local button_y = y + ( ( height - ( button_height * 2 ) ) / 2 )
+		
+		local cancel_button_x = x + width - 21
+		local cancel_button_y = y + height - 20
+		
+		local function get_button_info( product, type )
+			local button_font = "font_bryant_bold_22"
+			if button_width < 200 then
+				button_font = "font_bryant_bold_13"
+			end
+			local button_text = strings.title_rollup_overlay_unavailable_text
+			local button_background_color = { r = 90, g = 90, b = 90 }
+			local button_gradient_target_color = { r = 30, g = 30, b = 30 }
+			local button_hit_options = "None"
+			local button_visible = false
+			
+			if product ~= nil and product.product_id ~= nil and ShoppingCart:has_item( product.product_id ) == true then
+				button_text = string.gsub( strings.title_rollup_overlay_cart_text, "{0}", type )
+				button_visible = true
+			elseif product ~= nil and product.is_available == true and product.product_id ~= nil and ProductCatalog:in_stock( product.product_id ) == false then
+				if button_width < 200 then
+					button_font = "font_bryant_bold_12"
+				end
+				button_text = string.gsub( strings.title_rollup_overlay_oos_text, "{0}", type )
+				button_visible = true
+			elseif purchase == true and product ~= nil then
+				local purchase_price = StoreManager:get_purchase_price()
+				if purchase_price ~= nil and purchase_price > 0 then
+					if kernel.getculture() == "es-MX" then
+						if button_width < 200 then
+							button_font = "font_bryant_bold_10"
+						else
+							button_font = "font_bryant_bold_18"
+						end
+					end
+					button_text = string.gsub( strings.title_rollup_overlay_buy_text, "%S%S%S", { ["{0}"] = type, ["{1}"] = strings.currency_symbol, ["{2}"] = string.format( "%.2f", purchase_price ) } )
+					button_hit_options = "Enabled"
+					button_visible = true
+					if type == "BLU-RAY" then
+						button_background_color = { r = 29, g = 155, b = 229 }
+						button_gradient_target_color = { r = 23, g = 127, b = 188 }
+					else
+						button_background_color = { r = 181, g = 18, b = 27 }
+						button_gradient_target_color = { r = 143, g = 14, b = 21 }
+					end
+				end
+			elseif product ~= nil and product.is_available == true and product.product_id ~= nil and ProductCatalog:in_stock( product.product_id ) == true then
+				if button_width < 200 then
+					button_font = "font_bryant_bold_15"
+				end
+				button_text = string.gsub( strings.title_rollup_overlay_add_text, "{0}", type )
+				button_hit_options = "Enabled"
+				button_visible = true
+				if type == "BLU-RAY" then
+					button_background_color = { r = 29, g = 155, b = 229 }
+					button_gradient_target_color = { r = 23, g = 127, b = 188 }
+				else
+					button_background_color = { r = 181, g = 18, b = 27 }
+					button_gradient_target_color = { r = 143, g = 14, b = 21 }
+				end
+			end
+			
+			return button_font, button_text, button_background_color, button_gradient_target_color, button_hit_options, button_visible
+		end
+		
+		if modal == true then
+			self.scene_manager:add_actor(
+				"overlay_modal_background",
+				0,
+				0,
+				1024,
+				768,
+				{
+					backgroundColor = "black",
+					opacity = 0.8,
+					hitOptions = "Enabled",
+					renderOptions = "Background"
+				}
+			)
+			
+			self.scene_manager:add_actor(
+				"overlay_background",
+				x,
+				y,
+				width,
+				height,
+				{
+					backgroundColor = "white",
+					borderColor = { r = 151, g = 14, b = 22 },
+					strokeWeight = 4,
+					cornerSize = { width = 5, height = 5 },
+					renderOptions = "Background, DrawBorder"
+				}
+			)
+		else
+			self.scene_manager:add_actor(
+				"overlay_background",
+				x,
+				y,
+				width,
+				height,
+				{
+					backgroundColor = "black",
+					opacity = 0.8,
+					borderColor = { r = 151, g = 14, b = 22 },
+					strokeWeight = 4,
+					cornerSize = { width = 5, height = 5 },
+					hitOptions = "Enabled",
+					renderOptions = "Background, DrawBorder"
+				}
+			)	
+		end
+		
+		local dvd_button_font, dvd_button_text, dvd_button_background_color, dvd_button_gradient_target_color, dvd_button_hit_options, dvd_button_visible = get_button_info( dvd_product, "DVD" )
+		self.scene_manager:add_actor(
+			"overlay_dvd_button",
+			button_x,
+			button_y - 15,
+			button_width,
+			button_height,
+			{
+				backgroundColor = dvd_button_background_color,
+				gradientTargetColor = dvd_button_gradient_target_color,
+				gradientAngle = 90,
+				cornerSize = { width = 90, height = 90 },
+				foregroundColor = "white",
+				text = dvd_button_text,
+				font = dvd_button_font,
+				horizontalAlignment = "center",
+				verticalAlignment = "center",
+				hitOptions = dvd_button_hit_options,
+				visible = dvd_button_visible,
+				renderOptions = "BackgroundGradient, Text"
+			},
+			function()
+				self:hide()
+				if dvd_button_on_hit_function ~= nil then
+					dvd_button_on_hit_function()
+				end
+			end
+		)
+		
+		local blu_ray_button_font, blu_ray_button_text, blu_ray_button_background_color, blu_ray_button_gradient_target_color, blu_ray_button_hit_options, blu_ray_button_visible = get_button_info( blu_ray_product, "BLU-RAY" )
+		self.scene_manager:add_actor(
+			"overlay_blu_ray_button",
+			button_x,
+			button_y + button_height + 15,
+			button_width,
+			button_height,
+			{
+				backgroundColor = blu_ray_button_background_color,
+				gradientTargetColor = blu_ray_button_gradient_target_color,
+				gradientAngle = 90,
+				cornerSize = { width = 90, height = 90 },
+				foregroundColor = "white",
+				text = blu_ray_button_text,
+				font = blu_ray_button_font,
+				horizontalAlignment = "center",
+				verticalAlignment = "center",
+				hitOptions = blu_ray_button_hit_options,
+				visible = blu_ray_button_visible,
+				renderOptions = "BackgroundGradient, Text"
+			},
+			function()
+				self:hide()
+				if blu_ray_button_on_hit_function ~= nil then
+					blu_ray_button_on_hit_function()
+				end
+			end
+		)
+		
+		self.scene_manager:add_actor(
+			"overlay_cancel_button",
+			cancel_button_x,
+			cancel_button_y,
+			43,
+			43,
+			{
+				backgroundColor = { r = 80, g = 80, b = 80 },
+				gradientTargetColor = { r = 0, g = 0, b = 0 },
+				gradientAngle = 90,
+				borderColor = { r = 151, g = 14, b = 22 },
+				strokeWeight = 2,
+				cornerSize = { width = 21, height = 21 },
+				foregroundColor = "white",
+				text = "X",
+				font = "font_akzidenz_bold_small",
+				horizontalAlignment = "center",
+				verticalAlignment = "center",
+				hitOptions = "Enabled",
+				renderOptions = "BackgroundGradient, DrawBorder, Text"
+			},
+			function()
+				self:hide()
+				if cancel_button_on_hit_function ~= nil then
+					cancel_button_on_hit_function()
+				end
+			end
+		)
+		
+		kernel.timercreate(
+			"overlay_scene_manager_timer",
+			10000,
+			10000,
+			function()
+				self:hide()
+				if timeout_function ~= nil then
+					timeout_function()
+				end
+			end
+		)
+		kernel.timerstart( "overlay_scene_manager_timer" )
+	end
+	
+	t.hide = function( self )
+		kernel.timerstop( "overlay_scene_manager_timer" )
+		kernel.timerremove( "overlay_scene_manager_timer" )
+		self.scene_manager:clear()
+	end
+	
+	return t
+end
+
+function get_product_ui_info ( product )
+	local movie_price_purchase = StoreManager:get_purchase_price()
+	local sell_through_enabled = StoreManager:is_sell_thru_enabled()
+	local current_date_string = get_current_date_string( "%4d%02d%02d%02d%02d" )
+	local product_type = nil
+	local product_family = nil
+	local product_type_md = nil
+	if (product ~= nil) then
+		product_type = ProductTypes[product.product_type_id]
+		product_family = ProductFamilies[product_type.product_family_id]
+		product_type_md = ProductTypesMetaData[product_type.product_type_id]
+	end
+
+	local product_info_result = {}
+    product_info_result["product"] = product
+    product_info_result["product_is_case"] = product ~= nil and product.product_id == 1139
+    product_info_result["available"] = product ~= nil and product.is_available
+    product_info_result["available_and_instock"] = product_info_result["available"] and ProductCatalog:in_stock( product.product_id )
+    product_info_result["already_in_cart"] = product ~= nil and ShoppingCart:count_for_item( product.product_id ) > 0
+
+    -- purchase related properties
+    local is_purchasable_value = false
+    local show_buy_button_value = false
+    local show_in_purchase_overlay_value = false
+    if product ~= nil then
+	    if product_info_result["product_is_case"] then
+			is_purchasable_value = product_info_result["available_and_instock"]
+	    elseif product_family.product_family_name == "Movies" then
+		    is_purchasable_value = sell_through_enabled and movie_price_purchase ~= nil
+					and movie_price_purchase > 0 and product ~= nil and product.sell_thru == true and product.can_be_sold
+					and is_multi_disc( product.product_id ) == false 
+		    show_buy_button_value = is_purchasable_value and product_info_result["available_and_instock"] and not product_info_result["already_in_cart"]
+		    show_in_purchase_overlay_value = product_info_result["available"] and is_purchasable_value
+		elseif product_family.product_family_name == "Games" then
+			local game_price_purchase = nil
+			if product ~= nil and product.sellthru_price ~= nil then
+				game_price_purchase = StoreManager.PricingManager:get_adjusted_price( product.sellthru_price, "purchase" )
+			end
+
+			is_purchasable_value = product_info_result["available_and_instock"] and GamesSellThru == true and game_price_purchase ~= nil
+					and game_price_purchase > 0	and product.sell_thru == true
+					and product.sellthru_date ~= nil
+					and product.sellthru_date <= current_date_string
+					and product.can_be_sold
+					and EnableSellThruOfUsed == true
+					and is_multi_disc( product.product_id ) == false
+		end
+	end
+
+	product_info_result["is_purchasable"] = is_purchasable_value
+	product_info_result["show_buy_button"] = show_buy_button_value
+	product_info_result["show_in_purchase_overlay"] = show_in_purchase_overlay_value
+
+	return product_info_result
+end
+
+show_collection_items = function(collection)
+	browse_collection = collection
+	if (collection ~= nil) then
+		browse_collection_products = collection.incart_available_kiosk_products
+	end
+	collection_set_number = 1
+	view_show( "browse_view_collection" )
+end
+
+remove_product_on_hit = function(product_to_remove)
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
+	end
+	view_analytics_event( "buttonPress", "shopping-cart-remove-item" )
+	remove_movie(product_to_remove)
+end
+
+should_show_no_thanks_browse_button = function()
+return  ShoppingCart.in_cart_promo_offer_made == true
+	and ShoppingCart.in_cart_title_marketing == true
+	and CartHasAnyPostOfferItems( ShoppingCart ) == false
+end
+
+on_checkout_button_click = function ()
+	kernel.executescript("view_shopping_cart")
+end
+
+draw_action_bar = function() 
+	kernel.draw_action_bar(
+		#ShoppingCart.items,
+		on_checkout_button_click,
+		should_show_no_thanks_browse_button())
+end
+
+draw_action_bar_and_mini_cart = function (browseSetName)
+	draw_action_bar()
+	kernel.draw_mini_cart(
+		browseSetName,
+		ShoppingCart.items,
+		ShoppingCart.in_cart_title_marketing,
+		remove_product_on_hit,
+		browseSetName ~= "Collections")
+end
+
+draw_ada_control = function ()
+	kernel.draw_accessibility_control(
+		"ada",
+		alpha_filtered_products,
+		add_movie_on_hit,
+		switch_product_family_tab_function,
+		browse_filter_family_tracker.selected_family
+		)
+end
+
+draw_top_menu = function()
+	kernel.draw_top_menu(
+		kernel.peekview(),
+		browse_filter_genre_selected,
+		browse_filter_family_tracker.selected_family,
+		DisableGames,
+		kernel.rental_is_collections_enabled(), 
+		change_genre_filter,
+		change_product_family,
+		click_collections_menu)
+end
+
+change_genre_filter = function(new_genre_filter_value, new_genre_filter_text)
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
+	end
+	browse_filter_genre_selected = new_genre_filter_value
+	view_analytics_event( "filterChange", "browse-filter-genre," .. new_genre_filter_text )
+	set_number = 1
+	if (kernel.peekview() == "browse_view_collections") then
+		view_goback_safe()
+		if (kernel.peekview() ~= "browse_view" and kernel.peekview() ~= "browse_filter_alpha_view")  then
+			view_show_safe("browse_view")
+		end
+	else
+		show_browse_view(10)
+		draw_top_menu()
+		check_product_availability()
+	end
+	if kernel.peekview() == "browse_filter_alpha_view" then
+		highlight_alphabets()
+	end
+end
+
+click_collections_menu = function ()
+	view_analytics_event( "filterChange", "browse-filter-genre,COLLECTIONS" )
+	if (kernel.peekview() ~= "browse_view" and kernel.peekview() ~= "browse_filter_alpha_view") then
+		view_goback_safe()
+	end
+	show_browse_view_collections()
+end
+
+show_browse_view_collections = function()
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
+	end
+	collections_set_number = 1
+	view_show("browse_view_collections")
+end
+
+function switch_product_family_tab_function()
+	if browse_filter_family_tracker.selected_family == "Movies" then
+		change_product_family("Games")
+	else
+		change_product_family("Movies")
+	end
+end
+
+change_product_family = function (new_product_family) 
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
+	end
+	browse_filter_family_tracker.selected_family = new_product_family
+	if browse_filter_family_tracker.selected_family == "Games" then
+		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_games )
+		browse_filter_genre_selected = nil
+        if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Blu-ray" or  kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
+			browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+            kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+        elseif kernel.get_session_value("BrowseState.BrowseFilterMode") =="ComingSoon" then
+			browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseSelectedSort", "coming-soon")
+            kernel.set_session_value("BrowseState.BrowseFilterMode", "ComingSoon")
+        elseif kernel.get_session_value("BrowseState.BrowseFilterMode") =="ForSale" then
+			if ProductCatalog:is_product_available( "for-sale" )
+			and EnableSellThruOfUsed == true
+			and GamesSellThru == true then
+				browse_filter_family_tracker:set_family_type( "for-sale" )
+                kernel.set_session_value("BrowseState.BrowseSelectedSort", "for-sale")
+                kernel.set_session_value("BrowseState.BrowseFilterMode", "ForSale")
+			else
+				browse_filter_family_tracker:set_family_type( "ALL" )
+                kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+                kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+			end
+		end
+	else
+		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_movies )
+		browse_filter_genre_selected = ALL
+        if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Xbox 360" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Xbox One" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "PS2" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "PS3" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "PS4" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Wii" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "NintendoDS" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Wii U" then
+			browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+		end
+        if kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" then
+			if ProductCatalog:is_product_available( "for-sale" ) and EnableSellThruOfUsed == true then
+				browse_filter_family_tracker:set_family_type( "for-sale" )
+                kernel.set_session_value("BrowseState.BrowseSelectedSort", "for-sale")
+                kernel.set_session_value("BrowseState.BrowseFilterMode", "ForSale")
+			else
+				browse_filter_family_tracker:set_family_type( "ALL" )
+                kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+                kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+			end
+		end
+	end
+	view_analytics_event( "filterChange", "browse-filter," .. browse_filter_family_tracker.selected_family )
+    if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Newest" then
+		browse_filter_family_tracker:set_family_type( "ALL" )
+	end
+
+	set_number = 1
+	while (kernel.peekview() == "browse_view_collections" or kernel.peekview() == "browse_view_collection" or kernel.peekview() == "browse_filter_alpha_view") do
+		view_goback_safe()
+	end
+	if (kernel.peekview() == "browse_view_ada_accessible") then
+		show_browse_view(10)
+	elseif (kernel.peekview() == "browse_view") then
+		show_browse_view(10)
+		draw_top_menu()
+		check_product_availability()
+	else
+		view_show("browse_view")
+	end
+end
+
+function check_collections_popup(reason) 
+	if is_collections_popup_enabled() then
+		collection_message_reason = reason
+		view_show("collection_message_view")
+	end
+end
+
+function check_coming_soon_collections_popup()
+	if marketing_config ~= nil and marketing_config.show_collections_popup_on_coming_soon == true then
+		check_collections_popup("coming soon")
+	end
+end
+

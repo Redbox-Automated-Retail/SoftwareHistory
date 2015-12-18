@@ -33,6 +33,7 @@ local function CartCountByCriteria(
 		and ( product_id_list == nil or inlist( product_id_list, v.product_id, "," ) )
 		and ( exclude_id_list == nil or inlist( exclude_id_list, v.product_id, "," ) == false )
 		and ( product_type_list == nil or inlist( product_type_list, v.product_type, "," ) )
+		and ( MasterProductCatalog[v.product_id] ~= nil and ( MasterProductCatalog[v.product_id].disc_number == nil or MasterProductCatalog[v.product_id].disc_number == 1 ) )
 		then
 			count = count + 1
 			counted_items[ count ] = v
@@ -57,7 +58,7 @@ local function BrowseCountByCriteria(
 	local _incart_include_titles, _incart_exclude_titles = GetInCartTitleLists( true )
 
 	for k, v in ProductCatalog:pairs() do
-		if v.in_stock == true
+		if ProductCatalog:in_stock( v.product_id ) == true
 		and v.is_available == true
 		and v.product_id ~= 1139
 		and ( product_family == nil or product_family == v.product_family_name )
@@ -71,6 +72,7 @@ local function BrowseCountByCriteria(
 			and ( cart_count == 0 or as_rental == false )
 			and ( _incart_include_titles == nil or _incart_include_titles[ v.product_id ] ~= nil )
 			and ( _incart_exclude_titles == nil or _incart_exclude_titles[ v.product_id ] == nil )
+			and ( master_product.disc_number == nil or master_product.disc_number == 1 )
 			then
 				count = count + 1
 			end
@@ -82,19 +84,21 @@ local function BrowseCountByCriteria(
 end
 
 
-function CartQualifiesForInCartOffer( shopping_cart ) 
+function CartQualifiesForInCartOffer( shopping_cart )
 	kernel.log( "CartQualifiesForInCartOffer BEGIN" )
-	if 	InCartPromoRules == nil then
+    if 	InCartPromoRules == nil then
 		kernel.log( "InCartPromoRules == nil at CartQualifiesForInCartOffer" )
 		return false
 	end
-	
-	-- Having an existing Promo code on the cart prevents a customer from recieving an In-Cart promo offer
-	if shopping_cart.promo_code ~= nil then
-		if shopping_cart.promo_code.name ~= nil then
-			kernel.log( "customer already entered a promo code, CartQualifiesForInCartOffer = false" )
-			return false
-		end
+    if free_in_cart_template_is_running() then
+        return false
+    end
+
+	-- Having an existing Promo code on the cart prevents a customer from receiving an In-Cart promo offer
+	local promo_code = kernel.rental_promotion_get_promotion()
+	if promo_code ~= nil and promo_code.name ~= nil then
+		kernel.log( "customer already entered a promo code, CartQualifiesForInCartOffer = false" )
+		return false
 	end
 
 	local result = false
@@ -200,9 +204,13 @@ function CartQualifiesForInCartOffer( shopping_cart )
 end
 
 function GetInCartPromoAction()
-	if 	InCartPromoRules == nil then
+    if InCartPromoRules == nil then
 		return nil
 	end
+    if free_in_cart_template_is_running() then
+        return nil
+    end
+
 	for k, v in ipairs( InCartPromoRules ) do
 		if v.offer_action ~= nil then
 			return v
@@ -211,7 +219,7 @@ function GetInCartPromoAction()
 end
 
 function GetInCartPromoCode()
-	if 	InCartPromoRules == nil then
+	if InCartPromoRules == nil then
 		return nil
 	end
 	for k, v in ipairs( InCartPromoRules ) do
@@ -222,7 +230,7 @@ function GetInCartPromoCode()
 end
 
 function LoadInCartPromoMessaging()
-	if 	InCartPromoRules == nil then
+	if InCartPromoRules == nil then
 		return
 	end
 	for k, v in ipairs( InCartPromoRules ) do
@@ -246,11 +254,17 @@ function LoadInCartPromoMessaging()
 end
 
 function CartHasAnyPostOfferItems( shopping_cart )
-	return CartCountByCriteria( shopping_cart, nil, "post_offer" ) > 0
+    if free_in_cart_template_is_running() then
+        return false
+    end
+    return CartCountByCriteria( shopping_cart, nil, "post_offer" ) > 0
 end
 
 function CartHasProductTypeFamily( shopping_cart, product_type, product_family )
-	return CartCountByCriteria( shopping_cart, nil, nil, product_type, product_family ) > 0
+    if free_in_cart_template_is_running() then
+        return false
+    end
+    return CartCountByCriteria( shopping_cart, nil, nil, product_type, product_family ) > 0
 end
 
 function CartSatisfiesInCartOffer( shopping_cart )
@@ -259,6 +273,9 @@ function CartSatisfiesInCartOffer( shopping_cart )
 		if VerboseLogging == true then kernel.log( "> In cart Promo is null" ) end
 		return false, nil
 	end
+    if free_in_cart_template_is_running() then
+        return false, nil
+    end
 
 	if shopping_cart.in_cart_promo_offer_made == nil or shopping_cart.in_cart_promo_offer_made == false then
 		-- The offer does not apply if it was never shown to the customer
@@ -328,28 +345,31 @@ end
 
 
 function UpdateInCartPromoValue( shopping_cart )
-	
+    if free_in_cart_template_is_running() then
+        return
+    end
+
 	-- Satisfy conditions must be checked before moving on
 	local discount_valid, redemption_data = CartSatisfiesInCartOffer( shopping_cart )
+	local promo_code = kernel.rental_promotion_get_promotion()
 	if discount_valid == false 
-	and ( shopping_cart.promo_code == nil or redemption_data == nil )
+	and ( promo_code == nil or redemption_data == nil )
 	then
 		-- The discount was never taken, okay to leave
 		return
 	end
 
-	if shopping_cart.promo_code ~= nil then
-		if shopping_cart.promo_code.name ~= nil
-		and shopping_cart.promo_code.name ~= redemption_data.redemption_code then
+	if promo_code ~= nil then
+		if promo_code.name ~= nil
+		and promo_code.name ~= redemption_data.redemption_code then
 			-- The user added a different program after viewing the offer, they are DONE
 			return
 		end
-		if shopping_cart.promo_code.name ~= nil
-		and shopping_cart.promo_code.name == redemption_data.redemption_code
+		if promo_code.name ~= nil
+		and promo_code.name == redemption_data.redemption_code
 		and discount_valid == false then
 			-- The user no longer qualifies for the offer, remove the code and the discount
-			shopping_cart.promo_code = nil
-			kernel.sessioncleardiscount2( shopping_cart.session_id )
+			shopping_cart:clear_promo_code()
 			return
 		end
 	end
@@ -431,15 +451,25 @@ function UpdateInCartPromoValue( shopping_cart )
 
 		-- Once the amount is calculated, assign it to the cart object
 		if promo_price ~= nil then
-			shopping_cart.promo_code = {
+			local promo_code = {
 				name = redemption_data.redemption_code,
 				price = promo_price,
-				quantity = 1
+				quantity = 1,
+				intent = "FixedValue",
+				percent = 0,
+				rent_qty = 0,
+				rent_format = nil,
+				get_qty = 0,
+				get_format = nil
 			}
+			kernel.rental_promotion_set_promotion( promo_code )
 			kernel.sessionsetdiscount2(
 				shopping_cart.session_id,
-				shopping_cart.promo_code.name,
-				shopping_cart.promo_code.price )
+				promo_code.name,
+				promo_code.price )
+			
+			kernel.log( "UpdateInCartPromoValue: A Promocode is being used, setting session_use_credits to OptedOut" )
+			shopping_cart:set_use_credits( "OptedOut" )
 		end
 		
 	end
@@ -448,6 +478,22 @@ end
 
 function LoadInCartData()
 	-- Fall through logic is by design if config-based in-cart data not created or deployed correctly
+	
+	local function add_multi_discs( product_ids_string )
+		local product_ids = string.split( product_ids_string, "," )
+		for k1, v1 in ipairs( product_ids ) do
+			if is_multi_disc( v1 ) == true then
+				local product_id_list = ProductGroup[MultiDiscXREF[v1].product_group_id].product_id_list
+				for k2, v2 in pairs( product_id_list ) do
+					if inlist( product_ids_string, v2, "," ) == false then
+						product_ids_string = product_ids_string .. "," .. v2
+					end
+				end
+			end
+		end
+		return product_ids_string
+	end
+	
 	local iccsTable = kernel.gettable("in_cart_config_settings")
 	local iccsVars = nil
 	if iccsTable ~= nil then iccsVars = iccsTable[1] end
@@ -477,6 +523,11 @@ function LoadInCartData()
 					-- Replace all variable placeholders with config specified values
 					for k, v in pairs( macro_list ) do
 						kernel.log( "> making replacments for: " .. k )
+						
+						if k == "INCLUDED_TITLES" or k == "EXCLUDED_TITLES" then
+							v = add_multi_discs( v )
+						end
+						
 						for _, rule_group in ipairs( working_rule_set ) do
 							for data_name, data_value in pairs( rule_group ) do
 								if string.find( data_value, "{{" .. k .. "}}" ) then
@@ -491,6 +542,7 @@ function LoadInCartData()
 
 					-- All required data has been loaded and the rule set template has been filled
 					InCartPromoRules = working_rule_set
+					InCartTemplateName = iccsVars.template_name
 					kernel.log( "> InCart template loaded successfully" )
 					return
 				else
@@ -506,21 +558,21 @@ function LoadInCartData()
 	
 	-- If the code gets here there is no config in-cart set, or it is missing files or data values, use old file-based method only
 	InCartPromoRules = kernel.gettable( "in_cart_promotion_v2" )
-	kernel.log( "InCart loaded: " .. tostring( kernel.getresourceproperty( "in_cart_promotion_v2", "program_name" )))
+	local program_name = kernel.getresourceproperty( "in_cart_promotion_v2", "program_name" )
+	InCartTemplateName = program_name
+	kernel.log( "InCart loaded: " .. tostring( program_name ) )
 end
-
 
 function GetKioskOptinCampaign()
 	local kiosk_campaigns = kernel.gettable( "opt_in_campaign" )
 	return kiosk_campaigns[1]
 end
 
-
 function GetInCartTitleLists( ignore_offer_status )
 	local _incart_include_titles = {}
 	local _incart_exclude_titles = {}
-	local _in_cart = GetInCartPromoAction()
-	
+    local _in_cart = GetInCartPromoAction()
+
 	if ( ignore_offer_status == true 
 	or ShoppingCart ~= nil
 	and ShoppingCart.in_cart_promo_offer_made == true
@@ -531,7 +583,7 @@ function GetInCartTitleLists( ignore_offer_status )
 			-- Build in-cart include ONLY these titles list
 			local title_list = string.split( _in_cart.product_id_list, "," )
 			for _, v in ipairs( title_list ) do
-				if tonumber(v) ~= nil then
+				if tonumber( v ) ~= nil then
 					_incart_include_titles[ tonumber( v ) ] = true
 				end
 			end
@@ -543,7 +595,7 @@ function GetInCartTitleLists( ignore_offer_status )
 			-- Build in-cart exclude these titles list
 			local title_list = string.split( _in_cart.exclude_id_list, "," )
 			for _, v in ipairs( title_list ) do
-				if tonumber(v) ~= nil then
+				if tonumber( v ) ~= nil then
 					_incart_exclude_titles[ tonumber( v ) ] = true
 				end
 			end
@@ -555,4 +607,63 @@ function GetInCartTitleLists( ignore_offer_status )
 		_incart_exclude_titles = nil
 	end
 	return _incart_include_titles, _incart_exclude_titles
+end
+
+function free_in_cart_template_is_running()
+    return InCartTemplateName ~= nil and ( InCartTemplateName == "FREE DVD I" or InCartTemplateName == "FREE BLU-RAY J" or InCartTemplateName == "FREE GAME K" )
+end
+
+function free_in_cart_template_get_value( key )
+    for _, rule_group in ipairs( InCartPromoRules ) do
+        for k, v in pairs( rule_group ) do
+            if k == key then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+function free_in_cart_template_is_cart_valid()
+    local function is_excluded( exclude_ids, product_id )
+        for _, id in ipairs( exclude_ids ) do
+            if id == tostring( product_id ) then
+                return true
+            end
+		end
+        return false
+    end
+    local product_family = free_in_cart_template_get_value( "product_family" )
+    local product_type = free_in_cart_template_get_value( "product_type" )
+	local exclude_ids = string.split( free_in_cart_template_get_value( "exclude_id_list" ), "," )
+    for k, v in ipairs( ShoppingCart.items ) do
+        if v.action == "rental" and is_excluded( exclude_ids, v.product_id ) == false and v.product_family == product_family and ( v.product_type == product_type or product_type == "*" ) then
+            return true
+        end
+    end
+    return false
+end
+
+function free_in_cart_template_set_promo()
+    local redemption_code = GetInCartPromoCode()
+    local initial_night = StoreManager.PricingManager:get_price_setting( free_in_cart_template_get_value( "product_family" ), free_in_cart_template_get_value( "product_type" ), "initial_night", "rental" )
+    if redemption_code ~= nil and initial_night ~= nil then
+        local promo_code = {
+	        name = redemption_code,
+	        price = initial_night,
+	        quantity = 1,
+	        intent = "FixedValue",
+	        percent = 0,
+	        rent_qty = 0,
+	        rent_format = nil,
+	        get_qty = 0,
+	        get_format = nil
+        }
+        kernel.rental_promotion_set_promotion( promo_code )
+        kernel.sessionsetdiscount2(
+	        ShoppingCart.session_id,
+	        promo_code.name,
+	        promo_code.price
+        )
+    end
 end

@@ -61,14 +61,14 @@ function newcomingsoongenerator()
 
 	local is_in_date_range3 = function( product )
 		-- This function will account for early release titles [$3 Firsts]
-		local release_date_string = product.release_date
+		local release_date_string = product.merchandise_date
 		local alt_price_data = StoreManager.PricingManager.AlternatePriceTitles[ product.product_id ]
 		if alt_price_data ~= nil then
 			-- This is an early release title, move the release date string value up (x) days before using in compare logic
-			local release_date = kernel.datetimeparsefromstringdate( product.release_date )
+			local release_date = kernel.datetimeparsefromstringdate( product.merchandise_date )
 			local early_date = kernel.dateadd( release_date, "-" .. tostring( alt_price_data.release_early_days ) )
 			release_date_string = string.format( "%4d%02d%02d%02d%02d", early_date.year, early_date.month, early_date.day, early_date.hour, early_date.min )
-			kernel.log( "> OrigRelease:" .. product.release_date .. ", EarlyRelease: " .. release_date_string )
+			kernel.log( "> OrigRelease:" .. product.merchandise_date .. ", EarlyRelease: " .. release_date_string )
 		end
 		return is_in_date_range( release_date_string )
 	end
@@ -83,7 +83,7 @@ function newcomingsoongenerator()
 				kernel.log( ">  cart item p:" .. tostring( product.product_id ) ..
 					" r:" .. tostring( product.rating_id ) ..
 					" pt:" .. tostring( product.product_type_id ) ..
-					" rd:" .. tostring( product.release_date ) ..
+					" rd:" .. tostring( product.merchandise_date ) ..
 					" " ..tostring( product.sort_name ))
 			end
 
@@ -142,7 +142,7 @@ function newcomingsoongenerator()
 			end
 		end
 
-		table.sort( results, function( a, b ) return a.release_date < b.release_date end )
+		table.sort( results, function( a, b ) return a.merchandise_date < b.merchandise_date end )
 		return results
 	end
 
@@ -165,7 +165,7 @@ function newcomingsoongenerator()
 		local _MasterProductCatalog = MasterProductCatalog
 		
 		local process_product = function( product )
-			if get_current_date_string( "%4d%02d%02d%02d%02d" ) < product.release_date
+			if get_current_date_string( "%4d%02d%02d%02d%02d" ) < product.merchandise_date
 			and product.product_type_id ~= nil
 			and product.rating_id ~= nil
 			then
@@ -174,7 +174,7 @@ function newcomingsoongenerator()
 					kernel.log( ">  candidate p:" .. tostring( product.product_id ) ..
 						" r:" .. tostring( product.rating_id ) ..
 						" pt:" .. tostring( product.product_type_id ) ..
-						" rd:" .. tostring( product.release_date ) ..
+						" rd:" .. tostring( product.merchandise_date ) ..
 						" " .. tostring( product.sort_name ) ..
 						" g[1020]:" .. tostring( product.genres[1020] ) )
 				end
@@ -186,7 +186,8 @@ function newcomingsoongenerator()
 					and product.product_type_id > 2
 					and product.rating_id ~= nil
 					and product.rating_id <= highest_rating
-					and is_in_coming_soon_date_range( product.release_date )
+					and is_in_coming_soon_date_range( product.merchandise_date )
+					and ( product.disc_number == nil or product.disc_number == 1 )
 					)
 				or (
 					((product_type_name == "bluray"	and product.product_type_id == 2 ) 	or
@@ -194,12 +195,13 @@ function newcomingsoongenerator()
 					and product.rating_id <= highest_rating
 					and product.genres ~= nil
 					and product.genres[1020] ~= nil
-					and product.release_date ~= nil
+					and product.merchandise_date ~= nil
 					and is_in_date_range3( product ) == true
+					and ( product.disc_number == nil or product.disc_number == 1 )
 				)
 				then
 					-- Mingle #1261 only display coming soon titles if we can successfully load the artwork
-					local image_registered = kernel.registerimagefromcache( product.image_file, product.image_file )
+					local image_registered = kernel.dataserviceregisterimage( product.image_file, product.image_file )
 					if image_registered then
 						results[count] = product.product_id
 						kernel.log("> Coming soon " .. product_type_name .. " cache added: " .. product.sort_name )

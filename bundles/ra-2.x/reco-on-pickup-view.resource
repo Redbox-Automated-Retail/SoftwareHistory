@@ -913,8 +913,8 @@
 				height="146"
 				optionFlags="DrawBorder"
 				borderColor="78,78,78"/>
-				
-			<actor
+
+      <actor
 				name="label_charged_once"
 				x="730"
 				y="726"

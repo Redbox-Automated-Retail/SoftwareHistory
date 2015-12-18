@@ -19,14 +19,8 @@ function help_show_faq()
 	kernel.setactorbackgroundcolor("faq_button", {["r"] = 155, ["g"] = 155,["b"] = 155})
 	kernel.setactorgradienttargetcolor("faq_button", {["r"] = 219, ["g"] = 219,["b"] = 219})
 	
-	kernel.setactorbackgroundcolor("faq_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
 	kernel.setactorbackgroundcolor("terms_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("terms_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("terms_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
 	kernel.setactorbackgroundcolor("terms_redbox_card_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("terms_redbox_card_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
@@ -43,37 +37,6 @@ function help_show_faq()
 	help_image_page = 1
 end
 
-function help_show_faq_tickets()
-	kernel.setmacro( "Help:Title", strings.faq_title )
-	kernel.showactor("contact_redbox_label")
-	
-	kernel.setactorbackgroundcolor("faq_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("faq_tickets_button", {["r"] = 155, ["g"] = 155,["b"] = 155})
-	kernel.setactorgradienttargetcolor("faq_tickets_button", {["r"] = 219, ["g"] = 219,["b"] = 219})
-	
-	kernel.setactorbackgroundcolor("terms_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("terms_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("terms_redbox_card_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_redbox_card_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("privacy_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("privacy_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorforegroundcolor( "faq_button", "white" )
-	kernel.setactorforegroundcolor( "terms_button", "white" )
-	kernel.setactorforegroundcolor( "terms_redbox_card_button", "white" )
-	kernel.setactorforegroundcolor( "privacy_button", "white" )
-	
-	help_current_table = faq_tickets
-	help_image_page = 1
-end
-
 function help_show_terms()
 	kernel.setmacro( "Help:Title", strings.terms_of_use_title )
 	kernel.hideactor("contact_redbox_label")
@@ -81,14 +44,8 @@ function help_show_terms()
 	kernel.setactorbackgroundcolor("faq_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("faq_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
-	kernel.setactorbackgroundcolor("faq_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
 	kernel.setactorbackgroundcolor("terms_button", {["r"] = 155, ["g"] = 155,["b"] = 155})	
 	kernel.setactorgradienttargetcolor("terms_button", {["r"] = 219, ["g"] = 219,["b"] = 219})
-	
-	kernel.setactorbackgroundcolor("terms_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
 	kernel.setactorbackgroundcolor("terms_redbox_card_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("terms_redbox_card_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
@@ -105,37 +62,6 @@ function help_show_terms()
 	help_image_page = 1
 end
 
-function help_show_terms_tickets()
-	kernel.setmacro( "Help:Title", strings.terms_of_use_title )
-	kernel.hideactor("contact_redbox_label")
-	
-	kernel.setactorbackgroundcolor("faq_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("faq_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("terms_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("terms_tickets_button", {["r"] = 155, ["g"] = 155,["b"] = 155})
-	kernel.setactorgradienttargetcolor("terms_tickets_button", {["r"] = 219, ["g"] = 219,["b"] = 219})
-	
-	kernel.setactorbackgroundcolor("terms_redbox_card_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_redbox_card_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorbackgroundcolor("privacy_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("privacy_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
-	kernel.setactorforegroundcolor( "faq_button", "white" )
-	kernel.setactorforegroundcolor( "terms_button", "white" )
-	kernel.setactorforegroundcolor( "terms_redbox_card_button", "white" )
-	kernel.setactorforegroundcolor( "privacy_button", "white" )
-	
-	help_current_table = terms_tickets
-	help_image_page = 1
-end
-
 function help_show_terms_redbox_card()
 	kernel.setmacro( "Help:Title", strings.terms_of_use_title )
 	kernel.hideactor("contact_redbox_label")
@@ -143,15 +69,9 @@ function help_show_terms_redbox_card()
 	kernel.setactorbackgroundcolor("faq_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("faq_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
-	kernel.setactorbackgroundcolor("faq_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
 	kernel.setactorbackgroundcolor("terms_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("terms_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
-	kernel.setactorbackgroundcolor("terms_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-
 	kernel.setactorbackgroundcolor("terms_redbox_card_button", {["r"] = 155, ["g"] = 155,["b"] = 155})
 	kernel.setactorgradienttargetcolor("terms_redbox_card_button", {["r"] = 219, ["g"] = 219,["b"] = 219})
 	
@@ -174,15 +94,9 @@ function help_show_privacy()
 	kernel.setactorbackgroundcolor("faq_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("faq_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
-	kernel.setactorbackgroundcolor("faq_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("faq_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-	
 	kernel.setactorbackgroundcolor("terms_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("terms_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
-	kernel.setactorbackgroundcolor("terms_tickets_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
-	kernel.setactorgradienttargetcolor("terms_tickets_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
-
 	kernel.setactorbackgroundcolor("terms_redbox_card_button", {["r"] = 111, ["g"] = 111,["b"] = 111})
 	kernel.setactorgradienttargetcolor("terms_redbox_card_button", {["r"] = 70, ["g"] = 70,["b"] = 70})
 	
@@ -201,51 +115,24 @@ end
 function help_show_buttons()
 	if help_current_table == faq then
 		_showselectedbutton("faq")
-		kernel.showactor( "faq_tickets_button" )
 		kernel.showactor( "terms_button" )
-		kernel.showactor( "terms_tickets_button" )
-		kernel.showactor( "terms_redbox_card_button" )
-		kernel.showactor( "privacy_button" )
-	elseif help_current_table == faq_tickets then
-		_showselectedbutton("faq_tickets")
-		kernel.showactor( "faq_button" )
-		kernel.showactor( "terms_button" )
-		kernel.showactor( "terms_tickets_button" )
 		kernel.showactor( "terms_redbox_card_button" )
 		kernel.showactor( "privacy_button" )
 	elseif help_current_table == terms then
 		_showselectedbutton("terms")
 		kernel.showactor( "faq_button" )
-		kernel.showactor( "faq_tickets_button" )
-		kernel.showactor( "terms_tickets_button" )
-		kernel.showactor( "terms_redbox_card_button" )
-		kernel.showactor( "privacy_button" )
-	elseif help_current_table == terms_tickets then
-		_showselectedbutton("terms_tickets")
-		kernel.showactor( "faq_button" )
-		kernel.showactor( "faq_tickets_button" )
-		kernel.showactor( "terms_button" )
 		kernel.showactor( "terms_redbox_card_button" )
 		kernel.showactor( "privacy_button" )
 	elseif help_current_table == terms_redbox_card then
 		_showselectedbutton("terms_redbox_card")
 		kernel.showactor( "faq_button" )
 		kernel.showactor( "terms_button" )
-		kernel.showactor( "faq_tickets_button" )
-		kernel.showactor( "terms_tickets_button" )
 		kernel.showactor( "privacy_button" )
 	elseif help_current_table == privacy then
 		_showselectedbutton("privacy")
 		kernel.showactor( "faq_button" )
 		kernel.showactor( "terms_button" )
-		kernel.showactor( "faq_tickets_button" )
-		kernel.showactor( "terms_tickets_button" )
 		kernel.showactor( "terms_redbox_card_button" )
-	end
-	
-	if SellTickets == false then
-		kernel.hideactor( "terms_tickets_button" )
-		kernel.hideactor( "faq_tickets_button" )
 	end
 	
 	if GiftCardsEnabled == false then

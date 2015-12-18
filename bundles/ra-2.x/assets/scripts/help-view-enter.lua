@@ -32,58 +32,24 @@ if kernel.getlasthitactorname() == "Terms_conditions_button" or kernel.getlasthi
 	help_show_terms()
 end
 
-if kernel.getlasthitactorname() == "tickets_terms_conditions_button" or kernel.getlasthitactorname() == "tickets_terms_conditions_small_button" then
-	help_show_terms_tickets()
-end
-
 local set_actors_x_position = function( increment )
-	if SellTickets == true then
+	local x_faq = kernel.getactorx( "faq_button" )
+	local x_terms = kernel.getactorx( "terms_button" )
+	local x_terms_redbox_card = kernel.getactorx( "terms_redbox_card_button" )
+	local x_privacy = kernel.getactorx( "privacy_button" )
+	local x_unplayable = kernel.getactorx( "unplayable_return_button" )
+	kernel.setactorx( "faq_button", x_faq - 100 + increment )
+	kernel.setactorx( "terms_button", x_terms - 100 + increment )
+	kernel.setactorx( "terms_redbox_card_button", x_terms_redbox_card - 100 + increment )
+	if GiftCardsEnabled == false then
 		if kernel.getculture() == "en-US" then
-			kernel.setactorx( "faq_button", 171 + increment )
-			kernel.setactorx( "faq_tickets_button", 301 + increment )
-			kernel.setactorx( "terms_button", 431 + increment )
-			kernel.setactorx( "terms_tickets_button", 561 + increment )
-			kernel.setactorx( "terms_redbox_card_button", 691 + increment )
-			local x_pos_privacy_button = 871
-			if GiftCardsEnabled == false then
-				x_pos_privacy_button = 691
-			end
-			kernel.setactorx( "privacy_button", x_pos_privacy_button + increment )
-			kernel.setactorx( "unplayable_return_button", 824 + increment )
+			x_privacy = x_privacy - 180
 		else
-			kernel.setactorx( "faq_button", 161 + increment )
-			kernel.setactorx( "faq_tickets_button", 281 + increment )
-			kernel.setactorx( "terms_button", 401 + increment )
-			kernel.setactorx( "terms_tickets_button", 546 + increment )
-			kernel.setactorx( "terms_redbox_card_button", 691 + increment )
-			local x_pos_privacy_button = 836
-			if GiftCardsEnabled == false then
-				x_pos_privacy_button = 691
-			end
-			kernel.setactorx( "privacy_button", x_pos_privacy_button + increment )
-			kernel.setactorx( "unplayable_return_button", 811 + increment )
+			x_privacy = x_privacy - 153
 		end
-	else
-		local x_faq = kernel.getactorx( "faq_button" )
-		local x_terms = kernel.getactorx( "terms_button" )
-		local x_terms_redbox_card = kernel.getactorx( "terms_redbox_card_button" )
-		local x_privacy = kernel.getactorx( "privacy_button" )
-		local x_unplayable = kernel.getactorx( "unplayable_return_button" )
-		kernel.hideactor( "faq_tickets_button" )
-		kernel.hideactor( "terms_tickets_button" )
-		kernel.setactorx( "faq_button", x_faq - 100 + increment )
-		kernel.setactorx( "terms_button", x_terms - 100 + increment )
-		kernel.setactorx( "terms_redbox_card_button", x_terms_redbox_card - 100 + increment )
-		if GiftCardsEnabled == false then
-			if kernel.getculture() == "en-US" then
-				x_privacy = x_privacy - 180
-			else
-				x_privacy = x_privacy - 153
-			end
-		end
-		kernel.setactorx( "privacy_button", x_privacy - 100 + increment )
-		kernel.setactorx( "unplayable_return_button", x_unplayable - 100 + increment )
 	end
+	kernel.setactorx( "privacy_button", x_privacy - 100 + increment )
+	kernel.setactorx( "unplayable_return_button", x_unplayable - 100 + increment )
 end
 
 if EnableUnplayableReturn == false then

@@ -1,6 +1,6 @@
 --
 -- platform-selection-view-enter.lua
--- Copyright (C) 2013 Redbox Automated Retail, LLC.
+-- Copyright (C) 2015 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
@@ -42,11 +42,10 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,PS3" )
 		set_number = 1
-		browse_selected_sort = "PS3"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "PS3")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "PS3" )
 		view_show_safe( "browse_view")
-		-- view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )
 kernel.registeractorhitnotify(
@@ -54,11 +53,10 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,PS4" )
 		set_number = 1
-		browse_selected_sort = "PS4"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "PS4")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "PS4" )
 		view_show_safe( "browse_view")
-		-- view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )
 kernel.registeractorhitnotify(
@@ -66,11 +64,10 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Wii" )
 		set_number = 1
-		browse_selected_sort = "Wii"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Wii" )
 		view_show_safe( "browse_view")
-		-- view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )
 kernel.registeractorhitnotify(
@@ -78,11 +75,10 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Wii U" )
 		set_number = 1
-		browse_selected_sort = "Wii U"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii U")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Wii U" )
 		view_show_safe( "browse_view")
-		-- view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )
 kernel.registeractorhitnotify(
@@ -90,11 +86,10 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Xbox 360" )
 		set_number = 1
-		browse_selected_sort = "Xbox 360"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Xbox 360")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Xbox 360" )
 		view_show_safe( "browse_view")
-		-- view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )
 kernel.registeractorhitnotify(
@@ -102,17 +97,15 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Xbox One" )
 		set_number = 1
-		browse_selected_sort = "Xbox One"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Xbox One")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Xbox One" )
 		view_show_safe( "browse_view")
-		-- view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )
 kernel.registeractorhitnotify(
 	"view_all_button",
 	function()
 		view_show_safe( "browse_view" )
-		--view_analytics_event( "productsShown", tostring( total_products_shown ) )
 	end
 )

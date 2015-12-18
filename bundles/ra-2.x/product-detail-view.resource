@@ -91,7 +91,7 @@
 				visible="false"
 				optionFlags="Image, Text, TextShadow" />
 
-			<actor
+			<!--actor
 				name="banner"
 				x="74"
 				y="580"
@@ -103,7 +103,7 @@
 				horizontalAlignment="center"
 				visible="false"
 				text="${ProductDetail:ProductType}"
-				optionFlags="Image, Text" />
+				optionFlags="Image, Text" /-->
 
 			<actor
 				name="coming_soon_violator"
@@ -191,7 +191,7 @@
 
 			<actor
 				name="selected_product_running_time"
-				x="650"
+				x="602"
 				y="136"
 				width="40"
 				height="22"
@@ -206,7 +206,7 @@
 
 			<actor
 				name="selected_product_national_street_date"
-				x="698"
+				x="650"
 				y="136"
 				width="42"
 				height="22"
@@ -221,7 +221,7 @@
 
 			<actor
 				name="selected_product_CC"
-				x="748"
+				x="700"
 				y="136"
 				width="48"
 				height="22"
@@ -283,7 +283,7 @@
 				name="category"
 				x="612"
 				y="510"
-				width="146"
+				width="300"
 				height="20"
 				optionFlags="Text"
 				font="font_vag_light_11"
@@ -332,15 +332,6 @@
 				text="${ProductDetail:FirstNightPrice}" />
 
 			<actor
-				name="first_night_price_a_day"
-				x="673"
-				y="531"
-				Enabled="false"
-				optionFlags="Text"
-				font="font_vag_light_11"
-				text="a day" />
-
-			<actor
 				name="extra_night_price_label"
 				x="546"
 				y="551"
@@ -354,7 +345,7 @@
 				y="551"
 				optionFlags="Text"
 				font="font_vag_light_11"
-				text="${ProductDetail:ExtraNightPrice} a day" />				
+				text="${ProductDetail:ExtraNightPrice}" />				
 
 			<actor
 				name="return_time_label"
@@ -447,7 +438,30 @@
 				text="*WHEN YOU TEXT LOCATE TO 727272, YOU WILL GET UP TO 2 MESSAGES. Up to 2 msgs&#47;week. Msg &#38; data rates may apply. Text STOP to quit, HELP for help." />		
 
 			<actor
-				name="buy_used_dvd_button"
+				name="collection_button"
+				x="240"
+				y="645"
+				width="276"
+				height="70"
+				cornerSize="33,33"
+				font="font_bryant_bold_18"
+				text="SEE RELATED&#10;COLLECTION"
+				visible="true"
+				style="gray_button_white_border_style" />
+
+			<actor
+				name="buy_used_product_button"
+				x="536"
+				y="635"
+				width="88"
+				height="88"
+				cornerSize="47,47"
+				text="BUY"
+				font="font_target_medium_small"
+				style="kiosk_2_blue_button_style" />
+
+			<actor
+				name="buy_other_product_button"
 				x="690"
 				y="630"
 				width="94"
@@ -455,18 +469,18 @@
 				cornerSize="47,47"
 				text="BUY"
 				textRegion="0,15,94,45"
-				font="font_bryant_bold_24"
-				style="round_blue_with_blue_border_button_style" />
+				font="font_target_small_medium"
+				style="kiosk_2_blue_button_style" />
 
 			<actor
-				name="buy_used_amount_label"
+				name="buy_other_product_amount_label"
 				x="690"
-				y="668"
+				y="670"
 				width="94"
 				height="45"
 				foregroundColor="White"
 				text="${ProductDetail:PurchasePrice}"
-				font="font_bryant_bold_16"
+				font="font_target_small_medium"
 				visible="true"
 				verticalAlignment="center"
 				horizontalAlignment="center"
@@ -474,7 +488,7 @@
 				
 			<actor
 				name="back_button"
-				x="536"
+				x="74"
 				y="644"
 				width="146"
 				height="70"
@@ -486,7 +500,7 @@
 
 			<actor
 				name="back_button_arrow"
-				x="552"
+				x="90"
 				y="668"
 				hitFlags="Enabled"
 				tag="back"
@@ -495,7 +509,7 @@
 				optionFlags="image" />
 
 			<actor
-				name="add_button"
+				name="add_button_other_product"
 				x="792"
 				y="644"
 				width="146"
@@ -506,8 +520,134 @@
 				style="red_button_style" />
 
 			<actor
-				name="plus_button"
+				name="plus_button_other_product"
 				x="820"
+				y="668"
+				width="22"
+				height="22"
+				hitFlags="Enabled"
+				image="image_plus"
+				optionFlags="Image" />
+
+			<actor
+				name="add_button_dvd"
+				x="642"
+				y="644"
+				width="146"
+				height="70"
+				cornerSize="35,35"
+				font="font_bryant_bold_24"
+				text="   DVD"
+				style="red_button_style" />
+
+			<actor
+				name="dvd_in_cart"
+				x="669"
+				y="644"
+				height="70"
+				width="90"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="DVD       IN CART"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="dvd_out_of_stock"
+				x="660"
+				y="631"
+				height="70"
+				width="110"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="DVD"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="dvd_out_of_stock2"
+				x="640"
+				y="656"
+				height="70"
+				width="150"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_target_small_14"
+				text="OUT OF STOCK"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="plus_button_dvd"
+				x="670"
+				y="668"
+				width="22"
+				height="22"
+				hitFlags="Enabled"
+				image="image_plus"
+				optionFlags="Image" />
+
+			<actor
+				name="add_button_bluray"
+				x="806"
+				y="644"
+				width="194"
+				height="70"
+				cornerSize="35,35"
+				font="font_bryant_bold_24"
+				text="   BLU-RAY"
+				style="blue_button_style" />
+
+			<actor
+				name="bluray_in_cart"
+				x="843"
+				y="644"
+				height="70"
+				width="120"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="BLU-RAY  IN CART"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="bluray_out_of_stock"
+				x="828"
+				y="631"
+				height="70"
+				width="150"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_bryant_bold_18"
+				text="BLU-RAY"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="bluray_out_of_stock2"
+				x="828"
+				y="656"
+				height="70"
+				width="150"
+				optionFlags="Text"
+				enabled="false"
+				visible="false"
+				font="font_target_small_14"
+				text="OUT OF STOCK"
+				foregroundColor="white"
+				style="red_button_style" />
+
+			<actor
+				name="plus_button_bluray"
+				x="824"
 				y="668"
 				width="22"
 				height="22"

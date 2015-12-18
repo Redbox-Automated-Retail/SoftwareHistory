@@ -49,12 +49,17 @@ local close_view = function()
 						end
 					end
 					
+					local job_name = "vend"
+					if remove_disc_button_pressed_from_tab == "Unmatched" then
+						job_name = "MDV_Vend_Unmatched"
+					end
+					
 					-- Send DiscAction Message
 					if ( #barcode_list > 0 ) then
 						kernel.fmadiscaction(
 							StoreID,
 							username,
-							"vend",
+							job_name,
 							os.date("%Y%m%d%H%M"), -- YearMonthDatHourMin ie: 201312242359
 							barcode_list)
 					end
@@ -66,6 +71,13 @@ local close_view = function()
 
 --helper function for painting items on the panel
 local display_items = function( x, y )
+  local function get_disc_number( barcode )
+     if barcode ~= nil and BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id] ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number ~= nil then
+       return MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number
+     end
+     return 1
+  end
+	
   local stop_y = 522
   local formatted_text
   local name
@@ -78,18 +90,25 @@ local display_items = function( x, y )
     if( item == nil ) then
 		break
     end
-    if item.title == nil
-    or item.title == "" then
-		title = item.status
-	else
-		title = item.title
-	end
+	
 	if item.barcode == nil
 	or item.barcode == "" then
 		barcode = "Unknown"
 	else
 		barcode = item.barcode
 	end
+	
+    if item.title == nil
+    or item.title == "" then
+		title = item.status
+	else
+		title = item.title
+	end
+	
+	if remove_disc_button_pressed_from_tab == "Unmatched" then
+		title = tostring( title ) .. " (disc " .. tostring( get_disc_number( barcode ) ) .. ")"
+	end
+	
 	if string.len(title) > 35 then
 		title = string.sub(title, 1, 35 ) .. ".."
 	end
@@ -145,12 +164,12 @@ local function create_or_update_product_catalog_entry( product_id, history )
 		if not master.sell_thru then return false end
 		-- Currently may only sell DVDs, not blu-ray or games, safety catch for hive data used above
 		if master.product_type_id ~= 1 then return false end
-		if master.release_date == nil then return false end
+		if master.merchandise_date == nil then return false end
 
 		-- Disc must be 30 days past release date
 		local now = get_current_date_string( "%4d%02d%02d" )
 
-		local since_release = kernel.getelapseddays( master.release_date, now )
+		local since_release = kernel.getelapseddays( master.merchandise_date, now )
 		if since_release ~= nil and since_release < 30 then return false end
 
 		-- Special Out for Rent (OFR) rules apply to ensure adequate rental stock
@@ -174,7 +193,7 @@ local function create_or_update_product_catalog_entry( product_id, history )
 	local function is_available( product_id )
 		local product = MasterProductCatalog[product_id]
 		if product == nil then return false end
-		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > product.release_date
+		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > product.merchandise_date
 	end
 
 	local product_catalog = ProductCatalog[product_id] or { product_id = product_id }

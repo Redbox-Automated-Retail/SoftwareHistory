@@ -40,19 +40,6 @@ kernel.registeractorhitnotify(
 )
 
 kernel.registeractorhitnotify(
-	"abe_tickets_button",
-	function()
-		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
-		view_analytics_event( "buttonPress", "abe_tickets_button" )
-		if kernel.getculture() ~= "en-US" then localization_toggle_culture() end
-		kernel.setlasthitactorname( "abe_tickets_button" )
-		ShoppingCart.TicketsCart = newticketscart()
-		if VerboseLogging then kernel.log( "|Tickets| Making call to script 'tickets_show_how_it_works_view' " ) end
-		kernel.executescript( "tickets_show_how_it_works_view" )
-	end
-)
-
-kernel.registeractorhitnotify(
 	"abe_games_button",
 	function()
 		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
@@ -82,7 +69,6 @@ local do_not_show_games_button = ( DisableGames or ( ProductCatalog:in_stock_gam
 
 if do_not_show_games_button then
 	kernel.hideactor( "abe_games_button" )
-	kernel.setactorx( "abe_tickets_button", 177 )
 	kernel.setactorx( "abe_all_movies_button", 534 )
 end
 

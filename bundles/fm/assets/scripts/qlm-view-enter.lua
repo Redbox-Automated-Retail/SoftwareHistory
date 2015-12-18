@@ -11,6 +11,11 @@ end
 kernel.setactortext("schedule_value", tostring(schedule_time) )
 kernel.setmacro("MerchVmzFirstEnter", nil )
 
+if VMZMerchFlowEnabled == false then
+	kernel.disableactor( "launch_button" )
+	kernel.setactorforegroundcolor( "launch_button", "gray" )
+end
+
 -- unload-vmz # release decks, update text field appropriately
 if num_newrelease_decks < 1 then
 	kernel.setmacro("keyboard:newrelease_decks", "" )
@@ -43,7 +48,8 @@ if job_grid == nil then
 			   or (is_thin_running2 == true)
 			   or (is_thin_vmz_running == true)
 			   or (is_thin_vmz_running2 == true)
-			   or (is_clean_vmz_running == true) then
+			   or (is_clean_vmz_running == true)
+			   or (VMZMerchFlowEnabled == false) then
 				kernel.disableactor( "launch_button" )
 				kernel.setactorforegroundcolor( "launch_button", "gray" )
 			else

@@ -51,4 +51,10 @@ else
 	showinventory()
 end
 
-
+kernel.registeractorhitnotify(
+	"remove_disc_button",
+	function()
+		remove_disc_button_pressed_from_tab = kernel.getactortag( InventoryViewFilter )
+		kernel.executescript( "inventory_remove_discs" )
+	end
+)

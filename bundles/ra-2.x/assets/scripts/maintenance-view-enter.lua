@@ -11,6 +11,8 @@ end
 if DataAccessAlreadySent ~= true or AllowEntry ~= nil and AllowEntry == true then
 	AllowEntry = false
 	local store_id = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
+	kernel.setmacro( "KIOSK_ID", store_id )
+
 	if Stores ~= nil
 	and Stores[store_id] ~= nil
 	and Stores[store_id].zip ~= nil

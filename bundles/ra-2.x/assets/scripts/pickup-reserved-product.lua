@@ -54,13 +54,95 @@ end
 
 swipe_view_next_func = function()
 	ReservationManager:start_new()
+
 	local account_reservations = ReservationManager:get_account_reservations( true )
-	local message_view_manager = newmessageviewmanager()
+	local on_pickup_validation_failure = function()
+		ShoppingCart:commit( "Pickup Validation Failure." )
+		kernel.log( "on_pickup_validation_failure() BEGIN" )
+		local barcodes_to_reset = {}
+		local barcode_indexed_results = {}
+		for ref, res in ipairs( account_reservations ) do
+			for k, v in ipairs( res.barcodes ) do
+				barcode_indexed_results[v.barcode] = "CustomerDisabled"
+			end
+		end
+		for ref, res in pairs( account_reservations ) do
+			local pick_up_results = {}
+			local barcode_count = 0
+			for group, codes in pairs( res.barcodes ) do
+				local group_results = {}
+				for _, code in ipairs(codes) do
+				
+					local multi_disc = false
+					if BarcodeToProduct[code] ~= nil and BarcodeToProduct[code].product_id ~= nil then
+						multi_disc = is_multi_disc( BarcodeToProduct[code].product_id )
+					end
+					
+					local result = {
+						barcode = code,
+						multi_disc = multi_disc,
+						status = barcode_indexed_results[code] or "CustomerDisabled"
+					}
+					if result.status ~= "Fullfilled" then
+						kernel.log( "> Adding " .. tostring( result.barcode ) .. " to reset barcode list" )
+						barcodes_to_reset[#barcodes_to_reset + 1] = result.barcode
+					end
+					group_results[#group_results + 1] = result
+
+					local attributes = {
+						barcode = result.barcode,
+						multi_disc = result.multi_disc,
+						status = result.status
+					}
+					kernel.analyticsaddnode( "onlinePickup", "cartItem", ShoppingCart.session_id )
+					kernel.analyticsaddattributes( "cartItem", attributes, ShoppingCart.session_id )
+					barcode_count = barcode_count + 1
+				end
+				pick_up_results[group] = group_results
+			end
+			kernel.log( "on_pickup_validation_failure() pick_up_results for reservation " .. ref )
+			for group, group_results in pairs( pick_up_results ) do
+				kernel.log("on_pickup_validation_failure() pick_up_results for group " .. group )
+				for _, result in ipairs(group_results) do
+					kernel.log(
+						"on_pickup_validation_failure() group_result barcode " .. tostring( result.barcode ) ..
+						" multi_disc " .. tostring( result.multi_disc ) ..
+						" status " .. tostring( result.status ) )
+				end
+			end
+			if barcode_count == 0 then
+				kernel.log( "> Reservation " .. ref .. " had 0 barcodes, skipping Pickup() call" )
+			else
+				kernel.log( "on_pickup_validation_failure(): Calling kernel.resvsvcs_pickup" )
+				kernel.resvsvcs_pickup(
+					StoreManager:get_number(),
+					res.email_address,
+					ref,
+					pick_up_results,
+					ShoppingCart.blocklisted,
+					nil )
+			end
+		end
+
+		kernel.log( "on_pickup_validation_failure(): Removing reservations for ..." ..  string.sub( ReservationManager.card_hash_id or "NULL ", 1, 5 ) )
+		Reservations:remove( ReservationManager.card_hash_id )
+
+		if #barcodes_to_reset <= 0 then
+			kernel.log( "on_pickup_validation_failure(): No barcodes to reset" )
+		else
+			kernel.log( "on_pickup_validation_failure(): resetting status to Known for " .. tostring(#barcodes_to_reset) .. " discs" )
+			update_barcode_status( barcodes_to_reset, "Known" )
+		end
+		ShoppingCart:close_analytics( "False" )
+		kernel.log( "on_pickup_validation_failure() COMPLETE" )
+	end
+
 	if account_reservations == nil
 	or table_count( account_reservations ) == 0 then
 		kernel.log( "get_account_reservations() returns null or zero rows in swipe_view_next_funct()" )
 		reservation_error_handler()
 	else
+		local message_view_manager = newmessageviewmanager()
 		local num_reservations = 0
 		local reference_numbers = {}
 		local count = 0
@@ -87,83 +169,17 @@ swipe_view_next_func = function()
 			continue_func()
 		end
 		
-		local on_pickup_validation_failure = function()
-			ShoppingCart:commit( "Pickup Validation Failure." )
-			kernel.log( "on_pickup_validation_failure() BEGIN" )
-			local barcodes_to_reset = {}
-			local barcode_indexed_results = {}
-			for ref, res in ipairs( account_reservations ) do
-				for k, v in ipairs( res.barcodes ) do
-					barcode_indexed_results[v.barcode] = "CustomerDisabled"
-				end
-			end
-			for ref, res in pairs( account_reservations ) do
-				local pick_up_results = {}
-				local barcode_count = 0
-				for group, codes in pairs( res.barcodes ) do
-					local group_results = {}
-					for _, code in ipairs(codes) do
-						local result = {
-							barcode = code,
-							status = barcode_indexed_results[code] or "CustomerDisabled"
-						}
-						if result.status ~= "Fullfilled" then
-							kernel.log( "> Adding " .. tostring( result.barcode ) .. " to reset barcode list" )
-							barcodes_to_reset[#barcodes_to_reset + 1] = result.barcode
-						end
-						group_results[#group_results + 1] = result
-
-						local attributes = {
-							barcode = result.barcode,
-							status = result.status
-						}
-						kernel.analyticsaddnode( "onlinePickup", "cartItem", ShoppingCart.session_id )
-						kernel.analyticsaddattributes( "cartItem", attributes, ShoppingCart.session_id )
-						barcode_count = barcode_count + 1
-					end
-					pick_up_results[group] = group_results
-				end
-				kernel.log( "on_pickup_validation_failure() pick_up_results for reservation " .. ref )
-				for group, group_results in pairs( pick_up_results ) do
-					kernel.log("on_pickup_validation_failure() pick_up_results for group " .. group )
-					for _, result in ipairs(group_results) do
-						kernel.log(
-							"on_pickup_validation_failure() group_result barcode " .. tostring( result.barcode ) ..
-							" status " .. tostring( result.status ) )
-					end
-				end
-				if barcode_count == 0 then
-					kernel.log( "> Reservation " .. ref .. " had 0 barcodes, skipping Pickup() call" )
-				else
-					kernel.log( "on_pickup_validation_failure(): Calling kernel.resvsvcs_pickup" )
-					kernel.resvsvcs_pickup(
-						StoreManager:get_number(),
-						res.email_address,
-						ref,
-						pick_up_results,
-						nil )
-				end
-			end
-
-			kernel.log( "on_pickup_validation_failure(): Removing reservations for ..." ..  string.sub( ReservationManager.card_hash_id or "NULL ", 1, 5 ) )
-			Reservations:remove( ReservationManager.card_hash_id )
-
-			if #barcodes_to_reset <= 0 then
-				kernel.log( "on_pickup_validation_failure(): No barcodes to reset" )
-			else
-				kernel.log( "on_pickup_validation_failure(): resetting status to Known for " .. tostring(#barcodes_to_reset) .. " discs" )
-				update_barcode_status( barcodes_to_reset, "Known" )
-			end
-			ShoppingCart:close_analytics( "False" )
-			kernel.log( "on_pickup_validation_failure() COMPLETE" )
-		end
-
 		ShoppingCart:validatepickup(
 			reference_numbers,
 			function( result )
 				if result.properties.is_online == false
 				or result.properties.stand_alone == true then
-					result.success = true
+					ShoppingCart:set_blocklisted( ShoppingCart:is_card_blocklisted() )
+					if ShoppingCart.blocklisted == true then
+						result.success = false
+					else
+						result.success = true
+					end
 				end
 
 				if result.success then
@@ -179,8 +195,11 @@ swipe_view_next_func = function()
 						if num_reservations == 1
 						and num_reserved_titles < 5
 						and ( res_version_2 == true or ( res_version_3 == true and ShoppingCart:is_gift_card() == false and ReservationManager:is_gc() == false ) )
+						and ReservationManager:is_mnp() == false
+						and ReservationManager:is_mdv() == false
 						and result.properties.is_online == true
-						and result.properties.stand_alone == false then
+						and result.properties.stand_alone == false 
+						then
 							ShoppingCart.recommendations_generator:GenerateRecomendationsTop20()
 							local reco_list = ShoppingCart.recommendations_generator.recommended_list
 							if #reco_list > 2 then
@@ -189,7 +208,7 @@ swipe_view_next_func = function()
 						end
 						return qualifies
 					end
-				
+					
 					if RecommendationOnPickup == true and qualify_for_reco() then
 						-- Account qualifies for Recomendations On Pickup
 						
@@ -221,6 +240,20 @@ swipe_view_next_func = function()
 						message_view_manager:show_second_button( strings.continue_button, reservation_continue )
 						message_view_manager:start_timer( continue_func, 15000 )
 					end
+				elseif ShoppingCart.blocklisted == true then
+					view_analytics_event( "context", "blocklisted" )
+					on_pickup_validation_failure()
+
+					local blocklisted_complete = function()
+						message_view_manager:hide( true )
+						kernel.executescript( "start_over" )
+					end
+					message_view_manager:hide_title()
+					message_view_manager:show()
+					message_view_manager:set_message( strings.authorization_failure_message )
+					message_view_manager:hide_first_button()
+					message_view_manager:show_second_button( strings.continue_button, blocklisted_complete )
+					message_view_manager:start_timer( blocklisted_complete )
 				else
 					kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
 					show_customer_blacklisted_message( on_pickup_validation_failure )

@@ -325,28 +325,6 @@
         optionFlags="Text" />
 
       <actor
-        name="last_thin_label"
-        x="85"
-        y="530"
-        font="medium_font"
-        verticalAlignment="center"
-        horizontalAlignment="near"
-        foregroundColor="black"
-        text="Loading VMZ Data..."
-        optionFlags="Text" />
-
-      <actor
-        name="thins_outside_vmz_label"
-        x="85"
-        y="550"
-        font="medium_font"
-        verticalAlignment="center"
-        horizontalAlignment="near"
-        foregroundColor="black"
-        text=""
-        optionFlags="Text" />
-
-      <actor
         name="unload_checkbox"
         x="638"
         y="516"

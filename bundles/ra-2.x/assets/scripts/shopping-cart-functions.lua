@@ -56,6 +56,8 @@ function newshoppingcart()
 
 	t.session_use_credits = "NotSpecified"
 
+	t.blocklisted = false
+
 	t.size = function( self )
 		return #self.items
 	end
@@ -71,7 +73,6 @@ function newshoppingcart()
 		kernel.sessionabandon2( self.session_id, reason )
 		kernel.sessionend2( self.session_id )
 		kernel.sessionsave2( self.session_id )
-		movie_product_map = {}
 	end
 
 	t.commit = function( self, reason, should_end_and_save )
@@ -86,11 +87,7 @@ function newshoppingcart()
 	end
 
 	t.close_analytics = function( self, abandoned )
-		if self.TicketsCart ~= nil then
-			self.TicketsCart:send_cart_to_analytics()
-		else
-			self:send_cart_to_analytics()
-		end
+		self:send_cart_to_analytics()
 		SubmitAnalyticsPricing( self.session_id )
 		kernel.analyticsclose( self.session_id, abandoned )
 	end
@@ -108,15 +105,41 @@ function newshoppingcart()
 		end
 		kernel.sessionend2( self.session_id )
 		kernel.sessionsave2( self.session_id )
-		movie_product_map = {}
 	end
 
+	t.update_cart_macros = function( self )
+		for k, v in ipairs( self.items ) do
+			local product = MasterProductCatalog[ v.product_id ]
+			kernel.log("TTS:CartTitle_"..tostring(k).."_Name = "..tostring(product.long_name) )
+			kernel.setmacro( "TTS:CartTitle_"..tostring(k).."_Name", tostring(product.long_name) )
+		end
+		for i=(#self.items+1),5 do
+			kernel.log("TTS:CartTitle_"..tostring(i).."_Name = empty")
+			kernel.setmacro( "TTS:CartTitle_"..tostring(i).."_Name", "" )
+		end
+
+		if #self.items > 0 then
+			kernel.setmacro( "TTS:NumberOfTitlesInCart", #self.items )
+		else
+			kernel.setmacro( "TTS:NumberOfTitlesInCart", "" )
+		end
+		
+		if #self.items == 1 then
+			kernel.setmacro( "TTS:CartTitlePlurality", "Title" )
+		elseif #self.items > 1 then
+			kernel.setmacro( "TTS:CartTitlePlurality", "Titles" )
+		end
+	end
+	
 	t.check_out = function( self )
 		local barcodes = self:get_barcodes_to_vend()
 		if #barcodes == 0 then
 			self.messagebox:show( strings.inventory_error )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
+			if TextToSpeechEnabled == true then
+				self.update_cart_macros()
+			end
 			return false
 		end
 
@@ -136,11 +159,14 @@ function newshoppingcart()
 	t.start_new = function( self )
 		kernel.log("Shopping cart start_new() " )
 		self.items = {}
-		movie_product_map = {}
+		if TextToSpeechEnabled == true then
+			self:update_cart_macros()
+		end
 		self.session_use_credits = "NotSpecified"
 		self.email = nil
-		self.promo_code = nil
+		kernel.rental_promotion_clear_promotion()
 		self.postal_code = nil
+		self.blocklisted = false
 		self.vend_manager:init()
 		self.session_id = kernel.sessionstartnew2( StoreManager:get_number() )
 		kernel.log(">  session_id = " .. self.session_id )
@@ -153,6 +179,11 @@ function newshoppingcart()
 
 	t.add_session_event = function( self, event_type, event_description )
 		kernel.sessionaddevent2( self.session_id, event_type, event_description )
+	end
+
+	t.set_blocklisted = function( self, value )
+		self.blocklisted = value
+		kernel.sessionsetblocklisted( self.session_id, value )
 	end
 
 	t.set_use_credits = function( self, value )
@@ -183,11 +214,12 @@ function newshoppingcart()
 		end
 		self:get_barcodes_to_vend()
 		self:set_session_cart_groups()
+		self.blu_ray_upsell:set_shopping_cart_items()
 		local clear_in_cart_promo = false
 		for k, v in ipairs( self.items ) do
 			kernel.log( "Session add Line Item: " .. tostring( v.barcode ) .. " for ".. tostring( v.action ) .. " Price: " .. tostring( v.price ) ..
-				" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) )
-			kernel.sessionaddlineitem3(
+				" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) .. " " .. tostring( v.source_type ) )
+			kernel.sessionaddlineitem6(
 				self.session_id,
 				v.action,
 				v.barcode,
@@ -196,7 +228,10 @@ function newshoppingcart()
 				v.quantity,
 				v.pricing_policy,
 				v.product_family,
-				v.product_type)
+				v.product_type,
+				v.source_type,
+				v.blu_ray_upsell,
+				v.multi_disc )
 			if v.status == "InventoryError" then
 				clear_in_cart_promo = true
 			end
@@ -206,9 +241,10 @@ function newshoppingcart()
 		error_message_view_manager:set_message( strings.authorization_message )
 		kernel.analyticsaddnode( "authorizations", "authorize", self.session_id )
 
-		if clear_in_cart_promo == true and self.promo_code ~= nil and self.promo_code.name ~= nil and self.promo_code.name == GetInCartPromoCode() then
+		local promo_code = kernel.rental_promotion_get_promotion()
+		if clear_in_cart_promo == true and promo_code ~= nil and promo_code.name ~= nil and promo_code.name == GetInCartPromoCode() then
+			kernel.log( "> Inventory Error: In-Cart promo code " .. tostring( promo_code ) .. " cleared." )
 			self:clear_promo_code()
-			kernel.log( "> Inventory Error: In-Cart promo code " .. tostring( self.promo_code ) .. " cleared." )
 		end
 		kernel.merchsvcs_authorize(
 			self.session_id,
@@ -226,9 +262,8 @@ function newshoppingcart()
 							end
 						end
 						if clear_promo == true then
-							kernel.log( "> Invalid Promo code " .. self.promo_code .. " cleared." )
-							self.promo_code = nil
-							kernel.sessioncleardiscount2( self.session_id )
+							kernel.log( "> Invalid Promo code " .. tostring( promo_code ) .. " cleared." )
+							self:clear_promo_code()
 						end
 					end
 				end
@@ -397,7 +432,8 @@ function newshoppingcart()
 				v.quantity,
 				v.pricing_policy,
 				v.product_family,
-				v.product_type)
+				v.product_type,
+				v.multi_disc )
 		end
 
 		local error_message_view_manager = newerrormessageviewmanager()
@@ -502,7 +538,7 @@ function newshoppingcart()
 	t.get_rental_count = function( self )
 		local rent_count = 0
 		for k, v in ipairs( self.items ) do
-			if v.action == "rental" then
+			if v.action == "rental" and ( MasterProductCatalog[v.product_id].disc_number == nil or MasterProductCatalog[v.product_id].disc_number == 1 ) then
 				rent_count = rent_count + 1
 			end
 		end
@@ -532,8 +568,7 @@ function newshoppingcart()
 	t.get_rental_game_count = function( self )
 		local game_count = 0
 		for k, v in ipairs( self.items ) do
-			if v.product_family == "Games"
-			and v.action == "rental" then
+			if v.product_family == "Games" and v.action == "rental" and ( MasterProductCatalog[v.product_id].disc_number == nil or MasterProductCatalog[v.product_id].disc_number == 1 ) then
 				game_count = game_count + 1
 			end
 		end
@@ -581,6 +616,16 @@ function newshoppingcart()
 	t.add_item = function( self, catalog_entry, qty, action_code, source_type )
 		local product_pricing = StoreManager.PricingManager:get_product_price( catalog_entry.product_id )
 		local item_price = product_pricing.initial_night
+		
+		if is_multi_disc( catalog_entry.product_id ) == true and MasterProductCatalog[catalog_entry.product_id] ~= nil and MasterProductCatalog[catalog_entry.product_id].disc_number ~= nil and MasterProductCatalog[catalog_entry.product_id].disc_number > 1 then
+			product_pricing.initial_night = 0
+			product_pricing.extra_night = 0
+			product_pricing.non_return = 0
+			product_pricing.expiration_price = 0
+			
+			item_price = 0
+		end
+		
 		local item_tax_rate = ( StoreManager:get_rental_tax_rate() / 100 )
 		if self.reservation_tax_rate ~= nil then
 			item_tax_rate = self.reservation_tax_rate
@@ -634,7 +679,7 @@ function newshoppingcart()
 			{	product_id = catalog_entry.product_id,
 				product_type_id = catalog_entry.product_type_id,
 				rating_id = catalog_entry.rating_id,
-				release_date = catalog_entry.release_date,
+				merchandise_date = catalog_entry.merchandise_date,
 				genres = catalog_entry.genres,
 				quantity = qty or 1,
 				product_family = product_family.product_family_name,
@@ -649,6 +694,13 @@ function newshoppingcart()
 				source_type = source_type or "Browse" } )
 		if ShoppingCart.in_cart_promo_offer_cancel == false then
 			UpdateInCartPromoValue( ShoppingCart )
+		end
+		
+		self:validate_cart_update_promo_code( nil, nil )
+		
+		if TextToSpeechEnabled == true then
+			self:update_cart_macros()
+			kernel.ttsrepeat()
 		end
 	end
 
@@ -686,18 +738,32 @@ function newshoppingcart()
 			removed_item.product_id )
 		kernel.log( "ShoppingCart:remove_item: " .. tostring( session_message ) )
 		table.remove( self.items, index )
+		if TextToSpeechEnabled == true then
+			self:update_cart_macros()
+			kernel.ttsrepeat();
+		end
+
+        shopping_cart_full_message_shown = false
 
 		-- Clear Game Required promo code if user removed last game from cart
-		if self.promo_code ~= nil
-		and self.promo_code.intent == "FirstNightGameGameRequired"
+		local promo_code = kernel.rental_promotion_get_promotion()
+		if promo_code ~= nil
+		and promo_code.intent == "FirstNightGameGameRequired"
 		and CartHasProductTypeFamily( self, nil, "Games" ) == false
 		then
 			self:clear_promo_code()
 		end
-		shopping_cart_full_message_shown = false
-		if ShoppingCart.in_cart_promo_offer_cancel == false then
+		
+		if free_in_cart_template_is_running() then
+            if free_in_cart_template_is_cart_valid() == false and ShoppingCart.in_cart_promo_offer_made == true then
+                self:clear_promo_code()
+                ShoppingCart.in_cart_promo_offer_made = false
+            end
+        elseif ShoppingCart.in_cart_promo_offer_cancel == false then
 			UpdateInCartPromoValue( ShoppingCart )
 		end
+		
+		self:validate_cart_update_promo_code( nil, nil )
 	end
 
 	t.sub_total = function( self )
@@ -722,33 +788,35 @@ function newshoppingcart()
 		end
 
 		-- Calculate and apply promotion value as needed
-		if  self.promo_code ~= nil
+		local promo_code = kernel.rental_promotion_get_promotion()
+		if  promo_code ~= nil
 		and subtotal_by_group.rental ~= nil then
-			kernel.log( ">  promo:" .. tostring( self.promo_code.name ) .. ", intent:" .. tostring( self.promo_code.intent ) )
-			if self.promo_code.intent ~= nil and self.promo_code.intent == "PercentOffCartTotal" then
-				local promo_value = round( self.promo_code.percent * subtotal_by_group.rental.amount, 2 )
+			kernel.log( ">  promo:" .. tostring( promo_code.name ) .. ", intent:" .. tostring( promo_code.intent ) )
+			if promo_code.intent ~= nil and promo_code.intent == "PercentOffCartTotal" then
+				local promo_value = round( promo_code.percent * subtotal_by_group.rental.amount, 2 )
 				subtotal_by_group.rental.discounted_amount = subtotal_by_group.rental.amount - promo_value
 				-- Percentage off must be constantly updated whenever the cart changes
-				self.promo_code.price = promo_value
+				promo_code.price = promo_value
+				kernel.rental_promotion_set_promotion( promo_code )
 				kernel.sessionsetdiscount2(
 					self.session_id,
-					self.promo_code.name,
+					promo_code.name,
 					promo_value
 				)
 			else
-				subtotal_by_group.rental.discounted_amount = subtotal_by_group.rental.amount - (self.promo_code.quantity * self.promo_code.price)
+				subtotal_by_group.rental.discounted_amount = subtotal_by_group.rental.amount - ( promo_code.quantity * promo_code.price )
 			end
 		end
 
 		for k, v in pairs( subtotal_by_group ) do
 			if v.discounted_amount ~= nil then
-				v.discounted_amount = math.max( kernel.round( v.discounted_amount, 16), 0 )
+				v.discounted_amount = math.max( kernel.round( v.discounted_amount, 16 ), 0 )
 				v.tax_amount = kernel.round( v.discounted_amount * v.tax_rate, 16 )
 			else
 				v.amount = math.max( v.amount, 0 )
 				v.tax_amount = kernel.round( v.amount * v.tax_rate, 16 )
 			end
-			kernel.log( ">  a:" .. tostring(k) .. " d:" .. tostring(v.discounted_amount) .. ", t:" .. tostring(v.tax_amount) .. ", $:" .. tostring(v.amount) )
+			kernel.log( ">  a:" .. tostring( k ) .. " d:" .. tostring( v.discounted_amount ) .. ", t:" .. tostring( v.tax_amount ) .. ", $:" .. tostring( v.amount ) )
 		end
 		return subtotal_by_group
 	end
@@ -779,6 +847,7 @@ function newshoppingcart()
 		local keyboard_manager = newkeyboardmanager()
 		keyboard_manager:init( 31 )
 		keyboard_manager:set_message( strings.promo_code_prompt_message )
+		kernel.setmacro( "TTSKeyBoard:PromoEntry", "true" )
 		kernel.disableactor("ok_button")
 		keyboard_manager:set_validate_event(
 			function( text )
@@ -792,6 +861,7 @@ function newshoppingcart()
 				local message_view_manager = newmessageviewmanager()
 				local error_message_view_manager = newerrormessageviewmanager()
 				local code = keyboard_manager:get_value()
+				kernel.setmacro( "TTSKeyBoard:PromoEntry", nil )
 				keyboard_manager:hide( true )
 				error_message_view_manager:show()
 				error_message_view_manager:set_message( strings.promo_code_validating_message )
@@ -812,11 +882,10 @@ function newshoppingcart()
 					function( r )
 						if r.success then
 							kernel.analyticsaddattribute( "promoCode", "valid", "True", self.session_id )
-
+							
 							local promo_price = nil
-							local promo_intent = r.properties.promotion_intent
-							local promo_percent = nil
-
+							local promo_percent = 0
+							
 							if r.properties.promotion_intent == "FirstNightDVD" then
 								promo_price = StoreManager.PricingManager:get_price_setting( "movies", "dvd", "initial_night", "rental" )
 							end
@@ -850,21 +919,56 @@ function newshoppingcart()
 								r.properties.response = "GameRequired"
 							else
 								-- This promo is okay to proceed
-								kernel.analyticsaddattribute( "promoCode", "value", tostring( promo_price ), self.session_id )
-								self.promo_code = {
+								local promo_code = {
 									name = code,
 									price = promo_price,
 									quantity = 1,
-									intent = promo_intent,
-									percent = promo_percent
+									intent = r.properties.promotion_intent,
+									percent = promo_percent,
+									rent_qty = r.properties.rent_qty,
+									rent_format = r.properties.rent_format,
+									get_qty = r.properties.get_qty,
+									get_format = r.properties.get_format
 								}
+								kernel.rental_promotion_set_promotion( promo_code )
 								kernel.sessionsetdiscount2(
 									self.session_id,
-									self.promo_code.name,
-									self.promo_code.price
+									promo_code.name,
+									promo_code.price
 								)
-								if on_complete ~= nil then
-									on_complete()
+								
+								if promo_code.intent == "RxGx" then
+									self:validate_cart_update_promo_code(
+										function( cart_promo_info )
+											if on_complete ~= nil then
+												on_complete()
+											end
+										end,
+										function( cart_promo_info )
+											local done = function()
+												message_view_manager:hide()
+												if on_error ~= nil then
+													on_error()
+												end
+											end
+											message_view_manager:show()
+											message_view_manager:set_message_header( "Oops" )
+											if kernel.getculture() == "es-MX" then
+												message_view_manager:set_message( cart_promo_info.title_spanish .. "\n\n" .. cart_promo_info.message_spanish )
+											else
+												message_view_manager:set_message( cart_promo_info.title_english .. "\n\n" .. cart_promo_info.message_english )
+											end
+											message_view_manager:hide_first_button()
+											message_view_manager:show_second_button( strings.continue_button, done )
+											message_view_manager:start_timer( done )
+											view_analytics_event( "context", "rxgxWarning" )
+										end
+									)
+								else
+									kernel.analyticsaddattribute( "promoCode", "value", tostring( promo_code.price ), self.session_id )
+									if on_complete ~= nil then
+										on_complete()
+									end
 								end
 							end
 						end
@@ -879,7 +983,7 @@ function newshoppingcart()
 
 							if r.properties.response == "CodeAlreadyUsed" then
 								view_analytics_event( "context", "promoAlreadyUsed" )
-								message_view_manager:hide_title()
+								message_view_manager:set_message_header( strings.promo_code_already_used_message_title )
 								message_view_manager:set_message( strings.promo_code_already_used_message )
 							elseif r.properties.response == "CodeNotValidAtThisLocation" then
 								view_analytics_event( "context", "promoInvalidLocation" )
@@ -890,11 +994,7 @@ function newshoppingcart()
 								or r.properties.response == "Communications Failure" then
 								view_analytics_event( "context", "promoCantBeUsed" )
 								online_flag = "False"
-								if kernel.getculture() == "es-MX" then
-									message_view_manager:set_title( strings.promo_code_transaction_error_title )
-								else
-									message_view_manager:set_title( strings.promo_code_error_title )
-								end
+								message_view_manager:set_message_header( strings.promo_code_validation_failure_message_title )
 								message_view_manager:set_message( strings.promo_code_validation_failure_message )
 							elseif r.properties.response == "GameRequired" then
 								view_analytics_event( "context", "promoCantBeUsed" )
@@ -902,7 +1002,7 @@ function newshoppingcart()
 								message_view_manager:set_message( strings.promo_code_game_required_message )
 							else
 								view_analytics_event( "context", "promoNotValid" )
-								message_view_manager:set_title( strings.promo_code_error_title )
+								message_view_manager:set_message_header( strings.promo_code_not_valid_message_title )
 								message_view_manager:set_message( strings.promo_code_not_valid_message )
 							end
 							kernel.analyticsaddattribute( "promoCode", "serverFailureReason", tostring( r.properties.response ), self.session_id )
@@ -933,10 +1033,40 @@ function newshoppingcart()
 
 		idle_timer:start()
 	end
-
+	
+	t.validate_cart_update_promo_code = function( self, on_valid, on_invalid )
+		local promo_code = kernel.rental_promotion_get_promotion()
+		if promo_code ~= nil and promo_code.intent == "RxGx" then
+			local dvd_price = StoreManager.PricingManager:get_price_setting( "movies", "dvd", "initial_night", "rental" )
+			local blu_ray_price = StoreManager.PricingManager:get_price_setting( "movies", "blu-ray", "initial_night", "rental" )
+			local game_price = StoreManager.PricingManager:get_price_setting( "games", "*", "initial_night", "rental" )
+			local cart_promo_info = kernel.rental_promotion_validate_cart( self.items, dvd_price, blu_ray_price, game_price )
+			if cart_promo_info ~= nil then
+				promo_code.price = cart_promo_info.promo_code_value
+				kernel.rental_promotion_set_promotion( promo_code )
+				kernel.sessionsetdiscount2(
+					self.session_id,
+					promo_code.name,
+					promo_code.price
+				)
+				if cart_promo_info.is_cart_valid == true then
+					if on_valid ~= nil then
+						on_valid( cart_promo_info )
+					end
+				else
+					if on_invalid ~= nil then
+						on_invalid( cart_promo_info )
+					end
+				end
+			else
+				self:clear_promo_code()
+			end
+		end
+	end
+	
 	t.clear_promo_code = function( self )
 		kernel.log( "> Clear Promo Code was called" )
-		self.promo_code = nil
+		kernel.rental_promotion_clear_promotion()
 		kernel.sessioncleardiscount2( self.session_id )
 	end
 
@@ -953,6 +1083,9 @@ function newshoppingcart()
 				false )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
+			if TextToSpeechEnabled == true then
+				self:update_cart_macros()
+			end
 			return
 		end
 
@@ -987,7 +1120,8 @@ function newshoppingcart()
 						v.quantity,
 						v.pricing_policy,
 						v.product_family,
-						v.product_type)
+						v.product_type,
+						v.multi_disc )
 
 					if v.status ~= "Fullfilled" then
 						all_vended = false
@@ -998,18 +1132,19 @@ function newshoppingcart()
 				end
 
 				-- Clear in-cart promo if all items did not vend successfully
+				local promo_code = kernel.rental_promotion_get_promotion()
 				if all_vended == false
-				and self.promo_code ~= nil
-				and self.promo_code.name ~= nil
-				and self.promo_code.name == GetInCartPromoCode() then
+				and promo_code ~= nil
+				and promo_code.name ~= nil
+				and promo_code.name == GetInCartPromoCode() then
 					kernel.log( "Not all items vended, clearing InCart promotion" )
 					self:clear_promo_code()
 				end
 
 				-- Clear Game required promo if no game was vended
 				if at_least_one_game == false
-				and self.promo_code ~= nil
-				and self.promo_code.intent == "FirstNightGameGameRequired" then
+				and promo_code ~= nil
+				and promo_code.intent == "FirstNightGameGameRequired" then
 					kernel.log( "No game was vended, clearing GamesRequired promotion" )
 					self:clear_promo_code()
 				end
@@ -1032,6 +1167,9 @@ function newshoppingcart()
 				true )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
+			if TextToSpeechEnabled == true then
+				self:update_cart_macros()
+			end
 			return
 		end
 	end
@@ -1061,6 +1199,9 @@ function newshoppingcart()
 				false )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
+			if TextToSpeechEnabled == true then
+				self:update_cart_macros()
+			end
 			return
 		end
 		
@@ -1187,7 +1328,7 @@ function newshoppingcart()
 		elseif days >= 105
 		and product_id ~= 1139
 		and productfamilytype == 1
-		and is_product_thinned(product_id) == true then
+		and kernel.is_product_thinned(product_id) == true then
 			kernel.setactorimage("flag_"..tostring(index),"image_flag_orange_small")
 			kernel.setactortext("flag_"..tostring(index),strings.flag_last_chance)
 		else
@@ -1219,7 +1360,7 @@ function newshoppingcart()
 				totals["discount_used"] = totals["discount_used"] + credits_amount
 				totals["tax_amount"] = totals["tax_amount"] - credited_tax_amount
 				totals["sub_total"] = totals["sub_total"] - credits_amount
-				if StoreManager.store.state ~= "MD" then
+				if StoreManager.store ~= nil and StoreManager.store.state ~= nil and StoreManager.store.state ~= "MD" and StoreManager.store.state ~= "SC" then
 					totals["total"] = totals["total"] - credits_amount - credited_tax_amount
 				else
 					totals["total"] = totals["total"] - credits_amount
@@ -1318,7 +1459,7 @@ function newshoppingcart()
 
 			display_banner( product_type.product_type_name, product_type.product_family_id, k )
 
-			local releaseDate = string.sub(catalog_entry.release_date, 1, 8)
+			local releaseDate = string.sub(catalog_entry.merchandise_date, 1, 8)
 			local days = kernel.getelapseddays( releaseDate, get_current_date_string( "%4d%02d%02d" ) )
 
 			--display flag
@@ -1354,7 +1495,6 @@ function newshoppingcart()
 					local remove_item = function()
 						view_analytics_event2( "buttonPress", "shopping-cart-remove-item," .. tostring( catalog_entry.product_id ), self.session_id )
 						self:remove_item( k )
-						remove_movie_from_selected_product_map( "selectedmovie_" .. k )
 						shopping_cart_scene_manager:clear()
 						self:show_cart_table()
 					end
@@ -1619,13 +1759,13 @@ function newshoppingcart()
 			"Total",
 			string.format( "%s%.2f", strings.currency_symbol, kernel.round( total, 2 ) ) )
 
+		local promo_code = kernel.rental_promotion_get_promotion()
 		if  self:has_items()
-		and (not self:has_rentals() and self.promo_code ~= nil) then
-			self.promo_code = nil
-			kernel.sessioncleardiscount2( self.session_id )
+		and (not self:has_rentals() and promo_code ~= nil) then
+			self:clear_promo_code()
 		end
 
-		if self.promo_code ~= nil then
+		if promo_code ~= nil then
 			kernel.showactor( "promo_code_label" )
 			kernel.showactor( "promo_code_amount" )
 			kernel.disableactor( "promo_code_button" )
@@ -1637,7 +1777,7 @@ function newshoppingcart()
 						strings.currency_symbol,
 						0 ) )
 			else
-				local promo_code_price = self.promo_code.price
+				local promo_code_price = promo_code.price
 				kernel.setmacro(
 					"Discount",
 					string.format( "-%s%.2f",
@@ -1674,6 +1814,10 @@ function newshoppingcart()
 			kernel.disableactor("promo_code_button")
 		else
 			kernel.enableactor("promo_code_button")
+		end
+
+		if TextToSpeechEnabled == true then
+			kernel.ttsrepeat();  -- the titles and assests have been set and toggled
 		end
 	end
 
@@ -1727,11 +1871,12 @@ function newshoppingcart()
 		--end
 		self:get_barcodes_to_vend()
 		self:set_session_cart_groups()
+		self.blu_ray_upsell:set_shopping_cart_items()
 		local clear_in_cart_promo = false
 		for k, v in ipairs( self.items ) do
 			kernel.log( "Session add Line Item: " .. tostring( v.barcode ) .. " for ".. tostring( v.action ) .. " Price: " .. tostring( v.price ) ..
-				" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) )
-			kernel.sessionaddlineitem3(
+				" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) .. " " .. tostring( v.source_type ) )
+			kernel.sessionaddlineitem5(
 				self.session_id,
 				v.action,
 				v.barcode,
@@ -1740,7 +1885,9 @@ function newshoppingcart()
 				v.quantity,
 				v.pricing_policy,
 				v.product_family,
-				v.product_type)
+				v.product_type,
+				v.source_type,
+				v.blu_ray_upsell )
 			if v.status == "InventoryError" then
 				clear_in_cart_promo = true
 			end
@@ -1750,9 +1897,10 @@ function newshoppingcart()
 		error_message_view_manager:set_message( strings.authorization_message )
 		kernel.analyticsaddnode( "authorizations", "gc_authorize", self.session_id )
 		
-		if clear_in_cart_promo == true and self.promo_code ~= nil and self.promo_code.name ~= nil and self.promo_code.name == GetInCartPromoCode() then
+		local promo_code = kernel.rental_promotion_get_promotion()
+		if clear_in_cart_promo == true and promo_code ~= nil and promo_code.name ~= nil and promo_code.name == GetInCartPromoCode() then
+			kernel.log( "> Inventory Error: In-Cart promo code " .. tostring( promo_code ) .. " cleared." )
 			self:clear_promo_code()
-			kernel.log( "> Inventory Error: In-Cart promo code " .. tostring( self.promo_code ) .. " cleared." )
 		end
 		kernel.merchsvcs_gcauthorize(
 			self.session_id,
@@ -1770,9 +1918,8 @@ function newshoppingcart()
 							end
 						end
 						if clear_promo == true then
-							kernel.log( "> Invalid Promo code " .. self.promo_code .. " cleared." )
-							self.promo_code = nil
-							kernel.sessioncleardiscount2( self.session_id )
+							kernel.log( "> Invalid Promo code " .. tostring( promo_code ) .. " cleared." )
+							self:clear_promo_code()
 						end
 					end
 				end
@@ -1790,6 +1937,237 @@ function newshoppingcart()
 				end
 			end
 		)
+	end
+	
+	t.blu_ray_upsell = {
+		do_not_show_again = false,
+		
+		items = {},
+		
+		has_in_stock_and_available_blu_rays = function( self, insert )
+			local has_items = false
+			
+			local function contains( items, dvd_product_id )
+				for k, v in ipairs( items ) do
+					if v.dvd_product_id == dvd_product_id then
+						return true
+					end
+				end
+				return false
+			end
+			
+			local function get_blu_ray_product_id_from_product_id_list( product_id_list )
+				for k, v in pairs( product_id_list ) do
+					if MasterProductCatalog[v] ~= nil and MasterProductCatalog[v].product_type_id == 2 then
+						return v
+					end
+				end
+				return nil
+			end
+			
+			local function shopping_cart_contains_blu_ray_product_id( blu_ray_product_id )
+				for k, v in ipairs( ShoppingCart.items ) do
+					if v.product_id == blu_ray_product_id then
+						return true
+					end
+				end
+				return false
+			end
+			
+			for k, v in ipairs( ShoppingCart.items ) do
+				if MasterProductCatalog[v.product_id] ~= nil
+				and MasterProductCatalog[v.product_id].product_type_id == 1
+				and v.action == "rental"
+				and contains( self.items, v.product_id ) == false then
+					if TitleRollupXREF[v.product_id] ~= nil then
+						local product_group_id = TitleRollupXREF[v.product_id].product_group_id
+						if ProductGroup[product_group_id] ~= nil then
+							local product_id_list = ProductGroup[product_group_id].product_id_list
+							if product_id_list ~= nil and #product_id_list > 0 then
+								local blu_ray_product_id = get_blu_ray_product_id_from_product_id_list( product_id_list )
+								if blu_ray_product_id ~= nil
+								and ProductCatalog[blu_ray_product_id] ~= nil
+								and ProductCatalog[blu_ray_product_id].in_stock == true
+								and ProductCatalog:in_stock( blu_ray_product_id ) == true
+								and ProductCatalog[blu_ray_product_id].is_available == true
+								and shopping_cart_contains_blu_ray_product_id( blu_ray_product_id ) == false then
+									if insert == true then
+										table.insert( self.items, { dvd_product_id = v.product_id, blu_ray_product_id = blu_ray_product_id, product_group_id = product_group_id } )
+									end
+									has_items = true
+								end
+							end
+						end
+					end
+				end
+			end
+			return has_items
+		end,
+		
+		in_cart_check = function( self )
+			local in_cart_running = false
+			local games_template_running = false
+			
+			if InCartTemplateName ~= nil and InCartTemplateName ~= "Default-No-Offer" then
+				in_cart_running = true
+			end
+			
+			if InCartTemplateName ~= nil
+			and ( InCartTemplateName == "ROGO GAME B" or InCartTemplateName == "ROGO GAME FREE G" or InCartTemplateName == "ROGO GAME FREE INCLUDE H" ) then
+				games_template_running = true
+			end
+			
+			if in_cart_running == false or games_template_running == true then
+				return true
+			end
+			return false
+		end,
+		
+		show = function( self )
+			if BluRayUpsellEnabled == true
+			and self:in_cart_check() == true
+			and self:has_in_stock_and_available_blu_rays( false ) == true
+			and self.do_not_show_again == false then
+				return true
+			end
+			return false
+		end,
+		
+		set_shopping_cart_items = function( self )
+			local function get_blu_ray_upsell_table( shopping_cart_item )
+				for k, v in ipairs( self.items ) do
+					if v.offer == "accepted" and v.blu_ray_product_id == shopping_cart_item.product_id then
+						return { product_group_id = v.product_group_id, offer = v.offer, title_id = v.blu_ray_product_id }
+					elseif v.offer == "rejected" and v.dvd_product_id == shopping_cart_item.product_id then
+						return { product_group_id = v.product_group_id, offer = v.offer, title_id = v.dvd_product_id }
+					end
+				end
+				return {}
+			end
+			
+			for k, v in ipairs( ShoppingCart.items ) do
+				v.blu_ray_upsell = get_blu_ray_upsell_table( v )
+			end
+		end
+	}
+
+	t.is_card_blocklisted = function( self )
+		local blocklisted = false
+		if OfflineBlockListEnabled == true 
+		and kernel.healthsvcs_isonline() == false
+		and self:is_gift_card() == false then
+			local first_name = kernel.trackgetfirstname() or ""
+			local last_name = kernel.trackgetlastname() or ""
+			local zip_code = StoreManager:get_store_zip() or ""
+			local market_id = StoreManager:get_store_market_id()
+			blocklisted = kernel.rental_is_name_in_blocklist( first_name, last_name, market_id, zip_code )
+		end
+		return blocklisted
+	end
+
+	t.set_items_to_not_vended = function( self )
+		for k, v in ipairs( self.items ) do
+			v.status = "NotVended"
+			kernel.sessionaddlineitem3(
+				self.session_id,
+				v.action,
+				v.barcode,
+				v.status,
+				v.price,
+				v.quantity,
+				v.pricing_policy,
+				v.product_family,
+				v.product_type,
+				v.multi_disc )
+		end
+	end
+	
+	t.add_multi_disc_discs = function( self )
+		local multi_disc_product_ids_to_add = {}
+		for k, v in ipairs( self.items ) do
+			if is_multi_disc( v.product_id ) == true then
+				local product_id_list = ProductGroup[MultiDiscXREF[v.product_id].product_group_id].product_id_list
+				for k2, v2 in ipairs( product_id_list ) do
+					if v2 ~= v.product_id and self:has_item( v2 ) == false then
+						table.insert( multi_disc_product_ids_to_add, v2)
+					end
+				end
+			end
+		end
+		
+		for k, v in ipairs( multi_disc_product_ids_to_add ) do
+			if MasterProductCatalog[v] ~= nil then
+				kernel.log( "MDV - adding product id " .. tostring( v ) )
+				self:add_item( MasterProductCatalog[v], 1, "rental", "Browse" )
+			end
+		end
+	end
+	
+	t.remove_multi_disc_discs = function( self )
+		local function get_shopping_cart_index_by_product_id( product_id )
+			for k, v in ipairs( self.items ) do
+				if v.product_id == product_id then
+					return k
+				end
+			end
+			return 0
+		end
+		
+		local multi_disc_product_ids_to_remove = {}
+		for k, v in ipairs( self.items ) do
+			if is_multi_disc( v.product_id ) == true and MasterProductCatalog[v.product_id] ~= nil and MasterProductCatalog[v.product_id].disc_number ~= nil and MasterProductCatalog[v.product_id].disc_number > 1 then
+				table.insert( multi_disc_product_ids_to_remove, v.product_id )
+			end
+		end
+		
+		for k, v in ipairs( multi_disc_product_ids_to_remove ) do
+			kernel.log( "MDV - removing product id " .. tostring( v ) )
+			self:remove_item( get_shopping_cart_index_by_product_id( v ), false )
+		end
+	end
+	
+	t.set_multi_disc_flags = function( self )
+		for k, v in ipairs( self.items ) do
+			v.multi_disc = is_multi_disc( v.product_id )
+		end
+	end
+	
+	t.contains_multi_disc = function( self )
+		for k, v in ipairs( self.items ) do
+			if is_multi_disc( v.product_id ) == true then
+				return true
+			end
+		end
+		return false
+	end
+	
+	t.contains_all_title_rollup_movie_group = function( self, product )
+		if product ~= nil and product.kiosk_product_type == 3 and product.is_movie == true then
+			local dvd_product = nil
+			local blu_ray_product = nil
+			
+			if product.dvd_index > 0 then
+				dvd_product = product.kiosk_products[product.dvd_index]
+			end
+			if  product.blu_ray_index > 0 then
+				blu_ray_product = product.kiosk_products[product.blu_ray_index]
+			end
+			
+			if (dvd_product == nil and blu_ray_product ~= nil) then
+			  return self:has_item( blu_ray_product.product_id ) == true
+			end
+			if (blu_ray_product == nil and dvd_product ~= nil) then
+			  return self:has_item( dvd_product.product_id ) == true
+			end
+			if (blu_ray_product ~= nil and dvd_product ~= nil) then
+				-- make sure product has stock or this function doesn't work correctly
+				return (  (blu_ray_product.in_stock == false) or (self:has_item( blu_ray_product.product_id ) == true) ) and ( (dvd_product.in_stock == false) or  (self:has_item( dvd_product.product_id ) == true) )
+			end
+
+			return false
+		else
+			return product ~= nil and self:has_item( product.product_id ) == true
+		end
 	end
 	
 	return t

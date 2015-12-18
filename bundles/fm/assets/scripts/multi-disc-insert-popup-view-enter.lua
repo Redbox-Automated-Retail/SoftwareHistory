@@ -127,19 +127,11 @@ insert_disc = function()
 								v.time_stamp,
 								function( result )
 									if result.success == true then
-
 										local new_status = "Known"
-										if use_rapid_thin_file() == true
-										and RapidThinBarcodes[ v.item_id ] ~= nil then
-											new_status = RapidThinBarcodes[ v.item_id ].status
+										local rapid_status = kernel.rental_inventory_get_rapidstatus( v.item_id )
+										if rapid_status ~= nil then
+											new_status = rapid_status.status
 										end
-										
-										if new_status == "Thinned"
-										and RebalancesUnThinInuse ~= nil 
-										and RebalancesUnThinInuse[ v.item_id ] ~= nil then
-											kernel.log(" > Unthin detected in FMA -> multi-disc-insert-popup-view.lua -> insert_disc: " .. tostring( v.item_id ) )
-											new_status = "Known"
-										end 
 										
 										local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
 										BarcodePosition[deck_slot_key] = { ["barcode"] = tostring( v.item_id ), ["status"] = new_status }

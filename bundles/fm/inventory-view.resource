@@ -127,7 +127,7 @@
         optionFlags=" Text, TextShadow" />
 		
       <actor
-        name="reserved_filter"
+        name="unmatched_filter"
         x="298"
         y="76"
         height="32"
@@ -136,14 +136,14 @@
         foregroundColor="white"
         verticalAlignment="center"
         horizontalAlignment="center"
-        text="Reserved"
-        tag="Reserved"
+        text="Unmatched"
+        tag="Unmatched"
         hitFlags="Enabled"
         onHit="inventory_filter_onhit"
         optionFlags=" Text, TextShadow" />
 		
       <actor
-        name="wrongtitle_filter"
+        name="redeploy_filter"
         x="440"
         y="76"
         height="32"
@@ -152,8 +152,8 @@
         foregroundColor="white"
         verticalAlignment="center"
         horizontalAlignment="center"
-        text="Wrong Title"
-        tag="Wrong Title"
+        text="Redeploy"
+        tag="Redeployment"
         hitFlags="Enabled"
         onHit="inventory_filter_onhit"
         optionFlags=" Text, TextShadow" />
@@ -571,8 +571,7 @@
 		cornerSize="8,8"
         optionFlags="Background, Text, TextShadow, DrawBorder"
         hitFlags="Enabled"
-        enabled="False"
-        onHit="inventory_remove_discs"/>
+        enabled="False" />
 		
       <actor
         name="insert_disc_button"

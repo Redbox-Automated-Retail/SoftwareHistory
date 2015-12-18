@@ -85,7 +85,7 @@
 
 			<actor
 				name="rented_discs_label"
-				x="20"
+				x="56"
 				y="120"
 				width="200"
 				height="20"
@@ -100,7 +100,7 @@
 
 			<actor
 				name="rented_discs_value"
-				x="230"
+				x="266"
 				y="120"
 				width="125"
 				height="20"
@@ -115,7 +115,7 @@
 
 			<actor
 				name="empty_slots_label"
-				x="20"
+				x="56"
 				y="142"
 				width="200"
 				height="20"
@@ -130,7 +130,7 @@
 
 			<actor
 				name="empty_slots_value"
-				x="230"
+				x="266"
 				y="142"
 				width="125"
 				height="20"
@@ -145,7 +145,7 @@
 
 			<actor
 				name="empty_case_count_label"
-				x="20"
+				x="56"
 				y="164"
 				width="200"
 				height="20"
@@ -160,7 +160,7 @@
 
 			<actor
 				name="empty_case_count_value"
-				x="230"
+				x="266"
 				y="164"
 				width="125"
 				height="20"
@@ -175,7 +175,7 @@
 
 			<actor
 				name="unknown_count_label"
-				x="20"
+				x="56"
 				y="186"
 				width="200"
 				height="20"
@@ -190,7 +190,7 @@
 
 			<actor
 				name="unknown_count_value"
-				x="230"
+				x="266"
 				y="186"
 				width="125"
 				height="20"
@@ -204,12 +204,12 @@
 				enabled="true" />
 
 			<actor
-				name="thin_discs_count_label"
-				x="20"
+				name="thins_outside_vmz_label"
+				x="56"
 				y="208"
 				width="200"
 				height="20"
-				text="Thin Discs:"
+				text="Thins Outside VMZ:"
 				font="medium_font"
 				verticalAlignment="near"
 				horizontalAlignment="far"
@@ -219,9 +219,39 @@
 				enabled="true" />
 
 			<actor
-				name="thin_discs_count_value"
-				x="230"
+				name="thins_outside_vmz_value"
+				x="266"
 				y="208"
+				width="125"
+				height="20"
+				text=" "
+				font="medium_font"
+				verticalAlignment="near"
+				horizontalAlignment="near"
+				optionFlags="Text, TextShadow"
+				foregroundColor="white"
+				visible="true"
+				enabled="true" />
+
+			<actor
+				name="thin_redeploys_outside_vmz_label"
+				x="56"
+				y="230"
+				width="200"
+				height="20"
+				text="Redeploys Outside VMZ:"
+				font="medium_font"
+				verticalAlignment="near"
+				horizontalAlignment="far"
+				optionFlags="Text, TextShadow"
+				foregroundColor="white"
+				visible="true"
+				enabled="true" />
+
+			<actor
+				name="thin_redeploys_outside_vmz_value"
+				x="266"
+				y="230"
 				width="125"
 				height="20"
 				text=" "
@@ -235,8 +265,8 @@
 
 			<actor
 				name="fraud_discs_count_label"
-				x="20"
-				y="230"
+				x="56"
+				y="252"
 				width="200"
 				height="20"
 				text="Fraud Discs:"
@@ -250,8 +280,8 @@
 
 			<actor
 				name="fraud_discs_count_value"
-				x="230"
-				y="230"
+				x="266"
+				y="252"
 				width="125"
 				height="20"
 				text=" "
@@ -265,8 +295,8 @@
 
 			<actor
 				name="DNR_disc_count_label"
-				x="20"
-				y="252"
+				x="56"
+				y="274"
 				width="200"
 				height="20"
 				text="Do Not Rent Discs:"
@@ -280,8 +310,8 @@
 
 			<actor
 				name="DNR_disc_count_value"
-				x="230"
-				y="252"
+				x="266"
+				y="274"
 				width="125"
 				height="20"
 				text=" "
@@ -295,8 +325,8 @@
 
 			<actor
 				name="damaged_discs_count_label"
-				x="20"
-				y="274"
+				x="56"
+				y="296"
 				width="200"
 				height="20"
 				text="Damaged Discs:"
@@ -310,8 +340,8 @@
 
 			<actor
 				name="damaged_discs_count_value"
-				x="230"
-				y="274"
+				x="266"
+				y="296"
 				width="125"
 				height="20"
 				text=" "
@@ -325,8 +355,8 @@
 
 			<actor
 				name="distinct_title_count_label"
-				x="20"
-				y="296"
+				x="56"
+				y="318"
 				width="200"
 				height="20"
 				text="Distinct Titles:"
@@ -340,8 +370,8 @@
 
 			<actor
 				name="distinct_title_count_value"
-				x="230"
-				y="296"
+				x="266"
+				y="318"
 				width="125"
 				height="20"
 				text=" "
@@ -355,8 +385,8 @@
 
 			<actor
 				name="reserved_disc_count_label"
-				x="20"
-				y="318"
+				x="56"
+				y="340"
 				width="200"
 				height="20"
 				text="Reserved Discs:"
@@ -370,8 +400,8 @@
 
 			<actor
 				name="reserved_disc_count_value"
-				x="230"
-				y="318"
+				x="266"
+				y="340"
 				width="125"
 				height="20"
 				text=" "
@@ -385,8 +415,8 @@
 
 			<actor
 				name="rebalance_disc_count_label"
-				x="20"
-				y="340"
+				x="56"
+				y="362"
 				width="200"
 				height="20"
 				text="Rebalance Discs:"
@@ -400,27 +430,12 @@
 
 			<actor
 				name="rebalance_disc_count_value"
-				x="230"
-				y="340"
+				x="266"
+				y="362"
 				width="125"
 				height="20"
 				text=" "
 				font="medium_font"
-				verticalAlignment="near"
-				horizontalAlignment="near"
-				optionFlags="Text, TextShadow"
-				foregroundColor="white"
-				visible="true"
-				enabled="true" />
-
-			<actor
-				name="disclaimer"
-				x="55"
-				y="375"
-				width="350"
-				height="60"
-				text="* data from server subject to delays"
-				font="small_font"
 				verticalAlignment="near"
 				horizontalAlignment="near"
 				optionFlags="Text, TextShadow"

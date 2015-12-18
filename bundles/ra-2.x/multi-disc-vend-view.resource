@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<resource type="view">
+	<property name="name" value="multi_disc_vend_view" />
+	<property name="version" value="2.0,Core,A" />
+	<property name="active_flag" value="active" />
+	<aspect name="content">
+		<scene
+			name="Default"
+			width="1024"
+			height="768"
+			backgroundColor="181,18,27"
+			stylesheet="style_sheet_common"
+			onEnter="multi_disc_vend_view_enter"
+			onLeave="multi_disc_vend_view_leave">
+			
+			<actor
+				name="header"
+				x="103"
+				y="86"
+				font="font_target_large_52"
+				foregroundColor="white"
+				text="Don't Forget..."
+				optionFlags="Text" />
+				
+			<actor
+				name="body"
+				x="103"
+				y="220"
+				width="640"
+				height="120"
+				font="font_target_large_38"
+				foregroundColor="white"
+				text="You rented multiple discs, so please wait for all of them."
+				optionFlags="Text" />
+				
+			<actor
+				name="discs_image"
+				x="286"
+				y="449"
+				image="image_number_of_discs"
+				optionFlags="Image" />
+				
+			<actor
+				name="discs_image_number_text"
+				x="438"
+				y="434"
+				width="300"
+				height="110"
+				font="font_target_regular_largest"
+				foregroundColor="black"
+				optionFlags="Text" />
+				
+			<actor
+				name="discs_image_discs_text"
+				x="521"
+				y="477"
+				width="300"
+				height="110"
+				font="font_target_large_62"
+				foregroundColor="black"
+				text="DISCS"
+				optionFlags="Text" />
+				
+		</scene>
+	</aspect>
+</resource>

@@ -97,19 +97,7 @@
 				font="font_akzidenz_bold_smaller"
 				cornerSize="20,26"
 				style="gray_button_white_border_style" />
-
-			<actor
-				name="abe_tickets_button"
-				x="22"
-				y="625"
-				width="313"
-				height="106"
-				cornerSize="57,56"
-				font="font_target_medium"
-				text="TICKETS"
-				style="red_button_style"
-				strokeWeight="4" />
-
+				
 			<actor
 				name="abe_games_button"
 				x="356"

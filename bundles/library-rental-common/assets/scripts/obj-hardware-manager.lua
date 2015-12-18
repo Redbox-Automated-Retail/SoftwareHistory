@@ -148,29 +148,7 @@ run_thin_job = function( label, jobname )
 		{ label, jobname } )
 end
 
-run_thin_vmz_job = function( label, jobname )
-	kernel.log( "Enqueue callback for " .. jobname )
-	kernel.callbackenqueue(
-		function( label, jobname )
-			local hardwareManager = newhardwaremanager()
-			kernel.log( "Execute " .. jobname )
-			local barcodesToBin, barcodesToVmz = get_vmz_thin_barcodes()
-			if #barcodesToBin == 0
-			and #barcodesToVmz == 0 then
-				kernel.log(">  There are no Thinned discs at this time, thin request cancelled.")
-			else
-				kernel.log(">  Found " ..tostring(#barcodesToBin) .. " thinned discs to be sent to Bin.")
-				kernel.log(">  Found " ..tostring(#barcodesToVmz) .. " thinned discs to be sent to VMZ.")
-				local schedule = newdatetime()
-				hardwareManager:vmz_thin( label, schedule.backing, barcodesToBin, barcodesToVmz )
-			end
-			-- Remove job from the Kiosk Engine scheduler as these are one-time run jobs (for now)
-			scheduler_services.remove_entry( jobname )
-		end,
-		{ label, jobname } )
-end
-
-run_thin_vmz_job2 = function( label, jobname, rebalances, exclude_barcodes )
+run_thin_vmz_job = function( label, jobname, schedule, include_rebalance, callback )
 	-- Run GetInventoryStats in order to determine if the rebalance job barcode list need to be modified
 	local hardwareManager = newhardwaremanager()
 	hardwareManager:get_inventory_stats( function( results )
@@ -196,25 +174,34 @@ run_thin_vmz_job2 = function( label, jobname, rebalances, exclude_barcodes )
 		kernel.callbackenqueue(
 			function( label, jobname )
 				kernel.log( "Execute " .. jobname )
-				local barcodesToBin, barcodesToVmz = get_vmz_thin_barcodes( exclude_barcodes )
-				if rebalances == nil then rebalances = {} end
+				
+				-- Get all barcodes
+				local barcodesToBin, rebalances, redeployments, barcodesToVmz = get_vmz_thin_barcodes()
+				
+				-- If no barcodes to thin, then exit
 				if #barcodesToBin == 0
-				and #barcodesToVmz == 0 
-				and #rebalances == 0 then
-					kernel.log( ">  There are no Thinned/Rebalance discs at this time, thin request cancelled." )
-					kernel.log( ">  Running clean_vmz.")
-					hardwareManager:clean_vmz( nil )
+				and (include_rebalance == nil or include_rebalance == false)
+				and #redeployments == 0
+				and #barcodesToVmz == 0 then
+					kernel.log( ">  There are no thinned or redeploy discs at this time, thin request cancelled." )
+				
+				-- If no barcodes to thin - including rebalace - then exit
+				elseif #barcodesToBin == 0
+					and include_rebalance == true and #rebalances == 0
+					and #redeployments == 0
+					and #barcodesToVmz == 0 then
+					kernel.log( ">  There are no thinned, rebalance or redeploy discs at this time, thin request cancelled." )
 				else
 				
+				-- Determine the max # of disks that could/should be moved to the dumpbin
 					if KioskIsFull and DumpBinRemainingCapacity > 0 then
-						-- Determine the max # of disks that could/should be moved to the dumpbin
 						local MinToDumpBin = MakeRoomBuffer
 						if ( MinToDumpBin > DumpBinRemainingCapacity ) then
 							MinToDumpBin = DumpBinRemainingCapacity
 						end
 
+						-- If there are too many barcodes to fill the dump bin, then send a subset instead
 						if #barcodesToBin > MinToDumpBin then
-							-- Send a subset of barcodesToBin
 							kernel.log( "Restricting barcodes_to_bin from: " .. tostring(#barcodesToBin) .. " to: " .. tostring(MinToDumpBin) )
 							for k,v in ipairs( barcodesToBin ) do
 								-- list is pre-sorted, keep the end of the list
@@ -222,37 +209,84 @@ run_thin_vmz_job2 = function( label, jobname, rebalances, exclude_barcodes )
 									barcodesToBin[k] = nil
 								end
 							end
-						elseif #barcodesToBin < MinToDumpBin and #barcodesToVmz > 0 then
-							-- Increase the number to the dumpbin by including some thins (barcodesToVmz)
-							local NumBarcodesToAdd = MinToDumpBin - #barcodesToBin
-							for  k,v in ipairs( barcodesToVmz ) do
-								if NumBarcodesToAdd > 0 then
-									-- Ensure the barcode is not a Rebalance
-									local rebalanceBarcode = false
-									for k2,v2 in ipairs( rebalances ) do
-										if v.barcode == v2.barcode then
-											kernel.log( "> Skipping rebalance barcode: " .. tostring(v.barcode) )
-											rebalanceBarcode = true
-											break
+
+						-- If there is room left in the dump bin, then increase the number of discs that can be sent to the dump bin
+						elseif #barcodesToBin < MinToDumpBin then
+
+							-- Increase the number to the dump bin by including some thins (barcodesToVmz)
+							if #barcodesToVmz > 0 then
+								kernel.log( "Increasing barcodes_to_bin to include thins..." )
+								local NumBarcodesToAdd = MinToDumpBin - #barcodesToBin
+								for  k,v in ipairs( barcodesToVmz ) do
+									if NumBarcodesToAdd > 0 then
+										-- Ensure the barcode is not a rebalance
+										local moveToBin = true
+										for k2,v2 in ipairs( rebalances ) do
+											if v.barcode == v2.barcode then
+												kernel.log( "> Skipping rebalance barcode: " .. tostring(v.barcode) )
+												moveToBin = false
+												break
+											end
+										end
+										-- Ensure the barcode is not a redeploy
+										for k3,v3 in ipairs( redeployments ) do
+											if v.barcode == v3.barcode then
+												kernel.log( "> Skipping redeploy barcode: " .. tostring(v.barcode) )
+												moveToBin = false
+												break
+											end
+										end
+										if moveToBin == true then
+											kernel.log( "> Moving barcode: " .. tostring(v.barcode) .. " from barcodes_to_vmz to barcodes_to_bin." )
+											table.insert( barcodesToBin, 1, v )
+											barcodesToVmz[ k ] = nil
+											NumBarcodesToAdd = NumBarcodesToAdd - 1
 										end
 									end
-									if rebalanceBarcode == false then
-										kernel.log( "> Moving barcode: " .. tostring(v.barcode) .. " from barcodes_to_vmz to barcodes_to_bin." )
-										table.insert( barcodesToBin, 1, v )
-										barcodesToVmz[ k ] = nil
-										NumBarcodesToAdd = NumBarcodesToAdd - 1
+								end
+							end
+
+							-- Increase the number to the dumpbin by including some redeploys (redeployments)
+							if #barcodesToBin < MinToDumpBin and #redeployments > 0 then
+								kernel.log( "Increasing barcodes_to_bin to include redeploys..." )
+								local NumBarcodesToAdd = MinToDumpBin - #barcodesToBin
+								for  k,v in ipairs( redeployments ) do
+									if NumBarcodesToAdd > 0 then
+										-- Ensure the barcode is not a Rebalance
+										local moveToBin = true
+										for k3,v3 in ipairs( rebalances ) do
+											if v.barcode == v3.barcode then
+												kernel.log( "> Skipping rebalance barcode: " .. tostring(v.barcode) )
+												moveToBin = false
+												break
+											end
+										end
+										if moveToBin == true then
+											kernel.log( "> Moving barcode: " .. tostring(v.barcode) .. " from redeployments to barcodes_to_bin." )
+											table.insert( barcodesToBin, 1, v )
+											redeployments[ k ] = nil
+											NumBarcodesToAdd = NumBarcodesToAdd - 1
+										end
 									end
 								end
 							end
 						end
-						
 					end
 
-					kernel.log(">  Found " ..tostring(#barcodesToBin) .. " thinned discs to be sent to Bin.")
-					kernel.log(">  Found " ..tostring(#rebalances) .. " rebalance discs to be sent to VMZ.")
+					kernel.log(">  Found " ..tostring(#barcodesToBin) .. " thinned discs to be sent to dump bin.")
+					if include_rebalance == true then
+						kernel.log(">  Found " ..tostring(#rebalances) .. " rebalance discs to be sent to VMZ.")
+					else
+						-- Ensure rebalances is an empty list
+						rebalances = {}
+					end
+					kernel.log(">  Found " ..tostring(#redeployments) .. " redeploy discs to be sent to VMZ.")
 					kernel.log(">  Found " ..tostring(#barcodesToVmz) .. " thinned discs to be sent to VMZ.")
-					local schedule = newdatetime()
-					hardwareManager:vmz_thin2( label, schedule.backing, barcodesToBin, rebalances, barcodesToVmz )
+					if schedule == nil then
+						local now = newdatetime()
+						schedule = now.backing
+					end
+					hardwareManager:vmz_thin( label, schedule, barcodesToBin, rebalances, redeployments, barcodesToVmz, callback )
 				end
 				-- Remove job from the Kiosk Engine scheduler as these are one-time run jobs (for now)
 				scheduler_services.remove_entry( jobname )
@@ -288,7 +322,6 @@ end
 get_thin_barcodes = function()
 	local do_not_rent_discs = {}
 	local thinned_discs = {}
-	local rapidthinsvalid = use_rapid_thin_file()
 	for k, v in BarcodePosition:pairs() do
 		local barcode = v["barcode"]
 		local status = v["status"]
@@ -307,17 +340,58 @@ get_thin_barcodes = function()
 					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
 				end
 			end
-			if rapidthinsvalid == true and RapidThinBarcodes[ barcode ] ~= nil then
-				row.status = RapidThinBarcodes[ barcode ].status
+			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
+			if rapid_status ~= nil then
+				row.status = rapid_status.status
 			end
 			
-			if row.status == "Thinned"
-			and RebalancesUnThinInuse ~= nil 
-			and RebalancesUnThinInuse[ barcode ] ~= nil then
-				kernel.log(" > Unthin detected in get_thin_barcodes: " .. tostring( barcode ) )
-				row.status = "Known"
+			if do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then
+				table.insert( do_not_rent_discs, row )
+				kernel.log(">  added to do not rent list " .. barcode .." from location " .. k )
+			elseif row.status == "Thinned" or row.status == "Redeployment" or row.status == "Rebalancing" then
+				table.insert( thinned_discs, row )
+				kernel.log(">  added to thin list " .. barcode .." from location " .. k )
 			end
+		end
+	end
 
+	local thin_barcodes = {}
+	--thinned_discs inserted into table first, so when barcodes are sent to HAL, they will be reversed and do_not_rent_discs will pop first
+	for _, v in ipairs( thinned_discs ) do
+		table.insert( thin_barcodes, { barcode=v.barcode, status=v.status } )
+	end
+	for _, v in ipairs( do_not_rent_discs ) do
+		table.insert( thin_barcodes, { barcode=v.barcode, status=v.status } )
+	end
+	return thin_barcodes
+end
+
+get_thin_barcodes2 = function()
+	local do_not_rent_discs = {}
+	local thinned_discs = {}
+	for k, v in BarcodePosition:pairs() do
+		local barcode = v["barcode"]
+		local status = v["status"]
+		if barcode ~= nil
+		and status ~= nil
+		and barcode ~= "UNDEFINED"
+		and barcode ~= "EMPTY" then
+			local row = {}
+			row.barcode = barcode
+			row.status = status
+
+			local do_not_rent_date = nil
+			if BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil then
+				local product_id = BarcodeToProduct[barcode].product_id
+				if MasterProductCatalog[product_id] ~= nil and MasterProductCatalog[product_id].do_not_rent_date ~= nil then
+					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
+				end
+			end
+			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
+			if rapid_status ~= nil then
+				row.status = rapid_status.status
+			end
+			
 			if do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then
 				table.insert( do_not_rent_discs, row )
 				kernel.log(">  added to do not rent list " .. barcode .." from location " .. k )
@@ -339,7 +413,7 @@ get_thin_barcodes = function()
 	return thin_barcodes
 end
 
-get_vmz_thin_barcodes = function( exclude_barcodes )
+get_vmz_thin_barcodes = function()
 	local sort_order = {
 		["DNR"] = 1,
 		["DAMAGED"] = 2,
@@ -348,8 +422,9 @@ get_vmz_thin_barcodes = function( exclude_barcodes )
 	}
 
 	local barcodes_to_bin = {}
+	local rebalances = {}
+	local redeployments = {}
 	local barcodes_to_vmz = {}
-	local rapidthinsvalid = use_rapid_thin_file()
 
 	local barcode_in_exclude_list = function( barcode )
 		if barcode == nil then
@@ -381,20 +456,12 @@ get_vmz_thin_barcodes = function( exclude_barcodes )
 					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
 				end
 			end
-			if rapidthinsvalid == true and RapidThinBarcodes[ barcode ] ~= nil then
-				row.status = RapidThinBarcodes[ barcode ].status
+			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
+			if rapid_status ~= nil then
+				row.status = rapid_status.status
 			end
-
-			if row.status == "Thinned"
-			and RebalancesUnThinInuse ~= nil 
-			and RebalancesUnThinInuse[ barcode ] ~= nil then
-				kernel.log(" > Unthin detected in get_vmz_thin_barcodes: " .. tostring( barcode ) )
-				row.status = "Known"
-			end
-
-			if exclude_barcodes ~= nil and barcode_in_exclude_list( barcode ) then
-				kernel.log( ">  found in exclude_list skipping barcode " .. barcode .. " at location " .. k )
-			elseif string.upper( row.status ) == "DAMAGED" then
+			
+			if string.upper( row.status ) == "DAMAGED" then
 				row.order = sort_order["DAMAGED"]
 				table.insert( barcodes_to_bin, row )
 				kernel.log(">  added Damaged (sort_order:" ..sort_order["DAMAGED"] ..") " .. barcode .." to barcodes_to_bin from location " .. k )
@@ -425,8 +492,51 @@ get_vmz_thin_barcodes = function( exclude_barcodes )
 			return false
 		end
 	)
+--[[
+	-- Get redeployment barcodes
+	local rebalance = kernel.rental_inventory_get_rapidstatus_by_status("Rebalancing") or {}
 
-	return barcodes_to_bin, barcodes_to_vmz
+	for k, v in pairs(rebalance) do
+		if k ~= nil then
+			local row = {}
+			row.barcode = v["barcode"]
+			table.insert( rebalances, row)
+			kernel.log(">  added Rebalancing " .. row.barcode .." to rebalances" )
+		end
+	end
+
+	-- Get redeployment barcodes
+	local redeploy = kernel.rental_inventory_get_rapidstatus_by_status("Redeployment") or {}
+	for k, v in pairs(redeploy) do
+		if k ~= nil then
+			local row = {}
+			row.barcode = v["barcode"]
+			table.insert( redeployments, row)
+			kernel.log(">  added Redeployment " .. row.barcode .." to redeployments" )
+		end
+	end
+	--]]
+	local rebalance = kernel.rental_inventory_get_barcodes_by_status("Rebalancing", true) or {}
+	for k, v in pairs(rebalance) do
+		if k ~= nil then
+			local row = {}
+			row.barcode = v --v["barcode"]
+			table.insert( rebalances, row)
+			kernel.log(">  added Rebalancing " .. row.barcode .." to rebalances" )
+		end
+	end	
+	
+	local redeploy = kernel.rental_inventory_get_barcodes_by_status("Redeployment", true) or {}
+	for k, v in pairs(redeploy) do
+		if k ~= nil then
+			local row = {}
+			row.barcode = v --v["barcode"]
+			table.insert( redeployments, row)
+			kernel.log(">  added Redeployment " .. row.barcode .." to redeployments" )
+		end
+	end	
+
+	return barcodes_to_bin, rebalances, redeployments, barcodes_to_vmz
 end
 
 local is_release_date_less_than_28_days = function( release_date )
@@ -675,6 +785,27 @@ function newhardwaremanager()
 		return true
 	end
 
+	t.prep_unload_zone = function( self, rotation, last_deck, on_complete )
+		local result = kernel.hardwareprepunloadzone(
+		rotation,
+		last_deck,
+		nil,
+		function( jobid, status )
+			if( has_job_ended( status ) ) then
+				local job_result = kernel.hardwaregetprogramresults( jobid )
+				if on_complete ~= nil then
+					on_complete( job_result.results )
+				end
+				kernel.hardwaretrashjob( jobid )
+			end
+		end )
+		
+		if result.success == false then
+			return false
+		end
+		return true
+	end
+
 	t.schedule_job = function(
 			self,
 			script_name,
@@ -828,7 +959,9 @@ function newhardwaremanager()
 					else
 						if cached_info ~= nil then
 							if ( cached_info.status == "Known"
-							or cached_info.status == "Thinned" )
+							or cached_info.status == "Thinned"
+							or cached_info.status == "Redeployment"
+							or cached_info.status == "Rebalancing" )
 							and present_barcodes[ each_barcode ] ~= nil
 							then
 								on_hand_count = on_hand_count + 1
@@ -848,7 +981,7 @@ function newhardwaremanager()
 					kernel.log(">> False Positive in_stock OR on_hand_count cleared for Product " .. v.product_id )
 					v.in_stock = false
 					history.on_hand_count = 0
-					if product ~= nil and is_release_date_less_than_28_days( product.release_date ) == false then
+					if product ~= nil and is_release_date_less_than_28_days( product.merchandise_date ) == false then
 						ProductHistory:remove( v.product_id )
 						ProductCatalog:remove( v.product_id )
 					else
@@ -857,7 +990,7 @@ function newhardwaremanager()
 					end
 				end
 			elseif history ~= nil then
-				if product == nil or ( history.on_hand_count == 0 and is_release_date_less_than_28_days( product.release_date ) == false ) then
+				if product == nil or ( history.on_hand_count == 0 and is_release_date_less_than_28_days( product.merchandise_date ) == false ) then
 					ProductHistory:remove( v.product_id )
 					ProductCatalog:remove( v.product_id )
 				else
@@ -960,38 +1093,16 @@ function newhardwaremanager()
 		return true
 	end
 
-	t.vmz_thin = function( self, label, schedule, barcodes_to_bin, barcodes_to_vmz )
+	t.vmz_thin = function( self, label, schedule, barcodes_to_bin, rebalances, redeployments, barcodes_to_vmz, callback )
 		local result = kernel.hardwarevmzthin(
 			nil,
-			nil,
+			callback,
 			label,
 			schedule,
 			barcodes_to_bin,
+			rebalances,
+			redeployments,
 			barcodes_to_vmz)
-
-		if result.success == false then
-			self:show_hardware_errors( result )
-			return false
-		end
-
-		return true
-	end
-
-	t.vmz_thin2 = function( self, label, schedule, barcodes_to_bin, barcodes_to_rebalance, barcodes_to_vmz )
-		local result = kernel.hardwarevmzthin2(
-			nil,
-			function( jobid, status )
-				if status == "Completed"
-				or status == "Errored" then
-					kernel.log( "> hardwarevmzthin2 complete, now running clean_vmz")
-					self:clean_vmz( nil )
-				end
-			end,
-			label,
-			schedule,
-			barcodes_to_bin,
-			barcodes_to_rebalance,
-			barcodes_to_vmz )
 
 		if result.success == false then
 			self:show_hardware_errors( result )

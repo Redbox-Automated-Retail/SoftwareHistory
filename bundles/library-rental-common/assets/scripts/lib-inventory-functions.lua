@@ -19,7 +19,7 @@ local function product_to_barcode_entry_count( barcodes )
 	local count = 0
 	for k, v in pairs( barcodes ) do
 		if v ~= nil 
-		and (v.status == "Known" or v.status == "Thinned")
+		and (v.status == "Known" or v.status == "Thinned" or v.status == "Redeployment" or v.status == "Rebalancing")
 		and UnplayableProduct[ k ] == nil
 		then 
 			count = count + 1 
@@ -59,6 +59,10 @@ end
 
 local function create_or_update_product_to_barcode_entry( product_id, barcode, status )
 	local barcodes = ProductToBarcode[product_id] or {}
+    if type(barcodes) ~= "table" then
+        kernel.log("Error in create_or_update_product_to_barcode_entry.  ProductToBarcode entry is not a table.  product_id:" .. tostring(product_id) .. " barcode: " .. tostring(barcode) .. " status: " ..tostring(status))
+        barcodes = {}
+    end
 	if barcodes[barcode] == nil then barcodes[barcode] = {} end
 	if barcodes[barcode].status == nil then barcodes[barcode].status = status end
 	if barcodes[barcode].status ~= "Reserved" and barcodes[barcode].status ~= status then barcodes[barcode].status = status end
@@ -98,17 +102,111 @@ function update_game_has_content_registry_keys( product_type )
 	end 
 end
 
+function is_multi_disc( product_id )
+	return product_id ~= nil and MultiDiscXREF[product_id] ~= nil and MultiDiscXREF[product_id].product_group_id ~= nil and ProductGroup[MultiDiscXREF[product_id].product_group_id] ~= nil and ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list ~= nil and #ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list > 0
+end
+
+function get_all_unmatched_multi_disc_barcodes()
+	local all_unmatched_multi_disc_barcodes = {}
+	
+	local product_group_ids = {}
+	for _, v in MultiDiscXREF:pairs() do
+		if v.product_group_id ~= nil and product_group_ids[v.product_group_id] == nil then
+			product_group_ids[v.product_group_id] = v.product_group_id
+		end
+	end
+	
+	for _, product_group_id in pairs( product_group_ids ) do
+		if ProductGroup[product_group_id] ~= nil and ProductGroup[product_group_id].product_id_list ~= nil then
+			local product_ids_and_barcodes = {}
+			
+			local product_id_list = ProductGroup[product_group_id].product_id_list
+			for _, product_id in pairs( product_id_list ) do
+				local barcodes_table = {}
+				
+				local barcodes = ProductToBarcode[product_id]
+				if barcodes ~= nil then
+					for barcode, _ in pairs( barcodes ) do
+						table.insert( barcodes_table, barcode )
+					end
+				end
+				
+				table.sort(
+					barcodes_table,
+					function( a, b )
+						local a_total_rental_count = 0
+						local b_total_rental_count = 0
+						
+						if BarcodeToProduct[a] ~= nil and BarcodeToProduct[a].total_rental_count ~= nil then
+							a_total_rental_count = BarcodeToProduct[a].total_rental_count
+						end
+						
+						if BarcodeToProduct[b] ~= nil and BarcodeToProduct[b].total_rental_count ~= nil then
+							b_total_rental_count = BarcodeToProduct[b].total_rental_count
+						end
+						
+						return a_total_rental_count < b_total_rental_count
+					end
+				)
+				
+				table.insert( product_ids_and_barcodes, { product_id = product_id, barcodes = barcodes_table } )
+			end
+			
+			local min_number_of_barcodes = 0
+			if product_ids_and_barcodes[1] ~= nil and product_ids_and_barcodes[1].barcodes ~= nil then
+				min_number_of_barcodes = #product_ids_and_barcodes[1].barcodes
+			end
+			
+			local max_number_of_barcodes = 0
+			
+			for _, product_id_and_barcodes in ipairs( product_ids_and_barcodes ) do
+				if #product_id_and_barcodes.barcodes < min_number_of_barcodes then
+					min_number_of_barcodes = #product_id_and_barcodes.barcodes
+				end
+				if #product_id_and_barcodes.barcodes > max_number_of_barcodes then
+					max_number_of_barcodes = #product_id_and_barcodes.barcodes
+				end
+			end
+			
+			if min_number_of_barcodes < max_number_of_barcodes then
+				for i = min_number_of_barcodes + 1, max_number_of_barcodes do
+					for _, product_id_and_barcodes in ipairs( product_ids_and_barcodes ) do
+						if product_id_and_barcodes.barcodes ~= nil and product_id_and_barcodes.barcodes[i] ~= nil then
+							table.insert( all_unmatched_multi_disc_barcodes, product_id_and_barcodes.barcodes[i] )
+						end
+					end
+				end
+			end
+		end
+	end
+	return all_unmatched_multi_disc_barcodes
+end
+
 function create_or_update_product_catalog_entry( product_id, history )
 	local master = MasterProductCatalog[product_id]
+	
+	local function in_stock( product_id, history )
+		if is_multi_disc( product_id ) == true then
+			for k, v in pairs( ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list ) do
+				local current_history = ProductHistory[v]
+				if current_history == nil or current_history.on_hand_count == nil or current_history.on_hand_count <= 0 then
+					return false
+				end
+			end
+			return true
+		else
+			return history.on_hand_count > 0
+		end
+	end
 	local function can_be_sold( product_id, history )
 		if master == nil then return false end
 		if not master.sell_thru then return false end
-		if master.release_date == nil then return false end
+		if master.merchandise_date == nil then return false end
 
 		local now = get_current_date_string( "%4d%02d%02d" )
 		-- Disc must be 30 days past release date (Does not apply for Games)
 		if master.product_type_id <= 2 then
-			local since_release = kernel.getelapseddays( master.release_date, now )
+			local since_release = kernel.getelapseddays( master.merchandise_date, now )
 			if since_release ~= nil and since_release < 30 then return false end
 		end
 
@@ -117,8 +215,8 @@ function create_or_update_product_catalog_entry( product_id, history )
 			local barcodes_table = ProductToBarcode[product_id] or {}
 			for each_barcode, cached_info in pairs( barcodes_table ) do
 				if cached_info ~= nil then
-					if cached_info.status == "Thinned"
-					and UnplayableProduct[each_barcode] == nil then
+					if UnplayableProduct[each_barcode] == nil
+					and ( cached_info.status == "Thinned" or cached_info.status == "Redeployment" or cached_info.status == "Rebalancing" ) then
 						return true
 					end
 				end
@@ -145,7 +243,7 @@ function create_or_update_product_catalog_entry( product_id, history )
 	end
 	local function product_is_available()
 		if master == nil then return false end
-		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > master.release_date or StoreManager.PricingManager:is_early_released( master )
+		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > master.merchandise_date or StoreManager.PricingManager:is_early_released( master )
 	end
 	local function get_type_name()
 		if master == nil then return nil end
@@ -163,7 +261,7 @@ function create_or_update_product_catalog_entry( product_id, history )
 	end
 
 	local product_catalog = ProductCatalog[product_id] or { product_id = product_id }
-	product_catalog.in_stock = history.on_hand_count > 0
+	product_catalog.in_stock = in_stock( product_id, history )
 	product_catalog.can_be_sold = can_be_sold( product_id, history )
 	product_catalog.is_available = product_is_available()
 	product_catalog.product_type_name = get_type_name()
@@ -188,35 +286,29 @@ end
 
 local function item_status_based_on_barcode_to_product_and_barcode( barcode_to_product, barcode )
 	local status = nil
+	
 	if barcode == nil or barcode == "UNKNOWN" or barcode == "EMPTY" or string.upper( barcode ) == "REDBOX" then 
 		status = "Unknown"
 	elseif barcode_to_product == nil then
 		status = "Unknown Title"
 	else
-		if barcode_to_product.status ~= nil and 
-		(barcode_to_product.status == "Unknown Title" or barcode_to_product.status == "Known") then
-			-- Known or Unknown get reset but DO NOT override Thinned, Damaged, or Reserved
-			if barcode_to_product.product_id ~= nil and MasterProductCatalog[barcode_to_product.product_id] ~= nil then
-				if use_rapid_thin_file() == true 
-				and RapidThinBarcodes[ barcode ] ~= nil then
-					status = RapidThinBarcodes[ barcode ].status
-				else
-					status = "Known"
-				end
+		if barcode_to_product.product_id ~= nil and MasterProductCatalog[barcode_to_product.product_id] ~= nil then
+			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
+			if rapid_status ~= nil then
+				status = rapid_status.status
+			elseif barcode_to_product.status ~= nil  and ( barcode_to_product.status == "Rebalancing" or barcode_to_product.status == "Redeployment" or barcode_to_product.status == "Thinned")   then		
+				status = "Known"
 			else
-				status = "Unknown Title"
+				status = barcode_to_product.status
 			end
 		else
-			status = barcode_to_product.status
-		end
-		
-		if status == "Thinned"
-		and RebalancesUnThinInuse ~= nil 
-		and RebalancesUnThinInuse[ barcode ] ~= nil then
-			kernel.log(" > Unthin detected in item_status_based_on_barcode_to_product_and_barcode: " .. tostring( barcode ) )
-			status = "Known"
-		end
+			status = "Unknown Title"
+		end	
+		if VerboseLogging then
+		  kernel.log("Barcode_to_product_and_barcode: " .. barcode .. " BarcodeToProduct status: " .. tostring(barcode_to_product.status) .. " return status: " .. status )
+		end		
 	end
+
 	return status
 end
 
@@ -278,6 +370,11 @@ local function sync_inventory_item_returned( job_result )
 		local current_date = get_current_date_string( "%4d%02d%02d" )
 		if history.sold_out == nil then history.sold_out = current_date end
 		if history.last_date_out_of_stock == nil then history.last_date_out_of_stock = current_date end
+	end
+
+	if RemovedQueue[ barcode ] ~= nil then
+		kernel.log( ">  " .. barcode .. " removed from RemovedQueue" )
+		RemovedQueue:remove( barcode )
 	end
 
 	create_or_update_product_catalog_entry( product_id, history )
@@ -420,27 +517,28 @@ function get_barcodes_for_products( products, exclude_list )
 		used_barcodes[k] = true
 	end
 	
-	-- Get a list of barcodes in the RebalanceOut list
-	rebalances_raw = get_rebalance_barcodes_raw()
-	
 	for k, v in ipairs( products ) do
 		if v.barcode == nil then
-			local work_table = {}
+			local work_table_known = {}
+			local work_table_thinned = {}
+			local work_table_redeployment = {}
+			local work_table_rebalancing = {}
+			
 			local in_kiosk_and_not_available = false
 			local barcodes_table = ProductToBarcode[v.product_id] or {}
-			local title_rebalances = {}
-			local num_title_rebalances = 0
+
 			for each_barcode, cached_info in pairs( barcodes_table ) do
 				if cached_info ~= nil then
-					if used_barcodes[each_barcode] == nil
-					and (cached_info.status == "Known" or cached_info.status == "Thinned") then
-						local disc_info = BarcodeToProduct[each_barcode] or { total_rental_count = 0 }
-						table.insert(
-							work_table,
-							{ barcode = each_barcode, turns = disc_info.total_rental_count } )
-						if rebalances_raw[ each_barcode ] == true then
-							title_rebalances[ tostring(each_barcode) ] = true
-							num_title_rebalances = num_title_rebalances + 1
+					local disc_info = BarcodeToProduct[each_barcode] or { total_rental_count = 0 }
+					if used_barcodes[each_barcode] == nil then
+						if cached_info.status == "Known" then
+							table.insert( work_table_known, { barcode = each_barcode, turns = disc_info.total_rental_count } )
+						elseif cached_info.status == "Thinned" then
+							table.insert( work_table_thinned, { barcode = each_barcode, turns = disc_info.total_rental_count } )
+						elseif cached_info.status == "Redeployment" then
+							table.insert( work_table_redeployment, { barcode = each_barcode, turns = disc_info.total_rental_count } )
+						elseif cached_info.status == "Rebalancing" then
+							table.insert( work_table_rebalancing, { barcode = each_barcode, turns = disc_info.total_rental_count } )
 						end
 					else
 						in_kiosk_and_not_available = true
@@ -449,38 +547,34 @@ function get_barcodes_for_products( products, exclude_list )
 					kernel.log( ">  WARNING: Missing disc info in ProductToBarcode for barcode: " .. each_barcode )
 				end
 			end
-			if #work_table > 0 then
-				table.sort(
-					work_table,
-					function( a, b ) return a.turns < b.turns end )
-				local barcode = ""
-				if v.action == "purchase" then
-					barcode = work_table[#work_table].barcode
-				else
-					barcode = work_table[1].barcode
-
-					-- if the selected barcode is a rebalance, try to assign a barcode not in the rebalance list
-					if rebalances_raw[ barcode ] == true
-					and num_title_rebalances < #work_table then
-						for key, work_table_item in ipairs( work_table ) do
-							if title_rebalances[ tostring(work_table_item.barcode) ] == nil then
-								barcode = work_table_item.barcode
-								break
-							end
-						end
-					end
-				end
-				table.insert( barcodes_to_vend,	barcode )
-				v.barcode = barcode
-				v.status = "ProductSelected"
-				used_barcodes[barcode] = true
-				kernel.log( ">  Barcode " .. barcode .. " assigned to product " .. tostring( v.product_id ) )
+			
+			local barcode = ""
+			if #work_table_known > 0 then
+				table.sort(work_table_known, function( a, b ) return a.turns < b.turns end )
+				barcode = work_table_known[iif( v.action == "purchase", #work_table_known, 1 )].barcode
+			elseif #work_table_thinned > 0 then
+				table.sort(work_table_thinned, function( a, b ) return a.turns < b.turns end )
+				barcode = work_table_thinned[iif( v.action == "purchase", #work_table_thinned, 1 )].barcode
+			elseif #work_table_redeployment > 0 then
+				table.sort(work_table_redeployment, function( a, b ) return a.turns < b.turns end )
+				barcode = work_table_redeployment[iif( v.action == "purchase", #work_table_redeployment, 1 )].barcode
+			elseif #work_table_rebalancing > 0 then
+				table.sort(work_table_rebalancing, function( a, b ) return a.turns < b.turns end )
+				barcode = work_table_rebalancing[iif( v.action == "purchase", #work_table_rebalancing, 1 )].barcode
 			elseif in_kiosk_and_not_available then
 				kernel.log( ">  WARNING: Last Barcode Not Reservable: " .. tostring( v.product_id ) )
 				v.status = "ProductSelected"
 			else
 				kernel.log( ">  WARNING: No vendable barcodes found for product: " .. tostring( v.product_id ) )
 				v.status = "InventoryError"
+			end
+
+			if barcode ~= "" then
+				table.insert( barcodes_to_vend,	barcode )
+				v.barcode = barcode
+				v.status = "ProductSelected"
+				used_barcodes[barcode] = true
+				kernel.log( ">  Barcode " .. barcode .. " assigned to product " .. tostring( v.product_id ) )
 			end
 		else
 			table.insert( barcodes_to_vend, v.barcode )
@@ -500,7 +594,6 @@ sync_inventory_functors["InventoryState"] = sync_inventory_soft_sync
 sync_inventory_functors["NonThinRemoved"] = sync_inventory_item_vended
 sync_inventory_functors["ThinTransferSuccessful"] = sync_inventory_item_vended
 sync_inventory_functors["QlmUnloadPutIntoDrum"] = sync_inventory_item_returned
-
 
 function sync_inventory( job_result )
 	if job_result.deck == 0 or job_result.slot == 0 then 
@@ -550,7 +643,6 @@ end
 function update_barcode_status( barcodes, status )
 	BarcodePosition:reset_keys_cache()
 	local product_ids = {}
-	local rapidthinsvalid = use_rapid_thin_file()
 	for _, v in ipairs( barcodes ) do
 		local barcode_info = BarcodeToProduct[v]
 		if barcode_info ~= nil then
@@ -562,7 +654,7 @@ function update_barcode_status( barcodes, status )
 		if product_info ~= nil then
 			local rentable_barcode_count = 0
 			for _, v in pairs( product_info ) do
-				if v.status == "Known" or v.status == "Thinned" then
+				if v.status == "Known" or v.status == "Thinned" or v.status == "Redeployment" or v.status == "Rebalancing" then
 					rentable_barcode_count = rentable_barcode_count + 1
 				end
 			end
@@ -570,19 +662,14 @@ function update_barcode_status( barcodes, status )
 				local barcode_info = product_info[v]
 				if status == "Known" then
 					-- Known is passed generically for expired reservations, use the CORRECT status instead
-					if rapidthinsvalid == true and RapidThinBarcodes[v] ~= nil then
-						status = RapidThinBarcodes[v].status
+					local rapid_status = kernel.rental_inventory_get_rapidstatus( v )
+					if rapid_status ~= nil then
+						status = rapid_status.status
 					else
 						if BarcodeToProduct[v] ~= nil then
 							status = BarcodeToProduct[v].status
 						end
 					end
-				end
-				if status == "Thinned"
-				and RebalancesUnThinInuse ~= nil 
-				and RebalancesUnThinInuse[ v ] ~= nil then
-					kernel.log(" > Unthin detected in update_barcode_status: " .. tostring( v ) )
-					status = "Known"
 				end
 				if barcode_info ~= nil then
 					barcode_info.status = status
@@ -719,35 +806,34 @@ function barcodeisreserved( barcode )
 	return false
 end
 
-function use_rapid_thin_file()
-	if InventoryVersion ~= nil
-	and InventoryVersion.generated_on.date ~= nil
-	and RapidThinVersion ~= nil
-	and RapidThinVersion.generated_on ~= nil 
-	and kernel.datecompare( 
-		kernel.datetimeparsefromstringdate( RapidThinVersion.generated_on.date ), 
-		kernel.datetimeparsefromstringdate( InventoryVersion.generated_on.date ) 
-		) > 0
-	and RapidThinBarcodes:getsize() > 0 then
-		return true
-	else
-		return false
-	end
-end
-
 function get_rebalance_barcodes( inside_vmz, outside_vmz, on_complete )
-	local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.json.inuse"
-	local rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
-	barcodes_vmz_status ( inside_vmz, outside_vmz, rebalance_out_inuse_data, on_complete )
+	--local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.data.inuse"
+	--local rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
+	local rebalance_out = kernel.rental_inventory_get_rapidstatus_by_status("Rebalancing")
+	barcodes_vmz_status ( inside_vmz, outside_vmz, rebalance_out, on_complete )
 end
 
 function get_rebalance_barcodes_raw()
-	local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.json.inuse"
-	local rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
+	--local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.data.inuse"
+	--local rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
+	local rebalance_out = kernel.rental_inventory_get_rapidstatus_by_status("Rebalancing")	
 	local raw_data = {}
 
-	if rebalance_out_inuse_data ~= nil then
-		for k, v in ipairs(rebalance_out_inuse_data) do
+	if rebalance_out ~= nil then
+		for k, v in pairs(rebalance_out) do
+			raw_data[ tostring(v.Barcode) ] = true
+		end
+	end
+	
+	return raw_data
+end
+
+function get_redeploy_barcodes_raw()
+	local redeploy_out = kernel.rental_inventory_get_rapidstatus_by_status("Redeployment")	
+	local raw_data = {}
+
+	if redeploy_out ~= nil then
+		for k, v in pairs(redeploy_out) do
 			raw_data[ tostring(v.Barcode) ] = true
 		end
 	end
@@ -760,14 +846,14 @@ function barcodes_vmz_status ( inside_vmz, outside_vmz, barcode_list, on_complet
 	local result_list = {}
 	if on_complete ~= nil
 	and barcode_list ~= nil then
-		local all_rebalances = {}
-		for _,v in ipairs( barcode_list ) do
+		local indexed_barcodes = {}
+		for _,v in pairs( barcode_list ) do
 			local row = {}
 			row.barcode = v["Barcode"] or v["barcode"]
-			table.insert( all_rebalances, row )
+			table.insert( indexed_barcodes, row )
 		end
-		if #all_rebalances > 0 then
-			hardware_manager:get_barcode_vmz_position( all_rebalances, 
+		if #indexed_barcodes > 0 then
+			hardware_manager:get_barcode_vmz_position( indexed_barcodes, 
 				function( results )
 					local rebalance_count = 0
 					for _,v in ipairs( results ) do
@@ -786,4 +872,14 @@ function barcodes_vmz_status ( inside_vmz, outside_vmz, barcode_list, on_complet
 	elseif on_complete ~= nil then
 		on_complete( result_list )
 	end
+end
+
+function upgrade_product( product ) 
+		if (product.title_rollup_product_group_id ~= nil) then
+			local group_prod = kernel.rental_get_title_rollup(product.title_rollup_product_group_id)
+			if (group_prod ~= nil) then
+				return group_prod
+			end
+		end
+		return product
 end

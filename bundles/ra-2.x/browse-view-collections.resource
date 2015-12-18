@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<resource type="view">
+	<property name="name" value="browse_view_collections" />
+	<property name="version" value="2.0,Core,A" />
+	<property name="active_flag" value="active" />
+	<aspect name="content">
+		<scene
+			width="1024"
+			height="768"
+			backgroundColor="24, 24, 24"
+			stylesheet="style_sheet_common"
+			onEnter="browse_view_collections_enter">
+
+<!-- Page Background Graphics -->
+
+			<actor
+				name="top_part_gray_background"
+				x="0"
+				y="0"
+				optionFlags="Text, Background"
+				backgroundColor="167,167,167"
+				foregroundColor="white"
+				width="1024"
+				height="70"
+				text="Place holder for top menu"
+				verticalAlignment="center"
+				horizontalAlignment="center"
+				visible="true"/>
+
+			<actor
+				name="lowerpart_gray_background"
+				x="0"
+				y="564"
+				optionFlags="Background"
+				backgroundColor="167,167,167"
+				width="1024"
+				height="60"
+				visible="true" />
+
+<!-- Back button stuff -->
+
+			<actor
+				name="back_button"
+				x="8"
+				y="576"
+				width="115"
+				height="36"
+				addToFront="true"
+				text="       BACK"
+				font="font_target_smaller"
+				cornerSize="18,18"
+				strokeWeight="2"
+				enabled="true"
+				borderColor="white"
+				style="gray_button_style" />
+
+			<actor
+				name="back_arrow"
+				x="28"
+				y="585"
+				width="21"
+				height="18"
+				hitFlags="None"
+				image="image_back_white_arrow"
+				optionFlags="Image" />
+
+		</scene>
+	</aspect>
+</resource>

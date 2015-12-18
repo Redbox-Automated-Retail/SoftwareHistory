@@ -37,15 +37,10 @@ function localization_reload_resources()
 	faq = kernel.gettable( "faqs" )
 	terms = kernel.gettable( "terms" )
 	privacy = kernel.gettable( "privacy" )
-	faq_tickets = kernel.gettable( "faq_tickets" )
-	terms_tickets = kernel.gettable( "terms_tickets" )
 	terms_redbox_card = kernel.gettable( "terms_redbox_card" )
 	
 	strings = kernel.getdictionary( "strings" )
 	LoadStringsMacros()
-	if SellTickets == true then
-		tickets_strings = kernel.getdictionary( "tickets_strings" )
-	end
 	if SetESRBRatings ~= nil then
 		SetESRBRatings()
 	end

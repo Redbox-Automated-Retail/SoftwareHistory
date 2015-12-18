@@ -109,7 +109,13 @@ function newvendmanager()
 				and self.aborted_jobs[ job_result.job_id ] == true then
 					-- We do not want to process results and send server calls if the prepos_vend was aborted
 					kernel.log( "on_complete() skipped for aborted prepos_vend[ " .. tostring( job_result.job_id ) .. " ]" )
-					self.vending = false
+					
+					-- Only change the vending flag if the aborted job is the current vending job
+					-- otherwise if the customer swipes again successfully you are incorrectly setting this flag!
+					if job_result.job_id == self.job_id then
+						self.vending = false
+					end
+					
 					return
 				end
 
@@ -216,7 +222,7 @@ function newvendmanager()
 							kernel.log( "VendManager: vended_count = " .. tostring( vended_count ) .. ", #barcodes_to_vend = " .. tostring( #barcodes_to_vend ) )
 							kernel.log( "VendManager: Showing customer friendly error message." )
 							t.message_view_manager:show()
-							t.message_view_manager:set_title( strings.vend_error_title )
+							t.message_view_manager:set_message_header( strings.vend_error_title )
 							t.message_view_manager:set_message_text( strings.vend_error_message )
 							local continue_handler = function()
 								kernel.log( "VendManager:bad_codes follows:" )

@@ -9,14 +9,17 @@
 -- PROFILE.DATA
 Stores = getprofiletable( "profile", "Store" )
 if DataAccessAlreadySent ~= true then
-	Genres = getprofiletable( "profile", "Genres" )
+	Genres = getcacheprofiletable( "profile", "Genres" )
 	ProfileVersion = getprofiletable( "profile", "Version" )
-	ProductTypes = getprofiletable( "profile", "ProductType" )
-	ProductFamilies = getprofiletable( "profile", "ProductFamily" )
-	SubPlatform = getprofiletable("profile","SubPlatform")
+	ProductTypes = getcacheprofiletable( "profile", "ProductType" )
+	ProductFamilies = getcacheprofiletable( "profile", "ProductFamily" )
+	SubPlatform = getcacheprofiletable("profile","SubPlatform")
 	MasterProductCatalog = getprofiletable( "profile", "ProductCatalog" )
-	ProductRatings=getprofiletable( "profile", "ProductRating" )
+	ProductRatings=getcacheprofiletable( "profile", "ProductRating" )
 	MasterProductCatalog:prime_cache_keys()
+	ProductGroup = getprofiletable( "profile", "ProductGroup" )
+	TitleRollupXREF = getprofiletable( "profile", "TitleRollupXREF" )
+	MultiDiscXREF = getcacheprofiletable( "profile", "MultiDiscXREF" )
 else
 	Genres = {}
 	ProfileVersion = {}
@@ -25,43 +28,19 @@ else
 	SubPlatform = {}
 	MasterProductCatalog = {}
 	ProductRatings = {}
+	ProductGroup = {}
+	TitleRollupXREF = {}
+	MultiDiscXREF = {}
 end
 
 -- INVENTORY.DATA
 if DataAccessAlreadySent ~= true then
-	InventoryVersion = getprofiletable( "inventory", "Version" )
+	InventoryVersion = getinventorytable( "inventory", "Version" )
 	InventoryVersion:prime_cache_keys()
-	BarcodeToProduct = getprofiletable( "inventory", "BarcodeToProduct" )
+	BarcodeToProduct = getinventorytable( "inventory", "BarcodeToProduct" )
 else
 	InventoryVersion = {}
 	BarcodeToProduct = {}
-end
-
---INVENTORYTHINS.DATA
-if DataAccessAlreadySent ~= true then
-	kernel.datastoreregistprovider( "InventoryThins", "CachedProductLookupProvider" )
-	RapidThinVersion = getfulltable( "InventoryThins", "Version")
-	RapidThinBarcodes = getfulltable( "InventoryThins", "BarcodeToProduct" )
-	kernel.log( "RapidThinBarcodes file contains " .. tostring( RapidThinBarcodes:getsize()) .. " barcodes."  )
-	local rebalancesunthin = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceUnthin.json.inuse"
-	
-	local store_number = tonumber(kernel.getmachinevalueordefault(
-		"Store",
-		"ID",
-		"None" ) )
-		
-	kernel.log( "STORENUMBER = " .. store_number )
-	local barcode_list = kernel.tablefromfileserializedlistdictionary( rebalancesunthin, store_number ) or {}
-	local temp_list = {}
-	for _,v in ipairs( barcode_list ) do
-		temp_list[ v["Barcode"] ] = "Known"
-	end
-	RebalancesUnThinInuse = temp_list
-	kernel.log( "RebalanceUnThinFile.JSON.Inuse file contains " .. tostring( #barcode_list ) .. " barcodes."  )
-else
-	RapidThinVersion = {}
-	RapidThinBarcodes = {}
-	RebalancesUnThinInuse = {}
 end
 
 -- Read-Write tables used by the application
@@ -96,12 +75,13 @@ end
 
 -- CACHE.DATA
 if DataAccessAlreadySent ~= true then
-	ProductHistory = getworktable( "cache", "ProductHistory" )
+	ProductHistory = getcachedataservicetable( "cache", "ProductHistory" )
 	if DataAccessAlreadySent ~= true then
-		ProductCatalog = getworktable( "cache", "ProductCatalog" )
-		BarcodePosition = getworktable( "cache", "BarcodePosition" )
+		ProductCatalog = getcachedataservicetable( "cache", "ProductCatalog" )
+		BarcodePosition = getcachedataservicetable( "cache", "BarcodePosition" )
 		BarcodePosition:prime_cache_keys()
-		ProductToBarcode = getworktable( "cache", "ProductToBarcode" )
+		ProductToBarcode = getcachedataservicetable( "cache", "ProductToBarcode" )
+		
 		FilteredProductList = getworktable( "cache", "FilteredProductList" )
 		VendScreenImpressions = getworktable( "cache", "VendScreenImpressions" )
 		DuplicateSlotFixes = getworktable( "cache", "DuplicateSlotFixes" )

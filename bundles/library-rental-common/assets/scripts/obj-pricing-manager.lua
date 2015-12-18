@@ -34,6 +34,10 @@ function newpricingmanager()
 
 			-- We only compare the standard set because the web site does not get the title_price or pricing_other data
 			local compare_set = kernel.gettable( pricing_config_name )
+			for k, v in ipairs( compare_set ) do
+				v.non_return = self:calculate_non_return_amount( v.initial_night, v.non_return_days )
+			end
+			
 			price_has_changed = deepcompare( self.StandardPricing.Rows, compare_set ) ~= true
 		end
 
@@ -44,6 +48,9 @@ function newpricingmanager()
 
 		-- Standard Pricing and Release Date are used if title does not have an override
 		self.StandardPricing.Rows = kernel.gettable( pricing_config_name )
+		for k, v in ipairs( self.StandardPricing.Rows ) do
+			v.non_return = self:calculate_non_return_amount( v.initial_night, v.non_return_days )
+		end
 		self.StandardPricing.PriceSetID = kernel.getresourceproperty( pricing_config_name, "price_set_id" )
 
 		-- Load any titles with alternate prices
@@ -54,9 +61,9 @@ function newpricingmanager()
 			local product = MasterProductCatalog[ v.title_id ]
 			if product ~= nil then
 				local now = get_current_date_string( "%4d%02d%02d%02d%02d" )
-				kernel.log( ">  rd=" .. tostring( product.release_date ) .. ", xar=" .. tostring( v.expire_at_release ) )
+				kernel.log( ">  rd=" .. tostring( product.merchandise_date ) .. ", xar=" .. tostring( v.expire_at_release ) )
 				-- If hive release date already passed, price exception no longer applies
-				if v.expire_at_release == false or ( v.expire_at_release == true and now < product.release_date ) then
+				if v.expire_at_release == false or ( v.expire_at_release == true and now < product.merchandise_date ) then
 					-- Add this title to the list
 					self.AlternatePriceTitles[ v.title_id ] = { 
 						price_resource = v.price_resource,
@@ -131,7 +138,7 @@ function newpricingmanager()
 		local alt_title = self.AlternatePriceTitles[ product.product_id ]
 		if alt_title ~= nil then
 			local now = get_current_date_string( "%4d%02d%02d%02d%02d" )
-			local date_diff = kernel.getelapseddays( now, product.release_date )
+			local date_diff = kernel.getelapseddays( now, product.merchandise_date )
 			if date_diff ~= nil 
 			and alt_title.release_early_days ~= nil
 			and alt_title.release_early_days >= date_diff
@@ -144,11 +151,11 @@ function newpricingmanager()
 	
 	t.get_early_release_date = function( self, product )
 		if (self:is_alternate_priced(product.product_id) == true) then
-			local release_date = kernel.datetimeparsefromstringdate(product.release_date)
+			local release_date = kernel.datetimeparsefromstringdate(product.merchandise_date)
 			local early_release_date = kernel.dateadd(release_date, "-"..tostring(self.AlternatePriceTitles[product.product_id].release_early_days))
 			return string.format( "%4d%02d%02d%02d%02d", early_release_date.year, early_release_date.month, early_release_date.day, early_release_date.hour, early_release_date.min )
 		else
-			return product.release_date
+			return product.merchandise_date
 		end
 	end
 	
@@ -213,7 +220,7 @@ function newpricingmanager()
 						return {
 							initial_night = self:get_adjusted_price( v.initial_night, "rental"),
 							extra_night = self:get_adjusted_price( v.extra_night, "rental"),
-							non_return = self:get_adjusted_price( v.non_return, "rental"),
+							non_return = v.non_return,
 							non_return_days = v.non_return_days,
 							expiration_price = self:get_adjusted_price( v.expiration_price, "rental")
 						}
@@ -247,7 +254,7 @@ function newpricingmanager()
 				if v.family == string.lower(product_family)
 				and (v.type == string.lower(product_type) or v.type == "*") then
 					local setting_value = v[ setting_name ]
-					if setting_value ~= nil and setting_name ~= "non_return_days" then
+					if setting_value ~= nil and setting_name ~= "non_return" and setting_name ~= "non_return_days" then
 						setting_value = self:get_adjusted_price( setting_value, action )
 					end
 					return setting_value
@@ -290,7 +297,13 @@ function newpricingmanager()
 			}
 		return servicePrices
 	end
-
+	
+	t.calculate_non_return_amount = function( self, initial_night_amount, non_return_days )
+		if StoreManager.store ~= nil and StoreManager.store.state ~= nil and StoreManager.store.state == "MD" then
+			return kernel.round( initial_night_amount * ( ( StoreManager.store.rental_tax_rate / 100 ) + 1 ), 2 ) * non_return_days
+		end
+		return initial_night_amount * non_return_days
+	end
+	
 	return t
 end
-

@@ -36,6 +36,11 @@ elseif kernel.getlasthitactorname() == "clearall_button" then
 	kernel.showactor("next_button_right_arrow_icon")
 	kernel.hideactor("image_next_white_arrow_big")
 	
+	if TextToSpeechEnabled == true then
+		kernel.setmacro( "TTSKeyPad:Text", "" )	
+		kernel.ttsrepeat();  -- assests have been set and toggled
+	end
+
 	return
 elseif kernel.getlasthitactorname() == "back_button" then
 	key_pad_value = kernel.getmacro( "KeyPad:Text" )
@@ -47,6 +52,13 @@ elseif kernel.getlasthitactorname() == "back_button" then
 --	kernel.setactorbackgroundcolor( "next_button", "30,30,30" )
 	kernel.hideactor("image_next_white_arrow_big")
 	kernel.showactor("next_button_right_arrow_icon")
+
+	if TextToSpeechEnabled == true then
+		local splitzip = ""
+		for digit in key_pad_value:gmatch("%w+") do splitzip = splitzip .. digit .. " " end
+		kernel.setmacro( "TTSKeyPad:Text", splitzip )	
+		kernel.ttsrepeat();  -- assests have been set and toggled
+	end
 	
 	return
 end
@@ -74,5 +86,12 @@ if string.len( text ) == key_pad_minimum_length then
 	kernel.showactor("next_button_right_arrow_icon")
 	kernel.hideactor("image_next_white_arrow_big")
 ]]
+end
+
+if TextToSpeechEnabled == true then
+	local splitzip = ""
+	for digit in text:gmatch("%w") do splitzip = splitzip .. digit .. " " end
+	kernel.setmacro( "TTSKeyPad:Text", splitzip )	
+	kernel.ttsrepeat();  -- assests have been set and toggled
 end
 

@@ -15,394 +15,214 @@ function newreservationmanager()
 	t.init = function( self )
 		local servicePrices = StoreManager.PricingManager:get_broker_service_prices()
 		
-		if GiftCardsEnabled == true then
-			kernel.resvsvcs_register3(
-				StoreManager:get_number(),
-				servicePrices,
-				function(
-						card_id,
-						email,
-						reference_number,
-						reserve_date,
-						products_to_reserve,
-						applied_credit,
-						applied_hive_online_promo,
-						applied_title_marketing,
-						customer_number,
-						discounted_sub_total,
-						grand_total,
-						history_title_ids,
-						hive_online_promo_discount,
-						number_of_credits_remaining,
-						promo_code,
-						sub_total,
-						tax,
-						reservation_titles,
-						is_gc,
-						gc_ids,
-						cc_ids,
-						tax_rate,
-						zip_code )
-						
-					local result = { success = false, items = {} }
-					local pricesNotAdjusted = StoreManager.PricingManager:get_broker_service_prices( true )
+		kernel.resvsvcs_register3(
+			StoreManager:get_number(),
+			servicePrices,
+			function(
+					card_id,
+					email,
+					reference_number,
+					reserve_date,
+					products_to_reserve,
+					applied_credit,
+					applied_hive_online_promo,
+					applied_title_marketing,
+					customer_number,
+					discounted_sub_total,
+					grand_total,
+					history_title_ids,
+					hive_online_promo_discount,
+					is_mnp,
+					number_of_credits_remaining,
+					promo_code,
+					sub_total,
+					tax,
+					reservation_titles,
+					is_gc,
+					gc_ids,
+					cc_ids,
+					tax_rate,
+					zip_code,
+					is_mdv )
 					
-					local reservation = {
-						transaction_date = reserve_date,
-						email_address = email,
-						barcodes = {},
-						prices = pricesNotAdjusted,
-						applied_credit = applied_credit,
-						applied_hive_online_promo = applied_hive_online_promo,
-						applied_title_marketing = applied_title_marketing,
-						customer_number = customer_number,
-						discounted_sub_total = discounted_sub_total,
-						grand_total = grand_total,
-						history_title_ids = history_title_ids,
-						hive_online_promo_discount = hive_online_promo_discount,
-						number_of_credits_remaining = number_of_credits_remaining,
-						promo_code = promo_code,
-						sub_total = sub_total,
-						tax = tax,
-						reservation_titles = reservation_titles,
-						reservation_version = 3,
-						is_gc = is_gc,
-						gc_ids = gc_ids,
-						cc_ids = cc_ids,
-						tax_rate = tax_rate,
-						zip_code = zip_code
-					}
-					
-					local products = {}
-					for k, v in pairs( products_to_reserve ) do
-						for _, id in ipairs( v ) do
-							table.insert(
-								products,
-								{ product_id = id.product_id, action = k } )
-						end
+				local result = { success = false, items = {} }
+				local pricesNotAdjusted = StoreManager.PricingManager:get_broker_service_prices( true )
+				
+				local reservation = {
+					transaction_date = reserve_date,
+					email_address = email,
+					barcodes = {},
+					prices = pricesNotAdjusted,
+					applied_credit = applied_credit,
+					applied_hive_online_promo = applied_hive_online_promo,
+					applied_title_marketing = applied_title_marketing,
+					customer_number = customer_number,
+					discounted_sub_total = discounted_sub_total,
+					grand_total = grand_total,
+					history_title_ids = history_title_ids,
+					hive_online_promo_discount = hive_online_promo_discount,
+					is_mnp = is_mnp,
+					number_of_credits_remaining = number_of_credits_remaining,
+					promo_code = promo_code,
+					sub_total = sub_total,
+					tax = tax,
+					reservation_titles = reservation_titles,
+					reservation_version = 3,
+					is_gc = is_gc,
+					gc_ids = gc_ids,
+					cc_ids = cc_ids,
+					tax_rate = tax_rate,
+					zip_code = zip_code,
+					is_mdv = is_mdv
+				}
+				
+				local products = {}
+				for k, v in pairs( products_to_reserve ) do
+					for _, id in ipairs( v ) do
+						table.insert(
+							products,
+							{ product_id = id.product_id, action = k } )
 					end
-					local shopping_cart_barcodes = ShoppingCart:get_barcodes_to_vend()
-					local products_visible_to_user = {}
-					if kernel.peekview() == "browse_view"
-					or kernel.peekview() == "browse_filter_alpha_view" then
-						for i = 1, table_count( movie_product_map ) do
-							local browse_product = movie_product_map["movie_".. i]
-							if browse_product ~= nil then
-								table.insert( products_visible_to_user, { product_id = browse_product.product_id, action = "rental" } )
+				end
+				
+				local shopping_cart_barcodes = ShoppingCart:get_barcodes_to_vend()
+				local multi_disc_products = {}
+				for k, v in ipairs( ShoppingCart.items ) do
+					if is_multi_disc( v.product_id ) == true then
+						local product_id_list = ProductGroup[MultiDiscXREF[v.product_id].product_group_id].product_id_list
+						for k2, v2 in ipairs( product_id_list ) do
+							if v2 ~= v.product_id and ShoppingCart:has_item( v2 ) == false and MasterProductCatalog[v2] ~= nil then
+								table.insert( multi_disc_products, MasterProductCatalog[v2] )
 							end
 						end
 					end
-					if kernel.peekview() == "product_detail_view" then
-						table.insert( products_visible_to_user, { product_id = browse_selection_selected_product.product_id, action = "rental" } )
-					end
-					if ShoppingCart.recommendations_generator.recommended_list ~= nil and #ShoppingCart.recommendations_generator.recommended_list > 0 then
-						for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
-							table.insert( products_visible_to_user, { product_id = v.product_id, action = "rental" } )
-						end
-					end
-					local in_play_barcodes = get_barcodes_for_products( products_visible_to_user, shopping_cart_barcodes )
-					for _, v in ipairs( in_play_barcodes ) do
-						table.insert( shopping_cart_barcodes, v )
-					end
-					local candidate_barcodes = get_barcodes_for_products(
-						products,
-						shopping_cart_barcodes )
-						
-					local account_reservations = Reservations[card_id]
-					if account_reservations == nil then
-						account_reservations = {}
-					end
-					for k, v in ipairs( products ) do
-						local barcodes = reservation[ "barcodes" ]
-						if barcodes[v.action] == nil then
-							barcodes[v.action] = {}
-						end
-						table.insert( barcodes[v.action], v.barcode )
-					end
-					
-					local reservable_product_ids = {}
-					local can_reserve_entire_cart = true
-					
-					for _, v in ipairs( candidate_barcodes ) do
-						local product_info = BarcodeToProduct[v]
-						if product_info ~= nil then
-							table.insert( result.items, { ["product_id"] = product_info["product_id"], ["barcode"] = v, ["status"] = "Fullfilled" } )
-							reservable_product_ids[ product_info["product_id"] ] = true
-							kernel.log("> ReservationManager: found good product_id : " .. tostring(reservable_product_ids[ product_info["product_id"] ]) )
-						end
-					end
-					--determine which products could not be reserved and store them in the result along with reason
-					for k, v in pairs( products ) do
-						kernel.log("> ReservationManager: found requsted product_id : " .. tostring(v.product_id) )
-						if reservable_product_ids[ v.product_id ] ~= true then
-							local status = "ProductSelected"
-							if v.status ~= nil and v.status == "InventoryError" then
-								status = "InventoryError"
-							end
-							table.insert( result.items, { ["product_id"] = v.product_id, ["barcode"] = "empty", ["status"] = status } )
-							--if there is one item in the cart that can't be reserved then the entire cart cannot be reserved
-							can_reserve_entire_cart = false
-						end
-					end
-					if #result.items > 0 and can_reserve_entire_cart == true then
-						update_barcode_status( candidate_barcodes, "Reserved" )
-						account_reservations[reference_number] = reservation
-						Reservations[card_id] = account_reservations -- writes the reservation locally to the database
-						result.success = true					
-						if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == Start_Over_View_Name then
-							reload_carousel( true )
+				end
+				local multi_disc_barcodes = get_barcodes_for_products( multi_disc_products )
+				for k, v in ipairs( multi_disc_barcodes ) do
+					table.insert( shopping_cart_barcodes, v )
+				end
+				
+				local products_visible_to_user = {}
+				
+				local add_product = function( product )
+					if is_multi_disc( product.product_id ) == true then
+						local product_id_list = ProductGroup[MultiDiscXREF[product.product_id].product_group_id].product_id_list
+						for k, v in ipairs( product_id_list ) do
+							table.insert( products_visible_to_user, { product_id = v, action = "rental" } )
 						end
 					else
-						kernel.log("ReservationManager: Could not satisfy reservation request; unable to reserve requested inventory." )
-						--This needs to be nil when inventory can not be allocated 
-						result.error_message = nil
-						result.success = false
+						table.insert( products_visible_to_user, { product_id = product.product_id, action = "rental" } )
 					end
-					return result
 				end
-			)
-		elseif RecommendationOnPickup == true then
-			kernel.resvsvcs_register2(
-				StoreManager:get_number(),
-				servicePrices,
-				function(
-						card_id,
-						email,
-						reference_number,
-						reserve_date,
-						products_to_reserve,
-						applied_credit,
-						applied_hive_online_promo,
-						applied_title_marketing,
-						customer_number,
-						discounted_sub_total,
-						grand_total,
-						history_title_ids,
-						hive_online_promo_discount,
-						number_of_credits_remaining,
-						promo_code,
-						sub_total,
-						tax,
-						reservation_titles )
-						
-					local result = { success = false, items = {} }
-					local pricesNotAdjusted = StoreManager.PricingManager:get_broker_service_prices( true )
-					
-					local reservation = {
-						transaction_date = reserve_date,
-						email_address = email,
-						barcodes = {},
-						prices = pricesNotAdjusted,
-						applied_credit = applied_credit,
-						applied_hive_online_promo = applied_hive_online_promo,
-						applied_title_marketing = applied_title_marketing,
-						customer_number = customer_number,
-						discounted_sub_total = discounted_sub_total,
-						grand_total = grand_total,
-						history_title_ids = history_title_ids,
-						hive_online_promo_discount = hive_online_promo_discount,
-						number_of_credits_remaining = number_of_credits_remaining,
-						promo_code = promo_code,
-						sub_total = sub_total,
-						tax = tax,
-						reservation_titles = reservation_titles,
-						reservation_version = 2
-					}
-					
-					local products = {}
-					for k, v in pairs( products_to_reserve ) do
-						for _, id in ipairs( v ) do
-							table.insert(
-								products,
-								{ product_id = id.product_id, action = k } )
-						end
+
+				local add_product_to_visible_list = function( product )
+					if product == nil then
+						return
 					end
-					local shopping_cart_barcodes = ShoppingCart:get_barcodes_to_vend()
-					local products_visible_to_user = {}
-					if kernel.peekview() == "browse_view"
-					or kernel.peekview() == "browse_filter_alpha_view" then
-						for i = 1, table_count( movie_product_map ) do
-							local browse_product = movie_product_map["movie_".. i]
-							if browse_product ~= nil then
-								table.insert( products_visible_to_user, { product_id = browse_product.product_id, action = "rental" } )
-							end
-						end
-					end
-					if kernel.peekview() == "product_detail_view" then
-						table.insert( products_visible_to_user, { product_id = browse_selection_selected_product.product_id, action = "rental" } )
-					end
-					if ShoppingCart.recommendations_generator.recommended_list ~= nil and #ShoppingCart.recommendations_generator.recommended_list > 0 then
-						for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
-							table.insert( products_visible_to_user, { product_id = v.product_id, action = "rental" } )
-						end
-					end
-					local in_play_barcodes = get_barcodes_for_products( products_visible_to_user, shopping_cart_barcodes )
-					for _, v in ipairs( in_play_barcodes ) do
-						table.insert( shopping_cart_barcodes, v )
-					end
-					local candidate_barcodes = get_barcodes_for_products(
-						products,
-						shopping_cart_barcodes )
-						
-					local account_reservations = Reservations[card_id]
-					if account_reservations == nil then
-						account_reservations = {}
-					end
-					for k, v in ipairs( products ) do
-						local barcodes = reservation[ "barcodes" ]
-						if barcodes[v.action] == nil then
-							barcodes[v.action] = {}
-						end
-						table.insert( barcodes[v.action], v.barcode )
-					end
-					
-					local reservable_product_ids = {}
-					local can_reserve_entire_cart = true
-					
-					for _, v in ipairs( candidate_barcodes ) do
-						local product_info = BarcodeToProduct[v]
-						if product_info ~= nil then
-							table.insert( result.items, { ["product_id"] = product_info["product_id"], ["barcode"] = v, ["status"] = "Fullfilled" } )
-							reservable_product_ids[ product_info["product_id"] ] = true
-							kernel.log("> ReservationManager: found good product_id : " .. tostring(reservable_product_ids[ product_info["product_id"] ]) )
-						end
-					end
-					--determine which products could not be reserved and store them in the result along with reason
-					for k, v in pairs( products ) do
-						kernel.log("> ReservationManager: found requsted product_id : " .. tostring(v.product_id) )
-						if reservable_product_ids[ v.product_id ] ~= true then
-							local status = "ProductSelected"
-							if v.status ~= nil and v.status == "InventoryError" then
-								status = "InventoryError"
-							end
-							table.insert( result.items, { ["product_id"] = v.product_id, ["barcode"] = "empty", ["status"] = status } )
-							--if there is one item in the cart that can't be reserved then the entire cart cannot be reserved
-							can_reserve_entire_cart = false
-						end
-					end
-					if #result.items > 0 and can_reserve_entire_cart == true then
-						update_barcode_status( candidate_barcodes, "Reserved" )
-						account_reservations[reference_number] = reservation
-						Reservations[card_id] = account_reservations -- writes the reservation locally to the database
-						result.success = true					
-						if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == Start_Over_View_Name then
-							reload_carousel( true )
+					if product.kiosk_product_type == 3 then --title rollup
+						for _,v in pairs(product.kiosk_products) do
+							add_product( v )
 						end
 					else
-						kernel.log("ReservationManager: Could not satisfy reservation request; unable to reserve requested inventory." )
-						--This needs to be nil when inventory can not be allocated 
-						result.error_message = nil
-						result.success = false
+						add_product( product )
 					end
-					return result
 				end
-			)
-		else
-			kernel.resvsvcs_register(
-				StoreManager:get_number(),
-				servicePrices,
-				function(
-						card_id,
-						email,
-						reference_number,
-						reserve_date,
-						products_to_reserve )
-					
-					local result = { success = false, items = {} }
-					local reservation = {
-						transaction_date = reserve_date,
-						email_address = email,
-						barcodes = {}
-					} 
-					local products = {}
-					for k, v in pairs( products_to_reserve ) do
-						for _, id in ipairs( v ) do
-							table.insert(
-								products,
-								{ product_id = id.product_id, action = k } )
+
+				local process_visible_browse_products = function (browse_set_name)
+					local productList = kernel.get_visible_browse_products(browse_set_name)
+					if productList ~= nil then
+						for i=1, #productList do
+							add_product_to_visible_list( productList[i] )
 						end
 					end
-					local shopping_cart_barcodes = ShoppingCart:get_barcodes_to_vend()
-					local products_visible_to_user = {}
-					if kernel.peekview() == "browse_view"
-					or kernel.peekview() == "browse_filter_alpha_view" then
-						for i = 1, table_count( movie_product_map ) do
-							local browse_product = movie_product_map["movie_".. i]
-							if browse_product ~= nil then
-								table.insert( products_visible_to_user, { product_id = browse_product.product_id, action = "rental" } )
-							end
-						end
-					end
-					if kernel.peekview() == "product_detail_view" then
-						table.insert( products_visible_to_user, { product_id = browse_selection_selected_product.product_id, action = "rental" } )
-					end
-					if ShoppingCart.recommendations_generator.recommended_list ~= nil and #ShoppingCart.recommendations_generator.recommended_list > 0 then
-						for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
-							table.insert( products_visible_to_user, { product_id = v.product_id, action = "rental" } )
-						end
-					end
-					local in_play_barcodes = get_barcodes_for_products( products_visible_to_user, shopping_cart_barcodes )
-					for _, v in ipairs( in_play_barcodes ) do
-						table.insert( shopping_cart_barcodes, v )
-					end
-					local candidate_barcodes = get_barcodes_for_products(
-						products,
-						shopping_cart_barcodes )
-					
-					local account_reservations = Reservations[card_id]
-					if account_reservations == nil then
-						account_reservations = {}
-					end
-					for k, v in ipairs( products ) do
-						local barcodes = reservation[ "barcodes" ]
-						if barcodes[v.action] == nil then
-							barcodes[v.action] = {}
-						end
-						table.insert( barcodes[v.action], v.barcode )
-					end
-					
-					local reservable_product_ids = {}
-					local can_reserve_entire_cart = true
-					
-					for _, v in ipairs( candidate_barcodes ) do
-						local product_info = BarcodeToProduct[v]
-						if product_info ~= nil then
-							table.insert( result.items, { ["product_id"] = product_info["product_id"], ["barcode"] = v, ["status"] = "Fullfilled" } )
-							reservable_product_ids[ product_info["product_id"] ] = true
-							kernel.log("> ReservationManager: found good product_id : " .. tostring(reservable_product_ids[ product_info["product_id"] ]) )
-						end
-					end
-					--determine which products could not be reserved and store them in the result along with reason
-					for k, v in pairs( products ) do
-						kernel.log("> ReservationManager: found requsted product_id : " .. tostring(v.product_id) )
-						if reservable_product_ids[ v.product_id ] ~= true then
-							local status = "ProductSelected"
-							if v.status ~= nil and v.status == "InventoryError" then
-								status = "InventoryError"
-							end
-							table.insert( result.items, { ["product_id"] = v.product_id, ["barcode"] = "empty", ["status"] = status } )
-							--if there is one item in the cart that can't be reserved then the entire cart cannot be reserved
-							can_reserve_entire_cart = false
-						end
-					end
-					if #result.items > 0 and can_reserve_entire_cart == true then
-						update_barcode_status( candidate_barcodes, "Reserved" )
-						account_reservations[reference_number] = reservation
-						Reservations[card_id] = account_reservations -- writes the reservation locally to the database
-						result.success = true					
-						if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == Start_Over_View_Name then
-							reload_carousel( true )
-						end
-					else
-						kernel.log("ReservationManager: Could not satisfy reseveration request; unable to reserve requested inventory." )
-						--This needs to be nil when inventory can not be allocated 
-						result.error_message = nil
-						result.success = false
-					end
-					return result
 				end
-			)
-		end
+
+				if kernel.peekview() == "start_view" and user_on_overlay == true and center_poster_product ~= nil then
+					add_product_to_visible_list( center_poster_product )		
+				end
+				if kernel.peekview() == "browse_view"
+				or kernel.peekview() == "browse_filter_alpha_view" then
+					process_visible_browse_products("Main")
+				elseif kernel.peekview() == "browse_view_collection" then
+					process_visible_browse_products("Collection")
+				end
+				if kernel.peekview() == "product_detail_view" then
+					add_product_to_visible_list( browse_selection_selected_product )
+				end
+				if ShoppingCart.recommendations_generator.recommended_list ~= nil and #ShoppingCart.recommendations_generator.recommended_list > 0 then
+					for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
+						table.insert( products_visible_to_user, { product_id = v.product_id, action = "rental" } )
+					end
+				end
+				if kernel.peekview() == "blu_ray_upsell_view" then
+					for k, v in ipairs( ShoppingCart.blu_ray_upsell.items ) do
+						if v.offer == nil then
+							table.insert( products_visible_to_user, { product_id = v.blu_ray_product_id, action = "rental" } )
+						end
+					end
+				end
+				
+				local in_play_barcodes = get_barcodes_for_products( products_visible_to_user, shopping_cart_barcodes )
+				for _, v in ipairs( in_play_barcodes ) do
+					table.insert( shopping_cart_barcodes, v )
+				end
+				local candidate_barcodes = get_barcodes_for_products(
+					products,
+					shopping_cart_barcodes )
+					
+				local account_reservations = Reservations[card_id]
+				if account_reservations == nil then
+					account_reservations = {}
+				end
+				for k, v in ipairs( products ) do
+					local barcodes = reservation[ "barcodes" ]
+					if barcodes[v.action] == nil then
+						barcodes[v.action] = {}
+					end
+					table.insert( barcodes[v.action], v.barcode )
+				end
+				
+				local reservable_product_ids = {}
+				local can_reserve_entire_cart = true
+				
+				for _, v in ipairs( candidate_barcodes ) do
+					local product_info = BarcodeToProduct[v]
+					if product_info ~= nil then
+						table.insert( result.items, { ["product_id"] = product_info["product_id"], ["barcode"] = v, ["status"] = "Fullfilled" } )
+						reservable_product_ids[ product_info["product_id"] ] = true
+						kernel.log("> ReservationManager: found good product_id : " .. tostring(reservable_product_ids[ product_info["product_id"] ]) )
+					end
+				end
+				--determine which products could not be reserved and store them in the result along with reason
+				for k, v in pairs( products ) do
+					kernel.log("> ReservationManager: found requsted product_id : " .. tostring(v.product_id) )
+					if reservable_product_ids[ v.product_id ] ~= true then
+						local status = "ProductSelected"
+						if v.status ~= nil and v.status == "InventoryError" then
+							status = "InventoryError"
+						end
+						table.insert( result.items, { ["product_id"] = v.product_id, ["barcode"] = "empty", ["status"] = status } )
+						--if there is one item in the cart that can't be reserved then the entire cart cannot be reserved
+						can_reserve_entire_cart = false
+					end
+				end
+				if #result.items > 0 and can_reserve_entire_cart == true then
+					update_barcode_status( candidate_barcodes, "Reserved" )
+					account_reservations[reference_number] = reservation
+					Reservations[card_id] = account_reservations -- writes the reservation locally to the database
+					result.success = true					
+					if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == Start_Over_View_Name then
+						reload_carousel( true )
+					end
+				else
+					kernel.log("ReservationManager: Could not satisfy reservation request; unable to reserve requested inventory." )
+					--This needs to be nil when inventory can not be allocated 
+					result.error_message = nil
+					result.success = false
+				end
+				return result
+			end
+		)
 		
 		if not kernel.timerexists( "reservation-expire-timer" ) then
 			kernel.timercreate(
@@ -599,8 +419,15 @@ function newreservationmanager()
                     for group, codes in pairs( res.barcodes ) do
                         local group_results = {}
                         for _, code in ipairs(codes) do
-                            local result = {
+							
+							local multi_disc = false
+							if BarcodeToProduct[code] ~= nil and BarcodeToProduct[code].product_id ~= nil then
+								multi_disc = is_multi_disc( BarcodeToProduct[code].product_id )
+							end
+							
+							local result = {
                                 barcode = code,
+								multi_disc = multi_disc,
                                 status = barcode_indexed_results[code] or "NotFullfilled"
                             }
                             if result.status ~= "Fullfilled" then
@@ -611,6 +438,7 @@ function newreservationmanager()
 							
 							local attributes = {
 								barcode = result.barcode,
+								multi_disc = result.multi_disc,
 								status = result.status
 							}
 							kernel.analyticsaddnode( "onlinePickup", "cartItem", t.session_id )
@@ -625,6 +453,7 @@ function newreservationmanager()
                         for _, result in ipairs(group_results) do
                             kernel.log(
                                 "ReservationManager:vend group_result barcode " .. tostring( result.barcode ) ..
+								" multi_disc " .. tostring( result.multi_disc ) ..
                                 " status " .. tostring( result.status ) )
                         end
                     end
@@ -637,6 +466,7 @@ function newreservationmanager()
 							res.email_address,
 							ref,
 							pick_up_results,
+							ShoppingCart.blocklisted,
 							nil )
 					end
                 end
@@ -711,7 +541,27 @@ function newreservationmanager()
 	t.is_gc = function( self )
 		local reservations = self:get_account_reservations()
 		for _, v in pairs( reservations or {} ) do
-			if v.is_gc == true then
+			if v.is_gc ~= nil and v.is_gc == true then
+				return true
+			end
+		end
+		return false
+	end
+
+	t.is_mnp = function( self )
+		local reservations = self:get_account_reservations()
+		for _, v in pairs( reservations or {} ) do
+			if v.is_mnp ~= nil and v.is_mnp == true then
+				return true
+			end
+		end
+		return false
+	end
+
+	t.is_mdv = function( self )
+		local reservations = self:get_account_reservations()
+		for _, v in pairs( reservations or {} ) do
+			if v.is_mdv ~= nil and v.is_mdv == true then
 				return true
 			end
 		end
@@ -721,7 +571,6 @@ function newreservationmanager()
 	t.remove_orphaned_reservations = function( self )
 		kernel.log("Remove Orphan Reservations BEGIN")
 		local reserved_barcodes = {}
-		local rapidthinsvalid = use_rapid_thin_file()
 		
 		-- Build list of all currently reserved barcodes for faster lookup
 		for card_id, reservation_list in Reservations:pairs() do
@@ -741,31 +590,16 @@ function newreservationmanager()
 			and reserved_barcodes[ v.barcode ] == nil then
 				-- Get correct status from corporate inventory
 				local barcode_to_product = BarcodeToProduct[ v.barcode ]
-				if barcode_to_product == nil then
-					v.status = "Unknown Title"
-				else
-					if barcode_to_product.status ~= nil 
-					and barcode_to_product.status ~= "Thinned" then
-						if barcode_to_product.product_id ~= nil and MasterProductCatalog[ barcode_to_product.product_id ] ~= nil then
-							if rapidthinsvalid == true and RapidThinBarcodes[ v.barcode ] ~= nil then
-								v.status = RapidThinBarcodes[ v.barcode ].status
-							else
-								v.status = "Known"
-							end
-						else
-							v.status = "Unknown Title"
-						end
+				
+				if barcode_to_product ~= nil
+				and barcode_to_product.product_id ~= nil
+				and MasterProductCatalog[ barcode_to_product.product_id ] ~= nil then
+					local rapid_status = kernel.rental_inventory_get_rapidstatus( v.barcode )
+					if rapid_status ~= nil then
+						v.status = rapid_status.status
 					else
-						v.status = barcode_to_product.status
-					end
-					
-					if v.status == "Thinned"
-					and RebalancesUnThinInuse ~= nil 
-					and RebalancesUnThinInuse[ v.barcode ] ~= nil then
-						kernel.log(" > Unthin detected in remove_orphaned_reservations: " .. tostring( v.barcode ) )
 						v.status = "Known"
 					end
-					
 					if barcode_to_product.product_id ~= nil then
 						local barcodes = ProductToBarcode[ barcode_to_product.product_id ]
 						if barcodes ~= nil and barcodes[ v.barcode ] ~= nil then 
@@ -773,8 +607,10 @@ function newreservationmanager()
 							ProductToBarcode[ barcode_to_product.product_id ] = barcodes --forces commit
 						end
 					end
+				else
+					v.status = "Unknown Title"
 				end
-
+				
 				BarcodePosition[ k ] = v --forces commit
 				kernel.log( "> oprhan reservation cleared for: " .. tostring( v.barcode ))
 				

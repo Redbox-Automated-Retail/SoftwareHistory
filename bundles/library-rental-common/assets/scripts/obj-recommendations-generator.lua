@@ -96,6 +96,7 @@ function newrecommendationsgenerator()
 				and ( product.product_type_id == 1 or product.product_type_id == 2 ) -- only Blu-Rays and DVDs
 				and product.sell_thru_new == false
 				and is_dnr_disc( product ) == false
+				and is_multi_disc( v.product_id ) == false
 				then
 					if containsBluray == false and product.product_type_id == 2 then
 						-- skip blu-ray as there is none in the reservation list

@@ -1,18 +1,17 @@
-# Rental bundles revision 28 (no code name)
+# The Martian (2015-12-18)
 
 - Product: Rental bundles
 - Date (first download in the snapshots): 2015-12-18
-- Store labels: none
+- Store labels: kop-rental-bundles-The-Martian
 - Package revisions:
-  - `kop-rental-bundles` revision 28 (`9DF0CFC570D7B4A8975E50EDE77C39CB4AA4E966`)
+  - `kop-rental-bundles` revision 34 (`E5118C6982CC25B2800DF9D0D72C69CE70F1F673`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `cp.bundle` |  |  | `A5402F8BFF78ABEEF956FB499EDFA7C68F8EAD88` | exact |
-| `fm.bundle` |  |  | `F4BC4907076E303A8E42441CDE3804F749159CF9` | stale (listed version D5140C6E63… has no content) |
-| `library-rental-common.bundle` |  |  | `149497682D160548299A7D8BE6AE3E8A434A2FC1` | stale (listed version 1D53D73388… has no content) |
-| `library-tickets.bundle` |  |  | `ECFD750E36F174FF4B58AFFA0A43C0F96DFA3CEF` | exact |
-| `ra-2.x.bundle` |  |  | `3B5E3312030422B04DCEEB211CC9CAACAC5CE34D` | stale (listed version 3144B96432… has no content) |
+| `fm.bundle` |  |  | `BE80D2D5D08B33828781B4F48F09F346A219D80C` | exact |
+| `library-rental-common.bundle` |  |  | `35DD4AA2CB3182164C28D2F1BC73A0CCD777E80F` | exact |
+| `ra-2.x.bundle` |  |  | `A8DE8BF9B91B6AF4CAAF9C511276697BC0A89360` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

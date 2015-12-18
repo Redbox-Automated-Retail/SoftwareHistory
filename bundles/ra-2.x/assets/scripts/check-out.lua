@@ -15,6 +15,8 @@ swipe_view_cancel_func = function()
 end
 
 swipe_view_next_func = function()
+	ShoppingCart:add_multi_disc_discs()
+	ShoppingCart:set_multi_disc_flags()
 	ShoppingCart:prepos_vend()
 	if ShoppingCart:has_items() then
 		if ShoppingCart:is_gift_card() == true then
@@ -106,22 +108,28 @@ function set_kiosk_optin_values( ItemType, ItemId )
 	)
 end
 
+function finish_vend()
+	view_show_safe( "vend_view" )
+	if quick_return_is_running == false then
+		ShoppingCart.vend_manager:show_movie_or_coming_soon()
+	end
+	if in_maintenance_mode() then
+		ShoppingCart:prepos_vend_abort()
+	else
+		ShoppingCart:prepos_vend_continue()
+	end
+end
+
 continue_vend = function()
 	check_for_campaign_opt_in()
 	if ShoppingCart.alternate_optin and ShoppingCart.alternate_optin_not_shown then
 		-- Go to the the optional email opt in view
 		ShoppingCart.alternate_optin_not_shown = false
 		view_show_safe( "email_optin_view" )
+	elseif ShoppingCart:contains_multi_disc() == true then
+		view_show_safe( "multi_disc_vend_view" )
 	else
-		view_show_safe( "vend_view" )
-		if quick_return_is_running == false then
-			ShoppingCart.vend_manager:show_movie_or_coming_soon()
-		end
-		if in_maintenance_mode() then
-			ShoppingCart:prepos_vend_abort()
-		else
-			ShoppingCart:prepos_vend_continue()
-		end
+		finish_vend()
 	end
 end
 
@@ -191,6 +199,11 @@ function process_authorize_result( result )
 		if ShoppingCart:is_gift_card() == true then
 			result.success = false
 			result.properties.response = "OfflineGCDeclined"
+		end
+		ShoppingCart:set_blocklisted( ShoppingCart:is_card_blocklisted() )
+		if ShoppingCart.blocklisted == true then
+			result.success = false
+			result.properties.response = "OfflineCardBlocklisted"
 		end
 	end
 	ShoppingCart.marketing_opt_in = result.properties.confirmation_status or "DoNotShow"
@@ -313,15 +326,38 @@ function process_authorize_result( result )
 				end,
 				15000 )
 		end -- result.has_profile && result.properties.email
+	elseif result.properties.response == "OfflineCardBlocklisted" then
+		ShoppingCart:prepos_vend_abort()
+		view_analytics_event( "context", "blocklisted" )
+
+		-- Partial Reconcile
+		ShoppingCart:set_items_to_not_vended()
+		ShoppingCart:set_session_cart_groups()
+		kernel.merchsvcs_reconcile( ShoppingCart.session_id )
+		
+		local blocklisted_complete = function()
+			message_view_manager:hide( true )
+			view_unwindto_safe( "shopping_cart_view", false, "blocklisted complete" )
+		end
+		message_view_manager:hide_title()
+		message_view_manager:show()
+		message_view_manager:set_message( strings.authorization_failure_message )
+		message_view_manager:hide_first_button()
+		message_view_manager:show_second_button( strings.continue_button, blocklisted_complete )
+		message_view_manager:start_timer( blocklisted_complete )
 	else
 		if result.properties.response == "CheckIfCustomerWantsToUseCredits"
 		and PromptForCredits
 		and show_credits_popup
 		and ( result.properties.has_profile ~= nil and result.properties.has_profile == true )
 		and ( result.properties.total_credits_available ~= nil and tonumber( result.properties.total_credits_available ) > 0 )
+		and ( result.properties.is_rbi == true )
+		and ( result.properties.total_credits_applied ~= nil and tonumber( result.properties.total_credits_applied ) > 0 )
 		then
+			local credit_message_view_manager = newmessageviewmanager( "credit_message_view" )
 			local show_credits_popup_timer = function()
 				ShoppingCart:set_use_credits( "OptedOut" )
+				credit_message_view_manager:hide( false ) -- this will re-show the "Authorizing Transaction..." message
 				if GiftCardsEnabled == true and ShoppingCart:is_gift_card() == true then
 					gc_authorize_func()
 				else
@@ -329,26 +365,22 @@ function process_authorize_result( result )
 				end
 			end
 			
-			local credit_message_view_manager = newmessageviewmanager( "credit_message_view" )
-			credit_message_view_manager:hide( true )
 			show_credits_popup = false
 			credit_message_view_manager:show()
-			credit_message_view_manager:hide_title()
-			credit_message_view_manager:set_message( string.gsub( strings.credits_remaining, "{0}", result.properties.total_credits_available ) )
+			if result.properties.total_credits_available == 1 then
+				credit_message_view_manager:set_message_header( strings.credits_remaining_singular_header )
+				credit_message_view_manager:set_message( strings.credits_remaining_singular_body )
+			else
+				credit_message_view_manager:set_message_header( string.gsub( strings.credits_remaining_plural_header, "{0}", result.properties.total_credits_available ) )
+				credit_message_view_manager:set_message( strings.credits_remaining_plural_body )
+			end
+
 			credit_message_view_manager:show_first_button(
-				strings.pay_with_credits,
+				strings.pay_with_credits_no,
 				function()
-					credit_message_view_manager:hide( true )
-					ShoppingCart:set_use_credits( "OptedIn" )
-					key_pad_next_getcustomercredits_func()
-				end
-			)
-			credit_message_view_manager:show_second_button(
-				strings.yes_button,
-				function()
-					credit_message_view_manager:hide( true )
+					view_analytics_event( "buttonPress", "prompt_for_credits_no_button" )
 					--Remove credit_message_view from the stack once the user wants to pay with credit card
-					view_goback_safe( "check_out::credit_message_view:second_button", true )
+					credit_message_view_manager:hide( false )  -- this will re-show the "Authorizing Transaction..." message
 					ShoppingCart:set_use_credits( "OptedOut" )
 					if GiftCardsEnabled == true and ShoppingCart:is_gift_card() == true then
 						gc_authorize_func()
@@ -357,7 +389,17 @@ function process_authorize_result( result )
 					end
 				end
 			)
+			credit_message_view_manager:show_second_button(
+				strings.pay_with_credits_yes,
+				function()
+					view_analytics_event( "buttonPress", "prompt_for_credits_yes_button" )
+					credit_message_view_manager:hide( false )  -- this will re-show the "Authorizing Transaction..." message
+					ShoppingCart:set_use_credits( "OptedIn" )
+					key_pad_next_getcustomercredits_func()
+				end
+			)
 			credit_message_view_manager:start_timer( show_credits_popup_timer )
+			view_analytics_event( "context", "promptForCredits" )
 		else
 			-- Mingle #2625
 			ShoppingCart:prepos_vend_abort()
@@ -423,12 +465,12 @@ function process_authorize_result( result )
 			elseif result.properties.response == "CodeNotValid" then
 				ShoppingCart:clear_promo_code()
 				view_analytics_event( "context", "promoNotValid" )
-				message_view_manager:set_title( strings.promo_code_error_title )
+				message_view_manager:set_message_header( strings.promo_code_not_valid_message_title )
 				message_view_manager:set_message( strings.promo_code_not_valid_message )
 			elseif result.properties.response == "CodeAlreadyUsed" then
 				ShoppingCart:clear_promo_code()
 				view_analytics_event( "context", "promoAlreadyUsed" )
-				message_view_manager:hide_title()
+				message_view_manager:set_message_header( strings.promo_code_already_used_message_title )
 				message_view_manager:set_message( strings.promo_code_already_used_message )
 			elseif result.properties.response == "CodeNotValidAtThisLocation" then
 				ShoppingCart:clear_promo_code()
@@ -463,6 +505,10 @@ function process_authorize_result( result )
 			elseif result.properties.response == "GCDeclined" or result.properties.response == "Declined" then
 				message_view_manager:set_message_header( strings.gc_declined_title )
 				message_view_manager:set_message( strings.gc_declined )
+			elseif result.properties.response == "EnforceAccertify" then
+				view_analytics_event( "context", "accertifyRejectedGames" )
+				message_view_manager:set_message_header( strings.accertify_enforce_accertify_header )
+				message_view_manager:set_message( strings.accertify_enforce_accertify_message )
 			else
 				view_analytics_event( "context", "cardNotAuthorized" )
 				message_view_manager:hide_title()
@@ -539,7 +585,7 @@ key_pad_next_getcustomercredits_func = function()
 				end
 				kernel.setactortext( "total_amount", "$" .. string.format( "%.2f", kernel.round( total_amount, 2 ) ) )
 
-				if StoreManager.store ~= nil and StoreManager.store.state ~= nil and StoreManager.store.state == "MD" then
+				if StoreManager.store ~= nil and StoreManager.store.state ~= nil and ( StoreManager.store.state == "MD" or StoreManager.store.state == "SC" ) then
 					kernel.hideactor( "tax_heading" )
 					kernel.hideactor( "tax_amount" )
 					kernel.moveactory( "grey_line", -30 )

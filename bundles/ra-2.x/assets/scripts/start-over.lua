@@ -13,13 +13,12 @@ if kernel.timerexists("free_trial_need_more_time_timer") then
 	kernel.timerremove("free_trial_need_more_time_timer")
 end
 
+view_analytics_event( "buttonPress", "startOver" )
+
 if ShoppingCart ~= nil then
 	ShoppingCart:close_analytics( "True" )
 	CloseAnalyticsOnStartView = false
 	ShoppingCart:abandon( "User chose to abandon session." )
-	if ShoppingCart.TicketsCart ~= nil then
-		ShoppingCart.TicketsCart:reset_cart()
-	end
 end
 ABE_ON = false -- this line is here to turn off ABE mode when using the AB testing screens.
 view_unwindtobottom_safe( "start-over" )

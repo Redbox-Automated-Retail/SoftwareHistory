@@ -16,27 +16,38 @@
 			<column name="vmz_merch_flow_body_3">* Press 'Insert' to load the thin marker&#10;&#10;* Place the thin marker into the vend door</column>
 			<column name="vmz_merch_flow_continue_button_3">Insert</column>
 			
-			<column name="vmz_merch_flow_title_4">Remove Rebalance</column>
-			<column name="vmz_merch_flow_body_4">* Press 'Vend' to vend rebalance</column>
+			<column name="vmz_merch_flow_title_4">Remove Redeploy</column>
+			<column name="vmz_merch_flow_body_4">* Press 'Vend' to vend redeploy</column>
 			<column name="vmz_merch_flow_continue_button_4">Vend</column>
 			
-			<column name="vmz_merch_flow_title_5">Locate Rebalances</column>
-			<column name="vmz_merch_flow_body_5">* Press 'Insert' to load the rebalance marker&#10;&#10;* Place the rebalance marker into the vend door</column>
+			<column name="vmz_merch_flow_title_5">Locate Redeploys</column>
+			<column name="vmz_merch_flow_body_5">* Press 'Insert' to load the redeploy marker&#10;&#10;* Place the redeploy marker into the vend door</column>
 			<column name="vmz_merch_flow_continue_button_5">Insert</column>
 			
-			<column name="vmz_merch_flow_title_6">Remove Rebalances Located Outside the VMZ</column>
-			<column name="vmz_merch_flow_body_6">* Press 'Vend' to feed rebalances through the vend door&#10;&#10;* Separate rebalances</column>
-			<column name="vmz_merch_flow_continue_button_6">Continue</column>
-			<column name="vmz_merch_flow_vend_button_6">Vend</column>
+			<column name="vmz_merch_flow_title_6">Remove Rebalance</column>
+			<column name="vmz_merch_flow_body_6">* Press 'Vend' to vend rebalance</column>
+			<column name="vmz_merch_flow_continue_button_6">Vend</column>
 			
-			<column name="vmz_merch_flow_title_7">Remove Thins, Rebalances, and Dump Bin</column>
-			<column name="vmz_merch_flow_body_7">* Remove all thins&#10;&#10;* Remove any Rebalances when applicable&#10;&#10;* Remove markers from VMZ&#10;&#10;* Empty Dump bin&#10;&#10;* Press 'Continue'</column>
-			<column name="vmz_merch_flow_continue_button_7">Continue</column>
+			<column name="vmz_merch_flow_title_7">Locate Rebalances</column>
+			<column name="vmz_merch_flow_body_7">* Press 'Insert' to load the rebalance marker&#10;&#10;* Place the rebalance marker into the vend door</column>
+			<column name="vmz_merch_flow_continue_button_7">Insert</column>
 			
-			<column name="vmz_merch_flow_title_8">Load Rebalances and New Releases</column>
-			<column name="vmz_merch_flow_body_8">* For rebalancing instruction press 'View Discs to Rebalance', if available&#10;&#10;* Load New Releases in all open slots starting from top of VMZ moving left to right&#10;&#10;    ** Consult SOP or ROS if not enough slots available&#10;&#10;* Note Last Deck loaded for schedule job&#10;&#10;* Press 'Close' when complete</column>
-			<column name="vmz_merch_flow_continue_button_8">Close</column>
-			<column name="vmz_merch_flow_vend_button_8">View Discs&#10;to Rebalance</column>
+			<column name="vmz_merch_flow_title_8">Remove Rebalances Located Outside the VMZ</column>
+			<column name="vmz_merch_flow_body_8">* Press 'Vend' to feed rebalances through the vend door&#10;&#10;* Separate rebalances</column>
+			<column name="vmz_merch_flow_continue_button_8">Continue</column>
+			<column name="vmz_merch_flow_vend_button_8">Vend</column>
+			
+			<column name="vmz_merch_flow_title_9">Remove Thins, Redeploys, Rebalances, and Dump Bin</column>
+			<column name="vmz_merch_flow_body_9">* Remove all thins&#10;&#10;* Remove any Redeployments when applicable&#10;&#10;* Remove any Rebalances when applicable&#10;&#10;* Remove markers from VMZ&#10;&#10;* Empty Dump bin&#10;&#10;* Press 'Continue'</column>
+			<column name="vmz_merch_flow_continue_button_9">Continue</column>
+			
+			<column name="vmz_merch_flow_title_10">Load Rebalances, New Releases and Redeploys</column>
+			<column name="vmz_merch_flow_body_10">* For rebalancing instruction press 'View Discs to Rebalance', if available&#10;&#10;* Load New Releases in all open slots starting from top of VMZ moving left to right</column>
+			<column name="vmz_merch_flow_redeployment_body_10">* Load         redeployment discs in all open slots starting from top&#10;of VMZ moving left to right</column>
+			<column name="vmz_merch_flow_remaining_body_10">    ** Consult SOP or ROS if not enough slots available&#10;&#10;* Note Last Deck loaded for schedule job&#10;&#10;* Press 'Close' when complete</column>
+			<column name="vmz_merch_flow_continue_button_10">Close</column>
+			<column name="vmz_merch_flow_vend_button_10">View Discs&#10;to Rebalance</column>
+			<column name="vmz_merch_flow_alternate_button_10">Rotate Drum</column>
 			
 			<column name="remove_non_thins_from_vmz">Remove Non-Thins From VMZ</column>
 			<column name="vend_rebalances_outside_vmz">Remove rebalances not in VMZ</column>
@@ -56,6 +67,13 @@
 			<column name="rebalance_instructions">Load these titles in all open slots starting from top of VMZ moving left to right.&#10;* Consult SOP or ROS if not enough slots available</column>
 			<column name="rebalance_close_button">Close</column>
 			
+			<column name="door_open_title">Kiosk Door is Open</column>
+			<column name="door_open_body">1. Close door and press 'Continue' button.&#10;2. Then press 'Rotate Drum' again.</column>
+			
+			<column name="rotations_exceeded_title">Drum Rotations Exceeded</column>
+			<column name="rotations_exceeded_body">1. Close door and press 'Continue' button.&#10;2. Press 'Close' to complete merchandizing.</column>
+			
+			<column name="card_reader_popup_body">I visually inspected the card reader for any signs of a suspicious device on the reader or adhesive near the card reader.  I also inspected the internal wire from reader to computer for any signs of tampering or adhesive residue.</column>
         </row>
     </aspect>
 </resource>

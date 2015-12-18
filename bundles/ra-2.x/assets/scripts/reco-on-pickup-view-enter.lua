@@ -257,13 +257,18 @@ local function display_totals()
 				discount = -(reservation.hive_online_promo_discount)
 			end
 			kernel.log( "reco_on_pickup_view_enter:display_totals() - applied_hive_online_promo, reserved discount amount:".. discount )
-			ShoppingCart.promo_code = {
+			local promo_code = {
 				name = reservation.promo_code,
 				price = discount,
 				quantity = 1,
 				intent = "FixedValue",
-				percent = 0
+				percent = 0,
+				rent_qty = 0,
+				rent_format = nil,
+				get_qty = 0,
+				get_format = nil
 			}
+			kernel.rental_promotion_set_promotion( promo_code )
 			kernel.sessionsetdiscount2(
 				ShoppingCart.session_id,
 				reservation.promo_code,
@@ -326,7 +331,7 @@ local function display_totals()
 		kernel.showactor( "label_charged_once" )
 		kernel.showactor( "label_agree_to_terms" )
 		
-		if StoreManager.store.state == "MD" then
+		if StoreManager.store ~= nil and StoreManager.store.state ~= nil and ( StoreManager.store.state == "MD" or StoreManager.store.state == "SC" ) then
 			totals_y = totals_y + y_offset_increment
 			total_seperator_y = total_seperator_y + y_offset_increment
 
@@ -344,7 +349,6 @@ local function display_totals()
 		kernel.setactory( "total_amount", totals_y ) -- originally 740
 		kernel.setactory( "tax_label", tax_y ) -- originally 740
 		kernel.setactory( "tax_amount", tax_y ) -- originally 740
-
 	else
 		-- Set text on Pay Button
 		kernel.setactortext( "pay_button", strings.pickup .. " ("..reserved_count..")" )

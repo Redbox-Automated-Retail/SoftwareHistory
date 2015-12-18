@@ -65,13 +65,12 @@
 				optionFlags="Text"
 				text="&#191;Necesita ayuda? 1.866.REDBOX3 (1.866.733.2693)" />
 				
-
 			<actor
 				name="image_container"
-				x="58"
-				y="90"
-				width="907"
-				height="460"
+				x="79"
+				y="93"
+				width="866"
+				height="455"
 				optionFlags="Image" />
 			
 			<actor
@@ -147,22 +146,7 @@
 				strokeWeight="2"
 				borderColor="white"
 				style="gray_button_style" />
-
-			<actor
-				name="faq_tickets_button"
-				x="751"
-				y="580"
-				width="110"
-				height="32"
-				onHit="show_faq_tickets" 
-				text="FAQs Boletos"
-				font="font_akzidenz_regular_smaller"
-				cornerSize="17,24"
-				strokeWeight="2"
-				visible="true"
-				borderColor="white"
-				style="gray_button_style" />
-
+				
 			<actor
 				name="terms_button"
 				x="505"
@@ -174,21 +158,6 @@
 				font="font_akzidenz_regular_smaller"
 				cornerSize="17,24"
 				strokeWeight="2"
-				borderColor="white"
-				style="gray_button_style" />
-
-			<actor
-				name="terms_tickets_button"
-				x="801"
-				y="580"
-				width="135"
-				height="32"
-				onHit="show_terms_tickets" 
-				text="T&#233;rminos Boletos"
-				font="font_akzidenz_regular_smaller"
-				cornerSize="17,24"
-				strokeWeight="2"
-				visible="true"
 				borderColor="white"
 				style="gray_button_style" />
 				

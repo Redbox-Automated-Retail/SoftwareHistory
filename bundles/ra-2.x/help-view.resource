@@ -66,10 +66,10 @@
 				
 			<actor
 				name="image_container"
-				x="58"
-				y="90"
-				width="907"
-				height="460"
+				x="79"
+				y="93"
+				width="866"
+				height="455"
 				optionFlags="Image" />
 			
 			<actor
@@ -147,21 +147,6 @@
 				style="gray_button_style" />
 				
 			<actor
-				name="faq_tickets_button"
-				x="751"
-				y="580"
-				width="110"
-				height="32"
-				onHit="show_faq_tickets" 
-				text="Ticket FAQs"
-				font="font_akzidenz_regular_smaller"
-				cornerSize="17,24"
-				strokeWeight="2"
-				visible="true"
-				borderColor="white"
-				style="gray_button_style" />
-
-			<actor
 				name="terms_button"
 				x="506"
 				y="580"
@@ -172,21 +157,6 @@
 				font="font_akzidenz_regular_smaller"
 				cornerSize="17,24"
 				strokeWeight="2"
-				borderColor="white"
-				style="gray_button_style" />
-			
-			<actor
-				name="terms_tickets_button"
-				x="801"
-				y="580"
-				width="110"
-				height="32"
-				onHit="show_terms_tickets" 
-				text="Ticket Terms"
-				font="font_akzidenz_regular_smaller"
-				cornerSize="17,24"
-				strokeWeight="2"
-				visible="true"
 				borderColor="white"
 				style="gray_button_style" />
 				

@@ -4,4 +4,4 @@
 -- All Rights Reserved
 --
 
-do_multi_sort_on("release_date")
+do_multi_sort_on("merchandise_date")

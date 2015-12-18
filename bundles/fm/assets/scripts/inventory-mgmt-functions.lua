@@ -175,7 +175,7 @@ function get_column_order_string()
 	local str = ""
 	for k, v in ipairs(sort_columns) do
 		local col_str = ""
-		if v.name == "release_date" then
+		if v.name == "merchandise_date" then
 			col_str = kernel.getactortext("releasedate_label")
 		elseif v.name == "deck" then
 			col_str = "Deck Slot"
@@ -266,7 +266,7 @@ function show_sorting_arrows()
 	for _, v in ipairs(sort_columns) do
 		if v.name
 		and is_column_selected_for_sort(v.name) ~= "slot" then
-			if v.name == "release_date" then
+			if v.name == "merchandise_date" then
 				kernel.setactorforegroundcolor("releasedate_label", "red")
 				kernel.showactor("releasedate_sort_arrow")
 				if v.order == "A" then
@@ -353,7 +353,6 @@ reload_inventory = function()
     local product_type_lookup = {}
     local product_family_lookup = {}
 	local product_type = getprofiletable( "profile", "ProductType" )
-	local rapidthinsvalid = use_rapid_thin_file()
 
 	for _, v in product_type:ipairs() do
 		product_type_lookup[v["product_type_id"]] = v["product_type_name"]
@@ -375,6 +374,17 @@ reload_inventory = function()
 		["66"] = true,
 		["72"] = true
 	}
+	
+	local all_unmatched_multi_disc_barcodes = get_all_unmatched_multi_disc_barcodes()
+	local function is_unmatched( barcode )
+		for _, unmatched_barcode in ipairs( all_unmatched_multi_disc_barcodes ) do
+			if barcode == unmatched_barcode then
+				return true
+			end
+		end
+		return false
+	end
+	
 	for pos, disc in BarcodePosition:pairs() do
 		local fields = {}
 		string.gsub(pos, "@*(%w+)@*", function(values) table.insert(fields,values) end )
@@ -394,24 +404,25 @@ reload_inventory = function()
 				row.status = disc["status"]
 				row.title = ""
 				row.media = ""
+				row.unmatched = is_unmatched( barcode )
 				if barcode ~= "UNKNOWN" then
 					local product = BarcodeToProduct[barcode]
 					if product ~= nil then
 						row.product_id = product.product_id
 						if product.status ~= nil and row.status ~= "Reserved" then
-							if rapidthinsvalid == true and RapidThinBarcodes[ barcode ] ~= nil then
-								row.status = RapidThinBarcodes[ barcode ].status --Rapid thin status overrules Inventory.data if it is more recent
+							local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
+							if rapid_status ~= nil then
+								row.status = rapid_status.status
 							else
-								row.status = product.status --Inventory.data status should overrule local copy in case it was updated recently
+								-- if the barcode is  not in rapid status then revert to inventory status unless the inventory status is equal to Rebalance, Redeployment or Thinned
+								-- this happens when a barcode is unthinned
+								if product.status  == "Rebalancing" or product.status == "Redeployment" or product.status == "Thinned" then
+									row.status = "Known"
+								else
+									row.status = product.status 
+								end
 							end
 						end
-						
-						if row.status == "Thinned"
-						and RebalancesUnThinInuse ~= nil 
-						and RebalancesUnThinInuse[ barcode ] ~= nil then
-							kernel.log(" > Unthin detected in FMA -> inventory-mgmt-functions.lua -> reload-inventory: " .. tostring( barcode ) )
-							row.status = "Known"
-						end 
 						
 						local catalog_item = MasterProductCatalog[product["product_id"]]
 						if catalog_item ~= nil
@@ -436,11 +447,11 @@ reload_inventory = function()
 								row.media = ""
 								row.rating = ""
 							end
-							local year = string.sub(catalog_item["release_date"], 1, 4)
-							local month = string.sub(catalog_item["release_date"], 5, 6)
-							local day = string.sub(catalog_item["release_date"], 7, 8)
+							local year = string.sub(catalog_item["merchandise_date"], 1, 4)
+							local month = string.sub(catalog_item["merchandise_date"], 5, 6)
+							local day = string.sub(catalog_item["merchandise_date"], 7, 8)
 							row.released = string.format("%s-%s-%s", month, day, year)
-							row.release_date = catalog_item["release_date"]
+							row.merchandise_date = catalog_item["merchandise_date"]
 						end
 					else
 						if row.barcode == nil or trim( row.barcode ) == "" then
@@ -451,6 +462,11 @@ reload_inventory = function()
 						row.status = "Unplayable"
 					end
 				end
+				
+				if row.status == "Damaged" or row.status == "DNR" or row.status == "Fraud" or row.status == "Reserved" then
+					row.unmatched = false
+				end
+				
 				table.insert(Inventory_Table, row)
 				table.insert(Inventory_All_Table, row)
 			end
@@ -567,17 +583,30 @@ show_table = function(
 	kernel.enableactor("releasedate_label", "white")
 	kernel.enableactor("rented_label", "white")
 	kernel.enableactor("status_label", "white")
-
+	
+	local function get_disc_number( barcode )
+		if barcode ~= nil and BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id] ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number ~= nil then
+			return MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number
+		end
+		return 1
+	end
+	
 	while true do
 		local textHeight = 0
 		local columns = table[pager:get_index()]
 		local inventoryItemActorName = "inventoryitem" .. actor_index
+		
+		local barcode = columns["barcode"] or " "
+		
 		local title = columns["title"] or " "
+		if kernel.getactortag( InventoryViewFilter ) == "Unmatched" then
+			title = tostring( title ) .. " (disc " .. tostring( get_disc_number( barcode ) ) .. ")"
+		end
+		
 		local media = columns["media"] or " "
 		local rating = columns["rating"] or " "
 		local deck = columns["deck"] or " "
 		local slot = columns["slot"] or " "
-		local barcode = columns["barcode"] or " "
 		local released = columns["released"] or " "
 		local rented = columns["rented"] or " "
 		local status = columns["status"] or " "
@@ -774,6 +803,8 @@ filter_by_tabs = function( value )
 			else
 				result = false
 			end
+		elseif last_hit_filter_tag == "Unmatched" then
+			result = value["unmatched"]
 		else 
 			if value["status"] == last_hit_filter_tag then
 				result = true
@@ -827,7 +858,7 @@ showinventory = function(entry_point)
 			Inventory_All_Table,
 			function( value )
 				local result = false
-				if filter_criteria ~= "filter" and filter_criteria ~= "Thinned" then
+				if filter_criteria ~= "filter" and filter_criteria ~= "Thinned" and filter_criteria ~= "Unmatched" then
 					if value["status"] == filter_criteria
 					or filter_criteria == "ALL" then
 						result = true
@@ -838,6 +869,8 @@ showinventory = function(entry_point)
 					(s == "Thinned" or s == "PR1" or s == "PR2" or s == "DNR") then
 						result = true
 					end
+				elseif filter_criteria == "Unmatched" then
+					result = value["unmatched"]
 				else
 					InventorySortBy = "sort_by_title"
 					result = filter_by_title( value )

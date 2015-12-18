@@ -21,7 +21,7 @@ local function get_counts()
             if disc["barcode"] == "UNDEFINED" then
                 undefined = undefined + 1
             end
-			if disc["status"] == "Thinned" then
+			if disc["status"] == "Thinned" or disc["status"] == "Redeployment" or disc["status"] == "Rebalancing" then
 				thinned = thinned + 1
 			end
 		end
@@ -79,9 +79,16 @@ local function send_thin_rebalance_information()
 		kernel.healthsvcs_enqueuestatistic( "ThinsOutsideVMZ", 0 )
 	end
 	
-	local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.json.inuse"
-	local rebalances = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
-	if rebalances ~= nil and #rebalances > 0 then
+	--local rebalancesoutpath = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\RebalanceOut.data.inuse"
+	--local rebalances = kernel.tablefromfileserializedlistdictionary( rebalancesoutpath, StoreManager ~= nil and StoreManager:get_number() or nil )
+	local rebalances = kernel.rental_inventory_get_rapidstatus_by_status("Rebalancing")	or {}
+	
+	local count = 0
+	for k, v in pairs( rebalances ) do
+		count = count + 1
+	end
+	
+	if rebalances ~= nil and count > 0 then
 		get_inside_outside_vmz_counts( rebalances, 
 			function( result_list )
 					kernel.log( "RebalancesInVMZ: " .. tostring( result_list ~= nil and result_list.inside or 0 ) )

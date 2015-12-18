@@ -32,10 +32,13 @@
 
 			<column name="promo_code_validating_message">Please wait while we validate your promo code.</column>
 			<column name="promo_code_error_title">Promo Code Error</column>
-			<column name="promo_code_not_valid_message">Sorry, this promo code isn't valid. Please try it again or use a different promo code.</column>
-			<column name="promo_code_already_used_message">Redbox is sorry, but the promo code you entered has already been used.</column>
+			<column name="promo_code_not_valid_message_title">We can't find that promo code.</column>
+			<column name="promo_code_not_valid_message">Sorry about that. Please double-check to make sure you entered it right.&#10;&#10;You might also want to check the expiration date to make sure it hasn't expired.</column>
+			<column name="promo_code_already_used_message_title">That code's already been used.</column>
+			<column name="promo_code_already_used_message">Sorry about that. The promo code you entered has already been used.</column>
 			<column name="promo_code_not_valid_location_message">Sorry, your promo code is only valid at certain locations, and this isn't one of them.</column>
-			<column name="promo_code_validation_failure_message">Sorry for the inconvenience, but Redbox can't process your promo code at this time. Please try again later.</column>
+			<column name="promo_code_validation_failure_message_title">Sorry, we're having some trouble.</column>
+			<column name="promo_code_validation_failure_message">We can't process this promo code right now. It's our fault, not yours.&#10;&#10;Please try the code later on or at a different box.</column>
 			<column name="promo_code_new_customer_only_message">Sorry this promo code is only valid for new customers, and it looks like you've used Redbox before.</column>
 			<column name="promo_code_tag">PROMO CODE</column>
 			<column name="promo_code_error_message">Please enter a valid promo code.</column>
@@ -76,13 +79,13 @@
 			<column name="offline_rental_limit_exceeded_message">You can rent up to 3 discs, and only 1 can be a game.&#10;&#10;Please remove discs from your cart to continue.</column>
 
 			<column name="game_limit_exceeded_message_header">You’ve reached the limit.</column>
-			<column name="game_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 can be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 can be games.&#10;&#10;To continue, please remove something from your cart.</column>
+			<column name="game_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 may be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 may be games.&#10;&#10;To continue, please remove something from your cart.</column>
 			<column name="rental_limit_exceeded_message_header">You’ve reached the limit.</column>
-			<column name="rental_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 can be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 can be games.&#10;&#10;To continue, please remove something from your cart.</column>
+			<column name="rental_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 may be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 may be games.&#10;&#10;To continue, please remove something from your cart.</column>
 
 			<column name="inventory_error">Sorry, there was a problem with one of your items. Please select another.</column>
-			<column name="vend_error_title">Transaction Error</column>
-			<column name="vend_error_message">Sorry, there was a problem with your transaction. Please come back later or try another Redbox location.&#10;&#10;Your card will not be charged for the items you didn't receive.</column>
+			<column name="vend_error_title">Sorry, something went wrong.</column>
+			<column name="vend_error_message">Please come back later or try another Redbox location.&#10;&#10;You won't be charged for any discs you didn't get, but you might see a pending charge (called a "preauthorization") on your account. The charge will drop off in about 3-5 business days.</column>
 			<column name="vend_quick_return_wait">Thank you for your patience.&#10;&#10;Redbox is accepting a return and will vend your discs in a moment.</column>
 
 			<column name="confirm_purchase_message">You have chosen to purchase this DVD, which will be sold in a durable Redbox rental case, not the original movie&#10;studio packaging.&#10;As Redbox is unable to accept returns, all sales are final.&#10;To confirm that you would like to make this purchase, press "Buy Used DVD(s)". If not, press "Back".</column>
@@ -122,7 +125,7 @@
 			<column name="subplatform_for">for</column>
 
 			<column name="blu_ray_alert_title">That's a Blu-ray Disc&#8482;!</column>
-			<column name="bly_ray_alert">You've selected a Blu-ray disc, which won't play on a standard DVD player.</column>
+			<column name="bly_ray_alert">To watch, you'll need a Blu-ray player, PS3, PS4 or&#10;Xbox One.</column>
 			<column name="purchase_new_warning">You have chosen to purchase this DVD, which will be sold n a Redbox cardboard sleeve, not the original movie studio packing.&#10;&#10;As Redbox is unable to accept returns, all sales are final.&#10;To confirm that you would like make this purchase, press OK to continue. If not, press ''Back''.</column>
 			<column name="purchase_warning">Heads up! You're about to buy a used product, which will come in a durable Redbox rental case, not the original packaging.</column>
 
@@ -171,6 +174,7 @@
 
 			<column name="Movies_ALL">ALL MOVIES</column>
 			<column name="Games_ALL">ALL GAMES</column>
+			<column name="Collections">COLLECTIONS</column>
 
 			<column name="select_a_platform">Select a platform</column>
 			<column name="view_all_games">VIEW ALL GAMES</column>
@@ -257,13 +261,19 @@
 
 			<column name="credit_lable_bottom_text">By pressing 'PAY' or 'USE CREDITS' you agree to the Terms.</column>
 
-			<column name="credits_remaining">You have {0} credits remaining.&#10;&#10;Are you sure you want to pay with your card?</column>
-			<column name="pay_with_credits">NO, I WANT TO PAY WITH CREDITS</column>
+			<column name="credits_remaining_singular_header">You have 1 credit available.</column>
+			<column name="credits_remaining_singular_body">Would you like to use it?</column>
+			<column name="credits_remaining_plural_header">You have {0} credits available.</column>
+			<column name="credits_remaining_plural_body">Would you like to use them?</column>
+			<column name="pay_with_credits_yes">YES, USE&#10;MY CREDITS</column>
+			<column name="pay_with_credits_no">NO, PAY WITH&#10;CREDIT CARD</column>
 
 			<column name="price_tag">Price:</column>
 			<column name="first_day_price">First Day Price:</column>
 			<column name="extra_day_price">Additional Days:</column>
 			<column name="price_a_day">a day</column>
+			<column name="blu_ray">Blu-ray</column>
+			<column name="dvd">DVD</column>
 
 			<column name="a_day">a day</column>
 			<column name="first_day">first day</column>
@@ -294,9 +304,12 @@
 			<column name="burn_in_view_label">touch here to rent or return</column>
 
 			<column name="email_optin_offer_message">Would you like to get an email about this?</column>
+			<column name="email_optin_button_text">EMAIL ME</column>
+			<column name="email_optin_reminder_set_button_text">REMINDER SET</column>
 
 			<column name="cart_full_header">Your Cart's Full</column>
 			<column name="cart_full_body">Check out now or make some changes.</column>
+			<column name="check_out_button_text">CHECK OUT ({0})</column>
 
 			<column name="abe_mode_text">ADA mode</column>
 			<column name="abe_mode_description">All subsequent screens have been modified to meet ADA requirements. Select how you would like to browse using the buttons below.&#10;&#10;To purchase ADA compatible seating call 1-866-REDBOX3 or visit redbox.com.</column>
@@ -324,6 +337,31 @@
 			<column name="edit_button">EDIT</column>
 			<column name="confirm_button">CONFIRM</column>
 			<column name="cancel_signup_button">CANCEL SIGNUP</column>
+			
+			<column name="blu_ray_upsell_unselected_header">Select a Movie to upgrade!</column>
+			<column name="blu_ray_upsell_unselected_message">Please choose at least 1 Movie to upgrade.</column>
+			
+			<column name="accertify_enforce_accertify_header">Card not approved for games.</column>
+			<column name="accertify_enforce_accertify_message">To continue, please try another form of payment&#10;or remove any games from your cart.</column>			
+      
+			<column name="mini_cart_purchase_text">PURCHASE</column>
+			<column name="mini_cart_discs_text">{0} DISCS</column>
+			
+			<column name="title_rollup_overlay_unavailable_text">UNAVAILABLE</column>
+			<column name="title_rollup_overlay_cart_text">{0}&#10;IN CART</column>
+			<column name="title_rollup_overlay_oos_text">{0}&#10;OUT OF STOCK</column>
+			<column name="title_rollup_overlay_buy_text">BUY {0}&#10;{1}{2}</column>
+			<column name="title_rollup_overlay_add_text">+ {0}</column>
+
+			<column name="carousel_add_item_to_cart_button_for_collection">SEE ALL</column>			
+			<column name="add_to_cart_label">Press     to add items for rental</column>			
+			<column name="add_to_cart_ada_label">To rent a disc, touch its picture or its  number above.</column>			
+
+			<column name="collections_popup_text">Can't find something you like?  Check out our collections</column>			
+			<column name="collections_popup_see_all_collections">SEE ALL COLLECTIONS</column>
+			
+			<column name="rxgx_use_promo_button">USE PROMO&#10;&#038; ADD ITEM(S)</column>
+			<column name="rxgx_do_not_use_promo_button">DO NOT USE PROMO</column>
 		</row>
 	</aspect>
 </resource>

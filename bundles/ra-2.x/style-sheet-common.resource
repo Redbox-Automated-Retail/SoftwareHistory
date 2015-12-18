@@ -30,6 +30,33 @@
 			</state>
 		</style>
 		
+		<style name="blue_button_style">
+			<state name="enabled">
+				<property name="gradientAngle" value="90" />
+				<property name="borderColor" value="12,128,197" />
+				<property name="backgroundColor" value="28,155,230" />
+				<property name="gradientTargetColor" value="23,123,183" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="3" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+			</state>
+			<state name="disabled">
+				<property name="gradientAngle" value="90" />
+				<property name="borderColor" value="gray" />
+				<property name="backgroundColor" value="29,29,29" />
+				<property name="gradientTargetColor" value="22,22,22" />
+				<property name="foregroundColor" value="99,99,99" />
+				<property name="strokeWeight" value="3" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+			</state>
+		</style>
+		
 		<style name="yellow_button_style">
 			<state name="enabled">
 				<property name="gradientAngle" value="90" />
@@ -38,6 +65,36 @@
 				<property name="gradientTargetColor" value="231, 130, 0" />
 				<property name="foregroundColor" value="black" />
 				<property name="strokeWeight" value="2" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+			</state>
+		</style>
+
+		<style name="kiosk_2_yellow_button_style">
+			<state name="enabled">
+				<property name="gradientAngle" value="90" />
+				<property name="borderColor" value="255, 192, 0" />
+				<property name="backgroundColor" value="239, 174, 0" />
+				<property name="gradientTargetColor" value="231, 130, 0" />
+				<property name="foregroundColor" value="0, 0, 0" />
+				<property name="strokeWeight" value="2" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+			</state>
+		</style>
+
+		<style name="kiosk_2_blue_button_style">
+			<state name="enabled">
+				<property name="gradientAngle" value="90" />
+				<property name="borderColor" value="85, 95, 100" />
+				<property name="backgroundColor" value="71, 80, 85" />
+				<property name="gradientTargetColor" value="36, 39, 41" />
+				<property name="foregroundColor" value="White" />
+				<property name="strokeWeight" value="4" />
 				<property name="verticalAlignment" value="center" />
 				<property name="horizontalAlignment" value="center" />
 				<property name="hitFlags" value="Enabled" />
@@ -360,25 +417,24 @@
 
 		<style name="topten_movie_style">
 			<state name="enabled">
-				<property name="width" value="221" />
-				<property name="height" value="318" />
-				<property name="borderColor" value="20, 20, 20" />
+				<property name="width" value="206" />
+				<property name="height" value="284" />
+				<property name="borderColor" value="60, 56, 57" />
 				<property name="foregroundColor" value="white" />
 				<property name="verticalAlignment" value="center" />
 				<property name="horizontalAlignment" value="center" />
 				<property name="hitFlags" value="Enabled" />
 				<property name="strokeWeight" value="2" />
-				<property name="cornerSize" value="5,20" />
 				<property name="font" value="font_large" />
 				<property name="textRegion" value="38,85,165,60" />
-				<property name="optionFlags" value="Image, Text" />
+				<property name="optionFlags" value="Image, Text, DrawBorder" />
 			</state>
 		</style>
 
 		<style name="topten_movie_position_style">
 			<state name="enabled">
-				<property name="width" value="221" />
-				<property name="height" value="318" />
+				<property name="width" value="206" />
+				<property name="height" value="284" />
 				<property name="verticalAlignment" value="center" />
 				<property name="horizontalAlignment" value="center" />
 				<property name="hitFlags" value="Enabled" />
@@ -388,8 +444,8 @@
 
 		<style name="topten_movie_style_big">
 			<state name="enabled">
-				<property name="width" value="268" />
-				<property name="height" value="388" />
+				<property name="width" value="276" />
+				<property name="height" value="400" />
 				<property name="borderColor" value="20, 20, 20" />
 				<property name="foregroundColor" value="white" />
 				<property name="verticalAlignment" value="center" />
@@ -405,13 +461,13 @@
 
 		<style name="topten_center_movie_style">
 			<state name="enabled">
-				<property name="width" value="268" />
-				<property name="height" value="388" />
-				<property name="borderColor" value="162,16,24" />
+				<property name="width" value="276" />
+				<property name="height" value="400" />
+				<property name="borderColor" value="153,14,22" />
 				<property name="verticalAlignment" value="center" />
 				<property name="horizontalAlignment" value="center" />
 				<property name="hitFlags" value="Enabled" />
-				<property name="strokeWeight" value="5.5" />
+				<property name="strokeWeight" value="7" />
 				<property name="cornerSize" value="5,20" />
 			</state>
 		</style>
@@ -615,17 +671,6 @@
 			</state>
 		</style>
 
-		<style name="reco_add_item_style">
-			<state name="enabled">
-				<property name="width" value="50" />
-				<property name="height" value="50" />
-				<property name="hotSpot" value="0,0,60,60" />
-				<property name="hitFlags" value="Enabled" />
-				<property name="image" value="image_add_plus_button" />
-				<property name="optionFlags" value="Image" />
-			</state>
-		</style>
-		
 		<style name="browse_add_movie_accessible_style">
 			<state name="enabled">
 				<property name="width" value="60" />
@@ -711,6 +756,17 @@
 				<property name="gradientTargetColor" value="143,14,21" />
 				<property name="hitFlags" value="Enabled" />
 				<property name="optionFlags" value="Text, DrawBorder, BackgroundGradient" />
+			</state>
+		</style>
+		
+		<style name="reco_add_item_style">
+			<state name="enabled">
+				<property name="width" value="50" />
+				<property name="height" value="50" />
+				<property name="hotSpot" value="0,0,60,60" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="image" value="image_add_plus_button" />
+				<property name="optionFlags" value="Image" />
 			</state>
 		</style>
 	</aspect>

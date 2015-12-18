@@ -73,14 +73,14 @@ function newshoppingcartgenrecategories()
 	local is_coming_soon_hit_movie = function( product )
 		if not video_types[product.product_type_id] then return false end
 		if not product.genres[hit_movies_genre_id] then return false end
-		if product.release_date == nil then flag_error( "Product for id: " .. tostring(id) .. " does not have a release date!" ) end
-		return is_in_coming_soon_date_range( product.release_date )
+		if product.merchandise_date == nil then flag_error( "Product for id: " .. tostring(id) .. " does not have a release date!" ) end
+		return is_in_coming_soon_date_range( product.merchandise_date )
 	end
 
 	local is_coming_soon_game = function( product )
 		if not game_types[product.product_type_id] then return false end
-		if product.release_date == nil then flag_error( "Product for id: " .. tostring(id) .. " does not have a release date!" ) end
-		return is_in_coming_soon_date_range( product.release_date )
+		if product.merchandise_date == nil then flag_error( "Product for id: " .. tostring(id) .. " does not have a release date!" ) end
+		return is_in_coming_soon_date_range( product.merchandise_date )
 	end
 
 	local process_product = function( self, product )

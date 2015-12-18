@@ -1,182 +1,121 @@
 --
 -- browse-view-enter.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- Copyright (C) 2015 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
 -- This screen uses the actual Start Over script instead
 CloseAnalyticsOnStartView = false
 
-if browse_filter_family_tracker.selected_family == "Movies" then
-	if (#ShoppingCart.items) == 5 then
-		set_actors_opacity( 0.2 )
-	else
-		set_actors_opacity( 1 )
-	end
-end
+browse_collection = nil
 
-local function TogglePayButton()
-	if ShoppingCart.in_cart_promo_offer_made == true
-	and ShoppingCart.in_cart_title_marketing == true
-	and CartHasAnyPostOfferItems( ShoppingCart ) == false
-	then
-		kernel.hideactor( "my_rentals_button" )
-		kernel.showactor( "title_marketing_no_button" )
-	else
-		kernel.showactor( "my_rentals_button" )
-		kernel.hideactor( "title_marketing_no_button" )
-	end
-end
-
-movie_product_map = {}
--- Left and Right Arrows
-kernel.registeractorhitnotify(
-	"left_arrow_button",
-	function()
-		view_analytics_event( "pageChange", "browse-page-back" )
-		move_left(10)
-	end
-)
-kernel.registeractorhitnotify(
-	"right_arrow_button",
-	function()
-		view_analytics_event( "pageChange", "browse-page-next" )
-		move_right(10)
-	end
-)
+local title_rollup_overlay = newtitlerollupoverlay()
 
 -- Add movie Plus signs
-for i = 1, 10 do
-	kernel.registeractorhitnotify(
-		"add_movie_" .. tostring( i ),
-		function()
-			view_analytics_event( "buttonPress", "shopping-cart-add-item" )
-			selected_movie = "movie_" .. tostring( i )
-			if browse_filter_mode == "for-sale" then
-				browse_selection_cart_action = "purchase"
-			else
-				browse_selection_cart_action = "rental"
-			end
-			item_added_from_view = kernel.peekview()
-			add_item_tocart( 11 )
-			TogglePayButton()
+function add_movie_on_hit( actor_name )
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
+	end
+	
+	local function product_on_hit( product )
+		selected_movie = actor_name
+        if kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" and (kernel.peekview() == "browse_view" or kernel.peekview() == "browse_view_ada_accessible") then
+			browse_selection_cart_action = "purchase"
+		else
+			browse_selection_cart_action = "rental"
 		end
-	)
-	kernel.registeractorhitnotify(
-		"add_movie_lower_" .. tostring( i ),
-		function()
-			view_analytics_event( "buttonPress", "shopping-cart-add-item-ada" )
-			selected_movie = "movie_" .. tostring( i )
-			if browse_filter_mode == "for-sale" then
-				browse_selection_cart_action = "purchase"
-			else
-				browse_selection_cart_action = "rental"
-			end
-			item_added_from_view = kernel.peekview()
-			add_item_tocart( 11 )
-			TogglePayButton()
+		item_added_from_view = kernel.peekview()
+		add_item_to_cart( product )
+	end
+	
+	local product_from_actor = get_product_from_actor( actor_name )
+	if product_from_actor ~= nil and product_from_actor.product_id ~= 1139 and product_from_actor.is_movie == true and product_from_actor.kiosk_product_type == 3 then
+		view_analytics_event( "buttonPress", "shopping-cart-modal-add-item" )
+		
+        local is_purchase = kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" and (kernel.peekview() == "browse_view" or kernel.peekview() == "browse_view_ada_accessible")
+		
+		local dvd_product = nil
+		local blu_ray_product = nil
+
+		if product_from_actor.dvd_index ~= nil and product_from_actor.dvd_index > 0 then
+			dvd_product = product_from_actor.kiosk_products[product_from_actor.dvd_index]
 		end
-	)
+		if product_from_actor.blu_ray_index ~= nil and product_from_actor.blu_ray_index > 0 then
+			blu_ray_product = product_from_actor.kiosk_products[product_from_actor.blu_ray_index]
+		end
+		
+		local dvd_product_ui_info = get_product_ui_info(dvd_product)
+		local blu_ray_product_ui_info = get_product_ui_info(blu_ray_product)
+
+		-- if we are in "for sale" mode and the product is not purchasable then pass nil to the overlay
+		local overlay_dvd_product = dvd_product
+		if is_purchase and not dvd_product_ui_info.show_in_purchase_overlay then
+			overlay_dvd_product = nil
+		end
+
+		local overlay_blu_ray_product = blu_ray_product
+		if is_purchase and not blu_ray_product_ui_info.show_in_purchase_overlay then
+			overlay_blu_ray_product = nil
+		end
+
+		title_rollup_overlay:show(
+			kernel.getactorx( actor_name ),
+			kernel.getactory( actor_name ),
+			kernel.getactorwidth( actor_name ),
+			kernel.getactorheight( actor_name ),
+			false,
+			overlay_dvd_product,
+			function()
+				if is_purchase == true and dvd_product ~= nil and dvd_product.product_id ~= nil then
+					view_analytics_event( "buttonPress", "buy," .. tostring( dvd_product.product_id ) )
+				else
+					if browse_collection ~= nil then
+						view_analytics_event( "buttonPress", "shopping-cart-add-item," .. browse_collection.product_name )
+					else
+						view_analytics_event( "buttonPress", "shopping-cart-add-item" )
+					end
+				end
+				product_on_hit( dvd_product )
+			end,
+			overlay_blu_ray_product,
+			function()
+				if is_purchase == true and blu_ray_product ~= nil and blu_ray_product.product_id ~= nil then
+					view_analytics_event( "buttonPress", "buy," .. tostring( blu_ray_product.product_id ) )
+				else
+					if browse_collection ~= nil then
+						view_analytics_event( "buttonPress", "shopping-cart-add-item," .. browse_collection.product_name )
+					else
+						view_analytics_event( "buttonPress", "shopping-cart-add-item" )
+					end
+				end
+				product_on_hit( blu_ray_product )
+			end,
+			function()
+				if is_purchase == true then
+					view_analytics_event( "buttonPress", "buy-cancel-add-item" )
+				else
+					view_analytics_event( "buttonPress", "shopping-cart-cancel-add-item" )
+				end
+			end,
+			nil,
+			is_purchase
+		)
+	elseif product_from_actor ~= nil then
+		view_analytics_event( "buttonPress", "shopping-cart-add-item" )
+		product_on_hit( product_from_actor )
+	end
 end
 
--- Remove movie from cart X buttons
-for i = 1, 5 do
-	kernel.registeractorhitnotify(
-		"cancel_" .. tostring( i ),
-		function()
-			view_analytics_event( "buttonPress", "shopping-cart-remove-item" )
-			selected_movie = "selectedmovie_" .. tostring( i )
-			remove_movie(10)
-			TogglePayButton()
-		end
-	)
-end
-
-function switch_product_family_tab_function()
-	if browse_filter_family_tracker.selected_family == "Movies" then
-		browse_filter_family_tracker.selected_family = "Games"
-		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_games )
-		browse_filter_genre_selected = nil
-		set_actors_opacity( 0.2 )
-		for i = 1, 10 do
-			kernel.hideactor("banner_" .. tostring( i ))
-			kernel.hideactor("banner_coming_soon_" .. tostring( i ))
-			kernel.hideactor( "button_email_reminder_" .. tostring( i ))
-			kernel.hideactor( "button_email_reminder_set_" .. tostring( i ))
-		end
-		if browse_selected_sort == "Blu-ray" then
-			browse_filter_family_tracker:set_family_type( "ALL" )
-			browse_selected_sort = "Newest"
-			browse_filter_mode = "all"
-		elseif browse_filter_mode =="coming-soon" then
-			browse_filter_family_tracker:set_family_type( "ALL" )
-			browse_selected_sort = "coming-soon"
-			browse_filter_mode = "coming-soon"
-		elseif browse_filter_mode =="for-sale" then
-			if ProductCatalog:is_product_available( "for-sale" )
-			and EnableSellThruOfUsed == true
-			and GamesSellThru == true then
-				browse_filter_family_tracker:set_family_type( "for-sale" )
-				browse_selected_sort = "for-sale"
-				browse_filter_mode = "for-sale"
-			else
-				browse_filter_family_tracker:set_family_type( "ALL" )
-				browse_selected_sort = "Newest"
-				browse_filter_mode = "all"
-			end
-		end
-	else
-		browse_filter_family_tracker.selected_family = "Movies"
-		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_movies )
-		browse_filter_genre_selected = ALL
-		if(#ShoppingCart.items) ~= 5 then
-			set_actors_opacity( 1 )
-		end
-		if browse_selected_sort == "Xbox 360" or browse_selected_sort == "Xbox One" or browse_selected_sort == "PS2" or browse_selected_sort == "PS3" or browse_selected_sort == "PS4" or browse_selected_sort == "Wii" or browse_selected_sort == "NintendoDS" or browse_selected_sort == "Wii U" then
-			browse_filter_family_tracker:set_family_type( "ALL" )
-			browse_selected_sort = "Newest"
-		end
-		if browse_filter_mode == "for-sale" then
-			if ProductCatalog:is_product_available( "for-sale" ) and EnableSellThruOfUsed == true then
-				browse_filter_family_tracker:set_family_type( "for-sale" )
-				browse_selected_sort = "for-sale"
-				browse_filter_mode = "for-sale"
-			else
-				browse_filter_family_tracker:set_family_type( "ALL" )
-				browse_selected_sort = "Newest"
-				browse_filter_mode = "all"
-			end
-		end
-	end
-	view_analytics_event( "filterChange", "browse-filter," .. browse_filter_family_tracker.selected_family )
-	if browse_selected_sort == "Newest" then
-		browse_filter_family_tracker:set_family_type( "ALL" )
-	end
-	set_number = 1
-	show_browse_view(10)
-	check_product_availability()
-	highlight_tab(1)
-end
-
-kernel.registeractorhitnotify(
-	"tab_switch_product_family",
-	function()
-		switch_product_family_tab_function()
-	end
-)
-kernel.registeractorhitnotify(
-	"image_next_white_arrow",
-	function()
-		switch_product_family_tab_function()
-	end
-)
 kernel.registeractorhitnotify(
 	"abc_button",
 	function()
+		if title_rollup_overlay ~= nil then
+			title_rollup_overlay:hide()
+		end
 		view_analytics_event( "filterChange", "browse-filter-family,alpha" )
 		set_number = 1
 		browse_filter_family_tracker:set_family_type( "ALL" )
-		browse_selected_sort = "alpha"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "alpha")
 		kernel.executescript("browse_filter_alpha")
 		display_alpha_screen_layout()
 	end
@@ -184,10 +123,13 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"newest_button",
 	function()
+		if title_rollup_overlay ~= nil then
+			title_rollup_overlay:hide()
+		end
 		view_analytics_event( "filterChange", "browse-filter-family,Newest" )
 		set_number = 1
-		browse_selected_sort = "Newest"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "ALL" )
 		show_browse_view(10)
 	end
@@ -195,10 +137,13 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"for_sale_button",
 	function()
+		if title_rollup_overlay ~= nil then
+			title_rollup_overlay:hide()
+		end
 		view_analytics_event( "filterChange", "browse-filter-family,for-sale" )
 		set_number = 1
-		browse_selected_sort = "for-sale"
-		browse_filter_mode = "for-sale"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "for-sale")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "ForSale")
 		browse_filter_family_tracker:set_family_type( "for-sale" )
 		show_browse_view(10)
 	end
@@ -206,21 +151,28 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"coming_soon_button",
 	function()
+		if title_rollup_overlay ~= nil then
+			title_rollup_overlay:hide()
+		end
 		view_analytics_event( "filterChange", "browse-filter-family,Coming-soon" )
 		set_number = 1
-		browse_selected_sort = "coming-soon"
-		browse_filter_mode = "coming-soon"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "coming-soon")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "ComingSoon")
 		browse_filter_family_tracker:set_family_type( "ALL" )
 		show_browse_view(10)
+		check_coming_soon_collections_popup()
 	end
 )
 kernel.registeractorhitnotify(
 	"blu_ray_button",
 	function()
+		if title_rollup_overlay ~= nil then
+			title_rollup_overlay:hide()
+		end
 		view_analytics_event( "filterChange", "browse-filter-family,Blu-ray" )
 		set_number = 1
-		browse_selected_sort = "Blu-ray"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Blu-ray")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Blu-ray" )
 		show_browse_view(10)
 	end
@@ -230,8 +182,8 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Xbox 360" )
 		set_number = 1
-		browse_selected_sort = "Xbox 360"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Xbox 360")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Xbox 360" )
 		show_browse_view(10)
 	end
@@ -241,8 +193,8 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Xbox One" )
 		set_number = 1
-		browse_selected_sort = "Xbox One"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Xbox One")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Xbox One" )
 		show_browse_view(10)
 	end
@@ -252,8 +204,8 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,PS3" )
 		set_number = 1
-		browse_selected_sort = "PS3"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "PS3")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "PS3" )
 		show_browse_view(10)
 	end
@@ -263,8 +215,8 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,PS4" )
 		set_number = 1
-		browse_selected_sort = "PS4"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "PS4")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "PS4" )
 		show_browse_view(10)
 	end
@@ -274,8 +226,8 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Wii" )
 		set_number = 1
-		browse_selected_sort = "Wii"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Wii" )
 		show_browse_view(10)
 	end
@@ -285,51 +237,16 @@ kernel.registeractorhitnotify(
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Wii U" )
 		set_number = 1
-		browse_selected_sort = "Wii U"
-		browse_filter_mode = "all"
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii U")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Wii U" )
 		show_browse_view(10)
 	end
 )
 
--- Tabs at the top
-function RegisterProductFamilyTabs()
-	for i = 1, 7 do
-		kernel.registeractorhitnotify(
-			"tab_" .. tostring( i ),
-			function()
-				browse_filter_genre_selected = ProductFamiliesMetaData[ browse_filter_family_tracker.selected_family ].filter_genres[i]
-				local tab_text = kernel.getactortext( "tab_" .. tostring( i ) )
-				if string.len(tab_text) == 0
-					and i==2 then -- single out the Top 20 tab (2nd tab, ie i==2) that is currently split into 2 actors
-					-- handles the tabs that has the text split between 2 new actors
-					tab_text = kernel.getactortext( "tab_" .. tostring( i ) .. "_text_a")
-						.. " "
-						.. kernel.getactortext( "tab_" .. tostring( i ) .. "_text_b")
-				end
-				view_analytics_event( "filterChange", "browse-filter-genre," .. tab_text )
-				set_number = 1
-				show_browse_view(10)
-				check_product_availability()
-				highlight_tab( i )
-			end
-		)
-	end
-end
-
 show_browse_view(10)
 
 check_product_availability()
-for i = 1, 7 do
-	local genre = ProductFamiliesMetaData[ browse_filter_family_tracker.selected_family ].filter_genres[i]
-	if browse_filter_genre_selected == genre then
-		highlight_tab(i)
-		break
-	end
-end
-
-RegisterProductFamilyTabs()
-load_shopping_cart()
 idle_timer:start()
 
 priced_item_popup_timer = newidletimer("priced_item_popup_timer")
@@ -389,11 +306,16 @@ if show_alert_message then
 	check_for_warning_popups( check_alert_table, selected_movie, i )
 end
 
--- Mingle #3981 for Title Marketing special browse view
-TogglePayButton()
-
 if #ShoppingCart.items == 5
 and browse_is_cart_full_open == false
 and shopping_cart_full_message_shown == false then
 	show_shopping_cart_full()
+end
+
+if (kernel.peekview() == "browse_view") then
+	draw_action_bar_and_mini_cart(kernel.peekview())
+	draw_top_menu()
+elseif (kernel.peekview() == "browse_view_ada_accessible") then
+	draw_action_bar()
+	draw_ada_control()
 end
