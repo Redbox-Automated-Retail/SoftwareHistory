@@ -38,6 +38,8 @@ public class VCDevice3 : IVideoSource
 
 	private object sourceObject;
 
+	private readonly int GrabWaitTime;
+
 	private readonly object sync = new object();
 
 	private readonly object m_listLock = new object();
@@ -287,9 +289,10 @@ public class VCDevice3 : IVideoSource
 
 	public event PlayingFinishedEventHandler PlayingFinished;
 
-	public VCDevice3(string deviceMoniker)
+	public VCDevice3(string deviceMoniker, int snapTimeout)
 	{
 		this.deviceMoniker = deviceMoniker;
+		GrabWaitTime = snapTimeout;
 	}
 
 	public bool Start()
@@ -398,7 +401,6 @@ public class VCDevice3 : IVideoSource
 	private void WorkerThread(bool runGraph)
 	{
 		ReasonToFinishPlaying reason = ReasonToFinishPlaying.StoppedByUser;
-		int secretValue = RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "FrameWait", 500);
 		SampleGrabber sampleGrabber = new SampleGrabber(OnNewFrame);
 		object obj = null;
 		object obj2 = null;
@@ -525,7 +527,7 @@ public class VCDevice3 : IVideoSource
 						ReceivedFrames.Clear();
 					}
 					sampleGrabber.Grab = true;
-					Thread.Sleep(secretValue);
+					Thread.Sleep(GrabWaitTime);
 					bool simulateTrigger = (sampleGrabber.Grab = false);
 					m_simulateTrigger = simulateTrigger;
 					if (Debug)
@@ -541,6 +543,11 @@ public class VCDevice3 : IVideoSource
 						else
 						{
 							LogHelper.Instance.Log("[DirectShow] There are no captured frames from the device.");
+							if (mediaEventEx != null && mediaEventEx.GetEvent(out lEventCode, out lParam, out lParam2, 0) == 0)
+							{
+								mediaEventEx.FreeEventParams(lEventCode, lParam, lParam2);
+								LogHelper.Instance.Log(">> [DirectShow]Event: {0}", lEventCode.ToString());
+							}
 						}
 						foreach (Bitmap receivedFrame in ReceivedFrames)
 						{

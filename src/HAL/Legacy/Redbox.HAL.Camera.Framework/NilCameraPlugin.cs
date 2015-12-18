@@ -7,6 +7,8 @@ internal sealed class NilCameraPlugin : ICameraPlugin
 {
 	public bool IsRunning => false;
 
+	public bool SupportsReset => false;
+
 	public bool Start()
 	{
 		return false;

@@ -18,6 +18,8 @@ internal class VidcapService : Redbox.HAL.Core.ICameraPlugin
 
 	public bool IsRunning { get; private set; }
 
+	public bool SupportsReset => false;
+
 	private string ImagesDirectory { get; set; }
 
 	public bool Start()

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Xml;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Camera.Framework;
@@ -7,6 +8,18 @@ namespace Redbox.HAL.Camera.Framework;
 public sealed class CameraService : IDisposable
 {
 	public bool IsRunning { get; private set; }
+
+	public bool SupportsRestart
+	{
+		get
+		{
+			if (Plugin.SupportsReset)
+			{
+				return Platform.Windows7 == RuntimeService.Instance.GetPlatform();
+			}
+			return false;
+		}
+	}
 
 	public bool CameraInErroredState { get; private set; }
 
@@ -50,7 +63,10 @@ public sealed class CameraService : IDisposable
 			{
 				LogHelper.Instance.Log("File doesn't exist; turn off camera.");
 				ProcessHelper.DumpProcessMemoryMetrics();
-				TurnOffCamera();
+				if (Plugin.SupportsReset)
+				{
+					TurnOffCamera();
+				}
 			}
 		}
 		catch (Exception e)
@@ -86,15 +102,48 @@ public sealed class CameraService : IDisposable
 
 	public void TurnOffCamera()
 	{
-		try
+		if (IsRunning)
 		{
-			Plugin.TurnOff();
+			try
+			{
+				Plugin.TurnOff();
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("TurnOffCamera encountered an exception.", e);
+			}
 			IsRunning = false;
+			CameraInErroredState = false;
 		}
-		catch (Exception e)
+	}
+
+	public bool RestartCamera(bool cycleDriver)
+	{
+		if (!Plugin.SupportsReset)
 		{
-			LogHelper.Instance.Log("TurnOffCamera encountered an exception.", e);
+			return false;
 		}
+		TurnOffCamera();
+		PerfFunctions.SpinWait(500);
+		if (cycleDriver)
+		{
+			using DeviceHelper helper = new DeviceHelper(debug: false);
+			CameraInfo cameraInfo = new CameraInfo(helper);
+			if (cameraInfo.FindActiveCamera())
+			{
+				LogHelper.Instance.Log("Found camera {0}", cameraInfo.Revision.ToString());
+				if (cameraInfo.Revision == KnownCameras.ThirdGen || cameraInfo.Revision == KnownCameras.FourthGen)
+				{
+					LogHelper.Instance.Log("The running driver for the camera {0}", cameraInfo.CorrectDriverRunning() ? "is correct" : "is not correct.");
+				}
+				if (DeviceStatus.Enabled == cameraInfo.Status)
+				{
+					bool flag = cameraInfo.ResetDriver();
+					LogHelper.Instance.Log(" RESET camera returned {0}", flag ? "OK" : "FAILURE");
+				}
+			}
+		}
+		return Start();
 	}
 
 	private CameraService()
@@ -112,7 +161,8 @@ public sealed class CameraService : IDisposable
 	private void LoadPluginsInner()
 	{
 		string cameraDriver = CameraConfiguration.Instance.CameraDriver;
-		if (!PluginLoader.Instance.LocatePlugin(cameraDriver, out var plugin))
+		CameraPluginDescriptor cameraPluginDescriptor = PluginLoader.Instance.LocatePlugin(cameraDriver, out var plugin);
+		if (cameraPluginDescriptor == null)
 		{
 			LogHelper.Instance.Log($"Unable to locate plugin {cameraDriver}", LogEntryType.Error);
 			Plugin = new NilCameraPlugin();
@@ -121,6 +171,42 @@ public sealed class CameraService : IDisposable
 		{
 			LogHelper.Instance.Log($"Successfully loaded camera plugin {cameraDriver}");
 			Plugin = plugin;
+			if (cameraPluginDescriptor.DescriptorPath != null)
+			{
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(cameraPluginDescriptor.DescriptorPath);
+				if (xmlDocument.DocumentElement != null)
+				{
+					XmlNode xmlNode = xmlDocument.SelectSingleNode("Plugin/Properties");
+					if (xmlNode != null)
+					{
+						foreach (XmlNode childNode in xmlNode.ChildNodes)
+						{
+							if (!childNode.Name.Equals("property"))
+							{
+								continue;
+							}
+							string value = childNode.Attributes["name"].Value;
+							string value2 = childNode.Attributes["value"].Value;
+							XmlAttribute xmlAttribute = childNode.Attributes["type"];
+							if (xmlAttribute == null)
+							{
+								CameraConfiguration.Instance.Properties[value] = value2;
+								continue;
+							}
+							try
+							{
+								Type type = Type.GetType(xmlAttribute.Value);
+								CameraConfiguration.Instance.Properties[value] = Convert.ChangeType(value2, type);
+							}
+							catch
+							{
+								CameraConfiguration.Instance.Properties[value] = value2;
+							}
+						}
+					}
+				}
+			}
 		}
 		Plugin.InitWithProperties(CameraConfiguration.Instance.Properties);
 	}

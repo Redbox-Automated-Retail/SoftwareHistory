@@ -4,7 +4,7 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Camera.Framework;
 
-internal class CameraPluginDescriptor
+internal sealed class CameraPluginDescriptor
 {
 	internal string PluginName { get; set; }
 
@@ -15,6 +15,8 @@ internal class CameraPluginDescriptor
 	internal string PluginServiceProviderMethodName { get; set; }
 
 	internal string Version { get; set; }
+
+	internal string DescriptorPath { get; private set; }
 
 	internal static CameraPluginDescriptor FromXml(string xmlPath)
 	{
@@ -32,6 +34,7 @@ internal class CameraPluginDescriptor
 				return null;
 			}
 			CameraPluginDescriptor cameraPluginDescriptor = new CameraPluginDescriptor();
+			cameraPluginDescriptor.DescriptorPath = xmlPath;
 			XmlNodeList childNodes = xmlNode.ChildNodes;
 			foreach (XmlNode item in childNodes)
 			{

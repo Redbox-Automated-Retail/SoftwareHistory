@@ -11,6 +11,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Redbox.HAL.ClearimageV1")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("fcdf4d23-3588-4d24-a3ec-31a50fc34a06")]
-[assembly: AssemblyFileVersion("1.3.0.84")]
+[assembly: AssemblyFileVersion("1.3.0.119")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.3.0.84")]
+[assembly: AssemblyVersion("1.3.0.119")]

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
@@ -9,6 +10,8 @@ internal sealed class Service : ICameraPlugin
 {
 	public bool IsRunning { get; private set; }
 
+	public bool SupportsReset => true;
+
 	internal int SnapTimeout { get; private set; }
 
 	internal string ImagePath { get; private set; }
@@ -18,6 +21,8 @@ internal sealed class Service : ICameraPlugin
 	private Player Worker { get; set; }
 
 	private string SnapFile { get; set; }
+
+	private int WakeupPause { get; set; }
 
 	public bool Start()
 	{
@@ -31,7 +36,7 @@ internal sealed class Service : ICameraPlugin
 			Worker.Visible = false;
 		}
 		IsRunning = Worker.Connect();
-		Thread.Sleep(5000);
+		Thread.Sleep(WakeupPause);
 		if (!IsRunning)
 		{
 			Worker.Disconnect();
@@ -79,7 +84,25 @@ internal sealed class Service : ICameraPlugin
 		}
 		if (properties.ContainsKey("SnapTimeout"))
 		{
-			SnapTimeout = (int)properties["SnapTimeout"];
+			try
+			{
+				SnapTimeout = (int)Convert.ChangeType(properties["SnapTimeout"], typeof(int));
+			}
+			catch
+			{
+				SnapTimeout = 5000;
+			}
+		}
+		if (properties.ContainsKey("WakeupPause"))
+		{
+			try
+			{
+				WakeupPause = (int)Convert.ChangeType(properties["WakeupPause"], typeof(int));
+			}
+			catch
+			{
+				WakeupPause = 5000;
+			}
 		}
 	}
 
@@ -87,6 +110,7 @@ internal sealed class Service : ICameraPlugin
 	{
 		ImageSize = new Size(640, 480);
 		SnapTimeout = 5000;
+		WakeupPause = 5000;
 	}
 
 	private bool Shutdown()

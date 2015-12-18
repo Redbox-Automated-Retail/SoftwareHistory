@@ -48,22 +48,26 @@ internal sealed class PluginLoader
 		}
 	}
 
-	internal bool LocatePlugin(string name, out ICameraPlugin plugin)
+	internal CameraPluginDescriptor LocatePlugin(string name, out ICameraPlugin plugin)
 	{
 		plugin = null;
 		CameraPluginDescriptor cameraPluginDescriptor = Plugins.Find((CameraPluginDescriptor d) => name.Equals(d.PluginName, StringComparison.CurrentCultureIgnoreCase));
-		if (cameraPluginDescriptor != null)
+		if (cameraPluginDescriptor == null)
 		{
-			return LocatePlugin(cameraPluginDescriptor, out plugin);
+			return null;
 		}
-		return false;
+		if (!LocatePluginInner(cameraPluginDescriptor, out plugin))
+		{
+			return null;
+		}
+		return cameraPluginDescriptor;
 	}
 
 	private PluginLoader()
 	{
 	}
 
-	private bool LocatePlugin(CameraPluginDescriptor descriptor, out ICameraPlugin plugin)
+	private bool LocatePluginInner(CameraPluginDescriptor descriptor, out ICameraPlugin plugin)
 	{
 		plugin = null;
 		string assemblyFile = Path.Combine(PluginsDirectory, descriptor.AssemblyName);

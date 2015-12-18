@@ -3,12 +3,28 @@ using System.Collections;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using Redbox.DirectShow.Interop;
+using Redbox.HAL.Core;
 
 namespace Redbox.DirectShow;
 
 public class FilterInfoCollection : CollectionBase
 {
+	private static bool? m_useOldOption = null;
+
 	public FilterInfo this[int index] => (FilterInfo)base.InnerList[index];
+
+	private static bool UseOld
+	{
+		get
+		{
+			if (m_useOldOption.HasValue)
+			{
+				return m_useOldOption.Value;
+			}
+			m_useOldOption = RegistryOptions.Instance.GetSecretValue("SOFTWARE\\Redbox\\HAL", "UseOldEnumerator", def: false);
+			return m_useOldOption.Value;
+		}
+	}
 
 	public FilterInfoCollection(Guid category)
 	{
@@ -35,12 +51,22 @@ public class FilterInfoCollection : CollectionBase
 				throw new ApplicationException("No devices of the category");
 			}
 			IntPtr zero = IntPtr.Zero;
-			while (enumMoniker.Next(1, array, zero) == 0 && array[0] != null)
+			while (enumMoniker.Next(1, array, zero) == 0)
 			{
-				FilterInfo value = new FilterInfo(array[0]);
-				base.InnerList.Add(value);
-				Marshal.ReleaseComObject(array[0]);
-				array[0] = null;
+				if (array[0] == null)
+				{
+					if (UseOld)
+					{
+						break;
+					}
+				}
+				else
+				{
+					FilterInfo value = new FilterInfo(array[0]);
+					base.InnerList.Add(value);
+					Marshal.ReleaseComObject(array[0]);
+					array[0] = null;
+				}
 			}
 			base.InnerList.Sort();
 		}

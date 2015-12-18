@@ -9,29 +9,31 @@ namespace Redbox.HAL.Camera.Framework;
 
 public sealed class CameraConfiguration : XmlConfiguration
 {
+	private const string Win7CameraDriver = "DirectShowFrame";
+
 	private string m_workingDirectory;
 
 	public static CameraConfiguration Instance => Singleton<CameraConfiguration>.Instance;
 
 	[DisplayName("Driver Mode")]
-	[Category("Settings")]
-	[ValidValueListProvider("GetValidModes")]
 	[ExcludeType]
+	[Category("Settings")]
 	[Description("The mode under which the camera driver runs. If set to Emulated, all camera driver functions will be emulated based on the configured emulation state.")]
+	[ValidValueListProvider("GetValidModes")]
 	public CameraMode Mode { get; set; }
 
-	[DisplayName("Video Format")]
 	[Description("The size of the video capture frame.  Larger frame sizes yield a higher capture resolution at the cost of high CPU utilization, memory usage, and disk space.")]
 	[Category("Settings")]
+	[DisplayName("Video Format")]
 	public Size VideoFormat { get; set; }
 
 	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
-	[DisplayName("Cycle Camera On Use")]
 	[Category("Settings")]
+	[DisplayName("Cycle Camera On Use")]
 	public bool CycleCameraOnUse { get; set; }
 
-	[Description("If true, will delete the bitmap used to read the barcode, if successfully read.")]
 	[DisplayName("Delete Bitmap On Successful Read")]
+	[Description("If true, will delete the bitmap used to read the barcode, if successfully read.")]
 	[Category("Settings")]
 	public bool DeleteBitmapOnSuccessfulRead { get; set; }
 
@@ -40,17 +42,7 @@ public sealed class CameraConfiguration : XmlConfiguration
 	[DisplayName("Camera Driver")]
 	public string CameraDriver { get; set; }
 
-	[Category("Settings")]
-	[Description("In ms, the time to wait for an image.")]
-	[DisplayName("Camera Snap Timeout")]
-	public int SnapTimeout { get; set; }
-
-	[Category("Settings")]
-	[Description("In ms, the time to sleep after start.")]
-	[DisplayName("Camera Wakeup Sleep")]
-	public int CameraWakeupSleep { get; set; }
-
-	internal IDictionary<string, object> Properties { get; set; }
+	internal IDictionary<string, object> Properties { get; private set; }
 
 	internal string WorkingPath
 	{
@@ -80,13 +72,11 @@ public sealed class CameraConfiguration : XmlConfiguration
 		int nodeValue2 = GetNodeValue(document.DocumentElement, "Camera/VideoFormat/Height", 480);
 		VideoFormat = new Size(nodeValue, nodeValue2);
 		DeleteBitmapOnSuccessfulRead = GetNodeValue(document.DocumentElement, "Camera/DeleteBitmapOnSuccessfulRead", defaultValue: true);
-		SnapTimeout = GetNodeValue(document.DocumentElement, "Camera/SnapTimeout", 5000);
-		CameraWakeupSleep = GetNodeValue(document.DocumentElement, "Camera/CameraWakeupSleep", 10000);
 		CameraDriver = GetNodeValue(document.DocumentElement, "Camera/CameraDriver", "Vidcap");
 		if (RuntimeService.Instance.GetPlatform() == Platform.Windows7 && CameraDriver == "Vidcap")
 		{
-			LogHelper.Instance.Log("Platform is Windows7; hijack control to DirectShow.");
-			CameraDriver = "DirectShow";
+			LogHelper.Instance.Log("Platform is Windows7; hijack control to {0}.", "DirectShowFrame");
+			CameraDriver = "DirectShowFrame";
 		}
 		CycleCameraOnUse = GetNodeValue(document.DocumentElement, "Camera/CycleCameraOnUse", defaultValue: false);
 		if (CycleCameraOnUse)
@@ -136,26 +126,14 @@ public sealed class CameraConfiguration : XmlConfiguration
 		{
 			SetSingleNodeValue(document.DocumentElement, "Camera/CycleCameraOnUse", CycleCameraOnUse);
 		}
-		XmlNode xmlNode7 = document.DocumentElement.SelectSingleNode("Camera/SnapTimeout");
-		if (xmlNode7 != null)
-		{
-			xmlNode7.InnerText = XmlConvert.ToString(SnapTimeout);
-		}
-		else
-		{
-			SetSingleNodeValue(document.DocumentElement, "Camera/SnapTimeout", SnapTimeout);
-		}
-		SetSingleNodeValue(document.DocumentElement, "Camera/CameraWakeupSleep", CameraWakeupSleep);
 	}
 
 	private CameraConfiguration()
 		: base("cameraConfig")
 	{
-		SnapTimeout = 5000;
 		Mode = CameraMode.Normal;
 		VideoFormat = new Size(640, 480);
-		CameraDriver = "DirectShow";
-		CameraWakeupSleep = 5000;
+		CameraDriver = "DirectShowFrame";
 		Properties = new Dictionary<string, object>();
 		SaveProperties();
 	}
@@ -165,7 +143,5 @@ public sealed class CameraConfiguration : XmlConfiguration
 		Properties["WorkingPath"] = WorkingPath;
 		Properties["Mode"] = Mode;
 		Properties["VideoFormat"] = VideoFormat;
-		Properties["SnapTimeout"] = SnapTimeout;
-		Properties["WakeupPause"] = CameraWakeupSleep;
 	}
 }

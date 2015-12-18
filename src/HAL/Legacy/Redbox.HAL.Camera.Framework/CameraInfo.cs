@@ -61,8 +61,10 @@ public sealed class CameraInfo
 		{
 			return false;
 		}
-		PerfFunctions.Wait(500);
-		return SetCameraStateInner(DeviceState.Enable);
+		PerfFunctions.Wait(1500);
+		bool result = SetCameraStateInner(DeviceState.Enable);
+		PerfFunctions.SpinWait(1500);
+		return result;
 	}
 
 	public bool SetCameraState(DeviceState state)

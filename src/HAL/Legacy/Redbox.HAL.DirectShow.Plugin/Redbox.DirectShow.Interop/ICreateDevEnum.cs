@@ -5,8 +5,8 @@ using System.Runtime.InteropServices.ComTypes;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("29840822-5B84-11D0-BD3B-00A0C911CE86")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 internal interface ICreateDevEnum
 {
 	[PreserveSig]
