@@ -206,15 +206,17 @@ public class UpdateService : IDisposable
 		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
 	}
 
-	public ClientCommandResult StartStoreInstaller(string repositoryHash, string frontEndVersion)
+	public ClientCommandResult StartStoreInstaller(string kioskId, string repositoryHash, string frontEndVersion)
 	{
-		string command = $"installer start hash: '{repositoryHash}' version: '{frontEndVersion}'";
+		string credentialHash = UpdateServiceCredentials.Instance.GetCredentialHash(kioskId);
+		string command = $"installer start hash: '{repositoryHash}' version: '{frontEndVersion}' h: '{credentialHash}'";
 		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
 	}
 
-	public ClientCommandResult InstallerLog(string guid, string name, string value)
+	public ClientCommandResult InstallerLog(string kioskId, string guid, string name, string value)
 	{
-		string command = $"installer log guid:'{guid}' name:'{name}' value:'{value}'";
+		string credentialHash = UpdateServiceCredentials.Instance.GetCredentialHash(kioskId);
+		string command = string.Format("installer log guid:'{0}' name:'{1}' value:'{2}' h: '{2}'", guid, name, value, credentialHash);
 		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
 	}
 
@@ -250,18 +252,6 @@ public class UpdateService : IDisposable
 		if (clientCommandResult.Success)
 		{
 			lastCheckIn = clientCommandResult.CommandMessages[0].ToObject<DateTime>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult UploadFile(string number, string fileName, out Upload upload)
-	{
-		upload = new Upload();
-		string command = $"u u n: '{number}' f: '{fileName}'";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			upload = clientCommandResult.CommandMessages[0].ToObject<Upload>();
 		}
 		return clientCommandResult;
 	}
@@ -360,90 +350,6 @@ public class UpdateService : IDisposable
 		if (clientCommandResult.Success)
 		{
 			log = clientCommandResult.CommandMessages[0].ToObject<RevLog>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult GetWorkResultByStore(string number, out List<WorkResult> results)
-	{
-		results = new List<WorkResult>();
-		string command = $"work-result by-store number: '{number}'";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			results = clientCommandResult.CommandMessages[0].ToObject<List<WorkResult>>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult GetWorkResultByScript(long id, out List<WorkResult> results)
-	{
-		results = new List<WorkResult>();
-		string command = $"work-result by-script id: {id}";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			results = clientCommandResult.CommandMessages[0].ToObject<List<WorkResult>>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult GetWorkResultByScript(string name, out List<WorkResult> results)
-	{
-		results = new List<WorkResult>();
-		string command = $"work-result by-script name: {name}";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			results = clientCommandResult.CommandMessages[0].ToObject<List<WorkResult>>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult GetWorkResultByID(long id, out WorkResult workResult)
-	{
-		workResult = null;
-		string command = $"work-result get id: {id}";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			workResult = clientCommandResult.CommandMessages[0].ToObject<WorkResult>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult GiveStoreWork(long workId, string number)
-	{
-		string command = $"work-item give-store-work id: {workId} number: '{number}'";
-		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-	}
-
-	public ClientCommandResult GiveGroupWork(long workId, string name)
-	{
-		string command = $"work-item give-group-work id: {workId} name: '{name}'";
-		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-	}
-
-	public ClientCommandResult CreateWorkItem(string name, out WorkItem item)
-	{
-		item = new WorkItem();
-		string command = $"work-item create-by-name name: '{name}'";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			item = clientCommandResult.CommandMessages[0].ToObject<WorkItem>();
-		}
-		return clientCommandResult;
-	}
-
-	public ClientCommandResult CreateWorkItem(string name, DateTime effectiveDate, WorkItemRecurrence recurrence, out WorkItem item)
-	{
-		item = new WorkItem();
-		string command = $"work-item create-by-name name: '{name}' effectiveDate: '{effectiveDate}' recurrence: {recurrence}";
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult.Success)
-		{
-			item = clientCommandResult.CommandMessages[0].ToObject<WorkItem>();
 		}
 		return clientCommandResult;
 	}
@@ -686,17 +592,12 @@ public class UpdateService : IDisposable
 		return clientCommandResult;
 	}
 
-	public ClientCommandResult SendResult(string storeNumber, long id, object result)
-	{
-		string command = $"u r n: '{storeNumber}' i: {id} t: '{result.ToJson().EscapedJson()}'";
-		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-	}
-
 	public ClientCommandResult GetChangeSet(string storeNumber, Dictionary<string, string> currentFiles, out Store store, out List<ChangeSet> jobs)
 	{
 		store = new Store();
 		jobs = new List<ChangeSet>();
-		string command = $"u p n: '{storeNumber}' c: '{currentFiles.ToJson().EscapedJson()}'";
+		string credentialHash = UpdateServiceCredentials.Instance.GetCredentialHash(storeNumber);
+		string command = $"u p n: '{storeNumber}' c: '{currentFiles.ToJson().EscapedJson()}' h:'{credentialHash}'";
 		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
 		if (clientCommandResult.Success)
 		{
@@ -712,7 +613,8 @@ public class UpdateService : IDisposable
 	public ClientCommandResult Poll(string storeNumber, int version, List<PollRequest> pollRequestList, out List<PollReply> pollReplyList)
 	{
 		List<PollRequestDTO> pollReplyDTOList = PollRequestDTO.GetPollReplyDTOList(pollRequestList);
-		string command = $"u pr n:'{storeNumber}' v:'{version}' c:'{pollReplyDTOList.ToJson().EscapedJson()}'";
+		string credentialHash = UpdateServiceCredentials.Instance.GetCredentialHash(storeNumber);
+		string command = $"u pr n:'{storeNumber}' v:'{version}' c:'{pollReplyDTOList.ToJson().EscapedJson()}' h:'{credentialHash}'";
 		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
 		List<PollReplyDTO> list = new List<PollReplyDTO>();
 		foreach (string commandMessage in clientCommandResult.CommandMessages)
@@ -776,18 +678,6 @@ public class UpdateService : IDisposable
 			versions = clientCommandResult.CommandMessages[0].ToObject<List<Identifier>>();
 		}
 		return clientCommandResult;
-	}
-
-	public ClientCommandResult FinishUpload(UploadReport report)
-	{
-		string command = $"u q d: '{report.ToJson().EscapedJson()}'";
-		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-	}
-
-	public ClientCommandResult FinishTransfer(TransferStatisticReport report)
-	{
-		string command = $"u f d: '{report.ToJson().EscapedJson()}'";
-		return ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
 	}
 
 	public ClientCommandResult ForcePublishRun(string name)
@@ -913,30 +803,30 @@ public class UpdateService : IDisposable
 		using FileStream fileStream = File.OpenRead(path);
 		string arg = fileStream.ToASCIISHA1Hash();
 		fileStream.Seek(0L, SeekOrigin.Begin);
-		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile set-file " + (id.HasValue ? $"id:{id.Value} " : $"name:'{name}' ") + $"filename:'{filename}' destinationpath:'{destinationPath.EscapedJson()}' filekey:'{arg}'");
-		if (!clientCommandResult.Success)
+		ClientCommandResult clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile set-file " + (id.HasValue ? $"id:{id.Value} " : $"name:'{name}' ") + $"filename:'{filename}' destinationpath:'{destinationPath.EscapedJson()}' filekey:'{arg}'");
+		if (!clientCommandResult2.Success)
 		{
-			return clientCommandResult;
+			return clientCommandResult2;
 		}
 		byte[] array2 = new byte[1048576];
 		for (int num4 = ReadChunk(fileStream, array2); num4 > 0; num4 = ReadChunk(fileStream, array2))
 		{
 			byte[] array3 = new byte[num4];
 			Array.Copy(array2, array3, array3.Length);
-			clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value} " : $"name:'{name}' ") + $"data:'{array3.ToBase64()}'");
-			if (!clientCommandResult.Success)
+			clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value} " : $"name:'{name}' ") + $"data:'{array3.ToBase64()}'");
+			if (!clientCommandResult2.Success)
 			{
-				return clientCommandResult;
+				return clientCommandResult2;
 			}
 			num3 += array3.Length;
 			Log("Uploaded {0} mb / {1} mb", (num3 != 0) ? (num3 / 1048576) : 0, num2);
 		}
-		clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value}" : $"name:'{name}'") + " finished:true");
-		if (clientCommandResult.Success)
+		clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value}" : $"name:'{name}'") + " finished:true");
+		if (clientCommandResult2.Success)
 		{
 			Log("Upload complete");
 		}
-		return clientCommandResult;
+		return clientCommandResult2;
 	}
 
 	public ClientCommandResult DownloadFileSetScript(long? id, string name, string path)
