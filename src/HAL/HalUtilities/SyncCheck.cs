@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;
@@ -57,6 +58,8 @@ internal class SyncCheck
 		}
 	}
 
+	private readonly IRuntimeService RuntimeService;
+
 	private List<SyncLocation> Locations { get; set; }
 
 	private string JobID { get; set; }
@@ -65,6 +68,7 @@ internal class SyncCheck
 	{
 		Locations = new List<SyncLocation>();
 		JobID = jobId;
+		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
 	}
 
 	internal void Summarize()
@@ -85,7 +89,7 @@ internal class SyncCheck
 
 	internal void AnalyzeCognex(string file)
 	{
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, $"Cognex-{JobID}-analysis.log");
+		string path = RuntimeService.RuntimePath($"Cognex-{JobID}-analysis.log");
 		if (File.Exists(path))
 		{
 			try
@@ -188,7 +192,7 @@ internal class SyncCheck
 
 	internal void AnalyzeCortex(string file)
 	{
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, $"Cortex-{JobID}-analysis.log");
+		string path = RuntimeService.RuntimePath($"Cortex-{JobID}-analysis.log");
 		if (File.Exists(path))
 		{
 			try
@@ -322,7 +326,7 @@ internal class SyncCheck
 		string text = "Deck=";
 		string text2 = "Slot=";
 		string text3 = "ID=";
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, $"Sync-{JobID}-analysis.log");
+		string path = RuntimeService.RuntimePath($"Sync-{JobID}-analysis.log");
 		if (File.Exists(path))
 		{
 			try

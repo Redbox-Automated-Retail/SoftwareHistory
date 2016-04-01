@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;

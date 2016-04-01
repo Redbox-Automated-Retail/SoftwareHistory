@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;
@@ -68,6 +69,8 @@ internal sealed class QuickReturnHelper
 	private const int SPDRP_HARDWAREID = 1;
 
 	private const int SPDRP_CLASS = 7;
+
+	private readonly IRuntimeService RuntimeService;
 
 	private StringBuilder m_deviceBufferName;
 
@@ -134,14 +137,14 @@ internal sealed class QuickReturnHelper
 
 	internal void DumpCounters(HardwareService service, bool reset)
 	{
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "QRHelper.log");
+		string path = RuntimeService.RuntimePath("QRHelper.log");
 		using StreamWriter streamWriter = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read));
 		if (service == null)
 		{
 			streamWriter.WriteLine("Can't talk to HAL.");
 			return;
 		}
-		string path2 = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "QRstats.log");
+		string path2 = RuntimeService.RuntimePath("QRstats.log");
 		if (File.Exists(path2))
 		{
 			try
@@ -303,11 +306,12 @@ internal sealed class QuickReturnHelper
 
 	internal QuickReturnHelper()
 	{
+		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
 	}
 
 	private void LogErrors(string fileName, List<string> errors)
 	{
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, fileName);
+		string path = RuntimeService.RuntimePath(fileName);
 		if (File.Exists(path))
 		{
 			try

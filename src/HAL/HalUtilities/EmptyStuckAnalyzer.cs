@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;
@@ -61,7 +62,8 @@ internal class EmptyStuckAnalyzer
 			int num2 = 0;
 			string text = "GET Deck=";
 			string text2 = "Slot=";
-			string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "EmptyStuckAnalysis.log");
+			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+			string path = service.RuntimePath("EmptyStuckAnalysis.log");
 			if (File.Exists(path))
 			{
 				try

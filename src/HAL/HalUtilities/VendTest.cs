@@ -9,19 +9,21 @@ namespace HALUtilities;
 
 internal class VendTest
 {
-	private AutoResetEvent Waiter = new AutoResetEvent(initialState: false);
+	private readonly AutoResetEvent Waiter = new AutoResetEvent(initialState: false);
 
-	private List<IInventoryLocation> m_locs = new List<IInventoryLocation>();
+	private readonly HardwareService Service;
 
-	private HardwareService Service { get; set; }
+	private readonly ClientHelper Helper;
 
-	private ClientHelper Helper { get; set; }
+	private readonly int Iterations;
 
-	private int Iterations { get; set; }
+	private readonly List<IInventoryLocation> m_locs = new List<IInventoryLocation>();
 
 	internal VendTest(int iter)
 	{
 		Iterations = iter;
+		Helper = new ClientHelper();
+		Service = Helper.AutoConnect();
 	}
 
 	internal void Execute(IConsole console, int? startAt)
@@ -34,12 +36,10 @@ internal class VendTest
 		}
 		console.WriteLine("Starting test at {0} on {1}", DateTime.Now.ToShortTimeString(), DateTime.Now.ToShortDateString());
 		List<Location> list = new List<Location>();
-		ClientHelper clientHelper = new ClientHelper();
-		Service = clientHelper.AutoConnect();
 		for (int i = 0; i < Iterations; i++)
 		{
 			console.WriteLine("Starting iteration {0}", i);
-			GenerateList(clientHelper, console);
+			GenerateList(console);
 			IInventoryLocation inventoryLocation = null;
 			do
 			{
@@ -58,7 +58,7 @@ internal class VendTest
 					return;
 				}
 				job.Pend();
-				clientHelper.WaitForJob(job, out var endStatus);
+				Helper.WaitForJob(job, out var endStatus);
 				list.Clear();
 				if (endStatus != HardwareJobStatus.Completed)
 				{
@@ -80,9 +80,9 @@ internal class VendTest
 		Waiter.Set();
 	}
 
-	private void GenerateList(ClientHelper helper, IConsole console)
+	private void GenerateList(IConsole console)
 	{
-		using KioskInventory kioskInventory = new KioskInventory();
+		using KioskInventory kioskInventory = new KioskInventory(Service);
 		if (kioskInventory.DeckInventory.Count == 0)
 		{
 			console.WriteLine("Unable to get inventory from service.");

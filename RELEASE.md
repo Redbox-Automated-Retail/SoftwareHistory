@@ -1,16 +1,16 @@
 # Batman (1.8.0.22)
 
-- Product: MS HAL Tester 1.8.0.22
+- Product: HAL Utilities 1.8.0.22
 - Date (first download in the snapshots): 2016-04-01
-- Store labels: kop-ms-hal-tester-Batman
+- Store labels: kop-tools-Batman
 - Package revisions:
-  - `kop-tools` revision 22 (`A5E52A494499BDECC9AEC39F3994DA6A73842CFC`)
+  - `kop-tools` revision 27 (`8F74EEBC08A7DAA461B666C2918FBDE8231C5D95`)
   - `kop-hal-install` revision 31 (`8542054E6CF6805DA0BC3443612EF390929F9D02`)
   - `kop-ms-hal-tester` revision 27 (`A72458770466E3A35C7B72182B30CB543D0B528B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.4.0.245 | `8C359A71AB518710385F9323BCE6AEB1910C97A9` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.8.0.22 | `8B91118CF825962B5F789AD8416010446C7B4C72` | exact |
 | `beforeactivate.lua` |  |  | `06B47DDAB43B054ECF43CF997FF078F687CF7171` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.4.0.246 | `6F67B9396CC02FFAC1FF07A994DD24479DB1D8F5` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

@@ -2,25 +2,13 @@ namespace HALUtilities;
 
 public class DeviceConfiguration
 {
-	private static DeviceConfiguration m_instance;
+	public readonly int DevicePixelWidth;
 
-	public static DeviceConfiguration Instance
+	public readonly int DeviceHeight;
+
+	internal DeviceConfiguration(int width, int height)
 	{
-		get
-		{
-			if (m_instance == null)
-			{
-				m_instance = new DeviceConfiguration();
-			}
-			return m_instance;
-		}
-	}
-
-	public int DevicePixelWidth { get; set; }
-
-	public int DeviceHeight { get; set; }
-
-	private DeviceConfiguration()
-	{
+		DevicePixelWidth = width;
+		DeviceHeight = height;
 	}
 }

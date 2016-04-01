@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -174,15 +175,11 @@ public class ClientHelper
 
 	private bool WaitForInitInner(int pause)
 	{
-		Sink.WriteMessage("Bootstrap init is running...");
-		while (true)
+		Sink.WriteMessage("Checking for bootstrap init.");
+		while (BootstrapInitRunning())
 		{
-			Thread.Sleep(pause);
-			if (!BootstrapInitRunning())
-			{
-				break;
-			}
 			Sink.WriteMessage("{0}: still waiting for bootstrap init.", DateTime.Now.ToLongTimeString());
+			Thread.Sleep(pause);
 		}
 		Sink.WriteMessage("Init done");
 		return true;
