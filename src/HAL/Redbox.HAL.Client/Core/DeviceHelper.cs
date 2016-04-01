@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
@@ -302,27 +302,22 @@ internal class DeviceHelper : IDisposable
 	public bool ResetByName(string deviceName)
 	{
 		int resetPauseTime = ResetPauseTime;
-		ManualResetEvent manualResetEvent = new ManualResetEvent(initialState: false);
 		if (!SetDeviceStateInner(DeviceClass.Ports, DeviceState.Disable, deviceName, MatchType.DeviceDescription))
 		{
 			return false;
 		}
-		manualResetEvent.WaitOne(resetPauseTime);
+		PerfFunctions.Wait(resetPauseTime);
 		if (!SetDeviceStateInner(DeviceClass.USB, DeviceState.Disable, deviceName, MatchType.DeviceDescription))
 		{
 			return false;
 		}
-		manualResetEvent.WaitOne(resetPauseTime);
+		PerfFunctions.Wait(resetPauseTime);
 		if (!SetDeviceStateInner(DeviceClass.USB, DeviceState.Enable, deviceName, MatchType.DeviceDescription))
 		{
 			return false;
 		}
-		manualResetEvent.WaitOne(resetPauseTime);
-		if (!SetDeviceStateInner(DeviceClass.Ports, DeviceState.Enable, deviceName, MatchType.DeviceDescription))
-		{
-			return false;
-		}
-		return true;
+		PerfFunctions.Wait(resetPauseTime);
+		return SetDeviceStateInner(DeviceClass.Ports, DeviceState.Enable, deviceName, MatchType.DeviceDescription);
 	}
 
 	public DeviceStatus FindDeviceStatus(Guid deviceClazz, DeviceDescriptor deviceInfo)

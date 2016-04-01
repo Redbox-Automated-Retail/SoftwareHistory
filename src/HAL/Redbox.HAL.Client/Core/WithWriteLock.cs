@@ -20,8 +20,9 @@ internal struct WithWriteLock : IDisposable
 
 	public WithWriteLock(ReaderWriterLockSlim _lock)
 	{
-		TheLock = _lock;
+		this = default(WithWriteLock);
 		Disposed = false;
+		TheLock = _lock;
 		TheLock.EnterWriteLock();
 	}
 }

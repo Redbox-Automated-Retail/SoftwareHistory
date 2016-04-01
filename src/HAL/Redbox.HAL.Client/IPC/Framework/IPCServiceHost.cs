@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;

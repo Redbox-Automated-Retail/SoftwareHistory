@@ -1,30 +1,21 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
 internal class BatchCommandRunner : ISession, IMessageSink
 {
-	private ErrorList m_errorList = new ErrorList();
+	private readonly ErrorList m_errorList = new ErrorList();
 
-	private ParameterDictionary m_context;
+	private readonly IDictionary<string, string> m_context = new Dictionary<string, string>();
 
 	private readonly StreamReader m_reader;
 
-	public ParameterDictionary Context
-	{
-		get
-		{
-			if (m_context == null)
-			{
-				m_context = new ParameterDictionary();
-			}
-			return m_context;
-		}
-	}
+	public IDictionary<string, string> Context => m_context;
 
 	public bool LogDetailedMessages { get; set; }
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -82,7 +83,7 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 	public T Execute()
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
-		T result = new T
+		T val = new T
 		{
 			CommandText = CommandText
 		};
@@ -100,20 +101,20 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 			}
 			List<string> list = Session.ExecuteCommand(CommandText);
 			bool success = Session.IsStatusOK(list);
-			result.Success = success;
+			val.Success = success;
 			if (list.Count > 0)
 			{
 				string statusMessage = list[list.Count - 1];
-				result.StatusMessage = statusMessage;
+				val.StatusMessage = statusMessage;
 				list.RemoveAt(list.Count - 1);
 			}
-			result.CommandMessages.AddRange(list);
-			List<int> list2 = ConvertMessages(result);
+			val.CommandMessages.AddRange(list);
+			List<int> list2 = ConvertMessages(val);
 			foreach (int item in list2)
 			{
-				if (item < result.CommandMessages.Count)
+				if (item < val.CommandMessages.Count)
 				{
-					result.CommandMessages.RemoveAt(item);
+					val.CommandMessages.RemoveAt(item);
 				}
 			}
 		}
@@ -121,23 +122,23 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 		{
 			ErrorLogFile.WriteLine("ClientCommand.Execute() caught a socket exception; SocketErrorCode = {0}, Native = {1}", ex.SocketErrorCode, ex.NativeErrorCode);
 			ErrorLogFile.Flush();
-			OnConnectionFailure(ex, result);
+			OnConnectionFailure(ex, val);
 		}
 		catch (TimeoutException ex2)
 		{
 			ErrorLogFile.WriteLine("ClientCommand.Execute() caught a Timeout exception ( exception Message = {0} )", ex2.Message);
 			ErrorLogFile.Flush();
-			OnConnectionFailure(ex2, result);
+			OnConnectionFailure(ex2, val);
 		}
 		catch (Exception e)
 		{
-			OnUnhandledException(e, result);
+			OnUnhandledException(e, val);
 		}
 		finally
 		{
 			TimeSpan elapsed = executionTimer.Elapsed;
-			result.ExecutionTime = elapsed;
-			ExecutionTime = result.ExecutionTime;
+			val.ExecutionTime = elapsed;
+			ExecutionTime = val.ExecutionTime;
 			try
 			{
 				if (flag && Session != null)
@@ -147,11 +148,11 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 			}
 			catch (Exception e2)
 			{
-				result.Success = false;
-				result.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in ClientCommand.Execute.", e2));
+				val.Success = false;
+				val.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in ClientCommand.Execute.", e2));
 			}
 		}
-		return result;
+		return val;
 	}
 
 	public override string ToString()

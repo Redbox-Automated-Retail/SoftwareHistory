@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -11,23 +12,7 @@ public class ClientHelper
 {
 	public delegate void InitComplete();
 
-	private const int DefaultWaitTime = 5000;
-
 	private ManualResetEvent m_resetEvent = new ManualResetEvent(initialState: false);
-
-	private int? m_initPauseTime = null;
-
-	public int InitPollTime
-	{
-		get
-		{
-			return m_initPauseTime ?? 5000;
-		}
-		set
-		{
-			m_initPauseTime = value;
-		}
-	}
 
 	public HardwareService Service { get; private set; }
 
@@ -54,14 +39,19 @@ public class ClientHelper
 		return true;
 	}
 
+	public bool WaitforInit(int pause)
+	{
+		return WaitForInitInner(pause);
+	}
+
 	public bool WaitforInit()
 	{
-		return WaitForInitInner();
+		return WaitForInitInner(5000);
 	}
 
 	public bool WaitforInit(InitComplete onDone)
 	{
-		bool result = WaitForInitInner();
+		bool result = WaitForInitInner(5000);
 		onDone?.Invoke();
 		return result;
 	}
@@ -183,17 +173,13 @@ public class ClientHelper
 		Service = service;
 	}
 
-	private bool WaitForInitInner()
+	private bool WaitForInitInner(int pause)
 	{
-		Sink.WriteMessage("Bootstrap init is running...");
-		while (true)
+		Sink.WriteMessage("Checking for bootstrap init.");
+		while (BootstrapInitRunning())
 		{
-			Thread.Sleep(InitPollTime);
-			if (!BootstrapInitRunning())
-			{
-				break;
-			}
 			Sink.WriteMessage("{0}: still waiting for bootstrap init.", DateTime.Now.ToLongTimeString());
+			Thread.Sleep(pause);
 		}
 		Sink.WriteMessage("Init done");
 		return true;

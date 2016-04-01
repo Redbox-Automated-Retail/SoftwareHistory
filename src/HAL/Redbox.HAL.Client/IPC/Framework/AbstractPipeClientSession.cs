@@ -77,18 +77,10 @@ internal abstract class AbstractPipeClientSession : IDisposable
 
 	protected List<string> ConsumeMessages()
 	{
-		ResetReadBuilder();
+		StringBuildExtension.Reset(ReadBuilder);
 		string value = Encoding.ASCII.GetString(Channel.ReceiveMessage());
 		ReadBuilder.Append(value);
 		return ProcessRawMessage();
-	}
-
-	protected void ResetReadBuilder()
-	{
-		if (ReadBuilder.Length != 0)
-		{
-			ReadBuilder.Length = 0;
-		}
 	}
 
 	protected bool Write(string s)

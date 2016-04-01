@@ -1,6 +1,6 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -8,8 +8,8 @@ namespace Redbox.HAL.IPC.Framework;
 [Command("script")]
 internal class ScriptCommand
 {
-	[Usage("SCRIPT execute path: 'C:\\temp\\my-script.txt'")]
 	[CommandForm(Name = "execute")]
+	[Usage("SCRIPT execute path: 'C:\\temp\\my-script.txt'")]
 	public void Execute(CommandContext context, [CommandKeyValue(IsRequired = true)] string path)
 	{
 		try

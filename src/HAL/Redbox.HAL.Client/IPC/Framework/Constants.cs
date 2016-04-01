@@ -30,9 +30,4 @@ internal static class Constants
 
 		public const int StreamWriteTimeout = 30000;
 	}
-
-	public static class Configuration
-	{
-		public const string SettingsKey = "SOFTWARE\\Redbox\\HAL";
-	}
 }

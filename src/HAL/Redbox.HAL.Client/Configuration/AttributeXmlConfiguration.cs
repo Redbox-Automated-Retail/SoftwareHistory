@@ -1,43 +1,61 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
 using System.Xml;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Configuration;
 
-internal abstract class AttributeXmlConfiguration : AbstractXmlConfiguration
+internal abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IConfigurationObserver
 {
+	private const BindingFlags PropertyFlags = BindingFlags.Instance | BindingFlags.Public;
+
 	private readonly Type ThisType;
+
+	private readonly List<IConfigurationObserver> Observers = new List<IConfigurationObserver>();
+
+	[Browsable(false)]
+	public string RootName { get; private set; }
 
 	protected abstract string FileNodeName { get; }
 
-	protected AttributeXmlConfiguration(string xmlRoot, Type type)
-		: base(xmlRoot)
+	public void NotifyConfigurationLoaded()
 	{
-		ThisType = type;
-		using ExecutionTimer executionTimer = new ExecutionTimer();
-		PropertyInfo[] properties = ThisType.GetProperties();
-		PropertyInfo[] array = properties;
-		foreach (PropertyInfo propertyInfo in array)
+		foreach (IConfigurationObserver observer in Observers)
 		{
-			if (Attribute.GetCustomAttribute(propertyInfo, typeof(XmlConfigurationAttribute)) is XmlConfigurationAttribute xmlConfigurationAttribute)
-			{
-				try
-				{
-					object value = ConversionHelper.ChangeType(xmlConfigurationAttribute.DefaultValue, propertyInfo.PropertyType);
-					propertyInfo.SetValue(this, value, null);
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log($"[AttributeXmlConfiguration] Ctor caught an exception processing property {propertyInfo.Name}.", e);
-				}
-			}
+			observer.NotifyConfigurationLoaded();
 		}
-		executionTimer.Stop();
-		LogHelper.Instance.Log("[AttributeXmlConfiguration] Time to set defaults on type {0}: {1}ms", type.Name, executionTimer.ElapsedMilliseconds);
 	}
 
-	protected override void LoadProperties(XmlDocument document, ErrorList errors)
+	public void NotifyConfigurationChangeStart()
+	{
+		foreach (IConfigurationObserver observer in Observers)
+		{
+			observer.NotifyConfigurationChangeStart();
+		}
+	}
+
+	public void NotifyConfigurationChangeEnd()
+	{
+		foreach (IConfigurationObserver observer in Observers)
+		{
+			observer.NotifyConfigurationChangeEnd();
+		}
+	}
+
+	public void AddObserver(IConfigurationObserver observer)
+	{
+		Observers.Add(observer);
+	}
+
+	public void RemoveObserver(IConfigurationObserver observer)
+	{
+		Observers.Remove(observer);
+	}
+
+	public void LoadProperties(XmlDocument document, ErrorList errors)
 	{
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
@@ -47,7 +65,7 @@ internal abstract class AttributeXmlConfiguration : AbstractXmlConfiguration
 				string name = childNode.Name;
 				try
 				{
-					PropertyInfo property = ThisType.GetProperty(name);
+					PropertyInfo property = ThisType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
 					if (property == null)
 					{
 						if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
@@ -72,11 +90,11 @@ internal abstract class AttributeXmlConfiguration : AbstractXmlConfiguration
 		LoadPropertiesInner(document, errors);
 	}
 
-	protected override void StoreProperties(XmlDocument document, ErrorList errors)
+	public void StoreProperties(XmlDocument document, ErrorList errors)
 	{
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
-			PropertyInfo[] properties = ThisType.GetProperties();
+			PropertyInfo[] properties = ThisType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 			PropertyInfo[] array = properties;
 			foreach (PropertyInfo propertyInfo in array)
 			{
@@ -99,7 +117,87 @@ internal abstract class AttributeXmlConfiguration : AbstractXmlConfiguration
 		StorePropertiesInner(document, errors);
 	}
 
+	public void Import(ErrorList errors)
+	{
+		ImportInner(errors);
+	}
+
+	public void Upgrade(XmlDocument document, ErrorList errors)
+	{
+		UpgradeInner(document, errors);
+	}
+
+	protected AttributeXmlConfiguration(string xmlRoot, Type type)
+	{
+		RootName = xmlRoot;
+		ThisType = type;
+		using ExecutionTimer executionTimer = new ExecutionTimer();
+		PropertyInfo[] properties = ThisType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+		PropertyInfo[] array = properties;
+		foreach (PropertyInfo propertyInfo in array)
+		{
+			if (Attribute.GetCustomAttribute(propertyInfo, typeof(XmlConfigurationAttribute)) is XmlConfigurationAttribute xmlConfigurationAttribute)
+			{
+				try
+				{
+					object value = ConversionHelper.ChangeType(xmlConfigurationAttribute.DefaultValue, propertyInfo.PropertyType);
+					propertyInfo.SetValue(this, value, null);
+				}
+				catch (Exception e)
+				{
+					LogHelper.Instance.Log($"[AttributeXmlConfiguration] Ctor caught an exception processing property {propertyInfo.Name}.", e);
+				}
+			}
+		}
+		executionTimer.Stop();
+		LogHelper.Instance.Log("[AttributeXmlConfiguration] Time to set defaults on type {0}: {1}ms", type.Name, executionTimer.ElapsedMilliseconds);
+	}
+
+	protected abstract void ImportInner(ErrorList errors);
+
+	protected abstract void UpgradeInner(XmlDocument document, ErrorList errors);
+
 	protected abstract void LoadPropertiesInner(XmlDocument document, ErrorList errors);
 
 	protected abstract void StorePropertiesInner(XmlDocument document, ErrorList errors);
+
+	private void SetSingleNodeValue(XmlNode node, string path, object value)
+	{
+		GetTargetNode(node, path).InnerText = value.ToString();
+	}
+
+	private T GetNodeValue<T>(XmlNode parent, string singleNode, T defaultValue)
+	{
+		XmlNode xmlNode = parent.SelectSingleNode(singleNode);
+		try
+		{
+			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+			if (xmlNode != null && !string.IsNullOrEmpty(xmlNode.InnerText))
+			{
+				return (T)ConversionHelper.ChangeType(service.ExpandConstantMacros(xmlNode.InnerText), typeof(T));
+			}
+		}
+		catch (ArgumentException)
+		{
+		}
+		return defaultValue;
+	}
+
+	private XmlNode GetTargetNode(XmlNode node, string path)
+	{
+		string[] array = path.Split("/".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+		XmlNode xmlNode = node;
+		string[] array2 = array;
+		foreach (string text in array2)
+		{
+			XmlNode xmlNode2 = xmlNode.SelectSingleNode(text);
+			if (xmlNode2 == null)
+			{
+				xmlNode2 = xmlNode.OwnerDocument.CreateElement(text);
+				xmlNode.AppendChild(xmlNode2);
+			}
+			xmlNode = xmlNode2;
+		}
+		return xmlNode;
+	}
 }

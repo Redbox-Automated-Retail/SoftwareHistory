@@ -5,37 +5,23 @@ using System.Net.Security;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
 internal abstract class ServerSession : ISession, IMessageSink
 {
-	public enum SessionType
-	{
-		NamedPipe,
-		TcpSocket
-	}
+	private readonly IPCServiceHost ServiceHost;
 
-	private StringBuilder m_readBuilder;
+	private readonly List<string> MessageSinkQueue = new List<string>();
 
-	private ParameterDictionary m_context;
+	private readonly StringBuilder ReadBuilder = new StringBuilder();
 
-	private List<string> m_messageSinkQueue;
+	private readonly IDictionary<string, string> m_context = new Dictionary<string, string>();
 
 	private readonly object m_syncLock = new object();
 
-	public ParameterDictionary Context
-	{
-		get
-		{
-			if (m_context == null)
-			{
-				m_context = new ParameterDictionary();
-			}
-			return m_context;
-		}
-	}
+	public IDictionary<string, string> Context => m_context;
 
 	public bool LogDetailedMessages { get; set; }
 
@@ -54,32 +40,6 @@ internal abstract class ServerSession : ISession, IMessageSink
 				return ServiceHost.Certificate != null;
 			}
 			return false;
-		}
-	}
-
-	private IPCServiceHost ServiceHost { get; set; }
-
-	private List<string> MessageSinkQueue
-	{
-		get
-		{
-			if (m_messageSinkQueue == null)
-			{
-				m_messageSinkQueue = new List<string>();
-			}
-			return m_messageSinkQueue;
-		}
-	}
-
-	private StringBuilder ReadBuilder
-	{
-		get
-		{
-			if (m_readBuilder == null)
-			{
-				m_readBuilder = new StringBuilder();
-			}
-			return m_readBuilder;
 		}
 	}
 
@@ -310,13 +270,5 @@ internal abstract class ServerSession : ISession, IMessageSink
 	private bool HasMoreBufferLines()
 	{
 		return ReadBuilder.ToString().IndexOf(Environment.NewLine) == -1;
-	}
-
-	private void ResetReadBuilder()
-	{
-		if (ReadBuilder.Length != 0)
-		{
-			ReadBuilder.Length = 0;
-		}
 	}
 }

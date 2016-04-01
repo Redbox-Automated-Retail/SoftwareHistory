@@ -5,7 +5,7 @@ namespace Redbox.HAL.Core;
 
 internal struct DisposeableList<T> : IDisposable
 {
-	private readonly List<T> TheList;
+	private readonly IList<T> TheList;
 
 	private bool m_disposed;
 
@@ -18,8 +18,9 @@ internal struct DisposeableList<T> : IDisposable
 		}
 	}
 
-	public DisposeableList(List<T> list)
+	public DisposeableList(IList<T> list)
 	{
+		this = default(DisposeableList<T>);
 		m_disposed = false;
 		TheList = list;
 	}

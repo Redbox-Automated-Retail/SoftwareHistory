@@ -4,26 +4,42 @@ namespace Redbox.HAL.Core;
 
 internal sealed class AtomicFlag
 {
-	private const int Flagged = 1;
+	private const int DefaultFlagged = 1;
 
-	private const int Unflagged = 0;
+	private const int DefaultUnflagged = 0;
 
-	private int m_state;
+	private int m_flagState;
 
-	public bool IsFlagged => Thread.VolatileRead(ref m_state) == 1;
+	private readonly int Flagged;
+
+	private readonly int Unflagged;
+
+	public bool IsSet => Thread.VolatileRead(ref m_flagState) == Flagged;
 
 	public bool Set()
 	{
-		return Interlocked.CompareExchange(ref m_state, 1, 0) == 0;
+		return Interlocked.CompareExchange(ref m_flagState, Flagged, Unflagged) == Unflagged;
 	}
 
 	public bool Clear()
 	{
-		return Interlocked.CompareExchange(ref m_state, 0, 1) == 1;
+		return Interlocked.CompareExchange(ref m_flagState, Unflagged, Flagged) == Flagged;
 	}
 
 	public AtomicFlag(bool initial)
+		: this(initial, 1, 0)
 	{
-		Interlocked.Exchange(ref m_state, initial ? 1 : 0);
+	}
+
+	public AtomicFlag()
+		: this(initial: false, 1, 0)
+	{
+	}
+
+	public AtomicFlag(bool initial, int flagged, int unflagged)
+	{
+		Flagged = flagged;
+		Unflagged = unflagged;
+		Interlocked.Exchange(ref m_flagState, initial ? Flagged : Unflagged);
 	}
 }

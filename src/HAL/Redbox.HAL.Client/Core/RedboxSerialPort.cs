@@ -2,12 +2,13 @@ using System;
 using System.IO.Ports;
 using System.Text;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
 internal abstract class RedboxSerialPort : IDisposable
 {
-	public delegate bool ResponseComplete(ChannelResponse response);
+	public delegate bool ResponseComplete(IChannelResponse response);
 
 	public static readonly byte[] WriteCharsCRNull = new byte[2] { 13, 0 };
 
@@ -31,11 +32,11 @@ internal abstract class RedboxSerialPort : IDisposable
 	{
 		get
 		{
-			if (Port == null)
+			if (Port != null)
 			{
-				return false;
+				return PortIsOpen();
 			}
-			return PortIsOpen();
+			return false;
 		}
 	}
 
@@ -135,7 +136,7 @@ internal abstract class RedboxSerialPort : IDisposable
 
 	public abstract bool Open();
 
-	public abstract ChannelResponse SendRecv(byte[] bytes, int readTimeout);
+	public abstract IChannelResponse SendRecv(byte[] bytes, int readTimeout);
 
 	protected bool OpenInner()
 	{
@@ -184,7 +185,7 @@ internal abstract class RedboxSerialPort : IDisposable
 		return ResetPortBuffers(resetOut: false);
 	}
 
-	public ChannelResponse SendRecv(string command, int readTimeout)
+	public IChannelResponse SendRecv(string command, int readTimeout)
 	{
 		return SendRecv(Encoding.ASCII.GetBytes(command), readTimeout);
 	}
@@ -225,10 +226,7 @@ internal abstract class RedboxSerialPort : IDisposable
 		string text = (string.IsNullOrEmpty(FriendlyName) ? Name : FriendlyName);
 		try
 		{
-			if (Port.IsOpen)
-			{
-				return true;
-			}
+			return Port.IsOpen;
 		}
 		catch (ArgumentNullException e)
 		{
@@ -245,7 +243,6 @@ internal abstract class RedboxSerialPort : IDisposable
 			LogHelper.Instance.Log("[RedboxSerialPort] {0} IsOpen generated an unhandled exception.", text);
 			return false;
 		}
-		return false;
 	}
 
 	protected string AsString(byte[] array)

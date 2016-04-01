@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 

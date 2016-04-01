@@ -1,16 +1,13 @@
 using System;
 using System.IO.Ports;
-using System.Threading;
+using System.Text;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
 internal sealed class CallbackReadPort : RedboxSerialPort
 {
-	private const int Reading = 1;
-
-	private const int NotReading = 0;
-
-	private int ReadState;
+	private readonly AtomicFlag ReadingFlag = new AtomicFlag();
 
 	private byte[] ReadBuffer;
 
@@ -33,9 +30,9 @@ internal sealed class CallbackReadPort : RedboxSerialPort
 		return true;
 	}
 
-	public override ChannelResponse SendRecv(byte[] command, int readTimeout)
+	public override IChannelResponse SendRecv(byte[] command, int readTimeout)
 	{
-		ChannelResponse channelResponse = (Current = ChannelResponse.NewChannel(createBuffer: false));
+		ChannelResponse channelResponse = (Current = new ChannelResponse());
 		try
 		{
 			try
@@ -43,10 +40,15 @@ internal sealed class CallbackReadPort : RedboxSerialPort
 				if (!Port.IsOpen)
 				{
 					LogHelper.Instance.Log("Port.WriteCommand: the port was closed.", LogEntryType.Error);
-					channelResponse.SetClosedError();
+					channelResponse.Error = ErrorCodes.CommunicationError;
 					return channelResponse;
 				}
-				Interlocked.Exchange(ref ReadState, 1);
+				if (!ReadingFlag.Set())
+				{
+					LogHelper.Instance.Log(LogEntryType.Error, "[CallbackPort] The port is already reading.");
+					channelResponse.Error = ErrorCodes.CommunicationError;
+					return channelResponse;
+				}
 				Port.Write(command, 0, command.Length);
 				if (base.WriteTerminator != null)
 				{
@@ -56,18 +58,28 @@ internal sealed class CallbackReadPort : RedboxSerialPort
 			}
 			catch (Exception e)
 			{
-				Interlocked.Exchange(ref ReadState, 0);
 				LogHelper.Instance.Log("Port.WriteCommand() caught an exception.", e);
-				channelResponse.SetCommunicationError();
+				channelResponse.Error = ErrorCodes.CommunicationError;
 				return channelResponse;
 			}
-			channelResponse.ReadEvent.WaitOne(readTimeout);
-			Interlocked.Exchange(ref ReadState, 0);
+			if (!channelResponse.Wait(readTimeout))
+			{
+				channelResponse.Error = ErrorCodes.CommunicationError;
+				if (string.IsNullOrEmpty(FriendlyName))
+				{
+					LogHelper.Instance.Log("Communication ERROR: port read timed out", LogEntryType.Error);
+				}
+				else
+				{
+					LogHelper.Instance.Log(LogEntryType.Error, "Communication ERROR ({0}): port read timed out", FriendlyName);
+				}
+			}
 			return channelResponse;
 		}
 		finally
 		{
 			Current = null;
+			ReadingFlag.Clear();
 		}
 	}
 
@@ -88,6 +100,10 @@ internal sealed class CallbackReadPort : RedboxSerialPort
 		{
 			return;
 		}
+		if (base.EnableDebugging)
+		{
+			LogHelper.Instance.Log("[Port_DataReceived] There are {0} bytes to read.", bytesToRead);
+		}
 		if (bytesToRead > ReadBuffer.Length)
 		{
 			LogHelper.Instance.Log("[DataReceived ERROR] {0} The bytes to read exceeds the read buffer length!", string.IsNullOrEmpty(FriendlyName) ? base.Name : FriendlyName);
@@ -99,7 +115,7 @@ internal sealed class CallbackReadPort : RedboxSerialPort
 			{
 				LogHelper.Instance.Log("[DataReceived ERROR] {0} The bytes to read {1} doesn't match the read count {2}", string.IsNullOrEmpty(FriendlyName) ? base.Name : FriendlyName, num, bytesToRead);
 			}
-			if (1 != ReadState)
+			if (!ReadingFlag.IsSet)
 			{
 				return;
 			}
@@ -111,7 +127,11 @@ internal sealed class CallbackReadPort : RedboxSerialPort
 			Current.Accumulate(ReadBuffer, bytesToRead);
 			if (base.Validate(Current))
 			{
-				Current.ReadEvent.Set();
+				Current.ReadEnd();
+			}
+			if (base.EnableDebugging)
+			{
+				LogHelper.Instance.Log("[Port_DataReceived] response currently: {0}", Encoding.ASCII.GetString(Current.RawResponse));
 			}
 		}
 		catch (Exception e2)

@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -87,7 +88,8 @@ internal class CommandService
 
 	private static bool GetTokenizer(string input, CommandResult result, CommandContext context, out CommandTokenizer tokenizer)
 	{
-		input = RuntimeService.Instance.ExpandConstantMacros(input);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		input = service.ExpandConstantMacros(input);
 		tokenizer = new CommandTokenizer(0, input);
 		tokenizer.Tokenize();
 		if (tokenizer.Tokens.HasOnlyComments())

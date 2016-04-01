@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
@@ -12,15 +13,15 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 		return OpenInner();
 	}
 
-	public override ChannelResponse SendRecv(byte[] command, int readTimeout)
+	public override IChannelResponse SendRecv(byte[] command, int readTimeout)
 	{
-		ChannelResponse channelResponse = ChannelResponse.NewChannel();
+		ChannelResponse channelResponse = new ChannelResponse(Port.ReadBufferSize);
 		try
 		{
 			if (!Port.IsOpen)
 			{
 				LogHelper.Instance.Log("Port.WriteCommand: the port was closed.", LogEntryType.Error);
-				channelResponse.SetClosedError();
+				channelResponse.Error = ErrorCodes.CommunicationError;
 				return channelResponse;
 			}
 			if (base.EnableDebugging)
@@ -37,28 +38,34 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Port.WriteCommand() caught an exception.", e);
-			channelResponse.SetCommunicationError();
+			channelResponse.Error = ErrorCodes.CommunicationError;
 			return channelResponse;
 		}
 		ReadInner(channelResponse);
-		bool flag = false;
-		if (!channelResponse.ReadEvent.WaitOne(readTimeout))
+		try
 		{
-			if (string.IsNullOrEmpty(FriendlyName))
+			if (!channelResponse.Wait(readTimeout))
 			{
-				LogHelper.Instance.Log("Communication ERROR: port read timed out", LogEntryType.Error);
+				if (string.IsNullOrEmpty(FriendlyName))
+				{
+					LogHelper.Instance.Log("Communication ERROR: port read timed out", LogEntryType.Error);
+				}
+				else
+				{
+					LogHelper.Instance.Log(LogEntryType.Error, "Communication ERROR ({0}): port read timed out", FriendlyName);
+				}
+				channelResponse.Error = ErrorCodes.CommunicationError;
 			}
-			else
-			{
-				LogHelper.Instance.Log(LogEntryType.Error, "Communication ERROR ({0}): port read timed out", FriendlyName);
-			}
-			channelResponse.SetCommunicationError();
-			flag = true;
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log(LogEntryType.Error, "[AsyncPort] Send/Recv caught an exception.", ex);
+			channelResponse.Error = ErrorCodes.CommunicationError;
 		}
 		if (base.EnableDebugging)
 		{
 			string text = Encoding.ASCII.GetString(channelResponse.RawResponse);
-			LogHelper.Instance.Log(" Read {0}, data: {1}", flag ? "timed out" : "ok", text);
+			LogHelper.Instance.Log(" Read {0}, data: {1}", (!channelResponse.CommOk) ? "timed out" : "ok", text);
 			LogHelper.Instance.Log("  raw response: {0}", AsString(channelResponse.RawResponse));
 		}
 		return channelResponse;
@@ -73,7 +80,7 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 	{
 		try
 		{
-			Port.BaseStream.BeginRead(response.ReadBuffer, 0, response.ReadBuffer.Length, EndReadCallback, response);
+			Port.BaseStream.BeginRead(response.Buffer, 0, response.Buffer.Length, EndReadCallback, response);
 		}
 		catch (Exception e)
 		{
@@ -92,7 +99,11 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 			if (num == 0)
 			{
 				LogHelper.Instance.Log("SerialPort {0}: received 0 bytes in read.", Port.PortName);
-				channelResponse.ReadEvent.Set();
+				if (base.Validate(channelResponse))
+				{
+					channelResponse.ReponseValid = true;
+				}
+				channelResponse.ReadEnd();
 				return;
 			}
 		}
@@ -108,6 +119,6 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 			return;
 		}
 		channelResponse.ReponseValid = true;
-		channelResponse.ReadEvent.Set();
+		channelResponse.ReadEnd();
 	}
 }

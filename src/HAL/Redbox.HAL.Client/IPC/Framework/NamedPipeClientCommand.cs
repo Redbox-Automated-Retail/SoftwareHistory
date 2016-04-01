@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -38,7 +39,7 @@ internal class NamedPipeClientCommand<T> where T : ClientCommandResult, new()
 	public T Execute()
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
-		T result = new T
+		T val = new T
 		{
 			CommandText = CommandText
 		};
@@ -55,36 +56,36 @@ internal class NamedPipeClientCommand<T> where T : ClientCommandResult, new()
 			}
 			List<string> list = namedPipeClientSession.ExecuteCommand(CommandText);
 			bool success = namedPipeClientSession.IsStatusOK(list);
-			result.Success = success;
+			val.Success = success;
 			if (list.Count > 0)
 			{
 				string statusMessage = list[list.Count - 1];
-				result.StatusMessage = statusMessage;
+				val.StatusMessage = statusMessage;
 				list.RemoveAt(list.Count - 1);
 			}
-			result.CommandMessages.AddRange(list);
-			List<int> list2 = ConvertMessages(result);
+			val.CommandMessages.AddRange(list);
+			List<int> list2 = ConvertMessages(val);
 			foreach (int item in list2)
 			{
-				if (item < result.CommandMessages.Count)
+				if (item < val.CommandMessages.Count)
 				{
-					result.CommandMessages.RemoveAt(item);
+					val.CommandMessages.RemoveAt(item);
 				}
 			}
 		}
 		catch (TimeoutException e)
 		{
-			OnConnectionFailure(e, result);
+			OnConnectionFailure(e, val);
 		}
 		catch (Exception e2)
 		{
-			OnUnhandledException(e2, result);
+			OnUnhandledException(e2, val);
 		}
 		finally
 		{
 			TimeSpan elapsed = executionTimer.Elapsed;
-			result.ExecutionTime = elapsed;
-			ExecutionTime = result.ExecutionTime;
+			val.ExecutionTime = elapsed;
+			ExecutionTime = val.ExecutionTime;
 			try
 			{
 				if (Session == null || DisposeWhenDone)
@@ -94,11 +95,11 @@ internal class NamedPipeClientCommand<T> where T : ClientCommandResult, new()
 			}
 			catch (Exception e3)
 			{
-				result.Success = false;
-				result.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in NamedPipeClientCommand.Execute.", e3));
+				val.Success = false;
+				val.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in NamedPipeClientCommand.Execute.", e3));
 			}
 		}
-		return result;
+		return val;
 	}
 
 	public override string ToString()

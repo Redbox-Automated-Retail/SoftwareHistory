@@ -2,10 +2,11 @@ using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Runtime.InteropServices;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal class RuntimeService
+internal sealed class RuntimeService : IRuntimeService
 {
 	private struct SYSTEM_INFO
 	{
@@ -49,29 +50,22 @@ internal class RuntimeService
 
 	private static RuntimeService m_instance = new RuntimeService();
 
-	private string m_assemblyDirectory;
-
-	public static RuntimeService Instance => m_instance;
-
 	public int PageSize { get; private set; }
 
-	public string AssemblyDirectory
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(m_assemblyDirectory))
-			{
-				m_assemblyDirectory = Path.GetDirectoryName(typeof(RuntimeService).Assembly.Location);
-			}
-			return m_assemblyDirectory;
-		}
-	}
+	public string AssemblyDirectory { get; private set; }
+
+	public string InstallRoot { get; private set; }
 
 	private Platform Platform { get; set; }
 
 	public string RuntimePath(string fileName)
 	{
 		return Path.Combine(AssemblyDirectory, fileName);
+	}
+
+	public string InstallPath(string subfolder)
+	{
+		return Path.Combine(InstallRoot, subfolder);
 	}
 
 	public Platform GetPlatform()
@@ -85,7 +79,6 @@ internal class RuntimeService
 		Version version = oSVersion.Version;
 		if (oSVersion.Platform != PlatformID.Win32NT)
 		{
-			LogHelper.Instance.Log("Unrecognized platform version {0}", oSVersion.Platform.ToString());
 			return Platform;
 		}
 		switch (version.Major)
@@ -116,6 +109,26 @@ internal class RuntimeService
 		return ExpandMacros(value, "$(", ")");
 	}
 
+	public RuntimeService()
+	{
+		AssemblyDirectory = Path.GetDirectoryName(typeof(RuntimeService).Assembly.Location);
+		try
+		{
+			DirectoryInfo parent = Directory.GetParent(AssemblyDirectory);
+			InstallRoot = parent.FullName;
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("[RuntimeService] Unable to find parent folder.", ex.Message);
+			InstallRoot = AssemblyDirectory;
+		}
+		Platform = Platform.None;
+		Values["RunningPath"] = AssemblyDirectory;
+		SYSTEM_INFO lpSystemInfo = default(SYSTEM_INFO);
+		GetSystemInfo(ref lpSystemInfo);
+		PageSize = (int)lpSystemInfo.dwPageSize;
+	}
+
 	private string ExpandMacros(string value, string preamble, string postamble)
 	{
 		if (value == null)
@@ -137,15 +150,6 @@ internal class RuntimeService
 			value = value.Replace($"{preamble}{text}{postamble}", text2);
 		}
 		return value;
-	}
-
-	private RuntimeService()
-	{
-		Platform = Platform.None;
-		Values["RunningPath"] = AssemblyDirectory;
-		SYSTEM_INFO lpSystemInfo = default(SYSTEM_INFO);
-		GetSystemInfo(ref lpSystemInfo);
-		PageSize = (int)lpSystemInfo.dwPageSize;
 	}
 
 	[DllImport("kernel32.dll")]

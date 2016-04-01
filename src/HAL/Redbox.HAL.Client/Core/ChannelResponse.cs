@@ -1,44 +1,40 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal sealed class ChannelResponse : IDisposable
+internal sealed class ChannelResponse : IChannelResponse, IDisposable
 {
-	private enum ChannelError
-	{
-		Success,
-		ChannelClosed,
-		CommunicationError
-	}
+	internal readonly byte[] Buffer;
+
+	private bool Disposed;
 
 	private readonly List<byte> PortResponse = new List<byte>();
 
-	public bool CommOk => Error == ChannelError.Success;
+	private readonly EventWaitHandle ReadEvent = new EventWaitHandle(initialState: false, EventResetMode.ManualReset);
+
+	public bool CommOk => ErrorCodes.Success == Error;
+
+	public ErrorCodes Error { get; internal set; }
 
 	public byte[] RawResponse => PortResponse.ToArray();
 
-	public string CommError => Error.ToString();
-
 	public bool ReponseValid { get; internal set; }
 
-	public bool PortTimeout { get; private set; }
-
-	internal AutoResetEvent ReadEvent { get; private set; }
-
-	internal byte[] ReadBuffer { get; private set; }
-
-	private ChannelError Error { get; set; }
-
-	private bool Disposed { get; set; }
-
-	public static bool EndsWithEOT(ChannelResponse response)
+	public void Dispose()
 	{
-		return -1 != response.IndexOf(4);
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
 	}
 
-	public int IndexOf(byte b)
+	~ChannelResponse()
+	{
+		Dispose(disposing: false);
+	}
+
+	public int GetIndex(byte b)
 	{
 		byte[] array = PortResponse.ToArray();
 		if (array == null || array.Length == 0)
@@ -55,35 +51,9 @@ internal sealed class ChannelResponse : IDisposable
 		return -1;
 	}
 
-	public void Dispose()
+	internal void Accumulate(int len)
 	{
-		if (!Disposed)
-		{
-			Disposed = true;
-			ReadEvent.Close();
-			PortResponse.Clear();
-			GC.SuppressFinalize(this);
-		}
-	}
-
-	internal static ChannelResponse NewChannel()
-	{
-		return new ChannelResponse(createBuffer: true);
-	}
-
-	internal static ChannelResponse NewChannel(bool createBuffer)
-	{
-		return new ChannelResponse(createBuffer);
-	}
-
-	internal void SetCommunicationError()
-	{
-		UpdateErrorState(ChannelError.CommunicationError);
-	}
-
-	internal void SetClosedError()
-	{
-		UpdateErrorState(ChannelError.ChannelClosed);
+		Accumulate(Buffer, len);
 	}
 
 	internal void Accumulate(byte[] bytes, int len)
@@ -94,26 +64,40 @@ internal sealed class ChannelResponse : IDisposable
 		}
 	}
 
-	internal void Accumulate(int count)
+	internal bool Wait(int timeout)
 	{
-		for (int i = 0; i < count; i++)
+		return ReadEvent.WaitOne(timeout);
+	}
+
+	internal void ReadEnd()
+	{
+		if (!Disposed)
 		{
-			PortResponse.Add(ReadBuffer[i]);
+			ReadEvent.Set();
 		}
 	}
 
-	private void UpdateErrorState(ChannelError err)
+	internal ChannelResponse()
+		: this(0)
 	{
-		Error = err;
 	}
 
-	private ChannelResponse(bool createBuffer)
+	internal ChannelResponse(int bufferSize)
 	{
-		Error = ChannelError.Success;
-		ReadEvent = new AutoResetEvent(initialState: false);
-		if (createBuffer)
+		Error = ErrorCodes.Success;
+		Buffer = ((bufferSize <= 0) ? null : new byte[bufferSize]);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (!Disposed)
 		{
-			ReadBuffer = new byte[256];
+			Disposed = true;
+			if (disposing)
+			{
+				ReadEvent.Close();
+				PortResponse.Clear();
+			}
 		}
 	}
 }

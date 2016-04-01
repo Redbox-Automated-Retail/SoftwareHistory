@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Xml;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Configuration;
@@ -35,34 +36,41 @@ internal static class PropertyHelper
 		}
 		foreach (XmlNode item in xmlNodeList)
 		{
-			if (item.Attributes["read-only"] != null && string.Compare(item.Attributes["read-only"].Value, bool.TrueString, ignoreCase: true) == 0)
+			try
 			{
-				continue;
+				if (item.Attributes["read-only"] != null && string.Compare(item.Attributes["read-only"].Value, bool.TrueString, ignoreCase: true) == 0)
+				{
+					continue;
+				}
+				PropertyInfo propertyInfo = null;
+				if (item.Attributes["name"] != null)
+				{
+					propertyInfo = instance.GetType().GetProperty(item.Attributes["name"].Value, BindingFlags.Instance | BindingFlags.Public);
+				}
+				if (propertyInfo == null)
+				{
+					continue;
+				}
+				XmlNodeList xmlNodeList2 = item.SelectNodes("property");
+				if (xmlNodeList2 != null && xmlNodeList2.Count > 0)
+				{
+					UpdateObjectFromXml(propertyInfo.GetValue(instance, new object[0]), item);
+					continue;
+				}
+				CustomEditorAttribute customEditorAttribute = (CustomEditorAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(CustomEditorAttribute));
+				if (item.ChildNodes.Count > 0 && customEditorAttribute != null && customEditorAttribute.SetMethodName != null)
+				{
+					instance.GetType().GetMethod(customEditorAttribute.SetMethodName, BindingFlags.Instance | BindingFlags.Public)?.Invoke(instance, new object[1] { item });
+				}
+				else if (item.Attributes["value"] != null)
+				{
+					string value = item.Attributes["value"].Value;
+					propertyInfo.SetValue(instance, ConversionHelper.ChangeType(value, propertyInfo.PropertyType), null);
+				}
 			}
-			PropertyInfo propertyInfo = null;
-			if (item.Attributes["name"] != null)
+			catch (Exception e)
 			{
-				propertyInfo = instance.GetType().GetProperty(item.Attributes["name"].Value, BindingFlags.Instance | BindingFlags.Public);
-			}
-			if (propertyInfo == null)
-			{
-				continue;
-			}
-			XmlNodeList xmlNodeList2 = item.SelectNodes("property");
-			if (xmlNodeList2 != null && xmlNodeList2.Count > 0)
-			{
-				UpdateObjectFromXml(propertyInfo.GetValue(instance, new object[0]), item);
-				continue;
-			}
-			CustomEditorAttribute customEditorAttribute = (CustomEditorAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(CustomEditorAttribute));
-			if (item.ChildNodes.Count > 0 && customEditorAttribute != null && customEditorAttribute.SetMethodName != null)
-			{
-				instance.GetType().GetMethod(customEditorAttribute.SetMethodName, BindingFlags.Instance | BindingFlags.Public)?.Invoke(instance, new object[1] { item });
-			}
-			else if (item.Attributes["value"] != null)
-			{
-				string value = item.Attributes["value"].Value;
-				propertyInfo.SetValue(instance, ConversionHelper.ChangeType(value, propertyInfo.PropertyType), null);
+				LogHelper.Instance.Log("UpdateXml caught exception", e);
 			}
 		}
 	}

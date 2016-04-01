@@ -27,31 +27,30 @@ public sealed class HardwareService
 
 	public HardwareCommandResult Init(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("init", schedule, out job);
+		return ScheduleJob("init", schedule, out job);
 	}
 
 	public HardwareCommandResult Unload(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("qlm-unload", schedule, out job);
+		return ScheduleJob("qlm-unload", schedule, out job);
 	}
 
 	public HardwareCommandResult CleanZone(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("clean-vmz", schedule, out job);
+		return ScheduleJob("clean-vmz", schedule, out job);
 	}
 
 	public HardwareCommandResult CleanZone(out HardwareJob job)
 	{
 		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-		hardwareJobSchedule.StartTime = DateTime.Now;
 		hardwareJobSchedule.Priority = HardwareJobPriority.Low;
 		HardwareJobSchedule schedule = hardwareJobSchedule;
-		return ScheduleJobInner("clean-vmz", schedule, out job);
+		return ScheduleJob("clean-vmz", schedule, out job);
 	}
 
 	public HardwareCommandResult Thin(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -62,7 +61,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -76,7 +75,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thinRedeploys, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -90,7 +89,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult ThinVMZ(string[] toBin, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("thin-vmz", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin-vmz", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -104,17 +103,17 @@ public sealed class HardwareService
 
 	public HardwareCommandResult GetNonBarcodeInventory(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("get-non-barcode-inventory", schedule, out job);
+		return ScheduleJob("get-non-barcode-inventory", schedule, out job);
 	}
 
 	public HardwareCommandResult GetInventoryStats(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("get-inventory-stats", schedule, out job);
+		return ScheduleJob("get-inventory-stats", schedule, out job);
 	}
 
 	public HardwareCommandResult ResetLocations(List<Location> locs, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("reset-locations", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("reset-locations", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			foreach (Location loc in locs)
@@ -136,7 +135,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult PrepUnloadZone(int rotation, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-zone-for-unload", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("prep-zone-for-unload", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(0);
@@ -147,7 +146,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult PrepUnloadZone(int rotation, int deckCount, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-zone-for-unload", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("prep-zone-for-unload", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(deckCount);
@@ -158,7 +157,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult PrepDeckForRedeploy(string deckNumber, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-deck-for-redeploy", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("prep-deck-for-redeploy", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(deckNumber);
@@ -169,7 +168,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult PrepForRedeploy(string[] decks, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("prep-deck-for-redeploy", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("prep-deck-for-redeploy", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			PushArray(decks, job);
@@ -179,12 +178,12 @@ public sealed class HardwareService
 
 	public HardwareCommandResult VMZRemovedThins(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("vmz-removed-thins", schedule, out job);
+		return ScheduleJob("vmz-removed-thins", schedule, out job);
 	}
 
 	public HardwareCommandResult ClearMerchStatus(string[] barcodesToClear, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("clear-merch-status", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("clear-merch-status", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			PushArray(barcodesToClear, job);
@@ -194,7 +193,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult LoadBin(List<Location> locs, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("load-bin", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("load-bin", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			foreach (Location loc in locs)
@@ -210,7 +209,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult Vend(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("vend", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
 		if (hardwareCommandResult.Success && ids != null)
 		{
 			job.Push(ids);
@@ -222,7 +221,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult Vend(List<Location> locations, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("vend", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
 		if (hardwareCommandResult.Success && locations.Count > 0)
 		{
 			foreach (Location location in locations)
@@ -238,7 +237,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult GetBarcodeVMZPosition(string[] idsToQuery, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("get-barcode-vmz-location", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("get-barcode-vmz-location", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -249,17 +248,17 @@ public sealed class HardwareService
 
 	public HardwareCommandResult VMZDetail(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("vmz-details", schedule, out job);
+		return ScheduleJob("vmz-details", schedule, out job);
 	}
 
 	public HardwareCommandResult VMZMerchSummary(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("vmz-merch-summary", schedule, out job);
+		return ScheduleJob("vmz-merch-summary", schedule, out job);
 	}
 
 	public HardwareCommandResult FileMarkerDisk(int deck, int slot, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("file-marker-disk", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("file-marker-disk", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(slot);
@@ -275,17 +274,17 @@ public sealed class HardwareService
 
 	public HardwareCommandResult GetNonThinsInVMZ(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("get-nonthins-in-vmz", schedule, out job);
+		return ScheduleJob("get-nonthins-in-vmz", schedule, out job);
 	}
 
 	public HardwareCommandResult GetBarcodesInBin(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("get-barcodes-in-bin", schedule, out job);
+		return ScheduleJob("get-barcodes-in-bin", schedule, out job);
 	}
 
 	public HardwareCommandResult HardSync(SyncRange range, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("sync", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("sync", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(range.Slots.End, range.EndDeck, range.Slots.Start, range.StartDeck);
@@ -293,44 +292,54 @@ public sealed class HardwareService
 		return hardwareCommandResult;
 	}
 
+	public HardwareCommandResult FieldInsertFraudWithCheck(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJob("field-insert-with-fraud-check", schedule, out job);
+	}
+
+	public HardwareCommandResult FraudHardwarePost(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJob("fraud-sensor-post-test", schedule, out job);
+	}
+
 	public HardwareCommandResult ReadFraudDisc(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("read-fraud-disc", schedule, out job);
+		return ScheduleJob("read-fraud-disc", schedule, out job);
 	}
 
 	public HardwareCommandResult Return(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("return", schedule, out job);
+		return ScheduleJob("return", schedule, out job);
 	}
 
 	public HardwareCommandResult SoftSync(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("soft-sync", schedule, out job);
+		return ScheduleJob("soft-sync", schedule, out job);
 	}
 
 	public HardwareCommandResult QlmUnload(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("qlm-unload", schedule, out job);
+		return ScheduleJob("qlm-unload", schedule, out job);
 	}
 
 	public HardwareCommandResult CheckPicker(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("check-picker", schedule, out job);
+		return ScheduleJob("check-picker", schedule, out job);
 	}
 
 	public HardwareCommandResult GetMachineInfo(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("get-machine-info", schedule, out job);
+		return ScheduleJob("get-machine-info", schedule, out job);
 	}
 
 	public HardwareCommandResult GetHardwareStatus(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("hardware-status", schedule, out job);
+		return ScheduleJob("hardware-status", schedule, out job);
 	}
 
 	public HardwareCommandResult QlmUnloadAndThin(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("unload-thin", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("unload-thin", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -341,7 +350,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult VendUnknown(int deck, int slot, HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("vend-unknown", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend-unknown", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(slot);
@@ -352,7 +361,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult ReturnUnknown(HardwareJobSchedule schedule, string returnTime, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("return-unknown", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("return-unknown", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(returnTime);
@@ -362,7 +371,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult PreposVend(HardwareJobSchedule schedule, string[] ids, out HardwareJob job)
 	{
-		HardwareCommandResult hardwareCommandResult = ScheduleJobInner("vend", schedule, out job);
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
 		if (!hardwareCommandResult.Success)
 		{
 			return hardwareCommandResult;
@@ -374,7 +383,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult ExchangerStatus(HardwareJobSchedule schedule, out HardwareJob job)
 	{
-		return ScheduleJobInner("air-exchanger-status", schedule, out job);
+		return ScheduleJob("air-exchanger-status", schedule, out job);
 	}
 
 	public HardwareCommandResult GetConfiguration(string name)
@@ -694,7 +703,7 @@ public sealed class HardwareService
 		return ClientSession.GetClientSession(m_protocol);
 	}
 
-	private HardwareCommandResult ScheduleJobInner(string name, HardwareJobSchedule schedule, out HardwareJob job)
+	private HardwareCommandResult ScheduleJob(string name, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJob(name, null, enableDebugging: false, schedule, out job);
 	}
@@ -710,20 +719,5 @@ public sealed class HardwareService
 			job.Push(array);
 			job.Push(array.Length);
 		}
-	}
-
-	private bool ValidateVersion()
-	{
-		HardwareCommandResult hardwareCommandResult = ExecuteCommand("SERVICE get-version");
-		if (!hardwareCommandResult.Success)
-		{
-			return false;
-		}
-		Version version = new Version(hardwareCommandResult.CommandMessages[0]);
-		if (ClientVersion.Major == version.Major && ClientVersion.Minor == version.Minor)
-		{
-			return ClientVersion.Build == version.Build;
-		}
-		return false;
 	}
 }

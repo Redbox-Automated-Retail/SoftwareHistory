@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Xml;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Configuration;
@@ -8,6 +9,8 @@ namespace Redbox.HAL.Configuration;
 internal abstract class AbstractXmlConfiguration
 {
 	public delegate void ConfigurationChangeHandler();
+
+	private readonly IRuntimeService RuntimeService;
 
 	private readonly string RootName;
 
@@ -71,7 +74,7 @@ internal abstract class AbstractXmlConfiguration
 			{
 				StringExtensions.SetValueForPath(name, this, value);
 			}
-			Save(RuntimeService.Instance.ExpandConstantMacros("$(RunningPath)\\HAL.xml"), new ErrorList());
+			Save(RuntimeService.ExpandConstantMacros("$(RunningPath)\\HAL.xml"), new ErrorList());
 			if (ConfigurationChangeEnd != null)
 			{
 				LogHelper.Instance.Log("Broadcast configuration change.");
@@ -94,7 +97,7 @@ internal abstract class AbstractXmlConfiguration
 		XmlDocument xmlDocument = new XmlDocument();
 		xmlDocument.LoadXml(xml);
 		PropertyHelper.UpdateObjectFromXml(this, xmlDocument.DocumentElement);
-		Save(RuntimeService.Instance.ExpandConstantMacros("$(RunningPath)\\HAL.xml"), new ErrorList());
+		Save(RuntimeService.ExpandConstantMacros("$(RunningPath)\\HAL.xml"), new ErrorList());
 		if (ConfigurationChangeEnd != null)
 		{
 			LogHelper.Instance.Log("Broadcast configuration change.");
@@ -109,6 +112,7 @@ internal abstract class AbstractXmlConfiguration
 	protected AbstractXmlConfiguration(string xmlRoot)
 	{
 		RootName = xmlRoot;
+		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
 	}
 
 	protected T GetNodeValue<T>(XmlNode parent, string singleNode, T defaultValue)
@@ -118,7 +122,7 @@ internal abstract class AbstractXmlConfiguration
 		{
 			if (xmlNode != null && !string.IsNullOrEmpty(xmlNode.InnerText))
 			{
-				return (T)ConversionHelper.ChangeType(RuntimeService.Instance.ExpandConstantMacros(xmlNode.InnerText), typeof(T));
+				return (T)ConversionHelper.ChangeType(RuntimeService.ExpandConstantMacros(xmlNode.InnerText), typeof(T));
 			}
 		}
 		catch (ArgumentException)
