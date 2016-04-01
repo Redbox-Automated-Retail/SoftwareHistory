@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Redbox.Rental.Services">
+  <Style x:Key="font_target_large_overlays" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontSize" Value="56" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_target_smaller" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_target_small_button_overlays" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_target_medium" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontSize" Value="34.6" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_akzidenz_regular_small" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Bethold Akzidenz Grotesk" />
+    <Setter Property="FontSize" Value="18.6" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_akzidenz_regular_16" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Berthold Akzidenz Grotesk" />
+    <Setter Property="FontSize" Value="21.3" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_akzidenz_regular_smaller" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Berthold Akzidenz Grotesk" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_akzidenz_regular_tiny" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.Services;component/Views/Assets/Fonts/#Berthold Akzidenz Grotesk" />
+    <Setter Property="FontSize" Value="13.3" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+</ResourceDictionary>

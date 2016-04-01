@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.Browse;
 

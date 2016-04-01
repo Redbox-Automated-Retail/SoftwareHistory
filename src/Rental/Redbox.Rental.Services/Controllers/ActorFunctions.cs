@@ -4,7 +4,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 
-namespace Redbox.Rental.Kernel.Views;
+namespace Redbox.Rental.Services.Controllers;
 
 public class ActorFunctions
 {

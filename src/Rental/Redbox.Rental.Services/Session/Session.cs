@@ -10,9 +10,12 @@ public class Session : ISession
 
 	public IBrowseState BrowseState { get; set; }
 
+	public IHelpState HelpState { get; set; }
+
 	public Session()
 	{
 		BrowseState = new BrowseState();
+		HelpState = new HelpState();
 		ServiceLocator.Instance.GetService<ITrackDataService>()?.RefreshCertificate();
 	}
 }

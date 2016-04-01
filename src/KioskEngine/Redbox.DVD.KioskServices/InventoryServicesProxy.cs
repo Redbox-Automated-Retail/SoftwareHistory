@@ -100,7 +100,7 @@ internal class InventoryServicesProxy : IInventoryServices
 	{
 	}
 
-	public void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, RemoteServiceCallback callback)
+	public void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -127,7 +127,8 @@ internal class InventoryServicesProxy : IInventoryServices
 					ReturnType = returnType,
 					Barcode = barcode,
 					Deck = deck,
-					Slot = slot
+					Slot = slot,
+					FailedSecurityRead = failedSecurityRead
 				});
 			}
 			catch (Exception e)

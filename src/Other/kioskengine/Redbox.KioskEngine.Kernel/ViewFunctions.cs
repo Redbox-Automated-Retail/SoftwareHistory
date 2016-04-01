@@ -56,6 +56,22 @@ internal static class ViewFunctions
 		return null;
 	}
 
+	[KernelFunction(Name = "kernel.getviewrendertype")]
+	internal static string GetViewRenderType()
+	{
+		string result = null;
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service != null)
+		{
+			IViewFrame viewFrame = service.PeekViewFrame();
+			if (viewFrame != null)
+			{
+				result = viewFrame.Scene.SceneRenderType.ToString();
+			}
+		}
+		return result;
+	}
+
 	[KernelFunction(Name = "kernel.showview")]
 	internal static void ShowView()
 	{

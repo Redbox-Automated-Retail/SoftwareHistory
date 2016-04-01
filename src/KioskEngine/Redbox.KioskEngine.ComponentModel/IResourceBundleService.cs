@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Reflection;
+using System.Windows.Xps.Packaging;
 using System.Xml;
 using Redbox.REDS.Framework;
 
@@ -62,6 +63,8 @@ public interface IResourceBundleService
 	string GetMovie(string resourceName);
 
 	byte[] GetSound(string resourceName);
+
+	XpsDocument GetXpsDocument(string resourceName);
 
 	string GetScript(string resourceName);
 

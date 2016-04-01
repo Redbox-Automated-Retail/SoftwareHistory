@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [CompilerGenerated]
-internal sealed class Redbox_002EKioskEngine_002EKernel140862_002E_003CPrivateImplementationDetails_003E
+internal sealed class Redbox_002EKioskEngine_002EKernel144483_002E_003CPrivateImplementationDetails_003E
 {
 	[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 20)]
 	private struct __StaticArrayInitTypeSize_003D20

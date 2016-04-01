@@ -6,6 +6,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Kernel.Views.Browse;

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
+using System.IO.Packaging;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Windows.Xps.Packaging;
 using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -515,6 +517,31 @@ public class ResourceBundleService : IResourceBundleService
 			return null;
 		}
 		return (byte[])resource.GetAspect("content").GetContent();
+	}
+
+	public XpsDocument GetXpsDocument(string resourceName)
+	{
+		XpsDocument result = null;
+		IResource resource = GetResource(resourceName);
+		if (resource != null)
+		{
+			IAspect aspect = resource.GetAspect("content");
+			byte[] array = (byte[])resource.GetAspect("content").GetContent();
+			if (array != null)
+			{
+				string text = string.Format("memorystream://{0}", aspect.Properties["file"]);
+				Uri uri = new Uri(text);
+				Package package = PackageStore.GetPackage(uri);
+				if (package == null)
+				{
+					MemoryStream stream = new MemoryStream(array);
+					package = Package.Open(stream);
+					PackageStore.AddPackage(new Uri(text), package);
+				}
+				result = new XpsDocument(package, CompressionOption.Fast, text);
+			}
+		}
+		return result;
 	}
 
 	public string GetScript(string resourceName)

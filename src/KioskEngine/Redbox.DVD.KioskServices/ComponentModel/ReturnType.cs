@@ -10,5 +10,7 @@ internal enum ReturnType
 	KioskReturn,
 	QuickReturn,
 	BackwardsDiscReturn,
-	UnplayableReturn
+	UnplayableReturn,
+	CrossBorderReturn,
+	FailedSecurityRead
 }

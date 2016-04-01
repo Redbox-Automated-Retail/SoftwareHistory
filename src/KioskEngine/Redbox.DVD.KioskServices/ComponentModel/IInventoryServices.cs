@@ -5,7 +5,7 @@ namespace Redbox.KioskServices.Proxy.ComponentModel;
 
 internal interface IInventoryServices
 {
-	void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, RemoteServiceCallback callback);
+	void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, RemoteServiceCallback callback);
 
 	void BackwardsDiscReturn(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, RemoteServiceCallback callback);
 

@@ -37,6 +37,8 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private const int MOUSEEVENTF_RIGHTUP = 16;
 
+	private bool m_audioDeviceConnected;
+
 	private SpeechSynthesizer m_reader;
 
 	private XmlNode[] m_speechControl;
@@ -59,9 +61,65 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private int m_keySequenceDelay;
 
+	private Dictionary<string, string> m_textReplacement = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
 	public static TextToSpeechService Instance => Singleton<TextToSpeechService>.Instance;
 
-	public bool TTSEnabled => true;
+	public bool AudioDeviceConnected
+	{
+		get
+		{
+			return m_audioDeviceConnected;
+		}
+		set
+		{
+			if (m_audioDeviceConnected == value)
+			{
+				return;
+			}
+			m_audioDeviceConnected = value;
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			if (!m_audioDeviceConnected)
+			{
+				LogHelper.Instance.Log("Headphones disconnected.");
+				Reset();
+				if (service != null && service.Peek() == "start_view")
+				{
+					service2.Filter["ada_accessible"] = "False";
+					UnwindToStartView(service);
+				}
+				return;
+			}
+			LogHelper.Instance.Log("Headphones connected.");
+			ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
+			if (service3 != null && !service3.HasValidData())
+			{
+				ISessionAnalyticsService service4 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+				IShoppingSessionService service5 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+				if (service != null && service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && service.Peek() != "swipe_view" && !InReturnFlow && service4 != null && service5 != null)
+				{
+					LogHelper.Instance.Log("Restarting session due to headphones being connected.");
+					IShoppingSession currentSession = service5.GetCurrentSession();
+					service4.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+					{
+						{ "subItemType", "Timeout" },
+						{ "subItemValue", "HeadphonesConnected" }
+					}, currentSession.Id.ToString());
+					service4.AddNode("session", "pricing");
+					currentSession.Abandon("HeadphonesConnected");
+					currentSession.End();
+					service4.Close(currentSession.Id.ToString());
+					service2.Filter["ada_accessible"] = "True";
+					UnwindToStartView(service);
+				}
+			}
+		}
+	}
+
+	public bool TTSEnabled => AudioDeviceConnected;
+
+	public bool InReturnFlow { get; set; }
 
 	public void Reset()
 	{
@@ -108,6 +166,16 @@ public class TextToSpeechService : ITextToSpeechService
 	private TextToSpeechService()
 	{
 		LogHelper.Instance.Log("TTS((> Service Initialized.");
+		m_textReplacement.Add("blu-ray", "blue ray");
+		m_textReplacement.Add("sec", "second");
+		m_textReplacement.Add("pg", "p g");
+		m_textReplacement.Add("pg13", "p g 13");
+		m_textReplacement.Add("pg-13", "p g 13");
+		m_textReplacement.Add("esrb", "e s r b");
+		m_textReplacement.Add("727272", "7 2 7 2 7 2");
+		m_textReplacement.Add("msg", "message");
+		m_textReplacement.Add("msgs", "messages");
+		m_textReplacement.Add("*", "");
 	}
 
 	private void ProcessSpeechPart(XmlNode speechPart)
@@ -118,9 +186,10 @@ public class TextToSpeechService : ITextToSpeechService
 		{
 			foreach (XmlNode item in xmlNodeList)
 			{
-				string text = "";
+				string text = string.Empty;
 				string text2 = XmlNodeExtensions.GetAttributeValue<string>(item, "textAvailable");
 				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item, "ifActorVisible");
+				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item, "ifControlEnabled");
 				if (text2 != null)
 				{
 					foreach (KeyValuePair<string, string> item2 in m_macrosFound)
@@ -137,7 +206,12 @@ public class TextToSpeechService : ITextToSpeechService
 					IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 					IViewFrame viewFrame = service.PeekViewFrame();
 					IActor actor = viewFrame.Scene.GetActor(attributeValue);
-					if (actor != null && actor.Visible && actor.Enabled)
+					bool flag = true;
+					if (!string.IsNullOrEmpty(attributeValue2) && actor.WPFFrameworkElement != null && actor.WPFFrameworkElement is ITextToSpeechControl textToSpeechControl)
+					{
+						flag = textToSpeechControl.IsControlEnabled(attributeValue2);
+					}
+					if ((actor != null && actor.Visible && actor.Enabled) & flag)
 					{
 						text += item.InnerText;
 					}
@@ -182,9 +256,9 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 		string innerText = xmlNode4.InnerText;
 		LogHelper.Instance.Log("TTS((> regex:" + innerText + "  value: " + text3);
-		bool flag = new Regex(innerText).IsMatch(text3);
-		LogHelper.Instance.Log("TTS((> regex result:" + flag);
-		string text4 = (flag ? xmlNode5.InnerText : xmlNode6.InnerText);
+		bool flag2 = new Regex(innerText).IsMatch(text3);
+		LogHelper.Instance.Log("TTS((> regex result:" + flag2);
+		string text4 = (flag2 ? xmlNode5.InnerText : xmlNode6.InnerText);
 		LogHelper.Instance.Log("TTS((> Skipping to Sequence:" + text4);
 		int result = 0;
 		if (int.TryParse(text4, out result))
@@ -244,7 +318,7 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 		else
 		{
-			m_keySequenceDelay = 500;
+			m_keySequenceDelay = 1000;
 		}
 		ITimerService service2 = ServiceLocator.Instance.GetService<ITimerService>();
 		if (service2 == null)
@@ -454,6 +528,8 @@ public class TextToSpeechService : ITextToSpeechService
 			{
 				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item, "keyCode");
 				XmlNode xmlNode3 = item.SelectSingleNode("actorName");
+				string command = item.SelectSingleNode("command")?.InnerText;
+				string parameter = item.SelectSingleNode("parameter")?.InnerText;
 				XmlNode funcNodeActorHit = item.SelectSingleNode("function");
 				XmlNode responseTextNode = item.SelectSingleNode("text");
 				XmlNode skipToNodeActorHit = item.SelectSingleNode("value");
@@ -470,7 +546,14 @@ public class TextToSpeechService : ITextToSpeechService
 				{
 					LogHelper.Instance.Log("TTS((> actorNode.InnerText:" + actor_name);
 					LogHelper.Instance.Log("TTS((> actor_name:" + actor_name);
-					ClickActor(actor_name);
+					if (!string.IsNullOrEmpty(command))
+					{
+						ExecuteActorCommand(actor_name, command, parameter);
+					}
+					else
+					{
+						ClickActor(actor_name);
+					}
 					if (funcNodeActorHit != null)
 					{
 						if (responseTextNode != null)
@@ -497,7 +580,7 @@ public class TextToSpeechService : ITextToSpeechService
 				IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
 				IViewFrame viewFrame = service2.PeekViewFrame();
 				IActor actor = viewFrame.Scene.GetActor(actor_name);
-				if (actor != null && actor.Visible && actor.Enabled)
+				if (actor != null && (!string.IsNullOrEmpty(command) || (actor.Visible && actor.Enabled)))
 				{
 					m_keyHandlers.Add(attributeValue, value);
 				}
@@ -508,19 +591,19 @@ public class TextToSpeechService : ITextToSpeechService
 		KeyPressHandler handler = delegate(string text, int keyCode, string modifier)
 		{
 			LogHelper.Instance.Log("TTS((> Key Sequence, mapping:" + text);
-			if (text == ".")
-			{
-				text = "ENTER";
-			}
 			if (text == "A")
 			{
-				text = "CANCEL";
+				text = "ENTER";
 			}
 			if (text == "B")
 			{
 				text = "CLEAR";
 			}
 			if (text == "C")
+			{
+				text = "CANCEL";
+			}
+			if (text == ".")
 			{
 				text = "PLUS";
 			}
@@ -680,15 +763,29 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 	}
 
+	private string ReplaceCommonText(string input)
+	{
+		if (string.IsNullOrEmpty(input) || m_textReplacement.Count <= 0)
+		{
+			return input;
+		}
+		LinqExtensions.ForEach(m_textReplacement, delegate(KeyValuePair<string, string> x)
+		{
+			input = input.ToLowerInvariant().Replace(x.Key, x.Value);
+		});
+		return input;
+	}
+
 	private void SayTTS(string speech)
 	{
 		SilenceTTS();
+		speech = ReplaceCommonText(speech);
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				if (!string.IsNullOrEmpty(speech) && HeadphoneConnected())
+				if (!string.IsNullOrEmpty(speech) && AudioDeviceConnected)
 				{
 					m_reader = new SpeechSynthesizer();
 					m_reader.Rate = m_speechRate;
@@ -713,6 +810,7 @@ public class TextToSpeechService : ITextToSpeechService
 	{
 		if (m_reader != null)
 		{
+			m_reader.SpeakAsyncCancelAll();
 			m_reader.Dispose();
 			m_reader = null;
 		}
@@ -781,6 +879,36 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 	}
 
+	private void ExecuteActorCommand(string actorName, string command, string parameter)
+	{
+		LogHelper.Instance.Log("TTS((> Execute Command requested: {0}, {1}, {2}", actorName, command, parameter);
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		IViewFrame viewFrame = service.PeekViewFrame();
+		IActor actor = viewFrame.Scene.GetActor(actorName);
+		if (actor != null)
+		{
+			if (actor.WPFFrameworkElement != null)
+			{
+				if (actor.WPFFrameworkElement is ITextToSpeechControl textToSpeechControl)
+				{
+					textToSpeechControl.ExecuteCommand(command, parameter);
+				}
+				else
+				{
+					LogHelper.Instance.Log("TTS((> actor WPFFrameworkElement is not a ITextToSpeechControl.");
+				}
+			}
+			else
+			{
+				LogHelper.Instance.Log("TTS((> actor does not have a WPFFrameworkElement.");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("TTS((> actor NOT FOUND in scene.");
+		}
+	}
+
 	private void ClickActor(string actorName)
 	{
 		LogHelper.Instance.Log("TTS((> Click Actor requested: " + actorName);
@@ -822,9 +950,11 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 	}
 
-	private bool HeadphoneConnected()
+	private void UnwindToStartView(IViewService viewService)
 	{
-		return true;
+		viewService.Reset();
+		viewService.Push("start_view");
+		viewService.Show();
 	}
 
 	[DllImport("User32.dll")]

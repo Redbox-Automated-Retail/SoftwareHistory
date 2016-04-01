@@ -135,6 +135,10 @@ public static class SessionFunctions
 		{
 			result = Convert.ToDecimal(value);
 		}
+		else if (propertyInfo.PropertyType.IsEnum)
+		{
+			result = Enum.Parse(propertyInfo.PropertyType, value.ToString());
+		}
 		return result;
 	}
 

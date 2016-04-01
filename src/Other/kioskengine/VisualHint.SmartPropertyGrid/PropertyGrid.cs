@@ -3283,32 +3283,32 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 
 	private void OnGridMouseMove(object sender, MouseEventArgs e)
 	{
-		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseMove(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
+		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseMove(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
 	}
 
 	private void OnGridMouseDown(object sender, MouseEventArgs e)
 	{
-		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseDown(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
+		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseDown(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
 	}
 
 	private void OnGridMouseUp(object sender, MouseEventArgs e)
 	{
-		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseUp(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
+		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseUp(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
 	}
 
 	private void OnGridMouseClick(object sender, MouseEventArgs e)
 	{
-		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseClick(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
+		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseClick(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
 	}
 
 	private void OnGridMouseDoubleClick(object sender, MouseEventArgs e)
 	{
-		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseDoubleClick(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
+		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseDoubleClick(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
 	}
 
 	private void OnGridMouseEnter(object sender, EventArgs e)

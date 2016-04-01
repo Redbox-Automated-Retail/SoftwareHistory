@@ -38,8 +38,8 @@ public static class PromotionFunctions
 		PromotionService.Instance.ClearPromotion();
 	}
 
-	[KernelFunction(Name = "kernel.rental_promotion_validate_cart")]
-	internal static LuaTable ValidateCart(LuaTable cartItems, decimal dvdPrice, decimal bluRayPrice, decimal gamePrice)
+	[KernelFunction(Name = "kernel.rental_promotion_rxgx_validate_cart")]
+	internal static LuaTable RxGxValidateCart(LuaTable cartItems, decimal dvdPrice, decimal bluRayPrice, decimal gamePrice)
 	{
 		Promotion promotion = PromotionService.Instance.GetPromotion();
 		if (promotion == null)
@@ -56,13 +56,13 @@ public static class PromotionFunctions
 		}
 		try
 		{
-			int num = GetRequiredCount("Dvd", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - GetCartItemCount(cartItems, "Dvd", null, null);
+			int num = RxGxGetRequiredCount("Dvd", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - RxGxGetCartItemCount(cartItems, "Dvd", null, null);
 			num = ((num > 0) ? num : 0);
-			int num2 = GetRequiredCount("BluRay", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - GetCartItemCount(cartItems, "BluRay", null, null);
+			int num2 = RxGxGetRequiredCount("BluRay", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - RxGxGetCartItemCount(cartItems, "BluRay", null, null);
 			num2 = ((num2 > 0) ? num2 : 0);
-			int num3 = GetRequiredCount("Game", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - GetCartItemCount(cartItems, "Game", null, null);
+			int num3 = RxGxGetRequiredCount("Game", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - RxGxGetCartItemCount(cartItems, "Game", null, null);
 			num3 = ((num3 > 0) ? num3 : 0);
-			int num4 = GetRequiredCount("Any", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - GetCartItemCount(cartItems, "Any", promotion.RentQuantity, promotion.RentFormat.ToString());
+			int num4 = RxGxGetRequiredCount("Any", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) - RxGxGetCartItemCount(cartItems, "Any", promotion.RentQuantity, promotion.RentFormat.ToString());
 			num4 = ((num4 > 0) ? num4 : 0);
 			Dictionary<string, object> dictionary = new Dictionary<string, object>();
 			dictionary["is_cart_valid"] = num == 0 && num2 == 0 && num3 == 0 && num4 == 0;
@@ -70,36 +70,85 @@ public static class PromotionFunctions
 			dictionary["blu_rays_remaining"] = num2;
 			dictionary["games_remaining"] = num3;
 			dictionary["any_remaining"] = num4;
-			dictionary["promo_code_value"] = GetPromoCodeValue((bool)dictionary["is_cart_valid"], promotion.GetQuantity, promotion.GetFormat.Value, cartItems, dvdPrice, bluRayPrice, gamePrice);
-			Dictionary<string, string> title = GetTitle(promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
-			dictionary["title_english"] = title["english"];
-			dictionary["title_spanish"] = title["spanish"];
-			Dictionary<string, string> message = GetMessage(num, num2, num3, num4);
-			dictionary["message_english"] = message["english"];
-			dictionary["message_spanish"] = message["spanish"];
+			dictionary["promo_code_value"] = RxGxGetPromoCodeValue((bool)dictionary["is_cart_valid"], promotion.GetQuantity, promotion.GetFormat.Value, cartItems, dvdPrice, bluRayPrice, gamePrice);
+			Dictionary<string, string> dictionary2 = RxGxGetTitle(promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
+			dictionary["title_english"] = dictionary2["english"];
+			dictionary["title_spanish"] = dictionary2["spanish"];
+			Dictionary<string, string> dictionary3 = RxGxGetMessage(num, num2, num3, num4);
+			dictionary["message_english"] = dictionary3["english"];
+			dictionary["message_spanish"] = dictionary3["spanish"];
 			return dictionary.ToLuaTable();
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.LogException("PromotionFunctions.ValidateCart - an unhandled exception occurred.", e);
+			LogHelper.Instance.LogException("PromotionFunctions.RxGxValidateCart - an unhandled exception occurred.", e);
 			return null;
+		}
+	}
+
+	[KernelFunction(Name = "kernel.rental_promotion_tsp_validate_cart")]
+	internal static bool TspValidateCart(LuaTable cartItems)
+	{
+		Promotion promotion = PromotionService.Instance.GetPromotion();
+		if (promotion == null)
+		{
+			return false;
+		}
+		if (promotion.CampaignTitles == null)
+		{
+			return false;
+		}
+		try
+		{
+			List<long> list = new List<long>();
+			foreach (LuaTable value in cartItems.Values)
+			{
+				if (!(((string)value["action"]).ToLower() != "rental"))
+				{
+					list.Add(long.Parse(value["product_id"].ToString()));
+				}
+			}
+			int num = list.Intersect(promotion.CampaignTitles.Titles).ToList().Count();
+			if (promotion.CampaignTitles.Include && num > 0)
+			{
+				return true;
+			}
+			if (!promotion.CampaignTitles.Include && num != list.Count())
+			{
+				return true;
+			}
+			return false;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("PromotionFunctions.TspValidateCart - an unhandled exception occurred.", e);
+			return false;
 		}
 	}
 
 	private static Dictionary<string, object> GetPromotionAsLuaFormat(Promotion promotion)
 	{
-		return new Dictionary<string, object>
+		Dictionary<string, object> dictionary = new Dictionary<string, object>();
+		dictionary["name"] = promotion.Name;
+		dictionary["original_price"] = promotion.OriginalPrice;
+		dictionary["price"] = promotion.Price;
+		dictionary["quantity"] = promotion.Quantity;
+		dictionary["intent"] = promotion.Intent.ToString();
+		dictionary["original_percent"] = promotion.OriginalPercent;
+		dictionary["percent"] = promotion.Percent;
+		dictionary["rent_qty"] = promotion.RentQuantity;
+		dictionary["rent_format"] = (promotion.RentFormat.HasValue ? promotion.RentFormat.ToString() : null);
+		dictionary["get_qty"] = promotion.GetQuantity;
+		dictionary["get_format"] = (promotion.GetFormat.HasValue ? promotion.GetFormat.ToString() : null);
+		dictionary["campaign_titles"] = null;
+		if (promotion.CampaignTitles != null)
 		{
-			["name"] = promotion.Name,
-			["price"] = promotion.Price,
-			["quantity"] = promotion.Quantity,
-			["intent"] = promotion.Intent.ToString(),
-			["percent"] = promotion.Percent,
-			["rent_qty"] = promotion.RentQuantity,
-			["rent_format"] = (promotion.RentFormat.HasValue ? promotion.RentFormat.ToString() : null),
-			["get_qty"] = promotion.GetQuantity,
-			["get_format"] = (promotion.GetFormat.HasValue ? promotion.GetFormat.ToString() : null)
-		};
+			Dictionary<string, object> dictionary2 = new Dictionary<string, object>();
+			dictionary2["include"] = promotion.CampaignTitles.Include;
+			dictionary2["titles"] = promotion.CampaignTitles.Titles;
+			dictionary["campaign_titles"] = dictionary2;
+		}
+		return dictionary;
 	}
 
 	private static Promotion GetLuaTableAsPromotion(LuaTable promotion)
@@ -108,9 +157,11 @@ public static class PromotionFunctions
 		{
 			Promotion promotion2 = new Promotion();
 			promotion2.Name = (string)promotion["name"];
+			promotion2.OriginalPrice = decimal.Parse(promotion["original_price"].ToString());
 			promotion2.Price = decimal.Parse(promotion["price"].ToString());
 			promotion2.Quantity = int.Parse(promotion["quantity"].ToString());
 			promotion2.Intent = Enum<PromotionIntentCode>.Parse((string)promotion["intent"]);
+			promotion2.OriginalPercent = decimal.Parse(promotion["original_percent"].ToString());
 			promotion2.Percent = decimal.Parse(promotion["percent"].ToString());
 			promotion2.RentQuantity = byte.Parse(promotion["rent_qty"].ToString());
 			promotion2.RentFormat = null;
@@ -124,6 +175,20 @@ public static class PromotionFunctions
 			{
 				promotion2.GetFormat = Enum<PromotionGetFormat>.Parse((string)promotion["get_format"]);
 			}
+			promotion2.CampaignTitles = null;
+			if (promotion["campaign_titles"] != null)
+			{
+				LuaTable luaTable = (LuaTable)promotion["campaign_titles"];
+				LuaTable obj = (LuaTable)luaTable["titles"];
+				List<long> list = new List<long>();
+				foreach (object value in obj.Values)
+				{
+					list.Add(long.Parse(value.ToString()));
+				}
+				promotion2.CampaignTitles = new CampaignTitles();
+				promotion2.CampaignTitles.Include = (bool)luaTable["include"];
+				promotion2.CampaignTitles.Titles = list;
+			}
 			return promotion2;
 		}
 		catch (Exception e)
@@ -133,7 +198,7 @@ public static class PromotionFunctions
 		}
 	}
 
-	private static byte GetRequiredCount(string format, byte rentQuantity, PromotionRentFormat rentFormat, byte getQuantity, PromotionGetFormat getFormat)
+	private static byte RxGxGetRequiredCount(string format, byte rentQuantity, PromotionRentFormat rentFormat, byte getQuantity, PromotionGetFormat getFormat)
 	{
 		byte b = 0;
 		if (format == rentFormat.ToString())
@@ -147,7 +212,7 @@ public static class PromotionFunctions
 		return b;
 	}
 
-	private static byte GetCartItemCount(LuaTable cartItems, string format, byte? excludeQuantity, string excludeFormat)
+	private static byte RxGxGetCartItemCount(LuaTable cartItems, string format, byte? excludeQuantity, string excludeFormat)
 	{
 		byte b = 0;
 		byte b2 = 0;
@@ -183,7 +248,7 @@ public static class PromotionFunctions
 		return b;
 	}
 
-	private static decimal GetPromoCodeValue(bool isCartValid, byte getQuantity, PromotionGetFormat getFormat, LuaTable cartItems, decimal dvdPrice, decimal bluRayPrice, decimal gamePrice)
+	private static decimal RxGxGetPromoCodeValue(bool isCartValid, byte getQuantity, PromotionGetFormat getFormat, LuaTable cartItems, decimal dvdPrice, decimal bluRayPrice, decimal gamePrice)
 	{
 		if (!isCartValid)
 		{
@@ -220,7 +285,7 @@ public static class PromotionFunctions
 		}
 	}
 
-	private static Dictionary<string, string> GetTitle(byte rentQuantity, PromotionRentFormat rentFormat, byte getQuantity, PromotionGetFormat getFormat)
+	private static Dictionary<string, string> RxGxGetTitle(byte rentQuantity, PromotionRentFormat rentFormat, byte getQuantity, PromotionGetFormat getFormat)
 	{
 		string text = rentFormat.ToString();
 		string text2 = rentFormat.ToString();
@@ -267,7 +332,7 @@ public static class PromotionFunctions
 		return dictionary;
 	}
 
-	private static Dictionary<string, string> GetMessage(int dvdsRemaining, int bluRaysRemaining, int gamesRemaining, int anyRemaining)
+	private static Dictionary<string, string> RxGxGetMessage(int dvdsRemaining, int bluRaysRemaining, int gamesRemaining, int anyRemaining)
 	{
 		Dictionary<string, string> dictionary = new Dictionary<string, string>();
 		dictionary["english"] = "";

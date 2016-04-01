@@ -1,18 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Microsoft.Win32;
 using Redbox.Core;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.IPC.Framework;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.REDS.Framework;
 
 namespace Redbox.HardwareServices.Proxy;
 
@@ -105,38 +103,6 @@ internal class HardwareService : IHardwareService
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in HardwareService.Reset.", e);
 		}
-	}
-
-	public Redbox.KioskEngine.ComponentModel.ErrorList CompileScriptResources()
-	{
-		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (service == null)
-		{
-			return errorList;
-		}
-		LogHelper.Instance.Log("Compile HAL Script resources:");
-		IHardwareService service2 = ServiceLocator.Instance.GetService<IHardwareService>();
-		IFileCacheService service3 = ServiceLocator.Instance.GetService<IFileCacheService>();
-		foreach (IResource resource in service.GetResources("halscript"))
-		{
-			object content = resource.GetAspect("content").GetContent();
-			string text = ((!(content is byte[])) ? ((string)content) : Encoding.ASCII.GetString((byte[])content));
-			if (!string.IsNullOrEmpty(text))
-			{
-				string text2 = Path.ChangeExtension(resource.Name, ".hs");
-				service3.SetFileContent(text2, text, overwrite: true);
-				string path = Path.Combine(service3.GetCachePath(), text2);
-				LogHelper.Instance.Log("...Compile HAL script resource '{0}'.", resource.Name);
-				Redbox.KioskEngine.ComponentModel.ErrorList errorList2 = service2.Compile(path, resource.Name);
-				if (errorList2.ContainsError())
-				{
-					errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("H033", $"The HAL Script resource '{resource.Name}' failed to compile, the errors that follow are the details.", "Correct the script resource and recompile."));
-					errorList.AddRange(errorList2);
-				}
-			}
-		}
-		return errorList;
 	}
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList Initialize()
@@ -792,6 +758,26 @@ internal class HardwareService : IHardwareService
 		return errorList;
 	}
 
+	public Redbox.KioskEngine.ComponentModel.ErrorList FieldInsertFraudWithCheck(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
+	{
+		jobId = null;
+		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
+		HardwareCommandResult hardwareCommandResult = Service.FieldInsertFraudWithCheck(new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Highest
+		}, out var job);
+		LogHelper.Instance.Log($"KernelFunction result.Success| {hardwareCommandResult.Success}");
+		if (!hardwareCommandResult.Success)
+		{
+			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
+		}
+		else
+		{
+			jobId = ConfigureJob(job, eventHandler, statusChangeHandler, errorList);
+		}
+		return errorList;
+	}
+
 	public Redbox.KioskEngine.ComponentModel.ErrorList Compile(string path, string name)
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
@@ -1001,7 +987,7 @@ internal class HardwareService : IHardwareService
 				if (eventHandler != null)
 				{
 					List<string> errorList = new List<string>();
-					hardwareCommandResult.Errors.ForEach(delegate(Redbox.HAL.Core.Error error)
+					hardwareCommandResult.Errors.ForEach(delegate(Redbox.HAL.Component.Model.Error error)
 					{
 						errorList.Add(error.Description);
 					});

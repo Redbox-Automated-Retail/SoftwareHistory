@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Windows;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
@@ -91,7 +92,15 @@ public interface IActor : IDisposable
 
 	IStyleSheetStyle Style { get; set; }
 
+	FrameworkElement WPFFrameworkElement { get; set; }
+
+	string WPFControlName { get; set; }
+
+	string WPFControlAssemblyName { get; set; }
+
 	event EventHandler Hit;
+
+	event WPFHitHandler OnWPFHit;
 
 	void ClearHit();
 

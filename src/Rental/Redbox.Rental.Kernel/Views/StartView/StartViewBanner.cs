@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.StartView;
 

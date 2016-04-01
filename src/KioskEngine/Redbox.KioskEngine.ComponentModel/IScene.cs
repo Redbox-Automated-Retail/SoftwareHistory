@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Windows.Controls;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IScene : IDisposable
 {
+	RenderType SceneRenderType { get; set; }
+
 	int ActiveHitHandlers { get; }
 
 	int Width { get; }
@@ -16,9 +19,17 @@ public interface IScene : IDisposable
 
 	Color BackgroundColor { get; set; }
 
-	Image BackgroundImage { get; set; }
+	System.Drawing.Image BackgroundImage { get; set; }
 
 	LinkedList<IActor> Actors { get; }
+
+	Grid WPFGrid { get; }
+
+	event WPFHitHandler OnWPFHit;
+
+	event WPFKeyEvent OnWPFKeyDown;
+
+	event WPFKeyEvent OnWPFKeyUp;
 
 	IActor CreateActor();
 

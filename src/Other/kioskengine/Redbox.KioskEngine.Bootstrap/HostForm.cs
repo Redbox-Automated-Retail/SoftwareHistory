@@ -416,11 +416,31 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		return BitConverter.ToString(array);
 	}
 
-	private void OnKeyDown(object sender, KeyEventArgs e)
+	public void OnKeyDown(object sender, KeyEventArgs e)
 	{
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		switch (e.KeyCode)
 		{
+		case Keys.Home:
+		{
+			ITextToSpeechService service3 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service3 != null)
+			{
+				service3.AudioDeviceConnected = true;
+				IViewService service4 = ServiceLocator.Instance.GetService<IViewService>();
+				service3.RunSpeechWorkflow("tts_" + service4.PeekViewFrame().ViewName);
+			}
+			break;
+		}
+		case Keys.End:
+		{
+			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service2 != null)
+			{
+				service2.AudioDeviceConnected = false;
+			}
+			break;
+		}
 		case Keys.F1:
 			ScreenshotHelper.Capture(this);
 			break;
@@ -514,15 +534,10 @@ public class HostForm : Form, IFlashService, ITrackDataService
 			}
 			m_isCursorHidden = !m_isCursorHidden;
 			break;
-		case Keys.F3:
-		case Keys.F7:
-		case Keys.F9:
-		case Keys.F10:
-			break;
 		}
 	}
 
-	private void OnKeyPress(object sender, KeyPressEventArgs e)
+	public void OnKeyPress(object sender, KeyPressEventArgs e)
 	{
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		if (e.KeyChar == '\u001b')

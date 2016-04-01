@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Windows.Forms.Integration;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
@@ -8,7 +9,7 @@ public interface IRenderingService
 
 	Color BackgroundColor { get; set; }
 
-	IScene CreateScene(string name, int width, int height, Color backgroundColor);
+	IScene CreateScene(string name, int width, int height, Color backgroundColor, ElementHost elementHost);
 
 	IScene GetScene(string name);
 

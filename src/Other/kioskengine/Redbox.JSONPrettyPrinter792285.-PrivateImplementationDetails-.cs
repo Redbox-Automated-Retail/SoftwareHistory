@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 
-internal class Redbox_002EJSONPrettyPrinter788477_002E_003CPrivateImplementationDetails_003E
+internal class Redbox_002EJSONPrettyPrinter792285_002E_003CPrivateImplementationDetails_003E
 {
 	[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 52)]
 	private struct _0024_0024struct0x6000300_002D1

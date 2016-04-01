@@ -105,6 +105,12 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 
 		[ActorPropertyTag(Name = "horizontalAlignment")]
 		public StringAlignment HorizontalAlignment;
+
+		[ActorPropertyTag(Name = "WPFControlName")]
+		public string WPFControlName;
+
+		[ActorPropertyTag(Name = "WPFControlAssemblyName")]
+		public string WPFControlAssemblyName;
 	}
 
 	private readonly Redbox.KioskEngine.ComponentModel.ErrorList m_errors = new Redbox.KioskEngine.ComponentModel.ErrorList();
@@ -124,6 +130,8 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 	public string ViewName { get; internal set; }
 
 	public string ViewVersion { get; internal set; }
+
+	public RenderType ViewRenderType { get; internal set; }
 
 	public string ActiveFlag { get; internal set; }
 
@@ -148,6 +156,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		try
 		{
 			Scene.SuspendDrawing();
+			Scene.SceneRenderType = ViewRenderType;
 			if (Clear)
 			{
 				Scene.Clear();
@@ -190,6 +199,8 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 				actor.GradientTargetColor = actorProperties.GradientTargetColor;
 				actor.HorizontalAlignment = actorProperties.HorizontalAlignment;
 				actor.TextTranslationPoint = actorProperties.TextTranslationPoint;
+				actor.WPFControlName = actorProperties.WPFControlName;
+				actor.WPFControlAssemblyName = actorProperties.WPFControlAssemblyName;
 				string onHitScriptName = actorProperties.OnHit;
 				actor.Hit += delegate
 				{
@@ -254,32 +265,43 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		ViewVersion = viewResource["version"] as string;
 		ActiveFlag = viewResource["active_flag"] as string;
 		XmlNode xmlNode = GetViewGraph().ChildNodes[0];
+		string attributeValue = XmlNodeExtensions.GetAttributeValue(xmlNode, "render_type", "GDI");
+		if (!string.IsNullOrEmpty(attributeValue))
+		{
+			try
+			{
+				ViewRenderType = (RenderType)Enum.Parse(typeof(RenderType), attributeValue);
+			}
+			catch
+			{
+			}
+		}
 		Clear = XmlNodeExtensions.GetAttributeValue(xmlNode, "clear", defaultValue: true);
 		Width = XmlNodeExtensions.GetAttributeValue<int>(xmlNode, "width");
 		Height = XmlNodeExtensions.GetAttributeValue<int>(xmlNode, "height");
 		Cached = XmlNodeExtensions.GetAttributeValue<bool>(xmlNode, "cached");
 		SceneName = XmlNodeExtensions.GetAttributeValue(xmlNode, "name", "Default");
-		string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "stylesheet");
-		if (!string.IsNullOrEmpty(attributeValue))
+		string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "stylesheet");
+		if (!string.IsNullOrEmpty(attributeValue2))
 		{
-			StyleSheet = service2.New(attributeValue);
+			StyleSheet = service2.New(attributeValue2);
 		}
 		ViewWindow = XmlNodeExtensions.GetAttributeValue<Rectangle?>(xmlNode, "viewWindow");
 		OnEnterResourceName = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onEnter");
 		OnLeaveResourceName = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onLeave");
-		string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "backgroundImage");
-		if (!string.IsNullOrEmpty(attributeValue2))
+		string attributeValue3 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "backgroundImage");
+		if (!string.IsNullOrEmpty(attributeValue3))
 		{
 			IMacroService service4 = ServiceLocator.Instance.GetService<IMacroService>();
-			attributeValue2 = service4.ExpandProperties(attributeValue2);
-			Image bitmap = service.GetBitmap(attributeValue2);
+			attributeValue3 = service4.ExpandProperties(attributeValue3);
+			Image bitmap = service.GetBitmap(attributeValue3);
 			if (bitmap != null)
 			{
 				BackgroundImage = bitmap;
 			}
 			else
 			{
-				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V002", $"backgroundImage: Bitmap resource '{attributeValue2}' not found.", "The resource name specified in the view attribute backgroundImage was not found."));
+				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V002", $"backgroundImage: Bitmap resource '{attributeValue3}' not found.", "The resource name specified in the view attribute backgroundImage was not found."));
 			}
 		}
 		BackgroundColor = XmlNodeExtensions.GetAttributeValue(xmlNode, "backgroundColor", Color.FromArgb(153, 153, 152));
@@ -291,17 +313,17 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		Scene = service3.GetScene(SceneName) ?? service3.GetScene("Default");
 		foreach (XmlNode item in xmlNodeList)
 		{
-			string attributeValue3 = XmlNodeExtensions.GetAttributeValue<string>(item, "name");
-			ActorProperties actorProperties = (m_actors.ContainsKey(attributeValue3) ? m_actors[attributeValue3] : new ActorProperties());
+			string attributeValue4 = XmlNodeExtensions.GetAttributeValue<string>(item, "name");
+			ActorProperties actorProperties = (m_actors.ContainsKey(attributeValue4) ? m_actors[attributeValue4] : new ActorProperties());
 			actorProperties.Enabled = XmlNodeExtensions.GetAttributeValue(item, "enabled", defaultValue: true);
 			IStyleSheetState styleSheetState = null;
 			if (StyleSheet != null)
 			{
-				string attributeValue4 = XmlNodeExtensions.GetAttributeValue<string>(item, "style");
-				if (!string.IsNullOrEmpty(attributeValue4))
+				string attributeValue5 = XmlNodeExtensions.GetAttributeValue<string>(item, "style");
+				if (!string.IsNullOrEmpty(attributeValue5))
 				{
-					actorProperties.StyleName = attributeValue4;
-					IStyleSheetStyle style = StyleSheet.GetStyle(attributeValue4);
+					actorProperties.StyleName = attributeValue5;
+					IStyleSheetStyle style = StyleSheet.GetStyle(attributeValue5);
 					if (style != null)
 					{
 						actorProperties.Style = style;
@@ -317,25 +339,25 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 				{
 					continue;
 				}
-				object obj = XmlNodeExtensions.GetAttributeValue<object>(item, actorPropertyTagAttribute.Name);
-				if (obj == null)
+				object obj2 = XmlNodeExtensions.GetAttributeValue<object>(item, actorPropertyTagAttribute.Name);
+				if (obj2 == null)
 				{
 					if (styleSheetState == null)
 					{
 						continue;
 					}
-					obj = styleSheetState[actorPropertyTagAttribute.Name];
+					obj2 = styleSheetState[actorPropertyTagAttribute.Name];
 				}
-				if (obj != null)
+				if (obj2 != null)
 				{
 					try
 					{
-						object value = ConversionHelper.ChangeType(obj, fieldInfo.FieldType);
+						object value = ConversionHelper.ChangeType(obj2, fieldInfo.FieldType);
 						fieldInfo.SetValue(actorProperties, value);
 					}
 					catch (Exception e)
 					{
-						LogHelper.Instance.Log($"Unable to set actor property '{actorPropertyTagAttribute.Name}' with value '{obj}'.", e);
+						LogHelper.Instance.Log($"Unable to set actor property '{actorPropertyTagAttribute.Name}' with value '{obj2}'.", e);
 					}
 				}
 			}
@@ -347,7 +369,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 			actorProperties.Font = service.GetFont(text, out var resourceFound);
 			if (!string.IsNullOrEmpty(text) && !resourceFound)
 			{
-				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V003", $"{attributeValue3}.font: Font resource '{text}' not found.", $" Actor {attributeValue3} is referencing a font resource named '{text}' that was not found."));
+				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V003", $"{attributeValue4}.font: Font resource '{text}' not found.", $" Actor {attributeValue4} is referencing a font resource named '{text}' that was not found."));
 			}
 			string text2 = XmlNodeExtensions.GetAttributeValue<string>(item, "image");
 			if (string.IsNullOrEmpty(text2) && styleSheetState != null)
@@ -371,7 +393,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 					ActorProperties actorProperties2 = actorProperties;
 					actorProperties2.OptionFlags |= RenderOptionFlags.DrawBorder;
 					actorProperties.ErrorText = $"Bitmap resource '{text2}' not found.";
-					Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V004", $"{attributeValue3}.image: Bitmap resource '{text2}' not found.", $"Actor {attributeValue3} is referencing a bitmap resource named '{text2}' that was not found."));
+					Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V004", $"{attributeValue4}.image: Bitmap resource '{text2}' not found.", $"Actor {attributeValue4} is referencing a bitmap resource named '{text2}' that was not found."));
 				}
 			}
 			if (ViewWindow.HasValue)
@@ -381,7 +403,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 				actorProperties2 = actorProperties;
 				actorProperties2.Y += ViewWindow.Value.Y;
 			}
-			m_actors[attributeValue3] = actorProperties;
+			m_actors[attributeValue4] = actorProperties;
 		}
 	}
 

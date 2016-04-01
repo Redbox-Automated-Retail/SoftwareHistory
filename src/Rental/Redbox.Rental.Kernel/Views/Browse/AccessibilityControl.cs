@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.Browse;
 

@@ -5,6 +5,7 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Lua;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -199,6 +200,21 @@ internal class PromotionServicesProxy : IPromotionServices
 						remoteServiceResult.Properties["rent_format"] = (dictionary.ContainsKey("RentFormat") ? dictionary["RentFormat"] : null);
 						remoteServiceResult.Properties["get_qty"] = (dictionary.ContainsKey("GetQty") ? dictionary["GetQty"] : ((object)0));
 						remoteServiceResult.Properties["get_format"] = (dictionary.ContainsKey("GetFormat") ? dictionary["GetFormat"] : null);
+						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CampaignTitles") ? (dictionary["CampaignTitles"] as Dictionary<string, object>) : null);
+						if (dictionary2 != null)
+						{
+							IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
+							LuaTable luaTable = (LuaTable)service2.NewTable();
+							int num = 1;
+							foreach (object item in dictionary2["Titles"] as ArrayList)
+							{
+								luaTable[num++] = item;
+							}
+							LuaTable luaTable2 = (LuaTable)service2.NewTable();
+							luaTable2["include"] = (bool)dictionary2["Include"];
+							luaTable2["titles"] = luaTable;
+							remoteServiceResult.Properties["campaign_titles"] = luaTable2;
+						}
 						if (dictionary.ContainsKey("ServerName"))
 						{
 							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
@@ -208,9 +224,9 @@ internal class PromotionServicesProxy : IPromotionServices
 							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 							if (arrayList != null && arrayList.Count > 0)
 							{
-								if (arrayList[0] is Dictionary<string, object> dictionary2)
+								if (arrayList[0] is Dictionary<string, object> dictionary3)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(PromotionValidationResponse?), (string)dictionary2["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(PromotionValidationResponse?), (string)dictionary3["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : PromotionValidationResponse.Error.ToString());
 								}
 							}
@@ -303,6 +319,7 @@ internal class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["rent_format"] = null;
 					remoteServiceResult.Properties["get_qty"] = 0;
 					remoteServiceResult.Properties["get_format"] = null;
+					remoteServiceResult.Properties["campaign_titles"] = null;
 				}
 				else
 				{
@@ -314,6 +331,7 @@ internal class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["rent_format"] = null;
 					remoteServiceResult.Properties["get_qty"] = 0;
 					remoteServiceResult.Properties["get_format"] = null;
+					remoteServiceResult.Properties["campaign_titles"] = null;
 				}
 			}
 			catch (Exception e)

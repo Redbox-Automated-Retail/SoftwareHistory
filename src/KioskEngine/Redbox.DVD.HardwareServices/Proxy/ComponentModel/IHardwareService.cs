@@ -11,8 +11,6 @@ internal interface IHardwareService
 
 	bool CanSwitch();
 
-	ErrorList CompileScriptResources();
-
 	ErrorList Init(out string jobId, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler);
 
 	ErrorList Vend(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, string[] barcodes, int? prepositionedDeck, int? prepositionedSlot, out string jobId);
@@ -64,6 +62,8 @@ internal interface IHardwareService
 	ErrorList ClearMerchStatus(string[] ids, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList GetBarcodeVMZPosition(string[] ids, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
+
+	ErrorList FieldInsertFraudWithCheck(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList Compile(string path, string name);
 

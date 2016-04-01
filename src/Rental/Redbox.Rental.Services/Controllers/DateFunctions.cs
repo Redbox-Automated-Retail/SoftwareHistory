@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace Redbox.Rental.Kernel.Views;
+namespace Redbox.Rental.Services.Controllers;
 
 public class DateFunctions
 {

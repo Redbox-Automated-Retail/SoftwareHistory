@@ -53,16 +53,6 @@ public class HardwareServicesHost : IKernelExtensionHost, IDisposable
 		ErrorList result = new ErrorList();
 		HardwareService.Instance.Reset();
 		ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>()?.RegisterKernelFunctions(typeof(HardwareFunctions).Assembly, "Hardware Services");
-		ServiceLocator.Instance.GetService<IFileCacheService>()?.Remove("*.hs");
-		ErrorList errorList = HardwareService.Instance.CompileScriptResources();
-		if (errorList.ContainsError())
-		{
-			ErrorForm errorForm = new ErrorForm();
-			errorForm.Errors = errorList;
-			errorForm.Text = "HAL Script Compilation Errors";
-			errorForm.Message = "One or more HAL Script resources failed to compile:";
-			errorForm.Show();
-		}
 		return result;
 	}
 

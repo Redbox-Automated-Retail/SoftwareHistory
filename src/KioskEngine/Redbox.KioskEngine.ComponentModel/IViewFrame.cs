@@ -19,6 +19,8 @@ public interface IViewFrame : IDisposable
 
 	string ViewVersion { get; }
 
+	RenderType ViewRenderType { get; }
+
 	string ActiveFlag { get; }
 
 	string SceneName { get; }

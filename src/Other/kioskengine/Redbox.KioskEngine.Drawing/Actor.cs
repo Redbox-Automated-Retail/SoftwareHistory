@@ -3,8 +3,16 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
+using System.Globalization;
+using System.IO;
 using System.Reflection;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Input;
+using System.Windows.Markup;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
@@ -12,6 +20,10 @@ namespace Redbox.KioskEngine.Drawing;
 
 public class Actor : IActor, IDisposable
 {
+	private bool m_clickStarted;
+
+	private double WPFSizeConvertion = 1.3333333333333333;
+
 	private int m_x;
 
 	private int m_y;
@@ -26,7 +38,7 @@ public class Actor : IActor, IDisposable
 
 	private string m_html;
 
-	private Image m_image;
+	private System.Drawing.Image m_image;
 
 	private bool m_enabled;
 
@@ -40,17 +52,17 @@ public class Actor : IActor, IDisposable
 
 	private string m_errorText;
 
-	private Size? m_cornerSize;
+	private System.Drawing.Size? m_cornerSize;
 
-	private Color? m_borderColor;
+	private System.Drawing.Color? m_borderColor;
 
 	private float m_strokeWeight;
 
 	private float? m_gradientAngle;
 
-	private Color m_foregroundColor;
+	private System.Drawing.Color m_foregroundColor;
 
-	private Color m_backgroundColor;
+	private System.Drawing.Color m_backgroundColor;
 
 	private IStyleSheetStyle m_style;
 
@@ -60,11 +72,11 @@ public class Actor : IActor, IDisposable
 
 	private float? m_textRotationAngle;
 
-	private WebBrowser m_browserControl;
+	private System.Windows.Forms.WebBrowser m_browserControl;
 
-	private Color? m_gradientTargetColor;
+	private System.Drawing.Color? m_gradientTargetColor;
 
-	private Point? m_textTranslationPoint;
+	private System.Drawing.Point? m_textTranslationPoint;
 
 	private RenderOptionFlags m_optionFlags;
 
@@ -73,6 +85,12 @@ public class Actor : IActor, IDisposable
 	private StringAlignment m_verticalAlignment;
 
 	private StringAlignment m_horizontalAlignment;
+
+	private FrameworkElement m_wpfFrameworkElement;
+
+	private TextBlock m_wpfTextBlock;
+
+	private System.Windows.Controls.Image m_wpfImage;
 
 	public bool HitExists => Hit != null;
 
@@ -93,6 +111,10 @@ public class Actor : IActor, IDisposable
 					rectangle,
 					new Rectangle(m_x, Y, Width, Height)
 				});
+				if (m_wpfFrameworkElement != null)
+				{
+					m_wpfFrameworkElement.Margin = Margin;
+				}
 			}
 		}
 	}
@@ -114,6 +136,10 @@ public class Actor : IActor, IDisposable
 					rectangle,
 					new Rectangle(X, m_y, Width, Height)
 				});
+				if (m_wpfFrameworkElement != null)
+				{
+					m_wpfFrameworkElement.Margin = Margin;
+				}
 			}
 		}
 	}
@@ -127,7 +153,7 @@ public class Actor : IActor, IDisposable
 				IFontCacheService service = ServiceLocator.Instance.GetService<IFontCacheService>();
 				if (service != null)
 				{
-					m_font = service.RegisterFont("DefaultActorFont", "Arial", 16f, FontStyle.Regular);
+					m_font = service.RegisterFont("DefaultActorFont", "Arial", 16f, System.Drawing.FontStyle.Regular);
 				}
 			}
 			return m_font;
@@ -147,6 +173,10 @@ public class Actor : IActor, IDisposable
 		set
 		{
 			SetFieldValue(ref m_width, value);
+			if (m_wpfFrameworkElement != null)
+			{
+				m_wpfFrameworkElement.Margin = Margin;
+			}
 		}
 	}
 
@@ -159,6 +189,10 @@ public class Actor : IActor, IDisposable
 		set
 		{
 			SetFieldValue(ref m_height, value);
+			if (m_wpfFrameworkElement != null)
+			{
+				m_wpfFrameworkElement.Margin = Margin;
+			}
 		}
 	}
 
@@ -171,6 +205,7 @@ public class Actor : IActor, IDisposable
 		set
 		{
 			SetFieldValue(ref m_text, value);
+			UpdateWPFText();
 		}
 	}
 
@@ -185,7 +220,7 @@ public class Actor : IActor, IDisposable
 			SetFieldValue(ref m_html, value);
 			if (m_html != null && m_html != string.Empty)
 			{
-				m_browserControl = new WebBrowser();
+				m_browserControl = new System.Windows.Forms.WebBrowser();
 				m_browserControl.ScrollBarsEnabled = false;
 				m_browserControl.DocumentCompleted += BrowserDocumentCompleted;
 				m_browserControl.Height = Height;
@@ -258,7 +293,7 @@ public class Actor : IActor, IDisposable
 		}
 	}
 
-	public Image Image
+	public System.Drawing.Image Image
 	{
 		get
 		{
@@ -287,6 +322,7 @@ public class Actor : IActor, IDisposable
 			{
 				new Rectangle(X, Y, Width, Height)
 			});
+			AssignWPFImage(m_image);
 		}
 	}
 
@@ -299,6 +335,10 @@ public class Actor : IActor, IDisposable
 		set
 		{
 			SetFieldValue(ref m_visible, value);
+			if (m_wpfFrameworkElement != null)
+			{
+				m_wpfFrameworkElement.Visibility = ((!value) ? Visibility.Hidden : Visibility.Visible);
+			}
 		}
 	}
 
@@ -369,7 +409,7 @@ public class Actor : IActor, IDisposable
 
 	public HitTestFlags HitFlags { get; set; }
 
-	public Size? CornerSize
+	public System.Drawing.Size? CornerSize
 	{
 		get
 		{
@@ -381,7 +421,7 @@ public class Actor : IActor, IDisposable
 		}
 	}
 
-	public Color? BorderColor
+	public System.Drawing.Color? BorderColor
 	{
 		get
 		{
@@ -393,7 +433,7 @@ public class Actor : IActor, IDisposable
 		}
 	}
 
-	public Color ForegroundColor
+	public System.Drawing.Color ForegroundColor
 	{
 		get
 		{
@@ -405,7 +445,7 @@ public class Actor : IActor, IDisposable
 		}
 	}
 
-	public Color BackgroundColor
+	public System.Drawing.Color BackgroundColor
 	{
 		get
 		{
@@ -453,7 +493,7 @@ public class Actor : IActor, IDisposable
 		}
 	}
 
-	public Color? GradientTargetColor
+	public System.Drawing.Color? GradientTargetColor
 	{
 		get
 		{
@@ -467,7 +507,7 @@ public class Actor : IActor, IDisposable
 
 	public string RelativeToActorName { get; set; }
 
-	public Point? TextTranslationPoint
+	public System.Drawing.Point? TextTranslationPoint
 	{
 		get
 		{
@@ -529,6 +569,54 @@ public class Actor : IActor, IDisposable
 		}
 	}
 
+	public FrameworkElement WPFFrameworkElement
+	{
+		get
+		{
+			if (m_wpfFrameworkElement == null)
+			{
+				m_wpfFrameworkElement = CreateUIElement();
+			}
+			return m_wpfFrameworkElement;
+		}
+		set
+		{
+			m_wpfFrameworkElement = value;
+		}
+	}
+
+	public string WPFControlName { get; set; }
+
+	public string WPFControlAssemblyName { get; set; }
+
+	private System.Windows.HorizontalAlignment WPFHorizontalAlignmnet => HorizontalAlignment switch
+	{
+		StringAlignment.Near => System.Windows.HorizontalAlignment.Left, 
+		StringAlignment.Center => System.Windows.HorizontalAlignment.Center, 
+		StringAlignment.Far => System.Windows.HorizontalAlignment.Right, 
+		_ => System.Windows.HorizontalAlignment.Left, 
+	};
+
+	private VerticalAlignment WPFVerticalAlignmnet => VerticalAlignment switch
+	{
+		StringAlignment.Near => System.Windows.VerticalAlignment.Top, 
+		StringAlignment.Center => System.Windows.VerticalAlignment.Center, 
+		StringAlignment.Far => System.Windows.VerticalAlignment.Bottom, 
+		_ => System.Windows.VerticalAlignment.Top, 
+	};
+
+	private Thickness Margin
+	{
+		get
+		{
+			int num = ((Width != 0) ? (Scene.Width - Width - X) : 0);
+			int num2 = ((Height != 0) ? (Scene.Height - Height - Y) : 0);
+			return new Thickness(X, Y, num, num2);
+		}
+	}
+
+	public event WPFHitHandler OnWPFHit;
+
 	public event EventHandler Hit;
 
 	public Actor()
@@ -538,8 +626,8 @@ public class Actor : IActor, IDisposable
 		Enabled = true;
 		Visible = true;
 		IsDirty = true;
-		BackgroundColor = Color.Black;
-		ForegroundColor = Color.White;
+		BackgroundColor = System.Drawing.Color.Black;
+		ForegroundColor = System.Drawing.Color.White;
 		OptionFlags = RenderOptionFlags.Text | RenderOptionFlags.Image;
 	}
 
@@ -572,7 +660,7 @@ public class Actor : IActor, IDisposable
 	public MeasureTextResult MeasureText()
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		using Graphics graphics = Graphics.FromHwnd(Application.OpenForms[0].Handle);
+		using Graphics graphics = Graphics.FromHwnd(System.Windows.Forms.Application.OpenForms[0].Handle);
 		graphics.PixelOffsetMode = PixelOffsetMode.Half;
 		graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
 		Rectangle textRegion = GetTextRegion(forTranslation: false);
@@ -603,6 +691,266 @@ public class Actor : IActor, IDisposable
 		OnRender(context);
 	}
 
+	protected FrameworkElement CreateUIElement()
+	{
+		FrameworkElement frameworkElement = null;
+		frameworkElement = (string.IsNullOrEmpty(WPFControlName) ? CreateWPFActor() : CreateWPFControl());
+		frameworkElement.Tag = Name;
+		frameworkElement.Margin = Margin;
+		frameworkElement.MouseDown += FrameworkElement_MouseDown;
+		frameworkElement.MouseLeave += FrameworkElement_MouseLeave;
+		frameworkElement.MouseUp += FrameworkElement_MouseUp;
+		frameworkElement.IsHitTestVisible = WPFControlName != null || (HitFlags & (HitTestFlags.Enabled | HitTestFlags.DrawHotSpot)) != 0;
+		return frameworkElement;
+	}
+
+	private FrameworkElement CreateWPFActor()
+	{
+		Grid grid = new Grid();
+		if ((OptionFlags & RenderOptionFlags.Background) != RenderOptionFlags.None || (OptionFlags & RenderOptionFlags.BackgroundGradient) != RenderOptionFlags.None)
+		{
+			Border border = new Border
+			{
+				Opacity = Opacity
+			};
+			System.Windows.Media.Color mediaColor = GetMediaColor(BackgroundColor, Opacity);
+			if ((OptionFlags & RenderOptionFlags.BackgroundGradient) != RenderOptionFlags.None)
+			{
+				System.Drawing.Color color = (GradientTargetColor.HasValue ? GradientTargetColor.Value : BackgroundColor);
+				System.Windows.Media.Color mediaColor2 = GetMediaColor(color, Opacity);
+				border.Background = new System.Windows.Media.LinearGradientBrush(mediaColor, mediaColor2, GradientAngle ?? 180f);
+			}
+			else
+			{
+				border.Background = new SolidColorBrush(mediaColor);
+			}
+			if (CornerSize.HasValue)
+			{
+				border.CornerRadius = new CornerRadius(CornerSize.Value.Width);
+			}
+			grid.Children.Add(border);
+		}
+		if ((OptionFlags & RenderOptionFlags.Image) != RenderOptionFlags.None)
+		{
+			m_wpfImage = new System.Windows.Controls.Image
+			{
+				Opacity = Opacity
+			};
+			AssignWPFImage(Image);
+			m_wpfImage.Stretch = Stretch.Fill;
+			grid.Children.Add(m_wpfImage);
+		}
+		if ((OptionFlags & RenderOptionFlags.DrawBorder) != RenderOptionFlags.None)
+		{
+			Border border2 = new Border();
+			border2.BorderThickness = new Thickness(StrokeWeight);
+			border2.BorderBrush = new SolidColorBrush(GetMediaColor(BorderColor ?? System.Drawing.Color.Red));
+			if (CornerSize.HasValue)
+			{
+				border2.CornerRadius = new CornerRadius(CornerSize.Value.Width);
+			}
+			grid.Children.Add(border2);
+		}
+		if ((OptionFlags & RenderOptionFlags.Text) != RenderOptionFlags.None)
+		{
+			m_wpfTextBlock = new TextBlock
+			{
+				Opacity = Opacity
+			};
+			System.Windows.Media.FontFamily fontFamily = null;
+			if (fontFamily == null)
+			{
+				fontFamily = new System.Windows.Media.FontFamily(Font.FontFamily.Name);
+				LogHelper.Instance.Log("Unable to find Font Family {0}.  Using default font instead.", Font.FontFamily.Name);
+			}
+			m_wpfTextBlock.FontFamily = fontFamily;
+			m_wpfTextBlock.FontSize = (double)Font.Size * WPFSizeConvertion;
+			if (Font.Style == System.Drawing.FontStyle.Bold)
+			{
+				m_wpfTextBlock.FontWeight = FontWeights.Bold;
+			}
+			else if (Font.Style == System.Drawing.FontStyle.Regular)
+			{
+				m_wpfTextBlock.FontWeight = FontWeights.Regular;
+			}
+			else
+			{
+				m_wpfTextBlock.FontWeight = FontWeights.Normal;
+			}
+			if (Font.Style == System.Drawing.FontStyle.Italic)
+			{
+				m_wpfTextBlock.FontStyle = FontStyles.Italic;
+			}
+			else
+			{
+				m_wpfTextBlock.FontStyle = FontStyles.Normal;
+			}
+			m_wpfTextBlock.HorizontalAlignment = WPFHorizontalAlignmnet;
+			m_wpfTextBlock.VerticalAlignment = WPFVerticalAlignmnet;
+			System.Windows.Media.Color mediaColor3 = GetMediaColor(ForegroundColor);
+			if (mediaColor3.A == 0 && mediaColor3.R == 0 && mediaColor3.B == 0 && mediaColor3.G == 0)
+			{
+				mediaColor3.A = byte.MaxValue;
+			}
+			m_wpfTextBlock.Foreground = new SolidColorBrush(mediaColor3);
+			UpdateWPFText();
+			string text = fontFamily.FamilyNames[XmlLanguage.GetLanguage(CultureInfo.CurrentUICulture.Name)];
+			LogHelper.Instance.Log("Font for Actor {0}: Family: {1}, Size: {2}, Text: {3}", Name, text, m_wpfTextBlock.FontSize, m_wpfTextBlock.Text);
+			grid.Children.Add(m_wpfTextBlock);
+		}
+		return grid;
+	}
+
+	private FrameworkElement CreateWPFControl()
+	{
+		FrameworkElement frameworkElement = null;
+		WPFControlName.Split(',');
+		if (!string.IsNullOrEmpty(WPFControlName) && !string.IsNullOrEmpty(WPFControlAssemblyName))
+		{
+			string text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), WPFControlAssemblyName);
+			if (File.Exists(text))
+			{
+				Assembly assembly = Assembly.LoadFile(text);
+				if (assembly != null)
+				{
+					Type type = assembly.GetType(WPFControlName);
+					if (type != null)
+					{
+						object obj = Activator.CreateInstance(type);
+						if (obj != null)
+						{
+							if (obj is System.Windows.Controls.UserControl userControl)
+							{
+								frameworkElement = userControl;
+								if (frameworkElement is IWPFActor iWPFActor)
+								{
+									iWPFActor.Actor = this;
+									iWPFActor.OnWPFHit += delegate
+									{
+										if (OnWPFHit != null)
+										{
+											OnWPFHit(this);
+										}
+									};
+								}
+							}
+							else
+							{
+								LogHelper.Instance.Log("Type {0} is not a UserControl", WPFControlName);
+							}
+						}
+						else
+						{
+							LogHelper.Instance.Log("Unable to create instance of type {0}", WPFControlName);
+						}
+					}
+					else
+					{
+						LogHelper.Instance.Log("Unable to get type {1} in assembly {0}", text, WPFControlName);
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("Unable to load assembly {0}", text);
+				}
+			}
+			else
+			{
+				LogHelper.Instance.Log("Unable to find assembly {0}", text);
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("WPFControlName and WPFControlAssemblyName must have values");
+		}
+		return frameworkElement;
+	}
+
+	private void AssignWPFImage(System.Drawing.Image image)
+	{
+		if (m_wpfImage != null && image != null)
+		{
+			m_wpfImage.Source = ToBitmapImage(new Bitmap(Image));
+		}
+	}
+
+	private System.Windows.Media.Color GetMediaColor(System.Drawing.Color color)
+	{
+		return new System.Windows.Media.Color
+		{
+			R = color.R,
+			G = color.G,
+			B = color.B,
+			A = color.A
+		};
+	}
+
+	private System.Windows.Media.Color GetMediaColor(System.Drawing.Color color, double opacity)
+	{
+		int num = (int)Math.Ceiling(255.0 * opacity);
+		return new System.Windows.Media.Color
+		{
+			R = color.R,
+			G = color.G,
+			B = color.B,
+			A = (byte)num
+		};
+	}
+
+	private void UpdateWPFText()
+	{
+		if (m_wpfTextBlock != null)
+		{
+			string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(Text);
+			m_wpfTextBlock.Text = text;
+		}
+	}
+
+	private void FrameworkElement_MouseUp(object sender, MouseButtonEventArgs e)
+	{
+		if (!m_clickStarted)
+		{
+			return;
+		}
+		if (Enabled)
+		{
+			RaiseHit();
+			if (OnWPFHit != null)
+			{
+				OnWPFHit(this);
+			}
+		}
+		m_clickStarted = false;
+	}
+
+	private void FrameworkElement_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+	{
+		m_clickStarted = false;
+	}
+
+	private void FrameworkElement_MouseDown(object sender, MouseButtonEventArgs e)
+	{
+		m_clickStarted = true;
+	}
+
+	private double ToWPFScale(double value)
+	{
+		return value * WPFSizeConvertion;
+	}
+
+	private BitmapImage ToBitmapImage(Bitmap bitmap)
+	{
+		using MemoryStream memoryStream = new MemoryStream();
+		bitmap.Save(memoryStream, ImageFormat.Png);
+		memoryStream.Position = 0L;
+		BitmapImage bitmapImage = new BitmapImage();
+		bitmapImage.BeginInit();
+		bitmapImage.StreamSource = memoryStream;
+		bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+		bitmapImage.EndInit();
+		return bitmapImage;
+	}
+
 	protected void NotifyScene(Rectangle[] rectangles)
 	{
 		if (Scene != null)
@@ -628,21 +976,21 @@ public class Actor : IActor, IDisposable
 		bool hasValue2 = TextTranslationPoint.HasValue;
 		if ((OptionFlags & RenderOptionFlags.Background) != RenderOptionFlags.None || (OptionFlags & RenderOptionFlags.BackgroundGradient) != RenderOptionFlags.None)
 		{
-			Color alphaRampedColor = GetAlphaRampedColor(BackgroundColor, Opacity);
+			System.Drawing.Color alphaRampedColor = GetAlphaRampedColor(BackgroundColor, Opacity);
 			if (CornerSize.HasValue)
 			{
-				using Pen p = new Pen(alphaRampedColor, StrokeWeight);
+				using System.Drawing.Pen p = new System.Drawing.Pen(alphaRampedColor, StrokeWeight);
 				DrawRoundedRect(context, p, X, Y, Width, Height, CornerSize.Value.Width, fill: true);
 			}
 			else
 			{
-				Brush brush = null;
+				System.Drawing.Brush brush = null;
 				try
 				{
 					if ((OptionFlags & RenderOptionFlags.BackgroundGradient) != RenderOptionFlags.None)
 					{
-						Color alphaRampedColor2 = GetAlphaRampedColor(GradientTargetColor ?? BackgroundColor, Opacity);
-						brush = new LinearGradientBrush(new Rectangle(X, Y, Width, Height), alphaRampedColor, alphaRampedColor2, GradientAngle ?? 180f);
+						System.Drawing.Color alphaRampedColor2 = GetAlphaRampedColor(GradientTargetColor ?? BackgroundColor, Opacity);
+						brush = new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle(X, Y, Width, Height), alphaRampedColor, alphaRampedColor2, GradientAngle ?? 180f);
 					}
 					else
 					{
@@ -678,7 +1026,7 @@ public class Actor : IActor, IDisposable
 		}
 		if ((OptionFlags & RenderOptionFlags.DrawBorder) != RenderOptionFlags.None)
 		{
-			using Pen pen = new Pen(BorderColor ?? Color.Red, StrokeWeight);
+			using System.Drawing.Pen pen = new System.Drawing.Pen(BorderColor ?? System.Drawing.Color.Red, StrokeWeight);
 			if (CornerSize.HasValue)
 			{
 				DrawRoundedRect(context, pen, X, Y, Width, Height, CornerSize.Value.Width, fill: false);
@@ -719,7 +1067,7 @@ public class Actor : IActor, IDisposable
 			}
 			if ((OptionFlags & RenderOptionFlags.TextShadow) != RenderOptionFlags.None)
 			{
-				using SolidBrush brush3 = new SolidBrush(GetAlphaRampedColor(Color.Black, Opacity));
+				using SolidBrush brush3 = new SolidBrush(GetAlphaRampedColor(System.Drawing.Color.Black, Opacity));
 				context.DrawString(s, Font, brush3, new Rectangle(textRegion.Left + 1, textRegion.Top + 1, textRegion.Width, textRegion.Height), stringFormat);
 			}
 			context.DrawString(s, Font, brush2, textRegion, stringFormat);
@@ -743,14 +1091,14 @@ public class Actor : IActor, IDisposable
 		}
 		if (!string.IsNullOrEmpty(ErrorText))
 		{
-			using (Font font = new Font("Tahoma", 7f, FontStyle.Bold))
+			using (Font font = new Font("Tahoma", 7f, System.Drawing.FontStyle.Bold))
 			{
 				int num = Y + Height + 2;
 				if (m_drawErrorTop)
 				{
 					num = Y - font.Height - 2;
 				}
-				context.DrawString(ErrorText, font, Brushes.Red, X, num);
+				context.DrawString(ErrorText, font, System.Drawing.Brushes.Red, X, num);
 			}
 			m_drawErrorTop = !m_drawErrorTop;
 		}
@@ -864,12 +1212,12 @@ public class Actor : IActor, IDisposable
 		return false;
 	}
 
-	private static Color GetAlphaRampedColor(Color color, float opacity)
+	private static System.Drawing.Color GetAlphaRampedColor(System.Drawing.Color color, float opacity)
 	{
-		return Color.FromArgb((int)Math.Ceiling(255f * opacity), color);
+		return System.Drawing.Color.FromArgb((int)Math.Ceiling(255f * opacity), color);
 	}
 
-	private void DrawRoundedRect(Graphics g, Pen p, float x, float y, float width, float height, float radius, bool fill)
+	private void DrawRoundedRect(Graphics g, System.Drawing.Pen p, float x, float y, float width, float height, float radius, bool fill)
 	{
 		using GraphicsPath graphicsPath = new GraphicsPath();
 		if (radius * 2f > height || radius * 2f > width)
@@ -901,13 +1249,13 @@ public class Actor : IActor, IDisposable
 		graphicsPath.CloseFigure();
 		if (fill)
 		{
-			Brush brush = null;
+			System.Drawing.Brush brush = null;
 			try
 			{
 				if ((OptionFlags & RenderOptionFlags.BackgroundGradient) != RenderOptionFlags.None)
 				{
-					Color alphaRampedColor = GetAlphaRampedColor(GradientTargetColor ?? BackgroundColor, Opacity);
-					brush = new LinearGradientBrush(new Rectangle((int)x, (int)y, (int)width, (int)height), p.Color, alphaRampedColor, GradientAngle ?? 180f);
+					System.Drawing.Color alphaRampedColor = GetAlphaRampedColor(GradientTargetColor ?? BackgroundColor, Opacity);
+					brush = new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle((int)x, (int)y, (int)width, (int)height), p.Color, alphaRampedColor, GradientAngle ?? 180f);
 				}
 				else
 				{

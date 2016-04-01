@@ -5,6 +5,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using System.Windows.Forms.Integration;
+using System.Windows.Input;
 using Microsoft.Win32;
 using Redbox.Core;
 using Redbox.GetOpts;
@@ -103,8 +105,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	{
 		try
 		{
-			InputSimulator.SimulateLeftMouseDown(Cursor.Position.X, Cursor.Position.Y);
-			InputSimulator.SimulateLeftMouseUp(Cursor.Position.X, Cursor.Position.Y);
+			InputSimulator.SimulateLeftMouseDown(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+			InputSimulator.SimulateLeftMouseUp(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
 		}
 		catch (Exception e)
 		{
@@ -116,10 +118,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	{
 		try
 		{
-			InputSimulator.SimulateLeftMouseDown(Cursor.Position.X, Cursor.Position.Y);
-			InputSimulator.SimulateLeftMouseUp(Cursor.Position.X, Cursor.Position.Y);
-			InputSimulator.SimulateLeftMouseDown(Cursor.Position.X, Cursor.Position.Y);
-			InputSimulator.SimulateLeftMouseUp(Cursor.Position.X, Cursor.Position.Y);
+			InputSimulator.SimulateLeftMouseDown(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+			InputSimulator.SimulateLeftMouseUp(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+			InputSimulator.SimulateLeftMouseDown(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
+			InputSimulator.SimulateLeftMouseUp(System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y);
 		}
 		catch (Exception e)
 		{
@@ -320,8 +322,16 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
 		service.Register(base.MainForm.Handle);
 		IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
-		IScene activeScene = service2.CreateScene("Default", base.MainForm.Width, base.MainForm.Height, RenderingService.Instance.BackgroundColor);
-		service2.ActiveScene = activeScene;
+		ElementHost elementHost = new ElementHost();
+		elementHost.Parent = base.MainForm;
+		elementHost.Dock = DockStyle.Fill;
+		elementHost.Visible = false;
+		ElementHost elementHost2 = elementHost;
+		IScene scene = service2.CreateScene("Default", base.MainForm.Width, base.MainForm.Height, RenderingService.Instance.BackgroundColor, elementHost2);
+		scene.OnWPFHit += Scene_OnWPFHit;
+		scene.OnWPFKeyDown += Scene_OnWPFKeyDown;
+		scene.OnWPFKeyUp += Scene_OnWPFKeyUp;
+		service2.ActiveScene = scene;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		if (!ResourceBundleService.Instance.IsPendingBundleSwitch() && ResourceBundleService.Instance.DefaultBundleName == null)
 		{
@@ -341,6 +351,27 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ErrorForm errorForm2 = errorForm;
 		errorForm2.ShowDialog();
 		return false;
+	}
+
+	private void Scene_OnWPFKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+	{
+		int num = KeyInterop.VirtualKeyFromKey(e.Key);
+		char keyChar = (char)num;
+		KeyPressEventArgs e2 = new KeyPressEventArgs(keyChar);
+		((HostForm)base.MainForm).OnKeyPress(sender, e2);
+	}
+
+	private void Scene_OnWPFKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+	{
+		int num = KeyInterop.VirtualKeyFromKey(e.Key);
+		Keys keyData = (Keys)num;
+		System.Windows.Forms.KeyEventArgs e2 = new System.Windows.Forms.KeyEventArgs(keyData);
+		((HostForm)base.MainForm).OnKeyDown(sender, e2);
+	}
+
+	private void Scene_OnWPFHit(IActor actor)
+	{
+		ActivateMouseClickHandlers(new System.Windows.Forms.MouseEventArgs(MouseButtons.Left, 1, System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y, 0));
 	}
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList Initialize()
@@ -764,7 +795,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		}
 	}
 
-	internal void ActivateMouseClickHandlers(MouseEventArgs e)
+	internal void ActivateMouseClickHandlers(System.Windows.Forms.MouseEventArgs e)
 	{
 		if (m_mouseClickHandlers.Count != 0)
 		{
@@ -778,7 +809,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		}
 	}
 
-	internal void ActivateMouseDoubleClickHandlers(MouseEventArgs e)
+	internal void ActivateMouseDoubleClickHandlers(System.Windows.Forms.MouseEventArgs e)
 	{
 		if (m_mouseDoubleClickHandlers.Count != 0)
 		{

@@ -740,7 +740,7 @@ internal class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["first_name"] = CPFirstName;
 						remoteServiceResult.Properties["last_name"] = CPLastName;
 						remoteServiceResult.Properties["is_rbi"] = IsRBI;
-						remoteServiceResult.Properties["total_credits_applied"] = 0;
+						remoteServiceResult.Properties["total_credits_applied"] = 1;
 						if (AuthorizeResponse == AuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
 						{
 							remoteServiceResult.Properties["total_credits_available"] = DigitalServicesProxy.Instance.TotalCreditsAvailable;
@@ -772,7 +772,7 @@ internal class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !LiveCall;
+					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -1060,7 +1060,7 @@ internal class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !GCLiveCall;
+					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,

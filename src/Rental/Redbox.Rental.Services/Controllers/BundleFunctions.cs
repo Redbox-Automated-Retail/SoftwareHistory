@@ -4,7 +4,7 @@ using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
-namespace Redbox.Rental.Kernel.Views;
+namespace Redbox.Rental.Services.Controllers;
 
 public class BundleFunctions
 {

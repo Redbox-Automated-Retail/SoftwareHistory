@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.Browse;
 

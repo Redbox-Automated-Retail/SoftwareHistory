@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Drawing;
+using System.Windows.Forms.Integration;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
@@ -66,13 +67,13 @@ public class RenderingService : IRenderingService
 		return result;
 	}
 
-	public IScene CreateScene(string name, int width, int height, Color backgroundColor)
+	public IScene CreateScene(string name, int width, int height, Color backgroundColor, ElementHost elementHost)
 	{
 		if (Scenes.ContainsKey(name))
 		{
 			return Scenes[name];
 		}
-		Scene scene = new Scene(name, width, height, backgroundColor);
+		Scene scene = new Scene(name, width, height, backgroundColor, elementHost);
 		Scenes[name] = scene;
 		return scene;
 	}

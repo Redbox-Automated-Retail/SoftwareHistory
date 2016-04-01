@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Windows.Controls;
+using System.Windows.Forms;
+using System.Windows.Forms.Integration;
+using System.Windows.Input;
 using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.KioskEngine.Drawing;
 
 public class Scene : IScene, IDisposable
 {
-	private Image m_backgroundImage;
+	private System.Drawing.Image m_backgroundImage;
 
 	private Color m_backgroundColor;
 
@@ -18,6 +22,10 @@ public class Scene : IScene, IDisposable
 	private List<Rectangle> m_dirtyRectangles;
 
 	private readonly object m_syncObject = new object();
+
+	private ElementHost m_elementHost;
+
+	private Grid m_wpfGrid;
 
 	public int ActiveHitHandlers
 	{
@@ -35,6 +43,8 @@ public class Scene : IScene, IDisposable
 			return num;
 		}
 	}
+
+	public RenderType SceneRenderType { get; set; }
 
 	public int Width { get; private set; }
 
@@ -58,7 +68,7 @@ public class Scene : IScene, IDisposable
 		}
 	}
 
-	public Image BackgroundImage
+	public System.Drawing.Image BackgroundImage
 	{
 		get
 		{
@@ -71,11 +81,15 @@ public class Scene : IScene, IDisposable
 		}
 	}
 
+	public Grid WPFGrid => m_wpfGrid;
+
 	internal Bitmap BackBuffer { get; set; }
 
 	internal Rectangle Bounds { get; set; }
 
 	internal bool IsDirty { get; set; }
+
+	internal RenderType LastSceneRenderType { get; set; }
 
 	public List<Rectangle> DirtyRectangles
 	{
@@ -101,13 +115,20 @@ public class Scene : IScene, IDisposable
 		}
 	}
 
-	public Scene(string name, int width, int height, Color backgroundColor)
+	public event WPFHitHandler OnWPFHit;
+
+	public event WPFKeyEvent OnWPFKeyDown;
+
+	public event WPFKeyEvent OnWPFKeyUp;
+
+	public Scene(string name, int width, int height, Color backgroundColor, ElementHost elementHost)
 	{
 		Name = name;
 		Width = width;
 		Height = height;
 		BackgroundColor = backgroundColor;
 		Bounds = new Rectangle(0, 0, Width, Height);
+		InitializeWPFElementHost(elementHost);
 	}
 
 	public void Clear()
@@ -120,6 +141,10 @@ public class Scene : IScene, IDisposable
 				actor.ClearHit();
 			}
 			Actors.Clear();
+			if (SceneRenderType == RenderType.WPF)
+			{
+				WPFGrid.Children.Clear();
+			}
 			MakeDirty(null);
 		}
 		BackgroundImage = null;
@@ -150,7 +175,9 @@ public class Scene : IScene, IDisposable
 
 	public IActor CreateActor()
 	{
-		return new Actor();
+		Actor actor = new Actor();
+		((IActor)actor).OnWPFHit += OnWPFActorHit;
+		return actor;
 	}
 
 	public void Dispose()
@@ -174,14 +201,23 @@ public class Scene : IScene, IDisposable
 		}
 		try
 		{
-			DrawBackground(context, Bounds);
-			for (LinkedListNode<IActor> linkedListNode = Actors.First; linkedListNode != null; linkedListNode = linkedListNode.Next)
+			m_elementHost.Visible = SceneRenderType == RenderType.WPF;
+			if (SceneRenderType == RenderType.GDI)
 			{
-				linkedListNode.Value.Render(context);
+				DrawBackground(context, Bounds);
+				for (LinkedListNode<IActor> linkedListNode = Actors.First; linkedListNode != null; linkedListNode = linkedListNode.Next)
+				{
+					linkedListNode.Value.Render(context);
+				}
+				if (LastSceneRenderType == RenderType.WPF)
+				{
+					Application.OpenForms["HostForm"]?.Focus();
+				}
 			}
 		}
 		finally
 		{
+			LastSceneRenderType = SceneRenderType;
 			changed = true;
 			IsDirty = false;
 		}
@@ -239,7 +275,15 @@ public class Scene : IScene, IDisposable
 		{
 			actor.Scene = this;
 			Actors.AddLast(actor);
-			MakeDirty(new Rectangle[1] { actor.Bounds });
+			switch (SceneRenderType)
+			{
+			case RenderType.GDI:
+				MakeDirty(new Rectangle[1] { actor.Bounds });
+				break;
+			case RenderType.WPF:
+				WPFGrid.Children.Add(actor.WPFFrameworkElement);
+				break;
+			}
 		}
 	}
 
@@ -346,5 +390,41 @@ public class Scene : IScene, IDisposable
 			}
 		}
 		return list;
+	}
+
+	private void InitializeWPFElementHost(ElementHost elementHost)
+	{
+		m_elementHost = elementHost;
+		System.Windows.Controls.UserControl userControl = new System.Windows.Controls.UserControl();
+		m_wpfGrid = new Grid();
+		m_wpfGrid.Focusable = true;
+		m_wpfGrid.KeyDown += WPFGrid_KeyDown;
+		m_wpfGrid.KeyUp += WPFGrid_KeyUp;
+		userControl.Content = m_wpfGrid;
+		m_elementHost.Child = userControl;
+	}
+
+	private void WPFGrid_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+	{
+		if (OnWPFKeyUp != null)
+		{
+			OnWPFKeyUp(sender, e);
+		}
+	}
+
+	private void WPFGrid_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+	{
+		if (OnWPFKeyDown != null)
+		{
+			OnWPFKeyDown(sender, e);
+		}
+	}
+
+	private void OnWPFActorHit(IActor actor)
+	{
+		if (OnWPFHit != null)
+		{
+			OnWPFHit(actor);
+		}
 	}
 }

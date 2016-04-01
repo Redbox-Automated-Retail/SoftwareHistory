@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.Browse;
 

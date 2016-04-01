@@ -1,7 +1,9 @@
 using System;
 using System.Drawing;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.Browse;
 
@@ -167,6 +169,7 @@ public class MovieOrGameBrowseItem(LuaTable luaTable) : LuaBasedBrowseItem(luaTa
 		ConfigureCancelActor();
 		ConfigureSeparatorActor();
 		UpdateItemMapping();
+		SetMacros();
 	}
 
 	protected virtual string GetDefaultImageName()
@@ -675,5 +678,26 @@ public class MovieOrGameBrowseItem(LuaTable luaTable) : LuaBasedBrowseItem(luaTa
 		ActorFunctions.RemoveActor(CancelButtonActorName);
 		ActorFunctions.RemoveActor(BannerActorName);
 		ActorFunctions.RemoveActor(ButtonEmailReminderActorName);
+		ClearMacros();
+	}
+
+	private void SetMacros()
+	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		if (service != null)
+		{
+			string name = $"TTS:BrowseTitle_{_browseItemConfigurationInfo.BrowseItemActorIndex}_Name";
+			service[name] = (string.IsNullOrEmpty(base.Name) ? null : base.Name);
+		}
+	}
+
+	private void ClearMacros()
+	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		if (service != null)
+		{
+			string name = $"TTS:BrowseTitle_{_browseItemConfigurationInfo.BrowseItemActorIndex}_Name";
+			service[name] = null;
+		}
 	}
 }

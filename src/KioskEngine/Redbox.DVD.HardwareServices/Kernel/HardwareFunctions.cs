@@ -519,6 +519,18 @@ internal static class HardwareFunctions
 		return CreateResultTable(jobId, errors);
 	}
 
+	[KernelFunction(Name = "kernel.fieldinsertfraudwithcheck")]
+	internal static LuaTable FieldInsertFraudWithCheck(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler)
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		if (service == null)
+		{
+			return null;
+		}
+		ErrorList errors = service.FieldInsertFraudWithCheck(eventHandler, statusChangeHandler, out var jobId);
+		return CreateResultTable(jobId, errors);
+	}
+
 	[KernelFunction(Name = "kernel.prepforredeploy")]
 	internal static LuaTable PrepForRedeploy(LuaTable decksToChange, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler)
 	{

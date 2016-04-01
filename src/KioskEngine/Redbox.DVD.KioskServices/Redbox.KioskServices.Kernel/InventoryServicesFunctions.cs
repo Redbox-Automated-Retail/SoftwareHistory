@@ -13,13 +13,13 @@ internal static class InventoryServicesFunctions
 	[KernelFunction(Name = "kernel.invsvcs_return")]
 	internal static void Return(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime)
 	{
-		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, null);
+		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead: false, null);
 	}
 
 	[KernelFunction(Name = "kernel.invsvcs_return2")]
-	internal static void Return(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, LuaFunction callback)
+	internal static void Return2(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead)
 	{
-		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, callback);
+		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead, null);
 	}
 
 	[KernelFunction(Name = "kernel.invsvcs_snapshot")]
@@ -161,7 +161,7 @@ internal static class InventoryServicesFunctions
 		}
 	}
 
-	private static void InnerReturn(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, LuaFunction callback)
+	private static void InnerReturn(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, LuaFunction callback)
 	{
 		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
 		if (service == null)
@@ -195,7 +195,7 @@ internal static class InventoryServicesFunctions
 			LogHelper.Instance.Log("Invalid date time passed to InnerReturn : {0}.", returnTime);
 			result = DateTime.Now;
 		}
-		service.Return(storeNumber, Enum<ReturnType>.ParseIgnoringCase(returnType, ReturnType.KioskReturn), barcode, deck, slot, result.ToString(), callback2);
+		service.Return(storeNumber, Enum<ReturnType>.ParseIgnoringCase(returnType, ReturnType.KioskReturn), barcode, deck, slot, result.ToString(), failedSecurityRead, callback2);
 	}
 
 	private static void InnerSnapshot(string storeNumber, LuaTable items, List<IInventoryItem> inventoryItems)

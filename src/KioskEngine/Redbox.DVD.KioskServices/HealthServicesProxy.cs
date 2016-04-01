@@ -465,10 +465,10 @@ internal class HealthServicesProxy : IHealthServices
 		}
 		DateTime value = response["ServerTime"].ToJson().ToObject<DateTime>();
 		value = DateTime.SpecifyKind(value, DateTimeKind.Utc);
-		if (!(Math.Abs((DateTime.UtcNow - value).TotalMinutes) <= 5.0))
+		if (!(Math.Abs((DateTime.UtcNow - value).TotalMinutes) <= 1.0))
 		{
 			DateTime dateTime = value.ToLocalTime();
-			LogHelper.Instance.Log("...There's more than a five minute variance between the server and client, setting local time to match server: {0}", dateTime);
+			LogHelper.Instance.Log("...There's more than a one minute variance between the server and client, setting local time to match server: {0}", dateTime);
 			SYSTEMTIME lpSystemTime = new SYSTEMTIME
 			{
 				Hour = (ushort)dateTime.Hour,
