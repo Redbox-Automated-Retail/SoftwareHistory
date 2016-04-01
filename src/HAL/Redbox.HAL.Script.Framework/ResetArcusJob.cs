@@ -1,5 +1,3 @@
-using Redbox.HAL.Controller.Framework;
-
 namespace Redbox.HAL.Script.Framework;
 
 [NativeJob(ProgramName = "reset-motioncontrol", Operand = "RESET-MOTIONCONTROL")]
@@ -7,7 +5,7 @@ internal sealed class ResetArcusJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		if (!MotionController.Reset(base.AppLog, quick: false))
+		if (!base.MotionService.Reset(base.AppLog, quick: false))
 		{
 			base.Context.CreateInfoResult("ResetFailure", "RESET of the controller failed.");
 			AddError("Reset failure.");

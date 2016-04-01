@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -9,15 +10,23 @@ internal sealed class TakeDiskAtDoorJob : NativeJobAdapter
 	{
 		try
 		{
-			if (VendDoor.Rent())
+			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+			ErrorCodes errorCodes = service.MoveVend(MoveMode.None, base.Context.AppLog);
+			if (errorCodes != ErrorCodes.Success)
+			{
+				base.Context.CreateInfoResult("HardwareError", $"MOVE failed with error {errorCodes.ToString()}");
+				return;
+			}
+			if (!base.ControlSystem.VendDoorRent().Success)
 			{
 				base.Context.CreateInfoResult("HardwareError", "Vend rent timed out.");
 				return;
 			}
-			PickerStatus pickerStatus = ControllerService.Instance.TakeDiskAtDoor();
-			if (PickerStatus.DiscInPicker != pickerStatus)
+			using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
+			ErrorCodes errorCodes2 = acceptDiskOperation.Execute();
+			if (ErrorCodes.PickerFull != errorCodes2)
 			{
-				base.Context.CreateInfoResult("ReceiveFailure", pickerStatus.ToString().ToUpper());
+				base.Context.CreateInfoResult("ReceiveFailure", errorCodes2.ToString().ToUpper());
 			}
 			else
 			{
@@ -26,7 +35,7 @@ internal sealed class TakeDiskAtDoorJob : NativeJobAdapter
 		}
 		finally
 		{
-			if (VendDoor.Close())
+			if (!base.ControlSystem.VendDoorClose().Success)
 			{
 				base.Context.CreateInfoResult("HardwareError", "Vend close timed out.");
 			}

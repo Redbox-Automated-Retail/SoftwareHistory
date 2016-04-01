@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -8,6 +9,7 @@ internal sealed class ClearMerchStatusJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		int num = 0;
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		try
 		{
 			if (!ControllerConfiguration.Instance.IsVMZMachine)
@@ -18,11 +20,12 @@ internal sealed class ClearMerchStatusJob : NativeJobAdapter
 			for (int i = 0; i < top; i++)
 			{
 				string top2 = GetTop<string>();
-				Location location = InventoryService.Instance.Lookup(top2);
+				ILocation location = service.Lookup(top2);
 				if (location != null && SegmentManager.Instance.InCompressedZone(location) && !SegmentManager.Instance.IsNonThinType(location.Flags))
 				{
 					base.Context.ServiceLog("The flags at {0} are changed from {1} -> None", location.ToString(), location.Flags.ToString());
-					location.ChangeMerchFlags(MerchFlags.None);
+					location.Flags = MerchFlags.None;
+					service.Save(location);
 					num++;
 				}
 			}

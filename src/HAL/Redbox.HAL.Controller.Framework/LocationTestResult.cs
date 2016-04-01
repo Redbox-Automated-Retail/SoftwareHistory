@@ -1,31 +1,21 @@
+using Redbox.HAL.Component.Model;
+
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class LocationTestResult
+internal sealed class LocationTestResult : IPeekResult
 {
-	public readonly Deck Deck;
+	public bool TestOk => ErrorCodes.Success == Error;
 
-	public readonly int Slot;
+	public bool IsFull { get; internal set; }
 
-	public bool TestOk => PickerHardwareError.Success == Error;
+	public ErrorCodes Error { get; internal set; }
 
-	public GripperPeekResult PeekResult { get; internal set; }
-
-	public PickerHardwareError Error { get; internal set; }
-
-	public override string ToString()
-	{
-		if (!TestOk)
-		{
-			return Error.ToString().ToUpper();
-		}
-		return PeekResult.ToString().ToUpper();
-	}
+	public ILocation PeekLocation { get; private set; }
 
 	internal LocationTestResult(int deck, int slot)
 	{
-		Error = PickerHardwareError.Success;
-		PeekResult = GripperPeekResult.Empty;
-		Deck = DecksManager.Instance.GetDeck(deck);
-		Slot = slot;
+		Error = ErrorCodes.Success;
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		PeekLocation = service.Get(deck, slot);
 	}
 }

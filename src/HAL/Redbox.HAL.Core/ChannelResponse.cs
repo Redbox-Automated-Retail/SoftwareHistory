@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
@@ -14,25 +15,23 @@ internal sealed class ChannelResponse : IChannelResponse, IDisposable
 
 	private readonly EventWaitHandle ReadEvent = new EventWaitHandle(initialState: false, EventResetMode.ManualReset);
 
-	public bool CommOk { get; private set; }
+	public bool CommOk => ErrorCodes.Success == Error;
+
+	public ErrorCodes Error { get; internal set; }
 
 	public byte[] RawResponse => PortResponse.ToArray();
 
-	public string Error { get; private set; }
-
 	public bool ReponseValid { get; internal set; }
-
-	public bool PortTimeout { get; private set; }
 
 	public void Dispose()
 	{
-		if (!Disposed)
-		{
-			Disposed = true;
-			ReadEvent.Close();
-			PortResponse.Clear();
-			GC.SuppressFinalize(this);
-		}
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
+	}
+
+	~ChannelResponse()
+	{
+		Dispose(disposing: false);
 	}
 
 	public int GetIndex(byte b)
@@ -50,18 +49,6 @@ internal sealed class ChannelResponse : IChannelResponse, IDisposable
 			}
 		}
 		return -1;
-	}
-
-	internal void SetCommunicationError()
-	{
-		Error = "CommunicationError";
-		CommOk = false;
-	}
-
-	internal void SetClosedError()
-	{
-		Error = "ChannelClosed";
-		CommOk = false;
 	}
 
 	internal void Accumulate(int len)
@@ -97,7 +84,20 @@ internal sealed class ChannelResponse : IChannelResponse, IDisposable
 
 	internal ChannelResponse(int bufferSize)
 	{
-		CommOk = true;
+		Error = ErrorCodes.Success;
 		Buffer = ((bufferSize <= 0) ? null : new byte[bufferSize]);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (!Disposed)
+		{
+			Disposed = true;
+			if (disposing)
+			{
+				ReadEvent.Close();
+				PortResponse.Clear();
+			}
+		}
 	}
 }

@@ -1,14 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Xml;
+using System.ServiceProcess;
 using Microsoft.Win32;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 using Redbox.HAL.DataStorage;
+using Redbox.HAL.Script.Framework;
 
 namespace Redbox.HAL.PackageInstaller;
 
@@ -24,8 +25,6 @@ internal sealed class PackageInstaller : IDisposable
 
 	private readonly string InstallerLog;
 
-	private readonly int MachineConfiguration;
-
 	private readonly string InstallLogsDirectory;
 
 	private readonly string ConfigurationFile;
@@ -34,24 +33,37 @@ internal sealed class PackageInstaller : IDisposable
 
 	private readonly string DeprecatedQRStateFile;
 
+	private readonly IRuntimeService RuntimeService;
+
+	private readonly List<IPackageInstallHandler> PackageHandlers = new List<IPackageInstallHandler>();
+
 	private readonly ErrorList InstallErrors = new ErrorList();
 
 	public void Dispose()
 	{
-		if (!Disposed)
+		if (Disposed)
 		{
-			Disposed = true;
-			Writer.Dispose();
+			return;
 		}
+		Disposed = true;
+		if (InstallErrors.ContainsError())
+		{
+			Writer.WriteLine("** Installation failed with the following errors **");
+			foreach (Error installError in InstallErrors)
+			{
+				Writer.WriteLine("{0}: {1}: {2} ", installError.Code, installError.Description, installError.Details);
+			}
+		}
+		Writer.Dispose();
 	}
 
 	private PackageInstaller()
 	{
-		ConfigurationFile = RuntimeService.Instance.RuntimePath("hal.xml");
-		QRStateFile = RuntimeService.Instance.RuntimePath("qr.state");
-		DeprecatedQRStateFile = RuntimeService.Instance.RuntimePath("qr.defs");
-		string fullPath = Path.GetFullPath(Path.Combine(RuntimeService.Instance.AssemblyDirectory, ".."));
-		InstallLogsDirectory = Path.Combine(fullPath, "InstallLogs");
+		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
+		ConfigurationFile = RuntimeService.RuntimePath("hal.xml");
+		QRStateFile = RuntimeService.RuntimePath("qr.state");
+		DeprecatedQRStateFile = RuntimeService.RuntimePath("qr.defs");
+		InstallLogsDirectory = RuntimeService.InstallPath("InstallLogs");
 		if (!Directory.Exists(InstallLogsDirectory))
 		{
 			try
@@ -71,77 +83,43 @@ internal sealed class PackageInstaller : IDisposable
 		{
 			Writer = StreamWriter.Null;
 		}
-		ServiceInstallerBatchFile = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "register-service.bat");
-		RegistryKey registryKey = null;
-		try
-		{
-			registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
-			if (registryKey == null)
-			{
-				MachineConfiguration = -1;
-				return;
-			}
-			object value = registryKey.GetValue("MaxSlots");
-			MachineConfiguration = ((int?)Convert.ChangeType(value, typeof(int))) ?? (-1);
-		}
-		catch
-		{
-			MachineConfiguration = -1;
-		}
-		finally
-		{
-			registryKey?.Close();
-		}
+		ServiceInstallerBatchFile = Path.Combine(RuntimeService.AssemblyDirectory, "register-service.bat");
 	}
 
 	private void CreateDirectories()
 	{
-		try
+		List<string> list = new List<string>();
+		using (new DisposeableList<string>(list))
 		{
-			if (!Directory.Exists("C:\\Program Files\\Redbox\\KioskLogs"))
+			list.Add("C:\\Program Files\\Redbox\\KioskLogs");
+			list.Add(Path.Combine(RuntimeService.AssemblyDirectory, "data"));
+			list.Add("c:\\Program Files\\Redbox\\HALService\\Video");
+			foreach (string item in list)
 			{
-				Directory.CreateDirectory("C:\\Program Files\\Redbox\\KioskLogs");
+				try
+				{
+					if (!Directory.Exists(item))
+					{
+						Directory.CreateDirectory(item);
+					}
+				}
+				catch (Exception ex)
+				{
+					Writer.WriteLine("Unable to create directory: {0}", ex.Message);
+				}
 			}
-		}
-		catch (Exception ex)
-		{
-			Writer.WriteLine("Unable to create directory: {0}", ex.Message);
-		}
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
-		try
-		{
-			if (!Directory.Exists(path))
-			{
-				Directory.CreateDirectory(path);
-			}
-		}
-		catch (Exception ex2)
-		{
-			Writer.WriteLine("Unable to create data directory: {0}", ex2.Message);
-		}
-		string path2 = "c:\\Program Files\\Redbox\\HALService\\Video";
-		try
-		{
-			if (!Directory.Exists(path2))
-			{
-				Directory.CreateDirectory(path2);
-			}
-		}
-		catch (Exception ex3)
-		{
-			Writer.WriteLine("Unable to create images directory: {0}", ex3.Message);
 		}
 	}
 
 	private void InstallDatabase(string fileName)
 	{
-		string text = Path.Combine(RuntimeService.Instance.AssemblyDirectory, $"data\\{fileName}");
+		string text = RuntimeService.RuntimePath($"data\\{fileName}");
 		if (File.Exists(text))
 		{
 			Writer.WriteLine("The database {0} already exists - take no further action.", fileName);
 			return;
 		}
-		string text2 = RuntimeService.Instance.RuntimePath($"{fileName}.default");
+		string text2 = RuntimeService.RuntimePath($"{fileName}.default");
 		string arg = $"copy {text2} -> {text}";
 		try
 		{
@@ -154,142 +132,106 @@ internal sealed class PackageInstaller : IDisposable
 		}
 	}
 
-	private bool InstallService()
+	private void InstallService()
 	{
-		bool flag = true;
-		RegistryKey registryKey = null;
-		try
+		if (!File.Exists(ServiceInstallerBatchFile))
 		{
-			string name = "SYSTEM\\CurrentControlSet\\Services\\halsvc$default";
-			registryKey = Registry.LocalMachine.OpenSubKey(name);
-			if (registryKey != null)
-			{
-				string text = (string)registryKey.GetValue("ImagePath");
-				if (text.Contains(RuntimeService.Instance.AssemblyDirectory))
-				{
-					flag = false;
-					Writer.WriteLine("Service already installed - don't need to register.");
-				}
-			}
+			InstallErrors.Add(Error.NewError("I003", "No service batch file.", "The service install batch file is missing."));
+			return;
 		}
-		finally
+		bool flag = true;
+		ServiceController[] services = ServiceController.GetServices();
+		ServiceController[] array = services;
+		foreach (ServiceController serviceController in array)
 		{
-			registryKey?.Close();
+			if (serviceController.ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
+			{
+				flag = false;
+				Writer.WriteLine("Service already installed - don't need to register.");
+				break;
+			}
 		}
 		if (!flag)
 		{
-			return true;
+			return;
 		}
-		Process process = new Process();
+		using Process process = new Process();
 		process.StartInfo.FileName = ServiceInstallerBatchFile;
 		process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 		process.Start();
 		process.WaitForExit();
 		int exitCode = process.ExitCode;
-		process.Close();
+		if (exitCode == 0)
+		{
+			Writer.WriteLine("Register service was successful.");
+			return;
+		}
 		Writer.WriteLine("Register service returned with code {0}", exitCode);
-		return exitCode == 0;
+		InstallErrors.Add(Error.NewError("I004", "Service install failed.", $"The service install returned error code {exitCode}"));
 	}
 
-	private void CleanupQuickReturn(string configuration)
+	private void RegisterHandlers()
 	{
-		XmlDocument xmlDocument = new XmlDocument();
-		string path = FileHelper.CreateBackup(configuration, BackupAction.Copy);
-		bool flag = true;
-		try
+		string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "*.dll");
+		string[] array = files;
+		foreach (string text in array)
 		{
-			xmlDocument.Load(configuration);
-			if (xmlDocument.DocumentElement == null)
+			try
 			{
-				return;
-			}
-			XmlNodeList xmlNodeList = xmlDocument.DocumentElement.SelectNodes("InstalledDevices/Device");
-			if (xmlNodeList.Count == 0)
-			{
-				return;
-			}
-			string text = null;
-			foreach (XmlNode item in xmlNodeList)
-			{
-				XmlNode namedItem = item.Attributes.GetNamedItem("Name");
-				if (namedItem.Value.Equals("QRTerminal", StringComparison.CurrentCultureIgnoreCase))
+				Assembly assembly = Assembly.LoadFrom(text);
+				Type typeFromHandle = typeof(IPackageInstallHandler);
+				Type[] types = assembly.GetTypes();
+				foreach (Type type in types)
 				{
-					XmlNodeList xmlNodeList2 = item.SelectNodes("Property");
-					foreach (XmlNode item2 in xmlNodeList2)
+					if (typeFromHandle.IsAssignableFrom(type) && !type.IsInterface)
 					{
-						XmlNode namedItem2 = item2.Attributes.GetNamedItem("name");
-						if (namedItem2.Value.Equals("Port"))
-						{
-							text = item2.Attributes.GetNamedItem("value").Value;
-							break;
-						}
+						IPackageInstallHandler packageInstallHandler = (IPackageInstallHandler)Activator.CreateInstance(type);
+						PackageHandlers.Add(packageInstallHandler);
+						packageInstallHandler.OnRegister();
 					}
 				}
-				if (!string.IsNullOrEmpty(text))
-				{
-					break;
-				}
 			}
-			if (!string.IsNullOrEmpty(text))
+			catch (Exception ex)
 			{
-				Console.WriteLine("InstalledPort: {0}", text);
-				XmlNodeExtensions.SelectSingleNodeAndSetValue(xmlDocument.DocumentElement, "Controller/QuickReturnComPort", text);
-				xmlDocument.Save(configuration);
+				Writer.WriteLine("Unable to load assembly '{0}' to scan for installer handlers.", text);
+				Writer.WriteLine("Exception: {0}", ex.Message);
 			}
 		}
-		catch (Exception)
+		Writer.WriteLine("[Package Installer] there are {0} handlers registered.", PackageHandlers.Count);
+	}
+
+	private void OnUpgrade()
+	{
+		foreach (IPackageInstallHandler packageHandler in PackageHandlers)
 		{
-			flag = false;
-		}
-		finally
-		{
-			if (flag)
-			{
-				FileHelper.SafeDeleteFile(path);
-			}
+			packageHandler.OnUpgrade(InstallErrors, Writer);
 		}
 	}
 
-	private bool InstallConfiguration()
+	private void OnNewInstall()
 	{
-		string text = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "HAL.xml");
-		if (File.Exists(text))
+		foreach (IPackageInstallHandler packageHandler in PackageHandlers)
 		{
-			Writer.WriteLine("The configuration file is already present - no further action.");
-			return true;
+			packageHandler.OnNewInstall(InstallErrors, Writer);
 		}
-		try
-		{
-			File.Move(Path.Combine(RuntimeService.Instance.AssemblyDirectory, "HAL.xml.default"), text);
-		}
-		catch
-		{
-			Writer.WriteLine("Unable to move default HAL.xml file over.");
-			return false;
-		}
-		ErrorList errorList = new ErrorList();
-		ControllerConfiguration.Instance.Load(text, errorList);
-		ControllerConfiguration.Instance.Import(Writer, errorList);
-		ControllerConfiguration.Instance.Save(text, errorList);
-		if (errorList.ContainsError())
-		{
-			Writer.WriteLine("There were problems importing the data from gamp - errors:");
-			foreach (Error item in errorList)
-			{
-				Writer.WriteLine(item.ToString());
-			}
-			return false;
-		}
-		Writer.WriteLine("Successfully imported data from the Gamp folder.");
-		return true;
 	}
 
 	private static void Main(string[] args)
 	{
-		ServiceHelper.StopHALService(check: false);
+		ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
+		ServiceLocator.Instance.AddService(typeof(IRuntimeService), new RuntimeService());
+		ServiceController serviceController = new ServiceController("halsvc$default");
+		try
+		{
+			serviceController.Stop();
+			serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30.0));
+		}
+		catch
+		{
+		}
 		using PackageInstaller packageInstaller = new PackageInstaller();
 		packageInstaller.CreateDirectories();
-		Platform platform = RuntimeService.Instance.GetPlatform();
+		Platform platform = packageInstaller.RuntimeService.GetPlatform();
 		string text = "1.0.0.x";
 		try
 		{
@@ -309,7 +251,7 @@ internal sealed class PackageInstaller : IDisposable
 		packageInstaller.InstallDatabase("HALData.vdb3");
 		if (packageInstaller.InstallErrors.ContainsError())
 		{
-			packageInstaller.Writer.WriteLine("There were problems copying databases - ABORTING install:");
+			packageInstaller.Writer.WriteLine("** There were problems copying databases - ABORTING install: **");
 			{
 				foreach (Error installError in packageInstaller.InstallErrors)
 				{
@@ -318,68 +260,57 @@ internal sealed class PackageInstaller : IDisposable
 				return;
 			}
 		}
-		StoreManager.Instance.Initialize();
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
-		try
+		StoreManager instance = new StoreManager();
+		ServiceLocator.Instance.AddService(typeof(IDataStoreService), instance);
+		ConfigurationService configurationService = ConfigurationService.Make(packageInstaller.ConfigurationFile);
+		ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
+		packageInstaller.RegisterHandlers();
+		if (File.Exists(packageInstaller.ConfigurationFile))
 		{
-			StoreManager.Instance.UpgradeTables(packageInstaller.Writer);
-			string text2 = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "HAL.xml");
-			if (File.Exists(text2))
+			packageInstaller.Writer.WriteLine("The configuration file is already present.");
+			configurationService.LoadAndUpgrade(packageInstaller.InstallErrors);
+			packageInstaller.OnUpgrade();
+		}
+		else
+		{
+			packageInstaller.Writer.WriteLine("Installing configuration from GAMP.");
+			string text2 = packageInstaller.RuntimeService.RuntimePath("HAL.xml.default");
+			try
 			{
-				packageInstaller.CleanupQuickReturn(text2);
-				FileHelper.CreateBackup(text2, BackupAction.Copy);
-				BarcodeConfiguration.Upgrade(packageInstaller.Writer, text2);
-				InventoryManager.UpdateInventoryDatabaseOnUpgrade(packageInstaller.Writer);
-				if (dataStore.GetValue("IceQubeExchanger", def: false))
-				{
-					XmlDocument xmlDocument = new XmlDocument();
-					xmlDocument.Load(text2);
-					XmlNodeExtensions.SelectSingleNodeAndSetValue(xmlDocument.DocumentElement, "Controller/EnableIceQubePolling", true.ToString());
-					xmlDocument.Save(text2);
-					packageInstaller.Writer.WriteLine("Migrated air exchanger configuration.");
-					dataStore.Remove("IceQubeExchanger");
-				}
+				File.Copy(text2, packageInstaller.ConfigurationFile);
+			}
+			catch (Exception ex)
+			{
+				packageInstaller.InstallErrors.Add(Error.NewError("I004", "Configuration install failed.", $"Unable to move file '{text2}' - error: {ex.Message}"));
+				return;
+			}
+			configurationService.LoadAndImport(packageInstaller.InstallErrors);
+			if (packageInstaller.InstallErrors.ErrorCount == 0)
+			{
+				packageInstaller.OnNewInstall();
 			}
 			else
 			{
-				int platterSlots = GampHelper.Instance.GetPlatterSlots();
-				if (platterSlots == packageInstaller.MachineConfiguration)
-				{
-					packageInstaller.InstallConfiguration();
-					InventoryManager.UpdateInventoryDatabaseOnUpgrade(packageInstaller.Writer);
-				}
-				else
-				{
-					InventoryManager.Instance.CreateUnknownDatabase(packageInstaller.MachineConfiguration);
-					packageInstaller.Writer.WriteLine("The machine is configured for {0} slots; the gamp data says there are {1} slots - mark db UNKNOWN with {2} slots", packageInstaller.MachineConfiguration, platterSlots, packageInstaller.MachineConfiguration);
-				}
+				packageInstaller.Writer.WriteLine("** Gamp data import failed - the configuration file may be incomplete. **");
 			}
 		}
-		finally
-		{
-			StoreManager.Instance.CloseStores();
-		}
 		RegistryKey registryKey = null;
-		string assemblyFile = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "halsvc-win32.exe");
+		string assemblyFile = Path.Combine(packageInstaller.RuntimeService.AssemblyDirectory, "halsvc-win32.exe");
 		try
 		{
 			AssemblyName assemblyName = AssemblyName.GetAssemblyName(assemblyFile);
-			packageInstaller.Writer.WriteLine("Service has version {0}", assemblyName.Version.ToString());
 			string subkey = "SOFTWARE\\Redbox\\HAL";
 			registryKey = Registry.LocalMachine.CreateSubKey(subkey);
 			registryKey?.SetValue("Product Version", assemblyName.Version.ToString());
 		}
-		catch (Exception e)
+		catch (Exception arg)
 		{
-			LogHelper.Instance.Log("Unable to set service registry key.", e);
+			packageInstaller.Writer.WriteLine("Unable to set service registry key.", arg);
 		}
 		finally
 		{
 			registryKey?.Close();
 		}
-		if (File.Exists(packageInstaller.ServiceInstallerBatchFile))
-		{
-			packageInstaller.InstallService();
-		}
+		packageInstaller.InstallService();
 	}
 }

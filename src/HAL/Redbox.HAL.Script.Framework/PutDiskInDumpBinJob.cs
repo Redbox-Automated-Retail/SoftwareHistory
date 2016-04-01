@@ -1,6 +1,6 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -15,6 +15,7 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 
 	protected override void ExecuteInner()
 	{
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			base.Context.CreateInfoResult("PickerEmpty", "The picker is empty.");
@@ -29,26 +30,29 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			AddError("The picker is empty.");
 			return;
 		}
-		if (!DumpBin.Instance.Active)
+		if (!service.Active)
 		{
 			base.Context.CreateInfoResult("Misconfiguration", "The dump bin is not configured.");
 			applicationLog.Write("The dumpbin is not configured.");
 			AddError("The bin is not configured.");
 			return;
 		}
-		if (DumpBin.Instance.IsFull())
+		if (service.IsFull())
 		{
 			base.Context.CreateInfoResult("DumpBinFull", "The dump bin is full.");
 			applicationLog.Write("The dumpbin is full.");
 			AddError("The dumpbin is full.");
 			return;
 		}
+		IDiskValidatorService service2 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service2, JobsWithScan.PutDiskInBin);
+		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		using Scanner scanner = new Scanner();
-		Location location = DumpBin.Instance.MoveableLocation();
-		MotionResult motionResult = ControllerService.Instance.MoveTo(location, MoveMode.Put, applicationLog);
-		if (motionResult != MotionResult.Success)
+		ILocation location = service.MoveableLocation();
+		ErrorCodes errorCodes = service3.MoveTo(location, MoveMode.Put, applicationLog);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {motionResult.ToString()}");
+			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
 			AddError("The MOVE instruction failed.");
 			return;
 		}
@@ -57,7 +61,7 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 		foreach (CenterDiskMethod method in returnReadMethods)
 		{
 			PerfFunctions.Wait(1000);
-			ControllerService.Instance.CenterItem(method);
+			base.ControlSystem.Center(method);
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{
@@ -67,10 +71,11 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			if (scanResult.ReadCode)
 			{
 				text = scanResult.ScannedMatrix;
+				diskValidatorHelper.ValidateAndNotify(text, base.Context);
 				break;
 			}
 		}
-		PutResult putResult = ControllerService.Instance.Put(text, applicationLog);
+		IPutResult putResult = ControllerService.Instance.Put(text, applicationLog);
 		if (!putResult.Success)
 		{
 			base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
@@ -79,7 +84,7 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 		}
 		base.Context.CreateInfoResult("PutToBinOK", "The disk was successfully filed", text);
 		applicationLog.WriteFormatted("The barcode {0} was put into the dump bin.", text);
-		DumpBin.Instance.DumpContents(base.AppLog);
+		service.DumpContents(base.AppLog);
 	}
 
 	internal PutDiskInDumpBinJob(ExecutionResult result, ExecutionContext ctx)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -9,36 +10,36 @@ internal sealed class InventoryStatisticsJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		int totalMachineSlots = 0;
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
-			if (!deck.IsQlmDeck)
+			if (!deck.IsQlm)
 			{
 				totalMachineSlots += deck.NumberOfSlots;
 			}
 			return true;
 		});
-		InventoryService instance = InventoryService.Instance;
-		int emptyCount = instance.GetEmptyCount();
-		List<Location> unknowns = instance.GetUnknowns();
-		List<Location> list = instance.ComputeExcludedSlots();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		int machineEmptyCount = service.GetMachineEmptyCount();
+		IList<ILocation> unknowns = service.GetUnknowns();
+		IList<ILocation> list = service.ComputeExcludedSlots();
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: false, "InventoryStats");
-		int num = emptyCount - ControllerConfiguration.Instance.ReturnSlotBuffer;
+		int num = machineEmptyCount - ControllerConfiguration.Instance.ReturnSlotBuffer;
 		applicationLog.Write("Inventory snapshot.");
-		applicationLog.WriteFormatted(" Total Empty: {0}", emptyCount);
+		applicationLog.WriteFormatted(" Total Empty: {0}", machineEmptyCount);
 		applicationLog.WriteFormatted(" Usable empty: {0}", num);
 		applicationLog.WriteFormatted(" Unknown: {0}", unknowns.Count);
 		applicationLog.WriteFormatted(" Excluded: {0}", list.Count);
 		applicationLog.WriteFormatted(" Total Slots: {0}", totalMachineSlots);
-		applicationLog.WriteFormatted(" Dumpbin capacity: {0}", DumpBin.Instance.Capacity);
-		applicationLog.WriteFormatted(" Dumpbin current count: {0}", DumpBin.Instance.CurrentCount());
-		base.Context.CreateInfoResult("TotalEmptyCount", emptyCount.ToString());
+		applicationLog.WriteFormatted(" Dumpbin capacity: {0}", base.DumpbinService.Capacity);
+		applicationLog.WriteFormatted(" Dumpbin current count: {0}", base.DumpbinService.CurrentCount());
+		base.Context.CreateInfoResult("TotalEmptyCount", machineEmptyCount.ToString());
 		base.Context.CreateInfoResult("UsableEmptyCount", num.ToString());
 		base.Context.CreateInfoResult("UnknownCount", unknowns.Count.ToString());
 		base.Context.CreateInfoResult("ExcludedCount", list.Count.ToString());
 		base.Context.CreateInfoResult("TotalMachineSlots", totalMachineSlots.ToString());
-		base.Context.CreateInfoResult("DumpBinCapacity", DumpBin.Instance.Capacity.ToString());
-		base.Context.CreateInfoResult("DumpBinCount", DumpBin.Instance.CurrentCount().ToString());
-		if (instance.MachineIsFull())
+		base.Context.CreateInfoResult("DumpBinCapacity", base.DumpbinService.Capacity.ToString());
+		base.Context.CreateInfoResult("DumpBinCount", base.DumpbinService.CurrentCount().ToString());
+		if (service.MachineIsFull())
 		{
 			applicationLog.Write(" The machine is full.");
 			base.Context.CreateInfoResult("MachineFull", "The machine is full.");

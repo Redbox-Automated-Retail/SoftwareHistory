@@ -1,40 +1,40 @@
 using System;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class Location : ILocation
+internal sealed class Location : ILocation
 {
-	private int m_deck;
+	private readonly int m_deck;
 
-	private int m_slot;
+	private readonly int m_slot;
 
-	private string m_stringRep;
+	private readonly string m_stringRep;
+
+	public bool IsEmpty => ID == "EMPTY";
+
+	public bool IsWide
+	{
+		get
+		{
+			IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+			return service.GetByNumber(m_deck).IsSlotSellThru(m_slot);
+		}
+	}
 
 	public int Deck => m_deck;
 
 	public int Slot => m_slot;
 
-	public string Matrix => _Deck.GetIdForSlot(m_slot);
+	public string ID { get; set; }
 
-	public bool IsEmpty => _Deck.GetIdForSlot(m_slot) == "EMPTY";
+	public DateTime? ReturnDate { get; set; }
 
-	public bool IsUnknown => _Deck.GetIdForSlot(m_slot) == "UNKNOWN";
+	public bool Excluded { get; set; }
 
-	public MerchFlags Flags => _Deck.GetMerchFlags(m_slot);
+	public int StuckCount { get; set; }
 
-	public bool IsStuck => _Deck.GetEmptyStuckCount(m_slot) > 0;
-
-	public int StuckCount => _Deck.GetEmptyStuckCount(m_slot);
-
-	public bool IsWide => _Deck.IsSlotSellThru(m_slot);
-
-	public bool IsExcluded => _Deck.IsExcluded(m_slot);
-
-	public DateTime? ReturnTime => _Deck.GetReturnTime(m_slot);
-
-	public bool IsSecure => SpecialLocationLocatorService.Instance.FindByLocation(this)?.IsSecureLocation ?? false;
-
-	private Deck _Deck => DecksManager.Instance.GetDeck(m_deck);
+	public MerchFlags Flags { get; set; }
 
 	public override bool Equals(object obj)
 	{
@@ -52,11 +52,7 @@ public sealed class Location : ILocation
 
 	public override string ToString()
 	{
-		if (!string.IsNullOrEmpty(m_stringRep))
-		{
-			return m_stringRep;
-		}
-		return m_stringRep = $"Deck = {Deck} Slot = {Slot}";
+		return m_stringRep;
 	}
 
 	public override int GetHashCode()
@@ -64,45 +60,15 @@ public sealed class Location : ILocation
 		return 101 * m_deck + m_slot;
 	}
 
-	public void ChangeMerchFlags(MerchFlags flags)
-	{
-		_Deck.UpdateMerchFlag(flags, m_slot);
-	}
-
-	public bool IncrementEmptyStuck()
-	{
-		return _Deck.UpdateEmptyStuck(m_slot);
-	}
-
-	public bool ResetEmptyStuck()
-	{
-		return _Deck.ResetEmptyStuckCount(m_slot);
-	}
-
-	public bool UpdateReturnTime(DateTime? newDT)
-	{
-		return _Deck.UpdateReturnTime(m_slot, newDT);
-	}
-
-	public bool MarkUnknown()
-	{
-		return _Deck.MarkSlotUnknown(m_slot);
-	}
-
-	public bool ResetFrom(GetResult result)
-	{
-		_Deck.SetSlotId(m_slot, result.Previous, result.Flags, result.ReturnTime);
-		return true;
-	}
-
-	public bool Reset()
-	{
-		return _Deck.ResetLocation(m_slot);
-	}
-
-	public Location(int deck, int slot)
+	internal Location(int deck, int slot, string id, DateTime? rt, bool excluded, int stuck, MerchFlags flags)
 	{
 		m_deck = deck;
 		m_slot = slot;
+		ID = id;
+		ReturnDate = rt;
+		Excluded = excluded;
+		StuckCount = stuck;
+		Flags = flags;
+		m_stringRep = $"Deck = {m_deck} Slot = {m_slot}";
 	}
 }

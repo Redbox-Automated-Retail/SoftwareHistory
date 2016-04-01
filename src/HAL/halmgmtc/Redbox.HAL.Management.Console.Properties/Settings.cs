@@ -13,38 +13,38 @@ internal sealed class Settings : ApplicationSettingsBase
 
 	public static Settings Default => defaultInstance;
 
+	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
 	[DefaultSettingValue("120000")]
-	[DebuggerNonUserCode]
 	public int ImmediateInstructionTimeout => (int)this["ImmediateInstructionTimeout"];
 
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("rcp-p://127.0.0.1:7001")]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	public string NewConnectionURL => (string)this["NewConnectionURL"];
 
-	[DefaultSettingValue("Red")]
 	[ApplicationScopedSetting]
+	[DefaultSettingValue("Red")]
 	[DebuggerNonUserCode]
 	public string ButtonRunningColor => (string)this["ButtonRunningColor"];
 
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("")]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	public string ButtonCompleteColor => (string)this["ButtonCompleteColor"];
 
-	[ApplicationScopedSetting]
-	[DefaultSettingValue("rcp://localhost:7001")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("rcp://localhost:7001")]
+	[ApplicationScopedSetting]
 	public string DefaultConnectionURL => (string)this["DefaultConnectionURL"];
 
+	[DefaultSettingValue("thin,thin-vmz,qlm-unload,unload-thin,sync,sync-locations,quick-return")]
 	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
-	[DefaultSettingValue("thin,thin-vmz,qlm-unload,unload-thin,sync,sync-locations,quick-return")]
 	public string SecureJob => (string)this["SecureJob"];
 
-	[DefaultSettingValue("False")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("False")]
 	[ApplicationScopedSetting]
 	public bool DeveloperMode => (bool)this["DeveloperMode"];
 }

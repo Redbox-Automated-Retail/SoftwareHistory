@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataStorage;
 

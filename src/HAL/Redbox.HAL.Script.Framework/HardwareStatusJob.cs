@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -19,29 +20,32 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 			ProcessError(num);
 			return;
 		}
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		int num2 = 0;
-		MotionController controller = MotionController.GetController();
-		if (!controller.IsInitialized() && (!ControllerConfiguration.Instance.FixArcusDuringStatusJob || !MotionController.Reset(base.AppLog, quick: true)))
+		if (!base.MotionService.IsInitialized && (!ControllerConfiguration.Instance.FixArcusDuringStatusJob || !base.MotionService.Reset(base.AppLog, quick: true)))
 		{
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "Could not talk with the motion controller.");
 			num2++;
 		}
-		if (ControllerConfiguration.Instance.EnableDoorCheckInStatus && DoorSensors.Instance.Query() != DoorSensorResult.Ok)
+		if (ControllerConfiguration.Instance.EnableDoorCheckInStatus && service.Query() != DoorSensorResult.Ok)
 		{
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "The door sensors are not in a safe mode.");
 			num2++;
 		}
-		if (!Gripper.IsClear())
+		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
 		{
-			num2++;
-			base.Context.CreateInfoResult("GripperObstructed", "The gripper is obstructed.");
+			if (clearGripperOperation.Execute() != ErrorCodes.Success)
+			{
+				num2++;
+				base.Context.CreateInfoResult("GripperObstructed", "The gripper is obstructed.");
+			}
 		}
 		if (PickerBoard.IsFull())
 		{
 			num2++;
 			base.Context.CreateInfoResult("GripperObstructed", "The picker is full.");
 		}
-		if (VendDoor.Close())
+		if (!base.ControlSystem.VendDoorClose().Success)
 		{
 			num2++;
 			base.Context.CreateInfoResult("VendDoorOpen", "Unable to close the vend door.");

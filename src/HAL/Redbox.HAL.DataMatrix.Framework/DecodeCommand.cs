@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
@@ -12,8 +12,6 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 	private readonly List<int> DataPackets = new List<int>();
 
 	private readonly byte[] m_rawCommand = new byte[4] { 36, 1, 5, 0 };
-
-	private readonly CortexDecodeVersion Version;
 
 	private readonly char[] Separator = new char[1] { ' ' };
 
@@ -27,9 +25,8 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 
 	protected override int ReadTimeout => BarcodeConfiguration.Instance.ScanTimeout;
 
-	internal DecodeCommand(CortexDecodeVersion version)
+	internal DecodeCommand()
 	{
-		Version = version;
 	}
 
 	protected override bool CoreValidate()
@@ -99,22 +96,15 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 						continue;
 					}
 					DataPackets.Add(packet.PacketNumber);
-					if (CortexDecodeVersion.Version2 == Version)
+					string[] array = text.Split(Separator);
+					if ((int)Convert.ChangeType(array[2], typeof(int)) == 0)
 					{
-						string[] array = text.Split(Separator);
-						if ((int)Convert.ChangeType(array[2], typeof(int)) == 0)
-						{
-							DecodeFailure = true;
-							continue;
-						}
-						for (int num = 3; num < array.Length; num++)
-						{
-							FoundCodes.Add(array[num]);
-						}
+						DecodeFailure = true;
+						continue;
 					}
-					else
+					for (int num = 3; num < array.Length; num++)
 					{
-						FoundCodes.Add(text);
+						FoundCodes.Add(array[num]);
 					}
 				}
 				else
@@ -158,7 +148,7 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 					LogHelper.Instance.Log(" >>  Scanned code {0}", foundCode);
 				}
 			}
-			return (Version == CortexDecodeVersion.Version1) ? (DataPackets.Count > 1) : (DataPackets.Count > 0);
+			return DataPackets.Count > 0;
 		}
 		finally
 		{

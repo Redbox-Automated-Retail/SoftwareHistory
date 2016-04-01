@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.IPC.Framework;

@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -14,32 +15,36 @@ internal class VendDiskInPickerJob : NativeJobAdapter
 				base.Context.CreateInfoResult("EmptyPicker", "No disk in picker.");
 				return;
 			}
-			MotionResult motionResult = ControllerService.Instance.MoveToVend(MoveMode.None, base.AppLog);
-			if (motionResult != MotionResult.Success)
+			ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.None, base.AppLog);
+			if (errorCodes != ErrorCodes.Success)
 			{
-				base.Context.CreateInfoResult("HardwareError", $"There was an error while executing the MOVEVEND instruction: {motionResult.ToString().ToUpper()}");
+				base.Context.CreateInfoResult("HardwareError", $"There was an error while executing the MOVEVEND instruction: {errorCodes.ToString().ToUpper()}");
 				return;
 			}
-			VendItemResult vendItemResult = ControllerService.Instance.VendItem();
-			if (vendItemResult.PickerStatus == PickerStatus.HardwareError)
+			using (VendItemOperation vendItemOperation = new VendItemOperation())
 			{
-				base.Context.CreateInfoResult("HardwareError", "There was a HW error during the vend disk routine.");
-				return;
+				VendItemResult vendItemResult = vendItemOperation.Execute();
+				switch (vendItemResult.Status)
+				{
+				case ErrorCodes.TrackCloseTimeout:
+				case ErrorCodes.VendDoorRentTimeout:
+				case ErrorCodes.SensorReadError:
+					base.Context.CreateInfoResult("HardwareError", "There was a HW error during the vend disk routine.");
+					return;
+				case ErrorCodes.PickerEmpty:
+					base.Context.CreateInfoResult("ItemVended", "The item was successfully vended.");
+					return;
+				}
 			}
-			if (vendItemResult.PickerStatus == PickerStatus.Empty)
-			{
-				base.Context.CreateInfoResult("ItemVended", "The item was successfully vended.");
-				return;
-			}
-			PickerStatus pickerStatus = ControllerService.Instance.TakeDiskAtDoor();
-			if (PickerStatus.DiscInPicker != pickerStatus)
+			using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
+			if (ErrorCodes.PickerFull != acceptDiskOperation.Execute())
 			{
 				base.Context.CreateInfoResult("TakeDiskError", "Unable to get the disk.");
 			}
 		}
 		finally
 		{
-			if (VendDoor.Close())
+			if (!base.ControlSystem.VendDoorClose().Success)
 			{
 				base.Context.CreateInfoResult("HardwareError", "Unable to close the vend door.");
 			}

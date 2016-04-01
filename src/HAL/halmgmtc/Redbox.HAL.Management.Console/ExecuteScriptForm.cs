@@ -22,8 +22,8 @@ public class ExecuteScriptForm : Form
 
 	private Label label2;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string SelectedScript
 	{
 		get

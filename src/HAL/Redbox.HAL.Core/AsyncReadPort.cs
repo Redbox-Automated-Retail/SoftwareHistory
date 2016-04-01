@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
@@ -20,7 +21,7 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 			if (!Port.IsOpen)
 			{
 				LogHelper.Instance.Log("Port.WriteCommand: the port was closed.", LogEntryType.Error);
-				channelResponse.SetClosedError();
+				channelResponse.Error = ErrorCodes.CommunicationError;
 				return channelResponse;
 			}
 			if (base.EnableDebugging)
@@ -37,7 +38,7 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Port.WriteCommand() caught an exception.", e);
-			channelResponse.SetCommunicationError();
+			channelResponse.Error = ErrorCodes.CommunicationError;
 			return channelResponse;
 		}
 		ReadInner(channelResponse);
@@ -53,13 +54,13 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 				{
 					LogHelper.Instance.Log(LogEntryType.Error, "Communication ERROR ({0}): port read timed out", FriendlyName);
 				}
-				channelResponse.SetCommunicationError();
+				channelResponse.Error = ErrorCodes.CommunicationError;
 			}
 		}
 		catch (Exception ex)
 		{
 			LogHelper.Instance.Log(LogEntryType.Error, "[AsyncPort] Send/Recv caught an exception.", ex);
-			channelResponse.SetCommunicationError();
+			channelResponse.Error = ErrorCodes.CommunicationError;
 		}
 		if (base.EnableDebugging)
 		{

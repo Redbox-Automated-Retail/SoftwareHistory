@@ -1,4 +1,6 @@
-using Redbox.HAL.Controller.Framework;
+using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -7,22 +9,26 @@ internal sealed class ResetLocationsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		int top = GetTop<int>();
-		int num = 0;
-		for (int i = 0; i < top; i++)
+		List<ILocation> list = new List<ILocation>();
+		using (new DisposeableList<ILocation>(list))
 		{
-			int top2 = GetTop<int>();
-			int top3 = GetTop<int>();
-			Deck deck = DecksManager.Instance.GetDeck(top2);
-			if (!(deck == null) && deck.IsSlotValid(top3))
+			for (int i = 0; i < top; i++)
 			{
-				Location location = new Location(top2, top3);
-				location.Reset();
-				num++;
-				base.Context.CreateResult("LocationReset", "The location was reset.", top2, top3, null, null, null);
+				int top2 = GetTop<int>();
+				int top3 = GetTop<int>();
+				IDeck byNumber = base.DecksService.GetByNumber(top2);
+				if (byNumber != null && byNumber.IsSlotValid(top3))
+				{
+					ILocation item = service.Get(top2, top3);
+					list.Add(item);
+					base.Context.CreateResult("LocationReset", "The location was reset.", top2, top3, null, null, null);
+				}
 			}
+			service.Reset(list);
+			base.Context.CreateInfoResult("TotalLocationsReset", list.Count.ToString());
 		}
-		base.Context.CreateInfoResult("TotalLocationsReset", num.ToString());
 	}
 
 	internal ResetLocationsJob(ExecutionResult r, ExecutionContext c)

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -82,9 +82,20 @@ internal sealed class WatchdogPoller : ScriptPoller
 		return true;
 	}
 
+	internal override void Initialize()
+	{
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		service.AddObserver(this);
+		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		foreach (TimeoutCounters value in Enum.GetValues(typeof(TimeoutCounters)))
+		{
+			service2.AddWeeklyResettable(value);
+		}
+	}
+
 	private WatchdogPoller()
 	{
-		DataMap = StoreManager.Instance.GetDataStore();
+		DataMap = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 	}
 
 	private int CleanErroredJobs()
@@ -124,7 +135,8 @@ internal sealed class WatchdogPoller : ScriptPoller
 		{
 			return num;
 		}
-		string[] directories = Directory.GetDirectories(ControllerConfiguration.Instance.KioskLogsPath);
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string[] directories = Directory.GetDirectories(service.LogsBasePath);
 		string[] array = directories;
 		foreach (string text in array)
 		{
@@ -241,11 +253,12 @@ internal sealed class WatchdogPoller : ScriptPoller
 		{
 			LastCounterReset = now;
 			LogHelper.Instance.Log("Watchdog resetting counters.");
-			CounterManager.Instance.Reset("EmptyOrStuckCount");
+			IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+			service.Reset("EmptyOrStuckCount");
 			if (now.DayOfWeek == DayOfWeek.Sunday)
 			{
 				LogHelper.Instance.Log("Reset timeout counters.", LogEntryType.Info);
-				HardwareSupport.ResetCounters();
+				service.ResetWeekly();
 			}
 		}
 	}

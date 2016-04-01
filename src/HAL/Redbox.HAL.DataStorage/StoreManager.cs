@@ -1,20 +1,20 @@
 using System.Collections.Generic;
 using System.IO;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataStorage;
 
-public sealed class StoreManager
+public sealed class StoreManager : IDataStoreService
 {
-	public readonly string DataDirectory;
-
-	private readonly Dictionary<PersistentMapTypes, IPersistentMap> ObjectMap = new Dictionary<PersistentMapTypes, IPersistentMap>();
+	private readonly List<IStoreDescriptor> Descriptors = new List<IStoreDescriptor>();
 
 	private readonly Dictionary<string, IDataStore> Cache = new Dictionary<string, IDataStore>();
 
-	public static StoreManager Instance => Singleton<StoreManager>.Instance;
+	private readonly IRuntimeService RuntimeService;
 
-	public void CloseStores()
+	public string StoreDirectory { get; private set; }
+
+	public bool Shutdown()
 	{
 		lock (Cache)
 		{
@@ -23,103 +23,37 @@ public sealed class StoreManager
 				IDataStore dataStore = Cache[key];
 				dataStore.CloseConnection(force: true);
 			}
+			foreach (IStoreDescriptor descriptor in Descriptors)
+			{
+				descriptor.OnShutdown();
+			}
 			Cache.Clear();
-		}
-	}
-
-	public void Initialize()
-	{
-		lock (Cache)
-		{
-			if (Cache.Keys.Count <= 0)
-			{
-				string source = Path.Combine(DataDirectory, "HALData.vdb3");
-				Cache["HALData.vdb3"] = new NoLockVistaDBStore(source);
-				source = Path.Combine(DataDirectory, "HALCounters.vdb3");
-				ThreadSafeVistaDBStore threadSafeVistaDBStore = new ThreadSafeVistaDBStore(source);
-				Cache["HALCounters.vdb3"] = threadSafeVistaDBStore;
-				ObjectMap[PersistentMapTypes.Database] = new SecretOptions(threadSafeVistaDBStore);
-				ObjectMap[PersistentMapTypes.Engine] = new RegistryStore("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
-				ObjectMap[PersistentMapTypes.Registry] = new RegistryStore("SOFTWARE\\Redbox\\HAL");
-			}
-		}
-	}
-
-	public IDataStore FindByName(string store)
-	{
-		lock (Cache)
-		{
-			if (Cache.ContainsKey(store))
-			{
-				return Cache[store];
-			}
-			return null;
-		}
-	}
-
-	public bool UpgradeTables(TextWriter writer)
-	{
-		IDataStore dataStore = FindByName("HALCounters.vdb3");
-		if (dataStore == null)
-		{
-			writer.WriteLine("[UpgradeTables] Cannot locate a counters database. EPIC FAILURE.");
-			return false;
-		}
-		CountersStore countersStore = new CountersStore();
-		foreach (string table in countersStore.Tables)
-		{
-			TestAndCreate(dataStore, table, writer);
-		}
-		dataStore = FindByName("HALData.vdb3");
-		if (dataStore == null)
-		{
-			writer.WriteLine("[UpgradeTables] Cannot locate a Data database. EPIC FAILURE.");
-			return false;
-		}
-		InventoryStore inventoryStore = new InventoryStore();
-		foreach (string table2 in inventoryStore.Tables)
-		{
-			TestAndCreate(dataStore, table2, writer);
+			Descriptors.Clear();
 		}
 		return true;
 	}
 
-	public IPersistentMap GetDataStore(PersistentMapTypes type)
+	public IDataStore CreateStore(IStoreDescriptor descriptor)
 	{
-		if (ObjectMap.ContainsKey(type))
+		lock (Cache)
 		{
-			return ObjectMap[type];
+			string key = descriptor.DataSource.ToUpper();
+			if (Cache.ContainsKey(key))
+			{
+				return Cache[key];
+			}
+			string source = Path.Combine(StoreDirectory, descriptor.DataSource);
+			IDataStore dataStore = null;
+			dataStore = ((StoreLockType.NoLock != descriptor.LockType) ? ((IDataStore)new ThreadSafeVistaDBStore(source)) : ((IDataStore)new NoLockVistaDBStore(source)));
+			Cache[key] = dataStore;
+			Descriptors.Add(descriptor);
+			return dataStore;
 		}
-		return null;
 	}
 
-	public IPersistentMap GetDataStore()
+	public StoreManager()
 	{
-		return GetDataStore(PersistentMapTypes.Database);
-	}
-
-	private bool TestAndCreate(IDataStore store, string table, TextWriter writer)
-	{
-		if (store.TableExists(table))
-		{
-			writer.WriteLine("The table '{0}' already exists - take no action.", table);
-			return true;
-		}
-		if (!TableNames.CreateMap.ContainsKey(table))
-		{
-			return true;
-		}
-		if (!store.CreateTable(TableNames.CreateMap[table]))
-		{
-			writer.WriteLine("Unable to create new database table '{0}'.", table);
-			return false;
-		}
-		writer.WriteLine("The table '{0}' was successfully created.", table);
-		return true;
-	}
-
-	private StoreManager()
-	{
-		DataDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
+		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
+		StoreDirectory = Path.Combine(RuntimeService.AssemblyDirectory, "data");
 	}
 }

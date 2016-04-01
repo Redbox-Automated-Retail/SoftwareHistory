@@ -1,10 +1,12 @@
+using Redbox.HAL.Component.Model;
+
 namespace Redbox.HAL.Controller.Framework;
 
-public struct MoveTarget
+internal struct MoveTarget
 {
-	public Axis Axis { get; set; }
+	internal Axis Axis;
 
-	public int? XCoordinate { get; set; }
+	internal int? XCoordinate;
 
-	public int? YCoordinate { get; set; }
+	internal int? YCoordinate;
 }

@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -8,39 +8,37 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
+		IAirExchangerService service = ServiceLocator.Instance.GetService<IAirExchangerService>();
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: true, "IceQubeBoard");
-		if (!IceQubeBoard.Instance.ShouldRetry())
+		if (!service.ShouldRetry())
 		{
-			string msg = "The board is in persistent error; no further queries.";
-			applicationLog.Write(msg);
-			base.Context.ServiceLog(msg);
-			AddError("IceQube board in persistent error state.");
+			OnPersistentError();
 			return;
 		}
-		IceQubeBoardStatus iceQubeBoardStatus = IceQubeBoard.Instance.CheckStatus();
-		if (iceQubeBoardStatus != IceQubeBoardStatus.Error)
+		AirExchangerStatus airExchangerStatus = service.CheckStatus();
+		if (AirExchangerStatus.Error != airExchangerStatus)
 		{
 			return;
 		}
 		applicationLog.Write("Board status in error; attempt reset.", LogEntryType.Info);
-		IceQubeBoardStatus iceQubeBoardStatus2 = IceQubeBoardStatus.NotConfigured;
+		AirExchangerStatus airExchangerStatus2 = AirExchangerStatus.NotConfigured;
 		for (int i = 0; i < 3; i++)
 		{
-			iceQubeBoardStatus2 = IceQubeBoard.Instance.Reset();
-			applicationLog.Write($"Reset status is {iceQubeBoardStatus2.ToString().ToUpper()}");
-			if (IceQubeBoardStatus.Ok == iceQubeBoardStatus2)
+			airExchangerStatus2 = service.Reset();
+			applicationLog.Write($"Reset status is {airExchangerStatus2.ToString().ToUpper()}");
+			if (AirExchangerStatus.Ok == airExchangerStatus2)
 			{
-				IceQubeBoard.Instance.ResetFailureCount();
+				service.ResetFailureCount();
 				return;
 			}
 			PerfFunctions.Wait(2000);
 		}
-		if (IceQubeBoardStatus.Error == iceQubeBoardStatus2)
+		if (AirExchangerStatus.Error == airExchangerStatus2)
 		{
-			IceQubeBoard.Instance.IncrementResetFailureCount();
-			if (!IceQubeBoard.Instance.ShouldRetry())
+			service.IncrementResetFailureCount();
+			if (!service.ShouldRetry())
 			{
-				AddError("Unable to reset IceQube board.");
+				OnPersistentError();
 			}
 		}
 	}
@@ -48,5 +46,13 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 	internal TestIceQubeExchangerJob(ExecutionResult result, ExecutionContext ctx)
 		: base(result, ctx)
 	{
+	}
+
+	private void OnPersistentError()
+	{
+		string msg = "The board is in persistent error; no further queries.";
+		base.Context.AppLog.Write(msg);
+		base.Context.ServiceLog(msg);
+		AddError("IceQube board in persistent error state.");
 	}
 }

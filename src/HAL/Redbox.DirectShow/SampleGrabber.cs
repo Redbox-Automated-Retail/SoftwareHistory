@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using Redbox.DirectShow.Interop;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.DirectShow;
 

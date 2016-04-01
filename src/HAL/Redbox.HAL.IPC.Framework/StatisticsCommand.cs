@@ -7,8 +7,8 @@ namespace Redbox.HAL.IPC.Framework;
 [Command("statistics")]
 public class StatisticsCommand
 {
-	[CommandForm(Name = "show")]
 	[Usage("STATISTICS show")]
+	[CommandForm(Name = "show")]
 	public void Show(CommandContext context)
 	{
 		BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public;

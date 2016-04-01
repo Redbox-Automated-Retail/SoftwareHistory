@@ -1,8 +1,8 @@
-        #
+﻿        #
         # QLM-UNLOAD Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.4.0.246
+	# VERSION 1.8.0.22
         #
 
         LOG                 "Begin QLM unload request."
@@ -81,7 +81,7 @@
 
 	GRIPPER	CHECK-PICKER
 	POP		CP-RESULT
-	IF		"EMPTY" != CP-RESULT
+	IF		"PICKEREMPTY" != CP-RESULT
 		EXIT	"Unable to clear the picker."
 	ENDIF
 	
@@ -121,7 +121,7 @@ _JOB_DONE:
 
 	GRIPPER		CHECK-PICKER
 	POP		CP-RESULT
-	IF		"EMPTY" != CP-RESULT
+	IF		"PICKEREMPTY" != CP-RESULT
 		EXIT	"Unable to clear the picker."
 	ENDIF
 	

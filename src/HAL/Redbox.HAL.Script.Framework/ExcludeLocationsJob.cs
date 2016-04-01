@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -15,8 +15,8 @@ internal sealed class ExcludeLocationsJob : NativeJobAdapter
 		{
 			int top2 = GetTop<int>();
 			int top3 = GetTop<int>();
-			Deck deck = DecksManager.Instance.GetDeck(top2);
-			if (!(deck == null) && deck.IsSlotValid(top3))
+			IDeck byNumber = base.DecksService.GetByNumber(top2);
+			if (byNumber != null && byNumber.IsSlotValid(top3))
 			{
 				if (!dictionary.ContainsKey(top2))
 				{
@@ -29,8 +29,8 @@ internal sealed class ExcludeLocationsJob : NativeJobAdapter
 		foreach (int key in dictionary.Keys)
 		{
 			List<int> list = dictionary[key];
-			Deck deck2 = DecksManager.Instance.GetDeck(key);
-			deck2.Exclude(list);
+			IDeck byNumber2 = base.DecksService.GetByNumber(key);
+			base.InventoryService.ExcludeSlots(byNumber2, list);
 			list.Clear();
 		}
 		dictionary.Clear();

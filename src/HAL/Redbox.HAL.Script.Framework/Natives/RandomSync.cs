@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework.Natives;
 
@@ -10,41 +10,55 @@ internal sealed class RandomSync : NativeJobAdapter
 {
 	private class RandomSyncDecorator : SyncDecorator
 	{
+		private readonly bool VendDisk;
+
 		private readonly int VendTime;
 
-		internal RandomSyncDecorator(ExecutionContext ctx, ExecutionResult r, Location loc, int vendTime)
+		internal RandomSyncDecorator(ExecutionContext ctx, ExecutionResult r, ILocation loc, int vendtime, bool vend)
 			: base(ctx, r, loc)
 		{
-			VendTime = vendTime;
+			VendDisk = vend;
+			VendTime = vendtime;
 		}
 
 		internal override SyncResult AfterDiskRead()
 		{
-			if (ControllerService.Instance.MoveToVend(MoveMode.None, Context.AppLog) != MotionResult.Success)
+			if (!VendDisk)
+			{
+				return SyncResult.Success;
+			}
+			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+			if (service.MoveVend(MoveMode.None, Context.AppLog) != ErrorCodes.Success)
 			{
 				Context.CreateMoveErrorResult(SyncLocation.Deck, SyncLocation.Slot);
 				AddError("job error.");
 				return SyncResult.HardwareError;
 			}
-			VendItemResult vendItemResult = ControllerService.Instance.VendItem(VendTime);
-			if (!vendItemResult.Presented)
+			using (VendItemOperation vendItemOperation = new VendItemOperation(VendTime))
 			{
-				Context.AppLog.Write("The disk was not presented to the user from the vend door.");
-				AddError("Job error.");
-				return SyncResult.HardwareError;
+				VendItemResult vendItemResult = vendItemOperation.Execute();
+				if (!vendItemResult.Presented)
+				{
+					Context.AppLog.Write("The disk was not presented to the user from the vend door.");
+					AddError("Job error.");
+					return SyncResult.HardwareError;
+				}
+				if (vendItemResult.Status == ErrorCodes.PickerEmpty)
+				{
+					Context.AppLog.Write("The disk is no longer present in the picker. This is not good.");
+					AddError("Job error.");
+					return SyncResult.HardwareError;
+				}
 			}
-			if (vendItemResult.PickerStatus == PickerStatus.Empty)
+			using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
 			{
-				Context.AppLog.Write("The disk is no longer present in the picker. This is not good.");
-				AddError("Job error.");
-				return SyncResult.HardwareError;
-			}
-			PickerStatus pickerStatus = ControllerService.Instance.TakeDiskAtDoor();
-			if (PickerStatus.DiscInPicker != pickerStatus)
-			{
-				Context.AppLog.Write("There was a problem taking the disk in.");
-				AddError("Job error.");
-				return SyncResult.HardwareError;
+				ErrorCodes errorCodes = acceptDiskOperation.Execute();
+				if (ErrorCodes.PickerFull != errorCodes)
+				{
+					Context.AppLog.Write("There was a problem taking the disk in.");
+					AddError("Job error.");
+					return SyncResult.HardwareError;
+				}
 			}
 			return SyncResult.Success;
 		}
@@ -59,30 +73,34 @@ internal sealed class RandomSync : NativeJobAdapter
 			AddError("Unsupported configuration.");
 			return;
 		}
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		int top = GetTop<int>();
 		base.Context.AppLog.WriteFormatted("Vend time is set to {0}s", top);
+		int top2 = GetTop<int>();
 		base.Context.AppLog.Write("Random sync test start.");
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
-		dataStore.GetValue("RandomSyncVendFrequency", 5);
-		List<Location> locations = new List<Location>();
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck _deck)
+		List<ILocation> locations = new List<ILocation>();
+		base.DecksService.ForAllDecksDo(delegate(IDeck _deck)
 		{
 			for (int i = 1; i <= _deck.NumberOfSlots; i++)
 			{
-				locations.Add(new Location(_deck.Number, i));
+				locations.Add(service.Get(_deck.Number, i));
 			}
 			return true;
 		});
+		int num = 0;
 		bool flag = true;
 		while (flag)
 		{
-			Location location = SelectTargetLocation(locations);
+			ILocation location = SelectTargetLocation(locations);
 			if (location == null)
 			{
+				flag = false;
 				break;
 			}
 			base.Context.AppLog.WriteFormatted("Sync {0}", location.ToString());
-			RandomSyncDecorator decorator = new RandomSyncDecorator(base.Context, base.Result, location, top);
+			num++;
+			bool vend = num % top2 == 0;
+			RandomSyncDecorator decorator = new RandomSyncDecorator(base.Context, base.Result, location, top, vend);
 			SyncResult syncResult = SyncHelper.SyncSlot(base.Result, base.Context, location, decorator);
 			SyncResult syncResult2 = syncResult;
 			if (syncResult2 == SyncResult.HardwareError || syncResult2 == SyncResult.GetError)
@@ -102,7 +120,7 @@ internal sealed class RandomSync : NativeJobAdapter
 	{
 	}
 
-	private Location SelectTargetLocation(List<Location> locations)
+	private ILocation SelectTargetLocation(List<ILocation> locations)
 	{
 		if (0 >= locations.Count)
 		{
@@ -110,7 +128,7 @@ internal sealed class RandomSync : NativeJobAdapter
 		}
 		Random random = new Random(DateTime.Now.Millisecond);
 		int index = random.Next(0, locations.Count - 1);
-		Location result = locations[index];
+		ILocation result = locations[index];
 		locations.RemoveAt(index);
 		return result;
 	}

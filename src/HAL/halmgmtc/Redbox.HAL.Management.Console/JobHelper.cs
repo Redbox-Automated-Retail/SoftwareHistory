@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HAL.Management.Console.Properties;
 
@@ -11,7 +12,7 @@ namespace Redbox.HAL.Management.Console;
 
 public static class JobHelper
 {
-	private static SimpleLock m_jobListLock = new SimpleLock();
+	private static AtomicFlag m_jobListLock = new AtomicFlag();
 
 	private static BindingList<ProgramEvent> m_programEventsList;
 
@@ -203,7 +204,7 @@ public static class JobHelper
 		{
 			return false;
 		}
-		if (!m_jobListLock.TryLock())
+		if (!m_jobListLock.Set())
 		{
 			LogHelper.Instance.Log("Refresh Job List Denied - Locked", LogEntryType.Error);
 		}
@@ -260,7 +261,7 @@ public static class JobHelper
 		}
 		finally
 		{
-			m_jobListLock.Unlock();
+			m_jobListLock.Clear();
 		}
 		return true;
 	}

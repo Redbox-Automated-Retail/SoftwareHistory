@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
@@ -14,8 +15,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("job")]
 public sealed class JobCommand
 {
-	[CommandForm(Name = "get")]
 	[Usage("JOB get job: job-id")]
+	[CommandForm(Name = "get")]
 	public void Get(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -25,8 +26,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[CommandForm(Name = "list")]
 	[Usage("JOB list")]
+	[CommandForm(Name = "list")]
 	public void List(CommandContext context)
 	{
 		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
@@ -52,8 +53,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB get-errors job: job-id")]
 	[CommandForm(Name = "get-errors")]
+	[Usage("JOB get-errors job: job-id")]
 	public void GetErrors(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -63,8 +64,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[CommandForm(Name = "get-messages")]
 	[Usage("JOB get-messages job: job-id")]
+	[CommandForm(Name = "get-messages")]
 	public void GetMessages(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -74,8 +75,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB get-results job: job-id")]
 	[CommandForm(Name = "get-results")]
+	[Usage("JOB get-results job: job-id")]
 	public void GetResults(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -101,8 +102,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[CommandForm(Name = "connect")]
 	[Usage("JOB connect job: job-id")]
+	[CommandForm(Name = "connect")]
 	public void Connect(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext executionContext = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -118,8 +119,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB pend job: job-id")]
 	[CommandForm(Name = "pend")]
+	[Usage("JOB pend job: job-id")]
 	public void Pend(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Pend();
@@ -132,8 +133,8 @@ public sealed class JobCommand
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Signal(value);
 	}
 
-	[CommandForm(Name = "trash")]
 	[Usage("JOB trash job: job-id")]
+	[CommandForm(Name = "trash")]
 	public void Trash(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Trash();
@@ -205,15 +206,15 @@ public sealed class JobCommand
 		ExecutionEngine.Instance.CleanupJobs(force);
 	}
 
-	[Usage("JOB scheduler-status")]
 	[CommandForm(Name = "scheduler-status")]
+	[Usage("JOB scheduler-status")]
 	public void GetSchedulerStatus(CommandContext context)
 	{
 		context.Messages.Add((ExecutionEngine.Instance.ActiveContext != null) ? ExecutionEngine.Instance.ActiveContext.ID : "idle");
 	}
 
-	[Usage("JOB wait-for-completion job: job-id")]
 	[CommandForm(Name = "wait-for-completion")]
+	[Usage("JOB wait-for-completion job: job-id")]
 	public void WaitForCompletion(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.WaitForCompletion();
@@ -250,8 +251,8 @@ public sealed class JobCommand
 		CommandHelper.FormatJob(executionContext2, context);
 	}
 
-	[Usage("JOB execute-immediate statement: statement-line")]
 	[CommandForm(Name = "execute-immediate")]
+	[Usage("JOB execute-immediate statement: statement-line")]
 	public void ExecuteImmediate([CommandKeyValue(IsRequired = true)] CommandContext context, string statement)
 	{
 		if (ExecutionEngine.Instance.IsImmediateJobPending())
@@ -301,8 +302,8 @@ public sealed class JobCommand
 		context.Messages.Add(ExecutionEngine.Instance.GetInitJobStatus());
 	}
 
-	[CommandForm(Name = "quick-return-status")]
 	[Usage("JOB quick-return-status")]
+	[CommandForm(Name = "quick-return-status")]
 	public void QuickReturnIsRunning(CommandContext context)
 	{
 		string text = (QuickReturnDevice.Instance.IsConfigured ? "ACTIVE" : "INACTIVE");

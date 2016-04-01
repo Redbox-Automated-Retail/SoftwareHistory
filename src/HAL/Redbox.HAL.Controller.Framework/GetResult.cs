@@ -1,80 +1,55 @@
 using System;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class GetResult
+internal sealed class GetResult : IGetResult
 {
-	private GetResultCode Code;
+	public ErrorCodes HardwareError { get; private set; }
 
-	public bool Success
-	{
-		get
-		{
-			if (HardwareError == PickerHardwareError.Success)
-			{
-				return Code == GetResultCode.Success;
-			}
-			return false;
-		}
-	}
+	public bool Success => ErrorCodes.Success == HardwareError;
 
 	public bool EmptyOrStuck
 	{
 		get
 		{
-			if (Code != GetResultCode.SlotEmpty)
+			if (!IsSlotEmpty)
 			{
-				return Code == GetResultCode.ItemStuck;
+				return ItemStuck;
 			}
 			return true;
 		}
 	}
 
-	public bool IsSlotEmpty => Code == GetResultCode.SlotEmpty;
+	public bool IsSlotEmpty => ErrorCodes.SlotEmpty == HardwareError;
 
-	public bool ItemStuck => Code == GetResultCode.ItemStuck;
+	public bool ItemStuck => ErrorCodes.ItemStuck == HardwareError;
 
-	public PickerHardwareError HardwareError { get; private set; }
+	public ILocation Location { get; private set; }
 
-	public string Previous { get; internal set; }
+	public string Previous { get; private set; }
 
-	public DateTime? ReturnTime { get; internal set; }
+	public DateTime? ReturnTime { get; private set; }
 
-	public MerchFlags Flags { get; internal set; }
-
-	public static GetResult MakeEmulatedSlotEmpty()
-	{
-		if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
-		{
-			return null;
-		}
-		GetResult getResult = new GetResult();
-		getResult.Code = GetResultCode.SlotEmpty;
-		return getResult;
-	}
+	public MerchFlags Flags { get; private set; }
 
 	public override string ToString()
 	{
-		if (HardwareError == PickerHardwareError.Success)
-		{
-			return Code.ToString();
-		}
 		return HardwareError.ToString();
 	}
 
-	public void UpdateCode(GetResultCode newCode)
+	public void Update(ErrorCodes newError)
 	{
-		Code = newCode;
+		HardwareError = newError;
 	}
 
-	public void SetHardwareError(PickerHardwareError error)
+	internal GetResult(ILocation location)
 	{
-		HardwareError = error;
-	}
-
-	internal GetResult()
-	{
-		Previous = "UNKNOWN";
-		HardwareError = PickerHardwareError.Success;
+		Location = location;
+		Previous = Location.ID;
+		Flags = Location.Flags;
+		ReturnTime = location.ReturnDate;
+		HardwareError = ErrorCodes.Success;
+		LogHelper.Instance.Log(LogEntryType.Debug, "[GET Result] Loc = {0} Prev = {1} Flags = {2} r/t = {3}", location.ToString(), Previous, Flags.ToString(), ReturnTime.ToString());
 	}
 }

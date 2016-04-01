@@ -19,8 +19,8 @@ public struct ResultsReader : IDisposable
 
 	public ResultsReader(ExecutionContext context)
 	{
+		this = default(ResultsReader);
 		Context = context;
-		Disposed = false;
 		Context.ResultsLock.EnterReadLock();
 	}
 }

@@ -28,19 +28,14 @@ public class Program : IDisposable
 		Application.EnableVisualStyles();
 		Application.SetCompatibleTextRenderingDefault(defaultValue: false);
 		bool snapOnly = false;
-		bool hasIR = false;
 		for (int i = 0; i < args.Length; i++)
 		{
 			if (args[i] == "-snaptest")
 			{
 				snapOnly = true;
 			}
-			else if (args[i].Equals("-secure", StringComparison.CurrentCultureIgnoreCase))
-			{
-				hasIR = true;
-			}
 		}
-		Application.Run(new MainForm(snapOnly, hasIR));
+		Application.Run(new MainForm(snapOnly));
 	}
 
 	[STAThread]

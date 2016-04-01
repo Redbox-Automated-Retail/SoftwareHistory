@@ -1,5 +1,4 @@
-using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -7,160 +6,24 @@ public static class QLM
 {
 	private const int LifterTimeout = 120000;
 
-	public static Deck Deck
+	public static IDeck Deck
 	{
 		get
 		{
-			Deck rv = null;
-			DecksManager.Instance.ForAllDecksDo(delegate(Deck d)
-			{
-				if (d.IsQlmDeck)
-				{
-					rv = d;
-					return false;
-				}
-				return true;
-			});
-			return rv;
+			IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+			return service.QlmDeck;
 		}
-	}
-
-	public static bool SetDoorLock(bool locked)
-	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			if (!locked)
-			{
-				return ControllerEmulationState.Instance.ExpectedQlmUnLockResult;
-			}
-			return ControllerEmulationState.Instance.ExpectedQlmLockResult;
-		}
-		return true;
-	}
-
-	public static QlmDoorStatus GetDoorStatus()
-	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedGetQlmDoorStatusResult;
-		}
-		return QlmDoorStatus.Closed;
 	}
 
 	public static QlmStatus GetStatus()
-	{
-		return StatusInner();
-	}
-
-	public static QlmMotionResult Engage(bool home, IFormattedLog log)
-	{
-		if (ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			return QlmMotionResult.Timeout;
-		}
-		if (home && ControllerService.Instance.HomeAxis(Axis.X, log) != MotionResult.Success)
-		{
-			return QlmMotionResult.HomeXTimeout;
-		}
-		Deck deck = Deck;
-		if (deck != null)
-		{
-			deck.MarkInventory("UNKNOWN");
-		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedEngageQlmResult;
-		}
-		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmEngage, 120000);
-		if (coreResponse.TimedOut)
-		{
-			CounterManager.Instance.Increment("QlmEngageTimeout");
-		}
-		QlmMotionResult result = (coreResponse.TimedOut ? QlmMotionResult.Timeout : QlmMotionResult.Success);
-		LogResult(log, result, "ENGAGE");
-		return result;
-	}
-
-	public static QlmMotionResult Disengage(bool home, IFormattedLog log)
-	{
-		if (ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			return QlmMotionResult.Timeout;
-		}
-		if (home && ControllerService.Instance.HomeAxis(Axis.X, log) != MotionResult.Success)
-		{
-			return QlmMotionResult.HomeXTimeout;
-		}
-		Deck deck = Deck;
-		if (deck != null)
-		{
-			deck.MarkInventory("UNKNOWN");
-		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedDisengageQlmResult;
-		}
-		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
-		if (coreResponse.TimedOut)
-		{
-			CounterManager.Instance.Increment("QlmDisengageTimeout");
-		}
-		QlmMotionResult result = (coreResponse.TimedOut ? QlmMotionResult.Timeout : QlmMotionResult.Success);
-		LogResult(log, result, "DISENGAGE");
-		return result;
-	}
-
-	public static void Drop()
-	{
-		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && !ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmDisengage);
-		}
-	}
-
-	public static void Lift()
-	{
-		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && !ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmEngage);
-		}
-	}
-
-	public static bool HaltOperation()
-	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedQlmHaltResult;
-		}
-		if (ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			return true;
-		}
-		return ControlSystem.Instance.ExecuteControllerCommand(CommandType.QlmHalt).TimedOut;
-	}
-
-	internal static bool ExtendForGet()
-	{
-		int qlmExtendTime = ControllerConfiguration.Instance.QlmExtendTime;
-		if (ControllerConfiguration.Instance.QlmTimedExtend)
-		{
-			Gripper.TimedExtend(qlmExtendTime);
-		}
-		else
-		{
-			ControlSystem.Instance.ExecuteControllerCommand(CommandType.GripperExtend, ControllerConfiguration.Instance.QlmExtendTime);
-		}
-		return true;
-	}
-
-	private static QlmStatus StatusInner()
 	{
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
 			return ControllerEmulationState.Instance.ExpectedGetQlmStatusResult;
 		}
-		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.AuxSensorsRead);
-		if (coreResponse.CommunicationError)
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		if (coreResponse.CommError)
 		{
 			return QlmStatus.AuxNotResponsive;
 		}
@@ -176,13 +39,112 @@ public static class QLM
 		return QlmStatus.Disengaged;
 	}
 
-	private static void LogResult(IFormattedLog log, QlmMotionResult result, string state)
+	public static ErrorCodes Engage(bool home, IFormattedLog log)
+	{
+		if (ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			return ErrorCodes.Timeout;
+		}
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (home && service.HomeAxis(Axis.X, log) != ErrorCodes.Success)
+		{
+			return ErrorCodes.HomeXTimeout;
+		}
+		IDeck deck = Deck;
+		if (deck != null)
+		{
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			service2.MarkDeckInventory(deck, "UNKNOWN");
+		}
+		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
+		{
+			return ControllerEmulationState.Instance.ExpectedEngageQlmResult;
+		}
+		ICoreCommandExecutor service3 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service3.ExecuteControllerCommand(CommandType.QlmEngage, 120000);
+		if (coreResponse.TimedOut)
+		{
+			IPersistentCounterService service4 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+			service4.Increment(TimeoutCounters.QlmEngage);
+		}
+		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
+		LogResult(log, result, "ENGAGE");
+		return result;
+	}
+
+	public static ErrorCodes Disengage(bool home, IFormattedLog log)
+	{
+		if (ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			return ErrorCodes.Timeout;
+		}
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (home && service.HomeAxis(Axis.X, log) != ErrorCodes.Success)
+		{
+			return ErrorCodes.HomeXTimeout;
+		}
+		IDeck deck = Deck;
+		if (deck != null)
+		{
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			service2.MarkDeckInventory(deck, "UNKNOWN");
+		}
+		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
+		{
+			return ControllerEmulationState.Instance.ExpectedDisengageQlmResult;
+		}
+		ICoreCommandExecutor service3 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service3.ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
+		IPersistentCounterService service4 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		if (coreResponse.TimedOut)
+		{
+			service4.Increment(TimeoutCounters.QlmDisengage);
+		}
+		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
+		LogResult(log, result, "DISENGAGE");
+		return result;
+	}
+
+	public static void Drop()
+	{
+		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && !ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+			service.ExecuteControllerCommand(CommandType.QlmDisengage);
+		}
+	}
+
+	public static void Lift()
+	{
+		if (ControllerConfiguration.Instance.Mode != ControllerMode.Emulated && !ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+			service.ExecuteControllerCommand(CommandType.QlmEngage);
+		}
+	}
+
+	public static bool HaltOperation()
+	{
+		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
+		{
+			return ControllerEmulationState.Instance.ExpectedQlmHaltResult;
+		}
+		if (ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			return true;
+		}
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		return !service.ExecuteControllerCommand(CommandType.QlmHalt).Success;
+	}
+
+	private static void LogResult(IFormattedLog log, ErrorCodes result, string state)
 	{
 		string msg = $"QLM {state} returned status {result.ToString().ToUpper()}.";
-		log.WriteFormatted(msg, (result != QlmMotionResult.Success) ? LogEntryType.Error : LogEntryType.Info);
-		if (result != QlmMotionResult.Success)
+		log.WriteFormatted(msg, (result != ErrorCodes.Success) ? LogEntryType.Error : LogEntryType.Info);
+		if (result != ErrorCodes.Success)
 		{
-			ControlSystem.Instance.LogInputs(ControlBoards.Aux, LogEntryType.Error);
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			service.LogInputs(ControlBoards.Aux, LogEntryType.Error);
 		}
 	}
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -314,7 +314,7 @@ public class Instruction : ICloneable<Instruction>
 		return true;
 	}
 
-	protected bool GetLocation(ExecutionResult result, ExecutionContext context, out Location location)
+	protected bool GetLocation(ExecutionResult result, ExecutionContext context, out ILocation location)
 	{
 		int deck = -1;
 		int slot = -1;
@@ -323,7 +323,8 @@ public class Instruction : ICloneable<Instruction>
 		{
 			return false;
 		}
-		location = new Location(deck, slot);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		location = service.Get(deck, slot);
 		return true;
 	}
 
@@ -348,11 +349,11 @@ public class Instruction : ICloneable<Instruction>
 		return keyValuePairValue;
 	}
 
-	protected void HandleTimeoutOrCommmError(CoreResponse response, ExecutionContext context)
+	protected void HandleError(IControlResponse response, ExecutionContext context)
 	{
-		if (response.CommunicationError)
+		if (response.CommError)
 		{
-			context.PushTop(response.CommErrorDiagnostic);
+			context.PushTop(response.Diagnostic);
 		}
 		else
 		{
@@ -436,15 +437,6 @@ public class Instruction : ICloneable<Instruction>
 			AddError("E002", "Type conversion error: " + ex, errors);
 		}
 		return result;
-	}
-
-	internal static string ConvertTimeoutBoolToMessage(bool timedOut)
-	{
-		if (!timedOut)
-		{
-			return "SUCCESS";
-		}
-		return "TIMEOUT";
 	}
 
 	internal int? GetNullableNumericOperand(ExecutionResult result, string name, ExecutionContext context)

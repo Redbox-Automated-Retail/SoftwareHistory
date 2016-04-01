@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -7,12 +7,12 @@ internal sealed class GetVMZInfoJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		VMZSearchResult result = default(VMZSearchResult);
+		ILocation location = null;
 		foreach (MerchFlags item in SegmentManager.Instance.DecreasingPriorityOrder)
 		{
 			MerchSegment merchSegment = MerchSegmentFactory.Get(item);
-			merchSegment.FindHigh(ref result);
-			if (!result.Found)
+			location = merchSegment.FindHigh();
+			if (location == null)
 			{
 				base.Context.CreateInfoResult($"No{item.ToString()}s", $"There are no {item.ToString()} in the VMZ.");
 				continue;
@@ -21,9 +21,9 @@ internal sealed class GetVMZInfoJob : NativeJobAdapter
 			int num = merchSegment.ItemCount();
 			base.Context.CreateInfoResult(code, num.ToString());
 			string code2 = $"Last{item.ToString()}Info";
-			base.Context.CreateResult(code2, $"The high {item.ToString()} was found.", result.Deck, result.Slot, result.Location.Matrix, null, null);
+			base.Context.CreateResult(code2, $"The high {item.ToString()} was found.", location.Deck, location.Slot, location.ID, null, null);
 		}
-		base.Context.CreateInfoResult("DumpBinInventoryCount", DumpBin.Instance.CurrentCount().ToString());
+		base.Context.CreateInfoResult("DumpBinInventoryCount", base.DumpbinService.CurrentCount().ToString());
 	}
 
 	internal GetVMZInfoJob(ExecutionResult result, ExecutionContext ctx)

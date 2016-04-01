@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -61,7 +62,7 @@ internal sealed class TestQlmJob : NativeJobAdapter
 			PerfFunctions.Wait(500);
 		}
 		applicationLog.Write("The sync completed successfully.");
-		ControllerService.Instance.MoveToVend(MoveMode.Get, applicationLog);
+		base.MotionService.MoveVend(MoveMode.Get, applicationLog);
 	}
 
 	internal TestQlmJob(ExecutionResult r, ExecutionContext c)

@@ -6,8 +6,8 @@ namespace Redbox.HAL.Controller.Framework;
 
 public class MotorSpeed
 {
-	[DisplayName("Low Speed")]
 	[Description("The low (start) speed of the motor specified in pulses per second.")]
+	[DisplayName("Low Speed")]
 	public int Low { get; private set; }
 
 	[Description("The high (target) speed of the motor specified in pulses per second.")]
@@ -17,8 +17,8 @@ public class MotorSpeed
 	[Browsable(false)]
 	public MotorGear Gear { get; internal set; }
 
-	[DisplayName("Acceleration Time (in milliseconds)")]
 	[Description("The amount of time in milliseconds between acceleration from the low speed to the high speed.")]
+	[DisplayName("Acceleration Time (in milliseconds)")]
 	public int AccelerationTime { get; private set; }
 
 	public MotorSpeed(int low, int high, int accelerationTime, MotorGear gear)

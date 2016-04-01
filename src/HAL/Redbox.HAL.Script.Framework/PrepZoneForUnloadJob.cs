@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -18,7 +19,8 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 			applicationLog.Write("Prep Zone for unload is supported only on VMZ machines. I'm sorry.");
 			return;
 		}
-		DoorSensorResult doorSensorResult = DoorSensors.Instance.Query();
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		DoorSensorResult doorSensorResult = service.Query();
 		if (doorSensorResult != DoorSensorResult.Ok)
 		{
 			string text = $"Door sensor query returned error {doorSensorResult.ToString()}";
@@ -27,30 +29,30 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 			base.Context.CreateInfoResult("DoorOpen", text);
 			return;
 		}
-		Deck deck = DecksManager.Instance.GetDeck(1);
-		if (top >= deck.Quadrants.Length)
+		IDeck first = base.DecksService.First;
+		if (top >= first.Quadrants.Count)
 		{
 			AddError("The drum as fully rotated.");
 			applicationLog.Write("The drum is fully rotated.");
 			base.Context.CreateInfoResult("RotationsExceeded", "There are no more rotations to be made.");
 			return;
 		}
-		int num = ((top > 0) ? (deck.Quadrants.Length - top) : 0);
-		Quadrant currentQuadrant = deck.Quadrants[num];
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck2)
+		int num = ((top > 0) ? (first.Quadrants.Count - top) : 0);
+		IQuadrant currentQuadrant = first.Quadrants[num];
+		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
-			if (deckCount > 0 && deck2.Number > deckCount)
+			if (deckCount > 0 && deck.Number > deckCount)
 			{
 				return false;
 			}
-			totalReset += deck2.SwapEmptyWith("UNKNOWN", MerchFlags.Unload, currentQuadrant.Slots).Count;
+			totalReset += base.InventoryService.SwapEmptyWith(deck, "UNKNOWN", MerchFlags.Unload, currentQuadrant.Slots).Count;
 			return true;
 		});
 		applicationLog.WriteFormatted("{0} locations were marked for unload covering slots {1} -> {2}.", totalReset, currentQuadrant.Slots.Start, currentQuadrant.Slots.End);
 		base.Context.CreateInfoResult("LocationChangedCount", totalReset.ToString());
 		if (top == 0)
 		{
-			num = deck.Quadrants.Length;
+			num = first.Quadrants.Count;
 		}
 		if (--num == 0)
 		{
@@ -59,17 +61,17 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 			base.Context.CreateInfoResult("RotationsExceeded", "There are no more rotations to be made.");
 			return;
 		}
-		Quadrant quadrant = deck.Quadrants[num];
+		IQuadrant quadrant = first.Quadrants[num];
 		int num2 = quadrant.Slots.Start - 5;
 		if (num2 <= 0)
 		{
-			num2 = deck.NumberOfSlots - Math.Abs(num2);
+			num2 = first.NumberOfSlots - Math.Abs(num2);
 		}
-		applicationLog.Write($"PrepZone: Rotations = {top}, move to target Deck = {deck.Number} Slot = {num2}");
-		MotionResult motionResult = ControllerService.Instance.MoveTo(1, num2, MoveMode.None, base.Context.AppLog);
-		if (motionResult != MotionResult.Success)
+		applicationLog.Write($"PrepZone: Rotations = {top}, move to target Deck = {first.Number} Slot = {num2}");
+		ErrorCodes errorCodes = base.MotionService.MoveTo(1, num2, MoveMode.None, base.Context.AppLog);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			string text2 = $"The MOVE instruction failed with error {motionResult.ToString()}";
+			string text2 = $"The MOVE instruction failed with error {errorCodes.ToString()}";
 			base.Context.CreateInfoResult("MachineError", text2);
 			AddError(text2);
 		}

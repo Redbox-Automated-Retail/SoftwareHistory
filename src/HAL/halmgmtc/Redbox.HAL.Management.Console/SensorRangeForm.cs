@@ -32,12 +32,12 @@ public class SensorRangeForm : Form
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int MinimumValue { get; set; }
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int MaximumValue { get; set; }
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? Start
 	{
 		get
@@ -54,8 +54,8 @@ public class SensorRangeForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? End
 	{
 		get

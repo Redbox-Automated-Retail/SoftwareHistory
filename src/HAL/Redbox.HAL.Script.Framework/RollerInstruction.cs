@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -33,6 +33,7 @@ public sealed class RollerInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		GetWaitFlag();
 		int? num = GetTimeOutValue(result.Errors, context);
 		Token token = base.Operands[0];
@@ -53,22 +54,21 @@ public sealed class RollerInstruction : Instruction
 			{
 				num = 8000;
 			}
-			bool timedOut = PickerBoard.RollerToPosition(position, num.Value);
-			context.PushTop(Instruction.ConvertTimeoutBoolToMessage(timedOut));
+			HandleError(service.RollerToPosition(position, num.Value), context);
 		}
 		else if (token.Type == TokenType.Symbol)
 		{
 			if (string.Compare(token.Value, "IN", ignoreCase: true) == 0)
 			{
-				PickerBoard.StartRollerIn();
+				service.StartRollerIn();
 			}
 			else if (string.Compare(token.Value, "OUT", ignoreCase: true) == 0)
 			{
-				PickerBoard.StartRollerOut();
+				service.StartRollerOut();
 			}
 			else if (string.Compare(token.Value, "STOP", ignoreCase: true) == 0)
 			{
-				PickerBoard.StopRoller();
+				service.StopRoller();
 			}
 		}
 	}

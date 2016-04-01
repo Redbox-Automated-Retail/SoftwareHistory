@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
+using Microsoft.Win32;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
@@ -18,9 +18,9 @@ public sealed class ServiceCommand
 {
 	private static Random m_random = new Random((int)DateTime.Now.Ticks);
 
-	[Description("Queries the state of the hardware.")]
 	[Usage("SERVICE hardware-status")]
 	[CommandForm(Name = "hardware-status")]
+	[Description("Queries the state of the hardware.")]
 	public void Status(CommandContext context)
 	{
 		if (ExecutionEngine.Instance.IsImmediateJobPending())
@@ -48,17 +48,17 @@ public sealed class ServiceCommand
 		ExecutionEngine.Instance.ChangeMode((!enabled) ? EngineModes.Normal : EngineModes.Maintenance);
 	}
 
-	[Description("")]
-	[CommandForm(Name = "merch-mode")]
 	[Usage("SERVICE merch-mode status: enabled")]
+	[CommandForm(Name = "merch-mode")]
+	[Description("")]
 	public void ChangeMerchModeStatus(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "status")] bool enabled)
 	{
 		ExecutionEngine.Instance.ChangeMode((!enabled) ? EngineModes.Normal : EngineModes.Merchandizing);
 	}
 
 	[Usage("SERVICE diagnostic-mode status: enabled")]
-	[CommandForm(Name = "diagnostic-mode")]
 	[Description("")]
+	[CommandForm(Name = "diagnostic-mode")]
 	public void ChangeDiagnosticModeStatus(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "status")] bool enabled)
 	{
 		ExecutionEngine.Instance.ChangeMode((!enabled) ? EngineModes.Normal : EngineModes.Diagnostic);
@@ -69,7 +69,8 @@ public sealed class ServiceCommand
 	[Description("")]
 	public void SyncUnknowns(CommandContext context)
 	{
-		List<Location> unknowns = InventoryService.Instance.GetUnknowns();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		IList<ILocation> unknowns = service.GetUnknowns();
 		if (unknowns.Count == 0)
 		{
 			LogHelper.Instance.Log("Service unknown sync: there are no UNKNOWNS. Nice job!");
@@ -77,9 +78,9 @@ public sealed class ServiceCommand
 		}
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("sync-locations", "UNKNOWN inventory sync.", DateTime.Now, ProgramPriority.Low);
 		executionContext.EnableDebugging = false;
-		using (new DisposeableList<Location>(unknowns))
+		using (new DisposeableList<ILocation>(unknowns))
 		{
-			foreach (Location item in unknowns)
+			foreach (ILocation item in unknowns)
 			{
 				executionContext.PushTop(item.Slot);
 				executionContext.PushTop(item.Deck);
@@ -92,11 +93,12 @@ public sealed class ServiceCommand
 	}
 
 	[Description("")]
-	[Usage("SERVICE sync-empty")]
 	[CommandForm(Name = "sync-empty")]
+	[Usage("SERVICE sync-empty")]
 	public void SyncEmpty(CommandContext context)
 	{
-		List<Location> emptySlots = InventoryService.Instance.GetEmptySlots();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		IList<ILocation> emptySlots = service.GetEmptySlots();
 		if (emptySlots.Count == 0)
 		{
 			LogHelper.Instance.Log("SyncEmpty: there are no empty slots.");
@@ -104,9 +106,9 @@ public sealed class ServiceCommand
 		}
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("sync-locations", "EMPTY inventory sync.", DateTime.Now, ProgramPriority.Low);
 		executionContext.EnableDebugging = false;
-		using (new DisposeableList<Location>(emptySlots))
+		using (new DisposeableList<ILocation>(emptySlots))
 		{
-			foreach (Location item in emptySlots)
+			foreach (ILocation item in emptySlots)
 			{
 				executionContext.PushTop(item.Slot);
 				executionContext.PushTop(item.Deck);
@@ -125,39 +127,41 @@ public sealed class ServiceCommand
 	{
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("sync", "Full inventory sync.", DateTime.Now, ProgramPriority.Low);
 		executionContext.EnableDebugging = false;
-		Deck deck = DecksManager.Instance.Last();
-		if (deck.IsQlmDeck)
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck deck = service.Last;
+		if (deck.IsQlm)
 		{
-			deck = DecksManager.Instance.GetDeck(deck.Number - 1);
+			deck = service.GetByNumber(deck.Number - 1);
 		}
 		executionContext.PushTop(deck.NumberOfSlots);
 		executionContext.PushTop(deck.Number);
-		Deck deck2 = DecksManager.Instance.First();
+		IDeck first = service.First;
 		executionContext.PushTop(1);
-		executionContext.PushTop(deck2.Number);
+		executionContext.PushTop(first.Number);
 		LogHelper.Instance.Log("Service executing full sync ( job ID = {0} ).", executionContext.ID);
 		executionContext.Pend();
 		CommandHelper.FormatJob(executionContext, context);
 	}
 
-	[Description("")]
-	[Usage("SERVICE update-gamp [backup-directory: 'c:\\backup\\path' ]")]
 	[CommandForm(Name = "update-gamp")]
+	[Usage("SERVICE update-gamp [backup-directory: 'c:\\backup\\path' ]")]
+	[Description("")]
 	public void UpdateGamp(CommandContext context, [CommandKeyValue(KeyName = "backup-directory")] string backupDirectory)
 	{
 		List<List<int>> newData = new List<List<int>>();
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		service.ForAllDecksDo(delegate(IDeck deck)
 		{
 			List<int> list = new List<int> { deck.YOffset };
-			Quadrant[] quadrants = deck.Quadrants;
-			foreach (Quadrant quadrant in quadrants)
+			foreach (IQuadrant quadrant in deck.Quadrants)
 			{
 				list.Add(quadrant.Offset);
 			}
 			newData.Add(list);
 			return true;
 		});
-		GampBackupResult gampBackupResult = GampHelper.Instance.WriteSlotDataFile(newData, createBackup: true);
+		GampHelper gampHelper = new GampHelper();
+		GampBackupResult gampBackupResult = gampHelper.WriteSlotDataFile(newData, createBackup: true);
 		if (!string.IsNullOrEmpty(backupDirectory) && Directory.Exists(backupDirectory))
 		{
 			try
@@ -188,36 +192,25 @@ public sealed class ServiceCommand
 		context.Messages.Add(text);
 	}
 
-	[Usage("SERVICE test-comm")]
-	[CommandForm(Name = "test-comm")]
 	[Description("")]
+	[CommandForm(Name = "test-comm")]
+	[Usage("SERVICE test-comm")]
 	public void TestIPCTransfer(CommandContext context)
 	{
 		context.Messages.Add("ACK");
 	}
 
-	[CommandForm(Name = "quick-sync")]
-	[Usage("SERVICE quick-sync")]
-	[Description("")]
-	public void QuickSync(CommandContext context)
-	{
-		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("quick-sync-test", "Quick full sync", DateTime.Now, ProgramPriority.Low);
-		executionContext.EnableDebugging = false;
-		LogHelper.Instance.Log("Service executing quick sync ( job ID = {0} ).", executionContext.ID);
-		executionContext.Pend();
-	}
-
-	[Description("")]
-	[CommandForm(Name = "last-user-job")]
 	[Usage("SERVICE last-user-job")]
+	[CommandForm(Name = "last-user-job")]
+	[Description("")]
 	public void LastUserJob(CommandContext context)
 	{
 		context.Messages.Add("NONE");
 	}
 
 	[CommandForm(Name = "get-version")]
-	[Description("")]
 	[Usage("SERVICE get-version")]
+	[Description("")]
 	public void GetServiceVersion(CommandContext context)
 	{
 		context.Messages.Add(typeof(ServiceCommand).Assembly.GetName().Version.ToString());
@@ -228,40 +221,160 @@ public sealed class ServiceCommand
 	[Usage("SERVICE get-kiosk-id")]
 	public void GetKioskID(CommandContext context)
 	{
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore(PersistentMapTypes.Engine);
-		string value = dataStore.GetValue("ID", "UKNOWN");
-		context.Messages.Add(value);
+		RegistryKey registryKey = null;
+		string item = "UNKNOWN";
+		try
+		{
+			registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
+			if (registryKey != null)
+			{
+				object value = registryKey.GetValue("ID");
+				if (value != null)
+				{
+					item = (string)ConversionHelper.ChangeType(value, typeof(string));
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Unable to read secret option 'ID'", e);
+			item = "UNKNOWN";
+		}
+		finally
+		{
+			registryKey?.Close();
+		}
+		context.Messages.Add(item);
 	}
 
-	[Description("")]
-	[Usage("SERVICE reset-support-counters")]
-	[CommandForm(Name = "reset-support-counters")]
-	public void ResetSupportCounters(CommandContext context)
-	{
-		HardwareSupport.ResetCounters();
-	}
-
-	[Usage("SERVICE mark-kiosk-empty")]
-	[Description("")]
 	[CommandForm(Name = "mark-kiosk-empty")]
+	[Description("")]
+	[Usage("SERVICE mark-kiosk-empty")]
 	public void MarkKioskEmpty(CommandContext context)
 	{
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IInventoryService inventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.ForAllDecksDo(delegate(IDeck deck)
 		{
-			deck.Reset("EMPTY");
+			inventoryService.ResetAndMark(deck, "EMPTY");
 			return true;
 		});
 	}
 
-	[CommandForm(Name = "mark-kiosk-unknown")]
 	[Description("")]
+	[CommandForm(Name = "mark-kiosk-unknown")]
 	[Usage("SERVICE mark-kiosk-unknown")]
 	public void MarkKioskUnknown(CommandContext context)
 	{
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IInventoryService inventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.ForAllDecksDo(delegate(IDeck deck)
 		{
-			deck.Reset("UNKNOWN");
+			inventoryService.ResetAndMark(deck, "UNKNOWN");
 			return true;
 		});
+	}
+
+	[CommandForm(Name = "dump-inventory-store")]
+	[Description("")]
+	[Usage("SERVICE dump-inventory-store")]
+	public void DumpInventoryStore(CommandContext context)
+	{
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		string path = string.Format("StoreDump-{0}", FileHelper.GenerateUniqueFile("txt"));
+		string path2 = Path.Combine("c:\\Program Files\\Redbox\\KioskLogs\\Service", path);
+		using StreamWriter writer = new StreamWriter(path2);
+		service.DumpStore(writer);
+	}
+
+	[Description("")]
+	[CommandForm(Name = "power-down")]
+	[Usage("SERVICE power-down")]
+	public void PowerDownService(CommandContext context)
+	{
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		service.Suspend();
+	}
+
+	[CommandForm(Name = "power-up")]
+	[Description("")]
+	[Usage("SERVICE power-up")]
+	public void PowerUpService(CommandContext context)
+	{
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		service.Restart();
+	}
+
+	[Description("")]
+	[CommandForm(Name = "dump-arcus-correction-stats")]
+	[Usage("SERVICE dump-arcus-correction-stats")]
+	public void DumpArcusCorrectionStats(CommandContext context)
+	{
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string path = service.CreateSubpath("Service");
+		string path2 = Path.Combine(path, "ArcusCorrectionStats.txt");
+		if (File.Exists(path2))
+		{
+			FileHelper.CreateBackup(path2, BackupAction.Move);
+		}
+		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		using StreamWriter log = new StreamWriter(path2);
+		service2.LogStats(HardwareCorrectionStatistic.Arcus, log);
+	}
+
+	[Usage("SERVICE clear-arcus-correction-stats")]
+	[Description("")]
+	[CommandForm(Name = "clear-arcus-correction-stats")]
+	public void ClearArcusCorrectionStats(CommandContext context)
+	{
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		service.RemoveAll(HardwareCorrectionStatistic.Arcus);
+	}
+
+	[CommandForm(Name = "get-fraud-post-statistics")]
+	[Description("")]
+	[Usage("SERVICE get-fraud-post-statistics")]
+	public void GetFraudPostStatistics(CommandContext context)
+	{
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string path = service.CreateSubpath("Service");
+		string path2 = Path.Combine(path, "FraudPostStatistics.txt");
+		if (File.Exists(path2))
+		{
+			FileHelper.SafeDeleteFile(path2);
+		}
+		using (StreamWriter streamWriter = new StreamWriter(path2))
+		{
+			IDiskValidatorService service2 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+			if (service2.IsConfigured)
+			{
+				IFraudPostStatistics statistics = service2.FraudSensor.GetStatistics();
+				streamWriter.WriteLine("POST statistics sample {0}", statistics.LastSampleDate.ToString());
+				streamWriter.WriteLine("  Failed post: {0}", statistics.Failures);
+				streamWriter.WriteLine("  Successful post: {0}", statistics.Successes);
+			}
+			else
+			{
+				streamWriter.WriteLine("Fraud service not configured.");
+			}
+		}
+		context.Messages.Add("ACK");
+	}
+
+	[Description("")]
+	[CommandForm(Name = "reset-fraud-post-counters")]
+	[Usage("SERVICE reset-fraud-post-counters")]
+	public void ResetFraudPostCounters(CommandContext context)
+	{
+		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		if (service.IsConfigured)
+		{
+			service.FraudSensor.ResetPostStatistics();
+			context.Messages.Add("OK");
+		}
+		else
+		{
+			context.Messages.Add("NOT CONFIGURED");
+		}
 	}
 }

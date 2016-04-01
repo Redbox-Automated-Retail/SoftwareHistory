@@ -1,15 +1,17 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal sealed class StandardSyncDecorator : SyncDecorator
 {
-	internal override void OnGetFailure(GetResult notUsed)
+	internal override void OnGetFailure(IGetResult notUsed)
 	{
-		SyncLocation.MarkUnknown();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		SyncLocation.ID = "UNKNOWN";
+		service.Save(SyncLocation);
 	}
 
-	internal StandardSyncDecorator(ExecutionContext ctx, ExecutionResult r, Location l)
+	internal StandardSyncDecorator(ExecutionContext ctx, ExecutionResult r, ILocation l)
 		: base(ctx, r, l)
 	{
 	}

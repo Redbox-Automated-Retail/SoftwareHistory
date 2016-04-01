@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 using VistaDB.Provider;
 
 namespace Redbox.HAL.DataStorage;
@@ -8,11 +8,6 @@ namespace Redbox.HAL.DataStorage;
 public sealed class NoLockVistaDBStore : IDataStore
 {
 	private readonly string ConnectionString;
-
-	public static IDataStore Make(string s)
-	{
-		return new NoLockVistaDBStore(s);
-	}
 
 	public bool Update(string update)
 	{
@@ -192,11 +187,11 @@ public sealed class NoLockVistaDBStore : IDataStore
 
 	public string FormatNullableTime(DateTime? time)
 	{
-		if (!time.HasValue)
+		if (time.HasValue)
 		{
-			return "NULL";
+			return $"'{time.Value}'";
 		}
-		return $"'{time.Value}'";
+		return "NULL";
 	}
 
 	public void CloseConnection(bool force)

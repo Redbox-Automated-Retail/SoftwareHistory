@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,14 +8,14 @@ internal sealed class SoftSyncJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		base.Context.ServiceLog("Begin soft sync request.");
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
 			int numberOfSlots = deck.NumberOfSlots;
 			for (int i = 0; i < numberOfSlots; i++)
 			{
 				int num = i + 1;
-				string item = InventoryService.Instance.Inspect(deck.Number, num);
-				base.Context.CreateResult("SoftSync", "The inventory location has been successfully inspected.", deck.Number, num, item, null, null);
+				ILocation location = base.InventoryService.Get(deck.Number, num);
+				base.Context.CreateResult("SoftSync", "The inventory location has been successfully inspected.", deck.Number, num, location.ID, null, null);
 			}
 			return true;
 		});

@@ -1,108 +1,107 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal static class HelperFunctions
 {
-	internal static PickerStatus CheckPicker(ExecutionResult result, ExecutionContext context, string vendId)
+	internal static ErrorCodes CheckPicker(ExecutionResult result, ExecutionContext context, string vendId)
 	{
 		context.Send("CheckPickerStart");
 		context.ServiceLog("Check picker to see if we need to put something away.");
 		if (!PickerBoard.IsFull())
 		{
 			CheckPickerComplete(includeResults: true, context);
-			return PickerStatus.Empty;
+			return ErrorCodes.PickerEmpty;
 		}
-		if (!Gripper.IsClear())
+		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
 		{
-			context.AppLog.Write("There is an item stuck in the gripper.", LogEntryType.Info);
-			context.CreateItemStuckResult(vendId);
-			context.SymbolTable.Add("MSTESTER-SYMBOL-PICKER-FULL", "The gripper is obstructed.");
-			return PickerStatus.Obstructed;
+			ErrorCodes errorCodes = clearGripperOperation.Execute();
+			if (errorCodes != ErrorCodes.Success)
+			{
+				context.AppLog.Write($"There is an item stuck in the gripper; clear gripper returned error {errorCodes.ToString()}.", LogEntryType.Info);
+				context.CreateItemStuckResult(vendId);
+				context.SymbolTable.Add("MSTESTER-SYMBOL-PICKER-FULL", "The gripper is obstructed.");
+				return ErrorCodes.PickerObstructed;
+			}
 		}
 		if (!PickerBoard.IsFull())
 		{
 			CheckPickerComplete(includeResults: true, context);
-			return PickerStatus.Empty;
+			return ErrorCodes.PickerEmpty;
 		}
+		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.CheckPicker);
 		context.Send("ItemInPicker");
 		context.ServiceLog("Picker is full, trying to find a slot for product.");
 		string text = "UNKNOWN";
+		ServiceLocator.Instance.GetService<IInventoryService>();
 		using (Scanner scanner = new Scanner())
 		{
-			if (!VendDoor.IsClosed())
+			if (service2.VendDoorState != VendDoorState.Closed)
 			{
-				VendDoor.Close();
+				service2.VendDoorClose();
 			}
-			ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+			service2.Center(CenterDiskMethod.VendDoorAndBack);
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{
-				context.ServiceLog(LogEntryType.Error, "The CAMERA CAPTURE instruction errored with status = {0}.", scanner.Diagnostic(scanResult));
+				context.ServiceLog(LogEntryType.Error, "The CAMERA CAPTURE instruction errored with status = {0}.", scanResult.Diagnostic);
 				context.CreateCameraCaptureErrorResult();
+			}
+			else if (scanResult.ReadCode)
+			{
+				text = scanResult.ScannedMatrix;
+				diskValidatorHelper.ValidateAndNotify(text, context);
 			}
 			else
 			{
-				text = scanResult.ScannedMatrix;
-				if (ControllerConfiguration.Instance.MarkDuplicatesUnknown && InventoryService.Instance.IsBarcodeDuplicate(text, out var _))
-				{
-					text = "UNKNOWN";
-				}
-				if ("UNKNOWN" == text)
-				{
-					context.ServiceLog("The barcode couldn't be read.");
-					context.CreateInfoResult("BadIdRead", "The READ request failed.");
-				}
-				else if ("redbox" == text)
-				{
-					context.ServiceLog("The item was placed into the picker backwards.");
-					context.CreateInfoResult("ItemReceivedBackward", "The READ request failed.", text);
-				}
+				context.ServiceLog("The barcode couldn't be read.");
+				context.CreateInfoResult("BadIdRead", "The READ request failed.");
 			}
 		}
 		context.ServiceLog("The ID in the picker: {0}", text);
-		FileDiscStatus fileDiscStatus = PutDiscAway(result, context, text, new CheckPickerHandler(context));
-		if (fileDiscStatus != FileDiscStatus.Success)
+		ErrorCodes errorCodes2 = PutDiscAway(result, context, text, new CheckPickerHandler(context));
+		if (errorCodes2 != ErrorCodes.Success)
 		{
-			context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", fileDiscStatus);
+			context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", errorCodes2);
 		}
 		else
 		{
 			CheckPickerComplete(includeResults: true, context);
 		}
-		if (fileDiscStatus != FileDiscStatus.Success)
-		{
-			return PickerStatus.DiscInPicker;
-		}
-		return PickerStatus.Empty;
+		return (errorCodes2 == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
 	}
 
-	internal static FileDiscStatus PutDiscAway(ExecutionResult result, ExecutionContext context, string idInPicker, IFileDiskHandler handler)
+	internal static ErrorCodes PutDiscAway(ExecutionResult result, ExecutionContext context, string idInPicker, IFileDiskHandler handler)
 	{
-		using EmptySearchResult emptySearchResult = new EmptySearchResult();
-		if (!emptySearchResult.FindMultipleEmptyLocations())
+		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
+		using IEmptySearchResult emptySearchResult = service.FindMultipleEmptyLocations();
+		if (emptySearchResult.FoundEmpty == 0)
 		{
 			context.ServiceLog("The machine is full, can't continue.");
 			handler.MachineFull(result, idInPicker);
-			return FileDiscStatus.MachineFull;
+			return ErrorCodes.MachineFull;
 		}
-		bool isDuplicate = InventoryService.Instance.IsBarcodeDuplicate(idInPicker, out var _);
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+		IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
+		service3.IsBarcodeDuplicate(idInPicker, out var _);
 		int num = ((emptySearchResult.FoundEmpty > 1) ? (emptySearchResult.FoundEmpty - 1) : 0);
+		IMotionControlService service4 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		int num2 = 0;
-		foreach (Location emptyLocation in emptySearchResult.EmptyLocations)
+		foreach (ILocation emptyLocation in emptySearchResult.EmptyLocations)
 		{
 			context.ServiceLog("Find an empty slot for item in picker.");
 			string msg = $"Moving to {emptyLocation.ToString()} to put item in picker away.";
 			context.ServiceLog(msg);
-			MotionResult motionResult = ControllerService.Instance.MoveTo(emptyLocation, MoveMode.Put, context.AppLog);
-			if (motionResult != MotionResult.Success)
+			ErrorCodes errorCodes = service4.MoveTo(emptyLocation, MoveMode.Put, context.AppLog);
+			if (errorCodes != ErrorCodes.Success)
 			{
-				FileDiscIterationResult fileDiscIterationResult = handler.MoveError(result, idInPicker, motionResult, emptyLocation.Deck, emptyLocation.Slot);
+				FileDiscIterationResult fileDiscIterationResult = handler.MoveError(result, idInPicker, errorCodes, emptyLocation.Deck, emptyLocation.Slot);
 				if (FileDiscIterationResult.Halt == fileDiscIterationResult)
 				{
-					return FileDiscStatus.NotFiled;
+					return ErrorCodes.DiskNotFiled;
 				}
 				if (FileDiscIterationResult.NextLocation == fileDiscIterationResult)
 				{
@@ -110,48 +109,30 @@ internal static class HelperFunctions
 				}
 			}
 			context.ServiceLog("Putting item in picker into slot.");
-			PutResult putResult = ControllerService.Instance.Put(idInPicker, context.AppLog);
+			IPutResult putResult = ControllerService.Instance.Put(idInPicker, context.AppLog);
 			if (putResult.Success)
 			{
-				handler.DiskFiled(result, idInPicker, emptyLocation.Deck, emptyLocation.Slot, isDuplicate);
-				return FileDiscStatus.Success;
+				handler.DiskFiled(result, putResult);
+				return ErrorCodes.Success;
 			}
-			if (putResult.PickerEmpty)
+			if (putResult.IsSlotInUse)
 			{
-				Track.Cycle();
-				if (ControllerService.Instance.GetPickerStatus() == PickerStatus.Empty)
+				if (++num2 == num)
 				{
-					return FileDiscStatus.Success;
+					service4.InitAxes(context.AppLog);
+				}
+				FileDiscIterationResult fileDiscIterationResult2 = handler.BeforeNextPut(result, putResult);
+				if (FileDiscIterationResult.Halt == fileDiscIterationResult2)
+				{
+					return ErrorCodes.DiskNotFiled;
 				}
 			}
-			else if (putResult.PickerObstructed)
-			{
-				if (!Gripper.IsClear())
-				{
-					return FileDiscStatus.NotFiled;
-				}
-				if (!PickerBoard.IsFull())
-				{
-					LogHelper.Instance.Log("FileDisk: PUT returned obstruced disk, but gripper clear filed disk - update inventory.", LogEntryType.Info);
-					InventoryService.Instance.UpdateInventoryOnPut(putResult, emptyLocation, idInPicker, out var _);
-					handler.DiskFiled(result, idInPicker, emptyLocation.Deck, emptyLocation.Slot, isDuplicate);
-					return FileDiscStatus.Success;
-				}
-			}
-			if (++num2 == num)
-			{
-				MotionController.GetController().InitAxes(context.AppLog);
-			}
-			FileDiscIterationResult fileDiscIterationResult2 = handler.BeforeNextPut(result, putResult, idInPicker, emptyLocation.Deck, emptyLocation.Slot);
-			if (FileDiscIterationResult.Halt == fileDiscIterationResult2)
-			{
-				return FileDiscStatus.NotFiled;
-			}
+			service2.TrackCycle();
 		}
 		string msg2 = $"Unable to put away item in picker {idInPicker} after {ControllerConfiguration.Instance.PutAwayItemAttempts} attempts.";
 		context.AppLog.Write(msg2, LogEntryType.Error);
 		handler.FailedToFileDisk(result, idInPicker);
-		return FileDiscStatus.NotFiled;
+		return ErrorCodes.DiskNotFiled;
 	}
 
 	private static void CheckPickerComplete(bool includeResults, ExecutionContext context)

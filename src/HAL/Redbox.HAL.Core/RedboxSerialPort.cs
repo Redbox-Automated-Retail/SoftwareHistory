@@ -2,6 +2,7 @@ using System;
 using System.IO.Ports;
 using System.Text;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
@@ -225,10 +226,7 @@ public abstract class RedboxSerialPort : IDisposable
 		string text = (string.IsNullOrEmpty(FriendlyName) ? Name : FriendlyName);
 		try
 		{
-			if (Port.IsOpen)
-			{
-				return true;
-			}
+			return Port.IsOpen;
 		}
 		catch (ArgumentNullException e)
 		{
@@ -245,7 +243,6 @@ public abstract class RedboxSerialPort : IDisposable
 			LogHelper.Instance.Log("[RedboxSerialPort] {0} IsOpen generated an unhandled exception.", text);
 			return false;
 		}
-		return false;
 	}
 
 	protected string AsString(byte[] array)

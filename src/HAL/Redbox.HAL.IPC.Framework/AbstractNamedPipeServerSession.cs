@@ -3,25 +3,25 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
 public abstract class AbstractNamedPipeServerSession
 {
+	private readonly StringBuilder ReadBuilder;
+
+	private readonly BasePipeChannel Channel;
+
 	public IDictionary<string, object> Properties { get; private set; }
 
-	public ParameterDictionary Context { get; private set; }
+	public IDictionary<string, string> Context { get; private set; }
 
 	protected abstract string WelcomeMessage { get; }
 
 	protected bool LogToConsole => false;
 
 	protected bool IsSecure => false;
-
-	private StringBuilder ReadBuilder { get; set; }
-
-	private BasePipeChannel Channel { get; set; }
 
 	public void Start()
 	{
@@ -39,7 +39,7 @@ public abstract class AbstractNamedPipeServerSession
 		Channel = new ServerPipeChannel(pipeHandle);
 		ReadBuilder = new StringBuilder();
 		Properties = new Dictionary<string, object>();
-		Context = new ParameterDictionary();
+		Context = new Dictionary<string, string>();
 		Channel.Connected = true;
 	}
 
@@ -78,7 +78,7 @@ public abstract class AbstractNamedPipeServerSession
 			}
 			ReadBuilder.Append(Encoding.ASCII.GetString(array, 0, array.Length));
 			flag = ProcessCommand();
-			ResetReadBuilder();
+			StringBuildExtension.Reset(ReadBuilder);
 		}
 		InternalClose();
 	}
@@ -86,14 +86,6 @@ public abstract class AbstractNamedPipeServerSession
 	protected abstract string ProcessClientCommand(string clientCommand);
 
 	protected abstract void CloseSessionInner();
-
-	private void ResetReadBuilder()
-	{
-		if (ReadBuilder.Length != 0)
-		{
-			ReadBuilder.Length = 0;
-		}
-	}
 
 	private bool ProcessCommand()
 	{

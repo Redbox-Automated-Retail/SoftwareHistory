@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -131,7 +131,7 @@ public abstract class ClientSession : IDisposable
 
 	protected List<string> ConsumeMessages()
 	{
-		ResetReadBuilder();
+		StringBuildExtension.Reset(ReadBuilder);
 		List<string> list = new List<string>();
 		Read(list);
 		if (!m_resetEvent.WaitOne(Timeout))
@@ -188,14 +188,6 @@ public abstract class ClientSession : IDisposable
 		catch (IOException)
 		{
 			LogHelper.Instance.Log("ClientSession.Write caught an I/O exception; maybe server is down?");
-		}
-	}
-
-	private void ResetReadBuilder()
-	{
-		if (ReadBuilder.Length != 0)
-		{
-			ReadBuilder.Length = 0;
 		}
 	}
 

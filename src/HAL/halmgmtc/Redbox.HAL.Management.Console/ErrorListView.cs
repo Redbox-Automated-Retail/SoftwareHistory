@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Management.Console.Properties;
 
 namespace Redbox.HAL.Management.Console;

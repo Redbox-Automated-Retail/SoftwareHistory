@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -7,23 +7,16 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public sealed class AudioInstruction : Instruction
 {
-	private enum AudioOperands
-	{
-		None,
-		On,
-		Off
-	}
-
 	public override string Mnemonic => "AUDIO";
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return AudioOperands.None != Enum<AudioOperands>.ParseIgnoringCase(operand, AudioOperands.None);
+		return AudioChannelState.None != Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None);
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		if (Enum<AudioOperands>.ParseIgnoringCase(operandTokens[0].Value, AudioOperands.None) == AudioOperands.None)
+		if (!IsOperandRecognized(operandTokens[0].Value))
 		{
 			result.Errors.Add(Error.NewError("C001", "Unexpected form", $"The operand {operandTokens[0].Value} for AUDIO isn't recognized."));
 		}
@@ -31,7 +24,8 @@ public sealed class AudioInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		AudioOperands audioOperands = Enum<AudioOperands>.ParseIgnoringCase(base.Operands[0].Value, AudioOperands.None);
-		ControlSystem.Instance.ExecuteControllerCommand((AudioOperands.Off == audioOperands) ? CommandType.AudioOff : CommandType.AudioOn);
+		AudioChannelState audio = Enum<AudioChannelState>.ParseIgnoringCase(base.Operands[0].Value, AudioChannelState.None);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		service.SetAudio(audio);
 	}
 }

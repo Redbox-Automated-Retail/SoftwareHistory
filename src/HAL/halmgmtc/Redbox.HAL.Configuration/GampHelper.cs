@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Configuration;
@@ -26,11 +27,10 @@ public sealed class GampHelper
 
 	internal const string SystemData = "C:\\gamp\\SystemData.dat";
 
-	public static GampHelper Instance => Singleton<GampHelper>.Instance;
-
 	public int GetPlatterSlots()
 	{
-		List<List<int>> list = Instance.ReadLegacySlotDataFile(removeZeroes: false);
+		GampHelper gampHelper = new GampHelper();
+		List<List<int>> list = gampHelper.ReadLegacySlotDataFile(removeZeroes: false);
 		if (list.Count == 0)
 		{
 			return -1;
@@ -199,9 +199,5 @@ public sealed class GampHelper
 			list.Add((int)num.Value);
 		}
 		return list;
-	}
-
-	private GampHelper()
-	{
 	}
 }

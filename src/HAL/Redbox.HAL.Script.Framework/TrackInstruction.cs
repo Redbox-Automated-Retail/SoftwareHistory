@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -20,7 +20,8 @@ public sealed class TrackInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return IsValidOperand(operand);
+		Commands commands = Enum<Commands>.ParseIgnoringCase(operand, Commands.None);
+		return commands != Commands.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
@@ -29,7 +30,7 @@ public sealed class TrackInstruction : Instruction
 		{
 			result.AddMissingOperandError("Expected a symbol: OPEN, CLOSE, CYCLE or STATUS.");
 		}
-		else if (operandTokens[0].Type != TokenType.Symbol || !IsValidOperand(operandTokens[0].Value))
+		else if (operandTokens[0].Type != TokenType.Symbol || !IsOperandRecognized(operandTokens[0].Value))
 		{
 			result.AddInvalidOperandError("Expected a symbol: OPEN, CLOSE, CYCLE or STATUS.");
 		}
@@ -37,34 +38,22 @@ public sealed class TrackInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		_ = context.ProgramName;
 		Token token = base.Operands[0];
-		if (token.Type == TokenType.Symbol)
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		switch (Enum<Commands>.ParseIgnoringCase(token.Value, Commands.None))
 		{
-			switch (Enum<Commands>.ParseIgnoringCase(token.Value, Commands.None))
-			{
-			case Commands.Status:
-				context.PushTop(Track.IsTrackOpen(read: false) ? "OPEN" : "CLOSED");
-				break;
-			case Commands.Open:
-				HandleTimeoutOrCommmError(Track.TestOpen(), context);
-				break;
-			case Commands.Close:
-				HandleTimeoutOrCommmError(Track.TestClose(), context);
-				break;
-			case Commands.Cycle:
-			{
-				bool timedOut = Track.Cycle();
-				context.PushTop(Instruction.ConvertTimeoutBoolToMessage(timedOut));
-				break;
-			}
-			}
+		case Commands.Status:
+			context.PushTop(service.TrackState.ToString().ToUpper());
+			break;
+		case Commands.Open:
+			HandleError(service.TrackOpen(), context);
+			break;
+		case Commands.Close:
+			HandleError(service.TrackClose(), context);
+			break;
+		case Commands.Cycle:
+			HandleError(service.TrackCycle(), context);
+			break;
 		}
-	}
-
-	private bool IsValidOperand(string operand)
-	{
-		Commands commands = Enum<Commands>.ParseIgnoringCase(operand, Commands.None);
-		return commands != Commands.None;
 	}
 }

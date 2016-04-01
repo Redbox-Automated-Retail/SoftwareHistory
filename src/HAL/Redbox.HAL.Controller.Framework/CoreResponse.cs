@@ -1,46 +1,49 @@
 using System;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class CoreResponse
+internal sealed class CoreResponse : IControlResponse
 {
 	internal readonly AddressSelector Selector;
 
-	private bool m_communicationError;
+	private ErrorCodes m_errorCode;
 
 	private string m_commandResponse = string.Empty;
 
 	private readonly char[] TrimChars = Environment.NewLine.ToCharArray();
 
-	public string CommErrorDiagnostic { get; internal set; }
+	public bool Success => ErrorCodes.Success == Error;
 
-	public bool TimedOut { get; internal set; }
+	public bool TimedOut => ErrorCodes.Timeout == Error;
 
-	public bool CommunicationError
+	public bool CommError => ErrorCodes.CommunicationError == Error;
+
+	public string Diagnostic { get; internal set; }
+
+	internal ErrorCodes Error
 	{
 		get
 		{
-			return m_communicationError;
+			return m_errorCode;
 		}
-		internal set
+		set
 		{
-			m_communicationError = value;
-			if (m_communicationError)
+			m_errorCode = value;
+			if (ErrorCodes.CommunicationError == m_errorCode)
 			{
 				OpCodeResponse = "COMMUNICATION ERROR";
-				TimedOut = true;
 			}
 		}
 	}
 
-	public string OpCodeResponse
+	internal string OpCodeResponse
 	{
 		get
 		{
 			return m_commandResponse;
 		}
-		internal set
+		set
 		{
 			if (value == null)
 			{
@@ -52,6 +55,15 @@ public sealed class CoreResponse
 		}
 	}
 
+	public override string ToString()
+	{
+		if (!CommError)
+		{
+			return Error.ToString().ToUpper();
+		}
+		return Diagnostic;
+	}
+
 	internal bool IsSensorSet(AuxSensor sensor)
 	{
 		return IsBitSet((int)sensor);
@@ -59,6 +71,10 @@ public sealed class CoreResponse
 
 	internal bool IsBitSet(int bit)
 	{
+		if (m_errorCode != ErrorCodes.Success)
+		{
+			return false;
+		}
 		if (string.IsNullOrEmpty(OpCodeResponse))
 		{
 			LogHelper.Instance.Log("IsBitSet: opcode response is null or empty!", LogEntryType.Info);
@@ -72,10 +88,17 @@ public sealed class CoreResponse
 		return OpCodeResponse[bit] == '1';
 	}
 
-	internal static CoreResponse MakeErrorResponse()
+	internal static CoreResponse CommErrorResponse()
 	{
 		CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
-		coreResponse.CommunicationError = true;
+		coreResponse.Error = ErrorCodes.CommunicationError;
+		return coreResponse;
+	}
+
+	internal static CoreResponse TimedOutResponse()
+	{
+		CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
+		coreResponse.Error = ErrorCodes.Timeout;
 		return coreResponse;
 	}
 

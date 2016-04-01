@@ -1,41 +1,54 @@
 using System.Threading;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class IceQubeBoard
+internal class IceQubeBoard : IAirExchangerService, IConfigurationObserver
 {
-	public static IceQubeBoard Instance => Singleton<IceQubeBoard>.Instance;
+	private const string ResetFailures = "IceQubeResetFailures";
 
-	public FanStatus FanState { get; private set; }
+	public bool Configured { get; private set; }
 
-	public bool Configured
+	public ExchangerFanStatus FanStatus { get; private set; }
+
+	public void NotifyConfigurationChangeStart()
 	{
-		get
+		LogHelper.Instance.Log("[IceQubeService] Configuration change start.");
+		FanStatus = ExchangerFanStatus.Unknown;
+	}
+
+	public void NotifyConfigurationChangeEnd()
+	{
+		LogHelper.Instance.Log("[IceQubeService] Configuration change end.");
+		Configured = ControllerConfiguration.Instance.EnableIceQubePolling;
+		FanStatus = ((!Configured) ? ExchangerFanStatus.NotConfigured : ExchangerFanStatus.On);
+		if (!Configured)
 		{
-			return ControllerConfiguration.Instance.EnableIceQubePolling;
-		}
-		set
-		{
-			ControllerConfiguration.Instance.SetPropertyByName("EnableIceQubePolling", new object[1] { value });
+			TurnOnFan();
 		}
 	}
 
-	public IceQubeBoardStatus CheckStatus()
+	public void NotifyConfigurationLoaded()
+	{
+		LogHelper.Instance.Log("[IceQubeService] Configuration loaded.");
+		Configured = ControllerConfiguration.Instance.EnableIceQubePolling;
+		FanStatus = ((!Configured) ? ExchangerFanStatus.NotConfigured : ExchangerFanStatus.On);
+	}
+
+	public AirExchangerStatus CheckStatus()
 	{
 		if (Configured)
 		{
 			return CheckStatusInner();
 		}
-		return IceQubeBoardStatus.NotConfigured;
+		return AirExchangerStatus.NotConfigured;
 	}
 
 	public void TurnOnFan()
 	{
 		if (Configured)
 		{
-			if (FanStatus.On == FanState)
+			if (ExchangerFanStatus.On == FanStatus)
 			{
 				LogHelper.Instance.Log("Fan is already on - bypass.");
 				return;
@@ -50,7 +63,7 @@ public sealed class IceQubeBoard
 	{
 		if (Configured)
 		{
-			if (FanStatus.Off == FanState)
+			if (ExchangerFanStatus.Off == FanStatus)
 			{
 				LogHelper.Instance.Log("Fan is already off - bypass.");
 				return;
@@ -76,15 +89,11 @@ public sealed class IceQubeBoard
 		}
 	}
 
-	public IceQubeBoardStatus Reset()
+	public AirExchangerStatus Reset()
 	{
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			return IceQubeBoardStatus.Error;
-		}
 		if (!Configured)
 		{
-			return IceQubeBoardStatus.NotConfigured;
+			return AirExchangerStatus.NotConfigured;
 		}
 		int millisecondsTimeout = 1500;
 		ToggleLatch(on: true);
@@ -96,68 +105,64 @@ public sealed class IceQubeBoard
 
 	public int PersistentFailureCount()
 	{
-		Counter counter = CounterManager.Instance.Find("IceQubeResetFailures");
-		if (counter == null)
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		IPersistentCounter persistentCounter = service.Find("IceQubeResetFailures");
+		if (persistentCounter == null)
 		{
 			LogHelper.Instance.Log("Unable to create IceQube counter.", LogEntryType.Error);
 			return 0;
 		}
-		return counter.Value;
+		return persistentCounter.Value;
 	}
 
 	public bool ShouldRetry()
 	{
-		Counter counter = CounterManager.Instance.Find("IceQubeResetFailures");
-		if (counter == null)
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		IPersistentCounter persistentCounter = service.Find("IceQubeResetFailures");
+		if (persistentCounter == null)
 		{
 			return false;
 		}
-		return counter.Value < 3;
+		return persistentCounter.Value < 3;
 	}
 
 	public void ResetFailureCount()
 	{
-		LogHelper.Instance.Log("IceQubeBoard reset failure counter.", LogEntryType.Info);
-		CounterManager.Instance.Reset("IceQubeResetFailures");
+		LogHelper.Instance.Log("IceQubeBoard reset failure counter.");
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		service.Reset("IceQubeResetFailures");
 	}
 
 	public void IncrementResetFailureCount()
 	{
-		CounterManager.Instance.Increment("IceQubeResetFailures");
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		service.Increment("IceQubeResetFailures");
 	}
 
-	public void ConfigurationUpdateFinish()
+	internal IceQubeBoard()
 	{
-		FanState = ((!Configured) ? FanStatus.NotConfigured : FanStatus.On);
-	}
-
-	public void ConfigurationChangeStart()
-	{
-		FanState = FanStatus.Unknown;
+		FanStatus = ExchangerFanStatus.NotConfigured;
 	}
 
 	private void ToggleLatch(bool on)
 	{
-		ControlSystem.Instance.ExecuteControllerCommand(on ? CommandType.QlmDoorUnlock : CommandType.QlmDoorLock);
-		FanState = (on ? FanStatus.Off : FanStatus.On);
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		service.ExecuteControllerCommand(on ? CommandType.QlmDoorUnlock : CommandType.QlmDoorLock);
+		FanStatus = (on ? ExchangerFanStatus.Off : ExchangerFanStatus.On);
 	}
 
-	private IceQubeBoardStatus CheckStatusInner()
+	private AirExchangerStatus CheckStatusInner()
 	{
-		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CommandType.AuxSensorsRead);
-		if (coreResponse.CommunicationError)
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		if (coreResponse.CommError)
 		{
-			return IceQubeBoardStatus.Error;
+			return AirExchangerStatus.Error;
 		}
 		if (!coreResponse.IsSensorSet(AuxSensor.QlmBayDoor))
 		{
-			return IceQubeBoardStatus.Error;
+			return AirExchangerStatus.Error;
 		}
-		return IceQubeBoardStatus.Ok;
-	}
-
-	private IceQubeBoard()
-	{
-		FanState = ((!ControllerConfiguration.Instance.EnableIceQubePolling) ? FanStatus.NotConfigured : FanStatus.On);
+		return AirExchangerStatus.Ok;
 	}
 }

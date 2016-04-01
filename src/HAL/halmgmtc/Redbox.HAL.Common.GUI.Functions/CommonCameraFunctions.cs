@@ -16,7 +16,7 @@ public static class CommonCameraFunctions
 		{
 			return false;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
+		string topOfStack = hardwareJob.GetTopOfStack();
 		return bool.Parse(topOfStack);
 	}
 

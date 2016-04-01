@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -30,12 +31,14 @@ public sealed class HomeYInstruction : Instruction
 				flag = result2;
 			}
 		}
-		if (flag)
+		if (flag && ControllerConfiguration.Instance.ClearPickerOnHome)
 		{
-			Gripper.ClearFront();
+			using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
+			clearPickerFrontOperation.Execute();
 		}
-		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.Y, context.AppLog);
-		string instance = motionResult.ToString().ToUpper();
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.HomeAxis(Axis.Y, context.AppLog);
+		string instance = errorCodes.ToString().ToUpper();
 		context.PushTop(instance);
 	}
 

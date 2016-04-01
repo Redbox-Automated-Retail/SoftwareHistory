@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -29,10 +29,17 @@ public sealed class InspectInstruction : Instruction
 		if (!GetLocation(result, context, out var deck, out var slot))
 		{
 			AddError("E004", "Deck or slot are undefined, reissue the INSPECT instruction specifying both deck and slot values.", result.Errors);
+			return;
 		}
-		else
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck byNumber = service.GetByNumber(deck);
+		if (byNumber == null || !byNumber.IsSlotValid(slot))
 		{
-			context.PushTop(InventoryService.Instance.Inspect(deck, slot));
+			context.PushTop(ErrorCodes.InvalidLocation.ToString().ToUpper());
+			return;
 		}
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+		ILocation location = service2.Get(deck, slot);
+		context.PushTop(location.ID);
 	}
 }

@@ -1,7 +1,6 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -20,43 +19,26 @@ public sealed class GetConfigInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		ConfigType configType = ConfigType.Controller;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("TYPE");
-		if (keyValuePair != null)
+		object[] args = OperandsHelper.ConvertSymbolsToParameterArray(base.Operands, result.Errors, context);
+		if (result.Errors.Count <= 0)
 		{
-			configType = Enum<ConfigType>.ParseIgnoringCase(keyValuePair.Value, ConfigType.Controller);
-		}
-		object[] args = ConvertSymbolsToParameterArray(result.Errors, context);
-		if (result.Errors.Count > 0)
-		{
-			return;
-		}
-		string text = string.Format(base.Operands[0].Value, args);
-		object obj = string.Empty;
-		try
-		{
-			switch (configType)
+			string name = string.Format(base.Operands[0].Value, args);
+			object empty = string.Empty;
+			try
 			{
-			case ConfigType.Camera:
-				obj = BarcodeConfiguration.Instance.GetPropertyByName(text);
-				break;
-			case ConfigType.Controller:
-				obj = ControllerConfiguration.Instance.GetPropertyByName(text);
-				if (text.Equals("QlmDeck.Number", StringComparison.CurrentCultureIgnoreCase) && obj == null)
-				{
-					obj = -1;
-				}
-				break;
+				IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+				empty = service.GetPropertyByName(keyValuePair.Value, name);
 			}
-		}
-		catch (ArgumentException ex)
-		{
-			AddError("E002", ex.ToString(), result.Errors);
-			return;
-		}
-		if (obj != null)
-		{
-			context.PushTop(obj);
+			catch (ArgumentException ex)
+			{
+				AddError("E002", ex.ToString(), result.Errors);
+				return;
+			}
+			if (empty != null)
+			{
+				context.PushTop(empty);
+			}
 		}
 	}
 }

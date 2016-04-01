@@ -1,5 +1,3 @@
-using Redbox.HAL.Controller.Framework;
-
 namespace Redbox.HAL.Script.Framework;
 
 [NativeJob(ProgramName = "vmz-details", Operand = "VMZ-DETAILS")]
@@ -11,11 +9,11 @@ internal sealed class GetVMZDetailJob : NativeJobAdapter
 		{
 			do
 			{
-				base.Context.CreateResult("VMZLocationDetail", vMZIterator.Flags.ToString(), vMZIterator.Location.Deck, vMZIterator.Location.Slot, vMZIterator.Location.Matrix, null, null);
+				base.Context.CreateResult("VMZLocationDetail", vMZIterator.Flags.ToString(), vMZIterator.Location.Deck, vMZIterator.Location.Slot, vMZIterator.Location.ID, null, null);
 			}
 			while (vMZIterator.Up());
 		}
-		base.Context.CreateInfoResult("DumpBinInventoryCount", DumpBin.Instance.CurrentCount().ToString());
+		base.Context.CreateInfoResult("DumpBinInventoryCount", base.DumpbinService.CurrentCount().ToString());
 	}
 
 	internal GetVMZDetailJob(ExecutionResult result, ExecutionContext ctx)

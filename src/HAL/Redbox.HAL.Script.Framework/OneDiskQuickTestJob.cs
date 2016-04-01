@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -11,9 +11,9 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 	{
 		ApplicationLog appLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "OneDiskQuickTest");
 		int errors = 0;
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
-			if (deck.IsQlmDeck)
+			if (deck.IsQlm)
 			{
 				appLog.Write("The deck is a qlm deck - finish test.");
 				return true;
@@ -23,12 +23,12 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 				errors++;
 				return false;
 			}
-			Deck deck2 = DecksManager.Instance.GetDeck(deck.Number + 1);
-			if (deck2 == null || deck2.IsQlmDeck)
+			IDeck byNumber = base.DecksService.GetByNumber(deck.Number + 1);
+			if (byNumber == null || byNumber.IsQlm)
 			{
 				return true;
 			}
-			if (!MoveAndPut(deck2.Number, 1, "UNKNOWN"))
+			if (!MoveAndPut(byNumber.Number, 1, "UNKNOWN"))
 			{
 				AddError("Unable to place the into the slot.");
 				errors++;
@@ -42,7 +42,7 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 			{
 				AddError("Unable to place the disk back into the source slot.");
 			}
-			ControllerService.Instance.MoveToVend(MoveMode.Get, appLog);
+			base.MotionService.MoveVend(MoveMode.Get, appLog);
 		}
 	}
 
@@ -51,7 +51,7 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 	{
 	}
 
-	private bool TestDeck(Deck deck)
+	private bool TestDeck(IDeck deck)
 	{
 		if (!MoveAndGet(deck.Number, 1))
 		{

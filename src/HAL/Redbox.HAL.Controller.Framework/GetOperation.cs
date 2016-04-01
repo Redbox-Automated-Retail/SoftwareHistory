@@ -1,32 +1,23 @@
-using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class GetOperation : IDisposable
+internal sealed class GetOperation : AbstractOperation<IGetResult>
 {
-	private bool Disposed;
-
 	private IFormattedLog Log;
+
+	private readonly ILocation Location;
 
 	private readonly IGetObserver Observer;
 
-	private readonly Deck Deck;
+	private readonly IDeck Deck;
 
 	private readonly int Slot;
 
-	private readonly GetResult Result = new GetResult();
+	private readonly GetResult Result;
 
-	public void Dispose()
-	{
-		if (!Disposed)
-		{
-			Disposed = true;
-			Log = null;
-		}
-	}
-
-	internal GetResult Execute()
+	public override IGetResult Execute()
 	{
 		if (Validate())
 		{
@@ -35,51 +26,59 @@ internal sealed class GetOperation : IDisposable
 		return Result;
 	}
 
-	internal GetOperation(IGetObserver observer, IFormattedLog log)
+	protected override void OnDispose()
+	{
+		Log = null;
+	}
+
+	internal GetOperation(ILocation location, IGetObserver observer, IFormattedLog log)
 	{
 		Observer = ((observer == null) ? DefaultGetObserver.Instance : observer);
 		Log = log;
-		Deck = DecksManager.Instance.GetDeck(ControllerService.Instance.Location.Deck);
-		Slot = ControllerService.Instance.Location.Slot;
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		Deck = service.GetFrom(location);
+		Slot = location.Slot;
+		Location = location;
+		Result = new GetResult(Location);
 	}
 
 	private void FetchDisk()
 	{
-		Deck.Fill(Result, Slot);
-		if (Deck.IsSlotSellThru(Slot) && ControllerConfiguration.Instance.SettleDiscInWideSlot)
+		if (Location.IsWide)
 		{
-			Gripper.SettleDiskInSlot();
+			SettleDiskInSlot();
 		}
-		if (Track.OpenIfClosed())
+		if (!Controller.TrackOpen().Success)
 		{
-			Result.SetHardwareError(PickerHardwareError.TrackOpenTimeout);
+			Result.Update(ErrorCodes.TrackOpenTimeout);
 			return;
 		}
-		PickerBoard.StartRollerOut();
-		PickerHardwareError pickerHardwareError = Gripper.PullFromLocation(ControllerConfiguration.Instance.NumberOfPulls);
-		if (pickerHardwareError != PickerHardwareError.Success)
+		Controller.StartRollerOut();
+		ErrorCodes errorCodes = PullFrom(Location, ControllerConfiguration.Instance.NumberOfPulls);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			PickerBoard.StopRoller();
-			Track.Close();
-			Result.SetHardwareError(pickerHardwareError);
+			Controller.StopRoller();
+			Controller.TrackClose();
+			Result.Update(errorCodes);
 			return;
 		}
-		if (Track.Close())
+		if (!Controller.TrackClose().Success)
 		{
-			PickerBoard.StopRoller();
-			Gripper.PushIntoSlot();
-			Result.SetHardwareError(PickerHardwareError.TrackCloseTimeout);
+			Controller.StopRoller();
+			PushIntoSlot();
+			Result.Update(ErrorCodes.TrackCloseTimeout);
 			return;
 		}
-		bool[] array = PickerBoard.ReadAsFlags();
-		if (array[0] && !array[1])
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
+		if (pickerSensorReadResult.Sensors[0] && !pickerSensorReadResult.Sensors[1])
 		{
-			pickerHardwareError = Gripper.PullFromLocation(1);
+			errorCodes = PullFrom(Location, 1);
 		}
 		PerfFunctions.SpinWait(300);
-		if (!PickerBoard.RollerToPosition(RollerPosition.Position4, 6000, logError: false))
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (Controller.RollerToPosition(RollerPosition.Position4, 6000, logSensors: false).Success)
 		{
-			Deck.ResetLocation(Slot);
+			service.Reset(Location);
 			return;
 		}
 		if (PickerBoard.IsFull())
@@ -88,46 +87,46 @@ internal sealed class GetOperation : IDisposable
 			return;
 		}
 		LogHelper.Instance.Log("GET: no disk in picker after pull.", LogEntryType.Info);
-		PickerBoard.LogPickerSensorState(LogEntryType.Info);
-		Result.UpdateCode(GetResultCode.SlotEmpty);
-		if (Observer.OnEmpty(Result, Deck, Slot))
+		Controller.LogPickerSensorState();
+		Result.Update(ErrorCodes.SlotEmpty);
+		if (Observer.OnEmpty(Result))
 		{
-			Deck.ResetLocation(Slot);
+			service.Reset(Location);
 		}
 	}
 
 	private void OnStuck()
 	{
 		LogHelper.Instance.Log("Disk did not make it to sensor 4.", LogEntryType.Error);
-		PickerBoard.LogPickerSensorState(LogEntryType.Error);
-		PickerBoard.StartRollerIn();
+		Controller.LogPickerSensorState(LogEntryType.Error);
+		Controller.StartRollerIn();
 		try
 		{
-			bool flag = PickerBoard.ClearDiskFromPicker();
-			Gripper.PushIntoSlot();
-			LogHelper.Instance.Log(string.Format("GET: couldn't get disc, ClearDiscFromPicker returned {0}", flag ? "TIMEOUT" : "SUCCESS"), LogEntryType.Error);
-			PickerBoard.LogPickerSensorState(LogEntryType.Error);
-			Result.UpdateCode(PickerBoard.IsFull() ? GetResultCode.PickerObstructed : GetResultCode.ItemStuck);
+			bool flag = ClearDiskFromPicker();
+			PushIntoSlot();
+			LogHelper.Instance.Log(LogEntryType.Error, "GET: couldn't get disc, ClearDiscFromPicker returned {0}", flag ? "TIMEOUT" : "SUCCESS");
+			Controller.LogPickerSensorState(LogEntryType.Error);
+			Result.Update(PickerBoard.IsFull() ? ErrorCodes.PickerObstructed : ErrorCodes.ItemStuck);
 		}
 		finally
 		{
-			PickerBoard.StopRoller();
+			Controller.StopRoller();
 		}
-		Observer.OnStuck(Result, Deck, Slot);
+		Observer.OnStuck(Result);
 	}
 
 	private bool Validate()
 	{
-		if (Track.CloseIfOpen())
+		if (Controller.TrackState != TrackState.Closed && !Controller.TrackClose().Success)
 		{
-			Result.SetHardwareError(PickerHardwareError.TrackCloseTimeout);
+			Result.Update(ErrorCodes.TrackCloseTimeout);
 			return false;
 		}
-		PickerSensorReadResult pickerSensorReadResult = PickerSensorBar.ReadSensors();
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
 		if (pickerSensorReadResult.IsFull)
 		{
-			LogHelper.Instance.Log($">> ControllerService.Get: {GetResultCode.PickerFull.ToString()}", LogEntryType.Info);
-			Result.UpdateCode(GetResultCode.PickerFull);
+			LogHelper.Instance.Log($">> ControllerService.Get: {ErrorCodes.PickerFull.ToString()}", LogEntryType.Info);
+			Result.Update(ErrorCodes.PickerFull);
 			return false;
 		}
 		return true;

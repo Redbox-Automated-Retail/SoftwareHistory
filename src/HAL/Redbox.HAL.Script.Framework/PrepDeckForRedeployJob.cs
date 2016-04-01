@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -15,20 +16,20 @@ internal sealed class PrepDeckForRedeployJob : NativeJobAdapter
 		for (int i = 0; i < top; i++)
 		{
 			int top2 = GetTop<int>();
-			Deck deck = DecksManager.Instance.GetDeck(top2);
-			if (deck == null)
+			IDeck byNumber = base.DecksService.GetByNumber(top2);
+			if (byNumber == null)
 			{
 				LogHelper.Instance.Log("Invalid deck '{0}' specified to prep redeploy deck job.", top2);
 				continue;
 			}
-			if (!isVMZMachine && deck.IsQlmDeck)
+			if (!isVMZMachine && byNumber.IsQlm)
 			{
 				LogHelper.Instance.Log("Deck specified '{0}' is QLM; will not alter.", top2);
 				continue;
 			}
 			int start = ((!isVMZMachine) ? 1 : (VMZ.Instance.Bounds.End + 1));
-			Range range = new Range(start, deck.NumberOfSlots);
-			List<int> list = deck.SwapEmptyWith("UNKNOWN", MerchFlags.None, range);
+			Range slotRange = new Range(start, byNumber.NumberOfSlots);
+			IList<int> list = base.InventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
 			foreach (int item in list)
 			{
 				base.Context.CreateResult("LocationChanged", "The location was set to UNKNOWN", top2, item, null, null, null);

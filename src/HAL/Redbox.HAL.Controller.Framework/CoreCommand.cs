@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Text;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
@@ -20,6 +21,8 @@ internal sealed class CoreCommand
 	internal readonly AddressSelector Address;
 
 	internal readonly int WaitPauseTime;
+
+	private static readonly char[] CommaSplit = new char[1] { ',' };
 
 	internal string Command { get; private set; }
 
@@ -47,14 +50,14 @@ internal sealed class CoreCommand
 			LogHelper.Instance.Log("[CoreCommand] Executing command {0}", Command);
 		}
 		CoreResponse coreResponse = SendCommand(Command);
-		if (coreResponse.CommunicationError || !StatusBit.HasValue)
+		if (coreResponse.CommError || !StatusBit.HasValue)
 		{
 			return coreResponse;
 		}
-		coreResponse.TimedOut = WaitForCommand();
+		coreResponse.Error = WaitForCommand();
 		if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
 		{
-			string[] array = ResetCommand.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			string[] array = ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries);
 			string[] array2 = array;
 			foreach (string command in array2)
 			{
@@ -64,7 +67,7 @@ internal sealed class CoreCommand
 		return coreResponse;
 	}
 
-	internal bool WaitForCommand()
+	internal ErrorCodes WaitForCommand()
 	{
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, WaitPauseTime);
 		if (ControllerConfiguration.Instance.EnableCommandTrace)
@@ -76,17 +79,17 @@ internal sealed class CoreCommand
 		{
 			PerfFunctions.SpinWait(timespan);
 			CoreResponse coreResponse = SendCommand("S");
-			if (coreResponse.CommunicationError)
+			if (coreResponse.CommError)
 			{
-				return true;
+				return ErrorCodes.CommunicationError;
 			}
 			if (!coreResponse.IsBitSet(StatusBit.Value))
 			{
-				return false;
+				return ErrorCodes.Success;
 			}
 		}
 		while (executionTimer.ElapsedMilliseconds <= OperationTimeout);
-		return true;
+		return ErrorCodes.Timeout;
 	}
 
 	internal CoreResponse SendCommand(string command)
@@ -95,17 +98,17 @@ internal sealed class CoreCommand
 		Port.ResetBuffers();
 		using (IChannelResponse channelResponse = Port.SendRecv(Address.ToString(), 5000))
 		{
-			coreResponse.CommunicationError = !channelResponse.CommOk;
+			coreResponse.Error = ((!channelResponse.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
 			if (!channelResponse.CommOk)
 			{
 				LogHelper.Instance.Log("[SendCommand] Selector on address {0} timed out; port = {1}.", Address.ToString(), Port.Name);
-				coreResponse.CommErrorDiagnostic = ComputeCommunicationError(Address);
+				coreResponse.Diagnostic = ComputeCommunicationError(Address);
 				return coreResponse;
 			}
 		}
 		Port.ResetBuffers();
 		using IChannelResponse channelResponse2 = Port.SendRecv(command, CommandWait);
-		coreResponse.CommunicationError = !channelResponse2.CommOk;
+		coreResponse.Error = ((!channelResponse2.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
 		if (channelResponse2.CommOk)
 		{
 			coreResponse.OpCodeResponse = Encoding.ASCII.GetString(channelResponse2.RawResponse);

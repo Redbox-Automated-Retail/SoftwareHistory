@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -33,7 +33,7 @@ public sealed class DumpBinInstruction : Instruction
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		ExpectedOperand expectedOperand = Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None);
-		DumpBin dumpBin = SpecialLocationLocatorService.Instance.FindDumpBin();
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
 		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
@@ -44,19 +44,19 @@ public sealed class DumpBinInstruction : Instruction
 			break;
 		}
 		case ExpectedOperand.IsConfigured:
-			context.PushTop(dumpBin.Active);
+			context.PushTop(service.Active);
 			break;
 		case ExpectedOperand.GetCapacity:
-			context.PushTop(dumpBin.Capacity);
+			context.PushTop(service.Capacity);
 			break;
 		case ExpectedOperand.SetCapacity:
 			result.Errors.Add(Error.NewError("E011", "Unsupported operand.", "The SetCapacity operand is no longer supported."));
 			break;
 		case ExpectedOperand.GetCurrentCount:
-			context.PushTop(dumpBin.CurrentCount());
+			context.PushTop(service.CurrentCount());
 			break;
 		case ExpectedOperand.ResetCounter:
-			dumpBin.ResetCount();
+			service.ResetCount();
 			break;
 		case ExpectedOperand.FileDisk:
 		{
@@ -71,11 +71,11 @@ public sealed class DumpBinInstruction : Instruction
 			break;
 		}
 		case ExpectedOperand.ResetCounterMove:
-			dumpBin.ResetCount();
+			service.ResetCount();
 			VMZHelperFunctions.MoveViewable(context);
 			break;
 		case ExpectedOperand.DumpInventory:
-			DumpBin.Instance.DumpContents(context.AppLog);
+			service.DumpContents(context.AppLog);
 			break;
 		}
 	}

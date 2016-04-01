@@ -1,6 +1,6 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -20,7 +20,7 @@ internal sealed class TesterReadDiskJob : NativeJobAdapter
 			return;
 		}
 		using Scanner scanner = new Scanner();
-		ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+		base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
 		ScanResult scanResult = scanner.Read();
 		if (!scanResult.SnapOk)
 		{
@@ -29,7 +29,7 @@ internal sealed class TesterReadDiskJob : NativeJobAdapter
 			return;
 		}
 		PushResults(scanResult.ExecutionTime, scanResult.ReadCount, scanResult.ScannedMatrix);
-		if (InventoryService.Instance.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
+		if (base.InventoryService.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
 		{
 			base.Context.CreateInfoResult("DuplicateDetected", "The read ID is a duplicate.", scanResult.ScannedMatrix);
 		}
@@ -44,10 +44,6 @@ internal sealed class TesterReadDiskJob : NativeJobAdapter
 	{
 		string message = $"{ts.Seconds}.{ts.Milliseconds} s";
 		base.Context.CreateInfoResult("ReadTime", message);
-		if (readCodes > BarcodeConfiguration.Instance.ExpectedCodes && BarcodeConfiguration.Instance.FilterExcessReadCodes)
-		{
-			readCodes = BarcodeConfiguration.Instance.ExpectedCodes;
-		}
 		base.Context.CreateInfoResult("NumBarcodes", readCodes.ToString());
 		base.Context.CreateResult("Read-ID", "Id read.", null, null, id, null, null);
 	}

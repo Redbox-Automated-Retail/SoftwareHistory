@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -10,7 +11,7 @@ internal sealed class LoadBinJob : NativeJobAdapter
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "KioskTest", flushOnWrite: false, "load-bin-fast");
 		_ = ControllerService.Instance;
-		if (!DumpBin.Instance.Active)
+		if (!base.DumpbinService.Active)
 		{
 			applicationLog.Write("The dump bin is not configured.");
 			AddError("The dump bin is not configured.");
@@ -28,16 +29,16 @@ internal sealed class LoadBinJob : NativeJobAdapter
 		int top2 = GetTop<int>();
 		for (int i = 0; i < top2; i++)
 		{
-			if (DumpBin.Instance.IsFull())
+			if (base.DumpbinService.IsFull())
 			{
 				base.Context.AppLog.Write("The dump bin is full.");
 				return;
 			}
-			Location location = null;
+			ILocation location = null;
 			if (LoadBy.Barcode == loadBy)
 			{
 				string top3 = GetTop<string>();
-				location = InventoryService.Instance.Lookup(top3);
+				location = base.InventoryService.Lookup(top3);
 				if (location == null)
 				{
 					continue;
@@ -47,21 +48,21 @@ internal sealed class LoadBinJob : NativeJobAdapter
 			{
 				int top4 = GetTop<int>();
 				int top5 = GetTop<int>();
-				location = new Location(top4, top5);
+				location = base.InventoryService.Get(top4, top5);
 			}
-			if (ControllerService.Instance.MoveTo(location, MoveMode.Get, base.AppLog) != MotionResult.Success)
+			if (base.MotionService.MoveTo(location, MoveMode.Get, base.AppLog) != ErrorCodes.Success)
 			{
 				AddError("There was an error during the move.");
 				return;
 			}
-			GetResult getResult = ControllerService.Instance.Get(base.AppLog);
+			IGetResult getResult = ControllerService.Instance.Get(base.AppLog);
 			if (!getResult.Success)
 			{
 				AddError("Unable to fetch disk from drum.");
 				return;
 			}
-			Location location2 = DumpBin.Instance.MoveableLocation();
-			if (ControllerService.Instance.MoveTo(location2.Deck, location2.Slot, MoveMode.Put, base.AppLog) != MotionResult.Success)
+			ILocation location2 = base.DumpbinService.MoveableLocation();
+			if (base.MotionService.MoveTo(location2.Deck, location2.Slot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 			{
 				AddError("There was an error during the move.");
 				return;
@@ -72,7 +73,7 @@ internal sealed class LoadBinJob : NativeJobAdapter
 				return;
 			}
 		}
-		if (ControllerService.Instance.MoveToVend(MoveMode.Get, base.AppLog) != MotionResult.Success)
+		if (base.MotionService.MoveVend(MoveMode.Get, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Unable to move to vend.");
 		}

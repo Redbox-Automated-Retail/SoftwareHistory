@@ -1,12 +1,15 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-public sealed class Scanner : IDisposable
+internal sealed class Scanner : IDisposable
 {
+	private readonly IControlSystem ControlSystem;
+
+	private bool Disposed;
+
 	private static readonly CenterDiskMethod[] ReadFromDoor = new CenterDiskMethod[2]
 	{
 		CenterDiskMethod.None,
@@ -19,11 +22,9 @@ public sealed class Scanner : IDisposable
 		CenterDiskMethod.VendDoorAndBack
 	};
 
-	public bool CameraStarted { get; private set; }
+	internal bool CameraStarted { get; private set; }
 
-	public IScannerDevice Device { get; private set; }
-
-	private bool Disposed { get; set; }
+	internal IScannerDevice Device { get; private set; }
 
 	public void Dispose()
 	{
@@ -36,60 +37,37 @@ public sealed class Scanner : IDisposable
 		{
 			if (Device.RequiresExternalLighting)
 			{
-				PickerBoard.ToggleRingLight(RinglightState.Off, null);
-			}
-			if (BarcodeConfiguration.Instance.CycleCameraOnUse)
-			{
-				Device.Stop();
+				ControlSystem.ToggleRingLight(on: false, null);
 			}
 			Device = null;
 		}
 		GC.SuppressFinalize(this);
 	}
 
-	public RawReadResult RawRead()
+	internal ScanResult Read()
 	{
-		return Device.Scan().ToRawReadResult();
+		using IScanResult sr = Device.Scan();
+		return new ScanResult(sr);
 	}
 
-	public ScanResult Read()
+	internal Scanner()
 	{
-		ScanResult scanResult = Device.Scan();
-		try
-		{
-			if (BarcodeConfiguration.Instance.LogDetailedScan)
-			{
-				LogHelper.Instance.Log($"***ReadDisc: Execution Time = {scanResult.ExecutionTime}, File = {scanResult.SnapResult.Path}, Matrix = {scanResult.ScannedMatrix} secure code count = {scanResult.SecureCount}", LogEntryType.Info);
-			}
-			if (scanResult.ReadCode && BarcodeConfiguration.Instance.DeleteBitmapOnSuccessfulRead)
-			{
-				FileHelper.SafeDeleteFile(scanResult.SnapResult.Path);
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An unhandled exception was raised in ReadDiskInPickerInner.", e);
-		}
-		return scanResult;
-	}
-
-	public Scanner()
-	{
-		Device = ScannerDeviceFactory.GetConfiguredDevice();
+		ControlSystem = ServiceLocator.Instance.GetService<IControlSystem>();
+		Device = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
 		CameraStarted = Device.Start();
 		if (CameraStarted && Device.RequiresExternalLighting)
 		{
-			PickerBoard.ToggleRingLight(RinglightState.On, ControllerConfiguration.Instance.SyncRinglightWarmupTime);
+			ControlSystem.ToggleRingLight(on: true, ControllerConfiguration.Instance.SyncRinglightWarmupTime);
 		}
 	}
 
-	public ScanResult SmartReadDisk(CenterDiskMethod[] methods)
+	internal ScanResult SmartReadDisk(CenterDiskMethod[] methods)
 	{
 		ScanResult scanResult = null;
 		bool flag = false;
 		foreach (CenterDiskMethod method in methods)
 		{
-			ControllerService.Instance.CenterItem(method);
+			ControlSystem.Center(method);
 			while (true)
 			{
 				scanResult = Read();
@@ -110,14 +88,5 @@ public sealed class Scanner : IDisposable
 			}
 		}
 		return scanResult;
-	}
-
-	internal string Diagnostic(ScanResult scanResult)
-	{
-		if (!scanResult.SnapOk)
-		{
-			return "CAPTUREERROR";
-		}
-		return "SUCCESS";
 	}
 }

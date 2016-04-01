@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -34,9 +34,9 @@ internal sealed class MerchTransferManager : IDisposable
 		}
 	}
 
-	internal void ProcessTransfer(Location source, Location dest, string matrix)
+	internal void ProcessTransfer(ILocation source, ILocation dest)
 	{
-		Sum(source, dest, matrix);
+		Sum(source, dest);
 	}
 
 	internal void Process(TransferResult xferResult)
@@ -45,17 +45,15 @@ internal sealed class MerchTransferManager : IDisposable
 		{
 			Transfers.Add(xferResult);
 			Sum(xferResult);
+			return;
 		}
-		else if (xferResult.ReturnedToSource)
+		m_transferFailures++;
+		if (xferResult.ReturnedToSource)
 		{
 			LogHelper.Instance.Log("The transfer failed to put the disk in a target, but it was returned to source.");
-			m_transferFailures++;
+			return;
 		}
-		else if (!string.IsNullOrEmpty(xferResult.ErrorCode))
-		{
-			LogHelper.Instance.Log("The transfer result had a hardware error: {0}", xferResult.ErrorCode.ToUpper());
-			m_transferFailures++;
-		}
+		LogHelper.Instance.Log("The transfer result had a hardware error: {0}", xferResult.TransferError.ToString());
 	}
 
 	internal MerchTransferManager(ExecutionContext context, bool debug)
@@ -69,21 +67,22 @@ internal sealed class MerchTransferManager : IDisposable
 	{
 		if (xferResult.Transferred)
 		{
-			Sum(xferResult.TransferredItem.Source, xferResult.TransferredItem.Destination, xferResult.TransferredItem.Matrix);
+			Sum(xferResult.Source, xferResult.Destination);
 		}
 	}
 
-	private void Sum(Location source, Location dest, string matrix)
+	private void Sum(ILocation source, ILocation dest)
 	{
 		m_successfulTransfers++;
-		Context.CreateResult("DiskTransferSuccessful", SegmentManager.Instance.InCompressedZone(source) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", source.Deck, source.Slot, "EMPTY", null, matrix);
-		if (DumpBin.Instance.IsBin(dest))
+		Context.CreateResult("DiskTransferSuccessful", SegmentManager.Instance.InCompressedZone(source) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", source.Deck, source.Slot, "EMPTY", null, dest.ID);
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		if (service.IsBin(dest))
 		{
-			Context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, matrix, null, null);
+			Context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, dest.ID, null, null);
 		}
 		else
 		{
-			Context.CreateResult("DiskTransferSuccessful", SegmentManager.Instance.InCompressedZone(dest) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", dest.Deck, dest.Slot, matrix, null, "EMPTY");
+			Context.CreateResult("DiskTransferSuccessful", SegmentManager.Instance.InCompressedZone(dest) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", dest.Deck, dest.Slot, dest.ID, null, "EMPTY");
 		}
 	}
 }

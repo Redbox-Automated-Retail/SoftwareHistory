@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -42,7 +43,9 @@ public sealed class PutInstruction : Instruction
 			AddError("E004", "The PUT instruction expects a valid string literal ID on the stack.", result.Errors);
 			return;
 		}
-		PutResult putResult = ControllerService.Instance.Put(id, context.AppLog);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		service.TrackCycle();
+		IPutResult putResult = ControllerService.Instance.Put(id, context.AppLog);
 		context.PushTop(putResult.ToString().ToUpper());
 		context.PushTop(1);
 	}

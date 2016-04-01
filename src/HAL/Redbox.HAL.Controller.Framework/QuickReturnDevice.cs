@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
@@ -241,8 +242,9 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log("Unable to set write pointer to 0000.", LogEntryType.Error);
 				return false;
 			}
-			CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, Port));
-			string arg = (coreResponse.CommunicationError ? "COMMUNICATION ERROR" : coreResponse.OpCodeResponse.TrimStart());
+			ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+			CoreResponse coreResponse = service.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, Port));
+			string arg = (coreResponse.CommError ? "COMMUNICATION ERROR" : coreResponse.OpCodeResponse.TrimStart());
 			if (!ReadStateTable(StateFile))
 			{
 				LogHelper.Instance.Log($"Unable to read state file {StateFile}", LogEntryType.Info);
@@ -350,9 +352,10 @@ public sealed class QuickReturnDevice
 			{
 				return false;
 			}
-			CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CoreCommand.Create(CommandType.ReadQRButton, Port));
+			ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+			CoreResponse coreResponse = service.ExecuteControllerCommand(CoreCommand.Create(CommandType.ReadQRButton, Port));
 			LogHelper.Instance.Log(string.Format("QR status returned {0}", (coreResponse != null) ? coreResponse.OpCodeResponse : "COMMUNICATION ERROR"), LogEntryType.Debug);
-			if (coreResponse.CommunicationError)
+			if (coreResponse.CommError)
 			{
 				LogHelper.Instance.Log("CheckAttButton: there was a timeout or communication error with the device.", LogEntryType.Error);
 				commError = true;
@@ -631,9 +634,10 @@ public sealed class QuickReturnDevice
 	{
 		Configuration = new RedboxSerialPortConfiguration();
 		Configuration.Test = ResponseValid;
-		ImagesDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr-chamfer");
-		StateFile = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr.state");
-		GraphicsPath = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "qr-chamfer");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		ImagesDirectory = service.RuntimePath("qr-chamfer");
+		StateFile = service.RuntimePath("qr.state");
+		GraphicsPath = service.RuntimePath("qr-chamfer");
 	}
 
 	private bool ExecuteQRCommand(CommandType type, string format)
@@ -656,12 +660,13 @@ public sealed class QuickReturnDevice
 
 	private bool ExecuteCommand(CoreCommand command)
 	{
-		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(command);
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service.ExecuteControllerCommand(command);
 		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 		{
 			LogHelper.Instance.Log(string.Format("The command {0} returned {1}", command.Command, (coreResponse == null) ? "ERROR" : coreResponse.OpCodeResponse), LogEntryType.Debug);
 		}
-		if (coreResponse.CommunicationError)
+		if (coreResponse.CommError)
 		{
 			LogHelper.Instance.Log("QuickReturn: communication problem.", LogEntryType.Info);
 			return false;
@@ -737,8 +742,9 @@ public sealed class QuickReturnDevice
 
 	private bool TestPort(RedboxSerialPort port)
 	{
-		CoreResponse coreResponse = ControlSystem.Instance.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, port));
-		if (coreResponse.CommunicationError)
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, port));
+		if (coreResponse.CommError)
 		{
 			LogHelper.Instance.Log("[QuickReturn Scan test] There was a communication error trying to chat to the port.");
 			return false;

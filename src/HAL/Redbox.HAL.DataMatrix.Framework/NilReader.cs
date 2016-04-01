@@ -1,26 +1,10 @@
-using System;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
 internal class NilReader : IBarcodeReader
 {
-	private class NilScanResult : IScanResult, IDisposable
-	{
-		private readonly TimeSpan Time = default(TimeSpan);
-
-		private readonly string[] Codes = new string[0];
-
-		public TimeSpan ExecutionTime => Time;
-
-		public string[] ReadCodes => Codes;
-
-		public void Dispose()
-		{
-		}
-	}
-
-	private readonly NilScanResult Result = new NilScanResult();
+	private readonly NilScanResult Result = new NilScanResult("UNLICENSED READER");
 
 	public bool IsLicensed => false;
 

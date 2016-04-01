@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -10,12 +10,12 @@ internal sealed class VMZRemovedThinsJob : NativeJobAdapter
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "VMZ", flushOnWrite: false, "vmz-removed-disks");
 		applicationLog.Write("** Remove thins from VMZ **");
 		VMZ.Instance.DumpZone(applicationLog);
-		int totalEmptyNow = InventoryService.Instance.GetEmptyCount();
-		VMZSearchResult high = default(VMZSearchResult);
-		SegmentManager.Instance.FindHighest(ref high);
-		if (high.Found)
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		int totalEmptyNow = service.GetMachineEmptyCount();
+		ILocation location = SegmentManager.Instance.FindHighest();
+		if (location != null)
 		{
-			VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
+			VMZ.Instance.ForAllBetweenDo(delegate(ILocation loc)
 			{
 				if (loc.IsEmpty)
 				{
@@ -23,16 +23,16 @@ internal sealed class VMZRemovedThinsJob : NativeJobAdapter
 				}
 				if (SegmentManager.Instance.IsThinType(loc.Flags))
 				{
-					base.Context.CreateResult("ThinTransferSuccessful", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.Matrix, null, null);
-					base.Context.CreateResult($"{loc.Flags.ToString()}DiskRemovedFromVMZ", "Disk merchandizing metadata.", loc.Deck, loc.Slot, loc.Matrix, null, null);
+					base.Context.CreateResult("ThinTransferSuccessful", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.ID, null, null);
+					base.Context.CreateResult($"{loc.Flags.ToString()}DiskRemovedFromVMZ", "Disk merchandizing metadata.", loc.Deck, loc.Slot, loc.ID, null, null);
 				}
 				else
 				{
-					base.Context.CreateResult("NonThinRemoved", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.Matrix, null, null);
+					base.Context.CreateResult("NonThinRemoved", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.ID, null, null);
 				}
 				totalEmptyNow++;
 				return true;
-			}, ref high);
+			}, location);
 		}
 		base.Context.CreateInfoResult("MachineEmptySlots", totalEmptyNow.ToString());
 	}

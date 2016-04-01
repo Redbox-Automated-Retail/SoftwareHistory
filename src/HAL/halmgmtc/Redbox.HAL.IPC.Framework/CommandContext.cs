@@ -1,55 +1,20 @@
 using System;
-using Redbox.HAL.Core;
+using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
 public class CommandContext
 {
-	private ErrorList m_errors;
+	public readonly IDictionary<string, string> Parameters = new Dictionary<string, string>();
 
-	private MessageList m_messages;
+	public readonly MessageList Messages = new MessageList();
 
-	private ParameterDictionary m_parameters;
+	public readonly ErrorList Errors = new ErrorList();
 
 	public ISession Session { get; internal set; }
 
 	public IMessageSink MessageSink { get; internal set; }
-
-	public ParameterDictionary Parameters
-	{
-		get
-		{
-			if (m_parameters == null)
-			{
-				m_parameters = new ParameterDictionary();
-			}
-			return m_parameters;
-		}
-	}
-
-	public MessageList Messages
-	{
-		get
-		{
-			if (m_messages == null)
-			{
-				m_messages = new MessageList();
-			}
-			return m_messages;
-		}
-	}
-
-	public ErrorList Errors
-	{
-		get
-		{
-			if (m_errors == null)
-			{
-				m_errors = new ErrorList();
-			}
-			return m_errors;
-		}
-	}
 
 	internal static bool IsSymbol(string value)
 	{

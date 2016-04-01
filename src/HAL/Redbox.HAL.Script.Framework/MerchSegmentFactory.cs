@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 

@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -16,15 +17,17 @@ internal class MerchandizingHelper
 		if (checkSlots)
 		{
 			int numberOfEmpty = 5;
-			if (!InventoryService.Instance.EmptyCountExceeds(numberOfEmpty))
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			if (!service.EmptyCountExceeds(numberOfEmpty))
 			{
 				context.AppLog.LogMachineFull();
 				context.CreateInfoResult("QlmUnloadMachineFull", "The machine is full, can't continue.");
 				return false;
 			}
 		}
-		Deck deck = QLM.Deck;
-		if (null == deck)
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		IDeck deck = QLM.Deck;
+		if (deck == null)
 		{
 			context.AppLog.Write("There is no QLM deck on this machine.", LogEntryType.Info);
 			context.CreateInfoResult("QlmNoDeck", "There is no QLM deck defined for this machine.");
@@ -49,10 +52,10 @@ internal class MerchandizingHelper
 			context.CreateInfoResult("QlmDeckEmpty", "The QLM unload request failed because there is no QLM case in the QLM bay.");
 			return false;
 		}
-		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.Y, context.AppLog);
-		if (motionResult != MotionResult.Success)
+		ErrorCodes errorCodes = service2.HomeAxis(Axis.Y, context.AppLog);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			context.CreateInfoResult(motionResult.ToString().ToUpper(), "The HOMEY instruction failed.");
+			context.CreateInfoResult(errorCodes.ToString().ToUpper(), "The HOMEY instruction failed.");
 			AddError(result, "The homing operation on the Y axis failed.");
 			return false;
 		}
@@ -63,18 +66,17 @@ internal class MerchandizingHelper
 		}
 		else
 		{
-			if (ControllerService.Instance.MoveToVend(MoveMode.Get, context.AppLog) != MotionResult.Success)
+			if (service2.MoveVend(MoveMode.Get, context.AppLog) != ErrorCodes.Success)
 			{
 				context.CreateInfoResult("MachineError", "There was an error executing the MOVEVEND instruction.");
 				AddError(result, "The MOVEVEND instruction returned an error.");
 				return false;
 			}
 			context.AppLog.Write("Engage the QLM.");
-			QlmMotionResult qlmMotionResult = QLM.Engage(home: true, context.AppLog);
-			if (qlmMotionResult != QlmMotionResult.Success)
+			if (QLM.Engage(home: true, context.AppLog) != ErrorCodes.Success)
 			{
 				context.CreateInfoResult("QlmDeckEngageFailure", "The QLM engage failed.");
-				if (QLM.Disengage(home: false, context.AppLog) != QlmMotionResult.Success)
+				if (QLM.Disengage(home: false, context.AppLog) != ErrorCodes.Success)
 				{
 					context.CreateInfoResult("QlmDeckDisengageFailure", "The QLM disengage failed.");
 				}
@@ -88,16 +90,18 @@ internal class MerchandizingHelper
 		return true;
 	}
 
-	internal bool CleanupJob(ExecutionResult result, ExecutionContext context, MotionResult failCode)
+	internal bool CleanupJob(ExecutionResult result, ExecutionContext context, ErrorCodes failCode)
 	{
-		if (failCode != MotionResult.Success)
+		if (failCode != ErrorCodes.Success)
 		{
 			context.CreateInfoResult("QlmMoveError", $"The MOVE instruction failed with code {failCode.ToString().ToUpper()}.");
 		}
-		if (ControllerService.Instance.MoveToVend(MoveMode.Get, context.AppLog) != MotionResult.Success)
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service.MoveVend(MoveMode.Get, context.AppLog) != ErrorCodes.Success)
 		{
 			context.CreateInfoResult("MachineError", "There was an error executing the MOVEVEND instruction.");
-			if (!Gripper.IsClear())
+			using ClearGripperOperation clearGripperOperation = new ClearGripperOperation();
+			if (clearGripperOperation.Execute() != ErrorCodes.Success)
 			{
 				context.CreateInfoResult("QlmDeckStillEngaged", "The QLM deck is still engaged.");
 				result.Errors.Add(Error.NewError("E999", "Execution context error.", "The MOVEVEND instruction failed."));
@@ -106,8 +110,7 @@ internal class MerchandizingHelper
 		}
 		if (!ControllerConfiguration.Instance.IsVMZMachine)
 		{
-			QlmMotionResult qlmMotionResult = QLM.Disengage(home: true, context.AppLog);
-			if (QlmMotionResult.Success != qlmMotionResult)
+			if (QLM.Disengage(home: true, context.AppLog) != ErrorCodes.Success)
 			{
 				context.CreateInfoResult("QlmDeckDisengageFailure", "The QLM disengage failed.");
 				result.Errors.Add(Error.NewError("E999", "Execution context error.", "The QLM Case didn't disengage."));
@@ -139,11 +142,11 @@ internal class MerchandizingHelper
 			return;
 		}
 		ApplicationLog appLog = context.AppLog;
-		MotionController controller = MotionController.GetController();
-		if (!controller.CommunicationOk())
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (!service.CommunicationOk())
 		{
 			appLog.Write("Attempt to reset Motion Controller ...", LogEntryType.Info);
-			if (MotionController.Reset(appLog, quick: true))
+			if (service.Reset(appLog, quick: true))
 			{
 				appLog.Write(" ... inline reset of device interfaces succeeded; init axes.", LogEntryType.Info);
 			}

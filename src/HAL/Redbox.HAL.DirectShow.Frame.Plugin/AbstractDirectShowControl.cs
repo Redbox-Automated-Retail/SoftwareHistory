@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using Redbox.DirectShow;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DirectShow.Frame.Plugin;
 
@@ -52,11 +52,6 @@ internal abstract class AbstractDirectShowControl : ICameraPlugin
 	public bool Stop()
 	{
 		return Shutdown();
-	}
-
-	public void TurnOff()
-	{
-		Shutdown();
 	}
 
 	public void InitWithProperties(IDictionary<string, object> properties)

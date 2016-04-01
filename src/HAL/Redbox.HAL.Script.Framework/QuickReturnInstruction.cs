@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -58,7 +58,8 @@ public sealed class QuickReturnInstruction : Instruction
 			{
 				return m_statsDirectory;
 			}
-			m_statsDirectory = Path.Combine(ControllerConfiguration.Instance.KioskLogsPath, "Return");
+			IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+			m_statsDirectory = service.CreateSubpath("Return");
 			return m_statsDirectory;
 		}
 	}
@@ -288,11 +289,12 @@ public sealed class QuickReturnInstruction : Instruction
 
 	private void LogCounterValue(TextWriter writer, string counterName, string friendlyName)
 	{
-		Counter counter = CounterManager.Instance.Find(counterName);
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		IPersistentCounter persistentCounter = service.Find(counterName);
 		int num = 0;
-		if (counter != null)
+		if (persistentCounter != null)
 		{
-			num = counter.Value;
+			num = persistentCounter.Value;
 		}
 		writer.WriteLine("{0} counter has a value of {1}", friendlyName, num);
 	}

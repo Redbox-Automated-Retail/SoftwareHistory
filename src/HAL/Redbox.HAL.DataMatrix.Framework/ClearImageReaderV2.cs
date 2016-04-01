@@ -1,64 +1,27 @@
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using ClearImage;
 using RBDM;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-internal class ClearImageReaderV2 : IBarcodeReader
+internal sealed class ClearImageReaderV2 : IBarcodeReader
 {
-	private sealed class ClearImageScanResult : IScanResult, IDisposable
-	{
-		private bool m_disposed;
-
-		private readonly List<string> m_rawCodes = new List<string>();
-
-		public TimeSpan ExecutionTime { get; set; }
-
-		public string[] ReadCodes => m_rawCodes.ToArray();
-
-		public void Dispose()
-		{
-			if (!m_disposed)
-			{
-				m_disposed = true;
-				m_rawCodes.Clear();
-			}
-		}
-
-		public ClearImageScanResult()
-		{
-			ExecutionTime = default(TimeSpan);
-		}
-
-		internal void ResetOnException()
-		{
-			m_rawCodes.Clear();
-			ExecutionTime = default(TimeSpan);
-		}
-
-		internal void AddCode(string code)
-		{
-			m_rawCodes.Add(code);
-		}
-	}
-
 	private readonly clsRBDM TheReader;
 
 	public bool IsLicensed { get; private set; }
 
 	public IScanResult Scan(string file)
 	{
-		ClearImageScanResult clearImageScanResult = new ClearImageScanResult();
+		ScanResult scanResult = new ScanResult();
 		if (!IsLicensed)
 		{
 			LogHelper.Instance.Log("This version isn't licensed.");
-			clearImageScanResult.ResetOnException();
-			return clearImageScanResult;
+			scanResult.ResetOnException();
+			return scanResult;
 		}
 		for (int i = 0; i < 2; i++)
 		{
@@ -71,13 +34,19 @@ internal class ClearImageReaderV2 : IBarcodeReader
 				{
 					num = TheReader.Find(BarcodeConfiguration.Instance.ExpectedCodes);
 					executionTimer.Stop();
-					clearImageScanResult.ExecutionTime = executionTimer.Elapsed;
+					scanResult.ExecutionTime = executionTimer.Elapsed;
 				}
 				if (num > 0)
 				{
 					foreach (CiBarcode barcode in TheReader.Barcodes)
 					{
-						clearImageScanResult.AddCode(barcode.Text);
+						foreach (string computeFilter in BarcodeConfiguration.Instance.ComputeFilterList)
+						{
+							if (!computeFilter.Equals(barcode.Text, StringComparison.CurrentCultureIgnoreCase))
+							{
+								scanResult.Add(barcode.Text);
+							}
+						}
 					}
 				}
 			}
@@ -85,8 +54,7 @@ internal class ClearImageReaderV2 : IBarcodeReader
 			{
 				flag = true;
 				LogHelper.Instance.Log("ClearImageScanner: exception during scan.", e);
-				ProcessHelper.DumpProcessMemoryMetrics();
-				clearImageScanResult.ResetOnException();
+				scanResult.ResetOnException();
 			}
 			try
 			{
@@ -98,21 +66,21 @@ internal class ClearImageReaderV2 : IBarcodeReader
 			}
 			if (!flag)
 			{
-				return clearImageScanResult;
+				return scanResult;
 			}
 		}
-		clearImageScanResult.ResetOnException();
-		return clearImageScanResult;
+		scanResult.ResetOnException();
+		return scanResult;
 	}
 
 	internal ClearImageReaderV2()
 	{
 		LogHelper.Instance.Log("Clearimage v2 reader.init()");
-		Module module = GetType().Module;
-		int hModule = Marshal.GetHINSTANCE(module).ToInt32();
-		CiServer ciServer = new CiServerClass();
 		try
 		{
+			Module module = GetType().Module;
+			int hModule = Marshal.GetHINSTANCE(module).ToInt32();
+			CiServer ciServer = new CiServerClass();
 			ciServer.OpenExt(hModule, 74391114, 0);
 			TheReader = new clsRBDM
 			{

@@ -1,13 +1,14 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal class QlmThinHelper : ThinHelper
 {
-	protected override MerchandizeResult ThinDiskInner(string id, Location source, Location notUsed, MerchFlags mf)
+	protected override MerchandizeResult ThinDiskInner(string id, ILocation source, ILocation notUsed, MerchFlags mf)
 	{
 		int thinSlot = GetThinSlot();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		try
 		{
 			MerchandizeResult merchandizeResult;
@@ -17,7 +18,7 @@ internal class QlmThinHelper : ThinHelper
 				{
 					return MerchandizeResult.QLMFull;
 				}
-				Location target = new Location(QLM.Deck.Number, thinSlot++);
+				ILocation target = service.Get(QLM.Deck.Number, thinSlot++);
 				merchandizeResult = ThinDiskToLocation(source, target, id, mf);
 			}
 			while (MerchandizeResult.SlotInUse == merchandizeResult);
@@ -29,11 +30,18 @@ internal class QlmThinHelper : ThinHelper
 		}
 	}
 
-	protected override Location FindEmptyTarget(MerchFlags notUsed, out MerchandizeResult result)
+	protected override ILocation FindEmptyTarget(MerchFlags notUsed, out MerchandizeResult result)
 	{
 		int thinSlot = GetThinSlot();
 		result = MerchandizeResult.Success;
-		return new Location(QLM.Deck.Number, thinSlot);
+		IDeck deck = QLM.Deck;
+		if (thinSlot > deck.NumberOfSlots)
+		{
+			result = MerchandizeResult.QLMFull;
+			return null;
+		}
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		return service.Get(QLM.Deck.Number, thinSlot);
 	}
 
 	internal QlmThinHelper(ExecutionResult result, ExecutionContext context)

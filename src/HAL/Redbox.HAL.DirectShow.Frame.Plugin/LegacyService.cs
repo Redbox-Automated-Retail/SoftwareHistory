@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using Redbox.DirectShow;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DirectShow.Frame.Plugin;
 
@@ -89,11 +89,6 @@ internal sealed class LegacyService : ICameraPlugin
 	public bool Stop()
 	{
 		return Shutdown();
-	}
-
-	public void TurnOff()
-	{
-		Shutdown();
 	}
 
 	public void InitWithProperties(IDictionary<string, object> properties)

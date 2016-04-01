@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -7,6 +7,13 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public sealed class RinglightInstruction : Instruction
 {
+	private enum RinglightState
+	{
+		None,
+		On,
+		Off
+	}
+
 	public override string Mnemonic => "RINGLIGHT";
 
 	protected override bool IsOperandRecognized(string operand)
@@ -28,16 +35,13 @@ public sealed class RinglightInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		RinglightState state = Enum<RinglightState>.ParseIgnoringCase(base.Operands[0].Value, RinglightState.None);
-		PickerBoard.ToggleRingLight(state, null);
+		RinglightState ringlightState = Enum<RinglightState>.ParseIgnoringCase(base.Operands[0].Value, RinglightState.Off);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		service.ToggleRingLight((RinglightState.On == ringlightState) ? true : false, null);
 	}
 
 	private bool IsOperandValid(string op)
 	{
-		if (Enum<RinglightState>.ParseIgnoringCase(op, RinglightState.None) != RinglightState.None)
-		{
-			return true;
-		}
-		return false;
+		return Enum<RinglightState>.ParseIgnoringCase(op, RinglightState.None) != RinglightState.None;
 	}
 }

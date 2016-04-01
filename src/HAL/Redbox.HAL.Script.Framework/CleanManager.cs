@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Timers;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal sealed class CleanManager : IStatusChangeObserver
+internal sealed class CleanManager : IStatusChangeObserver, IConfigurationObserver
 {
 	private readonly IPersistentMap PersistentMap;
 
@@ -140,6 +140,20 @@ internal sealed class CleanManager : IStatusChangeObserver
 		}
 	}
 
+	public void NotifyConfigurationLoaded()
+	{
+	}
+
+	public void NotifyConfigurationChangeStart()
+	{
+		ConfigurationUpdateStart();
+	}
+
+	public void NotifyConfigurationChangeEnd()
+	{
+		ConfigurationUpdateFinish();
+	}
+
 	public void StatusChange(ExecutionContextStatus status)
 	{
 		if (ExecutionContextStatus.Completed == status || ExecutionContextStatus.Errored == status || ExecutionContextStatus.Stopped == status)
@@ -182,6 +196,7 @@ internal sealed class CleanManager : IStatusChangeObserver
 		MerchTransferManager merchTransferManager = new MerchTransferManager(context, ThinHelper.Debug);
 		try
 		{
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			using VMZIterator vMZIterator = new VMZIterator();
 			_ = context.AppLog;
 			do
@@ -193,9 +208,9 @@ internal sealed class CleanManager : IStatusChangeObserver
 						return;
 					}
 				}
-				else if (vMZIterator.Location.IsStuck)
+				else if (service.IsStuck(vMZIterator.Location))
 				{
-					context.ServiceLog("CleanManager: don't process location {0} stuckFlags {1}", vMZIterator.Location.ToString(), vMZIterator.Location.IsStuck.ToString());
+					context.ServiceLog("CleanManager: don't process location {0} stuckFlags {1}", vMZIterator.Location.ToString(), vMZIterator.Location.StuckCount.ToString());
 				}
 				else if (manager.IsNonThinType(vMZIterator.Flags))
 				{
@@ -243,8 +258,9 @@ internal sealed class CleanManager : IStatusChangeObserver
 		}
 		try
 		{
-			ControllerConfiguration.Instance.ConfigurationChangeStart += ConfigurationUpdateStart;
-			ControllerConfiguration.Instance.ConfigurationChangeEnd += ConfigurationUpdateFinish;
+			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+			IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
+			attributeXmlConfiguration.AddObserver(this);
 			ExecutionContext executionContext = FindAnyAutoClean();
 			if (executionContext == null)
 			{
@@ -295,13 +311,13 @@ internal sealed class CleanManager : IStatusChangeObserver
 		{
 			LogHelper.Instance.Log("[CleanSlot] Found enclosing segment [flags = {0}] for location {1}", merchSegment.Flags.ToString(), iterator.Location.ToString());
 		}
-		VMZSearchResult result2 = default(VMZSearchResult);
-		merchSegment.FindHigh(ref result2);
-		if (result2.Location.IsStuck)
+		ILocation location = merchSegment.FindHigh();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (service.IsStuck(location))
 		{
 			return true;
 		}
-		MerchandizeResult merchandizeResult = manager.MoveThin(result2.Location, iterator.Location, xferMgr);
+		MerchandizeResult merchandizeResult = manager.MoveThin(location, iterator.Location, xferMgr);
 		result.Process(merchandizeResult);
 		return MerchandizeResult.EmptyStuck == merchandizeResult;
 	}
@@ -425,7 +441,7 @@ internal sealed class CleanManager : IStatusChangeObserver
 
 	private CleanManager()
 	{
-		PersistentMap = StoreManager.Instance.GetDataStore();
+		PersistentMap = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		CleanTimer = new RedboxTimer("Clean VMZ", CleanTimerFired);
 		if (!StartTime.HasValue)
 		{

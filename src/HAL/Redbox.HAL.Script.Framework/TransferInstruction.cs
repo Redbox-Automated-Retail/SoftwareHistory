@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -33,6 +34,7 @@ public sealed class TransferInstruction : Instruction
 			LogHelper.Instance.Log("XFER: the picker is full - bail.");
 			return;
 		}
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("SRC-DECK");
 		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
 		if (!keyValuePairValue.HasValue)
@@ -62,8 +64,8 @@ public sealed class TransferInstruction : Instruction
 			AddError("E004", "Expected key value pair SRC-DECK=y, SRC-SLOT=x, DEST-DECK=y, DEST-SLOT=x. The values of x and y may be numeric literals or symbols.", result.Errors);
 			return;
 		}
-		Location location = new Location(value, value2);
-		Location location2 = new Location(keyValuePairValue3.Value, keyValuePairValue4.Value);
+		ILocation location = service.Get(value, value2);
+		ILocation location2 = service.Get(keyValuePairValue3.Value, keyValuePairValue4.Value);
 		LogHelper.Instance.Log("XFER: {0} to {1}", location.ToString(), location2.ToString());
 		ApplicationLog appLog = context.AppLog;
 		TransferResult transferResult = ControllerService.Instance.Transfer(location, location2, appLog);
@@ -73,7 +75,7 @@ public sealed class TransferInstruction : Instruction
 		}
 		else
 		{
-			context.PushTop(transferResult.FailedError.ToUpper());
+			context.PushTop(transferResult.TransferError.ToString().ToUpper());
 		}
 	}
 }

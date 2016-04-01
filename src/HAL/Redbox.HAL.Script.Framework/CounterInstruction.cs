@@ -1,7 +1,7 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -33,6 +33,8 @@ public sealed class CounterInstruction : Instruction
 	{
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("NAME");
 		string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
 		string value = base.Operands[1].Value;
 		switch (Enum<Ops>.ParseIgnoringCase(value, Ops.None))
 		{
@@ -43,29 +45,29 @@ public sealed class CounterInstruction : Instruction
 			break;
 		}
 		case Ops.Create:
-			context.PushTop(CounterManager.Instance.Exists(keyValuePairValue) ? "SUCCESS" : "FAILURE");
+			context.PushTop(service.Exists(keyValuePairValue) ? "SUCCESS" : "FAILURE");
 			break;
 		case Ops.Decrement:
 		{
-			Counter counter = CounterManager.Instance.Decrement(keyValuePairValue);
-			if (counter == null)
+			IPersistentCounter persistentCounter = service.Decrement(keyValuePairValue);
+			if (persistentCounter == null)
 			{
 				context.PushTop("FAILURE");
 				break;
 			}
-			context.PushTop(counter.Value);
+			context.PushTop(persistentCounter.Value);
 			context.PushTop("SUCCESS");
 			break;
 		}
 		case Ops.Increment:
 		{
-			Counter counter = CounterManager.Instance.Find(keyValuePairValue);
-			if (counter == null)
+			IPersistentCounter persistentCounter = service.Find(keyValuePairValue);
+			if (persistentCounter == null)
 			{
 				context.PushTop("FAILURE");
 				break;
 			}
-			context.PushTop(counter.Value);
+			context.PushTop(persistentCounter.Value);
 			context.PushTop("SUCCESS");
 			break;
 		}
@@ -73,26 +75,35 @@ public sealed class CounterInstruction : Instruction
 		{
 			if (keyValuePairValue.Equals("DUMPBIN", StringComparison.CurrentCultureIgnoreCase))
 			{
-				context.PushTop(DumpBin.Instance.CurrentCount());
+				context.PushTop(service2.CurrentCount());
 				context.PushTop("SUCCESS");
 				break;
 			}
-			Counter counter = CounterManager.Instance.Find(keyValuePairValue);
-			if (counter == null)
+			IPersistentCounter persistentCounter = service.Find(keyValuePairValue);
+			if (persistentCounter == null)
 			{
 				context.PushTop("FAILURE");
 				break;
 			}
-			context.PushTop(counter.Value);
+			context.PushTop(persistentCounter.Value);
 			context.PushTop("SUCCESS");
 			break;
 		}
 		case Ops.Reset:
-			context.PushTop((CounterManager.Instance.Reset(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
+			context.PushTop((service.Reset(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
 			break;
 		case Ops.ShowTimeouts:
-			HardwareSupport.LogCurrent();
+		{
+			IFormattedLogFactoryService service3 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+			string path = service3.CreateSubpath("ErrorLogs");
+			string path2 = Path.Combine(path, "Timeouts.log");
+			using StreamWriter streamWriter = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
+			streamWriter.WriteLine("Counter sample on {0} {1}", DateTime.Now.ToShortTimeString(), DateTime.Now.ToShortDateString());
+			service.LogTimeouts(streamWriter);
+			service.LogCounter("EmptyOrStuckCount", streamWriter);
+			streamWriter.WriteLine();
 			break;
+		}
 		}
 	}
 }

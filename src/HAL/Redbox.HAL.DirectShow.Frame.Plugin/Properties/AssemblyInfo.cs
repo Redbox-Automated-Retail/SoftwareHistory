@@ -1,16 +1,15 @@
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2013")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("Redbox DVD Automated Retail")]
 [assembly: AssemblyTitle("Redbox.HAL.Directshow.Frame.Plugin")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyProduct("Redbox.HAL.Directshow.Frame.Plugin")]
-[assembly: Guid("c1c7a498-31a7-4827-9fa5-b82841e6b3d8")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyFileVersion("1.4.0.246")]
+[assembly: AssemblyProduct("Redbox.HAL.Directshow.Frame.Plugin")]
+[assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
+[assembly: Guid("c1c7a498-31a7-4827-9fa5-b82841e6b3d8")]
+[assembly: AssemblyFileVersion("1.8.0.18")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.4.0.246")]
+[assembly: AssemblyVersion("1.8.0.18")]

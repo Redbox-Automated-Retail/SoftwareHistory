@@ -1,5 +1,4 @@
 using System;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -39,13 +38,13 @@ public sealed class QlmDoorInstruction : Instruction
 			switch (Enum<QlmOperands>.ParseIgnoringCase(token.Value, QlmOperands.None))
 			{
 			case QlmOperands.Lock:
-				context.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.SetDoorLock(locked: true)));
+				context.PushTop("TIMEOUT");
 				break;
 			case QlmOperands.Unlock:
-				context.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.SetDoorLock(locked: false)));
+				context.PushTop("TIMEOUT");
 				break;
 			case QlmOperands.Status:
-				context.PushTop(QLM.GetDoorStatus().ToString().ToUpper());
+				context.PushTop("CLOSED");
 				break;
 			default:
 				result.AddError(ExecutionErrors.InvalidSymbolValue, $"The symbol {token.Value} is invalid.");

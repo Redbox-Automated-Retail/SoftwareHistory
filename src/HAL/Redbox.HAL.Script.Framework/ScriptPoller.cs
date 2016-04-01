@@ -1,10 +1,10 @@
 using System;
 using System.Threading;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal abstract class ScriptPoller : IStatusChangeObserver
+internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineChangeObserver
 {
 	private const int Polling = 1;
 
@@ -52,6 +52,35 @@ internal abstract class ScriptPoller : IStatusChangeObserver
 		}
 	}
 
+	public void OnShutdown()
+	{
+		Shutdown();
+	}
+
+	public void OnEngineChange(EngineModes newMode)
+	{
+		OnEngineModeChange(newMode);
+	}
+
+	protected virtual void OnEngineModeChange(EngineModes newMode)
+	{
+		switch (newMode)
+		{
+		case EngineModes.Normal:
+			Start();
+			break;
+		case EngineModes.Maintenance:
+		case EngineModes.Diagnostic:
+		case EngineModes.Merchandizing:
+		case EngineModes.RebootPending:
+			Shutdown();
+			break;
+		case EngineModes.PowerSuspend:
+			Shutdown(joinThread: false);
+			break;
+		}
+	}
+
 	protected virtual ExecutionContext ScheduleAndBlockOnJob()
 	{
 		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob(JobName, JobLabel, DateTime.Now, Priority);
@@ -83,21 +112,7 @@ internal abstract class ScriptPoller : IStatusChangeObserver
 		return true;
 	}
 
-	internal virtual void OnConfigChangeStart()
-	{
-	}
-
-	internal virtual void OnConfigChangeComplete()
-	{
-	}
-
-	internal virtual void OnEngineModeChange(EngineModes newMode)
-	{
-	}
-
-	internal virtual void Initialize()
-	{
-	}
+	internal abstract void Initialize();
 
 	internal void Start()
 	{

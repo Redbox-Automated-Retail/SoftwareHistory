@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -10,9 +10,9 @@ internal sealed class QuickSlotTestJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog appLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "QuickTest");
-		DecksManager.Instance.ForAllDecksDo(delegate(Deck deck)
+		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
-			if (deck.IsQlmDeck)
+			if (deck.IsQlm)
 			{
 				appLog.Write("The deck is a qlm deck - finish test.");
 				return false;

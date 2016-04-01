@@ -1,6 +1,6 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -36,17 +36,17 @@ public sealed class SecretOptionInstruction : Instruction
 			AddError("E001", "Missing 'NAME' operand.", result.Errors);
 			return;
 		}
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
+		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		string val = null;
 		LocateValue(result, context, out val);
 		switch (operation)
 		{
 		case Operation.Remove:
-			dataStore.Remove(key);
+			map.Remove(key);
 			break;
 		case Operation.Get:
 		{
-			string value = dataStore.GetValue(key, string.Empty);
+			string value = map.GetValue(key, string.Empty);
 			context.PushTop(string.IsNullOrEmpty(value) ? "UNKNOWN" : value);
 			break;
 		}
@@ -60,7 +60,7 @@ public sealed class SecretOptionInstruction : Instruction
 			}
 			else
 			{
-				dataStore.SetValue(key, val);
+				map.SetValue(key, val);
 			}
 			break;
 		case Operation.SetEncrypted:

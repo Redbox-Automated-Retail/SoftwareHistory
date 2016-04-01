@@ -1,8 +1,6 @@
 using System;
-using System.IO;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -30,14 +28,10 @@ public class CameraInsutrction : Instruction
 		IsWorking,
 		IRCamera,
 		Reset,
-		Disable,
-		Enable,
 		ResetReturnCounter,
 		ReturnErrorCount,
 		SnapDecode,
-		ClearStats,
-		ScanForPort,
-		DumpCortexStats
+		ScanForPort
 	}
 
 	public override string Mnemonic => "CAMERA";
@@ -62,78 +56,33 @@ public class CameraInsutrction : Instruction
 		{
 			flag = boolValue;
 		}
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IScannerDeviceService service2 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		IScannerDevice configuredDevice = service2.GetConfiguredDevice();
 		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
+		case ExpectedOperand.IRCamera:
+			context.PushTop(false);
+			break;
 		case ExpectedOperand.ShowProperties:
 			AddError("E999", $"The operand '{base.Operands[0].Value}' is deprecated.", result.Errors);
 			break;
-		case ExpectedOperand.Disable:
-		{
-			using DeviceHelper helper2 = new DeviceHelper(debug: true);
-			CameraInfo cameraInfo2 = new CameraInfo(helper2);
-			if (!cameraInfo2.FindActiveCamera())
-			{
-				context.PushTop("NO CAMERA");
-			}
-			else
-			{
-				context.PushTop(cameraInfo2.SetCameraState(DeviceState.Disable));
-			}
-			break;
-		}
-		case ExpectedOperand.Enable:
-		{
-			using DeviceHelper helper = new DeviceHelper(debug: true);
-			CameraInfo cameraInfo = new CameraInfo(helper);
-			if (!cameraInfo.FindActiveCamera())
-			{
-				context.PushTop("NO CAMERA");
-			}
-			else
-			{
-				context.PushTop(cameraInfo.SetCameraState(DeviceState.Enable));
-			}
-			break;
-		}
-		case ExpectedOperand.IRCamera:
-			context.PushTop(BarcodeConfiguration.Instance.EnableInfared);
-			break;
 		case ExpectedOperand.Status:
-		{
-			IScannerDevice configuredDevice4 = ScannerDeviceFactory.GetConfiguredDevice();
-			context.PushTop(configuredDevice4.IsConnected ? "RUNNING" : "STOPPED");
+			context.PushTop(configuredDevice.IsConnected ? "RUNNING" : "STOPPED");
 			break;
-		}
 		case ExpectedOperand.Start:
-		{
 			if (flag)
 			{
-				ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+				service.Center(CenterDiskMethod.VendDoorAndBack);
 			}
-			IScannerDevice configuredDevice2 = ScannerDeviceFactory.GetConfiguredDevice();
-			context.PushTop(configuredDevice2.Start());
+			context.PushTop(configuredDevice.Start());
 			break;
-		}
 		case ExpectedOperand.Stop:
-		{
-			bool boolValue2 = false;
-			FindBooleanOperand("FORCE", result, out boolValue2);
-			IScannerDevice configuredDevice5 = ScannerDeviceFactory.GetConfiguredDevice();
-			if (boolValue2)
-			{
-				configuredDevice5.TurnOff();
-				context.PushTop(true);
-			}
-			else
-			{
-				context.PushTop(configuredDevice5.Stop());
-			}
+			context.PushTop(configuredDevice.Stop());
 			break;
-		}
 		case ExpectedOperand.Snap:
 		{
-			IScannerDevice configuredDevice3 = ScannerDeviceFactory.GetConfiguredDevice();
-			SnapResult snapResult = configuredDevice3.Snap();
+			ISnapResult snapResult = configuredDevice.Snap();
 			if (!snapResult.SnapOk)
 			{
 				context.PushTop("CAPTURE ERROR");
@@ -163,32 +112,9 @@ public class CameraInsutrction : Instruction
 			context.PushTop(scanResult.ScannedMatrix);
 			break;
 		}
-		case ExpectedOperand.ClearStats:
-		{
-			KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("SERVICE");
-			string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair, result.Errors, context);
-			if (result.Errors.Count <= 0)
-			{
-				ScannerServices scannerServices = Enum<ScannerServices>.ParseIgnoringCase(keyValuePairValue, ScannerServices.Emulated);
-				if (ScannerServices.Emulated != scannerServices)
-				{
-					CameraStatistics.RemoveCameraStats(scannerServices);
-				}
-			}
-			break;
-		}
-		case ExpectedOperand.DumpCortexStats:
-		{
-			string path = Path.Combine(ControllerConfiguration.Instance.KioskLogsPath, "Service");
-			CameraStatistics.DumpStats(Path.Combine(path, "CortexDecodeStats.txt"), ScannerServices.Cortex);
-			break;
-		}
 		case ExpectedOperand.ScanForPort:
-		{
-			IScannerDevice configuredDevice = ScannerDeviceFactory.GetConfiguredDevice();
 			context.PushTop(configuredDevice.FindInstalledPort());
 			break;
-		}
 		case ExpectedOperand.Reset:
 			break;
 		}

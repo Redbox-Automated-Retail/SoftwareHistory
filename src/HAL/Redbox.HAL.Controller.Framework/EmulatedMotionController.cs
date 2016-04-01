@@ -1,31 +1,22 @@
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class EmulatedMotionController : MotionController
 {
-	public override bool CommunicationOk()
+	protected override void OnConfigurationChangeEnd()
 	{
-		return true;
 	}
 
-	public override bool IsMotorErrored(Axis axis, out MotionResult status)
+	protected override void OnConfigurationChangeStart()
 	{
-		status = MotionResult.Success;
-		return false;
 	}
 
-	public override bool GetCurrentLocation(Axis axis, ref MoveTarget target)
+	protected override void OnConfigurationLoad()
 	{
-		return true;
 	}
 
-	protected override bool ClosePortInner()
-	{
-		return true;
-	}
-
-	protected override MotionResult HomeAxisInner(Axis axis)
+	protected override ErrorCodes HomeAxisInner(Axis axis)
 	{
 		if (axis != Axis.X)
 		{
@@ -34,11 +25,14 @@ internal sealed class EmulatedMotionController : MotionController
 		return ControllerEmulationState.Instance.ExpectedHomeXResult;
 	}
 
-	protected override HomeAxesResult InitAxesInner(IFormattedLog log, bool notUsed)
+	protected override ErrorCodes MoveToTargetInner(ref MoveTarget target)
 	{
-		HomeAxesResult homeAxesResult = new HomeAxesResult();
-		homeAxesResult.Succeded = true;
-		return homeAxesResult;
+		return ControllerEmulationState.Instance.ExpectedMoveAbsoluteResult;
+	}
+
+	protected override ErrorCodes MoveToVendInner(MoveMode mode)
+	{
+		return ErrorCodes.Success;
 	}
 
 	protected override bool IsInitializedInner()
@@ -46,17 +40,22 @@ internal sealed class EmulatedMotionController : MotionController
 		return true;
 	}
 
-	protected override MotionResult MoveToTargetInner(MoveTarget target)
+	internal override bool CommunicationOk()
 	{
-		return ControllerEmulationState.Instance.ExpectedMoveAbsoluteResult;
+		return true;
 	}
 
-	protected override MotionResult MoveToVendInner(MoveMode mode)
+	internal override IControllerPosition ReadPositions()
 	{
-		return MotionResult.Success;
+		return EmulatedControllerPosition.DefaultInstance;
 	}
 
-	protected override string[] ReadLimitsInner()
+	internal override bool ClosePort()
+	{
+		return true;
+	}
+
+	internal override string[] ReadLimits()
 	{
 		return new string[2] { "UPPER LIMIT: CLEAR", "LOWER LIMIT: BLOCKED" };
 	}
@@ -66,7 +65,13 @@ internal sealed class EmulatedMotionController : MotionController
 		return true;
 	}
 
-	internal override void InitializeCommunication()
+	internal override bool InitializeCommunication()
+	{
+		return true;
+	}
+
+	internal EmulatedMotionController(MotionControlService service)
+		: base(service)
 	{
 	}
 }

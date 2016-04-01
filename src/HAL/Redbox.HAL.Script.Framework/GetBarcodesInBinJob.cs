@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,8 +8,8 @@ internal sealed class GetBarcodesInBinJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		List<DumpBinEntry> contents = DumpBin.Instance.GetContents();
-		foreach (DumpBinEntry item in contents)
+		IList<IDumpBinInventoryItem> barcodesInBin = base.InventoryService.GetBarcodesInBin();
+		foreach (IDumpBinInventoryItem item in barcodesInBin)
 		{
 			base.Context.CreateInfoResult("DumpBinInventoryItem", "The item is in the dump bin.", item.ID);
 		}

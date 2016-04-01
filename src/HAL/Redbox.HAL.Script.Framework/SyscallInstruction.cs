@@ -1,8 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -92,7 +92,7 @@ public sealed class SyscallInstruction : Instruction
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		string value = base.Operands[0].Value;
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
+		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		if ("GC".Equals(value, StringComparison.CurrentCultureIgnoreCase))
 		{
 			GC.Collect();
@@ -114,7 +114,7 @@ public sealed class SyscallInstruction : Instruction
 				AddError("E005", "Kiosk reboot is not configured.", result.Errors);
 				return;
 			}
-			if (dataStore.GetValue("CheckRebootTime", def: true))
+			if (map.GetValue("CheckRebootTime", def: true))
 			{
 				TimeSpan timeSpan = new TimeSpan(0, 0, 0);
 				TimeSpan timeSpan2 = new TimeSpan(5, 0, 0);
@@ -158,7 +158,7 @@ public sealed class SyscallInstruction : Instruction
 
 	public static bool Shutdown(ShutdownFlags flags, ShutdownReason reason)
 	{
-		if (StoreManager.Instance.GetDataStore().GetValue("SimulateRebootFailure", def: false))
+		if (ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap().GetValue("SimulateRebootFailure", def: false))
 		{
 			LogHelper.Instance.Log("Simulating reboot failure to service ...", LogEntryType.Error);
 			return false;

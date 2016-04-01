@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using log4net;
 
@@ -96,7 +97,6 @@ public class Program : IDisposable, ILogger
 
 	public void Run()
 	{
-		LogHelper.Instance.Logger = this;
 		Application.EnableVisualStyles();
 		Application.SetCompatibleTextRenderingDefault(defaultValue: false);
 		Application.Run(new Form1());
@@ -110,10 +110,9 @@ public class Program : IDisposable, ILogger
 		if (!program.m_instanceLock.IsOwned)
 		{
 			MessageBox.Show("Only one instance of the Console is allowed to run.");
+			return;
 		}
-		else
-		{
-			program.Run();
-		}
+		ServiceLocator.Instance.AddService(typeof(ILogger), program);
+		program.Run();
 	}
 }

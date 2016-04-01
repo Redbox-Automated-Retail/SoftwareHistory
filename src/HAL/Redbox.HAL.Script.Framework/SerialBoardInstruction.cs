@@ -1,5 +1,6 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using System.Threading;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -18,17 +19,24 @@ public sealed class SerialBoardInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
+		ExpectedOperand expectedOperand = Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
 			context.ServiceLog("SerialBoardInstruction: converted '{0}' to operand None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.ClosePort:
-			context.PushTop(ControlSystem.Instance.ClosePort(500) ? "SUCCESS" : "FAILURE");
+			service.Shutdown();
+			Thread.Sleep(500);
+			context.PushTop("SUCCESS");
 			break;
 		case ExpectedOperand.Reset:
-			HandleTimeoutOrCommmError(ControlSystem.Instance.Initialize(), context);
+		{
+			IControlResponse response = service.Initialize();
+			HandleError(response, context);
 			break;
+		}
 		}
 	}
 

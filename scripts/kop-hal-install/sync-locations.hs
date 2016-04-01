@@ -1,7 +1,7 @@
-	# sync-locations.hs
+﻿	# sync-locations.hs
 	# Copyright (C) 2011 Redbox Automated Retail, LLC
 	# All Rights Reserved
-	# VERSION 1.4.0.246
+	# VERSION 1.8.0.22
 	#
 		
 	LOG			"Begin sync-locations request."
@@ -43,7 +43,7 @@
 	
 	GRIPPER	CHECK-PICKER
 	POP		CP-STATUS
-	IF	"EMPTY" != CP-STATUS
+	IF	"PICKEREMPTY" != CP-STATUS
 		PUSHF		"Check picker returned an error status {0}" CP-STATUS
 		POP		MSTESTER-SYMBOL-CHECK-PICKER-FAILURE
 		EXIT		"check-picker was unable to clear the picker."

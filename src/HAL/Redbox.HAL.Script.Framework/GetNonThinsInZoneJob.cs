@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -9,12 +9,12 @@ internal sealed class GetNonThinsInZoneJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		List<Location> nonThinItemsInCompressedZone = SegmentManager.Instance.GetNonThinItemsInCompressedZone();
-		using (new DisposeableList<Location>(nonThinItemsInCompressedZone))
+		List<ILocation> nonThinItemsInCompressedZone = SegmentManager.Instance.GetNonThinItemsInCompressedZone();
+		using (new DisposeableList<ILocation>(nonThinItemsInCompressedZone))
 		{
-			foreach (Location item in nonThinItemsInCompressedZone)
+			foreach (ILocation item in nonThinItemsInCompressedZone)
 			{
-				base.Context.CreateResult("NonThinInVMZ", "The item is a non-thin in the VMZ.", item.Deck, item.Slot, item.Matrix, null, null);
+				base.Context.CreateResult("NonThinInVMZ", "The item is a non-thin in the VMZ.", item.Deck, item.Slot, item.ID, null, null);
 			}
 			base.Context.CreateInfoResult("NonThinInVMZCount", nonThinItemsInCompressedZone.Count.ToString());
 		}

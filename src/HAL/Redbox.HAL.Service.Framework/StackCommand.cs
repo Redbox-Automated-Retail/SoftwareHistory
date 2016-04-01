@@ -10,9 +10,9 @@ namespace Redbox.HAL.Service.Framework;
 [Command("stack")]
 public sealed class StackCommand
 {
-	[Usage("STACK show job: job-id")]
-	[CommandForm(Name = "show")]
 	[Description("Dumps a diagnostic list of the stack contents.")]
+	[CommandForm(Name = "show")]
+	[Usage("STACK show job: job-id")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -34,8 +34,8 @@ public sealed class StackCommand
 		}
 	}
 
-	[CommandForm(Name = "clear")]
 	[Description("Clears the execution engine's data stack.")]
+	[CommandForm(Name = "clear")]
 	[Usage("STACK clear job: job-id")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
@@ -47,9 +47,9 @@ public sealed class StackCommand
 		}
 	}
 
-	[Description("Removes only entries on the stack that were added using the RESULT instruction.")]
 	[CommandForm(Name = "remove-results")]
 	[Usage("STACK remove-results job: job-id")]
+	[Description("Removes only entries on the stack that were added using the RESULT instruction.")]
 	public void RemoveResults(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);

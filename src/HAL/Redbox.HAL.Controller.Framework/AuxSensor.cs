@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Controller.Framework;
 
-public enum AuxSensor
+internal enum AuxSensor
 {
 	QlmDown,
 	QlmUp,

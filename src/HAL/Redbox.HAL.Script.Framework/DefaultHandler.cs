@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,16 +8,16 @@ internal class DefaultHandler : IFileDiskHandler
 	{
 	}
 
-	public FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, MotionResult moveResult, int deck, int slot)
+	public FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, ErrorCodes moveResult, int deck, int slot)
 	{
 		return FileDiscIterationResult.Continue;
 	}
 
-	public void DiskFiled(ExecutionResult result, string idInPicker, int deck, int slot, bool isDuplicate)
+	public void DiskFiled(ExecutionResult result, IPutResult putResult)
 	{
 	}
 
-	public FileDiscIterationResult BeforeNextPut(ExecutionResult result, PutResult putResult, string idInPicker, int deck, int slot)
+	public FileDiscIterationResult BeforeNextPut(ExecutionResult result, IPutResult putResult)
 	{
 		return FileDiscIterationResult.Continue;
 	}

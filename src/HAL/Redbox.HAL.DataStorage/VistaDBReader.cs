@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using VistaDB.Provider;
 
 namespace Redbox.HAL.DataStorage;

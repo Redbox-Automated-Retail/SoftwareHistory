@@ -5,8 +5,8 @@ namespace Redbox.DirectShow.Interop;
 
 [ComImport]
 [Guid("C6E13380-30AC-11D0-A18C-00A0C9118956")]
-[SuppressUnmanagedCodeSecurity]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+[SuppressUnmanagedCodeSecurity]
 public interface IAMCrossbar
 {
 	[PreserveSig]

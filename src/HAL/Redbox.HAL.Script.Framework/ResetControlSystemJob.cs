@@ -1,4 +1,5 @@
-using Redbox.HAL.Controller.Framework;
+using System.Threading;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -7,11 +8,13 @@ internal class ResetControlSystemJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		ControlSystem.Instance.ClosePort(500);
-		CoreResponse coreResponse = ControlSystem.Instance.Initialize();
-		string message = string.Format("RESET returned {0}", coreResponse.CommunicationError ? coreResponse.CommErrorDiagnostic : "SUCCESS");
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		service.Shutdown();
+		Thread.Sleep(500);
+		IControlResponse controlResponse = service.Initialize();
+		string message = $"RESET returned {controlResponse.ToString()}";
 		base.Context.CreateInfoResult("ResetStatus", message);
-		if (coreResponse.CommunicationError)
+		if (!controlResponse.Success)
 		{
 			AddError("RESET failure.");
 		}

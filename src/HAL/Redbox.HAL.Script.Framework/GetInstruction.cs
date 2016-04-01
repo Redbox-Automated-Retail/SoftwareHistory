@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -11,29 +12,32 @@ public sealed class GetInstruction : Instruction
 	{
 		private readonly bool TestSlot;
 
-		public bool OnEmpty(GetResult gr, Deck deck, int slot)
+		public bool OnEmpty(IGetResult gr)
 		{
 			if (!TestSlot)
 			{
 				return true;
 			}
-			LocationTestResult locationTestResult = Gripper.Peek();
-			string message = $"GET disk at Deck = {deck.Number} Slot = {slot} shows SLOTEMPTY; PEEK returns {locationTestResult.ToString()}";
+			using PeekOperation peekOperation = new PeekOperation();
+			IPeekResult peekResult = peekOperation.Execute();
+			string message = $"GET disk at Deck = {gr.Location.Deck} Slot = {gr.Location.Slot} shows SLOTEMPTY; PEEK returns {peekResult.ToString()}";
 			LogHelper.Instance.Log(message, LogEntryType.Info);
-			if (!locationTestResult.TestOk || locationTestResult.PeekResult == GripperPeekResult.Full)
+			if (!peekResult.TestOk || peekResult.IsFull)
 			{
-				gr.UpdateCode(GetResultCode.ItemStuck);
-				deck.UpdateEmptyStuck(slot);
+				gr.Update(ErrorCodes.ItemStuck);
+				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+				service.UpdateEmptyStuck(gr.Location);
 				return false;
 			}
 			return true;
 		}
 
-		public void OnStuck(GetResult gr, Deck deck, int slot)
+		public void OnStuck(IGetResult gr)
 		{
 			if (TestSlot)
 			{
-				deck.UpdateEmptyStuck(slot);
+				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+				service.UpdateEmptyStuck(gr.Location);
 			}
 		}
 
@@ -85,10 +89,11 @@ public sealed class GetInstruction : Instruction
 			test = true;
 		}
 		GetInstructionObserver observer = new GetInstructionObserver(test);
-		GetResult getResult = ControllerService.Instance.Get(observer, context.AppLog);
+		IGetResult getResult = ControllerService.Instance.Get(observer, context.AppLog);
 		if (getResult.Success && flag)
 		{
-			ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			service.Center(CenterDiskMethod.VendDoorAndBack);
 		}
 		if (flag2)
 		{

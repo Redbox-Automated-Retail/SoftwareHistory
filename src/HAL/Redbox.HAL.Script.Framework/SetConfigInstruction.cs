@@ -1,7 +1,6 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -20,25 +19,13 @@ public sealed class SetConfigInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		ConfigType configType = ConfigType.Controller;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("TYPE");
-		if (keyValuePair != null)
-		{
-			configType = Enum<ConfigType>.ParseIgnoringCase(keyValuePair.Value, ConfigType.Controller);
-		}
-		object[] value = ConvertSymbolsToParameterArray(result.Errors, context);
+		object[] value = OperandsHelper.ConvertSymbolsToParameterArray(base.Operands, result.Errors, context);
 		if (result.Errors.Count <= 0)
 		{
 			string value2 = base.Operands[0].Value;
-			switch (configType)
-			{
-			case ConfigType.Camera:
-				BarcodeConfiguration.Instance.SetPropertyByName(value2, value);
-				break;
-			case ConfigType.Controller:
-				ControllerConfiguration.Instance.SetPropertyByName(value2, value);
-				break;
-			}
+			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+			service.SetPropertyByName(keyValuePair.Value, value2, value);
 		}
 	}
 }

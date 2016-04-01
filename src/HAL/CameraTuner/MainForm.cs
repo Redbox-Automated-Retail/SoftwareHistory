@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Redbox.DirectShow;
 using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HAL.DataMatrix.Framework;
 
@@ -48,8 +49,6 @@ public class MainForm : Form
 
 	private TextBox m_snapStatusBox;
 
-	private TextBox m_foundSecureTextBox;
-
 	private Label label1;
 
 	private Label label2;
@@ -57,8 +56,6 @@ public class MainForm : Form
 	private Label label3;
 
 	private Label label4;
-
-	private Label label5;
 
 	private Label label6;
 
@@ -88,7 +85,8 @@ public class MainForm : Form
 		{
 			if (string.IsNullOrEmpty(m_imagesFolder))
 			{
-				m_imagesFolder = Path.GetFullPath(Path.Combine(RuntimeService.Instance.AssemblyDirectory, "..\\Video"));
+				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+				m_imagesFolder = service.InstallPath("Video");
 			}
 			if (!Directory.Exists(m_imagesFolder))
 			{
@@ -104,25 +102,18 @@ public class MainForm : Form
 		}
 	}
 
-	private bool HasIR { get; set; }
-
-	public MainForm(bool snapOnly, bool hasIR)
+	public MainForm(bool snapOnly)
 	{
 		InitializeComponent();
+		ServiceLocator.Instance.AddService(typeof(IRuntimeService), new RuntimeService());
 		ReadWaiter = new AutoResetEvent(initialState: false);
 		SnapWaiter = new AutoResetEvent(initialState: false);
 		ImageGrabbedWaiter = new AutoResetEvent(initialState: false);
 		TunerLogInstance = new TunerLog();
-		LogHelper.Instance.Logger = TunerLogInstance;
+		ServiceLocator.Instance.AddService(typeof(ILogger), TunerLogInstance);
+		BarcodeConfiguration.MakeNewInstance2();
 		ImageSize = new Size(640, 480);
 		SnapOnly = snapOnly;
-		HasIR = hasIR;
-		if (HasIR)
-		{
-			label5.Visible = true;
-			m_foundSecureTextBox.Enabled = true;
-			m_foundSecureTextBox.Visible = true;
-		}
 		Manager = new ButtonAspectsManager();
 	}
 
@@ -130,22 +121,17 @@ public class MainForm : Form
 	{
 		try
 		{
-			BarcodeReader instance = BarcodeReader.Instance;
+			IBarcodeReader configuredReader = BarcodeReaderFactory.Instance.GetConfiguredReader();
 			LogHelper.Instance.Log("BarcodeReader thread processing messages ...");
 			while (m_continueProcessing)
 			{
 				ReadWaiter.WaitOne();
 				if (m_shouldSnap && CurrentImage != null)
 				{
-					ScanResult scanResult = new ScanResult();
-					instance.Scan(CurrentImage, scanResult);
+					ScanResult scanResult = ScanResult.Scan(configuredReader, CurrentImage);
 					CurrentImage = null;
 					m_numberOfBarcodesBox.Text = scanResult.ReadCount.ToString();
 					m_decodeTimeBox.Text = $"{scanResult.ExecutionTime.Seconds}.{scanResult.ExecutionTime.Milliseconds} s";
-					if (HasIR)
-					{
-						m_foundSecureTextBox.Text = (scanResult.FoundSecureCode ? "Sure did!" : "Nope - try again!");
-					}
 					m_barcodeBox.Text = scanResult.ScannedMatrix;
 				}
 				LogHelper.Instance.Log("Barcode thread completed read.");
@@ -267,10 +253,6 @@ public class MainForm : Form
 		m_decodeTimeBox.Text = "0.0 s";
 		m_numberOfBarcodesBox.Text = "0";
 		m_snapStatusBox.Text = string.Empty;
-		if (HasIR)
-		{
-			m_foundSecureTextBox.Text = string.Empty;
-		}
 		Application.DoEvents();
 	}
 
@@ -353,12 +335,10 @@ public class MainForm : Form
 		this.m_decodeTimeBox = new System.Windows.Forms.TextBox();
 		this.m_barcodeBox = new System.Windows.Forms.TextBox();
 		this.m_snapStatusBox = new System.Windows.Forms.TextBox();
-		this.m_foundSecureTextBox = new System.Windows.Forms.TextBox();
 		this.label1 = new System.Windows.Forms.Label();
 		this.label2 = new System.Windows.Forms.Label();
 		this.label3 = new System.Windows.Forms.Label();
 		this.label4 = new System.Windows.Forms.Label();
-		this.label5 = new System.Windows.Forms.Label();
 		this.label6 = new System.Windows.Forms.Label();
 		this.m_detectedErrorsTB = new System.Windows.Forms.TextBox();
 		this.button4 = new System.Windows.Forms.Button();
@@ -412,13 +392,6 @@ public class MainForm : Form
 		this.m_snapStatusBox.ReadOnly = true;
 		this.m_snapStatusBox.Size = new System.Drawing.Size(100, 20);
 		this.m_snapStatusBox.TabIndex = 7;
-		this.m_foundSecureTextBox.BackColor = System.Drawing.Color.White;
-		this.m_foundSecureTextBox.Location = new System.Drawing.Point(305, 641);
-		this.m_foundSecureTextBox.Name = "m_foundSecureTextBox";
-		this.m_foundSecureTextBox.ReadOnly = true;
-		this.m_foundSecureTextBox.Size = new System.Drawing.Size(100, 20);
-		this.m_foundSecureTextBox.TabIndex = 8;
-		this.m_foundSecureTextBox.Visible = false;
 		this.label1.AutoSize = true;
 		this.label1.Location = new System.Drawing.Point(172, 507);
 		this.label1.Name = "label1";
@@ -443,13 +416,6 @@ public class MainForm : Form
 		this.label4.Size = new System.Drawing.Size(65, 13);
 		this.label4.TabIndex = 12;
 		this.label4.Text = "Snap Status";
-		this.label5.AutoSize = true;
-		this.label5.Location = new System.Drawing.Point(172, 648);
-		this.label5.Name = "label5";
-		this.label5.Size = new System.Drawing.Size(108, 13);
-		this.label5.TabIndex = 13;
-		this.label5.Text = "Found Secure Code?";
-		this.label5.Visible = false;
 		this.label6.AutoSize = true;
 		this.label6.Location = new System.Drawing.Point(509, 502);
 		this.label6.Name = "label6";
@@ -482,12 +448,10 @@ public class MainForm : Form
 		base.Controls.Add(this.button4);
 		base.Controls.Add(this.m_detectedErrorsTB);
 		base.Controls.Add(this.label6);
-		base.Controls.Add(this.label5);
 		base.Controls.Add(this.label4);
 		base.Controls.Add(this.label3);
 		base.Controls.Add(this.label2);
 		base.Controls.Add(this.label1);
-		base.Controls.Add(this.m_foundSecureTextBox);
 		base.Controls.Add(this.m_snapStatusBox);
 		base.Controls.Add(this.m_barcodeBox);
 		base.Controls.Add(this.m_decodeTimeBox);

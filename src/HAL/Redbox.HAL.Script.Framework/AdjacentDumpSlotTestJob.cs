@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -10,51 +11,51 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "AdjacentDumpSlotTest");
-		Deck deck = QLM.Deck;
-		if (deck != null)
+		if (!ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			applicationLog.Write("The kiosk shows a QLM configuration - go no further.");
 			return;
 		}
-		int value = DumpBin.Instance.Deck.Value;
-		Deck deck2 = DecksManager.Instance.GetDeck(value);
-		if (!PutToAdjacentAndTest(deck2.Number, 2, 81))
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		int deck = service.PutLocation.Deck;
+		IDeck byNumber = base.DecksService.GetByNumber(deck);
+		if (!PutToAdjacentAndTest(byNumber.Number, 2, 81))
 		{
 			AddError("Test failure!");
 		}
-		else if (!PutToAdjacentAndTest(deck2.Number, 3, 85))
+		else if (!PutToAdjacentAndTest(byNumber.Number, 3, 85))
 		{
 			AddError("Test failure!");
 		}
-		else if (!MoveAndGet(deck2.Number, 4))
+		else if (!MoveAndGet(byNumber.Number, 4))
 		{
 			AddError("Test failure!");
 		}
-		else if (!TestAdjacentWithDisk(deck2.Number, 81))
+		else if (!TestAdjacentWithDisk(byNumber.Number, 81))
 		{
 			AddError("Test failure!");
 		}
-		else if (!TestAdjacentWithDisk(deck2.Number, 85))
+		else if (!TestAdjacentWithDisk(byNumber.Number, 85))
 		{
 			AddError("Test failure!");
 		}
-		else if (!FileToBin(deck2.Number))
+		else if (!FileToBin(byNumber.Number))
 		{
 			AddError("Test failure!");
 		}
-		else if (!MoveAndGet(deck2.Number, 81))
+		else if (!MoveAndGet(byNumber.Number, 81))
 		{
 			AddError("Test failure!");
 		}
-		else if (!FileToBin(deck2.Number))
+		else if (!FileToBin(byNumber.Number))
 		{
 			AddError("Test failure!");
 		}
-		else if (!MoveAndGet(deck2.Number, 85))
+		else if (!MoveAndGet(byNumber.Number, 85))
 		{
 			AddError("Test failure!");
 		}
-		else if (!FileToBin(deck2.Number))
+		else if (!FileToBin(byNumber.Number))
 		{
 			AddError("Test failure!");
 		}
@@ -67,17 +68,18 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 
 	private bool FileToBin(int deck)
 	{
-		DumpBin dumpBin = SpecialLocationLocatorService.Instance.FindDumpBin();
-		if (dumpBin == null)
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		if (service == null || !service.Active)
 		{
 			base.AppLog.Write("The kiosk is not configured for a dumpbin.");
 			AddError("The dumpbin is not configured.");
 		}
-		if (ControllerService.Instance.MoveTo(dumpBin.MoveableLocation(), MoveMode.Put, base.AppLog) != MotionResult.Success)
+		if (base.MotionService.MoveTo(service.MoveableLocation(), MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
 		}
+		base.ControlSystem.TrackCycle();
 		if (!ControllerService.Instance.Put("UNKNOWN", base.AppLog).Success)
 		{
 			AddError("Test failure.");
@@ -88,12 +90,13 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 
 	private bool TestAdjacentWithDisk(int deck, int testSlot)
 	{
-		if (ControllerService.Instance.MoveTo(deck, testSlot, MoveMode.Put, base.AppLog) != MotionResult.Success)
+		if (base.MotionService.MoveTo(deck, testSlot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
 		}
-		PutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
+		base.ControlSystem.TrackCycle();
+		IPutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
 		if (!putResult.IsSlotInUse)
 		{
 			return false;

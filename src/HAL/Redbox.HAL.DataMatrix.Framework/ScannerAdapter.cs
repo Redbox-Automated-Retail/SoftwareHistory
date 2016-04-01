@@ -1,12 +1,14 @@
 using System;
+using System.Diagnostics;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
 internal abstract class ScannerAdapter : IDisposable
 {
-	private readonly ScannerServices Service;
+	protected readonly ScannerServices Service;
 
 	private bool m_disposed;
 
@@ -25,36 +27,8 @@ internal abstract class ScannerAdapter : IDisposable
 		return Path.Combine(BarcodeConfiguration.Instance.WorkingPath, path);
 	}
 
-	protected SnapResult TestSnap(string snapFile)
-	{
-		SnapResult snapResult = new SnapResult();
-		try
-		{
-			if (snapFile == null || !File.Exists(snapFile))
-			{
-				ProcessHelper.DumpProcessMemoryMetrics();
-				snapResult.SnapError();
-			}
-			else
-			{
-				snapResult.SnapOk = true;
-				snapResult.Path = snapFile;
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("CameraService.Snap() caught an exception.", e);
-			snapResult.SnapError();
-		}
-		return snapResult;
-	}
-
 	protected void InsertStat(ScanResult result, bool clearImage, double totalSeconds)
 	{
-		if (BarcodeConfiguration.Instance.InsertReadStats)
-		{
-			CameraStatistics.InsertCameraStat(result.ReadCount > 0, result.SecureCount, clearImage, (int)Service, totalSeconds);
-		}
 	}
 
 	protected ScannerAdapter(ScannerServices service)
@@ -63,4 +37,14 @@ internal abstract class ScannerAdapter : IDisposable
 	}
 
 	protected abstract void DisposeInner();
+
+	private void DumpProcessMemoryMetrics()
+	{
+		Process currentProcess = Process.GetCurrentProcess();
+		LogHelper.Instance.Log(" --- Memory dump --- ");
+		LogHelper.Instance.Log("    Working set: {0} bytes", currentProcess.WorkingSet64);
+		LogHelper.Instance.Log("    VM size: {0} bytes", currentProcess.VirtualMemorySize64);
+		LogHelper.Instance.Log("    Private memory size: {0} bytes", currentProcess.PrivateMemorySize64);
+		LogHelper.Instance.Log("    Paged memory size: {0} bytes", currentProcess.PagedMemorySize64);
+	}
 }

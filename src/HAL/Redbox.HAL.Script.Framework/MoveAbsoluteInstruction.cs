@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -56,25 +56,26 @@ public sealed class MoveAbsoluteInstruction : Instruction
 			{
 				axis = Axis.XY;
 			}
-			MoveTarget target = new MoveTarget
-			{
-				Axis = axis
-			};
+			int? xunits = null;
+			int? yunits = null;
 			if (axis == Axis.X)
 			{
-				target.XCoordinate = keyValuePairValue;
+				xunits = keyValuePairValue;
+				yunits = null;
 			}
 			else if (Axis.XY == axis)
 			{
-				target.XCoordinate = keyValuePairValue;
-				target.YCoordinate = keyValuePairValue2;
+				xunits = keyValuePairValue;
+				yunits = keyValuePairValue2;
 			}
 			else if (Axis.Y == axis)
 			{
-				target.YCoordinate = keyValuePairValue;
+				xunits = null;
+				yunits = keyValuePairValue;
 			}
-			MotionResult motionResult = ControllerService.Instance.MoveAbsolute(target, checkSensors);
-			context.PushTop(motionResult.ToString().ToUpper());
+			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+			ErrorCodes errorCodes = service.MoveAbsolute(axis, xunits, yunits, checkSensors);
+			context.PushTop(errorCodes.ToString().ToUpper());
 		}
 	}
 }

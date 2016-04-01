@@ -1,5 +1,4 @@
-using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -28,36 +27,34 @@ internal abstract class MerchSegment
 
 	internal int ItemCount()
 	{
-		VMZSearchResult high = default(VMZSearchResult);
-		VMZSearchResult low = default(VMZSearchResult);
-		ComputeBounds(ref low, ref high);
-		if (!high.Found)
-		{
-			return 0;
-		}
+		ILocation location = FindHigh();
 		int count = 0;
-		VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
+		if (location == null)
+		{
+			return count;
+		}
+		ILocation low = FindLow();
+		VMZ.Instance.ForAllBetweenDo(delegate(ILocation loc)
 		{
 			if (loc.Flags == Flags)
 			{
 				count++;
 			}
 			return true;
-		}, ref low, ref high);
+		}, low, location);
 		return count;
 	}
 
-	internal bool Contains(Location location)
+	internal bool Contains(ILocation location)
 	{
-		VMZSearchResult high = default(VMZSearchResult);
-		VMZSearchResult low = default(VMZSearchResult);
-		ComputeBounds(ref low, ref high);
-		if (!high.Found)
+		ILocation location2 = FindHigh();
+		if (location2 == null)
 		{
 			return false;
 		}
+		ILocation low = FindLow();
 		bool found = false;
-		VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
+		VMZ.Instance.ForAllBetweenDo(delegate(ILocation loc)
 		{
 			if (location.Equals(loc))
 			{
@@ -65,21 +62,20 @@ internal abstract class MerchSegment
 				return false;
 			}
 			return true;
-		}, ref low, ref high);
+		}, low, location2);
 		return found;
 	}
 
-	internal Location GetEmpty()
+	internal ILocation GetEmpty()
 	{
-		VMZSearchResult high = default(VMZSearchResult);
-		VMZSearchResult low = default(VMZSearchResult);
-		ComputeBounds(ref low, ref high);
-		Location empty = null;
-		if (!high.Found)
+		ILocation empty = null;
+		ILocation location = FindHigh();
+		if (location == null)
 		{
 			return empty;
 		}
-		VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
+		ILocation low = FindLow();
+		VMZ.Instance.ForAllBetweenDo(delegate(ILocation loc)
 		{
 			if (loc.IsEmpty)
 			{
@@ -87,23 +83,17 @@ internal abstract class MerchSegment
 				return false;
 			}
 			return true;
-		}, ref low, ref high);
+		}, low, location);
 		return empty;
 	}
 
-	internal void FindHigh(ref VMZSearchResult result)
+	internal ILocation FindHigh()
 	{
-		VMZ.Instance.FindHighestLocation(Flags, ref result);
+		return VMZ.Instance.FindHighestLocation(Flags);
 	}
 
-	internal void FindLow(ref VMZSearchResult result)
+	internal ILocation FindLow()
 	{
-		VMZ.Instance.FindFirstLocation(Flags, ref result);
-	}
-
-	internal void ComputeBounds(ref VMZSearchResult low, ref VMZSearchResult high)
-	{
-		FindHigh(ref high);
-		FindLow(ref low);
+		return VMZ.Instance.FindFirstLocation(Flags);
 	}
 }

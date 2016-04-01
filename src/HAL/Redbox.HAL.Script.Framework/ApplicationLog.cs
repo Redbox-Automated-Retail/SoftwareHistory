@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Runtime.Serialization;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -168,36 +168,42 @@ internal sealed class ApplicationLog : IFormattedLog
 
 	private void ConfigureAndOpen(string directory, string fileName, bool flushOnWrite, bool appends)
 	{
-		string kioskLogsPath = ControllerConfiguration.Instance.KioskLogsPath;
-		string text = kioskLogsPath;
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string text = service.LogsBasePath;
+		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
+		{
+			IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+			text = service2.RuntimePath("Logs");
+		}
+		string text2 = text;
 		if (!string.IsNullOrEmpty(directory))
 		{
-			text = Path.Combine(kioskLogsPath, directory);
-			if (!System.IO.Directory.Exists(text))
+			text2 = Path.Combine(text, directory);
+			if (!System.IO.Directory.Exists(text2))
 			{
 				try
 				{
-					System.IO.Directory.CreateDirectory(text);
+					System.IO.Directory.CreateDirectory(text2);
 				}
 				catch (Exception e)
 				{
 					LogHelper.Instance.Log("Unable to create subdirectory.", e);
-					text = kioskLogsPath;
+					text2 = text;
 				}
 			}
 		}
 		Configured = true;
-		Directory = text;
+		Directory = text2;
 		FileName = fileName;
 		FlushOnWrite = flushOnWrite;
 		AppendToExisting = appends;
-		string text2 = Path.Combine(Directory, FileName);
-		if (AppendToExisting && File.Exists(text2))
+		string text3 = Path.Combine(Directory, FileName);
+		if (AppendToExisting && File.Exists(text3))
 		{
-			FileInfo fileInfo = new FileInfo(text2);
+			FileInfo fileInfo = new FileInfo(text3);
 			if (fileInfo.Length >= 1024000)
 			{
-				CreateBackup(text2);
+				CreateBackup(text3);
 			}
 		}
 		Open();

@@ -1,66 +1,40 @@
+using Redbox.HAL.Component.Model;
+
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class PutResult
+internal sealed class PutResult : IPutResult
 {
-	public bool Success
-	{
-		get
-		{
-			if (HardwareError == PickerHardwareError.Success)
-			{
-				return Code == PutResultCode.Success;
-			}
-			return false;
-		}
-	}
+	public bool Success => ErrorCodes.Success == Code;
 
-	public bool IsSlotInUse => Code == PutResultCode.SlotInUse;
+	public bool IsSlotInUse => ErrorCodes.SlotInUse == Code;
 
-	public bool PickerEmpty => Code == PutResultCode.PickerEmpty;
+	public bool PickerEmpty => ErrorCodes.PickerEmpty == Code;
 
-	public bool PickerObstructed => Code == PutResultCode.PickerObstructed;
+	public bool PickerObstructed => ErrorCodes.PickerObstructed == Code;
 
 	public bool IsDuplicate { get; internal set; }
 
-	internal PutResultCode Code { get; set; }
+	public ILocation PutLocation { get; private set; }
 
-	internal PickerHardwareError HardwareError { get; set; }
+	public ErrorCodes Code { get; internal set; }
 
-	public static PutResult MakeEmulatedSlotInUse()
-	{
-		if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
-		{
-			return null;
-		}
-		PutResult putResult = new PutResult();
-		putResult.Code = PutResultCode.SlotInUse;
-		return putResult;
-	}
+	public string OriginalMatrix { get; private set; }
 
-	public static PutResult MakeEmulatedLocationOutOfRange()
-	{
-		if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
-		{
-			return null;
-		}
-		PutResult putResult = new PutResult();
-		putResult.Code = PutResultCode.LocationOutOfRange;
-		return putResult;
-	}
+	public string StoredMatrix { get; internal set; }
+
+	public ILocation OriginalMatrixLocation { get; internal set; }
 
 	public override string ToString()
 	{
-		if (HardwareError != PickerHardwareError.Success)
-		{
-			return HardwareError.ToString();
-		}
 		return Code.ToString();
 	}
 
-	internal PutResult()
+	internal PutResult(string matrix, ILocation putLocation)
 	{
-		Code = PutResultCode.Success;
-		HardwareError = PickerHardwareError.Success;
+		Code = ErrorCodes.Success;
 		IsDuplicate = false;
+		OriginalMatrix = matrix;
+		PutLocation = putLocation;
+		StoredMatrix = OriginalMatrix;
 	}
 }

@@ -1,8 +1,8 @@
-using System;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-public class DeviceDescriptor
+public sealed class DeviceDescriptor : IDeviceDescriptor
 {
 	private string m_deviceRep;
 
@@ -12,9 +12,7 @@ public class DeviceDescriptor
 
 	public string Friendlyname { get; private set; }
 
-	public DriverDescriptor DriverInfo { get; private set; }
-
-	public Guid DeviceGuid { get; private set; }
+	public DeviceClass DeviceClazz { get; private set; }
 
 	public override string ToString()
 	{
@@ -25,20 +23,31 @@ public class DeviceDescriptor
 		return m_deviceRep = $"vid_{Vendor}&pid_{Product}";
 	}
 
-	public DeviceDescriptor(string v, string p, string friendly)
+	public bool MatchDriver()
 	{
-		Vendor = v;
-		Product = p;
-		Friendlyname = friendly;
-		DeviceGuid = Guid.Empty;
+		return false;
 	}
 
-	public DeviceDescriptor(string v, string p, string friendly, DriverDescriptor desc, Guid deviceGuid)
+	public bool Locate()
 	{
-		Vendor = v;
-		Product = p;
+		return false;
+	}
+
+	public DeviceStatus GetStatus()
+	{
+		return DeviceStatus.Unknown;
+	}
+
+	public bool ResetDriver()
+	{
+		return false;
+	}
+
+	public DeviceDescriptor(string v, string p, string friendly, DeviceClass clazz)
+	{
+		Vendor = v.ToLower();
+		Product = p.ToLower();
 		Friendlyname = friendly;
-		DriverInfo = desc;
-		DeviceGuid = deviceGuid;
+		DeviceClazz = clazz;
 	}
 }

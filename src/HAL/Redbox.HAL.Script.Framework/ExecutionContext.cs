@@ -5,35 +5,14 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class ExecutionContext : IMessageSink, ISerializable
+public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 {
-	internal class ScriptMessage
-	{
-		public string Message { get; set; }
-
-		public DateTime EventTime { get; set; }
-
-		public static ScriptMessage Parse(string message)
-		{
-			string[] array = message.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			ScriptMessage scriptMessage = new ScriptMessage();
-			scriptMessage.EventTime = DateTime.Parse(array[0]);
-			scriptMessage.Message = array[1];
-			return scriptMessage;
-		}
-
-		public override string ToString()
-		{
-			return $"{EventTime}|{Message}";
-		}
-	}
-
 	private const string ResultPrefix = "RESULT";
 
 	private const string EmptyItemToken = "~";
@@ -41,6 +20,8 @@ public class ExecutionContext : IMessageSink, ISerializable
 	public readonly ExecutionStatus Status = new ExecutionStatus();
 
 	public readonly IDictionary<string, object> SymbolTable = new Dictionary<string, object>();
+
+	internal readonly Registers Registers;
 
 	internal readonly ApplicationLog AppLog;
 
@@ -64,13 +45,13 @@ public class ExecutionContext : IMessageSink, ISerializable
 
 	private readonly EventWaitHandle CompletionWaitHandle = new EventWaitHandle(initialState: false, EventResetMode.AutoReset);
 
-	private readonly object Lock = new object();
-
-	private readonly Deque<object> DataStack = new Deque<object>();
-
 	private readonly ReaderWriterLockSlim SignalsLock = new ReaderWriterLockSlim();
 
 	private readonly List<string> CachedSignals = new List<string>();
+
+	private readonly object Lock = new object();
+
+	private readonly Deque<object> DataStack = new Deque<object>();
 
 	private readonly List<string> CachedResults = new List<string>();
 
@@ -100,15 +81,15 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 	}
 
-	public bool IsImmediate => ID == ScriptConstants.ExecutionContexts.ImmediateModeContext;
+	public IFormattedLog ContextLog => AppLog;
+
+	public bool IsImmediate { get; internal set; }
 
 	public DateTime? ExecutionStart { get; private set; }
 
 	public DateTime CreatedOn { get; private set; }
 
 	public string ProgramName { get; private set; }
-
-	public Registers Registers { get; private set; }
 
 	public bool TraceExecution { get; set; }
 
@@ -290,7 +271,6 @@ public class ExecutionContext : IMessageSink, ISerializable
 				CachedResults.Clear();
 			}
 		}
-		SignalsLock.Dispose();
 	}
 
 	public void Resurrect()
@@ -343,6 +323,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 	public void Execute()
 	{
 		ExecutionTimer executionTimer = new ExecutionTimer();
+		ExecutionContextStatus executionContextStatus = ExecutionContextStatus.Completed;
 		try
 		{
 			if (!ExecutionStart.HasValue)
@@ -364,7 +345,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 				}
 				if (Result.Errors.ContainsError())
 				{
-					Status.NextValue = ExecutionContextStatus.Errored;
+					Status.NextValue = (executionContextStatus = ExecutionContextStatus.Errored);
 					if (!Registers.ActiveFrame.IP.ExitsContext)
 					{
 						LogHelper.Instance.Log($"Job {ID} had errors processing instruction at line {Registers.ActiveFrame.IP.LineNumber}.", LogEntryType.Info);
@@ -387,7 +368,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 					Registers.PopCallFrame();
 					if (Registers.ActiveFrame == null)
 					{
-						Status.NextValue = ExecutionContextStatus.Completed;
+						Status.NextValue = (executionContextStatus = ExecutionContextStatus.Completed);
 						break;
 					}
 				}
@@ -401,6 +382,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 		{
 			Result.Errors.Add(Error.NewError("E001", "An unhandled exception was raised by the execution engine.", ex.ToString()));
 			LogHelper.Instance.Log($"An instruction in program {ProgramName} ( ID = {ID} ) threw an unhandled exception.", ex);
+			executionContextStatus = ExecutionContextStatus.Errored;
 			Status.Promote(ExecutionContextStatus.Errored);
 			Result.UpdateExecutionTime(executionTimer.Elapsed);
 			Save();
@@ -414,7 +396,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 				if (!IsImmediate)
 				{
 					CleanupHardware();
-					string msg = $"Job {ProgramName} ID {ID} ends with status {Status.ToString()}";
+					string msg = $"Job {ProgramName} ID {ID} ends with status {executionContextStatus.ToString()}";
 					LogHelper.Instance.Log(msg);
 					AppLog.Write(msg);
 					CompletionWaitHandle.Close();
@@ -432,6 +414,11 @@ public class ExecutionContext : IMessageSink, ISerializable
 		}
 	}
 
+	public void CreateResult(string code, string msg, string id)
+	{
+		CreateResult(StackEnd.Bottom, code, msg, null, null, id, null, null);
+	}
+
 	public bool Send(string message)
 	{
 		DateTime dateTime = DateTime.Now;
@@ -440,11 +427,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 			dateTime = LastEventTime.Value.AddSeconds(1.0);
 		}
 		LastEventTime = dateTime;
-		Messages.PushTop(new ScriptMessage
-		{
-			EventTime = dateTime,
-			Message = message
-		});
+		Messages.PushTop(new ScriptMessage(dateTime, message));
 		return FlushMessages();
 	}
 
@@ -456,6 +439,11 @@ public class ExecutionContext : IMessageSink, ISerializable
 	public void PushBottom(object instance)
 	{
 		DataStack.PushBottom(instance);
+	}
+
+	public T PopTop<T>()
+	{
+		return (T)ConversionHelper.ChangeType(PopTop(), typeof(T));
 	}
 
 	public object PopTop()
@@ -649,7 +637,7 @@ public class ExecutionContext : IMessageSink, ISerializable
 			string text = Messages.PopTop().ToString();
 			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 			{
-				LogHelper.Instance.Log($"Job ID = {ID}, Message = {text}", LogEntryType.Info);
+				LogHelper.Instance.Log("Job ID = {0}, Message = {1}", ID, text);
 			}
 			try
 			{
@@ -658,18 +646,10 @@ public class ExecutionContext : IMessageSink, ISerializable
 			}
 			catch (Exception ex)
 			{
-				LogHelper.Instance.Log($"Job {ProgramName} ID {ID} failed to send message: exception message = {ex.Message}", LogEntryType.Error);
+				LogHelper.Instance.Log(LogEntryType.Error, "Job {0} ID {1} failed to send message: exception message = {2}", ProgramName, ID, ex.Message);
 			}
 		}
 		return num > 0;
-	}
-
-	internal void SendDebugTraceMessage()
-	{
-		if (ConnectionState != ConnectionState.Disconnected && TraceExecution && EnableDebugging)
-		{
-			Send($">DBG TRACE< {ProgramName}@{Registers.ActiveFrame.IP.LineNumber}");
-		}
 	}
 
 	internal void PromoteDeferredStatusChange()
@@ -680,9 +660,10 @@ public class ExecutionContext : IMessageSink, ISerializable
 
 	internal void CleanupHardware()
 	{
-		PickerBoard.SetSensors(on: false);
-		PickerBoard.StopRoller();
-		PickerBoard.ToggleRingLight(RinglightState.Off, null);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		service.SetSensors(on: false);
+		service.StopRoller();
+		service.ToggleRingLight(on: false, null);
 	}
 
 	internal string CreateCameraCaptureErrorResult()
@@ -1040,16 +1021,6 @@ public class ExecutionContext : IMessageSink, ISerializable
 			if (instruction2.Instructions.Count > 0)
 			{
 				CopyReferences(instruction2);
-			}
-			if (instruction2 is CallInstruction callInstruction)
-			{
-				string value = callInstruction.Operands[0].Value;
-				ProgramInstruction program = ExecutionEngine.Instance.GetProgram(value);
-				if (program != null)
-				{
-					ProgramCache[value] = (ProgramInstruction)program.Clone();
-					CopyReferences(ProgramCache[value]);
-				}
 			}
 		}
 	}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -42,9 +43,10 @@ internal sealed class ProgramCache : IDisposable
 		}
 		JobToOperand["return"] = "RETURN";
 		JobToOperand["quick-return"] = "QUICKRETURN";
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
-			string text = Path.Combine(RuntimeService.Instance.AssemblyDirectory, Assembly.GetExecutingAssembly().GetName().Name + ".dll");
+			string text = service.RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
 			try
 			{
 				Assembly assembly = Assembly.LoadFrom(text);

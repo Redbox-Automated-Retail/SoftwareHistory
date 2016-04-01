@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -14,8 +14,6 @@ public sealed class AirExchangerInstruction : Instruction
 		FanOn,
 		FanOff,
 		FanStatus,
-		Enable,
-		Disable,
 		ResetFailureCounter,
 		BoardStatus,
 		Reset
@@ -38,40 +36,34 @@ public sealed class AirExchangerInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
+		ExpectedOperand expectedOperand = Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None);
+		IAirExchangerService service = ServiceLocator.Instance.GetService<IAirExchangerService>();
+		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
 			context.ServiceLog("{0} instruction: converted '{1}' to operand None", Mnemonic, base.Operands[0].Value);
 			break;
 		case ExpectedOperand.IsConfigured:
-			context.PushTop(IceQubeBoard.Instance.Configured);
+			context.PushTop(service.Configured);
 			break;
 		case ExpectedOperand.FanOn:
-			IceQubeBoard.Instance.TurnOnFan();
+			service.TurnOnFan();
 			break;
 		case ExpectedOperand.FanOff:
-			IceQubeBoard.Instance.TurnOffFan();
-			break;
-		case ExpectedOperand.Enable:
-			IceQubeBoard.Instance.Configured = true;
-			context.PushTop(IceQubeBoard.Instance.Configured);
-			break;
-		case ExpectedOperand.Disable:
-			IceQubeBoard.Instance.TurnOnFan();
-			IceQubeBoard.Instance.Configured = false;
-			context.PushTop(IceQubeBoard.Instance.Configured);
+			service.TurnOffFan();
 			break;
 		case ExpectedOperand.FanStatus:
-			context.PushTop(IceQubeBoard.Instance.FanState.ToString().ToUpper());
+			context.PushTop(service.FanStatus.ToString().ToUpper());
 			break;
 		case ExpectedOperand.ResetFailureCounter:
-			IceQubeBoard.Instance.ResetFailureCount();
+			service.ResetFailureCount();
+			context.PushTop(service.PersistentFailureCount());
 			break;
 		case ExpectedOperand.BoardStatus:
-			context.PushTop(IceQubeBoard.Instance.CheckStatus().ToString().ToUpper());
+			context.PushTop(service.CheckStatus().ToString().ToUpper());
 			break;
 		case ExpectedOperand.Reset:
-			context.PushTop(IceQubeBoard.Instance.Reset().ToString().ToUpper());
+			context.PushTop(service.Reset().ToString().ToUpper());
 			break;
 		}
 	}

@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework.Natives;
@@ -9,7 +10,7 @@ internal sealed class MSPullInDVDJob : NativeJobAdapter
 
 	protected override void ExecuteInner()
 	{
-		PickerSensorReadResult pickerSensorReadResult = PickerBoard.ReadSensors();
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadSensors();
 		if (!pickerSensorReadResult.IsFull)
 		{
 			base.Context.CreateInfoResult("InvalidJobUse", "Picker is clear.");
@@ -18,79 +19,73 @@ internal sealed class MSPullInDVDJob : NativeJobAdapter
 		}
 		try
 		{
-			ControllerLocation location = ControllerService.Instance.Location;
+			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
 			GripperFingerState finger = GripperFingerState.Rent;
-			if (location.IsValid)
+			ILocation currentLocation = service.CurrentLocation;
+			if (currentLocation != null)
 			{
-				Deck deck = DecksManager.Instance.GetDeck(location.Deck);
-				if (deck.IsSlotSellThru(location.Slot))
+				IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
+				IDeck deck = service2.GetFrom(currentLocation);
+				if (deck.IsSlotSellThru(currentLocation.Slot))
 				{
 					finger = GripperFingerState.Open;
 				}
 			}
-			if (Track.Open())
+			if (!base.ControlSystem.TrackOpen().Success)
 			{
 				ErrorCode = "TRACK-OPEN-TIMEOUT";
-				HandleMachineError();
 				return;
 			}
-			PickerBoard.StartRollerOut();
+			base.ControlSystem.StartRollerOut();
 			for (int i = 0; i < ControllerConfiguration.Instance.NumberOfPulls; i++)
 			{
-				if (Gripper.SetFinger(finger))
+				if (!base.ControlSystem.SetFinger(finger).Success)
 				{
 					ErrorCode = "GRIPPER FINGER TIMEOUT";
-					HandleMachineError();
 					return;
 				}
-				if (Gripper.ExtendArmToSensor())
+				if (!base.ControlSystem.ExtendArm().Success)
 				{
 					ErrorCode = "GRIPPER EXTEND TIMEOUT";
-					HandleMachineError();
 					return;
 				}
-				if (Gripper.SetFinger(GripperFingerState.Closed))
+				if (!base.ControlSystem.SetFinger(GripperFingerState.Closed).Success)
 				{
 					ErrorCode = "GRIPPER FINGER TIMEOUT";
-					HandleMachineError();
 					return;
 				}
-				if (Gripper.RetractArm())
+				if (!base.ControlSystem.RetractArm().Success)
 				{
 					ErrorCode = "GRIPPER RETRACT TIMEOUT";
-					HandleMachineError();
 					return;
 				}
 			}
-			Gripper.SetFinger(GripperFingerState.Open);
-			if (Track.Close())
+			base.ControlSystem.SetFinger(GripperFingerState.Open);
+			if (!base.ControlSystem.TrackClose().Success)
 			{
 				ErrorCode = "TRACK CLOSE TIMEOUT";
-				HandleMachineError();
 			}
-			else if (PickerBoard.RollerToPosition(RollerPosition.Position4, 3000))
+			else if (!base.ControlSystem.RollerToPosition(RollerPosition.Position4, 3000).Success)
 			{
 				ErrorCode = "ROLLER POS4 TIMEOUT";
-				HandleMachineError();
 			}
 		}
 		finally
 		{
-			Track.Close();
-			PickerBoard.StopRoller();
-			Gripper.SetFinger(GripperFingerState.Rent);
-			Gripper.RetractArm();
+			if ("SUCCESS" != ErrorCode)
+			{
+				base.Context.CreateInfoResult("MachineError", ErrorCode);
+				AddError("pull-in-dvd failed.");
+			}
+			base.ControlSystem.TrackClose();
+			base.ControlSystem.StopRoller();
+			base.ControlSystem.SetFinger(GripperFingerState.Rent);
+			base.ControlSystem.RetractArm();
 		}
 	}
 
 	internal MSPullInDVDJob(ExecutionResult result, ExecutionContext ctx)
 		: base(result, ctx)
 	{
-	}
-
-	private void HandleMachineError()
-	{
-		base.Context.CreateInfoResult("MachineError", ErrorCode);
-		AddError("pull-in-dvd failed.");
 	}
 }

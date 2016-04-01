@@ -76,8 +76,8 @@ public class DeckConfigurationDetailForm : Form
 
 	private DataGridViewCheckBoxColumn Excluded;
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public bool AllowSlotDataEdit
 	{
 		get
@@ -114,8 +114,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? YOffset
 	{
 		get
@@ -136,8 +136,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? NumberOfSlots
 	{
 		get
@@ -180,8 +180,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? SellThruSlots
 	{
 		get
@@ -202,8 +202,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? SellThruOffset
 	{
 		get
@@ -224,8 +224,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? ApproachOffset
 	{
 		get
@@ -246,8 +246,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? SlotsPerQuadrant
 	{
 		get
@@ -283,8 +283,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public bool HasDumpSlot
 	{
 		get

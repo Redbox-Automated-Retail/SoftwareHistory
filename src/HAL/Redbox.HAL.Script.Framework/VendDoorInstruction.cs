@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -20,7 +20,7 @@ public sealed class VendDoorInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return IsOperandValid(operand);
+		return Enum<DoorCommands>.ParseIgnoringCase(operand, DoorCommands.None) != DoorCommands.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
@@ -29,7 +29,7 @@ public sealed class VendDoorInstruction : Instruction
 		{
 			result.AddMissingOperandError("Expected a symbol: OPEN, CLOSE, RENT, or STATUS.");
 		}
-		else if (operandTokens[0].Type != TokenType.Symbol || !IsOperandValid(operandTokens[0].Value))
+		else if (operandTokens[0].Type != TokenType.Symbol || !IsOperandRecognized(operandTokens[0].Value))
 		{
 			result.AddInvalidOperandError("Expected a symbol: OPEN, CLOSE, RENT, or STATUS.");
 		}
@@ -40,29 +40,25 @@ public sealed class VendDoorInstruction : Instruction
 		Token token = base.Operands[0];
 		if (token.Type == TokenType.Symbol)
 		{
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 			switch (Enum<DoorCommands>.ParseIgnoringCase(token.Value, DoorCommands.None))
 			{
 			case DoorCommands.Status:
-				context.PushTop(VendDoor.IsClosed() ? "CLOSED" : "OPEN");
+				context.PushTop(service.ReadVendDoorPosition().ToString().ToUpper());
 				break;
 			case DoorCommands.Open:
-				HandleTimeoutOrCommmError(VendDoor.TestOpen(), context);
+				context.PushTop("TIMEOUT");
 				break;
 			case DoorCommands.Rent:
-				HandleTimeoutOrCommmError(VendDoor.TestRent(), context);
+				HandleError(service.VendDoorRent(), context);
 				break;
 			case DoorCommands.Close:
-				HandleTimeoutOrCommmError(VendDoor.TestClose(), context);
+				HandleError(service.VendDoorClose(), context);
 				break;
 			default:
 				result.AddError(ExecutionErrors.InvalidSymbolValue, $"The value {token.Value} is unrecognized.");
 				break;
 			}
 		}
-	}
-
-	private bool IsOperandValid(string op)
-	{
-		return Enum<DoorCommands>.ParseIgnoringCase(op, DoorCommands.None) != DoorCommands.None;
 	}
 }

@@ -1,7 +1,7 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -32,8 +32,6 @@ public sealed class GripperInstruction : Instruction
 
 		public const string PushOut = "PUSH-OUT";
 
-		public const string DiskPushedBack = "DISK-PUSHED-BACK";
-
 		public const string PushIn = "PUSH-IN";
 
 		public const string AcceptDiscAtDoor = "ACCEPT-DISC-AT-DOOR";
@@ -43,8 +41,6 @@ public sealed class GripperInstruction : Instruction
 		public const string VendDiscAtDoor = "VEND-DISC-AT-DOOR";
 
 		public const string CheckPicker = "CHECK-PICKER";
-
-		public const string WrongPeek = "PEAK";
 
 		public const string ReadDisk = "READ-DISC";
 	}
@@ -79,79 +75,87 @@ public sealed class GripperInstruction : Instruction
 		{
 			text = text2;
 		}
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		switch (text)
 		{
-		case "PEAK":
-			context.PushTop("Dave, you spelled PEAK wrong - even I can spell it right.");
-			break;
 		case "VEND-DISC-AT-DOOR":
 		{
-			VendItemResult vendItemResult = ControllerService.Instance.VendItem();
-			context.PushTop(vendItemResult.PickerStatus.ToString().ToUpper());
+			using VendItemOperation vendItemOperation = new VendItemOperation();
+			context.PushTop(vendItemOperation.Execute().Status.ToString().ToUpper());
 			break;
 		}
 		case "REJECT-DISC-AT-DOOR":
-			context.PushTop(ControllerService.Instance.RejectDisk(ControllerConfiguration.Instance.RejectAtDoorAttempts).ToString().ToUpper());
+		{
+			using RejectDiskOperation rejectDiskOperation = new RejectDiskOperation(ControllerConfiguration.Instance.RejectAtDoorAttempts);
+			context.PushTop(rejectDiskOperation.Execute().ToString().ToUpper());
 			break;
+		}
 		case "ACCEPT-DISC-AT-DOOR":
-			context.PushTop(ControllerService.Instance.TakeDiskAtDoor().ToString().ToUpper());
+		{
+			using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
+			context.PushTop(acceptDiskOperation.Execute().ToString().ToUpper());
 			break;
+		}
 		case "OPEN":
-		{
-			CoreResponse response4 = Gripper.TestFinger(GripperFingerState.Open);
-			HandleTimeoutOrCommmError(response4, context);
+			TestFingerOperation(GripperFingerState.Open, context);
 			break;
-		}
 		case "CLOSE":
-		{
-			CoreResponse response3 = Gripper.TestFinger(GripperFingerState.Closed);
-			HandleTimeoutOrCommmError(response3, context);
+			TestFingerOperation(GripperFingerState.Closed, context);
 			break;
-		}
 		case "RENT":
-		{
-			CoreResponse response2 = Gripper.TestFinger(GripperFingerState.Rent);
-			HandleTimeoutOrCommmError(response2, context);
+			TestFingerOperation(GripperFingerState.Rent, context);
 			break;
-		}
 		case "STATUS":
 			context.PushTop(PickerBoard.IsFull() ? "FULL" : "EMPTY");
 			break;
 		case "EXTEND":
 		{
-			CoreResponse response = Gripper.TestExtend();
-			HandleTimeoutOrCommmError(response, context);
+			IControlResponse controlResponse = service.ExtendArm();
+			if (controlResponse.TimedOut)
+			{
+				service.RetractArm();
+			}
+			HandleError(controlResponse, context);
 			break;
 		}
 		case "EXTEND-FOR-TIME":
-			Gripper.TimedExtend(timeOutValue);
+			if (timeOutValue.HasValue)
+			{
+				service.TimedExtend(timeOutValue.Value);
+			}
+			else
+			{
+				service.TimedExtend();
+			}
 			break;
 		case "RETRACT":
 		{
-			CoreResponse response5 = Gripper.TestRetract();
-			HandleTimeoutOrCommmError(response5, context);
+			IControlResponse response = service.RetractArm();
+			HandleError(response, context);
 			break;
 		}
 		case "PEEK":
 		{
-			if (!ControllerService.Instance.Location.IsValid)
+			ILocation currentLocation = service2.CurrentLocation;
+			if (currentLocation == null)
 			{
 				context.PushTop("LOCATIONOUTOFRANGE");
 				break;
 			}
-			LocationTestResult locationTestResult = Gripper.Peek();
-			if (!locationTestResult.TestOk)
+			IPeekResult peekResult = new PeekOperation().Execute();
+			if (!peekResult.TestOk)
 			{
-				context.PushTop(locationTestResult.Error.ToString().ToUpper());
+				context.PushTop(peekResult.Error.ToString().ToUpper());
 			}
 			else
 			{
-				context.PushTop(locationTestResult.PeekResult.ToString().ToUpper());
+				context.PushTop(peekResult.IsFull ? "FULL" : "EMPTY");
 			}
 			break;
 		}
 		case "CLEAR":
-			context.PushTop(Gripper.IsClear());
+			context.PushTop(new ClearGripperOperation().Execute() == ErrorCodes.Success);
 			break;
 		case "READ-DISC":
 		{
@@ -165,21 +169,24 @@ public sealed class GripperInstruction : Instruction
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk || scanResult.ReadCode || centerDiskMethod == CenterDiskMethod.None)
 			{
-				PushReadResults(scanner, scanResult, context);
+				PushReadResults(scanResult, context);
 				break;
 			}
-			ControllerService.Instance.CenterItem(centerDiskMethod);
-			PushReadResults(scanner, scanner.Read(), context);
+			service.Center(centerDiskMethod);
+			PushReadResults(scanner.Read(), context);
 			break;
 		}
 		case "PUSH":
 		case "PUSH-IN":
-			Gripper.ClearFront();
+		{
+			using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
+			clearPickerFrontOperation.Execute();
 			break;
+		}
 		case "PUSH-OUT":
 		{
-			PushOutStatus pushOutStatus = PickerBoard.PushOut();
-			context.PushTop(pushOutStatus.ToString().ToUpper());
+			ErrorCodes errorCodes = PickerBoard.PushOut();
+			context.PushTop(errorCodes.ToString().ToUpper());
 			break;
 		}
 		case "CHECK-PICKER":
@@ -208,13 +215,20 @@ public sealed class GripperInstruction : Instruction
 		}
 	}
 
-	private void PushReadResults(Scanner scanner, ScanResult status, ExecutionContext context)
+	private void TestFingerOperation(GripperFingerState state, ExecutionContext context)
+	{
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IControlResponse response = service.SetFinger(state);
+		HandleError(response, context);
+	}
+
+	private void PushReadResults(ScanResult status, ExecutionContext context)
 	{
 		if (status.SnapOk)
 		{
 			context.PushTop(status.ScannedMatrix);
 		}
-		context.PushTop(scanner.Diagnostic(status));
+		context.PushTop(status.Diagnostic);
 	}
 
 	private bool ValidateOperand(string operand)

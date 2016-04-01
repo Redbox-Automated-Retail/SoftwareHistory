@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -14,7 +12,8 @@ internal sealed class ResetInventoryJob : NativeJobAdapter
 		string text = GetTop<string>();
 		if (!File.Exists(text))
 		{
-			text = Path.Combine(StoreManager.Instance.DataDirectory, text);
+			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
+			text = Path.Combine(service.StoreDirectory, text);
 			if (!File.Exists(text))
 			{
 				AddError("The file {0} doesn't exist.");
@@ -25,7 +24,8 @@ internal sealed class ResetInventoryJob : NativeJobAdapter
 		try
 		{
 			string xml = File.ReadAllText(text);
-			ControllerConfiguration.Instance.ResetInventoryState(xml, base.Result.Errors);
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			service2.ResetInventoryState(xml, base.Result.Errors);
 		}
 		catch (Exception e)
 		{

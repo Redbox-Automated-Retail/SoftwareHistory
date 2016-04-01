@@ -1,10 +1,9 @@
-using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Poller(Name = "IceQubeBoard")]
-internal sealed class IceQubeBoardPoller : ScriptPoller
+internal sealed class IceQubeBoardPoller : ScriptPoller, IConfigurationObserver
 {
 	protected override string ThreadName => "IceQube Board Poller";
 
@@ -12,11 +11,36 @@ internal sealed class IceQubeBoardPoller : ScriptPoller
 
 	protected override string JobName => "check-iceqube-board";
 
-	protected override bool IsConfigured => IceQubeBoard.Instance.Configured;
+	protected override bool IsConfigured
+	{
+		get
+		{
+			IAirExchangerService service = ServiceLocator.Instance.GetService<IAirExchangerService>();
+			return service.Configured;
+		}
+	}
 
 	protected override int PollSleep => 600000;
 
-	internal static IceQubeBoardPoller Instance => PollerManager.Instance.Locate("IceQubeBoard") as IceQubeBoardPoller;
+	public void NotifyConfigurationLoaded()
+	{
+		LogHelper.Instance.Log("[IceQubePoller] Configuration loaded.");
+	}
+
+	public void NotifyConfigurationChangeStart()
+	{
+		LogHelper.Instance.Log("[IceQubePoller] Configuration change start.");
+		Shutdown();
+	}
+
+	public void NotifyConfigurationChangeEnd()
+	{
+		LogHelper.Instance.Log("[IceQubePoller] Configuration change end.");
+		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
+		{
+			Start();
+		}
+	}
 
 	protected override bool CoreExecute()
 	{
@@ -30,34 +54,13 @@ internal sealed class IceQubeBoardPoller : ScriptPoller
 		return true;
 	}
 
-	internal override void OnEngineModeChange(EngineModes newMode)
+	internal override void Initialize()
 	{
-		switch (newMode)
-		{
-		case EngineModes.Normal:
-			Start();
-			break;
-		case EngineModes.Maintenance:
-		case EngineModes.Diagnostic:
-		case EngineModes.Merchandizing:
-			Shutdown();
-			break;
-		}
-	}
-
-	internal override void OnConfigChangeComplete()
-	{
-		IceQubeBoard.Instance.ConfigurationUpdateFinish();
-		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
-		{
-			Start();
-		}
-	}
-
-	internal override void OnConfigChangeStart()
-	{
-		Shutdown();
-		IceQubeBoard.Instance.ConfigurationChangeStart();
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
+		attributeXmlConfiguration.AddObserver(this);
+		IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
+		service2.AddObserver(this);
 	}
 
 	private IceQubeBoardPoller()

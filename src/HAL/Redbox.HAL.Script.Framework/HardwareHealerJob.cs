@@ -1,5 +1,6 @@
+using System.Threading;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -14,13 +15,14 @@ internal class HardwareHealerJob : NativeJobAdapter
 			bool flag = false;
 			for (int i = 0; i < 2; i++)
 			{
-				if (ControlSystem.Instance.GetBoardVersion(ControlBoards.Serial) != "TIMEOUT" && ControlSystem.Instance.GetBoardVersion(ControlBoards.Aux) != "TIMEOUT" && ControlSystem.Instance.GetBoardVersion(ControlBoards.Picker) != "TIMEOUT")
+				if (base.ControlSystem.GetBoardVersion(ControlBoards.Serial) != "TIMEOUT" && base.ControlSystem.GetBoardVersion(ControlBoards.Aux) != "TIMEOUT" && base.ControlSystem.GetBoardVersion(ControlBoards.Picker) != "TIMEOUT")
 				{
 					flag = true;
 					break;
 				}
-				ControlSystem.Instance.ClosePort(500);
-				ControlSystem.Instance.Initialize();
+				base.ControlSystem.Shutdown();
+				Thread.Sleep(500);
+				base.ControlSystem.Initialize();
 			}
 			if (!flag)
 			{
@@ -29,16 +31,15 @@ internal class HardwareHealerJob : NativeJobAdapter
 		}
 		if (ControllerConfiguration.Instance.EnableArcusHealing)
 		{
-			MotionController controller = MotionController.GetController();
 			if (ControllerConfiguration.Instance.EnableArcusKeepalive)
 			{
-				if (!controller.CommunicationOk())
+				if (!base.MotionService.CommunicationOk())
 				{
 					base.Context.ServiceLog("The motion controller is not responsive.");
 					AddError("Arcus COMM failure.");
 				}
 			}
-			else if (!controller.CommunicationOk() && !ResetMotionController())
+			else if (!base.MotionService.CommunicationOk() && !ResetMotionController())
 			{
 				base.Context.ServiceLog("The motion controller is not responsive; driver reset returned FAILURE.");
 				AddError("Can't reset controller.");
@@ -46,7 +47,7 @@ internal class HardwareHealerJob : NativeJobAdapter
 		}
 		if (ControllerConfiguration.Instance.EnableCameraHealing)
 		{
-			IScannerDevice configuredDevice = ScannerDeviceFactory.GetConfiguredDevice();
+			IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
 			if (!configuredDevice.Snap().SnapOk)
 			{
 				bool flag2 = configuredDevice.Restart();

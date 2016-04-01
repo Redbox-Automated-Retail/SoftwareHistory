@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-public class DeviceHelper : IDisposable
+public sealed class DeviceHelper : IDisposable
 {
 	public enum DriverType : uint
 	{
@@ -230,20 +231,47 @@ public class DeviceHelper : IDisposable
 
 	private const int SPDRP_BASE_CONTAINERID = 36;
 
-	private int ResetPauseTime => 1500;
-
-	private bool Debug { get; set; }
+	private readonly bool Debug;
 
 	public void Dispose()
 	{
 	}
 
-	public bool ChangeByHWID(DeviceDescriptor descriptor, DeviceState state)
+	public bool ChangeByHWID(IDeviceDescriptor descriptor, DeviceState state)
 	{
-		return SetDeviceStateInner(descriptor, state);
+		return SetDeviceState(descriptor, state);
 	}
 
-	public bool ChangeByHWID(DeviceDescriptor descriptor, Guid deviceClass, DeviceState state)
+	public bool SetDeviceState(IDeviceDescriptor descriptor, DeviceState state)
+	{
+		StringBuilder clazzNameBuffer = MakeBuffer();
+		int lastError = 0;
+		int failures = 0;
+		EnumerateDevices(Guid.Empty, 6u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
+		{
+			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
+			{
+				lastError = Marshal.GetLastWin32Error();
+				return ProcessDeviceInfoResult.Continue;
+			}
+			string text = QueryHardwareId(devInfo, ref did, out lastError);
+			if (text == null || !text.Contains(descriptor.ToString()))
+			{
+				return ProcessDeviceInfoResult.Continue;
+			}
+			LogHelper.Instance.Log("Found HWID {0} on class {1}", text, clazzNameBuffer);
+			bool flag = ChangeState(devInfo, ref did, state);
+			LogHelper.Instance.Log("Change state {0} returned {1}", state.ToString(), flag ? "OK" : "FAIL");
+			if (!flag)
+			{
+				failures++;
+			}
+			return ProcessDeviceInfoResult.Continue;
+		});
+		return 0 == failures;
+	}
+
+	public bool ChangeByHWID(IDeviceDescriptor descriptor, Guid deviceClass, DeviceState state)
 	{
 		StringBuilder hwidBuffer = MakeBuffer();
 		return EnumerateDevices(deviceClass, 2u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
@@ -264,62 +292,7 @@ public class DeviceHelper : IDisposable
 		});
 	}
 
-	public bool ChangeWithDriverMatch(DeviceDescriptor descriptor, Guid deviceClass, DeviceState state)
-	{
-		StringBuilder hwidBuffer = MakeBuffer();
-		return EnumerateDevices(deviceClass, 2u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
-		{
-			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 1u, 0u, hwidBuffer, 1000u, IntPtr.Zero))
-			{
-				return ProcessDeviceInfoResult.Continue;
-			}
-			if (!hwidBuffer.ToString().ToLower().Contains(descriptor.ToString()))
-			{
-				return ProcessDeviceInfoResult.Continue;
-			}
-			if (!MatchDriverInner(devInfo, ref did, descriptor.DriverInfo, hwidBuffer.ToString()))
-			{
-				return ProcessDeviceInfoResult.Continue;
-			}
-			return (!ChangeState(devInfo, ref did, state)) ? ProcessDeviceInfoResult.Error : ProcessDeviceInfoResult.Success;
-		});
-	}
-
-	public bool ResetDriver(DeviceDescriptor descriptor)
-	{
-		if (!SetDeviceStateInner(descriptor, DeviceState.Disable))
-		{
-			return false;
-		}
-		if (!SetDeviceStateInner(descriptor, DeviceState.Enable))
-		{
-			return false;
-		}
-		return SetDeviceStateInner(descriptor, DeviceState.Enable);
-	}
-
-	public bool ResetByName(string deviceName)
-	{
-		int resetPauseTime = ResetPauseTime;
-		if (!SetDeviceStateInner(DeviceClass.Ports, DeviceState.Disable, deviceName, MatchType.DeviceDescription))
-		{
-			return false;
-		}
-		PerfFunctions.Wait(resetPauseTime);
-		if (!SetDeviceStateInner(DeviceClass.USB, DeviceState.Disable, deviceName, MatchType.DeviceDescription))
-		{
-			return false;
-		}
-		PerfFunctions.Wait(resetPauseTime);
-		if (!SetDeviceStateInner(DeviceClass.USB, DeviceState.Enable, deviceName, MatchType.DeviceDescription))
-		{
-			return false;
-		}
-		PerfFunctions.Wait(resetPauseTime);
-		return SetDeviceStateInner(DeviceClass.Ports, DeviceState.Enable, deviceName, MatchType.DeviceDescription);
-	}
-
-	public DeviceStatus FindDeviceStatus(Guid deviceClazz, DeviceDescriptor deviceInfo)
+	public DeviceStatus FindDeviceStatus(Guid deviceClazz, IDeviceDescriptor deviceInfo)
 	{
 		StringBuilder hwid = MakeBuffer();
 		DeviceStatus rv = DeviceStatus.None;
@@ -351,7 +324,25 @@ public class DeviceHelper : IDisposable
 		return rv;
 	}
 
-	public bool MatchDriver(DeviceDescriptor descriptor, DriverDescriptor driverInfo, Guid type)
+	public bool MatchDriver2(string desc, IDriverDescriptor driverInfo, Guid type)
+	{
+		StringBuilder hwid = MakeBuffer();
+		desc = desc.ToLower();
+		return EnumerateDevices(type, 2u, delegate(IntPtr hDevInfo, ref SP_DEVINFO_DATA did)
+		{
+			if (!SetupDiGetDeviceRegistryProperty(hDevInfo, ref did, 1u, 0u, hwid, 1000u, IntPtr.Zero))
+			{
+				return ProcessDeviceInfoResult.Continue;
+			}
+			if (!hwid.ToString().ToLower().Equals(desc, StringComparison.CurrentCultureIgnoreCase))
+			{
+				return ProcessDeviceInfoResult.Continue;
+			}
+			return (!MatchDriverInner(hDevInfo, ref did, driverInfo, hwid.ToString())) ? ProcessDeviceInfoResult.Continue : ProcessDeviceInfoResult.Success;
+		});
+	}
+
+	public bool MatchDriver(IDeviceDescriptor descriptor, IDriverDescriptor driverInfo, Guid type)
 	{
 		StringBuilder hwid = MakeBuffer();
 		return EnumerateDevices(type, 2u, delegate(IntPtr hDevInfo, ref SP_DEVINFO_DATA did)
@@ -364,11 +355,12 @@ public class DeviceHelper : IDisposable
 			{
 				return ProcessDeviceInfoResult.Continue;
 			}
+			LogHelper.Instance.Log("[MatchDriver] HWID found {0}", hwid.ToString());
 			return (!MatchDriverInner(hDevInfo, ref did, driverInfo, hwid.ToString())) ? ProcessDeviceInfoResult.Continue : ProcessDeviceInfoResult.Success;
 		});
 	}
 
-	public void FindDeviceWithPid(DeviceClass clazz, string vid, string pid, MatchType matcher, List<string> errors, List<string> devMatches)
+	public void FindDeviceWithPid(DeviceClass clazz, string vid, string pid, DriverMatchType matcher, List<string> errors, List<string> devMatches)
 	{
 		int lastError = 0;
 		char[] separator = new char[1] { '&' };
@@ -410,13 +402,13 @@ public class DeviceHelper : IDisposable
 				int num3 = int.Parse(pid);
 				switch (matcher)
 				{
-				case MatchType.GTEPid:
+				case DriverMatchType.GTEPid:
 					if (num2 >= num3)
 					{
 						devMatches.Add(text);
 					}
 					break;
-				case MatchType.ExactPID:
+				case DriverMatchType.ExactPID:
 					if (num2 == num3)
 					{
 						devMatches.Add(text);
@@ -428,7 +420,32 @@ public class DeviceHelper : IDisposable
 		});
 	}
 
-	public void FindDeviceWithVid(DeviceClass clazz, string vid, List<string> errors, List<string> devMatches)
+	public void FindDeviceWithVid2(IDeviceDescriptor desc, List<string> errors, List<string> devMatches)
+	{
+		int lastError = 0;
+		StringBuilder clazzNameBuffer = MakeBuffer();
+		EnumerateDevices(Guid.Empty, 6u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
+		{
+			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
+			{
+				lastError = Marshal.GetLastWin32Error();
+				errors.Add($"SetupDiGetDeviceRegisProperty returned {lastError} searching for class.");
+				return ProcessDeviceInfoResult.Error;
+			}
+			if (desc.DeviceClazz.ToString() != clazzNameBuffer.ToString())
+			{
+				return ProcessDeviceInfoResult.Continue;
+			}
+			string text = QueryHardwareId(devInfo, ref did, out lastError);
+			if (text.Equals(desc.Vendor, StringComparison.CurrentCultureIgnoreCase))
+			{
+				devMatches.Add(text);
+			}
+			return ProcessDeviceInfoResult.Continue;
+		});
+	}
+
+	public void FindDevice(IDeviceDescriptor descriptor, List<string> errors, List<string> devMatches)
 	{
 		int lastError = 0;
 		StringBuilder clazzNameBuffer = MakeBuffer();
@@ -441,19 +458,21 @@ public class DeviceHelper : IDisposable
 				errors.Add($"SetupDiGetDeviceRegisProperty returned {lastError} searching for class.");
 				return ProcessDeviceInfoResult.Error;
 			}
-			if (clazz.ToString() != clazzNameBuffer.ToString())
+			if (descriptor.DeviceClazz.ToString() != clazzNameBuffer.ToString())
 			{
 				return ProcessDeviceInfoResult.Continue;
 			}
+			LogHelper.Instance.Log("[FindDeviceWithVid] succeeded clazz match device = {0} buffer = {1}", descriptor.DeviceClazz.ToString(), clazzNameBuffer.ToString());
 			string item;
 			string text = (item = QueryHardwareId(devInfo, ref did, out lastError));
+			LogHelper.Instance.Log("[FindDeviceWithVid] found hwid = {0}", text);
 			if (!text.ToLower().StartsWith("vid"))
 			{
 				int num = text.IndexOf("vid");
 				if (num == -1)
 				{
 					errors.Add("Invalid string.");
-					return ProcessDeviceInfoResult.Error;
+					return ProcessDeviceInfoResult.Continue;
 				}
 				text = text.Substring(num).ToLower();
 			}
@@ -464,7 +483,8 @@ public class DeviceHelper : IDisposable
 				return ProcessDeviceInfoResult.Continue;
 			}
 			string text2 = array[0].Substring(4);
-			if (text2 == vid)
+			string text3 = array[1].Substring(4);
+			if (text2 == descriptor.Vendor && text3 == descriptor.Product)
 			{
 				devMatches.Add(item);
 			}
@@ -514,8 +534,8 @@ public class DeviceHelper : IDisposable
 	}
 
 	public DeviceHelper()
+		: this(debug: false)
 	{
-		Debug = false;
 	}
 
 	public DeviceHelper(bool debug)
@@ -577,7 +597,7 @@ public class DeviceHelper : IDisposable
 		return stringBuilder.ToString().ToLower();
 	}
 
-	private bool SetDeviceStateInner(DeviceClass devClass, DeviceState devState, string queryData, MatchType match)
+	private bool SetDeviceStateInner(DeviceClass devClass, DeviceState devState, string queryData, DriverMatchType match)
 	{
 		if (devState == DeviceState.None)
 		{
@@ -596,7 +616,7 @@ public class DeviceHelper : IDisposable
 			{
 				return ProcessDeviceInfoResult.Continue;
 			}
-			string text = ((match == MatchType.HardwareId) ? QueryHardwareId(devInfo, ref did, out lastError) : QueryDeviceDescription(devInfo, ref did, out lastError));
+			string text = ((match == DriverMatchType.HardwareId) ? QueryHardwareId(devInfo, ref did, out lastError) : QueryDeviceDescription(devInfo, ref did, out lastError));
 			if (text.Equals(queryData, StringComparison.CurrentCultureIgnoreCase))
 			{
 				bool flag = ChangeState(devInfo, ref did, devState);
@@ -609,35 +629,6 @@ public class DeviceHelper : IDisposable
 			}
 			return ProcessDeviceInfoResult.Continue;
 		});
-	}
-
-	private bool SetDeviceStateInner(DeviceDescriptor descriptor, DeviceState state)
-	{
-		StringBuilder clazzNameBuffer = MakeBuffer();
-		int lastError = 0;
-		int failures = 0;
-		EnumerateDevices(Guid.Empty, 6u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
-		{
-			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
-			{
-				lastError = Marshal.GetLastWin32Error();
-				return ProcessDeviceInfoResult.Continue;
-			}
-			string text = QueryHardwareId(devInfo, ref did, out lastError);
-			if (text == null || !text.Contains(descriptor.ToString()))
-			{
-				return ProcessDeviceInfoResult.Continue;
-			}
-			LogHelper.Instance.Log("Found HWID {0} on class {1}", text, clazzNameBuffer);
-			bool flag = ChangeState(devInfo, ref did, state);
-			LogHelper.Instance.Log("Change state {0} returned {1}", state.ToString(), flag ? "OK" : "FAIL");
-			if (!flag)
-			{
-				failures++;
-			}
-			return ProcessDeviceInfoResult.Continue;
-		});
-		return 0 == failures;
 	}
 
 	private bool ChangeState(IntPtr hDevInfo, ref SP_DEVINFO_DATA devInfoData, DeviceState devState)
@@ -691,13 +682,9 @@ public class DeviceHelper : IDisposable
 		}
 	}
 
-	private bool MatchDriverInner(IntPtr hDevInfo, ref SP_DEVINFO_DATA did, DriverDescriptor driverInfo, string hwid)
+	private bool MatchDriverInner(IntPtr hDevInfo, ref SP_DEVINFO_DATA did, IDriverDescriptor driverInfo, string hwid)
 	{
-		if (driverInfo == null)
-		{
-			return false;
-		}
-		if (SetupDiBuildDriverInfoList(hDevInfo, ref did, DriverType.SPDIT_COMPATDRIVER))
+		if (driverInfo != null && SetupDiBuildDriverInfoList(hDevInfo, ref did, DriverType.SPDIT_COMPATDRIVER))
 		{
 			DriverInfoData driverInfoData = default(DriverInfoData);
 			driverInfoData.Size = Marshal.SizeOf(driverInfoData);
@@ -708,7 +695,7 @@ public class DeviceHelper : IDisposable
 					LogHelper.Instance.Log("Driver data:", LogEntryType.Info);
 					LogHelper.Instance.Log(driverInfoData.ToString(), LogEntryType.Info);
 				}
-				if (driverInfoData.GetVersion().Major != driverInfo.DriverVersion.Major)
+				if (driverInfoData.GetVersion() != driverInfo.DriverVersion)
 				{
 					if (Debug)
 					{
@@ -727,7 +714,7 @@ public class DeviceHelper : IDisposable
 				}
 				if (Debug)
 				{
-					LogHelper.Instance.Log("** driver mfr {0} didn't match {1}", driverInfoData.ProviderName, driverInfo.Provider);
+					LogHelper.Instance.Log("** driver provider {0} didn't match {1}", driverInfoData.ProviderName, driverInfo.Provider);
 				}
 			}
 		}

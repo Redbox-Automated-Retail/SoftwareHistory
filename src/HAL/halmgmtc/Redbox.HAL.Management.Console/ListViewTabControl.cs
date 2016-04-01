@@ -1,13 +1,14 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Management.Console;
 
 public class ListViewTabControl : UserControl
 {
-	private readonly SimpleLock Lock = new SimpleLock();
+	private readonly AtomicFlag Flag = new AtomicFlag();
 
 	private TabControl m_listViews;
 
@@ -100,7 +101,7 @@ public class ListViewTabControl : UserControl
 		{
 			return;
 		}
-		if (!Lock.TryLock())
+		if (!Flag.Set())
 		{
 			LogHelper.Instance.Log("Attempting to Refresh Listview but it was already locked.  Dropping Request.", LogEntryType.Error);
 			return;
@@ -113,7 +114,7 @@ public class ListViewTabControl : UserControl
 		}
 		finally
 		{
-			Lock.Unlock();
+			Flag.Clear();
 		}
 	}
 

@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -19,13 +19,14 @@ public class ESPInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
+		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
 		if (string.Compare(base.Operands[0].Value, "DUMP", ignoreCase: true) == 0)
 		{
-			ControllerConfiguration.Instance.DumpESP(dumpStore: false);
+			service.DumpESP(dumpStore: false);
 		}
 		else if (string.Compare(base.Operands[0].Value, "DUMP-STORE", ignoreCase: true) == 0)
 		{
-			ControllerConfiguration.Instance.DumpESP(dumpStore: true);
+			service.DumpESP(dumpStore: true);
 		}
 	}
 }

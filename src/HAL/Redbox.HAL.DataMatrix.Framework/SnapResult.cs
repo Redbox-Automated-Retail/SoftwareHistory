@@ -1,19 +1,26 @@
+using System.IO;
+using Redbox.HAL.Component.Model;
+
 namespace Redbox.HAL.DataMatrix.Framework;
 
-public sealed class SnapResult
+internal sealed class SnapResult : ISnapResult
 {
-	public string Path { get; internal set; }
+	public string Path { get; private set; }
 
-	public bool SnapOk { get; internal set; }
-
-	internal void SnapError()
+	public bool SnapOk
 	{
-		Path = null;
-		SnapOk = false;
+		get
+		{
+			if (!string.IsNullOrEmpty(Path))
+			{
+				return File.Exists(Path);
+			}
+			return false;
+		}
 	}
 
-	internal SnapResult()
+	internal SnapResult(string path)
 	{
-		SnapError();
+		Path = (string.IsNullOrEmpty(path) ? "NONE" : path);
 	}
 }

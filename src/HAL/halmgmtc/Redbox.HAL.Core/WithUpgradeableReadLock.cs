@@ -20,8 +20,9 @@ public struct WithUpgradeableReadLock : IDisposable
 
 	public WithUpgradeableReadLock(ReaderWriterLockSlim _lock)
 	{
-		TheLock = _lock;
+		this = default(WithUpgradeableReadLock);
 		Disposed = false;
+		TheLock = _lock;
 		TheLock.EnterUpgradeableReadLock();
 	}
 }

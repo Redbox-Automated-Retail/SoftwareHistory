@@ -1,10 +1,12 @@
 namespace Redbox.HAL.Script.Framework;
 
-public sealed class CompiledProgram
+internal sealed class CompiledProgram
 {
-	public readonly ProgramInstruction ParseTree;
+	internal readonly ProgramInstruction ParseTree;
 
-	public readonly ExecutionResult CompilerResult;
+	internal readonly ExecutionResult CompilerResult;
+
+	internal bool VisibleToUser;
 
 	public override string ToString()
 	{
@@ -19,5 +21,6 @@ public sealed class CompiledProgram
 	{
 		ParseTree = tree;
 		CompilerResult = compileResult;
+		VisibleToUser = true;
 	}
 }

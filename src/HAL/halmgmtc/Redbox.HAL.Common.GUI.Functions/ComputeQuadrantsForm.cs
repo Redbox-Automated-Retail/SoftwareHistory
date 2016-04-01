@@ -27,8 +27,8 @@ public class ComputeQuadrantsForm : Form
 
 	private Label label3;
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public decimal? StartOffset
 	{
 		get
@@ -71,8 +71,8 @@ public class ComputeQuadrantsForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? SlotsPerQuadrant
 	{
 		get

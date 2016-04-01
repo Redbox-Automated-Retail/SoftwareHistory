@@ -1,16 +1,15 @@
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyFileVersion("1.4.0.246")]
+[assembly: ComVisible(false)]
 [assembly: Guid("d9c56260-32d1-40bf-a453-e27ec84eabf4")]
+[assembly: AssemblyFileVersion("1.8.0.22")]
+[assembly: AssemblyTrademark("")]
 [assembly: AssemblyTitle("Redbox.HAL.IPC.Framework")]
 [assembly: AssemblyDescription("")]
-[assembly: ComVisible(false)]
+[assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("Redbox DVD Automated Retail")]
 [assembly: AssemblyProduct("Redbox.HAL.IPC.Framework")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2011")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyVersion("1.4.0.246")]
+[assembly: AssemblyVersion("1.8.0.22")]

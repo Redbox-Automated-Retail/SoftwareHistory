@@ -2,63 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class PluginLoader
 {
-	private string m_pluginsDirectory;
+	private readonly string PluginsDirectory;
 
-	private List<CameraPluginDescriptor> m_pluginDescriptors;
+	private readonly List<CameraPluginDescriptor> PluginDescriptors;
 
 	internal static PluginLoader Instance => Singleton<PluginLoader>.Instance;
-
-	internal List<CameraPluginDescriptor> Plugins
-	{
-		get
-		{
-			if (m_pluginDescriptors == null)
-			{
-				m_pluginDescriptors = new List<CameraPluginDescriptor>();
-				string[] files = Directory.GetFiles(PluginsDirectory, "*.xml");
-				if (files.Length == 0)
-				{
-					LogHelper.Instance.Log("[Camera Plugin Manager] There are no plugin descriptor files.", LogEntryType.Error);
-				}
-				else
-				{
-					string[] array = files;
-					foreach (string xmlPath in array)
-					{
-						CameraPluginDescriptor cameraPluginDescriptor = CameraPluginDescriptor.FromXml(xmlPath);
-						if (cameraPluginDescriptor != null)
-						{
-							m_pluginDescriptors.Add(cameraPluginDescriptor);
-						}
-					}
-				}
-			}
-			return m_pluginDescriptors;
-		}
-	}
-
-	private string PluginsDirectory
-	{
-		get
-		{
-			if (string.IsNullOrEmpty(m_pluginsDirectory))
-			{
-				m_pluginsDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "camera.plugins");
-			}
-			return m_pluginsDirectory;
-		}
-	}
 
 	internal CameraPluginDescriptor LocatePlugin(string name, out ICameraPlugin plugin)
 	{
 		plugin = null;
-		CameraPluginDescriptor cameraPluginDescriptor = Plugins.Find((CameraPluginDescriptor d) => name.Equals(d.PluginName, StringComparison.CurrentCultureIgnoreCase));
+		CameraPluginDescriptor cameraPluginDescriptor = PluginDescriptors.Find((CameraPluginDescriptor d) => name.Equals(d.PluginName, StringComparison.CurrentCultureIgnoreCase));
 		if (cameraPluginDescriptor == null)
 		{
 			return null;
@@ -72,6 +32,24 @@ internal sealed class PluginLoader
 
 	private PluginLoader()
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		PluginsDirectory = service.RuntimePath("camera.plugins");
+		string[] files = Directory.GetFiles(PluginsDirectory, "*.xml");
+		PluginDescriptors = new List<CameraPluginDescriptor>();
+		if (files.Length == 0)
+		{
+			LogHelper.Instance.Log("[Camera Plugin Manager] There are no plugin descriptor files.", LogEntryType.Error);
+			return;
+		}
+		string[] array = files;
+		foreach (string xmlPath in array)
+		{
+			CameraPluginDescriptor cameraPluginDescriptor = CameraPluginDescriptor.FromXml(xmlPath);
+			if (cameraPluginDescriptor != null)
+			{
+				PluginDescriptors.Add(cameraPluginDescriptor);
+			}
+		}
 	}
 
 	private bool LocatePluginInner(CameraPluginDescriptor descriptor, out ICameraPlugin plugin)
@@ -88,8 +66,7 @@ internal sealed class PluginLoader
 				MethodInfo method = type.GetMethod(descriptor.PluginServiceProviderMethodName, BindingFlags.Static | BindingFlags.Public);
 				if (method != null)
 				{
-					object obj = method.Invoke(null, null);
-					plugin = (ICameraPlugin)obj;
+					plugin = method.Invoke(null, null) as ICameraPlugin;
 					return plugin != null;
 				}
 			}

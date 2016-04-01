@@ -19,8 +19,8 @@ public class InputBoxForm : Form
 
 	private MaskedTextBox m_textBox;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string Label
 	{
 		get
@@ -33,8 +33,8 @@ public class InputBoxForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public string Value
 	{
 		get
@@ -51,8 +51,8 @@ public class InputBoxForm : Form
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool IsValueRequired { get; set; }
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string ErrorMessage { get; set; }
 
 	[Browsable(false)]

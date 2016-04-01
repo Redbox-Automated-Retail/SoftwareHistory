@@ -3,15 +3,15 @@ using System.Diagnostics;
 
 namespace Redbox.HAL.Core;
 
-public class ExecutionTimer : IDisposable
+public sealed class ExecutionTimer : IDisposable
 {
+	private readonly Stopwatch Stopwatch;
+
 	public TimeSpan Elapsed => Stopwatch.Elapsed;
 
 	public long ElapsedTicks => Stopwatch.ElapsedTicks;
 
 	public long ElapsedMilliseconds => Stopwatch.ElapsedMilliseconds;
-
-	private Stopwatch Stopwatch { get; set; }
 
 	public ExecutionTimer()
 	{

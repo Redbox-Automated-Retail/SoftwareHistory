@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -19,14 +19,15 @@ public class FindEmptyInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		using EmptySearchResult emptySearchResult = new EmptySearchResult();
-		if (!emptySearchResult.FindOneEmpty())
+		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
+		using IEmptySearchResult emptySearchResult = service.FindOneEmpty();
+		if (emptySearchResult.FoundEmpty == 0)
 		{
 			context.AppLog.LogMachineFull();
 			context.PushTop("MACHINE FULL");
 			return;
 		}
-		Location location = emptySearchResult.EmptyLocations[0];
+		ILocation location = emptySearchResult.EmptyLocations[0];
 		context.PushTop(location.Slot);
 		context.PushTop(location.Deck);
 		context.PushTop("FOUND");

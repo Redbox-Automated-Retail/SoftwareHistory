@@ -1,14 +1,14 @@
 using System;
 using System.Threading;
 using System.Timers;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
 [Poller(Name = "QuickReturn")]
-internal sealed class QuickReturnPoller : ScriptPoller
+internal sealed class QuickReturnPoller : ScriptPoller, IConfigurationObserver
 {
 	private enum State
 	{
@@ -35,9 +35,39 @@ internal sealed class QuickReturnPoller : ScriptPoller
 
 	protected override int PollSleep => 1000;
 
-	internal static QuickReturnPoller Instance => PollerManager.Instance.Locate("QuickReturn") as QuickReturnPoller;
+	internal static QuickReturnPoller Instance
+	{
+		get
+		{
+			IPollerService service = ServiceLocator.Instance.GetService<IPollerService>();
+			return service.Locate("QuickReturn") as QuickReturnPoller;
+		}
+	}
 
 	private DateRange PowerOffWindow { get; set; }
+
+	public void NotifyConfigurationLoaded()
+	{
+	}
+
+	public void NotifyConfigurationChangeStart()
+	{
+		LogHelper.Instance.Log("[QuickReturnPoller] ConfigurationChangeStart");
+		Shutdown();
+		PowerOffTimer.Disable();
+		PowerOnTimer.Disable();
+	}
+
+	public void NotifyConfigurationChangeEnd()
+	{
+		LogHelper.Instance.Log("[QuickReturnPoller] ConfigurationChangeEnd");
+		QuickReturnDevice.Instance.ConfigurationChange();
+		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
+		{
+			Start();
+			ConfigureTimers();
+		}
+	}
 
 	protected override bool OnPollStart()
 	{
@@ -71,13 +101,14 @@ internal sealed class QuickReturnPoller : ScriptPoller
 	{
 		try
 		{
-			IScannerDevice configuredDevice = ScannerDeviceFactory.GetConfiguredDevice();
+			IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
 			if (configuredDevice.InError)
 			{
 				LogHelper.Instance.Log("Quick return poller believes camera is down; shutting down poller.", LogEntryType.Error);
 				return false;
 			}
-			if (InventoryService.Instance.MachineIsFull())
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			if (service.MachineIsFull())
 			{
 				DisableUI();
 				return true;
@@ -154,39 +185,12 @@ internal sealed class QuickReturnPoller : ScriptPoller
 
 	internal override void Initialize()
 	{
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
+		attributeXmlConfiguration.AddObserver(this);
+		IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
+		service2.AddObserver(this);
 		ConfigureTimers();
-	}
-
-	internal override void OnConfigChangeComplete()
-	{
-		QuickReturnDevice.Instance.ConfigurationChange();
-		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
-		{
-			Start();
-			ConfigureTimers();
-		}
-	}
-
-	internal override void OnConfigChangeStart()
-	{
-		Shutdown();
-		PowerOffTimer.Disable();
-		PowerOnTimer.Disable();
-	}
-
-	internal override void OnEngineModeChange(EngineModes newMode)
-	{
-		switch (newMode)
-		{
-		case EngineModes.Normal:
-			Start();
-			break;
-		case EngineModes.Maintenance:
-		case EngineModes.Diagnostic:
-		case EngineModes.Merchandizing:
-			Shutdown();
-			break;
-		}
 	}
 
 	private void PowerOnDevice(object source, ElapsedEventArgs e)

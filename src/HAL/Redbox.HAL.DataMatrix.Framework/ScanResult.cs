@@ -1,143 +1,68 @@
 using System;
 using System.Collections.Generic;
-using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-public sealed class ScanResult
+internal sealed class ScanResult : IScanResult, IDisposable
 {
-	private List<string> m_rawCodes = new List<string>();
+	private readonly List<IDecodeResult> RawDecodeResults = new List<IDecodeResult>();
 
-	private static string m_decryptedToken;
+	private bool Disposed;
 
-	private int m_secureCodeCount;
-
-	public string ScannedMatrix
-	{
-		get
-		{
-			if (m_rawCodes.Count == 0)
-			{
-				return "UNKNOWN";
-			}
-			if (BarcodeConfiguration.Instance.EnableInfared)
-			{
-				if (m_secureCodeCount <= 0)
-				{
-					return "UNKNOWN";
-				}
-				return m_rawCodes[0];
-			}
-			return m_rawCodes[0];
-		}
-	}
+	public bool DeviceError { get; internal set; }
 
 	public TimeSpan ExecutionTime { get; internal set; }
 
-	public bool FoundSecureCode => m_secureCodeCount > 0;
-
-	public int SecureCount => m_secureCodeCount;
-
-	public SnapResult SnapResult { get; private set; }
-
-	public bool SnapOk => SnapResult.SnapOk;
-
-	public int ReadCount
+	public IList<IDecodeResult> DecodeResults
 	{
 		get
 		{
-			if (!BarcodeConfiguration.Instance.EnableInfared)
-			{
-				return m_rawCodes.Count;
-			}
-			if (m_secureCodeCount != 0)
-			{
-				return m_rawCodes.Count;
-			}
-			return 0;
+			List<IDecodeResult> list = new List<IDecodeResult>();
+			list.AddRange(RawDecodeResults);
+			return list;
 		}
 	}
 
-	public bool ReadCode
+	public void Dispose()
 	{
-		get
+		if (!Disposed)
 		{
-			if (!BarcodeConfiguration.Instance.EnableInfared)
-			{
-				return m_rawCodes.Count > 0;
-			}
-			if (m_rawCodes.Count > 0)
-			{
-				return m_secureCodeCount > 0;
-			}
-			return false;
+			Disposed = true;
+			RawDecodeResults.Clear();
 		}
-	}
-
-	private static string SecretToken
-	{
-		get
-		{
-			if (!string.IsNullOrEmpty(m_decryptedToken))
-			{
-				return m_decryptedToken;
-			}
-			m_decryptedToken = StringExtensions.DecryptFromBase64("2PiCFxFlrO8=");
-			return m_decryptedToken;
-		}
-	}
-
-	public RawReadResult ToRawReadResult()
-	{
-		return new RawReadResult((m_rawCodes.Count > 0) ? m_rawCodes[0] : "UNKNOWN", ExecutionTime, SnapResult.SnapOk);
-	}
-
-	public ScanResult()
-		: this(new SnapResult())
-	{
-	}
-
-	internal void NewSnapResult(SnapResult result)
-	{
-		SnapResult = result;
-	}
-
-	internal void FromResult(IScanResult sr)
-	{
-		AddCodes(sr.ReadCodes);
-		ExecutionTime = sr.ExecutionTime;
 	}
 
 	internal void ResetOnException()
 	{
-		m_rawCodes.Clear();
-		m_secureCodeCount = 0;
 		ExecutionTime = default(TimeSpan);
+		RawDecodeResults.Clear();
 	}
 
-	internal void AddCodes(IEnumerable<string> codes)
+	internal void Add(string code)
 	{
-		foreach (string code in codes)
+		DecodeResult decodeResult = RawDecodeResults.Find((IDecodeResult each) => each.Matrix == code) as DecodeResult;
+		if (decodeResult == null)
 		{
-			if (SecretToken.Equals(code, StringComparison.CurrentCultureIgnoreCase))
-			{
-				m_secureCodeCount++;
-				continue;
-			}
-			foreach (string computeFilter in BarcodeConfiguration.Instance.ComputeFilterList)
-			{
-				if (!computeFilter.Equals(code, StringComparison.CurrentCultureIgnoreCase))
-				{
-					m_rawCodes.Add(code);
-				}
-			}
+			decodeResult = new DecodeResult(code);
+			RawDecodeResults.Add(decodeResult);
+		}
+		if (!BarcodeConfiguration.Instance.FilterExcessReadCodes || decodeResult.Count < BarcodeConfiguration.Instance.ExpectedCodes)
+		{
+			decodeResult.Increment();
 		}
 	}
 
-	internal ScanResult(SnapResult snapResult)
+	internal void Add(IEnumerable<string> codes)
+	{
+		foreach (string code in codes)
+		{
+			Add(code);
+		}
+	}
+
+	internal ScanResult()
 	{
 		ExecutionTime = default(TimeSpan);
-		SnapResult = snapResult;
 	}
 }

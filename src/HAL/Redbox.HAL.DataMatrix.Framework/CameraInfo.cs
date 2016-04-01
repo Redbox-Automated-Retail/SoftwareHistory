@@ -1,16 +1,17 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-public sealed class CameraInfo
+internal sealed class CameraInfo
 {
 	private readonly DeviceHelper Helper;
 
-	public DeviceStatus Status { get; private set; }
+	internal DeviceStatus Status { get; private set; }
 
-	public KnownCameras Revision { get; private set; }
+	internal KnownCameras Revision { get; private set; }
 
-	public DeviceDescriptor Descriptor
+	internal DeviceDescriptor Descriptor
 	{
 		get
 		{
@@ -22,7 +23,7 @@ public sealed class CameraInfo
 		}
 	}
 
-	public DriverDescriptor DriverDescriptor
+	internal DriverDescriptor DriverDescriptor
 	{
 		get
 		{
@@ -34,7 +35,7 @@ public sealed class CameraInfo
 		}
 	}
 
-	public bool FindActiveCamera()
+	internal bool FindActiveCamera()
 	{
 		DeviceDescriptor deviceInfo = CameraDescriptors.FromKnownCamera(KnownCameras.FourthGen);
 		DeviceStatus deviceStatus = Helper.FindDeviceStatus(DeviceClassGuids.Image, deviceInfo);
@@ -55,24 +56,24 @@ public sealed class CameraInfo
 		return false;
 	}
 
-	public bool ResetDriver()
+	internal bool ResetDriver()
 	{
-		if (!SetCameraStateInner(DeviceState.Disable))
+		if (!SetCameraState(DeviceState.Disable))
 		{
 			return false;
 		}
 		PerfFunctions.Wait(1500);
-		bool result = SetCameraStateInner(DeviceState.Enable);
+		bool result = SetCameraState(DeviceState.Enable);
 		PerfFunctions.SpinWait(1500);
 		return result;
 	}
 
 	public bool SetCameraState(DeviceState state)
 	{
-		return SetCameraStateInner(state);
+		return Helper.ChangeByHWID(Descriptor, DeviceClassGuids.Image, state);
 	}
 
-	public bool CorrectDriverRunning()
+	internal bool CorrectDriverRunning()
 	{
 		if (DriverDescriptor == null || Descriptor == null)
 		{
@@ -81,15 +82,10 @@ public sealed class CameraInfo
 		return Helper.MatchDriver(Descriptor, DriverDescriptor, DeviceClassGuids.Image);
 	}
 
-	public CameraInfo(DeviceHelper helper)
+	internal CameraInfo(DeviceHelper helper)
 	{
 		Status = DeviceStatus.None;
 		Revision = KnownCameras.None;
 		Helper = helper;
-	}
-
-	private bool SetCameraStateInner(DeviceState state)
-	{
-		return Helper.ChangeByHWID(Descriptor, DeviceClassGuids.Image, state);
 	}
 }

@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using Microsoft.Win32;
 
 namespace Redbox.HAL.Script.Framework;
 
-public sealed class Registers
+internal sealed class Registers
 {
-	private Stack<CallFrame> m_callStack;
+	internal readonly Stack<CallFrame> CallStack = new Stack<CallFrame>();
 
-	public CallFrame ActiveFrame
+	internal CallFrame ActiveFrame
 	{
 		get
 		{
@@ -19,19 +18,7 @@ public sealed class Registers
 		}
 	}
 
-	internal Stack<CallFrame> CallStack
-	{
-		get
-		{
-			if (m_callStack == null)
-			{
-				m_callStack = new Stack<CallFrame>();
-			}
-			return m_callStack;
-		}
-	}
-
-	public Instruction PopCallFrame()
+	internal Instruction PopCallFrame()
 	{
 		if (CallStack.Count != 0)
 		{
@@ -40,7 +27,7 @@ public sealed class Registers
 		return null;
 	}
 
-	public void PushCallFrame(string programName, Instruction parentContext)
+	internal void PushCallFrame(string programName, Instruction parentContext)
 	{
 		CallStack.Push(new CallFrame
 		{
@@ -51,7 +38,7 @@ public sealed class Registers
 		});
 	}
 
-	public bool JumpToLabel(string labelName)
+	internal bool JumpToLabel(string labelName)
 	{
 		while (ActiveFrame != null)
 		{
@@ -66,61 +53,8 @@ public sealed class Registers
 		return false;
 	}
 
-	public void Reset()
+	internal void Reset()
 	{
 		CallStack.Clear();
-	}
-
-	internal void Load(RegistryKey parentKey, IDictionary<string, ProgramInstruction> programCache)
-	{
-		RegistryKey registryKey = parentKey.CreateSubKey("Registers");
-		if (registryKey == null)
-		{
-			return;
-		}
-		RegistryKey registryKey2 = registryKey.CreateSubKey("Call Stack");
-		if (registryKey2 != null)
-		{
-			string[] subKeyNames = registryKey2.GetSubKeyNames();
-			foreach (string name in subKeyNames)
-			{
-				RegistryKey parentKey2 = registryKey2.OpenSubKey(name);
-				CallStack.Push(CallFrame.Load(parentKey2, programCache));
-			}
-			registryKey2.Close();
-		}
-		registryKey.Close();
-	}
-
-	internal void Save(RegistryKey parentKey)
-	{
-		RegistryKey registryKey = parentKey.CreateSubKey("Registers");
-		if (registryKey == null)
-		{
-			return;
-		}
-		List<string> list = new List<string>(registryKey.GetSubKeyNames());
-		if (list.Contains("Call Stack"))
-		{
-			registryKey.DeleteSubKeyTree("Call Stack");
-		}
-		RegistryKey registryKey2 = registryKey.CreateSubKey("Call Stack");
-		if (registryKey2 != null)
-		{
-			int num = CallStack.Count;
-			foreach (CallFrame item in CallStack)
-			{
-				RegistryKey registryKey3 = registryKey2.CreateSubKey($"{num:0000}");
-				if (registryKey3 != null)
-				{
-					item.Save(registryKey3);
-					num--;
-					continue;
-				}
-				break;
-			}
-			registryKey2.Close();
-		}
-		registryKey.Close();
 	}
 }

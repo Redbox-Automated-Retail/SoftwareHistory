@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HAL.Management.Console.Properties;
 
@@ -381,7 +382,7 @@ public class TouchScreenAccess : UserControl
 		using (Manager.MakeAspect(sender))
 		{
 			HardwareService service = ProfileManager.Instance.Service;
-			IncrementalMoveForm incrementalMoveForm = new IncrementalMoveForm(service, LogHelper.Instance.Logger);
+			IncrementalMoveForm incrementalMoveForm = new IncrementalMoveForm(service);
 			incrementalMoveForm.ShowDialog();
 		}
 	}

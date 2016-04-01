@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -7,13 +7,14 @@ internal sealed class AirExchangerStatusJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		if (!IceQubeBoard.Instance.Configured)
+		IAirExchangerService service = ServiceLocator.Instance.GetService<IAirExchangerService>();
+		if (!service.Configured)
 		{
 			base.Context.CreateInfoResult("AirExchangerNotConfigured", "There is no air exchanger configured.");
 			return;
 		}
 		base.Context.CreateInfoResult("AirExchangerConfigured", "There is an air exchanger configured.");
-		if (!IceQubeBoard.Instance.ShouldRetry())
+		if (!service.ShouldRetry())
 		{
 			base.Context.CreateInfoResult("PersistentErrorStatus", "The board is in an persistent error state.");
 		}

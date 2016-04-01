@@ -1,56 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal sealed class PollerManager
+internal sealed class PollerManager : IPollerService
 {
-	private delegate bool PollersPredicate(ScriptPoller poller);
-
 	private readonly Dictionary<string, ScriptPoller> PollerMap = new Dictionary<string, ScriptPoller>();
 
-	internal static PollerManager Instance => Singleton<PollerManager>.Instance;
-
-	internal void Shutdown()
-	{
-		DoForAll(delegate(ScriptPoller poller)
-		{
-			poller.Shutdown();
-			return true;
-		});
-	}
-
-	internal void OnEngineModeChange(EngineModes newMode)
-	{
-		DoForAll(delegate(ScriptPoller poller)
-		{
-			poller.OnEngineModeChange(newMode);
-			return true;
-		});
-	}
-
-	internal void ConfigurationUpdateStart()
-	{
-		DoForAll(delegate(ScriptPoller poller)
-		{
-			poller.OnConfigChangeStart();
-			return true;
-		});
-	}
-
-	internal void ConfigurationUpdateFinish()
-	{
-		DoForAll(delegate(ScriptPoller poller)
-		{
-			poller.OnConfigChangeComplete();
-			return true;
-		});
-	}
-
-	internal ScriptPoller Locate(string name)
+	public ScriptPoller Locate(string name)
 	{
 		foreach (string key in PollerMap.Keys)
 		{
@@ -62,10 +22,11 @@ internal sealed class PollerManager
 		return null;
 	}
 
-	internal void RegisterPollers()
+	public void InitializePollers()
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
-		string text = Path.Combine(RuntimeService.Instance.AssemblyDirectory, Assembly.GetExecutingAssembly().GetName().Name + ".dll");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string text = service.RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
 		Assembly assembly = null;
 		try
 		{
@@ -98,24 +59,23 @@ internal sealed class PollerManager
 		DoForAll(delegate(ScriptPoller poller)
 		{
 			poller.Initialize();
-			poller.Start();
 			return true;
 		});
 	}
 
-	private void DoForAll(PollersPredicate predicate)
+	internal PollerManager()
+	{
+	}
+
+	private void DoForAll(Predicate<ScriptPoller> predicate)
 	{
 		foreach (string key in PollerMap.Keys)
 		{
-			ScriptPoller poller = PollerMap[key];
-			if (!predicate(poller))
+			ScriptPoller obj = PollerMap[key];
+			if (!predicate(obj))
 			{
 				break;
 			}
 		}
-	}
-
-	private PollerManager()
-	{
 	}
 }

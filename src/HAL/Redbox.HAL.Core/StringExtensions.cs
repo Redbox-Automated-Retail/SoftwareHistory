@@ -95,7 +95,26 @@ public static class StringExtensions
 
 	public static object ExtractIndex(string part)
 	{
-		return ExtractIndexInternal(part);
+		if (part == null)
+		{
+			return null;
+		}
+		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
+		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
+		object result = null;
+		if (match.Success)
+		{
+			result = match.Groups["indexer"].Captures[0].Value;
+		}
+		else if (match2.Success)
+		{
+			string value = match2.Groups["indexer"].Captures[0].Value;
+			if (int.TryParse(value, out var result2))
+			{
+				result = result2;
+			}
+		}
+		return result;
 	}
 
 	public static string ExtractCodeFromBrackets(string value, string prefix, string postfix)
@@ -141,30 +160,6 @@ public static class StringExtensions
 			return null;
 		}
 		return value.Substring(num2, num3 - num2 + postfix.Length);
-	}
-
-	internal static object ExtractIndexInternal(string part)
-	{
-		if (part == null)
-		{
-			return null;
-		}
-		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
-		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
-		object result = null;
-		if (match.Success)
-		{
-			result = match.Groups["indexer"].Captures[0].Value;
-		}
-		else if (match2.Success)
-		{
-			string value = match2.Groups["indexer"].Captures[0].Value;
-			if (int.TryParse(value, out var result2))
-			{
-				result = result2;
-			}
-		}
-		return result;
 	}
 
 	private static object GetObjectFromPath(string path, object rootObject, int? depthAdjust)

@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -21,6 +21,7 @@ public class VersionInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		if (base.Operands.Count == 1)
 		{
 			Token token = base.Operands[0];
@@ -30,16 +31,16 @@ public class VersionInstruction : Instruction
 				result.Errors.Add(Error.NewError("E001", "Unrecognized board option.", $"The option {token.Value} is not a board."));
 				return;
 			}
-			string boardVersion = ControlSystem.Instance.GetBoardVersion(controlBoards);
+			string boardVersion = service.GetBoardVersion(controlBoards);
 			context.PushTop(boardVersion);
 			return;
 		}
-		string boardVersions = ControlSystem.Instance.GetBoardVersions(out var versions);
-		string[] array = versions;
+		string[] boardVersions = service.GetBoardVersions();
+		string[] array = boardVersions;
 		foreach (string instance in array)
 		{
 			context.PushTop(instance);
 		}
-		context.PushTop($"REVISION {boardVersions}");
+		context.PushTop("REVISION A");
 	}
 }

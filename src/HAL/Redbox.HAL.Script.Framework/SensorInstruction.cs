@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -39,18 +39,19 @@ public sealed class SensorInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		Token token = base.Operands[0];
 		if (string.Compare(token.Value, "PICKER-ON", ignoreCase: true) == 0)
 		{
-			context.PushTop(PickerBoard.SetSensors(on: true));
+			context.PushTop(service.SetSensors(on: true).Success);
 		}
 		else if (string.Compare(token.Value, "PICKER-OFF", ignoreCase: true) == 0)
 		{
-			context.PushTop(PickerBoard.SetSensors(on: false));
+			context.PushTop(service.SetSensors(on: false).Success);
 		}
 		else if (string.Compare(token.Value, "READ-AUX-INPUTS", ignoreCase: true) == 0)
 		{
-			string[] array = ControlSystem.Instance.ReadInputs(ControlBoards.Aux);
+			string[] array = service.ReadInputs(ControlBoards.Aux);
 			int num = 1;
 			string[] array2 = array;
 			foreach (string arg in array2)
@@ -61,7 +62,7 @@ public sealed class SensorInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "READ-PICKER-INPUTS", ignoreCase: true) == 0)
 		{
-			string[] array3 = ControlSystem.Instance.ReadInputs(ControlBoards.Picker);
+			string[] array3 = service.ReadInputs(ControlBoards.Picker);
 			int num2 = 1;
 			string[] array4 = array3;
 			foreach (string arg2 in array4)
@@ -76,8 +77,8 @@ public sealed class SensorInstruction : Instruction
 			{
 				return;
 			}
-			PickerSensorReadResult pickerSensorReadResult = PickerBoard.ImmediateReadSensors();
-			if (pickerSensorReadResult.ReadError)
+			IPickerSensorReadResult pickerSensorReadResult = service.ReadImmediateSensors();
+			if (pickerSensorReadResult.Error != ErrorCodes.Success)
 			{
 				context.PushTop(0);
 				return;

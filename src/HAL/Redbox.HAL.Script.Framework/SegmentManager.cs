@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -25,15 +26,17 @@ internal sealed class SegmentManager : IGetObserver
 
 	internal static SegmentManager Instance => Singleton<SegmentManager>.Instance;
 
-	public void OnStuck(GetResult result, Deck deck, int slot)
+	public void OnStuck(IGetResult result)
 	{
-		deck.UpdateEmptyStuck(slot);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 	}
 
-	public bool OnEmpty(GetResult result, Deck deck, int slot)
+	public bool OnEmpty(IGetResult result)
 	{
-		result.UpdateCode(GetResultCode.ItemStuck);
-		deck.UpdateEmptyStuck(slot);
+		result.Update(ErrorCodes.ItemStuck);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 		return false;
 	}
 
@@ -51,16 +54,15 @@ internal sealed class SegmentManager : IGetObserver
 		return true;
 	}
 
-	internal List<Location> GetNonThinItemsInCompressedZone()
+	internal List<ILocation> GetNonThinItemsInCompressedZone()
 	{
-		List<Location> rv = new List<Location>();
-		VMZSearchResult high = default(VMZSearchResult);
-		FindHighest(ref high);
-		if (!high.Found)
+		List<ILocation> rv = new List<ILocation>();
+		ILocation location = FindHighest();
+		if (location == null)
 		{
 			return rv;
 		}
-		VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
+		VMZ.Instance.ForAllBetweenDo(delegate(ILocation loc)
 		{
 			if (loc.IsEmpty)
 			{
@@ -71,20 +73,19 @@ internal sealed class SegmentManager : IGetObserver
 				rv.Add(loc);
 			}
 			return true;
-		}, ref high);
+		}, location);
 		return rv;
 	}
 
-	internal bool InCompressedZone(Location target)
+	internal bool InCompressedZone(ILocation target)
 	{
-		VMZSearchResult high = default(VMZSearchResult);
-		FindHighest(ref high);
-		if (!high.Found)
+		ILocation location = FindHighest();
+		if (location == null)
 		{
 			return false;
 		}
 		bool found = false;
-		VMZ.Instance.ForAllBetweenDo(delegate(Location loc)
+		VMZ.Instance.ForAllBetweenDo(delegate(ILocation loc)
 		{
 			if (loc.Equals(target))
 			{
@@ -92,43 +93,43 @@ internal sealed class SegmentManager : IGetObserver
 				return false;
 			}
 			return true;
-		}, ref high);
+		}, location);
 		return found;
 	}
 
-	internal void FindHighest(ref VMZSearchResult high)
+	internal ILocation FindHighest()
 	{
+		ILocation location = null;
 		foreach (MerchFlags item in IncreasingPriorityOrder)
 		{
 			MerchSegment merchSegment = MerchSegmentFactory.Get(item);
-			merchSegment.FindHigh(ref high);
-			if (high.Found)
+			location = merchSegment.FindHigh();
+			if (location != null)
 			{
-				return;
+				return location;
 			}
 		}
-		high.Invalidate();
+		return null;
 	}
 
-	internal Location SelectLocation(MerchFlags flags, MerchTransferManager manager, out MerchandizeResult result)
+	internal ILocation SelectLocation(MerchFlags flags, MerchTransferManager manager, out MerchandizeResult result)
 	{
 		result = MerchandizeResult.Success;
-		VMZSearchResult result2 = default(VMZSearchResult);
 		MerchSegment merchSegment = MerchSegmentFactory.Get(flags);
-		merchSegment.FindHigh(ref result2);
-		VMZSearchResult sr = default(VMZSearchResult);
-		FindLastHigherPriority(merchSegment, ref sr);
-		bool found = sr.Found;
-		if (!found)
+		ILocation location = merchSegment.FindHigh();
+		ILocation location2 = FindLastHigherPriority(merchSegment);
+		bool flag = null != location2;
+		if (!flag)
 		{
-			sr.ResetToFirst();
+			location2 = VMZ.Instance.First;
 		}
 		VMZIterator vMZIterator = null;
 		MerchandizeResult _mr = result;
-		Location target = null;
-		if (result2.Found)
+		ILocation target = null;
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (location != null)
 		{
-			VMZ.ForAllBetweenDo(delegate(Location loc)
+			VMZ.ForAllBetweenDo(delegate(ILocation loc)
 			{
 				if (loc.IsEmpty)
 				{
@@ -139,7 +140,7 @@ internal sealed class SegmentManager : IGetObserver
 				{
 					return true;
 				}
-				if (!loc.IsStuck)
+				if (!service.IsStuck(loc))
 				{
 					MerchandizeResult merchandizeResult = MoveNonThin(loc, manager);
 					if (merchandizeResult == MerchandizeResult.Success)
@@ -154,7 +155,7 @@ internal sealed class SegmentManager : IGetObserver
 					}
 				}
 				return true;
-			}, ref sr, ref result2);
+			}, location2, location);
 			result = _mr;
 			if (target != null)
 			{
@@ -164,7 +165,7 @@ internal sealed class SegmentManager : IGetObserver
 				}
 				return target;
 			}
-			vMZIterator = new VMZIterator(ref result2);
+			vMZIterator = new VMZIterator(location);
 			if (!vMZIterator.Up())
 			{
 				result = MerchandizeResult.VMZFull;
@@ -173,8 +174,8 @@ internal sealed class SegmentManager : IGetObserver
 		}
 		else
 		{
-			vMZIterator = new VMZIterator(ref sr);
-			if (found && !vMZIterator.Up())
+			vMZIterator = new VMZIterator(location2);
+			if (flag && !vMZIterator.Up())
 			{
 				result = MerchandizeResult.VMZFull;
 				return null;
@@ -205,13 +206,12 @@ internal sealed class SegmentManager : IGetObserver
 			{
 				return merchSegment;
 			}
-			VMZSearchResult result = default(VMZSearchResult);
-			merchSegment.FindLow(ref result);
-			if (iterator.RelativeTo(ref result) == IteratorComareResult.Below)
+			ILocation location = merchSegment.FindLow();
+			if (iterator.RelativeTo(location) == IteratorComareResult.Below)
 			{
 				if (ThinHelper.Debug)
 				{
-					LogHelper.Instance.Log("[FindContainingOrHigher] Iterator at {0} is below {1}", iterator.Location.ToString(), result.Location.ToString());
+					LogHelper.Instance.Log("[FindContainingOrHigher] Iterator at {0} is below {1}", iterator.Location.ToString(), location.ToString());
 				}
 				return merchSegment;
 			}
@@ -219,79 +219,57 @@ internal sealed class SegmentManager : IGetObserver
 		return null;
 	}
 
-	internal MerchandizeResult MoveNonThin(Location source, Location outside, MerchTransferManager manager)
+	internal MerchandizeResult MoveNonThin(ILocation source, ILocation outside, MerchTransferManager manager)
 	{
-		List<Location> list = VMZ.Instance.FindFarthestEmptyOutsideOf(outside);
-		if (list.Count == 0)
+		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
+		using IEmptySearchResult emptySearchResult = service.FindEmptyOutsideOf(outside);
+		if (emptySearchResult.FoundEmpty == 0)
 		{
 			LogHelper.Instance.Log("[SegmentManager]: There are no empty slots available for transfer.");
 			return MerchandizeResult.MachineFull;
 		}
-		using (new DisposeableList<Location>(list))
+		TransferResult transferResult = ControllerService.Instance.Transfer(source, emptySearchResult.EmptyLocations, this, manager.Context.AppLog);
+		if (transferResult.Transferred)
 		{
-			foreach (Location item in list)
-			{
-				if (ControllerService.Instance.MoveTo(source, MoveMode.Get, manager.Context.AppLog) != MotionResult.Success)
-				{
-					return MerchandizeResult.HardwareError;
-				}
-				GetResult getResult = ControllerService.Instance.Get(this, manager.Context.AppLog);
-				if (getResult.EmptyOrStuck)
-				{
-					return MerchandizeResult.EmptyStuck;
-				}
-				if (ControllerService.Instance.MoveTo(item, MoveMode.Put, manager.Context.AppLog) != MotionResult.Success)
-				{
-					return MerchandizeResult.HardwareError;
-				}
-				PutResult putResult = ControllerService.Instance.Put(getResult.Previous, manager.Context.AppLog);
-				if (putResult.Success)
-				{
-					manager.ProcessTransfer(source, item, getResult.Previous);
-					if (getResult.ReturnTime.HasValue)
-					{
-						Deck deckNumber = DecksManager.Instance.GetDeckNumber(item.Deck);
-						deckNumber.UpdateFromResult(getResult, item.Slot);
-					}
-					return MerchandizeResult.Success;
-				}
-				if (putResult.IsSlotInUse)
-				{
-					if (ControllerService.Instance.MoveTo(source, MoveMode.Put, manager.Context.AppLog) != MotionResult.Success)
-					{
-						return MerchandizeResult.HardwareError;
-					}
-					putResult = ControllerService.Instance.Put(getResult.Previous, manager.Context.AppLog);
-					return MerchandizeResult.TransferFailure;
-				}
-			}
+			manager.ProcessTransfer(source, transferResult.Destination);
+			return MerchandizeResult.Success;
+		}
+		switch (transferResult.TransferError)
+		{
+		case ErrorCodes.SlotEmpty:
+		case ErrorCodes.ItemStuck:
 			return MerchandizeResult.EmptyStuck;
+		case ErrorCodes.SlotInUse:
+			return MerchandizeResult.TransferFailure;
+		default:
+			return MerchandizeResult.HardwareError;
 		}
 	}
 
-	internal MerchandizeResult MoveNonThin(Location source, MerchTransferManager manager)
+	internal MerchandizeResult MoveNonThin(ILocation source, MerchTransferManager manager)
 	{
-		VMZSearchResult high = default(VMZSearchResult);
-		FindHighest(ref high);
-		Location outside = (high.Found ? high.Location : source);
+		ILocation location = FindHighest();
+		ILocation outside = ((location != null) ? location : source);
 		return MoveNonThin(source, outside, manager);
 	}
 
-	internal MerchandizeResult MoveThin(Location source, Location empty, MerchTransferManager mgr)
+	internal MerchandizeResult MoveThin(ILocation source, ILocation empty, MerchTransferManager mgr)
 	{
 		MerchFlags flags = source.Flags;
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		TransferResult transferResult = ControllerService.Instance.Transfer(source, empty, mgr.Context.AppLog);
 		if (transferResult.Transferred)
 		{
 			if (Debug)
 			{
-				LogHelper.Instance.Log("MerchMetadata: xfer of {0} [Flags = {1}] to {2} was successful.", source.ToString(), flags.ToString(), transferResult.TransferredItem.Destination.ToString());
+				LogHelper.Instance.Log("MerchMetadata: xfer of {0} [Flags = {1}] to {2} was successful.", source.ToString(), flags.ToString(), empty.ToString());
 			}
-			empty.ChangeMerchFlags(flags);
+			empty.Flags = flags;
+			service.Save(empty);
 		}
 		else
 		{
-			LogHelper.Instance.Log("MerchMetadata: xfer of {0} [Flags = {1}] failed with error {2}", source.ToString(), source.Flags.ToString(), (transferResult.ErrorCode == null) ? transferResult.FailedError : transferResult.ErrorCode);
+			LogHelper.Instance.Log("MerchMetadata: xfer of {0} [Flags = {1}] failed with error {2}", source.ToString(), source.Flags.ToString(), transferResult.TransferError.ToString());
 		}
 		mgr.Process(transferResult);
 		return MerchandizeResult.Success;
@@ -304,9 +282,10 @@ internal sealed class SegmentManager : IGetObserver
 		return num - num2;
 	}
 
-	private Location FindTarget(VMZIterator iterator, MerchFlags flags, MerchTransferManager manager, out MerchandizeResult result)
+	private ILocation FindTarget(VMZIterator iterator, MerchFlags flags, MerchTransferManager manager, out MerchandizeResult result)
 	{
 		result = MerchandizeResult.Success;
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		while (true)
 		{
 			if (iterator.IsEmpty)
@@ -319,7 +298,7 @@ internal sealed class SegmentManager : IGetObserver
 				if (num < 0)
 				{
 					MerchSegment merchSegment = MerchSegmentFactory.Get(iterator.Location.Flags);
-					Location empty = merchSegment.GetEmpty();
+					ILocation empty = merchSegment.GetEmpty();
 					if (empty != null)
 					{
 						result = MoveThin(iterator.Location, empty, manager);
@@ -336,7 +315,7 @@ internal sealed class SegmentManager : IGetObserver
 					break;
 				}
 			}
-			else if (!iterator.IsStuck)
+			else if (!service.IsStuck(iterator.Location))
 			{
 				MerchandizeResult merchandizeResult = MoveNonThin(iterator.Location, manager);
 				if (merchandizeResult == MerchandizeResult.Success)
@@ -362,19 +341,20 @@ internal sealed class SegmentManager : IGetObserver
 	{
 		if (xferResult.Transferred)
 		{
-			context.CreateResult("DiskTransferSuccessful", Instance.InCompressedZone(xferResult.TransferredItem.Source) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", xferResult.TransferredItem.Source.Deck, xferResult.TransferredItem.Source.Slot, "EMPTY", null, xferResult.TransferredItem.Matrix);
-			if (DumpBin.Instance.IsBin(xferResult.TransferredItem.Destination))
+			context.CreateResult("DiskTransferSuccessful", Instance.InCompressedZone(xferResult.Source) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", xferResult.Source.Deck, xferResult.Source.Slot, "EMPTY", null, xferResult.Destination.ID);
+			IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+			if (service.IsBin(xferResult.Destination))
 			{
-				context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, xferResult.TransferredItem.Matrix, null, null);
+				context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, xferResult.Destination.ID, null, null);
 			}
 			else
 			{
-				context.CreateResult("DiskTransferSuccessful", Instance.InCompressedZone(xferResult.TransferredItem.Destination) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", xferResult.TransferredItem.Destination.Deck, xferResult.TransferredItem.Destination.Slot, xferResult.TransferredItem.Matrix, null, "EMPTY");
+				context.CreateResult("DiskTransferSuccessful", Instance.InCompressedZone(xferResult.Destination) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", xferResult.Destination.Deck, xferResult.Destination.Slot, xferResult.Destination.ID, null, "EMPTY");
 			}
 		}
 	}
 
-	private void FindLastHigherPriority(MerchSegment start, ref VMZSearchResult sr)
+	private ILocation FindLastHigherPriority(MerchSegment start)
 	{
 		MerchFlags nextHigher = start.NextHigher;
 		while (true)
@@ -384,14 +364,14 @@ internal sealed class SegmentManager : IGetObserver
 			{
 				break;
 			}
-			merchSegment.FindHigh(ref sr);
-			if (sr.Found)
+			ILocation location = merchSegment.FindHigh();
+			if (location != null)
 			{
 				if (Debug)
 				{
-					LogHelper.Instance.Log("FindLastHigher: [Context = {0}]: found higher priority [Context = {1}] at {2}", start.Flags.ToString(), start.NextHigher.ToString(), sr.Location.ToString());
+					LogHelper.Instance.Log("FindLastHigher: [Context = {0}]: found higher priority [Context = {1}] at {2}", start.Flags.ToString(), nextHigher.ToString(), location.ToString());
 				}
-				return;
+				return location;
 			}
 			nextHigher = merchSegment.NextHigher;
 		}
@@ -399,7 +379,7 @@ internal sealed class SegmentManager : IGetObserver
 		{
 			LogHelper.Instance.Log("FindLastHigherPriority: [Context = {0}]: no higher priority segments found.", start.Flags.ToString());
 		}
-		sr.Invalidate();
+		return null;
 	}
 
 	private SegmentManager()

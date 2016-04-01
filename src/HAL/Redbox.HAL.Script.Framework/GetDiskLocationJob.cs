@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -11,7 +11,7 @@ internal sealed class GetDiskLocationJob : NativeJobAdapter
 		for (int i = 0; i < top; i++)
 		{
 			string top2 = GetTop<string>();
-			Location location = InventoryService.Instance.Lookup(top2);
+			ILocation location = base.InventoryService.Lookup(top2);
 			if (location == null)
 			{
 				base.Context.CreateInfoResult("BarcodeNotInInventory", "The barcode isn't in inventory.");

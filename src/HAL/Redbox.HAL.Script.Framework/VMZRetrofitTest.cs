@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
@@ -17,14 +18,20 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 				applicationLog.Write("HAL is running emulated - do not run job.");
 				return;
 			}
-			if (QLM.Deck != null)
+			if (!ControllerConfiguration.Instance.IsVMZMachine)
 			{
 				applicationLog.Write("The kiosk is still configured for a QLM - bail test.");
 				AddError("Kiosk Misconfiguration.");
 				return;
 			}
-			Deck deck = DecksManager.Instance.GetDeck(DumpBin.Instance.Deck.Value);
-			if (!MoveAndGet(deck.Number, 1))
+			if (!base.DumpbinService.Active)
+			{
+				applicationLog.Write("The kiosk is not configured with a dump slot.");
+				AddError("Kiosk Misconfiguration.");
+				return;
+			}
+			IDeck byNumber = base.DecksService.GetByNumber(base.DumpbinService.MoveableLocation().Deck);
+			if (!MoveAndGet(byNumber.Number, 1))
 			{
 				AddError("Failure to retrieve disk from start position.");
 				return;
@@ -32,73 +39,73 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			int[] testSlots = TestSlots;
 			foreach (int slot in testSlots)
 			{
-				if (!MoveAndPut(deck.Number, slot, "UNKNOWN"))
+				if (!MoveAndPut(byNumber.Number, slot, "UNKNOWN"))
 				{
 					AddError("Unable to place the disk at a test location.");
 					return;
 				}
-				if (!MoveAndGet(deck.Number, slot))
+				if (!MoveAndGet(byNumber.Number, slot))
 				{
 					AddError("Unable to get the disk from test location.");
 					return;
 				}
 			}
-			if (!MoveAndPut(deck.Number, 81, "UNKNOWN"))
+			if (!MoveAndPut(byNumber.Number, 81, "UNKNOWN"))
 			{
 				AddError("Unable to put disk into adjacent slot.");
 			}
-			else if (TestSlotForDisk(deck.Number, 81))
+			else if (TestSlotForDisk(byNumber.Number, 81))
 			{
-				if (!PutToAdjacentAndTest(deck.Number, 2, 85))
+				if (!PutToAdjacentAndTest(byNumber.Number, 2, 85))
 				{
 					AddError("Test failure!");
 				}
-				else if (!MoveAndGet(deck.Number, 3))
+				else if (!MoveAndGet(byNumber.Number, 3))
 				{
 					AddError("Test failure!");
 				}
-				else if (!TestAdjacentWithDisk(deck.Number, 81))
+				else if (!TestAdjacentWithDisk(byNumber.Number, 81))
 				{
 					AddError("Test failure!");
 				}
-				else if (!TestAdjacentWithDisk(deck.Number, 85))
+				else if (!TestAdjacentWithDisk(byNumber.Number, 85))
 				{
 					AddError("Test failure!");
 				}
-				else if (!FileToBin(deck.Number))
+				else if (!FileToBin(byNumber.Number))
 				{
 					AddError("Test failure!");
 				}
-				else if (!MoveAndGet(deck.Number, 81))
+				else if (!MoveAndGet(byNumber.Number, 81))
 				{
 					AddError("Test failure!");
 				}
-				else if (!FileToBin(deck.Number))
+				else if (!FileToBin(byNumber.Number))
 				{
 					AddError("Test failure!");
 				}
-				else if (!MoveAndGet(deck.Number, 85))
+				else if (!MoveAndGet(byNumber.Number, 85))
 				{
 					AddError("Test failure!");
 				}
-				else if (!FileToBin(deck.Number))
+				else if (!FileToBin(byNumber.Number))
 				{
 					AddError("Test failure!");
 				}
 				else
 				{
-					ControllerService.Instance.MoveToVend(MoveMode.Get, base.AppLog);
+					base.MotionService.MoveVend(MoveMode.Get, base.AppLog);
 				}
 			}
 		}
 		finally
 		{
-			Deck deck2 = DecksManager.Instance.GetDeck(DumpBin.Instance.Deck.Value);
-			if (!deck2.IsQlmDeck)
+			IDeck byNumber2 = base.DecksService.GetByNumber(base.DumpbinService.MoveableLocation().Deck);
+			if (!byNumber2.IsQlm)
 			{
-				deck2.MarkInventory("EMPTY");
+				base.InventoryService.MarkDeckInventory(byNumber2, "EMPTY");
 			}
-			DumpBin.Instance.ResetCount();
+			base.DumpbinService.ResetCount();
 		}
 	}
 
@@ -109,8 +116,8 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 
 	private bool FileToBin(int deck)
 	{
-		Location location = DumpBin.Instance.MoveableLocation();
-		if (ControllerService.Instance.MoveTo(location, MoveMode.Put, base.AppLog) != MotionResult.Success)
+		ILocation location = base.DumpbinService.MoveableLocation();
+		if (base.MotionService.MoveTo(location, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
@@ -120,18 +127,19 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			AddError("Test failure.");
 			return false;
 		}
-		ControllerService.Instance.MoveTo(deck, 1, MoveMode.None, base.AppLog);
+		base.MotionService.MoveTo(deck, 1, MoveMode.None, base.AppLog);
 		return true;
 	}
 
 	private bool TestAdjacentWithDisk(int deck, int testSlot)
 	{
-		if (ControllerService.Instance.MoveTo(deck, testSlot, MoveMode.Put, base.AppLog) != MotionResult.Success)
+		if (base.MotionService.MoveTo(deck, testSlot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
 		}
-		PutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
+		base.ControlSystem.TrackCycle();
+		IPutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
 		if (!putResult.IsSlotInUse)
 		{
 			return false;

@@ -1,6 +1,4 @@
-using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -10,7 +8,7 @@ internal abstract class SyncDecorator
 
 	protected readonly ExecutionContext Context;
 
-	protected readonly Location SyncLocation;
+	protected readonly ILocation SyncLocation;
 
 	private static readonly CenterDiskMethod[] m_readMethods = new CenterDiskMethod[2]
 	{
@@ -30,7 +28,7 @@ internal abstract class SyncDecorator
 		}
 	}
 
-	protected virtual void OnMoveErrorInner(MotionResult result)
+	protected virtual void OnMoveErrorInner(ErrorCodes result)
 	{
 	}
 
@@ -38,7 +36,7 @@ internal abstract class SyncDecorator
 	{
 	}
 
-	protected SyncDecorator(ExecutionContext ctx, ExecutionResult result, Location loc)
+	protected SyncDecorator(ExecutionContext ctx, ExecutionResult result, ILocation loc)
 	{
 		SyncLocation = loc;
 		Result = result;
@@ -50,11 +48,11 @@ internal abstract class SyncDecorator
 		return SyncResult.Success;
 	}
 
-	internal virtual void OnGetFailure(GetResult gr)
+	internal virtual void OnGetFailure(IGetResult gr)
 	{
 	}
 
-	internal virtual void OnPutError(string id, PutResult putResult)
+	internal virtual void OnPutError(string id, IPutResult putResult)
 	{
 	}
 
@@ -62,7 +60,7 @@ internal abstract class SyncDecorator
 	{
 	}
 
-	internal virtual SyncResult ProcessEmpty(GetResult gr)
+	internal virtual SyncResult ProcessEmpty(IGetResult gr)
 	{
 		return SyncResult.Success;
 	}
@@ -72,7 +70,7 @@ internal abstract class SyncDecorator
 		ScanResult scanResult = scanner.SmartReadDisk(m_readMethods);
 		if (!scanResult.SnapOk)
 		{
-			LogHelper.Instance.Log("ReadDiscInPicker returned status {0}", scanner.Diagnostic(scanResult));
+			LogHelper.Instance.Log("ReadDiscInPicker returned status {0}", scanResult.Diagnostic);
 		}
 		OnReadDisk(scanResult);
 		return scanResult;
@@ -83,10 +81,10 @@ internal abstract class SyncDecorator
 		Result.Errors.Add(Error.NewError("E999", "Execution context error.", msg));
 	}
 
-	internal void OnMoveError(MotionResult motionResult)
+	internal void OnMoveError(ErrorCodes err)
 	{
 		Context.CreateMoveErrorResult(SyncLocation.Deck, SyncLocation.Slot);
 		AddError("There was a MOVE error.");
-		OnMoveErrorInner(motionResult);
+		OnMoveErrorInner(err);
 	}
 }

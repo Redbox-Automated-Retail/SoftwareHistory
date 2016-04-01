@@ -1,13 +1,13 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal struct UnloadHelper : IFileDiskHandler
 {
 	private readonly ExecutionContext Context;
+
+	private readonly ExecutionResult Result;
 
 	private static readonly CenterDiskMethod[] m_readMethods = new CenterDiskMethod[2]
 	{
@@ -20,13 +20,13 @@ internal struct UnloadHelper : IFileDiskHandler
 		Context.CreateInfoResult("QlmUnloadMachineFull", "The FINDEMPTY request failed because the machine is full.", idInPicker);
 	}
 
-	public FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, MotionResult moveResult, int deck, int slot)
+	public FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, ErrorCodes moveResult, int deck, int slot)
 	{
-		if (moveResult == MotionResult.Success)
+		if (moveResult == ErrorCodes.Success)
 		{
 			return FileDiscIterationResult.Continue;
 		}
-		if (MotionResult.Timeout == moveResult)
+		if (ErrorCodes.Timeout == moveResult)
 		{
 			return FileDiscIterationResult.NextLocation;
 		}
@@ -38,23 +38,19 @@ internal struct UnloadHelper : IFileDiskHandler
 	{
 	}
 
-	public void DiskFiled(ExecutionResult result, string idInPicker, int deck, int slot, bool isDuplicate)
+	public void DiskFiled(ExecutionResult result, IPutResult putResult)
 	{
-		if (isDuplicate && ControllerConfiguration.Instance.MarkDuplicatesUnknown)
-		{
-			idInPicker = "UNKNOWN";
-		}
-		Context.CreateResult("QlmUnloadPutIntoDrum", "An item in the picker was put away.", deck, slot, idInPicker, null, null);
+		Context.CreateResult("QlmUnloadPutIntoDrum", "An item in the picker was put away.", putResult.PutLocation.Deck, putResult.PutLocation.Slot, putResult.StoredMatrix, null, null);
 	}
 
-	public FileDiscIterationResult BeforeNextPut(ExecutionResult result, PutResult putResult, string idInPicker, int deck, int slot)
+	public FileDiscIterationResult BeforeNextPut(ExecutionResult result, IPutResult putResult)
 	{
 		if (putResult.IsSlotInUse)
 		{
-			Context.CreateResult(putResult.ToString().ToUpper(), "The slot is in use.", deck, slot, idInPicker, null, null);
+			Context.CreateResult(putResult.ToString().ToUpper(), "The slot is in use.", putResult.PutLocation.Deck, putResult.PutLocation.Slot, putResult.StoredMatrix, null, null);
 			return FileDiscIterationResult.Continue;
 		}
-		Context.CreateInfoResult("MachineError", "The PUT request failed; try to put the product away into an empty slot.", idInPicker);
+		Context.CreateInfoResult("MachineError", "The PUT request failed; try to put the product away into an empty slot.", putResult.StoredMatrix);
 		return FileDiscIterationResult.Continue;
 	}
 
@@ -70,23 +66,29 @@ internal struct UnloadHelper : IFileDiskHandler
 			return;
 		}
 		string text = "UNKNOWN";
-		if (!Gripper.IsClear())
+		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
 		{
-			Context.ServiceLog("There is an item partially stuck in the gripper track.", LogEntryType.Error);
-			Context.CreateItemStuckResult(text);
-			result.Errors.Add(Error.NewError("E001", "Item stuck", "There is an item stuck in the gripper; can't continue."));
-			return;
+			ErrorCodes errorCodes = clearGripperOperation.Execute();
+			if (errorCodes != ErrorCodes.Success)
+			{
+				Context.ServiceLog("There is an item partially stuck in the gripper track.", LogEntryType.Error);
+				Context.AppLog.WriteFormatted(LogEntryType.Error, "[Unload] Check and clear returned error status {0}", errorCodes.ToString());
+				Context.CreateItemStuckResult(text);
+				result.Errors.Add(Error.NewError("E001", "Item stuck", "There is an item stuck in the gripper; can't continue."));
+				return;
+			}
 		}
 		if (!PickerBoard.IsFull())
 		{
 			Context.ServiceLog("Item was cleared from picker.");
 			return;
 		}
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		using Scanner scanner = new Scanner();
 		CenterDiskMethod[] readMethods = m_readMethods;
 		foreach (CenterDiskMethod method in readMethods)
 		{
-			ControllerService.Instance.CenterItem(method);
+			service.Center(method);
 			ScanResult scanResult = scanner.Read();
 			text = scanResult.ScannedMatrix;
 			if (!scanResult.SnapOk)
@@ -99,54 +101,60 @@ internal struct UnloadHelper : IFileDiskHandler
 				break;
 			}
 		}
-		if (HelperFunctions.PutDiscAway(result, Context, text, new DefaultHandler()) != FileDiscStatus.Success)
+		if (HelperFunctions.PutDiscAway(result, Context, text, new DefaultHandler()) != ErrorCodes.Success)
 		{
 			Context.CreateItemStuckResult(text);
 			result.Errors.Add(Error.NewError("E001", "Item stuck", "There is an item stuck in the gripper; can't continue."));
 		}
 	}
 
-	internal MerchandizeResult UnloadDisk(ExecutionResult result, int srcDeck, int srcSlot)
+	internal MerchandizeResult UnloadDisk(int srcDeck, int srcSlot)
 	{
 		bool isVMZMachine = ControllerConfiguration.Instance.IsVMZMachine;
-		MotionResult motionResult = ControllerService.Instance.MoveTo(srcDeck, srcSlot, MoveMode.Get, Context.AppLog);
-		if (motionResult != MotionResult.Success)
+		ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		IDiskValidatorService service2 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		ErrorCodes errorCodes = ErrorCodes.Success;
+		string text = "UNKNOWN";
+		using (DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service2, JobsWithScan.Unload))
 		{
-			MerchandizingHelper.Instance.CleanupJob(result, Context, motionResult);
-			Context.CreateResult("MachineError", "There was an error executing the MOVE instruction.", srcDeck, srcSlot, null, null, null);
-			MerchandizingHelper.Instance.AddError(result, "The MOVE instruction failed.");
-			return MerchandizeResult.HardwareError;
-		}
-		GetResult getResult = ControllerService.Instance.Get(Context.AppLog);
-		if (getResult.IsSlotEmpty)
-		{
-			Context.CreateResult("QlmUnloadQlmSlotEmpty", "There was no item found at this location.", srcDeck, srcSlot, null, null, null);
-			return MerchandizeResult.EmptyStuck;
-		}
-		if (!getResult.Success)
-		{
-			if (isVMZMachine)
+			errorCodes = service.MoveTo(srcDeck, srcSlot, MoveMode.Get, Context.AppLog);
+			if (errorCodes != ErrorCodes.Success)
 			{
-				if (getResult.ItemStuck)
+				MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
+				Context.CreateResult("MachineError", "There was an error executing the MOVE instruction.", srcDeck, srcSlot, null, null, null);
+				MerchandizingHelper.Instance.AddError(Result, "The MOVE instruction failed.");
+				return MerchandizeResult.HardwareError;
+			}
+			IGetResult getResult = ControllerService.Instance.Get(Context.AppLog);
+			if (getResult.IsSlotEmpty)
+			{
+				Context.CreateResult("QlmUnloadQlmSlotEmpty", "There was no item found at this location.", srcDeck, srcSlot, null, null, null);
+				return MerchandizeResult.EmptyStuck;
+			}
+			if (!getResult.Success)
+			{
+				if (isVMZMachine && getResult.ItemStuck)
 				{
-					Deck deck = DecksManager.Instance.GetDeck(srcDeck);
-					deck.ClearMerchFlag(srcSlot);
+					IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
+					ILocation location = service3.Get(srcDeck, srcSlot);
+					location.Flags = MerchFlags.None;
+					service3.Save(location);
 					Context.CreateResult("UnloadEmptyStuck", "The disk at this location is stuck.", srcDeck, srcSlot, null, null, null);
 					return MerchandizeResult.EmptyStuck;
 				}
-				CounterManager.Instance.Increment("UNLOADGETFAIL");
+				Context.CreateResult("MachineError", string.Format("A hardware error occurred in the get from {0}.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, null, null, null);
+				MerchandizingHelper.Instance.AddError(Result, string.Format("An error occurred getting an item from the {0}.", isVMZMachine ? "VMZ" : "QLM"));
+				using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
+				{
+					if (clearGripperOperation.Execute() == ErrorCodes.Success)
+					{
+						MerchandizingHelper.Instance.CleanupJob(Result, Context, ErrorCodes.Success);
+					}
+				}
+				return MerchandizeResult.HardwareError;
 			}
-			Context.CreateResult("MachineError", string.Format("A hardware error occurred in the get from {0}.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, null, null, null);
-			MerchandizingHelper.Instance.AddError(result, string.Format("An error occurred getting an item from the {0}.", isVMZMachine ? "VMZ" : "QLM"));
-			if (Gripper.IsClear())
-			{
-				MerchandizingHelper.Instance.CleanupJob(result, Context, MotionResult.Success);
-			}
-			return MerchandizeResult.HardwareError;
-		}
-		string text = "UNKNOWN";
-		using (Scanner scanner = new Scanner())
-		{
+			using Scanner scanner = new Scanner();
 			ScanResult scanResult = scanner.SmartReadDisk(m_readMethods);
 			text = scanResult.ScannedMatrix;
 			if (!scanResult.SnapOk)
@@ -155,62 +163,68 @@ internal struct UnloadHelper : IFileDiskHandler
 				text = "UNKNOWN";
 				if (ControllerConfiguration.Instance.IsVMZMachine)
 				{
-					result.Errors.Add(Error.NewError("E997", "CAMERA CAPTURE error.", "The camera isn't working."));
+					Result.Errors.Add(Error.NewError("E997", "CAMERA CAPTURE error.", "The camera isn't working."));
 				}
 			}
-			if (text == "UNKNOWN")
+			if (!scanResult.ReadCode)
 			{
 				Context.AppLog.Write("The barcode couldn't be read.", LogEntryType.Info);
 				Context.CreateResult("QlmUnloadBadRead", "The READ request failed because no barcode could be read.", srcDeck, srcSlot, null, null, null);
-				CounterManager.Instance.Increment("UNKNOWNUNLOADCOUNT");
+			}
+			else
+			{
+				diskValidatorHelper.ValidateAndNotify(text, Context);
 			}
 		}
 		Context.CreateResult("QlmUnloadBarcodeFromQlm", string.Format("The item pulled from the {0} has the following barcode.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, text, null, null);
 		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
-			motionResult = ControllerService.Instance.MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
-			if (motionResult != MotionResult.Success)
+			errorCodes = service.MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
+			if (errorCodes != ErrorCodes.Success)
 			{
-				MerchandizingHelper.Instance.CleanupJob(result, Context, motionResult);
-				MerchandizingHelper.Instance.ExitOnMoveError(result, Context, leaveResult: true);
+				MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
+				MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
 				return MerchandizeResult.HardwareError;
 			}
-			bool isDuplicate = InventoryService.Instance.IsBarcodeDuplicate(text, out var _);
-			if (ControllerService.Instance.Put(text, Context.AppLog).Success)
+			IPutResult putResult = ControllerService.Instance.Put(text, Context.AppLog);
+			if (putResult.Success)
 			{
-				DiskFiled(result, text, srcDeck, srcSlot, isDuplicate);
+				DiskFiled(Result, putResult);
 				return MerchandizeResult.Success;
 			}
 		}
-		return FileUnload(result, text, srcDeck, srcSlot);
+		return FileUnload(text, srcDeck, srcSlot);
 	}
 
-	internal UnloadHelper(ExecutionContext context)
+	internal UnloadHelper(ExecutionContext context, ExecutionResult result)
 	{
 		Context = context;
+		Result = result;
 	}
 
-	private MerchandizeResult FileUnload(ExecutionResult result, string readMatrix, int srcDeck, int srcSlot)
+	private MerchandizeResult FileUnload(string readMatrix, int srcDeck, int srcSlot)
 	{
-		FileDiscStatus fileDiscStatus = HelperFunctions.PutDiscAway(result, Context, readMatrix, this);
-		if (fileDiscStatus == FileDiscStatus.Success)
+		ErrorCodes errorCodes = HelperFunctions.PutDiscAway(Result, Context, readMatrix, this);
+		if (errorCodes == ErrorCodes.Success)
 		{
 			return MerchandizeResult.Success;
 		}
-		MotionResult motionResult = ControllerService.Instance.MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
-		if (motionResult != MotionResult.Success)
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes2 = service.MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
+		if (errorCodes2 != ErrorCodes.Success)
 		{
-			MerchandizingHelper.Instance.CleanupJob(result, Context, motionResult);
-			MerchandizingHelper.Instance.ExitOnMoveError(result, Context, leaveResult: true);
+			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes2);
+			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
 			return MerchandizeResult.HardwareError;
 		}
+		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
 		if (!ControllerService.Instance.Put(readMatrix, Context.AppLog).Success)
 		{
 			Context.CreateResult("MachineError", "There was an error executing the PUT instruction.", srcDeck, srcSlot, readMatrix, null, null);
 		}
-		MerchandizingHelper.Instance.CleanupJob(result, Context, MotionResult.Success);
-		MerchandizingHelper.Instance.AddError(result, "Unable to put disk away.");
-		if (fileDiscStatus != FileDiscStatus.MachineFull)
+		MerchandizingHelper.Instance.CleanupJob(Result, Context, ErrorCodes.Success);
+		MerchandizingHelper.Instance.AddError(Result, "Unable to put disk away.");
+		if (errorCodes != ErrorCodes.MachineFull)
 		{
 			return MerchandizeResult.HardwareError;
 		}

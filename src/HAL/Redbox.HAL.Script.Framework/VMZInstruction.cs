@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -20,6 +21,7 @@ public sealed class VMZInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
+		ServiceLocator.Instance.GetService<IMotionControlService>();
 		if (string.Compare(base.Operands[0].Value, "IS-CONFIGURED", ignoreCase: true) == 0)
 		{
 			context.PushTop(ControllerConfiguration.Instance.IsVMZMachine);
@@ -34,63 +36,11 @@ public sealed class VMZInstruction : Instruction
 		}
 		else if (string.Compare(base.Operands[0].Value, "FETCH-LAST-THIN", ignoreCase: true) == 0)
 		{
-			ErrorList errors = new ErrorList();
-			int? timeOutValue = GetTimeOutValue(errors, context);
-			PerfFunctions.Wait(timeOutValue.HasValue ? timeOutValue.Value : 8000);
-			VMZSearchResult result2 = default(VMZSearchResult);
-			VMZ.Instance.FindHighestLocation(MerchFlags.Thin, ref result2);
-			if (!result2.Found)
-			{
-				VMZHelperFunctions.MoveViewable(context);
-				context.PushTop("NONE");
-				return;
-			}
-			MotionResult motionResult = ControllerService.Instance.MoveTo(result2.Deck, result2.Slot, MoveMode.Get, context.AppLog);
-			if (motionResult != MotionResult.Success)
-			{
-				context.PushTop(motionResult.ToString().ToUpper());
-				return;
-			}
-			GetResult getResult = ControllerService.Instance.Get(context.AppLog);
-			if (getResult.Success)
-			{
-				VMZHelperFunctions.MoveViewable(context);
-				context.PushTop("SUCCESS");
-			}
-			else
-			{
-				context.PushTop(getResult.ToString().ToUpper());
-			}
+			FetchLast(MerchFlags.Thin, context);
 		}
 		else if (string.Compare(base.Operands[0].Value, "FETCH-LAST-REBALANCE", ignoreCase: true) == 0)
 		{
-			ErrorList errors2 = new ErrorList();
-			int? timeOutValue2 = GetTimeOutValue(errors2, context);
-			PerfFunctions.Wait(timeOutValue2.HasValue ? timeOutValue2.Value : 8000);
-			VMZSearchResult result3 = default(VMZSearchResult);
-			VMZ.Instance.FindHighestLocation(MerchFlags.Rebalance, ref result3);
-			if (!result3.Found)
-			{
-				VMZHelperFunctions.MoveViewable(context);
-				context.PushTop("NONE");
-				return;
-			}
-			MotionResult motionResult2 = ControllerService.Instance.MoveTo(result3.Deck, result3.Slot, MoveMode.Get, context.AppLog);
-			if (motionResult2 != MotionResult.Success)
-			{
-				context.PushTop(motionResult2.ToString().ToUpper());
-				return;
-			}
-			GetResult getResult2 = ControllerService.Instance.Get(context.AppLog);
-			if (getResult2.Success)
-			{
-				VMZHelperFunctions.MoveViewable(context);
-				context.PushTop("SUCCESS");
-			}
-			else
-			{
-				context.PushTop(getResult2.ToString().ToUpper());
-			}
+			FetchLast(MerchFlags.Rebalance, context);
 		}
 		else if (string.Compare(base.Operands[0].Value, "NON-THIN-COUNT", ignoreCase: true) == 0)
 		{
@@ -107,20 +57,20 @@ public sealed class VMZInstruction : Instruction
 				context.PushTop("CLEAN");
 				return;
 			}
-			CleanResult result4 = default(CleanResult);
-			CleanManager.Instance.CleanSlot(ref result4, context, SegmentManager.Instance);
-			ProcessAnyTransfers(result4, context);
-			if (result4.VisitedAllSlots)
+			CleanResult result2 = default(CleanResult);
+			CleanManager.Instance.CleanSlot(ref result2, context, SegmentManager.Instance);
+			ProcessAnyTransfers(result2, context);
+			if (result2.VisitedAllSlots)
 			{
 				context.PushTop("CLEAN");
 			}
-			else if (result4.NoEmptySlots)
+			else if (result2.NoEmptySlots)
 			{
 				context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
 			}
 			else
 			{
-				context.PushTop((result4.TransferFailures > 0) ? "TRANSFERFAILURE" : "SUCCESS");
+				context.PushTop((result2.TransferFailures > 0) ? "TRANSFERFAILURE" : "SUCCESS");
 			}
 		}
 		else if (string.Compare(base.Operands[0].Value, "MARK-UNLOAD", ignoreCase: true) == 0)
@@ -138,15 +88,14 @@ public sealed class VMZInstruction : Instruction
 		}
 		else if (string.Compare(base.Operands[0].Value, "MARK-EMPTY", ignoreCase: true) == 0)
 		{
-			VMZSearchResult high = default(VMZSearchResult);
-			SegmentManager.Instance.FindHighest(ref high);
-			if (!high.Found)
+			ILocation location = SegmentManager.Instance.FindHighest();
+			if (location == null)
 			{
 				context.PushTop(0);
 			}
 			else
 			{
-				context.PushTop(VMZ.Instance.ResetCompressedZone(ref high));
+				context.PushTop(VMZ.Instance.ResetCompressedZone(location));
 			}
 		}
 		else if (string.Compare(base.Operands[0].Value, "DUMP-ZONE", ignoreCase: true) == 0)
@@ -204,9 +153,40 @@ public sealed class VMZInstruction : Instruction
 		}
 		else if (string.Compare(base.Operands[0].Value, "ZONE-NON-THIN-COUNT", ignoreCase: true) == 0)
 		{
-			List<Location> nonThinItemsInCompressedZone = SegmentManager.Instance.GetNonThinItemsInCompressedZone();
+			List<ILocation> nonThinItemsInCompressedZone = SegmentManager.Instance.GetNonThinItemsInCompressedZone();
 			context.PushTop(nonThinItemsInCompressedZone.Count.ToString());
 			nonThinItemsInCompressedZone.Clear();
+		}
+	}
+
+	private void FetchLast(MerchFlags flags, ExecutionContext context)
+	{
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorList errors = new ErrorList();
+		int? timeOutValue = GetTimeOutValue(errors, context);
+		PerfFunctions.Wait(timeOutValue.HasValue ? timeOutValue.Value : 8000);
+		ILocation location = VMZ.Instance.FindHighestLocation(flags);
+		if (location == null)
+		{
+			VMZHelperFunctions.MoveViewable(context);
+			context.PushTop("NONE");
+			return;
+		}
+		ErrorCodes errorCodes = service.MoveTo(location, MoveMode.Get, context.AppLog);
+		if (errorCodes != ErrorCodes.Success)
+		{
+			context.PushTop(errorCodes.ToString().ToUpper());
+			return;
+		}
+		IGetResult getResult = ControllerService.Instance.Get(context.AppLog);
+		if (getResult.Success)
+		{
+			VMZHelperFunctions.MoveViewable(context);
+			context.PushTop("SUCCESS");
+		}
+		else
+		{
+			context.PushTop(getResult.ToString().ToUpper());
 		}
 	}
 
@@ -246,15 +226,14 @@ public sealed class VMZInstruction : Instruction
 
 	private void LocateLast(MerchFlags flags, ExecutionContext context)
 	{
-		VMZSearchResult result = default(VMZSearchResult);
-		VMZ.Instance.FindHighestLocation(flags, ref result);
-		if (!result.Found)
+		ILocation location = VMZ.Instance.FindHighestLocation(flags);
+		if (location == null)
 		{
 			context.PushTop("NONE");
 			return;
 		}
-		context.PushTop(result.Slot);
-		context.PushTop(result.Deck);
+		context.PushTop(location.Slot);
+		context.PushTop(location.Deck);
 		context.PushTop("FOUND");
 	}
 
@@ -272,9 +251,11 @@ public sealed class VMZInstruction : Instruction
 		{
 			MerchSegment merchSegment = MerchSegmentFactory.Get(item);
 			ctx.CreateInfoResult($"{item.ToString()}CountInZone", merchSegment.ItemCount().ToString());
-			VMZSearchResult result = default(VMZSearchResult);
-			VMZ.Instance.FindHighestLocation(item, ref result);
-			ctx.CreateInfoResult($"High{item.ToString()}Location", result.ToString());
+			ILocation location = VMZ.Instance.FindHighestLocation(item);
+			if (location != null)
+			{
+				ctx.CreateInfoResult($"High{item.ToString()}Location", location.ToString());
+			}
 		}
 	}
 }

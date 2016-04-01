@@ -1,17 +1,34 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal abstract class NativeJobAdapter
 {
+	internal string Name { get; set; }
+
 	protected ApplicationLog AppLog => Context.AppLog;
 
 	protected ControllerService Controller => ControllerService.Instance;
 
+	protected IInventoryService InventoryService => ServiceLocator.Instance.GetService<IInventoryService>();
+
+	protected IDumpbinService DumpbinService => ServiceLocator.Instance.GetService<IDumpbinService>();
+
+	protected IMotionControlService MotionService => ServiceLocator.Instance.GetService<IMotionControlService>();
+
+	protected IDecksService DecksService => ServiceLocator.Instance.GetService<IDecksService>();
+
+	protected IControlSystem ControlSystem => ServiceLocator.Instance.GetService<IControlSystem>();
+
 	protected ExecutionResult Result { get; private set; }
 
 	protected ExecutionContext Context { get; private set; }
+
+	internal void Execute()
+	{
+		ExecuteInner();
+	}
 
 	protected abstract void ExecuteInner();
 
@@ -22,8 +39,9 @@ internal abstract class NativeJobAdapter
 
 	protected bool ResetMotionController()
 	{
-		bool flag = MotionController.Reset(AppLog, quick: true);
-		HardwareCorrectionStats.InsertStat(CorrectionType.Arcus, flag, Context.ID);
+		bool flag = MotionService.Reset(AppLog, quick: true);
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		service.Insert(HardwareCorrectionStatistic.Arcus, Context, flag);
 		return flag;
 	}
 
@@ -38,7 +56,7 @@ internal abstract class NativeJobAdapter
 
 	protected bool MoveAndGet(int deck, int slot)
 	{
-		if (ControllerService.Instance.MoveTo(deck, slot, MoveMode.Get, AppLog) != MotionResult.Success)
+		if (MotionService.MoveTo(deck, slot, MoveMode.Get, AppLog) != ErrorCodes.Success)
 		{
 			return false;
 		}
@@ -47,49 +65,57 @@ internal abstract class NativeJobAdapter
 
 	protected bool MoveAndPut(int deck, int slot, string id)
 	{
-		if (ControllerService.Instance.MoveTo(deck, slot, MoveMode.Put, AppLog) != MotionResult.Success)
+		if (MotionService.MoveTo(deck, slot, MoveMode.Put, AppLog) != ErrorCodes.Success)
 		{
 			return false;
 		}
+		ControlSystem.TrackCycle();
 		return ControllerService.Instance.Put(id, AppLog).Success;
 	}
 
-	protected MotionResult CorrectiveMoveVend(MoveMode mode)
+	protected ErrorCodes CorrectiveMoveVend(MoveMode mode)
 	{
-		MotionResult motionResult = ControllerService.Instance.MoveToVend(mode, AppLog);
-		if (MotionResult.ArcusNotResponsive == motionResult)
+		ErrorCodes errorCodes = MotionService.MoveVend(mode, AppLog);
+		if (ErrorCodes.ArcusNotResponsive == errorCodes)
 		{
 			if (ResetMotionControllerChecked())
 			{
-				return ControllerService.Instance.MoveToVend(mode, AppLog);
+				return MotionService.MoveVend(mode, AppLog);
 			}
-			return MotionResult.ArcusNotResponsive;
+			return ErrorCodes.ArcusNotResponsive;
 		}
-		return motionResult;
+		return errorCodes;
 	}
 
-	protected MotionResult CorrectiveMove(int deck, int slot, MoveMode mode)
+	protected ErrorCodes CorrectiveMove(int deck, int slot, MoveMode mode)
 	{
-		MotionResult motionResult = ControllerService.Instance.MoveTo(deck, slot, mode, AppLog);
-		if (MotionResult.ArcusNotResponsive == motionResult)
+		ErrorCodes errorCodes = MotionService.MoveTo(deck, slot, mode, AppLog);
+		if (ErrorCodes.LowerLimitError == errorCodes && SessionErrorState.Instance.LowerLimitConfigured(Context))
+		{
+			SessionErrorState.Instance.IncrementLowerLimit();
+			ErrorCodes errorCodes2 = MotionService.HomeAxis(Axis.Y, AppLog);
+			AppLog.WriteFormatted("Move returned {0}; HOME Y returned {1}; return TIMEOUT", errorCodes.ToString(), errorCodes2.ToString());
+			return ErrorCodes.Timeout;
+		}
+		if (ErrorCodes.ArcusNotResponsive == errorCodes)
 		{
 			if (ResetMotionControllerChecked())
 			{
-				return ControllerService.Instance.MoveTo(deck, slot, mode, AppLog);
+				return MotionService.MoveTo(deck, slot, mode, AppLog);
 			}
-			return MotionResult.ArcusNotResponsive;
+			return ErrorCodes.ArcusNotResponsive;
 		}
-		return motionResult;
+		return errorCodes;
 	}
 
-	protected MotionResult CorrectiveMove(Location loc, MoveMode mode)
+	protected ErrorCodes CorrectiveMove(ILocation loc, MoveMode mode)
 	{
 		return CorrectiveMove(loc.Deck, loc.Slot, mode);
 	}
 
 	protected T GetTop<T>()
 	{
-		return (T)ConversionHelper.ChangeType(Context.PopTop(), typeof(T));
+		return Context.PopTop<T>();
 	}
 
 	protected bool ContextSwitchRequested()
@@ -112,10 +138,5 @@ internal abstract class NativeJobAdapter
 	{
 		Result = result;
 		Context = context;
-	}
-
-	internal void Execute()
-	{
-		ExecuteInner();
 	}
 }

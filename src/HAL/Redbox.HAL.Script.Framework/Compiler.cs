@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -46,8 +46,8 @@ public class Compiler
 		int num2 = 0;
 		Deque<string> deque = new Deque<string>();
 		ConstTokens = new Dictionary<string, bool>();
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore();
-		bool value = dataStore.GetValue("Compiler.EnablePreprocessor", def: true);
+		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
+		bool value = map.GetValue("Compiler.EnablePreprocessor", def: true);
 		ControlFlowAnalyzer = CFA.Initialize(CFAVersion, executionResult);
 		Instruction instruction = null;
 		using (TextReader textReader = new StreamReader(Stream))
@@ -217,7 +217,7 @@ public class Compiler
 		{
 			compiledProgram.IsCooperative = num > 0;
 		}
-		if (dataStore.GetValue("Compiler.DumpCompiledProgram", def: false) && compiledProgram != null)
+		if (map.GetValue("Compiler.DumpCompiledProgram", def: false) && compiledProgram != null)
 		{
 			InstructionList instructions = compiledProgram.Instructions;
 			using TextWriter textWriter = new StreamWriter("C:\\temp\\" + ProgramName + ".preprocessed");
@@ -418,9 +418,8 @@ public class Compiler
 	static Compiler()
 	{
 		m_configScriptPaths = new Deque<string>();
-		string assemblyDirectory = RuntimeService.Instance.AssemblyDirectory;
-		string fullPath = Path.GetFullPath(assemblyDirectory + "\\..\\Scripts");
-		m_configScriptPaths.AddToBack(fullPath);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		m_configScriptPaths.AddToBack(service.InstallPath("Scripts"));
 		m_warningTable = new Dictionary<string, bool>();
 		m_warningTable["W008"] = false;
 	}

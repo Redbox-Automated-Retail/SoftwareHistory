@@ -1,3 +1,4 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -11,50 +12,50 @@ internal sealed class PushInDVDJob : NativeJobAdapter
 		try
 		{
 			_ = ControllerService.Instance;
-			PickerBoard.StartRollerIn();
+			base.ControlSystem.StartRollerIn();
 			PerfFunctions.Wait(500);
-			PickerBoard.StopRoller();
-			if (Track.Open())
+			base.ControlSystem.StopRoller();
+			if (!base.ControlSystem.TrackOpen().Success)
 			{
 				HandleMachineError("TRACK OPEN TIMEOUT");
 				return;
 			}
-			if (Gripper.SetFinger(GripperFingerState.Closed))
+			if (!base.ControlSystem.SetFinger(GripperFingerState.Closed).Success)
 			{
 				HandleMachineError("GRIPPER CLOSE TIMEOUT");
 				return;
 			}
 			int pushTime = ControllerConfiguration.Instance.PushTime;
-			Gripper.PushToSensor(pushTime);
-			if (Gripper.SetFinger(GripperFingerState.Rent))
+			base.ControlSystem.ExtendArm(pushTime);
+			if (!base.ControlSystem.SetFinger(GripperFingerState.Rent).Success)
 			{
 				HandleMachineError("GRIPPER RENT TIMEOUT");
 				return;
 			}
-			if (Gripper.RetractArm())
+			if (!base.ControlSystem.RetractArm().Success)
 			{
 				HandleMachineError("GRIPPER RETRACT TIMEOUT");
 				return;
 			}
-			if (Gripper.SetFinger(GripperFingerState.Closed))
+			if (!base.ControlSystem.SetFinger(GripperFingerState.Closed).Success)
 			{
 				HandleMachineError("GRIPPER CLOSE TIMEOUT");
 				return;
 			}
-			Gripper.PushToSensor(pushTime);
-			if (Gripper.SetFinger(GripperFingerState.Rent))
+			base.ControlSystem.ExtendArm(pushTime);
+			if (!base.ControlSystem.SetFinger(GripperFingerState.Rent).Success)
 			{
 				HandleMachineError("GRIPPER RENT TIMEOUT");
 			}
-			else if (Gripper.RetractArm())
+			else if (!base.ControlSystem.RetractArm().Success)
 			{
 				HandleMachineError("GRIPPER RETRACT TIMEOUT");
 			}
 		}
 		finally
 		{
-			Track.Close();
-			Gripper.RetractArm();
+			base.ControlSystem.TrackClose();
+			base.ControlSystem.RetractArm();
 		}
 	}
 

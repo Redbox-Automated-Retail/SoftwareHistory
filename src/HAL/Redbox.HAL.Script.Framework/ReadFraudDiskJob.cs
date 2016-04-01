@@ -1,6 +1,5 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -11,44 +10,51 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Fraud", flushOnWrite: false, "Fraud");
 		applicationLog.Write("Read Fraud Disc Start.");
-		if (CorrectiveMoveVend(MoveMode.Get) != MotionResult.Success)
+		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.ReadFraudDisk);
+		if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
 		{
 			EndJob(errored: true);
 			return;
 		}
-		if (VendDoor.Rent())
+		if (!base.ControlSystem.VendDoorRent().Success)
 		{
 			EndJob(errored: true);
 			return;
 		}
-		PickerStatus pickerStatus = ControllerService.Instance.TakeDiskAtDoor();
-		if (pickerStatus != PickerStatus.DiscInPicker)
+		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
 		{
-			applicationLog.Write($"GRIPPER ACCEPT-DISK-AT-DOOR returned error status {pickerStatus.ToString()}", LogEntryType.Error);
-			EndJob(errored: true);
-			return;
+			ErrorCodes errorCodes = acceptDiskOperation.Execute();
+			if (ErrorCodes.PickerFull != errorCodes)
+			{
+				applicationLog.Write($"GRIPPER ACCEPT-DISK-AT-DOOR returned error status {errorCodes.ToString()}", LogEntryType.Error);
+				EndJob(errored: true);
+				return;
+			}
 		}
-		if (VendDoor.Close())
+		if (!base.ControlSystem.VendDoorClose().Success)
 		{
 			applicationLog.Write("Disk is in picker; cannot close the vend door.", LogEntryType.Error);
 			EndJob(errored: true);
 			return;
 		}
+		base.ControlSystem.TrackCycle();
 		using Scanner scanner = new Scanner();
 		for (int i = 0; i < 2; i++)
 		{
-			RawReadResult rawReadResult = scanner.RawRead();
-			if (!rawReadResult.SnapOk)
+			ScanResult scanResult = scanner.Read();
+			if (!scanResult.SnapOk)
 			{
 				EndJob(errored: true);
 				return;
 			}
-			if (rawReadResult.ReadCodes[0] == "UNKNOWN")
+			if (!scanResult.ReadCode)
 			{
-				ControllerService.Instance.CenterItem(CenterDiskMethod.DrumAndBack);
+				base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
 				continue;
 			}
-			base.Context.CreateInfoResult("FraudItem", "This is the barcode to be marked as fraud.", rawReadResult.ReadCodes[0]);
+			base.Context.CreateInfoResult("FraudItem", "This is the barcode to be marked as fraud.", scanResult.ScannedMatrix);
+			diskValidatorHelper.ValidateAndNotify(scanResult.ScannedMatrix, base.Context);
 			EndJob(errored: false);
 			return;
 		}
@@ -68,13 +74,14 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 		}
 		if (PickerBoard.IsFull())
 		{
-			VendItemResult vendItemResult = ControllerService.Instance.VendItem();
-			if (vendItemResult.PickerStatus != PickerStatus.Empty)
+			using VendItemOperation vendItemOperation = new VendItemOperation();
+			VendItemResult vendItemResult = vendItemOperation.Execute();
+			if (ErrorCodes.PickerEmpty != vendItemResult.Status)
 			{
 				base.AppLog.Write($"GRIPPER VEND-DISC-AT-DOOR returned error status {vendItemResult.ToString()}", LogEntryType.Error);
 			}
 		}
-		VendDoor.Close();
+		base.ControlSystem.VendDoorClose();
 		base.AppLog.Write("Read fraud disk end.");
 	}
 }

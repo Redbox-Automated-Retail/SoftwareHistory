@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -68,16 +69,16 @@ public sealed class QlmInstruction : Instruction
 		}
 		if (string.Compare(token.Value, "HALT", ignoreCase: true) == 0)
 		{
-			context.PushTop(Instruction.ConvertTimeoutBoolToMessage(QLM.HaltOperation()));
+			context.PushTop(QLM.HaltOperation() ? "TIMEOUT" : "SUCCESS");
 		}
 		else if (string.Compare(token.Value, "ENGAGE", ignoreCase: true) == 0)
 		{
-			QlmMotionResult qlmMotionResult = QLM.Engage(home, context.AppLog);
-			if (QlmMotionResult.Success == qlmMotionResult)
+			ErrorCodes errorCodes = QLM.Engage(home, context.AppLog);
+			if (errorCodes == ErrorCodes.Success)
 			{
 				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
 			}
-			context.PushTop(qlmMotionResult.ToString().ToUpper());
+			context.PushTop(errorCodes.ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "LIFT", ignoreCase: true) == 0)
 		{
@@ -89,12 +90,12 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "DISENGAGE", ignoreCase: true) == 0)
 		{
-			QlmMotionResult qlmMotionResult2 = QLM.Disengage(home, context.AppLog);
-			if (QlmMotionResult.Success == qlmMotionResult2)
+			ErrorCodes errorCodes2 = QLM.Disengage(home, context.AppLog);
+			if (errorCodes2 == ErrorCodes.Success)
 			{
 				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
 			}
-			context.PushTop(qlmMotionResult2.ToString().ToUpper());
+			context.PushTop(errorCodes2.ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "STATUS", ignoreCase: true) == 0)
 		{
@@ -102,14 +103,14 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "ENDQLMOP", ignoreCase: true) == 0)
 		{
-			MotionResult failCode = MotionResult.Success;
+			ErrorCodes failCode = ErrorCodes.Success;
 			KeyValuePair keyValuePair2 = base.Operands.GetKeyValuePair("MOVE-EC");
 			if (keyValuePair2 != null)
 			{
 				string keyValuePairValue = GetKeyValuePairValue<string>(keyValuePair2, result.Errors, context);
 				if (result.Errors.Count == 0)
 				{
-					failCode = Enum<MotionResult>.ParseIgnoringCase(keyValuePairValue, MotionResult.Success);
+					failCode = Enum<ErrorCodes>.ParseIgnoringCase(keyValuePairValue, ErrorCodes.Success);
 				}
 			}
 			if (MerchandizingHelper.Instance.CleanupJob(result, context, failCode))
@@ -119,7 +120,7 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "CLEAR-PICKER") == 0)
 		{
-			new UnloadHelper(context).CheckAndClearPicker(result);
+			new UnloadHelper(context, result).CheckAndClearPicker(result);
 		}
 		else if (string.Compare(token.Value, "SETUP") == 0)
 		{
@@ -133,14 +134,15 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "UNLOAD-DISK") == 0)
 		{
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			int num = CurrentSlot(result, context);
 			if (num != 0)
 			{
-				if (!InventoryService.Instance.EmptyCountExceeds(0))
+				if (!service.EmptyCountExceeds(0))
 				{
 					context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
 				}
-				MerchandizeResult merchandizeResult = new UnloadHelper(context).UnloadDisk(result, QLM.Deck.Number, num);
+				MerchandizeResult merchandizeResult = new UnloadHelper(context, result).UnloadDisk(QLM.Deck.Number, num);
 				string text = merchandizeResult.ToString().ToUpper();
 				if (merchandizeResult != MerchandizeResult.Success)
 				{

@@ -28,9 +28,4 @@ public static class ScriptConstants
 
 		public const string BreakPoints = "BreakPoints";
 	}
-
-	public static class ExecutionContexts
-	{
-		public static readonly string ImmediateModeContext = "IMMEDIATE";
-	}
 }

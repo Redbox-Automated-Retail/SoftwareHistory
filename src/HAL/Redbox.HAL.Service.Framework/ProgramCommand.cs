@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
@@ -12,8 +13,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("program")]
 public sealed class ProgramCommand
 {
-	[Usage("PROGRAM compile path: 'C:\\temp\\my-script.hs' [name: program-name] [requires-client-connection: true|false]")]
 	[CommandForm(Name = "compile")]
+	[Usage("PROGRAM compile path: 'C:\\temp\\my-script.hs' [name: program-name] [requires-client-connection: true|false]")]
 	public void Compile(CommandContext context, [CommandKeyValue(IsRequired = true)] string path, string name, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
 		if (string.IsNullOrEmpty(path))
@@ -45,7 +46,8 @@ public sealed class ProgramCommand
 	[Usage("PROGRAM get name: program-name")]
 	public void Get(CommandContext context, [CommandKeyValue(IsRequired = true)] string name)
 	{
-		string fileName = RuntimeService.Instance.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string fileName = service.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		ProtocolHelper.FormatCompressedBytes(FileHelper.ReadToBuffer(fileName), context);
 	}
 
@@ -53,7 +55,8 @@ public sealed class ProgramCommand
 	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
 	public void Set(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
-		string path = RuntimeService.Instance.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string path = service.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		File.WriteAllBytes(path, data);
 		CompileProgram(context.Errors, name, path);
 		RewriteServiceStartup();
@@ -66,8 +69,8 @@ public sealed class ProgramCommand
 		context.Errors.Add(Error.NewError("S002", "Unsupported call.", "The requires-client-connection form is no longer supported."));
 	}
 
-	[CommandForm(Name = "list")]
 	[Usage("PROGRAM list")]
+	[CommandForm(Name = "list")]
 	public void List(CommandContext context)
 	{
 		context.Messages.AddRange(ExecutionEngine.Instance.GetPrograms());
@@ -91,7 +94,8 @@ public sealed class ProgramCommand
 
 	private static void RewriteServiceStartup()
 	{
-		string path = RuntimeService.Instance.ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string path = service.ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
 		List<string> list = new List<string>(File.ReadAllLines(path));
 		int num = list.FindIndex((string each) => each.Contains("[["));
 		int num2 = list.FindIndex((string each) => each.Contains("]]"));

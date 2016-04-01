@@ -1,21 +1,21 @@
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class Quadrant
+internal sealed class Quadrant : IQuadrant
 {
 	public int Offset { get; private set; }
 
-	public Range Slots { get; private set; }
+	public IRange<int> Slots { get; private set; }
 
-	public bool IsExcluded { get; set; }
+	public bool IsExcluded { get; internal set; }
 
-	public Quadrant(int offset)
+	internal Quadrant(int offset)
 		: this(offset, null)
 	{
 	}
 
-	public Quadrant(int offset, Range slots)
+	internal Quadrant(int offset, IRange<int> slots)
 	{
 		Offset = offset;
 		Slots = slots;

@@ -1,6 +1,6 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -9,7 +9,7 @@ internal sealed class KioskTestJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		Deck deck = QLM.Deck;
+		IDeck deck = QLM.Deck;
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "KioskTestErrors");
 		bool top = GetTop<bool>();
 		int top2 = GetTop<int>();
@@ -23,26 +23,26 @@ internal sealed class KioskTestJob : NativeJobAdapter
 		{
 			return;
 		}
-		if (ControllerService.Instance.MoveTo(top2, top3, MoveMode.Get, base.Context.AppLog) != MotionResult.Success)
+		if (base.MotionService.MoveTo(top2, top3, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveError", "Failed to move to initial slot");
 			HandleMachineError();
 			return;
 		}
 		using Scanner scanner = new Scanner();
-		GetResult getResult = ControllerService.Instance.Get(base.AppLog);
+		IGetResult getResult = ControllerService.Instance.Get(base.AppLog);
 		if (!getResult.Success)
 		{
 			base.Context.CreateInfoResult("GetError", "Failed to pull disc from slot");
 			HandleMachineError();
 			return;
 		}
-		ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+		base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
 		ScanResult scanResult = scanner.Read();
 		string scannedMatrix = scanResult.ScannedMatrix;
 		if (!scanResult.SnapOk)
 		{
-			applicationLog.Write($"CAMERA CAPTURE returned an error status {scanner.Diagnostic(scanResult)}", LogEntryType.Error);
+			applicationLog.Write($"CAMERA CAPTURE returned an error status {scanResult.Diagnostic}", LogEntryType.Error);
 		}
 		if (!scanResult.ReadCode)
 		{
@@ -58,13 +58,14 @@ internal sealed class KioskTestJob : NativeJobAdapter
 			{
 				return;
 			}
-			if (ControllerService.Instance.MoveTo(top4, top5, MoveMode.Put, base.Context.AppLog) != MotionResult.Success)
+			if (base.MotionService.MoveTo(top4, top5, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MoveFailed", "Kiosk was unable to move to put position of destination slot");
 				HandleMachineError();
 				return;
 			}
-			PutResult putResult = ControllerService.Instance.Put(scannedMatrix, base.AppLog);
+			base.ControlSystem.TrackCycle();
+			IPutResult putResult = ControllerService.Instance.Put(scannedMatrix, base.AppLog);
 			if (!putResult.Success)
 			{
 				base.Context.CreateInfoResult("PutFailed", "Kiosk failed to put disc into slot");
@@ -72,7 +73,7 @@ internal sealed class KioskTestJob : NativeJobAdapter
 				return;
 			}
 			PerfFunctions.Wait(1200);
-			if (ControllerService.Instance.MoveTo(top4, top5, MoveMode.Get, base.AppLog) != MotionResult.Success)
+			if (base.MotionService.MoveTo(top4, top5, MoveMode.Get, base.AppLog) != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MoveFailed", "Kiosk was unable to move to get position of destination slot");
 				HandleMachineError();
@@ -94,8 +95,7 @@ internal sealed class KioskTestJob : NativeJobAdapter
 					return;
 				}
 				applicationLog.Write("Disengage the QLM.");
-				QlmMotionResult qlmMotionResult = QLM.Disengage(home: true, applicationLog);
-				if (QlmMotionResult.Success != qlmMotionResult)
+				if (QLM.Disengage(home: true, applicationLog) != ErrorCodes.Success)
 				{
 					base.Context.CreateInfoResult("QlmDeckDisengageFailure", "The QLM disengage failed.");
 					AddError("The QLM Case didn't disengage.");
@@ -139,8 +139,7 @@ internal sealed class KioskTestJob : NativeJobAdapter
 			return false;
 		}
 		base.Context.AppLog.Write("Engaging the QLM.", LogEntryType.Info);
-		QlmMotionResult qlmMotionResult = QLM.Engage(home: true, base.Context.AppLog);
-		if (QlmMotionResult.Success == qlmMotionResult)
+		if (QLM.Engage(home: true, base.Context.AppLog) == ErrorCodes.Success)
 		{
 			return true;
 		}
@@ -153,43 +152,47 @@ internal sealed class KioskTestJob : NativeJobAdapter
 	{
 		ApplicationLog appLog = base.Context.AppLog;
 		appLog.Write("Performing a Vend Test.");
-		if (ControllerService.Instance.MoveToVend(MoveMode.None, base.AppLog) != MotionResult.Success)
+		if (base.MotionService.MoveVend(MoveMode.None, base.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveVendError", "Failed to move to vend position");
 			return false;
 		}
-		if (Track.Open())
+		if (!base.ControlSystem.TrackOpen().Success)
 		{
 			appLog.Write("Track Open timed out.", LogEntryType.Error);
 			base.Context.CreateInfoResult("TrackOpenTimeOut", "Track Open timedout.");
 			return false;
 		}
-		if (Track.Close())
+		if (!base.ControlSystem.TrackClose().Success)
 		{
 			appLog.Write("Track Close timed out.", LogEntryType.Error);
 			base.Context.CreateInfoResult("TrackCloseTimeOut", "Track Close timedout.");
 			return false;
 		}
-		if (VendDoor.Rent())
+		if (!base.ControlSystem.VendDoorRent().Success)
 		{
 			appLog.Write("Vend door timed out trying to open vend door.", LogEntryType.Error);
 			base.Context.CreateInfoResult("VendDoorTimeOut", "Vend door timed out trying to open vend door.");
 			return false;
 		}
-		VendItemResult vendItemResult = ControllerService.Instance.VendItem();
-		if (PickerStatus.Empty == vendItemResult.PickerStatus)
+		using (VendItemOperation vendItemOperation = new VendItemOperation())
 		{
-			appLog.Write($"The item {matrix} was taken.", LogEntryType.Error);
-			return false;
+			VendItemResult vendItemResult = vendItemOperation.Execute();
+			if (ErrorCodes.PickerEmpty == vendItemResult.Status)
+			{
+				appLog.Write($"The item {matrix} was taken.", LogEntryType.Error);
+				return false;
+			}
+			if (ErrorCodes.PickerFull != vendItemResult.Status)
+			{
+				return false;
+			}
 		}
-		if (vendItemResult.PickerStatus == PickerStatus.HardwareError || PickerStatus.Obstructed == vendItemResult.PickerStatus)
+		using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
+		ErrorCodes errorCodes = acceptDiskOperation.Execute();
+		if (ErrorCodes.PickerFull != errorCodes)
 		{
-			return false;
-		}
-		PickerStatus pickerStatus = ControllerService.Instance.TakeDiskAtDoor();
-		if (PickerStatus.DiscInPicker != pickerStatus)
-		{
-			appLog.Write($"Take disk at door returned code {pickerStatus.ToString().ToUpper()}", LogEntryType.Info);
+			appLog.Write($"Take disk at door returned code {errorCodes.ToString().ToUpper()}", LogEntryType.Info);
 			return false;
 		}
 		return true;

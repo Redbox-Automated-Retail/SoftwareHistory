@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -61,9 +61,11 @@ public sealed class LocInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		if (base.Operands.Count >= 1)
 		{
-			Location location;
+			ILocation location;
 			if (base.Operands[0].Value.Equals("CLEARRETURNTIME"))
 			{
 				SetReturnTime(result, null, leaveResult: true, context);
@@ -76,7 +78,7 @@ public sealed class LocInstruction : Instruction
 				}
 				else
 				{
-					context.PushTop(location.IncrementEmptyStuck() ? "SUCCESS" : "ERROR");
+					context.PushTop(service.UpdateEmptyStuck(location) ? "SUCCESS" : "ERROR");
 				}
 			}
 			else if (base.Operands[0].Value.Equals("CLEAR-STUCK"))
@@ -87,13 +89,13 @@ public sealed class LocInstruction : Instruction
 				}
 				else
 				{
-					context.PushTop(location.ResetEmptyStuck() ? "SUCCESS" : "ERROR");
+					context.PushTop(service.ResetCount(location) ? "SUCCESS" : "ERROR");
 				}
 			}
 			else if (base.Operands[0].Value.Equals("RESET"))
 			{
 				GetLocation(result, context, out var location2);
-				context.PushTop(location2.Reset() ? "SUCCESS" : "ERROR");
+				context.PushTop(service.Reset(location2) ? "SUCCESS" : "ERROR");
 			}
 			else if (base.Operands[0].Value.Equals("GET-INFO"))
 			{
@@ -103,10 +105,10 @@ public sealed class LocInstruction : Instruction
 					context.PushTop(stuckCount);
 					string instance = location3.Flags.ToString();
 					context.PushTop(instance);
-					DateTime? returnTime = location3.ReturnTime;
-					context.PushTop(GetDateRepresentation(returnTime));
-					string matrix = location3.Matrix;
-					context.PushTop(matrix);
+					DateTime? returnDate = location3.ReturnDate;
+					context.PushTop(GetDateRepresentation(returnDate));
+					string iD = location3.ID;
+					context.PushTop(iD);
 					context.PushTop("SUCCESS");
 				}
 				else
@@ -118,7 +120,7 @@ public sealed class LocInstruction : Instruction
 			{
 				if (GetLocation(result, context, out var location4))
 				{
-					context.PushTop(GetDateRepresentation(location4.ReturnTime));
+					context.PushTop(GetDateRepresentation(location4.ReturnDate));
 				}
 				else
 				{
@@ -131,7 +133,7 @@ public sealed class LocInstruction : Instruction
 			}
 			else if (base.Operands[0].Value.Equals("AT-DRUM-LOC"))
 			{
-				if (ControllerService.Instance.Location.IsValid)
+				if (service2.CurrentLocation != null)
 				{
 					context.PushTop(true);
 				}
@@ -149,13 +151,13 @@ public sealed class LocInstruction : Instruction
 					context.PushTop("FAILURE");
 					return;
 				}
-				if (!GetLocation(result, context, out var deck, out var slot))
+				if (!GetLocation(result, context, out var location5))
 				{
 					LogHelper.Instance.Log("Unable to get deck and slot information.", LogEntryType.Error);
 					context.PushTop("FAILURE");
 				}
-				Deck deck2 = DecksManager.Instance.GetDeck(deck);
-				deck2.SetSlotMatrix(slot, keyValuePairValue);
+				location5.ID = keyValuePairValue;
+				service.Save(location5);
 				context.PushTop("SUCCESS");
 			}
 			else if (base.Operands[0].Value.Equals("RESETRT"))
@@ -203,9 +205,9 @@ public sealed class LocInstruction : Instruction
 			}
 			else if (base.Operands[0].Value.Equals("IS-EXCLUDED"))
 			{
-				if (GetLocation(result, context, out var location5))
+				if (GetLocation(result, context, out var location6))
 				{
-					context.PushTop(location5.IsExcluded);
+					context.PushTop(location6.Excluded);
 					context.PushTop("SUCCESS");
 				}
 				else
@@ -215,13 +217,13 @@ public sealed class LocInstruction : Instruction
 			}
 			else if (base.Operands[0].Value.Equals("SLOTTYPE"))
 			{
-				if (!GetLocation(result, context, out var location6))
+				if (!GetLocation(result, context, out var location7))
 				{
 					context.PushTop("UNKNOWN");
 				}
 				else
 				{
-					context.PushTop(location6.IsWide ? "WIDE" : "NOTWIDE");
+					context.PushTop(location7.IsWide ? "WIDE" : "NOTWIDE");
 				}
 			}
 			else
@@ -229,20 +231,20 @@ public sealed class LocInstruction : Instruction
 				result.Errors.Add(Error.NewError("E001", "Unrecognized LOC form.", $"The operand {base.Operands[0].Value} isn't recognized."));
 			}
 		}
-		else if (ControllerService.Instance.IsAtVendLocation)
+		else if (service2.AtVendDoor)
 		{
 			context.PushTop("VENDDOOR");
 			context.PushTop("VENDDOOR");
 		}
-		else if (!ControllerService.Instance.Location.IsValid)
+		else if (service2.CurrentLocation == null)
 		{
 			context.PushTop("UNDEFINED");
 			context.PushTop("UNDEFINED");
 		}
 		else
 		{
-			context.PushTop(ControllerService.Instance.Location.Slot);
-			context.PushTop(ControllerService.Instance.Location.Deck);
+			context.PushTop(service2.CurrentLocation.Slot);
+			context.PushTop(service2.CurrentLocation.Deck);
 		}
 	}
 
@@ -259,7 +261,9 @@ public sealed class LocInstruction : Instruction
 			context.PushTop("ERROR");
 			return;
 		}
-		bool flag = location.UpdateReturnTime(newTime);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		location.ReturnDate = newTime;
+		bool flag = service.Save(location);
 		if (leaveResult)
 		{
 			context.PushTop(flag);

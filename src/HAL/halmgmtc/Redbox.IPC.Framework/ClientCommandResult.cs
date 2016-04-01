@@ -1,38 +1,14 @@
 using System;
 using System.Collections.Generic;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.IPC.Framework;
 
 public class ClientCommandResult
 {
-	private ErrorList m_errors;
+	public readonly ErrorList Errors = new ErrorList();
 
-	private List<string> m_commandMessages;
-
-	public ErrorList Errors
-	{
-		get
-		{
-			if (m_errors == null)
-			{
-				m_errors = new ErrorList();
-			}
-			return m_errors;
-		}
-	}
-
-	public List<string> CommandMessages
-	{
-		get
-		{
-			if (m_commandMessages == null)
-			{
-				m_commandMessages = new List<string>();
-			}
-			return m_commandMessages;
-		}
-	}
+	public readonly List<string> CommandMessages = new List<string>();
 
 	public bool Success { get; set; }
 

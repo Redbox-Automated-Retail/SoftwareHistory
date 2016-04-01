@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 

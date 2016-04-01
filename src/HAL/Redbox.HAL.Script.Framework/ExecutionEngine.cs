@@ -4,23 +4,24 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Timers;
+using Microsoft.Win32;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
-using Redbox.HAL.DataStorage;
 
 namespace Redbox.HAL.Script.Framework;
 
-public sealed class ExecutionEngine : IStatusChangeObserver
+public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 {
 	internal readonly string DataDirectory;
+
+	private readonly ExecutionContext ImmediateModeContext;
 
 	private bool SchedulerEnabled;
 
 	private bool ContextSwitchRequested;
 
 	private Thread SchedulerThread;
-
-	private bool PrintedRebootDiagnostic;
 
 	private readonly ReaderWriterLockSlim ContextLock = new ReaderWriterLockSlim();
 
@@ -34,15 +35,17 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 
 	private readonly string[] NonSchedulableJobsWithinReboot = new string[7] { "qlm-unload", "thin", "unload-thin", "sync", "sync-locations", "thin-vmz", "clean-vmz" };
 
+	private readonly string ScriptsPath;
+
+	private readonly IdHelper IdGenerator = new IdHelper();
+
 	private readonly string[] SingletonJobs = new string[1] { "clean-vmz" };
 
 	private readonly RedboxTimer RebootWakeupTimer;
 
 	private readonly TimeSpan? RebootWindowStart = null;
 
-	private ExecutionContext m_immediateModeContext;
-
-	private EngineModes m_currentMode = EngineModes.Normal;
+	private readonly List<IExecutionEngineChangeObserver> Observers = new List<IExecutionEngineChangeObserver>();
 
 	private static readonly object InstanceLock = new object();
 
@@ -54,70 +57,121 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 
 	internal TimeSpan? KioskRebootTime { get; private set; }
 
-	internal EngineModes Mode => m_currentMode;
+	internal EngineModes Mode { get; private set; }
 
-	private ExecutionContext ImmediateModeContext
-	{
-		get
-		{
-			if (m_immediateModeContext == null)
-			{
-				m_immediateModeContext = new ExecutionContext(ScriptConstants.ExecutionContexts.ImmediateModeContext, "$$$immediate$$$")
-				{
-					Priority = ProgramPriority.Immediate,
-					Label = "HAL Script Immediate Mode"
-				};
-			}
-			using (new WithUpgradeableReadLock(ContextLock))
-			{
-				if (!Contexts.Contains(m_immediateModeContext))
-				{
-					using (new WithWriteLock(ContextLock))
-					{
-						Contexts.Add(m_immediateModeContext);
-					}
-				}
-			}
-			return m_immediateModeContext;
-		}
-	}
-
-	public static ExecutionEngine NewEngine(string scriptsPath, ErrorList errors)
+	public static IExecutionService NewEngine(string scriptsPath)
 	{
 		lock (InstanceLock)
 		{
 			if (Instance == null)
 			{
-				Instance = new ExecutionEngine();
-				Instance.Initialize(scriptsPath, errors);
-				LogHelper.Instance.Log("Execution service version {0} initialized.", typeof(ExecutionEngine).Assembly.GetName().Version);
+				Instance = new ExecutionEngine(scriptsPath);
 			}
 			return Instance;
 		}
+	}
+
+	public void AddObserver(IExecutionEngineChangeObserver ob)
+	{
+		lock (ModeLock)
+		{
+			Observers.Add(ob);
+		}
+	}
+
+	public void RemoveObserver(IExecutionEngineChangeObserver ob)
+	{
+		lock (ModeLock)
+		{
+			Observers.Remove(ob);
+		}
+	}
+
+	public void ChangeMode(EngineModes mode)
+	{
+		lock (ModeLock)
+		{
+			Mode = mode;
+			LogHelper.Instance.Log("[Execution Engine]: Change mode to {0}", Mode.ToString());
+			foreach (IExecutionEngineChangeObserver observer in Observers)
+			{
+				observer.OnEngineChange(Mode);
+			}
+		}
+	}
+
+	public void Initialize(ErrorList errors)
+	{
+		PollerManager pollerManager = new PollerManager();
+		ServiceLocator.Instance.AddService(typeof(IPollerService), pollerManager);
+		pollerManager.InitializePollers();
+		ProgramCache.CompilePrograms(ScriptsPath, errors);
+		LoadJobs();
+	}
+
+	public void StartScheduler()
+	{
+		RestartYoungest(5);
+		CleanupJobs(force: false);
+		SchedulerThread = new Thread(ProcessScheduler)
+		{
+			Name = "HAL Script Scheduler",
+			IsBackground = true
+		};
+		SchedulerThread.SetApartmentState(ApartmentState.STA);
+		SchedulerThread.Start();
+		SchedulerEnabled = true;
+		Version version = typeof(ExecutionEngine).Assembly.GetName().Version;
+		LogHelper.Instance.Log("Execution service version {0} initialized.", version);
+		ScheduleInit();
+	}
+
+	public void Shutdown()
+	{
+		Compile("CAMERA STOP FORCE=TRUE", "$$$immediate$$$");
+		ExecutionContext executionContext = ExecuteImmediate();
+		executionContext.WaitForCompletion();
+		lock (ModeLock)
+		{
+			foreach (IExecutionEngineChangeObserver observer in Observers)
+			{
+				observer.OnShutdown();
+			}
+			Observers.Clear();
+		}
+		ServiceLocator.Instance.RemoveService(typeof(IPollerService));
+		SchedulerEnabled = false;
+		SuspendAll(force: true);
+		while (ActiveContext != null)
+		{
+			Thread.Sleep(0);
+		}
+		LogHelper.Instance.Log("ExecutionEngine.Shutdown() complete.");
+	}
+
+	public void Suspend()
+	{
+		ChangeMode(EngineModes.PowerSuspend);
+		SuspendAll(force: true);
+	}
+
+	public void Restart()
+	{
+		if (InitJob != null)
+		{
+			InitJob.RemoveObserver(this);
+			InitJob = null;
+		}
+		ScheduleInit();
+		RestartYoungest(5);
 	}
 
 	public void StatusChange(ExecutionContextStatus status)
 	{
 		if (ExecutionContextStatus.Completed == status || ExecutionContextStatus.Errored == status)
 		{
-			PollerManager.Instance.RegisterPollers();
+			ChangeMode(EngineModes.Normal);
 			CleanManager.Instance.Init();
-		}
-	}
-
-	public static void Teardown()
-	{
-		lock (InstanceLock)
-		{
-			if (Instance != null)
-			{
-				if (Instance.InitJob != null)
-				{
-					Instance.InitJob.RemoveObserver(Instance);
-				}
-				Instance.Shutdown();
-				Instance = null;
-			}
 		}
 	}
 
@@ -132,14 +186,6 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 			return ExecutionContextStatus.Running.ToString().ToUpper();
 		}
 		return InitJob.Status.ToString().ToUpper();
-	}
-
-	public void ExecuteStartupInit()
-	{
-		LogHelper.Instance.Log("Schedule init job", LogEntryType.Info);
-		InitJob = ScheduleJob("init", "HAL Service Startup: Init", DateTime.Now, ProgramPriority.High);
-		InitJob.AddObserver(this);
-		InitJob.Resume();
 	}
 
 	public ExecutionResult Compile(string programSource, string programName)
@@ -172,7 +218,14 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 	{
 		using (new WithReadLock(ContextLock))
 		{
-			return GetJobInner(jobId);
+			foreach (ExecutionContext context in Contexts)
+			{
+				if (context.ID == jobId)
+				{
+					return context;
+				}
+			}
+			return null;
 		}
 	}
 
@@ -348,16 +401,6 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 		}
 	}
 
-	public void ChangeMode(EngineModes mode)
-	{
-		lock (ModeLock)
-		{
-			m_currentMode = mode;
-			LogHelper.Instance.Log("[Execution Engine]: Change mode to {0}", m_currentMode.ToString());
-			PollerManager.Instance.OnEngineModeChange(m_currentMode);
-		}
-	}
-
 	public string GetActiveContextProgramName()
 	{
 		if (ActiveContext == null || ActiveContext.Registers.ActiveFrame == null)
@@ -412,27 +455,54 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 		}
 	}
 
-	private ExecutionEngine()
+	private ExecutionEngine(string scriptsPath)
 	{
-		RebootWakeupTimer = new RedboxTimer("Reboot Wakeup", RestartJobs);
-		DataDirectory = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
+		Mode = EngineModes.None;
+		ScriptsPath = scriptsPath;
+		RebootWakeupTimer = new RedboxTimer("Reboot Wakeup", OnRebootWakeup);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		DataDirectory = service.RuntimePath("data");
 		int rebootExecutionPreventionWindow = ControllerConfiguration.Instance.RebootExecutionPreventionWindow;
-		IPersistentMap dataStore = StoreManager.Instance.GetDataStore(PersistentMapTypes.Engine);
-		if (rebootExecutionPreventionWindow <= 0)
+		ImmediateModeContext = new ExecutionContext("IMMEDIATE", "$$$immediate$$$")
 		{
-			return;
+			Priority = ProgramPriority.Immediate,
+			Label = "HAL Script Immediate Mode",
+			IsImmediate = true
+		};
+		Contexts.Add(ImmediateModeContext);
+		RegistryKey registryKey = null;
+		string text = string.Empty;
+		try
+		{
+			registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
+			if (registryKey != null)
+			{
+				object value = registryKey.GetValue("RebootTime");
+				if (value != null)
+				{
+					text = (string)ConversionHelper.ChangeType(value, typeof(string));
+				}
+			}
 		}
-		string value = dataStore.GetValue("RebootTime", string.Empty);
-		if (!string.IsNullOrEmpty(value))
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("Unable to read secret option 'RebootTime'", e);
+			text = string.Empty;
+		}
+		finally
+		{
+			registryKey?.Close();
+		}
+		if (rebootExecutionPreventionWindow > 0 && !string.IsNullOrEmpty(text))
 		{
 			try
 			{
-				KioskRebootTime = TimeSpan.Parse(value);
+				KioskRebootTime = TimeSpan.Parse(text);
 				RebootWindowStart = KioskRebootTime.Value.Subtract(new TimeSpan(0, rebootExecutionPreventionWindow, 0));
 			}
-			catch (Exception e)
+			catch (Exception e2)
 			{
-				LogHelper.Instance.Log("Parsing kiosk reboot time failed.", e);
+				LogHelper.Instance.Log("Parsing kiosk reboot time failed.", e2);
 				KioskRebootTime = (RebootWindowStart = null);
 			}
 		}
@@ -498,11 +568,8 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 			{
 				TimeSpan span = KioskRebootTime.Value.Add(new TimeSpan(0, 5, 0));
 				RebootWakeupTimer.ScheduleAtNext(span);
-			}
-			if (!PrintedRebootDiagnostic)
-			{
-				LogHelper.Instance.Log($"Time {FormatTime(timeOfDay)} is within 10 minute reboot window of {FormatTime(KioskRebootTime.Value)}; disabling scheduler.", LogEntryType.Info);
-				PrintedRebootDiagnostic = true;
+				LogHelper.Instance.Log("Time {0} is within 10 minute reboot window of {1}; disabling scheduler.", FormatTime(timeOfDay), FormatTime(KioskRebootTime.Value));
+				ChangeMode(EngineModes.RebootPending);
 			}
 			return false;
 		}
@@ -530,26 +597,15 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 		}
 	}
 
-	private void ConfigurationUpdateStart()
-	{
-		LogHelper.Instance.Log("ExecutionEngine::ConfigurationUpdateStart()");
-		PollerManager.Instance.ConfigurationUpdateStart();
-	}
-
-	private void ConfigurationUpdateFinish()
-	{
-		LogHelper.Instance.Log("ExecutionEngine::ConfigurationUpdateFinish()");
-		PollerManager.Instance.ConfigurationUpdateFinish();
-	}
-
 	private string GetUniqueId()
 	{
 		using (new WithReadLock(ContextLock))
 		{
+			string iD = ImmediateModeContext.ID;
 			for (int i = 0; i < 8; i++)
 			{
-				string text = IdHelper.GeneratePseudoUniqueId(8);
-				if (text != ScriptConstants.ExecutionContexts.ImmediateModeContext && Contexts.GetByID(text) == null)
+				string text = IdGenerator.GeneratePseudoUniqueId(8);
+				if (text != iD && Contexts.GetByID(text) == null)
 				{
 					return text;
 				}
@@ -558,10 +614,19 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 		throw new ApplicationException("Unable to generate a unique ID for ExecutionContext.");
 	}
 
-	private void RestartJobs(object source, ElapsedEventArgs e)
+	private void OnRebootWakeup(object source, ElapsedEventArgs e)
 	{
 		RebootWakeupTimer.Disable();
+		ChangeMode(EngineModes.Normal);
 		RestartYoungest(1);
+	}
+
+	private void ScheduleInit()
+	{
+		LogHelper.Instance.Log("Schedule init job", LogEntryType.Info);
+		InitJob = ScheduleJob("init", "HAL Service Startup: Init", DateTime.Now, ProgramPriority.High);
+		InitJob.AddObserver(this);
+		InitJob.Resume();
 	}
 
 	private void RestartYoungest(int delay)
@@ -650,52 +715,5 @@ public sealed class ExecutionEngine : IStatusChangeObserver
 				}
 			}
 		}
-	}
-
-	private void Initialize(string scriptsPath, ErrorList errors)
-	{
-		ControllerConfiguration.Instance.ConfigurationChangeStart += ConfigurationUpdateStart;
-		ControllerConfiguration.Instance.ConfigurationChangeEnd += ConfigurationUpdateFinish;
-		ProgramCache.CompilePrograms(scriptsPath, errors);
-		LoadJobs();
-		RestartYoungest(5);
-		CleanupJobs(force: false);
-		SchedulerThread = new Thread(ProcessScheduler)
-		{
-			Name = "HAL Script Scheduler",
-			IsBackground = true
-		};
-		SchedulerThread.SetApartmentState(ApartmentState.STA);
-		SchedulerThread.Start();
-		SchedulerEnabled = true;
-	}
-
-	private void Shutdown()
-	{
-		Compile("CAMERA STOP FORCE=TRUE", "$$$immediate$$$");
-		ExecutionContext executionContext = ExecuteImmediate();
-		executionContext.WaitForCompletion();
-		PollerManager.Instance.Shutdown();
-		ControllerConfiguration.Instance.ConfigurationChangeStart -= ConfigurationUpdateStart;
-		ControllerConfiguration.Instance.ConfigurationChangeEnd -= ConfigurationUpdateFinish;
-		SchedulerEnabled = false;
-		SuspendAll(force: true);
-		while (ActiveContext != null)
-		{
-			Thread.Sleep(0);
-		}
-		LogHelper.Instance.Log("ExecutionEngine.Shutdown() complete.");
-	}
-
-	private ExecutionContext GetJobInner(string id)
-	{
-		foreach (ExecutionContext context in Contexts)
-		{
-			if (context.ID == id)
-			{
-				return context;
-			}
-		}
-		return null;
 	}
 }

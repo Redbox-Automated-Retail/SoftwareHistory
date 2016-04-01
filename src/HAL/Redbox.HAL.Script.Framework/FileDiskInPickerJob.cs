@@ -1,6 +1,5 @@
-using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -14,8 +13,9 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 			base.Context.CreateInfoResult("JobError", "Gripper is empty.");
 			return;
 		}
-		using EmptySearchResult emptySearchResult = new EmptySearchResult();
-		if (!emptySearchResult.FindMultipleEmptyLocations())
+		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
+		using IEmptySearchResult emptySearchResult = service.FindMultipleEmptyLocations();
+		if (emptySearchResult.FoundEmpty == 0)
 		{
 			base.Context.CreateInfoResult("JobError", "Empty slot not found.");
 			return;
@@ -23,7 +23,7 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 		string matrix = "UNKNOWN";
 		using (Scanner scanner = new Scanner())
 		{
-			ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+			base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{
@@ -33,18 +33,17 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 			{
 				matrix = scanResult.ScannedMatrix;
 			}
-			if (InventoryService.Instance.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
+			if (base.InventoryService.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
 			{
 				base.Context.CreateInfoResult("DuplicateDetected", "The read ID is a duplicate.", scanResult.ScannedMatrix);
 			}
 		}
-		Location location = emptySearchResult.EmptyLocations[0];
+		ILocation location = emptySearchResult.EmptyLocations[0];
 		if (!File(location, matrix))
 		{
-			MotionController controller = MotionController.GetController();
-			HomeAxesResult homeAxesResult = controller.InitAxes(base.Context.AppLog);
-			base.Context.CreateInfoResult("InitStatus", string.Format("Init motors returned {0}", homeAxesResult.Succeded ? "SUCCESS" : "FAILURE"));
-			if (homeAxesResult.Succeded)
+			ErrorCodes errorCodes = base.MotionService.InitAxes(base.Context.AppLog);
+			base.Context.CreateInfoResult("InitStatus", string.Format("Init motors returned {0}", (errorCodes == ErrorCodes.Success) ? "SUCCESS" : "FAILURE"));
+			if (errorCodes == ErrorCodes.Success)
 			{
 				File(location, matrix);
 			}
@@ -56,27 +55,15 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 	{
 	}
 
-	private bool File(List<Location> toTry, string matrix)
+	private bool File(ILocation location, string matrix)
 	{
-		foreach (Location item in toTry)
+		ErrorCodes errorCodes = base.MotionService.MoveTo(location, MoveMode.Put, base.AppLog);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			if (File(item, matrix))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private bool File(Location location, string matrix)
-	{
-		MotionResult motionResult = ControllerService.Instance.MoveTo(location, MoveMode.Put, base.AppLog);
-		if (motionResult != MotionResult.Success)
-		{
-			base.Context.CreateInfoResult("JobError", $"MOVE {location.ToString()} MODE=PUT {motionResult.ToString()}");
+			base.Context.CreateInfoResult("JobError", $"MOVE {location.ToString()} MODE=PUT {errorCodes.ToString()}");
 			return false;
 		}
-		PutResult putResult = ControllerService.Instance.Put(matrix, base.AppLog);
+		IPutResult putResult = ControllerService.Instance.Put(matrix, base.AppLog);
 		if (putResult.Success)
 		{
 			base.Context.CreateInfoResult("JobSuccess", $"Filed {location.ToString()}, id={matrix}");

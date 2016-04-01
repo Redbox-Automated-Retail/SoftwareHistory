@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-public sealed class Range
+public sealed class Range : IRange<int>
 {
 	public int Size => End - Start + 1;
 
@@ -36,11 +37,20 @@ public sealed class Range
 		}
 	}
 
-	public bool InRange(int value)
+	public bool Includes(int value)
 	{
 		if (value >= Start)
 		{
 			return value <= End;
+		}
+		return false;
+	}
+
+	public bool Includes(IRange<int> range)
+	{
+		if (range.Start >= Start)
+		{
+			return range.End <= End;
 		}
 		return false;
 	}

@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -21,12 +21,12 @@ public sealed class DoorSensorInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return IsValidOperand(operand);
+		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		if (!IsValidOperand(operandTokens[0].Value))
+		if (Enum<ExpectedOperand>.ParseIgnoringCase(operandTokens[0].Value, ExpectedOperand.None) == ExpectedOperand.None)
 		{
 			result.AddInvalidOperandError("Expected a 'Query' or 'IsConfigured' operand.");
 		}
@@ -34,13 +34,15 @@ public sealed class DoorSensorInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
+		ExpectedOperand expectedOperand = Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None);
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
 			context.ServiceLog("DoorSensor instruction: converted '{0}' to operand None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.IsConfigured:
-			context.PushTop(DoorSensors.Instance.SensorsEnabled);
+			context.PushTop(service.SensorsEnabled);
 			break;
 		case ExpectedOperand.SoftwareOverride:
 		{
@@ -48,18 +50,18 @@ public sealed class DoorSensorInstruction : Instruction
 			{
 				val = "off";
 			}
-			bool flag = val.Equals("off", StringComparison.CurrentCultureIgnoreCase);
-			DoorSensors.Instance.SoftwareOverride = flag;
-			string path = Path.Combine(ControllerConfiguration.Instance.KioskLogsPath, "Service\\DoorSensorConfiguration.log");
+			bool flag = (service.SoftwareOverride = val.Equals("off", StringComparison.CurrentCultureIgnoreCase));
+			IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+			string path = Path.Combine(service2.LogsBasePath, "Service\\DoorSensorConfiguration.log");
 			using (StreamWriter streamWriter = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
 			{
 				streamWriter.WriteLine(flag ? $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors have a software override in place: they are not active - *UNCHECKED MOVEMENT IS POSSIBLE*." : $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors do not have a software override; they are active.");
 			}
-			context.PushTop(DoorSensors.Instance.SensorsEnabled);
+			context.PushTop(service.SensorsEnabled);
 			break;
 		}
 		case ExpectedOperand.Query:
-			switch (DoorSensors.Instance.QueryStateForDisplay())
+			switch (service.QueryStateForDisplay())
 			{
 			case DoorSensorResult.AuxReadError:
 				context.PushTop("AUX board not responsive.");
@@ -77,13 +79,8 @@ public sealed class DoorSensorInstruction : Instruction
 			context.PushTop(1);
 			break;
 		case ExpectedOperand.Status:
-			context.PushTop(DoorSensors.Instance.Query().ToString().ToUpper());
+			context.PushTop(service.Query().ToString().ToUpper());
 			break;
 		}
-	}
-
-	private bool IsValidOperand(string operand)
-	{
-		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 }

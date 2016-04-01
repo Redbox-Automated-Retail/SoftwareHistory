@@ -1,12 +1,13 @@
 using System;
 using System.Xml;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposable
+internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposable, IConfigurationObserver
 {
-	private int m_cycleCount;
+	private ICameraPlugin Plugin;
 
 	public bool RequiresExternalLighting => true;
 
@@ -16,9 +17,7 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool InError { get; private set; }
 
-	internal static LegacyScanner Instance => Singleton<LegacyScanner>.Instance;
-
-	private ICameraPlugin Plugin { get; set; }
+	public string Name => Service.ToString();
 
 	public bool Start()
 	{
@@ -38,20 +37,25 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		}
 	}
 
-	public SnapResult Snap()
+	public ISnapResult Snap()
 	{
 		return Snap(GenerateSnapFileName());
 	}
 
-	public SnapResult Snap(string snapFile)
+	public ISnapResult Snap(string snapFile)
 	{
 		Plugin.Snap(snapFile);
-		SnapResult snapResult = TestSnap(snapFile);
+		SnapResult snapResult = new SnapResult(snapFile);
 		if (!snapResult.SnapOk)
 		{
 			InError = true;
 		}
 		return snapResult;
+	}
+
+	public bool TestConfiguration(IMessageSink sink)
+	{
+		return true;
 	}
 
 	public bool Stop()
@@ -72,36 +76,17 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		}
 	}
 
-	public void TurnOff()
-	{
-		if (!IsConnected)
-		{
-			return;
-		}
-		IsConnected = false;
-		try
-		{
-			Plugin.TurnOff();
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("TurnOffCamera encountered an exception.", e);
-		}
-	}
-
 	public bool Restart()
 	{
 		if (!Plugin.SupportsReset)
 		{
 			return false;
 		}
-		TurnOff();
+		Stop();
 		PerfFunctions.SpinWait(500);
-		if (++m_cycleCount == 1)
+		LogHelper.Instance.Log("[Legacy Camera Service] Cycle camera driver.");
+		using (DeviceHelper helper = new DeviceHelper(debug: false))
 		{
-			m_cycleCount = 0;
-			LogHelper.Instance.Log("[Legacy Camera Service] Cycle camera driver.");
-			using DeviceHelper helper = new DeviceHelper(debug: false);
 			CameraInfo cameraInfo = new CameraInfo(helper);
 			if (cameraInfo.FindActiveCamera())
 			{
@@ -120,17 +105,38 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		return Start();
 	}
 
-	public ScanResult Scan()
+	public IScanResult Scan()
 	{
-		string snapFile = GenerateSnapFileName();
-		ScanResult scanResult = new ScanResult(Snap(snapFile));
-		if (!scanResult.SnapOk)
+		string text = GenerateSnapFileName();
+		ISnapResult snapResult = Snap(text);
+		if (snapResult.SnapOk)
 		{
-			scanResult.ResetOnException();
-			return scanResult;
+			IBarcodeReader configuredReader = BarcodeReaderFactory.Instance.GetConfiguredReader();
+			return configuredReader.Scan(text);
 		}
-		BarcodeReader.Instance.Scan(scanResult.SnapResult.Path, scanResult);
+		ScanResult scanResult = new ScanResult();
+		scanResult.DeviceError = true;
 		return scanResult;
+	}
+
+	public void NotifyConfigurationLoaded()
+	{
+		if (BarcodeConfiguration.Instance.ScannerService == Service && Plugin == null)
+		{
+			LoadPlugin(BarcodeConfiguration.Instance.CameraPlugin);
+		}
+	}
+
+	public void NotifyConfigurationChangeStart()
+	{
+	}
+
+	public void NotifyConfigurationChangeEnd()
+	{
+		if (BarcodeConfiguration.Instance.ScannerService == Service && Plugin == null)
+		{
+			LoadPlugin(BarcodeConfiguration.Instance.CameraPlugin);
+		}
 	}
 
 	public string FindInstalledPort()
@@ -140,27 +146,25 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	protected override void DisposeInner()
 	{
-		Plugin.TurnOff();
+		Plugin.Stop();
 	}
 
-	private LegacyScanner()
+	internal LegacyScanner()
 		: base(ScannerServices.Legacy)
 	{
-		LoadPluginsInner();
 	}
 
-	private void LoadPluginsInner()
+	private void LoadPlugin(string driver)
 	{
-		string cameraPlugin = BarcodeConfiguration.Instance.CameraPlugin;
-		CameraPluginDescriptor cameraPluginDescriptor = PluginLoader.Instance.LocatePlugin(cameraPlugin, out var plugin);
+		CameraPluginDescriptor cameraPluginDescriptor = PluginLoader.Instance.LocatePlugin(driver, out var plugin);
 		if (cameraPluginDescriptor == null)
 		{
-			LogHelper.Instance.Log($"Unable to locate plugin {cameraPlugin}", LogEntryType.Error);
+			LogHelper.Instance.Log($"Unable to locate plugin {driver}", LogEntryType.Error);
 			Plugin = new NilCameraPlugin();
 		}
 		else
 		{
-			LogHelper.Instance.Log($"Successfully loaded camera plugin {cameraPlugin}");
+			LogHelper.Instance.Log($"Successfully loaded camera plugin {driver}");
 			Plugin = plugin;
 			if (cameraPluginDescriptor.DescriptorPath != null)
 			{

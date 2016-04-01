@@ -1,5 +1,5 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -12,16 +12,16 @@ internal sealed class GetAndCenterJob : NativeJobAdapter
 		int top = GetTop<int>();
 		int top2 = GetTop<int>();
 		bool top3 = GetTop<bool>();
-		MotionResult motionResult = ControllerService.Instance.MoveTo(top2, top, MoveMode.Get, base.AppLog);
-		string message = $"MOVE DECK={top2} SLOT={top} MODE=GET {motionResult.ToString().ToUpper()}";
-		if (motionResult != MotionResult.Success)
+		ErrorCodes errorCodes = base.MotionService.MoveTo(top2, top, MoveMode.Get, base.AppLog);
+		string message = $"MOVE DECK={top2} SLOT={top} MODE=GET {errorCodes.ToString().ToUpper()}";
+		if (errorCodes != ErrorCodes.Success)
 		{
-			base.Context.ServiceLog(LogEntryType.Error, "There was an error executing MOVE: {0}", motionResult.ToString());
+			base.Context.ServiceLog(LogEntryType.Error, "There was an error executing MOVE: {0}", errorCodes.ToString());
 			base.Context.CreateResult("ErrorMessage", message, top2, top, null, null, null);
 			return;
 		}
 		base.Context.CreateResult("SuccessMessage", message, top2, top, null, null, null);
-		GetResult getResult = ControllerService.Instance.Get(base.AppLog);
+		IGetResult getResult = ControllerService.Instance.Get(base.AppLog);
 		if (!getResult.Success)
 		{
 			base.Context.ServiceLog(LogEntryType.Error, "There was an error executing GET: {0}", getResult.ToString());
@@ -30,7 +30,7 @@ internal sealed class GetAndCenterJob : NativeJobAdapter
 		}
 		if (top3)
 		{
-			ControllerService.Instance.CenterItem(CenterDiskMethod.VendDoorAndBack);
+			base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
 		}
 		base.Context.CreateInfoResult("SuccessMessage", "GET SUCCESS");
 	}

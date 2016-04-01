@@ -1,6 +1,6 @@
 using System.Threading;
 using Redbox.DirectShow;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DirectShow.Frame.Plugin;
 

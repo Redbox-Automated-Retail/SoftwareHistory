@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -12,8 +12,9 @@ public sealed class HomeXInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		MotionResult motionResult = ControllerService.Instance.HomeAxis(Axis.X, context.AppLog);
-		string instance = motionResult.ToString().ToUpper();
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.HomeAxis(Axis.X, context.AppLog);
+		string instance = errorCodes.ToString().ToUpper();
 		context.PushTop(instance);
 	}
 }

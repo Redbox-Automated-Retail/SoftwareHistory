@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
@@ -15,7 +16,7 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	private readonly string BackingFile;
 
-	private Location m_expectedLookupResult;
+	private ILocation m_expectedLookupResult;
 
 	private List<string> m_vendedIds = new List<string>();
 
@@ -23,11 +24,11 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public string[] ExpectedVersions { get; set; }
 
-	public GetResult ExpectedGetResult { get; set; }
+	public IGetResult ExpectedGetResult { get; set; }
 
-	public PutResult ExpectedPutResult { get; set; }
+	public IPutResult ExpectedPutResult { get; set; }
 
-	public QlmMotionResult ExpectedEngageQlmResult { get; set; }
+	public ErrorCodes ExpectedEngageQlmResult { get; set; }
 
 	public bool ExpectedQlmHaltResult { get; set; }
 
@@ -37,19 +38,17 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public bool ExpectedGripperPushResult { get; set; }
 
-	public GripperPeekResult ExpectedGripperPeekResult { get; set; }
-
 	public bool ExpectedSetVendDoorResult { get; set; }
 
 	public bool ExpectedIsTrackOpenResult { get; set; }
 
 	public string ExpectedPreviousIdResult { get; set; }
 
-	public QlmMotionResult ExpectedDisengageQlmResult { get; set; }
+	public ErrorCodes ExpectedDisengageQlmResult { get; set; }
 
-	public MotionResult ExpectedHomeXResult { get; set; }
+	public ErrorCodes ExpectedHomeXResult { get; set; }
 
-	public MotionResult ExpectedHomeYResult { get; set; }
+	public ErrorCodes ExpectedHomeYResult { get; set; }
 
 	public bool ExpectedSetGripperArmResult { get; set; }
 
@@ -59,7 +58,7 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public bool ExpectedIsGripperClearResult { get; set; }
 
-	public MotionResult ExpectedMoveToResult { get; set; }
+	public ErrorCodes ExpectedMoveToResult { get; set; }
 
 	public bool ExpectedSetGripperFingerResult { get; set; }
 
@@ -77,9 +76,9 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public QlmStatus ExpectedGetQlmStatusResult { get; set; }
 
-	public MotionResult ExpectedMoveToVendResult { get; set; }
+	public ErrorCodes ExpectedMoveToVendResult { get; set; }
 
-	public MotionResult ExpectedMoveAbsoluteResult { get; set; }
+	public ErrorCodes ExpectedMoveAbsoluteResult { get; set; }
 
 	public bool ExpectedIsAtVendDoorLocationResult { get; set; }
 
@@ -103,30 +102,29 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	public bool ExpectedSetSlotIdIsDuplicateInventoryResult { get; set; }
 
-	public Location ExpectedLookupResult => m_expectedLookupResult;
+	public ILocation ExpectedLookupResult => m_expectedLookupResult;
 
 	public void Reset()
 	{
 		ExpectedIsTrackClosedResult = true;
 		ExpectedIsGripperClearResult = true;
 		ExpectedIsVendDoorClosedResult = true;
-		ExpectedGetResult = new GetResult();
-		ExpectedPutResult = new PutResult();
+		ExpectedGetResult = new EmulatedGetResult(ErrorCodes.InvalidLocation);
+		ExpectedPutResult = new EmulatedPutResult(ErrorCodes.Success);
 		ExpectedVersions = new string[3] { "H101 Emulated controller board.", "H001 Emulated controller board.", "H002 Emulated controller board." };
 		ExpectedIsAuxSensorBlocked = new bool[12];
-		ExpectedHomeYResult = MotionResult.Success;
-		ExpectedHomeXResult = MotionResult.Success;
+		ExpectedHomeYResult = ErrorCodes.Success;
+		ExpectedHomeXResult = ErrorCodes.Success;
 		ExpectedIsPickerSensorBlocked = new bool[6];
-		ExpectedMoveToResult = MotionResult.Success;
+		ExpectedMoveToResult = ErrorCodes.Success;
 		ExpectedGetQlmStatusResult = QlmStatus.Empty;
-		ExpectedMoveToVendResult = MotionResult.Success;
-		ExpectedMoveAbsoluteResult = MotionResult.Success;
+		ExpectedMoveToVendResult = ErrorCodes.Success;
+		ExpectedMoveAbsoluteResult = ErrorCodes.Success;
 		ExpectedGetQlmDoorStatusResult = QlmDoorStatus.Closed;
 		ExpectedIsPickerFullResult.Clear();
 		ExpectedIsPickerFullResult.AddRange(new bool[2] { false, true });
-		QlmMotionResult expectedDisengageQlmResult = (ExpectedEngageQlmResult = QlmMotionResult.Success);
+		ErrorCodes expectedDisengageQlmResult = (ExpectedEngageQlmResult = ErrorCodes.Success);
 		ExpectedDisengageQlmResult = expectedDisengageQlmResult;
-		ExpectedGripperPeekResult = GripperPeekResult.Empty;
 		ExpectedSetGripperArmResult = false;
 		ExpectedQlmInBayStatus = true;
 		m_vendedIds = Load();
@@ -160,7 +158,8 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 		{
 			int deck = (int)value[0];
 			int slot = (int)value[1];
-			m_expectedLookupResult = new Location(deck, slot);
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			m_expectedLookupResult = service.Get(deck, slot);
 			return true;
 		}
 		if (string.Compare("ExpectedVendedDiscIDs.Set", name, ignoreCase: true) == 0)
@@ -178,7 +177,8 @@ public sealed class ControllerEmulationState : EmulationStateConfig
 
 	private ControllerEmulationState()
 	{
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "data");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string path = service.RuntimePath("data");
 		DataDirectory = Path.Combine(path, "SimulatedData");
 		BackingFile = Path.Combine(DataDirectory, "SimulatedVendData.ser");
 		CheckOrCreateBackingStoreDirectory(log: true);

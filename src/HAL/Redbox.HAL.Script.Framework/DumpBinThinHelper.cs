@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -11,14 +11,16 @@ internal class DumpBinThinHelper : ThinHelper
 
 	internal override MerchandizeResult ThinDisk(string id, MerchFlags flags)
 	{
-		if (DumpBin.Instance.IsFull())
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (service.IsFull())
 		{
 			base.Context.CreateInfoResult("DumpBinIsFull", "The dump bin is filled to capacity.");
 			base.Context.AppLog.Write("The dump bin is full.");
 			return MerchandizeResult.DumpBinFull;
 		}
 		base.Context.AppLog.Write($"Attempt thin of item {id}");
-		Location location = InventoryService.Instance.Lookup(id);
+		ILocation location = service2.Lookup(id);
 		if (location == null)
 		{
 			base.Context.AppLog.LogLookupFailure(id);
@@ -31,7 +33,7 @@ internal class DumpBinThinHelper : ThinHelper
 		case MerchandizeResult.EmptyStuck:
 			return merchandizeResult;
 		case MerchandizeResult.Success:
-			return ThinDiskToLocation(location, DumpBin.Instance.MoveableLocation(), id, MerchFlags.Thin);
+			return ThinDiskToLocation(location, service.MoveableLocation(), id, MerchFlags.Thin);
 		default:
 		{
 			MerchandizeResult merchandizeResult2 = ReturnToSource(location, id);
@@ -44,14 +46,15 @@ internal class DumpBinThinHelper : ThinHelper
 		}
 	}
 
-	protected override Location FindEmptyTarget(MerchFlags flags, out MerchandizeResult result)
+	protected override ILocation FindEmptyTarget(MerchFlags flags, out MerchandizeResult result)
 	{
-		if (DumpBin.Instance.IsFull())
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		if (service.IsFull())
 		{
 			result = MerchandizeResult.DumpBinFull;
 			return null;
 		}
 		result = MerchandizeResult.Success;
-		return DumpBin.Instance.MoveableLocation();
+		return service.MoveableLocation();
 	}
 }

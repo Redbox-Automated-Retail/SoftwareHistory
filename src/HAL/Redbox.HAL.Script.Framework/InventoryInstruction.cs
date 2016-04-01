@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -35,7 +35,9 @@ public sealed class InventoryInstruction : Instruction
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		InventoryOperands inventoryOperands = Enum<InventoryOperands>.ParseIgnoringCase(base.Operands[0].Value, InventoryOperands.None);
-		Location location;
+		IInventoryService inventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		ILocation location;
 		if (inventoryOperands == InventoryOperands.None && base.Operands[0].Value.Equals("MARK-EMPTY-UNKNOWN", StringComparison.CurrentCultureIgnoreCase))
 		{
 			int? deckOperand = GetDeckOperand(result.Errors, context);
@@ -43,9 +45,9 @@ public sealed class InventoryInstruction : Instruction
 			{
 				context.PushTop("ERROR");
 			}
-			Deck deck = DecksManager.Instance.GetDeck(deckOperand.Value);
-			Range range = new Range(1, deck.NumberOfSlots);
-			List<int> list = deck.SwapEmptyWith("UNKNOWN", MerchFlags.None, range);
+			IDeck byNumber = service.GetByNumber(deckOperand.Value);
+			Range slotRange = new Range(1, byNumber.NumberOfSlots);
+			IList<int> list = inventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
 			context.PushTop(list);
 			LogHelper.Instance.Log("Inventory: reset {0} empty slots on deck {1} to UNKNOWN", list, deckOperand.Value);
 		}
@@ -59,20 +61,20 @@ public sealed class InventoryInstruction : Instruction
 			}
 			else
 			{
-				context.PushTop(InventoryService.Instance.IsBarcodeDuplicate(keyValuePairValue, out var _));
+				context.PushTop(inventoryService.IsBarcodeDuplicate(keyValuePairValue, out var _));
 			}
 		}
 		else if (InventoryOperands.ClearAll == inventoryOperands)
 		{
-			DecksManager.Instance.ForAllDecksDo(delegate(Deck _d0)
+			service.ForAllDecksDo(delegate(IDeck _d0)
 			{
-				_d0.MarkInventory("EMPTY");
+				inventoryService.MarkDeckInventory(_d0, "EMPTY");
 				return true;
 			});
 		}
 		else if (InventoryOperands.EmptyCount == inventoryOperands)
 		{
-			context.PushTop(InventoryService.Instance.GetEmptyCount());
+			context.PushTop(inventoryService.GetMachineEmptyCount());
 		}
 		else if (!GetLocation(result, context, out location))
 		{
@@ -81,17 +83,18 @@ public sealed class InventoryInstruction : Instruction
 		}
 		else if (InventoryOperands.GetReturnTime == inventoryOperands)
 		{
-			DateTime? returnTime = location.ReturnTime;
-			context.PushTop((!returnTime.HasValue) ? "NONE" : returnTime.Value.ToString());
+			DateTime? returnDate = location.ReturnDate;
+			context.PushTop((!returnDate.HasValue) ? "NONE" : returnDate.Value.ToString());
 		}
 		else if (InventoryOperands.SetUnknown == inventoryOperands)
 		{
-			location.MarkUnknown();
+			location.ID = "UNKNOWN";
+			inventoryService.Save(location);
 			context.PushTop("SUCCESS");
 		}
 		else if (InventoryOperands.SetEmpty == inventoryOperands)
 		{
-			location.Reset();
+			inventoryService.Reset(location);
 			context.PushTop("SUCCESS");
 		}
 		else

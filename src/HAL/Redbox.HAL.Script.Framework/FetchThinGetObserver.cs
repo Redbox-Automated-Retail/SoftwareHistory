@@ -1,18 +1,20 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal sealed class FetchThinGetObserver : IGetObserver
 {
-	public void OnStuck(GetResult result, Deck deck, int slot)
+	public void OnStuck(IGetResult result)
 	{
-		deck.UpdateEmptyStuck(slot);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 	}
 
-	public bool OnEmpty(GetResult result, Deck deck, int slot)
+	public bool OnEmpty(IGetResult result)
 	{
-		result.UpdateCode(GetResultCode.ItemStuck);
-		deck.UpdateEmptyStuck(slot);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		result.Update(ErrorCodes.ItemStuck);
+		service.UpdateEmptyStuck(result.Location);
 		return false;
 	}
 

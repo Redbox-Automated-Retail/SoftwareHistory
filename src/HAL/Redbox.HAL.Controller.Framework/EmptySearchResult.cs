@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class EmptySearchResult : IDisposable
+internal sealed class EmptySearchResult : IEmptySearchResult, IDisposable
 {
-	public readonly List<Location> EmptyLocations = new List<Location>();
-
 	private bool m_disposed;
+
+	public IList<ILocation> EmptyLocations { get; private set; }
 
 	public int FoundEmpty => EmptyLocations.Count;
 
@@ -22,47 +22,8 @@ public class EmptySearchResult : IDisposable
 		}
 	}
 
-	public bool FindMultipleEmptyLocations()
+	internal EmptySearchResult()
 	{
-		int returnSlotBuffer = ControllerConfiguration.Instance.ReturnSlotBuffer;
-		int num = ControllerConfiguration.Instance.GetMachineEmptyCount() - returnSlotBuffer;
-		if (num <= 0)
-		{
-			LogHelper.Instance.Log("FindEmptyOutsideOf: There are no empty slots available.");
-			return false;
-		}
-		if (num > ControllerConfiguration.Instance.PutAwayItemAttempts)
-		{
-			num = ControllerConfiguration.Instance.PutAwayItemAttempts;
-		}
-		foreach (ESPNode item in ControllerConfiguration.Instance.ESPHelper.EmptyPattern)
-		{
-			Deck deck = DecksManager.Instance.GetDeck(item.Deck);
-			string idForSlot = deck.GetIdForSlot(item.Slot);
-			if ("EMPTY" == idForSlot)
-			{
-				EmptyLocations.Add(new Location(deck.Number, item.Slot));
-				if (EmptyLocations.Count == num)
-				{
-					break;
-				}
-			}
-		}
-		return EmptyLocations.Count > 0;
-	}
-
-	public bool FindOneEmpty()
-	{
-		foreach (ESPNode item in ControllerConfiguration.Instance.ESPHelper.EmptyPattern)
-		{
-			Deck deck = DecksManager.Instance.GetDeck(item.Deck);
-			string idForSlot = deck.GetIdForSlot(item.Slot);
-			if ("EMPTY" == idForSlot)
-			{
-				EmptyLocations.Add(new Location(deck.Number, item.Slot));
-				break;
-			}
-		}
-		return EmptyLocations.Count > 0;
+		EmptyLocations = new List<ILocation>();
 	}
 }

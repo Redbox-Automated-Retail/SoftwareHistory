@@ -1,5 +1,5 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.DataMatrix.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,17 +8,24 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		Deck deck = DecksManager.Instance.GetDeck(1);
-		base.Context.CreateInfoResult("MachineConfig", (deck.NumberOfSlots == 90) ? "Dense" : "Sparse");
-		base.Context.CreateInfoResult("CameraConfig", BarcodeConfiguration.Instance.ScannerService.ToString());
+		IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		IScannerDevice configuredDevice = service.GetConfiguredDevice();
+		IDoorSensorService service2 = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		IDeck first = base.DecksService.First;
+		base.Context.CreateInfoResult("MachineConfig", (first.NumberOfSlots == 90) ? "Dense" : "Sparse");
+		base.Context.CreateInfoResult("CameraConfig", configuredDevice.Name);
+		base.Context.CreateInfoResult("AuxRelayBoard", "Not Configured");
 		base.Context.CreateInfoResult("MerchMode", ControllerConfiguration.Instance.IsVMZMachine ? "VMZ" : "QLM");
-		base.Context.CreateInfoResult("DoorSensors", DoorSensors.Instance.SensorsEnabled ? "On" : "Off");
-		if (DoorSensors.Instance.SensorsEnabled)
+		base.Context.CreateInfoResult("DoorSensors", service2.SensorsEnabled ? "On" : "Off");
+		if (service2.SensorsEnabled)
 		{
-			base.Context.CreateInfoResult("DoorSensorStatus", DoorSensors.Instance.Query().ToString().ToUpper());
+			base.Context.CreateInfoResult("DoorSensorStatus", service2.Query().ToString().ToUpper());
 		}
 		base.Context.CreateInfoResult("QuickReturn", QuickReturnDevice.Instance.IsConfigured ? "Configured" : "Not configured");
-		base.Context.CreateInfoResult("AirExchangerConfigured", IceQubeBoard.Instance.Configured ? "Configured" : "Not configured");
+		IAirExchangerService service3 = ServiceLocator.Instance.GetService<IAirExchangerService>();
+		base.Context.CreateInfoResult("AirExchangerConfigured", service3.Configured ? "Configured" : "Not configured");
+		IDiskValidatorService service4 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		base.Context.CreateInfoResult("FraudSensorEnabled", service4.IsConfigured ? "Enabled" : "Not Enabled");
 	}
 
 	internal KioskConfigurationJob(ExecutionResult result, ExecutionContext ctx)

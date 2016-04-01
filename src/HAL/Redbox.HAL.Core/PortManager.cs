@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO.Ports;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 

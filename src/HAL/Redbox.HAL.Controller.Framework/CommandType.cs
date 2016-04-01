@@ -40,10 +40,22 @@ public enum CommandType
 	RollerToPos5,
 	[CommandProperties(Address = AddressSelector.H001, Command = "T6", StatusBit = 17, ResetCommand = "K4,P1", WaitPauseTime = 20)]
 	RollerToPos6,
+	[CommandProperties(Address = AddressSelector.H001, Command = "O4")]
+	FraudSensorEnablePowerTransistor,
+	[CommandProperties(Address = AddressSelector.H001, Command = "P4")]
+	FraudSensorDisablePowerTransistor,
+	[CommandProperties(Address = AddressSelector.H001, Command = "O3")]
+	FraudSensorEnableTransistor,
+	[CommandProperties(Address = AddressSelector.H001, Command = "P3")]
+	FraudSensorDisableTransistor,
 	[CommandProperties(Address = AddressSelector.H001, Command = "O2")]
 	RinglightOn,
 	[CommandProperties(Address = AddressSelector.H001, Command = "P2")]
 	RinglightOff,
+	[CommandProperties(Address = AddressSelector.H001, Command = "O3")]
+	RinglightOn3,
+	[CommandProperties(Address = AddressSelector.H001, Command = "P3")]
+	RinglightOff3,
 	[CommandProperties(Address = AddressSelector.H002, Command = "O1")]
 	AuxSensorsOn,
 	[CommandProperties(Address = AddressSelector.H002, Command = "P1")]
@@ -169,17 +181,5 @@ public enum CommandType
 	[CommandProperties(Address = AddressSelector.H002, Command = "O4")]
 	KillPowerToAUXUSB,
 	[CommandProperties(Address = AddressSelector.H002, Command = "P4")]
-	PowerAUXUSB,
-	[CommandProperties(Address = AddressSelector.H001, Command = "O1")]
-	RinglightOn1,
-	[CommandProperties(Address = AddressSelector.H001, Command = "P1")]
-	RinglightOff1,
-	[CommandProperties(Address = AddressSelector.H001, Command = "O3")]
-	RinglightOn3,
-	[CommandProperties(Address = AddressSelector.H001, Command = "P3")]
-	RinglightOff3,
-	[CommandProperties(Address = AddressSelector.H001, Command = "O4")]
-	RinglightOn4,
-	[CommandProperties(Address = AddressSelector.H001, Command = "P4")]
-	RinglightOff4
+	PowerAUXUSB
 }

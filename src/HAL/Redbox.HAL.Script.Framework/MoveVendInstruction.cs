@@ -1,5 +1,5 @@
 using System;
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -40,8 +40,9 @@ public sealed class MoveVendInstruction : Instruction
 			new ErrorList();
 			bool.TryParse(keyValuePair2.Value, out var _);
 		}
-		MotionResult motionResult = ControllerService.Instance.MoveToVend(mode, context.AppLog);
-		string instance = motionResult.ToString().ToUpper();
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.MoveVend(mode, context.AppLog);
+		string instance = errorCodes.ToString().ToUpper();
 		context.PushTop(instance);
 	}
 }

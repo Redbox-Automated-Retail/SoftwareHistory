@@ -7,7 +7,7 @@ using System.Windows.Forms;
 using System.Xml;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Management.Console.Properties;
 
 namespace Redbox.HAL.Management.Console;

@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.CameraTuner;
 

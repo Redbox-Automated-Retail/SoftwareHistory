@@ -1,89 +1,83 @@
-using System;
+using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-public static class ScannerDeviceFactory
+internal sealed class ScannerDeviceFactory : IScannerDeviceService, IConfigurationObserver
 {
-	private sealed class NilScanner : IScannerDevice, IDisposable
+	private IScannerDevice m_configuredDevice;
+
+	private ScannerServices ConfiguredService = ScannerServices.Emulated;
+
+	private readonly List<IConfigurationObserver> ConfigurableScanners = new List<IConfigurationObserver>();
+
+	private readonly CortexService CortexDevice;
+
+	private readonly LegacyScanner LegacyDevice;
+
+	private readonly NilScanner m_nilInstance = new NilScanner();
+
+	public IScannerDevice GetConfiguredDevice()
 	{
-		public bool RequiresExternalLighting => false;
+		return m_configuredDevice;
+	}
 
-		public bool IsConnected => false;
-
-		public bool InError => true;
-
-		public void Dispose()
+	public void NotifyConfigurationLoaded()
+	{
+		LogHelper.Instance.Log("[ScannerFactory] Configuration load.");
+		ConfiguredService = BarcodeConfiguration.Instance.ScannerService;
+		SetConfiguredDevice();
+		foreach (IConfigurationObserver configurableScanner in ConfigurableScanners)
 		{
-		}
-
-		public bool Start()
-		{
-			return false;
-		}
-
-		public SnapResult Snap(string fileName)
-		{
-			return new SnapResult();
-		}
-
-		public SnapResult Snap()
-		{
-			return new SnapResult();
-		}
-
-		public bool Stop()
-		{
-			return false;
-		}
-
-		public void TurnOff()
-		{
-		}
-
-		public bool Restart()
-		{
-			return false;
-		}
-
-		public ScanResult Scan()
-		{
-			ScanResult scanResult = new ScanResult(new SnapResult());
-			scanResult.ResetOnException();
-			return scanResult;
-		}
-
-		public string FindInstalledPort()
-		{
-			return "NONE";
-		}
-
-		internal NilScanner()
-		{
+			configurableScanner.NotifyConfigurationLoaded();
 		}
 	}
 
-	private static NilScanner m_nilInstance = new NilScanner();
-
-	public static IScannerDevice GetConfiguredDevice()
+	public void NotifyConfigurationChangeStart()
 	{
-		return GetConfiguredDevice(BarcodeConfiguration.Instance.ScannerService);
+		LogHelper.Instance.Log("[ScannerFactory] Configuration change start.");
+		m_configuredDevice.Stop();
+		m_configuredDevice = m_nilInstance;
+		foreach (IConfigurationObserver configurableScanner in ConfigurableScanners)
+		{
+			configurableScanner.NotifyConfigurationChangeStart();
+		}
 	}
 
-	public static IScannerDevice GetConfiguredDevice(ScannerServices _service)
+	public void NotifyConfigurationChangeEnd()
 	{
-		IScannerDevice result = null;
-		switch (_service)
+		LogHelper.Instance.Log("[ScannerFactory] Configuration change end.");
+		ConfiguredService = BarcodeConfiguration.Instance.ScannerService;
+		foreach (IConfigurationObserver configurableScanner in ConfigurableScanners)
+		{
+			configurableScanner.NotifyConfigurationChangeEnd();
+		}
+		SetConfiguredDevice();
+		m_configuredDevice.Start();
+	}
+
+	internal ScannerDeviceFactory()
+	{
+		m_configuredDevice = m_nilInstance;
+		CortexDevice = new CortexService();
+		LegacyDevice = new LegacyScanner();
+		ConfigurableScanners.Add(CortexDevice);
+		ConfigurableScanners.Add(LegacyDevice);
+	}
+
+	private void SetConfiguredDevice()
+	{
+		switch (ConfiguredService)
 		{
 		case ScannerServices.Legacy:
-			result = LegacyScanner.Instance;
+			m_configuredDevice = LegacyDevice;
 			break;
 		case ScannerServices.Cortex:
-			result = CortexService.Instance;
+			m_configuredDevice = CortexDevice;
 			break;
-		case ScannerServices.Emulated:
-			result = m_nilInstance;
+		default:
+			m_configuredDevice = m_nilInstance;
 			break;
 		}
-		return result;
 	}
 }

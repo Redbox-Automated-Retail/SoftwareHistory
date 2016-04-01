@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -18,7 +18,7 @@ internal class TestBoardsJob : NativeJobAdapter
 		ControlBoards[] boards = Boards;
 		foreach (ControlBoards controlBoards in boards)
 		{
-			string boardVersion = ControlSystem.Instance.GetBoardVersion(controlBoards);
+			string boardVersion = base.ControlSystem.GetBoardVersion(controlBoards);
 			string arg = "responsive";
 			if (boardVersion == "TIMEOUT")
 			{

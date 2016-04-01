@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DirectShow.Frame.Plugin;
@@ -24,11 +25,6 @@ internal sealed class Service : ICameraPlugin
 	public bool Stop()
 	{
 		return m_plugin.Stop();
-	}
-
-	public void TurnOff()
-	{
-		m_plugin.TurnOff();
 	}
 
 	public void InitWithProperties(IDictionary<string, object> properties)
