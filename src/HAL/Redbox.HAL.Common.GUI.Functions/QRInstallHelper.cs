@@ -129,7 +129,7 @@ public class QRInstallHelper : UserControl
 		{
 			return false;
 		}
-		return CommonFunctions.GetTopOfStack(hardwareJob) == "TRUE";
+		return hardwareJob.GetTopOfStack() == "TRUE";
 	}
 
 	private void SetToolButtonState(bool enabled)

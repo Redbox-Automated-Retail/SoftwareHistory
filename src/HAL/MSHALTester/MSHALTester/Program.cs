@@ -6,8 +6,6 @@ namespace Redbox.HAL.MSHALTester;
 
 public class Program : IDisposable
 {
-	public static string Version = "1.0.3.x";
-
 	private NamedLock m_instanceLock;
 
 	private static Guid m_applicationGuid = new Guid("{8609B87B-126E-489a-98E9-6818639534DF}");
@@ -15,7 +13,6 @@ public class Program : IDisposable
 	[STAThread]
 	public static void Main(string[] args)
 	{
-		Version = typeof(Program).Assembly.GetName().Version.ToString();
 		using Program program = new Program();
 		program.m_instanceLock = new NamedLock(m_applicationGuid.ToString(), LockScope.Local);
 		if (!program.m_instanceLock.IsOwned)
@@ -26,18 +23,23 @@ public class Program : IDisposable
 		Application.EnableVisualStyles();
 		Application.SetCompatibleTextRenderingDefault(defaultValue: false);
 		bool secure = false;
+		string text = "UNKNOWN";
 		for (int i = 0; i < args.Length; i++)
 		{
 			if (args[i].Equals("--secure", StringComparison.CurrentCultureIgnoreCase))
 			{
 				secure = true;
 			}
+			else if (args[i].StartsWith("--username"))
+			{
+				text = CommandLineOption.GetOptionVal(args[i], text);
+			}
 			else
 			{
-				TesterLog.Instance.Log($"Unrecognized option {args[i]}", LogEntryType.Error);
+				Console.WriteLine("Unrecognized option {0}", args[i]);
 			}
 		}
-		Form1 mainForm = new Form1(secure);
+		Form1 mainForm = new Form1(secure, text);
 		Application.Run(mainForm);
 	}
 

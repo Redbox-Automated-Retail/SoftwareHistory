@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace Redbox.HAL.MSHALTester;
+namespace Redbox.HAL.Common.GUI.Functions;
 
-public class NumberPad : Form
+public class LocationNumberPad : Form
 {
 	private IContainer components;
 
@@ -49,7 +49,7 @@ public class NumberPad : Form
 		}
 	}
 
-	public NumberPad()
+	public LocationNumberPad()
 	{
 		InitializeComponent();
 	}

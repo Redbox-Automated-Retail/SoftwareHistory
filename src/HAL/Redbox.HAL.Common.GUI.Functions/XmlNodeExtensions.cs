@@ -1,5 +1,6 @@
 using System;
 using System.Xml;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Common.GUI.Functions;
@@ -63,7 +64,8 @@ public static class XmlNodeExtensions
 		{
 			if (node != null && !string.IsNullOrEmpty(node.InnerText))
 			{
-				return (T)ConversionHelper.ChangeType(RuntimeService.Instance.ExpandConstantMacros(node.InnerText), typeof(T));
+				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+				return (T)ConversionHelper.ChangeType(service.ExpandConstantMacros(node.InnerText), typeof(T));
 			}
 		}
 		catch (ArgumentException)

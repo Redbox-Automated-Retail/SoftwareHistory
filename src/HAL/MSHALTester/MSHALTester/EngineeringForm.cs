@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HAL.MSHALTester.Properties;
 
@@ -151,7 +152,8 @@ public class EngineeringForm : Form
 						break;
 					}
 				}
-				string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "rotation-test.hs");
+				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+				string path = service.RuntimePath("rotation-test.hs");
 				if (!flag)
 				{
 					using (File.CreateText(path))
@@ -167,10 +169,10 @@ public class EngineeringForm : Form
 					FileHelper.SafeDeleteFile(path);
 				}
 				int num = 1000;
-				NumberPad numberPad = new NumberPad();
-				if (numberPad.ShowDialog() == DialogResult.OK)
+				LocationNumberPad locationNumberPad = new LocationNumberPad();
+				if (locationNumberPad.ShowDialog() == DialogResult.OK)
 				{
-					num = numberPad.Number;
+					num = locationNumberPad.Number;
 				}
 				HardwareCommandResult hardwareCommandResult2 = Service.ScheduleJob(text, "Engineering rotation test", enableDebugging: false, new HardwareJobSchedule
 				{
@@ -185,7 +187,10 @@ public class EngineeringForm : Form
 				WriteToOutput($"Scheduling rotation test job ID {m_rotationJob.ID}");
 				m_rotationJob.Pend();
 			}
-			new Thread(WaitforRotation).Start();
+			ThreadPool.QueueUserWorkItem(delegate
+			{
+				WaitforRotation();
+			});
 		}
 	}
 

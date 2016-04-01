@@ -10,13 +10,17 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HAL.MSHALTester.Properties;
+using log4net;
 
 namespace Redbox.HAL.MSHALTester;
 
-public class Form1 : Form, IDisposable, IClientOutputSink
+public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 {
+	private delegate void OnFinishInitDelegate();
+
 	internal enum Direction
 	{
 		Unknown,
@@ -47,9 +51,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private const int ImmediateTimeout = 90000;
 
+	private const string ExchangerMnemonic = "AIRXCHGR";
+
 	private const string UtilitiesProgram = "c:\\Program Files\\Redbox\\hal-tools\\HalUtilities.exe";
 
-	private const string ExchangerMnemonic = "AIRXCHGR";
+	private OnFinishInitDelegate FinishInitDelegate;
 
 	private ImageViewer ImageViewer;
 
@@ -69,6 +75,14 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private string CounterFile = "c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log";
 
+	private bool RinglightOn;
+
+	private CameraState StateOfCamera;
+
+	private bool FanConfigured;
+
+	private int? m_returnErrorCount = null;
+
 	private bool LegacyCamera;
 
 	private bool FormDisposed;
@@ -77,23 +91,23 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private ButtonAspectsManager Manager;
 
-	private bool RinglightOn;
+	private bool HasFraudSensor;
 
-	private CameraState StateOfCamera;
+	private bool VMZConfigured;
+
+	private bool DoorSensorsConfigured;
+
+	private readonly OutputBox OutputBox;
 
 	private readonly string Version;
-
-	private readonly TesterLog TesterLog;
-
-	private bool FanConfigured;
-
-	private int? m_returnErrorCount = null;
 
 	private readonly byte[] CameraSnapImmediate;
 
 	private bool PickProgramCompiled;
 
 	private RadioButton m_offsetGetRadioButton;
+
+	private readonly ILog m_log;
 
 	private IContainer components;
 
@@ -177,7 +191,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private Button button34;
 
-	private Button button33;
+	private Button m_gripperSellButton;
 
 	private Button button32;
 
@@ -305,13 +319,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private Button m_testArcusCommButton;
 
-	private TextBox m_getOffsetTB;
-
 	private Button m_getWithOffset;
+
+	private RadioButton m_getOffXRadio;
 
 	private RadioButton m_getOffYRadio;
 
-	private RadioButton m_getOffXRadio;
+	private TextBox m_getOffsetTB;
 
 	public bool CheckForHAL { get; set; }
 
@@ -344,13 +358,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				}
 				catch (Exception ex)
 				{
-					WriteToOutput("Unable to locate HAL service path " + ex.Message);
+					OutputBox.Write("Unable to locate HAL service path " + ex.Message);
 					m_servicePath = null;
 				}
 			}
 			return m_servicePath;
 		}
 	}
+
+	private int SourceDeck => m_sourceDeckTextBox.GetInteger("Source Deck", OutputBox);
+
+	private int SourceSlot => m_sourceSlotTextBox.GetInteger("Source Slot", OutputBox);
 
 	private string DeckConfigPassword
 	{
@@ -373,7 +391,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 			catch (Exception)
 			{
-				WriteToOutput("Unable to open MS HAL Tester store.");
+				OutputBox.Write("Unable to open MS HAL Tester store.");
 				return string.Empty;
 			}
 			finally
@@ -386,14 +404,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 		}
 	}
-
-	private bool IsDenseMachine { get; set; }
-
-	private bool HasQuickReturn { get; set; }
-
-	private bool VMZConfigured { get; set; }
-
-	private bool DoorSensorsConfigured { get; set; }
 
 	private int CameraInError
 	{
@@ -410,7 +420,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				{
 					try
 					{
-						m_returnErrorCount = int.Parse(CommonFunctions.GetTopOfStack(hardwareJob));
+						m_returnErrorCount = int.Parse(hardwareJob.GetTopOfStack());
 					}
 					catch
 					{
@@ -424,84 +434,160 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	public void WriteMessage(string msg)
 	{
-		WriteToOutput(msg);
+		OutputBox.Write(msg);
 	}
 
 	public void WriteMessage(string fmt, params object[] stuff)
 	{
-		string msg = string.Format(fmt, stuff);
-		WriteToOutput(msg);
+		OutputBox.Write(fmt, stuff);
 	}
 
-	public Form1(bool secure)
+	public void Log(string message, Exception e)
+	{
+		m_log.Error(message, e);
+	}
+
+	public void Log(string message, LogEntryType type)
+	{
+		switch (type)
+		{
+		case LogEntryType.Info:
+			m_log.Info(message);
+			break;
+		case LogEntryType.Debug:
+			m_log.Debug(message);
+			break;
+		case LogEntryType.Error:
+			m_log.Error(message);
+			break;
+		case LogEntryType.Fatal:
+			m_log.Fatal(message);
+			break;
+		}
+	}
+
+	public void Log(string message, Exception e, LogEntryType type)
+	{
+		switch (type)
+		{
+		case LogEntryType.Info:
+			m_log.Info(message, e);
+			break;
+		case LogEntryType.Debug:
+			m_log.Debug(message, e);
+			break;
+		case LogEntryType.Error:
+			m_log.Error(message, e);
+			break;
+		case LogEntryType.Fatal:
+			m_log.Fatal(message, e);
+			break;
+		}
+	}
+
+	public bool IsLevelEnabled(LogEntryType entryLogLevel)
+	{
+		return entryLogLevel switch
+		{
+			LogEntryType.Info => m_log.IsInfoEnabled, 
+			LogEntryType.Debug => m_log.IsDebugEnabled, 
+			LogEntryType.Error => m_log.IsErrorEnabled, 
+			LogEntryType.Fatal => m_log.IsFatalEnabled, 
+			_ => false, 
+		};
+	}
+
+	public Form1(bool secure, string user)
 	{
 		InitializeComponent();
 		Version = typeof(Form1).Assembly.GetName().Version.ToString();
+		TesterSession testerSession = new TesterSession(user);
+		TesterSessionImplemtation instance = new TesterSessionImplemtation(testerSession);
+		ServiceLocator.Instance.AddService(typeof(ISessionUserService), instance);
+		ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService());
+		FinishInitDelegate = AfterInit;
+		OutputBox = new TesterOutputBox(m_outputBox, this);
+		m_log = LogManager.GetLogger("TesterLog");
 		m_secure = secure;
-		if (Settings.Default.CheckForRunningHAL && !ProcessHelper.HALProcessRunning() && !ProcessHelper.ProcessIsRunning("halsvc-console.exe"))
+		if (ShouldStart())
 		{
-			WriteToOutput("The HAL process is not running.");
-			return;
-		}
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.AppendLine("CLEAR");
-		stringBuilder.AppendLine(" RINGLIGHT ON");
-		stringBuilder.AppendLine(" CAMERA SNAP");
-		stringBuilder.AppendLine(" RINGLIGHT OFF");
-		CameraSnapImmediate = Encoding.ASCII.GetBytes(stringBuilder.ToString());
-		m_offsetGetRadioButton = m_getOffXRadio;
-		m_offsetGetRadioButton.Checked = true;
-		TesterLog = new TesterLog();
-		LogHelper.Instance.Log("Tester Log startup; form {0} in secure mode.", m_secure ? "is" : "isn't");
-		ConfigureChannel(_test: false);
-		m_runningCommandButtonColor = Color.Red;
-		base.FormClosing += OnFormClosing;
-		PickerSensorsBar pickerSensorsBar = new PickerSensorsBar(m_hardwareService)
-		{
-			Dock = DockStyle.Bottom
-		};
-		groupBox5.Controls.Add(pickerSensorsBar);
-		pickerSensorsBar.ReadEvents += OnSensorReadDone;
-		pickerSensorsBar.BarEvents += OnSensorOperation;
-		if (!string.IsNullOrEmpty(Settings.Default.SensorColor))
-		{
-			m_sensorEnabledColor = Color.FromName(Settings.Default.SensorColor);
-		}
-		if (!string.IsNullOrEmpty(Settings.Default.ButtonRunningColor))
-		{
-			m_runningCommandButtonColor = Color.FromName(Settings.Default.ButtonRunningColor);
-		}
-		if (!string.IsNullOrEmpty(Settings.Default.FormBackgroundColor))
-		{
-			Color backColor = Color.FromName(Settings.Default.FormBackgroundColor);
-			BackColor = backColor;
-		}
-		Manager = new ButtonAspectsManager();
-		m_versionTextBox.Text = Version;
-		string id = "UNKNOWN";
-		if (!m_hardwareService.GetKioskID(out id).Success)
-		{
-			id = "UNKNOWN";
-		}
-		m_kioskIDTextBox.Text = id;
-		if (Helper.BootstrapInitRunning())
-		{
-			WriteToLogFile("bootstrap init still running - render ui & wait.");
-			new Thread((ThreadStart)delegate
+			m_offsetGetRadioButton = m_getOffXRadio;
+			m_offsetGetRadioButton.Checked = true;
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("CLEAR");
+			stringBuilder.AppendLine(" RINGLIGHT ON");
+			stringBuilder.AppendLine(" CAMERA SNAP");
+			stringBuilder.AppendLine(" RINGLIGHT OFF");
+			CameraSnapImmediate = Encoding.ASCII.GetBytes(stringBuilder.ToString());
+			ServiceLocator.Instance.AddService(typeof(IRuntimeService), new RuntimeService());
+			ServiceLocator.Instance.AddService(typeof(ILogger), this);
+			LogHelper.Instance.Log("Tester startup; form {0} in secure mode, user = {1}.", m_secure ? "is" : "isn't", testerSession.User);
+			ConfigureChannel(_test: false);
+			m_runningCommandButtonColor = Color.Red;
+			base.FormClosing += OnFormClosing;
+			PickerSensorsBar pickerSensorsBar = new PickerSensorsBar(m_hardwareService)
+			{
+				Dock = DockStyle.Bottom
+			};
+			groupBox5.Controls.Add(pickerSensorsBar);
+			pickerSensorsBar.ReadEvents += OnSensorReadDone;
+			pickerSensorsBar.BarEvents += OnSensorOperation;
+			if (!string.IsNullOrEmpty(Settings.Default.SensorColor))
+			{
+				m_sensorEnabledColor = Color.FromName(Settings.Default.SensorColor);
+			}
+			if (!string.IsNullOrEmpty(Settings.Default.ButtonRunningColor))
+			{
+				m_runningCommandButtonColor = Color.FromName(Settings.Default.ButtonRunningColor);
+			}
+			if (!string.IsNullOrEmpty(Settings.Default.FormBackgroundColor))
+			{
+				Color backColor = Color.FromName(Settings.Default.FormBackgroundColor);
+				BackColor = backColor;
+			}
+			Manager = new ButtonAspectsManager();
+			m_versionTextBox.Text = Version;
+			string id = "UNKNOWN";
+			if (!m_hardwareService.GetKioskID(out id).Success)
+			{
+				id = "UNKNOWN";
+			}
+			m_kioskIDTextBox.Text = id;
+			ThreadPool.QueueUserWorkItem(delegate
 			{
 				Helper.WaitforInit(FinishInit);
-			}).Start();
-		}
-		else
-		{
-			FinishInit();
+			});
 		}
 	}
 
-	private void FinishInit()
+	private bool ShouldStart()
 	{
-		StopJobs();
-		CompileScripts();
+		if (!Settings.Default.CheckForRunningHAL)
+		{
+			return true;
+		}
+		if (!ProcessIsRunning("halsvc-win32.exe") && !ProcessIsRunning("halsvc-console.exe"))
+		{
+			OutputBox.Write("The HAL process is not running.");
+			return false;
+		}
+		return true;
+	}
+
+	private bool ProcessIsRunning(string name)
+	{
+		int num = name.LastIndexOf(".exe");
+		name = ((-1 == num) ? name : name.Substring(0, num));
+		Process[] processesByName = Process.GetProcessesByName(name);
+		if (processesByName.Length != 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void AfterInit()
+	{
 		m_takeDiskButton.Enabled = m_secure;
 		if (m_secure)
 		{
@@ -514,7 +600,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			m_sensorCheckBox.Visible = false;
 		}
 		ChangeUIAfterconfig();
-		Application.DoEvents();
+	}
+
+	private void FinishInit()
+	{
+		StopJobs();
+		CompileScripts();
+		Invoke(FinishInitDelegate);
 	}
 
 	internal void LogMessage(string msg)
@@ -533,12 +625,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private void OnSensorReadDone(bool readError)
 	{
-		WriteToOutput(readError ? "Sensor Read Failure: PCB Not Responsive" : "Sensors read.");
+		OutputBox.Write(readError ? "Sensor Read Failure: PCB Not Responsive" : "Sensors read.");
 	}
 
 	private void OnSensorOperation(string msg, string response)
 	{
-		WriteToOutput($"{msg}: {response}");
+		OutputBox.Write($"{msg}: {response}");
 	}
 
 	private void ChangeUIAfterconfig()
@@ -548,55 +640,37 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			button.Enabled = true;
 		}
-		MachineConfiguration machineConfiguration = new MachineConfiguration(m_hardwareService);
+		using MachineConfiguration machineConfiguration = new MachineConfiguration(m_hardwareService);
 		machineConfiguration.Run();
-		string text = "NONE";
-		foreach (ProgramResult result in machineConfiguration.Results)
-		{
-			switch (result.Code)
-			{
-			case "MachineConfig":
-				IsDenseMachine = result.Message == "Sparse";
-				break;
-			case "CameraConfig":
-				LegacyCamera = result.Message == "Legacy";
-				break;
-			case "MerchMode":
-				VMZConfigured = result.Message == "VMZ";
-				break;
-			case "DoorSensors":
-				DoorSensorsConfigured = result.Message == "On";
-				break;
-			case "QuickReturn":
-				HasQuickReturn = result.Message == "Configured";
-				break;
-			case "DoorSensorStatus":
-				text = result.Message;
-				break;
-			case "AirExchangerConfigured":
-				FanConfigured = result.Message == "Configured";
-				break;
-			}
-		}
+		VMZConfigured = machineConfiguration.VMZConfigured;
+		DoorSensorsConfigured = machineConfiguration.DoorSensorsConfigured;
+		LegacyCamera = machineConfiguration.LegacyCamera;
+		FanConfigured = machineConfiguration.AirExchangerConfigured;
+		HasFraudSensor = machineConfiguration.HasFraudDevice;
 		if (VMZConfigured)
 		{
-			WriteToOutput("The kiosk is configured for a VMZ.");
+			OutputBox.Write("The kiosk is configured for a VMZ.");
 		}
 		if (DoorSensorsConfigured)
 		{
-			WriteToOutput("The kiosk is configured for door sensors.");
-			if (text != "OK")
+			OutputBox.Write("The kiosk is configured for door sensors.");
+			if (machineConfiguration.DoorSensorStatus != "OK")
 			{
-				WriteToOutput($"WARNING: DoorSensor status returned {text} (door may be open!)");
+				OutputBox.Write($"WARNING: DoorSensor status returned {machineConfiguration.DoorSensorStatus} (door may be open!)");
 			}
 		}
 		else
 		{
-			WriteToOutput($"Door sensor configuration shows: NOT CONFIGURED.");
+			OutputBox.Write($"Door sensor configuration shows: NOT CONFIGURED.");
 		}
-		if (HasQuickReturn)
+		if (machineConfiguration.HasQuickReturn)
 		{
-			WriteToOutput("The kiosk is configured for a quick return device.");
+			OutputBox.Write("The kiosk is configured for a quick return device.");
+		}
+		if (HasFraudSensor)
+		{
+			m_gripperSellButton.Enabled = false;
+			OutputBox.Write("The kiosk is configured with a fraud sensor.");
 		}
 		if (!LegacyCamera)
 		{
@@ -621,7 +695,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			string text = ExecuteInstructionWithResult("CAMERA STATUS", logResult: false);
 			if (string.IsNullOrEmpty(text))
 			{
-				WriteToOutput("Could not find current camera status.");
+				OutputBox.Write("Could not find current camera status.");
 				return;
 			}
 			StateOfCamera = ((text == "RUNNING") ? CameraState.Started : CameraState.Stopped);
@@ -637,19 +711,20 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			if (result.Code == "TotalEmptyCount")
 			{
-				WriteToOutput($"  EMPTY slots: {result.Message}");
+				OutputBox.Write($"  EMPTY slots: {result.Message}");
 			}
 			else if (result.Code == "UnknownCount")
 			{
-				WriteToOutput($"  UNKNOWN slots: {result.Message}");
+				OutputBox.Write($"  UNKNOWN slots: {result.Message}");
 			}
 		}
-		WriteToOutput("Inventory Stats: ");
+		OutputBox.Write("Inventory Stats: ");
 	}
 
 	private void CompileScripts()
 	{
-		string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "Scripts");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string path = service.RuntimePath("Scripts");
 		if (!Directory.Exists(path))
 		{
 			return;
@@ -673,11 +748,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		m_hardwareService = Helper.AutoConnect();
 		if (m_hardwareService == null)
 		{
-			WriteToOutput("Unable to create a hardware service.");
+			OutputBox.Write("Unable to create a hardware service.");
 		}
 		else if (_test)
 		{
-			WriteToOutput(Helper.TestCommunication() ? "Hardware service initialized." : "Failed to communicate with HAL.");
+			OutputBox.Write(Helper.TestCommunication() ? "Hardware service initialized." : "Failed to communicate with HAL.");
 		}
 	}
 
@@ -703,7 +778,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			{
 				if (text != "SUCCESS")
 				{
-					WriteToOutput($"The HOMEY function failed with error {text}");
+					OutputBox.Write($"The HOMEY function failed with error {text}");
 				}
 				else
 				{
@@ -719,13 +794,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			if (!m_hardwareService.ExecuteImmediateProgram(CameraSnapImmediate, out var job).Success)
 			{
-				WriteToOutput("Command error.");
+				OutputBox.Write("Command error.");
 				return;
 			}
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
+			string topOfStack = job.GetTopOfStack();
 			if ("SUCCESS" == topOfStack)
 			{
-				string[] stackEntries = CommonFunctions.GetStackEntries(job, 2);
+				string[] stackEntries = job.GetStackEntries(2);
 				if (ImageViewer == null)
 				{
 					ImageViewer = new ImageViewer();
@@ -740,7 +815,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 			else
 			{
-				WriteToOutput("CAMERA CAPTURE error. I'm sorry!");
+				OutputBox.Write("CAMERA CAPTURE error. I'm sorry!");
 			}
 		}
 	}
@@ -767,21 +842,30 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				ToggleRinglight();
 				buttonAspects.Button.Text = (RinglightOn ? "Turn Ringlight Off" : "Turn Ringlight On");
 			}
-			else if (StateOfCamera != CameraState.Unknown)
+			else
 			{
+				if (StateOfCamera == CameraState.Unknown)
+				{
+					return;
+				}
 				string instruction = ((CameraState.Started == StateOfCamera) ? "CAMERA STOP FORCE=TRUE" : "CAMERA START");
 				CameraState cameraState = ((CameraState.Started != StateOfCamera) ? CameraState.Started : CameraState.Stopped);
-				HardwareJob job = CommonFunctions.ExecuteInstruction(m_hardwareService, instruction);
-				string topOfStack = CommonFunctions.GetTopOfStack(job);
+				HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, instruction);
+				if (hardwareJob == null)
+				{
+					OutputBox.Write("Unable to execute instruction.");
+					return;
+				}
+				string topOfStack = hardwareJob.GetTopOfStack();
 				if ("TRUE".Equals(topOfStack, StringComparison.CurrentCultureIgnoreCase))
 				{
-					WriteToOutput($"Changed the camera state to {cameraState.ToString()}.");
+					OutputBox.Write($"Changed the camera state to {cameraState.ToString()}.");
 					StateOfCamera = cameraState;
 					ToggleNonLegacyStart();
 				}
 				else
 				{
-					WriteToOutput($"Couldn't change camera state to {cameraState.ToString()}.I'm sorry!");
+					OutputBox.Write($"Couldn't change camera state to {cameraState.ToString()}.I'm sorry!");
 				}
 			}
 		}
@@ -800,16 +884,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			{
 				if (CommonFunctions.ExecuteInstruction(m_hardwareService, instructionFromButton) != null)
 				{
-					WriteToOutput("Sent instruction " + instructionFromButton);
+					OutputBox.Write("Sent instruction " + instructionFromButton);
 				}
 				else
 				{
-					WriteToOutput("Sending instruction " + instructionFromButton + " failed.");
+					OutputBox.Write("Sending instruction " + instructionFromButton + " failed.");
 				}
 			}
 			else
 			{
-				WriteToOutput($"{instructionFromButton} failed.");
+				OutputBox.Write($"{instructionFromButton} failed.");
 			}
 		}
 	}
@@ -841,11 +925,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			testRetrofitDeck.Run();
 			if (HardwareJobStatus.Completed == testRetrofitDeck.EndStatus)
 			{
-				WriteToOutput("Test succeeded.");
+				OutputBox.Write("Test succeeded.");
 			}
 			else
 			{
-				WriteToOutput("The test failed.");
+				OutputBox.Write("The test failed.");
 			}
 		}
 	}
@@ -854,19 +938,19 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			WriteToOutput("Test boards:");
+			OutputBox.Write("Test boards:");
 			if (TestBoards())
 			{
-				WriteToOutput("Board test ok.");
+				OutputBox.Write("Board test ok.");
 				return;
 			}
-			WriteToOutput(" One or more boards not responsive - issue RESET.");
+			OutputBox.Write(" One or more boards not responsive - issue RESET.");
 			using (ResetControlSystemJob resetControlSystemJob = new ResetControlSystemJob(m_hardwareService))
 			{
 				resetControlSystemJob.Run();
 				foreach (ProgramResult result in resetControlSystemJob.Results)
 				{
-					WriteToOutput(result.Message);
+					OutputBox.Write(result.Message);
 				}
 				if (resetControlSystemJob.EndStatus == HardwareJobStatus.Errored)
 				{
@@ -885,24 +969,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			if (result.Code == "VersionResult")
 			{
-				WriteToOutput(result.Message);
+				OutputBox.Write(result.Message);
 			}
 		}
 		return boardTestJob.EndStatus == HardwareJobStatus.Completed;
-	}
-
-	private void WriteToOutput(string msg)
-	{
-		if (m_outputBox.InvokeRequired)
-		{
-			SetTextCallback method = WriteToOutput;
-			Invoke(method, msg);
-		}
-		else
-		{
-			m_outputBox.Items.Insert(0, msg);
-			WriteToLogFile(msg);
-		}
 	}
 
 	private void WriteToLogFile(string msg)
@@ -920,20 +990,19 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			string text = "MOVE";
-			if (!string.IsNullOrEmpty(m_sourceDeckTextBox.Text))
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
 			{
-				text += $" DECK={m_sourceDeckTextBox.Text}";
+				OutputBox.Write(Resources.SourceDeckSlotInvalid);
+				return;
 			}
-			if (!string.IsNullOrEmpty(m_sourceSlotTextBox.Text))
-			{
-				text += $" SLOT={m_sourceSlotTextBox.Text}";
-			}
+			string text = $"MOVE DECK={sourceDeck} SLOT={sourceSlot}";
 			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, text);
 			if (hardwareJob != null)
 			{
-				string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-				WriteToOutput(text + " " + topOfStack);
+				string topOfStack = hardwareJob.GetTopOfStack();
+				OutputBox.Write(text + " " + topOfStack);
 			}
 		}
 	}
@@ -987,7 +1056,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					if (Math.Abs(result) > 50)
 					{
 						m_errorProvider.SetError(m_encoderUnitsTextBox, "Cannot exceed 50 units.");
-						WriteToOutput("ERROR: move cannot exceed 50 units on X axis.");
+						OutputBox.Write("ERROR: move cannot exceed 50 units on X axis.");
 						Application.DoEvents();
 						return;
 					}
@@ -997,7 +1066,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					if (Math.Abs(result) > 200)
 					{
 						m_errorProvider.SetError(m_encoderUnitsTextBox, "Cannot exceed 200 units.");
-						WriteToOutput("ERROR: move cannot exceed 200 units on Y axis.");
+						OutputBox.Write("ERROR: move cannot exceed 200 units on Y axis.");
 						Application.DoEvents();
 						return;
 					}
@@ -1006,7 +1075,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				if (direction == Direction.Left || direction == Direction.Down)
 				{
 					result = -result;
-					WriteToOutput($"{direction.ToString()} moving {result} eu");
+					OutputBox.Write($"{direction.ToString()} moving {result} eu");
 				}
 				if (GetArcusPosition("MOTIONCONTROL XPOS", out var position))
 				{
@@ -1015,33 +1084,19 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					{
 						int num2 = position;
 						bool flag2 = direction == Direction.Up || direction == Direction.Down;
-						int num3 = (flag2 ? (num2 + result) : (num + result));
-						string text = string.Format("MOVEABS AXIS={0} UNITS={1}", flag2 ? "Y" : "X", num3);
-						if (m_secure && flag)
-						{
-							text = $"{text} SENSOR-CHECK=FALSE";
-						}
-						WriteToOutput($"Executing {text}");
-						HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate(text, out var job);
-						if (hardwareCommandResult.Success)
-						{
-							job.Resume();
-							job.WaitForCompletion();
-							WriteToOutput(CommonFunctions.GetTopOfStack(job));
-						}
-						else
-						{
-							WriteToOutput("Communication error");
-						}
+						int units = (flag2 ? (num2 + result) : (num + result));
+						MoveHelper moveHelper = new MoveHelper(m_hardwareService);
+						MoveHelperResult moveHelperResult = moveHelper.MoveAbs(flag2 ? MoveAxis.Y : MoveAxis.X, units, !m_secure || !flag);
+						OutputBox.Write(moveHelperResult.Status);
 					}
 					else
 					{
-						WriteToOutput("Cannot get current Y position.");
+						OutputBox.Write("Cannot get current Y position.");
 					}
 				}
 				else
 				{
-					WriteToOutput("Cannot get current X position.");
+					OutputBox.Write("Cannot get current X position.");
 				}
 			}
 			else
@@ -1053,33 +1108,33 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private bool GetArcusPosition(string instruction, out int position)
 	{
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate(instruction, out var job);
-		if (!hardwareCommandResult.Success)
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, instruction);
+		if (hardwareJob == null)
 		{
 			position = 0;
 			return false;
 		}
-		hardwareCommandResult = job.GetStack(out var stack);
+		HardwareCommandResult stack = hardwareJob.GetStack(out var stack2);
 		position = 0;
 		bool flag = false;
 		string text = null;
-		if (hardwareCommandResult.Success)
+		if (stack.Success)
 		{
-			if (stack.Count >= 1)
+			if (stack2.Count >= 1)
 			{
-				text = stack.Pop();
+				text = stack2.Pop();
 				flag = int.TryParse(text, out position);
 				if (!flag)
 				{
-					WriteToOutput($"Failed to decode {text}");
+					OutputBox.Write($"Failed to decode {text}");
 				}
 			}
 		}
 		else
 		{
-			WriteToOutput($"MOTIONCONTROL instruction failed: {hardwareCommandResult.ToString()}");
+			OutputBox.Write($"MOTIONCONTROL instruction failed: {stack.ToString()}");
 		}
-		if (hardwareCommandResult.Success)
+		if (stack.Success)
 		{
 			return flag;
 		}
@@ -1093,7 +1148,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			return true;
 		}
-		WriteToOutput("Unable to get position from MOTIONCONTROL.");
+		OutputBox.Write("Unable to get position from MOTIONCONTROL.");
 		return false;
 	}
 
@@ -1104,7 +1159,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			return true;
 		}
-		WriteToOutput("Unable to get position from MOTIONCONTROL.");
+		OutputBox.Write("Unable to get position from MOTIONCONTROL.");
 		return false;
 	}
 
@@ -1112,30 +1167,31 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			string statement = "LOC";
+			string instruction = "LOC";
 			string format = "Deck = {0}, Slot = {1}";
-			if (!m_hardwareService.ExecuteImmediate(statement, out var job).Success)
+			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, instruction);
+			if (hardwareJob == null)
 			{
-				WriteToOutput("Unable to execute immediate instruction.");
+				OutputBox.Write("Unable to execute immediate instruction.");
 				return;
 			}
-			if (job.GetStack(out var stack).Success)
+			if (hardwareJob.GetStack(out var stack).Success)
 			{
 				string arg = stack.Pop();
 				string arg2 = stack.Pop();
-				WriteToOutput(string.Format(format, arg, arg2));
+				OutputBox.Write(string.Format(format, arg, arg2));
 			}
 			else
 			{
-				WriteToOutput(string.Format(format, "UNDEFINED", "UNDEFINED"));
+				OutputBox.Write(string.Format(format, "UNDEFINED", "UNDEFINED"));
 			}
 			if (ReadXPosition(out var position) && ReadYPosition(out var position2))
 			{
-				WriteToOutput($"X = {position}, Y = {position2}");
+				OutputBox.Write($"X = {position}, Y = {position2}");
 			}
 			else
 			{
-				WriteToOutput("Unable to obtain position information.");
+				OutputBox.Write("Unable to obtain position information.");
 			}
 		}
 		Application.DoEvents();
@@ -1147,7 +1203,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		HardwareCommandResult jobs = m_hardwareService.GetJobs(out var jobs2);
 		if (!jobs.Success)
 		{
-			WriteToOutput("Unable to read job list - JOBS MAY BE ACTIVE!");
+			OutputBox.Write("Unable to read job list - JOBS MAY BE ACTIVE!");
 			return list;
 		}
 		list.AddRange(jobs2);
@@ -1167,11 +1223,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					if (item.Suspend().Success)
 					{
 						m_stoppedJobs.Add(item);
-						WriteToOutput($"Suspended job {item.ProgramName} ID = {item.ID}");
+						OutputBox.Write($"Suspended job {item.ProgramName} ID = {item.ID}");
 					}
 					else
 					{
-						WriteToOutput("Unable to stop job " + item.ProgramName);
+						OutputBox.Write("Unable to stop job " + item.ProgramName);
 					}
 				}
 				else if ((item.Status == HardwareJobStatus.Pending || item.Status == HardwareJobStatus.Running) && !item.ProgramName.Equals("job-watchdog"))
@@ -1181,11 +1237,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 			if (num > 0)
 			{
-				WriteToOutput("WARNING: jobs are currently running or pending.");
+				OutputBox.Write("WARNING: jobs are currently running or pending.");
 			}
 			else
 			{
-				WriteToOutput("There are no jobs running or pending.");
+				OutputBox.Write("There are no jobs running or pending.");
 			}
 			m_hardwareService.ExecuteServiceCommand("SERVICE diagnostic-mode status: true");
 		}
@@ -1207,8 +1263,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, text);
 				if (hardwareJob != null)
 				{
-					string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-					WriteToOutput(text + " " + topOfStack);
+					string topOfStack = hardwareJob.GetTopOfStack();
+					OutputBox.Write(text + " " + topOfStack);
 				}
 			}
 			else
@@ -1237,7 +1293,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		using (Manager.MakeAspect(sender))
 		{
 			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(m_hardwareService);
-			WriteToOutput(string.Format("Found {0} barcodes ({1}), time={2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
+			OutputBox.Write(string.Format("Found {0} barcodes ({1}), time={2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
 		}
 	}
 
@@ -1250,7 +1306,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				string servicePath = ServicePath;
 				if (string.IsNullOrEmpty(servicePath))
 				{
-					WriteToOutput("Unable to locate service path; cannot launch amcap.");
+					OutputBox.Write("Unable to locate service path; cannot launch amcap.");
 				}
 				else
 				{
@@ -1281,7 +1337,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			ImageViewer.Dispose();
 		}
 		FormDisposed = true;
-		WriteToOutput("Cleanup Hardware.");
+		OutputBox.Write("Cleanup Hardware.");
 		Application.DoEvents();
 		if (m_hardwareService != null)
 		{
@@ -1296,14 +1352,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			stringBuilder.AppendLine(" RINGLIGHT OFF");
 			stringBuilder.AppendLine(" CLEAR");
 			m_hardwareService.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
-			WriteToOutput("Restart suspended jobs.");
+			OutputBox.Write("Restart suspended jobs.");
 			Application.DoEvents();
 			foreach (HardwareJob stoppedJob in m_stoppedJobs)
 			{
 				stoppedJob.Pend();
 			}
 		}
-		TesterLog.Dispose();
 		Application.Exit();
 	}
 
@@ -1315,7 +1370,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			initJob.Run();
 			if (HardwareJobStatus.Completed == initJob.EndStatus)
 			{
-				WriteToOutput("Init succeeded.");
+				OutputBox.Write("Init succeeded.");
 			}
 			else
 			{
@@ -1325,43 +1380,45 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				}
 				foreach (Error error in initJob.Errors)
 				{
-					WriteToOutput(error.Details);
+					OutputBox.Write(error.Details);
 				}
-				WriteToOutput("Init didn't succeed; errors follow:");
+				OutputBox.Write("Init didn't succeed; errors follow:");
 			}
 		}
 	}
 
 	private void OnInsertBlankLine(object sender, EventArgs e)
 	{
-		WriteToOutput(string.Empty);
+		OutputBox.Write(string.Empty);
 	}
 
 	private void OnClearOutput(object sender, EventArgs e)
 	{
-		m_outputBox.Items.Clear();
+		OutputBox.Clear();
 	}
 
 	private void OnGotoSlot(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			if (!ValidateSourceDeckSlot())
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
 			{
-				WriteToOutput(Resources.SourceDeckSlotInvalid);
+				OutputBox.Write(Resources.SourceDeckSlotInvalid);
 				return;
 			}
 			int num = 0;
 			string text = ExecuteInstructionWithResult("VERSION AUX", logResult: false);
 			if ("TIMEOUT" == text)
 			{
-				WriteToOutput("Move: AUX board not responsive.");
+				OutputBox.Write("Move: AUX board not responsive.");
 				num++;
 			}
 			text = ExecuteInstructionWithResult("VERSION PICKER", logResult: false);
 			if ("TIMEOUT" == text)
 			{
-				WriteToOutput("Move: PCB not responsive.");
+				OutputBox.Write("Move: PCB not responsive.");
 				num++;
 			}
 			if (num > 0)
@@ -1375,12 +1432,14 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				if (text2.Contains("BLOCKED"))
 				{
 					num++;
-					WriteToOutput($"MOVE: {text2}");
+					OutputBox.Write($"MOVE: {text2}");
 				}
 			}
 			if (num <= 0)
 			{
-				MoveInner(m_sourceDeckTextBox.Text, m_sourceSlotTextBox.Text, "NORMAL", writeToStack: true);
+				MoveHelper moveHelper = new MoveHelper(m_hardwareService);
+				MoveHelperResult moveHelperResult = moveHelper.MoveTo(sourceDeck, sourceSlot);
+				OutputBox.Write($"MOVE DECK={sourceDeck} SLOT={sourceSlot} {moveHelperResult.Status}");
 			}
 		}
 	}
@@ -1389,31 +1448,31 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			if (!ValidateSourceDeckSlot())
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
 			{
-				WriteToOutput(Resources.SourceDeckSlotInvalid);
+				OutputBox.Write(Resources.SourceDeckSlotInvalid);
 				return;
 			}
-			int num = int.Parse(m_sourceDeckTextBox.Text);
-			int num2 = int.Parse(m_sourceSlotTextBox.Text);
 			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("sync-locations", "Tester Location Sync", enableDebugging: false, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Highest
 			}, out var job);
 			if (!hardwareCommandResult.Success)
 			{
-				WriteToOutput("Unable to communicate with HAL.");
+				OutputBox.Write("Unable to communicate with HAL.");
 				return;
 			}
-			job.Push(num2);
-			job.Push(num);
+			job.Push(sourceSlot);
+			job.Push(sourceDeck);
 			job.Push(1);
 			job.Pend();
 			hardwareCommandResult = job.WaitForCompletion(240000);
 			HardwareCommandResult job2 = m_hardwareService.GetJob(job.ID, out job);
 			if (!job2.Success)
 			{
-				WriteToOutput("Unable to talk with HAL.");
+				OutputBox.Write("Unable to talk with HAL.");
 			}
 			else
 			{
@@ -1426,7 +1485,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					{
 						if (key.StartsWith("MSTESTER-SYMBOL"))
 						{
-							WriteToOutput(symbols[key]);
+							OutputBox.Write(symbols[key]);
 						}
 					}
 					return;
@@ -1437,19 +1496,15 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private void OnPut(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
+		int sourceDeck = SourceDeck;
+		int sourceSlot = SourceSlot;
+		if (-1 == sourceDeck || -1 == sourceSlot)
 		{
-			if (!ValidateSourceDeckSlot())
-			{
-				WriteToOutput(Resources.SourceDeckSlotInvalid);
-				return;
-			}
-			using PutInLocationResult putInLocationResult = new PutInLocationResult(m_hardwareService, FromTextBox(m_sourceDeckTextBox), FromTextBox(m_sourceSlotTextBox));
-			putInLocationResult.Run();
-			foreach (ProgramResult result in putInLocationResult.Results)
-			{
-				WriteToOutput(result.Message);
-			}
+			OutputBox.Write(Resources.SourceDeckSlotInvalid);
+		}
+		else
+		{
+			CompositeFunctions.PutItem(sender, Manager, m_hardwareService, sourceDeck, sourceSlot, OutputBox);
 		}
 	}
 
@@ -1462,14 +1517,18 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			if (!ValidateSourceDeckSlot())
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
 			{
-				WriteToOutput(Resources.SourceDeckSlotInvalid);
+				OutputBox.Write(Resources.SourceDeckSlotInvalid);
 				return;
 			}
-			if (!ValidateDestinationDeckAndSlot())
+			int integer = m_destinationDeckText.GetInteger("Destination Deck", OutputBox);
+			int integer2 = m_destinationSlotText.GetInteger("Destination Slot", OutputBox);
+			if (-1 == integer || -1 == integer2)
 			{
-				WriteToOutput(Resources.DestDeckSlotInvalid);
+				OutputBox.Write(Resources.DestDeckSlotInvalid);
 				return;
 			}
 			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("GRIPPER  STATUS", out var job);
@@ -1478,20 +1537,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				LogServiceError(hardwareCommandResult);
 				return;
 			}
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
+			string topOfStack = job.GetTopOfStack();
 			if (topOfStack.Equals("FULL"))
 			{
-				WriteToOutput("The gripper is full; no transfer. Sorry! Have a great day!");
+				OutputBox.Write("The gripper is full; no transfer. Sorry! Have a great day!");
 				return;
 			}
-			hardwareCommandResult = m_hardwareService.ExecuteImmediate($"XFER SRC-DECK={m_sourceDeckTextBox.Text} SRC-SLOT={m_sourceSlotTextBox.Text} DEST-DECK={m_destinationDeckText.Text} DEST-SLOT={m_destinationSlotText.Text}", 120000, out job);
-			if (!hardwareCommandResult.Success)
-			{
-				LogServiceError(hardwareCommandResult);
-				return;
-			}
-			topOfStack = CommonFunctions.GetTopOfStack(job);
-			WriteToOutput("Transfer " + topOfStack);
+			TransferLocation source = new TransferLocation(sourceDeck, sourceSlot);
+			TransferLocation target = new TransferLocation(integer, integer2);
+			TransferDisk transferDisk = new TransferDisk(m_hardwareService);
+			topOfStack = transferDisk.Transfer(source, target);
+			OutputBox.Write("Transfer " + topOfStack);
 			m_destinationDeckText.Text = string.Empty;
 			m_destinationSlotText.Text = string.Empty;
 		}
@@ -1499,25 +1555,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private void OnVendDVD(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
-		{
-			using VendDiskInPickerJob vendDiskInPickerJob = new VendDiskInPickerJob(m_hardwareService);
-			vendDiskInPickerJob.Run();
-			foreach (ProgramResult result in vendDiskInPickerJob.Results)
-			{
-				WriteToOutput(result.Code);
-				if (result.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
-				{
-					WriteToOutput("Disk was taken.");
-					return;
-				}
-				if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
-				{
-					WriteToOutput("There was a HW error: " + result.Message);
-				}
-			}
-			WriteToOutput("Disk not taken - pulled back in.");
-		}
+		CompositeFunctions.VendDisk(sender, m_hardwareService, Manager, OutputBox);
 	}
 
 	private void OnPushDVDInSlot(object sender, EventArgs e)
@@ -1532,16 +1570,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				if (result.Code == "MachineError")
 				{
 					num++;
-					WriteToOutput(result.Message);
+					OutputBox.Write(result.Message);
 				}
 			}
 			if (num == 0)
 			{
-				WriteToOutput("push-in-dvd SUCCESS");
+				OutputBox.Write("push-in-dvd SUCCESS");
 				return;
 			}
 			string arg = (pushInDvdJob.Symbols.ContainsKey("ERROR-STATE") ? pushInDvdJob.Symbols["ERROR-STATE"] : "ERROR");
-			WriteToOutput($"push-in-dvd {arg}");
+			OutputBox.Write($"push-in-dvd {arg}");
 		}
 	}
 
@@ -1553,31 +1591,14 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			putInEmptySlotResult.Run();
 			foreach (ProgramResult result in putInEmptySlotResult.Results)
 			{
-				WriteToOutput(result.Message);
+				OutputBox.Write(result.Message);
 			}
 		}
-	}
-
-	private bool MoveInner(string deck, string slot, string mode, bool writeToStack)
-	{
-		string text = $"MOVE DECK={deck} SLOT={slot} MODE={mode}";
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate(text, Settings.Default.ImmediateMoveTimeout, out var job);
-		if (hardwareCommandResult.Success)
-		{
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
-			if (writeToStack)
-			{
-				WriteToOutput(text + " " + topOfStack);
-			}
-			return topOfStack.Equals("SUCCESS");
-		}
-		LogServiceError(hardwareCommandResult);
-		return false;
 	}
 
 	private void LogServiceError(HardwareCommandResult result)
 	{
-		DumpResult(result);
+		CommonFunctions.DumpResult(result);
 		LogHelper.Instance.Log("Service call failure.");
 	}
 
@@ -1600,7 +1621,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			{
 				if (!text.Equals("PICKER"))
 				{
-					WriteToOutput("Unrecognized sensor type " + text);
+					OutputBox.Write("Unrecognized sensor type " + text);
 					return;
 				}
 				arg = "PCB";
@@ -1608,67 +1629,27 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 			if (hardwareJob == null)
 			{
-				WriteToOutput("Command failed.");
+				OutputBox.Write("Command failed.");
 				return;
 			}
-			string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
+			string topOfStack = hardwareJob.GetTopOfStack();
 			int result = 0;
 			if (!int.TryParse(topOfStack, out result))
 			{
-				WriteToOutput("Sensor read error.");
+				OutputBox.Write("Sensor read error.");
 				return;
 			}
 			if (result == 0)
 			{
-				WriteToOutput($"{arg} is not responsive.");
+				OutputBox.Write($"{arg} is not responsive.");
 				return;
 			}
-			string[] stackEntries = CommonFunctions.GetStackEntries(hardwareJob, result + 1);
+			string[] stackEntries = hardwareJob.GetStackEntries(result + 1);
 			for (int i = 1; i <= result; i++)
 			{
-				WriteToOutput(stackEntries[i]);
+				OutputBox.Write(stackEntries[i]);
 			}
 		}
-	}
-
-	private bool ValidateSourceDeckSlot()
-	{
-		if (!ValidateIntTextBox(m_sourceDeckTextBox, "Source Deck"))
-		{
-			return false;
-		}
-		if (!ValidateIntTextBox(m_sourceSlotTextBox, "Source Slot"))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	private bool ValidateDestinationDeckAndSlot()
-	{
-		if (!ValidateIntTextBox(m_destinationDeckText, "Destination Deck"))
-		{
-			return false;
-		}
-		if (!ValidateIntTextBox(m_destinationSlotText, "Destination Slot"))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	private bool ValidateIntTextBox(TextBox tb, string friendlyName)
-	{
-		if (string.IsNullOrEmpty(tb.Text))
-		{
-			return false;
-		}
-		if (!int.TryParse(tb.Text, out var _))
-		{
-			WriteToOutput($"The value '{tb.Text}' in box {friendlyName} is not an integer.");
-			return false;
-		}
-		return true;
 	}
 
 	private void CopyListboxTextToClipboard(object sender, EventArgs e)
@@ -1690,7 +1671,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		string servicePath = ServicePath;
 		if (string.IsNullOrEmpty(servicePath))
 		{
-			WriteToOutput("Unable to locate HAL service path.");
+			OutputBox.Write("Unable to locate HAL service path.");
 			return;
 		}
 		string fileName = Path.Combine(servicePath, "halmgmtc.exe");
@@ -1711,7 +1692,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		}
 		catch (Exception ex)
 		{
-			WriteToOutput("Unable to run Decks form.");
+			OutputBox.Write("Unable to run Decks form.");
 			WriteToLogFile(ex.Message);
 		}
 	}
@@ -1728,7 +1709,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		}
 		catch (Exception)
 		{
-			WriteToOutput("Unable to launch explorer.");
+			OutputBox.Write("Unable to launch explorer.");
 		}
 	}
 
@@ -1753,10 +1734,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		TextBox textBox = TextBoxFromTag(tag);
 		if (textBox != null)
 		{
-			NumberPad numberPad = new NumberPad();
-			if (numberPad.ShowDialog() == DialogResult.OK)
+			LocationNumberPad locationNumberPad = new LocationNumberPad();
+			if (locationNumberPad.ShowDialog() == DialogResult.OK)
 			{
-				textBox.Text = numberPad.Number.ToString();
+				textBox.Text = locationNumberPad.Number.ToString();
 			}
 		}
 	}
@@ -1769,20 +1750,20 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			mSPullInDvdJob.Run();
 			if (mSPullInDvdJob.EndStatus == HardwareJobStatus.Completed)
 			{
-				WriteToOutput("pull-dvd-in SUCCESS");
+				OutputBox.Write("pull-dvd-in SUCCESS");
 				return;
 			}
 			foreach (ProgramResult result in mSPullInDvdJob.Results)
 			{
 				if (result.Code == "InvalidJobUse")
 				{
-					WriteToOutput("pull-dvd-in is intended for a disk stuck in the picker.");
-					WriteToOutput("Please use the 'GET' function instead.");
+					OutputBox.Write("pull-dvd-in is intended for a disk stuck in the picker.");
+					OutputBox.Write("Please use the 'GET' function instead.");
 					break;
 				}
 				if (result.Code == "MachineError")
 				{
-					WriteToOutput("pull-dvd-in " + result.Message);
+					OutputBox.Write("pull-dvd-in " + result.Message);
 				}
 			}
 		}
@@ -1806,9 +1787,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			ConfiguredDevicesForm configuredDevicesForm = new ConfiguredDevicesForm(m_hardwareService, TesterLog.CoreLog);
+			Dictionary<string, string> dictionary = new Dictionary<string, string>();
+			dictionary["AllowSessionDisplay"] = Settings.Default.AllowSessionDisplay.ToString();
+			ConfiguredDevicesForm configuredDevicesForm = new ConfiguredDevicesForm(m_hardwareService, dictionary);
 			configuredDevicesForm.ShowDialog();
 			ChangeUIAfterconfig();
+			dictionary.Clear();
 		}
 	}
 
@@ -1864,14 +1848,14 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, inst, 120000);
 		if (hardwareJob != null)
 		{
-			string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
+			string topOfStack = hardwareJob.GetTopOfStack();
 			if (logResult)
 			{
-				WriteToOutput(inst + " - " + topOfStack);
+				OutputBox.Write(inst + " - " + topOfStack);
 			}
 			return topOfStack;
 		}
-		WriteToOutput("Command failed.");
+		OutputBox.Write("Command failed.");
 		return string.Empty;
 	}
 
@@ -1905,32 +1889,32 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("hardware-status", string.Empty, enableDebugging: false, schedule, out var job);
 				if (!hardwareCommandResult.Success)
 				{
-					WriteToOutput("Unable to run job hardware-status");
+					OutputBox.Write("Unable to run job hardware-status");
 					return;
 				}
 				if (!Helper.WaitForJob(job, out var _))
 				{
-					WriteToOutput("Unable to run job hardware-status");
+					OutputBox.Write("Unable to run job hardware-status");
 					return;
 				}
 				if (!job.GetResults(out var results).Success)
 				{
-					WriteToOutput($"Unable to read the results for job {job.ID}");
+					OutputBox.Write($"Unable to read the results for job {job.ID}");
 					return;
 				}
 				if (results[0].Code == "HardwareStatusOk")
 				{
-					WriteToOutput("Hardware status ok.");
+					OutputBox.Write("Hardware status ok.");
 				}
 				else
 				{
-					WriteToOutput("Hardware error status follows:");
+					OutputBox.Write("Hardware error status follows:");
 					ProgramResult[] array = results;
 					foreach (ProgramResult programResult in array)
 					{
 						if (!(programResult.Code == "HardwareStatusInError"))
 						{
-							WriteToOutput(programResult.Message);
+							OutputBox.Write(programResult.Message);
 						}
 					}
 				}
@@ -1938,7 +1922,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 			catch (Exception)
 			{
-				WriteToOutput("ERROR: hardware-status failed.");
+				OutputBox.Write("ERROR: hardware-status failed.");
 			}
 		}
 	}
@@ -1955,12 +1939,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("reset-motioncontrol", string.Empty, enableDebugging: false, schedule, out var job);
 				if (!hardwareCommandResult.Success)
 				{
-					WriteToOutput("Unable to run job reset-arcus");
+					OutputBox.Write("Unable to run job reset-arcus");
 					return;
 				}
 				if (!Helper.WaitForJob(job, out var _))
 				{
-					WriteToOutput("Unable to run job reset-arcus");
+					OutputBox.Write("Unable to run job reset-arcus");
 					return;
 				}
 				if (job.GetResults(out var results).Success)
@@ -1968,18 +1952,18 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					ProgramResult[] array = results;
 					foreach (ProgramResult programResult in array)
 					{
-						WriteToOutput(programResult.Message);
+						OutputBox.Write(programResult.Message);
 					}
 				}
 				else
 				{
-					WriteToOutput("Command failure.");
+					OutputBox.Write("Command failure.");
 				}
 				m_hardwareService.TrashJob(job.ID);
 			}
 			catch (Exception)
 			{
-				WriteToOutput("ERROR: reset-arcus failed.");
+				OutputBox.Write("ERROR: reset-arcus failed.");
 			}
 		}
 	}
@@ -2007,20 +1991,15 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 
 	private void GetDVD(object sender)
 	{
-		using (Manager.MakeAspect(sender))
+		int sourceDeck = SourceDeck;
+		int sourceSlot = SourceSlot;
+		if (-1 == sourceDeck || -1 == sourceSlot)
 		{
-			if (!ValidateSourceDeckSlot())
-			{
-				WriteToOutput(Resources.SourceDeckSlotInvalid);
-				return;
-			}
-			using GetAndCenterResult getAndCenterResult = new GetAndCenterResult(m_hardwareService, FromTextBox(m_sourceDeckTextBox), FromTextBox(m_sourceSlotTextBox), center: false);
-			getAndCenterResult.Run();
-			WriteMessage("GetDVD ended with status {0}", getAndCenterResult.EndStatus.ToString());
-			foreach (ProgramResult result in getAndCenterResult.Results)
-			{
-				WriteToOutput(result.Message);
-			}
+			OutputBox.Write(Resources.SourceDeckSlotInvalid);
+		}
+		else
+		{
+			CompositeFunctions.GetItem(sender, Manager, sourceDeck, sourceSlot, OutputBox, m_hardwareService);
 		}
 	}
 
@@ -2029,22 +2008,22 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		m_errorProvider.Clear();
 		using (Manager.MakeAspect(sender))
 		{
-			if (!ValidateIntTextBox(m_sourceSlotTextBox, "Source Slot"))
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceSlot)
 			{
 				m_errorProvider.SetError(m_sourceSlotTextBox, "Need a valid slot!");
 				return;
 			}
-			int slot = int.Parse(m_sourceSlotTextBox.Text);
-			using VerticalSync verticalSync = new VerticalSync(m_hardwareService, slot);
+			using VerticalSync verticalSync = new VerticalSync(m_hardwareService, sourceSlot);
 			verticalSync.Run();
 			if (HardwareJobStatus.Completed == verticalSync.EndStatus)
 			{
-				WriteToOutput("The job completed successfully.");
+				OutputBox.Write("The job completed successfully.");
 				return;
 			}
 			foreach (ProgramResult result in verticalSync.Results)
 			{
-				WriteToOutput($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
+				OutputBox.Write($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
 			}
 		}
 	}
@@ -2053,15 +2032,15 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("CAMERA RESETRETURNCOUNTER", out var _);
-			if (hardwareCommandResult.Success)
+			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "CAMERA RESETRETURNCOUNTER");
+			if (hardwareJob != null)
 			{
-				WriteToOutput("Return counter reset.");
+				OutputBox.Write("Return counter reset.");
 				m_cameraWorkingButton.Enabled = false;
 			}
 			else
 			{
-				WriteToOutput("Command failed.");
+				OutputBox.Write("Command failed.");
 			}
 		}
 	}
@@ -2077,7 +2056,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}
 			else
 			{
-				WriteToOutput("Command failed.");
+				OutputBox.Write("Command failed.");
 			}
 		}
 	}
@@ -2089,26 +2068,46 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			string[] array = ReadLimits();
 			if (array.Length == 0)
 			{
-				WriteToOutput("Unable to read limits.");
+				OutputBox.Write("Unable to read limits.");
 				return;
 			}
 			string[] array2 = array;
 			foreach (string msg in array2)
 			{
-				WriteToOutput(msg);
+				OutputBox.Write(msg);
 			}
 		}
 	}
 
 	private string[] ReadLimits()
 	{
-		MoveHelper moveHelper = new MoveHelper(m_hardwareService);
-		string[] array = moveHelper.ReadLimits();
-		if (array.Length == 0)
+		List<string> list = new List<string>();
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "MOTIONCONTROL READLIMITS");
+		if (hardwareJob == null)
 		{
-			WriteToOutput("Command failed.");
+			OutputBox.Write("Command failed.");
+			return list.ToArray();
 		}
-		return array;
+		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
+		{
+			OutputBox.Write("Error getting stack.");
+			return list.ToArray();
+		}
+		string s = stack.Peek();
+		try
+		{
+			int num = int.Parse(s);
+			stack.Pop();
+			for (int i = 0; i < num; i++)
+			{
+				list.Add(stack.Pop());
+			}
+		}
+		catch
+		{
+			OutputBox.Write("Error processing stack.");
+		}
+		return list.ToArray();
 	}
 
 	private void ReadDoorSensors()
@@ -2116,12 +2115,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "DOORSENSORS QUERY");
 		if (hardwareJob == null)
 		{
-			WriteToOutput("Command failed.");
+			OutputBox.Write("Command failed.");
 			return;
 		}
 		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
 		{
-			WriteToOutput("Error getting stack.");
+			OutputBox.Write("Error getting stack.");
 			return;
 		}
 		string s = stack.Peek();
@@ -2131,12 +2130,36 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			stack.Pop();
 			for (int i = 0; i < num; i++)
 			{
-				WriteToOutput(stack.Pop());
+				OutputBox.Write(stack.Pop());
 			}
 		}
 		catch
 		{
-			WriteToOutput("Error processing stack.");
+			OutputBox.Write("Error processing stack.");
+		}
+	}
+
+	private string ReadDoorSensorStatus()
+	{
+		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "DOORSENSORS STATUS");
+		if (hardwareJob == null)
+		{
+			OutputBox.Write("Command failed.");
+			return "UNKNOWN";
+		}
+		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
+		{
+			OutputBox.Write("Error getting stack.");
+			return "UNKNOWN";
+		}
+		try
+		{
+			return stack.Pop();
+		}
+		catch
+		{
+			OutputBox.Write("Error processing stack.");
+			return "UNKNOWN";
 		}
 	}
 
@@ -2144,11 +2167,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 	{
 		if (m_hardwareService.ServiceUnknownSync().Success)
 		{
-			WriteToOutput("Unknown sync scheduled.");
+			OutputBox.Write("Unknown sync scheduled.");
 		}
 		else
 		{
-			WriteToOutput("Unknown sync schedule failed.");
+			OutputBox.Write("Unknown sync schedule failed.");
 		}
 	}
 
@@ -2164,54 +2187,27 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					qlmTestSyncJob.Run();
 					foreach (ProgramResult result in qlmTestSyncJob.Results)
 					{
-						WriteToOutput($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
+						OutputBox.Write($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
 					}
 					return;
 				}
 			}
 			using PutDiskInPickerInBinJob putDiskInPickerInBinJob = new PutDiskInPickerInBinJob(m_hardwareService);
 			putDiskInPickerInBinJob.Run();
+			OutputBox.Write($"Job ended with status = {putDiskInPickerInBinJob.EndStatus.ToString()}");
 			foreach (ProgramResult result2 in putDiskInPickerInBinJob.Results)
 			{
 				if (result2.Code == "PutToBinOK")
 				{
 					string arg = (result2.ItemID.IsUnknown() ? result2.ItemID.Metadata : result2.ItemID.Barcode);
-					WriteToOutput($"The disk ID = {arg} was put into the bin.");
+					OutputBox.Write($"The disk ID = {arg} was put into the bin.");
 				}
 				else
 				{
-					WriteToOutput($"Job failed: detailed message = {result2.Message}");
+					OutputBox.Write($"Code = {result2.Code} Message = {result2.Message}");
 				}
 			}
 		}
-	}
-
-	private void DumpResult(HardwareCommandResult result)
-	{
-		if (result == null)
-		{
-			return;
-		}
-		if (!result.Success && result.Errors.Count > 0)
-		{
-			WriteToLogFile("\nClient Errors:");
-			foreach (Error error in result.Errors)
-			{
-				WriteToLogFile(error.ToString());
-				LogFormattedMessage("Details: {0}\n", error.Details);
-			}
-		}
-		if (result.CommandMessages.Count > 0)
-		{
-			LogMessage("Command Messages:");
-			for (int i = 0; i < result.CommandMessages.Count; i++)
-			{
-				WriteToLogFile(result.CommandMessages[i]);
-			}
-		}
-		WriteToLogFile("Command ");
-		WriteToLogFile(result.Success ? "successfully executed" : "failed during execution");
-		LogFormattedMessage(", execution time = {0}", result.ExecutionTime);
 	}
 
 	private Button[] FormButtons()
@@ -2220,7 +2216,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			m_openLogsButton, m_clearOutputButton, m_readPosButton, m_runInitButton, m_homeXButton, m_homeYButton, m_resetProteusButton, m_testArcusCommButton, button57, button5,
 			button47, button50, button51, button53, button54, m_qlmTestButton, button22, button66, button20, m_showTimeoutLogButton,
-			m_readLimitsButton, button36, button37, button38, button39, button64, button31, button32, button33, button34,
+			m_readLimitsButton, button36, button37, button38, button39, button64, button31, button32, m_gripperSellButton, button34,
 			button35, button28, button29, button30, m_qlmEngageButton, m_qlmDisengageButton, m_qlmStopButton, m_qlmCaseStatusButton, m_qlmUpButton, m_qlmDownButton,
 			m_qlmDoorStatus, m_snapImageButton, m_startButtonCamera, m_cameraPreview, m_cameraWorkingButton, button19, button26, button7, button8, button10,
 			button11, button12, button13, button16, button14, button17, button18, button1, button2, button3,
@@ -2240,25 +2236,15 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			if (fanState == FanState.On)
 			{
 				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANOFF", "AIRXCHGR"));
-				WriteToOutput("Xchanger fan should be off.");
+				OutputBox.Write("Xchanger fan should be off.");
 			}
 			else
 			{
 				CommonFunctions.ExecuteInstruction(m_hardwareService, string.Format("{0} FANON", "AIRXCHGR"));
-				WriteToOutput("Xchanger fan should be on.");
+				OutputBox.Write("Xchanger fan should be on.");
 			}
 		}
 		SetFanButtonState();
-	}
-
-	private int FromTextBox(TextBox tb)
-	{
-		int result = -1;
-		if (!int.TryParse(tb.Text, out result))
-		{
-			return -1;
-		}
-		return result;
 	}
 
 	private void SetFanButtonState()
@@ -2282,26 +2268,17 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			return FanState.On;
 		}
-		string topOfStack = CommonFunctions.GetTopOfStack(hardwareJob);
-		FanState fanState = FanState.On;
-		try
-		{
-			return (FanState)Enum.Parse(typeof(FanState), topOfStack, ignoreCase: true);
-		}
-		catch (ArgumentException)
-		{
-			return FanState.On;
-		}
+		string topOfStack = hardwareJob.GetTopOfStack();
+		return Enum<FanState>.ParseIgnoringCase(topOfStack, FanState.On);
 	}
 
-	private void button6_Click_1(object sender, EventArgs e)
+	private void m_getWithOffset_Click(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			m_errorProvider.Clear();
-			int num = FromTextBox(m_sourceDeckTextBox);
-			int num2 = FromTextBox(m_sourceSlotTextBox);
-			if (-1 == num || -1 == num2)
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
 			{
 				m_errorProvider.SetError(m_sourceDeckTextBox, "Must provide a deck/slot value.");
 				return;
@@ -2311,81 +2288,57 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				GetDVD(sender);
 				return;
 			}
-			if (m_getOffXRadio == null)
+			if (m_offsetGetRadioButton == null)
 			{
-				WriteToOutput("Please specify an axis.");
+				OutputBox.Write("Please specify an axis.");
 				m_errorProvider.SetError(m_getOffsetTB, "Please specify an axis.");
 			}
 			m_hardwareService.ExecuteImmediate("CLEAR", out var job);
 			HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("GRIPPER STATUS", out job);
 			if (!hardwareCommandResult.Success)
 			{
-				WriteToOutput("Unable to communicate with service.");
+				CommonFunctions.DumpResult(hardwareCommandResult);
+				OutputBox.Write("Unable to communicate with service.");
 				return;
 			}
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
+			string topOfStack = job.GetTopOfStack();
 			if ("FULL".Equals(topOfStack, StringComparison.CurrentCultureIgnoreCase))
 			{
-				WriteToOutput("The gripper is full - clear picker & try again.");
+				OutputBox.Write("The gripper is full - clear picker & try again.");
 				return;
 			}
-			MoveHelper moveHelper = new MoveHelper(m_hardwareService);
-			MoveHelperResult moveHelperResult = moveHelper.MoveTo(num, num2, "GET");
-			if (moveHelperResult.MoveResultMessage != "SUCCESS")
-			{
-				WriteToOutput($"MOVE failure - error = {moveHelperResult.MoveResultMessage}");
-				return;
-			}
-			string text = m_offsetGetRadioButton.Tag as string;
+			Axis axis = Enum<Axis>.ParseIgnoringCase(m_offsetGetRadioButton.Tag as string, Axis.XY);
 			if (!int.TryParse(m_getOffsetTB.Text, out var result))
 			{
-				WriteToOutput($"Could not decode {m_getOffsetTB.Text} as offset.");
+				OutputBox.Write($"Could not decode {m_getOffsetTB.Text} as offset.");
 				return;
 			}
-			int position = 0;
-			int num3 = 0;
-			int num4 = 0;
-			if ("X" == text)
+			if (axis == Axis.X)
 			{
 				if (Math.Abs(result) > 50)
 				{
-					WriteToOutput($"Offset {m_getOffsetTB.Text} exceeds 50 units.");
+					OutputBox.Write($"Offset {m_getOffsetTB.Text} exceeds 50 units.");
 					return;
 				}
-				if (!GetArcusPosition("MOTIONCONTROL XPOS", out position))
-				{
-					WriteToOutput("Cannot get current X position.");
-					return;
-				}
-				num3 = position;
-				position = num3 + result;
 			}
-			else if ("Y" == text)
+			else if (Axis.Y == axis && Math.Abs(result) > 500)
 			{
-				if (Math.Abs(result) > 500)
-				{
-					WriteToOutput($"Offset {m_getOffsetTB.Text} exceeds 500 units.");
-					return;
-				}
-				if (!GetArcusPosition("MOTIONCONTROL YPOS", out position))
-				{
-					WriteToOutput("Cannot get current Y position.");
-					return;
-				}
-				num4 = position;
-				position = num4 + result;
-			}
-			string statement = $"MOVEABS AXIS={text} UNITS={position}";
-			hardwareCommandResult = m_hardwareService.ExecuteImmediate(statement, out job);
-			if (!hardwareCommandResult.Success)
-			{
-				WriteToOutput("Communication error");
+				OutputBox.Write($"Offset {m_getOffsetTB.Text} exceeds 500 units.");
 				return;
 			}
-			topOfStack = CommonFunctions.GetTopOfStack(job);
+			string text = $"MOVE WITH-OFFSET DECK={sourceDeck} SLOT={sourceSlot} AXIS={axis} UNITS={result}";
+			LogHelper.Instance.Log("Executing {0}", text);
+			hardwareCommandResult = m_hardwareService.ExecuteImmediate(text, out job);
+			if (!hardwareCommandResult.Success)
+			{
+				CommonFunctions.DumpResult(hardwareCommandResult);
+				OutputBox.Write("Communication error");
+				return;
+			}
+			topOfStack = job.GetTopOfStack();
 			if ("SUCCESS" != topOfStack)
 			{
-				WriteToOutput($"MOVEABS failed with status {topOfStack}");
+				OutputBox.Write($"MOVE failed with status {topOfStack}");
 				return;
 			}
 			m_hardwareService.ExecuteImmediate("CLEAR", out job);
@@ -2403,7 +2356,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 				}
 				if (!PickProgramCompiled)
 				{
-					string path = Path.Combine(RuntimeService.Instance.AssemblyDirectory, "pick_at_offset.hs");
+					IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+					string path = service.RuntimePath("pick_at_offset.hs");
 					using (File.CreateText(path))
 					{
 					}
@@ -2411,7 +2365,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 					HardwareCommandResult hardwareCommandResult2 = m_hardwareService.CompileProgram(path, "pick_at_offset", requiresClientConnection: false);
 					if (!hardwareCommandResult2.Success)
 					{
-						WriteToOutput("Failed to compile program.");
+						CommonFunctions.DumpResult(hardwareCommandResult2);
+						OutputBox.Write("Failed to compile program.");
 						return;
 					}
 					PickProgramCompiled = true;
@@ -2424,29 +2379,30 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 			}, out var job2);
 			if (!hardwareCommandResult.Success)
 			{
-				WriteToOutput("Unable to schedule pick job.");
+				CommonFunctions.DumpResult(hardwareCommandResult);
+				OutputBox.Write("Unable to schedule pick job.");
 				return;
 			}
-			LogHelper.Instance.Log("Scheduling pick job ID {0} with units {1} on axis {2}", job2.ID, position, text);
-			job2.Push(num2);
-			job2.Push(num);
+			LogHelper.Instance.Log("Scheduling pick job ID {0}", job2.ID);
+			job2.Push(sourceSlot);
+			job2.Push(sourceDeck);
 			Helper.WaitForJob(job2, out var endStatus);
 			ProgramResult[] results;
 			if (HardwareJobStatus.Completed == endStatus)
 			{
-				WriteToOutput("GET was successful.");
+				OutputBox.Write("GET was successful.");
 			}
 			else if (job2.GetResults(out results).Success)
 			{
 				ProgramResult[] array = results;
 				foreach (ProgramResult programResult in array)
 				{
-					WriteToOutput($"GET failed: {programResult.Code} ({programResult.Message})");
+					OutputBox.Write($"GET failed: {programResult.Code} ({programResult.Message})");
 				}
 			}
 			else
 			{
-				WriteToOutput("Unable to retrieve job results.");
+				OutputBox.Write("Unable to retrieve job results.");
 			}
 		}
 	}
@@ -2457,6 +2413,35 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		{
 			m_offsetGetRadioButton = radioButton;
 		}
+	}
+
+	private HardwareCommandResult RunImmediate(string command)
+	{
+		HardwareCommandResult result = m_hardwareService.ExecuteImmediate(command, out var _);
+		CommonFunctions.DumpResult(result);
+		return result;
+	}
+
+	private void button6_Click_1(object sender, EventArgs e)
+	{
+		HardwareCommandResult hardwareCommandResult = m_hardwareService.FieldInsertFraudWithCheck(new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.High
+		}, out var job);
+		if (!hardwareCommandResult.Success)
+		{
+			OutputBox.Write("Schedule job failed.");
+			{
+				foreach (Error error in hardwareCommandResult.Errors)
+				{
+					LogHelper.Instance.Log("Error = {0} msg = {1} details = {2}", error.Code, error.Description, error.Details);
+				}
+				return;
+			}
+		}
+		job.Pend();
+		Helper.WaitForJob(job, out var endStatus);
+		OutputBox.Write("Job ended with status {0}", endStatus.ToString());
 	}
 
 	protected override void Dispose(bool disposing)
@@ -2502,7 +2487,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.button64 = new System.Windows.Forms.Button();
 		this.button35 = new System.Windows.Forms.Button();
 		this.button34 = new System.Windows.Forms.Button();
-		this.button33 = new System.Windows.Forms.Button();
+		this.m_gripperSellButton = new System.Windows.Forms.Button();
 		this.button32 = new System.Windows.Forms.Button();
 		this.button31 = new System.Windows.Forms.Button();
 		this.groupBox8 = new System.Windows.Forms.GroupBox();
@@ -2539,8 +2524,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_sourceSlotTextBox = new System.Windows.Forms.TextBox();
 		this.m_sourceDeckTextBox = new System.Windows.Forms.TextBox();
 		this.groupBox11 = new System.Windows.Forms.GroupBox();
-		this.m_getOffYRadio = new System.Windows.Forms.RadioButton();
 		this.m_getOffXRadio = new System.Windows.Forms.RadioButton();
+		this.m_getOffYRadio = new System.Windows.Forms.RadioButton();
 		this.m_getOffsetTB = new System.Windows.Forms.TextBox();
 		this.m_getWithOffset = new System.Windows.Forms.Button();
 		this.m_sensorCheckBox = new System.Windows.Forms.CheckBox();
@@ -2846,7 +2831,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.groupBox7.Controls.Add(this.button64);
 		this.groupBox7.Controls.Add(this.button35);
 		this.groupBox7.Controls.Add(this.button34);
-		this.groupBox7.Controls.Add(this.button33);
+		this.groupBox7.Controls.Add(this.m_gripperSellButton);
 		this.groupBox7.Controls.Add(this.button32);
 		this.groupBox7.Controls.Add(this.button31);
 		this.groupBox7.Location = new System.Drawing.Point(328, 286);
@@ -2885,16 +2870,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.button34.Text = "Rent";
 		this.button34.UseVisualStyleBackColor = false;
 		this.button34.Click += new System.EventHandler(OnExecuteInstructionWithResult);
-		this.button33.BackColor = System.Drawing.Color.LightGray;
-		this.button33.Enabled = false;
-		this.button33.Location = new System.Drawing.Point(125, 70);
-		this.button33.Name = "button33";
-		this.button33.Size = new System.Drawing.Size(96, 45);
-		this.button33.TabIndex = 2;
-		this.button33.Tag = "GRIPPER OPEN";
-		this.button33.Text = "Sell";
-		this.button33.UseVisualStyleBackColor = false;
-		this.button33.Click += new System.EventHandler(OnExecuteInstructionWithResult);
+		this.m_gripperSellButton.BackColor = System.Drawing.Color.LightGray;
+		this.m_gripperSellButton.Enabled = false;
+		this.m_gripperSellButton.Location = new System.Drawing.Point(125, 70);
+		this.m_gripperSellButton.Name = "m_gripperSellButton";
+		this.m_gripperSellButton.Size = new System.Drawing.Size(96, 45);
+		this.m_gripperSellButton.TabIndex = 2;
+		this.m_gripperSellButton.Tag = "GRIPPER OPEN";
+		this.m_gripperSellButton.Text = "Sell";
+		this.m_gripperSellButton.UseVisualStyleBackColor = false;
+		this.m_gripperSellButton.Click += new System.EventHandler(OnExecuteInstructionWithResult);
 		this.button32.BackColor = System.Drawing.Color.LightGray;
 		this.button32.Enabled = false;
 		this.button32.Location = new System.Drawing.Point(241, 19);
@@ -3220,8 +3205,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_sourceDeckTextBox.Name = "m_sourceDeckTextBox";
 		this.m_sourceDeckTextBox.Size = new System.Drawing.Size(38, 20);
 		this.m_sourceDeckTextBox.TabIndex = 0;
-		this.groupBox11.Controls.Add(this.m_getOffYRadio);
 		this.groupBox11.Controls.Add(this.m_getOffXRadio);
+		this.groupBox11.Controls.Add(this.m_getOffYRadio);
 		this.groupBox11.Controls.Add(this.m_getOffsetTB);
 		this.groupBox11.Controls.Add(this.m_getWithOffset);
 		this.groupBox11.Controls.Add(this.m_sensorCheckBox);
@@ -3234,43 +3219,43 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.groupBox11.Controls.Add(this.button1);
 		this.groupBox11.Location = new System.Drawing.Point(720, 381);
 		this.groupBox11.Name = "groupBox11";
-		this.groupBox11.Size = new System.Drawing.Size(271, 194);
+		this.groupBox11.Size = new System.Drawing.Size(271, 193);
 		this.groupBox11.TabIndex = 10;
 		this.groupBox11.TabStop = false;
 		this.groupBox11.Text = "X/Y Moves";
-		this.m_getOffYRadio.AutoSize = true;
-		this.m_getOffYRadio.Location = new System.Drawing.Point(81, 171);
-		this.m_getOffYRadio.Name = "m_getOffYRadio";
-		this.m_getOffYRadio.Size = new System.Drawing.Size(32, 17);
-		this.m_getOffYRadio.TabIndex = 18;
-		this.m_getOffYRadio.TabStop = true;
-		this.m_getOffYRadio.Tag = "Y";
-		this.m_getOffYRadio.Text = "Y";
-		this.m_getOffYRadio.UseVisualStyleBackColor = true;
-		this.m_getOffYRadio.CheckedChanged += new System.EventHandler(radioButton_CheckedChanged);
 		this.m_getOffXRadio.AutoSize = true;
-		this.m_getOffXRadio.Location = new System.Drawing.Point(81, 154);
+		this.m_getOffXRadio.Location = new System.Drawing.Point(93, 149);
 		this.m_getOffXRadio.Name = "m_getOffXRadio";
 		this.m_getOffXRadio.Size = new System.Drawing.Size(32, 17);
-		this.m_getOffXRadio.TabIndex = 17;
+		this.m_getOffXRadio.TabIndex = 18;
 		this.m_getOffXRadio.TabStop = true;
 		this.m_getOffXRadio.Tag = "X";
 		this.m_getOffXRadio.Text = "X";
 		this.m_getOffXRadio.UseVisualStyleBackColor = true;
 		this.m_getOffXRadio.CheckedChanged += new System.EventHandler(radioButton_CheckedChanged);
+		this.m_getOffYRadio.AutoSize = true;
+		this.m_getOffYRadio.Location = new System.Drawing.Point(93, 170);
+		this.m_getOffYRadio.Name = "m_getOffYRadio";
+		this.m_getOffYRadio.Size = new System.Drawing.Size(32, 17);
+		this.m_getOffYRadio.TabIndex = 17;
+		this.m_getOffYRadio.TabStop = true;
+		this.m_getOffYRadio.Tag = "Y";
+		this.m_getOffYRadio.Text = "Y";
+		this.m_getOffYRadio.UseVisualStyleBackColor = true;
+		this.m_getOffYRadio.CheckedChanged += new System.EventHandler(radioButton_CheckedChanged);
 		this.m_getOffsetTB.Location = new System.Drawing.Point(6, 165);
 		this.m_getOffsetTB.Name = "m_getOffsetTB";
-		this.m_getOffsetTB.Size = new System.Drawing.Size(66, 20);
+		this.m_getOffsetTB.Size = new System.Drawing.Size(81, 20);
 		this.m_getOffsetTB.TabIndex = 16;
 		this.m_getWithOffset.BackColor = System.Drawing.Color.LightGray;
 		this.m_getWithOffset.Enabled = false;
-		this.m_getWithOffset.Location = new System.Drawing.Point(162, 142);
+		this.m_getWithOffset.Location = new System.Drawing.Point(177, 146);
 		this.m_getWithOffset.Name = "m_getWithOffset";
-		this.m_getWithOffset.Size = new System.Drawing.Size(103, 46);
+		this.m_getWithOffset.Size = new System.Drawing.Size(84, 41);
 		this.m_getWithOffset.TabIndex = 15;
 		this.m_getWithOffset.Text = "Get With Offset";
 		this.m_getWithOffset.UseVisualStyleBackColor = false;
-		this.m_getWithOffset.Click += new System.EventHandler(button6_Click_1);
+		this.m_getWithOffset.Click += new System.EventHandler(m_getWithOffset_Click);
 		this.m_sensorCheckBox.AutoSize = true;
 		this.m_sensorCheckBox.Location = new System.Drawing.Point(6, 134);
 		this.m_sensorCheckBox.Name = "m_sensorCheckBox";
@@ -3326,7 +3311,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_encoderUnitsTextBox.TabIndex = 1;
 		this.button1.BackColor = System.Drawing.Color.LightGray;
 		this.button1.Enabled = false;
-		this.button1.Location = new System.Drawing.Point(6, 54);
+		this.button1.Location = new System.Drawing.Point(0, 55);
 		this.button1.Name = "button1";
 		this.button1.Size = new System.Drawing.Size(75, 40);
 		this.button1.TabIndex = 0;
@@ -3437,20 +3422,20 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.label14.Text = "Output";
 		this.m_advancedMode.BackColor = System.Drawing.Color.LightGray;
 		this.m_advancedMode.Enabled = false;
-		this.m_advancedMode.Location = new System.Drawing.Point(718, 581);
+		this.m_advancedMode.Location = new System.Drawing.Point(720, 580);
 		this.m_advancedMode.Name = "m_advancedMode";
 		this.m_advancedMode.Size = new System.Drawing.Size(132, 40);
 		this.m_advancedMode.TabIndex = 16;
 		this.m_advancedMode.Text = "Advanced Mode";
 		this.m_advancedMode.UseVisualStyleBackColor = false;
 		this.m_advancedMode.Click += new System.EventHandler(button15_Click);
-		this.m_versionTextBox.Location = new System.Drawing.Point(859, 677);
+		this.m_versionTextBox.Location = new System.Drawing.Point(859, 676);
 		this.m_versionTextBox.Name = "m_versionTextBox";
 		this.m_versionTextBox.ReadOnly = true;
 		this.m_versionTextBox.Size = new System.Drawing.Size(100, 20);
 		this.m_versionTextBox.TabIndex = 17;
 		this.label19.AutoSize = true;
-		this.label19.Location = new System.Drawing.Point(717, 684);
+		this.label19.Location = new System.Drawing.Point(717, 683);
 		this.label19.Name = "label19";
 		this.label19.Size = new System.Drawing.Size(78, 13);
 		this.label19.TabIndex = 18;
@@ -3461,7 +3446,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.label20.Size = new System.Drawing.Size(50, 13);
 		this.label20.TabIndex = 19;
 		this.label20.Text = "Kiosk ID:";
-		this.m_kioskIDTextBox.Location = new System.Drawing.Point(859, 703);
+		this.m_kioskIDTextBox.Location = new System.Drawing.Point(859, 702);
 		this.m_kioskIDTextBox.Name = "m_kioskIDTextBox";
 		this.m_kioskIDTextBox.ReadOnly = true;
 		this.m_kioskIDTextBox.Size = new System.Drawing.Size(100, 20);
@@ -3536,7 +3521,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_errorProvider.ContainerControl = this;
 		this.m_deckConfigurationButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_deckConfigurationButton.Enabled = false;
-		this.m_deckConfigurationButton.Location = new System.Drawing.Point(856, 581);
+		this.m_deckConfigurationButton.Location = new System.Drawing.Point(859, 580);
 		this.m_deckConfigurationButton.Name = "m_deckConfigurationButton";
 		this.m_deckConfigurationButton.Size = new System.Drawing.Size(132, 40);
 		this.m_deckConfigurationButton.TabIndex = 23;
@@ -3545,7 +3530,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_deckConfigurationButton.Click += new System.EventHandler(button58_Click);
 		this.m_takeDiskButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_takeDiskButton.Enabled = false;
-		this.m_takeDiskButton.Location = new System.Drawing.Point(718, 627);
+		this.m_takeDiskButton.Location = new System.Drawing.Point(721, 626);
 		this.m_takeDiskButton.Name = "m_takeDiskButton";
 		this.m_takeDiskButton.Size = new System.Drawing.Size(132, 44);
 		this.m_takeDiskButton.TabIndex = 27;
@@ -3563,7 +3548,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink
 		this.m_openLogsButton.Click += new System.EventHandler(button59_Click);
 		this.m_configureDevicesButton.BackColor = System.Drawing.Color.LightGray;
 		this.m_configureDevicesButton.Enabled = false;
-		this.m_configureDevicesButton.Location = new System.Drawing.Point(856, 627);
+		this.m_configureDevicesButton.Location = new System.Drawing.Point(859, 626);
 		this.m_configureDevicesButton.Name = "m_configureDevicesButton";
 		this.m_configureDevicesButton.Size = new System.Drawing.Size(132, 44);
 		this.m_configureDevicesButton.TabIndex = 29;

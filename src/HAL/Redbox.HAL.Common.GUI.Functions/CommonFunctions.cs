@@ -1,7 +1,6 @@
-using System;
 using System.Xml;
 using Redbox.HAL.Client;
-using Redbox.IPC.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -25,76 +24,11 @@ public static class CommonFunctions
 		return true;
 	}
 
-	public static bool GetMotionControlPosition(Axis axis, HardwareService service, out int position)
-	{
-		object obj;
-		switch (axis)
-		{
-		case Axis.None:
-			position = 0;
-			return false;
-		default:
-			obj = "MOTIONCONTROL YPOS";
-			break;
-		case Axis.X:
-			obj = "MOTIONCONTROL XPOS";
-			break;
-		}
-		string statement = (string)obj;
-		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(statement, out var job);
-		job.WaitForCompletion();
-		hardwareCommandResult = job.GetStack(out var stack);
-		position = 0;
-		bool result = false;
-		string text = null;
-		if (!hardwareCommandResult.Success)
-		{
-			return false;
-		}
-		if (stack.Count >= 1)
-		{
-			text = stack.Pop();
-			result = int.TryParse(text, out position);
-		}
-		return result;
-	}
-
-	public static string[] GetStackEntries(HardwareJob job, int depth)
-	{
-		return GetStackEntriesInner(job, depth);
-	}
-
-	public static string GetTopOfStack(HardwareJob job)
-	{
-		return GetStackEntriesInner(job, 1)[0];
-	}
-
-	public static HardwareService ConfigureCommunication(string strProtocol)
-	{
-		if (Helper == null)
-		{
-			Helper = new ClientHelper();
-		}
-		try
-		{
-			HardwareService hardwareService = Helper.AutoConnect();
-			if (hardwareService != null)
-			{
-				return hardwareService;
-			}
-			IPCProtocol protocol = IPCProtocol.Parse(strProtocol);
-			return new HardwareService(protocol);
-		}
-		catch (UriFormatException)
-		{
-			return null;
-		}
-	}
-
 	public static HardwareJob ExecuteInstruction(HardwareService service, string instruction)
 	{
 		HardwareJob job = null;
 		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(instruction, out job);
+		DumpResult(hardwareCommandResult);
 		if (!hardwareCommandResult.Success)
 		{
 			return null;
@@ -106,6 +40,7 @@ public static class CommonFunctions
 	{
 		HardwareJob job = null;
 		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(instruction, timeout, out job);
+		DumpResult(hardwareCommandResult);
 		if (!hardwareCommandResult.Success)
 		{
 			return null;
@@ -113,21 +48,25 @@ public static class CommonFunctions
 		return job;
 	}
 
-	private static string[] GetStackEntriesInner(HardwareJob job, int depth)
+	public static void DumpResult(HardwareCommandResult result)
 	{
-		string[] array = new string[depth];
-		for (int i = 0; i < depth; i++)
+		if (!result.Success && result.Errors.Count > 0)
 		{
-			array[i] = string.Empty;
-		}
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (stack.Success && stack2.Count >= depth)
-		{
-			for (int j = 0; j < depth; j++)
+			LogHelper.Instance.Log("\nClient Errors:");
+			foreach (Error error in result.Errors)
 			{
-				array[j] = stack2.Pop();
+				LogHelper.Instance.Log(error.ToString());
+				LogHelper.Instance.Log("Details: {0}\n", error.Details);
 			}
 		}
-		return array;
+		if (result.CommandMessages.Count > 0)
+		{
+			LogHelper.Instance.Log("Command Messages:");
+			for (int i = 0; i < result.CommandMessages.Count; i++)
+			{
+				LogHelper.Instance.Log(result.CommandMessages[i]);
+			}
+		}
+		LogHelper.Instance.Log("Command {0}, execution time = {1}", result.Success ? "successfully executed" : "failed during execution", result.ExecutionTime);
 	}
 }

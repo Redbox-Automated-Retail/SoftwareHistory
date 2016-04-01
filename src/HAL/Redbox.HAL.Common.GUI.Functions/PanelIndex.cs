@@ -3,7 +3,8 @@
 public enum PanelIndex
 {
 	QuickReturn,
-	AuxBoardRelay,
 	IceQubeBoard,
-	CortexCamera
+	CortexCamera,
+	FraudSensor,
+	KioskFunctionTest
 }

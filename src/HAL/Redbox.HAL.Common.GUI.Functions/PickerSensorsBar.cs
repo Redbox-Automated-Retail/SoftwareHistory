@@ -79,11 +79,14 @@ public class PickerSensorsBar : UserControl
 		{
 			Button button = (Button)sender;
 			string text = button.Tag as string;
-			HardwareJob job = CommonFunctions.ExecuteInstruction(Service, text);
-			string topOfStack = CommonFunctions.GetTopOfStack(job);
-			if (BarEvents != null)
+			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, text);
+			if (hardwareJob != null)
 			{
-				BarEvents(text, topOfStack);
+				string topOfStack = hardwareJob.GetTopOfStack();
+				if (BarEvents != null)
+				{
+					BarEvents(text, topOfStack);
+				}
 			}
 		}
 	}

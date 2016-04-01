@@ -1,12 +1,10 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using Redbox.HAL.Client;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -20,11 +18,31 @@ public class EditSlotData : Form
 		Down
 	}
 
+	private class ESDOutput : OutputBox
+	{
+		internal ESDOutput(ListBox box)
+			: base(box)
+		{
+		}
+	}
+
+	private bool RinglightActive;
+
+	private bool SensorbarActive;
+
+	private int StartXPosition;
+
 	private int m_changes;
 
 	private int? m_preferredDeck = null;
 
 	private int? m_qlmDeckNumber = null;
+
+	private readonly XmlNode DeckNode;
+
+	private readonly HardwareService Service;
+
+	private readonly OutputBox OutputBox;
 
 	private IContainer components;
 
@@ -135,21 +153,10 @@ public class EditSlotData : Form
 
 	private ConfigurationManager Manager { get; set; }
 
-	private HardwareService Service { get; set; }
-
-	private IntPtr HookHandle { get; set; }
-
-	private XmlNode DeckNode { get; set; }
-
-	private bool RinglightActive { get; set; }
-
-	private bool SensorbarActive { get; set; }
-
-	private int StartXPosition { get; set; }
-
 	public EditSlotData(HardwareService service, ConfigurationManager mgr)
 	{
 		InitializeComponent();
+		OutputBox = new ESDOutput(m_OutputListBox);
 		Service = service;
 		Manager = mgr;
 		XmlNode xmlNode = Manager.FindDeckNode(8);
@@ -157,7 +164,6 @@ public class EditSlotData : Form
 		{
 			m_qlmDeckNumber = 8;
 		}
-		HookHandle = IntPtr.Zero;
 	}
 
 	public EditSlotData(HardwareService service, ConfigurationManager mgr, int deck, int measureSlot)
@@ -219,34 +225,33 @@ public class EditSlotData : Form
 			}
 			bool flag = direction == Direction.Up || direction == Direction.Down;
 			int num = (flag ? (CurrentEY + result) : (CurrentEX + result));
-			string statement = string.Format("MOVEABS AXIS={0} UNITS={1}", flag ? "Y" : "X", num);
-			m_OutputListBox.Items.Insert(0, $"MOVE {direction.ToString().ToUpper()} {text} UNITS - New Location {num} ...");
-			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, out var job);
-			hardwareCommandResult = job.WaitForCompletion();
-			if (hardwareCommandResult.Success)
+			MoveHelper moveHelper = new MoveHelper(Service);
+			MoveHelperResult moveHelperResult = moveHelper.MoveAbs(flag ? MoveAxis.Y : MoveAxis.X, num);
+			OutputBox.Write("MOVE {0} {1} UNITS - New Location {2} ...", direction.ToString().ToUpper(), text, num);
+			if (!moveHelperResult.MoveOk)
 			{
-				if (flag)
-				{
-					CurrentEY = num;
-				}
-				else
-				{
-					CurrentEX = num;
-				}
-				hardwareCommandResult = job.GetStack(out var stack);
-				ListBox.ObjectCollection items;
-				(items = m_OutputListBox.Items)[0] = string.Concat(items[0], stack.Pop());
-				int position = 0;
-				CommonFunctions.GetMotionControlPosition(Axis.X, Service, out position);
-				CommonFunctions.GetMotionControlPosition(Axis.Y, Service, out position);
-				Service.ExecuteImmediate(RinglightActive ? "RINGLIGHT ON" : "RINGLIGHT OFF", out var job2);
-				Service.ExecuteImmediate(SensorbarActive ? "SENSOR PICKER-ON" : "SENSOR PICKER-OFF", out job2);
-				IncrementChange();
-				return hardwareCommandResult.Success;
+				OutputBox.Write(moveHelperResult.Status);
+				return false;
 			}
-			ListBox.ObjectCollection items2;
-			(items2 = m_OutputListBox.Items)[0] = string.Concat(items2[0], "Failed - UNABLE TO CONNECT TO HAL");
-			return false;
+			if (flag)
+			{
+				CurrentEY = num;
+			}
+			else
+			{
+				CurrentEX = num;
+			}
+			OutputBox.Write(moveHelperResult.Status);
+			MotorPosition position = new MotorPosition(MoveAxis.X);
+			MotorPosition position2 = new MotorPosition(MoveAxis.Y);
+			moveHelper.GetPosition(ref position);
+			moveHelper.GetPosition(ref position2);
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append(RinglightActive ? "RINGLIGHT ON" : ("RINGLIGHT OFF" + Environment.NewLine));
+			stringBuilder.Append(SensorbarActive ? "SENSOR PICKER-ON" : ("SENSOR PICKER-OFF" + Environment.NewLine));
+			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			IncrementChange();
+			return moveHelperResult.MoveOk;
 		}
 		m_errorProvider.SetError(m_encoderUnitsTextBox, "Must specify an integer!");
 		return false;
@@ -269,18 +274,25 @@ public class EditSlotData : Form
 
 	private void SavePositionalState()
 	{
-		if (CommonFunctions.GetMotionControlPosition(Axis.Y, Service, out var position))
+		int num = 0;
+		MotorPosition position = new MotorPosition(MoveAxis.Y);
+		MoveHelper moveHelper = new MoveHelper(Service);
+		moveHelper.GetPosition(ref position);
+		if (position.ReadOk)
 		{
-			int originalEY = (CurrentEY = position);
+			int originalEY = (CurrentEY = position.Position);
 			OriginalEY = originalEY;
-			PositionsRecorded = true;
+			num++;
 		}
-		if (CommonFunctions.GetMotionControlPosition(Axis.X, Service, out position))
+		MotorPosition position3 = new MotorPosition(MoveAxis.X);
+		moveHelper.GetPosition(ref position3);
+		if (position3.ReadOk)
 		{
-			int originalEX = (CurrentEX = position);
+			int originalEX = (CurrentEX = position3.Position);
 			OriginalEX = originalEX;
-			PositionsRecorded = true;
+			num++;
 		}
+		PositionsRecorded = num == 2;
 	}
 
 	private void m_moveButton_Click(object sender, EventArgs e)
@@ -312,36 +324,28 @@ public class EditSlotData : Form
 		try
 		{
 			MoveHelper moveHelper = new MoveHelper(Service);
-			MoveHelperResult moveHelperResult = moveHelper.MoveTo(deck, slot, null, readLimits: true);
+			MoveHelperResult moveHelperResult = moveHelper.MoveTo(deck, slot, readLimits: true);
 			if (moveHelperResult.MoveOk)
 			{
-				m_moveStatusTB.Text = moveHelperResult.MoveResultMessage;
+				m_moveStatusTB.Text = moveHelperResult.Status;
 				SavePositionalState();
 				StartXPosition = CurrentEX;
-				string item = $"Start positions: X = {CurrentEX} Y = {CurrentEY}";
-				m_OutputListBox.Items.Insert(0, item);
+				OutputBox.Write("Start positions: X = {0} Y = {1}", CurrentEX, CurrentEY);
 				ClearChanges();
 				return;
 			}
-			if (!moveHelperResult.Timeout)
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append(moveHelperResult.Status);
+			string[] limits = moveHelperResult.Limits;
+			foreach (string text in limits)
 			{
-				m_moveStatusTB.Text = moveHelperResult.MoveResultMessage;
-			}
-			else
-			{
-				StringBuilder stringBuilder = new StringBuilder();
-				stringBuilder.Append(moveHelperResult.MoveResultMessage);
-				string[] limits = moveHelperResult.Limits;
-				foreach (string text in limits)
+				if (text.Contains("BLOCKED"))
 				{
-					if (text.Contains("BLOCKED"))
-					{
-						stringBuilder.Append(" ");
-						stringBuilder.Append(text);
-					}
+					stringBuilder.Append(" ");
+					stringBuilder.Append(text);
 				}
-				m_moveStatusTB.Text = stringBuilder.ToString();
 			}
+			m_moveStatusTB.Text = stringBuilder.ToString();
 			MessageBox.Show("Move to position failed!");
 			MoveFailed = true;
 		}
@@ -401,14 +405,14 @@ public class EditSlotData : Form
 			return;
 		}
 		stringBuilder.Append(stack2.Pop());
-		m_OutputListBox.Items.Insert(0, stringBuilder.ToString());
+		OutputBox.Write(stringBuilder.ToString());
 		stringBuilder = null;
 		Application.DoEvents();
 	}
 
 	private void NotifyCommunicationProblem()
 	{
-		m_OutputListBox.Items.Insert(0, "Unable to communicate with HAL. Might be on a lunch break.");
+		OutputBox.Write("Unable to communicate with HAL. Might be on a lunch break.");
 		m_errorProvider.SetError(m_deckTextBox, "Unable to communicate with HAL.");
 	}
 
@@ -532,8 +536,10 @@ public class EditSlotData : Form
 	{
 		if (Service != null)
 		{
-			Service.ExecuteImmediate("RINGLIGHT OFF", out var job);
-			Service.ExecuteImmediate("SENSOR PICKER-OFF", out job);
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append("RINGLIGHT OFF" + Environment.NewLine);
+			stringBuilder.Append("SENSOR PICKER-OFF" + Environment.NewLine);
+			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 		}
 	}
 
@@ -544,39 +550,6 @@ public class EditSlotData : Form
 			return 1;
 		}
 		return 2;
-	}
-
-	private IntPtr KeyHandler(int code, IntPtr wparam, IntPtr lparam)
-	{
-		if (code >= 0 && wparam == (IntPtr)256L && lparam != IntPtr.Zero)
-		{
-			try
-			{
-				Keys keys = (Keys)Marshal.ReadInt32(lparam);
-				LogHelper.Instance.Log("Key: {0}", keys.ToString());
-				switch (keys)
-				{
-				case Keys.Up:
-					moveEncoderUnits(Direction.Up);
-					break;
-				case Keys.Down:
-					moveEncoderUnits(Direction.Down);
-					break;
-				case Keys.Left:
-					moveEncoderUnits(Direction.Left);
-					break;
-				case Keys.Right:
-					moveEncoderUnits(Direction.Right);
-					break;
-				}
-			}
-			catch (Exception ex)
-			{
-				LogHelper.Instance.Log("Keypress failed.");
-				LogHelper.Instance.Log(ex.Message);
-			}
-		}
-		return User32.CallNextHookEx(HookHandle, code, wparam, lparam);
 	}
 
 	protected override void Dispose(bool disposing)

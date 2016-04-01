@@ -1,16 +1,17 @@
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using log4net.Config;
 
-[assembly: AssemblyFileVersion("1.4.0.245")]
+[assembly: AssemblyFileVersion("1.8.0.22")]
+[assembly: Guid("70818cfb-39ea-4683-8b89-17b10dae2861")]
+[assembly: XmlConfigurator(Watch = true)]
 [assembly: AssemblyTitle("Redbox.HAL.MSHALTester")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("Redbox DVD Automated Retail")]
 [assembly: AssemblyProduct("Redbox.HAL.MSHALTester")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2009")]
+[assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
 [assembly: AssemblyTrademark("")]
-[assembly: Guid("70818cfb-39ea-4683-8b89-17b10dae2861")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.4.0.245")]
+[assembly: AssemblyVersion("1.8.0.22")]

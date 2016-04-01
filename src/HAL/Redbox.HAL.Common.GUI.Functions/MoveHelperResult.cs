@@ -2,17 +2,15 @@ namespace Redbox.HAL.Common.GUI.Functions;
 
 public class MoveHelperResult
 {
-	public string MoveResultMessage { get; internal set; }
+	public readonly string Status;
 
 	public string[] Limits { get; internal set; }
 
-	public bool MoveOk => MoveResultMessage == "SUCCESS";
+	public bool MoveOk => Status == "SUCCESS";
 
-	public bool Timeout => MoveResultMessage == "TIMEOUT";
-
-	internal MoveHelperResult()
+	internal MoveHelperResult(string msg)
 	{
-		MoveResultMessage = "SUCCESS";
+		Status = msg;
 		Limits = new string[0];
 	}
 }

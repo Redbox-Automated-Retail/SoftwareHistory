@@ -53,15 +53,6 @@ public sealed class KioskInventory : IDisposable
 		Dispose(fromDispose: false);
 	}
 
-	public void DumpInventoryToFile(string path)
-	{
-		HardwareCommandResult inventoryState = Service.GetInventoryState();
-		if (!inventoryState.Errors.ContainsError())
-		{
-			File.WriteAllText(path, inventoryState.CommandMessages[0]);
-		}
-	}
-
 	public KioskInventory()
 	{
 		ClientHelper clientHelper = new ClientHelper();

@@ -3,12 +3,15 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
 public class IncrementalMoveForm : Form
 {
+	private readonly ILogger Log;
+
 	private IContainer components;
 
 	private Label label1;
@@ -54,8 +57,6 @@ public class IncrementalMoveForm : Form
 		}
 	}
 
-	private ILogger Log { get; set; }
-
 	private HardwareService Service { get; set; }
 
 	public IncrementalMoveForm()
@@ -63,11 +64,11 @@ public class IncrementalMoveForm : Form
 		InitializeComponent();
 	}
 
-	public IncrementalMoveForm(HardwareService service, ILogger log)
+	public IncrementalMoveForm(HardwareService service)
 		: this()
 	{
 		Service = service;
-		Log = log;
+		Log = ServiceLocator.Instance.GetService<ILogger>();
 	}
 
 	private void button1_Click(object sender, EventArgs e)
@@ -93,9 +94,10 @@ public class IncrementalMoveForm : Form
 	private void button3_Click(object sender, EventArgs e)
 	{
 		m_errorProvider.Clear();
+		MoveAxis moveAxis = Enum<MoveAxis>.ParseIgnoringCase(Axis, MoveAxis.X);
 		try
 		{
-			if (Axis.Equals("Y"))
+			if (MoveAxis.Y == moveAxis)
 			{
 				if (Math.Abs(Units) > 200)
 				{
@@ -103,23 +105,21 @@ public class IncrementalMoveForm : Form
 					return;
 				}
 			}
-			else if (Axis.Equals("X") && Math.Abs(Units) > 50)
+			else if (moveAxis == MoveAxis.X && Math.Abs(Units) > 50)
 			{
 				m_errorProvider.SetError(m_unitsTextBox, "Move cannot be more than 50 units.");
 				return;
 			}
-			if (CommonFunctions.GetMotionControlPosition((Axis == "X") ? Redbox.HAL.Common.GUI.Functions.Axis.X : Redbox.HAL.Common.GUI.Functions.Axis.Y, Service, out var position))
+			MotorPosition position = new MotorPosition(moveAxis);
+			MoveHelper moveHelper = new MoveHelper(Service);
+			moveHelper.GetPosition(ref position);
+			if (position.ReadOk)
 			{
-				int num = Units + position;
-				string statement = $"MOVEABS AXIS={Axis} UNITS={num} SENSOR-CHECK=FALSE";
-				HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, out var job);
-				if (!hardwareCommandResult.Success)
+				int units = Units + position.Position;
+				MoveHelperResult moveHelperResult = moveHelper.MoveAbs(moveAxis, units, checkSensors: false);
+				if (!moveHelperResult.MoveOk)
 				{
 					Log.Log("Execute immediate failed ... ", LogEntryType.Error);
-				}
-				else
-				{
-					hardwareCommandResult = job.WaitForCompletion();
 				}
 			}
 		}

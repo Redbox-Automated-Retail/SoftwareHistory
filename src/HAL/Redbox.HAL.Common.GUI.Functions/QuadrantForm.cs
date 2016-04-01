@@ -27,8 +27,8 @@ public class QuadrantForm : Form
 
 	private Button m_cancelButton;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? Offset
 	{
 		get
@@ -71,8 +71,8 @@ public class QuadrantForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? EndSlot
 	{
 		get
