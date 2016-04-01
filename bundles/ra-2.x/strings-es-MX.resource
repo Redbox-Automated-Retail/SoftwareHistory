@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resource type="table">
-    <property name="name" value="strings" />
-    <property name="culture" value="es-MX" />
-    <aspect name="content">
-        <row>
+  <property name="name" value="strings" />
+  <property name="culture" value="es-MX" />
+  <aspect name="content">
+    <row>
 			<column name="filter_movies_empty">Lo sentimos, nada coincide con esa búsqueda. Toca otro botón para más películas.</column>
 			<column name="filter_games_empty">Lo sentimos, nada coincide con esa búsqueda. Toca otro botón para más juegos.</column>
 			
@@ -93,6 +93,9 @@
 			<column name="sold_out_message">Lo sentimos, en este momento no se vende títulos en este kiosko, pero está en marcha. Chequealo en su próxima visita.</column>
 			<column name="maintenance_message">El kiosko no está disponible.  Por favor regrese o intente en otro kiosko.</column>
 
+      <column name="games_button_rent_label">ALQUILAR</column>
+      <column name="games_button_rent_and_buy_label">ALQUILAR &amp;</column>
+      <column name="games_button_rent_and_buy_label_2">COMPRAR</column>
 			<column name="yes_button">SÍ</column>
 			<column name="back_button">ATR&#193;S</column>
 			<column name="okay_button">OK</column>
@@ -126,7 +129,7 @@
 			<column name="subplatform_for">para</column>
 
 			<column name="blu_ray_alert_title">¡Escogió Un Disco Blu-ray&#8482;!</column>
-			<column name="bly_ray_alert">Se require un lector Blu-ray, PS3, PS4, o un Xbox One.</column>
+			<column name="bly_ray_alert">Para que el disco funcione Ud. necesitará un reproductor Blu-ray&#8482;.&#10;&#10;El audio en Blu-ray Disco&#174; puede variar de Dolby Digital y DTS Digital a Dolby Lossless y DTS-HD. Vea nuestras preguntas frecuentes (FAQs) para más detalles.</column>
 			<column name="purchase_new_warning">Que sepa que compare artículo(s) que se venden en un cartón Redbox manga, y no el envase original.&#10;&#10;Por favor, llame 1.866.REDBOX3 (1.866.733.2693) con cualquier pregunta. Marque CONTINUAR para proceder.</column>
 			<column name="purchase_warning">Oye, estás a punto de comprar un producto previamente visto que vendrá en un estuche resistente de alquiler de Redbox duradera, no el paquete original.</column>
 
@@ -323,7 +326,12 @@
 
 			<column name="start_view_title">Los mejores</column>
 			<column name="help_page_counter">{0} DE {1}</column>
-			
+      <column name="faq_button">FAQ Alquiler</column>
+      <column name="terms_button">T&#233;rminos Alquiler</column>
+      <column name="terms_redbox_card_button">T&#233;rminos Tarjeta</column>
+      <column name="privacy_button">Privacidad</column>
+      <column name="contact_redbox_label">&#191;Necesita ayuda? 1.866.REDBOX3 (1.866.733.2693)</column>
+          
 			<column name="rop_auth_fail_header">¡Lo sentimos!</column>
 			<column name="rop_auth_fail_message_line_one">No se pueden agregar discos nuevos a su carrito en este momento.</column>
 			<column name="rop_auth_fail_message_line_two">Ya están saliendo sus discos reservados.</column>
@@ -364,8 +372,13 @@
 			<column name="collections_popup_text">¿No puedes encontrar algo que te guste? Mira nuestras colecciónes</column>			
 			<column name="collections_popup_see_all_collections">VER TODAS LAS COLECCIÓNES</column>
 			
-			<column name="rxgx_use_promo_button">USAR PROMO</column>
-			<column name="rxgx_do_not_use_promo_button">NO USAR PROMO</column>
-		</row>
-    </aspect>
+			<column name="use_promo_button">USAR PROMO</column>
+			<column name="do_not_use_promo_button">NO USAR PROMO</column>
+
+      <column name="tsp_invalid_header">Código promocional no válido.</column>
+      <column name="tsp_invalid_message">Lo sentimos. El código promocional usado no es aplicable al título(s) que se encuentra en su carrito.&#10;&#10;Por favor, sírvase añadir un título válido a su carrito para poder utilizar este código promocional.</column>
+
+      <column name="passive_sale_note">*La tarifa de alquiler diario indicada no incluye impuestos. Para incurrir en una sola tarifa de alquiler, debe devolver el art&#237;culo a las 9:00 p.m. del d&#237;a siguiente en la zona horaria en que realice la devoluci&#243;n. Por cada d&#237;a adicional que no devuelva el art&#237;culo a las 9:00 p.m., hora local, su alquiler seguir&#225; vigente y se le cargar&#225; una tarifa de alquiler adicional diaria, m&#225;s impuestos. Si mantiene en su poder un art&#237;culo m&#225;s all&#225; del periodo m&#225;ximo de alquiler permitido, ese art&#237;culo pasar&#225; a ser de su propiedad y Redbox le cobrar&#225; entonces el cargo m&#225;ximo por dicho art&#237;culo. Ver las reglas completos por T&#233;rminos. Periodo m&#225;ximo: DVD {0} d&#237;as, Blu-ray&#174; {1} d&#237;as, Juegos {2} d&#237;as.</column>
+    </row>
+  </aspect>
 </resource>

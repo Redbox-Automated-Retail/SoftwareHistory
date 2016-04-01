@@ -14,11 +14,11 @@ kernel.registeractorhitnotify(
 )
 
 -- set a timer to just move on if OK is not pressed
-
+local timeout = kernel.ttsgettimeout( "short", 5000 )
 kernel.timercreate(
 	"free_trial_gift_card_swiped_view_ok_timer",
-	5000,
-	5000,
+	timeout,
+	timeout,
 	function()
 		view_analytics_event( "context", "Timeout" )
 		kernel.timerremove( "free_trial_gift_card_swiped_view_ok_timer" )

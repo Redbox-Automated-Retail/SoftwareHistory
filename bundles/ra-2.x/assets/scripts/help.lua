@@ -1,6 +1,6 @@
 --
 -- help.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- Copyright (C) 2016 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
@@ -11,11 +11,10 @@ view_analytics_start( Start_Over_View_Name, "BrowseVend" )
 
 view_analytics_event( "buttonPress", "help_button" )
 
-help_scene_manager = newscenemanager()
+kernel.set_session_value("HelpState.CurrentHelpDocument", "Faq")
+kernel.set_session_value("HelpState.CurrentHelpDocumentPage", "1")
 
-help_show_faq()
-
-view_show_safe( "help_view" )
+view_show_safe( "help_document_view" )
 
 -- Necessary for those times when this is launched from the Start/Welcome View
 CloseAnalyticsOnStartView = true

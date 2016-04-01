@@ -29,8 +29,14 @@ function add_movie_on_hit( actor_name )
 	end
 	
 	local product_from_actor = get_product_from_actor( actor_name )
-	if product_from_actor ~= nil and product_from_actor.product_id ~= 1139 and product_from_actor.is_movie == true and product_from_actor.kiosk_product_type == 3 then
-		view_analytics_event( "buttonPress", "shopping-cart-modal-add-item" )
+	if product_from_actor ~= nil 
+        and product_from_actor.product_id ~= 1139 
+        and product_from_actor.is_movie == true 
+        and (product_from_actor.kiosk_product_type == 3 
+            or ( kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" and kernel.peekview() == "browse_view_ada_accessible" ) )
+        then
+		
+        view_analytics_event( "buttonPress", "shopping-cart-modal-add-item" )
 		
         local is_purchase = kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" and (kernel.peekview() == "browse_view" or kernel.peekview() == "browse_view_ada_accessible")
 		
@@ -39,9 +45,13 @@ function add_movie_on_hit( actor_name )
 
 		if product_from_actor.dvd_index ~= nil and product_from_actor.dvd_index > 0 then
 			dvd_product = product_from_actor.kiosk_products[product_from_actor.dvd_index]
+        elseif product_from_actor.product_type_id == 1 then
+            dvd_product = product_from_actor
 		end
 		if product_from_actor.blu_ray_index ~= nil and product_from_actor.blu_ray_index > 0 then
 			blu_ray_product = product_from_actor.kiosk_products[product_from_actor.blu_ray_index]
+        elseif product_from_actor.product_type_id == 2 then
+            blu_ray_product = product_from_actor
 		end
 		
 		local dvd_product_ui_info = get_product_ui_info(dvd_product)

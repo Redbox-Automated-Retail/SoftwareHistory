@@ -559,7 +559,16 @@
 				text="COMPRAR"
 				optionFlags="Text"  />
 
-			<actor
+      <actor
+				name="games_button_rent_label_3"
+				x="125"
+				y="383"
+				font="font_bryant_bold_20"
+				foregroundColor="white"
+				text="ALQUILAR"
+				optionFlags="Text"  />
+
+      <actor
 				name="games_button_games_label"
 				x="125"
 				y="412"

@@ -70,12 +70,12 @@
 				style="red_next_button_style" />
 				
 			<actor
-                name="image_next_right_arrow"
-                x="925"
-                y="678"
+        name="image_next_right_arrow"
+        x="925"
+        y="678"
 				image="image_next_white_arrow_big"
-                hitFlags="enabled"
-                optionFlags="Image" />
+        hitFlags="enabled"
+        optionFlags="Image" />
 		</scene>
 	</aspect>
 </resource>

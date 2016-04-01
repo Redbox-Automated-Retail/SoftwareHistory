@@ -259,14 +259,17 @@ local function display_totals()
 			kernel.log( "reco_on_pickup_view_enter:display_totals() - applied_hive_online_promo, reserved discount amount:".. discount )
 			local promo_code = {
 				name = reservation.promo_code,
-				price = discount,
+				original_price = discount,
+                price = discount,
 				quantity = 1,
 				intent = "FixedValue",
-				percent = 0,
+				original_percent = 0,
+                percent = 0,
 				rent_qty = 0,
 				rent_format = nil,
 				get_qty = 0,
-				get_format = nil
+				get_format = nil,
+                campaign_titles = nil
 			}
 			kernel.rental_promotion_set_promotion( promo_code )
 			kernel.sessionsetdiscount2(

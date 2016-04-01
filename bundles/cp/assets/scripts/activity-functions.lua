@@ -299,7 +299,7 @@ function newactivitymanager()
 			return
 		end
 		local path = kernel.combinepaths( ms_hal_tester_path, "mshaltester.exe")
-		self:launch_external_process( path, "--secure" )
+		self:launch_external_process( path, "--secure --username:" .. CurrentUser.id )
 	end
 
 	t.activities.kill_process = function( self, parms )

@@ -50,6 +50,7 @@ function newtwolinemessageviewmanager()
 				return
 			end
 			timeout = timeout or 8000
+            timeout = kernel.ttsgettimeout( "medium", timeout )
 			kernel.timercreate(
 				"prompt_timer",
 				timeout,

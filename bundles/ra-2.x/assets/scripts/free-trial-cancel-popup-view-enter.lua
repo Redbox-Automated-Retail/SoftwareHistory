@@ -18,8 +18,8 @@ function free_trial_cancel_popup_start_timer()
 	if kernel.timerexists(free_trial_cancel_popup_timer) then
 		return
 	end
-	
-	kernel.timercreate(free_trial_cancel_popup_timer, 15000, 15000,
+	local timeout = kernel.ttsgettimeout( "medium", 15000 )
+	kernel.timercreate(free_trial_cancel_popup_timer, timeout, timeout,
 		function()
 			free_trial_cancel_popup_stop_timer()
 			view_analytics_event( "context", "Timeout" )

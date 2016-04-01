@@ -106,7 +106,6 @@
 				optionFlags="Text"
 				foregroundColor="black"
 				font="font_akzidenz_regular_tiny_9"
-				text="*La tarifa de alquiler diario indicada no incluye impuestos. Para incurrir en una sola tarifa de alquiler, debe devolver el art&#237;culo a las 9:00 p.m. del d&#237;a siguiente en la zona horaria en que realice la devoluci&#243;n. Por cada d&#237;a adicional que no devuelva el art&#237;culo a las 9:00 p.m., hora local, su alquiler seguir&#225; vigente y se le cargar&#225; una tarifa de alquiler adicional diaria, m&#225;s impuestos. Si mantiene en su poder un art&#237;culo m&#225;s all&#225; del periodo m&#225;ximo de alquiler permitido, ese art&#237;culo pasar&#225; a ser de su propiedad y Redbox le cobrar&#225; entonces el cargo m&#225;ximo por dicho art&#237;culo. Ver las reglas completos por T&#233;rminos. Periodo m&#225;ximo: DVD (${ShoppingCart:DvdDays} d&#237;as),Blu-ray&#174; (${ShoppingCart:BlurayDays} d&#237;as), Juegos (${ShoppingCart:GamesDays} d&#237;as)."
 				visible="false" />
 
 			<actor

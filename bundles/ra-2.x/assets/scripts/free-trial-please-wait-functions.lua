@@ -15,7 +15,8 @@ function show_free_trial_please_wait_view(onTimeout)
 		kernel.timerremove("free_trial_please_wait_message_timer")
 	end
 	
-	kernel.timercreate("free_trial_please_wait_message_timer", 30000, 30000,
+    local timeout = kernel.ttsgettimeout( "short", 5000 )
+	kernel.timercreate("free_trial_please_wait_message_timer", timeout, timeout,
 		function()
 			if kernel.timerexists("free_trial_please_wait_message_timer") then
 				kernel.timerremove("free_trial_please_wait_message_timer")

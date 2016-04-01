@@ -29,6 +29,11 @@ VMZMerchFlowTimeOut = kernel.config_getvalue(
 	"VMZMerchFlowTimeOut" ) or 900000 -- 15 minutes represented in seconds
 VMZMerchFlowEnabled = true
 
+EnableDiscSecurity = kernel.config_getvalue(
+		"system",
+		"General",
+		"EnableDiscSecurity" ) == true
+
 VerboseLogging = kernel.getmachinevalueordefault( "Store", "VerboseLogging", "False" ) == "True"
 
 UnloadDelayMinutes = tonumber( kernel.config_getvalue(

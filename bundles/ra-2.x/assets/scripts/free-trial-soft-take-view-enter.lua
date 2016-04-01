@@ -17,7 +17,8 @@ function free_trial_soft_take_start_timer()
 		return
 	end
 	
-	kernel.timercreate(free_trial_soft_take_timer, 5000, 5000,
+    local timeout = kernel.ttsgettimeout( "short", 5000 )
+	kernel.timercreate(free_trial_soft_take_timer, timeout, timeout,
 		function()
 			free_trial_soft_take_stop_timer()
 			view_analytics_event( "context", "Timeout" )

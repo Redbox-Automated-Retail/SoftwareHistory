@@ -106,7 +106,6 @@
 				optionFlags="Text"
 				foregroundColor="black"
 				font="font_akzidenz_regular_tiny_9"
-				text="*Daily rental charges don't include applicable tax. Discs kept after 9 p.m. the next day, and each day after, are subject to additional daily rental charges. If you keep a disc for the maximum rental period, it's yours to keep, and no further charges apply. See complete Terms for the rules for renting from Redbox. Maximum rental period: DVD (${ShoppingCart:DvdDays} days), Blu-ray&#174; (${ShoppingCart:BlurayDays} days), Games (${ShoppingCart:GamesDays} days)."
 				visible="false" />
 
 			<actor

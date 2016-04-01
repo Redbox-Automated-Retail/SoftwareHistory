@@ -230,7 +230,14 @@ function GetInCartPromoCode()
 end
 
 function LoadInCartPromoMessaging()
-	if InCartPromoRules == nil then
+    if kernel.ttsenabled() == true then
+	    kernel.setmacro( "InCartPromoHeaderMessage", "" )
+	    kernel.setmacro( "InCartPromoBodyMessage", "" )
+	    kernel.setmacro( "InCartPromoYesButton", "" )
+	    kernel.setmacro( "InCartPromoNoButton", "" )
+    end
+
+    if InCartPromoRules == nil then
 		return
 	end
 	for k, v in ipairs( InCartPromoRules ) do
@@ -453,14 +460,17 @@ function UpdateInCartPromoValue( shopping_cart )
 		if promo_price ~= nil then
 			local promo_code = {
 				name = redemption_data.redemption_code,
-				price = promo_price,
+				original_price = promo_price,
+                price = promo_price,
 				quantity = 1,
 				intent = "FixedValue",
-				percent = 0,
+				original_percent = 0,
+                percent = 0,
 				rent_qty = 0,
 				rent_format = nil,
 				get_qty = 0,
-				get_format = nil
+				get_format = nil,
+                campaign_titles = nil
 			}
 			kernel.rental_promotion_set_promotion( promo_code )
 			kernel.sessionsetdiscount2(
@@ -650,14 +660,17 @@ function free_in_cart_template_set_promo()
     if redemption_code ~= nil and initial_night ~= nil then
         local promo_code = {
 	        name = redemption_code,
-	        price = initial_night,
+	        original_price = initial_night,
+            price = initial_night,
 	        quantity = 1,
 	        intent = "FixedValue",
-	        percent = 0,
+	        original_percent = 0,
+            percent = 0,
 	        rent_qty = 0,
 	        rent_format = nil,
 	        get_qty = 0,
-	        get_format = nil
+	        get_format = nil,
+            campaign_titles = nil
         }
         kernel.rental_promotion_set_promotion( promo_code )
         kernel.sessionsetdiscount2(

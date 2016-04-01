@@ -6,7 +6,7 @@
 show_email_confirmation = nil
 local text = kernel.getmacro( "KeyPad:Text" )
 
-if TextToSpeechEnabled == true then
+if kernel.ttsenabled() == true then
 	kernel.setmacro( "TTSKeyPad:Text", text )
 end
 

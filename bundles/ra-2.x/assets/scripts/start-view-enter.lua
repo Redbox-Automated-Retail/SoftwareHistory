@@ -3,7 +3,7 @@
 -- Copyright (C) 2015 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
-
+kernel.ttsinreturnflow(false)
 kernel.timerstart( "reservation-expire-timer" )
 
 idle_timer:stop()
@@ -29,10 +29,14 @@ from_carousel = false
 HasDigitalSignupOffer = false
 AcceptedDigitalSignupOffer = false
 
-if ABE_ON == nil then
-	ABE_ON = false
-	kernel.setfilter( "ada_accessible", "False" )
+ABE_ON = false
+
+if kernel.ttsenabled() or kernel.getfilter( "ada_accessible" ) == "True" then
+    ABE_ON = true
+    kernel.setfilter( "ada_accessible", "True" )
 end
+
+kernel.setlasthitactorname( nil )
 
 local _ProductTypes = ProductTypes
 local _ProductCatalog = ProductCatalog
@@ -255,7 +259,9 @@ abe_idle_timer = newidletimer( "abe_idle_timer" )
 abe_idle_timer:initialize(
 	15000,
 	function()
-		turn_abe_off()
+        if kernel.ttsenabled() == false then
+		    turn_abe_off()
+        end
 	end
 )
 
@@ -283,7 +289,7 @@ turn_abe_off = function()
 end
 
 toggle_ABE_mode = function()
-	if ABE_ON == true  then
+	if ABE_ON == true then
 		turn_abe_off()
 	else
 		turn_abe_on()
@@ -962,13 +968,34 @@ local function arrange_buttons_based_on_games_availability()
 		kernel.hideactor( "game_button_icon" )
 		kernel.hideactor( "games_button_rent_label" )
 		kernel.hideactor( "games_button_rent_label_2" )
+		kernel.hideactor( "games_button_rent_label_3" )
 		kernel.hideactor( "games_button_games_label" )
 		kernel.setmacro( "StartView:AllMovies", strings.Alt_StartView_Movies )
 	else
+        -- adjust game rent and buy button text based on GamesSellThru and language
+        if GamesSellThru then
+		    kernel.showactor( "games_button_rent_label" )
+       		kernel.hideactor( "games_button_rent_label_3" )
+            kernel.setactortext("games_button_rent_label", strings.games_button_rent_and_buy_label)
+            kernel.setactortext("games_button_rent_label_2", strings.games_button_rent_and_buy_label_2)
+		    if kernel.getculture() == "es-MX" then
+    		    kernel.showactor( "games_button_rent_label_2" )
+            else
+    		    kernel.hideactor( "games_button_rent_label_2" )
+		    end
+        else 
+	        kernel.hideactor( "games_button_rent_label_2" )
+		    if kernel.getculture() == "es-MX" then
+		        kernel.hideactor( "games_button_rent_label" )
+        		kernel.showactor( "games_button_rent_label_3" )
+            else 
+    		    kernel.showactor( "games_button_rent_label" )
+                kernel.setactortext("games_button_rent_label", strings.games_button_rent_label)
+                kernel.setactortext("games_button_rent_label_2", "")
+            end
+        end
 		kernel.showactor( "games_button" )
 		kernel.showactor( "game_button_icon" )
-		kernel.showactor( "games_button_rent_label" )
-		kernel.showactor( "games_button_rent_label_2" )
 		kernel.showactor( "games_button_games_label" )
 		kernel.setmacro( "StartView:AllMovies", strings.Alt_StartView_Movies )
 	end
@@ -1684,7 +1711,7 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"games_button",
 	function()
-		if EnablePlatformScreen == true and ABE_ON == false then
+        if EnablePlatformScreen == true and ABE_ON == false then
 			go_to_games_platform_selection_view()
 		else
 			go_to_games_browse_view()
@@ -1695,7 +1722,7 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"all_movies_button",
 	function()
-		go_to_movies_browse_view()
+        go_to_movies_browse_view()
 	end
 )
 

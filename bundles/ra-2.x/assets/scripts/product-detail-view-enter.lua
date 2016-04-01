@@ -326,7 +326,10 @@ end
 -- display rating text and labels
 local rating_label = ""
 local rating = nil
-kernel.setmacro( "ProductDetail:Rating", "")
+kernel.setmacro( "ProductDetail:Rating", "" )
+kernel.setmacro( "TTS:RatingLabel", "" )
+kernel.setmacro( "TTS:Rating", "" )
+kernel.setmacro( "TTS:RatingDescription", "" )
 if display_product.rating_id ~= nil then
 	if product_family.product_family_name == "Games" then
 		rating_label = "ESRB Rating: "
@@ -346,26 +349,34 @@ if display_product.rating_id ~= nil then
 		kernel.showactor( "rating" )
 		kernel.showactor( "rating_description" )
 		kernel.setactortext( "rating_label", rating_label )
+        kernel.setmacro( "TTS:RatingLabel", rating_label )
 		kernel.setactortext( "rating", "Rated" )
 		local empty_spaces = "                                    "
-		if rating.rating_description ~= nil
+        if rating.rating_description ~= nil
 		and rating.rating_description ~= "" then
-			kernel.setactortext( "rating_description", empty_spaces.. rating.name.." ".."-".." "..rating.rating_description )
+			kernel.setactortext( "rating_description", empty_spaces .. rating.name .. " - " .. rating.rating_description )
+            kernel.setmacro( "TTS:Rating", rating.name )
+            kernel.setmacro( "TTS:RatingDescription", rating.rating_description )
 		else
-			kernel.setactortext( "rating_description", empty_spaces.. rating.name )
+			kernel.setactortext( "rating_description", empty_spaces .. rating.name )
+            kernel.setmacro( "TTS:Rating", rating.name )
 		end
 	elseif rating ~= nil then
 		if kernel.getculture() == "en-US" then
 			kernel.setactortext( "rating_label", rating_label )
+            kernel.setmacro( "TTS:RatingLabel", rating_label )
 		end
 		kernel.setmacro( "ProductDetail:Rating", rating.name )
+        kernel.setmacro( "TTS:Rating", rating.name )
 	else
 		kernel.setactortext( "rating_label", "" )
+        kernel.setmacro( "TTS:RatingLabel", "" )
 	end
 
 	-- adjust position and visibility of actors based on whether rating is shown
 	if not product_is_case and rating ~= nil and (rating.name ~= nil or rating.name ~= "") then
 		kernel.setmacro( "ProductDetail:Rating", rating.name )
+        kernel.setmacro( "TTS:Rating", "Rated " .. rating.name )
 		if string.len(rating.name) > 5 then
 			kernel.showactor( "selected_product_Rating_big" )
 			kernel.hideactor( "selected_product_Rating" )
@@ -901,18 +912,16 @@ if (other_product == nil or (other_product_already_in_cart and not product_is_ca
 else
 	-- buy button price 
 	local price_purchase_string = ""
-	if TextToSpeechEnabled == false then
-		local price_purchase = nil
-		if product_is_case then
-			price_purchase = case_price_purchase
-		elseif dvd_product ~= nil or bluray_product ~= nil then
-			price_purchase = movie_price_purchase
-		elseif other_product ~= nil then
-			price_purchase = game_price_purchase
-		end
-		if price_purchase ~= nil then
-			price_purchase_string = string.format( "%s%.2f", strings.currency_symbol, price_purchase )
-		end
+	local price_purchase = nil
+	if product_is_case then
+		price_purchase = case_price_purchase
+	elseif dvd_product ~= nil or bluray_product ~= nil then
+		price_purchase = movie_price_purchase
+	elseif other_product ~= nil then
+		price_purchase = game_price_purchase
+	end
+	if price_purchase ~= nil then
+		price_purchase_string = string.format( "%s%.2f", strings.currency_symbol, price_purchase )
 	end
 	kernel.setmacro( "ProductDetail:PurchasePrice", price_purchase_string )
 	kernel.log( "Adjusted purchase price string = " .. tostring( kernel.getmacro( "ProductDetail:PurchasePrice" )))
@@ -1060,6 +1069,8 @@ if display_product.is_available == true and not dvd_available_and_instock
 
 		kernel.setactortext( "out_of_stock_line2" , out_of_stock_message )
 		kernel.showactor( "out_of_stock_line3" )
+
+        kernel.setmacro( "TTS:OutOfStock", kernel.getactortext( "out_of_stock_line1" ) .. " " .. kernel.getactortext( "out_of_stock_line2" ) .. " " .. kernel.getactortext( "out_of_stock_line3" ) )
 	end
 end
 

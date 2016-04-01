@@ -124,18 +124,26 @@ function idle_timer_callback()
 end
 
 function idle_timer_show_prompt(expire_session)
-	local message_view_manager = newmessageviewmanager()
-	message_view_manager:show()
-	view_analytics_event( "context", "idleTimer" )
+    local render_type = kernel.getviewrendertype();
+    if render_type == "WPF" then
+	    if kernel.peekview() ~= "idle_timeout_message_view" then
+		    view_show_safe( "idle_timeout_message_view" )
+	    end
+	    view_analytics_event( "context", "idleTimer" )
+    else
+	    local message_view_manager = newmessageviewmanager()
+	    message_view_manager:show()
+	    view_analytics_event( "context", "idleTimer" )
 
-	message_view_manager:hide_message()
-	message_view_manager:set_idle_timer_title( strings.more_time_prompt_message )
-	message_view_manager:show_first_button( strings.no_thanks_button, expire_session )
-	message_view_manager:show_second_button(
-		strings.yes_button,
-		function() view_goback_safe( "need_more_time:second_button", false ) end
-	)
-	message_view_manager:start_timer( expire_session )
+	    message_view_manager:hide_message()
+	    message_view_manager:set_idle_timer_title( strings.more_time_prompt_message )
+	    message_view_manager:show_first_button( strings.no_thanks_button, expire_session )
+	    message_view_manager:show_second_button(
+		    strings.yes_button,
+		    function() view_goback_safe( "need_more_time:second_button", false ) end
+	    )
+	    message_view_manager:start_timer( expire_session )
+    end
 end
 
 function idle_timer_show_prompt_english(expire_session)
@@ -163,9 +171,7 @@ end
 
 function get_idle_timer_timeout()
 	local timeout = 40000
-	if TextToSpeechEnabled == true then
-		timeout = TTSTimeoutIdle
-	elseif is_collections_popup_timer_enabled() then
+	if is_collections_popup_timer_enabled() then
 		timeout = marketing_config.collections_popup_timer;
 		-- don't allow more than 1 minute or less than 16 seconds
 		if timeout > 60000 then
@@ -175,6 +181,8 @@ function get_idle_timer_timeout()
 			timeout = 16000
 		end
 	end
+    
+    timeout = kernel.ttsgettimeout( kernel.peekview() == "help_document_view" and "help" or "long", timeout ) 
 	return timeout
 end
 
@@ -508,39 +516,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"ForceAirExchangerConfiguration" ) == true
-	TextToSpeechEnabled = kernel.config_getvalue(
-		"system",
-		"General",
-		"TextToSpeechEnabled" ) == true
-	--TextToSpeechEnabled = false -- Force to false until the bundles are ready
-	TTSTimeoutKeyboardView = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSTimeoutKeyboardView" ) or 60000
-	TTSTimeoutMessageView = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSTimeoutMessageView" ) or 30000
-	TTSTimeoutBlurayRWarningView = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSTimeoutBlurayRWarningView" ) or 30000
-	TTSTimeoutErrorView = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSTimeoutErrorView" ) or 30000
-	TTSPostAuthDelay = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSPostAuthDelay" ) or 0
-	TTSPostReturnDelay = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSPostReturnDelay" ) or 0
-	TTSTimeoutIdle = kernel.config_getvalue(
-		"system",
-		"General",
-		"TTSTimeoutIdle" ) or 180000
 	BluRayUpsellEnabled = kernel.config_getvalue(
 		"system",
 		"General",
@@ -549,6 +524,10 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"OfflineBlockListEnabled" ) == true
+	EnableDiscSecurity = kernel.config_getvalue(
+		"system",
+		"General",
+		"EnableDiscSecurity" ) == true
 end
 
 local function create_coming_soon_cache_tables()
@@ -976,205 +955,6 @@ kernel.timercreate("blocklist-check-timer",
 	end
 )
 kernel.timerstart("blocklist-check-timer")
-
---[[kernel.timercreate(
-	"vmz-file-check-timer",
-	30000,
-	900000,
-	function()
-		local path = kernel.getmacro( "RunningPath" ) .. "\\..\\Data\\"
-		local rebalancesin = path .. "RebalanceIn.data"
-		local rebalancesout = path .. "RebalanceOut.data"
-		local rebalancesunthin = path .. "RebalanceUnthin.data"
-		local rebalancesversion = path .. "RebalanceVersion.data"
-		local hwmgr = newhardwaremanager()
-		
-		local do_clean = false
-		local do_thin = false
-		local requires_soft_sync = false
-		
-		kernel.log( "Checking for VMZ files" )
-		kernel.rental_check_new_rebalance(StoreManager:get_number());
-	
-		local compare_date_same_day = function( date1, date2 )
-			kernel.log( "r> Date1: " .. tostring( date1 ) )
-			kernel.log( "r> Date2: " .. tostring( date2 ) )
-			if date1 == nil
-			or date2 == nil then
-				kernel.log("r> One of the dates was nil " .. tostring( date1 ~= nil ) .. ", " .. tostring( date2 ~= nil ) )
-				return false
-			end
-			
-			if date1.backing == nil
-			or date2.backing == nil then
-				kernel.log("r> One of the dates backing was nil " .. tostring( date1.backing ~= nil ) .. ", " .. tostring( date2.backing ~= nil ) )
-				return false
-			end
-			
-			if date1.backing.year ~= date2.backing.year
-			or date1.backing.month ~= date2.backing.month
-			or date1.backing.day ~= date2.backing.day then
-				kernel.log( "r> Dates do not match" )
-				return false
-			end
-			kernel.log( "r> Dates match" )
-			return true
-		end
-		
-		local unmark_discs = function( barcode_list, on_complete )
-			if barcode_list ~= nil and #barcode_list > 0 then
-				local barcodes = {}
-				for _,v in ipairs( barcode_list ) do
-					local row = {}
-					row.barcode = v["Barcode"]
-					table.insert( barcodes, row )
-				end
-			
-				hwmgr:clear_merch_status( 
-					barcodes,
-					on_complete )
-				kernel.log( "r> unmarked " .. tostring(#barcodes) .. " barcodes" )
-				kernel.log( "r> set do_clean=true" )
-				do_clean = true
-			end
-		end
-		
-		local convert_unthin_to_global_table = function( barcode_list )
-			kernel.log( "r> convert_unthin_to_global_table" )
-			if barcode_list ~= nil then
-				local temp_list = {}
-				for _,v in ipairs( barcode_list ) do
-					temp_list[ v["Barcode"] ] = "Known"
-				end
-				RebalancesUnThinInuse = temp_list
-			end
-		end
-		
-		--*********START SETUP*************
-		kernel.log( "r> Start Rebalancing Setup" )
-		local version = kernel.tablefromfileserializeddictionary( rebalancesversion )
-		
-		local rebalance_out_data = nil
-		local rebalance_out_inuse_data = nil
-		local rebalance_in_data = nil
-		local rebalance_unthin_data = nil
-
-		--get new version date
-		local version_date = nil
-		if version ~= nil then
-			version_date_file = newdatetime( kernel.datetimeparsefromstringdate( version.VersionTimeStampUTC, "yyyyMMddHHmmss" ) )
-			version_date = newdatetime( kernel.datetimeparsefromstringdate( 
-												kernel.tolocaltime( version.VersionTimeStampUTC, "yyyyMMddHHmmss" ) ) )
-			if version_date_file ~= nil then
-				local date_string = version_date_file.backing.year .. "/" 
-										.. string.format( "%02d", version_date_file.backing.month ) .. "/"
-										.. string.format( "%02d", version_date_file.backing.day ) .. " "
-										.. string.format( "%02d", version_date_file.backing.hour ) .. ":"
-										.. string.format( "%02d", version_date_file.backing.min ) .. ":"
-										.. string.format( "%02d", version_date_file.backing.sec )
-				kernel.healthsvcs_enqueuestatistic( "RebalanceData", date_string ) --Check Name -- Test it hits db
-			end
-		end
-		
-		local current_date = newdatetime( os.date( "*t" ) )
-		--*********END SETUP*************
-		
-		kernel.log( "r> Check for Unthin" )
-		rebalance_unthin_data = kernel.tablefromfileserializedlistdictionary( rebalancesunthin, StoreManager ~= nil and StoreManager:get_number() or nil )
-		rebalance_unthin_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesunthin .. ".inuse", StoreManager ~= nil and StoreManager:get_number() or nil )
-		
-		if rebalance_unthin_data ~= nil and rebalance_unthin_inuse_data ~= nil then
-			RebalancesUnThinInuse = {}
-			kernel.log( "r> Delete UnThin Inuse File." )
-			kernel.deletefile( rebalancesunthin .. ".inuse" )
-		end
-		if rebalance_unthin_data ~= nil then
-			kernel.log( "r> Process UnThin File." )
-			os.rename( rebalancesunthin, rebalancesunthin .. ".inuse" )
-			unmark_discs( rebalance_unthin_data, nil )
-			convert_unthin_to_global_table( rebalance_unthin_data )
-
-			--TODO should I mark the disks here?  //WHY IS THERE A TODO IN PRODUCTION CODE!!!!  ARE YOU KIDDING ME??
-			requires_soft_sync = true -- a cheat? 
-			kernel.log( "r> set requires_soft_sync=true" )
-		end
-
-		
-		--*******Check for outdated files
-		if version ~= nil then
-			kernel.log( "r> rebalances version file found." )
-			if compare_date_same_day( current_date, version_date ) == false then 
-				--old data
-				kernel.log( "r> Remove Old Vmz Files." )
-				rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesout .. ".inuse", StoreManager ~= nil and StoreManager:get_number() or nil )
-				if rebalance_out_inuse_data ~= nil then
-					unmark_discs( rebalance_out_inuse_data, nil )
-					kernel.log( "r> Delete rebalances out inuse file" )
-					kernel.deletefile( rebalancesout .. ".inuse" )
-				end
-				
-				kernel.log( "r> Delete ALL local rebalance files [rebalancesout,rebalancesin,rebalancesversion]" )
-				kernel.deletefile( rebalancesout )
-				kernel.deletefile( rebalancesin )
-				kernel.deletefile( rebalancesversion )
-			else 
-				kernel.log( "r> Processing New Vmz Files." )
-
-				rebalance_out_data = kernel.tablefromfileserializedlistdictionary( rebalancesout, StoreManager ~= nil and StoreManager:get_number() or nil )
-				rebalance_out_inuse_data = kernel.tablefromfileserializedlistdictionary( rebalancesout .. ".inuse", StoreManager ~= nil and StoreManager:get_number() or nil )
-
-				if rebalance_out_data ~= nil and rebalance_out_inuse_data ~= nil then
-					unmark_discs( rebalance_out_inuse_data, nil )
-					kernel.log( "r> delete rebalancesout inuse file." )
-					kernel.deletefile( rebalancesout .. ".inuse" )
-				end
-				
-				if rebalance_out_data ~= nil then
-					kernel.log( "r> rename rebalances out to .inuse" )
-					os.rename( rebalancesout, rebalancesout .. ".inuse" )
-					--terminate clean-vmz jobs
-					kernel.log( "r> terminate any existing clean-vmz jobs" )
-					local currentjobs = hwmgr:get_hardware_jobs_by_program({ "clean-vmz" }, { "Garbage", "Stopped", "Completed", "Errored" })
-					for k,v in ipairs( currentjobs ) do
-						kernel.hardwareterminatejob( v.id )
-					end
-					kernel.log( "r> set do_thin=true" )
-					do_thin = true
-				end
-			end
-			
-			--finalize
-			local finalize = function()
-				kernel.log( "r> rebalancing finalize" )
-				if do_thin == true then
-					kernel.log( "r> do_thin was true" )
-					local rebalances = {}
-					for _,v in ipairs( rebalance_out_data ) do
-						local row = {}
-						row.barcode = v["Barcode"]
-						table.insert( rebalances, row )
-					end
-					kernel.log( "r> schedule vmzthin job" )
-					run_thin_vmz_job2( "Automated Rebalance", "vmzthin-" .. tostring( newdatetime() ), rebalances, rebalance_unthin_data )
-				elseif do_clean == true then
-					kernel.log( "r> do_clean was true, schedule clean-vmz job" )
-					hwmgr:clean_vmz( nil )
-				end
-			end
-			
-			if requires_soft_sync == true then
-				kernel.log( "r> requires_soft_sync was true, schedule soft-sync() with finalize() as the on_complete" )
-				run_soft_sync( finalize )
-			else
-				kernel.log( "r> requires_soft_sync was false, running finalize() directly" )
-				finalize()
-			end
-		end
-	end
-)
-if qlm_deck == nil then
-	kernel.timerstart("vmz-file-check-timer")
-end]]
 
 --Check if Air Exchanger is Configured
 HardwareManager:executeimmediate(

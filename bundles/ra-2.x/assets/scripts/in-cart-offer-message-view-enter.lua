@@ -14,10 +14,11 @@ if free_in_cart_template_is_running() then
     kernel.hideactor( "no_button" )
 end
 
+local timeout = kernel.ttsgettimeout( "long", 30000 )
 kernel.timercreate(
 	"in_cart_promo_popup_timer",
-	30000,
-	30000,
+	timeout,
+	timeout,
 	function()
 		kernel.timerstop( "in_cart_promo_popup_timer" )
 		kernel.timerremove( "in_cart_promo_popup_timer" )

@@ -40,7 +40,7 @@
 				x="0"
 				y="175"
 				width="1024"
-				text="Get better picture and better sound for only a few cents more."
+				text="Upgrade to Blu-ray&#8482; for just a few cents more."
 				font="font_target_medium_20"
 				foregroundColor="black"
 				horizontalAlignment="center"
@@ -48,10 +48,10 @@
 				
 			<actor
 				name="footer"
-				x="0"
-				y="544"
-				width="1024"
-				text="To watch, you'll need a Blu-ray player, PS3, PS4 or Xbox One."
+				x="100"
+				y="524"
+				width="824"
+				text="To play this Disc, you’ll need a Blu-ray™ player. The audio on a Blu-ray Disc® can range from Dolby Digital and DTS Digital to Dolby Lossless and DTS-HD. See our FAQs for more details."
 				font="font_target_smaller_overlays"
 				foregroundColor="black"
 				horizontalAlignment="center"

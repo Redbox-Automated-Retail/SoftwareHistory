@@ -311,5 +311,11 @@ else
 	kernel.setactortext( "info_label", tostring( qlm_info ) )
 end
 
-	
+if EnableDiscSecurity == true then
+    kernel.showactor( "verify_fraud_button" )
+    kernel.setactory( "inv_mgmt_button", 550 )
+else
+    kernel.hideactor( "verify_fraud_button" )
+    kernel.setactory( "inv_mgmt_button", 440 )
+end
 

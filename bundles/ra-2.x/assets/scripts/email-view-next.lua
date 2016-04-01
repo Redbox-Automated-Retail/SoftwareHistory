@@ -14,10 +14,11 @@ kernel.registeractorhitnotify(
 )
 
 -- set a timer to just move on if NEXT is not pressed
+local timeout = kernel.ttsgettimeout( "short", 8000 )
 kernel.timercreate(
 	"email_next_timer",
-	8000,
-	8000,
+	timeout,
+	timeout,
 	function()
 		kernel.timerremove( "email_next_timer" )
 		marketing_opt_in_flow( ShoppingCart.marketing_opt_in )
@@ -27,7 +28,7 @@ kernel.timerstart( "email_next_timer" )
 set_email_view_text = function( text )
 	kernel.setmacro( "EmailText", text )
 	kernel.markactordirty( "email_message" )
-	if TextToSpeechEnabled then
+	if kernel.ttsenabled() then
 		kernel.ttsrepeat();  -- assests have been set and toggled
 	end
 end

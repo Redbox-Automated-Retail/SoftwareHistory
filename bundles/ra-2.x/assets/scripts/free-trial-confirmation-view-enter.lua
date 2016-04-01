@@ -23,8 +23,8 @@ function free_trial_confirmation_start_timer()
 	if kernel.timerexists(free_trial_confirmation_timer) then
 		return
 	end
-	
-	kernel.timercreate(free_trial_confirmation_timer, 5000, 5000,
+	local timeout = kernel.ttsgettimeout( "short", 5000 )
+	kernel.timercreate(free_trial_confirmation_timer, timeout, timeout,
 		function()
 			view_analytics_event( "context", "Timeout" )
 			all_done()

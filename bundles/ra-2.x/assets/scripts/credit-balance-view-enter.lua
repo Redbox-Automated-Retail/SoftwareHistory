@@ -5,10 +5,12 @@
 --
 
 idle_timer:suspend()
+
+local timeout = kernel.ttsgettimeout( "long", 40000 )
 kernel.timercreate(
 	"credit_balance_view_timer",
-	40000,
-	40000,
+	timeout,
+	timeout,
 	function()
 		ShoppingCart:prepos_vend_abort()
 		view_unwindto_safe( "shopping_cart_view", false, "credit_balance_view_timer:timeout" )

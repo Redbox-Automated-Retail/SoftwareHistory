@@ -90,10 +90,11 @@ kernel.registeractorhitnotify(
 	end
 )
 
+local timeout = kernel.ttsgettimeout( "short", 10000 )
 kernel.timercreate(
 	"optin_view_timer",
-	10000,
-	10000,
+	timeout,
+	timeout,
 	function()
 		view_analytics_event( "context", "campaign:".. email_optin_campaign.campaign_id )
 		kernel.timerremove( "optin_view_timer" )

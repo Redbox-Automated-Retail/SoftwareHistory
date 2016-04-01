@@ -22,8 +22,8 @@ function free_trial_error_message_start_timer()
 	if kernel.timerexists(free_trial_error_message_timer) then
 		return
 	end
-	
-	kernel.timercreate(free_trial_error_message_timer, 5000, 5000,
+	local timeout = kernel.ttsgettimeout( "short", 5000 )
+	kernel.timercreate(free_trial_error_message_timer, timeout, timeout,
 		function()
 			free_trial_error_message_stop_timer()
 			view_analytics_event( "context", "Timeout" )

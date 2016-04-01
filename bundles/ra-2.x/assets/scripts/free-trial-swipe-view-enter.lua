@@ -43,9 +43,10 @@ kernel.trackdatanotify(
 
 -- If the user walks away, we need to
 -- go back to from where he came.
+local timeout = kernel.ttsgettimeout( "long", 5000 )
 kernel.timercreate(
 	"free_trial_swipe_timer",
-	50000,
+	timeout,
 	nil,
 	function()
 		view_analytics_event( "context", "Timeout" )

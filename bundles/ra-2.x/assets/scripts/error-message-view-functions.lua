@@ -30,7 +30,7 @@ function newerrormessageviewmanager()
 		set_message = function( self, text )
 			kernel.setmacro( "MessageText", text )
 			kernel.markactordirty( "message_label" )
-			if TextToSpeechEnabled == true then
+			if kernel.ttsenabled() == true then
 				kernel.ttsrepeat();  -- assests have been set and toggled
 			end
 		end,
@@ -43,9 +43,7 @@ function newerrormessageviewmanager()
 				return
 			end
 			timeout = timeout or 8000
-			if TextToSpeechEnabled == true then
-				timeout = TTSTimeoutErrorView
-			end
+            timeout = kernel.ttsgettimeout( "short", timeout )
 			kernel.timercreate(
 				"prompt_timer",
 				timeout,

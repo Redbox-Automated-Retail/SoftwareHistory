@@ -350,7 +350,7 @@ function newvendmanager()
 							if coming_soon_scene_manager ~= nil then
 								coming_soon_scene_manager:clear()
 							end
-							t.do_movie( )
+							t.do_movie()
 						else
 							kernel.log( ">  generator results being displayed" )
 							show_coming_soon_products( results )

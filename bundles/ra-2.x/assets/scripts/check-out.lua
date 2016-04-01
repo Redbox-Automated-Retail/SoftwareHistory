@@ -72,6 +72,7 @@ end
 check_for_campaign_opt_in = function()
 	if ShoppingCart.email ~= nil
 	and ShoppingCart.email ~= ""
+    and kernel.ttsenabled() == false
 	and ( EmailOptinCampaign ~= nil or HasDigitalSignupOffer == true ) then
 		kernel.log( "ShowOptinForNormalCheckout:" ..tostring( ShowOptinForNormalCheckout )
 			.. " ShowOptinForCreditsCheckout:" ..tostring( ShowOptinForCreditsCheckout )
@@ -122,7 +123,7 @@ end
 
 continue_vend = function()
 	check_for_campaign_opt_in()
-	if ShoppingCart.alternate_optin and ShoppingCart.alternate_optin_not_shown then
+	if kernel.ttsenabled() == false and ShoppingCart.alternate_optin and ShoppingCart.alternate_optin_not_shown then
 		-- Go to the the optional email opt in view
 		ShoppingCart.alternate_optin_not_shown = false
 		view_show_safe( "email_optin_view" )
@@ -136,7 +137,7 @@ end
 marketing_opt_in_flow = function( optin_status ) 
 	kernel.log("Entering marketing_opt_in_flow with status= "..tostring(optin_status) .. " and MarketingOptInEnabled: " .. tostring(MarketingOptInEnabled) )
 
-	if MarketingOptInEnabled and 
+	if MarketingOptInEnabled and kernel.ttsenabled() == false and
 	(optin_status == "SubscribedNotConfirmed" -- 2
 	or optin_status == "NotSubscribedConfirmed" -- 3
 	or optin_status == "NotSubscribedNotConfirmed") then -- 4
@@ -144,7 +145,7 @@ marketing_opt_in_flow = function( optin_status )
 			do_marketing_confirm = true
 		end
 		view_show_safe( "confirm_email_view" )
-	elseif MarketingOptInEnabled 
+	elseif MarketingOptInEnabled and kernel.ttsenabled() == false
 	and ShoppingCart.has_customer_profile ~= true
 	and optin_status == "NewCustomer" then -- 5
 		set_kiosk_optin_values("MarketingSubscribe", "1")
@@ -159,7 +160,8 @@ end
 function process_authorize_result( result )
 	local message_view_manager = newmessageviewmanager()
 	if result.properties.is_online == false
-	or result.properties.stand_alone == true then
+	    or result.properties.stand_alone == true 
+    then
 		result.success = true
 		ShoppingCart:set_cart_type( "Offline" )
 		if EnforceShoppingCartItemLimit then
@@ -271,7 +273,7 @@ function process_authorize_result( result )
 					keyboard_manager:stop_idle_timer()
 					--Based on marketing opt-in determine flow
 					kernel.log("Email changed: ".. tostring(email_changed))
-					if MarketingOptInEnabled and email_changed then
+					if MarketingOptInEnabled and kernel.ttsenabled() == false and email_changed then
 						-- Show a 'Please Wait' screen while the lookup is working
 						idle_timer:suspend()
 						view_show_safe( "please_wait_message" )
@@ -297,7 +299,7 @@ function process_authorize_result( result )
 				end )
 			keyboard_manager:set_actor_hit_event(
 				function( text )
-					if keyboard_manager:get_error( ) ~= "" then
+					if keyboard_manager:get_error() ~= "" then
 						keyboard_manager:set_error( "" )
 					end
 				end )
@@ -547,9 +549,12 @@ key_pad_next_getcustomercredits_func = function()
 
 				if result.properties.first_name == nil or result.properties.first_name == "" then
 					kernel.setactortext( "welcome_message_name", strings.credit_balance_hi .. "," )
+                    kernel.setmacro( "TTS:CreditViewWelcomeMessageName", strings.credit_balance_hi .. "," )
 				else
 					kernel.setactortext( "welcome_message_name", strings.credit_balance_hi .. " " .. result.properties.first_name .. "," )
+                    kernel.setmacro( "TTS:CreditViewWelcomeMessageName", strings.credit_balance_hi .. " " .. result.properties.first_name .. "," )
 				end
+
 				local credits_used = tonumber( result.properties.total_credits_applied )
 				local credits_available = tonumber( result.properties.total_credits_available )
 				if credits_available == nil or credits_available == 0 then
@@ -561,7 +566,9 @@ key_pad_next_getcustomercredits_func = function()
 					kernel.hideactor( "welcome_message_credits" )
 				else
 					kernel.setactortext( "welcome_message_credits_used", credits_used )
+                    kernel.setmacro( "TTS:CreditViewCreditsUsed", credits_used )
 					kernel.setactortext( "welcome_message_credits_available", credits_available )
+                    kernel.setmacro( "TTS:CreditViewCreditsAvailable", credits_available )
 				end
 
 				kernel.setactortext( "red_coin_credits_used", credits_used )
@@ -577,13 +584,26 @@ key_pad_next_getcustomercredits_func = function()
 				local credited_tax_amount = kernel.round( credits_amount * ( StoreManager:get_rental_tax_rate() / 100 ), 16 )
 
 				local total_amount = subtotal_amount - credits_amount + ( tax_amount - credited_tax_amount )
-				kernel.setactortext( "subtotal_amount", "$" .. string.format( "%.2f", kernel.round( subtotal_amount, 2 ) ) )
-				kernel.setactortext( "credits_amount", "-$" .. string.format( "%.2f", kernel.round( credits_amount, 2 ) ) )
-				kernel.setactortext( "tax_amount", "$" .. string.format( "%.2f", kernel.round( tax_amount - credited_tax_amount, 2 ) ) )
+
+                local subtotal_text = "$" .. string.format( "%.2f", kernel.round( subtotal_amount, 2 ) )
+				kernel.setactortext( "subtotal_amount", subtotal_text )
+                kernel.setmacro( "TTS:CreditBalanceViewSubtotal", subtotal_text )
+
+                local credit_amount_text = "-$" .. string.format( "%.2f", kernel.round( credits_amount, 2 ) )
+				kernel.setactortext( "credits_amount", credit_amount_text )
+                kernel.setmacro( "TTS:CreditBalanceViewCreditAmount", credit_amount_text )
+
+                local tax_amount_text = "$" .. string.format( "%.2f", kernel.round( tax_amount - credited_tax_amount, 2 ) )
+				kernel.setactortext( "tax_amount", tax_amount_text )
+                kernel.setmacro( "TTS:CreditBalanceViewTaxAmount", tax_amount_text )
+
 				if credits_amount == 0 then
 					kernel.setactortext( "total_heading", "Total" )
 				end
-				kernel.setactortext( "total_amount", "$" .. string.format( "%.2f", kernel.round( total_amount, 2 ) ) )
+
+                local total_amount_text = "$" .. string.format( "%.2f", kernel.round( total_amount, 2 ) )
+				kernel.setactortext( "total_amount", total_amount_text )
+                kernel.setmacro( "TTS:CreditBalanceViewTotalAmount", total_amount_text )
 
 				if StoreManager.store ~= nil and StoreManager.store.state ~= nil and ( StoreManager.store.state == "MD" or StoreManager.store.state == "SC" ) then
 					kernel.hideactor( "tax_heading" )
@@ -593,7 +613,9 @@ key_pad_next_getcustomercredits_func = function()
 					kernel.moveactory( "total_amount", -30 )
 				end
 
-				kernel.setactortext( "credits_left", string.gsub( strings.credit_balance_credits_left, "{0}", tostring( credits_available - credits_used ) ) )
+                local credits_left_text = string.gsub( strings.credit_balance_credits_left, "{0}", tostring( credits_available - credits_used ) )
+				kernel.setactortext( "credits_left", credits_left_text )
+                kernel.setmacro("TTS:CreditBalanceViewCreditsLeft", credits_left_text )
 
 				if total_amount > 0 then
 					local has_dvds = false
@@ -630,10 +652,15 @@ key_pad_next_getcustomercredits_func = function()
 					end
 					do_not_apply_text = string.sub( do_not_apply_text, 1, string.len( do_not_apply_text ) - 2 )
 					do_not_apply_text = do_not_apply_text .. strings.credit_balance_do_not_apply_2
-					kernel.setactortext( "credits_do_not_apply_message", do_not_apply_text )
+					
+                    kernel.setactortext( "credits_do_not_apply_message", do_not_apply_text )
+                    kernel.setmacro("TTS:CreditBalanceViewCreditsDoNotApply", do_not_apply_text )
 				else
 					kernel.hideactor( "credits_do_not_apply_message" )
 				end
+                if kernel.ttsenabled() then -- skipped checks elsewhere...
+                    kernel.ttsrepeat();  -- assests have been set and toggled
+                end
 			elseif result.properties.response == "RentalLimitExceeded" then
 				local message_view_manager = newmessageviewmanager()
 				message_view_manager:show()

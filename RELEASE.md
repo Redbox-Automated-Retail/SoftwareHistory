@@ -1,17 +1,17 @@
-# The Martian (2015-12-18)
+# Batman (2016-04-01)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2015-12-18
-- Store labels: kop-rental-bundles-The-Martian
+- Date (first download in the snapshots): 2016-04-01
+- Store labels: kop-rental-bundles-Batman
 - Package revisions:
-  - `kop-rental-bundles` revision 34 (`E5118C6982CC25B2800DF9D0D72C69CE70F1F673`)
+  - `kop-rental-bundles` revision 42 (`E9559925636E272C4C4EC32D8F5E41527B84F1BE`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `A5402F8BFF78ABEEF956FB499EDFA7C68F8EAD88` | exact |
-| `fm.bundle` |  |  | `BE80D2D5D08B33828781B4F48F09F346A219D80C` | exact |
-| `library-rental-common.bundle` |  |  | `35DD4AA2CB3182164C28D2F1BC73A0CCD777E80F` | exact |
-| `ra-2.x.bundle` |  |  | `A8DE8BF9B91B6AF4CAAF9C511276697BC0A89360` | exact |
+| `cp.bundle` |  |  | `C92F88F7C0C0DC4A527CD3413E6EF0A07C1796D5` | exact |
+| `fm.bundle` |  |  | `5264635D42CAFD066EA05DC0E364824672C85BC5` | exact |
+| `library-rental-common.bundle` |  |  | `6E06F6D68329C29F99530EC2A8BCE19471FF3624` | exact |
+| `ra-2.x.bundle` |  |  | `CF3B2077760A2939CEEA72270DFFED2AC8B98C51` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

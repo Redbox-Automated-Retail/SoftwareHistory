@@ -39,11 +39,10 @@ if DisplayModifiedShoppingCart == true then
 	local dvd_pricing_table = StoreManager.PricingManager:get_product_type_price( "movies", "dvd" )
 	local bluray_pricing_table = StoreManager.PricingManager:get_product_type_price( "movies", "blu-ray" )
 	local games_pricing_table = StoreManager.PricingManager:get_product_type_price( "games", "*" )
-	kernel.setmacro( "ShoppingCart:DvdDays", dvd_pricing_table.non_return_days + 1 )
-	kernel.setmacro( "ShoppingCart:BlurayDays", bluray_pricing_table.non_return_days + 1 )
-	kernel.setmacro( "ShoppingCart:GamesDays", games_pricing_table.non_return_days + 1 )
-	if TextToSpeechEnabled == true then
-		kernel.setmacro( "TTS:passive_sale_note", kernel.getactortext("passive_sale_note") )
+    local passive_sale_note = string.gsub( strings.passive_sale_note, "%S%S%S", { ["{0}"] = dvd_pricing_table.non_return_days + 1, ["{1}"] = bluray_pricing_table.non_return_days + 1, ["{2}"] = games_pricing_table.non_return_days + 1 } )
+    kernel.setactortext( "passive_sale_note", passive_sale_note )
+	if kernel.ttsenabled() == true then
+		kernel.setmacro( "TTS:passive_sale_note", passive_sale_note )
 	end
 	kernel.showactor( "passive_sale_note" )
 	
@@ -78,7 +77,7 @@ function show_offer_or_proceed_checkout()
 		kernel.log( "PromptForCredits is true, setting session_use_credits to NotSpecified" )
 		ShoppingCart:set_use_credits( "NotSpecified" )
 	end
-	
+
 	if promo_code ~= nil and promo_code.intent == "RxGx" then
 		ShoppingCart:validate_cart_update_promo_code(
 			function( cart_promo_info )
@@ -94,14 +93,20 @@ function show_offer_or_proceed_checkout()
 					message_view_manager:set_message( cart_promo_info.title_english .. "\n\n" .. cart_promo_info.message_english )
 				end
 				message_view_manager:hide_first_button()
-				message_view_manager:show_third_button( strings.rxgx_use_promo_button,
+				message_view_manager:show_third_button( strings.use_promo_button,
 					function()
 						view_analytics_event( "buttonPress", "keepPromo" )
 						message_view_manager:hide()
-						view_show( "browse_view" )
+                        kernel.set_session_value( "BrowseState.BrowseSelectedSort", "Newest" )
+                        kernel.set_session_value( "BrowseState.BrowseFilterMode", "All" )
+		                browse_filter_genre_selected = nil
+                        browse_filter_family_tracker:set_family_type( "ALL" )
+		                browse_filter_family_tracker.selected_family = "Movies"
+		                set_number = 1
+                        kernel.executescript( "browse_products" )
 					end
 				)
-				message_view_manager:show_fourth_button( strings.rxgx_do_not_use_promo_button,
+				message_view_manager:show_fourth_button( strings.do_not_use_promo_button,
 					function()
 						view_analytics_event( "buttonPress", "removePromo" )
 						message_view_manager:hide()
@@ -124,7 +129,54 @@ function show_offer_or_proceed_checkout()
 				view_analytics_event( "context", "rxgxWarning" )
 			end
 		)
-	else
+	elseif promo_code ~= nil and promo_code.campaign_titles ~= nil then
+		ShoppingCart:validate_cart_update_promo_code(
+			function()
+				kernel.executescript( "check_out" )
+			end,
+			function()
+				local message_view_manager = newmessageviewmanager()
+				message_view_manager:show()
+				message_view_manager:set_message_header( strings.tsp_invalid_header )
+				message_view_manager:set_message( strings.tsp_invalid_message )
+				message_view_manager:hide_first_button()
+				message_view_manager:show_third_button( strings.use_promo_button,
+					function()
+						view_analytics_event( "buttonPress", "keepPromo" )
+						message_view_manager:hide()
+                        kernel.set_session_value( "BrowseState.BrowseSelectedSort", "Newest" )
+                        kernel.set_session_value( "BrowseState.BrowseFilterMode", "All" )
+		                browse_filter_genre_selected = nil
+                        browse_filter_family_tracker:set_family_type( "ALL" )
+		                browse_filter_family_tracker.selected_family = "Movies"
+		                set_number = 1
+                        kernel.executescript( "browse_products" )
+					end
+				)
+				message_view_manager:show_fourth_button( strings.do_not_use_promo_button,
+					function()
+						view_analytics_event( "buttonPress", "removePromo" )
+						message_view_manager:hide()
+						ShoppingCart:clear_promo_code()
+						
+						if free_in_cart_template_is_running() == false
+                        and CartQualifiesForInCartOffer( ShoppingCart )
+						and ShoppingCart.in_cart_promo_offer_made == false then
+							view_show_safe( "in_cart_offer_message_view" )
+						else
+							kernel.executescript( "check_out" )
+						end
+					end
+				)
+				message_view_manager:start_timer(
+					function()
+						message_view_manager:hide()
+					end
+				)
+				view_analytics_event( "context", "titlelevelpromoWarning" )
+			end
+		)
+    else
         if free_in_cart_template_is_running() == false
 		and CartQualifiesForInCartOffer( ShoppingCart )
 		and ShoppingCart.in_cart_promo_offer_made == false then

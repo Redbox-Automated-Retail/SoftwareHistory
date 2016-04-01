@@ -15,6 +15,7 @@ function newreturnmanager( shopping_cart )
 	t.init = function( self )
 		kernel.log( "ReturnManager:init()" )
 		self.has_ended = false
+        kernel.ttsinreturnflow(true)
 		self.did_show_success_message = false
 		self.message_view_manager = newmessageviewmanager()
 		self.error_message_view_manager = newerrormessageviewmanager()
@@ -49,6 +50,7 @@ function newreturnmanager( shopping_cart )
 			self.error_message_view_manager:set_message( message )
 		end
 		self.has_ended = true
+        kernel.ttsinreturnflow( false )
 	end
 
 	t.close_session_show_maintenance = function( self, abandon_reason, alert_type, jobid, error_code, screen_code )
@@ -56,6 +58,7 @@ function newreturnmanager( shopping_cart )
 		self.shopping_cart:abandon( abandon_reason )
 		self:show_message( strings.hardware_error_message, false )
 		self.has_ended = true
+        kernel.ttsinreturnflow( false )
 		if screen_code == nil then
 			screen_code = "RPCSSM"
 		end
@@ -83,6 +86,7 @@ function newreturnmanager( shopping_cart )
 		self.message_view_manager:start_timer( switch_culture_unwind, 5000 )
 		self.did_show_success_message = true
 		self.has_ended = true
+        kernel.ttsinreturnflow( false )
 	end
 	
 	t.show_backward_inserted_message = function( self )
@@ -103,6 +107,7 @@ function newreturnmanager( shopping_cart )
 			end
 		)
 		self.has_ended = true
+        kernel.ttsinreturnflow( false )
 	end
 
 	t.begin_return = function( self, return_type )
@@ -242,7 +247,27 @@ function newreturnmanager( shopping_cart )
 			end,
 			function( job_result )
 				--On_Complete
-				local returned_item_id = nil
+                local function has_disc_detection_indicator( barcode )
+                    local product = BarcodeToProduct[barcode]
+                    if product ~= nil and product.product_id ~= nil then
+                        local master_product = MasterProductCatalog[product.product_id]
+                        if master_product ~= nil and master_product.disc_detection_indicator == true then
+                            return true
+                        end
+                    end
+                    return false
+                end
+
+                local function contains_code( results, code )
+	                for _, v in ipairs( results ) do
+		                if v.code == code then
+			                return true
+		                end
+	                end
+	                return false
+                end
+
+                local returned_item_id = nil
 				local bad_codes = {}
 				local should_show_success = false
 				local EmptySlotCount = 9999
@@ -275,18 +300,62 @@ function newreturnmanager( shopping_cart )
 						elseif v.code == "ItemReturned"
 						and v.item_id ~= nil and v.item_id ~= "UNKNOWN" then
 							kernel.log( "ReturnManager:v.code = " .. tostring ( v.code ) .. ", v.item_id = " .. tostring( v.item_id ) .. ", v.return_time = " .. tostring( v.return_time ) )
-							local type_value = "KioskReturn"
+                            local type_value = "KioskReturn"
+                            local failed_security_read = false
+
 							if return_type == "unplayable_return" then
 								type_value = "UnplayableReturn"
 							end
+                            if EnableDiscSecurity == true
+                            and has_disc_detection_indicator( v.item_id ) == true
+                            and contains_code( job_result.results, "NoFraudMarkersDetected" ) == true
+                            and contains_code( job_result.results, "FraudScanError" ) == false
+                            and contains_code( job_result.results, "LastFraudPostError" ) == false then
+                                type_value = "FailedSecurityRead"
+                                failed_security_read = true
+                            end
 
-							kernel.invsvcs_return(
+							kernel.invsvcs_return2(
 								StoreManager:get_number(),
 								type_value,
 								v.item_id,
 								v.deck,
 								v.slot,
-								v.return_time )
+								v.return_time,
+                                failed_security_read
+                            )
+
+                            if EnableDiscSecurity == true
+                            and has_disc_detection_indicator( v.item_id ) == true
+                            and contains_code( job_result.results, "NoFraudMarkersDetected" ) == true then
+                                kernel.healthsvcs_sendalert2(
+	                                StoreManager:get_number(),
+	                                "ReturnRejected",
+	                                "SECURITYRETURN",
+	                                "Security missing on " .. tostring( v.item_id )
+                                )
+                            end
+                            if EnableDiscSecurity == true
+                            and has_disc_detection_indicator( v.item_id ) == false
+                            and contains_code( job_result.results, "FraudMarkersRead" ) == true then
+                                kernel.healthsvcs_sendalert2(
+	                                StoreManager:get_number(),
+	                                "ReturnRejected",
+	                                "SECURITYRETURNERROR",
+	                                "Security erroneously detected on " .. tostring( v.item_id )
+                                )
+                            end
+                            if EnableDiscSecurity == true
+                            and ( contains_code( job_result.results, "FraudScanError" ) == true
+                            or contains_code( job_result.results, "LastFraudPostError" ) == true ) then
+                                kernel.healthsvcs_sendalert2(
+	                                StoreManager:get_number(),
+	                                "ReturnRejected",
+	                                "SECURITYHARDWAREERROR",
+	                                "Security hardware having issues"
+                                )
+                            end
+
 							returned_item_id = v.item_id
 							should_show_success = ( v.message == "The item was successfully returned." )
 
@@ -350,6 +419,7 @@ function newreturnmanager( shopping_cart )
 				or kernel.peekview() == "message_view" )
 				and not self.has_ended then
 					self.has_ended = true
+                    kernel.ttsinreturnflow( false )
 					self.message_view_manager:stop_timer()
 					if kernel.getculture() ~= "en-US" then
 						if DefaultCulture ~= nil and DefaultCulture ~= "" then
@@ -380,6 +450,7 @@ function newreturnmanager( shopping_cart )
 
 		if not result.success then
 			self.has_ended = true
+            kernel.ttsinreturnflow( false )
 			if not in_maintenance_mode() then
 				kernel.log("return-product view_unwindtobottom()")
 				ABE_ON = false

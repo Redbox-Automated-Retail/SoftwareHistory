@@ -209,7 +209,7 @@ swipe_view_next_func = function()
 						return qualifies
 					end
 					
-					if RecommendationOnPickup == true and qualify_for_reco() then
+					if RecommendationOnPickup == true and qualify_for_reco() and kernel.ttsenabled() == false then
 						-- Account qualifies for Recomendations On Pickup
 						
 						-- Add recommended information to KA

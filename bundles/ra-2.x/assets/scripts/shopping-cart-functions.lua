@@ -109,13 +109,17 @@ function newshoppingcart()
 
 	t.update_cart_macros = function( self )
 		for k, v in ipairs( self.items ) do
-			local product = MasterProductCatalog[ v.product_id ]
-			kernel.log("TTS:CartTitle_"..tostring(k).."_Name = "..tostring(product.long_name) )
+            local product = MasterProductCatalog[ v.product_id ]
+            kernel.log("TTS:CartTitle_"..tostring(k).."_Name = "..tostring(product.long_name) )
 			kernel.setmacro( "TTS:CartTitle_"..tostring(k).."_Name", tostring(product.long_name) )
+            kernel.log("TTS:CartTitle_"..tostring(k).."_Action = "..tostring(v.action) )
+			kernel.setmacro( "TTS:CartTitle_"..tostring(k).."_Action", tostring(v.action) )
 		end
 		for i=(#self.items+1),5 do
 			kernel.log("TTS:CartTitle_"..tostring(i).."_Name = empty")
 			kernel.setmacro( "TTS:CartTitle_"..tostring(i).."_Name", "" )
+			kernel.log("TTS:CartTitle_"..tostring(i).."_Action = empty")
+			kernel.setmacro( "TTS:CartTitle_"..tostring(i).."_Action", "" )
 		end
 
 		if #self.items > 0 then
@@ -137,7 +141,7 @@ function newshoppingcart()
 			self.messagebox:show( strings.inventory_error )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
-			if TextToSpeechEnabled == true then
+			if kernel.ttsenabled() == true then
 				self.update_cart_macros()
 			end
 			return false
@@ -159,7 +163,7 @@ function newshoppingcart()
 	t.start_new = function( self )
 		kernel.log("Shopping cart start_new() " )
 		self.items = {}
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			self:update_cart_macros()
 		end
 		self.session_use_credits = "NotSpecified"
@@ -698,7 +702,7 @@ function newshoppingcart()
 		
 		self:validate_cart_update_promo_code( nil, nil )
 		
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			self:update_cart_macros()
 			kernel.ttsrepeat()
 		end
@@ -738,7 +742,7 @@ function newshoppingcart()
 			removed_item.product_id )
 		kernel.log( "ShoppingCart:remove_item: " .. tostring( session_message ) )
 		table.remove( self.items, index )
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			self:update_cart_macros()
 			kernel.ttsrepeat();
 		end
@@ -918,17 +922,20 @@ function newshoppingcart()
 								r.success = false
 								r.properties.response = "GameRequired"
 							else
-								-- This promo is okay to proceed
+                                -- This promo is okay to proceed
 								local promo_code = {
 									name = code,
-									price = promo_price,
+									original_price = promo_price,
+                                    price = promo_price,
 									quantity = 1,
 									intent = r.properties.promotion_intent,
+                                    original_percent = promo_percent,
 									percent = promo_percent,
 									rent_qty = r.properties.rent_qty,
 									rent_format = r.properties.rent_format,
 									get_qty = r.properties.get_qty,
-									get_format = r.properties.get_format
+									get_format = r.properties.get_format,
+                                    campaign_titles = r.properties.campaign_titles
 								}
 								kernel.rental_promotion_set_promotion( promo_code )
 								kernel.sessionsetdiscount2(
@@ -936,7 +943,13 @@ function newshoppingcart()
 									promo_code.name,
 									promo_code.price
 								)
-								
+
+								local done = function()
+									message_view_manager:hide()
+									if on_error ~= nil then
+										on_error()
+									end
+								end
 								if promo_code.intent == "RxGx" then
 									self:validate_cart_update_promo_code(
 										function( cart_promo_info )
@@ -945,12 +958,6 @@ function newshoppingcart()
 											end
 										end,
 										function( cart_promo_info )
-											local done = function()
-												message_view_manager:hide()
-												if on_error ~= nil then
-													on_error()
-												end
-											end
 											message_view_manager:show()
 											message_view_manager:set_message_header( "Oops" )
 											if kernel.getculture() == "es-MX" then
@@ -964,7 +971,24 @@ function newshoppingcart()
 											view_analytics_event( "context", "rxgxWarning" )
 										end
 									)
-								else
+								elseif promo_code.campaign_titles ~= nil then
+                                    self:validate_cart_update_promo_code(
+										function()
+											if on_complete ~= nil then
+												on_complete()
+											end
+										end,
+										function()
+											message_view_manager:show()
+											message_view_manager:set_message_header( strings.tsp_invalid_header )
+											message_view_manager:set_message( strings.tsp_invalid_message )
+											message_view_manager:hide_first_button()
+											message_view_manager:show_second_button( strings.continue_button, done )
+											message_view_manager:start_timer( done )
+											view_analytics_event( "context", "titlelevelpromoWarning" )
+										end
+									)
+                                else
 									kernel.analyticsaddattribute( "promoCode", "value", tostring( promo_code.price ), self.session_id )
 									if on_complete ~= nil then
 										on_complete()
@@ -1033,14 +1057,14 @@ function newshoppingcart()
 
 		idle_timer:start()
 	end
-	
+
 	t.validate_cart_update_promo_code = function( self, on_valid, on_invalid )
 		local promo_code = kernel.rental_promotion_get_promotion()
 		if promo_code ~= nil and promo_code.intent == "RxGx" then
 			local dvd_price = StoreManager.PricingManager:get_price_setting( "movies", "dvd", "initial_night", "rental" )
 			local blu_ray_price = StoreManager.PricingManager:get_price_setting( "movies", "blu-ray", "initial_night", "rental" )
 			local game_price = StoreManager.PricingManager:get_price_setting( "games", "*", "initial_night", "rental" )
-			local cart_promo_info = kernel.rental_promotion_validate_cart( self.items, dvd_price, blu_ray_price, game_price )
+			local cart_promo_info = kernel.rental_promotion_rxgx_validate_cart( self.items, dvd_price, blu_ray_price, game_price )
 			if cart_promo_info ~= nil then
 				promo_code.price = cart_promo_info.promo_code_value
 				kernel.rental_promotion_set_promotion( promo_code )
@@ -1061,7 +1085,34 @@ function newshoppingcart()
 			else
 				self:clear_promo_code()
 			end
-		end
+		elseif promo_code ~= nil and promo_code.campaign_titles ~= nil then
+            local is_valid = kernel.rental_promotion_tsp_validate_cart( self.items )
+            if is_valid == true then
+				promo_code.price = promo_code.original_price
+                promo_code.percent = promo_code.original_percent
+				kernel.rental_promotion_set_promotion( promo_code )
+				kernel.sessionsetdiscount2(
+					self.session_id,
+					promo_code.name,
+					promo_code.price
+				)
+				if on_valid ~= nil then
+					on_valid()
+				end
+            else
+				promo_code.price = 0
+                promo_code.percent = 0
+				kernel.rental_promotion_set_promotion( promo_code )
+				kernel.sessionsetdiscount2(
+					self.session_id,
+					promo_code.name,
+					promo_code.price
+				)
+				if on_invalid ~= nil then
+					on_invalid()
+				end
+            end
+        end
 	end
 	
 	t.clear_promo_code = function( self )
@@ -1083,7 +1134,7 @@ function newshoppingcart()
 				false )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
-			if TextToSpeechEnabled == true then
+			if kernel.ttsenabled() == true then
 				self:update_cart_macros()
 			end
 			return
@@ -1150,7 +1201,7 @@ function newshoppingcart()
 				end
 
 				if self.session_committed == true then
-					self:reconcile( )
+					self:reconcile()
 				end
 				self:close_analytics( "False" )
 				kernel.sessionend2( self.session_id )
@@ -1167,7 +1218,7 @@ function newshoppingcart()
 				true )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
-			if TextToSpeechEnabled == true then
+			if kernel.ttsenabled() == true then
 				self:update_cart_macros()
 			end
 			return
@@ -1199,7 +1250,7 @@ function newshoppingcart()
 				false )
 			-- Remove all the items from the cart since none of them have inventory
 			self.items = {}
-			if TextToSpeechEnabled == true then
+			if kernel.ttsenabled() == true then
 				self:update_cart_macros()
 			end
 			return
@@ -1378,10 +1429,11 @@ function newshoppingcart()
 		local x = 0
 		local y = 170
 		local banner_y = 346
-
-		if kernel.getfilter( "ada_accessible" ) == "True" then
-			y = y + 25
-			banner_y = 371
+        local ada_y_difference = 100
+		
+        if kernel.getfilter( "ada_accessible" ) == "True" then
+			y = y + ada_y_difference
+			banner_y = banner_y + ada_y_difference
 		end
 
 		if #self.items == 0 then
@@ -1467,10 +1519,14 @@ function newshoppingcart()
 			display_flag( releaseDate, days, v.product_id, product_type.product_family_id, k, catalog_entry )
 
 			local cancel_imageName = "cancel_image_name_" .. k
-			shopping_cart_scene_manager:add_actor(
+            local cancel_y = y - 17
+            if kernel.getfilter( "ada_accessible" ) == "True" then
+                cancel_y = cancel_y + 205
+            end
+            shopping_cart_scene_manager:add_actor(
 				cancel_imageName,
 				x + 125,
-				y - 17,
+				cancel_y,
 				41,
 				41,
 				{ 	renderOptions = "BackgroundGradient, Text, DrawBorder",
@@ -1685,8 +1741,7 @@ function newshoppingcart()
 			kernel.setactorx("add_movie_add_game_reflection_opacity_hiding", x)
 			kernel.setactorx("all_movies_button", x)
 			kernel.setactorx("games_button", x)
-			if DisableGames
-			or ProductCatalog:in_stock_games_count() == 0 then
+			if DisableGames or ProductCatalog:in_stock_games_count() == 0 or kernel.getfilter( "ada_accessible" ) == "True" then
 				if kernel.getculture() == "en-US" then
 					kernel.setactorimage("add_movie_add_game","image_plus_add_movie")
 					kernel.setactorimage("add_movie_add_game_reflection","image_plus_add_movie")
@@ -1699,11 +1754,11 @@ function newshoppingcart()
 			end
 
 			if kernel.getfilter( "ada_accessible" ) == "True" then
-				kernel.setactory( "add_movie_add_game", 170 + 25 )
-				kernel.setactory( "add_movie_add_game_reflection", 526 + 25 )
-				kernel.setactory( "add_movie_add_game_reflection_opacity_hiding", 386 + 25 )
-				kernel.setactory( "all_movies_button", 170 + 25 )
-				kernel.setactory( "games_button", 316 + 25 )
+				kernel.setactory( "add_movie_add_game", 170 + ada_y_difference )
+				kernel.setactory( "add_movie_add_game_reflection", 526 + ada_y_difference )
+				kernel.setactory( "add_movie_add_game_reflection_opacity_hiding", 386 + ada_y_difference )
+				kernel.setactory( "all_movies_button", 170 + ada_y_difference )
+				kernel.setactory( "games_button", 316 + ada_y_difference )
 			end
 		end
 
@@ -1816,7 +1871,7 @@ function newshoppingcart()
 			kernel.enableactor("promo_code_button")
 		end
 
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			kernel.ttsrepeat();  -- the titles and assests have been set and toggled
 		end
 	end
@@ -2025,6 +2080,7 @@ function newshoppingcart()
 		
 		show = function( self )
 			if BluRayUpsellEnabled == true
+            and kernel.ttsenabled() == false
 			and self:in_cart_check() == true
 			and self:has_in_stock_and_available_blu_rays( false ) == true
 			and self.do_not_show_again == false then

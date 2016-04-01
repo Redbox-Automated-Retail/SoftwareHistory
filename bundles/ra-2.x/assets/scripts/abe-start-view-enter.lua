@@ -9,10 +9,11 @@ local set_text_on_screen = function()
 	kernel.setactortext( "abe_mode_text", strings.abe_mode_text )
 end
 
+local timeout = kernel.ttsgettimeout( "medium", 15000 )
 kernel.timercreate(
 	"abe_start_view_timer",
-	15000,
-	15000,
+	timeout,
+	timeout,
 	function()
 		kernel.timerremove( "abe_start_view_timer" )
 		if kernel.getculture() ~= DefaultCulture then

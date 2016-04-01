@@ -410,7 +410,7 @@ is_product_id_selected = function( product_id )
 end
 
 function highlight_sort_button( sort_name )
-	if TextToSpeechEnabled == true then
+	if kernel.ttsenabled() == true then
 		kernel.setmacro( "TTS:BrowsingFilter", sort_name )
 	end
 
@@ -609,7 +609,7 @@ ProductCatalog.show_sort_buttons = function( self )
 	kernel.setactorbackgroundcolor( "center_gray_background", {["r"] = 167, ["g"] = 167, ["b"] = 167} )
 	kernel.setactorgradienttargetcolor( "center_gray_background", {["r"] = 167, ["g"] = 167, ["b"] = 167} )
 	
-	if TextToSpeechEnabled == true then
+	if kernel.ttsenabled() == true then
 		if browse_filter_family_tracker.selected_family == "Movies" then
 			kernel.setmacro( "TTS:SwitchToFamily", strings.Games )
 			kernel.setmacro( "TTS:BrowsingFamily", strings.Movies )
@@ -648,7 +648,7 @@ ProductCatalog.show_sort_buttons = function( self )
 			--disable_games()
 		end
 
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			kernel.setmacro( "TTS:TabName_2", strings.genre_1093a .. " " .. strings.genre_1093b )
 			kernel.setmacro( "TTS:TabName_3", strings.genre_1000 )
 			kernel.setmacro( "TTS:TabName_4", strings.genre_1005 )
@@ -765,7 +765,7 @@ ProductCatalog.show_sort_buttons = function( self )
 		enable_filter_button( "newest_button" )
 		align_filter_buttons() --sets x coords in centered manner
 		
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			kernel.setmacro( "TTS:TabName_2", strings.genre_1026 )
 			kernel.setmacro( "TTS:TabName_3", strings.genre_1006 )
 			kernel.setmacro( "TTS:TabName_4", strings.genre_1028 )
@@ -782,7 +782,7 @@ ProductCatalog.show_sort_buttons = function( self )
 		kernel.setactory( "center_gray_background", 563 )
 	end
 	
-	if TextToSpeechEnabled == true then
+	if kernel.ttsenabled() == true then
 		-- Set TTS:Filter buttons based on what are showing
 		local filter_num = 1
 		if kernel.isactorvisible( "blu_ray_button" ) then
@@ -841,7 +841,7 @@ ProductCatalog.show_sort_buttons = function( self )
 			filter_num = filter_num + 1
 		end
 
-		if TextToSpeechEnabled == true then
+		if kernel.ttsenabled() == true then
 			kernel.ttsrepeat();  -- the titles and assests have been set and toggled
 		end
 	end
@@ -922,9 +922,14 @@ local page_number_changed = function(new_page_number)
 		draw_ada_control()
 	end
 
-	if page_number_is_different then
+    -- increment paddle count if the page number changed but don't include A-Z character selections
+	if page_number_is_different and browse_goto_alpha == nil then
 		increment_paddle_click_count()
 	end
+
+    if kernel.ttsenabled() then
+        kernel.ttsrepeat()
+    end
 end
 
 increment_paddle_click_count = function ()
@@ -1056,6 +1061,9 @@ draw_images_set = function( filtered_products_list )
 		register_email_reminder,
 		unregister_email_reminder)
 
+    if kernel.ttsenabled() then
+        kernel.ttsrepeat()
+    end
 	browse_goto_alpha = nil
 end 
 
@@ -1210,15 +1218,18 @@ function add_item_to_cart( selected_product )
 end
 
 warning_popup_timer = newidletimer("warning_popup_timer")
-local warning_popup_timeout = 15000
-if TextToSpeechEnabled == true then
-	warning_popup_timeout = 60000
-end
 warning_popup_timer:initialize(
-	warning_popup_timeout,
+	15000,
 	function()
 		hide_warning_popup()
 	end )
+
+function set_timeout_for_warning_timer( )
+    local warning_popup_timeout = kernel.ttsgettimeout( "medium", 15000 )
+    kernel.set_timer_period_and_duetime( "warning_popup_timer", warning_popup_timeout, warning_popup_timeout )
+end
+
+set_timeout_for_warning_timer()
 
 function check_for_warning_popups( check_alert_table, selected_movie, i, product_to_check )
 
@@ -1260,6 +1271,7 @@ function check_for_warning_popups( check_alert_table, selected_movie, i, product
 							local movie_mature_message = string.gsub( strings.mature_movie_warning,"{0}", rating.name )
 							kernel.setmacro( "MatureWarning:Header", string.gsub( strings.esrb_mature_name,"{0}", rating.name ))
 							kernel.setmacro( "MatureWarning:Message", movie_mature_message )
+                            kernel.setmacro( "MatureWarning:TTSMessage", string.gsub(movie_mature_message, "OK", "Enter" ) )
 							rated_movie_in_cart = true
 						end
 					elseif product_family.product_family_name == "Games" then
@@ -1272,6 +1284,7 @@ function check_for_warning_popups( check_alert_table, selected_movie, i, product
 							end
 							kernel.setmacro( "MatureWarning:Header", string.gsub( strings.esrb_mature_game_name,"{0}", rating.code ))
 							kernel.setmacro( "MatureWarning:Message", game_mature_message )
+                            kernel.setmacro( "MatureWarning:TTSMessage", string.gsub(game_mature_message, "OK", "Enter" ) )
 							rated_game_in_cart = true
 						end
 					end
@@ -1328,6 +1341,7 @@ function show_warning_alert( check_alert_table, selected_movie, i, product_to_ch
 
 		view_show_safe(analytics_view_name)
 		show_warning_header()
+        set_timeout_for_warning_timer()
 		warning_popup_timer:start()
 		if product_family ~= nil and product_family.product_family_name ~= nil then
 			view_analytics_event( "context", tostring(product_family.product_family_name) )
@@ -1386,7 +1400,8 @@ function hide_warning_popup()
 end
 
 function show_warning_popup()
-	warning_popup_timer:start()
+	set_timeout_for_warning_timer()
+    warning_popup_timer:start()    
 	kernel.showactor( "scene_background" )
 	kernel.showactor( "center_background" )
 	kernel.showactor( "rating_label" )
@@ -1397,6 +1412,7 @@ function show_warning_popup()
 end
 
 function show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
+    set_timeout_for_warning_timer()
 	warning_popup_timer:start()
 	view_show_safe( "bluray_message_view" )
 	warning_popup_timer:start()
@@ -1442,6 +1458,7 @@ end
 function show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
 	view_show_safe( "subplatform_message_view" )
 	show_warning_header()
+    set_timeout_for_warning_timer()
 	warning_popup_timer:start()
 	view_analytics_event( "context", "subplatformWarning" )
 	kernel.setmacro( "Subplatform:Header", strings.subplatform_warning_title )
@@ -1477,6 +1494,7 @@ end
 
 function show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
 	view_show_safe( "purchase_message_view" )
+    set_timeout_for_warning_timer()
 	warning_popup_timer:start()
 	show_warning_header()
 	if StoreManager:get_purchase_new_price() ~= nil
@@ -1768,11 +1786,18 @@ function newtitlerollupoverlay()
 				end
 			end
 		)
-		
+        if kernel.ttsenabled() == true then
+            kernel.setmacro( "Overlay:DVDButtonText", dvd_button_text )
+            kernel.setmacro( "Overlay:BlurayButtonText", blu_ray_button_text )
+            kernel.ttsrepeat()
+        end
+
+        local timeout = kernel.ttsgettimeout( "long", 10000 )
+
 		kernel.timercreate(
 			"overlay_scene_manager_timer",
-			10000,
-			10000,
+			timeout,
+			timeout,
 			function()
 				self:hide()
 				if timeout_function ~= nil then

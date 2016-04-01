@@ -41,18 +41,18 @@
 				x="0"
 				y="175"
 				width="1024"
-				text="Mejor imagen, mejor sonido por s&#243;lo unos centavos m&#225;s."
-				font="font_target_medium_20"
-				foregroundColor="black"
-				horizontalAlignment="center"
-				optionFlags="Text" />
-				
-			<actor
+				text="Actualizar a Blu-ray por s&#243;lo unos centavos m&#225;s."
+        font="font_target_medium_20"
+        foregroundColor="black"
+        horizontalAlignment="center"
+        optionFlags="Text" />
+
+      <actor
 				name="footer"
-				x="0"
-				y="544"
-				width="1024"
-				text="Se require un lector Blu-ray, PS3, PS4, o un Xbox One."
+				x="100"
+				y="504"
+				width="824"
+				text="Para que el disco funcione Ud. necesitará un reproductor Blu-ray™. El audio en Blu-ray Disco® puede variar de Dolby Digital y DTS Digital a Dolby Lossless y DTS-HD. Vea nuestras preguntas frecuentes (FAQs) para más detalles."
 				font="font_target_smaller_overlays"
 				foregroundColor="black"
 				horizontalAlignment="center"

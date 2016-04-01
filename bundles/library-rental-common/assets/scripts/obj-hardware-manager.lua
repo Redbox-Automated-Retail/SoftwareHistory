@@ -467,8 +467,12 @@ get_vmz_thin_barcodes = function()
 				kernel.log(">  added Damaged (sort_order:" ..sort_order["DAMAGED"] ..") " .. barcode .." to barcodes_to_bin from location " .. k )
 			elseif string.upper( row.status ) == "FRAUD" then
 				row.order = sort_order["FRAUD"]
-				table.insert( barcodes_to_bin, row )
-				kernel.log(">  added Fraud (sort_order:" ..sort_order["FRAUD"] ..") " .. barcode .." to barcodes_to_bin from location " .. k )
+                if EnableDiscSecurity == true then
+                    kernel.log(">  DiscSecurityEnabled fraud disc barcode: " .. barcode .." will not be thinned." )
+                else
+				    table.insert( barcodes_to_bin, row )
+				    kernel.log(">  added Fraud (sort_order:" ..sort_order["FRAUD"] ..") " .. barcode .." to barcodes_to_bin from location " .. k )
+                end
 			elseif do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then
 				row.order = sort_order["DNR"]
 				table.insert( barcodes_to_bin, row )
@@ -784,7 +788,7 @@ function newhardwaremanager()
 		end
 		return true
 	end
-
+    
 	t.prep_unload_zone = function( self, rotation, last_deck, on_complete )
 		local result = kernel.hardwareprepunloadzone(
 		rotation,
@@ -1496,6 +1500,32 @@ function newhardwaremanager()
 
 	t.read_fraud_disc = function( self, on_ready, on_complete, on_busy )
 		local result = kernel.hardwarereadfrauddisc(
+			self.default_status_change_handler,
+			function( jobid, status )
+				if has_job_ended( status ) then
+					local job_result = kernel.hardwaregetprogramresults( jobid )
+					enqueue_inventory_updates( job_result )
+					if on_complete ~= nil then
+						on_complete( job_result )
+					end
+					kernel.hardwaretrashjob( jobid )
+				end
+			end )
+
+		if result.success == false then
+			self:show_hardware_errors( result )
+			return { success = false, job_id = nil }
+		end
+
+		if not self:is_hardware_busy( result, on_ready, on_busy ) then
+			return { success = false, job_id = nil }
+		end
+
+		return { success = true, job_id = result.job_id }
+	end
+
+	t.field_insert_fraud_with_check = function( self, on_ready, on_complete, on_busy )
+		local result = kernel.fieldinsertfraudwithcheck(
 			self.default_status_change_handler,
 			function( jobid, status )
 				if has_job_ended( status ) then
