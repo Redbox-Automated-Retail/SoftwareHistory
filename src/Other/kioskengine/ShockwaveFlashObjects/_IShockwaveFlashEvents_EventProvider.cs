@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -26,7 +26,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		m_aEventSinkHelpers = new ArrayList();
 	}
 
-	public void add_FlashCall(_IShockwaveFlashEvents_FlashCallEventHandler param0)
+	private void add_FlashCall_Impl(_IShockwaveFlashEvents_FlashCallEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -39,7 +39,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			int pdwCookie = 0;
 			m_ConnectionPoint.Advise(iShockwaveFlashEvents_SinkHelper, out pdwCookie);
 			iShockwaveFlashEvents_SinkHelper.m_dwCookie = pdwCookie;
-			iShockwaveFlashEvents_SinkHelper.m_FlashCallDelegate = param0;
+			iShockwaveFlashEvents_SinkHelper.m_FlashCallDelegate = P_0;
 			m_aEventSinkHelpers.Add(iShockwaveFlashEvents_SinkHelper);
 		}
 		finally
@@ -48,7 +48,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void remove_FlashCall(_IShockwaveFlashEvents_FlashCallEventHandler param0)
+	private void remove_FlashCall_Impl(_IShockwaveFlashEvents_FlashCallEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -62,7 +62,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			do
 			{
 				_IShockwaveFlashEvents_SinkHelper iShockwaveFlashEvents_SinkHelper = (_IShockwaveFlashEvents_SinkHelper)m_aEventSinkHelpers[num];
-				if (iShockwaveFlashEvents_SinkHelper.m_FlashCallDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_FlashCallDelegate.Equals(param0) ? 1u : 0u) & 0xFFu) != 0)
+				if (iShockwaveFlashEvents_SinkHelper.m_FlashCallDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_FlashCallDelegate.Equals(P_0) ? 1u : 0u) & 0xFFu) != 0)
 				{
 					m_aEventSinkHelpers.RemoveAt(num);
 					m_ConnectionPoint.Unadvise(iShockwaveFlashEvents_SinkHelper.m_dwCookie);
@@ -84,7 +84,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void add_FSCommand(_IShockwaveFlashEvents_FSCommandEventHandler param0)
+	private void add_FSCommand_Impl(_IShockwaveFlashEvents_FSCommandEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -97,7 +97,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			int pdwCookie = 0;
 			m_ConnectionPoint.Advise(iShockwaveFlashEvents_SinkHelper, out pdwCookie);
 			iShockwaveFlashEvents_SinkHelper.m_dwCookie = pdwCookie;
-			iShockwaveFlashEvents_SinkHelper.m_FSCommandDelegate = param0;
+			iShockwaveFlashEvents_SinkHelper.m_FSCommandDelegate = P_0;
 			m_aEventSinkHelpers.Add(iShockwaveFlashEvents_SinkHelper);
 		}
 		finally
@@ -106,7 +106,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void remove_FSCommand(_IShockwaveFlashEvents_FSCommandEventHandler param0)
+	private void remove_FSCommand_Impl(_IShockwaveFlashEvents_FSCommandEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -120,7 +120,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			do
 			{
 				_IShockwaveFlashEvents_SinkHelper iShockwaveFlashEvents_SinkHelper = (_IShockwaveFlashEvents_SinkHelper)m_aEventSinkHelpers[num];
-				if (iShockwaveFlashEvents_SinkHelper.m_FSCommandDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_FSCommandDelegate.Equals(param0) ? 1u : 0u) & 0xFFu) != 0)
+				if (iShockwaveFlashEvents_SinkHelper.m_FSCommandDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_FSCommandDelegate.Equals(P_0) ? 1u : 0u) & 0xFFu) != 0)
 				{
 					m_aEventSinkHelpers.RemoveAt(num);
 					m_ConnectionPoint.Unadvise(iShockwaveFlashEvents_SinkHelper.m_dwCookie);
@@ -142,7 +142,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void add_OnProgress(_IShockwaveFlashEvents_OnProgressEventHandler param0)
+	private void add_OnProgress_Impl(_IShockwaveFlashEvents_OnProgressEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -155,7 +155,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			int pdwCookie = 0;
 			m_ConnectionPoint.Advise(iShockwaveFlashEvents_SinkHelper, out pdwCookie);
 			iShockwaveFlashEvents_SinkHelper.m_dwCookie = pdwCookie;
-			iShockwaveFlashEvents_SinkHelper.m_OnProgressDelegate = param0;
+			iShockwaveFlashEvents_SinkHelper.m_OnProgressDelegate = P_0;
 			m_aEventSinkHelpers.Add(iShockwaveFlashEvents_SinkHelper);
 		}
 		finally
@@ -164,7 +164,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void remove_OnProgress(_IShockwaveFlashEvents_OnProgressEventHandler param0)
+	private void remove_OnProgress_Impl(_IShockwaveFlashEvents_OnProgressEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -178,7 +178,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			do
 			{
 				_IShockwaveFlashEvents_SinkHelper iShockwaveFlashEvents_SinkHelper = (_IShockwaveFlashEvents_SinkHelper)m_aEventSinkHelpers[num];
-				if (iShockwaveFlashEvents_SinkHelper.m_OnProgressDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_OnProgressDelegate.Equals(param0) ? 1u : 0u) & 0xFFu) != 0)
+				if (iShockwaveFlashEvents_SinkHelper.m_OnProgressDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_OnProgressDelegate.Equals(P_0) ? 1u : 0u) & 0xFFu) != 0)
 				{
 					m_aEventSinkHelpers.RemoveAt(num);
 					m_ConnectionPoint.Unadvise(iShockwaveFlashEvents_SinkHelper.m_dwCookie);
@@ -200,7 +200,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void add_OnReadyStateChange(_IShockwaveFlashEvents_OnReadyStateChangeEventHandler param0)
+	private void add_OnReadyStateChange_Impl(_IShockwaveFlashEvents_OnReadyStateChangeEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -213,7 +213,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			int pdwCookie = 0;
 			m_ConnectionPoint.Advise(iShockwaveFlashEvents_SinkHelper, out pdwCookie);
 			iShockwaveFlashEvents_SinkHelper.m_dwCookie = pdwCookie;
-			iShockwaveFlashEvents_SinkHelper.m_OnReadyStateChangeDelegate = param0;
+			iShockwaveFlashEvents_SinkHelper.m_OnReadyStateChangeDelegate = P_0;
 			m_aEventSinkHelpers.Add(iShockwaveFlashEvents_SinkHelper);
 		}
 		finally
@@ -222,7 +222,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public void remove_OnReadyStateChange(_IShockwaveFlashEvents_OnReadyStateChangeEventHandler param0)
+	private void remove_OnReadyStateChange_Impl(_IShockwaveFlashEvents_OnReadyStateChangeEventHandler P_0)
 	{
 		Monitor.Enter(this);
 		try
@@ -236,7 +236,7 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 			do
 			{
 				_IShockwaveFlashEvents_SinkHelper iShockwaveFlashEvents_SinkHelper = (_IShockwaveFlashEvents_SinkHelper)m_aEventSinkHelpers[num];
-				if (iShockwaveFlashEvents_SinkHelper.m_OnReadyStateChangeDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_OnReadyStateChangeDelegate.Equals(param0) ? 1u : 0u) & 0xFFu) != 0)
+				if (iShockwaveFlashEvents_SinkHelper.m_OnReadyStateChangeDelegate != null && ((iShockwaveFlashEvents_SinkHelper.m_OnReadyStateChangeDelegate.Equals(P_0) ? 1u : 0u) & 0xFFu) != 0)
 				{
 					m_aEventSinkHelpers.RemoveAt(num);
 					m_ConnectionPoint.Unadvise(iShockwaveFlashEvents_SinkHelper.m_dwCookie);
@@ -258,9 +258,9 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 		}
 	}
 
-	public _IShockwaveFlashEvents_EventProvider(object param0)
+	public _IShockwaveFlashEvents_EventProvider(object P_0)
 	{
-		m_ConnectionPointContainer = (UCOMIConnectionPointContainer)param0;
+		m_ConnectionPointContainer = (UCOMIConnectionPointContainer)P_0;
 	}
 
 	public void Finalize()
@@ -299,5 +299,53 @@ internal sealed class _IShockwaveFlashEvents_EventProvider : _IShockwaveFlashEve
 	{
 		Finalize();
 		GC.SuppressFinalize(this);
+	}
+
+	public event _IShockwaveFlashEvents_FlashCallEventHandler FlashCall
+	{
+		add
+		{
+			add_FlashCall_Impl(value);
+		}
+		remove
+		{
+			remove_FlashCall_Impl(value);
+		}
+	}
+
+	public event _IShockwaveFlashEvents_FSCommandEventHandler FSCommand
+	{
+		add
+		{
+			add_FSCommand_Impl(value);
+		}
+		remove
+		{
+			remove_FSCommand_Impl(value);
+		}
+	}
+
+	public event _IShockwaveFlashEvents_OnProgressEventHandler OnProgress
+	{
+		add
+		{
+			add_OnProgress_Impl(value);
+		}
+		remove
+		{
+			remove_OnProgress_Impl(value);
+		}
+	}
+
+	public event _IShockwaveFlashEvents_OnReadyStateChangeEventHandler OnReadyStateChange
+	{
+		add
+		{
+			add_OnReadyStateChange_Impl(value);
+		}
+		remove
+		{
+			remove_OnReadyStateChange_Impl(value);
+		}
 	}
 }

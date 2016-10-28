@@ -70,24 +70,6 @@ public class HidDevice
 		public ushort NumberFeatureDataIndices;
 	}
 
-	internal const uint GENERIC_READ = 2147483648u;
-
-	internal const uint GENERIC_WRITE = 1073741824u;
-
-	internal const uint FILE_SHARE_READ = 1u;
-
-	internal const uint FILE_SHARE_WRITE = 2u;
-
-	internal const int OPEN_EXISTING = 3;
-
-	internal const int EV_RXFLAG = 2;
-
-	internal const int INVALID_HANDLE_VALUE = -1;
-
-	internal const int ERROR_INVALID_HANDLE = 6;
-
-	internal const int FILE_FLAG_OVERLAPPED = 1073741824;
-
 	public int Index;
 
 	public int Handle;
@@ -123,6 +105,24 @@ public class HidDevice
 	public ushort NumberFeatureDataIndices;
 
 	public ushort NumberLinkCollectionNodes;
+
+	internal const uint GENERIC_READ = 2147483648u;
+
+	internal const uint GENERIC_WRITE = 1073741824u;
+
+	internal const uint FILE_SHARE_READ = 1u;
+
+	internal const uint FILE_SHARE_WRITE = 2u;
+
+	internal const int OPEN_EXISTING = 3;
+
+	internal const int EV_RXFLAG = 2;
+
+	internal const int INVALID_HANDLE_VALUE = -1;
+
+	internal const int ERROR_INVALID_HANDLE = 6;
+
+	internal const int FILE_FLAG_OVERLAPPED = 1073741824;
 
 	private FileStream m_fileStream;
 

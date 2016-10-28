@@ -8,6 +8,7 @@ namespace ShockwaveFlashObjects;
 [ClassInterface(0)]
 [ComSourceInterfaces("ShockwaveFlashObjects._IShockwaveFlashEvents\0")]
 [Guid("D27CDB6E-AE6D-11CF-96B8-444553540000")]
+[ComVisible(true)]
 public class ShockwaveFlashClass : IShockwaveFlash, ShockwaveFlash, _IShockwaveFlashEvents_Event
 {
 	[DispId(-525)]

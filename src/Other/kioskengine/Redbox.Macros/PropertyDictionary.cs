@@ -24,7 +24,11 @@ public class PropertyDictionary : DictionaryBase
 		{
 			string text = (string)base.Dictionary[name];
 			CheckDeprecation(name);
-			return IsDynamicProperty(name) ? ExpandProperties(text, Location.UnknownLocation) : text;
+			if (!IsDynamicProperty(name))
+			{
+				return text;
+			}
+			return ExpandProperties(text, Location.UnknownLocation);
 		}
 		set
 		{
@@ -158,11 +162,7 @@ public class PropertyDictionary : DictionaryBase
 
 	protected override void OnValidate(object key, object value)
 	{
-		if (!(key is string propertyName))
-		{
-			throw new ArgumentException("Property name must be a string.", "key");
-		}
-		ValidatePropertyName(propertyName, Location.UnknownLocation);
+		ValidatePropertyName((key as string) ?? throw new ArgumentException("Property name must be a string.", "key"), Location.UnknownLocation);
 		ValidatePropertyValue(value, Location.UnknownLocation);
 		base.OnValidate(key, value);
 	}
@@ -247,7 +247,7 @@ public class PropertyDictionary : DictionaryBase
 				{
 					stringBuilder2.Append(' ');
 				}
-				for (int i = startPos; i < num; i++)
+				for (int j = startPos; j < num; j++)
 				{
 					stringBuilder2.Append('^');
 				}
@@ -262,7 +262,7 @@ public class PropertyDictionary : DictionaryBase
 
 	private static void ValidatePropertyName(string propertyName, Location location)
 	{
-		if (!Regex.IsMatch(propertyName, "^[_A-Za-z0-9][_A-Za-z0-9\\-:.]*$"))
+		if (!Regex.IsMatch(propertyName, "^[_A-Za-z0-9][_A-Za-z0-9\\-:.()]*$"))
 		{
 			throw new EvaluatorException(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1064"), propertyName), location);
 		}

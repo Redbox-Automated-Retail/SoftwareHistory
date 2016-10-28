@@ -12,7 +12,7 @@ public class PointFConverter : ExpandableObjectConverter
 {
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		if (sourceType == typeof(string))
+		if ((object)sourceType == typeof(string))
 		{
 			return true;
 		}
@@ -51,7 +51,7 @@ public class PointFConverter : ExpandableObjectConverter
 
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 	{
-		if (destinationType == typeof(string))
+		if ((object)destinationType == typeof(string))
 		{
 			return true;
 		}
@@ -60,13 +60,13 @@ public class PointFConverter : ExpandableObjectConverter
 
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
-		if (destinationType == null)
+		if ((object)destinationType == null)
 		{
 			throw new ArgumentNullException("destinationType");
 		}
 		if (value is PointF)
 		{
-			if (destinationType == typeof(string))
+			if ((object)destinationType == typeof(string))
 			{
 				PointF pointF = (PointF)value;
 				if (culture == null)
@@ -81,7 +81,7 @@ public class PointFConverter : ExpandableObjectConverter
 				array[num++] = converter.ConvertToString(context, culture, pointF.Y);
 				return string.Join(separator, array);
 			}
-			if (destinationType == typeof(InstanceDescriptor))
+			if ((object)destinationType == typeof(InstanceDescriptor))
 			{
 				PointF pointF2 = (PointF)value;
 				ConstructorInfo constructor = typeof(PointF).GetConstructor(new Type[2]
@@ -89,7 +89,7 @@ public class PointFConverter : ExpandableObjectConverter
 					typeof(float),
 					typeof(float)
 				});
-				if (constructor != null)
+				if ((object)constructor != null)
 				{
 					return new InstanceDescriptor(constructor, new object[2] { pointF2.X, pointF2.Y });
 				}

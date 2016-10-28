@@ -14,7 +14,7 @@ internal class Utilities
 			return null;
 		}
 		Type type = Type.GetType(typeName);
-		if (type != null)
+		if ((object)type != null)
 		{
 			return type;
 		}

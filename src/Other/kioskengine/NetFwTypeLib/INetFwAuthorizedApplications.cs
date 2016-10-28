@@ -7,6 +7,7 @@ namespace NetFwTypeLib;
 [ComImport]
 [TypeLibType(4160)]
 [Guid("644EFD52-CCF9-486C-97A2-39F352570B30")]
+[ComVisible(true)]
 public interface INetFwAuthorizedApplications : IEnumerable
 {
 	[DispId(1)]
@@ -31,8 +32,8 @@ public interface INetFwAuthorizedApplications : IEnumerable
 	INetFwAuthorizedApplication Item([In][MarshalAs(UnmanagedType.BStr)] string imageFileName);
 
 	[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-	[DispId(-4)]
 	[TypeLibFunc(1)]
-	[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalType = "System.Runtime.InteropServices.CustomMarshalers.EnumeratorToEnumVariantMarshaler, CustomMarshalers, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
+	[DispId(-4)]
+	[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalType = "System.Runtime.InteropServices.CustomMarshalers.EnumeratorToEnumVariantMarshaler, CustomMarshalers, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
 	new IEnumerator GetEnumerator();
 }

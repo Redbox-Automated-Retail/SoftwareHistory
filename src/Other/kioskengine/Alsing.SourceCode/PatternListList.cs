@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public sealed class PatternListList : IEnumerable
 {
 	private readonly ArrayList mGroups = new ArrayList();

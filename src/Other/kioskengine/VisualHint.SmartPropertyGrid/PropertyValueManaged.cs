@@ -67,7 +67,7 @@ public class PropertyValueManaged : PropertyValue
 					{
 						Type[] types = new Type[1] { typeof(Type) };
 						Type type = Type.GetType(typeConverterAttribute.ConverterTypeName);
-						if (type.GetConstructor(types) != null)
+						if ((object)type.GetConstructor(types) != null)
 						{
 							mConverter = (TypeConverter)Activator.CreateInstance(type, UnderlyingType);
 						}
@@ -83,7 +83,7 @@ public class PropertyValueManaged : PropertyValue
 				if (mConverter == null)
 				{
 					TypeConverter converter = TypeDescriptor.GetConverter(UnderlyingType);
-					if (UnderlyingType.Equals(typeof(object)) && converter.GetType() == typeof(TypeConverter) && UnderlyingValue != null)
+					if (UnderlyingType.Equals(typeof(object)) && (object)converter.GetType() == typeof(TypeConverter) && UnderlyingValue != null)
 					{
 						mConverter = TypeDescriptor.GetConverter(UnderlyingValue.GetType());
 					}
@@ -181,7 +181,7 @@ public class PropertyValueManaged : PropertyValue
 			{
 				foreach (Attribute attribute3 in PropertyDescriptor.Attributes)
 				{
-					if (attribute3.GetType() == attributeType)
+					if ((object)attribute3.GetType() == attributeType)
 					{
 						attributes.Add(attribute3);
 					}

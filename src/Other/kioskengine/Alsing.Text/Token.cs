@@ -1,7 +1,9 @@
 using System;
+using System.Runtime.InteropServices;
 
 namespace Alsing.Text;
 
+[ComVisible(true)]
 public sealed class Token
 {
 	public string Text { get; private set; }

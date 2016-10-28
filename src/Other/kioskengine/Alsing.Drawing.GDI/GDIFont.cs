@@ -1,8 +1,10 @@
 using System;
+using System.Runtime.InteropServices;
 using Alsing.Windows;
 
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class GDIFont : GDIObject
 {
 	public bool Bold;

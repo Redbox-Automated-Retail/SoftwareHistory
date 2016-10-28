@@ -31,10 +31,8 @@ internal static class ResourceLookup
 			return null;
 		}
 		List<ScoredResource> list = new List<ScoredResource>();
-		IResource each;
-		foreach (IResource item in collection)
+		foreach (IResource each in collection)
 		{
-			each = item;
 			if (!IsResourceEffective(each))
 			{
 				continue;
@@ -49,13 +47,9 @@ internal static class ResourceLookup
 				{
 					num++;
 				}
-				else
+				else if (list2.Count((IPropertyType eachFilter) => each.PropertyEquals(eachFilter.Name, filter[eachFilter.Name])) == list2.Count)
 				{
-					int num2 = list2.Count((IPropertyType eachFilter) => each.PropertyEquals(eachFilter.Name, filter[eachFilter.Name]));
-					if (num2 == list2.Count)
-					{
-						num += list2.Sum((IPropertyType eachFilter) => eachFilter.FilterScore);
-					}
+					num += list2.Sum((IPropertyType eachFilter) => eachFilter.FilterScore);
 				}
 			}
 			list.Add(new ScoredResource
@@ -89,10 +83,8 @@ internal static class ResourceLookup
 			return null;
 		}
 		List<ScoredResource> list = new List<ScoredResource>();
-		IResource each;
-		foreach (IResource item in collection)
+		foreach (IResource each in collection)
 		{
-			each = item;
 			if (!IsResourceEffective(each))
 			{
 				continue;
@@ -107,13 +99,9 @@ internal static class ResourceLookup
 				{
 					num++;
 				}
-				else
+				else if (list2.Count((IPropertyType eachFilter) => each.PropertyEquals2(eachFilter.Name, (eachFilter.Name.Substring(0, 2) == "!=") ? filter[eachFilter.Name.Substring(2)] : filter[eachFilter.Name])) == list2.Count)
 				{
-					int num2 = list2.Count((IPropertyType eachFilter) => each.PropertyEquals2(eachFilter.Name, (eachFilter.Name.Substring(0, 2) == "!=") ? filter[eachFilter.Name.Substring(2)] : filter[eachFilter.Name]));
-					if (num2 == list2.Count)
-					{
-						num += list2.Sum((IPropertyType eachFilter) => eachFilter.FilterScore);
-					}
+					num += list2.Sum((IPropertyType eachFilter) => eachFilter.FilterScore);
 				}
 			}
 			list.Add(new ScoredResource
@@ -154,9 +142,9 @@ internal static class ResourceLookup
 		}
 		if (dateTime2.HasValue)
 		{
-			DateTime value2 = now;
-			DateTime? dateTime4 = dateTime2;
-			if (value2 > dateTime4)
+			DateTime value = now;
+			DateTime? dateTime3 = dateTime2;
+			if (value > dateTime3)
 			{
 				return false;
 			}
@@ -204,9 +192,9 @@ internal static class ResourceLookup
 		}
 		if (timeSpan2.HasValue)
 		{
-			TimeSpan timeOfDay2 = now.TimeOfDay;
-			TimeSpan? timeSpan4 = timeSpan2;
-			if (timeOfDay2 > timeSpan4)
+			TimeSpan timeOfDay = now.TimeOfDay;
+			TimeSpan? timeSpan3 = timeSpan2;
+			if (timeOfDay > timeSpan3)
 			{
 				return false;
 			}

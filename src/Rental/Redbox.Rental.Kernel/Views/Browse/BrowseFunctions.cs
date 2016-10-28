@@ -23,6 +23,15 @@ public static class BrowseFunctions
 
 	private static Dictionary<string, TopMenuControl> _topMenuControls = new Dictionary<string, TopMenuControl>();
 
+	[KernelFunction(Name = "kernel.reset_browse_controls")]
+	internal static void ResetBrowseControls()
+	{
+		_browseControls = new Dictionary<string, LuaInterfacedBrowseControl>();
+		_miniCartControls = new Dictionary<string, MiniCartControl>();
+		_accessibilityControls = new Dictionary<string, AccessibilityControl>();
+		_topMenuControls = new Dictionary<string, TopMenuControl>();
+	}
+
 	[KernelFunction(Name = "kernel.draw_images_set")]
 	internal static void DrawImagesSet(string browseSetName, string browseFilterSelectedFamily, LuaTable products, int pageNumber, string gotoGroupName, string selectedGroupName, Action<int> onPageNumberChanged, Action<int> onProductsShown, Action<LuaTable> onItemSelected, Action<string> onAddItemSelected, Action<int, LuaTable> onUpdateItemMapping, Func<LuaTable, bool> onIsProductSelected, Func<LuaTable, bool> onIsProductInStock, Func<bool> isShoppingCartFull, Func<LuaTable, string> onGetTestPrice, Func<LuaTable, string> onGetEarlyReleaseDate, Func<bool> isTitleMarketingMode, Func<bool> onIsComingSoonOptinEnabled, Func<LuaTable, bool> onIsComingSoonProductRegistered, Action<LuaTable> onRegisterEmailReminder, Action<LuaTable> onUnregisterEmailReminder)
 	{

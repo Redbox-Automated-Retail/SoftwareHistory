@@ -204,7 +204,7 @@ public sealed class KernelService : IKernelService, IDisposable
 		IsTestPlanExecuting = true;
 		foreach (XmlNode item in xmlNodeList)
 		{
-			LogHelper.Instance.LogTo("TestServices", "TestSet " + XmlNodeExtensions.GetAttributeValue<string>(item, "name"));
+			LogHelper.Instance.LogTo("TestServices", "TestSet " + item.GetAttributeValue<string>("name"));
 			LogHelper.Instance.LogTo("TestServices", ">  Test: Setup");
 			XmlNode testStageNode = item.SelectSingleNode("setup");
 			RunTestScripts(testStageNode);
@@ -377,7 +377,7 @@ public sealed class KernelService : IKernelService, IDisposable
 			}
 			if (resource.Dependencies.Count > 0)
 			{
-				LogHelper.Instance.Log(".....Dependent resources: {1}", resource.Name, EnumerableExtensions.Join(resource.Dependencies, ","));
+				LogHelper.Instance.Log(".....Dependent resources: {1}", resource.Name, resource.Dependencies.Join(","));
 				if (!LoadDependentScripts(resource.Dependencies, bundleService))
 				{
 					return false;
@@ -421,7 +421,7 @@ public sealed class KernelService : IKernelService, IDisposable
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		foreach (XmlNode item in xmlNodeList)
 		{
-			string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item, "value");
+			string attributeValue = item.GetAttributeValue<string>("value");
 			string chunk = Encoding.UTF8.GetString(service.ActiveBundle.Storage.GetEntryContent(attributeValue));
 			ExecuteChunk(chunk);
 		}

@@ -73,11 +73,12 @@ public class FileSystemResourceBundleStorage : IResourceBundleStorage, IDisposab
 			return null;
 		}
 		FileInfo fileInfo = new FileInfo(text);
-		ResourceBundleStorageEntry resourceBundleStorageEntry = new ResourceBundleStorageEntry();
-		resourceBundleStorageEntry.Name = fileInfo.Name;
-		resourceBundleStorageEntry.Size = fileInfo.Length;
-		resourceBundleStorageEntry.Path = fileInfo.FullName;
-		return resourceBundleStorageEntry;
+		return new ResourceBundleStorageEntry
+		{
+			Name = fileInfo.Name,
+			Size = fileInfo.Length,
+			Path = fileInfo.FullName
+		};
 	}
 
 	public byte[] GetEntryContent(IResourceBundleStorageEntry entry)
@@ -89,9 +90,9 @@ public class FileSystemResourceBundleStorage : IResourceBundleStorage, IDisposab
 	{
 		List<IResourceBundleStorageEntry> list = new List<IResourceBundleStorageEntry>();
 		string[] files = Directory.GetFiles(BundlePath, "*.*", SearchOption.AllDirectories);
-		foreach (string fileName in files)
+		for (int i = 0; i < files.Length; i++)
 		{
-			FileInfo fileInfo = new FileInfo(fileName);
+			FileInfo fileInfo = new FileInfo(files[i]);
 			list.Add(new ResourceBundleStorageEntry
 			{
 				Name = fileInfo.Name,

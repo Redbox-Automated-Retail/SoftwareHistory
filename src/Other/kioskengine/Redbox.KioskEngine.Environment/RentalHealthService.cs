@@ -1,0 +1,120 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using Redbox.Core;
+using Redbox.HardwareServices.Proxy.ComponentModel;
+using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel;
+
+namespace Redbox.KioskEngine.Environment;
+
+public class RentalHealthService : IRentalHealthService
+{
+	private const string _kfcJson = "KFC.json";
+
+	private string FullKFCJsonPath
+	{
+		get
+		{
+			string directoryName = Path.GetDirectoryName(typeof(RentalHealthService).Assembly.Location);
+			string path = Path.Combine(directoryName, "..\\data");
+			return Path.Combine(path, "KFC.json");
+		}
+	}
+
+	public void KioskFunctionCheck()
+	{
+		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
+		ILogger service = ServiceLocator.Instance.GetService<ILogger>();
+		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+		string storeNumber = service2["StoreNumber"];
+		string timerName = "KioskFunctionCheckTimer";
+		ITimer timer = timerService.CreateTimer(timerName, 1200000, null, delegate
+		{
+			timerService.RemoveTimer(timerName);
+			try
+			{
+				IList<IKioskFunctionCheckData> hardwareKFC = GetHardwareKFC();
+				List<RentalKioskFunctionCheckData> source = ReadKFCJson();
+				DateTime lastUpdate = (source.Any() ? source.Max((RentalKioskFunctionCheckData x) => x.Timestamp) : DateTime.MinValue);
+				IEnumerable<IKioskFunctionCheckData> enumerable = hardwareKFC?.Where((IKioskFunctionCheckData x) => x.Timestamp > lastUpdate);
+				LogHelper.Instance.Log($"Found {enumerable?.Count() ?? 0} new Kiosk Function Check Entries.");
+				enumerable?.ForEach(delegate(IKioskFunctionCheckData x)
+				{
+					SendKioskFunctionCheckData(storeNumber, x);
+				});
+				UpdateKFCJson(hardwareKFC);
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.LogException("An error has occurred in RentalHealthService.KioskFunctionCheck", e);
+			}
+		});
+		timer.Start();
+	}
+
+	private IList<IKioskFunctionCheckData> GetHardwareKFC()
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		if (service == null)
+		{
+			LogHelper.Instance.LogError("S001", "Unable to locate Hardware Service.");
+			return null;
+		}
+		IList<IKioskFunctionCheckData> data = null;
+		LogHelper.Instance.Log("Getting Kiosk Function Check Data From HAL.", LogEntryType.Info);
+		ErrorList kioskFunctionCheckData = service.GetKioskFunctionCheckData(out data);
+		if (kioskFunctionCheckData != null && kioskFunctionCheckData.Any())
+		{
+			kioskFunctionCheckData.ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error x)
+			{
+				LogHelper.Instance.LogError(x.Code, x.Description ?? (string.Empty + System.Environment.NewLine + x.Details) ?? string.Empty);
+			});
+		}
+		else if (data != null)
+		{
+			LogHelper.Instance.Log(data.ToJson());
+		}
+		else
+		{
+			LogHelper.Instance.Log("No data retrieved from HAL.");
+		}
+		return data;
+	}
+
+	private List<RentalKioskFunctionCheckData> ReadKFCJson()
+	{
+		if (!File.Exists(FullKFCJsonPath))
+		{
+			LogHelper.Instance.Log(string.Format("Unable to read KFC json, File {0} doesn't exist.", "KFC.json"), LogEntryType.Info);
+			return new List<RentalKioskFunctionCheckData>();
+		}
+		string json = File.ReadAllText(FullKFCJsonPath, Encoding.ASCII);
+		List<RentalKioskFunctionCheckData> list = json.ToObject<List<RentalKioskFunctionCheckData>>();
+		LogHelper.Instance.Log($"Found {list?.Count() ?? 0} records in KFC.json file.", LogEntryType.Info);
+		return list;
+	}
+
+	private void UpdateKFCJson(IList<IKioskFunctionCheckData> data)
+	{
+		if (data == null)
+		{
+			LogHelper.Instance.Log("No data available to update KFC json file.", LogEntryType.Info);
+			return;
+		}
+		LogHelper.Instance.Log("Updating Kiosk Function Check Json File.", LogEntryType.Info);
+		File.WriteAllBytes(FullKFCJsonPath, Encoding.ASCII.GetBytes(data.ToJson()));
+	}
+
+	public void SendKioskFunctionCheckData(string storeNumber, IKioskFunctionCheckData data)
+	{
+		IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
+		LogHelper.Instance.Log("Sending Kiosk Function Check to Kiosk Service.", LogEntryType.Info);
+		service.SendKioskFunctionCheck(storeNumber, data.UserIdentifier, data.Timestamp, data.VerticalSlotTestResult, data.InitTestResult, data.VendDoorTestResult, data.TrackTestResult, data.SnapDecodeTestResult, data.TouchscreenDriverTestResult, data.CameraDriverTestResult, null, delegate
+		{
+			LogHelper.Instance.Log("Send Kiosk Function Check Complete.", LogEntryType.Info);
+		});
+	}
+}

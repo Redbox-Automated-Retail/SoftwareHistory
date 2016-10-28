@@ -1,0 +1,102 @@
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace stdole;
+
+[ComImport]
+[TypeLibType(4096)]
+[DefaultMember("Name")]
+[Guid("BEF6E003-A874-101A-8BBA-00AA00300CAB")]
+[InterfaceType(2)]
+[ComVisible(true)]
+public interface Font
+{
+	[DispId(0)]
+	string Name
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(0)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(0)]
+		set;
+	}
+
+	[DispId(2)]
+	decimal Size
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(2)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(2)]
+		set;
+	}
+
+	[DispId(3)]
+	bool Bold
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(3)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(3)]
+		set;
+	}
+
+	[DispId(4)]
+	bool Italic
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(4)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(4)]
+		set;
+	}
+
+	[DispId(5)]
+	bool Underline
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(5)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(5)]
+		set;
+	}
+
+	[DispId(6)]
+	bool Strikethrough
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(6)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(6)]
+		set;
+	}
+
+	[DispId(7)]
+	short Weight
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(7)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(7)]
+		set;
+	}
+
+	[DispId(8)]
+	short Charset
+	{
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(8)]
+		get;
+		[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
+		[DispId(8)]
+		set;
+	}
+}

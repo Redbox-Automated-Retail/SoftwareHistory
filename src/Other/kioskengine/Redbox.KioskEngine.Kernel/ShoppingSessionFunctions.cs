@@ -409,4 +409,16 @@ internal static class ShoppingSessionFunctions
 	{
 		return ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.Status.ToString();
 	}
+
+	[KernelFunction(Name = "kernel.sessionsetvariableauthvalues")]
+	internal static void SetVariableAuthValues(string sessionId, bool authAcceptFlag, int authRuleId, decimal authAmount, bool skipAuthRule)
+	{
+		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetVariableAuthValues(authAcceptFlag, authRuleId, authAmount, skipAuthRule);
+	}
+
+	[KernelFunction(Name = "kernel.sessionsetplaypasspromptaccepted")]
+	internal static void SetPlayPassPromptAccepted(string sessionId, bool playPassPromptAccepted, int playPassPointsEarned)
+	{
+		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetPlayPassPromptAccepted(playPassPromptAccepted, playPassPointsEarned);
+	}
 }

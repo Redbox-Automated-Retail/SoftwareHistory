@@ -235,7 +235,7 @@ internal class x7d8d2ed69d304345
 					int[] array = new int[(uint)unchecked(num / 4)];
 					GetBitmapBits(piconinfo.xff73e9350ab314ad, num, array);
 					GCHandle gCHandle = GCHandle.Alloc(array, GCHandleType.Pinned);
-					Bitmap bitmap2 = new Bitmap(lpObject.xf3c006205b66ef7b, lpObject.xfa6ea744155689ad, lpObject.x77b193b0c5b926ef, PixelFormat.Format32bppArgb, Marshal.UnsafeAddrOfPinnedArrayElement(array, 0));
+					Bitmap bitmap2 = new Bitmap(lpObject.xf3c006205b66ef7b, lpObject.xfa6ea744155689ad, lpObject.x77b193b0c5b926ef, PixelFormat.Format32bppArgb, Marshal.UnsafeAddrOfPinnedArrayElement((Array)array, 0));
 					bitmap = new Bitmap(bitmap2.Width, bitmap2.Height);
 					using (Graphics graphics = Graphics.FromImage(bitmap))
 					{

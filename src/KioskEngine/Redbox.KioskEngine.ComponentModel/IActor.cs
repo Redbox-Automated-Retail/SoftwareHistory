@@ -54,7 +54,7 @@ public interface IActor : IDisposable
 
 	float[] TabStops { get; set; }
 
-	Size? CornerSize { get; set; }
+	System.Drawing.Size? CornerSize { get; set; }
 
 	float StrokeWeight { get; set; }
 
@@ -80,7 +80,7 @@ public interface IActor : IDisposable
 
 	string RelativeToActorName { get; set; }
 
-	Point? TextTranslationPoint { get; set; }
+	System.Drawing.Point? TextTranslationPoint { get; set; }
 
 	RenderStateFlags StateFlags { get; set; }
 

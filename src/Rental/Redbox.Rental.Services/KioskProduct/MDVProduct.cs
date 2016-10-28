@@ -375,6 +375,8 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
+	public bool IsSellable => false;
+
 	public decimal GamePurchasePrice
 	{
 		get
@@ -402,18 +404,6 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 	public long TitleRollupProductGroupId { get; set; }
 
 	public bool DoNotRent => _titleProducts.Any((ITitleProduct tp) => tp.DoNotRent);
-
-	public bool CanBeSold
-	{
-		get
-		{
-			if (_primaryTitle != null)
-			{
-				return _primaryTitle.CanBeSold;
-			}
-			return false;
-		}
-	}
 
 	public bool IsAvailable
 	{

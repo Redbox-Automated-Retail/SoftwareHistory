@@ -78,7 +78,7 @@ internal static class FileFunctions
 			{
 				json = streamReader.ReadToEnd();
 			}
-			LinqExtensions.ForEach(StringExtensions.ToObject<Dictionary<string, object>>(json), delegate(KeyValuePair<string, object> x)
+			json.ToObject<Dictionary<string, object>>().ForEach(delegate(KeyValuePair<string, object> x)
 			{
 				new LuaTable(KernelService.Instance.LuaRuntime);
 				table[x.Key] = x.Value;
@@ -106,7 +106,7 @@ internal static class FileFunctions
 			{
 				json = streamReader.ReadToEnd();
 			}
-			List<Dictionary<string, object>> list = StringExtensions.ToObject<List<Dictionary<string, object>>>(json);
+			List<Dictionary<string, object>> list = json.ToObject<List<Dictionary<string, object>>>();
 			int num = 1;
 			foreach (Dictionary<string, object> item in list)
 			{

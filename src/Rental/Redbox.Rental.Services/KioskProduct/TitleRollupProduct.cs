@@ -341,6 +341,8 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
+	public bool IsSellable => _kioskProducts.Any((ITitleProduct kp) => kp.IsSellable);
+
 	public decimal GamePurchasePrice
 	{
 		get
@@ -366,8 +368,6 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 	}
 
 	public bool DoNotRent => _kioskProducts.All((ITitleProduct kp) => kp.DoNotRent);
-
-	public bool CanBeSold => _kioskProducts.Any((ITitleProduct kp) => kp.CanBeSold);
 
 	public bool IsAvailable => _kioskProducts.Any((ITitleProduct kp) => kp.IsAvailable);
 

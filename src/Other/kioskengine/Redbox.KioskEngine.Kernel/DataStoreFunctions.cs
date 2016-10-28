@@ -57,7 +57,7 @@ internal static class DataStoreFunctions
 			LuaTable keysTable = new LuaTable(KernelService.Instance.LuaRuntime);
 			LuaTable cacheTable = new LuaTable(KernelService.Instance.LuaRuntime);
 			int i = 1;
-			LinqExtensions.ForEach(all, delegate(KeyValuePair<string, object> r)
+			all.ForEach(delegate(KeyValuePair<string, object> r)
 			{
 				keysTable[i] = r.Key;
 				cacheTable[r.Key] = r.Value;

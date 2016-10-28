@@ -1,7 +1,7 @@
 using System;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Rental.Services.Views.IdleTimeoutMessageView;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 

@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public sealed class Scope
 {
 	public bool CaseSensitive;

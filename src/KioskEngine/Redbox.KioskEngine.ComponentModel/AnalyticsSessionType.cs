@@ -5,6 +5,5 @@ public enum AnalyticsSessionType
 	BrowseVend,
 	OnlinePickup,
 	Return,
-	QuickReturn,
-	JvHardTake
+	QuickReturn
 }

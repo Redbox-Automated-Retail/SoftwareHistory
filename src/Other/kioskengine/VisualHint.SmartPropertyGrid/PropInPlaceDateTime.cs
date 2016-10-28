@@ -102,7 +102,7 @@ public class PropInPlaceDateTime : DateTimePicker, IInPlaceControl, IMouseHookCl
 			{
 				nCCALCSIZE_PARAMS.rgrc0.Left += ((_ownerPropertyEnum.Property.Value.EditboxLeftMargin == -1) ? _ownerPropertyEnum.Property.ParentGrid.GlobalTextMargin : _ownerPropertyEnum.Property.Value.EditboxLeftMargin) - 2;
 			}
-			Marshal.StructureToPtr(nCCALCSIZE_PARAMS, m.LParam, fDeleteOld: false);
+			Marshal.StructureToPtr((object)nCCALCSIZE_PARAMS, m.LParam, false);
 		}
 		else
 		{

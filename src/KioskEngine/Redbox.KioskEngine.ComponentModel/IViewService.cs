@@ -42,4 +42,14 @@ public interface IViewService
 	IViewFrame PeekViewFrame();
 
 	IViewFrame GetViewFrame(string viewName);
+
+	bool IsInMaintenanceMode();
+
+	bool IsSafeToChangeView();
+
+	string GetStartOverViewName();
+
+	void GoBack(object context, bool popOnly);
+
+	void GoBackSafe(object context, bool popOnly);
 }

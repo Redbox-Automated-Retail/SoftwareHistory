@@ -1,10 +1,12 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public class TextStyleDesignerDialog : Form
 {
 	private readonly TextStyle _Style;

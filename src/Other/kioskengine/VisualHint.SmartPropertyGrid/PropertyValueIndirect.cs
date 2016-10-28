@@ -78,10 +78,10 @@ public class PropertyValueIndirect : PropertyValue
 	{
 		get
 		{
-			if (mUnderlyingType == null)
+			if ((object)mUnderlyingType == null)
 			{
 				mUnderlyingType = _propertyDescriptor.PropertyType;
-				if (mUnderlyingType == typeof(object))
+				if ((object)mUnderlyingType == typeof(object))
 				{
 					object value = GetValue(0);
 					if (value != null)
@@ -112,7 +112,7 @@ public class PropertyValueIndirect : PropertyValue
 					{
 						Type[] types = new Type[1] { typeof(Type) };
 						Type type = Type.GetType(typeConverterAttribute.ConverterTypeName);
-						if (type.GetConstructor(types) != null)
+						if ((object)type.GetConstructor(types) != null)
 						{
 							mConverter = (TypeConverter)Activator.CreateInstance(type, UnderlyingType);
 						}
@@ -128,7 +128,7 @@ public class PropertyValueIndirect : PropertyValue
 				if (mConverter == null)
 				{
 					TypeConverter converter = _propertyDescriptor.Converter;
-					if (_propertyDescriptor.PropertyType == typeof(object) && converter.GetType() == typeof(TypeConverter))
+					if ((object)_propertyDescriptor.PropertyType == typeof(object) && (object)converter.GetType() == typeof(TypeConverter))
 					{
 						mConverter = TypeDescriptor.GetConverter(UnderlyingType);
 					}
@@ -528,7 +528,7 @@ public class PropertyValueIndirect : PropertyValue
 		StringBuilder stringBuilder = new StringBuilder("Reset", 50);
 		stringBuilder.Append(base.OwnerEnumerator.Property.Name);
 		MethodInfo method = TargetInstance.GetType().GetMethod(stringBuilder.ToString(), BindingFlags.Instance | BindingFlags.NonPublic);
-		if (method != null)
+		if ((object)method != null)
 		{
 			method.Invoke(TargetInstance, new object[0]);
 			if (base.Grid.InPlaceControl is IInPlaceControl inPlaceControl && inPlaceControl.OwnerPropertyEnumerator == mOwnerEnumerator)

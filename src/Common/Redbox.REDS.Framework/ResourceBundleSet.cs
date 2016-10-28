@@ -42,7 +42,8 @@ public class ResourceBundleSet : IResourceBundleSet
 	{
 		m_name = name;
 		m_applicationBundle = applicationBundle;
-		List<IResourceBundle> list = new List<IResourceBundle> { applicationBundle };
+		List<IResourceBundle> list = new List<IResourceBundle>();
+		list.Add(applicationBundle);
 		list.AddRange(otherBundles);
 		foreach (IResourceBundle item in list)
 		{

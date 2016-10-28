@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Alsing.Text.PatternMatchers;
 
 namespace Alsing.Text;
 
+[ComVisible(true)]
 public class Tokenizer
 {
 	private readonly TokenTree tree;

@@ -12,12 +12,20 @@ public static class StringUtils
 			throw new ArgumentNullException("value");
 		}
 		int length = value.Length;
-		return length != 0 && value[length - 1] == c;
+		if (length != 0)
+		{
+			return value[length - 1] == c;
+		}
+		return false;
 	}
 
 	public static string ConvertEmptyToNull(string value)
 	{
-		return (!string.IsNullOrEmpty(value)) ? value : null;
+		if (string.IsNullOrEmpty(value))
+		{
+			return null;
+		}
+		return value;
 	}
 
 	public static string ConvertNullToEmpty(string value)

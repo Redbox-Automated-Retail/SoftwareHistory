@@ -1,8 +1,10 @@
 using System;
+using System.Runtime.InteropServices;
 using Alsing.Text.PatternMatchers;
 
 namespace Alsing.Text;
 
+[ComVisible(true)]
 public class TokenTree
 {
 	private readonly TokenTreeNode[] nodes;

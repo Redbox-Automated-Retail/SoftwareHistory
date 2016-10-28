@@ -130,13 +130,12 @@ public class Resource : IResource
 			if (!string.IsNullOrEmpty(attributeValue3))
 			{
 				string[] array = attributeValue3.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-				string[] array2 = array;
-				foreach (string text in array2)
+				for (int i = 0; i < array.Length; i++)
 				{
-					string text2 = text.Trim();
-					if (!(text2 == resource.Name))
+					string text = array[i].Trim();
+					if (!(text == resource.Name))
 					{
-						resource.AddDependency(text2);
+						resource.AddDependency(text);
 					}
 				}
 			}
@@ -195,12 +194,13 @@ public class Resource : IResource
 
 	public IAspect NewAspect(string name, IAspectType type)
 	{
-		Aspect aspect = new Aspect();
-		aspect.Name = name;
-		aspect.Type = type;
-		Aspect aspect2 = aspect;
-		Aspects[name] = aspect2;
-		return aspect2;
+		Aspect aspect = new Aspect
+		{
+			Name = name,
+			Type = type
+		};
+		Aspects[name] = aspect;
+		return aspect;
 	}
 
 	public IAspect GetAspect(string name)
@@ -260,39 +260,40 @@ public class Resource : IResource
 	{
 		ErrorList result = new ErrorList();
 		StringBuilder stringBuilder = new StringBuilder();
-		XmlTextWriter xmlTextWriter = new XmlTextWriter(new StringWriter(stringBuilder));
-		xmlTextWriter.Formatting = Formatting.Indented;
-		XmlTextWriter xmlTextWriter2 = xmlTextWriter;
-		xmlTextWriter2.WriteStartDocument();
-		xmlTextWriter2.WriteStartElement("resource");
-		xmlTextWriter2.WriteAttributeString("type", Type.Name);
+		XmlTextWriter xmlTextWriter = new XmlTextWriter(new StringWriter(stringBuilder))
+		{
+			Formatting = Formatting.Indented
+		};
+		xmlTextWriter.WriteStartDocument();
+		xmlTextWriter.WriteStartElement("resource");
+		xmlTextWriter.WriteAttributeString("type", Type.Name);
 		foreach (KeyValuePair<string, object> property in Properties)
 		{
 			if (property.Value == null)
 			{
 				continue;
 			}
-			xmlTextWriter2.WriteStartElement("property");
-			xmlTextWriter2.WriteAttributeString("name", property.Key);
+			xmlTextWriter.WriteStartElement("property");
+			xmlTextWriter.WriteAttributeString("name", property.Key);
 			if (property.Value is List<object>)
 			{
 				foreach (object item in (List<object>)property.Value)
 				{
-					xmlTextWriter2.WriteElementString("value", item.ToString());
+					xmlTextWriter.WriteElementString("value", item.ToString());
 				}
 			}
 			else
 			{
-				xmlTextWriter2.WriteAttributeString("value", property.Value.ToString());
+				xmlTextWriter.WriteAttributeString("value", property.Value.ToString());
 			}
-			xmlTextWriter2.WriteEndElement();
+			xmlTextWriter.WriteEndElement();
 		}
 		foreach (KeyValuePair<string, Aspect> aspect in Aspects)
 		{
-			aspect.Value.Save(xmlTextWriter2);
+			aspect.Value.Save(xmlTextWriter);
 		}
-		xmlTextWriter2.WriteEndElement();
-		xmlTextWriter2.WriteEndDocument();
+		xmlTextWriter.WriteEndElement();
+		xmlTextWriter.WriteEndDocument();
 		bundle?.StoreResource(GetStorageFriendlyName(Name), stringBuilder.ToString());
 		return result;
 	}

@@ -25,8 +25,7 @@ public class OptionValue
 	{
 		OptionValueList optionValueList = new OptionValueList();
 		MemberInfo[] members = container.GetType().GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.GetProperty | BindingFlags.SetProperty);
-		MemberInfo[] array = members;
-		foreach (MemberInfo memberInfo in array)
+		foreach (MemberInfo memberInfo in members)
 		{
 			OptionAttribute optionAttribute = (OptionAttribute)Attribute.GetCustomAttribute(memberInfo, typeof(OptionAttribute));
 			if (optionAttribute != null)
@@ -45,17 +44,15 @@ public class OptionValue
 		{
 			PropertyInfo property = m_member.Type.GetProperty("Item");
 			Type convertToType = m_member.Type.GetGenericArguments()[0];
-			Type convertToType2 = m_member.Type.GetGenericArguments()[1];
-			property.SetValue(m_member.GetValue(m_container), ConversionHelper.ChangeType(value, convertToType2), new object[1] { ConversionHelper.ChangeType(key, convertToType) });
+			property.SetValue(value: ConversionHelper.ChangeType(value, m_member.Type.GetGenericArguments()[1]), obj: m_member.GetValue(m_container), index: new object[1] { ConversionHelper.ChangeType(key, convertToType) });
 		}
 		else if (IsList())
 		{
-			Type convertToType3 = m_member.Type.GetGenericArguments()[0];
-			MethodInfo method = m_member.Type.GetMethod("Insert");
-			method.Invoke(m_member.GetValue(m_container), new object[2]
+			Type convertToType2 = m_member.Type.GetGenericArguments()[0];
+			m_member.Type.GetMethod("Insert").Invoke(m_member.GetValue(m_container), new object[2]
 			{
 				0,
-				ConversionHelper.ChangeType(value, convertToType3)
+				ConversionHelper.ChangeType(value, convertToType2)
 			});
 		}
 		else
@@ -123,8 +120,7 @@ public class OptionValue
 		if (m_description != null)
 		{
 			string[] array = m_description.Description.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			string[] array2 = array;
-			foreach (string text3 in array2)
+			foreach (string text3 in array)
 			{
 				stringBuilder.AppendFormat("{0} ", text3);
 				num2 += text3.Length + 1;

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public class SyntaxDefinitionList
 {
 	private readonly List<SyntaxDefinition> languages;

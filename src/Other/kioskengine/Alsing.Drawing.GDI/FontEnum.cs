@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Alsing.Windows;
 
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class FontEnum
 {
 	private Hashtable Fonts;

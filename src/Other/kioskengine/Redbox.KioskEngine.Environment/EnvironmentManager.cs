@@ -61,6 +61,8 @@ public class EnvironmentManager : IEnvironmentNotificationService
 			}
 			LogHelper.Instance.Log("...Clear configuration callbacks.");
 			m_configurationCallbacks.Clear();
+			UnRegisterCorruptDbCallback();
+			UnregisterHardwareChangeCallback();
 		}
 		catch (Exception e)
 		{

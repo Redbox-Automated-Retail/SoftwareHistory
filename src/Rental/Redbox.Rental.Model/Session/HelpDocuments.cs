@@ -5,5 +5,6 @@ public enum HelpDocuments
 	Faq,
 	Terms,
 	TermsReboxCard,
-	Privacy
+	Privacy,
+	PlayPass
 }

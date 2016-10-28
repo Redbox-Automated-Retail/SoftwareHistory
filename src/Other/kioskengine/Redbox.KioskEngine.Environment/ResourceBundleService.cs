@@ -218,7 +218,7 @@ public class ResourceBundleService : IResourceBundleService
 					IKernelFunctionRegistryService kernelFunctionRegistryService = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
 					if (kernelFunctionRegistryService != null)
 					{
-						LinqExtensions.ForEach(_asseblies, delegate(KeyValuePair<string, Assembly> pair)
+						_asseblies.ForEach(delegate(KeyValuePair<string, Assembly> pair)
 						{
 							kernelFunctionRegistryService.RegisterKernelFunctions(pair.Value, pair.Key);
 						});
@@ -612,7 +612,6 @@ public class ResourceBundleService : IResourceBundleService
 		service16.Reset();
 		service5.Reset();
 		service4.Reset();
-		service6.Reset();
 		service15.Reset();
 		service14.Reset();
 		service.Reset();

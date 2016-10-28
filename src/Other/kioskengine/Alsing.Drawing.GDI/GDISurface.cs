@@ -1,10 +1,12 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Alsing.Windows;
 
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class GDISurface : GDIObject
 {
 	private WeakReference _Control;

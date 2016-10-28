@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Services.Controllers;
 
@@ -231,6 +233,7 @@ public class BrowseControl : IBrowseControl
 		RenderNavigationButtons();
 		RenderPageNumbers();
 		NotifyBrowseItemsShown(_lastRenderedBrowseItems);
+		SetMacros();
 	}
 
 	private void RenderNoResultsMessage()
@@ -338,6 +341,15 @@ public class BrowseControl : IBrowseControl
 				actor.ForegroundColor = Color.FromArgb(60, 57, 57);
 			}
 		}
+	}
+
+	private void SetMacros()
+	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		service["TTS:BrowseTotalPages"] = PageCount.ToString();
+		service["TTS:BrowseCurrentPage"] = CurrentPage.ToString();
+		service["TTS:BrowseTotalTitles"] = Items.Count().ToString();
+		service["TTS:BrowseTitlesOnScreen"] = ((CurrentPage == PageCount) ? ((Items?.Count ?? 0) % VisibleItemCount).ToString() : VisibleItemCount.ToString());
 	}
 
 	private PageBrowseItemCollection GetPageBrowseItems(int startingBrowseItemIndex, BrowseLayoutDirection browseLayoutDirection)

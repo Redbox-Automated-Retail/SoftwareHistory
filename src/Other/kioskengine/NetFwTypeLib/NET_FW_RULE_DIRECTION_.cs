@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace NetFwTypeLib;
 
+[ComVisible(true)]
 public enum NET_FW_RULE_DIRECTION_
 {
 	NET_FW_RULE_DIR_IN = 1,

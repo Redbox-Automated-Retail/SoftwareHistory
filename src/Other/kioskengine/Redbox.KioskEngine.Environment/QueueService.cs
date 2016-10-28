@@ -540,7 +540,7 @@ public class QueueService : IQueueService, IDisposable
 					ID = 0,
 					Type = "KioskAlert",
 					CreatedOn = DateTime.Now,
-					Data = Encoding.ASCII.GetBytes(ObjectExtensions.ToJson(instance)),
+					Data = Encoding.ASCII.GetBytes(instance.ToJson()),
 					Priority = 200
 				});
 			}
@@ -562,12 +562,12 @@ public class QueueService : IQueueService, IDisposable
 
 	private byte[] ToEncryptedMessage(object message)
 	{
-		return ToEncryptedMessage(ObjectExtensions.ToJson(message));
+		return ToEncryptedMessage(message.ToJson());
 	}
 
 	private byte[] ToEncryptedMessage(string message)
 	{
-		byte[] array = ByteArrayExtensions.Encrypt(Encoding.ASCII.GetBytes(message));
+		byte[] array = Encoding.ASCII.GetBytes(message).Encrypt();
 		byte[] array2 = new byte["RedboxEncrypted".Length + array.Length];
 		byte[] bytes = Encoding.ASCII.GetBytes("RedboxEncrypted");
 		Buffer.BlockCopy(bytes, 0, array2, 0, bytes.Length);
@@ -587,7 +587,7 @@ public class QueueService : IQueueService, IDisposable
 			{
 				byte[] array2 = new byte[data.Length - bytes.Length];
 				Buffer.BlockCopy(data, bytes.Length, array2, 0, array2.Length);
-				return ByteArrayExtensions.Decrypt(array2);
+				return array2.Decrypt();
 			}
 		}
 		return data;

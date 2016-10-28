@@ -95,11 +95,12 @@ internal class ZippedResourceBundleStorage : IResourceBundleStorage, IDisposable
 		{
 			return null;
 		}
-		ResourceBundleStorageEntry resourceBundleStorageEntry = new ResourceBundleStorageEntry();
-		resourceBundleStorageEntry.Name = entry.Name;
-		resourceBundleStorageEntry.Size = entry.Size;
-		resourceBundleStorageEntry.Index = entry.ZipFileIndex;
-		return resourceBundleStorageEntry;
+		return new ResourceBundleStorageEntry
+		{
+			Name = entry.Name,
+			Size = entry.Size,
+			Index = entry.ZipFileIndex
+		};
 	}
 
 	public ReadOnlyCollection<IResourceBundleStorageEntry> GetResourceManifest()

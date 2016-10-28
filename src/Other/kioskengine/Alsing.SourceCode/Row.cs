@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public sealed class Row : IEnumerable
 {
 	private RowState _RowState;

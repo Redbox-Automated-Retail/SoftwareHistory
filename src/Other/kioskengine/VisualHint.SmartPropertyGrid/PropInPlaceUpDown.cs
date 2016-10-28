@@ -636,7 +636,7 @@ public class PropInPlaceUpDown : Control, IInPlaceControl
 					}
 				}
 			}
-			else if (_ownerPropertyEnum.Property.Value.UnderlyingType != typeof(string))
+			else if ((object)_ownerPropertyEnum.Property.Value.UnderlyingType != typeof(string))
 			{
 				TypeConverter typeConverter = _ownerPropertyEnum.Property.Value.TypeConverter;
 				PropertyTypeDescriptorContext typeDescriptorContext = _ownerPropertyEnum.Property.Value.GetTypeDescriptorContext(_ownerPropertyEnum);

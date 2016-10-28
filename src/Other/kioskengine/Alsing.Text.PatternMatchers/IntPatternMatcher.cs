@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class IntPatternMatcher : PatternMatcherBase
 {
 	public static readonly IntPatternMatcher Default = new IntPatternMatcher();

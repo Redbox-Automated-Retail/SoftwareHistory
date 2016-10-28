@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Alsing.SourceCode.SyntaxDocumentExporters;
 
+[ComVisible(true)]
 public class SimpleHTMLExporter
 {
 	private static StringBuilder sb;

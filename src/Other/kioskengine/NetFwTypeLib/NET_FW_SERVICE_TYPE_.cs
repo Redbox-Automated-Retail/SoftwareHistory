@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace NetFwTypeLib;
 
+[ComVisible(true)]
 public enum NET_FW_SERVICE_TYPE_
 {
 	NET_FW_SERVICE_FILE_AND_PRINT,

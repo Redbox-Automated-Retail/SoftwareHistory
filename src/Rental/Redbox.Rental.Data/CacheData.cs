@@ -119,7 +119,6 @@ public class CacheData : ICacheData
 		}
 		value.IsComingSoon = dictionary.ToBoolean("is_coming_soon");
 		value.IsAvailable = dictionary.ToBoolean("is_available");
-		value.CanBeSold = dictionary.ToBoolean("can_be_sold");
 		value.ProductFamilyName = dictionary.ToString("product_family_name");
 		value.InStock = dictionary.ToBoolean("in_stock");
 		value.ProductTypeName = dictionary.ToString("product_type_name");

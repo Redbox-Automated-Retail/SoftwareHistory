@@ -51,16 +51,18 @@ public class DirectoryFunctions : FunctionSetBase
 	[Function("get-parent-directory")]
 	public string GetParentDirectory(string path)
 	{
-		DirectoryInfo directoryInfo = new DirectoryInfo(path);
-		DirectoryInfo parent = directoryInfo.Parent;
-		return (parent != null) ? parent.FullName : string.Empty;
+		DirectoryInfo parent = new DirectoryInfo(path).Parent;
+		if (parent == null)
+		{
+			return string.Empty;
+		}
+		return parent.FullName;
 	}
 
 	[Function("get-directory-root")]
 	public string GetDirectoryRoot(string path)
 	{
-		string directoryRoot = Directory.GetDirectoryRoot(path);
-		return StringUtils.ConvertNullToEmpty(directoryRoot);
+		return StringUtils.ConvertNullToEmpty(Directory.GetDirectoryRoot(path));
 	}
 
 	[Function("exists")]

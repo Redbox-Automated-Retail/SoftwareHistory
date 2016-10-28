@@ -13,8 +13,6 @@ public class TitleCache
 
 	public bool IsAvailable { get; set; }
 
-	public bool CanBeSold { get; set; }
-
 	public string ProductFamilyName { get; set; }
 
 	public bool InStock { get; set; }

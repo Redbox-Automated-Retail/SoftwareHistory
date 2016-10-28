@@ -498,11 +498,11 @@ public class PropInPlaceContainer : Form, IMessageHookListener
 		if (PropertyGrid.HandleIdleDuringDropDown)
 		{
 			Type nestedType = typeof(Application).GetNestedType("ThreadContext", BindingFlags.NonPublic);
-			if (nestedType != null)
+			if ((object)nestedType != null)
 			{
 				methodInfo = nestedType.GetMethod("System.Windows.Forms.UnsafeNativeMethods.IMsoComponent.FDoIdle", BindingFlags.Instance | BindingFlags.NonPublic);
 				MethodInfo method = nestedType.GetMethod("FromCurrent", BindingFlags.Static | BindingFlags.NonPublic);
-				if (method != null)
+				if ((object)method != null)
 				{
 					obj = method.Invoke(null, new object[0]);
 				}
@@ -511,7 +511,7 @@ public class PropInPlaceContainer : Form, IMessageHookListener
 		while (base.Visible)
 		{
 			Application.DoEvents();
-			if (obj != null && methodInfo != null)
+			if (obj != null && (object)methodInfo != null)
 			{
 				Win32Calls.WaitMessage();
 				methodInfo.Invoke(obj, new object[1] { -1 });

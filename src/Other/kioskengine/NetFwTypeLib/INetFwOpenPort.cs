@@ -6,6 +6,7 @@ namespace NetFwTypeLib;
 [ComImport]
 [TypeLibType(4160)]
 [Guid("E0483BA0-47FF-4D9C-A6D6-7741D0B195F7")]
+[ComVisible(true)]
 public interface INetFwOpenPort
 {
 	[DispId(1)]

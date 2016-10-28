@@ -3,11 +3,13 @@ using System.Collections;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using Alsing.SourceCode.SyntaxDocumentParsers;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public class SyntaxDocument : Component, IEnumerable
 {
 	private readonly RowList rows = new RowList();
@@ -1431,7 +1433,7 @@ public class SyntaxDocument : Component, IEnumerable
 
 	public void SetSyntaxFromEmbeddedResource(Assembly assembly, string resourceName)
 	{
-		if (assembly == null)
+		if ((object)assembly == null)
 		{
 			throw new ArgumentNullException("assembly");
 		}

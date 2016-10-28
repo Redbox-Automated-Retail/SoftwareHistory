@@ -7,17 +7,17 @@ namespace Redbox.ProductLookupCatalog;
 
 public class Archive : IDisposable
 {
+	private readonly FileStream m_file;
+
 	private const int RecordLength = 18;
 
 	private const int HeaderLength = 312;
 
+	private readonly byte[] m_header = Encoding.ASCII.GetBytes("<~look~>");
+
 	private const string m_headerString = "<~look~>";
 
 	private const byte Version = 0;
-
-	private readonly FileStream m_file;
-
-	private readonly byte[] m_header = Encoding.ASCII.GetBytes("<~look~>");
 
 	public Inventory this[long i]
 	{
@@ -80,8 +80,7 @@ public class Archive : IDisposable
 	public byte GetVersion()
 	{
 		m_file.Seek(8L, SeekOrigin.Begin);
-		BinaryReader binaryReader = new BinaryReader(m_file, Encoding.ASCII);
-		return binaryReader.ReadByte();
+		return new BinaryReader(m_file, Encoding.ASCII).ReadByte();
 	}
 
 	public string GetOriginMachine()
@@ -94,8 +93,7 @@ public class Archive : IDisposable
 	public byte GetFlags()
 	{
 		m_file.Seek(9L, SeekOrigin.Begin);
-		BinaryReader binaryReader = new BinaryReader(m_file, Encoding.ASCII);
-		return binaryReader.ReadByte();
+		return new BinaryReader(m_file, Encoding.ASCII).ReadByte();
 	}
 
 	public long GetSizeInKB()
@@ -229,8 +227,7 @@ public class Archive : IDisposable
 	private Inventory ReadInventory(long index)
 	{
 		m_file.Seek(312 + index * 18, SeekOrigin.Begin);
-		BinaryReader reader = new BinaryReader(m_file, Encoding.ASCII);
-		return Decode(reader);
+		return Decode(new BinaryReader(m_file, Encoding.ASCII));
 	}
 
 	private void WriteInventory(long index, Inventory i)

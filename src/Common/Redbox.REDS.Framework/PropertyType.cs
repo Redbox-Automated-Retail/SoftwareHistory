@@ -42,7 +42,7 @@ public class PropertyType : IPropertyType
 		{
 			return value;
 		}
-		if (Type != null)
+		if (!(Type == null))
 		{
 			return ConversionHelper.ChangeType(value, Type);
 		}

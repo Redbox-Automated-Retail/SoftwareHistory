@@ -89,4 +89,44 @@ internal static class ViewFunctions
 	{
 		return ServiceLocator.Instance.GetService<IViewService>()?.GetLastShownView();
 	}
+
+	[KernelFunction(Name = "kernel.in_maintenance_mode")]
+	internal static bool InMaintenanceMode()
+	{
+		return ServiceLocator.Instance.GetService<IViewService>()?.IsInMaintenanceMode() ?? false;
+	}
+
+	[KernelFunction(Name = "kernel.safe_to_change_view")]
+	internal static bool SafeToChangeView()
+	{
+		return ServiceLocator.Instance.GetService<IViewService>()?.IsSafeToChangeView() ?? false;
+	}
+
+	[KernelFunction(Name = "kernel.get_start_over_view_name")]
+	internal static string GetStartOverViewName()
+	{
+		return ServiceLocator.Instance.GetService<IViewService>()?.GetStartOverViewName();
+	}
+
+	[KernelFunction(Name = "kernel.view_goback")]
+	internal static void ViewGoBack(object context, bool? popOnly)
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service != null)
+		{
+			bool popOnly2 = popOnly.HasValue && popOnly.Value;
+			service.GoBack(context, popOnly2);
+		}
+	}
+
+	[KernelFunction(Name = "kernel.view_goback_safe")]
+	internal static void ViewGoBackSafe(object context, bool? popOnly)
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service != null)
+		{
+			bool popOnly2 = popOnly.HasValue && popOnly.Value;
+			service.GoBackSafe(context, popOnly2);
+		}
+	}
 }

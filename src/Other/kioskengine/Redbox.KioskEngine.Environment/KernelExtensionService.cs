@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing;
-using System.IO;
+using System.Diagnostics;
 using System.Reflection;
-using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
@@ -12,8 +10,6 @@ namespace Redbox.KioskEngine.Environment;
 
 public class KernelExtensionService : IKernelExtensionService
 {
-	private string m_applicationPath;
-
 	private readonly object m_syncObject = new object();
 
 	private IDictionary<Guid, IKernelExtension> m_innerExtensions;
@@ -55,130 +51,54 @@ public class KernelExtensionService : IKernelExtensionService
 		}
 	}
 
-	public ErrorList Initialize(string applicationPath)
+	public ErrorList Initialize(List<Type> kernelExtensionHostTypes)
 	{
 		LogHelper.Instance.Log("Initialize kernel extension service:");
 		ErrorList errorList = new ErrorList();
-		m_applicationPath = applicationPath;
 		ServiceLocator.Instance.AddService(typeof(IKernelExtensionService), Instance);
-		List<string> names = new List<string>();
-		errorList.AddRange(EnumerateExtensions(names));
-		return errorList;
-	}
-
-	public ErrorList EnumerateExtensions(List<string> names)
-	{
-		ErrorList errorList = new ErrorList();
-		List<string> list = new List<string>();
-		string[] searchPath = SearchPath;
-		foreach (string text in searchPath)
+		foreach (Type kernelExtensionHostType in kernelExtensionHostTypes)
 		{
-			if (!Path.IsPathRooted(text))
-			{
-				list.Add(Path.Combine(Path.GetDirectoryName(m_applicationPath), text));
-			}
-			else
-			{
-				list.Add(text);
-			}
-		}
-		foreach (string item in list)
-		{
-			LogHelper.Instance.Log("...Search path: {0}", item);
-			if (!Directory.Exists(item))
-			{
-				continue;
-			}
-			string[] files = Directory.GetFiles(item, "*.kext", SearchOption.AllDirectories);
-			string[] array = files;
-			foreach (string text2 in array)
-			{
-				if (!Path.GetDirectoryName(text2).EndsWith(".staged_"))
-				{
-					errorList.AddRange(LoadExtension(text2, out var name));
-					if (name != null)
-					{
-						LogHelper.Instance.Log("...Loaded kernel extension '{0}' from file: {1}", name, text2);
-						names.Add(name);
-					}
-				}
-			}
+			errorList.AddRange(LoadExtension(kernelExtensionHostType));
+			LogHelper.Instance.Log("...Loaded kernel extension '{0}'", kernelExtensionHostType);
 		}
 		return errorList;
 	}
 
-	public ErrorList LoadExtension(string path, out string name)
+	public ErrorList LoadExtension(Type extensionHostType)
 	{
-		name = null;
 		ErrorList errorList = new ErrorList();
-		XmlDocument xmlDocument = new XmlDocument();
-		xmlDocument.Load(path);
-		if (xmlDocument.DocumentElement == null)
-		{
-			return errorList;
-		}
-		name = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Name"), null);
-		Guid? nodeValue = XmlNodeExtensions.GetNodeValue<Guid?>(xmlDocument.DocumentElement.SelectSingleNode("ID"), null);
-		string nodeValue2 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Title"), null);
-		string nodeValue3 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Type"), null);
-		string nodeValue4 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Author"), null);
-		string nodeValue5 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Version"), null);
-		string nodeValue6 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Category"), null);
-		string nodeValue7 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Copyright"), null);
-		string nodeValue8 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Trademark"), null);
-		Bitmap icon = null;
-		string nodeValue9 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Icon"), null);
-		if (!string.IsNullOrEmpty(nodeValue9))
-		{
-			using MemoryStream stream = new MemoryStream(StringExtensions.Base64ToBytes(nodeValue9));
-			icon = (Bitmap)Image.FromStream(stream);
-		}
-		string nodeValue10 = XmlNodeExtensions.GetNodeValue<string>(xmlDocument.DocumentElement.SelectSingleNode("Description"), null);
 		try
 		{
-			string[] array = nodeValue3.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array.Length == 2)
+			if (extensionHostType != null)
 			{
-				string assemblyFile = Path.Combine(Path.GetDirectoryName(path), array[0]) + ".dll";
-				Assembly assembly = Assembly.LoadFrom(assemblyFile);
+				string version = "0.0.0.0";
+				Assembly assembly = extensionHostType?.Assembly;
 				if (assembly != null)
 				{
-					Type type = assembly.GetType(array[1]);
-					if (type != null && Activator.CreateInstance(type) is IKernelExtensionHost kernelExtensionHost)
+					FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+					if (versionInfo != null)
 					{
-						KernelExtension kernelExtension = new KernelExtension();
-						kernelExtension.Author = nodeValue4;
-						kernelExtension.Category = nodeValue6;
-						kernelExtension.Copyright = nodeValue7;
-						kernelExtension.Description = nodeValue10;
-						kernelExtension.Host = kernelExtensionHost;
-						kernelExtension.Icon = icon;
-						kernelExtension.ID = nodeValue.Value;
-						kernelExtension.IsUnloadSupported = false;
-						kernelExtension.Name = name;
-						kernelExtension.Path = path;
-						kernelExtension.Title = nodeValue2;
-						kernelExtension.Trademark = nodeValue8;
-						kernelExtension.Version = nodeValue5;
-						KernelExtension kernelExtension2 = kernelExtension;
-						XmlNodeList xmlNodeList = xmlDocument.DocumentElement.SelectNodes("Dependency");
-						if (xmlNodeList != null)
-						{
-							foreach (XmlNode item in xmlNodeList)
-							{
-								kernelExtension2.InnerDependencies.Add(XmlNodeExtensions.GetNodeValue<Guid>(item));
-							}
-						}
-						kernelExtensionHost.Extension = kernelExtension2;
-						errorList.AddRange(kernelExtensionHost.PreLoad());
-						InnerExtensions[nodeValue.Value] = kernelExtension2;
+						version = versionInfo.FileVersion;
 					}
+				}
+				if (Activator.CreateInstance(extensionHostType) is IKernelExtensionHost kernelExtensionHost)
+				{
+					Guid? guid = Guid.NewGuid();
+					KernelExtension kernelExtension = new KernelExtension();
+					kernelExtension.Host = kernelExtensionHost;
+					kernelExtension.ID = guid.Value;
+					kernelExtension.IsUnloadSupported = false;
+					kernelExtension.Name = extensionHostType.ToString();
+					kernelExtension.Version = version;
+					KernelExtension value = (KernelExtension)(kernelExtensionHost.Extension = kernelExtension);
+					errorList.AddRange(kernelExtensionHost.PreLoad());
+					InnerExtensions[guid.Value] = value;
 				}
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("P999", $"An unhandled exception was raised while loading kernel extension: {path}.   See the details of this error for more information on the exception.", e));
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("P999", $"An unhandled exception was raised while loading kernel extension: {extensionHostType}.   See the details of this error for more information on the exception.", e));
 		}
 		return errorList;
 	}

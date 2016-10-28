@@ -99,4 +99,18 @@ public class StringFunctions : FunctionSetBase
 	{
 		return s.TrimEnd();
 	}
+
+	[Function("remove-at")]
+	public static string RemoveStringAt(string s, int i)
+	{
+		if (string.IsNullOrEmpty(s))
+		{
+			return string.Empty;
+		}
+		if (i != -1)
+		{
+			return s.Substring(0, i);
+		}
+		return s;
+	}
 }

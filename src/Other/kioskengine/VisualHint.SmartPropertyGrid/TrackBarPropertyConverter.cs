@@ -8,7 +8,7 @@ public class TrackBarPropertyConverter : TypeConverter
 {
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		if (sourceType == typeof(string))
+		if ((object)sourceType == typeof(string))
 		{
 			return true;
 		}

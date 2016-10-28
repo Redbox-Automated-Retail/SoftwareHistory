@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.REDS.Framework;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -92,27 +93,56 @@ public class TextToSpeechService : ITextToSpeechService
 				return;
 			}
 			LogHelper.Instance.Log("Headphones connected.");
+			service2.Filter["ada_accessible"] = "True";
+			IResource manifest = ResourceBundleService.Instance.GetManifest(out var manifestInfo);
+			string text = ResourceBundleService.Instance.Filter["view_name"];
+			if (manifestInfo.ProductName != "Rental Application")
+			{
+				LogHelper.Instance.Log($"TextToSpeechService.AudioDeviceConnected Not in Rental Application. Currently {manifestInfo.ProductName}");
+				return;
+			}
 			ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
 			if (service3 != null && !service3.HasValidData())
 			{
 				ISessionAnalyticsService service4 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 				IShoppingSessionService service5 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-				if (service != null && service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && service.Peek() != "swipe_view" && !InReturnFlow && service4 != null && service5 != null)
+				if (service != null && service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && service.Peek() != "swipe_view" && !InReturnFlow)
 				{
 					LogHelper.Instance.Log("Restarting session due to headphones being connected.");
-					IShoppingSession currentSession = service5.GetCurrentSession();
-					service4.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+					if (service5 != null)
 					{
-						{ "subItemType", "Timeout" },
-						{ "subItemValue", "HeadphonesConnected" }
-					}, currentSession.Id.ToString());
-					service4.AddNode("session", "pricing");
-					currentSession.Abandon("HeadphonesConnected");
-					currentSession.End();
-					service4.Close(currentSession.Id.ToString());
-					service2.Filter["ada_accessible"] = "True";
+						IShoppingSession currentSession = service5.GetCurrentSession();
+						if (service4 != null)
+						{
+							service4.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+							{
+								{ "subItemType", "Timeout" },
+								{ "subItemValue", "HeadphonesConnected" }
+							}, currentSession.Id.ToString());
+							service4.AddNode("session", "pricing");
+						}
+						currentSession.Abandon("HeadphonesConnected");
+						currentSession.End();
+						service4?.Close(currentSession.Id.ToString());
+					}
 					UnwindToStartView(service);
 				}
+				else if (service == null)
+				{
+					LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. Unable to find ViewService.");
+				}
+				else if (InReturnFlow)
+				{
+					LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. In Return Flow.");
+				}
+				else
+				{
+					LogHelper.Instance.Log($"TTS AudioDeviceConnected - Can't Unwind. On page {service.Peek()}");
+				}
+			}
+			else
+			{
+				LogHelper.Instance.Log("TTS AudioDeviceConnected - Track Data has errors or is missing.");
 			}
 		}
 	}
@@ -134,6 +164,22 @@ public class TextToSpeechService : ITextToSpeechService
 		m_keyHandlers.Clear();
 		m_speechRate = 0;
 		m_speechVolume = 80;
+	}
+
+	public int GetTimeout(string timeoutType, int defaultTimeout)
+	{
+		if (!TTSEnabled)
+		{
+			return defaultTimeout;
+		}
+		return timeoutType switch
+		{
+			"short" => 30000, 
+			"medium" => 60000, 
+			"long" => 180000, 
+			"help" => 480000, 
+			_ => 30000, 
+		};
 	}
 
 	public void RunSpeechWorkflow(string resourceName)
@@ -187,9 +233,9 @@ public class TextToSpeechService : ITextToSpeechService
 			foreach (XmlNode item in xmlNodeList)
 			{
 				string text = string.Empty;
-				string text2 = XmlNodeExtensions.GetAttributeValue<string>(item, "textAvailable");
-				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item, "ifActorVisible");
-				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item, "ifControlEnabled");
+				string text2 = item.GetAttributeValue<string>("textAvailable");
+				string attributeValue = item.GetAttributeValue<string>("ifActorVisible");
+				string attributeValue2 = item.GetAttributeValue<string>("ifControlEnabled");
 				if (text2 != null)
 				{
 					foreach (KeyValuePair<string, string> item2 in m_macrosFound)
@@ -272,9 +318,9 @@ public class TextToSpeechService : ITextToSpeechService
 		int num = -1;
 		if (m_currentSpeech != null)
 		{
-			num = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
+			num = m_currentSpeech.GetAttributeValue<int>("sequence");
 		}
-		int attributeValue = XmlNodeExtensions.GetAttributeValue<int>(speechPart, "sequence");
+		int attributeValue = speechPart.GetAttributeValue<int>("sequence");
 		m_currentSpeech = speechPart;
 		if (num == attributeValue)
 		{
@@ -301,7 +347,7 @@ public class TextToSpeechService : ITextToSpeechService
 						m_macrosFound.Add(item.InnerText, service[item.InnerText]);
 						continue;
 					}
-					string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item, "default");
+					string attributeValue2 = item.GetAttributeValue<string>("default");
 					m_macrosFound.Add(item.InnerText, attributeValue2);
 					LogHelper.Instance.Log("TTS((> Required macro {{" + item.InnerText + "}} not found; using default value");
 				}
@@ -314,7 +360,7 @@ public class TextToSpeechService : ITextToSpeechService
 		ResetTTSEventHandlers(speechPart);
 		if (m_currentSpeech.Attributes["keySequenceDelay"] != null)
 		{
-			m_keySequenceDelay = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "keySequenceDelay");
+			m_keySequenceDelay = m_currentSpeech.GetAttributeValue<int>("keySequenceDelay");
 		}
 		else
 		{
@@ -328,8 +374,8 @@ public class TextToSpeechService : ITextToSpeechService
 			return;
 		}
 		service2.RemoveTimer("TTSTimer");
-		bool attributeValue3 = XmlNodeExtensions.GetAttributeValue(speechPart, "loop", defaultValue: false);
-		int attributeValue4 = XmlNodeExtensions.GetAttributeValue(speechPart, "startPause", 0);
+		bool attributeValue3 = speechPart.GetAttributeValue("loop", defaultValue: false);
+		int attributeValue4 = speechPart.GetAttributeValue("startPause", 0);
 		TimerCallback callback = delegate
 		{
 			ProcessSpeechPart(speechPart);
@@ -351,7 +397,7 @@ public class TextToSpeechService : ITextToSpeechService
 	{
 		if (m_currentSpeech != null && m_speechControl != null)
 		{
-			int attributeValue = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
+			int attributeValue = m_currentSpeech.GetAttributeValue<int>("sequence");
 			RunSpeechPart(m_speechControl[attributeValue]);
 		}
 	}
@@ -372,7 +418,7 @@ public class TextToSpeechService : ITextToSpeechService
 			{
 			case "mapKeyPress":
 			{
-				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item, "keyCode");
+				string attributeValue2 = item.GetAttributeValue<string>("keyCode");
 				XmlNode xmlNode4 = item.SelectSingleNode("function");
 				XmlNode textNode = item.SelectSingleNode("text");
 				XmlNode skipToNode = item.SelectSingleNode("value");
@@ -426,7 +472,7 @@ public class TextToSpeechService : ITextToSpeechService
 					{
 						Action value5 = delegate
 						{
-							int attributeValue3 = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
+							int attributeValue3 = m_currentSpeech.GetAttributeValue<int>("sequence");
 							RunSpeechPart(m_speechControl[attributeValue3]);
 						};
 						m_keyHandlers.Add(attributeValue2, value5);
@@ -452,7 +498,7 @@ public class TextToSpeechService : ITextToSpeechService
 					{
 						Action value3 = delegate
 						{
-							int attributeValue3 = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
+							int attributeValue3 = m_currentSpeech.GetAttributeValue<int>("sequence");
 							if (attributeValue3 + 1 <= m_speechControl.GetUpperBound(0))
 							{
 								ServiceLocator.Instance.GetService<ITimerService>()?.RemoveTimer("TTSTimer");
@@ -526,7 +572,7 @@ public class TextToSpeechService : ITextToSpeechService
 			}
 			case "mapKeyPressToActorHit":
 			{
-				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item, "keyCode");
+				string attributeValue = item.GetAttributeValue<string>("keyCode");
 				XmlNode xmlNode3 = item.SelectSingleNode("actorName");
 				string command = item.SelectSingleNode("command")?.InnerText;
 				string parameter = item.SelectSingleNode("parameter")?.InnerText;
@@ -718,7 +764,7 @@ public class TextToSpeechService : ITextToSpeechService
 			XmlNode[] array = new XmlNode[xmlNodeList.Count];
 			foreach (XmlNode item in xmlNodeList)
 			{
-				int attributeValue = XmlNodeExtensions.GetAttributeValue(item, "sequence", 0);
+				int attributeValue = item.GetAttributeValue("sequence", 0);
 				array[attributeValue] = item;
 			}
 			LogHelper.Instance.Log("TTS((> Loaded [" + (array.GetUpperBound(0) + 1) + "] speech parts into memory.");
@@ -769,7 +815,7 @@ public class TextToSpeechService : ITextToSpeechService
 		{
 			return input;
 		}
-		LinqExtensions.ForEach(m_textReplacement, delegate(KeyValuePair<string, string> x)
+		m_textReplacement.ForEach(delegate(KeyValuePair<string, string> x)
 		{
 			input = input.ToLowerInvariant().Replace(x.Key, x.Value);
 		});
@@ -787,9 +833,11 @@ public class TextToSpeechService : ITextToSpeechService
 				Interlocked.Increment(ref m_working);
 				if (!string.IsNullOrEmpty(speech) && AudioDeviceConnected)
 				{
-					m_reader = new SpeechSynthesizer();
-					m_reader.Rate = m_speechRate;
-					m_reader.Volume = m_speechVolume;
+					m_reader = new SpeechSynthesizer
+					{
+						Rate = m_speechRate,
+						Volume = m_speechVolume
+					};
 					LogHelper.Instance.Log("TTS((> Say: " + speech);
 					m_reader.SpeakAsync(speech);
 					m_reader.SpeakCompleted += ReaderSpeakCompleted;
@@ -811,15 +859,15 @@ public class TextToSpeechService : ITextToSpeechService
 		if (m_reader != null)
 		{
 			m_reader.SpeakAsyncCancelAll();
-			m_reader.Dispose();
+			m_reader?.Dispose();
 			m_reader = null;
 		}
 	}
 
 	private void RunNextSpeechPart()
 	{
-		int attributeValue = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
-		bool attributeValue2 = XmlNodeExtensions.GetAttributeValue<bool>(m_currentSpeech, "loop");
+		int attributeValue = m_currentSpeech.GetAttributeValue<int>("sequence");
+		bool attributeValue2 = m_currentSpeech.GetAttributeValue<bool>("loop");
 		int num = (attributeValue2 ? attributeValue : (attributeValue + 1));
 		if (attributeValue2 || num < m_speechControl.GetLength(0))
 		{
@@ -833,7 +881,7 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private void ReaderNothingLeftToSay()
 	{
-		int attributeValue = XmlNodeExtensions.GetAttributeValue<int>(m_currentSpeech, "sequence");
+		int attributeValue = m_currentSpeech.GetAttributeValue<int>("sequence");
 		LogHelper.Instance.Log("TTS((> Reader speak completed speech part #" + attributeValue);
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
 		if (service == null)
@@ -845,7 +893,7 @@ public class TextToSpeechService : ITextToSpeechService
 		{
 			return;
 		}
-		int attributeValue2 = XmlNodeExtensions.GetAttributeValue(m_currentSpeech, "endPause", 0);
+		int attributeValue2 = m_currentSpeech.GetAttributeValue("endPause", 0);
 		if (attributeValue2 > 0)
 		{
 			ITimer timer = service.CreateTimer("TTSTimer", attributeValue2, null, delegate

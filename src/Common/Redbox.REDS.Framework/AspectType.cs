@@ -51,14 +51,9 @@ public class AspectType : IAspectType
 				return;
 			}
 			AspectBinaryEncodingType? aspectBinaryEncodingType = Enum<AspectBinaryEncodingType?>.ParseIgnoringCase(aspect.Properties["encoding"], null);
-			if (!aspectBinaryEncodingType.HasValue)
+			if (aspectBinaryEncodingType.HasValue && aspectBinaryEncodingType.HasValue)
 			{
-				return;
-			}
-			AspectBinaryEncodingType valueOrDefault = aspectBinaryEncodingType.GetValueOrDefault();
-			if (aspectBinaryEncodingType.HasValue)
-			{
-				switch (valueOrDefault)
+				switch (aspectBinaryEncodingType.GetValueOrDefault())
 				{
 				case AspectBinaryEncodingType.Base64:
 					aspect.SetContent(Convert.FromBase64String(aspectNode.InnerText));

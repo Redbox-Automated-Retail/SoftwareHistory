@@ -71,7 +71,7 @@ public class OutdoorElo : GenericTouchScreen
 			if (File.Exists(ControlFile))
 			{
 				Process[] driverProcess = GetDriverProcess("EloPCap_Control");
-				LinqExtensions.ForEach(driverProcess, delegate(Process process)
+				driverProcess.ForEach(delegate(Process process)
 				{
 					process.Kill();
 				});

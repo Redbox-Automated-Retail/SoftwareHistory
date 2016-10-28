@@ -1,10 +1,12 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
 [ToolboxItem(true)]
+[ComVisible(true)]
 public class SourceCodePrintDocument : PrintDocument
 {
 	private Font fontBreak;

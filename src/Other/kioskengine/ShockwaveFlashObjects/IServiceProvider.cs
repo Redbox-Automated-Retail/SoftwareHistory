@@ -7,6 +7,7 @@ namespace ShockwaveFlashObjects;
 [ComImport]
 [Guid("6D5140C1-7436-11CE-8034-00AA006009FA")]
 [InterfaceType(1)]
+[ComVisible(true)]
 public interface IServiceProvider
 {
 	[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]

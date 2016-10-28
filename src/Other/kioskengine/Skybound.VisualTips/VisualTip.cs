@@ -581,7 +581,7 @@ public class VisualTip : x6e74390626fc219b, ICustomTypeDescriptor
 		{
 			IDesignerHost designerHost = (IDesignerHost)x7f976b7a7a87b378.Site.GetService(typeof(IDesignerHost));
 			PropertyDescriptor propertyDescriptor = TypeDescriptor.GetProperties(designerHost.RootComponent)["Language"];
-			if (propertyDescriptor != null && propertyDescriptor.PropertyType == typeof(CultureInfo))
+			if (propertyDescriptor != null && (object)propertyDescriptor.PropertyType == typeof(CultureInfo))
 			{
 				return propertyDescriptor.GetValue(designerHost.RootComponent) as CultureInfo;
 			}
@@ -608,7 +608,7 @@ public class VisualTip : x6e74390626fc219b, ICustomTypeDescriptor
 		if (xc16dc8a3b56cfe52 != null)
 		{
 			PropertyInfo property = xc16dc8a3b56cfe52.GetType().GetProperty(propertyName);
-			if (property != null && property.PropertyType == propertyType)
+			if ((object)property != null && (object)property.PropertyType == propertyType)
 			{
 				value = property.GetValue(xc16dc8a3b56cfe52, null);
 				return true;

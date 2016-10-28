@@ -77,18 +77,19 @@ public class ResourceType : IResourceType
 
 	public IPropertyType AddPropertyType(string name, Type type, string description, bool isRequired, bool isFilter, int? filterScore, string label, string category)
 	{
-		PropertyType propertyType = new PropertyType();
-		propertyType.Name = name;
-		propertyType.Type = type;
-		propertyType.Label = label;
-		propertyType.IsFilter = isFilter;
-		propertyType.Category = category;
-		propertyType.IsRequired = isRequired;
-		propertyType.Description = description;
-		propertyType.FilterScore = filterScore ?? 1;
-		PropertyType propertyType2 = propertyType;
-		InnerProperties.Add(propertyType2);
-		return propertyType2;
+		PropertyType propertyType = new PropertyType
+		{
+			Name = name,
+			Type = type,
+			Label = label,
+			IsFilter = isFilter,
+			Category = category,
+			IsRequired = isRequired,
+			Description = description,
+			FilterScore = (filterScore ?? 1)
+		};
+		InnerProperties.Add(propertyType);
+		return propertyType;
 	}
 
 	public void RemoveAspectType(string name)
@@ -113,18 +114,24 @@ public class ResourceType : IResourceType
 	{
 		Resource resource = new Resource();
 		resource.Type = this;
-		Resource resource2 = resource;
-		resource2.Properties["name"] = name;
-		resource2.Properties["created_on"] = DateTime.UtcNow;
-		resource2.Properties["modified_on"] = DateTime.UtcNow;
-		return resource2;
+		resource.Properties["name"] = name;
+		resource.Properties["created_on"] = DateTime.UtcNow;
+		resource.Properties["modified_on"] = DateTime.UtcNow;
+		return resource;
 	}
 
 	public IAspectType GetAspectType(string name)
 	{
+		Predicate<IAspectType> predicate2 = default(Predicate<IAspectType>);
 		for (ResourceType resourceType = this; resourceType != null; resourceType = (ResourceType)resourceType.SuperType)
 		{
-			IAspectType aspectType = resourceType.InnerAspects.Find((IAspectType each) => each.Name == name);
+			List<IAspectType> innerAspects = resourceType.InnerAspects;
+			Predicate<IAspectType> predicate = predicate2;
+			if (predicate == null)
+			{
+				predicate = (predicate2 = (IAspectType each) => each.Name == name);
+			}
+			IAspectType aspectType = innerAspects.Find(predicate);
 			if (aspectType != null)
 			{
 				return aspectType;
@@ -135,9 +142,16 @@ public class ResourceType : IResourceType
 
 	public IPropertyType GetPropertyType(string name)
 	{
+		Predicate<IPropertyType> predicate2 = default(Predicate<IPropertyType>);
 		for (ResourceType resourceType = this; resourceType != null; resourceType = (ResourceType)resourceType.SuperType)
 		{
-			IPropertyType propertyType = resourceType.InnerProperties.Find((IPropertyType each) => each.Name == name);
+			List<IPropertyType> innerProperties = resourceType.InnerProperties;
+			Predicate<IPropertyType> predicate = predicate2;
+			if (predicate == null)
+			{
+				predicate = (predicate2 = (IPropertyType each) => each.Name == name);
+			}
+			IPropertyType propertyType = innerProperties.Find(predicate);
 			if (propertyType != null)
 			{
 				return propertyType;

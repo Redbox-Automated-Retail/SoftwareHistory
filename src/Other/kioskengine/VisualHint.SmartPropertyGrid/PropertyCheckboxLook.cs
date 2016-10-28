@@ -12,9 +12,9 @@ public class PropertyCheckboxLook : PropertyLook
 	{
 		get
 		{
-			if (!(base.Value.TypeConverter is NullableConverter nullableConverter) || nullableConverter.UnderlyingType != typeof(bool))
+			if (!(base.Value.TypeConverter is NullableConverter nullableConverter) || (object)nullableConverter.UnderlyingType != typeof(bool))
 			{
-				return base.Value.UnderlyingType == typeof(bool);
+				return (object)base.Value.UnderlyingType == typeof(bool);
 			}
 			return true;
 		}

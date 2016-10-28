@@ -128,7 +128,7 @@ public class KioskProductView
 	public List<IKioskProduct> GetCarouselProducts(bool showCollections)
 	{
 		List<IKioskProduct> resultList = new List<IKioskProduct>();
-		int num = 10;
+		int num = 11;
 		(from x in _movieProducts.OrderList(BrowseSort.SortDate)
 			where IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)
 			select x).Take(num)?.ForEach(resultList.Add);
@@ -138,7 +138,7 @@ public class KioskProductView
 		(from x in _movieProducts.OrderList(BrowseSort.SortDate)
 			where IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)
 			select x).Take(num - resultList.Count)?.ForEach(resultList.Add);
-		if (showCollections)
+		if (showCollections && resultList.Count() >= 5)
 		{
 			resultList.Insert(5, new CollectionProduct(new Collection
 			{
@@ -148,14 +148,28 @@ public class KioskProductView
 			{
 				ImageFile = "image_collections_carousel"
 			});
+			if (resultList.Count > num)
+			{
+				resultList.RemoveAt(resultList.Count() - 1);
+			}
 		}
-		ITitleProduct titleProduct = _gamesProducts.OrderList(BrowseSort.MerchandiseDate).FirstOrDefault((ITitleProduct x) => IsCarouselViewable(x, null) && ApplyGameRatingFilter(x, Ratings.T) && !resultList.Contains(x));
-		if (GetInStockGameCount() >= 3 && titleProduct != null && resultList.Count >= 5)
+		List<ITitleProduct> list = (from x in _gamesProducts.OrderList(BrowseSort.SortDate)
+			where IsCarouselViewable(x, null) && !resultList.Contains(x)
+			select x).Take(2).ToList();
+		if (GetInStockGameCount() >= 3 && list != null && list.Any() && (resultList.Count >= 5 || (list.Count() >= 2 && resultList.Count >= 4)))
 		{
-			resultList.Insert(6, titleProduct);
+			resultList.Insert(6, list.FirstOrDefault());
 			if (resultList.Count > num)
 			{
 				resultList.RemoveAt(resultList.Count - 1);
+			}
+			if (list.Count() >= 2)
+			{
+				if (resultList.Count == num)
+				{
+					resultList.RemoveAt(resultList.Count - 1);
+				}
+				resultList.Add(list.LastOrDefault());
 			}
 		}
 		return resultList;
@@ -233,31 +247,11 @@ public class KioskProductView
 		{
 			return false;
 		}
-		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-		if (titleProduct.IsMovie && titleProduct.MoviePurchasePrice <= 0m)
+		if (!(kioskProduct is ITitleProduct titleProduct))
 		{
 			return false;
 		}
-		if (titleProduct.IsGame && titleProduct.GamePurchasePrice <= 0m)
-		{
-			return false;
-		}
-		if (titleProduct.IsGame)
-		{
-			if (!titleProduct.SellThruDate.HasValue)
-			{
-				return false;
-			}
-			if (titleProduct.SellThruDate > DateTime.Now)
-			{
-				return false;
-			}
-		}
-		if (titleProduct.SellThru)
-		{
-			return titleProduct.CanBeSold;
-		}
-		return false;
+		return titleProduct.IsSellable;
 	}
 
 	public IKioskProduct GetTitleRollupProduct(long productGroupId)
@@ -367,6 +361,7 @@ public class KioskProductView
 	private void LoadTitleProducts()
 	{
 		_titleProducts.Clear();
+		LogHelper.Instance.Log("Loading {0} Title Products from cache", CacheDataInstance.Titles.Count);
 		CacheDataInstance.Titles.ToList().ForEach(delegate(KeyValuePair<long, TitleCache> pair)
 		{
 			AddTitleProduct(pair.Value);
@@ -418,7 +413,12 @@ public class KioskProductView
 				{
 					LogHelper.Instance.Log("KioskProductView.AddMissingProductIds - ProductId {0}", id);
 					TitleCache titleCache = CacheDataInstance.AddTitleCache(id);
-					AddTitleProduct(value, titleCache, (TitleType)value.ProductTypeId, ProfileDataInstance);
+					TitleProduct titleProduct = AddTitleProduct(value, titleCache, (TitleType)value.ProductTypeId, ProfileDataInstance);
+					if (force && titleProduct != null)
+					{
+						AddMDVProduct(titleProduct);
+						AddTitleRollupProduct(titleProduct);
+					}
 				}
 			}
 		});

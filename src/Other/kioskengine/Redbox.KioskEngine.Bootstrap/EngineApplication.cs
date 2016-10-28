@@ -4,23 +4,28 @@ using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 using System.Windows.Input;
 using Microsoft.Win32;
+using Redbox.BrokerServices.KernelExtension;
 using Redbox.Core;
 using Redbox.GetOpts;
+using Redbox.HardwareServices.KernelExtension;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Drawing;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.IDE;
 using Redbox.KioskEngine.Kernel;
+using Redbox.KioskServices.KernelExtension;
 using Redbox.REDS.Framework;
 using Redbox.Rental.Data;
 using Redbox.Rental.Kernel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Services;
+using Redbox.UpdateServices.KernelExtension;
 using WindowsInput;
 
 namespace Redbox.KioskEngine.Bootstrap;
@@ -39,7 +44,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 		public uint time;
 
-		public Point p;
+		public System.Drawing.Point p;
 	}
 
 	private string m_corruptDbName;
@@ -309,7 +314,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	public void ShutDown()
 	{
-		Application.Exit();
+		System.Windows.Forms.Application.Exit();
 	}
 
 	public bool Run()
@@ -333,6 +338,19 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		scene.OnWPFKeyUp += Scene_OnWPFKeyUp;
 		service2.ActiveScene = scene;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
+		try
+		{
+			if (System.Windows.Application.Current == null)
+			{
+				new System.Windows.Application();
+			}
+			Uri resourceLocator = new Uri("Redbox.Rental.UI;component/Assets/StyleDictionary.xaml", UriKind.Relative);
+			System.Windows.Application.Current.Resources.MergedDictionaries.Add(System.Windows.Application.LoadComponent(resourceLocator) as ResourceDictionary);
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("E006", "Unable to load WPF resource dictionary.", e));
+		}
 		if (!ResourceBundleService.Instance.IsPendingBundleSwitch() && ResourceBundleService.Instance.DefaultBundleName == null)
 		{
 			errorList.AddRange(SelectBundle());
@@ -402,7 +420,13 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		CommandHelper.Initialize();
 		UserSettingsStore.Instance.RootPath = "SOFTWARE\\Redbox\\REDS\\Kiosk Engine";
 		MachineSettingsStore.Instance.RootPath = "SOFTWARE\\Redbox\\REDS\\Kiosk Engine";
-		errorList.AddRange(KernelExtensionService.Instance.Initialize(Application.ExecutablePath));
+		errorList.AddRange(KernelExtensionService.Instance.Initialize(new List<Type>
+		{
+			typeof(BrokerServicesHost),
+			typeof(HardwareServicesHost),
+			typeof(KioskServicesHost),
+			typeof(UpdateServicesHost)
+		}));
 		errorList.AddRange(InitializeConfiguration());
 		ServiceLocator.Instance.AddService(typeof(IEngineApplication), this);
 		ServiceLocator.Instance.AddService(typeof(IObjectCacheService), ObjectCacheService.Instance);
@@ -447,7 +471,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		errorList.AddRange(ShoppingSessionService.Instance.Initialize(Path.Combine(service["RunningPath"], "session.data")));
 		errorList.AddRange(DebugService.Instance.Initialize());
 		errorList.AddRange(KernelExtensionService.Instance.LoadAllExtensions());
-		Redbox.KioskEngine.ComponentModel.ErrorList errorList2 = ResourceBundleService.Instance.Initialize(Application.ExecutablePath);
+		Redbox.KioskEngine.ComponentModel.ErrorList errorList2 = ResourceBundleService.Instance.Initialize(System.Windows.Forms.Application.ExecutablePath);
 		if (errorList2.ContainsError())
 		{
 			errorList.AddRange(errorList2);
@@ -493,17 +517,19 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), instance);
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
 			ServiceLocator.Instance.AddService(typeof(IStoreManager), storeManagerService);
+			RentalHealthService instance2 = new RentalHealthService();
+			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance2);
 			KernelHelperService kernelHelperService = new KernelHelperService();
 			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
 			BlockListData blockListData = new BlockListData(service);
 			ServiceLocator.Instance.AddService(typeof(IBlockListData), blockListData);
-			BlockListService instance2 = new BlockListService(storeManagerService, blockListData);
-			ServiceLocator.Instance.AddService(typeof(IBlockList), instance2);
+			BlockListService instance3 = new BlockListService(storeManagerService, blockListData);
+			ServiceLocator.Instance.AddService(typeof(IBlockList), instance3);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IInventoryData), inventoryData);
-			InventoryService instance3 = new InventoryService(inventoryData);
-			ServiceLocator.Instance.AddService(typeof(IInventory), instance3);
+			InventoryService instance4 = new InventoryService(inventoryData);
+			ServiceLocator.Instance.AddService(typeof(IInventory), instance4);
 			string directoryName = Path.GetDirectoryName(typeof(DataService).Assembly.Location);
 			string dataPath = Path.Combine(directoryName, "..\\data");
 			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(dataPath, "ProfileImages\\"), new CacheData(), new KioskData(service));
@@ -624,7 +650,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList result = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		SelectBundleForm selectBundleForm = new SelectBundleForm();
-		selectBundleForm.SearchPath = EnumerableExtensions.Join(ResourceBundleService.Instance.SearchPath, ";");
+		selectBundleForm.SearchPath = ResourceBundleService.Instance.SearchPath.Join(";");
 		SelectBundleForm selectBundleForm2 = selectBundleForm;
 		selectBundleForm2.ShowDialog();
 		if (selectBundleForm2.SelectedBundle != null)
@@ -832,7 +858,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				base.MainForm.Close();
 			}
 		};
-		Application.ThreadException += delegate(object sender, ThreadExceptionEventArgs e)
+		System.Windows.Forms.Application.ThreadException += delegate(object sender, ThreadExceptionEventArgs e)
 		{
 			try
 			{
@@ -851,9 +877,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				LogHelper.Instance.Log("Unable to save the active shopping session.", e3);
 			}
 			LogHelper.Instance.Log("An unhandled exception was rasied in the Application.ThreadException handler.", e.Exception);
-			MessageBox.Show(e.Exception.ToString());
+			System.Windows.Forms.MessageBox.Show(e.Exception.ToString());
 		};
-		Application.Idle += OnIdle;
+		System.Windows.Forms.Application.Idle += OnIdle;
 	}
 
 	private static void InitializePreferencePages()
@@ -861,7 +887,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
 		if (service != null)
 		{
-			service.AddPreferencePage("EngineCore_General", "Store", "Engine Core/General", PreferencePageTarget.LocalSystem, new GeneralPreferencePage());
+			service.AddPreferencePage("EngineCore_General", "Store", "Engine Core/General", PreferencePageTarget.LocalSystem, new Redbox.KioskEngine.IDE.GeneralPreferencePage());
 			service.AddPreferencePage("EngineCore_Ide", "Ide", "Engine Core/IDE", PreferencePageTarget.LocalSystem, new IdePreferencePage());
 			service.AddPreferencePage("EngineCore_Resource", "Resource", "Engine Core/Resource", PreferencePageTarget.LocalSystem, new ResourcePreferencePage());
 		}

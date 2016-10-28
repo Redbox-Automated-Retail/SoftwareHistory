@@ -228,7 +228,7 @@ public class PropInPlaceTextbox : TextBox, IInPlaceControl
 			}
 			break;
 		}
-		return base.ProcessCmdKey(ref msg, keyData);
+		return ProcessCmdKey(ref msg, keyData);
 	}
 
 	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]

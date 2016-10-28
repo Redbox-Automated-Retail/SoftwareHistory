@@ -159,7 +159,7 @@ public class PropertyValue
 	{
 		get
 		{
-			if (mUnderlyingType == null)
+			if ((object)mUnderlyingType == null)
 			{
 				mUnderlyingType = UnderlyingValue?.GetType();
 			}
@@ -940,13 +940,13 @@ public class PropertyValue
 		{
 			Type[] array = new Type[1] { typeof(Type) };
 			Type typeFromName = Utilities.GetTypeFromName(editorAttribute.EditorTypeName, UnderlyingType);
-			if (typeFromName == null)
+			if ((object)typeFromName == null)
 			{
 				return;
 			}
-			if (typeFromName != null && typeFromName.IsSubclassOf(typeof(UITypeEditor)))
+			if ((object)typeFromName != null && typeFromName.IsSubclassOf(typeof(UITypeEditor)))
 			{
-				if (typeFromName.GetConstructor(array) != null)
+				if ((object)typeFromName.GetConstructor(array) != null)
 				{
 					_uiTypeEditor = (UITypeEditor)TypeDescriptor.CreateInstance(null, typeFromName, array, new object[1] { UnderlyingType });
 				}
@@ -978,19 +978,19 @@ public class PropertyValue
 	public void SetAttribute(Attribute attr)
 	{
 		AttributeUsageAttribute attributeUsageAttribute = (AttributeUsageAttribute)TypeDescriptor.GetAttributes(attr)[typeof(AttributeUsageAttribute)];
-		if (!attributeUsageAttribute.AllowMultiple || attr.GetType() == typeof(EditorAttribute))
+		if (!attributeUsageAttribute.AllowMultiple || (object)attr.GetType() == typeof(EditorAttribute))
 		{
 			SetSingleAttribute(attr);
-			if (attr.GetType() == typeof(EditorAttribute) && OwnerEnumerator != null)
+			if ((object)attr.GetType() == typeof(EditorAttribute) && OwnerEnumerator != null)
 			{
 				InitializeUITypeEditor();
 				Feel = Grid.Grid.FindFeel(OwnerEnumerator.Parent, OwnerEnumerator);
 			}
-			else if (attr.GetType() == typeof(TypeConverterAttribute))
+			else if ((object)attr.GetType() == typeof(TypeConverterAttribute))
 			{
 				mConverter = null;
 			}
-			else if (attr.GetType() == typeof(DefaultValueAttribute))
+			else if ((object)attr.GetType() == typeof(DefaultValueAttribute))
 			{
 				Grid.Grid.HandleDefaultValue(OwnerEnumerator);
 			}
@@ -1020,12 +1020,12 @@ public class PropertyValue
 			}
 		}
 		arrayList.Add(attr);
-		if (attr.GetType() == typeof(PropertyValueDisplayedAsAttribute))
+		if ((object)attr.GetType() == typeof(PropertyValueDisplayedAsAttribute))
 		{
 			ClearStandardValues();
 			ExtractDisplayedValues(dontTriggerEvent: true);
 		}
-		else if (attr.GetType() == typeof(PropertyValidatorAttribute))
+		else if ((object)attr.GetType() == typeof(PropertyValidatorAttribute))
 		{
 			Validator = (attr as PropertyValidatorAttribute).Validator;
 		}
@@ -1034,19 +1034,19 @@ public class PropertyValue
 	public void DeleteAttribute(Attribute attr)
 	{
 		AttributeUsageAttribute attributeUsageAttribute = (AttributeUsageAttribute)TypeDescriptor.GetAttributes(attr)[typeof(AttributeUsageAttribute)];
-		if (!attributeUsageAttribute.AllowMultiple || attr.GetType() == typeof(EditorAttribute))
+		if (!attributeUsageAttribute.AllowMultiple || (object)attr.GetType() == typeof(EditorAttribute))
 		{
 			DeleteSingleAttribute(attr);
-			if (attr.GetType() == typeof(EditorAttribute))
+			if ((object)attr.GetType() == typeof(EditorAttribute))
 			{
 				InitializeUITypeEditor();
 				Feel = Grid.Grid.FindFeel(OwnerEnumerator.Parent, OwnerEnumerator);
 			}
-			else if (attr.GetType() == typeof(TypeConverterAttribute))
+			else if ((object)attr.GetType() == typeof(TypeConverterAttribute))
 			{
 				mConverter = null;
 			}
-			else if (attr.GetType() == typeof(DefaultValueAttribute))
+			else if ((object)attr.GetType() == typeof(DefaultValueAttribute))
 			{
 				Grid.Grid.HandleDefaultValue(OwnerEnumerator);
 			}
@@ -1909,7 +1909,7 @@ public class PropertyValue
 				foreach (object obj in array3)
 				{
 					FieldInfo fieldInfo2 = (FieldInfo)hashtable[obj.ToString()];
-					if (fieldInfo2 == null)
+					if ((object)fieldInfo2 == null)
 					{
 						continue;
 					}

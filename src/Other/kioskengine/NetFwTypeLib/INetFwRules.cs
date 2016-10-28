@@ -5,8 +5,9 @@ using System.Runtime.InteropServices;
 namespace NetFwTypeLib;
 
 [ComImport]
-[TypeLibType(4160)]
 [Guid("9C4C6277-5027-441E-AFAE-CA1F542DA009")]
+[TypeLibType(4160)]
+[ComVisible(true)]
 public interface INetFwRules : IEnumerable
 {
 	[DispId(1)]
@@ -31,8 +32,8 @@ public interface INetFwRules : IEnumerable
 	INetFwRule Item([In][MarshalAs(UnmanagedType.BStr)] string Name);
 
 	[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
-	[TypeLibFunc(1)]
 	[DispId(-4)]
-	[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalType = "System.Runtime.InteropServices.CustomMarshalers.EnumeratorToEnumVariantMarshaler, CustomMarshalers, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
+	[TypeLibFunc(1)]
+	[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalType = "System.Runtime.InteropServices.CustomMarshalers.EnumeratorToEnumVariantMarshaler, CustomMarshalers, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
 	new IEnumerator GetEnumerator();
 }

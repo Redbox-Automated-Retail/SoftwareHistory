@@ -163,7 +163,7 @@ internal static class QueueFunctions
 		string currentCardHashId = service2.GenerateCardHashId();
 		errors = service.ForEach(delegate(IMessage m)
 		{
-			Dictionary<string, object> dictionary = StringExtensions.ToDictionary(Encoding.ASCII.GetString(m.Data));
+			Dictionary<string, object> dictionary = Encoding.ASCII.GetString(m.Data).ToDictionary();
 			if (dictionary.ContainsKey("CreditCard"))
 			{
 				IDictionary<string, object> dictionary2 = (IDictionary<string, object>)dictionary["CreditCard"];

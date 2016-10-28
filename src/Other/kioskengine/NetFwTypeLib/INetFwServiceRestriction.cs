@@ -6,6 +6,7 @@ namespace NetFwTypeLib;
 [ComImport]
 [TypeLibType(4160)]
 [Guid("8267BBE3-F890-491C-B7B6-2DB1EF0E5D2B")]
+[ComVisible(true)]
 public interface INetFwServiceRestriction
 {
 	[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]

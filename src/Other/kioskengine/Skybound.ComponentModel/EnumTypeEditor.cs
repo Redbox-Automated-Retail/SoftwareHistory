@@ -338,7 +338,7 @@ internal class EnumTypeEditor : UITypeEditor
 			}
 		}
 		Attribute[] array = null;
-		if (type != null && Activator.CreateInstance(type) is x9adde36402496575 x9adde364024965752)
+		if ((object)type != null && Activator.CreateInstance(type) is x9adde36402496575 x9adde364024965752)
 		{
 			array = x9adde364024965752.GetAttributes(Enum.Parse(x7cbaa9e36b617ca7, xc15bd84e01929885, ignoreCase: false));
 		}

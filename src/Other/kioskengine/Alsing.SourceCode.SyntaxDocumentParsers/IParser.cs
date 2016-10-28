@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.SourceCode.SyntaxDocumentParsers;
 
+[ComVisible(true)]
 public interface IParser
 {
 	SyntaxDocument Document { get; set; }

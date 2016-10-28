@@ -6,6 +6,7 @@ namespace NetFwTypeLib;
 [ComImport]
 [TypeLibType(4160)]
 [Guid("D4BECDDF-6F73-4A83-B832-9C66874CD20E")]
+[ComVisible(true)]
 public interface INetFwRemoteAdminSettings
 {
 	[DispId(1)]

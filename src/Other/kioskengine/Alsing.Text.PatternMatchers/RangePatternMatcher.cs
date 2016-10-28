@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class RangePatternMatcher : PatternMatcherBase
 {
 	public override string[] DefaultPrefixes => new string[1] { StartChar.ToString() };

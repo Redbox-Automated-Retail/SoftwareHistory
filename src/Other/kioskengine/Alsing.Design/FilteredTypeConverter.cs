@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace Alsing.Design;
 
+[ComVisible(true)]
 public class FilteredTypeConverter : TypeConverter
 {
 	protected virtual void FilterProperties(IDictionary Properties, object value)

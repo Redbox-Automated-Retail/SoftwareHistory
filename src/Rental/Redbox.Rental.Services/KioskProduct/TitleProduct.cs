@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Redbox.Core;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
@@ -78,6 +80,60 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
+	public bool IsSellable
+	{
+		get
+		{
+			if (!SellThru)
+			{
+				return false;
+			}
+			if (IsGame)
+			{
+				if (GamePurchasePrice <= 0m)
+				{
+					return false;
+				}
+				if (!SellThruDate.HasValue)
+				{
+					return false;
+				}
+				if (SellThruDate > DateTime.Now)
+				{
+					return false;
+				}
+			}
+			if (IsMovie)
+			{
+				if (!_store.Sellthru)
+				{
+					return false;
+				}
+				if (MoviePurchasePrice <= 0m)
+				{
+					return false;
+				}
+				if (!SellThruDate.HasValue)
+				{
+					IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
+					if (service == null)
+					{
+						return false;
+					}
+					if ((DateTime.Now - MerchandiseDate).TotalDays < (double)service.GetSellThruDays())
+					{
+						return false;
+					}
+				}
+				if (SellThruDate.HasValue && SellThruDate > DateTime.Now)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
 	public decimal GamePurchasePrice
 	{
 		get
@@ -98,7 +154,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return 0m;
 			}
-			return GetAdjustedPurchasePrice(_store.PurchasePrice);
+			return GetAdjustedPurchasePrice(SellThruPrice ?? _store.PurchasePrice);
 		}
 	}
 
@@ -115,8 +171,6 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			return _title.DoNotRentDate <= DateTime.Now;
 		}
 	}
-
-	public bool CanBeSold => _titleCache.CanBeSold;
 
 	public bool IsAvailable => DateTime.Now > MerchandiseDate;
 
@@ -203,7 +257,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		{
 			return price;
 		}
-		if (_store.State == "MD" || _store.State == "SC")
+		if (_store.State == "MD")
 		{
 			decimal purchaseTaxRate = _store.PurchaseTaxRate;
 			if (purchaseTaxRate > 0m)

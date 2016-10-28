@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text;
 
+[ComVisible(true)]
 public struct MatchResult
 {
 	public bool Found;

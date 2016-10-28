@@ -423,21 +423,21 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		{
 		case Keys.Home:
 		{
-			ITextToSpeechService service3 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service3 != null)
+			ITextToSpeechService service4 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service4 != null)
 			{
-				service3.AudioDeviceConnected = true;
-				IViewService service4 = ServiceLocator.Instance.GetService<IViewService>();
-				service3.RunSpeechWorkflow("tts_" + service4.PeekViewFrame().ViewName);
+				service4.AudioDeviceConnected = true;
+				IViewService service5 = ServiceLocator.Instance.GetService<IViewService>();
+				service4.RunSpeechWorkflow("tts_" + service5.PeekViewFrame().ViewName);
 			}
 			break;
 		}
 		case Keys.End:
 		{
-			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service2 != null)
+			ITextToSpeechService service3 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service3 != null)
 			{
-				service2.AudioDeviceConnected = false;
+				service3.AudioDeviceConnected = false;
 			}
 			break;
 		}
@@ -478,10 +478,10 @@ public class HostForm : Form, IFlashService, ITrackDataService
 				}
 				foreach (XmlNode item2 in xmlNodeList2)
 				{
-					string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item2, "name");
+					string attributeValue = item2.GetAttributeValue<string>("name");
 					if (attributeValue == "F4PasswordHash")
 					{
-						text = XmlNodeExtensions.GetNodeValue(item2, string.Empty);
+						text = item2.GetNodeValue(string.Empty);
 						break;
 					}
 				}
@@ -523,6 +523,34 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		case Keys.F8:
 			ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.ToggleTouchScreen();
 			break;
+		case Keys.F10:
+		{
+			IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
+			string name = "ADA Line";
+			service2.ActiveScene.SuspendDrawing();
+			IActor actor = service2.ActiveScene.GetActor(name);
+			if (actor != null)
+			{
+				service2.ActiveScene.Remove(actor);
+			}
+			else
+			{
+				IActor actor2 = service2.ActiveScene.CreateActor();
+				actor2.Name = name;
+				actor2.Y = 286;
+				actor2.X = 0;
+				actor2.Width = 1024;
+				actor2.Height = 3;
+				actor2.BackgroundColor = Color.GreenYellow;
+				actor2.Visible = true;
+				actor2.HitFlags = HitTestFlags.None;
+				actor2.ForegroundColor = Color.GreenYellow;
+				actor2.OptionFlags = RenderOptionFlags.Background;
+				service2.ActiveScene.AddLast(actor2);
+			}
+			service2.ActiveScene.ResumeDrawing();
+			break;
+		}
 		case Keys.F11:
 			if (m_isCursorHidden)
 			{

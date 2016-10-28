@@ -451,6 +451,8 @@ public static class KioskProductExtensions
 			["closed_captioned"] = product.ClosedCaptioned,
 			["merchandise_date"] = product.MerchandiseDate,
 			["do_not_rent_date"] = product.DoNotRentDate,
+			["is_sellable"] = product.IsSellable,
+			["purchase_price"] = (product.IsMovie ? product.MoviePurchasePrice : product.GamePurchasePrice),
 			["sell_thru"] = product.SellThru,
 			["sell_thru_new"] = product.SellThruNew,
 			["sellthru_date"] = product.SellThruDate,
@@ -459,7 +461,6 @@ public static class KioskProductExtensions
 			["sub_platform_id"] = product.SubPlatformId,
 			["number_of_players_text"] = product.NumberOfPlayersText,
 			["do_not_rent"] = product.DoNotRent,
-			["can_be_sold"] = product.CanBeSold,
 			["is_available"] = product.IsAvailable,
 			["coming_soon"] = product.ComingSoon,
 			["in_stock"] = product.InStock,
@@ -508,6 +509,7 @@ public static class KioskProductExtensions
 			["closed_captioned"] = product.ClosedCaptioned,
 			["merchandise_date"] = product.MerchandiseDate,
 			["do_not_rent_date"] = product.DoNotRentDate,
+			["is_sellable"] = product.IsSellable,
 			["sell_thru"] = product.SellThru,
 			["sell_thru_new"] = product.SellThruNew,
 			["sellthru_date"] = product.SellThruDate,
@@ -516,7 +518,6 @@ public static class KioskProductExtensions
 			["sub_platform_id"] = product.SubPlatformId,
 			["number_of_players_text"] = product.NumberOfPlayersText,
 			["do_not_rent"] = product.DoNotRent,
-			["can_be_sold"] = product.CanBeSold,
 			["is_available"] = product.IsAvailable,
 			["coming_soon"] = product.ComingSoon,
 			["in_stock"] = product.InStock,
@@ -555,6 +556,7 @@ public static class KioskProductExtensions
 		dict["closed_captioned"] = product.ClosedCaptioned;
 		dict["merchandise_date"] = product.MerchandiseDate;
 		dict["do_not_rent_date"] = product.DoNotRentDate;
+		dict["is_sellable"] = product.IsSellable;
 		dict["sell_thru"] = product.SellThru;
 		dict["sell_thru_new"] = product.SellThruNew;
 		dict["sellthru_date"] = product.SellThruDate;
@@ -565,7 +567,6 @@ public static class KioskProductExtensions
 		dict["do_not_rent"] = product.DoNotRent;
 		dict["is_game"] = product.IsGame;
 		dict["is_movie"] = product.IsMovie;
-		dict["can_be_sold"] = product.CanBeSold;
 		dict["is_available"] = product.IsAvailable;
 		dict["coming_soon"] = product.ComingSoon;
 		dict["in_stock"] = product.InStock;

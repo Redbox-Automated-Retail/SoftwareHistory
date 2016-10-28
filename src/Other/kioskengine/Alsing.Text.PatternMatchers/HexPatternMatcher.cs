@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class HexPatternMatcher : PatternMatcherBase
 {
 	public static readonly HexPatternMatcher Default = new HexPatternMatcher();

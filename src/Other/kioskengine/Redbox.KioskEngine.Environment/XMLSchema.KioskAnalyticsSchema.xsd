@@ -98,6 +98,12 @@
                   <xs:attribute name="response" type="xs:string" />
                 </xs:complexType>
               </xs:element>
+              <xs:element name="preauth" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:attribute name="online" type="xs:string" />
+                  <xs:attribute name="timestamp" type="xs:string" />
+                </xs:complexType>
+              </xs:element>
             </xs:choice>
           </xs:complexType>
         </xs:element>

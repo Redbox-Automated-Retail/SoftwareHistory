@@ -1314,15 +1314,15 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 	{
 		get
 		{
-			if (DrawManager.GetType() == typeof(DotnetDrawManager))
+			if ((object)DrawManager.GetType() == typeof(DotnetDrawManager))
 			{
 				return DrawManagers.DotnetDrawManager;
 			}
-			if (DrawManager.GetType() == typeof(LightColorDrawManager))
+			if ((object)DrawManager.GetType() == typeof(LightColorDrawManager))
 			{
 				return DrawManagers.LightColorDrawManager;
 			}
-			if (DrawManager.GetType() == typeof(DefaultDrawManager))
+			if ((object)DrawManager.GetType() == typeof(DefaultDrawManager))
 			{
 				return DrawManagers.DefaultDrawManager;
 			}
@@ -1533,7 +1533,7 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 					foreach (object targetInstance in selectedObjects2)
 					{
 						PropertyDescriptorCollection propertyDescriptors2 = GetPropertyDescriptors(null, targetInstance, null, null);
-						if (PropertyComparer.GetType() == typeof(PropertyComparerNoSort))
+						if ((object)PropertyComparer.GetType() == typeof(PropertyComparerNoSort))
 						{
 							(PropertyComparer as PropertyComparerNoSort).OriginalCollection = propertyDescriptors2;
 						}
@@ -2428,7 +2428,7 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 	public PropertyLook GetRegisteredLookAttachment(Type valueType)
 	{
 		Type type = (Type)_registeredLookAttachments[valueType];
-		if (type != null)
+		if ((object)type != null)
 		{
 			return (PropertyLook)Activator.CreateInstance(type);
 		}
@@ -2470,7 +2470,7 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 				}
 			}
 		}
-		if (propertyDropDownContentAttribute != null && propertyDropDownContentAttribute.ControlType != null)
+		if (propertyDropDownContentAttribute != null && (object)propertyDropDownContentAttribute.ControlType != null)
 		{
 			Control control;
 			try
@@ -2487,7 +2487,7 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 			}
 		}
 		Type type = ((!underlyingType.IsEnum) ? ((Type)_registeredDropDownContent[underlyingType]) : ((Type)_registeredDropDownContent[typeof(Enum)]));
-		if (type == null)
+		if ((object)type == null)
 		{
 			type = typeof(DropDownContentListBox);
 		}
@@ -3283,32 +3283,32 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 
 	private void OnGridMouseMove(object sender, MouseEventArgs e)
 	{
-		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseMove(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
+		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseMove(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
 	}
 
 	private void OnGridMouseDown(object sender, MouseEventArgs e)
 	{
-		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseDown(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
+		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseDown(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
 	}
 
 	private void OnGridMouseUp(object sender, MouseEventArgs e)
 	{
-		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseUp(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
+		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseUp(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
 	}
 
 	private void OnGridMouseClick(object sender, MouseEventArgs e)
 	{
-		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseClick(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
+		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseClick(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
 	}
 
 	private void OnGridMouseDoubleClick(object sender, MouseEventArgs e)
 	{
-		Point point2 = PointFromInternalGrid(new Point(e.X, e.Y));
-		OnMouseDoubleClick(new MouseEventArgs(e.Button, e.Clicks, point2.X, point2.Y, e.Delta));
+		Point point = PointFromInternalGrid(new Point(e.X, e.Y));
+		OnMouseDoubleClick(new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
 	}
 
 	private void OnGridMouseEnter(object sender, EventArgs e)
@@ -3615,7 +3615,7 @@ public class PropertyGrid : ContainerControl, ISupportInitialize
 		}
 		foreach (Attribute attribute in pd1.Attributes)
 		{
-			if ((attribute.GetType() == typeof(PropertyFeelAttribute) || attribute.GetType() == typeof(PropertyLookAttribute) || attribute.GetType() == typeof(ValueAddedToPropertyAttribute) || attribute.GetType() == typeof(PropertyDisableAttribute) || attribute.GetType() == typeof(PropertyDropDownContentAttribute) || attribute.GetType() == typeof(PropertyHideAttribute) || attribute.GetType() == typeof(PropertyValidatorAttribute) || attribute.GetType() == typeof(PropertyValueDisplayedAsAttribute) || attribute.GetType() == typeof(ShowChildPropertiesAttribute)) && !pd2.Attributes.Matches(attribute))
+			if (((object)attribute.GetType() == typeof(PropertyFeelAttribute) || (object)attribute.GetType() == typeof(PropertyLookAttribute) || (object)attribute.GetType() == typeof(ValueAddedToPropertyAttribute) || (object)attribute.GetType() == typeof(PropertyDisableAttribute) || (object)attribute.GetType() == typeof(PropertyDropDownContentAttribute) || (object)attribute.GetType() == typeof(PropertyHideAttribute) || (object)attribute.GetType() == typeof(PropertyValidatorAttribute) || (object)attribute.GetType() == typeof(PropertyValueDisplayedAsAttribute) || (object)attribute.GetType() == typeof(ShowChildPropertiesAttribute)) && !pd2.Attributes.Matches(attribute))
 			{
 				return false;
 			}

@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Alsing.Windows;
 
 namespace Alsing.Globalization;
 
+[ComVisible(true)]
 public class IMEWindow
 {
 	private const int CFS_POINT = 2;

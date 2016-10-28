@@ -2,12 +2,14 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Alsing.Windows;
 using Alsing.Windows.Forms;
 
 namespace Alsing.Drawing;
 
+[ComVisible(true)]
 public static class DrawingTools
 {
 	public static Color MixColors(Color c1, Color c2, double mix)

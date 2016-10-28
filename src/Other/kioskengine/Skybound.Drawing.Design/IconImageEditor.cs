@@ -168,7 +168,7 @@ internal class IconImageEditor : UITypeEditor, IMessageFilter
 	private OpenFileDialog x7874f73222d60c69(Form xa6607dfd4b3038ad)
 	{
 		PropertyInfo property = xa6607dfd4b3038ad.GetType().GetProperty("OpenFileDialog", BindingFlags.Instance | BindingFlags.NonPublic);
-		if (property != null)
+		if ((object)property != null)
 		{
 			return property.GetValue(xa6607dfd4b3038ad, null) as OpenFileDialog;
 		}

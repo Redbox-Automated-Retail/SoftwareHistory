@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class GDIBrushes
 {
 	public static GDIBrush Black => new GDIBrush(0);

@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public sealed class PatternList : IEnumerable
 {
 	private readonly PatternCollection patterns = new PatternCollection();

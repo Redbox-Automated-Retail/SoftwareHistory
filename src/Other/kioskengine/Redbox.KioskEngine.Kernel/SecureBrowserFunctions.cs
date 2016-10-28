@@ -11,14 +11,19 @@ internal static class SecureBrowserFunctions
 	[KernelFunction(Name = "kernel.launchsecurebrowser")]
 	internal static void LaunchSecureBrowser(LuaTable approvedUrls, NavigateUrlCallback navigateUrlCallback)
 	{
-		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		bool value = false;
+		bool flag = service?.TryGetValue<bool>("system", "General", "DisableFieldVisitForm", out value) ?? false;
 		Dictionary<string, string> dictionary = new Dictionary<string, string>();
 		for (int i = 1; i <= approvedUrls.Keys.Count; i++)
 		{
 			LuaTable luaTable = (LuaTable)approvedUrls[i];
-			dictionary[(string)luaTable["title"]] = (string)luaTable["url"];
+			if (!(flag & value) || !((string)luaTable["title"] == "------------Field Visit Form------------"))
+			{
+				dictionary[(string)luaTable["title"]] = (string)luaTable["url"];
+			}
 		}
-		service.LaunchSecureBrowser(dictionary, navigateUrlCallback);
+		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>().LaunchSecureBrowser(dictionary, navigateUrlCallback);
 		approvedUrls.Dispose();
 	}
 

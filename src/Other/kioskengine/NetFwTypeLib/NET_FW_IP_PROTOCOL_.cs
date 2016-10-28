@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace NetFwTypeLib;
 
+[ComVisible(true)]
 public enum NET_FW_IP_PROTOCOL_
 {
 	NET_FW_IP_PROTOCOL_TCP = 6,

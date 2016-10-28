@@ -103,7 +103,7 @@ public class SchedulerService : ISchedulerService
 				return m_entries;
 			}
 			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			m_entries = ((service == null) ? new List<SchedulerEntry>() : StringExtensions.ToObject<List<SchedulerEntry>>(service.GetValue("Core", "SchedulerEntries", "[]")));
+			m_entries = ((service == null) ? new List<SchedulerEntry>() : service.GetValue("Core", "SchedulerEntries", "[]").ToObject<List<SchedulerEntry>>());
 			return m_entries ?? new List<SchedulerEntry>();
 		}
 		set
@@ -217,7 +217,7 @@ public class SchedulerService : ISchedulerService
 		{
 			return false;
 		}
-		service.SetValue("Core", "SchedulerEntries", ObjectExtensions.ToJson(m_entries));
+		service.SetValue("Core", "SchedulerEntries", m_entries.ToJson());
 		return true;
 	}
 

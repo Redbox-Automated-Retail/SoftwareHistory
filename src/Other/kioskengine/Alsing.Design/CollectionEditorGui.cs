@@ -3,12 +3,14 @@ using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
 using System.Resources;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
 
 namespace Alsing.Design;
 
 [ToolboxItem(false)]
+[ComVisible(true)]
 public class CollectionEditorGui : UserControl
 {
 	public Button btnAdd;

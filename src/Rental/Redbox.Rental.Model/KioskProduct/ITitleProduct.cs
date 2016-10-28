@@ -55,6 +55,8 @@ public interface ITitleProduct : IKioskProduct
 
 	bool IsMovie { get; }
 
+	bool IsSellable { get; }
+
 	decimal GamePurchasePrice { get; }
 
 	decimal MoviePurchasePrice { get; }
@@ -68,8 +70,6 @@ public interface ITitleProduct : IKioskProduct
 	decimal? SellThruPrice { get; }
 
 	bool DoNotRent { get; }
-
-	bool CanBeSold { get; }
 
 	bool IsAvailable { get; }
 

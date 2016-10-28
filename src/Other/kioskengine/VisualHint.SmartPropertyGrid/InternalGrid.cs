@@ -994,7 +994,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 			nCCALCSIZE_PARAMS.rgrc0.Right = rect.X + rect.Width;
 			nCCALCSIZE_PARAMS.rgrc0.Top = rect.Y;
 			nCCALCSIZE_PARAMS.rgrc0.Bottom = rect.Y + rect.Height;
-			Marshal.StructureToPtr(nCCALCSIZE_PARAMS, m.LParam, fDeleteOld: false);
+			Marshal.StructureToPtr((object)nCCALCSIZE_PARAMS, m.LParam, false);
 		}
 		else if (m.Msg == 78)
 		{
@@ -1037,7 +1037,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 			Rectangle clientRectangle = base.ClientRectangle;
 			int num4 = clientRectangle.Height / _basicPropertyHeight;
 			Win32Calls.SCROLLINFO lpScrollInfo = default(Win32Calls.SCROLLINFO);
-			lpScrollInfo.cbSize = Marshal.SizeOf(lpScrollInfo);
+			lpScrollInfo.cbSize = Marshal.SizeOf((object)lpScrollInfo);
 			lpScrollInfo.fMask = 3;
 			Win32Calls.GetScrollInfo(base.Handle, 1, ref lpScrollInfo);
 			switch (num3)
@@ -1176,7 +1176,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 	{
 		_scrollingInProgress = true;
 		Win32Calls.SCROLLINFO lpScrollInfo = default(Win32Calls.SCROLLINFO);
-		lpScrollInfo.cbSize = Marshal.SizeOf(lpScrollInfo);
+		lpScrollInfo.cbSize = Marshal.SizeOf((object)lpScrollInfo);
 		lpScrollInfo.fMask = 3;
 		Win32Calls.GetScrollInfo(base.Handle, 1, ref lpScrollInfo);
 		if (lpScrollInfo.nPage > 0 && Win32Calls.GetScrollPos(base.Handle, 1) < lpScrollInfo.nMax - (lpScrollInfo.nPage - 1))
@@ -1204,7 +1204,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 	{
 		_scrollingInProgress = true;
 		Win32Calls.SCROLLINFO lpScrollInfo = default(Win32Calls.SCROLLINFO);
-		lpScrollInfo.cbSize = Marshal.SizeOf(lpScrollInfo);
+		lpScrollInfo.cbSize = Marshal.SizeOf((object)lpScrollInfo);
 		lpScrollInfo.fMask = 3;
 		Win32Calls.GetScrollInfo(base.Handle, 1, ref lpScrollInfo);
 		if (Win32Calls.GetScrollPos(base.Handle, 1) > 0)
@@ -1353,7 +1353,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 		{
 			if (item.ChildPropertyName.Length == 0)
 			{
-				if (item.LookType == null)
+				if ((object)item.LookType == null)
 				{
 					return null;
 				}
@@ -2419,7 +2419,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 				else if (IsScrollbarVisible())
 				{
 					Win32Calls.SCROLLINFO lpScrollInfo = default(Win32Calls.SCROLLINFO);
-					lpScrollInfo.cbSize = Marshal.SizeOf(lpScrollInfo);
+					lpScrollInfo.cbSize = Marshal.SizeOf((object)lpScrollInfo);
 					lpScrollInfo.fMask = 2;
 					Win32Calls.GetScrollInfo(base.Handle, 1, ref lpScrollInfo);
 					num = lpScrollInfo.nPage - 1;
@@ -3274,7 +3274,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 					itemRect2 = GetItemRect(visibleDeepEnumerator3);
 				}
 				Win32Calls.SCROLLINFO lpScrollInfo = default(Win32Calls.SCROLLINFO);
-				lpScrollInfo.cbSize = Marshal.SizeOf(lpScrollInfo);
+				lpScrollInfo.cbSize = Marshal.SizeOf((object)lpScrollInfo);
 				lpScrollInfo.fMask = 3;
 				Win32Calls.GetScrollInfo(base.Handle, 1, ref lpScrollInfo);
 				int scrollPos = Win32Calls.GetScrollPos(base.Handle, 1);
@@ -3543,7 +3543,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 	private bool TryOnForbidClickThrough(Point pt)
 	{
 		MethodInfo method = _currentInPlaceControl.GetType().GetMethod("OnForbidClickThrough");
-		if (method != null)
+		if ((object)method != null)
 		{
 			return (bool)method.Invoke(_currentInPlaceControl, new object[1] { pt });
 		}
@@ -3647,7 +3647,7 @@ internal class InternalGrid : Control, IMouseHookClient, IMessageHookClient, IKe
 			return;
 		}
 		Win32Calls.SCROLLINFO lpsi = default(Win32Calls.SCROLLINFO);
-		lpsi.cbSize = Marshal.SizeOf(lpsi);
+		lpsi.cbSize = Marshal.SizeOf((object)lpsi);
 		int visibleLineCount = GetVisibleLineCount();
 		if (visibleLineCount > 1 && visibleLineCount * _basicPropertyHeight > clientRectangle.Height)
 		{

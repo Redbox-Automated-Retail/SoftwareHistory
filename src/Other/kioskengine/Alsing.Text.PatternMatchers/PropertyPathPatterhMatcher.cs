@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class PropertyPathPatterhMatcher : PatternMatcherBase
 {
 	public override int Match(string textToMatch, int matchAtIndex)

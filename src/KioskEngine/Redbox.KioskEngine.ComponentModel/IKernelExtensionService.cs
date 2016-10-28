@@ -10,13 +10,11 @@ public interface IKernelExtensionService
 
 	string[] SearchPath { get; set; }
 
-	ErrorList Initialize(string applicationPath);
+	ErrorList Initialize(List<Type> kernelExtensionHostTypes);
 
 	IKernelExtension GetExtension(Guid id);
 
-	ErrorList EnumerateExtensions(List<string> names);
-
-	ErrorList LoadExtension(string path, out string name);
+	ErrorList LoadExtension(Type extensionHostType);
 
 	ErrorList LoadAllExtensions();
 

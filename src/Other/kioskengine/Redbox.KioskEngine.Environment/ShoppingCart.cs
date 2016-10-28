@@ -44,6 +44,18 @@ internal sealed class ShoppingCart : IShoppingCart
 
 	public IDictionary<string, IShoppingCartLineItemGroup> Groups => m_groups;
 
+	public bool AuthAcceptFlag { get; internal set; }
+
+	public int AuthRuleId { get; internal set; }
+
+	public decimal AuthAmount { get; internal set; }
+
+	public bool SkipAuthRule { get; internal set; }
+
+	public bool PlayPassPromptAccepted { get; internal set; }
+
+	public int PlayPassPointsEarned { get; internal set; }
+
 	public ShoppingCart(Guid shoppingSessionId)
 	{
 		CreatedOn = DateTime.Now;
@@ -199,5 +211,21 @@ internal sealed class ShoppingCart : IShoppingCart
 	{
 		ReferenceNumber = referenceNumber;
 		LogHelper.Instance.Log("Set Reference Number on Shopping Cart for Shopping Session '{0}': referenceNumber={1}", ShoppingSessionId, referenceNumber);
+	}
+
+	public void SetVariableAuthValues(bool authAcceptFlag, int authRuleId, decimal authAmount, bool skipAuthRule)
+	{
+		LogHelper.Instance.Log("SetVariableAuthValues on Shopping Cart for Shopping Session '{0}': authAcceptFlag={1}, authRuleId={2}, authAmount={3}, skipAuthRule={4}", ShoppingSessionId, authAcceptFlag, authRuleId, authAmount, skipAuthRule);
+		AuthAcceptFlag = authAcceptFlag;
+		AuthRuleId = authRuleId;
+		AuthAmount = authAmount;
+		SkipAuthRule = skipAuthRule;
+	}
+
+	public void SetPlayPassPromptAccepted(bool playPassPromptAccepted, int playPassPointsEarned)
+	{
+		LogHelper.Instance.Log("SetPlayPassPromptAccepted on Shopping Cart for Shopping Session '{0}': playPassPromptAccepted={1}, playPassPointsEarned={2}", ShoppingSessionId, playPassPromptAccepted, playPassPointsEarned);
+		PlayPassPromptAccepted = playPassPromptAccepted;
+		PlayPassPointsEarned = playPassPointsEarned;
 	}
 }

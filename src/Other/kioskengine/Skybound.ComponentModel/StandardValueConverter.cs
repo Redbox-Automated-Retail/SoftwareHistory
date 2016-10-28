@@ -46,7 +46,7 @@ internal abstract class StandardValueConverter : TypeConverter
 
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 	{
-		if (destinationType != typeof(string) && destinationType != typeof(InstanceDescriptor))
+		if ((object)destinationType != typeof(string) && (object)destinationType != typeof(InstanceDescriptor))
 		{
 			return base.CanConvertTo(context, destinationType);
 		}
@@ -55,19 +55,19 @@ internal abstract class StandardValueConverter : TypeConverter
 
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
-		if (destinationType == typeof(string))
+		if ((object)destinationType == typeof(string))
 		{
 			PropertyInfo propertyInfo = x9c639476a525c3f4(value);
-			if (propertyInfo != null)
+			if ((object)propertyInfo != null)
 			{
 				return x6d5427cb1a81c070(propertyInfo);
 			}
 			throw new FormatException();
 		}
-		if (destinationType == typeof(InstanceDescriptor))
+		if ((object)destinationType == typeof(InstanceDescriptor))
 		{
 			PropertyInfo propertyInfo2 = x9c639476a525c3f4(value);
-			if (propertyInfo2 != null)
+			if ((object)propertyInfo2 != null)
 			{
 				return new InstanceDescriptor(propertyInfo2, null, isComplete: true);
 			}
@@ -101,7 +101,7 @@ internal abstract class StandardValueConverter : TypeConverter
 
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		if (sourceType != typeof(string))
+		if ((object)sourceType != typeof(string))
 		{
 			return base.CanConvertFrom(context, sourceType);
 		}

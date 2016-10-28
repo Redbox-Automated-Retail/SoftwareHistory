@@ -6,6 +6,7 @@ namespace NetFwTypeLib;
 [ComImport]
 [Guid("174A0DDA-E9F9-449D-993B-21AB667CA456")]
 [TypeLibType(4160)]
+[ComVisible(true)]
 public interface INetFwProfile
 {
 	[DispId(1)]

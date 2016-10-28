@@ -24,17 +24,15 @@ public class ExpressionEvaluator : ExpressionEvalBase
 	[Function("get-value")]
 	public string GetPropertyValue(string propertyName)
 	{
-		string propertyValue;
 		if (m_properties.IsDynamicProperty(propertyName))
 		{
-			string text = (string)m_state[propertyName];
-			if (text == "VISITING")
+			if ((string)m_state[propertyName] == "VISITING")
 			{
 				throw PropertyDictionary.CreateCircularException(propertyName, m_visiting);
 			}
 			m_visiting.Push(propertyName);
 			m_state[propertyName] = "VISITING";
-			propertyValue = m_properties.GetPropertyValue(propertyName);
+			string propertyValue = m_properties.GetPropertyValue(propertyName);
 			if (propertyValue == null)
 			{
 				throw new EvaluatorException(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1053"), propertyName));
@@ -45,16 +43,16 @@ public class ExpressionEvaluator : ExpressionEvalBase
 			m_state[propertyName] = "VISITED";
 			return propertyValue;
 		}
-		propertyValue = m_properties.GetPropertyValue(propertyName);
-		if (propertyValue == null)
+		string text = m_properties.GetPropertyValue(propertyName);
+		if (text == null)
 		{
 			if (m_properties.TreatUndefinedPropertyAsError)
 			{
 				throw new EvaluatorException(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1053"), propertyName));
 			}
-			propertyValue = string.Empty;
+			text = string.Empty;
 		}
-		return propertyValue;
+		return text;
 	}
 
 	protected override object EvaluateProperty(string propertyName)
@@ -74,8 +72,7 @@ public class ExpressionEvaluator : ExpressionEvalBase
 			{
 				return methodInfo.Invoke(this, args);
 			}
-			ConstructorInfo constructor = methodInfo.DeclaringType.GetConstructor(new Type[1] { typeof(PropertyDictionary) });
-			object obj = constructor.Invoke(new object[1] { m_properties });
+			object obj = methodInfo.DeclaringType.GetConstructor(new Type[1] { typeof(PropertyDictionary) }).Invoke(new object[1] { m_properties });
 			return methodInfo.Invoke(obj, args);
 		}
 		catch (TargetInvocationException ex)

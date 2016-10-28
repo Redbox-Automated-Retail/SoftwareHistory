@@ -140,8 +140,7 @@ public class CommandLine : IDisposable
 			num++;
 		}
 		while (num != array.Length);
-		List<string> list = new List<string>(commandLine.ProvidedOptions.Intersect(requiredOptions));
-		if (list.Count != requiredOptions.Count)
+		if (new List<string>(commandLine.ProvidedOptions.Intersect(requiredOptions)).Count != requiredOptions.Count)
 		{
 			commandLine.Errors.Push("Required parameters are missing.");
 		}
@@ -280,14 +279,12 @@ public class CommandLine : IDisposable
 	internal static int GetDashCount(IEnumerable<char> parameter)
 	{
 		int num = 0;
-		foreach (char item in parameter)
+		using (IEnumerator<char> enumerator = parameter.GetEnumerator())
 		{
-			if (item == '-')
+			while (enumerator.MoveNext() && enumerator.Current == '-')
 			{
 				num++;
-				continue;
 			}
-			break;
 		}
 		return num;
 	}

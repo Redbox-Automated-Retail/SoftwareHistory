@@ -246,6 +246,46 @@ public class ViewService : IViewService
 		return viewFrame2;
 	}
 
+	public bool IsInMaintenanceMode()
+	{
+		return Peek()?.Contains("maintenance_view") ?? false;
+	}
+
+	public bool IsSafeToChangeView()
+	{
+		return !IsInMaintenanceMode();
+	}
+
+	public string GetStartOverViewName()
+	{
+		return "start_view";
+	}
+
+	public void GoBack(object context, bool popOnly)
+	{
+		LogHelper.Instance.Log("> view_goback; context: {0}, {1}", context, popOnly);
+		if (Peek() == GetStartOverViewName())
+		{
+			Show();
+			return;
+		}
+		Pop();
+		if (!popOnly)
+		{
+			Show();
+		}
+	}
+
+	public void GoBackSafe(object context, bool popOnly)
+	{
+		if (IsSafeToChangeView())
+		{
+			GoBack(context, popOnly);
+			return;
+		}
+		LogHelper.Instance.Log("view_goback_safe({0}) denied.", context);
+	}
+
 	private ViewService()
 	{
 		InnerStack = new ViewStack();

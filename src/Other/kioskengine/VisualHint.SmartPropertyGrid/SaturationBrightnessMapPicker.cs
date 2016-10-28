@@ -121,7 +121,7 @@ public class SaturationBrightnessMapPicker : Control
 			nCCALCSIZE_PARAMS.rgrc0.Right -= 2;
 			nCCALCSIZE_PARAMS.rgrc0.Top += 2;
 			nCCALCSIZE_PARAMS.rgrc0.Bottom -= 2;
-			Marshal.StructureToPtr(nCCALCSIZE_PARAMS, m.LParam, fDeleteOld: false);
+			Marshal.StructureToPtr((object)nCCALCSIZE_PARAMS, m.LParam, false);
 		}
 		else if (m.Msg == 133)
 		{

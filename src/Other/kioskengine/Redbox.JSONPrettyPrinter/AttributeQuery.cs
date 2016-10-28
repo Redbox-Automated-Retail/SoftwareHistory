@@ -12,12 +12,7 @@ internal static class AttributeQuery<T> where T : Attribute
 
 	public static T Get<P>(P provider, bool inherit) where P : ICustomAttributeProvider
 	{
-		T val = Find(provider, inherit);
-		if (val == null)
-		{
-			throw new ObjectNotFoundException($"The attribute {typeof(T).FullName} was not found.");
-		}
-		return val;
+		return Find(provider, inherit) ?? throw new ObjectNotFoundException($"The attribute {typeof(T).FullName} was not found.");
 	}
 
 	public static T Find<P>(P provider) where P : ICustomAttributeProvider
@@ -28,7 +23,11 @@ internal static class AttributeQuery<T> where T : Attribute
 	public static T Find<P>(P provider, bool inherit) where P : ICustomAttributeProvider
 	{
 		T[] array = FindAll(provider, inherit);
-		return (array.Length > 0) ? array[0] : null;
+		if (array.Length == 0)
+		{
+			return null;
+		}
+		return array[0];
 	}
 
 	public static T FindAll<P>(P provider) where P : ICustomAttributeProvider

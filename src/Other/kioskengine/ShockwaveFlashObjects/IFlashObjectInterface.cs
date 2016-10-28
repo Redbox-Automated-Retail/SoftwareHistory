@@ -7,6 +7,7 @@ namespace ShockwaveFlashObjects;
 [ComImport]
 [TypeLibType(4096)]
 [Guid("D27CDB72-AE6D-11CF-96B8-444553540000")]
+[ComVisible(true)]
 public interface IFlashObjectInterface : IDispatchEx
 {
 	[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]

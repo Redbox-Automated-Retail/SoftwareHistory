@@ -8,6 +8,7 @@ namespace ShockwaveFlashObjects;
 [ClassInterface(0)]
 [Guid("D27CDB71-AE6D-11CF-96B8-444553540000")]
 [TypeLibType(2)]
+[ComVisible(true)]
 public class FlashObjectInterfaceClass : IFlashObjectInterface, FlashObjectInterface
 {
 	[MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]

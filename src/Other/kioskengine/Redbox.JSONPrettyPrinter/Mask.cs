@@ -6,17 +6,29 @@ internal sealed class Mask
 {
 	public static string NullString(string actual)
 	{
-		return (actual == null) ? string.Empty : actual;
+		if (actual != null)
+		{
+			return actual;
+		}
+		return string.Empty;
 	}
 
 	public static string NullString(string actual, string mask)
 	{
-		return (actual == null) ? mask : actual;
+		if (actual != null)
+		{
+			return actual;
+		}
+		return mask;
 	}
 
 	public static string EmptyString(string actual, string emptyValue)
 	{
-		return (NullString(actual).Length == 0) ? emptyValue : actual;
+		if (NullString(actual).Length != 0)
+		{
+			return actual;
+		}
+		return emptyValue;
 	}
 
 	private Mask()

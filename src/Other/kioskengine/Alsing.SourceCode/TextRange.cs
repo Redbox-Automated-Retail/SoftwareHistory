@@ -1,7 +1,9 @@
 using System;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public class TextRange
 {
 	private int firstRow;

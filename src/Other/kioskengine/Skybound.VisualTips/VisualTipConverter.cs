@@ -9,7 +9,7 @@ internal class VisualTipConverter : ExpandableObjectConverter
 {
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 	{
-		if (destinationType == typeof(string) || destinationType == typeof(InstanceDescriptor))
+		if ((object)destinationType == typeof(string) || (object)destinationType == typeof(InstanceDescriptor))
 		{
 			return true;
 		}
@@ -19,7 +19,7 @@ internal class VisualTipConverter : ExpandableObjectConverter
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
 		VisualTip visualTip = value as VisualTip;
-		if (destinationType == typeof(string))
+		if ((object)destinationType == typeof(string))
 		{
 			if (!visualTip.xe5a18e5ab4fed2d8())
 			{
@@ -27,7 +27,7 @@ internal class VisualTipConverter : ExpandableObjectConverter
 			}
 			return "(VisualTip)";
 		}
-		if (destinationType == typeof(InstanceDescriptor))
+		if ((object)destinationType == typeof(InstanceDescriptor))
 		{
 			return new InstanceDescriptor(typeof(VisualTip).GetConstructor(Type.EmptyTypes), null, isComplete: false);
 		}

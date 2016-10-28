@@ -8,7 +8,7 @@ public class DockPaneStripConverter : ExpandableObjectConverter
 {
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 	{
-		if (destinationType == typeof(DockPaneStripSkin))
+		if ((object)destinationType == typeof(DockPaneStripSkin))
 		{
 			return true;
 		}
@@ -17,7 +17,7 @@ public class DockPaneStripConverter : ExpandableObjectConverter
 
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
-		if (destinationType == typeof(string) && value is DockPaneStripSkin)
+		if ((object)destinationType == typeof(string) && value is DockPaneStripSkin)
 		{
 			return "DockPaneStripSkin";
 		}

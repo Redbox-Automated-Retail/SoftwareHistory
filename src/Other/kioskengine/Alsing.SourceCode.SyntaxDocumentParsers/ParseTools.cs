@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Alsing.SourceCode.SyntaxDocumentParsers;
 
+[ComVisible(true)]
 public sealed class ParseTools
 {
 	public static void AddPatternString(string Text, Row Row, Pattern Pattern, TextStyle Style, Span span, bool HasError)

@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Alsing.Text;
 
+[ComVisible(true)]
 public class CharUtils
 {
 	private static bool[] isLetterLookup;

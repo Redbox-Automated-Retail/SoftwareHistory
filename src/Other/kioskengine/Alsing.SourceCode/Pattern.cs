@@ -1,7 +1,9 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public sealed class Pattern
 {
 	public static readonly string DefaultSeparators = ".,+-*^\\/()[]{}@:;'?£$#%& \t=<>";

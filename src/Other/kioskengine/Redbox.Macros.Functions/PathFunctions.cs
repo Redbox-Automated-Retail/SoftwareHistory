@@ -31,8 +31,7 @@ public class PathFunctions : FunctionSetBase
 	[Function("get-directory-name")]
 	public static string GetDirectoryName(string path)
 	{
-		string directoryName = Path.GetDirectoryName(path);
-		return StringUtils.ConvertNullToEmpty(directoryName);
+		return StringUtils.ConvertNullToEmpty(Path.GetDirectoryName(path));
 	}
 
 	[Function("get-extension")]
@@ -56,8 +55,7 @@ public class PathFunctions : FunctionSetBase
 	[Function("get-path-root")]
 	public static string GetPathRoot(string path)
 	{
-		string pathRoot = Path.GetPathRoot(path);
-		return StringUtils.ConvertNullToEmpty(pathRoot);
+		return StringUtils.ConvertNullToEmpty(Path.GetPathRoot(path));
 	}
 
 	[Function("get-temp-file-name")]

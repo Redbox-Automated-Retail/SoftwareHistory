@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 [assembly: AssemblyTitle("Redbox.Rental.Data")]
 [assembly: AssemblyDescription("")]
@@ -12,5 +13,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("a57b9e38-ab37-4e4b-b589-e2d997600007")]
-[assembly: AssemblyFileVersion("1.13.0.19")]
-[assembly: AssemblyVersion("1.13.0.19")]
+[assembly: AssemblyFileVersion("1.18.0.18")]
+[assembly: AssemblyVersion("1.18.0.18")]

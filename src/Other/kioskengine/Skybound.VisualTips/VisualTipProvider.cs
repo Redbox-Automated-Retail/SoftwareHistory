@@ -791,7 +791,7 @@ public class VisualTipProvider : Component, IExtenderProvider
 
 	public static void SetExtender(Type controlType, IVisualTipExtender extender)
 	{
-		if (controlType == null)
+		if ((object)controlType == null)
 		{
 			throw new ArgumentNullException("controlType");
 		}
@@ -814,7 +814,7 @@ public class VisualTipProvider : Component, IExtenderProvider
 	[Description]
 	private static void SetExtender(Type controlType, object extender)
 	{
-		if (controlType == null)
+		if ((object)controlType == null)
 		{
 			throw new ArgumentNullException("controlType");
 		}
@@ -983,9 +983,9 @@ public class VisualTipProvider : Component, IExtenderProvider
 		{
 			return true;
 		}
-		if (type.GetEvent("MouseEnter") == null || type.GetEvent("MouseLeave") == null)
+		if ((object)type.GetEvent("MouseEnter") == null || (object)type.GetEvent("MouseLeave") == null)
 		{
-			return type.GetField("IsVisualTipComponent", BindingFlags.Static | BindingFlags.NonPublic) != null;
+			return (object)type.GetField("IsVisualTipComponent", BindingFlags.Static | BindingFlags.NonPublic) != null;
 		}
 		return true;
 	}

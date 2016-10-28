@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class GDISystemBrushes
 {
 	public static GDIBrush ActiveBorder => new GDIBrush(0);

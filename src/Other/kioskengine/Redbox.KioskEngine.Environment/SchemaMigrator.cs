@@ -81,7 +81,7 @@ public static class SchemaMigrator
 				using Stream stream = assembly.GetManifestResourceStream(text3);
 				using VistaDBCommand vistaDBCommand5 = new VistaDBCommand();
 				vistaDBCommand5.Connection = vistaDBConnection;
-				vistaDBCommand5.CommandText = Encoding.ASCII.GetString(StreamExtensions.GetBytes(stream));
+				vistaDBCommand5.CommandText = Encoding.ASCII.GetString(stream.GetBytes());
 				vistaDBCommand5.ExecuteNonQuery();
 			}
 			using VistaDBCommand vistaDBCommand6 = new VistaDBCommand();

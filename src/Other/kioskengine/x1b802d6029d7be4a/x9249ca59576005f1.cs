@@ -25,9 +25,9 @@ internal class x9249ca59576005f1 : IVisualTipExtender
 		MethodInfo methodInfo = x569eb6b436e07d6c(x11d58b056c032b03, "GetChildAtPoint", typeof(Control), typeof(int), typeof(int));
 		MethodInfo methodInfo2 = x569eb6b436e07d6c(x11d58b056c032b03, "GetParent", typeof(object));
 		MethodInfo methodInfo3 = x569eb6b436e07d6c(x11d58b056c032b03, "GetChildTypes", Type.EmptyTypes);
-		if (methodInfo != null && methodInfo2 != null && methodInfo3 != null)
+		if ((object)methodInfo != null && (object)methodInfo2 != null && (object)methodInfo3 != null)
 		{
-			return methodInfo3.ReturnType == typeof(Type[]);
+			return (object)methodInfo3.ReturnType == typeof(Type[]);
 		}
 		return false;
 	}
@@ -50,7 +50,7 @@ internal class x9249ca59576005f1 : IVisualTipExtender
 	public Rectangle GetBounds(object component)
 	{
 		MethodInfo methodInfo = x569eb6b436e07d6c(x42f4c234c9358072, "GetBounds", typeof(object));
-		if (methodInfo != null)
+		if ((object)methodInfo != null)
 		{
 			return (Rectangle)methodInfo.Invoke(x42f4c234c9358072, new object[1] { component });
 		}

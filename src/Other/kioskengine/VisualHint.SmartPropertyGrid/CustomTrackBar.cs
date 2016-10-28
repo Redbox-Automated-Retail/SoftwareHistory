@@ -72,11 +72,11 @@ public class CustomTrackBar : Control
 		}
 		set
 		{
-			if (value == null && value.GetType() != typeof(SimpleLineTracker))
+			if (value == null && (object)value.GetType() != typeof(SimpleLineTracker))
 			{
 				_tracker = new SimpleLineTracker();
 			}
-			else if (_tracker.GetType() != value.GetType())
+			else if ((object)_tracker.GetType() != value.GetType())
 			{
 				_tracker = value;
 			}

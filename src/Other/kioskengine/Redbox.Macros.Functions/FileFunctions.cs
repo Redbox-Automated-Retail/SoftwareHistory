@@ -52,8 +52,7 @@ public class FileFunctions : FunctionSetBase
 	[Function("get-length")]
 	public long GetLength(string file)
 	{
-		FileInfo fileInfo = new FileInfo(file);
-		return fileInfo.Length;
+		return new FileInfo(file).Length;
 	}
 
 	[Function("is-assembly")]

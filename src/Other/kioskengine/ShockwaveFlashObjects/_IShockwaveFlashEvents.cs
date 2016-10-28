@@ -7,6 +7,7 @@ namespace ShockwaveFlashObjects;
 [Guid("D27CDB6D-AE6D-11CF-96B8-444553540000")]
 [TypeLibType(4112)]
 [InterfaceType(2)]
+[ComVisible(true)]
 public interface _IShockwaveFlashEvents
 {
 	[MethodImpl(MethodImplOptions.PreserveSig | MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]

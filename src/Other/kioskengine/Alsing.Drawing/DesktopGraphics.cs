@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Alsing.Windows;
 
 namespace Alsing.Drawing;
 
+[ComVisible(true)]
 public class DesktopGraphics : IDisposable
 {
 	public readonly Graphics Graphics;

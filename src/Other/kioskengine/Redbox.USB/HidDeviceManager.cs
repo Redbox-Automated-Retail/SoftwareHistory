@@ -206,28 +206,20 @@ public class HidDeviceManager : IDisposable
 	{
 		using HidDeviceManager hidDeviceManager = new HidDeviceManager();
 		HidDevice[] array = hidDeviceManager.EnumerateDevices();
-		HidDevice[] array2 = array;
-		foreach (HidDevice hidDevice in array2)
+		for (int i = 0; i < array.Length; i++)
 		{
-			Console.WriteLine(hidDevice.DevicePath);
+			Console.WriteLine(array[i].DevicePath);
 		}
 	}
 
 	public HidDevice[] EnumerateDevices()
 	{
 		ArrayList arrayList = new ArrayList();
-		int num = 0;
-		while (true)
+		for (int i = 0; _SetupDiEnumDeviceInterfaces(i); i++)
 		{
-			bool flag = true;
-			if (!_SetupDiEnumDeviceInterfaces(num))
-			{
-				break;
-			}
 			string devicePath = _SetupDiGetDeviceInterfaceDetail();
-			HidDevice value = new HidDevice(num, devicePath);
+			HidDevice value = new HidDevice(i, devicePath);
 			arrayList.Add(value);
-			num++;
 		}
 		return (HidDevice[])arrayList.ToArray(typeof(HidDevice));
 	}
@@ -242,9 +234,6 @@ public class HidDeviceManager : IDisposable
 	{
 		if (!m_disposed)
 		{
-			if (disposeManagedResources)
-			{
-			}
 			if (m_hDevInfo != -1)
 			{
 				_SetupDiDestroyDeviceInfoList();
@@ -268,8 +257,11 @@ public class HidDeviceManager : IDisposable
 	{
 		m_deviceInterfaceData = default(SP_DEVICE_INTERFACE_DATA);
 		m_deviceInterfaceData.cbSize = Marshal.SizeOf(m_deviceInterfaceData);
-		int num = SetupDiEnumDeviceInterfaces(m_hDevInfo, 0, ref m_hidGuid, memberIndex, ref m_deviceInterfaceData);
-		return num == 1;
+		if (SetupDiEnumDeviceInterfaces(m_hDevInfo, 0, ref m_hidGuid, memberIndex, ref m_deviceInterfaceData) != 1)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	protected internal unsafe string _SetupDiGetDeviceInterfaceDetail()
@@ -296,9 +288,8 @@ public class HidDeviceManager : IDisposable
 
 	protected internal int _HidP_GetValueCaps(ref int CalsCapsLength, int pPHIDP_PREPARSED_DATA)
 	{
-		HIDP_REPORT_TYPE reportType = HIDP_REPORT_TYPE.HidP_Input;
 		m_hidValueCaps = new HIDP_VALUE_CAPS[5];
-		return HidP_GetValueCaps(reportType, m_hidValueCaps, ref CalsCapsLength, pPHIDP_PREPARSED_DATA);
+		return HidP_GetValueCaps(HIDP_REPORT_TYPE.HidP_Input, m_hidValueCaps, ref CalsCapsLength, pPHIDP_PREPARSED_DATA);
 	}
 
 	protected internal int _SetupDiDestroyDeviceInfoList()

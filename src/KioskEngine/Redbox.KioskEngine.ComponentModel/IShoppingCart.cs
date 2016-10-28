@@ -38,6 +38,18 @@ public interface IShoppingCart
 
 	IDictionary<string, IShoppingCartLineItemGroup> Groups { get; }
 
+	bool AuthAcceptFlag { get; }
+
+	int AuthRuleId { get; }
+
+	decimal AuthAmount { get; }
+
+	bool SkipAuthRule { get; }
+
+	bool PlayPassPromptAccepted { get; }
+
+	int PlayPassPointsEarned { get; }
+
 	void SetDiscount(string code, decimal value);
 
 	void ClearDiscount();
@@ -65,6 +77,10 @@ public interface IShoppingCart
 	void SetReferenceNumber(long referenceNumber);
 
 	IShoppingCartLineItemGroup GetGroup(string name);
+
+	void SetVariableAuthValues(bool authAcceptFlag, int authRuleId, decimal authAmount, bool skipAuthRule);
+
+	void SetPlayPassPromptAccepted(bool playPassPromptAccepted, int playPassPointsEarned);
 
 	void SetBlocklisted(bool value);
 }

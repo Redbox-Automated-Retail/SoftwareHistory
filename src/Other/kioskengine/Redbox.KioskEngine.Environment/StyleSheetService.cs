@@ -47,7 +47,7 @@ public class StyleSheetService : IStyleSheetService
 		{
 			foreach (XmlNode item in xmlNodeList)
 			{
-				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item, "name");
+				string attributeValue = item.GetAttributeValue<string>("name");
 				if (string.IsNullOrEmpty(attributeValue))
 				{
 					continue;
@@ -65,7 +65,7 @@ public class StyleSheetService : IStyleSheetService
 				IStyleSheetStyle styleSheetStyle = styleSheet2.AddStyle(attributeValue);
 				foreach (XmlNode item2 in xmlNodeList2)
 				{
-					string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item2, "name");
+					string attributeValue2 = item2.GetAttributeValue<string>("name");
 					if (string.IsNullOrEmpty(attributeValue2))
 					{
 						continue;
@@ -83,10 +83,10 @@ public class StyleSheetService : IStyleSheetService
 					IStyleSheetState styleSheetState = styleSheetStyle.AddState(attributeValue2);
 					foreach (XmlNode item3 in xmlNodeList3)
 					{
-						string attributeValue3 = XmlNodeExtensions.GetAttributeValue<string>(item3, "name");
+						string attributeValue3 = item3.GetAttributeValue<string>("name");
 						if (!string.IsNullOrEmpty(attributeValue3))
 						{
-							((StyleSheetState)styleSheetState)[attributeValue3] = XmlNodeExtensions.GetAttributeValue<object>(item3, "value");
+							((StyleSheetState)styleSheetState)[attributeValue3] = item3.GetAttributeValue<object>("value");
 						}
 					}
 				}

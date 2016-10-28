@@ -34,6 +34,7 @@ internal class MultiplePropertyDescriptor : PropertyDescriptor
 		}
 
 		public MultipleAttributeCollection(MultiplePropertyDescriptor owner)
+			: base(new Attribute[0])
 		{
 			_owner = owner;
 		}

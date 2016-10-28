@@ -39,7 +39,7 @@ internal sealed class EnumValueImageProviderAttribute : Attribute
 	public Image GetImage()
 	{
 		PropertyInfo property = ProviderType.GetProperty(PropertyName);
-		if (property != null)
+		if ((object)property != null)
 		{
 			return property.GetValue(null, null) as Image;
 		}

@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Xml;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public class SyntaxDefinitionLoader
 {
 	private Hashtable spanDefinitionLookup = new Hashtable();

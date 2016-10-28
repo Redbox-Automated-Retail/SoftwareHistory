@@ -114,9 +114,9 @@ public class PropInPlaceCheckbox : Control, IInPlaceControl
 	{
 		get
 		{
-			if (!(_ownerPropertyEnum.Property.Value.TypeConverter is NullableConverter nullableConverter) || nullableConverter.UnderlyingType != typeof(bool))
+			if (!(_ownerPropertyEnum.Property.Value.TypeConverter is NullableConverter nullableConverter) || (object)nullableConverter.UnderlyingType != typeof(bool))
 			{
-				return _ownerPropertyEnum.Property.Value.UnderlyingType == typeof(bool);
+				return (object)_ownerPropertyEnum.Property.Value.UnderlyingType == typeof(bool);
 			}
 			return true;
 		}

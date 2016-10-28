@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class DecPatternMatcher : PatternMatcherBase
 {
 	public static readonly DecPatternMatcher Default = new DecPatternMatcher();

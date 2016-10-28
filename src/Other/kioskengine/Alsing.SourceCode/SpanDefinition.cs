@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public class SpanDefinition
 {
 	private readonly List<Pattern> tmpSimplePatterns = new List<Pattern>();

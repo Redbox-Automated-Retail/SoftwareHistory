@@ -156,12 +156,12 @@ public static class BundleFunctions
 			LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
 			foreach (XmlNode item2 in xmlNodeList2)
 			{
-				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item2, "name");
-				object value = XmlNodeExtensions.GetNodeValue(item2, string.Empty);
-				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item2, "type");
+				string attributeValue = item2.GetAttributeValue<string>("name");
+				object value = item2.GetNodeValue(string.Empty);
+				string attributeValue2 = item2.GetAttributeValue<string>("type");
 				if (!string.IsNullOrEmpty(attributeValue2))
 				{
-					Type type = StringExtensions.ToType(attributeValue2);
+					Type type = attributeValue2.ToType();
 					if (type != null)
 					{
 						value = ConversionHelper.ChangeType(value, type);
@@ -197,12 +197,12 @@ public static class BundleFunctions
 			}
 			foreach (XmlNode item2 in xmlNodeList2)
 			{
-				string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(item2, "name");
-				object value = XmlNodeExtensions.GetNodeValue(item2, string.Empty);
-				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item2, "type");
+				string attributeValue = item2.GetAttributeValue<string>("name");
+				object value = item2.GetNodeValue(string.Empty);
+				string attributeValue2 = item2.GetAttributeValue<string>("type");
 				if (!string.IsNullOrEmpty(attributeValue2))
 				{
-					Type type = StringExtensions.ToType(attributeValue2);
+					Type type = attributeValue2.ToType();
 					if (type != null)
 					{
 						value = ConversionHelper.ChangeType(value, type);

@@ -9,7 +9,7 @@ public class SeparatorActor
 
 	private IBrowseItem _browseItem;
 
-	private string SeparatorActorName => _browseItemConfigurationInfo.BrowseControl.GetPrefixedActorName($"movie_title_{_browseItemConfigurationInfo.BrowseItemActorIndex}");
+	private string SeparatorActorName => _browseItemConfigurationInfo.BrowseControl.GetPrefixedActorName($"movie_separator_{_browseItemConfigurationInfo.BrowseItemActorIndex}");
 
 	public SeparatorActor(IBrowseItem browseItem, IBrowseItemConfigurationInfo browseItemConfigurationInfo)
 	{

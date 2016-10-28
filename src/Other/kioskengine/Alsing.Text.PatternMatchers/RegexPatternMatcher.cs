@@ -1,8 +1,10 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class RegexPatternMatcher : PatternMatcherBase
 {
 	private Regex regEx;

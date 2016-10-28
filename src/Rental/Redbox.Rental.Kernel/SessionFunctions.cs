@@ -95,7 +95,7 @@ public static class SessionFunctions
 				}
 				else
 				{
-					if (resultPropertyInfo.PropertyType != typeof(double))
+					if (!(resultPropertyInfo.PropertyType == typeof(double)))
 					{
 						throw new Exception($"Error in AddToPropertyValue. Unsupported property data type {resultPropertyInfo.PropertyType}");
 					}

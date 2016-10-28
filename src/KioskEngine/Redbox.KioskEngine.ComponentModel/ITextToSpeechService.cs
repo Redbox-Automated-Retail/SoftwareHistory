@@ -13,4 +13,6 @@ public interface ITextToSpeechService
 	void RunSpeechWorkflow(string viewName);
 
 	void TTSRepeatSequence();
+
+	int GetTimeout(string timeoutType, int defaultTimeout);
 }

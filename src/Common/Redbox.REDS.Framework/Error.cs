@@ -26,8 +26,7 @@ public class Error
 	{
 		string code = error.ExtractCodeFromBrackets("[", "]");
 		int startIndex = error.IndexOf("]");
-		string text = error.Substring(startIndex);
-		string[] array = text.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+		string[] array = error.Substring(startIndex).Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 		string details = null;
 		if (array.Length > 1)
 		{

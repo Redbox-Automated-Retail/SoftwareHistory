@@ -33,8 +33,7 @@ public sealed class BundleCollection
 			errorList.Add(Error.NewError("R901", "The bundle parameter cannot be null.", "Ensure a valid bundle instance is passed to the BundleCollection.AddBundle method."));
 			return errorList;
 		}
-		IResource manifest = bundle.GetManifest(bundle.CreateFilter(), out var manifestInfo);
-		if (manifest != null && manifestInfo != null)
+		if (bundle.GetManifest(bundle.CreateFilter(), out var manifestInfo) != null && manifestInfo != null)
 		{
 			try
 			{
@@ -88,8 +87,8 @@ public sealed class BundleCollection
 		}
 		if (bundle != null)
 		{
-			IResource manifest = bundle.GetManifest(bundle.CreateFilter(), out manifestInfo);
-			if (manifest == null || manifestInfo == null)
+			IResourceBundle obj = bundle;
+			if (obj.GetManifest(obj.CreateFilter(), out manifestInfo) == null || manifestInfo == null)
 			{
 				errorList.Add(Error.NewError("B120", $"No manifest resource was found for the bundle: {bundle.Storage.BundlePath}.", "The bundle may not be compiled correctly or the manifest.resource file was moved or deleted after the bundle was scanned."));
 			}

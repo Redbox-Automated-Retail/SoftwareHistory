@@ -6,6 +6,7 @@ namespace ShockwaveFlashObjects;
 [ComImport]
 [Guid("D27CDB6C-AE6D-11CF-96B8-444553540000")]
 [TypeLibType(4160)]
+[ComVisible(true)]
 public interface IShockwaveFlash
 {
 	[DispId(-525)]

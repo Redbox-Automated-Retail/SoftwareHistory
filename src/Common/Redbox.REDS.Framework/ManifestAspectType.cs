@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Reflection;
 using System.Windows.Forms;
 using System.Xml;
 using Redbox.Core;
@@ -56,8 +55,7 @@ public class ManifestAspectType : AspectType
 				foreach (XmlNode item2 in xmlNodeList2)
 				{
 					Type type2 = GetType(item2.GetAttributeValue<string>("type")) ?? typeof(string);
-					IPropertyType propertyType = resourceType2.AddPropertyType(item2.GetAttributeValue<string>("name"), type2, item2.GetAttributeValue<string>("description"), item2.GetAttributeValue<bool>("isRequired"), item2.GetAttributeValue<bool>("isFilter"), item2.GetAttributeValue<int?>("score"), item2.GetAttributeValue<string>("label"), item2.GetAttributeValue<string>("category"));
-					propertyType.SetDefaultValue(item2.GetAttributeValue<string>("defaultValue"));
+					resourceType2.AddPropertyType(item2.GetAttributeValue<string>("name"), type2, item2.GetAttributeValue<string>("description"), item2.GetAttributeValue<bool>("isRequired"), item2.GetAttributeValue<bool>("isFilter"), item2.GetAttributeValue<int?>("score"), item2.GetAttributeValue<string>("label"), item2.GetAttributeValue<string>("category")).SetDefaultValue(item2.GetAttributeValue<string>("defaultValue"));
 				}
 			}
 			XmlNodeList xmlNodeList3 = item.SelectNodes("aspectType");
@@ -92,18 +90,15 @@ public class ManifestAspectType : AspectType
 		}
 		if (typeName.StartsWith("System.Windows.Forms"))
 		{
-			Assembly assembly = typeof(Control).Assembly;
-			return assembly.GetType(typeName);
+			return typeof(Control).Assembly.GetType(typeName);
 		}
 		if (typeName.StartsWith("System.Drawing"))
 		{
-			Assembly assembly2 = typeof(FontStyle).Assembly;
-			return assembly2.GetType(typeName);
+			return typeof(FontStyle).Assembly.GetType(typeName);
 		}
 		if (typeName.StartsWith("Redbox.REDS.Framework"))
 		{
-			Assembly assembly3 = typeof(ManifestAspectType).Assembly;
-			return assembly3.GetType(typeName);
+			return typeof(ManifestAspectType).Assembly.GetType(typeName);
 		}
 		return typeName.ToType();
 	}

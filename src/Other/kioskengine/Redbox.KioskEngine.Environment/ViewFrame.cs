@@ -265,7 +265,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		ViewVersion = viewResource["version"] as string;
 		ActiveFlag = viewResource["active_flag"] as string;
 		XmlNode xmlNode = GetViewGraph().ChildNodes[0];
-		string attributeValue = XmlNodeExtensions.GetAttributeValue(xmlNode, "render_type", "GDI");
+		string attributeValue = xmlNode.GetAttributeValue("render_type", "GDI");
 		if (!string.IsNullOrEmpty(attributeValue))
 		{
 			try
@@ -276,20 +276,20 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 			{
 			}
 		}
-		Clear = XmlNodeExtensions.GetAttributeValue(xmlNode, "clear", defaultValue: true);
-		Width = XmlNodeExtensions.GetAttributeValue<int>(xmlNode, "width");
-		Height = XmlNodeExtensions.GetAttributeValue<int>(xmlNode, "height");
-		Cached = XmlNodeExtensions.GetAttributeValue<bool>(xmlNode, "cached");
-		SceneName = XmlNodeExtensions.GetAttributeValue(xmlNode, "name", "Default");
-		string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "stylesheet");
+		Clear = xmlNode.GetAttributeValue("clear", defaultValue: true);
+		Width = xmlNode.GetAttributeValue<int>("width");
+		Height = xmlNode.GetAttributeValue<int>("height");
+		Cached = xmlNode.GetAttributeValue<bool>("cached");
+		SceneName = xmlNode.GetAttributeValue("name", "Default");
+		string attributeValue2 = xmlNode.GetAttributeValue<string>("stylesheet");
 		if (!string.IsNullOrEmpty(attributeValue2))
 		{
 			StyleSheet = service2.New(attributeValue2);
 		}
-		ViewWindow = XmlNodeExtensions.GetAttributeValue<Rectangle?>(xmlNode, "viewWindow");
-		OnEnterResourceName = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onEnter");
-		OnLeaveResourceName = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onLeave");
-		string attributeValue3 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "backgroundImage");
+		ViewWindow = xmlNode.GetAttributeValue<Rectangle?>("viewWindow");
+		OnEnterResourceName = xmlNode.GetAttributeValue<string>("onEnter");
+		OnLeaveResourceName = xmlNode.GetAttributeValue<string>("onLeave");
+		string attributeValue3 = xmlNode.GetAttributeValue<string>("backgroundImage");
 		if (!string.IsNullOrEmpty(attributeValue3))
 		{
 			IMacroService service4 = ServiceLocator.Instance.GetService<IMacroService>();
@@ -304,7 +304,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V002", $"backgroundImage: Bitmap resource '{attributeValue3}' not found.", "The resource name specified in the view attribute backgroundImage was not found."));
 			}
 		}
-		BackgroundColor = XmlNodeExtensions.GetAttributeValue(xmlNode, "backgroundColor", Color.FromArgb(153, 153, 152));
+		BackgroundColor = xmlNode.GetAttributeValue("backgroundColor", Color.FromArgb(153, 153, 152));
 		XmlNodeList xmlNodeList = xmlNode.SelectNodes("actor");
 		if (xmlNodeList == null)
 		{
@@ -313,13 +313,13 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		Scene = service3.GetScene(SceneName) ?? service3.GetScene("Default");
 		foreach (XmlNode item in xmlNodeList)
 		{
-			string attributeValue4 = XmlNodeExtensions.GetAttributeValue<string>(item, "name");
+			string attributeValue4 = item.GetAttributeValue<string>("name");
 			ActorProperties actorProperties = (m_actors.ContainsKey(attributeValue4) ? m_actors[attributeValue4] : new ActorProperties());
-			actorProperties.Enabled = XmlNodeExtensions.GetAttributeValue(item, "enabled", defaultValue: true);
+			actorProperties.Enabled = item.GetAttributeValue("enabled", defaultValue: true);
 			IStyleSheetState styleSheetState = null;
 			if (StyleSheet != null)
 			{
-				string attributeValue5 = XmlNodeExtensions.GetAttributeValue<string>(item, "style");
+				string attributeValue5 = item.GetAttributeValue<string>("style");
 				if (!string.IsNullOrEmpty(attributeValue5))
 				{
 					actorProperties.StyleName = attributeValue5;
@@ -339,7 +339,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 				{
 					continue;
 				}
-				object obj2 = XmlNodeExtensions.GetAttributeValue<object>(item, actorPropertyTagAttribute.Name);
+				object obj2 = item.GetAttributeValue<object>(actorPropertyTagAttribute.Name);
 				if (obj2 == null)
 				{
 					if (styleSheetState == null)
@@ -361,7 +361,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 					}
 				}
 			}
-			string text = XmlNodeExtensions.GetAttributeValue<string>(item, "font");
+			string text = item.GetAttributeValue<string>("font");
 			if (string.IsNullOrEmpty(text) && styleSheetState != null)
 			{
 				text = styleSheetState["font"] as string;
@@ -371,7 +371,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 			{
 				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V003", $"{attributeValue4}.font: Font resource '{text}' not found.", $" Actor {attributeValue4} is referencing a font resource named '{text}' that was not found."));
 			}
-			string text2 = XmlNodeExtensions.GetAttributeValue<string>(item, "image");
+			string text2 = item.GetAttributeValue<string>("image");
 			if (string.IsNullOrEmpty(text2) && styleSheetState != null)
 			{
 				text2 = styleSheetState["image"] as string;

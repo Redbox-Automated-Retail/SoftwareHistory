@@ -1,7 +1,9 @@
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
+[ComVisible(true)]
 public sealed class Word
 {
 	public Color ErrorColor = Color.Red;

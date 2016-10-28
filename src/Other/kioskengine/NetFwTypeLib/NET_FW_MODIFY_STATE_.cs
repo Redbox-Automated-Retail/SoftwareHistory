@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace NetFwTypeLib;
 
+[ComVisible(true)]
 public enum NET_FW_MODIFY_STATE_
 {
 	NET_FW_MODIFY_STATE_OK,

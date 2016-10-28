@@ -8,7 +8,7 @@ public class DockPaneStripGradientConverter : ExpandableObjectConverter
 {
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 	{
-		if (destinationType == typeof(DockPaneStripGradient))
+		if ((object)destinationType == typeof(DockPaneStripGradient))
 		{
 			return true;
 		}
@@ -17,7 +17,7 @@ public class DockPaneStripGradientConverter : ExpandableObjectConverter
 
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
-		if (destinationType == typeof(string) && value is DockPaneStripGradient)
+		if ((object)destinationType == typeof(string) && value is DockPaneStripGradient)
 		{
 			return "DockPaneStripGradient";
 		}

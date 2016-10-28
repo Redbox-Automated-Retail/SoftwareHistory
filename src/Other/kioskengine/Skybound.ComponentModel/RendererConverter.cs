@@ -28,7 +28,7 @@ internal abstract class RendererConverter : ExpandableObjectConverter, IComparer
 		{
 			return new InstanceDescriptor(x7b7d3ca0edcb2c59.GetProperty("DefaultRenderer", BindingFlags.Static | BindingFlags.Public), null, isComplete: true);
 		}
-		return new InstanceDescriptor(renderer.GetType().GetConstructor(Type.EmptyTypes), null, renderer.GetType() == x7b7d3ca0edcb2c59);
+		return new InstanceDescriptor(renderer.GetType().GetConstructor(Type.EmptyTypes), null, (object)renderer.GetType() == x7b7d3ca0edcb2c59);
 	}
 
 	public override bool GetStandardValuesSupported(ITypeDescriptorContext context)
@@ -57,7 +57,7 @@ internal abstract class RendererConverter : ExpandableObjectConverter, IComparer
 			Type[] exportedTypes = x7b7d3ca0edcb2c59.Assembly.GetExportedTypes();
 			foreach (Type type in exportedTypes)
 			{
-				if ((type == x7b7d3ca0edcb2c59 || type.IsSubclassOf(x7b7d3ca0edcb2c59)) && !type.IsAbstract)
+				if (((object)type == x7b7d3ca0edcb2c59 || type.IsSubclassOf(x7b7d3ca0edcb2c59)) && !type.IsAbstract)
 				{
 					string friendlyName = DisplayNameAttribute.GetFriendlyName(type);
 					x7061fe7e7c9334af[friendlyName] = new InstanceDescriptor(type.GetConstructor(Type.EmptyTypes), null, isComplete: true);
@@ -72,7 +72,7 @@ internal abstract class RendererConverter : ExpandableObjectConverter, IComparer
 
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 	{
-		if (destinationType == typeof(string) || destinationType == typeof(InstanceDescriptor))
+		if ((object)destinationType == typeof(string) || (object)destinationType == typeof(InstanceDescriptor))
 		{
 			return true;
 		}
@@ -81,11 +81,11 @@ internal abstract class RendererConverter : ExpandableObjectConverter, IComparer
 
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
-		if (destinationType == typeof(string))
+		if ((object)destinationType == typeof(string))
 		{
 			return DisplayNameAttribute.GetFriendlyName(value.GetType());
 		}
-		if (destinationType == typeof(InstanceDescriptor))
+		if ((object)destinationType == typeof(InstanceDescriptor))
 		{
 			return CreateInstanceDescriptor(value);
 		}
@@ -94,7 +94,7 @@ internal abstract class RendererConverter : ExpandableObjectConverter, IComparer
 
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		if (sourceType == typeof(string))
+		if ((object)sourceType == typeof(string))
 		{
 			return true;
 		}

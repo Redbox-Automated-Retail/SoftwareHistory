@@ -851,7 +851,7 @@ public class DebuggerForm : Form
 			TreeNode treeNode5 = new TreeNode("Actors", 6, 6);
 			treeNode5.Name = treeNode5.Text;
 			XmlNode xmlNode = ((XmlNode)resource.GetAspect("content").GetContent()).ChildNodes[0];
-			string attributeValue = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onEnter");
+			string attributeValue = xmlNode.GetAttributeValue<string>("onEnter");
 			if (!string.IsNullOrEmpty(attributeValue))
 			{
 				dictionary[attributeValue] = true;
@@ -862,7 +862,7 @@ public class DebuggerForm : Form
 				treeNode6.Name = treeNode6.Text;
 				treeNode4.Nodes.Add(treeNode6);
 			}
-			string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(xmlNode, "onLeave");
+			string attributeValue2 = xmlNode.GetAttributeValue<string>("onLeave");
 			if (!string.IsNullOrEmpty(attributeValue2))
 			{
 				dictionary[attributeValue2] = true;
@@ -878,11 +878,11 @@ public class DebuggerForm : Form
 			{
 				foreach (XmlNode item in xmlNodeList)
 				{
-					string attributeValue3 = XmlNodeExtensions.GetAttributeValue<string>(item, "onHit");
+					string attributeValue3 = item.GetAttributeValue<string>("onHit");
 					if (!string.IsNullOrEmpty(attributeValue3))
 					{
 						dictionary[attributeValue3] = true;
-						string attributeValue4 = XmlNodeExtensions.GetAttributeValue<string>(item, "name");
+						string attributeValue4 = item.GetAttributeValue<string>("name");
 						TreeNode treeNode8 = new TreeNode($"{attributeValue4}: {attributeValue3}", 7, 7)
 						{
 							Tag = ActiveBundleSet.GetResource(attributeValue3, Filter)

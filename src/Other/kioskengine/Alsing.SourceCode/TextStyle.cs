@@ -2,10 +2,12 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Design;
+using System.Runtime.InteropServices;
 
 namespace Alsing.SourceCode;
 
 [Editor(typeof(TextStyleUIEditor), typeof(UITypeEditor))]
+[ComVisible(true)]
 public class TextStyle : ICloneable
 {
 	public string Name;

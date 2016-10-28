@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace NetFwTypeLib;
 
+[ComVisible(true)]
 public enum NET_FW_PROFILE_TYPE2_
 {
 	NET_FW_PROFILE2_DOMAIN = 1,

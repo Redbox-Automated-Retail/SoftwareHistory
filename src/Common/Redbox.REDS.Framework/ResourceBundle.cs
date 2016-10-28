@@ -63,9 +63,8 @@ public class ResourceBundle : IResourceBundle, IDisposable
 		{
 			ResourceBundle resourceBundle = new ResourceBundle();
 			resourceBundle.Storage = new ZippedResourceBundleStorage();
-			ResourceBundle resourceBundle2 = resourceBundle;
-			resourceBundle2.Storage.Create(fileName, trimPrefix);
-			return resourceBundle2;
+			resourceBundle.Storage.Create(fileName, trimPrefix);
+			return resourceBundle;
 		}
 		catch
 		{
@@ -81,8 +80,7 @@ public class ResourceBundle : IResourceBundle, IDisposable
 	public ErrorList Activate(IResourceBundleFilter filter, out IManifestInfo manifestInfo)
 	{
 		ErrorList errorList = new ErrorList();
-		IResource manifest = GetManifest(filter, out manifestInfo);
-		if (manifest == null)
+		if (GetManifest(filter, out manifestInfo) == null)
 		{
 			errorList.Add(Error.NewError("E003", $"Resource bundle '{Storage.BundlePath}' does not contain: manifest.resource.", "The Redbox Engine for Distributed Stores requires one valid bundle to execute."));
 			return errorList;
@@ -94,8 +92,7 @@ public class ResourceBundle : IResourceBundle, IDisposable
 				errorList.Add(Error.NewError("E004", $"Application resource bundle '{Storage.BundlePath}' must specify a valid startup_script in the manifest.resource.", "The Redbox Engine for Distributed Stores requires one valid startup script to execute."));
 				return errorList;
 			}
-			IResource resource = GetResource(manifestInfo.StartupScript, filter);
-			if (resource == null)
+			if (GetResource(manifestInfo.StartupScript, filter) == null)
 			{
 				errorList.Add(Error.NewError("E004", $"Resource bundle '{Storage.BundlePath}' does not contain: {manifestInfo.StartupScript}.resource.", "The resource specified in the startup_script property does not exist within the bundle.  Specify a valid script resource."));
 			}
@@ -108,8 +105,7 @@ public class ResourceBundle : IResourceBundle, IDisposable
 				errorList.Add(Error.NewError("E005", $"HTML Application resource bundle '{Storage.BundlePath}' must specify a valid control_assembly in the manifest.resource.", "The Redbox Engine for Distributed Stores requires a controller assembly to execute."));
 				return errorList;
 			}
-			IResource resource2 = GetResource(manifestInfo.ControlAssembly, filter);
-			if (resource2 == null)
+			if (GetResource(manifestInfo.ControlAssembly, filter) == null)
 			{
 				errorList.Add(Error.NewError("E005", $"Resource bundle '{Storage.BundlePath}' does not contain: {manifestInfo.ControlAssembly}.resource.", "The resource specified in the control_assembly property does not exist within the bundle.  Specify a valid control assembly resource."));
 			}
@@ -281,74 +277,76 @@ public class ResourceBundle : IResourceBundle, IDisposable
 
 	private void InitializeTypes()
 	{
-		ResourceType resourceType = new ResourceType();
-		resourceType.Name = "root";
-		ResourceType resourceType2 = resourceType;
-		resourceType2.InnerAspects.Add(new AspectType
+		ResourceType resourceType = new ResourceType
+		{
+			Name = "root"
+		};
+		resourceType.InnerAspects.Add(new AspectType
 		{
 			Name = "content"
 		});
-		ResourceTypes["root"] = resourceType2;
-		ResourceType resourceType3 = new ResourceType();
-		resourceType3.Name = "manifest";
-		ResourceType resourceType4 = resourceType3;
-		resourceType4.InnerProperties.Add(new PropertyType
+		ResourceTypes["root"] = resourceType;
+		ResourceType resourceType2 = new ResourceType
+		{
+			Name = "manifest"
+		};
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "requires",
 			Type = typeof(string)
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "public_key",
 			Type = typeof(string)
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "startup_script",
 			Type = typeof(string),
 			IsRequired = false
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "name",
 			Type = typeof(string),
 			IsRequired = true
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "product_name",
 			Type = typeof(string),
 			IsRequired = true
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "product_version",
 			Type = typeof(string),
 			IsRequired = true
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "bundle_type",
 			Type = typeof(BundleType?),
 			DefaultValue = BundleType.Application
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "test_control",
 			Type = typeof(string),
 			IsRequired = false
 		});
-		resourceType4.InnerProperties.Add(new PropertyType
+		resourceType2.InnerProperties.Add(new PropertyType
 		{
 			Name = "control_assembly",
 			Type = typeof(string),
 			IsRequired = false
 		});
-		resourceType4.InnerAspects.Add(new ManifestAspectType
+		resourceType2.InnerAspects.Add(new ManifestAspectType
 		{
 			Name = "schema"
 		});
-		ResourceTypes["manifest"] = resourceType4;
+		ResourceTypes["manifest"] = resourceType2;
 		Resources.Clear();
 	}
 }

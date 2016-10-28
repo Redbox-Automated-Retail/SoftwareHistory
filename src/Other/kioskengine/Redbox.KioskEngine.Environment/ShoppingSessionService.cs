@@ -109,7 +109,7 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 			}
 			if (m_sessions.Count > 0)
 			{
-				LinqExtensions.ForEach(m_sessions, delegate(KeyValuePair<string, IShoppingSession> s)
+				m_sessions.ForEach(delegate(KeyValuePair<string, IShoppingSession> s)
 				{
 					if (!_sessionQueue.Contains(s.Value))
 					{
@@ -168,7 +168,7 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 	private IShoppingSession Load(string id)
 	{
 		IShoppingSession found = null;
-		LinqExtensions.ForEach(_sessionQueue, delegate(IShoppingSession item)
+		_sessionQueue.ForEach(delegate(IShoppingSession item)
 		{
 			if (found == null && item.Id.Equals(new Guid(id)))
 			{

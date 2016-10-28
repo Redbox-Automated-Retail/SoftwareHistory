@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Alsing.Windows;
 
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class GDIPen : GDIObject
 {
 	public IntPtr hPen;

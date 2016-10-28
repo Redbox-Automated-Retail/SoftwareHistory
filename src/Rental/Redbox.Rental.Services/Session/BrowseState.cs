@@ -47,6 +47,12 @@ public class BrowseState : IBrowseState
 			case "PS4":
 			case "Wii":
 			case "Wii U":
+			case "Top 20":
+			case "Action":
+			case "Comedy":
+			case "Drama":
+			case "Family":
+			case "Horror":
 				_browseSelectedSort = value;
 				break;
 			default:

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 namespace ShockwaveFlashObjects;
 
 [ClassInterface(ClassInterfaceType.None)]
+[ComVisible(true)]
 public sealed class _IShockwaveFlashEvents_SinkHelper : _IShockwaveFlashEvents
 {
 	public _IShockwaveFlashEvents_FlashCallEventHandler m_FlashCallDelegate;
@@ -15,35 +16,35 @@ public sealed class _IShockwaveFlashEvents_SinkHelper : _IShockwaveFlashEvents
 
 	public int m_dwCookie;
 
-	public void FlashCall(string param0)
+	public void FlashCall(string P_0)
 	{
 		if (m_FlashCallDelegate != null)
 		{
-			m_FlashCallDelegate(param0);
+			m_FlashCallDelegate(P_0);
 		}
 	}
 
-	public void FSCommand(string param0, string param1)
+	public void FSCommand(string P_0, string P_1)
 	{
 		if (m_FSCommandDelegate != null)
 		{
-			m_FSCommandDelegate(param0, param1);
+			m_FSCommandDelegate(P_0, P_1);
 		}
 	}
 
-	public void OnProgress(int param0)
+	public void OnProgress(int P_0)
 	{
 		if (m_OnProgressDelegate != null)
 		{
-			m_OnProgressDelegate(param0);
+			m_OnProgressDelegate(P_0);
 		}
 	}
 
-	public void OnReadyStateChange(int param0)
+	public void OnReadyStateChange(int P_0)
 	{
 		if (m_OnReadyStateChangeDelegate != null)
 		{
-			m_OnReadyStateChangeDelegate(param0);
+			m_OnReadyStateChangeDelegate(P_0);
 		}
 	}
 

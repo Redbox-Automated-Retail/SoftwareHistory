@@ -3,7 +3,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.Session;
-using Redbox.Rental.Services.Views.HelpView;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -132,6 +132,13 @@ public class HelpViewController
 			Visible = true,
 			AnalyticsButtonName = "show_privacy"
 		});
+		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewUserControl.HelpDocumentInfo
+		{
+			DocumentName = "document-play-pass",
+			Title = BundleFunctions.GetDictionaryStringValue("strings", "play_pass_title"),
+			Visible = true,
+			AnalyticsButtonName = "show_play_pass"
+		});
 		BundleFunctions.GetDictionary("strings");
 		helpViewUserControl.SetString("ButtonGoBack_Text", BundleFunctions.GetDictionaryStringValue("strings", "back_button"));
 		helpViewUserControl.SetString("contact_redbox_label", BundleFunctions.GetDictionaryStringValue("strings", "contact_redbox_label"));
@@ -144,6 +151,7 @@ public class HelpViewController
 		helpViewUserControl.SetString("ButtonTerms_Text", BundleFunctions.GetDictionaryStringValue("strings", "terms_button"));
 		helpViewUserControl.SetString("ButtonTermsRedboxCard_Text", BundleFunctions.GetDictionaryStringValue("strings", "terms_redbox_card_button"));
 		helpViewUserControl.SetString("ButtonPrivacy_Text", BundleFunctions.GetDictionaryStringValue("strings", "privacy_button"));
+		helpViewUserControl.SetString("ButtonPlayPass_Text", BundleFunctions.GetDictionaryStringValue("strings", "play_pass_button"));
 		helpViewUserControl.CurrentHelpDocument = Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument;
 		helpViewUserControl.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage;
 		UpdateMacrosAndText(helpViewUserControl);

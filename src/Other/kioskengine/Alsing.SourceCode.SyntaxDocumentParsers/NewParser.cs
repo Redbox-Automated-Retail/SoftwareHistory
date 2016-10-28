@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.SourceCode.SyntaxDocumentParsers;
 
+[ComVisible(true)]
 public sealed class NewParser : ParserBase
 {
 	public override void ParseRow(int rowIndex, bool parseKeywords)

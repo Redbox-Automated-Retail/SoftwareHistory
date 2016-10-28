@@ -1,14 +1,16 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Alsing.Design;
 
+[ComVisible(true)]
 public class Int32AutoConverter : Int32Converter
 {
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		if (sourceType == typeof(string))
+		if ((object)sourceType == typeof(string))
 		{
 			return true;
 		}
@@ -17,7 +19,7 @@ public class Int32AutoConverter : Int32Converter
 
 	public override bool CanConvertTo(ITypeDescriptorContext context, Type t)
 	{
-		if (t == typeof(string))
+		if ((object)t == typeof(string))
 		{
 			return true;
 		}
@@ -39,7 +41,7 @@ public class Int32AutoConverter : Int32Converter
 
 	public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
 	{
-		if (destinationType == typeof(string))
+		if ((object)destinationType == typeof(string))
 		{
 			int num = Convert.ToInt32(value);
 			if (num == 0)

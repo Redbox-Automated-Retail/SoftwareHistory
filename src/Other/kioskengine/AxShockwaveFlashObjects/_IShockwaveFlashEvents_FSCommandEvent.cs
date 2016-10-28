@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace AxShockwaveFlashObjects;
 
+[ComVisible(true)]
 public class _IShockwaveFlashEvents_FSCommandEvent
 {
 	public string command;

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Views.ReturnViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:animcations="clr-namespace:Redbox.Rental.UI.Controls.Animations" xmlns:animcations2="clr-namespace:Redbox.Rental.UI">
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static local:ReturnViewCommands.GoBack}" Executed="GoBackCommandBinding_Executed" />
+  </UIElement.CommandBindings>
+  <Grid Background="#B5121B">
+    <animcations:InsertDiscAnimationUserControl x:Name="InsertDiscAnimation" VerticalAlignment="Center" HorizontalAlignment="Left" />
+    <Border Name="back_button" BorderBrush="#860C13" BorderThickness="3" CornerRadius="34" Width="194" Height="66" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="35,665,0,0">
+      <Border.Background>
+        <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+          <GradientStop Color="#B50E1B" Offset="0" />
+          <GradientStop Color="#8F0E15" Offset="1" />
+        </LinearGradientBrush>
+      </Border.Background>
+      <UIElement.InputBindings>
+        <MouseBinding Gesture="LeftClick" Command="{x:Static local:ReturnViewCommands.GoBack}" />
+      </UIElement.InputBindings>
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
+        <Image Width="31.5" Height="27" Margin="0,0,15,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/back-white-arrow.png" />
+        <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_target_small}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFFFF" Text="BACK" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

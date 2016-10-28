@@ -73,7 +73,7 @@ public class PropertyDropDownContentAttribute : PropertyAndChildrenAttribute
 		{
 			return false;
 		}
-		if (_controlType != propertyDropDownContentAttribute._controlType)
+		if ((object)_controlType != propertyDropDownContentAttribute._controlType)
 		{
 			return false;
 		}

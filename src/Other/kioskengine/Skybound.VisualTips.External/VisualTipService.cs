@@ -15,11 +15,11 @@ internal class VisualTipService
 
 	public static void SetExtender(Type controlType, IVisualTipExtender extender)
 	{
-		if (SetExtenderMethod == null && !SetExtenderChecked)
+		if ((object)SetExtenderMethod == null && !SetExtenderChecked)
 		{
 			SetExtenderChecked = true;
 			Type type = Type.GetType("Skybound.VisualTips.VisualTipProvider, Skybound.VisualTips");
-			if (type != null)
+			if ((object)type != null)
 			{
 				SetExtenderMethod = type.GetMethod("SetExtender", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[2]
 				{
@@ -28,7 +28,7 @@ internal class VisualTipService
 				}, null);
 			}
 		}
-		if (SetExtenderMethod != null)
+		if ((object)SetExtenderMethod != null)
 		{
 			SetExtenderMethod.Invoke(null, new object[2] { controlType, extender });
 		}

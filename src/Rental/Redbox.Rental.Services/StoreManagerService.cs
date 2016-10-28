@@ -138,4 +138,14 @@ public class StoreManagerService : IStoreManager
 		}
 		return result;
 	}
+
+	public int GetSellThruDays()
+	{
+		int result = 30;
+		if (_configService.TryGetValue<int>("system", "General", "SellThruDays", out var value))
+		{
+			result = value;
+		}
+		return result;
+	}
 }

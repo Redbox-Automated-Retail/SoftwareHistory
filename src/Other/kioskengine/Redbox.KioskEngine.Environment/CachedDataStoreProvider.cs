@@ -57,7 +57,7 @@ internal class CachedDataStoreProvider : DataStoreProvider
 	{
 		List<string> keys = new List<string>();
 		Dictionary<string, object> cachedTableCreate = GetCachedTableCreate(dataStore, tableName);
-		LinqExtensions.ForEach(cachedTableCreate, delegate(KeyValuePair<string, object> pair)
+		cachedTableCreate.ForEach(delegate(KeyValuePair<string, object> pair)
 		{
 			keys.Add(pair.Key);
 		});
@@ -82,7 +82,7 @@ internal class CachedDataStoreProvider : DataStoreProvider
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
 	{
 		Dictionary<string, object> table = GetCachedTableCreate(dataStore, tableName);
-		LinqExtensions.ForEach(values, delegate(KeyValuePair<string, object> pair)
+		values.ForEach(delegate(KeyValuePair<string, object> pair)
 		{
 			table[pair.Key] = pair.Value as string;
 		});
@@ -96,7 +96,7 @@ internal class CachedDataStoreProvider : DataStoreProvider
 		{
 			return tables.AsReadOnly();
 		}
-		LinqExtensions.ForEach(cachedDataStore, delegate(KeyValuePair<string, Dictionary<string, object>> pair)
+		cachedDataStore.ForEach(delegate(KeyValuePair<string, Dictionary<string, object>> pair)
 		{
 			tables.Add(pair.Key);
 		});

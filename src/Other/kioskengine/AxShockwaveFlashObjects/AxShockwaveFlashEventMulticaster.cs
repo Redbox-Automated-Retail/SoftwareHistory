@@ -1,7 +1,9 @@
+using System.Runtime.InteropServices;
 using ShockwaveFlashObjects;
 
 namespace AxShockwaveFlashObjects;
 
+[ComVisible(true)]
 public class AxShockwaveFlashEventMulticaster : _IShockwaveFlashEvents
 {
 	private AxShockwaveFlash parent;

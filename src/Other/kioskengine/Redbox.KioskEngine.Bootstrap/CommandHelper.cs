@@ -133,7 +133,7 @@ internal static class CommandHelper
 		try
 		{
 			string parmsvalue = string.Empty;
-			LinqExtensions.ForEach(parms, delegate(string s)
+			parms.ForEach(delegate(string s)
 			{
 				parmsvalue += $"{s}|";
 			});
@@ -184,7 +184,7 @@ internal static class CommandHelper
 			LogHelper.Instance.Log("WM_COPYDATA: Command '{0}' does not have a registered handler method.", name);
 			return;
 		}
-		LogHelper.Instance.Log("WM_COPYDATA: Execute command '{0}', with parms: {1}.", name, (parms != null) ? EnumerableExtensions.Join(parms, "|") : "null");
+		LogHelper.Instance.Log("WM_COPYDATA: Execute command '{0}', with parms: {1}.", name, (parms != null) ? parms.Join("|") : "null");
 		m_commands[name](parms);
 	}
 }

@@ -178,7 +178,7 @@ public class SelectBundleForm : Form
 		};
 		if (editSearchPathForm.ShowDialog() == DialogResult.OK)
 		{
-			m_searchPathToolStripTextBox.Text = EnumerableExtensions.Join(editSearchPathForm.SearchPath, ";");
+			m_searchPathToolStripTextBox.Text = editSearchPathForm.SearchPath.Join(";");
 			RefreshList();
 		}
 	}

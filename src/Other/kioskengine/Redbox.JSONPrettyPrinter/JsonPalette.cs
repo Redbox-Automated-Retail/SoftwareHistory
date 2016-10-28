@@ -186,37 +186,36 @@ internal sealed class JsonPalette : IJsonImportable
 		do
 		{
 			string text = reader.ReadMember().ToLowerInvariant();
-			string value = reader.ReadString();
-			ConsoleColor value2 = EnumHelper.TryParse<ConsoleColor>(value, ignoreCase: true) ?? DefaultBrush.Foreground;
+			ConsoleColor value = EnumHelper.TryParse<ConsoleColor>(reader.ReadString(), ignoreCase: true) ?? DefaultBrush.Foreground;
 			switch (text)
 			{
 			case "arr":
 			case "array":
-				Array = Array.ResetForeground(value2);
+				Array = Array.ResetForeground(value);
 				break;
 			case "obj":
 			case "object":
-				Object = Object.ResetForeground(value2);
+				Object = Object.ResetForeground(value);
 				break;
 			case "mem":
 			case "member":
-				Member = Member.ResetForeground(value2);
+				Member = Member.ResetForeground(value);
 				break;
 			case "str":
 			case "string":
-				String = String.ResetForeground(value2);
+				String = String.ResetForeground(value);
 				break;
 			case "num":
 			case "number":
-				Number = Number.ResetForeground(value2);
+				Number = Number.ResetForeground(value);
 				break;
 			case "bit":
 			case "boolean":
-				Boolean = Boolean.ResetForeground(value2);
+				Boolean = Boolean.ResetForeground(value);
 				break;
 			case "nil":
 			case "null":
-				Null = Null.ResetForeground(value2);
+				Null = Null.ResetForeground(value);
 				break;
 			}
 		}

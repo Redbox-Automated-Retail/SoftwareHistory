@@ -3,12 +3,14 @@ using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Design;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
 using Alsing.Windows;
 
 namespace Alsing.Drawing.GDI;
 
+[ComVisible(true)]
 public class FontList : UITypeEditor
 {
 	private IWindowsFormsEditorService edSvc;

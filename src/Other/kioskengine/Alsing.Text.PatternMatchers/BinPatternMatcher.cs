@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Alsing.Text.PatternMatchers;
 
+[ComVisible(true)]
 public class BinPatternMatcher : PatternMatcherBase
 {
 	public static readonly BinPatternMatcher Default = new BinPatternMatcher();

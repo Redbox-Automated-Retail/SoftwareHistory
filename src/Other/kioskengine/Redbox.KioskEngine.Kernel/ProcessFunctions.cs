@@ -212,7 +212,7 @@ internal static class ProcessFunctions
 			{
 				processStartInfo.UserName = userName;
 				SecureString pass = new SecureString();
-				LinqExtensions.ForEach(AdminPassword, delegate(char x)
+				AdminPassword.ForEach(delegate(char x)
 				{
 					pass.AppendChar(x);
 				});
