@@ -32,8 +32,7 @@ public class UpdateManagerApplication : ApplicationContext
 		}
 		ErrorForm errorForm = new ErrorForm();
 		errorForm.Errors = errorList;
-		ErrorForm errorForm2 = errorForm;
-		errorForm2.ShowDialog();
+		errorForm.ShowDialog();
 		return false;
 	}
 
@@ -142,10 +141,8 @@ public class UpdateManagerApplication : ApplicationContext
 	{
 		Instance.ThreadSafeHostUpdate(delegate
 		{
-			ErrorForm errorForm = new ErrorForm
-			{
-				Errors = errors
-			};
+			ErrorForm errorForm = new ErrorForm();
+			errorForm.Errors = errors;
 			errorForm.ShowDialog();
 		});
 	}
@@ -155,10 +152,8 @@ public class UpdateManagerApplication : ApplicationContext
 		Instance.ThreadSafeHostUpdate(delegate
 		{
 			Redbox.UpdateManager.ComponentModel.ErrorList errors = new Redbox.UpdateManager.ComponentModel.ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E988", "An unhandled exception was thrown in Update Mananger.", exception) };
-			ErrorForm errorForm = new ErrorForm
-			{
-				Errors = errors
-			};
+			ErrorForm errorForm = new ErrorForm();
+			errorForm.Errors = errors;
 			errorForm.ShowDialog();
 		});
 	}

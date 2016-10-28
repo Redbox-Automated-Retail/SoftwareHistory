@@ -41,8 +41,7 @@ internal class FileCacheService : IFileCacheService
 		Redbox.UpdateManager.ComponentModel.ErrorList errorList = new Redbox.UpdateManager.ComponentModel.ErrorList();
 		try
 		{
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			return File.Exists(filePath);
+			return File.Exists(GetFilePath(fileSetId, fileId, fileRevisionId));
 		}
 		catch (Exception e)
 		{
@@ -56,8 +55,7 @@ internal class FileCacheService : IFileCacheService
 		Redbox.UpdateManager.ComponentModel.ErrorList errorList = new Redbox.UpdateManager.ComponentModel.ErrorList();
 		try
 		{
-			List<string> allRevisionFiles = GetAllRevisionFiles(fileSetId, revisionId);
-			return allRevisionFiles.Count() > 0;
+			return GetAllRevisionFiles(fileSetId, revisionId).Count() > 0;
 		}
 		catch (Exception e)
 		{
@@ -71,8 +69,7 @@ internal class FileCacheService : IFileCacheService
 		Redbox.UpdateManager.ComponentModel.ErrorList errorList = new Redbox.UpdateManager.ComponentModel.ErrorList();
 		try
 		{
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			return File.Exists(revisionPath);
+			return File.Exists(GetRevisionPath(fileSetId, revisionId, patchRevisionId));
 		}
 		catch (Exception e)
 		{
@@ -87,10 +84,8 @@ internal class FileCacheService : IFileCacheService
 		try
 		{
 			CheckFilePath(fileSetId, fileId);
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			File.WriteAllBytes(filePath, data);
-			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
-			File.WriteAllText(fileInfoPath, info);
+			File.WriteAllBytes(GetFilePath(fileSetId, fileId, fileRevisionId), data);
+			File.WriteAllText(GetFileInfoPath(fileSetId, fileId, fileRevisionId), info);
 			LogHelper.Instance.Log($"FileCacheService.AddFile - Info: {info}");
 		}
 		catch (Exception e)
@@ -111,18 +106,15 @@ internal class FileCacheService : IFileCacheService
 				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileCacheService.AddFilePatch", $"Patch source file is missing FileId: {fileId} FileRevisionId {filePatchRevisionId}"));
 				return errorList;
 			}
-			string filePath = GetFilePath(fileSetId, fileId, filePatchRevisionId);
-			using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+			using (FileStream fileStream = new FileStream(GetFilePath(fileSetId, fileId, filePatchRevisionId), FileMode.Open, FileAccess.Read))
 			{
 				fileStream.Position = 0L;
 				using MemoryStream memoryStream = new MemoryStream(data);
 				memoryStream.Position = 0L;
-				string filePath2 = GetFilePath(fileSetId, fileId, fileRevisionId);
-				using FileStream target = new FileStream(filePath2, FileMode.OpenOrCreate, FileAccess.Write);
+				using FileStream target = new FileStream(GetFilePath(fileSetId, fileId, fileRevisionId), FileMode.OpenOrCreate, FileAccess.Write);
 				errorList.AddRange(ConvertFromXDeltaErrors(XDeltaHelper.Apply(fileStream, memoryStream, target)));
 			}
-			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
-			File.WriteAllText(fileInfoPath, info);
+			File.WriteAllText(GetFileInfoPath(fileSetId, fileId, fileRevisionId), info);
 			LogHelper.Instance.Log($"FileCacheService.AddFilePatch - Info: {info}");
 		}
 		catch (Exception e)
@@ -148,10 +140,8 @@ internal class FileCacheService : IFileCacheService
 		try
 		{
 			CheckFileSetPath(fileSetId);
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			File.WriteAllBytes(revisionPath, data);
-			string revisionInfoPath = GetRevisionInfoPath(fileSetId, revisionId, patchRevisionId);
-			File.WriteAllText(revisionInfoPath, info);
+			File.WriteAllBytes(GetRevisionPath(fileSetId, revisionId, patchRevisionId), data);
+			File.WriteAllText(GetRevisionInfoPath(fileSetId, revisionId, patchRevisionId), info);
 			LogHelper.Instance.Log($"FileCacheService.AddRevision - Info: {info}");
 		}
 		catch (Exception e)
@@ -199,8 +189,7 @@ internal class FileCacheService : IFileCacheService
 		try
 		{
 			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			int num = (int)(DateTime.Now - File.GetCreationTime(filePath)).TotalDays;
-			if (num <= 1)
+			if ((int)(DateTime.Now - File.GetCreationTime(filePath)).TotalDays <= 1)
 			{
 				LogHelper.Instance.Log("FileCacheService.DeleteFile - Cannot delete files less than 2 days - FileSetId {0}, FileId {1}, FileRevisionId {2}", fileSetId, fileId, fileRevisionId);
 				return;
@@ -379,8 +368,7 @@ internal class FileCacheService : IFileCacheService
 	public List<long> GetAllFileSets()
 	{
 		List<long> fileSets = new List<long>();
-		string[] directories = Directory.GetDirectories(_root);
-		LinqExtensions.ForEach(directories, delegate(string d)
+		Directory.GetDirectories(_root).ForEach(delegate(string d)
 		{
 			string fileName = Path.GetFileName(d);
 			try

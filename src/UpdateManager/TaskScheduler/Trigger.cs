@@ -150,7 +150,7 @@ public abstract class Trigger : ICloneable
 	{
 		iTaskTrigger = null;
 		taskTrigger = default(TaskTrigger);
-		taskTrigger.TriggerSize = (ushort)Marshal.SizeOf(taskTrigger);
+		taskTrigger.TriggerSize = (ushort)Marshal.SizeOf((object)taskTrigger);
 		taskTrigger.BeginYear = (ushort)DateTime.Today.Year;
 		taskTrigger.BeginMonth = (ushort)DateTime.Today.Month;
 		taskTrigger.BeginDay = (ushort)DateTime.Today.Day;
@@ -163,7 +163,7 @@ public abstract class Trigger : ICloneable
 			throw new ArgumentNullException("iTrigger", "ITaskTrigger instance cannot be null");
 		}
 		taskTrigger = default(TaskTrigger);
-		taskTrigger.TriggerSize = (ushort)Marshal.SizeOf(taskTrigger);
+		taskTrigger.TriggerSize = (ushort)Marshal.SizeOf((object)taskTrigger);
 		iTrigger.GetTrigger(ref taskTrigger);
 		iTaskTrigger = iTrigger;
 	}
@@ -182,7 +182,7 @@ public abstract class Trigger : ICloneable
 			throw new ArgumentNullException("iTaskTrigger", "Instance of ITaskTrigger cannot be null");
 		}
 		TaskTrigger Trigger = default(TaskTrigger);
-		Trigger.TriggerSize = (ushort)Marshal.SizeOf(Trigger);
+		Trigger.TriggerSize = (ushort)Marshal.SizeOf((object)Trigger);
 		iTaskTrigger.GetTrigger(ref Trigger);
 		return (TriggerType)Trigger.Type switch
 		{

@@ -56,7 +56,7 @@ internal class CommandResult
 		}
 		if (Success)
 		{
-			stringBuilder.Append("203 Command completed successfully.");
+			stringBuilder.Append("203 Command Success.");
 		}
 		else
 		{
@@ -66,7 +66,7 @@ internal class CommandResult
 				stringBuilder.AppendFormat(" {0}", ExtendedErrorMessage);
 			}
 		}
-		stringBuilder.AppendLine(string.Concat(" (Execution Time = ", ExecutionTime, ")"));
+		stringBuilder.AppendLine(" (Execution Time:" + Math.Truncate(ExecutionTime.TotalMilliseconds) + ")");
 		return stringBuilder.ToString();
 	}
 }

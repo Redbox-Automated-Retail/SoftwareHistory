@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreFileDataCache
+internal class StoreFileDataCache
 {
 	public long StoreFile { get; set; }
 

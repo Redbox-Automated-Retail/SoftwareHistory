@@ -59,7 +59,7 @@ internal class ScriptDownloadFile : DownloadFileBase
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("WDF001", "An unhandled exception occurred in WuaDownloadFile.CheckNone", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("WDF001", "An unhandled exception occurred in ScriptDownloadFile.CheckNone", e));
 		}
 		return errorList;
 	}

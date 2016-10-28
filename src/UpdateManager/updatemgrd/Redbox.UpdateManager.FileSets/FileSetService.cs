@@ -85,13 +85,12 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 			});
 			service.Add("FILESETSERVICE.FILESETCLEANUP", new TimeSpan(12, 0, 0), delegate
 			{
-				FileSetCleanup fileSetCleanup = new FileSetCleanup();
-				fileSetCleanup.Run();
+				new FileSetCleanup().Run();
 			});
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FS0042", "Unhandled exception occurred in FileSetService.Initialize.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FS0042", "Unhandled exception occurred in FileSetService.Initialize.", e));
 		}
 		return errorList;
 	}
@@ -107,7 +106,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FS998", "An unhandled exception occurred while starting the fileset service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FS998", "An unhandled exception occurred while starting the fileset service.", e));
 		}
 		return errorList;
 	}
@@ -123,7 +122,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FS997", "An unhandled exception occurred while stopping the fileset service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FS997", "An unhandled exception occurred while stopping the fileset service.", e));
 		}
 		return errorList;
 	}
@@ -147,11 +146,11 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 					Data = fileSetPollRequestList.ToShortFormat()
 				});
 			}
-			LogHelper.Instance.Log("FileSetService: Store file poll request: " + ObjectExtensions.ToJson(pollRequestList), LogEntryType.Debug);
+			LogHelper.Instance.Log("FileSetService: Store file poll request: " + pollRequestList.ToJson(), LogEntryType.Debug);
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetService.GetPollRequest", "Unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.GetPollRequest", "Unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -165,14 +164,14 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		try
 		{
-			IEnumerable<ClientFileSetRevisionChangeSet> enumerable = pollReplyList.Select((PollReply pollReply) => StringExtensions.ToObject<ClientFileSetRevisionChangeSet>(pollReply.Data));
+			IEnumerable<ClientFileSetRevisionChangeSet> enumerable = pollReplyList.Select((PollReply pollReply) => pollReply.Data.ToObject<ClientFileSetRevisionChangeSet>());
 			if (enumerable == null || enumerable.Count() == 0)
 			{
 				return errorList;
 			}
 			if (!_lock.TryEnterWriteLock(_lockTimeout))
 			{
-				errorList.Add(Error.NewError("FileSetService.ProcessPollReply", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.ProcessPollReply", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 				return errorList;
 			}
 			try
@@ -186,7 +185,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FS0010", "An unhandled exception occurred in FileSetService.ProcessPollReply.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FS0010", "An unhandled exception occurred in FileSetService.ProcessPollReply.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -215,7 +214,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 				ErrorList errorList = new ErrorList();
 				if (!_lock.TryEnterWriteLock(_lockTimeout))
 				{
-					errorList.Add(Error.NewError("FileSetService.DoWork", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.DoWork", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 					return;
 				}
 				LogHelper.Instance.Log("Executing FileSetService.DoWork");
@@ -263,7 +262,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetService.ProcessChangeSets", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.ProcessChangeSets", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -279,7 +278,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetService.FileSetUpdate", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.FileSetUpdate", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -327,8 +326,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 			{
 				return;
 			}
-			IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
-			service2.Execute(delegate
+			ServiceLocator.Instance.GetService<IKernelService>().Execute(delegate
 			{
 				bothGood.ForEach(item =>
 				{
@@ -397,7 +395,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("FileSetService.ProcessChangeSetWork", "An unhandled exception occurred", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.ProcessChangeSetWork", "An unhandled exception occurred", e));
 		}
 	}
 
@@ -453,7 +451,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetService.GetDependencyState", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.GetDependencyState", "An unhandled exception occurred", e));
 		}
 		return null;
 	}
@@ -462,7 +460,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 	{
 		if (FileCacheService.RevisionExists(fileSetId, revisionId, patchRevisionId) && FileCacheService.GetRevision(fileSetId, revisionId, patchRevisionId, out var data))
 		{
-			return StringExtensions.ToObject<ClientFileSetRevision>(Encoding.ASCII.GetString(data));
+			return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
 		}
 		return null;
 	}
@@ -471,7 +469,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 	{
 		if (FileCacheService.GetRevision(fileSetId, revisionId, out var data))
 		{
-			return StringExtensions.ToObject<ClientFileSetRevision>(Encoding.ASCII.GetString(data));
+			return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
 		}
 		return null;
 	}
@@ -480,7 +478,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 	{
 		if (FileCacheService.GetRevision(path, out var data))
 		{
-			return StringExtensions.ToObject<ClientFileSetRevision>(Encoding.ASCII.GetString(data));
+			return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
 		}
 		return null;
 	}
@@ -489,7 +487,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 	{
 		if (FileCacheService.GetFileInfo(path, out var data))
 		{
-			return StringExtensions.ToObject<FileSetFileInfo>(Encoding.ASCII.GetString(data));
+			return Encoding.ASCII.GetString(data).ToObject<FileSetFileInfo>();
 		}
 		return null;
 	}
@@ -507,7 +505,7 @@ internal class FileSetService : IPollRequestReply, IFileSetService
 		errorList.AddRange(service2.Shutdown(15000, 2));
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});

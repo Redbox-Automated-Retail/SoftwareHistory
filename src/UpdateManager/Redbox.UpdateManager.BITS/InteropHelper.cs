@@ -8,7 +8,7 @@ public static class InteropHelper
 	{
 		long num = filetime.dwLowDateTime;
 		long num2 = filetime.dwHighDateTime;
-		if (num == 0 && num2 == 0)
+		if (num == 0L && num2 == 0L)
 		{
 			return null;
 		}

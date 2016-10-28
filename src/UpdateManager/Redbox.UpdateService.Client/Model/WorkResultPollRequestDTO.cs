@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class WorkResultPollRequestDTO
+internal class WorkResultPollRequestDTO
 {
 	public string StoreNumber;
 

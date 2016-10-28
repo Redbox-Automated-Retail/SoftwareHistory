@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public static class StoreConfigurationConstants
+internal static class StoreConfigurationConstants
 {
 	public const string EmptyHash = "0000000000000000000000000000000000000000";
 

@@ -10,11 +10,11 @@ namespace Redbox.UpdateManager.Environment;
 
 public class StoreFileService : IPollRequestReply
 {
+	private string m_root;
+
 	private const string StagedStoreFileExt = ".staged";
 
 	private const string StoreFileStateExt = ".state";
-
-	private string m_root;
 
 	public static StoreFileService Instance => Singleton<StoreFileService>.Instance;
 
@@ -30,12 +30,12 @@ public class StoreFileService : IPollRequestReply
 			}
 			if (!Directory.Exists(m_root))
 			{
-				errorList.Add(Error.NewError("SFS0041", "The root directory is not set up properly", "Please check initialization values"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0041", "The root directory is not set up properly", "Please check initialization values"));
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("SFS0042", "Unhandled exception occurred in StoreFileService.Initialize.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0042", "Unhandled exception occurred in StoreFileService.Initialize.", e));
 		}
 		return errorList;
 	}
@@ -55,11 +55,11 @@ public class StoreFileService : IPollRequestReply
 					Data = storeFilePollRequestList.ToShortFormat()
 				});
 			}
-			LogHelper.Instance.Log("StoreFileService: Store file poll request: " + ObjectExtensions.ToJson(pollRequestList), LogEntryType.Debug);
+			LogHelper.Instance.Log("StoreFileService: Store file poll request: " + pollRequestList.ToJson(), LogEntryType.Debug);
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("SFS0042", "Unhandled exception occurred in StoreFileService.Initialize.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0042", "Unhandled exception occurred in StoreFileService.Initialize.", e));
 		}
 		return errorList;
 	}
@@ -73,16 +73,16 @@ public class StoreFileService : IPollRequestReply
 			{
 				if (string.IsNullOrEmpty(item.Data))
 				{
-					errorList.Add(Error.NewError("SFS0092", "Error, A poll reply contained a type of store file changeset without the changeset.", ObjectExtensions.ToJson(item)));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0092", "Error, A poll reply contained a type of store file changeset without the changeset.", item.ToJson()));
 					continue;
 				}
-				StoreFileChangeSetData changeSet = StringExtensions.ToObject<StoreFileChangeSetData>(item.Data);
+				StoreFileChangeSetData changeSet = item.Data.ToObject<StoreFileChangeSetData>();
 				errorList.AddRange(ProcessChangeSet(changeSet));
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("SFS0091", "Unhandled exception occurred in StoreFileService.ProcessPollReply.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0091", "Unhandled exception occurred in StoreFileService.ProcessPollReply.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -92,7 +92,7 @@ public class StoreFileService : IPollRequestReply
 	{
 	}
 
-	private IEnumerable<Error> Activate(long id)
+	private IEnumerable<Redbox.UpdateManager.ComponentModel.Error> Activate(long id)
 	{
 		ErrorList errorList = new ErrorList();
 		try
@@ -102,25 +102,24 @@ public class StoreFileService : IPollRequestReply
 			string text = Path.ChangeExtension(path, ".staged");
 			if (!File.Exists(path2))
 			{
-				errorList.Add(Error.NewError("SFS0311", "No state file for ID: " + id, "Check the id you are trying to activate"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0311", "No state file for ID: " + id, "Check the id you are trying to activate"));
 				return errorList;
 			}
 			if (!File.Exists(text))
 			{
-				errorList.Add(Error.NewError("SFS0312", "No store file for ID: " + id, "Check the id you are trying to activate"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0312", "No store file for ID: " + id, "Check the id you are trying to activate"));
 				return errorList;
 			}
-			string json = File.ReadAllText(path2);
-			StoreFileState storeFileState = StringExtensions.ToObject<StoreFileState>(json);
+			StoreFileState storeFileState = File.ReadAllText(path2).ToObject<StoreFileState>();
 			string directoryName = Path.GetDirectoryName(storeFileState.Destination);
 			if (Directory.Exists(storeFileState.Destination))
 			{
-				errorList.Add(Error.NewError("SFS0316", "This store file's destination is a directory and not a path: " + id, "Specify a full path, not just a directory for store files"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0316", "This store file's destination is a directory and not a path: " + id, "Specify a full path, not just a directory for store files"));
 				storeFileState.State = FileState.NoDestinationPath;
 			}
 			else if (string.IsNullOrEmpty(directoryName) || !Directory.Exists(directoryName))
 			{
-				errorList.Add(Error.NewError("SFS0315", "No directory found at: " + directoryName, string.Empty));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0315", "No directory found at: " + directoryName, string.Empty));
 				storeFileState.State = FileState.NoDestinationDirectory;
 			}
 			else
@@ -150,24 +149,23 @@ public class StoreFileService : IPollRequestReply
 				{
 					try
 					{
-						bool overwrite = true;
-						File.Copy(text, storeFileState.Destination, overwrite);
+						File.Copy(text, storeFileState.Destination, overwrite: true);
 						storeFileState.State = FileState.Activated;
 						LogHelper.Instance.Log("StoreFileService: file activated for ID: " + id, LogEntryType.Debug);
 					}
 					catch (Exception e)
 					{
 						storeFileState.State = state;
-						errorList.Add(Error.NewError("SFS0313", "File copy failed for store file ID: " + id, e));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0313", "File copy failed for store file ID: " + id, e));
 					}
 				}
 			}
 			storeFileState.Timestamp = DateTime.Now;
-			File.WriteAllText(path2, ObjectExtensions.ToJson(storeFileState));
+			File.WriteAllText(path2, storeFileState.ToJson());
 		}
 		catch (Exception e2)
 		{
-			errorList.Add(Error.NewError("SFS0032", "Unhandled exception occurred in StoreFileService.Activate.", e2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0032", "Unhandled exception occurred in StoreFileService.Activate.", e2));
 		}
 		return errorList;
 	}
@@ -180,46 +178,46 @@ public class StoreFileService : IPollRequestReply
 		{
 			if (!Directory.Exists(m_root))
 			{
-				errorList.Add(Error.NewError("GCS02", "No directory found at " + m_root, "No storefile state will be sent to the server"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("GCS02", "No directory found at " + m_root, "No storefile state will be sent to the server"));
 				return errorList;
 			}
 			string[] files = Directory.GetFiles(m_root, '*' + ".state", SearchOption.TopDirectoryOnly);
-			LogHelper.Instance.Log("StoreFileService: GetCurrentState files: " + ObjectExtensions.ToJson(files), LogEntryType.Debug);
+			LogHelper.Instance.Log("StoreFileService: GetCurrentState files: " + files.ToJson(), LogEntryType.Debug);
 			string[] array = files;
 			foreach (string text in array)
 			{
 				try
 				{
-					StoreFileState storeFileState = StringExtensions.ToObject<StoreFileState>(File.ReadAllText(text));
+					StoreFileState storeFileState = File.ReadAllText(text).ToObject<StoreFileState>();
 					if (storeFileState.State == FileState.Staged || storeFileState.State == FileState.ActivationFailedOnce || storeFileState.State == FileState.ActivationFailedTwice)
 					{
 						errorList.AddRange(Activate(storeFileState.StoreFilePollRequest.StoreFile));
 					}
 					storeFilePollRequestList.StoreFilePollRequests.Add(storeFileState.StoreFilePollRequest);
-					LogHelper.Instance.Log("StoreFileService: StoreFilePollRequest added: " + ObjectExtensions.ToJson(storeFileState.StoreFilePollRequest), LogEntryType.Debug);
+					LogHelper.Instance.Log("StoreFileService: StoreFilePollRequest added: " + storeFileState.StoreFilePollRequest.ToJson(), LogEntryType.Debug);
 				}
 				catch (Exception e)
 				{
-					errorList.Add(Error.NewError("GCS01", "Error parsing storefile state file at " + text, e));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("GCS01", "Error parsing storefile state file at " + text, e));
 					LogHelper.Instance.Log("Error parsing storefile state file at " + text, e);
 				}
 			}
 		}
 		catch (Exception e2)
 		{
-			errorList.Add(Error.NewError("GCS02", "Unhandled exception occurred in GetCurrentState()", e2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("GCS02", "Unhandled exception occurred in GetCurrentState()", e2));
 		}
 		return errorList;
 	}
 
-	private IEnumerable<Error> ProcessChangeSet(StoreFileChangeSetData changeSet)
+	private IEnumerable<Redbox.UpdateManager.ComponentModel.Error> ProcessChangeSet(StoreFileChangeSetData changeSet)
 	{
 		ErrorList errorList = new ErrorList();
 		try
 		{
 			if (changeSet == null)
 			{
-				errorList.Add(Error.NewError("PCS01", "ChangeSet is null", "Make sure that there is a changeset to process"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("PCS01", "ChangeSet is null", "Make sure that there is a changeset to process"));
 				return errorList;
 			}
 			string path = Path.Combine(m_root, changeSet.StoreFile.ToString());
@@ -235,12 +233,11 @@ public class StoreFileService : IPollRequestReply
 				string destinationPath = string.Empty;
 				try
 				{
-					StoreFileState storeFileState = StringExtensions.ToObject<StoreFileState>(File.ReadAllText(text));
-					destinationPath = storeFileState.Destination;
+					destinationPath = File.ReadAllText(text).ToObject<StoreFileState>().Destination;
 				}
 				catch (Exception e)
 				{
-					errorList.Add(Error.NewError("PCS02", "An exception occurred in parsing the state file at: " + text, e));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("PCS02", "An exception occurred in parsing the state file at: " + text, e));
 				}
 				finally
 				{
@@ -252,12 +249,12 @@ public class StoreFileService : IPollRequestReply
 		}
 		catch (Exception e2)
 		{
-			errorList.Add(Error.NewError("SFS0092", "Unhandled exception occurred in StoreFileService.ProcessChangeSet.", e2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0092", "Unhandled exception occurred in StoreFileService.ProcessChangeSet.", e2));
 		}
 		return errorList;
 	}
 
-	private static IEnumerable<Error> DeleteStoreFile(string destinationPath, string statePath, string filePath)
+	private static IEnumerable<Redbox.UpdateManager.ComponentModel.Error> DeleteStoreFile(string destinationPath, string statePath, string filePath)
 	{
 		ErrorList errorList = new ErrorList();
 		errorList.AddRange(Delete(destinationPath));
@@ -266,9 +263,9 @@ public class StoreFileService : IPollRequestReply
 		return errorList;
 	}
 
-	private static IEnumerable<Error> Delete(string path)
+	private static IEnumerable<Redbox.UpdateManager.ComponentModel.Error> Delete(string path)
 	{
-		List<Error> list = new List<Error>();
+		List<Redbox.UpdateManager.ComponentModel.Error> list = new List<Redbox.UpdateManager.ComponentModel.Error>();
 		try
 		{
 			if (!string.IsNullOrEmpty(path) && File.Exists(path))
@@ -278,41 +275,41 @@ public class StoreFileService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			list.Add(Error.NewError("SFS0099", "Error trying to delete path: " + path, e));
+			list.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SFS0099", "Error trying to delete path: " + path, e));
 		}
 		return list;
 	}
 
-	private IEnumerable<Error> UpdateStoreFile(StoreFileChangeSetData changeSet, string statePath, string stagedFilePath)
+	private IEnumerable<Redbox.UpdateManager.ComponentModel.Error> UpdateStoreFile(StoreFileChangeSetData changeSet, string statePath, string stagedFilePath)
 	{
 		ErrorList errorList = new ErrorList();
 		try
 		{
 			byte[] array = Convert.FromBase64String(changeSet.Base64Data);
-			string a = ByteArrayExtensions.ToASCIISHA1Hash(array);
-			if (!string.Equals(a, changeSet.DataHash, StringComparison.Ordinal))
+			if (!string.Equals(array.ToASCIISHA1Hash(), changeSet.DataHash, StringComparison.Ordinal))
 			{
-				errorList.Add(Error.NewError("USF03", "Hash check failed for storefile changeset " + changeSet.Name, "Aborting storefile update"));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("USF03", "Hash check failed for storefile changeset " + changeSet.Name, "Aborting storefile update"));
 				return errorList;
 			}
-			StoreFileState storeFileState = new StoreFileState();
-			storeFileState.Destination = changeSet.Path;
-			storeFileState.State = FileState.Staged;
-			storeFileState.Timestamp = DateTime.Now;
-			storeFileState.StoreFilePollRequest = new StoreFilePollRequest
+			StoreFileState instance = new StoreFileState
 			{
-				StoreFile = changeSet.StoreFile,
-				StoreFileData = changeSet.StoreFileData,
-				SyncId = changeSet.SyncId
+				Destination = changeSet.Path,
+				State = FileState.Staged,
+				Timestamp = DateTime.Now,
+				StoreFilePollRequest = new StoreFilePollRequest
+				{
+					StoreFile = changeSet.StoreFile,
+					StoreFileData = changeSet.StoreFileData,
+					SyncId = changeSet.SyncId
+				}
 			};
-			StoreFileState instance = storeFileState;
 			File.WriteAllBytes(stagedFilePath, array);
-			File.WriteAllText(statePath, ObjectExtensions.ToJson(instance));
+			File.WriteAllText(statePath, instance.ToJson());
 			errorList.AddRange(Activate(changeSet.StoreFile));
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("USF01", "Unknown error in Updating StoreFile", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("USF01", "Unknown error in Updating StoreFile", e));
 		}
 		return errorList;
 	}

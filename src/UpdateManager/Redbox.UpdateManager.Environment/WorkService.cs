@@ -17,17 +17,17 @@ public class WorkService : IPollRequestReply
 		public long ID { get; set; }
 	}
 
-	private const string WorkExtension = ".workdat";
-
-	private const string ScriptLabel = "script";
-
-	private const string InCompleteLabel = ".incomplete";
-
 	private Timer m_workTimer;
 
 	private bool m_isRunning;
 
 	private int m_inDoWork;
+
+	private const string WorkExtension = ".workdat";
+
+	private const string ScriptLabel = "script";
+
+	private const string InCompleteLabel = ".incomplete";
 
 	public static WorkService Instance => Singleton<WorkService>.Instance;
 
@@ -45,7 +45,7 @@ public class WorkService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS999", "An unhandled exception occurred while initializing the work service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS999", "An unhandled exception occurred while initializing the work service.", e));
 		}
 		return errorList;
 	}
@@ -66,7 +66,7 @@ public class WorkService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS998", "An unhandled exception occurred while starting the work service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS998", "An unhandled exception occurred while starting the work service.", e));
 		}
 		return errorList;
 	}
@@ -82,7 +82,7 @@ public class WorkService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS998", "An unhandled exception occurred while stopping the work service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS998", "An unhandled exception occurred while stopping the work service.", e));
 		}
 		return errorList;
 	}
@@ -92,20 +92,21 @@ public class WorkService : IPollRequestReply
 		ErrorList result = new ErrorList();
 		pollRequestList = new List<PollRequest>();
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		IUpdateService service2 = ServiceLocator.Instance.GetService<IUpdateService>();
-		string storeNumber = service2.StoreNumber();
+		string storeNumber = ServiceLocator.Instance.GetService<IUpdateService>().StoreNumber();
 		for (ResultEntry resultEntry = service.Peek<ResultEntry>("script"); resultEntry != null; resultEntry = service.Peek<ResultEntry>("script"))
 		{
-			Dictionary<object, object> results = StringExtensions.ToObject<Dictionary<object, object>>(resultEntry.Entry);
-			WorkResultPollRequestDTO workResultPollRequestDTO = new WorkResultPollRequestDTO();
-			workResultPollRequestDTO.StoreNumber = storeNumber;
-			workResultPollRequestDTO.ScriptID = resultEntry.ID;
-			workResultPollRequestDTO.Results = results;
-			WorkResultPollRequestDTO instance = workResultPollRequestDTO;
-			PollRequest pollRequest = new PollRequest();
-			pollRequest.PollRequestType = PollRequestType.WorkResult;
-			pollRequest.Data = ObjectExtensions.ToJson(instance);
-			PollRequest item = pollRequest;
+			Dictionary<object, object> results = resultEntry.Entry.ToObject<Dictionary<object, object>>();
+			WorkResultPollRequestDTO instance = new WorkResultPollRequestDTO
+			{
+				StoreNumber = storeNumber,
+				ScriptID = resultEntry.ID,
+				Results = results
+			};
+			PollRequest item = new PollRequest
+			{
+				PollRequestType = PollRequestType.WorkResult,
+				Data = instance.ToJson()
+			};
 			pollRequestList.Add(item);
 			service.Dequeue("script");
 			LogHelper.Instance.Log("Sent result for script {0} to server.", resultEntry.ID);
@@ -122,7 +123,7 @@ public class WorkService : IPollRequestReply
 		}
 		try
 		{
-			IEnumerable<ClientWorkScript> enumerable = pollReplyList.Select((PollReply pollReply) => StringExtensions.ToObject<ClientWorkScript>(pollReply.Data));
+			IEnumerable<ClientWorkScript> enumerable = pollReplyList.Select((PollReply pollReply) => pollReply.Data.ToObject<ClientWorkScript>());
 			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
 			List<Guid> list = new List<Guid>();
 			foreach (ClientWorkScript item in enumerable)
@@ -136,7 +137,7 @@ public class WorkService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E999", "An unhandled exception occurred in Updater.DoWork.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", "An unhandled exception occurred in Updater.DoWork.", e));
 		}
 		return errorList;
 	}
@@ -178,8 +179,7 @@ public class WorkService : IPollRequestReply
 	{
 		ErrorList errorList = new ErrorList();
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		IDataStoreService service2 = ServiceLocator.Instance.GetService<IDataStoreService>();
-		List<Guid> list = service2.Get<List<Guid>>(".incomplete");
+		List<Guid> list = ServiceLocator.Instance.GetService<IDataStoreService>().Get<List<Guid>>(".incomplete");
 		if (list != null && list.Count > 0)
 		{
 			LogHelper.Instance.Log("Doing {0} incomplete and queued work items.", list.Count);

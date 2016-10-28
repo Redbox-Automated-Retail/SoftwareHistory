@@ -11,6 +11,14 @@ namespace Redbox.IPC.Framework;
 
 internal abstract class ServerSession : ISession, IMessageSink
 {
+	private Action<string, string> _paramAction;
+
+	private Action<ISession> _beforeCommandAction;
+
+	private List<string> _filters = new List<string>();
+
+	private bool _enableFilters;
+
 	private StringBuilder m_readBuilder;
 
 	private ParameterDictionary m_context;
@@ -42,6 +50,20 @@ internal abstract class ServerSession : ISession, IMessageSink
 				m_properties = new Dictionary<string, object>();
 			}
 			return m_properties;
+		}
+	}
+
+	public List<string> Filters => _filters;
+
+	public bool EnableFilters
+	{
+		get
+		{
+			return _enableFilters;
+		}
+		set
+		{
+			_enableFilters = value;
 		}
 	}
 
@@ -95,6 +117,22 @@ internal abstract class ServerSession : ISession, IMessageSink
 		Read();
 	}
 
+	public void SetFilters(List<string> filters)
+	{
+		_filters.Clear();
+		filters.ForEach(_filters.Add);
+	}
+
+	public void SetParamAction(Action<string, string> paramAction)
+	{
+		_paramAction = paramAction;
+	}
+
+	public void SetBeforeCommandAction(Action<ISession> beforeCommandAction)
+	{
+		_beforeCommandAction = beforeCommandAction;
+	}
+
 	public bool Send(string message)
 	{
 		string message2 = $"[MSG] {message}";
@@ -130,12 +168,13 @@ internal abstract class ServerSession : ISession, IMessageSink
 			Stream = stream;
 			return;
 		}
-		SslStream sslStream = new SslStream(stream, leaveInnerStreamOpen: false);
-		sslStream.ReadTimeout = 30000;
-		sslStream.WriteTimeout = 30000;
-		SslStream sslStream2 = sslStream;
-		sslStream2.AuthenticateAsServer(ServiceHost.Certificate, clientCertificateRequired: false, SslProtocols.Tls, checkCertificateRevocation: true);
-		Stream = sslStream2;
+		SslStream sslStream = new SslStream(stream, leaveInnerStreamOpen: false)
+		{
+			ReadTimeout = 30000,
+			WriteTimeout = 30000
+		};
+		sslStream.AuthenticateAsServer(ServiceHost.Certificate, clientCertificateRequired: false, SslProtocols.Tls, checkCertificateRevocation: true);
+		Stream = sslStream;
 	}
 
 	protected abstract bool IsConnectedInternal();
@@ -260,7 +299,7 @@ internal abstract class ServerSession : ISession, IMessageSink
 		}
 		if (nextBufferLine.StartsWith("quit", StringComparison.CurrentCultureIgnoreCase))
 		{
-			LogHelper.Instance.Log(nextBufferLine, LogEntryType.Info);
+			LogHelper.Instance.Log(nextBufferLine, LogEntryType.Debug);
 			Write("Goodbye!");
 			InternalClose();
 			return;
@@ -276,7 +315,11 @@ internal abstract class ServerSession : ISession, IMessageSink
 			{
 				LogHelper.Instance.Log("Error accessing remote host ip.", e2);
 			}
-			CommandResult commandResult = CommandService.Instance.Execute(this, originIP, nextBufferLine);
+			if (_beforeCommandAction != null)
+			{
+				_beforeCommandAction(this);
+			}
+			CommandResult commandResult = CommandService.Instance.Execute(this, originIP, nextBufferLine, Filters, EnableFilters, _paramAction);
 			if (commandResult != null)
 			{
 				ProtocolHelper.FormatErrors(commandResult.Errors, commandResult.Messages);

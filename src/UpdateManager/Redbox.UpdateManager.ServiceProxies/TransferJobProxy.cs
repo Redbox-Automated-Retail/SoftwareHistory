@@ -32,38 +32,32 @@ public class TransferJobProxy : ITransferJob
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList AddItem(string url, string file)
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer add-item id: '{ID}' url: '{StringExtensions.Escaped(url)}' file: '{StringExtensions.Escaped(file)}'");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer add-item id: '{ID}' url: '{url.Escaped()}' file: '{file.Escaped()}'").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Complete()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer complete id: '{ID}'");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer complete id: '{ID}'").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Cancel()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer cancel id: '{ID}'");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer cancel id: '{ID}'").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Suspend()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer suspend id: '{ID}'");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer suspend id: '{ID}'").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Resume()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer resume id: '{ID}'");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer resume id: '{ID}'").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList SetPriority(TransferJobPriority priority)
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString(string.Format("transfer set-priority id: '{0}' priority: {1}", ID, priority.ToString("G")));
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString(string.Format("transfer set-priority id: '{0}' priority: {1}", ID, priority.ToString("G"))).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList SetCallback(ITransferCallbackParameters parameters)
@@ -78,14 +72,12 @@ public class TransferJobProxy : ITransferJob
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList SetNoProgressTimeout(uint period)
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer set-no-progress-timeout id: '{ID}' timeout: {period}");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer set-no-progress-timeout id: '{ID}' timeout: {period}").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList SetMinimumRetryDelay(uint seconds)
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer set-minimum-retry-delay id: '{ID}' seconds: {seconds}");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString($"transfer set-minimum-retry-delay id: '{ID}' seconds: {seconds}").Errors);
 	}
 
 	public void GetErrors(out Redbox.UpdateManager.ComponentModel.ErrorList errors)
@@ -100,7 +92,7 @@ public class TransferJobProxy : ITransferJob
 		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer get-items id: '{ID}'");
 		if (clientCommandResult.Success)
 		{
-			items = StringExtensions.ToObject<List<TransferItem>>(clientCommandResult.CommandMessages[0]).ConvertAll((Converter<TransferItem, ITransferItem>)((TransferItem t) => t));
+			items = clientCommandResult.CommandMessages[0].ToObject<List<TransferItem>>().ConvertAll((Converter<TransferItem, ITransferItem>)((TransferItem t) => t));
 		}
 		return ConvertFromIPCErrors(clientCommandResult.Errors);
 	}

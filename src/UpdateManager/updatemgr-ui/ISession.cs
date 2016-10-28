@@ -6,6 +6,8 @@ namespace Redbox.IPC.Framework;
 
 internal interface ISession : IMessageSink
 {
+	bool EnableFilters { get; set; }
+
 	ParameterDictionary Context { get; }
 
 	IDictionary<string, object> Properties { get; }
@@ -13,6 +15,12 @@ internal interface ISession : IMessageSink
 	event EventHandler Disconnect;
 
 	void Start();
+
+	void SetFilters(List<string> filters);
+
+	void SetParamAction(Action<string, string> paramAction);
+
+	void SetBeforeCommandAction(Action<ISession> beforeCommandAction);
 
 	bool IsConnected();
 }

@@ -85,8 +85,7 @@ public class PollService : IPollService
 			}
 			if (!suppressHealthUpdate)
 			{
-				IHealthService service2 = ServiceLocator.Instance.GetService<IHealthService>();
-				service2.Update("UPDATE_SERVICE_SERVERPOLL");
+				ServiceLocator.Instance.GetService<IHealthService>().Update("UPDATE_SERVICE_SERVERPOLL");
 			}
 			if (pollReplyList != null && pollReplyList.Count > 0)
 			{
@@ -104,10 +103,10 @@ public class PollService : IPollService
 				{
 					errorList.AddRange(errorList4);
 				}
-				IDownloadFileService service3 = ServiceLocator.Instance.GetService<IDownloadFileService>();
-				if (service3 != null)
+				IDownloadFileService service2 = ServiceLocator.Instance.GetService<IDownloadFileService>();
+				if (service2 != null)
 				{
-					errorList.AddRange(service3.ProcessPollReply(pollReplyList.Where((PollReply pr) => pr.PollReplyType == PollReplyType.DownloadFile).ToList()));
+					errorList.AddRange(service2.ProcessPollReply(pollReplyList.Where((PollReply pr) => pr.PollReplyType == PollReplyType.DownloadFile).ToList()));
 				}
 				IEnumerable<PollReply> source = pollReplyList.Where((PollReply pr) => pr.PollReplyType == PollReplyType.StoreFileChangeSet);
 				errorList.AddRange(StoreFileService.Instance.ProcessPollReply(source.ToList()));

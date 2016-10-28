@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Redbox.UpdateManager.BITS;
 
 [ComImport]
-[Guid("BC2C92DF-4972-4FA7-B8A0-444E127BA670")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+[Guid("BC2C92DF-4972-4FA7-B8A0-444E127BA670")]
 public interface IBackgroundCopyJob4
 {
 	void AddFileSet(uint cFileCount, [MarshalAs(UnmanagedType.LPArray)] BG_FILE_INFO[] pFileSet);

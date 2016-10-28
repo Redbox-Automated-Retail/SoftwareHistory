@@ -21,7 +21,7 @@ public class SchedulerProxy : ITaskScheduler
 			ClientCommandResult clientCommandResult = ExecuteCommandStringWithReturnValue("schedule-event isRunning");
 			if (!clientCommandResult.Errors.ContainsError())
 			{
-				result = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+				result = clientCommandResult.CommandMessages[0].ToObject<bool>();
 			}
 			return result;
 		}
@@ -65,8 +65,7 @@ public class SchedulerProxy : ITaskScheduler
 		ClientCommandResult clientCommandResult = ExecuteCommandStringWithReturnValue("schedule-event list");
 		if (clientCommandResult.Success)
 		{
-			List<Task> list = StringExtensions.ToObject<List<Task>>(clientCommandResult.CommandMessages[0]);
-			foreach (Task item in list)
+			foreach (Task item in clientCommandResult.CommandMessages[0].ToObject<List<Task>>())
 			{
 				tasks.Add(item);
 			}
@@ -81,7 +80,7 @@ public class SchedulerProxy : ITaskScheduler
 		ClientCommandResult clientCommandResult = ExecuteCommandStringWithReturnValue(command);
 		if (clientCommandResult.Success)
 		{
-			success = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			success = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return ConvertToComponentErrors(clientCommandResult.Errors);
 	}
@@ -102,8 +101,7 @@ public class SchedulerProxy : ITaskScheduler
 		{
 			stringBuilder.AppendFormat(" endTime:'{0}'", endTime.Value);
 		}
-		ClientCommandResult clientCommandResult = ExecuteCommandStringWithReturnValue(stringBuilder.ToString());
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(ExecuteCommandStringWithReturnValue(stringBuilder.ToString()).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList ScheduleCronJob(string name, string payload, PayloadType payloadType, TimeSpan? startOffset, DateTime? startTime, DateTime? endTime, string cronExpression)
@@ -127,8 +125,7 @@ public class SchedulerProxy : ITaskScheduler
 		{
 			stringBuilder.AppendFormat(" endTime:'{0}'", endTime.Value);
 		}
-		ClientCommandResult clientCommandResult = ExecuteCommandStringWithReturnValue(stringBuilder.ToString());
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(ExecuteCommandStringWithReturnValue(stringBuilder.ToString()).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList ScheduleSimpleJob(string name, string payload, PayloadType payloadType, TimeSpan? startOffset, DateTime? startTime, DateTime? endTime, TimeSpan repeatInterval)
@@ -143,8 +140,7 @@ public class SchedulerProxy : ITaskScheduler
 	private Redbox.UpdateManager.ComponentModel.ErrorList ExecuteCommandString(string command)
 	{
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
-		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(updateManagerService.ExecuteCommandString(command).Errors);
 	}
 
 	private ClientCommandResult ExecuteCommandStringWithReturnValue(string command)

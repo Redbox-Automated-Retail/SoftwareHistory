@@ -19,11 +19,10 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.uploadfile")]
 	internal static LuaTable UploadFile(string file)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errorList = service.UploadFile(file);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IUpdateService>().UploadFile(file);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e.ToString(), e.Details);
 			});
@@ -34,11 +33,10 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.pollupdateservice")]
 	internal static LuaTable PollUpdateService()
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errorList = service.Poll();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IUpdateService>().Poll();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e.ToString(), e.Details);
 			});
@@ -49,8 +47,7 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.serverpoll")]
 	internal static LuaTable ServerPoll()
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errors = service.ServerPoll();
+		ErrorList errors = ServiceLocator.Instance.GetService<IUpdateService>().ServerPoll();
 		errors.ToLogHelper();
 		return CreateResultTable(errors);
 	}
@@ -58,11 +55,10 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.startupdate")]
 	internal static LuaTable StartUpate()
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errorList = service.StartDownloads();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IUpdateService>().StartDownloads();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e.ToString(), e.Details);
 			});
@@ -73,11 +69,10 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.finishupdate")]
 	internal static LuaTable FinishUpdate(string jobId)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errorList = service.FinishDownload(new Guid(jobId));
+		ErrorList errorList = ServiceLocator.Instance.GetService<IUpdateService>().FinishDownload(new Guid(jobId));
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e.ToString(), e.Details);
 			});
@@ -88,11 +83,10 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.finishallupdates")]
 	internal static LuaTable FinishUpdates()
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errorList = service.FinishDownloads();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IUpdateService>().FinishDownloads();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e.ToString(), e.Details);
 			});
@@ -109,33 +103,25 @@ public static class UpdateServiceFunctions
 	[KernelFunction(Name = "kernel.updateaddstoretorepository")]
 	internal static LuaTable AddStoreToRepository(string store, string name)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errors = service.AddStoreToRepository(store, name);
-		return CreateResultTable(errors);
+		return CreateResultTable(ServiceLocator.Instance.GetService<IUpdateService>().AddStoreToRepository(store, name));
 	}
 
 	[KernelFunction(Name = "kernel.updateaddgrouptorepository")]
 	internal static LuaTable AddGroupToRepository(string group, string name)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errors = service.AddGroupToRepository(group, name);
-		return CreateResultTable(errors);
+		return CreateResultTable(ServiceLocator.Instance.GetService<IUpdateService>().AddGroupToRepository(group, name));
 	}
 
 	[KernelFunction(Name = "kernel.updateremovestorefromrepository")]
 	internal static LuaTable RemoveStoreFromRepository(string number, string name)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errors = service.RemoveStoreFromRepository(number, name);
-		return CreateResultTable(errors);
+		return CreateResultTable(ServiceLocator.Instance.GetService<IUpdateService>().RemoveStoreFromRepository(number, name));
 	}
 
 	[KernelFunction(Name = "kernel.updateremovegroupfromrepository")]
 	internal static LuaTable RemoveGroupFromRepository(string group, string name)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		ErrorList errors = service.RemoveGroupFromRepository(group, name);
-		return CreateResultTable(errors);
+		return CreateResultTable(ServiceLocator.Instance.GetService<IUpdateService>().RemoveGroupFromRepository(group, name));
 	}
 
 	[KernelFunction(Name = "kernel.startinstaller")]
@@ -165,8 +151,7 @@ public static class UpdateServiceFunctions
 	internal static bool FinishInstaller(string guid, LuaTable data)
 	{
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		Dictionary<string, string> instance = data.Keys.Cast<object>().ToDictionary((object k) => k as string, (object v) => data[v] as string);
-		string text = ObjectExtensions.ToJson(instance);
+		string text = data.Keys.Cast<object>().ToDictionary((object k) => k as string, (object v) => data[v] as string).ToJson();
 		if (text.Length > 252)
 		{
 			text = string.Empty;
@@ -187,7 +172,7 @@ public static class UpdateServiceFunctions
 		if (!Extensions.TryParse<StatusMessage.StatusMessageType>(type, out var result, ignoreCase: true))
 		{
 			result = Redbox.UpdateService.Model.StatusMessage.StatusMessageType.Info;
-			errorList.Add(Error.NewError("SSM01", "The type " + type + " is unparsable", "Defaulting to 'info'"));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SSM01", "The type " + type + " is unparsable", "Defaulting to 'info'"));
 			LogErrors(errorList);
 			errorList.Clear();
 		}
@@ -208,8 +193,7 @@ public static class UpdateServiceFunctions
 			Bitmap bitmap = TakeScreenshot();
 			int width = (int)Math.Round((double)bitmap.Width * size);
 			int height = (int)Math.Round((double)bitmap.Height * size);
-			Bitmap bitmap2 = ResizeBitmap(bitmap, width, height);
-			string data = BitmapToString(bitmap2);
+			string data = BitmapToString(ResizeBitmap(bitmap, width, height));
 			return StatusMessage("Info", "screenshot", string.Empty, "A kiosk screenshot", data, encode: false);
 		}
 		catch (Exception e)
@@ -224,7 +208,7 @@ public static class UpdateServiceFunctions
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		luaTable["success"] = !errors.ContainsError();
 		LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			luaTable2[error.Code] = error.Description;
 		}
@@ -232,9 +216,9 @@ public static class UpdateServiceFunctions
 		return luaTable;
 	}
 
-	private static void LogErrors(IEnumerable<Error> errors)
+	private static void LogErrors(IEnumerable<Redbox.UpdateManager.ComponentModel.Error> errors)
 	{
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			LogHelper.Instance.Log(error.Description, LogEntryType.Debug);
 		}

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Configuration.Install;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Text;
@@ -18,6 +19,7 @@ public class Program
 
 	public static void Main(string[] args)
 	{
+		ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 		try
 		{
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -80,7 +82,7 @@ public class Program
 				console = Options.Instance.Console;
 			}
 			UpdateManagerService updateManagerService = new UpdateManagerService();
-			if (Debugger.IsAttached || console)
+			if (Debugger.IsAttached | console)
 			{
 				LogHelper.Instance.Log("Debugger.IsAttached({0} || ConsoleMode({1})", Debugger.IsAttached, console);
 				LogHelper.Instance.Log("Starting service manually");

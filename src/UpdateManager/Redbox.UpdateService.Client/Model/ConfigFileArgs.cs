@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class ConfigFileArgs
+internal class ConfigFileArgs
 {
 	public string StoreNumber { get; set; }
 

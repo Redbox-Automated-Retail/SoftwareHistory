@@ -56,7 +56,7 @@ internal class ClientCommandResult
 		}
 		if (Success)
 		{
-			stringBuilder.Append(string.Concat("203 Command completed successfully. (Execution Time = ", ExecutionTime, ")"));
+			stringBuilder.Append("203 Command Success. (Execution Time:" + Math.Truncate(ExecutionTime.TotalMilliseconds) + ")");
 		}
 		else if (!string.IsNullOrEmpty(StatusMessage))
 		{
@@ -64,7 +64,7 @@ internal class ClientCommandResult
 		}
 		else
 		{
-			stringBuilder.Append(string.Concat("545 Command failed. (Execution Time = ", ExecutionTime, ")"));
+			stringBuilder.Append("545 Command failed. (Execution Time:" + Math.Truncate(ExecutionTime.TotalMilliseconds) + ")");
 		}
 		stringBuilder.AppendLine();
 		return stringBuilder.ToString();

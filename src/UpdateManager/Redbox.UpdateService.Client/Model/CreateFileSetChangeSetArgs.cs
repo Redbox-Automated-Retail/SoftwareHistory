@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class CreateFileSetChangeSetArgs
+internal class CreateFileSetChangeSetArgs
 {
 	public long FileSetId { get; set; }
 

@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Redbox.UpdateManager.BITS;
 
 [ComImport]
-[Guid("5CE34C0D-0DC9-4C1F-897C-DAA1B78CEE7C")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+[Guid("5CE34C0D-0DC9-4C1F-897C-DAA1B78CEE7C")]
 public interface IBackgroundCopyManager
 {
 	void CreateJob([MarshalAs(UnmanagedType.LPWStr)] string DisplayName, BG_JOB_TYPE Type, out Guid pJobId, [MarshalAs(UnmanagedType.Interface)] out IBackgroundCopyJob ppJob);

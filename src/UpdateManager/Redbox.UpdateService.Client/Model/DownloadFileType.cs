@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public enum DownloadFileType
+internal enum DownloadFileType
 {
 	Bits,
 	WUA,

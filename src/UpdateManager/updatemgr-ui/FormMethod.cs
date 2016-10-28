@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Redbox.Command.Tokenizer;
@@ -10,6 +11,8 @@ namespace Redbox.IPC.Framework;
 
 internal class FormMethod
 {
+	private List<string> _filters = new List<string>();
+
 	public readonly IDictionary<string, FormMethodParameter> ParameterCache = new Dictionary<string, FormMethodParameter>();
 
 	private object m_lock = new object();
@@ -27,6 +30,8 @@ internal class FormMethod
 	public MethodInfo Method { get; set; }
 
 	public string Description { get; set; }
+
+	public List<string> Filters => _filters;
 
 	public bool Loggable { get; set; }
 
@@ -74,8 +79,13 @@ internal class FormMethod
 		}
 	}
 
-	public void Invoke(CommandResult result, CommandContext context, CommandTokenizer tokenizer, object commandInstance)
+	public void Invoke(CommandResult result, CommandContext context, CommandTokenizer tokenizer, object commandInstance, bool enable, List<string> sourceFilters)
 	{
+		if (!IsInFilter(enable, sourceFilters))
+		{
+			LogHelper.Instance.Log($"Command {Method.Name} is not in filters.");
+			result.Errors.Add(Error.NewError("S514", $"Invalid Command: {Method.Name}", ""));
+		}
 		object[] array = new object[OrderedParameters.Count + 1];
 		array[0] = context;
 		int num = 1;
@@ -110,17 +120,38 @@ internal class FormMethod
 		}
 	}
 
-	public bool ValidateParameters(CommandResult result, CommandTokenizer tokenizer)
+	public bool ValidateParameters(CommandResult result, CommandTokenizer tokenizer, Action<string, string> paramAction)
 	{
 		foreach (FormMethodParameter requiredParameter in RequiredParameters)
 		{
 			KeyValuePair keyValuePair = tokenizer.Tokens.GetKeyValuePair(requiredParameter.KeyName);
-			if (keyValuePair == null)
+			if (keyValuePair != null)
+			{
+				paramAction?.Invoke(keyValuePair.Key, keyValuePair.Value);
+			}
+			else
 			{
 				result.Errors.Add(Error.NewError("S001", $"The named parameter '{requiredParameter.KeyName.ToLower()}:' is required.", "Submit the command specifying the missing named parameter."));
 			}
 		}
 		return !result.Errors.ContainsError();
+	}
+
+	private bool IsInFilter(bool enable, List<string> sourceFilters)
+	{
+		if (!enable)
+		{
+			return true;
+		}
+		if (sourceFilters == null || sourceFilters.Count == 0)
+		{
+			return false;
+		}
+		if (_filters.Count == 0)
+		{
+			return false;
+		}
+		return sourceFilters.Intersect(_filters, StringComparer.CurrentCultureIgnoreCase).Count() > 0;
 	}
 
 	internal void Compile(Type instanceType)

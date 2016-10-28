@@ -25,32 +25,30 @@ internal static class RepositoryDiffMerge
 				if (clientRepositoryDataDTO != null)
 				{
 					bool flag = false;
-					Dictionary<string, string> dictionary = new Dictionary<string, string>();
-					dictionary.Add("R", item.R);
-					Dictionary<string, string> dictionary2 = dictionary;
+					Dictionary<string, string> dictionary = new Dictionary<string, string> { { "R", item.R } };
 					if (item.H != clientRepositoryDataDTO.H)
 					{
-						dictionary2.Add("H", item.H);
+						dictionary.Add("H", item.H);
 						flag = true;
 					}
 					if (item.I != clientRepositoryDataDTO.I)
 					{
-						dictionary2.Add("I", item.I);
+						dictionary.Add("I", item.I);
 						flag = true;
 					}
 					if (item.A != clientRepositoryDataDTO.A)
 					{
-						dictionary2.Add("A", item.A);
+						dictionary.Add("A", item.A);
 						flag = true;
 					}
 					if (item.S != clientRepositoryDataDTO.S)
 					{
-						dictionary2.Add("S", item.S);
+						dictionary.Add("S", item.S);
 						flag = true;
 					}
 					if (flag)
 					{
-						list.Add(dictionary2);
+						list.Add(dictionary);
 					}
 				}
 				else
@@ -93,7 +91,7 @@ internal static class RepositoryDiffMerge
 			{
 				foreach (Dictionary<string, string> item in rdw.U)
 				{
-					ClientRepositoryDataDTO u = StringExtensions.ToObject<ClientRepositoryDataDTO>(ObjectExtensions.ToJson(item));
+					ClientRepositoryDataDTO u = item.ToJson().ToObject<ClientRepositoryDataDTO>();
 					ClientRepositoryDataDTO clientRepositoryDataDTO = input.First((ClientRepositoryDataDTO i) => u.R == i.R);
 					if (u.H != null)
 					{
@@ -125,8 +123,7 @@ internal static class RepositoryDiffMerge
 				});
 			}
 			output = input;
-			string text = Hash(output);
-			if (text != rdw.O)
+			if (Hash(output) != rdw.O)
 			{
 				LogHelper.Instance.Log("RDS100", "The hash check of the output failed in merging");
 				output = new List<ClientRepositoryDataDTO>();
@@ -149,35 +146,36 @@ internal static class RepositoryDiffMerge
 			return string.Empty;
 		}
 		hashMe.Sort();
-		return ByteArrayExtensions.ToASCIISHA1Hash(Encoding.ASCII.GetBytes(ObjectExtensions.ToJson(hashMe)));
+		return Encoding.ASCII.GetBytes(hashMe.ToJson()).ToASCIISHA1Hash();
 	}
 
 	public static string Minimize(RepositoryDiffWrapper wrapper)
 	{
-		ListDictionary listDictionary = new ListDictionary();
-		listDictionary.Add("I", wrapper.I);
-		listDictionary.Add("O", wrapper.O);
-		ListDictionary listDictionary2 = listDictionary;
+		ListDictionary listDictionary = new ListDictionary
+		{
+			{ "I", wrapper.I },
+			{ "O", wrapper.O }
+		};
 		if (wrapper.U != null && wrapper.U.Any())
 		{
-			listDictionary2.Add("U", wrapper.U);
+			listDictionary.Add("U", wrapper.U);
 		}
 		if (wrapper.A != null && wrapper.A.Any())
 		{
-			listDictionary2.Add("A", wrapper.A);
+			listDictionary.Add("A", wrapper.A);
 		}
 		if (wrapper.D != null && wrapper.D.Any())
 		{
-			listDictionary2.Add("D", wrapper.D);
+			listDictionary.Add("D", wrapper.D);
 		}
-		string seed = ObjectExtensions.ToJson(listDictionary2);
+		string seed = listDictionary.ToJson();
 		return CompressionLibrary.Aggregate(seed, (string current, KeyValuePair<string, string> i) => current.Replace(i.Value, i.Key));
 	}
 
 	public static RepositoryDiffWrapper Expand(string str)
 	{
 		str = CompressionLibrary.Aggregate(str, (string current, KeyValuePair<string, string> i) => current.Replace(i.Key, i.Value));
-		return StringExtensions.ToObject<RepositoryDiffWrapper>(str);
+		return str.ToObject<RepositoryDiffWrapper>();
 	}
 
 	internal static List<ClientRepositoryDataDTO> Copy(this List<ClientRepositoryDataDTO> list)
@@ -191,8 +189,7 @@ internal static class RepositoryDiffMerge
 		{
 			RepositoryDiffWrapper wrapper = rdw.Copy();
 			List<ClientRepositoryDataDTO> input2 = input.Copy();
-			string str = Minimize(wrapper);
-			wrapper = Expand(str);
+			wrapper = Expand(Minimize(wrapper));
 			bool flag = TryMerge(input2, wrapper, out var _);
 			if (!flag)
 			{

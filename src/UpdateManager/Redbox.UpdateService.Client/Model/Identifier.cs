@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class Identifier
+internal class Identifier
 {
 	public long ID { get; set; }
 

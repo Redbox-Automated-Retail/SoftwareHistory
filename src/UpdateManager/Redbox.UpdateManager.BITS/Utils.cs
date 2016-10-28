@@ -51,8 +51,7 @@ public static class Utils
 		{
 			return DateTime.MinValue;
 		}
-		long fileTime2 = (long)(((ulong)fileTime.dwHighDateTime << 32) + fileTime.dwLowDateTime);
-		return DateTime.FromFileTime(fileTime2);
+		return DateTime.FromFileTime((long)(((ulong)fileTime.dwHighDateTime << 32) + fileTime.dwLowDateTime));
 	}
 
 	private static BitsVersion GetBitsVersion()

@@ -23,29 +23,27 @@ public class StatusMessageService : IPollRequestReply, IStatusMessageService
 
 	public ErrorList EnqueueMessage(StatusMessage.StatusMessageType type, string key, string subKey, string description, string data, bool encodeData)
 	{
-		StatusMessage statusMessage = new StatusMessage();
-		statusMessage.Type = type;
-		statusMessage.Key = key;
-		statusMessage.SubKey = subKey;
-		statusMessage.Description = description;
-		statusMessage.Data = data;
-		statusMessage.TimeStamp = DateTime.UtcNow;
-		statusMessage.Encode = encodeData;
-		StatusMessage statusMessage2 = statusMessage;
+		StatusMessage statusMessage = new StatusMessage
+		{
+			Type = type,
+			Key = key,
+			SubKey = subKey,
+			Description = description,
+			Data = data,
+			TimeStamp = DateTime.UtcNow,
+			Encode = encodeData
+		};
 		if (encodeData)
 		{
-			statusMessage2.EncodeData();
+			statusMessage.EncodeData();
 		}
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("StatusMessageService.EnqueueMessage", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
-			return errorList;
+			return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("StatusMessageService.EnqueueMessage", "TryEnterWriteLock timeout expired prior to acquiring the lock.") };
 		}
 		try
 		{
-			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-			service.Enqueue(QueueLabel, statusMessage2);
+			ServiceLocator.Instance.GetService<IQueueService>().Enqueue(QueueLabel, statusMessage);
 		}
 		finally
 		{
@@ -75,7 +73,7 @@ public class StatusMessageService : IPollRequestReply, IStatusMessageService
 		ErrorList errorList = new ErrorList();
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			errorList.Add(Error.NewError("StatusMessageService.GetPollRequest", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("StatusMessageService.GetPollRequest", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return errorList;
 		}
 		try
@@ -83,10 +81,11 @@ public class StatusMessageService : IPollRequestReply, IStatusMessageService
 			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 			for (StatusMessage statusMessage = service.Peek<StatusMessage>(QueueLabel); statusMessage != null; statusMessage = service.Peek<StatusMessage>(QueueLabel))
 			{
-				PollRequest pollRequest = new PollRequest();
-				pollRequest.PollRequestType = PollRequestType.StatusMessage;
-				pollRequest.Data = ObjectExtensions.ToJson(statusMessage);
-				PollRequest item = pollRequest;
+				PollRequest item = new PollRequest
+				{
+					PollRequestType = PollRequestType.StatusMessage,
+					Data = statusMessage.ToJson()
+				};
 				pollRequests.Add(item);
 				LogHelper.Instance.Log("Dequeued status message key: {0}", statusMessage.Key);
 				service.Dequeue(QueueLabel);
@@ -94,7 +93,7 @@ public class StatusMessageService : IPollRequestReply, IStatusMessageService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("StatusMessageService", "Unhandled exception occurred in GetPollRequest.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("StatusMessageService", "Unhandled exception occurred in GetPollRequest.", e));
 		}
 		finally
 		{

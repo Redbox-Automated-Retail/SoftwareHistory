@@ -114,7 +114,7 @@ internal class FileSetDownloader
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetDownloader", "An unhandled exception occurred in DownloadFileSet", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetDownloader", "An unhandled exception occurred in DownloadFileSet", e));
 			return errorList;
 		}
 	}
@@ -126,9 +126,7 @@ internal class FileSetDownloader
 		{
 			if (_downloader.DownloadData.DownloadState == DownloadState.PostDownload)
 			{
-				string path = _downloader.DownloadData.Path;
-				ZipDownloadHelper zipDownloadHelper = new ZipDownloadHelper(path, _revision.FileSetId, _revision.RevisionId, _revision.PatchRevisionId);
-				ErrorList errorList = zipDownloadHelper.Extract();
+				ErrorList errorList = new ZipDownloadHelper(_downloader.DownloadData.Path, _revision.FileSetId, _revision.RevisionId, _revision.PatchRevisionId).Extract();
 				if (!errorList.ContainsError())
 				{
 					_downloader.Complete();
@@ -142,7 +140,7 @@ internal class FileSetDownloader
 	private void UpdateFileSetInfoList()
 	{
 		List<FileSetFileInfo> fileSetInfoList = new List<FileSetFileInfo>();
-		LinqExtensions.ForEach(_revision.Files, delegate(ClientFileSetFile f)
+		_revision.Files.ForEach(delegate(ClientFileSetFile f)
 		{
 			FileSetFileInfo fileSetFileInfo = new FileSetFileInfo
 			{
@@ -200,15 +198,15 @@ internal class FileSetDownloader
 				{
 					return 0L;
 				}
-				return (item.PatchSize == 0) ? item.FileSize : 0;
+				return (item.PatchSize == 0L) ? item.FileSize : 0;
 			});
 			num3 += _revision.PatchSetFileSize;
 		}
-		if (num == 0)
+		if (num == 0L)
 		{
 			return DownloadMethod.None;
 		}
-		if (num3 > 0 && (num2 == 0 || num3 <= num2) && num3 < num && num3 < _revision.SetFileSize)
+		if (num3 > 0 && (num2 == 0L || num3 <= num2) && num3 < num && num3 < _revision.SetFileSize)
 		{
 			return DownloadMethod.PatchSet;
 		}
@@ -241,7 +239,7 @@ internal class FileSetDownloader
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByFileSet", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByFileSet", e));
 		}
 		return errorList;
 	}
@@ -264,7 +262,7 @@ internal class FileSetDownloader
 			}
 			FileSetInfoList.ForEach(delegate(FileSetFileInfo item)
 			{
-				if (!item.Exists && item.PatchSize == 0 && !_downloads.Any((IDownloader d) => d.DownloadData.Key == item.Key))
+				if (!item.Exists && item.PatchSize == 0L && !_downloads.Any((IDownloader d) => d.DownloadData.Key == item.Key))
 				{
 					errors.AddRange(AddDownload(item.Key, item.FileHash, item.Url, out var download2));
 					if (!errors.ContainsError())
@@ -276,7 +274,7 @@ internal class FileSetDownloader
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByPatchSet", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByPatchSet", e));
 		}
 		return errors;
 	}
@@ -290,7 +288,7 @@ internal class FileSetDownloader
 			{
 				if (!item.Exists)
 				{
-					if (item.PatchSize == 0)
+					if (item.PatchSize == 0L)
 					{
 						if (!_downloads.Any((IDownloader d) => d.DownloadData.Key == item.Key))
 						{
@@ -314,7 +312,7 @@ internal class FileSetDownloader
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByPatches", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByPatches", e));
 		}
 		return errors;
 	}
@@ -338,7 +336,7 @@ internal class FileSetDownloader
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByFiles", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in DownloadByFiles", e));
 		}
 		return errors;
 	}

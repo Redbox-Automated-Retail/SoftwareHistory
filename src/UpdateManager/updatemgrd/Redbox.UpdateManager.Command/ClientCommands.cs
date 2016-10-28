@@ -20,8 +20,8 @@ internal class ClientCommands
 		}
 	}
 
-	[Usage("client serverpoll")]
 	[CommandForm(Name = "serverpoll")]
+	[Usage("client serverpoll")]
 	public void ServerPoll(CommandContext context)
 	{
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
@@ -31,8 +31,8 @@ internal class ClientCommands
 		}
 	}
 
-	[Usage("client execute-script script: [reset:]")]
 	[CommandForm(Name = "execute-script")]
+	[Usage("client execute-script script: [reset:]")]
 	public void ExecuteScript(CommandContext context, [CommandKeyValue(IsRequired = true)] string script, [CommandKeyValue(IsRequired = true)] bool? reset)
 	{
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
@@ -56,8 +56,8 @@ internal class ClientCommands
 		}
 	}
 
-	[Usage("client execute-scriptfile file: [reset:]")]
 	[CommandForm(Name = "execute-scriptfile")]
+	[Usage("client execute-scriptfile file: [reset:]")]
 	public void ExecuteScriptFile(CommandContext context, [CommandKeyValue(IsRequired = true)] string file, [CommandKeyValue(IsRequired = true)] bool? reset)
 	{
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
@@ -81,8 +81,8 @@ internal class ClientCommands
 		}
 	}
 
-	[Usage("client force-data-files")]
 	[CommandForm(Name = "force-data-files")]
+	[Usage("client force-data-files")]
 	public void ForceDataFiles(CommandContext context)
 	{
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
@@ -92,8 +92,8 @@ internal class ClientCommands
 		}
 	}
 
-	[Usage("client get-dvd-data-state")]
 	[CommandForm(Name = "get-dvd-data-state")]
+	[Usage("client get-dvd-data-state")]
 	public void GetDvdDataState(CommandContext context)
 	{
 		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
@@ -102,14 +102,14 @@ internal class ClientCommands
 			context.Errors.AddRange(service.GetSubscriptionState("dvd-data", out var lastRun, out var state).ToIPCErrors());
 			if (!context.Errors.ContainsError())
 			{
-				context.Messages.Add(ObjectExtensions.ToJson(lastRun));
-				context.Messages.Add(ObjectExtensions.ToJson(state));
+				context.Messages.Add(lastRun.ToJson());
+				context.Messages.Add(state.ToJson());
 			}
 		}
 	}
 
-	[Usage("client list-current-downloads")]
 	[CommandForm(Name = "list-current-downloads")]
+	[Usage("client list-current-downloads")]
 	public void ListCurrentDownloads(CommandContext context)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -118,13 +118,13 @@ internal class ClientCommands
 			context.Errors.AddRange(service.GetJobs(out var jobs, allUsers: false).ToIPCErrors());
 			if (!context.Errors.ContainsError())
 			{
-				context.Messages.Add(ObjectExtensions.ToJson(jobs));
+				context.Messages.Add(jobs.ToJson());
 			}
 		}
 	}
 
-	[Usage("client send-status-message type:(info, warning, error) key: description: data:")]
 	[CommandForm(Name = "send-status-message")]
+	[Usage("client send-status-message type:(info, warning, error) key: description: data:")]
 	public void SendStatusMessage(CommandContext context, [CommandKeyValue(IsRequired = true)] string type, [CommandKeyValue(IsRequired = true)] string key, [CommandKeyValue(IsRequired = true)] string description, [CommandKeyValue(IsRequired = true)] string data)
 	{
 		if (!Extensions.TryParse<StatusMessage.StatusMessageType>(type, out var result, ignoreCase: true))

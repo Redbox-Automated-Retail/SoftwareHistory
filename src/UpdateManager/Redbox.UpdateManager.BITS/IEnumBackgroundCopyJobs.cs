@@ -3,8 +3,8 @@
 namespace Redbox.UpdateManager.BITS;
 
 [ComImport]
-[Guid("1AF4F612-3B71-466F-8F58-7B6F73AC57AD")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+[Guid("1AF4F612-3B71-466F-8F58-7B6F73AC57AD")]
 public interface IEnumBackgroundCopyJobs
 {
 	void Next(uint celt, [MarshalAs(UnmanagedType.Interface)] out IBackgroundCopyJob rgelt, out uint pceltFetched);

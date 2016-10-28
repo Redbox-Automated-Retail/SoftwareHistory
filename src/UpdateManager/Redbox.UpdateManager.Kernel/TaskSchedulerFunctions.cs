@@ -21,11 +21,10 @@ public static class TaskSchedulerFunctions
 	[KernelFunction(Name = "kernel.schedulecronjob")]
 	internal static LuaTable ScheduleCronJob(string name, string payload, string payloadType, int startOffset, string cronExpression)
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		ErrorList errorList = service.ScheduleCronJob(name, payload, payloadType, (startOffset > 0) ? new TimeSpan?(new TimeSpan(0, 0, startOffset)) : ((TimeSpan?)null), null, null, cronExpression);
+		ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().ScheduleCronJob(name, payload, payloadType, (startOffset > 0) ? new TimeSpan?(new TimeSpan(0, 0, startOffset)) : ((TimeSpan?)null), null, null, cronExpression);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -51,19 +50,17 @@ public static class TaskSchedulerFunctions
 		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
 		if (!TimeSpan.TryParse(repeatIntervalString, out var result))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("I001", "Could not parse time interval", "Please use a parsable time interval"));
-			return CreateResultTable(errorList);
+			return CreateResultTable(new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("I001", "Could not parse time interval", "Please use a parsable time interval") });
 		}
-		ErrorList errorList2 = service.ScheduleSimpleJob(name, payload, payloadTypeString, (startOffset > 0) ? new TimeSpan?(new TimeSpan(0, 0, startOffset)) : ((TimeSpan?)null), null, null, result);
-		if (errorList2.ContainsError())
+		ErrorList errorList = service.ScheduleSimpleJob(name, payload, payloadTypeString, (startOffset > 0) ? new TimeSpan?(new TimeSpan(0, 0, startOffset)) : ((TimeSpan?)null), null, null, result);
+		if (errorList.ContainsError())
 		{
-			errorList2.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
 		}
-		return CreateResultTable(errorList2);
+		return CreateResultTable(errorList);
 	}
 
 	[KernelFunction(Name = "kernel.scheduleonetimescript")]
@@ -72,19 +69,17 @@ public static class TaskSchedulerFunctions
 		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
 		if (!TimeSpan.TryParse(timeString, out var result))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("I001", "Could not parse time interval", "Please use a parsable time interval"));
-			return CreateResultTable(errorList);
+			return CreateResultTable(new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("I001", "Could not parse time interval", "Please use a parsable time interval") });
 		}
-		ErrorList errorList2 = service.ScheduleSimpleJob(name, script, "script", (startOffset > 0) ? new TimeSpan?(new TimeSpan(0, 0, startOffset)) : ((TimeSpan?)null), DateTime.MinValue.Add(result), null, TimeSpan.Zero);
-		if (errorList2.ContainsError())
+		ErrorList errorList = service.ScheduleSimpleJob(name, script, "script", (startOffset > 0) ? new TimeSpan?(new TimeSpan(0, 0, startOffset)) : ((TimeSpan?)null), DateTime.MinValue.Add(result), null, TimeSpan.Zero);
+		if (errorList.ContainsError())
 		{
-			errorList2.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
 		}
-		return CreateResultTable(errorList2);
+		return CreateResultTable(errorList);
 	}
 
 	[KernelFunction(Name = "kernel.schedulesimplescript")]
@@ -102,11 +97,10 @@ public static class TaskSchedulerFunctions
 	[KernelFunction(Name = "kernel.scheduleeventlist")]
 	internal static LuaTable List()
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		ErrorList errorList = service.List(out var tasks);
+		ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().List(out var tasks);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -126,11 +120,10 @@ public static class TaskSchedulerFunctions
 	[KernelFunction(Name = "kernel.scheduleeventdelete")]
 	internal static LuaTable Delete(string name)
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		ErrorList errorList = service.Delete(name);
+		ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Delete(name);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -149,7 +142,7 @@ public static class TaskSchedulerFunctions
 		ErrorList errorList = service.Clear();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -168,7 +161,7 @@ public static class TaskSchedulerFunctions
 		}
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -179,11 +172,10 @@ public static class TaskSchedulerFunctions
 	[KernelFunction(Name = "kernel.schedulerstop")]
 	internal static LuaTable Stop()
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		ErrorList errorList = service.Stop();
+		ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Stop();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -194,11 +186,10 @@ public static class TaskSchedulerFunctions
 	[KernelFunction(Name = "kernel.schedulerstart")]
 	internal static LuaTable Start()
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		ErrorList errorList = service.Start();
+		ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Start();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -209,11 +200,10 @@ public static class TaskSchedulerFunctions
 	[KernelFunction(Name = "kernel.schedulerrestart")]
 	internal static LuaTable Restart()
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		ErrorList errorList = service.Restart();
+		ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Restart();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -226,7 +216,7 @@ public static class TaskSchedulerFunctions
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		luaTable["success"] = !errors.ContainsError();
 		LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			luaTable2[error.Code] = error.Description;
 		}

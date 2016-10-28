@@ -483,7 +483,7 @@ public class Task : IDisposable
 		{
 			throw new ArgumentException("No Property Pages to display");
 		}
-		psh.dwSize = (uint)Marshal.SizeOf(psh);
+		psh.dwSize = (uint)Marshal.SizeOf((object)psh);
 		psh.dwFlags = 128u;
 		psh.pszCaption = Name;
 		psh.nPages = (uint)num;

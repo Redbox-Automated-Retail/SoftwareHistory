@@ -20,8 +20,7 @@ public class WindowsTaskScheduler : IWindowsTaskScheduler
 	public ReadOnlyCollection<string> GetScheduledTasks()
 	{
 		using ScheduledTasks scheduledTasks = new ScheduledTasks();
-		List<string> list = new List<string>(scheduledTasks.GetTaskNames());
-		return list.AsReadOnly();
+		return new List<string>(scheduledTasks.GetTaskNames()).AsReadOnly();
 	}
 
 	public bool RemoveScheduledTask(string name)
@@ -106,14 +105,15 @@ public class WindowsTaskScheduler : IWindowsTaskScheduler
 				if (task != null)
 				{
 					task.IdleWaitMinutes = idleWaitMinutes ?? 1;
-					OnIdleTrigger onIdleTrigger = new OnIdleTrigger();
-					onIdleTrigger.BeginDate = beginDate;
-					OnIdleTrigger onIdleTrigger2 = onIdleTrigger;
+					OnIdleTrigger onIdleTrigger = new OnIdleTrigger
+					{
+						BeginDate = beginDate
+					};
 					if (endDate.HasValue)
 					{
-						onIdleTrigger2.EndDate = endDate.Value;
+						onIdleTrigger.EndDate = endDate.Value;
 					}
-					task.Triggers.Add(onIdleTrigger2);
+					task.Triggers.Add(onIdleTrigger);
 					task.Save();
 				}
 			}
@@ -139,23 +139,24 @@ public class WindowsTaskScheduler : IWindowsTaskScheduler
 				task = scheduledTasks.OpenTask(name);
 				if (task != null)
 				{
-					DailyTrigger dailyTrigger = new DailyTrigger(hours, minutes);
-					dailyTrigger.BeginDate = beginDate;
-					DailyTrigger dailyTrigger2 = dailyTrigger;
-					if (((int?)daysInterval).HasValue)
+					DailyTrigger dailyTrigger = new DailyTrigger(hours, minutes)
 					{
-						dailyTrigger2.DaysInterval = daysInterval.Value;
+						BeginDate = beginDate
+					};
+					if (daysInterval.HasValue)
+					{
+						dailyTrigger.DaysInterval = daysInterval.Value;
 					}
 					if (endDate.HasValue)
 					{
-						dailyTrigger2.EndDate = endDate.Value;
+						dailyTrigger.EndDate = endDate.Value;
 					}
 					if (minutesInterval.HasValue)
 					{
-						dailyTrigger2.DurationMinutes = 1440;
-						dailyTrigger2.IntervalMinutes = minutesInterval.Value;
+						dailyTrigger.DurationMinutes = 1440;
+						dailyTrigger.IntervalMinutes = minutesInterval.Value;
 					}
-					task.Triggers.Add(dailyTrigger2);
+					task.Triggers.Add(dailyTrigger);
 					task.Save();
 				}
 			}
@@ -181,14 +182,15 @@ public class WindowsTaskScheduler : IWindowsTaskScheduler
 				task = scheduledTasks.OpenTask(name);
 				if (task != null)
 				{
-					OnSystemStartTrigger onSystemStartTrigger = new OnSystemStartTrigger();
-					onSystemStartTrigger.BeginDate = beginDate;
-					OnSystemStartTrigger onSystemStartTrigger2 = onSystemStartTrigger;
+					OnSystemStartTrigger onSystemStartTrigger = new OnSystemStartTrigger
+					{
+						BeginDate = beginDate
+					};
 					if (endDate.HasValue)
 					{
-						onSystemStartTrigger2.EndDate = endDate.Value;
+						onSystemStartTrigger.EndDate = endDate.Value;
 					}
-					task.Triggers.Add(onSystemStartTrigger2);
+					task.Triggers.Add(onSystemStartTrigger);
 					task.Save();
 				}
 			}

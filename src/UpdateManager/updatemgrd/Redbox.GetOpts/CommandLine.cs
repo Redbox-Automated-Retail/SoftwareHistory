@@ -108,7 +108,6 @@ internal class CommandLine : IDisposable
 		OptionValue optionValue = null;
 		do
 		{
-			bool flag = true;
 			string text = array[num];
 			if (text == "--help" || text == "-?")
 			{
@@ -141,8 +140,7 @@ internal class CommandLine : IDisposable
 			num++;
 		}
 		while (num != array.Length);
-		List<string> list = new List<string>(commandLine.ProvidedOptions.Intersect(requiredOptions));
-		if (list.Count != requiredOptions.Count)
+		if (new List<string>(commandLine.ProvidedOptions.Intersect(requiredOptions)).Count != requiredOptions.Count)
 		{
 			commandLine.Errors.Push("Required parameters are missing.");
 		}
@@ -281,13 +279,12 @@ internal class CommandLine : IDisposable
 	internal static int GetDashCount(IEnumerable<char> parameter)
 	{
 		int num = 0;
-		foreach (char item in parameter)
+		using (IEnumerator<char> enumerator = parameter.GetEnumerator())
 		{
-			if (item != '-')
+			while (enumerator.MoveNext() && enumerator.Current == '-')
 			{
-				break;
+				num++;
 			}
-			num++;
 		}
 		return num;
 	}

@@ -83,14 +83,15 @@ public class Program
 				text = (text2.StartsWith("redbox") ? text2.Substring(7) : text2);
 			}
 			LogHelper.Instance.Log("Starting store updater with store number: {0}", text);
-			Updater updater = new Updater();
-			updater.StoreNumber = text;
-			Updater updater2 = updater;
+			Updater updater = new Updater
+			{
+				StoreNumber = text
+			};
 			string updateServiceUrl = (string.IsNullOrEmpty(Opts.UpdateServiceUrl) ? Settings.Default.UpdateServiceUrl : Opts.UpdateServiceUrl);
-			errorList.AddRange(updater2.Initialize(updateServiceUrl));
+			errorList.AddRange(updater.Initialize(updateServiceUrl));
 			if (errorList.ContainsError())
 			{
-				errorList.ForEach(delegate(Error error)
+				errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error error)
 				{
 					LogHelper.Instance.Log("{0} Details: {1}", error, error.Details);
 				});
@@ -98,17 +99,17 @@ public class Program
 			}
 			if (Opts.ResetAll)
 			{
-				updater2.Reset();
+				updater.Reset();
 				return 0;
 			}
 			if (Opts.ResetBITS)
 			{
-				updater2.ResetBITS();
+				updater.ResetBITS();
 				return 0;
 			}
 			if (Opts.ResetManifest)
 			{
-				updater2.ResetManifest();
+				updater.ResetManifest();
 				return 0;
 			}
 			if (!string.IsNullOrEmpty(Opts.Script))
@@ -127,13 +128,13 @@ public class Program
 				}
 				catch (Exception e)
 				{
-					errorList.Add(Error.NewError("E99", "Unhandled exception in ExecuteChunk.", e));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E99", "Unhandled exception in ExecuteChunk.", e));
 				}
 				finally
 				{
 					if (!service.ScriptCompleted)
 					{
-						errorList.Add(Error.NewError("S99", "Script failed to complete.", "Check logs."));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("S99", "Script failed to complete.", "Check logs."));
 					}
 				}
 			}
@@ -144,22 +145,22 @@ public class Program
 					IRepositoryService service2 = ServiceLocator.Instance.GetService<IRepositoryService>();
 					foreach (string allRepository in service2.GetAllRepositories())
 					{
-						Console.Out.WriteLine(ObjectExtensions.ToJson(service2.GetUnfinishedChanges(allRepository)));
+						Console.Out.WriteLine(service2.GetUnfinishedChanges(allRepository).ToJson());
 					}
 				}
 				if (Opts.Update)
 				{
 					if (!string.IsNullOrEmpty(Opts.Tree))
 					{
-						List<IRevLog> pendingChangeSets = updater2.GetPendingChangeSets(Opts.Tree);
-						Console.Out.WriteLine(ObjectExtensions.ToJson(pendingChangeSets));
+						List<IRevLog> pendingChangeSets = updater.GetPendingChangeSets(Opts.Tree);
+						Console.Out.WriteLine(pendingChangeSets.ToJson());
 						if (string.IsNullOrEmpty(Opts.Hash))
 						{
-							errorList.AddRange(updater2.UpdateTo(Opts.Tree));
+							errorList.AddRange(updater.UpdateTo(Opts.Tree));
 						}
 						else
 						{
-							errorList.AddRange(updater2.UpdateTo(Opts.Tree, Opts.Hash));
+							errorList.AddRange(updater.UpdateTo(Opts.Tree, Opts.Hash));
 						}
 					}
 					else
@@ -177,11 +178,11 @@ public class Program
 					{
 						if (string.IsNullOrEmpty(Opts.Hash))
 						{
-							errorList.AddRange(updater2.Activate(Opts.Tree));
+							errorList.AddRange(updater.Activate(Opts.Tree));
 						}
 						else
 						{
-							errorList.AddRange(updater2.Activate(Opts.Tree, Opts.Hash));
+							errorList.AddRange(updater.Activate(Opts.Tree, Opts.Hash));
 						}
 					}
 					else
@@ -195,92 +196,78 @@ public class Program
 				}
 				if (Opts.Diff)
 				{
-					List<string> manifests = updater2.GetManifests();
+					List<string> manifests = updater.GetManifests();
 					Dictionary<string, object> dictionary = new Dictionary<string, object>();
 					foreach (string item in manifests)
 					{
-						List<IRevLog> pendingChangeSets2 = updater2.GetPendingChangeSets(item);
+						List<IRevLog> pendingChangeSets2 = updater.GetPendingChangeSets(item);
 						pendingChangeSets2.Reverse();
 						dictionary.Add(item, pendingChangeSets2);
 					}
-					Console.Out.WriteLine(ObjectExtensions.ToJson(dictionary));
+					Console.Out.WriteLine(dictionary.ToJson());
 				}
 				if (Opts.List)
 				{
-					List<string> manifests2 = updater2.GetManifests();
+					List<string> manifests2 = updater.GetManifests();
 					Dictionary<string, object> dictionary2 = new Dictionary<string, object>();
 					foreach (string item2 in manifests2)
 					{
-						List<IRevLog> appliedChangeSets = updater2.GetAppliedChangeSets(item2);
+						List<IRevLog> appliedChangeSets = updater.GetAppliedChangeSets(item2);
 						appliedChangeSets.Reverse();
 						dictionary2.Add(item2, appliedChangeSets);
 					}
-					Console.Out.WriteLine(ObjectExtensions.ToJson(dictionary2));
+					Console.Out.WriteLine(dictionary2.ToJson());
 				}
 				if (Opts.ListAll)
 				{
-					List<string> manifests3 = updater2.GetManifests();
+					List<string> manifests3 = updater.GetManifests();
 					Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
 					foreach (string item3 in manifests3)
 					{
-						List<IRevLog> appliedChangeSets2 = updater2.GetAppliedChangeSets(item3);
+						List<IRevLog> appliedChangeSets2 = updater.GetAppliedChangeSets(item3);
 						appliedChangeSets2.Reverse();
 						dictionary3.Add(item3, appliedChangeSets2);
 					}
-					Console.Out.WriteLine(ObjectExtensions.ToJson(dictionary3));
+					Console.Out.WriteLine(dictionary3.ToJson());
 				}
 				if (Opts.StartDownload)
 				{
-					errorList.AddRange(updater2.StartUpdate());
+					errorList.AddRange(updater.StartUpdate());
 				}
 				if (Opts.Poll)
 				{
-					errorList.AddRange(updater2.FinishUpdates());
-					errorList.AddRange(updater2.StartUpdate());
+					errorList.AddRange(updater.FinishUpdates());
+					errorList.AddRange(updater.StartUpdate());
 				}
 				if (!string.IsNullOrEmpty(Opts.Dump))
 				{
 					if (string.IsNullOrEmpty(Opts.RepositoryName))
 					{
-						errorList.Add(Error.NewError("U998", "repository-name is required.", "Specify repository-name."));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("U998", "repository-name is required.", "Specify repository-name."));
 						return 1;
 					}
 					IRepositoryService service5 = ServiceLocator.Instance.GetService<IRepositoryService>();
 					if (!service5.ContainsRepository(Opts.RepositoryName))
 					{
-						errorList.Add(Error.NewError("U998", "repository-name does not exist.", "Check Name."));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("U998", "repository-name does not exist.", "Check Name."));
 						return 1;
 					}
 					switch (Opts.Dump.ToLower())
 					{
 					case "active":
-					{
-						string input = service5.GetActiveRevision(Opts.RepositoryName);
-						Console.Write(input);
+						Console.Write(service5.GetActiveRevision(Opts.RepositoryName));
 						break;
-					}
 					case "current":
-					{
-						string input = service5.GetStagedRevision(Opts.RepositoryName);
-						Console.Write(input);
+						Console.Write(service5.GetStagedRevision(Opts.RepositoryName));
 						break;
-					}
 					case "label":
-					{
-						string input = service5.GetActiveLabel(Opts.RepositoryName);
-						Console.Write(input);
+						Console.Write(service5.GetActiveLabel(Opts.RepositoryName));
 						break;
-					}
 					case "revlog":
-					{
-						List<IRevLog> allChanges = service5.GetAllChanges(Opts.RepositoryName);
-						string input = ObjectExtensions.ToJson(allChanges);
-						string prettyString = PrettyPrinter.GetPrettyString(input);
-						Console.Write(prettyString);
+						Console.Write(PrettyPrinter.GetPrettyString(service5.GetAllChanges(Opts.RepositoryName).ToJson()));
 						break;
-					}
 					default:
-						errorList.Add(Error.NewError("U998", "Dump file is invalid.", "Valid values: active, current, label, revlog"));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("U998", "Dump file is invalid.", "Valid values: active, current, label, revlog"));
 						return 1;
 					}
 				}
@@ -288,18 +275,18 @@ public class Program
 		}
 		catch (Exception e2)
 		{
-			errorList.Add(Error.NewError("U999", "An unhandled exception occurred in Updater.Program.Main.", e2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("U999", "An unhandled exception occurred in Updater.Program.Main.", e2));
 		}
 		finally
 		{
 			stopwatch.Stop();
 			try
 			{
-				errorList.ForEach(delegate(Error error)
+				errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error error)
 				{
 					LogHelper.Instance.Log("{0} Details: {1}", error, error.Details);
 				});
-				Console.Error.WriteLine(ObjectExtensions.ToJson(errorList));
+				Console.Error.WriteLine(errorList.ToJson());
 			}
 			catch (Exception e3)
 			{

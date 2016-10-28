@@ -115,7 +115,7 @@ public class NewShellEvent : Form
 				return;
 			}
 			TimeSpan repeatInterval = new TimeSpan(0, 0, int.Parse(m_recurrance_sec.Text));
-			string payload = StringExtensions.Escaped(m_path.Text) + " " + StringExtensions.Escaped(m_args_basic.Text);
+			string payload = m_path.Text.Escaped() + " " + m_args_basic.Text.Escaped();
 			errorList.AddRange(service.ScheduleSimpleJob(Simple_name.Text, payload, PayloadType.Shell, startOffset, null, null, repeatInterval));
 		}
 		else
@@ -152,15 +152,14 @@ public class NewShellEvent : Form
 			{
 				return;
 			}
-			string payload2 = StringExtensions.Escaped(m_pathAdvanced.Text) + " " + StringExtensions.Escaped(m_arguments_adv.Text);
+			string payload2 = m_pathAdvanced.Text.Escaped() + " " + m_arguments_adv.Text.Escaped();
 			errorList.AddRange(service.ScheduleCronJob(m_adv_name.Text, payload2, PayloadType.Shell, startOffset2, null, null, m_cron.Text));
 		}
 		if (errorList.ContainsError())
 		{
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errorList;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 		Close();
 	}

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class ConfigFileGenerationData
+internal class ConfigFileGenerationData
 {
 	public long OID { get; set; }
 

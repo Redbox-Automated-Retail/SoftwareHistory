@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class ClientStoreInfo
+internal class ClientStoreInfo
 {
 	public string TimeZoneInfoString { get; set; }
 

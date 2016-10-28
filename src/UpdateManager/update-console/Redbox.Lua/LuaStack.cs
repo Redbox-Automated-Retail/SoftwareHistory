@@ -8,11 +8,11 @@ namespace Redbox.Lua;
 
 internal class LuaStack
 {
-	private const string RedboxExceptionName = "(redboxException)";
-
 	public EventHandler CountChange;
 
 	private readonly LuaVirtualMachine m_virtualMachine;
+
+	private const string RedboxExceptionName = "(redboxException)";
 
 	private Stack<LuaScriptException> _redboxExceptionList = new Stack<LuaScriptException>();
 

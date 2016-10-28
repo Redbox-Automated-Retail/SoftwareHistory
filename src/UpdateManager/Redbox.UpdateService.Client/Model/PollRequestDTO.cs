@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class PollRequestDTO
+internal class PollRequestDTO
 {
 	public PollRequestType PRT { get; set; }
 

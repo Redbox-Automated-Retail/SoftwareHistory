@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Quartz;
+using Quartz.Collection;
 using Quartz.Impl;
+using Quartz.Impl.Matchers;
 using Redbox.Core;
 using Redbox.UpdateManager.ComponentModel;
 
@@ -154,7 +156,7 @@ public class Scheduler : ITaskScheduler
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E999", "Unhandled exception while forcing task: " + name, e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", "Unhandled exception while forcing task: " + name, e));
 		}
 		return errorList;
 	}
@@ -175,7 +177,7 @@ public class Scheduler : ITaskScheduler
 		ErrorList errors = new ErrorList();
 		if (!CronExpression.IsValidExpression(cronExpression))
 		{
-			errors.Add(Error.NewError("E428", "The cron expression is not valid.", $"The expression '{cronExpression}' is not valid, please specify a valid cron expression."));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E428", "The cron expression is not valid.", $"The expression '{cronExpression}' is not valid, please specify a valid cron expression."));
 		}
 		else
 		{
@@ -188,7 +190,7 @@ public class Scheduler : ITaskScheduler
 				}
 				else
 				{
-					errors.Add(Error.NewError("S489", "Task with same name already scheduled", "Please use a unique name."));
+					errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("S489", "Task with same name already scheduled", "Please use a unique name."));
 				}
 				return tasks;
 			}));
@@ -219,7 +221,7 @@ public class Scheduler : ITaskScheduler
 			}
 			else
 			{
-				errors.Add(Error.NewError("S489", "Task with same name already scheduled", "Please use a unique name."));
+				errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("S489", "Task with same name already scheduled", "Please use a unique name."));
 			}
 			return tasks;
 		}));
@@ -235,21 +237,15 @@ public class Scheduler : ITaskScheduler
 			IScheduler scheduler = m_schedulerFactory.GetScheduler();
 			if (scheduler.IsStarted)
 			{
-				string[] jobNames = scheduler.GetJobNames("updatemanager");
-				LinqExtensions.ForEach(jobNames, delegate(string j)
-				{
-					scheduler.DeleteJob(j, "updatemanager");
-				});
-				string[] triggerNames = scheduler.GetTriggerNames("updatemanager");
-				LinqExtensions.ForEach(triggerNames, delegate(string t)
-				{
-					scheduler.UnscheduleJob(t, "updatemanager");
-				});
+				Quartz.Collection.ISet<JobKey> jobKeys = scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals("updatemanager"));
+				scheduler.DeleteJobs(jobKeys.ToList());
+				Quartz.Collection.ISet<TriggerKey> triggerKeys = scheduler.GetTriggerKeys(GroupMatcher<TriggerKey>.GroupEquals("updatemanager"));
+				scheduler.UnscheduleJobs(triggerKeys.ToList());
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E999", "Unhandled exception throw in stop.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", "Unhandled exception throw in stop.", e));
 		}
 		finally
 		{
@@ -265,9 +261,7 @@ public class Scheduler : ITaskScheduler
 		{
 			if (IsRunning)
 			{
-				ErrorList errorList2 = new ErrorList();
-				errorList2.Add(Error.NewError("E987", "Scheduler is already running.", ""));
-				return errorList2;
+				return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E987", "Scheduler is already running.", "") };
 			}
 			IsRunning = true;
 			IScheduler scheduler = m_schedulerFactory.GetScheduler();
@@ -282,38 +276,45 @@ public class Scheduler : ITaskScheduler
 				try
 				{
 					LogHelper.Instance.Log("Scheduling task: " + task.ToString());
-					JobDetail jobDetail = new JobDetail(task.Name, "updatemanager", typeof(Task));
+					IJobDetail jobDetail = JobBuilder.Create<Task>().WithIdentity(task.Name, "updatemanager").Build();
 					jobDetail.JobDataMap["Task"] = task;
-					DateTime startTimeUtc = (task.StartTime.HasValue ? task.StartTime.Value : DateTime.UtcNow);
+					DateTime dateTime = (task.StartTime.HasValue ? task.StartTime.Value.ToUniversalTime() : DateTime.UtcNow);
 					if (task.StartOffset.HasValue)
 					{
-						startTimeUtc = startTimeUtc.Add(task.StartOffset.Value);
+						dateTime = dateTime.Add(task.StartOffset.Value);
 					}
 					if (task.ScheduleType == ScheduleType.Cron)
 					{
-						CronTrigger cronTrigger = new CronTrigger(task.Name, "updatemanager", task.Name, "updatemanager", startTimeUtc, task.EndTime, task.CronExpression);
-						cronTrigger.MisfireInstruction = 2;
-						CronTrigger trigger = cronTrigger;
+						ITrigger trigger = TriggerBuilder.Create().WithIdentity(task.Name, "updatemanager").ForJob(jobDetail)
+							.WithCronSchedule(task.CronExpression, delegate(CronScheduleBuilder x)
+							{
+								x.WithMisfireHandlingInstructionDoNothing();
+							})
+							.StartAt(dateTime)
+							.Build();
 						scheduler.ScheduleJob(jobDetail, trigger);
 					}
 					if (task.ScheduleType == ScheduleType.Simple && task.RepeatInterval.HasValue)
 					{
-						int repeatCount = ((!(task.RepeatInterval.Value.TotalMilliseconds < 1.0)) ? (-1) : 0);
-						SimpleTrigger simpleTrigger = new SimpleTrigger(task.Name, "updatemanager", task.Name, "updatemanager", startTimeUtc, task.EndTime, repeatCount, task.RepeatInterval.Value);
-						simpleTrigger.MisfireInstruction = 5;
-						SimpleTrigger trigger2 = simpleTrigger;
+						ITrigger trigger2 = TriggerBuilder.Create().WithIdentity(task.Name, "updatemanager").ForJob(jobDetail)
+							.WithSimpleSchedule(delegate(SimpleScheduleBuilder x)
+							{
+								x.WithIntervalInSeconds(Convert.ToInt32(task.RepeatInterval.Value.TotalSeconds)).RepeatForever();
+							})
+							.StartAt(dateTime)
+							.Build();
 						scheduler.ScheduleJob(jobDetail, trigger2);
 					}
 				}
 				catch (Exception e)
 				{
-					errorList.Add(Error.NewError("SCH899", "Unhandled exception throw when scheduling a task in scheduler.start.", e));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SCH899", "Unhandled exception throw when scheduling a task in scheduler.start.", e));
 				}
 			}
 		}
 		catch (Exception e2)
 		{
-			errorList.Add(Error.NewError("E929", "Unhandled exception throw in start.", e2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E929", "Unhandled exception throw in start.", e2));
 		}
 		return errorList;
 	}
@@ -370,7 +371,7 @@ public class Scheduler : ITaskScheduler
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E949", "Unhandled exception when deleting the schedule file.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E949", "Unhandled exception when deleting the schedule file.", e));
 		}
 		return errorList;
 	}
@@ -392,7 +393,7 @@ public class Scheduler : ITaskScheduler
 		{
 			try
 			{
-				StringExtensions.ToObject<List<PersistTask>>(raw);
+				raw.ToObject<List<PersistTask>>();
 			}
 			catch (Exception)
 			{
@@ -417,12 +418,12 @@ public class Scheduler : ITaskScheduler
 			}
 			if (!string.IsNullOrEmpty(raw))
 			{
-				tasks = PersistTasksToTasks(StringExtensions.ToObject<List<PersistTask>>(raw));
+				tasks = PersistTasksToTasks(raw.ToObject<List<PersistTask>>());
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E990", "Unhandled exception when reading the schedule file.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E990", "Unhandled exception when reading the schedule file.", e));
 		}
 		return errorList;
 	}
@@ -438,7 +439,7 @@ public class Scheduler : ITaskScheduler
 				List<PersistTask> persistTasks = new List<PersistTask>();
 				if (!string.IsNullOrEmpty(raw))
 				{
-					persistTasks = StringExtensions.ToObject<List<PersistTask>>(raw);
+					persistTasks = raw.ToObject<List<PersistTask>>();
 				}
 				List<Task> arg = PersistTasksToTasks(persistTasks);
 				arg = operation(arg);
@@ -448,9 +449,7 @@ public class Scheduler : ITaskScheduler
 		}
 		catch (Exception e)
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("E909", "Unhandled exception when accessing the schedule file.", e));
-			return errorList;
+			return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E909", "Unhandled exception when accessing the schedule file.", e) };
 		}
 		return new ErrorList();
 	}
@@ -459,19 +458,18 @@ public class Scheduler : ITaskScheduler
 	{
 		try
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			string text = Path.Combine(service.ExpandProperties("${Scripts}"), "default-schedule.lua");
-			IDataStoreService service2 = ServiceLocator.Instance.GetService<IDataStoreService>();
+			string text = Path.Combine(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties("${Scripts}"), "default-schedule.lua");
+			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
 			if (!File.Exists(text))
 			{
 				LogHelper.Instance.Log("RunDefaultSchedule: Script: {0} not found.", text);
 				return;
 			}
-			service2.Set("config-schedule", new object());
-			IKernelService service3 = ServiceLocator.Instance.GetService<IKernelService>();
+			service.Set("config-schedule", new object());
+			IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
 			string chunk = File.ReadAllText(text);
 			LogHelper.Instance.Log("RunDefaultSchedule: Executing lua script at {0}", text);
-			service3.ExecuteChunk(chunk);
+			service2.ExecuteChunk(chunk);
 		}
 		catch (Exception e)
 		{
@@ -495,7 +493,7 @@ public class Scheduler : ITaskScheduler
 		parsed = Enum<PayloadType>.ParseIgnoringCase(text, PayloadType.Unknown);
 		if (parsed == PayloadType.Unknown)
 		{
-			errorList.Add(Error.NewError("P001", "Cannot Parse PayloadType", "Cannot parse PayloadType " + text));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("P001", "Cannot Parse PayloadType", "Cannot parse PayloadType " + text));
 		}
 		return errorList;
 	}

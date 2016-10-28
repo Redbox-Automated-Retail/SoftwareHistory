@@ -17,12 +17,7 @@ internal static class XmlNodeExtensions
 
 	public static string SelectSingleNodeAndGetInnerText(this XmlNode node, string path)
 	{
-		XmlNode xmlNode = node.SelectSingleNode(path);
-		if (xmlNode != null)
-		{
-			return GetNodeInnerText(xmlNode);
-		}
-		return null;
+		return node.SelectSingleNode(path)?.GetNodeInnerText();
 	}
 
 	public static string GetNodeInnerXml(this XmlNode node)
@@ -37,12 +32,12 @@ internal static class XmlNodeExtensions
 
 	public static T GetNodeValue<T>(this XmlNode node)
 	{
-		return GetNodeValue(node, default(T));
+		return node.GetNodeValue(default(T));
 	}
 
 	public static T GetAttributeValue<T>(this XmlNode node, string attributeName)
 	{
-		return GetAttributeValue(node, attributeName, default(T));
+		return node.GetAttributeValue(attributeName, default(T));
 	}
 
 	public static T GetAttributeValue<T>(this XmlNode node, string attributeName, T defaultValue)

@@ -12,7 +12,6 @@ internal class RemotingHost : MarshalByRefObject, IRemotingHost
 	public string ExecuteCommand(string commandString)
 	{
 		RemotingServiceHost remotingServiceHost = null;
-		RemotingServerSession remotingServerSession = null;
 		using ExecutionTimer timer = new ExecutionTimer();
 		try
 		{
@@ -24,8 +23,7 @@ internal class RemotingHost : MarshalByRefObject, IRemotingHost
 			}
 			Interlocked.Increment(ref m_connectionCount);
 			LogHelper.Instance.Log($"There are {Interlocked.Read(ref m_connectionCount)} connections active", LogEntryType.Debug);
-			remotingServerSession = new RemotingServerSession();
-			string text = remotingServerSession.ProcessRequest(commandString);
+			string text = new RemotingServerSession().ProcessRequest(commandString);
 			Interlocked.Add(ref Statistics.Instance.NumberOfBytesSent, text.Length);
 			Interlocked.Decrement(ref m_connectionCount);
 			return text;

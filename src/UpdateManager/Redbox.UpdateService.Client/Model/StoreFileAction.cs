@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public enum StoreFileAction
+internal enum StoreFileAction
 {
 	Update = 1,
 	Delete

@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class KioskClientData
+internal class KioskClientData
 {
 	public long KioskClientID { get; set; }
 

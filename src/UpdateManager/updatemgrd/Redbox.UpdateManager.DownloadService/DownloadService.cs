@@ -34,7 +34,7 @@ internal class DownloadService : IDownloadService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DownloadService", "Unhandled exception occurred in Initialize.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DownloadService", "Unhandled exception occurred in Initialize.", e));
 		}
 		return errorList;
 	}
@@ -50,7 +50,7 @@ internal class DownloadService : IDownloadService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DownloadService", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DownloadService", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -66,7 +66,7 @@ internal class DownloadService : IDownloadService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DownloadService", "An unhandled exception occurred while stopping the Download service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DownloadService", "An unhandled exception occurred while stopping the Download service.", e));
 		}
 		return errorList;
 	}
@@ -123,7 +123,7 @@ internal class DownloadService : IDownloadService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DownloadService", "An unhandled exception occurred in AddDownload.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DownloadService", "An unhandled exception occurred in AddDownload.", e));
 		}
 		return errorList;
 	}
@@ -145,7 +145,7 @@ internal class DownloadService : IDownloadService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DownloadService", "An unhandled exception occurred in ProcessDownloads.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DownloadService", "An unhandled exception occurred in ProcessDownloads.", e));
 		}
 		return errorList;
 	}

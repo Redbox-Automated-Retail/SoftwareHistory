@@ -40,13 +40,10 @@ internal class TcpClientSession : ClientSession
 						LogHelper.Instance.Log("SSL Stream RemoteCertificateValidationCallback failed.");
 						LogHelper.Instance.Log("Policy Errors: {0}", sslPolicyErrors);
 						LogHelper.Instance.Log("Certificate: {0}", certificate);
-						if (chain != null)
+						chain?.ChainStatus.ForEach(delegate(X509ChainStatus cs)
 						{
-							LinqExtensions.ForEach(chain.ChainStatus, delegate(X509ChainStatus cs)
-							{
-								LogHelper.Instance.Log("Chain Status: {0}, Information: {1} ", cs.Status, cs.StatusInformation);
-							});
-						}
+							LogHelper.Instance.Log("Chain Status: {0}, Information: {1} ", cs.Status, cs.StatusInformation);
+						});
 						return !_validateCallback;
 					});
 					sslStream.ReadTimeout = base.Timeout;
@@ -175,12 +172,9 @@ internal class TcpClientSession : ClientSession
 		LogHelper.Instance.Log("SSL Stream RemoteCertificateValidationCallback logging.");
 		LogHelper.Instance.Log("Policy Errors: {0}", sslPolicyErrors);
 		LogHelper.Instance.Log("Certificate: {0}", certificate);
-		if (chain != null)
+		chain?.ChainStatus.ForEach(delegate(X509ChainStatus cs)
 		{
-			LinqExtensions.ForEach(chain.ChainStatus, delegate(X509ChainStatus cs)
-			{
-				LogHelper.Instance.Log("Chain Status: {0}, Information: {1} ", cs.Status, cs.StatusInformation);
-			});
-		}
+			LogHelper.Instance.Log("Chain Status: {0}, Information: {1} ", cs.Status, cs.StatusInformation);
+		});
 	}
 }

@@ -19,12 +19,12 @@ public class DataStoreServiceProxy : IDataStoreService
 
 	public void Set(Guid id, object o)
 	{
-		SetRaw(id.ToString(), StringExtensions.EscapedJson(ObjectExtensions.ToJson(o)));
+		SetRaw(id.ToString(), o.ToJson().EscapedJson());
 	}
 
 	public void Set(string id, object o)
 	{
-		SetRaw(id, StringExtensions.EscapedJson(ObjectExtensions.ToJson(o)));
+		SetRaw(id, o.ToJson().EscapedJson());
 	}
 
 	public void SetRaw(Guid id, string o)
@@ -60,7 +60,7 @@ public class DataStoreServiceProxy : IDataStoreService
 		{
 			return default(T);
 		}
-		return StringExtensions.ToObject<T>(raw);
+		return raw.ToObject<T>();
 	}
 
 	public string GetRaw(Guid id)

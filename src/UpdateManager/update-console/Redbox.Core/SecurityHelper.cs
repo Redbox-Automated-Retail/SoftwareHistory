@@ -11,8 +11,7 @@ internal static class SecurityHelper
 		{
 			return false;
 		}
-		WindowsPrincipal windowsPrincipal = new WindowsPrincipal(current);
-		return windowsPrincipal.IsInRole("BUILTIN\\Administrators");
+		return new WindowsPrincipal(current).IsInRole("BUILTIN\\Administrators");
 	}
 
 	public static bool IsCurrentUserPowerUser()
@@ -22,7 +21,6 @@ internal static class SecurityHelper
 		{
 			return false;
 		}
-		WindowsPrincipal windowsPrincipal = new WindowsPrincipal(current);
-		return windowsPrincipal.IsInRole("BUILTIN\\Power Users");
+		return new WindowsPrincipal(current).IsInRole("BUILTIN\\Power Users");
 	}
 }

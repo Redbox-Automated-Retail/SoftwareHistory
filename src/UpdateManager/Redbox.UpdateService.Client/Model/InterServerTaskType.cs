@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public enum InterServerTaskType
+internal enum InterServerTaskType
 {
 	CreateRepositoryChangeSet,
 	UpdateConfigFiles,

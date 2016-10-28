@@ -15,8 +15,7 @@ public static class RegistryFunctions
 	{
 		try
 		{
-			NTAccount nTAccount = new NTAccount(user);
-			SecurityIdentifier securityIdentifier = (SecurityIdentifier)nTAccount.Translate(typeof(SecurityIdentifier));
+			SecurityIdentifier securityIdentifier = (SecurityIdentifier)new NTAccount(user).Translate(typeof(SecurityIdentifier));
 			if (securityIdentifier != null)
 			{
 				return $"HKEY_USERS\\{securityIdentifier.Value}";
@@ -34,8 +33,7 @@ public static class RegistryFunctions
 	{
 		try
 		{
-			NTAccount nTAccount = new NTAccount(domain, user);
-			SecurityIdentifier securityIdentifier = (SecurityIdentifier)nTAccount.Translate(typeof(SecurityIdentifier));
+			SecurityIdentifier securityIdentifier = (SecurityIdentifier)new NTAccount(domain, user).Translate(typeof(SecurityIdentifier));
 			if (securityIdentifier != null)
 			{
 				return $"HKEY_USERS\\{securityIdentifier.Value}";
@@ -204,40 +202,39 @@ public static class RegistryFunctions
 		string text2 = service.ExpandProperties(fileName);
 		if (!string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(text2))
 		{
-			ProcessStartInfo processStartInfo = new ProcessStartInfo();
-			processStartInfo.CreateNoWindow = true;
-			processStartInfo.UseShellExecute = false;
-			processStartInfo.FileName = "regedit.exe";
-			processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			processStartInfo.Arguments = $"/E \"{text2}\" {text}";
-			ProcessStartInfo startInfo = processStartInfo;
+			ProcessStartInfo startInfo = new ProcessStartInfo
+			{
+				CreateNoWindow = true,
+				UseShellExecute = false,
+				FileName = "regedit.exe",
+				WindowStyle = ProcessWindowStyle.Hidden,
+				Arguments = $"/E \"{text2}\" {text}"
+			};
 			Process process = new Process();
 			process.StartInfo = startInfo;
-			Process process2 = process;
-			process2.Start();
-			process2.WaitForExit();
+			process.Start();
+			process.WaitForExit();
 		}
 	}
 
 	[KernelFunction(Name = "kernel.importregistryfile")]
 	internal static void ImportRegistryFile(string fileName)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(fileName);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fileName);
 		if (!string.IsNullOrEmpty(text))
 		{
-			ProcessStartInfo processStartInfo = new ProcessStartInfo();
-			processStartInfo.CreateNoWindow = true;
-			processStartInfo.UseShellExecute = false;
-			processStartInfo.FileName = "regedit.exe";
-			processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			processStartInfo.Arguments = $"/S \"{text}\"";
-			ProcessStartInfo startInfo = processStartInfo;
+			ProcessStartInfo startInfo = new ProcessStartInfo
+			{
+				CreateNoWindow = true,
+				UseShellExecute = false,
+				FileName = "regedit.exe",
+				WindowStyle = ProcessWindowStyle.Hidden,
+				Arguments = $"/S \"{text}\""
+			};
 			Process process = new Process();
 			process.StartInfo = startInfo;
-			Process process2 = process;
-			process2.Start();
-			process2.WaitForExit();
+			process.Start();
+			process.WaitForExit();
 		}
 	}
 }

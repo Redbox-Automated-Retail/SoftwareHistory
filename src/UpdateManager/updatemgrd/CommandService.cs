@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Text;
 using System.Threading;
 using Redbox.Command.Tokenizer;
 using Redbox.Core;
@@ -39,6 +40,7 @@ internal class CommandService
 
 	public void SetAccessFilter(string command, List<string> filters)
 	{
+		command = command.ToLower();
 		if (!m_accessFilter.ContainsKey(command))
 		{
 			m_accessFilter[command] = new List<byte[]>();
@@ -84,16 +86,22 @@ internal class CommandService
 
 	public CommandResult Execute(ISession session, string originIP, string input)
 	{
+		return Execute(session, string.Empty, input, null, enableFilters: false, null);
+	}
+
+	public CommandResult Execute(ISession session, string originIP, string input, List<string> sourceFilters, bool enableFilters, Action<string, string> paramAction)
+	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		CommandResult commandResult = new CommandResult();
-		CommandContext commandContext = new CommandContext();
-		commandContext.Session = session;
-		commandContext.MessageSink = session;
-		CommandContext commandContext2 = commandContext;
+		CommandContext commandContext = new CommandContext
+		{
+			Session = session,
+			MessageSink = session
+		};
 		string text = null;
 		try
 		{
-			if (!GetTokenizer(input, commandResult, commandContext2, out var tokenizer))
+			if (!GetTokenizer(input, commandResult, commandContext, out var tokenizer))
 			{
 				return commandResult;
 			}
@@ -101,27 +109,33 @@ internal class CommandService
 			CommandInstance command = CommandRepository.GetCommand(mnemonic.Value);
 			if (command == null)
 			{
-				commandResult.Errors.Add(Error.NewError("S514", $"Command {mnemonic.Value} not recognized.", "Use HELP command to learn more about available commands."));
-				commandResult.ExtendedErrorMessage = $"Command '{mnemonic.Value}' not recognized. Use HELP to learn more about available commands.";
+				LogHelper.Instance.Log($"Command {mnemonic.Value} not recognized.");
+				commandResult.Errors.Add(Error.NewError("S514", $"Invalid Command: {mnemonic.Value}", ""));
 				return commandResult;
+			}
+			if (!command.IsInFilter(enableFilters, sourceFilters))
+			{
+				LogHelper.Instance.Log($"Command {mnemonic.Value} is not in filters.");
+				commandResult.Errors.Add(Error.NewError("S514", $"Invalid Command: {mnemonic.Value}", ""));
 			}
 			if (command.FormMethodCache.Count == 0)
 			{
-				commandResult.Errors.Add(Error.NewError("S322", $"Command {mnemonic.Value} does not have any valid executable forms.", "Please contact the support personnel for this command service and notify them of this error."));
+				LogHelper.Instance.Log($"Command {mnemonic.Value} does not have any valid executable forms.");
+				commandResult.Errors.Add(Error.NewError("S514", $"Invalid Command: {mnemonic.Value}", ""));
 				return commandResult;
 			}
 			if (!string.IsNullOrEmpty(originIP) && !AllowOriginForCommand(originIP, mnemonic.Value))
 			{
-				string text2 = $"Command {mnemonic.Value} does allow execution from {originIP}.";
-				LogHelper.Instance.Log(text2);
-				commandResult.Errors.Add(Error.NewError("S923", text2, "Please contact the support personnel for this command service and notify them of this error."));
+				string message = $"Command {mnemonic.Value} does allow execution from {originIP}.";
+				LogHelper.Instance.Log(message);
+				commandResult.Errors.Add(Error.NewError("S514", $"Invalid Command: {mnemonic.Value}", ""));
 				return commandResult;
 			}
 			SimpleTokenList symbols = tokenizer.Tokens.GetSymbols();
 			if ((symbols.Count == 0 && command.HasDefault()) || command.HasOnlyDefault())
 			{
 				LogHelper.Instance.Log(input, LogEntryType.Info);
-				command.InvokeDefault(commandResult, commandContext2, tokenizer);
+				command.InvokeDefault(commandResult, commandContext, tokenizer, enableFilters, sourceFilters);
 				return commandResult;
 			}
 			if (symbols.Count == 0)
@@ -135,17 +149,21 @@ internal class CommandService
 				commandResult.Errors.Add(Error.NewError("S001", $"An unknown form was used for the {mnemonic.Value.ToUpper()} comand.", $"Use the HELP command to learn how to properly invoke the {mnemonic.Value.ToUpper()} command and its forms."));
 				return commandResult;
 			}
+			if (!method.ValidateParameters(commandResult, tokenizer, paramAction))
+			{
+				if (method.Loggable)
+				{
+					LogHelper.Instance.Log(input, LogEntryType.Info);
+				}
+				return commandResult;
+			}
 			if (method.Loggable)
 			{
 				LogHelper.Instance.Log(input, LogEntryType.Info);
 			}
-			if (!method.ValidateParameters(commandResult, tokenizer))
-			{
-				return commandResult;
-			}
 			text = $"{mnemonic.Value.ToUpper()} {symbols[0].Value.ToLower()}";
 			PerformanceCounterHelper.Instance.IncrementCommandPerSecond(text);
-			method.Invoke(commandResult, commandContext2, tokenizer, command.GetInstance());
+			method.Invoke(commandResult, commandContext, tokenizer, command.GetInstance(), enableFilters, sourceFilters);
 		}
 		catch (Exception e)
 		{
@@ -155,15 +173,25 @@ internal class CommandService
 		finally
 		{
 			commandResult.ExecutionTime = executionTimer.Elapsed;
-			commandResult.Success = !commandContext2.Errors.ContainsError() && !commandResult.Errors.ContainsError();
-			commandResult.Messages.AddRange(commandContext2.Messages);
-			commandResult.Errors.AddRange(commandContext2.Errors);
+			commandResult.Success = !commandContext.Errors.ContainsError() && !commandResult.Errors.ContainsError();
+			commandResult.Messages.AddRange(commandContext.Messages);
+			commandResult.Errors.AddRange(commandContext.Errors);
 			Statistics.Instance.TrackCommandStatistics(commandResult.ExecutionTime);
 			if (text != null)
 			{
 				PerformanceCounterHelper.Instance.IncrementCommandExecutionTime(text, executionTimer.ElapsedTicks);
 			}
 			LogHelper.Instance.Log(commandResult.ToString(IsResultLoggingEnabled()));
+			if (commandResult.Errors.Count > 0)
+			{
+				StringBuilder builder = new StringBuilder();
+				commandResult.Errors.ForEach(delegate(Error error)
+				{
+					builder.AppendFormat("{0} {1}", error.Code, error.Description);
+					builder.AppendFormat(error.Details);
+				});
+				LogHelper.Instance.Log(builder.ToString());
+			}
 		}
 		return commandResult;
 	}
@@ -190,6 +218,7 @@ internal class CommandService
 	private bool AllowOriginForCommand(string origin, string command)
 	{
 		LogHelper.Instance.Log($"Checking access rules for {origin}.", LogEntryType.Debug);
+		command = command.ToLower();
 		if (!m_accessFilter.ContainsKey(command))
 		{
 			return true;
@@ -200,8 +229,7 @@ internal class CommandService
 		{
 			array2[i] = Convert.ToByte(array[i]);
 		}
-		List<byte[]> list = m_accessFilter[command];
-		foreach (byte[] item in list)
+		foreach (byte[] item in m_accessFilter[command])
 		{
 			bool flag = true;
 			for (int j = 0; j < item.Length; j++)
@@ -242,10 +270,9 @@ internal class CommandService
 		{
 			context.Parameters[symbol.Value] = symbol.Value;
 		}
-		SimpleTokenList keyValuePairs = tokenizer.Tokens.GetKeyValuePairs();
-		foreach (SimpleToken item in keyValuePairs)
+		foreach (SimpleToken keyValuePair2 in tokenizer.Tokens.GetKeyValuePairs())
 		{
-			if (item.ConvertValue() is KeyValuePair keyValuePair)
+			if (keyValuePair2.ConvertValue() is KeyValuePair keyValuePair)
 			{
 				context.Parameters[$"{keyValuePair.Key}:"] = keyValuePair.Value;
 			}

@@ -28,15 +28,15 @@ public class UpdateManagerService : ServiceBase
 
 	internal const string StartMessage = "Start Update Manager Service.";
 
-	private const string ServiceApplicationId = "{C423B0E3-95B3-4191-B326-AB3EA516F825}";
-
-	public DateTime? ScriptLockedSince = null;
+	public DateTime? ScriptLockedSince;
 
 	public bool ScriptLockedNeedsReboot;
 
 	private Thread m_thread;
 
 	private IPCServiceHost m_listener;
+
+	private const string ServiceApplicationId = "{C423B0E3-95B3-4191-B326-AB3EA516F825}";
 
 	private static NamedLock m_instanceLock;
 
@@ -274,8 +274,7 @@ public class UpdateManagerService : ServiceBase
 					}
 					if (flag)
 					{
-						IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-						service.ExecuteChunkLockCheck("kernel.log(\"Heath Check Script - locked check\")", out var locked);
+						ServiceLocator.Instance.GetService<IKernelService>().ExecuteChunkLockCheck("kernel.log(\"Heath Check Script - locked check\")", out var locked);
 						if (locked)
 						{
 							LogHelper.Instance.Log("Health CheckScript - execution is locked");
@@ -308,8 +307,7 @@ public class UpdateManagerService : ServiceBase
 									}
 									else
 									{
-										IKioskEngineService service2 = ServiceLocator.Instance.GetService<IKioskEngineService>();
-										Redbox.UpdateManager.ComponentModel.ErrorList errorList = service2.Shutdown(15000, 2);
+										Redbox.UpdateManager.ComponentModel.ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().Shutdown(15000, 2);
 										if (errorList.ContainsError())
 										{
 											errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error error)
@@ -358,14 +356,11 @@ public class UpdateManagerService : ServiceBase
 						IPollService service = ServiceLocator.Instance.GetService<IPollService>();
 						if (service != null)
 						{
-							Redbox.UpdateManager.ComponentModel.ErrorList errorList = service.ServerPoll(suppressHealthUpdate: true);
+							foreach (Redbox.UpdateManager.ComponentModel.Error item in service.ServerPoll(suppressHealthUpdate: true))
 							{
-								foreach (Redbox.UpdateManager.ComponentModel.Error item in errorList)
-								{
-									LogHelper.Instance.Log(item.ToString(), (!item.IsWarning) ? LogEntryType.Error : LogEntryType.Info);
-								}
-								return;
+								LogHelper.Instance.Log(item.ToString(), (!item.IsWarning) ? LogEntryType.Error : LogEntryType.Info);
 							}
+							return;
 						}
 					}
 				}
@@ -388,18 +383,17 @@ public class UpdateManagerService : ServiceBase
 					LogHelper.Instance.Log("Running Health Entry for watchdog: {0}.", flag);
 					if (flag)
 					{
-						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						string text = Path.Combine(service.ExpandProperties("${Scripts}"), "watchdog.lua");
+						string text = Path.Combine(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties("${Scripts}"), "watchdog.lua");
 						if (!File.Exists(text))
 						{
 							LogHelper.Instance.Log("Health Entry for watchdog.  Script: {0} not found.", text);
 						}
 						else
 						{
-							IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
+							IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 							string chunk = File.ReadAllText(text);
 							LogHelper.Instance.Log("Health Entry for watchdog. Executing lua script at {0}", text);
-							service2.ExecuteChunk(chunk);
+							service.ExecuteChunk(chunk);
 						}
 					}
 				}

@@ -22,11 +22,12 @@ internal class PollReplyDTO
 
 	public static PollReplyDTO GetPollReplyDTO(PollReply pollReply)
 	{
-		PollReplyDTO pollReplyDTO = new PollReplyDTO();
-		pollReplyDTO.PRT = pollReply.PollReplyType;
-		pollReplyDTO.SId = pollReply.SyncId;
-		pollReplyDTO.D = pollReply.Data;
-		return pollReplyDTO;
+		return new PollReplyDTO
+		{
+			PRT = pollReply.PollReplyType,
+			SId = pollReply.SyncId,
+			D = pollReply.Data
+		};
 	}
 
 	public static List<PollReply> GetPollReplyList(List<PollReplyDTO> list)

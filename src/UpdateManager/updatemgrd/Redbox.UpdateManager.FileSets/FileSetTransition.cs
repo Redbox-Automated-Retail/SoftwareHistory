@@ -23,11 +23,11 @@ internal class FileSetTransition
 
 	private const string ResultTableName = "Results";
 
-	private const string FileSetChangeSetPath = "staging";
-
 	private ClientFileSetRevision _revision;
 
 	private IFileCacheService _fileCacheService;
+
+	private const string FileSetChangeSetPath = "staging";
 
 	internal IFileCacheService FileCacheService
 	{
@@ -61,7 +61,7 @@ internal class FileSetTransition
 			{
 				if (!FileCacheService.FileExists(_revision.FileSetId, f.FileId, f.FileRevisionId))
 				{
-					errors.Add(Error.NewError("FileSetTranition.Stage", $"FileId {f.FileId} Revision {f.FileRevisionId} doesn't exist"));
+					errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTranition.Stage", $"FileId {f.FileId} Revision {f.FileRevisionId} doesn't exist"));
 				}
 			});
 			if (errors.ContainsError())
@@ -72,7 +72,7 @@ internal class FileSetTransition
 			{
 				if (!FileCacheService.CopyFileToPath(_revision.FileSetId, f.FileId, f.FileRevisionId, f.StagePath))
 				{
-					errors.Add(Error.NewError("FileSetTranition.Stage", $"FileId {f.FileId} Revision {f.FileRevisionId} couldn't be copied to it's staging directory"));
+					errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTranition.Stage", $"FileId {f.FileId} Revision {f.FileRevisionId} couldn't be copied to it's staging directory"));
 				}
 			});
 			if (errors.ContainsError())
@@ -83,14 +83,14 @@ internal class FileSetTransition
 			{
 				if (!CheckHash(f.StagePath, f.Hash))
 				{
-					errors.Add(Error.NewError("FileSetTranition.Stage", $"FileId {f.FileId} Revision {f.FileRevisionId} hash check failed"));
+					errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTranition.Stage", $"FileId {f.FileId} Revision {f.FileRevisionId} hash check failed"));
 				}
 			});
 			return errors;
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("FileSetTransition.Stage", "An unhandled exception occurred", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.Stage", "An unhandled exception occurred", e));
 		}
 		return errors;
 	}
@@ -108,27 +108,23 @@ internal class FileSetTransition
 				return errorList;
 			}
 			bool meetsAll = true;
-			LinqExtensions.ForEach(dependencies, delegate(ClientFileSetRevisionDependency dep)
+			dependencies.ForEach(delegate(ClientFileSetRevisionDependency dep)
 			{
 				if (!dependencyStates.ContainsKey(dep.DependsOnFileSetId))
 				{
 					LogHelper.Instance.Log($"FileSetTransition.CheckMeetsDependency FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Depends on FileSet {dep.DependsOnFileSetId} not found.");
 					meetsAll = false;
 				}
-				else
+				else if (!dependencyStates[dep.DependsOnFileSetId].IsDependencyMet(dep.DependencyType, dep.MinimumVersion, dep.MaximumVersion))
 				{
-					FileSetDependencyState fileSetDependencyState = dependencyStates[dep.DependsOnFileSetId];
-					if (!fileSetDependencyState.IsDependencyMet(dep.DependencyType, dep.MinimumVersion, dep.MaximumVersion))
-					{
-						meetsAll = false;
-					}
+					meetsAll = false;
 				}
 			});
 			meetsDependencies = meetsAll;
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetTransition.CheckMeetsDependency", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.CheckMeetsDependency", "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -139,11 +135,12 @@ internal class FileSetTransition
 		ErrorList errorList = new ErrorList();
 		try
 		{
-			List<FileData> fileData = GetFileData();
-			FileData fileData2 = fileData.Where((FileData item) => Path.GetFileName(item.FileDestination).ToLower() == "beforeactivate.lua").FirstOrDefault();
-			if (fileData2 != null)
+			FileData fileData = (from item in GetFileData()
+				where Path.GetFileName(item.FileDestination).ToLower() == "beforeactivate.lua"
+				select item).FirstOrDefault();
+			if (fileData != null)
 			{
-				errorList.AddRange(RunScript(fileData2.StagePath, out var result));
+				errorList.AddRange(RunScript(fileData.StagePath, out var result));
 				bool flag = false;
 				if (result.ContainsKey("Failed"))
 				{
@@ -161,13 +158,13 @@ internal class FileSetTransition
 				if (flag)
 				{
 					success = false;
-					errorList.Add(Error.NewError("FileSetTransition.BeforeActivate", "BeforeActivate script returned failed == true", details));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.BeforeActivate", "BeforeActivate script returned failed == true", details));
 				}
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetTransition.BeforeActivate", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.BeforeActivate", "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -177,11 +174,12 @@ internal class FileSetTransition
 		ErrorList errorList = new ErrorList();
 		try
 		{
-			List<FileData> fileData = GetFileData();
-			FileData fileData2 = fileData.Where((FileData item) => Path.GetFileName(item.FileDestination).ToLower() == "afteractivate.lua").FirstOrDefault();
-			if (fileData2 != null)
+			FileData fileData = (from item in GetFileData()
+				where Path.GetFileName(item.FileDestination).ToLower() == "afteractivate.lua"
+				select item).FirstOrDefault();
+			if (fileData != null)
 			{
-				errorList.AddRange(RunScript(fileData2.FileDestination, out var result));
+				errorList.AddRange(RunScript(fileData.FileDestination, out var result));
 				bool flag = false;
 				if (result.ContainsKey("Failed"))
 				{
@@ -194,13 +192,13 @@ internal class FileSetTransition
 				}
 				if (flag)
 				{
-					errorList.Add(Error.NewError("FileSetTransition.AfterActivate", "BeforeActivate script returned failed == true", details));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.AfterActivate", "BeforeActivate script returned failed == true", details));
 				}
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetTransition.AfterActivate", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.AfterActivate", "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -215,7 +213,7 @@ internal class FileSetTransition
 			{
 				if (!File.Exists(f.StagePath))
 				{
-					errors.Add(Error.NewError("FileSetTranition.Activate", $"Staged FileId {f.FileId} Revision {f.FileRevisionId} doesn't exist"));
+					errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTranition.Activate", $"Staged FileId {f.FileId} Revision {f.FileRevisionId} doesn't exist"));
 				}
 			});
 			if (errors.ContainsError())
@@ -267,15 +265,12 @@ internal class FileSetTransition
 					}
 				}
 			});
-			if (errors.ContainsError())
-			{
-				return errors;
-			}
+			errors.ContainsError();
 			return errors;
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("FileSetTransition.Activate", "An unhandled exception occurred", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.Activate", "An unhandled exception occurred", e));
 		}
 		return errors;
 	}
@@ -297,7 +292,7 @@ internal class FileSetTransition
 	{
 		List<FileData> result = new List<FileData>();
 		string path = GetStagingFileSetRevisionPath();
-		LinqExtensions.ForEach(_revision.Files, delegate(ClientFileSetFile f)
+		_revision.Files.ForEach(delegate(ClientFileSetFile f)
 		{
 			FileData item = new FileData
 			{
@@ -330,7 +325,7 @@ internal class FileSetTransition
 			if (result2 != null)
 			{
 				Dictionary<string, object> list = new Dictionary<string, object>();
-				LinqExtensions.ForEach(result2, delegate(KeyValuePair<object, object> item)
+				result2.ForEach(delegate(KeyValuePair<object, object> item)
 				{
 					list[(string)item.Key] = item.Value;
 				});
@@ -339,7 +334,7 @@ internal class FileSetTransition
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetTransition.RunScript", string.Format("FileSetTransition.RunScript: unhandled exception in script. Script for FileSet: Name {1}", _revision.FileSetName), e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition.RunScript", string.Format("FileSetTransition.RunScript: unhandled exception in script. Script for FileSet: Name {1}", _revision.FileSetName), e));
 		}
 		return errorList;
 	}
@@ -365,12 +360,11 @@ internal class FileSetTransition
 		try
 		{
 			using FileStream inputStream = File.OpenRead(filePath);
-			string text = StreamExtensions.ToASCIISHA1Hash(inputStream);
-			return text == hash;
+			return inputStream.ToASCIISHA1Hash() == hash;
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetTransition", "An unhandled exception occurred in CheckHash.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetTransition", "An unhandled exception occurred in CheckHash.", e));
 		}
 		return false;
 	}

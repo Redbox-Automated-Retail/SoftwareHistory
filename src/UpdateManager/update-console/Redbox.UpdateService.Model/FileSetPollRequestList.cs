@@ -41,8 +41,7 @@ internal class FileSetPollRequestList
 		try
 		{
 			FileSetPollRequests.Clear();
-			string[] items = data.Split(new string[1] { "|" }, StringSplitOptions.RemoveEmptyEntries);
-			LinqExtensions.ForEach(items, delegate(string item)
+			data.Split(new string[1] { "|" }, StringSplitOptions.RemoveEmptyEntries).ForEach(delegate(string item)
 			{
 				string[] array = item.Split(new string[1] { "," }, StringSplitOptions.RemoveEmptyEntries);
 				FileSetPollRequest item2 = new FileSetPollRequest

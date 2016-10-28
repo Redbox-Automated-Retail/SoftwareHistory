@@ -6,7 +6,7 @@ using Redbox.Core;
 
 namespace Redbox.UpdateService.Model;
 
-public class StoreFilePollRequestList
+internal class StoreFilePollRequestList
 {
 	public List<StoreFilePollRequest> StoreFilePollRequests { get; set; }
 
@@ -41,8 +41,7 @@ public class StoreFilePollRequestList
 		try
 		{
 			StoreFilePollRequests.Clear();
-			string[] items = data.Split(new string[1] { "|" }, StringSplitOptions.RemoveEmptyEntries);
-			items.ForEach(delegate(string item)
+			data.Split(new string[1] { "|" }, StringSplitOptions.RemoveEmptyEntries).ForEach(delegate(string item)
 			{
 				string[] array = item.Split(new string[1] { "," }, StringSplitOptions.RemoveEmptyEntries);
 				StoreFilePollRequest item2 = new StoreFilePollRequest

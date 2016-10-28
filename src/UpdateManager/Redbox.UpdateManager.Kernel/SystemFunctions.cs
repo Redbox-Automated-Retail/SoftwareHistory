@@ -40,8 +40,7 @@ public static class SystemFunctions
 	[KernelFunction(Name = "kernel.import_script")]
 	internal static void Import(string path)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(path);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(path);
 		if (File.Exists(text))
 		{
 			KernelService.Instance.LuaRuntime.DoString(File.ReadAllText(text));
@@ -85,7 +84,7 @@ public static class SystemFunctions
 	internal static double GetVirtualMemoryUsageInMB(string name)
 	{
 		Process[] processesByName = Process.GetProcessesByName(name);
-		if (processesByName.Length > 0)
+		if (processesByName.Length != 0)
 		{
 			return (double)processesByName[0].VirtualMemorySize64 / 1048576.0;
 		}
@@ -96,7 +95,7 @@ public static class SystemFunctions
 	internal static double GetPhysicalMemoryUsageInMB(string name)
 	{
 		Process[] processesByName = Process.GetProcessesByName(name);
-		if (processesByName.Length > 0)
+		if (processesByName.Length != 0)
 		{
 			return (double)processesByName[0].WorkingSet64 / 1048576.0;
 		}
@@ -176,13 +175,11 @@ public static class SystemFunctions
 	[KernelFunction(Name = "kernel.systemrenamecomputer")]
 	internal static void RenameComputer(string name)
 	{
-		ManagementClass managementClass = new ManagementClass("Win32_ComputerSystem");
-		ManagementObjectCollection instances = managementClass.GetInstances();
-		foreach (ManagementObject item in instances)
+		foreach (ManagementObject instance in new ManagementClass("Win32_ComputerSystem").GetInstances())
 		{
-			ManagementBaseObject methodParameters = item.GetMethodParameters("Rename");
+			ManagementBaseObject methodParameters = instance.GetMethodParameters("Rename");
 			methodParameters.SetPropertyValue("Name", name);
-			item.InvokeMethod("Rename", methodParameters, new InvokeMethodOptions());
+			instance.InvokeMethod("Rename", methodParameters, new InvokeMethodOptions());
 		}
 	}
 
@@ -233,8 +230,7 @@ public static class SystemFunctions
 	{
 		try
 		{
-			DateTime time = DateTime.Parse(datetime);
-			return TimeZoneFunctions.SetTime(time);
+			return TimeZoneFunctions.SetTime(DateTime.Parse(datetime));
 		}
 		catch (FormatException e)
 		{
@@ -258,8 +254,7 @@ public static class SystemFunctions
 	{
 		try
 		{
-			TimeZoneInfo timeZone = TimeZoneInfo.FromSerializedString(serializedTimeZoneInfo);
-			return TimeZoneFunctions.SetTimeZone(timeZone);
+			return TimeZoneFunctions.SetTimeZone(TimeZoneInfo.FromSerializedString(serializedTimeZoneInfo));
 		}
 		catch (SerializationException e)
 		{
@@ -278,8 +273,7 @@ public static class SystemFunctions
 	{
 		try
 		{
-			TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneInfoId);
-			return TimeZoneFunctions.SetTimeZone(timeZone);
+			return TimeZoneFunctions.SetTimeZone(TimeZoneInfo.FindSystemTimeZoneById(timeZoneInfoId));
 		}
 		catch (TimeZoneNotFoundException e)
 		{
@@ -359,7 +353,6 @@ public static class SystemFunctions
 
 	private static void DeleteLockedFileSystemEntry(string target)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		MoveFileEx(service.ExpandProperties(target), null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+		MoveFileEx(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(target), null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
 	}
 }

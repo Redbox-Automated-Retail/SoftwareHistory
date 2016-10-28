@@ -12,24 +12,24 @@ public class Options
 	[Description("Define or override property key/value pairs.")]
 	public IDictionary<string, string> Properties = new Dictionary<string, string>();
 
-	[Description("Update Service Url override.")]
 	[Option(LongName = "update-service-url", ShortName = "h", Required = false)]
+	[Description("Update Service Url override.")]
 	public string UpdateServiceUrl { get; set; }
 
 	[Option(LongName = "activate", ShortName = "a")]
 	[Description("Activate staged files.")]
 	public bool Activate { get; set; }
 
-	[Description("Display the differnce in the current tree and what is avaliable to update to.")]
 	[Option(LongName = "diff", ShortName = "d")]
+	[Description("Display the differnce in the current tree and what is avaliable to update to.")]
 	public bool Diff { get; set; }
 
 	[Option(LongName = "eval")]
 	[Description("Executes the script specified in the store updater kernel. All other options ignored.")]
 	public string Script { get; set; }
 
-	[Description("Desired version for an update.")]
 	[Option(LongName = "hash", ShortName = "h")]
+	[Description("Desired version for an update.")]
 	public string Hash { get; set; }
 
 	[Option(LongName = "kaseya-id", ShortName = "k")]
@@ -40,52 +40,52 @@ public class Options
 	[Description("Lists the current applied revisions.")]
 	public bool List { get; set; }
 
-	[Description("Lists the all revision present on the machine applied or otherwise.")]
 	[Option(LongName = "list-all")]
+	[Description("Lists the all revision present on the machine applied or otherwise.")]
 	public bool ListAll { get; set; }
 
 	[Option(LongName = "store-number", ShortName = "n")]
 	[Description("Number of Current Store.")]
 	public string StoreNumber { get; set; }
 
-	[Description("Attempt to start downloads.")]
 	[Option(LongName = "start-download")]
+	[Description("Attempt to start downloads.")]
 	public bool StartDownload { get; set; }
 
-	[Description("Cause the underlying system to poll for changes from the server and BITS.")]
 	[Option(LongName = "poll", ShortName = "p")]
+	[Description("Cause the underlying system to poll for changes from the server and BITS.")]
 	public bool Poll { get; set; }
 
-	[Description("Deletes all repository entries and cancels all bits jobs.")]
 	[Option(LongName = "reset", ShortName = "r")]
+	[Description("Deletes all repository entries and cancels all bits jobs.")]
 	public bool ResetAll { get; set; }
 
 	[Option(LongName = "tree", ShortName = "t")]
 	[Description("The name of the tree to operate on. Required for update")]
 	public string Tree { get; set; }
 
-	[Description("Updates the tree given in name to the the revision specified in hash or head if none.")]
 	[Option(LongName = "update", ShortName = "u")]
+	[Description("Updates the tree given in name to the the revision specified in hash or head if none.")]
 	public bool Update { get; set; }
 
-	[Description("work filter to use when getting work from server.")]
 	[Option(LongName = "filter", ShortName = "f")]
+	[Description("work filter to use when getting work from server.")]
 	public string WorkFilter { get; set; }
 
-	[Description("Cancels all BITS jobs.")]
 	[Option(LongName = "reset-bits")]
+	[Description("Cancels all BITS jobs.")]
 	public bool ResetBITS { get; set; }
 
-	[Description("Cancels all BITS jobs.")]
 	[Option(LongName = "reset-repository")]
+	[Description("Cancels all BITS jobs.")]
 	public bool ResetManifest { get; set; }
 
-	[Description("Prints unfinished changes.")]
 	[Option(LongName = "print-unfinished-changes")]
+	[Description("Prints unfinished changes.")]
 	public bool PrintUnfinishedChanges { get; set; }
 
-	[Description("Sets the repository name.")]
 	[Option(LongName = "repository-name")]
+	[Description("Sets the repository name.")]
 	public string RepositoryName { get; set; }
 
 	[Option(LongName = "dump")]

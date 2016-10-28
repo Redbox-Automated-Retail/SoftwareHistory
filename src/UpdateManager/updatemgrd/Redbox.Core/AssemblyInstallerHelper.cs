@@ -10,8 +10,7 @@ internal class AssemblyInstallerHelper : MarshalByRefObject
 {
 	public static bool ExecuteInAppDomain(string targetPath, string[] args, InstallMode mode, List<string> errorList)
 	{
-		Assembly executingAssembly = Assembly.GetExecutingAssembly();
-		string location = executingAssembly.Location;
+		string location = Assembly.GetExecutingAssembly().Location;
 		if (string.IsNullOrEmpty(location))
 		{
 			return false;
@@ -20,8 +19,7 @@ internal class AssemblyInstallerHelper : MarshalByRefObject
 		try
 		{
 			appDomain = AppDomain.CreateDomain("AssemblyInstallerDomain");
-			AssemblyInstallerHelper assemblyInstallerHelper = (AssemblyInstallerHelper)appDomain.CreateInstanceFromAndUnwrap(location, typeof(AssemblyInstallerHelper).FullName);
-			return assemblyInstallerHelper.Execute(targetPath, args, mode.ToString(), errorList);
+			return ((AssemblyInstallerHelper)appDomain.CreateInstanceFromAndUnwrap(location, typeof(AssemblyInstallerHelper).FullName)).Execute(targetPath, args, mode.ToString(), errorList);
 		}
 		finally
 		{

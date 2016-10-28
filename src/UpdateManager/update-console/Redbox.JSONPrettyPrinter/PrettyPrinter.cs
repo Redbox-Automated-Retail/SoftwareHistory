@@ -13,8 +13,7 @@ internal static class PrettyPrinter
 		using JsonTextReader reader2 = new JsonTextReader(reader);
 		using JsonTextWriter jsonTextWriter = new JsonTextWriter(streamWriter);
 		jsonTextWriter.PrettyPrint = true;
-		JsonColorWriter jsonColorWriter = new JsonColorWriter(jsonTextWriter, new JsonPalette());
-		jsonColorWriter.WriteFromReader(reader2);
+		new JsonColorWriter(jsonTextWriter, new JsonPalette()).WriteFromReader(reader2);
 		streamWriter.WriteLine();
 	}
 
@@ -24,8 +23,7 @@ internal static class PrettyPrinter
 		using JsonTextReader reader = new JsonTextReader(i);
 		using JsonTextWriter jsonTextWriter = new JsonTextWriter(streamWriter);
 		jsonTextWriter.PrettyPrint = true;
-		JsonColorWriter jsonColorWriter = new JsonColorWriter(jsonTextWriter, new JsonPalette());
-		jsonColorWriter.WriteFromReader(reader);
+		new JsonColorWriter(jsonTextWriter, new JsonPalette()).WriteFromReader(reader);
 		streamWriter.WriteLine();
 	}
 
@@ -34,8 +32,7 @@ internal static class PrettyPrinter
 		using JsonTextReader reader = new JsonTextReader(i);
 		using JsonTextWriter jsonTextWriter = new JsonTextWriter(o);
 		jsonTextWriter.PrettyPrint = true;
-		JsonColorWriter jsonColorWriter = new JsonColorWriter(jsonTextWriter, new JsonPalette());
-		jsonColorWriter.WriteFromReader(reader);
+		new JsonColorWriter(jsonTextWriter, new JsonPalette()).WriteFromReader(reader);
 		o.WriteLine();
 	}
 

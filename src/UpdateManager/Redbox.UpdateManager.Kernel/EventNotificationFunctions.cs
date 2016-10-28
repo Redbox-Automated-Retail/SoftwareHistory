@@ -66,7 +66,7 @@ public static class EventNotificationFunctions
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		luaTable["success"] = !errors.ContainsError();
 		LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			luaTable2[error.Code] = error.Description;
 		}

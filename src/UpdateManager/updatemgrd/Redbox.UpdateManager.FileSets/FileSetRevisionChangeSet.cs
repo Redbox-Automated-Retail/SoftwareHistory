@@ -22,31 +22,33 @@ internal class FileSetRevisionChangeSet
 
 	public ClientFileSetRevisionChangeSet ToClient()
 	{
-		ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet = new ClientFileSetRevisionChangeSet();
-		clientFileSetRevisionChangeSet.FileSetId = FileSetId;
-		clientFileSetRevisionChangeSet.RevisionId = RevisionId;
-		clientFileSetRevisionChangeSet.Path = Path;
-		clientFileSetRevisionChangeSet.CompressionType = CompressionType;
-		clientFileSetRevisionChangeSet.FileHash = FileHash;
-		clientFileSetRevisionChangeSet.ContentHash = ContentHash;
-		clientFileSetRevisionChangeSet.PatchRevisionId = PatchRevisionId;
-		clientFileSetRevisionChangeSet.ContentSize = ContentSize;
-		clientFileSetRevisionChangeSet.FileSize = FileSize;
-		return clientFileSetRevisionChangeSet;
+		return new ClientFileSetRevisionChangeSet
+		{
+			FileSetId = FileSetId,
+			RevisionId = RevisionId,
+			Path = Path,
+			CompressionType = CompressionType,
+			FileHash = FileHash,
+			ContentHash = ContentHash,
+			PatchRevisionId = PatchRevisionId,
+			ContentSize = ContentSize,
+			FileSize = FileSize
+		};
 	}
 
 	public FileSetRevisionChangeSet Clone()
 	{
-		FileSetRevisionChangeSet fileSetRevisionChangeSet = new FileSetRevisionChangeSet();
-		fileSetRevisionChangeSet.FileSetId = FileSetId;
-		fileSetRevisionChangeSet.RevisionId = RevisionId;
-		fileSetRevisionChangeSet.Path = Path;
-		fileSetRevisionChangeSet.CompressionType = CompressionType;
-		fileSetRevisionChangeSet.ContentHash = ContentHash;
-		fileSetRevisionChangeSet.FileHash = FileHash;
-		fileSetRevisionChangeSet.PatchRevisionId = PatchRevisionId;
-		fileSetRevisionChangeSet.ContentSize = ContentSize;
-		fileSetRevisionChangeSet.FileSize = FileSize;
-		return fileSetRevisionChangeSet;
+		return new FileSetRevisionChangeSet
+		{
+			FileSetId = FileSetId,
+			RevisionId = RevisionId,
+			Path = Path,
+			CompressionType = CompressionType,
+			ContentHash = ContentHash,
+			FileHash = FileHash,
+			PatchRevisionId = PatchRevisionId,
+			ContentSize = ContentSize,
+			FileSize = FileSize
+		};
 	}
 }

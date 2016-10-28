@@ -4,7 +4,7 @@ using Redbox.Core;
 
 namespace Redbox.UpdateService.Model;
 
-public class StatusMessage
+internal class StatusMessage
 {
 	public enum StatusMessageType
 	{

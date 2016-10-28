@@ -21,8 +21,7 @@ internal class FileSetCleanup
 			{
 				return errorList;
 			}
-			List<long> allFileSets = FileCacheService.Instance.GetAllFileSets();
-			allFileSets.ForEach(delegate(long fileSetId)
+			FileCacheService.Instance.GetAllFileSets().ForEach(delegate(long fileSetId)
 			{
 				List<long> revisionIds = new List<long>();
 				stateFiles.ForEach(delegate(StateFile sf)
@@ -59,8 +58,7 @@ internal class FileSetCleanup
 						if (retentionDays != 0 || retentionRevisions != 0)
 						{
 							List<FileSetFileInfo> allFileInfos = new List<FileSetFileInfo>();
-							List<string> allFileInfos2 = FileCacheService.Instance.GetAllFileInfos(fileSetId);
-							allFileInfos2.ForEach(delegate(string path)
+							FileCacheService.Instance.GetAllFileInfos(fileSetId).ForEach(delegate(string path)
 							{
 								allFileInfos.Add(FileSetService.Instance.GetFileInfo(path));
 							});
@@ -122,7 +120,7 @@ internal class FileSetCleanup
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetCleanup.Run", "Unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetCleanup.Run", "Unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -145,8 +143,7 @@ internal class FileSetCleanup
 
 	private void RemoveFiles(long fileSetId, List<FileSetFileInfo> allFileInfos, List<FileSetFileInfo> requiredFiles)
 	{
-		List<FileSetFileInfo> list = allFileInfos.Except(requiredFiles.Distinct()).ToList();
-		list.ForEach(delegate(FileSetFileInfo r)
+		allFileInfos.Except(requiredFiles.Distinct()).ToList().ForEach(delegate(FileSetFileInfo r)
 		{
 			LogHelper.Instance.Log($"Deleting FileSetId: {fileSetId} FileId {r.FileId} FileRevisionId {r.FileRevisionId}", LogEntryType.Debug);
 			FileCacheService.Instance.DeleteFile(fileSetId, r.FileId, r.FileRevisionId);

@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.UpdateService.Model;
 
-public class ThinData
+internal class ThinData
 {
 	public string Barcode { get; set; }
 

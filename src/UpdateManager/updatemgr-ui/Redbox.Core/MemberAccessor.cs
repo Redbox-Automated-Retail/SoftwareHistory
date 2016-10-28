@@ -15,7 +15,7 @@ internal class MemberAccessor
 	{
 		get
 		{
-			if (m_fieldInfo == null)
+			if (!(m_fieldInfo != null))
 			{
 				return m_propertyInfo.PropertyType;
 			}
@@ -65,7 +65,7 @@ internal class MemberAccessor
 
 	public object GetValue(object instance, object[] index)
 	{
-		if (m_fieldInfo == null)
+		if (!(m_fieldInfo != null))
 		{
 			return m_propertyInfo.GetValue(instance, index);
 		}

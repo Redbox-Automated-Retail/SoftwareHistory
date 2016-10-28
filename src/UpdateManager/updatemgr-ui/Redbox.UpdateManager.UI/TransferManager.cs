@@ -127,17 +127,13 @@ public class TransferManager : Form
 	{
 		if (m_jobs.SelectedItems.Count >= 1)
 		{
-			ListViewItem listViewItem = m_jobs.SelectedItems[0];
-			ITransferJob job = listViewItem.Tag as ITransferJob;
-			TransferDetails transferDetails = new TransferDetails(job);
-			transferDetails.ShowDialog();
+			new TransferDetails(m_jobs.SelectedItems[0].Tag as ITransferJob).ShowDialog();
 		}
 	}
 
 	private void LoadJobsIntoList()
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		ErrorList jobs = service.GetJobs(out var jobs2, allUsers: true);
+		ErrorList jobs = ServiceLocator.Instance.GetService<ITransferService>().GetJobs(out var jobs2, allUsers: true);
 		if (jobs.ContainsError())
 		{
 			UpdateManagerApplication.Instance.ThreadSafeErrorDisplay(jobs);

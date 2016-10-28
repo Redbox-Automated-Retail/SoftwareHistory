@@ -58,7 +58,7 @@ internal class IPCProtocol
 				return;
 			}
 			Query.Clear();
-			LinqExtensions.ForEach(value, delegate(KeyValuePair<string, string> pair)
+			value.ForEach(delegate(KeyValuePair<string, string> pair)
 			{
 				Query.Add(pair.Key, pair.Value);
 			});
@@ -87,30 +87,31 @@ internal class IPCProtocol
 	public static IPCProtocol Parse(string protocolURI)
 	{
 		protocolURI = protocolURI.Trim();
-		IPCProtocol iPCProtocol = new IPCProtocol();
-		iPCProtocol.m_rawUri = protocolURI;
-		IPCProtocol iPCProtocol2 = iPCProtocol;
+		IPCProtocol iPCProtocol = new IPCProtocol
+		{
+			m_rawUri = protocolURI
+		};
 		try
 		{
-			iPCProtocol2.Read(protocolURI);
+			iPCProtocol.Read(protocolURI);
 		}
 		catch (Exception ex)
 		{
 			throw new UriFormatException(ex.Message);
 		}
-		if (string.IsNullOrEmpty(iPCProtocol2.Host))
+		if (string.IsNullOrEmpty(iPCProtocol.Host))
 		{
 			throw new UriFormatException("Host isn't set.");
 		}
-		if (iPCProtocol2.Channel == ChannelType.Unknown)
+		if (iPCProtocol.Channel == ChannelType.Unknown)
 		{
 			throw new UriFormatException("The channel type is unknown; please correct your URI.");
 		}
-		if ((iPCProtocol2.Channel == ChannelType.Socket || iPCProtocol2.Channel == ChannelType.Remoting) && !string.IsNullOrEmpty(iPCProtocol2.Port) && !int.TryParse(iPCProtocol2.Port, out var _))
+		if ((iPCProtocol.Channel == ChannelType.Socket || iPCProtocol.Channel == ChannelType.Remoting) && !string.IsNullOrEmpty(iPCProtocol.Port) && !int.TryParse(iPCProtocol.Port, out var _))
 		{
-			throw new UriFormatException($"Protocol is set up for {iPCProtocol2.Channel}, but port isn't a valid number.");
+			throw new UriFormatException($"Protocol is set up for {iPCProtocol.Channel}, but port isn't a valid number.");
 		}
-		return iPCProtocol2;
+		return iPCProtocol;
 	}
 
 	public override string ToString()
@@ -131,7 +132,7 @@ internal class IPCProtocol
 		if (!string.IsNullOrEmpty(uri.Query))
 		{
 			NameValueCollection queries = HttpUtility.ParseQueryString(uri.Query);
-			LinqExtensions.ForEach(queries.AllKeys, delegate(string key)
+			queries.AllKeys.ForEach(delegate(string key)
 			{
 				Query.Add(key, queries[key]);
 			});
@@ -147,11 +148,11 @@ internal class IPCProtocol
 			Password = Query["PASSWORD"];
 		}
 		int count = 0;
-		if (uri.Segments.Length <= 0)
+		if (uri.Segments.Length == 0)
 		{
 			return;
 		}
-		LinqExtensions.ForEach(uri.Segments, delegate(string s)
+		uri.Segments.ForEach(delegate(string s)
 		{
 			s = s.Replace("/", "").Replace(" ", "");
 			if (count == 0)

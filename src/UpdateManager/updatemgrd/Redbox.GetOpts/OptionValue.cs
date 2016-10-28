@@ -25,8 +25,7 @@ internal class OptionValue
 	{
 		OptionValueList optionValueList = new OptionValueList();
 		MemberInfo[] members = container.GetType().GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.GetProperty | BindingFlags.SetProperty);
-		MemberInfo[] array = members;
-		foreach (MemberInfo memberInfo in array)
+		foreach (MemberInfo memberInfo in members)
 		{
 			OptionAttribute optionAttribute = (OptionAttribute)Attribute.GetCustomAttribute(memberInfo, typeof(OptionAttribute));
 			if (optionAttribute != null)
@@ -45,14 +44,12 @@ internal class OptionValue
 		{
 			PropertyInfo property = m_member.Type.GetProperty("Item");
 			Type convertToType = m_member.Type.GetGenericArguments()[0];
-			Type convertToType2 = m_member.Type.GetGenericArguments()[1];
-			property.SetValue(m_member.GetValue(m_container), ConversionHelper.ChangeType(value, convertToType2), new object[1] { ConversionHelper.ChangeType(key, convertToType) });
+			property.SetValue(value: ConversionHelper.ChangeType(value, m_member.Type.GetGenericArguments()[1]), obj: m_member.GetValue(m_container), index: new object[1] { ConversionHelper.ChangeType(key, convertToType) });
 		}
 		else if (IsList())
 		{
 			Type convertToType2 = m_member.Type.GetGenericArguments()[0];
-			MethodInfo method = m_member.Type.GetMethod("Insert");
-			method.Invoke(m_member.GetValue(m_container), new object[2]
+			m_member.Type.GetMethod("Insert").Invoke(m_member.GetValue(m_container), new object[2]
 			{
 				0,
 				ConversionHelper.ChangeType(value, convertToType2)
@@ -123,8 +120,7 @@ internal class OptionValue
 		if (m_description != null)
 		{
 			string[] array = m_description.Description.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			string[] array2 = array;
-			foreach (string text3 in array2)
+			foreach (string text3 in array)
 			{
 				stringBuilder.AppendFormat("{0} ", text3);
 				num2 += text3.Length + 1;
@@ -149,7 +145,11 @@ internal class OptionValue
 
 	public bool IsValidName(string name)
 	{
-		return string.Compare(name, m_definition.LongName, ignoreCase: true) == 0 || string.Compare(name, m_definition.ShortName, ignoreCase: true) == 0 || string.Compare(name, m_member.Name, ignoreCase: true) == 0;
+		if (string.Compare(name, m_definition.LongName, ignoreCase: true) != 0 && string.Compare(name, m_definition.ShortName, ignoreCase: true) != 0)
+		{
+			return string.Compare(name, m_member.Name, ignoreCase: true) == 0;
+		}
+		return true;
 	}
 
 	internal OptionValue(object container, MemberAccessor member, OptionAttribute definition, DescriptionAttribute description, DefaultValueAttribute defaultValue)
@@ -181,11 +181,19 @@ internal class OptionValue
 
 	internal bool IsList()
 	{
-		return m_member.Type.IsGenericType && m_member.Type.GetGenericTypeDefinition() == typeof(IList<>);
+		if (m_member.Type.IsGenericType)
+		{
+			return m_member.Type.GetGenericTypeDefinition() == typeof(IList<>);
+		}
+		return false;
 	}
 
 	internal bool IsDictionary()
 	{
-		return m_member.Type.IsGenericType && m_member.Type.GetGenericTypeDefinition() == typeof(IDictionary<, >);
+		if (m_member.Type.IsGenericType)
+		{
+			return m_member.Type.GetGenericTypeDefinition() == typeof(IDictionary<, >);
+		}
+		return false;
 	}
 }

@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreInfoArgs
+internal class StoreInfoArgs
 {
 	public string StoreNumber { get; set; }
 

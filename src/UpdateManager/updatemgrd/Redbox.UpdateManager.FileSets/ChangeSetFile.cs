@@ -11,10 +11,6 @@ namespace Redbox.UpdateManager.FileSets;
 
 internal class ChangeSetFile
 {
-	private const string FileSetChangeSetExt = ".changeSet";
-
-	private const string FileSetChangeSetPath = "changesets";
-
 	private List<IDownloader> _downloads = new List<IDownloader>();
 
 	private IDownloadService _downloadService;
@@ -28,6 +24,10 @@ internal class ChangeSetFile
 	private static object _lock = new object();
 
 	private RevisionChangeSet _changeSet;
+
+	private const string FileSetChangeSetExt = ".changeSet";
+
+	private const string FileSetChangeSetPath = "changesets";
 
 	internal long FileSetId => _changeSet.FileSetId;
 
@@ -141,15 +141,13 @@ internal class ChangeSetFile
 			string changeSetDirectory = GetChangeSetDirectory();
 			if (!Directory.Exists(changeSetDirectory))
 			{
-				errorList.Add(Error.NewError("ChangeSetManager.CleanUp", "Error, No directory found at " + changeSetDirectory, ""));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetManager.CleanUp", "Error, No directory found at " + changeSetDirectory, ""));
 				return;
 			}
 			string[] files = Directory.GetFiles(changeSetDirectory, '*' + ".changeSet", SearchOption.TopDirectoryOnly);
-			string[] array = files;
-			foreach (string text in array)
+			foreach (string text in files)
 			{
-				DateTime creationTime = File.GetCreationTime(text);
-				if (creationTime <= dateTime)
+				if (File.GetCreationTime(text) <= dateTime)
 				{
 					Shared.SafeDelete(text);
 					LogHelper.Instance.Log($"ChangeSetManager.CleanUp - Deleting file > 60 days old: {text} ", LogEntryType.Info);
@@ -158,7 +156,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetManager.CleanUp", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetManager.CleanUp", "An unhandled exception occurred.", e));
 		}
 	}
 
@@ -178,13 +176,12 @@ internal class ChangeSetFile
 		{
 			lock (_lock)
 			{
-				string changeSetPath = GetChangeSetPath();
-				Shared.SafeDelete(changeSetPath);
+				Shared.SafeDelete(GetChangeSetPath());
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetManager.CleanUp", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetManager.CleanUp", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -199,7 +196,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile.CreateFromChangeSet", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile.CreateFromChangeSet", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -211,12 +208,12 @@ internal class ChangeSetFile
 		{
 			lock (_lock)
 			{
-				File.WriteAllText(GetChangeSetPath(), ObjectExtensions.ToJson(_changeSet));
+				File.WriteAllText(GetChangeSetPath(), _changeSet.ToJson());
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile.Save", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile.Save", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -231,18 +228,18 @@ internal class ChangeSetFile
 			{
 				CreateChangeSetDirectory();
 				string[] files = Directory.GetFiles(GetChangeSetDirectory(), '*' + ".changeSet", SearchOption.TopDirectoryOnly);
-				LogHelper.Instance.Log($"ChangeSetManager.GetAllFiles json: {ObjectExtensions.ToJson(files)} ", LogEntryType.Debug);
+				LogHelper.Instance.Log($"ChangeSetManager.GetAllFiles json: {files.ToJson()} ", LogEntryType.Debug);
 				string[] array = files;
 				foreach (string text in array)
 				{
 					try
 					{
-						RevisionChangeSet changeSet = StringExtensions.ToObject<RevisionChangeSet>(File.ReadAllText(text));
+						RevisionChangeSet changeSet = File.ReadAllText(text).ToObject<RevisionChangeSet>();
 						chageSetFiles.Add(new ChangeSetFile(changeSet));
 					}
 					catch (Exception e)
 					{
-						errorList.Add(Error.NewError("ChangeSetManager.GetAllFiles", $"Error parsing changeset file deleting {text} ", e));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetManager.GetAllFiles", $"Error parsing changeset file deleting {text} ", e));
 						Shared.SafeDelete(text);
 					}
 				}
@@ -250,7 +247,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e2)
 		{
-			errorList.Add(Error.NewError("ChangeSetManager.GetAllFiles", "Unhandled exception occurred.", e2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetManager.GetAllFiles", "Unhandled exception occurred.", e2));
 		}
 		return errorList;
 	}
@@ -305,7 +302,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetManager.ProcessChangeSet", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetManager.ProcessChangeSet", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -323,7 +320,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(code, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(code, "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -341,7 +338,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(code, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(code, "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -359,7 +356,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(code, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(code, "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -377,7 +374,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(code, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(code, "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -395,7 +392,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(code, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(code, "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -411,7 +408,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(code, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(code, "An unhandled exception occurred", e));
 		}
 		return errorList;
 	}
@@ -446,7 +443,7 @@ internal class ChangeSetFile
 		catch (Exception e)
 		{
 			SetError("Unhandled exception in CheckReceived");
-			errorList.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
 		}
 		return errorList;
 	}
@@ -489,7 +486,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
 			SetError("Unhandled exception in CheckDownloadingRevision");
 		}
 		return errorList;
@@ -528,7 +525,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
 			SetError("Unhandled exception in CheckDownloadedRevision");
 			return errorList;
 		}
@@ -567,7 +564,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile", "An unhandled exception occurred in CheckReceived", e));
 			SetError("Unhandled exception in CheckDownloadingFileSet");
 		}
 		return errorList;
@@ -587,7 +584,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile.CheckDownloadedFileSet", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile.CheckDownloadedFileSet", "An unhandled exception occurred", e));
 			SetError("Unhandled exception in CheckDownloadedFileSet");
 		}
 		return errorList;
@@ -619,7 +616,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile.CheckStagingFileSet", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile.CheckStagingFileSet", "An unhandled exception occurred", e));
 			SetError("Unhandled exception in CheckStagingFileSet");
 		}
 		return errorList;
@@ -639,7 +636,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("ChangeSetFile.CheckStagedFileSet", "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ChangeSetFile.CheckStagedFileSet", "An unhandled exception occurred", e));
 			SetError("Unhandled exception in CheckStagedFileSet");
 		}
 		return errorList;
@@ -677,7 +674,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(text, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(text, "An unhandled exception occurred", e));
 			SetError($"Unhandled exception in {text}");
 		}
 		return errorList;
@@ -709,7 +706,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(text, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(text, "An unhandled exception occurred", e));
 			SetError($"Unhandled exception in {text}");
 		}
 		return errorList;
@@ -745,7 +742,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(text, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(text, "An unhandled exception occurred", e));
 			SetError($"Unhandled exception in {text}");
 		}
 		return errorList;
@@ -778,7 +775,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(text, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(text, "An unhandled exception occurred", e));
 			SetError($"Unhandled exception in {text}");
 		}
 		return errorList;
@@ -807,7 +804,7 @@ internal class ChangeSetFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError(text, "An unhandled exception occurred", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError(text, "An unhandled exception occurred", e));
 			SetState(ChangesetState.Activated);
 		}
 		return errorList;
@@ -885,27 +882,28 @@ internal class ChangeSetFile
 
 	internal static RevisionChangeSet ClientToRevisionChangeSet(ClientFileSetRevisionChangeSet cs)
 	{
-		RevisionChangeSet revisionChangeSet = new RevisionChangeSet();
-		revisionChangeSet.FileSetId = cs.FileSetId;
-		revisionChangeSet.RevisionId = cs.RevisionId;
-		revisionChangeSet.Received = DateTime.Now;
-		revisionChangeSet.Downloaded = null;
-		revisionChangeSet.Staged = null;
-		revisionChangeSet.Activated = null;
-		revisionChangeSet.State = ChangesetState.Received;
-		revisionChangeSet.Message = string.Empty;
-		revisionChangeSet.RetryCount = 0;
-		revisionChangeSet.Path = cs.Path;
-		revisionChangeSet.CompressionType = cs.CompressionType;
-		revisionChangeSet.ContentHash = cs.ContentHash;
-		revisionChangeSet.FileHash = cs.FileHash;
-		revisionChangeSet.PatchRevisionId = cs.PatchRevisionId;
-		revisionChangeSet.DownloadOn = cs.DownloadOn.ToLocalTime();
-		revisionChangeSet.DownloadPriority = cs.DownloadPriority;
-		revisionChangeSet.ActiveOn = cs.ActiveOn.ToLocalTime();
-		revisionChangeSet.ActivateStartTime = cs.ActivateStartTime;
-		revisionChangeSet.ActivateEndTime = cs.ActivateEndTime;
-		revisionChangeSet.DownloadUrl = cs.DownloadUrl;
-		return revisionChangeSet;
+		return new RevisionChangeSet
+		{
+			FileSetId = cs.FileSetId,
+			RevisionId = cs.RevisionId,
+			Received = DateTime.Now,
+			Downloaded = null,
+			Staged = null,
+			Activated = null,
+			State = ChangesetState.Received,
+			Message = string.Empty,
+			RetryCount = 0,
+			Path = cs.Path,
+			CompressionType = cs.CompressionType,
+			ContentHash = cs.ContentHash,
+			FileHash = cs.FileHash,
+			PatchRevisionId = cs.PatchRevisionId,
+			DownloadOn = cs.DownloadOn.ToLocalTime(),
+			DownloadPriority = cs.DownloadPriority,
+			ActiveOn = cs.ActiveOn.ToLocalTime(),
+			ActivateStartTime = cs.ActivateStartTime,
+			ActivateEndTime = cs.ActivateEndTime,
+			DownloadUrl = cs.DownloadUrl
+		};
 	}
 }

@@ -7,8 +7,8 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.UpdateManager.UI.Properties;
 
-[DebuggerNonUserCode]
 [GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+[DebuggerNonUserCode]
 [CompilerGenerated]
 internal class Resources
 {
@@ -21,10 +21,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.UpdateManager.UI.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.UpdateManager.UI.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}

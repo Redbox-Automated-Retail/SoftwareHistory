@@ -43,16 +43,18 @@ public class UpdateManagerService : IDisposable
 
 	public static UpdateManagerService GetService(string url)
 	{
-		UpdateManagerService updateManagerService = new UpdateManagerService(url);
-		updateManagerService.Timeout = 600000;
-		return updateManagerService;
+		return new UpdateManagerService(url)
+		{
+			Timeout = 600000
+		};
 	}
 
 	public static UpdateManagerService GetService(string url, int timeout)
 	{
-		UpdateManagerService updateManagerService = new UpdateManagerService(url);
-		updateManagerService.Timeout = timeout;
-		return updateManagerService;
+		return new UpdateManagerService(url)
+		{
+			Timeout = timeout
+		};
 	}
 
 	public ClientCommandResult GetStoreNumber(out string number)
@@ -61,7 +63,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("data get id: 'config-store-number'");
 		if (clientCommandResult.Success)
 		{
-			number = StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+			number = clientCommandResult.CommandMessages[0].ToObject<string>();
 		}
 		return clientCommandResult;
 	}
@@ -72,7 +74,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("data get id: 'config-developer-mode-flag'");
 		if (clientCommandResult.Success)
 		{
-			isDeveloperUI = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			isDeveloperUI = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return clientCommandResult;
 	}
@@ -83,7 +85,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("data get id: 'config-initial-subscription-state-flag'");
 		if (clientCommandResult.Success)
 		{
-			initialSubscriptionState = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			initialSubscriptionState = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return clientCommandResult;
 	}
@@ -131,7 +133,7 @@ public class UpdateManagerService : IDisposable
 			if (IsEngineRunning())
 			{
 				clientCommandResult.Success = false;
-				clientCommandResult.Errors.Add(Error.NewError("T999", "The engine failed to shutdown in the time specified.", "Try to shutdown the engine again."));
+				clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("T999", "The engine failed to shutdown in the time specified.", "Try to shutdown the engine again."));
 			}
 		}
 		return clientCommandResult;
@@ -204,8 +206,7 @@ public class UpdateManagerService : IDisposable
 		{
 			if (createdNew)
 			{
-				Process[] processesByName = Process.GetProcessesByName("kioskengine");
-				return processesByName.Length > 0;
+				return Process.GetProcessesByName("kioskengine").Length != 0;
 			}
 			return true;
 		}

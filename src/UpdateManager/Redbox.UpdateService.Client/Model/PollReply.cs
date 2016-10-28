@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class PollReply
+internal class PollReply
 {
 	public PollReplyType PollReplyType { get; set; }
 

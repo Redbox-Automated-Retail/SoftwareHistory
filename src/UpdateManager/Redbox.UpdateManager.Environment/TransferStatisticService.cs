@@ -20,10 +20,11 @@ public class TransferStatisticService : IPollRequestReply
 			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 			for (TransferStatisticReport transferStatisticReport = service.Peek<TransferStatisticReport>("statistic"); transferStatisticReport != null; transferStatisticReport = service.Peek<TransferStatisticReport>("statistic"))
 			{
-				PollRequest pollRequest = new PollRequest();
-				pollRequest.PollRequestType = PollRequestType.TransferStatisticReport;
-				pollRequest.Data = ObjectExtensions.ToJson(transferStatisticReport);
-				PollRequest item = pollRequest;
+				PollRequest item = new PollRequest
+				{
+					PollRequestType = PollRequestType.TransferStatisticReport,
+					Data = transferStatisticReport.ToJson()
+				};
 				pollRequestList.Add(item);
 				LogHelper.Instance.Log("Enqueued transfer statistics for revision: {0}", transferStatisticReport.ChangeSet);
 				service.Dequeue("statistic");
@@ -31,7 +32,7 @@ public class TransferStatisticService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("StatusMessageService", "Unhandled exception occurred in GetPollRequest.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("StatusMessageService", "Unhandled exception occurred in GetPollRequest.", e));
 		}
 		return errorList;
 	}

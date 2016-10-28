@@ -99,9 +99,9 @@ public static class TimeZoneFunctions
 				Second = (ushort)dateTime.Second
 			};
 			LogHelper.Instance.Log("Attempting to change date and time (UTC) from " + DateTime.UtcNow.ToLongDateString() + " " + DateTime.UtcNow.ToLongTimeString() + " to " + dateTime.ToLongDateString() + " " + dateTime.ToLongTimeString(), LogEntryType.Debug);
-			bool flag = Win32SetSystemTime(ref sysTime);
-			LogHelper.Instance.Log("Timechange success: " + flag + " - current date and time (UTC) is: " + DateTime.UtcNow.ToLongDateString() + " " + DateTime.UtcNow.ToLongTimeString(), LogEntryType.Debug);
-			return flag;
+			bool result = Win32SetSystemTime(ref sysTime);
+			LogHelper.Instance.Log("Timechange success: " + result + " - current date and time (UTC) is: " + DateTime.UtcNow.ToLongDateString() + " " + DateTime.UtcNow.ToLongTimeString(), LogEntryType.Debug);
+			return result;
 		}
 		catch (Exception e)
 		{
@@ -118,8 +118,7 @@ public static class TimeZoneFunctions
 		}
 		try
 		{
-			TimeZoneInfo.AdjustmentRule[] adjustmentRules = timeZoneInfo.GetAdjustmentRules();
-			TimeZoneInfo.AdjustmentRule currentAdjustmentRule = adjustmentRules.FirstOrDefault((TimeZoneInfo.AdjustmentRule ar) => ar.DateStart < DateTime.UtcNow && ar.DateEnd > DateTime.UtcNow);
+			TimeZoneInfo.AdjustmentRule currentAdjustmentRule = timeZoneInfo.GetAdjustmentRules().FirstOrDefault((TimeZoneInfo.AdjustmentRule ar) => ar.DateStart < DateTime.UtcNow && ar.DateEnd > DateTime.UtcNow);
 			bool flag = false;
 			LogHelper.Instance.Log("Attempting to change timezone from " + TimeZoneInfo.Local.DisplayName + " to " + timeZoneInfo.DisplayName, LogEntryType.Debug);
 			if (IsOsVistaOrGreater)

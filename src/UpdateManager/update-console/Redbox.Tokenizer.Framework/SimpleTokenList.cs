@@ -5,7 +5,7 @@ using Redbox.Core;
 namespace Redbox.Tokenizer.Framework;
 
 [Serializable]
-internal class SimpleTokenList : List<SimpleToken>, Redbox_002ECommand_002ETokenizer2108_002EICloneable<SimpleTokenList>
+internal class SimpleTokenList : List<SimpleToken>, ICloneable<SimpleTokenList>
 {
 	public SimpleTokenList()
 	{
@@ -28,12 +28,20 @@ internal class SimpleTokenList : List<SimpleToken>, Redbox_002ECommand_002EToken
 
 	public bool HasOnlyLabel()
 	{
-		return base.Count > 0 && FindAll((SimpleToken each) => each.Type == SimpleTokenType.Label).Count == base.Count;
+		if (base.Count > 0)
+		{
+			return FindAll((SimpleToken each) => each.Type == SimpleTokenType.Label).Count == base.Count;
+		}
+		return false;
 	}
 
 	public bool HasOnlyComments()
 	{
-		return base.Count > 0 && FindAll((SimpleToken each) => each.Type == SimpleTokenType.Comment).Count == base.Count;
+		if (base.Count > 0)
+		{
+			return FindAll((SimpleToken each) => each.Type == SimpleTokenType.Comment).Count == base.Count;
+		}
+		return false;
 	}
 
 	public SimpleTokenList GetSymbols()
@@ -94,13 +102,11 @@ internal class SimpleTokenList : List<SimpleToken>, Redbox_002ECommand_002EToken
 	public SimpleTokenList Clone(params object[] parms)
 	{
 		SimpleTokenList simpleTokenList = new SimpleTokenList();
-		using (Enumerator enumerator = GetEnumerator())
+		using Enumerator enumerator = GetEnumerator();
+		while (enumerator.MoveNext())
 		{
-			while (enumerator.MoveNext())
-			{
-				SimpleToken current = enumerator.Current;
-				simpleTokenList.Add(current.Clone());
-			}
+			SimpleToken current = enumerator.Current;
+			simpleTokenList.Add(current.Clone());
 		}
 		return simpleTokenList;
 	}

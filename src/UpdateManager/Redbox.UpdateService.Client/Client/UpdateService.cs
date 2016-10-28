@@ -87,16 +87,18 @@ public class UpdateService : IDisposable
 
 	public static UpdateService GetService(string url)
 	{
-		UpdateService updateService = new UpdateService(url);
-		updateService.Timeout = 30000;
-		return updateService;
+		return new UpdateService(url)
+		{
+			Timeout = 30000
+		};
 	}
 
 	public static UpdateService GetService(string url, int timeout)
 	{
-		UpdateService updateService = new UpdateService(url);
-		updateService.Timeout = timeout;
-		return updateService;
+		return new UpdateService(url)
+		{
+			Timeout = timeout
+		};
 	}
 
 	public void Dispose()
@@ -118,16 +120,17 @@ public class UpdateService : IDisposable
 		list = new List<Identifier>();
 		if (!m_typeToCommandForm.ContainsKey(typeof(T)))
 		{
-			ClientCommandResult clientCommandResult = new ClientCommandResult();
-			clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("U334", $"The type '{typeof(T).FullName}' does not have a command form mapping.", "Specify a valid type."));
-			return clientCommandResult;
+			return new ClientCommandResult
+			{
+				Errors = { Redbox.IPC.Framework.Error.NewError("U334", $"The type '{typeof(T).FullName}' does not have a command form mapping.", "Specify a valid type.") }
+			};
 		}
-		ClientCommandResult clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, $"{m_typeToCommandForm[typeof(T)]} list");
-		if (clientCommandResult2.Success)
+		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, $"{m_typeToCommandForm[typeof(T)]} list");
+		if (clientCommandResult.Success)
 		{
-			list = clientCommandResult2.CommandMessages[0].ToObject<List<Identifier>>();
+			list = clientCommandResult.CommandMessages[0].ToObject<List<Identifier>>();
 		}
-		return clientCommandResult2;
+		return clientCommandResult;
 	}
 
 	public ClientCommandResult Get<T>(Identifier id, out T t)
@@ -135,16 +138,17 @@ public class UpdateService : IDisposable
 		t = default(T);
 		if (!m_typeToCommandForm.ContainsKey(typeof(T)))
 		{
-			ClientCommandResult clientCommandResult = new ClientCommandResult();
-			clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("U334", $"The type '{typeof(T).FullName}' does not have a command form mapping.", "Specify a valid type."));
-			return clientCommandResult;
+			return new ClientCommandResult
+			{
+				Errors = { Redbox.IPC.Framework.Error.NewError("U334", $"The type '{typeof(T).FullName}' does not have a command form mapping.", "Specify a valid type.") }
+			};
 		}
-		ClientCommandResult clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, $"{m_typeToCommandForm[typeof(T)]} get id: {id.ID}");
-		if (clientCommandResult2.Success)
+		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, $"{m_typeToCommandForm[typeof(T)]} get id: {id.ID}");
+		if (clientCommandResult.Success)
 		{
-			t = clientCommandResult2.CommandMessages[0].ToObject<T>();
+			t = clientCommandResult.CommandMessages[0].ToObject<T>();
 		}
-		return clientCommandResult2;
+		return clientCommandResult;
 	}
 
 	public ClientCommandResult GetSubscriptionStatus(string name, out SubscriptionStatus state)
@@ -419,19 +423,20 @@ public class UpdateService : IDisposable
 		script = null;
 		if (!File.Exists(scriptLocation))
 		{
-			ClientCommandResult clientCommandResult = new ClientCommandResult();
-			clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("U335", $"The script file does not exist: {scriptLocation}.", "Specify a path to a valid script file."));
-			return clientCommandResult;
+			return new ClientCommandResult
+			{
+				Errors = { Redbox.IPC.Framework.Error.NewError("U335", $"The script file does not exist: {scriptLocation}.", "Specify a path to a valid script file.") }
+			};
 		}
 		script = new Script();
 		string text = Encoding.Unicode.GetBytes(File.ReadAllText(scriptLocation)).ToBase64().Replace("'", "\\'");
 		string command = $"update-script create text: '{text}' createdBy: '{createBy}' system: '{system}' name: '{name}'";
-		ClientCommandResult clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult2.Success)
+		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
+		if (clientCommandResult.Success)
 		{
-			script = clientCommandResult2.CommandMessages[0].ToObject<Script>();
+			script = clientCommandResult.CommandMessages[0].ToObject<Script>();
 		}
-		return clientCommandResult2;
+		return clientCommandResult;
 	}
 
 	public ClientCommandResult UpdateScript(long id, string scriptLocation, string modifiedBy, string system, out Script script)
@@ -439,19 +444,20 @@ public class UpdateService : IDisposable
 		script = null;
 		if (!File.Exists(scriptLocation))
 		{
-			ClientCommandResult clientCommandResult = new ClientCommandResult();
-			clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("U335", $"The script file does not exist: {scriptLocation}.", "Specify a path to a valid script file."));
-			return clientCommandResult;
+			return new ClientCommandResult
+			{
+				Errors = { Redbox.IPC.Framework.Error.NewError("U335", $"The script file does not exist: {scriptLocation}.", "Specify a path to a valid script file.") }
+			};
 		}
 		script = new Script();
 		string text = Encoding.Unicode.GetBytes(File.ReadAllText(scriptLocation)).ToBase64().Replace("'", "\\'");
 		string command = string.Format("update-script update id: {3} text: '{0}' modifiedby: '{1}' system: '{2}'", text, modifiedBy, system, id);
-		ClientCommandResult clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
-		if (clientCommandResult2.Success)
+		ClientCommandResult clientCommandResult = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, command);
+		if (clientCommandResult.Success)
 		{
-			script = clientCommandResult2.CommandMessages[0].ToObject<Script>();
+			script = clientCommandResult.CommandMessages[0].ToObject<Script>();
 		}
-		return clientCommandResult2;
+		return clientCommandResult;
 	}
 
 	public ClientCommandResult GetHash(long fileId, out string hash)
@@ -731,12 +737,12 @@ public class UpdateService : IDisposable
 		{
 			if (!File.Exists(path))
 			{
-				ClientCommandResult clientCommandResult = new ClientCommandResult();
-				clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("U563", $"The file does not exist: {path}.", "Specify a path to a valid file."));
-				return clientCommandResult;
+				return new ClientCommandResult
+				{
+					Errors = { Redbox.IPC.Framework.Error.NewError("U563", $"The file does not exist: {path}.", "Specify a path to a valid file.") }
+				};
 			}
-			byte[] inputArray = File.ReadAllBytes(path);
-			arg = inputArray.ToBase64();
+			arg = File.ReadAllBytes(path).ToBase64();
 		}
 		string text = string.Format(format, configSetting, configdefaulttype, configdefaulttypekey, configdefaulttypevalue, effectiveTime);
 		if (expireTime.HasValue)
@@ -763,8 +769,7 @@ public class UpdateService : IDisposable
 			clientCommandResult.Errors.Add(Redbox.IPC.Framework.Error.NewError("US1010", $"The file does not exist: {path}.", "Specify a path to a valid file."));
 			return clientCommandResult;
 		}
-		byte[] inputArray = File.ReadAllBytes(path);
-		text = inputArray.ToBase64();
+		text = File.ReadAllBytes(path).ToBase64();
 		string text2 = string.Format(format, id, text);
 		Console.WriteLine(text2);
 		return ExecuteCommandString(text2);
@@ -795,8 +800,7 @@ public class UpdateService : IDisposable
 			clientCommandResult.Errors.AddRange(errorList);
 			return clientCommandResult;
 		}
-		byte[] array = File.ReadAllBytes(path);
-		int num = array.Length;
+		int num = File.ReadAllBytes(path).Length;
 		int num2 = ((num != 0) ? (num / 1048576) : 0);
 		int num3 = 0;
 		Log("Uploading file: {0} - {1} mb", path, num2);
@@ -808,17 +812,17 @@ public class UpdateService : IDisposable
 		{
 			return clientCommandResult2;
 		}
-		byte[] array2 = new byte[1048576];
-		for (int num4 = ReadChunk(fileStream, array2); num4 > 0; num4 = ReadChunk(fileStream, array2))
+		byte[] array = new byte[1048576];
+		for (int num4 = ReadChunk(fileStream, array); num4 > 0; num4 = ReadChunk(fileStream, array))
 		{
-			byte[] array3 = new byte[num4];
-			Array.Copy(array2, array3, array3.Length);
-			clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value} " : $"name:'{name}' ") + $"data:'{array3.ToBase64()}'");
+			byte[] array2 = new byte[num4];
+			Array.Copy(array, array2, array2.Length);
+			clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value} " : $"name:'{name}' ") + $"data:'{array2.ToBase64()}'");
 			if (!clientCommandResult2.Success)
 			{
 				return clientCommandResult2;
 			}
-			num3 += array3.Length;
+			num3 += array2.Length;
 			Log("Uploaded {0} mb / {1} mb", (num3 != 0) ? (num3 / 1048576) : 0, num2);
 		}
 		clientCommandResult2 = ClientCommand<ClientCommandResult>.ExecuteCommand(Session, disposeWhenDone: false, "downloadfile upload-file " + (id.HasValue ? $"id:{id.Value}" : $"name:'{name}'") + " finished:true");
@@ -846,8 +850,7 @@ public class UpdateService : IDisposable
 			clientCommandResult.Errors.AddRange(errorList);
 			return clientCommandResult;
 		}
-		string format = "downloadfile set-script " + (id.HasValue ? $" id:{id.Value} " : $" name:'{name}' ") + " text:'{0}'";
-		string text = string.Format(format, File.ReadAllBytes(path).ToBase64());
+		string text = string.Format("downloadfile set-script " + (id.HasValue ? $" id:{id.Value} " : $" name:'{name}' ") + " text:'{0}'", File.ReadAllBytes(path).ToBase64());
 		Console.WriteLine(text);
 		return ExecuteCommandString(text);
 	}

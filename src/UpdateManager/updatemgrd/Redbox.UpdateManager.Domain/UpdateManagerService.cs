@@ -14,8 +14,6 @@ namespace Redbox.UpdateManager.Domain;
 
 internal class UpdateManagerService : IDisposable
 {
-	private const int Version = 2;
-
 	private string m_shutdownScript = string.Empty;
 
 	private string m_scriptLocation = string.Empty;
@@ -24,14 +22,15 @@ internal class UpdateManagerService : IDisposable
 
 	private string _storeNumber = string.Empty;
 
+	private const int Version = 2;
+
 	public static UpdateManagerService Instance => Singleton<UpdateManagerService>.Instance;
 
 	public string KioskEnginePath
 	{
 		get
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			return service.ExpandProperties(m_kioskEnginePath);
+			return ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(m_kioskEnginePath);
 		}
 		set
 		{
@@ -43,8 +42,7 @@ internal class UpdateManagerService : IDisposable
 	{
 		get
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			return service.ExpandProperties(m_scriptLocation);
+			return ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(m_scriptLocation);
 		}
 		set
 		{
@@ -129,7 +127,7 @@ internal class UpdateManagerService : IDisposable
 		if (errorList.ContainsError())
 		{
 			LogHelper.Instance.Log("Errors from UpdateManagerServiceInitialize to follow:");
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} details: {1}", e, e.Details);
 			});
@@ -143,7 +141,7 @@ internal class UpdateManagerService : IDisposable
 		if (errorList.ContainsError())
 		{
 			LogHelper.Instance.Log("Errors from TaskScheduler.Stop to follow:");
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} details: {1}", e, e.Details);
 			});
@@ -156,7 +154,7 @@ internal class UpdateManagerService : IDisposable
 		if (errorList.ContainsError())
 		{
 			LogHelper.Instance.Log("Errors from TaskScheduler.Start to follow:");
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} details: {1}", e, e.Details);
 			});
@@ -165,8 +163,7 @@ internal class UpdateManagerService : IDisposable
 
 	public void RunShutdownScript()
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string path = service.ExpandProperties(m_scriptLocation);
+		string path = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(m_scriptLocation);
 		if (!File.Exists(path))
 		{
 			return;
@@ -184,8 +181,7 @@ internal class UpdateManagerService : IDisposable
 
 	public void Dispose()
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		service.Dispose();
+		ServiceLocator.Instance.GetService<IRepositoryService>().Dispose();
 	}
 
 	private UpdateManagerService()

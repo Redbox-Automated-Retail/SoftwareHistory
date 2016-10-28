@@ -17,12 +17,13 @@ internal class RepositoryDiffWrapper
 
 	public RepositoryDiffWrapper Copy()
 	{
-		RepositoryDiffWrapper repositoryDiffWrapper = new RepositoryDiffWrapper();
-		repositoryDiffWrapper.O = string.Copy(O);
-		repositoryDiffWrapper.I = string.Copy(I);
-		repositoryDiffWrapper.A = A.Copy();
-		repositoryDiffWrapper.D = D.ToList();
-		repositoryDiffWrapper.U = U.Select((Dictionary<string, string> each) => new Dictionary<string, string>(each)).ToList();
-		return repositoryDiffWrapper;
+		return new RepositoryDiffWrapper
+		{
+			O = string.Copy(O),
+			I = string.Copy(I),
+			A = A.Copy(),
+			D = D.ToList(),
+			U = U.Select((Dictionary<string, string> each) => new Dictionary<string, string>(each)).ToList()
+		};
 	}
 }

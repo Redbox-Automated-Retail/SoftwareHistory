@@ -50,12 +50,7 @@ internal class ZipDownloadHelper
 			ZipFile zip = ZipFile.Read(_zipPath);
 			try
 			{
-				List<ZipEntry> list = zip.Where(delegate(ZipEntry zipEntry)
-				{
-					string text = Path.GetExtension(zipEntry.FileName).ToLower();
-					return text == ".txt";
-				}).ToList();
-				list.ForEach(delegate(ZipEntry entry)
+				zip.Where((ZipEntry zipEntry) => Path.GetExtension(zipEntry.FileName).ToLower() == ".txt").ToList().ForEach(delegate(ZipEntry entry)
 				{
 					try
 					{
@@ -65,14 +60,14 @@ internal class ZipDownloadHelper
 						{
 							entry.Extract(memoryStream);
 							memoryStream.Position = 0L;
-							text = Encoding.ASCII.GetString(StreamExtensions.GetBytes(memoryStream));
-							dictionary = StringExtensions.ToDictionary(text);
+							text = Encoding.ASCII.GetString(memoryStream.GetBytes());
+							dictionary = text.ToDictionary();
 						}
 						string fileEntryName = Path.GetFileNameWithoutExtension(entry.FileName);
 						ZipEntry zipEntry = zip.Where((ZipEntry zipEntry2) => zipEntry2.FileName.Equals(fileEntryName)).FirstOrDefault();
 						if (fileEntryName == null)
 						{
-							errors.Add(Error.NewError("ZipDownloadHelper.Extract", $"File {fileEntryName} is missing from zip file"));
+							errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ZipDownloadHelper.Extract", $"File {fileEntryName} is missing from zip file"));
 						}
 						else
 						{
@@ -81,7 +76,7 @@ internal class ZipDownloadHelper
 							{
 								zipEntry.Extract(memoryStream2);
 								memoryStream2.Position = 0L;
-								bytes = StreamExtensions.GetBytes(memoryStream2);
+								bytes = memoryStream2.GetBytes();
 							}
 							if (dictionary.ContainsKey("RevisionId"))
 							{
@@ -105,7 +100,7 @@ internal class ZipDownloadHelper
 					}
 					catch (Exception e2)
 					{
-						errors.Add(Error.NewError("ZipDownloadHelper.Extract", $"An unhandled exception occurred extracting {entry.FileName}", e2));
+						errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ZipDownloadHelper.Extract", $"An unhandled exception occurred extracting {entry.FileName}", e2));
 					}
 				});
 			}
@@ -119,7 +114,7 @@ internal class ZipDownloadHelper
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("ZipDownloadHelper.Extract", "An unhandled exception occurred", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("ZipDownloadHelper.Extract", "An unhandled exception occurred", e));
 		}
 		return errors;
 	}

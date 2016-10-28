@@ -51,32 +51,28 @@ internal abstract class TokenizerBase<T>
 		{
 			return;
 		}
-		do
+		while (true)
 		{
-			bool flag = true;
-			while (true)
+			StateHandler obj = (m_handlers.ContainsKey(CurrentState) ? m_handlers[CurrentState] : null);
+			if (obj == null)
 			{
-				flag = true;
-				StateHandler stateHandler = (m_handlers.ContainsKey(CurrentState) ? m_handlers[CurrentState] : null);
-				if (stateHandler == null)
+				break;
+			}
+			switch (obj())
+			{
+			case StateResult.Terminal:
+				StopMachine();
+				return;
+			case StateResult.Continue:
+				if (!MoveToNextToken())
 				{
-					throw new ArgumentException("No handler found where CurrentState = " + CurrentState);
-				}
-				switch (stateHandler())
-				{
-				case StateResult.Terminal:
 					StopMachine();
 					return;
-				case StateResult.Continue:
-					goto end_IL_00b8;
 				}
-				continue;
-				end_IL_00b8:
 				break;
 			}
 		}
-		while (MoveToNextToken());
-		StopMachine();
+		throw new ArgumentException("No handler found where CurrentState = " + CurrentState);
 	}
 
 	protected internal string FormatError(string message)

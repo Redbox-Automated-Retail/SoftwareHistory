@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.UpdateService.Model;
 
-public class ConfigurationData
+internal class ConfigurationData
 {
 	public long CategoryID { get; set; }
 

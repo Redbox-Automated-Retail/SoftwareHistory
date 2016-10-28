@@ -98,8 +98,7 @@ public static class ProcessFunctions
 	[KernelFunction(Name = "kernel.processtrimworkingset")]
 	internal static void TrimWorkingSet(string name)
 	{
-		Process[] processes = Process.GetProcesses();
-		Process process = processes.FirstOrDefault((Process p) => string.Compare(p.ProcessName, name, ignoreCase: true) == 0);
+		Process process = Process.GetProcesses().FirstOrDefault((Process p) => string.Compare(p.ProcessName, name, ignoreCase: true) == 0);
 		if (process != null)
 		{
 			SetProcessWorkingSetSize(process.Handle, -1, -1);
@@ -109,33 +108,33 @@ public static class ProcessFunctions
 	[KernelFunction(Name = "kernel.killprocessbyname")]
 	public static void KillProcessByName(string name)
 	{
-		Process[] processes = Process.GetProcesses();
-		processes.FirstOrDefault((Process p) => string.Compare(p.ProcessName, name, ignoreCase: true) == 0)?.Kill();
+		Process.GetProcesses().FirstOrDefault((Process p) => string.Compare(p.ProcessName, name, ignoreCase: true) == 0)?.Kill();
 	}
 
 	[KernelFunction(Name = "kernel.isprocessrunning")]
 	internal static bool IsProcessRunning(string name)
 	{
-		Process[] processesByName = Process.GetProcessesByName(name);
-		return processesByName.Length > 0;
+		return Process.GetProcessesByName(name).Length != 0;
 	}
 
 	[KernelFunction(Name = "kernel.executestring")]
 	internal static int Execute(string process, string arguments, string workingDirectory, object timeout)
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		ProcessStartInfo processStartInfo = new ProcessStartInfo();
-		processStartInfo.CreateNoWindow = true;
-		processStartInfo.UseShellExecute = false;
-		processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-		processStartInfo.FileName = service.ExpandProperties(process);
-		processStartInfo.Arguments = service.ExpandProperties(arguments);
-		processStartInfo.WorkingDirectory = service.ExpandProperties(workingDirectory);
-		ProcessStartInfo startInfo = processStartInfo;
-		Process process2 = new Process();
-		process2.StartInfo = startInfo;
-		Process process3 = process2;
-		process3.Start();
+		ProcessStartInfo startInfo = new ProcessStartInfo
+		{
+			CreateNoWindow = true,
+			UseShellExecute = false,
+			WindowStyle = ProcessWindowStyle.Hidden,
+			FileName = service.ExpandProperties(process),
+			Arguments = service.ExpandProperties(arguments),
+			WorkingDirectory = service.ExpandProperties(workingDirectory)
+		};
+		Process process2 = new Process
+		{
+			StartInfo = startInfo
+		};
+		process2.Start();
 		int? num = null;
 		if (timeout != null)
 		{
@@ -150,16 +149,16 @@ public static class ProcessFunctions
 		if (num.HasValue)
 		{
 			LogHelper.Instance.Log("Entering bounded WaitForExit in ProcessFunctions.Execute with a timeout of {0}.", num.Value);
-			process3.WaitForExit(num.Value);
+			process2.WaitForExit(num.Value);
 		}
 		else
 		{
 			LogHelper.Instance.Log("Entering unbounded WaitForExit in ProcessFunctions.Execute.");
-			process3.WaitForExit();
+			process2.WaitForExit();
 		}
-		if (process3.HasExited)
+		if (process2.HasExited)
 		{
-			return process3.ExitCode;
+			return process2.ExitCode;
 		}
 		return -1;
 	}
@@ -175,8 +174,7 @@ public static class ProcessFunctions
 			return -1;
 		}
 		IntPtr tokenHandle = IntPtr.Zero;
-		Process process = processesByName[0];
-		if (OpenProcessToken(process.Handle, 14, ref tokenHandle) != 0)
+		if (OpenProcessToken(processesByName[0].Handle, 14, ref tokenHandle) != 0)
 		{
 			try
 			{

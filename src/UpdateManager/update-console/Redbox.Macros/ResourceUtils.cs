@@ -38,8 +38,7 @@ internal static class ResourceUtils
 		{
 			RegisterAssembly(assembly);
 		}
-		ResourceManager resourceManager = (ResourceManager)_resourceManagerDictionary[name2];
-		string text = resourceManager.GetString(name, culture);
+		string text = ((ResourceManager)_resourceManagerDictionary[name2]).GetString(name, culture);
 		if (text == null && _sharedResourceManager != null)
 		{
 			return _sharedResourceManager.GetString(name, culture);
@@ -58,8 +57,6 @@ internal static class ResourceUtils
 
 	private static string GetResourceName(string assemblyName)
 	{
-		string text = null;
-		text = (assemblyName.EndsWith("Tasks") ? assemblyName.Substring(0, assemblyName.Length - 5) : assemblyName);
-		return text + ".Strings";
+		return (assemblyName.EndsWith("Tasks") ? assemblyName.Substring(0, assemblyName.Length - 5) : assemblyName) + ".Strings";
 	}
 }

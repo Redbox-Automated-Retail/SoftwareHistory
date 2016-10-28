@@ -42,12 +42,13 @@ internal class ClientRepositoryDataDTO : IComparable
 
 	public ClientRepositoryDataDTO Copy()
 	{
-		ClientRepositoryDataDTO clientRepositoryDataDTO = new ClientRepositoryDataDTO();
-		clientRepositoryDataDTO.R = string.Copy(R);
-		clientRepositoryDataDTO.I = string.Copy(I);
-		clientRepositoryDataDTO.S = string.Copy(S);
-		clientRepositoryDataDTO.A = string.Copy(A);
-		clientRepositoryDataDTO.H = string.Copy(H);
-		return clientRepositoryDataDTO;
+		return new ClientRepositoryDataDTO
+		{
+			R = string.Copy(R),
+			I = string.Copy(I),
+			S = string.Copy(S),
+			A = string.Copy(A),
+			H = string.Copy(H)
+		};
 	}
 }

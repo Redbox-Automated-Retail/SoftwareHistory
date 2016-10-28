@@ -15,8 +15,7 @@ public class KioskEngineService : IKioskEngineService
 
 	public void Initialize(string kioskEnginePath, string kioskEngineUrl)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(kioskEnginePath);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(kioskEnginePath);
 		if (!Path.IsPathRooted(text))
 		{
 			text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), text);
@@ -29,17 +28,13 @@ public class KioskEngineService : IKioskEngineService
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList ExportSessions(string path)
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ExportSessions"), "Windows Messaging communication no longer supported."));
-		return errorList;
+		return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ExportSessions"), "Windows Messaging communication no longer supported.") };
 	}
 
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList ExportQueue(string path)
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ExportQueue"), "Windows Messaging communication no longer supported."));
-		return errorList;
+		return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ExportQueue"), "Windows Messaging communication no longer supported.") };
 	}
 
 	public ErrorList IsEngineRunning(out bool isRunning)
@@ -52,7 +47,7 @@ public class KioskEngineService : IKioskEngineService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.IsEngineRunning.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.IsEngineRunning.", e));
 		}
 		return errorList;
 	}
@@ -63,15 +58,14 @@ public class KioskEngineService : IKioskEngineService
 		try
 		{
 			LogHelper.Instance.Log("Starting engine at location: {0}", _kioskEnginePath);
-			int num = ShellHelper.StartProcessAsShellUser(_kioskEnginePath);
-			if (num < 0)
+			if (ShellHelper.StartProcessAsShellUser(_kioskEnginePath) < 0)
 			{
 				LogHelper.Instance.Log("Error impersonating shell user. Errors found above");
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.StartEngine.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.StartEngine.", e));
 		}
 		return errorList;
 	}
@@ -82,15 +76,14 @@ public class KioskEngineService : IKioskEngineService
 		try
 		{
 			LogHelper.Instance.Log("Starting engine at location: {0}", _kioskEnginePath);
-			int num = ShellHelper.StartProcessAsShellUser(_kioskEnginePath, $"--bundle:\"{bundleName}\"");
-			if (num < 0)
+			if (ShellHelper.StartProcessAsShellUser(_kioskEnginePath, $"--bundle:\"{bundleName}\"") < 0)
 			{
 				LogHelper.Instance.Log("Error impersonating shell user. Errors found above");
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.StartEngine.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.StartEngine.", e));
 		}
 		return errorList;
 	}
@@ -104,7 +97,7 @@ public class KioskEngineService : IKioskEngineService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.ReloadBundle.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.ReloadBundle.", e));
 		}
 		return errorList;
 	}
@@ -122,7 +115,7 @@ public class KioskEngineService : IKioskEngineService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.Shutdown.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.Shutdown.", e));
 		}
 		return errorList;
 	}
@@ -152,12 +145,12 @@ public class KioskEngineService : IKioskEngineService
 			errorList.AddRange(IsEngineRunning(out isRunning));
 			if (isRunning)
 			{
-				errorList.Add(Error.NewError("T999", "The engine failed to shutdown in the time specified.", "Try to shutdown the engine again."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("T999", "The engine failed to shutdown in the time specified.", "Try to shutdown the engine again."));
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.Shutdown.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("K999", "An unhandled exception was raised in KioskEngineService.Shutdown.", e));
 		}
 		return errorList;
 	}
@@ -165,41 +158,31 @@ public class KioskEngineService : IKioskEngineService
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList ChangeBundle(string name)
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ChangeBundle"), "Windows Messaging communication no longer supported."));
-		return errorList;
+		return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ChangeBundle"), "Windows Messaging communication no longer supported.") };
 	}
 
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList BringToFront()
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "BringToFront"), "Windows Messaging communication no longer supported."));
-		return errorList;
+		return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "BringToFront"), "Windows Messaging communication no longer supported.") };
 	}
 
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList ExecuteScript(string path)
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ExecuteScript"), "Windows Messaging communication no longer supported."));
-		return errorList;
+		return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ExecuteScript"), "Windows Messaging communication no longer supported.") };
 	}
 
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList ShowOfflineScreen()
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ShowOfflineScreen"), "Windows Messaging communication no longer supported."));
-		return errorList;
+		return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "ShowOfflineScreen"), "Windows Messaging communication no longer supported.") };
 	}
 
 	[Obsolete("Windows Messaging communication no longer supported")]
 	public ErrorList GetMemoryUsage(out long total)
 	{
-		ErrorList errorList = new ErrorList();
-		errorList.Add(Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "GetMemoryUsage"), "Windows Messaging communication no longer supported."));
-		ErrorList result = errorList;
+		ErrorList result = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("W999", string.Format("Service method '{0}' not implemented.", "GetMemoryUsage"), "Windows Messaging communication no longer supported.") };
 		total = -1L;
 		return result;
 	}

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class CCFDTO
+internal class CCFDTO
 {
 	public long Id { get; set; }
 

@@ -4,7 +4,7 @@ using Redbox.Core;
 namespace Redbox.Tokenizer.Framework;
 
 [Serializable]
-internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002ETokenizer2108_002EICloneable<SimpleToken>
+internal class SimpleToken : TokenBase<SimpleTokenType>, ICloneable<SimpleToken>
 {
 	public bool IsKeyValuePair { get; private set; }
 
@@ -25,13 +25,17 @@ internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002E
 
 	public override bool Equals(object obj)
 	{
-		if (object.ReferenceEquals(this, obj))
+		if (this == obj)
 		{
 			return true;
 		}
 		if (obj is SimpleToken simpleToken)
 		{
-			return base.Value == simpleToken.Value && base.Type == simpleToken.Type && IsKeyValuePair == simpleToken.IsKeyValuePair;
+			if (base.Value == simpleToken.Value && base.Type == simpleToken.Type)
+			{
+				return IsKeyValuePair == simpleToken.IsKeyValuePair;
+			}
+			return false;
 		}
 		return false;
 	}
@@ -62,7 +66,7 @@ internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002E
 		}
 		if (base.Type == SimpleTokenType.Operator && base.Value.IndexOf("..") != -1)
 		{
-			return new Redbox_002ECommand_002ETokenizer2108_002ERange(base.Value);
+			return new Range(base.Value);
 		}
 		if (string.Compare(base.Value, bool.TrueString, ignoreCase: true) == 0)
 		{
@@ -77,8 +81,9 @@ internal class SimpleToken : TokenBase<SimpleTokenType>, Redbox_002ECommand_002E
 
 	public SimpleToken Clone(params object[] parms)
 	{
-		SimpleToken simpleToken = new SimpleToken(base.Type, base.Value, IsKeyValuePair);
-		simpleToken.PairSeparator = PairSeparator;
-		return simpleToken;
+		return new SimpleToken(base.Type, base.Value, IsKeyValuePair)
+		{
+			PairSeparator = PairSeparator
+		};
 	}
 }

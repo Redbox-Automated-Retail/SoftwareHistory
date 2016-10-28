@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public struct Server
+internal struct Server
 {
 	public string Url { get; set; }
 

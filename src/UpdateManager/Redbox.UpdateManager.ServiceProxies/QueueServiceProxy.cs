@@ -19,7 +19,7 @@ public class QueueServiceProxy : IQueueService
 
 	public void Enqueue(string label, object entry)
 	{
-		string command = $"queue enqueue label: '{label}' entry: '{StringExtensions.EscapedJson(ObjectExtensions.ToJson(entry))}'";
+		string command = $"queue enqueue label: '{label}' entry: '{entry.ToJson().EscapedJson()}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -35,7 +35,7 @@ public class QueueServiceProxy : IQueueService
 
 	public void EnqueueRaw(string label, string entry)
 	{
-		string command = $"queue enqueue label: '{label}' entry: '{StringExtensions.EscapedJson(entry)}'";
+		string command = $"queue enqueue label: '{label}' entry: '{entry.EscapedJson()}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -83,7 +83,7 @@ public class QueueServiceProxy : IQueueService
 		{
 			return default(T);
 		}
-		return StringExtensions.ToObject<T>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<T>();
 	}
 
 	public string PeekRaw(string label)

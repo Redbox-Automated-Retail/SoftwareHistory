@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Redbox.Core;
-using Redbox.IPC.Framework.Messaging;
 using Redbox.IPC.Framework.NamedPipes;
 using Redbox.IPC.Framework.Remoting;
 using Redbox.IPC.Framework.Sockets;
@@ -57,12 +56,6 @@ internal abstract class ClientSession : IDisposable
 			return GetNamedPipesClientSession(protocol);
 		case ChannelType.Socket:
 			return GetTcpClientSession(protocol, timeout);
-		case ChannelType.ActiveMQ:
-		case ChannelType.MSMQ:
-		case ChannelType.OracleMQ:
-		case ChannelType.TibcoEMS:
-		case ChannelType.WebSphereMQ:
-			return GetMessageQueueClientSession(protocol, timeout);
 		case ChannelType.Remoting:
 			return new RemotingClientSession(protocol, timeout ?? 5000);
 		default:
@@ -124,8 +117,7 @@ internal abstract class ClientSession : IDisposable
 		bool result = false;
 		if (messages.Count > 0)
 		{
-			string text = messages[messages.Count - 1];
-			result = text.StartsWith("203 Command");
+			result = messages[messages.Count - 1].StartsWith("203 Command");
 		}
 		return result;
 	}
@@ -151,10 +143,7 @@ internal abstract class ClientSession : IDisposable
 			if (!m_resetEvent.WaitOne(Timeout))
 			{
 				list.Clear();
-				ErrorList errorList = new ErrorList();
-				errorList.Add(Error.NewError("J888", "Timeout threshold exceeded.", "Reissue the command when the service is not as busy."));
-				ErrorList errors = errorList;
-				ProtocolHelper.FormatErrors(errors, list);
+				ProtocolHelper.FormatErrors(new ErrorList { Error.NewError("J888", "Timeout threshold exceeded.", "Reissue the command when the service is not as busy.") }, list);
 				list.Add("545 Command failed.");
 			}
 		}
@@ -189,11 +178,6 @@ internal abstract class ClientSession : IDisposable
 	private static ClientSession GetTcpClientSession(IPCProtocol protocol, int? timeout)
 	{
 		return new TcpClientSession(protocol, timeout);
-	}
-
-	private static ClientSession GetMessageQueueClientSession(IPCProtocol protocol, int? timeout)
-	{
-		return new MessageQueueClientSession(protocol, timeout);
 	}
 
 	private static ClientSession GetNamedPipesClientSession(IPCProtocol protocol)

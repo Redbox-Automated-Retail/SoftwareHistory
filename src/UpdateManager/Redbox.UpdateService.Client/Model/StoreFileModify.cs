@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreFileModify
+internal class StoreFileModify
 {
 	public StoreFileInfo StoreFileInfo { get; set; }
 

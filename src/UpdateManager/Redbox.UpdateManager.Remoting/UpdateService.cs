@@ -20,21 +20,21 @@ public class UpdateService : IUpdateService
 		public long ID { get; set; }
 	}
 
+	private string m_url;
+
+	private TimeSpan m_timeout = TimeSpan.FromSeconds(30.0);
+
 	private const string ResultTableName = "Results";
 
 	private const string InCompleteLabel = ".incomplete";
 
 	private const string ScriptLabel = "script";
 
-	private const string WorkExtension = ".workdat";
-
-	private string m_url;
-
-	private TimeSpan m_timeout = TimeSpan.FromSeconds(30.0);
-
 	private string m_storeNumber;
 
 	private int m_minimumRetryDelay = 60;
+
+	private const string WorkExtension = ".workdat";
 
 	public static UpdateService Instance => Singleton<UpdateService>.Instance;
 
@@ -50,8 +50,7 @@ public class UpdateService : IUpdateService
 	public Redbox.UpdateManager.ComponentModel.ErrorList ForcePublish(string name)
 	{
 		using Redbox.UpdateService.Client.UpdateService updateService = GetService();
-		ClientCommandResult clientCommandResult = updateService.ForcePublishRun(name);
-		return IPC(clientCommandResult.Errors);
+		return IPC(updateService.ForcePublishRun(name).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList GetSubscriptionState(string name, out DateTime lastRun, out Redbox.UpdateManager.ComponentModel.SubscriptionState state)
@@ -203,8 +202,7 @@ public class UpdateService : IUpdateService
 			Dictionary<string, string> dictionary = new Dictionary<string, string>();
 			foreach (string item in allRepositories)
 			{
-				string headRevision = service3.GetHeadRevision(item);
-				if (!string.IsNullOrEmpty(headRevision))
+				if (!string.IsNullOrEmpty(service3.GetHeadRevision(item)))
 				{
 					dictionary.Add(item, service3.GetHeadRevision(item));
 				}
@@ -349,28 +347,30 @@ public class UpdateService : IUpdateService
 			UploadReport entry;
 			if (job2.Status == TransferStatus.Error)
 			{
-				UploadReport uploadReport = new UploadReport();
-				uploadReport.AverageSpeedInKPS = 0.0;
-				uploadReport.ID = upload.ID;
-				uploadReport.End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow);
-				uploadReport.StoreNumber = m_storeNumber;
-				uploadReport.Success = false;
-				uploadReport.TotalBytesTransfered = job2.TotalBytesTransfered;
-				entry = uploadReport;
+				entry = new UploadReport
+				{
+					AverageSpeedInKPS = 0.0,
+					ID = upload.ID,
+					End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow),
+					StoreNumber = m_storeNumber,
+					Success = false,
+					TotalBytesTransfered = job2.TotalBytesTransfered
+				};
 				errorList.AddRange(job2.Cancel());
 			}
 			else
 			{
 				DateTime dateTime = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow);
 				double averageSpeedInKPS = (double)job2.TotalBytesTransfered / (dateTime - job2.StartTime).TotalSeconds;
-				UploadReport uploadReport2 = new UploadReport();
-				uploadReport2.AverageSpeedInKPS = averageSpeedInKPS;
-				uploadReport2.ID = upload.ID;
-				uploadReport2.End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow);
-				uploadReport2.StoreNumber = m_storeNumber;
-				uploadReport2.Success = true;
-				uploadReport2.TotalBytesTransfered = job2.TotalBytesTransfered;
-				entry = uploadReport2;
+				entry = new UploadReport
+				{
+					AverageSpeedInKPS = averageSpeedInKPS,
+					ID = upload.ID,
+					End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow),
+					StoreNumber = m_storeNumber,
+					Success = true,
+					TotalBytesTransfered = job2.TotalBytesTransfered
+				};
 				errorList.AddRange(job2.Complete());
 			}
 			service3.Enqueue("upload-report", entry);
@@ -413,15 +413,16 @@ public class UpdateService : IUpdateService
 			}
 			if (job2.Status == TransferStatus.Error)
 			{
-				TransferStatisticReport transferStatisticReport = new TransferStatisticReport();
-				transferStatisticReport.Repository = changeSet.Name;
-				transferStatisticReport.AverageSpeedInKPS = 0.0;
-				transferStatisticReport.ChangeSet = changeSet.Head;
-				transferStatisticReport.End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow);
-				transferStatisticReport.StoreNumber = m_storeNumber;
-				transferStatisticReport.Success = false;
-				transferStatisticReport.TotalBytesTransfered = job2.TotalBytesTransfered;
-				TransferStatisticReport entry = transferStatisticReport;
+				TransferStatisticReport entry = new TransferStatisticReport
+				{
+					Repository = changeSet.Name,
+					AverageSpeedInKPS = 0.0,
+					ChangeSet = changeSet.Head,
+					End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow),
+					StoreNumber = m_storeNumber,
+					Success = false,
+					TotalBytesTransfered = job2.TotalBytesTransfered
+				};
 				service4.Enqueue("statistic", entry);
 				errorList.AddRange(job2.Cancel());
 				return errorList;
@@ -450,7 +451,7 @@ public class UpdateService : IUpdateService
 			{
 				string text2 = text;
 				using FileStream inputStream = File.OpenRead(text2);
-				string text3 = StreamExtensions.ToASCIISHA1Hash(inputStream);
+				string text3 = inputStream.ToASCIISHA1Hash();
 				if (text3 != changeSet.ContentHash)
 				{
 					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("D999", $"{text2} should have hash {changeSet.ContentHash} but it hash {text3}", "This download failed and will need to be restarted."));
@@ -478,42 +479,45 @@ public class UpdateService : IUpdateService
 			List<DeltaItem> list = new List<DeltaItem>();
 			foreach (ChangeSetItem item2 in changeSet.Items)
 			{
-				DeltaItem deltaItem = new DeltaItem();
-				deltaItem.Revision = item2.Revision;
-				deltaItem.IsSeed = item2.IsFirst;
-				deltaItem.IsPlaceHolder = item2.Composite;
-				deltaItem.ContentHash = item2.ContentHash;
-				deltaItem.TargetName = item2.TargetName;
-				deltaItem.TargetPath = item2.TargetPath;
-				deltaItem.VersionHash = item2.VersionHash;
-				DeltaItem item = deltaItem;
+				DeltaItem item = new DeltaItem
+				{
+					Revision = item2.Revision,
+					IsSeed = item2.IsFirst,
+					IsPlaceHolder = item2.Composite,
+					ContentHash = item2.ContentHash,
+					TargetName = item2.TargetName,
+					TargetPath = item2.TargetPath,
+					VersionHash = item2.VersionHash
+				};
 				list.Add(item);
 			}
 			service2.AddDelta(changeSet.Name, list);
 			LogHelper.Instance.Log("Finished Add patch for ChangeSetName: {0} TransferJobId: {1}", changeSet.Name, job2.ID);
-			TransferStatisticReport transferStatisticReport2 = new TransferStatisticReport();
-			transferStatisticReport2.Repository = changeSet.Name;
-			transferStatisticReport2.AverageSpeedInKPS = averageSpeedInKPS;
-			transferStatisticReport2.ChangeSet = changeSet.Head;
-			transferStatisticReport2.End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow);
-			transferStatisticReport2.StoreNumber = m_storeNumber;
-			transferStatisticReport2.Success = true;
-			transferStatisticReport2.TotalBytesTransfered = job2.TotalBytesTransfered;
-			TransferStatisticReport entry2 = transferStatisticReport2;
+			TransferStatisticReport entry2 = new TransferStatisticReport
+			{
+				Repository = changeSet.Name,
+				AverageSpeedInKPS = averageSpeedInKPS,
+				ChangeSet = changeSet.Head,
+				End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow),
+				StoreNumber = m_storeNumber,
+				Success = true,
+				TotalBytesTransfered = job2.TotalBytesTransfered
+			};
 			service4.Enqueue("statistic", entry2);
 		}
 		catch (Exception e2)
 		{
 			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", "Error adding delta to repository.", e2));
 			service2.RemoveRevisions(changeSet.Name, changeSet.Revisions);
-			TransferStatisticReport transferStatisticReport3 = new TransferStatisticReport();
-			transferStatisticReport3.Repository = changeSet.Name;
-			transferStatisticReport3.AverageSpeedInKPS = averageSpeedInKPS;
-			transferStatisticReport3.ChangeSet = changeSet.Head;
-			transferStatisticReport3.End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow);
-			transferStatisticReport3.StoreNumber = m_storeNumber;
-			transferStatisticReport3.TotalBytesTransfered = job2.TotalBytesTransfered;
-			TransferStatisticReport entry3 = transferStatisticReport3;
+			TransferStatisticReport entry3 = new TransferStatisticReport
+			{
+				Repository = changeSet.Name,
+				AverageSpeedInKPS = averageSpeedInKPS,
+				ChangeSet = changeSet.Head,
+				End = (job2.FinishTime.HasValue ? job2.FinishTime.Value : DateTime.UtcNow),
+				StoreNumber = m_storeNumber,
+				TotalBytesTransfered = job2.TotalBytesTransfered
+			};
 			service4.Enqueue("statistic", entry3);
 		}
 		service3.Delete(jobId);
@@ -522,8 +526,7 @@ public class UpdateService : IUpdateService
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList ServerPoll()
 	{
-		IPollService service = ServiceLocator.Instance.GetService<IPollService>();
-		return service.ServerPoll();
+		return ServiceLocator.Instance.GetService<IPollService>().ServerPoll();
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Poll()
@@ -536,8 +539,7 @@ public class UpdateService : IUpdateService
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList ClearWorkQueue()
 	{
-		IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-		service.Delete(".incomplete");
+		ServiceLocator.Instance.GetService<IDataStoreService>().Delete(".incomplete");
 		return new Redbox.UpdateManager.ComponentModel.ErrorList();
 	}
 
@@ -550,8 +552,7 @@ public class UpdateService : IUpdateService
 			List<Guid> list = service.Get<List<Guid>>(".incomplete");
 			for (int i = 0; i < list.Count; i++)
 			{
-				Work work = service.Get<Work>(string.Concat(list[i], ".workdat"));
-				if (work.ID == Convert.ToInt64(name))
+				if (service.Get<Work>(string.Concat(list[i], ".workdat")).ID == Convert.ToInt64(name))
 				{
 					list.RemoveAt(i);
 					service.Set(".incomplete", list);
@@ -576,7 +577,7 @@ public class UpdateService : IUpdateService
 			ClientCommandResult clientCommandResult = updateService.StartStoreInstaller("installer", repositoryHash, frontEndVersion);
 			if (clientCommandResult.Success)
 			{
-				response = StringExtensions.ToDictionary(clientCommandResult.CommandMessages[0]).ToDictionary((KeyValuePair<string, object> k) => k.Key, (KeyValuePair<string, object> v) => v.Value as string);
+				response = clientCommandResult.CommandMessages[0].ToDictionary().ToDictionary((KeyValuePair<string, object> k) => k.Key, (KeyValuePair<string, object> v) => v.Value as string);
 			}
 			else
 			{
@@ -634,8 +635,7 @@ public class UpdateService : IUpdateService
 	{
 		Redbox.UpdateManager.ComponentModel.ErrorList errorList = new Redbox.UpdateManager.ComponentModel.ErrorList();
 		result = string.Empty;
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string path2 = service.ExpandProperties(path);
+		string path2 = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(path);
 		if (!File.Exists(path2))
 		{
 			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("US9987", "Script path does not exist.", $"Correct Path {path}"));
@@ -661,7 +661,7 @@ public class UpdateService : IUpdateService
 			Dictionary<object, object> table = service.GetTable("Results");
 			if (table != null)
 			{
-				result = ObjectExtensions.ToJson(table);
+				result = table.ToJson();
 			}
 		}
 		catch (Exception e)
@@ -698,11 +698,11 @@ public class UpdateService : IUpdateService
 				if (ex != null)
 				{
 					LogHelper.Instance.Log("Script Id: {0} caused an exception.", work.ID);
-					Redbox_002EUpdateManager_002ERemoting2091_002E_003C_003Ef__AnonymousType0<bool, bool, string> instance = new Redbox_002EUpdateManager_002ERemoting2091_002E_003C_003Ef__AnonymousType0<bool, bool, string>(Result: false, Exception: true, ex.Message);
+					Redbox_002EUpdateManager_002ERemoting_002E_003C_003Ef__AnonymousType0<bool, bool, string> instance = new Redbox_002EUpdateManager_002ERemoting_002E_003C_003Ef__AnonymousType0<bool, bool, string>(Result: false, Exception: true, ex.Message);
 					service2.Enqueue("script", new ResultEntry
 					{
 						ID = work.ID,
-						Entry = ObjectExtensions.ToJson(instance)
+						Entry = instance.ToJson()
 					});
 					list.Remove(id);
 					if (list.Count == 0)
@@ -732,7 +732,7 @@ public class UpdateService : IUpdateService
 					Dictionary<object, object> table = service3.GetTable("Results");
 					if (table != null)
 					{
-						string entry = ObjectExtensions.ToJson(table);
+						string entry = table.ToJson();
 						service2.Enqueue("script", new ResultEntry
 						{
 							ID = work.ID,

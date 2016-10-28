@@ -34,15 +34,13 @@ internal static class ConversionHelper
 			if (value is string)
 			{
 				FlagsAttribute[] array = (FlagsAttribute[])convertToType.GetCustomAttributes(typeof(FlagsAttribute), inherit: false);
-				if (array != null && array.Length > 0)
+				if (array != null && array.Length != 0)
 				{
 					int num = 0;
-					string text = (string)value;
-					string[] array2 = text.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-					string[] array3 = array2;
-					foreach (string text2 in array3)
+					string[] array2 = ((string)value).Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+					foreach (string text in array2)
 					{
-						object value2 = Enum.Parse(convertToType, text2.Trim(), ignoreCase: true);
+						object value2 = Enum.Parse(convertToType, text.Trim(), ignoreCase: true);
 						num |= Convert.ToInt32(value2);
 					}
 					return Enum.ToObject(convertToType, num);

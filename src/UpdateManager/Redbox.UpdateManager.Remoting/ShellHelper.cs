@@ -100,8 +100,7 @@ public class ShellHelper
 			return -1;
 		}
 		IntPtr tokenHandle = IntPtr.Zero;
-		Process process = processesByName[0];
-		if (OpenProcessToken(process.Handle, 14, ref tokenHandle) != 0)
+		if (OpenProcessToken(processesByName[0].Handle, 14, ref tokenHandle) != 0)
 		{
 			try
 			{

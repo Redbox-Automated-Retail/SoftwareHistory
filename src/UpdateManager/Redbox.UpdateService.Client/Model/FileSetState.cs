@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public enum FileSetState
+internal enum FileSetState
 {
 	Active,
 	InProgress,

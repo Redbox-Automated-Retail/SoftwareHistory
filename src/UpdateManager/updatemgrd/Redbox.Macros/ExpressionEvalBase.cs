@@ -17,7 +17,7 @@ internal abstract class ExpressionEvalBase
 
 	private ExpressionTokenizer _tokenizer;
 
-	private EvalMode _evalMode = EvalMode.Evaluate;
+	private EvalMode _evalMode;
 
 	public object Evaluate(ExpressionTokenizer tokenizer)
 	{
@@ -86,7 +86,7 @@ internal abstract class ExpressionEvalBase
 				if (!SyntaxCheckOnly())
 				{
 					bool flag2 = (bool)SafeConvert(typeof(bool), source, "the right hand side of the 'or' operator", currentPosition2, currentPosition3);
-					obj = flag || flag2;
+					obj = flag | flag2;
 				}
 			}
 			return obj;
@@ -122,7 +122,7 @@ internal abstract class ExpressionEvalBase
 				if (!SyntaxCheckOnly())
 				{
 					bool flag2 = (bool)SafeConvert(typeof(bool), source, "the right hand side of the 'and' operator", currentPosition2, currentPosition3);
-					obj = flag && flag2;
+					obj = flag & flag2;
 				}
 			}
 			return obj;
@@ -540,14 +540,11 @@ internal abstract class ExpressionEvalBase
 		object obj = ParseMulDiv();
 		while (true)
 		{
-			bool flag = true;
-			object obj2;
-			ExpressionTokenizer.Position currentPosition2;
 			if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.Plus)
 			{
 				_tokenizer.GetNextToken();
-				obj2 = ParseMulDiv();
-				currentPosition2 = _tokenizer.CurrentPosition;
+				object obj2 = ParseMulDiv();
+				ExpressionTokenizer.Position currentPosition2 = _tokenizer.CurrentPosition;
 				if (SyntaxCheckOnly())
 				{
 					continue;
@@ -619,73 +616,73 @@ internal abstract class ExpressionEvalBase
 				break;
 			}
 			_tokenizer.GetNextToken();
-			obj2 = ParseMulDiv();
-			currentPosition2 = _tokenizer.CurrentPosition;
+			object obj3 = ParseMulDiv();
+			ExpressionTokenizer.Position currentPosition3 = _tokenizer.CurrentPosition;
 			if (SyntaxCheckOnly())
 			{
 				continue;
 			}
-			if (obj is int && obj2 is int)
+			if (obj is int && obj3 is int)
 			{
-				obj = (int)obj - (int)obj2;
+				obj = (int)obj - (int)obj3;
 				continue;
 			}
-			if (obj is int && obj2 is long)
+			if (obj is int && obj3 is long)
 			{
-				obj = (int)obj - (long)obj2;
+				obj = (int)obj - (long)obj3;
 				continue;
 			}
-			if (obj is int && obj2 is double)
+			if (obj is int && obj3 is double)
 			{
-				obj = (double)(int)obj - (double)obj2;
+				obj = (double)(int)obj - (double)obj3;
 				continue;
 			}
-			if (obj is long && obj2 is long)
+			if (obj is long && obj3 is long)
 			{
-				obj = (long)obj - (long)obj2;
+				obj = (long)obj - (long)obj3;
 				continue;
 			}
-			if (obj is long && obj2 is int)
+			if (obj is long && obj3 is int)
 			{
-				obj = (long)obj - (int)obj2;
+				obj = (long)obj - (int)obj3;
 				continue;
 			}
-			if (obj is long && obj2 is double)
+			if (obj is long && obj3 is double)
 			{
-				obj = (double)(long)obj - (double)obj2;
+				obj = (double)(long)obj - (double)obj3;
 				continue;
 			}
-			if (obj is double && obj2 is double)
+			if (obj is double && obj3 is double)
 			{
-				obj = (double)obj - (double)obj2;
+				obj = (double)obj - (double)obj3;
 				continue;
 			}
-			if (obj is double && obj2 is int)
+			if (obj is double && obj3 is int)
 			{
-				obj = (double)obj - (double)(int)obj2;
+				obj = (double)obj - (double)(int)obj3;
 				continue;
 			}
-			if (obj is double && obj2 is long)
+			if (obj is double && obj3 is long)
 			{
-				obj = (double)obj - (double)(long)obj2;
+				obj = (double)obj - (double)(long)obj3;
 				continue;
 			}
-			if (obj is DateTime && obj2 is DateTime)
+			if (obj is DateTime && obj3 is DateTime)
 			{
-				obj = (DateTime)obj - (DateTime)obj2;
+				obj = (DateTime)obj - (DateTime)obj3;
 				continue;
 			}
-			if (obj is DateTime && obj2 is TimeSpan)
+			if (obj is DateTime && obj3 is TimeSpan)
 			{
-				obj = (DateTime)obj - (TimeSpan)obj2;
+				obj = (DateTime)obj - (TimeSpan)obj3;
 				continue;
 			}
-			if (obj is TimeSpan && obj2 is TimeSpan)
+			if (obj is TimeSpan && obj3 is TimeSpan)
 			{
-				obj = (TimeSpan)obj - (TimeSpan)obj2;
+				obj = (TimeSpan)obj - (TimeSpan)obj3;
 				continue;
 			}
-			throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1048"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj2.GetType())), currentPosition, currentPosition2);
+			throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1048"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj3.GetType())), currentPosition, currentPosition3);
 		}
 		return obj;
 	}
@@ -696,14 +693,11 @@ internal abstract class ExpressionEvalBase
 		object obj = ParseValue();
 		while (true)
 		{
-			bool flag = true;
-			object obj2;
-			ExpressionTokenizer.Position currentPosition2;
 			if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.Mul)
 			{
 				_tokenizer.GetNextToken();
-				obj2 = ParseValue();
-				currentPosition2 = _tokenizer.CurrentPosition;
+				object obj2 = ParseValue();
+				ExpressionTokenizer.Position currentPosition2 = _tokenizer.CurrentPosition;
 				if (SyntaxCheckOnly())
 				{
 					continue;
@@ -755,194 +749,193 @@ internal abstract class ExpressionEvalBase
 				}
 				throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1036"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj2.GetType())), currentPosition, currentPosition2);
 			}
-			ExpressionTokenizer.Position currentPosition3;
 			if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.Div)
 			{
 				_tokenizer.GetNextToken();
-				currentPosition3 = _tokenizer.CurrentPosition;
-				obj2 = ParseValue();
-				currentPosition2 = _tokenizer.CurrentPosition;
+				ExpressionTokenizer.Position currentPosition3 = _tokenizer.CurrentPosition;
+				object obj3 = ParseValue();
+				ExpressionTokenizer.Position currentPosition4 = _tokenizer.CurrentPosition;
 				if (SyntaxCheckOnly())
 				{
 					continue;
 				}
-				if (obj is int && obj2 is int)
+				if (obj is int && obj3 is int)
 				{
-					if ((int)obj2 == 0)
+					if ((int)obj3 == 0)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (int)obj / (int)obj2;
+					obj = (int)obj / (int)obj3;
 					continue;
 				}
-				if (obj is int && obj2 is long)
+				if (obj is int && obj3 is long)
 				{
-					if ((long)obj2 == 0)
+					if ((long)obj3 == 0L)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (int)obj / (long)obj2;
+					obj = (int)obj / (long)obj3;
 					continue;
 				}
-				if (obj is int && obj2 is double)
+				if (obj is int && obj3 is double)
 				{
-					if ((double)obj2 == 0.0)
+					if ((double)obj3 == 0.0)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (double)(int)obj / (double)obj2;
+					obj = (double)(int)obj / (double)obj3;
 					continue;
 				}
-				if (obj is long && obj2 is long)
+				if (obj is long && obj3 is long)
 				{
-					if ((long)obj2 == 0)
+					if ((long)obj3 == 0L)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (long)obj / (long)obj2;
+					obj = (long)obj / (long)obj3;
 					continue;
 				}
-				if (obj is long && obj2 is int)
+				if (obj is long && obj3 is int)
 				{
-					if ((int)obj2 == 0)
+					if ((int)obj3 == 0)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (long)obj / (int)obj2;
+					obj = (long)obj / (int)obj3;
 					continue;
 				}
-				if (obj is long && obj2 is double)
+				if (obj is long && obj3 is double)
 				{
-					if ((double)obj2 == 0.0)
+					if ((double)obj3 == 0.0)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (double)(long)obj / (double)obj2;
+					obj = (double)(long)obj / (double)obj3;
 					continue;
 				}
-				if (obj is double && obj2 is double)
+				if (obj is double && obj3 is double)
 				{
-					if ((double)obj2 == 0.0)
+					if ((double)obj3 == 0.0)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (double)obj / (double)obj2;
+					obj = (double)obj / (double)obj3;
 					continue;
 				}
-				if (obj is double && obj2 is int)
+				if (obj is double && obj3 is int)
 				{
-					if ((int)obj2 == 0)
+					if ((int)obj3 == 0)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (double)obj / (double)(int)obj2;
+					obj = (double)obj / (double)(int)obj3;
 					continue;
 				}
-				if (obj is double && obj2 is long)
+				if (obj is double && obj3 is long)
 				{
-					if ((long)obj2 == 0)
+					if ((long)obj3 == 0L)
 					{
-						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+						throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition4);
 					}
-					obj = (double)obj / (double)(long)obj2;
+					obj = (double)obj / (double)(long)obj3;
 					continue;
 				}
-				throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1039"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj2.GetType())), currentPosition, currentPosition2);
+				throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1039"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj3.GetType())), currentPosition, currentPosition4);
 			}
 			if (_tokenizer.CurrentToken != ExpressionTokenizer.TokenType.Mod)
 			{
 				break;
 			}
 			_tokenizer.GetNextToken();
-			currentPosition3 = _tokenizer.CurrentPosition;
-			obj2 = ParseValue();
-			currentPosition2 = _tokenizer.CurrentPosition;
+			ExpressionTokenizer.Position currentPosition5 = _tokenizer.CurrentPosition;
+			object obj4 = ParseValue();
+			ExpressionTokenizer.Position currentPosition6 = _tokenizer.CurrentPosition;
 			if (SyntaxCheckOnly())
 			{
 				continue;
 			}
-			if (obj is int && obj2 is int)
+			if (obj is int && obj4 is int)
 			{
-				if ((int)obj2 == 0)
+				if ((int)obj4 == 0)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (int)obj % (int)obj2;
+				obj = (int)obj % (int)obj4;
 				continue;
 			}
-			if (obj is int && obj2 is long)
+			if (obj is int && obj4 is long)
 			{
-				if ((long)obj2 == 0)
+				if ((long)obj4 == 0L)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (int)obj % (long)obj2;
+				obj = (int)obj % (long)obj4;
 				continue;
 			}
-			if (obj is int && obj2 is double)
+			if (obj is int && obj4 is double)
 			{
-				if ((double)obj2 == 0.0)
+				if ((double)obj4 == 0.0)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (double)(int)obj % (double)obj2;
+				obj = (double)(int)obj % (double)obj4;
 				continue;
 			}
-			if (obj is long && obj2 is long)
+			if (obj is long && obj4 is long)
 			{
-				if ((long)obj2 == 0)
+				if ((long)obj4 == 0L)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (long)obj % (long)obj2;
+				obj = (long)obj % (long)obj4;
 				continue;
 			}
-			if (obj is long && obj2 is int)
+			if (obj is long && obj4 is int)
 			{
-				if ((int)obj2 == 0)
+				if ((int)obj4 == 0)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (long)obj % (int)obj2;
+				obj = (long)obj % (int)obj4;
 				continue;
 			}
-			if (obj is long && obj2 is double)
+			if (obj is long && obj4 is double)
 			{
-				if ((double)obj2 == 0.0)
+				if ((double)obj4 == 0.0)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (double)(long)obj % (double)obj2;
+				obj = (double)(long)obj % (double)obj4;
 				continue;
 			}
-			if (obj is double && obj2 is double)
+			if (obj is double && obj4 is double)
 			{
-				if ((double)obj2 == 0.0)
+				if ((double)obj4 == 0.0)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (double)obj % (double)obj2;
+				obj = (double)obj % (double)obj4;
 				continue;
 			}
-			if (obj is double && obj2 is int)
+			if (obj is double && obj4 is int)
 			{
-				if ((int)obj2 == 0)
+				if ((int)obj4 == 0)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (double)obj % (double)(int)obj2;
+				obj = (double)obj % (double)(int)obj4;
 				continue;
 			}
-			if (obj is double && obj2 is long)
+			if (obj is double && obj4 is long)
 			{
-				if ((long)obj2 == 0)
+				if ((long)obj4 == 0L)
 				{
-					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition3, currentPosition2);
+					throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1043")), currentPosition5, currentPosition6);
 				}
-				obj = (double)obj % (double)(long)obj2;
+				obj = (double)obj % (double)(long)obj4;
 				continue;
 			}
-			throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1047"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj2.GetType())), currentPosition, currentPosition2);
+			throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1047"), GetSimpleTypeName(obj.GetType()), GetSimpleTypeName(obj4.GetType())), currentPosition, currentPosition6);
 		}
 		return obj;
 	}
@@ -1013,7 +1006,7 @@ internal abstract class ExpressionEvalBase
 	{
 		if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.String)
 		{
-			object tokenText = _tokenizer.TokenText;
+			string tokenText = _tokenizer.TokenText;
 			_tokenizer.GetNextToken();
 			return tokenText;
 		}
@@ -1062,54 +1055,53 @@ internal abstract class ExpressionEvalBase
 		if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.Minus)
 		{
 			_tokenizer.GetNextToken();
-			ExpressionTokenizer.Position currentPosition = _tokenizer.CurrentPosition;
-			object tokenText = ParseValue();
-			ExpressionTokenizer.Position p = _tokenizer.CurrentPosition;
+			ExpressionTokenizer.Position currentPosition2 = _tokenizer.CurrentPosition;
+			object obj = ParseValue();
+			ExpressionTokenizer.Position currentPosition3 = _tokenizer.CurrentPosition;
 			if (!SyntaxCheckOnly())
 			{
-				if (tokenText is int)
+				if (obj is int)
 				{
-					return -(int)tokenText;
+					return -(int)obj;
 				}
-				if (tokenText is long)
+				if (obj is long)
 				{
-					return -(long)tokenText;
+					return -(long)obj;
 				}
-				if (tokenText is double)
+				if (obj is double)
 				{
-					return 0.0 - (double)tokenText;
+					return 0.0 - (double)obj;
 				}
-				throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1040"), GetSimpleTypeName(tokenText.GetType())), currentPosition, p);
+				throw BuildParseError(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1040"), GetSimpleTypeName(obj.GetType())), currentPosition2, currentPosition3);
 			}
 			return null;
 		}
 		if (_tokenizer.IsKeyword("not"))
 		{
 			_tokenizer.GetNextToken();
-			ExpressionTokenizer.Position currentPosition = _tokenizer.CurrentPosition;
-			object tokenText = ParseValue();
-			ExpressionTokenizer.Position p = _tokenizer.CurrentPosition;
+			ExpressionTokenizer.Position currentPosition4 = _tokenizer.CurrentPosition;
+			object source = ParseValue();
+			ExpressionTokenizer.Position currentPosition5 = _tokenizer.CurrentPosition;
 			if (!SyntaxCheckOnly())
 			{
-				bool flag = (bool)SafeConvert(typeof(bool), tokenText, "the argument of 'not' operator", currentPosition, p);
-				return !flag;
+				return !(bool)SafeConvert(typeof(bool), source, "the argument of 'not' operator", currentPosition4, currentPosition5);
 			}
 			return null;
 		}
 		if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.LeftParen)
 		{
 			_tokenizer.GetNextToken();
-			object tokenText = ParseExpression();
+			object result = ParseExpression();
 			if (_tokenizer.CurrentToken != ExpressionTokenizer.TokenType.RightParen)
 			{
 				throw BuildParseError("')' expected.", _tokenizer.CurrentPosition);
 			}
 			_tokenizer.GetNextToken();
-			return tokenText;
+			return result;
 		}
 		if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.Keyword)
 		{
-			ExpressionTokenizer.Position currentPosition = _tokenizer.CurrentPosition;
+			ExpressionTokenizer.Position currentPosition6 = _tokenizer.CurrentPosition;
 			string text = _tokenizer.TokenText;
 			switch (text)
 			{
@@ -1126,15 +1118,15 @@ internal abstract class ExpressionEvalBase
 				_tokenizer.IgnoreWhitespace = false;
 				_tokenizer.GetNextToken();
 				ArrayList arrayList = new ArrayList();
-				bool flag2 = false;
+				bool flag = false;
 				if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.DoubleColon)
 				{
-					flag2 = true;
+					flag = true;
 					text += "::";
 					_tokenizer.GetNextToken();
 					if (_tokenizer.CurrentToken != ExpressionTokenizer.TokenType.Keyword)
 					{
-						throw BuildParseError("Function name expected.", currentPosition, _tokenizer.CurrentPosition);
+						throw BuildParseError("Function name expected.", currentPosition6, _tokenizer.CurrentPosition);
 					}
 					text += _tokenizer.TokenText;
 					_tokenizer.GetNextToken();
@@ -1153,7 +1145,7 @@ internal abstract class ExpressionEvalBase
 					_tokenizer.GetNextToken();
 				}
 				MethodInfo methodInfo = null;
-				if (flag2)
+				if (flag)
 				{
 					if (_tokenizer.CurrentToken != ExpressionTokenizer.TokenType.LeftParen)
 					{
@@ -1163,10 +1155,10 @@ internal abstract class ExpressionEvalBase
 					int num = 0;
 					while (_tokenizer.CurrentToken != ExpressionTokenizer.TokenType.RightParen && _tokenizer.CurrentToken != ExpressionTokenizer.TokenType.EOF)
 					{
-						ExpressionTokenizer.Position currentPosition2 = _tokenizer.CurrentPosition;
+						ExpressionTokenizer.Position currentPosition7 = _tokenizer.CurrentPosition;
 						object value = ParseExpression();
-						ExpressionTokenizer.Position currentPosition3 = _tokenizer.CurrentPosition;
-						arrayList.Add(new FunctionArgument(text, num, value, currentPosition2, currentPosition3));
+						ExpressionTokenizer.Position currentPosition8 = _tokenizer.CurrentPosition;
+						arrayList.Add(new FunctionArgument(text, num, value, currentPosition7, currentPosition8));
 						num++;
 						if (_tokenizer.CurrentToken == ExpressionTokenizer.TokenType.RightParen)
 						{
@@ -1193,7 +1185,7 @@ internal abstract class ExpressionEvalBase
 						}
 						catch (EvaluatorException ex4)
 						{
-							throw BuildParseError(ex4.Message, currentPosition, _tokenizer.CurrentPosition);
+							throw BuildParseError(ex4.Message, currentPosition6, _tokenizer.CurrentPosition);
 						}
 						ParameterInfo[] parameters = methodInfo.GetParameters();
 						arrayList.Clear();
@@ -1210,7 +1202,7 @@ internal abstract class ExpressionEvalBase
 				{
 					if (!SyntaxCheckOnly())
 					{
-						if (flag2)
+						if (flag)
 						{
 							return EvaluateFunction(methodInfo, arrayList.ToArray());
 						}
@@ -1220,11 +1212,11 @@ internal abstract class ExpressionEvalBase
 				}
 				catch (Exception ex5)
 				{
-					if (flag2)
+					if (flag)
 					{
-						throw BuildParseError("Function call failed.", currentPosition, _tokenizer.CurrentPosition, ex5);
+						throw BuildParseError("Function call failed.", currentPosition6, _tokenizer.CurrentPosition, ex5);
 					}
-					throw BuildParseError("Property evaluation failed.", currentPosition, _tokenizer.CurrentPosition, ex5);
+					throw BuildParseError("Property evaluation failed.", currentPosition6, _tokenizer.CurrentPosition, ex5);
 				}
 			}
 			}

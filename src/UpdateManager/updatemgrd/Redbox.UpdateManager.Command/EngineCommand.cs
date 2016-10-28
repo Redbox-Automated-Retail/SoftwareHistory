@@ -9,8 +9,8 @@ namespace Redbox.UpdateManager.Command;
 [Command("engine")]
 internal class EngineCommand
 {
-	[Usage("engine export-queue path:")]
 	[CommandForm(Name = "export-queue")]
+	[Usage("engine export-queue path:")]
 	public void ExportQueue(CommandContext context, [CommandKeyValue(IsRequired = true)] string path)
 	{
 		if (!Directory.Exists(Path.GetDirectoryName(path)))
@@ -22,8 +22,8 @@ internal class EngineCommand
 		context.Errors.AddRange(service.ExportQueue(path).ToIPCErrors());
 	}
 
-	[Usage("engine export-sessions path:")]
 	[CommandForm(Name = "export-sessions")]
+	[Usage("engine export-sessions path:")]
 	public void ExportSession(CommandContext context, [CommandKeyValue(IsRequired = true)] string path)
 	{
 		if (!Directory.Exists(Path.GetDirectoryName(path)))
@@ -35,16 +35,16 @@ internal class EngineCommand
 		context.Errors.AddRange(service.ExportSessions(path).ToIPCErrors());
 	}
 
-	[Usage("engine load-bundle bundle:")]
 	[CommandForm(Name = "load-bundle")]
+	[Usage("engine load-bundle bundle:")]
 	public void LoadBundle(CommandContext context, [CommandKeyValue(IsRequired = true)] string bundle)
 	{
 		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
 		context.Errors.AddRange(service.ChangeBundle(bundle).ToIPCErrors());
 	}
 
-	[Usage("engine show-offline-screen")]
 	[CommandForm(Name = "show-offline-screen")]
+	[Usage("engine show-offline-screen")]
 	public void ShowOfflineScreen(CommandContext context)
 	{
 		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
@@ -59,8 +59,8 @@ internal class EngineCommand
 		context.Errors.AddRange(service.ReloadBundle().ToIPCErrors());
 	}
 
-	[Usage("engine bring-to-front")]
 	[CommandForm(Name = "bring-to-front")]
+	[Usage("engine bring-to-front")]
 	public void BringToFront(CommandContext context)
 	{
 		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
@@ -79,8 +79,8 @@ internal class EngineCommand
 		}
 	}
 
-	[Usage("engine start")]
 	[CommandForm(Name = "start")]
+	[Usage("engine start")]
 	public void Start(CommandContext context, string bundle)
 	{
 		LogHelper.Instance.Log("Starting engine at location: {0}", UpdateManagerService.Instance.KioskEnginePath);
@@ -95,8 +95,8 @@ internal class EngineCommand
 		}
 	}
 
-	[Usage("engine execute-script path:")]
 	[CommandForm(Name = "execute-script")]
+	[Usage("engine execute-script path:")]
 	public void ExecuteScript(CommandContext context, [CommandKeyValue(IsRequired = true)] string path)
 	{
 		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();

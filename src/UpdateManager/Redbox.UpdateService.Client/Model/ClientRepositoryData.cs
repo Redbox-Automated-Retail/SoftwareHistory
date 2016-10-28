@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class ClientRepositoryData
+internal class ClientRepositoryData
 {
 	public class Revlog
 	{

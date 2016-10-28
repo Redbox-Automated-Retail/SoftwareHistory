@@ -5,9 +5,9 @@ namespace Redbox.Tokenizer.Framework;
 
 internal class StreamTokenReader : ITokenReader, IDisposable
 {
-	private int m_index = 0;
+	private int m_index;
 
-	private int m_bufferSize = 0;
+	private int m_bufferSize;
 
 	private readonly char[] m_buffer;
 
@@ -17,7 +17,7 @@ internal class StreamTokenReader : ITokenReader, IDisposable
 
 	private readonly int MaxLookAhead;
 
-	private bool m_resetColumnOnNextMove = false;
+	private bool m_resetColumnOnNextMove;
 
 	private bool m_twoCharNewLine;
 
@@ -81,7 +81,11 @@ internal class StreamTokenReader : ITokenReader, IDisposable
 		int num = m_stream.ReadBlock(m_buffer, m_bufferSize - m_index, m_index);
 		m_bufferSize = num + (m_bufferSize - m_index);
 		m_index = 0;
-		return (i < m_bufferSize) ? new char?(m_buffer[i]) : ((char?)null);
+		if (i >= m_bufferSize)
+		{
+			return null;
+		}
+		return m_buffer[i];
 	}
 
 	public bool MoveToNextToken()
@@ -113,7 +117,11 @@ internal class StreamTokenReader : ITokenReader, IDisposable
 
 	public bool IsEmpty()
 	{
-		return m_index >= m_bufferSize && m_stream.EndOfStream;
+		if (m_index >= m_bufferSize)
+		{
+			return m_stream.EndOfStream;
+		}
+		return false;
 	}
 
 	private void AdavnceRowCount()

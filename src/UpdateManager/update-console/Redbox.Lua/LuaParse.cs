@@ -24,8 +24,7 @@ internal class LuaParse
 	{
 		string text = string.Format("({0}[^{0}]*{0})", "\"");
 		string[] array = Regex.Split(s, text + "|(=)|(,)|(\\[)|(\\])|(\\{)|(\\})|(--[^\\n\\r]*)");
-		string[] array2 = array;
-		foreach (string text2 in array2)
+		foreach (string text2 in array)
 		{
 			if (text2.Trim().Length != 0 && !text2.StartsWith("--"))
 			{
@@ -129,8 +128,7 @@ internal class LuaParse
 
 	protected LuaParseObject GetString()
 	{
-		Match match = Regex.Match(m_tokens[0], "^[\"']([^\"]*)[\"']");
-		string value = match.Groups[1].Captures[0].Value;
+		string value = Regex.Match(m_tokens[0], "^[\"']([^\"]*)[\"']").Groups[1].Captures[0].Value;
 		m_tokens.RemoveAt(0);
 		return value;
 	}

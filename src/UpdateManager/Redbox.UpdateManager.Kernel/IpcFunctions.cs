@@ -29,7 +29,7 @@ public static class IpcFunctions
 				}
 				num = 1;
 				LuaTable luaTable4 = new LuaTable(KernelService.Instance.LuaRuntime);
-				foreach (Error error in clientCommandResult.Errors)
+				foreach (Redbox.IPC.Framework.Error error in clientCommandResult.Errors)
 				{
 					LuaTable luaTable5 = new LuaTable(KernelService.Instance.LuaRuntime);
 					luaTable5["code"] = error.Code;

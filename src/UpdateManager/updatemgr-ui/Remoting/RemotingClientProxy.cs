@@ -17,7 +17,7 @@ internal class RemotingClientProxy : RealProxy
 		: base(type)
 	{
 		Url = url;
-		using (IEnumerator<IChannel> enumerator = ChannelServices.RegisteredChannels.Where((IChannel channel) => channel.ChannelName == "tcp" && channel is IChannelSender).GetEnumerator())
+		using (IEnumerator<IChannel> enumerator = ChannelServices.RegisteredChannels.Where((IChannel channel) => channel.ChannelName == "ipc_tcp" && channel is IChannelSender).GetEnumerator())
 		{
 			if (enumerator.MoveNext())
 			{

@@ -89,7 +89,7 @@ internal class MultiLog4NetLogger : ILogger
 	{
 		if (LoggerInstance.IsInfoEnabled)
 		{
-			if (parms.Length > 0)
+			if (parms.Length != 0)
 			{
 				LoggerInstance.Info(string.Format(message, parms));
 			}

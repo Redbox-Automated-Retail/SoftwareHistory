@@ -21,14 +21,25 @@ internal class RemotingServiceHost : IPCServiceHost
 
 	public override bool Start()
 	{
+		if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["CallRemotingConfigure"]))
+		{
+			LogHelper.Instance.Log("Before configure - CustomErrors enabled = {0}, {1}", RemotingConfiguration.CustomErrorsEnabled(isLocalRequest: false), RemotingConfiguration.CustomErrorsMode);
+			RemotingConfiguration.Configure(null, base.Protocol.IsSecure);
+			LogHelper.Instance.Log("After configure - CustomErrors enabled = {0}, {1}", RemotingConfiguration.CustomErrorsEnabled(isLocalRequest: false), RemotingConfiguration.CustomErrorsMode);
+		}
 		if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["CustomErrorsMode"]))
 		{
 			RemotingConfiguration.CustomErrorsMode = Enum<CustomErrorsModes>.ParseIgnoringCase(ConfigurationManager.AppSettings["CustomErrorsMode"], CustomErrorsModes.RemoteOnly);
 		}
-		LogHelper.Instance.Log("CustomErrors enabled = {0}", RemotingConfiguration.CustomErrorsEnabled(isLocalRequest: false));
-		ListDictionary listDictionary = new ListDictionary();
-		listDictionary.Add("port", base.Protocol.Port);
-		ListDictionary properties = listDictionary;
+		LogHelper.Instance.Log("CustomErrors enabled = {0}, {1}", RemotingConfiguration.CustomErrorsEnabled(isLocalRequest: false), RemotingConfiguration.CustomErrorsMode);
+		ListDictionary properties = new ListDictionary
+		{
+			{
+				"port",
+				base.Protocol.Port
+			},
+			{ "name", "ipc_tcp" }
+		};
 		LogHelper.Instance.Log("Creating tcp channel for remoting");
 		m_tcpChannel = new TcpServerChannel(properties, new RemotingServerChannelSinkProvider(this, new BinaryServerFormatterSinkProvider()));
 		LogHelper.Instance.Log("Registering channel with channel services");

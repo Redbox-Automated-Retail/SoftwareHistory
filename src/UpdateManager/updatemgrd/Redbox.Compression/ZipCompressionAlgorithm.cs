@@ -17,11 +17,12 @@ internal class ZipCompressionAlgorithm : CompressionAlgorithm
 		using (MemoryStream memoryStream = new MemoryStream())
 		{
 			ZipOutputStream zipOutputStream = new ZipOutputStream(memoryStream);
-			ZipEntry zipEntry = new ZipEntry("file");
-			zipEntry.DateTime = DateTime.UtcNow;
-			zipEntry.Size = source.Length;
-			zipEntry.CompressionMethod = CompressionMethod.Deflated;
-			ZipEntry entry = zipEntry;
+			ZipEntry entry = new ZipEntry("file")
+			{
+				DateTime = DateTime.UtcNow,
+				Size = source.Length,
+				CompressionMethod = CompressionMethod.Deflated
+			};
 			zipOutputStream.PutNextEntry(entry);
 			while (true)
 			{
@@ -52,12 +53,11 @@ internal class ZipCompressionAlgorithm : CompressionAlgorithm
 			while (true)
 			{
 				int num = zipInputStream.Read(array, 0, array.Length);
-				if (num != 0)
+				if (num == 0)
 				{
-					binaryWriter.Write(array, 0, num);
-					continue;
+					break;
 				}
-				break;
+				binaryWriter.Write(array, 0, num);
 			}
 		}
 		byte[] array2 = new byte[memoryStream.Length];
@@ -70,11 +70,12 @@ internal class ZipCompressionAlgorithm : CompressionAlgorithm
 	{
 		using BinaryReader binaryReader = new BinaryReader(source);
 		using ZipOutputStream zipOutputStream = new ZipOutputStream(target);
-		ZipEntry zipEntry = new ZipEntry("file");
-		zipEntry.DateTime = DateTime.UtcNow;
-		zipEntry.Size = source.Length;
-		zipEntry.CompressionMethod = CompressionMethod.Deflated;
-		ZipEntry entry = zipEntry;
+		ZipEntry entry = new ZipEntry("file")
+		{
+			DateTime = DateTime.UtcNow,
+			Size = source.Length,
+			CompressionMethod = CompressionMethod.Deflated
+		};
 		zipOutputStream.PutNextEntry(entry);
 		zipOutputStream.Write(binaryReader.ReadBytes((int)source.Length), 0, (int)source.Length);
 		zipOutputStream.Finish();
@@ -87,12 +88,11 @@ internal class ZipCompressionAlgorithm : CompressionAlgorithm
 		while (true)
 		{
 			int num = zipInputStream.Read(array, 0, array.Length);
-			if (num != 0)
+			if (num == 0)
 			{
-				target.Write(array, 0, num);
-				continue;
+				break;
 			}
-			break;
+			target.Write(array, 0, num);
 		}
 	}
 }

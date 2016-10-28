@@ -9,15 +9,15 @@ namespace Redbox.UpdateManager.DownloadFile;
 
 internal class DownloadFileFactory
 {
-	public const string DownloadFileExtension = ".downloaddat";
-
-	public const string DownloadFileLabel = ".download";
-
 	private IDataStoreService _dataStoreService;
 
 	private IStatusMessageService _statusMessageService;
 
 	private object _lock = new object();
+
+	public const string DownloadFileExtension = ".downloaddat";
+
+	public const string DownloadFileLabel = ".download";
 
 	public static DownloadFileFactory Instance => Singleton<DownloadFileFactory>.Instance;
 
@@ -51,15 +51,14 @@ internal class DownloadFileFactory
 		{
 			List<IDownloadFile> list = new List<IDownloadFile>();
 			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-			List<Guid> downLoadList = GetDownLoadList();
-			foreach (Guid item in downLoadList)
+			foreach (Guid downLoad in GetDownLoadList())
 			{
 				try
 				{
-					DownloadFileData downloadFileData = service.Get<DownloadFileData>(string.Concat(item, ".downloaddat"));
+					DownloadFileData downloadFileData = service.Get<DownloadFileData>(string.Concat(downLoad, ".downloaddat"));
 					if (downloadFileData == null)
 					{
-						DeleteDownloadFile(item);
+						DeleteDownloadFile(downLoad);
 						continue;
 					}
 					IDownloadFile downloadFileFromData = GetDownloadFileFromData(downloadFileData);
@@ -70,7 +69,7 @@ internal class DownloadFileFactory
 				}
 				catch (Exception e)
 				{
-					LogHelper.Instance.Log($"An unhandled exception occurred in DownloadFileFactory.GetDownloadFiles for Guid: {item}", e);
+					LogHelper.Instance.Log($"An unhandled exception occurred in DownloadFileFactory.GetDownloadFiles for Guid: {downLoad}", e);
 				}
 			}
 			return list;
@@ -86,22 +85,23 @@ internal class DownloadFileFactory
 			DownloadFileType.Script => DownloadFileDataType.Script, 
 			_ => DownloadFileDataType.Script, 
 		};
-		DownloadFileData downloadFileData = new DownloadFileData();
-		downloadFileData.FileGuid = Guid.NewGuid();
-		downloadFileData.ActivateScript = changeSet.ActivateScript;
-		downloadFileData.DestinationPath = changeSet.DestinationPath;
-		downloadFileData.DownloadFileDataState = DownloadFileDataState.None;
-		downloadFileData.DownloadFileDataType = downloadFileDataType;
-		downloadFileData.EndTime = changeSet.EndTime;
-		downloadFileData.FileKey = changeSet.FileKey;
-		downloadFileData.FileName = changeSet.FileName;
-		downloadFileData.Id = changeSet.Id;
-		downloadFileData.Name = changeSet.Name;
-		downloadFileData.StartTime = changeSet.StartTime;
-		downloadFileData.StatusKey = changeSet.StatusKey;
-		downloadFileData.Url = changeSet.Url;
-		downloadFileData.RetryCount = 0;
-		return downloadFileData;
+		return new DownloadFileData
+		{
+			FileGuid = Guid.NewGuid(),
+			ActivateScript = changeSet.ActivateScript,
+			DestinationPath = changeSet.DestinationPath,
+			DownloadFileDataState = DownloadFileDataState.None,
+			DownloadFileDataType = downloadFileDataType,
+			EndTime = changeSet.EndTime,
+			FileKey = changeSet.FileKey,
+			FileName = changeSet.FileName,
+			Id = changeSet.Id,
+			Name = changeSet.Name,
+			StartTime = changeSet.StartTime,
+			StatusKey = changeSet.StatusKey,
+			Url = changeSet.Url,
+			RetryCount = 0
+		};
 	}
 
 	internal IDownloadFile GetDownloadFileFromChangeSet(DownloadFileChangeSetData changeSet)
@@ -114,7 +114,6 @@ internal class DownloadFileFactory
 		return downloadFileData.DownloadFileDataType switch
 		{
 			DownloadFileDataType.Bits => new BitsDownloadFile(downloadFileData), 
-			DownloadFileDataType.WUA => new WuaDownloadFile(downloadFileData), 
 			DownloadFileDataType.Script => new ScriptDownloadFile(downloadFileData), 
 			_ => null, 
 		};
@@ -176,8 +175,7 @@ internal class DownloadFileFactory
 
 	internal List<Guid> GetDownLoadList()
 	{
-		IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-		List<Guid> list = service.Get<List<Guid>>(".download");
+		List<Guid> list = ServiceLocator.Instance.GetService<IDataStoreService>().Get<List<Guid>>(".download");
 		if (list == null)
 		{
 			list = new List<Guid>();
@@ -190,11 +188,11 @@ internal class DownloadFileFactory
 		ErrorList errorList = new ErrorList();
 		try
 		{
-			errorList.AddRange(StatusMessageService.EnqueueMessage(statusMessageType, statusKey, description, ObjectExtensions.ToJson(data)));
+			errorList.AddRange(StatusMessageService.EnqueueMessage(statusMessageType, statusKey, description, data.ToJson()));
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS999", "An unhandled exception occurred in DownloadFileService.SendStatus.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS999", "An unhandled exception occurred in DownloadFileService.SendStatus.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;

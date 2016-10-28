@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Redbox.UpdateManager.BITS;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("83E81B93-0873-474D-8A8C-F2018B1A939C")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IBackgroundCopyFile2
 {
 	void GetRemoteName([MarshalAs(UnmanagedType.LPWStr)] out string pVal);

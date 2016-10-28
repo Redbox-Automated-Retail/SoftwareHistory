@@ -24,10 +24,9 @@ internal class Error
 
 	public static Error Parse(string error)
 	{
-		string code = GlobalStringExtensions.ExtractCodeFromBrackets(error, "[", "]");
+		string code = error.ExtractCodeFromBrackets("[", "]");
 		int startIndex = error.IndexOf("]");
-		string text = error.Substring(startIndex);
-		string[] array = text.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+		string[] array = error.Substring(startIndex).Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 		string details = null;
 		if (array.Length > 1)
 		{

@@ -31,17 +31,17 @@ public static class InputFunctions
 		{
 			return null;
 		}
-		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		luaTable["name"] = fileInfo.Name;
-		luaTable["length"] = fileInfo.Length;
-		luaTable["directory"] = fileInfo.DirectoryName;
-		return luaTable;
+		return new LuaTable(KernelService.Instance.LuaRuntime)
+		{
+			["name"] = fileInfo.Name,
+			["length"] = fileInfo.Length,
+			["directory"] = fileInfo.DirectoryName
+		};
 	}
 
 	[KernelFunction(Name = "kernel.notifyinfo")]
 	internal static void NotifyInfo(string title, string message)
 	{
-		IInputService service = ServiceLocator.Instance.GetService<IInputService>();
-		service.NotifyInfo(title, message);
+		ServiceLocator.Instance.GetService<IInputService>().NotifyInfo(title, message);
 	}
 }

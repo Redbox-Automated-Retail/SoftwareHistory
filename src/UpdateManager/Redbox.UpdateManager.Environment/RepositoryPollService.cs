@@ -31,7 +31,7 @@ public class RepositoryPollService : IPollRequestReply
 			pollRequestList = new List<PollRequest>();
 			if (!_lock.TryEnterWriteLock(_lockTimeout))
 			{
-				errorList.Add(Error.NewError("RepositoryPollService.GetPollRequest", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("RepositoryPollService.GetPollRequest", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 				return errorList;
 			}
 			try
@@ -41,15 +41,17 @@ public class RepositoryPollService : IPollRequestReply
 				if (m_syncId == 0 || string.IsNullOrEmpty(m_previousClientRepositoryDataDTOHash))
 				{
 					m_syncId = 1;
-					RepositoryDiffWrapper repositoryDiffWrapper = new RepositoryDiffWrapper();
-					repositoryDiffWrapper.O = text;
-					repositoryDiffWrapper.A = currentClientRepositoryDataDTO;
-					RepositoryDiffWrapper wrapper = repositoryDiffWrapper;
-					PollRequest pollRequest = new PollRequest();
-					pollRequest.PollRequestType = PollRequestType.Repositories;
-					pollRequest.SyncId = 1;
-					pollRequest.Data = RepositoryDiffMerge.Minimize(wrapper);
-					PollRequest item = pollRequest;
+					RepositoryDiffWrapper wrapper = new RepositoryDiffWrapper
+					{
+						O = text,
+						A = currentClientRepositoryDataDTO
+					};
+					PollRequest item = new PollRequest
+					{
+						PollRequestType = PollRequestType.Repositories,
+						SyncId = 1,
+						Data = RepositoryDiffMerge.Minimize(wrapper)
+					};
 					pollRequestList.Add(item);
 					m_previousClientRepositoryDataDTO = currentClientRepositoryDataDTO;
 					m_previousClientRepositoryDataDTOHash = text;
@@ -60,15 +62,16 @@ public class RepositoryPollService : IPollRequestReply
 					if (!RepositoryDiffMerge.TryDiff(m_previousClientRepositoryDataDTO, currentClientRepositoryDataDTO, verify: true, out var rdw))
 					{
 						m_syncId = 0;
-						errorList.Add(Error.NewWarning("RPS01", "TryDiff failed", "Resetting SyncID and sending up a full sync"));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewWarning("RPS01", "TryDiff failed", "Resetting SyncID and sending up a full sync"));
 						return errorList;
 					}
 					m_syncId++;
-					PollRequest pollRequest2 = new PollRequest();
-					pollRequest2.PollRequestType = PollRequestType.Repositories;
-					pollRequest2.SyncId = m_syncId;
-					pollRequest2.Data = RepositoryDiffMerge.Minimize(rdw);
-					PollRequest item2 = pollRequest2;
+					PollRequest item2 = new PollRequest
+					{
+						PollRequestType = PollRequestType.Repositories,
+						SyncId = m_syncId,
+						Data = RepositoryDiffMerge.Minimize(rdw)
+					};
 					pollRequestList.Add(item2);
 					m_previousClientRepositoryDataDTOHash = text;
 					m_previousClientRepositoryDataDTO = currentClientRepositoryDataDTO;
@@ -81,7 +84,7 @@ public class RepositoryPollService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("RPS002", "There was an unhandled exception in RepositoryPollService.GetPollRequest", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("RPS002", "There was an unhandled exception in RepositoryPollService.GetPollRequest", e));
 			pollRequestList = new List<PollRequest>();
 		}
 		return errorList;
@@ -98,13 +101,13 @@ public class RepositoryPollService : IPollRequestReply
 				LogHelper.Instance.Log("No pollReplyList in RepositoryService.ProcessPollReply", LogEntryType.Debug);
 				return errorList;
 			}
-			LogHelper.Instance.Log("PollReplyList in RepositoryService.ProcessPollReply: " + ObjectExtensions.ToJson(pollReplyList), LogEntryType.Debug);
+			LogHelper.Instance.Log("PollReplyList in RepositoryService.ProcessPollReply: " + pollReplyList.ToJson(), LogEntryType.Debug);
 			if (pollReplyList.Any((PollReply pr) => (pr.PollReplyType == PollReplyType.RepositoryChangeSet && pr.SyncId == 0 && string.IsNullOrEmpty(pr.Data)) || pr.PollReplyType == PollReplyType.UpdateRepositories))
 			{
 				LogHelper.Instance.Log("Server requested full sync", LogEntryType.Info);
 				if (!_lock.TryEnterWriteLock(_lockTimeout))
 				{
-					errorList.Add(Error.NewError("RepositoryPollService.ProcessPollReply", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("RepositoryPollService.ProcessPollReply", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 					return errorList;
 				}
 				try
@@ -119,7 +122,7 @@ public class RepositoryPollService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("RPS003", "There was an unhandled exception in RepositoryPollService.ProcessPollReply", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("RPS003", "There was an unhandled exception in RepositoryPollService.ProcessPollReply", e));
 		}
 		return errorList;
 	}
@@ -128,7 +131,7 @@ public class RepositoryPollService : IPollRequestReply
 	{
 	}
 
-	private static IEnumerable<Error> GetClientRepositoryDataDTO(out List<ClientRepositoryDataDTO> currentClientRepositoryDataDTO)
+	private static IEnumerable<Redbox.UpdateManager.ComponentModel.Error> GetClientRepositoryDataDTO(out List<ClientRepositoryDataDTO> currentClientRepositoryDataDTO)
 	{
 		ErrorList errorList = new ErrorList();
 		currentClientRepositoryDataDTO = new List<ClientRepositoryDataDTO>();
@@ -164,7 +167,7 @@ public class RepositoryPollService : IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("RPS010", "There was an error in gathering the clientRepositoryInfo", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("RPS010", "There was an error in gathering the clientRepositoryInfo", e));
 		}
 		return errorList;
 	}

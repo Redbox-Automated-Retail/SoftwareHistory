@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.UpdateService.Model;
 
-public class StoreData
+internal class StoreData
 {
 	public byte? EndOfScheduleInHoursFromMidnight;
 

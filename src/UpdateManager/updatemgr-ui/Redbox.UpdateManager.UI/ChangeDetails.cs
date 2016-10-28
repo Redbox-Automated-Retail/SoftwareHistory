@@ -47,16 +47,17 @@ public class ChangeDetails : Form
 		m_label.Text = log.Label;
 		foreach (ChangeItem change in log.Changes)
 		{
-			ListViewItem listViewItem = new ListViewItem();
-			listViewItem.Text = change.TargetName;
-			listViewItem.Tag = change;
-			ListViewItem listViewItem2 = listViewItem;
-			listViewItem2.SubItems.Add(change.TargetPath);
-			listViewItem2.SubItems.Add(change.VersionHash);
-			listViewItem2.SubItems.Add(change.ContentHash);
-			listViewItem2.SubItems.Add(change.IsSeed.ToString());
-			listViewItem2.SubItems.Add(change.Composite.ToString());
-			m_changes.Items.Add(listViewItem2);
+			ListViewItem listViewItem = new ListViewItem
+			{
+				Text = change.TargetName,
+				Tag = change
+			};
+			listViewItem.SubItems.Add(change.TargetPath);
+			listViewItem.SubItems.Add(change.VersionHash);
+			listViewItem.SubItems.Add(change.ContentHash);
+			listViewItem.SubItems.Add(change.IsSeed.ToString());
+			listViewItem.SubItems.Add(change.Composite.ToString());
+			m_changes.Items.Add(listViewItem);
 		}
 		m_changes.EndUpdate();
 	}

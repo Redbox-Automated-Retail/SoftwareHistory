@@ -9,11 +9,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineexportqueue")]
 	internal static LuaTable ExportQueue(string path)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.ExportQueue(path);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().ExportQueue(path);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -24,11 +23,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineexportsession")]
 	internal static LuaTable ExportSession(string path)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.ExportSessions(path);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().ExportSessions(path);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -39,11 +37,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskenginestart")]
 	internal static LuaTable StartEngine()
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.StartEngine();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().StartEngine();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -54,11 +51,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineisrunning")]
 	internal static LuaTable IsEngineRunning()
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.IsEngineRunning(out var isRunning);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().IsEngineRunning(out var isRunning);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -71,11 +67,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskenginestartwithbundle")]
 	internal static LuaTable StartEngine(string bundle)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.StartEngine(bundle);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().StartEngine(bundle);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -86,11 +81,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskenginechangebundle")]
 	internal static LuaTable ChangeBundle(string bundle)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.ChangeBundle(bundle);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().ChangeBundle(bundle);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -101,11 +95,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineshutdownblocking")]
 	public static LuaTable ShutdownBlocking(int timeout, int tries)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.Shutdown(timeout, tries);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().Shutdown(timeout, tries);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -116,11 +109,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineshutdown")]
 	internal static LuaTable Shutdown()
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.Shutdown();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().Shutdown();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -131,11 +123,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskenginebringtofront")]
 	internal static LuaTable BringToFront()
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.BringToFront();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().BringToFront();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -146,11 +137,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineexecutescript")]
 	internal static LuaTable ExecuteScript(string path)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.ExecuteScript(path);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().ExecuteScript(path);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -161,11 +151,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskenginereloadbundle")]
 	internal static LuaTable ReloadBundle()
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.ReloadBundle();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().ReloadBundle();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -176,11 +165,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskenginegetmemoryusage")]
 	internal static long GetMemoryUsage(string path)
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList memoryUsage = service.GetMemoryUsage(out var total);
+		ErrorList memoryUsage = ServiceLocator.Instance.GetService<IKioskEngineService>().GetMemoryUsage(out var total);
 		if (memoryUsage.ContainsError())
 		{
-			memoryUsage.ForEach(delegate(Error e)
+			memoryUsage.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -191,11 +179,10 @@ public static class KioskEngineFunctions
 	[KernelFunction(Name = "kernel.kioskengineshowofflinescreen")]
 	internal static LuaTable ShowOfflineScreen()
 	{
-		IKioskEngineService service = ServiceLocator.Instance.GetService<IKioskEngineService>();
-		ErrorList errorList = service.ShowOfflineScreen();
+		ErrorList errorList = ServiceLocator.Instance.GetService<IKioskEngineService>().ShowOfflineScreen();
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -208,7 +195,7 @@ public static class KioskEngineFunctions
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		luaTable["success"] = !errors.ContainsError();
 		LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			luaTable2[error.Code] = error.Description;
 		}

@@ -49,17 +49,18 @@ public class LocalChangeSet
 		{
 			return false;
 		}
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Name", targetName);
-		dictionary.Add("Path", targetPath);
-		dictionary.Add("DisplayName", displayName);
-		dictionary.Add("Data", localPath);
-		Dictionary<string, string> dictionary2 = dictionary;
+		Dictionary<string, string> dictionary = new Dictionary<string, string>
+		{
+			{ "Name", targetName },
+			{ "Path", targetPath },
+			{ "DisplayName", displayName },
+			{ "Data", localPath }
+		};
 		using (FileStream inputStream = File.OpenRead(localPath))
 		{
-			dictionary2["Hash"] = inputStream.ToASCIISHA1Hash();
+			dictionary["Hash"] = inputStream.ToASCIISHA1Hash();
 		}
-		m_newFiles.Add(Path.Combine(targetPath, targetName), dictionary2);
+		m_newFiles.Add(Path.Combine(targetPath, targetName), dictionary);
 		return true;
 	}
 

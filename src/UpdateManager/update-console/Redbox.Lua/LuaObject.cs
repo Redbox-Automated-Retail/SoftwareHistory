@@ -33,7 +33,7 @@ internal class LuaObject : IDisposable
 
 	public override bool Equals(object obj)
 	{
-		if (object.ReferenceEquals(this, obj))
+		if (this == obj)
 		{
 			return true;
 		}

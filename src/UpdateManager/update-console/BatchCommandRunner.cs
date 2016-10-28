@@ -9,11 +9,33 @@ namespace Redbox.IPC.Framework;
 
 internal class BatchCommandRunner : ISession, IMessageSink
 {
+	private Action<string, string> _paramAction;
+
+	private Action<ISession> _beforeCommandAction;
+
+	private List<string> _filters = new List<string>();
+
+	private bool _enableFilters;
+
 	private ParameterDictionary m_context;
 
 	private readonly StreamReader m_reader;
 
 	private IDictionary<string, object> m_properties;
+
+	public List<string> Filters => _filters;
+
+	public bool EnableFilters
+	{
+		get
+		{
+			return _enableFilters;
+		}
+		set
+		{
+			_enableFilters = value;
+		}
+	}
 
 	public ParameterDictionary Context
 	{
@@ -51,6 +73,22 @@ internal class BatchCommandRunner : ISession, IMessageSink
 		return true;
 	}
 
+	public void SetParamAction(Action<string, string> paramAction)
+	{
+		_paramAction = paramAction;
+	}
+
+	public void SetBeforeCommandAction(Action<ISession> beforeCommandAction)
+	{
+		_beforeCommandAction = beforeCommandAction;
+	}
+
+	public void SetFilters(List<string> filters)
+	{
+		_filters.Clear();
+		filters.ForEach(_filters.Add);
+	}
+
 	public bool IsConnected()
 	{
 		return true;
@@ -59,18 +97,16 @@ internal class BatchCommandRunner : ISession, IMessageSink
 	public static void ExecuteStartupFiles()
 	{
 		string[] files = Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "*.txt");
-		string[] array = files;
-		foreach (string fileName in array)
+		for (int i = 0; i < files.Length; i++)
 		{
-			ExecuteFile(fileName);
+			ExecuteFile(files[i]);
 		}
 	}
 
 	public static void ExecuteFile(string fileName)
 	{
 		using StreamReader reader = new StreamReader(fileName);
-		BatchCommandRunner batchCommandRunner = new BatchCommandRunner(reader);
-		batchCommandRunner.Start();
+		new BatchCommandRunner(reader).Start();
 	}
 
 	public void Start()
@@ -91,7 +127,11 @@ internal class BatchCommandRunner : ISession, IMessageSink
 				{
 					break;
 				}
-				CommandResult commandResult = CommandService.Instance.Execute(this, text);
+				if (_beforeCommandAction != null)
+				{
+					_beforeCommandAction(this);
+				}
+				CommandResult commandResult = CommandService.Instance.Execute(this, string.Empty, text, Filters, EnableFilters, _paramAction);
 				if (commandResult != null)
 				{
 					ProtocolHelper.FormatErrors(commandResult.Errors, commandResult.Messages);

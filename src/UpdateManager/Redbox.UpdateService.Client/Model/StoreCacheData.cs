@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Redbox.UpdateService.Model;
 
-public class StoreCacheData
+internal class StoreCacheData
 {
 	private readonly List<long> _downloadFileList = new List<long>();
 
@@ -211,8 +211,7 @@ public class StoreCacheData
 				clientRepositoryData2.Active = clientRepositoryDatum.Active;
 				clientRepositoryData2.Head = clientRepositoryDatum.Head;
 			}
-			IEnumerable<ClientRepositoryData> enumerable = ClientRepositoryData.Where((ClientRepositoryData crd1) => !clientRepositoryData.Any((ClientRepositoryData clientRepositoryData3) => string.Equals(crd1.RepositoryName, clientRepositoryData3.RepositoryName, StringComparison.CurrentCultureIgnoreCase)));
-			foreach (ClientRepositoryData item in enumerable)
+			foreach (ClientRepositoryData item in ClientRepositoryData.Where((ClientRepositoryData crd1) => !clientRepositoryData.Any((ClientRepositoryData clientRepositoryData3) => string.Equals(crd1.RepositoryName, clientRepositoryData3.RepositoryName, StringComparison.CurrentCultureIgnoreCase))))
 			{
 				item.InTransit = new ClientRepositoryData.Revlog();
 				item.Staged = new ClientRepositoryData.Revlog();
@@ -245,15 +244,16 @@ public class StoreCacheData
 					clientRepositoryData.Assigned = item2.Value;
 					continue;
 				}
-				ClientRepositoryData clientRepositoryData2 = new ClientRepositoryData();
-				clientRepositoryData2.RepositoryName = item2.Key.Name;
-				clientRepositoryData2.RepositoryOID = item2.Key.OID;
-				clientRepositoryData2.Assigned = item2.Value;
-				clientRepositoryData2.InTransit = new ClientRepositoryData.Revlog();
-				clientRepositoryData2.Staged = new ClientRepositoryData.Revlog();
-				clientRepositoryData2.Active = new ClientRepositoryData.Revlog();
-				clientRepositoryData2.Head = new ClientRepositoryData.Revlog();
-				ClientRepositoryData item = clientRepositoryData2;
+				ClientRepositoryData item = new ClientRepositoryData
+				{
+					RepositoryName = item2.Key.Name,
+					RepositoryOID = item2.Key.OID,
+					Assigned = item2.Value,
+					InTransit = new ClientRepositoryData.Revlog(),
+					Staged = new ClientRepositoryData.Revlog(),
+					Active = new ClientRepositoryData.Revlog(),
+					Head = new ClientRepositoryData.Revlog()
+				};
 				ClientRepositoryData.Add(item);
 			}
 			ClientRepositoryData.RemoveAll((ClientRepositoryData crd) => !assigned.Any((KeyValuePair<ClientRepositoryData.Repository, ClientRepositoryData.Revlog> a) => string.Equals(crd.RepositoryName, a.Key.Name, StringComparison.CurrentCultureIgnoreCase)));

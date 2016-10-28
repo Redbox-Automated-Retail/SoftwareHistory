@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreFileAdd
+internal class StoreFileAdd
 {
 	public long Store { get; set; }
 

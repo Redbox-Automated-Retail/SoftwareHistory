@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreKioskClientMap
+internal class StoreKioskClientMap
 {
 	public long ID { get; set; }
 

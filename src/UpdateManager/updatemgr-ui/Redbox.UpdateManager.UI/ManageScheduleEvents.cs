@@ -50,8 +50,7 @@ public class ManageScheduleEvents : Form
 	{
 		UpdateManagerApplication.Instance.AsyncButtonAction((Control)sender, delegate
 		{
-			ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-			ErrorList errorList = service.Restart();
+			ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Restart();
 			if (errorList.ContainsError())
 			{
 				UpdateManagerApplication.Instance.ThreadSafeErrorDisplay(errorList);
@@ -64,8 +63,7 @@ public class ManageScheduleEvents : Form
 	{
 		UpdateManagerApplication.Instance.AsyncButtonAction((Control)sender, delegate
 		{
-			ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-			ErrorList errorList = service.Stop();
+			ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Stop();
 			if (errorList.ContainsError())
 			{
 				UpdateManagerApplication.Instance.ThreadSafeErrorDisplay(errorList);
@@ -78,8 +76,7 @@ public class ManageScheduleEvents : Form
 	{
 		UpdateManagerApplication.Instance.AsyncButtonAction((Control)sender, delegate
 		{
-			ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-			ErrorList errorList = service.Start();
+			ErrorList errorList = ServiceLocator.Instance.GetService<ITaskScheduler>().Start();
 			if (errorList.ContainsError())
 			{
 				UpdateManagerApplication.Instance.ThreadSafeErrorDisplay(errorList);
@@ -177,9 +174,16 @@ public class ManageScheduleEvents : Form
 			});
 			try
 			{
-				using IEnumerator<ErrorForm> enumerator = (from ListViewItem item in m_events.SelectedItems
+				IEnumerable<ListViewItem> source = from ListViewItem item in m_events.SelectedItems
 					where item != null
-					select scheduler.Delete(item.SubItems[0].Text) into errors2
+					select item;
+				Func<ListViewItem, ErrorList> func2 = default(Func<ListViewItem, ErrorList>);
+				Func<ListViewItem, ErrorList> func = func2;
+				if (func == null)
+				{
+					func = (func2 = (ListViewItem item) => scheduler.Delete(item.SubItems[0].Text));
+				}
+				using IEnumerator<ErrorForm> enumerator = (from errors2 in source.Select(func)
 					where errors2.ContainsError()
 					select new ErrorForm
 					{
@@ -187,21 +191,18 @@ public class ManageScheduleEvents : Form
 					}).GetEnumerator();
 				if (enumerator.MoveNext())
 				{
-					ErrorForm current = enumerator.Current;
-					current.ShowDialog();
+					enumerator.Current.ShowDialog();
 					return;
 				}
 			}
 			catch (Exception e2)
 			{
-				ErrorList foo = new ErrorList { Error.NewError("E992", "An unhandled exception occurred while polling update service.", e2) };
+				ErrorList foo = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E992", "An unhandled exception occurred while polling update service.", e2) };
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm5 = new ErrorForm
-					{
-						Errors = foo
-					};
-					errorForm5.ShowDialog();
+					ErrorForm errorForm3 = new ErrorForm();
+					errorForm3.Errors = foo;
+					errorForm3.ShowDialog();
 				});
 			}
 			finally
@@ -216,20 +217,16 @@ public class ManageScheduleEvents : Form
 			{
 				ErrorForm errorForm = new ErrorForm();
 				errorForm.Errors = errorList;
-				ErrorForm errorForm2 = errorForm;
-				errorForm2.ShowDialog();
+				errorForm.ShowDialog();
 			}
 			LoadScheduleEvents();
 		}
 		catch (Exception e3)
 		{
-			ErrorList errorList2 = new ErrorList();
-			errorList2.Add(Error.NewError("E991", "An unhandled exception was thrown in Update Mananger.", e3));
-			ErrorList errors = errorList2;
-			ErrorForm errorForm3 = new ErrorForm();
-			errorForm3.Errors = errors;
-			ErrorForm errorForm4 = errorForm3;
-			errorForm4.ShowDialog();
+			ErrorList errors = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E991", "An unhandled exception was thrown in Update Mananger.", e3) };
+			ErrorForm errorForm2 = new ErrorForm();
+			errorForm2.Errors = errors;
+			errorForm2.ShowDialog();
 		}
 	}
 
@@ -252,10 +249,10 @@ public class ManageScheduleEvents : Form
 				{
 					foreach (ITask item in list)
 					{
-						ErrorList errorList2 = scheduler.ForceTask(item.Name, out var _);
-						if (errorList2.ContainsError())
+						ErrorList errorList = scheduler.ForceTask(item.Name, out var _);
+						if (errorList.ContainsError())
 						{
-							UpdateManagerApplication.Instance.ThreadSafeErrorDisplay(errorList2);
+							UpdateManagerApplication.Instance.ThreadSafeErrorDisplay(errorList);
 							break;
 						}
 					}
@@ -265,13 +262,10 @@ public class ManageScheduleEvents : Form
 		}
 		catch (Exception e2)
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("E990", "An unhandled exception was thrown in Update Mananger.", e2));
-			ErrorList errors = errorList;
+			ErrorList errors = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E990", "An unhandled exception was thrown in Update Mananger.", e2) };
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errors;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 	}
 
@@ -282,8 +276,7 @@ public class ManageScheduleEvents : Form
 
 	private void SetButtonState()
 	{
-		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		bool isRunning = service.IsRunning;
+		bool isRunning = ServiceLocator.Instance.GetService<ITaskScheduler>().IsRunning;
 		m_startScheduler.Enabled = !isRunning;
 		m_stopScheduler.Enabled = isRunning;
 	}

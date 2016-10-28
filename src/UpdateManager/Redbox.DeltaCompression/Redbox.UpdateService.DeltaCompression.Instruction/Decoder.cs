@@ -35,46 +35,51 @@ public class Decoder
 
 	private static Instruction DecodeInsert(BinaryReader reader)
 	{
-		Instruction instruction = new Instruction();
-		instruction.Type = InstructionType.Insert;
-		instruction.Key = GetUint16PrefixEncodedString(reader);
-		instruction.Value = GetIntPrefixEncodedString(reader);
-		return instruction;
+		return new Instruction
+		{
+			Type = InstructionType.Insert,
+			Key = GetUint16PrefixEncodedString(reader),
+			Value = GetIntPrefixEncodedString(reader)
+		};
 	}
 
 	private static Instruction DecodeUpdate(BinaryReader reader)
 	{
-		Instruction instruction = new Instruction();
-		instruction.Type = InstructionType.Update;
-		instruction.Key = GetUint16PrefixEncodedString(reader);
-		instruction.StartIndex = reader.ReadInt32();
-		instruction.Value = GetIntPrefixEncodedString(reader);
-		return instruction;
+		return new Instruction
+		{
+			Type = InstructionType.Update,
+			Key = GetUint16PrefixEncodedString(reader),
+			StartIndex = reader.ReadInt32(),
+			Value = GetIntPrefixEncodedString(reader)
+		};
 	}
 
 	private static Instruction DecodeDelete(BinaryReader reader)
 	{
-		Instruction instruction = new Instruction();
-		instruction.Type = InstructionType.Delete;
-		instruction.Key = GetUint16PrefixEncodedString(reader);
-		return instruction;
+		return new Instruction
+		{
+			Type = InstructionType.Delete,
+			Key = GetUint16PrefixEncodedString(reader)
+		};
 	}
 
 	private static Instruction DecodeCacheUpdateInsert(BinaryReader reader)
 	{
-		Instruction instruction = new Instruction();
-		instruction.Type = InstructionType.CacheUpdateInsert;
-		instruction.Key = GetUint16PrefixEncodedString(reader);
-		instruction.CacheValue = GetIntPrefixedByteArray(reader);
-		return instruction;
+		return new Instruction
+		{
+			Type = InstructionType.CacheUpdateInsert,
+			Key = GetUint16PrefixEncodedString(reader),
+			CacheValue = GetIntPrefixedByteArray(reader)
+		};
 	}
 
 	private static Instruction DecodeCacheDelete(BinaryReader reader)
 	{
-		Instruction instruction = new Instruction();
-		instruction.Type = InstructionType.Insert;
-		instruction.Key = GetUint16PrefixEncodedString(reader);
-		return instruction;
+		return new Instruction
+		{
+			Type = InstructionType.Insert,
+			Key = GetUint16PrefixEncodedString(reader)
+		};
 	}
 
 	private static byte[] GetIntPrefixedByteArray(BinaryReader reader)

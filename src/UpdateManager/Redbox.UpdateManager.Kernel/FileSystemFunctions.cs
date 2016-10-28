@@ -29,8 +29,7 @@ public static class FileSystemFunctions
 	[KernelFunction(Name = "kernel.getfilelength")]
 	internal static long GetFileLength(string file)
 	{
-		FileInfo fileInfo = new FileInfo(file);
-		return fileInfo.Length;
+		return new FileInfo(file).Length;
 	}
 
 	[KernelFunction(Name = "kernel.tar")]
@@ -172,29 +171,25 @@ public static class FileSystemFunctions
 	[KernelFunction(Name = "kernel.getdirectoryfrompath")]
 	internal static string GetDirectoryNameFromPath(string fullPath)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return Path.GetDirectoryName(service.ExpandProperties(fullPath));
+		return Path.GetDirectoryName(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fullPath));
 	}
 
 	[KernelFunction(Name = "kernel.getfilenamefrompath")]
 	internal static string GetFileNameFromPath(string fullPath)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return Path.GetFileName(service.ExpandProperties(fullPath));
+		return Path.GetFileName(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fullPath));
 	}
 
 	[KernelFunction(Name = "kernel.getfilenamewithoutextension")]
 	internal static string GetFileNameWithOutExtension(string fullPath)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return Path.GetFileNameWithoutExtension(service.ExpandProperties(fullPath));
+		return Path.GetFileNameWithoutExtension(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fullPath));
 	}
 
 	[KernelFunction(Name = "kernel.directorycreate")]
 	internal static void CreateDirectory(string path)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		Directory.CreateDirectory(service.ExpandProperties(path));
+		Directory.CreateDirectory(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(path));
 	}
 
 	[KernelFunction(Name = "kernel.directorycopy")]
@@ -267,15 +262,13 @@ public static class FileSystemFunctions
 	[KernelFunction(Name = "kernel.fileexists")]
 	internal static bool FileExists(string file)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return File.Exists(service.ExpandProperties(file));
+		return File.Exists(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(file));
 	}
 
 	[KernelFunction(Name = "kernel.directoryexists")]
 	internal static bool DirectoryExists(string path)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return Directory.Exists(service.ExpandProperties(path));
+		return Directory.Exists(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(path));
 	}
 
 	[KernelFunction(Name = "kernel.directoryremove")]
@@ -303,8 +296,7 @@ public static class FileSystemFunctions
 	{
 		try
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			File.Delete(service.ExpandProperties(file));
+			File.Delete(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(file));
 			return true;
 		}
 		catch (Exception e)
@@ -351,8 +343,7 @@ public static class FileSystemFunctions
 	{
 		try
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			return File.ReadAllText(service.ExpandProperties(file));
+			return File.ReadAllText(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(file));
 		}
 		catch (Exception e)
 		{
@@ -387,8 +378,7 @@ public static class FileSystemFunctions
 	[KernelFunction(Name = "kernel.getdirectoryname")]
 	internal static string GetDirectoryName(string path)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return Path.GetDirectoryName(service.ExpandProperties(path));
+		return Path.GetDirectoryName(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(path));
 	}
 
 	[KernelFunction(Name = "kernel.pathcombine")]
@@ -447,18 +437,18 @@ public static class FileSystemFunctions
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		string fileName = service.ExpandProperties(path);
-		XmlFileEditor xmlFileEditor = new XmlFileEditor(fileName);
-		xmlFileEditor.EditAllMatches = editAllMatches;
-		xmlFileEditor.RaiseErrors = raiseErrors;
-		XmlFileEditor xmlFileEditor2 = xmlFileEditor;
+		XmlFileEditor xmlFileEditor = new XmlFileEditor(service.ExpandProperties(path))
+		{
+			EditAllMatches = editAllMatches,
+			RaiseErrors = raiseErrors
+		};
 		if (xmlNamespaces is LuaTable luaTable2)
 		{
 			foreach (object key in luaTable2.Keys)
 			{
 				if (luaTable2[key] is LuaTable luaTable3)
 				{
-					xmlFileEditor2.Namespaces.Add(new XmlNamespace((string)luaTable3["prefix"], (string)luaTable3["uri"]));
+					xmlFileEditor.Namespaces.Add(new XmlNamespace((string)luaTable3["prefix"], (string)luaTable3["uri"]));
 				}
 			}
 		}
@@ -470,11 +460,11 @@ public static class FileSystemFunctions
 				{
 					XmlEdit xmlEdit = new XmlEdit(service.ExpandProperties((string)luaTable5["xpath"]), service.ExpandProperties((string)luaTable5["value"]));
 					LogHelper.Instance.Log("xpath = {0}, value = {1}", xmlEdit.XPath, xmlEdit.Value);
-					xmlFileEditor2.Edits.Add(xmlEdit);
+					xmlFileEditor.Edits.Add(xmlEdit);
 				}
 			}
 		}
-		ReadOnlyCollection<XmlEditorError> readOnlyCollection = xmlFileEditor2.Apply();
+		ReadOnlyCollection<XmlEditorError> readOnlyCollection = xmlFileEditor.Apply();
 		luaTable["success"] = readOnlyCollection.Count == 0;
 		LuaTable luaTable6 = new LuaTable(KernelService.Instance.LuaRuntime);
 		int num = 1;
@@ -493,14 +483,13 @@ public static class FileSystemFunctions
 	[KernelFunction(Name = "kernel.getfilehash")]
 	internal static string GetSHA1Hash(string fileName)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string path = service.ExpandProperties(fileName);
+		string path = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fileName);
 		if (!File.Exists(path))
 		{
 			return "0000000000000000000000000000000000000000";
 		}
 		using FileStream inputStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return StreamExtensions.ToASCIISHA1Hash(inputStream);
+		return inputStream.ToASCIISHA1Hash();
 	}
 
 	private static void DirectoryCopyInternal(DirectoryInfo source, DirectoryInfo target)

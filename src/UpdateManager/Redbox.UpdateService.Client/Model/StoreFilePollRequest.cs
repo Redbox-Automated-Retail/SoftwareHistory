@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreFilePollRequest
+internal class StoreFilePollRequest
 {
 	public long StoreFile { get; set; }
 

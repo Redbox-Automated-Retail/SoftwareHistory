@@ -9,34 +9,32 @@ namespace Redbox.UpdateManager.Command;
 [Command("transfer")]
 internal class TransferCommand
 {
-	[Usage("transfer cancel-all")]
 	[CommandForm(Name = "cancel-all")]
+	[Usage("transfer cancel-all")]
 	public void CancelAll(CommandContext context)
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		Redbox.IPC.Framework.ErrorList collection = ConvertErrors(service.CancelAll());
+		Redbox.IPC.Framework.ErrorList collection = ConvertErrors(ServiceLocator.Instance.GetService<ITransferService>().CancelAll());
 		context.Errors.AddRange(collection);
 	}
 
-	[Usage("transfer repositories-in-transit")]
 	[CommandForm(Name = "repositories-in-transit")]
+	[Usage("transfer repositories-in-transit")]
 	public void InTransit(CommandContext context)
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		Redbox.IPC.Framework.ErrorList collection = ConvertErrors(service.GetRepositoriesInTransit(out var inTransit));
+		Redbox.IPC.Framework.ErrorList collection = ConvertErrors(ServiceLocator.Instance.GetService<ITransferService>().GetRepositoriesInTransit(out var inTransit));
 		context.Errors.AddRange(collection);
-		context.Messages.Add(ObjectExtensions.ToJson(new List<string>(inTransit)));
+		context.Messages.Add(new List<string>(inTransit).ToJson());
 	}
 
-	[Usage("transfer list [allusers:]")]
 	[CommandForm(Name = "list")]
+	[Usage("transfer list [allusers:]")]
 	public void InTransit(CommandContext context, bool? allusers)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
 		context.Errors.AddRange(ConvertErrors(service.GetJobs(out var jobs, allusers.HasValue && allusers.Value)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(jobs));
+			context.Messages.Add(jobs.ToJson());
 		}
 	}
 
@@ -48,7 +46,7 @@ internal class TransferCommand
 		context.Errors.AddRange(ConvertErrors(service.CreateDownloadJob(name, out var job)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(job));
+			context.Messages.Add(job.ToJson());
 		}
 	}
 
@@ -60,7 +58,7 @@ internal class TransferCommand
 		context.Errors.AddRange(ConvertErrors(service.CreateUploadJob(name, out var job)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(job));
+			context.Messages.Add(job.ToJson());
 		}
 	}
 
@@ -72,7 +70,7 @@ internal class TransferCommand
 		context.Errors.AddRange(ConvertErrors(service.GetJob(new Guid(id), out var job)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(job));
+			context.Messages.Add(job.ToJson());
 		}
 	}
 
@@ -84,7 +82,7 @@ internal class TransferCommand
 		context.Errors.AddRange(ConvertErrors(service.AreJobsRunning(out var isRunning)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(isRunning));
+			context.Messages.Add(isRunning.ToJson());
 		}
 	}
 
@@ -100,8 +98,8 @@ internal class TransferCommand
 		}
 	}
 
-	[Usage("complete id:")]
 	[CommandForm(Name = "complete")]
+	[Usage("complete id:")]
 	public void Complete(CommandContext context, [CommandKeyValue(IsRequired = true)] string id)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -112,8 +110,8 @@ internal class TransferCommand
 		}
 	}
 
-	[Usage("resume id:")]
 	[CommandForm(Name = "resume")]
+	[Usage("resume id:")]
 	public void Resume(CommandContext context, [CommandKeyValue(IsRequired = true)] string id)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -124,8 +122,8 @@ internal class TransferCommand
 		}
 	}
 
-	[Usage("cancel id:")]
 	[CommandForm(Name = "cancel")]
+	[Usage("cancel id:")]
 	public void Cancel(CommandContext context, [CommandKeyValue(IsRequired = true)] string id)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -136,8 +134,8 @@ internal class TransferCommand
 		}
 	}
 
-	[Usage("suspend id:")]
 	[CommandForm(Name = "suspend")]
+	[Usage("suspend id:")]
 	public void Suspend(CommandContext context, [CommandKeyValue(IsRequired = true)] string id)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -184,8 +182,8 @@ internal class TransferCommand
 		}
 	}
 
-	[Usage("set-minimum-retry-delay id: seconds:")]
 	[CommandForm(Name = "set-minimum-retry-delay")]
+	[Usage("set-minimum-retry-delay id: seconds:")]
 	public void SetMinimumRetryDelay(CommandContext context, [CommandKeyValue(IsRequired = true)] string id, [CommandKeyValue(IsRequired = true)] uint? seconds)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -209,8 +207,8 @@ internal class TransferCommand
 		}
 	}
 
-	[Usage("get-items id:")]
 	[CommandForm(Name = "get-items")]
+	[Usage("get-items id:")]
 	public void GetItems(CommandContext context, [CommandKeyValue(IsRequired = true)] string id)
 	{
 		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
@@ -221,7 +219,7 @@ internal class TransferCommand
 			context.Errors.AddRange(ConvertErrors(items));
 			if (!context.Errors.ContainsError())
 			{
-				context.Messages.Add(ObjectExtensions.ToJson(items2));
+				context.Messages.Add(items2.ToJson());
 			}
 		}
 	}

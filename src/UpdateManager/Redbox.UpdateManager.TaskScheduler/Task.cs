@@ -62,7 +62,7 @@ public class Task : ITask, IJob
 		RepeatInterval = repeatInterval;
 	}
 
-	public void Execute(JobExecutionContext context)
+	public void Execute(IJobExecutionContext context)
 	{
 		try
 		{
@@ -109,8 +109,7 @@ public class Task : ITask, IJob
 	{
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("Task.ExecuteEvent", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			new ErrorList().Add(Redbox.UpdateManager.ComponentModel.Error.NewError("Task.ExecuteEvent", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return;
 		}
 		try
@@ -138,18 +137,17 @@ public class Task : ITask, IJob
 					{
 						if (string.Compare(task.Payload, "watchdog.lua", StringComparison.CurrentCultureIgnoreCase) == 0)
 						{
-							IHealthService service3 = ServiceLocator.Instance.GetService<IHealthService>();
-							service3.Update("UPDATE_SERVICE_WATCHDOG");
+							ServiceLocator.Instance.GetService<IHealthService>().Update("UPDATE_SERVICE_WATCHDOG");
 						}
 					}
 					catch (Exception e)
 					{
 						LogHelper.Instance.Log("(TASK0099) - An unhandled exception occurred updating health for watchdog.", e);
 					}
-					IKernelService service4 = ServiceLocator.Instance.GetService<IKernelService>();
+					IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
 					string chunk = File.ReadAllText(text3);
 					LogHelper.Instance.Log("Executing lua script at {0}", text3);
-					service4.ExecuteChunk(chunk);
+					service2.ExecuteChunk(chunk);
 					break;
 				}
 				case PayloadType.Shell:
@@ -167,35 +165,30 @@ public class Task : ITask, IJob
 						text2 = string.Empty;
 					}
 					LogHelper.Instance.Log("Executing shell command process: {0} arguments: {1}", text, text2);
-					ProcessStartInfo processStartInfo = new ProcessStartInfo();
-					processStartInfo.WorkingDirectory = service.ExpandProperties("${RunningPath}");
-					processStartInfo.ErrorDialog = false;
-					processStartInfo.UseShellExecute = false;
-					processStartInfo.Arguments = text2;
-					processStartInfo.CreateNoWindow = true;
-					processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-					processStartInfo.FileName = text;
-					ProcessStartInfo startInfo = processStartInfo;
-					using (Process process = Process.Start(startInfo))
+					using (Process process = Process.Start(new ProcessStartInfo
+					{
+						WorkingDirectory = service.ExpandProperties("${RunningPath}"),
+						ErrorDialog = false,
+						UseShellExecute = false,
+						Arguments = text2,
+						CreateNoWindow = true,
+						WindowStyle = ProcessWindowStyle.Hidden,
+						FileName = text
+					}))
 					{
 						LogHelper.Instance.Log("Process '{0}' started with PID '{1}'.", process.ProcessName, process.Id);
 					}
 					break;
 				}
 				case PayloadType.ServerPoll:
-				{
 					LogHelper.Instance.Log("Running scheduled ServerPoll");
-					IUpdateService service2 = ServiceLocator.Instance.GetService<IUpdateService>();
-					ErrorList errorList2 = service2.ServerPoll();
-					foreach (Error item in errorList2)
+					foreach (Redbox.UpdateManager.ComponentModel.Error item in ServiceLocator.Instance.GetService<IUpdateService>().ServerPoll())
 					{
 						LogHelper.Instance.Log(item.ToString(), LogEntryType.Error);
 					}
 					break;
 				}
-				}
-				IKernelService service5 = ServiceLocator.Instance.GetService<IKernelService>();
-				service5.PerformShutdown();
+				ServiceLocator.Instance.GetService<IKernelService>().PerformShutdown();
 			}
 			catch (Exception e2)
 			{

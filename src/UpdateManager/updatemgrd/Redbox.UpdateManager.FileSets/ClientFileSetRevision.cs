@@ -45,24 +45,25 @@ internal class ClientFileSetRevision
 
 	public ClientFileSetRevision Clone()
 	{
-		ClientFileSetRevision clientFileSetRevision = new ClientFileSetRevision();
-		clientFileSetRevision.FileSetId = FileSetId;
-		clientFileSetRevision.FileSetName = FileSetName;
-		clientFileSetRevision.RetentionDays = RetentionDays;
-		clientFileSetRevision.RetentionRevisions = RetentionRevisions;
-		clientFileSetRevision.RevisionId = RevisionId;
-		clientFileSetRevision.RevisionName = RevisionName;
-		clientFileSetRevision.RevisionVersion = RevisionVersion;
-		clientFileSetRevision.PatchRevisionId = PatchRevisionId;
-		clientFileSetRevision.SetPath = SetPath;
-		clientFileSetRevision.SetCompressionType = SetCompressionType;
-		clientFileSetRevision.SetFileHash = SetFileHash;
-		clientFileSetRevision.SetFileSize = SetFileSize;
-		clientFileSetRevision.PatchSetPath = PatchSetPath;
-		clientFileSetRevision.PatchSetCompressionType = PatchSetCompressionType;
-		clientFileSetRevision.PatchSetFileHash = PatchSetFileHash;
-		clientFileSetRevision.PatchSetFileSize = PatchSetFileSize;
-		ClientFileSetRevision clientFileSetRevision2 = clientFileSetRevision;
+		ClientFileSetRevision obj = new ClientFileSetRevision
+		{
+			FileSetId = FileSetId,
+			FileSetName = FileSetName,
+			RetentionDays = RetentionDays,
+			RetentionRevisions = RetentionRevisions,
+			RevisionId = RevisionId,
+			RevisionName = RevisionName,
+			RevisionVersion = RevisionVersion,
+			PatchRevisionId = PatchRevisionId,
+			SetPath = SetPath,
+			SetCompressionType = SetCompressionType,
+			SetFileHash = SetFileHash,
+			SetFileSize = SetFileSize,
+			PatchSetPath = PatchSetPath,
+			PatchSetCompressionType = PatchSetCompressionType,
+			PatchSetFileHash = PatchSetFileHash,
+			PatchSetFileSize = PatchSetFileSize
+		};
 		List<ClientFileSetFile> files = new List<ClientFileSetFile>();
 		if (Files != null)
 		{
@@ -71,7 +72,7 @@ internal class ClientFileSetRevision
 				files.Add(item);
 			});
 		}
-		clientFileSetRevision2.Files = files;
+		obj.Files = files;
 		List<ClientPatchFileSetFile> patchFiles = new List<ClientPatchFileSetFile>();
 		if (PatchFiles != null)
 		{
@@ -80,7 +81,7 @@ internal class ClientFileSetRevision
 				patchFiles.Add(item);
 			});
 		}
-		clientFileSetRevision2.PatchFiles = patchFiles;
+		obj.PatchFiles = patchFiles;
 		List<ClientFileSetRevisionDependency> dependencies = new List<ClientFileSetRevisionDependency>();
 		if (Dependencies != null)
 		{
@@ -89,7 +90,7 @@ internal class ClientFileSetRevision
 				dependencies.Add(item);
 			});
 		}
-		clientFileSetRevision2.Dependencies = dependencies;
-		return clientFileSetRevision2;
+		obj.Dependencies = dependencies;
+		return obj;
 	}
 }

@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class FileSetPollRequest
+internal class FileSetPollRequest
 {
 	public long FileSetId { get; set; }
 

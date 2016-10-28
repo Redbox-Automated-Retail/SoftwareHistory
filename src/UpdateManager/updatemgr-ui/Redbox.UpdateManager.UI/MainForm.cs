@@ -94,25 +94,20 @@ public class MainForm : Form
 	{
 		try
 		{
-			TransferManager transferManager = new TransferManager();
-			transferManager.Show(this);
+			new TransferManager().Show(this);
 		}
 		catch (Exception e2)
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("E999", "An unhandled exception was thrown in Update Mananger in ManageTransfersOnClick.", e2));
-			ErrorList errors = errorList;
+			ErrorList errors = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E999", "An unhandled exception was thrown in Update Mananger in ManageTransfersOnClick.", e2) };
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errors;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 	}
 
 	private void OnResetBITS(object sender, EventArgs e)
 	{
-		DialogResult dialogResult = MessageBox.Show("Are you sure you want to cancel all running transfer jobs?", "Warning!", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly);
-		if (dialogResult != DialogResult.Yes)
+		if (MessageBox.Show("Are you sure you want to cancel all running transfer jobs?", "Warning!", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly) != DialogResult.Yes)
 		{
 			return;
 		}
@@ -124,10 +119,8 @@ public class MainForm : Form
 			{
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm = new ErrorForm
-					{
-						Errors = errors
-					};
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errors;
 					errorForm.ShowDialog();
 				});
 			}
@@ -144,10 +137,8 @@ public class MainForm : Form
 			{
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm = new ErrorForm
-					{
-						Errors = errors
-					};
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errors;
 					errorForm.ShowDialog();
 				});
 			}
@@ -162,13 +153,10 @@ public class MainForm : Form
 		}
 		catch (Exception e2)
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("E998", "An unhandled exception was thrown in Update Mananger.", e2));
-			ErrorList errors = errorList;
+			ErrorList errors = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E998", "An unhandled exception was thrown in Update Mananger.", e2) };
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errors;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 	}
 
@@ -314,13 +302,10 @@ public class MainForm : Form
 		}
 		catch (Exception e2)
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("E997", "An unhandled exception was thrown in Update Mananger.", e2));
-			ErrorList errors = errorList;
+			ErrorList errors = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E997", "An unhandled exception was thrown in Update Mananger.", e2) };
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errors;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 	}
 
@@ -352,10 +337,8 @@ public class MainForm : Form
 				{
 					UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 					{
-						ErrorForm errorForm = new ErrorForm
-						{
-							Errors = errors
-						};
+						ErrorForm errorForm = new ErrorForm();
+						errorForm.Errors = errors;
 						errorForm.ShowDialog();
 					});
 				}
@@ -370,13 +353,11 @@ public class MainForm : Form
 			}
 			catch (Exception e2)
 			{
-				ErrorList errors2 = new ErrorList { Error.NewError("E996", "An unhandled exception occurred while polling update service.", e2) };
+				ErrorList errors2 = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E996", "An unhandled exception occurred while polling update service.", e2) };
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm = new ErrorForm
-					{
-						Errors = errors2
-					};
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errors2;
 					errorForm.ShowDialog();
 				});
 			}
@@ -419,10 +400,8 @@ public class MainForm : Form
 				{
 					UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 					{
-						ErrorForm errorForm = new ErrorForm
-						{
-							Errors = errors
-						};
+						ErrorForm errorForm = new ErrorForm();
+						errorForm.Errors = errors;
 						errorForm.ShowDialog();
 					});
 				}
@@ -432,8 +411,7 @@ public class MainForm : Form
 					{
 						UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 						{
-							DialogResult dialogResult = MessageBox.Show("To complete this activation this computer must restart. Would you like to reboot now?", "Information", MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly);
-							if (dialogResult == DialogResult.Yes)
+							if (MessageBox.Show("To complete this activation this computer must restart. Would you like to reboot now?", "Information", MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly) == DialogResult.Yes)
 							{
 								shouldReboot = true;
 							}
@@ -448,13 +426,11 @@ public class MainForm : Form
 			}
 			catch (Exception e2)
 			{
-				ErrorList errors2 = new ErrorList { Error.NewError("E995", "An unhandled exception occurred while polling update service.", e2) };
+				ErrorList errors2 = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E995", "An unhandled exception occurred while polling update service.", e2) };
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm = new ErrorForm
-					{
-						Errors = errors2
-					};
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errors2;
 					errorForm.ShowDialog();
 				});
 			}
@@ -500,10 +476,8 @@ public class MainForm : Form
 				{
 					UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 					{
-						ErrorForm errorForm = new ErrorForm
-						{
-							Errors = errors
-						};
+						ErrorForm errorForm = new ErrorForm();
+						errorForm.Errors = errors;
 						errorForm.ShowDialog();
 					});
 				}
@@ -518,13 +492,11 @@ public class MainForm : Form
 			}
 			catch (Exception e2)
 			{
-				ErrorList errors2 = new ErrorList { Error.NewError("E994", "An unhandled exception occurred while polling update service.", e2) };
+				ErrorList errors2 = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E994", "An unhandled exception occurred while polling update service.", e2) };
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm = new ErrorForm
-					{
-						Errors = errors2
-					};
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errors2;
 					errorForm.ShowDialog();
 				});
 			}
@@ -553,14 +525,12 @@ public class MainForm : Form
 				{
 					if (selectedItem is ListViewItem listViewItem)
 					{
-						IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-						service.Reset((string)listViewItem.Tag, out var defferedDelete);
+						ServiceLocator.Instance.GetService<IRepositoryService>().Reset((string)listViewItem.Tag, out var defferedDelete);
 						if (defferedDelete)
 						{
 							UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 							{
-								DialogResult dialogResult = MessageBox.Show("To complete this activation this computer must restart. Would you like to reboot now?", "Information", MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly);
-								if (dialogResult == DialogResult.Yes)
+								if (MessageBox.Show("To complete this activation this computer must restart. Would you like to reboot now?", "Information", MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly) == DialogResult.Yes)
 								{
 									shouldReboot = true;
 								}
@@ -587,19 +557,15 @@ public class MainForm : Form
 		{
 			if (m_changes.SelectedItems.Count >= 1 && m_changes.SelectedItems[0].Tag is IRevLog log)
 			{
-				ChangeDetails changeDetails = new ChangeDetails(log);
-				changeDetails.Show(this);
+				new ChangeDetails(log).Show(this);
 			}
 		}
 		catch (Exception e2)
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("E993", "An unhandled exception was thrown in Update Mananger.", e2));
-			ErrorList errors = errorList;
+			ErrorList errors = new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("E993", "An unhandled exception was thrown in Update Mananger.", e2) };
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errors;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 	}
 
@@ -644,19 +610,16 @@ public class MainForm : Form
 
 	private void OnManageEventSchedulerClick(object sender, EventArgs e)
 	{
-		ManageScheduleEvents manageScheduleEvents = new ManageScheduleEvents();
-		manageScheduleEvents.Show(this);
+		new ManageScheduleEvents().Show(this);
 	}
 
 	private void OnResetScheduleEventClick(object sender, EventArgs e)
 	{
-		DialogResult dialogResult = MessageBox.Show("Are you sure you want to delete all running schedule events?", "Warning!", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly);
-		if (dialogResult == DialogResult.Yes)
+		if (MessageBox.Show("Are you sure you want to delete all running schedule events?", "Warning!", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly) == DialogResult.Yes)
 		{
 			UpdateManagerApplication.Instance.AsyncButtonAction((Control)sender, delegate
 			{
-				ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-				service.Clear();
+				ServiceLocator.Instance.GetService<ITaskScheduler>().Clear();
 			});
 		}
 	}
@@ -678,10 +641,10 @@ public class MainForm : Form
 			Button activateTo2 = m_activateTo;
 			Button rebuild2 = m_rebuild;
 			Button updateTo2 = m_updateTo;
-			bool flag6 = (m_details.Enabled = false);
-			bool flag8 = (updateTo2.Enabled = flag6);
-			bool enabled2 = (rebuild2.Enabled = flag8);
-			activateTo2.Enabled = enabled2;
+			bool flag = (m_details.Enabled = false);
+			bool flag3 = (updateTo2.Enabled = flag);
+			bool enabled = (rebuild2.Enabled = flag3);
+			activateTo2.Enabled = enabled;
 		}
 	}
 
@@ -699,8 +662,7 @@ public class MainForm : Form
 				{
 					if (selectedItem is ListViewItem listViewItem)
 					{
-						IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-						service.TrimRepository((string)listViewItem.Tag);
+						ServiceLocator.Instance.GetService<IRepositoryService>().TrimRepository((string)listViewItem.Tag);
 					}
 				}
 			}
@@ -722,10 +684,8 @@ public class MainForm : Form
 			{
 				UpdateManagerApplication.Instance.ThreadSafeHostUpdate(delegate
 				{
-					ErrorForm errorForm = new ErrorForm
-					{
-						Errors = errors
-					};
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errors;
 					errorForm.ShowDialog();
 				});
 			}

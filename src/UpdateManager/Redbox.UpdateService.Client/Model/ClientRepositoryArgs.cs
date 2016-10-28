@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.UpdateService.Model;
 
-public class ClientRepositoryArgs
+internal class ClientRepositoryArgs
 {
 	public string StoreNumber { get; set; }
 

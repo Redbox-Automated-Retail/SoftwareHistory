@@ -44,111 +44,92 @@ public class Updater
 			TransferServiceProxy.Instance.Initialize(Settings.Default.UpdateManagerUrl);
 			RepositoryServiceProxy.Instance.Initialize(Settings.Default.UpdateManagerUrl);
 			SchedulerProxy.Instance.Initialize(Settings.Default.UpdateManagerUrl);
+			return result;
 		}
-		else
-		{
-			DataStoreService.Instance.Initialize(Settings.Default.DataStoreRoot);
-			QueueService.Instance.Initialize(Settings.Default.DataStoreRoot);
-			TransferService.Instance.Initialize();
-			RepositoryService.Instance.Initialize(Settings.Default.ManifestRoot);
-			Scheduler.Instance.Initialize();
-		}
+		DataStoreService.Instance.Initialize(Settings.Default.DataStoreRoot);
+		QueueService.Instance.Initialize(Settings.Default.DataStoreRoot);
+		TransferService.Instance.Initialize();
+		RepositoryService.Instance.Initialize(Settings.Default.ManifestRoot);
+		Scheduler.Instance.Initialize();
 		return result;
 	}
 
 	public ErrorList StartUpdate()
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		return service.StartDownloads();
+		return ServiceLocator.Instance.GetService<IUpdateService>().StartDownloads();
 	}
 
 	public ErrorList FinishUpdates()
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		return service.FinishDownloads();
+		return ServiceLocator.Instance.GetService<IUpdateService>().FinishDownloads();
 	}
 
 	public ErrorList FinishUpdate(Guid jobId)
 	{
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		return service.FinishDownload(jobId);
+		return ServiceLocator.Instance.GetService<IUpdateService>().FinishDownload(jobId);
 	}
 
 	public ErrorList Activate(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
 		bool deferredMove;
-		return service.ActivateToHead(name, out deferredMove);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().ActivateToHead(name, out deferredMove);
 	}
 
 	public ErrorList Activate(string name, string hash)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
 		bool deferredMove;
-		return service.ActivateTo(name, hash, out deferredMove);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().ActivateTo(name, hash, out deferredMove);
 	}
 
 	public ErrorList UpdateTo(string name, string hash)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.UpdateTo(name, hash);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().UpdateTo(name, hash);
 	}
 
 	public ErrorList UpdateTo(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.UpdateToHead(name);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().UpdateToHead(name);
 	}
 
 	public List<string> GetManifests()
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.GetAllRepositories();
+		return ServiceLocator.Instance.GetService<IRepositoryService>().GetAllRepositories();
 	}
 
 	public List<IRevLog> GetPendingChangeSets(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.GetPendingChanges(name);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().GetPendingChanges(name);
 	}
 
 	public List<IRevLog> GetAppliedChangeSets(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.GetAppliedChanges(name);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().GetAppliedChanges(name);
 	}
 
 	public List<IRevLog> GetAllChangesSets(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.GetAllChanges(name);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().GetAllChanges(name);
 	}
 
 	public ErrorList ResetBITS()
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		return service.CancelAll();
+		return ServiceLocator.Instance.GetService<ITransferService>().CancelAll();
 	}
 
 	public void ResetManifest()
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		service.Reset(out var _);
+		ServiceLocator.Instance.GetService<IRepositoryService>().Reset(out var _);
 	}
 
 	public void Reset()
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		service.Reset(out var _);
-		ITransferService service2 = ServiceLocator.Instance.GetService<ITransferService>();
-		service2.CancelAll();
-		IDataStoreService service3 = ServiceLocator.Instance.GetService<IDataStoreService>();
-		service3.Reset();
+		ServiceLocator.Instance.GetService<IRepositoryService>().Reset(out var _);
+		ServiceLocator.Instance.GetService<ITransferService>().CancelAll();
+		ServiceLocator.Instance.GetService<IDataStoreService>().Reset();
 	}
 
 	private static bool IsServiceRunning()
 	{
-		NamedLock namedLock = new NamedLock("{C423B0E3-95B3-4191-B326-AB3EA516F825}", LockScope.Local);
-		return !namedLock.Exists();
+		return !new NamedLock("{C423B0E3-95B3-4191-B326-AB3EA516F825}", LockScope.Local).Exists();
 	}
 }

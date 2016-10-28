@@ -32,7 +32,7 @@ public class Program : IDisposable
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E989", "An unhandled exception was thrown in Program.Run.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E989", "An unhandled exception was thrown in Program.Run.", e));
 		}
 		if (!errorList.ContainsCode("INSTANCE"))
 		{
@@ -40,8 +40,7 @@ public class Program : IDisposable
 			{
 				ErrorForm errorForm = new ErrorForm();
 				errorForm.Errors = errorList;
-				ErrorForm errorForm2 = errorForm;
-				errorForm2.ShowDialog();
+				errorForm.ShowDialog();
 			}
 			else if (UpdateManagerApplication.Instance.Run())
 			{

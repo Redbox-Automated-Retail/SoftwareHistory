@@ -186,8 +186,8 @@ public class TransferService : ITransferService
 		}
 		catch (COMException e)
 		{
-			errorList.Add(Error.NewError("B999", "Error creating BITS job.", e));
-			errorList.Add(Error.NewError("B999", "Error accesing BITS job.", new Win32Exception(Marshal.GetLastWin32Error())));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("B999", "Error creating BITS job.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("B999", "Error accesing BITS job.", new Win32Exception(Marshal.GetLastWin32Error())));
 		}
 		finally
 		{
@@ -213,7 +213,7 @@ public class TransferService : ITransferService
 		}
 		catch (COMException e)
 		{
-			errorList.Add(Error.NewError("B999", "Error creating BITS job.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("B999", "Error creating BITS job.", e));
 		}
 		finally
 		{
@@ -239,7 +239,7 @@ public class TransferService : ITransferService
 		}
 		catch (COMException e)
 		{
-			errorList.Add(Error.NewError("B999", "Error creating BITS job.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("B999", "Error creating BITS job.", e));
 		}
 		finally
 		{
@@ -262,8 +262,8 @@ public class TransferService : ITransferService
 		}
 		catch (COMException e)
 		{
-			errorList.Add(Error.NewError("B999", "Error accesing BITS job.", e));
-			errorList.Add(Error.NewError("B999", "Error accesing BITS job.", new Win32Exception(Marshal.GetLastWin32Error())));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("B999", "Error accesing BITS job.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("B999", "Error accesing BITS job.", new Win32Exception(Marshal.GetLastWin32Error())));
 		}
 		return errorList;
 	}

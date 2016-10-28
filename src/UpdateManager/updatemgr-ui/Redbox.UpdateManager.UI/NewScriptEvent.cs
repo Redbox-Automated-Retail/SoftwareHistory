@@ -109,7 +109,7 @@ public class NewScriptEvent : Form
 			{
 				return;
 			}
-			errorList.AddRange(service.ScheduleSimpleJob(repeatInterval: new TimeSpan(0, 0, int.Parse(m_basic_recurrence.Text)), name: m_basic_name.Text, payload: StringExtensions.Escaped(m_basic_path.Text), payloadType: PayloadType.Script, startOffset: startOffset, startTime: null, endTime: null));
+			errorList.AddRange(service.ScheduleSimpleJob(repeatInterval: new TimeSpan(0, 0, int.Parse(m_basic_recurrence.Text)), name: m_basic_name.Text, payload: m_basic_path.Text.Escaped(), payloadType: PayloadType.Script, startOffset: startOffset, startTime: null, endTime: null));
 		}
 		else
 		{
@@ -145,14 +145,13 @@ public class NewScriptEvent : Form
 			{
 				return;
 			}
-			errorList.AddRange(service.ScheduleCronJob(m_advanced_name.Text, StringExtensions.Escaped(m_advanced_path.Text), PayloadType.Script, startOffset2, null, null, m_advanced_cronExpression.Text));
+			errorList.AddRange(service.ScheduleCronJob(m_advanced_name.Text, m_advanced_path.Text.Escaped(), PayloadType.Script, startOffset2, null, null, m_advanced_cronExpression.Text));
 		}
 		if (errorList.ContainsError())
 		{
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errorList;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 		Close();
 	}

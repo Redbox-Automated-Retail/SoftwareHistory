@@ -94,8 +94,7 @@ public class TransferDetails : Form
 	{
 		ErrorForm errorForm = new ErrorForm();
 		errorForm.Errors = m_errors;
-		ErrorForm errorForm2 = errorForm;
-		errorForm2.ShowDialog();
+		errorForm.ShowDialog();
 	}
 
 	protected override void Dispose(bool disposing)

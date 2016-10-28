@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class StoreScheduleInfo
+internal class StoreScheduleInfo
 {
 	public byte EndOfScheduleInHoursFromMidnight;
 

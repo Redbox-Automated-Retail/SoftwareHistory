@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using Redbox.Command.Tokenizer;
 using Redbox.Core;
@@ -9,20 +10,25 @@ namespace Redbox.IPC.Framework;
 
 internal class CommandInstance
 {
+	private List<string> _filters = new List<string>();
+
 	public readonly IDictionary<string, FormMethod> FormMethodCache = new Dictionary<string, FormMethod>();
 
 	public Type CommandType { get; set; }
 
 	public string CommandDescription { get; set; }
 
+	public List<string> Filters => _filters;
+
 	public static CommandInstance GetCommandInstance(Type commandType)
 	{
-		CommandInstance commandInstance = new CommandInstance();
-		commandInstance.CommandType = commandType;
-		CommandInstance commandInstance2 = commandInstance;
+		CommandInstance commandInstance = new CommandInstance
+		{
+			CommandType = commandType
+		};
 		if (Attribute.GetCustomAttribute(commandType, typeof(DescriptionAttribute)) is DescriptionAttribute descriptionAttribute)
 		{
-			commandInstance2.CommandDescription = descriptionAttribute.Description;
+			commandInstance.CommandDescription = descriptionAttribute.Description;
 		}
 		MethodInfo[] methods = commandType.GetMethods();
 		foreach (MethodInfo methodInfo in methods)
@@ -39,12 +45,18 @@ internal class CommandInstance
 			}
 			UsageAttribute usageAttribute = Attribute.GetCustomAttribute(methodInfo, typeof(UsageAttribute)) as UsageAttribute;
 			DescriptionAttribute descriptionAttribute2 = Attribute.GetCustomAttribute(methodInfo, typeof(DescriptionAttribute)) as DescriptionAttribute;
-			FormMethod formMethod = new FormMethod();
-			formMethod.Method = methodInfo;
-			formMethod.Usage = ((usageAttribute != null) ? usageAttribute.Template : string.Empty);
-			formMethod.Description = ((descriptionAttribute2 != null) ? descriptionAttribute2.Description : string.Empty);
-			formMethod.Loggable = notLoggableAttribute == null;
-			FormMethod formMethod2 = formMethod;
+			FormMethod formMethod = new FormMethod
+			{
+				Method = methodInfo,
+				Usage = ((usageAttribute != null) ? usageAttribute.Template : string.Empty),
+				Description = ((descriptionAttribute2 != null) ? descriptionAttribute2.Description : string.Empty),
+				Loggable = (notLoggableAttribute == null)
+			};
+			if (!string.IsNullOrEmpty(commandFormAttribute.Filter))
+			{
+				commandFormAttribute.Filter.Trim().Split('|').ToList()
+					.ForEach(formMethod.Filters.Add);
+			}
 			int num = 0;
 			ParameterInfo[] array = parameters;
 			foreach (ParameterInfo parameterInfo in array)
@@ -53,35 +65,37 @@ internal class CommandInstance
 				{
 					continue;
 				}
-				FormMethodParameter formMethodParameter = new FormMethodParameter();
-				formMethodParameter.Parameter = parameterInfo;
-				formMethodParameter.Index = num++;
-				FormMethodParameter formMethodParameter2 = formMethodParameter;
+				FormMethodParameter formMethodParameter = new FormMethodParameter
+				{
+					Parameter = parameterInfo,
+					Index = num++
+				};
 				CommandKeyValueAttribute commandKeyValueAttribute = Attribute.GetCustomAttribute(parameterInfo, typeof(CommandKeyValueAttribute)) as CommandKeyValueAttribute;
-				formMethodParameter2.KeyName = parameterInfo.Name.ToUpper();
+				formMethodParameter.KeyName = parameterInfo.Name.ToUpper();
 				if (commandKeyValueAttribute != null)
 				{
-					formMethodParameter2.MetaData = commandKeyValueAttribute;
+					formMethodParameter.MetaData = commandKeyValueAttribute;
 					if (commandKeyValueAttribute.KeyName != null)
 					{
-						formMethodParameter2.KeyName = commandKeyValueAttribute.KeyName.ToUpper();
+						formMethodParameter.KeyName = commandKeyValueAttribute.KeyName.ToUpper();
 					}
 				}
-				formMethod2.ParameterCache[formMethodParameter2.KeyName] = formMethodParameter2;
+				formMethod.ParameterCache[formMethodParameter.KeyName] = formMethodParameter;
 			}
-			formMethod2.Compile(commandInstance2.CommandType);
-			commandInstance2.FormMethodCache[commandFormAttribute.Name.ToUpper()] = formMethod2;
+			formMethod.Compile(commandInstance.CommandType);
+			commandInstance.FormMethodCache[commandFormAttribute.Name.ToUpper()] = formMethod;
 		}
 		MethodInfo method = commandType.GetMethod("Default", new Type[1] { typeof(CommandContext) });
 		if (method != null)
 		{
-			FormMethod formMethod3 = new FormMethod();
-			formMethod3.Method = method;
-			FormMethod formMethod4 = formMethod3;
-			formMethod4.Compile(commandInstance2.CommandType);
-			commandInstance2.FormMethodCache["Default"] = formMethod4;
+			FormMethod formMethod2 = new FormMethod
+			{
+				Method = method
+			};
+			formMethod2.Compile(commandInstance.CommandType);
+			commandInstance.FormMethodCache["Default"] = formMethod2;
 		}
-		return commandInstance2;
+		return commandInstance;
 	}
 
 	public object GetInstance()
@@ -103,11 +117,11 @@ internal class CommandInstance
 		return false;
 	}
 
-	public void InvokeDefault(CommandResult result, CommandContext context, CommandTokenizer tokenizer)
+	public void InvokeDefault(CommandResult result, CommandContext context, CommandTokenizer tokenizer, bool enable, List<string> sourceFilters)
 	{
 		if (HasDefault())
 		{
-			FormMethodCache["Default"].Invoke(result, context, tokenizer, GetInstance());
+			FormMethodCache["Default"].Invoke(result, context, tokenizer, GetInstance(), enable, sourceFilters);
 		}
 	}
 
@@ -123,5 +137,22 @@ internal class CommandInstance
 			return FormMethodCache[key];
 		}
 		return null;
+	}
+
+	public bool IsInFilter(bool enable, List<string> sourceFilters)
+	{
+		if (!enable)
+		{
+			return true;
+		}
+		if (sourceFilters == null || sourceFilters.Count == 0)
+		{
+			return false;
+		}
+		if (_filters.Count == 0)
+		{
+			return false;
+		}
+		return sourceFilters.Intersect(_filters, StringComparer.CurrentCultureIgnoreCase).Count() > 0;
 	}
 }

@@ -42,8 +42,7 @@ public sealed class KernelService : IKernelService
 	{
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("KernelService.Reset", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			new ErrorList().Add(Redbox.UpdateManager.ComponentModel.Error.NewError("KernelService.Reset", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return;
 		}
 		try
@@ -87,8 +86,7 @@ public sealed class KernelService : IKernelService
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
 			locked = true;
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("KernelService.ExecuteChunck(chunk)", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			new ErrorList().Add(Redbox.UpdateManager.ComponentModel.Error.NewError("KernelService.ExecuteChunck(chunk)", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return null;
 		}
 		try
@@ -109,8 +107,7 @@ public sealed class KernelService : IKernelService
 	{
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("KernelService.ExecuteChunck(chunk,reset)", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			new ErrorList().Add(Redbox.UpdateManager.ComponentModel.Error.NewError("KernelService.ExecuteChunck(chunk,reset)", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return null;
 		}
 		try
@@ -140,8 +137,7 @@ public sealed class KernelService : IKernelService
 	{
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("KernelService.ExecuteChunck(chunck,reset,resulttablename,out,out", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			new ErrorList().Add(Redbox.UpdateManager.ComponentModel.Error.NewError("KernelService.ExecuteChunck(chunck,reset,resulttablename,out,out", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			result = null;
 			scriptCompleted = false;
 			return null;
@@ -160,8 +156,7 @@ public sealed class KernelService : IKernelService
 	{
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("KernelService.Execute", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+			new ErrorList().Add(Redbox.UpdateManager.ComponentModel.Error.NewError("KernelService.Execute", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 			return;
 		}
 		try
@@ -189,8 +184,7 @@ public sealed class KernelService : IKernelService
 	{
 		if (value is string)
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			value = service.ExpandProperties((string)value);
+			value = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties((string)value);
 		}
 		LuaRuntime[key] = value;
 	}
@@ -259,9 +253,9 @@ public sealed class KernelService : IKernelService
 		{
 			LuaRuntime["kernel"] = new LuaTable(LuaRuntime);
 			Type[] types = typeof(KernelService).Assembly.GetTypes();
-			foreach (Type type in types)
+			for (int i = 0; i < types.Length; i++)
 			{
-				MethodInfo[] methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+				MethodInfo[] methods = types[i].GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 				foreach (MethodInfo methodInfo in methods)
 				{
 					KernelFunctionAttribute kernelFunctionAttribute = (KernelFunctionAttribute)Attribute.GetCustomAttribute(methodInfo, typeof(KernelFunctionAttribute));

@@ -11,9 +11,7 @@ public static class TransferFunctions
 	[KernelFunction(Name = "kernel.transferarejobsrunning")]
 	internal static LuaTable AreJobRunning()
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		ErrorList errors = service.AreJobsRunning(out var isRunning);
-		LuaTable luaTable = CreateResultTable(errors);
+		LuaTable luaTable = CreateResultTable(ServiceLocator.Instance.GetService<ITransferService>().AreJobsRunning(out var isRunning));
 		luaTable["isrunning"] = isRunning;
 		return luaTable;
 	}
@@ -49,16 +47,13 @@ public static class TransferFunctions
 	[KernelFunction(Name = "kernel.resettransfers")]
 	internal static LuaTable Reset()
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		ErrorList errors = service.CancelAll();
-		return CreateResultTable(errors);
+		return CreateResultTable(ServiceLocator.Instance.GetService<ITransferService>().CancelAll());
 	}
 
 	[KernelFunction(Name = "kernel.transfergetrepositoriesintransit")]
 	internal static LuaTable GetRevisionsInTransit()
 	{
-		ITransferService service = ServiceLocator.Instance.GetService<ITransferService>();
-		ErrorList repositoriesInTransit = service.GetRepositoriesInTransit(out var inTransit);
+		ErrorList repositoriesInTransit = ServiceLocator.Instance.GetService<ITransferService>().GetRepositoriesInTransit(out var inTransit);
 		if (repositoriesInTransit.ContainsError())
 		{
 			repositoriesInTransit.ForEach(delegate
@@ -99,7 +94,7 @@ public static class TransferFunctions
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		luaTable["success"] = !errors.ContainsError();
 		LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			luaTable2[error.Code] = error.Description;
 		}

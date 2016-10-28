@@ -20,7 +20,7 @@ internal class Shared
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("FileSetService.SafeDelete", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("FileSetService.SafeDelete", "An unhandled exception occurred.", e));
 		}
 	}
 }

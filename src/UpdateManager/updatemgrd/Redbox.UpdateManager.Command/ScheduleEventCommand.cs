@@ -9,24 +9,24 @@ namespace Redbox.UpdateManager.Command;
 [Command("schedule-event")]
 internal class ScheduleEventCommand
 {
-	[Usage("SCHEDULE-EVENT list")]
 	[CommandForm(Name = "list")]
+	[Usage("SCHEDULE-EVENT list")]
 	public void List(CommandContext context)
 	{
 		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
 		context.Errors.AddRange(ConvertToIPCErrors(service.List(out var tasks)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(tasks));
+			context.Messages.Add(tasks.ToJson());
 		}
 	}
 
-	[Usage("SCHEDULE-EVENT isRunning")]
 	[CommandForm(Name = "isRunning")]
+	[Usage("SCHEDULE-EVENT isRunning")]
 	public void IsRunning(CommandContext context)
 	{
 		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
-		context.Messages.Add(ObjectExtensions.ToJson(service.IsRunning));
+		context.Messages.Add(service.IsRunning.ToJson());
 	}
 
 	[CommandForm(Name = "create")]
@@ -84,8 +84,8 @@ internal class ScheduleEventCommand
 		}
 	}
 
-	[Usage("SCHEDULE-EVENT delete name:")]
 	[CommandForm(Name = "delete")]
+	[Usage("SCHEDULE-EVENT delete name:")]
 	public void Delete(CommandContext context, [CommandKeyValue(IsRequired = true)] string name)
 	{
 		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
@@ -100,8 +100,8 @@ internal class ScheduleEventCommand
 		context.Errors.AddRange(ConvertToIPCErrors(service.Clear()));
 	}
 
-	[Usage("SCHEDULE-EVENT stop")]
 	[CommandForm(Name = "stop")]
+	[Usage("SCHEDULE-EVENT stop")]
 	public void Stop(CommandContext context)
 	{
 		ITaskScheduler service = ServiceLocator.Instance.GetService<ITaskScheduler>();
@@ -132,7 +132,7 @@ internal class ScheduleEventCommand
 		context.Errors.AddRange(ConvertToIPCErrors(service.ForceTask(name, out var success)));
 		if (!context.Errors.ContainsError())
 		{
-			context.Messages.Add(ObjectExtensions.ToJson(success));
+			context.Messages.Add(success.ToJson());
 		}
 	}
 

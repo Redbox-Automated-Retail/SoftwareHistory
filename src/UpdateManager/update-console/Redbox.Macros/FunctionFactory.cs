@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -10,13 +11,14 @@ namespace Redbox.Macros;
 
 internal sealed class FunctionFactory
 {
+	private delegate Attribute ConstructDelegate(Attribute attribute);
+
 	private static readonly Hashtable m_methodInfoCollection = new Hashtable();
 
 	[ReflectionPermission(SecurityAction.Demand, Flags = ReflectionPermissionFlag.NoFlags)]
 	public static bool ScanAssembly(string assemblyFile)
 	{
-		Assembly assembly = Assembly.LoadFrom(assemblyFile);
-		return ScanAssembly(assembly);
+		return ScanAssembly(Assembly.LoadFrom(assemblyFile));
 	}
 
 	[ReflectionPermission(SecurityAction.Demand, Flags = ReflectionPermissionFlag.NoFlags)]
@@ -24,10 +26,10 @@ internal sealed class FunctionFactory
 	{
 		bool flag = false;
 		Type[] types = assembly.GetTypes();
-		foreach (Type type in types)
+		for (int i = 0; i < types.Length; i++)
 		{
-			bool flag2 = ScanTypeForFunctions(type);
-			flag = flag || flag2;
+			bool flag2 = ScanTypeForFunctions(types[i]);
+			flag |= flag2;
 		}
 		return flag;
 	}
@@ -40,23 +42,29 @@ internal sealed class FunctionFactory
 			return;
 		}
 		DirectoryInfo directoryInfo = new DirectoryInfo(path);
-		FileInfo[] files = directoryInfo.GetFiles("*.dll");
-		FileInfo[] array = files;
-		foreach (FileInfo fileInfo in array)
+		List<FileInfo> list = new List<FileInfo>(directoryInfo.GetFiles("*.dll"));
+		list.AddRange(directoryInfo.GetFiles("*.exe"));
+		list.ForEach(delegate(FileInfo f)
 		{
 			try
 			{
-				ScanAssembly(fileInfo.FullName);
+				ScanAssembly(f.FullName);
 			}
 			catch (Exception innerException)
 			{
-				string text = string.Format(CultureInfo.InvariantCulture, "Failure scanning \"{0}\" for extensions", fileInfo);
+				string text = string.Format(CultureInfo.InvariantCulture, "Failure scanning \"{0}\" for extensions", f);
 				if (failOnError)
 				{
 					throw new EvaluatorException(text + ".", Location.UnknownLocation, innerException);
 				}
 			}
-		}
+		});
+	}
+
+	[ReflectionPermission(SecurityAction.Demand, Flags = ReflectionPermissionFlag.NoFlags)]
+	public static void ScanExecutionPath()
+	{
+		ScanDir(Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase).Replace("file:\\", ""), failOnError: true);
 	}
 
 	internal static MethodInfo LookupFunction(string functionName, FunctionArgument[] args)
@@ -66,7 +74,8 @@ internal sealed class FunctionFactory
 		{
 			throw new EvaluatorException(string.Format(CultureInfo.InvariantCulture, ResourceUtils.GetString("NA1052"), functionName));
 		}
-		if (obj is MethodInfo methodInfo)
+		MethodInfo methodInfo = obj as MethodInfo;
+		if (methodInfo != null)
 		{
 			if (methodInfo.GetParameters().Length == args.Length)
 			{
@@ -79,11 +88,11 @@ internal sealed class FunctionFactory
 			ArrayList arrayList = (ArrayList)obj;
 			for (int i = 0; i < arrayList.Count; i++)
 			{
-				MethodInfo methodInfo2 = (MethodInfo)arrayList[i];
-				if (methodInfo2.GetParameters().Length == args.Length)
+				methodInfo = (MethodInfo)arrayList[i];
+				if (methodInfo.GetParameters().Length == args.Length)
 				{
-					CheckDeprecation(functionName, methodInfo2);
-					return methodInfo2;
+					CheckDeprecation(functionName, methodInfo);
+					return methodInfo;
 				}
 			}
 		}
@@ -100,7 +109,7 @@ internal sealed class FunctionFactory
 			{
 				throw new EvaluatorException(text, Location.UnknownLocation);
 			}
-			Redbox_002EMacros1955_002ELogHelper.Instance.Log($"{text}", Redbox_002EMacros1955_002ELogEntryType.Info);
+			LogHelper.Instance.Log($"{text}", LogEntryType.Info);
 		}
 	}
 
@@ -108,13 +117,13 @@ internal sealed class FunctionFactory
 	{
 		try
 		{
-			FunctionSetAttribute functionSetAttribute = (FunctionSetAttribute)Attribute.GetCustomAttribute(type, typeof(FunctionSetAttribute));
+			FunctionSetAttribute functionSetAttribute = (FunctionSetAttribute)ExtrapolateAttribute(type, "Redbox.Macros.FunctionSetAttribute", FunctionSetAttributeConstructor);
 			if (functionSetAttribute == null)
 			{
 				return false;
 			}
-			bool flag = type == typeof(ExpressionEvaluator);
-			if (type.IsSubclassOf(typeof(FunctionSetBase)) && !type.IsAbstract)
+			bool flag = type.IsTypeOfExpressionEvaluator();
+			if (type.IsSubclassOfFunctionSetBase() && !type.IsAbstract)
 			{
 				flag = true;
 			}
@@ -127,7 +136,7 @@ internal sealed class FunctionFactory
 					MethodInfo[] methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public);
 					foreach (MethodInfo methodInfo in methods)
 					{
-						FunctionAttribute functionAttribute = (FunctionAttribute)Attribute.GetCustomAttribute(methodInfo, typeof(FunctionAttribute));
+						FunctionAttribute functionAttribute = (FunctionAttribute)ExtrapolateAttribute(methodInfo, "Redbox.Macros.FunctionAttribute", FunctionAttributeConstructor);
 						if (functionAttribute != null)
 						{
 							RegisterFunction(prefix + functionAttribute.Name, methodInfo);
@@ -135,14 +144,14 @@ internal sealed class FunctionFactory
 					}
 					return true;
 				}
-				Redbox_002EMacros1955_002ELogHelper.Instance.Log($"Ignoring functions in type \"{type.AssemblyQualifiedName}\": no prefix was set.", Redbox_002EMacros1955_002ELogEntryType.Info);
+				LogHelper.Instance.Log($"Ignoring functions in type \"{type.AssemblyQualifiedName}\": no prefix was set.", LogEntryType.Info);
 				return false;
 			}
 			return false;
 		}
 		catch
 		{
-			Redbox_002EMacros1955_002ELogHelper.Instance.Log($"Failure scanning \"{type.AssemblyQualifiedName}\" for functions.", Redbox_002EMacros1955_002ELogEntryType.Error);
+			LogHelper.Instance.Log($"Failure scanning \"{type.AssemblyQualifiedName}\" for functions.", LogEntryType.Error);
 			throw;
 		}
 	}
@@ -155,17 +164,37 @@ internal sealed class FunctionFactory
 			m_methodInfoCollection.Add(key, info);
 			return;
 		}
-		ArrayList arrayList;
-		if (!(obj is MethodInfo value))
+		MethodInfo methodInfo = obj as MethodInfo;
+		if (methodInfo == null)
 		{
-			arrayList = (ArrayList)obj;
-			arrayList.Add(info);
+			((ArrayList)obj).Add(info);
 			return;
 		}
-		ArrayList arrayList2 = new ArrayList(3);
-		arrayList2.Add(value);
-		arrayList2.Add(info);
-		arrayList = arrayList2;
-		m_methodInfoCollection[key] = arrayList;
+		ArrayList value = new ArrayList(3) { methodInfo, info };
+		m_methodInfoCollection[key] = value;
+	}
+
+	private static Attribute ExtrapolateAttribute(MemberInfo type, string fullname, ConstructDelegate doconstruct)
+	{
+		Attribute[] customAttributes = Attribute.GetCustomAttributes(type);
+		foreach (Attribute attribute in customAttributes)
+		{
+			Type type2 = attribute.TypeId as Type;
+			if (type2 != null && type2.FullName == fullname)
+			{
+				return doconstruct(attribute);
+			}
+		}
+		return null;
+	}
+
+	private static Attribute FunctionSetAttributeConstructor(Attribute attribute)
+	{
+		return new FunctionSetAttribute(attribute.GetType().InvokeMember("Prefix", BindingFlags.GetProperty, null, attribute, new object[0]).ToString(), attribute.GetType().InvokeMember("Category", BindingFlags.GetProperty, null, attribute, new object[0]).ToString());
+	}
+
+	private static Attribute FunctionAttributeConstructor(Attribute attribute)
+	{
+		return new FunctionAttribute(attribute.GetType().InvokeMember("Name", BindingFlags.GetProperty, null, attribute, new object[0]).ToString());
 	}
 }

@@ -46,14 +46,14 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (clientCommandResult.Success)
 		{
-			deferredMove = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			deferredMove = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return ConvertToComponentErrors(clientCommandResult.Errors);
 	}
 
 	public string FormatStagedFileName(string file)
 	{
-		string command = $"repository format-stage-file-name file: '{StringExtensions.Escaped(file)}'";
+		string command = $"repository format-stage-file-name file: '{file.Escaped()}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -65,12 +65,12 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<string>();
 	}
 
 	public void UnpackChangeSet(string name, Guid id, string archive)
 	{
-		string command = string.Format("repository unpack-change-set name: '{2}' id: '{0}' archive: '{1}'", id, StringExtensions.Escaped(archive), name);
+		string command = string.Format("repository unpack-change-set name: '{2}' id: '{0}' archive: '{1}'", id, archive.Escaped(), name);
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -98,7 +98,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return clientCommandResult.Success && StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.Success && clientCommandResult.CommandMessages[0].ToObject<bool>();
 	}
 
 	public void AddRepository(string name)
@@ -119,7 +119,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 
 	public void AddRevisions(string name, List<string> revisions)
 	{
-		string command = $"repository add-revisions name: '{name}' revisions: '{StringExtensions.EscapedJson(ObjectExtensions.ToJson(revisions))}'";
+		string command = $"repository add-revisions name: '{name}' revisions: '{revisions.ToJson().EscapedJson()}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -155,7 +155,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 
 	public void RemoveRevisions(string name, List<string> revisions)
 	{
-		string command = $"repository remove-revisions name: '{name}' revisions: '{StringExtensions.EscapedJson(ObjectExtensions.ToJson(revisions))}'";
+		string command = $"repository remove-revisions name: '{name}' revisions: '{revisions.ToJson().EscapedJson()}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -176,7 +176,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 
 	public void AddDelta(string name, string revision, string file, bool isSeed, bool isPlaceHolder, string contentHash, string versionHash)
 	{
-		string command = $"repository add-delta name: '{name}' revision: '{revision}' file: '{StringExtensions.Escaped(file)}' isSeed: {isSeed} isPlaceHolder: {isPlaceHolder} contentHash: '{contentHash}' versionHash: '{versionHash}'";
+		string command = $"repository add-delta name: '{name}' revision: '{revision}' file: '{file.Escaped()}' isSeed: {isSeed} isPlaceHolder: {isPlaceHolder} contentHash: '{contentHash}' versionHash: '{versionHash}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (!clientCommandResult.Success)
@@ -204,7 +204,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<string>();
 	}
 
 	public List<string> GetAllRepositories()
@@ -220,7 +220,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<List<string>>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<List<string>>();
 	}
 
 	public List<IRevLog> GetUnfinishedChanges(string name)
@@ -238,7 +238,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			throw new ApplicationException(errorString);
 		}
 		List<IRevLog> list = new List<IRevLog>();
-		StringExtensions.ToObject<List<RevLog>>(clientCommandResult.CommandMessages[0]).ForEach(list.Add);
+		clientCommandResult.CommandMessages[0].ToObject<List<RevLog>>().ForEach(list.Add);
 		return list;
 	}
 
@@ -257,7 +257,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			throw new ApplicationException(errorString);
 		}
 		List<IRevLog> list = new List<IRevLog>();
-		StringExtensions.ToObject<List<RevLog>>(clientCommandResult.CommandMessages[0]).ForEach(list.Add);
+		clientCommandResult.CommandMessages[0].ToObject<List<RevLog>>().ForEach(list.Add);
 		return list;
 	}
 
@@ -276,7 +276,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			throw new ApplicationException(errorString);
 		}
 		List<IRevLog> list = new List<IRevLog>();
-		StringExtensions.ToObject<List<RevLog>>(clientCommandResult.CommandMessages[0]).ForEach(list.Add);
+		clientCommandResult.CommandMessages[0].ToObject<List<RevLog>>().ForEach(list.Add);
 		return list;
 	}
 
@@ -295,7 +295,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			throw new ApplicationException(errorString);
 		}
 		List<IRevLog> list = new List<IRevLog>();
-		StringExtensions.ToObject<List<RevLog>>(clientCommandResult.CommandMessages[0]).ForEach(list.Add);
+		clientCommandResult.CommandMessages[0].ToObject<List<RevLog>>().ForEach(list.Add);
 		return list;
 	}
 
@@ -314,7 +314,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			throw new ApplicationException(errorString);
 		}
 		List<IRevLog> list = new List<IRevLog>();
-		StringExtensions.ToObject<List<RevLog>>(clientCommandResult.CommandMessages[0]).ForEach(list.Add);
+		clientCommandResult.CommandMessages[0].ToObject<List<RevLog>>().ForEach(list.Add);
 		return list;
 	}
 
@@ -332,7 +332,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<string>();
 	}
 
 	public string GetActiveRevision(string name)
@@ -349,7 +349,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<string>();
 	}
 
 	public string GetStagedRevision(string name)
@@ -366,7 +366,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<string>();
 	}
 
 	public string GetActiveLabel(string name)
@@ -383,7 +383,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<string>();
 	}
 
 	public List<IRevLog> GetAppliedChanges(string name)
@@ -400,31 +400,28 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return StringExtensions.ToObject<List<IRevLog>>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.CommandMessages[0].ToObject<List<IRevLog>>();
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList UpdateTo(string name, string targetHash)
 	{
 		string command = $"repository update-to name: '{name}' hash: '{targetHash}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
-		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(updateManagerService.ExecuteCommandString(command).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList RebuildTo(string name, string targetHash)
 	{
 		string command = $"repository rebuild-to name: '{name}' hash: '{targetHash}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
-		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(updateManagerService.ExecuteCommandString(command).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList RebuildToHead(string name)
 	{
 		string command = $"repository rebuild-to-head name: '{name}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
-		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(updateManagerService.ExecuteCommandString(command).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList ActivateToHead(string name, out bool deferredMove)
@@ -435,7 +432,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (clientCommandResult.Success)
 		{
-			deferredMove = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			deferredMove = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return ConvertToComponentErrors(clientCommandResult.Errors);
 	}
@@ -444,16 +441,14 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 	{
 		string command = $"repository update-to-head name: '{name}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
-		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(updateManagerService.ExecuteCommandString(command).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Verify(string name)
 	{
 		string command = $"repository verify name: '{name}'";
 		using UpdateManagerService updateManagerService = UpdateManagerService.GetService(m_url);
-		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
-		return ConvertToComponentErrors(clientCommandResult.Errors);
+		return ConvertToComponentErrors(updateManagerService.ExecuteCommandString(command).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Repair(string name, out bool deferredMove)
@@ -464,7 +459,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 		ClientCommandResult clientCommandResult = updateManagerService.ExecuteCommandString(command);
 		if (clientCommandResult.Success)
 		{
-			deferredMove = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			deferredMove = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return ConvertToComponentErrors(clientCommandResult.Errors);
 	}
@@ -484,7 +479,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		defferedDelete = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+		defferedDelete = clientCommandResult.CommandMessages[0].ToObject<bool>();
 	}
 
 	public void Reset(out bool defferedDelete)
@@ -501,7 +496,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		defferedDelete = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+		defferedDelete = clientCommandResult.CommandMessages[0].ToObject<bool>();
 	}
 
 	public bool Subscribed(string name)
@@ -518,7 +513,7 @@ public class RepositoryServiceProxy : IRepositoryService, IDisposable
 			});
 			throw new ApplicationException(errorString);
 		}
-		return clientCommandResult.Success && StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+		return clientCommandResult.Success && clientCommandResult.CommandMessages[0].ToObject<bool>();
 	}
 
 	public void EndableSubscription(string name)

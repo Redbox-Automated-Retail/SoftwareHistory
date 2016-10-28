@@ -3,8 +3,8 @@
 namespace Redbox.UpdateManager.BITS;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("19C613A0-FCB8-4F28-81AE-897C3D078F81")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IBackgroundCopyError
 {
 	void GetError(out BG_ERROR_CONTEXT pContext, [MarshalAs(UnmanagedType.Error)] out int pCode);

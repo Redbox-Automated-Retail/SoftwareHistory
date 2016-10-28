@@ -7,7 +7,7 @@ using Redbox.Core;
 
 namespace Redbox.UpdateService.Model;
 
-public static class RepositoryDiffMerge
+internal static class RepositoryDiffMerge
 {
 	private static readonly Dictionary<string, string> CompressionLibrary = new Dictionary<string, string> { { "%", "0000000000000000000000000000000000000000" } };
 
@@ -25,32 +25,30 @@ public static class RepositoryDiffMerge
 				if (clientRepositoryDataDTO != null)
 				{
 					bool flag = false;
-					Dictionary<string, string> dictionary = new Dictionary<string, string>();
-					dictionary.Add("R", item.R);
-					Dictionary<string, string> dictionary2 = dictionary;
+					Dictionary<string, string> dictionary = new Dictionary<string, string> { { "R", item.R } };
 					if (item.H != clientRepositoryDataDTO.H)
 					{
-						dictionary2.Add("H", item.H);
+						dictionary.Add("H", item.H);
 						flag = true;
 					}
 					if (item.I != clientRepositoryDataDTO.I)
 					{
-						dictionary2.Add("I", item.I);
+						dictionary.Add("I", item.I);
 						flag = true;
 					}
 					if (item.A != clientRepositoryDataDTO.A)
 					{
-						dictionary2.Add("A", item.A);
+						dictionary.Add("A", item.A);
 						flag = true;
 					}
 					if (item.S != clientRepositoryDataDTO.S)
 					{
-						dictionary2.Add("S", item.S);
+						dictionary.Add("S", item.S);
 						flag = true;
 					}
 					if (flag)
 					{
-						list.Add(dictionary2);
+						list.Add(dictionary);
 					}
 				}
 				else
@@ -125,8 +123,7 @@ public static class RepositoryDiffMerge
 				});
 			}
 			output = input;
-			string text = Hash(output);
-			if (text != rdw.O)
+			if (Hash(output) != rdw.O)
 			{
 				LogHelper.Instance.Log("RDS100", "The hash check of the output failed in merging");
 				output = new List<ClientRepositoryDataDTO>();
@@ -154,23 +151,24 @@ public static class RepositoryDiffMerge
 
 	public static string Minimize(RepositoryDiffWrapper wrapper)
 	{
-		ListDictionary listDictionary = new ListDictionary();
-		listDictionary.Add("I", wrapper.I);
-		listDictionary.Add("O", wrapper.O);
-		ListDictionary listDictionary2 = listDictionary;
+		ListDictionary listDictionary = new ListDictionary
+		{
+			{ "I", wrapper.I },
+			{ "O", wrapper.O }
+		};
 		if (wrapper.U != null && wrapper.U.Any())
 		{
-			listDictionary2.Add("U", wrapper.U);
+			listDictionary.Add("U", wrapper.U);
 		}
 		if (wrapper.A != null && wrapper.A.Any())
 		{
-			listDictionary2.Add("A", wrapper.A);
+			listDictionary.Add("A", wrapper.A);
 		}
 		if (wrapper.D != null && wrapper.D.Any())
 		{
-			listDictionary2.Add("D", wrapper.D);
+			listDictionary.Add("D", wrapper.D);
 		}
-		string seed = listDictionary2.ToJson();
+		string seed = listDictionary.ToJson();
 		return CompressionLibrary.Aggregate(seed, (string current, KeyValuePair<string, string> i) => current.Replace(i.Value, i.Key));
 	}
 
@@ -191,8 +189,7 @@ public static class RepositoryDiffMerge
 		{
 			RepositoryDiffWrapper wrapper = rdw.Copy();
 			List<ClientRepositoryDataDTO> input2 = input.Copy();
-			string str = Minimize(wrapper);
-			wrapper = Expand(str);
+			wrapper = Expand(Minimize(wrapper));
 			bool flag = TryMerge(input2, wrapper, out var _);
 			if (!flag)
 			{

@@ -52,10 +52,7 @@ internal class RemotingClientSession : ClientSession
 		{
 			base.OwningPool.ReturnSession(this);
 		}
-		else
-		{
-			base.Dispose();
-		}
+		base.Dispose();
 	}
 
 	public override List<string> ExecuteCommand(string command)
@@ -64,8 +61,7 @@ internal class RemotingClientSession : ClientSession
 		{
 			RegisterChannel();
 		}
-		IRemotingHost remotingHost = (IRemotingHost)new RemotingClientProxy(typeof(IRemotingHost), Url, base.Timeout).GetTransparentProxy();
-		string text = remotingHost.ExecuteCommand(command);
+		string text = ((IRemotingHost)new RemotingClientProxy(typeof(IRemotingHost), Url, base.Timeout).GetTransparentProxy()).ExecuteCommand(command);
 		if (string.IsNullOrEmpty(text))
 		{
 			return new List<string>();
@@ -98,30 +94,35 @@ internal class RemotingClientSession : ClientSession
 		{
 			if (IsRegistrationRequired())
 			{
+				if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["CallRemotingConfigure"]))
+				{
+					RemotingConfiguration.Configure(null, base.Protocol.IsSecure);
+				}
 				if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["CustomErrorsMode"]))
 				{
 					RemotingConfiguration.CustomErrorsMode = Enum<CustomErrorsModes>.ParseIgnoringCase(ConfigurationManager.AppSettings["CustomErrorsMode"], CustomErrorsModes.RemoteOnly);
 				}
-				LogHelper.Instance.Log("CustomErrors enabled = {0}", RemotingConfiguration.CustomErrorsEnabled(isLocalRequest: false));
+				LogHelper.Instance.Log("CustomErrors enabled = {0}, {1}", RemotingConfiguration.CustomErrorsEnabled(isLocalRequest: false), RemotingConfiguration.CustomErrorsMode);
 				BinaryClientFormatterSinkProvider binaryClientFormatterSinkProvider = new BinaryClientFormatterSinkProvider();
 				RemotingClientChannelSinkProvider next = new RemotingClientChannelSinkProvider(binaryClientFormatterSinkProvider.Next);
 				binaryClientFormatterSinkProvider.Next = next;
-				TcpClientChannel chnl = new TcpClientChannel(GetProperties(), binaryClientFormatterSinkProvider);
-				ChannelServices.RegisterChannel(chnl, base.Protocol.IsSecure);
+				ChannelServices.RegisterChannel(new TcpClientChannel(GetProperties(), binaryClientFormatterSinkProvider), base.Protocol.IsSecure);
 			}
 		}
 	}
 
 	private static bool IsRegistrationRequired()
 	{
-		return ChannelServices.GetChannel("tcp") == null;
+		return ChannelServices.GetChannel("ipc_tcp") == null;
 	}
 
 	private ListDictionary GetProperties()
 	{
-		ListDictionary listDictionary = new ListDictionary();
-		listDictionary.Add("port", "0");
-		listDictionary.Add("timeout", base.Timeout);
-		return listDictionary;
+		return new ListDictionary
+		{
+			{ "port", "0" },
+			{ "timeout", base.Timeout },
+			{ "name", "ipc_tcp" }
+		};
 	}
 }

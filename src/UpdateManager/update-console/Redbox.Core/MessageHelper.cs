@@ -6,8 +6,6 @@ namespace Redbox.Core;
 
 internal static class MessageHelper
 {
-	public const uint WM_FONTCHANGE = 29u;
-
 	public static readonly IntPtr HWND_BROADCAST = new IntPtr(65535);
 
 	public static readonly IntPtr HWND_TOP = new IntPtr(0);
@@ -19,6 +17,8 @@ internal static class MessageHelper
 	public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
 
 	public static readonly IntPtr HWND_MESSAGE = new IntPtr(-3);
+
+	public const uint WM_FONTCHANGE = 29u;
 
 	[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
 	public static extern bool SendNotifyMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);

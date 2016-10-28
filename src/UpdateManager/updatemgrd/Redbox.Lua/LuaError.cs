@@ -35,12 +35,13 @@ internal class LuaError
 			}
 			message = array[2];
 		}
-		LuaError luaError = new LuaError();
-		luaError.Message = message;
-		luaError.ChunkName = chunkName;
-		luaError.RawMessage = rawMessage;
-		luaError.LineNumber = lineNumber;
-		return luaError;
+		return new LuaError
+		{
+			Message = message,
+			ChunkName = chunkName,
+			RawMessage = rawMessage,
+			LineNumber = lineNumber
+		};
 	}
 
 	private LuaError()

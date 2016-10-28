@@ -46,8 +46,7 @@ internal class LogHelper
 	{
 		get
 		{
-			StackTrace stackTrace = new StackTrace(2);
-			StackFrame frame = stackTrace.GetFrame(0);
+			StackFrame frame = new StackTrace(2).GetFrame(0);
 			return frame.GetMethod().DeclaringType.FullName + "." + frame.GetMethod().Name;
 		}
 	}
@@ -125,7 +124,7 @@ internal class LogHelper
 		}
 		catch (Exception)
 		{
-			OnLogged(message + "\n" + ObjectExtensions.ToJson(parms));
+			OnLogged(message + "\n" + parms.ToJson());
 		}
 	}
 
@@ -142,7 +141,7 @@ internal class LogHelper
 		}
 		catch (Exception)
 		{
-			OnLogged(message + "\n" + ObjectExtensions.ToJson(parms) + "\n" + e);
+			OnLogged(message + "\n" + parms.ToJson() + "\n" + e);
 		}
 	}
 

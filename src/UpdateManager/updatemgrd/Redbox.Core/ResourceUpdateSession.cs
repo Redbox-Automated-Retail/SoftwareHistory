@@ -21,7 +21,7 @@ internal class ResourceUpdateSession
 
 		public override bool Equals(object obj)
 		{
-			if (object.ReferenceEquals(obj, this))
+			if (obj == this)
 			{
 				return true;
 			}

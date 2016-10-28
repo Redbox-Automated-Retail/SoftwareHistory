@@ -13,7 +13,6 @@ internal class RemotingClientChannelSinkProvider : IClientChannelSinkProvider
 
 	public IClientChannelSink CreateSink(IChannelSender channel, string url, object remoteChannelData)
 	{
-		IClientChannelSink nextSink = Next.CreateSink(channel, url, remoteChannelData);
-		return new RemotingClientSink(nextSink, remoteChannelData);
+		return new RemotingClientSink(Next.CreateSink(channel, url, remoteChannelData), remoteChannelData);
 	}
 }

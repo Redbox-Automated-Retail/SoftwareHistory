@@ -92,8 +92,7 @@ public class TransferServiceProxy : ITransferService
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList CancelAll()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString("transfer cancel-all");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString("transfer cancel-all").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList GetRepositoriesInTransit(out HashSet<string> inTransit)
@@ -102,7 +101,7 @@ public class TransferServiceProxy : ITransferService
 		ClientCommandResult clientCommandResult = ExecuteCommandString("transfer repositories-in-transit");
 		if (clientCommandResult.Success)
 		{
-			inTransit = new HashSet<string>(StringExtensions.ToObject<List<string>>(clientCommandResult.CommandMessages[0]));
+			inTransit = new HashSet<string>(clientCommandResult.CommandMessages[0].ToObject<List<string>>());
 		}
 		return ConvertFromIPCErrors(clientCommandResult.Errors);
 	}
@@ -113,7 +112,7 @@ public class TransferServiceProxy : ITransferService
 		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer list allUsers: {allUsers}");
 		if (clientCommandResult.Success)
 		{
-			List<TransferJobProxy> list = StringExtensions.ToObject<List<TransferJobProxy>>(clientCommandResult.CommandMessages[0]);
+			List<TransferJobProxy> list = clientCommandResult.CommandMessages[0].ToObject<List<TransferJobProxy>>();
 			list.ForEach(delegate(TransferJobProxy p)
 			{
 				p.SetUrl(m_url);
@@ -129,7 +128,7 @@ public class TransferServiceProxy : ITransferService
 		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer create-download name: '{name}'");
 		if (clientCommandResult.Success)
 		{
-			TransferJobProxy transferJobProxy = StringExtensions.ToObject<TransferJobProxy>(clientCommandResult.CommandMessages[0]);
+			TransferJobProxy transferJobProxy = clientCommandResult.CommandMessages[0].ToObject<TransferJobProxy>();
 			transferJobProxy.SetUrl(m_url);
 			job = transferJobProxy;
 		}
@@ -142,7 +141,7 @@ public class TransferServiceProxy : ITransferService
 		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer create-upload name: '{name}'");
 		if (clientCommandResult.Success)
 		{
-			TransferJobProxy transferJobProxy = StringExtensions.ToObject<TransferJobProxy>(clientCommandResult.CommandMessages[0]);
+			TransferJobProxy transferJobProxy = clientCommandResult.CommandMessages[0].ToObject<TransferJobProxy>();
 			transferJobProxy.SetUrl(m_url);
 			job = transferJobProxy;
 		}
@@ -155,7 +154,7 @@ public class TransferServiceProxy : ITransferService
 		ClientCommandResult clientCommandResult = ExecuteCommandString($"transfer get-job id: '{id}'");
 		if (clientCommandResult.Success)
 		{
-			TransferJobProxy transferJobProxy = StringExtensions.ToObject<TransferJobProxy>(clientCommandResult.CommandMessages[0]);
+			TransferJobProxy transferJobProxy = clientCommandResult.CommandMessages[0].ToObject<TransferJobProxy>();
 			transferJobProxy.SetUrl(m_url);
 			job = transferJobProxy;
 		}
@@ -168,7 +167,7 @@ public class TransferServiceProxy : ITransferService
 		ClientCommandResult clientCommandResult = ExecuteCommandString("transfer are-jobs-running");
 		if (clientCommandResult.Success)
 		{
-			isRunning = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			isRunning = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return ConvertFromIPCErrors(clientCommandResult.Errors);
 	}

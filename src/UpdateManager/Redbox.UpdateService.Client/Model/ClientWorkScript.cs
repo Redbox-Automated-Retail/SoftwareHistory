@@ -3,7 +3,7 @@ using Redbox.Core;
 
 namespace Redbox.UpdateService.Model;
 
-public class ClientWorkScript
+internal class ClientWorkScript
 {
 	public long ID { get; set; }
 

@@ -34,7 +34,7 @@ public class CertificateService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("CertificateService", "Unhandled exception occurred in Initialize.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("CertificateService", "Unhandled exception occurred in Initialize.", e));
 		}
 		return errorList;
 	}
@@ -50,7 +50,7 @@ public class CertificateService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("CertificateService", "An unhandled exception occurred.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("CertificateService", "An unhandled exception occurred.", e));
 		}
 		return errorList;
 	}
@@ -66,7 +66,7 @@ public class CertificateService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("CertificateService", "An unhandled exception occurred while stopping the CertificateService.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("CertificateService", "An unhandled exception occurred while stopping the CertificateService.", e));
 		}
 		return errorList;
 	}
@@ -109,8 +109,7 @@ public class CertificateService
 			return;
 		}
 		string[] files = Directory.GetFiles(_certDataPath, "*.staged");
-		string[] array = files;
-		foreach (string text in array)
+		foreach (string text in files)
 		{
 			try
 			{

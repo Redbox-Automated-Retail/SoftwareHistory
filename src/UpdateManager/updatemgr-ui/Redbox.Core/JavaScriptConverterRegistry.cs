@@ -43,9 +43,8 @@ internal class JavaScriptConverterRegistry
 	{
 		JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer();
 		javaScriptSerializer.MaxJsonLength = int.MaxValue;
-		JavaScriptSerializer javaScriptSerializer2 = javaScriptSerializer;
-		javaScriptSerializer2.RegisterConverters(m_converters.Values.ToArray());
-		return javaScriptSerializer2;
+		javaScriptSerializer.RegisterConverters(m_converters.Values.ToArray());
+		return javaScriptSerializer;
 	}
 
 	private JavaScriptConverterRegistry()

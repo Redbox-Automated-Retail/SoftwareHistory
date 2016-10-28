@@ -52,8 +52,7 @@ public class CertificateHelper
 	public static bool Exists(StoreName storeName, StoreLocation storeLocation, byte[] data)
 	{
 		X509Certificate2 x509Certificate = new X509Certificate2(data);
-		X509Certificate2 certificateByThumbPrint = GetCertificateByThumbPrint(storeName, storeLocation, x509Certificate.Thumbprint);
-		return certificateByThumbPrint != null;
+		return GetCertificateByThumbPrint(storeName, storeLocation, x509Certificate.Thumbprint) != null;
 	}
 
 	public static X509Certificate2 GetCertificateByThumbPrint(StoreName storeName, StoreLocation storeLocation, string thumbPrint)
@@ -74,8 +73,7 @@ public class CertificateHelper
 	public static bool SubjectDistinguishedNameExists(StoreName storeName, StoreLocation storeLocation, byte[] data)
 	{
 		X509Certificate2 x509Certificate = new X509Certificate2(data);
-		X509Certificate2 certificateBySubjectDistinguishedName = GetCertificateBySubjectDistinguishedName(storeName, storeLocation, x509Certificate.SubjectName);
-		return certificateBySubjectDistinguishedName != null;
+		return GetCertificateBySubjectDistinguishedName(storeName, storeLocation, x509Certificate.SubjectName) != null;
 	}
 
 	public static X509Certificate2 GetCertificateBySubjectDistinguishedName(StoreName storeName, StoreLocation storeLocation, X500DistinguishedName subjectName)

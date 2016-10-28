@@ -79,7 +79,7 @@ internal class CommandTokenizer : SimpleTokenizer<CommandParserState>
 			base.CurrentState = CommandParserState.Whitespace;
 			return StateResult.Restart;
 		}
-		if (!((int?)PeekNextToken()).HasValue)
+		if (!PeekNextToken().HasValue)
 		{
 			AddTokenAndReset(SimpleTokenType.Mnemonic, isKeyValuePair: false);
 			return StateResult.Continue;
@@ -103,7 +103,7 @@ internal class CommandTokenizer : SimpleTokenizer<CommandParserState>
 			base.CurrentState = CommandParserState.Whitespace;
 			return StateResult.Restart;
 		}
-		if (!((int?)PeekNextToken()).HasValue)
+		if (!PeekNextToken().HasValue)
 		{
 			AppendToAccumulator();
 			AddTokenAndReset(SimpleTokenType.Symbol, isKeyValuePair: false);
@@ -151,7 +151,7 @@ internal class CommandTokenizer : SimpleTokenizer<CommandParserState>
 			}
 			base.CurrentState = CommandParserState.Whitespace;
 		}
-		else if (!((int?)PeekNextToken()).HasValue)
+		else if (!PeekNextToken().HasValue)
 		{
 			if (m_inQuotedValue)
 			{
@@ -191,41 +191,41 @@ internal class CommandTokenizer : SimpleTokenizer<CommandParserState>
 			base.CurrentState = (m_expectingValue ? CommandParserState.Value : CommandParserState.Symbol);
 			return StateResult.Restart;
 		}
-		if (currentToken == '\'' || currentToken == '"')
+		switch (currentToken)
 		{
-			if (!m_expectingValue)
+		case '"':
+		case '\'':
+			if (m_expectingValue)
 			{
-				base.CurrentState = CommandParserState.Error;
-				return StateResult.Restart;
+				m_expectedClosingQuote = currentToken;
+				base.CurrentState = CommandParserState.Value;
+				m_inQuotedValue = true;
+				break;
 			}
-			m_expectedClosingQuote = currentToken;
-			base.CurrentState = CommandParserState.Value;
-			m_inQuotedValue = true;
-		}
-		else
-		{
-			if (currentToken == '>')
+			base.CurrentState = CommandParserState.Error;
+			return StateResult.Restart;
+		case '>':
+			if (m_inPathExpression)
 			{
-				if (m_inPathExpression)
-				{
-					base.Errors.Add(Error.NewError("T005", FormatError("Cannot nest redirection operators."), "Correct your command syntax and resubmit."));
-					return StateResult.Terminal;
-				}
+				base.Errors.Add(Error.NewError("T005", FormatError("Cannot nest redirection operators."), "Correct your command syntax and resubmit."));
+				return StateResult.Terminal;
+			}
+			AppendToAccumulator();
+			if (PeekNextToken() == '>')
+			{
 				AppendToAccumulator();
-				if (PeekNextToken() == '>')
-				{
-					AppendToAccumulator();
-					MoveToNextToken();
-				}
-				AddTokenAndReset(SimpleTokenType.Operator, isKeyValuePair: false);
-				m_inPathExpression = true;
-				m_expectingValue = true;
-				return StateResult.Continue;
+				MoveToNextToken();
 			}
+			AddTokenAndReset(SimpleTokenType.Operator, isKeyValuePair: false);
+			m_inPathExpression = true;
+			m_expectingValue = true;
+			return StateResult.Continue;
+		default:
 			if (m_inQuotedValue)
 			{
 				AppendToAccumulator();
 			}
+			break;
 		}
 		return StateResult.Continue;
 	}

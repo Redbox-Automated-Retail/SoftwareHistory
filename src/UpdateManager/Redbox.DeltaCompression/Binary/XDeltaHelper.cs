@@ -14,17 +14,18 @@ public static class XDeltaHelper
 		ErrorList errorList = new ErrorList();
 		try
 		{
-			ProcessStartInfo processStartInfo = new ProcessStartInfo();
-			processStartInfo.CreateNoWindow = true;
-			processStartInfo.ErrorDialog = false;
-			processStartInfo.FileName = Name;
-			processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			processStartInfo.Arguments = FormatApplyArguments(Path.GetFullPath(source), Path.GetFullPath(target), Path.GetFullPath(patch));
-			processStartInfo.RedirectStandardError = true;
-			processStartInfo.RedirectStandardInput = true;
-			processStartInfo.RedirectStandardOutput = true;
-			processStartInfo.UseShellExecute = false;
-			ProcessStartInfo startInfo = processStartInfo;
+			ProcessStartInfo startInfo = new ProcessStartInfo
+			{
+				CreateNoWindow = true,
+				ErrorDialog = false,
+				FileName = Name,
+				WindowStyle = ProcessWindowStyle.Hidden,
+				Arguments = FormatApplyArguments(Path.GetFullPath(source), Path.GetFullPath(target), Path.GetFullPath(patch)),
+				RedirectStandardError = true,
+				RedirectStandardInput = true,
+				RedirectStandardOutput = true,
+				UseShellExecute = false
+			};
 			using Process process = new Process();
 			process.StartInfo = startInfo;
 			process.Start();
@@ -80,17 +81,18 @@ public static class XDeltaHelper
 		ErrorList errorList = new ErrorList();
 		try
 		{
-			ProcessStartInfo processStartInfo = new ProcessStartInfo();
-			processStartInfo.CreateNoWindow = true;
-			processStartInfo.ErrorDialog = false;
-			processStartInfo.FileName = Name;
-			processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			processStartInfo.Arguments = FormatCreateArguments(Path.GetFullPath(source), Path.GetFullPath(target), Path.GetFullPath(patch));
-			processStartInfo.RedirectStandardError = true;
-			processStartInfo.RedirectStandardInput = true;
-			processStartInfo.RedirectStandardOutput = true;
-			processStartInfo.UseShellExecute = false;
-			ProcessStartInfo startInfo = processStartInfo;
+			ProcessStartInfo startInfo = new ProcessStartInfo
+			{
+				CreateNoWindow = true,
+				ErrorDialog = false,
+				FileName = Name,
+				WindowStyle = ProcessWindowStyle.Hidden,
+				Arguments = FormatCreateArguments(Path.GetFullPath(source), Path.GetFullPath(target), Path.GetFullPath(patch)),
+				RedirectStandardError = true,
+				RedirectStandardInput = true,
+				RedirectStandardOutput = true,
+				UseShellExecute = false
+			};
 			using Process process = new Process();
 			process.StartInfo = startInfo;
 			process.Start();

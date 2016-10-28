@@ -8,28 +8,24 @@ public class MacroFunctions
 	[KernelFunction(Name = "kernel.getmacrovalue")]
 	internal static string GetMacroValue(string name)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return service[name];
+		return ServiceLocator.Instance.GetService<IMacroService>()[name];
 	}
 
 	[KernelFunction(Name = "kernel.expandconstantmacro")]
 	internal static string ExpandConstantMacro(string value)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return service.ExpandProperties(value);
+		return ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(value);
 	}
 
 	[KernelFunction(Name = "kernel.expandruntimemacro")]
 	internal static string ExpandRuntimeMacro(string value)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		return service.ExpandProperties(value);
+		return ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(value);
 	}
 
 	[KernelFunction(Name = "kernel.setmacrovalue")]
 	internal static void SetMacroValue(string name, string value)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		service[name] = value;
+		ServiceLocator.Instance.GetService<IMacroService>()[name] = value;
 	}
 }

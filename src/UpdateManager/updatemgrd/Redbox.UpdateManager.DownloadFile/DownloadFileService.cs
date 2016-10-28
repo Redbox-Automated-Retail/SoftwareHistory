@@ -48,7 +48,7 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS999", "An unhandled exception occurred while initializing the download file service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS999", "An unhandled exception occurred while initializing the download file service.", e));
 		}
 		return errorList;
 	}
@@ -64,7 +64,7 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS998", "An unhandled exception occurred while starting the download file service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS998", "An unhandled exception occurred while starting the download file service.", e));
 		}
 		return errorList;
 	}
@@ -80,7 +80,7 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS997", "An unhandled exception occurred while stopping the download file service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS997", "An unhandled exception occurred while stopping the download file service.", e));
 		}
 		return errorList;
 	}
@@ -100,12 +100,12 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		}
 		try
 		{
-			IEnumerable<DownloadFileChangeSetData> changeSets = pollReplyList.Select((PollReply pollReply) => StringExtensions.ToObject<DownloadFileChangeSetData>(pollReply.Data));
+			IEnumerable<DownloadFileChangeSetData> changeSets = pollReplyList.Select((PollReply pollReply) => pollReply.Data.ToObject<DownloadFileChangeSetData>());
 			errorList.AddRange(CreateDownloads(changeSets));
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS0010", "An unhandled exception occurred in DownloadFileService.ProcessPollReply.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS0010", "An unhandled exception occurred in DownloadFileService.ProcessPollReply.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -153,13 +153,12 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		{
 			foreach (DownloadFileChangeSetData changeSet in changeSets)
 			{
-				IDownloadFile downloadFileFromChangeSet = DownloadFileFactory.Instance.GetDownloadFileFromChangeSet(changeSet);
-				downloadFileFromChangeSet.SaveDownloadFile();
+				DownloadFileFactory.Instance.GetDownloadFileFromChangeSet(changeSet).SaveDownloadFile();
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("E999", "An unhandled exception occurred in DownloadFileService.CreateDownloads.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", "An unhandled exception occurred in DownloadFileService.CreateDownloads.", e));
 		}
 		return errorList;
 	}
@@ -170,21 +169,13 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		try
 		{
 			LogHelper.Instance.Log("Executing DownloadFileService.ProcessDownloads");
-			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-			service.Execute(delegate
+			ServiceLocator.Instance.GetService<IKernelService>().Execute(delegate
 			{
 				List<IDownloadFile> downloadFiles = DownloadFileFactory.Instance.GetDownloadFiles();
 				LogHelper.Instance.Log("Found {0} download files.", downloadFiles.Count);
 				foreach (IDownloadFile item in downloadFiles)
 				{
 					errors.AddRange(item.ProcessDownloadFile());
-				}
-				if (downloadFiles.Any((IDownloadFile item) => item is WuaDownloadFile))
-				{
-					errors.AddRange(WuaDownloadFile.StartDownloads());
-					errors.AddRange(WuaDownloadFile.StartInstalls());
-					ErrorList asyncErrors = WuaDownloadFile.GetAsyncErrors();
-					errors.AddRange(asyncErrors);
 				}
 				errors.AddRange(BitsDownloadFile.Cleanup());
 				if (RebootRequired)
@@ -196,7 +187,7 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		}
 		catch (Exception e)
 		{
-			errors.Add(Error.NewError("DFS999", "An unhandled exception occurred in DownloadFileService.ProcessDownloads.", e));
+			errors.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS999", "An unhandled exception occurred in DownloadFileService.ProcessDownloads.", e));
 		}
 		return errors;
 	}
@@ -214,7 +205,7 @@ internal class DownloadFileService : IPollRequestReply, IDownloadFileService
 		errorList.AddRange(service2.Shutdown(15000, 2));
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});

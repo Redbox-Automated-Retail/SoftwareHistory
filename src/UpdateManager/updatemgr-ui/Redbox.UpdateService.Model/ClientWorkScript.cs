@@ -11,6 +11,6 @@ internal class ClientWorkScript
 
 	public string GetScriptText()
 	{
-		return Encoding.Unicode.GetString(StringExtensions.Base64ToBytes(Command));
+		return Encoding.Unicode.GetString(Command.Base64ToBytes());
 	}
 }

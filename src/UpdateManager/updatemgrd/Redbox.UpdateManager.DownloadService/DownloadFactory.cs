@@ -8,13 +8,13 @@ namespace Redbox.UpdateManager.DownloadService;
 
 internal class DownloadFactory
 {
-	public const string DownloadExtension = ".dldat";
-
-	public const string DownloadLabel = ".dl";
-
 	private IDataStoreService _dataStoreService;
 
 	private object _lock = new object();
+
+	public const string DownloadExtension = ".dldat";
+
+	public const string DownloadLabel = ".dl";
 
 	public static DownloadFactory Instance => Singleton<DownloadFactory>.Instance;
 
@@ -36,15 +36,14 @@ internal class DownloadFactory
 		{
 			List<IDownloader> list = new List<IDownloader>();
 			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-			List<Guid> downLoadList = GetDownLoadList();
-			foreach (Guid item in downLoadList)
+			foreach (Guid downLoad in GetDownLoadList())
 			{
 				try
 				{
-					DownloadData downloadData = service.Get<DownloadData>(string.Concat(item, ".dldat"));
+					DownloadData downloadData = service.Get<DownloadData>(string.Concat(downLoad, ".dldat"));
 					if (downloadData == null)
 					{
-						DeleteDownload(item);
+						DeleteDownload(downLoad);
 						continue;
 					}
 					IDownloader downloaderFromData = GetDownloaderFromData(downloadData);
@@ -55,7 +54,7 @@ internal class DownloadFactory
 				}
 				catch (Exception e)
 				{
-					LogHelper.Instance.Log($"An unhandled exception occurred in DownloadFactory.GetDownloads for Guid: {item}", e);
+					LogHelper.Instance.Log($"An unhandled exception occurred in DownloadFactory.GetDownloads for Guid: {downLoad}", e);
 				}
 			}
 			return list;
@@ -78,16 +77,17 @@ internal class DownloadFactory
 
 	internal DownloadData GetDownloadData(string key, string hash, string url, DownloadPriority downloadPriority)
 	{
-		DownloadData downloadData = new DownloadData();
-		downloadData.Key = key;
-		downloadData.Url = url;
-		downloadData.DownloadState = DownloadState.None;
-		downloadData.RetryCount = 0;
-		downloadData.FileGuid = Guid.NewGuid();
-		downloadData.Hash = hash;
-		downloadData.DownloadType = DownloadType.Bits;
-		downloadData.DownloadPriority = downloadPriority;
-		return downloadData;
+		return new DownloadData
+		{
+			Key = key,
+			Url = url,
+			DownloadState = DownloadState.None,
+			RetryCount = 0,
+			FileGuid = Guid.NewGuid(),
+			Hash = hash,
+			DownloadType = DownloadType.Bits,
+			DownloadPriority = downloadPriority
+		};
 	}
 
 	internal void SaveDownload(DownloadData downloadData)
@@ -150,8 +150,7 @@ internal class DownloadFactory
 
 	internal List<Guid> GetDownLoadList()
 	{
-		IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-		List<Guid> list = service.Get<List<Guid>>(".dl");
+		List<Guid> list = ServiceLocator.Instance.GetService<IDataStoreService>().Get<List<Guid>>(".dl");
 		if (list == null)
 		{
 			list = new List<Guid>();

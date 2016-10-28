@@ -49,20 +49,17 @@ public class UpdateServiceProxy : IUpdateService
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList ServerPoll()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString("client serverpoll");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString("client serverpoll").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList WCFServerPoll()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString("client wcfserverpoll");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString("client wcfserverpoll").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList Poll()
 	{
-		ClientCommandResult clientCommandResult = ExecuteCommandString("client poll");
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString("client poll").Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList DoWork(string filter)
@@ -72,8 +69,7 @@ public class UpdateServiceProxy : IUpdateService
 		{
 			command = $"client dowork filter: '{filter}'";
 		}
-		ClientCommandResult clientCommandResult = ExecuteCommandString(command);
-		return ConvertFromIPCErrors(clientCommandResult.Errors);
+		return ConvertFromIPCErrors(ExecuteCommandString(command).Errors);
 	}
 
 	public Redbox.UpdateManager.ComponentModel.ErrorList DoWork()
@@ -205,9 +201,7 @@ public class UpdateServiceProxy : IUpdateService
 
 	private Redbox.UpdateManager.ComponentModel.ErrorList NotImplemented(string method)
 	{
-		Redbox.UpdateManager.ComponentModel.ErrorList errorList = new Redbox.UpdateManager.ComponentModel.ErrorList();
-		errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("USP999", $"UpdateServiceProxy.{method} not implemented.", ""));
-		return errorList;
+		return new Redbox.UpdateManager.ComponentModel.ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("USP999", $"UpdateServiceProxy.{method} not implemented.", "") };
 	}
 
 	private static Redbox.UpdateManager.ComponentModel.ErrorList ConvertFromIPCErrors(List<Redbox.IPC.Framework.Error> ipc)

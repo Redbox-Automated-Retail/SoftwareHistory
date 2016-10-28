@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class CreateRepositoryChangeSetArgs
+internal class CreateRepositoryChangeSetArgs
 {
 	public string SourceRevision { get; set; }
 

@@ -45,12 +45,11 @@ internal class BZip2CompressionAlgorithm : CompressionAlgorithm
 			while (true)
 			{
 				int num = bZip2InputStream.Read(array, 0, array.Length);
-				if (num != 0)
+				if (num == 0)
 				{
-					binaryWriter.Write(array, 0, num);
-					continue;
+					break;
 				}
-				break;
+				binaryWriter.Write(array, 0, num);
 			}
 		}
 		byte[] array2 = new byte[memoryStream.Length];
@@ -83,12 +82,11 @@ internal class BZip2CompressionAlgorithm : CompressionAlgorithm
 		while (true)
 		{
 			int num = bZip2InputStream.Read(array, 0, array.Length);
-			if (num != 0)
+			if (num == 0)
 			{
-				target.Write(array, 0, num);
-				continue;
+				break;
 			}
-			break;
+			target.Write(array, 0, num);
 		}
 	}
 }

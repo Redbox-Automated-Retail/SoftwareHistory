@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.UpdateService.Model;
 
-public class StoreFileChangeSetData
+internal class StoreFileChangeSetData
 {
 	public long StoreFile { get; set; }
 

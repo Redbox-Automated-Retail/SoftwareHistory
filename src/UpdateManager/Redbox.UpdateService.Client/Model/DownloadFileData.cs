@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class DownloadFileData
+internal class DownloadFileData
 {
 	public long Id { get; set; }
 

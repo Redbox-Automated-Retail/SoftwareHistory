@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using Redbox.Core;
 using Redbox.UpdateManager.ComponentModel;
@@ -25,8 +24,7 @@ public class QueueService : IQueueService
 
 	public void Initialize(string path)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(path);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(path);
 		if (!Path.IsPathRooted(text))
 		{
 			text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), text);
@@ -53,33 +51,34 @@ public class QueueService : IQueueService
 		string text = PeekRaw(label);
 		if (text != null)
 		{
-			return StringExtensions.ToObject<T>(text);
+			return text.ToObject<T>();
 		}
 		return default(T);
 	}
 
 	public void Enqueue(string label, object entry)
 	{
-		QueueEntry queueEntry = new QueueEntry();
-		queueEntry.Label = label;
-		queueEntry.Entry = ObjectExtensions.ToJson(entry);
-		QueueEntry entry2 = queueEntry;
+		QueueEntry entry2 = new QueueEntry
+		{
+			Label = label,
+			Entry = entry.ToJson()
+		};
 		Write(entry2);
 	}
 
 	public void EnqueueRaw(string label, string entry)
 	{
-		QueueEntry queueEntry = new QueueEntry();
-		queueEntry.Label = label;
-		queueEntry.Entry = entry;
-		QueueEntry entry2 = queueEntry;
+		QueueEntry entry2 = new QueueEntry
+		{
+			Label = label,
+			Entry = entry
+		};
 		Write(entry2);
 	}
 
 	public void Dequeue(string label)
 	{
-		List<QueueEntry> list = m_queueFile.AsList();
-		int num = list.FindIndex((QueueEntry each) => each != null && string.Compare(each.Label, label, ignoreCase: true) == 0);
+		int num = m_queueFile.AsList().FindIndex((QueueEntry each) => each != null && string.Compare(each.Label, label, ignoreCase: true) == 0);
 		if (num != -1)
 		{
 			m_queueFile.RemoveAt(num);

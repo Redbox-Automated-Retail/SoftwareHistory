@@ -19,9 +19,9 @@ internal static class SimpleSound
 		return PlaySound((string)null, SoundFlags.SND_PURGE);
 	}
 
-	[DllImport("WinMM.dll", SetLastError = true)]
+	[DllImport("WinMM.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
 	internal static extern bool PlaySound(string wfname, SoundFlags fuSound);
 
-	[DllImport("WinMM.dll", SetLastError = true)]
+	[DllImport("WinMM.dll", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
 	internal static extern bool PlaySound(byte[] buffer, SoundFlags fuSound);
 }

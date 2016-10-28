@@ -29,11 +29,11 @@ internal class StatusMessage
 
 	public void DecodeData()
 	{
-		Data = Encoding.Unicode.GetString(StringExtensions.Base64ToBytes(Data));
+		Data = Encoding.Unicode.GetString(Data.Base64ToBytes());
 	}
 
 	public void EncodeData()
 	{
-		Data = ByteArrayExtensions.ToBase64(Encoding.Unicode.GetBytes(Data));
+		Data = Encoding.Unicode.GetBytes(Data).ToBase64();
 	}
 }

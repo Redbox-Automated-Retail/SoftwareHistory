@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public enum PollRequestType
+internal enum PollRequestType
 {
 	None,
 	Repositories,

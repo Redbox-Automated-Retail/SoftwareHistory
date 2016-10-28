@@ -14,9 +14,9 @@ public static class Win32ServiceFunctions
 	internal static bool ServiceExists(string name)
 	{
 		ServiceController[] services = ServiceController.GetServices();
-		foreach (ServiceController serviceController in services)
+		for (int i = 0; i < services.Length; i++)
 		{
-			if (serviceController.ServiceName == name)
+			if (services[i].ServiceName == name)
 			{
 				return true;
 			}
@@ -59,8 +59,7 @@ public static class Win32ServiceFunctions
 	{
 		try
 		{
-			List<ServiceController> list = new List<ServiceController>(ServiceController.GetServices());
-			if (list.FindIndex((ServiceController p) => p.ServiceName == name) > -1)
+			if (new List<ServiceController>(ServiceController.GetServices()).FindIndex((ServiceController p) => p.ServiceName == name) > -1)
 			{
 				string keyName = $"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\{name}";
 				switch (type)
@@ -94,9 +93,8 @@ public static class Win32ServiceFunctions
 				CreateNoWindow = true,
 				WindowStyle = ProcessWindowStyle.Hidden
 			};
-			Process process2 = process;
-			process2.Start();
-			process2.WaitForExit(120000);
+			process.Start();
+			process.WaitForExit(120000);
 		}
 		catch (Exception e)
 		{
@@ -120,9 +118,8 @@ public static class Win32ServiceFunctions
 				CreateNoWindow = true,
 				WindowStyle = ProcessWindowStyle.Hidden
 			};
-			Process process2 = process;
-			process2.Start();
-			process2.WaitForExit(120000);
+			process.Start();
+			process.WaitForExit(120000);
 		}
 		catch (Exception e)
 		{
@@ -183,8 +180,7 @@ public static class Win32ServiceFunctions
 		try
 		{
 			ServiceController[] services = ServiceController.GetServices();
-			ServiceController[] array = services;
-			foreach (ServiceController serviceController in array)
+			foreach (ServiceController serviceController in services)
 			{
 				LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
 				luaTable2["name"] = serviceController.ServiceName;

@@ -37,8 +37,7 @@ internal class Location
 		{
 			try
 			{
-				Uri uri = new Uri(fileName);
-				fileName = uri.LocalPath;
+				fileName = new Uri(fileName).LocalPath;
 			}
 			catch
 			{

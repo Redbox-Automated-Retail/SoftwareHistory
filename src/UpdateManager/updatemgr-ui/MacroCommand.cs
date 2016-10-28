@@ -2,11 +2,11 @@ using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-[Command("macro")]
+[Command("macro", Filter = "System|Macro")]
 internal class MacroCommand
 {
-	[CommandForm(Name = "list")]
 	[Usage("MACRO list")]
+	[CommandForm(Name = "list")]
 	public void List(CommandContext context)
 	{
 		foreach (string key in CommandService.Instance.Properties.Keys)

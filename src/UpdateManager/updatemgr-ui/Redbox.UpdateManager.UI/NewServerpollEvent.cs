@@ -123,8 +123,7 @@ public class NewServerpollEvent : Form
 		{
 			ErrorForm errorForm = new ErrorForm();
 			errorForm.Errors = errorList;
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.ShowDialog();
+			errorForm.ShowDialog();
 		}
 		Close();
 	}

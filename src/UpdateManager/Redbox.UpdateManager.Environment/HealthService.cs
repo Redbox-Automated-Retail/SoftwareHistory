@@ -100,7 +100,7 @@ public class HealthService : IHealthService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS999", "An unhandled exception occurred while initializing the health service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS999", "An unhandled exception occurred while initializing the health service.", e));
 		}
 		return errorList;
 	}
@@ -116,7 +116,7 @@ public class HealthService : IHealthService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS998", "An unhandled exception occurred while starting the health service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS998", "An unhandled exception occurred while starting the health service.", e));
 		}
 		return errorList;
 	}
@@ -132,7 +132,7 @@ public class HealthService : IHealthService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS997", "An unhandled exception occurred while stopping the health service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS997", "An unhandled exception occurred while stopping the health service.", e));
 		}
 		return errorList;
 	}
@@ -144,16 +144,14 @@ public class HealthService : IHealthService
 		{
 			if (!_lock.TryEnterWriteLock(_lockTimeout))
 			{
-				errorList.Add(Error.NewError("HealthService.Add", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HealthService.Add", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 				return errorList;
 			}
 			try
 			{
 				if (_healthItemList.ContainsKey(key))
 				{
-					ErrorList errorList2 = new ErrorList();
-					errorList2.Add(Error.NewError("HS8002", "An unhandled exception occurred in health service", $"Exception occurred when trying to add a health item with a duplicate key {key}"));
-					return errorList2;
+					return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("HS8002", "An unhandled exception occurred in health service", $"Exception occurred when trying to add a health item with a duplicate key {key}") };
 				}
 				_healthItemList.Add(key, new HealthItem(key, expireTime, rescue));
 				return new ErrorList();
@@ -165,7 +163,7 @@ public class HealthService : IHealthService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS996", "An unhandled exception occurred while adding a key to the health service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS996", "An unhandled exception occurred while adding a key to the health service.", e));
 			return errorList;
 		}
 	}
@@ -177,7 +175,7 @@ public class HealthService : IHealthService
 		{
 			if (!_lock.TryEnterWriteLock(_lockTimeout))
 			{
-				errorList.Add(Error.NewError("HealthService.Remove", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HealthService.Remove", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 				return errorList;
 			}
 			try
@@ -188,9 +186,7 @@ public class HealthService : IHealthService
 					LogHelper.Instance.Log("Health service: Removing {0}", key);
 					return new ErrorList();
 				}
-				ErrorList errorList2 = new ErrorList();
-				errorList2.Add(Error.NewError("HS8001", "An unhandled exception occurred in health service", $"Exception occurred when trying to remove a health item with a non-existent key {key}"));
-				return errorList2;
+				return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("HS8001", "An unhandled exception occurred in health service", $"Exception occurred when trying to remove a health item with a non-existent key {key}") };
 			}
 			finally
 			{
@@ -199,7 +195,7 @@ public class HealthService : IHealthService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS995", "An unhandled exception occurred while removing a key to the health service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS995", "An unhandled exception occurred while removing a key to the health service.", e));
 			return errorList;
 		}
 	}
@@ -211,7 +207,7 @@ public class HealthService : IHealthService
 		{
 			if (!_lock.TryEnterWriteLock(_lockTimeout))
 			{
-				errorList.Add(Error.NewError("HealthService.Update", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HealthService.Update", "TryEnterWriteLock timeout expired prior to acquiring the lock."));
 				return errorList;
 			}
 			try
@@ -221,9 +217,7 @@ public class HealthService : IHealthService
 					value.UpdateHealth();
 					return new ErrorList();
 				}
-				ErrorList errorList2 = new ErrorList();
-				errorList2.Add(Error.NewError("HS8000", "An unhandled exception occurred in health service", $"Exception occurred when trying to update a health item with a non-existent key {key}"));
-				return errorList2;
+				return new ErrorList { Redbox.UpdateManager.ComponentModel.Error.NewError("HS8000", "An unhandled exception occurred in health service", $"Exception occurred when trying to update a health item with a non-existent key {key}") };
 			}
 			finally
 			{
@@ -232,7 +226,7 @@ public class HealthService : IHealthService
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("HS994", "An unhandled exception occurred while updating a key to the health service.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("HS994", "An unhandled exception occurred while updating a key to the health service.", e));
 			return errorList;
 		}
 	}
@@ -245,7 +239,7 @@ public class HealthService : IHealthService
 	{
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
-			Error.NewError("HealthService.UpdateHealth", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+			Redbox.UpdateManager.ComponentModel.Error.NewError("HealthService.UpdateHealth", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
 			return;
 		}
 		try
@@ -254,7 +248,7 @@ public class HealthService : IHealthService
 			{
 				return;
 			}
-			LinqExtensions.ForEach(_healthItemList, delegate(KeyValuePair<string, HealthItem> key)
+			_healthItemList.ForEach(delegate(KeyValuePair<string, HealthItem> key)
 			{
 				try
 				{

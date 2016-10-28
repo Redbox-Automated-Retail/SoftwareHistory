@@ -1,6 +1,6 @@
 namespace Redbox.UpdateService.Model;
 
-public class InterServerTask
+internal class InterServerTask
 {
 	public InterServerTaskType Type { get; set; }
 

@@ -9,7 +9,7 @@ public static class CryptographicFunctions
 	internal static string HashFile(string fileName)
 	{
 		using FileStream inputStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-		return StreamExtensions.ToASCIISHA1Hash(inputStream);
+		return inputStream.ToASCIISHA1Hash();
 	}
 
 	[KernelFunction(Name = "kernel.comparehash")]

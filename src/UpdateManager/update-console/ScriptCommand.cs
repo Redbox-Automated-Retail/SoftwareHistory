@@ -3,7 +3,7 @@ using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-[Command("script")]
+[Command("script", Filter = "System|Script")]
 internal class ScriptCommand
 {
 	[CommandForm(Name = "execute")]

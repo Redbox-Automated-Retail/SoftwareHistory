@@ -106,8 +106,7 @@ internal class FileSetRevisionDownloader
 
 	internal IDownloader AddDownload()
 	{
-		ErrorList errorList = AddDownload(GetRevisionKey(), _hash, GetRevisionUrl(), out var download);
-		if (errorList.ContainsError())
+		if (AddDownload(GetRevisionKey(), _hash, GetRevisionUrl(), out var download).ContainsError())
 		{
 			return null;
 		}
@@ -123,9 +122,7 @@ internal class FileSetRevisionDownloader
 
 	internal bool CompleteDownload()
 	{
-		string path = _downloader.DownloadData.Path;
-		ZipDownloadHelper zipDownloadHelper = new ZipDownloadHelper(path, _fileSetId, _revisionId, _patchRevisionId);
-		ErrorList errorList = zipDownloadHelper.Extract();
+		ErrorList errorList = new ZipDownloadHelper(_downloader.DownloadData.Path, _fileSetId, _revisionId, _patchRevisionId).Extract();
 		if (!errorList.ContainsError())
 		{
 			_downloader.Complete();
@@ -139,7 +136,7 @@ internal class FileSetRevisionDownloader
 		{
 			return null;
 		}
-		return StringExtensions.ToObject<ClientFileSetRevision>(Encoding.ASCII.GetString(data));
+		return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
 	}
 
 	private string GetRevisionKey()

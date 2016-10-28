@@ -7,12 +7,11 @@ namespace Redbox.UpdateManager.Command;
 [Command("configfile")]
 internal class ConfigFileCommand
 {
-	[Usage("configfile activate configfileid:")]
 	[CommandForm(Name = "activate")]
+	[Usage("configfile activate configfileid:")]
 	public void ActivateConfigFile(CommandContext context, [CommandKeyValue(IsRequired = true)] long configfileid)
 	{
-		IConfigFileService service = ServiceLocator.Instance.GetService<IConfigFileService>();
-		Redbox.UpdateManager.ComponentModel.ErrorList errorList = service.ActivateConfigFile(configfileid);
+		Redbox.UpdateManager.ComponentModel.ErrorList errorList = ServiceLocator.Instance.GetService<IConfigFileService>().ActivateConfigFile(configfileid);
 		if (errorList.ContainsError())
 		{
 			context.Errors.AddRange(errorList.ToIPCErrors());

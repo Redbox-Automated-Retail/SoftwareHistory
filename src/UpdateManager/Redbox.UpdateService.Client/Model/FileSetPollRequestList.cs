@@ -6,7 +6,7 @@ using Redbox.Core;
 
 namespace Redbox.UpdateService.Model;
 
-public class FileSetPollRequestList
+internal class FileSetPollRequestList
 {
 	public List<FileSetPollRequest> FileSetPollRequests { get; set; }
 
@@ -41,8 +41,7 @@ public class FileSetPollRequestList
 		try
 		{
 			FileSetPollRequests.Clear();
-			string[] items = data.Split(new string[1] { "|" }, StringSplitOptions.RemoveEmptyEntries);
-			items.ForEach(delegate(string item)
+			data.Split(new string[1] { "|" }, StringSplitOptions.RemoveEmptyEntries).ForEach(delegate(string item)
 			{
 				string[] array = item.Split(new string[1] { "," }, StringSplitOptions.RemoveEmptyEntries);
 				FileSetPollRequest item2 = new FileSetPollRequest

@@ -8,11 +8,11 @@ namespace Redbox.UpdateManager.DownloadFile;
 
 internal class DownloadFileBase : IDownloadFile
 {
+	private IDownloadFileData _downloadFileData;
+
 	private const string ResultTableName = "Results";
 
 	private const string MarkScriptCompletedText = "kernel.markscriptcomplete";
-
-	private IDownloadFileData _downloadFileData;
 
 	public IDownloadFileData DownloadFileData
 	{
@@ -45,7 +45,7 @@ internal class DownloadFileBase : IDownloadFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFB001", "Unhandled exception occurred in DownloadFilebase.DeleteDownloadFile", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFB001", "Unhandled exception occurred in DownloadFilebase.DeleteDownloadFile", e));
 		}
 		return errorList;
 	}
@@ -59,7 +59,7 @@ internal class DownloadFileBase : IDownloadFile
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFB001", "Unhandled exception occurred in DownloadFilebase.SaveDownloadFile", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFB001", "Unhandled exception occurred in DownloadFilebase.SaveDownloadFile", e));
 		}
 		return errorList;
 	}
@@ -131,7 +131,7 @@ internal class DownloadFileBase : IDownloadFile
 		}
 		IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 		string text = string.Empty;
-		string text2 = Encoding.Unicode.GetString(StringExtensions.Base64ToBytes(DownloadFileData.ActivateScript));
+		string text2 = Encoding.Unicode.GetString(DownloadFileData.ActivateScript.Base64ToBytes());
 		LogHelper.Instance.Log("DownloadFileBase.RunScript: DownloadFile Id {0} Name {1} running attached script", DownloadFileData.Id, DownloadFileData.Name);
 		Exception ex = null;
 		try
@@ -139,12 +139,12 @@ internal class DownloadFileBase : IDownloadFile
 			service.ExecuteChunkNoLock(text2, reset: true, "Results", out var result, out scriptCompleted);
 			if (result != null)
 			{
-				text = ObjectExtensions.ToJson(result);
+				text = result.ToJson();
 			}
 		}
 		catch (Exception ex2)
 		{
-			errorList.Add(Error.NewError("DFS9999", $"DownloadFileBase.RunScript: unhandled exception in script. Script for download file Id {DownloadFileData.Id} Name {DownloadFileData.Name}", ex2));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS9999", $"DownloadFileBase.RunScript: unhandled exception in script. Script for download file Id {DownloadFileData.Id} Name {DownloadFileData.Name}", ex2));
 			ex = ex2;
 		}
 		if (ex != null)
@@ -155,7 +155,7 @@ internal class DownloadFileBase : IDownloadFile
 				Exception = true,
 				Message = ex.Message
 			};
-			errorList.AddRange(SendResult(StatusMessage.StatusMessageType.Error, ObjectExtensions.ToJson(instance)));
+			errorList.AddRange(SendResult(StatusMessage.StatusMessageType.Error, instance.ToJson()));
 			return errorList;
 		}
 		bool flag = text2.IndexOf("kernel.markscriptcomplete", StringComparison.CurrentCultureIgnoreCase) > -1;

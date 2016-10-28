@@ -17,7 +17,7 @@ public static class Extensions
 	public static string ToSingleString(this ErrorList errors)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			stringBuilder.AppendLine(error.ToString());
 			stringBuilder.AppendLine(error.Details);

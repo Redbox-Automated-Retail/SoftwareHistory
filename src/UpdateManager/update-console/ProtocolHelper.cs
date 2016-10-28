@@ -25,6 +25,19 @@ internal static class ProtocolHelper
 		return null;
 	}
 
+	public static int? ParseInteger(string data)
+	{
+		if (data == "N/A")
+		{
+			return null;
+		}
+		if (int.TryParse(data, out var result))
+		{
+			return result;
+		}
+		return null;
+	}
+
 	public static long? ParseLong(string data)
 	{
 		if (data == "N/A")
@@ -133,43 +146,36 @@ internal static class ProtocolHelper
 
 	public static void FormatFile(string path, CommandContext context)
 	{
-		context.Messages.Add(Redbox.Core.ByteArrayExtensions.ToBase64(File.ReadAllBytes(path)));
+		context.Messages.Add(File.ReadAllBytes(path).ToBase64());
 	}
 
 	public static void FormatCompressedFile(string path, CommandContext context)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
-		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(Redbox.Core.ByteArrayExtensions.ToBase64(File.ReadAllBytes(path))));
-		FormatGzipCompressedMessage(buffer, context);
+		FormatGzipCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.GZip).Compress(Encoding.ASCII.GetBytes(File.ReadAllBytes(path).ToBase64())), context);
 	}
 
 	public static void FormatCompressedString(string value, CommandContext context)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(value));
-		FormatLzmaCompressedMessage(buffer, context);
+		FormatLzmaCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(value)), context);
 	}
 
 	public static void FormatCompressedBytes(byte[] buffer, CommandContext context)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-		byte[] buffer2 = algorithm.Compress(buffer);
-		FormatLzmaCompressedMessage(buffer2, context);
+		FormatLzmaCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(buffer), context);
 	}
 
 	public static byte[] DecompressBase64String(string value)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-		return algorithm.Decompress(StringExtensions.Base64ToBytes(value));
+		return CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Decompress(value.Base64ToBytes());
 	}
 
 	private static void FormatLzmaCompressedMessage(byte[] buffer, CommandContext context)
 	{
-		context.Messages.Add($"LZMA|{Redbox.Core.ByteArrayExtensions.ToBase64(buffer)}");
+		context.Messages.Add($"LZMA|{buffer.ToBase64()}");
 	}
 
 	private static void FormatGzipCompressedMessage(byte[] buffer, CommandContext context)
 	{
-		context.Messages.Add($"GZIP|{Redbox.Core.ByteArrayExtensions.ToBase64(buffer)}");
+		context.Messages.Add($"GZIP|{buffer.ToBase64()}");
 	}
 }

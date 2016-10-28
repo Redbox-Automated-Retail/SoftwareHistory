@@ -45,13 +45,11 @@ public class KioskEngineProxy
 	{
 		if (!IsEngineRunning())
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			string text = service.ExpandProperties("${engine}");
+			string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties("${engine}");
 			LogHelper.Instance.Log("Engine not running. Starting engine so a message can be sent.");
 			if (File.Exists(text))
 			{
-				int num = ShellHelper.StartProcessAsShellUser(text, "--bundle:\"Rental Application,*\"");
-				if (num < 0)
+				if (ShellHelper.StartProcessAsShellUser(text, "--bundle:\"Rental Application,*\"") < 0)
 				{
 					LogHelper.Instance.Log("Error impersonating shell user. Errors found above");
 				}

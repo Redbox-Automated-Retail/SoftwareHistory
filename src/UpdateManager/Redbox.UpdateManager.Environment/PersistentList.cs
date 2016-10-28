@@ -50,7 +50,7 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 			string path = Path.Combine(m_path, i.ToString());
 			try
 			{
-				return (!File.Exists(path)) ? default(T) : StringExtensions.ToObject<T>(File.ReadAllText(path));
+				return (!File.Exists(path)) ? default(T) : File.ReadAllText(path).ToObject<T>();
 			}
 			catch (Exception)
 			{
@@ -71,8 +71,7 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 		set
 		{
 			EnsureDirectoryExists();
-			string path = Path.Combine(m_path, i.ToString());
-			File.WriteAllText(path, ObjectExtensions.ToJson(value));
+			File.WriteAllText(Path.Combine(m_path, i.ToString()), value.ToJson());
 		}
 	}
 
@@ -98,8 +97,7 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 	public int Add(T value)
 	{
 		int count = Count;
-		string path = Path.Combine(m_path, count.ToString());
-		File.WriteAllText(path, ObjectExtensions.ToJson(value));
+		File.WriteAllText(Path.Combine(m_path, count.ToString()), value.ToJson());
 		return count;
 	}
 
@@ -145,8 +143,7 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 
 	public void RemoveAt(int index)
 	{
-		string path = Path.Combine(m_path, index.ToString());
-		File.Delete(path);
+		File.Delete(Path.Combine(m_path, index.ToString()));
 		PackList();
 	}
 
@@ -167,7 +164,7 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 		}
 		try
 		{
-			List<T> list = StringExtensions.ToObject<List<T>>(File.ReadAllText(m_path));
+			List<T> list = File.ReadAllText(m_path).ToObject<List<T>>();
 			File.Delete(m_path);
 			EnsureDirectoryExists();
 			foreach (T item in list)
@@ -195,14 +192,12 @@ public class PersistentList<T> : IEnumerable<T>, IEnumerable
 	{
 		try
 		{
-			string[] files = Directory.GetFiles(m_path);
-			List<string> source = files.ToList();
+			List<string> source = Directory.GetFiles(m_path).ToList();
 			source = source.Select((string f, int i) => Path.GetFileName(f)).ToList();
 			source = source.OrderBy((string s) => Convert.ToInt32(s)).ToList();
 			for (int num = 0; num < source.Count(); num++)
 			{
-				string text = source[num];
-				if (text != num.ToString())
+				if (source[num] != num.ToString())
 				{
 					File.Move(Path.Combine(m_path, source[num]), Path.Combine(m_path, num.ToString()));
 				}

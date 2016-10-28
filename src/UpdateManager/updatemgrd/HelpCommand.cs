@@ -3,8 +3,8 @@ using System.ComponentModel;
 
 namespace Redbox.IPC.Framework;
 
+[Command("help", Filter = "System|Help")]
 [Description("The HELP command, with no parameters, returns a list of all available commands. The HELP command with a single parameter matching the name of another command will display the help specifically for that command, if available.")]
-[Command("help")]
 internal class HelpCommand
 {
 	public void Default(CommandContext context)

@@ -16,8 +16,7 @@ public class DataStoreService : IDataStoreService
 
 	public void Initialize(string rootPath)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(rootPath);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(rootPath);
 		if (!Path.IsPathRooted(text))
 		{
 			text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), text);
@@ -44,7 +43,7 @@ public class DataStoreService : IDataStoreService
 
 	public void Set(string id, object o)
 	{
-		SetRaw(id, ObjectExtensions.ToJson(o));
+		SetRaw(id, o.ToJson());
 	}
 
 	public void SetRaw(Guid id, string o)
@@ -71,7 +70,7 @@ public class DataStoreService : IDataStoreService
 		T result;
 		try
 		{
-			return StringExtensions.ToObject<T>(raw);
+			return raw.ToObject<T>();
 		}
 		catch (Exception e)
 		{
@@ -126,11 +125,9 @@ public class DataStoreService : IDataStoreService
 	public void CleanUp()
 	{
 		string[] files = Directory.GetFiles(Root, "*.dat");
-		string[] array = files;
-		foreach (string path in array)
+		foreach (string path in files)
 		{
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
-			if (!fileNameWithoutExtension.StartsWith("config", StringComparison.CurrentCultureIgnoreCase))
+			if (!Path.GetFileNameWithoutExtension(path).StartsWith("config", StringComparison.CurrentCultureIgnoreCase))
 			{
 				File.Delete(path);
 			}
@@ -140,11 +137,9 @@ public class DataStoreService : IDataStoreService
 	public void CleanUp(string extension)
 	{
 		string[] files = Directory.GetFiles(Root, "*" + extension);
-		string[] array = files;
-		foreach (string path in array)
+		foreach (string path in files)
 		{
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
-			if (!fileNameWithoutExtension.StartsWith("config", StringComparison.CurrentCultureIgnoreCase))
+			if (!Path.GetFileNameWithoutExtension(path).StartsWith("config", StringComparison.CurrentCultureIgnoreCase))
 			{
 				File.Delete(path);
 			}

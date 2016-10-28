@@ -129,7 +129,7 @@ internal class BitsDownloadFile : DownloadFileBase
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.None", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.None", e));
 		}
 		return errorList;
 	}
@@ -198,7 +198,7 @@ internal class BitsDownloadFile : DownloadFileBase
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.CheckDownloading.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.CheckDownloading.", e));
 		}
 		return errorList;
 	}
@@ -213,7 +213,7 @@ internal class BitsDownloadFile : DownloadFileBase
 			errorList.AddRange(job.Complete());
 			if (errorList.ContainsError())
 			{
-				errorList.Add(Error.NewError("BDF999", $"Job {job.ID} get items or completion failed.", "This download will be canceled."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("BDF999", $"Job {job.ID} get items or completion failed.", "This download will be canceled."));
 				errorList.AddRange(job.Cancel());
 				base.DownloadFileData.DownloadFileDataState = DownloadFileDataState.Error;
 				base.DownloadFileData.Message = errorList[0].Description;
@@ -225,7 +225,7 @@ internal class BitsDownloadFile : DownloadFileBase
 			errorList.AddRange(CheckHash(text, base.DownloadFileData.FileKey, out var matched, out var fileHash));
 			if (!matched)
 			{
-				errorList.Add(Error.NewError("D996", $"Download file: {base.DownloadFileData.Name} path: {text} should have hash {base.DownloadFileData.FileKey} but it hash {fileHash}", "This download failed and will need to be restarted."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("D996", $"Download file: {base.DownloadFileData.Name} path: {text} should have hash {base.DownloadFileData.FileKey} but it hash {fileHash}", "This download failed and will need to be restarted."));
 				base.DownloadFileData.DownloadFileDataState = DownloadFileDataState.Error;
 				base.DownloadFileData.Message = errorList[0].Description;
 				errorList.AddRange(SaveDownloadFile());
@@ -257,12 +257,12 @@ internal class BitsDownloadFile : DownloadFileBase
 				catch
 				{
 				}
-				errorList.Add(Error.NewError("DFS995", "An unhandled exception occurred in DownloadFileService.FinishDownload.", ex));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS995", "An unhandled exception occurred in DownloadFileService.FinishDownload.", ex));
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS990", "An unhandled exception occurred in DownloadFileService.FinishDownload.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS990", "An unhandled exception occurred in DownloadFileService.FinishDownload.", e));
 		}
 		finally
 		{
@@ -319,7 +319,7 @@ internal class BitsDownloadFile : DownloadFileBase
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("BDF999", "An unhandled exception occurred in BitsDownloadFile.CheckPendingInstall.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("BDF999", "An unhandled exception occurred in BitsDownloadFile.CheckPendingInstall.", e));
 		}
 		return errorList;
 	}
@@ -398,12 +398,9 @@ internal class BitsDownloadFile : DownloadFileBase
 			{
 				return errorList;
 			}
-			ITransferJob job;
-			foreach (ITransferJob item in jobs)
+			foreach (ITransferJob job in jobs)
 			{
-				job = item;
-				IDownloadFile downloadFile = downloadFiles.Where((IDownloadFile d) => d.DownloadFileData.BitsGuid == job.ID).FirstOrDefault();
-				if (downloadFile == null)
+				if (downloadFiles.Where((IDownloadFile d) => d.DownloadFileData.BitsGuid == job.ID).FirstOrDefault() == null)
 				{
 					LogHelper.Instance.Log("DownloadFileService: Clearing bits job, guid {0} that has not download file changeset.", job.ID);
 					errorList.AddRange(job.Cancel());
@@ -412,7 +409,7 @@ internal class BitsDownloadFile : DownloadFileBase
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("DFS999", "An unhandled exception occurred in BitsDownloadFile.Cleanup.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("DFS999", "An unhandled exception occurred in BitsDownloadFile.Cleanup.", e));
 		}
 		return errorList;
 	}
@@ -425,11 +422,9 @@ internal class BitsDownloadFile : DownloadFileBase
 		if (errorList.ContainsError())
 		{
 			jobs = new List<ITransferJob>();
+			return errorList;
 		}
-		else
-		{
-			jobs = jobs.Where((ITransferJob j) => j.Name.StartsWith("<:~") && j.Name.EndsWith("~:>")).ToList();
-		}
+		jobs = jobs.Where((ITransferJob j) => j.Name.StartsWith("<:~") && j.Name.EndsWith("~:>")).ToList();
 		return errorList;
 	}
 
@@ -458,7 +453,7 @@ internal class BitsDownloadFile : DownloadFileBase
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.ChangeSetDestPathCheckHash.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.ChangeSetDestPathCheckHash.", e));
 		}
 		return errorList;
 	}
@@ -471,12 +466,12 @@ internal class BitsDownloadFile : DownloadFileBase
 		try
 		{
 			using FileStream inputStream = File.OpenRead(filePath);
-			fileHash = StreamExtensions.ToASCIISHA1Hash(inputStream);
+			fileHash = inputStream.ToASCIISHA1Hash();
 			matched = fileHash == hash;
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.CheckHash.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("BDF001", "An unhandled exception occurred in BitsDownloadFile.CheckHash.", e));
 		}
 		return errorList;
 	}

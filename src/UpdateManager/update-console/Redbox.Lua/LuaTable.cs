@@ -59,7 +59,7 @@ internal class LuaTable : LuaObject
 				return GetTableDictionary().Keys;
 			}
 			List<object> list = new List<object>();
-			LinqExtensions.ForEach(m_pairs.Keys, list.Add);
+			m_pairs.Keys.ForEach(list.Add);
 			return list;
 		}
 	}
@@ -73,7 +73,7 @@ internal class LuaTable : LuaObject
 				return GetTableDictionary().Values;
 			}
 			List<object> list = new List<object>();
-			LinqExtensions.ForEach(m_pairs.Values, list.Add);
+			m_pairs.Values.ForEach(list.Add);
 			return list;
 		}
 	}
@@ -115,7 +115,7 @@ internal class LuaTable : LuaObject
 	{
 		Dictionary<string, object> dictionary = new Dictionary<string, object>();
 		BuildPropertiesDictionary(dictionary, this);
-		return ObjectExtensions.ToJson(dictionary);
+		return dictionary.ToJson();
 	}
 
 	public void FormatTable(StringBuilder builder, List<LuaTable> visited)
@@ -191,8 +191,7 @@ internal class LuaTable : LuaObject
 
 	public DateTime? ToDateTime()
 	{
-		string s = string.Format("{0}/{1}/{2} {3}:{4}:{5}", this["month"], this["day"], this["year"], this["hour"], this["min"], this["sec"]);
-		if (DateTime.TryParse(s, out var result))
+		if (DateTime.TryParse(string.Format("{0}/{1}/{2} {3}:{4}:{5}", this["month"], this["day"], this["year"], this["hour"], this["min"], this["sec"]), out var result))
 		{
 			return result;
 		}
@@ -244,8 +243,7 @@ internal class LuaTable : LuaObject
 		}
 		if (eachKey is string)
 		{
-			string symbol = (string)eachKey;
-			if (IsValidSymbol(symbol))
+			if (IsValidSymbol((string)eachKey))
 			{
 				return $"{eachKey}=";
 			}

@@ -6,4 +6,6 @@ namespace Redbox.IPC.Framework;
 internal class CommandFormAttribute : Attribute
 {
 	public string Name { get; set; }
+
+	public string Filter { get; set; }
 }

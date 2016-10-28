@@ -30,7 +30,7 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 		{
 			ErrorList clientStoreInfo = GetClientStoreInfo(out var clientStoreInfo2);
 			errorList.AddRange(clientStoreInfo);
-			string data = ObjectExtensions.ToJson(clientStoreInfo2);
+			string data = clientStoreInfo2.ToJson();
 			string hash = GetHash(clientStoreInfo2);
 			if (!string.IsNullOrEmpty(_clientStoreInfoHash) && _clientStoreInfoHash != hash)
 			{
@@ -57,7 +57,7 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("SIS0091", "Unhandled exception occurred in StoreInfoModel.GetPollRequest.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SIS0091", "Unhandled exception occurred in StoreInfoModel.GetPollRequest.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -68,37 +68,36 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 		ErrorList errorList = new ErrorList();
 		try
 		{
-			PollReply pollReply = (from pr in pollReplyList.ToList()
+			if ((from pr in pollReplyList.ToList()
 				where pr.PollReplyType == PollReplyType.UpdateStoreInfo
-				select pr).FirstOrDefault();
-			if (pollReply != null)
+				select pr).FirstOrDefault() != null)
 			{
 				_syncID = 0;
 				_clientStoreInfoHash = string.Empty;
 				LogHelper.Instance.Log("Store Info server is clearing the sync id as requested by the server.");
 				return new ErrorList();
 			}
-			PollReply pollReply2 = (from pr in pollReplyList.ToList()
+			PollReply pollReply = (from pr in pollReplyList.ToList()
 				where pr.PollReplyType == PollReplyType.StoreInfoChangeSet
 				select pr).FirstOrDefault();
-			if (pollReply2 != null)
+			if (pollReply != null)
 			{
-				if (string.IsNullOrEmpty(pollReply2.Data))
+				if (string.IsNullOrEmpty(pollReply.Data))
 				{
-					errorList.Add(Error.NewError("CFS0092", "Error, A poll reply contained a type of store info changeset without the changeset.", ObjectExtensions.ToJson(pollReply2)));
+					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("CFS0092", "Error, A poll reply contained a type of store info changeset without the changeset.", pollReply.ToJson()));
 				}
 				else
 				{
-					StoreInfoChangeSetData changeSet = StringExtensions.ToObject<StoreInfoChangeSetData>(pollReply2.Data);
+					StoreInfoChangeSetData changeSet = pollReply.Data.ToObject<StoreInfoChangeSetData>();
 					ErrorList collection = ProcessChangeSet(changeSet);
 					errorList.AddRange(collection);
 				}
-				_syncID = pollReply2.SyncId;
+				_syncID = pollReply.SyncId;
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("CFS0091", "Unhandled exception occurred in StoreInfoService.ProcessPollReply.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("CFS0091", "Unhandled exception occurred in StoreInfoService.ProcessPollReply.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -107,26 +106,22 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 	private ErrorList ProcessChangeSet(StoreInfoChangeSetData changeSet)
 	{
 		ErrorList errorList = new ErrorList();
-		LogHelper.Instance.Log("Processing StoreInfo ChangeSet: " + ObjectExtensions.ToJson(changeSet), LogEntryType.Debug);
+		LogHelper.Instance.Log("Processing StoreInfo ChangeSet: " + changeSet.ToJson(), LogEntryType.Debug);
 		try
 		{
 			_storeInfoChangeSet = changeSet;
-			if (_storeInfoChangeSet.CorrectTimeZone)
+			if (_storeInfoChangeSet.CorrectTimeZone && !TimeZoneFunctions.SetTimeZone(TimeZoneInfo.FromSerializedString(_storeInfoChangeSet.TimeZoneInfoString)))
 			{
-				TimeZoneInfo timeZone = TimeZoneInfo.FromSerializedString(_storeInfoChangeSet.TimeZoneInfoString);
-				if (!TimeZoneFunctions.SetTimeZone(timeZone))
-				{
-					errorList.Add(Error.NewError("SIS0100", "Setting timezone failed", "Check the log for further details."));
-				}
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SIS0100", "Setting timezone failed", "Check the log for further details."));
 			}
 			if (_storeInfoChangeSet.CorrectDateTime && !TimeZoneFunctions.SetTime(_storeInfoChangeSet.CurrentUTCDateTime))
 			{
-				errorList.Add(Error.NewError("SIS0101", "Setting datetime failed", "Check the log for further details."));
+				errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SIS0101", "Setting datetime failed", "Check the log for further details."));
 			}
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("SIS0089", $"Unhandled exception occurred in StoreInfoService.ProcessChangeSet for store info", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SIS0089", $"Unhandled exception occurred in StoreInfoService.ProcessChangeSet for store info", e));
 		}
 		return errorList;
 	}
@@ -153,8 +148,7 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 			clientStoreInfo.Info.Add("OS VersionString", System.Environment.OSVersion.VersionString);
 			clientStoreInfo.Info.Add("OS Platform", System.Environment.OSVersion.Platform.ToString());
 			clientStoreInfo.Info.Add("OS ServicePack", System.Environment.OSVersion.ServicePack);
-			IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-			string value = hostEntry.AddressList.FirstOrDefault((IPAddress a) => a.AddressFamily == AddressFamily.InterNetwork).ToString();
+			string value = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault((IPAddress a) => a.AddressFamily == AddressFamily.InterNetwork).ToString();
 			clientStoreInfo.Info.Add("IP Address", value);
 			NetworkInterface[] allNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 			if (allNetworkInterfaces.Any())
@@ -165,7 +159,7 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 		}
 		catch (Exception e)
 		{
-			errorList.Add(Error.NewError("SIS0092", "Unhandled exception occurred in StoreInfoServieGetClientStoreInfo.", e));
+			errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("SIS0092", "Unhandled exception occurred in StoreInfoServieGetClientStoreInfo.", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -179,13 +173,12 @@ public class StoreInfoService : IStoreInfoService, IPollRequestReply
 			Version = clientStoreInfo.Version,
 			Info = new Dictionary<string, string>()
 		};
-		LinqExtensions.ForEach(clientStoreInfo.Info, delegate(KeyValuePair<string, string> info)
+		clientStoreInfo.Info.ForEach(delegate(KeyValuePair<string, string> info)
 		{
 			obj.Info.Add(info.Key, info.Value);
 		});
-		string s = ObjectExtensions.ToJson(obj);
-		byte[] bytes = Encoding.ASCII.GetBytes(s);
-		return ByteArrayExtensions.ToASCIISHA1Hash(bytes);
+		string s = obj.ToJson();
+		return Encoding.ASCII.GetBytes(s).ToASCIISHA1Hash();
 	}
 
 	private StoreInfoService()

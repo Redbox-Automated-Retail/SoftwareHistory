@@ -20,8 +20,7 @@ public static class ComObjectFunctions
 	[KernelFunction(Name = "kernel.registercomobject")]
 	internal static bool RegisterComObject(string fileName)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(fileName);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fileName);
 		if (SelfRegistrationTool.IsModuleSelfRegistering(text))
 		{
 			SelfRegistrationTool.Register(text);
@@ -36,17 +35,15 @@ public static class ComObjectFunctions
 			WindowStyle = ProcessWindowStyle.Hidden,
 			Arguments = $"/s {text}"
 		};
-		Process process2 = process;
-		process2.Start();
-		process2.WaitForExit();
-		return process2.ExitCode == 0;
+		process.Start();
+		process.WaitForExit();
+		return process.ExitCode == 0;
 	}
 
 	[KernelFunction(Name = "kernel.unregistercomobject")]
 	internal static bool UnregisterComObject(string fileName)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = service.ExpandProperties(fileName);
+		string text = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(fileName);
 		if (SelfRegistrationTool.IsModuleSelfRegistering(text))
 		{
 			SelfRegistrationTool.Unregister(text);
@@ -61,9 +58,8 @@ public static class ComObjectFunctions
 			WindowStyle = ProcessWindowStyle.Hidden,
 			Arguments = $"/s /u {text}"
 		};
-		Process process2 = process;
-		process2.Start();
-		process2.WaitForExit();
-		return process2.ExitCode == 0;
+		process.Start();
+		process.WaitForExit();
+		return process.ExitCode == 0;
 	}
 }

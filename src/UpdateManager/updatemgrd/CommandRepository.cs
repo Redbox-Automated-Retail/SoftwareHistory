@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-[Command("command-repository")]
+[Command("command-repository", Filter = "System|Command-Repository")]
 [Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
 internal class CommandRepository
 {
@@ -20,8 +21,7 @@ internal class CommandRepository
 
 	public void Default(CommandContext context)
 	{
-		List<string> list = DiscoverInstalledCommands();
-		foreach (string item in list)
+		foreach (string item in DiscoverInstalledCommands())
 		{
 			context.Messages.Add("Installed Command '" + item + "'.");
 		}
@@ -120,14 +120,19 @@ internal class CommandRepository
 		foreach (Type type in types)
 		{
 			CommandAttribute[] array = (CommandAttribute[])type.GetCustomAttributes(typeof(CommandAttribute), inherit: false);
-			CommandAttribute[] array2 = array;
-			foreach (CommandAttribute commandAttribute in array2)
+			foreach (CommandAttribute commandAttribute in array)
 			{
 				if (commandAttribute.Name != null)
 				{
 					string text = commandAttribute.Name.ToUpper();
 					list.Add(text);
-					m_commandInstanceCache[text] = CommandInstance.GetCommandInstance(type);
+					CommandInstance commandInstance = CommandInstance.GetCommandInstance(type);
+					m_commandInstanceCache[text] = commandInstance;
+					if (!string.IsNullOrEmpty(commandAttribute.Filter))
+					{
+						commandAttribute.Filter.Trim().Split('|').ToList()
+							.ForEach(commandInstance.Filters.Add);
+					}
 				}
 			}
 		}

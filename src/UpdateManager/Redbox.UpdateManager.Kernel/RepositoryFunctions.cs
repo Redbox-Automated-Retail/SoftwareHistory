@@ -11,11 +11,10 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositoryverify")]
 	internal static LuaTable Verify(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		ErrorList errorList = service.Verify(name);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IRepositoryService>().Verify(name);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -28,21 +27,17 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositoryreset")]
 	internal static LuaTable Reset(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		service.Reset(name, out var defferedDelete);
-		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
-		luaTable["should_restart"] = defferedDelete;
-		return luaTable;
+		ServiceLocator.Instance.GetService<IRepositoryService>().Reset(name, out var defferedDelete);
+		return new LuaTable(KernelService.Instance.LuaRuntime) { ["should_restart"] = defferedDelete };
 	}
 
 	[KernelFunction(Name = "kernel.repositoryrepair")]
 	internal static LuaTable Repair(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		ErrorList errorList = service.Repair(name, out var deferredMove);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IRepositoryService>().Repair(name, out var deferredMove);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -55,26 +50,22 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositorygetunfinishedchanges")]
 	internal static LuaTable GetOutstandingChanges(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		List<IRevLog> unfinishedChanges = service.GetUnfinishedChanges(name);
-		return ChangeSetToFileList(unfinishedChanges);
+		return ChangeSetToFileList(ServiceLocator.Instance.GetService<IRepositoryService>().GetUnfinishedChanges(name));
 	}
 
 	[KernelFunction(Name = "kernel.repositoryformatstagedfile")]
 	internal static string FormatStagedFile(string path)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		return service.FormatStagedFileName(path);
+		return ServiceLocator.Instance.GetService<IRepositoryService>().FormatStagedFileName(path);
 	}
 
 	[KernelFunction(Name = "kernel.repositoryactivateto")]
 	internal static LuaTable ActivateTo(string name, string hash)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		ErrorList errorList = service.ActivateTo(name, hash, out var deferredMove);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IRepositoryService>().ActivateTo(name, hash, out var deferredMove);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -87,11 +78,10 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositoryactivate")]
 	internal static LuaTable Activate(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		ErrorList errorList = service.ActivateToHead(name, out var deferredMove);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IRepositoryService>().ActivateToHead(name, out var deferredMove);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -104,11 +94,10 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositoryupdateto")]
 	internal static LuaTable UpdateTo(string name, string hash)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		ErrorList errorList = service.UpdateTo(name, hash);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IRepositoryService>().UpdateTo(name, hash);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -119,11 +108,10 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositoryupdate")]
 	internal static LuaTable Update(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		ErrorList errorList = service.UpdateToHead(name);
+		ErrorList errorList = ServiceLocator.Instance.GetService<IRepositoryService>().UpdateToHead(name);
 		if (errorList.ContainsError())
 		{
-			errorList.ForEach(delegate(Error e)
+			errorList.ForEach(delegate(Redbox.UpdateManager.ComponentModel.Error e)
 			{
 				LogHelper.Instance.Log("{0} Details: {1}", e, e.Details);
 			});
@@ -134,9 +122,7 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositorypendingchanges")]
 	internal static LuaTable GetPendingChanges(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		List<IRevLog> pendingChanges = service.GetPendingChanges(name);
-		return ChangeSetToFileList(pendingChanges);
+		return ChangeSetToFileList(ServiceLocator.Instance.GetService<IRepositoryService>().GetPendingChanges(name));
 	}
 
 	[KernelFunction(Name = "kernel.repositorypendingactivations")]
@@ -158,8 +144,7 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositorylist")]
 	internal static LuaTable ListRepositories()
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		List<string> allRepositories = service.GetAllRepositories();
+		List<string> allRepositories = ServiceLocator.Instance.GetService<IRepositoryService>().GetAllRepositories();
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		int num = 1;
 		foreach (string item in allRepositories)
@@ -197,8 +182,7 @@ public static class RepositoryFunctions
 	[KernelFunction(Name = "kernel.repositorytrim")]
 	internal static void Trim(string name)
 	{
-		IRepositoryService service = ServiceLocator.Instance.GetService<IRepositoryService>();
-		service.TrimRepository(name);
+		ServiceLocator.Instance.GetService<IRepositoryService>().TrimRepository(name);
 	}
 
 	private static LuaTable CreateResultTable(ErrorList errors)
@@ -206,7 +190,7 @@ public static class RepositoryFunctions
 		LuaTable luaTable = new LuaTable(KernelService.Instance.LuaRuntime);
 		luaTable["success"] = !errors.ContainsError();
 		LuaTable luaTable2 = new LuaTable(KernelService.Instance.LuaRuntime);
-		foreach (Error error in errors)
+		foreach (Redbox.UpdateManager.ComponentModel.Error error in errors)
 		{
 			luaTable2[error.Code] = error.Description;
 		}

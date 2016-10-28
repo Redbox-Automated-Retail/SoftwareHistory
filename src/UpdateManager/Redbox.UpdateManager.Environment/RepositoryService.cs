@@ -116,13 +116,12 @@ public class RepositoryService : IRepositoryService, IDisposable
 					continue;
 				}
 				string text = Path.Combine(FormatRepositoryLocationInternal(name), revLogList[i].HashFileName(change.FormatFileName()));
-				FileInfo fileInfo = new FileInfo(text);
-				if (fileInfo.Length < 1)
+				if (new FileInfo(text).Length < 1)
 				{
 					continue;
 				}
 				using FileStream inputStream = File.OpenRead(text);
-				string text2 = StreamExtensions.ToASCIISHA1Hash(inputStream);
+				string text2 = inputStream.ToASCIISHA1Hash();
 				if (change.IsSeed && change.VersionHash != text2)
 				{
 					errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("V999", $"{text} should have hash {change.VersionHash} but has {text2}", "This store's repository is corrupted."));
@@ -137,10 +136,9 @@ public class RepositoryService : IRepositoryService, IDisposable
 		string current2 = ReadCurrentRevisionInternal(name);
 		if (current2 != "0000000000000000000000000000000000000000")
 		{
-			int num = revLogList.FindIndex((RevLog l) => l.Hash == current2);
-			for (int num2 = num; num2 > -1; num2--)
+			for (int num = revLogList.FindIndex((RevLog l) => l.Hash == current2); num > -1; num--)
 			{
-				foreach (ChangeItem change2 in revLogList[num2].Changes)
+				foreach (ChangeItem change2 in revLogList[num].Changes)
 				{
 					string text3 = Path.Combine(change2.TargetPath, change2.TargetName);
 					if (hashSet.Contains(text3))
@@ -150,7 +148,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 					hashSet.Add(text3);
 					string text4 = FormatStagedFileName(text3);
 					using FileStream inputStream2 = File.OpenRead(text4);
-					string text5 = StreamExtensions.ToASCIISHA1Hash(inputStream2);
+					string text5 = inputStream2.ToASCIISHA1Hash();
 					if (change2.VersionHash != text5)
 					{
 						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("V999", $"Staged file: {text4} should have hash {change2.VersionHash} but has {text5}", "This store's repository is corrupted."));
@@ -159,32 +157,30 @@ public class RepositoryService : IRepositoryService, IDisposable
 			}
 			hashSet.Clear();
 		}
-		string text6 = ReadActiveRevisionInternal(name);
-		if (text6 != "0000000000000000000000000000000000000000")
+		if (ReadActiveRevisionInternal(name) != "0000000000000000000000000000000000000000")
 		{
-			int num3 = revLogList.FindIndex((RevLog l) => l.Hash == current2);
-			for (int num4 = num3; num4 > -1; num4--)
+			for (int num2 = revLogList.FindIndex((RevLog l) => l.Hash == current2); num2 > -1; num2--)
 			{
-				foreach (ChangeItem change3 in revLogList[num4].Changes)
+				foreach (ChangeItem change3 in revLogList[num2].Changes)
 				{
-					string text7 = Path.Combine(change3.TargetPath, change3.TargetName);
-					if (hashSet.Contains(text7))
+					string text6 = Path.Combine(change3.TargetPath, change3.TargetName);
+					if (hashSet.Contains(text6))
 					{
 						continue;
 					}
-					hashSet.Add(text7);
+					hashSet.Add(text6);
 					try
 					{
-						using FileStream inputStream3 = File.OpenRead(text7);
-						string text8 = StreamExtensions.ToASCIISHA1Hash(inputStream3);
-						if (change3.VersionHash != text8)
+						using FileStream inputStream3 = File.OpenRead(text6);
+						string text7 = inputStream3.ToASCIISHA1Hash();
+						if (change3.VersionHash != text7)
 						{
-							errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("V999", $"Active file: {text7} should have hash {change3.VersionHash} but has {text8}", "This store's repository is corrupted."));
+							errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("V999", $"Active file: {text6} should have hash {change3.VersionHash} but has {text7}", "This store's repository is corrupted."));
 						}
 					}
 					catch (Exception e)
 					{
-						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", $"Error hashing {text7}.", e));
+						errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("E999", $"Error hashing {text6}.", e));
 					}
 				}
 			}
@@ -227,12 +223,13 @@ public class RepositoryService : IRepositoryService, IDisposable
 				Dictionary<string, IRevLog> dictionary = new Dictionary<string, IRevLog>();
 				foreach (string revision in changeSet.Revisions)
 				{
-					RevLog revLog = new RevLog();
-					revLog.Changes = new List<ChangeItem>();
-					revLog.Hash = revision;
-					RevLog revLog2 = revLog;
-					dictionary.Add(revision, revLog2);
-					list.Add(revLog2);
+					RevLog revLog = new RevLog
+					{
+						Changes = new List<ChangeItem>(),
+						Hash = revision
+					};
+					dictionary.Add(revision, revLog);
+					list.Add(revLog);
 				}
 				foreach (ChangeSetItem item2 in changeSet.Items)
 				{
@@ -269,9 +266,9 @@ public class RepositoryService : IRepositoryService, IDisposable
 			Directory.CreateDirectory(StagingDirectory);
 		}
 		string[] array = directories;
-		foreach (string path in array)
+		for (int i = 0; i < array.Length; i++)
 		{
-			DirectoryInfo directoryInfo2 = new DirectoryInfo(path);
+			DirectoryInfo directoryInfo2 = new DirectoryInfo(array[i]);
 			if (directoryInfo2.FullName != directoryInfo.FullName)
 			{
 				list.Add(directoryInfo2.Name);
@@ -283,8 +280,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 	public string FormatStagedFileName(string file)
 	{
 		string fileName = Path.GetFileName(file);
-		string directoryName = Path.GetDirectoryName(file);
-		return Path.Combine(directoryName, $".staged_\\{fileName}");
+		return Path.Combine(Path.GetDirectoryName(file), $".staged_\\{fileName}");
 	}
 
 	public void RemoveRevision(string name, string hash)
@@ -303,9 +299,15 @@ public class RepositoryService : IRepositoryService, IDisposable
 			List<int> list = new List<int>();
 			PersistentList<RevLog> revLog = GetRevLog(name);
 			List<RevLog> list2 = revLog.AsList();
+			Predicate<RevLog> predicate2 = default(Predicate<RevLog>);
 			while (true)
 			{
-				int num = list2.FindIndex((RevLog l) => l.Hash == hash);
+				Predicate<RevLog> predicate = predicate2;
+				if (predicate == null)
+				{
+					predicate = (predicate2 = (RevLog l) => l.Hash == hash);
+				}
+				int num = list2.FindIndex(predicate);
 				if (num == -1)
 				{
 					break;
@@ -409,8 +411,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 		try
 		{
 			LogHelper.Instance.Log("Unpacking change set.");
-			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-			ChangeSet changeSet = service.Get<ChangeSet>(id);
+			ChangeSet changeSet = ServiceLocator.Instance.GetService<IDataStoreService>().Get<ChangeSet>(id);
 			if ((byte)changeSet.CompressionType != 0)
 			{
 				using ExecutionTimer executionTimer = new ExecutionTimer();
@@ -436,8 +437,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 			if (!changeSet.IsArchive)
 			{
 				string s = Path.Combine(changeSet.Items[changeSet.Items.Count - 1].TargetPath, changeSet.Items[changeSet.Items.Count - 1].TargetName);
-				byte[] bytes = Encoding.ASCII.GetBytes(s);
-				string arg = Redbox.Core.ByteArrayExtensions.ToASCIISHA1Hash(bytes);
+				string arg = Encoding.ASCII.GetBytes(s).ToASCIISHA1Hash();
 				string text = Path.Combine(StagingDirectory, $"{changeSet.Revisions.Last()}-{arg}.patch");
 				File.Delete(text);
 				File.Move(archive, text);
@@ -525,8 +525,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 		try
 		{
 			List<IRevLog> list = new List<IRevLog>();
-			List<RevLog> revLogList = GetRevLogList(name);
-			revLogList.ForEach(list.Add);
+			GetRevLogList(name).ForEach(list.Add);
 			return list;
 		}
 		finally
@@ -769,13 +768,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 		}
 		try
 		{
-			List<RevLog> revLogList = GetRevLogList(name);
-			RevLog revLog = revLogList.Find((RevLog l) => l.Hash == revision);
-			if (revLog == null)
-			{
-				throw new ApplicationException($"No revsion with hash: {revision} found in repository name: {name}");
-			}
-			return revLog.Label;
+			return (GetRevLogList(name).Find((RevLog l) => l.Hash == revision) ?? throw new ApplicationException($"No revsion with hash: {revision} found in repository name: {name}")).Label;
 		}
 		finally
 		{
@@ -840,22 +833,22 @@ public class RepositoryService : IRepositoryService, IDisposable
 					throw new ApplicationException($"No revision with hash: {deltaItem.Revision} found in repository name: {name}");
 				}
 				RevLog revLog2 = list[num];
-				ChangeItem changeItem = new ChangeItem();
-				changeItem.IsSeed = deltaItem.IsSeed;
-				changeItem.Composite = deltaItem.IsPlaceHolder;
-				changeItem.ContentHash = deltaItem.ContentHash;
-				changeItem.TargetName = deltaItem.TargetName;
-				changeItem.TargetPath = deltaItem.TargetPath;
-				changeItem.VersionHash = deltaItem.VersionHash;
-				ChangeItem changeItem2 = changeItem;
-				revLog2.Changes.Add(changeItem2);
+				ChangeItem changeItem = new ChangeItem
+				{
+					IsSeed = deltaItem.IsSeed,
+					Composite = deltaItem.IsPlaceHolder,
+					ContentHash = deltaItem.ContentHash,
+					TargetName = deltaItem.TargetName,
+					TargetPath = deltaItem.TargetPath,
+					VersionHash = deltaItem.VersionHash
+				};
+				revLog2.Changes.Add(changeItem);
 				revLog[num] = revLog2;
-				string text = Path.Combine(FormatRepositoryLocationInternal(name), revLog2.HashFileName(changeItem2.FormatFileName()));
-				LogHelper.Instance.Log("Add patch from Revision: {0} with the following properties.\r\nComposite: {1}\r\n ContentHash: {2}\r\n TargetName: {3}\r\n TargetPath: {4}\r\n VersionHash: {5}\r\n IsSeed: {6}\r\n", deltaItem.Revision, changeItem2.Composite, changeItem2.ContentHash, changeItem2.TargetName, changeItem2.TargetPath, changeItem2.VersionHash, changeItem2.IsSeed);
+				string text = Path.Combine(FormatRepositoryLocationInternal(name), revLog2.HashFileName(changeItem.FormatFileName()));
+				LogHelper.Instance.Log("Add patch from Revision: {0} with the following properties.\r\nComposite: {1}\r\n ContentHash: {2}\r\n TargetName: {3}\r\n TargetPath: {4}\r\n VersionHash: {5}\r\n IsSeed: {6}\r\n", deltaItem.Revision, changeItem.Composite, changeItem.ContentHash, changeItem.TargetName, changeItem.TargetPath, changeItem.VersionHash, changeItem.IsSeed);
 				if (!deltaItem.IsPlaceHolder)
 				{
-					byte[] bytes = Encoding.ASCII.GetBytes(deltaItem.FormatFileName());
-					string arg = Redbox.Core.ByteArrayExtensions.ToASCIISHA1Hash(bytes);
+					string arg = Encoding.ASCII.GetBytes(deltaItem.FormatFileName()).ToASCIISHA1Hash();
 					if (!Directory.Exists(StagingDirectory))
 					{
 						Directory.CreateDirectory(StagingDirectory);
@@ -881,15 +874,16 @@ public class RepositoryService : IRepositoryService, IDisposable
 
 	public void AddDelta(string name, string revision, string file, bool isSeed, bool isPlaceHolder, string contentHash, string versionHash)
 	{
-		DeltaItem deltaItem = new DeltaItem();
-		deltaItem.Revision = revision;
-		deltaItem.IsSeed = isSeed;
-		deltaItem.IsPlaceHolder = isPlaceHolder;
-		deltaItem.ContentHash = contentHash;
-		deltaItem.TargetName = Path.GetFileName(file);
-		deltaItem.TargetPath = Path.GetDirectoryName(file);
-		deltaItem.VersionHash = versionHash;
-		DeltaItem item = deltaItem;
+		DeltaItem item = new DeltaItem
+		{
+			Revision = revision,
+			IsSeed = isSeed,
+			IsPlaceHolder = isPlaceHolder,
+			ContentHash = contentHash,
+			TargetName = Path.GetFileName(file),
+			TargetPath = Path.GetDirectoryName(file),
+			VersionHash = versionHash
+		};
 		AddDelta(name, new List<DeltaItem> { item });
 	}
 
@@ -972,10 +966,9 @@ public class RepositoryService : IRepositoryService, IDisposable
 	public void Reset(out bool defferedDelete)
 	{
 		defferedDelete = false;
-		List<string> allRepositories = GetAllRepositories();
-		foreach (string item in allRepositories)
+		foreach (string allRepository in GetAllRepositories())
 		{
-			Reset(item, out defferedDelete);
+			Reset(allRepository, out defferedDelete);
 		}
 		if (Directory.Exists(Root))
 		{
@@ -1132,10 +1125,8 @@ public class RepositoryService : IRepositoryService, IDisposable
 	public Redbox.UpdateManager.ComponentModel.ErrorList RebuildToInternal(string name, string targetHash)
 	{
 		Reset(name, out var _);
-		string path = FormatRepositoryLocationInternal(name);
-		Directory.CreateDirectory(path);
-		IUpdateService service = ServiceLocator.Instance.GetService<IUpdateService>();
-		return service.Poll();
+		Directory.CreateDirectory(FormatRepositoryLocationInternal(name));
+		return ServiceLocator.Instance.GetService<IUpdateService>().Poll();
 	}
 
 	private Redbox.UpdateManager.ComponentModel.ErrorList ActivateToInternal(string name, string targetHash, out bool deferredMove)
@@ -1169,8 +1160,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 		}
 		try
 		{
-			string text2 = ReadActiveRevisionInternal(name);
-			if (text2 == text)
+			if (ReadActiveRevisionInternal(name) == text)
 			{
 				return errorList;
 			}
@@ -1189,29 +1179,29 @@ public class RepositoryService : IRepositoryService, IDisposable
 					{
 						continue;
 					}
-					string text3 = change.FormatFileName();
-					if (!hashSet.Contains(text3))
+					string text2 = change.FormatFileName();
+					if (!hashSet.Contains(text2))
 					{
-						LogHelper.Instance.Log("Activating file {0} to {1}{2}{2}", FormatStagedFileName(text3), text3, System.Environment.NewLine);
-						hashSet.Add(text3);
-						string text4 = FormatStagedFileName(text3);
-						if (!File.Exists(text4))
+						LogHelper.Instance.Log("Activating file {0} to {1}{2}{2}", FormatStagedFileName(text2), text2, System.Environment.NewLine);
+						hashSet.Add(text2);
+						string text3 = FormatStagedFileName(text2);
+						if (!File.Exists(text3))
 						{
-							errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("U998", $"Error Activating staged files for repository: {name} to revision: {targetHash}", $"Staged file does not exist.File:{text4}"));
+							errorList.Add(Redbox.UpdateManager.ComponentModel.Error.NewError("U998", $"Error Activating staged files for repository: {name} to revision: {targetHash}", $"Staged file does not exist.File:{text3}"));
 							Reset(name, out var _);
 							return errorList;
 						}
 						try
 						{
-							File.Copy(FormatStagedFileName(text3), text3, overwrite: true);
+							File.Copy(FormatStagedFileName(text2), text2, overwrite: true);
 						}
 						catch (Exception e)
 						{
-							LogHelper.Instance.Log("{0} is locked by anther process doing a deferred move.", text3);
+							LogHelper.Instance.Log("{0} is locked by anther process doing a deferred move.", text2);
 							LogHelper.Instance.Log("Error from activate copy.", e);
 							string tempFileName = Path.GetTempFileName();
-							File.Copy(FormatStagedFileName(text3), tempFileName, overwrite: true);
-							MoveLockedFileSystemEntry(tempFileName, text3);
+							File.Copy(FormatStagedFileName(text2), tempFileName, overwrite: true);
+							MoveLockedFileSystemEntry(tempFileName, text2);
 							deferredMove = true;
 						}
 					}
@@ -1278,6 +1268,11 @@ public class RepositoryService : IRepositoryService, IDisposable
 		if (errorList.ContainsError() && !rebuilding)
 		{
 			LogHelper.Instance.Log("Error Updating {0} from {1} to {2} attempting to rebuild.", name, current, targetHash);
+			if (name.Equals("dvd-data", StringComparison.CurrentCultureIgnoreCase))
+			{
+				LogHelper.Instance.Log("Skipped resetting dvd-data");
+				return errorList;
+			}
 			Redbox.UpdateManager.ComponentModel.ErrorList errorList2 = RebuildToInternal(name, targetHash);
 			if (errorList2.ContainsError())
 			{
@@ -1335,11 +1330,18 @@ public class RepositoryService : IRepositoryService, IDisposable
 					string stagedHash;
 					using (FileStream inputStream = new FileStream(text, FileMode.Open, FileAccess.ReadWrite))
 					{
-						stagedHash = StreamExtensions.ToASCIISHA1Hash(inputStream);
+						stagedHash = inputStream.ToASCIISHA1Hash();
 					}
+					Predicate<ChangeItem> predicate2 = default(Predicate<ChangeItem>);
 					for (int j = 0; j < target; j++)
 					{
-						if (logList[j].Changes.FindIndex((ChangeItem c) => !c.Composite && c.VersionHash == stagedHash && c.TargetPath == targetPath && c.TargetName == targetName) > -1)
+						List<ChangeItem> changes = logList[j].Changes;
+						Predicate<ChangeItem> predicate = predicate2;
+						if (predicate == null)
+						{
+							predicate = (predicate2 = (ChangeItem c) => !c.Composite && c.VersionHash == stagedHash && c.TargetPath == targetPath && c.TargetName == targetName);
+						}
+						if (changes.FindIndex(predicate) > -1)
 						{
 							dictionary2[text] = j + 1;
 							break;
@@ -1410,7 +1412,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 						string text4;
 						using (FileStream inputStream2 = new FileStream(dictionary[text2], FileMode.Open, FileAccess.ReadWrite))
 						{
-							text4 = StreamExtensions.ToASCIISHA1Hash(inputStream2);
+							text4 = inputStream2.ToASCIISHA1Hash();
 						}
 						if (text4 != change2.VersionHash)
 						{
@@ -1450,26 +1452,24 @@ public class RepositoryService : IRepositoryService, IDisposable
 	{
 		if (!m_revLogs.ContainsKey(name))
 		{
-			string path = FormatRepositoryLocationInternal(name);
-			string path2 = Path.Combine(path, ".revlog");
-			m_revLogs[name] = new PersistentList<RevLog>(path2);
+			string path = Path.Combine(FormatRepositoryLocationInternal(name), ".revlog");
+			m_revLogs[name] = new PersistentList<RevLog>(path);
 		}
 		return m_revLogs[name];
 	}
 
 	private string ReadCurrentRevisionInternal(string name)
 	{
-		string path = FormatRepositoryLocationInternal(name);
-		string path2 = Path.Combine(path, ".current");
-		if (!File.Exists(path2))
+		string path = Path.Combine(FormatRepositoryLocationInternal(name), ".current");
+		if (!File.Exists(path))
 		{
 			return "0000000000000000000000000000000000000000";
 		}
 		try
 		{
-			using FileStream stream = new FileStream(path2, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 			using StreamReader streamReader = new StreamReader(stream);
-			return StringExtensions.ToObject<string>(streamReader.ReadToEnd());
+			return streamReader.ReadToEnd().ToObject<string>();
 		}
 		catch (Exception e)
 		{
@@ -1480,17 +1480,16 @@ public class RepositoryService : IRepositoryService, IDisposable
 
 	private string ReadActiveRevisionInternal(string name)
 	{
-		string path = FormatRepositoryLocationInternal(name);
-		string path2 = Path.Combine(path, ".active");
-		if (!File.Exists(path2))
+		string path = Path.Combine(FormatRepositoryLocationInternal(name), ".active");
+		if (!File.Exists(path))
 		{
 			return "0000000000000000000000000000000000000000";
 		}
 		try
 		{
-			using FileStream stream = new FileStream(path2, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 			using StreamReader streamReader = new StreamReader(stream);
-			return StringExtensions.ToObject<string>(streamReader.ReadToEnd());
+			return streamReader.ReadToEnd().ToObject<string>();
 		}
 		catch (Exception e)
 		{
@@ -1501,31 +1500,26 @@ public class RepositoryService : IRepositoryService, IDisposable
 
 	private void WriteCurrentRevisionInternal(string name, string revision)
 	{
-		string path = FormatRepositoryLocationInternal(name);
-		string path2 = Path.Combine(path, ".current");
-		File.WriteAllText(path2, ObjectExtensions.ToJson(revision));
+		File.WriteAllText(Path.Combine(FormatRepositoryLocationInternal(name), ".current"), revision.ToJson());
 	}
 
 	private void WriteActiveRevisionInternal(string name, string revision)
 	{
-		string path = FormatRepositoryLocationInternal(name);
-		string path2 = Path.Combine(path, ".active");
-		File.WriteAllText(path2, ObjectExtensions.ToJson(revision));
+		File.WriteAllText(Path.Combine(FormatRepositoryLocationInternal(name), ".active"), revision.ToJson());
 	}
 
 	private string ReadActiveLabelInternal(string name)
 	{
-		string path = FormatRepositoryLocationInternal(name);
-		string path2 = Path.Combine(path, ".label");
-		if (!File.Exists(path2))
+		string path = Path.Combine(FormatRepositoryLocationInternal(name), ".label");
+		if (!File.Exists(path))
 		{
 			return string.Empty;
 		}
 		try
 		{
-			using FileStream stream = new FileStream(path2, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 			using StreamReader streamReader = new StreamReader(stream);
-			return StringExtensions.ToObject<string>(streamReader.ReadToEnd());
+			return streamReader.ReadToEnd().ToObject<string>();
 		}
 		catch (Exception e)
 		{
@@ -1536,9 +1530,7 @@ public class RepositoryService : IRepositoryService, IDisposable
 
 	private void WriteActiveLabelInternal(string name, string label)
 	{
-		string path = FormatRepositoryLocationInternal(name);
-		string path2 = Path.Combine(path, ".label");
-		File.WriteAllText(path2, ObjectExtensions.ToJson(label));
+		File.WriteAllText(Path.Combine(FormatRepositoryLocationInternal(name), ".label"), label.ToJson());
 	}
 
 	private string FormatRepositoryLocationInternal(string name)
@@ -1608,7 +1600,6 @@ public class RepositoryService : IRepositoryService, IDisposable
 
 	public void DeleteLockedFileSystemEntry(string target)
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		MoveFileEx(service.ExpandProperties(target), null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
+		MoveFileEx(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(target), null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);
 	}
 }

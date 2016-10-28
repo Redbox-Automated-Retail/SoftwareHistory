@@ -9,15 +9,7 @@ internal class ThreadExecutionTimer
 
 	private long m_startTimeStamp;
 
-	public TimeSpan Elapsed
-	{
-		get
-		{
-			long num = m_endTimeStamp ?? GetThreadTimes();
-			long num2 = num - m_startTimeStamp;
-			return TimeSpan.FromMilliseconds(num2 / 10000);
-		}
-	}
+	public TimeSpan Elapsed => TimeSpan.FromMilliseconds(((m_endTimeStamp ?? GetThreadTimes()) - m_startTimeStamp) / 10000);
 
 	public bool IsRunning { get; private set; }
 
@@ -47,8 +39,7 @@ internal class ThreadExecutionTimer
 
 	private static long GetThreadTimes()
 	{
-		IntPtr currentThread = GetCurrentThread();
-		long threadTimes = GetThreadTimes(currentThread, out long createionTime, out createionTime, out var kernelTime, out var userTime);
+		long threadTimes = GetThreadTimes(GetCurrentThread(), out long exitTime, out exitTime, out var kernelTime, out var userTime);
 		if (!Convert.ToBoolean(threadTimes))
 		{
 			throw new Exception($"failed to get timestamp. error code: {threadTimes}");

@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.UpdateService.Model;
 
-public class StoreInfoChangeSetData
+internal class StoreInfoChangeSetData
 {
 	public string TimeZoneInfoString { get; set; }
 
