@@ -76,8 +76,8 @@ public class DeckConfigurationDetailForm : Form
 
 	private DataGridViewCheckBoxColumn Excluded;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool AllowSlotDataEdit
 	{
 		get
@@ -92,8 +92,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? Number
 	{
 		get
@@ -114,8 +114,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? YOffset
 	{
 		get
@@ -224,8 +224,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? ApproachOffset
 	{
 		get
@@ -283,8 +283,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool HasDumpSlot
 	{
 		get
@@ -313,16 +313,17 @@ public class DeckConfigurationDetailForm : Form
 
 	public HardwareService Service { get; set; }
 
-	public ConfigurationManager Manager { get; set; }
+	public DecksConfigurationManager Manager { get; private set; }
 
 	private bool AllowExcludeUpdates { get; set; }
 
 	private XmlNode WorkingNode { get; set; }
 
-	public DeckConfigurationDetailForm(bool allowExcludeUpdates)
+	public DeckConfigurationDetailForm(bool allowExcludeUpdates, DecksConfigurationManager manager)
 	{
 		InitializeComponent();
 		AllowExcludeUpdates = allowExcludeUpdates;
+		Manager = manager;
 		m_quadrantDataGridView.Columns[DeckConfigurationDetailColumns.Excluded].ReadOnly = !AllowExcludeUpdates;
 	}
 
@@ -394,28 +395,9 @@ public class DeckConfigurationDetailForm : Form
 		{
 			UpdateOriginalNode(xmlNode);
 			Manager.FlushChanges(refresh: false);
-			UpdateInventory(xmlNode, list);
 			base.DialogResult = DialogResult.OK;
 			Close();
 		}
-	}
-
-	private void UpdateInventory(XmlNode deckNode, List<int> newExcludedQuads)
-	{
-		HardwareCommandResult inventoryState = Service.GetInventoryState();
-		XmlDocument xmlDocument = new XmlDocument();
-		xmlDocument.LoadXml(inventoryState.CommandMessages[0]);
-		foreach (int newExcludedQuad in newExcludedQuads)
-		{
-			XmlNode node = deckNode.ChildNodes[newExcludedQuad];
-			string xpath = string.Format("inventory-items/item[@deck={0} and @slot>={1} and @slot<={2}]", Number.Value, node.GetAttributeValue<int>("StartSlot"), node.GetAttributeValue<int>("EndSlot"));
-			XmlNodeList xmlNodeList = xmlDocument.SelectNodes(xpath);
-			foreach (XmlNode item in xmlNodeList)
-			{
-				item.SetAttributeValue("id", "EMPTY");
-			}
-		}
-		Service.SetInventoryState(xmlDocument.InnerXml);
 	}
 
 	private void OnCancel(object sender, EventArgs e)

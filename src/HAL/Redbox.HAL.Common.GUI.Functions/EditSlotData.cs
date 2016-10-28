@@ -151,9 +151,9 @@ public class EditSlotData : Form
 
 	private bool MoveFailed { get; set; }
 
-	private ConfigurationManager Manager { get; set; }
+	private DecksConfigurationManager Manager { get; set; }
 
-	public EditSlotData(HardwareService service, ConfigurationManager mgr)
+	public EditSlotData(HardwareService service, DecksConfigurationManager mgr)
 	{
 		InitializeComponent();
 		OutputBox = new ESDOutput(m_OutputListBox);
@@ -166,7 +166,7 @@ public class EditSlotData : Form
 		}
 	}
 
-	public EditSlotData(HardwareService service, ConfigurationManager mgr, int deck, int measureSlot)
+	public EditSlotData(HardwareService service, DecksConfigurationManager mgr, int deck, int measureSlot)
 		: this(service, mgr)
 	{
 		DeckNode = mgr.FindDeckNode(deck);
@@ -175,7 +175,7 @@ public class EditSlotData : Form
 		m_deckTextBox.ReadOnly = true;
 	}
 
-	public EditSlotData(HardwareService service, int deck, ConfigurationManager mgr)
+	public EditSlotData(HardwareService service, int deck, DecksConfigurationManager mgr)
 		: this(service, mgr)
 	{
 		ToggleApplyCheckBox(deck == 1);

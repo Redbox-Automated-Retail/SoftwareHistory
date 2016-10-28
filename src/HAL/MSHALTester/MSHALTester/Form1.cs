@@ -53,8 +53,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private const string ExchangerMnemonic = "AIRXCHGR";
 
-	private const string UtilitiesProgram = "c:\\Program Files\\Redbox\\hal-tools\\HalUtilities.exe";
-
 	private OnFinishInitDelegate FinishInitDelegate;
 
 	private ImageViewer ImageViewer;
@@ -70,8 +68,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	private HardwareService m_hardwareService;
 
 	private string m_servicePath;
-
-	private bool m_secure;
 
 	private string CounterFile = "c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log";
 
@@ -103,11 +99,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private readonly byte[] CameraSnapImmediate;
 
-	private bool PickProgramCompiled;
-
 	private RadioButton m_offsetGetRadioButton;
 
 	private readonly ILog m_log;
+
+	private readonly bool m_secure;
 
 	private IContainer components;
 
@@ -504,7 +500,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		TesterSession testerSession = new TesterSession(user);
 		TesterSessionImplemtation instance = new TesterSessionImplemtation(testerSession);
 		ServiceLocator.Instance.AddService(typeof(ISessionUserService), instance);
-		ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService());
+		ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService(Settings.Default.UsbServiceDebug));
+		ServiceLocator.Instance.AddService(typeof(IDeviceSetupClassFactory), new DeviceSetupClassFactory());
+		ServiceLocator.Instance.AddService(typeof(ITouchscreenService), new TouchscreenService());
 		FinishInitDelegate = AfterInit;
 		OutputBox = new TesterOutputBox(m_outputBox, this);
 		m_log = LogManager.GetLogger("TesterLog");
@@ -1686,8 +1684,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	{
 		try
 		{
-			ConfigurationManager cm = new ConfigurationManager(m_hardwareService);
-			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(m_hardwareService, allowInventoryUpdate: false, cm);
+			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(m_hardwareService, allowInventoryUpdate: false);
 			deckConfigurationForm.ShowDialog();
 		}
 		catch (Exception ex)
@@ -1931,39 +1928,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			try
-			{
-				HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-				hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-				HardwareJobSchedule schedule = hardwareJobSchedule;
-				HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("reset-motioncontrol", string.Empty, enableDebugging: false, schedule, out var job);
-				if (!hardwareCommandResult.Success)
-				{
-					OutputBox.Write("Unable to run job reset-arcus");
-					return;
-				}
-				if (!Helper.WaitForJob(job, out var _))
-				{
-					OutputBox.Write("Unable to run job reset-arcus");
-					return;
-				}
-				if (job.GetResults(out var results).Success)
-				{
-					ProgramResult[] array = results;
-					foreach (ProgramResult programResult in array)
-					{
-						OutputBox.Write(programResult.Message);
-					}
-				}
-				else
-				{
-					OutputBox.Write("Command failure.");
-				}
-				m_hardwareService.TrashJob(job.ID);
-			}
-			catch (Exception)
+			using ResetMotionControlExecutor resetMotionControlExecutor = new ResetMotionControlExecutor(m_hardwareService);
+			resetMotionControlExecutor.Run();
+			if (resetMotionControlExecutor.EndStatus != HardwareJobStatus.Completed)
 			{
 				OutputBox.Write("ERROR: reset-arcus failed.");
+				return;
+			}
+			foreach (ProgramResult result in resetMotionControlExecutor.Results)
+			{
+				OutputBox.Write(result.Message);
 			}
 		}
 	}
@@ -2049,8 +2023,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "COUNTER NAME=\"FOO\" SHOWTIMEOUTS");
-			if (hardwareJob != null && File.Exists(CounterFile))
+			using LogTimeoutsExecutor logTimeoutsExecutor = new LogTimeoutsExecutor(m_hardwareService, CounterFile);
+			logTimeoutsExecutor.Run();
+			if (File.Exists(CounterFile))
 			{
 				Process.Start(CounterFile);
 			}
@@ -2136,30 +2111,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		catch
 		{
 			OutputBox.Write("Error processing stack.");
-		}
-	}
-
-	private string ReadDoorSensorStatus()
-	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "DOORSENSORS STATUS");
-		if (hardwareJob == null)
-		{
-			OutputBox.Write("Command failed.");
-			return "UNKNOWN";
-		}
-		if (hardwareJob.GetStack(out var stack).Errors.Count > 0)
-		{
-			OutputBox.Write("Error getting stack.");
-			return "UNKNOWN";
-		}
-		try
-		{
-			return stack.Pop();
-		}
-		catch
-		{
-			OutputBox.Write("Error processing stack.");
-			return "UNKNOWN";
 		}
 	}
 
@@ -2307,102 +2258,32 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 				OutputBox.Write("The gripper is full - clear picker & try again.");
 				return;
 			}
-			Axis axis = Enum<Axis>.ParseIgnoringCase(m_offsetGetRadioButton.Tag as string, Axis.XY);
+			Axis axis = Enum<Axis>.ParseIgnoringCase(m_offsetGetRadioButton.Tag as string, Axis.X);
 			if (!int.TryParse(m_getOffsetTB.Text, out var result))
 			{
 				OutputBox.Write($"Could not decode {m_getOffsetTB.Text} as offset.");
 				return;
 			}
-			if (axis == Axis.X)
+			if (axis == Axis.X && Math.Abs(result) > 50)
 			{
-				if (Math.Abs(result) > 50)
-				{
-					OutputBox.Write($"Offset {m_getOffsetTB.Text} exceeds 50 units.");
-					return;
-				}
+				OutputBox.Write($"Offset {m_getOffsetTB.Text} exceeds 50 units.");
+				return;
 			}
-			else if (Axis.Y == axis && Math.Abs(result) > 500)
+			if (Axis.Y == axis && Math.Abs(result) > 500)
 			{
 				OutputBox.Write($"Offset {m_getOffsetTB.Text} exceeds 500 units.");
 				return;
 			}
-			string text = $"MOVE WITH-OFFSET DECK={sourceDeck} SLOT={sourceSlot} AXIS={axis} UNITS={result}";
-			LogHelper.Instance.Log("Executing {0}", text);
-			hardwareCommandResult = m_hardwareService.ExecuteImmediate(text, out job);
-			if (!hardwareCommandResult.Success)
-			{
-				CommonFunctions.DumpResult(hardwareCommandResult);
-				OutputBox.Write("Communication error");
-				return;
-			}
-			topOfStack = job.GetTopOfStack();
-			if ("SUCCESS" != topOfStack)
-			{
-				OutputBox.Write($"MOVE failed with status {topOfStack}");
-				return;
-			}
-			m_hardwareService.ExecuteImmediate("CLEAR", out job);
-			if (!PickProgramCompiled)
-			{
-				byte[] pick_at_offset = Resources.pick_at_offset;
-				HardwareCommandResult programs = m_hardwareService.GetPrograms();
-				foreach (string commandMessage in programs.CommandMessages)
-				{
-					if (commandMessage.StartsWith("pick_at_offset"))
-					{
-						PickProgramCompiled = true;
-						break;
-					}
-				}
-				if (!PickProgramCompiled)
-				{
-					IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-					string path = service.RuntimePath("pick_at_offset.hs");
-					using (File.CreateText(path))
-					{
-					}
-					File.WriteAllBytes(path, pick_at_offset);
-					HardwareCommandResult hardwareCommandResult2 = m_hardwareService.CompileProgram(path, "pick_at_offset", requiresClientConnection: false);
-					if (!hardwareCommandResult2.Success)
-					{
-						CommonFunctions.DumpResult(hardwareCommandResult2);
-						OutputBox.Write("Failed to compile program.");
-						return;
-					}
-					PickProgramCompiled = true;
-					FileHelper.SafeDeleteFile(path);
-				}
-			}
-			hardwareCommandResult = m_hardwareService.ScheduleJob("pick_at_offset", string.Empty, enableDebugging: false, new HardwareJobSchedule
-			{
-				Priority = HardwareJobPriority.Highest
-			}, out var job2);
-			if (!hardwareCommandResult.Success)
-			{
-				CommonFunctions.DumpResult(hardwareCommandResult);
-				OutputBox.Write("Unable to schedule pick job.");
-				return;
-			}
-			LogHelper.Instance.Log("Scheduling pick job ID {0}", job2.ID);
-			job2.Push(sourceSlot);
-			job2.Push(sourceDeck);
-			Helper.WaitForJob(job2, out var endStatus);
-			ProgramResult[] results;
-			if (HardwareJobStatus.Completed == endStatus)
+			using PickAtOffsetExecutor pickAtOffsetExecutor = new PickAtOffsetExecutor(m_hardwareService, sourceDeck, sourceSlot, axis, result);
+			pickAtOffsetExecutor.Run();
+			if (HardwareJobStatus.Completed == pickAtOffsetExecutor.EndStatus)
 			{
 				OutputBox.Write("GET was successful.");
+				return;
 			}
-			else if (job2.GetResults(out results).Success)
+			foreach (ProgramResult result2 in pickAtOffsetExecutor.Results)
 			{
-				ProgramResult[] array = results;
-				foreach (ProgramResult programResult in array)
-				{
-					OutputBox.Write($"GET failed: {programResult.Code} ({programResult.Message})");
-				}
-			}
-			else
-			{
-				OutputBox.Write("Unable to retrieve job results.");
+				OutputBox.Write(result2.Message);
 			}
 		}
 	}
@@ -2420,28 +2301,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		HardwareCommandResult result = m_hardwareService.ExecuteImmediate(command, out var _);
 		CommonFunctions.DumpResult(result);
 		return result;
-	}
-
-	private void button6_Click_1(object sender, EventArgs e)
-	{
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.FieldInsertFraudWithCheck(new HardwareJobSchedule
-		{
-			Priority = HardwareJobPriority.High
-		}, out var job);
-		if (!hardwareCommandResult.Success)
-		{
-			OutputBox.Write("Schedule job failed.");
-			{
-				foreach (Error error in hardwareCommandResult.Errors)
-				{
-					LogHelper.Instance.Log("Error = {0} msg = {1} details = {2}", error.Code, error.Description, error.Details);
-				}
-				return;
-			}
-		}
-		job.Pend();
-		Helper.WaitForJob(job, out var endStatus);
-		OutputBox.Write("Job ended with status {0}", endStatus.ToString());
 	}
 
 	protected override void Dispose(bool disposing)

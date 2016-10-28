@@ -9,9 +9,9 @@ namespace Redbox.HAL.Common.GUI.Functions;
 
 public class DeckConfigurationForm : Form
 {
-	private HardwareService m_hardwareService;
+	private readonly HardwareService m_hardwareService;
 
-	private bool m_allowInventoryUpdate;
+	private readonly bool m_allowInventoryUpdate;
 
 	private IContainer components;
 
@@ -39,11 +39,11 @@ public class DeckConfigurationForm : Form
 
 	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-	public ConfigurationManager Manager { get; private set; }
+	public DecksConfigurationManager Manager { get; private set; }
 
-	public DeckConfigurationForm(HardwareService service, bool allowInventoryUpdate, ConfigurationManager cm)
+	public DeckConfigurationForm(HardwareService service, bool allowInventoryUpdate)
 	{
-		Manager = cm;
+		Manager = new DecksConfigurationManager(service);
 		m_hardwareService = service;
 		InitializeComponent();
 		m_allowInventoryUpdate = allowInventoryUpdate;
@@ -68,7 +68,7 @@ public class DeckConfigurationForm : Form
 		if (dataGridViewRow != null && dataGridViewRow.Tag is XmlNode node)
 		{
 			bool attributeValue = node.GetAttributeValue<bool>("IsQlm");
-			DeckConfigurationDetailForm deckConfigurationDetailForm = new DeckConfigurationDetailForm(m_allowInventoryUpdate);
+			DeckConfigurationDetailForm deckConfigurationDetailForm = new DeckConfigurationDetailForm(m_allowInventoryUpdate, Manager);
 			deckConfigurationDetailForm.Number = node.GetAttributeValue<int?>("Number");
 			deckConfigurationDetailForm.YOffset = node.GetAttributeValue<int?>("Offset");
 			deckConfigurationDetailForm.NumberOfSlots = node.GetAttributeValue<int?>("NumberOfSlots");
@@ -80,7 +80,6 @@ public class DeckConfigurationForm : Form
 			deckConfigurationDetailForm.IsQlmDeck = attributeValue;
 			deckConfigurationDetailForm.Service = m_hardwareService;
 			deckConfigurationDetailForm.ShowDumpSlot = false;
-			deckConfigurationDetailForm.Manager = Manager;
 			DeckConfigurationDetailForm deckConfigurationDetailForm2 = deckConfigurationDetailForm;
 			if (deckConfigurationDetailForm2.ShowDialog() == DialogResult.OK)
 			{

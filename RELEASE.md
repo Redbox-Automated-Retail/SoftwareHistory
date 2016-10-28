@@ -1,12 +1,12 @@
 # Hawkeye (1.9.0.49)
 
-- Product: HAL Utilities 1.9.0.49
+- Product: MS HAL Tester 1.9.0.49
 - Date (first download in the snapshots): 2016-10-28
-- Store labels: kop-tools-Hawkeye
+- Store labels: kop-ms-hal-tester-Hawkeye
 - Package revisions:
   - `kop-tools` revision 32 (`1272D5B3B2A8B7333D0DFAAACAEA4053D465C1AF`)
   - `kop-hal-install` revision 37 (`79408DFCF76AB155984417A8E3CA6F0C331900E1`)
-  - `kop-ms-hal-tester` revision 27 (`A72458770466E3A35C7B72182B30CB543D0B528B`)
+  - `kop-ms-hal-tester` revision 32 (`BE1EFFFFC05B2B572541A7C3BE9A1B37EA14D61C`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `016EB2C2B43C7D765E61F3FA57C30D07D401ACB7` | exact |
 | `unload-thin.hs` |  |  | `9F9CA9C3D597B2F50A8DD61E9218285E9EBAD298` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.8.0.22 | `DBFAB1CDF2EF03187A9A627B8352B248569F1B48` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.9.0.49 | `461B7C3522075CC93E8B19C5C597DA9C400901ED` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

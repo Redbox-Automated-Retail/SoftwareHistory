@@ -227,8 +227,6 @@ public class ConfiguredDevicesForm : Form
 
 	private Button button12;
 
-	private Button button11;
-
 	private Button button17;
 
 	private Button button18;
@@ -240,8 +238,6 @@ public class ConfiguredDevicesForm : Form
 	private TextBox m_initTB;
 
 	private TextBox m_testVendDoorTB;
-
-	private TextBox m_testTrackTB;
 
 	private TextBox m_checkDriversStatusTB;
 
@@ -275,7 +271,6 @@ public class ConfiguredDevicesForm : Form
 		m_quickReturnTab.Controls.Add(value);
 		m_devicesTab.Selected += OnTabSelectedChange;
 		Manager = new ButtonAspectsManager();
-		m_devicesTab.TabPages.Remove(m_kioskFunctionCheck);
 		AirExchangerOutput = new ConfiguredDeviceOuptutBox(m_iceQubeOutput);
 		FraudSensorOutput = new ConfiguredDeviceOuptutBox(m_fraudSensorOutput);
 		KioskTestOutput = new ConfiguredDeviceOuptutBox(m_kioskTestOutput);
@@ -355,7 +350,6 @@ public class ConfiguredDevicesForm : Form
 		ISessionUserService service = ServiceLocator.Instance.GetService<ISessionUserService>();
 		ISessionUser currentSession = service.GetCurrentSession();
 		FunctionTest = new KioskFunctionTest(Service, KioskTestOutput, HasCortexCamera, currentSession.User);
-		TextBox testTrackTB = m_testTrackTB;
 		TextBox testVendDoorTB = m_testVendDoorTB;
 		TextBox checkDriversStatusTB = m_checkDriversStatusTB;
 		TextBox cameraSnapTB = m_cameraSnapTB;
@@ -366,8 +360,7 @@ public class ConfiguredDevicesForm : Form
 		string text5 = (initTB.Text = text3);
 		string text7 = (cameraSnapTB.Text = text5);
 		string text9 = (checkDriversStatusTB.Text = text7);
-		string text11 = (testVendDoorTB.Text = text9);
-		testTrackTB.Text = text11;
+		testVendDoorTB.Text = text9;
 		m_userName.Text = currentSession.User;
 	}
 
@@ -577,7 +570,6 @@ public class ConfiguredDevicesForm : Form
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine($"SETCFG \"EnableSecureDiskValidator\" \"{flag.ToString()}\" TYPE=CONTROLLER");
 			stringBuilder.AppendLine($" SETCFG \"EnableFraudSensorCheck\" \"{flag.ToString()}\" TYPE=CONTROLLER");
-			stringBuilder.AppendLine($" SETCFG \"EnableFraudScanResults\" \"{flag.ToString()}\" TYPE=CONTROLLER");
 			stringBuilder.AppendLine(" CLEAR");
 			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			if (!hardwareCommandResult.Success)
@@ -798,7 +790,7 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			m_checkDriversStatusTB.Text = FunctionTest.TestDrivers().ToString();
+			m_checkDriversStatusTB.Text = FunctionTest.TestDrivers().ToString().ToUpper();
 		}
 	}
 
@@ -810,19 +802,11 @@ public class ConfiguredDevicesForm : Form
 		}
 	}
 
-	private void button11_Click(object sender, EventArgs e)
-	{
-		using (Manager.MakeAspect(sender))
-		{
-			m_testTrackTB.Text = FunctionTest.TestTrack().ToString();
-		}
-	}
-
 	private void button12_Click(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			m_testVendDoorTB.Text = FunctionTest.TestVendDoor().ToString();
+			m_testVendDoorTB.Text = FunctionTest.TestVendDoor().ToString().ToUpper();
 		}
 	}
 
@@ -830,20 +814,19 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			m_initTB.Text = FunctionTest.RunInit().ToString();
+			m_initTB.Text = FunctionTest.RunInit().ToString().ToUpper();
 		}
 	}
 
 	private void button17_Click(object sender, EventArgs e)
 	{
 		int integer = m_sourceSlotTB.GetInteger("Test Slot", KioskTestOutput);
-		if (-1 == integer)
+		if (-1 != integer)
 		{
-			return;
-		}
-		using (Manager.MakeAspect(sender))
-		{
-			m_verticalTestTB.Text = FunctionTest.RunVertialSlotTest(integer).ToString();
+			using (Manager.MakeAspect(sender))
+			{
+				m_verticalTestTB.Text = FunctionTest.RunVertialSlotTest(integer).ToString().ToUpper();
+			}
 		}
 	}
 
@@ -893,7 +876,7 @@ public class ConfiguredDevicesForm : Form
 			}
 			else
 			{
-				m_cameraSnapTB.Text = FunctionTest.TestCameraSnap(integer, integer2).ToString();
+				m_cameraSnapTB.Text = FunctionTest.TestCameraSnap(integer, integer2).ToString().ToUpper();
 			}
 		}
 	}
@@ -1015,12 +998,10 @@ public class ConfiguredDevicesForm : Form
 		this.m_verticalTestTB = new System.Windows.Forms.TextBox();
 		this.m_initTB = new System.Windows.Forms.TextBox();
 		this.m_testVendDoorTB = new System.Windows.Forms.TextBox();
-		this.m_testTrackTB = new System.Windows.Forms.TextBox();
 		this.m_checkDriversStatusTB = new System.Windows.Forms.TextBox();
 		this.button18 = new System.Windows.Forms.Button();
 		this.button17 = new System.Windows.Forms.Button();
 		this.button12 = new System.Windows.Forms.Button();
-		this.button11 = new System.Windows.Forms.Button();
 		this.button9 = new System.Windows.Forms.Button();
 		this.button8 = new System.Windows.Forms.Button();
 		this.m_userName = new System.Windows.Forms.TextBox();
@@ -1427,22 +1408,22 @@ public class ConfiguredDevicesForm : Form
 		this.m_sourceSlotTB.Location = new System.Drawing.Point(277, 83);
 		this.m_sourceSlotTB.Name = "m_sourceSlotTB";
 		this.m_sourceSlotTB.Size = new System.Drawing.Size(75, 20);
-		this.m_sourceSlotTB.TabIndex = 21;
+		this.m_sourceSlotTB.TabIndex = 11;
 		this.button19.Location = new System.Drawing.Point(801, 501);
 		this.button19.Name = "button19";
 		this.button19.Size = new System.Drawing.Size(100, 55);
-		this.button19.TabIndex = 5;
+		this.button19.TabIndex = 13;
 		this.button19.Text = "Send Report";
 		this.button19.UseVisualStyleBackColor = true;
 		this.button19.Click += new System.EventHandler(button19_Click);
 		this.m_sourceDeckTB.Location = new System.Drawing.Point(90, 83);
 		this.m_sourceDeckTB.Name = "m_sourceDeckTB";
 		this.m_sourceDeckTB.Size = new System.Drawing.Size(68, 20);
-		this.m_sourceDeckTB.TabIndex = 19;
+		this.m_sourceDeckTB.TabIndex = 9;
 		this.button22.Location = new System.Drawing.Point(196, 65);
 		this.button22.Name = "button22";
 		this.button22.Size = new System.Drawing.Size(75, 38);
-		this.button22.TabIndex = 20;
+		this.button22.TabIndex = 10;
 		this.button22.Text = "Slot";
 		this.button22.UseVisualStyleBackColor = true;
 		this.button22.Click += new System.EventHandler(button22_Click);
@@ -1452,12 +1433,10 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox2.Controls.Add(this.m_verticalTestTB);
 		this.groupBox2.Controls.Add(this.m_initTB);
 		this.groupBox2.Controls.Add(this.m_testVendDoorTB);
-		this.groupBox2.Controls.Add(this.m_testTrackTB);
 		this.groupBox2.Controls.Add(this.m_checkDriversStatusTB);
 		this.groupBox2.Controls.Add(this.button18);
 		this.groupBox2.Controls.Add(this.button17);
 		this.groupBox2.Controls.Add(this.button12);
-		this.groupBox2.Controls.Add(this.button11);
 		this.groupBox2.Controls.Add(this.button9);
 		this.groupBox2.Controls.Add(this.button8);
 		this.groupBox2.Location = new System.Drawing.Point(9, 118);
@@ -1466,86 +1445,74 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox2.TabIndex = 4;
 		this.groupBox2.TabStop = false;
 		this.groupBox2.Text = "Steps:";
-		this.m_unknownCountTB.Location = new System.Drawing.Point(118, 396);
+		this.m_unknownCountTB.Location = new System.Drawing.Point(133, 411);
 		this.m_unknownCountTB.Name = "m_unknownCountTB";
 		this.m_unknownCountTB.ReadOnly = true;
 		this.m_unknownCountTB.Size = new System.Drawing.Size(129, 20);
 		this.m_unknownCountTB.TabIndex = 17;
-		this.m_cameraSnapTB.Location = new System.Drawing.Point(118, 105);
+		this.m_cameraSnapTB.Location = new System.Drawing.Point(133, 129);
 		this.m_cameraSnapTB.Name = "m_cameraSnapTB";
 		this.m_cameraSnapTB.ReadOnly = true;
 		this.m_cameraSnapTB.Size = new System.Drawing.Size(129, 20);
 		this.m_cameraSnapTB.TabIndex = 16;
-		this.button20.Location = new System.Drawing.Point(12, 75);
+		this.button20.Location = new System.Drawing.Point(12, 89);
 		this.button20.Name = "button20";
-		this.button20.Size = new System.Drawing.Size(100, 50);
-		this.button20.TabIndex = 15;
+		this.button20.Size = new System.Drawing.Size(100, 60);
+		this.button20.TabIndex = 2;
 		this.button20.Text = "Decode Test";
 		this.button20.UseVisualStyleBackColor = true;
 		this.button20.Click += new System.EventHandler(button20_Click);
-		this.m_verticalTestTB.Location = new System.Drawing.Point(118, 328);
+		this.m_verticalTestTB.Location = new System.Drawing.Point(133, 338);
 		this.m_verticalTestTB.Name = "m_verticalTestTB";
 		this.m_verticalTestTB.ReadOnly = true;
 		this.m_verticalTestTB.Size = new System.Drawing.Size(129, 20);
 		this.m_verticalTestTB.TabIndex = 13;
-		this.m_initTB.Location = new System.Drawing.Point(121, 272);
+		this.m_initTB.Location = new System.Drawing.Point(133, 272);
 		this.m_initTB.Name = "m_initTB";
 		this.m_initTB.ReadOnly = true;
 		this.m_initTB.Size = new System.Drawing.Size(129, 20);
 		this.m_initTB.TabIndex = 12;
-		this.m_testVendDoorTB.Location = new System.Drawing.Point(121, 217);
+		this.m_testVendDoorTB.Location = new System.Drawing.Point(133, 195);
 		this.m_testVendDoorTB.Name = "m_testVendDoorTB";
 		this.m_testVendDoorTB.ReadOnly = true;
 		this.m_testVendDoorTB.Size = new System.Drawing.Size(129, 20);
 		this.m_testVendDoorTB.TabIndex = 11;
-		this.m_testTrackTB.Location = new System.Drawing.Point(121, 161);
-		this.m_testTrackTB.Name = "m_testTrackTB";
-		this.m_testTrackTB.ReadOnly = true;
-		this.m_testTrackTB.Size = new System.Drawing.Size(129, 20);
-		this.m_testTrackTB.TabIndex = 10;
-		this.m_checkDriversStatusTB.Location = new System.Drawing.Point(121, 49);
+		this.m_checkDriversStatusTB.Location = new System.Drawing.Point(133, 59);
 		this.m_checkDriversStatusTB.Name = "m_checkDriversStatusTB";
 		this.m_checkDriversStatusTB.ReadOnly = true;
 		this.m_checkDriversStatusTB.Size = new System.Drawing.Size(129, 20);
 		this.m_checkDriversStatusTB.TabIndex = 9;
-		this.button18.Location = new System.Drawing.Point(12, 366);
+		this.button18.Location = new System.Drawing.Point(12, 371);
 		this.button18.Name = "button18";
-		this.button18.Size = new System.Drawing.Size(100, 50);
-		this.button18.TabIndex = 8;
+		this.button18.Size = new System.Drawing.Size(100, 60);
+		this.button18.TabIndex = 7;
 		this.button18.Text = "Unknown Count";
 		this.button18.UseVisualStyleBackColor = true;
 		this.button18.Click += new System.EventHandler(button18_Click);
 		this.button17.Location = new System.Drawing.Point(12, 298);
 		this.button17.Name = "button17";
-		this.button17.Size = new System.Drawing.Size(100, 50);
-		this.button17.TabIndex = 5;
+		this.button17.Size = new System.Drawing.Size(100, 60);
+		this.button17.TabIndex = 6;
 		this.button17.Text = "Vertical Slot Test";
 		this.button17.UseVisualStyleBackColor = true;
 		this.button17.Click += new System.EventHandler(button17_Click);
-		this.button12.Location = new System.Drawing.Point(12, 187);
+		this.button12.Location = new System.Drawing.Point(12, 155);
 		this.button12.Name = "button12";
-		this.button12.Size = new System.Drawing.Size(100, 50);
-		this.button12.TabIndex = 3;
+		this.button12.Size = new System.Drawing.Size(100, 60);
+		this.button12.TabIndex = 4;
 		this.button12.Text = "Test Vend Door";
 		this.button12.UseVisualStyleBackColor = true;
 		this.button12.Click += new System.EventHandler(button12_Click);
-		this.button11.Location = new System.Drawing.Point(12, 131);
-		this.button11.Name = "button11";
-		this.button11.Size = new System.Drawing.Size(100, 50);
-		this.button11.TabIndex = 2;
-		this.button11.Text = "Test Track";
-		this.button11.UseVisualStyleBackColor = true;
-		this.button11.Click += new System.EventHandler(button11_Click);
-		this.button9.Location = new System.Drawing.Point(12, 243);
+		this.button9.Location = new System.Drawing.Point(12, 232);
 		this.button9.Name = "button9";
-		this.button9.Size = new System.Drawing.Size(103, 49);
-		this.button9.TabIndex = 1;
+		this.button9.Size = new System.Drawing.Size(100, 60);
+		this.button9.TabIndex = 5;
 		this.button9.Text = "Init";
 		this.button9.UseVisualStyleBackColor = true;
 		this.button9.Click += new System.EventHandler(button9_Click);
 		this.button8.Location = new System.Drawing.Point(12, 19);
 		this.button8.Name = "button8";
-		this.button8.Size = new System.Drawing.Size(100, 50);
+		this.button8.Size = new System.Drawing.Size(100, 60);
 		this.button8.TabIndex = 0;
 		this.button8.Text = "Check Drivers";
 		this.button8.UseVisualStyleBackColor = true;
@@ -1558,7 +1525,7 @@ public class ConfiguredDevicesForm : Form
 		this.button21.Location = new System.Drawing.Point(9, 65);
 		this.button21.Name = "button21";
 		this.button21.Size = new System.Drawing.Size(75, 38);
-		this.button21.TabIndex = 18;
+		this.button21.TabIndex = 8;
 		this.button21.Text = "Deck";
 		this.button21.UseVisualStyleBackColor = true;
 		this.button21.Click += new System.EventHandler(button21_Click);
@@ -1571,7 +1538,7 @@ public class ConfiguredDevicesForm : Form
 		this.button2.Location = new System.Drawing.Point(460, 501);
 		this.button2.Name = "button2";
 		this.button2.Size = new System.Drawing.Size(100, 55);
-		this.button2.TabIndex = 1;
+		this.button2.TabIndex = 12;
 		this.button2.Text = "Clear Output";
 		this.button2.UseVisualStyleBackColor = true;
 		this.button2.Click += new System.EventHandler(button2_Click_1);
@@ -1584,7 +1551,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_exitButton.Location = new System.Drawing.Point(12, 644);
 		this.m_exitButton.Name = "m_exitButton";
 		this.m_exitButton.Size = new System.Drawing.Size(135, 59);
-		this.m_exitButton.TabIndex = 1;
+		this.m_exitButton.TabIndex = 14;
 		this.m_exitButton.Text = "Exit";
 		this.m_exitButton.UseVisualStyleBackColor = false;
 		this.m_exitButton.Click += new System.EventHandler(m_exitButton_Click);

@@ -1,3 +1,5 @@
+using System;
+
 namespace Redbox.HAL.Client;
 
 public sealed class MachineConfiguration : JobExecutor
@@ -19,6 +21,8 @@ public sealed class MachineConfiguration : JobExecutor
 	public string DoorSensorStatus { get; private set; }
 
 	public bool HasAuxRelayBoard { get; private set; }
+
+	public bool HasABEDevice { get; private set; }
 
 	protected override string JobName => "kiosk-configuration-job";
 
@@ -59,6 +63,9 @@ public sealed class MachineConfiguration : JobExecutor
 				break;
 			case "FraudSensorEnabled":
 				HasFraudDevice = result.Message == "Enabled";
+				break;
+			case "AbeDeviceStatus":
+				HasABEDevice = result.Message.Equals("ATTACHED", StringComparison.CurrentCultureIgnoreCase);
 				break;
 			}
 		}

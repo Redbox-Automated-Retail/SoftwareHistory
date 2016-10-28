@@ -1,14 +1,10 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions;
-using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
-using Redbox.HAL.MSHALTester.Properties;
 
 namespace Redbox.HAL.MSHALTester;
 
@@ -16,7 +12,13 @@ public class EngineeringForm : Form
 {
 	private delegate void SetTextCallback(string s);
 
-	private HardwareJob m_rotationJob;
+	private JobExecutor m_rotationJob;
+
+	private readonly HardwareService Service;
+
+	private readonly ButtonAspectsManager Manager;
+
+	private readonly ClientHelper Helper;
 
 	private readonly object Lock = new object();
 
@@ -57,12 +59,6 @@ public class EngineeringForm : Form
 	private TextBox m_vendslot;
 
 	private TextBox m_vendDeck;
-
-	private HardwareService Service { get; set; }
-
-	private ButtonAspectsManager Manager { get; set; }
-
-	private ClientHelper Helper { get; set; }
 
 	public EngineeringForm(ClientHelper helper, HardwareService service, ButtonAspectsManager manager)
 	{
@@ -140,53 +136,16 @@ public class EngineeringForm : Form
 		{
 			lock (Lock)
 			{
-				byte[] rotationTest = Resources.RotationTest;
-				HardwareCommandResult programs = Service.GetPrograms();
-				bool flag = false;
-				string text = "rotation-test";
-				foreach (string commandMessage in programs.CommandMessages)
-				{
-					if (commandMessage.StartsWith(text))
-					{
-						flag = true;
-						break;
-					}
-				}
-				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-				string path = service.RuntimePath("rotation-test.hs");
-				if (!flag)
-				{
-					using (File.CreateText(path))
-					{
-					}
-					File.WriteAllBytes(path, rotationTest);
-					HardwareCommandResult hardwareCommandResult = Service.CompileProgram(path, text, requiresClientConnection: false);
-					if (!hardwareCommandResult.Success)
-					{
-						WriteToOutput("Failed to compile program.");
-						return;
-					}
-					FileHelper.SafeDeleteFile(path);
-				}
-				int num = 1000;
+				int iterations = 1000;
 				LocationNumberPad locationNumberPad = new LocationNumberPad();
 				if (locationNumberPad.ShowDialog() == DialogResult.OK)
 				{
-					num = locationNumberPad.Number;
+					iterations = locationNumberPad.Number;
 				}
-				HardwareCommandResult hardwareCommandResult2 = Service.ScheduleJob(text, "Engineering rotation test", enableDebugging: false, new HardwareJobSchedule
-				{
-					Priority = HardwareJobPriority.Highest
-				}, out m_rotationJob);
-				if (!hardwareCommandResult2.Success)
-				{
-					WriteToOutput("Unable to schedule test job - tell Jim he's a dumbass.");
-					return;
-				}
-				m_rotationJob.Push(num);
+				m_rotationJob = new RotationTestExecutor(Service, iterations);
 				WriteToOutput($"Scheduling rotation test job ID {m_rotationJob.ID}");
-				m_rotationJob.Pend();
 			}
+			button2.Enabled = false;
 			ThreadPool.QueueUserWorkItem(delegate
 			{
 				WaitforRotation();
@@ -198,16 +157,13 @@ public class EngineeringForm : Form
 	{
 		lock (Lock)
 		{
-			if (!Helper.WaitForJob(m_rotationJob, out var _))
-			{
-				WriteToOutput("Jim's shame - wait for job failed.");
-				return;
-			}
-			if (m_rotationJob != null)
-			{
-				m_rotationJob.Trash();
-			}
+			m_rotationJob.Run();
+			m_rotationJob.Dispose();
 			m_rotationJob = null;
+			Invoke((MethodInvoker)delegate
+			{
+				button2.Enabled = true;
+			});
 		}
 	}
 
@@ -215,7 +171,7 @@ public class EngineeringForm : Form
 	{
 		if (m_rotationJob != null)
 		{
-			m_rotationJob.Terminate();
+			Service.ExecuteServiceCommand($"job signal job: '{m_rotationJob.ID}' value: 'continue'");
 			WriteToOutput($"Terminating job {m_rotationJob.ID}");
 		}
 	}

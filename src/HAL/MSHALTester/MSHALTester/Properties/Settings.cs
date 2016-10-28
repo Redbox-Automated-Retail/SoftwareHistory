@@ -6,8 +6,8 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.MSHALTester.Properties;
 
-[CompilerGenerated]
 [GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
+[CompilerGenerated]
 public sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
@@ -15,13 +15,13 @@ public sealed class Settings : ApplicationSettingsBase
 	public static Settings Default => defaultInstance;
 
 	[ApplicationScopedSetting]
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("Green")]
+	[DebuggerNonUserCode]
 	public string SensorColor => (string)this["SensorColor"];
 
+	[DefaultSettingValue("False")]
 	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
-	[DefaultSettingValue("False")]
 	public bool ExitOnAdvancedModeLaunch => (bool)this["ExitOnAdvancedModeLaunch"];
 
 	[DebuggerNonUserCode]
@@ -29,45 +29,50 @@ public sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("Red")]
 	public string ButtonRunningColor => (string)this["ButtonRunningColor"];
 
+	[DefaultSettingValue("2")]
 	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
-	[DefaultSettingValue("2")]
 	public int PollSensorOneCount => (int)this["PollSensorOneCount"];
 
+	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
 	[DefaultSettingValue("rcp://127.0.0.1:7001")]
-	[DebuggerNonUserCode]
 	public string CommunicationURL => (string)this["CommunicationURL"];
 
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	[DefaultSettingValue("70000")]
 	public int ImmediateMoveTimeout => (int)this["ImmediateMoveTimeout"];
 
 	[DebuggerNonUserCode]
-	[DefaultSettingValue("")]
 	[ApplicationScopedSetting]
+	[DefaultSettingValue("")]
 	public string FormBackgroundColor => (string)this["FormBackgroundColor"];
 
-	[ApplicationScopedSetting]
 	[DefaultSettingValue("True")]
 	[DebuggerNonUserCode]
+	[ApplicationScopedSetting]
 	public bool DisableQuickReturn => (bool)this["DisableQuickReturn"];
 
 	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
 	[DefaultSettingValue("True")]
+	[ApplicationScopedSetting]
 	public bool CheckForRunningHAL => (bool)this["CheckForRunningHAL"];
 
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("False")]
+	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
 	public bool DeveloperMode => (bool)this["DeveloperMode"];
 
+	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
 	[DefaultSettingValue("False")]
-	[DebuggerNonUserCode]
 	public bool AllowSessionDisplay => (bool)this["AllowSessionDisplay"];
+
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("True")]
+	[ApplicationScopedSetting]
+	public bool UsbServiceDebug => (bool)this["UsbServiceDebug"];
 
 	private void SettingChangingEventHandler(object sender, SettingChangingEventArgs e)
 	{

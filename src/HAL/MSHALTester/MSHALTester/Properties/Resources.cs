@@ -45,24 +45,6 @@ internal class Resources
 
 	internal static string DestDeckSlotInvalid => ResourceManager.GetString("DestDeckSlotInvalid", resourceCulture);
 
-	internal static byte[] pick_at_offset
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("pick_at_offset", resourceCulture);
-			return (byte[])obj;
-		}
-	}
-
-	internal static byte[] RotationTest
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("RotationTest", resourceCulture);
-			return (byte[])obj;
-		}
-	}
-
 	internal static string SourceDeckSlotInvalid => ResourceManager.GetString("SourceDeckSlotInvalid", resourceCulture);
 
 	internal Resources()
