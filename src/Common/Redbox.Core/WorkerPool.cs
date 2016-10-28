@@ -53,11 +53,15 @@ public class WorkerPool
 		m_isRunning = true;
 		for (int i = 0; i < MaximumThreads; i++)
 		{
-			Thread thread = new Thread(ItemWorker);
-			thread.Name = $"{PoolName} #{i}";
-			thread.IsBackground = true;
-			Thread thread2 = thread;
-			thread2.Start();
+			Thread thread = ((!string.IsNullOrEmpty(PoolName)) ? new Thread(ItemWorker)
+			{
+				Name = $"{PoolName} #{i}",
+				IsBackground = true
+			} : new Thread(ItemWorker)
+			{
+				IsBackground = true
+			});
+			thread.Start();
 		}
 	}
 

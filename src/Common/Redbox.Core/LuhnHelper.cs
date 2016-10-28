@@ -27,13 +27,12 @@ public static class LuhnHelper
 		for (int k = 1; k <= 16; k++)
 		{
 			int num2 = 1 + k % 2;
-			int num3 = int.Parse(text.Substring(k - 1, 1));
-			int num4 = num3 * num2;
-			if (num4 > 9)
+			int num3 = int.Parse(text.Substring(k - 1, 1)) * num2;
+			if (num3 > 9)
 			{
-				num4 -= 9;
+				num3 -= 9;
 			}
-			num += num4;
+			num += num3;
 		}
 		return num % 10 == 0;
 	}

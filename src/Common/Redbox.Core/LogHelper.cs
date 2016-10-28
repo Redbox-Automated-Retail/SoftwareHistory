@@ -46,8 +46,7 @@ public class LogHelper
 	{
 		get
 		{
-			StackTrace stackTrace = new StackTrace(2);
-			StackFrame frame = stackTrace.GetFrame(0);
+			StackFrame frame = new StackTrace(2).GetFrame(0);
 			return frame.GetMethod().DeclaringType.FullName + "." + frame.GetMethod().Name;
 		}
 	}

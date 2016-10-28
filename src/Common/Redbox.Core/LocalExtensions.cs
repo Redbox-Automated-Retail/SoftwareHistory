@@ -17,16 +17,17 @@ internal static class LocalExtensions
 
 	public static Error MakeError(string code, string description, Exception e)
 	{
-		Error error = new Error();
-		error.Code = code;
-		error.Description = description;
-		Error error2 = error;
+		Error error = new Error
+		{
+			Code = code,
+			Description = description
+		};
 		if (e != null)
 		{
-			error2.ExceptionType = e.GetType().FullName;
-			error2.ExceptionMessage = e.Message;
-			error2.ExceptionStackTrace = e.StackTrace;
+			error.ExceptionType = e.GetType().FullName;
+			error.ExceptionMessage = e.Message;
+			error.ExceptionStackTrace = e.StackTrace;
 		}
-		return error2;
+		return error;
 	}
 }

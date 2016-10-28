@@ -87,12 +87,11 @@ public static class DelegateFactory
 			}
 		}
 		int[] array2 = new int[num2];
-		MethodBuilder methodBuilder = typeBuilder.DefineMethod("CallFunction", method.Attributes, returnType, array);
-		ILGenerator iLGenerator = methodBuilder.GetILGenerator();
+		ILGenerator iLGenerator = typeBuilder.DefineMethod("CallFunction", method.Attributes, returnType, array).GetILGenerator();
 		iLGenerator.DeclareLocal(typeof(object[]));
 		iLGenerator.DeclareLocal(typeof(object[]));
 		iLGenerator.DeclareLocal(typeof(int[]));
-		if (returnType != typeof(void))
+		if (!(returnType == typeof(void)))
 		{
 			iLGenerator.DeclareLocal(returnType);
 		}
@@ -208,7 +207,7 @@ public static class DelegateFactory
 				iLGenerator.Emit(OpCodes.Stind_Ref);
 			}
 		}
-		if (returnType != typeof(void))
+		if (!(returnType == typeof(void)))
 		{
 			iLGenerator.Emit(OpCodes.Ldloc_3);
 		}

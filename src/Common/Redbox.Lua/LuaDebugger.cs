@@ -92,8 +92,6 @@ public class LuaDebugger : ILuaDebugFileFactory, ILuaDebugBreakpointFactory
 				case LuaDebuggerState.Stopped:
 					Run();
 					break;
-				case LuaDebuggerState.Running:
-					break;
 				}
 				break;
 			case LuaDebuggerState.Stopped:
