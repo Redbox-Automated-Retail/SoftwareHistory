@@ -46,6 +46,7 @@ public static class BuildConfiguration
 
 	static BuildConfiguration()
 	{
-		m_configParts = ((AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyConfigurationAttribute))).Configuration.Split('|');
+		AssemblyConfigurationAttribute assemblyConfigurationAttribute = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyConfigurationAttribute));
+		m_configParts = assemblyConfigurationAttribute.Configuration.Split('|');
 	}
 }

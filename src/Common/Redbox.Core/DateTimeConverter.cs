@@ -13,11 +13,16 @@ internal class DateTimeConverter : JavaScriptConverter
 
 	private const string DateString = "dateString";
 
-	public override IEnumerable<Type> SupportedTypes => new List<Type>
+	public override IEnumerable<Type> SupportedTypes
 	{
-		typeof(DateTime),
-		typeof(DateTime?)
-	};
+		get
+		{
+			List<Type> list = new List<Type>();
+			list.Add(typeof(DateTime));
+			list.Add(typeof(DateTime?));
+			return list;
+		}
+	}
 
 	public override IDictionary<string, object> Serialize(object obj, JavaScriptSerializer serializer)
 	{

@@ -8,7 +8,8 @@ public static class StreamExtensions
 {
 	public static string ToASCIISHA1Hash(this Stream inputStream)
 	{
-		string result = BitConverter.ToString(SHA1.Create().ComputeHash(inputStream)).Replace("-", string.Empty);
+		SHA1 sHA = SHA1.Create();
+		string result = BitConverter.ToString(sHA.ComputeHash(inputStream)).Replace("-", string.Empty);
 		if (inputStream.CanSeek)
 		{
 			inputStream.Seek(0L, SeekOrigin.Begin);

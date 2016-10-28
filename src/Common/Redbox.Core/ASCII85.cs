@@ -24,12 +24,14 @@ public class ASCII85
 
 	public static byte[] Decode(string s)
 	{
-		return new ASCII85().InternalDecode(s);
+		ASCII85 aSCII = new ASCII85();
+		return aSCII.InternalDecode(s);
 	}
 
 	public static string Encode(byte[] source)
 	{
-		return new ASCII85().InternalEncode(source);
+		ASCII85 aSCII = new ASCII85();
+		return aSCII.InternalEncode(source);
 	}
 
 	private byte[] InternalDecode(string s)
@@ -50,9 +52,8 @@ public class ASCII85
 		int num = 0;
 		bool flag = false;
 		string text = s;
-		for (int i = 0; i < text.Length; i++)
+		foreach (char c in text)
 		{
-			char c = text[i];
 			switch (c)
 			{
 			case 'z':

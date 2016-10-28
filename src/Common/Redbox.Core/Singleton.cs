@@ -10,7 +10,7 @@ public static class Singleton<T> where T : class
 	static Singleton()
 	{
 		Type typeFromHandle = typeof(T);
-		if (typeFromHandle.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Length != 0)
+		if (typeFromHandle.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Length > 0)
 		{
 			throw new SingletonException("A Singleton<T> class must not implement public instance constructors.");
 		}

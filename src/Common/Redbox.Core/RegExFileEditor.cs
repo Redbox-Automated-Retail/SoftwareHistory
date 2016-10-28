@@ -28,7 +28,8 @@ public class RegExFileEditor
 
 	internal static string Apply(string regEx, string originalText, string token)
 	{
-		Match match = new Regex(regEx).Match(originalText);
+		Regex regex = new Regex(regEx);
+		Match match = regex.Match(originalText);
 		if (!match.Success)
 		{
 			return null;

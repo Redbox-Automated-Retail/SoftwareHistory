@@ -74,7 +74,7 @@ public class MostRecentlyUsedDictionary<K, V>
 		if (last != null)
 		{
 			K key2 = (K)m_linkToKey[last];
-			if (PurgedFromDictionary != null && PurgedFromDictionary.GetInvocationList().Length != 0)
+			if (PurgedFromDictionary != null && PurgedFromDictionary.GetInvocationList().Length > 0)
 			{
 				PurgedFromDictionary(key2, last.Value);
 			}
@@ -84,14 +84,14 @@ public class MostRecentlyUsedDictionary<K, V>
 
 	public bool Contains(K key)
 	{
-		bool num = m_dictionary.ContainsKey(key);
-		if (num)
+		bool flag = m_dictionary.ContainsKey(key);
+		if (flag)
 		{
 			LinkedListNode<V> node = m_dictionary[key];
 			m_list.Remove(node);
 			m_list.AddFirst(node);
 		}
-		return num;
+		return flag;
 	}
 
 	public void Remove(K key)

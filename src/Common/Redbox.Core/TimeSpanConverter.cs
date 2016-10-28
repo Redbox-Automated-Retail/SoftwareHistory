@@ -8,11 +8,16 @@ internal class TimeSpanConverter : JavaScriptConverter
 {
 	private const string TimeSpanKey = "theTimeSpan";
 
-	public override IEnumerable<Type> SupportedTypes => new List<Type>
+	public override IEnumerable<Type> SupportedTypes
 	{
-		typeof(TimeSpan),
-		typeof(TimeSpan?)
-	};
+		get
+		{
+			List<Type> list = new List<Type>();
+			list.Add(typeof(TimeSpan));
+			list.Add(typeof(TimeSpan?));
+			return list;
+		}
+	}
 
 	public override IDictionary<string, object> Serialize(object obj, JavaScriptSerializer serializer)
 	{

@@ -191,7 +191,8 @@ public class LuaTable : LuaObject
 
 	public DateTime? ToDateTime()
 	{
-		if (DateTime.TryParse(string.Format("{0}/{1}/{2} {3}:{4}:{5}", this["month"], this["day"], this["year"], this["hour"], this["min"], this["sec"]), out var result))
+		string s = string.Format("{0}/{1}/{2} {3}:{4}:{5}", this["month"], this["day"], this["year"], this["hour"], this["min"], this["sec"]);
+		if (DateTime.TryParse(s, out var result))
 		{
 			return result;
 		}
@@ -243,7 +244,8 @@ public class LuaTable : LuaObject
 		}
 		if (eachKey is string)
 		{
-			if (IsValidSymbol((string)eachKey))
+			string symbol = (string)eachKey;
+			if (IsValidSymbol(symbol))
 			{
 				return $"{eachKey}=";
 			}

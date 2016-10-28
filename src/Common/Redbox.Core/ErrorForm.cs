@@ -49,8 +49,8 @@ public class ErrorForm : Form
 		}
 	}
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public IEnumerable Errors
 	{
 		get

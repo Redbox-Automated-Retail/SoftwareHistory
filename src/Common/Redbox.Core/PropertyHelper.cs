@@ -56,11 +56,7 @@ public static class PropertyHelper
 			CustomEditorAttribute customEditorAttribute = (CustomEditorAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(CustomEditorAttribute));
 			if (item.ChildNodes.Count > 0 && customEditorAttribute != null && customEditorAttribute.SetMethodName != null)
 			{
-				MethodInfo method = instance.GetType().GetMethod(customEditorAttribute.SetMethodName, BindingFlags.Instance | BindingFlags.Public);
-				if (method != null)
-				{
-					method.Invoke(instance, new object[1] { item });
-				}
+				instance.GetType().GetMethod(customEditorAttribute.SetMethodName, BindingFlags.Instance | BindingFlags.Public)?.Invoke(instance, new object[1] { item });
 			}
 			else if (item.Attributes["value"] != null)
 			{
@@ -112,11 +108,7 @@ public static class PropertyHelper
 				xmlWriter.WriteAttributeString("custom-editor", customEditorAttribute.Text);
 				if (customEditorAttribute.GetMethodName != null)
 				{
-					MethodInfo method = instance.GetType().GetMethod(customEditorAttribute.GetMethodName, BindingFlags.Instance | BindingFlags.Public);
-					if (method != null)
-					{
-						method.Invoke(instance, new object[1] { xmlWriter });
-					}
+					instance.GetType().GetMethod(customEditorAttribute.GetMethodName, BindingFlags.Instance | BindingFlags.Public)?.Invoke(instance, new object[1] { xmlWriter });
 				}
 			}
 			else
@@ -149,8 +141,8 @@ public static class PropertyHelper
 					ValidValueListProviderAttribute validValueListProviderAttribute = (ValidValueListProviderAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(ValidValueListProviderAttribute));
 					if (validValueListProviderAttribute != null)
 					{
-						MethodInfo method2 = instance.GetType().GetMethod(validValueListProviderAttribute.MethodName, BindingFlags.Instance | BindingFlags.Public);
-						if (method2 != null && method2.Invoke(instance, null) is string[] array)
+						MethodInfo method = instance.GetType().GetMethod(validValueListProviderAttribute.MethodName, BindingFlags.Instance | BindingFlags.Public);
+						if (method != null && method.Invoke(instance, null) is string[] array)
 						{
 							xmlWriter.WriteAttributeString("valid-value-count", array.Length.ToString());
 							string[] array2 = array;

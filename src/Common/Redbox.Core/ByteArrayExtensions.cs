@@ -20,7 +20,8 @@ public static class ByteArrayExtensions
 
 	public static byte[] Encrypt(this byte[] inputArray)
 	{
-		ICryptoTransform transform = new TripleDESCryptoServiceProvider().CreateEncryptor(m_keyValue, m_initialVector);
+		TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider();
+		ICryptoTransform transform = tripleDESCryptoServiceProvider.CreateEncryptor(m_keyValue, m_initialVector);
 		using MemoryStream memoryStream = new MemoryStream();
 		CryptoStream cryptoStream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write);
 		cryptoStream.Write(inputArray, 0, inputArray.Length);
@@ -30,7 +31,8 @@ public static class ByteArrayExtensions
 
 	public static byte[] Decrypt(this byte[] inputArray)
 	{
-		ICryptoTransform transform = new TripleDESCryptoServiceProvider().CreateDecryptor(m_keyValue, m_initialVector);
+		TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider();
+		ICryptoTransform transform = tripleDESCryptoServiceProvider.CreateDecryptor(m_keyValue, m_initialVector);
 		using MemoryStream memoryStream = new MemoryStream();
 		CryptoStream cryptoStream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write);
 		cryptoStream.Write(inputArray, 0, inputArray.Length);
@@ -50,6 +52,8 @@ public static class ByteArrayExtensions
 
 	public static string ToASCIISHA1Hash(this byte[] inputArray)
 	{
-		return BitConverter.ToString(SHA1.Create().ComputeHash(inputArray)).Replace("-", string.Empty);
+		SHA1 sHA = SHA1.Create();
+		byte[] array = sHA.ComputeHash(inputArray);
+		return BitConverter.ToString(array).Replace("-", string.Empty);
 	}
 }

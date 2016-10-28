@@ -136,10 +136,9 @@ public class XmlFileEditor
 					});
 				}
 			}
-			XmlTextWriter w = new XmlTextWriter(FileName, null)
-			{
-				Formatting = Formatting.Indented
-			};
+			XmlTextWriter xmlTextWriter = new XmlTextWriter(FileName, null);
+			xmlTextWriter.Formatting = Formatting.Indented;
+			XmlTextWriter w = xmlTextWriter;
 			xmlDocument.Save(w);
 		}
 		catch (Exception ex2)

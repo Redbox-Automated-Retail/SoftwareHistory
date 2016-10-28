@@ -120,7 +120,8 @@ public class RegisteredMethod
 		{
 			return methodInfo.Invoke(null, values);
 		}
-		return m_compiledMethodHandlers[methodInfo].MethodHandler(values);
+		CompiledMethodHandler compiledMethodHandler = m_compiledMethodHandlers[methodInfo];
+		return compiledMethodHandler.MethodHandler(values);
 	}
 
 	private static List<MethodInfo> FindMethodOverloads(MethodInfo targetMethodInfo)
