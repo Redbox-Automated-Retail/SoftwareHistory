@@ -19,7 +19,7 @@ public class MethodInvocation
 
 	public object Invoke()
 	{
-		if (m_method != null)
+		if (!(m_method == null))
 		{
 			return m_method.Invoke(m_target, m_parameters);
 		}

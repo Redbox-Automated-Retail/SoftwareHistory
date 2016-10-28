@@ -34,8 +34,6 @@ public class ShellShortcut : IDisposable
 
 	private struct WIN32_FIND_DATAA
 	{
-		private const int MAX_PATH = 260;
-
 		public int dwFileAttributes;
 
 		public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
@@ -57,13 +55,13 @@ public class ShellShortcut : IDisposable
 
 		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
 		public string cAlternateFileName;
+
+		private const int MAX_PATH = 260;
 	}
 
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 	private struct WIN32_FIND_DATAW
 	{
-		private const int MAX_PATH = 260;
-
 		public int dwFileAttributes;
 
 		public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
@@ -85,11 +83,13 @@ public class ShellShortcut : IDisposable
 
 		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
 		public string cAlternateFileName;
+
+		private const int MAX_PATH = 260;
 	}
 
 	[ComImport]
-	[Guid("0000010B-0000-0000-C000-000000000046")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	[Guid("0000010B-0000-0000-C000-000000000046")]
 	private interface IPersistFile
 	{
 		void GetClassID(out Guid pClassID);
@@ -107,8 +107,8 @@ public class ShellShortcut : IDisposable
 	}
 
 	[ComImport]
-	[Guid("000214EE-0000-0000-C000-000000000046")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	[Guid("000214EE-0000-0000-C000-000000000046")]
 	private interface IShellLinkA
 	{
 		void GetPath([Out][MarshalAs(UnmanagedType.LPStr)] StringBuilder pszFile, int cchMaxPath, out WIN32_FIND_DATAA pfd, SLGP_FLAGS fFlags);
@@ -149,8 +149,8 @@ public class ShellShortcut : IDisposable
 	}
 
 	[ComImport]
-	[Guid("000214F9-0000-0000-C000-000000000046")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	[Guid("000214F9-0000-0000-C000-000000000046")]
 	private interface IShellLinkW
 	{
 		void GetPath([Out][MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszFile, int cchMaxPath, out WIN32_FIND_DATAW pfd, SLGP_FLAGS fFlags);
@@ -303,8 +303,7 @@ public class ShellShortcut : IDisposable
 		{
 			StringBuilder stringBuilder = new StringBuilder(260);
 			m_link.GetIconLocation(stringBuilder, stringBuilder.Capacity, out var piIcon);
-			IntPtr hINSTANCE = Marshal.GetHINSTANCE(GetType().Module);
-			IntPtr intPtr = ExtractIcon(hINSTANCE, stringBuilder.ToString(), piIcon);
+			IntPtr intPtr = ExtractIcon(Marshal.GetHINSTANCE(GetType().Module), stringBuilder.ToString(), piIcon);
 			if (intPtr == IntPtr.Zero)
 			{
 				return null;
@@ -372,15 +371,13 @@ public class ShellShortcut : IDisposable
 		m_link = (IShellLinkW)new ShellLink();
 		if (File.Exists(linkPath))
 		{
-			IPersistFile persistFile = (IPersistFile)m_link;
-			persistFile.Load(linkPath, 0);
+			((IPersistFile)m_link).Load(linkPath, 0);
 		}
 	}
 
 	public void Save()
 	{
-		IPersistFile persistFile = (IPersistFile)m_link;
-		persistFile.Save(m_path, fRemember: true);
+		((IPersistFile)m_link).Save(m_path, fRemember: true);
 	}
 
 	public void Dispose()

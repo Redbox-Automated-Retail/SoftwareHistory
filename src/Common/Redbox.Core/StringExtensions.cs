@@ -49,16 +49,15 @@ public static class StringExtensions
 	public static IDictionary<string, string> GetNameValuePairs(this string source)
 	{
 		IDictionary<string, string> dictionary = new Dictionary<string, string>();
-		MatchCollection matchCollection = Regex.Matches(source, "(?n:((?<name>[\\w-_]*)=(?<val>[\\w-_\\\\\\/\\(\\)\\,'\\.\\s]*)))");
-		foreach (Match item in matchCollection)
+		foreach (Match item in Regex.Matches(source, "(?n:((?<name>[\\w-_]*)=(?<val>[\\w-_\\\\\\/\\(\\)\\,'\\.\\s]*)))"))
 		{
-			Group obj = item.Groups["name"];
-			Group obj2 = item.Groups["val"];
-			if (obj.Captures.Count == obj2.Captures.Count)
+			Group obj2 = item.Groups["name"];
+			Group obj3 = item.Groups["val"];
+			if (obj2.Captures.Count == obj3.Captures.Count)
 			{
-				for (int i = 0; i < obj.Captures.Count; i++)
+				for (int i = 0; i < obj2.Captures.Count; i++)
 				{
-					dictionary[obj.Captures[i].Value] = obj2.Captures[i].Value;
+					dictionary[obj2.Captures[i].Value] = obj3.Captures[i].Value;
 				}
 			}
 		}
@@ -157,7 +156,10 @@ public static class StringExtensions
 		{
 			string[] array = path.Split(PropertyPathSeparators);
 			PropertyInfo property = objectFromPath.GetType().GetProperty(array[array.Length - 1], BindingFlags.Instance | BindingFlags.Public);
-			property?.SetValue(objectFromPath, ConversionHelper.ChangeType(value, property.PropertyType), null);
+			if (property != null)
+			{
+				property.SetValue(objectFromPath, ConversionHelper.ChangeType(value, property.PropertyType), null);
+			}
 		}
 	}
 
@@ -179,17 +181,14 @@ public static class StringExtensions
 		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
 		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
 		object result = null;
+		int result2;
 		if (match.Success)
 		{
 			result = match.Groups["indexer"].Captures[0].Value;
 		}
-		else if (match2.Success)
+		else if (match2.Success && int.TryParse(match2.Groups["indexer"].Captures[0].Value, out result2))
 		{
-			string value = match2.Groups["indexer"].Captures[0].Value;
-			if (int.TryParse(value, out var result2))
-			{
-				result = result2;
-			}
+			result = result2;
 		}
 		return result;
 	}
@@ -314,8 +313,7 @@ public static class StringExtensions
 			}
 			try
 			{
-				object obj3 = obj.GetType().InvokeMember(text, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty, null, obj, args);
-				obj = obj3;
+				obj = obj.GetType().InvokeMember(text, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty, null, obj, args);
 				if (obj == null)
 				{
 					break;

@@ -9,6 +9,10 @@ namespace Redbox.Lua;
 
 public class LuaVirtualMachine : IDisposable
 {
+	private object _lock = new object();
+
+	private Stack<int> _removeReferenceList = new Stack<int>();
+
 	internal const int LuaErrRun = 2;
 
 	internal const int LuaErrSyntax = 3;
@@ -28,10 +32,6 @@ public class LuaVirtualMachine : IDisposable
 	internal const string LuaDllName = "lua51";
 
 	private const string RedboxLuaFlag = "__redbox_lua_flag";
-
-	private object _lock = new object();
-
-	private Stack<int> _removeReferenceList = new Stack<int>();
 
 	private IntPtr m_luaState;
 
@@ -319,8 +319,8 @@ public class LuaVirtualMachine : IDisposable
 
 	internal static string lua_tostring(IntPtr luaState, int index)
 	{
-		IntPtr ptr = lua_tolstring(luaState, index, out var len);
-		return StringPointerToString(ptr, len.ToInt32());
+		IntPtr len;
+		return StringPointerToString(lua_tolstring(luaState, index, out len), len.ToInt32());
 	}
 
 	internal static bool lua_compareref(IntPtr luaState, int ref1, int ref2)
@@ -333,163 +333,163 @@ public class LuaVirtualMachine : IDisposable
 		return num != 0;
 	}
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_atpanic(IntPtr luaState, LuaCFunctionDelegate panicf);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_close(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_createtable(IntPtr luaState, int narr, int nrec);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_call(IntPtr luaState, int nargs, int nresults);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_error(IntPtr luaState);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern void lua_getfield(IntPtr luaState, int index, string k);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_gettable(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_gettop(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_next(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_pcall(IntPtr luaState, int nargs, int nresults, int errfunc);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_pushboolean(IntPtr luaState, bool b);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_pushcclosure(IntPtr luaState, LuaCFunctionDelegate f, int n);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern void lua_pushlstring(IntPtr luaState, string s, IntPtr len);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern void lua_pushstring(IntPtr luaState, string s);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_pushnil(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_pushnumber(IntPtr luaState, double n);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_pushvalue(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_settop(IntPtr luaState, int newTop);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern void lua_setfield(IntPtr luaState, int index, string k);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_settable(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern bool lua_toboolean(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr lua_tolstring(IntPtr luaState, int index, out IntPtr len);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern double lua_tonumber(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr lua_touserdata(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern LuaTypes lua_type(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr lua_typename(IntPtr luaState, LuaTypes type);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern int luaL_loadbuffer(IntPtr luaState, string buff, uint sz, string name);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern int luaL_loadfile(IntPtr luaState, string fileName);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr luaL_newstate();
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void luaL_openlibs(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr lua_gethook(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern LuaHookEventMasks lua_gethookmask(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_gethookcount(IntPtr luaState);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern int lua_getinfo(IntPtr luaState, string what, ref LuaDebug luaDebug);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern string lua_getlocal(IntPtr luaState, ref LuaDebug luaDebug, int n);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern string lua_setlocal(IntPtr luaState, ref LuaDebug luaDebug, int n);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_getstack(IntPtr luaState, int level, ref LuaDebug luaDebug);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_sethook(IntPtr luaState, IntPtr f, int mask, int count);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int luaopen_base(IntPtr luaState);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int luaopen_math(IntPtr luaState);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern string lua_getupvalue(IntPtr luaState, int funcindex, int n);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern string lua_setupvalue(IntPtr luaState, int funcindex, int n);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_rawgeti(IntPtr luaState, int tableIndex, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_rawseti(IntPtr luaState, int tableIndex, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int luaL_ref(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void luaL_unref(IntPtr luaState, int index, int reference);
 
-	[DllImport("lua51", CharSet = CharSet.Ansi)]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	internal static extern void luaL_newmetatable(IntPtr luaState, string name);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_setmetatable(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr lua_newuserdata(IntPtr luaState, IntPtr size);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern void lua_remove(IntPtr luaState, int index);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_equal(IntPtr luaState, int index1, int index2);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int lua_checkstack(IntPtr luaState, int extra);
 
-	[DllImport("lua51")]
+	[DllImport("lua51", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern int luaL_where(IntPtr luaState, int level);
 
 	internal void ThrowExceptionFromError(int oldTop)
@@ -541,8 +541,7 @@ public class LuaVirtualMachine : IDisposable
 
 	private static int PanicCallback(IntPtr luaState)
 	{
-		string message = $"unprotected error in call to Lua API ({lua_tostring(luaState, -1)})";
-		throw new LuaException(message);
+		throw new LuaException($"unprotected error in call to Lua API ({lua_tostring(luaState, -1)})");
 	}
 
 	private void DebugHookCallback(IntPtr luaState, ref LuaDebug luaDebug)
@@ -619,8 +618,7 @@ public class LuaVirtualMachine : IDisposable
 
 	private int ExecuteFunction(IntPtr luaState)
 	{
-		object at = Stack.GetAt(1);
-		int num = Convert.ToInt32(at);
+		int num = Convert.ToInt32(Stack.GetAt(1));
 		LogHelper.Instance.Log($"Lua: ExecuteFunction called from runtime for object {num}.", LogEntryType.Debug);
 		RegisteredMethod registeredMethod = (RegisteredMethod)m_objectCache.GetObject(num);
 		if (registeredMethod != null)
