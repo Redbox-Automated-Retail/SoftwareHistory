@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Control Panel Application" />
-  <property name="product_version" value="1.6.0.3" />
+  <property name="product_version" value="1.7.0.2" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
     <value>Content In-Cart Run Data,*</value>

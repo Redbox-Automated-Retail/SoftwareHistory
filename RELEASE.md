@@ -1,17 +1,17 @@
-# Batman (2016-04-01)
+# Rental bundles revision 44 (no code name)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2016-04-01
-- Store labels: kop-rental-bundles-Batman
+- Date (first download in the snapshots): 2016-10-28
+- Store labels: none
 - Package revisions:
-  - `kop-rental-bundles` revision 42 (`E9559925636E272C4C4EC32D8F5E41527B84F1BE`)
+  - `kop-rental-bundles` revision 44 (`EFF89950D0C12BF3862B3E09AD2A1F388E50EA90`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `C92F88F7C0C0DC4A527CD3413E6EF0A07C1796D5` | exact |
-| `fm.bundle` |  |  | `5264635D42CAFD066EA05DC0E364824672C85BC5` | exact |
-| `library-rental-common.bundle` |  |  | `6E06F6D68329C29F99530EC2A8BCE19471FF3624` | exact |
-| `ra-2.x.bundle` |  |  | `CF3B2077760A2939CEEA72270DFFED2AC8B98C51` | exact |
+| `cp.bundle` |  |  | `7D0CCBFF5F44E08E0BE22776DF3D775953637030` | exact |
+| `fm.bundle` |  |  | `5264635D42CAFD066EA05DC0E364824672C85BC5` | stale (listed version EA2E2A8E9C… has no content) |
+| `library-rental-common.bundle` |  |  | `6E06F6D68329C29F99530EC2A8BCE19471FF3624` | stale (listed version DF023CC863… has no content) |
+| `ra-2.x.bundle` |  |  | `CF3B2077760A2939CEEA72270DFFED2AC8B98C51` | stale (listed version 47581926B8… has no content) |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

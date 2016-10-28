@@ -722,7 +722,7 @@ function newkioskconfigurationmanager()
 			self.selected_store.id,
 			function( result )
 				local path = "C:\\Program Files\\Redbox\\Reds\\Installers\\" .. result.properties.kaseya_server .. "Install.exe"
-				local args = "/s /r /v /g=redbox." .. result.properties.ops_market .. " /m=redbox-" .. self.selected_store.id
+				local args = "/s /w /r /v /g=redbox." .. result.properties.ops_market .. " /m=redbox-" .. self.selected_store.id
 				
 				kernel.startprocesswaitforexit( path, args, 20000 )
 				progress_manager:stop()
