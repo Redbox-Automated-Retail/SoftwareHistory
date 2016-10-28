@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Timers;
 using Redbox.HAL.Client;
 using Redbox.HAL.Core;
 
@@ -8,13 +9,45 @@ namespace HALUtilities;
 
 internal sealed class KioskTest : IDisposable
 {
-	private HardwareService m_hardwareService;
+	private class DeckConfig
+	{
+		internal int Deck { get; set; }
 
-	private readonly NamedLock m_instanceLock;
+		internal int Slots { get; set; }
 
-	private Guid ProgramLock = new Guid("{7B780DBE-F37B-4f4a-83FA-C59F5B2C87D2}");
+		internal bool IsQlm { get; set; }
+	}
 
-	private List<TestLocation> TestLocations = new List<TestLocation>();
+	private class TestLocation
+	{
+		internal Location Location { get; private set; }
+
+		internal bool IsQlm { get; private set; }
+
+		internal TestLocation(DeckConfig config, int slot)
+		{
+			Location = new Location
+			{
+				Deck = config.Deck,
+				Slot = slot
+			};
+			IsQlm = config.IsQlm;
+		}
+	}
+
+	private int Transfers;
+
+	private bool ConfiguredForVMZ;
+
+	private bool Disposed;
+
+	private volatile bool KeepRunningTest = true;
+
+	private readonly StreamWriter Log;
+
+	private readonly List<TestLocation> TestLocations = new List<TestLocation>();
+
+	private readonly List<int> ConfiguredDecks = new List<int>();
 
 	private readonly List<DeckConfig> Decks = new List<DeckConfig>();
 
@@ -24,8 +57,6 @@ internal sealed class KioskTest : IDisposable
 
 	private readonly int VendFrequency;
 
-	private readonly string DeckList;
-
 	private readonly bool RunOneDiskQuickTestOnly;
 
 	private readonly bool ExcludeSlotsAroundDumpBin;
@@ -34,26 +65,11 @@ internal sealed class KioskTest : IDisposable
 
 	private readonly bool RewriteDataOnSuccess = true;
 
-	internal HardwareService Service
-	{
-		get
-		{
-			if (m_hardwareService == null)
-			{
-				m_hardwareService = Helper.AutoConnect();
-				if (m_hardwareService == null)
-				{
-					Console.WriteLine("Can't connect to hardware service.");
-					return m_hardwareService;
-				}
-			}
-			return m_hardwareService;
-		}
-	}
+	private readonly NamedLock m_instanceLock;
 
-	private bool ConfiguredForVMZ { get; set; }
+	private readonly Guid ProgramLock = new Guid("{7B780DBE-F37B-4f4a-83FA-C59F5B2C87D2}");
 
-	private bool Disposed { get; set; }
+	private readonly HardwareService Service;
 
 	public void Dispose()
 	{
@@ -64,6 +80,7 @@ internal sealed class KioskTest : IDisposable
 			{
 				m_instanceLock.Dispose();
 			}
+			Log.Dispose();
 		}
 	}
 
@@ -73,207 +90,225 @@ internal sealed class KioskTest : IDisposable
 		{
 			for (int i = 0; i < args.Length; i++)
 			{
-				if (args[i].StartsWith("-runtime", StringComparison.CurrentCultureIgnoreCase))
+				if (args[i].StartsWith("--runtime", StringComparison.CurrentCultureIgnoreCase))
 				{
 					RunTime = CommandLineOption.GetOptionVal(args[i], 6.5);
-					continue;
 				}
-				if (args[i].StartsWith("-vend"))
+				else if (args[i].StartsWith("--vend"))
 				{
 					VendFrequency = CommandLineOption.GetOptionVal(args[i], 5);
-					continue;
 				}
-				if (args[i].StartsWith("-decks"))
+				else if (args[i].StartsWith("--decks"))
 				{
-					DeckList = CommandLineOption.GetOptionVal(args[i], string.Empty);
-					continue;
+					string optionVal = CommandLineOption.GetOptionVal(args[i], string.Empty);
+					if (!string.IsNullOrEmpty(optionVal))
+					{
+						string[] array = optionVal.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+						string[] array2 = array;
+						foreach (string text in array2)
+						{
+							if (!int.TryParse(text, out var result))
+							{
+								Console.WriteLine("Unable to parse deck list option '{0}'.", text);
+								Environment.Exit(-1);
+							}
+							ConfiguredDecks.Add(result);
+						}
+					}
+					ConfiguredDecks.Sort();
 				}
-				if (args[i].StartsWith("-excludeAroundDump"))
+				else if (args[i].StartsWith("-excludeAroundDump"))
 				{
 					ExcludeSlotsAroundDumpBin = true;
-					continue;
 				}
-				if (args[i].StartsWith("-quickTest"))
+				else if (args[i].StartsWith("--quickTest"))
 				{
 					ExecuteQuickTest = CommandLineOption.GetOptionVal(args[i], defVal: true);
-					continue;
 				}
-				if (args[i].StartsWith("-rewriteDataOnSuccess"))
+				else if (args[i].StartsWith("--rewriteDataOnSuccess"))
 				{
 					RewriteDataOnSuccess = CommandLineOption.GetOptionVal(args[i], defVal: true);
-					continue;
 				}
-				if (args[i] == "-oneDiskQuickTest")
+				else if (args[i] == "-oneDiskQuickTest")
 				{
 					RunOneDiskQuickTestOnly = true;
-					continue;
 				}
-				Console.WriteLine("\nList of Commands:\n--------------------\n");
-				Console.WriteLine("\t-decks <number>,<number>,<number>,...\tUse only the decks listed");
-				Console.WriteLine("\t-runTime <number>\tSet the number of hours for test to run");
-				Console.WriteLine("\t-vend <number>\tSet the number of moves between each vend attempt, 0 prevents vends from being attempted");
-				Console.WriteLine("\t-help\t\t\tPrints this screen");
-				Environment.Exit(0);
+				else
+				{
+					Console.WriteLine("\nList of Commands:\n--------------------\n");
+					Console.WriteLine("\t--decks:<number>,<number>,<number>,...\tUse only the decks listed");
+					Console.WriteLine("\t--runTime:<number>\tSet the number of hours for test to run");
+					Console.WriteLine("\t--vend:<number>\tSet the number of moves between each vend attempt, 0 prevents vends from being attempted");
+					Console.WriteLine("\t-excludeAroundDump\tIgnores slots 81 & 85 on deck 8 VMZ machines.");
+					Console.WriteLine("\t--quickTest:{true|false}\tTests disk at slots 1, 30 and 60 on each deck. Assumes a disk at 1,1 on each deck.");
+					Console.WriteLine("\t--rewriteDataOnSuccess:{true|false}\tOn successful test, updates GAMP data with new values.");
+					Console.WriteLine("\t-oneDiskQuickTest\tPerforms a quick test at slots 1, 30 and 60 on each deck. Assumes single disk at 1,1.");
+					Console.WriteLine("\t-help\t\t\tPrints this screen");
+					Environment.Exit(0);
+				}
 			}
 		}
 		Helper = new ClientHelper();
+		Service = Helper.AutoConnect();
 		m_instanceLock = new NamedLock(ProgramLock.ToString(), LockScope.Local);
+		string path = string.Format("kioskTest-{0}", FileHelper.GenerateUniqueFile(".log"));
+		string path2 = Path.Combine("c:\\Program Files\\Redbox\\KioskLogs\\KioskTest", path);
+		Log = new StreamWriter(path2)
+		{
+			AutoFlush = true
+		};
 	}
 
 	internal int Run()
 	{
-		string path = Path.Combine("c:\\Program Files\\Redbox\\KioskLogs\\KioskTest", "kioskTest.log");
-		using (StreamWriter streamWriter = new StreamWriter(path, append: true))
+		if (RunOneDiskQuickTestOnly)
 		{
-			if (!ConfigureDecks(streamWriter))
+			printAndLog(" ** scheduling one disk quick deck test ** ");
+			using OneDiskQuickTest oneDiskQuickTest = new OneDiskQuickTest(Service);
+			oneDiskQuickTest.Run();
+			if (oneDiskQuickTest.EndStatus != HardwareJobStatus.Completed)
 			{
-				printAndLog("Unable to retrieve decks information from service.", streamWriter);
 				return -1;
 			}
-			if (RunOneDiskQuickTestOnly)
-			{
-				printAndLog(" ** scheduling one disk quick deck test ** ", streamWriter);
-				using OneDiskQuickTest oneDiskQuickTest = new OneDiskQuickTest(m_hardwareService);
-				oneDiskQuickTest.Run();
-				if (oneDiskQuickTest.EndStatus != HardwareJobStatus.Completed)
-				{
-					return -1;
-				}
-				if (!RewriteDataOnSuccess)
-				{
-					return 0;
-				}
-				HardwareCommandResult hardwareCommandResult = Service.ExecuteServiceCommand("SERVICE update-gamp backup-directory: @'c:\\gamp\\KentBackup'");
-				streamWriter.WriteLine("Update gamp file data: {0}.", hardwareCommandResult.Success ? "OK" : "EPIC FAIL");
-				return (!hardwareCommandResult.Success) ? (-1) : 0;
-			}
-			if (ExecuteQuickTest)
-			{
-				using QuickDeckTest quickDeckTest = new QuickDeckTest(m_hardwareService);
-				printAndLog(" ** scheduling quick deck test ** ", streamWriter);
-				quickDeckTest.Run();
-				if (HardwareJobStatus.Completed != quickDeckTest.EndStatus)
-				{
-					streamWriter.WriteLine("The quick test failed - bailing test.");
-					return -1;
-				}
-				printAndLog(" ** quick test SUCCEEDED; schedule adjacent bin test ** ", streamWriter);
-				using AdjacentBinTest adjacentBinTest = new AdjacentBinTest(m_hardwareService);
-				adjacentBinTest.Run();
-				if (adjacentBinTest.EndStatus == HardwareJobStatus.Completed)
-				{
-					printAndLog("The quick test succeeded.", streamWriter);
-				}
-			}
-			if (!m_instanceLock.IsOwned)
-			{
-				Console.WriteLine("Only one instance of the Kiosk Test is allowed to run.");
-				PerfFunctions.Wait(10000);
-				return -1;
-			}
-			printAndLog($"Kiosk Test Starting - {DateTime.Now}", streamWriter);
-			printAndLog("Deck Details", streamWriter);
-			printAndLog("-------------------------------------", streamWriter);
-			foreach (DeckConfig deck in Decks)
-			{
-				printAndLog($"Deck {deck.Deck} - Number of Slots {deck.Slots} - Is QLM {deck.IsQlm}", streamWriter);
-			}
-			printAndLog("-------------------------------------", streamWriter);
-			DateTime dateTime = DateTime.Now.AddHours(RunTime);
-			printAndLog($"Run until {dateTime}", streamWriter);
-			int num = 1;
-			int num2 = 0;
-			bool flag = false;
-			Location location = null;
-			Location location2 = null;
-			while (DateTime.Now <= dateTime)
-			{
-				flag = location != null && VendFrequency != 0 && TestLocations.Count % VendFrequency == 0;
-				if (TestLocations.Count < 1 || location == null)
-				{
-					if (location != null)
-					{
-						Service.CollectGarbage(force: false);
-						Console.WriteLine("{4} - Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {5}", location.Deck, location.Slot, Decks[num2].Deck, 1, TestLocations.Count, flag);
-						Schedule(location, new Location
-						{
-							Deck = Decks[num2].Deck,
-							Slot = 1
-						}, flag, streamWriter);
-					}
-					num = 1;
-					num2 = 0;
-					streamWriter.WriteLine("{0} - Populating Location Information", DateTime.Now);
-					streamWriter.Flush();
-					PopulateLocations();
-					Location location3 = new Location();
-					location3.Deck = Decks[num2].Deck;
-					location3.Slot = 1;
-					location = location3;
-					location2 = null;
-					Console.WriteLine("============Start Fresh : Time Remaining {0}============", dateTime - DateTime.Now);
-				}
-				else if (num >= Decks[num2].Slots)
-				{
-					Service.CollectGarbage(force: false);
-					Console.WriteLine("{4} - Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {5}", location.Deck, location.Slot, Decks[num2].Deck, 1, TestLocations.Count + 1, flag);
-					Schedule(location, new Location
-					{
-						Deck = Decks[num2].Deck,
-						Slot = 1
-					}, flag, streamWriter);
-					num2++;
-					Location location4 = new Location();
-					location4.Deck = Decks[num2].Deck;
-					location4.Slot = 1;
-					location = location4;
-					num = 1;
-					streamWriter.WriteLine("{0} - Deck {1} finished", DateTime.Now, Decks[num2].Deck);
-					streamWriter.Flush();
-					Console.WriteLine("----------Iteration {0} : Time Remaining {1}-----------", num2, dateTime - DateTime.Now);
-				}
-				location2 = SelectTargetLocation();
-				Console.WriteLine("{4} - Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {5}", location.Deck, location.Slot, location2.Deck, location2.Slot, TestLocations.Count + 1, flag);
-				if (!Schedule(location, location2, flag, streamWriter))
-				{
-					streamWriter.WriteLine("Job failed to schedule properly");
-					streamWriter.Flush();
-					Environment.Exit(-1);
-				}
-				num++;
-				location = location2;
-			}
-			Console.WriteLine("return disk - Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {4}", location.Deck, location.Slot, Decks[num2].Deck, 1, false);
-			Schedule(location, new Location
-			{
-				Deck = Decks[num2].Deck,
-				Slot = 1
-			}, vend: false, streamWriter);
-			if (ConfiguredForVMZ)
-			{
-				streamWriter.WriteLine("Kiosk is configured for VMZ - schedule load bin job.");
-				List<Location> list = new List<Location>();
-				foreach (DeckConfig deck2 in Decks)
-				{
-					Location location5 = new Location();
-					location5.Deck = deck2.Deck;
-					location5.Slot = 1;
-					Location item = location5;
-					list.Add(item);
-				}
-				ScheduleAndBlockLoadBinJob(list);
-			}
-			if (RewriteDataOnSuccess)
-			{
-				HardwareCommandResult hardwareCommandResult2 = Service.ExecuteServiceCommand("SERVICE update-gamp backup-directory: @'c:\\gamp\\KentBackup'");
-				streamWriter.WriteLine("Update gamp file data: {0}.", hardwareCommandResult2.Success ? "OK" : "EPIC FAIL");
-			}
-			printAndLog("Kiosk Test Completed", streamWriter);
+			return (!UpdateGamp()) ? (-1) : 0;
 		}
+		if (ExecuteQuickTest)
+		{
+			using QuickDeckTest quickDeckTest = new QuickDeckTest(Service);
+			printAndLog(" ** scheduling quick deck test ** ");
+			quickDeckTest.Run();
+			if (HardwareJobStatus.Completed != quickDeckTest.EndStatus)
+			{
+				printAndLog("The quick test failed - bailing test.");
+				return -1;
+			}
+			printAndLog(" ** quick test SUCCEEDED; schedule adjacent bin test ** ");
+			using AdjacentBinTest adjacentBinTest = new AdjacentBinTest(Service);
+			adjacentBinTest.Run();
+			if (adjacentBinTest.EndStatus == HardwareJobStatus.Completed)
+			{
+				printAndLog("The quick test succeeded.");
+			}
+		}
+		if (!ConfigureDecks())
+		{
+			printAndLog("!! Unable to retrieve decks information from service !!");
+			return -1;
+		}
+		return RunKioskTest();
+	}
+
+	private void OnTimerFired(object sender, ElapsedEventArgs e)
+	{
+		KeepRunningTest = false;
+	}
+
+	private int RunKioskTest()
+	{
+		if (!m_instanceLock.IsOwned)
+		{
+			printAndLog("Only one instance of the Kiosk Test is allowed to run - bailing test.");
+			return -1;
+		}
+		printAndLog("Kiosk Test Starting - Deck details:");
+		printAndLog("-------------------------------------");
+		foreach (DeckConfig deck in Decks)
+		{
+			printAndLog("  Deck {0} - Number of Slots {1} - Is QLM {2}", deck.Deck, deck.Slots, deck.IsQlm);
+		}
+		printAndLog("-------------------------------------");
+		DateTime dateTime = DateTime.Now.AddHours(RunTime);
+		printAndLog("Run until {0}", dateTime);
+		RedboxTimer redboxTimer = new RedboxTimer("KioskTest", OnTimerFired);
+		redboxTimer.FireOn(dateTime);
+		while (KeepRunningTest)
+		{
+			foreach (DeckConfig deck2 in Decks)
+			{
+				printAndLog("## Start test on deck {0} : Time Remaining {1} ##", deck2.Deck, dateTime - DateTime.Now);
+				RunOnDeck(deck2, dateTime);
+			}
+		}
+		if (ConfiguredForVMZ)
+		{
+			printAndLog("## Kiosk is configured for VMZ - schedule load bin job ##");
+			List<Location> list = new List<Location>();
+			foreach (DeckConfig deck3 in Decks)
+			{
+				Location location = new Location();
+				location.Deck = deck3.Deck;
+				location.Slot = 1;
+				Location item = location;
+				list.Add(item);
+			}
+			ScheduleAndBlockLoadBinJob(list);
+		}
+		UpdateGamp();
+		printAndLog("## Kiosk Test Completed ##");
 		return 0;
 	}
 
-	private bool ConfigureDecks(StreamWriter log)
+	private void RunOnDeck(DeckConfig deck, DateTime stopTime)
+	{
+		bool flag = false;
+		Location location = new Location();
+		location.Deck = deck.Deck;
+		location.Slot = 1;
+		Location location2 = location;
+		Location location3 = null;
+		for (int i = 1; i <= deck.Slots; i++)
+		{
+			if (!KeepRunningTest)
+			{
+				break;
+			}
+			if (VendFrequency > 0)
+			{
+				flag = Transfers % VendFrequency == 0;
+			}
+			if (TestLocations.Count == 0)
+			{
+				printAndLog("## Populating Location Information ##");
+				PopulateLocations();
+			}
+			Random random = new Random(DateTime.Now.Millisecond);
+			int index = random.Next(0, TestLocations.Count - 1);
+			location3 = TestLocations[index].Location;
+			TestLocations.RemoveAt(index);
+			printAndLog("## Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {4} ##", location2.Deck, location2.Slot, location3.Deck, location3.Slot, flag);
+			if (!Schedule(location2, location3, flag))
+			{
+				printAndLog("Job failed to schedule properly");
+				Environment.Exit(-1);
+			}
+			Transfers++;
+			location2 = location3;
+		}
+		DeckConfig deckConfig = Decks.Find((DeckConfig each) => each.Deck == deck.Deck + 1);
+		if (deckConfig == null)
+		{
+			deckConfig = Decks.Find((DeckConfig each) => each.Deck == 1);
+		}
+		printAndLog("## Deck {0} iteration complete return disk to Deck = {1} Slot = 1 ##", deck.Deck, deckConfig.Deck);
+		Schedule(location2, new Location
+		{
+			Deck = deckConfig.Deck,
+			Slot = 1
+		}, vend: false);
+	}
+
+	private bool UpdateGamp()
+	{
+		if (RewriteDataOnSuccess)
+		{
+			HardwareCommandResult hardwareCommandResult = Service.ExecuteServiceCommand("SERVICE update-gamp backup-directory: @'c:\\gamp\\KentBackup'");
+			printAndLog("Update gamp file data: {0}.", hardwareCommandResult.Success ? "OK" : "EPIC FAIL");
+			return hardwareCommandResult.Success;
+		}
+		return true;
+	}
+
+	private bool ConfigureDecks()
 	{
 		HardwareCommandResult machineInfo = Service.GetMachineInfo(new HardwareJobSchedule
 		{
@@ -286,16 +321,15 @@ internal sealed class KioskTest : IDisposable
 		Helper.WaitForJob(job, out var endStatus);
 		if (endStatus != HardwareJobStatus.Completed)
 		{
-			log.WriteLine("Get-machine-info returned an error status.");
+			printAndLog("!! Get-machine-info ended with error status {0} !!", endStatus.ToString());
 			return false;
 		}
 		if (!job.GetResults(out var results).Success)
 		{
-			log.WriteLine("Unable to get results for get-machine-info job.");
+			printAndLog("!! Unable to get results for get-machine-info job !!");
 			return false;
 		}
 		int qlmDeck = -1;
-		ConfiguredForVMZ = true;
 		ProgramResult[] array = results;
 		foreach (ProgramResult programResult in array)
 		{
@@ -305,11 +339,14 @@ internal sealed class KioskTest : IDisposable
 				qlmDeck = programResult.Deck;
 				break;
 			case "DeckInfo":
-				Decks.Add(new DeckConfig
+				if (ConfiguredDecks.Count == 0 || ConfiguredDecks.Contains(programResult.Deck))
 				{
-					Deck = programResult.Deck,
-					Slots = programResult.Slot
-				});
+					Decks.Add(new DeckConfig
+					{
+						Deck = programResult.Deck,
+						Slots = programResult.Slot
+					});
+				}
 				break;
 			}
 		}
@@ -321,25 +358,8 @@ internal sealed class KioskTest : IDisposable
 				deckConfig.IsQlm = true;
 			}
 		}
-		if (string.IsNullOrEmpty(DeckList))
-		{
-			return true;
-		}
-		List<string> list = new List<string>(DeckList.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries));
-		list.Sort();
-		foreach (string item in list)
-		{
-			if (!int.TryParse(item, out var _d0))
-			{
-				printAndLog("Unable to parse deck list option.", log);
-				Environment.Exit(-1);
-			}
-			DeckConfig deckConfig2 = Decks.Find((DeckConfig each) => each.Deck == _d0);
-			if (deckConfig2 != null)
-			{
-				Decks.Remove(deckConfig2);
-			}
-		}
+		ConfiguredForVMZ = -1 == qlmDeck;
+		Decks.Sort((DeckConfig x, DeckConfig y) => x.Deck.CompareTo(y.Deck));
 		return true;
 	}
 
@@ -376,28 +396,6 @@ internal sealed class KioskTest : IDisposable
 		}
 	}
 
-	private Location SelectTargetLocation()
-	{
-		if (0 >= TestLocations.Count)
-		{
-			Environment.Exit(-1);
-		}
-		Random random = new Random(DateTime.Now.Millisecond);
-		int index = random.Next(0, TestLocations.Count - 1);
-		TestLocation testLocation = TestLocations[index];
-		TestLocations.RemoveAt(index);
-		return testLocation.Location;
-	}
-
-	private bool IsFinished(HardwareJob job)
-	{
-		if (!job.Status.Equals(HardwareJobStatus.Stopped) && !job.Status.Equals(HardwareJobStatus.Completed))
-		{
-			return job.Status.Equals(HardwareJobStatus.Errored);
-		}
-		return true;
-	}
-
 	private bool ScheduleAndBlockLoadBinJob(List<Location> locs)
 	{
 		HardwareJob job = null;
@@ -409,20 +407,15 @@ internal sealed class KioskTest : IDisposable
 			}, out job);
 			if (!hardwareCommandResult.Success)
 			{
-				Console.WriteLine("Failed to create bin job.");
+				printAndLog("!! Failed to create bin job !!");
 				return false;
 			}
 			if (!Helper.WaitForJob(job, out var endStatus))
 			{
-				Console.WriteLine("Error waiting for load bin job to complete.");
+				printAndLog("!! Error waiting for load bin job to complete !!");
 				return false;
 			}
-			if (endStatus == HardwareJobStatus.Completed)
-			{
-				return true;
-			}
-			Environment.Exit(-1);
-			return false;
+			return endStatus == HardwareJobStatus.Completed;
 		}
 		finally
 		{
@@ -430,21 +423,26 @@ internal sealed class KioskTest : IDisposable
 		}
 	}
 
-	private void printAndLog(string message, StreamWriter log)
+	private void printAndLog(string message)
 	{
-		Console.WriteLine(message);
-		log.WriteLine(message);
+		string value = $"{DateTime.Now.ToString()} {message}";
+		Console.WriteLine(value);
+		Log.WriteLine(value);
 	}
 
-	private bool Schedule(Location start, Location end, bool vend, StreamWriter log)
+	private void printAndLog(string fmt, params object[] args)
 	{
-		using (KioskTestJob kioskTestJob = new KioskTestJob(m_hardwareService, start, end, vend))
+		printAndLog(string.Format(fmt, args));
+	}
+
+	private bool Schedule(Location start, Location end, bool vend)
+	{
+		using (KioskTestJob kioskTestJob = new KioskTestJob(Service, start, end, vend))
 		{
 			kioskTestJob.Run();
 			if (HardwareJobStatus.Completed != kioskTestJob.EndStatus)
 			{
-				log.WriteLine("Job {0} Errored out", kioskTestJob.ID);
-				log.Flush();
+				printAndLog("!! Job {0} failed with status {1} !!", kioskTestJob.ID, kioskTestJob.EndStatus.ToString());
 				Environment.Exit(-1);
 			}
 		}

@@ -92,7 +92,7 @@ internal sealed class RegistryStore
 		{
 			return converter.ConvertFrom(value);
 		}
-		if ((object)convertToType == typeof(string))
+		if (convertToType == typeof(string))
 		{
 			converter = TypeDescriptor.GetConverter(value.GetType());
 			if (converter != null && converter.CanConvertTo(typeof(string)))
@@ -115,7 +115,7 @@ internal sealed class RegistryStore
 
 	private Type GetNullableTypeIfWrapped(Type type)
 	{
-		if (type.IsGenericType && (object)type.GetGenericTypeDefinition() == typeof(Nullable<>))
+		if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
 		{
 			return type.GetGenericArguments()[0];
 		}

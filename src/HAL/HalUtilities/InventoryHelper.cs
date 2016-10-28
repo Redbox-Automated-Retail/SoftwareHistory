@@ -6,8 +6,6 @@ namespace HALUtilities;
 
 internal sealed class InventoryHelper : IDisposable
 {
-	private const string DefaultProtocol = "rcp://localhost:7001";
-
 	private bool Disposed;
 
 	private readonly HardwareService Service;
@@ -30,10 +28,14 @@ internal sealed class InventoryHelper : IDisposable
 
 	internal bool ImportInventoryFromFile(string fileName)
 	{
+		if (!File.Exists(fileName))
+		{
+			Console.WriteLine("The file '{0}' doesn't exist.", fileName);
+			return false;
+		}
 		try
 		{
-			string inventoryState = File.ReadAllText(fileName);
-			return Service.SetInventoryState(inventoryState).Success;
+			return Service.SetInventoryState(File.ReadAllText(fileName)).Success;
 		}
 		catch (Exception ex)
 		{
@@ -60,9 +62,9 @@ internal sealed class InventoryHelper : IDisposable
 		return Service.FullSync().Success;
 	}
 
-	internal InventoryHelper()
+	internal InventoryHelper(ClientHelper helper)
 	{
-		m_helper = new ClientHelper();
+		m_helper = helper;
 		Service = m_helper.AutoConnect();
 	}
 

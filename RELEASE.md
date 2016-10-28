@@ -1,16 +1,16 @@
-# Batman (1.8.0.22)
+# Hawkeye (1.9.0.49)
 
-- Product: HAL 1.8.0.22
-- Date (first download in the snapshots): 2016-04-01
-- Store labels: kop-hal-install-Batman
+- Product: HAL Utilities 1.9.0.49
+- Date (first download in the snapshots): 2016-10-28
+- Store labels: kop-tools-Hawkeye
 - Package revisions:
-  - `kop-tools` revision 27 (`8F74EEBC08A7DAA461B666C2918FBDE8231C5D95`)
+  - `kop-tools` revision 32 (`1272D5B3B2A8B7333D0DFAAACAEA4053D465C1AF`)
   - `kop-hal-install` revision 37 (`79408DFCF76AB155984417A8E3CA6F0C331900E1`)
   - `kop-ms-hal-tester` revision 27 (`A72458770466E3A35C7B72182B30CB543D0B528B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.8.0.22 | `8B91118CF825962B5F789AD8416010446C7B4C72` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.9.0.49 | `2D437B0A3FAD1C5B4ECDDCABC0006FCB6E0141B3` | exact |
 | `beforeactivate.lua` |  |  | `06B47DDAB43B054ECF43CF997FF078F687CF7171` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.8.0.18 | `118C3DB4714FC3CCD2C609885291644AAE67E7E2` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

@@ -504,12 +504,6 @@ internal sealed class QuickReturnHelper
 		writer.WriteLine("Result = {0}", arg);
 	}
 
-	[DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-	internal static extern bool SetupDiSetClassInstallParams(IntPtr DeviceInfoSet, IntPtr DeviceInfoData, IntPtr ClassInstallParams, int ClassInstallParamsSize);
-
-	[DllImport("setupapi.dll", CharSet = CharSet.Auto)]
-	internal static extern bool SetupDiCallClassInstaller(uint InstallFunction, IntPtr DeviceInfoSet, IntPtr DeviceInfoData);
-
 	[DllImport("setupapi.dll", SetLastError = true)]
 	private static extern int SetupDiDestroyDeviceInfoList(IntPtr lpInfoSet);
 
