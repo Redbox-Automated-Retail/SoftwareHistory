@@ -74,9 +74,9 @@ internal sealed class RandomSync : NativeJobAdapter
 			return;
 		}
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		int top = GetTop<int>();
-		base.Context.AppLog.WriteFormatted("Vend time is set to {0}s", top);
-		int top2 = GetTop<int>();
+		int num = base.Context.PopTop<int>();
+		base.Context.AppLog.WriteFormatted("Vend time is set to {0}s", num);
+		int num2 = base.Context.PopTop<int>();
 		base.Context.AppLog.Write("Random sync test start.");
 		List<ILocation> locations = new List<ILocation>();
 		base.DecksService.ForAllDecksDo(delegate(IDeck _deck)
@@ -87,7 +87,7 @@ internal sealed class RandomSync : NativeJobAdapter
 			}
 			return true;
 		});
-		int num = 0;
+		int num3 = 0;
 		bool flag = true;
 		while (flag)
 		{
@@ -98,9 +98,9 @@ internal sealed class RandomSync : NativeJobAdapter
 				break;
 			}
 			base.Context.AppLog.WriteFormatted("Sync {0}", location.ToString());
-			num++;
-			bool vend = num % top2 == 0;
-			RandomSyncDecorator decorator = new RandomSyncDecorator(base.Context, base.Result, location, top, vend);
+			num3++;
+			bool vend = num3 % num2 == 0;
+			RandomSyncDecorator decorator = new RandomSyncDecorator(base.Context, base.Result, location, num, vend);
 			SyncResult syncResult = SyncHelper.SyncSlot(base.Result, base.Context, location, decorator);
 			SyncResult syncResult2 = syncResult;
 			if (syncResult2 == SyncResult.HardwareError || syncResult2 == SyncResult.GetError)

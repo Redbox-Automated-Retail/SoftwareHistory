@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Xml;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
@@ -9,11 +10,11 @@ internal sealed class ResetInventoryJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		string text = GetTop<string>();
+		string text = base.Context.PopTop<string>();
 		if (!File.Exists(text))
 		{
-			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
-			text = Path.Combine(service.StoreDirectory, text);
+			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+			text = Path.Combine(service.DataPath, text);
 			if (!File.Exists(text))
 			{
 				AddError("The file {0} doesn't exist.");
@@ -24,12 +25,34 @@ internal sealed class ResetInventoryJob : NativeJobAdapter
 		try
 		{
 			string xml = File.ReadAllText(text);
+			XmlDocument xmlDocument = new XmlDocument();
+			try
+			{
+				xmlDocument.LoadXml(xml);
+				if (xmlDocument.DocumentElement == null)
+				{
+					base.Result.Errors.Add(Error.NewError("I001", "Invalid document.", "The specified document is invalid."));
+					return;
+				}
+			}
+			catch (Exception e)
+			{
+				base.Result.Errors.Add(Error.NewError("I001", "Invalid document.", e));
+				return;
+			}
 			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-			service2.ResetInventoryState(xml, base.Result.Errors);
+			service2.ResetState(xmlDocument, base.Result.Errors);
+			IDumpbinService service3 = ServiceLocator.Instance.GetService<IDumpbinService>();
+			service3.ResetState(xmlDocument, base.Result.Errors);
+			if (base.Result.Errors.Count > 0)
+			{
+				LogHelper.Instance.Log("RESET INVENTORY Failed to import inventory.", LogEntryType.Error);
+			}
 		}
-		catch (Exception e)
+		catch (Exception e2)
 		{
-			LogHelper.Instance.Log("Reset-inventory caught an exception.", e);
+			LogHelper.Instance.Log("Reset-inventory caught an exception.", e2);
+			base.Result.Errors.Add(Error.NewError("I003", "Reset inventory failure.", e2));
 		}
 	}
 

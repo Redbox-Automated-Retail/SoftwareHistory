@@ -67,10 +67,6 @@ public static class PickerBoard
 
 	public static bool IsFull()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedIsPickerFullResult.Next();
-		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		IPickerSensorReadResult pickerSensorReadResult = service.ReadSensors();
 		if (pickerSensorReadResult.Error == ErrorCodes.Success)
@@ -92,10 +88,6 @@ public static class PickerBoard
 
 	private static bool WaitSensor(PickerSensor lowSensor, bool state, int timeout)
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedWaitForPickerSensorsToBlockResult;
-		}
 		int waitSensorPauseTime = ControllerConfiguration.Instance.WaitSensorPauseTime;
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		int num = (int)(lowSensor - 1);

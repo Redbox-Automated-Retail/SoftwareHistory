@@ -2,7 +2,7 @@ namespace Redbox.HAL.Component.Model;
 
 public interface IControlSystemObserver
 {
-	void OnInitialize(ErrorCodes initError);
+	void OnSystemInitialize(ErrorCodes initError);
 
-	void OnShutdown();
+	void OnSystemShutdown();
 }

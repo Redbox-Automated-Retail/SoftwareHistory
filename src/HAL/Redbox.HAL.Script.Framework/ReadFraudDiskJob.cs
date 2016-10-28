@@ -10,8 +10,6 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Fraud", flushOnWrite: false, "Fraud");
 		applicationLog.Write("Read Fraud Disc Start.");
-		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.ReadFraudDisk);
 		if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
 		{
 			EndJob(errored: true);
@@ -39,26 +37,24 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 			return;
 		}
 		base.ControlSystem.TrackCycle();
+		bool errored = true;
 		using Scanner scanner = new Scanner();
 		for (int i = 0; i < 2; i++)
 		{
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{
-				EndJob(errored: true);
-				return;
+				break;
 			}
-			if (!scanResult.ReadCode)
+			if (scanResult.ReadCode)
 			{
-				base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
-				continue;
+				base.Context.CreateInfoResult("FraudItem", "This is the barcode to be marked as fraud.", scanResult.ScannedMatrix);
+				errored = false;
+				break;
 			}
-			base.Context.CreateInfoResult("FraudItem", "This is the barcode to be marked as fraud.", scanResult.ScannedMatrix);
-			diskValidatorHelper.ValidateAndNotify(scanResult.ScannedMatrix, base.Context);
-			EndJob(errored: false);
-			return;
+			base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
 		}
-		EndJob(errored: true);
+		EndJob(errored);
 	}
 
 	internal ReadFraudDiskJob(ExecutionResult r, ExecutionContext c)

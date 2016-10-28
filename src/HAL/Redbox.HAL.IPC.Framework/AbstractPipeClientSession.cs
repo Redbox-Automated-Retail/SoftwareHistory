@@ -11,8 +11,6 @@ public abstract class AbstractPipeClientSession : IDisposable
 
 	protected readonly string ID;
 
-	protected readonly string PipeName;
-
 	private readonly BasePipeChannel Channel;
 
 	private int? m_timeout;
@@ -58,7 +56,7 @@ public abstract class AbstractPipeClientSession : IDisposable
 
 	public void ConnectThrowOnError()
 	{
-		Channel.Connect(PipeName);
+		Channel.Connect();
 		if (!Channel.Connected)
 		{
 			throw new TimeoutException("Failed to connect to pipe server: maybe it's not started?");
@@ -72,7 +70,6 @@ public abstract class AbstractPipeClientSession : IDisposable
 	{
 		Channel = new ClientPipeChannel(pipeName);
 		ID = id;
-		PipeName = pipeName;
 	}
 
 	protected List<string> ConsumeMessages()

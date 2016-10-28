@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -24,7 +23,7 @@ internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
 	{
 		int errors = 0;
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "Sync", flushOnWrite: true, null);
-		int slot = GetTop<int>();
+		int slot = base.Context.PopTop<int>();
 		applicationLog.Write($"Start vertical sync for slot {slot}");
 		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
@@ -39,7 +38,8 @@ internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
 				errors++;
 				return false;
 			}
-			GetResult = ControllerService.Instance.Get(base.AppLog);
+			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+			GetResult = service.Get(base.AppLog);
 			if (!GetResult.Success)
 			{
 				HandleError(deck.Number, slot, "Retrieving the disk failed.");
@@ -53,7 +53,7 @@ internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
 				return false;
 			}
 			base.ControlSystem.TrackCycle();
-			if (!ControllerService.Instance.Put(GetResult.Previous, base.AppLog).Success)
+			if (!service.Put(GetResult.Previous, base.AppLog).Success)
 			{
 				HandleError(deck.Number, slot, "Filing the disk failed.");
 				errors++;

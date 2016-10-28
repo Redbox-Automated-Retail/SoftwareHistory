@@ -259,10 +259,10 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 	{
 		if (ID == ExecutionEngine.Instance.InitJob.ID)
 		{
-			LogHelper.Instance.Log($"The job {ID} ( {ProgramName} ) will not be trashed - it is the init job.", LogEntryType.Info);
+			LogHelper.Instance.Log("The job {0} ( {1} ) will not be trashed - it is the init job.", ID, ProgramName);
 			return;
 		}
-		LogHelper.Instance.Log($"context {ID} ( {ProgramName} ) being trashed", LogEntryType.Info);
+		LogHelper.Instance.Log("Context {0} ( {1} ) being trashed", ID, ProgramName);
 		ChangeStatus(ExecutionContextStatus.Garbage);
 		using (new WithWriteLock(ResultsLock))
 		{

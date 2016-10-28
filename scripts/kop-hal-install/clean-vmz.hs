@@ -2,7 +2,7 @@
         # Clean VMZ Aggregate Instruction
         # Copyright (C) 2012 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.8.0.22
+	# VERSION 1.9.0.49
         #
 	
 	APPLOG		CONFIGURE	SUBDIRECTORY="VMZ"

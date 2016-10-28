@@ -5,6 +5,8 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurationObserver, IControlSystemObserver
 {
+	private int m_persistentPostFailureCount;
+
 	public bool IsConfigured { get; private set; }
 
 	public IFraudSensor FraudSensor { get; private set; }
@@ -15,6 +17,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		if (IsConfigured)
 		{
 			FraudSensor.Shutdown();
+			PerfFunctions.SpinWait(ControllerConfiguration.Instance.FraudSensorPostWait);
 		}
 	}
 
@@ -37,7 +40,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		LogHelper.Instance.Log("[DiskValidatorService] ConfigurationLoad: Enabled = {0}.", IsConfigured.ToString());
 	}
 
-	public void OnInitialize(ErrorCodes initError)
+	public void OnSystemInitialize(ErrorCodes initError)
 	{
 		LogHelper.Instance.Log("[DiskValidatorService] On initialize.");
 		if (initError == ErrorCodes.Success && IsConfigured)
@@ -49,7 +52,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		}
 	}
 
-	public void OnShutdown()
+	public void OnSystemShutdown()
 	{
 		LogHelper.Instance.Log("[DiskValidatorService] On shutdown.");
 		if (IsConfigured)
@@ -76,8 +79,32 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		return FraudSensor.Validate();
 	}
 
+	public void CorrectErroredPost(IFormattedLog log)
+	{
+		if (!IsConfigured || FraudSensor.LastPostResult == ErrorCodes.Success)
+		{
+			m_persistentPostFailureCount = 0;
+		}
+		else if (ControllerConfiguration.Instance.CorrectFailedFraudPost && m_persistentPostFailureCount <= 2)
+		{
+			ErrorCodes errorCodes = FraudSensor.Reset(log);
+			log.WriteFormatted($"[CorrectErroredPost] POST returned {errorCodes.ToString()}");
+			if (errorCodes == ErrorCodes.Success)
+			{
+				m_persistentPostFailureCount = 0;
+			}
+			else
+			{
+				m_persistentPostFailureCount++;
+			}
+		}
+	}
+
 	internal DiskValidatorService(IFraudSensor sensor)
 	{
 		FraudSensor = sensor;
+		ControllerConfiguration.Instance.AddObserver(this);
+		IControlSystemService service = ServiceLocator.Instance.GetService<IControlSystemService>();
+		service.AddHandler(this);
 	}
 }

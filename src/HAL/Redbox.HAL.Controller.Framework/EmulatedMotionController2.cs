@@ -14,9 +14,9 @@ internal sealed class EmulatedMotionController2 : AbstractMotionController
 		return true;
 	}
 
-	internal override string[] ReadLimits()
+	internal override IMotionControlLimitResponse ReadLimits()
 	{
-		return new string[2] { "UPPER LIMIT: CLEAR", "LOWER LIMIT: BLOCKED" };
+		return new EmulatedArcusLimitResponse();
 	}
 
 	internal override bool CommunicationOk()
@@ -31,7 +31,7 @@ internal sealed class EmulatedMotionController2 : AbstractMotionController
 
 	internal override ErrorCodes MoveToTarget(ref MoveTarget target)
 	{
-		return ControllerEmulationState.Instance.ExpectedMoveAbsoluteResult;
+		return ErrorCodes.Success;
 	}
 
 	internal override ErrorCodes MoveToVend(MoveMode mode)
@@ -41,11 +41,7 @@ internal sealed class EmulatedMotionController2 : AbstractMotionController
 
 	internal override ErrorCodes HomeAxis(Axis axis)
 	{
-		if (axis != Axis.X)
-		{
-			return ControllerEmulationState.Instance.ExpectedHomeYResult;
-		}
-		return ControllerEmulationState.Instance.ExpectedHomeXResult;
+		return ErrorCodes.Success;
 	}
 
 	internal override bool OnResetDeviceDriver()

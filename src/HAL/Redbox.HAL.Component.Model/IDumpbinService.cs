@@ -1,11 +1,11 @@
-using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Xml;
 
 namespace Redbox.HAL.Component.Model;
 
-public interface IDumpbinService : IDisposable
+public interface IDumpbinService
 {
-	bool Active { get; }
-
 	ILocation PutLocation { get; }
 
 	int Capacity { get; }
@@ -16,15 +16,21 @@ public interface IDumpbinService : IDisposable
 
 	bool IsBin(ILocation loc);
 
-	ILocation MoveableLocation();
-
 	int CurrentCount();
 
 	int RemainingSpace();
 
-	bool ResetCount();
+	bool ClearItems();
 
-	void DumpContents(IFormattedLog log);
+	void DumpContents(TextWriter writer);
 
-	bool Initialize();
+	IList<IDumpBinInventoryItem> GetBarcodesInBin();
+
+	bool AddBinItem(string matrix);
+
+	bool AddBinItem(IDumpBinInventoryItem item);
+
+	void GetState(XmlTextWriter writer);
+
+	void ResetState(XmlDocument document, ErrorList errors);
 }

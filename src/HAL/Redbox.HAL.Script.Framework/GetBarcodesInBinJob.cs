@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,10 +9,14 @@ internal sealed class GetBarcodesInBinJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IList<IDumpBinInventoryItem> barcodesInBin = base.InventoryService.GetBarcodesInBin();
-		foreach (IDumpBinInventoryItem item in barcodesInBin)
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		IList<IDumpBinInventoryItem> barcodesInBin = service.GetBarcodesInBin();
+		using (new DisposeableList<IDumpBinInventoryItem>(barcodesInBin))
 		{
-			base.Context.CreateInfoResult("DumpBinInventoryItem", "The item is in the dump bin.", item.ID);
+			foreach (IDumpBinInventoryItem item in barcodesInBin)
+			{
+				base.Context.CreateInfoResult("DumpBinInventoryItem", "The item is in the dump bin.", item.ID);
+			}
 		}
 	}
 

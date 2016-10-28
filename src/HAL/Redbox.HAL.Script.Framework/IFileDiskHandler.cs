@@ -10,7 +10,7 @@ internal interface IFileDiskHandler
 
 	void DiskFiled(ExecutionResult result, IPutResult putResult);
 
-	FileDiscIterationResult BeforeNextPut(ExecutionResult result, IPutResult putResult);
+	FileDiscIterationResult OnFailedPut(ExecutionResult result, IPutResult putResult);
 
 	void FailedToFileDisk(ExecutionResult result, string idInPicker);
 }

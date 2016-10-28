@@ -4,11 +4,24 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal class ArcusControllerPosition : IControllerPosition
 {
-	public Axis Axis { get; internal set; }
-
 	public int? XCoordinate { get; internal set; }
 
 	public int? YCoordinate { get; internal set; }
 
-	public bool ReadOk { get; internal set; }
+	public bool ReadOk
+	{
+		get
+		{
+			if (XCoordinate.HasValue)
+			{
+				return YCoordinate.HasValue;
+			}
+			return false;
+		}
+	}
+
+	internal ArcusControllerPosition()
+	{
+		XCoordinate = (YCoordinate = null);
+	}
 }

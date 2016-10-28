@@ -1,4 +1,4 @@
-using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -18,7 +18,7 @@ internal struct CleanResult
 		TransferFailures += manager.TransferFailures;
 	}
 
-	internal void Accumulate(TransferResult result)
+	internal void Accumulate(ITransferResult result)
 	{
 		if (result.Transferred)
 		{

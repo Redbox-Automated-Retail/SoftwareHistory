@@ -2,7 +2,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class TransferResult
+internal sealed class TransferResult : ITransferResult
 {
 	public bool ReturnedToSource { get; internal set; }
 

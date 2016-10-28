@@ -1,32 +1,15 @@
+using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class ControllerService : IConfigurationObserver, IMoveVeto
+public sealed class ControllerService : IMoveVeto, IControllerService
 {
-	private InventoryService InventoryService;
-
-	private DiskValidatorService DiskValidator;
-
-	private IControlSystem ControlSystem;
-
-	private ICoreCommandExecutor Executor;
-
-	private readonly IStoreDescriptor CountersDesc;
-
-	private readonly IStoreDescriptor InventoryDesc;
-
-	private readonly EmptySearchPatternService SearchService = new EmptySearchPatternService();
-
-	private readonly List<IConfigurationObserver> OrderedObservers = new List<IConfigurationObserver>();
-
-	public static ControllerService Instance => Singleton<ControllerService>.Instance;
-
 	public ErrorCodes CanMove()
 	{
-		if (VendDoorState.Closed != ControlSystem.VendDoorState && !ControlSystem.VendDoorClose().Success)
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		if (VendDoorState.Closed != service.VendDoorState && !service.VendDoorClose().Success)
 		{
 			LogHelper.Instance.Log("MOVE: could not close the vend door.", LogEntryType.Error);
 			return ErrorCodes.VendDoorNotClosed;
@@ -37,22 +20,23 @@ public sealed class ControllerService : IConfigurationObserver, IMoveVeto
 			if (errorCodes != ErrorCodes.Success)
 			{
 				LogHelper.Instance.Log(LogEntryType.Error, "[ControllerService::CanMove] Clear picker returned error status {0}.", errorCodes);
+				service.LogInputs(ControlBoards.Picker, LogEntryType.Error);
 				return ErrorCodes.ObstructionDetected;
 			}
 		}
-		string[] array = ControlSystem.ReadInputs(ControlBoards.Picker);
+		string[] array = service.ReadInputs(ControlBoards.Picker);
 		if (array.Length == 0)
 		{
 			return ErrorCodes.SensorReadError;
 		}
 		if (array[1] == "0")
 		{
-			if (ControllerConfiguration.Instance.GripperRentOnMove && array[6] == "0" && !ControlSystem.SetFinger(GripperFingerState.Rent).Success)
+			if (ControllerConfiguration.Instance.GripperRentOnMove && array[6] == "0" && !service.SetFinger(GripperFingerState.Rent).Success)
 			{
 				LogHelper.Instance.Log("MOVE: could not set the gripper fingers to rent.", LogEntryType.Error);
 				return ErrorCodes.GripperRentTimeout;
 			}
-			if (!ControlSystem.RetractArm().Success)
+			if (!service.RetractArm().Success)
 			{
 				LogHelper.Instance.Log("MOVE: could not retract the gripper arm.", LogEntryType.Error);
 				return ErrorCodes.GripperRetractTimeout;
@@ -61,83 +45,54 @@ public sealed class ControllerService : IConfigurationObserver, IMoveVeto
 		if (ControllerConfiguration.Instance.CheckGripperArmSensorsOnMove && array[0] == "1" && array[1] == "1")
 		{
 			LogHelper.Instance.Log("MOVE: can't move because extend/retract both triggered.", LogEntryType.Error);
-			ControlSystem.LogInputs(ControlBoards.Picker, LogEntryType.Error);
+			service.LogInputs(ControlBoards.Picker, LogEntryType.Error);
 			return ErrorCodes.SensorError;
 		}
 		return ErrorCodes.Success;
 	}
 
-	public void NotifyConfigurationChangeStart()
+	public void Initialize(ErrorList errors, IDictionary<string, object> initProperties)
 	{
-		foreach (IConfigurationObserver orderedObserver in OrderedObservers)
+		ControllerConfiguration.Instance.Initialize();
+		ServiceLocator.Instance.AddService(typeof(IKioskConfiguration), new KioskConfigurationService());
+		ServiceLocator.Instance.AddService(typeof(IInventoryService), new InventoryService());
+		ServiceLocator.Instance.AddService(typeof(IPersistentCounterService), new PersistentCounterService());
+		ServiceLocator.Instance.AddService(typeof(IKioskFunctionCheckService), new KioskFunctionCheckService());
+		ServiceLocator.Instance.AddService(typeof(IEmptySearchPatternService), new EmptySearchPatternService());
+		bool flag = true;
+		if (initProperties.ContainsKey("MotionControlServiceVersion") && initProperties["MotionControlServiceVersion"] is string text)
 		{
-			orderedObserver.NotifyConfigurationChangeStart();
+			flag = text.Equals("Modern", StringComparison.CurrentCultureIgnoreCase);
 		}
-	}
-
-	public void NotifyConfigurationChangeEnd()
-	{
-		foreach (IConfigurationObserver orderedObserver in OrderedObservers)
+		if (flag)
 		{
-			orderedObserver.NotifyConfigurationChangeEnd();
-		}
-	}
-
-	public void NotifyConfigurationLoaded()
-	{
-		LogHelper.Instance.Log("[ControllerService] NotifyConfigurationLoaded");
-		OrderedObservers.Add(InventoryService);
-		OrderedObservers.Add(new DumpbinConfigurationObserver());
-		OrderedObservers.Add(new DoorSensorConfigObserver());
-		OrderedObservers.Add(SearchService);
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			EmulatedControlSystem instance = (EmulatedControlSystem)(Executor = (ICoreCommandExecutor)(ControlSystem = new EmulatedControlSystem()));
-			ServiceLocator.Instance.AddService(typeof(IControlSystem), instance);
-			ServiceLocator.Instance.AddService(typeof(ICoreCommandExecutor), instance);
+			LogHelper.Instance.Log("[ControllerService] Load modern motion controller.");
+			MotionControlService_v2 motionControlService_v = new MotionControlService_v2();
+			ServiceLocator.Instance.AddService(typeof(IMotionControlService), motionControlService_v);
+			motionControlService_v.AddVeto(this);
 		}
 		else
 		{
-			ControlSystem instance2 = (ControlSystem)(Executor = (ICoreCommandExecutor)(ControlSystem = new ControlSystem()));
-			ServiceLocator.Instance.AddService(typeof(IControlSystem), instance2);
-			ServiceLocator.Instance.AddService(typeof(ICoreCommandExecutor), instance2);
+			LogHelper.Instance.Log("[ControllerService] Load legacy motion controller.");
+			MotionControlService motionControlService = new MotionControlService();
+			ServiceLocator.Instance.AddService(typeof(IMotionControlService), motionControlService);
+			motionControlService.AddVeto(this);
 		}
-		ControlSystem.AddHandler(DiskValidator);
-		foreach (IConfigurationObserver orderedObserver in OrderedObservers)
-		{
-			orderedObserver.NotifyConfigurationLoaded();
-		}
+		ControlSystemBridge instance = new ControlSystemBridge();
+		ServiceLocator.Instance.AddService(typeof(IControlSystemService), instance);
+		ServiceLocator.Instance.AddService(typeof(IControlSystem), instance);
+		ServiceLocator.Instance.AddService(typeof(IDiskValidatorService), new DiskValidatorService(new FraudSensor()));
+		ServiceLocator.Instance.AddService(typeof(IAirExchangerService), new IceQubeAirExchangerService());
+		ServiceLocator.Instance.AddService(typeof(IDumpbinService), new DumpbinServiceBridge());
+		ServiceLocator.Instance.AddService(typeof(IDoorSensorService), new DoorSensorService());
 	}
 
-	public void Initialize(ErrorList errors)
-	{
-		InventoryService = new InventoryService(InventoryDesc.Store);
-		ServiceLocator.Instance.AddService(typeof(IPersistentCounterService), new PersistentCounterService(CountersDesc.Store));
-		ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new SecretOptions(CountersDesc.Store));
-		ServiceLocator.Instance.AddService(typeof(IKioskFunctionCheckService), new KioskFunctionCheckService(CountersDesc.Store));
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		service.RegisterConfiguration(Configurations.Controller.ToString(), ControllerConfiguration.Instance);
-		ControllerConfiguration.Instance.AddObserver(this);
-		ServiceLocator.Instance.AddService(typeof(IDecksService), ControllerConfiguration.Instance.Manager);
-		ServiceLocator.Instance.AddService(typeof(IEmptySearchPatternService), SearchService);
-		MotionControlService motionControlService = new MotionControlService();
-		ServiceLocator.Instance.AddService(typeof(IMotionControlService), motionControlService);
-		motionControlService.AddVeto(this);
-		ControllerConfiguration.Instance.AddObserver(motionControlService);
-		FraudSensor sensor = new FraudSensor();
-		DiskValidator = new DiskValidatorService(sensor);
-		ServiceLocator.Instance.AddService(typeof(IDiskValidatorService), DiskValidator);
-		ControllerConfiguration.Instance.AddObserver(DiskValidator);
-		IceQubeBoard iceQubeBoard = new IceQubeBoard();
-		ServiceLocator.Instance.AddService(typeof(IAirExchangerService), iceQubeBoard);
-		ControllerConfiguration.Instance.AddObserver(iceQubeBoard);
-	}
-
-	public void ParkHardware()
+	public void Shutdown()
 	{
 		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
 		service.Shutdown();
-		ControlSystem.Shutdown();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+		service2.Shutdown();
 	}
 
 	public IGetResult Get(IFormattedLog log)
@@ -180,8 +135,9 @@ public sealed class ControllerService : IConfigurationObserver, IMoveVeto
 		if (!PickerBoard.IsFull())
 		{
 			LogHelper.Instance.Log("PUT: picker is empty - returning PickerEmpty.", LogEntryType.Error);
-			ControlSystem.LogPickerSensorState();
-			ControlSystem.LogInputs(ControlBoards.Picker, LogEntryType.Info);
+			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+			service2.LogPickerSensorState();
+			service2.LogInputs(ControlBoards.Picker, LogEntryType.Info);
 			PutResult putResult = new PutResult(id, service.CurrentLocation);
 			putResult.Code = ErrorCodes.PickerEmpty;
 			return putResult;
@@ -214,27 +170,21 @@ public sealed class ControllerService : IConfigurationObserver, IMoveVeto
 		return Put(instance, id, log);
 	}
 
-	public TransferResult Transfer(ILocation source, ILocation destination, IFormattedLog log)
+	public ITransferResult Transfer(ILocation source, ILocation destination, IFormattedLog log)
 	{
-		using TransferOperation transferOperation = new TransferOperation(source, log);
+		using TransferOperation transferOperation = new TransferOperation(this, source, log);
 		return transferOperation.Transfer(destination);
 	}
 
-	public TransferResult Transfer(ILocation source, IList<ILocation> destinations, IFormattedLog log)
+	public ITransferResult Transfer(ILocation source, IList<ILocation> destinations, IFormattedLog log)
 	{
-		using TransferOperation transferOperation = new TransferOperation(source, log);
+		using TransferOperation transferOperation = new TransferOperation(this, source, log);
 		return transferOperation.Transfer(destinations);
 	}
 
-	public TransferResult Transfer(ILocation source, IList<ILocation> destinations, IGetObserver observer, IFormattedLog log)
+	public ITransferResult Transfer(ILocation source, IList<ILocation> destinations, IGetObserver observer, IFormattedLog log)
 	{
-		using TransferOperation transferOperation = new TransferOperation(source, log);
+		using TransferOperation transferOperation = new TransferOperation(this, source, log);
 		return transferOperation.Transfer(destinations, observer);
-	}
-
-	private ControllerService()
-	{
-		CountersDesc = new CountersStore();
-		InventoryDesc = new InventoryStore();
 	}
 }

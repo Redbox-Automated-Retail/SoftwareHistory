@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Text;
@@ -492,8 +491,7 @@ public class Form1 : Form
 	{
 		try
 		{
-			ConfigurationManager cm = new ConfigurationManager(ProfileManager.Instance.Service);
-			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(ProfileManager.Instance.Service, allowInventoryUpdate: true, cm);
+			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(ProfileManager.Instance.Service, allowInventoryUpdate: true);
 			deckConfigurationForm.ShowDialog();
 		}
 		catch (Exception ex)
@@ -554,8 +552,8 @@ public class Form1 : Form
 		}
 		SaveFileDialog saveFileDialog = new SaveFileDialog();
 		saveFileDialog.Filter = "XML|*.xml";
-		saveFileDialog.Title = "Export Hal.xml";
-		if (saveFileDialog.ShowDialog() != DialogResult.OK || string.IsNullOrEmpty(saveFileDialog.FileName))
+		saveFileDialog.Title = "Export Inventory xml";
+		if (saveFileDialog.ShowDialog() != DialogResult.OK || string.IsNullOrEmpty(saveFileDialog.FileName) || !File.Exists(saveFileDialog.FileName))
 		{
 			return;
 		}
@@ -567,7 +565,7 @@ public class Form1 : Form
 	{
 		OpenFileDialog openFileDialog = new OpenFileDialog();
 		openFileDialog.Filter = "XML|*.xml";
-		openFileDialog.Title = "Import Hal.xml";
+		openFileDialog.Title = "Import Inventory xml";
 		if (openFileDialog.ShowDialog() == DialogResult.OK)
 		{
 			string inventoryState;
@@ -581,14 +579,6 @@ public class Form1 : Form
 
 	private void OnMenuToolsESPTool(object sender, EventArgs e)
 	{
-		string text = "ESPTool.exe";
-		if (!File.Exists(text))
-		{
-			MessageBox.Show("ERROR: Unable to find ESPTool!", "ERROR");
-			return;
-		}
-		Process process = Process.Start(text);
-		process.WaitForExit();
 	}
 
 	private void OnSync(object sender, EventArgs e)

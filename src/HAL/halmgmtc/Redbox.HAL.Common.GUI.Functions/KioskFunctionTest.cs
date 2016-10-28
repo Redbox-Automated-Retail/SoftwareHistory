@@ -14,8 +14,6 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	private TestState SnapDecodeStatus;
 
-	private TestState TrackStatus;
-
 	private TestState VendDoorStatus;
 
 	private TestState InitStatus;
@@ -34,7 +32,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	public string VendDoorTestResult => VendDoorStatus.ToString();
 
-	public string TrackTestResult => TrackStatus.ToString();
+	public string TrackTestResult => InitStatus.ToString();
 
 	public string SnapDecodeTestResult => SnapDecodeStatus.ToString();
 
@@ -112,20 +110,6 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 			VendDoorStatus = (("SUCCESS" == ExecuteInstructionWithResult("VENDDOOR CLOSE")) ? TestState.Success : TestState.Failure);
 		}
 		return VendDoorStatus;
-	}
-
-	internal TestState TestTrack()
-	{
-		if (ExecuteInstructionWithResult("TRACK OPEN") != "SUCCESS")
-		{
-			TrackStatus = TestState.Failure;
-		}
-		else
-		{
-			Thread.Sleep(500);
-			TrackStatus = (("SUCCESS" == ExecuteInstructionWithResult("TRACK CLOSE")) ? TestState.Success : TestState.Failure);
-		}
-		return TrackStatus;
 	}
 
 	internal TestState RunVertialSlotTest(int slot)
@@ -211,7 +195,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 		stringBuilder.AppendLine(" RINGLIGHT OFF");
 		CameraSnapImmediate = Encoding.ASCII.GetBytes(stringBuilder.ToString());
 		TSDriverStatus = (CameraDriverStatus = (SnapDecodeStatus = TestState.NotStarted));
-		TrackStatus = (VendDoorStatus = (InitStatus = (VerticalSlotTestStatus = TestState.NotStarted)));
+		VendDoorStatus = (InitStatus = (VerticalSlotTestStatus = TestState.NotStarted));
 	}
 
 	private string ExecuteInstructionWithResult(string inst)
@@ -233,20 +217,20 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
-			TSDriverStatus = TestState.Success;
+			CameraDriverStatus = TestState.Success;
 			Box.Write("Matched camera {0}", deviceDescriptor.Friendlyname);
 		}
 		else
 		{
 			Box.Write("Failed to locate camera or match camera driver.");
-			TSDriverStatus = TestState.Failure;
+			CameraDriverStatus = TestState.Failure;
 		}
-		return TSDriverStatus;
+		return CameraDriverStatus;
 	}
 
 	private TestState MatchTS()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		ITouchscreenService service = ServiceLocator.Instance.GetService<ITouchscreenService>();
 		IDeviceDescriptor deviceDescriptor = service.FindTouchScreen(matchDriver: true);
 		if (deviceDescriptor != null)
 		{

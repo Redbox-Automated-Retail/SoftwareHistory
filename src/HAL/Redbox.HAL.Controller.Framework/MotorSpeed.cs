@@ -4,7 +4,7 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class MotorSpeed
+public sealed class MotorSpeed
 {
 	[Description("The low (start) speed of the motor specified in pulses per second.")]
 	[DisplayName("Low Speed")]
@@ -15,10 +15,10 @@ public class MotorSpeed
 	public int High { get; private set; }
 
 	[Browsable(false)]
-	public MotorGear Gear { get; internal set; }
+	public MotorGear Gear { get; private set; }
 
-	[Description("The amount of time in milliseconds between acceleration from the low speed to the high speed.")]
 	[DisplayName("Acceleration Time (in milliseconds)")]
+	[Description("The amount of time in milliseconds between acceleration from the low speed to the high speed.")]
 	public int AccelerationTime { get; private set; }
 
 	public MotorSpeed(int low, int high, int accelerationTime, MotorGear gear)
@@ -34,12 +34,12 @@ public class MotorSpeed
 		return "(Motor Speed Properties)";
 	}
 
-	public static MotorSpeed FromXmlNode(XmlNode node)
+	public static MotorSpeed FromXmlNode(XmlNode node, MotorGear gear)
 	{
 		int nodeValue = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("Low"), 500);
 		int nodeValue2 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("High"), 3000);
 		int nodeValue3 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("AccelerationTime"), 300);
-		return new MotorSpeed(nodeValue, nodeValue2, nodeValue3, null);
+		return new MotorSpeed(nodeValue, nodeValue2, nodeValue3, gear);
 	}
 
 	public void SaveToXml(XmlNode node)

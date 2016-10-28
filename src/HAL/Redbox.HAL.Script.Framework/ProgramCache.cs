@@ -245,9 +245,13 @@ internal sealed class ProgramCache : IDisposable
 			NativeJobAttribute[] array2 = array;
 			foreach (NativeJobAttribute nativeJobAttribute in array2)
 			{
-				if (nativeJobAttribute.ProgramName == null || nativeJobAttribute.Operand == null)
+				if (nativeJobAttribute.ProgramName == null)
 				{
 					continue;
+				}
+				if (nativeJobAttribute.Operand == null)
+				{
+					nativeJobAttribute.Operand = nativeJobAttribute.ProgramName.ToUpper();
 				}
 				OperandToType.Add(nativeJobAttribute.Operand, type);
 				JobToOperand.Add(nativeJobAttribute.ProgramName, nativeJobAttribute.Operand);

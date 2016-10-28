@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
@@ -85,21 +86,20 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		Stop();
 		PerfFunctions.SpinWait(500);
 		LogHelper.Instance.Log("[Legacy Camera Service] Cycle camera driver.");
-		using (DeviceHelper helper = new DeviceHelper(debug: false))
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
+		if (deviceDescriptor != null)
 		{
-			CameraInfo cameraInfo = new CameraInfo(helper);
-			if (cameraInfo.FindActiveCamera())
+			LogHelper.Instance.Log("Found camera {0}", deviceDescriptor.Friendlyname);
+			CameraGeneration cameraGeneration = default(CameraTranslator).From(deviceDescriptor);
+			if (CameraGeneration.Third == cameraGeneration || CameraGeneration.Fourth == cameraGeneration)
 			{
-				LogHelper.Instance.Log("Found camera {0}", cameraInfo.Revision.ToString());
-				if (cameraInfo.Revision == KnownCameras.ThirdGen || cameraInfo.Revision == KnownCameras.FourthGen)
-				{
-					LogHelper.Instance.Log("The running driver for the camera {0}", cameraInfo.CorrectDriverRunning() ? "is correct" : "is not correct.");
-				}
-				if (DeviceStatus.Enabled == cameraInfo.Status)
-				{
-					bool flag = cameraInfo.ResetDriver();
-					LogHelper.Instance.Log(" RESET camera returned {0}", flag ? "OK" : "FAILURE");
-				}
+				LogHelper.Instance.Log("The running driver for the camera {0}", deviceDescriptor.MatchDriver() ? "is correct" : "is not correct.");
+			}
+			if (service.FindDeviceStatus(deviceDescriptor) == DeviceStatus.Enabled)
+			{
+				bool flag = deviceDescriptor.ResetDriver();
+				LogHelper.Instance.Log(" RESET camera returned {0}", flag ? "OK" : "FAILURE");
 			}
 		}
 		return Start();
@@ -112,11 +112,24 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		if (snapResult.SnapOk)
 		{
 			IBarcodeReader configuredReader = BarcodeReaderFactory.Instance.GetConfiguredReader();
-			return configuredReader.Scan(text);
+			IScanResult scanResult = configuredReader.Scan(text);
+			if (BarcodeConfiguration.Instance.DeleteBitmapOnSuccessfulRead && scanResult.DecodeResults.Count > 0)
+			{
+				try
+				{
+					File.Delete(text);
+				}
+				catch (Exception ex)
+				{
+					LogHelper.Instance.Log("[LegacyCameraService] Unable to delete file '{0}'", text);
+					LogHelper.Instance.Log(ex.Message);
+				}
+			}
+			return scanResult;
 		}
-		ScanResult scanResult = new ScanResult();
-		scanResult.DeviceError = true;
-		return scanResult;
+		ScanResult scanResult2 = new ScanResult();
+		scanResult2.DeviceError = true;
+		return scanResult2;
 	}
 
 	public void NotifyConfigurationLoaded()

@@ -165,27 +165,20 @@ internal sealed class DecksManager : IDecksService
 				foreach (Deck item2 in list)
 				{
 					Deck deck3 = GetByNumber(item2.Number) as Deck;
-					LogHelper.Instance.Log("  Deck Number {0} changes", deck3.Number);
-					LogHelper.Instance.Log("    Y-offset: new = {0} old = {1}", item2.YOffset, deck3.YOffset);
+					LogHelper.Instance.Log(" Deck Number {0} changes", deck3.Number);
+					LogHelper.Instance.Log("  Y-offset: new = {0} old = {1}", item2.YOffset, deck3.YOffset);
 					if (item2.Quadrants.Count == deck3.Quadrants.Count)
 					{
 						for (int i = 0; i < item2.Quadrants.Count; i++)
 						{
-							LogHelper.Instance.Log("     Quadrant {0} offsets: new = {1} old = {2}", i + 1, item2.Quadrants[i].Offset, deck3.Quadrants[i].Offset);
+							LogHelper.Instance.Log("   Quadrant {0} offsets: new = {1} ( excluded = {2} ) old = {3} ( excluded = {4} )", i + 1, item2.Quadrants[i].Offset, item2.Quadrants[i].IsExcluded, deck3.Quadrants[i].Offset, deck3.Quadrants[i].IsExcluded);
 						}
+						deck3.UpdateFrom(item2);
 					}
 					else
 					{
-						LogHelper.Instance.Log("    Quadrant counts do not match: print <NONE> for non-existent quadrants in config.");
-						int num = Math.Max(item2.Quadrants.Count, deck3.Quadrants.Count);
-						for (int j = 0; j < num; j++)
-						{
-							string text = ((j < item2.Quadrants.Count) ? item2.Quadrants[j].Offset.ToString() : "<NONE>");
-							string text2 = ((j < deck3.Quadrants.Count) ? deck3.Quadrants[j].Offset.ToString() : "<NONE>");
-							LogHelper.Instance.Log("     Quadrant {0} offsets: new = {1} old = {2}", j + 1, text, text2);
-						}
+						LogHelper.Instance.Log(LogEntryType.Error, "[DecksManager] Unsupported configuration change: slot count ( old count = {0} new count = {1}", deck3.NumberOfSlots, item2.NumberOfSlots);
 					}
-					deck3.Copy(item2);
 				}
 			}
 			catch (Exception e)

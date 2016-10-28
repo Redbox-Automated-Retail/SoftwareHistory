@@ -13,8 +13,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("program")]
 public sealed class ProgramCommand
 {
-	[CommandForm(Name = "compile")]
 	[Usage("PROGRAM compile path: 'C:\\temp\\my-script.hs' [name: program-name] [requires-client-connection: true|false]")]
+	[CommandForm(Name = "compile")]
 	public void Compile(CommandContext context, [CommandKeyValue(IsRequired = true)] string path, string name, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
 		if (string.IsNullOrEmpty(path))
@@ -51,8 +51,8 @@ public sealed class ProgramCommand
 		ProtocolHelper.FormatCompressedBytes(FileHelper.ReadToBuffer(fileName), context);
 	}
 
-	[CommandForm(Name = "set")]
 	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
+	[CommandForm(Name = "set")]
 	public void Set(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
@@ -62,15 +62,15 @@ public sealed class ProgramCommand
 		RewriteServiceStartup();
 	}
 
-	[CommandForm(Name = "properties")]
 	[Usage("PROGRAM properties name: program-name requires-client-connection: true|false")]
+	[CommandForm(Name = "properties")]
 	public void Properties(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(KeyName = "requires-client-connection")] bool requiresClientConnection)
 	{
 		context.Errors.Add(Error.NewError("S002", "Unsupported call.", "The requires-client-connection form is no longer supported."));
 	}
 
-	[Usage("PROGRAM list")]
 	[CommandForm(Name = "list")]
+	[Usage("PROGRAM list")]
 	public void List(CommandContext context)
 	{
 		context.Messages.AddRange(ExecutionEngine.Instance.GetPrograms());

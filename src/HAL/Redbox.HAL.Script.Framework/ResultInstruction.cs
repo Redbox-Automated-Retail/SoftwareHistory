@@ -83,6 +83,6 @@ public sealed class ResultInstruction : Instruction
 				returnTime = result2;
 			}
 		}
-		context.CreateResult(flag ? StackEnd.Bottom : StackEnd.Top, keyValuePairValue, keyValuePairValue2, keyValuePairValue3, keyValuePairValue4, keyValuePairValue5, returnTime, keyValuePairValue7);
+		context.CreateResult((!flag) ? StackEnd.Top : StackEnd.Bottom, keyValuePairValue, keyValuePairValue2, keyValuePairValue3, keyValuePairValue4, keyValuePairValue5, returnTime, keyValuePairValue7);
 	}
 }

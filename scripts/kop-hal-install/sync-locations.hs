@@ -1,7 +1,7 @@
 ﻿	# sync-locations.hs
 	# Copyright (C) 2011 Redbox Automated Retail, LLC
 	# All Rights Reserved
-	# VERSION 1.8.0.22
+	# VERSION 1.9.0.49
 	#
 		
 	LOG			"Begin sync-locations request."
@@ -23,7 +23,6 @@
 		JUMP		_SYNC_DONE
 	ENDIF
     
-	SET	SYNC-ERRORS		0
 	SET			YIELD-TIME		0
 	QUICKRETURN		POLLSTATUS
 	POP		QR-STATUS
@@ -58,12 +57,7 @@ _NEXT_ITEM:
 	
 	SYNC		TYPE="LOCATION"	DECK=CUR-DECK SLOT=CUR-SLOT
 	POP	SYNC-RESULT
-	
-	IF	"GETERROR" == SYNC-RESULT
-		INC	SYNC-ERRORS
-	ENDIF
-	
-	        
+		        
 _GOTO_NEXT_ITEM:               
 	DEC         LOCATION-COUNT
 	IF          LOCATION-COUNT == 0

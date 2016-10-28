@@ -11,7 +11,6 @@ internal sealed class PushInDVDJob : NativeJobAdapter
 	{
 		try
 		{
-			_ = ControllerService.Instance;
 			base.ControlSystem.StartRollerIn();
 			PerfFunctions.Wait(500);
 			base.ControlSystem.StopRoller();

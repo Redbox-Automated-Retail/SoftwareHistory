@@ -66,22 +66,27 @@ internal sealed class VendDoorImpl : IVendDoor
 				LogHelper.Instance.Log(message, LogEntryType.Error);
 				return coreResponse;
 			}
-			if (coreResponse.TimedOut && state == VendDoorState.Closed)
+			if (coreResponse.TimedOut)
 			{
-				PerfFunctions.Wait(70);
-				service.ExecuteControllerCommand(CommandType.UnknownVendDoorCloseCommand);
-				PerfFunctions.Wait(70);
-				service.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
-				PerfFunctions.Wait(50);
-				continue;
+				if (VendDoorState.Closed == state)
+				{
+					PerfFunctions.Wait(70);
+					service.ExecuteControllerCommand(CommandType.UnknownVendDoorCloseCommand);
+					PerfFunctions.Wait(70);
+					service.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
+					PerfFunctions.Wait(50);
+				}
 			}
-			if (state != VendDoorState.Closed)
+			else
 			{
-				return coreResponse;
-			}
-			if (VendDoorIsInState(state) || MoveToVendSensor(state, commandType, unknownCommand))
-			{
-				return coreResponse;
+				if (state != VendDoorState.Closed)
+				{
+					return coreResponse;
+				}
+				if (VendDoorIsInState(state) || MoveToVendSensor(state, commandType, unknownCommand))
+				{
+					return coreResponse;
+				}
 			}
 		}
 		string message2 = $"SetVendDoor {state.ToString()} timed out after {num} tries.";

@@ -4,8 +4,41 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal sealed class SyncLocationDecorator : SyncDecorator
+internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 {
+	internal override FraudScanJobMask BitValue => FraudScanJobMask.SyncLocations;
+
+	public void OnStuck(IGetResult result)
+	{
+		HandleStuck(result);
+	}
+
+	public bool OnEmpty(IGetResult result)
+	{
+		using PeekOperation peekOperation = new PeekOperation();
+		IPeekResult peekResult = peekOperation.Execute();
+		if (!peekResult.TestOk)
+		{
+			string text = $"Peek Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} returned status {peekResult.Error.ToString().ToUpper()} after GET returned SLOTEMPTY";
+			UpdateSymbol("MSTESTER-SYMBOL-GET-ERR-MSG", text);
+			Context.AppLog.Write(text, LogEntryType.Error);
+			Context.CreateResult("MachineError", "An error occurred when attempting to peek the slot.", SyncLocation.Deck, SyncLocation.Slot, null, null, null);
+			AddError("There was an error performing a PEEK.");
+			HandleStuck(result);
+			return false;
+		}
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (!peekResult.IsFull)
+		{
+			UpdateSymbol("MSTESTER-SYMBOL-EMPTY-SLOT-MSG", $"The location Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} is empty.");
+			SyncLocation.ReturnDate = null;
+			service.Save(SyncLocation);
+			return true;
+		}
+		HandleStuck(result, service);
+		return false;
+	}
+
 	protected override void OnReadDisk(ScanResult scanResult)
 	{
 		string scannedMatrix = scanResult.ScannedMatrix;
@@ -26,30 +59,10 @@ internal sealed class SyncLocationDecorator : SyncDecorator
 		UpdateSymbol("MSTESTER-SYMBOL-MOVE-FALURE", $"MOVE Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} returned an error status {moveRes.ToString().ToUpper()}");
 	}
 
-	internal override SyncResult ProcessEmpty(IGetResult gr)
+	internal override IGetResult GetDisk(IFormattedLog applog)
 	{
-		using PeekOperation peekOperation = new PeekOperation();
-		IPeekResult peekResult = peekOperation.Execute();
-		if (!peekResult.TestOk)
-		{
-			string text = $"Peek Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} returned status {peekResult.Error.ToString().ToUpper()} after GET returned SLOTEMPTY";
-			UpdateSymbol("MSTESTER-SYMBOL-GET-ERR-MSG", text);
-			Context.AppLog.Write(text, LogEntryType.Error);
-			Context.CreateResult("MachineError", "An error occurred when attempting to peek the slot.", SyncLocation.Deck, SyncLocation.Slot, null, null, null);
-			AddError("There was an error performing a PEEK.");
-			return SyncResult.HardwareError;
-		}
-		if (!peekResult.IsFull)
-		{
-			UpdateSymbol("MSTESTER-SYMBOL-EMPTY-SLOT-MSG", $"The location Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} is empty.");
-			Context.CreateResult("InventoryState", "This location was updated in inventory.", SyncLocation.Deck, SyncLocation.Slot, "EMPTY", null, null);
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-			SyncLocation.ReturnDate = null;
-			service.Save(SyncLocation);
-			return SyncResult.SlotEmpty;
-		}
-		UpdateSymbol("MSTESTER-SYMBOL-STUCK-DISC-MSG", $"The location Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} has a disc stuck in slot.");
-		return SyncResult.GetError;
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Get(this, applog);
 	}
 
 	internal override void OnGetFailure(IGetResult gr)
@@ -74,5 +87,18 @@ internal sealed class SyncLocationDecorator : SyncDecorator
 	internal SyncLocationDecorator(ExecutionContext ctx, ExecutionResult r, ILocation loc)
 		: base(ctx, r, loc)
 	{
+	}
+
+	private void HandleStuck(IGetResult result)
+	{
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		HandleStuck(result, service);
+	}
+
+	private void HandleStuck(IGetResult result, IInventoryService service)
+	{
+		UpdateSymbol("MSTESTER-SYMBOL-STUCK-DISC-MSG", $"The location Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} has a disc stuck in slot.");
+		result.Update(ErrorCodes.ItemStuck);
+		service.UpdateEmptyStuck(result.Location);
 	}
 }

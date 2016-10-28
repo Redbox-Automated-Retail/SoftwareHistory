@@ -16,11 +16,11 @@ internal sealed class ApplicationLog : IFormattedLog
 
 	internal readonly ExecutionContext Context;
 
+	private TextWriter Log = StreamWriter.Null;
+
 	private bool m_open;
 
 	private bool Configured;
-
-	private TextWriter Log = StreamWriter.Null;
 
 	private string Directory;
 
@@ -29,6 +29,11 @@ internal sealed class ApplicationLog : IFormattedLog
 	internal bool AppendToExisting { get; private set; }
 
 	internal bool FlushOnWrite { get; private set; }
+
+	public static implicit operator TextWriter(ApplicationLog log)
+	{
+		return log.Log;
+	}
 
 	public void WriteFormatted(string msg)
 	{
@@ -100,14 +105,12 @@ internal sealed class ApplicationLog : IFormattedLog
 
 	internal void LogMachineFull()
 	{
-		string msg = "The machine is full.";
-		Write(msg, LogEntryType.Error);
+		Write(HardwareMessageCatalog.MachineFull(), LogEntryType.Error);
 	}
 
 	internal void LogLookupFailure(string id)
 	{
-		string msg = $"LOOKUP of item {id} returned NOT FOUND.";
-		Write(msg, LogEntryType.Error);
+		Write(HardwareMessageCatalog.LookupFailure(id), LogEntryType.Error);
 	}
 
 	internal void LogCaptureProblem()
@@ -140,6 +143,7 @@ internal sealed class ApplicationLog : IFormattedLog
 	internal ApplicationLog(ExecutionContext ctx)
 	{
 		Context = ctx;
+		Log = StreamWriter.Null;
 	}
 
 	internal bool Open()

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
@@ -17,10 +16,6 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		ControlBoards.Aux
 	};
 
-	private readonly List<IControlSystemObserver> Observers = new List<IControlSystemObserver>();
-
-	private readonly object ObserverLock = new object();
-
 	private readonly RedboxSerialPort Port;
 
 	private readonly ITrack Track;
@@ -29,30 +24,9 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	private readonly bool UseAltRinglightCommand;
 
-	public bool IsInitialized { get; private set; }
-
 	public TrackState TrackState => Track.TrackState;
 
 	public VendDoorState VendDoorState { get; private set; }
-
-	public void AddHandler(IControlSystemObserver observer)
-	{
-		lock (ObserverLock)
-		{
-			if (!Observers.Contains(observer))
-			{
-				Observers.Add(observer);
-			}
-		}
-	}
-
-	public void RemoveHandler(IControlSystemObserver observer)
-	{
-		lock (ObserverLock)
-		{
-			Observers.Remove(observer);
-		}
-	}
 
 	public IControlResponse StopRoller()
 	{
@@ -398,40 +372,16 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	public IControlResponse Initialize()
 	{
-		CoreResponse coreResponse = ExecuteControllerCommand(CommandType.Reset);
+		CoreResponse result = ExecuteControllerCommand(CommandType.Reset);
 		PerfFunctions.Wait(2000);
 		SetAudio(AudioChannelState.Off);
 		VendDoorState = VendDoor.ReadState();
-		lock (ObserverLock)
-		{
-			foreach (IControlSystemObserver observer in Observers)
-			{
-				observer.OnInitialize(coreResponse.Error);
-			}
-		}
-		IsInitialized = coreResponse.Success;
-		return coreResponse;
+		return result;
 	}
 
 	public void Shutdown()
 	{
-		Shutdown(force: false);
-	}
-
-	public void Shutdown(bool force)
-	{
-		if (!force)
-		{
-			lock (ObserverLock)
-			{
-				foreach (IControlSystemObserver observer in Observers)
-				{
-					observer.OnShutdown();
-				}
-			}
-		}
 		Port.Close();
-		IsInitialized = false;
 	}
 
 	public string[] ReadInputs(ControlBoards board)

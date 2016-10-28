@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
@@ -15,8 +14,7 @@ public sealed class CounterInstruction : Instruction
 		Decrement,
 		Get,
 		Create,
-		Reset,
-		ShowTimeouts
+		Reset
 	}
 
 	public override string Mnemonic => "COUNTER";
@@ -90,20 +88,8 @@ public sealed class CounterInstruction : Instruction
 			break;
 		}
 		case Ops.Reset:
-			context.PushTop((service.Reset(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
+			context.PushTop(service.Reset(keyValuePairValue) ? "SUCCESS" : "FAILURE");
 			break;
-		case Ops.ShowTimeouts:
-		{
-			IFormattedLogFactoryService service3 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-			string path = service3.CreateSubpath("ErrorLogs");
-			string path2 = Path.Combine(path, "Timeouts.log");
-			using StreamWriter streamWriter = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
-			streamWriter.WriteLine("Counter sample on {0} {1}", DateTime.Now.ToShortTimeString(), DateTime.Now.ToShortDateString());
-			service.LogTimeouts(streamWriter);
-			service.LogCounter("EmptyOrStuckCount", streamWriter);
-			streamWriter.WriteLine();
-			break;
-		}
 		}
 	}
 }

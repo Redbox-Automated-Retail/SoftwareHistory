@@ -1,8 +1,6 @@
-using System;
-
 namespace Redbox.HAL.Component.Model;
 
-public interface IDoorSensorService : IDisposable
+public interface IDoorSensorService : IMoveVeto
 {
 	bool SensorsEnabled { get; }
 

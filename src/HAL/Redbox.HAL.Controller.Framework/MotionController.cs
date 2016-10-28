@@ -4,7 +4,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal abstract class MotionController : IMoveVeto, IConfigurationObserver
+internal abstract class MotionController : IConfigurationObserver
 {
 	protected readonly MotionControlService ControlService;
 
@@ -25,19 +25,7 @@ internal abstract class MotionController : IMoveVeto, IConfigurationObserver
 		OnConfigurationLoad();
 	}
 
-	public ErrorCodes CanMove()
-	{
-		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
-		DoorSensorResult doorSensorResult = service.Query();
-		if (doorSensorResult == DoorSensorResult.Ok)
-		{
-			return ErrorCodes.Success;
-		}
-		LogHelper.Instance.Log($"Door sensor query returned {doorSensorResult.ToString()}", LogEntryType.Error);
-		return ErrorCodes.DoorOpen;
-	}
-
-	internal abstract string[] ReadLimits();
+	internal abstract IMotionControlLimitResponse ReadLimits();
 
 	internal abstract bool CommunicationOk();
 

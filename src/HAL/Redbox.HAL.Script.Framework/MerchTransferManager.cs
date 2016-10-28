@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -17,7 +16,7 @@ internal sealed class MerchTransferManager : IDisposable
 
 	private readonly bool Debug;
 
-	private readonly List<TransferResult> Transfers = new List<TransferResult>();
+	private readonly List<ITransferResult> Transfers = new List<ITransferResult>();
 
 	internal int SuccessfulTransfers => m_successfulTransfers;
 
@@ -39,7 +38,7 @@ internal sealed class MerchTransferManager : IDisposable
 		Sum(source, dest);
 	}
 
-	internal void Process(TransferResult xferResult)
+	internal void Process(ITransferResult xferResult)
 	{
 		if (xferResult.Transferred)
 		{
@@ -63,7 +62,7 @@ internal sealed class MerchTransferManager : IDisposable
 		Context = context;
 	}
 
-	private void Sum(TransferResult xferResult)
+	private void Sum(ITransferResult xferResult)
 	{
 		if (xferResult.Transferred)
 		{

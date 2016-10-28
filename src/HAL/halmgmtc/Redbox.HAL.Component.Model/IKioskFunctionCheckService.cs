@@ -8,5 +8,5 @@ public interface IKioskFunctionCheckService
 
 	IList<IKioskFunctionCheckData> Load();
 
-	bool Clean();
+	int CleanOldEntries();
 }

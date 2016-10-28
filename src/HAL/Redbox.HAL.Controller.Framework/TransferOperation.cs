@@ -16,6 +16,8 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 
 	private readonly IFormattedLog Log;
 
+	private readonly IControllerService ControllerService;
+
 	private bool m_disposed;
 
 	private IGetResult GetResult;
@@ -39,7 +41,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 	{
 	}
 
-	internal TransferResult Transfer(IList<ILocation> destinations)
+	internal ITransferResult Transfer(IList<ILocation> destinations)
 	{
 		TransferResult transferResult = new TransferResult();
 		FetchSource(transferResult);
@@ -59,7 +61,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 		return transferResult;
 	}
 
-	internal TransferResult Transfer(IList<ILocation> destinations, IGetObserver observer)
+	internal ITransferResult Transfer(IList<ILocation> destinations, IGetObserver observer)
 	{
 		TransferResult transferResult = new TransferResult();
 		FetchSource(transferResult, observer);
@@ -79,7 +81,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 		return transferResult;
 	}
 
-	internal TransferResult Transfer(ILocation destination)
+	internal ITransferResult Transfer(ILocation destination)
 	{
 		TransferResult transferResult = new TransferResult();
 		FetchSource(transferResult);
@@ -95,11 +97,12 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 		return transferResult;
 	}
 
-	internal TransferOperation(ILocation source, IFormattedLog log)
+	internal TransferOperation(IControllerService service, ILocation source, IFormattedLog log)
 	{
 		InventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
 		MotionService = ServiceLocator.Instance.GetService<IMotionControlService>();
 		ControlSystem = ServiceLocator.Instance.GetService<IControlSystem>();
+		ControllerService = service;
 		Log = log;
 		Source = source;
 	}
@@ -113,7 +116,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 			return;
 		}
 		ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put(this, GetResult.Previous, Log);
+		IPutResult putResult = ControllerService.Put(this, GetResult.Previous, Log);
 		result.TransferError = putResult.Code;
 		if (putResult.Success)
 		{
@@ -130,7 +133,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 			return;
 		}
 		ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put(GetResult.Previous, Log);
+		IPutResult putResult = ControllerService.Put(GetResult.Previous, Log);
 		if (putResult.Success)
 		{
 			result.ReturnedToSource = true;
@@ -148,7 +151,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 			result.TransferError = errorCodes;
 			return;
 		}
-		GetResult = ControllerService.Instance.Get(observer, Log);
+		GetResult = ControllerService.Get(observer, Log);
 		result.TransferError = ((!GetResult.Success) ? GetResult.HardwareError : ErrorCodes.Success);
 		if (GetResult.Success)
 		{
@@ -164,7 +167,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 			result.TransferError = errorCodes;
 			return;
 		}
-		GetResult = ControllerService.Instance.Get(Log);
+		GetResult = ControllerService.Get(Log);
 		result.TransferError = ((!GetResult.Success) ? GetResult.HardwareError : ErrorCodes.Success);
 		if (GetResult.Success)
 		{

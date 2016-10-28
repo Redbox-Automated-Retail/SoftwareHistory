@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,15 +9,18 @@ internal sealed class GetExcludedLocationsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IList<ILocation> list = base.InventoryService.ComputeExcludedSlots();
-		if (list.Count == 0)
+		IList<ILocation> excludedSlots = base.InventoryService.GetExcludedSlots();
+		using (new DisposeableList<ILocation>(excludedSlots))
 		{
-			base.Context.CreateInfoResult("NoExcludedSlots", "There are no excluded slots.");
-			return;
-		}
-		foreach (ILocation item in list)
-		{
-			base.Context.CreateResult("ExcludedSlot", "The location is excluded.", item.Deck, item.Slot, null, null, null);
+			if (excludedSlots.Count == 0)
+			{
+				base.Context.CreateInfoResult("NoExcludedSlots", "There are no excluded slots.");
+				return;
+			}
+			foreach (ILocation item in excludedSlots)
+			{
+				base.Context.CreateResult("ExcludedSlot", "The location is excluded.", item.Deck, item.Slot, null, null, null);
+			}
 		}
 	}
 

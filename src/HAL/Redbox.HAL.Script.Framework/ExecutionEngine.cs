@@ -102,6 +102,10 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 
 	public void Initialize(ErrorList errors)
 	{
+		MoveDecoratorService moveDecoratorService = new MoveDecoratorService();
+		ServiceLocator.Instance.AddService(typeof(IMoveDecoratorService), moveDecoratorService);
+		moveDecoratorService.ConfigureLowerLimitFor("vend");
+		ServiceLocator.Instance.AddService(typeof(IBarcodeValidatorService), new RedboxBarcodeValidator());
 		PollerManager pollerManager = new PollerManager();
 		ServiceLocator.Instance.AddService(typeof(IPollerService), pollerManager);
 		pollerManager.InitializePollers();
@@ -171,7 +175,6 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 		if (ExecutionContextStatus.Completed == status || ExecutionContextStatus.Errored == status)
 		{
 			ChangeMode(EngineModes.Normal);
-			CleanManager.Instance.Init();
 		}
 	}
 

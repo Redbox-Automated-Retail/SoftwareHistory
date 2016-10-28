@@ -5,7 +5,7 @@ using log4net.Config;
 
 [assembly: Guid("0222d8a8-cd37-4897-9ace-b015ab0a1306")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyFileVersion("1.8.0.22")]
+[assembly: AssemblyFileVersion("1.9.0.49")]
 [assembly: XmlConfigurator(Watch = true)]
 [assembly: AssemblyTitle("Redbox.HAL.Management.Console")]
 [assembly: AssemblyDescription("")]
@@ -14,4 +14,4 @@ using log4net.Config;
 [assembly: AssemblyProduct("Redbox.HAL.Management.Console")]
 [assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.8.0.22")]
+[assembly: AssemblyVersion("1.9.0.49")]

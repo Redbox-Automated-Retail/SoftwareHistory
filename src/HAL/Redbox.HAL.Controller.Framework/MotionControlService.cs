@@ -42,7 +42,6 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 		{
 			Controller = new ArcusMotionController(this);
 		}
-		AddVeto(Controller);
 		Controller.NotifyConfigurationLoaded();
 	}
 
@@ -79,7 +78,7 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 		Controller.ClosePort();
 	}
 
-	public string[] ReadLimits()
+	public IMotionControlLimitResponse ReadLimits()
 	{
 		return Controller.ReadLimits();
 	}
@@ -257,6 +256,7 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 
 	internal MotionControlService()
 	{
+		ControllerConfiguration.Instance.AddObserver(this);
 	}
 
 	internal void ResetLocation()

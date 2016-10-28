@@ -10,8 +10,8 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-[Command("command-repository")]
 [Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
+[Command("command-repository")]
 public class CommandRepository
 {
 	private static readonly IDictionary<string, Type> m_commands = new Dictionary<string, Type>();

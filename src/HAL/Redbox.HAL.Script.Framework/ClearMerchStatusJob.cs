@@ -16,11 +16,11 @@ internal sealed class ClearMerchStatusJob : NativeJobAdapter
 			{
 				return;
 			}
-			int top = GetTop<int>();
-			for (int i = 0; i < top; i++)
+			int num2 = base.Context.PopTop<int>();
+			for (int i = 0; i < num2; i++)
 			{
-				string top2 = GetTop<string>();
-				ILocation location = service.Lookup(top2);
+				string id = base.Context.PopTop<string>();
+				ILocation location = service.Lookup(id);
 				if (location != null && SegmentManager.Instance.InCompressedZone(location) && !SegmentManager.Instance.IsNonThinType(location.Flags))
 				{
 					base.Context.ServiceLog("The flags at {0} are changed from {1} -> None", location.ToString(), location.Flags.ToString());

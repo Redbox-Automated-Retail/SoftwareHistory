@@ -17,7 +17,7 @@ internal class DefaultHandler : IFileDiskHandler
 	{
 	}
 
-	public FileDiscIterationResult BeforeNextPut(ExecutionResult result, IPutResult putResult)
+	public FileDiscIterationResult OnFailedPut(ExecutionResult result, IPutResult putResult)
 	{
 		return FileDiscIterationResult.Continue;
 	}

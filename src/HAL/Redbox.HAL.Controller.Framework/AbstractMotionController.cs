@@ -50,7 +50,7 @@ internal abstract class AbstractMotionController
 
 	internal abstract bool OnShutdown();
 
-	internal abstract string[] ReadLimits();
+	internal abstract IMotionControlLimitResponse ReadLimits();
 
 	internal abstract bool CommunicationOk();
 

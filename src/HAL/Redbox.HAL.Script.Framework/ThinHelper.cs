@@ -106,7 +106,7 @@ internal abstract class ThinHelper
 			{
 				return result;
 			}
-			location2 = service2.MoveableLocation();
+			location2 = service2.PutLocation;
 		}
 		location = service.Lookup(id);
 		if (location == null)
@@ -143,7 +143,7 @@ internal abstract class ThinHelper
 			Context.ServiceLog("Transfer from {0} --> {1}.", source.ToString(), target.ToString());
 		}
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
-		if (target == service.MoveableLocation() && service.IsFull())
+		if (target == service.PutLocation && service.IsFull())
 		{
 			LogHelper.Instance.Log("The dumpbin is full.");
 			return MerchandizeResult.DumpBinFull;
@@ -158,7 +158,8 @@ internal abstract class ThinHelper
 		}
 		IControlSystem service3 = ServiceLocator.Instance.GetService<IControlSystem>();
 		service3.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put(id, Context.AppLog);
+		IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service4.Put(id, Context.AppLog);
 		if (putResult.Success)
 		{
 			return ProcessSuccessfulThin(target, id, flags);
@@ -185,7 +186,8 @@ internal abstract class ThinHelper
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put(id, Context.AppLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service2.Put(id, Context.AppLog);
 		if (putResult.Success)
 		{
 			return MerchandizeResult.HardwareError;
@@ -212,7 +214,8 @@ internal abstract class ThinHelper
 			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
 			return MerchandizeResult.HardwareError;
 		}
-		IGetResult getResult = (ControllerConfiguration.Instance.IsVMZMachine ? ControllerService.Instance.Get(new FetchThinGetObserver(), Context.AppLog) : ControllerService.Instance.Get(Context.AppLog));
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = (ControllerConfiguration.Instance.IsVMZMachine ? service2.Get(new FetchThinGetObserver(), Context.AppLog) : service2.Get(Context.AppLog));
 		if (getResult.IsSlotEmpty)
 		{
 			return MerchandizeResult.EmptyStuck;

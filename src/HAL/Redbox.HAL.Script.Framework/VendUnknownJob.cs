@@ -1,4 +1,3 @@
-using System;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
@@ -45,49 +44,52 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 		base.Context.Send("VendStart");
 		PerfFunctions.SpinWait(30);
 		base.Context.Send("VendGraphicDisplay");
-		ErrorCodes errorCodes = HelperFunctions.CheckPicker(base.Result, base.Context, null);
-		if (ErrorCodes.PickerEmpty != errorCodes)
+		using (CheckPickerOperation checkPickerOperation = new CheckPickerOperation(base.Context))
 		{
-			AddError("Unable to clear the picker.");
-			return;
+			if (ErrorCodes.PickerEmpty != checkPickerOperation.CheckPicker(base.Result, null))
+			{
+				AddError("Unable to clear the picker.");
+				return;
+			}
 		}
-		int top = GetTop<int>();
-		int top2 = GetTop<int>();
+		int num = base.Context.PopTop<int>();
+		int num2 = base.Context.PopTop<int>();
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		ILocation location = service.Get(top, top2);
+		ILocation location = service.Get(num, num2);
 		LogHelper.Instance.Log("Move to {0} to pick requested item.", location.ToString());
-		if (CorrectiveMove(top, top2, MoveMode.Get) != ErrorCodes.Success)
+		if (CorrectiveMove(num, num2, MoveMode.Get) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
-			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", top, top2, null, null, null);
+			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
-		IGetResult getResult = base.Controller.Get(this, base.Context.AppLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service2.Get(this, base.Context.AppLog);
 		if (getResult.IsSlotEmpty || getResult.ItemStuck)
 		{
 			if (!ControllerConfiguration.Instance.RotateDrumDuringUnknownRemoval2)
 			{
-				base.Context.CreateResult("SlotEmpty", "The slot is empty.", top, top2, null, null, null);
+				base.Context.CreateResult("SlotEmpty", "The slot is empty.", num, num2, null, null, null);
 				VendEnd();
 			}
 			else if (getResult.IsSlotEmpty)
 			{
 				base.Context.AppLog.WriteFormatted("Slot is empty, moving to next.");
-				base.Context.CreateResult("SlotEmpty", "The slot is empty.", top, top2, null, null, null);
+				base.Context.CreateResult("SlotEmpty", "The slot is empty.", num, num2, null, null, null);
 				VendEnd();
 			}
 			else
 			{
 				LogHelper.Instance.Log("Disc stuck in slot, moving to next.");
-				base.Context.CreateResult("GetAfterPeekShowsFull", "This Location was NOT updated in inventory.", top, top2, getResult.Previous, getResult.ReturnTime, null);
+				base.Context.CreateResult("GetAfterPeekShowsFull", "This Location was NOT updated in inventory.", num, num2, getResult.Previous, getResult.ReturnTime, null);
 				ShowEmptyStuck(location);
 			}
 			return;
 		}
 		if (!getResult.Success)
 		{
-			base.Context.CreateResult("GetError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", top, top2, null, null, null);
+			base.Context.CreateResult("GetError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
@@ -95,7 +97,7 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 		if (CorrectiveMoveVend(MoveMode.None) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
-			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", top, top2, null, null, null);
+			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
@@ -108,7 +110,7 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 				base.ControlSystem.VendDoorClose();
 				base.Context.Send("ItemVended");
 				base.Context.AppLog.Write("The item was taken.");
-				base.Context.CreateResult("ItemVended", "The item was successfully vended.", top, top2, getResult.Previous, getResult.ReturnTime, null);
+				base.Context.CreateResult("ItemVended", "The item was successfully vended.", num, num2, getResult.Previous, getResult.ReturnTime, null);
 				VendEnd();
 				return;
 			}
@@ -125,58 +127,38 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 		LogHelper.Instance.Log("The iterm was not taken; pull it in and file it away.");
 		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
 		{
-			ErrorCodes errorCodes2 = acceptDiskOperation.Execute();
-			if (ErrorCodes.PickerFull != errorCodes2)
+			ErrorCodes errorCodes = acceptDiskOperation.Execute();
+			if (ErrorCodes.PickerFull != errorCodes)
 			{
-				base.Context.AppLog.WriteFormatted("ACCEPT-DISK-AT-DOOR failed with error code {0}", errorCodes2.ToString());
-				base.Context.CreateResult("RollInToSensor3TimedOut", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", top, top2, null, null, null);
+				base.Context.AppLog.WriteFormatted("ACCEPT-DISK-AT-DOOR failed with error code {0}", errorCodes.ToString());
+				base.Context.CreateResult("RollInToSensor3TimedOut", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 				AddError("MACHINE ERROR");
 				return;
 			}
 			if (CorrectiveMove(location, MoveMode.Put) != ErrorCodes.Success)
 			{
 				base.Context.Send("MachineError");
-				base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", top, top2, null, null, null);
+				base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 				AddError("MACHINE ERROR");
 				return;
 			}
 			base.ControlSystem.TrackCycle();
-			if (!base.Controller.Put("UNKNOWN", base.Context.AppLog).Success)
+			if (!service2.Put("UNKNOWN", base.Context.AppLog).Success)
 			{
-				base.Context.CreateResult("PutError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", top, top2, null, null, null);
+				base.Context.CreateResult("PutError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 				AddError("MACHINE ERROR");
 				return;
 			}
 		}
 		location.ReturnDate = getResult.ReturnTime;
 		service.Save(location);
-		base.Context.CreateResult("UnclaimedVend", "The vend request failed because the item was not taken.  It has been returned.", top, top2, getResult.Previous, null, null);
+		base.Context.CreateResult("UnclaimedVend", "The vend request failed because the item was not taken.  It has been returned.", num, num2, getResult.Previous, null, null);
 		VendEnd();
 	}
 
 	internal VendUnknownJob(ExecutionResult r, ExecutionContext c)
 		: base(r, c)
 	{
-	}
-
-	private void ShowEmptyStuck(ILocation target)
-	{
-		IDeck deck = base.DecksService.GetFrom(target);
-		int num = target.Slot - 5;
-		if (num <= 0)
-		{
-			num = deck.NumberOfSlots - Math.Abs(num);
-		}
-		if (CorrectiveMove(target.Deck, num, MoveMode.None) != ErrorCodes.Success)
-		{
-			base.Context.CreateInfoResult("MoveOffsetError", "There was an error moving the offset.");
-			AddError("There was an error moving to the offset position.");
-			return;
-		}
-		base.ControlSystem.SetFinger(GripperFingerState.Rent);
-		base.ControlSystem.TimedExtend();
-		base.ControlSystem.SetSensors(on: true);
-		base.Context.CreateInfoResult("MoveOffsetOk", "The damaged disk is located 5 slots left, starting at the disk next to the extended gripper fingers.");
 	}
 
 	private void VendEnd()

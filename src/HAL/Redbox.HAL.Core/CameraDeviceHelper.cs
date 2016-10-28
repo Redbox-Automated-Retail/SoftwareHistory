@@ -12,8 +12,6 @@ internal sealed class CameraDeviceHelper : IDisposable
 
 	private readonly List<IDeviceDescriptor> Devices = new List<IDeviceDescriptor>();
 
-	private readonly DeviceHelper Helper;
-
 	private bool Disposed;
 
 	public void Dispose()
@@ -40,9 +38,9 @@ internal sealed class CameraDeviceHelper : IDisposable
 
 	internal CameraDeviceHelper()
 	{
-		Helper = new DeviceHelper(debug: true);
-		Devices.Add(new Gen5DeviceDescriptor(Helper));
-		Devices.Add(new LegacyDeviceDescriptor(Helper, "1871", "0f01", "4th Gen", Gen4DriverDescriptor));
-		Devices.Add(new LegacyDeviceDescriptor(Helper, "0c45", "627b", "3rd Gen", Gen3DriverDescriptor));
+		Devices.Add(new Gen5DeviceDescriptor());
+		Devices.Add(new LegacyDeviceDescriptor("1871", "0d01", "4th Gen (Color)", Gen4DriverDescriptor));
+		Devices.Add(new LegacyDeviceDescriptor("1871", "0f01", "4th Gen", Gen4DriverDescriptor));
+		Devices.Add(new LegacyDeviceDescriptor("0c45", "627b", "3rd Gen", Gen3DriverDescriptor));
 	}
 }

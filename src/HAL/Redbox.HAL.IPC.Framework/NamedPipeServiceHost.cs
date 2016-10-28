@@ -5,11 +5,11 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-public class NamedPipeServiceHost : IPCServiceHost
+public sealed class NamedPipeServiceHost : IPCServiceHost
 {
-	private List<ISession> m_sessions = new List<ISession>();
+	private readonly List<ISession> m_sessions = new List<ISession>();
 
-	private object m_sessionsSyncObject = new object();
+	private readonly object m_sessionsSyncObject = new object();
 
 	public override void Start()
 	{
@@ -20,14 +20,14 @@ public class NamedPipeServiceHost : IPCServiceHost
 		{
 			while (base.Alive)
 			{
-				AbstractNamedPipeServerSession session = namedPipeServer.WaitForClientConnect(PipeServerSessionFactory.Instance);
-				if (session != null && session is NamedPipeServerSession namedPipeServerSession)
+				BasePipeChannel basePipeChannel = namedPipeServer.WaitForClientConnect();
+				if (basePipeChannel != null)
 				{
-					namedPipeServerSession.ServiceHost = this;
-					RegiserSession(namedPipeServerSession);
+					NamedPipeServerSession pipeServerSession = new NamedPipeServerSession(basePipeChannel, this);
+					RegiserSession(pipeServerSession);
 					ThreadPool.QueueUserWorkItem(delegate
 					{
-						session.Start();
+						pipeServerSession.Start();
 					});
 				}
 			}
@@ -44,7 +44,7 @@ public class NamedPipeServiceHost : IPCServiceHost
 
 	public override void Stop()
 	{
-		LogHelper.Instance.Log(string.Format("Attempting to Stop NamedPipeServiceHost on host {0} with pipe {1}", base.Protocol.Host, "HALService7001"));
+		LogHelper.Instance.Log("Attempting to Stop NamedPipeServiceHost on host {0} with pipe {1}", base.Protocol.Host, "HALService7001");
 		base.Alive = false;
 	}
 
@@ -52,7 +52,13 @@ public class NamedPipeServiceHost : IPCServiceHost
 	{
 		if (session != null)
 		{
-			UnregisterSessionInner(session);
+			int num = 0;
+			lock (m_sessionsSyncObject)
+			{
+				m_sessions.Remove(session);
+				num = m_sessions.Count;
+			}
+			LogHelper.Instance.Log(LogEntryType.Debug, "[NamedPipeServer] Unregister session - currently {0} active sessions.", num);
 		}
 	}
 
@@ -66,19 +72,7 @@ public class NamedPipeServiceHost : IPCServiceHost
 				m_sessions.Add(session);
 				num = m_sessions.Count;
 			}
-			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
-			{
-				LogHelper.Instance.Log($"There are currently {num} active sessions.");
-			}
+			LogHelper.Instance.Log(LogEntryType.Debug, "[NamedPipeServer] Register session - currently {0} active sessions.", num);
 		}
-	}
-
-	private void UnregisterSessionInner(ISession session)
-	{
-		lock (m_sessionsSyncObject)
-		{
-			m_sessions.Remove(session);
-		}
-		LogHelper.Instance.Log("Unregister server session.", LogEntryType.Debug);
 	}
 }

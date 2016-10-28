@@ -1,5 +1,6 @@
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -26,6 +27,8 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 		base.Context.CreateInfoResult("AirExchangerConfigured", service3.Configured ? "Configured" : "Not configured");
 		IDiskValidatorService service4 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
 		base.Context.CreateInfoResult("FraudSensorEnabled", service4.IsConfigured ? "Enabled" : "Not Enabled");
+		AbeDeviceDescriptor abeDeviceDescriptor = new AbeDeviceDescriptor(debug: true);
+		base.Context.CreateInfoResult("AbeDeviceStatus", abeDeviceDescriptor.Locate() ? "ATTACHED" : "NOT ATTACHED");
 	}
 
 	internal KioskConfigurationJob(ExecutionResult result, ExecutionContext ctx)

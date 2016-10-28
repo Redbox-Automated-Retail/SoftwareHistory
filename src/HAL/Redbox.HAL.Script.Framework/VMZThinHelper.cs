@@ -10,7 +10,7 @@ internal sealed class VMZThinHelper : ThinHelper
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		if (service.MachineIsFull())
 		{
-			LogHelper.Instance.Log("[FindEmptyTarget] The machine is full.", LogEntryType.Debug);
+			LogHelper.Instance.Log($"[FindEmptyTarget] {HardwareMessageCatalog.MachineFull()}");
 			result = MerchandizeResult.MachineFull;
 			return null;
 		}
@@ -19,7 +19,10 @@ internal sealed class VMZThinHelper : ThinHelper
 		ILocation location = SegmentManager.Instance.SelectLocation(flags, manager, out result);
 		if (location != null)
 		{
-			LogHelper.Instance.Log("[FindEmptyTarget] Select location found target at = {0}", location.ToString());
+			if (ThinHelper.Debug)
+			{
+				LogHelper.Instance.Log("[FindEmptyTarget] Select location found target at = {0}", location.ToString());
+			}
 			return location;
 		}
 		if (ThinHelper.Debug)
@@ -33,7 +36,7 @@ internal sealed class VMZThinHelper : ThinHelper
 		IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
 		if (service2.IsFull())
 		{
-			LogHelper.Instance.Log("MoveLowPriorityToBin: the dump bin is full.");
+			LogHelper.Instance.Log("[FindEmptyTarget] MoveLowPriorityToBin: the dump bin is full.");
 			result = MerchandizeResult.VMZFull;
 			return null;
 		}
@@ -61,7 +64,7 @@ internal sealed class VMZThinHelper : ThinHelper
 				LogHelper.Instance.Log("Thin: cannot move low at {0}; bail.", location3.ToString());
 				continue;
 			}
-			ILocation location4 = ((location2 == null) ? service2.MoveableLocation() : location2);
+			ILocation location4 = ((location2 == null) ? service2.PutLocation : location2);
 			MerchandizeResult merchandizeResult = ThinDiskToLocation(location3, location4, iD, flags2);
 			if (ThinHelper.Debug)
 			{
@@ -110,6 +113,6 @@ internal sealed class VMZThinHelper : ThinHelper
 			return null;
 		}
 		result = MerchandizeResult.Success;
-		return service.MoveableLocation();
+		return service.PutLocation;
 	}
 }

@@ -18,7 +18,7 @@ public interface IMotionControlService
 
 	IControllerPosition ReadPositions();
 
-	string[] ReadLimits();
+	IMotionControlLimitResponse ReadLimits();
 
 	ErrorCodes MoveAbsolute(Axis axis, int? xunits, int? yunits, bool checkSensors);
 

@@ -16,6 +16,8 @@ internal abstract class SyncDecorator
 		CenterDiskMethod.DrumAndBack
 	};
 
+	internal virtual FraudScanJobMask BitValue => FraudScanJobMask.Sync;
+
 	protected void UpdateSymbol(string name, object value)
 	{
 		if (Context.SymbolTable.ContainsKey(name))
@@ -48,6 +50,12 @@ internal abstract class SyncDecorator
 		return SyncResult.Success;
 	}
 
+	internal virtual IGetResult GetDisk(IFormattedLog applog)
+	{
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Get(applog);
+	}
+
 	internal virtual void OnGetFailure(IGetResult gr)
 	{
 	}
@@ -58,11 +66,6 @@ internal abstract class SyncDecorator
 
 	internal virtual void OnExcludedLocation()
 	{
-	}
-
-	internal virtual SyncResult ProcessEmpty(IGetResult gr)
-	{
-		return SyncResult.Success;
 	}
 
 	internal ScanResult ReadDisk(Scanner scanner)

@@ -15,8 +15,8 @@ public class NumberPadForm : Form
 
 	private Button m_cancelButton;
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public string Number
 	{
 		get

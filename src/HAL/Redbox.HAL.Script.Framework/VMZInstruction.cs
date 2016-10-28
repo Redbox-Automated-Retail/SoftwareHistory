@@ -26,136 +26,134 @@ public sealed class VMZInstruction : Instruction
 		{
 			context.PushTop(ControllerConfiguration.Instance.IsVMZMachine);
 		}
-		else if (string.Compare(base.Operands[0].Value, "REGISTER-CLEAN", ignoreCase: true) == 0)
+		else
 		{
-			CleanManager.Instance.Register(context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "RANDOMIZE-CLEAN", ignoreCase: true) == 0)
-		{
-			CleanManager.Instance.RandomizeCleanTime();
-		}
-		else if (string.Compare(base.Operands[0].Value, "FETCH-LAST-THIN", ignoreCase: true) == 0)
-		{
-			FetchLast(MerchFlags.Thin, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "FETCH-LAST-REBALANCE", ignoreCase: true) == 0)
-		{
-			FetchLast(MerchFlags.Rebalance, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "NON-THIN-COUNT", ignoreCase: true) == 0)
-		{
-			AddError("E101", "NON-THIN-COUNT is not supported.", result.Errors);
-		}
-		else if (string.Compare(base.Operands[0].Value, "AGGREGATE-CLEAN", ignoreCase: true) == 0)
-		{
-			AggregateCleanData(context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "CLEAN-SLOT", ignoreCase: true) == 0)
-		{
-			if (context.IsAutoScheduled && CleanManager.Instance.ScheduledCleanIsRunningOutsideWindow())
+			if (string.Compare(base.Operands[0].Value, "REGISTER-CLEAN", ignoreCase: true) == 0)
 			{
-				context.PushTop("CLEAN");
 				return;
 			}
-			CleanResult result2 = default(CleanResult);
-			CleanManager.Instance.CleanSlot(ref result2, context, SegmentManager.Instance);
-			ProcessAnyTransfers(result2, context);
-			if (result2.VisitedAllSlots)
+			if (string.Compare(base.Operands[0].Value, "RANDOMIZE-CLEAN", ignoreCase: true) == 0)
 			{
-				context.PushTop("CLEAN");
+				result.Errors.Add(Error.NewError("E203", "Deprecated operand", "The RANDOMIZE-CLEAN operand is deprecated."));
 			}
-			else if (result2.NoEmptySlots)
+			else if (string.Compare(base.Operands[0].Value, "FETCH-LAST-THIN", ignoreCase: true) == 0)
 			{
-				context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
+				FetchLast(MerchFlags.Thin, context);
 			}
-			else
+			else if (string.Compare(base.Operands[0].Value, "FETCH-LAST-REBALANCE", ignoreCase: true) == 0)
 			{
-				context.PushTop((result2.TransferFailures > 0) ? "TRANSFERFAILURE" : "SUCCESS");
+				FetchLast(MerchFlags.Rebalance, context);
 			}
-		}
-		else if (string.Compare(base.Operands[0].Value, "MARK-UNLOAD", ignoreCase: true) == 0)
-		{
-			int num = 0;
-			KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("LAST-DECK");
-			int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
-			if (result.Errors.Count > 0 || !keyValuePairValue.HasValue)
+			else if (string.Compare(base.Operands[0].Value, "NON-THIN-COUNT", ignoreCase: true) == 0)
 			{
-				context.PushTop("ERROR");
-				return;
+				AddError("E101", "NON-THIN-COUNT is not supported.", result.Errors);
 			}
-			num = keyValuePairValue.Value;
-			context.PushTop(VMZ.Instance.ReserveUnload(num));
-		}
-		else if (string.Compare(base.Operands[0].Value, "MARK-EMPTY", ignoreCase: true) == 0)
-		{
-			ILocation location = SegmentManager.Instance.FindHighest();
-			if (location == null)
+			else if (string.Compare(base.Operands[0].Value, "AGGREGATE-CLEAN", ignoreCase: true) == 0)
 			{
-				context.PushTop(0);
+				AggregateCleanData(context);
 			}
-			else
+			else if (string.Compare(base.Operands[0].Value, "CLEAN-SLOT", ignoreCase: true) == 0)
 			{
-				context.PushTop(VMZ.Instance.ResetCompressedZone(location));
+				CleanResult result2 = default(CleanResult);
+				CleanManager.Instance.CleanSlot(ref result2, context, SegmentManager.Instance);
+				ProcessAnyTransfers(result2, context);
+				if (result2.VisitedAllSlots)
+				{
+					context.PushTop("CLEAN");
+				}
+				else if (result2.NoEmptySlots)
+				{
+					context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
+				}
+				else
+				{
+					context.PushTop((result2.TransferFailures > 0) ? "TRANSFERFAILURE" : "SUCCESS");
+				}
 			}
-		}
-		else if (string.Compare(base.Operands[0].Value, "DUMP-ZONE", ignoreCase: true) == 0)
-		{
-			AddError("E002", "The operand DUMP-ZONE is no longer supported.", result.Errors);
-		}
-		else if (string.Compare(base.Operands[0].Value, "DUMP-ZONE-TO-APPLOG", ignoreCase: true) == 0)
-		{
-			VMZ.Instance.DumpZone(context.AppLog);
-		}
-		else if (string.Compare(base.Operands[0].Value, "THIN-DISC", ignoreCase: true) == 0)
-		{
-			ThinType(result, context, MerchFlags.Thin);
-		}
-		else if (string.Compare(base.Operands[0].Value, "THIN-REBALANCE", ignoreCase: true) == 0)
-		{
-			ThinType(result, context, MerchFlags.Rebalance);
-		}
-		else if (string.Compare(base.Operands[0].Value, "THIN-REDEPLOY", ignoreCase: true) == 0)
-		{
-			ThinType(result, context, MerchFlags.ThinRedeploy);
-		}
-		else if (string.Compare(base.Operands[0].Value, "UNLOAD-DISC", ignoreCase: true) == 0)
-		{
-			MerchandizeResult merchandizeResult = VMZHelperFunctions.Instance.UnloadDisc(result, context);
-			context.PushTop(merchandizeResult.ToString().ToUpper());
-		}
-		else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN", ignoreCase: true) == 0)
-		{
-			LocateLast(MerchFlags.Thin, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "GET-LAST-REBALANCE", ignoreCase: true) == 0)
-		{
-			LocateLast(MerchFlags.Rebalance, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN-REDEPLOY", ignoreCase: true) == 0)
-		{
-			LocateLast(MerchFlags.ThinRedeploy, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "THIN-ZONE-COUNT", ignoreCase: true) == 0)
-		{
-			PushCount(MerchFlags.Thin, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "REBALANCE-COUNT", ignoreCase: true) == 0)
-		{
-			PushCount(MerchFlags.Rebalance, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "THIN-REDEPLOY-COUNT", ignoreCase: true) == 0)
-		{
-			PushCount(MerchFlags.ThinRedeploy, context);
-		}
-		else if (string.Compare(base.Operands[0].Value, "MOVE-VIEWABLE", ignoreCase: true) == 0)
-		{
-			context.PushTop(VMZHelperFunctions.MoveViewable(context).ToString().ToUpper());
-		}
-		else if (string.Compare(base.Operands[0].Value, "ZONE-NON-THIN-COUNT", ignoreCase: true) == 0)
-		{
-			List<ILocation> nonThinItemsInCompressedZone = SegmentManager.Instance.GetNonThinItemsInCompressedZone();
-			context.PushTop(nonThinItemsInCompressedZone.Count.ToString());
-			nonThinItemsInCompressedZone.Clear();
+			else if (string.Compare(base.Operands[0].Value, "MARK-UNLOAD", ignoreCase: true) == 0)
+			{
+				int num = 0;
+				KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("LAST-DECK");
+				int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
+				if (result.Errors.Count > 0 || !keyValuePairValue.HasValue)
+				{
+					context.PushTop("ERROR");
+					return;
+				}
+				num = keyValuePairValue.Value;
+				context.PushTop(VMZ.Instance.ReserveUnload(num));
+			}
+			else if (string.Compare(base.Operands[0].Value, "MARK-EMPTY", ignoreCase: true) == 0)
+			{
+				ILocation location = SegmentManager.Instance.FindHighest();
+				if (location == null)
+				{
+					context.PushTop(0);
+				}
+				else
+				{
+					context.PushTop(VMZ.Instance.ResetCompressedZone(location));
+				}
+			}
+			else if (string.Compare(base.Operands[0].Value, "DUMP-ZONE", ignoreCase: true) == 0)
+			{
+				AddError("E002", "The operand DUMP-ZONE is no longer supported.", result.Errors);
+			}
+			else if (string.Compare(base.Operands[0].Value, "DUMP-ZONE-TO-APPLOG", ignoreCase: true) == 0)
+			{
+				VMZ.Instance.DumpZone(context.AppLog);
+			}
+			else if (string.Compare(base.Operands[0].Value, "THIN-DISC", ignoreCase: true) == 0)
+			{
+				ThinType(result, context, MerchFlags.Thin);
+			}
+			else if (string.Compare(base.Operands[0].Value, "THIN-REBALANCE", ignoreCase: true) == 0)
+			{
+				ThinType(result, context, MerchFlags.Rebalance);
+			}
+			else if (string.Compare(base.Operands[0].Value, "THIN-REDEPLOY", ignoreCase: true) == 0)
+			{
+				ThinType(result, context, MerchFlags.ThinRedeploy);
+			}
+			else if (string.Compare(base.Operands[0].Value, "UNLOAD-DISC", ignoreCase: true) == 0)
+			{
+				MerchandizeResult merchandizeResult = VMZHelperFunctions.Instance.UnloadDisc(result, context);
+				context.PushTop(merchandizeResult.ToString().ToUpper());
+			}
+			else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN", ignoreCase: true) == 0)
+			{
+				LocateLast(MerchFlags.Thin, context);
+			}
+			else if (string.Compare(base.Operands[0].Value, "GET-LAST-REBALANCE", ignoreCase: true) == 0)
+			{
+				LocateLast(MerchFlags.Rebalance, context);
+			}
+			else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN-REDEPLOY", ignoreCase: true) == 0)
+			{
+				LocateLast(MerchFlags.ThinRedeploy, context);
+			}
+			else if (string.Compare(base.Operands[0].Value, "THIN-ZONE-COUNT", ignoreCase: true) == 0)
+			{
+				PushCount(MerchFlags.Thin, context);
+			}
+			else if (string.Compare(base.Operands[0].Value, "REBALANCE-COUNT", ignoreCase: true) == 0)
+			{
+				PushCount(MerchFlags.Rebalance, context);
+			}
+			else if (string.Compare(base.Operands[0].Value, "THIN-REDEPLOY-COUNT", ignoreCase: true) == 0)
+			{
+				PushCount(MerchFlags.ThinRedeploy, context);
+			}
+			else if (string.Compare(base.Operands[0].Value, "MOVE-VIEWABLE", ignoreCase: true) == 0)
+			{
+				context.PushTop(VMZHelperFunctions.MoveViewable(context).ToString().ToUpper());
+			}
+			else if (string.Compare(base.Operands[0].Value, "ZONE-NON-THIN-COUNT", ignoreCase: true) == 0)
+			{
+				List<ILocation> nonThinItemsInCompressedZone = SegmentManager.Instance.GetNonThinItemsInCompressedZone();
+				context.PushTop(nonThinItemsInCompressedZone.Count.ToString());
+				nonThinItemsInCompressedZone.Clear();
+			}
 		}
 	}
 
@@ -178,7 +176,8 @@ public sealed class VMZInstruction : Instruction
 			context.PushTop(errorCodes.ToString().ToUpper());
 			return;
 		}
-		IGetResult getResult = ControllerService.Instance.Get(context.AppLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service2.Get(context.AppLog);
 		if (getResult.Success)
 		{
 			VMZHelperFunctions.MoveViewable(context);

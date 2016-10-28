@@ -30,6 +30,10 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 			}
 			if (pickerSensorReadResult.BlockedCount == 0)
 			{
+				if (!Controller.VendDoorClose().Success)
+				{
+					return ErrorCodes.PickerObstructed;
+				}
 				return ErrorCodes.PickerEmpty;
 			}
 			LogHelper.Instance.Log("[RejectDisk] The picker is not clear.");

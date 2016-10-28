@@ -11,26 +11,27 @@ internal sealed class KioskTestJob : NativeJobAdapter
 	{
 		IDeck deck = QLM.Deck;
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "KioskTestErrors");
-		bool top = GetTop<bool>();
-		int top2 = GetTop<int>();
-		int top3 = GetTop<int>();
-		int top4 = GetTop<int>();
-		int top5 = GetTop<int>();
-		bool flag = !ControllerConfiguration.Instance.IsVMZMachine && deck != null;
-		bool flag2 = flag && deck.Number == top2;
-		bool flag3 = flag && deck.Number == top4;
-		if (flag2 && !EngageQlm())
+		bool flag = base.Context.PopTop<bool>();
+		int num = base.Context.PopTop<int>();
+		int slot = base.Context.PopTop<int>();
+		int num2 = base.Context.PopTop<int>();
+		int slot2 = base.Context.PopTop<int>();
+		bool flag2 = !ControllerConfiguration.Instance.IsVMZMachine && deck != null;
+		bool flag3 = flag2 && deck.Number == num;
+		bool flag4 = flag2 && deck.Number == num2;
+		if (flag3 && !EngageQlm())
 		{
 			return;
 		}
-		if (base.MotionService.MoveTo(top2, top3, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+		if (base.MotionService.MoveTo(num, slot, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveError", "Failed to move to initial slot");
 			HandleMachineError();
 			return;
 		}
 		using Scanner scanner = new Scanner();
-		IGetResult getResult = ControllerService.Instance.Get(base.AppLog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service.Get(base.AppLog);
 		if (!getResult.Success)
 		{
 			base.Context.CreateInfoResult("GetError", "Failed to pull disc from slot");
@@ -48,24 +49,24 @@ internal sealed class KioskTestJob : NativeJobAdapter
 		{
 			applicationLog.Write("The barcode in the picker could not be read.", LogEntryType.Error);
 		}
-		if (top && !VendDisk(scannedMatrix))
+		if (flag && !VendDisk(scannedMatrix))
 		{
 			HandleMachineError();
 		}
 		else
 		{
-			if (flag3 && !EngageQlm())
+			if (flag4 && !EngageQlm())
 			{
 				return;
 			}
-			if (base.MotionService.MoveTo(top4, top5, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+			if (base.MotionService.MoveTo(num2, slot2, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MoveFailed", "Kiosk was unable to move to put position of destination slot");
 				HandleMachineError();
 				return;
 			}
 			base.ControlSystem.TrackCycle();
-			IPutResult putResult = ControllerService.Instance.Put(scannedMatrix, base.AppLog);
+			IPutResult putResult = service.Put(scannedMatrix, base.AppLog);
 			if (!putResult.Success)
 			{
 				base.Context.CreateInfoResult("PutFailed", "Kiosk failed to put disc into slot");
@@ -73,13 +74,13 @@ internal sealed class KioskTestJob : NativeJobAdapter
 				return;
 			}
 			PerfFunctions.Wait(1200);
-			if (base.MotionService.MoveTo(top4, top5, MoveMode.Get, base.AppLog) != ErrorCodes.Success)
+			if (base.MotionService.MoveTo(num2, slot2, MoveMode.Get, base.AppLog) != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MoveFailed", "Kiosk was unable to move to get position of destination slot");
 				HandleMachineError();
 				return;
 			}
-			if (flag2 && !flag3)
+			if (flag3 && !flag4)
 			{
 				QlmStatus status = QLM.GetStatus();
 				if (QlmStatus.AuxNotResponsive == status)

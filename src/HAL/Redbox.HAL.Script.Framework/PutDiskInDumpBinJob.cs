@@ -30,7 +30,7 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			AddError("The picker is empty.");
 			return;
 		}
-		if (!service.Active)
+		if (!ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			base.Context.CreateInfoResult("Misconfiguration", "The dump bin is not configured.");
 			applicationLog.Write("The dumpbin is not configured.");
@@ -44,12 +44,11 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			AddError("The dumpbin is full.");
 			return;
 		}
-		IDiskValidatorService service2 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service2, JobsWithScan.PutDiskInBin);
-		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		using FraudValidator fraudValidator = new FraudValidator(base.Context, FraudScanJobMask.PutDiskInBin);
+		fraudValidator.StartScan();
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		using Scanner scanner = new Scanner();
-		ILocation location = service.MoveableLocation();
-		ErrorCodes errorCodes = service3.MoveTo(location, MoveMode.Put, applicationLog);
+		ErrorCodes errorCodes = service2.MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
@@ -71,11 +70,12 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			if (scanResult.ReadCode)
 			{
 				text = scanResult.ScannedMatrix;
-				diskValidatorHelper.ValidateAndNotify(text, base.Context);
+				fraudValidator.ValidateAndPublish(text);
 				break;
 			}
 		}
-		IPutResult putResult = ControllerService.Instance.Put(text, applicationLog);
+		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service3.Put(text, applicationLog);
 		if (!putResult.Success)
 		{
 			base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");

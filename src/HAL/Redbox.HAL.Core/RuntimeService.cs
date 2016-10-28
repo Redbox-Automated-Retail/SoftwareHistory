@@ -50,13 +50,25 @@ public sealed class RuntimeService : IRuntimeService
 
 	private static RuntimeService m_instance = new RuntimeService();
 
-	public int PageSize { get; private set; }
+	public string DataPath { get; private set; }
 
 	public string AssemblyDirectory { get; private set; }
 
 	public string InstallRoot { get; private set; }
 
+	public int PageSize { get; private set; }
+
 	private Platform Platform { get; set; }
+
+	public string ExpandRuntimeMacros(string value)
+	{
+		return ExpandMacros(value, "${", "}");
+	}
+
+	public string ExpandConstantMacros(string value)
+	{
+		return ExpandMacros(value, "$(", ")");
+	}
 
 	public string RuntimePath(string fileName)
 	{
@@ -99,19 +111,10 @@ public sealed class RuntimeService : IRuntimeService
 		return Platform;
 	}
 
-	public string ExpandRuntimeMacros(string value)
-	{
-		return ExpandMacros(value, "${", "}");
-	}
-
-	public string ExpandConstantMacros(string value)
-	{
-		return ExpandMacros(value, "$(", ")");
-	}
-
 	public RuntimeService()
 	{
 		AssemblyDirectory = Path.GetDirectoryName(typeof(RuntimeService).Assembly.Location);
+		DataPath = Path.Combine(AssemblyDirectory, "data");
 		try
 		{
 			DirectoryInfo parent = Directory.GetParent(AssemblyDirectory);

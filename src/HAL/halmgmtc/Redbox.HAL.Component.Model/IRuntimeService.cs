@@ -2,6 +2,8 @@ namespace Redbox.HAL.Component.Model;
 
 public interface IRuntimeService
 {
+	string DataPath { get; }
+
 	string AssemblyDirectory { get; }
 
 	string InstallRoot { get; }

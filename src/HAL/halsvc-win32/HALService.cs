@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.ServiceProcess;
@@ -11,6 +12,7 @@ using Redbox.HAL.DataMatrix.Framework;
 using Redbox.HAL.DataStorage;
 using Redbox.HAL.Script.Framework;
 using Redbox.HAL.Service.Framework;
+using Redbox.HAL.Service.Win32.Properties;
 using log4net;
 
 namespace Redbox.HAL.Service.Win32;
@@ -131,6 +133,7 @@ public class HALService : ServiceBase, ILogger
 	{
 		LogHelper.Instance.Log("Stop service request from OnPowerEvent; powerStatus = {0} State = {1}.", powerStatus.ToString(), State.ToString());
 		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
 		lock (PowerStateLock)
 		{
 			if (PowerBroadcastStatus.Suspend == powerStatus)
@@ -139,7 +142,7 @@ public class HALService : ServiceBase, ILogger
 				{
 					State = PowerState.Suspended;
 					service.Suspend();
-					ControllerService.Instance.ParkHardware();
+					service2.Shutdown();
 				}
 			}
 			else if (PowerBroadcastStatus.ResumeSuspend == powerStatus && PowerState.Suspended == State)
@@ -162,8 +165,7 @@ public class HALService : ServiceBase, ILogger
 	{
 		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
 		service.Shutdown();
-		ControllerService.Instance.ParkHardware();
-		IDataStoreService service2 = ServiceLocator.Instance.GetService<IDataStoreService>();
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
 		service2.Shutdown();
 		Log("Stop Hardware Abstraction Layer (HAL) Service.", LogEntryType.Info);
 		WriteEventLogEntry("Stop Hardware Abstraction Layer (HAL) Service.", EventLogEntryType.Information);
@@ -182,19 +184,28 @@ public class HALService : ServiceBase, ILogger
 		IRuntimeService runtimeService = new RuntimeService();
 		string message = string.Format("{0} version {1} (.NET version {2}; OS = {3})", "Start Hardware Abstraction Layer (HAL) Service", typeof(HALService).Assembly.GetName().Version, Environment.Version.ToString(), runtimeService.GetPlatform().ToString());
 		ErrorList errorList = new ErrorList();
+		Dictionary<string, object> dictionary = new Dictionary<string, object>();
+		dictionary.Add("MotionControlServiceVersion", Settings.Default.MotionControlServiceVersion);
+		dictionary.Add("CountersDBExclusiveMode", Settings.Default.CountersDBExclusiveMode);
 		try
 		{
 			Log(message, LogEntryType.Info);
 			WriteEventLogEntry("Start Hardware Abstraction Layer (HAL) Service", EventLogEntryType.Information);
+			ServiceLocator.Instance.AddService(typeof(ITableTypeFactory), new TableTypeFactory());
 			ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
 			ServiceLocator.Instance.AddService(typeof(ILogger), this);
 			ServiceLocator.Instance.AddService(typeof(IRuntimeService), runtimeService);
-			StoreManager instance = new StoreManager();
-			ServiceLocator.Instance.AddService(typeof(IDataStoreService), instance);
+			ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService(Settings.Default.UsbServiceDebug));
+			ServiceLocator.Instance.AddService(typeof(IDeviceSetupClassFactory), new DeviceSetupClassFactory());
+			ServiceLocator.Instance.AddService(typeof(ITouchscreenService), new TouchscreenService());
+			ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(Settings.Default.CountersDBExclusiveMode));
+			ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
 			string configFile = runtimeService.RuntimePath("HAL.xml");
 			ConfigurationService configurationService = ConfigurationService.Make(configFile);
 			ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
-			ControllerService.Instance.Initialize(errorList);
+			ControllerService controllerService = new ControllerService();
+			ServiceLocator.Instance.AddService(typeof(IControllerService), controllerService);
+			controllerService.Initialize(errorList, dictionary);
 			BarcodeConfiguration.NewInstance();
 			string scriptsPath = runtimeService.InstallPath("Scripts");
 			IExecutionService executionService = ExecutionEngine.NewEngine(scriptsPath);

@@ -1,103 +1,73 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class DumpbinService : IExcludeEmptySearchLocationObserver, IDumpbinService, IDisposable
+internal sealed class DumpbinService : IDumpbinService
 {
-	private bool Disposed;
+	private int m_itemCount;
 
-	private readonly IInventoryService InventoryService;
+	private readonly IDataTable<IDumpBinInventoryItem> Table;
 
 	private readonly int Deck;
 
 	private readonly IRange<int> Slots;
 
-	private readonly ILocation m_putLocation;
-
-	public bool Active => true;
-
-	public ILocation PutLocation => m_putLocation;
-
-	public int Capacity
+	public ILocation PutLocation
 	{
 		get
 		{
-			if (Active)
-			{
-				return 60;
-			}
-			return 0;
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			return service.Get(Deck, Slots.Start + 1);
 		}
 	}
 
-	public ILocation RotationLocation { get; private set; }
+	public int Capacity => 60;
 
-	public bool ShouldExclude(ILocation location)
+	public ILocation RotationLocation
 	{
-		if (location.Deck != Deck || !Slots.Includes(location.Slot))
+		get
 		{
-			return false;
-		}
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		location.Excluded = true;
-		service.Save(location);
-		return true;
-	}
-
-	public void Dispose()
-	{
-		if (!Disposed)
-		{
-			Disposed = true;
-			IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-			service.RemoveObserver(this);
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			return service.Get(Deck, 1);
 		}
 	}
 
 	public bool IsFull()
 	{
-		return IsFullInner();
+		return CurrentCount() >= Capacity;
 	}
 
 	public bool IsBin(ILocation loc)
 	{
-		if (loc.Deck != Deck)
-		{
-			return false;
-		}
-		if (loc.Slot >= Slots.Start)
+		if (loc.Deck == Deck && loc.Slot >= Slots.Start)
 		{
 			return loc.Slot <= Slots.End;
 		}
 		return false;
 	}
 
-	public ILocation MoveableLocation()
-	{
-		return PutLocation;
-	}
-
 	public int CurrentCount()
 	{
-		return InventoryService.DumpbinItemCount;
+		return m_itemCount;
 	}
 
 	public int RemainingSpace()
 	{
-		if (!IsFullInner())
+		if (!IsFull())
 		{
-			return Capacity - InventoryService.DumpbinItemCount;
+			return Capacity - CurrentCount();
 		}
 		return 0;
 	}
 
-	public bool ResetCount()
+	public bool ClearItems()
 	{
-		LogHelper.Instance.Log("Reset dumpbin counter: current bin count = {0}", InventoryService.DumpbinItemCount);
+		LogHelper.Instance.Log("Reset dumpbin counter: current bin count = {0}", CurrentCount());
 		ServiceLocator.Instance.GetService<IRuntimeService>();
 		try
 		{
@@ -105,59 +75,110 @@ internal sealed class DumpbinService : IExcludeEmptySearchLocationObserver, IDum
 			string path = service.CreateSubpath("Service");
 			string path2 = Path.Combine(path, "DumpBinInventory.log");
 			using StreamWriter streamWriter = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
-			IList<IDumpBinInventoryItem> barcodesInBin = InventoryService.GetBarcodesInBin();
-			streamWriter.WriteLine("** Dump bin data **");
-			foreach (IDumpBinInventoryItem item in barcodesInBin)
-			{
-				streamWriter.WriteLine(" Barcode {0} put in at {1} {2}", item.ID, item.PutTime.ToShortDateString(), item.PutTime.ToShortTimeString());
-			}
+			DumpContents(streamWriter);
 			streamWriter.WriteLine();
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Failed to log dump bin contents.", e);
 		}
-		return InventoryService.ClearDumpbinInventory();
+		int num = CurrentCount();
+		m_itemCount = 0;
+		return Table.DeleteAll() == num;
 	}
 
-	public void DumpContents(IFormattedLog log)
+	public void DumpContents(TextWriter log)
 	{
-		if (!ControllerConfiguration.Instance.DumpVMZState)
+		List<IDumpBinInventoryItem> list = Table.LoadEntries();
+		using (new DisposeableList<IDumpBinInventoryItem>(list))
+		{
+			log.WriteLine("-- Dump bin inventory ( {0} total items ) --", list.Count);
+			foreach (IDumpBinInventoryItem item in list)
+			{
+				log.WriteLine("Barcode {0} put in at {1}", item.ID, item.PutTime.ToString());
+			}
+		}
+	}
+
+	public IList<IDumpBinInventoryItem> GetBarcodesInBin()
+	{
+		return Table.LoadEntries();
+	}
+
+	public bool AddBinItem(string matrix)
+	{
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		return AddBinItem(service.NewBinItem(matrix, DateTime.Now));
+	}
+
+	public bool AddBinItem(IDumpBinInventoryItem item)
+	{
+		m_itemCount++;
+		return Table.Insert(item);
+	}
+
+	public void GetState(XmlTextWriter writer)
+	{
+		List<IDumpBinInventoryItem> list = Table.LoadEntries();
+		using (new DisposeableList<IDumpBinInventoryItem>(list))
+		{
+			foreach (IDumpBinInventoryItem item in list)
+			{
+				writer.WriteStartElement("bin-item");
+				writer.WriteAttributeString("PutTime", item.PutTime.ToString());
+				writer.WriteAttributeString("id", item.ID);
+				writer.WriteEndElement();
+			}
+		}
+	}
+
+	public void ResetState(XmlDocument xmlDocument, ErrorList errors)
+	{
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		ClearItems();
+		XmlNodeList xmlNodeList = xmlDocument.DocumentElement.SelectNodes("bin-item");
+		if (xmlNodeList == null || xmlNodeList.Count <= 0)
 		{
 			return;
 		}
-		IList<IDumpBinInventoryItem> barcodesInBin = InventoryService.GetBarcodesInBin();
-		int num = 0;
-		log.WriteFormatted("-- Dump bin inventory --");
-		foreach (IDumpBinInventoryItem item in barcodesInBin)
+		List<IDumpBinInventoryItem> list = new List<IDumpBinInventoryItem>();
+		using (new DisposeableList<IDumpBinInventoryItem>(list))
 		{
-			num++;
-			log.WriteFormatted(" Barcode {0} put in at {1} {2}", item.ID, item.PutTime.ToShortDateString(), item.PutTime.ToShortTimeString());
+			foreach (XmlNode item in xmlNodeList)
+			{
+				string attributeValue = XmlNodeExtensions.GetAttributeValue(item, "id", "UNKNOWN");
+				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item, "PutTime", null);
+				DateTime timestamp = DateTime.Now;
+				if (attributeValue2 != null)
+				{
+					try
+					{
+						timestamp = DateTime.Parse(attributeValue2);
+					}
+					catch (Exception)
+					{
+						LogHelper.Instance.Log(LogEntryType.Error, "[DumpbinService] ResetState: unable to parse date time {0}", attributeValue2);
+						timestamp = DateTime.Now;
+					}
+				}
+				list.Add(service.NewBinItem(attributeValue, timestamp));
+			}
+			if (list.Count > 0)
+			{
+				Table.Insert(list);
+				m_itemCount += list.Count;
+			}
 		}
-		log.WriteFormatted("There are {0} items in the bin.", num);
 	}
 
-	public bool Initialize()
+	internal DumpbinService()
 	{
-		LogHelper.Instance.Log("[DumpBinService] Initialize.");
-		return true;
-	}
-
-	internal DumpbinService(IInventoryService service)
-	{
-		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-		IEmptySearchPatternService service3 = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-		service3.AddObserver(this);
-		Deck = service2.Last.Number;
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		Deck = service.Last.Number;
 		Slots = new Range(82, 84);
-		RotationLocation = service.Get(Deck, 1);
-		m_putLocation = service.Get(Deck, Slots.Start + 1);
-		InventoryService = service;
-	}
-
-	private bool IsFullInner()
-	{
-		int dumpbinItemCount = InventoryService.DumpbinItemCount;
-		return dumpbinItemCount >= Capacity;
+		IDataTableService service2 = ServiceLocator.Instance.GetService<IDataTableService>();
+		Table = service2.GetTable<IDumpBinInventoryItem>();
+		m_itemCount = Table.GetRowCount();
+		LogHelper.Instance.Log("[DumpbinService] Loaded {0} items.", m_itemCount);
 	}
 }

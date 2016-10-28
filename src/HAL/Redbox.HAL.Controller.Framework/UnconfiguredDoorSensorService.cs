@@ -1,30 +1,16 @@
-using System;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class UnconfiguredDoorSensorService : IDoorSensorService, IDisposable
+internal sealed class UnconfiguredDoorSensorService : IDoorSensorService, IMoveVeto
 {
-	private bool m_softwareOverride;
-
 	public bool SensorsEnabled => false;
 
-	public bool SoftwareOverride
-	{
-		get
-		{
-			return m_softwareOverride;
-		}
-		set
-		{
-			m_softwareOverride = value;
-			IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
-			map.SetValue("SensorSoftwareOverride", m_softwareOverride);
-		}
-	}
+	public bool SoftwareOverride { get; set; }
 
-	public void Dispose()
+	public ErrorCodes CanMove()
 	{
+		return ErrorCodes.Success;
 	}
 
 	public DoorSensorResult Query()
@@ -39,7 +25,5 @@ internal sealed class UnconfiguredDoorSensorService : IDoorSensorService, IDispo
 
 	internal UnconfiguredDoorSensorService()
 	{
-		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
-		m_softwareOverride = map.GetValue("SensorSoftwareOverride", def: false);
 	}
 }

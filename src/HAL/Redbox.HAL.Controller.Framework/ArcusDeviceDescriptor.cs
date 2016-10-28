@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -14,7 +13,7 @@ internal sealed class ArcusDeviceDescriptor : IDeviceDescriptor
 
 	public string Friendlyname => "Proteus XES";
 
-	public DeviceClass DeviceClazz => DeviceClass.None;
+	public IDeviceSetupClass SetupClass { get; private set; }
 
 	public override string ToString()
 	{
@@ -39,20 +38,18 @@ internal sealed class ArcusDeviceDescriptor : IDeviceDescriptor
 	public bool ResetDriver()
 	{
 		Thread.Sleep(3000);
-		using (DeviceHelper deviceHelper = new DeviceHelper(debug: true))
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		if (!service.SetDeviceState(this, DeviceState.Disable))
 		{
-			if (!deviceHelper.SetDeviceState(this, DeviceState.Disable))
-			{
-				return false;
-			}
-			if (!deviceHelper.SetDeviceState(this, DeviceState.Enable))
-			{
-				return false;
-			}
-			if (deviceHelper.SetDeviceState(this, DeviceState.Enable))
-			{
-				return true;
-			}
+			return false;
+		}
+		if (!service.SetDeviceState(this, DeviceState.Enable))
+		{
+			return false;
+		}
+		if (service.SetDeviceState(this, DeviceState.Enable))
+		{
+			return true;
 		}
 		Process process = null;
 		bool flag = false;
@@ -71,5 +68,7 @@ internal sealed class ArcusDeviceDescriptor : IDeviceDescriptor
 
 	internal ArcusDeviceDescriptor()
 	{
+		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
+		SetupClass = service.Get(DeviceClass.None);
 	}
 }

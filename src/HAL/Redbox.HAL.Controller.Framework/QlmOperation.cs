@@ -2,7 +2,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class QlmOperation : IQlm
+internal sealed class QlmOperation
 {
 	private const int LifterTimeout = 120000;
 

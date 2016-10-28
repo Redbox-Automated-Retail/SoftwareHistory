@@ -5,13 +5,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal struct ArcusMotorStatus
 {
-	private enum MoveOperation
-	{
-		Home,
-		Dropback,
-		Normal
-	}
-
 	private MoveOperation Operation;
 
 	internal int ArcusStatusCode { get; private set; }
@@ -104,19 +97,13 @@ internal struct ArcusMotorStatus
 		{
 			Operation = MoveOperation.Dropback;
 			Axes = new Axis[1] { Axis.Y };
-			return;
-		}
-		string text = null;
-		if (waitCommand.StartsWith("WAITH"))
-		{
-			Operation = MoveOperation.Home;
-			text = waitCommand.Substring("WAITH".Length);
 		}
 		else
 		{
-			text = waitCommand.Substring("WAIT".Length);
+			string text = null;
+			text = ((!waitCommand.StartsWith("WAITH")) ? waitCommand.Substring("WAIT".Length) : waitCommand.Substring("WAITH".Length));
+			ComputeAxis(text);
 		}
-		ComputeAxis(text);
 	}
 
 	private void ComputeAxis(string axisAsString)

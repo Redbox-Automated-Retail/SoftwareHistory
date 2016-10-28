@@ -16,10 +16,10 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 	public void MachineFull(ExecutionResult result, string id)
 	{
 		base.Context.Send("MachineFull");
-		base.AppLog.Write("The machine is full.");
+		base.AppLog.LogMachineFull();
 	}
 
-	public FileDiscIterationResult BeforeNextPut(ExecutionResult result, IPutResult putResult)
+	public FileDiscIterationResult OnFailedPut(ExecutionResult result, IPutResult putResult)
 	{
 		base.Context.CreateInfoResult("PutFailure", $"There was an error while executing the PUT instruction: {putResult.ToString().ToUpper()}");
 		if (putResult.IsSlotInUse)
@@ -64,7 +64,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 		applicationLog.Write("Field-insert with fraud scan start.");
 		if (base.InventoryService.MachineIsFull())
 		{
-			applicationLog.Write("The machine is full, can't continue.");
+			applicationLog.LogMachineFull();
 			base.Context.CreateInfoResult("MachineFull", "The machine is full.");
 			base.Context.Send("MachineFull");
 			AddError("The machine is full.");
@@ -85,8 +85,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 			AddError("Unable to move to the vend door.");
 			return;
 		}
-		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.FieldInsertFraudCheck);
+		using FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: false);
 		if (!base.ControlSystem.VendDoorRent().Success)
 		{
 			base.Context.CreateInfoResult("MachineError", "VENDDOOR RENT timed out.");
@@ -128,6 +127,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 		}
 		applicationLog.Write("Item received into picker.");
 		base.ControlSystem.TrackCycle();
+		fraudValidator.StartScan();
 		using Scanner scanner = new Scanner();
 		ScanResult scanResult = scanner.Read();
 		if (!scanResult.SnapOk)
@@ -147,14 +147,16 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 		base.Context.CreateInfoResult("BarcodeRead", "The returned item's barcode.", scanResult.ScannedMatrix);
 		applicationLog.Write($"The ID in the picker: {scanResult.ScannedMatrix}");
 		base.Context.Send($"ReturnEnd:{scanResult.ScannedMatrix}");
-		IFraudScanResult fraudScanResult = diskValidatorHelper.Validate(scanResult.ScannedMatrix);
-		diskValidatorHelper.NotifyContext(fraudScanResult, scanResult.ScannedMatrix, base.Context, leaveResult: true);
+		IFraudScanResult fraudScanResult = fraudValidator.Validate(scanResult.ScannedMatrix);
+		fraudValidator.Publish(fraudScanResult, scanResult.ScannedMatrix);
 		if (fraudScanResult.ScanError != ErrorCodes.Success || !fraudScanResult.Valid)
 		{
 			applicationLog.WriteFormatted("Scan error code = {0} is valid = {1}; returning item to user.", fraudScanResult.ScanError.ToString(), fraudScanResult.Valid);
 			ReturnItem();
+			return;
 		}
-		else if (HelperFunctions.PutDiscAway(base.Result, base.Context, scanResult.ScannedMatrix, this) == ErrorCodes.Success)
+		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context);
+		if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
 		{
 			CorrectiveMoveVend(MoveMode.Get);
 		}

@@ -69,18 +69,14 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 	private bool FileToBin(int deck)
 	{
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
-		if (service == null || !service.Active)
-		{
-			base.AppLog.Write("The kiosk is not configured for a dumpbin.");
-			AddError("The dumpbin is not configured.");
-		}
-		if (base.MotionService.MoveTo(service.MoveableLocation(), MoveMode.Put, base.AppLog) != ErrorCodes.Success)
+		if (base.MotionService.MoveTo(service.PutLocation, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!ControllerService.Instance.Put("UNKNOWN", base.AppLog).Success)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service2.Put("UNKNOWN", base.AppLog).Success)
 		{
 			AddError("Test failure.");
 			return false;
@@ -96,7 +92,8 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service.Put("UNKNOWN", base.AppLog);
 		if (!putResult.IsSlotInUse)
 		{
 			return false;

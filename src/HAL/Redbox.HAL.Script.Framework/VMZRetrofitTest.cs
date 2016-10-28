@@ -24,13 +24,7 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 				AddError("Kiosk Misconfiguration.");
 				return;
 			}
-			if (!base.DumpbinService.Active)
-			{
-				applicationLog.Write("The kiosk is not configured with a dump slot.");
-				AddError("Kiosk Misconfiguration.");
-				return;
-			}
-			IDeck byNumber = base.DecksService.GetByNumber(base.DumpbinService.MoveableLocation().Deck);
+			IDeck byNumber = base.DecksService.GetByNumber(base.DumpbinService.PutLocation.Deck);
 			if (!MoveAndGet(byNumber.Number, 1))
 			{
 				AddError("Failure to retrieve disk from start position.");
@@ -100,12 +94,12 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 		}
 		finally
 		{
-			IDeck byNumber2 = base.DecksService.GetByNumber(base.DumpbinService.MoveableLocation().Deck);
+			IDeck byNumber2 = base.DecksService.GetByNumber(base.DumpbinService.PutLocation.Deck);
 			if (!byNumber2.IsQlm)
 			{
 				base.InventoryService.MarkDeckInventory(byNumber2, "EMPTY");
 			}
-			base.DumpbinService.ResetCount();
+			base.DumpbinService.ClearItems();
 		}
 	}
 
@@ -116,13 +110,13 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 
 	private bool FileToBin(int deck)
 	{
-		ILocation location = base.DumpbinService.MoveableLocation();
-		if (base.MotionService.MoveTo(location, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
+		if (base.MotionService.MoveTo(base.DumpbinService.PutLocation, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
 		}
-		if (!ControllerService.Instance.Put("UNKNOWN", base.AppLog).Success)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service.Put("UNKNOWN", base.AppLog).Success)
 		{
 			AddError("Test failure.");
 			return false;
@@ -139,7 +133,8 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service.Put("UNKNOWN", base.AppLog);
 		if (!putResult.IsSlotInUse)
 		{
 			return false;

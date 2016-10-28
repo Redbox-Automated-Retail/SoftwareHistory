@@ -5,17 +5,19 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal abstract class BasePipeChannel : IDisposable
+public abstract class BasePipeChannel : IDisposable
 {
-	internal bool Connected { get; set; }
+	protected bool Disposed;
 
-	internal string ID { get; set; }
+	protected SafeFileHandle PipeHandle;
 
-	protected bool Disposed { get; set; }
+	protected readonly uint MessageHeaderSize;
 
-	protected SafeFileHandle PipeHandle { get; set; }
+	private readonly bool FlushOnWrite;
 
-	protected uint MessageHeaderSize => (uint)Marshal.SizeOf(typeof(int));
+	public bool Connected { get; internal set; }
+
+	public string ID { get; internal set; }
 
 	public void Dispose()
 	{
@@ -23,14 +25,33 @@ internal abstract class BasePipeChannel : IDisposable
 		GC.SuppressFinalize(this);
 	}
 
-	internal abstract bool Connect(string pipeName);
+	public abstract bool Connect();
 
-	internal bool SendMessage(byte[] message)
+	public bool SendMessage(byte[] message)
 	{
-		return SendBytes(message);
+		if (PipeHandle.IsInvalid)
+		{
+			return false;
+		}
+		uint lpNumberOfBytesWritten = 0u;
+		byte[] bytes = BitConverter.GetBytes(message.Length);
+		byte[] array = new byte[bytes.Length + message.Length];
+		Array.Copy(bytes, array, bytes.Length);
+		Array.Copy(message, 0, array, bytes.Length, message.Length);
+		if (WriteFile(PipeHandle, array, (uint)array.Length, out lpNumberOfBytesWritten, IntPtr.Zero))
+		{
+			int lastWin32Error = Marshal.GetLastWin32Error();
+			LogHelper.Instance.Log($"PipeClientSession.SafeWrite() returned false; error code = {lastWin32Error}", LogEntryType.Error);
+			return false;
+		}
+		if (!FlushOnWrite)
+		{
+			return true;
+		}
+		return FlushFileBuffers(PipeHandle);
 	}
 
-	internal byte[] ReceiveMessage()
+	public byte[] ReceiveMessage()
 	{
 		byte[] array = ReadBytes(MessageHeaderSize);
 		if (array == null)
@@ -64,43 +85,31 @@ internal abstract class BasePipeChannel : IDisposable
 		return null;
 	}
 
-	protected bool SendBytes(byte[] message)
+	protected BasePipeChannel()
+		: this(flushOnWrite: true)
 	{
-		if (PipeHandle.IsInvalid)
-		{
-			return false;
-		}
-		uint writtenBytes = 0u;
-		byte[] bytes = BitConverter.GetBytes(message.Length);
-		uint messageHeaderSize = MessageHeaderSize;
-		if (!SafeWrite(bytes, messageHeaderSize, out writtenBytes))
-		{
-			return false;
-		}
-		if (writtenBytes != messageHeaderSize)
-		{
-			LogHelper.Instance.Log($"SendBytes: written bytes {writtenBytes} != header size {messageHeaderSize}", LogEntryType.Error);
-			return false;
-		}
-		if (SafeWrite(message, (uint)message.Length, out writtenBytes))
-		{
-			return writtenBytes == message.Length;
-		}
-		return false;
+	}
+
+	protected BasePipeChannel(bool flushOnWrite)
+	{
+		FlushOnWrite = flushOnWrite;
+	}
+
+	protected BasePipeChannel(SafeFileHandle handle, bool flushOnWrite)
+	{
+		PipeHandle = handle;
+		MessageHeaderSize = (uint)Marshal.SizeOf(typeof(int));
+		FlushOnWrite = flushOnWrite;
 	}
 
 	protected BasePipeChannel(SafeFileHandle pipeHandle)
+		: this(pipeHandle, flushOnWrite: true)
 	{
-		PipeHandle = pipeHandle;
 	}
 
 	~BasePipeChannel()
 	{
 		DisposeChannel(fromDispose: false);
-	}
-
-	protected BasePipeChannel()
-	{
 	}
 
 	[DllImport("kernel32.dll", SetLastError = true)]
@@ -114,15 +123,4 @@ internal abstract class BasePipeChannel : IDisposable
 
 	[DllImport("kernel32.dll", SetLastError = true)]
 	protected static extern bool FlushFileBuffers(SafeFileHandle handle);
-
-	private bool SafeWrite(byte[] bytes, uint msgLen, out uint writtenBytes)
-	{
-		if (WriteFile(PipeHandle, bytes, msgLen, out writtenBytes, IntPtr.Zero))
-		{
-			return true;
-		}
-		int lastWin32Error = Marshal.GetLastWin32Error();
-		LogHelper.Instance.Log($"PipeClientSession.SafeWrite() returned false; error code = {lastWin32Error}", LogEntryType.Error);
-		return false;
-	}
 }

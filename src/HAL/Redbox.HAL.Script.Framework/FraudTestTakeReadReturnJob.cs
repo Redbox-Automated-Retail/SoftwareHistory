@@ -10,8 +10,7 @@ internal sealed class FraudTestTakeReadReturnJob : NativeJobAdapter
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Fraud", flushOnWrite: false, "Fraud-take-read-return");
 		applicationLog.Write("Take/Test/Return Start.");
-		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.Return);
+		using FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: false);
 		if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
 		{
 			EndJob(errored: true);
@@ -39,30 +38,25 @@ internal sealed class FraudTestTakeReadReturnJob : NativeJobAdapter
 			return;
 		}
 		base.ControlSystem.TrackCycle();
+		fraudValidator.StartScan();
+		bool errored = true;
 		using Scanner scanner = new Scanner();
 		for (int i = 0; i < 2; i++)
 		{
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{
-				EndJob(errored: true);
-				return;
+				break;
 			}
-			if (!scanResult.ReadCode)
+			if (scanResult.ReadCode)
 			{
-				if (i != 0)
-				{
-					break;
-				}
-				base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
-				continue;
+				fraudValidator.ValidateAndPublish(scanResult.ScannedMatrix);
+				errored = false;
+				break;
 			}
-			IFraudScanResult scanResult2 = diskValidatorHelper.Validate(scanResult.ScannedMatrix);
-			diskValidatorHelper.NotifyContext(scanResult2, scanResult.ScannedMatrix, base.Context, leaveResult: true);
-			EndJob(errored: false);
-			return;
+			base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
 		}
-		EndJob(errored: true);
+		EndJob(errored);
 	}
 
 	internal FraudTestTakeReadReturnJob(ExecutionResult r, ExecutionContext c)

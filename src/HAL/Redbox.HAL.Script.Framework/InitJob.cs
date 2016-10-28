@@ -32,7 +32,6 @@ internal sealed class InitJob : NativeJobAdapter
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "init", flushOnWrite: true, null);
-		_ = ControllerService.Instance;
 		applicationLog.Write("Init start.");
 		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
 		{
@@ -60,7 +59,8 @@ internal sealed class InitJob : NativeJobAdapter
 			PerfFunctions.Wait(ControllerConfiguration.Instance.MinInitWakeupTime);
 			LogHelper.Instance.Log("Wait for COM ports complete.", LogEntryType.Info);
 		}
-		if (base.ControlSystem.IsInitialized)
+		IControlSystemService service2 = ServiceLocator.Instance.GetService<IControlSystemService>();
+		if (service2.IsInitialized)
 		{
 			base.ControlSystem.Shutdown();
 			PerfFunctions.Wait(2000);
@@ -75,8 +75,8 @@ internal sealed class InitJob : NativeJobAdapter
 			AddError("RESET instruction returned timeout.");
 			return;
 		}
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		service2.Initialize();
+		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		service3.Initialize();
 		try
 		{
 			Process cameraTuner2 = null;
@@ -160,18 +160,20 @@ internal sealed class InitJob : NativeJobAdapter
 			}
 			HandleCameraStartup(cameraTuner2);
 			StartCamera();
-			ErrorCodes errorCodes3 = HelperFunctions.CheckPicker(base.Result, base.Context, null);
-			if (errorCodes3 != ErrorCodes.PickerEmpty)
+			using (CheckPickerOperation checkPickerOperation = new CheckPickerOperation(base.Context))
 			{
-				AddError("Failed to put disk away.");
-				return;
+				if (checkPickerOperation.CheckPicker(base.Result, null) != ErrorCodes.PickerEmpty)
+				{
+					AddError("Failed to put disk away.");
+					return;
+				}
 			}
 			applicationLog.Write("Move to the vend position.");
 			base.Context.Send("MOVE TO VEND");
-			ErrorCodes errorCodes4 = base.MotionService.MoveVend(MoveMode.Get, base.AppLog);
-			if (errorCodes4 != ErrorCodes.Success)
+			ErrorCodes errorCodes3 = base.MotionService.MoveVend(MoveMode.Get, base.AppLog);
+			if (errorCodes3 != ErrorCodes.Success)
 			{
-				base.Context.CreateInfoResult(StackEnd.Top, errorCodes4.ToString().ToUpper(), "There was an error executing the MOVEVEND instruction.");
+				base.Context.CreateInfoResult(StackEnd.Top, errorCodes3.ToString().ToUpper(), "There was an error executing the MOVEVEND instruction.");
 				AddError("The MOVEVEND instruction failed.");
 			}
 		}

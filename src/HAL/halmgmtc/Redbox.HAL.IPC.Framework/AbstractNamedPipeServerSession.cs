@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Microsoft.Win32.SafeHandles;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -11,11 +10,11 @@ public abstract class AbstractNamedPipeServerSession
 {
 	private readonly StringBuilder ReadBuilder;
 
-	private readonly BasePipeChannel Channel;
-
 	public IDictionary<string, object> Properties { get; private set; }
 
 	public IDictionary<string, string> Context { get; private set; }
+
+	public BasePipeChannel Channel { get; private set; }
 
 	protected abstract string WelcomeMessage { get; }
 
@@ -34,9 +33,9 @@ public abstract class AbstractNamedPipeServerSession
 		return Channel.Connected;
 	}
 
-	protected AbstractNamedPipeServerSession(SafeFileHandle pipeHandle)
+	protected AbstractNamedPipeServerSession(BasePipeChannel channel)
 	{
-		Channel = new ServerPipeChannel(pipeHandle);
+		Channel = channel;
 		ReadBuilder = new StringBuilder();
 		Properties = new Dictionary<string, object>();
 		Context = new Dictionary<string, string>();

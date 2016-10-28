@@ -15,19 +15,9 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 
 	private TrackState m_trackState;
 
-	public bool IsInitialized => true;
-
 	public VendDoorState VendDoorState => m_vendDoorState;
 
 	public TrackState TrackState => m_trackState;
-
-	public void AddHandler(IControlSystemObserver observer)
-	{
-	}
-
-	public void RemoveHandler(IControlSystemObserver observer)
-	{
-	}
 
 	public IControlResponse StopRoller()
 	{
@@ -166,10 +156,6 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 	}
 
 	public void Shutdown()
-	{
-	}
-
-	public void Shutdown(bool _notUsed)
 	{
 	}
 

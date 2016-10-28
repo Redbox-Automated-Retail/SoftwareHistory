@@ -38,13 +38,21 @@ public sealed class MotionControlInstruction : Instruction
 		{
 		case Operand.Readlimits:
 		{
-			string[] array = service.ReadLimits();
-			string[] array2 = array;
-			foreach (string instance in array2)
+			IMotionControlLimitResponse motionControlLimitResponse = service.ReadLimits();
+			if (motionControlLimitResponse.ReadOk)
 			{
-				context.PushTop(instance);
+				IMotionControlLimit[] limits = motionControlLimitResponse.Limits;
+				foreach (IMotionControlLimit motionControlLimit in limits)
+				{
+					context.PushTop(string.Format("{0} LIMIT: {1} ", motionControlLimit.Limit.ToString().ToUpper(), motionControlLimit.Blocked ? "BLOCKED" : "CLEAR"));
+				}
+				context.PushTop(motionControlLimitResponse.Limits.Length);
 			}
-			context.PushTop(array.Length);
+			else
+			{
+				context.PushTop("INVALID LIMITS RESPONSE");
+				context.PushTop(1);
+			}
 			break;
 		}
 		case Operand.Comstatus:

@@ -163,32 +163,21 @@ internal sealed class ArcusMotionController : MotionController
 		{
 			if (list.Count != 2)
 			{
-				arcusControllerPosition.ReadOk = false;
 				return arcusControllerPosition;
 			}
 			if (list[0].Error != ErrorCodes.Success || list[1].Error != ErrorCodes.Success)
 			{
-				arcusControllerPosition.ReadOk = false;
 				return arcusControllerPosition;
 			}
-			arcusControllerPosition.ReadOk = true;
 			string s = list[0].Response.Substring(list[0].Response.IndexOf('=') + 1);
 			if (int.TryParse(s, out var result))
 			{
 				arcusControllerPosition.XCoordinate = result;
 			}
-			else
-			{
-				arcusControllerPosition.ReadOk = false;
-			}
 			string s2 = list[1].Response.Substring(list[1].Response.IndexOf('=') + 1);
 			if (int.TryParse(s2, out result))
 			{
 				arcusControllerPosition.YCoordinate = result;
-			}
-			else
-			{
-				arcusControllerPosition.ReadOk = false;
 			}
 			return arcusControllerPosition;
 		}
@@ -201,7 +190,7 @@ internal sealed class ArcusMotionController : MotionController
 		return Port.Close();
 	}
 
-	internal override string[] ReadLimits()
+	internal override IMotionControlLimitResponse ReadLimits()
 	{
 		string[] array = new string[1] { "???" };
 		List<ArcusCommandResponse> list = OnSendCommands(array);
@@ -210,31 +199,15 @@ internal sealed class ArcusMotionController : MotionController
 			if (list.Count != array.Length)
 			{
 				WriteToLog("[ReadLimits] Query response returned length of {0}", list.Count);
-				return InvalidQueryResponse;
+				return new ArcusLimitResponse(null);
 			}
 			ArcusCommandResponse arcusCommandResponse = list[0];
-			if (arcusCommandResponse.Error != ErrorCodes.Success)
+			ArcusLimitResponse arcusLimitResponse = new ArcusLimitResponse(arcusCommandResponse.Response);
+			if (!arcusLimitResponse.ReadOk)
 			{
-				WriteToLog("[ReadLimits] Query response returned error {0}", arcusCommandResponse.Error.ToString());
-				return InvalidQueryResponse;
+				WriteToLog("[ReadLimits] The response is incorrect {0}", list);
 			}
-			string[] array2 = arcusCommandResponse.Response.Trim().Split(',');
-			if (array2.Length != 28)
-			{
-				WriteToLog("[ReadLimits] ERROR: the length of the status query ( length = {0} ) is unexpected.", array2.Length);
-				return InvalidQueryResponse;
-			}
-			string text = array2[13].TrimEnd('.');
-			if (!int.TryParse(text, out var result))
-			{
-				WriteToLog("[ReadLimits] The enable output status entry returned an unexpected value {0}", text);
-				return InvalidQueryResponse;
-			}
-			return new string[2]
-			{
-				string.Format("UPPER LIMIT: {0}", ((result & 0x10) != 0) ? "BLOCKED" : "CLEAR"),
-				string.Format("LOWER LIMIT: {0}", ((result & 0x20) != 0) ? "BLOCKED" : "CLEAR")
-			};
+			return arcusLimitResponse;
 		}
 	}
 
@@ -333,12 +306,13 @@ internal sealed class ArcusMotionController : MotionController
 	private ArcusCommandResponse WaitMotor(Axis axis, ref ArcusMotorStatus motorStatus)
 	{
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusMotorQueryPause);
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		string command = "MST" + axis.ToString().ToUpper();
 		ArcusCommandResponse arcusCommandResponse;
 		do
 		{
-			ErrorCodes errorCodes = CanMove();
+			ErrorCodes errorCodes = service.CanMove();
 			if (errorCodes != ErrorCodes.Success)
 			{
 				WriteToLog($"Door sensor query returned {errorCodes.ToString()}: halting motion.");
@@ -374,13 +348,14 @@ internal sealed class ArcusMotionController : MotionController
 	private ArcusCommandResponse WaitMotor(Axis axis, int? timeOut, Predicate<int> motorRunning)
 	{
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusMotorQueryPause);
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		string command = "MST" + axis.ToString().ToUpper();
 		ArcusCommandResponse arcusCommandResponse;
 		int result;
 		do
 		{
-			ErrorCodes errorCodes = CanMove();
+			ErrorCodes errorCodes = service.CanMove();
 			if (errorCodes != ErrorCodes.Success)
 			{
 				WriteToLog($"Door sensor query returned {errorCodes.ToString()}: halting motion.");

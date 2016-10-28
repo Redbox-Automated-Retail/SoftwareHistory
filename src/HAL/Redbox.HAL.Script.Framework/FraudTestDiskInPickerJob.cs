@@ -1,6 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -22,24 +20,22 @@ internal sealed class FraudTestDiskInPickerJob : NativeJobAdapter
 			AddError("PickerEmpty");
 			return;
 		}
-		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.Return);
-		PerfFunctions.Wait(500);
-		using Scanner scanner = new Scanner();
+		using FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: true);
 		base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
+		using Scanner scanner = new Scanner();
 		ScanResult scanResult = scanner.Read();
 		if (!scanResult.SnapOk)
 		{
 			base.Context.CreateCameraCaptureErrorResult();
-			return;
 		}
-		if (!scanResult.ReadCode)
+		else if (!scanResult.ReadCode)
 		{
 			base.Context.CreateInfoResult("NoBarcodeRead", "The disk has no barcode.");
-			return;
 		}
-		IFraudScanResult scanResult2 = diskValidatorHelper.Validate(scanResult.ScannedMatrix);
-		diskValidatorHelper.NotifyContext(scanResult2, scanResult.ScannedMatrix, base.Context, leaveResult: true);
+		else
+		{
+			fraudValidator.ValidateAndPublish(scanResult.ScannedMatrix);
+		}
 	}
 
 	internal FraudTestDiskInPickerJob(ExecutionResult r, ExecutionContext c)

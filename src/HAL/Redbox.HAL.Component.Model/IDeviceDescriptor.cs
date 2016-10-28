@@ -8,13 +8,13 @@ public interface IDeviceDescriptor
 
 	string Friendlyname { get; }
 
-	DeviceClass DeviceClazz { get; }
+	IDeviceSetupClass SetupClass { get; }
+
+	bool ResetDriver();
 
 	bool MatchDriver();
 
 	bool Locate();
 
 	DeviceStatus GetStatus();
-
-	bool ResetDriver();
 }

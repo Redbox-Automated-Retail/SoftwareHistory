@@ -10,13 +10,13 @@ internal sealed class DumpbinPutObserver : IPutObserver
 	public void OnSuccessfulPut(IPutResult res, IFormattedLog log)
 	{
 		log.WriteFormatted($"PUT DUMPBIN ID={res.StoredMatrix}");
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 		service.AddBinItem(res.StoredMatrix);
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		IDumpbinService service3 = ServiceLocator.Instance.GetService<IDumpbinService>();
-		service2.MoveTo(service3.RotationLocation, MoveMode.None, log);
-		LogHelper.Instance.Log("An item was just placed to the bin: current count = {0}", service3.CurrentCount());
-		service.Reset(service3.PutLocation);
+		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		service3.MoveTo(service.RotationLocation, MoveMode.None, log);
+		LogHelper.Instance.Log("An item was just placed to the bin: current count = {0}", service.CurrentCount());
+		service2.Reset(service.PutLocation);
 	}
 
 	public void OnFailedPut(IPutResult res, IFormattedLog log)

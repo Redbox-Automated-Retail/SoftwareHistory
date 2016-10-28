@@ -238,7 +238,7 @@ public sealed class Deck : IDeck
 		writer.WriteEndElement();
 	}
 
-	internal void Copy(Deck newProperties)
+	internal void UpdateFrom(Deck newProperties)
 	{
 		YOffset = newProperties.YOffset;
 		IsQlm = newProperties.IsQlm;

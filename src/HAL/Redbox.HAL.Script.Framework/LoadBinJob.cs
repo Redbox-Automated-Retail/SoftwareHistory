@@ -10,24 +10,23 @@ internal sealed class LoadBinJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "KioskTest", flushOnWrite: false, "load-bin-fast");
-		_ = ControllerService.Instance;
-		if (!base.DumpbinService.Active)
+		if (!ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			applicationLog.Write("The dump bin is not configured.");
 			AddError("The dump bin is not configured.");
 			return;
 		}
-		string top = GetTop<string>();
-		LoadBy loadBy = Enum<LoadBy>.ParseIgnoringCase(top, LoadBy.None);
+		string text = base.Context.PopTop<string>();
+		LoadBy loadBy = Enum<LoadBy>.ParseIgnoringCase(text, LoadBy.None);
 		if (loadBy == LoadBy.None)
 		{
-			string text = $"Unrecognized argument {top}";
-			applicationLog.Write(text);
-			AddError(text);
+			string text2 = $"Unrecognized argument {text}";
+			applicationLog.Write(text2);
+			AddError(text2);
 			return;
 		}
-		int top2 = GetTop<int>();
-		for (int i = 0; i < top2; i++)
+		int num = base.Context.PopTop<int>();
+		for (int i = 0; i < num; i++)
 		{
 			if (base.DumpbinService.IsFull())
 			{
@@ -37,8 +36,8 @@ internal sealed class LoadBinJob : NativeJobAdapter
 			ILocation location = null;
 			if (LoadBy.Barcode == loadBy)
 			{
-				string top3 = GetTop<string>();
-				location = base.InventoryService.Lookup(top3);
+				string id = base.Context.PopTop<string>();
+				location = base.InventoryService.Lookup(id);
 				if (location == null)
 				{
 					continue;
@@ -46,28 +45,28 @@ internal sealed class LoadBinJob : NativeJobAdapter
 			}
 			else
 			{
-				int top4 = GetTop<int>();
-				int top5 = GetTop<int>();
-				location = base.InventoryService.Get(top4, top5);
+				int deck = base.Context.PopTop<int>();
+				int slot = base.Context.PopTop<int>();
+				location = base.InventoryService.Get(deck, slot);
 			}
 			if (base.MotionService.MoveTo(location, MoveMode.Get, base.AppLog) != ErrorCodes.Success)
 			{
 				AddError("There was an error during the move.");
 				return;
 			}
-			IGetResult getResult = ControllerService.Instance.Get(base.AppLog);
+			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+			IGetResult getResult = service.Get(base.AppLog);
 			if (!getResult.Success)
 			{
 				AddError("Unable to fetch disk from drum.");
 				return;
 			}
-			ILocation location2 = base.DumpbinService.MoveableLocation();
-			if (base.MotionService.MoveTo(location2.Deck, location2.Slot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
+			if (base.MotionService.MoveTo(base.DumpbinService.PutLocation, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 			{
 				AddError("There was an error during the move.");
 				return;
 			}
-			if (!ControllerService.Instance.Put(getResult.Previous, base.AppLog).Success)
+			if (!service.Put(getResult.Previous, base.AppLog).Success)
 			{
 				AddError("Unable to place disk into drum.");
 				return;

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Win32.SafeHandles;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -13,7 +12,7 @@ internal class NamedPipeServerSession : AbstractNamedPipeServerSession, ISession
 
 	public bool LogDetailedMessages { get; set; }
 
-	internal IPCServiceHost ServiceHost { get; set; }
+	internal IPCServiceHost ServiceHost { get; private set; }
 
 	protected override string WelcomeMessage => $"Welcome! {ServiceHost.Name}, Version {ServiceHost.Version}, {ServiceHost.Copyright}";
 
@@ -33,15 +32,19 @@ internal class NamedPipeServerSession : AbstractNamedPipeServerSession, ISession
 
 	public bool Send(string message)
 	{
-		string text = string.Format("{0} {1}", "[MSG]", message);
-		LogHelper.Instance.Log(text);
-		EnqueueSinkMessage(text);
+		string msg = string.Format("{0} {1}", "[MSG]", message);
+		LogHelper.Instance.Log(msg);
+		lock (m_syncLock)
+		{
+			MessageSinkQueue.Add(message);
+		}
 		return true;
 	}
 
-	internal NamedPipeServerSession(SafeFileHandle pipeHandle)
-		: base(pipeHandle)
+	internal NamedPipeServerSession(BasePipeChannel channel, IPCServiceHost host)
+		: base(channel)
 	{
+		ServiceHost = host;
 	}
 
 	protected override void CloseSessionInner()
@@ -82,14 +85,6 @@ internal class NamedPipeServerSession : AbstractNamedPipeServerSession, ISession
 		if (Disconnect != null)
 		{
 			Disconnect(this, EventArgs.Empty);
-		}
-	}
-
-	private void EnqueueSinkMessage(string message)
-	{
-		lock (m_syncLock)
-		{
-			MessageSinkQueue.Add(message);
 		}
 	}
 

@@ -8,12 +8,12 @@ internal static class SyncHelper
 {
 	internal static SyncResult SyncSlot(ExecutionResult result, ExecutionContext context, ILocation loc, SyncDecorator decorator)
 	{
-		IDiskValidatorService service = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		using DiskValidatorHelper diskValidatorHelper = new DiskValidatorHelper(service, JobsWithScan.Sync);
-		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck deck = service2.GetFrom(loc);
-		IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
-		IMotionControlService service4 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		using FraudValidator fraudValidator = new FraudValidator(context, decorator.BitValue);
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck deck = service.GetFrom(loc);
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		if (deck == null)
 		{
 			context.AppLog.Write($"The deck {loc.Deck} is not a valid deck.");
@@ -37,32 +37,28 @@ internal static class SyncHelper
 		int deck2 = loc.Deck;
 		int slot = loc.Slot;
 		context.Send($"SYNC {deck2},{slot}");
-		ErrorCodes errorCodes = service4.MoveTo(loc, MoveMode.Get, context.AppLog);
+		ErrorCodes errorCodes = service3.MoveTo(loc, MoveMode.Get, context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			context.CreateResult("MachineError", "There was an error executing the MOVE instruction.", deck2, slot, null, null, null);
 			decorator.OnMoveError(errorCodes);
 			return SyncResult.HardwareError;
 		}
-		IGetResult getResult = ControllerService.Instance.Get(context.AppLog);
-		if (getResult.IsSlotEmpty)
+		IGetResult disk = decorator.GetDisk(context.AppLog);
+		if (disk.IsSlotEmpty)
 		{
-			SyncResult syncResult = decorator.ProcessEmpty(getResult);
-			if (syncResult != SyncResult.Success)
-			{
-				return syncResult;
-			}
-			context.CreateResult("InventoryState", "This location was updated in inventory.", deck2, slot, "EMPTY", null, getResult.Previous);
+			context.CreateResult("InventoryState", "This location was updated in inventory.", deck2, slot, "EMPTY", null, disk.Previous);
 			loc.ReturnDate = null;
-			service3.Save(loc);
+			service2.Save(loc);
 			return SyncResult.SlotEmpty;
 		}
-		if (!getResult.Success)
+		if (!disk.Success)
 		{
 			context.CreateResult("MachineError", "An error occurred in the get.", deck2, slot, null, null, null);
-			decorator.OnGetFailure(getResult);
+			decorator.OnGetFailure(disk);
 			return SyncResult.GetError;
 		}
+		fraudValidator.StartScan();
 		using Scanner scanner = new Scanner();
 		ScanResult scanResult = decorator.ReadDisk(scanner);
 		if (!scanResult.SnapOk)
@@ -73,31 +69,32 @@ internal static class SyncHelper
 		}
 		else if (scanResult.ReadCode)
 		{
-			diskValidatorHelper.ValidateAndNotify(scanResult.ScannedMatrix, context);
+			fraudValidator.ValidateAndPublish(scanResult.ScannedMatrix);
 		}
-		SyncResult syncResult2 = decorator.AfterDiskRead();
-		if (syncResult2 != SyncResult.Success)
+		SyncResult syncResult = decorator.AfterDiskRead();
+		if (syncResult != SyncResult.Success)
 		{
-			return syncResult2;
+			return syncResult;
 		}
-		errorCodes = service4.MoveTo(loc, MoveMode.Put, context.AppLog);
+		errorCodes = service3.MoveTo(loc, MoveMode.Put, context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			decorator.OnMoveError(errorCodes);
 			context.CreateMoveErrorResult(deck2, slot);
 			return SyncResult.HardwareError;
 		}
-		IPutResult putResult = ControllerService.Instance.Put(scanResult.ScannedMatrix, context.AppLog);
+		IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service4.Put(scanResult.ScannedMatrix, context.AppLog);
 		if (!putResult.Success)
 		{
 			decorator.OnPutError(scanResult.ScannedMatrix, putResult);
 			return SyncResult.HardwareError;
 		}
-		context.CreateResult("InventoryState", "This location was updated in inventory.", deck2, slot, scanResult.ScannedMatrix, getResult.ReturnTime, getResult.Previous);
-		MerchFlags flags = ((scanResult.ScannedMatrix == getResult.Previous) ? getResult.Flags : MerchFlags.None);
-		loc.ReturnDate = ((!scanResult.ReadCode) ? getResult.ReturnTime : ((DateTime?)null));
+		context.CreateResult("InventoryState", "This location was updated in inventory.", deck2, slot, scanResult.ScannedMatrix, disk.ReturnTime, disk.Previous);
+		MerchFlags flags = ((scanResult.ScannedMatrix == disk.Previous) ? disk.Flags : MerchFlags.None);
+		loc.ReturnDate = ((!scanResult.ReadCode) ? disk.ReturnTime : ((DateTime?)null));
 		loc.Flags = flags;
-		service3.Save(loc);
+		service2.Save(loc);
 		if (!scanResult.SnapOk && ControllerConfiguration.Instance.ErrorSyncOnCameraFailure)
 		{
 			decorator.AddError("The CAMERA isn't working.");

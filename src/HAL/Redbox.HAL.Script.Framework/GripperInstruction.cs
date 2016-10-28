@@ -202,7 +202,8 @@ public sealed class GripperInstruction : Instruction
 				}
 				vendId = keyValuePairValue;
 			}
-			context.PushTop(HelperFunctions.CheckPicker(result, context, vendId).ToString().ToUpper());
+			using CheckPickerOperation checkPickerOperation = new CheckPickerOperation(context);
+			context.PushTop(checkPickerOperation.CheckPicker(result, vendId).ToString().ToUpper());
 			break;
 		}
 		default:

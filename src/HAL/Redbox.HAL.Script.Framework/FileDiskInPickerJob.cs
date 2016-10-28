@@ -63,7 +63,8 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 			base.Context.CreateInfoResult("JobError", $"MOVE {location.ToString()} MODE=PUT {errorCodes.ToString()}");
 			return false;
 		}
-		IPutResult putResult = ControllerService.Instance.Put(matrix, base.AppLog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service.Put(matrix, base.AppLog);
 		if (putResult.Success)
 		{
 			base.Context.CreateInfoResult("JobSuccess", $"Filed {location.ToString()}, id={matrix}");

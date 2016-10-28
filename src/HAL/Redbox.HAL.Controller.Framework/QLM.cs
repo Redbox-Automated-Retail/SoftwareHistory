@@ -17,10 +17,6 @@ public static class QLM
 
 	public static QlmStatus GetStatus()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedGetQlmStatusResult;
-		}
 		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
 		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.AuxSensorsRead);
 		if (coreResponse.CommError)
@@ -56,10 +52,6 @@ public static class QLM
 			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 			service2.MarkDeckInventory(deck, "UNKNOWN");
 		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedEngageQlmResult;
-		}
 		ICoreCommandExecutor service3 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
 		CoreResponse coreResponse = service3.ExecuteControllerCommand(CommandType.QlmEngage, 120000);
 		if (coreResponse.TimedOut)
@@ -88,10 +80,6 @@ public static class QLM
 		{
 			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 			service2.MarkDeckInventory(deck, "UNKNOWN");
-		}
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedDisengageQlmResult;
 		}
 		ICoreCommandExecutor service3 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
 		CoreResponse coreResponse = service3.ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
@@ -125,10 +113,6 @@ public static class QLM
 
 	public static bool HaltOperation()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedQlmHaltResult;
-		}
 		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
 			return true;

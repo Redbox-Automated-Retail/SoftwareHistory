@@ -24,10 +24,6 @@ public abstract class AbstractOperation<T> : IDisposable
 
 	protected bool WaitToClear(PickerSensor highSensor, PickerSensor lowSensor, int timeout)
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ControllerEmulationState.Instance.ExpectedWaitForPickerSensorsToBlockResult;
-		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		int num = (int)(lowSensor - 1);
 		int num2 = (int)(highSensor - 1);

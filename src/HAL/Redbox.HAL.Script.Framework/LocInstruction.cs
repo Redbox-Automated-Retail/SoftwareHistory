@@ -86,11 +86,10 @@ public sealed class LocInstruction : Instruction
 				if (!GetLocation(result, context, out location))
 				{
 					context.PushTop("ERROR");
+					return;
 				}
-				else
-				{
-					context.PushTop(service.ResetCount(location) ? "SUCCESS" : "ERROR");
-				}
+				location.StuckCount = 0;
+				context.PushTop(service.Save(location) ? "SUCCESS" : "ERROR");
 			}
 			else if (base.Operands[0].Value.Equals("RESET"))
 			{

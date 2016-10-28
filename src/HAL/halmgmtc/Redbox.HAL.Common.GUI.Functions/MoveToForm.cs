@@ -33,8 +33,8 @@ public class MoveToForm : Form
 
 	private RadioButton m_putModeRadioButton;
 
-	[Browsable(false)]
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+	[Browsable(false)]
 	public int? Deck
 	{
 		get
@@ -51,8 +51,8 @@ public class MoveToForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? Slot
 	{
 		get
@@ -69,8 +69,8 @@ public class MoveToForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string Mode
 	{
 		get

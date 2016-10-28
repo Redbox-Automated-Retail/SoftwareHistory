@@ -68,7 +68,8 @@ public sealed class TransferInstruction : Instruction
 		ILocation location2 = service.Get(keyValuePairValue3.Value, keyValuePairValue4.Value);
 		LogHelper.Instance.Log("XFER: {0} to {1}", location.ToString(), location2.ToString());
 		ApplicationLog appLog = context.AppLog;
-		TransferResult transferResult = ControllerService.Instance.Transfer(location, location2, appLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		ITransferResult transferResult = service2.Transfer(location, location2, appLog);
 		if (transferResult.Transferred)
 		{
 			context.PushTop("SUCCESS");

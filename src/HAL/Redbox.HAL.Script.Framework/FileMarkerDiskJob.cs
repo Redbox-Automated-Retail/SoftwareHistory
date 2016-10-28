@@ -8,8 +8,8 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		int top = GetTop<int>();
-		int top2 = GetTop<int>();
+		int num = base.Context.PopTop<int>();
+		int num2 = base.Context.PopTop<int>();
 		ErrorCodes errorCodes = CorrectiveMoveVend(MoveMode.Get);
 		if (errorCodes != ErrorCodes.Success)
 		{
@@ -36,14 +36,15 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 				break;
 			}
 		}
-		errorCodes = CorrectiveMove(top, top2, MoveMode.Put);
+		errorCodes = CorrectiveMove(num, num2, MoveMode.Put);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			HandleHWError(errorCodes.ToString());
 			return;
 		}
 		base.ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put("UNKNOWN", base.AppLog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service.Put("UNKNOWN", base.AppLog);
 		if (!putResult.Success)
 		{
 			errorCodes = CorrectiveMoveVend(MoveMode.None);
@@ -73,7 +74,7 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 		}
 		else
 		{
-			base.Context.CreateResult("ItemReturned", "The marker disk was filed.", top, top2, "UNKNOWN", null, null);
+			base.Context.CreateResult("ItemReturned", "The marker disk was filed.", num, num2, "UNKNOWN", null, null);
 		}
 	}
 

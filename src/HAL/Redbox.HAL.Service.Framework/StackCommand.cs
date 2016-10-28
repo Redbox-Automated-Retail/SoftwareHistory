@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
@@ -10,8 +11,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("stack")]
 public sealed class StackCommand
 {
-	[Description("Dumps a diagnostic list of the stack contents.")]
 	[CommandForm(Name = "show")]
+	[Description("Dumps a diagnostic list of the stack contents.")]
 	[Usage("STACK show job: job-id")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
@@ -34,9 +35,9 @@ public sealed class StackCommand
 		}
 	}
 
-	[Description("Clears the execution engine's data stack.")]
 	[CommandForm(Name = "clear")]
 	[Usage("STACK clear job: job-id")]
+	[Description("Clears the execution engine's data stack.")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -47,9 +48,9 @@ public sealed class StackCommand
 		}
 	}
 
-	[CommandForm(Name = "remove-results")]
 	[Usage("STACK remove-results job: job-id")]
 	[Description("Removes only entries on the stack that were added using the RESULT instruction.")]
+	[CommandForm(Name = "remove-results")]
 	public void RemoveResults(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -61,8 +62,8 @@ public sealed class StackCommand
 	}
 
 	[Usage("STACK push job: job-id value: value [end: bottom|top]")]
-	[Description("Pushes value onto specified end of stack for the designated job.")]
 	[CommandForm(Name = "pop")]
+	[Description("Pushes value onto specified end of stack for the designated job.")]
 	public void Pop(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId, StackEnd? end)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -75,9 +76,9 @@ public sealed class StackCommand
 		}
 	}
 
-	[CommandForm(Name = "push")]
 	[Usage("STACK pop job: job-id [end: bottom|top]")]
 	[Description("Pops any value at the specified end of the data stack for the designated job.  Values are popped from the top of the stack by default.")]
+	[CommandForm(Name = "push")]
 	public void Push(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId, [CommandKeyValue(IsRequired = true)] string value, StackEnd? end)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);

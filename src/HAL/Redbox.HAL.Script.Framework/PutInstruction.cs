@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -45,7 +44,8 @@ public sealed class PutInstruction : Instruction
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		service.TrackCycle();
-		IPutResult putResult = ControllerService.Instance.Put(id, context.AppLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service2.Put(id, context.AppLog);
 		context.PushTop(putResult.ToString().ToUpper());
 		context.PushTop(1);
 	}

@@ -29,20 +29,16 @@ internal class HardwareHealerJob : NativeJobAdapter
 				AddError("Failed to reset boards.");
 			}
 		}
-		if (ControllerConfiguration.Instance.EnableArcusHealing)
+		if (ControllerConfiguration.Instance.EnableArcusHealing && !base.MotionService.CommunicationOk())
 		{
-			if (ControllerConfiguration.Instance.EnableArcusKeepalive)
-			{
-				if (!base.MotionService.CommunicationOk())
-				{
-					base.Context.ServiceLog("The motion controller is not responsive.");
-					AddError("Arcus COMM failure.");
-				}
-			}
-			else if (!base.MotionService.CommunicationOk() && !ResetMotionController())
+			if (!ResetMotionControllerChecked())
 			{
 				base.Context.ServiceLog("The motion controller is not responsive; driver reset returned FAILURE.");
 				AddError("Can't reset controller.");
+			}
+			else
+			{
+				base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 			}
 		}
 		if (ControllerConfiguration.Instance.EnableCameraHealing)

@@ -4,9 +4,9 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class ServerPipeChannel : BasePipeChannel
+internal sealed class ServerPipeChannel : BasePipeChannel
 {
-	internal override bool Connect(string pipeName)
+	public override bool Connect()
 	{
 		LogHelper.Instance.Log($"ServerChannel ID = {base.ID}: Connect() improperly called.");
 		return false;
@@ -19,15 +19,15 @@ internal class ServerPipeChannel : BasePipeChannel
 
 	protected override bool DisposeChannel(bool fromDispose)
 	{
-		if (base.Disposed)
+		if (Disposed)
 		{
 			return true;
 		}
-		BasePipeChannel.FlushFileBuffers(base.PipeHandle);
-		DisconnectNamedPipe(base.PipeHandle);
-		base.PipeHandle.Close();
+		BasePipeChannel.FlushFileBuffers(PipeHandle);
+		DisconnectNamedPipe(PipeHandle);
+		PipeHandle.Close();
 		base.Connected = false;
-		return base.Disposed = true;
+		return Disposed = true;
 	}
 
 	[DllImport("kernel32.dll", SetLastError = true)]

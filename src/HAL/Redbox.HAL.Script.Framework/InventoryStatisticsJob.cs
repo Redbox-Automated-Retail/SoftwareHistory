@@ -21,27 +21,27 @@ internal sealed class InventoryStatisticsJob : NativeJobAdapter
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		int machineEmptyCount = service.GetMachineEmptyCount();
 		IList<ILocation> unknowns = service.GetUnknowns();
-		IList<ILocation> list = service.ComputeExcludedSlots();
+		int excludedSlotsCount = service.GetExcludedSlotsCount();
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: false, "InventoryStats");
 		int num = machineEmptyCount - ControllerConfiguration.Instance.ReturnSlotBuffer;
 		applicationLog.Write("Inventory snapshot.");
 		applicationLog.WriteFormatted(" Total Empty: {0}", machineEmptyCount);
 		applicationLog.WriteFormatted(" Usable empty: {0}", num);
 		applicationLog.WriteFormatted(" Unknown: {0}", unknowns.Count);
-		applicationLog.WriteFormatted(" Excluded: {0}", list.Count);
+		applicationLog.WriteFormatted(" Excluded: {0}", excludedSlotsCount);
 		applicationLog.WriteFormatted(" Total Slots: {0}", totalMachineSlots);
 		applicationLog.WriteFormatted(" Dumpbin capacity: {0}", base.DumpbinService.Capacity);
 		applicationLog.WriteFormatted(" Dumpbin current count: {0}", base.DumpbinService.CurrentCount());
 		base.Context.CreateInfoResult("TotalEmptyCount", machineEmptyCount.ToString());
 		base.Context.CreateInfoResult("UsableEmptyCount", num.ToString());
 		base.Context.CreateInfoResult("UnknownCount", unknowns.Count.ToString());
-		base.Context.CreateInfoResult("ExcludedCount", list.Count.ToString());
+		base.Context.CreateInfoResult("ExcludedCount", excludedSlotsCount.ToString());
 		base.Context.CreateInfoResult("TotalMachineSlots", totalMachineSlots.ToString());
 		base.Context.CreateInfoResult("DumpBinCapacity", base.DumpbinService.Capacity.ToString());
 		base.Context.CreateInfoResult("DumpBinCount", base.DumpbinService.CurrentCount().ToString());
 		if (service.MachineIsFull())
 		{
-			applicationLog.Write(" The machine is full.");
+			applicationLog.LogMachineFull();
 			base.Context.CreateInfoResult("MachineFull", "The machine is full.");
 		}
 	}

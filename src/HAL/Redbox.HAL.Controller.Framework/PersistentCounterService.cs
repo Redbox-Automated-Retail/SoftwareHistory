@@ -2,160 +2,120 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class PersistentCounterService : IPersistentCounterService
 {
-	private const string Table = "Counters";
+	private readonly IDataTable<IPersistentCounter> CounterTable;
 
-	private const string CorrectionTable = "HardwareCorrection";
+	private readonly IDataTable<IHardwareCorrectionStatistic> StatsTable;
 
 	private readonly List<string> WeeklyResettableCounters = new List<string>();
 
-	private readonly Dictionary<TimeoutCounters, string> TimeoutCounterMap = new Dictionary<TimeoutCounters, string>();
-
 	private readonly Dictionary<string, IPersistentCounter> Counters = new Dictionary<string, IPersistentCounter>();
-
-	private readonly object SyncObject = new object();
-
-	private readonly IDataStore Store;
-
-	public bool UpdateTable()
-	{
-		return true;
-	}
-
-	public void Shutdown()
-	{
-		lock (SyncObject)
-		{
-			Counters.Clear();
-		}
-	}
 
 	public bool Exists(string name)
 	{
-		lock (SyncObject)
-		{
-			return FindUnderLock(name, createIfNotFound: false) != null;
-		}
+		return Counters.ContainsKey(name);
 	}
 
 	public IPersistentCounter Find(string name)
 	{
-		lock (SyncObject)
+		if (Counters.ContainsKey(name))
 		{
-			return FindUnderLock(name, createIfNotFound: true);
+			return Counters[name];
 		}
-	}
-
-	public IPersistentCounter Find(TimeoutCounters counter)
-	{
-		return Find(TimeoutCounterMap[counter]);
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		IPersistentCounter persistentCounter = service.NewCounter(name, 0);
+		if (CounterTable.Insert(persistentCounter))
+		{
+			Counters[name] = persistentCounter;
+			return persistentCounter;
+		}
+		LogHelper.Instance.Log("Unable to create counter {0}", name);
+		return null;
 	}
 
 	public IPersistentCounter Increment(string name)
 	{
-		lock (SyncObject)
+		try
 		{
-			try
+			IPersistentCounter persistentCounter = Find(name);
+			if (persistentCounter == null)
 			{
-				IPersistentCounter persistentCounter = FindUnderLock(name, createIfNotFound: true);
-				if (persistentCounter == null)
-				{
-					return null;
-				}
-				persistentCounter.Increment();
-				return UpdateCounterInner(persistentCounter) ? persistentCounter : null;
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log($"FindAndIncrementCounter ( name = {name} ) caught an exception.", e);
 				return null;
 			}
+			persistentCounter.Increment();
+			return CounterTable.Update(persistentCounter) ? persistentCounter : null;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log($"FindAndIncrementCounter ( name = {name} ) caught an exception.", e);
+			return null;
 		}
 	}
 
 	public IPersistentCounter Increment(TimeoutCounters counter)
 	{
-		return Increment(TimeoutCounterMap[counter]);
+		return Increment(KeyFrom(counter));
 	}
 
 	public IPersistentCounter Decrement(string name)
 	{
-		lock (SyncObject)
+		try
 		{
-			try
+			IPersistentCounter persistentCounter = Find(name);
+			if (persistentCounter == null)
 			{
-				IPersistentCounter persistentCounter = FindUnderLock(name, createIfNotFound: true);
-				if (persistentCounter == null)
-				{
-					return null;
-				}
-				persistentCounter.Decrement();
-				return UpdateCounterInner(persistentCounter) ? persistentCounter : null;
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log($"FindAndDecrementCounter ( name = {name} ) caught an exception.", e);
 				return null;
 			}
+			persistentCounter.Decrement();
+			return CounterTable.Update(persistentCounter) ? persistentCounter : null;
 		}
-	}
-
-	public bool ResetCounter(IPersistentCounter counter)
-	{
-		lock (SyncObject)
+		catch (Exception e)
 		{
-			if (counter == null)
-			{
-				return false;
-			}
-			if (counter.Value == 0)
-			{
-				return true;
-			}
-			counter.Reset();
-			return UpdateCounterInner(counter);
+			LogHelper.Instance.Log($"[PersistentCounterService] Decrement counter ( name = {name} ) caught an exception.", e);
+			return null;
 		}
 	}
 
-	public IPersistentCounter Reset(string name)
+	public bool Reset(IPersistentCounter counter)
 	{
-		lock (SyncObject)
+		if (counter == null)
 		{
-			return ResetUnderLock(name);
+			return false;
 		}
+		if (counter.Value == 0)
+		{
+			return true;
+		}
+		counter.Reset();
+		return CounterTable.Update(counter);
 	}
 
-	public IPersistentCounter Reset(TimeoutCounters ctr)
+	public bool Reset(string name)
 	{
-		return Reset(TimeoutCounterMap[ctr]);
+		IPersistentCounter persistentCounter = Find(name);
+		if (persistentCounter == null)
+		{
+			return false;
+		}
+		return Reset(persistentCounter);
 	}
 
 	public void LogTimeouts(TextWriter log)
 	{
 		foreach (TimeoutCounters value in Enum.GetValues(typeof(TimeoutCounters)))
 		{
-			LogTimeout(value, log);
+			LogCounter(KeyFrom(value), log);
 		}
-	}
-
-	public void LogTimeout(TimeoutCounters counter, TextWriter writer)
-	{
-		LogCounter(TimeoutCounterMap[counter], writer);
 	}
 
 	public void LogCounter(string counter, TextWriter writer)
 	{
-		int num = 0;
-		IPersistentCounter persistentCounter = Find(counter);
-		if (persistentCounter != null)
-		{
-			num = persistentCounter.Value;
-		}
-		writer.WriteLine($" {counter}: {num}");
+		writer.WriteLine(" {0}: {1}", counter, Find(counter)?.Value ?? 0);
 	}
 
 	public bool Insert(HardwareCorrectionStatistic type, IExecutionContext context, bool correctionOk)
@@ -164,150 +124,105 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		{
 			return true;
 		}
-		string insert = string.Format("INSERT INTO [{0}] (Type, Job, CorrectionTime, Success) VALUES ('{1}', '{2}', '{3}', '{4}')", "HardwareCorrection", (int)type, context.ProgramName, DateTime.Now, correctionOk ? 1 : 0);
-		return Store.Insert(insert);
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		IHardwareCorrectionStatistic p = service.NewStatistic(type, context.ProgramName, correctionOk, DateTime.Now);
+		return StatsTable.Insert(p);
 	}
 
-	public int RemoveAll(HardwareCorrectionStatistic stat)
+	public bool RemoveAll(HardwareCorrectionStatistic stat)
 	{
 		try
 		{
-			string deleteQuery = string.Format("DELETE FROM [{0}] where Type = {1}", "HardwareCorrection", (int)stat);
-			return Store.Delete(deleteQuery);
+			List<IHardwareCorrectionStatistic> list = StatsTable.LoadEntries();
+			List<IHardwareCorrectionStatistic> list2 = new List<IHardwareCorrectionStatistic>();
+			using (new DisposeableList<IHardwareCorrectionStatistic>(list2))
+			{
+				using (new DisposeableList<IHardwareCorrectionStatistic>(list))
+				{
+					foreach (IHardwareCorrectionStatistic item in list)
+					{
+						if (item.Statistic == stat)
+						{
+							list2.Add(item);
+						}
+					}
+				}
+				return StatsTable.Delete(list2);
+			}
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Failed to delete HardwareCorrection info.", e);
-			return 0;
+			return false;
 		}
 	}
 
 	public void LogStats(HardwareCorrectionStatistic key, TextWriter log)
 	{
-		string query = string.Format("SELECT Job, CorrectionTime, Success FROM [{0}] WHERE Type = '{1}'", "HardwareCorrection", (int)key);
-		Store.ExectuteSelectQuery(delegate(IDataReader reader)
+		List<IHardwareCorrectionStatistic> list = StatsTable.LoadEntries();
+		using (new DisposeableList<IHardwareCorrectionStatistic>(list))
 		{
-			string arg = reader.ReadString(0);
-			DateTime? dateTime = reader.ReadDateTime(1);
-			bool flag = reader.ReadBoolean(2);
-			log.WriteLine("{0},{1},{2}", dateTime.ToString(), arg, flag ? "SUCCESS" : "FAILURE");
-		}, query);
-	}
-
-	public void AddWeeklyResettable(IPersistentCounter counter)
-	{
-		lock (SyncObject)
-		{
-			if (!WeeklyResettableCounters.Contains(counter.Name))
+			foreach (IHardwareCorrectionStatistic item in list)
 			{
-				WeeklyResettableCounters.Add(counter.Name);
+				if (item.Statistic == key)
+				{
+					log.WriteLine("{0},{1},{2}", item.CorrectionTime.ToString(), item.ProgramName, item.CorrectionOk ? "SUCCESS" : "FAILURE");
+				}
 			}
 		}
 	}
 
-	public void AddWeeklyResettable(TimeoutCounters counter)
+	public void AddWeeklyResettable(IPersistentCounter counter)
 	{
-		lock (SyncObject)
+		if (!WeeklyResettableCounters.Contains(counter.Name))
 		{
-			string item = TimeoutCounterMap[counter];
-			if (!WeeklyResettableCounters.Contains(item))
-			{
-				WeeklyResettableCounters.Add(TimeoutCounterMap[counter]);
-			}
+			WeeklyResettableCounters.Add(counter.Name);
 		}
 	}
 
 	public void ResetWeekly()
 	{
-		lock (SyncObject)
+		List<IPersistentCounter> list = new List<IPersistentCounter>();
+		using (new DisposeableList<IPersistentCounter>(list))
 		{
 			foreach (string weeklyResettableCounter in WeeklyResettableCounters)
 			{
-				ResetUnderLock(weeklyResettableCounter);
+				IPersistentCounter persistentCounter = Find(weeklyResettableCounter);
+				if (persistentCounter != null && persistentCounter.Value != 0)
+				{
+					persistentCounter.Reset();
+					list.Add(persistentCounter);
+				}
+			}
+			CounterTable.Update(list);
+		}
+	}
+
+	internal PersistentCounterService()
+	{
+		foreach (TimeoutCounters value in Enum.GetValues(typeof(TimeoutCounters)))
+		{
+			string item = KeyFrom(value);
+			if (!WeeklyResettableCounters.Contains(item))
+			{
+				WeeklyResettableCounters.Add(item);
+			}
+		}
+		IDataTableService service = ServiceLocator.Instance.GetService<IDataTableService>();
+		CounterTable = service.GetTable<IPersistentCounter>();
+		StatsTable = service.GetTable<IHardwareCorrectionStatistic>();
+		List<IPersistentCounter> list = CounterTable.LoadEntries();
+		using (new DisposeableList<IPersistentCounter>(list))
+		{
+			foreach (IPersistentCounter item2 in list)
+			{
+				Counters[item2.Name] = item2;
 			}
 		}
 	}
 
-	internal PersistentCounterService(IDataStore store)
+	private string KeyFrom(TimeoutCounters counter)
 	{
-		BuildTimeoutMap();
-		Store = store;
-		string query = string.Format("SELECT Name, Value FROM [{0}]", "Counters");
-		IDataStore store2 = Store;
-		HandleSelectResult callback = delegate(IDataReader reader)
-		{
-			Counter counter = new Counter(reader.ReadString(0), reader.ReadInt(1));
-			Counters[counter.Name] = counter;
-		};
-		store2.ExectuteSelectQuery(callback, query);
-	}
-
-	private IPersistentCounter ResetUnderLock(string name)
-	{
-		IPersistentCounter persistentCounter = FindUnderLock(name, createIfNotFound: true);
-		if (persistentCounter == null)
-		{
-			return null;
-		}
-		if (persistentCounter.Value == 0)
-		{
-			return persistentCounter;
-		}
-		persistentCounter.Reset();
-		if (!UpdateCounterInner(persistentCounter))
-		{
-			return null;
-		}
-		return persistentCounter;
-	}
-
-	private IPersistentCounter InsertCounter(string name, int defaultValue)
-	{
-		string insert = string.Format("INSERT INTO [{0}] (Name, Value) VALUES ('{1}', '{2}')", "Counters", name, defaultValue);
-		if (Store.Insert(insert))
-		{
-			return new Counter(name, defaultValue);
-		}
-		LogHelper.Instance.Log($"Unable to create counter {name}", LogEntryType.Info);
-		return null;
-	}
-
-	private void BuildTimeoutMap()
-	{
-		TimeoutCounterMap[TimeoutCounters.FingerClose] = "FingerCloseTimeout";
-		TimeoutCounterMap[TimeoutCounters.FingerOpen] = "FingerOpenTimeout";
-		TimeoutCounterMap[TimeoutCounters.FingerRent] = "FingerRentTimeout";
-		TimeoutCounterMap[TimeoutCounters.GripperExtend] = "GripperExtendTimeout";
-		TimeoutCounterMap[TimeoutCounters.GripperRetract] = "GripperRetractTimeout";
-		TimeoutCounterMap[TimeoutCounters.TrackClose] = "TrackCloseTimeout";
-		TimeoutCounterMap[TimeoutCounters.TrackOpen] = "TrackOpenTimeout";
-		TimeoutCounterMap[TimeoutCounters.VendDoorClose] = "VendDoorCloseTimeout";
-		TimeoutCounterMap[TimeoutCounters.VendDoorRent] = "VendDoorRentTimeout";
-		TimeoutCounterMap[TimeoutCounters.QlmDisengage] = "QlmDisengageTimeout";
-		TimeoutCounterMap[TimeoutCounters.QlmEngage] = "QlmEngageTimeout";
-	}
-
-	private IPersistentCounter FindUnderLock(string name, bool createIfNotFound)
-	{
-		if (Counters.ContainsKey(name))
-		{
-			return Counters[name];
-		}
-		if (!createIfNotFound)
-		{
-			return null;
-		}
-		IPersistentCounter persistentCounter = InsertCounter(name, 0);
-		if (persistentCounter != null)
-		{
-			Counters[name] = persistentCounter;
-		}
-		return persistentCounter;
-	}
-
-	private bool UpdateCounterInner(IPersistentCounter counter)
-	{
-		string update = string.Format("UPDATE {0} SET VALUE = '{1}' WHERE NAME = '{2}'", "Counters", counter.Value, counter.Name);
-		return Store.Update(update);
+		return $"{counter.ToString()}Timeout";
 	}
 }

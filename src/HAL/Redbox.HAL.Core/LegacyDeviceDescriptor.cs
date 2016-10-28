@@ -6,15 +6,13 @@ internal sealed class LegacyDeviceDescriptor : IDeviceDescriptor
 {
 	private readonly IDriverDescriptor DriverDescriptor;
 
-	private readonly DeviceHelper Helper;
-
 	public string Vendor { get; private set; }
 
 	public string Product { get; private set; }
 
 	public string Friendlyname { get; private set; }
 
-	public DeviceClass DeviceClazz => DeviceClass.Image;
+	public IDeviceSetupClass SetupClass { get; private set; }
 
 	public override string ToString()
 	{
@@ -23,43 +21,41 @@ internal sealed class LegacyDeviceDescriptor : IDeviceDescriptor
 
 	public bool MatchDriver()
 	{
-		return Helper.MatchDriver(this, DriverDescriptor, DeviceClassGuids.Image);
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		return service.MatchDriver(this, DriverDescriptor);
 	}
 
 	public bool Locate()
 	{
-		DeviceStatus deviceStatus = Helper.FindDeviceStatus(DeviceClassGuids.Image, this);
-		return DeviceStatus.None != deviceStatus;
+		return DeviceStatus.None != GetStatus();
 	}
 
 	public DeviceStatus GetStatus()
 	{
-		return Helper.FindDeviceStatus(DeviceClassGuids.Image, this);
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		return service.FindDeviceStatus(this);
 	}
 
 	public bool ResetDriver()
 	{
-		if (!SetCameraState(DeviceState.Disable))
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		if (!service.ChangeByHWID(this, DeviceState.Disable))
 		{
 			return false;
 		}
 		PerfFunctions.Wait(1500);
-		bool result = SetCameraState(DeviceState.Enable);
+		bool result = service.ChangeByHWID(this, DeviceState.Enable);
 		PerfFunctions.SpinWait(1500);
 		return result;
 	}
 
-	internal LegacyDeviceDescriptor(DeviceHelper helper, string vendor, string product, string friendly, IDriverDescriptor driver)
+	internal LegacyDeviceDescriptor(string vendor, string product, string friendly, IDriverDescriptor driver)
 	{
-		Helper = helper;
 		Vendor = vendor.ToLower();
 		Product = product.ToLower();
 		Friendlyname = friendly;
 		DriverDescriptor = driver;
-	}
-
-	private bool SetCameraState(DeviceState state)
-	{
-		return Helper.ChangeByHWID(this, DeviceClassGuids.Image, state);
+		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
+		SetupClass = service.Get(DeviceClass.Image);
 	}
 }

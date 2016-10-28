@@ -319,7 +319,7 @@ public class Instruction : ICloneable<Instruction>
 		int deck = -1;
 		int slot = -1;
 		location = null;
-		if (!GetLocationInner(result, context, out deck, out slot))
+		if (!GetLocation(result, context, out deck, out slot))
 		{
 			return false;
 		}
@@ -330,7 +330,25 @@ public class Instruction : ICloneable<Instruction>
 
 	protected bool GetLocation(ExecutionResult result, ExecutionContext context, out int deck, out int slot)
 	{
-		return GetLocationInner(result, context, out deck, out slot);
+		deck = -1;
+		slot = -1;
+		int? deckOperand = GetDeckOperand(result.Errors, context);
+		if (!deckOperand.HasValue)
+		{
+			return false;
+		}
+		deck = deckOperand.Value;
+		KeyValuePair keyValuePair = Operands.GetKeyValuePair("SLOT");
+		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
+		if (result.Errors.Count > 0)
+		{
+			return false;
+		}
+		if (keyValuePairValue.HasValue)
+		{
+			slot = keyValuePairValue.Value;
+		}
+		return true;
 	}
 
 	protected string GetID(ExecutionResult result, ExecutionContext context)
@@ -541,29 +559,6 @@ public class Instruction : ICloneable<Instruction>
 
 	internal virtual bool ValidateConditionalBranch(Instruction branchTarget, ExecutionResult result)
 	{
-		return true;
-	}
-
-	private bool GetLocationInner(ExecutionResult result, ExecutionContext context, out int deck, out int slot)
-	{
-		deck = -1;
-		slot = -1;
-		int? deckOperand = GetDeckOperand(result.Errors, context);
-		if (!deckOperand.HasValue)
-		{
-			return false;
-		}
-		deck = deckOperand.Value;
-		KeyValuePair keyValuePair = Operands.GetKeyValuePair("SLOT");
-		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
-		if (result.Errors.Count > 0)
-		{
-			return false;
-		}
-		if (keyValuePairValue.HasValue)
-		{
-			slot = keyValuePairValue.Value;
-		}
 		return true;
 	}
 }

@@ -1,37 +1,17 @@
-using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Xml;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class NilDumpbinService : IExcludeEmptySearchLocationObserver, IDumpbinService, IDisposable
+internal sealed class NilDumpbinService : IDumpbinService
 {
-	private bool Disposed;
-
-	private readonly IInventoryService InventoryService;
-
-	public bool Active => false;
-
 	public ILocation PutLocation => null;
 
 	public int Capacity => 0;
 
 	public ILocation RotationLocation { get; private set; }
-
-	public void Dispose()
-	{
-		if (!Disposed)
-		{
-			Disposed = true;
-			IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-			service.RemoveObserver(this);
-			GC.SuppressFinalize(this);
-		}
-	}
-
-	public bool ShouldExclude(ILocation location)
-	{
-		return false;
-	}
 
 	public bool IsFull()
 	{
@@ -41,11 +21,6 @@ internal sealed class NilDumpbinService : IExcludeEmptySearchLocationObserver, I
 	public bool IsBin(ILocation loc)
 	{
 		return false;
-	}
-
-	public ILocation MoveableLocation()
-	{
-		return PutLocation;
 	}
 
 	public int CurrentCount()
@@ -58,31 +33,40 @@ internal sealed class NilDumpbinService : IExcludeEmptySearchLocationObserver, I
 		return 0;
 	}
 
-	public bool ResetCount()
+	public bool ClearItems()
 	{
 		return false;
 	}
 
-	public void DumpContents(IFormattedLog log)
+	public void DumpContents(TextWriter writer)
 	{
-		log.WriteFormatted("The dumpbin is not configured.");
+		writer.WriteLine("The dumpbin is not configured.");
 	}
 
-	public bool Initialize()
+	public IList<IDumpBinInventoryItem> GetBarcodesInBin()
 	{
-		LogHelper.Instance.Log("[NilDumpBinService] Initialize.");
+		return new List<IDumpBinInventoryItem>();
+	}
+
+	public bool AddBinItem(string m)
+	{
 		return false;
 	}
 
-	internal bool AddToInventory(string id)
+	public bool AddBinItem(IDumpBinInventoryItem i)
 	{
 		return false;
 	}
 
-	internal NilDumpbinService(IInventoryService service)
+	public void GetState(XmlTextWriter writer)
 	{
-		InventoryService = service;
-		IEmptySearchPatternService service2 = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-		service2.AddObserver(this);
+	}
+
+	public void ResetState(XmlDocument document, ErrorList errors)
+	{
+	}
+
+	internal NilDumpbinService()
+	{
 	}
 }

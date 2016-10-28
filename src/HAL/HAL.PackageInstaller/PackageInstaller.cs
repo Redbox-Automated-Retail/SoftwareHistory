@@ -15,9 +15,15 @@ namespace Redbox.HAL.PackageInstaller;
 
 internal sealed class PackageInstaller : IDisposable
 {
+	private const int BackupsToKeep = 2;
+
 	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
 
-	private bool Disposed;
+	private const string DefaultConfiguration = "HAL.xml.default";
+
+	private const string ConfigurationFileName = "hal.xml";
+
+	private readonly string[] DefaultDatabases = new string[2] { "HALCounters.vdb3", "HALData.vdb3" };
 
 	private readonly string ServiceInstallerBatchFile;
 
@@ -27,17 +33,15 @@ internal sealed class PackageInstaller : IDisposable
 
 	private readonly string InstallLogsDirectory;
 
-	private readonly string ConfigurationFile;
-
-	private readonly string QRStateFile;
-
-	private readonly string DeprecatedQRStateFile;
+	private readonly string ConfigurationFullPath;
 
 	private readonly IRuntimeService RuntimeService;
 
 	private readonly List<IPackageInstallHandler> PackageHandlers = new List<IPackageInstallHandler>();
 
 	private readonly ErrorList InstallErrors = new ErrorList();
+
+	private bool Disposed;
 
 	public void Dispose()
 	{
@@ -60,9 +64,7 @@ internal sealed class PackageInstaller : IDisposable
 	private PackageInstaller()
 	{
 		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
-		ConfigurationFile = RuntimeService.RuntimePath("hal.xml");
-		QRStateFile = RuntimeService.RuntimePath("qr.state");
-		DeprecatedQRStateFile = RuntimeService.RuntimePath("qr.defs");
+		ConfigurationFullPath = RuntimeService.RuntimePath("hal.xml");
 		InstallLogsDirectory = RuntimeService.InstallPath("InstallLogs");
 		if (!Directory.Exists(InstallLogsDirectory))
 		{
@@ -111,25 +113,70 @@ internal sealed class PackageInstaller : IDisposable
 		}
 	}
 
-	private void InstallDatabase(string fileName)
+	private void InstallDatabases()
 	{
-		string text = RuntimeService.RuntimePath($"data\\{fileName}");
-		if (File.Exists(text))
+		string[] defaultDatabases = DefaultDatabases;
+		foreach (string arg in defaultDatabases)
 		{
-			Writer.WriteLine("The database {0} already exists - take no further action.", fileName);
-			return;
+			string text = RuntimeService.RuntimePath($"data\\{arg}");
+			if (File.Exists(text))
+			{
+				Writer.WriteLine("The database {0} already exists - take no further action.", arg);
+				continue;
+			}
+			string text2 = RuntimeService.RuntimePath($"{arg}.default");
+			string arg2 = $"copy {text2} -> {text}";
+			try
+			{
+				File.Copy(text2, text);
+				Writer.WriteLine("{0}: SUCCESS", arg2);
+			}
+			catch (Exception ex)
+			{
+				InstallErrors.Add(Error.NewError("I001", "Copy failure", $"{arg2}: FAILURE reason = {ex.Message}"));
+			}
 		}
-		string text2 = RuntimeService.RuntimePath($"{fileName}.default");
-		string arg = $"copy {text2} -> {text}";
-		try
+	}
+
+	private void BackupConfiguration()
+	{
+		FileHelper.CreateBackup(ConfigurationFullPath, BackupAction.Copy);
+		List<BackupEntry> list = new List<BackupEntry>();
+		using (new DisposeableList<BackupEntry>(list))
 		{
-			File.Copy(text2, text);
-			Writer.WriteLine("{0}: SUCCESS", arg);
+			string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml");
+			string[] array = files;
+			foreach (string fullPath in array)
+			{
+				BackupEntry backupEntry = new BackupEntry(fullPath, FileHelper.DefaultFormat);
+				if (!backupEntry.FileName.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !backupEntry.FileName.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase) && backupEntry.BackupDate.HasValue)
+				{
+					list.Add(backupEntry);
+				}
+			}
+			list.Sort((BackupEntry x, BackupEntry y) => x.BackupDate.Value.CompareTo(y.BackupDate.Value));
+			if (list.Count > 2)
+			{
+				for (int num = 0; num < list.Count - 2; num++)
+				{
+					FileHelper.SafeDeleteFile(list[num].FullPath);
+				}
+			}
 		}
-		catch (Exception ex)
+	}
+
+	private bool ServiceIsInstalled()
+	{
+		ServiceController[] services = ServiceController.GetServices();
+		ServiceController[] array = services;
+		foreach (ServiceController serviceController in array)
 		{
-			InstallErrors.Add(Error.NewError("I001", "Copy failure", $"{arg}: FAILURE reason = {ex.Message}"));
+			if (serviceController.ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
+			{
+				return true;
+			}
 		}
+		return false;
 	}
 
 	private void InstallService()
@@ -139,20 +186,9 @@ internal sealed class PackageInstaller : IDisposable
 			InstallErrors.Add(Error.NewError("I003", "No service batch file.", "The service install batch file is missing."));
 			return;
 		}
-		bool flag = true;
-		ServiceController[] services = ServiceController.GetServices();
-		ServiceController[] array = services;
-		foreach (ServiceController serviceController in array)
+		if (ServiceIsInstalled())
 		{
-			if (serviceController.ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
-			{
-				flag = false;
-				Writer.WriteLine("Service already installed - don't need to register.");
-				break;
-			}
-		}
-		if (!flag)
-		{
+			Writer.WriteLine("Service already installed - don't need to register.");
 			return;
 		}
 		using Process process = new Process();
@@ -218,18 +254,22 @@ internal sealed class PackageInstaller : IDisposable
 
 	private static void Main(string[] args)
 	{
+		ServiceLocator.Instance.AddService(typeof(ITableTypeFactory), new TableTypeFactory());
 		ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
 		ServiceLocator.Instance.AddService(typeof(IRuntimeService), new RuntimeService());
-		ServiceController serviceController = new ServiceController("halsvc$default");
-		try
-		{
-			serviceController.Stop();
-			serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30.0));
-		}
-		catch
-		{
-		}
 		using PackageInstaller packageInstaller = new PackageInstaller();
+		if (packageInstaller.ServiceIsInstalled())
+		{
+			ServiceController serviceController = new ServiceController("halsvc$default");
+			try
+			{
+				serviceController.Stop();
+				serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30.0));
+			}
+			catch
+			{
+			}
+		}
 		packageInstaller.CreateDirectories();
 		Platform platform = packageInstaller.RuntimeService.GetPlatform();
 		string text = "1.0.0.x";
@@ -247,8 +287,7 @@ internal sealed class PackageInstaller : IDisposable
 			packageInstaller.Writer.WriteLine("** ERROR ** This version is not supported on this platform ( {0} )", platform.ToString());
 			return;
 		}
-		packageInstaller.InstallDatabase("HALCounters.vdb3");
-		packageInstaller.InstallDatabase("HALData.vdb3");
+		packageInstaller.InstallDatabases();
 		if (packageInstaller.InstallErrors.ContainsError())
 		{
 			packageInstaller.Writer.WriteLine("** There were problems copying databases - ABORTING install: **");
@@ -260,13 +299,14 @@ internal sealed class PackageInstaller : IDisposable
 				return;
 			}
 		}
-		StoreManager instance = new StoreManager();
-		ServiceLocator.Instance.AddService(typeof(IDataStoreService), instance);
-		ConfigurationService configurationService = ConfigurationService.Make(packageInstaller.ConfigurationFile);
+		ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(exclusive: false));
+		ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
+		ConfigurationService configurationService = ConfigurationService.Make(packageInstaller.ConfigurationFullPath);
 		ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
 		packageInstaller.RegisterHandlers();
-		if (File.Exists(packageInstaller.ConfigurationFile))
+		if (File.Exists(packageInstaller.ConfigurationFullPath))
 		{
+			packageInstaller.BackupConfiguration();
 			packageInstaller.Writer.WriteLine("The configuration file is already present.");
 			configurationService.LoadAndUpgrade(packageInstaller.InstallErrors);
 			packageInstaller.OnUpgrade();
@@ -277,7 +317,7 @@ internal sealed class PackageInstaller : IDisposable
 			string text2 = packageInstaller.RuntimeService.RuntimePath("HAL.xml.default");
 			try
 			{
-				File.Copy(text2, packageInstaller.ConfigurationFile);
+				File.Copy(text2, packageInstaller.ConfigurationFullPath);
 			}
 			catch (Exception ex)
 			{

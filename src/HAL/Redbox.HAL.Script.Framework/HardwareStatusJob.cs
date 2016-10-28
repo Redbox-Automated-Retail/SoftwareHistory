@@ -8,65 +8,43 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			int num = 0;
-			InventoryDatabaseTest inventoryDatabaseTest = new InventoryDatabaseTest();
-			if (!inventoryDatabaseTest.Test())
-			{
-				num++;
-				base.Context.CreateInfoResult("MachineError", "Inventory database integrity test failed.");
-			}
-			ProcessError(num);
-			return;
-		}
 		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
-		int num2 = 0;
+		int num = 0;
 		if (!base.MotionService.IsInitialized && (!ControllerConfiguration.Instance.FixArcusDuringStatusJob || !base.MotionService.Reset(base.AppLog, quick: true)))
 		{
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "Could not talk with the motion controller.");
-			num2++;
+			num++;
 		}
 		if (ControllerConfiguration.Instance.EnableDoorCheckInStatus && service.Query() != DoorSensorResult.Ok)
 		{
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "The door sensors are not in a safe mode.");
-			num2++;
+			num++;
 		}
 		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
 		{
 			if (clearGripperOperation.Execute() != ErrorCodes.Success)
 			{
-				num2++;
+				num++;
 				base.Context.CreateInfoResult("GripperObstructed", "The gripper is obstructed.");
 			}
 		}
 		if (PickerBoard.IsFull())
 		{
-			num2++;
+			num++;
 			base.Context.CreateInfoResult("GripperObstructed", "The picker is full.");
 		}
 		if (!base.ControlSystem.VendDoorClose().Success)
 		{
-			num2++;
+			num++;
 			base.Context.CreateInfoResult("VendDoorOpen", "Unable to close the vend door.");
 		}
-		InventoryDatabaseTest inventoryDatabaseTest2 = new InventoryDatabaseTest();
-		if (!inventoryDatabaseTest2.Test())
+		InventoryDatabaseTest inventoryDatabaseTest = new InventoryDatabaseTest();
+		if (!inventoryDatabaseTest.Test())
 		{
-			num2++;
+			num++;
 			base.Context.CreateInfoResult("MachineError", "Inventory database integrity test failed.");
 		}
-		ProcessError(num2);
-	}
-
-	internal HardwareStatusJob(ExecutionResult result, ExecutionContext ctx)
-		: base(result, ctx)
-	{
-	}
-
-	private void ProcessError(int count)
-	{
-		if (count == 0)
+		if (num == 0)
 		{
 			base.Context.CreateInfoResult("HardwareStatusOk", "The three tests passed!");
 		}
@@ -74,5 +52,10 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 		{
 			base.Context.CreateInfoResult("HardwareStatusInError", "One or more ops failed.");
 		}
+	}
+
+	internal HardwareStatusJob(ExecutionResult result, ExecutionContext ctx)
+		: base(result, ctx)
+	{
 	}
 }

@@ -89,11 +89,12 @@ public sealed class GetInstruction : Instruction
 			test = true;
 		}
 		GetInstructionObserver observer = new GetInstructionObserver(test);
-		IGetResult getResult = ControllerService.Instance.Get(observer, context.AppLog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service.Get(observer, context.AppLog);
 		if (getResult.Success && flag)
 		{
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			service.Center(CenterDiskMethod.VendDoorAndBack);
+			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+			service2.Center(CenterDiskMethod.VendDoorAndBack);
 		}
 		if (flag2)
 		{

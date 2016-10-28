@@ -128,7 +128,7 @@ internal sealed class FraudSensor : IFraudSensor
 
 	public ErrorCodes StopScan()
 	{
-		return StopScan(ControllerConfiguration.Instance.FraudResetEndWait);
+		return StopScan(ControllerConfiguration.Instance.FraudStopScanWait);
 	}
 
 	public IFraudScanResult Validate()

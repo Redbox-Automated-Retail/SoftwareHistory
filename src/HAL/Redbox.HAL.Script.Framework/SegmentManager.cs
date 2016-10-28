@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -228,7 +227,8 @@ internal sealed class SegmentManager : IGetObserver
 			LogHelper.Instance.Log("[SegmentManager]: There are no empty slots available for transfer.");
 			return MerchandizeResult.MachineFull;
 		}
-		TransferResult transferResult = ControllerService.Instance.Transfer(source, emptySearchResult.EmptyLocations, this, manager.Context.AppLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		ITransferResult transferResult = service2.Transfer(source, emptySearchResult.EmptyLocations, this, manager.Context.AppLog);
 		if (transferResult.Transferred)
 		{
 			manager.ProcessTransfer(source, transferResult.Destination);
@@ -257,7 +257,8 @@ internal sealed class SegmentManager : IGetObserver
 	{
 		MerchFlags flags = source.Flags;
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		TransferResult transferResult = ControllerService.Instance.Transfer(source, empty, mgr.Context.AppLog);
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		ITransferResult transferResult = service2.Transfer(source, empty, mgr.Context.AppLog);
 		if (transferResult.Transferred)
 		{
 			if (Debug)
@@ -337,7 +338,7 @@ internal sealed class SegmentManager : IGetObserver
 		return null;
 	}
 
-	private void AddTransfer(TransferResult xferResult, ExecutionContext context)
+	private void AddTransfer(ITransferResult xferResult, ExecutionContext context)
 	{
 		if (xferResult.Transferred)
 		{

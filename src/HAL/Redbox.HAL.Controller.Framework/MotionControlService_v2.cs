@@ -77,7 +77,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		return Controller.ReadPositions();
 	}
 
-	public string[] ReadLimits()
+	public IMotionControlLimitResponse ReadLimits()
 	{
 		return Controller.ReadLimits();
 	}
@@ -107,6 +107,12 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		ErrorCodes errorCodes = AxesInitialized();
 		if (errorCodes != ErrorCodes.Success)
 		{
+			if (log != null)
+			{
+				string text = $"MOVE Deck = {deck} Slot = {slot} returned an error status {errorCodes.ToString().ToUpper()}";
+				log.WriteFormatted(text);
+				LogHelper.Instance.Log(text, LogEntryType.Error);
+			}
 			return errorCodes;
 		}
 		ResetLocation();
@@ -182,11 +188,15 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 			CurrentLocation = currentLocation;
 			return ErrorCodes.Success;
 		}
+		if (ErrorCodes.LowerLimitError == errorCodes2 && !ControllerConfiguration.Instance.LowerLimitAsError)
+		{
+			errorCodes2 = ErrorCodes.Timeout;
+		}
 		if (log != null)
 		{
-			string text = $"MOVE Deck ={deck} Slot = {slot} returned an error status {errorCodes2.ToString().ToUpper()}";
-			log.WriteFormatted(text);
-			LogHelper.Instance.Log(text, LogEntryType.Error);
+			string text2 = $"MOVE Deck = {deck} Slot = {slot} returned an error status {errorCodes2.ToString().ToUpper()}";
+			log.WriteFormatted(text2);
+			LogHelper.Instance.Log(text2, LogEntryType.Error);
 		}
 		return errorCodes2;
 	}
@@ -212,19 +222,31 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		ErrorCodes errorCodes = AxesInitialized();
 		if (errorCodes != ErrorCodes.Success)
 		{
+			if (writer != null)
+			{
+				string text = $"MOVEVEND returned an error status {errorCodes.ToString().ToUpper()}";
+				writer.WriteFormatted(text);
+				LogHelper.Instance.Log(text, LogEntryType.Error);
+			}
 			return errorCodes;
 		}
 		ErrorCodes errorCodes2 = CheckAndReset();
 		if (errorCodes2 != ErrorCodes.Success)
 		{
+			if (writer != null)
+			{
+				string text2 = $"MOVEVEND returned an error status {errorCodes2.ToString().ToUpper()}";
+				writer.WriteFormatted(text2);
+				LogHelper.Instance.Log(text2, LogEntryType.Error);
+			}
 			return errorCodes2;
 		}
 		ErrorCodes errorCodes3 = Controller.MoveToVend(mode);
 		if (writer != null && errorCodes3 != ErrorCodes.Success)
 		{
-			string text = $"MOVEVEND returned an error status {errorCodes3.ToString().ToUpper()}";
-			writer.WriteFormatted(text);
-			LogHelper.Instance.Log(text, LogEntryType.Error);
+			string text3 = $"MOVEVEND returned an error status {errorCodes3.ToString().ToUpper()}";
+			writer.WriteFormatted(text3);
+			LogHelper.Instance.Log(text3, LogEntryType.Error);
 		}
 		AtVendDoor = ErrorCodes.Success == errorCodes3;
 		return errorCodes3;
@@ -278,6 +300,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 
 	internal MotionControlService_v2()
 	{
+		ControllerConfiguration.Instance.AddObserver(this);
 	}
 
 	private void ResetLocation()
@@ -289,11 +312,11 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 	private ErrorCodes MoveWithCheck(ref MoveTarget target)
 	{
 		ErrorCodes errorCodes = CheckAndReset();
-		if (errorCodes != ErrorCodes.Success)
+		if (errorCodes == ErrorCodes.Success)
 		{
-			return errorCodes;
+			return Controller.MoveToTarget(ref target);
 		}
-		return Controller.MoveToTarget(ref target);
+		return errorCodes;
 	}
 
 	private ErrorCodes HomeAxisChecked(Axis axis, IFormattedLog log)

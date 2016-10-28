@@ -47,6 +47,14 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 	public void NotifyConfigurationLoaded()
 	{
 		LogHelper.Instance.Log("[EmptySearchService] Configuration load.");
+		if (ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			AddObserver(new VmzExcludePolicy());
+		}
+		else
+		{
+			AddObserver(new QlmExcludePolicy());
+		}
 		lock (Lock)
 		{
 			ComputeList();
@@ -157,6 +165,7 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 
 	internal EmptySearchPatternService()
 	{
+		ControllerConfiguration.Instance.AddObserver(this);
 	}
 
 	private int SlotsAvailable()
@@ -178,32 +187,27 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 
 	private void AddLocation(IDeck deck, int slot, ref int idx)
 	{
-		lock (Lock)
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		ILocation location = service.Get(deck.Number, slot);
+		if (location.Excluded)
 		{
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-			ILocation location = service.Get(deck.Number, slot);
-			if (location.Excluded)
-			{
-				LogHelper.Instance.Log(LogEntryType.Debug, "Location Deck = {0} Slot = {1} is already excluded.", deck.Number, slot);
-				return;
-			}
-			if (deck.IsSparse && deck.Number == 7 && deck.IsSlotSellThru(slot))
+			LogHelper.Instance.Log(LogEntryType.Debug, "Location Deck = {0} Slot = {1} is already excluded.", deck.Number, slot);
+			return;
+		}
+		foreach (IExcludeEmptySearchLocationObserver observer in Observers)
+		{
+			if (observer.ShouldExclude(location))
 			{
 				LogHelper.Instance.Log(" Apply exclude policy to Deck = {0} Slot = {1}", deck.Number, slot);
-				location.Excluded = true;
-				service.Save(location);
+				if (!location.Excluded)
+				{
+					location.Excluded = true;
+					service.Save(location);
+				}
 				return;
 			}
-			foreach (IExcludeEmptySearchLocationObserver observer in Observers)
-			{
-				if (observer.ShouldExclude(location))
-				{
-					LogHelper.Instance.Log(" Apply exclude policy to Deck = {0} Slot = {1}", deck.Number, slot);
-					return;
-				}
-			}
-			Pattern.Add(new ESPNode(deck.Number, slot, idx));
 		}
+		Pattern.Add(new ESPNode(deck.Number, slot, idx));
 	}
 
 	private void ComputeList()
@@ -246,42 +250,44 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 					AddLocation(deck, n, ref idx);
 				}
 			}
-			return;
 		}
-		for (int num3 = 1; num3 < 6; num3++)
+		else
 		{
-			int[] array3 = array;
-			foreach (int number2 in array3)
+			for (int num3 = 1; num3 < 6; num3++)
 			{
-				deck = service.GetByNumber(number2);
-				int num5 = num3 * deck.SlotsPerQuadrant + 1;
-				for (int num6 = num5; num6 <= num5 + deck.SlotsPerQuadrant - 1; num6++)
+				int[] array3 = array;
+				foreach (int number2 in array3)
 				{
-					AddLocation(deck, num6, ref idx);
+					deck = service.GetByNumber(number2);
+					int num5 = num3 * deck.SlotsPerQuadrant + 1;
+					for (int num6 = num5; num6 <= num5 + deck.SlotsPerQuadrant - 1; num6++)
+					{
+						AddLocation(deck, num6, ref idx);
+					}
 				}
 			}
-		}
-		deck = service.GetByNumber(6);
-		for (int num7 = 16; num7 <= deck.NumberOfSlots; num7++)
-		{
-			AddLocation(deck, num7, ref idx);
-		}
-		deck = service.GetByNumber(7);
-		for (int num8 = 16; num8 <= deck.NumberOfSlots; num8++)
-		{
-			AddLocation(deck, num8, ref idx);
-		}
-		deck = service.GetByNumber(8);
-		for (int num9 = 16; num9 <= deck.NumberOfSlots; num9++)
-		{
-			AddLocation(deck, num9, ref idx);
-		}
-		for (int num10 = 1; num10 <= 8; num10++)
-		{
-			deck = service.GetByNumber(num10);
-			for (int num11 = 15; num11 >= 1; num11--)
+			deck = service.GetByNumber(6);
+			for (int num7 = 16; num7 <= deck.NumberOfSlots; num7++)
 			{
-				AddLocation(deck, num11, ref idx);
+				AddLocation(deck, num7, ref idx);
+			}
+			deck = service.GetByNumber(7);
+			for (int num8 = 16; num8 <= deck.NumberOfSlots; num8++)
+			{
+				AddLocation(deck, num8, ref idx);
+			}
+			deck = service.GetByNumber(8);
+			for (int num9 = 16; num9 <= deck.NumberOfSlots; num9++)
+			{
+				AddLocation(deck, num9, ref idx);
+			}
+			for (int num10 = 1; num10 <= 8; num10++)
+			{
+				deck = service.GetByNumber(num10);
+				for (int num11 = 15; num11 >= 1; num11--)
+				{
+					AddLocation(deck, num11, ref idx);
+				}
 			}
 		}
 		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();

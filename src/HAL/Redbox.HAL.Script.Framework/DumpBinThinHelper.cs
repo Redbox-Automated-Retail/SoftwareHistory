@@ -33,7 +33,7 @@ internal class DumpBinThinHelper : ThinHelper
 		case MerchandizeResult.EmptyStuck:
 			return merchandizeResult;
 		case MerchandizeResult.Success:
-			return ThinDiskToLocation(location, service.MoveableLocation(), id, MerchFlags.Thin);
+			return ThinDiskToLocation(location, service.PutLocation, id, MerchFlags.Thin);
 		default:
 		{
 			MerchandizeResult merchandizeResult2 = ReturnToSource(location, id);
@@ -55,6 +55,6 @@ internal class DumpBinThinHelper : ThinHelper
 			return null;
 		}
 		result = MerchandizeResult.Success;
-		return service.MoveableLocation();
+		return service.PutLocation;
 	}
 }

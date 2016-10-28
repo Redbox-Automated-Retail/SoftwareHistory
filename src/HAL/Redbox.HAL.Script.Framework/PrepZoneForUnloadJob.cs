@@ -10,8 +10,8 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "VMZ", flushOnWrite: false, null);
-		int top = GetTop<int>();
-		int deckCount = GetTop<int>();
+		int num = base.Context.PopTop<int>();
+		int deckCount = base.Context.PopTop<int>();
 		int totalReset = 0;
 		if (!ControllerConfiguration.Instance.IsVMZMachine)
 		{
@@ -30,15 +30,15 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 			return;
 		}
 		IDeck first = base.DecksService.First;
-		if (top >= first.Quadrants.Count)
+		if (num >= first.Quadrants.Count)
 		{
 			AddError("The drum as fully rotated.");
 			applicationLog.Write("The drum is fully rotated.");
 			base.Context.CreateInfoResult("RotationsExceeded", "There are no more rotations to be made.");
 			return;
 		}
-		int num = ((top > 0) ? (first.Quadrants.Count - top) : 0);
-		IQuadrant currentQuadrant = first.Quadrants[num];
+		int num2 = ((num > 0) ? (first.Quadrants.Count - num) : 0);
+		IQuadrant currentQuadrant = first.Quadrants[num2];
 		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
 			if (deckCount > 0 && deck.Number > deckCount)
@@ -50,25 +50,25 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 		});
 		applicationLog.WriteFormatted("{0} locations were marked for unload covering slots {1} -> {2}.", totalReset, currentQuadrant.Slots.Start, currentQuadrant.Slots.End);
 		base.Context.CreateInfoResult("LocationChangedCount", totalReset.ToString());
-		if (top == 0)
+		if (num == 0)
 		{
-			num = first.Quadrants.Count;
+			num2 = first.Quadrants.Count;
 		}
-		if (--num == 0)
+		if (--num2 == 0)
 		{
 			AddError("The drum as fully rotated.");
 			applicationLog.Write("The drum is fully rotated.");
 			base.Context.CreateInfoResult("RotationsExceeded", "There are no more rotations to be made.");
 			return;
 		}
-		IQuadrant quadrant = first.Quadrants[num];
-		int num2 = quadrant.Slots.Start - 5;
-		if (num2 <= 0)
+		IQuadrant quadrant = first.Quadrants[num2];
+		int num3 = quadrant.Slots.Start - 5;
+		if (num3 <= 0)
 		{
-			num2 = first.NumberOfSlots - Math.Abs(num2);
+			num3 = first.NumberOfSlots - Math.Abs(num3);
 		}
-		applicationLog.Write($"PrepZone: Rotations = {top}, move to target Deck = {first.Number} Slot = {num2}");
-		ErrorCodes errorCodes = base.MotionService.MoveTo(1, num2, MoveMode.None, base.Context.AppLog);
+		applicationLog.Write($"PrepZone: Rotations = {num}, move to target Deck = {first.Number} Slot = {num3}");
+		ErrorCodes errorCodes = base.MotionService.MoveTo(1, num3, MoveMode.None, base.Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			string text2 = $"The MOVE instruction failed with error {errorCodes.ToString()}";

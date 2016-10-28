@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -44,7 +45,7 @@ public sealed class DumpBinInstruction : Instruction
 			break;
 		}
 		case ExpectedOperand.IsConfigured:
-			context.PushTop(service.Active);
+			context.PushTop(ControllerConfiguration.Instance.IsVMZMachine);
 			break;
 		case ExpectedOperand.GetCapacity:
 			context.PushTop(service.Capacity);
@@ -56,7 +57,7 @@ public sealed class DumpBinInstruction : Instruction
 			context.PushTop(service.CurrentCount());
 			break;
 		case ExpectedOperand.ResetCounter:
-			service.ResetCount();
+			service.ClearItems();
 			break;
 		case ExpectedOperand.FileDisk:
 		{
@@ -71,7 +72,7 @@ public sealed class DumpBinInstruction : Instruction
 			break;
 		}
 		case ExpectedOperand.ResetCounterMove:
-			service.ResetCount();
+			service.ClearItems();
 			VMZHelperFunctions.MoveViewable(context);
 			break;
 		case ExpectedOperand.DumpInventory:

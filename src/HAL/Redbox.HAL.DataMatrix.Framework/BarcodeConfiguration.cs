@@ -44,92 +44,92 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 	[Description("The port the snap/decode device is configured.")]
 	public string SnapDecodePort { get; set; }
 
+	[Description("In ms.")]
 	[DisplayName("Write Pause")]
 	[XmlConfiguration(DefaultValue = "500")]
 	[Category("Settings")]
-	[Description("In ms.")]
 	public int WritePause { get; set; }
 
+	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
 	[DisplayName("Reboot On Start")]
 	[Description("In ms.")]
-	[XmlConfiguration(DefaultValue = "false")]
 	public bool RebootOnStart { get; private set; }
 
 	[XmlConfiguration(DefaultValue = "false")]
-	[DisplayName("Cycle Camera On Use")]
 	[Category("Settings")]
 	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
+	[DisplayName("Cycle Camera On Use")]
 	public bool CycleCameraOnUse { get; private set; }
 
 	[Description("If true, uses CI to take a photo & try decode.")]
+	[DisplayName("Use CI On Fail")]
 	[Category("Settings")]
 	[XmlConfiguration(DefaultValue = "false")]
-	[DisplayName("Use CI On Fail")]
 	public bool UseInliteOnFail { get; private set; }
 
 	[DisplayName("Scanner Service")]
+	[Description("The configured scanner.")]
 	[XmlConfiguration(DefaultValue = "Legacy")]
 	[Category("Settings")]
-	[Description("The configured scanner.")]
 	public ScannerServices ScannerService { get; set; }
 
-	[Category("Settings")]
 	[XmlConfiguration(DefaultValue = "false")]
-	[Description("The configured scanner.")]
 	[DisplayName("Log Detailed Scan")]
+	[Category("Settings")]
+	[Description("The configured scanner.")]
 	public bool LogDetailedScan { get; private set; }
 
+	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
 	[DisplayName("Insert Read Stats")]
 	[Description("If true, will insert read data.")]
-	[XmlConfiguration(DefaultValue = "false")]
 	public bool InsertReadStats { get; private set; }
 
-	[Description("For the scanner, the max number of barcodes.")]
-	[XmlConfiguration(DefaultValue = "4")]
 	[DisplayName("Expected Read Codes")]
+	[Description("For the scanner, the max number of barcodes.")]
 	[Category("Settings")]
+	[XmlConfiguration(DefaultValue = "4")]
 	public int ExpectedCodes { get; private set; }
 
-	[Category("Settings")]
-	[Description("In ms, the time to wait for a scan to complete.")]
 	[XmlConfiguration(DefaultValue = "2000")]
 	[DisplayName("Scan Timeout")]
+	[Category("Settings")]
+	[Description("In ms, the time to wait for a scan to complete.")]
 	public int ScanTimeout { get; private set; }
 
-	[Category("Settings")]
 	[XmlConfiguration(DefaultValue = "15000")]
+	[Category("Settings")]
 	[DisplayName("Scanner Wakeup Pause")]
 	[Description("In ms, the time to wait for the scanner after boot.")]
 	public int ScannerWakeupPause { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "Decode")]
 	[Description("The action to take on startup of the Cortex camera.")]
 	[Browsable(false)]
-	[Category("Settings")]
 	[DisplayName("Cortex Wakeup Action")]
+	[XmlConfiguration(DefaultValue = "Decode")]
+	[Category("Settings")]
 	public CortexStartupAction CortexStartupAction { get; private set; }
 
-	[Browsable(false)]
-	[Description("If true, will trim read code count to 4.")]
 	[DisplayName("Filter Excess Codes")]
+	[Description("If true, will trim read code count to 4.")]
 	[XmlConfiguration(DefaultValue = "true")]
 	[Category("Settings")]
+	[Browsable(false)]
 	public bool FilterExcessReadCodes { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "50")]
 	[Browsable(false)]
-	[Category("Settings")]
+	[XmlConfiguration(DefaultValue = "50")]
 	[DisplayName("Cortex Port Open Wait")]
+	[Category("Settings")]
 	[Description("Time to wait for the port after open (in ms).")]
 	public int CortexPortOpenWait { get; private set; }
 
-	[DisplayName("Cortex Snap On Decode Failure")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Description("If true, will snap an image on decode failure.")]
 	[Browsable(false)]
 	[Category("Settings")]
-	[Description("If true, will snap an image on decode failure.")]
+	[DisplayName("Cortex Snap On Decode Failure")]
 	public bool CortexSnapOnDecodeFailure { get; private set; }
 
 	protected override string FileNodeName => "Camera";

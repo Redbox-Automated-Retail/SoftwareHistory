@@ -1,15 +1,10 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
 internal abstract class NativeJobAdapter
 {
-	internal string Name { get; set; }
-
 	protected ApplicationLog AppLog => Context.AppLog;
-
-	protected ControllerService Controller => ControllerService.Instance;
 
 	protected IInventoryService InventoryService => ServiceLocator.Instance.GetService<IInventoryService>();
 
@@ -25,10 +20,7 @@ internal abstract class NativeJobAdapter
 
 	protected ExecutionContext Context { get; private set; }
 
-	internal void Execute()
-	{
-		ExecuteInner();
-	}
+	internal string Name { get; set; }
 
 	protected abstract void ExecuteInner();
 
@@ -37,21 +29,19 @@ internal abstract class NativeJobAdapter
 		Result.Errors.Add(Error.NewError("E999", "Execution context error.", errMsg));
 	}
 
-	protected bool ResetMotionController()
+	protected void ShowEmptyStuck(ILocation location)
 	{
-		bool flag = MotionService.Reset(AppLog, quick: true);
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service.Insert(HardwareCorrectionStatistic.Arcus, Context, flag);
-		return flag;
+		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
+		if (service.ShowEmptyStuck(Context, location) != ErrorCodes.Success)
+		{
+			AddError("There was an error moving to the offset position.");
+		}
 	}
 
 	protected bool ResetMotionControllerChecked()
 	{
-		if (ControllerConfiguration.Instance.RestartControllerDuringUserJobs)
-		{
-			return ResetMotionController();
-		}
-		return false;
+		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
+		return service.ResetMotionControllerChecked(Context);
 	}
 
 	protected bool MoveAndGet(int deck, int slot)
@@ -60,7 +50,8 @@ internal abstract class NativeJobAdapter
 		{
 			return false;
 		}
-		return ControllerService.Instance.Get(AppLog).Success;
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Get(AppLog).Success;
 	}
 
 	protected bool MoveAndPut(int deck, int slot, string id)
@@ -70,52 +61,25 @@ internal abstract class NativeJobAdapter
 			return false;
 		}
 		ControlSystem.TrackCycle();
-		return ControllerService.Instance.Put(id, AppLog).Success;
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Put(id, AppLog).Success;
 	}
 
 	protected ErrorCodes CorrectiveMoveVend(MoveMode mode)
 	{
-		ErrorCodes errorCodes = MotionService.MoveVend(mode, AppLog);
-		if (ErrorCodes.ArcusNotResponsive == errorCodes)
-		{
-			if (ResetMotionControllerChecked())
-			{
-				return MotionService.MoveVend(mode, AppLog);
-			}
-			return ErrorCodes.ArcusNotResponsive;
-		}
-		return errorCodes;
+		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
+		return service.CorrectiveMoveVend(Context, mode);
 	}
 
 	protected ErrorCodes CorrectiveMove(int deck, int slot, MoveMode mode)
 	{
-		ErrorCodes errorCodes = MotionService.MoveTo(deck, slot, mode, AppLog);
-		if (ErrorCodes.LowerLimitError == errorCodes && SessionErrorState.Instance.LowerLimitConfigured(Context))
-		{
-			SessionErrorState.Instance.IncrementLowerLimit();
-			ErrorCodes errorCodes2 = MotionService.HomeAxis(Axis.Y, AppLog);
-			AppLog.WriteFormatted("Move returned {0}; HOME Y returned {1}; return TIMEOUT", errorCodes.ToString(), errorCodes2.ToString());
-			return ErrorCodes.Timeout;
-		}
-		if (ErrorCodes.ArcusNotResponsive == errorCodes)
-		{
-			if (ResetMotionControllerChecked())
-			{
-				return MotionService.MoveTo(deck, slot, mode, AppLog);
-			}
-			return ErrorCodes.ArcusNotResponsive;
-		}
-		return errorCodes;
+		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
+		return service.CorrectiveMove(Context, deck, slot, mode);
 	}
 
 	protected ErrorCodes CorrectiveMove(ILocation loc, MoveMode mode)
 	{
 		return CorrectiveMove(loc.Deck, loc.Slot, mode);
-	}
-
-	protected T GetTop<T>()
-	{
-		return Context.PopTop<T>();
 	}
 
 	protected bool ContextSwitchRequested()
@@ -138,5 +102,10 @@ internal abstract class NativeJobAdapter
 	{
 		Result = result;
 		Context = context;
+	}
+
+	internal void Execute()
+	{
+		ExecuteInner();
 	}
 }
