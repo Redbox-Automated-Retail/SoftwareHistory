@@ -127,12 +127,7 @@ insert_disc = function()
 								v.time_stamp,
 								function( result )
 									if result.success == true then
-										local new_status = "Known"
-										local rapid_status = kernel.rental_inventory_get_rapidstatus( v.item_id )
-										if rapid_status ~= nil then
-											new_status = rapid_status.status
-										end
-										
+                                        local new_status = get_rapid_status( v.item_id, "Known" )
 										local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
 										BarcodePosition[deck_slot_key] = { ["barcode"] = tostring( v.item_id ), ["status"] = new_status }
 

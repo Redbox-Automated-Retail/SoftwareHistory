@@ -127,6 +127,9 @@ kernel.registeractorhitnotify(
 		browse_filter_family_tracker:set_family_type( "ALL" )
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "alpha")
 		kernel.executescript("browse_filter_alpha")
+        if ABE_ON then
+            browse_filter_genre_selected = nil
+        end
 		display_alpha_screen_layout()
 	end
 )
@@ -141,6 +144,9 @@ kernel.registeractorhitnotify(
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "ALL" )
+        if ABE_ON then
+            browse_filter_genre_selected = nil
+        end
 		show_browse_view(10)
 	end
 )
@@ -155,6 +161,9 @@ kernel.registeractorhitnotify(
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "for-sale")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "ForSale")
 		browse_filter_family_tracker:set_family_type( "for-sale" )
+        if ABE_ON then
+            browse_filter_genre_selected = nil
+        end
 		show_browse_view(10)
 	end
 )
@@ -184,6 +193,9 @@ kernel.registeractorhitnotify(
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Blu-ray")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Blu-ray" )
+        if ABE_ON then
+            browse_filter_genre_selected = nil
+        end
 		show_browse_view(10)
 	end
 )
@@ -250,6 +262,78 @@ kernel.registeractorhitnotify(
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii U")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		browse_filter_family_tracker:set_family_type( "Wii U" )
+		show_browse_view(10)
+	end
+)
+kernel.registeractorhitnotify(
+	"top_20_filter_button",
+	function()
+		view_analytics_event( "filterChange", "browse-filter-family,Top 20" )
+		set_number = 1
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Top 20")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+		--browse_filter_family_tracker:set_family_type( "Top 20" )
+        browse_filter_genre_selected = 1093
+		show_browse_view(10)
+	end
+)
+kernel.registeractorhitnotify(
+	"action_filter_button",
+	function()
+		view_analytics_event( "filterChange", "browse-filter-family,Action" )
+		set_number = 1
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Action")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+		--browse_filter_family_tracker:set_family_type( "Action" )
+        browse_filter_genre_selected = 1000
+		show_browse_view(10)
+	end
+)
+kernel.registeractorhitnotify(
+	"comedy_filter_button",
+	function()
+		view_analytics_event( "filterChange", "browse-filter-family,Comedy" )
+		set_number = 1
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Comedy")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+		--browse_filter_family_tracker:set_family_type( "Comedy" )
+        browse_filter_genre_selected = 1004
+		show_browse_view(10)
+	end
+)
+kernel.registeractorhitnotify(
+	"drama_filter_button",
+	function()
+		view_analytics_event( "filterChange", "browse-filter-family,Drama" )
+		set_number = 1
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Drama")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+		--browse_filter_family_tracker:set_family_type( "Drama" )
+        browse_filter_genre_selected = 1005
+		show_browse_view(10)
+	end
+)
+kernel.registeractorhitnotify(
+	"family_filter_button",
+	function()
+		view_analytics_event( "filterChange", "browse-filter-family,Family" )
+		set_number = 1
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Family")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+		--browse_filter_family_tracker:set_family_type( "Family" )
+        browse_filter_genre_selected = 1006
+		show_browse_view(10)
+	end
+)
+kernel.registeractorhitnotify(
+	"horror_filter_button",
+	function()
+		view_analytics_event( "filterChange", "browse-filter-family,Horror" )
+		set_number = 1
+        kernel.set_session_value("BrowseState.BrowseSelectedSort", "Horror")
+        kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+		--browse_filter_family_tracker:set_family_type( "Horror" )
+        browse_filter_genre_selected = 1009
 		show_browse_view(10)
 	end
 )

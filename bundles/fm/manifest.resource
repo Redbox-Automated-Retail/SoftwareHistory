@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Field Maintenance Application" />
-  <property name="product_version" value="1.14.0.1" />
+  <property name="product_version" value="1.19.0.3" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
     <value>Content Pricing,*</value>

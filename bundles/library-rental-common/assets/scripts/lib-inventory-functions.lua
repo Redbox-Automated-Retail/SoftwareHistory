@@ -20,7 +20,6 @@ local function product_to_barcode_entry_count( barcodes )
 	for k, v in pairs( barcodes ) do
 		if v ~= nil 
 		and (v.status == "Known" or v.status == "Thinned" or v.status == "Redeployment" or v.status == "Rebalancing")
-		and UnplayableProduct[ k ] == nil
 		then 
 			count = count + 1 
 		end
@@ -198,49 +197,6 @@ function create_or_update_product_catalog_entry( product_id, history )
 			return history.on_hand_count > 0
 		end
 	end
-	local function can_be_sold( product_id, history )
-		if master == nil then return false end
-		if not master.sell_thru then return false end
-		if master.merchandise_date == nil then return false end
-
-		local now = get_current_date_string( "%4d%02d%02d" )
-		-- Disc must be 30 days past release date (Does not apply for Games)
-		if master.product_type_id <= 2 then
-			local since_release = kernel.getelapseddays( master.merchandise_date, now )
-			if since_release ~= nil and since_release < 30 then return false end
-		end
-
-		-- Mingle #291 special exception for last copy of a thinned disc
-		if history.on_hand_count == 1 then
-			local barcodes_table = ProductToBarcode[product_id] or {}
-			for each_barcode, cached_info in pairs( barcodes_table ) do
-				if cached_info ~= nil then
-					if UnplayableProduct[each_barcode] == nil
-					and ( cached_info.status == "Thinned" or cached_info.status == "Redeployment" or cached_info.status == "Rebalancing" ) then
-						return true
-					end
-				end
-			end
-		end
-
-		-- Special Out for Rent (OFR) rules apply to ensure adequate rental stock
-		if history == nil
-		or history.last_max_ofr == nil
-		or history.created_date == nil
-		or history.sold_out ~= nil then
-			return false
-		end
-
-		-- if the created date is less than seven days, then go ahead and let the sell go thru;
-		-- if the created date is seven days or greater, then check on hand against last max ofr.
-		if kernel.getelapseddays( history.created_date, now ) < 7 then return true end
-
-		-- we do not have enough on hand to meet last week's demand
-		-- rule is that we do not count actual out for rent copies, only on-hand copies
-		if history.on_hand_count <= history.last_max_ofr then return false end
-
-		return true
-	end
 	local function product_is_available()
 		if master == nil then return false end
 		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > master.merchandise_date or StoreManager.PricingManager:is_early_released( master )
@@ -262,7 +218,6 @@ function create_or_update_product_catalog_entry( product_id, history )
 
 	local product_catalog = ProductCatalog[product_id] or { product_id = product_id }
 	product_catalog.in_stock = in_stock( product_id, history )
-	product_catalog.can_be_sold = can_be_sold( product_id, history )
 	product_catalog.is_available = product_is_available()
 	product_catalog.product_type_name = get_type_name()
 	product_catalog.product_family_name = get_family_name()
@@ -293,14 +248,14 @@ local function item_status_based_on_barcode_to_product_and_barcode( barcode_to_p
 		status = "Unknown Title"
 	else
 		if barcode_to_product.product_id ~= nil and MasterProductCatalog[barcode_to_product.product_id] ~= nil then
-			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
-			if rapid_status ~= nil then
-				status = rapid_status.status
-			elseif barcode_to_product.status ~= nil  and ( barcode_to_product.status == "Rebalancing" or barcode_to_product.status == "Redeployment" or barcode_to_product.status == "Thinned")   then		
-				status = "Known"
-			else
-				status = barcode_to_product.status
-			end
+			status = get_rapid_status( barcode, nil )
+            if status == nil then
+                if barcode_to_product.status ~= nil  and ( barcode_to_product.status == "Rebalancing" or barcode_to_product.status == "Redeployment" or barcode_to_product.status == "Thinned")   then		
+				    status = "Known"
+			    else
+				    status = barcode_to_product.status
+			    end
+            end
 		else
 			status = "Unknown Title"
 		end	
@@ -365,7 +320,6 @@ local function sync_inventory_item_returned( job_result )
 	local history = create_missing_product_history_set_on_hand_and_ofr_counts( product_id, barcodes )
 	if history.ofr_count > 0 then history.ofr_count = history.ofr_count - 1 end
 
-	-- This is now required even on a return thanks to Unplayable Returns
 	if history.on_hand_count == 0 then 
 		local current_date = get_current_date_string( "%4d%02d%02d" )
 		if history.sold_out == nil then history.sold_out = current_date end
@@ -493,7 +447,6 @@ local function sync_inventory_soft_sync( job_result )
 	clear_product_history_sold_out_after_seven_days( history, current_date )
 	set_last_max_ofr_fields_if_after_seven_days( history, current_date )
 
-	-- This is now required even on a return thanks to Unplayable Returns
 	if history.on_hand_count == 0 then 
 		local current_date = get_current_date_string( "%4d%02d%02d" )
 		if history.sold_out == nil then history.sold_out = current_date end
@@ -512,9 +465,6 @@ function get_barcodes_for_products( products, exclude_list )
 	exclude_list = exclude_list or {}
 	for _, v in ipairs( exclude_list ) do
 		used_barcodes[v] = true
-	end
-	for k, v in UnplayableProduct:pairs() do
-		used_barcodes[k] = true
 	end
 	
 	for k, v in ipairs( products ) do
@@ -662,13 +612,13 @@ function update_barcode_status( barcodes, status )
 				local barcode_info = product_info[v]
 				if status == "Known" then
 					-- Known is passed generically for expired reservations, use the CORRECT status instead
-					local rapid_status = kernel.rental_inventory_get_rapidstatus( v )
-					if rapid_status ~= nil then
-						status = rapid_status.status
-					else
+                    status = get_rapid_status( v, nil )
+					if status == nil then
 						if BarcodeToProduct[v] ~= nil then
 							status = BarcodeToProduct[v].status
-						end
+						else
+                            status = "Known"
+                        end
 					end
 				end
 				if barcode_info ~= nil then
@@ -875,11 +825,23 @@ function barcodes_vmz_status ( inside_vmz, outside_vmz, barcode_list, on_complet
 end
 
 function upgrade_product( product ) 
-		if (product.title_rollup_product_group_id ~= nil) then
-			local group_prod = kernel.rental_get_title_rollup(product.title_rollup_product_group_id)
-			if (group_prod ~= nil) then
-				return group_prod
-			end
-		end
-		return product
+    if product.title_rollup_product_group_id ~= nil then
+	    local group_prod = kernel.rental_get_title_rollup( product.title_rollup_product_group_id )
+	    if group_prod ~= nil then
+		    return group_prod
+	    end
+    end
+    return product
+end
+
+function get_rapid_status( barcode, default_status )
+    local barcode_status = BarcodeStatus[barcode]
+    if barcode_status ~= nil then
+        return barcode_status.status
+    end
+    local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
+    if rapid_status ~= nil then
+        return rapid_status.status
+    end
+    return default_status
 end

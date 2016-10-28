@@ -163,16 +163,16 @@
 				style="red_button_style_bold_border" />
 				
 			<actor
-                name="clearall_button"
-                x="372"
-                y="494"
-                width="75"
-                height="75"
-                text="CANCELA"
-				font="font_akzidenz_bold_tiny"
-				onHit="key_pad_update"
-				cornerSize="36,36"
-				style="red_button_style_bold_border" />
+        name="clearall_button"
+        x="372"
+        y="494"
+        width="75"
+        height="75"
+        text="CANCELA"
+        font="font_akzidenz_bold_tiny"
+        onHit="key_pad_update"
+        cornerSize="36,36"
+        style="red_button_style_bold_border" />
 				
 			<actor
 				name="zero_button"
@@ -188,57 +188,65 @@
 				style="red_button_style_bold_border" />
 				
 			<actor
-                name="back_button"
-                x="576"
-                y="494"
-                width="75"
-                height="75"
-               text="ATR&#193;S"
-				font="font_akzidenz_bold_tiny"
-				onHit="key_pad_update"
-				cornerSize="36,36"
-				style="red_button_style_bold_border" />
+        name="back_button"
+        x="576"
+        y="494"
+        width="75"
+        height="75"
+        text="ATR&#193;S"
+        font="font_akzidenz_bold_tiny"
+        onHit="key_pad_update"
+        cornerSize="36,36"
+        style="red_button_style_bold_border" />
 				
 			<actor
 				name="note_label"
-				x="30"
-				y="677"
-				width="500"
-				foregroundColor="128,128,128"
+				x="20"
+				y="640"
+				width="700"
+				foregroundColor="white"
 				optionFlags="Text"
-				font="font_akzidenz_regular_small"
+				font="font_akzidenz_regular_smaller_13"
 				text="El c&#243;digo postal asociado a su tarjeta de cr&#233;dito es necesario para fines de verificaci&#243;n." />
-				
-			<actor
-				name="next_button"
-				x="794"
-				y="660"
-				width="196"
-				height="66"
-				onHit="key_pad_update"
-				text="    CONTINUAR"
-				font="font_target_small"
-				cornerSize="32,32"
-				style="red_next_button_style" /> 
+      
+      <actor
+				name="note_label2"
+				x="20"
+				y="680"
+				width="700"
+				foregroundColor="white"
+				optionFlags="Text"
+				font="font_akzidenz_regular_smaller_13"
+				text="${KeyPad:AuthText}" />
+			
+      <actor
+        name="next_button"
+        x="794"
+        y="660"
+        width="196"
+        height="66"
+        onHit="key_pad_update"
+        text="    CONTINUAR"
+        font="font_target_small"
+        cornerSize="32,32"
+        style="red_next_button_style" /> 
 					
-	       	<actor
-                name="next_button_right_arrow_icon"
-                x="943"
-                y="682"
-				image="image_email_entry_right_arrow_icon"
-                hitFlags="enabled"
-                optionFlags="Image" />
-				
-				
+      <actor
+        name="next_button_right_arrow_icon"
+        x="943"
+        y="682"
+        image="image_email_entry_right_arrow_icon"
+        hitFlags="enabled"
+        optionFlags="Image" />
+      
 			<actor
-                name="image_next_white_arrow_big"
-                x="943"
-                y="682"
-				onHit="key_pad_update"
-				image="image_next_white_arrow_big"
-                hitFlags="enabled"
-                optionFlags="Image" />	 
+        name="image_next_white_arrow_big"
+        x="943"
+        y="682"
+        onHit="key_pad_update"
+        image="image_next_white_arrow_big"
+        hitFlags="enabled"
+        optionFlags="Image" />	 
 		</scene>	
-		
 	</aspect>
 </resource>

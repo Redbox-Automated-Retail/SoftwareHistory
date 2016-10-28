@@ -158,38 +158,6 @@ local function product_on_hand_count( barcodes )
 end
 
 local function create_or_update_product_catalog_entry( product_id, history )
-	local function can_be_sold( product_id, history )
-		local master = MasterProductCatalog[product_id]
-		if master == nil then return false end
-		if not master.sell_thru then return false end
-		-- Currently may only sell DVDs, not blu-ray or games, safety catch for hive data used above
-		if master.product_type_id ~= 1 then return false end
-		if master.merchandise_date == nil then return false end
-
-		-- Disc must be 30 days past release date
-		local now = get_current_date_string( "%4d%02d%02d" )
-
-		local since_release = kernel.getelapseddays( master.merchandise_date, now )
-		if since_release ~= nil and since_release < 30 then return false end
-
-		-- Special Out for Rent (OFR) rules apply to ensure adequate rental stock
-		if history == nil
-		or history.last_max_ofr == nil
-		or history.created_date == nil
-		or history.sold_out ~= nil then
-			return false
-		end
-
-		-- if the created date is less than seven days, then go ahead and let the sell go thru;
-		-- if the created date is seven days or greater, then check on hand against last max ofr.
-		if kernel.getelapseddays( history.created_date, now ) < 7 then return true end
-
-		-- we do not have enough on hand to meet last week's demand
-		-- rule is that we do not count actual out for rent copies, only on-hand copies
-		if history.on_hand_count <= history.last_max_ofr then return false end
-
-		return true
-	end
 	local function is_available( product_id )
 		local product = MasterProductCatalog[product_id]
 		if product == nil then return false end
@@ -198,7 +166,6 @@ local function create_or_update_product_catalog_entry( product_id, history )
 
 	local product_catalog = ProductCatalog[product_id] or { product_id = product_id }
 	product_catalog.in_stock = history.on_hand_count > 0
-	product_catalog.can_be_sold = can_be_sold( product_id, history )
 	product_catalog.is_available = is_available( product_id )
 	ProductCatalog[product_id] = product_catalog
 end

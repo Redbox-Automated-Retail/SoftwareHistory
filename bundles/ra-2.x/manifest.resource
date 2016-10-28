@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Rental Application" />
-  <property name="product_version" value="2.13.0.23" />
+  <property name="product_version" value="2.18.0.11" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
     <value>Content Pricing,*</value>
@@ -14,6 +14,7 @@
     <value>Content Email Opt-In,*</value>
     <value>Content Speech,*</value>
     <value>Content Banner Marketing,*</value>
+    <value>Content Marketing Ads,*</value>
   </property>
   <property name="public_key" value="public_key" />
   <aspect name="schema">

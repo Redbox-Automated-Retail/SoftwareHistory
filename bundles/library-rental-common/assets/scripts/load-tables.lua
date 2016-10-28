@@ -55,14 +55,14 @@ if DataAccessAlreadySent ~= true then
 		RemovedQueue = getworktable( "local", "RemovedQueue" )
 		RemovedQueue:prime_cache_keys()
 		BreakingNews = getworktable( "local", "BreakingNews" )
-		UnplayableProduct = getworktable( "local", "UnplayableProduct" )
-		UnplayableProduct:prime_cache_keys()
+        BarcodeStatus = getworktable( "local", "BarcodeStatus" )
+        BarcodeStatus:prime_cache_keys()
 	else
 		Reservations = {}
 		DuplicateBarcodes = {}
 		RemovedQueue = {}
 		BreakingNews = {}
-		UnplayableProduct = {}
+        BarcodeStatus = {}
 	end
 else 
 	BadCardList = {}
@@ -70,7 +70,7 @@ else
 	DuplicateBarcodes = {}
 	RemovedQueue = {}
 	BreakingNews = {}
-	UnplayableProduct = {}
+    BarcodeStatus = {}
 end
 
 -- CACHE.DATA

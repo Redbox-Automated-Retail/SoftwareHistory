@@ -17,7 +17,6 @@ function newreturnmanager( shopping_cart )
 		self.has_ended = false
         kernel.ttsinreturnflow(true)
 		self.did_show_success_message = false
-		self.message_view_manager = newmessageviewmanager()
 		self.error_message_view_manager = newerrormessageviewmanager()
 	end
 
@@ -27,25 +26,23 @@ function newreturnmanager( shopping_cart )
 		end
 		
 		if unwind_views == true then
-			self.message_view_manager:show()
-			self.message_view_manager:hide_title()
-			self.message_view_manager:set_message( message )
-			self.message_view_manager:start_timer(
-				function()
-					ABE_ON = false
-					view_unwindtobottom_safe( "ReturnManager:show_message timer expired" )
-				end
-			)
-			self.message_view_manager:hide_first_button()
-			self.message_view_manager:show_second_button(
-				strings.continue_button,
-				function()
-					ABE_ON = false
-					view_unwindtobottom_safe( "ReturnManager:show_message second button clicked" )
-				end
-			)
+            if (message == strings.hardware_error_message) then
+                kernel.show_message_popup_view_hardware_error(
+				    function()
+					    ABE_ON = false
+					    view_unwindtobottom_safe( "ReturnManager:show_message timer expired" )
+				    end,
+				    function()
+					    ABE_ON = false
+					    view_unwindtobottom_safe( "ReturnManager:show_message second button clicked" )
+				    end
+                )
+            else
+                -- this code should never run but just in case...
+			    ABE_ON = false
+			    view_unwindtobottom_safe( "ReturnManager:show_message unexpected message text." )
+            end
 		else
-			kernel.popmovie()
 			self.error_message_view_manager:show()
 			self.error_message_view_manager:set_message( message )
 		end
@@ -66,54 +63,63 @@ function newreturnmanager( shopping_cart )
 	end
 
 	t.show_success_message = function( self, item_id, return_type )
-	
-		local switch_culture_unwind = function()
-			if DefaultCulture ~= nil and DefaultCulture ~= "" then
-				kernel.setculture( DefaultCulture )
-			else
-				kernel.setculture( "en-US" )
-			end
-			localization_reload_resources()
-			ABE_ON = false
-			view_unwindtobottom_safe( "ReturnManager:show_success_message switch_culture_unwind()" )
-		end
-		if self.shopping_cart ~= nil and self.shopping_cart.session_id ~= nil then
-			self.shopping_cart:commit( "User successfully returned product with barcode: " .. tostring( item_id ), true )
-		end
-		self.message_view_manager:show()
-		self.message_view_manager:set_title( strings.title_thanks )
-		self.message_view_manager:set_message( strings.inventory_updated_message )
-		self.message_view_manager:start_timer( switch_culture_unwind, 5000 )
-		self.did_show_success_message = true
-		self.has_ended = true
-        kernel.ttsinreturnflow( false )
+	    if (self.did_show_success_message == false) then
+		    self.did_show_success_message = true
+		    local switch_culture_unwind = function()
+			    if DefaultCulture ~= nil and DefaultCulture ~= "" then
+				    kernel.setculture( DefaultCulture )
+			    else
+				    kernel.setculture( "en-US" )
+			    end
+			    localization_reload_resources()
+			    ABE_ON = false
+			    view_unwindtobottom_safe( "ReturnManager:show_success_message switch_culture_unwind()" )
+		    end
+		    if self.shopping_cart ~= nil and self.shopping_cart.session_id ~= nil then
+			    self.shopping_cart:commit( "User successfully returned product with barcode: " .. tostring( item_id ), true )
+		    end
+
+            kernel.show_message_popup_view_return_success(switch_culture_unwind)
+		    self.has_ended = true
+            kernel.ttsinreturnflow( false )
+        end
 	end
 	
 	t.show_backward_inserted_message = function( self )
-		self.message_view_manager:show()
-		self.message_view_manager:set_title(strings.return_error)
-		self.message_view_manager:set_message(strings.backward_insert_error)
-		self.message_view_manager:show_second_button(
-			strings.continue_button,
+        kernel.show_message_popup_view_return_backward_inserted(
+			function()
+				ABE_ON = false
+				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message timer expired" )
+			end,
 			function()
 				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message second button clicked" )
 			end
-		)
-		self.message_view_manager:start_timer(
+        )
+
+		self.has_ended = true
+        kernel.ttsinreturnflow( false )
+	end
+
+	t.show_unrecognized_barcode_returned_message = function( self )
+        kernel.show_message_popup_view_return_unrecognized_barcode(
 			function()
 				ABE_ON = false
-				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message timer expired" )
+				view_unwindtobottom_safe( "ReturnManager:show_unrecognized_barcode_returned_message timer" )
+			end,
+			function()
+				ABE_ON = false
+				view_unwindtobottom_safe( "ReturnManager:show_unrecognized_barcode_returned_message continue button" )
 			end
-		)
+        )
+
 		self.has_ended = true
         kernel.ttsinreturnflow( false )
 	end
 
 	t.begin_return = function( self, return_type )
 
-		self.message_view_manager:hide( true )
-
+        kernel.hide_message_popup_view(true)
 		local function register_return_responders( hardware_manager, return_manager  )
 
 			hardware_manager:reset_event_responders()
@@ -189,14 +195,22 @@ function newreturnmanager( shopping_cart )
 				end
 			end
 
+			hardware_manager.hardware_event_responders.UnrecognizedBarcodeReturned = function( args, jobid )
+				-- Remove this handler so it does not run when the job finally ends
+				hardware_manager.hardware_event_responders.ReturnEnd = nil
+				if not in_maintenance_mode() then
+					return_manager:show_unrecognized_barcode_returned_message()
+                    view_analytics_event2( "context", "UnrecognizedBarcodeReturned", tostring( self.shopping_cart.session_id ) )
+				end
+			end
+
 			hardware_manager.hardware_event_responders.ReturnRetry = function( args, jobid )
 				-- Deprecated
 				kernel.log( "ReturnManager event responder for ReturnRetry " .. tostring( jobid ) )
 			end
 
 			hardware_manager.hardware_event_responders.DisableCancel = function( args, jobid )
-				kernel.hideactor( "return_back_button" )
-				kernel.hideactor( "return_back_button_arrow" )
+                kernel.set_return_view_back_button_isvisible(false)
 			end
 
 			hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
@@ -232,12 +246,11 @@ function newreturnmanager( shopping_cart )
 			function()
 				--On_Ready
 				ShoppingCart:add_session_event( "Hardware", "HAL return job is running." )
-				if self.message_view_manager.is_showing then
-					self.message_view_manager:hide( true )
-				end
+                if kernel.is_message_popup_view_showing() then
+                    kernel.hide_message_popup_view(true)
+                end
 				if self.error_message_view_manager.is_showing then
 					self.error_message_view_manager:hide( true )
-					kernel.switchmovie( "return_movie" )
 				end
 				view_show_safe( "return_view" )
 				self.has_ended = false
@@ -303,9 +316,6 @@ function newreturnmanager( shopping_cart )
                             local type_value = "KioskReturn"
                             local failed_security_read = false
 
-							if return_type == "unplayable_return" then
-								type_value = "UnplayableReturn"
-							end
                             if EnableDiscSecurity == true
                             and has_disc_detection_indicator( v.item_id ) == true
                             and contains_code( job_result.results, "NoFraudMarkersDetected" ) == true
@@ -313,6 +323,10 @@ function newreturnmanager( shopping_cart )
                             and contains_code( job_result.results, "LastFraudPostError" ) == false then
                                 type_value = "FailedSecurityRead"
                                 failed_security_read = true
+                                if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
+                                    BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
+                                    kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = Fraud inserted into BarcodeStatus" )
+                                end
                             end
 
 							kernel.invsvcs_return2(
@@ -416,11 +430,11 @@ function newreturnmanager( shopping_cart )
 				end
 
 				if ( kernel.peekview() == "return_view"
-				or kernel.peekview() == "message_view" )
+				or kernel.is_message_popup_view_showing() )
 				and not self.has_ended then
 					self.has_ended = true
                     kernel.ttsinreturnflow( false )
-					self.message_view_manager:stop_timer()
+                    kernel.message_popup_view_stop_timer()
 					if kernel.getculture() ~= "en-US" then
 						if DefaultCulture ~= nil and DefaultCulture ~= "" then
 							kernel.setculture( DefaultCulture )
@@ -428,18 +442,15 @@ function newreturnmanager( shopping_cart )
 							kernel.setculture( "en-US" )
 						end
 						localization_reload_resources()
-						kernel.popmovie()
 					end
-					view_unwindto_safe( Start_Over_View_Name, true, "ReturnManager: on_complete, has_ended == false" )					
+					view_unwindto_safe( kernel.get_start_over_view_name(), true, "ReturnManager: on_complete, has_ended == false" )					
 				end
 			end,
 			function()
 				--On_Busy
 				if not in_maintenance_mode() then
 					-- The back button cannot cancel the job now because it is already scheduled, so hide the button
-					kernel.hideactor( "return_back_button" )
-					kernel.hideactor( "return_back_button_arrow" )
-
+                    kernel.set_return_view_back_button_isvisible(false)
 					self.error_message_view_manager:show()
 					self.error_message_view_manager:set_message( strings.hardware_busy_message )
 					self.shopping_cart:add_session_event(
@@ -459,8 +470,7 @@ function newreturnmanager( shopping_cart )
 			return
 		end
 
-		kernel.registeractorhitnotify(
-			"return_back_button",
+        kernel.configure_return_view(
 			function()
 				view_analytics_event2( "buttonPress", "return-product-cancel", self.shopping_cart.session_id )
 				local return_end_time = os.time()
@@ -473,14 +483,12 @@ function newreturnmanager( shopping_cart )
 				self.shopping_cart:close_analytics( "True" )
 
 				kernel.log( "User cancelled return: " .. tostring( result.job_id ) )
-				kernel.hideactor( "return_back_button" )
-				kernel.hideactor( "return_back_button_arrow" )
 				start_idle_timer:reset()
 				kernel.hardwareterminatejob( result.job_id )
 				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager: return_back_button pressed" )
-			end )
-
+			end 
+        )
 	end
 
 	t.free_slots_schedule_thin = function( self, DumpBinRemainingCapacity )

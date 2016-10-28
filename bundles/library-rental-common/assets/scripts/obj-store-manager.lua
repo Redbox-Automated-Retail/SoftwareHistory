@@ -168,19 +168,23 @@ function newstoremanager()
 
 		local rapid_status_all = kernel.rental_inventory_get_rapidstatus_all()
 		if rapid_status_all ~= nil then
-			for k, v in pairs( rapid_status_all ) do
-				local barcodes = ProductToBarcode[ v.product_id ]
+            
+            BarcodeStatus:clear()
+            kernel.log( "activated new rapid status file, cleared BarcodeStatus table" )
+            
+            for k, v in pairs( rapid_status_all ) do
+				local barcodes = ProductToBarcode[v.product_id]
 				if barcodes ~= nil and barcodes[k] ~= nil then
 					if barcodes[k].status ~= "Reserved" and barcodes[k].status ~= v.status then
 						barcodes[k].status = v.status 
 						count_PRD = count_PRD + 1
 					end
-					ProductToBarcode[ v.product_id ] = barcodes
+					ProductToBarcode[v.product_id] = barcodes
 				end
 			end
 			
 			for position_key, position_info in BarcodePosition:pairs() do
-				local rapid_status = rapid_status_all[ position_info.barcode ]
+				local rapid_status = rapid_status_all[position_info.barcode]
 				if rapid_status ~= nil then
 					position_info.status = rapid_status.status
 					BarcodePosition[position_key] = position_info
@@ -191,7 +195,7 @@ function newstoremanager()
 					table.insert( barcodes_to_unmerchandize, row )
 					position_info.status = "Known"
 					BarcodePosition[position_key] = position_info
-					kernel.log("Adding barcode: " .. tostring(row.barcode) .. " to barcodes_to_unmerchandize")
+					kernel.log( "Adding barcode: " .. tostring( row.barcode ) .. " to barcodes_to_unmerchandize" )
 				end
 
 				local do_not_rent_date = nil
@@ -209,7 +213,7 @@ function newstoremanager()
 			
 			if #barcodes_to_unmerchandize > 0 then
 				local hardware_manager = newhardwaremanager()
-				kernel.log( "Calling clear_merch_status on " .. tostring(#barcodes_to_unmerchandize) .. " barcodes" )
+				kernel.log( "Calling clear_merch_status on " .. tostring( #barcodes_to_unmerchandize ) .. " barcodes" )
 				hardware_manager:clear_merch_status( barcodes_to_unmerchandize, nil )
 			end
 		end

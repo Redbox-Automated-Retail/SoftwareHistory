@@ -364,6 +364,12 @@ ProductCatalog.set_title_marketing_view = function( self )
 	kernel.hideactor( "ps4_button" )
 	kernel.hideactor( "wii_button" )
 	kernel.hideactor( "wii_u_button" )
+    kernel.hideactor( "top_20_filter_button" )
+    kernel.hideactor( "action_filter_button" )
+    kernel.hideactor( "comedy_filter_button" )
+    kernel.hideactor( "drama_filter_button" )
+    kernel.hideactor( "family_filter_button" )
+    kernel.hideactor( "horror_filter_button" )
 
 	-- Hide the start over button
 	kernel.hideactor( "startover_button" )
@@ -416,6 +422,7 @@ function highlight_sort_button( sort_name )
 
 	local width = kernel.getactorwidth( "selected_button" )
 	show_or_hide_for_sale_button()
+
 	kernel.setactorwidth( "selected_button", 94 )
 	local _showselectedbutton = function( name )
 		kernel.setmacro( "SortName", kernel.getactortext( name .. "_button" ))
@@ -490,6 +497,54 @@ function highlight_sort_button( sort_name )
 			kernel.showactor( "newest_button" )
 			kernel.showactor( "blu_ray_button" )
 		end
+    elseif sort_name == "Top 20" then
+        sort_name = "top_20_filter"
+		kernel.setactorx( "selected_button", kernel.getactorx( "top_20_filter_button") )
+		width = kernel.getactorwidth( "top_20_filter_button" )
+        if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.showactor( "newest_button" )
+			kernel.showactor( "blu_ray_button" )
+		end
+    elseif sort_name == "Action" then
+        sort_name = "action_filter"
+		kernel.setactorx( "selected_button", kernel.getactorx( "action_filter_button") )
+		width = kernel.getactorwidth( "action_filter_button" )
+        if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.showactor( "newest_button" )
+			kernel.showactor( "blu_ray_button" )
+		end
+    elseif sort_name == "Comedy" then
+        sort_name = "comedy_filter"
+		kernel.setactorx( "selected_button", kernel.getactorx( "comedy_filter_button") )
+		width = kernel.getactorwidth( "comedy_filter_button" )
+        if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.showactor( "newest_button" )
+			kernel.showactor( "blu_ray_button" )
+		end
+    elseif sort_name == "Drama" then
+        sort_name = "drama_filter"
+		kernel.setactorx( "selected_button", kernel.getactorx( "drama_filter_button") )
+		width = kernel.getactorwidth( "drama_filter_button" )
+        if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.showactor( "newest_button" )
+			kernel.showactor( "blu_ray_button" )
+		end
+    elseif sort_name == "Family" then
+        sort_name = "family_filter"
+		kernel.setactorx( "selected_button", kernel.getactorx( "family_filter_button") )
+		width = kernel.getactorwidth( "family_filter_button" )
+        if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.showactor( "newest_button" )
+			kernel.showactor( "blu_ray_button" )
+		end
+    elseif sort_name == "Horror" then
+        sort_name = "horror_filter"
+		kernel.setactorx( "selected_button", kernel.getactorx( "horror_filter_button") )
+		width = kernel.getactorwidth( "horror_filter_button" )
+        if browse_filter_family_tracker.selected_family == "Movies" then
+			kernel.showactor( "newest_button" )
+			kernel.showactor( "blu_ray_button" )
+		end
 	else
 		sort_name = string.lower(sort_name)
 	end
@@ -518,6 +573,12 @@ function highlight_sort_button( sort_name )
 	_highlight( "ps4_button", "white",  med_gray, dark_gray )
 	_highlight( "wii_button", "white",  med_gray, dark_gray )
 	_highlight( "wii_u_button", "white",  med_gray, dark_gray )
+    _highlight( "top_20_filter_button", "white",  med_gray, dark_gray )
+    _highlight( "action_filter_button", "white",  med_gray, dark_gray )
+    _highlight( "comedy_filter_button", "white",  med_gray, dark_gray )
+    _highlight( "drama_filter_button", "white",  med_gray, dark_gray )
+    _highlight( "family_filter_button", "white",  med_gray, dark_gray )
+    _highlight( "horror_filter_button", "white",  med_gray, dark_gray )
 
 	kernel.setbordercolor( "startover_button", "white" )
 
@@ -556,7 +617,7 @@ ProductCatalog.is_product_available = function( self, sort_name )
 
 			if    product_family.product_family_name == browse_filter_family_tracker.selected_family
 			and  ( browse_filter_genre_selected == nil or browse_filter_genre_selected == "ALL" or product.genres[browse_filter_genre_selected] == true )
-			and  ( browse_rent_or_sellthru == "rent" or ( browse_rent_or_sellthru == "sellthru" and product.can_be_sold) ) then
+			and  ( browse_rent_or_sellthru == "rent" or ( browse_rent_or_sellthru == "sellthru" and product.is_sellable) ) then
 				if sort_name == "Newest" then
 					return true
 				elseif sort_name == "coming-soon" then
@@ -565,25 +626,9 @@ ProductCatalog.is_product_available = function( self, sort_name )
 						return true
 					end
 				elseif sort_name == "for-sale" then
-					if browse_filter_family_tracker.selected_family == "Movies" then
-						local price_purchase = StoreManager:get_purchase_price()
-						if 	price_purchase ~= nil
-						and price_purchase > 0
-						and product.sell_thru == true
-						and product.can_be_sold  then
-							return true
-						end
-					else
-						local price_purchase = StoreManager.PricingManager:get_adjusted_price( product.sellthru_price )
-						if 	price_purchase ~= nil
-						and price_purchase > 0
-						and product.sell_thru == true
-						and product.sellthru_date ~= nil
-						and product.sellthru_date <= get_current_date_string( "%4d%02d%02d%02d%02d" )
-						and product.can_be_sold  then
-							return true
-						end
-					end
+                    if product.is_sellable then
+                        return true
+                    end
 				else
 					if product_type.product_type_name == sort_name then
 						return true
@@ -627,6 +672,12 @@ ProductCatalog.show_sort_buttons = function( self )
 		kernel.showactor( "abc_button" )
 		kernel.showactor( "blu_ray_button" )
 		kernel.showactor( "coming_soon_button" )
+        kernel.showactor( "top_20_filter_button" )
+        kernel.showactor( "action_filter_button" )
+        kernel.showactor( "comedy_filter_button" )
+        kernel.showactor( "drama_filter_button" )
+        kernel.showactor( "family_filter_button" )
+        kernel.showactor( "horror_filter_button" )
 		kernel.hideactor( "xbox_360_button" )
 		kernel.hideactor( "xbox_one_button" )
 		kernel.hideactor( "ps3_button" )
@@ -658,10 +709,24 @@ ProductCatalog.show_sort_buttons = function( self )
 		end
 
 		if kernel.getfilter( "ada_accessible" ) == "True" then
-			kernel.setactorx( "blu_ray_button", 342 )
-			kernel.setactorx( "newest_button", 452 )
-			kernel.setactorx( "for_sale_button", 562  )
-			kernel.setactorx( "coming_soon_button", 662 )
+            --calculate distances
+            --EnableSellThruOfUsed
+
+            kernel.setactorwidth("blu_ray_button",75)
+			kernel.setactorx( "blu_ray_button", 172 )
+            kernel.setactorwidth("newest_button",75)
+			kernel.setactorx( "newest_button", 263 )
+            kernel.setactorwidth("for_sale_button",75)
+			kernel.setactorx( "for_sale_button", 354  )  --move to last since it can be disabled...?
+
+			kernel.hideactor( "coming_soon_button" )
+
+--            kernel.setactorx( "top_20_filter_button" )
+--            kernel.setactorx( "action_filter_button" )
+--            kernel.setactorx( "comedy_filter_button" )
+--            kernel.setactorx( "drama_filter_button" )
+--            kernel.setactorx( "family_filter_button" )
+--            kernel.setactorx( "horror_filter_button" )
 		else
 			kernel.setactorx( "blu_ray_button", 287 )
 			kernel.setactorx( "newest_button", 397 )
@@ -675,6 +740,12 @@ ProductCatalog.show_sort_buttons = function( self )
 		kernel.setbordercolor( "blu_ray_button", "white" )
 		kernel.setbordercolor( "newest_button", "white" )
 		kernel.setbordercolor( "for_sale_button", "white" )
+        kernel.setbordercolor( "top_20_filter_button", "white" )
+        kernel.setbordercolor( "action_filter_button", "white" )
+        kernel.setbordercolor( "comedy_filter_button", "white" )
+        kernel.setbordercolor( "drama_filter_button", "white" )
+        kernel.setbordercolor( "family_filter_button", "white" )
+        kernel.setbordercolor( "horror_filter_button", "white" )
 
         if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
 			kernel.setactorbackgroundcolor( "bg_box_top", "black" )
@@ -690,6 +761,12 @@ ProductCatalog.show_sort_buttons = function( self )
 		-- GAMES
 		kernel.hideactor( "blu_ray_button" )
 		kernel.hideactor( "abc_button" )
+        kernel.hideactor( "top_20_filter_button" )
+        kernel.hideactor( "action_filter_button" )
+        kernel.hideactor( "comedy_filter_button" )
+        kernel.hideactor( "drama_filter_button" )
+        kernel.hideactor( "family_filter_button" )
+        kernel.hideactor( "horror_filter_button" )
 
 		local total_width = 0
 		local padding = 8
@@ -722,7 +799,7 @@ ProductCatalog.show_sort_buttons = function( self )
 				start_loc = start_loc - item_width - padding
 				kernel.setactorx( name, start_loc )
 			end
-			
+            			
 		end
 		
 		enable_filter_button( "coming_soon_button" )
@@ -784,6 +861,11 @@ ProductCatalog.show_sort_buttons = function( self )
 	
 	if kernel.ttsenabled() == true then
 		-- Set TTS:Filter buttons based on what are showing
+        for i=1,10 do
+            kernel.setmacro( "TTS:FilterName_" .. tostring(i), nil )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(i), nil )
+        end
+
 		local filter_num = 1
 		if kernel.isactorvisible( "blu_ray_button" ) then
 			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("blu_ray_button") )
@@ -838,6 +920,36 @@ ProductCatalog.show_sort_buttons = function( self )
 		if kernel.isactorvisible( "coming_soon_button" ) then
 			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("coming_soon_button") )
 			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "coming_soon_button" )
+			filter_num = filter_num + 1
+		end
+        if kernel.isactorvisible( "top_20_filter_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("top_20_filter_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "top_20_filter_button" )
+			filter_num = filter_num + 1
+		end
+        if kernel.isactorvisible( "action_filter_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("action_filter_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "action_filter_button" )
+			filter_num = filter_num + 1
+		end
+        if kernel.isactorvisible( "drama_filter_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("drama_filter_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "drama_filter_button" )
+			filter_num = filter_num + 1
+		end
+        if kernel.isactorvisible( "horror_filter_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("horror_filter_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "horror_filter_button" )
+			filter_num = filter_num + 1
+		end
+        if kernel.isactorvisible( "comedy_filter_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("comedy_filter_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "comedy_filter_button" )
+			filter_num = filter_num + 1
+		end
+        if kernel.isactorvisible( "family_filter_button" ) then
+			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("family_filter_button") )
+			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "family_filter_button" )
 			filter_num = filter_num + 1
 		end
 
@@ -1420,7 +1532,7 @@ function show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_ch
 	show_warning_header()
 
 	kernel.setmacro( "MatureWarning:Header",strings.blu_ray_alert_title )
-	kernel.setmacro( "Bluray:Message", strings.bly_ray_alert )
+	kernel.setmacro( "Bluray:Message", strings.blu_ray_alert )
 
 	kernel.registeractorhitnotify(
 		"warning_continue_button",
@@ -1613,7 +1725,7 @@ function newtitlerollupoverlay()
 				button_text = string.gsub( strings.title_rollup_overlay_oos_text, "{0}", type )
 				button_visible = true
 			elseif purchase == true and product ~= nil then
-				local purchase_price = StoreManager:get_purchase_price()
+				local purchase_price = product.purchase_price
 				if purchase_price ~= nil and purchase_price > 0 then
 					if kernel.getculture() == "es-MX" then
 						if button_width < 200 then
@@ -1818,7 +1930,6 @@ function newtitlerollupoverlay()
 end
 
 function get_product_ui_info ( product )
-	local movie_price_purchase = StoreManager:get_purchase_price()
 	local sell_through_enabled = StoreManager:is_sell_thru_enabled()
 	local current_date_string = get_current_date_string( "%4d%02d%02d%02d%02d" )
 	local product_type = nil
@@ -1842,27 +1953,15 @@ function get_product_ui_info ( product )
     local show_buy_button_value = false
     local show_in_purchase_overlay_value = false
     if product ~= nil then
+        product_info_result["purchase_price"] = product.purchase_price
 	    if product_info_result["product_is_case"] then
 			is_purchasable_value = product_info_result["available_and_instock"]
 	    elseif product_family.product_family_name == "Movies" then
-		    is_purchasable_value = sell_through_enabled and movie_price_purchase ~= nil
-					and movie_price_purchase > 0 and product ~= nil and product.sell_thru == true and product.can_be_sold
-					and is_multi_disc( product.product_id ) == false 
+		    is_purchasable_value = sell_through_enabled and product.is_sellable
 		    show_buy_button_value = is_purchasable_value and product_info_result["available_and_instock"] and not product_info_result["already_in_cart"]
 		    show_in_purchase_overlay_value = product_info_result["available"] and is_purchasable_value
 		elseif product_family.product_family_name == "Games" then
-			local game_price_purchase = nil
-			if product ~= nil and product.sellthru_price ~= nil then
-				game_price_purchase = StoreManager.PricingManager:get_adjusted_price( product.sellthru_price, "purchase" )
-			end
-
-			is_purchasable_value = product_info_result["available_and_instock"] and GamesSellThru == true and game_price_purchase ~= nil
-					and game_price_purchase > 0	and product.sell_thru == true
-					and product.sellthru_date ~= nil
-					and product.sellthru_date <= current_date_string
-					and product.can_be_sold
-					and EnableSellThruOfUsed == true
-					and is_multi_disc( product.product_id ) == false
+			is_purchasable_value = product_info_result["available_and_instock"] and GamesSellThru == true and product.is_sellable == true and EnableSellThruOfUsed == true
 		end
 	end
 
@@ -2013,6 +2112,10 @@ change_product_family = function (new_product_family)
                 kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
                 kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 			end
+        else
+            browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
+            kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		end
 	else
 		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_movies )

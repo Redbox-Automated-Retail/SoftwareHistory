@@ -6,11 +6,6 @@
 
 local email_optin_campaign = EmailOptinCampaign
 
-if HasDigitalSignupOffer == true then
-	local digital_sign_up_campaign = kernel.gettable( "opt_in_campaign_digital_sign_up" )
-	email_optin_campaign = digital_sign_up_campaign[1]
-end
-
 kernel.registeractorhitnotify(
 	"accept_optin_button",
 	function()
@@ -18,43 +13,21 @@ kernel.registeractorhitnotify(
 		view_analytics_event( "context", "campaign:".. email_optin_campaign.campaign_id )
 		kernel.timerremove( "optin_view_timer" )
 		local email_optin = {}
-		
-		if HasDigitalSignupOffer == true then
-			table.insert( email_optin,
-				{
-					item_id = tostring( 1 ),
-					item_type = "DigitalSignupAcceptance",
-					optin_method_type = "EmailAddress",
-					optin_method_data = ShoppingCart.email,
-					template_name = email_optin_campaign.email_template_name,
-					campaign_name = email_optin_campaign.campaign_id
-				}
-			)
-			kernel.promosvcs_kioskoptin2(
-				StoreManager:get_number(),
-				email_optin,
-				true,
-				nil
-			)
-			AcceptedDigitalSignupOffer = true
-		else
-			table.insert( email_optin,
-				{
-					item_id = tostring( 0 ),
-					item_type = "Non_Item_Specific",
-					optin_method_type = "EmailAddress",
-					optin_method_data = ShoppingCart.email,
-					template_name = email_optin_campaign.email_template_name,
-					campaign_name = email_optin_campaign.campaign_id
-				}
-			)
-			kernel.promosvcs_kioskoptin(
-				StoreManager:get_number(),
-				email_optin,
-				nil
-			)
-		end
-		
+		table.insert( email_optin,
+			{
+				item_id = tostring( 0 ),
+				item_type = "Non_Item_Specific",
+				optin_method_type = "EmailAddress",
+				optin_method_data = ShoppingCart.email,
+				template_name = email_optin_campaign.email_template_name,
+				campaign_name = email_optin_campaign.campaign_id
+			}
+		)
+		kernel.promosvcs_kioskoptin(
+			StoreManager:get_number(),
+			email_optin,
+			nil
+		)
 		continue_vend()
 	end
 )
@@ -65,27 +38,6 @@ kernel.registeractorhitnotify(
 		view_analytics_event( "buttonPress", "reject-optin-button" )
 		view_analytics_event( "context", "campaign:".. email_optin_campaign.campaign_id )
 		kernel.timerremove( "optin_view_timer" )
-		
-		if HasDigitalSignupOffer == true then
-			local email_optin = {}
-			table.insert( email_optin,
-				{
-					item_id = tostring( 0 ),
-					item_type = "DigitalSignupAcceptance",
-					optin_method_type = "EmailAddress",
-					optin_method_data = ShoppingCart.email,
-					template_name = email_optin_campaign.email_template_name,
-					campaign_name = email_optin_campaign.campaign_id
-				}
-			)
-			kernel.promosvcs_kioskoptin2(
-				StoreManager:get_number(),
-				email_optin,
-				true,
-				nil
-			)
-		end
-		
 		continue_vend()
 	end
 )

@@ -17,7 +17,6 @@ kernel.registerdatastoreerrorhandler(
 		if QLMMonitor ~= nil then QLMMonitor:stop() end
 		if ReservationManager ~= nil then ReservationManager:reset() end
 		if BreakingNewsTimer ~= nil then BreakingNewsTimer:stop() end
-		if UnplayableExpireTimer ~= nil then UnplayableExpireTimer:stop() end
 
 		if DataAccessAlreadySent ~= nil then
 			kernel.log( "> kiosk already in maintenance mode... exiting")

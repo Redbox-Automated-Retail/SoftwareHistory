@@ -8,8 +8,7 @@ function newmessageviewmanager(message_view_name)
 
 	local view_actor_prefix_map = {
 		["in_cart_offer_message_view"] = "in_cart_offer_",
-		["credit_message_view"]   = "credit_",
-		["unplayable_return_confirm"] = "unplayable_"
+		["credit_message_view"]   = "credit_"
 	}
 
 	local actor_prefix = view_actor_prefix_map[message_view_name] or ""
@@ -58,7 +57,6 @@ function newmessageviewmanager(message_view_name)
 
 		set_idle_timer_title = function( self, text )
 			kernel.hideactor( actor_prefix.. "title_label" )
-			kernel.hideactor( actor_prefix.. "unplayable_message_header" )
 			kernel.hideactor( actor_prefix.. "blacklist_message_header" )
 			kernel.hideactor( "message_header_label" )
 			kernel.hideactor( "third_button" )
@@ -77,7 +75,6 @@ function newmessageviewmanager(message_view_name)
 			kernel.showactor( actor_prefix.. "title_label" )
 			kernel.setmacro( actor_prefix.. "MessageTitle", text )
 			kernel.markactordirty( actor_prefix.. "title_label" )
-			kernel.hideactor( actor_prefix.. "unplayable_message_header" )
 			kernel.hideactor( "message_header_label" )
 			if kernel.ttsenabled() == true then
 				kernel.setmacro( "TTS:MessageViewTitle", text )
@@ -90,7 +87,6 @@ function newmessageviewmanager(message_view_name)
 				return
 			end
 			kernel.hideactor( actor_prefix.. "title_timeout_label" )
-			kernel.hideactor( actor_prefix.. "unplayable_message_header" )
 			kernel.hideactor( "title_label" )
 			kernel.setactory( "message_label", 196 )
 			kernel.setactory( "credit_message_label", 196 )
@@ -99,20 +95,7 @@ function newmessageviewmanager(message_view_name)
 				kernel.ttsrepeat();  -- assests have been set and toggled
 			end
 		end,
-		
-		set_unplayable_message = function( self, text )
-			kernel.hideactor( actor_prefix.. "title_timeout_label" )
-			kernel.hideactor( actor_prefix.. "title_label" )
-			kernel.hideactor( "back_button_arrow" )			
-			kernel.showactor( actor_prefix.. "unplayable_message_header" )
-			kernel.setmacro( actor_prefix.. "UnplayableMessageLabel", text )
-			kernel.markactordirty( actor_prefix.. "unplayable_message_header" )
-			if kernel.ttsenabled() == true then
-				kernel.setmacro( "TTS:MessageViewText", text )
-				kernel.ttsrepeat();  -- assests have been set and toggled
-			end
-		end,
-		
+
 		set_blacklist_message = function( self, text )
 			kernel.hideactor( actor_prefix.. "title_timeout_label" )
 			kernel.hideactor( "back_button_arrow" )
@@ -131,7 +114,6 @@ function newmessageviewmanager(message_view_name)
 			kernel.hideactor( "message_label_text" )
 			kernel.showactor( "message_header_label" )
 			kernel.setmacro( "MessageHeaderText", text )
-			kernel.hideactor( actor_prefix.. "unplayable_message_header" )
 			kernel.markactordirty( "message_header_label" )
 			if kernel.ttsenabled() == true then
 				kernel.setmacro( "TTS:MessageViewTitle", text )

@@ -44,7 +44,21 @@ swipe_view_next_func = function()
 				message_view_manager:set_message( strings.gc_not_available )
 			end
 		else
-			kernel.executescript( "get_postal_code" )
+            if ShowAuthChangeMessage == true then
+	            ShoppingCart:preauth(
+		            function( result )
+                        ShoppingCart.prompt_required = result.properties.prompt_required
+                        ShoppingCart.auth_days = result.properties.auth_days
+                        kernel.sessionsetvariableauthvalues( ShoppingCart.session_id, result.properties.prompt_required, result.properties.auth_rule_id, result.properties.auth_amount, result.properties.skip_auth_rule )
+                        kernel.executescript( "get_postal_code" )
+		            end
+	            )
+            else
+                ShoppingCart.prompt_required = false
+                ShoppingCart.auth_days = 0
+                kernel.sessionsetvariableauthvalues( ShoppingCart.session_id, false, 0, 0, true )
+                kernel.executescript( "get_postal_code" )
+            end
 		end
 	else
 		view_unwindto_safe( "shopping_cart_view", false, "check_out:INVENTORY ERROR no barcodes, cart cleared" )
@@ -73,7 +87,8 @@ check_for_campaign_opt_in = function()
 	if ShoppingCart.email ~= nil
 	and ShoppingCart.email ~= ""
     and kernel.ttsenabled() == false
-	and ( EmailOptinCampaign ~= nil or HasDigitalSignupOffer == true ) then
+	and EmailOptinCampaign ~= nil
+    and ShoppingCart.play_pass_prompt == false then
 		kernel.log( "ShowOptinForNormalCheckout:" ..tostring( ShowOptinForNormalCheckout )
 			.. " ShowOptinForCreditsCheckout:" ..tostring( ShowOptinForCreditsCheckout )
 			.. " ShoppingCart.session_use_credits:" ..ShoppingCart.session_use_credits )
@@ -122,8 +137,8 @@ function finish_vend()
 end
 
 continue_vend = function()
-	check_for_campaign_opt_in()
-	if kernel.ttsenabled() == false and ShoppingCart.alternate_optin and ShoppingCart.alternate_optin_not_shown then
+    check_for_campaign_opt_in()
+	if kernel.ttsenabled() == false and ShoppingCart.alternate_optin and ShoppingCart.alternate_optin_not_shown and ShoppingCart.play_pass_prompt == false then
 		-- Go to the the optional email opt in view
 		ShoppingCart.alternate_optin_not_shown = false
 		view_show_safe( "email_optin_view" )
@@ -135,30 +150,34 @@ continue_vend = function()
 end
 
 marketing_opt_in_flow = function( optin_status ) 
-	kernel.log("Entering marketing_opt_in_flow with status= "..tostring(optin_status) .. " and MarketingOptInEnabled: " .. tostring(MarketingOptInEnabled) )
+    if ShoppingCart.play_pass_prompt == true then
+        view_show_safe( "play_pass_opt_in_view" )
+    else
+        kernel.log("Entering marketing_opt_in_flow with status= "..tostring(optin_status) .. " and MarketingOptInEnabled: " .. tostring(MarketingOptInEnabled) )
 
-	if MarketingOptInEnabled and kernel.ttsenabled() == false and
-	(optin_status == "SubscribedNotConfirmed" -- 2
-	or optin_status == "NotSubscribedConfirmed" -- 3
-	or optin_status == "NotSubscribedNotConfirmed") then -- 4
-		if optin_status == "SubscribedNotConfirmed" then -- 2
-			do_marketing_confirm = true
-		end
-		view_show_safe( "confirm_email_view" )
-	elseif MarketingOptInEnabled and kernel.ttsenabled() == false
-	and ShoppingCart.has_customer_profile ~= true
-	and optin_status == "NewCustomer" then -- 5
-		set_kiosk_optin_values("MarketingSubscribe", "1")
-		view_show_safe( "optin_thank_you_view" )
-	else
-	--	optin_status == "DoNotShow" -- 0
-	--	optin_status == "SubscribedConfirmed" -- 1
-		continue_vend()
-	end
+	    if MarketingOptInEnabled and kernel.ttsenabled() == false and
+	    (optin_status == "SubscribedNotConfirmed" -- 2
+	    or optin_status == "NotSubscribedConfirmed" -- 3
+	    or optin_status == "NotSubscribedNotConfirmed") then -- 4
+		    if optin_status == "SubscribedNotConfirmed" then -- 2
+			    do_marketing_confirm = true
+		    end
+		    view_show_safe( "confirm_email_view" )
+	    elseif MarketingOptInEnabled and kernel.ttsenabled() == false
+	    and ShoppingCart.has_customer_profile ~= true
+	    and optin_status == "NewCustomer" then -- 5
+		    set_kiosk_optin_values("MarketingSubscribe", "1")
+		    view_show_safe( "optin_thank_you_view" )
+	    else
+	    --	optin_status == "DoNotShow" -- 0
+	    --	optin_status == "SubscribedConfirmed" -- 1
+		    continue_vend()
+	    end
+    end
 end
 
 function process_authorize_result( result )
-	local message_view_manager = newmessageviewmanager()
+    local message_view_manager = newmessageviewmanager()
 	if result.properties.is_online == false
 	    or result.properties.stand_alone == true 
     then
@@ -220,26 +239,11 @@ function process_authorize_result( result )
 		kernel.setmacro( "ComingSoonTitleIDs", "" )
 		
 		local keyboard_manager = newkeyboardmanager()
-		
-		local has_digital_signup_offer = function()
-			local digital_sign_up_campaign = kernel.gettable( "opt_in_campaign_digital_sign_up" )
-			if result.properties.offers ~= nil and digital_sign_up_campaign ~= nil then
-				for k, v in pairs( result.properties.offers ) do
-					if v == "DigitalSignup" then
-						kernel.log( "has_digital_signup_offer() returning true" )
-						return true
-					end
-				end
-			end
-			kernel.log( "has_digital_signup_offer() returning false" )
-			return false
-		end
-		
+
 		local keyboard_continue_func = function()
 			keyboard_manager:hide( true )
 			kernel.analyticsaddelement( "session", "hasCheckout", "True", ShoppingCart.session_id )
 			keyboard_manager:stop_idle_timer()
-			HasDigitalSignupOffer = has_digital_signup_offer()
 
 			-- If user has a profile and email - continue the vend process
 			if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
@@ -251,8 +255,12 @@ function process_authorize_result( result )
 				marketing_opt_in_flow( ShoppingCart.marketing_opt_in )
 			end
 		end
-		
+
 		ShoppingCart.has_customer_profile = result.properties.has_profile
+
+        ShoppingCart.play_pass_prompt = result.properties.play_pass_prompt
+        ShoppingCart.play_pass_points_earned = result.properties.play_pass_points_earned
+
 		-- If user has a profile and email - continue the vend process
 		if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
 			-- show the email and change data screen
@@ -283,7 +291,6 @@ function process_authorize_result( result )
 							StoreManager:get_number(), 
 							ShoppingCart.email,
 							function( email_lookup_result )
-								HasDigitalSignupOffer = has_digital_signup_offer()
 								idle_timer:resume()
 								marketing_opt_in_flow( email_lookup_result.properties.confirmation_status )
 							end )
@@ -402,7 +409,7 @@ function process_authorize_result( result )
 			)
 			credit_message_view_manager:start_timer( show_credits_popup_timer )
 			view_analytics_event( "context", "promptForCredits" )
-		else
+        else
 			-- Mingle #2625
 			ShoppingCart:prepos_vend_abort()
 
@@ -470,7 +477,12 @@ function process_authorize_result( result )
 				message_view_manager:set_message_header( strings.promo_code_not_valid_message_title )
 				message_view_manager:set_message( strings.promo_code_not_valid_message )
 			elseif result.properties.response == "CodeAlreadyUsed" then
-				ShoppingCart:clear_promo_code()
+                if rtwo_in_cart_template_is_running() then
+                    ShoppingCart.in_cart_do_not_show = true
+                    ShoppingCart.in_cart_promo_offer_made = false
+                    ShoppingCart.in_cart_promo_offer_cancel = false
+                end
+                ShoppingCart:clear_promo_code()
 				view_analytics_event( "context", "promoAlreadyUsed" )
 				message_view_manager:set_message_header( strings.promo_code_already_used_message_title )
 				message_view_manager:set_message( strings.promo_code_already_used_message )
@@ -507,7 +519,7 @@ function process_authorize_result( result )
 			elseif result.properties.response == "GCDeclined" or result.properties.response == "Declined" then
 				message_view_manager:set_message_header( strings.gc_declined_title )
 				message_view_manager:set_message( strings.gc_declined )
-			elseif result.properties.response == "EnforceAccertify" then
+            elseif result.properties.response == "EnforceAccertify" then
 				view_analytics_event( "context", "accertifyRejectedGames" )
 				message_view_manager:set_message_header( strings.accertify_enforce_accertify_header )
 				message_view_manager:set_message( strings.accertify_enforce_accertify_message )

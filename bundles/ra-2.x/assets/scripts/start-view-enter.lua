@@ -3,6 +3,7 @@
 -- Copyright (C) 2015 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
+kernel.reset_browse_controls()
 kernel.ttsinreturnflow(false)
 kernel.timerstart( "reservation-expire-timer" )
 
@@ -26,8 +27,6 @@ user_on_overlay = false
 overlay_scene_manager = newtitlerollupoverlay()
 from_carousel_collections = false
 from_carousel = false
-HasDigitalSignupOffer = false
-AcceptedDigitalSignupOffer = false
 
 ABE_ON = false
 
@@ -122,7 +121,7 @@ if StoreManager ~= nil then
 	StoreManager:reload_pricing_data( "_v2" )
 	StoreManager:check_product_catalog_for_games_platforms()
 end
-
+kernel.log( "start-view-enter - started updating cache table")
 for k,v in _ProductCatalog:pairs() do
 	local product = MasterProductCatalog[v.product_id]
 	if product ~= nil then
@@ -130,15 +129,26 @@ for k,v in _ProductCatalog:pairs() do
 			local current_date = get_current_date_string( "%4d%02d%02d%02d%02d" )
 			local release_date = string.sub(product.merchandise_date, 1, 12)
 
-			product_catalog.is_available = current_date > release_date
-			or StoreManager.PricingManager:is_early_released( product )
+            -- making changes to only update values when one changes, this loop is causing a performance problem when hitting the start over button
+            local isAvailable = product_catalog.is_available
+            local isComingSoon = product_catalog.is_coming_soon
 
-			product_catalog.is_coming_soon = not (release_date <= current_date
-			or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
+			local newIsAvailable = current_date > release_date or StoreManager.PricingManager:is_early_released( product )
+			local newIsComingSoon = not (release_date <= current_date	or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
 
-			ProductCatalog[v.product_id] = product_catalog
+            if ( (isAvailable ~= newIsAvailable) or (isComingSoon ~= newIsComingSoon)) then
+			    product_catalog.is_available = newIsAvailable
+			    product_catalog.is_coming_soon = newIsComingSoon
+			    ProductCatalog[v.product_id] = product_catalog
+            end
+
+            -- original
+			--product_catalog.is_available = current_date > release_date or StoreManager.PricingManager:is_early_released( product )
+			--product_catalog.is_coming_soon = not (release_date <= current_date	or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
+			--ProductCatalog[v.product_id] = product_catalog
 	end
 end
+kernel.log( "start-view-enter - finished updating cache table")
 
 ProductGenreData = {
 	["Movies"] = {
@@ -201,7 +211,7 @@ if FMAMaintenanceMode == false then
 	kernel.hardwaremaintenancemoderesumejobs()
 end
 
-if kernel.getlastshownview() == Start_Over_View_Name then
+if kernel.getlastshownview() == kernel.get_start_over_view_name() then
 	kernel.applysafeshutdown()
 	kernel.trimbitmapcache( 128 )
 	local hardware_manager = newhardwaremanager()
@@ -387,7 +397,7 @@ local add_product_to_cart = function ( product )
 			kernel.setfilter( "ada_accessible", "True" )
 			kernel.setmacro( "Browse:ProductFamily", abe_product_family_macro )
 		end
-		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+		view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 		view_analytics_event( "buttonPress", "carousel-add-item" )
 		--view_analytics_event( "buttonPress", tostring( product_type ) )
 		check_for_warning_popups( check_alert_table, product, nil )
@@ -452,7 +462,7 @@ local flip_overlay = function()
 			kernel.showactor("add_to_cart")
 			kernel.showactor("plus_button")
 			kernel.timerstart( "carousel-timer" )
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "carousel-cancel-add-item" )
 		end
 
@@ -1002,7 +1012,7 @@ local function arrange_buttons_based_on_games_availability()
 end
 
 local function on_banner_click(banner, value)
-	view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+	view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 	view_analytics_event( "buttonPress", banner )
 
 	if banner == "bluray_banner" then
@@ -1334,7 +1344,7 @@ handle_center_poster_hit = function()
 
 	product_family = center_poster_product.product_type_id ~= nil and get_product_family( center_poster_product.product_type_id ) or { product_family_name = "Movies" }
 	
-	view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+	view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 	view_analytics_event( "buttonPress", "carousel_art_button" )
 	kernel.timerremove( "carousel-timer" )
 	kernel.timerremove( "carousel-user-timer" )
@@ -1382,7 +1392,7 @@ handle_add_to_cart_hit = function()
 	product_family = center_poster_product.product_type_id ~= nil and get_product_family( center_poster_product.product_type_id ) or { product_family_name = "Movies" }
 	
 	if center_poster_product ~= nil and center_poster_product.kiosk_product_type == 4 then
-		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+		view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 		view_analytics_event( "buttonPress", "add_to_cart" )
 		go_to_collection_browse()
 		if center_poster_product.id > 0 then
@@ -1391,7 +1401,7 @@ handle_add_to_cart_hit = function()
 	elseif product_family.product_family_name == "Movies" then
 		flip_overlay()
 	elseif product_family.product_family_name == "Games" then
-		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+		view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 		view_analytics_event( "buttonPress", "add_to_cart" )
 		kernel.timerstop( "carousel-timer" )
 		kernel.timerstop( "carousel-user-timer" )
@@ -1402,7 +1412,7 @@ handle_add_to_cart_hit = function()
 end
 
 go_to_movies_browse_view = function()
-	view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+	view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 	view_analytics_event( "buttonPress", "all_movies_button" )
 	kernel.timerremove( "carousel-timer" )
 	kernel.timerremove( "carousel-user-timer" )
@@ -1421,7 +1431,7 @@ end
 
 
 go_to_games_view = function()
-	view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+	view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 	view_analytics_event( "buttonPress", "games_button" )
 	kernel.timerremove( "carousel-timer" )
 	kernel.timerremove( "carousel-user-timer" )
@@ -1475,7 +1485,7 @@ function show_images( difference )
 		"movie_3_position",
 		function()
 			show_normal_view()
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "movie_3_position" )
 			if movie_products[movie_positions[3]].image_file == "image_message_poster_background" then
 				go_to_movies_browse_view()
@@ -1492,7 +1502,7 @@ function show_images( difference )
 		"movie_4_position",
 		function()
 			show_normal_view()
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "movie_4_position" )
 			if movie_products[movie_positions[4]].image_file == "image_message_poster_background" then
 				go_to_movies_browse_view()
@@ -1509,7 +1519,7 @@ function show_images( difference )
 		"movie_5_position",
 		function()
 			show_normal_view()
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "movie_5_position" )
 			if movie_products[movie_positions[5]].image_file == "image_message_poster_background" then
 				go_to_movies_browse_view()
@@ -1524,7 +1534,7 @@ function show_images( difference )
 	kernel.registeractorhitnotify(
 		"movie_flip",
 		function()
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "poster_flip" )
 			flip_cover( last_flipped_actor )
 		end
@@ -1542,7 +1552,7 @@ function show_images( difference )
 		"movie_6_position",
 		function()
 			show_normal_view()
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "movie_6_position" )
 			if movie_products[movie_positions[6]].image_file == "image_message_poster_background" then
 				go_to_movies_browse_view()
@@ -1559,7 +1569,7 @@ function show_images( difference )
 		"movie_7_position",
 		function()
 			show_normal_view()
-			view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+			view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 			view_analytics_event( "buttonPress", "movie_7_position" )
 			if movie_products[movie_positions[7]].image_file == "image_message_poster_background" then
 				go_to_movies_browse_view()
@@ -1606,7 +1616,6 @@ function show_images( difference )
 				-- add in cache state variables...
 				local cache = _ProductCatalog[product.product_id]
 				if cache ~= nil then
-					product.can_be_sold = cache.can_be_sold == nil and false or cache.can_be_sold
 					--product.is_available = cache.is_available == nil and false or cache.is_available
 					product.is_available = cache.is_available or false
 				end

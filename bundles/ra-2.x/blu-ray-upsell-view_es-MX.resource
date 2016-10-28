@@ -52,7 +52,7 @@
 				x="100"
 				y="504"
 				width="824"
-				text="Para que el disco funcione Ud. necesitará un reproductor Blu-ray™. El audio en Blu-ray Disco® puede variar de Dolby Digital y DTS Digital a Dolby Lossless y DTS-HD. Vea nuestras preguntas frecuentes (FAQs) para más detalles."
+				text="Para que el disco funcione Ud. necesitará un reproductor Blu-ray™."
 				font="font_target_smaller_overlays"
 				foregroundColor="black"
 				horizontalAlignment="center"

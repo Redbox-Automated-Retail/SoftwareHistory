@@ -211,7 +211,7 @@ function newreservationmanager()
 					account_reservations[reference_number] = reservation
 					Reservations[card_id] = account_reservations -- writes the reservation locally to the database
 					result.success = true					
-					if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == Start_Over_View_Name then
+					if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == kernel.get_start_over_view_name() then
 						reload_carousel( true )
 					end
 				else
@@ -594,12 +594,7 @@ function newreservationmanager()
 				if barcode_to_product ~= nil
 				and barcode_to_product.product_id ~= nil
 				and MasterProductCatalog[ barcode_to_product.product_id ] ~= nil then
-					local rapid_status = kernel.rental_inventory_get_rapidstatus( v.barcode )
-					if rapid_status ~= nil then
-						v.status = rapid_status.status
-					else
-						v.status = "Known"
-					end
+                    v.status = get_rapid_status( v.barcode, "Known" )
 					if barcode_to_product.product_id ~= nil then
 						local barcodes = ProductToBarcode[ barcode_to_product.product_id ]
 						if barcodes ~= nil and barcodes[ v.barcode ] ~= nil then 

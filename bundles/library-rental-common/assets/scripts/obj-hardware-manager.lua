@@ -89,7 +89,7 @@ function handle_critical_hardware_errors( job_type, jobid, bad_codes )
             codes = {
                 ["ItemStuckInGripper"] = { id=1, code="001ISTG", maint_mode=true },
                 ["ObstructionDetected"] = { id=2, code="002OBDT", maint_mode=true },
-                ["CameraCaptureFailure"] = { id=3, code="003CCFA", maint_mode=false  }
+                ["CameraCaptureFailure"] = { id=3, code="003CCFA", maint_mode=false }
             }
         },
         ["vend"] = {
@@ -107,7 +107,8 @@ function handle_critical_hardware_errors( job_type, jobid, bad_codes )
                 ["ObstructionDetected"] = { id=2, code="002OBDT", maint_mode=true },
                 ["MachineError"] = { id=4, code="004MACH", maint_mode=true },
                 ["PutFailureMaxAttempts"] = { id=5, code="005PMXA", maint_mode=true },
-                ["MoveFailure"] = { id=6, code="006MVFA", maint_mode=false  }
+                ["MoveFailure"] = { id=6, code="006MVFA", maint_mode=false  },
+                ["AlertableThresholdExceeded"] = { id=7, code="007ALTE", maint_mode=true }
             }
         }
     }
@@ -123,7 +124,9 @@ function handle_critical_hardware_errors( job_type, jobid, bad_codes )
 		local found_code = job_type_data.codes[v]
 		if found_code ~= nil then
 			job_type_data.error_handler( jobid, v, found_code.code, found_code.maint_mode )
-			return
+            if found_code.maint_mode == true then --make sure we go to maintenance mode when we should
+			    return
+            end
 		end
 	end
 end
@@ -340,11 +343,7 @@ get_thin_barcodes = function()
 					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
 				end
 			end
-			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
-			if rapid_status ~= nil then
-				row.status = rapid_status.status
-			end
-			
+            row.status = get_rapid_status( barcode, row.status )
 			if do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then
 				table.insert( do_not_rent_discs, row )
 				kernel.log(">  added to do not rent list " .. barcode .." from location " .. k )
@@ -387,11 +386,7 @@ get_thin_barcodes2 = function()
 					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
 				end
 			end
-			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
-			if rapid_status ~= nil then
-				row.status = rapid_status.status
-			end
-			
+            row.status = get_rapid_status( barcode, row.status )
 			if do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then
 				table.insert( do_not_rent_discs, row )
 				kernel.log(">  added to do not rent list " .. barcode .." from location " .. k )
@@ -456,11 +451,7 @@ get_vmz_thin_barcodes = function()
 					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
 				end
 			end
-			local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
-			if rapid_status ~= nil then
-				row.status = rapid_status.status
-			end
-			
+            row.status = get_rapid_status( barcode, row.status )			
 			if string.upper( row.status ) == "DAMAGED" then
 				row.order = sort_order["DAMAGED"]
 				table.insert( barcodes_to_bin, row )

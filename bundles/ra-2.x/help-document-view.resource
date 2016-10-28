@@ -21,8 +21,8 @@
 				y="0"
 				width="1024"
 				height="768"
-        WPFControlAssemblyName="Redbox.Rental.Services.dll"
-        WPFControlName="Redbox.Rental.Services.Views.HelpView.HelpViewUserControl"/>
+        WPFControlAssemblyName="Redbox.Rental.UI.exe"
+        WPFControlName="Redbox.Rental.UI.Views.HelpViewUserControl"/>
     </scene>
 	</aspect>
 </resource>

@@ -14,7 +14,7 @@ ShoppingCart:start_new()
 ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
 
 -- Start an analytics session if it does not already exist and capture button press on start_view
-view_analytics_start( Start_Over_View_Name, "OnlinePickup" )
+view_analytics_start( kernel.get_start_over_view_name(), "OnlinePickup" )
 view_analytics_event( "buttonPress", "pickup_reservation_button" )
 
 -- There are many divergent UI paths which lead out from here, many of which result in cancellation
@@ -35,7 +35,7 @@ show_customer_blacklisted_message = function( on_ok_or_timerexpired )
 		if on_ok_or_timerexpired ~= nil then
 			on_ok_or_timerexpired()
 		end
-		view_unwindto_safe( Start_Over_View_Name, true, "show_customer_blacklisted_message" )
+		view_unwindto_safe( kernel.get_start_over_view_name(), true, "show_customer_blacklisted_message" )
 	end
 	local message_view_manager = newmessageviewmanager()
 	message_view_manager:show()

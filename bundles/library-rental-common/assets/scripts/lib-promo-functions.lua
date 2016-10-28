@@ -90,7 +90,7 @@ function CartQualifiesForInCartOffer( shopping_cart )
 		kernel.log( "InCartPromoRules == nil at CartQualifiesForInCartOffer" )
 		return false
 	end
-    if free_in_cart_template_is_running() then
+    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
         return false
     end
 
@@ -241,10 +241,9 @@ function LoadInCartPromoMessaging()
 		return
 	end
 	for k, v in ipairs( InCartPromoRules ) do
-		if v.offer_language ~= nil 
-		and v.offer_language == kernel.getculture() then
-
-			local bodyMessageWithPrice = v.InCartPromoBodyMessage
+        if v.offer_language ~= nil and v.offer_language == kernel.getculture()
+        and ( rtwo_in_cart_template_is_running() == false or ( rtwo_in_cart_template_is_running() and ( ( rtwo_in_cart_template_get_valid_item_count() == 1 and v.offer_message_version == "1" ) or ( rtwo_in_cart_template_get_valid_item_count() > 1 and v.offer_message_version == "2" ) ) ) ) then
+            local bodyMessageWithPrice = v.InCartPromoBodyMessage
 			-- Update additional night price to what is actually running on this kiosk if the macro exists in the BodyMessage
 			local extra_night = StoreManager.PricingManager:get_price_setting( "movies", "dvd", "extra_night", "rental" )
 			if extra_night ~= nil then
@@ -261,14 +260,14 @@ function LoadInCartPromoMessaging()
 end
 
 function CartHasAnyPostOfferItems( shopping_cart )
-    if free_in_cart_template_is_running() then
+    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
         return false
     end
     return CartCountByCriteria( shopping_cart, nil, "post_offer" ) > 0
 end
 
 function CartHasProductTypeFamily( shopping_cart, product_type, product_family )
-    if free_in_cart_template_is_running() then
+    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
         return false
     end
     return CartCountByCriteria( shopping_cart, nil, nil, product_type, product_family ) > 0
@@ -280,7 +279,7 @@ function CartSatisfiesInCartOffer( shopping_cart )
 		if VerboseLogging == true then kernel.log( "> In cart Promo is null" ) end
 		return false, nil
 	end
-    if free_in_cart_template_is_running() then
+    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
         return false, nil
     end
 
@@ -352,7 +351,7 @@ end
 
 
 function UpdateInCartPromoValue( shopping_cart )
-    if free_in_cart_template_is_running() then
+    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
         return
     end
 
@@ -619,11 +618,7 @@ function GetInCartTitleLists( ignore_offer_status )
 	return _incart_include_titles, _incart_exclude_titles
 end
 
-function free_in_cart_template_is_running()
-    return InCartTemplateName ~= nil and ( InCartTemplateName == "FREE DVD I" or InCartTemplateName == "FREE BLU-RAY J" or InCartTemplateName == "FREE GAME K" )
-end
-
-function free_in_cart_template_get_value( key )
+local function get_value( key )
     for _, rule_group in ipairs( InCartPromoRules ) do
         for k, v in pairs( rule_group ) do
             if k == key then
@@ -634,18 +629,23 @@ function free_in_cart_template_get_value( key )
     return nil
 end
 
+local function is_excluded( exclude_ids, product_id )
+    for _, id in ipairs( exclude_ids ) do
+        if id == tostring( product_id ) then
+            return true
+        end
+	end
+    return false
+end
+
+function free_in_cart_template_is_running()
+    return InCartTemplateName ~= nil and ( InCartTemplateName == "FREE DVD I" or InCartTemplateName == "FREE BLU-RAY J" or InCartTemplateName == "FREE GAME K" )
+end
+
 function free_in_cart_template_is_cart_valid()
-    local function is_excluded( exclude_ids, product_id )
-        for _, id in ipairs( exclude_ids ) do
-            if id == tostring( product_id ) then
-                return true
-            end
-		end
-        return false
-    end
-    local product_family = free_in_cart_template_get_value( "product_family" )
-    local product_type = free_in_cart_template_get_value( "product_type" )
-	local exclude_ids = string.split( free_in_cart_template_get_value( "exclude_id_list" ), "," )
+    local product_family = get_value( "product_family" )
+    local product_type = get_value( "product_type" )
+	local exclude_ids = string.split( get_value( "exclude_id_list" ), "," )
     for k, v in ipairs( ShoppingCart.items ) do
         if v.action == "rental" and is_excluded( exclude_ids, v.product_id ) == false and v.product_family == product_family and ( v.product_type == product_type or product_type == "*" ) then
             return true
@@ -656,7 +656,7 @@ end
 
 function free_in_cart_template_set_promo()
     local redemption_code = GetInCartPromoCode()
-    local initial_night = StoreManager.PricingManager:get_price_setting( free_in_cart_template_get_value( "product_family" ), free_in_cart_template_get_value( "product_type" ), "initial_night", "rental" )
+    local initial_night = StoreManager.PricingManager:get_price_setting( get_value( "product_family" ), get_value( "product_type" ), "initial_night", "rental" )
     if redemption_code ~= nil and initial_night ~= nil then
         local promo_code = {
 	        name = redemption_code,
@@ -679,4 +679,61 @@ function free_in_cart_template_set_promo()
 	        promo_code.price
         )
     end
+end
+
+function free_in_cart_template_show_message()
+    local promo_code = kernel.rental_promotion_get_promotion()
+    return promo_code == nil and free_in_cart_template_is_running() and free_in_cart_template_is_cart_valid() and ShoppingCart.in_cart_promo_offer_made == false
+end
+
+function rtwo_in_cart_template_is_running()
+    return InCartTemplateName ~= nil and InCartTemplateName == "RTWO MONEY OFF L"
+end
+
+function rtwo_in_cart_template_get_valid_item_count()
+	local valid_item_count = 0
+    local exclude_ids = string.split( get_value( "exclude_id_list" ), "," )
+    for k, v in ipairs( ShoppingCart.items ) do
+        if v.action == "rental" and is_excluded( exclude_ids, v.product_id ) == false then
+            valid_item_count = valid_item_count + 1
+        end
+    end
+    return valid_item_count
+end
+
+function rtwo_in_cart_template_set_promo()
+    local redemption_code = GetInCartPromoCode()
+    local redemption_amount = get_value( "redemption_amount" )
+    if redemption_code ~= nil and redemption_amount ~= nil then
+        local promo_code = {
+	        name = redemption_code,
+	        original_price = redemption_amount,
+            price = redemption_amount,
+	        quantity = 1,
+	        intent = "FixedValue",
+	        original_percent = 0,
+            percent = 0,
+	        rent_qty = 0,
+	        rent_format = nil,
+	        get_qty = 0,
+	        get_format = nil,
+            campaign_titles = nil
+        }
+        kernel.rental_promotion_set_promotion( promo_code )
+        kernel.sessionsetdiscount2(
+	        ShoppingCart.session_id,
+	        promo_code.name,
+	        promo_code.price
+        )
+    end
+end
+
+function rtwo_in_cart_template_show_message()
+    if rtwo_in_cart_template_is_running() == false then
+        return false
+    end
+    local show_first_message = rtwo_in_cart_template_get_valid_item_count() == 1 and ShoppingCart.in_cart_promo_offer_made == false
+    local show_second_message = rtwo_in_cart_template_get_valid_item_count() > 1
+    local promo_code = kernel.rental_promotion_get_promotion()
+    return promo_code == nil and ShoppingCart.in_cart_do_not_show == false and ( show_first_message or show_second_message )
 end

@@ -4,15 +4,6 @@
 -- All Rights Reserved
 --
 
--- Clean up any free trial timers that may be remaining active
-if kernel.timerexists("free_trial_cancel_idle_timer") then
-	kernel.timerremove("free_trial_cancel_idle_timer")
-end
-
-if kernel.timerexists("free_trial_need_more_time_timer") then
-	kernel.timerremove("free_trial_need_more_time_timer")
-end
-
 view_analytics_event( "buttonPress", "startOver" )
 
 if ShoppingCart ~= nil then

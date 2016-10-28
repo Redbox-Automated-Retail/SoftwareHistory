@@ -57,12 +57,12 @@ local product_is_case = other_product ~= nil and other_product.product_id == 113
 local shopping_cart_is_full = #ShoppingCart.items == 5
 
 local case_price_purchase = StoreManager.PricingManager:get_empty_case_price()
-local movie_price_purchase = StoreManager:get_purchase_price()
 local sell_through_enabled = StoreManager:is_sell_thru_enabled()
 
 -- DVD variables
 local dvd_product_ui_info = get_product_ui_info(dvd_product)
 local dvd_available = dvd_product_ui_info["available"]
+local dvd_purchase_price = dvd_product_ui_info["purchase_price"]
 local dvd_available_and_instock = dvd_product_ui_info["available_and_instock"]
 local dvd_already_in_cart = dvd_product_ui_info["already_in_cart"]
 local dvd_is_purchasable = dvd_product_ui_info["is_purchasable"]
@@ -73,6 +73,7 @@ local dvd_show_in_purchase_overlay = dvd_product_ui_info["show_in_purchase_overl
 -- Blu-ray variables
 local bluray_product_ui_info = get_product_ui_info(bluray_product)
 local bluray_available =  bluray_product_ui_info["available"]
+local bluray_purchase_price = bluray_product_ui_info["purchase_price"]
 local bluray_available_and_instock = bluray_product_ui_info["available_and_instock"]
 local bluray_already_in_cart = bluray_product_ui_info["already_in_cart"]
 local bluray_is_purchasable = bluray_product_ui_info["is_purchasable"]
@@ -82,8 +83,8 @@ local bluray_show_in_purchase_overlay = bluray_product_ui_info["show_in_purchase
 
 -- Other product variables (games and cases)
 local game_price_purchase = nil
-if other_product ~= nil and other_product.sellthru_price ~= nil then
-	game_price_purchase = StoreManager.PricingManager:get_adjusted_price( other_product.sellthru_price, "purchase" )
+if other_product ~= nil then
+    game_price_purchase = other_product.purchase_price
 end
 local other_product_ui_info = get_product_ui_info(other_product)
 local other_product_available = other_product_ui_info["available"]
@@ -120,18 +121,19 @@ if VerboseLogging then
 	kernel.log("Blu-ray product: " .. tostring(blurayProductId) .. " " .. tostring(blurayProductName))
 	kernel.log("Other product: " .. tostring(otherProductId) .. " " .. tostring(otherProductName))
 	kernel.log("Store Manager Sell through enabled: " .. tostring(sell_through_enabled))
-	kernel.log("Movie purchase price: " .. tostring(movie_price_purchase))
 	kernel.log("Game purchase price: " .. tostring(game_price_purchase))
 	kernel.log("Case purchase price: " .. tostring(case_price_purchase))
 	kernel.log("Product is case: " .. tostring(product_is_case))
 	kernel.log("Shopping cart is full: " .. tostring(shopping_cart_is_full))
 	kernel.log("DVD available: " .. tostring(dvd_available))
+	kernel.log("DVD purchase price: " .. tostring(dvd_purchase_price))
 	kernel.log("DVD available and instock: " .. tostring(dvd_available_and_instock))
 	kernel.log("DVD already in cart: " .. tostring(dvd_already_in_cart))
 	kernel.log("DVD is purchasable: " .. tostring(dvd_is_purchasable))
 	kernel.log("DVD show buy button: " .. tostring(dvd_show_buy_button))
 	kernel.log("DVD show in purchase overlay: " .. tostring(dvd_show_in_purchase_overlay))
 	kernel.log("Blu-ray available: " .. tostring(bluray_available))
+	kernel.log("Blu-ray purchase price: " .. tostring(bluray_purchase_price))
 	kernel.log("Blu-ray available and instock: " .. tostring(bluray_available_and_instock))
 	kernel.log("Blu-ray already in cart: " .. tostring(bluray_already_in_cart))
 	kernel.log("Blu-ray is purchasable: " .. tostring(bluray_is_purchasable))
@@ -915,8 +917,10 @@ else
 	local price_purchase = nil
 	if product_is_case then
 		price_purchase = case_price_purchase
-	elseif dvd_product ~= nil or bluray_product ~= nil then
-		price_purchase = movie_price_purchase
+	elseif dvd_product ~= nil then
+		price_purchase = dvd_purchase_price
+    elseif bluray_product ~= nil then
+		price_purchase = bluray_purchase_price
 	elseif other_product ~= nil then
 		price_purchase = game_price_purchase
 	end

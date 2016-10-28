@@ -55,7 +55,8 @@
 			<column name="coming_soon_email_optin_email_prompt_message">What email address would you like your reminder sent to? If you ask for other reminders during this visit, we'll send them here too.</column>
 			<column name="coming_soon_email_optin_email_marketing_message">Redbox will never sell your email address to any third parties. We promise.</column>
 
-			<column name="inventory_full_message">The Redbox kiosk is unable to accept your return at this time.&#10;&#10;Please call customer service at&#10;1-866-REDBOX3 (1.866.733.2693).</column>
+      <column name="disc_return_message">Please insert your disc.</column>
+      <column name="inventory_full_message">The Redbox kiosk is unable to accept your return at this time.&#10;&#10;Please call customer service at&#10;1-866-REDBOX3 (1.866.733.2693).</column>
 			<column name="inventory_updated_message">Please wait a sec while we put your disc away.&#10;&#10;And then stick around to see what's new to rent!</column>
 			<column name="invalid_card_message">Sorry, your card could not be recognized. Please try again.</column>
 
@@ -108,6 +109,7 @@
 			<column name="try_again_button">TRY AGAIN</column>
 			<column name="return_error">Return Error</column>
 			<column name="backward_insert_error">Please try again with the big Redbox logo facing you and the arrow pointing toward the kiosk.</column>
+      <column name="unrecognized_barcode_returned_message">The disc you are trying to return is not from Redbox. Please take your disc from the slot and check again because we can only accept Redbox discs.&#10;&#10;By the way, we'd love to have you as a customer, so stick around and browse what's At the Box or visit redbox.com anytime.</column>
 
 			<column name="title_thanks">Thanks!</column>
 			<column name="currency_symbol">$</column>
@@ -128,7 +130,7 @@
 			<column name="subplatform_for">for</column>
 
 			<column name="blu_ray_alert_title">That's a Blu-ray Disc&#8482;!</column>
-			<column name="bly_ray_alert">To play this Disc, you’ll need a Blu-ray player&#8482;.&#10;&#10;The audio on a Blu-ray Disc&#174; can range from Dolby Digital and DTS Digital to Dolby Lossless and DTS-HD. See our FAQs for more details.</column>
+			<column name="blu_ray_alert">The audio on Blu-ray Discs can range from Dolby Digital and DTS Digital to Dolby TrueHD and DTS-HD.</column>
 			<column name="purchase_new_warning">You have chosen to purchase this DVD, which will be sold n a Redbox cardboard sleeve, not the original movie studio packing.&#10;&#10;As Redbox is unable to accept returns, all sales are final.&#10;To confirm that you would like make this purchase, press OK to continue. If not, press ''Back''.</column>
 			<column name="purchase_warning">Heads up! You're about to buy a used product, which will come in a durable Redbox rental case, not the original packaging.</column>
 
@@ -286,15 +288,7 @@
 			<column name="nonstandered_priced_item">This movie costs {0} to rent the first day and {EXTRANIGHT} for each day after that.&#10;&#10;Movies that are {0} Firsts come to Redbox 28 days ahead of schedule. Be among the first to watch this DVD!</column>
 
 			<column name="purchase">purchase</column>
-
-			<column name="unplayable_return_button">Report unplayable</column>
-			<column name="unplayable_confirm_messageA">Unplayable disc</column>
-			<column name="unplayable_confirm_messageB">You've selected to report a disc as unplayable.&#10;Once this disc is reported, it'll go out of circulation and won't be available to rent.</column>
-			<column name="unplayable_email_prompt">Please enter your email adddress</column>
-			<column name="unplayable_email_message">Your email is required to continue.  Once this disc has been reviewed you'll be notified via email.</column>
-			<column name="unplayable_return_acceptedA">Return successful.</column>
-			<column name="unplayable_return_acceptedB">You'll be getting an email in the next 24 hours&#10;regarding its status. Thanks for using Redbox!</column>
-
+      
 			<column name="in_cart_remove_item_warning_header">Are You Sure?</column>
 			<column name="in_cart_remove_item_warning_message">If you remove that disc from your cart, you won't qualify anymore for the special pricing on your other cart item(s).&#10;&#10;Do you still want to remove it?</column>
 
@@ -319,14 +313,15 @@
 
 			<column name="start_view_title">top picks</column>
 			<column name="help_page_counter">{0} OF {1}</column>
-      <column name="faq_button">Rental FAQs</column>
-      <column name="terms_button">Rental Terms</column>
-      <column name="terms_redbox_card_button">Redbox Card Terms</column>
-      <column name="privacy_button">Privacy</column>
-      <column name="contact_redbox_label">Contact Redbox customer service at 1.866.REDBOX3 (1.866.733.2693)</column>
+			<column name="faq_button">Rental FAQs</column>
+			<column name="terms_button">Rental Terms</column>
+			<column name="terms_redbox_card_button">Redbox Card Terms</column>
+			<column name="privacy_button">Privacy</column>
+			<column name="play_pass_button">Play Pass</column>
+			<column name="contact_redbox_label">Contact Redbox customer service at 1.866.REDBOX3 (1.866.733.2693)</column>
       
 
-      <column name="rop_auth_fail_header">We're sorry</column>
+			<column name="rop_auth_fail_header">We're sorry</column>
 			<column name="rop_auth_fail_message_line_one">New discs can’t be added to your cart at this time.</column>
 			<column name="rop_auth_fail_message_line_two">Your reserved discs are on their way out right now.</column>
 			
@@ -341,8 +336,6 @@
 			<column name="gc_declined_title">Sorry, we're having some trouble.</column>
 			<column name="gc_declined">Your card could not be authorized.&#10;&#10;Please swipe another card or try again later.</column>
 			
-			<column name="free_trial_offer_text">Want to sign up for a free trial now?</column>
-			<column name="free_trial_email_presentation_text">Please confirm or edit your info:</column>
 			<column name="edit_button">EDIT</column>
 			<column name="confirm_button">CONFIRM</column>
 			<column name="cancel_signup_button">CANCEL SIGNUP</column>
@@ -376,6 +369,13 @@
       <column name="tsp_invalid_message">Sorry about that. The promo code you entered does not apply to the title(s) in your cart.&#10;&#10;Please add a valid title to your cart to use this promo code.</column>
       
       <column name="passive_sale_note">*Daily rental charges don't include applicable tax. Discs kept after 9 p.m. the next day, and each day after, are subject to additional daily rental charges. If you keep a disc for the maximum rental period, it's yours to keep, and no further charges apply. See complete Terms for the rules for renting from Redbox. Maximum rental period: DVD {0} days, Blu-ray&#174; {1} days, Games {2} days.</column>
+      
+      <column name="zip_code_auth_text">By tapping Next, you agree to an authorization hold period of up to {0} days per item on this card. You will only be charged for the actual number of rental days plus applicable taxes for which you keep your items.</column>
+      
+      <column name="play_pass_prompt_message">EARN UP TO {0} POINTS&#10;FOR THIS RENTAL</column>
+      <column name="play_pass_join_now">JOIN NOW</column>
+      <column name="play_pass_confirm_message">Welcome to Redbox Play Pass!&#10;You've just earned {0} points.</column>
+      <column name="play_pass_email_message">An email has been sent to {0}&#10;with instructions on how to redeem your free rental.</column>
     </row>
 	</aspect>
 </resource>

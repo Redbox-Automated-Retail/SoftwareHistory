@@ -18,9 +18,6 @@ end
 kernel.setmarket( kernel.getmachinevalue( "Store", "Market" ) )
 kernel.setvendor( kernel.getmachinevalue( "Store", "Banner" ) )
 
-Start_Over_View_Name = "start_view" --Used to abstract certain view functions like goback()
-
-
 --DefaultCulture = kernel.getmachinevalueordefault("Store","DefaultCulture","en-US" )
 DefaultCulture = kernel.rental_get_default_culture()
 OtherCulture = kernel.rental_get_alternate_culture()
@@ -76,9 +73,6 @@ local function initialize_scheduled_tasks()
 	start_sync_timers()
 	MaintenanceModeTimer = newmaintenancemodetimer()
 	MaintenanceModeTimer.clear()
-
-	UnplayableExpireTimer = newunplayableexpiretimer()
-	UnplayableExpireTimer:start()
 
 	if quick_return_is_running == true then
 		QuickReturnTimer = newquickreturntimer()
@@ -203,11 +197,11 @@ local function start_the_application()
 		initialize_scheduled_tasks()
 		if not kernel.hasvalidcardreader() then
 			--kernel.pushview replaced with view_show function which will inturn call the kernel.pushview
-			view_show( Start_Over_View_Name )
+			view_show( kernel.get_start_over_view_name() )
 			handle_disconnected_usb_card_reader()
 		else
 			if not in_maintenance_mode() then
-				view_show( Start_Over_View_Name )
+				view_show( kernel.get_start_over_view_name() )
 			end
 		end
 	end
@@ -370,11 +364,6 @@ local function load_registry_key_values()
 		"DisableGames",
 		"False" ) == "True"]]
 	DisableGames = false
-	--[[EnableUnplayableReturn = kernel.getmachinevalueordefault(
-		"Remote Services\\Inventory Services",
-		"EnableUnplayableReturn",
-		"False" ) == "True"]]
-	EnableUnplayableReturn = false
 	BurnInTimeout = kernel.config_getvalue(
 		"system",
 		"General",
@@ -409,10 +398,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"PromptForCredits" ) == true
-	EnableHiddenDigitalCheckout = kernel.config_getvalue(
-		"system",
-		"General",
-		"EnableHiddenDigitalCheckout" ) == true
 	ShowOptinForNormalCheckout = kernel.config_getvalue(
 		"system",
 		"General",
@@ -528,6 +513,10 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"EnableDiscSecurity" ) == true
+	ShowAuthChangeMessage = kernel.config_getvalue(
+		"system",
+		"General",
+		"ShowAuthChangeMessage" ) == true
 end
 
 local function create_coming_soon_cache_tables()
@@ -570,12 +559,12 @@ local function register_default_hardware_handlers()
 	kernel.registercanshutdown(
 		function()
 			kernel.log( "Kiosk Engine is requesting a shut-down" )
-			return kernel.peekview() == Start_Over_View_Name or kernel.peekview() == "maintenance_view"
+			return kernel.peekview() == kernel.get_start_over_view_name() or kernel.peekview() == "maintenance_view"
 		end )
 	kernel.registercanrestart(
 		function()
 			kernel.log( "Kiosk Engine is requesting a restart" )
-			return kernel.peekview() == Start_Over_View_Name
+			return kernel.peekview() == kernel.get_start_over_view_name()
 		end )
 	kernel.registershowmaintenanceview(
 		function()
@@ -765,13 +754,6 @@ config = kernel.getdictionary( "config" )
 create_coming_soon_cache_tables()
 register_default_hardware_handlers()
 
--- JVMHardTake FAQ tables - files are only in english so its ok to be in app-startup
-free_trial_billing = kernel.gettable( "free_trial_billing" )
-free_trial_faq = kernel.gettable( "free_trial_faqs" )
-free_trial_privacy = kernel.gettable( "free_trial_privacy" )
-free_trial_terms = kernel.gettable( "free_trial_tos" )	
-
-
 -- If the application has crashed from file access errors, do not continue
 if DataAccessAlreadySent == true then
 	return
@@ -812,33 +794,49 @@ kernel.timercreate(
 
 -- Run immediate thin job if secret <redacted> key is set (which includes rebalances)
 if kernel.getmachinevalueordefault( "Store", "RemoteThinWithRebalRequested", "False" ) == "True" then
-	kernel.log( "Remote Thin Request found in Store registry" )
-	if qlm_deck == nil then
-		--vmz
-		local jobname = "vmzthin-with-rebalance-" .. tostring( newdatetime() )
-		run_thin_vmz_job( "Remote thin job with rebalance requested", jobname, nil, true )
-	else
-		--qlm
-		local jobname = "qlmthin-" .. tostring( newdatetime() )
-		run_thin_job( "Remote thin job requested", jobname )
-	end
-	kernel.setmachinevalue( "Store", "RemoteThinWithRebalRequested", "False" )
-	kernel.setmachinevalue( "Store", "RemoteThinRequested", "False" )
+    kernel.timercreate(
+	    "remote_thin_with_rebalances_timer",
+	    5000,
+	    nil,
+	    function()
+	        kernel.log( "Remote Thin Request found in Store registry" )
+	        if qlm_deck == nil then
+		        --vmz
+		        local jobname = "vmzthin-with-rebalance-" .. tostring( newdatetime() )
+		        run_thin_vmz_job( "Remote thin job with rebalance requested", jobname, nil, true )
+	        else
+		        --qlm
+		        local jobname = "qlmthin-" .. tostring( newdatetime() )
+		        run_thin_job( "Remote thin job requested", jobname )
+	        end
+	        kernel.setmachinevalue( "Store", "RemoteThinWithRebalRequested", "False" )
+	        kernel.setmachinevalue( "Store", "RemoteThinRequested", "False" )
+            kernel.timerremove("remote_thin_with_rebalances_timer")
+        end )
+    kernel.timerstart("remote_thin_with_rebalances_timer")
 end
 
 -- Run immediate thin job if secret <redacted> key is set
 if kernel.getmachinevalueordefault( "Store", "RemoteThinRequested", "False" ) == "True" then
-	kernel.log( "Remote Thin Request found in Store registry" )
-	if qlm_deck == nil then
-		--vmz
-		local jobname = "vmzthin-" .. tostring( schedule )
-		run_thin_vmz_job( "Remote thin job requested", jobname )
-	else
-		--qlm
-		local jobname = "qlmthin-" .. tostring( newdatetime() )
-		run_thin_job( "Remote thin job requested", jobname )
-	end
-	kernel.setmachinevalue( "Store", "RemoteThinRequested", "False" )
+    kernel.timercreate(
+	    "remote_thin_timer",
+	    5000,
+	    nil,
+	    function()
+	        kernel.log( "Remote Thin Request found in Store registry" )
+	        if qlm_deck == nil then
+		        --vmz
+		        local jobname = "vmzthin-" .. tostring( schedule )
+		        run_thin_vmz_job( "Remote thin job requested", jobname )
+	        else
+		        --qlm
+		        local jobname = "qlmthin-" .. tostring( newdatetime() )
+		        run_thin_job( "Remote thin job requested", jobname )
+	        end
+	        kernel.setmachinevalue( "Store", "RemoteThinRequested", "False" )
+            kernel.timerremove("remote_thin_timer")
+        end )
+    kernel.timerstart("remote_thin_timer")
 end
 
 if #newhardwaremanager():get_hardware_jobs_by_label_contains_text( "maintenance sync by ", { "Stopped", "Errored", "Garbage", "Suspended", "Completed" } ) > 0 then
@@ -974,3 +972,5 @@ HardwareManager:executeimmediate(
 		end
 	end
 )
+
+kernel.queuekioskfunctioncheck()

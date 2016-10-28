@@ -56,7 +56,8 @@
 			<column name="coming_soon_email_optin_email_prompt_message">Ingrese el correo a lo cual quiere recibir notificaciones. Este correo es separado a lo de sus notificaciones de los títulos de próxima, y no se afectará.</column>
 			<column name="coming_soon_email_optin_email_marketing_message">Redbox valora su privacidad y nunca vendería su dirección de correo electrónico. Se lo prometemos.</column>
 
-			<column name="inventory_full_message">En este momento el kiosko no puede&#10;aceptar devoluciones.&#10;&#10;Por favor, llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
+      <column name="disc_return_message">Por favor introduczca el disco.</column>
+      <column name="inventory_full_message">En este momento el kiosko no puede&#10;aceptar devoluciones.&#10;&#10;Por favor, llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
 			<column name="inventory_updated_message">Por favor espere un segundo mientras lo aguardamos.&#10;&#10;¡Y quedase a ver las películas nuevas!</column>
 			<column name="invalid_card_message">Lo sentimos, no pudo autorizar su tarjeta.  Por favor, intente de nuevo.</column>
 
@@ -108,9 +109,9 @@
 			<column name="try_again_button">INTÉNTALO DE NUEVO </column>
 			<column name="return_error">¡Espérate!</column>
 			<column name="backward_insert_error">Por favor, inténtelo de nuevo con el logotipo de Redbox hacia arriba y la flecha apuntando hacia el kiosco.</column>
+      <column name="unrecognized_barcode_returned_message">El disco que está tratando de devolver no es de Redbox. Por favor, retire su disco de la ranura y revise de nuevo porque solo podemos aceptar discos de Redbox.&#10;&#10;Por cierto, nos encantaría tenerle como cliente, por eso quédese un ratito más y vea lo que está en el quisco o visite redbox.com en cualquier momento.</column>
 
 			<column name="title_thanks">Gracias</column>
-
 			<column name="currency_symbol">$</column>
 
 			<column name="faq_title">FAQ</column>
@@ -129,7 +130,7 @@
 			<column name="subplatform_for">para</column>
 
 			<column name="blu_ray_alert_title">¡Escogió Un Disco Blu-ray&#8482;!</column>
-			<column name="bly_ray_alert">Para que el disco funcione Ud. necesitará un reproductor Blu-ray&#8482;.&#10;&#10;El audio en Blu-ray Disco&#174; puede variar de Dolby Digital y DTS Digital a Dolby Lossless y DTS-HD. Vea nuestras preguntas frecuentes (FAQs) para más detalles.</column>
+			<column name="blu_ray_alert">El audio en Blu-ray Disco&#174; puede variar de Dolby Digital y DTS Digital a Dolby.</column>
 			<column name="purchase_new_warning">Que sepa que compare artículo(s) que se venden en un cartón Redbox manga, y no el envase original.&#10;&#10;Por favor, llame 1.866.REDBOX3 (1.866.733.2693) con cualquier pregunta. Marque CONTINUAR para proceder.</column>
 			<column name="purchase_warning">Oye, estás a punto de comprar un producto previamente visto que vendrá en un estuche resistente de alquiler de Redbox duradera, no el paquete original.</column>
 
@@ -293,15 +294,7 @@
 			<column name="nonstandered_priced_item">El alquiler de ésta película cuesta {0} por el primer día y {EXTRANIGHT} por cada día siguiente.&#10;&#10;Las películas que son {0} Primicias llegan a Redbox 28 días antes de lo normal. Sé de los primeros en ver éste DVD!</column>
 
 			<column name="purchase">compra</column>
-
-			<column name="unplayable_return_button">Disco defectuoso</column>
-			<column name="unplayable_confirm_messageA">Confirma de defectuoso</column>
-			<column name="unplayable_confirm_messageB">Ha elegido informarnos de un disco defectuoso.&#10;Por indicar este disco como defectuoso,&#10;lo sacaríamos del inventario para evitar el alquila de un defectuoso por otra persona.</column>
-			<column name="unplayable_email_prompt">Por favor, introduzca su dirección de correo electrónico.</column>
-			<column name="unplayable_email_message">Se requiere su correo electrónico para seguir. Después de que investiga el disco, recibiría un correo electrónico acerca el estatus del disco.</column>
-			<column name="unplayable_return_acceptedA">Devolvió el disco con éxito</column>
-			<column name="unplayable_return_acceptedB">Dentro de 24 horas recibiría un correo electrónico acerca el estatus del disco. Gracias por usar Redbox.</column>
-
+      
 			<column name="in_cart_remove_item_warning_header">¿Seguro?</column>
 			<column name="in_cart_remove_item_warning_message">Si lo saque este disco del carrito, se cancelaría&#10;la oferta y el descuento que recibiría de&#10;lo(s) adicional(es).&#10;&#10;¿Quiere seguir?</column>
 
@@ -326,11 +319,12 @@
 
 			<column name="start_view_title">Los mejores</column>
 			<column name="help_page_counter">{0} DE {1}</column>
-      <column name="faq_button">FAQ Alquiler</column>
-      <column name="terms_button">T&#233;rminos Alquiler</column>
-      <column name="terms_redbox_card_button">T&#233;rminos Tarjeta</column>
-      <column name="privacy_button">Privacidad</column>
-      <column name="contact_redbox_label">&#191;Necesita ayuda? 1.866.REDBOX3 (1.866.733.2693)</column>
+			<column name="faq_button">FAQ Alquiler</column>
+			<column name="terms_button">T&#233;rminos Alquiler</column>
+			<column name="terms_redbox_card_button">T&#233;rminos Tarjeta</column>
+			<column name="privacy_button">Privacidad</column>
+			<column name="play_pass_button">Play Pass</column>
+			<column name="contact_redbox_label">&#191;Necesita ayuda? 1.866.REDBOX3 (1.866.733.2693)</column>
           
 			<column name="rop_auth_fail_header">¡Lo sentimos!</column>
 			<column name="rop_auth_fail_message_line_one">No se pueden agregar discos nuevos a su carrito en este momento.</column>
@@ -346,9 +340,6 @@
 			<column name="gc_rental_limit_exceeded">Lo sentimos, hay un límite de alquila de {0} películas al máximo con esa tarjeta. Ni tampoco se permite alquilar juegos.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
 			<column name="gc_declined_title">Error técnica</column>
 			<column name="gc_declined">Lo sentimos, estamos teniendo dificultades técnicas. No podemos autorizar esta tarjeta.&#10;&#10;Por favor deslice otra tarjeta o intentarlo de nuevo en otra ocasión.</column>
-			
-			<column name="free_trial_offer_text">Want to sign up for a free trial now?</column>
-			<column name="free_trial_email_presentation_text">Please confirm or edit your info:</column>
 			
 			<column name="blu_ray_upsell_unselected_header">¡Escoge y actualizarlo a Blu-ray!</column>
 			<column name="blu_ray_upsell_unselected_message">Por favor escoge al menos 1 película a actualizarlo.</column>
@@ -379,6 +370,13 @@
       <column name="tsp_invalid_message">Lo sentimos. El código promocional usado no es aplicable al título(s) que se encuentra en su carrito.&#10;&#10;Por favor, sírvase añadir un título válido a su carrito para poder utilizar este código promocional.</column>
 
       <column name="passive_sale_note">*La tarifa de alquiler diario indicada no incluye impuestos. Para incurrir en una sola tarifa de alquiler, debe devolver el art&#237;culo a las 9:00 p.m. del d&#237;a siguiente en la zona horaria en que realice la devoluci&#243;n. Por cada d&#237;a adicional que no devuelva el art&#237;culo a las 9:00 p.m., hora local, su alquiler seguir&#225; vigente y se le cargar&#225; una tarifa de alquiler adicional diaria, m&#225;s impuestos. Si mantiene en su poder un art&#237;culo m&#225;s all&#225; del periodo m&#225;ximo de alquiler permitido, ese art&#237;culo pasar&#225; a ser de su propiedad y Redbox le cobrar&#225; entonces el cargo m&#225;ximo por dicho art&#237;culo. Ver las reglas completos por T&#233;rminos. Periodo m&#225;ximo: DVD {0} d&#237;as, Blu-ray&#174; {1} d&#237;as, Juegos {2} d&#237;as.</column>
+      
+      <column name="zip_code_auth_text">Al hacer uso A continuación, usted está de acuerdo a un período de retención de autorización de hasta {0} días por artículo en esta tarjeta. Sólo se le cobrará por el número real de días de alquiler más los impuestos aplicables para el cual mantiene sus artículos.</column>
+      
+      <column name="play_pass_prompt_message">GANA HASTA {0} PUNTOS&#10;POR ESTE ALQUILER</column>
+      <column name="play_pass_join_now">ÚNETE AHORA</column>
+      <column name="play_pass_confirm_message">¡Bienvenido a Redbox Play Pass!&#10;Usted acaba de ganar {0} puntos.</column>
+      <column name="play_pass_email_message">Un correo electrónico ha sido enviado a {0}&#10;con instrucciones sobre cómo canjear el alquiler gratuito.</column>
     </row>
   </aspect>
 </resource>

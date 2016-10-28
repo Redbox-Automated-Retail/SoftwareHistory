@@ -1,21 +1,15 @@
 --
 -- lib-view-functions.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- Copyright (C) 2016 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
 function in_maintenance_mode()
-	current_view = kernel.peekview()
-	if current_view == nil then current_view = "" end
-	if( string.find( current_view, "maintenance_view" ) ~= nil ) then
-		return true
-	else
-		return false
-	end
+    return kernel.in_maintenance_mode()
 end
 
 function safe_to_change_view()
-	return ( not in_maintenance_mode() )
+    return kernel.safe_to_change_view()
 end
 
 function view_show( name )
@@ -37,24 +31,11 @@ function view_show_safe( name )
 end
 
 function view_goback( context, pop_only )
-	kernel.log( "> view_goback; context: " .. tostring( context ) .. ", " .. tostring( pop_only ) )
-    if kernel.peekview() == Start_Over_View_Name then
-        kernel.showview()
-        return
-    end
-	kernel.popview()
-	if pop_only ~= true then
-		-- This causes the view's on_enter script to run which is not always desirable
-		kernel.showview()
-	end
+    kernel.view_goback(context, pop_only)
 end
 
 function view_goback_safe( context, pop_only )
-	if safe_to_change_view() == true then
-		view_goback( context, pop_only )
-	else
-		kernel.log( "view_goback_safe( " .. context .. " ) denied." )
-	end
+    kernel.view_goback_safe(context, pop_only)
 end
 
 function view_unwindto( name, discard, context )
@@ -88,7 +69,7 @@ function view_unwindto_safe( name, discard, context )
 end
 
 function view_unwindtobottom( context )
-	view_unwindto( Start_Over_View_Name, true, context )
+	view_unwindto( kernel.get_start_over_view_name(), true, context )
 end
 
 function view_unwindtobottom_safe( context )

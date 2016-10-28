@@ -120,6 +120,11 @@ stats_run_daily_timer = function()
 	--Versions
 	get_version_statistics()
 	kernel.log( "Got Versions" )
+
+    --Abe Check
+    local has_abe_device = kernel.hasabedevice()
+    kernel.healthsvcs_enqueueproperty( "ABEKeypad", has_abe_device )
+    kernel.log( "Got Abe Keypad State" )
 	
 	--Create duplicate barcode alert
 	kernel.log( "Duplicate barcode daily timer executing..." )
@@ -170,7 +175,7 @@ stats_run_daily_timer = function()
 				kernel.log( "KaseyaD.ini and GetOpsMarket have different values, reinstalling Kaseya." )
 				
 				local path = "C:\\Program Files\\Redbox\\Reds\\Installers\\" .. result.properties.kaseya_server .. "Install.exe"
-				local args = "/s /r /v /g=redbox." .. result.properties.ops_market .. " /m=redbox-" .. StoreManager:get_number()
+				local args = "/s /w /r /v /g=redbox." .. result.properties.ops_market .. " /m=redbox-" .. StoreManager:get_number()
 				
 				kernel.startprocesswaitforexit( path, args, 20000 )
 			else

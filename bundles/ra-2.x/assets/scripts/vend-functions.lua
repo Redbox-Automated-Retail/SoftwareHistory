@@ -71,14 +71,10 @@ function newvendmanager()
 			view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.PickupGraphicDisplay" )
 			kernel.popmovie()
 			clear_coming_soon_vend_screen_if_up()
-			if AcceptedDigitalSignupOffer == true then
-				kernel.pushmovie( "vend_digital_trial_movie", { x = 0, y = 112, width = 1024, height = 543 } )
+			if ShoppingCart.pickup_recommendations_shown == true then
+				kernel.pushmovie( "reco_vend_movie", { x = 0, y = 112, width = 1024, height = 543 } )
 			else
-				if ShoppingCart.pickup_recommendations_shown == true then
-					kernel.pushmovie( "reco_vend_movie", { x = 0, y = 112, width = 1024, height = 543 } )
-				else
-					kernel.pushmovie( "vend_movie", { x = 0, y = 112, width = 1024, height = 543 } )
-				end
+				kernel.pushmovie( "vend_movie", { x = 0, y = 112, width = 1024, height = 543 } )
 			end
 		end
 		if quick_return_is_running == true then
@@ -291,7 +287,6 @@ function newvendmanager()
 
 	t.show_movie_or_coming_soon = function( barcodes_to_vend )
 		if safe_to_change_view() == true
-		and kernel.peekmovie() ~= "vend_digital_trial_movie"
 		and kernel.peekmovie() ~= "vend_movie"
 		and kernel.peekmovie() ~= "reco_vend_movie"
 		and kernel.peekmovie() ~= "vending_movie"

@@ -42,6 +42,8 @@ function newshoppingcart()
 	t.in_cart_promo_offer_made = false
 	t.in_cart_promo_offer_cancel = false
 	t.in_cart_title_marketing = false
+    t.in_cart_do_not_show = false
+
 	t.marketing_opt_in = "DoNotShow"
 	t.alternate_optin = false
 	t.alternate_optin_not_shown = true
@@ -57,6 +59,14 @@ function newshoppingcart()
 	t.session_use_credits = "NotSpecified"
 
 	t.blocklisted = false
+
+    t.prompt_required = false
+
+    t.auth_days = 0
+
+    t.play_pass_prompt = false
+
+    t.play_pass_points_earned = 0
 
 	t.size = function( self )
 		return #self.items
@@ -205,6 +215,56 @@ function newshoppingcart()
 		return (StoreManager:is_sell_thru_enabled() == false and rent_count == 5)
 			or ((StoreManager:has_sell_thru_new_in_stock() == false or StoreManager:get_purchase_new_price() == nil) and rent_count == 5)
 			or #self.items == 7
+	end
+
+	t.preauth = function( self, on_complete )
+		if not kernel.sessioncaptureaccountdata2( self.session_id ) then
+			self.messagebox:show( "WARNING: ShoppingCart:preauth was called with invalid account data." )
+			return
+		end
+		kernel.log("PreAuth for Session ID: " .. self.session_id )
+		if self.postal_code ~= nil then
+			kernel.sessionsetpostalcode2( self.session_id, self.postal_code )
+		end
+		self:get_barcodes_to_vend()
+		self:set_session_cart_groups()
+		self.blu_ray_upsell:set_shopping_cart_items()
+		for k, v in ipairs( self.items ) do
+			kernel.log( "Session add Line Item: " .. tostring( v.barcode ) .. " for ".. tostring( v.action ) .. " Price: " .. tostring( v.price ) ..
+				" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) .. " " .. tostring( v.source_type ) )
+			kernel.sessionaddlineitem6(
+				self.session_id,
+				v.action,
+				v.barcode,
+				v.status,
+				v.price,
+				v.quantity,
+				v.pricing_policy,
+				v.product_family,
+				v.product_type,
+				v.source_type,
+				v.blu_ray_upsell,
+				v.multi_disc )
+		end
+		local error_message_view_manager = newerrormessageviewmanager()
+		error_message_view_manager:show()
+		error_message_view_manager:set_message( strings.authorization_message )
+		kernel.analyticsaddnode( "authorizations", "preauth", self.session_id )
+
+		kernel.merchsvcs_preauth(
+			self.session_id,
+			function( r )
+				local preAuthResponse = {
+					online = tostring( r.properties.is_online ),
+					timestamp = tostring( newdatetime() )
+				}
+				kernel.analyticsaddattributes( "preauth", preAuthResponse, self.session_id )
+
+				if on_complete ~= nil then
+					on_complete( r )
+				end
+			end
+		)
 	end
 
 	t.authorize = function( self, on_complete )
@@ -453,29 +513,7 @@ function newshoppingcart()
 			end
 		)
 	end
-	
-	t.create_rbi_free_trial = function( self, email_address, zip, status, on_complete )
-		if not kernel.sessioncaptureaccountdata2( self.session_id ) then
-			self.messagebox:show( "WARNING: ShoppingCart:create_rbi_free_trial was called with invalid account data." )
-			return
-		end
-		
-		if zip ~= nil then
-			kernel.sessionsetpostalcode2( self.session_id, zip )
-		end
-		
-		kernel.digitalsvcs_createrbifreetrial(
-			self.session_id,
-			email_address,
-			status,
-			function( r )
-				if on_complete ~= nil then
-					on_complete( r )
-				end
-			end
-		)
-	end
-	
+
 	t.set_session_cart_groups = function( self )
 		local subtotal_by_group = self:sub_total()
 		for k, v in pairs( subtotal_by_group ) do
@@ -646,12 +684,12 @@ function newshoppingcart()
 				expire_price = item_price
 			else
 				if product_family.product_family_name == "Games" then
-					item_price = StoreManager.PricingManager:get_adjusted_price( product.sellthru_price, "purchase" )
+					item_price = catalog_entry.purchase_price
 				else
 					if catalog_entry.sell_thru_new == true then
 						item_price = StoreManager:get_purchase_new_price()
 					else
-						item_price = StoreManager:get_purchase_price()
+    					item_price = catalog_entry.purchase_price
 					end
 				end
 				expire_price = product_pricing.expiration_price
@@ -757,16 +795,22 @@ function newshoppingcart()
 		then
 			self:clear_promo_code()
 		end
-		
+
 		if free_in_cart_template_is_running() then
             if free_in_cart_template_is_cart_valid() == false and ShoppingCart.in_cart_promo_offer_made == true then
                 self:clear_promo_code()
                 ShoppingCart.in_cart_promo_offer_made = false
             end
+        elseif rtwo_in_cart_template_is_running() then
+            if rtwo_in_cart_template_get_valid_item_count() < 2 and ShoppingCart.in_cart_promo_offer_made == true then
+                self:clear_promo_code()
+                ShoppingCart.in_cart_promo_offer_made = false
+                ShoppingCart.in_cart_promo_offer_cancel = false
+            end
         elseif ShoppingCart.in_cart_promo_offer_cancel == false then
 			UpdateInCartPromoValue( ShoppingCart )
 		end
-		
+
 		self:validate_cart_update_promo_code( nil, nil )
 	end
 
@@ -1855,12 +1899,12 @@ function newshoppingcart()
 		end
 		if ShoppingCart:size() > 0 then
 			kernel.enableactor("pay_button")
-			if EnableCreditsButton or ShoppingCart.hidden_digital_checkout_shown == true then
+			if EnableCreditsButton then
 				kernel.enableactor("credits_button")
 			end
 		else
 			kernel.disableactor("pay_button")
-			if EnableCreditsButton or ShoppingCart.hidden_digital_checkout_shown == true then
+			if EnableCreditsButton then
 				kernel.disableactor("credits_button")
 			end
 		end
@@ -1877,8 +1921,6 @@ function newshoppingcart()
 	end
 
 	t.items = {}
-
-	t.hidden_digital_checkout_shown = false
 
 	t.coming_soon_optin = {
 		email_address = nil,

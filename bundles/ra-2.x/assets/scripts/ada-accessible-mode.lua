@@ -8,7 +8,7 @@
 kernel.log( "User clicked the ADA Accessible button" )
 
 -- Start an analytics session if it does not already exist and capture button press on start_view
-view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 view_analytics_event( "buttonPress", "ada_accessible_mode" )
 
 -- This line is the only difference from the standard browse_products script

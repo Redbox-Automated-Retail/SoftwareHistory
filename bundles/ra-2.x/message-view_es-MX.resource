@@ -88,20 +88,7 @@
 				horizontalAlignment="near"
 				optionFlags="Text"
 				visible="false" />
-
-			<actor
-				name="unplayable_message_header"
-				x="190"
-				y="142"
-				width="644"
-				height="45"
-				text="${UnplayableMessageLabel}"
-				font="font_target_medium_large"
-				foregroundColor="181, 18, 27"
-				horizontalAlignment="near"
-				optionFlags="Text"
-				visible="false" />
-
+      
 			<actor
 				name="message_label"
 				x="190"

@@ -410,11 +410,9 @@ reload_inventory = function()
 					if product ~= nil then
 						row.product_id = product.product_id
 						if product.status ~= nil and row.status ~= "Reserved" then
-							local rapid_status = kernel.rental_inventory_get_rapidstatus( barcode )
-							if rapid_status ~= nil then
-								row.status = rapid_status.status
-							else
-								-- if the barcode is  not in rapid status then revert to inventory status unless the inventory status is equal to Rebalance, Redeployment or Thinned
+                            row.status = get_rapid_status( barcode, nil )
+                            if row.status == nil then
+								-- if the barcode is not in rapid status then revert to inventory status unless the inventory status is equal to Rebalance, Redeployment or Thinned
 								-- this happens when a barcode is unthinned
 								if product.status  == "Rebalancing" or product.status == "Redeployment" or product.status == "Thinned" then
 									row.status = "Known"
@@ -457,9 +455,6 @@ reload_inventory = function()
 						if row.barcode == nil or trim( row.barcode ) == "" then
 							row.barcode = "UNKNOWN"
 						end
-					end
-					if UnplayableProduct[ barcode ] ~= nil then
-						row.status = "Unplayable"
 					end
 				end
 				

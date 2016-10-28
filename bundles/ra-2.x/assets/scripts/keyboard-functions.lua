@@ -16,6 +16,7 @@ function newkeyboardmanager()
 			self.cancel_event = nil
 			self.validate_event = nil
 			self.actor_hit_event = nil
+            self.cancel_text = nil
 			self:set_value( "" )
 			self:set_error( "" )
 			self:set_message( "" )
@@ -30,39 +31,20 @@ function newkeyboardmanager()
 			kernel.setmacro( "KeyBoard:PanelTag", tag_name )
 			self.is_showing = true
 			if kernel.peekview() ~= "key_board_view" then
-				view_show_safe( "key_board_view" )
 				current_keyboard_manager = self
+                view_show_safe( "key_board_view" )
 				
 				if tag_name == "EMAIL ADDRESS" or string.find( tag_name, "CORREO ELECTR" ) ~= nil then
-					kernel.showactor("yahoo_button")
-					kernel.showactor("hotmail_button")
-					kernel.showactor("gmail_button")
-					kernel.showactor("aol_button")
-					kernel.showactor("under_score_button")
-					kernel.showactor("at_button")
-					kernel.showactor("dot_button")
-					kernel.showactor( "dotcom_button" )
-					kernel.showactor( "clear_button" )
-					kernel.showactor( "clear_button_icon" )
-					kernel.showactor( "marketing_label" )
+
 					kernel.setactorwidth( "space_bar_button", 315 )
 					kernel.setactorwidth( "text_label", 615 )
-					kernel.setactorx( "back_button", 695 )	
+					--kernel.setactorx( "back_button", 695 )	
 					if kernel.getculture() == "en-US" then
 						kernel.setactorx( "back_button_arrow", 715 )	
 					else
 						kernel.setactorx( "back_button_arrow" , 714 )	
 					end				
 				elseif tag_name == "PROMO CODE" or string.find( tag_name, "PROMOCI" ) ~= nil then
-					kernel.setactorx("two_button",143)
-					kernel.setactorx("three_button",219)
-					kernel.setactorx("four_button",295)
-					kernel.setactorx("five_button",371)
-					kernel.setactorx("six_button",447)
-					kernel.setactorx("seven_button",523)
-					kernel.setactorx("eight_button",599)
-					kernel.setactorx("nine_button",675)
-					kernel.setactorx("zero_button",751)
 					if kernel.ttsenabled() == true then
 						self:set_marketing( "" )
 					end
@@ -277,7 +259,7 @@ function newkeyboardmanager()
 		end,
 
 		set_cancel_event = function( self, func )
-			self.cancel_event = func
+            self.cancel_event = func
 		end,
 
 		set_validate_event = function( self, func )
@@ -324,6 +306,7 @@ function newkeyboardmanager()
 		end,
 
 		set_cancel_button_text = function( self, value )
+            self.cancel_text = value
 			kernel.setactortext( "cancel_button", value )
 		end
 	}

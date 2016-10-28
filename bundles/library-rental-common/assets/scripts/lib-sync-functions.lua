@@ -60,7 +60,7 @@ function run_initial_sync()
 	end
     kernel.setmacro( "MaintenanceView:ErrorCode", "INITSYNC" )
 	-- kernel.pushview and kernel.showview functions replaced with view_show function.
-	view_show( Start_Over_View_Name )
+	view_show( kernel.get_start_over_view_name() )
 	view_show( get_maintenance_view_from_screen_code("INITSYNC") )
 	local hardware_manager = newhardwaremanager()
 	hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )

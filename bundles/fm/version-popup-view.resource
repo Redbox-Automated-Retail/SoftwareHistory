@@ -40,7 +40,7 @@
 		y="2"
 		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
 		backgroundColor="DarkRed"
-		text="  Software Versions - Batman"
+		text="  Software Versions - Hawkeye"
 		foregroundColor="White"
 		verticalAlignment="center"
 		font="medium_larger_font"

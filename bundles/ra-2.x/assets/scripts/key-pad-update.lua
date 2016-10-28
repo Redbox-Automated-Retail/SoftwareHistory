@@ -9,16 +9,22 @@ if kernel.getlasthitactorname() == nil then
 end
 
 if kernel.getlasthitactorname() == "next_button" or kernel.getlasthitactorname() == "image_next_white_arrow_big" then
-	key_pad_value = kernel.getmacro( "KeyPad:Text" )
+	
+    kernel.disableactor( "next_button" )
+	kernel.setactorforegroundcolor( "next_button", "gray" )	
+	kernel.hideactor( "image_next_white_arrow_big" )
+    kernel.showactor( "next_button_right_arrow_icon" )
 
-	if credit_button_hit == true then
+    key_pad_value = kernel.getmacro( "KeyPad:Text" )
+	
+    if credit_button_hit == true then
 		ShoppingCart.postal_code = key_pad_value
 		key_pad_next_getcustomercredits_func()
 	else
 		if key_pad_next_authorize_func ~= nil then
-			ShoppingCart.postal_code = key_pad_value
+            ShoppingCart.postal_code = key_pad_value
 			show_credits_popup = true
-			key_pad_next_authorize_func()
+            key_pad_next_authorize_func()
 		else
 			view_goback_safe( "keypad:next_button", false )
 		end

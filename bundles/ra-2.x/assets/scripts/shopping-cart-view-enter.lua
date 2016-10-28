@@ -29,8 +29,6 @@ and promo_code ~= nil then
 elseif EnableCreditsButton then
 	kernel.showactor( "credits_button" )
 	kernel.setactortext( "label_bottom", strings.credit_lable_bottom_text )
-elseif ShoppingCart.hidden_digital_checkout_shown == true then
-	kernel.showactor( "credits_button" )
 else
 	kernel.hideactor( "credits_button" )
 end
@@ -112,11 +110,12 @@ function show_offer_or_proceed_checkout()
 						message_view_manager:hide()
 						ShoppingCart:clear_promo_code()
 						
-						if free_in_cart_template_is_running() == false
+                        if free_in_cart_template_is_running() == false
+                        and rtwo_in_cart_template_is_running() == false
                         and CartQualifiesForInCartOffer( ShoppingCart )
 						and ShoppingCart.in_cart_promo_offer_made == false then
 							view_show_safe( "in_cart_offer_message_view" )
-						else
+                        else
 							kernel.executescript( "check_out" )
 						end
 					end
@@ -157,13 +156,14 @@ function show_offer_or_proceed_checkout()
 					function()
 						view_analytics_event( "buttonPress", "removePromo" )
 						message_view_manager:hide()
-						ShoppingCart:clear_promo_code()
-						
-						if free_in_cart_template_is_running() == false
+                        ShoppingCart:clear_promo_code()
+                        
+                        if free_in_cart_template_is_running() == false
+                        and rtwo_in_cart_template_is_running() == false
                         and CartQualifiesForInCartOffer( ShoppingCart )
 						and ShoppingCart.in_cart_promo_offer_made == false then
 							view_show_safe( "in_cart_offer_message_view" )
-						else
+                        else
 							kernel.executescript( "check_out" )
 						end
 					end
@@ -178,10 +178,11 @@ function show_offer_or_proceed_checkout()
 		)
     else
         if free_in_cart_template_is_running() == false
+        and rtwo_in_cart_template_is_running() == false
 		and CartQualifiesForInCartOffer( ShoppingCart )
 		and ShoppingCart.in_cart_promo_offer_made == false then
 			view_show_safe( "in_cart_offer_message_view" )
-		else
+        else
 			kernel.executescript( "check_out" )
 		end
 	end
@@ -239,18 +240,3 @@ kernel.registeractorhitnotify(
 		setcategory( browse_filter_family_tracker.selected_family, browse_filter_genre_selected )
 	end
 )
-
-if EnableHiddenDigitalCheckout == true then
-	kernel.registeractorhitnotify(
-		"redbox_logo",
-		function()
-			if ShoppingCart.hidden_digital_checkout_shown == false then
-				kernel.showactor( "credits_button" )
-				if ShoppingCart:size() == 0 then
-					kernel.disableactor( "credits_button" )
-				end
-				ShoppingCart.hidden_digital_checkout_shown = true
-			end
-		end
-	)
-end

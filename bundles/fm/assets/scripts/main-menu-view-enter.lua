@@ -4,6 +4,8 @@
 -- All Rights Reserved
 --
 
+kernel.setmacro( "KioskID", kernel.getmachinevalueordefault( "Store", "ID", "" ) )
+
 ----vmz screen code
 -- Clear num_newrelease_decks and display text
 num_newrelease_decks = 0

@@ -10,7 +10,7 @@ culture_idle_timer:suspend()
 LoadInCartPromoMessaging()
 ShoppingCart.in_cart_promo_offer_made = true
 
-if free_in_cart_template_is_running() then
+if free_in_cart_template_is_running() or ( rtwo_in_cart_template_is_running() and rtwo_in_cart_template_get_valid_item_count() > 1 ) then
     kernel.hideactor( "no_button" )
 end
 
@@ -24,6 +24,14 @@ kernel.timercreate(
 		kernel.timerremove( "in_cart_promo_popup_timer" )
 		if free_in_cart_template_is_running() then
             free_in_cart_template_set_promo()
+            view_show_safe( "shopping_cart_view" )
+        elseif rtwo_in_cart_template_is_running() and rtwo_in_cart_template_get_valid_item_count() == 1 then
+			ShoppingCart.in_cart_promo_offer_cancel = true
+			ShoppingCart.in_cart_title_marketing = false
+            view_show_safe( "shopping_cart_view" )
+        elseif rtwo_in_cart_template_is_running() and rtwo_in_cart_template_get_valid_item_count() > 1 then
+            ShoppingCart.in_cart_promo_offer_cancel = false
+            rtwo_in_cart_template_set_promo()
             view_show_safe( "shopping_cart_view" )
         else
             view_goback_safe( "in_cart_offer_message_view:timeout", true )
@@ -41,10 +49,16 @@ kernel.registeractorhitnotify(
 		view_analytics_event2( "buttonPress", "in-cart-promo-decline", ShoppingCart.session_id )
 		kernel.timerstop( "in_cart_promo_popup_timer" )
 		kernel.timerremove( "in_cart_promo_popup_timer" )
-		view_goback_safe( "in_cart_offer_message_view:no_button", true )
-		ShoppingCart.in_cart_promo_offer_cancel = true
-		ShoppingCart.in_cart_title_marketing = false
-		kernel.executescript( "check_out" )
+        if rtwo_in_cart_template_is_running() and rtwo_in_cart_template_get_valid_item_count() == 1 then
+		    ShoppingCart.in_cart_promo_offer_cancel = true
+		    ShoppingCart.in_cart_title_marketing = false
+            view_show_safe( "shopping_cart_view" )
+        else
+            view_goback_safe( "in_cart_offer_message_view:no_button", true )
+		    ShoppingCart.in_cart_promo_offer_cancel = true
+		    ShoppingCart.in_cart_title_marketing = false
+		    kernel.executescript( "check_out" )
+        end
 	end
 )
 
@@ -56,6 +70,10 @@ kernel.registeractorhitnotify(
 		kernel.timerremove( "in_cart_promo_popup_timer" )
         if free_in_cart_template_is_running() then
             free_in_cart_template_set_promo()
+            view_show_safe( "shopping_cart_view" )
+        elseif rtwo_in_cart_template_is_running() and rtwo_in_cart_template_get_valid_item_count() > 1 then
+            ShoppingCart.in_cart_promo_offer_cancel = false
+            rtwo_in_cart_template_set_promo()
             view_show_safe( "shopping_cart_view" )
         else
             local promo_data = GetInCartPromoAction()

@@ -138,66 +138,6 @@ ProductCatalog.out_of_stock_within_expiration_date = function( self, product_id,
 	end
 end
 
-ProductCatalog.out_of_stock_within_expiration_date_product = function( self, product )
-	if product ~= nil and product.kiosk_product_type ==  3 then
-		local dvd_product = nil
-		local blu_ray_product = nil
-		if product.dvd_index ~= nil and product.dvd_index > 0 then
-			dvd_product = product.kiosk_products[product.dvd_index]
-		end
-		if product.blu_ray_index ~= nil and product.blu_ray_index > 0 then
-			blu_ray_product = product.kiosk_products[product.blu_ray_index]
-		end
-		
-		local dvd_out_of_stock_within_expiration_date = false
-		local blu_ray_out_of_stock_within_expiration_date = false
-		if dvd_product ~= nil and dvd_product.product_id ~= nil then
-			dvd_out_of_stock_within_expiration_date = self:out_of_stock_within_expiration_date( dvd_product.product_id )
-		end
-		if blu_ray_product ~= nil and blu_ray_product.product_id ~= nil then
-			blu_ray_out_of_stock_within_expiration_date = self:out_of_stock_within_expiration_date( blu_ray_product.product_id )
-		end
-		
-		return dvd_out_of_stock_within_expiration_date and blu_ray_out_of_stock_within_expiration_date
-	elseif product ~= nil and product.product_id ~= nil then
-		return self:out_of_stock_within_expiration_date( product.product_id )
-	end
-	return false
-end
-
-ProductCatalog.product_type_count = function( self, filtered_products, type_id, in_stock_only )
-	local count = 0
-	if filtered_products ~= nil and type_id ~= nil and in_stock_only ~= nil then
-		for k, v in pairs( filtered_products ) do
-			if  v ~= nil
-			and ( self:in_stock(v.product_id) == true or in_stock_only == false )
-			and (v.product_type_id == type_id) then
-				count = count + 1
-			end
-		end
-	end
-	return count
-end
-
-ProductCatalog.get_copy_with_release_date = function( self )
-	local temp_product_catalog = {}
-	for k, v in ProductCatalog:pairs() do
-		local temp_product = {}
-		temp_product["product_id"] = v.product_id
-		temp_product["in_stock"] = self:in_stock( v.product_id )
-		temp_product["is_available"] = v.is_available
-		temp_product["can_be_sold"] = v.can_be_sold
-		local master_product = MasterProductCatalog[v.product_id]
-		if master_product ~= nil
-		and master_product.merchandise_date ~= nil
-		then
-			temp_product["merchandise_date"] = MasterProductCatalog[v.product_id].merchandise_date
-		end
-		table.insert(temp_product_catalog, temp_product)
-	end
-	return temp_product_catalog
-end
-
 ProductCatalog.in_stock_games_count = function( self )
 	local count = 0
 	for _, v in ProductCatalog:pairs() do

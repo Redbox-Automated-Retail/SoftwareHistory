@@ -17,7 +17,8 @@
 	obj_progress_manager,
 	obj_qlm_monitor,
 	obj_scene_manager_pager,
-	keypad_controller">
+	keypad_controller,
+  lib_inventory_functions">
     <property name="name" value="application_startup" />
     <aspect name="content" file="assets/scripts/application-startup.lua" />
 </resource>

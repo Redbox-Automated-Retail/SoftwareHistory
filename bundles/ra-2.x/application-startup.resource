@@ -23,12 +23,10 @@
 	obj_maintenance_mode_timer,
 	obj_reservation_manager, 
 	obj_scene_manager_pager, 
-	obj_unplayable_expire_timer,
 	quickreturn_functions, 
 	lib_datetime,
 	obj_progress_manager,
 	swipe_functions,
-	free_trial_please_wait_functions,
 	lib_inventory_functions">
     <property name="name" value="application_startup" />
     <aspect name="content" file="assets/scripts/application-startup.lua" />

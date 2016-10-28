@@ -157,20 +157,13 @@ local result = hardware_manager:return_unknown(
 								function( result )
 									if result.success == true then
 										local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
-										
-										local new_status = "Known"
-										local rapid_status = kernel.rental_inventory_get_rapidstatus( v.item_id )
-										if rapid_status ~= nil then
-											new_status = rapid_status.status
-										end
-										
+                                        local new_status = get_rapid_status( v.item_id, "Known" )
 										BarcodePosition[deck_slot_key] = { ["barcode"] = tostring( v.item_id ), ["status"] = new_status }
 										local barcodes = ProductToBarcode[product.product_id]
 										if barcodes ~= nil then
 											barcodes[v.item_id].status = new_status
 											ProductToBarcode[product.product_id] = barcodes
 										end
-										
 										product.status = new_status
 										reload_inventory()
 									end

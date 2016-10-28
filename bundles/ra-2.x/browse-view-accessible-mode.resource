@@ -90,8 +90,87 @@
 				visible="true"
 				font="font_akzidenz_regular_smaller"
 				style="gray_button_style" />
-				
-<!-- Filtering and Sorting Buttons - GAMES -->
+
+    <!-- Filtering and Sorting Buttons - MOVIES -->      
+      <actor
+				name="top_20_filter_button"
+				x="445"
+				y="578"
+				width="75"
+				height="30"
+				cornerSize="16,16"
+				strokeWeight="2"
+				text="Top 20"
+				visible="true"
+				font="font_akzidenz_regular_smaller"
+				style="gray_button_style" />
+
+      <actor
+				name="action_filter_button"
+				x="536"
+				y="578"
+				width="75"
+				height="30"
+				cornerSize="16,16"
+				strokeWeight="2"
+				text="Action"
+				visible="true"
+				font="font_akzidenz_regular_smaller"
+				style="gray_button_style" />
+
+      <actor
+       name="drama_filter_button"
+       x="627"
+       y="578"
+       width="75"
+       height="30"
+       cornerSize="16,16"
+       strokeWeight="2"
+       text="Drama"
+       visible="true"
+       font="font_akzidenz_regular_smaller"
+       style="gray_button_style" />
+
+      <actor
+				name="horror_filter_button"
+				x="718"
+				y="578"
+				width="75"
+				height="30"
+				cornerSize="16,16"
+				strokeWeight="2"
+				text="Horror"
+				visible="true"
+				font="font_akzidenz_regular_smaller"
+				style="gray_button_style" />
+
+      <actor
+				name="comedy_filter_button"
+				x="809"
+				y="578"
+				width="75"
+				height="30"
+				cornerSize="16,16"
+				strokeWeight="2"
+				text="Comedy"
+				visible="true"
+				font="font_akzidenz_regular_smaller"
+				style="gray_button_style" />
+
+      <actor
+        name="family_filter_button"
+        x="900"
+        y="578"
+        width="75"
+        height="30"
+        cornerSize="16,16"
+        strokeWeight="2"
+        text="Family"
+        visible="true"
+        font="font_akzidenz_regular_smaller"
+        style="gray_button_style" />     
+
+      <!-- Filtering and Sorting Buttons - GAMES -->
 
 			<actor
 				name="xbox_360_button"

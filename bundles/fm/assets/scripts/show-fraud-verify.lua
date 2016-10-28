@@ -79,6 +79,8 @@ hardware_manager:field_insert_fraud_with_check(
 							            "ClearFraud",
 							            v.time_stamp24,
 							            barcode_list)
+                        BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Known" }
+                        kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = Known inserted into BarcodeStatus" )
                     end
                     reload_inventory()
                     break

@@ -199,18 +199,27 @@
 				cornerSize="36,36"
 				style="red_button_style_bold_border" />
 
-				
-			<actor
+      <actor
 				name="note_label"
-				x="30"
-				y="677"
-				width="450"
-				foregroundColor="128,128,128"
+				x="20"
+				y="640"
+				width="700"
+				foregroundColor="white"
 				optionFlags="Text"
-				font="font_akzidenz_regular_small"
-				text="Note: The zipcode associated with your credit card is needed for verification purposes only." />
-				
-			<actor
+				font="font_akzidenz_regular_smaller_13"
+				text="The zip code associated with your credit card is needed for verification purpose only." />
+
+      <actor
+				name="note_label2"
+				x="20"
+				y="680"
+				width="700"
+				foregroundColor="white"
+				optionFlags="Text"
+				font="font_akzidenz_regular_smaller_13"
+				text="${KeyPad:AuthText}" />
+
+      <actor
 				name="next_button"
 				x="794"
 				y="660"
@@ -220,24 +229,24 @@
 				text="          NEXT"
 				font="font_target_small"
 				cornerSize="32,32"
-				style="red_next_button_style" /> 
-					
-	       	<actor
-                name="next_button_right_arrow_icon"
-                x="915"
-                y="682"
-				image="image_email_entry_right_arrow_icon"
-                hitFlags="enabled"
-                optionFlags="Image" />
-				
+				style="red_next_button_style" />
+      
+	    <actor
+        name="next_button_right_arrow_icon"
+        x="915"
+        y="682"
+        image="image_email_entry_right_arrow_icon"
+        hitFlags="enabled"
+        optionFlags="Image" />
+      
 			<actor
-                name="image_next_white_arrow_big"
-                x="915"
-                y="682"
-				onHit="key_pad_update"
-				image="image_next_white_arrow_big"
-                hitFlags="enabled"
-                optionFlags="Image" />	 
+        name="image_next_white_arrow_big"
+        x="915"
+        y="682"
+        onHit="key_pad_update"
+        image="image_next_white_arrow_big"
+        hitFlags="enabled"
+        optionFlags="Image" />	 
 		</scene>
 	</aspect>
 </resource>

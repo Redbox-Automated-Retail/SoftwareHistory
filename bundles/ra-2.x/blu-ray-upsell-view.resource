@@ -51,7 +51,7 @@
 				x="100"
 				y="524"
 				width="824"
-				text="To play this Disc, you’ll need a Blu-ray™ player. The audio on a Blu-ray Disc® can range from Dolby Digital and DTS Digital to Dolby Lossless and DTS-HD. See our FAQs for more details."
+				text="To play this Disc, you’ll need a Blu-ray™ player. The audio on Blu-ray Discs can range from Dolby Digital and DTS Digital to Dolby TrueHD and DTS-HD."
 				font="font_target_smaller_overlays"
 				foregroundColor="black"
 				horizontalAlignment="center"

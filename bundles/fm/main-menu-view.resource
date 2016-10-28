@@ -23,7 +23,7 @@
 				image="title_arrow"
 				visible="true" />
 
-			<actor
+      <actor
 				name="title_area"
 				x="45"
 				y="0"
@@ -37,7 +37,21 @@
 				height="50"
 				visible="true" />
 
-			<actor
+      <actor
+        name="title_area_kiosk_id"
+        x="635"
+        y="0"
+        optionFlags="Background, Text, TextShadow"
+        backgroundColor="DarkRed"
+        text="Kiosk ID: ${KioskID}"
+        foregroundColor="White"
+        horizontalAlignment="far"
+        verticalAlignment="center"
+        font="medium_larger_font"
+        width="285"
+        height="50" />
+
+      <actor
 				name="close_area"
 				x="940"
 				y="0"

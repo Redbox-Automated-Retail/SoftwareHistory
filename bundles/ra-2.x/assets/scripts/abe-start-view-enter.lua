@@ -43,7 +43,7 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"abe_games_button",
 	function()
-		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+		view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 		view_analytics_event( "buttonPress", "abe_games_button" )
 		browse_filter_family_tracker.selected_family = "Games"
 		browse_filter_family_tracker:set_family_type( "ALL" )
@@ -56,7 +56,7 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"abe_all_movies_button",
 	function()
-		view_analytics_start( Start_Over_View_Name, "BrowseVend" )
+		view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
 		view_analytics_event( "buttonPress", "abe_all_movies_button" )
 		browse_filter_family_tracker.selected_family = "Movies"
 		browse_filter_family_tracker:set_family_type( "ALL" )
