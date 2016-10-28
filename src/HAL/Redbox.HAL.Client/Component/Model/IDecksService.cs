@@ -4,6 +4,8 @@ namespace Redbox.HAL.Component.Model;
 
 internal interface IDecksService
 {
+	IDeck QlmDeck { get; }
+
 	IDeck First { get; }
 
 	IDeck Last { get; }

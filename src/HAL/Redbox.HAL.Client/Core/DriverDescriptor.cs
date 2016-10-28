@@ -1,19 +1,17 @@
 using System;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal class DriverDescriptor
+internal sealed class DriverDescriptor : IDriverDescriptor
 {
 	public Version DriverVersion { get; private set; }
 
-	public string Manufacturer { get; private set; }
-
 	public string Provider { get; private set; }
 
-	public DriverDescriptor(Version version, string mfrName, string provider)
+	public DriverDescriptor(Version version, string provider)
 	{
 		DriverVersion = version;
-		Manufacturer = mfrName;
 		Provider = provider;
 	}
 }

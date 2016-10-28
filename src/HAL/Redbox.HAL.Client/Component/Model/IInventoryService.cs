@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 
 namespace Redbox.HAL.Component.Model;
 
 internal interface IInventoryService
 {
-	int DumpbinItemCount { get; }
-
 	bool IsTrackingEmptyStuck { get; }
 
 	bool MachineIsFull();
@@ -23,11 +22,11 @@ internal interface IInventoryService
 
 	bool Save(ILocation location);
 
-	bool Save(IEnumerable<ILocation> locations);
+	bool Save(IList<ILocation> locations);
 
 	int GetExcludedSlotsCount();
 
-	IList<ILocation> ComputeExcludedSlots();
+	IList<ILocation> GetExcludedSlots();
 
 	IList<ILocation> GetEmptySlots();
 
@@ -37,11 +36,7 @@ internal interface IInventoryService
 
 	int GetMachineEmptyCount();
 
-	bool UpdateEmptyStuck(int deck, int slot);
-
 	bool UpdateEmptyStuck(ILocation location);
-
-	bool ResetCount(ILocation location);
 
 	bool IsStuck(ILocation loc);
 
@@ -53,17 +48,7 @@ internal interface IInventoryService
 
 	bool ResetAndMark(IDeck deck, string id);
 
-	string GetInventoryState();
+	void GetState(XmlTextWriter writer);
 
-	void ResetInventoryState(string xml, ErrorList errors);
-
-	bool ClearDumpbinInventory();
-
-	IList<IDumpBinInventoryItem> GetBarcodesInBin();
-
-	bool AddBinItem(string matrix);
-
-	bool ExcludeSlots(IDeck deck, IList<int> slots);
-
-	bool UnExcludeSlots(IDeck deck, IList<int> slots);
+	void ResetState(XmlDocument document, ErrorList errors);
 }

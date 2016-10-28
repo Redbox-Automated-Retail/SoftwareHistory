@@ -19,7 +19,7 @@ internal static class ByteHelper
 	{
 		TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider();
 		ICryptoTransform transform = tripleDESCryptoServiceProvider.CreateEncryptor(m_keyValue, m_initialVector);
-		using System.IO.MemoryStream memoryStream = new System.IO.MemoryStream();
+		using MemoryStream memoryStream = new MemoryStream();
 		CryptoStream cryptoStream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write);
 		cryptoStream.Write(inputArray, 0, inputArray.Length);
 		cryptoStream.FlushFinalBlock();
@@ -30,7 +30,7 @@ internal static class ByteHelper
 	{
 		TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider();
 		ICryptoTransform transform = tripleDESCryptoServiceProvider.CreateDecryptor(m_keyValue, m_initialVector);
-		using System.IO.MemoryStream memoryStream = new System.IO.MemoryStream();
+		using MemoryStream memoryStream = new MemoryStream();
 		CryptoStream cryptoStream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write);
 		cryptoStream.Write(inputArray, 0, inputArray.Length);
 		cryptoStream.FlushFinalBlock();

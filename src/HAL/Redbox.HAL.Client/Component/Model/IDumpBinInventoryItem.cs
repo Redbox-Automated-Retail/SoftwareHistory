@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDumpBinInventoryItem : IXmlConfigurationElement
+internal interface IDumpBinInventoryItem
 {
 	DateTime PutTime { get; }
 

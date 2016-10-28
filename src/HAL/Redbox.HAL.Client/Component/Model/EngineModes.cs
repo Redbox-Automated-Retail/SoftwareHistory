@@ -7,5 +7,6 @@ internal enum EngineModes
 	Maintenance,
 	Diagnostic,
 	Merchandizing,
-	PowerSuspend
+	PowerSuspend,
+	RebootPending
 }

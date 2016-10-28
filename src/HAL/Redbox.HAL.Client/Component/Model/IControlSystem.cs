@@ -2,8 +2,6 @@ namespace Redbox.HAL.Component.Model;
 
 internal interface IControlSystem
 {
-	bool IsInitialized { get; }
-
 	VendDoorState VendDoorState { get; }
 
 	TrackState TrackState { get; }
@@ -12,13 +10,7 @@ internal interface IControlSystem
 
 	void Shutdown();
 
-	void Shutdown(bool force);
-
-	void AddHandler(IControlSystemObserver observer);
-
-	void RemoveHandler(IControlSystemObserver observer);
-
-	IControlResponse SetAudio(bool on);
+	IControlResponse SetAudio(AudioChannelState newState);
 
 	void ToggleRingLight(bool on, int? sleepAfter);
 

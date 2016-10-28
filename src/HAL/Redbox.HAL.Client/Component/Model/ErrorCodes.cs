@@ -55,5 +55,7 @@ public enum ErrorCodes
 	MachineFull,
 	DeviceNotConfigured,
 	FraudPostFailure,
-	InvalidDeviceState
+	InvalidDeviceState,
+	LowerLimitError,
+	UpperLimitError
 }

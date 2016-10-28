@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Text;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
 using Redbox.IPC.Framework;
@@ -11,9 +11,17 @@ public sealed class HardwareService
 {
 	private const int DefaultTimeout = 60000;
 
-	private readonly Version ClientVersion;
-
 	private IPCProtocol m_protocol;
+
+	public bool HasABEDevice
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.HasABEDevice;
+		}
+	}
 
 	public int? CommandTimeout { get; set; }
 
@@ -22,7 +30,6 @@ public sealed class HardwareService
 	public HardwareService(IPCProtocol protocol)
 	{
 		m_protocol = protocol;
-		ClientVersion = typeof(HardwareService).Assembly.GetName().Version;
 	}
 
 	public HardwareCommandResult Init(HardwareJobSchedule schedule, out HardwareJob job)
@@ -51,53 +58,49 @@ public sealed class HardwareService
 	public HardwareCommandResult Thin(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(ids, job);
 		}
-		PushArray(ids, job);
 		return hardwareCommandResult;
 	}
 
 	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin-vmz", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(thins, job);
+			PushArray(null, job);
+			PushArray(rebalance, job);
+			PushArray(toBin, job);
 		}
-		PushArray(thins, job);
-		PushArray(null, job);
-		PushArray(rebalance, job);
-		PushArray(toBin, job);
 		return hardwareCommandResult;
 	}
 
 	public HardwareCommandResult ThinVMZ(string[] toBin, string[] rebalance, string[] thinRedeploys, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin-vmz", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(thins, job);
+			PushArray(thinRedeploys, job);
+			PushArray(rebalance, job);
+			PushArray(toBin, job);
 		}
-		PushArray(thins, job);
-		PushArray(thinRedeploys, job);
-		PushArray(rebalance, job);
-		PushArray(toBin, job);
 		return hardwareCommandResult;
 	}
 
 	public HardwareCommandResult ThinVMZ(string[] toBin, string[] thins, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("thin-vmz", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(thins, job);
+			PushArray(null, job);
+			PushArray(null, job);
+			PushArray(toBin, job);
 		}
-		PushArray(thins, job);
-		PushArray(null, job);
-		PushArray(null, job);
-		PushArray(toBin, job);
 		return hardwareCommandResult;
 	}
 
@@ -109,6 +112,16 @@ public sealed class HardwareService
 	public HardwareCommandResult GetInventoryStats(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJob("get-inventory-stats", schedule, out job);
+	}
+
+	public HardwareCommandResult ChangeAudioChannelState(HardwareJobSchedule schedule, SpeakerState newState, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("change-audio-channel-state", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(newState.ToString());
+		}
+		return hardwareCommandResult;
 	}
 
 	public HardwareCommandResult ResetLocations(List<Location> locs, HardwareJobSchedule schedule, out HardwareJob job)
@@ -238,11 +251,10 @@ public sealed class HardwareService
 	public HardwareCommandResult GetBarcodeVMZPosition(string[] idsToQuery, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("get-barcode-vmz-location", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(idsToQuery, job);
 		}
-		PushArray(idsToQuery, job);
 		return hardwareCommandResult;
 	}
 
@@ -259,6 +271,17 @@ public sealed class HardwareService
 	public HardwareCommandResult FileMarkerDisk(int deck, int slot, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("file-marker-disk", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(slot);
+			job.Push(deck);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult MerchandizeClearAndOffset(int deck, int slot, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("merch-clear-and-offset", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(slot);
@@ -340,11 +363,10 @@ public sealed class HardwareService
 	public HardwareCommandResult QlmUnloadAndThin(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("unload-thin", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(ids, job);
 		}
-		PushArray(ids, job);
 		return hardwareCommandResult;
 	}
 
@@ -372,12 +394,11 @@ public sealed class HardwareService
 	public HardwareCommandResult PreposVend(HardwareJobSchedule schedule, string[] ids, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
-		if (!hardwareCommandResult.Success)
+		if (hardwareCommandResult.Success)
 		{
-			return hardwareCommandResult;
+			PushArray(ids, job);
+			job.Push("PREPOSITION-PICKER");
 		}
-		PushArray(ids, job);
-		job.Push("PREPOSITION-PICKER");
 		return hardwareCommandResult;
 	}
 
@@ -663,6 +684,21 @@ public sealed class HardwareService
 	public HardwareCommandResult TestSomeData(int dataSize)
 	{
 		return ExecuteCommand($"SERVICE test-ipc-xfer size: '{dataSize.ToString()}'");
+	}
+
+	public HardwareCommandResult GetKioskFunctionCheckData(out IList<IKioskFunctionCheckData> sessions)
+	{
+		sessions = new List<IKioskFunctionCheckData>();
+		using KioskFunctionCheckExecutor kioskFunctionCheckExecutor = new KioskFunctionCheckExecutor(this);
+		kioskFunctionCheckExecutor.Run();
+		if (kioskFunctionCheckExecutor.ScheduleResult.Success)
+		{
+			foreach (IKioskFunctionCheckData session in kioskFunctionCheckExecutor.Sessions)
+			{
+				sessions.Add(session);
+			}
+		}
+		return kioskFunctionCheckExecutor.ScheduleResult;
 	}
 
 	public HardwareCommandResult ExecuteServiceCommand(string command)

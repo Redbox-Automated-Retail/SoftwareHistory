@@ -4,7 +4,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class NamedPipeServer
+internal sealed class NamedPipeServer : IDisposable
 {
 	private struct SecurityDescriptor
 	{
@@ -84,34 +84,26 @@ internal class NamedPipeServer
 
 	private const uint SECURITY_DESCRIPTOR_REVISION = 1u;
 
-	private static NamedPipeServer m_instance = null;
+	private bool Disposed;
 
-	private IntPtr ServerOverlappedEvent = IntPtr.Zero;
+	private readonly SecurityDescriptor m_securityDescriptor;
 
-	private SecurityDescriptor m_securityDescriptor;
+	private readonly SecurityAttributes m_securityAttributes;
 
-	private SecurityAttributes m_securityAttributes;
+	private readonly IntPtr m_securityDescriptorPointer = IntPtr.Zero;
 
-	private IntPtr m_securityDescriptorPointer = IntPtr.Zero;
-
-	private IntPtr m_securityAttributesPointer = IntPtr.Zero;
+	private readonly IntPtr m_securityAttributesPointer = IntPtr.Zero;
 
 	private static IntPtr INVALID_HANDLE_VALUE = (IntPtr)(-1);
 
 	internal string PipeName { get; private set; }
 
-	private bool Disposed { get; set; }
-
 	public static NamedPipeServer CreateServer(string pipeName)
 	{
-		if (m_instance == null)
-		{
-			m_instance = new NamedPipeServer(pipeName);
-		}
-		return m_instance;
+		return new NamedPipeServer(pipeName);
 	}
 
-	public AbstractNamedPipeServerSession WaitForClientConnect(PipeSessionFactory factory)
+	public BasePipeChannel WaitForClientConnect()
 	{
 		SafeFileHandle safeFileHandle = ConnectPipeInner(out var lastError);
 		if (safeFileHandle.IsInvalid)
@@ -123,21 +115,21 @@ internal class NamedPipeServer
 		{
 			return null;
 		}
-		return factory.CreateSession(safeFileHandle);
+		return new ServerPipeChannel(safeFileHandle);
 	}
 
 	~NamedPipeServer()
 	{
-		Dispose(disposing: false);
+		OnDispose(disposing: false);
 	}
 
 	public void Dispose()
 	{
-		Dispose(disposing: true);
+		OnDispose(disposing: true);
 		GC.SuppressFinalize(this);
 	}
 
-	private void Dispose(bool disposing)
+	private void OnDispose(bool disposing)
 	{
 		if (!Disposed)
 		{

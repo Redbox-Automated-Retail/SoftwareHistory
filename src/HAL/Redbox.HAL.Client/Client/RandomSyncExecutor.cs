@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Client;
 
-public class RandomSyncExecutor : JobExecutor
+public sealed class RandomSyncExecutor : JobExecutor
 {
 	private readonly int VendTime;
 

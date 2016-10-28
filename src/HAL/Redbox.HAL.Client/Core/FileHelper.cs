@@ -1,20 +1,20 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
 internal static class FileHelper
 {
-	public static string CreateBackup(string path, BackupAction action)
+	public static readonly string DefaultFormat = "yyyyMMddHHmmss";
+
+	public static string CreateBackup(string path, string dateFormat, BackupAction action)
 	{
 		if (string.IsNullOrEmpty(path))
 		{
 			return path;
 		}
-		string text = CreateBackupPathInner(path);
+		string text = CreateBackupName(path, dateFormat);
 		switch (action)
 		{
 		case BackupAction.None:
@@ -27,6 +27,11 @@ internal static class FileHelper
 			break;
 		}
 		return text;
+	}
+
+	public static string CreateBackup(string path, BackupAction action)
+	{
+		return CreateBackup(path, DefaultFormat, action);
 	}
 
 	public static bool SafeDeleteFile(string path)
@@ -46,18 +51,6 @@ internal static class FileHelper
 			LogHelper.Instance.Log("Delete file failed.", e);
 			return false;
 		}
-	}
-
-	public static string CreateBackupName(string path)
-	{
-		return CreateBackupPathInner(path);
-	}
-
-	public static string GetShortName(string path)
-	{
-		StringBuilder stringBuilder = new StringBuilder(256);
-		GetShortPathName(path, stringBuilder, stringBuilder.Capacity);
-		return stringBuilder.ToString();
 	}
 
 	public static bool SafeMove(TextWriter writer, string source, string dest)
@@ -111,15 +104,12 @@ internal static class FileHelper
 		return $"m{now.Month}d{now.Day}y{now.Year}_h{now.Hour}m{now.Minute}s{now.Second}t{now.Millisecond}.{suffix}";
 	}
 
-	[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-	private static extern uint GetShortPathName([MarshalAs(UnmanagedType.LPTStr)] string lpszLongPath, [MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpszShortPath, int cchBuffer);
-
-	private static string CreateBackupPathInner(string path)
+	private static string CreateBackupName(string path, string dateFormat)
 	{
 		string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
 		string directoryName = Path.GetDirectoryName(path);
 		string extension = Path.GetExtension(path);
-		string path2 = string.Format("{0}.{1}{2}", fileNameWithoutExtension, DateTime.Now.ToString("yyyyMMddHHmmss"), extension ?? ".bak");
+		string path2 = string.Format("{0}.{1}{2}", fileNameWithoutExtension, DateTime.Now.ToString(dateFormat), extension ?? ".bak");
 		return Path.Combine(directoryName, path2);
 	}
 }

@@ -8,31 +8,27 @@ internal interface IPersistentCounterService
 
 	IPersistentCounter Find(string name);
 
-	IPersistentCounter Find(TimeoutCounters counter);
-
 	IPersistentCounter Increment(string name);
 
 	IPersistentCounter Increment(TimeoutCounters counter);
 
 	IPersistentCounter Decrement(string name);
 
-	bool ResetCounter(IPersistentCounter counter);
+	bool Reset(IPersistentCounter counter);
 
-	IPersistentCounter Reset(string name);
-
-	IPersistentCounter Reset(TimeoutCounters ctr);
-
-	void ResetTimeoutCounters();
+	bool Reset(string name);
 
 	void LogTimeouts(TextWriter log);
 
-	void LogTimeout(TimeoutCounters counter, TextWriter writer);
-
 	void LogCounter(string counter, TextWriter writer);
 
-	bool Insert(HardwareCorrectionStatistic statistic, IExecutionContext context, bool correctionSuccessful);
+	bool Insert(HardwareCorrectionStatistic statistic, IExecutionContext context, bool correctionOk);
 
-	int RemoveAll(HardwareCorrectionStatistic stat);
+	bool RemoveAll(HardwareCorrectionStatistic stat);
 
 	void LogStats(HardwareCorrectionStatistic key, TextWriter log);
+
+	void AddWeeklyResettable(IPersistentCounter counter);
+
+	void ResetWeekly();
 }

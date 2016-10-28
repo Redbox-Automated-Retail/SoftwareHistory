@@ -5,28 +5,30 @@ namespace Redbox.HAL.IPC.Framework;
 
 internal class ClientPipeChannel : BasePipeChannel
 {
-	internal override bool Connect(string pipeName)
+	private readonly string PipeName;
+
+	public override bool Connect()
 	{
 		if (base.Connected)
 		{
 			return false;
 		}
-		pipeName = "\\\\.\\PIPE\\" + pipeName;
-		base.PipeHandle = BasePipeChannel.CreateFile(pipeName, 3221225472u, 0u, IntPtr.Zero, 3u, 0u, IntPtr.Zero);
-		if (base.PipeHandle.IsInvalid)
+		PipeHandle = BasePipeChannel.CreateFile(PipeName, 3221225472u, 0u, IntPtr.Zero, 3u, 0u, IntPtr.Zero);
+		if (PipeHandle.IsInvalid)
 		{
 			return false;
 		}
 		return base.Connected = true;
 	}
 
-	internal ClientPipeChannel(string pipeName)
+	public ClientPipeChannel(string pipeName)
 	{
+		PipeName = "\\\\.\\PIPE\\" + pipeName;
 	}
 
 	protected override bool DisposeChannel(bool fromDispose)
 	{
-		if (base.Disposed)
+		if (Disposed)
 		{
 			return true;
 		}
@@ -34,8 +36,8 @@ internal class ClientPipeChannel : BasePipeChannel
 		{
 			LogHelper.Instance.Log("Client channel: dispose()");
 		}
-		base.PipeHandle.Close();
+		PipeHandle.Close();
 		base.Connected = false;
-		return base.Disposed = true;
+		return Disposed = true;
 	}
 }

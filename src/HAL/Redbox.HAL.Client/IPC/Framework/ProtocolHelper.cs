@@ -139,7 +139,7 @@ internal static class ProtocolHelper
 
 	public static void FormatCompressedFile(string path, CommandContext context)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
+		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
 		byte[] inputArray = File.ReadAllBytes(path);
 		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(ByteHelper.ToBase64(inputArray)));
 		FormatGzipCompressedMessage(buffer, context);
@@ -147,21 +147,21 @@ internal static class ProtocolHelper
 
 	public static void FormatCompressedString(string value, CommandContext context)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
+		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
 		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(value));
 		FormatLzmaCompressedMessage(buffer, context);
 	}
 
 	public static void FormatCompressedBytes(byte[] buffer, CommandContext context)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
+		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
 		byte[] buffer2 = algorithm.Compress(buffer);
 		FormatLzmaCompressedMessage(buffer2, context);
 	}
 
 	public static byte[] DecompressBase64String(string value)
 	{
-		CompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
+		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
 		return algorithm.Decompress(StringExtensions.Base64ToBytes(value));
 	}
 

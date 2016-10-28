@@ -10,6 +10,8 @@ public abstract class JobExecutor : IDisposable
 
 	protected readonly HardwareService Service;
 
+	protected internal readonly HardwareCommandResult ScheduleResult;
+
 	private HardwareEvent UserEvent;
 
 	private readonly HardwareJob m_job;
@@ -117,8 +119,8 @@ public abstract class JobExecutor : IDisposable
 		{
 			Priority = JobPriority
 		};
-		HardwareCommandResult hardwareCommandResult = Service.ScheduleJob(JobName, Label, enableDebugging: false, schedule, out m_job);
-		if (!hardwareCommandResult.Success)
+		ScheduleResult = Service.ScheduleJob(JobName, Label, enableDebugging: false, schedule, out m_job);
+		if (!ScheduleResult.Success)
 		{
 			m_job = null;
 		}
