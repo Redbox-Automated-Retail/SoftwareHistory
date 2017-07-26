@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
@@ -91,14 +92,6 @@ public class ConfiguredDevicesForm : Form
 
 	private IDictionary<string, string> FormProperties;
 
-	private bool HasQuickReturn;
-
-	private bool HasCortexCamera;
-
-	private bool HasFraudSensor;
-
-	private bool HasExchanger;
-
 	private KioskFunctionTest FunctionTest;
 
 	private readonly HardwareService Service;
@@ -114,6 +107,14 @@ public class ConfiguredDevicesForm : Form
 	private readonly ButtonAspectsManager Manager;
 
 	private readonly byte[] CenterItemProgram;
+
+	private readonly AirExchangerState ExchangerState;
+
+	private bool HasFraudSensor;
+
+	private bool HasCortexCamera;
+
+	private readonly QRInstallHelper QuickReturnControl;
 
 	private IContainer components;
 
@@ -259,29 +260,35 @@ public class ConfiguredDevicesForm : Form
 
 	private Button m_displaySessionsButton;
 
+	private TabPage tabPage1;
+
+	private Button button16;
+
+	private Button button11;
+
+	private ListView listView1;
+
 	public ConfiguredDevicesForm(HardwareService service, IDictionary<string, string> properties)
 	{
 		InitializeComponent();
 		OutputBox = new ConfiguredDeviceOuptutBox(m_cortexStatusBox);
 		Service = service;
-		UserControl value = new QRInstallHelper(Service)
-		{
-			Dock = DockStyle.Fill
-		};
-		m_quickReturnTab.Controls.Add(value);
 		m_devicesTab.Selected += OnTabSelectedChange;
 		Manager = new ButtonAspectsManager();
 		AirExchangerOutput = new ConfiguredDeviceOuptutBox(m_iceQubeOutput);
 		FraudSensorOutput = new ConfiguredDeviceOuptutBox(m_fraudSensorOutput);
 		KioskTestOutput = new ConfiguredDeviceOuptutBox(m_kioskTestOutput);
-		using (MachineConfiguration machineConfiguration = new MachineConfiguration(service))
+		ExchangerState = new AirExchangerState(service);
+		using (MachineConfiguration machineConfiguration = new MachineConfiguration(Service))
 		{
 			machineConfiguration.Run();
-			HasCortexCamera = !machineConfiguration.LegacyCamera;
-			HasQuickReturn = machineConfiguration.HasQuickReturn;
-			HasExchanger = machineConfiguration.AirExchangerConfigured;
+			ExchangerState.Configure(machineConfiguration.AirExchangerStatus, machineConfiguration.AirExchangerFanStatus);
 			HasFraudSensor = machineConfiguration.HasFraudDevice;
+			HasCortexCamera = !machineConfiguration.LegacyCamera;
+			QuickReturnControl = new QRInstallHelper(Service, machineConfiguration.QuickReturnStatus);
 		}
+		QuickReturnControl.Dock = DockStyle.Fill;
+		m_quickReturnTab.Controls.Add(QuickReturnControl);
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.AppendLine("ROLLER POS=6 TIMEOUT=4000 WAIT=TRUE ");
 		stringBuilder.AppendLine(" ROLLER POS=3 TIMEOUT=4000 WAIT=TRUE ");
@@ -301,6 +308,8 @@ public class ConfiguredDevicesForm : Form
 			}
 		}
 		m_displaySessionsButton.Enabled = (m_displaySessionsButton.Visible = flag);
+		listView1.Columns.Add("Component", 200);
+		listView1.Columns.Add("Value", 200);
 	}
 
 	private void ConfigureCortexPanel()
@@ -312,43 +321,36 @@ public class ConfiguredDevicesForm : Form
 
 	private void OnConfigureIceQubeBoard()
 	{
-		m_iceQubeExchangerLabel.Text = string.Format("The board {0} configured.", HasExchanger ? "is" : "is not");
-		m_configureQubeButton.Text = (HasExchanger ? "Remove" : "Configure");
-		m_resetQubeBoard.Enabled = HasExchanger;
-		m_qubeStatusButton.Enabled = HasExchanger;
-		m_resetPersistentCounter.Enabled = HasExchanger;
+		bool configured = ExchangerState.Configured;
+		m_iceQubeExchangerLabel.Text = string.Format("The board {0} configured.", configured ? "is" : "is not");
+		m_configureQubeButton.Text = (configured ? "Remove" : "Configure");
+		m_resetQubeBoard.Enabled = configured;
+		m_qubeStatusButton.Enabled = configured;
+		m_resetPersistentCounter.Enabled = configured;
 	}
 
 	private void OnTabSelectedChange(object sender, EventArgs e)
 	{
-		if (Enum.IsDefined(typeof(PanelIndex), m_devicesTab.SelectedIndex))
+		switch (m_devicesTab.SelectedIndex)
 		{
-			PanelIndex panelIndex = (PanelIndex)Enum.ToObject(typeof(PanelIndex), m_devicesTab.SelectedIndex);
-			WriteToOutput($"Change to panel {panelIndex.ToString()}");
-			switch (panelIndex)
-			{
-			case PanelIndex.IceQubeBoard:
-				OnConfigureIceQubeBoard();
-				break;
-			case PanelIndex.CortexCamera:
-				ConfigureCortexPanel();
-				break;
-			case PanelIndex.FraudSensor:
-				OnConfigureFraudSensor();
-				break;
-			case PanelIndex.KioskFunctionTest:
-				OnConfigureKioskTest();
-				break;
-			case PanelIndex.QuickReturn:
-				break;
-			}
+		case 1:
+			OnConfigureIceQubeBoard();
+			break;
+		case 2:
+			ConfigureCortexPanel();
+			break;
+		case 3:
+			OnConfigureFraudSensor();
+			break;
+		case 4:
+			OnConfigureKioskTest();
+			break;
 		}
 	}
 
 	private void OnConfigureKioskTest()
 	{
-		ISessionUserService service = ServiceLocator.Instance.GetService<ISessionUserService>();
-		ISessionUser currentSession = service.GetCurrentSession();
+		ISessionUser currentSession = ServiceLocator.Instance.GetService<ISessionUserService>().GetCurrentSession();
 		FunctionTest = new KioskFunctionTest(Service, KioskTestOutput, HasCortexCamera, currentSession.User);
 		TextBox testVendDoorTB = m_testVendDoorTB;
 		TextBox checkDriversStatusTB = m_checkDriversStatusTB;
@@ -371,39 +373,29 @@ public class ConfiguredDevicesForm : Form
 		bool enabled = (m_resetFraudButton.Enabled = HasFraudSensor);
 		fraudPOSTButton.Enabled = enabled;
 		Button powerOnFraudSensor = m_powerOnFraudSensor;
-		bool enabled2 = (m_powerOffFraudSensor.Enabled = HasFraudSensor);
-		powerOnFraudSensor.Enabled = enabled2;
+		enabled = (m_powerOffFraudSensor.Enabled = HasFraudSensor);
+		powerOnFraudSensor.Enabled = enabled;
 		Button startFraudScan = m_startFraudScan;
-		bool enabled3 = (m_stopFraudScan.Enabled = HasFraudSensor);
-		startFraudScan.Enabled = enabled3;
+		enabled = (m_stopFraudScan.Enabled = HasFraudSensor);
+		startFraudScan.Enabled = enabled;
 		Button testDiskForMarkers = m_testDiskForMarkers;
-		bool enabled4 = (m_testFraudButton.Enabled = HasFraudSensor);
-		testDiskForMarkers.Enabled = enabled4;
+		enabled = (m_testFraudButton.Enabled = HasFraudSensor);
+		testDiskForMarkers.Enabled = enabled;
 	}
 
 	private void WriteToOutput(string msg)
 	{
-		ILogger service = ServiceLocator.Instance.GetService<ILogger>();
-		service.Log(msg, LogEntryType.Info);
+		ServiceLocator.Instance.GetService<ILogger>().Log(msg, LogEntryType.Info);
 	}
 
 	private void m_configureQubeButton_Click(object sender, EventArgs e)
 	{
-		bool hasExchanger = !HasExchanger;
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate($"SETCFG \"EnableIceQubePolling\" \"{hasExchanger.ToString()}\" TYPE=CONTROLLER", out var _);
-		if (!hardwareCommandResult.Success)
+		if (!ExchangerState.ToggleConfiguration())
 		{
 			AirExchangerOutput.Write("Failed to update configuration.");
-			{
-				foreach (Error error in hardwareCommandResult.Errors)
-				{
-					AirExchangerOutput.Write(error.ToString());
-				}
-				return;
-			}
+			return;
 		}
-		HasExchanger = hasExchanger;
-		AirExchangerOutput.Write("The air exchanger is {0}.", HasExchanger ? "configured" : "not configured");
+		AirExchangerOutput.Write("The air exchanger is {0}.", ExchangerState.Configured ? "configured" : "not configured");
 		OnConfigureIceQubeBoard();
 	}
 
@@ -424,38 +416,17 @@ public class ConfiguredDevicesForm : Form
 
 	private void ExecuteInstruction(object sender, OutputBox box, string mnemonic)
 	{
-		using (Manager.MakeAspect(sender))
+		using ButtonAspects buttonAspects = Manager.MakeAspect(sender);
+		string tagInstruction = buttonAspects.GetTagInstruction();
+		if (string.IsNullOrEmpty(tagInstruction))
 		{
-			string tagFromButton = GetTagFromButton(sender);
-			if (string.IsNullOrEmpty(tagFromButton))
-			{
-				box.Write("There is no operand associated with that button.");
-				return;
-			}
-			string instruction = $"{mnemonic} {tagFromButton}";
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, instruction);
-			if (hardwareJob == null)
-			{
-				box.Write("Instruction execution failed.");
-			}
-			else
-			{
-				box.Write(hardwareJob.GetTopOfStack());
-			}
+			box.Write("There is no operand associated with that button.");
+			return;
 		}
-	}
-
-	private string GetTagFromButton(object sender)
-	{
-		if (!(sender is Button button))
-		{
-			return string.Empty;
-		}
-		if (button.Tag is string result)
-		{
-			return result;
-		}
-		return string.Empty;
+		using InstructionHelper instructionHelper = new InstructionHelper(Service);
+		string instruction = $"{mnemonic} {tagInstruction}";
+		string text = instructionHelper.ExecuteGeneric(instruction);
+		box.Write(string.IsNullOrEmpty(text) ? "Instruction execution failed." : text);
 	}
 
 	private void m_exitButton_Click(object sender, EventArgs e)
@@ -476,30 +447,35 @@ public class ConfiguredDevicesForm : Form
 
 	private void ToggleCortex(object sender, bool install)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		using (Manager.MakeAspect(sender))
 		{
-			string statement = string.Format("SETCFG \"ScannerService\" \"{0}\" TYPE=CAMERA", install ? "Cortex" : "Legacy");
-			if (Service.ExecuteImmediate(statement, out var job).Success)
+			using (InstructionHelper instructionHelper = new InstructionHelper(Service))
 			{
+				string instruction = string.Format("SETCFG \"ScannerService\" \"{0}\" TYPE=CAMERA", install ? "Cortex" : "Legacy");
+				if (string.IsNullOrEmpty(instructionHelper.ExecuteGeneric(instruction)))
+				{
+					WriteToBox("Unable to change camera configuration.");
+					return;
+				}
 				WriteToBox("Successfully changed camera configuration.");
-				PerfFunctions.Wait(2000);
+				service.Wait(2000);
 				if (install)
 				{
 					WriteToBox("Probing ports for device...");
-					job = CommonFunctions.ExecuteInstruction(Service, "CAMERA SCANFORPORT");
-					if (job != null)
+					string text = instructionHelper.ExecuteGeneric("CAMERA SCANFORPORT");
+					if (!string.IsNullOrEmpty(text))
 					{
-						string topOfStack = job.GetTopOfStack();
-						if (topOfStack == "NONE")
+						if (text == "NONE")
 						{
 							WriteToBox("Device probe failed; install unsuccessful.");
 						}
 						else
 						{
-							statement = $"SETCFG \"SnapDecodePort\" \"{topOfStack}\" TYPE=CAMERA";
-							if (Service.ExecuteImmediate(statement, out job).Success)
+							instruction = $"SETCFG \"SnapDecodePort\" \"{text}\" TYPE=CAMERA";
+							if (!string.IsNullOrEmpty(instructionHelper.ExecuteGeneric(instruction)))
 							{
-								WriteToBox($"The camera was successfully installed on port {topOfStack}");
+								WriteToBox($"The camera was successfully installed on port {text}");
 							}
 							else
 							{
@@ -507,20 +483,20 @@ public class ConfiguredDevicesForm : Form
 							}
 						}
 					}
+					else
+					{
+						WriteToBox(ErrorCodes.ServiceChannelError.ToString().ToUpper());
+					}
 				}
 				else
 				{
-					Service.ExecuteImmediate("SETCFG \"SnapDecodePort\" \"NONE\" TYPE=CAMERA", out job);
+					instructionHelper.ExecuteGeneric("SETCFG \"SnapDecodePort\" \"NONE\" TYPE=CAMERA");
 				}
-				m_installCortexButton.Enabled = !install;
-				Button uninstallCortexButton = m_uninstallCortexButton;
-				bool enabled = (m_startCortexButton.Enabled = install);
-				uninstallCortexButton.Enabled = enabled;
 			}
-			else
-			{
-				WriteToBox("Unable to change camera configuration.");
-			}
+			m_installCortexButton.Enabled = !install;
+			Button uninstallCortexButton = m_uninstallCortexButton;
+			bool enabled = (m_startCortexButton.Enabled = install);
+			uninstallCortexButton.Enabled = enabled;
 		}
 	}
 
@@ -534,8 +510,14 @@ public class ConfiguredDevicesForm : Form
 		using (Manager.MakeAspect(sender))
 		{
 			WriteToBox("Waiting for camera to start - could take up to 15s.");
-			HardwareJob job = CommonFunctions.ExecuteInstruction(Service, "CAMERA START");
-			bool flag = bool.Parse(job.GetTopOfStack());
+			using InstructionHelper instructionHelper = new InstructionHelper(Service);
+			string value = instructionHelper.ExecuteGeneric("CAMERA START");
+			if (string.IsNullOrEmpty(value))
+			{
+				OutputBox.Write(ErrorCodes.ServiceChannelError.ToString().ToUpper());
+				return;
+			}
+			bool flag = bool.Parse(value);
 			WriteToBox(flag ? "Camera started." : "Camera DIDN'T START.");
 		}
 	}
@@ -570,6 +552,7 @@ public class ConfiguredDevicesForm : Form
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine($"SETCFG \"EnableSecureDiskValidator\" \"{flag.ToString()}\" TYPE=CONTROLLER");
 			stringBuilder.AppendLine($" SETCFG \"EnableFraudSensorCheck\" \"{flag.ToString()}\" TYPE=CONTROLLER");
+			stringBuilder.AppendLine($" SETCFG \"FraudScanJobBitmask2\" \"{(flag ? 32 : 0)}\" TYPE=CONTROLLER");
 			stringBuilder.AppendLine(" CLEAR");
 			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			if (!hardwareCommandResult.Success)
@@ -683,33 +666,16 @@ public class ConfiguredDevicesForm : Form
 
 	private void button7_Click(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
+		using ButtonAspects buttonAspects = Manager.MakeAspect(sender);
+		using InstructionHelper instructionHelper = new InstructionHelper(Service);
+		string tagInstruction = buttonAspects.GetTagInstruction();
+		if (string.IsNullOrEmpty(tagInstruction))
 		{
-			GetInstructionFromButtonAndExecute(sender, FraudSensorOutput);
-		}
-	}
-
-	private void GetInstructionFromButtonAndExecute(object sender, OutputBox box)
-	{
-		if (!(sender is Button button))
-		{
-			return;
-		}
-		string text = button.Tag as string;
-		if (string.IsNullOrEmpty(text))
-		{
-			OutputBox.Write("Unable to parse instruction.");
-			return;
-		}
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, text, 120000);
-		if (hardwareJob != null)
-		{
-			string topOfStack = hardwareJob.GetTopOfStack();
-			box.Write(text + " - " + topOfStack);
+			FraudSensorOutput.Write("There is no instruction for that button.");
 		}
 		else
 		{
-			box.Write("Command failed.");
+			instructionHelper.ExecuteGeneric(tagInstruction);
 		}
 	}
 
@@ -740,14 +706,6 @@ public class ConfiguredDevicesForm : Form
 		AirExchangerOutput.Clear();
 	}
 
-	private void button13_Click(object sender, EventArgs e)
-	{
-		using (Manager.MakeAspect(sender))
-		{
-			GetInstructionFromButtonAndExecute(sender, FraudSensorOutput);
-		}
-	}
-
 	private void RunStressTest()
 	{
 		int integer = m_scanPauseTB.GetInteger("Scan Pause", FraudSensorOutput);
@@ -772,7 +730,7 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			CommonFunctions.ExecuteInstruction(Service, "CONTROLSYSTEM CENTER");
+			ServiceLocator.Instance.GetService<IControlSystem>().Center(CenterDiskMethod.VendDoorAndBack);
 		}
 	}
 
@@ -902,8 +860,7 @@ public class ConfiguredDevicesForm : Form
 
 	private void button16_Click_1(object sender, EventArgs e)
 	{
-		HardwareCommandResult kioskFunctionCheckData = Service.GetKioskFunctionCheckData(out var sessions);
-		if (!kioskFunctionCheckData.Success)
+		if (!Service.GetKioskFunctionCheckData(out var sessions).Success)
 		{
 			return;
 		}
@@ -926,6 +883,55 @@ public class ConfiguredDevicesForm : Form
 		KioskTestOutput.Write("   Timestamp {0}", session.Timestamp.ToString());
 		KioskTestOutput.Write("   User identifier {0}", session.UserIdentifier);
 		KioskTestOutput.Write("Session {0}", sessionCount);
+	}
+
+	private void button11_Click(object sender, EventArgs e1)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			using HardwareSurveyExecutor hardwareSurveyExecutor = new HardwareSurveyExecutor(Service);
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			hardwareSurveyExecutor.Run();
+			AddItem("Timestamp", hardwareSurveyExecutor.Timestamp.ToString());
+			AddItem("Camera", hardwareSurveyExecutor.CameraVersion);
+			string col = hardwareSurveyExecutor.TouchscreenFirmware;
+			try
+			{
+				Version version = new Version(hardwareSurveyExecutor.TouchscreenFirmware);
+				bool flag = version.Major == 4 && version.Minor == 30;
+				col = string.Format("{0} ( {1} CURRENT )", hardwareSurveyExecutor.TouchscreenFirmware, flag ? "MOST" : "NOT MOST");
+			}
+			catch (Exception)
+			{
+			}
+			AddItem("Touchscreen firmware", col);
+			AddItem("Touchscreen model", hardwareSurveyExecutor.Touchscreen);
+			AddItem("ABE device", hardwareSurveyExecutor.ABEDevice.ToString());
+			AddItem("Fraud sensor", hardwareSurveyExecutor.FraudDevice.ToString());
+			AddItem("AuxRelay board", hardwareSurveyExecutor.HasAuxRelayBoard ? "Yes" : "No");
+			AddItem("Air exchanger", hardwareSurveyExecutor.AirExchanger.ToString());
+			AddItem("Quick return", hardwareSurveyExecutor.QuickReturn.ToString());
+			AddItem("Disk free space", $"{hardwareSurveyExecutor.FreeDiskSpace >> 30} GB");
+			AddItem("Memory", $"{hardwareSurveyExecutor.Memory >> 20} GB");
+			AddItem("PC Model", hardwareSurveyExecutor.PcModel);
+			AddItem("PC Manufacturer", hardwareSurveyExecutor.PcManufacturer);
+			AddItem("UPS", hardwareSurveyExecutor.UpsModel);
+			AddItem("Monitor Model", hardwareSurveyExecutor.Monitor);
+			AddItem("Serial controller version", hardwareSurveyExecutor.SerialControllerVersion);
+			executionTimer.Stop();
+			LogHelper.Instance.Log("[{0}] Hardware survey execution time = {1}", GetType().Name, executionTimer.Elapsed);
+		}
+	}
+
+	private void AddItem(string col1, string col2)
+	{
+		ListViewItem value = new ListViewItem(new string[2] { col1, col2 });
+		listView1.Items.Add(value);
+	}
+
+	private void button16_Click_2(object sender, EventArgs e)
+	{
+		listView1.Items.Clear();
 	}
 
 	protected override void Dispose(bool disposing)
@@ -1009,8 +1015,12 @@ public class ConfiguredDevicesForm : Form
 		this.label1 = new System.Windows.Forms.Label();
 		this.button2 = new System.Windows.Forms.Button();
 		this.m_kioskTestOutput = new System.Windows.Forms.ListBox();
+		this.tabPage1 = new System.Windows.Forms.TabPage();
+		this.button16 = new System.Windows.Forms.Button();
+		this.button11 = new System.Windows.Forms.Button();
 		this.m_exitButton = new System.Windows.Forms.Button();
 		this.errorProvider1 = new System.Windows.Forms.ErrorProvider(this.components);
+		this.listView1 = new System.Windows.Forms.ListView();
 		this.m_devicesTab.SuspendLayout();
 		this.m_airExchangerTab.SuspendLayout();
 		this.m_cortexTab.SuspendLayout();
@@ -1018,6 +1028,7 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox1.SuspendLayout();
 		this.m_kioskFunctionCheck.SuspendLayout();
 		this.groupBox2.SuspendLayout();
+		this.tabPage1.SuspendLayout();
 		((System.ComponentModel.ISupportInitialize)this.errorProvider1).BeginInit();
 		base.SuspendLayout();
 		this.m_devicesTab.Controls.Add(this.m_quickReturnTab);
@@ -1025,6 +1036,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_devicesTab.Controls.Add(this.m_cortexTab);
 		this.m_devicesTab.Controls.Add(this.m_fraudSensorTab);
 		this.m_devicesTab.Controls.Add(this.m_kioskFunctionCheck);
+		this.m_devicesTab.Controls.Add(this.tabPage1);
 		this.m_devicesTab.Location = new System.Drawing.Point(2, 12);
 		this.m_devicesTab.Name = "m_devicesTab";
 		this.m_devicesTab.Padding = new System.Drawing.Point(10, 20);
@@ -1238,7 +1250,7 @@ public class ConfiguredDevicesForm : Form
 		this.button13.Tag = "SERIALBOARD RESET";
 		this.button13.Text = "Initialize Control System";
 		this.button13.UseVisualStyleBackColor = true;
-		this.button13.Click += new System.EventHandler(button13_Click);
+		this.button13.Click += new System.EventHandler(button7_Click);
 		this.button3.Location = new System.Drawing.Point(6, 454);
 		this.button3.Name = "button3";
 		this.button3.Size = new System.Drawing.Size(120, 65);
@@ -1547,6 +1559,30 @@ public class ConfiguredDevicesForm : Form
 		this.m_kioskTestOutput.Name = "m_kioskTestOutput";
 		this.m_kioskTestOutput.Size = new System.Drawing.Size(441, 485);
 		this.m_kioskTestOutput.TabIndex = 0;
+		this.tabPage1.BackColor = System.Drawing.Color.LightGray;
+		this.tabPage1.Controls.Add(this.listView1);
+		this.tabPage1.Controls.Add(this.button16);
+		this.tabPage1.Controls.Add(this.button11);
+		this.tabPage1.Location = new System.Drawing.Point(4, 56);
+		this.tabPage1.Name = "tabPage1";
+		this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+		this.tabPage1.Size = new System.Drawing.Size(943, 566);
+		this.tabPage1.TabIndex = 7;
+		this.tabPage1.Text = "Hardware Survey";
+		this.button16.Location = new System.Drawing.Point(656, 194);
+		this.button16.Name = "button16";
+		this.button16.Size = new System.Drawing.Size(140, 80);
+		this.button16.TabIndex = 2;
+		this.button16.Text = "Clear";
+		this.button16.UseVisualStyleBackColor = true;
+		this.button16.Click += new System.EventHandler(button16_Click_2);
+		this.button11.Location = new System.Drawing.Point(656, 74);
+		this.button11.Name = "button11";
+		this.button11.Size = new System.Drawing.Size(140, 80);
+		this.button11.TabIndex = 1;
+		this.button11.Text = "Run Survey";
+		this.button11.UseVisualStyleBackColor = true;
+		this.button11.Click += new System.EventHandler(button11_Click);
 		this.m_exitButton.BackColor = System.Drawing.Color.GreenYellow;
 		this.m_exitButton.Location = new System.Drawing.Point(12, 644);
 		this.m_exitButton.Name = "m_exitButton";
@@ -1556,6 +1592,12 @@ public class ConfiguredDevicesForm : Form
 		this.m_exitButton.UseVisualStyleBackColor = false;
 		this.m_exitButton.Click += new System.EventHandler(m_exitButton_Click);
 		this.errorProvider1.ContainerControl = this;
+		this.listView1.Location = new System.Drawing.Point(20, 35);
+		this.listView1.Name = "listView1";
+		this.listView1.Size = new System.Drawing.Size(502, 378);
+		this.listView1.TabIndex = 3;
+		this.listView1.UseCompatibleStateImageBehavior = false;
+		this.listView1.View = System.Windows.Forms.View.Details;
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.ClientSize = new System.Drawing.Size(975, 715);
@@ -1576,6 +1618,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_kioskFunctionCheck.PerformLayout();
 		this.groupBox2.ResumeLayout(false);
 		this.groupBox2.PerformLayout();
+		this.tabPage1.ResumeLayout(false);
 		((System.ComponentModel.ISupportInitialize)this.errorProvider1).EndInit();
 		base.ResumeLayout(false);
 	}

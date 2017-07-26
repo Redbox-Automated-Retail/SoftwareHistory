@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -11,9 +12,11 @@ public class PickerSensorsBar : UserControl
 {
 	public delegate void SensorOperationHandler(bool readError);
 
-	public delegate void BarToggle(string msg, string response);
+	public delegate void BarToggle(string instruction, IControlResponse response);
 
-	private Dictionary<int, Panel> m_sensors = new Dictionary<int, Panel>();
+	private readonly Dictionary<int, Panel> m_sensors = new Dictionary<int, Panel>();
+
+	private readonly ButtonAspectsManager ButtonManager;
 
 	private IContainer components;
 
@@ -47,59 +50,13 @@ public class PickerSensorsBar : UserControl
 
 	private Button m_offButton;
 
-	public HardwareService Service { get; set; }
-
-	private Color SensorBlockedColor => Color.Green;
-
-	private Color SensorClearColor => Color.WhiteSmoke;
-
-	private ButtonAspectsManager ButtonManager { get; set; }
+	public HardwareService Service { get; private set; }
 
 	public event SensorOperationHandler ReadEvents;
 
 	public event BarToggle BarEvents;
 
 	public PickerSensorsBar(HardwareService service)
-	{
-		InitInner(service);
-	}
-
-	public PickerSensorsBar(HardwareService service, bool[] pickerSensors)
-	{
-		InitInner(Service);
-		if (pickerSensors.Length == 6)
-		{
-			DisplaySensors(pickerSensors);
-		}
-	}
-
-	private void ExecuteBarInstruction(object sender, EventArgs e)
-	{
-		using (ButtonManager.MakeAspect(sender))
-		{
-			Button button = (Button)sender;
-			string text = button.Tag as string;
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, text);
-			if (hardwareJob != null)
-			{
-				string topOfStack = hardwareJob.GetTopOfStack();
-				if (BarEvents != null)
-				{
-					BarEvents(text, topOfStack);
-				}
-			}
-		}
-	}
-
-	private void Read_Click(object sender, EventArgs e)
-	{
-		using (ButtonManager.MakeAspect(sender))
-		{
-			ReadSensorsInner();
-		}
-	}
-
-	private void InitInner(HardwareService service)
 	{
 		InitializeComponent();
 		m_sensors[0] = m_sensor1Panel;
@@ -112,56 +69,43 @@ public class PickerSensorsBar : UserControl
 		ButtonManager = new ButtonAspectsManager();
 	}
 
-	private void ReadSensorsInner()
+	private void ExecuteBarInstruction(object sender, EventArgs e)
 	{
-		bool readError = false;
-		try
+		using ButtonAspects buttonAspects = ButtonManager.MakeAspect(sender);
+		string tagInstruction = buttonAspects.GetTagInstruction();
+		using InstructionHelper instructionHelper = new InstructionHelper(Service);
+		IControlResponse response = instructionHelper.ExecuteWithResponse(tagInstruction);
+		if (BarEvents != null)
 		{
-			string instruction = "SENSOR READ PICKER-SENSOR=1..6";
-			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, instruction);
-			if (hardwareJob == null)
-			{
-				return;
-			}
-			if (!hardwareJob.GetStack(out var stack).Success)
-			{
-				readError = true;
-				return;
-			}
-			if (stack.Count == 0)
-			{
-				readError = true;
-				return;
-			}
-			if (int.Parse(stack.Pop()) == 0)
-			{
-				readError = true;
-				return;
-			}
-			bool[] array = new bool[6];
-			for (int num = 5; num >= 0; num--)
-			{
-				string text = stack.Pop();
-				array[num] = (text.Contains("BLOCKED") ? true : false);
-			}
-			DisplaySensors(array);
-		}
-		finally
-		{
-			if (ReadEvents != null)
-			{
-				ReadEvents(readError);
-			}
+			BarEvents(tagInstruction, response);
 		}
 	}
 
-	private void DisplaySensors(bool[] sensors)
+	private void Read_Click(object sender, EventArgs e)
 	{
-		for (int i = 0; i < sensors.Length; i++)
+		using (ButtonManager.MakeAspect(sender))
 		{
-			m_sensors[i].BackColor = (sensors[i] ? SensorBlockedColor : SensorClearColor);
+			bool flag = false;
+			try
+			{
+				IPickerSensorReadResult pickerSensorReadResult = ServiceLocator.Instance.GetService<IControlSystem>().ReadImmediateSensors();
+				flag = pickerSensorReadResult.Error != ErrorCodes.Success;
+				if (!flag)
+				{
+					for (int i = 0; i < pickerSensorReadResult.Sensors.Length; i++)
+					{
+						m_sensors[i].BackColor = (pickerSensorReadResult.Sensors[i] ? Color.Green : Color.WhiteSmoke);
+					}
+				}
+			}
+			finally
+			{
+				if (ReadEvents != null)
+				{
+					ReadEvents(flag);
+				}
+			}
 		}
-		Application.DoEvents();
 	}
 
 	protected override void Dispose(bool disposing)
@@ -277,7 +221,7 @@ public class PickerSensorsBar : UserControl
 		this.m_onButton.Name = "m_onButton";
 		this.m_onButton.Size = new System.Drawing.Size(75, 45);
 		this.m_onButton.TabIndex = 15;
-		this.m_onButton.Tag = "SENSOR PICKER-ON";
+		this.m_onButton.Tag = "CONTROLSYSTEM PICKERSENSORSON";
 		this.m_onButton.Text = "On";
 		this.m_onButton.UseVisualStyleBackColor = false;
 		this.m_onButton.Click += new System.EventHandler(ExecuteBarInstruction);
@@ -286,7 +230,7 @@ public class PickerSensorsBar : UserControl
 		this.m_offButton.Name = "m_offButton";
 		this.m_offButton.Size = new System.Drawing.Size(75, 45);
 		this.m_offButton.TabIndex = 16;
-		this.m_offButton.Tag = "SENSOR PICKER-OFF";
+		this.m_offButton.Tag = "CONTROLSYSTEM PICKERSENSORSOFF";
 		this.m_offButton.Text = "Off";
 		this.m_offButton.UseVisualStyleBackColor = false;
 		this.m_offButton.Click += new System.EventHandler(ExecuteBarInstruction);

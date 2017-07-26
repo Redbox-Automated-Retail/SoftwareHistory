@@ -53,13 +53,6 @@ public sealed class KioskInventory : IDisposable
 		Dispose(fromDispose: false);
 	}
 
-	public KioskInventory()
-	{
-		ClientHelper clientHelper = new ClientHelper();
-		Service = clientHelper.AutoConnect();
-		Load();
-	}
-
 	public KioskInventory(HardwareService service)
 	{
 		Service = service;

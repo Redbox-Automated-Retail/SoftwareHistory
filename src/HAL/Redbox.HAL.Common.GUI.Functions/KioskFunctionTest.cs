@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading;
 using Redbox.HAL.Client;
 using Redbox.HAL.Component.Model;
@@ -21,8 +20,6 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 	private TestState VerticalSlotTestStatus;
 
 	private readonly bool HasCortex;
-
-	private readonly byte[] CameraSnapImmediate;
 
 	private readonly OutputBox Box;
 
@@ -89,8 +86,7 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 			int num = (HasCortex ? 1 : 3);
 			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(Service);
 			Box.Write(string.Format("Found {0} barcodes ({1}), time={2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
-			string[] array = readBarcodeResult.ScanTime.Split('.');
-			int num2 = int.Parse(array[0]);
+			int num2 = int.Parse(readBarcodeResult.ScanTime.Split('.')[0]);
 			int num3 = int.Parse(readBarcodeResult.Count);
 			SnapDecodeStatus = ((num3 >= num && num2 <= 0) ? TestState.Success : TestState.Failure);
 			CompositeFunctions.PutItem(Service, deck, slot, Box);
@@ -100,16 +96,17 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	internal TestState TestVendDoor()
 	{
-		if ("SUCCESS" != ExecuteInstructionWithResult("VENDDOOR RENT"))
+		VendDoorStatus = TestState.Failure;
+		using (new InstructionHelper(Service))
 		{
-			VendDoorStatus = TestState.Failure;
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			if (service.VendDoorRent().Success)
+			{
+				Thread.Sleep(500);
+				VendDoorStatus = (service.VendDoorClose().Success ? TestState.Success : TestState.Failure);
+			}
+			return VendDoorStatus;
 		}
-		else
-		{
-			Thread.Sleep(500);
-			VendDoorStatus = (("SUCCESS" == ExecuteInstructionWithResult("VENDDOOR CLOSE")) ? TestState.Success : TestState.Failure);
-		}
-		return VendDoorStatus;
 	}
 
 	internal TestState RunVertialSlotTest(int slot)
@@ -188,33 +185,13 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 		HasCortex = hasCortex;
 		Timestamp = DateTime.Now;
 		UserIdentifier = uname;
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.AppendLine("CLEAR");
-		stringBuilder.AppendLine(" RINGLIGHT ON");
-		stringBuilder.AppendLine(" CAMERA SNAP");
-		stringBuilder.AppendLine(" RINGLIGHT OFF");
-		CameraSnapImmediate = Encoding.ASCII.GetBytes(stringBuilder.ToString());
 		TSDriverStatus = (CameraDriverStatus = (SnapDecodeStatus = TestState.NotStarted));
 		VendDoorStatus = (InitStatus = (VerticalSlotTestStatus = TestState.NotStarted));
 	}
 
-	private string ExecuteInstructionWithResult(string inst)
-	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, inst, 120000);
-		if (hardwareJob != null)
-		{
-			string topOfStack = hardwareJob.GetTopOfStack();
-			Box.Write(inst + " - " + topOfStack);
-			return topOfStack;
-		}
-		Box.Write("Command failed.");
-		return string.Empty;
-	}
-
 	private TestState MatchCamera()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: true);
+		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
 			CameraDriverStatus = TestState.Success;
@@ -230,8 +207,7 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	private TestState MatchTS()
 	{
-		ITouchscreenService service = ServiceLocator.Instance.GetService<ITouchscreenService>();
-		IDeviceDescriptor deviceDescriptor = service.FindTouchScreen(matchDriver: true);
+		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindTouchScreen(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
 			TSDriverStatus = TestState.Success;

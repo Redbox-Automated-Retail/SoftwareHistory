@@ -1,5 +1,6 @@
 using System.Windows.Forms;
 using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.MSHALTester;
 
@@ -9,7 +10,7 @@ internal sealed class TesterOutputBox : OutputBox
 
 	protected override void PostWrite(string s)
 	{
-		TheForm.LogMessage(s);
+		LogHelper.Instance.Log(s);
 	}
 
 	internal TesterOutputBox(ListBox box, Form1 form)

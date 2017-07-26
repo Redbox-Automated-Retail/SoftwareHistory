@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -26,6 +27,20 @@ public class EditSlotData : Form
 		}
 	}
 
+	private int CurrentEY;
+
+	private int CurrentEX;
+
+	private int OriginalEY;
+
+	private int OriginalEX;
+
+	private bool PositionsRecorded;
+
+	private bool MoveFailed;
+
+	private readonly DecksConfigurationManager Manager;
+
 	private bool RinglightActive;
 
 	private bool SensorbarActive;
@@ -34,9 +49,9 @@ public class EditSlotData : Form
 
 	private int m_changes;
 
-	private int? m_preferredDeck = null;
+	private int? m_preferredDeck;
 
-	private int? m_qlmDeckNumber = null;
+	private int? m_qlmDeckNumber;
 
 	private readonly XmlNode DeckNode;
 
@@ -139,20 +154,6 @@ public class EditSlotData : Form
 		}
 	}
 
-	private int CurrentEY { get; set; }
-
-	private int CurrentEX { get; set; }
-
-	private int OriginalEY { get; set; }
-
-	private int OriginalEX { get; set; }
-
-	private bool PositionsRecorded { get; set; }
-
-	private bool MoveFailed { get; set; }
-
-	private DecksConfigurationManager Manager { get; set; }
-
 	public EditSlotData(HardwareService service, DecksConfigurationManager mgr)
 	{
 		InitializeComponent();
@@ -225,12 +226,11 @@ public class EditSlotData : Form
 			}
 			bool flag = direction == Direction.Up || direction == Direction.Down;
 			int num = (flag ? (CurrentEY + result) : (CurrentEX + result));
-			MoveHelper moveHelper = new MoveHelper(Service);
-			MoveHelperResult moveHelperResult = moveHelper.MoveAbs(flag ? MoveAxis.Y : MoveAxis.X, num);
+			ErrorCodes errorCodes = new MoveHelper(Service).MoveAbs(flag ? Axis.Y : Axis.X, num);
 			OutputBox.Write("MOVE {0} {1} UNITS - New Location {2} ...", direction.ToString().ToUpper(), text, num);
-			if (!moveHelperResult.MoveOk)
+			OutputBox.Write(errorCodes.ToString());
+			if (errorCodes != ErrorCodes.Success)
 			{
-				OutputBox.Write(moveHelperResult.Status);
 				return false;
 			}
 			if (flag)
@@ -241,17 +241,12 @@ public class EditSlotData : Form
 			{
 				CurrentEX = num;
 			}
-			OutputBox.Write(moveHelperResult.Status);
-			MotorPosition position = new MotorPosition(MoveAxis.X);
-			MotorPosition position2 = new MotorPosition(MoveAxis.Y);
-			moveHelper.GetPosition(ref position);
-			moveHelper.GetPosition(ref position2);
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(RinglightActive ? "RINGLIGHT ON" : ("RINGLIGHT OFF" + Environment.NewLine));
 			stringBuilder.Append(SensorbarActive ? "SENSOR PICKER-ON" : ("SENSOR PICKER-OFF" + Environment.NewLine));
 			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			IncrementChange();
-			return moveHelperResult.MoveOk;
+			return true;
 		}
 		m_errorProvider.SetError(m_encoderUnitsTextBox, "Must specify an integer!");
 		return false;
@@ -270,29 +265,6 @@ public class EditSlotData : Form
 	private void button2_Click(object sender, EventArgs e)
 	{
 		moveEncoderUnits(Direction.Down);
-	}
-
-	private void SavePositionalState()
-	{
-		int num = 0;
-		MotorPosition position = new MotorPosition(MoveAxis.Y);
-		MoveHelper moveHelper = new MoveHelper(Service);
-		moveHelper.GetPosition(ref position);
-		if (position.ReadOk)
-		{
-			int originalEY = (CurrentEY = position.Position);
-			OriginalEY = originalEY;
-			num++;
-		}
-		MotorPosition position3 = new MotorPosition(MoveAxis.X);
-		moveHelper.GetPosition(ref position3);
-		if (position3.ReadOk)
-		{
-			int originalEX = (CurrentEX = position3.Position);
-			OriginalEX = originalEX;
-			num++;
-		}
-		PositionsRecorded = num == 2;
 	}
 
 	private void m_moveButton_Click(object sender, EventArgs e)
@@ -321,93 +293,126 @@ public class EditSlotData : Form
 
 	private void MoveToStart(int deck, int slot)
 	{
-		try
+		MoveHelper moveHelper = new MoveHelper(Service);
+		ErrorCodes errorCodes = moveHelper.MoveTo(deck, slot);
+		if (errorCodes == ErrorCodes.Success)
 		{
-			MoveHelper moveHelper = new MoveHelper(Service);
-			MoveHelperResult moveHelperResult = moveHelper.MoveTo(deck, slot, readLimits: true);
-			if (moveHelperResult.MoveOk)
+			m_moveStatusTB.Text = errorCodes.ToString().ToUpper();
+			IControllerPosition position = moveHelper.GetPosition();
+			PositionsRecorded = false;
+			if (position.ReadOk)
 			{
-				m_moveStatusTB.Text = moveHelperResult.Status;
-				SavePositionalState();
-				StartXPosition = CurrentEX;
-				OutputBox.Write("Start positions: X = {0} Y = {1}", CurrentEX, CurrentEY);
-				ClearChanges();
-				return;
+				OriginalEY = (CurrentEY = position.YCoordinate.Value);
+				OriginalEX = (CurrentEX = position.XCoordinate.Value);
+				PositionsRecorded = true;
 			}
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.Append(moveHelperResult.Status);
-			string[] limits = moveHelperResult.Limits;
-			foreach (string text in limits)
+			StartXPosition = CurrentEX;
+			OutputBox.Write("Start positions: X = {0} Y = {1}", CurrentEX, CurrentEY);
+			ClearChanges();
+			return;
+		}
+		IMotionControlLimitResponse motionControlLimitResponse = moveHelper.ReadLimits();
+		StringBuilder stringBuilder = new StringBuilder();
+		if (motionControlLimitResponse.ReadOk)
+		{
+			stringBuilder.Append(errorCodes.ToString().ToUpper());
+			IMotionControlLimit[] limits = motionControlLimitResponse.Limits;
+			foreach (IMotionControlLimit motionControlLimit in limits)
 			{
-				if (text.Contains("BLOCKED"))
+				if (motionControlLimit.Blocked)
 				{
 					stringBuilder.Append(" ");
-					stringBuilder.Append(text);
+					stringBuilder.Append(motionControlLimit);
 				}
 			}
-			m_moveStatusTB.Text = stringBuilder.ToString();
-			MessageBox.Show("Move to position failed!");
-			MoveFailed = true;
 		}
-		finally
-		{
-			Application.DoEvents();
-		}
+		m_moveStatusTB.Text = stringBuilder.ToString();
+		MessageBox.Show("Move to position failed!");
+		MoveFailed = true;
 	}
 
 	private void RunSimpleCommand(object sender, EventArgs e)
 	{
-		if (!(sender is Button button))
-		{
-			return;
-		}
-		if (button == m_ringlightOnButton)
-		{
-			RinglightActive = true;
-		}
-		else if (button == m_ringlightOffButton)
-		{
-			RinglightActive = false;
-		}
-		if (button == m_sensorBarOnButton)
-		{
-			SensorbarActive = true;
-		}
-		else if (button == m_sensorBarOffButton)
-		{
-			SensorbarActive = false;
-		}
-		if (!(button.Tag is string statement))
-		{
-			return;
-		}
 		if (Deck == -1)
 		{
 			m_errorProvider.SetError(m_deckTextBox, "Please select a deck.");
-			return;
 		}
-		if (Service == null)
+		else if (Service == null)
 		{
 			NotifyCommunicationProblem();
-			return;
 		}
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.Append(string.Concat(button.Tag, " ... "));
-		if (!Service.ExecuteImmediate(statement, out var job).Success)
+		else
 		{
-			NotifyCommunicationProblem();
-			return;
+			if (!(sender is Button button))
+			{
+				return;
+			}
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			IControlResponse controlResponse = null;
+			if (button == m_ringlightOnButton)
+			{
+				controlResponse = service.ToggleRingLight(on: true, null);
+				if (controlResponse.Success)
+				{
+					RinglightActive = true;
+				}
+			}
+			else if (button == m_ringlightOffButton)
+			{
+				controlResponse = service.ToggleRingLight(on: false, null);
+				if (controlResponse.Success)
+				{
+					RinglightActive = false;
+				}
+			}
+			else if (button == m_sensorBarOnButton)
+			{
+				controlResponse = service.SetSensors(on: true);
+				if (controlResponse.Success)
+				{
+					SensorbarActive = true;
+				}
+			}
+			else if (button == m_sensorBarOffButton)
+			{
+				controlResponse = service.SetSensors(on: false);
+				if (controlResponse.Success)
+				{
+					SensorbarActive = false;
+				}
+			}
+			else if (button == m_gripperExtendButton)
+			{
+				controlResponse = service.ExtendArm();
+			}
+			else if (button == m_gripperFingerOpen)
+			{
+				controlResponse = service.SetFinger(GripperFingerState.Rent);
+			}
+			else if (button == m_gripperRetractButton)
+			{
+				controlResponse = service.RetractArm();
+			}
+			else if (button == m_gripperFingerClose)
+			{
+				controlResponse = service.SetFinger(GripperFingerState.Closed);
+			}
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append(string.Concat(button.Tag, " ... "));
+			if (controlResponse.CommError)
+			{
+				stringBuilder.Append(controlResponse.Diagnostic);
+			}
+			else if (controlResponse.TimedOut)
+			{
+				stringBuilder.Append(ErrorCodes.Timeout.ToString().ToUpper());
+			}
+			else
+			{
+				stringBuilder.Append(ErrorCodes.Success.ToString().ToUpper());
+			}
+			OutputBox.Write(stringBuilder.ToString());
 		}
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (!stack.Success)
-		{
-			NotifyCommunicationProblem();
-			return;
-		}
-		stringBuilder.Append(stack2.Pop());
-		OutputBox.Write(stringBuilder.ToString());
-		stringBuilder = null;
-		Application.DoEvents();
 	}
 
 	private void NotifyCommunicationProblem()

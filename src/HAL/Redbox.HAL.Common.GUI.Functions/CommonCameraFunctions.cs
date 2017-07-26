@@ -11,12 +11,12 @@ public static class CommonCameraFunctions
 {
 	public static bool IRCameraConfigured(HardwareService service)
 	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(service, "CAMERA IRCAMERA");
-		if (hardwareJob == null)
+		HardwareJob val = CommonFunctions.ExecuteInstruction(service, "CAMERA IRCAMERA");
+		if (val == null)
 		{
 			return false;
 		}
-		string topOfStack = hardwareJob.GetTopOfStack();
+		string topOfStack = HardwareJobExtensions.GetTopOfStack(val);
 		return bool.Parse(topOfStack);
 	}
 
@@ -31,14 +31,15 @@ public static class CommonCameraFunctions
 				StringBuilder stringBuilder = new StringBuilder();
 				stringBuilder.Append("CAMERA STOP FORCE=TRUE" + Environment.NewLine);
 				stringBuilder.Append("RINGLIGHT ON" + Environment.NewLine);
-				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var job);
+				HardwareJob val = default(HardwareJob);
+				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val);
 				PerfFunctions.SpinWait(5000);
 				Process process = Process.Start(text, flag ? "-secure" : string.Empty);
 				process.WaitForExit();
 				stringBuilder = new StringBuilder();
 				stringBuilder.Append("RINGLIGHT OFF" + Environment.NewLine);
 				stringBuilder.Append("CAMERA START" + Environment.NewLine);
-				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out job);
+				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val);
 			}
 		}
 	}

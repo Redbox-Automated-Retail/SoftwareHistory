@@ -1,12 +1,12 @@
-# Jubilee SR (1.10.0.29)
+# Legion (1.10.0.31)
 
-- Product: HAL Utilities 1.10.0.29
+- Product: MS HAL Tester 1.10.0.31
 - Date (first download in the snapshots): 2017-07-26
-- Store labels: kop-tools-JubileeSR
+- Store labels: kop-ms-hal-tester-Legion
 - Package revisions:
   - `kop-tools` revision 35 (`9B861627C41A59F6468F706A924A61896B4514EA`)
   - `kop-hal-install` revision 42 (`0D4A4D72A73AFDEFCA9D11637E85CE9FF2264CD1`)
-  - `kop-ms-hal-tester` revision 32 (`BE1EFFFFC05B2B572541A7C3BE9A1B37EA14D61C`)
+  - `kop-ms-hal-tester` revision 36 (`515BC94F53908BF7DCB0383416CEBF28C37DCC2B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `A79D727D591B5C2CB8D975523D6B978DBA82C684` | exact |
 | `unload-thin.hs` |  |  | `E60D1B1704BB202C7F7BB5952332D30BF25173C5` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.9.0.49 | `461B7C3522075CC93E8B19C5C597DA9C400901ED` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.10.0.31 | `15EA84A1D986E5F836B13869FFEE150552581D79` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

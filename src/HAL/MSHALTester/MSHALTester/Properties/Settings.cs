@@ -6,8 +6,8 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.MSHALTester.Properties;
 
-[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 [CompilerGenerated]
+[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 public sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
@@ -15,27 +15,7 @@ public sealed class Settings : ApplicationSettingsBase
 	public static Settings Default => defaultInstance;
 
 	[ApplicationScopedSetting]
-	[DefaultSettingValue("Green")]
 	[DebuggerNonUserCode]
-	public string SensorColor => (string)this["SensorColor"];
-
-	[DefaultSettingValue("False")]
-	[ApplicationScopedSetting]
-	[DebuggerNonUserCode]
-	public bool ExitOnAdvancedModeLaunch => (bool)this["ExitOnAdvancedModeLaunch"];
-
-	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
-	[DefaultSettingValue("Red")]
-	public string ButtonRunningColor => (string)this["ButtonRunningColor"];
-
-	[DefaultSettingValue("2")]
-	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
-	public int PollSensorOneCount => (int)this["PollSensorOneCount"];
-
-	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
 	[DefaultSettingValue("rcp://127.0.0.1:7001")]
 	public string CommunicationURL => (string)this["CommunicationURL"];
 
@@ -44,35 +24,40 @@ public sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("70000")]
 	public int ImmediateMoveTimeout => (int)this["ImmediateMoveTimeout"];
 
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
-	[DefaultSettingValue("")]
-	public string FormBackgroundColor => (string)this["FormBackgroundColor"];
-
-	[DefaultSettingValue("True")]
-	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
-	public bool DisableQuickReturn => (bool)this["DisableQuickReturn"];
-
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("True")]
-	[ApplicationScopedSetting]
 	public bool CheckForRunningHAL => (bool)this["CheckForRunningHAL"];
 
-	[DefaultSettingValue("False")]
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
-	public bool DeveloperMode => (bool)this["DeveloperMode"];
-
 	[DebuggerNonUserCode]
-	[ApplicationScopedSetting]
 	[DefaultSettingValue("False")]
 	public bool AllowSessionDisplay => (bool)this["AllowSessionDisplay"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("True")]
-	[ApplicationScopedSetting]
 	public bool UsbServiceDebug => (bool)this["UsbServiceDebug"];
+
+	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("True")]
+	public bool TestCommOnStartup => (bool)this["TestCommOnStartup"];
+
+	[UserScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log")]
+	public string CountersFile
+	{
+		get
+		{
+			return (string)this["CountersFile"];
+		}
+		set
+		{
+			this["CountersFile"] = value;
+		}
+	}
 
 	private void SettingChangingEventHandler(object sender, SettingChangingEventArgs e)
 	{

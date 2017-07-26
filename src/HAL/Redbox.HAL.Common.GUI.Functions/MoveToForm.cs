@@ -33,8 +33,8 @@ public class MoveToForm : Form
 
 	private RadioButton m_putModeRadioButton;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? Deck
 	{
 		get
@@ -119,24 +119,26 @@ public class MoveToForm : Form
 
 	private void OnPickDeck(object sender, EventArgs e)
 	{
-		NumberPadForm numberPadForm = new NumberPadForm();
-		numberPadForm.Text = "Enter Deck Number";
-		NumberPadForm numberPadForm2 = numberPadForm;
-		if (numberPadForm2.ShowDialog() == DialogResult.OK)
+		NumberPadForm numberPadForm = new NumberPadForm
 		{
-			m_deckTextBox.Text = numberPadForm2.Number;
+			Text = "Enter Deck Number"
+		};
+		if (numberPadForm.ShowDialog() == DialogResult.OK)
+		{
+			m_deckTextBox.Text = numberPadForm.Number;
 			m_slotTextBox.Focus();
 		}
 	}
 
 	private void OnPickSlot(object sender, EventArgs e)
 	{
-		NumberPadForm numberPadForm = new NumberPadForm();
-		numberPadForm.Text = "Enter Slot Number";
-		NumberPadForm numberPadForm2 = numberPadForm;
-		if (numberPadForm2.ShowDialog() == DialogResult.OK)
+		NumberPadForm numberPadForm = new NumberPadForm
 		{
-			m_slotTextBox.Text = numberPadForm2.Number;
+			Text = "Enter Slot Number"
+		};
+		if (numberPadForm.ShowDialog() == DialogResult.OK)
+		{
+			m_slotTextBox.Text = numberPadForm.Number;
 			m_okButton.Focus();
 		}
 	}

@@ -39,8 +39,7 @@ public class Program : IDisposable
 				Console.WriteLine("Unrecognized option {0}", args[i]);
 			}
 		}
-		Form1 mainForm = new Form1(secure, text);
-		Application.Run(mainForm);
+		Application.Run(new Form1(secure, text));
 	}
 
 	public void Dispose()

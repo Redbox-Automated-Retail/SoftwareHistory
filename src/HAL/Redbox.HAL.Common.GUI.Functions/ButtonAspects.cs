@@ -21,6 +21,15 @@ public struct ButtonAspects : IDisposable
 		}
 	}
 
+	public string GetTagInstruction()
+	{
+		if (Button != null)
+		{
+			return Button.Tag as string;
+		}
+		return string.Empty;
+	}
+
 	internal ButtonAspects(Button b, Color running)
 	{
 		Button = b;
@@ -32,6 +41,5 @@ public struct ButtonAspects : IDisposable
 		}
 		CompleteColor = Button.BackColor;
 		Button.BackColor = RunningColor;
-		Application.DoEvents();
 	}
 }

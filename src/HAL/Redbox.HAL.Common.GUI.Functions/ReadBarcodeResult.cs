@@ -6,7 +6,7 @@ namespace Redbox.HAL.Common.GUI.Functions;
 
 public sealed class ReadBarcodeResult
 {
-	private sealed class ReadDiskJob : JobExecutor
+	private class ReadDiskJob : JobExecutor
 	{
 		protected override string JobName => "read-barcode";
 

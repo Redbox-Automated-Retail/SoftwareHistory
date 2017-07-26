@@ -50,7 +50,7 @@ public static class CompositeFunctions
 			}
 			box.Write(result.Message);
 		}
-		return 0 == num;
+		return num == 0;
 	}
 
 	public static bool PutItem(object sender, ButtonAspectsManager manager, HardwareService service, int deck, int slot, OutputBox box)

@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -45,15 +44,15 @@ public class IncrementalMoveForm : Form
 		}
 	}
 
-	public string Axis
+	public Axis Axis
 	{
 		get
 		{
-			if (m_xAxisRadio.Checked)
+			if (!m_xAxisRadio.Checked)
 			{
-				return "X";
+				return Axis.Y;
 			}
-			return "Y";
+			return Axis.X;
 		}
 	}
 
@@ -94,10 +93,10 @@ public class IncrementalMoveForm : Form
 	private void button3_Click(object sender, EventArgs e)
 	{
 		m_errorProvider.Clear();
-		MoveAxis moveAxis = Enum<MoveAxis>.ParseIgnoringCase(Axis, MoveAxis.X);
+		Axis axis = Axis;
 		try
 		{
-			if (MoveAxis.Y == moveAxis)
+			if (Axis.Y == axis)
 			{
 				if (Math.Abs(Units) > 200)
 				{
@@ -105,19 +104,17 @@ public class IncrementalMoveForm : Form
 					return;
 				}
 			}
-			else if (moveAxis == MoveAxis.X && Math.Abs(Units) > 50)
+			else if (axis == Axis.X && Math.Abs(Units) > 50)
 			{
 				m_errorProvider.SetError(m_unitsTextBox, "Move cannot be more than 50 units.");
 				return;
 			}
-			MotorPosition position = new MotorPosition(moveAxis);
 			MoveHelper moveHelper = new MoveHelper(Service);
-			moveHelper.GetPosition(ref position);
-			if (position.ReadOk)
+			IControllerPosition position = moveHelper.GetPosition();
+			if (position != null && position.ReadOk)
 			{
-				int units = Units + position.Position;
-				MoveHelperResult moveHelperResult = moveHelper.MoveAbs(moveAxis, units, checkSensors: false);
-				if (!moveHelperResult.MoveOk)
+				int units = Units + ((axis == Axis.X) ? position.XCoordinate.Value : position.YCoordinate.Value);
+				if (moveHelper.MoveAbs(axis, units, checkSensors: false) != ErrorCodes.Success)
 				{
 					Log.Log("Execute immediate failed ... ", LogEntryType.Error);
 				}
