@@ -1,16 +1,16 @@
-# Hawkeye (1.9.0.49)
+# Jubilee SR (1.10.0.29)
 
-- Product: HAL 1.9.0.49
-- Date (first download in the snapshots): 2016-10-28
-- Store labels: kop-hal-install-Hawkeye
+- Product: HAL Utilities 1.10.0.29
+- Date (first download in the snapshots): 2017-07-26
+- Store labels: kop-tools-JubileeSR
 - Package revisions:
-  - `kop-tools` revision 32 (`1272D5B3B2A8B7333D0DFAAACAEA4053D465C1AF`)
+  - `kop-tools` revision 35 (`9B861627C41A59F6468F706A924A61896B4514EA`)
   - `kop-hal-install` revision 42 (`0D4A4D72A73AFDEFCA9D11637E85CE9FF2264CD1`)
   - `kop-ms-hal-tester` revision 32 (`BE1EFFFFC05B2B572541A7C3BE9A1B37EA14D61C`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.9.0.49 | `2D437B0A3FAD1C5B4ECDDCABC0006FCB6E0141B3` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.10.0.29 | `AD40250FC389411A37844CACB21F66C8ACCFABEA` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.9.0.49 | `A956EE4D641C1EEE7CCDDEFBE261F18536EC333F` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

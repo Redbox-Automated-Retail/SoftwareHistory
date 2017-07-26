@@ -18,18 +18,18 @@ internal sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("False")]
 	public bool KillEngine => (bool)this["KillEngine"];
 
-	[DefaultSettingValue("10")]
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("10")]
 	public int TouchDriverWakeup => (int)this["TouchDriverWakeup"];
 
-	[DefaultSettingValue("15000")]
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("15000")]
 	public int TouchDriverResetTimeout => (int)this["TouchDriverResetTimeout"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("False")]
-	[ApplicationScopedSetting]
 	public bool DebugHardware => (bool)this["DebugHardware"];
 }

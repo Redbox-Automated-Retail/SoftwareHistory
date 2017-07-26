@@ -2,13 +2,12 @@ using System;
 using System.IO;
 using Redbox.HAL.Client;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace HALUtilities;
 
 internal sealed class ServiceConfigurationHelper : IDisposable
 {
-	private readonly ClientHelper Helper;
+	private readonly HardwareService Service;
 
 	public void Dispose()
 	{
@@ -17,8 +16,7 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 	internal void BackupConfiguration(string kioskID)
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string path = service.RuntimePath("backup-log.txt");
-		using StreamWriter streamWriter = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read));
+		using StreamWriter streamWriter = new StreamWriter(File.Open(service.RuntimePath("backup-log.txt"), FileMode.Append, FileAccess.Write, FileShare.Read));
 		string text = service.RuntimePath(kioskID);
 		if (!Directory.Exists(text))
 		{
@@ -74,8 +72,7 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 			{
 			}
 		}
-		HardwareService hardwareService = Helper.AutoConnect();
-		if (hardwareService == null)
+		if (Service == null)
 		{
 			using (StreamWriter streamWriter = new StreamWriter(path))
 			{
@@ -83,7 +80,7 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 			}
 			return false;
 		}
-		HardwareCommandResult hardwareCommandResult = hardwareService.ExecuteImmediate($"SETCFG \"{arg}\" \"{text2}\" TYPE={text}", out var job);
+		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate($"SETCFG \"{arg}\" \"{text2}\" TYPE={text}", out var job);
 		if (!hardwareCommandResult.Success)
 		{
 			using (StreamWriter streamWriter2 = new StreamWriter(path))
@@ -100,9 +97,9 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 		{
 			return true;
 		}
-		hardwareCommandResult = hardwareService.ExecuteImmediate($"GETCFG \"{arg}\" TYPE={text}", out job);
+		hardwareCommandResult = Service.ExecuteImmediate($"GETCFG \"{arg}\" TYPE={text}", out job);
 		string path2 = service.RuntimePath("ConfigurationUpdateValidateError.log");
-		FileHelper.SafeDeleteFile(path2);
+		service.SafeDelete(path2);
 		bool result = false;
 		using (StreamWriter streamWriter3 = new StreamWriter(path2))
 		{
@@ -115,14 +112,13 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 				}
 				return false;
 			}
-			HardwareCommandResult stack = job.GetStack(out var stack2);
-			if (!stack.Success)
+			if (!job.GetStack(out var stack).Success)
 			{
 				streamWriter3.WriteLine("Couldn't validate: unable to get stack.");
 			}
 			else
 			{
-				string text3 = stack2.Pop();
+				string text3 = stack.Pop();
 				if (!text3.Equals(text2, StringComparison.CurrentCultureIgnoreCase))
 				{
 					streamWriter3.WriteLine("The new value {0} doesn't match {1}", text3, text2);
@@ -136,8 +132,8 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 		return result;
 	}
 
-	internal ServiceConfigurationHelper(ClientHelper helper)
+	internal ServiceConfigurationHelper(HardwareService service)
 	{
-		Helper = helper;
+		Service = service;
 	}
 }

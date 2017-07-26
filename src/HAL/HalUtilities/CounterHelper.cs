@@ -25,8 +25,7 @@ internal class CounterHelper
 		{
 			return false;
 		}
-		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate($"COUNTER NAME=\"{name}\" GET ", out var job);
-		if (!hardwareCommandResult.Success)
+		if (!service.ExecuteImmediate($"COUNTER NAME=\"{name}\" GET ", out var job).Success)
 		{
 			return false;
 		}
@@ -51,11 +50,10 @@ internal class CounterHelper
 		{
 			return new Stack<string>();
 		}
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (!stack.Success)
+		if (!job.GetStack(out var stack).Success)
 		{
 			return new Stack<string>();
 		}
-		return stack2;
+		return stack;
 	}
 }

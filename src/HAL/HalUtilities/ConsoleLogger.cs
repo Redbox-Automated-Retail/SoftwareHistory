@@ -5,6 +5,8 @@ namespace HALUtilities;
 
 internal sealed class ConsoleLogger : ILogger
 {
+	private readonly bool EnableDebug;
+
 	public void Log(string message, Exception e)
 	{
 		Console.WriteLine(message);
@@ -22,11 +24,16 @@ internal sealed class ConsoleLogger : ILogger
 
 	public bool IsLevelEnabled(LogEntryType entryLevel)
 	{
-		return true;
+		if (LogEntryType.Debug != entryLevel)
+		{
+			return true;
+		}
+		return EnableDebug;
 	}
 
-	internal ConsoleLogger()
+	internal ConsoleLogger(bool enableDebug)
 	{
+		EnableDebug = enableDebug;
 		ServiceLocator.Instance.AddService(typeof(ILogger), this);
 	}
 }

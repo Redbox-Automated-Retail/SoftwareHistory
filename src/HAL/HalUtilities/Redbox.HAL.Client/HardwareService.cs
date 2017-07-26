@@ -11,8 +11,6 @@ public sealed class HardwareService
 {
 	private const int DefaultTimeout = 60000;
 
-	private IPCProtocol m_protocol;
-
 	public bool HasABEDevice
 	{
 		get
@@ -25,11 +23,11 @@ public sealed class HardwareService
 
 	public int? CommandTimeout { get; set; }
 
-	internal IPCProtocol Protocol => m_protocol;
+	internal IPCProtocol Protocol { get; private set; }
 
 	public HardwareService(IPCProtocol protocol)
 	{
-		m_protocol = protocol;
+		Protocol = protocol;
 	}
 
 	public HardwareCommandResult Init(HardwareJobSchedule schedule, out HardwareJob job)
@@ -49,9 +47,10 @@ public sealed class HardwareService
 
 	public HardwareCommandResult CleanZone(out HardwareJob job)
 	{
-		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-		hardwareJobSchedule.Priority = HardwareJobPriority.Low;
-		HardwareJobSchedule schedule = hardwareJobSchedule;
+		HardwareJobSchedule schedule = new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Low
+		};
 		return ScheduleJob("clean-vmz", schedule, out job);
 	}
 
@@ -129,12 +128,7 @@ public sealed class HardwareService
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("reset-locations", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
-			foreach (Location loc in locs)
-			{
-				job.Push(loc.Slot);
-				job.Push(loc.Deck);
-			}
-			job.Push(locs.Count);
+			PushLocs(locs, job);
 		}
 		return hardwareCommandResult;
 	}
@@ -209,12 +203,7 @@ public sealed class HardwareService
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("load-bin", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
-			foreach (Location loc in locs)
-			{
-				job.Push(loc.Slot);
-				job.Push(loc.Deck);
-			}
-			job.Push(locs.Count);
+			PushLocs(locs, job);
 			job.Push("LOCATION");
 		}
 		return hardwareCommandResult;
@@ -223,10 +212,9 @@ public sealed class HardwareService
 	public HardwareCommandResult Vend(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
-		if (hardwareCommandResult.Success && ids != null)
+		if (hardwareCommandResult.Success)
 		{
-			job.Push(ids);
-			job.Push(ids.Length);
+			PushArray(ids, job);
 			job.Push("BY-ID");
 		}
 		return hardwareCommandResult;
@@ -235,14 +223,9 @@ public sealed class HardwareService
 	public HardwareCommandResult Vend(List<Location> locations, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
-		if (hardwareCommandResult.Success && locations.Count > 0)
+		if (hardwareCommandResult.Success)
 		{
-			foreach (Location location in locations)
-			{
-				job.Push(location.Slot);
-				job.Push(location.Deck);
-			}
-			job.Push(locations.Count);
+			PushLocs(locations, job);
 			job.Push("BY-LOCATION");
 		}
 		return hardwareCommandResult;
@@ -311,6 +294,16 @@ public sealed class HardwareService
 		if (hardwareCommandResult.Success)
 		{
 			job.Push(range.Slots.End, range.EndDeck, range.Slots.Start, range.StartDeck);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult HardSync(List<Location> locations, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("sync-locations", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushLocs(locations, job);
 		}
 		return hardwareCommandResult;
 	}
@@ -407,6 +400,31 @@ public sealed class HardwareService
 		return ScheduleJob("air-exchanger-status", schedule, out job);
 	}
 
+	public HardwareCommandResult MarkBarcodesUnknown(HardwareJobSchedule s, string[] barcodes, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("mark-barcodes-unknown", s, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushArray(barcodes, job);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult MarkLocationsUnknown(HardwareJobSchedule s, List<Location> locs, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("mark-locations-unknown", s, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushLocs(locs, job);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult ResetTouchscreenController(HardwareJobSchedule s, out HardwareJob job)
+	{
+		return ScheduleJob("reset-touchscreen-controller", s, out job);
+	}
+
 	public HardwareCommandResult GetConfiguration(string name)
 	{
 		return ExecuteCommand($"CONFIG get name: '{name}'");
@@ -466,9 +484,9 @@ public sealed class HardwareService
 	public HardwareCommandResult ResumeJobs(HardwareJob[] jobs)
 	{
 		HardwareCommandResult hardwareCommandResult = new HardwareCommandResult();
-		foreach (HardwareJob hardwareJob in jobs)
+		for (int i = 0; i < jobs.Length; i++)
 		{
-			HardwareCommandResult hardwareCommandResult2 = hardwareJob.Resume();
+			HardwareCommandResult hardwareCommandResult2 = jobs[i].Resume();
 			if (!hardwareCommandResult2.Success && hardwareCommandResult2.Errors.Count > 0)
 			{
 				hardwareCommandResult.Errors.AddRange(hardwareCommandResult2.Errors);
@@ -683,7 +701,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult TestSomeData(int dataSize)
 	{
-		return ExecuteCommand($"SERVICE test-ipc-xfer size: '{dataSize.ToString()}'");
+		return ExecuteCommand($"ipctest test-ipc-xfer size: '{dataSize.ToString()}'");
 	}
 
 	public HardwareCommandResult GetKioskFunctionCheckData(out IList<IKioskFunctionCheckData> sessions)
@@ -718,30 +736,37 @@ public sealed class HardwareService
 
 	internal HardwareCommandResult ExecuteCommand(string command)
 	{
-		if (m_protocol.Channel == ChannelType.NamedPipe)
-		{
-			return NamedPipeClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, command);
-		}
-		return ClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, command);
+		return ClientCommand<HardwareCommandResult>.ExecuteCommand(Protocol, command);
 	}
 
 	internal HardwareCommandResult ExecuteCommand(string command, int timeout)
 	{
-		if (m_protocol.Channel == ChannelType.NamedPipe)
-		{
-			return NamedPipeClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, command);
-		}
-		return ClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, timeout, command);
+		return ClientCommand<HardwareCommandResult>.ExecuteCommand(Protocol, timeout, command);
 	}
 
-	internal ClientSession GetSession()
+	internal IIpcClientSession GetSession()
 	{
-		return ClientSession.GetClientSession(m_protocol);
+		return ClientSessionFactory.GetClientSession(Protocol);
 	}
 
 	private HardwareCommandResult ScheduleJob(string name, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJob(name, null, enableDebugging: false, schedule, out job);
+	}
+
+	private void PushLocs(List<Location> locs, HardwareJob job)
+	{
+		if (locs == null || locs.Count == 0)
+		{
+			job.Push(0);
+			return;
+		}
+		foreach (Location loc in locs)
+		{
+			job.Push(loc.Slot);
+			job.Push(loc.Deck);
+		}
+		job.Push(locs.Count);
 	}
 
 	private void PushArray(string[] array, HardwareJob job)

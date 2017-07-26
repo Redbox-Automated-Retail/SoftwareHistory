@@ -19,35 +19,27 @@ internal class ScriptMode : IDisposable
 
 	private readonly IConsole m_console;
 
-	private HardwareService m_hardwareService;
+	private readonly HardwareService Service;
 
-	private static ClientHelper m_helper;
-
-	private static ClientHelper Helper
-	{
-		get
-		{
-			if (m_helper == null)
-			{
-				m_helper = new ClientHelper();
-			}
-			return m_helper;
-		}
-	}
+	private readonly ClientHelper Helper;
 
 	public void Dispose()
 	{
 		m_console.Dispose();
+		Helper.Dispose();
 	}
 
-	internal ScriptMode()
+	internal ScriptMode(HardwareService service)
 	{
 		m_console = new DefaultConsole();
+		Service = service;
+		Helper = new ClientHelper(service);
 	}
 
 	internal int Run(string[] programArgs)
 	{
 		string text = null;
+		ImmediateCommand.Service = Service;
 		for (int i = 0; i < programArgs.Length; i++)
 		{
 			if (programArgs[i].StartsWith("--script"))
@@ -63,24 +55,10 @@ internal class ScriptMode : IDisposable
 					m_console.WriteLine("The specified file '{0}' doesn't exist. Try again.", text);
 					return 1;
 				}
-				m_hardwareService = Helper.AutoConnect();
-				if (m_hardwareService == null)
-				{
-					m_console.WriteLine("Unable to create service object.");
-					return 1;
-				}
-				ImmediateCommand.Service = m_hardwareService;
 				ExecuteScriptCommands(text);
 				return 0;
 			}
 		}
-		m_hardwareService = Helper.AutoConnect();
-		if (m_hardwareService == null)
-		{
-			m_console.WriteLine("Unable to create service object.");
-			return 1;
-		}
-		ImmediateCommand.Service = m_hardwareService;
 		m_console.WriteLine("HAL Interactive Console, use ? for help.");
 		bool flag = true;
 		while (flag)
@@ -88,8 +66,7 @@ internal class ScriptMode : IDisposable
 			m_console.Write("> ");
 			string statement = Console.ReadLine();
 			flag = ExecuteStatement(statement);
-			HardwareCommandResult job = m_hardwareService.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job2);
-			if (job.Success && job2.GetStack(out var stack).Success)
+			if (Service.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job).Success && job.GetStack(out var stack).Success)
 			{
 				FormatStack(stack, m_console);
 			}
@@ -125,7 +102,7 @@ internal class ScriptMode : IDisposable
 		console.WriteLine(", execution time = {0}", result.ExecutionTime);
 	}
 
-	public static void FormatStack(Stack<string> stack, IConsole console)
+	private void FormatStack(Stack<string> stack, IConsole console)
 	{
 		int count = stack.Count;
 		foreach (string item in stack)
@@ -134,7 +111,7 @@ internal class ScriptMode : IDisposable
 		}
 	}
 
-	private static bool ProcessJob(ClientHelper helper, HardwareJob job, IConsole console, out ProgramResult[] programResults)
+	private bool ProcessJob(HardwareJob job, IConsole console, out ProgramResult[] programResults)
 	{
 		programResults = new ProgramResult[0];
 		console.WriteLine("Job '{0}' successfully scheduled, resuming...", job.ID);
@@ -146,7 +123,7 @@ internal class ScriptMode : IDisposable
 			return false;
 		}
 		console.WriteLine("Waiting for job '{0}' to complete...", job.ID);
-		helper.WaitForJob(job, out var _);
+		Helper.WaitForJob(job, out var _);
 		job.Disconnect();
 		ShowResults(hardwareCommandResult, console);
 		if (!hardwareCommandResult.Success)
@@ -197,12 +174,11 @@ internal class ScriptMode : IDisposable
 		while (true)
 		{
 			string text = textReader.ReadLine();
-			if (text != null)
+			if (text == null)
 			{
-				ExecuteStatement(text);
-				continue;
+				break;
 			}
-			break;
+			ExecuteStatement(text);
 		}
 	}
 

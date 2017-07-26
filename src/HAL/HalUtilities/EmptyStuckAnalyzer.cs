@@ -68,7 +68,7 @@ internal class EmptyStuckAnalyzer
 			{
 				try
 				{
-					FileHelper.CreateBackup(path, BackupAction.Move);
+					service.CreateBackup(path, BackupAction.Move);
 				}
 				catch (Exception ex)
 				{
@@ -103,8 +103,7 @@ internal class EmptyStuckAnalyzer
 					{
 						type = StuckType.LookupFail;
 						num++;
-						TypeStat typeStat = list.Find((TypeStat each) => each.Type == type);
-						typeStat.Increment();
+						list.Find((TypeStat each) => each.Type == type).Increment();
 						if (type == StuckType.LookupFail)
 						{
 							int num3 = text3.IndexOf("item") + 5;
@@ -130,8 +129,7 @@ internal class EmptyStuckAnalyzer
 						continue;
 					}
 					num++;
-					TypeStat typeStat2 = list.Find((TypeStat each) => each.Type == type);
-					typeStat2.Increment();
+					list.Find((TypeStat each) => each.Type == type).Increment();
 					string s = text3.Substring(num5 + text.Length, 1);
 					int deck = int.Parse(s);
 					num5 = text3.IndexOf(text2);

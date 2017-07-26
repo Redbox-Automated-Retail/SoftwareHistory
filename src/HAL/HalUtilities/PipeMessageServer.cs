@@ -1,61 +1,40 @@
 using System;
-using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.IPC.Framework;
+using Redbox.HAL.IPC.Framework.Pipes;
 
 namespace HALUtilities;
 
-public sealed class PipeMessageServer
+internal sealed class PipeMessageServer : AbstractPipeSever
 {
-	private class F : IIPCMessage
+	private readonly IIPCMessageFactory Factory = new IPCMessageFactory();
+
+	protected override void OnStop()
 	{
-		public MessagePriority Priority { get; internal set; }
-
-		public MessageSeverity Severity { get; internal set; }
-
-		public string Message { get; internal set; }
-
-		public Guid UID { get; internal set; }
-
-		public DateTime Timestamp { get; internal set; }
-
-		public bool Write()
+		IIPCMessage msg = Factory.Create(MessageType.Quit, MessageSeverity.High, string.Empty);
+		ClientPipeChannel clientPipeChannel = new ClientPipeChannel(PipeName, "MessageServerQuit");
+		if (clientPipeChannel.Connect())
 		{
-			throw new NotImplementedException();
-		}
-
-		internal F()
-		{
-		}
-	}
-
-	private volatile bool IsAlive;
-
-	private readonly string Name;
-
-	public void Run()
-	{
-		IsAlive = true;
-		using NamedPipeServer namedPipeServer = NamedPipeServer.CreateServer(Name);
-		while (IsAlive)
-		{
-			BasePipeChannel channel = namedPipeServer.WaitForClientConnect();
-			if (channel != null)
+			Factory.Write(msg, clientPipeChannel);
+			IIPCMessage iIPCMessage = Factory.Read(clientPipeChannel);
+			if (iIPCMessage.Type != MessageType.Ack)
 			{
-				ThreadPool.QueueUserWorkItem(delegate
-				{
-					ProcessMessage(channel);
-				});
+				Console.WriteLine("Client: didn't get an ACK (received = {0})", iIPCMessage.Type.ToString());
 			}
 		}
 	}
 
-	internal PipeMessageServer(string name)
+	protected override void Process(BasePipeChannel channel)
 	{
-		Name = name;
+		IIPCMessage iIPCMessage = Factory.Read(channel);
+		LogHelper.Instance.Log("[PipeMessageServer] {0} Message received.", DateTime.Now);
+		LogHelper.Instance.Log(iIPCMessage.ToString());
+		IIPCMessage msg = Factory.CreateAck(iIPCMessage.UID);
+		Factory.Write(msg, channel);
+		channel.Dispose();
 	}
 
-	private void ProcessMessage(BasePipeChannel channel)
+	internal PipeMessageServer(string name)
+		: base(name)
 	{
 	}
 }

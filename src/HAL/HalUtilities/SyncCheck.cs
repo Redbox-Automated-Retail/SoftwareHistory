@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace HALUtilities;
 
@@ -94,7 +93,7 @@ internal class SyncCheck
 		{
 			try
 			{
-				FileHelper.CreateBackup(path, BackupAction.Move);
+				RuntimeService.CreateBackup(path, BackupAction.Move);
 			}
 			catch (Exception ex)
 			{
@@ -124,8 +123,7 @@ internal class SyncCheck
 						if (-1 != num)
 						{
 							int result = -1;
-							string s = text.Substring(num + text2.Length, 1);
-							int deck = int.Parse(s);
+							int deck = int.Parse(text.Substring(num + text2.Length, 1));
 							num = text.IndexOf(text3);
 							string text4 = text.Substring(num + text3.Length).TrimEnd();
 							if (!int.TryParse(text4, out result))
@@ -197,7 +195,7 @@ internal class SyncCheck
 		{
 			try
 			{
-				FileHelper.CreateBackup(path, BackupAction.Move);
+				RuntimeService.CreateBackup(path, BackupAction.Move);
 			}
 			catch (Exception ex)
 			{
@@ -227,8 +225,7 @@ internal class SyncCheck
 						if (-1 != num)
 						{
 							int result = -1;
-							string s = text.Substring(num + text2.Length, 1);
-							int deck = int.Parse(s);
+							int deck = int.Parse(text.Substring(num + text2.Length, 1));
 							num = text.IndexOf(text3);
 							string text4 = text.Substring(num + text3.Length).TrimEnd();
 							if (!int.TryParse(text4, out result))
@@ -258,12 +255,7 @@ internal class SyncCheck
 							}
 							string value = "data (barcode = ";
 							int num2 = text.IndexOf(">> Reponse packet");
-							if (-1 == num2)
-							{
-								continue;
-							}
-							int num3 = text.IndexOf(value);
-							if (num3 != -1)
+							if (-1 != num2 && text.IndexOf(value) != -1)
 							{
 								if (text.Contains("YES") || text.Contains("yes"))
 								{
@@ -331,7 +323,7 @@ internal class SyncCheck
 		{
 			try
 			{
-				FileHelper.CreateBackup(path, BackupAction.Move);
+				RuntimeService.CreateBackup(path, BackupAction.Move);
 			}
 			catch (Exception ex)
 			{

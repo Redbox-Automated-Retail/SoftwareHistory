@@ -7,7 +7,7 @@ using Redbox.HAL.Core;
 
 namespace HALUtilities;
 
-internal class VendTest
+internal sealed class VendTest : IDisposable
 {
 	private readonly AutoResetEvent Waiter = new AutoResetEvent(initialState: false);
 
@@ -17,21 +17,23 @@ internal class VendTest
 
 	private readonly int Iterations;
 
-	private readonly List<IInventoryLocation> m_locs = new List<IInventoryLocation>();
+	public void Dispose()
+	{
+		Helper.Dispose();
+	}
 
-	internal VendTest(int iter)
+	internal VendTest(int iter, HardwareService service)
 	{
 		Iterations = iter;
-		Helper = new ClientHelper();
-		Service = Helper.AutoConnect();
+		Helper = new ClientHelper(service);
+		Service = service;
 	}
 
 	internal void Execute(IConsole console, int? startAt)
 	{
 		if (startAt.HasValue && startAt.Value != -1)
 		{
-			RedboxTimer redboxTimer = new RedboxTimer("Vend Test", TimerFired);
-			redboxTimer.ScheduleAtNext(startAt.Value, 0);
+			new RedboxTimer("Vend Test", TimerFired).ScheduleAtNext(startAt.Value, 0);
 			Waiter.WaitOne();
 		}
 		console.WriteLine("Starting test at {0} on {1}", DateTime.Now.ToShortTimeString(), DateTime.Now.ToShortDateString());
@@ -39,11 +41,11 @@ internal class VendTest
 		for (int i = 0; i < Iterations; i++)
 		{
 			console.WriteLine("Starting iteration {0}", i);
-			GenerateList(console);
+			using RandomInventorySelector randomInventorySelector = new RandomInventorySelector(Service);
 			IInventoryLocation inventoryLocation = null;
 			do
 			{
-				inventoryLocation = SelectTargetLocation();
+				inventoryLocation = randomInventorySelector.Select();
 				if (inventoryLocation == null)
 				{
 					break;
@@ -78,35 +80,5 @@ internal class VendTest
 	private void TimerFired(object source, ElapsedEventArgs e)
 	{
 		Waiter.Set();
-	}
-
-	private void GenerateList(IConsole console)
-	{
-		using KioskInventory kioskInventory = new KioskInventory(Service);
-		if (kioskInventory.DeckInventory.Count == 0)
-		{
-			console.WriteLine("Unable to get inventory from service.");
-			Environment.Exit(-1);
-		}
-		foreach (IInventoryLocation item in kioskInventory.DeckInventory)
-		{
-			if (!(item.Matrix == "EMPTY"))
-			{
-				m_locs.Add(item);
-			}
-		}
-	}
-
-	private IInventoryLocation SelectTargetLocation()
-	{
-		if (0 >= m_locs.Count)
-		{
-			return null;
-		}
-		Random random = new Random(DateTime.Now.Millisecond);
-		int index = random.Next(0, m_locs.Count - 1);
-		IInventoryLocation result = m_locs[index];
-		m_locs.RemoveAt(index);
-		return result;
 	}
 }

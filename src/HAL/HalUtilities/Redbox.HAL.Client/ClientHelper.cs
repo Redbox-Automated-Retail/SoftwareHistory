@@ -2,21 +2,31 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Client;
 
-public class ClientHelper
+public sealed class ClientHelper : IDisposable
 {
 	public delegate void InitComplete();
 
-	private ManualResetEvent m_resetEvent = new ManualResetEvent(initialState: false);
+	private bool Disposed;
+
+	private readonly IClientOutputSink Sink;
+
+	private readonly ManualResetEvent m_resetEvent = new ManualResetEvent(initialState: false);
 
 	public HardwareService Service { get; private set; }
 
-	private IClientOutputSink Sink { get; set; }
+	public void Dispose()
+	{
+		if (!Disposed)
+		{
+			Disposed = true;
+			m_resetEvent.Close();
+		}
+	}
 
 	public bool BootstrapInitRunning()
 	{
@@ -25,8 +35,7 @@ public class ClientHelper
 			Sink.WriteMessage("The service is not configured.");
 			return false;
 		}
-		HardwareCommandResult initStatus = Service.GetInitStatus(out var status);
-		if (!initStatus.Success)
+		if (!Service.GetInitStatus(out var status).Success)
 		{
 			Sink.WriteMessage("Unable to determine init status.");
 			return false;
@@ -68,32 +77,6 @@ public class ClientHelper
 			throw new UriFormatException("The URI string is null or empty - please re-configure.");
 		}
 		return ConnectInner(ipc);
-	}
-
-	public HardwareService AutoConnect()
-	{
-		if (Service != null)
-		{
-			return Service;
-		}
-		Service = ConnectInner(Constants.HALIPCStrings.TcpServer);
-		if (Service != null)
-		{
-			LogHelper.Instance.Log("Autoconnect: found server running on {0}", Constants.HALIPCStrings.TcpServer);
-			return Service;
-		}
-		string text = FindLocalIP();
-		if (string.IsNullOrEmpty(text))
-		{
-			return Service = null;
-		}
-		string text2 = $"rcp://{text}:7001";
-		Service = ConnectInner(text2);
-		if (Service != null)
-		{
-			LogHelper.Instance.Log("Autoconnect: found server running on {0}", text2);
-		}
-		return Service;
 	}
 
 	public bool TestCommunication()
@@ -153,24 +136,28 @@ public class ClientHelper
 		{
 			return default(T);
 		}
-		string[] stackEntriesInner = GetStackEntriesInner(job, 1);
-		return (T)ConversionHelper.ChangeType(stackEntriesInner[0], typeof(T));
+		return (T)ConversionHelper.ChangeType(GetStackEntriesInner(job, 1)[0], typeof(T));
 	}
 
-	public ClientHelper(IClientOutputSink sink)
+	public ClientHelper(IClientOutputSink sink, HardwareService service)
 	{
-		Sink = ((sink == null) ? NullSink.Instance : sink);
-	}
-
-	public ClientHelper()
-	{
-		Sink = NullSink.Instance;
+		IClientOutputSink sink2;
+		if (sink != null)
+		{
+			sink2 = sink;
+		}
+		else
+		{
+			IClientOutputSink instance = NullSink.Instance;
+			sink2 = instance;
+		}
+		Sink = sink2;
+		Service = service;
 	}
 
 	public ClientHelper(HardwareService service)
+		: this(NullSink.Instance, service)
 	{
-		Sink = NullSink.Instance;
-		Service = service;
 	}
 
 	private bool WaitForInitInner(int pause)
@@ -187,11 +174,9 @@ public class ClientHelper
 
 	private HardwareService ConnectInner(string ipcUrl)
 	{
-		IPCProtocol iPCProtocol = null;
 		try
 		{
-			iPCProtocol = IPCProtocol.Parse(ipcUrl);
-			HardwareService hardwareService = new HardwareService(iPCProtocol);
+			HardwareService hardwareService = new HardwareService(IPCProtocol.Parse(ipcUrl));
 			return TestServiceConnection(hardwareService) ? hardwareService : null;
 		}
 		catch (UriFormatException)
@@ -216,8 +201,7 @@ public class ClientHelper
 
 	private string FindLocalIP()
 	{
-		IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-		IPAddress[] addressList = hostEntry.AddressList;
+		IPAddress[] addressList = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
 		foreach (IPAddress iPAddress in addressList)
 		{
 			if (iPAddress.AddressFamily == AddressFamily.InterNetwork)
@@ -235,12 +219,11 @@ public class ClientHelper
 		{
 			array[i] = string.Empty;
 		}
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (stack.Success && stack2.Count >= depth)
+		if (job.GetStack(out var stack).Success && stack.Count >= depth)
 		{
 			for (int j = 0; j < depth; j++)
 			{
-				array[j] = stack2.Pop();
+				array[j] = stack.Pop();
 			}
 		}
 		return array;

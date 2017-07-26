@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Timers;
 using Redbox.HAL.Client;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;
@@ -76,6 +77,7 @@ internal sealed class KioskTest : IDisposable
 		if (!Disposed)
 		{
 			Disposed = true;
+			Helper.Dispose();
 			if (m_instanceLock != null)
 			{
 				m_instanceLock.Dispose();
@@ -84,9 +86,9 @@ internal sealed class KioskTest : IDisposable
 		}
 	}
 
-	internal KioskTest(string[] args)
+	internal KioskTest(string[] args, HardwareService service)
 	{
-		if (args.Length > 0)
+		if (args.Length != 0)
 		{
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -104,8 +106,7 @@ internal sealed class KioskTest : IDisposable
 					if (!string.IsNullOrEmpty(optionVal))
 					{
 						string[] array = optionVal.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-						string[] array2 = array;
-						foreach (string text in array2)
+						foreach (string text in array)
 						{
 							if (!int.TryParse(text, out var result))
 							{
@@ -148,10 +149,11 @@ internal sealed class KioskTest : IDisposable
 				}
 			}
 		}
-		Helper = new ClientHelper();
-		Service = Helper.AutoConnect();
+		Service = service;
+		Helper = new ClientHelper(service);
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
 		m_instanceLock = new NamedLock(ProgramLock.ToString(), LockScope.Local);
-		string path = string.Format("kioskTest-{0}", FileHelper.GenerateUniqueFile(".log"));
+		string path = string.Format("kioskTest-{0}", service2.GenerateUniqueFile(".log"));
 		string path2 = Path.Combine("c:\\Program Files\\Redbox\\KioskLogs\\KioskTest", path);
 		Log = new StreamWriter(path2)
 		{
@@ -219,8 +221,7 @@ internal sealed class KioskTest : IDisposable
 		printAndLog("-------------------------------------");
 		DateTime dateTime = DateTime.Now.AddHours(RunTime);
 		printAndLog("Run until {0}", dateTime);
-		RedboxTimer redboxTimer = new RedboxTimer("KioskTest", OnTimerFired);
-		redboxTimer.FireOn(dateTime);
+		new RedboxTimer("KioskTest", OnTimerFired).FireOn(dateTime);
 		while (KeepRunningTest)
 		{
 			foreach (DeckConfig deck2 in Decks)
@@ -235,10 +236,11 @@ internal sealed class KioskTest : IDisposable
 			List<Location> list = new List<Location>();
 			foreach (DeckConfig deck3 in Decks)
 			{
-				Location location = new Location();
-				location.Deck = deck3.Deck;
-				location.Slot = 1;
-				Location item = location;
+				Location item = new Location
+				{
+					Deck = deck3.Deck,
+					Slot = 1
+				};
 				list.Add(item);
 			}
 			ScheduleAndBlockLoadBinJob(list);
@@ -251,11 +253,12 @@ internal sealed class KioskTest : IDisposable
 	private void RunOnDeck(DeckConfig deck, DateTime stopTime)
 	{
 		bool flag = false;
-		Location location = new Location();
-		location.Deck = deck.Deck;
-		location.Slot = 1;
-		Location location2 = location;
-		Location location3 = null;
+		Location location = new Location
+		{
+			Deck = deck.Deck,
+			Slot = 1
+		};
+		Location location2 = null;
 		for (int i = 1; i <= deck.Slots; i++)
 		{
 			if (!KeepRunningTest)
@@ -271,18 +274,17 @@ internal sealed class KioskTest : IDisposable
 				printAndLog("## Populating Location Information ##");
 				PopulateLocations();
 			}
-			Random random = new Random(DateTime.Now.Millisecond);
-			int index = random.Next(0, TestLocations.Count - 1);
-			location3 = TestLocations[index].Location;
+			int index = new Random(DateTime.Now.Millisecond).Next(0, TestLocations.Count - 1);
+			location2 = TestLocations[index].Location;
 			TestLocations.RemoveAt(index);
-			printAndLog("## Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {4} ##", location2.Deck, location2.Slot, location3.Deck, location3.Slot, flag);
-			if (!Schedule(location2, location3, flag))
+			printAndLog("## Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {4} ##", location.Deck, location.Slot, location2.Deck, location2.Slot, flag);
+			if (!Schedule(location, location2, flag))
 			{
 				printAndLog("Job failed to schedule properly");
 				Environment.Exit(-1);
 			}
 			Transfers++;
-			location2 = location3;
+			location = location2;
 		}
 		DeckConfig deckConfig = Decks.Find((DeckConfig each) => each.Deck == deck.Deck + 1);
 		if (deckConfig == null)
@@ -290,7 +292,7 @@ internal sealed class KioskTest : IDisposable
 			deckConfig = Decks.Find((DeckConfig each) => each.Deck == 1);
 		}
 		printAndLog("## Deck {0} iteration complete return disk to Deck = {1} Slot = 1 ##", deck.Deck, deckConfig.Deck);
-		Schedule(location2, new Location
+		Schedule(location, new Location
 		{
 			Deck = deckConfig.Deck,
 			Slot = 1
@@ -310,11 +312,10 @@ internal sealed class KioskTest : IDisposable
 
 	private bool ConfigureDecks()
 	{
-		HardwareCommandResult machineInfo = Service.GetMachineInfo(new HardwareJobSchedule
+		if (!Service.GetMachineInfo(new HardwareJobSchedule
 		{
 			Priority = HardwareJobPriority.High
-		}, out var job);
-		if (!machineInfo.Success)
+		}, out var job).Success)
 		{
 			return false;
 		}
@@ -333,13 +334,10 @@ internal sealed class KioskTest : IDisposable
 		ProgramResult[] array = results;
 		foreach (ProgramResult programResult in array)
 		{
-			switch (programResult.Code)
+			string code = programResult.Code;
+			if (!(code == "QlmInfo"))
 			{
-			case "QlmInfo":
-				qlmDeck = programResult.Deck;
-				break;
-			case "DeckInfo":
-				if (ConfiguredDecks.Count == 0 || ConfiguredDecks.Contains(programResult.Deck))
+				if (code == "DeckInfo" && (ConfiguredDecks.Count == 0 || ConfiguredDecks.Contains(programResult.Deck)))
 				{
 					Decks.Add(new DeckConfig
 					{
@@ -347,7 +345,10 @@ internal sealed class KioskTest : IDisposable
 						Slots = programResult.Slot
 					});
 				}
-				break;
+			}
+			else
+			{
+				qlmDeck = programResult.Deck;
 			}
 		}
 		if (qlmDeck != -1)
@@ -401,11 +402,10 @@ internal sealed class KioskTest : IDisposable
 		HardwareJob job = null;
 		try
 		{
-			HardwareCommandResult hardwareCommandResult = Service.LoadBin(locs, new HardwareJobSchedule
+			if (!Service.LoadBin(locs, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.High
-			}, out job);
-			if (!hardwareCommandResult.Success)
+			}, out job).Success)
 			{
 				printAndLog("!! Failed to create bin job !!");
 				return false;

@@ -1,4 +1,6 @@
 using System;
+using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Client;
 
@@ -12,7 +14,17 @@ public sealed class MachineConfiguration : JobExecutor
 
 	public bool DoorSensorsConfigured { get; private set; }
 
-	public bool HasQuickReturn { get; private set; }
+	public bool HasQuickReturn
+	{
+		get
+		{
+			throw new NotImplementedException("HasQuickReturn property deprecated.");
+		}
+	}
+
+	public AirExchangerStatus AirExchangerStatus { get; private set; }
+
+	public ExchangerFanStatus AirExchangerFanStatus { get; private set; }
 
 	public bool AirExchangerConfigured { get; private set; }
 
@@ -23,6 +35,8 @@ public sealed class MachineConfiguration : JobExecutor
 	public bool HasAuxRelayBoard { get; private set; }
 
 	public bool HasABEDevice { get; private set; }
+
+	public DeviceStatus QuickReturnStatus { get; private set; }
 
 	protected override string JobName => "kiosk-configuration-job";
 
@@ -52,9 +66,6 @@ public sealed class MachineConfiguration : JobExecutor
 			case "DoorSensors":
 				DoorSensorsConfigured = result.Message == "On";
 				break;
-			case "QuickReturn":
-				HasQuickReturn = result.Message == "Configured";
-				break;
 			case "DoorSensorStatus":
 				DoorSensorStatus = result.Message;
 				break;
@@ -66,6 +77,15 @@ public sealed class MachineConfiguration : JobExecutor
 				break;
 			case "AbeDeviceStatus":
 				HasABEDevice = result.Message.Equals("ATTACHED", StringComparison.CurrentCultureIgnoreCase);
+				break;
+			case "QuickReturnStatus":
+				QuickReturnStatus = Enum<DeviceStatus>.ParseIgnoringCase(result.Message, DeviceStatus.Unknown);
+				break;
+			case "AirExchangerStatus":
+				AirExchangerStatus = Enum<AirExchangerStatus>.ParseIgnoringCase(result.Message, AirExchangerStatus.NotConfigured);
+				break;
+			case "AirExchangerFanStatus":
+				AirExchangerFanStatus = Enum<ExchangerFanStatus>.ParseIgnoringCase(result.Message, ExchangerFanStatus.On);
 				break;
 			}
 		}
