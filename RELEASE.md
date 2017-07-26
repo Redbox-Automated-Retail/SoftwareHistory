@@ -1,17 +1,17 @@
-# Hawkeye (2016-10-28)
+# Rental bundles revision 54 (no code name)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2016-10-28
-- Store labels: kop-rental-bundles-Hawkeye
+- Date (first download in the snapshots): 2017-07-26
+- Store labels: none
 - Package revisions:
-  - `kop-rental-bundles` revision 47 (`40CF43D77B244B26E33D92F3FE19F6525E474B57`)
+  - `kop-rental-bundles` revision 54 (`947A9F5AE9E6D5E794AEB08625BE4FB4A9129E1E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `7D0CCBFF5F44E08E0BE22776DF3D775953637030` | exact |
-| `fm.bundle` |  |  | `4F13AF9A285666C6ECF2791AC9B5E2C9FC9BE47B` | exact |
-| `library-rental-common.bundle` |  |  | `F6EEE4EC526DD386EC71C54584DE1B0DF88D994A` | exact |
-| `ra-2.x.bundle` |  |  | `F136CBB3730DA7A519A7934CAC1116CAF7072937` | exact |
+| `cp.bundle` |  |  | `EAF2019B6306B0AC703DEF6DEED57CBB81BEE272` | exact |
+| `fm.bundle` |  |  | `4F13AF9A285666C6ECF2791AC9B5E2C9FC9BE47B` | stale (listed version F972C2A226… has no content) |
+| `library-rental-common.bundle` |  |  | `F6EEE4EC526DD386EC71C54584DE1B0DF88D994A` | stale (listed version 1B3C8C07A4… has no content) |
+| `ra-2.x.bundle` |  |  | `F136CBB3730DA7A519A7934CAC1116CAF7072937` | stale (listed version CD6C17D207… has no content) |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

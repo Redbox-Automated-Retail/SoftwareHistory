@@ -355,12 +355,7 @@ function newmessageboxmanager()
             create_icon_field( icon_format )
             create_button_bar( button_type )
             do_layout( button_type )
-        end,
-
-		-- just to support luaunit and faking click of button
-		testing_click = function( self, id )
-			do_callback( id )
-		end
+        end
 	}
 
     return t
