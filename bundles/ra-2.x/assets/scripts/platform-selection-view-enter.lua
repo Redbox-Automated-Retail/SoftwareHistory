@@ -41,10 +41,10 @@ kernel.registeractorhitnotify(
 	"ps3_button",
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,PS3" )
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "PS3")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		browse_filter_family_tracker:set_family_type( "PS3" )
+        kernel.set_session_value("BrowseState.BrowseTitleType", "PS3")
 		view_show_safe( "browse_view")
 	end
 )
@@ -52,10 +52,10 @@ kernel.registeractorhitnotify(
 	"ps4_button",
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,PS4" )
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "PS4")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		browse_filter_family_tracker:set_family_type( "PS4" )
+        kernel.set_session_value("BrowseState.BrowseTitleType", "PS4")
 		view_show_safe( "browse_view")
 	end
 )
@@ -63,10 +63,10 @@ kernel.registeractorhitnotify(
 	"wii_button",
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Wii" )
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		browse_filter_family_tracker:set_family_type( "Wii" )
+        kernel.set_session_value("BrowseState.BrowseTitleType", "Wii")
 		view_show_safe( "browse_view")
 	end
 )
@@ -74,10 +74,10 @@ kernel.registeractorhitnotify(
 	"wii_u_button",
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Wii U" )
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Wii U")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		browse_filter_family_tracker:set_family_type( "Wii U" )
+        kernel.set_session_value("BrowseState.BrowseTitleType", "Wii U")
 		view_show_safe( "browse_view")
 	end
 )
@@ -85,10 +85,10 @@ kernel.registeractorhitnotify(
 	"xbox_360_button",
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Xbox 360" )
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Xbox 360")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		browse_filter_family_tracker:set_family_type( "Xbox 360" )
+        kernel.set_session_value("BrowseState.BrowseTitleType", "Xbox 360")
 		view_show_safe( "browse_view")
 	end
 )
@@ -96,10 +96,10 @@ kernel.registeractorhitnotify(
 	"xbox_one_button",
 	function()
 		view_analytics_event( "filterChange", "browse-filter-family,Xbox One" )
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
         kernel.set_session_value("BrowseState.BrowseSelectedSort", "Xbox One")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		browse_filter_family_tracker:set_family_type( "Xbox One" )
+        kernel.set_session_value("BrowseState.BrowseTitleType", "Xbox One")
 		view_show_safe( "browse_view")
 	end
 )

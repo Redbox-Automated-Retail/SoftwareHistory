@@ -4,4 +4,4 @@
 -- All Rights Reserved
 --
 
-culture_idle_timer:resume()
+

@@ -398,9 +398,8 @@ local function add_reco_item( item )
 
 		-- Add the Item to the ShoppingCart
 		selected_product = item
-		item_added_from_view = kernel.peekview()
-		browse_selection_cart_action = "rental"
-		check_for_warning_popups( check_alert_table, selected_product, nil )
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
+		check_for_warning_popups( selected_product, false, nil, "rental" )
 
 		-- Refresh the Cart and Reco items
 		if  cart_items_pre_click ~= #ShoppingCart.items then

@@ -89,7 +89,6 @@
 				name="warning_back_button_arrow"
 				x="212"
 				y="600"
-				hitFlags="Enabled"
 				tag="back"
 				image="image_back-white-arrow-gray-background"
 				optionFlags="image" 

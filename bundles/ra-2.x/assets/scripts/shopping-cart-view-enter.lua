@@ -34,13 +34,9 @@ else
 end
 
 if DisplayModifiedShoppingCart == true then
-	local dvd_pricing_table = StoreManager.PricingManager:get_product_type_price( "movies", "dvd" )
-	local bluray_pricing_table = StoreManager.PricingManager:get_product_type_price( "movies", "blu-ray" )
-	local games_pricing_table = StoreManager.PricingManager:get_product_type_price( "games", "*" )
-    local passive_sale_note = string.gsub( strings.passive_sale_note, "%S%S%S", { ["{0}"] = dvd_pricing_table.non_return_days + 1, ["{1}"] = bluray_pricing_table.non_return_days + 1, ["{2}"] = games_pricing_table.non_return_days + 1 } )
-    kernel.setactortext( "passive_sale_note", passive_sale_note )
+    kernel.setactortext( "passive_sale_note", strings.passive_sale_note )
 	if kernel.ttsenabled() == true then
-		kernel.setmacro( "TTS:passive_sale_note", passive_sale_note )
+		kernel.setmacro( "TTS:passive_sale_note", strings.passive_sale_note )
 	end
 	kernel.showactor( "passive_sale_note" )
 	
@@ -97,10 +93,10 @@ function show_offer_or_proceed_checkout()
 						message_view_manager:hide()
                         kernel.set_session_value( "BrowseState.BrowseSelectedSort", "Newest" )
                         kernel.set_session_value( "BrowseState.BrowseFilterMode", "All" )
-		                browse_filter_genre_selected = nil
-                        browse_filter_family_tracker:set_family_type( "ALL" )
-		                browse_filter_family_tracker.selected_family = "Movies"
-		                set_number = 1
+                        kernel.set_session_value("BrowseState.BrowseGenre", nil)
+                        kernel.set_session_value("BrowseState.BrowseTitleType", "All")
+		                kernel.set_session_value("BrowseState.BrowseTitleFamily", "Movies")
+                        kernel.set_session_value("BrowseState.PageNumber", 1)
                         kernel.executescript( "browse_products" )
 					end
 				)
@@ -145,10 +141,10 @@ function show_offer_or_proceed_checkout()
 						message_view_manager:hide()
                         kernel.set_session_value( "BrowseState.BrowseSelectedSort", "Newest" )
                         kernel.set_session_value( "BrowseState.BrowseFilterMode", "All" )
-		                browse_filter_genre_selected = nil
-                        browse_filter_family_tracker:set_family_type( "ALL" )
-		                browse_filter_family_tracker.selected_family = "Movies"
-		                set_number = 1
+                        kernel.set_session_value("BrowseState.BrowseGenre", nil)
+                        kernel.set_session_value("BrowseState.BrowseTitleType", "All")
+                        kernel.set_session_value("BrowseState.BrowseTitleFamily", "Movies")
+                        kernel.set_session_value("BrowseState.PageNumber", 1)
                         kernel.executescript( "browse_products" )
 					end
 				)
@@ -210,13 +206,12 @@ kernel.registeractorhitnotify(
 )
 
 local function setcategory(selectedfamily,genre)
-    	browse_filter_family_tracker.selected_family = selectedfamily
-		browse_filter_family_tracker:set_family_type( "ALL" )
-		browse_filter_genre_selected = genre
-		browse_filter_alpha_selected = nil
+        kernel.set_session_value("BrowseState.BrowseTitleFamily", selectedfamily)
+        kernel.set_session_value("BrowseState.BrowseTitleType", "All")
+        kernel.set_session_value("BrowseState.BrowseGenre", genre)
 		kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
         kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-		set_number = 1
+        kernel.set_session_value("BrowseState.PageNumber", 1)
 		kernel.executescript( "browse_products" )
 end
 
@@ -237,6 +232,6 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"back_button",
 	function()
-		setcategory( browse_filter_family_tracker.selected_family, browse_filter_genre_selected )
+		setcategory( kernel.get_session_value("BrowseState.BrowseTitleFamily"), kernel.get_session_value("BrowseState.BrowseGenre") )
 	end
 )

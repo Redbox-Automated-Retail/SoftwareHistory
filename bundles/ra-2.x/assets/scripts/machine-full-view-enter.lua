@@ -35,6 +35,6 @@ kernel.registeractorhitnotify(
 			ShoppingCart:start_new()
 			ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
 		end
-		view_analytics_start( kernel.get_start_over_view_name(), "BrowseVend" )
+        kernel.view_analytics_start("BrowseVend")
 		kernel.executescript( "browse_products" )
 	end )

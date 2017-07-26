@@ -5,4 +5,3 @@
 --
 
 idle_timer:suspend()
-culture_idle_timer:suspend()

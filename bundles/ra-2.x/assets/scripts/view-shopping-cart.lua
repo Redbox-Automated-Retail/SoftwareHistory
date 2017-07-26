@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-browse_is_cart_full_open = false
+kernel.set_session_value("BrowseState.IsShoppingCartFullMessagesOpen", false)
 
 if free_in_cart_template_show_message() or rtwo_in_cart_template_show_message() then
     view_show_safe( "in_cart_offer_message_view" )

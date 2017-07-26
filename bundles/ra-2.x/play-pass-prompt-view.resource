@@ -1,57 +1,45 @@
 <?xml version="1.0"?>
 <resource type="view">
-	<property name="name" value="play_pass_opt_in_view" />
+	<property name="name" value="play_pass_prompt_view" />
 	<property name="version" value="2.0,Core,A" />
 	<property name="active_flag" value="active" />
 	<aspect name="content">
 		<scene
-			name="Default"
 			width="1024"
 			height="768"
-			backgroundColor="transparent"
+			backgroundImage="image_play_pass_prompt"
 			stylesheet="style_sheet_common"
-			onEnter="play_pass_opt_in_view_enter"
-			onLeave="play_pass_opt_in_view_leave">
+			onEnter="play_pass_prompt_view_enter"
+			onLeave="play_pass_prompt_view_leave">
       
 			<actor
-				name="background"
-				x="0"
-				y="0"
-				width="1024"
-				height="768"
-        image="image_play_pass_prompt"
-				optionFlags="Image" />
-      
-			<actor
-				name="prompt_message"
+				name="message"
 				x="509"
 				y="182"
-				font="font_akzidenz_bold_30"
+				font="font_akzidenz_bold_28"
 				foregroundColor="217,34,49"
 				optionFlags="Text" />
-
+      
       <actor
-				name="confirm_message"
-				x="173"
-				y="190"
-        width="680"
-        height="100"
-				font="font_akzidenz_bold_large"
-        horizontalAlignment="center"
-				foregroundColor="177,35,39"
-        optionFlags="Text" />
-
-      <actor
-				name="email_message"
-				x="173"
-				y="330"
-        width="680"
-        height="100"
-				font="font_akzidenz_18_bold"
-        horizontalAlignment="center"
-				foregroundColor="95,95,95"
+				name="disclaimer_message"
+				x="509"
+				y="425"
+        width="460"
+        height="180"
+				font="font_akzidenz_regular_smaller_13"
+				foregroundColor="black"
 				optionFlags="Text" />
-
+      
+      <actor
+				name="disclaimer_button"
+				x="766"
+				y="529"
+				width="90"
+				height="30"
+				font="font_akzidenz_bold_smaller"
+				cornerSize="30,30"
+				style="gray_button_style" />
+      
       <actor
 				name="bottom"
 				x="0"

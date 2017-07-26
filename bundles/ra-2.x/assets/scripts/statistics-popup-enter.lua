@@ -102,7 +102,6 @@ end
 
 
 idle_timer:suspend()
-culture_idle_timer:suspend()
 local product_type = ProductTypes[statistics_popup_view_product.product_type_id]
 local product_family = ProductFamilies[product_type.product_family_id]
 

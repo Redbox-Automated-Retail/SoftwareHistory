@@ -56,7 +56,7 @@ end
 
 kernel.keyboard_show(
         emailPromo, 
-        ABE_ON, 
+        kernel.get_application_state_value("IsABEOn"),
         kernel.getculture() ~= "en-US", 
         current_keyboard_manager.cancel_text,
         current_keyboard_manager.validate_event,

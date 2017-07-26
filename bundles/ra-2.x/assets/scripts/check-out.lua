@@ -18,7 +18,7 @@ swipe_view_next_func = function()
 	ShoppingCart:add_multi_disc_discs()
 	ShoppingCart:set_multi_disc_flags()
 	ShoppingCart:prepos_vend()
-	if ShoppingCart:has_items() then
+	if #ShoppingCart.items > 0 then
 		if ShoppingCart:is_gift_card() == true then
 			if GiftCardsEnabled == true then
 				if credit_button_hit == true then
@@ -151,7 +151,7 @@ end
 
 marketing_opt_in_flow = function( optin_status ) 
     if ShoppingCart.play_pass_prompt == true then
-        view_show_safe( "play_pass_opt_in_view" )
+        view_show_safe( "play_pass_prompt_view" )
     else
         kernel.log("Entering marketing_opt_in_flow with status= "..tostring(optin_status) .. " and MarketingOptInEnabled: " .. tostring(MarketingOptInEnabled) )
 
@@ -183,28 +183,18 @@ function process_authorize_result( result )
     then
 		result.success = true
 		ShoppingCart:set_cart_type( "Offline" )
-		if EnforceShoppingCartItemLimit then
-			if EnableQueueBasedRentalLimit then
-				if ShoppingCart:get_rental_game_count() + kernel.queuependingrentalcount( "Games" ) > MaximumOfflineGameRentalLimit then
-					result.success = false
-					result.properties.response = "OfflineGameLimitExceeded"
-				elseif ShoppingCart:get_rental_count() + kernel.queuependingrentalcount() > MaximumShoppingCartItems then
-					result.success = false
-					result.properties.response = "OfflineRentalLimitExceeded"
-				end
-			else
-				if ShoppingCart:get_rental_game_count() > MaximumOfflineGameRentalLimit then
-					result.success = false
-					result.properties.response = "OfflineGameLimitExceeded"
-				elseif ShoppingCart:get_rental_count() > MaximumShoppingCartItems then
-					result.success = false
-					result.properties.response = "OfflineRentalLimitExceeded"
-				end
-			end
-		end
-		if  EnableOfflineBadCardList
-		and result.success
-		and not result.properties.stand_alone then
+        local pending_counts = kernel.queuependingcounts()
+        if pending_counts.game_rental_count + ShoppingCart:get_count( "Games", "rental" ) > OfflineGameRentalLimit then
+			result.success = false
+			result.properties.response = "OfflineGameRentalLimitExceeded"
+        elseif pending_counts.game_purchase_count + ShoppingCart:get_count( "Games", "purchase" ) > OfflineGamePurchaseLimit then
+			result.success = false
+			result.properties.response = "OfflineGamePurchaseLimitExceeded"
+        elseif pending_counts.total_count + #ShoppingCart.items > OfflineItemsLimit then
+			result.success = false
+			result.properties.response = "OfflineItemsLimitExceeded"
+        end
+		if  EnableOfflineBadCardList and result.success and not result.properties.stand_alone then
 			if BadCardList:is_current_account_bad() then
 				result.success = false
 				result.properties.response = "Error"
@@ -244,12 +234,17 @@ function process_authorize_result( result )
 			keyboard_manager:hide( true )
 			kernel.analyticsaddelement( "session", "hasCheckout", "True", ShoppingCart.session_id )
 			keyboard_manager:stop_idle_timer()
-
-			-- If user has a profile and email - continue the vend process
+			
+            -- If user has a profile and email - continue the vend process
 			if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
 				ShoppingCart.email = result.properties.email
 				-- show the email and change data screen
 				view_show_safe( "email_view" )
+                local ad = kernel.marketing_ad_get_screen_ad( "EmailNotification", true )
+                if ad ~= nil and ad.visible == true then
+                    kernel.showactor( "ad" )
+                    kernel.setactorimage( "ad", ad.image_name )
+                end
 				set_email_view_text( result.properties.email )
 			else
 				marketing_opt_in_flow( ShoppingCart.marketing_opt_in )
@@ -329,7 +324,6 @@ function process_authorize_result( result )
 					if keyboard_manager.cancel_event ~= nil then
 						keyboard_manager:raise_cancel_event()
 					else
-						ABE_ON = false
 						view_unwindtobottom_safe( "check_out::keyboard_manager:idle_timer (on_expire:cancel_event = nil)" )
 					end
 				end,
@@ -434,24 +428,27 @@ function process_authorize_result( result )
 			message_view_manager:hide_first_button()
 			message_view_manager:show_second_button( strings.continue_button, auth_retry )
 			message_view_manager:start_timer( auth_retry )
-
-			if result.properties.response == "OfflineGameLimitExceeded" then
-				if kernel.getculture() == "es-MX" then
-					message_view_manager:set_message_header( strings.offline_game_limit_exceeded_message_header )
-				else
-					message_view_manager:set_title( strings.offline_game_limit_exceeded_message_header )
-				end
-				view_analytics_event( "context", "gameLimitExceededOffline" )
-				message_view_manager:set_message( strings.offline_game_limit_exceeded_message )
-			elseif result.properties.response == "OfflineRentalLimitExceeded" then
-				if kernel.getculture() == "es-MX" then
-					message_view_manager:set_message_header( strings.offline_rental_limit_exceeded_message_header )
-				else
-					message_view_manager:set_title( strings.offline_rental_limit_exceeded_message_header )
-				end
-				view_analytics_event( "context", "rentalLimitExceededOffline" )
-				message_view_manager:set_message( strings.offline_rental_limit_exceeded_message )
-			elseif result.properties.response == "GameLimitExceeded" then
+			if result.properties.response == "OfflineGameRentalLimitExceeded" then
+				view_analytics_event( "context", "offlineGameRentalLimitExceeded" )
+                message_view_manager:set_message_header( strings.offline_game_rental_limit_exceeded_message_header )
+                local game_or_games = strings.offline_game_limit_exceeded_message_game
+                if OfflineGameRentalLimit > 1 then
+                    game_or_games = strings.offline_game_limit_exceeded_message_games
+                end
+                message_view_manager:set_message( string.gsub( strings.offline_game_rental_limit_exceeded_message, "%S%S%S", { ["{0}"] = OfflineItemsLimit, ["{1}"] = OfflineGameRentalLimit, ["{2}"] = game_or_games } ) )
+			elseif result.properties.response == "OfflineGamePurchaseLimitExceeded" then
+				view_analytics_event( "context", "offlineGamePurchaseLimitExceeded" )
+                message_view_manager:set_message_header( strings.offline_game_purchase_limit_exceeded_message_header )
+                local game_or_games = strings.offline_game_limit_exceeded_message_game
+                if OfflineGamePurchaseLimit > 1 then
+                    game_or_games = strings.offline_game_limit_exceeded_message_games
+                end
+                message_view_manager:set_message( string.gsub( strings.offline_game_purchase_limit_exceeded_message, "%S%S%S", { ["{0}"] = OfflineItemsLimit, ["{1}"] = OfflineGamePurchaseLimit, ["{2}"] = game_or_games } ) )
+			elseif result.properties.response == "OfflineItemsLimitExceeded" then
+				view_analytics_event( "context", "offlineItemsLimitExceeded" )
+                message_view_manager:set_message_header( strings.offline_items_limit_exceeded_message_header )
+                message_view_manager:set_message( string.gsub( strings.offline_items_limit_exceeded_message, "%S%S%S", { ["{0}"] = OfflineItemsLimit } ) )
+            elseif result.properties.response == "GameLimitExceeded" then
 				if kernel.getculture() == "es-MX" then
 					message_view_manager:set_message_header( strings.game_limit_exceeded_message_header )
 				else
@@ -789,6 +786,13 @@ key_pad_next_getcustomercredits_func = function()
 		end
 	)
 end
+
+-- setup the WPF swipe view
+local swipe_view_type = "RegularCheckOut"
+if (credit_button_hit) then
+    swipe_view_type = "Credits"
+end
+kernel.set_swipe_view_parameters(swipe_view_cancel_func, swipe_view_next_func, swipe_view_type)
 
 view_show_safe( "swipe_view" )
 view_analytics_event( "context", "checkout" )

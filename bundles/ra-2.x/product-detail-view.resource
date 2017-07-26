@@ -21,8 +21,17 @@
 				image="product_detail_starburst_background"
 				optionFlags="Image"
 				stylesheet="style_sheet_common" />
-
-			<actor
+      
+      <actor
+				name="ad"
+				x="148"
+				y="25"
+				width="728"
+				height="90"
+        visible="false"
+				optionFlags="Image" />
+      
+      <actor
 				name="left_arrow"
 				x="0"
 				y="150"
@@ -30,43 +39,7 @@
 				hitFlags="Enabled"
 				image="image_left_navigation_arrow"
 				optionFlags="Image" />
-
-			<actor
-				name="selected_product_background1"
-				x="71"
-				y="57"
-				width="414"
-				height="574"
-				hitFlags="None"
-				cornerSize="7,7"
-				strokeWeight="1.0"
-				backgroundColor="187,187,187"
-				optionFlags="Background, BackgroundGradient" />
-
-			<actor
-				name="selected_product_background2"
-				x="72"
-				y="58"
-				width="412"
-				height="572"
-				hitFlags="None"
-				cornerSize="7,7"
-				strokeWeight="1.0"
-				backgroundColor="176,176,176"
-				optionFlags="Background, BackgroundGradient" /> 
-
-			<actor
-				name="selected_product_background3"
-				x="73"
-				y="59"
-				width="410"
-				height="570"
-				hitFlags="None"
-				cornerSize="6,6"
-				strokeWeight="1.0"
-				backgroundColor="99,99,99"
-				optionFlags="Background, BackgroundGradient" />
-
+      
 			<actor
 				name="selected_product_image"
 				x="74"
@@ -90,21 +63,7 @@
 				horizontalAlignment="center"
 				visible="false"
 				optionFlags="Image, Text, TextShadow" />
-
-			<!--actor
-				name="banner"
-				x="74"
-				y="580"
-				width="410"
-				height="50"
-				font="font_akzidenz_bold_smaller"
-				foregroundColor="white"
-				verticalAlignment="center"
-				horizontalAlignment="center"
-				visible="false"
-				text="${ProductDetail:ProductType}"
-				optionFlags="Image, Text" /-->
-
+      
 			<actor
 				name="coming_soon_violator"
 				x="74"

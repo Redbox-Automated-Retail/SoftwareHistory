@@ -54,7 +54,8 @@
 			<column name="email_marketing_message">Redbox valora su privacidad y nunca vendería su dirección de correo electrónico. Se lo prometemos. Este correo es separado a lo de sus notificaciones de los títulos de próxima, y no se afectará.</column>
 			<column name="email_cancel_message">NO GRACIAS</column>
 			<column name="coming_soon_email_optin_email_prompt_message">Ingrese el correo a lo cual quiere recibir notificaciones. Este correo es separado a lo de sus notificaciones de los títulos de próxima, y no se afectará.</column>
-			<column name="coming_soon_email_optin_email_marketing_message">Redbox valora su privacidad y nunca vendería su dirección de correo electrónico. Se lo prometemos.</column>
+      <column name="oops">Oops!</column>
+      <column name="coming_soon_email_optin_email_marketing_message">Redbox valora su privacidad y nunca vendería su dirección de correo electrónico. Se lo prometemos.</column>
 
       <column name="disc_return_message">Por favor introduczca el disco.</column>
       <column name="inventory_full_message">En este momento el kiosko no puede&#10;aceptar devoluciones.&#10;&#10;Por favor, llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
@@ -73,13 +74,16 @@
 			<column name="authorization_failure_message">Su tarjeta no pudo ser autorizada. Por favor intente de nuevo.</column>
 			<column name="sell_thru_new_offline_denied">Lo sentimos, fue un error con los artículos comprados de su carrito.  Por favor, saque los artículos para continuar.</column>
 
+      <column name="offline_game_rental_limit_exceeded_message_header">¡Has llegado al límite!</column>
+      <column name="offline_game_rental_limit_exceeded_message">Puedes tener hasta {0} discos, y sólo {1} {2}.&#10;&#10;Por favor retira los discos de tu carrito para continuar.</column>
+      <column name="offline_game_purchase_limit_exceeded_message_header">¡Has llegado al límite!</column>
+      <column name="offline_game_purchase_limit_exceeded_message">Puedes tener hasta {0} discos, y sólo {1} {2}.&#10;&#10;Por favor retira los discos de tu carrito para continuar.</column>
+      <column name="offline_game_limit_exceeded_message_game">puede ser un juego</column>
+      <column name="offline_game_limit_exceeded_message_games">pueden ser juegos</column>
+      <column name="offline_items_limit_exceeded_message_header">¡Has llegado al límite!</column>
+      <column name="offline_items_limit_exceeded_message">Puedes tener hasta {0} discos.&#10;&#10;Por favor retira los discos de tu carrito para continuar.</column>
 
-			<column name="offline_game_limit_exceeded_message_header">Sobrepasó el límite</column>
-			<column name="offline_game_limit_exceeded_message">Se permite alquilar 3 artículos al máximo, lo cual se incluye 1 juego.&#10;&#10;Por favor saque artículos del carrito para continuar.</column>
-			<column name="offline_rental_limit_exceeded_message_header">Sobrepasó el límite</column>
-			<column name="offline_rental_limit_exceeded_message">Se permite alquilar 3 artículos al máximo, lo cual se incluye 1 juego.&#10;&#10;Por favor saque artículos del carrito para continuar.</column>
-
-			<column name="game_limit_exceeded_message_header">Sobrepasó el límite</column>
+      <column name="game_limit_exceeded_message_header">Sobrepasó el límite</column>
 			<column name="game_limit_exceeded_message">Lo sentimos, hay un límite de de 3 películas y 1 juego al máximo con una tarjeta usada la primera vez con Redbox.&#10;&#10;Se permite 5 películas y 2 juegos al máximo con tarjetas previamente usada con Redbox.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
 			<column name="rental_limit_exceeded_message_header">Sobrepasó el límite</column>
 			<column name="rental_limit_exceeded_message">Lo sentimos, hay un límite de 3 películas y 1 juego al máximo con una tarjeta usada la primera vez con Redbox.&#10;&#10;Se permite 5 películas y 2 juegos al máximo con tarjetas previamente usada con Redbox.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
@@ -94,10 +98,15 @@
 			<column name="sold_out_message">Lo sentimos, en este momento no se vende títulos en este kiosko, pero está en marcha. Chequealo en su próxima visita.</column>
 			<column name="maintenance_message">El kiosko no está disponible.  Por favor regrese o intente en otro kiosko.</column>
 
+      <column name="movie_button_rent_label">ALQUILAR</column>
       <column name="games_button_rent_label">ALQUILAR</column>
-      <column name="games_button_rent_and_buy_label">ALQUILAR &amp;</column>
-      <column name="games_button_rent_and_buy_label_2">COMPRAR</column>
-			<column name="yes_button">SÍ</column>
+      <column name="games_button_rent_and_buy_label">ALQUILAR</column>
+      <column name="games_button_games_label">JUEGOS</column>
+      <column name="return_button_label">DEVOLVER</column>
+      <column name="toggle_language_button_label">ENGLISH</column>
+      <column name="carousel_add_button_label">iAlquilelo Ahora!</column>
+
+      <column name="yes_button">SÍ</column>
 			<column name="back_button">ATR&#193;S</column>
 			<column name="okay_button">OK</column>
 			<column name="continue_button">CONTINUAR</column>
@@ -117,6 +126,7 @@
 			<column name="faq_title">FAQ</column>
 			<column name="terms_of_use_title">Términos</column>
 			<column name="privacy_policy_title">Privacidad</column>
+      <column name="play_pass_title">Play Pass</column>
 
 			<column name="postal_code_tag">ENTRAR CÓDIGO POSTAL</column>
 			<column name="reservation_error_message">Redbox no se ajustó su tarjeta con &#10;una reservación.&#10;&#10;¿Recuerda si usó otra tarjeta?&#10;&#10;Si continua con problemas llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
@@ -316,14 +326,19 @@
 
 			<column name="abe_mode_text">             Acceso para discapacitadas.</column>
 			<column name="abe_mode_description">Todas las siguientes pantallas se modificaron para cumplir con los requisitos de la ley de acceso para personas discapacitadas. Para proseguir utilice los botones de navegación a continuación.&#10;&#10;Para comprar boletos de eventos con acceso para personas discapacitadas, contáctese con nuestro equipo de atención al cliente llamando al 1.866.REDBOX3 (1.866.733.2693) o en redbox.com/help.</column>
+      <column name="ada_purchase_price_message">COMPRE {0} {1}{2}</column>
+      <column name="ada_turned_on_label_text">Las pantallas se modificaron para discapacitadas.&#10;Sigue con los botones de navegaci&#243;n.</column>
 
-			<column name="start_view_title">Los mejores</column>
+
+      <column name="start_view_title">Los mejores</column>
 			<column name="help_page_counter">{0} DE {1}</column>
 			<column name="faq_button">FAQ Alquiler</column>
-			<column name="terms_button">T&#233;rminos Alquiler</column>
+      <column name="transaction_terms_button">Condiciones de Transacción </column>
 			<column name="terms_redbox_card_button">T&#233;rminos Tarjeta</column>
 			<column name="privacy_button">Privacidad</column>
 			<column name="play_pass_button">Play Pass</column>
+      <column name="help_updated_button">Actualizado</column>
+      <column name="close_button">Cerrar</column>
 			<column name="contact_redbox_label">&#191;Necesita ayuda? 1.866.REDBOX3 (1.866.733.2693)</column>
           
 			<column name="rop_auth_fail_header">¡Lo sentimos!</column>
@@ -369,14 +384,54 @@
       <column name="tsp_invalid_header">Código promocional no válido.</column>
       <column name="tsp_invalid_message">Lo sentimos. El código promocional usado no es aplicable al título(s) que se encuentra en su carrito.&#10;&#10;Por favor, sírvase añadir un título válido a su carrito para poder utilizar este código promocional.</column>
 
-      <column name="passive_sale_note">*La tarifa de alquiler diario indicada no incluye impuestos. Para incurrir en una sola tarifa de alquiler, debe devolver el art&#237;culo a las 9:00 p.m. del d&#237;a siguiente en la zona horaria en que realice la devoluci&#243;n. Por cada d&#237;a adicional que no devuelva el art&#237;culo a las 9:00 p.m., hora local, su alquiler seguir&#225; vigente y se le cargar&#225; una tarifa de alquiler adicional diaria, m&#225;s impuestos. Si mantiene en su poder un art&#237;culo m&#225;s all&#225; del periodo m&#225;ximo de alquiler permitido, ese art&#237;culo pasar&#225; a ser de su propiedad y Redbox le cobrar&#225; entonces el cargo m&#225;ximo por dicho art&#237;culo. Ver las reglas completos por T&#233;rminos. Periodo m&#225;ximo: DVD {0} d&#237;as, Blu-ray&#174; {1} d&#237;as, Juegos {2} d&#237;as.</column>
+      <column name="passive_sale_note">*La tarifa de alquiler diario indicada no incluye impuestos. Para incurrir en una sola tarifa de alquiler, debe devolver el art&#237;culo a las 9:00 p.m. del d&#237;a siguiente en la zona horaria en que realice la devoluci&#243;n. Por cada d&#237;a adicional que no devuelva el art&#237;culo a las 9:00 p.m., hora local, su alquiler seguir&#225; vigente y se le cargar&#225; una tarifa de alquiler adicional diaria, m&#225;s impuestos. Si mantiene en su poder un art&#237;culo m&#225;s all&#225; del periodo m&#225;ximo de alquiler permitido, ese art&#237;culo pasar&#225; a ser de su propiedad y Redbox le cobrar&#225; entonces el cargo m&#225;ximo por dicho art&#237;culo. Ver las reglas completos por T&#233;rminos.</column>
       
       <column name="zip_code_auth_text">Al hacer uso A continuación, usted está de acuerdo a un período de retención de autorización de hasta {0} días por artículo en esta tarjeta. Sólo se le cobrará por el número real de días de alquiler más los impuestos aplicables para el cual mantiene sus artículos.</column>
       
-      <column name="play_pass_prompt_message">GANA HASTA {0} PUNTOS&#10;POR ESTE ALQUILER</column>
+      <column name="play_pass_prompt_message">GANA HASTA {0} PUNTOS*&#10;POR ESTE ALQUILER</column>
+      <column name="play_pass_prompt_disclaimer_message">*No se emitirán puntos si estás alquilando con un crédito o con un código promocional. Una vez ganado, el crédito para una noche de cine gratis se depositará en tu cuenta, y caducará 60 días luego de haber sido emitido. Se requiere tarjeta de crédito o débito para utilizar el crédito en tu cuenta. Al hacer clic en "Hacerse Miembro", estás aceptando todos los términos establecidos en el acuerdo, disponibles aquí y en www.redbox.com/redboxplaypass.</column>
+      <column name="play_pass_terms">Términos</column>
       <column name="play_pass_join_now">ÚNETE AHORA</column>
-      <column name="play_pass_confirm_message">¡Bienvenido a Redbox Play Pass!&#10;Usted acaba de ganar {0} puntos.</column>
-      <column name="play_pass_email_message">Un correo electrónico ha sido enviado a {0}&#10;con instrucciones sobre cómo canjear el alquiler gratuito.</column>
+      <column name="play_pass_confirm_message">¡Bienvenido a Redbox Play Pass!&#10;Usted acaba de ganar {0} puntos*.</column>
+      <column name="play_pass_email_message">Un correo electrónico ha sido enviado a&#10;{0}&#10;con instrucciones sobre cómo canjear el noche de película.</column>
+      <column name="play_pass_confirm_disclaimer_message">*No se emitirán puntos si alquilaste con un crédito o con un código promocional. Los puntos pueden tardar hasta 24 horas en aparecer en tu cuenta. Al hacer clic en "Hacerse Miembro", estás aceptando todos los términos establecidos en el acuerdo, disponibles aquí y en www.redbox.com/redboxplaypass.</column>
+
+      <column name="reservation_swipe_title">Deslice y recoge&#10;su reservación&#10;hecho en línea.</column>
+      <column name="reservation_swipe_message">Deslice en cualquier dirección, no&#10;le importa si es por arriba o abajo.</column>
+      <column name="regular_checkout_swipe_title">¿Listo?&#10;¡Deslice!</column>
+      <column name="regular_checkout_swipe_message">Deslice en cualquier dirección, no&#10;le importa si es por arriba o abajo.</column>
+      <column name="credits_swipe_title">Enseñame&#10;mis créditos.</column>
+      <column name="credits_swipe_message">Paga con créditos por deslizar la tarjeta asociada&#10;a su cuenta en línea.&#10;&#10;Deslice en cualquier dirección, no le importa si es&#10;por arriba o abajo.</column>
+      <column name="vending_disc_please_wait_title">SU DVD&#10;ESTA EN&#10;CAMINO</column>
+      <column name="vending_disc_please_wait_message">REDBOX LE DA LAS GRACIAS.</column>
+      <column name="vending_disc_rentals_on_their_way_title">Espere&#10;mientras&#10;recoge sus&#10;títulos.</column>
+      <column name="vending_disc_rentals_on_their_way_charged_once_title">Espere&#10;mientras&#10;recoge sus&#10;títulos.</column>
+      <column name="vending_disc_rentals_on_their_way_charged_once_message">Se aplicará un solo cargo a tu tarjeta.</column>
+
+      <column name="start_over_button">P&#225;gina Principal</column>
+      <column name="newest_button">&#218;ltimos</column>
+      <column name="abc_button">A-Z</column>
+      <column name="blu_ray_button">Blu-ray</column>
+      <column name="for_sale_button">Se Vende</column>
+      <column name="coming_soon_button">Pr&#243;ximamente</column>
+
+      <column name="top_20_filter_button">Los Éxitos 20</column>
+      <column name="action_filter_button">Acción</column>
+      <column name="drama_filter_button">Drama</column>
+      <column name="horror_filter_button">Terror</column>
+      <column name="comedy_filter_button">Comedia</column>
+      <column name="family_filter_button">Familia</column>
+
+      <column name="xbox_360_button">Xbox 360</column>
+      <column name="xbox_one_button">Xbox One</column>
+      <column name="ps3_button">PS3</column>
+      <column name="ps4_button">PS4</column>
+      <column name="wii_button">Wii</column>
+      <column name="wii_u_button">Wii U</column>
+
+      <column name="buy_movies_or_games_line1">PELÍCULAS</column>
+      <column name="buy_movies_or_games_line1_games">Y JUEGOS</column>
+      <column name="buy_movies_or_games_line2">EN VENTA</column>
     </row>
   </aspect>
 </resource>

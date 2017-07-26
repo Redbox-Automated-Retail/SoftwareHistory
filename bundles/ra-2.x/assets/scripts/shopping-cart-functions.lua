@@ -159,7 +159,7 @@ function newshoppingcart()
 
 		-- Server does not handle promo codes correctly if there are no rentals in the cart.
 		-- This is a kluge which should be fixed server side.
-		if self:has_rentals() == false then
+        if self:get_count( nil, "rental" ) == 0 then
 			self:clear_promo_code()
 		end
 
@@ -577,61 +577,17 @@ function newshoppingcart()
 		end
 	end
 
-	t.get_rental_count = function( self )
-		local rent_count = 0
-		for k, v in ipairs( self.items ) do
-			if v.action == "rental" and ( MasterProductCatalog[v.product_id].disc_number == nil or MasterProductCatalog[v.product_id].disc_number == 1 ) then
-				rent_count = rent_count + 1
+    t.get_count = function( self, product_family, action )
+		local count = 0
+        for k, v in ipairs( self.items ) do
+            if ( product_family == nil or v.product_family == product_family ) and ( action == nil or v.action == action ) and ( MasterProductCatalog[v.product_id].disc_number == nil or MasterProductCatalog[v.product_id].disc_number == 1 ) then
+				count = count + 1
 			end
 		end
-		return rent_count
-	end
+		return count
+    end
 
-	t.has_rentals = function( self )
-		return self:get_rental_count() > 0
-	end
-
-	t.get_purchase_count = function( self, exclude_list )
-		exclude_list = exclude_list or {}
-		local purchase_count = 0
-		for k, v in ipairs( self.items ) do
-			if v.action == "purchase"
-			and exclude_list[v.product_id] == nil then
-				purchase_count = purchase_count + 1
-			end
-		end
-		return purchase_count
-	end
-
-	t.has_purchases = function( self, exclude_list )
-		return self:get_purchase_count( exclude_list ) > 0
-	end
-
-	t.get_rental_game_count = function( self )
-		local game_count = 0
-		for k, v in ipairs( self.items ) do
-			if v.product_family == "Games" and v.action == "rental" and ( MasterProductCatalog[v.product_id].disc_number == nil or MasterProductCatalog[v.product_id].disc_number == 1 ) then
-				game_count = game_count + 1
-			end
-		end
-		return game_count
-	end
-
-	t.get_game_count = function( self )
-		local game_count = 0
-		for k, v in ipairs( self.items ) do
-			if v.product_family == "Games" then
-				game_count = game_count + 1
-			end
-		end
-		return game_count
-	end
-
-	t.has_items = function( self )
-		return #self.items > 0
-	end
-
-	t.count_for_item = function( self, id )
+    t.count_for_item = function( self, id )
 		local item_count = 0
 		local as_a_rental = false
 		for k, v in ipairs( self.items ) do
@@ -643,16 +599,6 @@ function newshoppingcart()
 			end
 		end
 		return item_count, as_a_rental
-	end
-
-	t.has_bluray = function( self )
-		local i = 0
-		for k, v in ipairs( self.items ) do
-			if v.product_type_id == 2 then
-				i = i + 1
-			end
-		end
-		return i > 0
 	end
 
 	t.add_item = function( self, catalog_entry, qty, action_code, source_type )
@@ -785,7 +731,7 @@ function newshoppingcart()
 			kernel.ttsrepeat();
 		end
 
-        shopping_cart_full_message_shown = false
+        kernel.set_session_value("BrowseState.ShoppingCartFullMessagesShown", false)
 
 		-- Clear Game Required promo code if user removed last game from cart
 		local promo_code = kernel.rental_promotion_get_promotion()
@@ -867,10 +813,6 @@ function newshoppingcart()
 			kernel.log( ">  a:" .. tostring( k ) .. " d:" .. tostring( v.discounted_amount ) .. ", t:" .. tostring( v.tax_amount ) .. ", $:" .. tostring( v.amount ) )
 		end
 		return subtotal_by_group
-	end
-
-	t.get_item = function( self, i )
-		return self.items[i]
 	end
 
 	t.get_item_by_barcode = function( self, barcode )
@@ -1475,7 +1417,7 @@ function newshoppingcart()
 		local banner_y = 346
         local ada_y_difference = 100
 		
-        if kernel.getfilter( "ada_accessible" ) == "True" then
+        if kernel.get_application_state_value("IsADAAccessible") == true then
 			y = y + ada_y_difference
 			banner_y = banner_y + ada_y_difference
 		end
@@ -1564,7 +1506,7 @@ function newshoppingcart()
 
 			local cancel_imageName = "cancel_image_name_" .. k
             local cancel_y = y - 17
-            if kernel.getfilter( "ada_accessible" ) == "True" then
+            if kernel.get_application_state_value("IsADAAccessible") == true then
                 cancel_y = cancel_y + 205
             end
             shopping_cart_scene_manager:add_actor(
@@ -1785,7 +1727,7 @@ function newshoppingcart()
 			kernel.setactorx("add_movie_add_game_reflection_opacity_hiding", x)
 			kernel.setactorx("all_movies_button", x)
 			kernel.setactorx("games_button", x)
-			if DisableGames or ProductCatalog:in_stock_games_count() == 0 or kernel.getfilter( "ada_accessible" ) == "True" then
+			if ProductCatalog:in_stock_games_count() == 0 or kernel.get_application_state_value("IsADAAccessible") == true then
 				if kernel.getculture() == "en-US" then
 					kernel.setactorimage("add_movie_add_game","image_plus_add_movie")
 					kernel.setactorimage("add_movie_add_game_reflection","image_plus_add_movie")
@@ -1797,7 +1739,7 @@ function newshoppingcart()
 				kernel.setactorheight("all_movies_button",216)
 			end
 
-			if kernel.getfilter( "ada_accessible" ) == "True" then
+			if kernel.get_application_state_value("IsADAAccessible") == true then
 				kernel.setactory( "add_movie_add_game", 170 + ada_y_difference )
 				kernel.setactory( "add_movie_add_game_reflection", 526 + ada_y_difference )
 				kernel.setactory( "add_movie_add_game_reflection_opacity_hiding", 386 + ada_y_difference )
@@ -1812,7 +1754,7 @@ function newshoppingcart()
 			kernel.showactor( "back_to_rentals_button" )
 			kernel.setactorlocation( "add_promo_button", 847, 682 )
 		end
-		if self:has_items() == true then
+		if #self.items > 0 then
 			kernel.showactor( "my_rentals_button" )
 			if self:is_full() == true then
 				if StoreManager:get_purchase_new_price() ~= nil and StoreManager:has_sell_thru_new_in_stock() then
@@ -1859,8 +1801,8 @@ function newshoppingcart()
 			string.format( "%s%.2f", strings.currency_symbol, kernel.round( total, 2 ) ) )
 
 		local promo_code = kernel.rental_promotion_get_promotion()
-		if  self:has_items()
-		and (not self:has_rentals() and promo_code ~= nil) then
+		if #self.items > 0
+		and ( self:get_count( nil, "rental" ) == 0 and promo_code ~= nil ) then
 			self:clear_promo_code()
 		end
 
@@ -1869,7 +1811,7 @@ function newshoppingcart()
 			kernel.showactor( "promo_code_amount" )
 			kernel.disableactor( "promo_code_button" )
 
-			if self:get_purchase_count() == #self.items then
+			if self:get_count( nil, "purchase" ) == #self.items then
 				kernel.setmacro(
 					"Discount",
 					string.format( "-%s%.2f",

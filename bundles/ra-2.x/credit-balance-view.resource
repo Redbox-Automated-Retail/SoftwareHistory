@@ -34,8 +34,17 @@
 				borderColor="162,16,24"
 				strokeWeight="5"
 				optionFlags="Background, DrawBorder" />
-				
-			<actor
+      
+      <actor
+        name="ad"
+        x="178"
+        y="65"
+        width="668"
+        height="83"
+        visible="false"
+        optionFlags="Image" />
+      
+      <actor
 				name="welcome_message_name"
 				x="100"
 				y="100"
@@ -102,17 +111,17 @@
 				
 			<actor
 				name="red_coin_credits"
-				x="220"
-				y="220"
+				x="214"
+				y="247"
 				width="200"
-				height="245"
+				height="200"
 				image="image_red_coin_credits"
 				optionFlags="Image" />
 				
 			<actor
 				name="red_coin_credits_used"
-				x="244"
-				y="237"
+				x="238"
+				y="264"
 				width="150"
 				font="font_target_regular_largest"
 				foregroundColor="255,221,153"
@@ -121,18 +130,28 @@
 				
 			<actor
 				name="credits_disclaimer"
-				x="150"
-				y="500"
-				width="322"
-				text="Available credits will be applied each night for this transaction. Your credit card will be charged once your credits run out."
+				x="115"
+				y="450"
+				width="440"
+				text="Available credits will be applied each night for this transaction. Your credit card will be charged once your credits run out.  If you're redeeming Redbox Play Pass credits for the first time, your rental confirms that you accept the Play Pass Terms &amp; Conditions. Click here to read them."
 				font="font_akzidenz_regular_tiny"
 				foregroundColor="80,80,80"
 				optionFlags="Text" />
-				
-			<actor
+
+      <actor
+				name="disclaimer_button"
+				x="267"
+				y="530"
+				width="90"
+				height="30"
+				font="font_akzidenz_bold_smaller"
+				cornerSize="30,30"
+				style="gray_button_style" />
+
+      <actor
 				name="credits_do_not_apply_message"
 				x="590"
-				y="215"
+				y="249"
 				width="240"
 				font="font_akzidenz_regular_tiny"
 				foregroundColor="black"
@@ -141,7 +160,7 @@
 			<actor
 				name="subtotal_heading"
 				x="597"
-				y="305"
+				y="332"
 				text="Subtotal"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -150,7 +169,7 @@
 			<actor
 				name="subtotal_amount"
 				x="723"
-				y="305"
+				y="332"
 				width="100"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -160,7 +179,7 @@
 			<actor
 				name="credits_background"
 				x="590"
-				y="335"
+				y="362"
 				width="240"
 				height="40"
 				backgroundColor="174,4,13"
@@ -169,7 +188,7 @@
 			<actor
 				name="credits_heading"
 				x="597"
-				y="342"
+				y="369"
 				text="Credits"
 				font="font_arial_regular_medium"
 				foregroundColor="255,255,255"
@@ -178,7 +197,7 @@
 			<actor
 				name="credits_amount"
 				x="723"
-				y="342"
+				y="369"
 				width="100"
 				font="font_arial_regular_medium"
 				foregroundColor="255,255,255"
@@ -188,7 +207,7 @@
 			<actor
 				name="tax_heading"
 				x="597"
-				y="380"
+				y="407"
 				text="Tax"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -197,7 +216,7 @@
 			<actor
 				name="tax_amount"
 				x="723"
-				y="380"
+				y="407"
 				width="100"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -207,7 +226,7 @@
 			<actor
 				name="grey_line"
 				x="590"
-				y="410"
+				y="437"
 				width="240"
 				height="4"
 				backgroundColor="204,204,204"
@@ -216,7 +235,7 @@
 			<actor
 				name="total_heading"
 				x="597"
-				y="420"
+				y="447"
 				text="New total"
 				font="font_medium"
 				foregroundColor="black"
@@ -225,7 +244,7 @@
 			<actor
 				name="total_amount"
 				x="723"
-				y="420"
+				y="447"
 				width="100"
 				font="font_medium"
 				foregroundColor="black"
@@ -235,7 +254,7 @@
       <actor
 				name="credits_left"
 				x="590"
-				y="470"
+				y="499"
 				width="260"
 				font="font_akzidenz_regular_small"
 				foregroundColor="black"
@@ -261,7 +280,7 @@
 				
 			<actor
 				name="confirm_button"
-				x="689"
+				x="729"
 				y="590"
 				width="195"
 				height="65"

@@ -31,7 +31,7 @@ if collection_set_number == nil then
 	collection_set_number = 1
 end
 
-local page_number_changed = function(new_page_number)
+local page_number_changed = function(new_page_number, page_change_source)
 	collection_set_number = new_page_number
 	-- draw top menu to repaint the button overhang into the browse area
 	draw_top_menu()
@@ -47,11 +47,9 @@ end
 local draw_collection = function ()
 	kernel.draw_images_set(
 		"Collection",
-		browse_filter_family_tracker.selected_family,
-		browse_collection_products, --browse_filtered_products,
+        kernel.get_session_value("BrowseState.BrowseTitleFamily"),
+		browse_collection_products, 
 		collection_set_number,
-		browse_goto_alpha,
-		browse_filter_alpha_selected,
 		page_number_changed,
 		update_products_shown, 
 		show_product_detail_view,

@@ -5,7 +5,6 @@
 --
 
 idle_timer:suspend()
-culture_idle_timer:suspend()
 
 LoadInCartPromoMessaging()
 ShoppingCart.in_cart_promo_offer_made = true
@@ -78,12 +77,11 @@ kernel.registeractorhitnotify(
         else
             local promo_data = GetInCartPromoAction()
 		    if promo_data.offer_action == "browse_filter" or promo_data.offer_action == "title_marketing" then
-			    browse_filter_family_tracker.selected_family = promo_data.product_family
-			    browse_filter_alpha_selected = nil
-			    browse_filter_genre_selected = nil
+                kernel.set_session_value("BrowseState.BrowseTitleFamily", promo_data.product_family)
+                kernel.set_session_value("BrowseState.BrowseGenre", nil)
 			    kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
-			    set_number = 1
-			    browse_filter_family_tracker:set_family_type( promo_data.product_type or "ALL" )
+                kernel.set_session_value("BrowseState.PageNumber", 1)
+                kernel.set_session_value("BrowseState.BrowseTitleType", promo_data.product_type or "ALL")
                 kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 			    if promo_data.offer_action == "title_marketing" then
 				    ShoppingCart.in_cart_title_marketing = true

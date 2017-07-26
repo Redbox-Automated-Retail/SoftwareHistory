@@ -6,6 +6,7 @@
 	<aspect name="content">
 		<scene
 			name="Default"
+      render_type="WPF"
 			width="1024"
 			height="768"
 			backgroundColor="0, 0, 0"
@@ -13,7 +14,16 @@
 			onEnter="start_view_enter"
 			onLeave="start_view_leave">
 
-			<actor
+      <actor
+				name="StartViewUserControl"
+				x="0"
+				y="0"
+				width="1024"
+				height="768"
+        WPFControlAssemblyName="Redbox.Rental.UI.exe"
+        WPFControlName="StartView"/>
+
+      <!--<actor
 				name="back_ground_image"
 				width="1024"
 				height="768"
@@ -204,27 +214,6 @@
 				style = "topten_center_movie_style" />
 				
 			<actor
-				name="movie_flip"
-				x="425"
-				y="200"
-				backgroundColor="white"
-				visible="false"
-				optionFlags="Background, DrawBorder"
-				style="topten_center_movie_style" />
-
-			<actor
-				name="movie_flip_cancel"
-				x="663"
-				y="173"
-				height="56"
-				width="56"
-				text="X"
-				font="font_akzidenz_bold_small"
-				cornerSize="27,27"
-				visible="false"
-				style="round_gray_with_red_border_button_style" />
-
-			<actor
 				name="loading_titles_label"
 				x="325"
 				y="320"
@@ -255,224 +244,6 @@
 				image="image_plus"
 				optionFlags="Image" />
 
-			<actor
-				name="selected_product_title"
-				x="443"
-				y="210"
-				width="220"
-				height="125"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_medium" />
-
-			<actor
-				name="national_street_date"
-				x="443"
-				y="235"
-				width="238"
-				height="125"
-				visible="false"
-				text="(${NationalStreetDate})"
-				optionFlags="Text"
-				font="font_akzidenz_bold_smaller" />
-
-			<actor
-				name="selected_product_description"
-				x="443"
-				y="270"
-				width="223"
-				height="160"
-				visible="false"
-				font="font_akzidenz_regular_tiny"
-				optionFlags="Text" />
-
-			<actor
-				name="separator_1"
-				x="435"
-				y="378"
-				width="238"
-				height="2"
-				visible="false"
-				optionFlags="Background"
-				backgroundColor="240,240,240" />
-
-			<actor
-				name="genre_label"
-				x="445"
-				y="385"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Genre:" />
-
-			<actor
-				name="genre"
-				x="505"
-				y="385"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="actors_label"
-				x="445"
-				y="430"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Actors: " />
-
-			<actor
-				name="actors"
-				x="505"
-				y="430"
-				width="178"
-				height="100"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="dates_label"
-				x="445"
-				y="410"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Dates: " />
-
-			<actor
-				name="dates"
-				x="505"
-				y="410"
-				width="178"
-				height="100"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="director_label"
-				x="445"
-				y="460"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Director: " />
-
-			<actor
-				name="director"
-				x="505"
-				y="460"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="running_time_label"
-				x="445"
-				y="480"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Time: " />
-
-			<actor
-				name="running_time"
-				x="505"
-				y="480"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="price_label"
-				x="445"
-				y="500"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Price: " />
-
-			<actor
-				name="price"
-				x="505"
-				y="500"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="price_extra_label"
-				x="445"
-				y="510"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Additional Days: " />
-
-			<actor
-				name="price_extra"
-				x="505"
-				y="510"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="return_label"
-				x="445"
-				y="520"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="Return: " />
-
-			<actor
-				name="return"
-				x="505"
-				y="520"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="rating_label"
-				x="445"
-				y="540"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny"
-				text="MPAA Rating: " />
-
-			<actor
-				name="rating_description"
-				x="545"
-				y="540"
-				width="140"
-				height="100"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_bold_tiny" />
-
-			<actor
-				name="rating"
-				x="545"
-				y="540"
-				visible="false"
-				optionFlags="Text"
-				font="font_akzidenz_regular_tiny" />
-
-			<actor
-				name="separator_2"
-				x="435"
-				y="548"
-				width="238"
-				height="2"
-				visible="false"
-				optionFlags="Background"
-				backgroundColor="240,240,240" />
-				
 			<actor
 				name="navigation_side_bar"
 				x="8"
@@ -675,7 +446,7 @@
 				foregroundColor="white"
 				hitFlags="Enabled"
 				optionFlags="Text"
-				visible="false" />
+				visible="false" />-->
 
 		</scene>
 	</aspect>

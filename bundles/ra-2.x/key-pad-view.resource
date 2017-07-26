@@ -10,8 +10,17 @@
 			stylesheet="style_sheet_common"
 			backgroundImage="image_zipcode_background"
 			onEnter="key_pad_view_enter" >
-
-			<actor
+      
+      <actor
+				name="ad"
+				x="178"
+				y="25"
+				width="668"
+				height="83"
+        visible="false"
+				optionFlags="Image" />
+      
+      <actor
 				name="bg_top_border"
 				x="20"
 				y="72"
@@ -43,8 +52,8 @@
 				horizontalAlignment="center"
 				image="image_zip_entry_field"
 				optionFlags="Image, Text" />
-
-			<actor
+      
+      <actor
 				name="one_button"
 				x="372"
 				y="218"

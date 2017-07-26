@@ -4,6 +4,9 @@
 -- All Rights Reserved
 --
 
+
+
+
 idle_timer:suspend()
 
 local timeout = kernel.ttsgettimeout( "long", 40000 )
@@ -41,3 +44,47 @@ kernel.registeractorhitnotify(
 		end
 	end
 )
+
+kernel.setactortext( "disclaimer_button", strings.play_pass_terms )
+
+kernel.registeractorhitnotify(
+	"disclaimer_button",
+	function()
+        view_analytics_event( "buttonPress", "play_pass_disclaimer_button" )
+        kernel.setlasthitactorname( "play_pass_disclaimer_button" )
+        view_show_safe( "help_document_view" )
+	end
+)
+
+
+local ad = kernel.marketing_ad_get_screen_ad( "Credits", true )
+if ad ~= nil and ad.visible == true then
+    kernel.showactor( "ad" )
+    kernel.setactorimage( "ad", ad.image_name )
+    kernel.moveactory( "welcome_message_name", 65 )
+    kernel.moveactory( "welcome_message_using", 65 )
+    kernel.moveactory( "welcome_message_credits_used", 65 )
+    kernel.moveactory( "welcome_message_of", 65 )
+    kernel.moveactory( "welcome_message_credits_available", 65 )
+    kernel.moveactory( "welcome_message_credits", 65 )
+    kernel.moveactory( "welcome_message_no_credits", 65 )
+    kernel.moveactory( "red_coin_credits", 40 )
+    kernel.moveactory( "red_coin_credits_used", 40 )
+    kernel.moveactory( "credits_disclaimer", 40 )
+    kernel.moveactory( "disclaimer_button", 40 )
+    kernel.moveactory( "credits_do_not_apply_message", 40 )
+    kernel.moveactory( "subtotal_heading", 40 )
+    kernel.moveactory( "subtotal_amount", 40 )
+    kernel.moveactory( "credits_background", 40 )
+    kernel.moveactory( "credits_heading", 40 )
+    kernel.moveactory( "credits_amount", 40 )
+    kernel.moveactory( "tax_heading", 40 )
+    kernel.moveactory( "tax_amount", 40 )
+    kernel.moveactory( "grey_line", 40 )
+    kernel.moveactory( "total_heading", 40 )
+    kernel.moveactory( "total_amount", 40 )
+    kernel.moveactory( "credits_left", 40 )
+    kernel.moveactory( "back_button", 40 )
+    kernel.moveactory( "back_button_arrow", 40 )
+    kernel.moveactory( "confirm_button", 40 )
+end

@@ -4,5 +4,3 @@
 -- All Rights Reserved
 --
 
-alpha_scene_manager:clear()
----browse_filter_alpha_selected = nil

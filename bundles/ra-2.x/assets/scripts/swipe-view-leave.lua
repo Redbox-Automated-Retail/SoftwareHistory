@@ -1,9 +1,6 @@
 --
 -- swipe-view-enter.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- Copyright (C) 2016 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
-kernel.popmovie()
-kernel.trackdatastop()
-kernel.timerremove( "swipe_timer" )
-culture_idle_timer:resume()
+kernel.leave_swipe_view()

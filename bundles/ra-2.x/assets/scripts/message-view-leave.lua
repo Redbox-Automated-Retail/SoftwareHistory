@@ -4,6 +4,4 @@
 -- All Rights Reserved
 --
 
---kernel.popmovie()
 idle_timer:resume()
---culture_idle_timer:resume()

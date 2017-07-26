@@ -11,10 +11,7 @@ if ShoppingCart ~= nil then
 	CloseAnalyticsOnStartView = false
 	ShoppingCart:abandon( "User chose to abandon session." )
 end
-ABE_ON = false -- this line is here to turn off ABE mode when using the AB testing screens.
-kernel.setfilter( "ada_accessible", "False" )
+
+kernel.set_application_state_value("IsADAAccessible", false)
 view_unwindtobottom_safe( "start-over" )
 
-if kernel.getculture() == "es-MX" then
-	culture_idle_timer:start()
-end

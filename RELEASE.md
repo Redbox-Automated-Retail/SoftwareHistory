@@ -1,17 +1,17 @@
-# Rental bundles revision 55 (no code name)
+# Penguin SR (2017-07-26)
 
 - Product: Rental bundles
 - Date (first download in the snapshots): 2017-07-26
-- Store labels: none
+- Store labels: kop-rental-bundles-PenguinSR
 - Package revisions:
-  - `kop-rental-bundles` revision 55 (`C98C28021CD4A4FFCC3BD6E8335EAEE62CAB2ADE`)
+  - `kop-rental-bundles` revision 56 (`41F8FB1ECF53E55212A0F45544E1BAAD2426550E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `cp.bundle` |  |  | `EAF2019B6306B0AC703DEF6DEED57CBB81BEE272` | exact |
 | `fm.bundle` |  |  | `230904872638EF632E8CD33364BEA63354C34904` | exact |
 | `library-rental-common.bundle` |  |  | `83EE65DB3121EFC79977808056B16508C571FF1D` | exact |
-| `ra-2.x.bundle` |  |  | `F136CBB3730DA7A519A7934CAC1116CAF7072937` | stale (listed version EACA2DF5B9… has no content) |
+| `ra-2.x.bundle` |  |  | `AEFAF64D491DA114764771F1302791C48B631168` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

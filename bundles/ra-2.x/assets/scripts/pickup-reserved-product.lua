@@ -14,7 +14,7 @@ ShoppingCart:start_new()
 ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
 
 -- Start an analytics session if it does not already exist and capture button press on start_view
-view_analytics_start( kernel.get_start_over_view_name(), "OnlinePickup" )
+kernel.view_analytics_start("OnlinePickup")
 view_analytics_event( "buttonPress", "pickup_reservation_button" )
 
 -- There are many divergent UI paths which lead out from here, many of which result in cancellation
@@ -24,7 +24,6 @@ CloseAnalyticsOnStartView = true
 
 local function reservation_error_handler()
 	local function continue_func()
-		ABE_ON = false
 		view_unwindtobottom_safe( "reservation_error_handler" )
 	end
 	view_show_safe( "reservation_not_found_view" )
@@ -48,7 +47,6 @@ show_customer_blacklisted_message = function( on_ok_or_timerexpired )
 end
 
 swipe_view_cancel_func = function()
-	ABE_ON = false
 	view_goback_safe( "swipe_view:back_button", false )
 end
 
@@ -198,8 +196,9 @@ swipe_view_next_func = function()
 						and ReservationManager:is_mnp() == false
 						and ReservationManager:is_mdv() == false
 						and result.properties.is_online == true
-						and result.properties.stand_alone == false 
-						then
+						and result.properties.stand_alone == false
+                        and ReservationManager:has_purchase() == false
+                        then
 							ShoppingCart.recommendations_generator:GenerateRecomendationsTop20()
 							local reco_list = ShoppingCart.recommendations_generator.recommended_list
 							if #reco_list > 2 then
@@ -208,7 +207,7 @@ swipe_view_next_func = function()
 						end
 						return qualifies
 					end
-					
+
 					if RecommendationOnPickup == true and qualify_for_reco() and kernel.ttsenabled() == false then
 						-- Account qualifies for Recomendations On Pickup
 						
@@ -263,5 +262,6 @@ swipe_view_next_func = function()
 	end
 end
 
+kernel.set_swipe_view_parameters(swipe_view_cancel_func, swipe_view_next_func, "ReservationPickup")
 view_show_safe( "swipe_view" )
 view_analytics_event( "context", "onlinePickup" )

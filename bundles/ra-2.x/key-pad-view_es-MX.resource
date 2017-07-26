@@ -11,8 +11,17 @@
 			stylesheet="style_sheet_common"
 			backgroundImage="image_zipcode_background"
 			onEnter="key_pad_view_enter" >
-					
-		    <actor
+
+      <actor
+				name="ad"
+				x="178"
+				y="25"
+				width="668"
+				height="83"
+        visible="false"
+				optionFlags="Image" />
+
+      <actor
 				name="bg_top_border"
 				x="20"
 				y="72"
@@ -20,8 +29,8 @@
 				height="2"
 				optionFlags="Background"
 				backgroundColor="44,46,50" />
-			
-			<actor
+
+      <actor
 				name="zipcode_label"
 				x="20"
 				y="20"
@@ -29,8 +38,18 @@
 				optionFlags="Text"
 				foregroundColor="44,46,50"
 				text="C&#211;DIGO POSTAL" />
-				
-			<actor
+
+      <actor
+				name="zipcode_label_small"
+				x="20"
+				y="88"
+				font="font_target_small_medium"
+				optionFlags="Text"
+				foregroundColor="44,46,50"
+				text="C&#211;DIGO POSTAL"
+        visible="false" />
+
+      <actor
 				name="text_label"
 				x="372"
 				y="124"

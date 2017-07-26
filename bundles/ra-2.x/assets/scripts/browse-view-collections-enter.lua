@@ -12,7 +12,7 @@ if collections_set_number == nil then
 	collections_set_number = 1
 end
 
-local page_number_changed = function(new_page_number)
+local page_number_changed = function(new_page_number, page_change_source)
 	collections_set_number = new_page_number
 	-- draw top menu to repaint the button overhang into the browse area
 	draw_top_menu()
@@ -31,19 +31,17 @@ local draw_collections = function ()
 	local temp_include_list = nil
 	local temp_exclude_list = nil
 	if ShoppingCart.in_cart_promo_offer_made == true and ShoppingCart.in_cart_promo_offer_cancel == false then
-		temp_family_name = browse_filter_family_tracker.selected_family
-		temp_family_type = browse_filter_family_tracker:get_family_type()
+		temp_family_name = kernel.get_session_value("BrowseState.BrowseTitleFamily") 
+		temp_family_type = kernel.get_session_value("BrowseState.BrowseTitleType") 
 		temp_include_list, temp_exclude_list = GetInCartTitleLists(true)
 	end
 	local collection_products = kernel.rental_get_collection_products(temp_family_name, temp_family_type, temp_include_list, temp_exclude_list)
 
 	kernel.draw_images_set(
 		"Collections",
-		browse_filter_family_tracker.selected_family,
+		kernel.get_session_value("BrowseState.BrowseTitleFamily"),
 		collection_products, 
 		collections_set_number,
-		browse_goto_alpha,
-		browse_filter_alpha_selected,
 		page_number_changed,
 		nil, 
 		item_selected,

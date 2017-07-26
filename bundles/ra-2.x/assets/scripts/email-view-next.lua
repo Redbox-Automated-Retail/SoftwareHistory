@@ -14,7 +14,7 @@ kernel.registeractorhitnotify(
 )
 
 -- set a timer to just move on if NEXT is not pressed
-local timeout = kernel.ttsgettimeout( "short", 8000 )
+local timeout = kernel.ttsgettimeout( "shorter", 8000 )
 kernel.timercreate(
 	"email_next_timer",
 	timeout,

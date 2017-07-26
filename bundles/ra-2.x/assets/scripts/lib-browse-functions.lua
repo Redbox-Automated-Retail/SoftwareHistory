@@ -4,7 +4,6 @@
 -- All Rights Reserved
 --
 
-browse_filtered_products_table = {}
 local x=80
 local y=80
 local rated_movie_in_cart = false
@@ -14,17 +13,6 @@ local subplatform_game_in_cart = false
 local purchase_product_in_cart = false
 local subplatform_message = ""
 
-
-AlphaRanges = {
-	{ range_name = "A - D", ranges = { A = true, B = true, C = true, D = true } },
-	{ range_name = "E - H", ranges = { E = true, F = true, G = true, H = true } },
-	{ range_name = "I - L", ranges = { I = true, J = true, K = true, L = true } },
-	{ range_name = "M - O", ranges = { M = true, N = true, O = true } },
-	{ range_name = "P - S", ranges = { P = true, Q = true, R = true, S = true } },
-	{ range_name = "T - W", ranges = { T = true, U = true, V = true, W = true } },
-	{ range_name = "X - Z", ranges = { X = true, Y = true, Z = true } },
-	{ range_name = "0 - 9", ranges = { [0] = true, [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true } }
-}
 
 -- TODO:  It might just be easier to put this is a table resource and localize the resource
 function SetESRBRatings()
@@ -103,31 +91,6 @@ ProductTypesMetaData = {
 	
 }
 
-ProductFamiliesMetaData = {
-	["Movies"] = {
-		filter_genres = {
-			[1] = ALL,
-			[2] = 1093,
-			[3] = 1000,
-			[4] = 1005,
-			[5] = 1009,
-			[6] = 1004,
-			[7] = 1006
-		}
-	},
-	["Games"] = {
-		filter_genres = {
-			[1] = nil,
-			[2] = 1026,
-			[3] = 1094,
-			[4] = 1028,
-			[5] = 1030,
-			[6] = 1034,
-			[7] = 1036
-		}
-	}
-}
-
 SubPlatformIndicatorData = {
 	[1] = { sub_platform_id = 1,
 			sub_platform_name = "Wii Motion Plus Compatible",
@@ -176,79 +139,34 @@ SubPlatformIndicatorData = {
 			sub_platform_image = "image_kinect_required_xbox_one" }
 }
 
-function show_or_hide_for_sale_button()
-	if EnableSellThruOfUsed == true then
-		if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "for_sale_button" )
-			kernel.setactorx( "coming_soon_button", 727)
-		else
-			if GamesSellThru == true then
-				kernel.showactor( "for_sale_button" )
-			else
-				kernel.hideactor( "for_sale_button" )
-			end
-		end
-	else
-		if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.hideactor( "for_sale_button" )
-			kernel.setactorx( "coming_soon_button", 617 )
-		else
-			kernel.hideactor( "for_sale_button" )
-		end
+function show_browse_view()
+	if title_rollup_overlay ~= nil then
+		title_rollup_overlay:hide()
 	end
-end
 
-ProductFamilies.new_selection_tracker = function( self, default )
-	local t = {
-		selected_family = default or "Movies",
+    -- make sure we are on the correct view
+    if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" and kernel.peekview() ~= "browse_filter_alpha_view" then
+        kernel.log("switching view to A-Z")
+        view_show_safe( "browse_filter_alpha_view" )
+    else 
+        if kernel.get_session_value("BrowseState.BrowseSelectedSort") ~= "alpha" and kernel.peekview() == "browse_filter_alpha_view" then
+            kernel.log("Switching view to regular browse")
+            kernel.executescript("browse_products")
+        else
+            kernel.draw_browse_filter_bar(
+                kernel.peekview(),
+                function() 
+                    kernel.executescript( "start_over" )
+                end,
+                show_browse_view
+            )
+	        ProductCatalog:show_filtered_grid()
 
-		get_family_type = function( self )
-			return self.families[ self.selected_family ]
-		end,
-
-		set_family_type = function( self, v )
-			self.families[ self.selected_family ] = v
-		end,
-
-		is_match = function( self, f, v )
-			local family_type = self:get_family_type()
-			return f == self.selected_family
-				and ( family_type == "ALL" or family_type == v )
-		end,
-
-		families = {}
-	}
-	for k, v in self:pairs() do
-		t.families[ v.product_family_name ] = "ALL"
-	end
-	return t
-end
-
-function show_browse_view( total_count )
-    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
-	ProductCatalog:show_filtered_grid()
-	if (kernel.getfilter( "ada_accessible" ) == "True") then
-		draw_ada_control()
-	end
-end
-
-game_allowed_to_be_shown = function( product_type )
-	if product_type ~= nil 
-	and (( GameEnablePS3 == false
-	and product_type.product_type_name == 'PS3' ) 
-	or ( GameEnablePS4 == false
-	and product_type.product_type_name == 'PS4' ) 
-	or ( GameEnableWii == false
-	and product_type.product_type_name == 'Wii' ) 
-	or ( GameEnableWiiU == false
-	and product_type.product_type_name == 'Wii U' ) 
-	or ( GameEnableXbox360 == false
-	and product_type.product_type_name == 'Xbox 360' ) 
-	or ( GameEnableXboxOne == false
-	and product_type.product_type_name == 'Xbox One' )) then
-		return false
-	end
-	return true
+	        if (kernel.get_application_state_value("IsADAAccessible") == true) then
+		        draw_ada_control()
+	        end
+        end
+    end
 end
 
 ProductCatalog.filter_products = function(self)
@@ -288,13 +206,13 @@ ProductCatalog.filter_products = function(self)
 	
 	return kernel.rental_get_products(
 		kernel.get_session_value("BrowseState.BrowseFilterMode"),
-		browse_filter_family_tracker.selected_family,
-		browse_filter_family_tracker:get_family_type(),
+        kernel.get_session_value("BrowseState.BrowseTitleFamily"),
+        kernel.get_session_value("BrowseState.BrowseTitleType"),
         kernel.get_session_value("BrowseState.BrowseSelectedSort"),
-		browse_filter_genre_selected,
+        kernel.get_session_value("BrowseState.BrowseGenre"),
 		_incart_include_titles,
 		_incart_exclude_titles,
-		kernel.getfilter( "ada_accessible" ) == "True")
+		kernel.get_application_state_value("IsADAAccessible") == true)
 		
 end
 
@@ -302,6 +220,7 @@ ProductCatalog.filter_grid = function( self )
 
 	browse_filtered_products = self:filter_products()
     if kernel.get_session_value("BrowseState.BrowseSelectedSort") ~= "alpha" then
+        -- move out of stock products to the end of the list
 		local In_stock_products = {}
 		local Out_of_stock_products = {}
 		for i, v in ipairs( browse_filtered_products ) do
@@ -317,7 +236,6 @@ ProductCatalog.filter_grid = function( self )
 		end
 		browse_filtered_products = In_stock_products
 	end
-	alpha_filtered_products = browse_filtered_products
 
 	return browse_filtered_products
 end
@@ -325,7 +243,7 @@ end
 ProductCatalog.get_default_family = function( self )
 	local many_families, default_family = self:has_many_families()
 	if many_families == false then
-		browse_filter_family_tracker.selected_family = default_family or browse_filter_family_tracker.selected_family
+        kernel.set_session_value("BrowseState.BrowseTitleFamily", default_family or kernel.get_session_value("BrowseState.BrowseTitleFamily"))
 	end
 end
 
@@ -334,13 +252,9 @@ ProductCatalog.show_filtered_grid = function( self )
 	and ShoppingCart.in_cart_title_marketing == true
 	then
 		self:set_title_marketing_view()
-		self:filter_grid()
-		self:show_selection_grid()
-	else
-		self:filter_grid()
-		self:show_sort_buttons()
-		self:show_selection_grid()
 	end
+    self:filter_grid()
+    draw_images_set( browse_filtered_products )
 end
 
 ProductCatalog.set_title_marketing_view = function( self )
@@ -377,9 +291,9 @@ ProductCatalog.set_title_marketing_view = function( self )
 end
 
 draw_image = function( product_to_draw, control_to_draw )
-	if browse_filter_family_tracker.selected_family == "Movies" then
+    if kernel.get_session_value("BrowseState.BrowseTitleFamily") == "Movies" then
 		source_image_name = "image_movie_missing_box_art"
-	elseif browse_filter_family_tracker.selected_family == "Games" then
+    elseif kernel.get_session_value("BrowseState.BrowseTitleFamily") == "Games" then
 		source_image_name = "image_game_missing_box_art"
 	end
 
@@ -402,563 +316,6 @@ end
 
 is_product_selected = function( product )
 	return ShoppingCart:contains_all_title_rollup_movie_group( product )
-end
-
-is_product_id_selected = function( product_id )
-	local is_selected = false
-	for k, v in ipairs( ShoppingCart.items ) do
-		if v.product_id == product_id then
-			is_selected = true
-			break
-		end
-	end
-	return is_selected
-end
-
-function highlight_sort_button( sort_name )
-	if kernel.ttsenabled() == true then
-		kernel.setmacro( "TTS:BrowsingFilter", sort_name )
-	end
-
-	local width = kernel.getactorwidth( "selected_button" )
-	show_or_hide_for_sale_button()
-
-	kernel.setactorwidth( "selected_button", 94 )
-	local _showselectedbutton = function( name )
-		kernel.setmacro( "SortName", kernel.getactortext( name .. "_button" ))
-		kernel.showactor( "selected_button" )
-		kernel.hideactor( name .. "_button" )
-	end
-
-	if ShoppingCart.in_cart_title_marketing == true then
-		-- These buttons are hidden in the Title Marketing view
-		return
-	end
-
-	if sort_name == "alpha" then
-		sort_name = "abc"
-		kernel.setactorx( "selected_button", kernel.getactorx( "abc_button") )
-		width = kernel.getactorwidth( "abc_button" )
-		if browse_filter_family_tracker.selected_family == "Movies"  then
-			kernel.showactor( "blu_ray_button" )
-			kernel.showactor( "coming_soon_button" )
-		end
-	elseif sort_name == "Newest" then
-		sort_name = "newest"
-		kernel.setactorx( "selected_button", kernel.getactorx( "newest_button") )
-		width = kernel.getactorwidth( "newest_button" )
-		if browse_filter_family_tracker.selected_family == "Movies"  then
-			if ProductCatalog:is_product_available( "Newest" ) then
-				kernel.showactor( "blu_ray_button" )
-				kernel.showactor( "coming_soon_button" )
-			end
-		end
-	elseif sort_name == "Blu-ray" then
-		sort_name = "blu_ray"
-		kernel.setactorx( "selected_button", kernel.getactorx( "blu_ray_button" ) )
-		width = kernel.getactorwidth( "blu_ray_button" )
-		kernel.showactor( "newest_button" )
-		kernel.showactor( "coming_soon_button" )
-	elseif sort_name == "for-sale" then
-		sort_name = "for_sale"
-		kernel.setactorx( "selected_button", kernel.getactorx( "for_sale_button") )
-		width = kernel.getactorwidth( "for_sale_button" )
-		if browse_filter_family_tracker.selected_family == "Movies"  then
-			kernel.showactor( "blu_ray_button" )
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "coming_soon_button" )
-		end
-	elseif sort_name == "Xbox 360" then
-		sort_name = "xbox_360"
-		kernel.setactorx( "selected_button", kernel.getactorx( "xbox_360_button") )
-		width = kernel.getactorwidth( "xbox_360_button" )
-	elseif sort_name == "Xbox One" then
-		sort_name = "xbox_one"
-		kernel.setactorx( "selected_button", kernel.getactorx( "xbox_one_button") )
-		width = kernel.getactorwidth( "xbox_one_button" )
-	elseif sort_name == "PS3" then
-		kernel.setactorx( "selected_button", kernel.getactorx( "ps3_button") )
-		width = kernel.getactorwidth( "ps3_button" )
-	elseif sort_name == "PS4" then
-		kernel.setactorx( "selected_button", kernel.getactorx( "ps4_button") )
-		width = kernel.getactorwidth( "ps4_button" )
-	elseif sort_name == "Wii" then
-		kernel.setactorx( "selected_button", kernel.getactorx( "wii_button") )
-		width = kernel.getactorwidth( "wii_button" )
-	elseif sort_name == "Wii U" then
-		sort_name = "wii_u"
-		kernel.setactorx( "selected_button", kernel.getactorx( "wii_u_button") )
-		width = kernel.getactorwidth( "wii_u_button" )
-	elseif sort_name == "coming-soon" then
-		sort_name = "coming_soon"
-		kernel.setactorx( "selected_button", kernel.getactorx( "coming_soon_button" ) )
-		width = kernel.getactorwidth( "coming_soon_button" )
-		if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-    elseif sort_name == "Top 20" then
-        sort_name = "top_20_filter"
-		kernel.setactorx( "selected_button", kernel.getactorx( "top_20_filter_button") )
-		width = kernel.getactorwidth( "top_20_filter_button" )
-        if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-    elseif sort_name == "Action" then
-        sort_name = "action_filter"
-		kernel.setactorx( "selected_button", kernel.getactorx( "action_filter_button") )
-		width = kernel.getactorwidth( "action_filter_button" )
-        if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-    elseif sort_name == "Comedy" then
-        sort_name = "comedy_filter"
-		kernel.setactorx( "selected_button", kernel.getactorx( "comedy_filter_button") )
-		width = kernel.getactorwidth( "comedy_filter_button" )
-        if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-    elseif sort_name == "Drama" then
-        sort_name = "drama_filter"
-		kernel.setactorx( "selected_button", kernel.getactorx( "drama_filter_button") )
-		width = kernel.getactorwidth( "drama_filter_button" )
-        if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-    elseif sort_name == "Family" then
-        sort_name = "family_filter"
-		kernel.setactorx( "selected_button", kernel.getactorx( "family_filter_button") )
-		width = kernel.getactorwidth( "family_filter_button" )
-        if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-    elseif sort_name == "Horror" then
-        sort_name = "horror_filter"
-		kernel.setactorx( "selected_button", kernel.getactorx( "horror_filter_button") )
-		width = kernel.getactorwidth( "horror_filter_button" )
-        if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.showactor( "newest_button" )
-			kernel.showactor( "blu_ray_button" )
-		end
-	else
-		sort_name = string.lower(sort_name)
-	end
-	kernel.setactorwidth( "selected_button", width )
-	_showselectedbutton( sort_name )
-
-	local _highlight = function( name, foreground, background, gradient_target )
-		kernel.setactorforegroundcolor( name, foreground )
-		kernel.setactorbackgroundcolor( name, background )
-		kernel.setactorgradienttargetcolor( name, gradient_target )
-	end
-
-	local bright_gray = {["r"] = 219, ["g"] = 219,["b"] = 219}
-	local light_gray = {["r"] = 155, ["g"] = 155,["b"] = 155}
-	local med_gray = {["r"] = 111, ["g"] = 111,["b"] = 111}
-	local dark_gray = {["r"] = 70, ["g"] = 70,["b"] = 70}
-
-	_highlight( "abc_button", "white", med_gray, dark_gray )
-	_highlight( "coming_soon_button", "white",  med_gray, dark_gray )
-	_highlight( "blu_ray_button", "white",  med_gray, dark_gray )
-	_highlight( "newest_button", "white",  med_gray, dark_gray )
-	_highlight( "for_sale_button", "white",  med_gray, dark_gray )
-	_highlight( "xbox_360_button", "white",  med_gray, dark_gray )
-	_highlight( "xbox_one_button", "white",  med_gray, dark_gray )
-	_highlight( "ps3_button", "white",  med_gray, dark_gray )
-	_highlight( "ps4_button", "white",  med_gray, dark_gray )
-	_highlight( "wii_button", "white",  med_gray, dark_gray )
-	_highlight( "wii_u_button", "white",  med_gray, dark_gray )
-    _highlight( "top_20_filter_button", "white",  med_gray, dark_gray )
-    _highlight( "action_filter_button", "white",  med_gray, dark_gray )
-    _highlight( "comedy_filter_button", "white",  med_gray, dark_gray )
-    _highlight( "drama_filter_button", "white",  med_gray, dark_gray )
-    _highlight( "family_filter_button", "white",  med_gray, dark_gray )
-    _highlight( "horror_filter_button", "white",  med_gray, dark_gray )
-
-	kernel.setbordercolor( "startover_button", "white" )
-
-	_highlight( sort_name .. "_button", "black", light_gray, bright_gray )
-end
-
-check_product_availability = function()
-
-	if ShoppingCart.in_cart_title_marketing == true then
-		-- These buttons are hidden in the Title Marketing view
-		return
-	end
-
-    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
-end
-
-ProductCatalog.is_product_available = function( self, sort_name )
-	--cache globals to locals for improved performance
-	local _ProductTypes = ProductTypes
-	local _ShoppingCart = ShoppingCart
-	local _ProductFamilies = ProductFamilies
-	local _History = ProductHistory
-	local _MasterProductCatalog = MasterProductCatalog
-	local products = {}
-	for k, v in self:pairs() do
-		local product_type = nil
-		local product = _MasterProductCatalog[v.product_id]
-		local history = _History[v.product_id]
-		if product ~= nil then
-			product_type = _ProductTypes[product.product_type_id]
-		end
-		if  product ~= nil
-		and product_type ~= nil
-		and history ~= nil then
-			local product_family = _ProductFamilies[product_type.product_family_id]
-
-			if    product_family.product_family_name == browse_filter_family_tracker.selected_family
-			and  ( browse_filter_genre_selected == nil or browse_filter_genre_selected == "ALL" or product.genres[browse_filter_genre_selected] == true )
-			and  ( browse_rent_or_sellthru == "rent" or ( browse_rent_or_sellthru == "sellthru" and product.is_sellable) ) then
-				if sort_name == "Newest" then
-					return true
-				elseif sort_name == "coming-soon" then
-					if product.is_available == false then
-						kernel.setbordercolor( "coming_soon_button", {["r"] = 157, ["g"] = 157,["b"] = 157} )
-						return true
-					end
-				elseif sort_name == "for-sale" then
-                    if product.is_sellable then
-                        return true
-                    end
-				else
-					if product_type.product_type_name == sort_name then
-						return true
-					end
-				end
-			end
-		else
-			--kernel.log( "WARNING! ProductCatalog.filter_products couldn't find: v.product_id = " .. tostring( v.product_id ) )
-		end
-	end
-
-	return false
-
-end
-
-ProductCatalog.show_sort_buttons = function( self )
-
-	if ShoppingCart.in_cart_title_marketing == true then
-		-- These buttons are hidden in the Title Marketing view
-		return
-	end
-
-	kernel.setactorbackgroundcolor( "center_gray_background", {["r"] = 167, ["g"] = 167, ["b"] = 167} )
-	kernel.setactorgradienttargetcolor( "center_gray_background", {["r"] = 167, ["g"] = 167, ["b"] = 167} )
-	
-	if kernel.ttsenabled() == true then
-		if browse_filter_family_tracker.selected_family == "Movies" then
-			kernel.setmacro( "TTS:SwitchToFamily", strings.Games )
-			kernel.setmacro( "TTS:BrowsingFamily", strings.Movies )
-			kernel.setmacro( "TTS:BrowsingFamilySingular", "movie" )
-		else
-			kernel.setmacro( "TTS:SwitchToFamily", strings.Movies )
-			kernel.setmacro( "TTS:BrowsingFamily", strings.Games )
-			kernel.setmacro( "TTS:BrowsingFamilySingular", "game" )
-		end
-		kernel.setmacro( "TTS:FilterOptions", "Various Options" )
-		kernel.ttsrepeat() -- assets have been set and toggled
-	end
-	
-	if browse_filter_family_tracker.selected_family == "Movies" then
-		kernel.showactor( "abc_button" )
-		kernel.showactor( "blu_ray_button" )
-		kernel.showactor( "coming_soon_button" )
-        kernel.showactor( "top_20_filter_button" )
-        kernel.showactor( "action_filter_button" )
-        kernel.showactor( "comedy_filter_button" )
-        kernel.showactor( "drama_filter_button" )
-        kernel.showactor( "family_filter_button" )
-        kernel.showactor( "horror_filter_button" )
-		kernel.hideactor( "xbox_360_button" )
-		kernel.hideactor( "xbox_one_button" )
-		kernel.hideactor( "ps3_button" )
-		kernel.hideactor( "ps4_button" )
-		kernel.hideactor( "wii_button" )
-		kernel.hideactor( "wii_u_button" )
-		kernel.setbordercolor( "abc_button", "white" )
-
-		if not DisableGames then
-			kernel.log( "Games are enabled." )
-			if ProductCatalog:in_stock_games_count() == 0 then
-				kernel.log( "Not Enough games in kiosk. Disabling Games tab." )
-				--disable_games()
-			else
-				--enable_games()
-			end
-		else
-			kernel.log( "Games are disabled. Disabling Games tab." )
-			--disable_games()
-		end
-
-		if kernel.ttsenabled() == true then
-			kernel.setmacro( "TTS:TabName_2", strings.genre_1093a .. " " .. strings.genre_1093b )
-			kernel.setmacro( "TTS:TabName_3", strings.genre_1000 )
-			kernel.setmacro( "TTS:TabName_4", strings.genre_1005 )
-			kernel.setmacro( "TTS:TabName_5", strings.genre_1009 )
-			kernel.setmacro( "TTS:TabName_6", strings.genre_1004 )
-			kernel.setmacro( "TTS:TabName_7", strings.genre_1006 )
-		end
-
-		if kernel.getfilter( "ada_accessible" ) == "True" then
-            --calculate distances
-            --EnableSellThruOfUsed
-
-            kernel.setactorwidth("blu_ray_button",75)
-			kernel.setactorx( "blu_ray_button", 172 )
-            kernel.setactorwidth("newest_button",75)
-			kernel.setactorx( "newest_button", 263 )
-            kernel.setactorwidth("for_sale_button",75)
-			kernel.setactorx( "for_sale_button", 354  )  --move to last since it can be disabled...?
-
-			kernel.hideactor( "coming_soon_button" )
-
---            kernel.setactorx( "top_20_filter_button" )
---            kernel.setactorx( "action_filter_button" )
---            kernel.setactorx( "comedy_filter_button" )
---            kernel.setactorx( "drama_filter_button" )
---            kernel.setactorx( "family_filter_button" )
---            kernel.setactorx( "horror_filter_button" )
-		else
-			kernel.setactorx( "blu_ray_button", 287 )
-			kernel.setactorx( "newest_button", 397 )
-			kernel.setactorx( "abc_button", 507 )
-			kernel.setactorx( "for_sale_button", 617  )
-			kernel.setactorx( "coming_soon_button", 727 )
-		end
-
-		kernel.setbordercolor( "abc_button", "white" )
-		kernel.setbordercolor( "coming_soon_button", "white" )
-		kernel.setbordercolor( "blu_ray_button", "white" )
-		kernel.setbordercolor( "newest_button", "white" )
-		kernel.setbordercolor( "for_sale_button", "white" )
-        kernel.setbordercolor( "top_20_filter_button", "white" )
-        kernel.setbordercolor( "action_filter_button", "white" )
-        kernel.setbordercolor( "comedy_filter_button", "white" )
-        kernel.setbordercolor( "drama_filter_button", "white" )
-        kernel.setbordercolor( "family_filter_button", "white" )
-        kernel.setbordercolor( "horror_filter_button", "white" )
-
-        if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
-			kernel.setactorbackgroundcolor( "bg_box_top", "black" )
-		else
-			kernel.setactorbackgroundcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactorbackgroundcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactorgradienttargetcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactorgradienttargetcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-			kernel.setactory( "bg_box_bottom", 318 )
-			kernel.setactory( "center_gray_background", 563 )
-		end
-	else
-		-- GAMES
-		kernel.hideactor( "blu_ray_button" )
-		kernel.hideactor( "abc_button" )
-        kernel.hideactor( "top_20_filter_button" )
-        kernel.hideactor( "action_filter_button" )
-        kernel.hideactor( "comedy_filter_button" )
-        kernel.hideactor( "drama_filter_button" )
-        kernel.hideactor( "family_filter_button" )
-        kernel.hideactor( "horror_filter_button" )
-
-		local total_width = 0
-		local padding = 8
-		local set_position_array = {}
-		
-		local enable_filter_button = function( button_name )
-			if button_name == nil or button_name == "" then
-				return
-			end
-			kernel.showactor( button_name )
-			kernel.setbordercolor( button_name, "white" )
-			local width = kernel.getactorwidth( button_name )
-			total_width = total_width + width + padding
-			
-			table.insert( set_position_array, 
-							{ 
-								name = button_name,
-								button_width = width
-							} )
-		end
-		
-		local align_filter_buttons = function()
-
-			local half_total_width = total_width / 2
-			local center = 592  -- ( 1024 + 160 (offset to right) ) / 2
-			local start_loc = center + half_total_width
-			for _, button in ipairs( set_position_array ) do
-				local name = button["name"]
-				local item_width = button["button_width"]
-				start_loc = start_loc - item_width - padding
-				kernel.setactorx( name, start_loc )
-			end
-            			
-		end
-		
-		enable_filter_button( "coming_soon_button" )
-		if EnableSellThruOfUsed == true and GamesSellThru == true then
-			enable_filter_button( "for_sale_button" )
-		else
-			kernel.hideactor( "for_sale_button" )
-		end
-		if GameEnableWiiU == true and GameHasContentWiiU == true then
-			enable_filter_button( "wii_u_button" )
-		else
-			kernel.hideactor( "wii_u_button" )
-		end
-		if GameEnableWii == true and GameHasContentWii == true then
-			enable_filter_button( "wii_button" )
-		else
-			kernel.hideactor( "wii_button" )
-		end
-		if GameEnablePS4 == true and GameHasContentPS4 == true then
-			enable_filter_button( "ps4_button" )
-		else
-			kernel.hideactor( "ps4_button" )
-		end
-		if GameEnablePS3 == true and GameHasContentPS3 == true then
-			enable_filter_button( "ps3_button" )
-		else
-			kernel.hideactor( "ps3_button" )
-		end
-		if GameEnableXboxOne == true and GameHasContentXboxOne == true then
-			enable_filter_button( "xbox_one_button" )
-		else
-			kernel.hideactor( "xbox_one_button" )
-		end
-		if GameEnableXbox360 == true and GameHasContentXbox360 == true then
-			enable_filter_button( "xbox_360_button" )
-		else
-			kernel.hideactor( "xbox_360_button" )
-		end
-	
-		enable_filter_button( "newest_button" )
-		align_filter_buttons() --sets x coords in centered manner
-		
-		if kernel.ttsenabled() == true then
-			kernel.setmacro( "TTS:TabName_2", strings.genre_1026 )
-			kernel.setmacro( "TTS:TabName_3", strings.genre_1006 )
-			kernel.setmacro( "TTS:TabName_4", strings.genre_1028 )
-			kernel.setmacro( "TTS:TabName_5", strings.genre_1030 )
-			kernel.setmacro( "TTS:TabName_6", strings.genre_1034 )
-			kernel.setmacro( "TTS:TabName_7", strings.genre_1036 )
-		end
-
-		kernel.setactorbackgroundcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-		kernel.setactorbackgroundcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-		kernel.setactorgradienttargetcolor( "bg_box_top", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-		kernel.setactorgradienttargetcolor( "bg_box_bottom", {["r"] = 229, ["g"] = 229, ["b"] = 229} )
-		kernel.setactory( "bg_box_bottom", 318 )
-		kernel.setactory( "center_gray_background", 563 )
-	end
-	
-	if kernel.ttsenabled() == true then
-		-- Set TTS:Filter buttons based on what are showing
-        for i=1,10 do
-            kernel.setmacro( "TTS:FilterName_" .. tostring(i), nil )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(i), nil )
-        end
-
-		local filter_num = 1
-		if kernel.isactorvisible( "blu_ray_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("blu_ray_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "blu_ray_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "newest_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("newest_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "newest_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "abc_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("abc_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "abc_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "for_sale_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("for_sale_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "for_sale_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "xbox_360_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("xbox_360_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "xbox_360_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "xbox_one_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("xbox_one_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "xbox_one_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "ps3_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("ps3_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "ps3_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "ps4_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("ps4_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "ps4_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "wii_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("wii_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "wii_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "wii_u_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("wii_u_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "wii_u_button" )
-			filter_num = filter_num + 1
-		end
-		if kernel.isactorvisible( "coming_soon_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("coming_soon_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "coming_soon_button" )
-			filter_num = filter_num + 1
-		end
-        if kernel.isactorvisible( "top_20_filter_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("top_20_filter_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "top_20_filter_button" )
-			filter_num = filter_num + 1
-		end
-        if kernel.isactorvisible( "action_filter_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("action_filter_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "action_filter_button" )
-			filter_num = filter_num + 1
-		end
-        if kernel.isactorvisible( "drama_filter_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("drama_filter_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "drama_filter_button" )
-			filter_num = filter_num + 1
-		end
-        if kernel.isactorvisible( "horror_filter_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("horror_filter_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "horror_filter_button" )
-			filter_num = filter_num + 1
-		end
-        if kernel.isactorvisible( "comedy_filter_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("comedy_filter_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "comedy_filter_button" )
-			filter_num = filter_num + 1
-		end
-        if kernel.isactorvisible( "family_filter_button" ) then
-			kernel.setmacro( "TTS:FilterName_" .. tostring(filter_num), kernel.getactortext("family_filter_button") )
-			kernel.setmacro( "TTS:FilterButton_" .. tostring(filter_num), "family_filter_button" )
-			filter_num = filter_num + 1
-		end
-
-		if kernel.ttsenabled() == true then
-			kernel.ttsrepeat();  -- the titles and assests have been set and toggled
-		end
-	end
-	
-    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
 end
 
 function display_banner( type_name, productfamilytype, actor_count ) --Matt Will there be banners? no longer used?
@@ -986,56 +343,29 @@ function display_banner( type_name, productfamilytype, actor_count ) --Matt Will
 	end
 end
 
-alpha_filter_list = function( browse_alpha_products )
-	local alpha_final_list = {}
-	local alpha_products = browse_alpha_products
-	local position = 1
-	for i, k in ipairs( alpha_products ) do
-		if i < #alpha_products then
-			if i == 1 then
-				table.insert( alpha_final_list, position, "" )
-				position = position + 1
-			end
-			if	AlphaRanges[8].ranges[ tonumber( string.sub( alpha_products[ i + 1 ].sort_name, 0, 1 ) ) ] == nil
-			and string.upper( string.sub( k.sort_name, 0, 1 ) ) ~= string.upper( string.sub( alpha_products[ i + 1 ].sort_name, 0, 1 ) ) then
-				table.insert( alpha_final_list,position, k )
-				position = position + 1
-				table.insert( alpha_final_list, position, "" )
-			else
-				table.insert( alpha_final_list, position, k )
-			end
-			position = position + 1
-		end
-		if i == #alpha_products then
-			table.insert( alpha_final_list, position, k )
-		end
-	end
-	return alpha_final_list
-end
-
 show_product_detail_view = function(product)
-	browse_selection_selected_product = product
-	product_detail_shown_from_view = kernel.peekview()
+    kernel.set_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable", product)
+    kernel.set_session_value("BrowseState.ProductDetailShownFromView", kernel.peekview())
 	view_show( "product_detail_view" )
 end
 
-local page_number_changed = function(new_page_number)
+local page_number_changed = function(new_page_number, page_change_source)
 	if title_rollup_overlay ~= nil then
 		title_rollup_overlay:hide()
 	end
-	if new_page_number < set_number then
+	if new_page_number < kernel.get_session_value("BrowseState.PageNumber") then
 		view_analytics_event( "pageChange", "browse-page-back" )
 	else
 		view_analytics_event( "pageChange", "browse-page-next" )
 	end
-	local page_number_is_different = set_number ~= new_page_number
-	set_number = new_page_number
-	if kernel.getfilter( "ada_accessible" ) == "True" then
+	local page_number_is_different = kernel.get_session_value("BrowseState.PageNumber") ~= new_page_number
+    kernel.set_session_value("BrowseState.PageNumber", new_page_number)
+	if kernel.get_application_state_value("IsADAAccessible") == true then
 		draw_ada_control()
 	end
 
     -- increment paddle count if the page number changed but don't include A-Z character selections
-	if page_number_is_different and browse_goto_alpha == nil then
+	if page_number_is_different and page_change_source == "PaddleButton" then
 		increment_paddle_click_count()
 	end
 
@@ -1046,6 +376,7 @@ end
 
 increment_paddle_click_count = function ()
 	-- collection popup browse paddle click counter logic
+    local marketing_config = kernel.get_marketing_config()
 	if marketing_config ~= nil and marketing_config.collections_popup_paddle_clicks ~= nil and marketing_config.collections_popup_paddle_clicks > 0 then
 		local paddle_click_count = kernel.add_to_session_value("BrowseState.PaddleClickCount", 1) 
 		if paddle_click_count ~= nil and paddle_click_count >= marketing_config.collections_popup_paddle_clicks then
@@ -1152,11 +483,9 @@ end
 draw_images_set = function( filtered_products_list )
 	kernel.draw_images_set(
 		"Main",
-		browse_filter_family_tracker.selected_family,
+        kernel.get_session_value("BrowseState.BrowseTitleFamily"),
 		filtered_products_list,
-		set_number,
-		browse_goto_alpha,
-		browse_filter_alpha_selected,
+        kernel.get_session_value("BrowseState.PageNumber"),
 		page_number_changed,
 		update_products_shown, 
 		show_product_detail_view,
@@ -1176,17 +505,7 @@ draw_images_set = function( filtered_products_list )
     if kernel.ttsenabled() then
         kernel.ttsrepeat()
     end
-	browse_goto_alpha = nil
 end 
-
-ProductCatalog.show_selection_grid = function( self )
-    if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
-		browse_filtered_products_table = alpha_filter_list( browse_filtered_products )
-		draw_images_set( browse_filtered_products_table )
-	else
-		draw_images_set( browse_filtered_products )
-	end
-end
 
 get_product_from_actor = function( actor_name )
 	return kernel.get_product_from_actor(actor_name)
@@ -1206,38 +525,22 @@ show_shopping_cart_full = function()
 end
 
 hide_shopping_cart_full = function()
-	kernel.hideactor( "cart_full_background" )
-	kernel.hideactor( "cart_full_label_border" )
-	kernel.hideactor( "cart_full_label" )
-	kernel.hideactor( "cart_full_label_text" )
-	kernel.hideactor( "cart_full_image" )
-	kernel.hideactor( "cart_full_cancel_button" )
-    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
-	browse_is_cart_full_open = false
+	kernel.set_session_value("BrowseState.IsShoppingCartFullMessagesOpen", false)
 end
 
-add_movie = function( product_to_add )
+add_movie = function( product_to_add, action )
 	local selected_product = get_product_from_actor( selected_movie )
 	if product_to_add ~= nil then
 		selected_product = product_to_add
 	end
 
-	browse_selection_selected_product = selected_product
-	--If Redbox empty case setting action as purchase
-    if selected_product.product_id == 1139 or (kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" and (kernel.peekview() == "browse_view" or kernel.peekview() == "purchase_message_view" or kernel.peekview() == "browse_view_ada_accessible")) then
-		browse_selection_cart_action = "purchase"
-	else
-		browse_selection_cart_action = "rental"
-	end
-	kernel.executescript( "add_to_cart" )
+    kernel.set_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable", selected_product)
+    ShoppingCart:add_item( selected_product, 1, action )
  	refresh_current_page()
 		
-	if #ShoppingCart.items == 5
-	and browse_is_cart_full_open == false
-	and shopping_cart_full_message_shown == false then
+	if #ShoppingCart.items == 5 and kernel.get_session_value("BrowseState.IsShoppingCartFullMessagesOpen") == false and kernel.get_session_value("BrowseState.ShoppingCartFullMessagesShown") == false then
 		show_shopping_cart_full()
 	end
-
 end
 
 
@@ -1252,15 +555,19 @@ refresh_current_page = function()
 	elseif kernel.peekview() == "browse_view_collections" then
 		draw_collections_view()
 	elseif kernel.peekview() == "browse_view_ada_accessible" then
-		draw_images_set( alpha_filtered_products )
+		draw_images_set( browse_filtered_products )
 		draw_action_bar()
 		draw_ada_control()
     elseif kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
-		draw_images_set( browse_filtered_products_table )
-		draw_action_bar_and_mini_cart("browse_filter_alpha_view")
-		highlight_alphabets()
+		draw_images_set( browse_filtered_products )
+        if (kernel.get_application_state_value("IsADAAccessible") == true) then
+		    draw_action_bar()
+		    draw_ada_control()
+        else
+		    draw_action_bar_and_mini_cart("browse_filter_alpha_view")
+        end
 	else
-		draw_images_set( alpha_filtered_products )
+		draw_images_set( browse_filtered_products )
 		draw_action_bar_and_mini_cart("browse_view")
 	end
 end
@@ -1278,11 +585,9 @@ remove_movie = function( selected_product )
 
 	refresh_current_page()
 	hide_shopping_cart_full()
-    highlight_sort_button( kernel.get_session_value("BrowseState.BrowseSelectedSort") )
-
 end
 
-function add_item_to_cart( selected_product )
+function add_item_to_cart( selected_product, action )
 	if selected_product ~= nil
 	and StoreManager.PricingManager:is_early_released( selected_product ) then
 
@@ -1317,7 +622,7 @@ function add_item_to_cart( selected_product )
 			strings.add_to_cart,
 			function()
 				message_view_manager:hide()
-				check_for_warning_popups( check_alert_table, selected_movie, i )
+				check_for_warning_popups( selected_movie, false, nil, action )
 			end )
 		message_view_manager:show_back_button_arrow(
 			function()
@@ -1325,7 +630,7 @@ function add_item_to_cart( selected_product )
 			end )
 		idle_timer:start()
 	else
-		check_for_warning_popups( check_alert_table, selected_movie, 11, selected_product )
+		check_for_warning_popups( selected_movie, true, selected_product, action )
 	end
 end
 
@@ -1343,7 +648,7 @@ end
 
 set_timeout_for_warning_timer()
 
-function check_for_warning_popups( check_alert_table, selected_movie, i, product_to_check )
+function check_for_warning_popups( selected_movie, is_added_from_browse, product_to_check, action )
 
 	local _MasterProductCatalog = MasterProductCatalog
 	local _ProductFamilies = ProductFamilies
@@ -1361,7 +666,7 @@ function check_for_warning_popups( check_alert_table, selected_movie, i, product
 
 	if product_to_check ~= nil then
 		selected_product = product_to_check
-	elseif i == nil then
+	elseif is_added_from_browse ~= true then
 		selected_product = selected_movie
 	else
 		selected_product = get_product_from_actor( selected_movie )
@@ -1428,10 +733,10 @@ function check_for_warning_popups( check_alert_table, selected_movie, i, product
 	if selected_product.product_type_id == 2 then
 		blu_ray_movie_in_cart = true
 	end
-	if browse_selection_cart_action == "purchase" and selected_product.product_id ~= 1139 then
+	if action == "purchase" and selected_product.product_id ~= 1139 then
 		purchase_product_in_cart = true
 	end
-	show_warning_alert( check_alert_table, selected_movie, i, product_to_check )
+	show_warning_alert( selected_movie, is_added_from_browse, product_to_check, action )
 end
 
 local function show_warning_header()
@@ -1446,38 +751,200 @@ local function show_warning_header()
 	end
 end
 
-function show_warning_alert( check_alert_table, selected_movie, i, product_to_check )
-	if ( check_alert_table.movie_mature_warning_shown == false and rated_movie_in_cart == true )
-	or ( check_alert_table.mature_game_warning_shown == false and rated_game_in_cart == true ) then
-		local analytics_view_name = "rrated_message_view"
-
-		view_show_safe(analytics_view_name)
-		show_warning_header()
-        set_timeout_for_warning_timer()
-		warning_popup_timer:start()
+function show_warning_alert( selected_movie, is_added_from_browse, product_to_check, action )
+	if ( kernel.get_session_value("BrowseState.MovieMatureWarningShown") == false and rated_movie_in_cart == true )
+	or ( kernel.get_session_value("BrowseState.MatureGameWarningShown") == false and rated_game_in_cart == true ) then
 		if product_family ~= nil and product_family.product_family_name ~= nil then
 			view_analytics_event( "context", tostring(product_family.product_family_name) )
 		end
 		view_analytics_event( "context", "matureWarning" )
+	    local render_type = kernel.getviewrendertype();
+		if render_type == "WPF" then
+			kernel.show_mature_warning(
+				-- time out
+				function()
+            		view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Message view Timed out." )
+				end,
+				-- back button
+				function()
+					view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "rrated_message_view:hide()" )
+				end,
+				-- ok button
+				function()
+					if product_family.product_family_name == "Movies" then
+						kernel.set_session_value("BrowseState.MovieMatureWarningShown", true)
+					elseif product_family.product_family_name == "Games" then
+						kernel.set_session_value("BrowseState.MatureGameWarningShown", true)
+					end
+					if blu_ray_movie_in_cart == true and kernel.get_session_value("BrowseState.BluRayWarningShown") == false then
+						show_blu_ray_alert( selected_movie, is_added_from_browse, product_to_check, action )
+					elseif subplatform_game_in_cart == true then
+						show_sub_platform_warning( selected_movie, is_added_from_browse, product_to_check, action )
+					elseif purchase_product_in_cart == true then
+						show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
+					else
+						add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+					end
+				end
+			)
+		else
+			local analytics_view_name = "rrated_message_view"
+			view_show_safe(analytics_view_name)
+			show_warning_header()
+			set_background_opacity("rrated_scene_background")
+			set_timeout_for_warning_timer()
+			warning_popup_timer:start()
+			kernel.registeractorhitnotify(
+				"warning_continue_button",
+				function()
+					if product_family.product_family_name == "Movies" then
+						kernel.set_session_value("BrowseState.MovieMatureWarningShown", true)
+					elseif product_family.product_family_name == "Games" then
+						kernel.set_session_value("BrowseState.MatureGameWarningShown", true)
+					end
+					if blu_ray_movie_in_cart == true and kernel.get_session_value("BrowseState.BluRayWarningShown") == false then
+						show_blu_ray_alert( selected_movie, is_added_from_browse, product_to_check, action )
+					elseif subplatform_game_in_cart == true then
+						show_sub_platform_warning( selected_movie, is_added_from_browse, product_to_check, action )
+					elseif purchase_product_in_cart == true then
+						show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
+					else
+						warning_popup_timer:stop()
+						add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+					end
+				end
+			)
+			kernel.registeractorhitnotify(
+				"warning_back_button",
+				function()
+					warning_popup_timer:stop()
+					view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, analytics_view_name .. ":hide()" )
+				end
+			)
+		end
+	elseif blu_ray_movie_in_cart == true and kernel.get_session_value("BrowseState.BluRayWarningShown") == false then
+		show_blu_ray_alert( selected_movie, is_added_from_browse, product_to_check, action )
+	elseif subplatform_game_in_cart == true then
+		show_sub_platform_warning( selected_movie, is_added_from_browse, product_to_check, action )
+	elseif purchase_product_in_cart == true then
+		show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
+	else
+		add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+	end
+end
+
+function hide_warning_popup()
+	view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Message view Timed out." )
+	warning_popup_timer:stop()
+end
+
+function set_background_opacity(background_actor_name)
+    -- if the prior view is another popup message then don't gray the background again because it will turn a dark shade of gray
+    if (kernel.peekpriorview() ~= kernel.get_session_value("BrowseState.ItemAddedFromView")) then
+        kernel.setactoropacity( background_actor_name , 0 )
+    end
+end
+
+function show_blu_ray_alert( selected_movie, is_added_from_browse, product_to_check, action )
+    view_analytics_event( "context", "blurayWarning" )
+	kernel.setmacro( "MatureWarning:Header",strings.blu_ray_alert_title )
+	kernel.setmacro( "Bluray:Message", strings.blu_ray_alert )
+
+    local render_type = kernel.getviewrendertype();
+    if render_type == "WPF" then
+        kernel.show_bluray_alert(
+            -- time out
+            function()
+            	view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Message view Timed out." )
+            end,
+            -- back button
+		    function()
+			    view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "bluray_message_view:hide()" )
+		    end,
+            -- ok button
+		    function()
+			    kernel.set_session_value("BrowseState.BluRayWarningShown", true)
+			    if purchase_product_in_cart == true then
+				    show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
+					    -- Need to bail here or else lower part of routine will hide the puchase warning before user sees it
+				    return
+			    else
+				    add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+			    end
+		    end
+        )
+    else
+        set_timeout_for_warning_timer()
+	    warning_popup_timer:start()
+	    view_show_safe( "bluray_message_view" )
+	    warning_popup_timer:start()
+	    show_warning_header()
+        set_background_opacity("bluray_scene_background")
+
+
+	    kernel.registeractorhitnotify(
+		    "warning_continue_button",
+		    function()
+			    warning_popup_timer:stop()
+			    kernel.set_session_value("BrowseState.BluRayWarningShown", true)
+			    if purchase_product_in_cart == true then
+				    show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
+					    -- Need to bail here or else lower part of routine will hide the puchase warning before user sees it
+				    return
+			    else
+				    add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+			    end
+		    end
+	    )
+	    kernel.registeractorhitnotify(
+		    "warning_back_button",
+		    function()
+			    warning_popup_timer:stop()
+			    view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "bluray_message_view:hide()" )
+		    end
+	    )
+    end
+end
+
+function show_sub_platform_warning( selected_movie, is_added_from_browse, product_to_check, action )
+	view_analytics_event( "context", "subplatformWarning" )
+	kernel.setmacro( "Subplatform:Header", strings.subplatform_warning_title )
+	kernel.setmacro( "Subplatform:Message", string.gsub( strings.subplatform_warning, "{0}", subplatform_message ) )
+
+    local render_type = kernel.getviewrendertype();
+    if render_type == "WPF" then
+        kernel.show_sub_platform_warning(
+            -- time out
+            function()
+            	view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Message view Timed out." )
+            end,
+            -- back button
+		    function()
+			    view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "subplatform_message_view:hide()" )
+		    end,
+            -- ok button
+		    function()
+				if purchase_product_in_cart == true then
+					show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
+				else
+					add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+				end
+		    end
+        )
+    else
+		view_show_safe( "subplatform_message_view" )
+		show_warning_header()
+		set_timeout_for_warning_timer()
+		warning_popup_timer:start()
+
 		kernel.registeractorhitnotify(
 			"warning_continue_button",
 			function()
-				if product_family.product_family_name == "Movies" then
-					check_alert_table.movie_mature_warning_shown = true
-				elseif product_family.product_family_name == "Games" then
-					check_alert_table.mature_game_warning_shown = true
-				end
-				if blu_ray_movie_in_cart == true and check_alert_table.blu_ray_warning_shown == false then
-					show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
-					kernel.setactoropacity( "bluray_scene_background" , 0 )
-				elseif subplatform_game_in_cart == true then
-					show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
-				elseif purchase_product_in_cart == true then
-					show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
-					kernel.setactoropacity( "purchase_scene_background" , 0 )
+				warning_popup_timer:stop()
+				if purchase_product_in_cart == true then
+					show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
 				else
-					warning_popup_timer:stop()
-					add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
+					add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
 				end
 			end
 		)
@@ -1485,130 +952,20 @@ function show_warning_alert( check_alert_table, selected_movie, i, product_to_ch
 			"warning_back_button",
 			function()
 				warning_popup_timer:stop()
-				view_unwindto_safe( item_added_from_view, true, analytics_view_name .. ":hide()" )
+				view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "subplatform_message_view:hide()" )
 			end
 		)
 		kernel.registeractorhitnotify(
-			"warning_back_button_arrow",
+			"warning_backback_button_arrow",
 			function()
 				warning_popup_timer:stop()
-				view_unwindto_safe( item_added_from_view, true, analytics_view_name .. ":hide()" )
+				view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "subplatform_message_view:hide()" )
 			end
 		)
-	elseif blu_ray_movie_in_cart == true and check_alert_table.blu_ray_warning_shown == false then
-		show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
-	elseif subplatform_game_in_cart == true then
-		show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
-	elseif purchase_product_in_cart == true then
-		show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
-	else
-		add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
 	end
 end
 
-function hide_warning_popup()
-	view_unwindto_safe( item_added_from_view, true, "Message view Timed out." )
-	warning_popup_timer:stop()
-end
-
-function show_warning_popup()
-	set_timeout_for_warning_timer()
-    warning_popup_timer:start()    
-	kernel.showactor( "scene_background" )
-	kernel.showactor( "center_background" )
-	kernel.showactor( "rating_label" )
-	kernel.showactor( "message_label" )
-	kernel.showactor( "mature_rating_back_button" )
-	kernel.showactor( "mature_rating_back_button_arrow" )
-	kernel.showactor( "continue_button" )
-end
-
-function show_blu_ray_alert( check_alert_table, selected_movie, i, product_to_check )
-    set_timeout_for_warning_timer()
-	warning_popup_timer:start()
-	view_show_safe( "bluray_message_view" )
-	warning_popup_timer:start()
-	view_analytics_event( "context", "blurayWarning" )
-	show_warning_header()
-
-	kernel.setmacro( "MatureWarning:Header",strings.blu_ray_alert_title )
-	kernel.setmacro( "Bluray:Message", strings.blu_ray_alert )
-
-	kernel.registeractorhitnotify(
-		"warning_continue_button",
-		function()
-			warning_popup_timer:stop()
-			check_alert_table.blu_ray_warning_shown = true
-			if purchase_product_in_cart == true then
-				show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
-				kernel.setactoropacity( "purchase_scene_background" , 0 )
-					-- Need to bail here or else lower part of routine will hide the puchase warning before user sees it
-				return
-			else
-				add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
-			end
-		end
-	)
-	kernel.registeractorhitnotify(
-		"warning_back_button",
-		function()
-			warning_popup_timer:stop()
-			kernel.setactoropacity( "bluray_scene_background" , 0.6 )
-			view_unwindto_safe( item_added_from_view, true, "bluray_message_view:hide()" )
-		end
-	)
-	kernel.registeractorhitnotify(
-		"warning_backback_button_arrow",
-		function()
-			warning_popup_timer:stop()
-			kernel.setactoropacity( "bluray_scene_background" , 0.6 )
-			view_unwindto_safe( item_added_from_view, true, "bluray_message_view:hide()" )
-		end
-	)
-end
-
-function show_sub_platform_warning( check_alert_table, selected_movie, i, product_to_check )
-	view_show_safe( "subplatform_message_view" )
-	show_warning_header()
-    set_timeout_for_warning_timer()
-	warning_popup_timer:start()
-	view_analytics_event( "context", "subplatformWarning" )
-	kernel.setmacro( "Subplatform:Header", strings.subplatform_warning_title )
-	kernel.setmacro( "Subplatform:Message", string.gsub( strings.subplatform_warning, "{0}", subplatform_message ) )
-
-	kernel.registeractorhitnotify(
-		"warning_continue_button",
-		function()
-			warning_popup_timer:stop()
-			check_alert_table.sub_platform_warning_shown = true
-			if purchase_product_in_cart == true then
-				show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
-			else
-				add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
-			end
-		end
-	)
-	kernel.registeractorhitnotify(
-		"warning_back_button",
-		function()
-			warning_popup_timer:stop()
-			view_unwindto_safe( item_added_from_view, true, "subplatform_message_view:hide()" )
-		end
-	)
-	kernel.registeractorhitnotify(
-		"warning_backback_button_arrow",
-		function()
-			warning_popup_timer:stop()
-			view_unwindto_safe( item_added_from_view, true, "subplatform_message_view:hide()" )
-		end
-	)
-end
-
-function show_purchase_warning( check_alert_table, selected_movie, i, product_to_check )
-	view_show_safe( "purchase_message_view" )
-    set_timeout_for_warning_timer()
-	warning_popup_timer:start()
-	show_warning_header()
+function show_purchase_warning( selected_movie, is_added_from_browse, product_to_check, action )
 	if StoreManager:get_purchase_new_price() ~= nil
 	and StoreManager:has_sell_thru_new_in_stock() then
 		kernel.setmacro( "PurchaseWarning:Header", strings.products_new )
@@ -1617,60 +974,65 @@ function show_purchase_warning( check_alert_table, selected_movie, i, product_to
 		kernel.setmacro( "PurchaseWarning:Header",strings.products_used )
 		kernel.setmacro( "PurchaseWarning:Message",strings.purchase_warning )
 	end
+
 	view_analytics_event( "context", "purchaseWarning" )
 
-	kernel.registeractorhitnotify(
-		"warning_continue_button",
-		function()
-			warning_popup_timer:stop()
-			add_item_to_shopping_cart( selected_movie, i, browse_selection_cart_action, product_to_check )
-		end
-	)
-	kernel.registeractorhitnotify(
-		"warning_back_button",
-		function()
-			warning_popup_timer:stop()
-			kernel.setactoropacity( "purchase_scene_background" , 0.6 )
-			view_unwindto_safe( item_added_from_view, true, "purchase_message_view:hide()" )
-		end
-	)
-	kernel.registeractorhitnotify(
-		"warning_backback_button_arrow",
-		function()
-			warning_popup_timer:stop()
-			kernel.setactoropacity( "purchase_scene_background" , 0.6 )
-			view_unwindto_safe( item_added_from_view, true, "purchase_message_view:hide()" )
-		end
-	)
-	view_analytics_event( "context", "purchaseWarning" )
+    local render_type = kernel.getviewrendertype();
+    if render_type == "WPF" then
+        kernel.show_purchase_warning(
+            -- time out
+            function()
+            	view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Message view Timed out." )
+            end,
+            -- back button
+		    function()
+			    view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "purchase_message_view:hide()" )
+		    end,
+            -- ok button
+		    function()
+				add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+		    end
+        )
+    else
+		view_show_safe( "purchase_message_view" )
+		set_timeout_for_warning_timer()
+		warning_popup_timer:start()
+		show_warning_header()
+		set_background_opacity("purchase_scene_background")
+
+		kernel.registeractorhitnotify(
+			"warning_continue_button",
+			function()
+				warning_popup_timer:stop()
+				add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_check )
+			end
+		)
+		kernel.registeractorhitnotify(
+			"warning_back_button",
+			function()
+				warning_popup_timer:stop()
+				view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "purchase_message_view:hide()" )
+			end
+		)
+	end
 end
 
-function add_item_to_shopping_cart( selected_movie, i, action, product_to_add )
+function add_item_to_shopping_cart( selected_movie, is_added_from_browse, action, product_to_add )
 	if ShoppingCart.pickup_recommendations_shown == true then
 		-- Add directly to the cart then unwind  ('add_movie' has screen specific toggling)
 		ShoppingCart:add_item( selected_movie, 1, action, "Recommendation" )
-		view_unwindto_safe( item_added_from_view, true, "Item added" )
-	elseif i == nil then
+		view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Item added" )
+	elseif is_added_from_browse ~= true then
 		ShoppingCart:add_item( selected_movie, 1, action )
-		if added_from_carousel == false then
-			view_unwindto_safe( product_detail_shown_from_view, true, "Item added from Product Detail view" )
+		if kernel.get_session_value("BrowseState.ProductAddedFromCarousel") == false then
+			view_unwindto_safe( kernel.get_session_value("BrowseState.ProductDetailShownFromView"), true, "Item added from Product Detail view" )
 		else
-			added_from_carousel = false
+			kernel.set_session_value("BrowseState.ProductAddedFromCarousel", false)
 			kernel.executescript( "browse_products" )
 		end
 	else
-		add_movie( product_to_add )
-		view_unwindto_safe( item_added_from_view, true, "Item added" )
-	end
-	browse_selection_cart_action = "rental"
-end
-
-function display_alpha_screen_layout()
-	kernel.hideactor( "selected_label" )
-	kernel.showactor( "alpha_back_ground_image" )
-	kernel.hideactor( "bg_box_top" )
-	for k,v in ipairs( alpha_table ) do
-		kernel.setactorbackgroundcolor( v .. "_label", "black" )
+		add_movie( product_to_add, action )
+		view_unwindto_safe( kernel.get_session_value("BrowseState.ItemAddedFromView"), true, "Item added" )
 	end
 end
 
@@ -1961,7 +1323,7 @@ function get_product_ui_info ( product )
 		    show_buy_button_value = is_purchasable_value and product_info_result["available_and_instock"] and not product_info_result["already_in_cart"]
 		    show_in_purchase_overlay_value = product_info_result["available"] and is_purchasable_value
 		elseif product_family.product_family_name == "Games" then
-			is_purchasable_value = product_info_result["available_and_instock"] and GamesSellThru == true and product.is_sellable == true and EnableSellThruOfUsed == true
+			is_purchasable_value = product_info_result["available_and_instock"] and product.is_sellable == true 
 		end
 	end
 
@@ -1978,6 +1340,7 @@ show_collection_items = function(collection)
 		browse_collection_products = collection.incart_available_kiosk_products
 	end
 	collection_set_number = 1
+    kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
 	view_show( "browse_view_collection" )
 end
 
@@ -2019,19 +1382,19 @@ end
 draw_ada_control = function ()
 	kernel.draw_accessibility_control(
 		"ada",
-		alpha_filtered_products,
+		browse_filtered_products,
 		add_movie_on_hit,
 		switch_product_family_tab_function,
-		browse_filter_family_tracker.selected_family
+        kernel.get_session_value("BrowseState.BrowseTitleFamily")
 		)
 end
 
 draw_top_menu = function()
 	kernel.draw_top_menu(
 		kernel.peekview(),
-		browse_filter_genre_selected,
-		browse_filter_family_tracker.selected_family,
-		DisableGames,
+        kernel.get_session_value("BrowseState.BrowseGenre"),
+        kernel.get_session_value("BrowseState.BrowseTitleFamily"),
+		false,
 		kernel.rental_is_collections_enabled(), 
 		change_genre_filter,
 		change_product_family,
@@ -2042,21 +1405,19 @@ change_genre_filter = function(new_genre_filter_value, new_genre_filter_text)
 	if title_rollup_overlay ~= nil then
 		title_rollup_overlay:hide()
 	end
-	browse_filter_genre_selected = new_genre_filter_value
+	kernel.set_session_value("BrowseState.BrowseGenre", new_genre_filter_value)
 	view_analytics_event( "filterChange", "browse-filter-genre," .. new_genre_filter_text )
-	set_number = 1
+    kernel.set_session_value("BrowseState.PageNumber", 1)
 	if (kernel.peekview() == "browse_view_collections") then
 		view_goback_safe()
 		if (kernel.peekview() ~= "browse_view" and kernel.peekview() ~= "browse_filter_alpha_view")  then
 			view_show_safe("browse_view")
 		end
 	else
-		show_browse_view(10)
+		show_browse_view()
 		draw_top_menu()
-		check_product_availability()
 	end
 	if kernel.peekview() == "browse_filter_alpha_view" then
-		highlight_alphabets()
 	end
 end
 
@@ -2073,11 +1434,12 @@ show_browse_view_collections = function()
 		title_rollup_overlay:hide()
 	end
 	collections_set_number = 1
+    kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
 	view_show("browse_view_collections")
 end
 
 function switch_product_family_tab_function()
-	if browse_filter_family_tracker.selected_family == "Movies" then
+	if kernel.get_session_value("BrowseState.BrowseTitleFamily") == "Movies" then
 		change_product_family("Games")
 	else
 		change_product_family("Movies")
@@ -2088,69 +1450,66 @@ change_product_family = function (new_product_family)
 	if title_rollup_overlay ~= nil then
 		title_rollup_overlay:hide()
 	end
-	browse_filter_family_tracker.selected_family = new_product_family
-	if browse_filter_family_tracker.selected_family == "Games" then
+    kernel.set_session_value("BrowseState.BrowseTitleFamily", new_product_family)
+	if kernel.get_session_value("BrowseState.BrowseTitleFamily") == "Games" then
 		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_games )
-		browse_filter_genre_selected = nil
+        kernel.set_session_value("BrowseState.BrowseGenre", nil)
         if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Blu-ray" or  kernel.get_session_value("BrowseState.BrowseSelectedSort") == "alpha" then
-			browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseTitleType", "All")
             kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
             kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
         elseif kernel.get_session_value("BrowseState.BrowseFilterMode") =="ComingSoon" then
-			browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseTitleType", "All")
             kernel.set_session_value("BrowseState.BrowseSelectedSort", "coming-soon")
             kernel.set_session_value("BrowseState.BrowseFilterMode", "ComingSoon")
         elseif kernel.get_session_value("BrowseState.BrowseFilterMode") =="ForSale" then
-			if ProductCatalog:is_product_available( "for-sale" )
-			and EnableSellThruOfUsed == true
-			and GamesSellThru == true then
-				browse_filter_family_tracker:set_family_type( "for-sale" )
+			if kernel.get_can_sell_used_games() == true then
+                kernel.set_session_value("BrowseState.BrowseTitleType", "All")
                 kernel.set_session_value("BrowseState.BrowseSelectedSort", "for-sale")
                 kernel.set_session_value("BrowseState.BrowseFilterMode", "ForSale")
 			else
-				browse_filter_family_tracker:set_family_type( "ALL" )
+                kernel.set_session_value("BrowseState.BrowseTitleType", "All")
                 kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
                 kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 			end
         else
-            browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseTitleType", "All")
             kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
             kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 		end
 	else
 		kernel.setmacro( "Browse:ProductFamily", strings.browse_family_movies )
-		browse_filter_genre_selected = ALL
+        kernel.set_session_value("BrowseState.BrowseGenre", nil)
         if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Xbox 360" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Xbox One" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "PS2" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "PS3" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "PS4" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Wii" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "NintendoDS" or kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Wii U" then
-			browse_filter_family_tracker:set_family_type( "ALL" )
+            kernel.set_session_value("BrowseState.BrowseTitleType", "All")
             kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
 		end
         if kernel.get_session_value("BrowseState.BrowseFilterMode") == "ForSale" then
-			if ProductCatalog:is_product_available( "for-sale" ) and EnableSellThruOfUsed == true then
-				browse_filter_family_tracker:set_family_type( "for-sale" )
+			if kernel.get_can_sell_used_movies() == true  then
+                kernel.set_session_value("BrowseState.BrowseTitleType", "All")
                 kernel.set_session_value("BrowseState.BrowseSelectedSort", "for-sale")
                 kernel.set_session_value("BrowseState.BrowseFilterMode", "ForSale")
 			else
-				browse_filter_family_tracker:set_family_type( "ALL" )
+                kernel.set_session_value("BrowseState.BrowseTitleType", "All")
                 kernel.set_session_value("BrowseState.BrowseSelectedSort", "Newest")
                 kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
 			end
 		end
 	end
-	view_analytics_event( "filterChange", "browse-filter," .. browse_filter_family_tracker.selected_family )
+	view_analytics_event( "filterChange", "browse-filter," .. kernel.get_session_value("BrowseState.BrowseTitleFamily") )
     if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Newest" then
-		browse_filter_family_tracker:set_family_type( "ALL" )
+		kernel.set_session_value("BrowseState.BrowseTitleType", "All")
 	end
 
-	set_number = 1
+    kernel.set_session_value("BrowseState.PageNumber", 1)
 	while (kernel.peekview() == "browse_view_collections" or kernel.peekview() == "browse_view_collection" or kernel.peekview() == "browse_filter_alpha_view") do
 		view_goback_safe()
 	end
 	if (kernel.peekview() == "browse_view_ada_accessible") then
-		show_browse_view(10)
+		show_browse_view()
 	elseif (kernel.peekview() == "browse_view") then
-		show_browse_view(10)
+		show_browse_view()
 		draw_top_menu()
-		check_product_availability()
 	else
 		view_show("browse_view")
 	end
@@ -2164,8 +1523,8 @@ function check_collections_popup(reason)
 end
 
 function check_coming_soon_collections_popup()
+    local marketing_config = kernel.get_marketing_config()
 	if marketing_config ~= nil and marketing_config.show_collections_popup_on_coming_soon == true then
 		check_collections_popup("coming soon")
 	end
 end
-

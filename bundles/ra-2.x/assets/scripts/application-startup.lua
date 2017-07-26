@@ -14,27 +14,18 @@ if kernel.getmachinevalueordefault( "Store", "OutOfOrder", "false" ) == "true" t
 	kernel.applyunsafeshutdown()
 end
 
+if not in_maintenance_mode() then
+    view_show("application_load_view")
+end
 
 kernel.setmarket( kernel.getmachinevalue( "Store", "Market" ) )
 kernel.setvendor( kernel.getmachinevalue( "Store", "Banner" ) )
 
---DefaultCulture = kernel.getmachinevalueordefault("Store","DefaultCulture","en-US" )
 DefaultCulture = kernel.rental_get_default_culture()
 OtherCulture = kernel.rental_get_alternate_culture()
 
 kernel.log( "DefaultCulture is set to: ".. DefaultCulture )
---if kernel.isculturevalid( DefaultCulture ) == false then
---	kernel.log( "Invalid culture set in Registry: ".. DefaultCulture.. ". Setting DefaultCulture to en-US.")
---	DefaultCulture = "en-US"
---end
---f DefaultCulture == "en-US" then
---	OtherCulture = "es-MX"
---else
---	OtherCulture = "en-US"
---end
 kernel.log( "OtherCulture is set to: ".. OtherCulture )
-
-user_on_flip_view = false
 
 if DataAccessAlreadySent == true then
 	return
@@ -105,7 +96,6 @@ function idle_timer_expire_session()
 		kernel.setculture( "en-US" )
 	end
 	localization_reload_resources()
-	ABE_ON = false
 	view_unwindtobottom_safe( "application_startup::idle_timer_expire_session" )
 end
 
@@ -156,16 +146,19 @@ function idle_timer_show_prompt_english(expire_session)
 end
 
 function is_collections_popup_enabled()
+    local marketing_config = kernel.get_marketing_config()
 	return kernel.get_session_value("BrowseState.CollectionsPopupShown") == false and kernel.rental_is_collections_enabled() and marketing_config ~= nil and marketing_config.show_collections_popup
 end
 
 function is_collections_popup_timer_enabled()
+    local marketing_config = kernel.get_marketing_config()
 	return is_collections_popup_enabled() and marketing_config ~= nil and marketing_config.collections_popup_timer ~= nil and marketing_config.collections_popup_timer > 0
 end
 
 function get_idle_timer_timeout()
 	local timeout = 40000
 	if is_collections_popup_timer_enabled() then
+        local marketing_config = kernel.get_marketing_config()
 		timeout = marketing_config.collections_popup_timer;
 		-- don't allow more than 1 minute or less than 16 seconds
 		if timeout > 60000 then
@@ -191,8 +184,13 @@ function initialize_idle_timer()
 end
 
 local function start_the_application()
-	progress_manager:stop()
-	--kernel.setculture("en-US")
+    if (kernel.peekview() == "application_load_view") then
+        view_popview("remove startup wait view")
+        -- Preload help view because if you are the first person to view help it occassionally shows a black screen 
+        -- for up to 30 seconds and then shows the help screen. This issue should go away after all the views are WPF
+        view_show("help_document_view")
+        view_popview("remove preloaded help document view")
+    end
 	if not run_initial_sync() then
 		initialize_scheduled_tasks()
 		if not kernel.hasvalidcardreader() then
@@ -335,43 +333,14 @@ end
 
 local function load_registry_key_values()
 	-- Load registry values into global variables
-	EnforceShoppingCartItemLimit = kernel.getmachinevalueordefault(
-		"Remote Services\\Merchant Services",
-		"EnforceShoppingCartItemLimit",
-		"True" ) == "True"
 	EnableOfflineBadCardList = kernel.getmachinevalueordefault(
 		"Remote Services\\Merchant Services",
 		"EnableOfflineBadCardList",
 		"True" ) == "True"
-	MaximumShoppingCartItems = tonumber( kernel.getmachinevalueordefault(
-		"Remote Services\\Merchant Services",
-		"MaximumShoppingCartItems",
-		"3" ) )
 	EnableOutOfStockDisplay = kernel.getmachinevalueordefault(
 		"Remote Services\\Inventory Services",
 		"EnableOutOfStockDisplay",
 		"False" ) == "True"
-	EnableQueueBasedRentalLimit = kernel.getmachinevalueordefault(
-		"Remote Services\\Merchant Services",
-		"EnableQueueBasedRentalLimit",
-		"True" ) == "True"
-	EnableSellThruOfUsed = kernel.getmachinevalueordefault(
-		"Remote Services\\Inventory Services",
-		"EnableSellThruOfUsed",
-		"True" ) == "True"
-	--[[DisableGames = kernel.getmachinevalueordefault(
-		"Remote Services\\Inventory Services",
-		"DisableGames",
-		"False" ) == "True"]]
-	DisableGames = false
-	BurnInTimeout = kernel.config_getvalue(
-		"system",
-		"General",
-		"BurnInTimeout" ) or 1800000
-	BurnInViewDuration = kernel.config_getvalue(
-		"system",
-		"General",
-		"BurnInViewDuration" ) or 30000
 	PricingReloadTimeout = tonumber(kernel.getmachinevalueordefault(
 		"Store",
 		"PricingReloadTimeout",
@@ -414,11 +383,7 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"ComingSoonOptIn" ) == true
-	GamesSellThru = kernel.config_getvalue(
-		"system",
-		"General",
-		"GamesSellThru" ) == true
-	HowItWorksToggle = kernel.config_getvalue(
+    HowItWorksToggle = kernel.config_getvalue(
 		"system",
 		"General",
 		"HowItWorksToggle" )
@@ -493,10 +458,6 @@ local function load_registry_key_values()
 		"Store",
 		"GameHasContentWiiU",
 		"false" ) == "true"
-	EnablePlatformScreen = kernel.config_getvalue(
-		"system",
-		"Games",
-		"EnablePlatformScreen" ) == true
 	ForcedAirExchangerConfigured = kernel.config_getvalue(
 		"system",
 		"General",
@@ -517,6 +478,18 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"ShowAuthChangeMessage" ) == true
+	OfflineItemsLimit = kernel.config_getvalue(
+		"system",
+		"General",
+		"OfflineItemsLimit" ) or 3
+	OfflineGameRentalLimit = kernel.config_getvalue(
+		"system",
+		"General",
+		"OfflineGameRentalLimit" ) or 1
+	OfflineGamePurchaseLimit = kernel.config_getvalue(
+		"system",
+		"General",
+		"OfflineGamePurchaseLimit" ) or 2
 end
 
 local function create_coming_soon_cache_tables()
@@ -615,25 +588,12 @@ local function register_default_hardware_handlers()
 					StoreManager:set_number( value )
 					ReservationManager:init()
 					ReservationManager:sync_reservations()
-				elseif path == "Remote Services\\Merchant Services" and key == "EnforeShoppingCartItemLimit" then
-					kernel.log( "Configuration value changed for EnforceShoppingCartItemLimit: " .. value )
-					EnforceShoppingCartItemLimit = value == "True"
-				elseif path == "Remote Services\\Merchant Services" and key == "MaximumShoppingCartItems" then
-					kernel.log( "Configuration value changed for MaximumShoppingCartItems: " .. value )
-					MaximumShoppingCartItems = tonumber( value )
 				elseif path == "Remote Services\\Merchant Services" and key == "EnableOfflineBadCardList" then
 					kernel.log( "Configuration value changed for EnableOfflineBadCardList: " .. value )
 					EnableOfflineBadCardList = value == "True"
 				elseif path == "Remote Services\\Inventory Services" and key == "EnableOutOfStockDisplay" then
 					kernel.log( "Configuration value changed for EnableOutOfStockDisplay: " .. value )
 					EnableOutOfStockDisplay = value == "True"
-					kernel.reenterview()
-				elseif path == "Remote Services\\Merchant Services" and key == "EnableQueueBasedRentalLimit" then
-					kernel.log( "Configuration value changed for EnableQueueBasedRentalLimit: " .. value )
-					EnableQueueBasedRentalLimit = value == "True"
-				elseif path == "Remote Services\\Inventory Services" and key == "EnableSellThruOfUsed" then
-					kernel.log( "Configuration value changed for EnableSellThruOfUsed: " .. value )
-					EnableSellThruOfUsed = value == "True"
 					kernel.reenterview()
 				end
 			end
@@ -727,7 +687,6 @@ idle_timer = newidletimer( "idle_timer" )
 -- Set Global variable values
 --
 --************************************************
-MaximumOfflineGameRentalLimit = 1
 quick_return_is_running = false
 
 -- Nothing will work correctly if these values are not accurate
@@ -739,7 +698,7 @@ max_slots = tonumber( kernel.getmachinevalueordefault( "Store", "MaxSlots",	"0" 
 if max_slots == 0 then max_slots = nil end
 
 max_reco_items = 6
-max_reco_cart_items = 5 -- MaximumShoppingCartItems (Should we use this? Reco Cart Assets are restricted to 5)
+max_reco_cart_items = 5
 
 
 --************************************************
@@ -748,7 +707,8 @@ max_reco_cart_items = 5 -- MaximumShoppingCartItems (Should we use this? Reco Ca
 --
 --************************************************
 load_registry_key_values()
-localization_init()
+kernel.setculture( DefaultCulture )
+localization_reload_resources()
 SetESRBRatings()
 config = kernel.getdictionary( "config" )
 create_coming_soon_cache_tables()
@@ -844,11 +804,6 @@ if #newhardwaremanager():get_hardware_jobs_by_label_contains_text( "maintenance 
 	return
 end
 
-progress_manager = newprogressmanager()
-if not in_maintenance_mode() then
-	progress_manager:start()
-end
-
 kernel.timercreate(
 	"hal_init_status_check_timer",
 	500,
@@ -859,7 +814,9 @@ kernel.timercreate(
 		if initstatus["status"] == "COMPLETED" or initstatus["status"] == "ERRORED" then
 			kernel.log( "HAL init Completed, resuming Rental Application launch." )
 			kernel.timerremove( "hal_init_status_check_timer" )
-			if kernel.peekview() == "maintenance_view" then
+            local maintenance_view_error_code = kernel.getmacro("MaintenanceView:ErrorCode")
+            -- don't remove the maintenance view if there is a data error
+			if kernel.peekview() == "maintenance_view" and maintenance_view_error_code ~= "SOFT-FILE01" then
 				view_popview( "remove maintenance_view from the stack." ) --won't actually change the view since there is nothing underneath it to render yet, but when start view is pushed it'll refresh
 			end
 			verify_hardware_status_before_launching_application()
@@ -879,14 +836,11 @@ kernel.timercreate(
 	PricingReloadTimeout,
 	function()
 		if StoreManager ~= nil
-		and kernel.peekview() == "start_view"
-		and user_on_flip_view == false then
+		and kernel.peekview() == "start_view" then
 			kernel.log( "Reloading Pricing information..." )
 			StoreManager:reload_pricing_data( "_v2" )
 			StoreManager:check_product_catalog_for_games_platforms()
-			if reload_carousel ~= nil then
-				reload_carousel()
-			end
+            kernel.reload_carousel(false)
 		else
 			kernel.log( "Cannot Reload Pricing since User is on the Flip View or the bundle is Not on Start View." )
 		end
@@ -923,8 +877,8 @@ kernel.timercreate("inventory-check-for-new-files-timer",
 					nil, 
 					true,
 					function( jobid, status )
-						if status == "Completed"
-						or status == "Errored" then
+                        
+						if status == "Completed" or status == "Errored" then
 							kernel.log( "> hardwarevmzthin2 complete, now running clean_vmz")
 							hwmgr:clean_vmz( 
 								function()
@@ -974,3 +928,8 @@ HardwareManager:executeimmediate(
 )
 
 kernel.queuekioskfunctioncheck()
+
+kernel.marketing_ad_start_application()
+
+-- force load of first xps help document to speed up load of help screen
+kernel.load_xps_document("document-faqs")

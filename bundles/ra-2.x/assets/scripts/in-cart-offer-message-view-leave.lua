@@ -5,4 +5,3 @@
 --
 
 idle_timer:resume()
-culture_idle_timer:resume()

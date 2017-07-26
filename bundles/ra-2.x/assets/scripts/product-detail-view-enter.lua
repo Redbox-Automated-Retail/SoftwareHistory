@@ -5,13 +5,13 @@
 
 local product_list = {}
 
-local display_product = browse_selection_selected_product
+local display_product = kernel.get_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable")
 -- for the blu-ray filter only (non-ADA), check if there is a parent title rollup product. If so then use that 
-if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Blu-ray" and browse_selection_selected_product.kiosk_product_type ~= 3 
-		and browse_selection_selected_product.title_rollup_product_group_id ~= nil 
-		and kernel.getfilter( "ada_accessible" ) ~= "True" then
+if kernel.get_session_value("BrowseState.BrowseSelectedSort") == "Blu-ray" and display_product.kiosk_product_type ~= 3 
+		and display_product.title_rollup_product_group_id ~= nil 
+		and kernel.get_application_state_value("IsADAAccessible") == false then
 	local parent_product = nil
-	parent_product = kernel.rental_get_title_rollup(browse_selection_selected_product.title_rollup_product_group_id)
+	parent_product = kernel.rental_get_title_rollup(display_product.title_rollup_product_group_id)
 	if parent_product ~= nil and parent_product.kiosk_product_type == 3 then
 		display_product = parent_product
 		if VerboseLogging then
@@ -114,7 +114,7 @@ if VerboseLogging then
 		otherProductId = other_product.product_id
 	end
 		
-	kernel.log("browse_selection_selected_product: " .. tostring(browse_selection_selected_product ~= nil and browse_selection_selected_product.product_id or nil) .. " " .. tostring(browse_selection_selected_product ~= nil and browse_selection_selected_product.long_name or nil))
+	kernel.log("browse_selection_selected_product: " .. tostring(display_product ~= nil and display_product.product_id or nil) .. " " .. tostring(display_product ~= nil and display_product.long_name or nil))
 	kernel.log("Kiosk Product Type: " .. display_product.kiosk_product_type)
 	kernel.log("Product Type: " .. product_type.product_type_name)
 	kernel.log("DVD product: " .. tostring(dvdProductId) .. " " .. tostring(dvdProductName) )
@@ -147,13 +147,13 @@ end
 
 local function get_current_index()
 	-- first check to see if the product_detail_index is still correct.  If not then take the time to loop through the list to find the right one
-	if product_list ~= nil and product_detail_index ~= nil and product_detail_index <= #product_list and product_list[product_detail_index] ~= nil and browse_selection_selected_product ~= nil
-			and product_list[product_detail_index].product_id == browse_selection_selected_product.product_id then
+	if product_list ~= nil and product_detail_index ~= nil and product_detail_index <= #product_list and product_list[product_detail_index] ~= nil and display_product ~= nil
+			and product_list[product_detail_index].product_id == display_product.product_id then
 		return product_detail_index
 	else
 		-- Look through all the products and find the matching index
 		for k,product in ipairs(product_list) do
-			if product ~= nil and browse_selection_selected_product.product_id == product.product_id then
+			if product ~= nil and display_product.product_id == product.product_id then
 				product_detail_index = k
 				return k
 			end
@@ -166,9 +166,9 @@ local function get_product(index, difference)
 	local product = {}
 	product = product_list[index + difference]
 	if product ~= nil then
-		browse_selection_selected_product = product
+        kernel.set_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable", product)
 	end
-	if browse_selection_selected_product ~= nil then
+	if display_product ~= nil then
 		product_detail_index = index + difference
 		--Need to reload product_detail_view, before reloading, pop the stack.
 		view_goback_safe( "product_detail_view", true )
@@ -265,7 +265,7 @@ local show_flag_product_detail = function( releaseDate, days, daysByCalculatedSo
 	if daysByCalculatedSortDate ~= nil
 	and daysByCalculatedSortDate <= 14 
 	--and not is_product_selected(dvd_product) and not is_product_selected(bluray_product) and not is_product_selected(other_product)
-	and browse_filter_family_tracker.selected_family ~= "Games"
+	and kernel.get_session_value("BrowseState.BrowseTitleFamily") ~= "Games"
 	and display_product.genres[1025] ~= nil then
 		kernel.showactor( "flag" )
 		kernel.setactorimage( "flag", "image_flag_red_small" )
@@ -277,7 +277,7 @@ local show_flag_product_detail = function( releaseDate, days, daysByCalculatedSo
 	if daysByCalculatedSortDate ~= nil
 	and daysByCalculatedSortDate <= 14
 	--and not is_product_selected(dvd_product) and not is_product_selected(bluray_product) and not is_product_selected(other_product)
-	and browse_filter_family_tracker.selected_family ~= "Movies"
+	and kernel.get_session_value("BrowseState.BrowseTitleFamily") ~= "Movies"
 	and display_product.genres[1095] ~= nil then
 		kernel.showactor( "flag" )
 		kernel.setactorimage( "flag", "image_flag_red_small" )
@@ -298,7 +298,7 @@ local show_flag_product_detail = function( releaseDate, days, daysByCalculatedSo
 	if days >= 105
 	--and not is_product_selected(dvd_product) and not is_product_selected(bluray_product) and not is_product_selected(other_product)
 	and not product_is_case
-	and browse_filter_family_tracker.selected_family ~= "Games"
+	and kernel.get_session_value("BrowseState.BrowseTitleFamily") ~= "Games"
 	and kernel.is_product_thinned( display_product.product_id ) == true
 	then
 		kernel.showactor( "flag" )
@@ -317,12 +317,12 @@ kernel.registeractorhitnotify("right_arrow",
 idle_timer:start()
 
 -- get the ordered list of products to be shown
-if product_detail_shown_from_view == "browse_view_collection" then
+if kernel.get_session_value("BrowseState.ProductDetailShownFromView") == "browse_view_collection" then
 	product_list = browse_collection_products
 elseif kernel.get_session_value("BrowseState.BrowseSelectedSort") ~= "alpha" then
 	product_list = ProductCatalog:filter_grid()
 else
-	product_list = alpha_filtered_products
+	product_list = browse_filtered_products
 end
 
 -- display rating text and labels
@@ -753,11 +753,10 @@ end
 -- define logic for add and buy buttons
 local add_product_to_cart_as_buy = function(product_to_buy)
 	view_analytics_event( "buttonPress", "buy," .. tostring( product_to_buy.product_id))
-	browse_selection_cart_action = "purchase"
 	if product_to_buy.product_id ~= 1139 then
-		check_for_warning_popups( check_alert_table, product_to_buy, nil )
+		check_for_warning_popups( product_to_buy, false, nil, "purchase" )
 	else
-		add_item_to_shopping_cart( product_to_buy, nil, "purchase" )
+		add_item_to_shopping_cart( product_to_buy, false, "purchase" )
 	end
 end
 
@@ -772,12 +771,12 @@ kernel.registeractorhitnotify(
 		title_rollup_overlay:show( 384, 226, 275, 384, true,
 			dvd_show_in_purchase_overlay and dvd_product or nil, 
 			function()
-				item_added_from_view = kernel.peekview()
+				kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 				add_product_to_cart_as_buy(dvd_product)
 			end, 
 			bluray_show_in_purchase_overlay and bluray_product or nil, 
 			function()
-				item_added_from_view = kernel.peekview()
+				kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 				add_product_to_cart_as_buy(bluray_product)
 			end, 
 			function()
@@ -791,20 +790,19 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"buy_other_product_button",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_buy(display_product)
 	end
 )
 
 local function add_rental_product(product_to_rent)
-	browse_selection_cart_action = "rental"
-	check_for_warning_popups( check_alert_table, product_to_rent, nil )
+	check_for_warning_popups( product_to_rent, false, nil, "rental" )
 end
 
 local add_product_to_cart_as_rent = function( product_to_rent )
-	if from_carousel_collections == true then
+	if kernel.get_session_value("BrowseState.CarouselCollectionsSelected") == true then
 		view_analytics_event( "CarouselCollection", "rent," .. tostring( product_to_rent.product_id ) )
-	elseif from_carousel == true then
+	elseif kernel.get_session_value("BrowseState.ProductSelectedFromCarousel") == true then
 		view_analytics_event( "Carousel", "rent," .. tostring( product_to_rent.product_id ) )
 	end
 	if browse_collection ~= nil then
@@ -858,14 +856,14 @@ end
 kernel.registeractorhitnotify(
 	"add_button_dvd",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_rent(dvd_product)
 	end
 )
 kernel.registeractorhitnotify(
 	"plus_button_dvd",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_rent(dvd_product)
 	end
 )
@@ -873,14 +871,14 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"add_button_bluray",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_rent(bluray_product)
 	end
 )
 kernel.registeractorhitnotify(
 	"plus_button_bluray",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_rent(bluray_product)
 	end
 )
@@ -888,14 +886,14 @@ kernel.registeractorhitnotify(
 kernel.registeractorhitnotify(
 	"add_button_other_product",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_rent(other_product)
 	end
 )
 kernel.registeractorhitnotify(
 	"plus_button_other_product",
 	function()
-		item_added_from_view = kernel.peekview()
+		kernel.set_session_value("BrowseState.ItemAddedFromView", kernel.peekview())
 		add_product_to_cart_as_rent(other_product)
 	end
 )
@@ -1104,4 +1102,28 @@ if kernel.rental_is_collections_enabled() == true and display_product.coming_soo
 		end)
 else
 	kernel.hideactor("collection_button")
+end
+
+local ad = kernel.marketing_ad_get_screen_ad( "TitleDetail", true )
+if ad ~= nil and ad.visible == true then
+    kernel.showactor( "ad" )
+    kernel.setactorimage( "ad", ad.image_name )
+    kernel.setactorheight( "selected_product_image", 468 )
+    kernel.setactorwidth( "selected_product_image", 336 )
+    kernel.setactorx( "selected_product_image", 115 )
+    kernel.setactory( "selected_product_image", 160 )
+    kernel.setactorx( "flag", 94 )
+    kernel.setactory( "flag", 117 )
+    kernel.setactorwidth( "coming_soon_violator", 337 )
+    kernel.setactorx( "coming_soon_violator", 115 )
+    kernel.setactory( "selected_product_title", 160 )
+    kernel.setactory( "selected_product_Rating", 236 )
+    kernel.setactory( "selected_product_Rating_big", 236 )
+    kernel.setactory( "selected_product_Media", 236 )
+    kernel.setactory( "selected_product_Media_big", 236 )
+    kernel.setactory( "selected_product_running_time", 236 )
+    kernel.setactory( "selected_product_national_street_date", 236 )
+    kernel.setactory( "selected_product_CC", 236 )
+    kernel.setactorheight( "selected_product_description", 200 )
+    kernel.setactory( "selected_product_description", 280 )
 end

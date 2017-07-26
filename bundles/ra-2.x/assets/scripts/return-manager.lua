@@ -29,17 +29,14 @@ function newreturnmanager( shopping_cart )
             if (message == strings.hardware_error_message) then
                 kernel.show_message_popup_view_hardware_error(
 				    function()
-					    ABE_ON = false
 					    view_unwindtobottom_safe( "ReturnManager:show_message timer expired" )
 				    end,
 				    function()
-					    ABE_ON = false
 					    view_unwindtobottom_safe( "ReturnManager:show_message second button clicked" )
 				    end
                 )
             else
                 -- this code should never run but just in case...
-			    ABE_ON = false
 			    view_unwindtobottom_safe( "ReturnManager:show_message unexpected message text." )
             end
 		else
@@ -72,7 +69,6 @@ function newreturnmanager( shopping_cart )
 				    kernel.setculture( "en-US" )
 			    end
 			    localization_reload_resources()
-			    ABE_ON = false
 			    view_unwindtobottom_safe( "ReturnManager:show_success_message switch_culture_unwind()" )
 		    end
 		    if self.shopping_cart ~= nil and self.shopping_cart.session_id ~= nil then
@@ -88,11 +84,9 @@ function newreturnmanager( shopping_cart )
 	t.show_backward_inserted_message = function( self )
         kernel.show_message_popup_view_return_backward_inserted(
 			function()
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message timer expired" )
 			end,
 			function()
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message second button clicked" )
 			end
         )
@@ -104,11 +98,9 @@ function newreturnmanager( shopping_cart )
 	t.show_unrecognized_barcode_returned_message = function( self )
         kernel.show_message_popup_view_return_unrecognized_barcode(
 			function()
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager:show_unrecognized_barcode_returned_message timer" )
 			end,
 			function()
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager:show_unrecognized_barcode_returned_message continue button" )
 			end
         )
@@ -152,7 +144,6 @@ function newreturnmanager( shopping_cart )
 					jobid,
 					"ReturnEndWithBackwardDisc, Customer Return")
 				-- Here maintenance view check is done in the stack
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager: ReturnEndWithBackwardDisc" )
 			end
 
@@ -464,7 +455,6 @@ function newreturnmanager( shopping_cart )
             kernel.ttsinreturnflow( false )
 			if not in_maintenance_mode() then
 				kernel.log("return-product view_unwindtobottom()")
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager: unable to create_return" )
 			end
 			return
@@ -483,9 +473,7 @@ function newreturnmanager( shopping_cart )
 				self.shopping_cart:close_analytics( "True" )
 
 				kernel.log( "User cancelled return: " .. tostring( result.job_id ) )
-				start_idle_timer:reset()
 				kernel.hardwareterminatejob( result.job_id )
-				ABE_ON = false
 				view_unwindtobottom_safe( "ReturnManager: return_back_button pressed" )
 			end 
         )

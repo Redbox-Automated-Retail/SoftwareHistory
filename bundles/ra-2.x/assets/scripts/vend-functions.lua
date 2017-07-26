@@ -1,12 +1,12 @@
 --
 -- vend-functions.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- Copyright (C) 2016 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
 function newvendmanager()
 	local t = {}
-
+    coming_soon_product_list = nil
 	t.vending = false
 	t.aborted_jobs = {}
 	t.job_id = nil
@@ -15,35 +15,8 @@ function newvendmanager()
 
 	t.message_view_manager = newmessageviewmanager()
 
-	t.error_message_view_manager = newerrormessageviewmanager()
-
 	t.init = function( self )
 		self.vending = false
-	end
-
-	t.show_message = function( message, unwind_views )
-		if unwind_views == true then
-			t.message_view_manager:show()
-			t.message_view_manager:hide_title()
-			t.message_view_manager:set_message( message )
-			t.message_view_manager:start_timer(
-				function()
-					ABE_ON = false
-					view_unwindtobottom_safe( "vend_functions::show_message:idle_timer" )
-				end
-			)
-			t.message_view_manager:hide_first_button()
-			t.message_view_manager:show_second_button(
-				strings.continue_button,
-				function()
-					ABE_ON = false
-					view_unwindtobottom_safe( "vend_functions::show_message:continue_button" )
-				end
-			)
-		else
-			t.error_message_view_manager:show()
-			t.error_message_view_manager:set_message( message )
-		end
 	end
 
 	t.prepos_vend_abort = function( self )
@@ -56,25 +29,31 @@ function newvendmanager()
 
 	t.prepos_vend_continue = function( self )
 		HardwareManager.hardware_event_responders.VendGraphicDisplay = function( args, jobid )
-			if kernel.peekview() ~= "vsm_view" and kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil then
-				kernel.popmovie()
-				view_show_safe( "vsm_view" )
-				kernel.setactorimage( "vsm_image_placeholder", "vsm_image" )
+            kernel.log( "VendGraphicDisplay" )
+            local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
+            local show_ad = ad ~= nil and ad.visible == true
+			if show_ad == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil then
+                if kernel.peekview() ~= "vsm_view"  then
+                    kernel.log( "Show VSM" )
+                    t.show_vsm_view(ad)
+                end
+            elseif coming_soon_product_list ~= nil then
+                view_show_safe( "coming_soon_view" )
 			else
 				view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.VendGraphicDisplay" )
-				kernel.popmovie()
-				kernel.pushmovie( "vending_movie", { x = 0, y = 0, width = 1024, height = 768 } )
+                kernel.log( "Show Animation PleaseWait" )
+                kernel.vend_view_show_animation("PleaseWait")
 			end
 		end
 		HardwareManager.hardware_event_responders.PickupGraphicDisplay = function( args, jobid )
 			--Display the vend animation once the kiosk starts pushing the disc out of the picker.
 			view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.PickupGraphicDisplay" )
-			kernel.popmovie()
-			clear_coming_soon_vend_screen_if_up()
 			if ShoppingCart.pickup_recommendations_shown == true then
-				kernel.pushmovie( "reco_vend_movie", { x = 0, y = 112, width = 1024, height = 543 } )
+                kernel.log( "Show Animation RecomendationOnPickupVend" )
+                kernel.vend_view_show_animation("RecomendationOnPickupVend")
 			else
-				kernel.pushmovie( "vend_movie", { x = 0, y = 112, width = 1024, height = 543 } )
+                kernel.log( "Show Animation RentalsOnTheirWay (PickupGraphicDisplay)" )
+                kernel.vend_view_show_animation("RentalsOnTheirWay")
 			end
 		end
 		if quick_return_is_running == true then
@@ -217,9 +196,6 @@ function newvendmanager()
 						if vended_count < #barcodes_to_vend then
 							kernel.log( "VendManager: vended_count = " .. tostring( vended_count ) .. ", #barcodes_to_vend = " .. tostring( #barcodes_to_vend ) )
 							kernel.log( "VendManager: Showing customer friendly error message." )
-							t.message_view_manager:show()
-							t.message_view_manager:set_message_header( strings.vend_error_title )
-							t.message_view_manager:set_message_text( strings.vend_error_message )
 							local continue_handler = function()
 								kernel.log( "VendManager:bad_codes follows:" )
 								for _, v in ipairs( bad_codes ) do
@@ -227,16 +203,12 @@ function newvendmanager()
 								end
 								local did_handle = handle_critical_hardware_errors( "vend", job_result.job_id, bad_codes )
 								if not did_handle then
-									ABE_ON = false
 									view_unwindtobottom_safe( "handle_critical_hardware_errors" )
 								end
 							end
-							t.message_view_manager:hide_first_button()
-							t.message_view_manager:show_second_button( strings.continue_button, continue_handler )
-							t.message_view_manager:start_timer( continue_handler )
+                            kernel.show_message_popup_view_vend_error(continue_handler, continue_handler)
 						else
 							kernel.log( "VendManager: Vend was successful." )
-							ABE_ON = false
 							view_unwindtobottom_safe( "prepos_vend:vend successful" )
 						end
 				--    end,
@@ -271,25 +243,42 @@ function newvendmanager()
 		self.vending = true
 	end
 
-	t.do_movie = function()
+    t.show_vsm_view = function(ad)
+        local show_ad = ad ~= nil and ad.visible == true
+		view_show_safe( "vsm_view" )
+         if show_ad == true then
+            kernel.marketing_ad_get_screen_ad( "VSM", true )
+            kernel.setactorimage( "vsm_image_placeholder", ad.image_name )
+         else
+		    kernel.setactorimage( "vsm_image_placeholder", "vsm_image" )
+         end
+    end
+
+    t.setup_vsm_view = function()
 		local vsm_program_name = kernel.getresourceproperty( "vsm_image", "program_name" )
-		if vsm_program_name ~= nil then
-			view_show_safe( "vsm_view" )
-			kernel.setactorimage( "vsm_image_placeholder", "vsm_image" )
-			UpdateVSMImpression( vsm_program_name )
-			kernel.analyticsaddattribute( "vendingMovie", "type", "Marketing", ShoppingCart.session_id )
-			kernel.analyticsaddattribute( "vendingMovie", "programName", vsm_program_name, ShoppingCart.session_id )
-		else
-			kernel.pushmovie( "vending_movie", { x = 0, y = 0, width = 1024, height = 768 } )
-			kernel.analyticsaddattribute( "vendingMovie", "type", "Default", ShoppingCart.session_id )
-		end
+        local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
+        local show_ad = ad ~= nil and ad.visible == true
+		if show_ad == true or vsm_program_name ~= nil then
+            t.show_vsm_view(ad)
+            if show_ad == false then
+			    UpdateVSMImpression( vsm_program_name )
+			    kernel.analyticsaddattribute( "vendingMovie", "type", "Marketing", ShoppingCart.session_id )
+			    kernel.analyticsaddattribute( "vendingMovie", "programName", vsm_program_name, ShoppingCart.session_id )
+            end
+        end
+    end
+
+	t.show_animation = function()
+        if kernel.vend_view_get_animation() == "None" then
+            kernel.log( "Show Animation PleaseWait" )
+            kernel.vend_view_show_animation("PleaseWait")
+		    kernel.analyticsaddattribute( "vendingMovie", "type", "Default", ShoppingCart.session_id )
+        end
 	end
 
 	t.show_movie_or_coming_soon = function( barcodes_to_vend )
 		if safe_to_change_view() == true
-		and kernel.peekmovie() ~= "vend_movie"
-		and kernel.peekmovie() ~= "reco_vend_movie"
-		and kernel.peekmovie() ~= "vending_movie"
+        and kernel.vend_view_get_animation() == "None"
 		and kernel.peekview() ~= "vsm_view"
 		then
 			if ( barcodes_to_vend == nil or #barcodes_to_vend == 0 )
@@ -302,15 +291,12 @@ function newvendmanager()
 
 			kernel.analyticsaddnode( "session", "vendingMovie", ShoppingCart.session_id )
 
-
-			if kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil
+            local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
+			if ( ad ~= nil and ad.visible == true ) or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil
 			or ( #ShoppingCart.items == 0 and (barcodes_to_vend == nil or #barcodes_to_vend == 0 ))
 			then
-				clear_coming_soon_vend_screen_if_up()
-				t.do_movie()
+                t.setup_vsm_view()
 			else
-				show_coming_soon_vend_screen()
-
 				kernel.timercreate(
 					"coming-soon-timer",
 					5,
@@ -345,10 +331,12 @@ function newvendmanager()
 							if coming_soon_scene_manager ~= nil then
 								coming_soon_scene_manager:clear()
 							end
-							t.do_movie()
+                            t.show_animation()
 						else
 							kernel.log( ">  generator results being displayed" )
-							show_coming_soon_products( results )
+                            -- yup another ugly global
+                            coming_soon_product_list = results
+                            view_show_safe( "coming_soon_view" )
 							kernel.analyticsaddattribute( "vendingMovie", "type", "comingSoon", ShoppingCart.session_id )
 						end
 

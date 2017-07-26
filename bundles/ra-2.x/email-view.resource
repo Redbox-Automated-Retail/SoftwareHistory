@@ -17,8 +17,17 @@
 				y="0"
 				image="image_tickets_red_background"
 				optionFlags="Image"	/>
-
-			<actor
+      
+      <actor
+				name="ad"
+				x="148"
+				y="25"
+				width="728"
+				height="90"
+        visible="false"
+				optionFlags="Image" />
+      
+      <actor
 				name="email_message_header"
 				x="68"
 				y="160"

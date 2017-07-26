@@ -8,7 +8,7 @@
 kernel.disableactor( "return_button" )
 
 -- Start an analytics session if it does not already exist and capture button press on start_view
-view_analytics_start( kernel.get_start_over_view_name(), "Return" )
+kernel.view_analytics_start("Return")
 view_analytics_event( "buttonPress", "return_button" )
 
 local return_manager = newreturnmanager( ShoppingCart )
