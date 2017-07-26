@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -9,6 +8,7 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 
 	public override ErrorCodes Execute()
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		int attempts = Attempts;
 		LogHelper.Instance.Log("[RejectDisk]: called with {0} tries", Attempts);
 		int ms = 1000;
@@ -45,11 +45,10 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 				if (flag)
 				{
 					PickerBoard.PushOut();
-					PerfFunctions.Wait(ms);
+					service.Wait(ms);
 					continue;
 				}
-				IControlResponse controlResponse2 = Controller.RollerToPosition(RollerPosition.Position3, 8000);
-				if (controlResponse2.Success)
+				if (Controller.RollerToPosition(RollerPosition.Position3, 8000).Success)
 				{
 					pickerSensorReadResult = Controller.ReadSensors();
 					if (pickerSensorReadResult.Error != ErrorCodes.Success)
@@ -69,12 +68,12 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 						return ErrorCodes.PickerFull;
 					}
 				}
-				PerfFunctions.Wait(ms);
+				service.Wait(ms);
 			}
 			else if (flag)
 			{
 				PickerBoard.PushOut();
-				PerfFunctions.Wait(1500);
+				service.Wait(1500);
 			}
 		}
 		pickerSensorReadResult = Controller.ReadSensors();

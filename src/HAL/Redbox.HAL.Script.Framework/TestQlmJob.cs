@@ -1,6 +1,5 @@
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -20,17 +19,19 @@ internal sealed class TestQlmJob : NativeJobAdapter
 			AddError("The kiosk is not configured for a QLM.");
 			return;
 		}
-		if (QLM.Deck == null)
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
+		if (service2.QlmDeck == null)
 		{
 			applicationLog.Write("The kiosk is not configured with a QLM.");
 			base.Context.CreateInfoResult("SyncFailure", "Kiosk is not configured for a QLM.");
 			AddError("The kiosk is not configured for a QLM.");
 			return;
 		}
-		QlmStatus status = QLM.GetStatus();
-		if (QlmStatus.Engaged != status)
+		QlmStatus qlmStatus = service.GetQlmStatus();
+		if (QlmStatus.Engaged != qlmStatus)
 		{
-			applicationLog.Write($"The QLM status instruction returned {status.ToString()}");
+			applicationLog.Write($"The QLM status instruction returned {qlmStatus.ToString()}");
 			base.Context.CreateInfoResult("SyncFailure", "The QLM is not engaged.");
 			AddError("There is no QLM in the bay.");
 			return;
@@ -42,7 +43,8 @@ internal sealed class TestQlmJob : NativeJobAdapter
 			base.Context.CreateInfoResult("SyncFailure", "There is no disk in the picker.");
 			return;
 		}
-		int number = QLM.Deck.Number;
+		IRuntimeService service3 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		int number = service2.QlmDeck.Number;
 		int[] targetSlots = TargetSlots;
 		foreach (int num in targetSlots)
 		{
@@ -52,14 +54,14 @@ internal sealed class TestQlmJob : NativeJobAdapter
 				AddError("Unable to PUT disk.");
 				return;
 			}
-			PerfFunctions.Wait(1000);
+			service3.Wait(1000);
 			if (!MoveAndGet(number, num))
 			{
 				base.Context.CreateResult("SyncFailure", "Filing the disk to the QLM failed.", number, num, null, null, null);
 				AddError("Failure to get disk.");
 				return;
 			}
-			PerfFunctions.Wait(500);
+			service3.Wait(500);
 		}
 		applicationLog.Write("The sync completed successfully.");
 		base.MotionService.MoveVend(MoveMode.Get, applicationLog);

@@ -4,7 +4,7 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class EmulatedPutResult : IPutResult
 {
-	public bool Success => ErrorCodes.Success == Code;
+	public bool Success => Code == ErrorCodes.Success;
 
 	public bool IsSlotInUse => ErrorCodes.SlotInUse == Code;
 

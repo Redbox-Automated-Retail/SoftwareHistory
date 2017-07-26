@@ -24,8 +24,7 @@ public sealed class SetConfigInstruction : Instruction
 		if (result.Errors.Count <= 0)
 		{
 			string value2 = base.Operands[0].Value;
-			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-			service.SetPropertyByName(keyValuePair.Value, value2, value);
+			ServiceLocator.Instance.GetService<IConfigurationService>().SetPropertyByName(keyValuePair.Value, value2, value);
 		}
 	}
 }

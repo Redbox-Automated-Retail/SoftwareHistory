@@ -26,9 +26,9 @@ internal sealed class CortexSettingsValidator
 	internal bool Validate(IMessageSink sink)
 	{
 		string[] registers = Registers;
-		foreach (string text in registers)
+		for (int i = 0; i < registers.Length; i++)
 		{
-			string[] array = text.Split(Separator);
+			string[] array = registers[i].Split(Separator);
 			GetRegisterValue getRegisterValue = new GetRegisterValue(array[0], array[1]);
 			getRegisterValue.Send(Service.ConfiguredPort());
 			if (!getRegisterValue.IsCorrectlySet)

@@ -11,8 +11,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 public sealed class InventoryService : IInventoryService, IConfigurationObserver, IPackageInstallHandler
 {
-	private const int MaximumBarcodeLength = 100;
-
 	private readonly IDataTable<ILocation> Table;
 
 	private readonly string EmptyStuckLogFile;
@@ -20,6 +18,8 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 	private readonly ReaderWriterLockSlim Lock = new ReaderWriterLockSlim();
 
 	private ILocation[][] LocationInfo;
+
+	private const int MaximumBarcodeLength = 100;
 
 	public bool IsTrackingEmptyStuck { get; private set; }
 
@@ -34,15 +34,13 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 
 	public void OnNewInstall(ErrorList errors, TextWriter writer)
 	{
-		GampHelper gampHelper = new GampHelper();
-		int platterSlots = gampHelper.GetPlatterSlots();
+		int platterSlots = new GampHelper().GetPlatterSlots();
 		int registrySlotCount = ControllerConfiguration.Instance.RegistrySlotCount;
 		ITableTypeFactory factory = ServiceLocator.Instance.GetService<ITableTypeFactory>();
 		if (platterSlots == registrySlotCount)
 		{
 			List<ILocation> locs = new List<ILocation>();
-			IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-			service.ForAllDecksDo(delegate(IDeck deck)
+			ServiceLocator.Instance.GetService<IDecksService>().ForAllDecksDo(delegate(IDeck deck)
 			{
 				for (int i = 1; i <= deck.NumberOfSlots; i++)
 				{
@@ -120,8 +118,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 	public bool EmptyCountExceeds(int numberOfEmpty)
 	{
 		Predicate<ILocation> predicate = (ILocation loc) => !loc.Excluded && loc.ID == "EMPTY";
-		int num = ComputeCount(predicate, excludeQLM: true);
-		return num > numberOfEmpty;
+		return ComputeCount(predicate, excludeQLM: true) > numberOfEmpty;
 	}
 
 	public ILocation Lookup(string id)
@@ -244,7 +241,8 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 		}
 		using (new WithWriteLock(Lock))
 		{
-			location.StuckCount++;
+			int stuckCount = location.StuckCount + 1;
+			location.StuckCount = stuckCount;
 			LogFormattedMessage("Incrementing Deck = {0} Slot = {1}; current stuck count = {2}", location.Deck, location.Slot, location.StuckCount);
 			if (location.StuckCount >= ControllerConfiguration.Instance.MarkLocationUnknownThreshold && location.ID != "UNKNOWN")
 			{
@@ -393,8 +391,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 					}
 					using (new WithWriteLock(Lock))
 					{
-						IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-						service.ForAllDecksDo(delegate(IDeck deck)
+						ServiceLocator.Instance.GetService<IDecksService>().ForAllDecksDo(delegate(IDeck deck)
 						{
 							if (deck.Number - 1 < 0 || deck.Number - 1 > LocationInfo.GetLength(0))
 							{
@@ -428,8 +425,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 	{
 		IDataTableService service = ServiceLocator.Instance.GetService<IDataTableService>();
 		Table = service.GetTable<ILocation>();
-		IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-		string path = service2.CreateSubpath("ErrorLogs");
+		string path = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("ErrorLogs");
 		EmptyStuckLogFile = Path.Combine(path, "ErrorLocationsHistory.txt");
 		ControllerConfiguration.Instance.AddObserver(this);
 	}
@@ -481,8 +477,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 	{
 		using (new WithWriteLock(Lock))
 		{
-			IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-			service.ForAllDecksDo(delegate(IDeck deck)
+			ServiceLocator.Instance.GetService<IDecksService>().ForAllDecksDo(delegate(IDeck deck)
 			{
 				int number = deck.Number;
 				if (LocationInfo[number - 1].Length != deck.NumberOfSlots)
@@ -501,6 +496,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 								ILocation underLock = GetUnderLock(deck.Number, i);
 								if (underLock.Excluded != quadrant.IsExcluded)
 								{
+									ResetLocation(underLock);
 									underLock.Excluded = quadrant.IsExcluded;
 									list.Add(underLock);
 								}
@@ -547,8 +543,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
 		for (int i = 0; i < LocationInfo.GetLength(0); i++)
 		{
-			IDeck byNumber = service.GetByNumber(i + 1);
-			if (byNumber.IsQlm)
+			if (service.GetByNumber(i + 1).IsQlm)
 			{
 				continue;
 			}
@@ -587,8 +582,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 		}
 		bool attributeValue5 = XmlNodeExtensions.GetAttributeValue(node, "excluded", defaultValue: false);
 		int attributeValue6 = XmlNodeExtensions.GetAttributeValue(node, "emptyStuckCount", 0);
-		string attributeValue7 = XmlNodeExtensions.GetAttributeValue(node, "merchFlags", "None");
-		MerchFlags flags = Enum<MerchFlags>.ParseIgnoringCase(attributeValue7, MerchFlags.None);
+		MerchFlags flags = Enum<MerchFlags>.ParseIgnoringCase(XmlNodeExtensions.GetAttributeValue(node, "merchFlags", "None"), MerchFlags.None);
 		if (!attributeValue.HasValue || !attributeValue2.HasValue || string.IsNullOrEmpty(attributeValue3))
 		{
 			errors.Add(Error.NewError("P004", "A valid deck, slot, and id must be specified for each item element.", "Add a valid item element with a deck, slot, and id attributes."));
@@ -614,8 +608,7 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 			LogHelper.Instance.Log($"Deck {byNumber.Number} expects a value between 1 and {byNumber.NumberOfSlots}, received {attributeValue2}", LogEntryType.Error);
 			return null;
 		}
-		ITableTypeFactory service2 = ServiceLocator.Instance.GetService<ITableTypeFactory>();
-		return service2.NewLocation(attributeValue.Value, attributeValue2.Value, attributeValue3, returnTime, attributeValue5, attributeValue6, flags);
+		return ServiceLocator.Instance.GetService<ITableTypeFactory>().NewLocation(attributeValue.Value, attributeValue2.Value, attributeValue3, returnTime, attributeValue5, attributeValue6, flags);
 	}
 
 	private ILocation GetUnderLock(int deck, int slot)

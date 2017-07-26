@@ -34,7 +34,6 @@ public sealed class SyncInstruction : Instruction
 			}
 		}
 		SyncDecorator syncDecorator = null;
-		SyncResult syncResult = SyncHelper.SyncSlot(decorator: (SyncType.Location != syncType) ? ((SyncDecorator)new StandardSyncDecorator(context, result, location)) : ((SyncDecorator)new SyncLocationDecorator(context, result, location)), result: result, context: context, loc: location);
-		context.PushTop(syncResult.ToString().ToUpper());
+		context.PushTop(SyncHelper.SyncSlot(decorator: (SyncType.Location != syncType) ? ((SyncDecorator)new StandardSyncDecorator(context, result, location)) : ((SyncDecorator)new SyncLocationDecorator(context, result, location)), result: result, context: context, loc: location).ToString().ToUpper());
 	}
 }

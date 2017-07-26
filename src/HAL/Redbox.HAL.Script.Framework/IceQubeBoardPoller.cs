@@ -11,14 +11,7 @@ internal sealed class IceQubeBoardPoller : ScriptPoller, IConfigurationObserver
 
 	protected override string JobName => "check-iceqube-board";
 
-	protected override bool IsConfigured
-	{
-		get
-		{
-			IAirExchangerService service = ServiceLocator.Instance.GetService<IAirExchangerService>();
-			return service.Configured;
-		}
-	}
+	protected override bool IsConfigured => ServiceLocator.Instance.GetService<IAirExchangerService>().Configured;
 
 	protected override int PollSleep => 600000;
 
@@ -56,11 +49,8 @@ internal sealed class IceQubeBoardPoller : ScriptPoller, IConfigurationObserver
 
 	internal override void Initialize()
 	{
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
-		attributeXmlConfiguration.AddObserver(this);
-		IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
-		service2.AddObserver(this);
+		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
+		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private IceQubeBoardPoller()

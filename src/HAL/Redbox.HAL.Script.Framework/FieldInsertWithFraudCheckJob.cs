@@ -56,6 +56,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 	{
 		base.Context.Send($"ItemPlacementDone:{putResult.StoredMatrix}");
 		base.Context.CreateResult("ItemReturned", "The item was successfully returned.", putResult.PutLocation.Deck, putResult.PutLocation.Slot, putResult.StoredMatrix, null, null);
+		base.Context.AppLog.WriteFormatted("Item {0} filed at Deck = {1} Slot = {2}", putResult.StoredMatrix, putResult.PutLocation.Deck, putResult.PutLocation.Slot);
 	}
 
 	protected override void ExecuteInner()
@@ -147,7 +148,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 		base.Context.CreateInfoResult("BarcodeRead", "The returned item's barcode.", scanResult.ScannedMatrix);
 		applicationLog.Write($"The ID in the picker: {scanResult.ScannedMatrix}");
 		base.Context.Send($"ReturnEnd:{scanResult.ScannedMatrix}");
-		IFraudScanResult fraudScanResult = fraudValidator.Validate(scanResult.ScannedMatrix);
+		IFraudScanResult fraudScanResult = fraudValidator.MultipassValidate(scanResult.ScannedMatrix);
 		fraudValidator.Publish(fraudScanResult, scanResult.ScannedMatrix);
 		if (fraudScanResult.ScanError != ErrorCodes.Success || !fraudScanResult.Valid)
 		{
@@ -155,6 +156,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 			ReturnItem();
 			return;
 		}
+		applicationLog.WriteFormatted("Fraud markers detected on item {0}", scanResult.ScannedMatrix);
 		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context);
 		if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
 		{

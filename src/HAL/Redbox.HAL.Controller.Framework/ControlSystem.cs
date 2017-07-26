@@ -7,9 +7,7 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 {
-	private const int OpTries = 2;
-
-	internal readonly ControlBoards[] ControllerBoards = new ControlBoards[3]
+	private readonly ControlBoards[] ControllerBoards = new ControlBoards[3]
 	{
 		ControlBoards.Serial,
 		ControlBoards.Picker,
@@ -22,118 +20,100 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	private readonly IVendDoor VendDoor;
 
-	private readonly bool UseAltRinglightCommand;
-
-	public TrackState TrackState => Track.TrackState;
+	private const int OpTries = 2;
 
 	public VendDoorState VendDoorState { get; private set; }
 
-	public IControlResponse StopRoller()
-	{
-		return ExecuteControllerCommand(CommandType.RollerStop);
-	}
+	public TrackState TrackState => Track.TrackState;
 
-	public IControlResponse StartRollerIn()
+	public IControlResponse Initialize()
 	{
-		return ExecuteControllerCommand(CommandType.RollerIn);
-	}
-
-	public IControlResponse StartRollerOut()
-	{
-		return ExecuteControllerCommand(CommandType.RollerOut);
-	}
-
-	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors)
-	{
-		CommandType type = CommandType.RollerToPos1;
-		switch (position)
-		{
-		case RollerPosition.Position1:
-			type = CommandType.RollerToPos1;
-			break;
-		case RollerPosition.Position2:
-			type = CommandType.RollerToPos2;
-			break;
-		case RollerPosition.Position3:
-			type = CommandType.RollerToPos3;
-			break;
-		case RollerPosition.Position4:
-			type = CommandType.RollerToPos4;
-			break;
-		case RollerPosition.Position5:
-			type = CommandType.RollerToPos5;
-			break;
-		case RollerPosition.Position6:
-			type = CommandType.RollerToPos6;
-			break;
-		}
-		CoreResponse coreResponse = ExecuteControllerCommand(type, opTimeout);
-		if (coreResponse.Error != ErrorCodes.Success && logSensors)
-		{
-			LogHelper.Instance.Log(LogEntryType.Error, "Roller to position {0} timed out.", position.ToString());
-			LogPickerSensorState(LogEntryType.Error);
-		}
-		return coreResponse;
-	}
-
-	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout)
-	{
-		return RollerToPosition(position, opTimeout, logSensors: true);
-	}
-
-	public IPickerSensorReadResult ReadSensors()
-	{
-		if (TrackState.Closed != Track.TrackState)
-		{
-			IControlResponse controlResponse = TrackClose();
-			if (!controlResponse.Success)
-			{
-				LogHelper.Instance.Log(LogEntryType.Error, "[ControlSystem] Track close reported an error {0} during picker sensor read.", controlResponse.ToString());
-				return new PickerSensorReadResult(ErrorCodes.TrackCloseTimeout);
-			}
-		}
-		return ReadPickerSensors();
-	}
-
-	public IPickerSensorReadResult ReadImmediateSensors()
-	{
-		return ReadPickerSensors();
-	}
-
-	public IControlResponse SetSensors(bool on)
-	{
-		return ExecuteControllerCommand(on ? CommandType.SensorBarOn : CommandType.SensorBarOff);
-	}
-
-	public ErrorCodes Center(CenterDiskMethod method)
-	{
-		ErrorCodes result = ErrorCodes.Success;
-		if (method == CenterDiskMethod.None)
-		{
-			return result;
-		}
-		int milliseconds = 250;
-		int opTimeout = 8000;
-		RollerPosition rollerPosition = ((CenterDiskMethod.DrumAndBack == method) ? RollerPosition.Position1 : RollerPosition.Position6);
-		if (!RollerToPosition(rollerPosition, opTimeout).Success)
-		{
-			result = ((RollerPosition.Position1 == rollerPosition) ? ErrorCodes.RollerToPos1Timeout : ErrorCodes.RollerToPos6Timeout);
-			string message = $"CenterItem: roll to position {rollerPosition.ToString()} timed out.";
-			LogHelper.Instance.Log(message, LogEntryType.Error);
-			LogPickerSensorState(LogEntryType.Error);
-		}
-		PerfFunctions.SpinWait(milliseconds);
-		rollerPosition = ((CenterDiskMethod.DrumAndBack == method) ? RollerPosition.Position5 : RollerPosition.Position3);
-		if (!RollerToPosition(rollerPosition, opTimeout).Success)
-		{
-			result = ((RollerPosition.Position5 == rollerPosition) ? ErrorCodes.RollerToPos5Timeout : ErrorCodes.RollerToPos3Timeout);
-			string message2 = $"CenterItem: roll to position {rollerPosition.ToString()} timed out.";
-			LogHelper.Instance.Log(message2, LogEntryType.Error);
-			LogPickerSensorState(LogEntryType.Error);
-		}
-		PerfFunctions.SpinWait(milliseconds);
-		TrackCycle();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		CoreResponse result = ExecuteControllerCommand(CommandType.Reset);
+		service.Wait(2000);
+		SetAudio(AudioChannelState.Off);
+		VendDoorState = VendDoor.ReadState();
 		return result;
+	}
+
+	public bool Shutdown()
+	{
+		return Port.Close();
+	}
+
+	public IControlResponse SetAudio(AudioChannelState newState)
+	{
+		return ExecuteControllerCommand((AudioChannelState.On == newState) ? CommandType.AudioOn : CommandType.AudioOff);
+	}
+
+	public IControlResponse ToggleRingLight(bool on, int? sleepAfter)
+	{
+		CommandType type = (on ? CommandType.RinglightOn : CommandType.RinglightOff);
+		CoreResponse result = ExecuteControllerCommand(type);
+		if (sleepAfter.HasValue)
+		{
+			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(sleepAfter.Value);
+		}
+		return result;
+	}
+
+	public IControlResponse VendDoorRent()
+	{
+		IControlResponse controlResponse = VendDoor.Rent();
+		VendDoorState = (controlResponse.Success ? VendDoorState.Rent : VendDoorState.Unknown);
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		if (!controlResponse.Success)
+		{
+			service.Increment(TimeoutCounters.VendDoorRent);
+		}
+		return controlResponse;
+	}
+
+	public IControlResponse VendDoorClose()
+	{
+		IControlResponse controlResponse = VendDoor.Close();
+		VendDoorState = (controlResponse.Success ? VendDoorState.Closed : VendDoorState.Unknown);
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		if (!controlResponse.Success)
+		{
+			service.Increment(TimeoutCounters.VendDoorClose);
+		}
+		return controlResponse;
+	}
+
+	public VendDoorState ReadVendDoorPosition()
+	{
+		return VendDoor.ReadState();
+	}
+
+	public IControlResponse TrackOpen()
+	{
+		IControlResponse controlResponse = Track.Open();
+		if (!controlResponse.Success)
+		{
+			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.TrackOpen);
+		}
+		return controlResponse;
+	}
+
+	public IControlResponse TrackClose()
+	{
+		IControlResponse controlResponse = Track.Close();
+		if (!controlResponse.Success)
+		{
+			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.TrackClose);
+		}
+		return controlResponse;
+	}
+
+	public IControlResponse TrackCycle()
+	{
+		IControlResponse controlResponse = TrackOpen();
+		if (controlResponse.Success)
+		{
+			controlResponse = TrackClose();
+		}
+		return controlResponse;
 	}
 
 	public void TimedExtend()
@@ -143,6 +123,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	public void TimedExtend(int timeout)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		try
 		{
 			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
@@ -150,7 +131,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 				LogHelper.Instance.Log($"ExtendGripperArmForTime {timeout} ms", LogEntryType.Debug);
 			}
 			ExecuteControllerCommand(CommandType.ExtendGripperArmForTime);
-			PerfFunctions.Wait(timeout);
+			service.Wait(timeout);
 		}
 		finally
 		{
@@ -162,13 +143,11 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 	{
 		int timeout = ControllerConfiguration.Instance.GripperArmExtendRetractTimeout;
 		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ILocation currentLocation = service2.CurrentLocation;
+		ILocation currentLocation = ServiceLocator.Instance.GetService<IMotionControlService>().CurrentLocation;
 		bool flag = false;
 		if (currentLocation != null)
 		{
-			IDeck byNumber = service.GetByNumber(currentLocation.Deck);
-			flag = byNumber.IsQlm;
+			flag = service.GetByNumber(currentLocation.Deck).IsQlm;
 		}
 		if (flag)
 		{
@@ -190,7 +169,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 			return coreResponse;
 		}
 		string[] array = ReadInputs(ControlBoards.Picker);
-		if (array.Length > 0 && array[0] == "1")
+		if (array.Length != 0 && array[0] == "1")
 		{
 			LogHelper.Instance.Log("GripperExtend status returned timeout; however, picker sensors read shows the forward sensor reached.", LogEntryType.Info);
 			coreResponse.Error = ErrorCodes.Success;
@@ -198,8 +177,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		}
 		LogHelper.Instance.Log("SetGripperArm( Extend ) timed out.", LogEntryType.Error);
 		LogInputs(ControlBoards.Picker, LogEntryType.Error);
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service.Increment(TimeoutCounters.GripperExtend);
+		ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.GripperExtend);
 		return coreResponse;
 	}
 
@@ -221,15 +199,14 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 			}
 		}
 		string[] array = ReadInputs(ControlBoards.Picker);
-		if (array.Length > 0 && array[1] == "1")
+		if (array.Length != 0 && array[1] == "1")
 		{
 			LogHelper.Instance.Log("GripperRetract status returned timeout; however, picker sensors read shows the sensor tripped.", LogEntryType.Info);
 			return coreResponse;
 		}
 		LogHelper.Instance.Log($"SetGripperArm( RETRACT ) timed out after {2} retries.", LogEntryType.Error);
 		LogInputs(ControlBoards.Picker, LogEntryType.Error);
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service.Increment(TimeoutCounters.GripperRetract);
+		ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.GripperRetract);
 		return coreResponse;
 	}
 
@@ -284,67 +261,35 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		return coreResponse;
 	}
 
-	public VendDoorState ReadVendDoorPosition()
+	public ErrorCodes Center(CenterDiskMethod method)
 	{
-		return VendDoor.ReadState();
-	}
-
-	public IControlResponse VendDoorRent()
-	{
-		IControlResponse controlResponse = VendDoor.Rent();
-		VendDoorState = (controlResponse.Success ? VendDoorState.Rent : VendDoorState.Unknown);
-		return controlResponse;
-	}
-
-	public IControlResponse VendDoorClose()
-	{
-		IControlResponse controlResponse = VendDoor.Close();
-		VendDoorState = (controlResponse.Success ? VendDoorState.Closed : VendDoorState.Unknown);
-		return controlResponse;
-	}
-
-	public IControlResponse TrackOpen()
-	{
-		return Track.Open();
-	}
-
-	public IControlResponse TrackClose()
-	{
-		return Track.Close();
-	}
-
-	public IControlResponse TrackCycle()
-	{
-		return Track.Cycle();
-	}
-
-	public void ToggleRingLight(bool on, int? sleepAfter)
-	{
-		CommandType type = (on ? CommandType.RinglightOn : CommandType.RinglightOff);
-		if (UseAltRinglightCommand)
+		ErrorCodes result = ErrorCodes.Success;
+		if (method == CenterDiskMethod.None)
 		{
-			type = (on ? CommandType.RinglightOn3 : CommandType.RinglightOff3);
+			return result;
 		}
-		ExecuteControllerCommand(type);
-		if (sleepAfter.HasValue)
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		int milliseconds = 250;
+		RollerPosition rollerPosition = ((CenterDiskMethod.DrumAndBack == method) ? RollerPosition.Position1 : RollerPosition.Position6);
+		if (!RollerToPosition(rollerPosition).Success)
 		{
-			PerfFunctions.Wait(sleepAfter.Value);
+			result = ((RollerPosition.Position1 == rollerPosition) ? ErrorCodes.RollerToPos1Timeout : ErrorCodes.RollerToPos6Timeout);
+			string message = $"CenterItem: roll to position {rollerPosition.ToString()} timed out.";
+			LogHelper.Instance.Log(message, LogEntryType.Error);
+			LogPickerSensorState(LogEntryType.Error);
 		}
-	}
-
-	public IControlResponse SetAudio(AudioChannelState newState)
-	{
-		return ExecuteControllerCommand((AudioChannelState.On == newState) ? CommandType.AudioOn : CommandType.AudioOff);
-	}
-
-	public string[] GetBoardVersions()
-	{
-		string[] array = new string[ControllerBoards.Length];
-		for (int i = 0; i < ControllerBoards.Length; i++)
+		service.SpinWait(milliseconds);
+		rollerPosition = ((CenterDiskMethod.DrumAndBack == method) ? RollerPosition.Position5 : RollerPosition.Position3);
+		if (!RollerToPosition(rollerPosition).Success)
 		{
-			array[i] = GetBoardVersion(ControllerBoards[i]);
+			result = ((RollerPosition.Position5 == rollerPosition) ? ErrorCodes.RollerToPos5Timeout : ErrorCodes.RollerToPos3Timeout);
+			string message2 = $"CenterItem: roll to position {rollerPosition.ToString()} timed out.";
+			LogHelper.Instance.Log(message2, LogEntryType.Error);
+			LogPickerSensorState(LogEntryType.Error);
 		}
-		return array;
+		service.SpinWait(milliseconds);
+		TrackCycle();
+		return result;
 	}
 
 	public string GetBoardVersion(ControlBoards board)
@@ -370,18 +315,14 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		return "TIMEOUT";
 	}
 
-	public IControlResponse Initialize()
+	public string[] GetBoardVersions()
 	{
-		CoreResponse result = ExecuteControllerCommand(CommandType.Reset);
-		PerfFunctions.Wait(2000);
-		SetAudio(AudioChannelState.Off);
-		VendDoorState = VendDoor.ReadState();
-		return result;
-	}
-
-	public void Shutdown()
-	{
-		Port.Close();
+		string[] array = new string[ControllerBoards.Length];
+		for (int i = 0; i < ControllerBoards.Length; i++)
+		{
+			array[i] = GetBoardVersion(ControllerBoards[i]);
+		}
+		return array;
 	}
 
 	public string[] ReadInputs(ControlBoards board)
@@ -432,6 +373,118 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		LogHelper.Instance.Log(type, "{0} {1}", text, coreResponse.OpCodeResponse);
 	}
 
+	public IControlResponse SetSensors(bool on)
+	{
+		return ExecuteControllerCommand(on ? CommandType.SensorBarOn : CommandType.SensorBarOff);
+	}
+
+	public IPickerSensorReadResult ReadSensors()
+	{
+		if (TrackState.Closed != Track.TrackState)
+		{
+			IControlResponse controlResponse = TrackClose();
+			if (!controlResponse.Success)
+			{
+				LogHelper.Instance.Log(LogEntryType.Error, "[ControlSystem] Track close reported an error {0} during picker sensor read.", controlResponse.ToString());
+				return new PickerSensorReadResult(ErrorCodes.TrackCloseTimeout);
+			}
+		}
+		return ReadPickerSensors();
+	}
+
+	public IPickerSensorReadResult ReadImmediateSensors()
+	{
+		return ReadPickerSensors();
+	}
+
+	public IControlResponse StopRoller()
+	{
+		return ExecuteControllerCommand(CommandType.RollerStop);
+	}
+
+	public IControlResponse StartRollerIn()
+	{
+		return ExecuteControllerCommand(CommandType.RollerIn);
+	}
+
+	public IControlResponse StartRollerOut()
+	{
+		return ExecuteControllerCommand(CommandType.RollerOut);
+	}
+
+	public IControlResponse RollerToPosition(RollerPosition position)
+	{
+		return RollerToPosition(position, 8000);
+	}
+
+	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout)
+	{
+		return RollerToPosition(position, opTimeout, logSensors: true);
+	}
+
+	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors)
+	{
+		CommandType type = CommandType.RollerToPos1;
+		switch (position)
+		{
+		case RollerPosition.Position1:
+			type = CommandType.RollerToPos1;
+			break;
+		case RollerPosition.Position2:
+			type = CommandType.RollerToPos2;
+			break;
+		case RollerPosition.Position3:
+			type = CommandType.RollerToPos3;
+			break;
+		case RollerPosition.Position4:
+			type = CommandType.RollerToPos4;
+			break;
+		case RollerPosition.Position5:
+			type = CommandType.RollerToPos5;
+			break;
+		case RollerPosition.Position6:
+			type = CommandType.RollerToPos6;
+			break;
+		}
+		CoreResponse coreResponse = ExecuteControllerCommand(type, opTimeout);
+		if ((coreResponse.Error != ErrorCodes.Success) & logSensors)
+		{
+			LogHelper.Instance.Log(LogEntryType.Error, "Roller to position {0} timed out.", position.ToString());
+			LogPickerSensorState(LogEntryType.Error);
+		}
+		return coreResponse;
+	}
+
+	public QlmStatus GetQlmStatus()
+	{
+		return QLM.GetStatus();
+	}
+
+	public ErrorCodes EngageQlm(IFormattedLog log)
+	{
+		return QLM.Engage(log);
+	}
+
+	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)
+	{
+		return QLM.Disengage(home, log);
+	}
+
+	public IControlResponse DropQlm()
+	{
+		return QLM.Drop();
+	}
+
+	public IControlResponse LiftQlm()
+	{
+		return QLM.Lift();
+	}
+
+	public IControlResponse HaltQlmOperation()
+	{
+		return QLM.HaltOperation();
+	}
+
 	public CoreResponse ExecuteControllerCommand(CommandType type)
 	{
 		return SendCommand(CoreCommand.Create(type, null, Port));
@@ -458,12 +511,11 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 			Test = ResponseValid,
 			WriteTerminator = RedboxSerialPort.WriteCharsCR
 		}, PortModes.Async, "Serial Board");
-		IPersistentMapService service = ServiceLocator.Instance.GetService<IPersistentMapService>();
-		UseAltRinglightCommand = service.GetMap().GetValue("AltRinglight", def: false);
 	}
 
 	private PickerSensorReadResult ReadPickerSensors()
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		try
 		{
 			CoreResponse coreResponse = ExecuteControllerCommand(CommandType.SensorBarOn);
@@ -471,9 +523,9 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 			{
 				return new PickerSensorReadResult(coreResponse);
 			}
-			PerfFunctions.SpinWait(10);
+			service.SpinWait(10);
 			CoreResponse response = ExecuteControllerCommand(CommandType.ReadPickerInputs);
-			PerfFunctions.SpinWait(10);
+			service.SpinWait(10);
 			return new PickerSensorReadResult(response);
 		}
 		finally

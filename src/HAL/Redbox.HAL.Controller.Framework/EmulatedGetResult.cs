@@ -5,7 +5,7 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class EmulatedGetResult : IGetResult
 {
-	public bool Success => ErrorCodes.Success == HardwareError;
+	public bool Success => HardwareError == ErrorCodes.Success;
 
 	public bool EmptyOrStuck
 	{

@@ -133,45 +133,39 @@ public static class ProtocolHelper
 
 	public static void FormatFile(string path, CommandContext context)
 	{
-		byte[] inputArray = File.ReadAllBytes(path);
-		context.Messages.Add(ByteHelper.ToBase64(inputArray));
+		byte[] inArray = File.ReadAllBytes(path);
+		context.Messages.Add(Convert.ToBase64String(inArray));
 	}
 
 	public static void FormatCompressedFile(string path, CommandContext context)
 	{
 		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
-		byte[] inputArray = File.ReadAllBytes(path);
-		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(ByteHelper.ToBase64(inputArray)));
-		FormatGzipCompressedMessage(buffer, context);
+		byte[] inArray = File.ReadAllBytes(path);
+		FormatGzipCompressedMessage(algorithm.Compress(Encoding.ASCII.GetBytes(Convert.ToBase64String(inArray))), context);
 	}
 
 	public static void FormatCompressedString(string value, CommandContext context)
 	{
-		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(value));
-		FormatLzmaCompressedMessage(buffer, context);
+		FormatLzmaCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(value)), context);
 	}
 
 	public static void FormatCompressedBytes(byte[] buffer, CommandContext context)
 	{
-		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-		byte[] buffer2 = algorithm.Compress(buffer);
-		FormatLzmaCompressedMessage(buffer2, context);
+		FormatLzmaCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(buffer), context);
 	}
 
 	public static byte[] DecompressBase64String(string value)
 	{
-		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
-		return algorithm.Decompress(StringExtensions.Base64ToBytes(value));
+		return CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Decompress(StringExtensions.Base64ToBytes(value));
 	}
 
 	private static void FormatLzmaCompressedMessage(byte[] buffer, CommandContext context)
 	{
-		context.Messages.Add($"LZMA|{ByteHelper.ToBase64(buffer)}");
+		context.Messages.Add($"LZMA|{Convert.ToBase64String(buffer)}");
 	}
 
 	private static void FormatGzipCompressedMessage(byte[] buffer, CommandContext context)
 	{
-		context.Messages.Add($"GZIP|{ByteHelper.ToBase64(buffer)}");
+		context.Messages.Add($"GZIP|{Convert.ToBase64String(buffer)}");
 	}
 }

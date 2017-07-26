@@ -27,15 +27,15 @@ internal sealed class FraudTestDiskInPickerJob : NativeJobAdapter
 		if (!scanResult.SnapOk)
 		{
 			base.Context.CreateCameraCaptureErrorResult();
+			return;
 		}
-		else if (!scanResult.ReadCode)
+		if (!scanResult.ReadCode)
 		{
 			base.Context.CreateInfoResult("NoBarcodeRead", "The disk has no barcode.");
+			return;
 		}
-		else
-		{
-			fraudValidator.ValidateAndPublish(scanResult.ScannedMatrix);
-		}
+		IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(scanResult.ScannedMatrix);
+		fraudValidator.Publish(scanResult2, scanResult.ScannedMatrix);
 	}
 
 	internal FraudTestDiskInPickerJob(ExecutionResult r, ExecutionContext c)

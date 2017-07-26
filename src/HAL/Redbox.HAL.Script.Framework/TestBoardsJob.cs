@@ -16,16 +16,17 @@ internal class TestBoardsJob : NativeJobAdapter
 	{
 		int num = 0;
 		ControlBoards[] boards = Boards;
-		foreach (ControlBoards controlBoards in boards)
+		for (int i = 0; i < boards.Length; i++)
 		{
-			string boardVersion = base.ControlSystem.GetBoardVersion(controlBoards);
+			ControlBoards board = boards[i];
+			string boardVersion = base.ControlSystem.GetBoardVersion(board);
 			string arg = "responsive";
 			if (boardVersion == "TIMEOUT")
 			{
 				num++;
 				arg = "not responsive";
 			}
-			base.Context.CreateInfoResult("VersionResult", $"{controlBoards.ToString().ToUpper()} board {arg}");
+			base.Context.CreateInfoResult("VersionResult", $"{board.ToString().ToUpper()} board {arg}");
 		}
 		if (num > 0)
 		{

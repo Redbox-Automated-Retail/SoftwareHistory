@@ -174,8 +174,7 @@ internal sealed class VMZ
 				return null;
 			}
 		}
-		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-		return service2.Get(num2, num);
+		return ServiceLocator.Instance.GetService<IInventoryService>().Get(num2, num);
 	}
 
 	internal void DumpZone(IFormattedLog log)
@@ -203,15 +202,16 @@ internal sealed class VMZ
 			{
 				flag = false;
 			}
-			if (!match(location))
+			if (match(location))
 			{
-				break;
+				location = ComputeNextHigherLocation(location);
+				if (location == null)
+				{
+					flag = false;
+				}
+				continue;
 			}
-			location = ComputeNextHigherLocation(location);
-			if (location == null)
-			{
-				flag = false;
-			}
+			break;
 		}
 	}
 

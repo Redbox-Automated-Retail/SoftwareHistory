@@ -8,10 +8,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class ArcusMotionController2 : AbstractMotionController
 {
-	private const string HaltMotorCommand = "RSTOP";
-
-	private const string NopCommand = "NOP";
-
 	private readonly bool DebugEnabled;
 
 	private readonly List<string> MovePreamble = new List<string>();
@@ -23,6 +19,10 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 	private readonly List<string> ErrorCorrectPreamble = new List<string>();
 
 	private readonly List<string> InitCommands = new List<string>();
+
+	private const string HaltMotorCommand = "RSTOP";
+
+	private const string NopCommand = "NOP";
 
 	private bool UseSmoothMove;
 
@@ -126,10 +126,9 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 			ArcusControllerPosition arcusControllerPosition = new ArcusControllerPosition();
 			arcusControllerPosition.XCoordinate = null;
 			arcusControllerPosition.YCoordinate = null;
-			ArcusControllerPosition arcusControllerPosition2 = arcusControllerPosition;
-			arcusControllerPosition2.XCoordinate = DecodePositionResponse(Axis.X);
-			arcusControllerPosition2.YCoordinate = DecodePositionResponse(Axis.Y);
-			return arcusControllerPosition2;
+			arcusControllerPosition.XCoordinate = DecodePositionResponse(Axis.X);
+			arcusControllerPosition.YCoordinate = DecodePositionResponse(Axis.Y);
+			return arcusControllerPosition;
 		}
 		finally
 		{
@@ -183,8 +182,7 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 
 	internal ArcusMotionController2()
 	{
-		IPersistentMapService service = ServiceLocator.Instance.GetService<IPersistentMapService>();
-		IPersistentMap map = service.GetMap();
+		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		DebugEnabled = map.GetValue("ArcusDebug", def: false);
 		Port = RedboxSerialPort.Create(new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.MotionControllerPortName)
 		{
@@ -249,15 +247,16 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 
 	private ErrorCodes OnWaitMotor(int timeout, Axis axis, MoveOperation operation)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusMotorQueryPause);
-		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		IDoorSensorService service2 = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		string command = "MST" + axis.ToString().ToUpper();
 		string text;
 		MotorWaitDecoder motorWaitDecoder;
 		do
 		{
-			DoorSensorResult doorSensorResult = service.Query();
+			DoorSensorResult doorSensorResult = service2.Query();
 			if (doorSensorResult != DoorSensorResult.Ok)
 			{
 				WriteToLog($"Door sensor query returned {doorSensorResult.ToString()}: halting motion.");
@@ -274,7 +273,7 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 			{
 				return motorWaitDecoder.Error;
 			}
-			PerfFunctions.SpinWait(timespan);
+			service.SpinWait(timespan);
 		}
 		while (executionTimer.ElapsedMilliseconds < timeout);
 		string text2 = $"Unable to reach target on axis {axis.ToString().ToUpper()}. Response {text} ( diagnostic = {motorWaitDecoder.Diagnostic} )";
@@ -321,8 +320,8 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 		{
 			return errorCodes;
 		}
-		string[] array2 = new string[2] { "I2=3136", "I7=15" };
-		foreach (string command2 in array2)
+		array = new string[2] { "I2=3136", "I7=15" };
+		foreach (string command2 in array)
 		{
 			if (SendReciveRaw(command2) == null)
 			{
@@ -436,8 +435,7 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 		string text = SendReciveRaw(command);
 		if (text != null)
 		{
-			string s = text.Substring(text.IndexOf('=') + 1);
-			if (int.TryParse(s, out var result))
+			if (int.TryParse(text.Substring(text.IndexOf('=') + 1), out var result))
 			{
 				return result;
 			}

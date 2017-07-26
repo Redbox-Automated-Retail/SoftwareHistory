@@ -1,6 +1,5 @@
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -9,10 +8,11 @@ internal sealed class PushInDVDJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		try
 		{
 			base.ControlSystem.StartRollerIn();
-			PerfFunctions.Wait(500);
+			service.Wait(500);
 			base.ControlSystem.StopRoller();
 			if (!base.ControlSystem.TrackOpen().Success)
 			{

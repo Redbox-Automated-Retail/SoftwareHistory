@@ -42,7 +42,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		if (HardCycleOnReboot)
 		{
 			Stop();
-			PerfFunctions.Wait(500);
+			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(500);
 			return Start();
 		}
 		return RestartDecoder();
@@ -50,8 +50,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool TestConfiguration(IMessageSink sink)
 	{
-		CortexSettingsValidator cortexSettingsValidator = new CortexSettingsValidator(this);
-		return cortexSettingsValidator.Validate(sink);
+		return new CortexSettingsValidator(this).Validate(sink);
 	}
 
 	public bool ResetDeviceDriver()
@@ -66,6 +65,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 			LogHelper.Instance.Log("[Cortex Service] Scan is called without initialization.");
 			ScanResult scanResult = new ScanResult();
 			scanResult.ResetOnException();
+			scanResult.DeviceError = true;
 			return scanResult;
 		}
 		return Scan(SnapOnDecodeFailure);
@@ -107,8 +107,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		{
 			RestartDecoder();
 		}
-		InfaredLightCommand infaredLightCommand = new InfaredLightCommand();
-		infaredLightCommand.Send(Port);
+		new InfaredLightCommand().Send(Port);
 		switch (StartupAction)
 		{
 		case CortexStartupAction.Decode:
@@ -189,11 +188,10 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 	internal CortexService()
 		: base(ScannerServices.Cortex)
 	{
-		IPersistentMapService service = ServiceLocator.Instance.GetService<IPersistentMapService>();
-		IPersistentMap map = service.GetMap();
-		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		Configuration = new RedboxSerialPortConfiguration();
-		int value = map.GetValue("CortexReadBuffer", service2.PageSize << 1);
+		int value = map.GetValue("CortexReadBuffer", service.PageSize << 1);
 		Configuration.ReceiveBufferSize = value;
 		LogHelper.Instance.Log("[CortexService] Receive buffer size = {0}", value);
 		Configuration.WriteTimeout = 2000;
@@ -221,7 +219,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		}
 		scanResult.Add(decodeCommand.FoundCodes);
 		InsertStat(scanResult, clearImage: false, decodeCommand.ExecutionTime.TotalSeconds);
-		if (scanResult.DecodeResults.Count == 0 && snapOnFailure)
+		if ((scanResult.DecodeResults.Count == 0) & snapOnFailure)
 		{
 			ISnapResult snapResult = Snap();
 			if (!snapResult.SnapOk)
@@ -235,9 +233,9 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 
 	private bool RestartDecoder()
 	{
-		RebootCommand rebootCommand = new RebootCommand();
-		rebootCommand.Send(Port);
-		PerfFunctions.Wait(WakeupPause);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		new RebootCommand().Send(Port);
+		service.Wait(WakeupPause);
 		return true;
 	}
 
@@ -250,18 +248,23 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 			LogHelper.Instance.Log("[CortexService]: There was a communication error.");
 			return new SnapResult(fileName);
 		}
-		ImagePacket packet = null;
+		ImagePacket imagePacket = null;
 		CortexPacket[] parsedPackets = takePictureCommand.ParsedPackets;
 		foreach (CortexPacket cortexPacket in parsedPackets)
 		{
 			if (cortexPacket.RawPacketType == 'm')
 			{
-				packet = new ImagePacket(cortexPacket);
+				imagePacket = new ImagePacket(cortexPacket);
 			}
+		}
+		if (imagePacket == null)
+		{
+			LogHelper.Instance.Log("[CortexService]: unable to locate image packet during snap.");
+			return new SnapResult(fileName);
 		}
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
-			GetFileCommand getFileCommand = new GetFileCommand(packet);
+			GetFileCommand getFileCommand = new GetFileCommand(imagePacket);
 			getFileCommand.Send(Port);
 			string fmt = "[Cortex Service] Snap time: {0}ms";
 			if (getFileCommand.ImageBytes.Length != getFileCommand.Descriptor.ImageSize)
@@ -292,8 +295,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 				LogHelper.Instance.Log(fmt, executionTimer.ElapsedMilliseconds);
 			}
 		}
-		DeleteFileCommand deleteFileCommand = new DeleteFileCommand(packet);
-		deleteFileCommand.Send(Port);
+		new DeleteFileCommand(imagePacket).Send(Port);
 		return new SnapResult(fileName);
 	}
 

@@ -133,8 +133,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 			return;
 		}
 		ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Put(GetResult.Previous, Log);
-		if (putResult.Success)
+		if (ControllerService.Put(GetResult.Previous, Log).Success)
 		{
 			result.ReturnedToSource = true;
 			Source.Flags = GetResult.Flags;

@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
@@ -23,7 +22,7 @@ internal abstract class ScannerAdapter : IDisposable
 
 	protected string GenerateSnapFileName()
 	{
-		string path = FileHelper.GenerateUniqueFile("jpg");
+		string path = ServiceLocator.Instance.GetService<IRuntimeService>().GenerateUniqueFile("jpg");
 		return Path.Combine(BarcodeConfiguration.Instance.WorkingPath, path);
 	}
 

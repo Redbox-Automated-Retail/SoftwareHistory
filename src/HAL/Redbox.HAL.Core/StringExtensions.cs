@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Redbox.HAL.Core;
@@ -31,16 +30,6 @@ public static class StringExtensions
 
 	internal static readonly char[] PropertyPathSeparators = new char[1] { '.' };
 
-	public static string RemoveString(string value, string token)
-	{
-		int num = value.IndexOf(token);
-		if (num <= -1)
-		{
-			return value;
-		}
-		return value.Remove(num, token.Length);
-	}
-
 	public static byte[] HexToBytes(string source)
 	{
 		List<byte> list = new List<byte>();
@@ -58,18 +47,6 @@ public static class StringExtensions
 	public static byte[] Base64ToBytes(string source)
 	{
 		return Convert.FromBase64String(source);
-	}
-
-	public static string EncryptToBase64(string source)
-	{
-		byte[] bytes = Encoding.UTF8.GetBytes(source);
-		return ByteHelper.ToBase64(ByteHelper.Encrypt(bytes));
-	}
-
-	public static string DecryptFromBase64(string source)
-	{
-		byte[] inputArray = Base64ToBytes(source);
-		return Encoding.UTF8.GetString(ByteHelper.Decrypt(inputArray));
 	}
 
 	public static object GetValueForPath(string path, object rootObject)
@@ -102,17 +79,14 @@ public static class StringExtensions
 		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
 		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
 		object result = null;
+		int result2;
 		if (match.Success)
 		{
 			result = match.Groups["indexer"].Captures[0].Value;
 		}
-		else if (match2.Success)
+		else if (match2.Success && int.TryParse(match2.Groups["indexer"].Captures[0].Value, out result2))
 		{
-			string value = match2.Groups["indexer"].Captures[0].Value;
-			if (int.TryParse(value, out var result2))
-			{
-				result = result2;
-			}
+			result = result2;
 		}
 		return result;
 	}
@@ -191,8 +165,7 @@ public static class StringExtensions
 			}
 			try
 			{
-				object obj3 = obj.GetType().InvokeMember(text, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty, null, obj, args);
-				obj = obj3;
+				obj = obj.GetType().InvokeMember(text, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty, null, obj, args);
 				if (obj == null)
 				{
 					break;

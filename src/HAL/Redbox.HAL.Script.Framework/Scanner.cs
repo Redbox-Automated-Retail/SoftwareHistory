@@ -75,7 +75,7 @@ internal sealed class Scanner : IDisposable
 				{
 					break;
 				}
-				if (!ControllerConfiguration.Instance.EnableCameraReset || flag)
+				if (!ControllerConfiguration.Instance.EnableCameraReset | flag)
 				{
 					return scanResult;
 				}

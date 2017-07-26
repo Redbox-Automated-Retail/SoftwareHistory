@@ -1,5 +1,5 @@
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -18,13 +18,14 @@ internal sealed class UpdateQREEPROMJob : NativeJobAdapter
 			return;
 		}
 		QuickReturnPoller.Instance.Shutdown();
-		PerfFunctions.Wait(5000);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		service.Wait(5000);
 		if (QuickReturnDevice.Instance.UpdateDeviceImages() == 0)
 		{
 			AddError("Unable to update device images; check service logs.");
 			return;
 		}
-		PerfFunctions.Wait(5000);
+		service.Wait(5000);
 		QuickReturnPoller.Instance.Start();
 	}
 

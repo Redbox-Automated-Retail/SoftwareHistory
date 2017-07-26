@@ -50,7 +50,8 @@ internal sealed class FraudTestTakeReadReturnJob : NativeJobAdapter
 			}
 			if (scanResult.ReadCode)
 			{
-				fraudValidator.ValidateAndPublish(scanResult.ScannedMatrix);
+				IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(scanResult.ScannedMatrix);
+				fraudValidator.Publish(scanResult2, scanResult.ScannedMatrix);
 				errored = false;
 				break;
 			}

@@ -89,8 +89,7 @@ public sealed class MoveInstruction : Instruction
 				context.PushTop(ErrorCodes.InvalidLocation.ToString().ToUpper());
 				return;
 			}
-			IMoveDecoratorService service2 = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
-			ErrorCodes errorCodes = service2.ShowEmptyStuck(context, service.CurrentLocation, keyValuePairValue);
+			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMoveDecoratorService>().ShowEmptyStuck(context, service.CurrentLocation, keyValuePairValue);
 			if (errorCodes == ErrorCodes.Success)
 			{
 				context.PushTop(keyValuePairValue);
@@ -103,8 +102,8 @@ public sealed class MoveInstruction : Instruction
 			AddError("E004", "Deck or slot are undefined, and no location specified; reissue the MOVE instruction specifying both deck and slot values or the location.", result.Errors);
 			return;
 		}
-		IDumpbinService service3 = ServiceLocator.Instance.GetService<IDumpbinService>();
-		if (context.IsImmediate && service3.IsBin(location))
+		IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
+		if (context.IsImmediate && service2.IsBin(location))
 		{
 			string instance = ErrorCodes.InvalidMoveToSecureLocation.ToString().ToUpper();
 			context.PushTop(instance);

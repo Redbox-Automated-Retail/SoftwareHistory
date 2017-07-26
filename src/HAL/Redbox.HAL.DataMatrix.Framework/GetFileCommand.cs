@@ -44,10 +44,8 @@ internal sealed class GetFileCommand : TextCommand
 		}
 		try
 		{
-			CortexPacket packet;
-			foreach (CortexPacket packet2 in Packets)
+			foreach (CortexPacket packet in Packets)
 			{
-				packet = packet2;
 				if (packet.PacketType == PacketType.Data)
 				{
 					if (-1 == ProcessedPackets.FindIndex((int each) => each == packet.PacketNumber))

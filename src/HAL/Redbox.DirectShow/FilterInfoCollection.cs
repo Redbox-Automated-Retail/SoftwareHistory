@@ -10,7 +10,7 @@ namespace Redbox.DirectShow;
 
 public class FilterInfoCollection : CollectionBase
 {
-	private static bool? m_useOldOption = null;
+	private static bool? m_useOldOption;
 
 	public FilterInfo this[int index] => (FilterInfo)base.InnerList[index];
 
@@ -61,19 +61,12 @@ public class FilterInfoCollection : CollectionBase
 	private void CollectFilters(Guid category)
 	{
 		object obj = null;
-		ICreateDevEnum createDevEnum = null;
 		IEnumMoniker enumMoniker = null;
 		IMoniker[] array = new IMoniker[1];
 		try
 		{
-			Type typeFromCLSID = Type.GetTypeFromCLSID(Clsid.SystemDeviceEnum);
-			if (typeFromCLSID == null)
-			{
-				throw new ApplicationException("Failed creating device enumerator");
-			}
-			obj = Activator.CreateInstance(typeFromCLSID);
-			createDevEnum = (ICreateDevEnum)obj;
-			if (createDevEnum.CreateClassEnumerator(ref category, out enumMoniker, 0) != 0)
+			obj = Activator.CreateInstance(Type.GetTypeFromCLSID(Clsid.SystemDeviceEnum) ?? throw new ApplicationException("Failed creating device enumerator"));
+			if (((ICreateDevEnum)obj).CreateClassEnumerator(ref category, out enumMoniker, 0) != 0)
 			{
 				throw new ApplicationException("No devices of the category");
 			}
@@ -102,7 +95,6 @@ public class FilterInfoCollection : CollectionBase
 		}
 		finally
 		{
-			createDevEnum = null;
 			if (obj != null)
 			{
 				Marshal.ReleaseComObject(obj);

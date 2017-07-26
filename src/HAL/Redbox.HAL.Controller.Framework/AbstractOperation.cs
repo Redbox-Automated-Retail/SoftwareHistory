@@ -24,7 +24,8 @@ public abstract class AbstractOperation<T> : IDisposable
 
 	protected bool WaitToClear(PickerSensor highSensor, PickerSensor lowSensor, int timeout)
 	{
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
 		int num = (int)(lowSensor - 1);
 		int num2 = (int)(highSensor - 1);
 		if (highSensor < lowSensor)
@@ -38,8 +39,8 @@ public abstract class AbstractOperation<T> : IDisposable
 		{
 			while (true)
 			{
-				PerfFunctions.SpinWait(50);
-				IPickerSensorReadResult pickerSensorReadResult = service.ReadSensors();
+				service.SpinWait(50);
+				IPickerSensorReadResult pickerSensorReadResult = service2.ReadSensors();
 				if (pickerSensorReadResult.Error != ErrorCodes.Success)
 				{
 					LogHelper.Instance.Log("WaittoClear: sensor read timed out.", LogEntryType.Error);
@@ -70,19 +71,16 @@ public abstract class AbstractOperation<T> : IDisposable
 
 	protected bool ClearDiskFromPicker()
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		int milliseconds = 300;
 		bool flag = WaitToClear(PickerSensor.Sensor2, PickerSensor.Sensor5, 8000);
 		if (!flag)
 		{
-			PerfFunctions.SpinWait(milliseconds);
+			service.SpinWait(milliseconds);
 			bool[] array = null;
 			bool flag2 = true;
-			for (int i = 0; i < 3; i++)
+			for (int i = 0; (i < 3) & flag2; i++)
 			{
-				if (!flag2)
-				{
-					break;
-				}
 				if (flag2)
 				{
 					if (i > 0)
@@ -93,7 +91,7 @@ public abstract class AbstractOperation<T> : IDisposable
 				}
 				array = Controller.ReadSensors().Sensors;
 				flag2 = array[1] || array[2] || array[3] || array[4];
-				PerfFunctions.SpinWait(milliseconds);
+				service.SpinWait(milliseconds);
 			}
 			array = Controller.ReadSensors().Sensors;
 			flag = array[1] || array[2] || array[3] || array[4];
@@ -155,8 +153,7 @@ public abstract class AbstractOperation<T> : IDisposable
 				}
 				return ErrorCodes.GripperOpenTimeout;
 			}
-			IDeck byNumber = DeckService.GetByNumber(MotionService.CurrentLocation.Deck);
-			if (byNumber.IsQlm)
+			if (DeckService.GetByNumber(MotionService.CurrentLocation.Deck).IsQlm)
 			{
 				int qlmExtendTime = ControllerConfiguration.Instance.QlmExtendTime;
 				if (ControllerConfiguration.Instance.QlmTimedExtend)

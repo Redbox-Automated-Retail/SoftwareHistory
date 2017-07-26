@@ -20,8 +20,7 @@ internal sealed class GetAndCenterJob : NativeJobAdapter
 			return;
 		}
 		base.Context.CreateResult("SuccessMessage", message, num2, num, null, null, null);
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service.Get(base.AppLog);
+		IGetResult getResult = ServiceLocator.Instance.GetService<IControllerService>().Get(base.AppLog);
 		if (!getResult.Success)
 		{
 			base.Context.ServiceLog(LogEntryType.Error, "There was an error executing GET: {0}", getResult.ToString());

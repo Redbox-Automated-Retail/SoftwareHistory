@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
@@ -27,8 +26,7 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		{
 			return Counters[name];
 		}
-		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
-		IPersistentCounter persistentCounter = service.NewCounter(name, 0);
+		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewCounter(name, 0);
 		if (CounterTable.Insert(persistentCounter))
 		{
 			Counters[name] = persistentCounter;
@@ -36,6 +34,11 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		}
 		LogHelper.Instance.Log("Unable to create counter {0}", name);
 		return null;
+	}
+
+	public IPersistentCounter Find(TimeoutCounters counter)
+	{
+		return Find(KeyFrom(counter));
 	}
 
 	public IPersistentCounter Increment(string name)
@@ -81,6 +84,11 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		}
 	}
 
+	public IPersistentCounter Decrement(TimeoutCounters counter)
+	{
+		return Decrement(KeyFrom(counter));
+	}
+
 	public bool Reset(IPersistentCounter counter)
 	{
 		if (counter == null)
@@ -105,27 +113,13 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		return Reset(persistentCounter);
 	}
 
-	public void LogTimeouts(TextWriter log)
-	{
-		foreach (TimeoutCounters value in Enum.GetValues(typeof(TimeoutCounters)))
-		{
-			LogCounter(KeyFrom(value), log);
-		}
-	}
-
-	public void LogCounter(string counter, TextWriter writer)
-	{
-		writer.WriteLine(" {0}: {1}", counter, Find(counter)?.Value ?? 0);
-	}
-
 	public bool Insert(HardwareCorrectionStatistic type, IExecutionContext context, bool correctionOk)
 	{
 		if (!ControllerConfiguration.Instance.TrackHardwareCorrections)
 		{
 			return true;
 		}
-		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
-		IHardwareCorrectionStatistic p = service.NewStatistic(type, context.ProgramName, correctionOk, DateTime.Now);
+		IHardwareCorrectionStatistic p = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewStatistic(type, context.ProgramName, correctionOk, DateTime.Now);
 		return StatsTable.Insert(p);
 	}
 
@@ -157,18 +151,12 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		}
 	}
 
-	public void LogStats(HardwareCorrectionStatistic key, TextWriter log)
+	public List<IHardwareCorrectionStatistic> GetStats(HardwareCorrectionStatistic key)
 	{
 		List<IHardwareCorrectionStatistic> list = StatsTable.LoadEntries();
 		using (new DisposeableList<IHardwareCorrectionStatistic>(list))
 		{
-			foreach (IHardwareCorrectionStatistic item in list)
-			{
-				if (item.Statistic == key)
-				{
-					log.WriteLine("{0},{1},{2}", item.CorrectionTime.ToString(), item.ProgramName, item.CorrectionOk ? "SUCCESS" : "FAILURE");
-				}
-			}
+			return list.FindAll((IHardwareCorrectionStatistic each) => each.Statistic == key);
 		}
 	}
 

@@ -27,14 +27,12 @@ internal sealed class Gen5DeviceDescriptor : IDeviceDescriptor
 
 	public bool MatchDriver()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		return service.MatchDriverByVendor(this, DriverInfo);
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().MatchDriverByVendor(this, DriverInfo);
 	}
 
 	public bool Locate()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		return service.FindDeviceByVendor(this).Found;
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDeviceByVendor(this).Found;
 	}
 
 	public DeviceStatus GetStatus()

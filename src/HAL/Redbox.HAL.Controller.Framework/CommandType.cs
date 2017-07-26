@@ -52,10 +52,10 @@ public enum CommandType
 	RinglightOn,
 	[CommandProperties(Address = AddressSelector.H001, Command = "P2")]
 	RinglightOff,
-	[CommandProperties(Address = AddressSelector.H001, Command = "O3")]
-	RinglightOn3,
-	[CommandProperties(Address = AddressSelector.H001, Command = "P3")]
-	RinglightOff3,
+	[CommandProperties(Address = AddressSelector.H001, Command = "O1")]
+	Junction4On,
+	[CommandProperties(Address = AddressSelector.H001, Command = "P1")]
+	Junction4Off,
 	[CommandProperties(Address = AddressSelector.H002, Command = "O1")]
 	AuxSensorsOn,
 	[CommandProperties(Address = AddressSelector.H002, Command = "P1")]

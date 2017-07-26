@@ -2,7 +2,7 @@
         # QLM-UNLOAD Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.9.0.49
+	# VERSION 1.10.0.32
         #
 	
 	VMZ	IS-CONFIGURED

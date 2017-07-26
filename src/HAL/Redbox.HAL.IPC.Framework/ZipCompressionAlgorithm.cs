@@ -36,12 +36,11 @@ internal sealed class ZipCompressionAlgorithm : ICompressionAlgorithm
 			while (true)
 			{
 				int num = zipInputStream.Read(buffer, 0, 4096);
-				if (num != 0)
+				if (num == 0)
 				{
-					binaryWriter.Write(buffer, 0, num);
-					continue;
+					break;
 				}
-				break;
+				binaryWriter.Write(buffer, 0, num);
 			}
 		}
 		byte[] array = new byte[memoryStream.Length];

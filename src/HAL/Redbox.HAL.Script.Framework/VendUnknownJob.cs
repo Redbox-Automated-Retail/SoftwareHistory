@@ -1,6 +1,5 @@
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -39,10 +38,9 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 
 	protected override void ExecuteInner()
 	{
-		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Unknowns", flushOnWrite: false, "VendUnknown");
-		applicationLog.Write("Vend unknown start.");
+		ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Unknowns", flushOnWrite: false, "VendUnknown").Write("Vend unknown start.");
 		base.Context.Send("VendStart");
-		PerfFunctions.SpinWait(30);
+		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(30);
 		base.Context.Send("VendGraphicDisplay");
 		using (CheckPickerOperation checkPickerOperation = new CheckPickerOperation(base.Context))
 		{
@@ -57,15 +55,16 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		ILocation location = service.Get(num, num2);
 		LogHelper.Instance.Log("Move to {0} to pick requested item.", location.ToString());
-		if (CorrectiveMove(num, num2, MoveMode.Get) != ErrorCodes.Success)
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service2.MoveTo(num, num2, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
 			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service2.Get(this, base.Context.AppLog);
+		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service3.Get(this, base.Context.AppLog);
 		if (getResult.IsSlotEmpty || getResult.ItemStuck)
 		{
 			if (!ControllerConfiguration.Instance.RotateDrumDuringUnknownRemoval2)
@@ -135,7 +134,7 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 				AddError("MACHINE ERROR");
 				return;
 			}
-			if (CorrectiveMove(location, MoveMode.Put) != ErrorCodes.Success)
+			if (service2.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 			{
 				base.Context.Send("MachineError");
 				base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
@@ -143,7 +142,7 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 				return;
 			}
 			base.ControlSystem.TrackCycle();
-			if (!service2.Put("UNKNOWN", base.Context.AppLog).Success)
+			if (!service3.Put("UNKNOWN", base.Context.AppLog).Success)
 			{
 				base.Context.CreateResult("PutError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 				AddError("MACHINE ERROR");

@@ -6,8 +6,8 @@ namespace Redbox.DirectShow.Interop;
 
 [ComImport]
 [SuppressUnmanagedCodeSecurity]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("56a86899-0ad4-11ce-b03a-0020af0ba770")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IMediaFilter : IPersist
 {
 	[PreserveSig]

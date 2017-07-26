@@ -57,7 +57,7 @@ public sealed class Deck : IDeck
 
 	public static bool operator ==(Deck lhs, Deck rhs)
 	{
-		if (object.ReferenceEquals(lhs, rhs))
+		if ((object)lhs == rhs)
 		{
 			return true;
 		}

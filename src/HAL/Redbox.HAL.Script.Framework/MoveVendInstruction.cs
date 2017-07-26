@@ -40,9 +40,8 @@ public sealed class MoveVendInstruction : Instruction
 			new ErrorList();
 			bool.TryParse(keyValuePair2.Value, out var _);
 		}
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes = service.MoveVend(mode, context.AppLog);
-		string instance = errorCodes.ToString().ToUpper();
+		string instance = ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(mode, context.AppLog).ToString()
+			.ToUpper();
 		context.PushTop(instance);
 	}
 }

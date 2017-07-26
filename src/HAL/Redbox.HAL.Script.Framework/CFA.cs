@@ -41,8 +41,8 @@ public class CFA
 
 	internal static CFAInternals Initialize(CFAInternalsVersion version, ExecutionResult result)
 	{
-		CFAInternals cFAInternals = new CFAInternalsMock();
-		cFAInternals.Initialize(result);
-		return cFAInternals;
+		CFAInternalsMock cFAInternalsMock = new CFAInternalsMock();
+		cFAInternalsMock.Initialize(result);
+		return cFAInternalsMock;
 	}
 }

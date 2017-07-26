@@ -34,7 +34,7 @@ public interface IMotionControlService
 
 	ErrorCodes InitAxes(IFormattedLog log);
 
-	ErrorCodes InitAxesFast(IFormattedLog log);
+	ErrorCodes InitAxes(IFormattedLog log, bool quick);
 
 	ErrorCodes HomeAxis(Axis axis, IFormattedLog log);
 

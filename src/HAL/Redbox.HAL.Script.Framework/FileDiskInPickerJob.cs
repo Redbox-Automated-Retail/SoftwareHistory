@@ -13,8 +13,7 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 			base.Context.CreateInfoResult("JobError", "Gripper is empty.");
 			return;
 		}
-		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-		using IEmptySearchResult emptySearchResult = service.FindMultipleEmptyLocations();
+		using IEmptySearchResult emptySearchResult = ServiceLocator.Instance.GetService<IEmptySearchPatternService>().FindMultipleEmptyLocations();
 		if (emptySearchResult.FoundEmpty == 0)
 		{
 			base.Context.CreateInfoResult("JobError", "Empty slot not found.");
@@ -63,8 +62,7 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 			base.Context.CreateInfoResult("JobError", $"MOVE {location.ToString()} MODE=PUT {errorCodes.ToString()}");
 			return false;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service.Put(matrix, base.AppLog);
+		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(matrix, base.AppLog);
 		if (putResult.Success)
 		{
 			base.Context.CreateInfoResult("JobSuccess", $"Filed {location.ToString()}, id={matrix}");

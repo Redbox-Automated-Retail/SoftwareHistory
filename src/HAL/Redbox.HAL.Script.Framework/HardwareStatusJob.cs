@@ -38,8 +38,7 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 			num++;
 			base.Context.CreateInfoResult("VendDoorOpen", "Unable to close the vend door.");
 		}
-		InventoryDatabaseTest inventoryDatabaseTest = new InventoryDatabaseTest();
-		if (!inventoryDatabaseTest.Test())
+		if (!new InventoryDatabaseTest().Test())
 		{
 			num++;
 			base.Context.CreateInfoResult("MachineError", "Inventory database integrity test failed.");

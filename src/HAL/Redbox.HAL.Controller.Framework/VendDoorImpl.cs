@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -17,8 +16,7 @@ internal sealed class VendDoorImpl : IVendDoor
 
 	public VendDoorState ReadState()
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
 		if (!coreResponse.Success)
 		{
 			LogHelper.Instance.Log("Read AUX sensors failed.", LogEntryType.Error);
@@ -42,6 +40,7 @@ internal sealed class VendDoorImpl : IVendDoor
 
 	private CoreResponse RetryableVendDoorCommand(VendDoorState state, bool retry)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		CommandType commandType = CommandType.VendDoorClose;
 		CommandType unknownCommand = CommandType.UnknownVendDoorOpenCommand;
 		switch (state)
@@ -56,25 +55,24 @@ internal sealed class VendDoorImpl : IVendDoor
 		}
 		int num = ((!retry) ? 1 : 2);
 		CoreResponse coreResponse = null;
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		ICoreCommandExecutor service2 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
 		for (int i = 0; i < num; i++)
 		{
-			coreResponse = service.ExecuteControllerCommand(commandType, 5500);
+			coreResponse = service2.ExecuteControllerCommand(commandType, 5500);
 			if (coreResponse.CommError)
 			{
-				string message = $"Communication error during vend door {state.ToString().ToUpper()}";
-				LogHelper.Instance.Log(message, LogEntryType.Error);
+				LogHelper.Instance.Log(LogEntryType.Error, "Communication error during vend door {0}", state.ToString().ToUpper());
 				return coreResponse;
 			}
 			if (coreResponse.TimedOut)
 			{
 				if (VendDoorState.Closed == state)
 				{
-					PerfFunctions.Wait(70);
-					service.ExecuteControllerCommand(CommandType.UnknownVendDoorCloseCommand);
-					PerfFunctions.Wait(70);
-					service.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
-					PerfFunctions.Wait(50);
+					service.Wait(70);
+					service2.ExecuteControllerCommand(CommandType.UnknownVendDoorCloseCommand);
+					service.Wait(70);
+					service2.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
+					service.Wait(50);
 				}
 			}
 			else
@@ -83,47 +81,35 @@ internal sealed class VendDoorImpl : IVendDoor
 				{
 					return coreResponse;
 				}
-				if (VendDoorIsInState(state) || MoveToVendSensor(state, commandType, unknownCommand))
+				if (VendDoorIsInState(state) || MoveToVendSensor(state, commandType, unknownCommand, service))
 				{
 					return coreResponse;
 				}
 			}
 		}
-		string message2 = $"SetVendDoor {state.ToString()} timed out after {num} tries.";
-		LogHelper.Instance.Log(message2, LogEntryType.Error);
-		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-		service2.LogInputs(ControlBoards.Aux, LogEntryType.Error);
-		IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		switch (state)
-		{
-		case VendDoorState.Closed:
-			service3.Increment(TimeoutCounters.VendDoorClose);
-			break;
-		case VendDoorState.Rent:
-			service3.Increment(TimeoutCounters.VendDoorRent);
-			break;
-		}
+		LogHelper.Instance.Log(LogEntryType.Error, "SetVendDoor {0} timed out after {1} tries.", state.ToString(), num);
+		ServiceLocator.Instance.GetService<IControlSystem>().LogInputs(ControlBoards.Aux, LogEntryType.Error);
 		return coreResponse;
 	}
 
-	private bool MoveToVendSensor(VendDoorState state, CommandType doorCommand, CommandType unknownCommand)
+	private bool MoveToVendSensor(VendDoorState state, CommandType doorCommand, CommandType unknownCommand, IRuntimeService rts)
 	{
 		if (!ControllerConfiguration.Instance.MoveVendDoorToAuxSensor || VendDoorState.Rent == state)
 		{
 			return true;
 		}
 		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		PerfFunctions.SpinWait(200);
+		rts.SpinWait(200);
 		service.ExecuteControllerCommand(unknownCommand);
-		PerfFunctions.SpinWait(100);
+		rts.SpinWait(100);
 		service.ExecuteControllerCommand(CommandType.VendDoorKillCommand);
-		PerfFunctions.SpinWait(100);
+		rts.SpinWait(100);
 		CoreResponse coreResponse = service.ExecuteControllerCommand(doorCommand, 5000);
 		if (coreResponse.CommError)
 		{
 			return false;
 		}
-		PerfFunctions.SpinWait(100);
+		rts.SpinWait(100);
 		return !coreResponse.TimedOut;
 	}
 }

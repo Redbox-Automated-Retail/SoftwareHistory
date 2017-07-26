@@ -8,12 +8,6 @@ namespace Redbox.HAL.Script.Framework;
 
 internal sealed class ApplicationLog : IFormattedLog
 {
-	private const int MaxFileSize = 1024000;
-
-	private const int BackDays = 60;
-
-	private const int BackDaysForImages = 168;
-
 	internal readonly ExecutionContext Context;
 
 	private TextWriter Log = StreamWriter.Null;
@@ -25,6 +19,12 @@ internal sealed class ApplicationLog : IFormattedLog
 	private string Directory;
 
 	private string FileName;
+
+	private const int MaxFileSize = 1024000;
+
+	private const int BackDays = 60;
+
+	private const int BackDaysForImages = 168;
 
 	internal bool AppendToExisting { get; private set; }
 
@@ -172,12 +172,10 @@ internal sealed class ApplicationLog : IFormattedLog
 
 	private void ConfigureAndOpen(string directory, string fileName, bool flushOnWrite, bool appends)
 	{
-		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-		string text = service.LogsBasePath;
+		string text = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath;
 		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
 		{
-			IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-			text = service2.RuntimePath("Logs");
+			text = ServiceLocator.Instance.GetService<IRuntimeService>().RuntimePath("Logs");
 		}
 		string text2 = text;
 		if (!string.IsNullOrEmpty(directory))
@@ -202,13 +200,9 @@ internal sealed class ApplicationLog : IFormattedLog
 		FlushOnWrite = flushOnWrite;
 		AppendToExisting = appends;
 		string text3 = Path.Combine(Directory, FileName);
-		if (AppendToExisting && File.Exists(text3))
+		if (AppendToExisting && File.Exists(text3) && new FileInfo(text3).Length >= 1024000)
 		{
-			FileInfo fileInfo = new FileInfo(text3);
-			if (fileInfo.Length >= 1024000)
-			{
-				CreateBackup(text3);
-			}
+			CreateBackup(text3);
 		}
 		Open();
 	}

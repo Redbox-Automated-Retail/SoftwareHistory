@@ -57,5 +57,6 @@ public enum ErrorCodes
 	FraudPostFailure,
 	InvalidDeviceState,
 	LowerLimitError,
-	UpperLimitError
+	UpperLimitError,
+	ServiceChannelError
 }

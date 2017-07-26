@@ -8,11 +8,11 @@ public interface IControlSystem
 
 	IControlResponse Initialize();
 
-	void Shutdown();
+	bool Shutdown();
 
 	IControlResponse SetAudio(AudioChannelState newState);
 
-	void ToggleRingLight(bool on, int? sleepAfter);
+	IControlResponse ToggleRingLight(bool on, int? sleepAfter);
 
 	IControlResponse VendDoorRent();
 
@@ -66,7 +66,21 @@ public interface IControlSystem
 
 	IControlResponse StartRollerOut();
 
+	IControlResponse RollerToPosition(RollerPosition position);
+
 	IControlResponse RollerToPosition(RollerPosition position, int opTimeout);
 
 	IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors);
+
+	QlmStatus GetQlmStatus();
+
+	ErrorCodes EngageQlm(IFormattedLog log);
+
+	ErrorCodes DisengageQlm(bool home, IFormattedLog log);
+
+	IControlResponse DropQlm();
+
+	IControlResponse LiftQlm();
+
+	IControlResponse HaltQlmOperation();
 }

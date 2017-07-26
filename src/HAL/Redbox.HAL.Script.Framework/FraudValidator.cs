@@ -1,7 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -19,11 +18,11 @@ internal struct FraudValidator : IDisposable
 		}
 	}
 
+	internal readonly bool ScanConfigured;
+
 	private readonly ExecutionContext Context;
 
 	private readonly IDiskValidatorService DiskService;
-
-	private readonly bool ScanConfigured;
 
 	private ErrorCodes ScanError;
 
@@ -43,41 +42,35 @@ internal struct FraudValidator : IDisposable
 		}
 	}
 
-	internal IFraudScanResult Validate()
+	internal IFraudScanResult MultipassValidate(string matrix)
 	{
-		if (ScanError == ErrorCodes.Success)
+		IFraudScanResult fraudScanResult = Validate(matrix);
+		if (fraudScanResult.ScanError == ErrorCodes.Success && !fraudScanResult.Valid)
 		{
-			return DiskService.Validate();
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			service.RollerToPosition(RollerPosition.Position6);
+			fraudScanResult = Validate(matrix);
+			service.RollerToPosition(RollerPosition.Position3);
 		}
-		return new InvalidScanStateResult(ScanError);
+		return fraudScanResult;
 	}
 
-	internal IFraudScanResult Validate(string matrix)
+	internal IFraudScanResult MultipassValidateChecked(string matrix)
 	{
-		if (ScanError == ErrorCodes.Success)
+		if (!ControllerConfiguration.Instance.FraudScanMultiPass)
 		{
-			return DiskService.Validate(matrix);
+			return Validate(matrix);
 		}
-		return new InvalidScanStateResult(ScanError);
-	}
-
-	internal void ValidateAndPublish(string matrix)
-	{
-		if (ScanConfigured)
-		{
-			Publish(DiskService.Validate(matrix), matrix);
-		}
-	}
-
-	internal void StaticScan()
-	{
-		StartScan();
-		PerfFunctions.Wait(ControllerConfiguration.Instance.FraudScanStartupDelay);
+		return MultipassValidate(matrix);
 	}
 
 	internal void StartScan()
 	{
-		StartScan(ControllerConfiguration.Instance.FraudScanStartupDelay);
+		if (ScanConfigured && !IsScanning)
+		{
+			ScanError = DiskService.FraudSensor.StartScan();
+			IsScanning = ScanError == ErrorCodes.Success;
+		}
 	}
 
 	internal void Publish(IFraudScanResult scanResult, string matrix)
@@ -111,7 +104,7 @@ internal struct FraudValidator : IDisposable
 		Disposed = (IsScanning = false);
 		if (startScan)
 		{
-			StartScan(0);
+			StartScan();
 		}
 	}
 
@@ -120,21 +113,17 @@ internal struct FraudValidator : IDisposable
 		this = default(FraudValidator);
 		DiskService = ServiceLocator.Instance.GetService<IDiskValidatorService>();
 		Context = context;
-		FraudScanJobMask fraudScanJobBitmask = (FraudScanJobMask)ControllerConfiguration.Instance.FraudScanJobBitmask2;
-		ScanConfigured = (fraudScanJobBitmask & scanJob) == scanJob && DiskService.IsConfigured;
+		bool flag = ((uint)ControllerConfiguration.Instance.FraudScanJobBitmask2 & (uint)scanJob) != 0;
+		ScanConfigured = flag && DiskService.IsConfigured;
 		Disposed = (IsScanning = false);
 	}
 
-	private void StartScan(int delay)
+	private IFraudScanResult Validate(string matrix)
 	{
-		if (ScanConfigured && !IsScanning)
+		if (ScanError == ErrorCodes.Success)
 		{
-			ScanError = DiskService.FraudSensor.StartScan();
-			IsScanning = ErrorCodes.Success == ScanError;
-			if (delay > 0)
-			{
-				PerfFunctions.Wait(delay);
-			}
+			return DiskService.Validate(matrix);
 		}
+		return new InvalidScanStateResult(ScanError);
 	}
 }

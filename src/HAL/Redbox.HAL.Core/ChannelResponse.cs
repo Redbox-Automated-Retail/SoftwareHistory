@@ -15,7 +15,7 @@ internal sealed class ChannelResponse : IChannelResponse, IDisposable
 
 	private readonly EventWaitHandle ReadEvent = new EventWaitHandle(initialState: false, EventResetMode.ManualReset);
 
-	public bool CommOk => ErrorCodes.Success == Error;
+	public bool CommOk => Error == ErrorCodes.Success;
 
 	public ErrorCodes Error { get; internal set; }
 

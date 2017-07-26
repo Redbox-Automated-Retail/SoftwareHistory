@@ -8,7 +8,5 @@ public interface IDiskValidatorService : IConfigurationObserver
 
 	IFraudScanResult Validate(string matrix);
 
-	IFraudScanResult Validate();
-
 	void CorrectErroredPost(IFormattedLog log);
 }

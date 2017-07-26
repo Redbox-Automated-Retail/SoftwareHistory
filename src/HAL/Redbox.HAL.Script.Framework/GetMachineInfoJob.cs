@@ -8,23 +8,23 @@ internal sealed class GetMachineInfoJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IDeck deck = QLM.Deck;
-		if (deck == null)
+		IDeck qlmDeck = ServiceLocator.Instance.GetService<IDecksService>().QlmDeck;
+		if (qlmDeck == null)
 		{
 			base.Context.CreateInfoResult("QlmMissingInfo", "There is no QLM deck defined for this machine.");
 		}
 		else
 		{
-			base.Context.CreateResult("QlmInfo", "Designated QLM deck for this machine, slot equals maximum number for this deck.", deck.Number, deck.NumberOfSlots, null, null, null);
+			base.Context.CreateResult("QlmInfo", "Designated QLM deck for this machine, slot equals maximum number for this deck.", qlmDeck.Number, qlmDeck.NumberOfSlots, null, null, null);
 		}
-		base.DecksService.ForAllReverseDecksDo(delegate(IDeck deck2)
+		base.DecksService.ForAllReverseDecksDo(delegate(IDeck deck)
 		{
-			base.Context.CreateResult("DeckInfo", "Slot equals maximum number for this deck.", deck2.Number, deck2.NumberOfSlots, null, null, null);
+			base.Context.CreateResult("DeckInfo", "Slot equals maximum number for this deck.", deck.Number, deck.NumberOfSlots, null, null, null);
 			return true;
 		});
 		base.Context.CreateResult("MaxDeckInfo", "Deck equals maximum number for this machine.", base.DecksService.DeckCount, 1, null, null, null);
 		base.Context.CreateInfoResult("BufferSlot", ControllerConfiguration.Instance.ReturnSlotBuffer.ToString());
-		base.Context.CreateInfoResult("MerchType", (deck == null) ? "VMZ2" : "QLM");
+		base.Context.CreateInfoResult("MerchType", (qlmDeck == null) ? "VMZ2" : "QLM");
 	}
 
 	internal GetMachineInfoJob(ExecutionResult result, ExecutionContext ctx)

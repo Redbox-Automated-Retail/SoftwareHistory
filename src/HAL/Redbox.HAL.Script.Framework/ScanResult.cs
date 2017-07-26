@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -55,6 +54,6 @@ internal sealed class ScanResult
 
 	static ScanResult()
 	{
-		SecretToken = StringExtensions.DecryptFromBase64("2PiCFxFlrO8=");
+		SecretToken = ServiceLocator.Instance.GetService<IEncryptionService>().DecryptFromBase64("2PiCFxFlrO8=");
 	}
 }

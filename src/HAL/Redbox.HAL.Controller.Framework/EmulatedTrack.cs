@@ -15,9 +15,4 @@ internal sealed class EmulatedTrack : ITrack
 	{
 		return CoreResponse.TimedOutResponse();
 	}
-
-	public IControlResponse Cycle()
-	{
-		return CoreResponse.TimedOutResponse();
-	}
 }

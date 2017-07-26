@@ -27,10 +27,12 @@ public sealed class SerialBoardInstruction : Instruction
 			context.ServiceLog("SerialBoardInstruction: converted '{0}' to operand None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.ClosePort:
-			service.Shutdown();
+		{
+			string instance = (service.Shutdown() ? "SUCCESS" : "TIMEOUT");
 			Thread.Sleep(500);
-			context.PushTop("SUCCESS");
+			context.PushTop(instance);
 			break;
+		}
 		case ExpectedOperand.Reset:
 		{
 			IControlResponse response = service.Initialize();

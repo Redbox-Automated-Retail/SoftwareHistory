@@ -64,8 +64,8 @@ public sealed class SensorInstruction : Instruction
 		{
 			string[] array3 = service.ReadInputs(ControlBoards.Picker);
 			int num2 = 1;
-			string[] array4 = array3;
-			foreach (string arg2 in array4)
+			string[] array2 = array3;
+			foreach (string arg2 in array2)
 			{
 				context.PushTop($"PICKER CONTROLLER I/O {num2++} = {arg2}");
 			}

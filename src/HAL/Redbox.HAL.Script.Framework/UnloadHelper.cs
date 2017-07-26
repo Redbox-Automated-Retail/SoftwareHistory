@@ -1,3 +1,4 @@
+using System;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
@@ -117,7 +118,8 @@ internal struct UnloadHelper : IFileDiskHandler
 		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
 		ErrorCodes errorCodes = ErrorCodes.Success;
 		string text = "UNKNOWN";
-		using (FraudValidator fraudValidator = new FraudValidator(Context, FraudScanJobMask.Unload))
+		FraudValidator fraudValidator = new FraudValidator(Context, FraudScanJobMask.Unload);
+		try
 		{
 			errorCodes = service.MoveTo(srcDeck, srcSlot, MoveMode.Get, Context.AppLog);
 			if (errorCodes != ErrorCodes.Success)
@@ -173,10 +175,15 @@ internal struct UnloadHelper : IFileDiskHandler
 				Context.AppLog.Write("The barcode couldn't be read.", LogEntryType.Info);
 				Context.CreateResult("QlmUnloadBadRead", "The READ request failed because no barcode could be read.", srcDeck, srcSlot, null, null, null);
 			}
-			else
+			else if (fraudValidator.ScanConfigured)
 			{
-				fraudValidator.ValidateAndPublish(text);
+				IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(text);
+				fraudValidator.Publish(scanResult2, text);
 			}
+		}
+		finally
+		{
+			((IDisposable)fraudValidator/*cast due to constrained. prefix*/).Dispose();
 		}
 		Context.CreateResult("QlmUnloadBarcodeFromQlm", string.Format("The item pulled from the {0} has the following barcode.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, text, null, null);
 		if (ControllerConfiguration.Instance.IsVMZMachine)
@@ -212,8 +219,7 @@ internal struct UnloadHelper : IFileDiskHandler
 		{
 			return MerchandizeResult.Success;
 		}
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes2 = service.MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
+		ErrorCodes errorCodes2 = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
 		if (errorCodes2 != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes2);
@@ -221,8 +227,7 @@ internal struct UnloadHelper : IFileDiskHandler
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		if (!service2.Put(readMatrix, Context.AppLog).Success)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put(readMatrix, Context.AppLog).Success)
 		{
 			Context.CreateResult("MachineError", "There was an error executing the PUT instruction.", srcDeck, srcSlot, readMatrix, null, null);
 		}

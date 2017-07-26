@@ -15,8 +15,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("job")]
 public sealed class JobCommand
 {
-	[Usage("JOB get job: job-id")]
 	[CommandForm(Name = "get")]
+	[Usage("JOB get job: job-id")]
 	public void Get(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -26,8 +26,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB list")]
 	[CommandForm(Name = "list")]
+	[Usage("JOB list")]
 	public void List(CommandContext context)
 	{
 		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
@@ -41,8 +41,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB set-label job: job-id value: label")]
 	[CommandForm(Name = "set-label")]
+	[Usage("JOB set-label job: job-id value: label")]
 	public void SetLabel(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId, string value)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -53,8 +53,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB get-errors job: job-id")]
 	[CommandForm(Name = "get-errors")]
+	[Usage("JOB get-errors job: job-id")]
 	public void GetErrors(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -64,8 +64,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB get-messages job: job-id")]
 	[CommandForm(Name = "get-messages")]
+	[Usage("JOB get-messages job: job-id")]
 	public void GetMessages(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -86,13 +86,12 @@ public sealed class JobCommand
 		}
 		using (new ResultsReader(job))
 		{
-			IEnumerable<string> messages = job.EnumerateResults();
-			ProtocolHelper.FormatEventMessages(messages, context);
+			ProtocolHelper.FormatEventMessages(job.EnumerateResults(), context);
 		}
 	}
 
-	[Usage("JOB disconnect job: job-id")]
 	[CommandForm(Name = "disconnect")]
+	[Usage("JOB disconnect job: job-id")]
 	public void Disconnect(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -119,15 +118,15 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB pend job: job-id")]
 	[CommandForm(Name = "pend")]
+	[Usage("JOB pend job: job-id")]
 	public void Pend(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Pend();
 	}
 
-	[Usage("JOB signal job: job-id value: signalValue")]
 	[CommandForm(Name = "signal")]
+	[Usage("JOB signal job: job-id value: signalValue")]
 	public void Signal(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId, string value)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Signal(value);
@@ -140,15 +139,15 @@ public sealed class JobCommand
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Trash();
 	}
 
-	[Usage("JOB resume job: job-id")]
 	[CommandForm(Name = "resume")]
+	[Usage("JOB resume job: job-id")]
 	public void Resume(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Resume();
 	}
 
-	[Usage("JOB suspend job: job-id")]
 	[CommandForm(Name = "suspend")]
+	[Usage("JOB suspend job: job-id")]
 	public void Suspend(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.Suspend();
@@ -161,8 +160,8 @@ public sealed class JobCommand
 		context.Errors.Add(Error.NewError("C999", "Unsupported Client API", "The SuspendAll client API is no longer supported."));
 	}
 
-	[Usage("JOB resume-all")]
 	[CommandForm(Name = "resume-all")]
+	[Usage("JOB resume-all")]
 	public void ResumeAll(CommandContext context)
 	{
 		context.Errors.Add(Error.NewError("C999", "Unsupported Client API", "The ResumeAll client API is no longer supported."));
@@ -187,8 +186,8 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB set-start-time job: job-id value: startTime")]
 	[CommandForm(Name = "set-start-time")]
+	[Usage("JOB set-start-time job: job-id value: startTime")]
 	public void SetStartTime(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId, DateTime value)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -206,53 +205,54 @@ public sealed class JobCommand
 		ExecutionEngine.Instance.CleanupJobs(force);
 	}
 
-	[Usage("JOB scheduler-status")]
 	[CommandForm(Name = "scheduler-status")]
+	[Usage("JOB scheduler-status")]
 	public void GetSchedulerStatus(CommandContext context)
 	{
-		context.Messages.Add((ExecutionEngine.Instance.ActiveContext != null) ? ExecutionEngine.Instance.ActiveContext.ID : "idle");
+		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
+		context.Messages.Add((activeContext != null) ? activeContext.ID : "idle");
 	}
 
-	[Usage("JOB wait-for-completion job: job-id")]
 	[CommandForm(Name = "wait-for-completion")]
+	[Usage("JOB wait-for-completion job: job-id")]
 	public void WaitForCompletion(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors, required: true)?.WaitForCompletion();
 	}
 
-	[Usage("JOB schedule name: program-name [debugging: flag] [priority: priority] [startTime: startTime] [label: label] [resume-now] [no-duplicates]")]
 	[CommandForm(Name = "schedule")]
+	[Usage("JOB schedule name: program-name [debugging: flag] [priority: priority] [startTime: startTime] [label: label] [resume-now] [no-duplicates]")]
 	public void Schedule(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, bool? debugging, ProgramPriority? priority, DateTime? startTime, string label)
 	{
 		bool flag = context.Parameters.ContainsKey("resume-now");
 		if (context.Parameters.ContainsKey("no-duplicates") && label != null)
 		{
 			ExecutionContext[] jobByLabel = ExecutionEngine.Instance.GetJobByLabel(label);
-			if (jobByLabel != null && jobByLabel.Length > 0)
+			if (jobByLabel != null && jobByLabel.Length != 0)
 			{
 				context.Errors.Add(Error.NewWarning("S998", $"A job with the label '{label}' already exists and the no-duplicates flag was specified.", "Issue the JOB schedule command again passing in a non-duplicate label: or remove the no-duplicates parameter."));
 				if (flag)
 				{
 					ExecutionContext[] jobByLabel2 = ExecutionEngine.Instance.GetJobByLabel(label);
-					foreach (ExecutionContext executionContext in jobByLabel2)
+					for (int i = 0; i < jobByLabel2.Length; i++)
 					{
-						executionContext.Resurrect();
+						jobByLabel2[i].Resurrect();
 					}
 				}
 				return;
 			}
 		}
-		ExecutionContext executionContext2 = ScheduleJob(name, label, startTime, priority ?? ProgramPriority.Normal, debugging ?? false);
-		context.Errors.AddRange(executionContext2.Result.Errors);
-		if (!context.Errors.ContainsError() && flag)
+		ExecutionContext executionContext = ScheduleJob(name, label, startTime, priority ?? ProgramPriority.Normal, debugging ?? false);
+		context.Errors.AddRange(executionContext.Result.Errors);
+		if (!context.Errors.ContainsError() & flag)
 		{
-			executionContext2.Resume();
+			executionContext.Resume();
 		}
-		CommandHelper.FormatJob(executionContext2, context);
+		CommandHelper.FormatJob(executionContext, context);
 	}
 
-	[Usage("JOB execute-immediate statement: statement-line")]
 	[CommandForm(Name = "execute-immediate")]
+	[Usage("JOB execute-immediate statement: statement-line")]
 	public void ExecuteImmediate([CommandKeyValue(IsRequired = true)] CommandContext context, string statement)
 	{
 		if (ExecutionEngine.Instance.IsImmediateJobPending())
@@ -295,15 +295,15 @@ public sealed class JobCommand
 		context.Errors.AddRange(executionContext.Result.Errors);
 	}
 
-	[Usage("JOB init-status")]
 	[CommandForm(Name = "init-status")]
+	[Usage("JOB init-status")]
 	public void StartupInitSucceeded(CommandContext context)
 	{
 		context.Messages.Add(ExecutionEngine.Instance.GetInitJobStatus());
 	}
 
-	[Usage("JOB quick-return-status")]
 	[CommandForm(Name = "quick-return-status")]
+	[Usage("JOB quick-return-status")]
 	public void QuickReturnIsRunning(CommandContext context)
 	{
 		string text = (QuickReturnDevice.Instance.IsConfigured ? "ACTIVE" : "INACTIVE");

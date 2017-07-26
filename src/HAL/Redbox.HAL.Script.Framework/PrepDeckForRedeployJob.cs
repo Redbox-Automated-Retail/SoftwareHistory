@@ -27,8 +27,7 @@ internal sealed class PrepDeckForRedeployJob : NativeJobAdapter
 				LogHelper.Instance.Log("Deck specified '{0}' is QLM; will not alter.", num3);
 				continue;
 			}
-			int start = ((!isVMZMachine) ? 1 : (VMZ.Instance.Bounds.End + 1));
-			Range slotRange = new Range(start, byNumber.NumberOfSlots);
+			Range slotRange = new Range((!isVMZMachine) ? 1 : (VMZ.Instance.Bounds.End + 1), byNumber.NumberOfSlots);
 			IList<int> list = base.InventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
 			foreach (int item in list)
 			{

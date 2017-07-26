@@ -5,8 +5,8 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.Service.Win32.Properties;
 
-[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 [CompilerGenerated]
+[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 internal sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
@@ -14,8 +14,8 @@ internal sealed class Settings : ApplicationSettingsBase
 	public static Settings Default => defaultInstance;
 
 	[UserScopedSetting]
-	[DefaultSettingValue("Modern")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("Modern")]
 	public string MotionControlServiceVersion
 	{
 		get
@@ -29,8 +29,8 @@ internal sealed class Settings : ApplicationSettingsBase
 	}
 
 	[UserScopedSetting]
-	[DefaultSettingValue("True")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("True")]
 	public bool CountersDBExclusiveMode
 	{
 		get
@@ -43,9 +43,9 @@ internal sealed class Settings : ApplicationSettingsBase
 		}
 	}
 
+	[UserScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("True")]
-	[UserScopedSetting]
 	public bool UsbServiceDebug
 	{
 		get
@@ -55,6 +55,36 @@ internal sealed class Settings : ApplicationSettingsBase
 		set
 		{
 			this["UsbServiceDebug"] = value;
+		}
+	}
+
+	[UserScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("rcp://127.0.0.1:7001")]
+	public string ServiceProtocol
+	{
+		get
+		{
+			return (string)this["ServiceProtocol"];
+		}
+		set
+		{
+			this["ServiceProtocol"] = value;
+		}
+	}
+
+	[UserScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("Legacy")]
+	public string ServiceHostGeneration
+	{
+		get
+		{
+			return (string)this["ServiceHostGeneration"];
+		}
+		set
+		{
+			this["ServiceHostGeneration"] = value;
 		}
 	}
 }

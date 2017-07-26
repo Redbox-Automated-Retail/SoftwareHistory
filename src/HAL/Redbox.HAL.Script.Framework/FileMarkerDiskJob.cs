@@ -36,16 +36,14 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 				break;
 			}
 		}
-		errorCodes = CorrectiveMove(num, num2, MoveMode.Put);
+		errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(num, num2, MoveMode.Put, base.Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			HandleHWError(errorCodes.ToString());
 			return;
 		}
 		base.ControlSystem.TrackCycle();
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service.Put("UNKNOWN", base.AppLog);
-		if (!putResult.Success)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).Success)
 		{
 			errorCodes = CorrectiveMoveVend(MoveMode.None);
 			if (errorCodes == ErrorCodes.Success)

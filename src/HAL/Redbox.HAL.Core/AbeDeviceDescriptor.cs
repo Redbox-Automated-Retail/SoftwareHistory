@@ -27,8 +27,7 @@ public sealed class AbeDeviceDescriptor : IDeviceDescriptor
 
 	public bool Locate()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		return service.FindDevice(this).Found;
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDevice(this).Found;
 	}
 
 	public DeviceStatus GetStatus()

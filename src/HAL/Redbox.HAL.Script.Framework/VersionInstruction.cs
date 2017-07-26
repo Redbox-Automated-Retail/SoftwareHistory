@@ -33,14 +33,15 @@ public class VersionInstruction : Instruction
 			}
 			string boardVersion = service.GetBoardVersion(controlBoards);
 			context.PushTop(boardVersion);
-			return;
 		}
-		string[] boardVersions = service.GetBoardVersions();
-		string[] array = boardVersions;
-		foreach (string instance in array)
+		else
 		{
-			context.PushTop(instance);
+			string[] boardVersions = service.GetBoardVersions();
+			foreach (string instance in boardVersions)
+			{
+				context.PushTop(instance);
+			}
+			context.PushTop("REVISION A");
 		}
-		context.PushTop("REVISION A");
 	}
 }

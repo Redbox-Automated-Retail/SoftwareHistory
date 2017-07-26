@@ -1,14 +1,11 @@
 using System;
-using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
+using System.Threading;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core.Descriptors;
 
 internal sealed class MicrotouchDescriptor : ITouchscreenDescriptor, IDeviceDescriptor, IDriverDescriptor
 {
-	private readonly byte[] FirmwareCommand;
-
 	public string Vendor => "0596";
 
 	public string Product => "0001";
@@ -28,17 +25,25 @@ internal sealed class MicrotouchDescriptor : ITouchscreenDescriptor, IDeviceDesc
 
 	public bool SoftReset()
 	{
-		throw new NotImplementedException();
+		return new _3mSoftResetCommand().Reset();
+	}
+
+	public bool HardReset()
+	{
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		bool result = false;
+		if (service.SetDeviceState(this, DeviceState.Disable))
+		{
+			Thread.Sleep(2000);
+			result = service.SetDeviceState(this, DeviceState.Enable);
+			Thread.Sleep(2000);
+		}
+		return result;
 	}
 
 	public string ReadFirmware()
 	{
-		byte[] array = SendReceive(FirmwareCommand, 24);
-		if (array == null)
-		{
-			return "UNKNOWN";
-		}
-		return $"{BitConverter.ToString(array, 3, 1)}.{BitConverter.ToString(array, 4, 1)}";
+		return new _3mFirmwareCommand().GetFirmwareRevision();
 	}
 
 	public bool ResetDriver()
@@ -48,8 +53,7 @@ internal sealed class MicrotouchDescriptor : ITouchscreenDescriptor, IDeviceDesc
 
 	public bool MatchDriver()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		if (service.MatchDriver(this, this))
+		if (ServiceLocator.Instance.GetService<IUsbDeviceService>().MatchDriver(this, this))
 		{
 			LogHelper.Instance.Log("Touch screen driver matched.");
 			return true;
@@ -60,8 +64,7 @@ internal sealed class MicrotouchDescriptor : ITouchscreenDescriptor, IDeviceDesc
 
 	public bool Locate()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		return service.FindDevice(this).Found;
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDevice(this).Found;
 	}
 
 	public DeviceStatus GetStatus()
@@ -74,55 +77,5 @@ internal sealed class MicrotouchDescriptor : ITouchscreenDescriptor, IDeviceDesc
 		DriverVersion = new Version("7.13.14.0");
 		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
 		SetupClass = service.Get(clazz);
-		FirmwareCommand = new byte[8];
-		for (int i = 0; i < FirmwareCommand.Length; i++)
-		{
-			byte b = 0;
-			switch (i)
-			{
-			case 0:
-				b = 192;
-				break;
-			case 1:
-				b = 10;
-				break;
-			case 6:
-				b = 24;
-				break;
-			}
-			FirmwareCommand[i] = b;
-		}
-	}
-
-	private byte[] SendReceive(byte[] command, int responseLength)
-	{
-		SafeFileHandle safeFileHandle = Win32.CreateFile("\\\\.\\TwTouchDevice1", Win32.AccessFlags.GENERIC_READ_WRITE, Win32.ShareFlags.FILE_SHARE_READ_WRITE, IntPtr.Zero, 3u, 128u, IntPtr.Zero);
-		byte[] array = null;
-		if (safeFileHandle.IsInvalid)
-		{
-			LogHelper.Instance.Log("[MicrotouchDescriptor] CreateFile failed: Error = {0}", Marshal.GetLastWin32Error());
-			return array;
-		}
-		try
-		{
-			if (!Win32.WriteFile(safeFileHandle, command, command.Length, out var lpNumberOfBytesWritten, IntPtr.Zero))
-			{
-				LogHelper.Instance.Log("[MicrotouchDescriptor] WriteFile failed: Error = {0}", Marshal.GetLastWin32Error());
-			}
-			else
-			{
-				array = new byte[responseLength];
-				if (!Win32.ReadFile(safeFileHandle, array, array.Length, out lpNumberOfBytesWritten, IntPtr.Zero))
-				{
-					array = null;
-					LogHelper.Instance.Log("[MicrotouchDescriptor] ReadFile failed: Error = {0}", Marshal.GetLastWin32Error());
-				}
-			}
-			return array;
-		}
-		finally
-		{
-			safeFileHandle.Close();
-		}
 	}
 }

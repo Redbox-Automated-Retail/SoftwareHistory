@@ -10,14 +10,23 @@ public sealed class ControlSystemInstruction : Instruction
 	private enum Ops
 	{
 		None,
-		Center
+		Center,
+		RinglightOn,
+		RinglightOff,
+		PickerSensorsOn,
+		PickerSensorsOff,
+		EngageQlm,
+		DisengageQlm,
+		DropQlm,
+		LiftQlm,
+		HaltQlmOperation
 	}
 
 	public override string Mnemonic => "CONTROLSYSTEM";
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
 	{
-		if (operandTokens.Count != 1)
+		if (operandTokens.Count == 0)
 		{
 			result.AddInvalidOperandError($"The {Mnemonic} instruction expects one operand.");
 		}
@@ -31,10 +40,47 @@ public sealed class ControlSystemInstruction : Instruction
 	{
 		Ops ops = Enum<Ops>.ParseIgnoringCase(base.Operands[0].Value, Ops.None);
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		Ops ops2 = ops;
-		if (ops2 == Ops.Center)
+		IControlResponse controlResponse = null;
+		IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		switch (ops)
 		{
-			service.Center(CenterDiskMethod.VendDoorAndBack);
+		case Ops.Center:
+			context.PushTop(service.Center(CenterDiskMethod.VendDoorAndBack).ToString());
+			break;
+		case Ops.RinglightOn:
+			controlResponse = service.ToggleRingLight(on: true, null);
+			break;
+		case Ops.RinglightOff:
+			controlResponse = service.ToggleRingLight(on: false, null);
+			break;
+		case Ops.PickerSensorsOn:
+			controlResponse = service.SetSensors(on: true);
+			break;
+		case Ops.PickerSensorsOff:
+			controlResponse = service.SetSensors(on: false);
+			break;
+		case Ops.EngageQlm:
+			context.PushTop(service.EngageQlm(service2.NilLog).ToString().ToUpper());
+			break;
+		case Ops.DisengageQlm:
+			context.PushTop(service.DisengageQlm(home: true, service2.NilLog).ToString().ToUpper());
+			break;
+		case Ops.DropQlm:
+			controlResponse = service.DropQlm();
+			break;
+		case Ops.LiftQlm:
+			controlResponse = service.LiftQlm();
+			break;
+		case Ops.HaltQlmOperation:
+			controlResponse = service.HaltQlmOperation();
+			break;
+		default:
+			result.AddError(ExecutionErrors.InvalidSymbolValue, $"The value {base.Operands[0].Value} is unrecognized.");
+			break;
+		}
+		if (controlResponse != null)
+		{
+			HandleError(controlResponse, context);
 		}
 	}
 }

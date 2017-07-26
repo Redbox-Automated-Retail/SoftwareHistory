@@ -15,6 +15,7 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 
 	public override IChannelResponse SendRecv(byte[] command, int readTimeout)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		ChannelResponse channelResponse = new ChannelResponse(Port.ReadBufferSize);
 		try
 		{
@@ -33,7 +34,7 @@ internal sealed class AsyncReadPort : RedboxSerialPort
 			{
 				Port.Write(base.WriteTerminator, 0, base.WriteTerminator.Length);
 			}
-			PerfFunctions.SpinWait(WritePause);
+			service.SpinWait(WritePause);
 		}
 		catch (Exception e)
 		{

@@ -58,8 +58,7 @@ public sealed class QuickReturnInstruction : Instruction
 			{
 				return m_statsDirectory;
 			}
-			IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-			m_statsDirectory = service.CreateSubpath("Return");
+			m_statsDirectory = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("Return");
 			return m_statsDirectory;
 		}
 	}
@@ -257,27 +256,6 @@ public sealed class QuickReturnInstruction : Instruction
 		case Forms.ClosePort:
 			QuickReturnDevice.Instance.ClosePort();
 			break;
-		case Forms.DumpCounters:
-		{
-			string path = Path.Combine(StatisticsDirectory, "QRstats.log");
-			if (File.Exists(path))
-			{
-				try
-				{
-					FileHelper.CreateBackup(path, BackupAction.Move);
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("Unable to backup statistics file.", e);
-					break;
-				}
-			}
-			using StreamWriter writer = new StreamWriter(path);
-			LogCounterValue(writer, "QuickReturnAttention", "Button presses");
-			LogCounterValue(writer, "QuickReturnNoInsertDisk", "No disk inserts");
-			LogCounterValue(writer, "QuickReturnSuccessful", "Successful returns");
-			break;
-		}
 		case Forms.FindDevice:
 		{
 			string instance = QuickReturnDevice.Instance.ProbePort();
@@ -289,8 +267,7 @@ public sealed class QuickReturnInstruction : Instruction
 
 	private void LogCounterValue(TextWriter writer, string counterName, string friendlyName)
 	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		IPersistentCounter persistentCounter = service.Find(counterName);
+		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<IPersistentCounterService>().Find(counterName);
 		int num = 0;
 		if (persistentCounter != null)
 		{
@@ -315,8 +292,7 @@ public sealed class QuickReturnInstruction : Instruction
 	{
 		try
 		{
-			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Led.ToString().ToUpper()), result.Errors, context);
-			return Enum<QuickReturnDevice.LED>.ParseIgnoringCase(keyValuePairValue, QuickReturnDevice.LED.Unknown);
+			return Enum<QuickReturnDevice.LED>.ParseIgnoringCase(GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Led.ToString().ToUpper()), result.Errors, context), QuickReturnDevice.LED.Unknown);
 		}
 		catch (Exception)
 		{
@@ -328,8 +304,7 @@ public sealed class QuickReturnInstruction : Instruction
 	{
 		try
 		{
-			string keyValuePairValue = GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Mode.ToString().ToUpper()), result.Errors, context);
-			return Enum<QuickReturnDevice.LEDMode>.ParseIgnoringCase(keyValuePairValue, QuickReturnDevice.LEDMode.Unknown);
+			return Enum<QuickReturnDevice.LEDMode>.ParseIgnoringCase(GetKeyValuePairValue<string>(base.Operands.GetKeyValuePair(Attributes.Mode.ToString().ToUpper()), result.Errors, context), QuickReturnDevice.LEDMode.Unknown);
 		}
 		catch (Exception)
 		{

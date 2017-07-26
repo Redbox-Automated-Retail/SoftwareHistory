@@ -31,9 +31,8 @@ internal class HardwareHealerJob : NativeJobAdapter
 		}
 		if (ControllerConfiguration.Instance.EnableArcusHealing && !base.MotionService.CommunicationOk())
 		{
-			if (!ResetMotionControllerChecked())
+			if (!base.MotionService.Reset(base.Context.AppLog, quick: false))
 			{
-				base.Context.ServiceLog("The motion controller is not responsive; driver reset returned FAILURE.");
 				AddError("Can't reset controller.");
 			}
 			else

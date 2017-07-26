@@ -44,8 +44,7 @@ internal class Options
 		}
 		try
 		{
-			object value = m_options[name];
-			return (T)Convert.ChangeType(value, typeof(T));
+			return (T)Convert.ChangeType(m_options[name], typeof(T));
 		}
 		catch (Exception)
 		{
@@ -69,16 +68,15 @@ internal class Options
 		while (true)
 		{
 			string text = textReader.ReadLine();
-			if (text != null)
+			if (text == null)
 			{
-				string[] array = text.Split(',');
-				if (array.Length == 2)
-				{
-					m_options[array[0]] = array[1];
-				}
-				continue;
+				break;
 			}
-			break;
+			string[] array = text.Split(',');
+			if (array.Length == 2)
+			{
+				m_options[array[0]] = array[1];
+			}
 		}
 	}
 }

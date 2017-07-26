@@ -17,8 +17,7 @@ internal sealed class ResetFraudSensorJob : NativeJobAdapter
 				base.Context.CreateInfoResult("FraudSensorNotConfigured", "The fraud sensor is not configured.");
 				return;
 			}
-			IFraudSensor fraudSensor = service.FraudSensor;
-			if (fraudSensor.Reset(log) != ErrorCodes.Success)
+			if (service.FraudSensor.Reset(log) != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("FraudSensorResetError", "Unable to reset the fraud sensor.");
 				return;

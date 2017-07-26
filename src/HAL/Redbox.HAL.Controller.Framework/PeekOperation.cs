@@ -7,8 +7,7 @@ public sealed class PeekOperation : AbstractOperation<IPeekResult>
 	public override IPeekResult Execute()
 	{
 		LogHelper.Instance.Log(">> ControllerService.GripperPeek", LogEntryType.Info);
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ILocation currentLocation = service.CurrentLocation;
+		ILocation currentLocation = ServiceLocator.Instance.GetService<IMotionControlService>().CurrentLocation;
 		LocationTestResult locationTestResult = new LocationTestResult(currentLocation.Deck, currentLocation.Slot);
 		if (currentLocation.IsWide)
 		{

@@ -42,10 +42,8 @@ public sealed class PutInstruction : Instruction
 			AddError("E004", "The PUT instruction expects a valid string literal ID on the stack.", result.Errors);
 			return;
 		}
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		service.TrackCycle();
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service2.Put(id, context.AppLog);
+		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
+		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(id, context.AppLog);
 		context.PushTop(putResult.ToString().ToUpper());
 		context.PushTop(1);
 	}

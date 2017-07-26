@@ -1,38 +1,42 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.IPC.Framework;
+using Redbox.HAL.IPC.Framework.Server;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Service.Framework;
 
 public sealed class IPCProxy : IDisposable
 {
-	private IPCServiceHost m_listener;
+	private IIpcServiceHost m_listener;
 
 	private bool Disposed;
 
-	private readonly IPCProtocol Protocol;
-
-	private readonly ManualResetEvent m_waitObject = new ManualResetEvent(initialState: false);
+	private readonly IIpcProtocol Protocol;
 
 	public bool ProtocolValid => Protocol != null;
 
+	public static void InitializeServices(IpcHostVersion version)
+	{
+		IpcServiceHostFactory instance = new IpcServiceHostFactory(version);
+		ServiceLocator.Instance.AddService(typeof(IIpcServiceHostFactory), instance);
+	}
+
 	public static IPCProxy Parse(string protocol)
 	{
-		IPCProtocol iPCProtocol = null;
+		IIpcProtocol ipcProtocol = null;
 		try
 		{
-			iPCProtocol = IPCProtocol.Parse(protocol);
+			ipcProtocol = IPCProtocol.Parse(protocol);
 		}
 		catch (UriFormatException e)
 		{
 			LogHelper.Instance.Log("ProtocolURI is malformed.", e);
-			iPCProtocol = null;
+			ipcProtocol = null;
 		}
-		return new IPCProxy(iPCProtocol);
+		return new IPCProxy(ipcProtocol);
 	}
 
 	public void Dispose()
@@ -50,14 +54,11 @@ public sealed class IPCProxy : IDisposable
 		{
 			throw new Exception("Expected a parsed protocol.");
 		}
-		if (Protocol.Channel == ChannelType.NamedPipe)
-		{
-			RunPipeListener();
-		}
-		else
-		{
-			ExecuteIPCListener();
-		}
+		Assembly assembly = typeof(ProgramCommand).Assembly;
+		IIpcServiceHostFactory service = ServiceLocator.Instance.GetService<IIpcServiceHostFactory>();
+		IHostInfo info = service.Create(assembly);
+		m_listener = service.Create(Protocol, info);
+		m_listener.Start();
 	}
 
 	public void StopListener()
@@ -66,50 +67,19 @@ public sealed class IPCProxy : IDisposable
 		{
 			m_listener.Stop();
 		}
-		m_waitObject.Set();
 	}
 
 	public bool ExecuteStartupFile(string serviceStartup)
 	{
-		if (!File.Exists(serviceStartup))
+		if (File.Exists(serviceStartup))
 		{
-			return true;
+			using StreamReader reader = new StreamReader(serviceStartup);
+			new BatchCommandRunner(reader).Start();
 		}
-		using StreamReader reader = new StreamReader(serviceStartup);
-		BatchCommandRunner batchCommandRunner = new BatchCommandRunner(reader);
-		batchCommandRunner.Start();
 		return true;
 	}
 
-	private void ExecuteIPCListener()
-	{
-		m_listener = IPCServiceHost.Create(Protocol, GetProductName(typeof(ProgramCommand).Assembly), GetVersion(typeof(ProgramCommand).Assembly), GetCopyright(typeof(ProgramCommand).Assembly), Environment.ProcessorCount, Environment.ProcessorCount << 3);
-		m_listener.Start();
-		m_waitObject.WaitOne();
-	}
-
-	private string GetProductName(Assembly assembly)
-	{
-		return ((AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute)))?.Product;
-	}
-
-	private string GetCopyright(Assembly assembly)
-	{
-		return ((AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyCopyrightAttribute)))?.Copyright;
-	}
-
-	private string GetVersion(Assembly assembly)
-	{
-		return assembly.GetName().Version.ToString();
-	}
-
-	private void RunPipeListener()
-	{
-		m_listener = new NamedPipeServiceHost();
-		m_listener.Start();
-	}
-
-	private IPCProxy(IPCProtocol protocol)
+	private IPCProxy(IIpcProtocol protocol)
 	{
 		Protocol = protocol;
 	}

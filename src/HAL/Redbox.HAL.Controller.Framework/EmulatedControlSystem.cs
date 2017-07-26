@@ -15,33 +15,42 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 
 	private TrackState m_trackState;
 
+	private readonly IControlResponse SuccessResponse = new EmulatedControlResponse(ErrorCodes.Success, string.Empty);
+
+	private readonly IControlResponse TimeoutResponse = new EmulatedControlResponse(ErrorCodes.Timeout, string.Empty);
+
 	public VendDoorState VendDoorState => m_vendDoorState;
 
 	public TrackState TrackState => m_trackState;
 
 	public IControlResponse StopRoller()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse StartRollerIn()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse StartRollerOut()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
-	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors)
+	public IControlResponse RollerToPosition(RollerPosition position)
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout)
 	{
-		return SuccessResponse();
+		return SuccessResponse;
+	}
+
+	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors)
+	{
+		return SuccessResponse;
 	}
 
 	public IPickerSensorReadResult ReadSensors()
@@ -56,7 +65,7 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 
 	public IControlResponse SetSensors(bool on)
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public ErrorCodes Center(CenterDiskMethod method)
@@ -74,22 +83,22 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 
 	public IControlResponse ExtendArm()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse ExtendArm(int timeout)
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse RetractArm()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse SetFinger(GripperFingerState state)
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public VendDoorState ReadVendDoorPosition()
@@ -100,39 +109,40 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 	public IControlResponse VendDoorRent()
 	{
 		m_vendDoorState = VendDoorState.Rent;
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse VendDoorClose()
 	{
 		m_vendDoorState = VendDoorState.Closed;
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse TrackOpen()
 	{
 		m_trackState = TrackState.Closed;
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse TrackClose()
 	{
 		m_trackState = TrackState.Closed;
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public IControlResponse TrackCycle()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
-	public void ToggleRingLight(bool on, int? sleepAfter)
+	public IControlResponse ToggleRingLight(bool on, int? sleepAfter)
 	{
+		return SuccessResponse;
 	}
 
 	public IControlResponse SetAudio(AudioChannelState newState)
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
 	public string[] GetBoardVersions()
@@ -152,11 +162,12 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 
 	public IControlResponse Initialize()
 	{
-		return SuccessResponse();
+		return SuccessResponse;
 	}
 
-	public void Shutdown()
+	public bool Shutdown()
 	{
+		return true;
 	}
 
 	public string[] ReadInputs(ControlBoards board)
@@ -180,6 +191,36 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 	{
 	}
 
+	public QlmStatus GetQlmStatus()
+	{
+		return QlmStatus.AuxNotResponsive;
+	}
+
+	public ErrorCodes EngageQlm(IFormattedLog log)
+	{
+		return ErrorCodes.Timeout;
+	}
+
+	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)
+	{
+		return ErrorCodes.Timeout;
+	}
+
+	public IControlResponse DropQlm()
+	{
+		return TimeoutResponse;
+	}
+
+	public IControlResponse LiftQlm()
+	{
+		return TimeoutResponse;
+	}
+
+	public IControlResponse HaltQlmOperation()
+	{
+		return TimeoutResponse;
+	}
+
 	public CoreResponse ExecuteControllerCommand(CommandType type)
 	{
 		CoreCommand command = CoreCommand.Create(type, null);
@@ -194,17 +235,13 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 
 	public CoreResponse ExecuteControllerCommand(CoreCommand command)
 	{
-		CoreResponse coreResponse = new CoreResponse(command.Address);
-		coreResponse.Error = ErrorCodes.Success;
-		return coreResponse;
+		return new CoreResponse(command.Address)
+		{
+			Error = ErrorCodes.Success
+		};
 	}
 
 	internal EmulatedControlSystem()
 	{
-	}
-
-	private IControlResponse SuccessResponse()
-	{
-		return new EmulatedControlResponse(ErrorCodes.Success, string.Empty);
 	}
 }

@@ -18,8 +18,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	public void OnStuck(IGetResult result)
 	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		service.UpdateEmptyStuck(result.Location);
+		ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(result.Location);
 	}
 
 	public bool OnEmpty(IGetResult result)
@@ -155,8 +154,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 				}
 				if (ControllerConfiguration.Instance.PrepositionVendFraudMove && VendMethod.Preposition == Method)
 				{
-					IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
-					service3.MoveTo(6, location.Slot, MoveMode.None, base.AppLog);
+					ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(6, location.Slot, MoveMode.None, base.AppLog);
 					if (!OnPrePosition(location, text))
 					{
 						break;
@@ -208,15 +206,15 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		{
 			if (ControllerConfiguration.Instance.EmptyStuckAlertThreshold > 0)
 			{
-				IPersistentCounterService service4 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-				IPersistentCounter persistentCounter = service4.Find("EmptyOrStuckCount");
+				IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+				IPersistentCounter persistentCounter = service3.Find("EmptyOrStuckCount");
 				if (persistentCounter != null && persistentCounter.Value > ControllerConfiguration.Instance.EmptyStuckAlertThreshold)
 				{
 					LogHelper.Instance.Log($"The Empty/Stuck counter for alert generation has exceeded its threshold (value = {persistentCounter.Value})", LogEntryType.Error);
 					if (ControllerConfiguration.Instance.AlertForEmptyStuck)
 					{
 						base.Context.CreateInfoResult("EmptyStuckThresholdExceeded", "There are too many empty/stuck failures transactions on this kiosk, please investigate.");
-						service4.Reset(persistentCounter);
+						service3.Reset(persistentCounter);
 					}
 				}
 			}
@@ -266,8 +264,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 	{
 		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
 		{
-			ErrorCodes errorCodes = acceptDiskOperation.Execute();
-			if (errorCodes != ErrorCodes.PickerFull)
+			if (acceptDiskOperation.Execute() != ErrorCodes.PickerFull)
 			{
 				base.Context.AppLog.Write("Unable to move disc back to sensor 3; assume the disc is vended.", LogEntryType.Info);
 				return FileFraudedDisk(source, id);
@@ -337,21 +334,20 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	private bool FileDisk(ILocation location, string id)
 	{
-		if (CorrectiveMove(location, MoveMode.Put) != ErrorCodes.Success)
+		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			return false;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		if (!service.Put(id, base.AppLog).Success)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put(id, base.AppLog).Success)
 		{
 			return false;
 		}
 		if (CurrentGetResult != null)
 		{
-			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			location.Flags = CurrentGetResult.Flags;
 			location.ReturnDate = CurrentGetResult.ReturnTime;
-			service2.Save(location);
+			service.Save(location);
 		}
 		return true;
 	}
@@ -378,7 +374,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		CurrentGetResult = null;
 		string msg = $"Move Deck = {loc.Deck} Slot = {loc.Slot} to get requested barcode = {barcode}.";
 		base.Context.AppLog.Write(msg, LogEntryType.Info);
-		switch (CorrectiveMove(loc, MoveMode.Get))
+		switch (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(loc, MoveMode.Get, base.Context.AppLog))
 		{
 		case ErrorCodes.Timeout:
 			base.Context.CreateInfoResult("MoveFailure", "The MOVE instruction returned TIMEOUT.", barcode);
@@ -402,8 +398,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			}
 			if (CurrentGetResult.ItemStuck && ControllerConfiguration.Instance.EmptyStuckAlertThreshold > 0 && Method != VendMethod.Location)
 			{
-				IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-				service2.Increment("EmptyOrStuckCount");
+				ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("EmptyOrStuckCount");
 			}
 			new ClearGripperOperation().Execute();
 			if (!PickerBoard.IsFull())

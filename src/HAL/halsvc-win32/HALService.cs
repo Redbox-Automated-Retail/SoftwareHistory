@@ -29,8 +29,6 @@ public class HALService : ServiceBase, ILogger
 
 	private const string StartMessage = "Start Hardware Abstraction Layer (HAL) Service";
 
-	private string ServiceURI = "rcp://127.0.0.1:7001";
-
 	private Thread ListenerThread;
 
 	private IPCProxy Proxy;
@@ -86,9 +84,12 @@ public class HALService : ServiceBase, ILogger
 			m_log.Debug(message, e);
 			break;
 		case LogEntryType.Error:
-			LogServiceError(message, e);
+		{
+			string msg = $"{message}: {e.Message} ({e.StackTrace})";
+			LogServiceError(msg);
 			m_log.Error(message, e);
 			break;
+		}
 		case LogEntryType.Fatal:
 			m_log.Fatal(message, e);
 			break;
@@ -109,17 +110,6 @@ public class HALService : ServiceBase, ILogger
 
 	protected override void OnStart(string[] args)
 	{
-		ServiceURI = "rcp://127.0.0.1:7001";
-		if (args != null)
-		{
-			for (int i = 0; i < args.Length; i++)
-			{
-				if (args[i].StartsWith("--uri"))
-				{
-					ServiceURI = CommandLineOption.GetOptionVal(args[i], ServiceURI);
-				}
-			}
-		}
 		StartService();
 	}
 
@@ -163,10 +153,8 @@ public class HALService : ServiceBase, ILogger
 
 	internal void StopService()
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		service.Shutdown();
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		service2.Shutdown();
+		ServiceLocator.Instance.GetService<IExecutionService>().Shutdown();
+		ServiceLocator.Instance.GetService<IControllerService>().Shutdown();
 		Log("Stop Hardware Abstraction Layer (HAL) Service.", LogEntryType.Info);
 		WriteEventLogEntry("Stop Hardware Abstraction Layer (HAL) Service.", EventLogEntryType.Information);
 		Proxy.Dispose();
@@ -194,21 +182,19 @@ public class HALService : ServiceBase, ILogger
 			ServiceLocator.Instance.AddService(typeof(ITableTypeFactory), new TableTypeFactory());
 			ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
 			ServiceLocator.Instance.AddService(typeof(ILogger), this);
+			ServiceLocator.Instance.AddService(typeof(IEncryptionService), new TripleDesEncryptionService());
 			ServiceLocator.Instance.AddService(typeof(IRuntimeService), runtimeService);
-			ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService(Settings.Default.UsbServiceDebug));
 			ServiceLocator.Instance.AddService(typeof(IDeviceSetupClassFactory), new DeviceSetupClassFactory());
-			ServiceLocator.Instance.AddService(typeof(ITouchscreenService), new TouchscreenService());
+			ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService(Settings.Default.UsbServiceDebug));
 			ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(Settings.Default.CountersDBExclusiveMode));
 			ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
-			string configFile = runtimeService.RuntimePath("HAL.xml");
-			ConfigurationService configurationService = ConfigurationService.Make(configFile);
+			ConfigurationService configurationService = ConfigurationService.Make(runtimeService.RuntimePath("HAL.xml"));
 			ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
 			ControllerService controllerService = new ControllerService();
 			ServiceLocator.Instance.AddService(typeof(IControllerService), controllerService);
 			controllerService.Initialize(errorList, dictionary);
 			BarcodeConfiguration.NewInstance();
-			string scriptsPath = runtimeService.InstallPath("Scripts");
-			IExecutionService executionService = ExecutionEngine.NewEngine(scriptsPath);
+			IExecutionService executionService = ExecutionEngine.NewEngine(runtimeService.InstallPath("Scripts"));
 			ServiceLocator.Instance.AddService(typeof(IExecutionService), executionService);
 			executionService.Initialize(errorList);
 			configurationService.Load(errorList);
@@ -222,33 +208,28 @@ public class HALService : ServiceBase, ILogger
 				Log("Failed to load configuration.", LogEntryType.Error);
 				WriteEventLogEntry("HAL Service encountered startup problems, and is stopping.", EventLogEntryType.Error);
 				Stop();
-				return;
-			}
-			Proxy = IPCProxy.Parse(ServiceURI);
-			if (!Proxy.ProtocolValid)
-			{
-				string text = "ProtocolURI is malformed; please fix. HAL service is exiting.";
-				Log(text, LogEntryType.Fatal);
-				WriteEventLogEntry(text, EventLogEntryType.Error);
 			}
 			else
 			{
-				executionService.StartScheduler();
-				string serviceStartup = runtimeService.RuntimePath("ServiceStartup.txt");
-				Proxy.ExecuteStartupFile(serviceStartup);
-				Proxy.StartListener();
+				IPCProxy.InitializeServices(Enum<IpcHostVersion>.Parse(Settings.Default.ServiceHostGeneration, IpcHostVersion.Legacy));
+				Proxy = IPCProxy.Parse(Settings.Default.ServiceProtocol);
+				if (!Proxy.ProtocolValid)
+				{
+					string text = "ProtocolURI is malformed; please fix. HAL service is exiting.";
+					Log(text, LogEntryType.Fatal);
+					WriteEventLogEntry(text, EventLogEntryType.Error);
+				}
+				else
+				{
+					executionService.StartScheduler();
+					Proxy.StartListener();
+				}
 			}
 		}
 		catch (Exception e)
 		{
 			Log("Top level exception caught", e);
 		}
-	}
-
-	private void LogServiceError(string msg, Exception exception)
-	{
-		string msg2 = $"{msg}: {exception.Message} ({exception.StackTrace})";
-		LogServiceError(msg2);
 	}
 
 	private void LogServiceError(string msg)

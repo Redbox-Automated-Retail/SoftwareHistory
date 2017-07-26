@@ -14,7 +14,8 @@ public sealed class DoorSensorInstruction : Instruction
 		IsConfigured,
 		Query,
 		Status,
-		SoftwareOverride
+		SoftwareOverride,
+		TesterQuery
 	}
 
 	public override string Mnemonic => "DOORSENSORS";
@@ -51,9 +52,7 @@ public sealed class DoorSensorInstruction : Instruction
 				val = "off";
 			}
 			bool flag = (service.SoftwareOverride = val.Equals("off", StringComparison.CurrentCultureIgnoreCase));
-			IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-			string path = Path.Combine(service2.LogsBasePath, "Service\\DoorSensorConfiguration.log");
-			using (StreamWriter streamWriter = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
+			using (StreamWriter streamWriter = new StreamWriter(File.Open(Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath, "Service\\DoorSensorConfiguration.log"), FileMode.Append, FileAccess.Write, FileShare.Read)))
 			{
 				streamWriter.WriteLine(flag ? $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors have a software override in place: they are not active - *UNCHECKED MOVEMENT IS POSSIBLE*." : $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors do not have a software override; they are active.");
 			}
@@ -61,25 +60,33 @@ public sealed class DoorSensorInstruction : Instruction
 			break;
 		}
 		case ExpectedOperand.Query:
-			switch (service.QueryStateForDisplay())
-			{
-			case DoorSensorResult.AuxReadError:
-				context.PushTop("AUX board not responsive.");
-				break;
-			case DoorSensorResult.FrontDoor:
-				context.PushTop("FRONT DOOR OPEN");
-				break;
-			case DoorSensorResult.Ok:
-				context.PushTop("FRONT DOOR CLOSED");
-				break;
-			case DoorSensorResult.SoftwareOverride:
-				context.PushTop("OVERRIDE IN PLACE.");
-				break;
-			}
+			RunQuery(service, context);
 			context.PushTop(1);
 			break;
 		case ExpectedOperand.Status:
 			context.PushTop(service.Query().ToString().ToUpper());
+			break;
+		case ExpectedOperand.TesterQuery:
+			RunQuery(service, context);
+			break;
+		}
+	}
+
+	private void RunQuery(IDoorSensorService service, ExecutionContext context)
+	{
+		switch (service.QueryStateForDisplay())
+		{
+		case DoorSensorResult.AuxReadError:
+			context.PushTop("AUX board not responsive.");
+			break;
+		case DoorSensorResult.FrontDoor:
+			context.PushTop("FRONT DOOR OPEN");
+			break;
+		case DoorSensorResult.Ok:
+			context.PushTop("FRONT DOOR CLOSED");
+			break;
+		case DoorSensorResult.SoftwareOverride:
+			context.PushTop("OVERRIDE IN PLACE.");
 			break;
 		}
 	}

@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -19,24 +18,26 @@ public sealed class VendItemOperation : AbstractOperation<VendItemResult>
 
 	public override VendItemResult Execute()
 	{
-		VendItemResult vendItemResult = new VendItemResult();
-		vendItemResult.Presented = true;
-		vendItemResult.Status = ErrorCodes.PickerEmpty;
-		VendItemResult vendItemResult2 = vendItemResult;
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		VendItemResult vendItemResult = new VendItemResult
+		{
+			Presented = true,
+			Status = ErrorCodes.PickerEmpty
+		};
 		Controller.RollerToPosition(RollerPosition.Position5, 3000);
 		if (!Controller.VendDoorRent().Success)
 		{
-			vendItemResult2.Status = ErrorCodes.VendDoorRentTimeout;
-			return vendItemResult2;
+			vendItemResult.Status = ErrorCodes.VendDoorRentTimeout;
+			return vendItemResult;
 		}
 		LogHelper.Instance.Log(">> VendDiskAtDoor...", LogEntryType.Info);
 		int ms = 1000;
 		ErrorCodes errorCodes = PickerBoard.PushOut();
 		if (ErrorCodes.TrackCloseTimeout == errorCodes || ErrorCodes.SensorReadError == errorCodes)
 		{
-			vendItemResult2.Status = errorCodes;
-			vendItemResult2.Presented = false;
-			return vendItemResult2;
+			vendItemResult.Status = errorCodes;
+			vendItemResult.Presented = false;
+			return vendItemResult;
 		}
 		Controller.TrackCycle();
 		int num = 0;
@@ -46,8 +47,8 @@ public sealed class VendItemOperation : AbstractOperation<VendItemResult>
 			pickerSensorReadResult = Controller.ReadSensors();
 			if (pickerSensorReadResult.Error != ErrorCodes.Success)
 			{
-				vendItemResult2.Status = ErrorCodes.SensorReadError;
-				return vendItemResult2;
+				vendItemResult.Status = ErrorCodes.SensorReadError;
+				return vendItemResult;
 			}
 			bool[] sensors = pickerSensorReadResult.Sensors;
 			if (sensors[0] || sensors[1] || sensors[2] || sensors[3])
@@ -55,16 +56,16 @@ public sealed class VendItemOperation : AbstractOperation<VendItemResult>
 				pickerSensorReadResult.LogSensorState(LogEntryType.Error);
 				if (num == 1 && ControllerConfiguration.Instance.TrackPushOutFailures)
 				{
-					vendItemResult2.Presented = false;
+					vendItemResult.Presented = false;
 					LogHelper.Instance.Log("After 2 pushes, the disk has not cleared sensor 4.", LogEntryType.Info);
-					vendItemResult2.Status = ErrorCodes.PickerFull;
-					return vendItemResult2;
+					vendItemResult.Status = ErrorCodes.PickerFull;
+					return vendItemResult;
 				}
 				num++;
 				LogHelper.Instance.Log("Disc was pushed to the drum - push it back out.", LogEntryType.Error);
 				Controller.TrackCycle();
 				PickerBoard.PushOut();
-				PerfFunctions.Wait(ms);
+				service.Wait(ms);
 				continue;
 			}
 			num = 0;
@@ -74,23 +75,23 @@ public sealed class VendItemOperation : AbstractOperation<VendItemResult>
 				{
 					LogHelper.Instance.Log("The item is still blocking sensor 5.", LogEntryType.Info);
 				}
-				PerfFunctions.Wait(ms);
+				service.Wait(ms);
 				continue;
 			}
 			if (!sensors[5])
 			{
-				vendItemResult2.Status = ErrorCodes.PickerEmpty;
-				return vendItemResult2;
+				vendItemResult.Status = ErrorCodes.PickerEmpty;
+				return vendItemResult;
 			}
-			PerfFunctions.Wait(ms);
+			service.Wait(ms);
 		}
 		pickerSensorReadResult = Controller.ReadSensors();
 		if (pickerSensorReadResult.Error != ErrorCodes.Success)
 		{
-			vendItemResult2.Status = ErrorCodes.SensorReadError;
-			return vendItemResult2;
+			vendItemResult.Status = ErrorCodes.SensorReadError;
+			return vendItemResult;
 		}
-		vendItemResult2.Status = (pickerSensorReadResult.IsFull ? ErrorCodes.PickerFull : ErrorCodes.PickerEmpty);
-		return vendItemResult2;
+		vendItemResult.Status = (pickerSensorReadResult.IsFull ? ErrorCodes.PickerFull : ErrorCodes.PickerEmpty);
+		return vendItemResult;
 	}
 }

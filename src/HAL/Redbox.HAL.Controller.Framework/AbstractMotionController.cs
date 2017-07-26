@@ -31,10 +31,8 @@ internal abstract class AbstractMotionController
 	{
 		try
 		{
-			IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-			string path = service.CreateSubpath("Service");
-			string path2 = Path.Combine(path, "MotionControlErrorLog.log");
-			LogFile = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read))
+			string path = Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("Service"), "MotionControlErrorLog.log");
+			LogFile = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read))
 			{
 				AutoFlush = true
 			};

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
+using Microsoft.Win32;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
@@ -46,9 +48,54 @@ public sealed class RuntimeService : IRuntimeService
 
 	public const string RunningPath = "RunningPath";
 
+	private Platform Platform;
+
+	private string m_kioskId;
+
+	private readonly WaitHandle m_waitObject = new ManualResetEvent(initialState: false);
+
 	private readonly StringDictionary Values = new StringDictionary();
 
 	private static RuntimeService m_instance = new RuntimeService();
+
+	public string KioskId
+	{
+		get
+		{
+			if (!string.IsNullOrEmpty(m_kioskId))
+			{
+				return m_kioskId;
+			}
+			RegistryKey registryKey = null;
+			try
+			{
+				registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
+				if (registryKey != null)
+				{
+					object value = registryKey.GetValue("ID");
+					if (value != null)
+					{
+						m_kioskId = (string)ConversionHelper.ChangeType(value, typeof(string));
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				LogHelper.Instance.Log("[{0}] Unable to read secret option 'ID':", GetType().Name);
+				LogHelper.Instance.Log(ex.Message);
+				m_kioskId = null;
+			}
+			finally
+			{
+				registryKey?.Close();
+			}
+			if (!string.IsNullOrEmpty(m_kioskId))
+			{
+				return m_kioskId;
+			}
+			return "UNKNOWN";
+		}
+	}
 
 	public string DataPath { get; private set; }
 
@@ -58,7 +105,7 @@ public sealed class RuntimeService : IRuntimeService
 
 	public int PageSize { get; private set; }
 
-	private Platform Platform { get; set; }
+	public string ScriptsPath { get; private set; }
 
 	public string ExpandRuntimeMacros(string value)
 	{
@@ -78,6 +125,108 @@ public sealed class RuntimeService : IRuntimeService
 	public string InstallPath(string subfolder)
 	{
 		return Path.Combine(InstallRoot, subfolder);
+	}
+
+	public string CreateBackup(string path)
+	{
+		return CreateBackup(path, BackupAction.Delete);
+	}
+
+	public string CreateBackup(string path, BackupAction action)
+	{
+		if (string.IsNullOrEmpty(path))
+		{
+			return path;
+		}
+		string text = CreateBackupName(path);
+		if (action == BackupAction.Move)
+		{
+			File.Move(path, text);
+		}
+		else if (BackupAction.Copy == action)
+		{
+			File.Copy(path, text);
+		}
+		else if (BackupAction.Delete == action)
+		{
+			SafeDelete(path);
+		}
+		return text;
+	}
+
+	public string GenerateUniqueFile(string suffix)
+	{
+		if (!suffix.StartsWith("."))
+		{
+			suffix = $".{suffix}";
+		}
+		DateTime now = DateTime.Now;
+		return $"m{now.Month}d{now.Day}y{now.Year}_h{now.Hour}m{now.Minute}s{now.Second}t{now.Millisecond}{suffix}";
+	}
+
+	public byte[] ReadToBuffer(string fileName)
+	{
+		if (fileName == null)
+		{
+			return null;
+		}
+		byte[] array = null;
+		using FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+		array = new byte[fileStream.Length];
+		fileStream.Read(array, 0, (int)fileStream.Length);
+		return array;
+	}
+
+	public bool SafeCopy(TextWriter writer, string source, string dest)
+	{
+		string arg = $"copy {source} -> {dest}";
+		try
+		{
+			File.Copy(source, dest);
+			writer.WriteLine("[{0}] {1}: SUCCESS", GetType().Name, arg);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			writer.WriteLine("[{0}] {1}: FAILURE reason = {2}", GetType().Name, arg, ex.Message);
+			return false;
+		}
+	}
+
+	public bool SafeMove(TextWriter writer, string source, string dest)
+	{
+		string arg = $"move {source} -> {dest}";
+		try
+		{
+			File.Move(source, dest);
+			writer.WriteLine("[{0}] {1}: SUCCESS", GetType().Name, arg);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			writer.WriteLine("[{0}] {1}: FAILURE reason = {2}", GetType().Name, arg, ex.Message);
+			return false;
+		}
+	}
+
+	public bool SafeDelete(string path)
+	{
+		if (string.IsNullOrEmpty(path) || !File.Exists(path))
+		{
+			return false;
+		}
+		bool flag = false;
+		try
+		{
+			File.Delete(path);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("[{0}] Delete file failed:", GetType().Name);
+			LogHelper.Instance.Log(ex.Message);
+			return false;
+		}
 	}
 
 	public Platform GetPlatform()
@@ -111,6 +260,32 @@ public sealed class RuntimeService : IRuntimeService
 		return Platform;
 	}
 
+	public void SpinWait(int milliseconds)
+	{
+		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, milliseconds);
+		SpinWait(timespan);
+	}
+
+	public void SpinWait(TimeSpan timespan)
+	{
+		using ExecutionTimer executionTimer = new ExecutionTimer();
+		while ((double)executionTimer.ElapsedMilliseconds < timespan.TotalMilliseconds)
+		{
+		}
+	}
+
+	public void Wait(int ms)
+	{
+		if (ms < 1000)
+		{
+			SpinWait(ms);
+		}
+		else
+		{
+			m_waitObject.WaitOne(ms, exitContext: false);
+		}
+	}
+
 	public RuntimeService()
 	{
 		AssemblyDirectory = Path.GetDirectoryName(typeof(RuntimeService).Assembly.Location);
@@ -119,6 +294,7 @@ public sealed class RuntimeService : IRuntimeService
 		{
 			DirectoryInfo parent = Directory.GetParent(AssemblyDirectory);
 			InstallRoot = parent.FullName;
+			ScriptsPath = Path.Combine(InstallRoot, "Scripts");
 		}
 		catch (Exception ex)
 		{
@@ -130,6 +306,15 @@ public sealed class RuntimeService : IRuntimeService
 		SYSTEM_INFO lpSystemInfo = default(SYSTEM_INFO);
 		GetSystemInfo(ref lpSystemInfo);
 		PageSize = (int)lpSystemInfo.dwPageSize;
+	}
+
+	private string CreateBackupName(string path)
+	{
+		string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
+		string directoryName = Path.GetDirectoryName(path);
+		string extension = Path.GetExtension(path);
+		string path2 = $"{fileNameWithoutExtension}-{GenerateUniqueFile(extension)}";
+		return Path.Combine(directoryName, path2);
 	}
 
 	private string ExpandMacros(string value, string preamble, string postamble)

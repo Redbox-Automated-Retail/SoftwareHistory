@@ -50,11 +50,23 @@ internal sealed class InstallHandler : IPackageInstallHandler
 	{
 		IDataTableService service = ServiceLocator.Instance.GetService<IDataTableService>();
 		IDataTable<IKioskFunctionCheckData> table = service.GetTable<IKioskFunctionCheckData>();
+		TestAndCreate(table, errors, writer);
+		IDataTable<IHardwareCorrectionStatistic> table2 = service.GetTable<IHardwareCorrectionStatistic>();
+		TestAndCreate(table2, errors, writer);
+		IDataTable<IHardwareCorrectionStatistic> legacyTable = service.GetLegacyTable<IHardwareCorrectionStatistic>();
+		if (legacyTable != null && legacyTable.Exists)
+		{
+			legacyTable.Drop();
+		}
+	}
+
+	private void TestAndCreate<T>(IDataTable<T> table, ErrorList errors, TextWriter writer)
+	{
 		if (!table.Exists)
 		{
 			if (!table.Create())
 			{
-				errors.Add(Error.NewError("I0777", "Create table error.", "Unable to create dumpbin table in haldata.vdb3."));
+				errors.Add(Error.NewError("I0777", "Create table error.", $"Unable to create table '{table.Name}'"));
 			}
 			else
 			{

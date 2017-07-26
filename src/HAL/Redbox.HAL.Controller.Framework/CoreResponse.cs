@@ -13,7 +13,7 @@ internal sealed class CoreResponse : IControlResponse
 
 	private readonly char[] TrimChars = Environment.NewLine.ToCharArray();
 
-	public bool Success => ErrorCodes.Success == Error;
+	public bool Success => Error == ErrorCodes.Success;
 
 	public bool TimedOut => ErrorCodes.Timeout == Error;
 
@@ -90,16 +90,18 @@ internal sealed class CoreResponse : IControlResponse
 
 	internal static CoreResponse CommErrorResponse()
 	{
-		CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
-		coreResponse.Error = ErrorCodes.CommunicationError;
-		return coreResponse;
+		return new CoreResponse(AddressSelector.H101)
+		{
+			Error = ErrorCodes.CommunicationError
+		};
 	}
 
 	internal static CoreResponse TimedOutResponse()
 	{
-		CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
-		coreResponse.Error = ErrorCodes.Timeout;
-		return coreResponse;
+		return new CoreResponse(AddressSelector.H101)
+		{
+			Error = ErrorCodes.Timeout
+		};
 	}
 
 	internal CoreResponse(AddressSelector selector)

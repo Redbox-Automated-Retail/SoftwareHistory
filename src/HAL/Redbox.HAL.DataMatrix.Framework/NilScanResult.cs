@@ -6,7 +6,7 @@ namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class NilScanResult : IScanResult, IDisposable
 {
-	private readonly TimeSpan Time = default(TimeSpan);
+	private readonly TimeSpan Time;
 
 	private readonly List<IDecodeResult> Codes = new List<IDecodeResult>();
 

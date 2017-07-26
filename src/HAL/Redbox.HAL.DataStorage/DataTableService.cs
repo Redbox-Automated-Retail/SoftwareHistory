@@ -53,5 +53,6 @@ public sealed class DataTableService : IDataTableService
 		TypeMap.Add(typeof(IKioskFunctionCheckData), new KioskFunctionCheckTable(d));
 		TypeMap.Add(typeof(IPersistentOption), new SecretOptionsTable(d));
 		LegacyTypeMap.Add(typeof(IDumpBinInventoryItem), new LegacyDumpbinTable(d));
+		LegacyTypeMap.Add(typeof(IHardwareCorrectionStatistic), new LegacyHardwareCorrectionStatsTable(d));
 	}
 }

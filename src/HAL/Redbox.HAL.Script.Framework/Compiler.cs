@@ -8,13 +8,13 @@ namespace Redbox.HAL.Script.Framework;
 
 public class Compiler
 {
+	private static Dictionary<string, bool> m_warningTable;
+
 	private const string DirectiveToken = "@";
 
 	private const string IncludeDirective = "INC";
 
 	private const string PragmaDirective = "PRAGMA";
-
-	private static Dictionary<string, bool> m_warningTable;
 
 	private static readonly Deque<string> m_configScriptPaths;
 
@@ -257,7 +257,7 @@ public class Compiler
 	public static void AppendSearchPath(string wholePath)
 	{
 		string[] array = ParseDelimitedPaths(wholePath);
-		if (array.Length > 0)
+		if (array.Length != 0)
 		{
 			m_configScriptPaths.AddManyToFront(array);
 		}
@@ -309,8 +309,7 @@ public class Compiler
 			{
 				return null;
 			}
-			string[] array = symbol.Value.Split(new string[1] { symbol.PairSeparator }, StringSplitOptions.RemoveEmptyEntries);
-			return array[1];
+			return symbol.Value.Split(new string[1] { symbol.PairSeparator }, StringSplitOptions.RemoveEmptyEntries)[1];
 		}
 		return symbol.Value;
 	}
@@ -397,8 +396,7 @@ public class Compiler
 	{
 		List<string> list = new List<string>();
 		string[] array = wholeLot.Split(Path.PathSeparator);
-		string[] array2 = array;
-		foreach (string text in array2)
+		foreach (string text in array)
 		{
 			try
 			{

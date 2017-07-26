@@ -4,7 +4,7 @@ namespace Redbox.HAL.Component.Model;
 
 public interface IIPCMessage
 {
-	MessagePriority Priority { get; }
+	MessageType Type { get; }
 
 	MessageSeverity Severity { get; }
 

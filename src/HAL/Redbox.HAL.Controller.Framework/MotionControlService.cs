@@ -58,9 +58,9 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 			LogHelper.Instance.Log("[Reset Hardware]: After reset, channel still down. I'm sorry.");
 			return false;
 		}
-		ErrorCodes errorCodes = (quick ? InitAxesFast(log) : InitAxes(log));
+		ErrorCodes errorCodes = InitAxes(log, quick);
 		LogHelper.Instance.Log("[Reset Hardware]: Restart returned {0}", errorCodes.ToString().ToUpper());
-		return ErrorCodes.Success == errorCodes;
+		return errorCodes == ErrorCodes.Success;
 	}
 
 	public bool Initialize()
@@ -117,12 +117,45 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 
 	public ErrorCodes InitAxes(IFormattedLog log)
 	{
-		return InitAxes(log, 2);
+		return InitAxes(log, fast: false);
 	}
 
-	public ErrorCodes InitAxesFast(IFormattedLog log)
+	public ErrorCodes InitAxes(IFormattedLog log, bool fast)
 	{
-		return InitAxes(log, 1);
+		using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
+		if (ControllerConfiguration.Instance.ClearPickerOnHome)
+		{
+			clearPickerFrontOperation.Execute();
+		}
+		log.WriteFormatted("Home the X motor.");
+		int num = (fast ? 1 : 2);
+		for (int i = 0; i < num; i++)
+		{
+			ErrorCodes errorCodes = Controller.HomeAxis(Axis.X);
+			if (errorCodes != ErrorCodes.Success)
+			{
+				log.WriteFormatted("HOME X returned error status {0}", errorCodes.ToString().ToUpper());
+				return errorCodes;
+			}
+			if (i == 0)
+			{
+				MoveTarget target = new MoveTarget
+				{
+					Axis = Axis.X,
+					XCoordinate = -200,
+					YCoordinate = null
+				};
+				Controller.MoveToTargetWithoutSensorCheck(ref target);
+			}
+		}
+		log.WriteFormatted("Home the Y Motor.");
+		ErrorCodes errorCodes2 = Controller.HomeAxis(Axis.Y);
+		if (errorCodes2 != ErrorCodes.Success)
+		{
+			log.WriteFormatted("HOME Y returned error status {0}", errorCodes2.ToString().ToUpper());
+			return errorCodes2;
+		}
+		return ErrorCodes.Success;
 	}
 
 	public ErrorCodes MoveVend(MoveMode mode, IFormattedLog writer)
@@ -135,7 +168,7 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 			writer.WriteFormatted(text);
 			LogHelper.Instance.Log(text, LogEntryType.Error);
 		}
-		AtVendDoor = ErrorCodes.Success == errorCodes;
+		AtVendDoor = errorCodes == ErrorCodes.Success;
 		return errorCodes;
 	}
 
@@ -167,10 +200,8 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log, ref OffsetMoveData data)
 	{
 		ResetLocation();
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		ILocation currentLocation = service.Get(deck, slot);
-		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck byNumber = service2.GetByNumber(deck);
+		ILocation currentLocation = ServiceLocator.Instance.GetService<IInventoryService>().Get(deck, slot);
+		IDeck byNumber = ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(deck);
 		if (byNumber == null)
 		{
 			return ErrorCodes.DeckOutOfRange;
@@ -280,42 +311,5 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 			}
 			return ErrorCodes.Success;
 		}
-	}
-
-	private ErrorCodes InitAxes(IFormattedLog log, int xtries)
-	{
-		using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
-		if (ControllerConfiguration.Instance.ClearPickerOnHome)
-		{
-			clearPickerFrontOperation.Execute();
-		}
-		log.WriteFormatted("Home the X motor.");
-		for (int i = 0; i < xtries; i++)
-		{
-			ErrorCodes errorCodes = Controller.HomeAxis(Axis.X);
-			if (errorCodes != ErrorCodes.Success)
-			{
-				log.WriteFormatted("HOME X returned error status {0}", errorCodes.ToString().ToUpper());
-				return errorCodes;
-			}
-			if (i == 0)
-			{
-				MoveTarget target = new MoveTarget
-				{
-					Axis = Axis.X,
-					XCoordinate = -200,
-					YCoordinate = null
-				};
-				Controller.MoveToTargetWithoutSensorCheck(ref target);
-			}
-		}
-		log.WriteFormatted("Home the Y Motor.");
-		ErrorCodes errorCodes2 = Controller.HomeAxis(Axis.Y);
-		if (errorCodes2 != ErrorCodes.Success)
-		{
-			log.WriteFormatted("HOME Y returned error status {0}", errorCodes2.ToString().ToUpper());
-			return errorCodes2;
-		}
-		return ErrorCodes.Success;
 	}
 }

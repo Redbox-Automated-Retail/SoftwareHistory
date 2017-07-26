@@ -77,13 +77,16 @@ internal sealed class DecksManager : IDecksService
 
 	public void ForAllReverseDecksDo(Predicate<IDeck> predicate)
 	{
-		for (int num = Decks.Count; num >= 1; num--)
+		int num = Decks.Count;
+		while (num >= 1)
 		{
 			IDeck obj = Decks[num - 1];
-			if (!predicate(obj))
+			if (predicate(obj))
 			{
-				break;
+				num--;
+				continue;
 			}
+			break;
 		}
 	}
 
@@ -108,15 +111,15 @@ internal sealed class DecksManager : IDecksService
 	{
 		using (StringWriter stringWriter = new StringWriter())
 		{
-			XmlTextWriter xmlTextWriter = new XmlTextWriter(stringWriter);
-			xmlTextWriter.Formatting = Formatting.Indented;
-			XmlTextWriter xmlTextWriter2 = xmlTextWriter;
-			foreach (IDeck deck2 in Decks)
+			XmlTextWriter xmlTextWriter = new XmlTextWriter(stringWriter)
 			{
-				Deck deck = deck2 as Deck;
-				deck.ToXmlWriter(xmlTextWriter2);
+				Formatting = Formatting.Indented
+			};
+			foreach (IDeck deck in Decks)
+			{
+				(deck as Deck).ToXmlWriter(xmlTextWriter);
 			}
-			xmlTextWriter2.Flush();
+			xmlTextWriter.Flush();
 			XmlNodeExtensions.SelectSingleNodeAndSetInnerXml(document.DocumentElement, "Controller/Decks", stringWriter);
 		}
 		LogHelper.Instance.Log("Completed decks save.", LogEntryType.Info);

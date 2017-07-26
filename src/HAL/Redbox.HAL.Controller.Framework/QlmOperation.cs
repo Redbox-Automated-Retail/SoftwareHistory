@@ -8,14 +8,13 @@ internal sealed class QlmOperation
 
 	public QlmStatus GetStatus()
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
 		if (coreResponse.CommError)
 		{
 			return QlmStatus.AuxNotResponsive;
 		}
 		bool flag = coreResponse.IsSensorSet(AuxSensor.QlmPresence);
-		if (coreResponse.IsSensorSet(AuxSensor.QlmUp) && flag)
+		if (coreResponse.IsSensorSet(AuxSensor.QlmUp) & flag)
 		{
 			return QlmStatus.Engaged;
 		}
@@ -33,12 +32,10 @@ internal sealed class QlmOperation
 		{
 			return ErrorCodes.HomeXTimeout;
 		}
-		ICoreCommandExecutor service2 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service2.ExecuteControllerCommand(CommandType.QlmEngage, 120000);
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmEngage, 120000);
 		if (coreResponse.TimedOut)
 		{
-			IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-			service3.Increment(TimeoutCounters.QlmEngage);
+			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.QlmEngage);
 		}
 		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
 		LogResult(log, result, "ENGAGE");
@@ -52,12 +49,11 @@ internal sealed class QlmOperation
 		{
 			return ErrorCodes.HomeXTimeout;
 		}
-		ICoreCommandExecutor service2 = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service2.ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
-		IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
+		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
 		if (coreResponse.TimedOut)
 		{
-			service3.Increment(TimeoutCounters.QlmDisengage);
+			service2.Increment(TimeoutCounters.QlmDisengage);
 		}
 		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
 		LogResult(log, result, "DISENGAGE");
@@ -66,20 +62,17 @@ internal sealed class QlmOperation
 
 	public void Drop()
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		service.ExecuteControllerCommand(CommandType.QlmDisengage);
+		ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmDisengage);
 	}
 
 	public void Lift()
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		service.ExecuteControllerCommand(CommandType.QlmEngage);
+		ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmEngage);
 	}
 
 	public bool HaltOperation()
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		return !service.ExecuteControllerCommand(CommandType.QlmHalt).Success;
+		return !ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmHalt).Success;
 	}
 
 	private void LogResult(IFormattedLog log, ErrorCodes result, string state)
@@ -88,8 +81,7 @@ internal sealed class QlmOperation
 		log.WriteFormatted(msg, (result != ErrorCodes.Success) ? LogEntryType.Error : LogEntryType.Info);
 		if (result != ErrorCodes.Success)
 		{
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			service.LogInputs(ControlBoards.Aux, LogEntryType.Error);
+			ServiceLocator.Instance.GetService<IControlSystem>().LogInputs(ControlBoards.Aux, LogEntryType.Error);
 		}
 	}
 }

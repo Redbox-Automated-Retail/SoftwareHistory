@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
@@ -13,8 +12,8 @@ namespace Redbox.HAL.Service.Framework;
 [Command("program")]
 public sealed class ProgramCommand
 {
-	[Usage("PROGRAM compile path: 'C:\\temp\\my-script.hs' [name: program-name] [requires-client-connection: true|false]")]
 	[CommandForm(Name = "compile")]
+	[Usage("PROGRAM compile path: 'C:\\temp\\my-script.hs' [name: program-name] [requires-client-connection: true|false]")]
 	public void Compile(CommandContext context, [CommandKeyValue(IsRequired = true)] string path, string name, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
 		if (string.IsNullOrEmpty(path))
@@ -35,8 +34,8 @@ public sealed class ProgramCommand
 		RewriteServiceStartup();
 	}
 
-	[Usage("PROGRAM add-search-path paths: 'c:\\path1;c:\\path1\\path2'")]
 	[CommandForm(Name = "add-search-path")]
+	[Usage("PROGRAM add-search-path paths: 'c:\\path1;c:\\path1\\path2'")]
 	public void AddSearchPath(CommandContext context, [CommandKeyValue(IsRequired = true)] string paths)
 	{
 		Compiler.AppendSearchPath(paths);
@@ -48,22 +47,21 @@ public sealed class ProgramCommand
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		string fileName = service.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
-		ProtocolHelper.FormatCompressedBytes(FileHelper.ReadToBuffer(fileName), context);
+		ProtocolHelper.FormatCompressedBytes(service.ReadToBuffer(fileName), context);
 	}
 
-	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
 	[CommandForm(Name = "set")]
+	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
 	public void Set(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string path = service.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		string path = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		File.WriteAllBytes(path, data);
 		CompileProgram(context.Errors, name, path);
 		RewriteServiceStartup();
 	}
 
-	[Usage("PROGRAM properties name: program-name requires-client-connection: true|false")]
 	[CommandForm(Name = "properties")]
+	[Usage("PROGRAM properties name: program-name requires-client-connection: true|false")]
 	public void Properties(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(KeyName = "requires-client-connection")] bool requiresClientConnection)
 	{
 		context.Errors.Add(Error.NewError("S002", "Unsupported call.", "The requires-client-connection form is no longer supported."));
@@ -87,15 +85,14 @@ public sealed class ProgramCommand
 		{
 			programName = Path.GetFileNameWithoutExtension(path);
 		}
-		using MemoryStream stream = new MemoryStream(FileHelper.ReadToBuffer(path));
+		using MemoryStream stream = new MemoryStream(ServiceLocator.Instance.GetService<IRuntimeService>().ReadToBuffer(path));
 		ExecutionResult executionResult = ExecutionEngine.Instance.Compile(stream, programName);
 		errors.AddRange(executionResult.Errors);
 	}
 
 	private static void RewriteServiceStartup()
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string path = service.ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
+		string path = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
 		List<string> list = new List<string>(File.ReadAllLines(path));
 		int num = list.FindIndex((string each) => each.Contains("[["));
 		int num2 = list.FindIndex((string each) => each.Contains("]]"));
@@ -104,9 +101,9 @@ public sealed class ProgramCommand
 			num++;
 			list.RemoveRange(num, num2 - num);
 			string[] programs = ExecutionEngine.Instance.GetPrograms();
-			foreach (string text in programs)
+			for (int num3 = 0; num3 < programs.Length; num3++)
 			{
-				string[] array = text.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+				string[] array = programs[num3].Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 				list.Insert(num, string.Format("PROGRAM compile path: @'$(RunningPath)\\..\\Scripts\\{0}.hs'{1}", array[0], (string.Compare(array[2], true.ToString(), ignoreCase: true) == 0) ? " requires-client-connection: true" : string.Empty));
 			}
 			File.WriteAllLines(path, list.ToArray());

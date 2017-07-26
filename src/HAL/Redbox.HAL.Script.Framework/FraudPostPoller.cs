@@ -57,18 +57,14 @@ internal sealed class FraudPostPoller : ScriptPoller, IConfigurationObserver
 
 	protected override bool CoreExecute()
 	{
-		ExecutionContext executionContext = ScheduleAndBlockOnJob();
-		executionContext.Trash();
+		ScheduleAndBlockOnJob().Trash();
 		return true;
 	}
 
 	internal override void Initialize()
 	{
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
-		attributeXmlConfiguration.AddObserver(this);
-		IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
-		service2.AddObserver(this);
+		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
+		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private FraudPostPoller()

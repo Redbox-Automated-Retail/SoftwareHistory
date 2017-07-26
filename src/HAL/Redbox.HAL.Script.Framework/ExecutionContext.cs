@@ -13,10 +13,6 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 {
-	private const string ResultPrefix = "RESULT";
-
-	private const string EmptyItemToken = "~";
-
 	public readonly ExecutionStatus Status = new ExecutionStatus();
 
 	public readonly IDictionary<string, object> SymbolTable = new Dictionary<string, object>();
@@ -58,6 +54,10 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 	private readonly List<IStatusChangeObserver> Observers = new List<IStatusChangeObserver>();
 
 	private readonly ReaderWriterLockSlim ObserverLock = new ReaderWriterLockSlim();
+
+	private const string ResultPrefix = "RESULT";
+
+	private const string EmptyItemToken = "~";
 
 	public string ID { get; private set; }
 
@@ -194,8 +194,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 				try
 				{
 					using FileStream serializationStream = File.OpenWrite(Path.Combine(ContextDirectory, "ctx.data"));
-					BinaryFormatter binaryFormatter = new BinaryFormatter();
-					binaryFormatter.Serialize(serializationStream, this);
+					new BinaryFormatter().Serialize(serializationStream, this);
 				}
 				catch (Exception e2)
 				{
@@ -233,17 +232,20 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 		{
 			return true;
 		}
-		try
+		while (true)
 		{
-			while (!CompletionWaitHandle.WaitOne(50, exitContext: false) && !IsComplete)
+			try
 			{
+				if (CompletionWaitHandle.WaitOne(50, exitContext: false) || IsComplete)
+				{
+					return true;
+				}
 				Thread.Sleep(0);
 			}
-			return true;
-		}
-		catch (ObjectDisposedException)
-		{
-			return true;
+			catch (ObjectDisposedException)
+			{
+				return true;
+			}
 		}
 	}
 
@@ -476,9 +478,9 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 
 	public IEnumerable<string> EnumerateMessages()
 	{
-		foreach (ScriptMessage each in Messages)
+		foreach (ScriptMessage message in Messages)
 		{
-			yield return each.ToString();
+			yield return message.ToString();
 		}
 	}
 
@@ -907,7 +909,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 		if (!string.IsNullOrEmpty(text2))
 		{
 			string[] array = text2.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array != null && array.Length > 0)
+			if (array != null && array.Length != 0)
 			{
 				Result.Errors.AddRange(ErrorList.NewFromStrings(array));
 			}
@@ -916,8 +918,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 		if (!string.IsNullOrEmpty(text3))
 		{
 			string[] array2 = text3.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			string[] array3 = array2;
-			foreach (string text4 in array3)
+			foreach (string text4 in array2)
 			{
 				if (!string.IsNullOrEmpty(text4))
 				{
@@ -928,9 +929,8 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 		string text5 = info.GetString("Results");
 		if (!string.IsNullOrEmpty(text5))
 		{
-			string[] array4 = text5.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			string[] array5 = array4;
-			foreach (string text6 in array5)
+			string[] array2 = text5.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			foreach (string text6 in array2)
 			{
 				if (!string.IsNullOrEmpty(text6))
 				{
@@ -941,17 +941,16 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 		ParentID = info.GetString("ParentID");
 		if (flag)
 		{
-			string text7 = info.GetString("Programs");
-			string[] array6 = text7.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			string[] array3 = info.GetString("Programs").Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 			BinaryFormatter binaryFormatter = new BinaryFormatter();
-			string[] array7 = array6;
-			foreach (string text8 in array7)
+			string[] array2 = array3;
+			foreach (string text7 in array2)
 			{
-				string path = Path.Combine(ContextDirectory, text8);
+				string path = Path.Combine(ContextDirectory, text7);
 				try
 				{
 					using FileStream serializationStream = File.OpenRead(path);
-					ProgramCache[text8] = (ProgramInstruction)binaryFormatter.Deserialize(serializationStream);
+					ProgramCache[text7] = (ProgramInstruction)binaryFormatter.Deserialize(serializationStream);
 				}
 				catch (Exception e2)
 				{
@@ -963,34 +962,31 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 		{
 			SymbolTable = (IDictionary<string, object>)info.GetValue("SymbolTable", typeof(Dictionary<string, object>));
 		}
-		string text9 = info.GetString("Stack");
-		string[] array8 = text9.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-		for (int num = array8.Length - 1; num >= 0; num--)
+		string[] array4 = info.GetString("Stack").Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+		for (int num = array4.Length - 1; num >= 0; num--)
 		{
-			string[] array9 = array8[num].Split("=".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries);
-			if (array9.Length >= 2)
+			string[] array5 = array4[num].Split("=".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries);
+			if (array5.Length >= 2)
 			{
-				PushTop(ConversionHelper.ChangeType(array9[1], Type.GetType(array9[0])));
+				PushTop(ConversionHelper.ChangeType(array5[1], Type.GetType(array5[0])));
 			}
 		}
 		if (flag)
 		{
-			string text10 = info.GetString("CallFrames");
-			string[] array10 = text10.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			for (int num2 = array10.Length - 1; num2 >= 0; num2--)
+			string[] array6 = info.GetString("CallFrames").Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			for (int num2 = array6.Length - 1; num2 >= 0; num2--)
 			{
-				string text11 = array10[num2];
-				string[] array11 = text11.Split('|');
-				string text12 = array11[3];
-				int parentContextLineNumber = int.Parse(array11[4]);
+				string[] array7 = array6[num2].Split('|');
+				string text8 = array7[3];
+				int parentContextLineNumber = int.Parse(array7[4]);
 				CallFrame callFrame = new CallFrame
 				{
-					PC = int.Parse(array11[0]),
-					X = int.Parse(array11[1]),
-					Y = int.Parse(array11[2]),
-					ProgramName = text12
+					PC = int.Parse(array7[0]),
+					X = int.Parse(array7[1]),
+					Y = int.Parse(array7[2]),
+					ProgramName = text8
 				};
-				ProgramInstruction program = (ProgramCache.ContainsKey(text12) ? ProgramCache[text12] : null);
+				ProgramInstruction program = (ProgramCache.ContainsKey(text8) ? ProgramCache[text8] : null);
 				callFrame.LoadInstructionPointer(parentContextLineNumber, program);
 				Registers.CallStack.Push(callFrame);
 			}

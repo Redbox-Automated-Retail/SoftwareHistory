@@ -9,8 +9,7 @@ public sealed class InventoryDatabaseTest
 	{
 		int failures = 0;
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-		service2.ForAllDecksDo(delegate(IDeck deck)
+		ServiceLocator.Instance.GetService<IDecksService>().ForAllDecksDo(delegate(IDeck deck)
 		{
 			ILocation location = service.Get(deck.Number, deck.NumberOfSlots);
 			DateTime? returnDate = location.ReturnDate;
@@ -18,12 +17,13 @@ public sealed class InventoryDatabaseTest
 			if (!service.Save(location))
 			{
 				LogHelper.Instance.Log(LogEntryType.Error, "[InventoryDBTest] Update failure on deck {0}", deck.Number);
-				failures++;
+				int num = failures + 1;
+				failures = num;
 			}
 			location.ReturnDate = returnDate;
 			service.Save(location);
 			return true;
 		});
-		return 0 == failures;
+		return failures == 0;
 	}
 }

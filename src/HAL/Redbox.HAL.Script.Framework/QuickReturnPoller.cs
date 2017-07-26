@@ -35,14 +35,7 @@ internal sealed class QuickReturnPoller : ScriptPoller, IConfigurationObserver
 
 	protected override int PollSleep => 1000;
 
-	internal static QuickReturnPoller Instance
-	{
-		get
-		{
-			IPollerService service = ServiceLocator.Instance.GetService<IPollerService>();
-			return service.Locate("QuickReturn") as QuickReturnPoller;
-		}
-	}
+	internal static QuickReturnPoller Instance => ServiceLocator.Instance.GetService<IPollerService>().Locate("QuickReturn") as QuickReturnPoller;
 
 	private DateRange PowerOffWindow { get; set; }
 
@@ -101,19 +94,17 @@ internal sealed class QuickReturnPoller : ScriptPoller, IConfigurationObserver
 	{
 		try
 		{
-			IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
-			if (configuredDevice.InError)
+			if (ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().InError)
 			{
 				LogHelper.Instance.Log("Quick return poller believes camera is down; shutting down poller.", LogEntryType.Error);
 				return false;
 			}
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-			if (service.MachineIsFull())
+			if (ServiceLocator.Instance.GetService<IInventoryService>().MachineIsFull())
 			{
 				DisableUI();
 				return true;
 			}
-			if (ExecutionEngine.Instance.ActiveContext != null)
+			if (ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext() != null)
 			{
 				if (PollerState != State.Busy)
 				{
@@ -185,11 +176,8 @@ internal sealed class QuickReturnPoller : ScriptPoller, IConfigurationObserver
 
 	internal override void Initialize()
 	{
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
-		attributeXmlConfiguration.AddObserver(this);
-		IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
-		service2.AddObserver(this);
+		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
+		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 		ConfigureTimers();
 	}
 

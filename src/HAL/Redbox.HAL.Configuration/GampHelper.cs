@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Configuration;
 
@@ -29,8 +28,7 @@ public sealed class GampHelper
 
 	public int GetPlatterSlots()
 	{
-		GampHelper gampHelper = new GampHelper();
-		List<List<int>> list = gampHelper.ReadLegacySlotDataFile(removeZeroes: false);
+		List<List<int>> list = new GampHelper().ReadLegacySlotDataFile(removeZeroes: false);
 		if (list.Count == 0)
 		{
 			return -1;
@@ -55,13 +53,12 @@ public sealed class GampHelper
 			return dictionary;
 		}
 		string[] array = File.ReadAllLines(path);
-		string[] array2 = array;
-		foreach (string text in array2)
+		for (int i = 0; i < array.Length; i++)
 		{
-			string[] array3 = text.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array3.Length >= 2 && int.TryParse(array3[1], out var result))
+			string[] array2 = array[i].Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			if (array2.Length >= 2 && int.TryParse(array2[1], out var result))
 			{
-				dictionary[array3[0]] = result;
+				dictionary[array2[0]] = result;
 			}
 		}
 		return dictionary;
@@ -69,10 +66,11 @@ public sealed class GampHelper
 
 	public GampBackupResult WriteSystemData(IDictionary<string, int> data, bool createBackup)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		GampBackupResult gampBackupResult = new GampBackupResult();
 		if (createBackup)
 		{
-			gampBackupResult.BackupFile = FileHelper.CreateBackup("C:\\gamp\\SystemData.dat", BackupAction.Move);
+			gampBackupResult.BackupFile = service.CreateBackup("C:\\gamp\\SystemData.dat", BackupAction.Move);
 		}
 		using (StreamWriter streamWriter = new StreamWriter("C:\\gamp\\SystemData.dat"))
 		{
@@ -88,9 +86,10 @@ public sealed class GampHelper
 	public GampBackupResult WriteSlotDataFile(List<List<int>> data, bool createBackup)
 	{
 		GampBackupResult gampBackupResult = new GampBackupResult();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		if (createBackup)
 		{
-			gampBackupResult.BackupFile = FileHelper.CreateBackup("C:\\gamp\\SlotData.dat", BackupAction.Move);
+			gampBackupResult.BackupFile = service.CreateBackup("C:\\gamp\\SlotData.dat", BackupAction.Move);
 		}
 		using (StreamWriter streamWriter = new StreamWriter("C:\\gamp\\SlotData.dat"))
 		{
@@ -124,8 +123,7 @@ public sealed class GampHelper
 		bool flag = false;
 		StringBuilder stringBuilder = new StringBuilder();
 		string[] array = File.ReadAllLines(path);
-		string[] array2 = array;
-		foreach (string text in array2)
+		foreach (string text in array)
 		{
 			List<int> list2 = new List<int>();
 			int result;

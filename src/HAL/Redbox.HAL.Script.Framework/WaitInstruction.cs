@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -36,6 +37,6 @@ public sealed class WaitInstruction : Instruction
 		{
 			ms = result2;
 		}
-		PerfFunctions.Wait(ms);
+		ServiceLocator.Instance.GetService<IRuntimeService>().Wait(ms);
 	}
 }

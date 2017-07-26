@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("6A2E0670-28E4-11D0-A18c-00A0C9118956")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IAMVideoControl
 {
 	[PreserveSig]

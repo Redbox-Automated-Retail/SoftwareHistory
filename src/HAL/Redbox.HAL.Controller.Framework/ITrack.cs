@@ -9,6 +9,4 @@ internal interface ITrack
 	IControlResponse Close();
 
 	IControlResponse Open();
-
-	IControlResponse Cycle();
 }

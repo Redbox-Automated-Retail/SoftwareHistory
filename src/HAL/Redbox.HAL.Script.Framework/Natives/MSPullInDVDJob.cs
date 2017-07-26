@@ -10,8 +10,7 @@ internal sealed class MSPullInDVDJob : NativeJobAdapter
 
 	protected override void ExecuteInner()
 	{
-		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadSensors();
-		if (!pickerSensorReadResult.IsFull)
+		if (!base.ControlSystem.ReadSensors().IsFull)
 		{
 			base.Context.CreateInfoResult("InvalidJobUse", "Picker is clear.");
 			AddError("pull-in-dvd failed.");
@@ -22,14 +21,9 @@ internal sealed class MSPullInDVDJob : NativeJobAdapter
 			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
 			GripperFingerState finger = GripperFingerState.Rent;
 			ILocation currentLocation = service.CurrentLocation;
-			if (currentLocation != null)
+			if (currentLocation != null && ServiceLocator.Instance.GetService<IDecksService>().GetFrom(currentLocation).IsSlotSellThru(currentLocation.Slot))
 			{
-				IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-				IDeck deck = service2.GetFrom(currentLocation);
-				if (deck.IsSlotSellThru(currentLocation.Slot))
-				{
-					finger = GripperFingerState.Open;
-				}
+				finger = GripperFingerState.Open;
 			}
 			if (!base.ControlSystem.TrackOpen().Success)
 			{

@@ -73,9 +73,8 @@ public sealed class MoveAbsoluteInstruction : Instruction
 				xunits = null;
 				yunits = keyValuePairValue;
 			}
-			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-			ErrorCodes errorCodes = service.MoveAbsolute(axis, xunits, yunits, checkSensors);
-			context.PushTop(errorCodes.ToString().ToUpper());
+			context.PushTop(ServiceLocator.Instance.GetService<IMotionControlService>().MoveAbsolute(axis, xunits, yunits, checkSensors).ToString()
+				.ToUpper());
 		}
 	}
 }

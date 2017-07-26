@@ -1,6 +1,6 @@
+using System;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -44,47 +44,58 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			AddError("The dumpbin is full.");
 			return;
 		}
-		using FraudValidator fraudValidator = new FraudValidator(base.Context, FraudScanJobMask.PutDiskInBin);
-		fraudValidator.StartScan();
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		using Scanner scanner = new Scanner();
-		ErrorCodes errorCodes = service2.MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
-		if (errorCodes != ErrorCodes.Success)
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		FraudValidator fraudValidator = new FraudValidator(base.Context, FraudScanJobMask.PutDiskInBin);
+		try
 		{
-			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
-			AddError("The MOVE instruction failed.");
-			return;
-		}
-		string text = "UNKNOWN";
-		CenterDiskMethod[] returnReadMethods = m_returnReadMethods;
-		foreach (CenterDiskMethod method in returnReadMethods)
-		{
-			PerfFunctions.Wait(1000);
-			base.ControlSystem.Center(method);
-			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
+			fraudValidator.StartScan();
+			IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+			using Scanner scanner = new Scanner();
+			ErrorCodes errorCodes = service3.MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
+			if (errorCodes != ErrorCodes.Success)
 			{
-				base.Context.CreateCameraCaptureErrorResult();
-				break;
+				base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
+				AddError("The MOVE instruction failed.");
+				return;
 			}
-			if (scanResult.ReadCode)
+			string text = "UNKNOWN";
+			CenterDiskMethod[] returnReadMethods = m_returnReadMethods;
+			foreach (CenterDiskMethod method in returnReadMethods)
 			{
-				text = scanResult.ScannedMatrix;
-				fraudValidator.ValidateAndPublish(text);
-				break;
+				service2.Wait(1000);
+				base.ControlSystem.Center(method);
+				ScanResult scanResult = scanner.Read();
+				if (!scanResult.SnapOk)
+				{
+					base.Context.CreateCameraCaptureErrorResult();
+					break;
+				}
+				if (scanResult.ReadCode)
+				{
+					text = scanResult.ScannedMatrix;
+					if (fraudValidator.ScanConfigured)
+					{
+						IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(text);
+						fraudValidator.Publish(scanResult2, text);
+					}
+					break;
+				}
 			}
+			IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(text, applicationLog);
+			if (!putResult.Success)
+			{
+				base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
+				AddError("The PUT instruction failed.");
+				return;
+			}
+			base.Context.CreateInfoResult("PutToBinOK", "The disk was successfully filed", text);
+			applicationLog.WriteFormatted("The barcode {0} was put into the dump bin.", text);
+			service.DumpContents(base.AppLog);
 		}
-		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service3.Put(text, applicationLog);
-		if (!putResult.Success)
+		finally
 		{
-			base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
-			AddError("The PUT instruction failed.");
-			return;
+			((IDisposable)fraudValidator/*cast due to constrained. prefix*/).Dispose();
 		}
-		base.Context.CreateInfoResult("PutToBinOK", "The disk was successfully filed", text);
-		applicationLog.WriteFormatted("The barcode {0} was put into the dump bin.", text);
-		service.DumpContents(base.AppLog);
 	}
 
 	internal PutDiskInDumpBinJob(ExecutionResult result, ExecutionContext ctx)

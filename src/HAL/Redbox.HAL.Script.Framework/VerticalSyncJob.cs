@@ -35,7 +35,8 @@ internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
 			if (errorCodes != ErrorCodes.Success)
 			{
 				HandleError(deck.Number, slot, $"Move error: {errorCodes.ToString()}.");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
@@ -43,20 +44,23 @@ internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
 			if (!GetResult.Success)
 			{
 				HandleError(deck.Number, slot, "Retrieving the disk failed.");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			if (base.MotionService.MoveTo(deck.Number, slot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 			{
 				HandleError(deck.Number, slot, "Move to PUT position failed.");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			base.ControlSystem.TrackCycle();
 			if (!service.Put(GetResult.Previous, base.AppLog).Success)
 			{
 				HandleError(deck.Number, slot, "Filing the disk failed.");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			return true;

@@ -61,64 +61,16 @@ internal sealed class MoveDecoratorService : IMoveDecoratorService, IConfigurati
 
 	public ErrorCodes MoveOffset(ExecutionContext context, ILocation location, int offset)
 	{
-		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck deck = service.GetFrom(location);
+		IDeck deck = ServiceLocator.Instance.GetService<IDecksService>().GetFrom(location);
 		int num = location.Slot - offset;
 		if (num <= 0)
 		{
 			num = deck.NumberOfSlots - Math.Abs(num);
 		}
-		ErrorCodes errorCodes = CorrectiveMove(context, location.Deck, num, MoveMode.None);
-		string msg = $"MOVE-OFFSET Deck = {deck.Number} Slot = {num} returned {errorCodes.ToString().ToUpper()}";
+		ErrorCodes result = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location.Deck, num, MoveMode.None, context.AppLog);
+		string msg = $"MOVE-OFFSET Deck = {deck.Number} Slot = {num} returned {result.ToString().ToUpper()}";
 		context.AppLog.Write(msg);
-		return errorCodes;
-	}
-
-	public bool ResetMotionControllerChecked(ExecutionContext context)
-	{
-		if (!ControllerConfiguration.Instance.RestartControllerDuringUserJobs)
-		{
-			return false;
-		}
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		bool flag = service.Reset(context.AppLog, quick: true);
-		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service2.Insert(HardwareCorrectionStatistic.Arcus, context, flag);
-		return flag;
-	}
-
-	public ErrorCodes CorrectiveMoveVend(ExecutionContext context, MoveMode mode)
-	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes = service.MoveVend(mode, context.AppLog);
-		if (ErrorCodes.ArcusNotResponsive == errorCodes && ResetMotionControllerChecked(context))
-		{
-			errorCodes = service.MoveVend(mode, context.AppLog);
-		}
-		return errorCodes;
-	}
-
-	public ErrorCodes CorrectiveMove(ExecutionContext context, ILocation location, MoveMode mode)
-	{
-		return CorrectiveMove(context, location.Deck, location.Slot, mode);
-	}
-
-	public ErrorCodes CorrectiveMove(ExecutionContext context, int deck, int slot, MoveMode mode)
-	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes = service.MoveTo(deck, slot, mode, context.AppLog);
-		if (ErrorCodes.ArcusNotResponsive == errorCodes && ResetMotionControllerChecked(context))
-		{
-			errorCodes = service.MoveTo(deck, slot, mode, context.AppLog);
-		}
-		else if (ErrorCodes.LowerLimitError == errorCodes && LowerLimitConfigured(context))
-		{
-			m_lowerLimitCounter++;
-			ErrorCodes errorCodes2 = service.HomeAxis(Axis.Y, context.AppLog);
-			context.AppLog.WriteFormatted("Move returned {0}; HOME Y returned {1}; return TIMEOUT", errorCodes.ToString(), errorCodes2.ToString());
-			errorCodes = ErrorCodes.Timeout;
-		}
-		return errorCodes;
+		return result;
 	}
 
 	public void ConfigureLowerLimitFor(string program)
@@ -134,13 +86,9 @@ internal sealed class MoveDecoratorService : IMoveDecoratorService, IConfigurati
 
 	public bool LowerLimitConfigured(ExecutionContext context)
 	{
-		if (!m_configured)
-		{
-			return false;
-		}
 		lock (Lock)
 		{
-			return ConfiguredPrograms.Find((string each) => each.Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase)) != null;
+			return m_configured && ConfiguredPrograms.Find((string each) => each.Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase)) != null;
 		}
 	}
 
@@ -163,8 +111,6 @@ internal sealed class MoveDecoratorService : IMoveDecoratorService, IConfigurati
 
 	internal MoveDecoratorService()
 	{
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
-		attributeXmlConfiguration.AddObserver(this);
+		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
 	}
 }

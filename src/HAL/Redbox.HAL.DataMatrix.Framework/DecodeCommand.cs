@@ -71,10 +71,8 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 		}
 		try
 		{
-			CortexPacket packet;
-			foreach (CortexPacket packet2 in Packets)
+			foreach (CortexPacket packet in Packets)
 			{
-				packet = packet2;
 				if (packet.PacketType == PacketType.Incomplete)
 				{
 					if (logDetailedScan)
@@ -90,8 +88,7 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 					{
 						LogHelper.Instance.Log(" >> Reponse packet: data (barcode = {0} Number = {1}).", text, packet.PacketNumber);
 					}
-					List<int> list = DataPackets.FindAll((int each) => each == packet.PacketNumber);
-					if (list.Count != 0)
+					if (DataPackets.FindAll((int each) => each == packet.PacketNumber).Count != 0)
 					{
 						continue;
 					}

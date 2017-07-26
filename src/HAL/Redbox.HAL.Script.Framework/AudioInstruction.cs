@@ -11,7 +11,7 @@ public sealed class AudioInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return AudioChannelState.None != Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None);
+		return Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None) != AudioChannelState.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
@@ -26,6 +26,6 @@ public sealed class AudioInstruction : Instruction
 	{
 		AudioChannelState audio = Enum<AudioChannelState>.ParseIgnoringCase(base.Operands[0].Value, AudioChannelState.None);
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		service.SetAudio(audio);
+		HandleError(service.SetAudio(audio), context);
 	}
 }

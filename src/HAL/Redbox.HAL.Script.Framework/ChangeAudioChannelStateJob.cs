@@ -7,11 +7,10 @@ internal sealed class ChangeAudioChannelStateJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		AudioChannelState audioChannelState = base.Context.PopTop<AudioChannelState>();
-		IControlResponse controlResponse = base.ControlSystem.SetAudio(audioChannelState);
-		if (controlResponse.Success)
+		AudioChannelState audio = base.Context.PopTop<AudioChannelState>();
+		if (base.ControlSystem.SetAudio(audio).Success)
 		{
-			base.Context.CreateInfoResult("AudioChangeSuccessful", $"Changed audio channel state to {audioChannelState.ToString().ToUpper()}");
+			base.Context.CreateInfoResult("AudioChangeSuccessful", $"Changed audio channel state to {audio.ToString().ToUpper()}");
 			return;
 		}
 		base.Context.CreateInfoResult("AudioChangeFailure", "Failed to change channel state.");

@@ -58,8 +58,7 @@ internal sealed class CoreCommand
 		if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
 		{
 			string[] array = ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries);
-			string[] array2 = array;
-			foreach (string command in array2)
+			foreach (string command in array)
 			{
 				SendCommand(command);
 			}
@@ -69,6 +68,7 @@ internal sealed class CoreCommand
 
 	internal ErrorCodes WaitForCommand()
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, WaitPauseTime);
 		if (ControllerConfiguration.Instance.EnableCommandTrace)
 		{
@@ -77,7 +77,7 @@ internal sealed class CoreCommand
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		do
 		{
-			PerfFunctions.SpinWait(timespan);
+			service.SpinWait(timespan);
 			CoreResponse coreResponse = SendCommand("S");
 			if (coreResponse.CommError)
 			{

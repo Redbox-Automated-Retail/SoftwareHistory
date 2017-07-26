@@ -20,8 +20,7 @@ public sealed class TrackInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		Commands commands = Enum<Commands>.ParseIgnoringCase(operand, Commands.None);
-		return commands != Commands.None;
+		return Enum<Commands>.ParseIgnoringCase(operand, Commands.None) != Commands.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)

@@ -8,10 +8,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class ArcusMotionController : MotionController
 {
-	private const string HaltMotorCommand = "RSTOP";
-
-	private const string NopCommand = "NOP";
-
 	private readonly IDeviceDescriptor ArcusDescriptor = new ArcusDeviceDescriptor();
 
 	private readonly bool DebugEnabled;
@@ -23,6 +19,10 @@ internal sealed class ArcusMotionController : MotionController
 	private readonly string[] CommOkCommand = new string[1] { "$" };
 
 	private readonly string[] InvalidQueryResponse = new string[1] { "INVALID QUERY RESPONSE" };
+
+	private const string HaltMotorCommand = "RSTOP";
+
+	private const string NopCommand = "NOP";
 
 	private RedboxSerialPort Port;
 
@@ -169,13 +169,11 @@ internal sealed class ArcusMotionController : MotionController
 			{
 				return arcusControllerPosition;
 			}
-			string s = list[0].Response.Substring(list[0].Response.IndexOf('=') + 1);
-			if (int.TryParse(s, out var result))
+			if (int.TryParse(list[0].Response.Substring(list[0].Response.IndexOf('=') + 1), out var result))
 			{
 				arcusControllerPosition.XCoordinate = result;
 			}
-			string s2 = list[1].Response.Substring(list[1].Response.IndexOf('=') + 1);
-			if (int.TryParse(s2, out result))
+			if (int.TryParse(list[1].Response.Substring(list[1].Response.IndexOf('=') + 1), out result))
 			{
 				arcusControllerPosition.YCoordinate = result;
 			}
@@ -201,8 +199,7 @@ internal sealed class ArcusMotionController : MotionController
 				WriteToLog("[ReadLimits] Query response returned length of {0}", list.Count);
 				return new ArcusLimitResponse(null);
 			}
-			ArcusCommandResponse arcusCommandResponse = list[0];
-			ArcusLimitResponse arcusLimitResponse = new ArcusLimitResponse(arcusCommandResponse.Response);
+			ArcusLimitResponse arcusLimitResponse = new ArcusLimitResponse(list[0].Response);
 			if (!arcusLimitResponse.ReadOk)
 			{
 				WriteToLog("[ReadLimits] The response is incorrect {0}", list);
@@ -272,8 +269,7 @@ internal sealed class ArcusMotionController : MotionController
 	internal ArcusMotionController(MotionControlService controlService)
 		: base(controlService)
 	{
-		IPersistentMapService service = ServiceLocator.Instance.GetService<IPersistentMapService>();
-		IPersistentMap map = service.GetMap();
+		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		DebugEnabled = map.GetValue("ArcusDebug", def: false);
 		RedboxSerialPortConfiguration conf = new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.MotionControllerPortName)
 		{
@@ -305,14 +301,15 @@ internal sealed class ArcusMotionController : MotionController
 
 	private ArcusCommandResponse WaitMotor(Axis axis, ref ArcusMotorStatus motorStatus)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusMotorQueryPause);
-		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		IDoorSensorService service2 = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		string command = "MST" + axis.ToString().ToUpper();
 		ArcusCommandResponse arcusCommandResponse;
 		do
 		{
-			ErrorCodes errorCodes = service.CanMove();
+			ErrorCodes errorCodes = service2.CanMove();
 			if (errorCodes != ErrorCodes.Success)
 			{
 				WriteToLog($"Door sensor query returned {errorCodes.ToString()}: halting motion.");
@@ -329,7 +326,7 @@ internal sealed class ArcusMotionController : MotionController
 			{
 				return new ArcusCommandResponse(arcusCommandResponse.Response, motorStatus.Error);
 			}
-			PerfFunctions.SpinWait(timespan);
+			service.SpinWait(timespan);
 		}
 		while (executionTimer.ElapsedMilliseconds < motorStatus.Timeout);
 		string text = $"Unable to reach target on axis {axis.ToString().ToUpper()}; reported error: {motorStatus.Diagnostic}";
@@ -348,14 +345,15 @@ internal sealed class ArcusMotionController : MotionController
 	private ArcusCommandResponse WaitMotor(Axis axis, int? timeOut, Predicate<int> motorRunning)
 	{
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, ControllerConfiguration.Instance.ArcusMotorQueryPause);
-		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IDoorSensorService service2 = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		string command = "MST" + axis.ToString().ToUpper();
 		ArcusCommandResponse arcusCommandResponse;
 		int result;
 		do
 		{
-			ErrorCodes errorCodes = service.CanMove();
+			ErrorCodes errorCodes = service2.CanMove();
 			if (errorCodes != ErrorCodes.Success)
 			{
 				WriteToLog($"Door sensor query returned {errorCodes.ToString()}: halting motion.");
@@ -375,7 +373,7 @@ internal sealed class ArcusMotionController : MotionController
 			{
 				return arcusCommandResponse;
 			}
-			PerfFunctions.SpinWait(timespan);
+			service.SpinWait(timespan);
 		}
 		while (!timeOut.HasValue || !(executionTimer.ElapsedMilliseconds >= timeOut));
 		string text = $"Unable to reach target on axis {axis.ToString().ToUpper()}; reported error: {ConvertMSTCodeToText(result)}";
@@ -444,10 +442,11 @@ internal sealed class ArcusMotionController : MotionController
 					num = result;
 				}
 			}
+			Axis[] axes;
 			if (ControllerConfiguration.Instance.LowerLimitAsError)
 			{
 				ArcusMotorStatus motorStatus = new ArcusMotorStatus(array[0], num);
-				Axis[] axes = motorStatus.Axes;
+				axes = motorStatus.Axes;
 				foreach (Axis axis in axes)
 				{
 					ArcusCommandResponse arcusCommandResponse2 = WaitMotor(axis, ref motorStatus);
@@ -466,8 +465,8 @@ internal sealed class ArcusMotionController : MotionController
 			}
 			Predicate<int> check = null;
 			DecodeWait(array[0], out var axis2, out check);
-			Axis[] array2 = axis2;
-			foreach (Axis axis3 in array2)
+			axes = axis2;
+			foreach (Axis axis3 in axes)
 			{
 				ArcusCommandResponse arcusCommandResponse3 = WaitMotor(axis3, num, check);
 				if (arcusCommandResponse3.Error != ErrorCodes.Success)
@@ -583,8 +582,7 @@ internal sealed class ArcusMotionController : MotionController
 		Predicate<int> predicate = (int status) => status != 0;
 		Predicate<int> predicate2 = (int status) => status > 0;
 		Predicate<int> predicate3 = (int status) => status > 0 && status < 15;
-		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
-		if (service.SensorsEnabled)
+		if (ServiceLocator.Instance.GetService<IDoorSensorService>().SensorsEnabled)
 		{
 			predicate = DefaultMotorRunningCheck;
 			predicate2 = DefaultMotorRunningCheck;
@@ -608,8 +606,7 @@ internal sealed class ArcusMotionController : MotionController
 		}
 		if ("X".Equals(text.ToUpper()))
 		{
-			Axis[] array = new Axis[1];
-			axis = array;
+			axis = new Axis[1];
 		}
 		else if ("Y".Equals(text.ToUpper()))
 		{
@@ -682,61 +679,52 @@ internal sealed class ArcusMotionController : MotionController
 		switch (target.Axis)
 		{
 		case Axis.X:
-		{
 			empty = $"X{target.XCoordinate.Value}";
 			list.Add(empty);
 			item = m_waitXCommand;
-			List<string> list4 = new List<string>();
-			list4.Add(m_lspdCommand);
-			list4.Add(m_correctiveToleranceCommand);
-			list4.Add(empty);
-			list4.Add(item);
-			list4.Add("I7=10");
-			list2 = list4;
+			list2 = new List<string> { m_lspdCommand, m_correctiveToleranceCommand, empty, item, "I7=10" };
 			break;
-		}
 		case Axis.Y:
 			empty = $"Y{target.YCoordinate.Value}";
 			list.Add(empty);
 			item = m_waitYCommand;
 			break;
 		case Axis.XY:
-		{
 			list.Add($"X{target.XCoordinate.Value}");
 			list.Add($"Y{target.YCoordinate.Value}");
 			item = m_waitXYCommand;
-			List<string> list3 = new List<string>();
-			list3.Add(m_lspdCommand);
-			list3.Add(m_correctiveToleranceCommand);
-			list3.Add($"Y{target.YCoordinate.Value}X{target.XCoordinate.Value}");
-			list3.Add(item);
-			list3.Add("I7=10");
-			list2 = list3;
+			list2 = new List<string>
+			{
+				m_lspdCommand,
+				m_correctiveToleranceCommand,
+				$"Y{target.YCoordinate.Value}X{target.XCoordinate.Value}",
+				item,
+				"I7=10"
+			};
 			break;
 		}
-		}
-		List<string> list5 = new List<string>();
-		list5.AddRange(m_movePreamble);
+		List<string> list3 = new List<string>();
+		list3.AddRange(m_movePreamble);
 		foreach (string item2 in list)
 		{
-			list5.Add(item2);
+			list3.Add(item2);
 		}
-		list5.Add(item);
-		int index = list5.Count - 1;
-		list5.AddRange(list2);
-		List<ArcusCommandResponse> list6 = OnSendCommands(list5.ToArray());
-		using (new DisposeableList<ArcusCommandResponse>(list6))
+		list3.Add(item);
+		int index = list3.Count - 1;
+		list3.AddRange(list2);
+		List<ArcusCommandResponse> list4 = OnSendCommands(list3.ToArray());
+		using (new DisposeableList<ArcusCommandResponse>(list4))
 		{
 			ErrorCodes status = ErrorCodes.Success;
 			if (IsMotorErrored(Axis.XY, out status))
 			{
 				return status;
 			}
-			if (list6.Count != list5.Count)
+			if (list4.Count != list3.Count)
 			{
-				return list6[0].Error;
+				return list4[0].Error;
 			}
-			ErrorCodes errorCodes = ((list2 != null) ? list6[list5.Count - 2].Error : ErrorCodes.Success);
+			ErrorCodes errorCodes = ((list2 != null) ? list4[list3.Count - 2].Error : ErrorCodes.Success);
 			if (ControllerConfiguration.Instance.PrintEncoderPositionAfterMove2)
 			{
 				IControllerPosition controllerPosition = ReadPositions();
@@ -753,7 +741,7 @@ internal sealed class ArcusMotionController : MotionController
 			{
 				return errorCodes;
 			}
-			return list6[index].Error;
+			return list4[index].Error;
 		}
 	}
 
@@ -772,8 +760,7 @@ internal sealed class ArcusMotionController : MotionController
 		status = ErrorCodes.Success;
 		if (Axis.XY == axis || Axis.Y == axis)
 		{
-			string s = OnSendCommands(new string[2] { "MIOY", "MECLEARY" })[0].Response.Trim();
-			if (int.TryParse(s, out var result))
+			if (int.TryParse(OnSendCommands(new string[2] { "MIOY", "MECLEARY" })[0].Response.Trim(), out var result))
 			{
 				status = ErrorCodes.MotorError;
 				if (result > 0)

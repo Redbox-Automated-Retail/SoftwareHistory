@@ -28,7 +28,7 @@ internal sealed class TakePictureCommand : AbstractCortexCommand
 	protected override bool CoreProcess()
 	{
 		bool flag = false;
-		bool result = false;
+		bool flag2 = false;
 		foreach (CortexPacket packet in Packets)
 		{
 			if (packet.RawPacketType == 'd')
@@ -37,17 +37,13 @@ internal sealed class TakePictureCommand : AbstractCortexCommand
 			}
 			else if (packet.RawPacketType == 'm')
 			{
-				result = true;
+				flag2 = true;
 			}
 			else if (packet.PacketType == PacketType.Incomplete)
 			{
-				flag = (result = false);
+				flag = (flag2 = false);
 			}
 		}
-		if (flag)
-		{
-			return result;
-		}
-		return false;
+		return flag & flag2;
 	}
 }

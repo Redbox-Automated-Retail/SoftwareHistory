@@ -6,15 +6,15 @@ namespace Redbox.HAL.Script.Framework;
 
 internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineChangeObserver
 {
-	private const int Polling = 1;
-
-	private const int NotPolling = 0;
-
 	protected readonly ManualResetEvent JobCompletionHandle = new ManualResetEvent(initialState: false);
 
 	protected readonly ManualResetEvent PollEvent = new ManualResetEvent(initialState: false);
 
 	private readonly object SyncLock = new object();
+
+	private const int Polling = 1;
+
+	private const int NotPolling = 0;
 
 	private int m_pollingState;
 

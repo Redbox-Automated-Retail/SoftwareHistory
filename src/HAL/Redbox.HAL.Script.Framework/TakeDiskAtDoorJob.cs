@@ -10,8 +10,7 @@ internal sealed class TakeDiskAtDoorJob : NativeJobAdapter
 	{
 		try
 		{
-			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-			ErrorCodes errorCodes = service.MoveVend(MoveMode.None, base.Context.AppLog);
+			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.None, base.Context.AppLog);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("HardwareError", $"MOVE failed with error {errorCodes.ToString()}");

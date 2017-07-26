@@ -58,7 +58,7 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 		Context.ServiceLog("Check picker to see if we need to put something away.");
 		if (!PickerBoard.IsFull())
 		{
-			OnComplete(includeResults: true);
+			OnComplete();
 			return ErrorCodes.PickerEmpty;
 		}
 		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
@@ -74,51 +74,62 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 		}
 		if (!PickerBoard.IsFull())
 		{
-			OnComplete(includeResults: true);
+			OnComplete();
 			return ErrorCodes.PickerEmpty;
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		using FraudValidator fraudValidator = new FraudValidator(Context, FraudScanJobMask.CheckPicker);
-		Context.Send("ItemInPicker");
-		Context.ServiceLog("Picker is full, trying to find a slot for product.");
-		string text = "UNKNOWN";
-		if (service.VendDoorState != VendDoorState.Closed)
+		FraudValidator fraudValidator = new FraudValidator(Context, FraudScanJobMask.CheckPicker);
+		try
 		{
-			service.VendDoorClose();
-		}
-		service.Center(CenterDiskMethod.VendDoorAndBack);
-		fraudValidator.StartScan();
-		using (Scanner scanner = new Scanner())
-		{
-			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
+			Context.Send("ItemInPicker");
+			Context.ServiceLog("Picker is full, trying to find a slot for product.");
+			string text = "UNKNOWN";
+			if (service.VendDoorState != VendDoorState.Closed)
 			{
-				Context.ServiceLog(LogEntryType.Error, "The CAMERA CAPTURE instruction errored with status = {0}.", scanResult.Diagnostic);
-				Context.CreateCameraCaptureErrorResult();
+				service.VendDoorClose();
 			}
-			else if (scanResult.ReadCode)
+			service.Center(CenterDiskMethod.VendDoorAndBack);
+			fraudValidator.StartScan();
+			using (Scanner scanner = new Scanner())
 			{
-				text = scanResult.ScannedMatrix;
-				fraudValidator.ValidateAndPublish(text);
+				ScanResult scanResult = scanner.Read();
+				if (!scanResult.SnapOk)
+				{
+					Context.ServiceLog(LogEntryType.Error, "The CAMERA CAPTURE instruction errored with status = {0}.", scanResult.Diagnostic);
+					Context.CreateCameraCaptureErrorResult();
+				}
+				else if (!scanResult.ReadCode)
+				{
+					Context.ServiceLog("The barcode couldn't be read.");
+					Context.CreateInfoResult("BadIdRead", "The READ request failed.");
+				}
+				else
+				{
+					text = scanResult.ScannedMatrix;
+					if (fraudValidator.ScanConfigured)
+					{
+						IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(text);
+						fraudValidator.Publish(scanResult2, text);
+					}
+				}
+			}
+			Context.ServiceLog("The ID in the picker: {0}", text);
+			using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, Context);
+			ErrorCodes errorCodes2 = fileDiskOperation.PutDiscAway(result, text);
+			if (errorCodes2 != ErrorCodes.Success)
+			{
+				Context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", errorCodes2);
 			}
 			else
 			{
-				Context.ServiceLog("The barcode couldn't be read.");
-				Context.CreateInfoResult("BadIdRead", "The READ request failed.");
+				OnComplete();
 			}
+			return (errorCodes2 == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
 		}
-		Context.ServiceLog("The ID in the picker: {0}", text);
-		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, Context);
-		ErrorCodes errorCodes2 = fileDiskOperation.PutDiscAway(result, text);
-		if (errorCodes2 != ErrorCodes.Success)
+		finally
 		{
-			Context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", errorCodes2);
+			((IDisposable)fraudValidator/*cast due to constrained. prefix*/).Dispose();
 		}
-		else
-		{
-			OnComplete(includeResults: true);
-		}
-		return (errorCodes2 == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
 	}
 
 	internal CheckPickerOperation(ExecutionContext context)
@@ -127,12 +138,9 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 		Context = context;
 	}
 
-	private void OnComplete(bool includeResults)
+	private void OnComplete()
 	{
-		if (includeResults)
-		{
-			Context.Send("CheckPickerStop");
-		}
+		Context.Send("CheckPickerStop");
 		Context.ServiceLog("check-picker complete.");
 	}
 }

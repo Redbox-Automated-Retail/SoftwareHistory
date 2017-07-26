@@ -43,8 +43,7 @@ public sealed class FraudSensorInstruction : Instruction
 			context.PushTop(ErrorCodes.DeviceNotConfigured.ToString().ToUpper());
 			return;
 		}
-		IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-		IFormattedLog nilLog = service2.NilLog;
+		IFormattedLog nilLog = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().NilLog;
 		switch (Enum<SensorOperands>.ParseIgnoringCase(base.Operands[0].Value, SensorOperands.None))
 		{
 		case SensorOperands.Reset:

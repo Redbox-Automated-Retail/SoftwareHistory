@@ -42,14 +42,9 @@ internal static class IPAddressHelper
 		NetworkInterface[] allNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
 		foreach (NetworkInterface networkInterface in allNetworkInterfaces)
 		{
-			if (networkInterface.Description == "Microsoft TV/Video Connection")
+			if (networkInterface.Description == "Microsoft TV/Video Connection" && networkInterface.GetPhysicalAddress().GetAddressBytes() == new byte[6])
 			{
-				byte[] addressBytes = networkInterface.GetPhysicalAddress().GetAddressBytes();
-				byte[] array = new byte[6];
-				if (addressBytes == array)
-				{
-					continue;
-				}
+				continue;
 			}
 			IPInterfaceProperties iPProperties = networkInterface.GetIPProperties();
 			if (iPProperties == null)

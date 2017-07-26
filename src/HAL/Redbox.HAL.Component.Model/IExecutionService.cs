@@ -2,6 +2,8 @@ namespace Redbox.HAL.Component.Model;
 
 public interface IExecutionService
 {
+	IExecutionContext GetActiveContext();
+
 	void AddObserver(IExecutionEngineChangeObserver ob);
 
 	void RemoveObserver(IExecutionEngineChangeObserver ob);

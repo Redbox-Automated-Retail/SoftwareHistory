@@ -1,6 +1,5 @@
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -9,17 +8,36 @@ internal sealed class KioskTestJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IDeck deck = QLM.Deck;
+		ServiceLocator.Instance.GetService<IControlSystem>();
+		IDeck qlmDeck = ServiceLocator.Instance.GetService<IDecksService>().QlmDeck;
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "KioskTestErrors");
 		bool flag = base.Context.PopTop<bool>();
 		int num = base.Context.PopTop<int>();
 		int slot = base.Context.PopTop<int>();
 		int num2 = base.Context.PopTop<int>();
 		int slot2 = base.Context.PopTop<int>();
-		bool flag2 = !ControllerConfiguration.Instance.IsVMZMachine && deck != null;
-		bool flag3 = flag2 && deck.Number == num;
-		bool flag4 = flag2 && deck.Number == num2;
-		if (flag3 && !EngageQlm())
+		int num3;
+		int num4;
+		if (!ControllerConfiguration.Instance.IsVMZMachine)
+		{
+			num3 = ((qlmDeck != null) ? 1 : 0);
+			if (num3 != 0)
+			{
+				num4 = ((qlmDeck.Number == num) ? 1 : 0);
+				goto IL_00a1;
+			}
+		}
+		else
+		{
+			num3 = 0;
+		}
+		num4 = 0;
+		goto IL_00a1;
+		IL_00a1:
+		bool flag2 = (byte)num4 != 0;
+		bool flag3 = num3 != 0 && qlmDeck.Number == num2;
+		if (flag2 && !EngageQlm())
 		{
 			return;
 		}
@@ -30,9 +48,8 @@ internal sealed class KioskTestJob : NativeJobAdapter
 			return;
 		}
 		using Scanner scanner = new Scanner();
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service.Get(base.AppLog);
-		if (!getResult.Success)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service2.Get(base.AppLog).Success)
 		{
 			base.Context.CreateInfoResult("GetError", "Failed to pull disc from slot");
 			HandleMachineError();
@@ -55,7 +72,7 @@ internal sealed class KioskTestJob : NativeJobAdapter
 		}
 		else
 		{
-			if (flag4 && !EngageQlm())
+			if (flag3 && !EngageQlm())
 			{
 				return;
 			}
@@ -66,37 +83,36 @@ internal sealed class KioskTestJob : NativeJobAdapter
 				return;
 			}
 			base.ControlSystem.TrackCycle();
-			IPutResult putResult = service.Put(scannedMatrix, base.AppLog);
-			if (!putResult.Success)
+			if (!service2.Put(scannedMatrix, base.AppLog).Success)
 			{
 				base.Context.CreateInfoResult("PutFailed", "Kiosk failed to put disc into slot");
 				HandleMachineError();
 				return;
 			}
-			PerfFunctions.Wait(1200);
+			service.Wait(1200);
 			if (base.MotionService.MoveTo(num2, slot2, MoveMode.Get, base.AppLog) != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MoveFailed", "Kiosk was unable to move to get position of destination slot");
 				HandleMachineError();
 				return;
 			}
-			if (flag3 && !flag4)
+			if (flag2 && !flag3)
 			{
-				QlmStatus status = QLM.GetStatus();
-				if (QlmStatus.AuxNotResponsive == status)
+				QlmStatus qlmStatus = base.ControlSystem.GetQlmStatus();
+				if (QlmStatus.AuxNotResponsive == qlmStatus)
 				{
 					applicationLog.Write("The AUX board is not responsive.");
 					HandleMachineError();
 					return;
 				}
-				if (QlmStatus.Empty == status)
+				if (QlmStatus.Empty == qlmStatus)
 				{
 					applicationLog.Write("There is no QLM in the bay.", LogEntryType.Error);
 					HandleMachineError();
 					return;
 				}
 				applicationLog.Write("Disengage the QLM.");
-				if (QLM.Disengage(home: true, applicationLog) != ErrorCodes.Success)
+				if (base.ControlSystem.DisengageQlm(home: true, applicationLog) != ErrorCodes.Success)
 				{
 					base.Context.CreateInfoResult("QlmDeckDisengageFailure", "The QLM disengage failed.");
 					AddError("The QLM Case didn't disengage.");
@@ -122,25 +138,26 @@ internal sealed class KioskTestJob : NativeJobAdapter
 
 	private bool EngageQlm()
 	{
-		QlmStatus status = QLM.GetStatus();
-		if (QlmStatus.AuxNotResponsive == status)
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		QlmStatus qlmStatus = service.GetQlmStatus();
+		if (QlmStatus.AuxNotResponsive == qlmStatus)
 		{
 			base.Context.AppLog.Write("QLM Status: the AUX board is not responsive.");
 			AddError("AUX not responsive.");
 			return false;
 		}
-		if (QlmStatus.Engaged == status)
+		if (QlmStatus.Engaged == qlmStatus)
 		{
 			return true;
 		}
-		if (QlmStatus.Empty == status)
+		if (QlmStatus.Empty == qlmStatus)
 		{
 			base.Context.AppLog.Write("There is no QLM in the bay.", LogEntryType.Error);
 			AddError("NO QLM IN BAY.");
 			return false;
 		}
 		base.Context.AppLog.Write("Engaging the QLM.", LogEntryType.Info);
-		if (QLM.Engage(home: true, base.Context.AppLog) == ErrorCodes.Success)
+		if (service.EngageQlm(base.Context.AppLog) == ErrorCodes.Success)
 		{
 			return true;
 		}

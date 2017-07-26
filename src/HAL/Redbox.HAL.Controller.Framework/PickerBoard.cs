@@ -7,15 +7,16 @@ public static class PickerBoard
 {
 	public static ErrorCodes PushOut()
 	{
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		if (!service.TrackClose().Success)
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+		if (!service2.TrackClose().Success)
 		{
 			LogHelper.Instance.Log("[PickerBoard] PushOut: unable to close the track.", LogEntryType.Error);
 			return ErrorCodes.TrackCloseTimeout;
 		}
 		for (int i = 0; i < 3; i++)
 		{
-			IPickerSensorReadResult pickerSensorReadResult = service.ReadSensors();
+			IPickerSensorReadResult pickerSensorReadResult = service2.ReadSensors();
 			if (pickerSensorReadResult.Error != ErrorCodes.Success)
 			{
 				return ErrorCodes.SensorReadError;
@@ -27,32 +28,32 @@ public static class PickerBoard
 			}
 			if (sensors[3])
 			{
-				service.StartRollerOut();
+				service2.StartRollerOut();
 				WaitToClearSensor(PickerSensor.Sensor4, 4000);
 				if (ControllerConfiguration.Instance.PushOutSleepTime2 > 0)
 				{
-					PerfFunctions.Wait(ControllerConfiguration.Instance.PushOutSleepTime2);
+					service.Wait(ControllerConfiguration.Instance.PushOutSleepTime2);
 				}
-				service.StopRoller();
+				service2.StopRoller();
 				continue;
 			}
 			if (sensors[0] || sensors[1] || sensors[2])
 			{
-				if (!service.RollerToPosition(RollerPosition.Position4, 4000).Success)
+				if (!service2.RollerToPosition(RollerPosition.Position4, 4000).Success)
 				{
 					LogHelper.Instance.Log("PushOut: roller to 4 timed out.", LogEntryType.Error);
-					service.LogPickerSensorState(LogEntryType.Error);
+					service2.LogPickerSensorState(LogEntryType.Error);
 					continue;
 				}
-				PerfFunctions.SpinWait(50);
-				service.StartRollerOut();
+				service.SpinWait(50);
+				service2.StartRollerOut();
 				WaitToClearSensor(PickerSensor.Sensor4, 4000);
-				service.StopRoller();
+				service2.StopRoller();
 				continue;
 			}
 			return ErrorCodes.Success;
 		}
-		IPickerSensorReadResult pickerSensorReadResult2 = service.ReadSensors();
+		IPickerSensorReadResult pickerSensorReadResult2 = service2.ReadSensors();
 		if (pickerSensorReadResult2.Error != ErrorCodes.Success)
 		{
 			return ErrorCodes.SensorReadError;
@@ -67,8 +68,7 @@ public static class PickerBoard
 
 	public static bool IsFull()
 	{
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IPickerSensorReadResult pickerSensorReadResult = service.ReadSensors();
+		IPickerSensorReadResult pickerSensorReadResult = ServiceLocator.Instance.GetService<IControlSystem>().ReadSensors();
 		if (pickerSensorReadResult.Error == ErrorCodes.Success)
 		{
 			return pickerSensorReadResult.IsFull;
@@ -89,15 +89,16 @@ public static class PickerBoard
 	private static bool WaitSensor(PickerSensor lowSensor, bool state, int timeout)
 	{
 		int waitSensorPauseTime = ControllerConfiguration.Instance.WaitSensorPauseTime;
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
 		int num = (int)(lowSensor - 1);
 		bool result = false;
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
 			while (true)
 			{
-				PerfFunctions.SpinWait(waitSensorPauseTime);
-				IPickerSensorReadResult pickerSensorReadResult = service.ReadSensors();
+				service.SpinWait(waitSensorPauseTime);
+				IPickerSensorReadResult pickerSensorReadResult = service2.ReadSensors();
 				if (pickerSensorReadResult.Error != ErrorCodes.Success)
 				{
 					LogHelper.Instance.Log("WaittoClear: sensor read timed out.", LogEntryType.Error);

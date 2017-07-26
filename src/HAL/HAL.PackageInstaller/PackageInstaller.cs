@@ -15,14 +15,6 @@ namespace Redbox.HAL.PackageInstaller;
 
 internal sealed class PackageInstaller : IDisposable
 {
-	private const int BackupsToKeep = 2;
-
-	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
-
-	private const string DefaultConfiguration = "HAL.xml.default";
-
-	private const string ConfigurationFileName = "hal.xml";
-
 	private readonly string[] DefaultDatabases = new string[2] { "HALCounters.vdb3", "HALData.vdb3" };
 
 	private readonly string ServiceInstallerBatchFile;
@@ -40,6 +32,14 @@ internal sealed class PackageInstaller : IDisposable
 	private readonly List<IPackageInstallHandler> PackageHandlers = new List<IPackageInstallHandler>();
 
 	private readonly ErrorList InstallErrors = new ErrorList();
+
+	private const int BackupsToKeep = 2;
+
+	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
+
+	private const string DefaultConfiguration = "HAL.xml.default";
+
+	private const string ConfigurationFileName = "hal.xml";
 
 	private bool Disposed;
 
@@ -140,26 +140,25 @@ internal sealed class PackageInstaller : IDisposable
 
 	private void BackupConfiguration()
 	{
-		FileHelper.CreateBackup(ConfigurationFullPath, BackupAction.Copy);
+		RuntimeService.CreateBackup(ConfigurationFullPath, BackupAction.Copy);
 		List<BackupEntry> list = new List<BackupEntry>();
 		using (new DisposeableList<BackupEntry>(list))
 		{
 			string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml");
-			string[] array = files;
-			foreach (string fullPath in array)
+			for (int i = 0; i < files.Length; i++)
 			{
-				BackupEntry backupEntry = new BackupEntry(fullPath, FileHelper.DefaultFormat);
-				if (!backupEntry.FileName.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !backupEntry.FileName.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase) && backupEntry.BackupDate.HasValue)
+				BackupEntry backupEntry = new BackupEntry(files[i]);
+				if (!backupEntry.FileName.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !backupEntry.FileName.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase) && backupEntry.CreateDate.HasValue)
 				{
 					list.Add(backupEntry);
 				}
 			}
-			list.Sort((BackupEntry x, BackupEntry y) => x.BackupDate.Value.CompareTo(y.BackupDate.Value));
+			list.Sort((BackupEntry x, BackupEntry y) => x.CreateDate.Value.CompareTo(y.CreateDate.Value));
 			if (list.Count > 2)
 			{
 				for (int num = 0; num < list.Count - 2; num++)
 				{
-					FileHelper.SafeDeleteFile(list[num].FullPath);
+					RuntimeService.SafeDelete(list[num].FullPath);
 				}
 			}
 		}
@@ -168,10 +167,9 @@ internal sealed class PackageInstaller : IDisposable
 	private bool ServiceIsInstalled()
 	{
 		ServiceController[] services = ServiceController.GetServices();
-		ServiceController[] array = services;
-		foreach (ServiceController serviceController in array)
+		for (int i = 0; i < services.Length; i++)
 		{
-			if (serviceController.ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
+			if (services[i].ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}
@@ -209,8 +207,7 @@ internal sealed class PackageInstaller : IDisposable
 	private void RegisterHandlers()
 	{
 		string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "*.dll");
-		string[] array = files;
-		foreach (string text in array)
+		foreach (string text in files)
 		{
 			try
 			{

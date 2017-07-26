@@ -87,8 +87,7 @@ public sealed class PersistentMapService : IPersistentMap, IPersistentMapService
 
 	private void InsertUnderLock<T>(string key, T val)
 	{
-		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
-		IPersistentOption persistentOption = service.NewPersistentOption(key, val.ToString());
+		IPersistentOption persistentOption = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewPersistentOption(key, val.ToString());
 		Table.Insert(persistentOption);
 		Options.Add(persistentOption);
 	}

@@ -89,7 +89,7 @@ internal sealed class ProgramCache : IDisposable
 			{
 				LogHelper.Instance.Log($"Compile program {fileNameWithoutExtension} from file {text3}", LogEntryType.Info);
 			}
-			using MemoryStream stream = new MemoryStream(FileHelper.ReadToBuffer(text3));
+			using MemoryStream stream = new MemoryStream(ServiceLocator.Instance.GetService<IRuntimeService>().ReadToBuffer(text3));
 			ExecutionResult executionResult2 = CompileInner(stream, fileNameWithoutExtension);
 			errorList.AddRange(executionResult2.Errors);
 			if (!executionResult2.Errors.ContainsError())
@@ -109,16 +109,13 @@ internal sealed class ProgramCache : IDisposable
 	internal NativeJobAdapter MakeJobFromOperand(ExecutionContext ctx, ExecutionResult result, string key)
 	{
 		NativeJobAdapter result2 = null;
-		switch (key)
+		if (!(key == "RETURN"))
 		{
-		case "RETURN":
-			result2 = new ReturnJob(result, ctx, isQuick: false);
-			break;
-		case "QUICKRETURN":
-			result2 = new ReturnJob(result, ctx, isQuick: true);
-			break;
-		default:
-			if (OperandToType.ContainsKey(key))
+			if (key == "QUICKRETURN")
+			{
+				result2 = new ReturnJob(result, ctx, isQuick: true);
+			}
+			else if (OperandToType.ContainsKey(key))
 			{
 				try
 				{
@@ -131,7 +128,10 @@ internal sealed class ProgramCache : IDisposable
 					result2 = null;
 				}
 			}
-			break;
+		}
+		else
+		{
+			result2 = new ReturnJob(result, ctx, isQuick: false);
 		}
 		return result2;
 	}
@@ -179,9 +179,10 @@ internal sealed class ProgramCache : IDisposable
 			{
 				LogHelper.Instance.Log($"Not allowing replacement of program {programName}", LogEntryType.Info);
 			}
-			ExecutionResult executionResult = new ExecutionResult();
-			executionResult.ExecutionTime = new TimeSpan(0L);
-			return executionResult;
+			return new ExecutionResult
+			{
+				ExecutionTime = new TimeSpan(0L)
+			};
 		}
 	}
 
@@ -206,10 +207,8 @@ internal sealed class ProgramCache : IDisposable
 		List<string> list = new List<string>();
 		using (new WithReadLock(CacheLock))
 		{
-			string key;
-			foreach (string key2 in CompiledPrograms.Keys)
+			foreach (string key in CompiledPrograms.Keys)
 			{
-				key = key2;
 				string text = NoShowJobs.Find((string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase));
 				if (text == null)
 				{
@@ -267,9 +266,9 @@ internal sealed class ProgramCache : IDisposable
 					continue;
 				}
 				ConstructorInfo[] array3 = constructors;
-				foreach (ConstructorInfo constructorInfo in array3)
+				for (int j = 0; j < array3.Length; j++)
 				{
-					ParameterInfo[] parameters = constructorInfo.GetParameters();
+					ParameterInfo[] parameters = array3[j].GetParameters();
 					if (parameters == null || parameters.Length == 0)
 					{
 						LogHelper.Instance.Log("Type {0} has a ctor that does not match.", type.ToString());

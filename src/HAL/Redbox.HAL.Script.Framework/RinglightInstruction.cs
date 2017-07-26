@@ -36,8 +36,7 @@ public sealed class RinglightInstruction : Instruction
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		RinglightState ringlightState = Enum<RinglightState>.ParseIgnoringCase(base.Operands[0].Value, RinglightState.Off);
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		service.ToggleRingLight((RinglightState.On == ringlightState) ? true : false, null);
+		ServiceLocator.Instance.GetService<IControlSystem>().ToggleRingLight((RinglightState.On == ringlightState) ? true : false, null);
 	}
 
 	private bool IsOperandValid(string op)

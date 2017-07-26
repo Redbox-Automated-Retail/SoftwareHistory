@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
+using Redbox.HAL.Core.Descriptors;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -88,16 +89,6 @@ public sealed class QuickReturnDevice
 		}
 	}
 
-	private const int PageSize = 2048;
-
-	private const string MemorySize = "1FFF";
-
-	private const string GraphicsWidth = "10";
-
-	private const int MaxPages = 16;
-
-	private const string PreferredDisplayAddress = "0800";
-
 	private readonly string ImagesDirectory;
 
 	private readonly string StateFile;
@@ -113,6 +104,16 @@ public sealed class QuickReturnDevice
 	private readonly object Lock = new object();
 
 	private readonly List<QuickReturnState> States = new List<QuickReturnState>();
+
+	private const int PageSize = 2048;
+
+	private const string MemorySize = "1FFF";
+
+	private const string GraphicsWidth = "10";
+
+	private const int MaxPages = 16;
+
+	private const string PreferredDisplayAddress = "0800";
 
 	public static QuickReturnDevice Instance => Singleton<QuickReturnDevice>.Instance;
 
@@ -242,8 +243,7 @@ public sealed class QuickReturnDevice
 				LogHelper.Instance.Log("Unable to set write pointer to 0000.", LogEntryType.Error);
 				return false;
 			}
-			ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-			CoreResponse coreResponse = service.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, Port));
+			CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, Port));
 			string arg = (coreResponse.CommError ? "COMMUNICATION ERROR" : coreResponse.OpCodeResponse.TrimStart());
 			if (!ReadStateTable(StateFile))
 			{
@@ -352,8 +352,7 @@ public sealed class QuickReturnDevice
 			{
 				return false;
 			}
-			ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-			CoreResponse coreResponse = service.ExecuteControllerCommand(CoreCommand.Create(CommandType.ReadQRButton, Port));
+			CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CoreCommand.Create(CommandType.ReadQRButton, Port));
 			LogHelper.Instance.Log(string.Format("QR status returned {0}", (coreResponse != null) ? coreResponse.OpCodeResponse : "COMMUNICATION ERROR"), LogEntryType.Debug);
 			if (coreResponse.CommError)
 			{
@@ -361,8 +360,7 @@ public sealed class QuickReturnDevice
 				commError = true;
 				return false;
 			}
-			string text = coreResponse.OpCodeResponse.TrimStart();
-			return text.StartsWith("02");
+			return coreResponse.OpCodeResponse.TrimStart().StartsWith("02");
 		}
 	}
 
@@ -450,10 +448,11 @@ public sealed class QuickReturnDevice
 				return false;
 			}
 			string text = ConvertIntToHexString(m_currentGraphicsAddress);
-			QuickReturnState quickReturnState2 = new QuickReturnState();
-			quickReturnState2.Name = name.ToUpper();
-			quickReturnState2.GraphicsAddress = (string.IsNullOrEmpty(file) ? null : text);
-			quickReturnState = quickReturnState2;
+			quickReturnState = new QuickReturnState
+			{
+				Name = name.ToUpper(),
+				GraphicsAddress = (string.IsNullOrEmpty(file) ? null : text)
+			};
 			string[] data = null;
 			if (!string.IsNullOrEmpty(file))
 			{
@@ -526,6 +525,20 @@ public sealed class QuickReturnDevice
 			}
 			return true;
 		}
+	}
+
+	public DeviceStatus GetStatus()
+	{
+		DeviceStatus deviceStatus = DeviceStatus.None;
+		if (IsConfigured)
+		{
+			deviceStatus |= DeviceStatus.Configured;
+		}
+		if (new QuickReturnDescriptor().Locate())
+		{
+			deviceStatus |= DeviceStatus.Found;
+		}
+		return deviceStatus;
 	}
 
 	private string ConvertIntToHexString(int i)
@@ -610,16 +623,13 @@ public sealed class QuickReturnDevice
 	{
 		List<LedState> list = new List<LedState>();
 		string[] array = states.Split(';');
-		string[] array2 = array;
-		foreach (string text in array2)
+		for (int i = 0; i < array.Length; i++)
 		{
-			string[] array3 = text.Split(',');
-			if (array3[0].StartsWith("led", StringComparison.CurrentCultureIgnoreCase) && array3[1].StartsWith("mode", StringComparison.CurrentCultureIgnoreCase))
+			string[] array2 = array[i].Split(',');
+			if (array2[0].StartsWith("led", StringComparison.CurrentCultureIgnoreCase) && array2[1].StartsWith("mode", StringComparison.CurrentCultureIgnoreCase))
 			{
-				string value = array3[0].Split('=')[1];
-				LED led = Enum<LED>.ParseIgnoringCase(value, LED.Background);
-				string value2 = array3[1].Split('=')[1];
-				LEDMode mode = Enum<LEDMode>.ParseIgnoringCase(value2, LEDMode.Unknown);
+				LED led = Enum<LED>.ParseIgnoringCase(array2[0].Split('=')[1], LED.Background);
+				LEDMode mode = Enum<LEDMode>.ParseIgnoringCase(array2[1].Split('=')[1], LEDMode.Unknown);
 				list.Add(new LedState
 				{
 					Led = led,
@@ -660,8 +670,7 @@ public sealed class QuickReturnDevice
 
 	private bool ExecuteCommand(CoreCommand command)
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service.ExecuteControllerCommand(command);
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(command);
 		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 		{
 			LogHelper.Instance.Log(string.Format("The command {0} returned {1}", command.Command, (coreResponse == null) ? "ERROR" : coreResponse.OpCodeResponse), LogEntryType.Debug);
@@ -671,13 +680,12 @@ public sealed class QuickReturnDevice
 			LogHelper.Instance.Log("QuickReturn: communication problem.", LogEntryType.Info);
 			return false;
 		}
-		string text = coreResponse.OpCodeResponse.Trim();
-		bool flag = text.EndsWith("OK");
-		if (!flag)
+		bool num = coreResponse.OpCodeResponse.Trim().EndsWith("OK");
+		if (!num)
 		{
 			LogHelper.Instance.Log($"QR: command {command.Command} failed", LogEntryType.Error);
 		}
-		return flag;
+		return num;
 	}
 
 	private bool ResponseValid(IChannelResponse response)
@@ -687,11 +695,7 @@ public sealed class QuickReturnDevice
 		{
 			return false;
 		}
-		if (text.IndexOf("OK") == -1 && text.IndexOf("EER") == -1)
-		{
-			return false;
-		}
-		return true;
+		return text.IndexOf("OK") != -1;
 	}
 
 	private bool ReadStateTable(string fileName)
@@ -713,21 +717,32 @@ public sealed class QuickReturnDevice
 				string[] array = text.Split('=');
 				if (array.Length == 2)
 				{
-					string text2 = StringExtensions.RemoveString(array[0], ".grf");
+					string text2 = RemoveString(array[0], ".grf");
 					if (!int.TryParse(array[1], out var result))
 					{
 						LogHelper.Instance.Log($"Unable to parse state table entry {text}", LogEntryType.Error);
 						continue;
 					}
-					QuickReturnState quickReturnState = new QuickReturnState();
-					quickReturnState.Name = text2.ToUpper();
-					quickReturnState.GraphicsAddress = ConvertIntToHexString(result * 2048);
-					QuickReturnState item = quickReturnState;
+					QuickReturnState item = new QuickReturnState
+					{
+						Name = text2.ToUpper(),
+						GraphicsAddress = ConvertIntToHexString(result * 2048)
+					};
 					States.Add(item);
 				}
 			}
 		}
 		return true;
+	}
+
+	private string RemoveString(string value, string token)
+	{
+		int num = value.IndexOf(token);
+		if (num <= -1)
+		{
+			return value;
+		}
+		return value.Remove(num, token.Length);
 	}
 
 	private bool OpenPort()
@@ -742,8 +757,7 @@ public sealed class QuickReturnDevice
 
 	private bool TestPort(RedboxSerialPort port)
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service.ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, port));
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CoreCommand.Create(CommandType.SideTerminalVersion, port));
 		if (coreResponse.CommError)
 		{
 			LogHelper.Instance.Log("[QuickReturn Scan test] There was a communication error trying to chat to the port.");

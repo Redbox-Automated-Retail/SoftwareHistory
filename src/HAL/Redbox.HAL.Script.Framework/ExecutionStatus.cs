@@ -8,11 +8,7 @@ public sealed class ExecutionStatus
 
 	public static bool operator ==(ExecutionStatus status, ExecutionContextStatus right)
 	{
-		if (status != null)
-		{
-			return status.Value.Equals(right);
-		}
-		return false;
+		return status?.Value.Equals(right) ?? false;
 	}
 
 	public static bool operator !=(ExecutionStatus status, ExecutionContextStatus right)
@@ -27,13 +23,13 @@ public sealed class ExecutionStatus
 
 	public override bool Equals(object obj)
 	{
-		if (object.ReferenceEquals(this, obj))
+		if (this == obj)
 		{
 			return true;
 		}
-		if (obj is ExecutionStatus executionStatus)
+		if (obj is ExecutionStatus { Value: var value })
 		{
-			return executionStatus.Value.Equals(Value);
+			return value.Equals(Value);
 		}
 		return false;
 	}

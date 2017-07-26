@@ -26,110 +26,110 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 
 	private static readonly object InstanceLock = new object();
 
-	[XmlConfiguration(DefaultValue = "true")]
 	[Category("Settings")]
 	[DisplayName("Delete Bitmap On Successful Read")]
 	[Description("If true, will delete the bitmap used to read the barcode, if successfully read.")]
+	[XmlConfiguration(DefaultValue = "true")]
 	public bool DeleteBitmapOnSuccessfulRead { get; set; }
 
+	[Category("Settings")]
 	[DisplayName("Camera Plugin")]
 	[Description("Sets the plugin to use in legacy scan mode.")]
-	[Category("Settings")]
 	[XmlConfiguration(DefaultValue = "DirectShowFrame")]
 	public string CameraPlugin { get; set; }
 
-	[XmlConfiguration(DefaultValue = "NONE")]
-	[DisplayName("Snap Decode Port")]
 	[Category("Settings")]
+	[DisplayName("Snap Decode Port")]
 	[Description("The port the snap/decode device is configured.")]
+	[XmlConfiguration(DefaultValue = "NONE")]
 	public string SnapDecodePort { get; set; }
 
-	[Description("In ms.")]
-	[DisplayName("Write Pause")]
-	[XmlConfiguration(DefaultValue = "500")]
 	[Category("Settings")]
+	[DisplayName("Write Pause")]
+	[Description("In ms.")]
+	[XmlConfiguration(DefaultValue = "500")]
 	public int WritePause { get; set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
 	[DisplayName("Reboot On Start")]
 	[Description("In ms.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	public bool RebootOnStart { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
-	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
 	[DisplayName("Cycle Camera On Use")]
+	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	public bool CycleCameraOnUse { get; private set; }
 
-	[Description("If true, uses CI to take a photo & try decode.")]
-	[DisplayName("Use CI On Fail")]
 	[Category("Settings")]
+	[DisplayName("Use CI On Fail")]
+	[Description("If true, uses CI to take a photo & try decode.")]
 	[XmlConfiguration(DefaultValue = "false")]
 	public bool UseInliteOnFail { get; private set; }
 
+	[Category("Settings")]
 	[DisplayName("Scanner Service")]
 	[Description("The configured scanner.")]
 	[XmlConfiguration(DefaultValue = "Legacy")]
-	[Category("Settings")]
 	public ScannerServices ScannerService { get; set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
-	[DisplayName("Log Detailed Scan")]
 	[Category("Settings")]
+	[DisplayName("Log Detailed Scan")]
 	[Description("The configured scanner.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	public bool LogDetailedScan { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
 	[DisplayName("Insert Read Stats")]
 	[Description("If true, will insert read data.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	public bool InsertReadStats { get; private set; }
 
+	[Category("Settings")]
 	[DisplayName("Expected Read Codes")]
 	[Description("For the scanner, the max number of barcodes.")]
-	[Category("Settings")]
 	[XmlConfiguration(DefaultValue = "4")]
 	public int ExpectedCodes { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "2000")]
-	[DisplayName("Scan Timeout")]
 	[Category("Settings")]
+	[DisplayName("Scan Timeout")]
 	[Description("In ms, the time to wait for a scan to complete.")]
+	[XmlConfiguration(DefaultValue = "2000")]
 	public int ScanTimeout { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "15000")]
 	[Category("Settings")]
 	[DisplayName("Scanner Wakeup Pause")]
 	[Description("In ms, the time to wait for the scanner after boot.")]
+	[XmlConfiguration(DefaultValue = "15000")]
 	public int ScannerWakeupPause { get; private set; }
 
-	[Description("The action to take on startup of the Cortex camera.")]
 	[Browsable(false)]
-	[DisplayName("Cortex Wakeup Action")]
-	[XmlConfiguration(DefaultValue = "Decode")]
 	[Category("Settings")]
+	[DisplayName("Cortex Wakeup Action")]
+	[Description("The action to take on startup of the Cortex camera.")]
+	[XmlConfiguration(DefaultValue = "Decode")]
 	public CortexStartupAction CortexStartupAction { get; private set; }
 
+	[Browsable(false)]
+	[Category("Settings")]
 	[DisplayName("Filter Excess Codes")]
 	[Description("If true, will trim read code count to 4.")]
 	[XmlConfiguration(DefaultValue = "true")]
-	[Category("Settings")]
-	[Browsable(false)]
 	public bool FilterExcessReadCodes { get; private set; }
 
 	[Browsable(false)]
-	[XmlConfiguration(DefaultValue = "50")]
-	[DisplayName("Cortex Port Open Wait")]
 	[Category("Settings")]
+	[DisplayName("Cortex Port Open Wait")]
 	[Description("Time to wait for the port after open (in ms).")]
+	[XmlConfiguration(DefaultValue = "50")]
 	public int CortexPortOpenWait { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
-	[Description("If true, will snap an image on decode failure.")]
 	[Browsable(false)]
 	[Category("Settings")]
 	[DisplayName("Cortex Snap On Decode Failure")]
+	[Description("If true, will snap an image on decode failure.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	public bool CortexSnapOnDecodeFailure { get; private set; }
 
 	protected override string FileNodeName => "Camera";
@@ -143,8 +143,7 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 			if (Instance == null)
 			{
 				Instance = new BarcodeConfiguration();
-				IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-				service.RegisterConfiguration(Configurations.Camera.ToString(), Instance);
+				ServiceLocator.Instance.GetService<IConfigurationService>().RegisterConfiguration(Configurations.Camera.ToString(), Instance);
 				ScannerDeviceFactory scannerDeviceFactory = new ScannerDeviceFactory();
 				ServiceLocator.Instance.AddService(typeof(IScannerDeviceService), scannerDeviceFactory);
 				Instance.AddObserver(scannerDeviceFactory);

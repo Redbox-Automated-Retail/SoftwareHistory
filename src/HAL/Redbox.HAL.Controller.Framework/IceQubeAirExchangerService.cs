@@ -95,18 +95,16 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 		{
 			return AirExchangerStatus.NotConfigured;
 		}
-		int millisecondsTimeout = 1500;
 		ToggleLatch(on: true);
-		Thread.Sleep(millisecondsTimeout);
+		Thread.Sleep(1500);
 		ToggleLatch(on: false);
-		Thread.Sleep(millisecondsTimeout);
+		Thread.Sleep(1500);
 		return CheckStatusInner();
 	}
 
 	public int PersistentFailureCount()
 	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		IPersistentCounter persistentCounter = service.Find("IceQubeResetFailures");
+		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<IPersistentCounterService>().Find("IceQubeResetFailures");
 		if (persistentCounter == null)
 		{
 			LogHelper.Instance.Log("Unable to create IceQube counter.", LogEntryType.Error);
@@ -117,8 +115,7 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 
 	public bool ShouldRetry()
 	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		IPersistentCounter persistentCounter = service.Find("IceQubeResetFailures");
+		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<IPersistentCounterService>().Find("IceQubeResetFailures");
 		if (persistentCounter == null)
 		{
 			return false;
@@ -129,14 +126,12 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 	public void ResetFailureCount()
 	{
 		LogHelper.Instance.Log("IceQubeBoard reset failure counter.");
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service.Reset("IceQubeResetFailures");
+		ServiceLocator.Instance.GetService<IPersistentCounterService>().Reset("IceQubeResetFailures");
 	}
 
 	public void IncrementResetFailureCount()
 	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service.Increment("IceQubeResetFailures");
+		ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("IceQubeResetFailures");
 	}
 
 	internal IceQubeAirExchangerService()
@@ -147,15 +142,13 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 
 	private void ToggleLatch(bool on)
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		service.ExecuteControllerCommand(on ? CommandType.QlmDoorUnlock : CommandType.QlmDoorLock);
+		ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(on ? CommandType.QlmDoorUnlock : CommandType.QlmDoorLock);
 		FanStatus = (on ? ExchangerFanStatus.Off : ExchangerFanStatus.On);
 	}
 
 	private AirExchangerStatus CheckStatusInner()
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
 		if (coreResponse.CommError)
 		{
 			return AirExchangerStatus.Error;

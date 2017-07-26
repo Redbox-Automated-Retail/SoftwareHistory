@@ -8,10 +8,9 @@ public static class Program
 	public static void Main()
 	{
 		Thread.CurrentThread.Name = "HAL Service";
-		ServiceBase[] services = new ServiceBase[1]
+		ServiceBase.Run(new ServiceBase[1]
 		{
 			new HALService()
-		};
-		ServiceBase.Run(services);
+		});
 	}
 }

@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -67,13 +66,14 @@ public sealed class QlmInstruction : Instruction
 		{
 			home = result2;
 		}
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		if (string.Compare(token.Value, "HALT", ignoreCase: true) == 0)
 		{
-			context.PushTop(QLM.HaltOperation() ? "TIMEOUT" : "SUCCESS");
+			context.PushTop(service.HaltQlmOperation().Success ? "SUCCESS" : "TIMEOUT");
 		}
 		else if (string.Compare(token.Value, "ENGAGE", ignoreCase: true) == 0)
 		{
-			ErrorCodes errorCodes = QLM.Engage(home, context.AppLog);
+			ErrorCodes errorCodes = service.EngageQlm(context.AppLog);
 			if (errorCodes == ErrorCodes.Success)
 			{
 				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
@@ -82,15 +82,15 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "LIFT", ignoreCase: true) == 0)
 		{
-			QLM.Lift();
+			service.LiftQlm();
 		}
 		else if (string.Compare(token.Value, "DROP", ignoreCase: true) == 0)
 		{
-			QLM.Drop();
+			service.DropQlm();
 		}
 		else if (string.Compare(token.Value, "DISENGAGE", ignoreCase: true) == 0)
 		{
-			ErrorCodes errorCodes2 = QLM.Disengage(home, context.AppLog);
+			ErrorCodes errorCodes2 = service.DisengageQlm(home, context.AppLog);
 			if (errorCodes2 == ErrorCodes.Success)
 			{
 				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
@@ -99,7 +99,7 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "STATUS", ignoreCase: true) == 0)
 		{
-			context.PushTop(QLM.GetStatus().ToString().ToUpper());
+			context.PushTop(service.GetQlmStatus().ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "ENDQLMOP", ignoreCase: true) == 0)
 		{
@@ -134,15 +134,16 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "UNLOAD-DISK") == 0)
 		{
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 			int num = CurrentSlot(result, context);
 			if (num != 0)
 			{
-				if (!service.EmptyCountExceeds(0))
+				if (!service2.EmptyCountExceeds(0))
 				{
 					context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
 				}
-				MerchandizeResult merchandizeResult = new UnloadHelper(context, result).UnloadDisk(QLM.Deck.Number, num);
+				IDecksService service3 = ServiceLocator.Instance.GetService<IDecksService>();
+				MerchandizeResult merchandizeResult = new UnloadHelper(context, result).UnloadDisk(service3.QlmDeck.Number, num);
 				string text = merchandizeResult.ToString().ToUpper();
 				if (merchandizeResult != MerchandizeResult.Success)
 				{

@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
@@ -84,7 +83,7 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			return false;
 		}
 		Stop();
-		PerfFunctions.SpinWait(500);
+		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(500);
 		LogHelper.Instance.Log("[Legacy Camera Service] Cycle camera driver.");
 		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
 		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
@@ -96,7 +95,8 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			{
 				LogHelper.Instance.Log("The running driver for the camera {0}", deviceDescriptor.MatchDriver() ? "is correct" : "is not correct.");
 			}
-			if (service.FindDeviceStatus(deviceDescriptor) == DeviceStatus.Enabled)
+			DeviceStatus deviceStatus = service.FindDeviceStatus(deviceDescriptor);
+			if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None && (deviceStatus & DeviceStatus.Enabled) != DeviceStatus.None)
 			{
 				bool flag = deviceDescriptor.ResetDriver();
 				LogHelper.Instance.Log(" RESET camera returned {0}", flag ? "OK" : "FAILURE");
@@ -108,11 +108,9 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 	public IScanResult Scan()
 	{
 		string text = GenerateSnapFileName();
-		ISnapResult snapResult = Snap(text);
-		if (snapResult.SnapOk)
+		if (Snap(text).SnapOk)
 		{
-			IBarcodeReader configuredReader = BarcodeReaderFactory.Instance.GetConfiguredReader();
-			IScanResult scanResult = configuredReader.Scan(text);
+			IScanResult scanResult = BarcodeReaderFactory.Instance.GetConfiguredReader().Scan(text);
 			if (BarcodeConfiguration.Instance.DeleteBitmapOnSuccessfulRead && scanResult.DecodeResults.Count > 0)
 			{
 				try
@@ -127,9 +125,10 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			}
 			return scanResult;
 		}
-		ScanResult scanResult2 = new ScanResult();
-		scanResult2.DeviceError = true;
-		return scanResult2;
+		return new ScanResult
+		{
+			DeviceError = true
+		};
 	}
 
 	public void NotifyConfigurationLoaded()

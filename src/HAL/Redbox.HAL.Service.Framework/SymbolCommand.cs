@@ -9,9 +9,9 @@ namespace Redbox.HAL.Service.Framework;
 [Command("symbol")]
 public sealed class SymbolCommand
 {
-	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	[CommandForm(Name = "show")]
 	[Usage("SYMBOL show job: job-id")]
+	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
@@ -28,9 +28,9 @@ public sealed class SymbolCommand
 		}
 	}
 
-	[Description("Clears the execution engine's symbol list.")]
 	[CommandForm(Name = "clear")]
 	[Usage("SYMBOL clear job: job-id")]
+	[Description("Clears the execution engine's symbol list.")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);

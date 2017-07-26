@@ -6,12 +6,12 @@ namespace Redbox.HAL.Controller.Framework;
 
 public sealed class MotorSpeed
 {
-	[Description("The low (start) speed of the motor specified in pulses per second.")]
 	[DisplayName("Low Speed")]
+	[Description("The low (start) speed of the motor specified in pulses per second.")]
 	public int Low { get; private set; }
 
-	[Description("The high (target) speed of the motor specified in pulses per second.")]
 	[DisplayName("High Speed")]
+	[Description("The high (target) speed of the motor specified in pulses per second.")]
 	public int High { get; private set; }
 
 	[Browsable(false)]

@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -31,7 +30,7 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 				service.ResetFailureCount();
 				return;
 			}
-			PerfFunctions.Wait(2000);
+			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(2000);
 		}
 		if (AirExchangerStatus.Error == airExchangerStatus2)
 		{

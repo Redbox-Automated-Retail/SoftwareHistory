@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -33,7 +32,17 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 
 	internal GetOperation(ILocation location, IGetObserver observer, IFormattedLog log)
 	{
-		Observer = ((observer == null) ? DefaultGetObserver.Instance : observer);
+		IGetObserver observer2;
+		if (observer != null)
+		{
+			observer2 = observer;
+		}
+		else
+		{
+			IGetObserver instance = DefaultGetObserver.Instance;
+			observer2 = instance;
+		}
+		Observer = observer2;
 		Log = log;
 		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
 		Deck = service.GetFrom(location);
@@ -74,7 +83,7 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 		{
 			errorCodes = PullFrom(Location, 1);
 		}
-		PerfFunctions.SpinWait(300);
+		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(300);
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		if (Controller.RollerToPosition(RollerPosition.Position4, 6000, logSensors: false).Success)
 		{
@@ -122,8 +131,7 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 			Result.Update(ErrorCodes.TrackCloseTimeout);
 			return false;
 		}
-		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
-		if (pickerSensorReadResult.IsFull)
+		if (Controller.ReadSensors().IsFull)
 		{
 			LogHelper.Instance.Log($">> ControllerService.Get: {ErrorCodes.PickerFull.ToString()}", LogEntryType.Info);
 			Result.Update(ErrorCodes.PickerFull);

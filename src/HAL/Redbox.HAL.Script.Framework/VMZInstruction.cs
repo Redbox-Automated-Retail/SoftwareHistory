@@ -117,8 +117,7 @@ public sealed class VMZInstruction : Instruction
 			}
 			else if (string.Compare(base.Operands[0].Value, "UNLOAD-DISC", ignoreCase: true) == 0)
 			{
-				MerchandizeResult merchandizeResult = VMZHelperFunctions.Instance.UnloadDisc(result, context);
-				context.PushTop(merchandizeResult.ToString().ToUpper());
+				context.PushTop(VMZHelperFunctions.Instance.UnloadDisc(result, context).ToString().ToUpper());
 			}
 			else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN", ignoreCase: true) == 0)
 			{
@@ -159,10 +158,10 @@ public sealed class VMZInstruction : Instruction
 
 	private void FetchLast(MerchFlags flags, ExecutionContext context)
 	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		ErrorList errors = new ErrorList();
-		int? timeOutValue = GetTimeOutValue(errors, context);
-		PerfFunctions.Wait(timeOutValue.HasValue ? timeOutValue.Value : 8000);
+		service.Wait(GetTimeOutValue(errors, context) ?? 8000);
 		ILocation location = VMZ.Instance.FindHighestLocation(flags);
 		if (location == null)
 		{
@@ -170,14 +169,13 @@ public sealed class VMZInstruction : Instruction
 			context.PushTop("NONE");
 			return;
 		}
-		ErrorCodes errorCodes = service.MoveTo(location, MoveMode.Get, context.AppLog);
+		ErrorCodes errorCodes = service2.MoveTo(location, MoveMode.Get, context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			context.PushTop(errorCodes.ToString().ToUpper());
 			return;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service2.Get(context.AppLog);
+		IGetResult getResult = ServiceLocator.Instance.GetService<IControllerService>().Get(context.AppLog);
 		if (getResult.Success)
 		{
 			VMZHelperFunctions.MoveViewable(context);

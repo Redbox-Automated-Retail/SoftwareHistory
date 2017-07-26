@@ -36,8 +36,7 @@ internal sealed class Service : ICameraPlugin
 			{
 				implementors = Enum<Implementors>.ParseIgnoringCase((string)properties["Implementor"], Implementors.Legacy);
 			}
-			Implementors implementors2 = implementors;
-			if (implementors2 == Implementors.Slim)
+			if (implementors == Implementors.Slim)
 			{
 				m_plugin = new SlimFrameService();
 			}

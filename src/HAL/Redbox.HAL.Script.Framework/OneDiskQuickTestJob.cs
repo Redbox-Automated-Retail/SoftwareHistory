@@ -20,7 +20,8 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 			}
 			if (!TestDeck(deck))
 			{
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			IDeck byNumber = base.DecksService.GetByNumber(deck.Number + 1);
@@ -31,7 +32,8 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 			if (!MoveAndPut(byNumber.Number, 1, "UNKNOWN"))
 			{
 				AddError("Unable to place the into the slot.");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			return true;

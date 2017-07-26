@@ -89,10 +89,8 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 
 	public void Shutdown()
 	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		service.Shutdown();
-		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-		service2.Shutdown();
+		ServiceLocator.Instance.GetService<IMotionControlService>().Shutdown();
+		ServiceLocator.Instance.GetService<IControlSystem>().Shutdown();
 	}
 
 	public IGetResult Get(IFormattedLog log)
@@ -138,29 +136,30 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
 			service2.LogPickerSensorState();
 			service2.LogInputs(ControlBoards.Picker, LogEntryType.Info);
-			PutResult putResult = new PutResult(id, service.CurrentLocation);
-			putResult.Code = ErrorCodes.PickerEmpty;
-			return putResult;
+			return new PutResult(id, service.CurrentLocation)
+			{
+				Code = ErrorCodes.PickerEmpty
+			};
 		}
-		using PutOperation putOperation = new PutOperation(id, observer, service.CurrentLocation, log);
-		IPutResult putResult2 = putOperation.Execute();
-		if (putResult2.Success)
+		ILocation currentLocation = service.CurrentLocation;
+		string arg = (ServiceLocator.Instance.GetService<IDumpbinService>().IsBin(currentLocation) ? "DUMPBIN" : $"Deck = {currentLocation.Deck} Slot = {currentLocation.Slot}");
+		using PutOperation putOperation = new PutOperation(id, observer, currentLocation, log);
+		IPutResult putResult = putOperation.Execute();
+		if (putResult.Success)
 		{
-			string msg = $"PUT {service.CurrentLocation.ToString()} ID={id}";
-			log.WriteFormatted(msg);
+			log.WriteFormatted($"PUT {arg} ID={id}");
 		}
 		else
 		{
-			string format = $"PUT {service.CurrentLocation.ToString()} ID={id} returned error status {putResult2.ToString().ToUpper()}";
+			string format = $"PUT {arg} ID={id} returned error status {putResult.ToString().ToUpper()}";
 			log.WriteFormatted(LogEntryType.Error, format);
 		}
-		return putResult2;
+		return putResult;
 	}
 
 	public IPutResult Put(string id, IFormattedLog log)
 	{
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
-		ServiceLocator.Instance.GetService<IInventoryService>();
 		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		IPutObserver instance = DefaultPutObserver.Instance;
 		if (service.IsBin(service2.CurrentLocation))

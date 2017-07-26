@@ -8,8 +8,7 @@ internal sealed class KioskFunctionTestDataLoadJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IKioskFunctionCheckService service = ServiceLocator.Instance.GetService<IKioskFunctionCheckService>();
-		IList<IKioskFunctionCheckData> list = service.Load();
+		IList<IKioskFunctionCheckData> list = ServiceLocator.Instance.GetService<IKioskFunctionCheckService>().Load();
 		foreach (IKioskFunctionCheckData item in list)
 		{
 			base.Context.PushTop(item.UserIdentifier);

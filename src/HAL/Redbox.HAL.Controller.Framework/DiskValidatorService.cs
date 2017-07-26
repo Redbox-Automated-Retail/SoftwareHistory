@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -17,7 +16,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		if (IsConfigured)
 		{
 			FraudSensor.Shutdown();
-			PerfFunctions.SpinWait(ControllerConfiguration.Instance.FraudSensorPostWait);
+			ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(ControllerConfiguration.Instance.FraudSensorPostWait);
 		}
 	}
 
@@ -27,8 +26,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		IsConfigured = ControllerConfiguration.Instance.EnableSecureDiskValidator;
 		if (IsConfigured)
 		{
-			IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-			IFormattedLog nilLog = service.NilLog;
+			IFormattedLog nilLog = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().NilLog;
 			ErrorCodes errorCodes = FraudSensor.Initialize(nilLog);
 			LogHelper.Instance.Log("[DiskValidator] Fraud sensor initialization returned {0}", errorCodes.ToString());
 		}
@@ -45,8 +43,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		LogHelper.Instance.Log("[DiskValidatorService] On initialize.");
 		if (initError == ErrorCodes.Success && IsConfigured)
 		{
-			IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-			IFormattedLog nilLog = service.NilLog;
+			IFormattedLog nilLog = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().NilLog;
 			ErrorCodes errorCodes = FraudSensor.Initialize(nilLog);
 			LogHelper.Instance.Log("[DiskValidator] Fraud sensor initialization returned {0}", errorCodes.ToString());
 		}
@@ -63,19 +60,14 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 
 	public IFraudScanResult Validate(string matrix)
 	{
-		return Validate();
-	}
-
-	public IFraudScanResult Validate()
-	{
 		if (!IsConfigured)
 		{
-			FraudScanResult fraudScanResult = new FraudScanResult();
-			fraudScanResult.ScanError = ErrorCodes.DeviceNotConfigured;
-			fraudScanResult.Valid = false;
-			return fraudScanResult;
+			return new FraudScanResult
+			{
+				ScanError = ErrorCodes.DeviceNotConfigured,
+				Valid = false
+			};
 		}
-		PerfFunctions.Wait(ControllerConfiguration.Instance.FraudCameraScanPause);
 		return FraudSensor.Validate();
 	}
 
@@ -104,7 +96,6 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 	{
 		FraudSensor = sensor;
 		ControllerConfiguration.Instance.AddObserver(this);
-		IControlSystemService service = ServiceLocator.Instance.GetService<IControlSystemService>();
-		service.AddHandler(this);
+		ServiceLocator.Instance.GetService<IControlSystemService>().AddHandler(this);
 	}
 }

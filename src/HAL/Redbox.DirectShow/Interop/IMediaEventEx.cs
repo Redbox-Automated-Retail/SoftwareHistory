@@ -4,9 +4,9 @@ using System.Runtime.InteropServices;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsDual)]
-[Guid("56a868c0-0ad4-11ce-b03a-0020af0ba770")]
 [ComVisible(true)]
+[Guid("56a868c0-0ad4-11ce-b03a-0020af0ba770")]
+[InterfaceType(ComInterfaceType.InterfaceIsDual)]
 public interface IMediaEventEx
 {
 	[PreserveSig]

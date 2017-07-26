@@ -8,6 +8,8 @@ internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
 {
 	private bool m_configured;
 
+	private int m_pauseTime = 900000;
+
 	protected override string ThreadName => "Hardware Healer";
 
 	protected override string JobName => "hardware-healer";
@@ -16,7 +18,7 @@ internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
 
 	protected override ProgramPriority Priority => ProgramPriority.Highest;
 
-	protected override int PollSleep => 1800000;
+	protected override int PollSleep => m_pauseTime;
 
 	protected override bool IsConfigured => m_configured;
 
@@ -24,6 +26,7 @@ internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
 	{
 		LogHelper.Instance.Log("[HardwareHealer] Configuration loaded.");
 		m_configured = ControllerConfiguration.Instance.EnableHardwareHealing;
+		m_pauseTime = ControllerConfiguration.Instance.HardwareHealerPauseTime;
 	}
 
 	public void NotifyConfigurationChangeStart()
@@ -36,6 +39,7 @@ internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
 	{
 		LogHelper.Instance.Log("[HardwareHealer] Configuration change end.");
 		m_configured = ControllerConfiguration.Instance.EnableHardwareHealing;
+		m_pauseTime = ControllerConfiguration.Instance.HardwareHealerPauseTime;
 		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
 		{
 			Start();
@@ -44,18 +48,14 @@ internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
 
 	protected override bool CoreExecute()
 	{
-		ExecutionContext executionContext = ScheduleAndBlockOnJob();
-		executionContext.Trash();
+		ScheduleAndBlockOnJob().Trash();
 		return true;
 	}
 
 	internal override void Initialize()
 	{
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
-		attributeXmlConfiguration.AddObserver(this);
-		IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
-		service2.AddObserver(this);
+		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
+		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private HardwareHealerPoller()

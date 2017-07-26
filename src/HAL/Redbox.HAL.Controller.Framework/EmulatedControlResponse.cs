@@ -6,7 +6,7 @@ internal sealed class EmulatedControlResponse : IControlResponse
 {
 	private readonly ErrorCodes m_error;
 
-	public bool Success => ErrorCodes.Success == m_error;
+	public bool Success => m_error == ErrorCodes.Success;
 
 	public bool TimedOut => ErrorCodes.Timeout == m_error;
 

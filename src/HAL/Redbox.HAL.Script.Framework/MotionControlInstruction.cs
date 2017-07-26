@@ -16,7 +16,8 @@ public sealed class MotionControlInstruction : Instruction
 		Positions,
 		XPos,
 		YPos,
-		Homeall
+		Homeall,
+		ComCheck
 	}
 
 	public override string Mnemonic => "MOTIONCONTROL";
@@ -55,6 +56,9 @@ public sealed class MotionControlInstruction : Instruction
 			}
 			break;
 		}
+		case Operand.ComCheck:
+			context.PushTop((!service.CommunicationOk()) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
+			break;
 		case Operand.Comstatus:
 			context.PushTop(service.CommunicationOk() ? "OK" : "COMM ERROR");
 			break;
@@ -110,7 +114,7 @@ public sealed class MotionControlInstruction : Instruction
 			else
 			{
 				ErrorCodes errorCodes = service.InitAxes(context.AppLog);
-				context.PushTop(ErrorCodes.Success == errorCodes);
+				context.PushTop(errorCodes == ErrorCodes.Success);
 			}
 			break;
 		}

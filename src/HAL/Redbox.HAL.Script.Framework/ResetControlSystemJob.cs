@@ -3,7 +3,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "reset-controlsystem-job", Operand = "RESET-CONTROLSYSTEM-JOB")]
+[NativeJob(ProgramName = "reset-controlsystem-job")]
 internal class ResetControlSystemJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()

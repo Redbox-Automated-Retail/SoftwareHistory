@@ -15,7 +15,7 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 {
 	internal readonly string DataDirectory;
 
-	private readonly ExecutionContext ImmediateModeContext;
+	private ExecutionContext ActiveContext;
 
 	private bool SchedulerEnabled;
 
@@ -33,7 +33,7 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 
 	private readonly ProgramCache ProgramCache = new ProgramCache();
 
-	private readonly string[] NonSchedulableJobsWithinReboot = new string[7] { "qlm-unload", "thin", "unload-thin", "sync", "sync-locations", "thin-vmz", "clean-vmz" };
+	private readonly ExecutionContext ImmediateModeContext;
 
 	private readonly string ScriptsPath;
 
@@ -43,15 +43,15 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 
 	private readonly RedboxTimer RebootWakeupTimer;
 
-	private readonly TimeSpan? RebootWindowStart = null;
+	private readonly TimeSpan? RebootWindowStart;
 
 	private readonly List<IExecutionEngineChangeObserver> Observers = new List<IExecutionEngineChangeObserver>();
+
+	private readonly string[] NonSchedulableJobsWithinReboot = new string[7] { "qlm-unload", "thin", "unload-thin", "sync", "sync-locations", "thin-vmz", "clean-vmz" };
 
 	private static readonly object InstanceLock = new object();
 
 	public static ExecutionEngine Instance { get; private set; }
-
-	public ExecutionContext ActiveContext { get; private set; }
 
 	internal ExecutionContext InitJob { get; set; }
 
@@ -69,6 +69,11 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 			}
 			return Instance;
 		}
+	}
+
+	public IExecutionContext GetActiveContext()
+	{
+		return ActiveContext;
 	}
 
 	public void AddObserver(IExecutionEngineChangeObserver ob)
@@ -133,8 +138,7 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 	public void Shutdown()
 	{
 		Compile("CAMERA STOP FORCE=TRUE", "$$$immediate$$$");
-		ExecutionContext executionContext = ExecuteImmediate();
-		executionContext.WaitForCompletion();
+		ExecuteImmediate().WaitForCompletion();
 		lock (ModeLock)
 		{
 			foreach (IExecutionEngineChangeObserver observer in Observers)
@@ -205,8 +209,7 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 	{
 		using (new WithWriteLock(ContextLock))
 		{
-			IEnumerable<ExecutionContext> enumerable = Contexts.EnumerateGarbage(force);
-			foreach (ExecutionContext item in enumerable)
+			foreach (ExecutionContext item in Contexts.EnumerateGarbage(force))
 			{
 				if ((InitJob == null || !(item.ID == InitJob.ID)) && !item.IsImmediate)
 				{
@@ -266,16 +269,17 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 
 	public ExecutionContext ScheduleJob(string progName, string label, DateTime? startTime, ProgramPriority priority)
 	{
-		ExecutionContext executionContext = new ExecutionContext(GetUniqueId(), progName);
-		executionContext.StartTime = startTime;
-		executionContext.Priority = priority;
-		executionContext.Label = label;
-		ExecutionContext executionContext2 = executionContext;
+		ExecutionContext executionContext = new ExecutionContext(GetUniqueId(), progName)
+		{
+			StartTime = startTime,
+			Priority = priority,
+			Label = label
+		};
 		CompiledProgram program = ProgramCache.GetProgram(progName);
 		if (program == null)
 		{
-			executionContext2.Result.Errors.Add(Error.NewError("E001", $"The program '{progName}' was not found in the program cache.", "Recompile the program which will place it in the program cache."));
-			return executionContext2;
+			executionContext.Result.Errors.Add(Error.NewError("E001", $"The program '{progName}' was not found in the program cache.", "Recompile the program which will place it in the program cache."));
+			return executionContext;
 		}
 		using (new WithUpgradeableReadLock(ContextLock))
 		{
@@ -287,19 +291,19 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 					{
 						string text = $"The program '{progName}' is marked singleton, instance currently running - deny new job.";
 						LogHelper.Instance.Log(text);
-						executionContext2.Result.Errors.Add(Error.NewError("E001", text, "Reschedule the program ."));
-						return executionContext2;
+						executionContext.Result.Errors.Add(Error.NewError("E001", text, "Reschedule the program ."));
+						return executionContext;
 					}
 				}
 			}
-			executionContext2.CopyProgramAndReferences(progName, program.ParseTree);
+			executionContext.CopyProgramAndReferences(progName, program.ParseTree);
 			using (new WithWriteLock(ContextLock))
 			{
-				Contexts.Add(executionContext2);
+				Contexts.Add(executionContext);
 			}
 		}
-		executionContext2.Save();
-		return executionContext2;
+		executionContext.Save();
+		return executionContext;
 	}
 
 	public ExecutionContext ExecuteImmediate()
@@ -514,9 +518,9 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 	private bool IsSingletonJob(string name)
 	{
 		string[] singletonJobs = SingletonJobs;
-		foreach (string text in singletonJobs)
+		for (int i = 0; i < singletonJobs.Length; i++)
 		{
-			if (text.Equals(name, StringComparison.CurrentCultureIgnoreCase))
+			if (singletonJobs[i].Equals(name, StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}
@@ -535,9 +539,9 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 					continue;
 				}
 				string[] nonSchedulableJobsWithinReboot = NonSchedulableJobsWithinReboot;
-				foreach (string text in nonSchedulableJobsWithinReboot)
+				for (int i = 0; i < nonSchedulableJobsWithinReboot.Length; i++)
 				{
-					if (!(text == context.ProgramName))
+					if (!(nonSchedulableJobsWithinReboot[i] == context.ProgramName))
 					{
 						continue;
 					}
@@ -681,8 +685,7 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 				LogHelper.Instance.Log("Unable to create contexts directory.", e);
 			}
 			string[] directories = Directory.GetDirectories(path);
-			string[] array = directories;
-			foreach (string text in array)
+			foreach (string text in directories)
 			{
 				string path2 = Path.Combine(text, "ctx.data");
 				ExecutionContext executionContext = null;
@@ -690,8 +693,7 @@ public sealed class ExecutionEngine : IStatusChangeObserver, IExecutionService
 				{
 					using (FileStream serializationStream = File.OpenRead(path2))
 					{
-						BinaryFormatter binaryFormatter = new BinaryFormatter();
-						executionContext = (ExecutionContext)binaryFormatter.Deserialize(serializationStream);
+						executionContext = (ExecutionContext)new BinaryFormatter().Deserialize(serializationStream);
 					}
 					if (executionContext != null)
 					{

@@ -78,7 +78,7 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 		return controlResponse;
 	}
 
-	public void Shutdown()
+	public bool Shutdown()
 	{
 		using (new WithReadLock(ObserverLock))
 		{
@@ -87,8 +87,8 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 				observer.OnSystemShutdown();
 			}
 		}
-		Implementor.Shutdown();
 		IsInitialized = false;
+		return Implementor.Shutdown();
 	}
 
 	public IControlResponse SetAudio(AudioChannelState newState)
@@ -96,9 +96,9 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 		return Implementor.SetAudio(newState);
 	}
 
-	public void ToggleRingLight(bool on, int? sleepAfter)
+	public IControlResponse ToggleRingLight(bool on, int? sleepAfter)
 	{
-		Implementor.ToggleRingLight(on, sleepAfter);
+		return Implementor.ToggleRingLight(on, sleepAfter);
 	}
 
 	public IControlResponse VendDoorRent()
@@ -231,6 +231,11 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 		return Implementor.StartRollerOut();
 	}
 
+	public IControlResponse RollerToPosition(RollerPosition position)
+	{
+		return Implementor.RollerToPosition(position);
+	}
+
 	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout)
 	{
 		return Implementor.RollerToPosition(position, opTimeout);
@@ -239,6 +244,36 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 	public IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors)
 	{
 		return Implementor.RollerToPosition(position, opTimeout, logSensors);
+	}
+
+	public QlmStatus GetQlmStatus()
+	{
+		return Implementor.GetQlmStatus();
+	}
+
+	public ErrorCodes EngageQlm(IFormattedLog log)
+	{
+		return Implementor.EngageQlm(log);
+	}
+
+	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)
+	{
+		return Implementor.DisengageQlm(home, log);
+	}
+
+	public IControlResponse DropQlm()
+	{
+		return Implementor.DropQlm();
+	}
+
+	public IControlResponse LiftQlm()
+	{
+		return Implementor.LiftQlm();
+	}
+
+	public IControlResponse HaltQlmOperation()
+	{
+		return Implementor.HaltQlmOperation();
 	}
 
 	internal ControlSystemBridge()

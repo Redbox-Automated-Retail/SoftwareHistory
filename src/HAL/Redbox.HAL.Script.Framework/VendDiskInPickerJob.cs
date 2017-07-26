@@ -4,7 +4,7 @@ using Redbox.HAL.Controller.Framework;
 namespace Redbox.HAL.Script.Framework;
 
 [NativeJob(ProgramName = "ms-vend-disk-in-picker", Operand = "MS-VEND-DISK-IN-PICKER")]
-internal class VendDiskInPickerJob : NativeJobAdapter
+internal sealed class VendDiskInPickerJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
@@ -23,8 +23,7 @@ internal class VendDiskInPickerJob : NativeJobAdapter
 			}
 			using (VendItemOperation vendItemOperation = new VendItemOperation())
 			{
-				VendItemResult vendItemResult = vendItemOperation.Execute();
-				switch (vendItemResult.Status)
+				switch (vendItemOperation.Execute().Status)
 				{
 				case ErrorCodes.TrackCloseTimeout:
 				case ErrorCodes.VendDoorRentTimeout:

@@ -1,26 +1,18 @@
-using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class FraudSensor : IFraudSensor
 {
-	private const string PostFailureCounter = "FraudPostFailure";
-
-	private const string PostOkCounter = "FraudPostSuccess";
-
-	private DateTime LastSampleDate = DateTime.Now;
-
 	private bool SensorPowered;
 
 	public ErrorCodes LastPostResult { get; private set; }
 
 	public ErrorCodes Initialize(IFormattedLog log)
 	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		try
 		{
-			LastSampleDate = DateTime.Now;
 			bool enableFraudSensorPostTrace = ControllerConfiguration.Instance.EnableFraudSensorPostTrace;
 			int fraudSensorPostWait = ControllerConfiguration.Instance.FraudSensorPostWait;
 			ErrorCodes errorCodes = ExecuteCommand(CommandType.FraudSensorEnablePowerTransistor);
@@ -31,9 +23,9 @@ internal sealed class FraudSensor : IFraudSensor
 				return errorCodes;
 			}
 			SensorPowered = true;
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			PerfFunctions.SpinWait(fraudSensorPostWait);
-			string[] array = service.ReadInputs(ControlBoards.Picker);
+			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+			service.SpinWait(fraudSensorPostWait);
+			string[] array = service2.ReadInputs(ControlBoards.Picker);
 			if (array.Length == 0)
 			{
 				log.WriteFormatted("[FraudSensor] POST: unable to read picker inputs.", LogEntryType.Error);
@@ -54,16 +46,9 @@ internal sealed class FraudSensor : IFraudSensor
 				log.WriteFormatted("[FraudSensor] POST startup error: cannot send reset signal error = {0}.", errorCodes4.ToString());
 				return LastPostResult = errorCodes4;
 			}
-			PerfFunctions.SpinWait(fraudSensorPostWait);
-			if (ControllerConfiguration.Instance.PauseBeforePostReadEnd)
-			{
-				StopScan();
-			}
-			else
-			{
-				StopScan(0);
-			}
-			array = service.ReadInputs(ControlBoards.Picker);
+			service.SpinWait(fraudSensorPostWait);
+			StopScan();
+			array = service2.ReadInputs(ControlBoards.Picker);
 			if (array.Length == 0)
 			{
 				log.WriteFormatted("[FraudSensor] POST: unable to read picker inputs.", LogEntryType.Error);
@@ -112,7 +97,7 @@ internal sealed class FraudSensor : IFraudSensor
 		{
 			return errorCodes;
 		}
-		PerfFunctions.Wait(ControllerConfiguration.Instance.FraudResetPause);
+		ServiceLocator.Instance.GetService<IRuntimeService>().Wait(ControllerConfiguration.Instance.FraudResetPause);
 		return Initialize(log);
 	}
 
@@ -123,19 +108,31 @@ internal sealed class FraudSensor : IFraudSensor
 			LogHelper.Instance.Log("[FraudSensor] Scan called when unit is not under power.");
 			return ErrorCodes.InvalidDeviceState;
 		}
-		return ExecuteCommand(CommandType.FraudSensorEnableTransistor);
+		ErrorCodes result = ExecuteCommand(CommandType.FraudSensorEnableTransistor);
+		int fraudStartScanWait = ControllerConfiguration.Instance.FraudStartScanWait;
+		if (fraudStartScanWait > 0)
+		{
+			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(fraudStartScanWait);
+		}
+		return result;
 	}
 
 	public ErrorCodes StopScan()
 	{
-		return StopScan(ControllerConfiguration.Instance.FraudStopScanWait);
+		int fraudStopScanWait = ControllerConfiguration.Instance.FraudStopScanWait;
+		ErrorCodes result = ExecuteCommand(CommandType.FraudSensorDisableTransistor);
+		if (fraudStopScanWait > 0)
+		{
+			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(fraudStopScanWait);
+		}
+		return result;
 	}
 
 	public IFraudScanResult Validate()
 	{
+		ServiceLocator.Instance.GetService<IRuntimeService>().Wait(ControllerConfiguration.Instance.FraudScanValidateDelay);
 		FraudScanResult fraudScanResult = new FraudScanResult();
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		string[] array = service.ReadInputs(ControlBoards.Picker);
+		string[] array = ServiceLocator.Instance.GetService<IControlSystem>().ReadInputs(ControlBoards.Picker);
 		if (array.Length == 0)
 		{
 			LogHelper.Instance.Log("[FraudSensor.Validate] Read inputs failed with {0}.", ErrorCodes.CommunicationError.ToString());
@@ -150,60 +147,16 @@ internal sealed class FraudSensor : IFraudSensor
 		return fraudScanResult;
 	}
 
-	public IFraudPostStatistics GetStatistics()
-	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		IPersistentCounter failures = service.Find("FraudPostFailure");
-		IPersistentCounter success = service.Find("FraudPostSuccess");
-		return new PostStatistics(LastSampleDate, failures, success);
-	}
-
-	public bool ResetPostStatistics()
-	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		service.Reset("FraudPostFailure");
-		service.Reset("FraudPostSuccess");
-		return true;
-	}
-
 	internal FraudSensor()
 	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		IPersistentCounter counter = service.Find("FraudPostFailure");
-		service.AddWeeklyResettable(counter);
-		IPersistentCounter counter2 = service.Find("FraudPostSuccess");
-		service.AddWeeklyResettable(counter2);
-	}
-
-	private ErrorCodes StopScan(int pause)
-	{
-		ErrorCodes result = ExecuteCommand(CommandType.FraudSensorDisableTransistor);
-		if (pause > 0)
-		{
-			PerfFunctions.Wait(pause);
-		}
-		return result;
 	}
 
 	private void OnAfterPost()
 	{
-		if (ControllerConfiguration.Instance.EnableFraudPostTracking)
-		{
-			IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-			if (LastPostResult != ErrorCodes.Success)
-			{
-				service.Increment("FraudPostFailure");
-			}
-			else
-			{
-				service.Increment("FraudPostSuccess");
-			}
-		}
 	}
 
 	private ErrorCodes ExecuteCommand(CommandType type)
 	{
-		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
-		return service.ExecuteControllerCommand(type).Error;
+		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(type).Error;
 	}
 }

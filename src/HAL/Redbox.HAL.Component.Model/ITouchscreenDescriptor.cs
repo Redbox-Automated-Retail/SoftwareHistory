@@ -4,5 +4,7 @@ public interface ITouchscreenDescriptor : IDeviceDescriptor
 {
 	bool SoftReset();
 
+	bool HardReset();
+
 	string ReadFirmware();
 }

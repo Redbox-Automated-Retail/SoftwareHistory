@@ -25,8 +25,7 @@ public sealed class GetInstruction : Instruction
 			if (!peekResult.TestOk || peekResult.IsFull)
 			{
 				gr.Update(ErrorCodes.ItemStuck);
-				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-				service.UpdateEmptyStuck(gr.Location);
+				ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(gr.Location);
 				return false;
 			}
 			return true;
@@ -36,8 +35,7 @@ public sealed class GetInstruction : Instruction
 		{
 			if (TestSlot)
 			{
-				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-				service.UpdateEmptyStuck(gr.Location);
+				ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(gr.Location);
 			}
 		}
 
@@ -89,12 +87,10 @@ public sealed class GetInstruction : Instruction
 			test = true;
 		}
 		GetInstructionObserver observer = new GetInstructionObserver(test);
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service.Get(observer, context.AppLog);
-		if (getResult.Success && flag)
+		IGetResult getResult = ServiceLocator.Instance.GetService<IControllerService>().Get(observer, context.AppLog);
+		if (getResult.Success & flag)
 		{
-			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-			service2.Center(CenterDiskMethod.VendDoorAndBack);
+			ServiceLocator.Instance.GetService<IControlSystem>().Center(CenterDiskMethod.VendDoorAndBack);
 		}
 		if (flag2)
 		{

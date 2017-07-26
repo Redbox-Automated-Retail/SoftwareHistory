@@ -7,7 +7,7 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-public class TcpClientSession : ClientSession
+public sealed class TcpClientSession : ClientSession
 {
 	private Stream m_stream;
 
@@ -28,19 +28,18 @@ public class TcpClientSession : ClientSession
 				}
 				else
 				{
-					SslStream sslStream = new SslStream(TransportClient.GetStream(), leaveInnerStreamOpen: false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
-					sslStream.ReadTimeout = base.Timeout;
-					sslStream.WriteTimeout = base.Timeout;
-					SslStream sslStream2 = sslStream;
-					sslStream2.AuthenticateAsClient(base.Protocol.Host);
-					m_stream = sslStream2;
+					SslStream sslStream = new SslStream(TransportClient.GetStream(), leaveInnerStreamOpen: false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true)
+					{
+						ReadTimeout = base.Timeout,
+						WriteTimeout = base.Timeout
+					};
+					sslStream.AuthenticateAsClient(base.Protocol.Host);
+					m_stream = sslStream;
 				}
 			}
 			return m_stream;
 		}
 	}
-
-	protected internal TcpClientSessionPool OwningPool { get; set; }
 
 	private TcpClient TransportClient
 	{
@@ -58,32 +57,7 @@ public class TcpClientSession : ClientSession
 		}
 	}
 
-	public override bool Connect()
-	{
-		try
-		{
-			ConnectThrowOnError();
-			return true;
-		}
-		catch (IOException)
-		{
-			return false;
-		}
-	}
-
-	public override void Dispose()
-	{
-		if (OwningPool != null)
-		{
-			OwningPool.ReturnSession(this);
-		}
-		else
-		{
-			base.Dispose();
-		}
-	}
-
-	public override void ConnectThrowOnError()
+	protected override void OnConnectThrowOnError()
 	{
 		TransportClient = new TcpClient(base.Protocol.Host, m_clientPort);
 		ConsumeMessages();

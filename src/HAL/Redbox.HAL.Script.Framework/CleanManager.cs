@@ -73,8 +73,7 @@ internal sealed class CleanManager
 			LogHelper.Instance.Log("[CleanSlot] Found enclosing segment [flags = {0}] for location {1}", merchSegment.Flags.ToString(), iterator.Location.ToString());
 		}
 		ILocation location = merchSegment.FindHigh();
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		if (service.IsStuck(location))
+		if (ServiceLocator.Instance.GetService<IInventoryService>().IsStuck(location))
 		{
 			return true;
 		}

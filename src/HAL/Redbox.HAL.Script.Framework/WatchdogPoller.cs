@@ -39,7 +39,8 @@ internal sealed class WatchdogPoller : ScriptPoller
 		{
 			LogHelper.Instance.Log("Watchdog is configured to not reset timeout counters weekly.");
 		}
-		if (++m_gcCount > 2 && ExecutionEngine.Instance.ActiveContext == null)
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		if (++m_gcCount > 2 && service.GetActiveContext() == null)
 		{
 			GC.Collect();
 			m_gcCount = 0;
@@ -59,8 +60,7 @@ internal sealed class WatchdogPoller : ScriptPoller
 
 	internal override void Initialize()
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		service.AddObserver(this);
+		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private WatchdogPoller()
@@ -104,10 +104,8 @@ internal sealed class WatchdogPoller : ScriptPoller
 		{
 			return num;
 		}
-		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-		string[] directories = Directory.GetDirectories(service.LogsBasePath);
-		string[] array = directories;
-		foreach (string text in array)
+		string[] directories = Directory.GetDirectories(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath);
+		foreach (string text in directories)
 		{
 			if (!text.Contains("Service") && !text.Contains("ErrorLogs"))
 			{
@@ -121,8 +119,7 @@ internal sealed class WatchdogPoller : ScriptPoller
 	{
 		int num = 0;
 		string[] files = Directory.GetFiles(directory, filePattern);
-		string[] array = files;
-		foreach (string text in array)
+		foreach (string text in files)
 		{
 			FileInfo fileInfo = new FileInfo(text);
 			if (DateTime.Now.Subtract(fileInfo.LastWriteTime).Days < ageInDays)
@@ -156,9 +153,9 @@ internal sealed class WatchdogPoller : ScriptPoller
 		{
 			return false;
 		}
-		foreach (string text in ignoreList)
+		for (int i = 0; i < ignoreList.Length; i++)
 		{
-			if (text.Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase))
+			if (ignoreList[i].Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}

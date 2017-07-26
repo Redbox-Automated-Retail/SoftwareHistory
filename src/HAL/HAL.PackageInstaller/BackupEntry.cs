@@ -1,28 +1,27 @@
 using System;
-using System.Globalization;
 using System.IO;
 
 namespace Redbox.HAL.PackageInstaller;
 
 internal sealed class BackupEntry
 {
-	internal readonly DateTime? BackupDate;
+	internal readonly DateTime? CreateDate;
 
 	internal readonly string FullPath;
 
 	internal readonly string FileName;
 
-	private static readonly char[] Separator = new char[1] { '.' };
-
-	internal BackupEntry(string fullPath, string dateParseFormat)
+	internal BackupEntry(string fullPath)
 	{
 		FullPath = fullPath;
 		FileName = Path.GetFileName(FullPath);
-		BackupDate = null;
-		string[] array = FileName.Split(Separator);
-		if (array.Length == 3 && DateTime.TryParseExact(array[1], dateParseFormat, null, DateTimeStyles.None, out var result))
+		try
 		{
-			BackupDate = result;
+			CreateDate = File.GetCreationTime(FullPath);
+		}
+		catch (Exception)
+		{
+			CreateDate = null;
 		}
 	}
 }

@@ -21,19 +21,17 @@ internal sealed class LegacyDeviceDescriptor : IDeviceDescriptor
 
 	public bool MatchDriver()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		return service.MatchDriver(this, DriverDescriptor);
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().MatchDriver(this, DriverDescriptor);
 	}
 
 	public bool Locate()
 	{
-		return DeviceStatus.None != GetStatus();
+		return (GetStatus() & DeviceStatus.Found) != 0;
 	}
 
 	public DeviceStatus GetStatus()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		return service.FindDeviceStatus(this);
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDeviceStatus(this);
 	}
 
 	public bool ResetDriver()
@@ -43,9 +41,10 @@ internal sealed class LegacyDeviceDescriptor : IDeviceDescriptor
 		{
 			return false;
 		}
-		PerfFunctions.Wait(1500);
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		service2.Wait(1500);
 		bool result = service.ChangeByHWID(this, DeviceState.Enable);
-		PerfFunctions.SpinWait(1500);
+		service2.SpinWait(1500);
 		return result;
 	}
 

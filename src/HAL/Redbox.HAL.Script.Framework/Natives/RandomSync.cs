@@ -27,8 +27,7 @@ internal sealed class RandomSync : NativeJobAdapter
 			{
 				return SyncResult.Success;
 			}
-			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-			if (service.MoveVend(MoveMode.None, Context.AppLog) != ErrorCodes.Success)
+			if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.None, Context.AppLog) != ErrorCodes.Success)
 			{
 				Context.CreateMoveErrorResult(SyncLocation.Deck, SyncLocation.Slot);
 				AddError("job error.");
@@ -102,8 +101,7 @@ internal sealed class RandomSync : NativeJobAdapter
 			bool vend = num3 % num2 == 0;
 			RandomSyncDecorator decorator = new RandomSyncDecorator(base.Context, base.Result, location, num, vend);
 			SyncResult syncResult = SyncHelper.SyncSlot(base.Result, base.Context, location, decorator);
-			SyncResult syncResult2 = syncResult;
-			if (syncResult2 == SyncResult.HardwareError || syncResult2 == SyncResult.GetError)
+			if (syncResult == SyncResult.HardwareError || syncResult == SyncResult.GetError)
 			{
 				base.Context.AppLog.WriteFormatted("Sync returned error {0}", syncResult.ToString());
 				flag = false;
@@ -126,8 +124,7 @@ internal sealed class RandomSync : NativeJobAdapter
 		{
 			return null;
 		}
-		Random random = new Random(DateTime.Now.Millisecond);
-		int index = random.Next(0, locations.Count - 1);
+		int index = new Random(DateTime.Now.Millisecond).Next(0, locations.Count - 1);
 		ILocation result = locations[index];
 		locations.RemoveAt(index);
 		return result;

@@ -4,15 +4,15 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal class TrackImpl : ITrack
 {
+	private TrackState m_trackState;
+
+	private readonly ControlSystem ControlSystem;
+
 	private const int TrackOpenBit = 3;
 
 	private const int TrackClosedBit = 2;
 
 	private const int OpTries = 2;
-
-	private readonly ControlSystem ControlSystem;
-
-	private TrackState m_trackState;
 
 	public TrackState TrackState => m_trackState;
 
@@ -23,16 +23,6 @@ internal class TrackImpl : ITrack
 
 	public IControlResponse Close()
 	{
-		return RetryableTrackCommand(TrackState.Closed);
-	}
-
-	public IControlResponse Cycle()
-	{
-		IControlResponse controlResponse = RetryableTrackCommand(TrackState.Open);
-		if (!controlResponse.Success)
-		{
-			return controlResponse;
-		}
 		return RetryableTrackCommand(TrackState.Closed);
 	}
 
@@ -60,17 +50,8 @@ internal class TrackImpl : ITrack
 				return controlResponse;
 			}
 		}
-		LogHelper.Instance.Log($"Timeout error during track {state.ToString().ToUpper()} operation.", LogEntryType.Error);
+		LogHelper.Instance.Log(LogEntryType.Error, "Timeout error during track {0} operation.", state.ToString().ToUpper());
 		ControlSystem.LogInputs(ControlBoards.Picker, LogEntryType.Error);
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		if (TrackState.Closed == state)
-		{
-			service.Increment(TimeoutCounters.TrackClose);
-		}
-		else if (TrackState.Open == state)
-		{
-			service.Increment(TimeoutCounters.TrackOpen);
-		}
 		return controlResponse;
 	}
 }

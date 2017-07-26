@@ -31,17 +31,10 @@ internal abstract class NativeJobAdapter
 
 	protected void ShowEmptyStuck(ILocation location)
 	{
-		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
-		if (service.ShowEmptyStuck(Context, location) != ErrorCodes.Success)
+		if (ServiceLocator.Instance.GetService<IMoveDecoratorService>().ShowEmptyStuck(Context, location) != ErrorCodes.Success)
 		{
 			AddError("There was an error moving to the offset position.");
 		}
-	}
-
-	protected bool ResetMotionControllerChecked()
-	{
-		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
-		return service.ResetMotionControllerChecked(Context);
 	}
 
 	protected bool MoveAndGet(int deck, int slot)
@@ -50,8 +43,7 @@ internal abstract class NativeJobAdapter
 		{
 			return false;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		return service.Get(AppLog).Success;
+		return ServiceLocator.Instance.GetService<IControllerService>().Get(AppLog).Success;
 	}
 
 	protected bool MoveAndPut(int deck, int slot, string id)
@@ -61,25 +53,12 @@ internal abstract class NativeJobAdapter
 			return false;
 		}
 		ControlSystem.TrackCycle();
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		return service.Put(id, AppLog).Success;
+		return ServiceLocator.Instance.GetService<IControllerService>().Put(id, AppLog).Success;
 	}
 
 	protected ErrorCodes CorrectiveMoveVend(MoveMode mode)
 	{
-		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
-		return service.CorrectiveMoveVend(Context, mode);
-	}
-
-	protected ErrorCodes CorrectiveMove(int deck, int slot, MoveMode mode)
-	{
-		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
-		return service.CorrectiveMove(Context, deck, slot, mode);
-	}
-
-	protected ErrorCodes CorrectiveMove(ILocation loc, MoveMode mode)
-	{
-		return CorrectiveMove(loc.Deck, loc.Slot, mode);
+		return ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(mode, Context.AppLog);
 	}
 
 	protected bool ContextSwitchRequested()

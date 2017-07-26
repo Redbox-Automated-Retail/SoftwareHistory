@@ -29,7 +29,7 @@ internal sealed class HardwareCorrectionStatsTable : AbstractVistaDBDataTable<IH
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.AppendFormat("CREATE TABLE [{0}] ", base.Name);
 		stringBuilder.Append("( [Type] Int NOT NULL,");
-		stringBuilder.Append(" [Job] VarChar(12) NOT NULL,");
+		stringBuilder.Append(" [Job] VarChar(100) NOT NULL,");
 		stringBuilder.Append(" [CorrectionTime] DateTime NOT NULL,");
 		stringBuilder.Append(" [Success] Bit NOT NULL )");
 		return stringBuilder.ToString();
@@ -55,7 +55,7 @@ internal sealed class HardwareCorrectionStatsTable : AbstractVistaDBDataTable<IH
 	}
 
 	internal HardwareCorrectionStatsTable(IDataTableDescriptor d)
-		: base(d, "HardwareCorrection")
+		: base(d, "HardwareCorrection_v2")
 	{
 	}
 }

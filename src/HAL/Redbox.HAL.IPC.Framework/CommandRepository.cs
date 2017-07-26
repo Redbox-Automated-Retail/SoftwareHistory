@@ -10,8 +10,8 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-[Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
 [Command("command-repository")]
+[Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
 public class CommandRepository
 {
 	private static readonly IDictionary<string, Type> m_commands = new Dictionary<string, Type>();
@@ -22,8 +22,7 @@ public class CommandRepository
 
 	public void Default(CommandContext context)
 	{
-		List<string> list = DiscoverInstalledCommands();
-		foreach (string item in list)
+		foreach (string item in DiscoverInstalledCommands())
 		{
 			context.Messages.Add("Installed Command '" + item + "'.");
 		}
@@ -67,9 +66,10 @@ public class CommandRepository
 		}
 		if (!m_instanceCache.TryGetValue(value, out var value2))
 		{
-			CommandInstance commandInstance = new CommandInstance();
-			commandInstance.CommandType = value;
-			value2 = commandInstance;
+			value2 = new CommandInstance
+			{
+				CommandType = value
+			};
 			if (Attribute.GetCustomAttribute(value, typeof(DescriptionAttribute)) is DescriptionAttribute descriptionAttribute)
 			{
 				value2.CommandDescription = descriptionAttribute.Description;
@@ -88,11 +88,12 @@ public class CommandRepository
 				}
 				UsageAttribute usageAttribute = Attribute.GetCustomAttribute(methodInfo, typeof(UsageAttribute)) as UsageAttribute;
 				DescriptionAttribute descriptionAttribute2 = Attribute.GetCustomAttribute(methodInfo, typeof(DescriptionAttribute)) as DescriptionAttribute;
-				FormMethod formMethod = new FormMethod();
-				formMethod.Method = methodInfo;
-				formMethod.Usage = ((usageAttribute != null) ? usageAttribute.Template : string.Empty);
-				formMethod.Description = ((descriptionAttribute2 != null) ? descriptionAttribute2.Description : string.Empty);
-				FormMethod formMethod2 = formMethod;
+				FormMethod formMethod = new FormMethod
+				{
+					Method = methodInfo,
+					Usage = ((usageAttribute != null) ? usageAttribute.Template : string.Empty),
+					Description = ((descriptionAttribute2 != null) ? descriptionAttribute2.Description : string.Empty)
+				};
 				int num = 0;
 				ParameterInfo[] array = parameters;
 				foreach (ParameterInfo parameterInfo in array)
@@ -101,27 +102,28 @@ public class CommandRepository
 					{
 						continue;
 					}
-					FormMethodParameter formMethodParameter = new FormMethodParameter();
-					formMethodParameter.Parameter = parameterInfo;
-					formMethodParameter.Index = num++;
-					FormMethodParameter formMethodParameter2 = formMethodParameter;
+					FormMethodParameter formMethodParameter = new FormMethodParameter
+					{
+						Parameter = parameterInfo,
+						Index = num++
+					};
 					CommandKeyValueAttribute commandKeyValueAttribute = Attribute.GetCustomAttribute(parameterInfo, typeof(CommandKeyValueAttribute)) as CommandKeyValueAttribute;
-					formMethodParameter2.KeyName = parameterInfo.Name.ToUpper();
+					formMethodParameter.KeyName = parameterInfo.Name.ToUpper();
 					if (commandKeyValueAttribute != null)
 					{
-						formMethodParameter2.MetaData = commandKeyValueAttribute;
+						formMethodParameter.MetaData = commandKeyValueAttribute;
 						if (commandKeyValueAttribute.KeyName != null)
 						{
-							formMethodParameter2.KeyName = commandKeyValueAttribute.KeyName.ToUpper();
+							formMethodParameter.KeyName = commandKeyValueAttribute.KeyName.ToUpper();
 						}
-						formMethod2.ParameterCache[formMethodParameter2.KeyName] = formMethodParameter2;
+						formMethod.ParameterCache[formMethodParameter.KeyName] = formMethodParameter;
 					}
 					else
 					{
-						formMethod2.ParameterCache[formMethodParameter2.KeyName] = formMethodParameter2;
+						formMethod.ParameterCache[formMethodParameter.KeyName] = formMethodParameter;
 					}
 				}
-				value2.FormMethodCache[commandFormAttribute.Name.ToUpper()] = formMethod2;
+				value2.FormMethodCache[commandFormAttribute.Name.ToUpper()] = formMethod;
 			}
 			MethodInfo method = value.GetMethod("Default", new Type[1] { typeof(CommandContext) });
 			if (method != null)
@@ -142,8 +144,7 @@ public class CommandRepository
 		foreach (Type type in types)
 		{
 			CommandAttribute[] array = (CommandAttribute[])type.GetCustomAttributes(typeof(CommandAttribute), inherit: false);
-			CommandAttribute[] array2 = array;
-			foreach (CommandAttribute commandAttribute in array2)
+			foreach (CommandAttribute commandAttribute in array)
 			{
 				if (commandAttribute.Name != null)
 				{
