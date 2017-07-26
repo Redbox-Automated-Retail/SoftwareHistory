@@ -43,4 +43,9 @@ public sealed class RedboxGiftCard
 	{
 		m_redboxGiftCardRanges.AddRange(binRanges);
 	}
+
+	public void ClearRanges()
+	{
+		m_redboxGiftCardRanges.Clear();
+	}
 }
