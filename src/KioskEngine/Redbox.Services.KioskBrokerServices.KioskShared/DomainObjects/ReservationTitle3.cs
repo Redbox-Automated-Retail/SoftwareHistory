@@ -10,7 +10,7 @@ public class ReservationTitle3
 
 	public int TitleID { get; set; }
 
-	public ReservationType ReservationType => ReservationType.Rental;
+	public ReservationType ReservationType { get; set; }
 
 	public decimal Price { get; set; }
 

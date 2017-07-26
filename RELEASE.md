@@ -4,23 +4,23 @@
 - Date (first download in the snapshots): 2017-07-26
 - Store labels: none
 - Package revisions:
-  - `kop-v2-engine` revision 59 (`7BD8464299323BEAA26395D2D256979511E07D18`)
+  - `kop-v2-engine` revision 64 (`E830EE78F0CEA93B6685852E4A09B08C081ECA97`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `afteractivate.lua` |  |  | `93371125E5354865F54BBF921B5DF7672DB40B56` | exact |
 | `beforeactivate.lua` |  |  | `8E41E91CF8469874639907FCC1807E83D0D8D4C7` | exact |
-| `kioskengine.exe` | kioskengine | 1.18.0.18 | `B1533E89BFF8A1C678C0442515AD117A2F368074` | stale (listed version F2B685BC63… has no content) |
+| `kioskengine.exe` | kioskengine | 1.18.0.18 | `B1533E89BFF8A1C678C0442515AD117A2F368074` | stale (listed version 328127A961… has no content) |
 | `Redbox.Core.dll` | Redbox.Core | 1.0.5.9 | `9B41C169DF7285DD7488CB2B1EFB85A8EFAB3C95` | exact |
-| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.18.0.18 | `4F9919E85F338D0141A11227F8C7311431B712B8` | stale (listed version F180787586… has no content) |
+| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.18.0.18 | `4F9919E85F338D0141A11227F8C7311431B712B8` | stale (listed version 3F4D017A15… has no content) |
 | `Redbox.Lua.dll` | Redbox.Lua | 1.2.0.11 | `A0224C8EC58A2CA7C6D81F07F9F6C6E2D42F9515` | exact |
-| `Redbox.REDS.Framework.dll` | Redbox.REDS.Framework | 1.2.0.2 | `CF720E2B8C7F74303BF2C770A9E7DF15B69B226D` | stale (listed version 2977D23A53… has no content) |
-| `Redbox.Rental.Data.dll` | Redbox.Rental.Data | 1.18.0.18 | `F460B343D1A4CF8204AB2CC113EFA26BB88EBBA8` | stale (listed version FD027F291D… has no content) |
-| `Redbox.Rental.Kernel.dll` | Redbox.Rental.Kernel | 1.18.0.18 | `A9333CCECBC5D02CDA5590AE590B90FB8842AFC2` | stale (listed version 654044E55C… has no content) |
-| `Redbox.Rental.Model.dll` | Redbox.Rental.Model | 1.18.0.18 | `C79E2C72DC63075313E1936E61726BB5171CB994` | stale (listed version D35E9CB14A… has no content) |
-| `Redbox.Rental.Services.dll` | Redbox.Rental.Services | 1.18.0.18 | `15AA7E05C1D62A4636E19A8E3BACBA415EEFE327` | stale (listed version 41C6BD85C4… has no content) |
-| `Redbox.Rental.UI.exe` | Redbox.Rental.UI | 1.18.0.18 | `690866D3B48AB86035B7F1BAA17E8C1190987E23` | stale (listed version A9CBB209DF… has no content) |
-| `Redbox.Services.KioskBrokerServices.KioskShared.dll` | Redbox.Services.KioskBrokerServices.KioskShared | 1.4.0.1 | `E0F47501DB2699B92C35B43A8E87A5F4DBECC6FD` | exact |
+| `Redbox.REDS.Framework.dll` | Redbox.REDS.Framework | 1.2.0.2 | `CF720E2B8C7F74303BF2C770A9E7DF15B69B226D` | stale (listed version 6320D3273C… has no content) |
+| `Redbox.Rental.Data.dll` | Redbox.Rental.Data | 1.18.0.18 | `F460B343D1A4CF8204AB2CC113EFA26BB88EBBA8` | stale (listed version 631E3BD69A… has no content) |
+| `Redbox.Rental.Kernel.dll` | Redbox.Rental.Kernel | 1.18.0.18 | `A9333CCECBC5D02CDA5590AE590B90FB8842AFC2` | stale (listed version C4BB91E142… has no content) |
+| `Redbox.Rental.Model.dll` | Redbox.Rental.Model | 1.18.0.18 | `C79E2C72DC63075313E1936E61726BB5171CB994` | stale (listed version 1B53F92FAB… has no content) |
+| `Redbox.Rental.Services.dll` | Redbox.Rental.Services | 1.18.0.18 | `15AA7E05C1D62A4636E19A8E3BACBA415EEFE327` | stale (listed version 453E28C081… has no content) |
+| `Redbox.Rental.UI.exe` | Redbox.Rental.UI | 1.18.0.18 | `690866D3B48AB86035B7F1BAA17E8C1190987E23` | stale (listed version BFD31A030D… has no content) |
+| `Redbox.Services.KioskBrokerServices.KioskShared.dll` | Redbox.Services.KioskBrokerServices.KioskShared | 1.4.0.8 | `BEE62065D9851D4922D4E75370A2FF698DC63AE6` | exact |
 | `redscc.exe` | redscc | 1.1.4.1 | `39F8E9824CADDB59F103D56F7F123380DF95F37B` | exact |
 | `Redbox.DVD.BrokerServices.dll` | Redbox.DVD.BrokerServices | 1.14.0.2 | `9F9E78B99A7729F4B6DDD552235BFDBB8BF858A5` | exact |
 | `Redbox.DVD.HardwareServices.dll` | Redbox.DVD.HardwareServices | 1.14.0.2 | `622CB15A68C3844E7FB0263279929A6135D5A25F` | exact |
