@@ -178,14 +178,18 @@ function getdataservicetable( store, name, read_only )
 		local function pairs_it( t1 )
 			i = i + 1
 			local cache = rawget( t1, "cache" )
-			local k = cache.keys[i]
-			if k ~= nil then
-				local v = t1[k]
-				if v ~= nil then
-					return k,v
-				else
-					return v
-				end
+            if cache ~= nil and cache.keys ~= nil then
+			    local k = cache.keys[i]
+			    if k ~= nil then
+				    local v = t1[k]
+				    if v ~= nil then
+					    return k,v
+				    else
+					    return v
+				    end
+			    else
+				    return nil
+			    end
 			else
 				return nil
 			end

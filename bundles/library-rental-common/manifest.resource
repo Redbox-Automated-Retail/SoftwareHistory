@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Library Rental Common" />
-  <property name="product_version" value="1.17.0.4" />
+  <property name="product_version" value="1.24.0.3" />
   <property name="bundle_type" value="Library" />
   <aspect name="schema">
     <resourceType name="root">
@@ -31,7 +31,6 @@
         <property name="label" value="bitmap" />
       </aspectType>
     </resourceType>
-    <resourceType name="movie" superType="bitmap" />
     <resourceType name="font" superType="root">
       <propertyType name="font_family" type="System.String" label="Font Family" category="Font Properties" />
       <propertyType name="point_size" type="System.Int32" defaultValue="10" label="Point Size" category="Font Properties" />

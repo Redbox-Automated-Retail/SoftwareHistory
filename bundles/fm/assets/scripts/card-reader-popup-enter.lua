@@ -4,6 +4,10 @@
 -- All Rights Reserved
 --
 
+if VMZEnabledMachine == true then
+	kernel.hideactor( "close_button" )
+end
+
 kernel.setmacro("CardReaderPopup:Body", tostring(strings["card_reader_popup_body"]))
 
 local send_card_reader_audit_event = function( yesno )
@@ -16,9 +20,9 @@ local send_card_reader_audit_event = function( yesno )
                 )
 				
 	view_popview( "closing popup so qlm/vmz view can go back correctly." )
-	
+
 	if VMZEnabledMachine == true then
-		view_show( "vmz_view" )
+		kernel.showview()
 	else
 		view_show( "qlm_view" )
 	end

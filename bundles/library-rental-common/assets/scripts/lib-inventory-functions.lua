@@ -623,7 +623,7 @@ function update_barcode_status( barcodes, status )
 				end
 				if barcode_info ~= nil then
 					barcode_info.status = status
-					if status == "Reserved" and rentable_barcode_count == 1 and carousel_contains_item( product_id ) then
+					if status == "Reserved" and rentable_barcode_count == 1 and kernel.is_product_in_carousel( product_id ) then
 						need_to_reload_carousel = true
 						kernel.log( string.format( "Carousel will be refreshed after reservation call is completed, since the last copy of product_id: %s was reserved online on this kiosk.", product_id ) )
 					end

@@ -195,13 +195,7 @@ function newfmamessageboxmanager()
 		
 		perform_callback = function( self, id )
 			do_callback( id )
-		end,
-		
-		-- just to support luaunit and faking click of button
-		testing_click = function( self, id )
-			do_callback( id )
 		end
-
 	}
 
     return t

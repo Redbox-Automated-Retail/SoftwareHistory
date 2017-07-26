@@ -81,24 +81,10 @@ function view_unwindtobottom_safe( context )
 end
 
 function view_analytics_event( subItemType, subItemValue )
-	if ShoppingCart ~= nil and ShoppingCart.session_id ~= nil then
-		view_analytics_event2( subItemType, subItemValue, ShoppingCart.session_id )
-	end
+    kernel.analyticsaddviewevent(subItemType, subItemValue )
 end
 
 function view_analytics_event2( subItemType, subItemValue, session_id )
-	kernel.analyticsaddnode( "viewEvents", "viewEvent", session_id )
-	kernel.analyticsaddattribute( "viewEvent", "subItemType", subItemType, session_id )
-	kernel.analyticsaddattribute( "viewEvent", "subItemValue", subItemValue, session_id )
-end
-
-function view_analytics_start( startViewName, sessionType )
-	if ShoppingCart ~= nil 
-	and ShoppingCart.session_id ~= nil 
-	and kernel.analyticssessionexists( ShoppingCart.session_id ) == false 
-	then
-		kernel.analyticsstart( ShoppingCart.session_id, sessionType )
-		kernel.analyticsaddview( ShoppingCart.session_id, startViewName )
-	end
+    kernel.analyticsaddviewevent2( subItemType, subItemValue, session_id )
 end
 

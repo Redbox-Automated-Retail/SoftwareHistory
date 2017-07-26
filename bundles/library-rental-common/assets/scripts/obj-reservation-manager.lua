@@ -136,9 +136,9 @@ function newreservationmanager()
 						end
 					end
 				end
-
-				if kernel.peekview() == "start_view" and user_on_overlay == true and center_poster_product ~= nil then
-					add_product_to_visible_list( center_poster_product )		
+                local center_carousel_product = kernel.get_session_value("BrowseState.CenterCarouselProductLuaTable")
+				if kernel.peekview() == "start_view" and center_carousel_product ~= nil then
+					add_product_to_visible_list( center_carousel_product )		
 				end
 				if kernel.peekview() == "browse_view"
 				or kernel.peekview() == "browse_filter_alpha_view" then
@@ -147,7 +147,7 @@ function newreservationmanager()
 					process_visible_browse_products("Collection")
 				end
 				if kernel.peekview() == "product_detail_view" then
-					add_product_to_visible_list( browse_selection_selected_product )
+					add_product_to_visible_list( kernel.get_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable") )
 				end
 				if ShoppingCart.recommendations_generator.recommended_list ~= nil and #ShoppingCart.recommendations_generator.recommended_list > 0 then
 					for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
@@ -212,7 +212,7 @@ function newreservationmanager()
 					Reservations[card_id] = account_reservations -- writes the reservation locally to the database
 					result.success = true					
 					if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == kernel.get_start_over_view_name() then
-						reload_carousel( true )
+                        kernel.reload_carousel(true)
 					end
 				else
 					kernel.log("ReservationManager: Could not satisfy reservation request; unable to reserve requested inventory." )
@@ -567,6 +567,18 @@ function newreservationmanager()
 		end
 		return false
 	end
+
+    t.has_purchase = function( self )
+        local reservations = self:get_account_reservations()
+        for _, v in pairs( reservations or {} ) do
+            for action, barcodes in pairs( v.barcodes or {} ) do
+                if action == "purchase" then
+                    return true
+                end
+            end
+        end
+        return false
+    end
 
 	t.remove_orphaned_reservations = function( self )
 		kernel.log("Remove Orphan Reservations BEGIN")

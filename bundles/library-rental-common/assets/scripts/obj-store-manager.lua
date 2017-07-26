@@ -85,24 +85,7 @@ function newstoremanager()
 	end
 
 	t.is_sell_thru_enabled = function( self )
-		local enabled = self.store ~= nil
-			and self.store.sell_thru
-			and EnableSellThruOfUsed
-		if  self.is_old_enough == nil
-		and self.store ~= nil
-		and self.store.open_date ~= nil then
-			local now = os.date( "*t" )
-			local end_date = string.format(
-				"%4d%02d%02d",
-				now.year,
-				now.month,
-				now.day )
-			local days_elapsed = kernel.getelapseddays(
-				self.store.open_date,
-				end_date )
-			self.is_old_enough = days_elapsed ~= nil and days_elapsed >= 60
-		end
-		return enabled and self.is_old_enough
+        return kernel.get_can_sell_used()
 	end
 
 	t.has_sell_thru_new_in_stock = function()

@@ -287,18 +287,18 @@ function newvmzmerchflowfunctions()
 			kernel.enableactor( "continue_button" )
 		end
 		
-		if self.fill_quantity > 0
-		and close_in_progress == false
-		and ( self.stepcomplete[ self.stepnumber ] == true or self.rebalance_in_count == 0 or enable_rotate_button == true ) then
-			enable_rotate_button = true
+--		if self.fill_quantity > 0
+--		and close_in_progress == false
+--		and ( self.stepcomplete[ self.stepnumber ] == true or self.rebalance_in_count == 0 or enable_rotate_button == true ) then
+--			enable_rotate_button = true
 			kernel.enableactor( "alternate_button" )
-		else
-			kernel.disableactor( "alternate_button" )
-		end
+--		else
+--			kernel.disableactor( "alternate_button" )
+--		end
 	end
 	
 	local prep_unload_zone = function ( self, final_rotation )
-		local job_success = self.hardware_mgr:prep_unload_zone(drum_rotations, last_deck_loaded, function( results )
+        local job_success = self.hardware_mgr:prep_unload_zone(drum_rotations, last_deck_loaded, function( results )
 			load_rebalances_and_new_releases_button_setup( self )
 			local rotations_exceeded = false
 			local rotation_successful = false
@@ -1089,6 +1089,7 @@ function newvmzmerchflowfunctions()
 			function ( results )
 				for _,v in ipairs(results) do
 					self.vmzmerchsummaryresults[tostring(v.code)] = v
+                    kernel.log( "VMZ Summary Result: " .. v.code .. " - " .. v.message )
 					self.vmzmerchsummaryresultscount = self.vmzmerchsummaryresultscount + 1
 				end
 				progress_manager:stop()
@@ -1100,7 +1101,6 @@ function newvmzmerchflowfunctions()
 		if job_result == false then
 			hardware_failure_popup( self )
 		end
-			
 	end
 
 	local function verify_hardware_status_before_launching_vmz_merch_flow( self, on_complete )
@@ -1237,7 +1237,7 @@ function newvmzmerchflowfunctions()
 		else
 			verify_hardware_status_before_launching_vmz_merch_flow( self, get_vmz_merch_summary )
 		end
-		
+
 	end
 	
 	t.nextstep = function( self )
@@ -1249,7 +1249,6 @@ function newvmzmerchflowfunctions()
 			kernel.log( "Skipping Step " .. tostring( self.stepnumber ) )
 			self:nextstep()
 		end
-
 		-- Skip Steps if needed
 		-- ...may have to verify certain codes gets ran.
 		if self.stepnumber == 1 and #self.non_thins_in_vmz_barcode_list == 0 then
@@ -1258,15 +1257,27 @@ function newvmzmerchflowfunctions()
 		and self.vmzmerchsummaryresults["NoThins"] ~= nil then
 			self.skipinsertmarker = true
 			skipstep( self )
-		elseif self.stepnumber == 4 -- Step 4 = remove_first_thin_redeploy_from_vmz
-		and self.vmzmerchsummaryresults["NoThinRedeploys"] ~= nil then
+        elseif self.stepnumber == 3 
+        and self.vmzmerchsummaryresults["NoThins"] == nil
+        and self.vmzmerchsummaryresults["VMZThinCount"].message == "1" then
+           skipstep( self )
+		elseif self.stepnumber == 4  -- Step 4 = remove_first_thin_redeploy_from_vmz
+        and self.vmzmerchsummaryresults["NoThinRedeploys"] ~= nil then
 			self.skipinsertmarker = true
 			skipstep( self )
-		elseif self.stepnumber == 6 -- Step 6 = remove_first_rebalance_from_vmz
-		and self.vmzmerchsummaryresults["NoRebalances"] ~= nil then
+        elseif self.stepnumber == 5 
+        and self.vmzmerchsummaryresults["NoThinRedeploys"] == nil
+        and self.vmzmerchsummaryresults["VMZThinRedeployCount"].message == "1" then
+           skipstep( self )
+		elseif self.stepnumber == 6  -- Step 6 = remove_first_rebalance_from_vmz
+        and self.vmzmerchsummaryresults["NoRebalances"] ~= nil then
 			self.skipinsertmarker = true
 			skipstep( self )
-		elseif ( self.stepnumber == 3	-- Step 3 = load_thin_marker
+        elseif self.stepnumber == 7 
+        and self.vmzmerchsummaryresults["NoRebalances"] == nil
+        and self.vmzmerchsummaryresults["VMZRebalanceCount"].message == "1" then
+            skipstep( self )
+        elseif ( self.stepnumber == 3	-- Step 3 = load_thin_marker
 		or self.stepnumber == 5		-- Step 5 = load_thin_redeploy_marker
 		or self.stepnumber == 7 )	-- Step 7 = load_rebalance_marker
 		and self.skipinsertmarker == true then
@@ -1305,6 +1316,18 @@ function newvmzmerchflowfunctions()
 			kernel.setmacro( "VMZMerchFlow:RedploymentBody", strings["vmz_merch_flow_redeployment_body_" .. self.stepnumber] or "" )
 			kernel.setmacro( "VMZMerchFlow:QuantityBody", tostring(self.fill_quantity or 0) )
 			kernel.setmacro( "VMZMerchFlow:RemainingBody", strings["vmz_merch_flow_remaining_body_" .. self.stepnumber] or "" )
+        elseif self.stepnumber == 2 and self.vmzmerchsummaryresults.VMZThinCount.message == "1" then
+            kernel.setmacro( "VMZMerchFlow:RedploymentBody", "** Only 1 thin disc exists.\nThere is no need to insert the thin marker disc.\nSkipping thin marker disc insertion step. **" )
+			kernel.setmacro( "VMZMerchFlow:QuantityBody", "" )
+			kernel.setmacro( "VMZMerchFlow:RemainingBody", "" ) 
+        elseif self.stepnumber == 4 and self.vmzmerchsummaryresults.VMZThinRedeployCount.message == "1" then
+            kernel.setmacro( "VMZMerchFlow:RedploymentBody", "** Only 1 redeploy disc exists.\nThere is no need to insert the redeploy marker disc.\nSkipping redeploy marker disc insertion step. **" )
+			kernel.setmacro( "VMZMerchFlow:QuantityBody", "" )
+			kernel.setmacro( "VMZMerchFlow:RemainingBody", "" ) 
+        elseif self.stepnumber == 6 and self.vmzmerchsummaryresults.VMZRebalanceCount.message == "1" then
+            kernel.setmacro( "VMZMerchFlow:RedploymentBody", "** Only 1 rebalance disc exists.\nThere is no need to insert the rebalance marker disc.\nSkipping rebalance marker disc insertion step. **" )
+			kernel.setmacro( "VMZMerchFlow:QuantityBody", "" )
+			kernel.setmacro( "VMZMerchFlow:RemainingBody", "" )
 		else
 			kernel.setmacro( "VMZMerchFlow:RedploymentBody", "" )
 			kernel.setmacro( "VMZMerchFlow:QuantityBody", "" )
@@ -1454,6 +1477,7 @@ function newvmzmerchflowfunctions()
 				on_complete()
 			else 
 				view_unwindto_safe( "vmz_view" )
+                view_show( "card_reader_popup_view" )
 			end
 		end)
 	end

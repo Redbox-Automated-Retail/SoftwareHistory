@@ -187,6 +187,16 @@ run_thin_vmz_job = function( label, jobname, schedule, include_rebalance, callba
 				and #redeployments == 0
 				and #barcodesToVmz == 0 then
 					kernel.log( ">  There are no thinned or redeploy discs at this time, thin request cancelled." )
+                    --User Story 129265:KC: Run Clean-VMZ after the daily morning thin job has run (i.e. even when there are no thins, rebalances, redeploys)
+                    if callback ~= nil then
+                        kernel.log( "> hardwarevmzthin2 complete, now running clean_vmz")
+                        local hwmgr = newhardwaremanager()
+						hwmgr:clean_vmz( 
+							function()
+								kernel.log("run soft sync")
+								run_soft_sync( nil )
+							end)
+                    end
 				
 				-- If no barcodes to thin - including rebalace - then exit
 				elseif #barcodesToBin == 0
@@ -194,6 +204,16 @@ run_thin_vmz_job = function( label, jobname, schedule, include_rebalance, callba
 					and #redeployments == 0
 					and #barcodesToVmz == 0 then
 					kernel.log( ">  There are no thinned, rebalance or redeploy discs at this time, thin request cancelled." )
+                    --User Story 129265:KC: Run Clean-VMZ after the daily morning thin job has run (i.e. even when there are no thins, rebalances, redeploys)
+                    if callback ~= nil then
+                        kernel.log( "> hardwarevmzthin2 complete, now running clean_vmz")
+                        local hwmgr = newhardwaremanager()
+						hwmgr:clean_vmz( 
+							function()
+								kernel.log("run soft sync")
+								run_soft_sync( nil )
+							end)
+                    end
 				else
 				
 				-- Determine the max # of disks that could/should be moved to the dumpbin
