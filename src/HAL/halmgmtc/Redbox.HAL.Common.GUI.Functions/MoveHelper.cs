@@ -12,8 +12,8 @@ public sealed class MoveHelper
 	public MoveHelperResult MoveTo(int deck, int slot, string mode)
 	{
 		string statement = $"MOVE DECK={deck} SLOT={slot} MODE={mode}";
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, Timeout, out var job);
-		return new MoveHelperResult(hardwareCommandResult.Success ? job.GetTopOfStack() : "SERVICE DOWN");
+		HardwareJob job;
+		return new MoveHelperResult(Service.ExecuteImmediate(statement, Timeout, out job).Success ? job.GetTopOfStack() : "SERVICE DOWN");
 	}
 
 	public MoveHelperResult MoveTo(int deck, int slot)
@@ -43,8 +43,7 @@ public sealed class MoveHelper
 		hardwareCommandResult = job.GetStack(out var stack);
 		if (hardwareCommandResult.Success && stack.Count >= 1)
 		{
-			string s = stack.Pop();
-			if (int.TryParse(s, out var result))
+			if (int.TryParse(stack.Pop(), out var result))
 			{
 				position.ReadOk = true;
 				position.Position = result;
@@ -64,8 +63,8 @@ public sealed class MoveHelper
 	public MoveHelperResult MoveAbs(MoveAxis axis, int units, bool checkSensors)
 	{
 		string statement = $"MOVEABS AXIS={axis.ToString().ToUpper()} UNITS={units.ToString()} SENSOR-CHECK={checkSensors.ToString().ToUpper()}";
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, Timeout, out var job);
-		return new MoveHelperResult(hardwareCommandResult.Success ? job.GetTopOfStack() : "SERVICE DOWN");
+		HardwareJob job;
+		return new MoveHelperResult(Service.ExecuteImmediate(statement, Timeout, out job).Success ? job.GetTopOfStack() : "SERVICE DOWN");
 	}
 
 	public string[] ReadLimits()

@@ -15,8 +15,4 @@ public interface IFraudSensor
 	ErrorCodes StopScan();
 
 	IFraudScanResult Validate();
-
-	IFraudPostStatistics GetStatistics();
-
-	bool ResetPostStatistics();
 }

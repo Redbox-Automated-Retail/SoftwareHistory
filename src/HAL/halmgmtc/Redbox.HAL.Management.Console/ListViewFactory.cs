@@ -38,7 +38,7 @@ internal class ListViewFactory
 
 	private void CreateJobListViewTab(bool enable)
 	{
-		string[,] headers = new string[8, 2]
+		JobListView<HardwareJobWrapper> control = new JobListView<HardwareJobWrapper>(new string[8, 2]
 		{
 			{ "Job ID", "ID" },
 			{ "Connection State", "ConnectionState" },
@@ -48,33 +48,29 @@ internal class ListViewFactory
 			{ "Status", "Status" },
 			{ "Start Time", "StartTime" },
 			{ "Execution Time", "ExecutionTime" }
-		};
-		JobListView<HardwareJobWrapper> control = new JobListView<HardwareJobWrapper>(headers, JobHelper.JobList);
+		}, JobHelper.JobList);
 		ListViewTabControl.Instance.Add(ListViewNames.Job, control, null, enable);
 	}
 
 	private void CreateStackListViewTab(bool enable)
 	{
-		string[,] headers = new string[1, 2] { { "Stack Values", "Value" } };
-		StackListView<StringWrapper> stackListView = new StackListView<StringWrapper>(headers, JobHelper.StackList);
+		StackListView<StringWrapper> stackListView = new StackListView<StringWrapper>(new string[1, 2] { { "Stack Values", "Value" } }, JobHelper.StackList);
 		ListViewTabControl.Instance.Add(ListViewNames.Stack, stackListView, stackListView.RefreshData, enable);
 	}
 
 	private void CreateSymbolListViewTab(bool enable)
 	{
-		string[,] headers = new string[2, 2]
+		SymbolListView<Symbol> symbolListView = new SymbolListView<Symbol>(new string[2, 2]
 		{
 			{ "Name", "Name" },
 			{ "Value", "Value" }
-		};
-		SymbolListView<Symbol> symbolListView = new SymbolListView<Symbol>(headers, JobHelper.SymbolList);
+		}, JobHelper.SymbolList);
 		ListViewTabControl.Instance.Add(ListViewNames.Symbols, symbolListView, symbolListView.RefreshData, enable);
 	}
 
 	private void CreateResultListViewTab(bool enable)
 	{
-		string[,] headers = new string[1, 2] { { "Results", "Value" } };
-		ResultListView<StringWrapper> resultListView = new ResultListView<StringWrapper>(headers, JobHelper.ResultList);
+		ResultListView<StringWrapper> resultListView = new ResultListView<StringWrapper>(new string[1, 2] { { "Results", "Value" } }, JobHelper.ResultList);
 		ListViewTabControl.Instance.Add(ListViewNames.Results, resultListView, resultListView.RefreshData, enable);
 	}
 
@@ -90,12 +86,11 @@ internal class ListViewFactory
 
 	private void CreateProgramEventListViewTab(bool enable)
 	{
-		string[,] headers = new string[2, 2]
+		ProgramEventListView<ProgramEvent> programEventListView = new ProgramEventListView<ProgramEvent>(new string[2, 2]
 		{
 			{ "Date", "EventTime" },
 			{ "Message", "Message" }
-		};
-		ProgramEventListView<ProgramEvent> programEventListView = new ProgramEventListView<ProgramEvent>(headers, JobHelper.ProgramEventList);
+		}, JobHelper.ProgramEventList);
 		ListViewTabControl.Instance.Add(ListViewNames.ProgramEvents, programEventListView, programEventListView.RefreshData, enable);
 	}
 

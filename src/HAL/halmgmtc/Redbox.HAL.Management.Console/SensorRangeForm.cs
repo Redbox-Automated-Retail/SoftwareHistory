@@ -36,8 +36,8 @@ public class SensorRangeForm : Form
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int MaximumValue { get; set; }
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? Start
 	{
 		get
@@ -125,24 +125,26 @@ public class SensorRangeForm : Form
 
 	private void OnPickStartSensor(object sender, EventArgs e)
 	{
-		NumberPadForm numberPadForm = new NumberPadForm();
-		numberPadForm.Text = "Enter Start Sensor";
-		NumberPadForm numberPadForm2 = numberPadForm;
-		if (numberPadForm2.ShowDialog() == DialogResult.OK)
+		NumberPadForm numberPadForm = new NumberPadForm
 		{
-			m_startSensorTextBox.Text = numberPadForm2.Number;
+			Text = "Enter Start Sensor"
+		};
+		if (numberPadForm.ShowDialog() == DialogResult.OK)
+		{
+			m_startSensorTextBox.Text = numberPadForm.Number;
 			m_endSensorTextBox.Focus();
 		}
 	}
 
 	private void OnPickEndSensor(object sender, EventArgs e)
 	{
-		NumberPadForm numberPadForm = new NumberPadForm();
-		numberPadForm.Text = "Enter End Sensor";
-		NumberPadForm numberPadForm2 = numberPadForm;
-		if (numberPadForm2.ShowDialog() == DialogResult.OK)
+		NumberPadForm numberPadForm = new NumberPadForm
 		{
-			m_endSensorTextBox.Text = numberPadForm2.Number;
+			Text = "Enter End Sensor"
+		};
+		if (numberPadForm.ShowDialog() == DialogResult.OK)
+		{
+			m_endSensorTextBox.Text = numberPadForm.Number;
 		}
 	}
 

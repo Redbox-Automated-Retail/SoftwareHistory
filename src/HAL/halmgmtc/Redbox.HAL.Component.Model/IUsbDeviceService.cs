@@ -1,4 +1,5 @@
-using System.IO;
+using System;
+using System.Collections.Generic;
 
 namespace Redbox.HAL.Component.Model;
 
@@ -24,5 +25,13 @@ public interface IUsbDeviceService
 
 	IUsbDeviceSearchResult FindVendorDevices(string _vendor);
 
-	void EnumDevices(DeviceClass clazz, TextWriter writer);
+	void EnumDevices(Action<string, string> a);
+
+	List<IDeviceDescriptor> FindDevices(DeviceClass clazz);
+
+	ITouchscreenDescriptor FindTouchScreen(bool matchDriver);
+
+	ITouchscreenDescriptor FindTouchScreen();
+
+	IDeviceDescriptor FindUps();
 }

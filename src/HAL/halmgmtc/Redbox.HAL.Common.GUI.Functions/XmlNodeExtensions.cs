@@ -64,8 +64,7 @@ public static class XmlNodeExtensions
 		{
 			if (node != null && !string.IsNullOrEmpty(node.InnerText))
 			{
-				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-				return (T)ConversionHelper.ChangeType(service.ExpandConstantMacros(node.InnerText), typeof(T));
+				return (T)ConversionHelper.ChangeType(ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(node.InnerText), typeof(T));
 			}
 		}
 		catch (ArgumentException)

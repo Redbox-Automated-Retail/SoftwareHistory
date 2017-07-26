@@ -49,8 +49,7 @@ public sealed class PortManager
 	{
 		lock (ScanLock)
 		{
-			string text = InUsePorts.Find((string each) => each.Equals(port, StringComparison.CurrentCultureIgnoreCase));
-			if (text == null)
+			if (InUsePorts.Find((string each) => each.Equals(port, StringComparison.CurrentCultureIgnoreCase)) == null)
 			{
 				InUsePorts.Add(port);
 			}

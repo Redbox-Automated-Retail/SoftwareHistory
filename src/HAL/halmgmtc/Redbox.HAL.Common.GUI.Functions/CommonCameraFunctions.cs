@@ -16,8 +16,7 @@ public static class CommonCameraFunctions
 		{
 			return false;
 		}
-		string topOfStack = hardwareJob.GetTopOfStack();
-		return bool.Parse(topOfStack);
+		return bool.Parse(hardwareJob.GetTopOfStack());
 	}
 
 	public static void LaunchAndWaitForTuner(HardwareService service)
@@ -33,8 +32,7 @@ public static class CommonCameraFunctions
 				stringBuilder.Append("RINGLIGHT ON" + Environment.NewLine);
 				service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var job);
 				PerfFunctions.SpinWait(5000);
-				Process process = Process.Start(text, flag ? "-secure" : string.Empty);
-				process.WaitForExit();
+				Process.Start(text, flag ? "-secure" : string.Empty).WaitForExit();
 				stringBuilder = new StringBuilder();
 				stringBuilder.Append("RINGLIGHT OFF" + Environment.NewLine);
 				stringBuilder.Append("CAMERA START" + Environment.NewLine);

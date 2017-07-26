@@ -5,8 +5,6 @@ namespace Redbox.HAL.Core;
 
 internal sealed class GenericTouchscreenDescriptor : ITouchscreenDescriptor, IDeviceDescriptor
 {
-	private readonly IUsbDeviceService UsbService;
-
 	private readonly IDriverDescriptor DriverDesc;
 
 	public string Vendor { get; private set; }
@@ -27,6 +25,11 @@ internal sealed class GenericTouchscreenDescriptor : ITouchscreenDescriptor, IDe
 		throw new NotImplementedException("TouchscreenDescriptor::SoftReset");
 	}
 
+	public bool HardReset()
+	{
+		throw new NotImplementedException("TouchscreenDescriptor::HardReset");
+	}
+
 	public string ReadFirmware()
 	{
 		return "UNKNOWN";
@@ -34,7 +37,7 @@ internal sealed class GenericTouchscreenDescriptor : ITouchscreenDescriptor, IDe
 
 	public bool MatchDriver()
 	{
-		if (UsbService.MatchDriver(this, DriverDesc))
+		if (ServiceLocator.Instance.GetService<IUsbDeviceService>().MatchDriver(this, DriverDesc))
 		{
 			LogHelper.Instance.Log("Touch screen driver matched.");
 			return true;
@@ -45,7 +48,7 @@ internal sealed class GenericTouchscreenDescriptor : ITouchscreenDescriptor, IDe
 
 	public bool Locate()
 	{
-		return UsbService.FindDevice(this).Found;
+		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDevice(this).Found;
 	}
 
 	public DeviceStatus GetStatus()
@@ -66,6 +69,5 @@ internal sealed class GenericTouchscreenDescriptor : ITouchscreenDescriptor, IDe
 		DriverDesc = desc;
 		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
 		SetupClass = service.Get(clazz);
-		UsbService = ServiceLocator.Instance.GetService<IUsbDeviceService>();
 	}
 }

@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -86,13 +85,11 @@ public class LeftPanel : UserControl
 		AddTab(LeftPanelTab.Properties);
 		m_sensorPanel.Controls.Add(SensorView.Instance);
 		m_sensorPanel.Visible = true;
-		ProfileManager instance = ProfileManager.Instance;
-		EventHandler value = delegate
+		ProfileManager.Instance.Connected += delegate
 		{
 			base.Enabled = true;
 			Refresh();
 		};
-		instance.Connected += value;
 		ProfileManager.Instance.Disconnected += delegate
 		{
 			base.Enabled = false;

@@ -25,8 +25,8 @@ public class BarcodeInputForm : Form
 
 	private NumberPad m_numberPad;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public string[] Barcodes
 	{
 		get

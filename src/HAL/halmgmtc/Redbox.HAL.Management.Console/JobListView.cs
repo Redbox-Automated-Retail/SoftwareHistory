@@ -40,14 +40,12 @@ public class JobListView<T> : UserControl
 			m_timer.Enabled = true;
 			justConnected = true;
 		};
-		ProfileManager instance = ProfileManager.Instance;
-		EventHandler value = delegate
+		ProfileManager.Instance.Disconnected += delegate
 		{
 			base.Enabled = false;
 			m_timer.Enabled = false;
 			JobHelper.JobList.Clear();
 		};
-		instance.Disconnected += value;
 		dataGridView1.DataBindingComplete += delegate
 		{
 			if (justConnected && dataGridView1.Rows.Count > 1)
@@ -82,16 +80,37 @@ public class JobListView<T> : UserControl
 	private void CreatePriorityDropDown()
 	{
 		ToolStripDropDownButton toolStripDropDownButton = new ToolStripDropDownButton();
-		Dictionary<HardwareJobPriority, string> dictionary = new Dictionary<HardwareJobPriority, string>();
-		dictionary.Add(HardwareJobPriority.Lowest, "Lowest");
-		dictionary.Add(HardwareJobPriority.Low, "Low");
-		dictionary.Add(HardwareJobPriority.BelowNormal, "Below Normal");
-		dictionary.Add(HardwareJobPriority.Normal, "Normal");
-		dictionary.Add(HardwareJobPriority.AboveNormal, "Above Normal");
-		dictionary.Add(HardwareJobPriority.High, "High");
-		dictionary.Add(HardwareJobPriority.Highest, "Highest");
-		Dictionary<HardwareJobPriority, string> dictionary2 = dictionary;
-		foreach (KeyValuePair<HardwareJobPriority, string> item in dictionary2)
+		foreach (KeyValuePair<HardwareJobPriority, string> item in new Dictionary<HardwareJobPriority, string>
+		{
+			{
+				HardwareJobPriority.Lowest,
+				"Lowest"
+			},
+			{
+				HardwareJobPriority.Low,
+				"Low"
+			},
+			{
+				HardwareJobPriority.BelowNormal,
+				"Below Normal"
+			},
+			{
+				HardwareJobPriority.Normal,
+				"Normal"
+			},
+			{
+				HardwareJobPriority.AboveNormal,
+				"Above Normal"
+			},
+			{
+				HardwareJobPriority.High,
+				"High"
+			},
+			{
+				HardwareJobPriority.Highest,
+				"Highest"
+			}
+		})
 		{
 			ToolStripButton toolStripButton = new ToolStripButton();
 			toolStripButton.Tag = item.Key;

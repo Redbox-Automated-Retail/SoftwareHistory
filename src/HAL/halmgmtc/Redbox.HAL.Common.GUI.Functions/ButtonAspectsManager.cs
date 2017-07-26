@@ -19,7 +19,6 @@ public sealed class ButtonAspectsManager
 
 	public ButtonAspects MakeAspect(object button)
 	{
-		Button b = button as Button;
-		return new ButtonAspects(b, Running);
+		return new ButtonAspects(button as Button, Running);
 	}
 }

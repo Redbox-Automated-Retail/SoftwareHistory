@@ -87,8 +87,7 @@ internal static class EnvironmentHelper
 		{
 			ErrorListView.Instance.KeepOpenOnSuccessfulInstruction = keepOpenOnSuccessfulInstruction;
 		}
-		TabPageExtension tabPageExtension = ListViewTabControl.Instance.Find(ListViewNames.Errors);
-		if (tabPageExtension == null)
+		if (ListViewTabControl.Instance.Find(ListViewNames.Errors) == null)
 		{
 			ListViewFactory.Instance.MakeTab(ListViewNames.Errors, ProfileManager.Instance.IsConnected);
 		}
@@ -97,10 +96,10 @@ internal static class EnvironmentHelper
 
 	public static void LockControl(ToolStripItem ctrl)
 	{
-		LockStatusChanged = (EventHandler<BoolEventArgs>)Delegate.Combine(LockStatusChanged, (EventHandler<BoolEventArgs>)delegate
+		LockStatusChanged += delegate
 		{
 			ctrl.Enabled = ProfileManager.Instance.IsConnected && !IsLocked;
-		});
+		};
 		ctrl.Enabled = ProfileManager.Instance.IsConnected && !IsLocked;
 	}
 

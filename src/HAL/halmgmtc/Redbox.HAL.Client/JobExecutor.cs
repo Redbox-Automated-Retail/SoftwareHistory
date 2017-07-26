@@ -44,6 +44,7 @@ public abstract class JobExecutor : IDisposable
 		{
 			m_disposed = true;
 			DisposeInner();
+			Helper.Dispose();
 			Results.Clear();
 			Results = null;
 			Errors.Clear();

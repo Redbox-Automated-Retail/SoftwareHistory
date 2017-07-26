@@ -12,19 +12,15 @@ namespace Redbox.HAL.IPC.Framework;
 
 public class ClientCommand<T> where T : ClientCommandResult, new()
 {
-	private const string IPCLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs\\IPCFramework";
-
 	private TextWriter m_logFile;
+
+	private const string IPCLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs\\IPCFramework";
 
 	private IPCProtocol m_protocol;
 
 	public string CommandText { get; internal set; }
 
 	public TimeSpan? ExecutionTime { get; private set; }
-
-	internal bool DisposeWhenDone { get; set; }
-
-	internal ClientSession Session { get; set; }
 
 	internal int? Timeout { get; set; }
 
@@ -70,47 +66,43 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 		return new ClientCommand<T>(protocol, timeout, command).Execute();
 	}
 
-	public static T ExecuteCommand(ClientSession session, string command)
+	public static T ExecuteCommand(IIpcClientSession session, string command)
 	{
-		return new ClientCommand<T>(session, disposeWhenDone: false, command).Execute();
-	}
-
-	public static T ExecuteCommand(ClientSession session, bool disposeWhenDone, string command)
-	{
-		return new ClientCommand<T>(session, disposeWhenDone, command).Execute();
+		return new ClientCommand<T>(command).Execute(session);
 	}
 
 	public T Execute()
+	{
+		using IIpcClientSession session = ClientSessionFactory.GetClientSession(m_protocol);
+		return Execute(session);
+	}
+
+	public T Execute(IIpcClientSession session)
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		T val = new T
 		{
 			CommandText = CommandText
 		};
-		bool flag = Session == null || DisposeWhenDone;
 		try
 		{
-			Session = Session ?? ClientSession.GetClientSession(m_protocol);
 			if (Timeout.HasValue)
 			{
-				Session.Timeout = Timeout.Value;
+				session.Timeout = Timeout.Value;
 			}
-			if (!Session.IsConnected)
+			if (!session.IsConnected)
 			{
-				Session.ConnectThrowOnError();
+				session.ConnectThrowOnError();
 			}
-			List<string> list = Session.ExecuteCommand(CommandText);
-			bool success = Session.IsStatusOK(list);
-			val.Success = success;
+			List<string> list = session.ExecuteCommand(CommandText);
+			val.Success = session.IsStatusOK(list);
 			if (list.Count > 0)
 			{
-				string statusMessage = list[list.Count - 1];
-				val.StatusMessage = statusMessage;
+				val.StatusMessage = list[list.Count - 1];
 				list.RemoveAt(list.Count - 1);
 			}
 			val.CommandMessages.AddRange(list);
-			List<int> list2 = ConvertMessages(val);
-			foreach (int item in list2)
+			foreach (int item in ConvertMessages(val))
 			{
 				if (item < val.CommandMessages.Count)
 				{
@@ -136,21 +128,8 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 		}
 		finally
 		{
-			TimeSpan elapsed = executionTimer.Elapsed;
-			val.ExecutionTime = elapsed;
+			val.ExecutionTime = executionTimer.Elapsed;
 			ExecutionTime = val.ExecutionTime;
-			try
-			{
-				if (flag && Session != null)
-				{
-					Session.Dispose();
-				}
-			}
-			catch (Exception e2)
-			{
-				val.Success = false;
-				val.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in ClientCommand.Execute.", e2));
-			}
 		}
 		return val;
 	}
@@ -172,15 +151,9 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 		Timeout = timeout;
 	}
 
-	protected ClientCommand(ClientSession session, bool disposeWhenDone, string command)
+	protected ClientCommand(string command)
 	{
-		Session = session;
 		CommandText = command;
-		DisposeWhenDone = disposeWhenDone;
-		if (Session != null)
-		{
-			m_protocol = Session.Protocol;
-		}
 	}
 
 	protected virtual void OnConnectionFailure(Exception e, ClientCommandResult result)

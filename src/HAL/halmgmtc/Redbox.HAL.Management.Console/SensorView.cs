@@ -32,8 +32,8 @@ public class SensorView : UserControl
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public static SensorView Instance
 	{
 		get
@@ -99,12 +99,12 @@ public class SensorView : UserControl
 		{
 		}
 		bool[] sensors = Sensors;
-		foreach (bool flag in sensors)
+		foreach (bool num6 in sensors)
 		{
 			e.Graphics.DrawString(num.ToString(), Font, Brushes.Black, num4 + 8, num5 - 19f);
 			e.Graphics.FillRectangle(Brushes.DarkGray, num4 + 2, num5 + 2f, num2, num2);
 			e.Graphics.FillRectangle(Brushes.Black, num4, num5, num2, num2);
-			if (flag)
+			if (num6)
 			{
 				e.Graphics.FillRectangle(Brushes.Green, num4, num5, num2, num2);
 			}

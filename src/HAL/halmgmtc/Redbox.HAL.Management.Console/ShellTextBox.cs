@@ -81,9 +81,12 @@ public class ShellTextBox : TextBox
 	private void PrintPrompt()
 	{
 		string text = Text;
-		if (text.Length != 0 && text[text.Length - 1] != '\n')
+		if (text.Length != 0)
 		{
-			PrintLine();
+			if (text[text.Length - 1] != '\n')
+			{
+				PrintLine();
+			}
 		}
 		AddText(m_prompt);
 	}
@@ -152,7 +155,7 @@ public class ShellTextBox : TextBox
 
 	private string GetCurrentLine()
 	{
-		if (base.Lines.Length > 0)
+		if (base.Lines.Length != 0)
 		{
 			return (string)base.Lines.GetValue(base.Lines.GetLength(0) - 1);
 		}
@@ -166,8 +169,7 @@ public class ShellTextBox : TextBox
 
 	private void ReplaceTextAtPrompt(string text)
 	{
-		string currentLine = GetCurrentLine();
-		int num = currentLine.Length - m_prompt.Length;
+		int num = GetCurrentLine().Length - m_prompt.Length;
 		if (num == 0)
 		{
 			AddText(text);
@@ -200,8 +202,7 @@ public class ShellTextBox : TextBox
 	private int GetCurrentCaretColumnPosition()
 	{
 		string currentLine = GetCurrentLine();
-		int num = base.SelectionStart;
-		return num - TextLength + currentLine.Length;
+		return base.SelectionStart - TextLength + currentLine.Length;
 	}
 
 	private bool IsCaretAtWritablePosition()

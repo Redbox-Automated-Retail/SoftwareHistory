@@ -34,9 +34,9 @@ public class EditSlotData : Form
 
 	private int m_changes;
 
-	private int? m_preferredDeck = null;
+	private int? m_preferredDeck;
 
-	private int? m_qlmDeckNumber = null;
+	private int? m_qlmDeckNumber;
 
 	private readonly XmlNode DeckNode;
 
@@ -288,8 +288,8 @@ public class EditSlotData : Form
 		moveHelper.GetPosition(ref position3);
 		if (position3.ReadOk)
 		{
-			int originalEX = (CurrentEX = position3.Position);
-			OriginalEX = originalEX;
+			int originalEY = (CurrentEX = position3.Position);
+			OriginalEX = originalEY;
 			num++;
 		}
 		PositionsRecorded = num == 2;
@@ -323,8 +323,7 @@ public class EditSlotData : Form
 	{
 		try
 		{
-			MoveHelper moveHelper = new MoveHelper(Service);
-			MoveHelperResult moveHelperResult = moveHelper.MoveTo(deck, slot, readLimits: true);
+			MoveHelperResult moveHelperResult = new MoveHelper(Service).MoveTo(deck, slot, readLimits: true);
 			if (moveHelperResult.MoveOk)
 			{
 				m_moveStatusTB.Text = moveHelperResult.Status;
@@ -398,13 +397,12 @@ public class EditSlotData : Form
 			NotifyCommunicationProblem();
 			return;
 		}
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (!stack.Success)
+		if (!job.GetStack(out var stack).Success)
 		{
 			NotifyCommunicationProblem();
 			return;
 		}
-		stringBuilder.Append(stack2.Pop());
+		stringBuilder.Append(stack.Pop());
 		OutputBox.Write(stringBuilder.ToString());
 		stringBuilder = null;
 		Application.DoEvents();

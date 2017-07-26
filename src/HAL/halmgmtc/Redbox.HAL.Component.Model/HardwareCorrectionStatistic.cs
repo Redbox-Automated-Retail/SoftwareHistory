@@ -4,5 +4,6 @@ public enum HardwareCorrectionStatistic
 {
 	None,
 	Arcus,
-	Camera
+	Camera,
+	Touchscreen
 }

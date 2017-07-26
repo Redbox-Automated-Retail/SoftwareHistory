@@ -266,9 +266,7 @@ public class HardwareJobWrapper : INotifyPropertyChanged, IComparable
 		if (!IsDisplayable())
 		{
 			LogHelper.Instance.Log("ERROR: Attempting to merge data to a null jobwrapper", LogEntryType.Error);
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("BadJobDataMerge", "Attempted to merge job data to null item", string.Empty));
-			EnvironmentHelper.DisplayErrors(errorList, clearPrevious: true, keepOpenOnSuccessfulInstruction: false);
+			EnvironmentHelper.DisplayErrors(new ErrorList { Error.NewError("BadJobDataMerge", "Attempted to merge job data to null item", string.Empty) }, clearPrevious: true, keepOpenOnSuccessfulInstruction: false);
 		}
 		else if (m_hardwareJob.Merge(job))
 		{

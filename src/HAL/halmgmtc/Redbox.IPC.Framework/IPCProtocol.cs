@@ -4,7 +4,7 @@ using Redbox.HAL.Core;
 
 namespace Redbox.IPC.Framework;
 
-public class IPCProtocol
+public class IPCProtocol : IIpcProtocol
 {
 	private enum ProtocolParserState
 	{
@@ -148,7 +148,7 @@ public class IPCProtocol
 			if (char.IsLetterOrDigit(currentToken))
 			{
 				AppendToAccumulator();
-				if (!((int?)PeekNextToken()).HasValue)
+				if (!PeekNextToken().HasValue)
 				{
 					Port = base.Accumulator.ToString();
 					AddTokenAndReset(TokenType.StringLiteral, isKeyValuePair: false);
@@ -242,8 +242,7 @@ public class IPCProtocol
 
 		private bool DecodeChannel()
 		{
-			string text = base.Accumulator.ToString();
-			if (text.Equals("p", StringComparison.CurrentCultureIgnoreCase))
+			if (base.Accumulator.ToString().Equals("p", StringComparison.CurrentCultureIgnoreCase))
 			{
 				Channel = ChannelType.NamedPipe;
 				return true;
@@ -253,11 +252,13 @@ public class IPCProtocol
 		}
 	}
 
-	private string m_rawUri;
+	private string PipeName;
 
-	public bool IsSecure { get; internal set; }
+	private readonly string RawUri;
 
-	public ChannelType Channel { get; internal set; }
+	public bool IsSecure { get; private set; }
+
+	public ChannelType Channel { get; private set; }
 
 	public string Host { get; private set; }
 
@@ -265,34 +266,15 @@ public class IPCProtocol
 
 	public string Scheme { get; private set; }
 
-	public static bool Validate(string uri)
-	{
-		try
-		{
-			Parse(uri);
-			return true;
-		}
-		catch (UriFormatException ex)
-		{
-			Console.WriteLine("Caught URIformatException: {0}", ex.Message);
-			return false;
-		}
-		catch (Exception ex2)
-		{
-			Console.WriteLine("Caught Exception: {0}", ex2.Message);
-			return false;
-		}
-	}
-
 	public static IPCProtocol Parse(string protocolURI)
 	{
-		IPCProtocol iPCProtocol = new IPCProtocol();
-		iPCProtocol.Host = string.Empty;
-		iPCProtocol.Port = string.Empty;
-		iPCProtocol.IsSecure = false;
-		iPCProtocol.Channel = ChannelType.NamedPipe;
-		iPCProtocol.m_rawUri = protocolURI;
-		IPCProtocol iPCProtocol2 = iPCProtocol;
+		IPCProtocol iPCProtocol = new IPCProtocol(protocolURI)
+		{
+			Host = string.Empty,
+			Port = string.Empty,
+			IsSecure = false,
+			Channel = ChannelType.Unknown
+		};
 		ProtocolTokenizer protocolTokenizer = new ProtocolTokenizer(protocolURI);
 		try
 		{
@@ -310,28 +292,42 @@ public class IPCProtocol
 			}
 			throw new UriFormatException("URI is malformed: see log for details.");
 		}
-		iPCProtocol2.Host = protocolTokenizer.Host;
-		iPCProtocol2.Port = protocolTokenizer.Port;
-		iPCProtocol2.IsSecure = protocolTokenizer.IsSecure;
-		iPCProtocol2.Channel = protocolTokenizer.Channel;
-		iPCProtocol2.Scheme = protocolTokenizer.Scheme;
-		if (string.IsNullOrEmpty(iPCProtocol2.Host) || string.IsNullOrEmpty(iPCProtocol2.Port))
+		iPCProtocol.Host = protocolTokenizer.Host;
+		iPCProtocol.Port = protocolTokenizer.Port;
+		iPCProtocol.IsSecure = protocolTokenizer.IsSecure;
+		iPCProtocol.Channel = protocolTokenizer.Channel;
+		iPCProtocol.Scheme = protocolTokenizer.Scheme;
+		if (string.IsNullOrEmpty(iPCProtocol.Host) || string.IsNullOrEmpty(iPCProtocol.Port))
 		{
 			throw new UriFormatException("Host or port isn't set.");
 		}
-		if (iPCProtocol2.Channel == ChannelType.Unknown)
+		if (iPCProtocol.Channel == ChannelType.Unknown)
 		{
 			throw new UriFormatException("The channel type is unknown; please correct your URI.");
 		}
-		if (iPCProtocol2.Channel == ChannelType.Socket && !int.TryParse(iPCProtocol2.Port, out var _))
+		if (iPCProtocol.Channel == ChannelType.Socket && !int.TryParse(iPCProtocol.Port, out var _))
 		{
 			throw new UriFormatException("Protocol is set up for sockets, but port isn't a valid address.");
 		}
-		return iPCProtocol2;
+		return iPCProtocol;
+	}
+
+	public string GetPipeName()
+	{
+		if (PipeName == null)
+		{
+			PipeName = $"{Host}{Port}";
+		}
+		return PipeName;
 	}
 
 	public override string ToString()
 	{
-		return m_rawUri;
+		return RawUri;
+	}
+
+	private IPCProtocol(string rawUri)
+	{
+		RawUri = rawUri;
 	}
 }

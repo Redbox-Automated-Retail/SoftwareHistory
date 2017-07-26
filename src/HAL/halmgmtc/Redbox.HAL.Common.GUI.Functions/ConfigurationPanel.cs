@@ -137,7 +137,7 @@ public class ConfigurationPanel : UserControl
 	{
 		if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && e.RowIndex <= m_propertyDataGridView.Rows.Count - 1 && e.ColumnIndex <= 1)
 		{
-			DataGridViewButtonCell dataGridViewButtonCell = m_propertyDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewButtonCell;
+			_ = m_propertyDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex] is DataGridViewButtonCell;
 		}
 	}
 

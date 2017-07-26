@@ -3,17 +3,14 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-public abstract class IPCServiceHost
+public abstract class IPCServiceHost : IIpcServiceHost
 {
 	private const int StateRunning = 1;
 
 	private const int StateStopped = 0;
-
-	private static IPCServiceHost m_serviceHost;
 
 	private int m_aliveState;
 
@@ -33,13 +30,9 @@ public abstract class IPCServiceHost
 		}
 	}
 
-	public IPCProtocol Protocol { get; protected set; }
+	public IIpcProtocol Protocol { get; protected set; }
 
-	public string Name { get; protected set; }
-
-	public string Version { get; protected set; }
-
-	public string Copyright { get; protected set; }
+	public IHostInfo HostInfo { get; private set; }
 
 	public X509Certificate2 Certificate { get; set; }
 
@@ -47,37 +40,17 @@ public abstract class IPCServiceHost
 
 	public bool LogDetailedMessages { get; set; }
 
-	public static IPCServiceHost Create(IPCProtocol protocol, string product, string version, string copyright, int minThreads, int maxThreads)
+	public void Start()
 	{
-		if (m_serviceHost != null)
-		{
-			return m_serviceHost;
-		}
-		if (protocol.Channel == ChannelType.NamedPipe)
-		{
-			m_serviceHost = new NamedPipeServiceHost();
-		}
-		else
-		{
-			if (protocol.Channel != ChannelType.Socket)
-			{
-				LogHelper.Instance.Log($"Unsupported channel type '{protocol.Channel}' specified; try using sockets or pipes in your protocol uri.", LogEntryType.Error);
-				return null;
-			}
-			m_serviceHost = new TcpServiceHost();
-		}
-		m_serviceHost.Protocol = protocol;
-		m_serviceHost.Name = product;
-		m_serviceHost.Version = version;
-		m_serviceHost.Copyright = copyright;
-		return m_serviceHost;
+		OnStart();
 	}
 
-	public abstract void Start();
+	public void Stop()
+	{
+		OnStop();
+	}
 
-	public abstract void Stop();
-
-	public virtual void UnregisterSession(ISession session)
+	public void Unregister(ISession session)
 	{
 		int num = 0;
 		lock (m_sessionLockObject)
@@ -91,7 +64,7 @@ public abstract class IPCServiceHost
 		}
 	}
 
-	public virtual void RegiserSession(ISession session)
+	public void Register(ISession session)
 	{
 		int num = 0;
 		lock (m_sessionLockObject)
@@ -105,8 +78,14 @@ public abstract class IPCServiceHost
 		}
 	}
 
-	protected IPCServiceHost()
+	protected abstract void OnStart();
+
+	protected abstract void OnStop();
+
+	protected IPCServiceHost(IIpcProtocol protocol, IHostInfo info)
 	{
 		EncryptionProtocol = SslProtocols.None;
+		Protocol = protocol;
+		HostInfo = info;
 	}
 }

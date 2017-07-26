@@ -30,12 +30,11 @@ public class ProgramEventListView<T> : UserControl
 		dataGridView1.Columns[0].DefaultCellStyle.Format = "MM/dd/yyyy hh:mm:ss";
 		panel1.Controls.Add(dataGridView1);
 		ResumeLayout();
-		EventHandler value = delegate
+		EnvironmentHelper.SelectedJobChanged += delegate
 		{
 			JobHelper.ProgramEventList.Clear();
 			dataGridView1.DataSource = (JobComboBox.Instance.SelectedItem as HardwareJobWrapper).Events;
 		};
-		EnvironmentHelper.SelectedJobChanged += value;
 		ProfileManager.Instance.Connected += delegate
 		{
 			base.Enabled = true;

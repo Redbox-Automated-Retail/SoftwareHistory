@@ -13,7 +13,9 @@ public class PickerSensorsBar : UserControl
 
 	public delegate void BarToggle(string msg, string response);
 
-	private Dictionary<int, Panel> m_sensors = new Dictionary<int, Panel>();
+	private readonly Dictionary<int, Panel> m_sensors = new Dictionary<int, Panel>();
+
+	private readonly ButtonAspectsManager ButtonManager;
 
 	private IContainer components;
 
@@ -49,36 +51,28 @@ public class PickerSensorsBar : UserControl
 
 	public HardwareService Service { get; set; }
 
-	private Color SensorBlockedColor => Color.Green;
-
-	private Color SensorClearColor => Color.WhiteSmoke;
-
-	private ButtonAspectsManager ButtonManager { get; set; }
-
 	public event SensorOperationHandler ReadEvents;
 
 	public event BarToggle BarEvents;
 
 	public PickerSensorsBar(HardwareService service)
 	{
-		InitInner(service);
-	}
-
-	public PickerSensorsBar(HardwareService service, bool[] pickerSensors)
-	{
-		InitInner(Service);
-		if (pickerSensors.Length == 6)
-		{
-			DisplaySensors(pickerSensors);
-		}
+		InitializeComponent();
+		m_sensors[0] = m_sensor1Panel;
+		m_sensors[1] = m_sensor2Panel;
+		m_sensors[2] = m_sensor3Panel;
+		m_sensors[3] = m_sensor4Panel;
+		m_sensors[4] = m_sensor5Panel;
+		m_sensors[5] = m_sensor6Panel;
+		Service = service;
+		ButtonManager = new ButtonAspectsManager();
 	}
 
 	private void ExecuteBarInstruction(object sender, EventArgs e)
 	{
 		using (ButtonManager.MakeAspect(sender))
 		{
-			Button button = (Button)sender;
-			string text = button.Tag as string;
+			string text = ((Button)sender).Tag as string;
 			HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(Service, text);
 			if (hardwareJob != null)
 			{
@@ -97,19 +91,6 @@ public class PickerSensorsBar : UserControl
 		{
 			ReadSensorsInner();
 		}
-	}
-
-	private void InitInner(HardwareService service)
-	{
-		InitializeComponent();
-		m_sensors[0] = m_sensor1Panel;
-		m_sensors[1] = m_sensor2Panel;
-		m_sensors[2] = m_sensor3Panel;
-		m_sensors[3] = m_sensor4Panel;
-		m_sensors[4] = m_sensor5Panel;
-		m_sensors[5] = m_sensor6Panel;
-		Service = service;
-		ButtonManager = new ButtonAspectsManager();
 	}
 
 	private void ReadSensorsInner()
@@ -159,7 +140,7 @@ public class PickerSensorsBar : UserControl
 	{
 		for (int i = 0; i < sensors.Length; i++)
 		{
-			m_sensors[i].BackColor = (sensors[i] ? SensorBlockedColor : SensorClearColor);
+			m_sensors[i].BackColor = (sensors[i] ? Color.Green : Color.WhiteSmoke);
 		}
 		Application.DoEvents();
 	}

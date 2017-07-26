@@ -9,8 +9,7 @@ public static class PerfFunctions
 
 	public static void SpinWait(int milliseconds)
 	{
-		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, milliseconds);
-		SpinWait(timespan);
+		SpinWait(new TimeSpan(0, 0, 0, 0, milliseconds));
 	}
 
 	public static void SpinWait(TimeSpan timespan)

@@ -8,5 +8,6 @@ public enum DeviceClass
 	Image,
 	Monitor,
 	HIDClass,
-	Mouse
+	Mouse,
+	Battery
 }

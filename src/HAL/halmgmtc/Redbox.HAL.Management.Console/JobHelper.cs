@@ -216,10 +216,11 @@ public static class JobHelper
 				CommonFunctions.ProcessCommandResultError(jobs);
 				return false;
 			}
+			HardwareJob[] array;
 			for (int i = 0; i < JobList.Count; i++)
 			{
 				bool flag = true;
-				HardwareJob[] array = jobs2;
+				array = jobs2;
 				foreach (HardwareJob hardwareJob in array)
 				{
 					if (hardwareJob.ID == JobList[i].ID)
@@ -239,13 +240,13 @@ public static class JobHelper
 					JobList.RemoveAt(i);
 				}
 			}
-			HardwareJob[] array2 = jobs2;
-			foreach (HardwareJob hardwareJob2 in array2)
+			array = jobs2;
+			foreach (HardwareJob hardwareJob2 in array)
 			{
 				bool flag2 = true;
-				for (int l = 0; l < JobList.Count; l++)
+				for (int k = 0; k < JobList.Count; k++)
 				{
-					if (hardwareJob2.ID == JobList[l].ID)
+					if (hardwareJob2.ID == JobList[k].ID)
 					{
 						flag2 = false;
 						break;
@@ -289,8 +290,7 @@ public static class JobHelper
 			}
 			ProgramEvent[] array = new ProgramEvent[newEvent.Value.Count];
 			newEvent.Value.CopyTo(array);
-			IOrderedEnumerable<ProgramEvent> orderedEnumerable = array.OrderBy((ProgramEvent x) => x.EventTime);
-			foreach (ProgramEvent item in orderedEnumerable)
+			foreach (ProgramEvent item in array.OrderBy((ProgramEvent x) => x.EventTime))
 			{
 				hardwareJobWrapper.Events.Add(item);
 				newEvent.Value.Remove(item);
@@ -311,13 +311,14 @@ public static class JobHelper
 			CommonFunctions.ProcessCommandResultError(results);
 			return false;
 		}
+		ProgramResult[] array;
 		for (int i = 0; i < ResultList.Count; i++)
 		{
 			bool flag = true;
-			ProgramResult[] array = results2;
-			foreach (ProgramResult programResult in array)
+			array = results2;
+			for (int j = 0; j < array.Length; j++)
 			{
-				if (programResult.ToString().Equals(m_resultList[i].Value))
+				if (array[j].ToString().Equals(m_resultList[i].Value))
 				{
 					flag = false;
 					break;
@@ -328,13 +329,13 @@ public static class JobHelper
 				ResultList.RemoveAt(i);
 			}
 		}
-		ProgramResult[] array2 = results2;
-		foreach (ProgramResult programResult2 in array2)
+		array = results2;
+		foreach (ProgramResult programResult in array)
 		{
 			bool flag2 = true;
-			for (int l = 0; l < ResultList.Count; l++)
+			for (int k = 0; k < ResultList.Count; k++)
 			{
-				if (programResult2.ToString().Equals(ResultList[l].Value))
+				if (programResult.ToString().Equals(ResultList[k].Value))
 				{
 					flag2 = false;
 					break;
@@ -342,7 +343,7 @@ public static class JobHelper
 			}
 			if (flag2)
 			{
-				ResultList.Add(new StringWrapper(programResult2.ToString()));
+				ResultList.Add(new StringWrapper(programResult.ToString()));
 			}
 		}
 		return true;
@@ -513,17 +514,18 @@ public static class JobHelper
 
 	public static void SetLabels(List<HardwareJobWrapper> jobs)
 	{
-		InputBoxForm inputBoxForm = new InputBoxForm();
-		inputBoxForm.Text = "Set Job Label";
-		inputBoxForm.Label = "Enter the label for this job:";
-		InputBoxForm inputBoxForm2 = inputBoxForm;
-		if (inputBoxForm2.ShowDialog() == DialogResult.Cancel)
+		InputBoxForm inputBoxForm = new InputBoxForm
+		{
+			Text = "Set Job Label",
+			Label = "Enter the label for this job:"
+		};
+		if (inputBoxForm.ShowDialog() == DialogResult.Cancel)
 		{
 			return;
 		}
 		foreach (HardwareJobWrapper job in jobs)
 		{
-			SetLabel(job, inputBoxForm2.Value);
+			SetLabel(job, inputBoxForm.Value);
 		}
 	}
 

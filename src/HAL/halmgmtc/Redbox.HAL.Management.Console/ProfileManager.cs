@@ -10,7 +10,7 @@ public class ProfileManager
 {
 	private string DefaultProtocol = Settings.Default.DefaultConnectionURL;
 
-	private ClientHelper m_helper;
+	private ClientHelper Helper;
 
 	private HardwareService m_service;
 
@@ -35,18 +35,6 @@ public class ProfileManager
 		}
 	}
 
-	private ClientHelper Helper
-	{
-		get
-		{
-			if (m_helper == null)
-			{
-				m_helper = new ClientHelper();
-			}
-			return m_helper;
-		}
-	}
-
 	public event EventHandler Connected;
 
 	public event EventHandler Disconnected;
@@ -63,11 +51,11 @@ public class ProfileManager
 
 	public bool Connect()
 	{
-		Service = Helper.AutoConnect();
 		if (Service == null)
 		{
 			IPCProtocol protocol = IPCProtocol.Parse(DefaultProtocol);
 			Service = new HardwareService(protocol);
+			Helper = new ClientHelper(Service);
 		}
 		if (!Helper.TestCommunication())
 		{

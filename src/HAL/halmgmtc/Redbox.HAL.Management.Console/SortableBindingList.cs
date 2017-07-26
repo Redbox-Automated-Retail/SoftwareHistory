@@ -17,9 +17,9 @@ public class SortableBindingList<T> : BindingList<T>
 				bool flag = true;
 				for (int j = 1; j < base.Items.Count; j++)
 				{
-					IComparable comparable = prop.GetValue(base.Items[j - 1]) as IComparable;
-					IComparable obj = prop.GetValue(base.Items[j]) as IComparable;
-					if (comparable.CompareTo(obj) * num > 0)
+					IComparable obj = prop.GetValue(base.Items[j - 1]) as IComparable;
+					IComparable obj2 = prop.GetValue(base.Items[j]) as IComparable;
+					if (obj.CompareTo(obj2) * num > 0)
 					{
 						T value = base.Items[j - 1];
 						base.Items[j - 1] = base.Items[j];

@@ -79,12 +79,10 @@ public class ConfigPropertyList : UserControl
 		m_propertyDataGridView.CellEndEdit += OnDataChanged;
 		m_propertyDataGridView.SelectionChanged += OnConfigPropertiesItemChanged;
 		m_propertyDataGridView.CellClick += OnButtonClick;
-		ProfileManager instance = ProfileManager.Instance;
-		EventHandler value = delegate
+		ProfileManager.Instance.Connected += delegate
 		{
 			LoadConfiguration();
 		};
-		instance.Connected += value;
 		ProfileManager.Instance.Disconnected += delegate
 		{
 			m_descriptionLabel.Text = string.Empty;
@@ -161,12 +159,12 @@ public class ConfigPropertyList : UserControl
 		int num = (toolTip3.AutoPopDelay = 5000);
 		int autoPopDelay = (toolTip2.AutoPopDelay = num);
 		toolTip.AutoPopDelay = autoPopDelay;
-		int num4 = (toolTip3.InitialDelay = 1000);
-		int initialDelay = (toolTip2.InitialDelay = num4);
-		toolTip.InitialDelay = initialDelay;
-		int num7 = (toolTip3.ReshowDelay = 500);
-		int reshowDelay = (toolTip2.ReshowDelay = num7);
-		toolTip.ReshowDelay = reshowDelay;
+		num = (toolTip3.InitialDelay = 1000);
+		autoPopDelay = (toolTip2.InitialDelay = num);
+		toolTip.InitialDelay = autoPopDelay;
+		num = (toolTip3.ReshowDelay = 500);
+		autoPopDelay = (toolTip2.ReshowDelay = num);
+		toolTip.ReshowDelay = autoPopDelay;
 		bool flag = (toolTip3.ShowAlways = true);
 		bool showAlways = (toolTip2.ShowAlways = flag);
 		toolTip.ShowAlways = showAlways;

@@ -248,8 +248,7 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			Button button = sender as Button;
-			string text = button.Tag as string;
+			string text = (sender as Button).Tag as string;
 			if (!string.IsNullOrEmpty(text))
 			{
 				ExecuteInstruction(text);
@@ -291,21 +290,23 @@ public class TouchScreenAccess : UserControl
 			Location location = CommonFunctions.CurrentLocation();
 			if (location == null)
 			{
-				Location location2 = new Location();
-				location2.Deck = 1;
-				location2.Slot = 1;
-				location = location2;
-			}
-			MoveToForm moveToForm = new MoveToForm();
-			moveToForm.Deck = location.Deck;
-			moveToForm.Slot = location.Slot;
-			MoveToForm moveToForm2 = moveToForm;
-			if (moveToForm2.ShowDialog() == DialogResult.OK && moveToForm2.Deck.HasValue && moveToForm2.Slot.HasValue)
-			{
-				string text = $"MOVE DECK={moveToForm2.Deck} SLOT={moveToForm2.Slot}";
-				if (!string.IsNullOrEmpty(moveToForm2.Mode))
+				location = new Location
 				{
-					text = text + " MODE=" + moveToForm2.Mode;
+					Deck = 1,
+					Slot = 1
+				};
+			}
+			MoveToForm moveToForm = new MoveToForm
+			{
+				Deck = location.Deck,
+				Slot = location.Slot
+			};
+			if (moveToForm.ShowDialog() == DialogResult.OK && moveToForm.Deck.HasValue && moveToForm.Slot.HasValue)
+			{
+				string text = $"MOVE DECK={moveToForm.Deck} SLOT={moveToForm.Slot}";
+				if (!string.IsNullOrEmpty(moveToForm.Mode))
+				{
+					text = text + " MODE=" + moveToForm.Mode;
 				}
 				ExecuteInstruction(text);
 			}
@@ -338,13 +339,14 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			MoveToForm moveToForm = new MoveToForm();
-			moveToForm.Text = "Location to Inspect";
-			MoveToForm moveToForm2 = moveToForm;
-			moveToForm2.DisableModes();
-			if (moveToForm2.ShowDialog() == DialogResult.OK && moveToForm2.Deck.HasValue && moveToForm2.Slot.HasValue)
+			MoveToForm moveToForm = new MoveToForm
 			{
-				string instruction = $"INSPECT DECK={moveToForm2.Deck} SLOT={moveToForm2.Slot}";
+				Text = "Location to Inspect"
+			};
+			moveToForm.DisableModes();
+			if (moveToForm.ShowDialog() == DialogResult.OK && moveToForm.Deck.HasValue && moveToForm.Slot.HasValue)
+			{
+				string instruction = $"INSPECT DECK={moveToForm.Deck} SLOT={moveToForm.Slot}";
 				ExecuteInstruction(instruction);
 			}
 		}
@@ -381,9 +383,7 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareService service = ProfileManager.Instance.Service;
-			IncrementalMoveForm incrementalMoveForm = new IncrementalMoveForm(service);
-			incrementalMoveForm.ShowDialog();
+			new IncrementalMoveForm(ProfileManager.Instance.Service).ShowDialog();
 		}
 	}
 
@@ -391,13 +391,14 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			SensorRangeForm sensorRangeForm = new SensorRangeForm();
-			sensorRangeForm.MinimumValue = 1;
-			sensorRangeForm.MaximumValue = 6;
-			SensorRangeForm sensorRangeForm2 = sensorRangeForm;
-			if (sensorRangeForm2.ShowDialog() == DialogResult.OK && sensorRangeForm2.Start.HasValue)
+			SensorRangeForm sensorRangeForm = new SensorRangeForm
 			{
-				string instruction = string.Format("SENSOR WAIT-CLEAR PICKER-SENSOR={0}{1} TIMEOUT=30000", sensorRangeForm2.Start, sensorRangeForm2.End.HasValue ? (".." + sensorRangeForm2.End) : string.Empty);
+				MinimumValue = 1,
+				MaximumValue = 6
+			};
+			if (sensorRangeForm.ShowDialog() == DialogResult.OK && sensorRangeForm.Start.HasValue)
+			{
+				string instruction = string.Format("SENSOR WAIT-CLEAR PICKER-SENSOR={0}{1} TIMEOUT=30000", sensorRangeForm.Start, sensorRangeForm.End.HasValue ? (".." + sensorRangeForm.End) : string.Empty);
 				ExecuteInstruction(instruction);
 			}
 		}
@@ -407,13 +408,14 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			SensorRangeForm sensorRangeForm = new SensorRangeForm();
-			sensorRangeForm.MinimumValue = 1;
-			sensorRangeForm.MaximumValue = 6;
-			SensorRangeForm sensorRangeForm2 = sensorRangeForm;
-			if (sensorRangeForm2.ShowDialog() == DialogResult.OK && sensorRangeForm2.Start.HasValue)
+			SensorRangeForm sensorRangeForm = new SensorRangeForm
 			{
-				string instruction = string.Format("SENSOR WAIT-BLOCK PICKER-SENSOR={0}{1} TIMEOUT=30000", sensorRangeForm2.Start, sensorRangeForm2.End.HasValue ? (".." + sensorRangeForm2.End) : string.Empty);
+				MinimumValue = 1,
+				MaximumValue = 6
+			};
+			if (sensorRangeForm.ShowDialog() == DialogResult.OK && sensorRangeForm.Start.HasValue)
+			{
+				string instruction = string.Format("SENSOR WAIT-BLOCK PICKER-SENSOR={0}{1} TIMEOUT=30000", sensorRangeForm.Start, sensorRangeForm.End.HasValue ? (".." + sensorRangeForm.End) : string.Empty);
 				ExecuteInstruction(instruction);
 			}
 		}
@@ -432,14 +434,15 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			SensorRangeForm sensorRangeForm = new SensorRangeForm();
-			sensorRangeForm.MinimumValue = 1;
-			sensorRangeForm.MaximumValue = 6;
-			SensorRangeForm sensorRangeForm2 = sensorRangeForm;
-			sensorRangeForm2.DisableEnd();
-			if (sensorRangeForm2.ShowDialog() == DialogResult.OK && sensorRangeForm2.Start.HasValue)
+			SensorRangeForm sensorRangeForm = new SensorRangeForm
 			{
-				string instruction = $"ROLLER POS={sensorRangeForm2.Start} TIMEOUT=3000";
+				MinimumValue = 1,
+				MaximumValue = 6
+			};
+			sensorRangeForm.DisableEnd();
+			if (sensorRangeForm.ShowDialog() == DialogResult.OK && sensorRangeForm.Start.HasValue)
+			{
+				string instruction = $"ROLLER POS={sensorRangeForm.Start} TIMEOUT=3000";
 				ExecuteInstruction(instruction);
 			}
 		}
@@ -468,11 +471,11 @@ public class TouchScreenAccess : UserControl
 		try
 		{
 			Application.DoEvents();
-			HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-			hardwareJobSchedule.Priority = HardwareJobPriority.Highest;
-			HardwareJobSchedule schedule = hardwareJobSchedule;
-			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.ScheduleJob("push-in-dvd", string.Empty, enableDebugging: false, schedule, out var job);
-			if (!hardwareCommandResult.Success)
+			HardwareJobSchedule schedule = new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.Highest
+			};
+			if (!ProfileManager.Instance.Service.ScheduleJob("push-in-dvd", string.Empty, enableDebugging: false, schedule, out var job).Success)
 			{
 				LogHelper.Instance.Log("Unable to schedule job", LogEntryType.Error);
 				ExecuteInstruction("PUSH \"JOBERROR\"");
@@ -481,8 +484,7 @@ public class TouchScreenAccess : UserControl
 			job.Resume();
 			job.WaitForCompletion();
 			string iD = job.ID;
-			hardwareCommandResult = ProfileManager.Instance.Service.GetJob(iD, out job);
-			if (!hardwareCommandResult.Success)
+			if (!ProfileManager.Instance.Service.GetJob(iD, out job).Success)
 			{
 				LogHelper.Instance.Log("Unable to get job status", LogEntryType.Error);
 				ExecuteInstruction("PUSH \"JOBERROR\"");
@@ -513,10 +515,7 @@ public class TouchScreenAccess : UserControl
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			ClientHelper clientHelper = new ClientHelper();
-			HardwareService service = clientHelper.AutoConnect();
-			PutInEmptySlotResult putInEmptySlotResult = new PutInEmptySlotResult(service);
-			putInEmptySlotResult.Run();
+			new PutInEmptySlotResult(ProfileManager.Instance.Service).Run();
 		}
 	}
 

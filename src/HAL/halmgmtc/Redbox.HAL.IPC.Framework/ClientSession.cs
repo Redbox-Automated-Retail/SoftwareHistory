@@ -8,7 +8,7 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-public abstract class ClientSession : IDisposable
+public abstract class ClientSession : IIpcClientSession, IDisposable
 {
 	private int? m_timeout;
 
@@ -20,11 +20,7 @@ public abstract class ClientSession : IDisposable
 	{
 		get
 		{
-			if (m_timeout.HasValue)
-			{
-				return m_timeout.Value;
-			}
-			return 30000;
+			return m_timeout ?? 30000;
 		}
 		set
 		{
@@ -34,9 +30,9 @@ public abstract class ClientSession : IDisposable
 
 	public bool IsConnected { get; internal set; }
 
-	public IPCProtocol Protocol { get; protected set; }
+	public IIpcProtocol Protocol { get; private set; }
 
-	public bool IsDisposed { get; protected set; }
+	public bool IsDisposed { get; private set; }
 
 	protected abstract Stream Stream { get; }
 
@@ -58,28 +54,21 @@ public abstract class ClientSession : IDisposable
 
 	public event Action<string> ServerEvent;
 
-	public static ClientSession GetClientSession(IPCProtocol protocol)
+	public virtual void Dispose()
 	{
-		if (protocol.Channel == ChannelType.NamedPipe)
+		Close();
+		m_resetEvent.Close();
+		IsDisposed = true;
+		if (Disposed != null)
 		{
-			return null;
+			Disposed(this, EventArgs.Empty);
 		}
-		if (protocol.Channel == ChannelType.Socket)
-		{
-			if (int.TryParse(protocol.Port, out var result))
-			{
-				return GetTcpClientSession(protocol, result);
-			}
-			LogHelper.Instance.Log($"TCP port specification {protocol.Port} is incorrect; check your URI and try again.", LogEntryType.Fatal);
-			throw new Exception("Port specification in URI is incorrect.");
-		}
-		LogHelper.Instance.Log($"Unrecognized channel type {protocol.Channel}; please fix your protocol string.", LogEntryType.Error);
-		return null;
 	}
 
-	public abstract bool Connect();
-
-	public abstract void ConnectThrowOnError();
+	public void ConnectThrowOnError()
+	{
+		OnConnectThrowOnError();
+	}
 
 	public void Close()
 	{
@@ -101,24 +90,12 @@ public abstract class ClientSession : IDisposable
 		}
 	}
 
-	public virtual void Dispose()
-	{
-		Close();
-		m_resetEvent.Close();
-		IsDisposed = true;
-		if (Disposed != null)
-		{
-			Disposed(this, EventArgs.Empty);
-		}
-	}
-
 	public bool IsStatusOK(List<string> messages)
 	{
 		bool result = false;
 		if (messages.Count > 0)
 		{
-			string text = messages[messages.Count - 1];
-			result = text.StartsWith("203 Command");
+			result = messages[messages.Count - 1].StartsWith("203 Command");
 		}
 		return result;
 	}
@@ -129,18 +106,20 @@ public abstract class ClientSession : IDisposable
 		return ConsumeMessages();
 	}
 
+	protected abstract void OnConnectThrowOnError();
+
 	protected List<string> ConsumeMessages()
 	{
-		StringBuildExtension.Reset(ReadBuilder);
+		if (ReadBuilder.Length > 0)
+		{
+			ReadBuilder.Length = 0;
+		}
 		List<string> list = new List<string>();
 		Read(list);
 		if (!m_resetEvent.WaitOne(Timeout))
 		{
 			list.Clear();
-			ErrorList errorList = new ErrorList();
-			errorList.Add(Error.NewError("J888", $"Timeout threshold {Timeout} exceeded.", "Reissue the command when the service is not as busy."));
-			ErrorList errors = errorList;
-			ProtocolHelper.FormatErrors(errors, list);
+			ProtocolHelper.FormatErrors(new ErrorList { Error.NewError("J888", $"Timeout threshold {Timeout} exceeded.", "Reissue the command when the service is not as busy.") }, list);
 			list.Add("545 Command failed.");
 		}
 		return list;
@@ -284,10 +263,5 @@ public abstract class ClientSession : IDisposable
 			LogHelper.Instance.Log("Caught an exception setting the event.", e);
 			return false;
 		}
-	}
-
-	private static ClientSession GetTcpClientSession(IPCProtocol protocol, int port)
-	{
-		return new TcpClientSession(protocol, port);
 	}
 }

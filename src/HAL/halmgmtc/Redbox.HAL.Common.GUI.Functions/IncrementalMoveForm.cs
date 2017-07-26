@@ -116,8 +116,7 @@ public class IncrementalMoveForm : Form
 			if (position.ReadOk)
 			{
 				int units = Units + position.Position;
-				MoveHelperResult moveHelperResult = moveHelper.MoveAbs(moveAxis, units, checkSensors: false);
-				if (!moveHelperResult.MoveOk)
+				if (!moveHelper.MoveAbs(moveAxis, units, checkSensors: false).MoveOk)
 				{
 					Log.Log("Execute immediate failed ... ", LogEntryType.Error);
 				}

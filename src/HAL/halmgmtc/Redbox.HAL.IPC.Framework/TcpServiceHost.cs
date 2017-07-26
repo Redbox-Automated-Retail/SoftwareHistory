@@ -11,7 +11,7 @@ public class TcpServiceHost : IPCServiceHost
 
 	private int m_listenerPort;
 
-	public override void Start()
+	protected override void OnStart()
 	{
 		base.Alive = true;
 		IPAddress iPAddress;
@@ -41,9 +41,8 @@ public class TcpServiceHost : IPCServiceHost
 		{
 			try
 			{
-				TcpClient client = m_listener.AcceptTcpClient();
-				TcpServerSession tcpServerSession = new TcpServerSession(client, this);
-				RegiserSession(tcpServerSession);
+				TcpServerSession tcpServerSession = new TcpServerSession(m_listener.AcceptTcpClient(), this);
+				Register(tcpServerSession);
 				tcpServerSession.Start();
 			}
 			catch (SocketException ex)
@@ -61,9 +60,14 @@ public class TcpServiceHost : IPCServiceHost
 		LogHelper.Instance.Log("End processing incoming requests.");
 	}
 
-	public override void Stop()
+	protected override void OnStop()
 	{
 		base.Alive = false;
 		m_listener.Stop();
+	}
+
+	internal TcpServiceHost(IIpcProtocol protocol, IHostInfo info)
+		: base(protocol, info)
+	{
 	}
 }

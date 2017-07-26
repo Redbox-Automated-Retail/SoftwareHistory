@@ -38,6 +38,8 @@ public interface IControlSystem
 
 	IControlResponse SetFinger(GripperFingerState state);
 
+	IControlResponse ToggleJunction(PickerJunction junction, JunctionState state);
+
 	ErrorCodes Center(CenterDiskMethod method);
 
 	string GetBoardVersion(ControlBoards board);
@@ -65,6 +67,8 @@ public interface IControlSystem
 	IControlResponse StartRollerIn();
 
 	IControlResponse StartRollerOut();
+
+	IControlResponse RollerToPosition(RollerPosition position);
 
 	IControlResponse RollerToPosition(RollerPosition position, int opTimeout);
 

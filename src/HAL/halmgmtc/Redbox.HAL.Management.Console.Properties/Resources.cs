@@ -22,10 +22,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.HAL.Management.Console.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.HAL.Management.Console.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}
@@ -44,716 +43,163 @@ internal class Resources
 		}
 	}
 
-	internal static Bitmap auto_type
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("auto_type", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap barcode
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("barcode", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap camera
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("camera", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap camera_photo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("camera_photo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap cd_in_case
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("cd_in_case", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap cd_in_case_return
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("cd_in_case_return", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap clean
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("clean", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap clear
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("clear", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap compress
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("compress", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap computer
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("computer", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap connect
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("connect", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap copy
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("copy", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap cross
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("cross", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap cut
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("cut", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_breakpoint
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_breakpoint", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_breakpoint_clear
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_breakpoint_clear", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_callstack
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_callstack", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_immediate
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_immediate", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_pause
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_pause", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_play
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_play", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_run_to_cursor
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_run_to_cursor", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_step_into
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_step_into", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_step_out
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_step_out", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_step_over
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_step_over", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_stop
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_stop", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debug_watch
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debug_watch", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap debugger
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("debugger", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap delete
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("delete", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap disconnect
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("disconnect", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap edit
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("edit", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap error_list
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("error_list", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap execute
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("execute", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap flag
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("flag", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap hal
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("hal", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Icon hal_icon
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("hal_icon", resourceCulture);
-			return (Icon)obj;
-		}
-	}
-
-	internal static Bitmap hal_splash
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("hal_splash", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap help_contents
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("help_contents", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap help_index
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("help_index", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap hub
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("hub", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap init
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("init", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap label_edit
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("label_edit", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap locked
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("locked", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap minus
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("minus", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap movie
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("movie", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap network_connection
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("network_connection", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap network_connection_disconnected
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("network_connection_disconnected", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap newinstallsync
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("newinstallsync", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap output
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("output", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap paste
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("paste", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap pc_card
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("pc_card", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap planner
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("planner", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap plus
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("plus", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap processor
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("processor", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap properties
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("properties", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap qlm_unload
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("qlm_unload", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap recycle_bin_full
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("recycle_bin_full", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap redo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("redo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap refresh
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("refresh", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap report_bug
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("report_bug", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap resume
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("resume", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap save
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("save", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap saveas
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("saveas", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap script
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("script", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap search
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("search", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap soft_sync
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("soft_sync", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap sortAscending2
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("sortAscending2", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap sortDescending2
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("sortDescending2", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap symbols
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("symbols", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap sync
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("sync", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap syncwitherrorthreshold
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("syncwitherrorthreshold", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap thin
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("thin", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap todo_list
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("todo_list", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap tools
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("tools", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap undo
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("undo", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap UnloadThin
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("UnloadThin", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap unlock
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("unlock", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap warning
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("warning", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap window_code
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("window_code", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap window_cog
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("window_cog", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap auto_type => (Bitmap)ResourceManager.GetObject("auto_type", resourceCulture);
+
+	internal static Bitmap barcode => (Bitmap)ResourceManager.GetObject("barcode", resourceCulture);
+
+	internal static Bitmap camera => (Bitmap)ResourceManager.GetObject("camera", resourceCulture);
+
+	internal static Bitmap camera_photo => (Bitmap)ResourceManager.GetObject("camera_photo", resourceCulture);
+
+	internal static Bitmap cd_in_case => (Bitmap)ResourceManager.GetObject("cd_in_case", resourceCulture);
+
+	internal static Bitmap cd_in_case_return => (Bitmap)ResourceManager.GetObject("cd_in_case_return", resourceCulture);
+
+	internal static Bitmap clean => (Bitmap)ResourceManager.GetObject("clean", resourceCulture);
+
+	internal static Bitmap clear => (Bitmap)ResourceManager.GetObject("clear", resourceCulture);
+
+	internal static Bitmap compress => (Bitmap)ResourceManager.GetObject("compress", resourceCulture);
+
+	internal static Bitmap computer => (Bitmap)ResourceManager.GetObject("computer", resourceCulture);
+
+	internal static Bitmap connect => (Bitmap)ResourceManager.GetObject("connect", resourceCulture);
+
+	internal static Bitmap copy => (Bitmap)ResourceManager.GetObject("copy", resourceCulture);
+
+	internal static Bitmap cross => (Bitmap)ResourceManager.GetObject("cross", resourceCulture);
+
+	internal static Bitmap cut => (Bitmap)ResourceManager.GetObject("cut", resourceCulture);
+
+	internal static Bitmap debug_breakpoint => (Bitmap)ResourceManager.GetObject("debug_breakpoint", resourceCulture);
+
+	internal static Bitmap debug_breakpoint_clear => (Bitmap)ResourceManager.GetObject("debug_breakpoint_clear", resourceCulture);
+
+	internal static Bitmap debug_callstack => (Bitmap)ResourceManager.GetObject("debug_callstack", resourceCulture);
+
+	internal static Bitmap debug_immediate => (Bitmap)ResourceManager.GetObject("debug_immediate", resourceCulture);
+
+	internal static Bitmap debug_pause => (Bitmap)ResourceManager.GetObject("debug_pause", resourceCulture);
+
+	internal static Bitmap debug_play => (Bitmap)ResourceManager.GetObject("debug_play", resourceCulture);
+
+	internal static Bitmap debug_run_to_cursor => (Bitmap)ResourceManager.GetObject("debug_run_to_cursor", resourceCulture);
+
+	internal static Bitmap debug_step_into => (Bitmap)ResourceManager.GetObject("debug_step_into", resourceCulture);
+
+	internal static Bitmap debug_step_out => (Bitmap)ResourceManager.GetObject("debug_step_out", resourceCulture);
+
+	internal static Bitmap debug_step_over => (Bitmap)ResourceManager.GetObject("debug_step_over", resourceCulture);
+
+	internal static Bitmap debug_stop => (Bitmap)ResourceManager.GetObject("debug_stop", resourceCulture);
+
+	internal static Bitmap debug_watch => (Bitmap)ResourceManager.GetObject("debug_watch", resourceCulture);
+
+	internal static Bitmap debugger => (Bitmap)ResourceManager.GetObject("debugger", resourceCulture);
+
+	internal static Bitmap delete => (Bitmap)ResourceManager.GetObject("delete", resourceCulture);
+
+	internal static Bitmap disconnect => (Bitmap)ResourceManager.GetObject("disconnect", resourceCulture);
+
+	internal static Bitmap edit => (Bitmap)ResourceManager.GetObject("edit", resourceCulture);
+
+	internal static Bitmap error_list => (Bitmap)ResourceManager.GetObject("error_list", resourceCulture);
+
+	internal static Bitmap execute => (Bitmap)ResourceManager.GetObject("execute", resourceCulture);
+
+	internal static Bitmap flag => (Bitmap)ResourceManager.GetObject("flag", resourceCulture);
+
+	internal static Bitmap hal => (Bitmap)ResourceManager.GetObject("hal", resourceCulture);
+
+	internal static Icon hal_icon => (Icon)ResourceManager.GetObject("hal_icon", resourceCulture);
+
+	internal static Bitmap hal_splash => (Bitmap)ResourceManager.GetObject("hal_splash", resourceCulture);
+
+	internal static Bitmap help_contents => (Bitmap)ResourceManager.GetObject("help_contents", resourceCulture);
+
+	internal static Bitmap help_index => (Bitmap)ResourceManager.GetObject("help_index", resourceCulture);
+
+	internal static Bitmap hub => (Bitmap)ResourceManager.GetObject("hub", resourceCulture);
+
+	internal static Bitmap init => (Bitmap)ResourceManager.GetObject("init", resourceCulture);
+
+	internal static Bitmap label_edit => (Bitmap)ResourceManager.GetObject("label_edit", resourceCulture);
+
+	internal static Bitmap locked => (Bitmap)ResourceManager.GetObject("locked", resourceCulture);
+
+	internal static Bitmap minus => (Bitmap)ResourceManager.GetObject("minus", resourceCulture);
+
+	internal static Bitmap movie => (Bitmap)ResourceManager.GetObject("movie", resourceCulture);
+
+	internal static Bitmap network_connection => (Bitmap)ResourceManager.GetObject("network_connection", resourceCulture);
+
+	internal static Bitmap network_connection_disconnected => (Bitmap)ResourceManager.GetObject("network_connection_disconnected", resourceCulture);
+
+	internal static Bitmap newinstallsync => (Bitmap)ResourceManager.GetObject("newinstallsync", resourceCulture);
+
+	internal static Bitmap output => (Bitmap)ResourceManager.GetObject("output", resourceCulture);
+
+	internal static Bitmap paste => (Bitmap)ResourceManager.GetObject("paste", resourceCulture);
+
+	internal static Bitmap pc_card => (Bitmap)ResourceManager.GetObject("pc_card", resourceCulture);
+
+	internal static Bitmap planner => (Bitmap)ResourceManager.GetObject("planner", resourceCulture);
+
+	internal static Bitmap plus => (Bitmap)ResourceManager.GetObject("plus", resourceCulture);
+
+	internal static Bitmap processor => (Bitmap)ResourceManager.GetObject("processor", resourceCulture);
+
+	internal static Bitmap properties => (Bitmap)ResourceManager.GetObject("properties", resourceCulture);
+
+	internal static Bitmap qlm_unload => (Bitmap)ResourceManager.GetObject("qlm_unload", resourceCulture);
+
+	internal static Bitmap recycle_bin_full => (Bitmap)ResourceManager.GetObject("recycle_bin_full", resourceCulture);
+
+	internal static Bitmap redo => (Bitmap)ResourceManager.GetObject("redo", resourceCulture);
+
+	internal static Bitmap refresh => (Bitmap)ResourceManager.GetObject("refresh", resourceCulture);
+
+	internal static Bitmap report_bug => (Bitmap)ResourceManager.GetObject("report_bug", resourceCulture);
+
+	internal static Bitmap resume => (Bitmap)ResourceManager.GetObject("resume", resourceCulture);
+
+	internal static Bitmap save => (Bitmap)ResourceManager.GetObject("save", resourceCulture);
+
+	internal static Bitmap saveas => (Bitmap)ResourceManager.GetObject("saveas", resourceCulture);
+
+	internal static Bitmap script => (Bitmap)ResourceManager.GetObject("script", resourceCulture);
+
+	internal static Bitmap search => (Bitmap)ResourceManager.GetObject("search", resourceCulture);
+
+	internal static Bitmap soft_sync => (Bitmap)ResourceManager.GetObject("soft_sync", resourceCulture);
+
+	internal static Bitmap sortAscending2 => (Bitmap)ResourceManager.GetObject("sortAscending2", resourceCulture);
+
+	internal static Bitmap sortDescending2 => (Bitmap)ResourceManager.GetObject("sortDescending2", resourceCulture);
+
+	internal static Bitmap symbols => (Bitmap)ResourceManager.GetObject("symbols", resourceCulture);
+
+	internal static Bitmap sync => (Bitmap)ResourceManager.GetObject("sync", resourceCulture);
+
+	internal static Bitmap syncwitherrorthreshold => (Bitmap)ResourceManager.GetObject("syncwitherrorthreshold", resourceCulture);
+
+	internal static Bitmap thin => (Bitmap)ResourceManager.GetObject("thin", resourceCulture);
+
+	internal static Bitmap todo_list => (Bitmap)ResourceManager.GetObject("todo_list", resourceCulture);
+
+	internal static Bitmap tools => (Bitmap)ResourceManager.GetObject("tools", resourceCulture);
+
+	internal static Bitmap undo => (Bitmap)ResourceManager.GetObject("undo", resourceCulture);
+
+	internal static Bitmap UnloadThin => (Bitmap)ResourceManager.GetObject("UnloadThin", resourceCulture);
+
+	internal static Bitmap unlock => (Bitmap)ResourceManager.GetObject("unlock", resourceCulture);
+
+	internal static Bitmap warning => (Bitmap)ResourceManager.GetObject("warning", resourceCulture);
+
+	internal static Bitmap window_code => (Bitmap)ResourceManager.GetObject("window_code", resourceCulture);
+
+	internal static Bitmap window_cog => (Bitmap)ResourceManager.GetObject("window_cog", resourceCulture);
 
 	internal Resources()
 	{

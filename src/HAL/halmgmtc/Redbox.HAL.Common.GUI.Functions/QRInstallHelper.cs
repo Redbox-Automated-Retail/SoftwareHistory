@@ -6,19 +6,25 @@ using System.IO;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using Redbox.HAL.Client;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
 public class QRInstallHelper : UserControl
 {
+	private enum InstallState
+	{
+		Installed,
+		NotInstalled
+	}
+
 	private const string StateFile = "C:\\Program Files\\Redbox\\HALService\\bin\\qr.state";
 
 	private const string DefaultStateFile = "C:\\Program Files\\Redbox\\HALService\\bin\\qr.defs.default";
 
-	private HardwareService m_hardwareService;
+	private InstallState m_state = InstallState.NotInstalled;
 
-	private int ComLength = "COM".Length;
+	private readonly HardwareService m_hardwareService;
 
 	private IContainer components;
 
@@ -109,27 +115,31 @@ public class QRInstallHelper : UserControl
 		}
 	}
 
-	public QRInstallHelper(HardwareService service)
+	private InstallState State
+	{
+		get
+		{
+			return m_state;
+		}
+		set
+		{
+			m_state = value;
+			m_uninstallButton.Enabled = m_state == InstallState.Installed;
+			m_installIntoHALButton.Enabled = InstallState.NotInstalled == m_state;
+		}
+	}
+
+	public QRInstallHelper(HardwareService service, DeviceStatus status)
 	{
 		InitializeComponent();
-		m_hardwareService = service;
-		InitInner();
-	}
-
-	private void ToggleInstallUninstall(InstallState state)
-	{
-		m_uninstallButton.Enabled = state == InstallState.Installed;
-		m_installIntoHALButton.Enabled = state == InstallState.Uninstalled;
-	}
-
-	private bool QuickReturnInstalled()
-	{
-		HardwareJob hardwareJob = CommonFunctions.ExecuteInstruction(m_hardwareService, "QUICKRETURN ISINSTALLED");
-		if (hardwareJob == null)
+		if (service == null)
 		{
-			return false;
+			throw new ArgumentNullException("Hardware service");
 		}
-		return hardwareJob.GetTopOfStack() == "TRUE";
+		m_hardwareService = service;
+		bool flag = (status & DeviceStatus.Configured) != 0;
+		State = ((!flag) ? InstallState.NotInstalled : InstallState.Installed);
+		InstalledComPortNumber = LocatePortViaRegistry();
 	}
 
 	private void SetToolButtonState(bool enabled)
@@ -156,60 +166,32 @@ public class QRInstallHelper : UserControl
 		m_restartPollingButton.Enabled = enabled;
 	}
 
-	private void InitInner()
+	private void WriteToInstallOutput(string fmt, params object[] stuff)
 	{
-		InstalledComPortNumber = LocatePortViaRegistry();
-		ToggleInstallUninstall((!QuickReturnInstalled()) ? InstallState.Uninstalled : InstallState.Installed);
+		WriteToInstallOutput(string.Format(fmt, stuff));
 	}
 
-	private void CloseCommunication()
+	private void WriteToInstallOutput(string msg)
 	{
-		m_hardwareService = null;
-	}
-
-	private void WriteToInstallOutput(string msg, bool addNewLine)
-	{
-		if (addNewLine)
-		{
-			msg += Environment.NewLine;
-		}
+		msg += Environment.NewLine;
 		m_outputTextBox.Text += msg;
 		Application.DoEvents();
-	}
-
-	private bool MoveFile(string src, string dest)
-	{
-		bool result = false;
-		try
-		{
-			File.Move(src, dest);
-			if (File.Exists(dest))
-			{
-				return true;
-			}
-		}
-		catch (Exception)
-		{
-			result = false;
-		}
-		return result;
 	}
 
 	private void button1_Click(object sender, EventArgs e)
 	{
 		m_outputTextBox.Text = string.Empty;
-		string installedComPortNumber = InstalledComPortNumber;
-		if (!int.TryParse(installedComPortNumber, out var result))
+		if (!int.TryParse(InstalledComPortNumber, out var result))
 		{
-			WriteToInstallOutput("Port not recognized - INSTALL FAILED.", addNewLine: true);
+			WriteToInstallOutput("Port not recognized - INSTALL FAILED.");
 			return;
 		}
 		if (!UpdateConfiguration(install: true, result))
 		{
-			WriteToInstallOutput("Writing installed devices failed - INSTALL FAILED.", addNewLine: true);
+			WriteToInstallOutput("Writing installed devices failed - INSTALL FAILED.");
 			return;
 		}
-		WriteToInstallOutput("Successfully installed Quick Return device in HAL.", addNewLine: true);
+		WriteToInstallOutput("Successfully installed Quick Return device in HAL.");
 		StartDevice();
 	}
 
@@ -218,19 +200,18 @@ public class QRInstallHelper : UserControl
 		StopDevice();
 		if (!UpdateConfiguration(install: false, null))
 		{
-			WriteToInstallOutput("FAILED to uninstall device in HAL.xml - uninstall FAILED.", addNewLine: true);
+			WriteToInstallOutput("FAILED to uninstall device in HAL.xml - uninstall FAILED.");
 		}
 		else
 		{
-			WriteToInstallOutput("Successfully uninstalled Quick Return from HAL.", addNewLine: true);
+			WriteToInstallOutput("Successfully uninstalled Quick Return from HAL.");
 		}
 	}
 
 	private bool UpdateConfiguration(bool install, int? newComPort)
 	{
 		string arg = (newComPort.HasValue ? $"COM{newComPort.Value}" : "NONE");
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate($"SETCFG \"QuickReturnComPort\" \"{arg}\" TYPE=CONTROLLER", out var _);
-		if (!hardwareCommandResult.Success)
+		if (!m_hardwareService.ExecuteImmediate($"SETCFG \"QuickReturnComPort\" \"{arg}\" TYPE=CONTROLLER", out var _).Success)
 		{
 			return false;
 		}
@@ -244,13 +225,13 @@ public class QRInstallHelper : UserControl
 				}
 				catch (Exception ex)
 				{
-					WriteToInstallOutput(string.Format("Unable to copy {0} to {1}: error = {2}", "C:\\Program Files\\Redbox\\HALService\\bin\\qr.defs.default", "C:\\Program Files\\Redbox\\HALService\\bin\\qr.state", ex.Message), addNewLine: true);
+					WriteToInstallOutput("Unable to copy {0} to {1}: error = {2}", "C:\\Program Files\\Redbox\\HALService\\bin\\qr.defs.default", "C:\\Program Files\\Redbox\\HALService\\bin\\qr.state", ex.Message);
 				}
 			}
 		}
 		else
 		{
-			FileHelper.SafeDeleteFile("C:\\Program Files\\Redbox\\HALService\\bin\\qr.state");
+			ServiceLocator.Instance.GetService<IRuntimeService>().SafeDelete("C:\\Program Files\\Redbox\\HALService\\bin\\qr.state");
 		}
 		return true;
 	}
@@ -292,16 +273,14 @@ public class QRInstallHelper : UserControl
 
 	private void m_checkStatus_Click(object sender, EventArgs e)
 	{
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN CHECKATTBUTTON", out var job);
-		if (hardwareCommandResult.Success)
+		if (m_hardwareService.ExecuteImmediate("QUICKRETURN CHECKATTBUTTON", out var job).Success)
 		{
-			HardwareCommandResult stack = job.GetStack(out var stack2);
-			if (stack.Success)
+			if (job.GetStack(out var stack).Success)
 			{
-				if (stack2.Count > 1)
+				if (stack.Count > 1)
 				{
-					stack2.Pop();
-					listBox1.Items.Add(ConvertMessage(stack2.Peek()));
+					stack.Pop();
+					listBox1.Items.Add(ConvertMessage(stack.Peek()));
 				}
 				else
 				{
@@ -393,12 +372,11 @@ public class QRInstallHelper : UserControl
 
 	private void WriteToCommandOutput(HardwareCommandResult result, HardwareJob job)
 	{
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (stack.Success)
+		if (job.GetStack(out var stack).Success)
 		{
-			if (stack2.Count > 0)
+			if (stack.Count > 0)
 			{
-				listBox1.Items.Add(ConvertMessage(stack2.Peek()));
+				listBox1.Items.Add(ConvertMessage(stack.Peek()));
 			}
 			else
 			{
@@ -414,9 +392,8 @@ public class QRInstallHelper : UserControl
 
 	private void button3_Click_2(object sender, EventArgs e)
 	{
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN POLLSTATUS", out var job);
 		Stack<string> stack;
-		if (!hardwareCommandResult.Success)
+		if (!m_hardwareService.ExecuteImmediate("QUICKRETURN POLLSTATUS", out var job).Success)
 		{
 			m_suspendJobTB.Text = "COMM Error";
 		}
@@ -436,10 +413,11 @@ public class QRInstallHelper : UserControl
 		StartTimeForm startTimeForm = new StartTimeForm();
 		if (startTimeForm.ShowDialog() != DialogResult.Cancel)
 		{
-			HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-			hardwareJobSchedule.StartTime = startTimeForm.StartTime.Value;
-			hardwareJobSchedule.Priority = HardwareJobPriority.High;
-			HardwareJobSchedule schedule = hardwareJobSchedule;
+			HardwareJobSchedule schedule = new HardwareJobSchedule
+			{
+				StartTime = startTimeForm.StartTime.Value,
+				Priority = HardwareJobPriority.High
+			};
 			HardwareCommandResult hardwareCommandResult = m_hardwareService.ScheduleJob("quick-return-restart", string.Empty, enableDebugging: false, schedule, out var job);
 			if (hardwareCommandResult.Success)
 			{
@@ -452,10 +430,7 @@ public class QRInstallHelper : UserControl
 
 	private void button3_Click_3(object sender, EventArgs e)
 	{
-		if (m_hardwareService != null)
-		{
-			SetToolButtonState(enabled: true);
-		}
+		SetToolButtonState(enabled: true);
 	}
 
 	private void button1_Click_1(object sender, EventArgs e)
@@ -474,8 +449,7 @@ public class QRInstallHelper : UserControl
 				return null;
 			}
 			string[] subKeyNames = registryKey.GetSubKeyNames();
-			string[] array = subKeyNames;
-			foreach (string text in array)
+			foreach (string text in subKeyNames)
 			{
 				if (!text.StartsWith("VID_0403+PID_6001"))
 				{
@@ -512,18 +486,12 @@ public class QRInstallHelper : UserControl
 		{
 			return port;
 		}
-		return port.Substring(ComLength, port.Length - ComLength);
-	}
-
-	private void ClearPortTextBox()
-	{
-		m_comPortTextBox.Text = string.Empty;
+		return port.Substring(3, port.Length - 3);
 	}
 
 	private void StartDevice()
 	{
-		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN RESTART", out var job);
-		if (!hardwareCommandResult.Success)
+		if (!m_hardwareService.ExecuteImmediate("QUICKRETURN RESTART", out var job).Success)
 		{
 			m_suspendJobTB.Text = "COMMAND FAILED.";
 			Application.DoEvents();
@@ -532,7 +500,6 @@ public class QRInstallHelper : UserControl
 		{
 			job.GetStack(out var stack);
 			m_suspendJobTB.Text = ((stack.Count > 0) ? stack.Pop() : "COMMAND ERROR");
-			Application.DoEvents();
 		}
 	}
 
@@ -540,8 +507,7 @@ public class QRInstallHelper : UserControl
 	{
 		HardwareCommandResult hardwareCommandResult = m_hardwareService.ExecuteImmediate("QUICKRETURN HALTPOLL", out var _);
 		m_suspendJobTB.Text = (hardwareCommandResult.Success ? "STOPPED" : "RUNNING");
-		ClearPortTextBox();
-		Application.DoEvents();
+		m_comPortTextBox.Text = string.Empty;
 	}
 
 	protected override void Dispose(bool disposing)

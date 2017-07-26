@@ -25,9 +25,7 @@ internal class JobComboBox : ToolStripComboBox
 
 	public List<HardwareJobWrapper> GetSelectedJobList()
 	{
-		List<HardwareJobWrapper> list = new List<HardwareJobWrapper>();
-		list.Add((HardwareJobWrapper)base.SelectedItem);
-		return list;
+		return new List<HardwareJobWrapper> { (HardwareJobWrapper)base.SelectedItem };
 	}
 
 	public string GetJobID()
@@ -47,12 +45,10 @@ internal class JobComboBox : ToolStripComboBox
 		base.DropDownStyle = ComboBoxStyle.DropDownList;
 		Enabled = false;
 		base.SelectedIndexChanged += OnSelectedJobChanged;
-		ProfileManager instance = ProfileManager.Instance;
-		EventHandler value = delegate
+		ProfileManager.Instance.Connected += delegate
 		{
 			Enabled = true;
 		};
-		instance.Connected += value;
 		ProfileManager.Instance.Disconnected += delegate
 		{
 			Enabled = false;

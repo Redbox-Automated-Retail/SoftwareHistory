@@ -17,8 +17,7 @@ public static class ByteHelper
 
 	internal static byte[] Encrypt(byte[] inputArray)
 	{
-		TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider();
-		ICryptoTransform transform = tripleDESCryptoServiceProvider.CreateEncryptor(m_keyValue, m_initialVector);
+		ICryptoTransform transform = new TripleDESCryptoServiceProvider().CreateEncryptor(m_keyValue, m_initialVector);
 		using MemoryStream memoryStream = new MemoryStream();
 		CryptoStream cryptoStream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write);
 		cryptoStream.Write(inputArray, 0, inputArray.Length);
@@ -28,8 +27,7 @@ public static class ByteHelper
 
 	internal static byte[] Decrypt(byte[] inputArray)
 	{
-		TripleDESCryptoServiceProvider tripleDESCryptoServiceProvider = new TripleDESCryptoServiceProvider();
-		ICryptoTransform transform = tripleDESCryptoServiceProvider.CreateDecryptor(m_keyValue, m_initialVector);
+		ICryptoTransform transform = new TripleDESCryptoServiceProvider().CreateDecryptor(m_keyValue, m_initialVector);
 		using MemoryStream memoryStream = new MemoryStream();
 		CryptoStream cryptoStream = new CryptoStream(memoryStream, transform, CryptoStreamMode.Write);
 		cryptoStream.Write(inputArray, 0, inputArray.Length);

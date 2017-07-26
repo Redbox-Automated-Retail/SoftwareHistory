@@ -35,7 +35,8 @@ internal static class CommonFunctions
 							}
 							if (text.EndsWith("\""))
 							{
-								text = text.Remove(text.Length - 1, 1);
+								string text2 = text;
+								text = text2.Remove(text2.Length - 1, 1);
 							}
 							m_servicePath = Path.GetDirectoryName(text);
 						}
@@ -61,22 +62,21 @@ internal static class CommonFunctions
 		{
 			return null;
 		}
-		string s = stack.Pop();
-		if (!int.TryParse(s, out var result))
+		if (!int.TryParse(stack.Pop(), out var result))
 		{
 			LogHelper.Instance.Log("Currently not at a deck, slot location", LogEntryType.Error);
 			return null;
 		}
-		string s2 = stack.Pop();
-		if (!int.TryParse(s2, out var result2))
+		if (!int.TryParse(stack.Pop(), out var result2))
 		{
 			LogHelper.Instance.Log("Currently not at a deck, slot location", LogEntryType.Error);
 			return null;
 		}
-		Location location = new Location();
-		location.Deck = result;
-		location.Slot = result2;
-		return location;
+		return new Location
+		{
+			Deck = result,
+			Slot = result2
+		};
 	}
 
 	internal static void OnReadPickerSensors(object sender, EventArgs e)
@@ -112,8 +112,7 @@ internal static class CommonFunctions
 	{
 		using (TouchScreenAccess.Instance.Manager.MakeAspect(sender))
 		{
-			string servicePath = ServicePath;
-			if (string.IsNullOrEmpty(servicePath))
+			if (string.IsNullOrEmpty(ServicePath))
 			{
 				OutputWindow.Instance.Append("Unable to locate service path; cannot launch amcap.");
 			}
@@ -133,13 +132,12 @@ internal static class CommonFunctions
 			{
 				return false;
 			}
-			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.HardSync(new SyncRange(location.Deck, location.Deck, new Range(location.Slot, location.Slot)), new HardwareJobSchedule
+			if (ProfileManager.Instance.Service.HardSync(new SyncRange(location.Deck, location.Deck, new Range(location.Slot, location.Slot)), new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Highest
-			}, out var job);
-			if (hardwareCommandResult.Success)
+			}, out var job).Success)
 			{
-				hardwareCommandResult = job.Resume();
+				job.Resume();
 				job.WaitForCompletion();
 				ProfileManager.Instance.Service.GetJob(job.ID, out job);
 				return job.Status == HardwareJobStatus.Completed || job.Status == HardwareJobStatus.Stopped;
@@ -156,8 +154,7 @@ internal static class CommonFunctions
 
 	internal static HardwareJob ExecuteInstruction(string instruction)
 	{
-		HardwareCommandResult result = ProfileManager.Instance.Service.ExecuteImmediate(instruction, Settings.Default.ImmediateInstructionTimeout, out var job);
-		ProcessCommandResult(result);
+		ProcessCommandResult(ProfileManager.Instance.Service.ExecuteImmediate(instruction, Settings.Default.ImmediateInstructionTimeout, out var job));
 		return job;
 	}
 
@@ -165,7 +162,7 @@ internal static class CommonFunctions
 	{
 		HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.ScheduleJob(jobName, label, enableDebugging: false, schedule, out var job);
 		ProcessCommandResult(hardwareCommandResult);
-		if (hardwareCommandResult.Success && resumeNow)
+		if (hardwareCommandResult.Success & resumeNow)
 		{
 			job.Resume();
 		}

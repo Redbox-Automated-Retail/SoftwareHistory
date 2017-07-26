@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 
 namespace Redbox.HAL.Component.Model;
@@ -26,7 +27,7 @@ public interface IPersistentCounterService
 
 	bool RemoveAll(HardwareCorrectionStatistic stat);
 
-	void LogStats(HardwareCorrectionStatistic key, TextWriter log);
+	List<IHardwareCorrectionStatistic> GetStats(HardwareCorrectionStatistic key);
 
 	void AddWeeklyResettable(IPersistentCounter counter);
 

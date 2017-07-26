@@ -223,8 +223,7 @@ public class Form1 : Form
 		m_eastWestSplitContainer.Panel1.Controls.Add(LeftPanel.Instance);
 		m_northSouthSplitContainer.Panel1.Controls.Add(TouchScreenAccess.Instance);
 		m_northSouthSplitContainer.Panel2.Controls.Add(ListViewTabControl.Instance);
-		ProfileManager instance = ProfileManager.Instance;
-		EventHandler value2 = delegate
+		ProfileManager.Instance.Connected += delegate
 		{
 			m_timer.Enabled = true;
 			TouchScreenAccess.Instance.Enabled = true;
@@ -238,7 +237,6 @@ public class Form1 : Form
 			UpdateProgramButtons();
 			Refresh();
 		};
-		instance.Connected += value2;
 		ProfileManager.Instance.Disconnected += delegate
 		{
 			m_timer.Enabled = false;
@@ -491,8 +489,7 @@ public class Form1 : Form
 	{
 		try
 		{
-			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(ProfileManager.Instance.Service, allowInventoryUpdate: true);
-			deckConfigurationForm.ShowDialog();
+			new DeckConfigurationForm(ProfileManager.Instance.Service, allowInventoryUpdate: true).ShowDialog();
 		}
 		catch (Exception ex)
 		{
@@ -600,12 +597,13 @@ public class Form1 : Form
 
 	private void OnVend(object sender, EventArgs e)
 	{
-		BarcodeInputForm barcodeInputForm = new BarcodeInputForm();
-		barcodeInputForm.Text = "Vend Items";
-		BarcodeInputForm barcodeInputForm2 = barcodeInputForm;
-		if (barcodeInputForm2.ShowDialog() == DialogResult.OK && barcodeInputForm2.Barcodes.Length != 0)
+		BarcodeInputForm barcodeInputForm = new BarcodeInputForm
 		{
-			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.Vend(barcodeInputForm2.Barcodes, new HardwareJobSchedule
+			Text = "Vend Items"
+		};
+		if (barcodeInputForm.ShowDialog() == DialogResult.OK && barcodeInputForm.Barcodes.Length != 0)
+		{
+			HardwareCommandResult hardwareCommandResult = ProfileManager.Instance.Service.Vend(barcodeInputForm.Barcodes, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Normal
 			}, out var job);
@@ -647,11 +645,10 @@ public class Form1 : Form
 		ExecuteScriptForm executeScriptForm = new ExecuteScriptForm();
 		if (executeScriptForm.ShowDialog() != DialogResult.Cancel)
 		{
-			HardwareCommandResult result = ProfileManager.Instance.Service.ScheduleJob(executeScriptForm.SelectedScript, null, enableDebugging: false, new HardwareJobSchedule
+			CommonFunctions.ProcessCommandResult(ProfileManager.Instance.Service.ScheduleJob(executeScriptForm.SelectedScript, null, enableDebugging: false, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Normal
-			}, out var _);
-			CommonFunctions.ProcessCommandResult(result);
+			}, out var _));
 		}
 	}
 
@@ -691,8 +688,7 @@ public class Form1 : Form
 		autoResumeJobOnScheduleToolStripMenuItem.Checked = true;
 		ProfileManager.Instance.Connected += delegate
 		{
-			HardwareCommandResult result = ProfileManager.Instance.Service.ExecuteImmediate("NOP", out var _);
-			CommonFunctions.ProcessCommandResult(result);
+			CommonFunctions.ProcessCommandResult(ProfileManager.Instance.Service.ExecuteImmediate("NOP", out var _));
 			EnvironmentHelper.IsLocked = EnvironmentHelper.IsLocked;
 		};
 	}

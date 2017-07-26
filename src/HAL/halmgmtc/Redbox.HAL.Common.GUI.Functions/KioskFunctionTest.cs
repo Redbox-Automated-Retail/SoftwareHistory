@@ -89,8 +89,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 			int num = (HasCortex ? 1 : 3);
 			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(Service);
 			Box.Write(string.Format("Found {0} barcodes ({1}), time={2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
-			string[] array = readBarcodeResult.ScanTime.Split('.');
-			int num2 = int.Parse(array[0]);
+			int num2 = int.Parse(readBarcodeResult.ScanTime.Split('.')[0]);
 			int num3 = int.Parse(readBarcodeResult.Count);
 			SnapDecodeStatus = ((num3 >= num && num2 <= 0) ? TestState.Success : TestState.Failure);
 			CompositeFunctions.PutItem(Service, deck, slot, Box);
@@ -213,8 +212,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	private TestState MatchCamera()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: true);
+		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
 			CameraDriverStatus = TestState.Success;
@@ -230,8 +228,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	private TestState MatchTS()
 	{
-		ITouchscreenService service = ServiceLocator.Instance.GetService<ITouchscreenService>();
-		IDeviceDescriptor deviceDescriptor = service.FindTouchScreen(matchDriver: true);
+		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindTouchScreen(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
 			TSDriverStatus = TestState.Success;
