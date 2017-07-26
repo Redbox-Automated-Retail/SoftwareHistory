@@ -475,11 +475,15 @@ internal class KeyboardViewUI
 		IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
 		if (service != null && service2 != null)
 		{
-			service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+			IShoppingSession currentSession = service2.GetCurrentSession();
+			if (currentSession != null)
 			{
-				{ "subItemType", "buttonPress" },
-				{ "subItemValue", "ok_button" }
-			}, service2.GetCurrentSession().Id.ToString());
+				service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+				{
+					{ "subItemType", "buttonPress" },
+					{ "subItemValue", "ok_button" }
+				}, currentSession.Id.ToString());
+			}
 		}
 		_next?.Invoke();
 	}
@@ -490,11 +494,15 @@ internal class KeyboardViewUI
 		IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
 		if (service != null && service2 != null)
 		{
-			service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+			IShoppingSession currentSession = service2.GetCurrentSession();
+			if (currentSession != null)
 			{
-				{ "subItemType", "buttonPress" },
-				{ "subItemValue", "cancel_button" }
-			}, service2.GetCurrentSession().Id.ToString());
+				service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+				{
+					{ "subItemType", "buttonPress" },
+					{ "subItemValue", "cancel_button" }
+				}, currentSession.Id.ToString());
+			}
 		}
 		if (_cancel != null)
 		{

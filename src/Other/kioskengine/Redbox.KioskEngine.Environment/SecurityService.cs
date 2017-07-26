@@ -18,14 +18,15 @@ public class SecurityService : ISecurityService
 		try
 		{
 			using PrincipalContext context = new PrincipalContext(ContextType.Machine);
-			UserPrincipal userPrincipal = new UserPrincipal(context);
-			userPrincipal.Name = userName;
-			userPrincipal.DisplayName = userName;
-			UserPrincipal userPrincipal2 = userPrincipal;
-			userPrincipal2.SetPassword(password);
-			userPrincipal2.UserCannotChangePassword = true;
-			userPrincipal2.AccountExpirationDate = DateTime.Now.AddDays(numberOfDaysToExpire);
-			userPrincipal2.Save();
+			UserPrincipal userPrincipal = new UserPrincipal(context)
+			{
+				Name = userName,
+				DisplayName = userName
+			};
+			userPrincipal.SetPassword(password);
+			userPrincipal.UserCannotChangePassword = true;
+			userPrincipal.AccountExpirationDate = DateTime.Now.AddDays(numberOfDaysToExpire);
+			userPrincipal.Save();
 			return true;
 		}
 		catch

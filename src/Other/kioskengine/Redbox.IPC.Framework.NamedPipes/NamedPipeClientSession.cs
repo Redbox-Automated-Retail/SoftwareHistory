@@ -73,7 +73,7 @@ public class NamedPipeClientSession : ClientSession
 		base.IsConnected = true;
 	}
 
-	protected internal NamedPipeClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol)
+	protected internal NamedPipeClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol)
 		: base(protocol)
 	{
 		string text = protocol.Host;

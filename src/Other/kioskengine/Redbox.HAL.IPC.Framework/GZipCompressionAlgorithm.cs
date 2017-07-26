@@ -14,7 +14,7 @@ internal sealed class GZipCompressionAlgorithm : ICompressionAlgorithm
 		byte[] array;
 		using (MemoryStream memoryStream2 = StreamBase.New())
 		{
-			Redbox_002EHAL_002EClient1198959_002EGZipOutputStream obj = new Redbox_002EHAL_002EClient1198959_002EGZipOutputStream(memoryStream2);
+			Redbox_002EHAL_002EClient1178151_002EGZipOutputStream obj = new Redbox_002EHAL_002EClient1178151_002EGZipOutputStream(memoryStream2);
 			obj.Write(binaryReader.ReadBytes((int)memoryStream.Length), 0, (int)memoryStream.Length);
 			obj.Finish();
 			obj.Flush();
@@ -32,7 +32,7 @@ internal sealed class GZipCompressionAlgorithm : ICompressionAlgorithm
 		using (MemoryStream memoryStream2 = StreamBase.NewOn(source))
 		{
 			byte[] buffer = new byte[4096];
-			Redbox_002EHAL_002EClient1198959_002EGZipInputStream obj = new Redbox_002EHAL_002EClient1198959_002EGZipInputStream(memoryStream2, 4096);
+			Redbox_002EHAL_002EClient1178151_002EGZipInputStream obj = new Redbox_002EHAL_002EClient1178151_002EGZipInputStream(memoryStream2, 4096);
 			while (true)
 			{
 				int num = obj.Read(buffer, 0, 4096);

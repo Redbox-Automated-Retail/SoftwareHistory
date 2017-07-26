@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using VistaDB;
 using VistaDB.DDA;
 
@@ -58,27 +59,29 @@ public class DataStoreCache
 			{
 				return m_databases[path].Instance;
 			}
-			DatabaseCache databaseCache = new DatabaseCache();
-			databaseCache.DDA = VistaDBEngine.Connections.OpenDDA();
-			DatabaseCache databaseCache2 = databaseCache;
+			DatabaseCache databaseCache = new DatabaseCache
+			{
+				DDA = VistaDBEngine.Connections.OpenDDA()
+			};
 			if (!File.Exists(path))
 			{
 				if (mode == VistaDBDatabaseOpenMode.SharedReadOnly)
 				{
 					return null;
 				}
-				databaseCache2.Instance = databaseCache2.DDA.CreateDatabase(path, stayExclusive: false, null, 0, 0, caseSensitive: false);
+				databaseCache.Instance = databaseCache.DDA.CreateDatabase(path, stayExclusive: false, null, 0, 0, caseSensitive: false);
 			}
-			if (databaseCache2.Instance == null)
+			if (databaseCache.Instance == null)
 			{
-				databaseCache2.Instance = databaseCache2.DDA.OpenDatabase(path, mode, null);
+				databaseCache.Instance = databaseCache.DDA.OpenDatabase(path, mode, null);
 			}
-			m_databases[path] = databaseCache2;
-			return databaseCache2.Instance;
+			m_databases[path] = databaseCache;
+			return databaseCache.Instance;
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Unhandled exception in DataStoreCache.GetStore.", e);
+			ServiceLocator.Instance.GetService<IEngineApplication>()?.CorruptDbDetected(Path.GetFileName(path));
 			throw;
 		}
 	}

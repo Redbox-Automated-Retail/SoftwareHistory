@@ -81,11 +81,12 @@ public class TimerService : ITimerService
 			}
 			else
 			{
-				SoftTimer softTimer2 = new SoftTimer();
-				softTimer2.DueTime = dueTime;
-				softTimer2.Period = period;
-				softTimer2.Name = name;
-				softTimer = softTimer2;
+				softTimer = new SoftTimer
+				{
+					DueTime = dueTime,
+					Period = period,
+					Name = name
+				};
 				InnerTimers[name] = softTimer;
 			}
 			softTimer.ClearFire();

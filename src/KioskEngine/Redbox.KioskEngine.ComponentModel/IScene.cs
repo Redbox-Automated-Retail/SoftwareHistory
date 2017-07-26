@@ -51,6 +51,8 @@ public interface IScene : IDisposable
 
 	IActor GetActor(string name);
 
+	IActor GetActorByNameAndTag(string name, string tag);
+
 	List<IActor> GetActorByTag(string tag);
 
 	IActor GetActorByTabOrder(int tabOrder);

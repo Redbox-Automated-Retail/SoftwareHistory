@@ -3,6 +3,8 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.Rental.UI.Controls;
@@ -35,6 +37,32 @@ public class TextToSpeechUserControl : UserControl, ITextToSpeechControl
 	public virtual bool IsControlVisible(string controlName)
 	{
 		return GetUIElement(controlName)?.IsVisible ?? false;
+	}
+
+	public virtual void ToggleADALine()
+	{
+		UIElement uIElement = GetUIElement("adaLine");
+		if (uIElement == null)
+		{
+			uIElement = new Line
+			{
+				X1 = 0.0,
+				Y1 = 286.0,
+				Height = 3.0,
+				Width = 1024.0,
+				Stroke = new SolidColorBrush
+				{
+					Color = Colors.GreenYellow
+				},
+				StrokeThickness = 3.0,
+				Visibility = Visibility.Visible
+			};
+			AddChild(uIElement);
+		}
+		else
+		{
+			uIElement.Visibility = ((uIElement.Visibility == Visibility.Visible) ? Visibility.Hidden : Visibility.Visible);
+		}
 	}
 
 	protected void RegisterRoutedCommand(string commandName, RoutedCommand command)

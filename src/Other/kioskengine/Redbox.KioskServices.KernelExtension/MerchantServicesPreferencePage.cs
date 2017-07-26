@@ -16,17 +16,9 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private IContainer components;
 
-	private CheckBox m_queueBasedRentalLimitCheckBox;
-
 	private CheckBox m_enableOfflineBadCardListCheckBox;
 
 	private ErrorProvider m_errorProvider;
-
-	private TextBox m_maximumItemsTextBox;
-
-	private Label label2;
-
-	private CheckBox m_enforceShoppingCartLimitCheckBox;
 
 	private ComboBox m_authorizeResponseTypeComboBox;
 
@@ -85,10 +77,7 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		m_isLoaded = false;
 		m_liveCallCheckBox.Checked = MerchantServicesProxy.Instance.LiveCall;
 		m_simulateServerBusyCheckBox.Checked = MerchantServicesProxy.Instance.SimulateServerBusyError;
-		m_maximumItemsTextBox.Text = MerchantServicesProxy.Instance.MaximumShoppingCartItems.ToString();
-		m_queueBasedRentalLimitCheckBox.Checked = MerchantServicesProxy.Instance.EnableQueueBasedRentalLimit;
 		m_enableOfflineBadCardListCheckBox.Checked = MerchantServicesProxy.Instance.EnableOfflineBadCardList;
-		m_enforceShoppingCartLimitCheckBox.Checked = MerchantServicesProxy.Instance.EnforceShoppingCartItemLimit;
 		m_simulateCommunicationsFailureCheckBox.Checked = MerchantServicesProxy.Instance.SimulateCommunicationsFailure;
 		m_authorizeResponseTypeComboBox.Items.Clear();
 		string[] names = Enum.GetNames(typeof(AuthorizeResponse));
@@ -150,42 +139,11 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
-	private void OnEnforceLimitCheckBoxChanged(object sender, EventArgs e)
-	{
-		MerchantServicesProxy.Instance.EnforceShoppingCartItemLimit = m_enforceShoppingCartLimitCheckBox.Checked;
-		m_maximumItemsTextBox.Enabled = m_enforceShoppingCartLimitCheckBox.Checked;
-		m_queueBasedRentalLimitCheckBox.Enabled = m_enforceShoppingCartLimitCheckBox.Checked;
-	}
-
 	private void OnBadCardListCheckChanged(object sender, EventArgs e)
 	{
 		if (m_isLoaded)
 		{
 			MerchantServicesProxy.Instance.EnableOfflineBadCardList = m_enableOfflineBadCardListCheckBox.Checked;
-		}
-	}
-
-	private void OnMaximumItemsLeave(object sender, EventArgs e)
-	{
-		if (m_isLoaded)
-		{
-			m_errorProvider.SetError(m_maximumItemsTextBox, string.Empty);
-			if (!int.TryParse(m_maximumItemsTextBox.Text, out var result) || result < 0)
-			{
-				m_errorProvider.SetError(m_maximumItemsTextBox, "Maximum items must be a valid integer value.");
-			}
-			else
-			{
-				MerchantServicesProxy.Instance.MaximumShoppingCartItems = result;
-			}
-		}
-	}
-
-	private void OnQueueBasedRentalLimitCheckChanged(object sender, EventArgs e)
-	{
-		if (m_isLoaded)
-		{
-			MerchantServicesProxy.Instance.EnableQueueBasedRentalLimit = m_queueBasedRentalLimitCheckBox.Checked;
 		}
 	}
 
@@ -269,12 +227,8 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 	private void InitializeComponent()
 	{
 		this.components = new System.ComponentModel.Container();
-		this.m_queueBasedRentalLimitCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_enableOfflineBadCardListCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
-		this.m_maximumItemsTextBox = new System.Windows.Forms.TextBox();
-		this.label2 = new System.Windows.Forms.Label();
-		this.m_enforceShoppingCartLimitCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_authorizeResponseTypeComboBox = new System.Windows.Forms.ComboBox();
 		this.label1 = new System.Windows.Forms.Label();
 		this.m_simulateServerBusyCheckBox = new System.Windows.Forms.CheckBox();
@@ -298,15 +252,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_isRBICheckBox = new System.Windows.Forms.CheckBox();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
-		this.m_queueBasedRentalLimitCheckBox.AutoSize = true;
-		this.m_queueBasedRentalLimitCheckBox.Enabled = false;
-		this.m_queueBasedRentalLimitCheckBox.Location = new System.Drawing.Point(30, 180);
-		this.m_queueBasedRentalLimitCheckBox.Name = "m_queueBasedRentalLimitCheckBox";
-		this.m_queueBasedRentalLimitCheckBox.Size = new System.Drawing.Size(206, 17);
-		this.m_queueBasedRentalLimitCheckBox.TabIndex = 16;
-		this.m_queueBasedRentalLimitCheckBox.Text = "Enable queue-based rental limit check";
-		this.m_queueBasedRentalLimitCheckBox.UseVisualStyleBackColor = true;
-		this.m_queueBasedRentalLimitCheckBox.CheckedChanged += new System.EventHandler(OnQueueBasedRentalLimitCheckChanged);
 		this.m_enableOfflineBadCardListCheckBox.AutoSize = true;
 		this.m_enableOfflineBadCardListCheckBox.Location = new System.Drawing.Point(30, 157);
 		this.m_enableOfflineBadCardListCheckBox.Name = "m_enableOfflineBadCardListCheckBox";
@@ -316,26 +261,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_enableOfflineBadCardListCheckBox.UseVisualStyleBackColor = true;
 		this.m_enableOfflineBadCardListCheckBox.CheckedChanged += new System.EventHandler(OnBadCardListCheckChanged);
 		this.m_errorProvider.ContainerControl = this;
-		this.m_maximumItemsTextBox.Enabled = false;
-		this.m_maximumItemsTextBox.Location = new System.Drawing.Point(416, 177);
-		this.m_maximumItemsTextBox.Name = "m_maximumItemsTextBox";
-		this.m_maximumItemsTextBox.Size = new System.Drawing.Size(70, 20);
-		this.m_maximumItemsTextBox.TabIndex = 15;
-		this.m_maximumItemsTextBox.Leave += new System.EventHandler(OnMaximumItemsLeave);
-		this.label2.AutoSize = true;
-		this.label2.Location = new System.Drawing.Point(323, 181);
-		this.label2.Name = "label2";
-		this.label2.Size = new System.Drawing.Size(82, 13);
-		this.label2.TabIndex = 14;
-		this.label2.Text = "Maximum Items:";
-		this.m_enforceShoppingCartLimitCheckBox.AutoSize = true;
-		this.m_enforceShoppingCartLimitCheckBox.Location = new System.Drawing.Point(30, 203);
-		this.m_enforceShoppingCartLimitCheckBox.Name = "m_enforceShoppingCartLimitCheckBox";
-		this.m_enforceShoppingCartLimitCheckBox.Size = new System.Drawing.Size(281, 17);
-		this.m_enforceShoppingCartLimitCheckBox.TabIndex = 13;
-		this.m_enforceShoppingCartLimitCheckBox.Text = "Enforce shopping cart limit in offline/stand alone mode";
-		this.m_enforceShoppingCartLimitCheckBox.UseVisualStyleBackColor = true;
-		this.m_enforceShoppingCartLimitCheckBox.CheckedChanged += new System.EventHandler(OnEnforceLimitCheckBoxChanged);
 		this.m_authorizeResponseTypeComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 		this.m_authorizeResponseTypeComboBox.FormattingEnabled = true;
 		this.m_authorizeResponseTypeComboBox.Location = new System.Drawing.Point(169, 130);
@@ -493,11 +418,7 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		base.Controls.Add(this.m_addOfferTextBox);
 		base.Controls.Add(this.m_OffersLabel);
 		base.Controls.Add(this.m_headerLabel);
-		base.Controls.Add(this.m_queueBasedRentalLimitCheckBox);
 		base.Controls.Add(this.m_enableOfflineBadCardListCheckBox);
-		base.Controls.Add(this.m_maximumItemsTextBox);
-		base.Controls.Add(this.label2);
-		base.Controls.Add(this.m_enforceShoppingCartLimitCheckBox);
 		base.Controls.Add(this.m_authorizeResponseTypeComboBox);
 		base.Controls.Add(this.label1);
 		base.Controls.Add(this.m_simulateServerBusyCheckBox);

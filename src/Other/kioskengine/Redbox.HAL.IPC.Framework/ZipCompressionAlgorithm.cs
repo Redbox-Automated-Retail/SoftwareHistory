@@ -14,7 +14,7 @@ internal sealed class ZipCompressionAlgorithm : ICompressionAlgorithm
 		byte[] array;
 		using (MemoryStream memoryStream2 = StreamBase.New())
 		{
-			Redbox_002EHAL_002EClient1198959_002EZipOutputStream obj = new Redbox_002EHAL_002EClient1198959_002EZipOutputStream(memoryStream2);
+			Redbox_002EHAL_002EClient1178151_002EZipOutputStream obj = new Redbox_002EHAL_002EClient1178151_002EZipOutputStream(memoryStream2);
 			obj.Write(binaryReader.ReadBytes((int)memoryStream.Length), 0, (int)memoryStream.Length);
 			obj.Finish();
 			obj.Flush();
@@ -32,7 +32,7 @@ internal sealed class ZipCompressionAlgorithm : ICompressionAlgorithm
 		using (MemoryStream memoryStream2 = StreamBase.NewOn(source))
 		{
 			byte[] buffer = new byte[4096];
-			Redbox_002EHAL_002EClient1198959_002EZipInputStream obj = new Redbox_002EHAL_002EClient1198959_002EZipInputStream(memoryStream2);
+			Redbox_002EHAL_002EClient1178151_002EZipInputStream obj = new Redbox_002EHAL_002EClient1178151_002EZipInputStream(memoryStream2);
 			while (true)
 			{
 				int num = obj.Read(buffer, 0, 4096);

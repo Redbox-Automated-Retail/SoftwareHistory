@@ -83,7 +83,7 @@ public class UpdateManagerServiceProxy : IUpdateManagerService
 	public Redbox.KioskEngine.ComponentModel.ErrorList GetDownloadState(out ReadOnlyCollection<IDownloadData> downloads)
 	{
 		List<IDownloadData> list = new List<IDownloadData>();
-		Redbox_002EIPC_002EFramework1802119_002EClientCommandResult currentDownloads = m_service.GetCurrentDownloads(out var jobs);
+		Redbox_002EIPC_002EFramework1769326_002EClientCommandResult currentDownloads = m_service.GetCurrentDownloads(out var jobs);
 		foreach (Download item in jobs)
 		{
 			list.Add(new DownloadData
@@ -106,7 +106,7 @@ public class UpdateManagerServiceProxy : IUpdateManagerService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList GetSubscriptionState(out DateTime lastRun, out string subscriptionState)
 	{
-		Redbox_002EIPC_002EFramework1802119_002EClientCommandResult dvdDataState = m_service.GetDvdDataState(out lastRun, out var state);
+		Redbox_002EIPC_002EFramework1769326_002EClientCommandResult dvdDataState = m_service.GetDvdDataState(out lastRun, out var state);
 		subscriptionState = state.ToString();
 		return MakeLocalErrorList(dvdDataState.Errors);
 	}
@@ -118,7 +118,7 @@ public class UpdateManagerServiceProxy : IUpdateManagerService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList ExecuteCommand(string command, out ReadOnlyCollection<string> messages)
 	{
-		Redbox_002EIPC_002EFramework1802119_002EClientCommandResult obj = m_service.ExecuteCommandString(command);
+		Redbox_002EIPC_002EFramework1769326_002EClientCommandResult obj = m_service.ExecuteCommandString(command);
 		messages = obj.CommandMessages.AsReadOnly();
 		return MakeLocalErrorList(obj.Errors);
 	}

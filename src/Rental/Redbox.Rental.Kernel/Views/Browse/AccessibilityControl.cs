@@ -21,6 +21,8 @@ public class AccessibilityControl
 
 	public int Height { get; set; }
 
+	public bool InvertRowsAndColumns { get; set; }
+
 	public int X { get; set; }
 
 	public int Y { get; set; }
@@ -132,8 +134,8 @@ public class AccessibilityControl
 		_productBrowseControl = new BrowseControl
 		{
 			BrowseSetName = string.Format("{0}_{1}", BrowseSetName, "ada"),
-			ColumnCount = SourceBrowseControl.ColumnCount,
-			RowCount = SourceBrowseControl.RowCount,
+			ColumnCount = (InvertRowsAndColumns ? SourceBrowseControl.RowCount : SourceBrowseControl.ColumnCount),
+			RowCount = (InvertRowsAndColumns ? SourceBrowseControl.ColumnCount : SourceBrowseControl.RowCount),
 			Width = 375,
 			Height = Height - 26,
 			Y = Y,
@@ -185,6 +187,10 @@ public class AccessibilityControl
 						AllowAddEvenIfSelected = movieOrGameBrowseItem.AllowAddEvenIfSelected,
 						ImageName = null
 					});
+				}
+				else if (item is GroupHeaderBrowseItem)
+				{
+					list.Add(new GroupHeaderBrowseItem());
 				}
 			}
 		}

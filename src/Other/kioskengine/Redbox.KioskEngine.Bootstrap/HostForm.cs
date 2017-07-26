@@ -1,17 +1,19 @@
 using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Xml;
-using AxShockwaveFlashObjects;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
@@ -20,7 +22,7 @@ using Redbox.REDS.Framework;
 
 namespace Redbox.KioskEngine.Bootstrap;
 
-public class HostForm : Form, IFlashService, ITrackDataService
+public class HostForm : Form, ITrackDataService
 {
 	private struct COPYDATASTRUCT
 	{
@@ -44,25 +46,11 @@ public class HostForm : Form, IFlashService, ITrackDataService
 
 	private const int WM_COPYDATA = 74;
 
-	private Stack<FlashMovie> m_flashMovies;
-
 	private bool m_isCursorHidden;
 
 	private IContainer components = null;
 
 	public int KeyId => _keyId;
-
-	private Stack<FlashMovie> FlashMovies
-	{
-		get
-		{
-			if (m_flashMovies == null)
-			{
-				m_flashMovies = new Stack<FlashMovie>();
-			}
-			return m_flashMovies;
-		}
-	}
 
 	private SecureString TrackDataBuffer { get; set; }
 
@@ -92,107 +80,9 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		{
 			base.FormBorderStyle = FormBorderStyle.FixedSingle;
 			base.ControlBox = true;
-			MaximumSize = Size.Empty;
+			MaximumSize = System.Drawing.Size.Empty;
 		}
 		TrackDataBuffer = new SecureString();
-	}
-
-	public void Reset()
-	{
-		LogHelper.Instance.Log("Reset movie service.");
-		while (FlashMovies.Count > 0)
-		{
-			PopFlashMovie();
-		}
-		ServiceLocator.Instance.GetService<IFileCacheService>()?.Remove("*.movie");
-	}
-
-	public void ClearCache()
-	{
-		LogHelper.Instance.Log("Clear movie service cache.");
-		ServiceLocator.Instance.GetService<IFileCacheService>()?.Remove("*.movie");
-	}
-
-	public string PeekFlashMovie()
-	{
-		return (FlashMovies.Count == 0) ? null : Path.GetFileNameWithoutExtension(FlashMovies.Peek().FileName);
-	}
-
-	public void PopFlashMovie()
-	{
-		if (FlashMovies.Count == 0)
-		{
-			return;
-		}
-		FlashMovie topFlashMovie = FlashMovies.Pop();
-		MethodInvoker invoker = delegate
-		{
-			try
-			{
-				topFlashMovie.Player.StopPlay();
-				base.Controls.Remove(topFlashMovie.Player);
-				if (!topFlashMovie.Player.IsDisposed)
-				{
-					topFlashMovie.Player.Dispose();
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in PopFlashMovie.", e);
-			}
-		};
-		EngineApplication.Instance.ThreadSafeHostUpdate(invoker);
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		service.ActiveScene.MakeDirty(new Rectangle[1] { topFlashMovie.Zone });
-	}
-
-	public void SwitchTopMovie(string fileName)
-	{
-		if (FlashMovies.Count != 0)
-		{
-			FlashMovie topFlashMovie = FlashMovies.Peek();
-			MethodInvoker invoker = delegate
-			{
-				topFlashMovie.Player.LoadMovie(0, fileName);
-			};
-			EngineApplication.Instance.ThreadSafeHostUpdate(invoker);
-		}
-	}
-
-	public void PushFlashMovie(string fileName, Rectangle zone)
-	{
-		MethodInvoker invoker = delegate
-		{
-			try
-			{
-				AxShockwaveFlash axShockwaveFlash = new AxShockwaveFlash
-				{
-					Location = zone.Location,
-					Size = zone.Size
-				};
-				base.Controls.Add(axShockwaveFlash);
-				axShockwaveFlash.MouseCaptureChanged += flashPlayer_MouseCaptureChanged;
-				axShockwaveFlash.LoadMovie(0, fileName);
-				axShockwaveFlash.Play();
-				FlashMovies.Push(new FlashMovie
-				{
-					Zone = zone,
-					FileName = fileName,
-					Player = axShockwaveFlash
-				});
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in PushFlashMovie.", e);
-			}
-		};
-		EngineApplication.Instance.ThreadSafeHostUpdate(invoker);
-	}
-
-	public void flashPlayer_MouseCaptureChanged(object sender, EventArgs e)
-	{
-		base.ActiveControl = null;
-		Focus();
 	}
 
 	public int GetKeyId()
@@ -423,21 +313,21 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		{
 		case Keys.Home:
 		{
-			ITextToSpeechService service4 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service4 != null)
+			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service2 != null)
 			{
-				service4.AudioDeviceConnected = true;
-				IViewService service5 = ServiceLocator.Instance.GetService<IViewService>();
-				service4.RunSpeechWorkflow("tts_" + service5.PeekViewFrame().ViewName);
+				service2.AudioDeviceConnected = true;
+				IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
+				service2.RunSpeechWorkflow("tts_" + service3.PeekViewFrame().ViewName);
 			}
 			break;
 		}
 		case Keys.End:
 		{
-			ITextToSpeechService service3 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service3 != null)
+			ITextToSpeechService service5 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service5 != null)
 			{
-				service3.AudioDeviceConnected = false;
+				service5.AudioDeviceConnected = false;
 			}
 			break;
 		}
@@ -502,7 +392,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 				}
 				else
 				{
-					MessageBox.Show("The password provided is invalid.", "Redbox Engine for Distributed Stores", MessageBoxButtons.OK);
+					System.Windows.Forms.MessageBox.Show("The password provided is invalid.", "Redbox Engine for Distributed Stores", MessageBoxButtons.OK);
 				}
 			}
 			break;
@@ -525,30 +415,69 @@ public class HostForm : Form, IFlashService, ITrackDataService
 			break;
 		case Keys.F10:
 		{
-			IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
-			string name = "ADA Line";
-			service2.ActiveScene.SuspendDrawing();
-			IActor actor = service2.ActiveScene.GetActor(name);
-			if (actor != null)
+			IRenderingService service4 = ServiceLocator.Instance.GetService<IRenderingService>();
+			string name = "ADALine";
+			if (service4.ActiveScene.SceneRenderType == RenderType.WPF)
 			{
-				service2.ActiveScene.Remove(actor);
+				System.Windows.Controls.UserControl userControl = (service4.ActiveScene.Actors.First?.Value)?.WPFFrameworkElement as System.Windows.Controls.UserControl;
+				Grid grid = userControl?.Content as Grid;
+				IEnumerator enumerator = grid.Children.GetEnumerator();
+				bool flag = false;
+				while (enumerator.MoveNext())
+				{
+					if (enumerator.Current is Line line)
+					{
+						line.Visibility = ((line.Visibility == Visibility.Visible) ? Visibility.Hidden : Visibility.Visible);
+						userControl.InvalidateVisual();
+						flag = true;
+						break;
+					}
+				}
+				if (!flag)
+				{
+					Line element = new Line
+					{
+						X1 = 0.0,
+						Y1 = 286.0,
+						X2 = 1024.0,
+						Y2 = 286.0,
+						Stroke = new SolidColorBrush
+						{
+							Color = Colors.GreenYellow
+						},
+						StrokeThickness = 3.0,
+						Stretch = Stretch.None,
+						Name = name,
+						Visibility = Visibility.Visible
+					};
+					grid.Children.Add(element);
+				}
 			}
 			else
 			{
-				IActor actor2 = service2.ActiveScene.CreateActor();
-				actor2.Name = name;
-				actor2.Y = 286;
-				actor2.X = 0;
-				actor2.Width = 1024;
-				actor2.Height = 3;
-				actor2.BackgroundColor = Color.GreenYellow;
-				actor2.Visible = true;
-				actor2.HitFlags = HitTestFlags.None;
-				actor2.ForegroundColor = Color.GreenYellow;
-				actor2.OptionFlags = RenderOptionFlags.Background;
-				service2.ActiveScene.AddLast(actor2);
+				service4.ActiveScene.SuspendDrawing();
+				IActor actor = service4.ActiveScene.GetActor(name);
+				if (actor != null)
+				{
+					service4.ActiveScene.Remove(actor);
+				}
+				else
+				{
+					IActor actor2 = service4.ActiveScene.CreateActor();
+					actor2.Name = name;
+					actor2.Y = 286;
+					actor2.X = 0;
+					actor2.Width = 1024;
+					actor2.Height = 3;
+					actor2.BackgroundColor = System.Drawing.Color.GreenYellow;
+					actor2.Visible = true;
+					actor2.HitFlags = HitTestFlags.None;
+					actor2.ForegroundColor = System.Drawing.Color.GreenYellow;
+					actor2.OptionFlags = RenderOptionFlags.Background;
+					service4.ActiveScene.AddLast(actor2);
+				}
+				service4.ActiveScene.ResumeDrawing();
 			}
-			service2.ActiveScene.ResumeDrawing();
 			break;
 		}
 		case Keys.F11:
@@ -624,7 +553,7 @@ public class HostForm : Form, IFlashService, ITrackDataService
 				break;
 			}
 		}
-		EngineApplication.Instance.ActivateKeyPressHandlers(new KeyPressEventArgsEx(e, Control.ModifierKeys));
+		EngineApplication.Instance.ActivateKeyPressHandlers(new KeyPressEventArgsEx(e, System.Windows.Forms.Control.ModifierKeys));
 	}
 
 	private void OnActivated(object sender, EventArgs e)
@@ -651,12 +580,6 @@ public class HostForm : Form, IFlashService, ITrackDataService
 	private void OnMouseDoubleClick(object sender, MouseEventArgs e)
 	{
 		EngineApplication.Instance.ActivateMouseDoubleClickHandlers(e);
-	}
-
-	private void OnClosing(object sender, FormClosingEventArgs e)
-	{
-		IFlashService service = ServiceLocator.Instance.GetService<IFlashService>();
-		service.Reset();
 	}
 
 	protected override void Dispose(bool disposing)
@@ -692,7 +615,6 @@ public class HostForm : Form, IFlashService, ITrackDataService
 		base.MouseClick += new System.Windows.Forms.MouseEventHandler(OnMouseClick);
 		base.Activated += new System.EventHandler(OnActivated);
 		base.KeyPress += new System.Windows.Forms.KeyPressEventHandler(OnKeyPress);
-		base.FormClosing += new System.Windows.Forms.FormClosingEventHandler(OnClosing);
 		base.KeyDown += new System.Windows.Forms.KeyEventHandler(OnKeyDown);
 		base.ResumeLayout(false);
 	}

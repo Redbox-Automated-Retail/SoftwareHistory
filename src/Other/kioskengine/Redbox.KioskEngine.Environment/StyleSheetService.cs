@@ -38,10 +38,11 @@ public class StyleSheetService : IStyleSheetService
 		{
 			return null;
 		}
-		StyleSheet styleSheet = new StyleSheet();
-		styleSheet.Name = name;
-		StyleSheet styleSheet2 = styleSheet;
-		m_stylesheets[name] = styleSheet2;
+		StyleSheet styleSheet = new StyleSheet
+		{
+			Name = name
+		};
+		m_stylesheets[name] = styleSheet;
 		XmlNodeList xmlNodeList = xml.SelectNodes("style");
 		if (xmlNodeList != null)
 		{
@@ -52,7 +53,7 @@ public class StyleSheetService : IStyleSheetService
 				{
 					continue;
 				}
-				if (styleSheet2.GetStyle(attributeValue) != null)
+				if (styleSheet.GetStyle(attributeValue) != null)
 				{
 					LogHelper.Instance.Log("WARNING: Duplicate style '{0}' defined in stylesheet resource: {1}.", attributeValue, name);
 					continue;
@@ -62,7 +63,7 @@ public class StyleSheetService : IStyleSheetService
 				{
 					continue;
 				}
-				IStyleSheetStyle styleSheetStyle = styleSheet2.AddStyle(attributeValue);
+				IStyleSheetStyle styleSheetStyle = styleSheet.AddStyle(attributeValue);
 				foreach (XmlNode item2 in xmlNodeList2)
 				{
 					string attributeValue2 = item2.GetAttributeValue<string>("name");
@@ -92,7 +93,7 @@ public class StyleSheetService : IStyleSheetService
 				}
 			}
 		}
-		return styleSheet2;
+		return styleSheet;
 	}
 
 	public IStyleSheet GetStyleSheet(string name)

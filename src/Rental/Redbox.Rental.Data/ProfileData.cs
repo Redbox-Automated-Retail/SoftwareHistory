@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Profile;
 
@@ -74,21 +75,27 @@ public class ProfileData : IProfileData
 		profileDataInstance.ImagesPath = _imagesPath;
 		using (VistaDBDatabaseProvider vistaDBDatabaseProvider = new VistaDBDatabaseProvider("profile.data", _profileActivePath))
 		{
-			vistaDBDatabaseProvider.Open();
-			LoadBanners(vistaDBDatabaseProvider, profileDataInstance);
-			LoadGenres(vistaDBDatabaseProvider, profileDataInstance);
-			LoadMarkets(vistaDBDatabaseProvider, profileDataInstance);
-			LoadTitles(vistaDBDatabaseProvider, profileDataInstance);
-			LoadProductFamily(vistaDBDatabaseProvider, profileDataInstance);
-			LoadProductGroup(vistaDBDatabaseProvider, profileDataInstance);
-			LoadProductRating(vistaDBDatabaseProvider, profileDataInstance);
-			LoadProductType(vistaDBDatabaseProvider, profileDataInstance);
-			LoadStore(vistaDBDatabaseProvider, profileDataInstance);
-			LoadSubPlatform(vistaDBDatabaseProvider, profileDataInstance);
-			LoadVendors(vistaDBDatabaseProvider, profileDataInstance);
-			LoadVersion(vistaDBDatabaseProvider, profileDataInstance);
-			ExtractImages(vistaDBDatabaseProvider, profileDataInstance);
-			vistaDBDatabaseProvider.Close();
+			if (vistaDBDatabaseProvider.Open())
+			{
+				LoadBanners(vistaDBDatabaseProvider, profileDataInstance);
+				LoadGenres(vistaDBDatabaseProvider, profileDataInstance);
+				LoadMarkets(vistaDBDatabaseProvider, profileDataInstance);
+				LoadTitles(vistaDBDatabaseProvider, profileDataInstance);
+				LoadProductFamily(vistaDBDatabaseProvider, profileDataInstance);
+				LoadProductGroup(vistaDBDatabaseProvider, profileDataInstance);
+				LoadProductRating(vistaDBDatabaseProvider, profileDataInstance);
+				LoadProductType(vistaDBDatabaseProvider, profileDataInstance);
+				LoadStore(vistaDBDatabaseProvider, profileDataInstance);
+				LoadSubPlatform(vistaDBDatabaseProvider, profileDataInstance);
+				LoadVendors(vistaDBDatabaseProvider, profileDataInstance);
+				LoadVersion(vistaDBDatabaseProvider, profileDataInstance);
+				ExtractImages(vistaDBDatabaseProvider, profileDataInstance);
+				vistaDBDatabaseProvider.Close();
+			}
+			else
+			{
+				ServiceLocator.Instance.GetService<IEngineApplication>()?.CorruptDbDetected("Profile.Data");
+			}
 		}
 		profileDataInstance.ProfileLuaView = new ProfileLuaView(profileDataInstance);
 		return profileDataInstance;
@@ -401,7 +408,12 @@ public class ProfileData : IProfileData
 		{
 			Directory.CreateDirectory(_imagesPath);
 		}
-		foreach (DataRow row in db.GetSqlData(" SELECT [NAME] FROM CACHE").Rows)
+		DataTable sqlData = db.GetSqlData(" SELECT [NAME] FROM CACHE");
+		if (sqlData == null)
+		{
+			return;
+		}
+		foreach (DataRow row in sqlData.Rows)
 		{
 			string name = Convert.ToString(row["NAME"]);
 			string path = Path.Combine(_imagesPath, name);
@@ -411,10 +423,10 @@ public class ProfileData : IProfileData
 			}
 			TryCatchData("ProfileData.ExtractImages", name, delegate
 			{
-				DataTable sqlData = db.GetSqlData($"SELECT DATA FROM CACHE WHERE [NAME] = '{name}'", nolog: true);
-				if (sqlData.Rows.Count > 0)
+				DataTable sqlData2 = db.GetSqlData($"SELECT DATA FROM CACHE WHERE [NAME] = '{name}'", nolog: true);
+				if (sqlData2.Rows.Count > 0)
 				{
-					byte[] array = (byte[])sqlData.Rows[0]["Data"];
+					byte[] array = (byte[])sqlData2.Rows[0]["Data"];
 					using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
 					fileStream.Write(array, 0, array.Length);
 					fileStream.Close();
@@ -426,21 +438,28 @@ public class ProfileData : IProfileData
 	private void ConvertToList(DataTable data, string name, Action<string, string> action)
 	{
 		LogHelper.Instance.Log("ProfileData.{0} - Loading", name);
-		int columnIndex = data.Columns.IndexOf("Key");
-		int columnIndex2 = data.Columns.IndexOf("Value");
-		foreach (DataRow row in data.Rows)
+		if (data != null)
 		{
-			string arg = Convert.ToString(row[columnIndex]);
-			string arg2 = Convert.ToString(row[columnIndex2]);
-			try
+			int columnIndex = data.Columns.IndexOf("Key");
+			int columnIndex2 = data.Columns.IndexOf("Value");
 			{
-				action(arg, arg2);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log($"ProfileData.{name} - Unhandled exception occurred, skipping Key: {arg} Value: {arg2}", e);
+				foreach (DataRow row in data.Rows)
+				{
+					string arg = Convert.ToString(row[columnIndex]);
+					string arg2 = Convert.ToString(row[columnIndex2]);
+					try
+					{
+						action(arg, arg2);
+					}
+					catch (Exception e)
+					{
+						LogHelper.Instance.Log($"ProfileData.{name} - Unhandled exception occurred, skipping Key: {arg} Value: {arg2}", e);
+					}
+				}
+				return;
 			}
 		}
+		LogHelper.Instance.Log("Profile.{0} - data is null", name);
 	}
 
 	private void TryCatchData(string name, string data, Action action)

@@ -312,6 +312,23 @@ public class Scene : IScene, IDisposable
 		}
 	}
 
+	public IActor GetActorByNameAndTag(string name, string tag)
+	{
+		IActor result = null;
+		lock (m_syncObject)
+		{
+			foreach (IActor actor in Actors)
+			{
+				if (actor.Name == name && actor.Tag as string == tag)
+				{
+					result = actor;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	public List<IActor> GetActorByTag(string tag)
 	{
 		List<IActor> list = new List<IActor>();

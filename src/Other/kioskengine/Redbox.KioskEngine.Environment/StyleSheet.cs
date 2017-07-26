@@ -20,11 +20,12 @@ public class StyleSheet : IStyleSheet
 		{
 			return m_styles[name];
 		}
-		StyleSheetStyle styleSheetStyle = new StyleSheetStyle();
-		styleSheetStyle.Name = name;
-		StyleSheetStyle styleSheetStyle2 = styleSheetStyle;
-		m_styles[name] = styleSheetStyle2;
-		return styleSheetStyle2;
+		StyleSheetStyle styleSheetStyle = new StyleSheetStyle
+		{
+			Name = name
+		};
+		m_styles[name] = styleSheetStyle;
+		return styleSheetStyle;
 	}
 
 	public IStyleSheetStyle GetStyle(string name)

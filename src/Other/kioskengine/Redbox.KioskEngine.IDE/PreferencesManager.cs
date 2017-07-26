@@ -143,16 +143,7 @@ public class PreferencesManager : Form
 					treeNode = array[0];
 					continue;
 				}
-				TreeNode treeNode2;
-				if (treeNode != null)
-				{
-					treeNode2 = treeNode.Nodes.Add(item, item);
-				}
-				else
-				{
-					treeNode2 = m_treeView.Nodes.Add(item, item);
-				}
-				treeNode = treeNode2;
+				treeNode = ((treeNode == null) ? m_treeView.Nodes.Add(item, item) : treeNode.Nodes.Add(item, item));
 				if (item == list[list.Count - 1])
 				{
 					treeNode.Tag = preferencePage;

@@ -22,7 +22,7 @@ public interface IQueueService : IDisposable
 
 	ErrorList ExportToXml(string fileName);
 
-	ErrorList Initialize(string path);
+	ErrorList Initialize(string path, int retry = 2);
 
 	ErrorList ForEach(Action<IMessage> action);
 

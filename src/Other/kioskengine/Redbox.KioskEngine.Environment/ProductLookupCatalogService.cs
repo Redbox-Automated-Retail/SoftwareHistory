@@ -14,9 +14,10 @@ public class ProductLookupCatalogService : IProductLookupCatalogService
 		Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> dictionary = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
 		try
 		{
-			ProductLookupCatalogModel productLookupCatalogModel = new ProductLookupCatalogModel();
-			productLookupCatalogModel.Barcodes = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
-			ProductLookupCatalogModel productLookupCatalogModel2 = productLookupCatalogModel;
+			ProductLookupCatalogModel productLookupCatalogModel = new ProductLookupCatalogModel
+			{
+				Barcodes = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>()
+			};
 			if (!File.Exists(path))
 			{
 				LogHelper.Instance.Log("ProductLookupCatalogModel.GetProductLookupCatalog - ProductLookup file ({0}) does not exist", path);
@@ -29,14 +30,14 @@ public class ProductLookupCatalogService : IProductLookupCatalogService
 			}
 			using (MemoryArchive memoryArchive = MemoryArchive.Open(path))
 			{
-				productLookupCatalogModel2.OriginMachine = memoryArchive.GetOriginMachine().Trim();
-				productLookupCatalogModel2.GeneratedOn = memoryArchive.GetCreatedOn().Trim();
+				productLookupCatalogModel.OriginMachine = memoryArchive.GetOriginMachine().Trim();
+				productLookupCatalogModel.GeneratedOn = memoryArchive.GetCreatedOn().Trim();
 				for (int i = 0; i < memoryArchive.Count; i++)
 				{
 					Redbox.ProductLookupCatalog.Inventory inventory = memoryArchive[i];
-					if (inventory != null && inventory.Barcode != null && !productLookupCatalogModel2.Barcodes.ContainsKey(inventory.Barcode))
+					if (inventory != null && inventory.Barcode != null && !productLookupCatalogModel.Barcodes.ContainsKey(inventory.Barcode))
 					{
-						productLookupCatalogModel2.Barcodes.Add(inventory.Barcode, new Redbox.KioskEngine.ComponentModel.Inventory
+						productLookupCatalogModel.Barcodes.Add(inventory.Barcode, new Redbox.KioskEngine.ComponentModel.Inventory
 						{
 							Barcode = inventory.Barcode,
 							TitleId = inventory.TitleId,
@@ -46,8 +47,8 @@ public class ProductLookupCatalogService : IProductLookupCatalogService
 					}
 				}
 			}
-			LogHelper.Instance.Log("ProductLookupCatalogModel.GetProductLookupCatalog - ProductLookup file {0} contains {1} barcodes.", path, productLookupCatalogModel2.Barcodes.Count);
-			return productLookupCatalogModel2;
+			LogHelper.Instance.Log("ProductLookupCatalogModel.GetProductLookupCatalog - ProductLookup file {0} contains {1} barcodes.", path, productLookupCatalogModel.Barcodes.Count);
+			return productLookupCatalogModel;
 		}
 		catch (Exception e)
 		{

@@ -460,7 +460,14 @@ public class MovieOrGameBrowseItem(LuaTable luaTable) : LuaBasedBrowseItem(luaTa
 			if (_browseItemConfigurationInfo.BrowseControl.ShowTitle)
 			{
 				actor.HotSpot = ComputeAddImageHotspotWithTitleSizeAndPosition(_addImageSizeAndPosition);
-				actor.Hit += ItemSelected;
+				if (ShowIndexOfAddButton)
+				{
+					actor.Hit += AddItemSelected;
+				}
+				else
+				{
+					actor.Hit += ItemSelected;
+				}
 			}
 			else
 			{
@@ -595,10 +602,14 @@ public class MovieOrGameBrowseItem(LuaTable luaTable) : LuaBasedBrowseItem(luaTa
 		int num2 = 56;
 		double num3 = Convert.ToDouble(9) / (double)num2;
 		sizeAndPosition.Y = _imageSizeAndPosition.Y + Convert.ToInt32((double)_imageSizeAndPosition.Height * num3);
-		double num4 = Convert.ToDouble(43) / (double)num2;
-		sizeAndPosition.Height = Convert.ToInt32((double)_imageSizeAndPosition.Height * num4);
+		int num4 = 43;
+		double num5 = Convert.ToDouble(num4) / (double)num2;
+		sizeAndPosition.Height = Convert.ToInt32((double)_imageSizeAndPosition.Height * num5);
 		sizeAndPosition.Width = sizeAndPosition.Height;
 		sizeAndPosition.X = _browseItemConfigurationInfo.SizeAndPosition.X + _browseItemConfigurationInfo.SizeAndPosition.Width - sizeAndPosition.Width + 5;
+		int num6 = 18;
+		double num7 = Convert.ToDouble(sizeAndPosition.Width) / (double)num4;
+		sizeAndPosition.FontSize = Convert.ToSingle(num7 * (double)num6);
 		return sizeAndPosition;
 	}
 

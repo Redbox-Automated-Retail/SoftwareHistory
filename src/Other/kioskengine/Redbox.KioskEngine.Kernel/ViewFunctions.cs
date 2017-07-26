@@ -30,6 +30,12 @@ internal static class ViewFunctions
 		return ServiceLocator.Instance.GetService<IViewService>()?.Peek();
 	}
 
+	[KernelFunction(Name = "kernel.peekpriorview")]
+	internal static string PeekPriorView()
+	{
+		return ServiceLocator.Instance.GetService<IViewService>()?.Peek(1);
+	}
+
 	[KernelFunction(Name = "kernel.getviewframe")]
 	internal static LuaTable GetViewFrame()
 	{

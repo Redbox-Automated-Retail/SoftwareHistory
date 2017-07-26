@@ -14,16 +14,16 @@ public class ClientSessionPool : IDisposable
 
 	public int? Timeout { get; internal set; }
 
-	public Redbox_002EIPC_002EFramework1802119_002EIPCProtocol Protocol { get; internal set; }
+	public Redbox_002EIPC_002EFramework1769326_002EIPCProtocol Protocol { get; internal set; }
 
 	internal List<ClientSession> Sessions { get; set; }
 
-	public ClientSessionPool(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, int poolSize)
+	public ClientSessionPool(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, int poolSize)
 		: this(protocol, poolSize, null)
 	{
 	}
 
-	public ClientSessionPool(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, int poolSize, int? timeout)
+	public ClientSessionPool(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, int poolSize, int? timeout)
 	{
 		Sessions = new List<ClientSession>();
 		Protocol = protocol;

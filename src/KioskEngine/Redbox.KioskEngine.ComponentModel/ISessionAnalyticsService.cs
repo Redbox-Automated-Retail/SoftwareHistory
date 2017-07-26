@@ -8,6 +8,10 @@ public interface ISessionAnalyticsService
 
 	void AddView(string sessionId, string viewName);
 
+	void AddViewEvent(string subItemType, string subItemValue);
+
+	void AddViewEvent2(string subItemType, string subItemValue, string sessionId);
+
 	void Close(string sessionId);
 
 	void DisposeSession(string sessionId);

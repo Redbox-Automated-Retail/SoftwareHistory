@@ -5,10 +5,10 @@ using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.UpdateServices.KernelExtension;
 
-[Redbox_002EIPC_002EFramework1802119_002ECommand("engine")]
+[Redbox_002EIPC_002EFramework1769326_002ECommand("engine")]
 public class EngineCommand
 {
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "ping")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "ping")]
 	[Usage("engine ping")]
 	public void Ping(CommandContext context)
 	{
@@ -22,7 +22,7 @@ public class EngineCommand
 		}
 	}
 
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "shutdown")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "shutdown")]
 	[Usage("engine shutdown")]
 	public void ShutDown(CommandContext context)
 	{
@@ -52,7 +52,7 @@ public class EngineCommand
 		}
 	}
 
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "reset-bundle")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "reset-bundle")]
 	[Usage("engine reset-bundle")]
 	internal static void ResetBundle(string[] parms)
 	{

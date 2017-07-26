@@ -105,6 +105,18 @@ internal static class SessionAnalyticsFunctions
 		}
 	}
 
+	[KernelFunction(Name = "kernel.analyticsaddviewevent")]
+	internal static void AnalyticsAddViewEvent(string subItemType, string subItemValue)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent(subItemType, subItemValue);
+	}
+
+	[KernelFunction(Name = "kernel.analyticsaddviewevent2")]
+	internal static void AnalyticsAddViewEvent2(string subItemType, string subItemValue, string sessionId)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent2(subItemType, subItemValue, sessionId);
+	}
+
 	private static Dictionary<string, string> ConvertToDictionary(LuaTable table)
 	{
 		Dictionary<string, string> dictionary = new Dictionary<string, string>();

@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Windows.Media.Imaging;
 using System.Windows.Xps.Packaging;
 using System.Xml;
 using Redbox.Core;
@@ -154,6 +155,8 @@ public class ResourceBundleService : IResourceBundleService
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			errorList.AddRange(Deactivate());
+			ManualResetEvent manualResetEvent2 = new ManualResetEvent(initialState: false);
+			manualResetEvent2.WaitOne(5000);
 			LogHelper.Instance.Log("Activate resource bundle: {0}", SwitchToBundle.Storage.BundlePath);
 			ActiveBundle = SwitchToBundle;
 			Filter = ActiveBundle.CreateFilter();
@@ -176,9 +179,7 @@ public class ResourceBundleService : IResourceBundleService
 			Redbox.REDS.Framework.ErrorList source = ActiveBundle.Activate(Filter, out var manifestInfo);
 			source.CopyToLocalCollection(errorList);
 			List<IResourceBundle> list2 = new List<IResourceBundle>();
-			List<string> list3 = new List<string>();
-			list3.Add(manifestInfo.StartupScript);
-			List<string> list4 = list3;
+			List<string> list3 = new List<string> { manifestInfo.StartupScript };
 			foreach (IBundleSpecifier require in manifestInfo.Requires)
 			{
 				Redbox.REDS.Framework.ErrorList bundle = InnerBundles.GetBundle(require.Name, require.Version.ToString(), out var bundle2, out var manifestInfo2);
@@ -192,9 +193,9 @@ public class ResourceBundleService : IResourceBundleService
 					errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("B122", "Only Library and Content bundles may be referenced in the Requires property.", "Specify a bundle that has a type of Library or Content."));
 					continue;
 				}
-				if (!string.IsNullOrEmpty(manifestInfo2.StartupScript) && !list4.Contains(manifestInfo2.StartupScript))
+				if (!string.IsNullOrEmpty(manifestInfo2.StartupScript) && !list3.Contains(manifestInfo2.StartupScript))
 				{
-					list4.Add(manifestInfo2.StartupScript);
+					list3.Add(manifestInfo2.StartupScript);
 				}
 				list2.Add(bundle2);
 			}
@@ -206,7 +207,7 @@ public class ResourceBundleService : IResourceBundleService
 				service3["ProductVersion"] = manifestInfo.ProductVersion;
 				errorList.AddRange(service.ResetAllExtensions());
 				IKernelService service4 = ServiceLocator.Instance.GetService<IKernelService>();
-				foreach (string item3 in list4)
+				foreach (string item3 in list3)
 				{
 					if (!service4.LoadStartupScript(item3))
 					{
@@ -258,6 +259,8 @@ public class ResourceBundleService : IResourceBundleService
 		}
 		finally
 		{
+			IEngineApplication service7 = ServiceLocator.Instance.GetService<IEngineApplication>();
+			service7.AppStarting = false;
 			switchStatusForm.Close();
 		}
 	}
@@ -491,24 +494,6 @@ public class ResourceBundleService : IResourceBundleService
 		return (XmlNode)resource.GetAspect("content").GetContent();
 	}
 
-	public string GetMovie(string resourceName)
-	{
-		IFileCacheService service = ServiceLocator.Instance.GetService<IFileCacheService>();
-		IResource resource = GetResource(resourceName);
-		if (resource == null)
-		{
-			return null;
-		}
-		byte[] array = (byte[])resource.GetAspect("content").GetContent();
-		if (array == null)
-		{
-			return null;
-		}
-		string text = Path.Combine(service.GetCachePath(), Path.ChangeExtension(resourceName, ".movie"));
-		service.SetFileContent(text, array, overwrite: false);
-		return text;
-	}
-
 	public byte[] GetSound(string resourceName)
 	{
 		IResource resource = GetResource(resourceName);
@@ -559,6 +544,21 @@ public class ResourceBundleService : IResourceBundleService
 		return (string)content;
 	}
 
+	public string GetJsonFile(string resourceName)
+	{
+		IResource resource = GetResource(resourceName);
+		if (resource == null)
+		{
+			return null;
+		}
+		object content = resource.GetAspect("content").GetContent();
+		if (content is byte[])
+		{
+			return Encoding.ASCII.GetString((byte[])content);
+		}
+		return (string)content;
+	}
+
 	public Image GetBitmap(string resourceName)
 	{
 		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
@@ -568,6 +568,18 @@ public class ResourceBundleService : IResourceBundleService
 			return null;
 		}
 		return service.RegisterImage(resource.GetFullName(), (byte[])resource.GetAspect("content").GetContent());
+	}
+
+	public BitmapImage GetBitmapImage(string resourceName)
+	{
+		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		BitmapImage bitmapImage = service.GetBitmapImage(resourceName);
+		if (bitmapImage == null)
+		{
+			GetBitmap(resourceName);
+			bitmapImage = service.GetBitmapImage(resourceName);
+		}
+		return bitmapImage;
 	}
 
 	public ReadOnlyCollection<object> ExecuteScript(string resourceName)
@@ -586,36 +598,34 @@ public class ResourceBundleService : IResourceBundleService
 		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
 		ITimerService service3 = ServiceLocator.Instance.GetService<ITimerService>();
 		IInputService service4 = ServiceLocator.Instance.GetService<IInputService>();
-		IFlashService service5 = ServiceLocator.Instance.GetService<IFlashService>();
-		ISoundService service6 = ServiceLocator.Instance.GetService<ISoundService>();
-		IKernelService service7 = ServiceLocator.Instance.GetService<IKernelService>();
-		ISchedulerService service8 = ServiceLocator.Instance.GetService<ISchedulerService>();
-		IRenderingService service9 = ServiceLocator.Instance.GetService<IRenderingService>();
-		IDataStoreService service10 = ServiceLocator.Instance.GetService<IDataStoreService>();
-		IFontCacheService service11 = ServiceLocator.Instance.GetService<IFontCacheService>();
-		IStyleSheetService service12 = ServiceLocator.Instance.GetService<IStyleSheetService>();
-		IBitmapCacheService service13 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-		IShoppingSessionService service14 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		IEnvironmentNotificationService service15 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-		IKernelFunctionRegistryService service16 = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
-		service8?.Reset();
+		ISoundService service5 = ServiceLocator.Instance.GetService<ISoundService>();
+		IKernelService service6 = ServiceLocator.Instance.GetService<IKernelService>();
+		ISchedulerService service7 = ServiceLocator.Instance.GetService<ISchedulerService>();
+		IRenderingService service8 = ServiceLocator.Instance.GetService<IRenderingService>();
+		IDataStoreService service9 = ServiceLocator.Instance.GetService<IDataStoreService>();
+		IFontCacheService service10 = ServiceLocator.Instance.GetService<IFontCacheService>();
+		IStyleSheetService service11 = ServiceLocator.Instance.GetService<IStyleSheetService>();
+		IBitmapCacheService service12 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		IShoppingSessionService service13 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		IEnvironmentNotificationService service14 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		IKernelFunctionRegistryService service15 = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
+		service7?.Reset();
 		service3?.Reset();
-		if (service9.ActiveScene != null)
+		if (service8.ActiveScene != null)
 		{
-			service9.ActiveScene.Clear();
+			service8.ActiveScene.Clear();
 		}
 		service2.Reset();
-		service12?.Reset();
-		service13.DropCache();
-		service11.DropCache();
-		service7.Reset();
-		service16.Reset();
-		service5.Reset();
-		service4.Reset();
+		service11?.Reset();
+		service12.DropCache();
+		service10.DropCache();
+		service6.Reset();
 		service15.Reset();
+		service4.Reset();
 		service14.Reset();
+		service13.Reset();
 		service.Reset();
-		service10.CloseAllStores();
+		service9.CloseAllStores();
 	}
 
 	public void RegisterAssemblyFunctions(string name, Assembly assembly)

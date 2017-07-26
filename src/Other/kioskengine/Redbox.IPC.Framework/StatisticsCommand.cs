@@ -3,10 +3,10 @@ using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-[Redbox_002EIPC_002EFramework1802119_002ECommand("statistics", Filter = "System|Statistics")]
+[Redbox_002EIPC_002EFramework1769326_002ECommand("statistics", Filter = "System|Statistics")]
 public class StatisticsCommand
 {
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "show")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "show")]
 	[Usage("STATISTICS show")]
 	public void Show(CommandContext context)
 	{

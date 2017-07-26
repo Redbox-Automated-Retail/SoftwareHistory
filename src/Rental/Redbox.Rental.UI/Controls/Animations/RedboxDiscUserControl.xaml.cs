@@ -59,7 +59,7 @@ public partial class RedboxDiscUserControl : UserControl, IComponentConnector
 		DoubleAnimationUsingKeyFrames doubleAnimationUsingKeyFrames = new DoubleAnimationUsingKeyFrames();
 		doubleAnimationUsingKeyFrames.KeyFrames.Add(new EasingDoubleKeyFrame
 		{
-			KeyTime = KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.0)),
+			KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero),
 			Value = 0.0
 		});
 		doubleAnimationUsingKeyFrames.KeyFrames.Add(new EasingDoubleKeyFrame

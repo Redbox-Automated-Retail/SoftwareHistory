@@ -3,7 +3,7 @@
   <Grid Background="#B5121B" Width="2048">
     <local:RedChevronUserControl x:Name="RedChevron" VerticalAlignment="Top" HorizontalAlignment="Left" />
     <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="75" Width="430" TextBlock.Foreground="#FFFFFFFF">
-      <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_large}" TextWrapping="Wrap">Please insert your disc</TextBlock>
+      <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_large}" TextWrapping="Wrap">Culture specific title goes here at runtime</TextBlock>
     </StackPanel>
     <local:RedboxDiscUserControl x:Name="RedboxDisc" VerticalAlignment="Center" HorizontalAlignment="Left" Width="460" Height="460" Margin="520, 0" />
   </Grid>

@@ -49,6 +49,10 @@ public partial class InsertDiscAnimationUserControl : UserControl, IComponentCon
 	{
 		InitializeComponent();
 		RedboxDisc.AnimationScrollDirection = RedboxDiscUserControl.ScrollDirection.Left;
+		if (MessageTextBlock.Text.StartsWith("Culture specific title"))
+		{
+			MessageTextBlock.Text = "Please insert your disc.";
+		}
 		IsAnimated = true;
 	}
 

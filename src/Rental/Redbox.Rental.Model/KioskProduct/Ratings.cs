@@ -29,6 +29,8 @@ public enum Ratings : long
 	M17PLUS = 18L,
 	[Description("Rating Pending")]
 	RP = 19L,
+	[Description("Adult Only")]
+	AO = 20L,
 	[Description("Mature Audience Only")]
 	TVMA = 21L,
 	[Description("Parental Guidance Suggested")]

@@ -2,15 +2,33 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.Proxy;
 
 public class InventoryServicesProxy : IInventoryServices
 {
+	private class SnapshotRequest
+	{
+		public string MessageType { get; set; }
+
+		public string MessageId { get; set; }
+
+		public int KioskId { get; set; }
+
+		public string EngineVersion { get; set; }
+
+		public string BundleVersion { get; set; }
+
+		public List<InventoryItem> Discs { get; set; }
+	}
+
 	private int m_working;
 
 	public static InventoryServicesProxy Instance => Singleton<InventoryServicesProxy>.Instance;
@@ -36,18 +54,6 @@ public class InventoryServicesProxy : IInventoryServices
 		set
 		{
 			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "EnableOutOfStockDisplay", value);
-		}
-	}
-
-	public bool EnableSellThryOfUsed
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Inventory Services", "EnableSellThruOfUsed", defaultValue: true);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Inventory Services", "EnableSellThruOfUsed", value);
 		}
 	}
 
@@ -239,6 +245,18 @@ public class InventoryServicesProxy : IInventoryServices
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.SoftSync, URL: {0}", KioskServicesProxy.Instance.Url);
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
+				List<IMessage> oldData = new List<IMessage>();
+				service2.ForEach(delegate(IMessage x)
+				{
+					oldData.Add(x);
+				}, "SoftSync");
+				List<IInventoryItem> list = new List<IInventoryItem>(items);
+				if (oldData.Any())
+				{
+					IEnumerable<InventoryItem> collection = Encoding.ASCII.GetString(oldData.SelectMany((IMessage x) => x.Data).ToArray()).ToObject<SnapshotRequest>().Discs.Where((InventoryItem x) => x.Status == InventoryItemStatus.Removed);
+					list.AddRange(collection);
+				}
 				var message = new
 				{
 					MessageType = "SoftSync",
@@ -246,9 +264,9 @@ public class InventoryServicesProxy : IInventoryServices
 					KioskId = int.Parse(storeNumber),
 					EngineVersion = service["EngineVersion"],
 					BundleVersion = service["ProductVersion"],
-					Discs = new List<IInventoryItem>(items)
+					Discs = list
 				};
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().EnqueueOnlyOne(200, "SoftSync", message);
+				errorList = service2.EnqueueOnlyOne(200, "SoftSync", message);
 				Redbox.KioskEngine.ComponentModel.Error error = errorList.Find((Redbox.KioskEngine.ComponentModel.Error err) => err.Code == "QID");
 				if (error != null)
 				{
@@ -263,8 +281,8 @@ public class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service2 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -277,7 +295,7 @@ public class InventoryServicesProxy : IInventoryServices
 							remoteServiceResult.Properties["softsync_queue_id"] = num.ToString();
 							remoteServiceResult.Properties["message_guid"] = messageId.ToString();
 						}
-						service2.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,

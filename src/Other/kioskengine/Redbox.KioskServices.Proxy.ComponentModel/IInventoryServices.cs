@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 
 namespace Redbox.KioskServices.Proxy.ComponentModel;
 

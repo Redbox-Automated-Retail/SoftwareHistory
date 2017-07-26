@@ -6,6 +6,30 @@ namespace Redbox.Rental.Kernel.Views;
 
 public class MessagePopupViewFunctions
 {
+	[KernelFunction(Name = "kernel.show_sub_platform_warning")]
+	internal static void ShowSubPlatformWarning(Action timeOutAction, Action backAction, Action continueAction)
+	{
+		MessagePopupViewController.ShowSubPlatformWarning(timeOutAction, backAction, continueAction);
+	}
+
+	[KernelFunction(Name = "kernel.show_purchase_warning")]
+	internal static void ShowPurchaseWarning(Action timeOutAction, Action backAction, Action continueAction)
+	{
+		MessagePopupViewController.ShowPurchaseWarning(timeOutAction, backAction, continueAction);
+	}
+
+	[KernelFunction(Name = "kernel.show_mature_warning")]
+	internal static void ShowMatureWarning(Action timeOutAction, Action backAction, Action continueAction)
+	{
+		MessagePopupViewController.ShowMatureWarning(timeOutAction, backAction, continueAction);
+	}
+
+	[KernelFunction(Name = "kernel.show_bluray_alert")]
+	internal static void ShowBlurayAlert(Action timeOutAction, Action backAction, Action continueAction)
+	{
+		MessagePopupViewController.ShowBlurayAlert(timeOutAction, backAction, continueAction);
+	}
+
 	[KernelFunction(Name = "kernel.show_message_popup_view_return_success")]
 	internal static void ShowMessagePopupViewReturnSuccess(Action timeOutAction)
 	{
@@ -28,6 +52,12 @@ public class MessagePopupViewFunctions
 	internal static void ShowMessagePopupViewReturnUnrecognizedBarcode(Action timeOutAction, Action continueAction)
 	{
 		MessagePopupViewController.ShowMessagePopupViewReturnUnrecognizedBarcode(timeOutAction, continueAction);
+	}
+
+	[KernelFunction(Name = "kernel.show_message_popup_view_vend_error")]
+	internal static void ShowMessagePopupViewVendError(Action timeOutAction, Action continueAction)
+	{
+		MessagePopupViewController.ShowMessagePopupViewVendError(timeOutAction, continueAction);
 	}
 
 	[KernelFunction(Name = "kernel.hide_message_popup_view")]

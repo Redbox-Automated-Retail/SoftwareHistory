@@ -2,6 +2,24 @@ namespace Redbox.Rental.Model;
 
 public static class ConfigSetting
 {
+	public static string SellThruOfUsed = "SellThruOfUsed";
+
+	public static string GamesSellThru = "GamesSellThru";
+
+	public static string SellThruDays = "SellThruDays";
+
+	public static string GameEnableXbox360 = "GameEnableXbox360";
+
+	public static string GameEnableXboxOne = "GameEnableXboxOne";
+
+	public static string GameEnablePS3 = "GameEnablePS3";
+
+	public static string GameEnablePS4 = "GameEnablePS4";
+
+	public static string GameEnableWii = "GameEnableWii";
+
+	public static string GameEnableWiiU = "GameEnableWiiU";
+
 	public static string DefaultCulture = "DefaultCulture";
 
 	public static string AlternateCulture = "AlternateCulture";
@@ -23,4 +41,26 @@ public static class ConfigSetting
 	public static string CollectionsPopUpTimer = "CollectionsPopUpTimer";
 
 	public static string CollectionsPopUpPaddleClicks = "CollectionsPopUpPaddleClicks";
+
+	public static string EnableMarketingAds = "EnableMarketingAds";
+
+	public static string ShowFAQUpdated = "ShowFAQUpdated";
+
+	public static string ShowTermsUpdated = "ShowTermsUpdated";
+
+	public static string ShowRedboxCardUpdated = "ShowRedboxCardUpdated";
+
+	public static string ShowPrivacyUpdated = "ShowPrivacyUpdated";
+
+	public static string ShowPlayPassUpdated = "ShowPlayPassUpdated";
+
+	public static string FAQDocument = "FAQDocument";
+
+	public static string TermsDocument = "TermsDocument";
+
+	public static string RedboxCardDocument = "RedboxCardDocument";
+
+	public static string PrivacyDocument = "PrivacyDocument";
+
+	public static string PlayPassDocument = "PlayPassDocument";
 }

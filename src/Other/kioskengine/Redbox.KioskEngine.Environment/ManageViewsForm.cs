@@ -149,9 +149,10 @@ public class ManageViewsForm : Form
 		}
 		foreach (IResource resource in activeBundleSet.GetResources("view", ResourceBundleService.Instance.Filter))
 		{
-			ListViewItem listViewItem = new ListViewItem(resource.Name);
-			listViewItem.Tag = resource;
-			ListViewItem value = listViewItem;
+			ListViewItem value = new ListViewItem(resource.Name)
+			{
+				Tag = resource
+			};
 			m_viewListView.Items.Add(value);
 		}
 		m_viewListView.EndUpdate();
@@ -163,14 +164,15 @@ public class ManageViewsForm : Form
 		m_stackListView.Items.Clear();
 		foreach (IViewFrame item in ViewService.Instance.Stack)
 		{
-			ListViewItem listViewItem = new ListViewItem(item.ViewName);
-			listViewItem.Tag = item;
-			ListViewItem listViewItem2 = listViewItem;
-			listViewItem2.SubItems.Add(item.SceneName);
-			listViewItem2.SubItems.Add(item.Clear.ToString());
-			listViewItem2.SubItems.Add(item.Width.ToString());
-			listViewItem2.SubItems.Add(item.Height.ToString());
-			m_stackListView.Items.Add(listViewItem2);
+			ListViewItem listViewItem = new ListViewItem(item.ViewName)
+			{
+				Tag = item
+			};
+			listViewItem.SubItems.Add(item.SceneName);
+			listViewItem.SubItems.Add(item.Clear.ToString());
+			listViewItem.SubItems.Add(item.Width.ToString());
+			listViewItem.SubItems.Add(item.Height.ToString());
+			m_stackListView.Items.Add(listViewItem);
 		}
 		m_stackListView.EndUpdate();
 		m_popButton.Enabled = m_stackListView.Items.Count > 0;

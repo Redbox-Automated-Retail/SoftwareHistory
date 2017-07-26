@@ -73,6 +73,18 @@ public class FontCacheService : IFontCacheService, IDisposable
 			PrivateFonts.AddMemoryFont(intPtr, data.Length);
 			Marshal.FreeCoTaskMem(intPtr);
 			fontFamily = PrivateFonts.Families.ToList().Find((FontFamily f) => f.Name.Equals(familyName, StringComparison.CurrentCultureIgnoreCase));
+			if (fontFamily == null && familyName == "Target Alt Regular")
+			{
+				fontFamily = PrivateFonts.Families.ToList().Find((FontFamily f) => f.Name.Equals("Target Alt", StringComparison.CurrentCultureIgnoreCase));
+			}
+			if (fontFamily == null && familyName == "VAG Rounded Std Light")
+			{
+				fontFamily = PrivateFonts.Families.ToList().Find((FontFamily f) => f.Name.Equals("VAG Rounded Std", StringComparison.CurrentCultureIgnoreCase));
+			}
+		}
+		if (fontFamily == null)
+		{
+			fontFamily = PrivateFonts.Families.FirstOrDefault();
 		}
 		font = new Font(fontFamily, size, style);
 		Fonts[name] = font;

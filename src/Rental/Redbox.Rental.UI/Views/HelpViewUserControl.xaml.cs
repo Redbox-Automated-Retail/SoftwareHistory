@@ -14,6 +14,7 @@ using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.UI.Controls;
 
@@ -25,6 +26,8 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	{
 		public string DocumentName { get; set; }
 
+		public string DefaultDocumentName { get; set; }
+
 		public string Title { get; set; }
 
 		public bool Visible { get; set; }
@@ -33,6 +36,28 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	}
 
 	private List<Border> BorderButtons = new List<Border>();
+
+	public bool ShowFAQUpdated;
+
+	public bool ShowTermsUpdated;
+
+	public bool ShowRedboxCardUpdated;
+
+	public bool ShowPrivacyUpdated;
+
+	public bool ShowPlayPassUpdated;
+
+	public string HelpUpdatedButton = "Updated";
+
+	public string FAQDocument = "document-faqs";
+
+	public string TermsDocument = "document-terms";
+
+	public string RedboxCardDocument = "document-terms-redbox-card";
+
+	public string PrivacyDocument = "document-privacy-policy";
+
+	public string PlayPassDocument = "document-play-pass";
 
 	private Dictionary<HelpDocuments, HelpDocumentInfo> m_helpDocumentInfoList = new Dictionary<HelpDocuments, HelpDocumentInfo>();
 
@@ -45,6 +70,8 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	private FixedDocumentSequence m_fixedDocumentSequence;
 
 	private XpsDocument m_xpsDoc;
+
+	private bool m_showAsPopup;
 
 	public IActor Actor { get; set; }
 
@@ -137,6 +164,28 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		}
 	}
 
+	public bool ShowAsPopup
+	{
+		get
+		{
+			return m_showAsPopup;
+		}
+		set
+		{
+			m_showAsPopup = value;
+			if (m_showAsPopup)
+			{
+				back_button.Visibility = Visibility.Collapsed;
+				faq_button.Visibility = Visibility.Collapsed;
+				terms_button.Visibility = Visibility.Collapsed;
+				terms_redbox_card_button.Visibility = Visibility.Collapsed;
+				privacy_button.Visibility = Visibility.Collapsed;
+				play_pass_button.Visibility = Visibility.Collapsed;
+				close_button.Visibility = Visibility.Visible;
+			}
+		}
+	}
+
 	public Dictionary<HelpDocuments, HelpDocumentInfo> HelpDocumentInfoList => m_helpDocumentInfoList;
 
 	public event WPFHitHandler OnWPFHit;
@@ -170,6 +219,7 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		RegisterRoutedCommand("PageLeft", HelpViewCommands.PageLeft);
 		RegisterRoutedCommand("PageRight", HelpViewCommands.PageRight);
 		RegisterRoutedCommand("GoBack", HelpViewCommands.GoBack);
+		LoadConfigurations();
 	}
 
 	private void InitializePlayPassButton()
@@ -188,6 +238,9 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		{
 		case "ButtonGoBack_Text":
 			ButtonGoBack_Text.Text = value;
+			break;
+		case "ButtonClose_Text":
+			ButtonClose_Text.Text = value;
 			break;
 		case "ButtonFAQ_Text":
 			ButtonFAQ_Text.Text = value;
@@ -255,6 +308,14 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 				if (m_xpsDoc == null)
 				{
 					LogHelper.Instance.Log("Unable to get Xps document {0}", value.DocumentName);
+					if (!value.DocumentName.Equals(value.DefaultDocumentName, StringComparison.CurrentCultureIgnoreCase))
+					{
+						m_xpsDoc = service.GetXpsDocument(value.DefaultDocumentName);
+						if (m_xpsDoc == null)
+						{
+							LogHelper.Instance.Log("Unable to get default Xps document {0}", value.DefaultDocumentName);
+						}
+					}
 				}
 			}
 		}
@@ -363,5 +424,64 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	private void RedboxLogoCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		OnRedboxLogoCommand?.Invoke();
+	}
+
+	public void SetUpdatedText(string value)
+	{
+		txtRentalFaqUpdated.Text = value;
+		txtTransactionTermsUpdated.Text = value;
+		txtRedboxCardTermsUpdated.Text = value;
+		txtPrivacyUpdated.Text = value;
+		txtPlayPassUpdated.Text = value;
+	}
+
+	private void LoadConfigurations()
+	{
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowFAQUpdated, out var value))
+		{
+			ShowFAQUpdated = value;
+		}
+		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowTermsUpdated, out value))
+		{
+			ShowTermsUpdated = value;
+		}
+		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowRedboxCardUpdated, out value))
+		{
+			ShowRedboxCardUpdated = value;
+		}
+		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPrivacyUpdated, out value))
+		{
+			ShowPrivacyUpdated = value;
+		}
+		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPlayPassUpdated, out value))
+		{
+			ShowPlayPassUpdated = value;
+		}
+		brdRentalFaqUpdated.Visibility = ((!ShowFAQUpdated) ? Visibility.Hidden : Visibility.Visible);
+		brdTransactionTermsUpdated.Visibility = ((!ShowTermsUpdated) ? Visibility.Hidden : Visibility.Visible);
+		brdRedboxCardTermsUpdated.Visibility = ((!ShowRedboxCardUpdated) ? Visibility.Hidden : Visibility.Visible);
+		brdPrivacyUpdated.Visibility = ((!ShowPrivacyUpdated) ? Visibility.Hidden : Visibility.Visible);
+		brdPlayPassUpdated.Visibility = ((!ShowPlayPassUpdated) ? Visibility.Hidden : Visibility.Visible);
+		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.FAQDocument, out var value2))
+		{
+			FAQDocument = value2;
+		}
+		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.TermsDocument, out value2))
+		{
+			TermsDocument = value2;
+		}
+		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.RedboxCardDocument, out value2))
+		{
+			RedboxCardDocument = value2;
+		}
+		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PrivacyDocument, out value2))
+		{
+			PrivacyDocument = value2;
+		}
+		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PlayPassDocument, out value2))
+		{
+			PlayPassDocument = value2;
+		}
 	}
 }

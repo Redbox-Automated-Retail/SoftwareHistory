@@ -7,15 +7,15 @@ using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-public class ClientCommand<T> where T : Redbox_002EIPC_002EFramework1802119_002EClientCommandResult, new()
+public class ClientCommand<T> where T : Redbox_002EIPC_002EFramework1769326_002EClientCommandResult, new()
 {
-	private Redbox_002EIPC_002EFramework1802119_002EIPCProtocol m_protocol;
+	private Redbox_002EIPC_002EFramework1769326_002EIPCProtocol m_protocol;
 
 	public string CommandText { get; internal set; }
 
 	public int CommandTimeout { get; internal set; }
 
-	public Redbox_002EIPC_002EFramework1802119_002EIPCProtocol Protocol { get; internal set; }
+	public Redbox_002EIPC_002EFramework1769326_002EIPCProtocol Protocol { get; internal set; }
 
 	public TimeSpan? ExecutionTime { get; private set; }
 
@@ -92,7 +92,7 @@ public class ClientCommand<T> where T : Redbox_002EIPC_002EFramework1802119_002E
 		return $"Command: {CommandText}";
 	}
 
-	protected ClientCommand(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, string command)
+	protected ClientCommand(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, string command)
 	{
 		m_protocol = protocol;
 		CommandText = command;
@@ -109,13 +109,13 @@ public class ClientCommand<T> where T : Redbox_002EIPC_002EFramework1802119_002E
 		}
 	}
 
-	protected virtual void OnConnectionFailure(Exception e, Redbox_002EIPC_002EFramework1802119_002EClientCommandResult result)
+	protected virtual void OnConnectionFailure(Exception e, Redbox_002EIPC_002EFramework1769326_002EClientCommandResult result)
 	{
 		result.Success = false;
 		result.Errors.Add(Error.NewError("J001", $"Unable to connect to command service on {m_protocol.Scheme}://{m_protocol.Host}:{m_protocol.Port}.", e));
 	}
 
-	protected virtual void OnUnhandledException(Exception e, Redbox_002EIPC_002EFramework1802119_002EClientCommandResult result)
+	protected virtual void OnUnhandledException(Exception e, Redbox_002EIPC_002EFramework1769326_002EClientCommandResult result)
 	{
 		result.Success = false;
 		result.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in ClientCommand.Execute.", e));

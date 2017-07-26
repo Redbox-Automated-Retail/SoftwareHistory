@@ -5,8 +5,12 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
@@ -23,6 +27,30 @@ public static class BrowseFunctions
 
 	private static Dictionary<string, TopMenuControl> _topMenuControls = new Dictionary<string, TopMenuControl>();
 
+	private static Dictionary<string, BrowseGroupSelectionControl> _browseGroupSelectionControls = new Dictionary<string, BrowseGroupSelectionControl>();
+
+	private static Dictionary<string, BrowseFilterBarControl> _browseFilterBarControls = new Dictionary<string, BrowseFilterBarControl>();
+
+	internal static bool IsADAMode => ApplicationState.Instance?.IsADAAccessible ?? false;
+
+	internal static bool IsSpanish => BundleFunctions.GetCulture() == "es-MX";
+
+	internal static bool IsForSaleButtonEnabled
+	{
+		get
+		{
+			if (Session.Instance.BrowseState.TitleFamily == TitleFamily.Movies)
+			{
+				return RentalDataFunctions.GetCanSellUsedMovies();
+			}
+			if (Session.Instance.BrowseState.TitleFamily == TitleFamily.Games)
+			{
+				return RentalDataFunctions.GetCanSellUsedGames();
+			}
+			return false;
+		}
+	}
+
 	[KernelFunction(Name = "kernel.reset_browse_controls")]
 	internal static void ResetBrowseControls()
 	{
@@ -30,64 +58,145 @@ public static class BrowseFunctions
 		_miniCartControls = new Dictionary<string, MiniCartControl>();
 		_accessibilityControls = new Dictionary<string, AccessibilityControl>();
 		_topMenuControls = new Dictionary<string, TopMenuControl>();
+		_browseGroupSelectionControls = new Dictionary<string, BrowseGroupSelectionControl>();
+		_browseFilterBarControls = new Dictionary<string, BrowseFilterBarControl>();
 	}
 
 	[KernelFunction(Name = "kernel.draw_images_set")]
-	internal static void DrawImagesSet(string browseSetName, string browseFilterSelectedFamily, LuaTable products, int pageNumber, string gotoGroupName, string selectedGroupName, Action<int> onPageNumberChanged, Action<int> onProductsShown, Action<LuaTable> onItemSelected, Action<string> onAddItemSelected, Action<int, LuaTable> onUpdateItemMapping, Func<LuaTable, bool> onIsProductSelected, Func<LuaTable, bool> onIsProductInStock, Func<bool> isShoppingCartFull, Func<LuaTable, string> onGetTestPrice, Func<LuaTable, string> onGetEarlyReleaseDate, Func<bool> isTitleMarketingMode, Func<bool> onIsComingSoonOptinEnabled, Func<LuaTable, bool> onIsComingSoonProductRegistered, Action<LuaTable> onRegisterEmailReminder, Action<LuaTable> onUnregisterEmailReminder)
+	internal static void DrawImagesSet(string browseSetName, string browseFilterSelectedFamily, LuaTable products, int pageNumber, Action<int, string> onPageNumberChanged, Action<int> onProductsShown, Action<LuaTable> onItemSelected, Action<string> onAddItemSelected, Action<int, LuaTable> onUpdateItemMapping, Func<LuaTable, bool> onIsProductSelected, Func<LuaTable, bool> onIsProductInStock, Func<bool> isShoppingCartFull, Func<LuaTable, string> onGetTestPrice, Func<LuaTable, string> onGetEarlyReleaseDate, Func<bool> isTitleMarketingMode, Func<bool> onIsComingSoonOptinEnabled, Func<LuaTable, bool> onIsComingSoonProductRegistered, Action<LuaTable> onRegisterEmailReminder, Action<LuaTable> onUnregisterEmailReminder)
 	{
 		ClearOldActors(browseSetName);
 		BrowseViewFilter browseMode = Session.Instance.BrowseState.BrowseMode;
 		BrowseSort browseSort = Session.Instance.BrowseState.BrowseSelectedSort.ConvertToBrowseSort(browseMode);
 		TitleFamily titleFamily = browseFilterSelectedFamily.ConvertToTitleFamily();
-		List<IBrowseItem> list = CreateBrowseItems(products, selectedGroupName);
+		List<IBrowseItem> browseItems = CreateBrowseItems(products, browseSort == BrowseSort.Alpha);
+		bool flag = browseSort == BrowseSort.Alpha && browseSetName == BrowseSetNames.Main.ToString();
 		LuaInterfacedBrowseControl productBrowseControl;
 		if (browseSetName == BrowseSetNames.Collections.ToString())
 		{
-			productBrowseControl = CreateCollectionsBrowseView(list);
+			productBrowseControl = CreateCollectionsBrowseView(browseItems);
 		}
-		else if (browseSort == BrowseSort.Alpha && browseSetName == BrowseSetNames.Main.ToString())
+		else if (flag)
 		{
-			productBrowseControl = CreateAToZBrowseView(list);
+			if (IsADAMode)
+			{
+				productBrowseControl = CreateABEAToZBrowseView(browseItems);
+			}
+			else
+			{
+				productBrowseControl = CreateAToZBrowseView(browseItems);
+			}
 		}
 		else
 		{
-			productBrowseControl = CreateNormalBrowseView(list);
+			productBrowseControl = CreateNormalBrowseView(browseItems);
 		}
-		if (productBrowseControl != null)
+		if (productBrowseControl == null)
 		{
-			productBrowseControl.BrowseSetName = browseSetName;
-			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			productBrowseControl.isADAAccessible = service != null && service.Filter["ada_accessible"] == "True";
-			productBrowseControl.ShowPaddleShadow = true;
-			productBrowseControl.OnLuaItemSelected = onItemSelected;
-			productBrowseControl.OnLuaAddItemSelected = onAddItemSelected;
-			productBrowseControl.OnPageNumberChanged = onPageNumberChanged;
-			productBrowseControl.OnLuaItemsShown = onProductsShown;
-			productBrowseControl.OnLuaUpdateItemMapping = onUpdateItemMapping;
-			SetPageNumber(pageNumber, gotoGroupName, list, productBrowseControl);
-			_browseControls[browseSetName] = productBrowseControl;
-			productBrowseControl.IsShoppingCartFull = isShoppingCartFull;
-			productBrowseControl.OnIsProductSelected = onIsProductSelected;
-			productBrowseControl.OnIsProductInStock = onIsProductInStock;
-			productBrowseControl.OnIsProductThinned = IsProductThinned;
-			productBrowseControl.OnGetTestPrice = onGetTestPrice;
-			productBrowseControl.OnGetEarlyReleaseDate = onGetEarlyReleaseDate;
-			productBrowseControl.IsTitleMarketingMode = isTitleMarketingMode;
-			productBrowseControl.BrowseViewFilter = browseMode;
-			productBrowseControl.BrowseSort = browseSort;
-			productBrowseControl.BrowseTitleFamily = titleFamily;
-			productBrowseControl.OnIsComingSoonOptinEnabled = onIsComingSoonOptinEnabled;
-			productBrowseControl.OnIsComingSoonProductRegistered = onIsComingSoonProductRegistered;
-			productBrowseControl.OnRegisterEmailReminder = onRegisterEmailReminder;
-			productBrowseControl.OnUnregisterEmailReminder = onUnregisterEmailReminder;
-			list.ForEach(delegate(IBrowseItem x)
-			{
-				x.OnBeforeRender += productBrowseControl.ConfigureBrowseItem;
-			});
-			BundleFunctions.GetDictionary("strings");
-			productBrowseControl.NoResultsText = string.Format("{0}", (titleFamily == TitleFamily.Games) ? BundleFunctions.GetDictionaryStringValue("strings", "filter_games_empty") : BundleFunctions.GetDictionaryStringValue("strings", "filter_movies_empty"));
-			productBrowseControl.Render();
+			return;
 		}
+		productBrowseControl.BrowseSetName = browseSetName;
+		productBrowseControl.isADAAccessible = IsADAMode;
+		productBrowseControl.ShowPaddleShadow = true;
+		productBrowseControl.OnLuaItemSelected = onItemSelected;
+		productBrowseControl.OnLuaAddItemSelected = onAddItemSelected;
+		LuaInterfacedBrowseControl luaInterfacedBrowseControl = productBrowseControl;
+		luaInterfacedBrowseControl.OnPageNumberChanged = (Action<int, PageChangeSource>)Delegate.Combine(luaInterfacedBrowseControl.OnPageNumberChanged, (Action<int, PageChangeSource>)delegate(int newPageNumber, PageChangeSource pageChangeSource)
+		{
+			if (onPageNumberChanged != null)
+			{
+				onPageNumberChanged(newPageNumber, pageChangeSource.ToString());
+			}
+		});
+		productBrowseControl.OnLuaItemsShown = onProductsShown;
+		productBrowseControl.OnLuaUpdateItemMapping = onUpdateItemMapping;
+		SetPageNumber(pageNumber, productBrowseControl);
+		_browseControls[browseSetName] = productBrowseControl;
+		productBrowseControl.IsShoppingCartFull = isShoppingCartFull;
+		productBrowseControl.OnIsProductSelected = onIsProductSelected;
+		productBrowseControl.OnIsProductInStock = onIsProductInStock;
+		productBrowseControl.OnIsProductThinned = IsProductThinned;
+		productBrowseControl.OnGetTestPrice = onGetTestPrice;
+		productBrowseControl.OnGetEarlyReleaseDate = onGetEarlyReleaseDate;
+		productBrowseControl.IsTitleMarketingMode = isTitleMarketingMode;
+		productBrowseControl.BrowseViewFilter = browseMode;
+		productBrowseControl.BrowseSort = browseSort;
+		productBrowseControl.BrowseTitleFamily = titleFamily;
+		productBrowseControl.OnIsComingSoonOptinEnabled = onIsComingSoonOptinEnabled;
+		productBrowseControl.OnIsComingSoonProductRegistered = onIsComingSoonProductRegistered;
+		productBrowseControl.OnRegisterEmailReminder = onRegisterEmailReminder;
+		productBrowseControl.OnUnregisterEmailReminder = onUnregisterEmailReminder;
+		browseItems.ForEach(delegate(IBrowseItem x)
+		{
+			x.OnBeforeRender += productBrowseControl.ConfigureBrowseItem;
+		});
+		BundleFunctions.GetDictionary("strings");
+		productBrowseControl.NoResultsText = string.Format("{0}", (titleFamily == TitleFamily.Games) ? BundleFunctions.GetDictionaryStringValue("strings", "filter_games_empty") : BundleFunctions.GetDictionaryStringValue("strings", "filter_movies_empty"));
+		productBrowseControl.Render();
+		if (!flag)
+		{
+			return;
+		}
+		ClearOldBrowseGroupSelectionControlActors(browseSetName);
+		List<string> list = new List<string> { "#" };
+		for (int num = 65; num < 91; num++)
+		{
+			list.Add(((char)num).ToString());
+		}
+		List<IBrowseGroup> list2 = new List<IBrowseGroup>();
+		foreach (string eachGroupName in list)
+		{
+			bool enabled = browseItems.Any((IBrowseItem x) => x is IGroupHeaderBrowseItem && ((IGroupHeaderBrowseItem)x).Name == eachGroupName);
+			list2.Add(new BrowseGroup
+			{
+				Name = eachGroupName,
+				Width = 35,
+				Height = 35,
+				Enabled = enabled,
+				IsSelected = (eachGroupName == Session.Instance.BrowseState.SelectedAlphaGroupName && browseItems.Any((IBrowseItem x) => x is IGroupHeaderBrowseItem && ((IGroupHeaderBrowseItem)x).Name == eachGroupName))
+			});
+		}
+		BrowseGroupSelectionControl browseGroupSelectionControl = new BrowseGroupSelectionControl
+		{
+			X = 30,
+			Y = (IsADAMode ? 510 : 85),
+			BrowseGroups = list2
+		};
+		_browseGroupSelectionControls[browseSetName] = browseGroupSelectionControl;
+		browseGroupSelectionControl.OnGroupSelected += delegate(IBrowseGroup browseGroup)
+		{
+			string value = null;
+			if (browseGroup.Enabled)
+			{
+				foreach (IBrowseItem item in productBrowseControl.Items)
+				{
+					if (item is IGroupHeaderBrowseItem groupHeaderBrowseItem)
+					{
+						groupHeaderBrowseItem.IsSelected = false;
+					}
+				}
+				if (productBrowseControl.Items.FirstOrDefault((IBrowseItem x) => x.Name == browseGroup.Name) is IGroupHeaderBrowseItem groupHeaderBrowseItem2)
+				{
+					groupHeaderBrowseItem2.IsSelected = true;
+					productBrowseControl.ScrollToGroupHeaderBrowseItemPage(groupHeaderBrowseItem2);
+				}
+				Session.Instance.BrowseState.SelectedAlphaGroupName = browseGroup?.Name;
+			}
+			else if (!string.IsNullOrEmpty(browseGroup?.Name) && !browseItems.Any((IBrowseItem x) => x.Name == browseGroup?.Name))
+			{
+				value = $"There are no titles starting with the letter {browseGroup?.Name}.";
+			}
+			ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service != null && service.TTSEnabled)
+			{
+				IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+				if (service2 != null)
+				{
+					service2["TTS:SelectedAlphaGroupEmptyMessage"] = value;
+				}
+			}
+		};
+		browseGroupSelectionControl.Render();
 	}
 
 	[KernelFunction(Name = "kernel.get_visible_browse_products")]
@@ -173,7 +282,9 @@ public static class BrowseFunctions
 		{
 			return;
 		}
-		List<IBrowseItem> items = CreateBrowseItems(products, null);
+		BrowseViewFilter browseMode = Session.Instance.BrowseState.BrowseMode;
+		BrowseSort browseSort = Session.Instance.BrowseState.BrowseSelectedSort.ConvertToBrowseSort(browseMode);
+		List<IBrowseItem> items = CreateBrowseItems(products, browseSort == BrowseSort.Alpha);
 		AccessibilityControl accessibilityControl = new AccessibilityControl
 		{
 			BrowseSetName = browseSetName,
@@ -183,7 +294,8 @@ public static class BrowseFunctions
 			Width = 526,
 			Height = 146,
 			Y = 622,
-			X = 230
+			X = 230,
+			InvertRowsAndColumns = (browseSort == BrowseSort.Alpha)
 		};
 		accessibilityControl.OnAddItemSelected += delegate(IBrowseItem browseItem, string actorName)
 		{
@@ -207,7 +319,7 @@ public static class BrowseFunctions
 	internal static void DrawCollectionsPopUpDialog(int x, int y, int width, int height, Action onSeeAllCollections, Action<LuaTable> onCollectionSelected, Action onCancel)
 	{
 		LuaTable luaTable = RentalDataFunctions.RentalGetCollectionProducts(null, null, null, null);
-		List<IBrowseItem> source = CreateBrowseItems(luaTable, null);
+		List<IBrowseItem> source = CreateBrowseItems(luaTable, createAlphaGroups: false);
 		List<IBrowseItem> list = new List<IBrowseItem>();
 		list.AddRange(source.Take(2));
 		if (list.Count < 2)
@@ -261,6 +373,332 @@ public static class BrowseFunctions
 		};
 		collectionsPopUpDialogControl.ClearActors();
 		collectionsPopUpDialogControl.Render();
+	}
+
+	[KernelFunction(Name = "kernel.draw_browse_filter_bar")]
+	internal static void DrawBrowseFilterBar(string browseViewName, Action startOverAction, Action browseFilterButtonAction)
+	{
+		ClearOldBrowseFilterBarControlActors(browseViewName);
+		IBrowseState browseState = Session.Instance.BrowseState;
+		IConfiguration instance = Configuration.Instance;
+		BrowseFilterBarControl browseFilterBarControl = new BrowseFilterBarControl
+		{
+			X = 0,
+			Y = 563,
+			Height = 59,
+			Width = 1024,
+			StartOverAction = startOverAction,
+			UpdateBrowseViewAction = browseFilterButtonAction,
+			Buttons = CreateBrowseFilterButtons(instance),
+			ButtonSpacing = ((IsADAMode || browseState.TitleFamily == TitleFamily.Games) ? 8 : 16)
+		};
+		BrowseFilterBarControl browseFilterBarControl2 = browseFilterBarControl;
+		browseFilterBarControl2.BrowseFilterButtonAction = (BrowseFilterButtonEventHandler)Delegate.Combine(browseFilterBarControl2.BrowseFilterButtonAction, new BrowseFilterButtonEventHandler(HandleFilterButtonClick));
+		int num = 160 + (864 - browseFilterBarControl.Buttons.Sum((BrowseFilterButton x) => x.Width + browseFilterBarControl.ButtonSpacing)) / 2;
+		browseFilterBarControl.ButtonLeftOffset = ((browseState.TitleFamily == TitleFamily.Movies && !IsADAMode) ? (num - 20) : num);
+		_browseFilterBarControls[browseViewName] = browseFilterBarControl;
+		browseFilterBarControl.Render();
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service == null || !service.TTSEnabled)
+		{
+			return;
+		}
+		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+		if (service2 != null)
+		{
+			service2["TTS:BrowsingFilter"] = Session.Instance.BrowseState.BrowseSelectedSort;
+			service2["TTS:BrowsingFamilySingular"] = ((browseState.TitleFamily == TitleFamily.Movies) ? "movie" : "game");
+			service2["TTS:SwitchToFamily"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "Games" : "Movies");
+			service2["TTS:BrowsingFamily"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "Movies" : "Games");
+			service2["TTS:FilterOptions"] = "Various Options";
+			service2["TTS:TabName_2"] = ((browseState.TitleFamily == TitleFamily.Movies) ? string.Format("{0} {1}", BundleFunctions.GetDictionaryStringValue("strings", "genre_1093a"), BundleFunctions.GetDictionaryStringValue("strings", "genre_1093b")) : BundleFunctions.GetDictionaryStringValue("strings", "genre_1026"));
+			service2["TTS:TabName_3"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "genre_1000" : "genre_1006");
+			service2["TTS:TabName_4"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "genre_1005" : "genre_1028");
+			service2["TTS:TabName_5"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "genre_1009" : "genre_1030");
+			service2["TTS:TabName_6"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "genre_1004" : "genre_1034");
+			service2["TTS:TabName_7"] = BundleFunctions.GetDictionaryStringValue("strings", (browseState.TitleFamily == TitleFamily.Movies) ? "genre_1006" : "genre_1036");
+			for (int num2 = 0; num2 < 10; num2++)
+			{
+				BrowseFilterButton browseFilterButton = ((browseFilterBarControl.Buttons.Count > num2) ? browseFilterBarControl.Buttons[num2] : null);
+				service2[$"TTS:FilterName_{num2 + 1}"] = ((browseFilterButton != null) ? BundleFunctions.GetDictionaryStringValue("strings", browseFilterButton.Name) : null);
+				service2[$"TTS:FilterButton_{num2 + 1}"] = browseFilterButton?.Name;
+			}
+		}
+		service.TTSRepeatSequence();
+	}
+
+	internal static void HandleFilterButtonClick(BrowseFilterBarControl sender, BrowseFilterButton browseFilterButton)
+	{
+		if (IsADAMode)
+		{
+			Session.Instance.BrowseState.Genre = null;
+		}
+		switch (browseFilterButton.ButtonType)
+		{
+		case BrowseFilterButtonType.AllNewest:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Newest", TitleType.All, "browse-filter-family,Newest", 1);
+			break;
+		case BrowseFilterButtonType.BluRay:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Blu-ray", TitleType.Bluray, "browse-filter-family,Blu-ray", 1);
+			break;
+		case BrowseFilterButtonType.ForSale:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.ForSale, "for-sale", TitleType.All, "browse-filter-family,for-sale", 1);
+			break;
+		case BrowseFilterButtonType.ComingSoon:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.ComingSoon, "coming-soon", TitleType.All, "browse-filter-family,Coming-soon", 1);
+			break;
+		case BrowseFilterButtonType.AtoZ:
+			Session.Instance.BrowseState.SelectedAlphaGroupName = null;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "alpha", TitleType.All, "browse-filter-family,alpha", 1);
+			break;
+		case BrowseFilterButtonType.XboxOne:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Xbox One", TitleType.XboxOne, "browse-filter-family,Xbox One", 1);
+			break;
+		case BrowseFilterButtonType.Xbox360:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Xbox 360", TitleType.Xbox360, "browse-filter-family,Xbox 360", 1);
+			break;
+		case BrowseFilterButtonType.PS3:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "PS3", TitleType.PS3, "browse-filter-family,PS3", 1);
+			break;
+		case BrowseFilterButtonType.PS4:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "PS4", TitleType.PS4, "browse-filter-family,PS4", 1);
+			break;
+		case BrowseFilterButtonType.Wii:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Wii", TitleType.Wii, "browse-filter-family,Wii", 1);
+			break;
+		case BrowseFilterButtonType.WiiU:
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Wii U", TitleType.WiiU, "browse-filter-family,Wii U", 1);
+			break;
+		case BrowseFilterButtonType.Top20:
+			Session.Instance.BrowseState.Genre = Genres.Top20Movies;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Top 20", TitleType.All, "browse-filter-family,Top 20", 1);
+			break;
+		case BrowseFilterButtonType.Action:
+			Session.Instance.BrowseState.Genre = Genres.ActionAndAdventure;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Action", TitleType.All, "browse-filter-family,Action", 1);
+			break;
+		case BrowseFilterButtonType.Drama:
+			Session.Instance.BrowseState.Genre = Genres.Drama;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Drama", TitleType.All, "browse-filter-family,Drama", 1);
+			break;
+		case BrowseFilterButtonType.Horror:
+			Session.Instance.BrowseState.Genre = Genres.Horror;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Horror", TitleType.All, "browse-filter-family,Horror", 1);
+			break;
+		case BrowseFilterButtonType.Comedy:
+			Session.Instance.BrowseState.Genre = Genres.Comedy;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Comedy", TitleType.All, "browse-filter-family,Comedy", 1);
+			break;
+		case BrowseFilterButtonType.Family:
+			Session.Instance.BrowseState.Genre = Genres.FamilyMovies;
+			SetBrowseFilters(sender.UpdateBrowseViewAction, BrowseViewFilter.All, "Family", TitleType.All, "browse-filter-family,Family", 1);
+			break;
+		}
+	}
+
+	internal static void SetBrowseFilters(Action updateBrowseViewAction, BrowseViewFilter browseMode, string browseSelectedSort, TitleType titleType, string analyticAttributeValue, int? pageNumber)
+	{
+		IBrowseState browseState = Session.Instance.BrowseState;
+		browseState.BrowseMode = browseMode;
+		browseState.BrowseSelectedSort = browseSelectedSort;
+		browseState.TitleType = titleType;
+		if (pageNumber.HasValue)
+		{
+			browseState.PageNumber = pageNumber.Value;
+		}
+		if (!string.IsNullOrEmpty(analyticAttributeValue))
+		{
+			ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+			IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+			if (service != null && service2 != null)
+			{
+				string bufferedSessionID = service2.GetCurrentSession().Id.ToString();
+				service.AddNode("viewEvents", "viewEvent", bufferedSessionID);
+				service.AddAttribute("viewEvent", "subItemType", "filterChange", bufferedSessionID);
+				service.AddAttribute("viewEvent", "subItemValue", analyticAttributeValue, bufferedSessionID);
+			}
+		}
+		updateBrowseViewAction?.Invoke();
+	}
+
+	internal static List<BrowseFilterButton> CreateBrowseFilterButtons(IConfiguration configuration)
+	{
+		List<BrowseFilterButton> list = new List<BrowseFilterButton>();
+		IBrowseState browseState = Session.Instance.BrowseState;
+		int width = (IsADAMode ? 75 : 94);
+		if (browseState.TitleFamily == TitleFamily.Movies)
+		{
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.BluRay,
+				Name = "blu_ray_button",
+				Height = 30,
+				Width = width,
+				IsSelected = (browseState.BrowseSelectedSort == "Blu-ray")
+			});
+		}
+		list.Add(new BrowseFilterButton
+		{
+			ButtonType = BrowseFilterButtonType.AllNewest,
+			Name = "newest_button",
+			Height = 30,
+			Width = width,
+			IsSelected = (browseState.BrowseSelectedSort == "Newest" && (!IsADAMode || !browseState.Genre.HasValue))
+		});
+		if (browseState.TitleFamily == TitleFamily.Movies)
+		{
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.AtoZ,
+				Name = "abc_button",
+				Height = 30,
+				Width = width,
+				IsSelected = (browseState.BrowseSelectedSort == "alpha")
+			});
+		}
+		if (Session.Instance.BrowseState.TitleFamily == TitleFamily.Games)
+		{
+			if (configuration.EnabledGameTypes[TitleType.Xbox360] && configuration.GameHasContentTypes[TitleType.Xbox360])
+			{
+				list.Add(new BrowseFilterButton
+				{
+					ButtonType = BrowseFilterButtonType.Xbox360,
+					Name = "xbox_360_button",
+					Height = 30,
+					Width = 94,
+					IsSelected = (browseState.BrowseSelectedSort == "Xbox 360")
+				});
+			}
+			if (configuration.EnabledGameTypes[TitleType.XboxOne] && configuration.GameHasContentTypes[TitleType.XboxOne])
+			{
+				list.Add(new BrowseFilterButton
+				{
+					ButtonType = BrowseFilterButtonType.XboxOne,
+					Name = "xbox_one_button",
+					Height = 30,
+					Width = 94,
+					IsSelected = (browseState.BrowseSelectedSort == "Xbox One")
+				});
+			}
+			if (configuration.EnabledGameTypes[TitleType.PS3] && configuration.GameHasContentTypes[TitleType.PS3])
+			{
+				list.Add(new BrowseFilterButton
+				{
+					ButtonType = BrowseFilterButtonType.PS3,
+					Name = "ps3_button",
+					Height = 30,
+					Width = 74,
+					IsSelected = (browseState.BrowseSelectedSort == "PS3")
+				});
+			}
+			if (configuration.EnabledGameTypes[TitleType.PS4] && configuration.GameHasContentTypes[TitleType.PS4])
+			{
+				list.Add(new BrowseFilterButton
+				{
+					ButtonType = BrowseFilterButtonType.PS4,
+					Name = "ps4_button",
+					Height = 30,
+					Width = 74,
+					IsSelected = (browseState.BrowseSelectedSort == "PS4")
+				});
+			}
+			if (configuration.EnabledGameTypes[TitleType.Wii] && configuration.GameHasContentTypes[TitleType.Wii])
+			{
+				list.Add(new BrowseFilterButton
+				{
+					ButtonType = BrowseFilterButtonType.Wii,
+					Name = "wii_button",
+					Height = 30,
+					Width = 74,
+					IsSelected = (browseState.BrowseSelectedSort == "Wii")
+				});
+			}
+			if (configuration.EnabledGameTypes[TitleType.WiiU] && configuration.GameHasContentTypes[TitleType.WiiU])
+			{
+				list.Add(new BrowseFilterButton
+				{
+					ButtonType = BrowseFilterButtonType.WiiU,
+					Name = "wii_u_button",
+					Height = 30,
+					Width = 74,
+					IsSelected = (browseState.BrowseSelectedSort == "Wii U")
+				});
+			}
+		}
+		if (IsForSaleButtonEnabled)
+		{
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.ForSale,
+				Name = "for_sale_button",
+				Height = 30,
+				Width = width,
+				IsSelected = (browseState.BrowseSelectedSort == "for-sale")
+			});
+		}
+		if (IsADAMode && Session.Instance.BrowseState.TitleFamily == TitleFamily.Movies)
+		{
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.Top20,
+				Name = "top_20_filter_button",
+				Height = 30,
+				Width = (IsSpanish ? 105 : 75),
+				IsSelected = (browseState.BrowseSelectedSort == "Top 20" || (browseState.BrowseSelectedSort == "Newest" && IsADAMode && browseState.Genre == Genres.Top20Movies))
+			});
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.Action,
+				Name = "action_filter_button",
+				Height = 30,
+				Width = 75,
+				IsSelected = (browseState.BrowseSelectedSort == "Action" || (browseState.BrowseSelectedSort == "Newest" && IsADAMode && browseState.Genre == Genres.ActionAndAdventure))
+			});
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.Drama,
+				Name = "drama_filter_button",
+				Height = 30,
+				Width = 75,
+				IsSelected = (browseState.BrowseSelectedSort == "Drama" || (browseState.BrowseSelectedSort == "Newest" && IsADAMode && browseState.Genre == Genres.Drama))
+			});
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.Horror,
+				Name = "horror_filter_button",
+				Height = 30,
+				Width = 75,
+				IsSelected = (browseState.BrowseSelectedSort == "Horror" || (browseState.BrowseSelectedSort == "Newest" && IsADAMode && browseState.Genre == Genres.Horror))
+			});
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.Comedy,
+				Name = "comedy_filter_button",
+				Height = 30,
+				Width = 75,
+				IsSelected = (browseState.BrowseSelectedSort == "Comedy" || (browseState.BrowseSelectedSort == "Newest" && IsADAMode && browseState.Genre == Genres.Comedy))
+			});
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.Family,
+				Name = "family_filter_button",
+				Height = 30,
+				Width = 75,
+				IsSelected = (browseState.BrowseSelectedSort == "Family" || (browseState.BrowseSelectedSort == "Newest" && IsADAMode && browseState.Genre == Genres.FamilyMovies))
+			});
+		}
+		if (!IsADAMode)
+		{
+			list.Add(new BrowseFilterButton
+			{
+				ButtonType = BrowseFilterButtonType.ComingSoon,
+				Name = "coming_soon_button",
+				Height = 30,
+				Width = 110,
+				IsSelected = (browseState.BrowseSelectedSort == "coming-soon")
+			});
+		}
+		return list;
 	}
 
 	[KernelFunction(Name = "kernel.draw_top_menu")]
@@ -474,24 +912,10 @@ public static class BrowseFunctions
 		return list;
 	}
 
-	private static void SetPageNumber(int pageNumber, string gotoGroupName, List<IBrowseItem> browseItems, LuaInterfacedBrowseControl productBrowseControl)
+	private static void SetPageNumber(int pageNumber, LuaInterfacedBrowseControl productBrowseControl)
 	{
-		int num = pageNumber;
-		if (!string.IsNullOrEmpty(gotoGroupName))
-		{
-			IBrowseItem browseItem = browseItems.Find((IBrowseItem x) => x.Name == gotoGroupName);
-			if (browseItem != null)
-			{
-				int browseItemIndex = browseItems.IndexOf(browseItem) + 1;
-				num = productBrowseControl.GetPageOfBrowseItemIndex(browseItemIndex);
-			}
-			if (num == -1)
-			{
-				num = pageNumber;
-			}
-		}
-		productBrowseControl.CurrentPage = num;
-		productBrowseControl.OnPageNumberChanged(productBrowseControl.CurrentPage);
+		productBrowseControl.CurrentPage = pageNumber;
+		productBrowseControl.OnPageNumberChanged(productBrowseControl.CurrentPage, PageChangeSource.None);
 	}
 
 	private static void ClearOldActors(string browseSetName)
@@ -519,6 +943,20 @@ public static class BrowseFunctions
 	{
 		AccessibilityControl value = null;
 		_accessibilityControls.TryGetValue(browseSetName, out value);
+		value?.ClearActors();
+	}
+
+	private static void ClearOldBrowseGroupSelectionControlActors(string browseSetName)
+	{
+		BrowseGroupSelectionControl value = null;
+		_browseGroupSelectionControls.TryGetValue(browseSetName, out value);
+		value?.ClearActors();
+	}
+
+	private static void ClearOldBrowseFilterBarControlActors(string browseSetName)
+	{
+		BrowseFilterBarControl value = null;
+		_browseFilterBarControls.TryGetValue(browseSetName, out value);
 		value?.ClearActors();
 	}
 
@@ -597,6 +1035,34 @@ public static class BrowseFunctions
 		return luaInterfacedBrowseControl;
 	}
 
+	private static LuaInterfacedBrowseControl CreateABEAToZBrowseView(List<IBrowseItem> browseItems)
+	{
+		LuaInterfacedBrowseControl luaInterfacedBrowseControl = new LuaInterfacedBrowseControl
+		{
+			ColumnCount = 2,
+			RowCount = 5,
+			Width = 1024,
+			Height = 494,
+			Y = 70,
+			Items = browseItems,
+			ShowBorderItems = false,
+			ShowPageNumbers = false,
+			ShowTitle = true,
+			ShowBackground = false,
+			ShowSeparator = true,
+			SeparatorPadding = 8,
+			LayoutDirection = BrowseControl.BrowseLayoutDirection.TopToBottomThenLeftToRight
+		};
+		luaInterfacedBrowseControl.ItemMargins.Left = 10;
+		luaInterfacedBrowseControl.ItemMargins.Right = 10;
+		luaInterfacedBrowseControl.ItemMargins.Top = 5;
+		luaInterfacedBrowseControl.ItemMargins.Bottom = 0;
+		luaInterfacedBrowseControl.Margins.Bottom = 60;
+		luaInterfacedBrowseControl.Margins.Left = 60;
+		luaInterfacedBrowseControl.Margins.Right = luaInterfacedBrowseControl.Margins.Left;
+		return luaInterfacedBrowseControl;
+	}
+
 	private static LuaInterfacedBrowseControl CreateMegaBrowseView(List<IBrowseItem> browseItems)
 	{
 		LuaInterfacedBrowseControl luaInterfacedBrowseControl = new LuaInterfacedBrowseControl
@@ -624,8 +1090,8 @@ public static class BrowseFunctions
 	{
 		LuaInterfacedBrowseControl luaInterfacedBrowseControl = new LuaInterfacedBrowseControl
 		{
-			ColumnCount = 3,
-			RowCount = 1,
+			ColumnCount = 2,
+			RowCount = 5,
 			Width = 1024,
 			Height = 494,
 			Y = 70,
@@ -642,59 +1108,64 @@ public static class BrowseFunctions
 		return luaInterfacedBrowseControl;
 	}
 
-	private static List<IBrowseItem> CreateBrowseItems(LuaTable products, string selectedGroupName)
+	private static List<IBrowseItem> CreateBrowseItems(LuaTable products, bool createAlphaGroups)
 	{
 		List<IBrowseItem> list = new List<IBrowseItem>();
 		IGroupHeaderBrowseItem groupHeaderBrowseItem = null;
 		ProductFlagCollection.Instance.Clear();
 		foreach (object key in products.Keys)
 		{
-			if (!string.IsNullOrEmpty(products[key].ToString()))
+			if (!(products[key] is LuaTable luaTable) || !InCartCanShow(luaTable))
 			{
-				if (!(products[key] is LuaTable luaTable) || !InCartCanShow(luaTable))
+				continue;
+			}
+			IBrowseItem browseItem = null;
+			string text = luaTable["kiosk_product_type"].ToString();
+			if (text == 3.ToString())
+			{
+				browseItem = new TitleRollupBrowseItem(luaTable);
+			}
+			else if (text == 1.ToString() || text == 2.ToString())
+			{
+				bool result = false;
+				bool.TryParse(luaTable["is_movie"].ToString(), out result);
+				if (result)
 				{
-					continue;
+					browseItem = new MovieTitleBrowseItem(luaTable);
 				}
-				IBrowseItem browseItem = null;
-				string text = luaTable["kiosk_product_type"].ToString();
-				if (text == 3.ToString())
+				else
 				{
-					browseItem = new TitleRollupBrowseItem(luaTable);
-				}
-				else if (text == 1.ToString() || text == 2.ToString())
-				{
-					bool result = false;
-					bool.TryParse(luaTable["is_movie"].ToString(), out result);
-					if (result)
+					bool result2 = false;
+					bool.TryParse(luaTable["is_game"].ToString(), out result2);
+					if (result2)
 					{
-						browseItem = new MovieTitleBrowseItem(luaTable);
-					}
-					else
-					{
-						bool result2 = false;
-						bool.TryParse(luaTable["is_game"].ToString(), out result2);
-						if (result2)
-						{
-							browseItem = new GameTitleBrowseItem(luaTable);
-						}
+						browseItem = new GameTitleBrowseItem(luaTable);
 					}
 				}
-				else if (text == 4.ToString())
-				{
-					browseItem = new CollectionBrowseItem(luaTable);
-				}
-				if (browseItem != null)
-				{
-					browseItem.Data = luaTable;
-					list.Add(browseItem);
-				}
-				AssignGroupDisplayCharacter(ref groupHeaderBrowseItem, browseItem, selectedGroupName);
 			}
-			else
+			else if (text == 4.ToString())
 			{
-				groupHeaderBrowseItem = new GroupHeaderBrowseItem();
-				list.Add(groupHeaderBrowseItem);
+				browseItem = new CollectionBrowseItem(luaTable);
 			}
+			if (browseItem == null)
+			{
+				continue;
+			}
+			if (createAlphaGroups)
+			{
+				string alphaGroupCharacter = GetAlphaGroupCharacter(browseItem);
+				if (groupHeaderBrowseItem == null || groupHeaderBrowseItem.Name != alphaGroupCharacter)
+				{
+					groupHeaderBrowseItem = new GroupHeaderBrowseItem
+					{
+						Name = alphaGroupCharacter,
+						IsSelected = (alphaGroupCharacter == Session.Instance.BrowseState.SelectedAlphaGroupName)
+					};
+					list.Add(groupHeaderBrowseItem);
+				}
+			}
+			browseItem.Data = luaTable;
+			list.Add(browseItem);
 		}
 		return list;
 	}
@@ -709,20 +1180,15 @@ public static class BrowseFunctions
 		return result;
 	}
 
-	private static void AssignGroupDisplayCharacter(ref IGroupHeaderBrowseItem groupHeaderBrowseItem, IBrowseItem browseItem, string selectedGroupName)
+	private static string GetAlphaGroupCharacter(IBrowseItem browseItem)
 	{
-		if (groupHeaderBrowseItem != null && browseItem != null)
+		char c = ((browseItem != null && browseItem.SortName != null) ? browseItem.SortName.ToUpper()[0] : ' ');
+		string result = "#";
+		if (c >= 'A' && c <= 'Z')
 		{
-			char c = ((browseItem.SortName != null) ? browseItem.SortName.ToUpper()[0] : ' ');
-			string text = "#";
-			if (c >= 'A' && c <= 'Z')
-			{
-				text = c.ToString();
-			}
-			groupHeaderBrowseItem.Name = text;
-			groupHeaderBrowseItem.IsSelected = text == selectedGroupName;
-			groupHeaderBrowseItem = null;
+			result = c.ToString();
 		}
+		return result;
 	}
 
 	private static bool IsProductThinned(LuaTable luaKioskProduct)

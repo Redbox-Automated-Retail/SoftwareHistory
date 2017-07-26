@@ -18,6 +18,8 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	private IProfileDataInstance _profile;
 
+	private IStoreManager _storeManager;
+
 	public override string ProductName => _title.LongName;
 
 	public override string ProductDescription => _title.Description;
@@ -90,6 +92,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			}
 			if (IsGame)
 			{
+				if (!_storeManager.CanSellUsedGames)
+				{
+					return false;
+				}
 				if (GamePurchasePrice <= 0m)
 				{
 					return false;
@@ -105,7 +111,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			}
 			if (IsMovie)
 			{
-				if (!_store.Sellthru)
+				if (!_storeManager.CanSellUsedMovies)
 				{
 					return false;
 				}
@@ -226,7 +232,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public string SortName => _title.SortName.ToLower();
 
-	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store)
+	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store, IStoreManager storeManager)
 		: base(store)
 	{
 		base.KioskProductType = KioskProductType.Title;
@@ -234,6 +240,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		_titleCache = titleCache;
 		_titleType = titleType;
 		_profile = profile;
+		_storeManager = storeManager;
 	}
 
 	public override string ToString()

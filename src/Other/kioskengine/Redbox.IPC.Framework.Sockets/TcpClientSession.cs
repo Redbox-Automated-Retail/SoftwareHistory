@@ -105,7 +105,7 @@ public class TcpClientSession : ClientSession
 		base.IsConnected = true;
 	}
 
-	protected internal TcpClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, int? timeout)
+	protected internal TcpClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, int? timeout)
 		: base(protocol)
 	{
 		base.Timeout = timeout ?? 30000;

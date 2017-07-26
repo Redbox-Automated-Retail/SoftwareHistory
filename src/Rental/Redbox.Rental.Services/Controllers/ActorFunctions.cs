@@ -144,6 +144,11 @@ public class ActorFunctions
 		return ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.GetActor(name);
 	}
 
+	public static IActor GetActorByNameAndTag(string name, string tag)
+	{
+		return ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.GetActorByNameAndTag(name, tag);
+	}
+
 	public static void SetActorTag(string actorName, object tag)
 	{
 		IActor actor = GetActor(actorName);

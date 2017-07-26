@@ -2,11 +2,11 @@ using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-[Redbox_002EIPC_002EFramework1802119_002ECommand("macro", Filter = "System|Macro")]
+[Redbox_002EIPC_002EFramework1769326_002ECommand("macro", Filter = "System|Macro")]
 public class MacroCommand
 {
 	[Usage("MACRO list")]
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "list")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "list")]
 	public void List(CommandContext context)
 	{
 		foreach (string key in CommandService.Instance.Properties.Keys)
@@ -16,7 +16,7 @@ public class MacroCommand
 		}
 	}
 
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "create")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "create")]
 	[Usage("MACRO create symbol value: 'expansion'")]
 	public void Create(CommandContext context, [CommandKeyValue(IsRequired = true)] string value)
 	{
@@ -26,7 +26,7 @@ public class MacroCommand
 		}, new string[3] { "list", "create", "delete" });
 	}
 
-	[Redbox_002EIPC_002EFramework1802119_002ECommandForm(Name = "delete")]
+	[Redbox_002EIPC_002EFramework1769326_002ECommandForm(Name = "delete")]
 	[Usage("MACRO delete symbol ...")]
 	public void Delete(CommandContext context)
 	{

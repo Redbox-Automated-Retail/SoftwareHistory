@@ -1,3 +1,5 @@
+using Redbox.KioskEngine.ComponentModel.KioskServices;
+
 namespace Redbox.KioskServices.Proxy.ComponentModel;
 
 public interface IDigitalServices

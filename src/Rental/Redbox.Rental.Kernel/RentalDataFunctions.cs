@@ -199,56 +199,7 @@ public static class RentalDataFunctions
 	[KernelFunction(Name = "kernel.rental_get_collection")]
 	internal static LuaTable RentalGetCollection(long collectionId, string familyName, string familyType, LuaTable includeTitles, LuaTable excludeTitles)
 	{
-		LogHelper.Instance.Log("RentalGetCollection");
-		try
-		{
-			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			ICollectionProduct collection = null;
-			if (string.IsNullOrEmpty(familyName))
-			{
-				familyName = string.Empty;
-			}
-			if (string.IsNullOrEmpty(familyType))
-			{
-				familyType = string.Empty;
-			}
-			TitleFamily titleFamily = familyName.ConvertToTitleFamily();
-			TitleType titleType = familyType.ConvertToTitleType();
-			List<long> list = new List<long>();
-			List<long> list2 = new List<long>();
-			if (includeTitles != null)
-			{
-				foreach (object key in includeTitles.Keys)
-				{
-					list.Add(Convert.ToInt64(key));
-				}
-			}
-			if (excludeTitles != null)
-			{
-				foreach (object key2 in excludeTitles.Keys)
-				{
-					list2.Add(Convert.ToInt64(key2));
-				}
-			}
-			LogHelper.Instance.Log("rental_get_collection_products by Title Family: {0} Title Type: {1}", titleFamily, titleType);
-			ErrorList collection2 = service.GetCollection(collectionId, out collection);
-			if (collection2.Count > 0)
-			{
-				collection2.ToLogHelper();
-				return null;
-			}
-			if (collection == null)
-			{
-				LogHelper.Instance.Log("Error: RentalDataFunctions.RentalGetCollection return null");
-				return null;
-			}
-			return collection.ToDictionary(titleFamily, titleType, list, list2).ToLuaTable();
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.RentalGetCollection", e);
-			return null;
-		}
+		return OrchestrationService.RentalGetCollection(collectionId, familyName, familyType, includeTitles, excludeTitles);
 	}
 
 	[KernelFunction(Name = "kernel.rental_get_collection_products")]
@@ -305,35 +256,10 @@ public static class RentalDataFunctions
 		}
 	}
 
-	[KernelFunction(Name = "kernel.rental_refresh_if_needed")]
-	internal static bool RentalRefreshIfNeeded()
-	{
-		LogHelper.Instance.Log("RentalRefreshIfNeeded");
-		try
-		{
-			return ServiceLocator.Instance.GetService<IDataService>().RefreshIfNeeded();
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.RentalRefreshIfNeeded", e);
-			return false;
-		}
-	}
-
 	[KernelFunction(Name = "kernel.rental_is_collections_enabled")]
 	internal static bool RentalIsCollectionsEnabled()
 	{
-		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
-		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (service == null || service2 == null)
-		{
-			return false;
-		}
-		if (string.Compare(service2.Filter["ada_accessible"], "true", ignoreCase: true) != 0)
-		{
-			return service.ShowCollections;
-		}
-		return false;
+		return OrchestrationService.RentalIsCollectionsEnabled();
 	}
 
 	[KernelFunction(Name = "kernel.get_marketing_config")]
@@ -357,5 +283,47 @@ public static class RentalDataFunctions
 			}.ToLuaTable();
 		}
 		return result;
+	}
+
+	[KernelFunction(Name = "kernel.get_can_sell_used")]
+	internal static bool GetCanSellUsed()
+	{
+		try
+		{
+			return ServiceLocator.Instance.GetService<IStoreManager>().CanSellUsed;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.GetCanSellUsed", e);
+			return false;
+		}
+	}
+
+	[KernelFunction(Name = "kernel.get_can_sell_used_movies")]
+	internal static bool GetCanSellUsedMovies()
+	{
+		try
+		{
+			return ServiceLocator.Instance.GetService<IStoreManager>().CanSellUsedMovies;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.GetCanSellUsedMovies", e);
+			return false;
+		}
+	}
+
+	[KernelFunction(Name = "kernel.get_can_sell_used_games")]
+	internal static bool GetCanSellUsedGames()
+	{
+		try
+		{
+			return ServiceLocator.Instance.GetService<IStoreManager>().CanSellUsedGames;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.GetCanSellUsedGames", e);
+			return false;
+		}
 	}
 }

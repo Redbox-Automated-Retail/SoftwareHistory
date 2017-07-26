@@ -52,35 +52,68 @@
         </StackPanel>
       </Border>
       <StackPanel Margin="230,0,0,0" Orientation="Horizontal">
+        <Border Name="close_button" Style="{StaticResource gray_button_style}" Margin="227,0,0,0" Visibility="Collapsed">
+          <UIElement.InputBindings>
+            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.GoBack}" />
+          </UIElement.InputBindings>
+          <Grid>
+            <TextBlock Name="ButtonClose_Text" Style="{StaticResource gray_button_text_style}" Text="Close" />
+          </Grid>
+        </Border>
         <Border Name="faq_button" Style="{StaticResource gray_button_style}" IsEnabled="False">
           <UIElement.InputBindings>
             <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
           </UIElement.InputBindings>
-          <TextBlock Name="ButtonFAQ_Text" Style="{StaticResource gray_button_text_style}" IsEnabled="True" Text="Rental FAQ" />
+          <Grid>
+            <TextBlock Name="ButtonFAQ_Text" Style="{StaticResource gray_button_text_style}" IsEnabled="True" Text="Rental FAQ" />
+            <Border Name="brdRentalFaqUpdated" Style="{StaticResource help_updated_border_style}">
+              <TextBlock Name="txtRentalFaqUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" Margin="2,-1" VerticalAlignment="Top" />
+            </Border>
+          </Grid>
         </Border>
         <Border Name="terms_button" Style="{StaticResource gray_button_style}">
           <UIElement.InputBindings>
             <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
           </UIElement.InputBindings>
-          <TextBlock Name="ButtonTerms_Text" Style="{StaticResource gray_button_text_style}" Text="Rental Terms" />
+          <Grid>
+            <TextBlock Name="ButtonTerms_Text" Style="{StaticResource gray_button_text_style}" Text="Transaction Terms" Margin="0,0,0,0" />
+            <Border Name="brdTransactionTermsUpdated" Style="{StaticResource help_updated_border_style}">
+              <TextBlock Name="txtTransactionTermsUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" FontFamily="Arial" />
+            </Border>
+          </Grid>
         </Border>
         <Border Name="terms_redbox_card_button" Style="{StaticResource gray_button_style}">
           <UIElement.InputBindings>
             <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
           </UIElement.InputBindings>
-          <TextBlock Name="ButtonTermsRedboxCard_Text" Style="{StaticResource gray_button_text_style}" Text="Redbox Card Terms" />
+          <Grid>
+            <TextBlock Name="ButtonTermsRedboxCard_Text" Style="{StaticResource gray_button_text_style}" Text="Redbox Card Terms" />
+            <Border Name="brdRedboxCardTermsUpdated" Style="{StaticResource help_updated_border_style}">
+              <TextBlock Name="txtRedboxCardTermsUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" />
+            </Border>
+          </Grid>
         </Border>
         <Border Name="privacy_button" Style="{StaticResource gray_button_style}">
           <UIElement.InputBindings>
             <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
           </UIElement.InputBindings>
-          <TextBlock Name="ButtonPrivacy_Text" Style="{StaticResource gray_button_text_style}" Text="Privacy" />
+          <Grid>
+            <TextBlock Name="ButtonPrivacy_Text" Style="{StaticResource gray_button_text_style}" Text="Privacy" />
+            <Border Name="brdPrivacyUpdated" Style="{StaticResource help_updated_border_style}">
+              <TextBlock Name="txtPrivacyUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" />
+            </Border>
+          </Grid>
         </Border>
-        <Border Name="play_pass_button" Style="{StaticResource gray_button_style}" Margin="10,10,10,0" Width="115">
+        <Border Name="play_pass_button" Style="{StaticResource gray_button_style}">
           <UIElement.InputBindings>
             <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
           </UIElement.InputBindings>
-          <TextBlock Name="ButtonPlayPass_Text" Style="{StaticResource gray_button_text_style}" Text="Play Pass" />
+          <Grid>
+            <TextBlock Name="ButtonPlayPass_Text" Style="{StaticResource gray_button_text_style}" Text="Play Pass" />
+            <Border Name="brdPlayPassUpdated" Style="{StaticResource help_updated_border_style}">
+              <TextBlock Name="txtPlayPassUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" />
+            </Border>
+          </Grid>
         </Border>
       </StackPanel>
     </Grid>

@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Windows.Media.Imaging;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
@@ -18,6 +19,10 @@ public interface IBitmapCacheService : IDisposable
 	Image RegisterImageWithText(string name, string textToDisplay, Font textFont, Image baseImage, Rectangle textLocation);
 
 	Image RegisterImageWithImage(string name, byte[] imageToDraw, Image baseImage, Rectangle imageLocation);
+
+	BitmapImage GetBitmapImage(string imageName);
+
+	BitmapImage ToBitmapImage(Image image);
 
 	void DropCache();
 

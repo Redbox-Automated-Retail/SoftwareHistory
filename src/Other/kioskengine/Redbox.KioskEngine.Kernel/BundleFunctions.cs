@@ -114,7 +114,7 @@ public static class BundleFunctions
 	}
 
 	[KernelFunction(Name = "kernel.executescript")]
-	internal static object[] ExecuteScript(string name)
+	public static object[] ExecuteScript(string name)
 	{
 		List<object> list = new List<object>();
 		ReadOnlyCollection<object> readOnlyCollection = KernelService.Instance.ExecuteScript(name);
@@ -237,7 +237,6 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetVendor(string vendor)
 	{
-		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
 		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["vendor"] = vendor;
 		ResetCurrentView();
 	}
@@ -253,7 +252,6 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetMarket(string market)
 	{
-		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
 		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["market"] = market;
 		ResetCurrentView();
 	}
@@ -269,7 +267,6 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetStoreNumber(string storeNumber)
 	{
-		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
 		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["store_number"] = storeNumber;
 		ResetCurrentView();
 	}
@@ -285,7 +282,6 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetCulture(string culture)
 	{
-		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
 		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["culture"] = culture;
 		ResetCurrentView();
 	}
@@ -301,7 +297,6 @@ public static class BundleFunctions
 	[Obsolete("Kernel function is deprecated in favor of kernel.setfilter.")]
 	internal static void SetEnvironment(string environment)
 	{
-		ServiceLocator.Instance.GetService<IFlashService>()?.ClearCache();
 		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["environment"] = environment;
 		ResetCurrentView();
 	}
@@ -343,6 +338,14 @@ public static class BundleFunctions
 	internal static bool IsCultureValid(string culture)
 	{
 		return CultureInfo.GetCultures(CultureTypes.SpecificCultures).Any((CultureInfo c) => c.Name == culture);
+	}
+
+	[KernelFunction(Name = "kernel.load_xps_document")]
+	internal static void LoadXPSDocument(string documentName)
+	{
+		LogHelper.Instance.Log("Starting load of XPS document");
+		ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetXpsDocument(documentName);
+		LogHelper.Instance.Log("Finished load of XPS document");
 	}
 
 	private static void ResetCurrentView()

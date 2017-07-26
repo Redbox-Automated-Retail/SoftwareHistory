@@ -24,7 +24,7 @@ public abstract class ClientSession : IDisposable
 
 	public bool IsConnected { get; internal set; }
 
-	public Redbox_002EIPC_002EFramework1802119_002EIPCProtocol Protocol { get; protected set; }
+	public Redbox_002EIPC_002EFramework1769326_002EIPCProtocol Protocol { get; protected set; }
 
 	protected abstract Stream Stream { get; }
 
@@ -48,15 +48,15 @@ public abstract class ClientSession : IDisposable
 
 	public event Action<string> ServerEvent;
 
-	public static ClientSession GetClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, int? timeout)
+	public static ClientSession GetClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, int? timeout)
 	{
 		switch (protocol.Channel)
 		{
-		case Redbox_002EIPC_002EFramework1802119_002EChannelType.NamedPipe:
+		case Redbox_002EIPC_002EFramework1769326_002EChannelType.NamedPipe:
 			return GetNamedPipesClientSession(protocol);
-		case Redbox_002EIPC_002EFramework1802119_002EChannelType.Socket:
+		case Redbox_002EIPC_002EFramework1769326_002EChannelType.Socket:
 			return GetTcpClientSession(protocol, timeout);
-		case Redbox_002EIPC_002EFramework1802119_002EChannelType.Remoting:
+		case Redbox_002EIPC_002EFramework1769326_002EChannelType.Remoting:
 			return new RemotingClientSession(protocol, timeout ?? 5000);
 		default:
 			LogHelper.Instance.Log($"Unrecognized channel type {protocol.Channel}; please fix your protocol string.", LogEntryType.Error);
@@ -76,7 +76,7 @@ public abstract class ClientSession : IDisposable
 		}
 		try
 		{
-			if (Protocol.Channel == Redbox_002EIPC_002EFramework1802119_002EChannelType.Socket || Protocol.Channel == Redbox_002EIPC_002EFramework1802119_002EChannelType.NamedPipe)
+			if (Protocol.Channel == Redbox_002EIPC_002EFramework1769326_002EChannelType.Socket || Protocol.Channel == Redbox_002EIPC_002EFramework1769326_002EChannelType.NamedPipe)
 			{
 				ExecuteCommand("quit");
 			}
@@ -128,7 +128,7 @@ public abstract class ClientSession : IDisposable
 		return ConsumeMessages();
 	}
 
-	protected ClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol)
+	protected ClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol)
 	{
 		Protocol = protocol;
 	}
@@ -175,12 +175,12 @@ public abstract class ClientSession : IDisposable
 		}
 	}
 
-	private static ClientSession GetTcpClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, int? timeout)
+	private static ClientSession GetTcpClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, int? timeout)
 	{
 		return new TcpClientSession(protocol, timeout);
 	}
 
-	private static ClientSession GetNamedPipesClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol)
+	private static ClientSession GetNamedPipesClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol)
 	{
 		return new NamedPipeClientSession(protocol);
 	}

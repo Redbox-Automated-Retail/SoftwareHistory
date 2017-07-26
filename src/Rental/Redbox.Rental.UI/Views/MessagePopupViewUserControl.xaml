@@ -5,7 +5,7 @@
     <CommandBinding Command="{x:Static local:MessagePopupViewCommands.Button2}" Executed="Button2CommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid>
-    <Grid Background="#FF000000" Opacity="0.6" />
+    <Grid Name="DarkBackground" Background="#FF000000" Opacity="0.6" />
     <Grid Margin="128, 96,128, 96">
       <Border Background="#FFFFFFFF" CornerRadius="28" BorderBrush="#A21018" BorderThickness="5">
         <TextBlock Name="TitleText" Text="Culture Specific Title" Margin="62,46" Foreground="#B5121B" Style="{StaticResource font_target_large_overlays}" />

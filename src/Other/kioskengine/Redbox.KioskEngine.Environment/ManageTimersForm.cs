@@ -140,13 +140,14 @@ public class ManageTimersForm : Form
 		m_listView.Items.Clear();
 		foreach (ITimer timer in TimerService.Instance.Timers)
 		{
-			ListViewItem listViewItem = new ListViewItem(timer.Name);
-			listViewItem.Tag = timer.Tag;
-			ListViewItem listViewItem2 = listViewItem;
-			listViewItem2.SubItems.Add(timer.DueTime.ToString());
-			listViewItem2.SubItems.Add(timer.Period.ToString());
-			listViewItem2.SubItems.Add(timer.Enabled ? "Enabled" : "Disabled");
-			m_listView.Items.Add(listViewItem2);
+			ListViewItem listViewItem = new ListViewItem(timer.Name)
+			{
+				Tag = timer
+			};
+			listViewItem.SubItems.Add(timer.DueTime.ToString());
+			listViewItem.SubItems.Add(timer.Period.ToString());
+			listViewItem.SubItems.Add(timer.Enabled ? "Enabled" : "Disabled");
+			m_listView.Items.Add(listViewItem);
 		}
 		m_listView.EndUpdate();
 		RefreshButtonState();

@@ -16,6 +16,12 @@ public class StoreManagerService : IStoreManager
 
 	private long _kioskId;
 
+	private string _market;
+
+	private string _banner;
+
+	private bool _kioskSellThru = true;
+
 	public Country Country => _country;
 
 	public long KioskId
@@ -39,11 +45,109 @@ public class StoreManagerService : IStoreManager
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("Unhandled exception occurred in TicketsContext.GetKioskId", e);
+				LogHelper.Instance.Log("Unhandled exception occurred in StoreManagerService.GetKioskId", e);
 			}
 			return _kioskId;
 		}
 	}
+
+	public string Market
+	{
+		get
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(_market))
+				{
+					string text = "Market";
+					string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
+					object value = Registry.GetValue(text2, text, null);
+					if (value == null)
+					{
+						LogHelper.Instance.Log("Market is not set in the registry at {0}\\{1}", text2, text);
+						return null;
+					}
+					_market = ((string)value).Trim();
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("Unhandled exception occurred in StoreManagerService.GetMarket", e);
+			}
+			return _market;
+		}
+	}
+
+	public string Banner
+	{
+		get
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(_banner))
+				{
+					string text = "Banner";
+					string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
+					object value = Registry.GetValue(text2, text, null);
+					if (value == null)
+					{
+						LogHelper.Instance.Log("Banner is not set in the registry at {0}\\{1}", text2, text);
+						return null;
+					}
+					_banner = ((string)value).Trim();
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("Unhandled exception occurred in StoreManagerService.GetMarket", e);
+			}
+			return _banner;
+		}
+	}
+
+	public bool SellThru
+	{
+		get
+		{
+			return _kioskSellThru;
+		}
+		set
+		{
+			_kioskSellThru = value;
+		}
+	}
+
+	public bool CanSellUsed
+	{
+		get
+		{
+			if (!SellThru)
+			{
+				return false;
+			}
+			if (!GetSellThruOfUsed())
+			{
+				return false;
+			}
+			return true;
+		}
+	}
+
+	public bool CanSellUsedMovies => CanSellUsed;
+
+	public bool CanSellUsedGames
+	{
+		get
+		{
+			if (!CanSellUsed)
+			{
+				return false;
+			}
+			return GetGamesSellThru();
+		}
+	}
+
+	public decimal PurchasePrice { get; set; }
 
 	public StoreManagerService(Country country, IConfigurationService configService)
 	{
@@ -142,7 +246,27 @@ public class StoreManagerService : IStoreManager
 	public int GetSellThruDays()
 	{
 		int result = 30;
-		if (_configService.TryGetValue<int>("system", "General", "SellThruDays", out var value))
+		if (_configService.TryGetValue<int>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SellThruDays, out var value))
+		{
+			result = value;
+		}
+		return result;
+	}
+
+	private bool GetSellThruOfUsed()
+	{
+		bool result = true;
+		if (_configService.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SellThruOfUsed, out var value))
+		{
+			result = value;
+		}
+		return result;
+	}
+
+	private bool GetGamesSellThru()
+	{
+		bool result = true;
+		if (_configService.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GamesSellThru, out var value))
 		{
 			result = value;
 		}

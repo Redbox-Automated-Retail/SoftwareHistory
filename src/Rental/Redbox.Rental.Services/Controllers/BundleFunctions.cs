@@ -61,4 +61,9 @@ public class BundleFunctions
 		}
 		return dictionary;
 	}
+
+	public static string GetCulture()
+	{
+		return ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["culture"];
+	}
 }

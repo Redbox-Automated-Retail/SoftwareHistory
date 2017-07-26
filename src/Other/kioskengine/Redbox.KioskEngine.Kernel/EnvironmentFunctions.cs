@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -65,9 +66,12 @@ public static class EnvironmentFunctions
 	public static bool CanSwitch()
 	{
 		LogHelper.Instance.Log("Start CanSwitch Check");
-		bool flag = ServiceLocator.Instance.GetService<IKernelExtensionService>().CanSwitch(out var _);
-		LogHelper.Instance.Log("CanSwitch: {0}", flag);
-		return flag;
+		IKernelExtensionService service = ServiceLocator.Instance.GetService<IKernelExtensionService>();
+		bool flag = ServiceLocator.Instance.GetService<IEngineApplication>()?.AppStarting ?? false;
+		LogHelper.Instance.Log("Performing Startup: {0}", flag);
+		bool flag2 = !flag && service.CanSwitch(out var _);
+		LogHelper.Instance.Log("CanSwitch: {0}", flag2);
+		return flag2;
 	}
 
 	public static bool ShowMaintenanceView()
@@ -207,5 +211,12 @@ public static class EnvironmentFunctions
 	internal static void UnregisterHardwareChangeHandler()
 	{
 		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.UnregisterHardwareChangeCallback();
+	}
+
+	[KernelFunction(Name = "kernel.wait")]
+	internal static void Wait(int delay)
+	{
+		LogHelper.Instance.Log($"Wait {delay}", LogEntryType.Info);
+		new ManualResetEvent(initialState: false).WaitOne(delay);
 	}
 }

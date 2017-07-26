@@ -80,20 +80,19 @@ public class TextToSpeechService : ITextToSpeechService
 			}
 			m_audioDeviceConnected = value;
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
 			if (!m_audioDeviceConnected)
 			{
 				LogHelper.Instance.Log("Headphones disconnected.");
 				Reset();
-				if (service != null && service.Peek() == "start_view")
+				FireOnAudioDeviceConnectionChanged(isConnected: false);
+				if (CanReturnToStartView())
 				{
-					service2.Filter["ada_accessible"] = "False";
 					UnwindToStartView(service);
 				}
 				return;
 			}
 			LogHelper.Instance.Log("Headphones connected.");
-			service2.Filter["ada_accessible"] = "True";
+			FireOnAudioDeviceConnectionChanged(isConnected: true);
 			IResource manifest = ResourceBundleService.Instance.GetManifest(out var manifestInfo);
 			string text = ResourceBundleService.Instance.Filter["view_name"];
 			if (manifestInfo.ProductName != "Rental Application")
@@ -101,29 +100,29 @@ public class TextToSpeechService : ITextToSpeechService
 				LogHelper.Instance.Log($"TextToSpeechService.AudioDeviceConnected Not in Rental Application. Currently {manifestInfo.ProductName}");
 				return;
 			}
-			ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
-			if (service3 != null && !service3.HasValidData())
+			ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+			if (service2 != null && !service2.HasValidData())
 			{
-				ISessionAnalyticsService service4 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-				IShoppingSessionService service5 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-				if (service != null && service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && service.Peek() != "swipe_view" && !InReturnFlow)
+				ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+				IShoppingSessionService service4 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+				if (CanReturnToStartView())
 				{
 					LogHelper.Instance.Log("Restarting session due to headphones being connected.");
-					if (service5 != null)
+					if (service4 != null)
 					{
-						IShoppingSession currentSession = service5.GetCurrentSession();
-						if (service4 != null)
+						IShoppingSession currentSession = service4.GetCurrentSession();
+						if (service3 != null)
 						{
-							service4.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+							service3.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
 							{
 								{ "subItemType", "Timeout" },
 								{ "subItemValue", "HeadphonesConnected" }
 							}, currentSession.Id.ToString());
-							service4.AddNode("session", "pricing");
+							service3.AddNode("session", "pricing");
 						}
 						currentSession.Abandon("HeadphonesConnected");
 						currentSession.End();
-						service4?.Close(currentSession.Id.ToString());
+						service3?.Close(currentSession.Id.ToString());
 					}
 					UnwindToStartView(service);
 				}
@@ -151,6 +150,8 @@ public class TextToSpeechService : ITextToSpeechService
 
 	public bool InReturnFlow { get; set; }
 
+	public event AudioDeviceConnectionChanged OnAudioDeviceConnectionChanged;
+
 	public void Reset()
 	{
 		LogHelper.Instance.Log("TTS((> Reset Text-To-Speech service.");
@@ -174,6 +175,7 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 		return timeoutType switch
 		{
+			"shorter" => 15000, 
 			"short" => 30000, 
 			"medium" => 60000, 
 			"long" => 180000, 
@@ -209,6 +211,25 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 	}
 
+	private void FireOnAudioDeviceConnectionChanged(bool isConnected)
+	{
+		if (OnAudioDeviceConnectionChanged != null)
+		{
+			OnAudioDeviceConnectionChanged(this, isConnected);
+		}
+	}
+
+	private bool CanReturnToStartView()
+	{
+		bool result = true;
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service != null)
+		{
+			result = service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && service.Peek() != "swipe_view" && !InReturnFlow;
+		}
+		return result;
+	}
+
 	private TextToSpeechService()
 	{
 		LogHelper.Instance.Log("TTS((> Service Initialized.");
@@ -222,6 +243,7 @@ public class TextToSpeechService : ITextToSpeechService
 		m_textReplacement.Add("msg", "message");
 		m_textReplacement.Add("msgs", "messages");
 		m_textReplacement.Add("*", "");
+		m_textReplacement.Add("a-z", "'a' to z");
 	}
 
 	private void ProcessSpeechPart(XmlNode speechPart)
@@ -660,6 +682,54 @@ public class TextToSpeechService : ITextToSpeechService
 			if (text == "#")
 			{
 				text = "TAB";
+			}
+			if (text == "a")
+			{
+				text = "1";
+			}
+			if (text == "b")
+			{
+				text = "2";
+			}
+			if (text == "c")
+			{
+				text = "3";
+			}
+			if (text == "d")
+			{
+				text = "4";
+			}
+			if (text == "e")
+			{
+				text = "5";
+			}
+			if (text == "f")
+			{
+				text = "6";
+			}
+			if (text == "g")
+			{
+				text = "7";
+			}
+			if (text == "h")
+			{
+				text = "8";
+			}
+			if (text == "i")
+			{
+				text = "9";
+			}
+			if (text == "`")
+			{
+				text = "0";
+			}
+			if (text == "k")
+			{
+				text = "PLUS";
+			}
+			if (text == "m")
+			{
+				text = "MINUS";
 			}
 			if (text == "\r")
 			{

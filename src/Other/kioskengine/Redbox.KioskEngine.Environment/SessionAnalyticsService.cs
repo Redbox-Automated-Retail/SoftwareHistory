@@ -117,6 +117,26 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 		}
 	}
 
+	public void AddViewEvent(string subItemType, string subItemValue)
+	{
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service != null)
+		{
+			IShoppingSession currentSession = service.GetCurrentSession();
+			if (currentSession != null)
+			{
+				AddViewEvent2(subItemType, subItemValue, currentSession.Id.ToString());
+			}
+		}
+	}
+
+	public void AddViewEvent2(string subItemType, string subItemValue, string sessionId)
+	{
+		AddNode("viewEvents", "viewEvent", sessionId);
+		AddAttribute("viewEvent", "subItemType", subItemType, sessionId);
+		AddAttribute("viewEvent", "subItemValue", subItemValue, sessionId);
+	}
+
 	public void Close(string sessionId)
 	{
 		LogHelper.Instance.Log($"Analytics:Close({sessionId}) requested");

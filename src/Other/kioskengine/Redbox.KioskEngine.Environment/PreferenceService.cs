@@ -63,13 +63,14 @@ public class PreferenceService : IPreferenceService
 		{
 			return preferencePage;
 		}
-		PreferencePage preferencePage2 = new PreferencePage();
-		preferencePage2.Host = host;
-		preferencePage2.Name = pageName;
-		preferencePage2.Target = target;
-		preferencePage2.DisplayPath = displayPath;
-		preferencePage2.SettingPath = settingPath;
-		preferencePage = preferencePage2;
+		preferencePage = new PreferencePage
+		{
+			Host = host,
+			Name = pageName,
+			Target = target,
+			DisplayPath = displayPath,
+			SettingPath = settingPath
+		};
 		Pages[pageName] = preferencePage;
 		return preferencePage;
 	}

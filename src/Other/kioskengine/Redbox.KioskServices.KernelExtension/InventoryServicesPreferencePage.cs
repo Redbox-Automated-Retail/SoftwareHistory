@@ -13,8 +13,6 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private IContainer components;
 
-	private CheckBox m_enableSellThruOfUsedCheckBox;
-
 	private CheckBox m_enableOutOfStockDisplayCheckBox;
 
 	private CheckBox m_simulateServerBusyCheckBox;
@@ -42,7 +40,6 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 		m_isLoaded = false;
 		m_liveCallCheckBox.Checked = InventoryServicesProxy.Instance.LiveCall;
 		m_enableSellThruOfNewProduct.Checked = InventoryServicesProxy.Instance.EnableSellThryOfNew;
-		m_enableSellThruOfUsedCheckBox.Checked = InventoryServicesProxy.Instance.EnableSellThryOfUsed;
 		m_simulateServerBusyCheckBox.Checked = InventoryServicesProxy.Instance.SimulateServerBusyError;
 		m_enableOutOfStockDisplayCheckBox.Checked = InventoryServicesProxy.Instance.EnableOutOfStockDisplay;
 		m_simulateCommunicationsFailureCheckBox.Checked = InventoryServicesProxy.Instance.SimulateCommunicationsFailure;
@@ -73,14 +70,6 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
-	private void OnEnableSellThruOfUsedCheckChanged(object sender, EventArgs e)
-	{
-		if (m_isLoaded)
-		{
-			InventoryServicesProxy.Instance.EnableSellThryOfUsed = m_enableSellThruOfUsedCheckBox.Checked;
-		}
-	}
-
 	private void OnSellThruNewCheckChanged(object sender, EventArgs e)
 	{
 		if (m_isLoaded)
@@ -108,7 +97,6 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private void InitializeComponent()
 	{
-		this.m_enableSellThruOfUsedCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_enableOutOfStockDisplayCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_simulateServerBusyCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_simulateCommunicationsFailureCheckBox = new System.Windows.Forms.CheckBox();
@@ -116,14 +104,6 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_enableSellThruOfNewProduct = new System.Windows.Forms.CheckBox();
 		this.m_headerLabel = new System.Windows.Forms.Label();
 		base.SuspendLayout();
-		this.m_enableSellThruOfUsedCheckBox.AutoSize = true;
-		this.m_enableSellThruOfUsedCheckBox.Location = new System.Drawing.Point(33, 176);
-		this.m_enableSellThruOfUsedCheckBox.Name = "m_enableSellThruOfUsedCheckBox";
-		this.m_enableSellThruOfUsedCheckBox.Size = new System.Drawing.Size(175, 17);
-		this.m_enableSellThruOfUsedCheckBox.TabIndex = 7;
-		this.m_enableSellThruOfUsedCheckBox.Text = "Enable sell thru of used product";
-		this.m_enableSellThruOfUsedCheckBox.UseVisualStyleBackColor = true;
-		this.m_enableSellThruOfUsedCheckBox.CheckedChanged += new System.EventHandler(OnEnableSellThruOfUsedCheckChanged);
 		this.m_enableOutOfStockDisplayCheckBox.AutoSize = true;
 		this.m_enableOutOfStockDisplayCheckBox.Location = new System.Drawing.Point(33, 153);
 		this.m_enableOutOfStockDisplayCheckBox.Name = "m_enableOutOfStockDisplayCheckBox";
@@ -178,7 +158,6 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.Controls.Add(this.m_headerLabel);
 		base.Controls.Add(this.m_enableSellThruOfNewProduct);
-		base.Controls.Add(this.m_enableSellThruOfUsedCheckBox);
 		base.Controls.Add(this.m_enableOutOfStockDisplayCheckBox);
 		base.Controls.Add(this.m_simulateServerBusyCheckBox);
 		base.Controls.Add(this.m_simulateCommunicationsFailureCheckBox);

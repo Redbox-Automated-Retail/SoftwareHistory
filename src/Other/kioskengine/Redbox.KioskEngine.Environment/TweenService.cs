@@ -58,23 +58,24 @@ public class TweenService : ITweenService
 			}
 			else
 			{
-				Tween tween2 = new Tween();
-				tween2.Time = 0f;
-				tween2.Type = type;
-				tween2.Name = name;
-				tween2.Begin = begin;
-				tween2.Finish = finish;
-				tween2.Duration = duration;
-				Tween tween3 = tween2;
+				Tween tween2 = new Tween
+				{
+					Time = 0f,
+					Type = type,
+					Name = name,
+					Begin = begin,
+					Finish = finish,
+					Duration = duration
+				};
 				if (endHandler != null)
 				{
-					tween3.End += endHandler;
+					tween2.End += endHandler;
 				}
 				if (changeHandler != null)
 				{
-					tween3.ChangeState += changeHandler;
+					tween2.ChangeState += changeHandler;
 				}
-				Tweens[name] = tween3;
+				Tweens[name] = tween2;
 			}
 		}
 	}

@@ -123,7 +123,7 @@ public class UpdateServicesHost : IKernelExtensionHost, IDisposable
 		{
 			CommandRepository.AssemblyPatterns = new string[4] { "Redbox.DVD.UpdateServices.dll", "Redbox.UpdateServices.KernelExtension.dll", "kioskengine.exe", "Redbox.IPC.Framework.dll" };
 			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Local Services\\Update Services", "KioskEngineServiceUrl", "rcp://localhost:8004");
-			_listener = IPCServiceHost.Create(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol.Parse(value), AssemblyInfoHelper.GetProductName(typeof(EngineCommand).Assembly), AssemblyInfoHelper.GetVersion(typeof(EngineCommand).Assembly), AssemblyInfoHelper.GetCopyright(typeof(EngineCommand).Assembly), 3, 3, 8192, 64, 5);
+			_listener = IPCServiceHost.Create(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol.Parse(value), AssemblyInfoHelper.GetProductName(typeof(EngineCommand).Assembly), AssemblyInfoHelper.GetVersion(typeof(EngineCommand).Assembly), AssemblyInfoHelper.GetCopyright(typeof(EngineCommand).Assembly), 3, 3, 8192, 64, 5);
 			LogHelper.Instance.Log($"Start Service Listener for interface '{_listener.Protocol.Host}' on port '{_listener.Protocol.Port}'.", LogEntryType.Info);
 			_listener.Start();
 		}

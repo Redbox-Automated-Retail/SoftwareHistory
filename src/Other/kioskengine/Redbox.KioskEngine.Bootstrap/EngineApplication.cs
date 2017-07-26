@@ -5,9 +5,11 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using Redbox.BrokerServices.KernelExtension;
 using Redbox.Core;
@@ -24,7 +26,9 @@ using Redbox.Rental.Data;
 using Redbox.Rental.Kernel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Services;
+using Redbox.Rental.Services.Marketing;
 using Redbox.UpdateServices.KernelExtension;
 using WindowsInput;
 
@@ -47,9 +51,13 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		public System.Drawing.Point p;
 	}
 
+	private ElementHost _elementHost;
+
 	private string m_corruptDbName;
 
 	private bool m_enableMaintenanceMode;
+
+	private bool m_appStarting = true;
 
 	private bool checkMainFormStatus;
 
@@ -93,6 +101,18 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			NativeMessage msg;
 			return !PeekMessage(out msg, IntPtr.Zero, 0u, 0u, 0u);
+		}
+	}
+
+	public bool AppStarting
+	{
+		get
+		{
+			return m_appStarting;
+		}
+		set
+		{
+			m_appStarting = value;
 		}
 	}
 
@@ -248,7 +268,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in IFlashService.ClearCache().", e);
+			LogHelper.Instance.Log("An unhandled exception was raised in IFileCacheService.Remove().", e);
 		}
 	}
 
@@ -267,7 +287,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in IFlashService.ClearCache().", e);
+			LogHelper.Instance.Log("An unhandled exception was raised in IFileCacheService.FlushCache().", e);
 		}
 	}
 
@@ -322,17 +342,19 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		HostForm instance = (HostForm)(base.MainForm = new HostForm());
 		base.MainForm.BackColor = RenderingService.Instance.BackgroundColor;
 		BufferedGraphicsManager.Current.MaximumBuffer = base.MainForm.DisplayRectangle.Size;
-		ServiceLocator.Instance.AddService(typeof(IFlashService), instance);
 		ServiceLocator.Instance.AddService(typeof(ITrackDataService), instance);
 		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
 		service.Register(base.MainForm.Handle);
 		IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
-		ElementHost elementHost = new ElementHost();
-		elementHost.Parent = base.MainForm;
-		elementHost.Dock = DockStyle.Fill;
-		elementHost.Visible = false;
-		ElementHost elementHost2 = elementHost;
-		IScene scene = service2.CreateScene("Default", base.MainForm.Width, base.MainForm.Height, RenderingService.Instance.BackgroundColor, elementHost2);
+		ElementHost elementHost = new ElementHost
+		{
+			Parent = base.MainForm,
+			Dock = DockStyle.Fill,
+			Visible = false
+		};
+		elementHost.BackColor = Color.Red;
+		_elementHost = elementHost;
+		IScene scene = service2.CreateScene("Default", base.MainForm.Width, base.MainForm.Height, RenderingService.Instance.BackgroundColor, elementHost);
 		scene.OnWPFHit += Scene_OnWPFHit;
 		scene.OnWPFKeyDown += Scene_OnWPFKeyDown;
 		scene.OnWPFKeyUp += Scene_OnWPFKeyUp;
@@ -364,10 +386,11 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			base.MainForm.Show();
 			return true;
 		}
-		ErrorForm errorForm = new ErrorForm();
-		errorForm.Errors = errorList;
-		ErrorForm errorForm2 = errorForm;
-		errorForm2.ShowDialog();
+		ErrorForm errorForm = new ErrorForm
+		{
+			Errors = errorList
+		};
+		errorForm.ShowDialog();
 		return false;
 	}
 
@@ -435,6 +458,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.AddService(typeof(IFileCacheService), this);
 		ServiceLocator.Instance.AddService(typeof(IViewService), ViewService.Instance);
 		ServiceLocator.Instance.AddService(typeof(ITimerService), TimerService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IIdleTimerService), IdleTimerService.Instance);
 		ServiceLocator.Instance.AddService(typeof(ISoundService), SoundService.Instance);
 		ServiceLocator.Instance.AddService(typeof(ITweenService), TweenService.Instance);
 		ServiceLocator.Instance.AddService(typeof(ICallbackService), CallbackService.Instance);
@@ -447,6 +471,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.AddService(typeof(IStyleSheetService), StyleSheetService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IKernelFunctionRegistryService), KernelFunctionRegistryService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IProductLookupCatalogService), new ProductLookupCatalogService());
+		ServiceLocator.Instance.AddService(typeof(IThemeService), ThemeService.Instance);
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 		if (service2 != null)
 		{
@@ -513,23 +538,23 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
-			MarketingConfigurationManager instance = new MarketingConfigurationManager(service2);
-			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), instance);
+			MarketingConfigurationManager marketingConfigurationManager = new MarketingConfigurationManager(service2);
+			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), marketingConfigurationManager);
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
 			ServiceLocator.Instance.AddService(typeof(IStoreManager), storeManagerService);
-			RentalHealthService instance2 = new RentalHealthService();
-			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance2);
+			RentalHealthService instance = new RentalHealthService();
+			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance);
 			KernelHelperService kernelHelperService = new KernelHelperService();
 			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
 			BlockListData blockListData = new BlockListData(service);
 			ServiceLocator.Instance.AddService(typeof(IBlockListData), blockListData);
-			BlockListService instance3 = new BlockListService(storeManagerService, blockListData);
-			ServiceLocator.Instance.AddService(typeof(IBlockList), instance3);
+			BlockListService instance2 = new BlockListService(storeManagerService, blockListData);
+			ServiceLocator.Instance.AddService(typeof(IBlockList), instance2);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IInventoryData), inventoryData);
-			InventoryService instance4 = new InventoryService(inventoryData);
-			ServiceLocator.Instance.AddService(typeof(IInventory), instance4);
+			InventoryService instance3 = new InventoryService(inventoryData);
+			ServiceLocator.Instance.AddService(typeof(IInventory), instance3);
 			string directoryName = Path.GetDirectoryName(typeof(DataService).Assembly.Location);
 			string dataPath = Path.Combine(directoryName, "..\\data");
 			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(dataPath, "ProfileImages\\"), new CacheData(), new KioskData(service));
@@ -539,6 +564,11 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			dataService.RefreshIfNeeded();
 			IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
 			service3.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
+			MarketingAdImpressionService marketingAdImpressionService = new MarketingAdImpressionService(storeManagerService);
+			ServiceLocator.Instance.AddService(typeof(IMarketingAdImpressionService), marketingAdImpressionService);
+			marketingAdImpressionService.Start();
+			MarketingAdService instance4 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service3);
+			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance4);
 			RedboxRentalService redboxRentalService = new RedboxRentalService();
 			ServiceLocator.Instance.AddService(typeof(IRedboxRental), redboxRentalService);
 			errorList.AddRange(redboxRentalService.Initialize());
@@ -599,42 +629,46 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	protected override void OnMainFormClosed(object sender, EventArgs e)
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-		service2.Flush();
-		IEnvironmentNotificationService service3 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-		IQueueService service4 = ServiceLocator.Instance.GetService<IQueueService>();
-		IKernelService service5 = ServiceLocator.Instance.GetService<IKernelService>();
-		IRenderingService service6 = ServiceLocator.Instance.GetService<IRenderingService>();
-		IFontCacheService service7 = ServiceLocator.Instance.GetService<IFontCacheService>();
-		IDataCacheService service8 = ServiceLocator.Instance.GetService<IDataCacheService>();
-		IBitmapCacheService service9 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-		IShoppingSessionService service10 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		IDataStoreService service11 = ServiceLocator.Instance.GetService<IDataStoreService>();
-		ISchedulerService service12 = ServiceLocator.Instance.GetService<ISchedulerService>();
-		IStyleSheetService service13 = ServiceLocator.Instance.GetService<IStyleSheetService>();
-		service13.Reset();
+		IIdleTimerService service2 = ServiceLocator.Instance.GetService<IIdleTimerService>();
+		ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+		service3.Flush();
+		IEnvironmentNotificationService service4 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		IQueueService service5 = ServiceLocator.Instance.GetService<IQueueService>();
+		IKernelService service6 = ServiceLocator.Instance.GetService<IKernelService>();
+		IRenderingService service7 = ServiceLocator.Instance.GetService<IRenderingService>();
+		IFontCacheService service8 = ServiceLocator.Instance.GetService<IFontCacheService>();
+		IDataCacheService service9 = ServiceLocator.Instance.GetService<IDataCacheService>();
+		IBitmapCacheService service10 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		IShoppingSessionService service11 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		IDataStoreService service12 = ServiceLocator.Instance.GetService<IDataStoreService>();
+		ISchedulerService service13 = ServiceLocator.Instance.GetService<ISchedulerService>();
+		IStyleSheetService service14 = ServiceLocator.Instance.GetService<IStyleSheetService>();
+		service14.Reset();
+		service2?.Reset();
 		service.Reset();
-		service12.Shutdown();
-		service3.Unregister(base.MainForm.Handle);
-		service3.Reset();
-		if (service6.ActiveScene != null)
+		service13.Shutdown();
+		service4.Unregister(base.MainForm.Handle);
+		service4.Reset();
+		if (service7.ActiveScene != null)
 		{
-			service6.ActiveScene.Clear();
+			service7.ActiveScene.Clear();
 		}
-		service9.DropCache();
-		service7.DropCache();
+		service10.DropCache();
+		service8.DropCache();
+		service6.Dispose();
+		service9.Shutdown();
+		service3.Reset();
+		service5.StopQueueWorker();
+		service11.Dispose();
 		service5.Dispose();
-		service8.Shutdown();
-		service2.Reset();
-		service4.StopQueueWorker();
-		service10.Dispose();
-		service4.Dispose();
-		service11.CloseAllStores();
+		service12.CloseAllStores();
+		IMarketingAdImpressionService service15 = ServiceLocator.Instance.GetService<IMarketingAdImpressionService>();
+		service15.Stop();
 		ServiceLocator.Instance.GetService<IKernelExtensionService>()?.DeactivateAllExtensions();
-		IConfigurationService service14 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service14 != null)
+		IConfigurationService service16 = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (service16 != null)
 		{
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = service14.Stop();
+			Redbox.KioskEngine.ComponentModel.ErrorList errorList = service16.Stop();
 			errorList.ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)
 			{
 				LogHelper.Instance.Log("Code: {0} Desc: {1} Details: {2}", error.Code, error.Description, error.Details);
@@ -649,17 +683,18 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	internal Redbox.KioskEngine.ComponentModel.ErrorList SelectBundle()
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList result = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		SelectBundleForm selectBundleForm = new SelectBundleForm();
-		selectBundleForm.SearchPath = ResourceBundleService.Instance.SearchPath.Join(";");
-		SelectBundleForm selectBundleForm2 = selectBundleForm;
-		selectBundleForm2.ShowDialog();
-		if (selectBundleForm2.SelectedBundle != null)
+		SelectBundleForm selectBundleForm = new SelectBundleForm
 		{
-			if (ResourceBundleService.Instance.SetSwitchToBundle(selectBundleForm2.SelectedBundle))
+			SearchPath = ResourceBundleService.Instance.SearchPath.Join(";")
+		};
+		selectBundleForm.ShowDialog();
+		if (selectBundleForm.SelectedBundle != null)
+		{
+			if (ResourceBundleService.Instance.SetSwitchToBundle(selectBundleForm.SelectedBundle))
 			{
 				checkMainFormStatus = false;
 			}
-			ResourceBundleService.Instance.ShowDebugger = selectBundleForm2.ShowDebugger;
+			ResourceBundleService.Instance.ShowDebugger = selectBundleForm.ShowDebugger;
 		}
 		else
 		{
@@ -719,6 +754,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	internal void OnIdle(object sender, EventArgs e)
 	{
+		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		try
 		{
 			ActivateIdleHandlers();
@@ -738,18 +774,31 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			}
 			if (m_enableMaintenanceMode)
 			{
-				IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-				if (service != null && m_corruptDbName.Length > 0)
+				IEnvironmentNotificationService service2 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+				if (service2 != null && m_corruptDbName.Length > 0 && !service2.RaiseCorruptDb(m_corruptDbName))
 				{
-					service.RaiseCorruptDb(m_corruptDbName);
-					m_enableMaintenanceMode = false;
 				}
 			}
 			RenderScene();
-			int num = (int)(33 - executionTimer.ElapsedMilliseconds);
-			if (num > 0)
+			if (IsApplicationIdle)
 			{
-				m_resetEvent.WaitOne(num);
+				int num = (int)(33 - executionTimer.ElapsedMilliseconds);
+				while (num > 0)
+				{
+					int num2 = Math.Min(num, 5);
+					m_resetEvent.WaitOne(num2);
+					num -= num2;
+					if (!IsApplicationIdle)
+					{
+						break;
+					}
+				}
+			}
+			else if (service.ActiveScene.SceneRenderType == RenderType.WPF && _elementHost.Child is System.Windows.Controls.UserControl userControl)
+			{
+				userControl.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, (Action)delegate
+				{
+				}).Wait();
 			}
 		}
 	}
@@ -771,6 +820,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			if (!changed)
 			{
 				return false;
+			}
+			if (service.ActiveScene.SceneRenderType == RenderType.WPF)
+			{
+				return true;
 			}
 			bufferedGraphics.Render();
 		}

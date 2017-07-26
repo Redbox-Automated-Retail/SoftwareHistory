@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
@@ -11,6 +10,8 @@ namespace Redbox.Rental.Kernel;
 
 public static class SessionFunctions
 {
+	private static BaseSettingFunctions _baseSettingFunctions = new BaseSettingFunctions();
+
 	[KernelFunction(Name = "kernel.initialize_session")]
 	public static void InitializeSession()
 	{
@@ -23,7 +24,7 @@ public static class SessionFunctions
 		object obj = null;
 		if (valueName != null)
 		{
-			return Session.Instance.GetPropertyValue(valueName);
+			return _baseSettingFunctions.GetPropertyValue(Session.Instance, valueName);
 		}
 		throw new ArgumentNullException("Error in GetSessionValue.  valueName can not be null.");
 	}
@@ -39,7 +40,7 @@ public static class SessionFunctions
 				object obj = propertyNames[key];
 				if (obj != null)
 				{
-					object propertyValue = Session.Instance.GetPropertyValue(obj.ToString());
+					object propertyValue = _baseSettingFunctions.GetPropertyValue(Session.Instance, obj.ToString());
 					dictionary.Add(obj.ToString().Replace('.', '_'), propertyValue);
 				}
 			}
@@ -54,10 +55,10 @@ public static class SessionFunctions
 		_ = Session.Instance;
 		object resultObject = null;
 		PropertyInfo resultPropertyInfo = null;
-		Session.Instance.GetProperty(propertyName, out resultObject, out resultPropertyInfo);
+		_baseSettingFunctions.GetProperty(Session.Instance, propertyName, out resultObject, out resultPropertyInfo);
 		if (resultPropertyInfo != null && resultObject != null)
 		{
-			object value2 = ConvertValueToPropertyType(resultPropertyInfo, value);
+			object value2 = _baseSettingFunctions.ConvertValueToPropertyType(resultPropertyInfo, value);
 			resultPropertyInfo.SetValue(resultObject, value2, null);
 			return;
 		}
@@ -78,7 +79,7 @@ public static class SessionFunctions
 		{
 			throw new ArgumentNullException("Error in AddToPropertyValue.  valueToAdd can not be null.");
 		}
-		Session.Instance.GetProperty(propertyName, out resultObject, out resultPropertyInfo);
+		_baseSettingFunctions.GetProperty(Session.Instance, propertyName, out resultObject, out resultPropertyInfo);
 		if (valueToAdd != null)
 		{
 			if (resultPropertyInfo != null && resultObject != null)
@@ -87,11 +88,11 @@ public static class SessionFunctions
 				object obj = null;
 				if (resultPropertyInfo.PropertyType == typeof(decimal))
 				{
-					obj = AddDecimalValues(value, valueToAdd);
+					obj = _baseSettingFunctions.AddDecimalValues(value, valueToAdd);
 				}
 				else if (resultPropertyInfo.PropertyType == typeof(int))
 				{
-					obj = AddIntValues(value, valueToAdd);
+					obj = _baseSettingFunctions.AddIntValues(value, valueToAdd);
 				}
 				else
 				{
@@ -99,7 +100,7 @@ public static class SessionFunctions
 					{
 						throw new Exception($"Error in AddToPropertyValue. Unsupported property data type {resultPropertyInfo.PropertyType}");
 					}
-					obj = AddDoubleValues(value, valueToAdd);
+					obj = _baseSettingFunctions.AddDoubleValues(value, valueToAdd);
 				}
 				resultPropertyInfo.SetValue(resultObject, obj, null);
 				return obj;
@@ -107,90 +108,5 @@ public static class SessionFunctions
 			throw new ArgumentException($"Error in AddToPropertyValue.  Unable to locate property {propertyName}");
 		}
 		return null;
-	}
-
-	private static double AddDoubleValues(object value1, object value2)
-	{
-		return Convert.ToDouble(value1) + Convert.ToDouble(value2);
-	}
-
-	private static decimal AddDecimalValues(object value1, object value2)
-	{
-		return Convert.ToDecimal(value1) + Convert.ToDecimal(value2);
-	}
-
-	private static int AddIntValues(object value1, object value2)
-	{
-		return Convert.ToInt32(value1) + Convert.ToInt32(value2);
-	}
-
-	private static object ConvertValueToPropertyType(PropertyInfo propertyInfo, object value)
-	{
-		object result = value;
-		if (propertyInfo.PropertyType == typeof(int))
-		{
-			result = Convert.ToInt32(value);
-		}
-		else if (propertyInfo.PropertyType == typeof(decimal))
-		{
-			result = Convert.ToDecimal(value);
-		}
-		else if (propertyInfo.PropertyType.IsEnum)
-		{
-			result = Enum.Parse(propertyInfo.PropertyType, value.ToString());
-		}
-		return result;
-	}
-
-	private static void GetProperty(this object obj, string name, out object resultObject, out PropertyInfo resultPropertyInfo)
-	{
-		resultObject = null;
-		resultPropertyInfo = null;
-		List<string> list = name.Split('.').ToList();
-		for (int i = 0; i < list.Count; i++)
-		{
-			string name2 = list[i];
-			if (obj == null)
-			{
-				continue;
-			}
-			PropertyInfo property = obj.GetType().GetProperty(name2);
-			if (property != null)
-			{
-				if (i != list.Count - 1)
-				{
-					obj = property.GetValue(obj, null);
-					continue;
-				}
-				resultPropertyInfo = property;
-				resultObject = obj;
-			}
-		}
-	}
-
-	private static object GetPropertyValue(this object obj, string name)
-	{
-		bool flag = false;
-		string[] array = name.Split('.');
-		foreach (string name2 in array)
-		{
-			if (obj == null)
-			{
-				break;
-			}
-			flag = false;
-			PropertyInfo property = obj.GetType().GetProperty(name2);
-			if (property == null)
-			{
-				break;
-			}
-			obj = property.GetValue(obj, null);
-			flag = true;
-		}
-		if (!flag)
-		{
-			throw new ArgumentException($"Error in GetPropertyValue.  Unable to locate property {name}");
-		}
-		return obj;
 	}
 }

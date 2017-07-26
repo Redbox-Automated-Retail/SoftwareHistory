@@ -20,8 +20,8 @@ internal sealed class ZipFileManager
 			return false;
 		}
 		int num = 0;
-		using Redbox_002EHAL_002EClient1198959_002EZipFile obj = new Redbox_002EHAL_002EClient1198959_002EZipFile(ZipFile);
-		foreach (Redbox_002EHAL_002EClient1198959_002EZipEntry item in obj)
+		using Redbox_002EHAL_002EClient1178151_002EZipFile obj = new Redbox_002EHAL_002EClient1178151_002EZipFile(ZipFile);
+		foreach (Redbox_002EHAL_002EClient1178151_002EZipEntry item in obj)
 		{
 			num++;
 			if (item.IsDirectory)
@@ -41,7 +41,7 @@ internal sealed class ZipFileManager
 				return false;
 			}
 			using FileStream destination = File.Create(path);
-			Redbox_002EHAL_002EClient1198959_002EStreamUtils.Copy(inputStream, destination, buffer);
+			Redbox_002EHAL_002EClient1178151_002EStreamUtils.Copy(inputStream, destination, buffer);
 		}
 		return num == obj.Count;
 	}

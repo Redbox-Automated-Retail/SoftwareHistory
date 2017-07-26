@@ -6,6 +6,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Services;
 
 namespace Redbox.Rental.Kernel;
 
@@ -156,7 +157,8 @@ public static class DataServiceFunctions
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log($"An unhandled exception occured - DataServiceFunctions.DataServiceGetKeys({dataStore},{tableName}).", e);
-			throw;
+			ServiceLocator.Instance.GetService<IEngineApplication>()?.CorruptDbDetected(dataStore);
+			return null;
 		}
 	}
 
@@ -261,18 +263,7 @@ public static class DataServiceFunctions
 	{
 		try
 		{
-			IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-			if (service.GetImage(name) != null)
-			{
-				return true;
-			}
-			byte[] image = ServiceLocator.Instance.GetService<IDataService>().GetImage(cacheName);
-			if (image == null)
-			{
-				LogHelper.Instance.Log("DataServiceFunctions.RegisterImageFromCache was not able to read any data for name: {0} cacheName {1}", name, cacheName);
-				return false;
-			}
-			return service.RegisterImage(name, image) != null;
+			return OrchestrationService.DataServiceRegisterImage(name, cacheName);
 		}
 		catch (Exception e)
 		{

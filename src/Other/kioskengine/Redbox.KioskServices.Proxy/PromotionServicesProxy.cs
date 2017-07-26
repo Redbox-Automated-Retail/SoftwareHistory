@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Lua;
 
 namespace Redbox.KioskServices.Proxy;
@@ -152,6 +153,31 @@ public class PromotionServicesProxy : IPromotionServices
 	public IOptInItem NewOptInItem()
 	{
 		return new OptInItem();
+	}
+
+	public void MarketingAdImpressions(long kioskId, List<MarketingAdImpressionData> impressions)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				MarketingAdImpressionMessage marketingAdImpressionMessage = ToMarketingAdImpressionMessage(kioskId, impressions);
+				if (marketingAdImpressionMessage != null)
+				{
+					LogHelper.Instance.Log("Enqueue call to remote IPromotionServices.MarketingAdImpressions, URL: {0}", KioskServicesProxy.Instance.Url);
+					ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "MarketingAdImpression", marketingAdImpressionMessage);
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in PromotionServicesProxy.MarketingAdImpressions.", e);
+			}
+			finally
+			{
+				Interlocked.Decrement(ref m_working);
+			}
+		});
 	}
 
 	private PromotionServicesProxy()
@@ -382,5 +408,55 @@ public class PromotionServicesProxy : IPromotionServices
 			}
 		}
 		return false;
+	}
+
+	private MarketingAdImpressionMessage ToMarketingAdImpressionMessage(long kioskId, List<MarketingAdImpressionData> impressions)
+	{
+		MarketingAdImpressionMessage marketingAdImpressionMessage = new MarketingAdImpressionMessage();
+		try
+		{
+			marketingAdImpressionMessage.MessageId = Guid.NewGuid();
+			marketingAdImpressionMessage.MessageType = "MarketingAdImpression";
+			marketingAdImpressionMessage.KioskId = kioskId;
+			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+			marketingAdImpressionMessage.EngineVersion = service["EngineVersion"];
+			marketingAdImpressionMessage.BundleVersion = service["ProductVersion"];
+			marketingAdImpressionMessage.UseMessageControl = true;
+			List<AdCampaign> list = new List<AdCampaign>();
+			foreach (Guid campaignId in impressions.Select((MarketingAdImpressionData i) => i.CampaignId).Distinct())
+			{
+				IEnumerable<MarketingAdImpressionData> enumerable = impressions.Where((MarketingAdImpressionData c) => campaignId == c.CampaignId);
+				List<AdImpression> list2 = new List<AdImpression>();
+				foreach (MarketingAdImpressionData item in enumerable)
+				{
+					list2.Add(new AdImpression
+					{
+						ImpressionStart = item.ImpressionStartDate,
+						ImpressionEnd = item.ImpressionEndDate,
+						LocationId = item.AdLocation,
+						Count = item.Count
+					});
+				}
+				MarketingAdImpressionData marketingAdImpressionData = enumerable.First();
+				list.Add(new AdCampaign
+				{
+					CampaignId = marketingAdImpressionData.CampaignId,
+					Name = marketingAdImpressionData.Name,
+					StartDate = marketingAdImpressionData.StartDate,
+					EndDate = marketingAdImpressionData.EndDate,
+					StartTime = marketingAdImpressionData.StartTime,
+					EndTime = marketingAdImpressionData.EndTime,
+					DaysOfWeek = marketingAdImpressionData.DaysOfWeek,
+					Impressions = list2
+				});
+			}
+			marketingAdImpressionMessage.MarketingAdCampaigns = list;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in PromotionServicesProxy.ToMarketingAdImpressionMessage.", e);
+			marketingAdImpressionMessage = null;
+		}
+		return marketingAdImpressionMessage;
 	}
 }

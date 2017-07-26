@@ -111,10 +111,11 @@ public class Program : IDisposable
 				if (errorList.ContainsError())
 				{
 					errorList.ToLogHelper();
-					ErrorForm errorForm = new ErrorForm();
-					errorForm.Errors = errorList;
-					ErrorForm errorForm2 = errorForm;
-					errorForm2.ShowDialog();
+					ErrorForm errorForm = new ErrorForm
+					{
+						Errors = errorList
+					};
+					errorForm.ShowDialog();
 				}
 				else if (EngineApplication.Instance.Run())
 				{

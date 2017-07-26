@@ -122,6 +122,18 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 		}
 	}
 
+	public bool EnableMarketingAds
+	{
+		get
+		{
+			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.EnableMarketingAds, out var value))
+			{
+				return value;
+			}
+			return false;
+		}
+	}
+
 	public MarketingConfigurationManager(IConfigurationService configService)
 	{
 		_configService = configService;

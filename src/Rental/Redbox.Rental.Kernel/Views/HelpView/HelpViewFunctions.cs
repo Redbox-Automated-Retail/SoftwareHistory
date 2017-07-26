@@ -7,8 +7,8 @@ namespace Redbox.Rental.Kernel.Views.HelpView;
 public class HelpViewFunctions
 {
 	[KernelFunction(Name = "kernel.configure_help_view")]
-	internal static void ConfigureHelpView(bool giftCardEnabled, Action goBackAction, Action clickRedboxLogoAction)
+	internal static void ConfigureHelpView(bool giftCardEnabled, Action goBackAction, Action clickRedboxLogoAction, bool showAsPopup)
 	{
-		HelpViewController.ConfigureHelpView(giftCardEnabled, goBackAction, clickRedboxLogoAction);
+		HelpViewController.ConfigureHelpView(giftCardEnabled, goBackAction, clickRedboxLogoAction, showAsPopup);
 	}
 }

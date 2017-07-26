@@ -6,6 +6,8 @@ public interface IEngineApplication
 {
 	bool HasCorruptedDatabase { get; }
 
+	bool AppStarting { get; set; }
+
 	void ThreadSafeHostUpdate(MethodInvoker invoker);
 
 	bool CanRestart();

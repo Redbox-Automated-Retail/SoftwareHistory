@@ -16,6 +16,8 @@ public class ViewService : IViewService
 
 	public static ViewService Instance => Singleton<ViewService>.Instance;
 
+	public int ViewStackCount => InnerStack.Count;
+
 	public ReadOnlyCollection<IViewFrame> Stack
 	{
 		get
@@ -52,12 +54,13 @@ public class ViewService : IViewService
 		viewFrame.UpdateScene();
 		if (viewFrame.Errors.ContainsError())
 		{
-			ErrorForm errorForm = new ErrorForm();
-			errorForm.Errors = viewFrame.Errors;
-			errorForm.Text = $"Errors for view resource: {viewFrame.ViewName}";
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.Show();
-			errorForm2.BringToFront();
+			ErrorForm errorForm = new ErrorForm
+			{
+				Errors = viewFrame.Errors,
+				Text = $"Errors for view resource: {viewFrame.ViewName}"
+			};
+			errorForm.Show();
+			errorForm.BringToFront();
 		}
 	}
 
@@ -124,12 +127,13 @@ public class ViewService : IViewService
 		ServiceLocator.Instance.GetService<ITextToSpeechService>()?.RunSpeechWorkflow("tts_" + viewFrame.ViewName);
 		if (viewFrame.Errors.ContainsError())
 		{
-			ErrorForm errorForm = new ErrorForm();
-			errorForm.Errors = viewFrame.Errors;
-			errorForm.Text = $"Errors for view resource: {viewFrame.ViewName}";
-			ErrorForm errorForm2 = errorForm;
-			errorForm2.Show();
-			errorForm2.BringToFront();
+			ErrorForm errorForm = new ErrorForm
+			{
+				Errors = viewFrame.Errors,
+				Text = $"Errors for view resource: {viewFrame.ViewName}"
+			};
+			errorForm.Show();
+			errorForm.BringToFront();
 			RaiseViewStateChanged();
 		}
 	}
@@ -160,6 +164,22 @@ public class ViewService : IViewService
 	public string Peek()
 	{
 		return InnerStack.PeekViewName();
+	}
+
+	public string Peek(int index)
+	{
+		string result = null;
+		int num = 0;
+		foreach (IViewFrame item in InnerStack)
+		{
+			if (index == num)
+			{
+				result = item?.ViewName;
+				break;
+			}
+			num++;
+		}
+		return result;
 	}
 
 	public void ClearCache()
@@ -238,12 +258,13 @@ public class ViewService : IViewService
 			return m_viewFrameCache[viewName];
 		}
 		LogHelper.Instance.Log("Cache miss, building cached ViewFrame for view named: {0}", viewName);
-		ViewFrame viewFrame = new ViewFrame();
-		viewFrame.ViewName = viewName;
-		ViewFrame viewFrame2 = viewFrame;
-		viewFrame2.Parse();
-		m_viewFrameCache[viewName] = viewFrame2;
-		return viewFrame2;
+		ViewFrame viewFrame = new ViewFrame
+		{
+			ViewName = viewName
+		};
+		viewFrame.Parse();
+		m_viewFrameCache[viewName] = viewFrame;
+		return viewFrame;
 	}
 
 	public bool IsInMaintenanceMode()

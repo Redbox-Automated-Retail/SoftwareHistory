@@ -77,18 +77,9 @@ public class KioskServicesProxy
 			trailing = 0;
 		}
 		string obj = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
-		string text;
-		if (trailing <= 0)
-		{
-			text = string.Empty;
-		}
-		else
-		{
-			text = msgText.Substring(msgText.Length - trailing, trailing);
-		}
-		string text2 = text;
-		string text3 = new string(newChar, msgText.Length - (leading + trailing));
-		return obj + text3 + text2;
+		string text = ((trailing > 0) ? msgText.Substring(msgText.Length - trailing, trailing) : string.Empty);
+		string text2 = new string(newChar, msgText.Length - (leading + trailing));
+		return obj + text2 + text;
 	}
 
 	public IDictionary<string, object> ExecuteMessage(string jsonRequest)

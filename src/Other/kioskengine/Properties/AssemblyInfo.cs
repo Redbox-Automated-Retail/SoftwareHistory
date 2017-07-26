@@ -12,6 +12,6 @@ using System.Runtime.Versioning;
 [assembly: AssemblyCopyright("Copyright © 2011 Redbox Automated Retail, LLC.  All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("6db457a0-052b-4fd2-9f48-b1b6ad1c249d")]
-[assembly: AssemblyFileVersion("1.18.0.18")]
+[assembly: AssemblyFileVersion("1.25.0.4")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.18.0.18")]
+[assembly: AssemblyVersion("1.25.0.4")]

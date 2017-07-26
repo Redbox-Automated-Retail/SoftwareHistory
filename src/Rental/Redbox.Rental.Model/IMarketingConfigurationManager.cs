@@ -17,4 +17,6 @@ public interface IMarketingConfigurationManager
 	int CollectionsPopUpTimer { get; }
 
 	int CollectionsPopUpPaddleClicks { get; }
+
+	bool EnableMarketingAds { get; }
 }

@@ -341,11 +341,18 @@ public class QueueService : IQueueService, IDisposable
 		return errorList;
 	}
 
-	public ErrorList Initialize(string path)
+	public ErrorList Initialize(string path, int retry = 2)
 	{
-		LogHelper.Instance.Log("Initialize queue service, storage path: {0}", path);
-		ServiceLocator.Instance.AddService(typeof(IQueueService), Instance);
 		ErrorList errorList = new ErrorList();
+		if (retry <= 0)
+		{
+			return errorList;
+		}
+		LogHelper.Instance.Log("Initialize queue service, storage path: {0}", path);
+		if (ServiceLocator.Instance.GetService<IQueueService>() == null)
+		{
+			ServiceLocator.Instance.AddService(typeof(IQueueService), Instance);
+		}
 		try
 		{
 			DatabasePath = path;
@@ -362,13 +369,18 @@ public class QueueService : IQueueService, IDisposable
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in QueueServie.Initialize.", e);
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "Unable to initialize the Queue Service database.", e));
+			LogHelper.Instance.Log("An unhandled exception was raised in QueueService.Initialize.", e);
+			if (retry <= 0)
+			{
+				errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "Unable to initialize the Queue Service database.", e));
+			}
 			try
 			{
 				string text = DatabasePath + ".corrupt";
 				LogHelper.Instance.Log("Attempt to move '{0}' to '{1}'.", DatabasePath, text);
 				File.Move(DatabasePath, text);
+				LogHelper.Instance.Log("Attempt to retry QueueService.Initialize.");
+				errorList.AddRange(Initialize(path, --retry));
 			}
 			catch (Exception e2)
 			{
@@ -595,12 +607,13 @@ public class QueueService : IQueueService, IDisposable
 
 	private IMessage ToMessage(VistaDBDataReader reader)
 	{
-		Message message = new Message();
-		message.ID = (int)reader["ID"];
-		message.Type = (string)reader["Type"];
-		message.CreatedOn = (DateTime)reader["CreatedOn"];
-		message.Data = FromEncryptedMessage((byte[])reader["Data"]);
-		message.Priority = (byte)reader["Priority"];
-		return message;
+		return new Message
+		{
+			ID = (int)reader["ID"],
+			Type = (string)reader["Type"],
+			CreatedOn = (DateTime)reader["CreatedOn"],
+			Data = FromEncryptedMessage((byte[])reader["Data"]),
+			Priority = (byte)reader["Priority"]
+		};
 	}
 }

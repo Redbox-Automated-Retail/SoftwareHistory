@@ -1,7 +1,7 @@
 using System;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 
 namespace Redbox.KioskServices.Proxy;
 

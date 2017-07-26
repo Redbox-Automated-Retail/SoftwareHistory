@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.IO;
+using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
@@ -316,6 +317,34 @@ public class BitmapCacheService : IBitmapCacheService, IDisposable
 			LogHelper.Instance.Log("An unhandled exception was raised in BitmapCacheService.RegisterImageWithText from stream.", e2);
 		}
 		return bitmap;
+	}
+
+	public BitmapImage GetBitmapImage(string imageName)
+	{
+		Image image = GetImage(imageName);
+		return ToBitmapImage(image);
+	}
+
+	public BitmapImage ToBitmapImage(Image image)
+	{
+		if (image == null)
+		{
+			return null;
+		}
+		return ToBitmapImage(new Bitmap(image));
+	}
+
+	public BitmapImage ToBitmapImage(Bitmap bitmap)
+	{
+		using MemoryStream memoryStream = new MemoryStream();
+		bitmap.Save(memoryStream, ImageFormat.Png);
+		memoryStream.Position = 0L;
+		BitmapImage bitmapImage = new BitmapImage();
+		bitmapImage.BeginInit();
+		bitmapImage.StreamSource = memoryStream;
+		bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+		bitmapImage.EndInit();
+		return bitmapImage;
 	}
 
 	public void Dispose()

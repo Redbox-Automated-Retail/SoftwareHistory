@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Controls.DisplayProductUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localModels="clr-namespace:Redbox.Rental.UI.Models" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" DataContextChanged="UserControl_DataContextChanged">
+  <Grid Name="MainGrid">
+    <Border Name="ImageBorder" CornerRadius="{Binding Path=ImageBorderCornerRadius}" BorderThickness="{Binding Path=ImageBorderThickness}">
+      <Border.BorderBrush>
+        <SolidColorBrush Color="{Binding Path=ImageBorderColor}" />
+      </Border.BorderBrush>
+      <Grid>
+        <Image Name="DisplayProductImage" Stretch="Fill" Source="{Binding Path=Image}" Opacity="{Binding Path=ImageOpacity}">
+          <UIElement.InputBindings>
+            <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.DisplayProductSelectedCommand}" />
+          </UIElement.InputBindings>
+        </Image>
+        <local:RoundedButton x:Name="AddButton" Style="{StaticResource classic_red_button_style}" Command="{x:Static localbase:Commands.DisplayProductAddCommand}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="220" Height="68" CornerRadius="34" Margin="0,0,-25,-25" Focusable="False" Opacity="{Binding Path=AddButtonOpacity}" Visibility="{Binding Path=AddButtonVisibility}">
+          <StackPanel Margin="5" Orientation="Horizontal">
+            <Polygon Name="PlusSign" Fill="#FFFFFFFF" Stretch="Uniform" Margin="3" Height="18">
+              <Polygon.Points>
+                <Point X="9" Y="0" />
+                <Point X="16" Y="0" />
+                <Point X="16" Y="9" />
+                <Point X="25" Y="9" />
+                <Point X="25" Y="16" />
+                <Point X="16" Y="16" />
+                <Point X="16" Y="25" />
+                <Point X="9" Y="25" />
+                <Point X="9" Y="16" />
+                <Point X="0" Y="16" />
+                <Point X="0" Y="9" />
+                <Point X="9" Y="9" />
+              </Polygon.Points>
+            </Polygon>
+            <TextBlock Name="AddButtonText" VerticalAlignment="Center" Margin="5" Style="{StaticResource font_bryant_bold_18}" Text="{Binding Path=AddButtonLabelText, FallbackValue=RENT IT NOW!}" />
+          </StackPanel>
+        </local:RoundedButton>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

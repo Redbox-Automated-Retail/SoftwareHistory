@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
+using System.Windows.Media;
 using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.Rental.UI.Views;
@@ -34,6 +35,18 @@ public partial class ReturnViewUserControl : UserControl, IWPFActor, IComponentC
 		set
 		{
 			InsertDiscAnimation.MessageText = value;
+		}
+	}
+
+	public ImageSource AdImage
+	{
+		get
+		{
+			return ad_image.Source;
+		}
+		set
+		{
+			ad_image.Source = value;
 		}
 	}
 

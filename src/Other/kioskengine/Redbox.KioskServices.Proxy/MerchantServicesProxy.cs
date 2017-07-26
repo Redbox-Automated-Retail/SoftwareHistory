@@ -6,6 +6,7 @@ using System.Security;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.Proxy;
@@ -61,18 +62,6 @@ public class MerchantServicesProxy : IMerchantServices
 		set
 		{
 			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Reservation Auth Services", "SimulateServerBusyFailure", value);
-		}
-	}
-
-	public int MaximumShoppingCartItems
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "MaximumShoppingCartItems", 3);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "MaximumShoppingCartItems", value);
 		}
 	}
 
@@ -133,30 +122,6 @@ public class MerchantServicesProxy : IMerchantServices
 		set
 		{
 			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", value);
-		}
-	}
-
-	public bool EnableQueueBasedRentalLimit
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "EnableQueueBasedRentalLimit", defaultValue: true);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EnableQueueBasedRentalLimit", value);
-		}
-	}
-
-	public bool EnforceShoppingCartItemLimit
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "EnforeShoppingCartItemLimit", defaultValue: true);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "EnforeShoppingCartItemLimit", value);
 		}
 	}
 

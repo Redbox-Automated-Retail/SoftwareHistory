@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Views.VendViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:animations="clr-namespace:Redbox.Rental.UI.Controls.Animations">
+  <Grid Background="#B5121B">
+    <Grid Name="AnimationContainer">
+      <animations:VendDiscAnimationUserControl VerticalAlignment="Center" />
+    </Grid>
+  </Grid>
+</UserControl>

@@ -216,6 +216,10 @@ public static class KioskProductExtensions
 		{
 			return TitleType.Xbox360;
 		}
+		if (type.Equals("Xbox360", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.Xbox360;
+		}
 		if (type.Equals("PS3", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.PS3;
@@ -224,11 +228,19 @@ public static class KioskProductExtensions
 		{
 			return TitleType.XboxOne;
 		}
+		if (type.Equals("XBOXONE", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.XboxOne;
+		}
 		if (type.Equals("WII", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.Wii;
 		}
 		if (type.Equals("WII U", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.WiiU;
+		}
+		if (type.Equals("WIIU", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.WiiU;
 		}

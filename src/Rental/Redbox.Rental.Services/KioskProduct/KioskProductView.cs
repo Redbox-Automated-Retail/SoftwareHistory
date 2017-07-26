@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
@@ -13,6 +14,8 @@ namespace Redbox.Rental.Services.KioskProduct;
 public class KioskProductView
 {
 	private Store _store;
+
+	private IStoreManager _storeManager;
 
 	private Dictionary<long, ITitleProduct> _titleProducts = new Dictionary<long, ITitleProduct>();
 
@@ -44,9 +47,10 @@ public class KioskProductView
 
 	public Dictionary<long, ICollectionProduct> CollectionProducts => _collectionProducts;
 
-	public KioskProductView(Store store, IProfileDataInstance profileDataInstance, ICacheDataInstance cacheDataInstance, IKioskDataInstance kioskDataInstance)
+	public KioskProductView(Store store, IProfileDataInstance profileDataInstance, ICacheDataInstance cacheDataInstance, IKioskDataInstance kioskDataInstance, IStoreManager storeManager)
 	{
 		_store = store;
+		_storeManager = storeManager;
 		ProfileDataInstance = profileDataInstance;
 		CacheDataInstance = cacheDataInstance;
 		KioskDataInstance = kioskDataInstance;
@@ -247,11 +251,12 @@ public class KioskProductView
 		{
 			return false;
 		}
-		if (!(kioskProduct is ITitleProduct titleProduct))
+		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
+		if (titleProduct != null && titleProduct.ComingSoon)
 		{
 			return false;
 		}
-		return titleProduct.IsSellable;
+		return titleProduct?.IsSellable ?? false;
 	}
 
 	public IKioskProduct GetTitleRollupProduct(long productGroupId)
@@ -385,7 +390,7 @@ public class KioskProductView
 			LogHelper.Instance.Log("KioskProductView.AddTitleProduct - Title product {0} already exists", titleCache.ProductId);
 			return null;
 		}
-		TitleProduct titleProduct = new TitleProduct(title, titleCache, (TitleType)title.ProductTypeId, ProfileDataInstance, _store);
+		TitleProduct titleProduct = new TitleProduct(title, titleCache, (TitleType)title.ProductTypeId, ProfileDataInstance, _store, _storeManager);
 		_titleProducts[titleProduct.ProductId] = titleProduct;
 		return titleProduct;
 	}

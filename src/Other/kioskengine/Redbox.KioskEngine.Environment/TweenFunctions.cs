@@ -60,10 +60,7 @@ internal static class TweenFunctions
 		{
 			return change / 2f * time * time + begin;
 		}
-		float num = (0f - change) / 2f;
-		float num2 = time - 1f;
-		time = num2;
-		return num * (num2 * (time - 2f) - 1f) + begin;
+		return (0f - change) / 2f * (--time * (time - 2f) - 1f) + begin;
 	}
 
 	[TweenFunction(Type = TweenType.EaseInCubic)]

@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Controls.TitleRollupOverlayUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localbase="clr-namespace:Redbox.Rental.UI" Visibility="{Binding Path=Visibility}" DataContextChanged="UserControl_DataContextChanged" IsVisibleChanged="UserControl_IsVisibleChanged">
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static localbase:Commands.CancelTitleRollupOverlayCommand}" Executed="CancelTitleRollupOverlayCommand_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.AddDVDCommand}" Executed="AddDVDCommand_Executed" CanExecute="AddDVDCommand_CanExecute" />
+    <CommandBinding Command="{x:Static localbase:Commands.AddBluRayCommand}" Executed="AddBlurayCommand_Executed" CanExecute="AddBlurayCommand_CanExecute" />
+  </UIElement.CommandBindings>
+  <Grid>
+    <Border Name="Border" CornerRadius="4" BorderThickness="4" BorderBrush="#970E16">
+      <Grid ShowGridLines="False">
+        <Panel.Background>
+          <SolidColorBrush Color="Black" Opacity="0.8" />
+        </Panel.Background>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="15*" />
+          <RowDefinition Height="25*" />
+          <RowDefinition Height="15*" />
+          <RowDefinition Height="25*" />
+          <RowDefinition Height="15*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="10*" />
+          <ColumnDefinition Width="80*" />
+          <ColumnDefinition Width="10*" />
+        </Grid.ColumnDefinitions>
+        <local:RoundedButton x:Name="DVDButton" Grid.Row="1" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource classic_red_button_style}" Command="{x:Static localbase:Commands.AddDVDCommand}" Visibility="{Binding Path=DVDButtonVisibility, FallbackValue=Visible}">
+          <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=DVDButtonText, FallbackValue=+ DVD}" />
+        </local:RoundedButton>
+        <local:RoundedButton x:Name="BlurayButton" Grid.Row="3" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource classic_blue_button_style}" Command="{x:Static localbase:Commands.AddBluRayCommand}" Visibility="{Binding Path=BlurayButtonVisibility, FallbackValue=Visible}">
+          <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=BlurayButtonText, FallbackValue=+ BLU-RAY}" />
+        </local:RoundedButton>
+      </Grid>
+    </Border>
+    <local:RoundedButton x:Name="CancelButton" Width="42" Height="42" Style="{StaticResource classic_gray_button_style}" Command="{x:Static localbase:Commands.CancelTitleRollupOverlayCommand}" BorderColor="#970E16" BorderGradientColor="#970E16" CornerRadius="21" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-21,-21">
+      <TextBlock Style="{StaticResource font_bryant_bold_18}">X</TextBlock>
+    </local:RoundedButton>
+  </Grid>
+</UserControl>

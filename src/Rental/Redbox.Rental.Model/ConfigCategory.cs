@@ -11,4 +11,8 @@ public static class ConfigCategory
 	public static string Collections = "Collections";
 
 	public static string Games = "Games";
+
+	public static string MarketingGeneral = "MarketingGeneral";
+
+	public static string Documents = "Documents";
 }

@@ -17,6 +17,18 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	private bool m_timerDisabled;
 
+	public double BackgroundOpacity
+	{
+		get
+		{
+			return DarkBackground.Opacity;
+		}
+		set
+		{
+			DarkBackground.Opacity = value;
+		}
+	}
+
 	public string Message
 	{
 		get
@@ -38,6 +50,22 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 		set
 		{
 			TitleText.Text = value;
+		}
+	}
+
+	public string TitleStyle
+	{
+		set
+		{
+			SetStyle(TitleText, value);
+		}
+	}
+
+	public string MessageStyle
+	{
+		set
+		{
+			SetStyle(MessageText, value);
 		}
 	}
 
@@ -98,6 +126,19 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 		InitializeComponent();
 		RegisterRoutedCommand("Button1", MessagePopupViewCommands.Button1);
 		RegisterRoutedCommand("Button2", MessagePopupViewCommands.Button2);
+		Message = null;
+		Title = null;
+		Button1Text = null;
+		Button2Text = null;
+	}
+
+	private void SetStyle(FrameworkElement frameworkElement, string styleName)
+	{
+		object obj = FindResource(styleName);
+		if (obj != null && frameworkElement != null && obj is Style style)
+		{
+			frameworkElement.Style = style;
+		}
 	}
 
 	public void StopTimer()
@@ -115,7 +156,7 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 		bool flag = false;
 		lock (m_lockObject)
 		{
-			m_dispatcherTimer.Stop();
+			m_dispatcherTimer?.Stop();
 			if (!m_timerDisabled)
 			{
 				m_timerDisabled = true;
@@ -125,7 +166,7 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 				}
 			}
 		}
-		if (flag)
+		if (flag && OnTimeOut != null)
 		{
 			OnTimeOut();
 		}

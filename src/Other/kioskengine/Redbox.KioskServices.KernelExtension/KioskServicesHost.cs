@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Kernel;
 using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;

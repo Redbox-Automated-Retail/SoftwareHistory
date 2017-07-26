@@ -167,19 +167,22 @@ public class EnvironmentManager : IEnvironmentNotificationService
 		m_corruptDbCallback = callback;
 	}
 
-	public void RaiseCorruptDb(string dbName)
+	public bool RaiseCorruptDb(string dbName)
 	{
+		bool result = false;
 		try
 		{
 			if (m_corruptDbCallback != null)
 			{
 				m_corruptDbCallback(dbName);
+				result = true;
 			}
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseCorruptDb.", e);
 		}
+		return result;
 	}
 
 	public void UnregisterHardwareChangeCallback()

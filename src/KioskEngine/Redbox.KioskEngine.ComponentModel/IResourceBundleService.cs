@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Reflection;
+using System.Windows.Media.Imaging;
 using System.Windows.Xps.Packaging;
 using System.Xml;
 using Redbox.REDS.Framework;
@@ -60,15 +61,17 @@ public interface IResourceBundleService
 
 	XmlNode GetXml(string resourceName);
 
-	string GetMovie(string resourceName);
-
 	byte[] GetSound(string resourceName);
 
 	XpsDocument GetXpsDocument(string resourceName);
 
+	string GetJsonFile(string resourceName);
+
 	string GetScript(string resourceName);
 
 	Image GetBitmap(string resourceName);
+
+	BitmapImage GetBitmapImage(string resourceName);
 
 	ReadOnlyCollection<object> ExecuteScript(string resourceName);
 

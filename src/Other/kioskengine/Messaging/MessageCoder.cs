@@ -74,7 +74,7 @@ internal class MessageCoder
 		genuineChunkedStream.WriteStream(message.Stream);
 		if (compress)
 		{
-			GenuineChannels976446_002EGZipOutputStream obj2 = new GenuineChannels976446_002EGZipOutputStream(new NonClosableStream(stream));
+			GenuineChannels955638_002EGZipOutputStream obj2 = new GenuineChannels955638_002EGZipOutputStream(new NonClosableStream(stream));
 			GenuineUtility.CopyStreamToStream(genuineChunkedStream, obj2);
 			obj2.Finish();
 		}
@@ -85,7 +85,7 @@ internal class MessageCoder
 		BinaryReader binaryReader = new BinaryReader(stream);
 		if (binaryReader.ReadBoolean())
 		{
-			stream = new GenuineChannels976446_002EGZipInputStream(stream);
+			stream = new GenuineChannels955638_002EGZipInputStream(stream);
 		}
 		binaryReader = new BinaryReader(stream);
 		Message message = new Message();

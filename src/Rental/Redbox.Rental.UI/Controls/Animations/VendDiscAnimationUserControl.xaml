@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Controls.Animations.VendDiscAnimationUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls.Animations">
+  <Grid Background="#B5121B" Width="2048">
+    <local:RedChevronUserControl x:Name="RedChevron" VerticalAlignment="Top" HorizontalAlignment="Left" />
+    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="75" Width="430" TextBlock.Foreground="#FFFFFFFF">
+      <TextBlock Name="TitleTextBlock" Style="{StaticResource font_target_large}" TextWrapping="Wrap">Culture specific title</TextBlock>
+      <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_smaller}" TextWrapping="Wrap">Culture specific message goes here at runtime</TextBlock>
+    </StackPanel>
+    <local:RedboxDiscUserControl x:Name="RedboxDisc" VerticalAlignment="Center" HorizontalAlignment="Left" Width="460" Height="460" Margin="520, 0" AnimationScrollDirection="Right" />
+  </Grid>
+</UserControl>

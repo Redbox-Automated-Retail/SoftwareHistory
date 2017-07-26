@@ -158,19 +158,20 @@ public class SchedulerService : ISchedulerService
 		List<SchedulerEntry> entries = Entries;
 		if (entries.FindIndex((SchedulerEntry each) => string.Compare(each.JobName, jobname, ignoreCase: true) == 0) == -1)
 		{
-			SchedulerEntry schedulerEntry = new SchedulerEntry();
-			schedulerEntry.JobName = jobname;
-			schedulerEntry.Label = label;
-			schedulerEntry.StartTime = startTime;
-			schedulerEntry.EndTime = endTime;
-			schedulerEntry.CronExpression = cronExpression;
-			schedulerEntry.FunctionName = functionName;
-			schedulerEntry.Program = programName;
-			schedulerEntry.MisfireInstruction = misfireInstruction;
-			SchedulerEntry schedulerEntry2 = schedulerEntry;
-			schedulerEntry2.Parameters.AddRange(parms);
-			entries.Add(schedulerEntry2);
-			if (ScheduleEntry(schedulerEntry2))
+			SchedulerEntry schedulerEntry = new SchedulerEntry
+			{
+				JobName = jobname,
+				Label = label,
+				StartTime = startTime,
+				EndTime = endTime,
+				CronExpression = cronExpression,
+				FunctionName = functionName,
+				Program = programName,
+				MisfireInstruction = misfireInstruction
+			};
+			schedulerEntry.Parameters.AddRange(parms);
+			entries.Add(schedulerEntry);
+			if (ScheduleEntry(schedulerEntry))
 			{
 				Entries = entries;
 				SaveEntries();

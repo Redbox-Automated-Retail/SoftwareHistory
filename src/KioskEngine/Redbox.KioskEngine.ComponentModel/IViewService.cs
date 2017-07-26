@@ -5,6 +5,8 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IViewService
 {
+	int ViewStackCount { get; }
+
 	ReadOnlyCollection<IViewFrame> Stack { get; }
 
 	string LastHitActorName { get; set; }
@@ -22,6 +24,8 @@ public interface IViewService
 	string Pop();
 
 	string Peek();
+
+	string Peek(int index);
 
 	void ClearCache();
 

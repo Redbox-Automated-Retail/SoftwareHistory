@@ -44,7 +44,7 @@ public interface IEnvironmentNotificationService
 
 	void RegisterCorruptDbCallback(CorruptDbCallback callback);
 
-	void RaiseCorruptDb(string dbName);
+	bool RaiseCorruptDb(string dbName);
 
 	EnvironmentNotificationType ProcessNotification(ref Message msg);
 }

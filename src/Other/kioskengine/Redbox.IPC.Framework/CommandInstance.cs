@@ -34,7 +34,7 @@ internal class CommandInstance
 		foreach (MethodInfo methodInfo in methods)
 		{
 			NotLoggableAttribute notLoggableAttribute = Attribute.GetCustomAttribute(methodInfo, typeof(NotLoggableAttribute)) as NotLoggableAttribute;
-			if (!(Attribute.GetCustomAttribute(methodInfo, typeof(Redbox_002EIPC_002EFramework1802119_002ECommandFormAttribute)) is Redbox_002EIPC_002EFramework1802119_002ECommandFormAttribute obj))
+			if (!(Attribute.GetCustomAttribute(methodInfo, typeof(Redbox_002EIPC_002EFramework1769326_002ECommandFormAttribute)) is Redbox_002EIPC_002EFramework1769326_002ECommandFormAttribute obj))
 			{
 				continue;
 			}

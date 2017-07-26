@@ -73,18 +73,12 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 			}
 			return new List<string>().AsReadOnly();
 		}
-		List<string> list2 = new List<string>();
-		list2.Add("origin_machine");
-		list2.Add("generated_on");
-		return list2.AsReadOnly();
+		return new List<string> { "origin_machine", "generated_on" }.AsReadOnly();
 	}
 
 	protected override ReadOnlyCollection<string> OnGetTables(string dataStore)
 	{
-		List<string> list = new List<string>();
-		list.Add("Version");
-		list.Add("BarcodeToProduct");
-		List<string> list2 = list;
-		return list2.AsReadOnly();
+		List<string> list = new List<string> { "Version", "BarcodeToProduct" };
+		return list.AsReadOnly();
 	}
 }

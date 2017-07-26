@@ -8,6 +8,8 @@ public interface ITextToSpeechService
 
 	bool InReturnFlow { get; set; }
 
+	event AudioDeviceConnectionChanged OnAudioDeviceConnectionChanged;
+
 	void Reset();
 
 	void RunSpeechWorkflow(string viewName);

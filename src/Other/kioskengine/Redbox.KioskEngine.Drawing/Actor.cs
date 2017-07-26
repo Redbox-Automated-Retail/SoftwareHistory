@@ -20,9 +20,11 @@ namespace Redbox.KioskEngine.Drawing;
 
 public class Actor : IActor, IDisposable
 {
+	private Form _mainForm;
+
 	private bool m_clickStarted;
 
-	private double WPFSizeConvertion = 1.3333333333333333;
+	private double WPFSizeConvertion = 1.3333333730697632;
 
 	private int m_x;
 
@@ -93,6 +95,19 @@ public class Actor : IActor, IDisposable
 	private System.Windows.Controls.Image m_wpfImage;
 
 	public bool HitExists => Hit != null;
+
+	public IntPtr MainHandle
+	{
+		get
+		{
+			if (_mainForm == null)
+			{
+				IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
+				_mainForm = (service as ApplicationContext).MainForm;
+			}
+			return _mainForm.Handle;
+		}
+	}
 
 	public int X
 	{
@@ -660,7 +675,7 @@ public class Actor : IActor, IDisposable
 	public MeasureTextResult MeasureText()
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		using Graphics graphics = Graphics.FromHwnd(System.Windows.Forms.Application.OpenForms[0].Handle);
+		using Graphics graphics = Graphics.FromHwnd(MainHandle);
 		graphics.PixelOffsetMode = PixelOffsetMode.Half;
 		graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
 		Rectangle textRegion = GetTextRegion(forTranslation: false);
@@ -803,65 +818,67 @@ public class Actor : IActor, IDisposable
 
 	private FrameworkElement CreateWPFControl()
 	{
-		FrameworkElement frameworkElement = null;
-		WPFControlName.Split(',');
-		if (!string.IsNullOrEmpty(WPFControlName) && !string.IsNullOrEmpty(WPFControlAssemblyName))
+		FrameworkElement frameworkElement = ServiceLocator.Instance.GetService<IThemeService>()?.GetNewThemedControlInstance(WPFControlName);
+		if (frameworkElement == null)
 		{
-			string text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), WPFControlAssemblyName);
-			if (File.Exists(text))
+			if (!string.IsNullOrEmpty(WPFControlName) && !string.IsNullOrEmpty(WPFControlAssemblyName))
 			{
-				Assembly assembly = Assembly.LoadFile(text);
-				if (assembly != null)
+				string text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), WPFControlAssemblyName);
+				if (File.Exists(text))
 				{
-					Type type = assembly.GetType(WPFControlName);
-					if (type != null)
+					Assembly assembly = Assembly.LoadFile(text);
+					if (assembly != null)
 					{
-						object obj = Activator.CreateInstance(type);
-						if (obj != null)
+						Type type = assembly.GetType(WPFControlName);
+						if (type != null)
 						{
-							if (obj is System.Windows.Controls.UserControl userControl)
+							object obj = Activator.CreateInstance(type);
+							if (obj != null)
 							{
-								frameworkElement = userControl;
-								if (frameworkElement is IWPFActor iWPFActor)
+								if (obj is System.Windows.Controls.UserControl userControl)
 								{
-									iWPFActor.Actor = this;
-									iWPFActor.OnWPFHit += delegate
-									{
-										if (OnWPFHit != null)
-										{
-											OnWPFHit(this);
-										}
-									};
+									frameworkElement = userControl;
+								}
+								else
+								{
+									LogHelper.Instance.Log("Type {0} is not a UserControl", WPFControlName);
 								}
 							}
 							else
 							{
-								LogHelper.Instance.Log("Type {0} is not a UserControl", WPFControlName);
+								LogHelper.Instance.Log("Unable to create instance of type {0}", WPFControlName);
 							}
 						}
 						else
 						{
-							LogHelper.Instance.Log("Unable to create instance of type {0}", WPFControlName);
+							LogHelper.Instance.Log("Unable to get type {1} in assembly {0}", text, WPFControlName);
 						}
 					}
 					else
 					{
-						LogHelper.Instance.Log("Unable to get type {1} in assembly {0}", text, WPFControlName);
+						LogHelper.Instance.Log("Unable to load assembly {0}", text);
 					}
 				}
 				else
 				{
-					LogHelper.Instance.Log("Unable to load assembly {0}", text);
+					LogHelper.Instance.Log("Unable to find assembly {0}", text);
 				}
 			}
 			else
 			{
-				LogHelper.Instance.Log("Unable to find assembly {0}", text);
+				LogHelper.Instance.Log("WPFControlName and WPFControlAssemblyName must have values");
 			}
 		}
-		else
+		if (frameworkElement is IWPFActor iWPFActor)
 		{
-			LogHelper.Instance.Log("WPFControlName and WPFControlAssemblyName must have values");
+			iWPFActor.Actor = this;
+			iWPFActor.OnWPFHit += delegate
+			{
+				if (OnWPFHit != null)
+				{
+					OnWPFHit(this);
+				}
+			};
 		}
 		return frameworkElement;
 	}

@@ -399,6 +399,11 @@ public class DataService : IDataService
 		return result;
 	}
 
+	public int GetInStockGameCount()
+	{
+		return _kioskProductView?.GetInStockGameCount() ?? 0;
+	}
+
 	private ErrorList PerformActionWhileLocked(Action action)
 	{
 		ErrorList errorList = new ErrorList();
@@ -536,7 +541,8 @@ public class DataService : IDataService
 
 	private void RefreshView()
 	{
-		long kioskId = ServiceLocator.Instance.GetService<IStoreManager>().KioskId;
+		IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
+		long kioskId = service.KioskId;
 		Store store;
 		if (_dataServiceInstance.ProfileDataInstance.Stores.ContainsKey(kioskId))
 		{
@@ -548,8 +554,14 @@ public class DataService : IDataService
 			{
 				StoreId = 0L
 			};
+			store.Sellthru = true;
+			store.PurchasePrice = 5m;
+			store.PurchaseTaxRate = 8m;
+			store.RentalTaxRate = 8m;
 			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");
 		}
-		_kioskProductView = new KioskProductView(store, _dataServiceInstance.ProfileDataInstance, _dataServiceInstance.CacheDataInstance, _dataServiceInstance.KioskDataInstance);
+		service.SellThru = store.Sellthru;
+		service.PurchasePrice = store.PurchasePrice;
+		_kioskProductView = new KioskProductView(store, _dataServiceInstance.ProfileDataInstance, _dataServiceInstance.CacheDataInstance, _dataServiceInstance.KioskDataInstance, service);
 	}
 }

@@ -33,7 +33,7 @@ public abstract class IPCServiceHost
 
 	public string Copyright { get; protected set; }
 
-	public Redbox_002EIPC_002EFramework1802119_002EIPCProtocol Protocol { get; protected set; }
+	public Redbox_002EIPC_002EFramework1769326_002EIPCProtocol Protocol { get; protected set; }
 
 	public WorkerPool WorkerPool { get; internal set; }
 
@@ -81,22 +81,22 @@ public abstract class IPCServiceHost
 		}
 	}
 
-	public static IPCServiceHost Create(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, string product, string version, string copyright, int minThreads, int maxThreads, int bufferSize, int numberOfBuffers, int? backlogSize)
+	public static IPCServiceHost Create(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, string product, string version, string copyright, int minThreads, int maxThreads, int bufferSize, int numberOfBuffers, int? backlogSize)
 	{
 		return Create(protocol, product, version, copyright, minThreads, maxThreads, bufferSize, numberOfBuffers, backlogSize, null);
 	}
 
-	public static IPCServiceHost Create(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, string product, string version, string copyright, int minThreads, int maxThreads, int bufferSize, int numberOfBuffers, int? backlogSize, string poolName)
+	public static IPCServiceHost Create(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, string product, string version, string copyright, int minThreads, int maxThreads, int bufferSize, int numberOfBuffers, int? backlogSize, string poolName)
 	{
 		switch (protocol.Channel)
 		{
-		case Redbox_002EIPC_002EFramework1802119_002EChannelType.NamedPipe:
+		case Redbox_002EIPC_002EFramework1769326_002EChannelType.NamedPipe:
 			m_serviceHost = new NamedPipeServiceHost();
 			break;
-		case Redbox_002EIPC_002EFramework1802119_002EChannelType.Socket:
+		case Redbox_002EIPC_002EFramework1769326_002EChannelType.Socket:
 			m_serviceHost = new TcpServiceHost(backlogSize);
 			break;
-		case Redbox_002EIPC_002EFramework1802119_002EChannelType.Remoting:
+		case Redbox_002EIPC_002EFramework1769326_002EChannelType.Remoting:
 			m_serviceHost = new RemotingServiceHost(maxThreads);
 			break;
 		default:

@@ -122,16 +122,17 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 				}
 			}
 			m_sessions.Clear();
-			ShoppingSession shoppingSession2 = new ShoppingSession((!string.IsNullOrEmpty(sessionId)) ? new Guid(sessionId) : Guid.NewGuid(), logStartEvent: true);
-			shoppingSession2.StartedOn = DateTime.Now;
-			shoppingSession2.StoreNumber = storeNumber;
-			ShoppingSession shoppingSession3 = shoppingSession2;
-			shoppingSession3.ShoppingCart = new ShoppingCart(shoppingSession3.Id)
+			ShoppingSession shoppingSession2 = new ShoppingSession((!string.IsNullOrEmpty(sessionId)) ? new Guid(sessionId) : Guid.NewGuid(), logStartEvent: true)
+			{
+				StartedOn = DateTime.Now,
+				StoreNumber = storeNumber
+			};
+			shoppingSession2.ShoppingCart = new ShoppingCart(shoppingSession2.Id)
 			{
 				Type = ShoppingCartType.Online
 			};
-			string text = shoppingSession3.Id.ToString();
-			m_sessions[text] = shoppingSession3;
+			string text = shoppingSession2.Id.ToString();
+			m_sessions[text] = shoppingSession2;
 			LogHelper.Instance.Log("Shopping Session '{0}' added to cache and started.", text);
 			return text;
 		}

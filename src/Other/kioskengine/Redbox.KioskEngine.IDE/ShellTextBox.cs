@@ -81,12 +81,9 @@ public class ShellTextBox : TextBox
 	private void PrintPrompt()
 	{
 		string text = Text;
-		if (text.Length != 0)
+		if (text.Length != 0 && text[text.Length - 1] != '\n')
 		{
-			if (text[text.Length - 1] != '\n')
-			{
-				PrintLine();
-			}
+			PrintLine();
 		}
 		AddText(m_prompt);
 	}

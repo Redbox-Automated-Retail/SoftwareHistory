@@ -61,7 +61,7 @@ public class HelpViewController
 		}
 	}
 
-	public static void ConfigureHelpView(bool giftCardEnabled, Action goBackAction, Action clickRedboxLogoAction)
+	public static void ConfigureHelpView(bool giftCardEnabled, Action goBackAction, Action clickRedboxLogoAction, bool showAsPopup)
 	{
 		IActor actor = ActorFunctions.GetActor("HelpViewUserControl");
 		if (actor == null)
@@ -76,11 +76,17 @@ public class HelpViewController
 		IMacroService macroService = ServiceLocator.Instance.GetService<IMacroService>();
 		helpViewUserControl.OnHelpDocumentChanged += delegate(HelpDocuments helpDocument)
 		{
-			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = helpDocument;
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = helpDocument;
+			}
 		};
 		helpViewUserControl.OnHelpDocumentPageChanged += delegate(int pageNumber)
 		{
-			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = pageNumber;
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = pageNumber;
+			}
 		};
 		helpViewUserControl.OnHelpDocumentButtonPress += delegate
 		{
@@ -106,35 +112,40 @@ public class HelpViewController
 		};
 		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.Faq, new HelpViewUserControl.HelpDocumentInfo
 		{
-			DocumentName = "document-faqs",
+			DocumentName = helpViewUserControl.FAQDocument,
+			DefaultDocumentName = "document-faqs",
 			Title = BundleFunctions.GetDictionaryStringValue("strings", "faq_title"),
 			Visible = true,
 			AnalyticsButtonName = "show_faq"
 		});
 		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.Terms, new HelpViewUserControl.HelpDocumentInfo
 		{
-			DocumentName = "document-terms",
+			DocumentName = helpViewUserControl.TermsDocument,
+			DefaultDocumentName = "document-terms",
 			Title = BundleFunctions.GetDictionaryStringValue("strings", "terms_of_use_title"),
 			Visible = true,
 			AnalyticsButtonName = "show_terms"
 		});
 		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.TermsReboxCard, new HelpViewUserControl.HelpDocumentInfo
 		{
-			DocumentName = "document-terms-redbox-card",
+			DocumentName = helpViewUserControl.RedboxCardDocument,
+			DefaultDocumentName = "document-terms-redbox-card",
 			Title = BundleFunctions.GetDictionaryStringValue("strings", "terms_of_use_title"),
 			Visible = giftCardEnabled,
 			AnalyticsButtonName = "show_terms_redbox_card"
 		});
 		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.Privacy, new HelpViewUserControl.HelpDocumentInfo
 		{
-			DocumentName = "document-privacy-policy",
+			DocumentName = helpViewUserControl.PrivacyDocument,
+			DefaultDocumentName = "document-privacy-policy",
 			Title = BundleFunctions.GetDictionaryStringValue("strings", "privacy_policy_title"),
 			Visible = true,
 			AnalyticsButtonName = "show_privacy"
 		});
 		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewUserControl.HelpDocumentInfo
 		{
-			DocumentName = "document-play-pass",
+			DocumentName = helpViewUserControl.PlayPassDocument,
+			DefaultDocumentName = "document-play-pass",
 			Title = BundleFunctions.GetDictionaryStringValue("strings", "play_pass_title"),
 			Visible = true,
 			AnalyticsButtonName = "show_play_pass"
@@ -148,12 +159,15 @@ public class HelpViewController
 			helpViewUserControl.SetString("store_number_text", macroService["StoreNumber"]);
 		}
 		helpViewUserControl.SetString("ButtonFAQ_Text", BundleFunctions.GetDictionaryStringValue("strings", "faq_button"));
-		helpViewUserControl.SetString("ButtonTerms_Text", BundleFunctions.GetDictionaryStringValue("strings", "terms_button"));
+		helpViewUserControl.SetString("ButtonTerms_Text", BundleFunctions.GetDictionaryStringValue("strings", "transaction_terms_button"));
 		helpViewUserControl.SetString("ButtonTermsRedboxCard_Text", BundleFunctions.GetDictionaryStringValue("strings", "terms_redbox_card_button"));
 		helpViewUserControl.SetString("ButtonPrivacy_Text", BundleFunctions.GetDictionaryStringValue("strings", "privacy_button"));
 		helpViewUserControl.SetString("ButtonPlayPass_Text", BundleFunctions.GetDictionaryStringValue("strings", "play_pass_button"));
-		helpViewUserControl.CurrentHelpDocument = Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument;
-		helpViewUserControl.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage;
+		helpViewUserControl.SetUpdatedText(BundleFunctions.GetDictionaryStringValue("strings", "help_updated_button"));
+		helpViewUserControl.CurrentHelpDocument = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocument ?? HelpDocuments.Faq;
+		helpViewUserControl.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocumentPage ?? 1;
 		UpdateMacrosAndText(helpViewUserControl);
+		helpViewUserControl.SetString("ButtonClose_Text", BundleFunctions.GetDictionaryStringValue("strings", "close_button"));
+		helpViewUserControl.ShowAsPopup = showAsPopup;
 	}
 }

@@ -58,7 +58,7 @@ public class BrowseControl : IBrowseControl
 
 	public List<IBrowseItem> Items { get; set; }
 
-	public Action<int> OnPageNumberChanged { get; set; }
+	public Action<int, PageChangeSource> OnPageNumberChanged { get; set; }
 
 	public int RowCount { get; set; }
 
@@ -149,6 +149,24 @@ public class BrowseControl : IBrowseControl
 	public List<IBrowseItem> LastRenderedBrowseItems => _lastRenderedBrowseItems;
 
 	public int VisibleItemCount => RowCount * ColumnCount;
+
+	public int NumberOfTitlesOnCurrentPage
+	{
+		get
+		{
+			PageBrowseItemCollection pageBrowseItems = GetPageBrowseItems(_browseItemIndex, LayoutDirection);
+			int titleCount = 0;
+			PerformActionAcrossRowsAndColumns(action: delegate(int rowLoopIndex, int columnLoopIndex)
+			{
+				IBrowseItem browseItem = pageBrowseItems.Get(rowLoopIndex, columnLoopIndex);
+				if (browseItem != null && !(browseItem is IGroupHeaderBrowseItem))
+				{
+					titleCount++;
+				}
+			}, browseLayoutDirection: LayoutDirection);
+			return titleCount;
+		}
+	}
 
 	private int ItemWidth => (Width - Margins.Left - Margins.Right - ColumnCount * (ItemMargins.Left + ItemMargins.Right)) / ColumnCount;
 
@@ -316,6 +334,26 @@ public class BrowseControl : IBrowseControl
 		return processedBrowseItems;
 	}
 
+	public void ScrollToGroupHeaderBrowseItemPage(IBrowseItem groupHeaderBrowseItem)
+	{
+		int num = Items.IndexOf(groupHeaderBrowseItem);
+		if (num == -1)
+		{
+			return;
+		}
+		int pageOfBrowseItemIndex = GetPageOfBrowseItemIndex(num + 1);
+		if (pageOfBrowseItemIndex != -1)
+		{
+			ClearBrowseItemActors();
+			CurrentPage = pageOfBrowseItemIndex;
+			Render();
+			if (OnPageNumberChanged != null)
+			{
+				OnPageNumberChanged(CurrentPage, PageChangeSource.GroupSelection);
+			}
+		}
+	}
+
 	public void ScrollLeft()
 	{
 		UpdateBrowseItemIndex(Math.Max(0, _browseItemIndex - VisibleItemCount));
@@ -348,8 +386,8 @@ public class BrowseControl : IBrowseControl
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		service["TTS:BrowseTotalPages"] = PageCount.ToString();
 		service["TTS:BrowseCurrentPage"] = CurrentPage.ToString();
-		service["TTS:BrowseTotalTitles"] = Items.Count().ToString();
-		service["TTS:BrowseTitlesOnScreen"] = ((CurrentPage == PageCount) ? ((Items?.Count ?? 0) % VisibleItemCount).ToString() : VisibleItemCount.ToString());
+		service["TTS:BrowseTotalTitles"] = Items.Where((IBrowseItem x) => x != null && !(x is IGroupHeaderBrowseItem)).Count().ToString();
+		service["TTS:BrowseTitlesOnScreen"] = NumberOfTitlesOnCurrentPage.ToString();
 	}
 
 	private PageBrowseItemCollection GetPageBrowseItems(int startingBrowseItemIndex, BrowseLayoutDirection browseLayoutDirection)
@@ -460,7 +498,7 @@ public class BrowseControl : IBrowseControl
 		Render();
 		if (OnPageNumberChanged != null)
 		{
-			OnPageNumberChanged(CurrentPage);
+			OnPageNumberChanged(CurrentPage, PageChangeSource.PaddleButton);
 		}
 	}
 

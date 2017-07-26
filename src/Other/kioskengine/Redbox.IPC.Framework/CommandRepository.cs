@@ -9,7 +9,7 @@ using Redbox.Core;
 
 namespace Redbox.IPC.Framework;
 
-[Redbox_002EIPC_002EFramework1802119_002ECommand("command-repository", Filter = "System|Command-Repository")]
+[Redbox_002EIPC_002EFramework1769326_002ECommand("command-repository", Filter = "System|Command-Repository")]
 [Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
 public class CommandRepository
 {
@@ -119,8 +119,8 @@ public class CommandRepository
 		List<string> list = new List<string>();
 		foreach (Type type in types)
 		{
-			Redbox_002EIPC_002EFramework1802119_002ECommandAttribute[] array = (Redbox_002EIPC_002EFramework1802119_002ECommandAttribute[])type.GetCustomAttributes(typeof(Redbox_002EIPC_002EFramework1802119_002ECommandAttribute), inherit: false);
-			foreach (Redbox_002EIPC_002EFramework1802119_002ECommandAttribute obj in array)
+			Redbox_002EIPC_002EFramework1769326_002ECommandAttribute[] array = (Redbox_002EIPC_002EFramework1769326_002ECommandAttribute[])type.GetCustomAttributes(typeof(Redbox_002EIPC_002EFramework1769326_002ECommandAttribute), inherit: false);
+			foreach (Redbox_002EIPC_002EFramework1769326_002ECommandAttribute obj in array)
 			{
 				if (obj.Name != null)
 				{

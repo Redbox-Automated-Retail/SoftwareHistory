@@ -84,13 +84,14 @@ public class KernelExtensionService : IKernelExtensionService
 				if (Activator.CreateInstance(extensionHostType) is IKernelExtensionHost kernelExtensionHost)
 				{
 					Guid? guid = Guid.NewGuid();
-					KernelExtension kernelExtension = new KernelExtension();
-					kernelExtension.Host = kernelExtensionHost;
-					kernelExtension.ID = guid.Value;
-					kernelExtension.IsUnloadSupported = false;
-					kernelExtension.Name = extensionHostType.ToString();
-					kernelExtension.Version = version;
-					KernelExtension value = (KernelExtension)(kernelExtensionHost.Extension = kernelExtension);
+					KernelExtension value = (KernelExtension)(kernelExtensionHost.Extension = new KernelExtension
+					{
+						Host = kernelExtensionHost,
+						ID = guid.Value,
+						IsUnloadSupported = false,
+						Name = extensionHostType.ToString(),
+						Version = version
+					});
 					errorList.AddRange(kernelExtensionHost.PreLoad());
 					InnerExtensions[guid.Value] = value;
 				}

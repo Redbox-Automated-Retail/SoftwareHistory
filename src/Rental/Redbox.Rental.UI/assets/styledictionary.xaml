@@ -1,8 +1,215 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Redbox.Rental.UI">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls">
+  <Style x:Key="glass_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type localControls:RoundedButton}">
+          <Grid>
+            <Border Name="InnerBorder" CornerRadius="{Binding Path=CornerRadius, RelativeSource={RelativeSource TemplatedParent}}">
+              <Border.Background>
+                <LinearGradientBrush EndPoint="{Binding Path=BorderGradientEndPoint, RelativeSource={RelativeSource TemplatedParent}}" StartPoint="{Binding Path=BorderGradientStartPoint, RelativeSource={RelativeSource TemplatedParent}}">
+                  <GradientStop Offset="0" Color="{Binding Path=BorderGradientColor, RelativeSource={RelativeSource TemplatedParent}}" />
+                  <GradientStop Offset="1" Color="{Binding Path=BorderColor, RelativeSource={RelativeSource TemplatedParent}}" />
+                </LinearGradientBrush>
+              </Border.Background>
+              <UIElement.Effect>
+                <DropShadowEffect Color="#606060" Direction="-50" ShadowDepth="5" Opacity="{Binding Path=DropShadowOpacity, RelativeSource={RelativeSource TemplatedParent}}" />
+              </UIElement.Effect>
+              <Border Name="InnerSubBorder" CornerRadius="{Binding Path=CornerRadiusInner, RelativeSource={RelativeSource TemplatedParent}}" Margin="{Binding Path=BorderThickness, RelativeSource={RelativeSource TemplatedParent}}">
+                <Border.Background>
+                  <LinearGradientBrush EndPoint="{Binding Path=BackgroundGradientEndPoint, RelativeSource={RelativeSource TemplatedParent}}" StartPoint="{Binding Path=BackgroundGradientStartPoint, RelativeSource={RelativeSource TemplatedParent}}">
+                    <GradientStop Offset="0" Color="{Binding Path=BackgroundGradientColor, RelativeSource={RelativeSource TemplatedParent}}" />
+                    <GradientStop Offset="1" Color="{Binding Path=BackgroundColor, RelativeSource={RelativeSource TemplatedParent}}" />
+                  </LinearGradientBrush>
+                </Border.Background>
+              </Border>
+            </Border>
+            <Border Name="GlassHighlight" Opacity=".5" Margin="0,5,0,20" HorizontalAlignment="Center" VerticalAlignment="Top" CornerRadius="{Binding Path=GlassHighlightCornerRadius, RelativeSource={RelativeSource TemplatedParent}}" Height="{Binding Path=GlassHighlightHeight, RelativeSource={RelativeSource TemplatedParent}}" Width="{Binding Path=GlassHighlightWidth, RelativeSource={RelativeSource TemplatedParent}}" Visibility="{Binding Path=GlassHighlightVisibility, RelativeSource={RelativeSource TemplatedParent}}">
+              <Border.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                  <GradientStop Color="White" Offset="0" />
+                  <GradientStop Offset="1" Color="{Binding Path=BackgroundGradientColor, RelativeSource={RelativeSource TemplatedParent}}" />
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="base_disabled_glass_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.CornerRadius" Value="17" />
+    <Setter Property="BorderThickness" Value="3" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="localControls:RoundedButton.BorderColor" Value="#1D1D1D" />
+        <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#1D1D1D" />
+        <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#1D1D1D" />
+        <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#363636" />
+        <Setter Property="Foreground" Value="#636363" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="red_glass_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#8F0E15" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#8F0E15" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#B50E1B" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#8F0E15" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+  </Style>
+  <Style x:Key="yellow_glass_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#E78200" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#E78200" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#EFAE00" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#E78200" />
+    <Setter Property="Foreground" Value="#FF000000" />
+  </Style>
+  <Style x:Key="blue_glass_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#0C80C5" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#0C80C5" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#1C9BE6" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#177BB7" />
+    <Setter Property="Foreground" Value="#FF000000" />
+  </Style>
+  <Style x:Key="gray_glass_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#475055" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#242729" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+  </Style>
+  <Style x:Key="gray_glass_rounded_menu_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#475055" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#242729" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#A92424" />
+        <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#900B0B" />
+        <Setter Property="Foreground" Value="#FFFFFFFF" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="gray_glass_rounded_radio_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#475055" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#242729" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="localControls:RoundedButton.BorderColor" Value="#DFDFDF" />
+        <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#262626" />
+        <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#AFAFAF" />
+        <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#5F5F5F" />
+        <Setter Property="Foreground" Value="#FF000000" />
+        <Setter Property="localControls:RoundedButton.DropShadowOpacity" Value="0" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="base_disabled_rounded_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource glass_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.CornerRadius" Value="17" />
+    <Setter Property="BorderThickness" Value="3" />
+    <Setter Property="localControls:RoundedButton.GlassHighlightVisibility" Value="Collapsed" />
+    <Setter Property="localControls:RoundedButton.DropShadowOpacity" Value="0" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="localControls:RoundedButton.BorderColor" Value="#1D1D1D" />
+        <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#1D1D1D" />
+        <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#1D1D1D" />
+        <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#1D1D1D" />
+        <Setter Property="Foreground" Value="#636363" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="classic_blue_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#0C80C5" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#0C80C5" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#177BB7" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#1C9BE6" />
+    <Setter Property="Foreground" Value="#FF000000" />
+  </Style>
+  <Style x:Key="classic_yellow_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#FFC000" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#FFC000" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#E78200" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#EFAE00" />
+    <Setter Property="Foreground" Value="#FF000000" />
+  </Style>
+  <Style x:Key="classic_red_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#8F0E15" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#8F0E15" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#8F0E15" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#B50E1B" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+  </Style>
+  <Style x:Key="classic_gray_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#242729" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#475055" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+  </Style>
+  <Style x:Key="classic_gray_menu_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#555F64" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#242729" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#475055" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#900B0B" />
+        <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#A92424" />
+        <Setter Property="Foreground" Value="#FFFFFFFF" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="classic_gray_radio_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="localControls:RoundedButton.BorderColor" Value="White" />
+    <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="White" />
+    <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#464646" />
+    <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#6F6F6F" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="localControls:RoundedButton.BackgroundGradientEndPoint" Value="0.5,0.5" />
+        <Setter Property="localControls:RoundedButton.BorderColor" Value="#FFFFFF" />
+        <Setter Property="localControls:RoundedButton.BorderGradientColor" Value="#262626" />
+        <Setter Property="localControls:RoundedButton.BackgroundColor" Value="#FFFFFF" />
+        <Setter Property="localControls:RoundedButton.BackgroundGradientColor" Value="#7F7F7F" />
+        <Setter Property="Foreground" Value="#FF000000" />
+        <Setter Property="localControls:RoundedButton.DropShadowOpacity" Value="0" />
+        <Setter Property="BorderThickness" Value="3" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="classic_menu_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource classic_gray_menu_button_style}">
+    <Setter Property="Height" Value="70" />
+    <Setter Property="Width" Value="126" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="localControls:RoundedButton.CornerRadius" Value="0" />
+  </Style>
+  <Style x:Key="glass_menu_button_style" TargetType="{x:Type localControls:RoundedButton}" BasedOn="{StaticResource gray_glass_rounded_menu_button_style}">
+    <Setter Property="Height" Value="70" />
+    <Setter Property="Width" Value="126" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="localControls:RoundedButton.CornerRadius" Value="0" />
+  </Style>
   <Style x:Key="font_target_large_overlays" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Target Alt Regular" />
     <Setter Property="FontSize" Value="56" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_target_not_as_large_overlays" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontSize" Value="42" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
@@ -10,7 +217,19 @@
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Target Alt Regular" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Regular" />
-    <Setter Property="FontSize" Value="75" />
+    <Setter Property="FontSize" Value="48" />
+  </Style>
+  <Style x:Key="font_target_larger" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+    <Setter Property="FontSize" Value="66.6" />
+  </Style>
+  <Style x:Key="font_target_largest" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Target Alt Regular" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+    <Setter Property="FontSize" Value="96" />
   </Style>
   <Style x:Key="font_target_medium_2" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Target Alt Regular" />
@@ -78,16 +297,99 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
+  <Style x:Key="font_akzidenz_bold_tiny" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Berthold Akzidenz Grotesk" />
+    <Setter Property="FontSize" Value="13.3" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_smaller_italic" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Tahoma" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontStyle" Value="Italic" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_cooper_23" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Cooper TL" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="30.65" />
+  </Style>
+  <Style x:Key="font_bryant_bold_34" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="45.3" />
+  </Style>
+  <Style x:Key="font_bryant_bold_28" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="37.3" />
+  </Style>
+  <Style x:Key="font_bryant_bold_24" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="31.92" />
+  </Style>
+  <Style x:Key="font_bryant_bold_20" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="26.6" />
+  </Style>
+  <Style x:Key="font_bryant_bold_18" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="24" />
+  </Style>
+  <Style x:Key="font_bryant_bold_16" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="21.33" />
+  </Style>
+  <Style x:Key="font_bryant_bold_14" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="18.66" />
+  </Style>
+  <Style x:Key="font_bryant_bold_12" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Bryant" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="16" />
+  </Style>
+  <Style x:Key="font_akzidenz_bold_smaller" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Berthold Akzidenz Grotesk" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="16" />
+  </Style>
+  <Style x:Key="font_akzidenz_bold_small" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Berthold Akzidenz Grotesk" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="24" />
+  </Style>
+  <Style x:Key="font_vag_light_10" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#VAG Rounded Std Light" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="13.33" />
+  </Style>
   <Style x:Key="gray_button_style" TargetType="{x:Type Border}">
-    <Setter Property="Margin" Value="150,580,0,0" />
     <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="BorderBrush" Value="#FFFFFFFF" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="Border.CornerRadius" Value="17" />
     <Setter Property="Height" Value="34" />
     <Setter Property="Border.Padding" Value="10,0,10,0" />
-    <Setter Property="Margin" Value="10,10,10,10" />
+    <Setter Property="Margin" Value="5,0,10,0" />
     <Setter Property="MinWidth" Value="110" />
     <Setter Property="Background">
       <Setter.Value>
@@ -127,5 +429,70 @@
         <Setter Property="Foreground" Value="#FF000000" />
       </Trigger>
     </Style.Triggers>
+  </Style>
+  <Style x:Key="help_updated_border_style" TargetType="{x:Type Border}">
+    <Setter Property="Margin" Value="0,-10,-5,0" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Border.CornerRadius" Value="4" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="Width" Value="70" />
+    <Setter Property="Background" Value="#FFFF0000" />
+  </Style>
+  <Style x:Key="help_updated_text_style" TargetType="{x:Type TextBlock}">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="TextBlock.Padding" Value="6,2,6,2" />
+    <Setter Property="Margin" Value="0,0,0,0" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontFamily" Value="Arial" />
+    <Setter Property="UIElement.Effect">
+      <Setter.Value>
+        <DropShadowEffect ShadowDepth="4" Direction="330" Color="Black" Opacity="0.5" BlurRadius="4" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="handicap_icon" TargetType="{x:Type UserControl}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type UserControl}">
+          <Grid>
+            <Ellipse VerticalAlignment="Top" HorizontalAlignment="Left" Margin="18,17,0,0" Width="27" Height="27" StrokeThickness="4" Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource TemplatedParent}}">
+              <UIElement.Clip>
+                <GeometryGroup FillRule="Nonzero">
+                  <RectangleGeometry Rect="0,0,7,30" />
+                  <RectangleGeometry Rect="7,8,20,30">
+                    <Geometry.Transform>
+                      <RotateTransform CenterX="13" CenterY="17" Angle="70" />
+                    </Geometry.Transform>
+                  </RectangleGeometry>
+                </GeometryGroup>
+              </UIElement.Clip>
+            </Ellipse>
+            <Ellipse VerticalAlignment="Top" HorizontalAlignment="Left" Margin="25,4,0,0" Width="8" Height="8" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
+            <Line X1="28" Y1="20" X2="40" Y2="20" StrokeThickness="4" Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
+            <Path Name="Finger1" StrokeThickness="4" Width="150" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0" Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource TemplatedParent}}">
+              <Path.Data>
+                <PathGeometry>
+                  <PathGeometry.Figures>
+                    <PathFigure StartPoint="28,8">
+                      <PathFigure.Segments>
+                        <PathSegmentCollection>
+                          <LineSegment Point="29,26" />
+                          <LineSegment Point="42,26" />
+                          <LineSegment Point="46,38" />
+                          <LineSegment Point="52,36" />
+                        </PathSegmentCollection>
+                      </PathFigure.Segments>
+                    </PathFigure>
+                  </PathGeometry.Figures>
+                </PathGeometry>
+              </Path.Data>
+            </Path>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 </ResourceDictionary>

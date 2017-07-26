@@ -24,7 +24,7 @@ public class RemotingClientSession : ClientSession
 
 	private string Url { get; set; }
 
-	public RemotingClientSession(Redbox_002EIPC_002EFramework1802119_002EIPCProtocol protocol, int timeout)
+	public RemotingClientSession(Redbox_002EIPC_002EFramework1769326_002EIPCProtocol protocol, int timeout)
 		: base(protocol)
 	{
 		base.Timeout = timeout;
