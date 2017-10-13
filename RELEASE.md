@@ -4,13 +4,13 @@
 - Date (first download in the snapshots): 2017-10-13
 - Store labels: none
 - Package revisions:
-  - `kop-v2-engine` revision 73 (`7DA55A6F9E24BE9FF33E8C605F77F7C88A430B36`)
+  - `kop-v2-engine` revision 75 (`E54952F835BC3EBA9337D50DB9F05958A81E4CB6`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `afteractivate.lua` |  |  | `93371125E5354865F54BBF921B5DF7672DB40B56` | exact |
 | `beforeactivate.lua` |  |  | `8E41E91CF8469874639907FCC1807E83D0D8D4C7` | exact |
-| `kioskengine.exe` | kioskengine | 1.25.0.4 | `07818474F91FC677801DE06A4C718E5403D35336` | stale (listed version 41627918B2… has no content) |
+| `kioskengine.exe` | kioskengine | 1.25.0.4 | `07818474F91FC677801DE06A4C718E5403D35336` | exact |
 | `Redbox.Command.Tokenizer.dll` | Redbox.Command.Tokenizer | 1.0.1.3 | `56F86A90F8420DB7963A875BD6413A64E69F20F2` | exact |
 | `Redbox.Compression.dll` | Redbox.Compression | 1.0.1.11 | `05A1D5AB64E36F5B7FC2D245FA1963A0C96D5EF5` | exact |
 | `Redbox.Core.dll` | Redbox.Core | 1.0.5.9 | `9B41C169DF7285DD7488CB2B1EFB85A8EFAB3C95` | exact |
@@ -18,19 +18,19 @@
 | `Redbox.HAL.Client.dll` | Redbox.HAL.Client | 1.9.0.57 | `415121C2CB64A644CB749F77ED0EF24C9917ABF9` | exact |
 | `Redbox.IPC.Framework.dll` | Redbox.IPC.Framework | 1.1.1.2 | `131F71C3AE8CB860972365148FDC8B04199E7428` | exact |
 | `Redbox.JSONPrettyPrinter.dll` | Redbox.JSONPrettyPrinter | 1.1.0.7 | `11E5B2E72FAF345A7646162CA7F4F7397CCBDBF8` | exact |
-| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.25.0.4 | `17580EC260794F0BD3CC4E0C3250FD17C9F95408` | stale (listed version BD3AE35F2A… has no content) |
+| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.25.0.4 | `17580EC260794F0BD3CC4E0C3250FD17C9F95408` | exact |
 | `Redbox.KioskServices.ComponentModel.dll` | Redbox.KioskServices.ComponentModel | 2.6.0.11 | `3BEF42F146AEECED4373B24098D689C1F9FE8E02` | exact |
 | `Redbox.Log.Framework.dll` | Redbox.Log.Framework | 1.3.0.4 | `CA3FF372C03A2470D285AC2D9F2CC9CC5406A5B8` | exact |
 | `Redbox.Lua.dll` | Redbox.Lua | 1.2.0.11 | `A0224C8EC58A2CA7C6D81F07F9F6C6E2D42F9515` | exact |
 | `Redbox.Macros.dll` | Redbox.Macros | 1.0.2.15 | `B882183AC01A9EB74339BFF995B8845FCB762B3D` | exact |
 | `Redbox.Macros.Functions.dll` | Redbox.Macros.Functions | 1.0.2.15 | `4C778F62387FA91724D24D943D2E78BE58A41AEF` | exact |
 | `Redbox.ProductLookupCatalog.dll` | Redbox.ProductLookupCatalog | 1.1.0.2 | `A7D55A5AE60E1B2F65AC0D5F77ED56227616A8FF` | exact |
-| `Redbox.REDS.Framework.dll` | Redbox.REDS.Framework | 1.2.0.2 | `B863A71B9721A2AF39592313B67435FD7DE2DD99` | exact |
-| `Redbox.Rental.Data.dll` | Redbox.Rental.Data | 1.25.0.4 | `34F9066F92511CB85AF198EB2021B8B3AFCE03EF` | stale (listed version 3F57E1F31A… has no content) |
-| `Redbox.Rental.Kernel.dll` | Redbox.Rental.Kernel | 1.25.0.4 | `FAA07A27221673F6645EAC1817055324E9EC6880` | stale (listed version 390B6CAB63… has no content) |
-| `Redbox.Rental.Model.dll` | Redbox.Rental.Model | 1.25.0.4 | `B19FD75598A4C0929B6B061BFB3EF1BEB2C24AEB` | stale (listed version 45E1BA6F29… has no content) |
-| `Redbox.Rental.Services.dll` | Redbox.Rental.Services | 1.25.0.4 | `186E2E691A0AF84F2F857373D74FC15BAE967434` | stale (listed version 49D1BC4468… has no content) |
-| `Redbox.Rental.UI.exe` | Redbox.Rental.UI | 1.25.0.4 | `6351D6F8EA1D558D5D950D9B01101E711EE3CBAE` | stale (listed version 8DE3397B26… has no content) |
+| `Redbox.REDS.Framework.dll` | Redbox.REDS.Framework | 1.2.0.2 | `042C0DAC7682D39986795408DE2C5ED060DB04CC` | exact |
+| `Redbox.Rental.Data.dll` | Redbox.Rental.Data | 1.25.0.4 | `34F9066F92511CB85AF198EB2021B8B3AFCE03EF` | exact |
+| `Redbox.Rental.Kernel.dll` | Redbox.Rental.Kernel | 1.25.0.4 | `FAA07A27221673F6645EAC1817055324E9EC6880` | exact |
+| `Redbox.Rental.Model.dll` | Redbox.Rental.Model | 1.25.0.4 | `B19FD75598A4C0929B6B061BFB3EF1BEB2C24AEB` | exact |
+| `Redbox.Rental.Services.dll` | Redbox.Rental.Services | 1.25.0.4 | `186E2E691A0AF84F2F857373D74FC15BAE967434` | exact |
+| `Redbox.Rental.UI.exe` | Redbox.Rental.UI | 1.25.0.4 | `6351D6F8EA1D558D5D950D9B01101E711EE3CBAE` | exact |
 | `Redbox.Services.KioskBrokerServices.KioskShared.dll` | Redbox.Services.KioskBrokerServices.KioskShared | 1.4.0.8 | `BEE62065D9851D4922D4E75370A2FF698DC63AE6` | exact |
 | `Redbox.Tokenizer.Framework.dll` | Redbox.Tokenizer.Framework | 1.0.1.3 | `B328984A4B6776888BE2370A75541C5B13626477` | exact |
 | `Redbox.UpdateManager.Client.dll` | Redbox.UpdateManager.Client | 3.0.0.36 | `BB401BD38A902F3326E2633188F30F01723BCD8F` | exact |
