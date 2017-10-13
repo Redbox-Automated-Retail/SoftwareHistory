@@ -1,12 +1,12 @@
 # Superman (1.10.0.74)
 
-- Product: HAL Utilities 1.10.0.74
+- Product: MS HAL Tester 1.10.0.74
 - Date (first download in the snapshots): 2017-10-13
-- Store labels: kop-tools-Superman
+- Store labels: kop-ms-hal-tester-Superman
 - Package revisions:
   - `kop-tools` revision 38 (`2A4385488526B652C1E075F485D3CA97AE561573`)
   - `kop-hal-install` revision 45 (`7130362C24E17C5936167280926A629CE6344C25`)
-  - `kop-ms-hal-tester` revision 36 (`515BC94F53908BF7DCB0383416CEBF28C37DCC2B`)
+  - `kop-ms-hal-tester` revision 39 (`AAF7D2F76C8ACDE475021AD8EE2EBAB61FCB16CC`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `8531C6378D409CC0CD732669E3BF8382322146E8` | exact |
 | `unload-thin.hs` |  |  | `6CB314F88BA8C05FEC4551AE6A49FBA246BFDA2A` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.10.0.31 | `15EA84A1D986E5F836B13869FFEE150552581D79` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.10.0.74 | `FBCC9E5DACE981F8FE5C2DFC6950974FF9CA6E62` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

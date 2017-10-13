@@ -90,7 +90,7 @@ public class ConfiguredDevicesForm : Form
 		}
 	}
 
-	private IDictionary<string, string> FormProperties;
+	private bool m_allowSessionDisplay;
 
 	private KioskFunctionTest FunctionTest;
 
@@ -104,6 +104,10 @@ public class ConfiguredDevicesForm : Form
 
 	private readonly OutputBox OutputBox;
 
+	private readonly OutputBox EngineeringOutput;
+
+	private readonly OutputBox HardwareStatsOutput;
+
 	private readonly ButtonAspectsManager Manager;
 
 	private readonly byte[] CenterItemProgram;
@@ -113,6 +117,12 @@ public class ConfiguredDevicesForm : Form
 	private bool HasFraudSensor;
 
 	private bool HasCortexCamera;
+
+	private bool HasRouterPowerRelay;
+
+	private bool ArcusResetConfigured;
+
+	private bool m_displayEngineeringTab;
 
 	private readonly QRInstallHelper QuickReturnControl;
 
@@ -268,7 +278,122 @@ public class ConfiguredDevicesForm : Form
 
 	private ListView listView1;
 
-	public ConfiguredDevicesForm(HardwareService service, IDictionary<string, string> properties)
+	private TabPage m_hwCorrections;
+
+	private Button button23;
+
+	private ListBox m_hwStatsOutput;
+
+	private Button button24;
+
+	private GroupBox m_hwCorrectiontypeGB;
+
+	private RadioButton radioButton3;
+
+	private RadioButton radioButton1;
+
+	private TabPage m_engineeringTab;
+
+	private Button button25;
+
+	private ListBox m_engineeringOutput;
+
+	private Button button26;
+
+	private Button button27;
+
+	private Button button28;
+
+	private Button button29;
+
+	private TextBox m_engSlotTB;
+
+	private TextBox m_engDeckTB;
+
+	private Button button30;
+
+	private GroupBox groupBox3;
+
+	private Button button31;
+
+	private TextBox m_engEndSlotTB;
+
+	private TextBox m_engEndDeckTB;
+
+	private Button button32;
+
+	private Button button34;
+
+	private Button button33;
+
+	private Button button36;
+
+	private Button button35;
+
+	private GroupBox groupBox5;
+
+	private Button m_restartTouchscreen;
+
+	private GroupBox groupBox6;
+
+	private Button m_restartArcus;
+
+	private Button m_configureArcus;
+
+	private RadioButton radioButton2;
+
+	private RadioButton radioButton5;
+
+	private RadioButton radioButton4;
+
+	private GroupBox groupBox4;
+
+	private Button m_configureRouterRelay;
+
+	private Button m_testRouterRelay;
+
+	public bool DisplayEngineeringTab
+	{
+		get
+		{
+			return m_displayEngineeringTab;
+		}
+		set
+		{
+			m_displayEngineeringTab = value;
+			if (!m_displayEngineeringTab)
+			{
+				m_devicesTab.TabPages.Remove(m_engineeringTab);
+			}
+		}
+	}
+
+	public int RouterPowerCyclePause { get; set; }
+
+	public bool AllowSessionDisplay
+	{
+		get
+		{
+			return m_allowSessionDisplay;
+		}
+		set
+		{
+			m_allowSessionDisplay = value;
+			Button displaySessionsButton = m_displaySessionsButton;
+			bool enabled = (m_displaySessionsButton.Visible = m_allowSessionDisplay);
+			displaySessionsButton.Enabled = enabled;
+		}
+	}
+
+	private int SourceDeck => m_engDeckTB.GetInteger("Source Deck", EngineeringOutput);
+
+	private int SourceSlot => m_engSlotTB.GetInteger("Source Slot", EngineeringOutput);
+
+	private int DestinationDeck => m_engEndDeckTB.GetInteger("Source Deck", EngineeringOutput);
+
+	private int DestinationSlot => m_engEndSlotTB.GetInteger("Source Slot", EngineeringOutput);
+
+	public ConfiguredDevicesForm(HardwareService service)
 	{
 		InitializeComponent();
 		OutputBox = new ConfiguredDeviceOuptutBox(m_cortexStatusBox);
@@ -278,6 +403,8 @@ public class ConfiguredDevicesForm : Form
 		AirExchangerOutput = new ConfiguredDeviceOuptutBox(m_iceQubeOutput);
 		FraudSensorOutput = new ConfiguredDeviceOuptutBox(m_fraudSensorOutput);
 		KioskTestOutput = new ConfiguredDeviceOuptutBox(m_kioskTestOutput);
+		HardwareStatsOutput = new ConfiguredDeviceOuptutBox(m_hwStatsOutput);
+		EngineeringOutput = new ConfiguredDeviceOuptutBox(m_engineeringOutput);
 		ExchangerState = new AirExchangerState(service);
 		using (MachineConfiguration machineConfiguration = new MachineConfiguration(Service))
 		{
@@ -285,7 +412,9 @@ public class ConfiguredDevicesForm : Form
 			ExchangerState.Configure(machineConfiguration.AirExchangerStatus, machineConfiguration.AirExchangerFanStatus);
 			HasFraudSensor = machineConfiguration.HasFraudDevice;
 			HasCortexCamera = !machineConfiguration.LegacyCamera;
+			HasRouterPowerRelay = machineConfiguration.HasRouterPowerRelay;
 			QuickReturnControl = new QRInstallHelper(Service, machineConfiguration.QuickReturnStatus);
+			ArcusResetConfigured = machineConfiguration.ArcusResetConfigured;
 		}
 		QuickReturnControl.Dock = DockStyle.Fill;
 		m_quickReturnTab.Controls.Add(QuickReturnControl);
@@ -294,22 +423,9 @@ public class ConfiguredDevicesForm : Form
 		stringBuilder.AppendLine(" ROLLER POS=3 TIMEOUT=4000 WAIT=TRUE ");
 		stringBuilder.AppendLine(" CLEAR");
 		CenterItemProgram = Encoding.ASCII.GetBytes(stringBuilder.ToString());
-		FormProperties = properties;
-		bool flag = false;
-		if (FormProperties.ContainsKey("AllowSessionDisplay"))
-		{
-			try
-			{
-				flag = bool.Parse(FormProperties["AllowSessionDisplay"]);
-			}
-			catch
-			{
-				flag = false;
-			}
-		}
-		m_displaySessionsButton.Enabled = (m_displaySessionsButton.Visible = flag);
 		listView1.Columns.Add("Component", 200);
 		listView1.Columns.Add("Value", 200);
+		RouterPowerCyclePause = 1500;
 	}
 
 	private void ConfigureCortexPanel()
@@ -345,6 +461,12 @@ public class ConfiguredDevicesForm : Form
 		case 4:
 			OnConfigureKioskTest();
 			break;
+		case 6:
+			ConfigureRouterGroup();
+			ConfigureArcusGroup();
+			break;
+		case 5:
+			break;
 		}
 	}
 
@@ -368,6 +490,7 @@ public class ConfiguredDevicesForm : Form
 
 	private void OnConfigureFraudSensor()
 	{
+		FraudSensorOutput.Write("Fraud sensor is {0}.", HasFraudSensor ? "enabled" : "disabled");
 		m_configureFraudSensor.Text = (HasFraudSensor ? "Disable" : "Enable");
 		Button fraudPOSTButton = m_fraudPOSTButton;
 		bool enabled = (m_resetFraudButton.Enabled = HasFraudSensor);
@@ -558,17 +681,13 @@ public class ConfiguredDevicesForm : Form
 			if (!hardwareCommandResult.Success)
 			{
 				FraudSensorOutput.Write("Failed to update configuration.");
-				{
-					foreach (Error error in hardwareCommandResult.Errors)
-					{
-						FraudSensorOutput.Write(error.ToString());
-					}
-					return;
-				}
+				FraudSensorOutput.Dump(hardwareCommandResult);
 			}
-			FraudSensorOutput.Write("Fraud sensor is {0}.", flag ? "enabled" : "disabled");
-			HasFraudSensor = flag;
-			OnConfigureFraudSensor();
+			else
+			{
+				HasFraudSensor = flag;
+				OnConfigureFraudSensor();
+			}
 		}
 	}
 
@@ -609,27 +728,33 @@ public class ConfiguredDevicesForm : Form
 				FraudSensorOutput.Write("Check deck and slot!");
 				return;
 			}
-			CompositeFunctions.GetItem(sender, Manager, integer, integer2, FraudSensorOutput, Service);
+			CompositeFunctions.GetItem(integer, integer2, FraudSensorOutput, Service);
 			Service.ExecuteImmediateProgram(CenterItemProgram, out var _);
 		}
 	}
 
 	private void button2_Click(object sender, EventArgs e)
 	{
-		CompositeFunctions.VendDisk(sender, Service, Manager, FraudSensorOutput);
+		using (Manager.MakeAspect(sender))
+		{
+			CompositeFunctions.VendDisk(Service, FraudSensorOutput);
+		}
 	}
 
 	private void button4_Click_1(object sender, EventArgs e)
 	{
-		int integer = m_fraudDeckTB.GetInteger("Deck", FraudSensorOutput);
-		int integer2 = m_fraudSlotTB.GetInteger("Slot", FraudSensorOutput);
-		if (-1 == integer || -1 == integer2)
+		using (Manager.MakeAspect(sender))
 		{
-			FraudSensorOutput.Write("Check deck and slot!");
-		}
-		else
-		{
-			CompositeFunctions.PutItem(sender, Manager, Service, integer, integer2, OutputBox);
+			int integer = m_fraudDeckTB.GetInteger("Deck", FraudSensorOutput);
+			int integer2 = m_fraudSlotTB.GetInteger("Slot", FraudSensorOutput);
+			if (-1 == integer || -1 == integer2)
+			{
+				FraudSensorOutput.Write("Check deck and slot!");
+			}
+			else
+			{
+				CompositeFunctions.PutItem(Service, integer, integer2, OutputBox);
+			}
 		}
 	}
 
@@ -677,23 +802,6 @@ public class ConfiguredDevicesForm : Form
 		{
 			instructionHelper.ExecuteGeneric(tagInstruction);
 		}
-	}
-
-	private void RunUserReturn()
-	{
-		using (ReturnExecutor returnExecutor = new ReturnExecutor(Service))
-		{
-			returnExecutor.AddSink(ProcessPostEvent);
-			returnExecutor.Run();
-			foreach (ProgramResult result in returnExecutor.Results)
-			{
-				FraudSensorOutput.Write("{0} : {1}", result.Code, result.Message);
-			}
-		}
-		BeginInvoke((MethodInvoker)delegate
-		{
-			button7.Enabled = true;
-		});
 	}
 
 	private void button3_Click_1(object sender, EventArgs e)
@@ -815,7 +923,7 @@ public class ConfiguredDevicesForm : Form
 
 	private void button16_Click(object sender, EventArgs e)
 	{
-		PopulateLocationBox(m_sourceSlotTB);
+		m_sourceSlotTB.InputNumber();
 	}
 
 	private void button20_Click(object sender, EventArgs e)
@@ -841,21 +949,12 @@ public class ConfiguredDevicesForm : Form
 
 	private void button21_Click(object sender, EventArgs e)
 	{
-		PopulateLocationBox(m_sourceDeckTB);
+		m_sourceDeckTB.InputNumber();
 	}
 
 	private void button22_Click(object sender, EventArgs e)
 	{
-		PopulateLocationBox(m_sourceSlotTB);
-	}
-
-	private void PopulateLocationBox(TextBox box)
-	{
-		LocationNumberPad locationNumberPad = new LocationNumberPad();
-		if (locationNumberPad.ShowDialog() == DialogResult.OK)
-		{
-			box.Text = locationNumberPad.Number.ToString();
-		}
+		m_sourceSlotTB.InputNumber();
 	}
 
 	private void button16_Click_1(object sender, EventArgs e)
@@ -932,6 +1031,446 @@ public class ConfiguredDevicesForm : Form
 	private void button16_Click_2(object sender, EventArgs e)
 	{
 		listView1.Items.Clear();
+	}
+
+	private void m_configureRouterRelay_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			bool flag = !HasRouterPowerRelay;
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine($"SETCFG \"RouterPowerCyclePause\" \"{(flag ? RouterPowerCyclePause : 0)}\" TYPE=CONTROLLER");
+			if (flag)
+			{
+				stringBuilder.AppendLine("SETCFG \"TrackHardwareCorrections\" \"TRUE\" TYPE=CONTROLLER");
+			}
+			stringBuilder.AppendLine(" CLEAR");
+			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			if (!hardwareCommandResult.Success)
+			{
+				HardwareStatsOutput.Dump(hardwareCommandResult);
+				HardwareStatsOutput.Write("Failed to update configuration.");
+			}
+			else
+			{
+				HasRouterPowerRelay = flag;
+				ConfigureRouterGroup();
+			}
+		}
+	}
+
+	private void ConfigureRouterGroup()
+	{
+		m_configureRouterRelay.Text = (HasRouterPowerRelay ? "Disable" : "Enable");
+		HardwareStatsOutput.Write("Router relay is {0}.", HasRouterPowerRelay ? "configured" : "not configured");
+		m_testRouterRelay.Enabled = HasRouterPowerRelay;
+	}
+
+	private void ConfigureArcusGroup()
+	{
+		m_restartArcus.Enabled = ArcusResetConfigured;
+		m_configureArcus.Text = (ArcusResetConfigured ? "Disable" : "Enable");
+		HardwareStatsOutput.Write("Kiosk is {0} to reset the Arcus.", ArcusResetConfigured ? "configured" : "not configured");
+	}
+
+	private void m_testRouterRelay_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			HardwareCommandResult hardwareCommandResult = Service.PowerCycleRouter(new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.High
+			}, out var job);
+			if (hardwareCommandResult.Success)
+			{
+				using (ClientHelper clientHelper = new ClientHelper(Service))
+				{
+					clientHelper.WaitForJob(job, out var endStatus);
+					HardwareStatsOutput.Write("Power cycle router job {0} ended with status {1}", job.ID, endStatus);
+					return;
+				}
+			}
+			HardwareStatsOutput.Dump(hardwareCommandResult);
+			HardwareStatsOutput.Write("Failed to schedule router power cycle job.");
+		}
+	}
+
+	private void button24_Click(object sender, EventArgs e)
+	{
+		HardwareCorrectionStatistic hardwareCorrectionStatistic = HardwareCorrectionStatistic.None;
+		foreach (Control control in m_hwCorrectiontypeGB.Controls)
+		{
+			if (control.GetType() == typeof(RadioButton))
+			{
+				RadioButton radioButton = (RadioButton)control;
+				if (radioButton.Checked)
+				{
+					hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase((string)radioButton.Tag, HardwareCorrectionStatistic.None);
+					break;
+				}
+			}
+		}
+		if (hardwareCorrectionStatistic != HardwareCorrectionStatistic.None)
+		{
+			using (GetHardwareCorrectionStatistics getHardwareCorrectionStatistics = new GetHardwareCorrectionStatistics(Service, hardwareCorrectionStatistic))
+			{
+				getHardwareCorrectionStatistics.Run();
+				if (HardwareJobStatus.Completed != getHardwareCorrectionStatistics.EndStatus)
+				{
+					HardwareStatsOutput.Write("Failed to get statistics from service.");
+				}
+				else
+				{
+					DumpHardwareStats(getHardwareCorrectionStatistics.Stats);
+				}
+				return;
+			}
+		}
+		using GetAllHardwareCorrectionStatistics getAllHardwareCorrectionStatistics = new GetAllHardwareCorrectionStatistics(Service);
+		getAllHardwareCorrectionStatistics.Run();
+		if (HardwareJobStatus.Completed != getAllHardwareCorrectionStatistics.EndStatus)
+		{
+			HardwareStatsOutput.Write("Failed to get statistics from service.");
+		}
+		else
+		{
+			DumpHardwareStats(getAllHardwareCorrectionStatistics.Stats);
+		}
+	}
+
+	private void DumpHardwareStats(List<IHardwareCorrectionStatistic> stats)
+	{
+		stats.ForEach(delegate(IHardwareCorrectionStatistic s)
+		{
+			HardwareStatsOutput.Write("{0} {1}: {2} {3}", s.CorrectionTime, s.Statistic, s.ProgramName, s.CorrectionOk ? "SUCCESS" : "FAILURE ");
+		});
+		HardwareStatsOutput.Write("Total of {0} statistics", stats.Count);
+	}
+
+	private void button23_Click(object sender, EventArgs e)
+	{
+		HardwareStatsOutput.Clear();
+	}
+
+	private void button27_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			CompositeFunctions.VendDisk(Service, EngineeringOutput);
+		}
+	}
+
+	private void button28_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(Service);
+			EngineeringOutput.Write(string.Format("Found {0} barcodes ({1}), time = {2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
+		}
+	}
+
+	private void button26_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			if (!Service.ScheduleJob("ms-take-disk-at-door", string.Empty, enableDebugging: false, new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.High
+			}, out var job).Success)
+			{
+				EngineeringOutput.Write("Failed to schedule job");
+				return;
+			}
+			job.Pend();
+			using ClientHelper clientHelper = new ClientHelper(Service);
+			clientHelper.WaitForJob(job, out var endStatus);
+			if (endStatus != HardwareJobStatus.Completed)
+			{
+				return;
+			}
+			if (!job.GetResults(out var results).Success)
+			{
+				EngineeringOutput.Write("Failed to get program results. I'm sorry!");
+				return;
+			}
+			ProgramResult[] array = results;
+			foreach (ProgramResult programResult in array)
+			{
+				EngineeringOutput.Write(programResult.Message);
+			}
+		}
+	}
+
+	private void button25_Click(object sender, EventArgs e)
+	{
+		EngineeringOutput.Clear();
+	}
+
+	private void button29_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
+			{
+				EngineeringOutput.Write("Please specify source deck/slot properly");
+				return;
+			}
+			int destinationDeck = DestinationDeck;
+			int destinationSlot = DestinationSlot;
+			if (-1 == destinationDeck || -1 == destinationSlot)
+			{
+				EngineeringOutput.Write("Please specify destination deck/slot properly");
+				return;
+			}
+			SyncRange range = new SyncRange(sourceDeck, destinationDeck, new Range(sourceSlot, destinationSlot));
+			if (!Service.HardSync(range, new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.Highest
+			}, out var job).Success)
+			{
+				EngineeringOutput.Write("Unable to communicate with HAL.");
+				return;
+			}
+			job.Pend();
+			job.WaitForCompletion(300000);
+			if (job.GetSymbols(out var symbols).Success)
+			{
+				foreach (string key in symbols.Keys)
+				{
+					if (key.StartsWith("MSTESTER-SYMBOL"))
+					{
+						EngineeringOutput.Write(symbols[key]);
+					}
+				}
+			}
+			if (!job.GetResults(out var results).Success)
+			{
+				EngineeringOutput.Write("Failed to get program results. I'm sorry!");
+				return;
+			}
+			ProgramResult[] array = results;
+			foreach (ProgramResult programResult in array)
+			{
+				EngineeringOutput.Write(programResult.Message);
+			}
+		}
+	}
+
+	private void button34_Click(object sender, EventArgs e)
+	{
+		m_engSlotTB.InputNumber();
+	}
+
+	private void button33_Click(object sender, EventArgs e)
+	{
+		m_engDeckTB.InputNumber();
+	}
+
+	private void button31_Click(object sender, EventArgs e)
+	{
+		m_engEndDeckTB.InputNumber();
+	}
+
+	private void button32_Click(object sender, EventArgs e)
+	{
+		m_engEndSlotTB.InputNumber();
+	}
+
+	private void button30_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
+			{
+				EngineeringOutput.Write("Please specify deck/slot properly");
+				return;
+			}
+			List<Location> locations = new List<Location>
+			{
+				new Location
+				{
+					Deck = sourceDeck,
+					Slot = sourceSlot
+				}
+			};
+			if (!Service.HardSync(locations, "Engineering Location Sync", new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.Highest
+			}, out var job).Success)
+			{
+				EngineeringOutput.Write("Unable to communicate with HAL.");
+				return;
+			}
+			job.Pend();
+			job.WaitForCompletion(300000);
+			if (job.GetSymbols(out var symbols).Success)
+			{
+				foreach (string key in symbols.Keys)
+				{
+					if (key.StartsWith("MSTESTER-SYMBOL"))
+					{
+						EngineeringOutput.Write(symbols[key]);
+					}
+				}
+			}
+			if (!job.GetResults(out var results).Success)
+			{
+				EngineeringOutput.Write("Failed to get program results. I'm sorry!");
+				return;
+			}
+			ProgramResult[] array = results;
+			foreach (ProgramResult programResult in array)
+			{
+				EngineeringOutput.Write(programResult.Message);
+			}
+		}
+	}
+
+	private void button35_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
+			{
+				EngineeringOutput.Write("Please specify deck/slot properly");
+			}
+			else
+			{
+				CompositeFunctions.GetItem(sourceDeck, sourceSlot, EngineeringOutput, Service);
+			}
+		}
+	}
+
+	private void button36_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
+			{
+				EngineeringOutput.Write("Please specify deck/slot properly");
+			}
+			else
+			{
+				CompositeFunctions.PutItem(Service, sourceDeck, sourceSlot, OutputBox);
+			}
+		}
+	}
+
+	private void m_restartTouchscreen_Click(object sender, EventArgs e)
+	{
+		if (Service.ResetTouchscreenController(new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.High
+		}, out var job).Success)
+		{
+			using (ClientHelper clientHelper = new ClientHelper(Service))
+			{
+				clientHelper.WaitForJob(job, out var endStatus);
+				HardwareStatsOutput.Write("Reset touchscreen controller ended with status {0}", endStatus.ToString());
+				return;
+			}
+		}
+		HardwareStatsOutput.Write("Unable to schedule reset touchscreen job.");
+	}
+
+	private void m_restartArcus_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			using ResetMotionControlExecutor resetMotionControlExecutor = new ResetMotionControlExecutor(Service);
+			resetMotionControlExecutor.Run();
+			if (resetMotionControlExecutor.EndStatus != HardwareJobStatus.Completed)
+			{
+				HardwareStatsOutput.Write("ERROR: reset-arcus failed.");
+				return;
+			}
+			foreach (ProgramResult result in resetMotionControlExecutor.Results)
+			{
+				HardwareStatsOutput.Write(result.Message);
+			}
+		}
+	}
+
+	private void m_configureArcus_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			bool flag = !ArcusResetConfigured;
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine($"SETCFG \"RestartControllerDuringUserJobs\" \"{flag}\" TYPE=CONTROLLER");
+			if (flag)
+			{
+				stringBuilder.AppendLine("SETCFG \"TrackHardwareCorrections\" \"TRUE\" TYPE=CONTROLLER");
+			}
+			stringBuilder.AppendLine("CLEAR");
+			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			if (!hardwareCommandResult.Success)
+			{
+				HardwareStatsOutput.Dump(hardwareCommandResult);
+				HardwareStatsOutput.Write("Failed to update configuration.");
+			}
+			else
+			{
+				ArcusResetConfigured = flag;
+				ConfigureArcusGroup();
+			}
+		}
+	}
+
+	private void button37_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			bool flag = !HasRouterPowerRelay;
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine($"SETCFG \"RouterPowerCyclePause\" \"{(flag ? RouterPowerCyclePause : 0)}\" TYPE=CONTROLLER");
+			if (flag)
+			{
+				stringBuilder.AppendLine("SETCFG \"TrackHardwareCorrections\" \"TRUE\" TYPE=CONTROLLER");
+			}
+			stringBuilder.AppendLine(" CLEAR");
+			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			if (!hardwareCommandResult.Success)
+			{
+				HardwareStatsOutput.Dump(hardwareCommandResult);
+				HardwareStatsOutput.Write("Failed to update configuration.");
+			}
+			else
+			{
+				HasRouterPowerRelay = flag;
+				ConfigureRouterGroup();
+			}
+		}
+	}
+
+	private void button38_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			HardwareCommandResult hardwareCommandResult = Service.PowerCycleRouter(new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.High
+			}, out var job);
+			if (hardwareCommandResult.Success)
+			{
+				using (ClientHelper clientHelper = new ClientHelper(Service))
+				{
+					clientHelper.WaitForJob(job, out var endStatus);
+					HardwareStatsOutput.Write("Power cycle router job {0} ended with status {1}", job.ID, endStatus);
+					return;
+				}
+			}
+			HardwareStatsOutput.Dump(hardwareCommandResult);
+			HardwareStatsOutput.Write("Failed to schedule router power cycle job.");
+		}
 	}
 
 	protected override void Dispose(bool disposing)
@@ -1016,11 +1555,48 @@ public class ConfiguredDevicesForm : Form
 		this.button2 = new System.Windows.Forms.Button();
 		this.m_kioskTestOutput = new System.Windows.Forms.ListBox();
 		this.tabPage1 = new System.Windows.Forms.TabPage();
+		this.listView1 = new System.Windows.Forms.ListView();
 		this.button16 = new System.Windows.Forms.Button();
 		this.button11 = new System.Windows.Forms.Button();
+		this.m_hwCorrections = new System.Windows.Forms.TabPage();
+		this.groupBox6 = new System.Windows.Forms.GroupBox();
+		this.m_restartArcus = new System.Windows.Forms.Button();
+		this.m_configureArcus = new System.Windows.Forms.Button();
+		this.groupBox5 = new System.Windows.Forms.GroupBox();
+		this.m_restartTouchscreen = new System.Windows.Forms.Button();
+		this.m_hwCorrectiontypeGB = new System.Windows.Forms.GroupBox();
+		this.radioButton2 = new System.Windows.Forms.RadioButton();
+		this.radioButton3 = new System.Windows.Forms.RadioButton();
+		this.button24 = new System.Windows.Forms.Button();
+		this.radioButton1 = new System.Windows.Forms.RadioButton();
+		this.button23 = new System.Windows.Forms.Button();
+		this.m_hwStatsOutput = new System.Windows.Forms.ListBox();
+		this.m_engineeringTab = new System.Windows.Forms.TabPage();
+		this.groupBox3 = new System.Windows.Forms.GroupBox();
+		this.button36 = new System.Windows.Forms.Button();
+		this.button35 = new System.Windows.Forms.Button();
+		this.button34 = new System.Windows.Forms.Button();
+		this.button29 = new System.Windows.Forms.Button();
+		this.button30 = new System.Windows.Forms.Button();
+		this.button33 = new System.Windows.Forms.Button();
+		this.button32 = new System.Windows.Forms.Button();
+		this.m_engEndSlotTB = new System.Windows.Forms.TextBox();
+		this.button31 = new System.Windows.Forms.Button();
+		this.m_engEndDeckTB = new System.Windows.Forms.TextBox();
+		this.m_engDeckTB = new System.Windows.Forms.TextBox();
+		this.m_engSlotTB = new System.Windows.Forms.TextBox();
+		this.button28 = new System.Windows.Forms.Button();
+		this.button27 = new System.Windows.Forms.Button();
+		this.button26 = new System.Windows.Forms.Button();
+		this.button25 = new System.Windows.Forms.Button();
+		this.m_engineeringOutput = new System.Windows.Forms.ListBox();
 		this.m_exitButton = new System.Windows.Forms.Button();
 		this.errorProvider1 = new System.Windows.Forms.ErrorProvider(this.components);
-		this.listView1 = new System.Windows.Forms.ListView();
+		this.radioButton4 = new System.Windows.Forms.RadioButton();
+		this.radioButton5 = new System.Windows.Forms.RadioButton();
+		this.groupBox4 = new System.Windows.Forms.GroupBox();
+		this.m_configureRouterRelay = new System.Windows.Forms.Button();
+		this.m_testRouterRelay = new System.Windows.Forms.Button();
 		this.m_devicesTab.SuspendLayout();
 		this.m_airExchangerTab.SuspendLayout();
 		this.m_cortexTab.SuspendLayout();
@@ -1029,7 +1605,14 @@ public class ConfiguredDevicesForm : Form
 		this.m_kioskFunctionCheck.SuspendLayout();
 		this.groupBox2.SuspendLayout();
 		this.tabPage1.SuspendLayout();
+		this.m_hwCorrections.SuspendLayout();
+		this.groupBox6.SuspendLayout();
+		this.groupBox5.SuspendLayout();
+		this.m_hwCorrectiontypeGB.SuspendLayout();
+		this.m_engineeringTab.SuspendLayout();
+		this.groupBox3.SuspendLayout();
 		((System.ComponentModel.ISupportInitialize)this.errorProvider1).BeginInit();
+		this.groupBox4.SuspendLayout();
 		base.SuspendLayout();
 		this.m_devicesTab.Controls.Add(this.m_quickReturnTab);
 		this.m_devicesTab.Controls.Add(this.m_airExchangerTab);
@@ -1037,17 +1620,19 @@ public class ConfiguredDevicesForm : Form
 		this.m_devicesTab.Controls.Add(this.m_fraudSensorTab);
 		this.m_devicesTab.Controls.Add(this.m_kioskFunctionCheck);
 		this.m_devicesTab.Controls.Add(this.tabPage1);
+		this.m_devicesTab.Controls.Add(this.m_hwCorrections);
+		this.m_devicesTab.Controls.Add(this.m_engineeringTab);
 		this.m_devicesTab.Location = new System.Drawing.Point(2, 12);
 		this.m_devicesTab.Name = "m_devicesTab";
 		this.m_devicesTab.Padding = new System.Drawing.Point(10, 20);
 		this.m_devicesTab.SelectedIndex = 0;
-		this.m_devicesTab.Size = new System.Drawing.Size(951, 626);
+		this.m_devicesTab.Size = new System.Drawing.Size(1057, 626);
 		this.m_devicesTab.TabIndex = 0;
 		this.m_quickReturnTab.BackColor = System.Drawing.Color.LightGray;
 		this.m_quickReturnTab.Location = new System.Drawing.Point(4, 56);
 		this.m_quickReturnTab.Name = "m_quickReturnTab";
 		this.m_quickReturnTab.Padding = new System.Windows.Forms.Padding(3);
-		this.m_quickReturnTab.Size = new System.Drawing.Size(943, 566);
+		this.m_quickReturnTab.Size = new System.Drawing.Size(1049, 566);
 		this.m_quickReturnTab.TabIndex = 0;
 		this.m_quickReturnTab.Text = "Quick Return Device";
 		this.m_airExchangerTab.BackColor = System.Drawing.Color.LightGray;
@@ -1061,7 +1646,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_airExchangerTab.Location = new System.Drawing.Point(4, 56);
 		this.m_airExchangerTab.Name = "m_airExchangerTab";
 		this.m_airExchangerTab.Padding = new System.Windows.Forms.Padding(3);
-		this.m_airExchangerTab.Size = new System.Drawing.Size(943, 566);
+		this.m_airExchangerTab.Size = new System.Drawing.Size(1049, 566);
 		this.m_airExchangerTab.TabIndex = 3;
 		this.m_airExchangerTab.Text = "Ice Qube Air Exchanger";
 		this.button10.Location = new System.Drawing.Point(26, 473);
@@ -1122,7 +1707,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_cortexTab.Location = new System.Drawing.Point(4, 56);
 		this.m_cortexTab.Name = "m_cortexTab";
 		this.m_cortexTab.Padding = new System.Windows.Forms.Padding(3);
-		this.m_cortexTab.Size = new System.Drawing.Size(943, 566);
+		this.m_cortexTab.Size = new System.Drawing.Size(1049, 566);
 		this.m_cortexTab.TabIndex = 4;
 		this.m_cortexTab.Text = "Cortex Camera";
 		this.m_startCortexButton.Enabled = false;
@@ -1182,7 +1767,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_fraudSensorTab.Location = new System.Drawing.Point(4, 56);
 		this.m_fraudSensorTab.Name = "m_fraudSensorTab";
 		this.m_fraudSensorTab.Padding = new System.Windows.Forms.Padding(3);
-		this.m_fraudSensorTab.Size = new System.Drawing.Size(943, 566);
+		this.m_fraudSensorTab.Size = new System.Drawing.Size(1049, 566);
 		this.m_fraudSensorTab.TabIndex = 5;
 		this.m_fraudSensorTab.Text = "Fraud Sensor";
 		this.button15.Enabled = false;
@@ -1407,7 +1992,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_kioskFunctionCheck.Location = new System.Drawing.Point(4, 56);
 		this.m_kioskFunctionCheck.Name = "m_kioskFunctionCheck";
 		this.m_kioskFunctionCheck.Padding = new System.Windows.Forms.Padding(3);
-		this.m_kioskFunctionCheck.Size = new System.Drawing.Size(943, 566);
+		this.m_kioskFunctionCheck.Size = new System.Drawing.Size(1049, 566);
 		this.m_kioskFunctionCheck.TabIndex = 6;
 		this.m_kioskFunctionCheck.Text = "Kiosk Function Check";
 		this.m_displaySessionsButton.Location = new System.Drawing.Point(680, 501);
@@ -1566,9 +2151,15 @@ public class ConfiguredDevicesForm : Form
 		this.tabPage1.Location = new System.Drawing.Point(4, 56);
 		this.tabPage1.Name = "tabPage1";
 		this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-		this.tabPage1.Size = new System.Drawing.Size(943, 566);
+		this.tabPage1.Size = new System.Drawing.Size(1049, 566);
 		this.tabPage1.TabIndex = 7;
 		this.tabPage1.Text = "Hardware Survey";
+		this.listView1.Location = new System.Drawing.Point(20, 35);
+		this.listView1.Name = "listView1";
+		this.listView1.Size = new System.Drawing.Size(502, 378);
+		this.listView1.TabIndex = 3;
+		this.listView1.UseCompatibleStateImageBehavior = false;
+		this.listView1.View = System.Windows.Forms.View.Details;
 		this.button16.Location = new System.Drawing.Point(656, 194);
 		this.button16.Name = "button16";
 		this.button16.Size = new System.Drawing.Size(140, 80);
@@ -1583,6 +2174,249 @@ public class ConfiguredDevicesForm : Form
 		this.button11.Text = "Run Survey";
 		this.button11.UseVisualStyleBackColor = true;
 		this.button11.Click += new System.EventHandler(button11_Click);
+		this.m_hwCorrections.BackColor = System.Drawing.Color.LightGray;
+		this.m_hwCorrections.Controls.Add(this.groupBox4);
+		this.m_hwCorrections.Controls.Add(this.groupBox6);
+		this.m_hwCorrections.Controls.Add(this.groupBox5);
+		this.m_hwCorrections.Controls.Add(this.m_hwCorrectiontypeGB);
+		this.m_hwCorrections.Controls.Add(this.button23);
+		this.m_hwCorrections.Controls.Add(this.m_hwStatsOutput);
+		this.m_hwCorrections.Location = new System.Drawing.Point(4, 56);
+		this.m_hwCorrections.Name = "m_hwCorrections";
+		this.m_hwCorrections.Padding = new System.Windows.Forms.Padding(3);
+		this.m_hwCorrections.Size = new System.Drawing.Size(1049, 566);
+		this.m_hwCorrections.TabIndex = 9;
+		this.m_hwCorrections.Text = "Hardware Corrections";
+		this.groupBox6.Controls.Add(this.m_restartArcus);
+		this.groupBox6.Controls.Add(this.m_configureArcus);
+		this.groupBox6.Location = new System.Drawing.Point(782, 280);
+		this.groupBox6.Name = "groupBox6";
+		this.groupBox6.Size = new System.Drawing.Size(200, 175);
+		this.groupBox6.TabIndex = 7;
+		this.groupBox6.TabStop = false;
+		this.groupBox6.Text = "Arcus";
+		this.m_restartArcus.Location = new System.Drawing.Point(26, 99);
+		this.m_restartArcus.Name = "m_restartArcus";
+		this.m_restartArcus.Size = new System.Drawing.Size(120, 50);
+		this.m_restartArcus.TabIndex = 1;
+		this.m_restartArcus.Text = "Restart";
+		this.m_restartArcus.UseVisualStyleBackColor = true;
+		this.m_restartArcus.Click += new System.EventHandler(m_restartArcus_Click);
+		this.m_configureArcus.Location = new System.Drawing.Point(26, 30);
+		this.m_configureArcus.Name = "m_configureArcus";
+		this.m_configureArcus.Size = new System.Drawing.Size(120, 50);
+		this.m_configureArcus.TabIndex = 0;
+		this.m_configureArcus.Text = "Configure";
+		this.m_configureArcus.UseVisualStyleBackColor = true;
+		this.m_configureArcus.Click += new System.EventHandler(m_configureArcus_Click);
+		this.groupBox5.Controls.Add(this.m_restartTouchscreen);
+		this.groupBox5.Location = new System.Drawing.Point(782, 51);
+		this.groupBox5.Name = "groupBox5";
+		this.groupBox5.Size = new System.Drawing.Size(200, 117);
+		this.groupBox5.TabIndex = 6;
+		this.groupBox5.TabStop = false;
+		this.groupBox5.Text = "Touchscreen";
+		this.m_restartTouchscreen.Location = new System.Drawing.Point(33, 33);
+		this.m_restartTouchscreen.Name = "m_restartTouchscreen";
+		this.m_restartTouchscreen.Size = new System.Drawing.Size(120, 50);
+		this.m_restartTouchscreen.TabIndex = 0;
+		this.m_restartTouchscreen.Text = "Reset";
+		this.m_restartTouchscreen.UseVisualStyleBackColor = true;
+		this.m_restartTouchscreen.Click += new System.EventHandler(m_restartTouchscreen_Click);
+		this.m_hwCorrectiontypeGB.Controls.Add(this.radioButton5);
+		this.m_hwCorrectiontypeGB.Controls.Add(this.radioButton4);
+		this.m_hwCorrectiontypeGB.Controls.Add(this.radioButton2);
+		this.m_hwCorrectiontypeGB.Controls.Add(this.radioButton3);
+		this.m_hwCorrectiontypeGB.Controls.Add(this.button24);
+		this.m_hwCorrectiontypeGB.Controls.Add(this.radioButton1);
+		this.m_hwCorrectiontypeGB.Location = new System.Drawing.Point(513, 43);
+		this.m_hwCorrectiontypeGB.Name = "m_hwCorrectiontypeGB";
+		this.m_hwCorrectiontypeGB.Size = new System.Drawing.Size(200, 217);
+		this.m_hwCorrectiontypeGB.TabIndex = 4;
+		this.m_hwCorrectiontypeGB.TabStop = false;
+		this.m_hwCorrectiontypeGB.Text = "Correction Type";
+		this.radioButton2.AutoSize = true;
+		this.radioButton2.Location = new System.Drawing.Point(23, 116);
+		this.radioButton2.Name = "radioButton2";
+		this.radioButton2.Size = new System.Drawing.Size(36, 17);
+		this.radioButton2.TabIndex = 4;
+		this.radioButton2.TabStop = true;
+		this.radioButton2.Tag = "None";
+		this.radioButton2.Text = "All";
+		this.radioButton2.UseVisualStyleBackColor = true;
+		this.radioButton3.AutoSize = true;
+		this.radioButton3.Location = new System.Drawing.Point(23, 47);
+		this.radioButton3.Name = "radioButton3";
+		this.radioButton3.Size = new System.Drawing.Size(88, 17);
+		this.radioButton3.TabIndex = 2;
+		this.radioButton3.TabStop = true;
+		this.radioButton3.Tag = "Touchscreen";
+		this.radioButton3.Text = "Touchscreen";
+		this.radioButton3.UseVisualStyleBackColor = true;
+		this.button24.Location = new System.Drawing.Point(23, 150);
+		this.button24.Name = "button24";
+		this.button24.Size = new System.Drawing.Size(120, 50);
+		this.button24.TabIndex = 3;
+		this.button24.Text = "Show Stats";
+		this.button24.UseVisualStyleBackColor = true;
+		this.button24.Click += new System.EventHandler(button24_Click);
+		this.radioButton1.AutoSize = true;
+		this.radioButton1.Location = new System.Drawing.Point(23, 24);
+		this.radioButton1.Name = "radioButton1";
+		this.radioButton1.Size = new System.Drawing.Size(52, 17);
+		this.radioButton1.TabIndex = 0;
+		this.radioButton1.TabStop = true;
+		this.radioButton1.Tag = "Arcus";
+		this.radioButton1.Text = "Arcus";
+		this.radioButton1.UseVisualStyleBackColor = true;
+		this.button23.Location = new System.Drawing.Point(21, 473);
+		this.button23.Name = "button23";
+		this.button23.Size = new System.Drawing.Size(120, 57);
+		this.button23.TabIndex = 1;
+		this.button23.Text = "Clear Output";
+		this.button23.UseVisualStyleBackColor = true;
+		this.button23.Click += new System.EventHandler(button23_Click);
+		this.m_hwStatsOutput.FormattingEnabled = true;
+		this.m_hwStatsOutput.Location = new System.Drawing.Point(21, 35);
+		this.m_hwStatsOutput.Name = "m_hwStatsOutput";
+		this.m_hwStatsOutput.Size = new System.Drawing.Size(422, 420);
+		this.m_hwStatsOutput.TabIndex = 0;
+		this.m_engineeringTab.BackColor = System.Drawing.Color.LightGray;
+		this.m_engineeringTab.Controls.Add(this.groupBox3);
+		this.m_engineeringTab.Controls.Add(this.button28);
+		this.m_engineeringTab.Controls.Add(this.button27);
+		this.m_engineeringTab.Controls.Add(this.button26);
+		this.m_engineeringTab.Controls.Add(this.button25);
+		this.m_engineeringTab.Controls.Add(this.m_engineeringOutput);
+		this.m_engineeringTab.Location = new System.Drawing.Point(4, 56);
+		this.m_engineeringTab.Name = "m_engineeringTab";
+		this.m_engineeringTab.Padding = new System.Windows.Forms.Padding(3);
+		this.m_engineeringTab.Size = new System.Drawing.Size(1049, 566);
+		this.m_engineeringTab.TabIndex = 10;
+		this.m_engineeringTab.Text = "Engineering";
+		this.groupBox3.Controls.Add(this.button36);
+		this.groupBox3.Controls.Add(this.button35);
+		this.groupBox3.Controls.Add(this.button34);
+		this.groupBox3.Controls.Add(this.button29);
+		this.groupBox3.Controls.Add(this.button30);
+		this.groupBox3.Controls.Add(this.button33);
+		this.groupBox3.Controls.Add(this.button32);
+		this.groupBox3.Controls.Add(this.m_engEndSlotTB);
+		this.groupBox3.Controls.Add(this.button31);
+		this.groupBox3.Controls.Add(this.m_engEndDeckTB);
+		this.groupBox3.Controls.Add(this.m_engDeckTB);
+		this.groupBox3.Controls.Add(this.m_engSlotTB);
+		this.groupBox3.Location = new System.Drawing.Point(621, 46);
+		this.groupBox3.Name = "groupBox3";
+		this.groupBox3.Size = new System.Drawing.Size(292, 392);
+		this.groupBox3.TabIndex = 14;
+		this.groupBox3.TabStop = false;
+		this.groupBox3.Text = "Locations";
+		this.button36.Location = new System.Drawing.Point(161, 293);
+		this.button36.Name = "button36";
+		this.button36.Size = new System.Drawing.Size(110, 60);
+		this.button36.TabIndex = 18;
+		this.button36.Text = "Put to";
+		this.button36.UseVisualStyleBackColor = true;
+		this.button36.Click += new System.EventHandler(button36_Click);
+		this.button35.Location = new System.Drawing.Point(18, 293);
+		this.button35.Name = "button35";
+		this.button35.Size = new System.Drawing.Size(110, 60);
+		this.button35.TabIndex = 17;
+		this.button35.Text = "Get from";
+		this.button35.UseVisualStyleBackColor = true;
+		this.button35.Click += new System.EventHandler(button35_Click);
+		this.button34.Location = new System.Drawing.Point(171, 26);
+		this.button34.Name = "button34";
+		this.button34.Size = new System.Drawing.Size(100, 40);
+		this.button34.TabIndex = 16;
+		this.button34.Text = "Start slot";
+		this.button34.UseVisualStyleBackColor = true;
+		this.button34.Click += new System.EventHandler(button34_Click);
+		this.button29.Location = new System.Drawing.Point(161, 216);
+		this.button29.Name = "button29";
+		this.button29.Size = new System.Drawing.Size(110, 60);
+		this.button29.TabIndex = 9;
+		this.button29.Text = "Sync slots";
+		this.button29.UseVisualStyleBackColor = true;
+		this.button29.Click += new System.EventHandler(button29_Click);
+		this.button30.Location = new System.Drawing.Point(18, 216);
+		this.button30.Name = "button30";
+		this.button30.Size = new System.Drawing.Size(110, 60);
+		this.button30.TabIndex = 10;
+		this.button30.Text = "Sync slot";
+		this.button30.UseVisualStyleBackColor = true;
+		this.button30.Click += new System.EventHandler(button30_Click);
+		this.button33.Location = new System.Drawing.Point(18, 26);
+		this.button33.Name = "button33";
+		this.button33.Size = new System.Drawing.Size(100, 40);
+		this.button33.TabIndex = 15;
+		this.button33.Text = "Start deck";
+		this.button33.UseVisualStyleBackColor = true;
+		this.button33.Click += new System.EventHandler(button33_Click);
+		this.button32.Location = new System.Drawing.Point(171, 121);
+		this.button32.Name = "button32";
+		this.button32.Size = new System.Drawing.Size(100, 40);
+		this.button32.TabIndex = 14;
+		this.button32.Text = "End slot";
+		this.button32.UseVisualStyleBackColor = true;
+		this.button32.Click += new System.EventHandler(button32_Click);
+		this.m_engEndSlotTB.Location = new System.Drawing.Point(171, 167);
+		this.m_engEndSlotTB.Name = "m_engEndSlotTB";
+		this.m_engEndSlotTB.Size = new System.Drawing.Size(100, 20);
+		this.m_engEndSlotTB.TabIndex = 12;
+		this.button31.Location = new System.Drawing.Point(18, 121);
+		this.button31.Name = "button31";
+		this.button31.Size = new System.Drawing.Size(100, 40);
+		this.button31.TabIndex = 13;
+		this.button31.Text = "End deck";
+		this.button31.UseVisualStyleBackColor = true;
+		this.button31.Click += new System.EventHandler(button31_Click);
+		this.m_engEndDeckTB.Location = new System.Drawing.Point(18, 167);
+		this.m_engEndDeckTB.Name = "m_engEndDeckTB";
+		this.m_engEndDeckTB.Size = new System.Drawing.Size(100, 20);
+		this.m_engEndDeckTB.TabIndex = 11;
+		this.m_engDeckTB.Location = new System.Drawing.Point(18, 72);
+		this.m_engDeckTB.Name = "m_engDeckTB";
+		this.m_engDeckTB.Size = new System.Drawing.Size(100, 20);
+		this.m_engDeckTB.TabIndex = 5;
+		this.m_engSlotTB.Location = new System.Drawing.Point(171, 72);
+		this.m_engSlotTB.Name = "m_engSlotTB";
+		this.m_engSlotTB.Size = new System.Drawing.Size(100, 20);
+		this.m_engSlotTB.TabIndex = 6;
+		this.button28.Location = new System.Drawing.Point(441, 220);
+		this.button28.Name = "button28";
+		this.button28.Size = new System.Drawing.Size(120, 61);
+		this.button28.TabIndex = 4;
+		this.button28.Text = "Read barcode";
+		this.button28.UseVisualStyleBackColor = true;
+		this.button28.Click += new System.EventHandler(button28_Click);
+		this.button27.Location = new System.Drawing.Point(441, 133);
+		this.button27.Name = "button27";
+		this.button27.Size = new System.Drawing.Size(120, 65);
+		this.button27.TabIndex = 3;
+		this.button27.Text = "Vend disk in picker";
+		this.button27.UseVisualStyleBackColor = true;
+		this.button27.Click += new System.EventHandler(button27_Click);
+		this.button26.Location = new System.Drawing.Point(441, 46);
+		this.button26.Name = "button26";
+		this.button26.Size = new System.Drawing.Size(120, 68);
+		this.button26.TabIndex = 2;
+		this.button26.Text = "Take Disk at door";
+		this.button26.UseVisualStyleBackColor = true;
+		this.button26.Click += new System.EventHandler(button26_Click);
+		this.button25.Location = new System.Drawing.Point(21, 455);
+		this.button25.Name = "button25";
+		this.button25.Size = new System.Drawing.Size(120, 58);
+		this.button25.TabIndex = 1;
+		this.button25.Text = "Clear Output";
+		this.button25.UseVisualStyleBackColor = true;
+		this.button25.Click += new System.EventHandler(button25_Click);
+		this.m_engineeringOutput.FormattingEnabled = true;
+		this.m_engineeringOutput.Location = new System.Drawing.Point(21, 31);
+		this.m_engineeringOutput.Name = "m_engineeringOutput";
+		this.m_engineeringOutput.Size = new System.Drawing.Size(392, 407);
+		this.m_engineeringOutput.TabIndex = 0;
 		this.m_exitButton.BackColor = System.Drawing.Color.GreenYellow;
 		this.m_exitButton.Location = new System.Drawing.Point(12, 644);
 		this.m_exitButton.Name = "m_exitButton";
@@ -1592,15 +2426,49 @@ public class ConfiguredDevicesForm : Form
 		this.m_exitButton.UseVisualStyleBackColor = false;
 		this.m_exitButton.Click += new System.EventHandler(m_exitButton_Click);
 		this.errorProvider1.ContainerControl = this;
-		this.listView1.Location = new System.Drawing.Point(20, 35);
-		this.listView1.Name = "listView1";
-		this.listView1.Size = new System.Drawing.Size(502, 378);
-		this.listView1.TabIndex = 3;
-		this.listView1.UseCompatibleStateImageBehavior = false;
-		this.listView1.View = System.Windows.Forms.View.Details;
+		this.radioButton4.AutoSize = true;
+		this.radioButton4.Location = new System.Drawing.Point(23, 70);
+		this.radioButton4.Name = "radioButton4";
+		this.radioButton4.Size = new System.Drawing.Size(57, 17);
+		this.radioButton4.TabIndex = 5;
+		this.radioButton4.TabStop = true;
+		this.radioButton4.Tag = "RouterRecycle";
+		this.radioButton4.Text = "Router";
+		this.radioButton4.UseVisualStyleBackColor = true;
+		this.radioButton5.AutoSize = true;
+		this.radioButton5.Location = new System.Drawing.Point(23, 93);
+		this.radioButton5.Name = "radioButton5";
+		this.radioButton5.Size = new System.Drawing.Size(141, 17);
+		this.radioButton5.TabIndex = 6;
+		this.radioButton5.TabStop = true;
+		this.radioButton5.Tag = "UnexpectedPowerLoss";
+		this.radioButton5.Text = "Unexpected Power Loss";
+		this.radioButton5.UseVisualStyleBackColor = true;
+		this.groupBox4.Controls.Add(this.m_testRouterRelay);
+		this.groupBox4.Controls.Add(this.m_configureRouterRelay);
+		this.groupBox4.Location = new System.Drawing.Point(513, 279);
+		this.groupBox4.Name = "groupBox4";
+		this.groupBox4.Size = new System.Drawing.Size(200, 175);
+		this.groupBox4.TabIndex = 8;
+		this.groupBox4.TabStop = false;
+		this.groupBox4.Text = "Router ";
+		this.m_configureRouterRelay.Location = new System.Drawing.Point(23, 31);
+		this.m_configureRouterRelay.Name = "m_configureRouterRelay";
+		this.m_configureRouterRelay.Size = new System.Drawing.Size(120, 50);
+		this.m_configureRouterRelay.TabIndex = 0;
+		this.m_configureRouterRelay.Text = "Configure";
+		this.m_configureRouterRelay.UseVisualStyleBackColor = true;
+		this.m_configureRouterRelay.Click += new System.EventHandler(button37_Click);
+		this.m_testRouterRelay.Location = new System.Drawing.Point(23, 100);
+		this.m_testRouterRelay.Name = "m_testRouterRelay";
+		this.m_testRouterRelay.Size = new System.Drawing.Size(120, 50);
+		this.m_testRouterRelay.TabIndex = 1;
+		this.m_testRouterRelay.Text = "Power Cycle";
+		this.m_testRouterRelay.UseVisualStyleBackColor = true;
+		this.m_testRouterRelay.Click += new System.EventHandler(button38_Click);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-		base.ClientSize = new System.Drawing.Size(975, 715);
+		base.ClientSize = new System.Drawing.Size(1116, 715);
 		base.Controls.Add(this.m_exitButton);
 		base.Controls.Add(this.m_devicesTab);
 		base.MaximizeBox = false;
@@ -1619,7 +2487,16 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox2.ResumeLayout(false);
 		this.groupBox2.PerformLayout();
 		this.tabPage1.ResumeLayout(false);
+		this.m_hwCorrections.ResumeLayout(false);
+		this.groupBox6.ResumeLayout(false);
+		this.groupBox5.ResumeLayout(false);
+		this.m_hwCorrectiontypeGB.ResumeLayout(false);
+		this.m_hwCorrectiontypeGB.PerformLayout();
+		this.m_engineeringTab.ResumeLayout(false);
+		this.groupBox3.ResumeLayout(false);
+		this.groupBox3.PerformLayout();
 		((System.ComponentModel.ISupportInitialize)this.errorProvider1).EndInit();
+		this.groupBox4.ResumeLayout(false);
 		base.ResumeLayout(false);
 	}
 }

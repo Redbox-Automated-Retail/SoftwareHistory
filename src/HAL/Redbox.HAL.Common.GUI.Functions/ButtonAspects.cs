@@ -37,9 +37,12 @@ public struct ButtonAspects : IDisposable
 		if (Button == null)
 		{
 			CompleteColor = Color.LightGray;
-			return;
 		}
-		CompleteColor = Button.BackColor;
-		Button.BackColor = RunningColor;
+		else
+		{
+			CompleteColor = Button.BackColor;
+			Button.BackColor = RunningColor;
+		}
+		Application.DoEvents();
 	}
 }

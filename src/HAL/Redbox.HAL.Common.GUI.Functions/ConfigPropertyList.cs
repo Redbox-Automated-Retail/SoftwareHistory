@@ -8,6 +8,7 @@ using System.Xml;
 using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions.Properties;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Configuration;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 

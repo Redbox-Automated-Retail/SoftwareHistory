@@ -1,39 +1,29 @@
 using System;
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Executors;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
 public static class CompositeFunctions
 {
-	public static void VendDisk(object sender, HardwareService service, ButtonAspectsManager manager, OutputBox box)
+	public static void VendDisk(HardwareService service, OutputBox box)
 	{
-		using (manager.MakeAspect(sender))
+		using VendDiskInPickerJob vendDiskInPickerJob = new VendDiskInPickerJob(service);
+		vendDiskInPickerJob.Run();
+		foreach (ProgramResult result in vendDiskInPickerJob.Results)
 		{
-			using VendDiskInPickerJob vendDiskInPickerJob = new VendDiskInPickerJob(service);
-			vendDiskInPickerJob.Run();
-			foreach (ProgramResult result in vendDiskInPickerJob.Results)
+			box.Write(result.Code);
+			if (result.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
 			{
-				box.Write(result.Code);
-				if (result.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
-				{
-					box.Write("Disk was taken.");
-					return;
-				}
-				if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
-				{
-					box.Write("There was a HW error: " + result.Message);
-				}
+				box.Write("Disk was taken.");
+				return;
 			}
-			box.Write("Disk not taken - pulled back in.");
+			if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
+			{
+				box.Write("There was a HW error: " + result.Message);
+			}
 		}
-	}
-
-	public static bool GetItem(object sender, ButtonAspectsManager manager, int deck, int slot, OutputBox box, HardwareService service)
-	{
-		using (manager.MakeAspect(sender))
-		{
-			return GetItem(deck, slot, box, service);
-		}
+		box.Write("Disk not taken - pulled back in.");
 	}
 
 	public static bool GetItem(int deck, int slot, OutputBox box, HardwareService service)
@@ -51,14 +41,6 @@ public static class CompositeFunctions
 			box.Write(result.Message);
 		}
 		return num == 0;
-	}
-
-	public static bool PutItem(object sender, ButtonAspectsManager manager, HardwareService service, int deck, int slot, OutputBox box)
-	{
-		using (manager.MakeAspect(sender))
-		{
-			return PutItem(service, deck, slot, box);
-		}
 	}
 
 	public static bool PutItem(HardwareService service, int deck, int slot, OutputBox box)

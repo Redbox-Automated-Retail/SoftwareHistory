@@ -67,6 +67,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private readonly MoveHelper MoveHelper;
 
+	private const int MaxMoveXUnits = 10;
+
+	private const int MaxMoveYUnits = 200;
+
 	private IContainer components;
 
 	private GroupBox groupBox2;
@@ -818,10 +822,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 				{
 				case Direction.Left:
 				case Direction.Right:
-					if (Math.Abs(result) > 50)
+					if (Math.Abs(result) > 10)
 					{
-						m_errorProvider.SetError(m_encoderUnitsTextBox, "Cannot exceed 50 units.");
-						OutputBox.Write("ERROR: move cannot exceed 50 units on X axis.");
+						m_errorProvider.SetError(m_encoderUnitsTextBox, $"Cannot exceed {10} units.");
+						OutputBox.Write("ERROR: move cannot exceed {0} units on X axis.", 10);
 						Application.DoEvents();
 						return;
 					}
@@ -830,8 +834,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 				case Direction.Down:
 					if (Math.Abs(result) > 200)
 					{
-						m_errorProvider.SetError(m_encoderUnitsTextBox, "Cannot exceed 200 units.");
-						OutputBox.Write("ERROR: move cannot exceed 200 units on Y axis.");
+						m_errorProvider.SetError(m_encoderUnitsTextBox, $"Cannot exceed {200} units.");
+						OutputBox.Write("ERROR: move cannot exceed {0} units on Y axis.", 200);
 						Application.DoEvents();
 						return;
 					}
@@ -1099,21 +1103,27 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void OnPut(object sender, EventArgs e)
 	{
-		int sourceDeck = SourceDeck;
-		int sourceSlot = SourceSlot;
-		if (-1 == sourceDeck || -1 == sourceSlot)
+		using (Manager.MakeAspect(sender))
 		{
-			OutputBox.Write(Resources.SourceDeckSlotInvalid);
-		}
-		else
-		{
-			CompositeFunctions.PutItem(sender, Manager, HardwareService, sourceDeck, sourceSlot, OutputBox);
+			int sourceDeck = SourceDeck;
+			int sourceSlot = SourceSlot;
+			if (-1 == sourceDeck || -1 == sourceSlot)
+			{
+				OutputBox.Write(Resources.SourceDeckSlotInvalid);
+			}
+			else
+			{
+				CompositeFunctions.PutItem(HardwareService, sourceDeck, sourceSlot, OutputBox);
+			}
 		}
 	}
 
 	private void OnGetAndRead(object sender, EventArgs e)
 	{
-		GetDVD(sender);
+		using (Manager.MakeAspect(sender))
+		{
+			GetDVD(sender);
+		}
 	}
 
 	private void OnTransfer(object sender, EventArgs e)
@@ -1158,7 +1168,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void OnVendDVD(object sender, EventArgs e)
 	{
-		CompositeFunctions.VendDisk(sender, HardwareService, Manager, OutputBox);
+		using (Manager.MakeAspect(sender))
+		{
+			CompositeFunctions.VendDisk(HardwareService, OutputBox);
+		}
 	}
 
 	private void OnPushDVDInSlot(object sender, EventArgs e)
@@ -1251,8 +1264,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 					}
 					if (text.EndsWith("\""))
 					{
-						string obj = text;
-						text = obj.Remove(obj.Length - 1, 1);
+						text = text.Remove(text.Length - 1, 1);
 					}
 					result = Path.GetDirectoryName(text);
 				}
@@ -1300,36 +1312,24 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		}
 	}
 
-	private void button60_Click(object sender, EventArgs e)
+	private void OnSourceDeck_Click(object s, EventArgs e)
 	{
-		if (!(sender is Button { Tag: string tag }))
-		{
-			return;
-		}
-		TextBox textBox = null;
-		switch (tag)
-		{
-		case "SourceDeck":
-			textBox = m_sourceDeckTextBox;
-			break;
-		case "SourceSlot":
-			textBox = m_sourceSlotTextBox;
-			break;
-		case "DestDeck":
-			textBox = m_destinationDeckText;
-			break;
-		case "DestSlot":
-			textBox = m_destinationSlotText;
-			break;
-		}
-		if (textBox != null)
-		{
-			LocationNumberPad locationNumberPad = new LocationNumberPad();
-			if (locationNumberPad.ShowDialog() == DialogResult.OK)
-			{
-				textBox.Text = locationNumberPad.Number.ToString();
-			}
-		}
+		m_sourceDeckTextBox.InputNumber();
+	}
+
+	private void OnSourceSlot_Click(object s, EventArgs e)
+	{
+		m_sourceSlotTextBox.InputNumber();
+	}
+
+	private void OnDestDeck_Click(object s, EventArgs e)
+	{
+		m_destinationDeckText.InputNumber();
+	}
+
+	private void OnDestSlot_Click(object s, EventArgs e)
+	{
+		m_destinationSlotText.InputNumber();
 	}
 
 	private void button17_Click(object sender, EventArgs e)
@@ -1371,11 +1371,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary["AllowSessionDisplay"] = Settings.Default.AllowSessionDisplay.ToString();
-			new ConfiguredDevicesForm(HardwareService, dictionary).ShowDialog();
+			ConfiguredDevicesForm configuredDevicesForm = new ConfiguredDevicesForm(HardwareService);
+			configuredDevicesForm.AllowSessionDisplay = Settings.Default.AllowSessionDisplay;
+			configuredDevicesForm.RouterPowerCyclePause = Settings.Default.RouterRelayPause;
+			configuredDevicesForm.DisplayEngineeringTab = Settings.Default.DisplayEngineeringTab;
+			configuredDevicesForm.ShowDialog();
 			ChangeUIAfterconfig();
-			dictionary.Clear();
 		}
 	}
 
@@ -1534,7 +1535,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		}
 		else
 		{
-			CompositeFunctions.GetItem(sender, Manager, sourceDeck, sourceSlot, OutputBox, HardwareService);
+			CompositeFunctions.GetItem(sourceDeck, sourceSlot, OutputBox, HardwareService);
 		}
 	}
 
@@ -2386,7 +2387,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		this.button63.Tag = "DestSlot";
 		this.button63.Text = "Slot";
 		this.button63.UseVisualStyleBackColor = false;
-		this.button63.Click += new System.EventHandler(button60_Click);
+		this.button63.Click += new System.EventHandler(OnDestSlot_Click);
 		this.button62.BackColor = System.Drawing.Color.LightGray;
 		this.button62.Location = new System.Drawing.Point(12, 89);
 		this.button62.Name = "button62";
@@ -2395,7 +2396,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		this.button62.Tag = "DestDeck";
 		this.button62.Text = "Deck";
 		this.button62.UseVisualStyleBackColor = false;
-		this.button62.Click += new System.EventHandler(button60_Click);
+		this.button62.Click += new System.EventHandler(OnDestDeck_Click);
 		this.button61.BackColor = System.Drawing.Color.LightGray;
 		this.button61.Location = new System.Drawing.Point(133, 32);
 		this.button61.Name = "button61";
@@ -2404,7 +2405,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		this.button61.Tag = "SourceSlot";
 		this.button61.Text = "Slot";
 		this.button61.UseVisualStyleBackColor = false;
-		this.button61.Click += new System.EventHandler(button60_Click);
+		this.button61.Click += new System.EventHandler(OnSourceSlot_Click);
 		this.button60.BackColor = System.Drawing.Color.LightGray;
 		this.button60.Location = new System.Drawing.Point(13, 32);
 		this.button60.Name = "button60";
@@ -2413,7 +2414,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		this.button60.Tag = "SourceDeck";
 		this.button60.Text = "Deck";
 		this.button60.UseVisualStyleBackColor = false;
-		this.button60.Click += new System.EventHandler(button60_Click);
+		this.button60.Click += new System.EventHandler(OnSourceDeck_Click);
 		this.m_destinationSlotText.Location = new System.Drawing.Point(203, 94);
 		this.m_destinationSlotText.Name = "m_destinationSlotText";
 		this.m_destinationSlotText.Size = new System.Drawing.Size(49, 20);

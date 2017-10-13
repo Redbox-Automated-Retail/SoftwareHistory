@@ -15,8 +15,6 @@ public sealed class ClientHelper : IDisposable
 
 	private readonly IClientOutputSink Sink;
 
-	private readonly ManualResetEvent m_resetEvent = new ManualResetEvent(initialState: false);
-
 	public HardwareService Service { get; private set; }
 
 	public void Dispose()
@@ -24,7 +22,6 @@ public sealed class ClientHelper : IDisposable
 		if (!Disposed)
 		{
 			Disposed = true;
-			m_resetEvent.Close();
 		}
 	}
 
@@ -50,17 +47,24 @@ public sealed class ClientHelper : IDisposable
 
 	public bool WaitforInit(int pause)
 	{
-		return WaitForInitInner(pause);
+		Sink.WriteMessage("Checking for bootstrap init.");
+		while (BootstrapInitRunning())
+		{
+			Sink.WriteMessage("{0}: still waiting for bootstrap init.", DateTime.Now.ToLongTimeString());
+			Thread.Sleep(pause);
+		}
+		Sink.WriteMessage("Init done");
+		return true;
 	}
 
 	public bool WaitforInit()
 	{
-		return WaitForInitInner(5000);
+		return WaitforInit(5000);
 	}
 
 	public bool WaitforInit(InitComplete onDone)
 	{
-		bool result = WaitForInitInner(5000);
+		bool result = WaitforInit();
 		onDone?.Invoke();
 		return result;
 	}
@@ -100,11 +104,13 @@ public sealed class ClientHelper : IDisposable
 				_s0 = status;
 				waitForJob = status != HardwareJobStatus.Stopped && status != HardwareJobStatus.Errored && status != HardwareJobStatus.Garbage && status != HardwareJobStatus.Completed && status != HardwareJobStatus.Suspended;
 			};
-			job.Connect();
-			job.Pend();
+			if (!job.Connect().Success || !job.Pend().Success)
+			{
+				return false;
+			}
 			while (waitForJob)
 			{
-				m_resetEvent.WaitOne(250, exitContext: false);
+				Thread.Sleep(250);
 			}
 			endStatus = _s0;
 			return true;
@@ -158,18 +164,6 @@ public sealed class ClientHelper : IDisposable
 	public ClientHelper(HardwareService service)
 		: this(NullSink.Instance, service)
 	{
-	}
-
-	private bool WaitForInitInner(int pause)
-	{
-		Sink.WriteMessage("Checking for bootstrap init.");
-		while (BootstrapInitRunning())
-		{
-			Sink.WriteMessage("{0}: still waiting for bootstrap init.", DateTime.Now.ToLongTimeString());
-			Thread.Sleep(pause);
-		}
-		Sink.WriteMessage("Init done");
-		return true;
 	}
 
 	private HardwareService ConnectInner(string ipcUrl)

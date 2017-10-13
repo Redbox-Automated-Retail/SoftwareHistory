@@ -17,4 +17,13 @@ public static class TextBoxExtensions
 		}
 		return result;
 	}
+
+	public static void InputNumber(this TextBox tb)
+	{
+		LocationNumberPad locationNumberPad = new LocationNumberPad();
+		if (locationNumberPad.ShowDialog() == DialogResult.OK)
+		{
+			tb.Text = locationNumberPad.Number.ToString();
+		}
+	}
 }

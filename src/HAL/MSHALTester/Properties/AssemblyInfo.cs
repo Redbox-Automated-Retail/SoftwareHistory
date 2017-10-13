@@ -13,6 +13,6 @@ using log4net.Config;
 [assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("70818cfb-39ea-4683-8b89-17b10dae2861")]
-[assembly: AssemblyFileVersion("1.10.0.31")]
+[assembly: AssemblyFileVersion("1.10.0.74")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.10.0.31")]
+[assembly: AssemblyVersion("1.10.0.74")]

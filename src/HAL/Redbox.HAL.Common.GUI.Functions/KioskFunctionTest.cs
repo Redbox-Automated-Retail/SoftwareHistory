@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;

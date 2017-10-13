@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
+using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
 using Redbox.IPC.Framework;
 
@@ -430,6 +431,45 @@ public sealed class HardwareService
 		return ScheduleJob("reset-touchscreen-controller", s, out job);
 	}
 
+	public HardwareCommandResult GetHardwareCorrectionStats(HardwareCorrectionStatistic stat, out List<IHardwareCorrectionStatistic> stats)
+	{
+		stats = new List<IHardwareCorrectionStatistic>();
+		using GetHardwareCorrectionStatistics getHardwareCorrectionStatistics = new GetHardwareCorrectionStatistics(this, stat);
+		getHardwareCorrectionStatistics.Run();
+		if (HardwareJobStatus.Completed == getHardwareCorrectionStatistics.EndStatus)
+		{
+			stats.AddRange(getHardwareCorrectionStatistics.Stats);
+		}
+		return getHardwareCorrectionStatistics.ScheduleResult;
+	}
+
+	public HardwareCommandResult GetHardwareCorrectionStats(out List<IHardwareCorrectionStatistic> stats)
+	{
+		stats = new List<IHardwareCorrectionStatistic>();
+		using GetAllHardwareCorrectionStatistics getAllHardwareCorrectionStatistics = new GetAllHardwareCorrectionStatistics(this);
+		getAllHardwareCorrectionStatistics.Run();
+		if (HardwareJobStatus.Completed == getAllHardwareCorrectionStatistics.EndStatus)
+		{
+			stats.AddRange(getAllHardwareCorrectionStatistics.Stats);
+		}
+		return getAllHardwareCorrectionStatistics.ScheduleResult;
+	}
+
+	public HardwareCommandResult RemoveHardwareCorrectionStats(HardwareCorrectionStatistic stat, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("clear-hardware-statistics", null, enableDebugging: false, schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			job.Push(stat.ToString());
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult RemoveHardwareCorrectionStats(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJob("clear-all-hardware-statistics", null, enableDebugging: false, schedule, out job);
+	}
+
 	public HardwareCommandResult GetConfiguration(string name)
 	{
 		return ExecuteCommand($"CONFIG get name: '{name}'");
@@ -437,8 +477,8 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetConfiguration(string name, string xmlConfig)
 	{
-		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
-		return ExecuteCommand($"CONFIG set name: '{name}' data: '{ByteHelper.ToBase64(inputArray)}'");
+		byte[] inArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
+		return ExecuteCommand($"CONFIG set name: '{name}' data: '{Convert.ToBase64String(inArray)}'");
 	}
 
 	public HardwareCommandResult LoadConfiguration(string path)
@@ -466,8 +506,13 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetInventoryState(string xml)
 	{
-		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
-		return ExecuteCommand($"CONFIG set-inventory-state data: '{ByteHelper.ToBase64(inputArray)}'");
+		byte[] inArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
+		return ExecuteCommand($"CONFIG set-inventory-state data: '{Convert.ToBase64String(inArray)}'");
+	}
+
+	public HardwareCommandResult PowerCycleRouter(HardwareJobSchedule s, out HardwareJob job)
+	{
+		return ScheduleJob("power-cycle-router", s, out job);
 	}
 
 	public HardwareCommandResult GetProgramScript(string programName)
@@ -477,8 +522,8 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetProgramScript(string programName, string script)
 	{
-		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
-		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{ByteHelper.ToBase64(inputArray)}'");
+		byte[] inArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
+		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{Convert.ToBase64String(inArray)}'");
 	}
 
 	public HardwareCommandResult SetProgramRequiresClientConnection(string programName, bool requiresClientConnection)
@@ -648,7 +693,7 @@ public sealed class HardwareService
 	public HardwareCommandResult ExecuteImmediateProgram(byte[] bytes, out HardwareJob job)
 	{
 		job = null;
-		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB execute-immediate-base64 statement: '{ByteHelper.ToBase64(bytes)}'");
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB execute-immediate-base64 statement: '{Convert.ToBase64String(bytes)}'");
 		if (hardwareCommandResult.Success)
 		{
 			job = HardwareJob.Parse(this, hardwareCommandResult.CommandMessages[0]);

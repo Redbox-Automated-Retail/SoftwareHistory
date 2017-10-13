@@ -14,7 +14,7 @@ public class Program : IDisposable
 	public static void Main(string[] args)
 	{
 		using Program program = new Program();
-		program.m_instanceLock = new NamedLock(m_applicationGuid.ToString(), LockScope.Local);
+		program.m_instanceLock = new NamedLock(m_applicationGuid.ToString());
 		if (!program.m_instanceLock.IsOwned)
 		{
 			MessageBox.Show("Only one instance of the MS HAL tester is allowed to run.");

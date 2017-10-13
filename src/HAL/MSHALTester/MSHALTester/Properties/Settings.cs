@@ -59,6 +59,16 @@ public sealed class Settings : ApplicationSettingsBase
 		}
 	}
 
+	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("5000")]
+	public int RouterRelayPause => (int)this["RouterRelayPause"];
+
+	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("False")]
+	public bool DisplayEngineeringTab => (bool)this["DisplayEngineeringTab"];
+
 	private void SettingChangingEventHandler(object sender, SettingChangingEventArgs e)
 	{
 	}

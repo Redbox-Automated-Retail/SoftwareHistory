@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Xml;
 using Redbox.HAL.Client;
+using Redbox.HAL.Configuration;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
