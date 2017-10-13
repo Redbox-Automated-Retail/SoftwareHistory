@@ -36,8 +36,6 @@ public abstract class JobExecutor : IDisposable
 
 	protected virtual string Label => string.Empty;
 
-	protected virtual HardwareJobPriority JobPriority => HardwareJobPriority.Highest;
-
 	public void Dispose()
 	{
 		if (!m_disposed)
@@ -110,6 +108,11 @@ public abstract class JobExecutor : IDisposable
 	}
 
 	protected JobExecutor(HardwareService service)
+		: this(service, HardwareJobPriority.Highest)
+	{
+	}
+
+	protected JobExecutor(HardwareService service, HardwareJobPriority priority)
 	{
 		Service = service;
 		Helper = new ClientHelper(service);
@@ -118,7 +121,7 @@ public abstract class JobExecutor : IDisposable
 		Symbols = new Dictionary<string, string>();
 		HardwareJobSchedule schedule = new HardwareJobSchedule
 		{
-			Priority = JobPriority
+			Priority = priority
 		};
 		ScheduleResult = Service.ScheduleJob(JobName, Label, enableDebugging: false, schedule, out m_job);
 		if (!ScheduleResult.Success)

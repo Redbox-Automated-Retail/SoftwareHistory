@@ -83,18 +83,18 @@ internal class ScriptMode : IDisposable
 		if (!result.Success && result.Errors.Count > 0)
 		{
 			console.WriteLine("\nClient Errors:");
-			foreach (Error error in result.Errors)
+			result.Errors.ForEach(delegate(Error each)
 			{
-				console.WriteLine(error);
-				console.WriteLine("Details: {0}\n", error.Details);
-			}
+				console.WriteLine(each);
+				console.WriteLine("Details: {0}\n", each.Details);
+			});
 		}
 		if (result.CommandMessages.Count > 0)
 		{
 			console.WriteLine("Command Messages:");
-			for (int i = 0; i < result.CommandMessages.Count; i++)
+			for (int num = 0; num < result.CommandMessages.Count; num++)
 			{
-				console.WriteLine(result.CommandMessages[i]);
+				console.WriteLine(result.CommandMessages[num]);
 			}
 		}
 		console.Write("Command ");
@@ -138,11 +138,11 @@ internal class ScriptMode : IDisposable
 		{
 			return false;
 		}
-		foreach (Error item in errors)
+		errors.ForEach(delegate(Error each)
 		{
-			console.WriteLine(item);
-			console.WriteLine("Details: {0}\n", item.Details);
-		}
+			console.WriteLine(each);
+			console.WriteLine("Details: {0}\n", each.Details);
+		});
 		if (errors.ContainsError())
 		{
 			return false;
@@ -159,11 +159,10 @@ internal class ScriptMode : IDisposable
 		{
 			return false;
 		}
-		ProgramResult[] array = programResults;
-		foreach (ProgramResult value in array)
+		Array.ForEach(programResults, delegate(ProgramResult each)
 		{
-			console.WriteLine(value);
-		}
+			console.WriteLine(each);
+		});
 		FormatStack(stack, console);
 		return true;
 	}

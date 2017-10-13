@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Redbox.HAL.Client;
 using Redbox.HAL.Client.Executors;
-using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;
@@ -18,10 +17,9 @@ internal sealed class HardwareSurvey
 		TextWriter textWriter = Console.Out;
 		if (SurveyModes.File == Mode)
 		{
-			ServiceLocator.Instance.GetService<IRuntimeService>().CreateBackup("HardwareSurvey.txt");
-			textWriter = new StreamWriter("HardwareSurvey.txt");
+			textWriter = new StreamWriter("HardwareSurvey.txt", append: true);
 		}
-		RunSurvey(service, Console.Out);
+		RunSurvey(service, textWriter);
 		if (SurveyModes.File == Mode)
 		{
 			textWriter.Dispose();
@@ -57,8 +55,10 @@ internal sealed class HardwareSurvey
 			bool flag = version.Major == 4 && version.Minor == 30;
 			arg = string.Format("{0} ( {1} CURRENT )", hardwareSurveyExecutor.TouchscreenFirmware, flag ? "MOST" : "NOT MOST");
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			writer.WriteLine("** ERROR** version format '{0}' caught an exception", hardwareSurveyExecutor.TouchscreenFirmware);
+			writer.WriteLine(ex.Message);
 		}
 		writer.WriteLine("\tTouchscreen firmware    :  {0}", arg);
 		writer.WriteLine("\tCamera                  :  {0}", hardwareSurveyExecutor.CameraVersion);

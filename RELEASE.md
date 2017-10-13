@@ -1,16 +1,16 @@
-# Legion (1.10.0.32)
+# Superman (1.10.0.74)
 
-- Product: HAL 1.10.0.32
-- Date (first download in the snapshots): 2017-07-26
-- Store labels: kop-hal-install-Legion
+- Product: HAL Utilities 1.10.0.74
+- Date (first download in the snapshots): 2017-10-13
+- Store labels: kop-tools-Superman
 - Package revisions:
-  - `kop-tools` revision 35 (`9B861627C41A59F6468F706A924A61896B4514EA`)
+  - `kop-tools` revision 38 (`2A4385488526B652C1E075F485D3CA97AE561573`)
   - `kop-hal-install` revision 45 (`7130362C24E17C5936167280926A629CE6344C25`)
   - `kop-ms-hal-tester` revision 36 (`515BC94F53908BF7DCB0383416CEBF28C37DCC2B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.10.0.29 | `AD40250FC389411A37844CACB21F66C8ACCFABEA` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.10.0.74 | `452EC289048038683009D43601BC869AE839A6A6` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.10.0.32 | `457CF50205CB68CC214B844C964956E4512D76E8` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

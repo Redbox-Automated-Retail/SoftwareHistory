@@ -61,29 +61,30 @@ internal sealed class InventoryHelper : IDisposable
 			LogHelper.Instance.Log("Can't get job results for {0}", syncJob.ID);
 			return;
 		}
-		int num = 0;
-		int num2 = 0;
-		ProgramResult[] array = results;
-		foreach (ProgramResult programResult in array)
+		int inventoryMatches = 0;
+		int inventoryMismatches = 0;
+		Array.ForEach(results, delegate(ProgramResult _r)
 		{
-			if (programResult.Code == "InventoryState")
+			if (_r.Code == "InventoryState")
 			{
-				if (InventoryItemsEqual(programResult, outputSuccessfulCompare))
+				if (InventoryItemsEqual(_r, outputSuccessfulCompare))
 				{
-					num++;
+					int num = inventoryMatches + 1;
+					inventoryMatches = num;
 				}
 				else
 				{
-					num2++;
+					int num = inventoryMismatches + 1;
+					inventoryMismatches = num;
 				}
 			}
-		}
+		});
 		LogHelper.Instance.Log("Analysis summary:");
-		LogHelper.Instance.Log("  {0} matches.", num);
-		LogHelper.Instance.Log("  {0} mismatches.", num2);
-		if (num + num2 != 717)
+		LogHelper.Instance.Log("  {0} matches.", inventoryMatches);
+		LogHelper.Instance.Log("  {0} mismatches.", inventoryMismatches);
+		if (inventoryMatches + inventoryMismatches != 717)
 		{
-			LogHelper.Instance.Log("Wrong analysis - expected 717, found {0}", num + num2);
+			LogHelper.Instance.Log("Wrong analysis - expected 717, found {0}", inventoryMatches + inventoryMismatches);
 		}
 	}
 

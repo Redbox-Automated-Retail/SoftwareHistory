@@ -34,7 +34,7 @@ internal sealed class RandomInventorySelector : IDisposable
 		}
 		foreach (IInventoryLocation item in kioskInventory.DeckInventory)
 		{
-			if (!(item.Matrix == "EMPTY"))
+			if (item.Matrix != "EMPTY")
 			{
 				m_locs.Add(item);
 			}

@@ -83,12 +83,20 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate($"SETCFG \"{arg}\" \"{text2}\" TYPE={text}", out var job);
 		if (!hardwareCommandResult.Success)
 		{
-			using (StreamWriter streamWriter2 = new StreamWriter(path))
+			StreamWriter log = new StreamWriter(path);
+			try
 			{
-				streamWriter2.WriteLine("The configuration update failed.");
-				foreach (Error error in hardwareCommandResult.Errors)
+				log.WriteLine("The configuration update failed.");
+				hardwareCommandResult.Errors.ForEach(delegate(Error err)
 				{
-					streamWriter2.WriteLine(error.ToString());
+					log.WriteLine(err.ToString());
+				});
+			}
+			finally
+			{
+				if (log != null)
+				{
+					((IDisposable)log).Dispose();
 				}
 			}
 			return false;
@@ -101,32 +109,40 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 		string path2 = service.RuntimePath("ConfigurationUpdateValidateError.log");
 		service.SafeDelete(path2);
 		bool result = false;
-		using (StreamWriter streamWriter3 = new StreamWriter(path2))
+		StreamWriter validateFile = new StreamWriter(path2);
+		try
 		{
 			if (!hardwareCommandResult.Success)
 			{
-				streamWriter3.WriteLine("The configuration update failed.");
-				foreach (Error error2 in hardwareCommandResult.Errors)
+				validateFile.WriteLine("The configuration update failed.");
+				hardwareCommandResult.Errors.ForEach(delegate(Error err)
 				{
-					streamWriter3.WriteLine(error2.ToString());
-				}
+					validateFile.WriteLine(err.ToString());
+				});
 				return false;
 			}
 			if (!job.GetStack(out var stack).Success)
 			{
-				streamWriter3.WriteLine("Couldn't validate: unable to get stack.");
+				validateFile.WriteLine("Couldn't validate: unable to get stack.");
 			}
 			else
 			{
 				string text3 = stack.Pop();
 				if (!text3.Equals(text2, StringComparison.CurrentCultureIgnoreCase))
 				{
-					streamWriter3.WriteLine("The new value {0} doesn't match {1}", text3, text2);
+					validateFile.WriteLine("The new value {0} doesn't match {1}", text3, text2);
 				}
 				else
 				{
 					result = true;
 				}
+			}
+		}
+		finally
+		{
+			if (validateFile != null)
+			{
+				((IDisposable)validateFile).Dispose();
 			}
 		}
 		return result;

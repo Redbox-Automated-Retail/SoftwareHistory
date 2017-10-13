@@ -6,6 +6,8 @@ namespace Redbox.HAL.Common.GUI.Functions.Services;
 
 internal sealed class ClientPickerSensorReadResult : IPickerSensorReadResult
 {
+	private const int SensorCount = 6;
+
 	public int BlockedCount { get; private set; }
 
 	public ErrorCodes Error { get; private set; }

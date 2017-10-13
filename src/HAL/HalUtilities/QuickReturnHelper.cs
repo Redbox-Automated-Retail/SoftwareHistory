@@ -34,18 +34,26 @@ internal sealed class QuickReturnHelper
 			}
 		}
 		new CounterHelper();
-		using (StreamWriter streamWriter = new StreamWriter(path))
+		StreamWriter sf = new StreamWriter(path);
+		try
 		{
-			streamWriter.WriteLine("QuickReturn stats of {0}", DateTime.Now.ToShortDateString());
+			sf.WriteLine("QuickReturn stats of {0}", DateTime.Now.ToShortDateString());
 			using (QuickReturnGetCounters quickReturnGetCounters = new QuickReturnGetCounters(Service))
 			{
 				quickReturnGetCounters.Run();
-				foreach (ProgramResult result in quickReturnGetCounters.Results)
+				quickReturnGetCounters.Results.ForEach(delegate(ProgramResult pr)
 				{
-					streamWriter.WriteLine("{0}:{1}", result.Code, result.Message);
-				}
+					sf.WriteLine("{0}:{1}", pr.Code, pr.Message);
+				});
 			}
-			FindCommunicationErrors(streamWriter);
+			FindCommunicationErrors(sf);
+		}
+		finally
+		{
+			if (sf != null)
+			{
+				((IDisposable)sf).Dispose();
+			}
 		}
 		if (reset)
 		{
@@ -83,12 +91,12 @@ internal sealed class QuickReturnHelper
 
 	internal void UpdateEEPROM(int waitTime)
 	{
-		List<string> list = new List<string>();
+		List<string> updateErrors = new List<string>();
 		try
 		{
 			if (Service == null)
 			{
-				list.Add("Unable to talk to service.");
+				updateErrors.Add("Unable to talk to service.");
 			}
 			else
 			{
@@ -96,17 +104,17 @@ internal sealed class QuickReturnHelper
 				updateQREEPROMJob.Run();
 				if (HardwareJobStatus.Completed != updateQREEPROMJob.EndStatus)
 				{
-					foreach (Error error in updateQREEPROMJob.Errors)
+					updateQREEPROMJob.Errors.ForEach(delegate(Error err)
 					{
-						list.Add($"[{error.Code}] {error.Description} :\n{error.Details}");
-					}
+						updateErrors.Add($"[{err.Code}] {err.Description} :\n{err.Details}");
+					});
 				}
 			}
-			LogErrors(EEPROMUpdateLog, list);
+			LogErrors(EEPROMUpdateLog, updateErrors);
 		}
 		finally
 		{
-			list.Clear();
+			updateErrors.Clear();
 		}
 	}
 
@@ -138,10 +146,20 @@ internal sealed class QuickReturnHelper
 			{
 			}
 		}
-		using StreamWriter streamWriter = new StreamWriter(path);
-		foreach (string error in errors)
+		StreamWriter log = new StreamWriter(path);
+		try
 		{
-			streamWriter.WriteLine("{0} {1}", DateTime.Now.ToString(), error);
+			errors.ForEach(delegate(string err)
+			{
+				log.WriteLine("{0} {1}", DateTime.Now.ToString(), err);
+			});
+		}
+		finally
+		{
+			if (log != null)
+			{
+				((IDisposable)log).Dispose();
+			}
 		}
 	}
 
