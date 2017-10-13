@@ -42,10 +42,7 @@ public static class Image
 		ColorPalette palette = image.Palette;
 		for (int i = 0; i < 256; i++)
 		{
-			Color[] entries = palette.Entries;
-			int num = i;
-			int num2 = i;
-			entries[num] = Color.FromArgb(num2, num2, num2);
+			palette.Entries[i] = Color.FromArgb(i, i, i);
 		}
 		image.Palette = palette;
 	}

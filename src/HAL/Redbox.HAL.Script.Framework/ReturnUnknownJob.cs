@@ -39,7 +39,7 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 	{
 		base.Context.CreateInfoResult("PutFailureMaxAttempts", "Failed to file disk.", idInPicker);
 		base.Context.Send("MaxPutAwayAttemptsExceeded");
-		if (CorrectiveMoveVend(MoveMode.Put) != ErrorCodes.Success)
+		if (base.MotionService.MoveVend(MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
 			base.Context.CreateInfoResult("MachineError", "The MOVEVEND instruction failed.");
@@ -105,7 +105,7 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 			{
 				return;
 			}
-			ErrorCodes errorCodes = CorrectiveMoveVend(MoveMode.Get);
+			ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 			if (errorCodes == ErrorCodes.Success)
 			{
 				FraudValidator fraudValidator = new FraudValidator(base.Context, FraudScanJobMask.ReturnUnknown);
@@ -226,7 +226,7 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 					using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context, correctMotionControl: true);
 					if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
 					{
-						CorrectiveMoveVend(MoveMode.Get);
+						base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 					}
 					return;
 				}

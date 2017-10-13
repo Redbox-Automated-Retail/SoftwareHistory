@@ -51,25 +51,11 @@ public sealed class SensorInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "READ-AUX-INPUTS", ignoreCase: true) == 0)
 		{
-			string[] array = service.ReadInputs(ControlBoards.Aux);
-			int num = 1;
-			string[] array2 = array;
-			foreach (string arg in array2)
-			{
-				context.PushTop($"AUX-QLM I/O {num++} = {arg}");
-			}
-			context.PushTop(array.Length);
+			PushInputs(context, ControlBoards.Aux, "AUX-QLM");
 		}
 		else if (string.Compare(token.Value, "READ-PICKER-INPUTS", ignoreCase: true) == 0)
 		{
-			string[] array3 = service.ReadInputs(ControlBoards.Picker);
-			int num2 = 1;
-			string[] array2 = array3;
-			foreach (string arg2 in array2)
-			{
-				context.PushTop($"PICKER CONTROLLER I/O {num2++} = {arg2}");
-			}
-			context.PushTop(array3.Length);
+			PushInputs(context, ControlBoards.Picker, "PICKER CONTROLLER");
 		}
 		else
 		{
@@ -83,11 +69,11 @@ public sealed class SensorInstruction : Instruction
 				context.PushTop(0);
 				return;
 			}
-			int num3 = 1;
+			int num = 1;
 			bool[] sensors = pickerSensorReadResult.Sensors;
 			foreach (bool flag in sensors)
 			{
-				string instance = string.Format("SENSOR{0}-{1}", num3++, flag ? "BLOCKED" : "CLEAR");
+				string instance = string.Format("SENSOR{0}-{1}", num++, flag ? "BLOCKED" : "CLEAR");
 				context.PushTop(instance);
 			}
 			context.PushTop(pickerSensorReadResult.Sensors.Length);
@@ -106,5 +92,16 @@ public sealed class SensorInstruction : Instruction
 			return string.Compare(operand, "READ-AUX-INPUTS", ignoreCase: true) == 0;
 		}
 		return true;
+	}
+
+	private void PushInputs(ExecutionContext ctx, ControlBoards board, string header)
+	{
+		string[] array = ServiceLocator.Instance.GetService<IControlSystem>().ReadInputs(board);
+		int counter = 1;
+		Array.ForEach(array, delegate(string each)
+		{
+			ctx.PushTop($"{header} I/O {counter++} = {each}");
+		});
+		ctx.PushTop(array.Length);
 	}
 }

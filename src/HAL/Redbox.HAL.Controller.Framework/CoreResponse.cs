@@ -11,7 +11,7 @@ internal sealed class CoreResponse : IControlResponse
 
 	private string m_commandResponse = string.Empty;
 
-	private readonly char[] TrimChars = Environment.NewLine.ToCharArray();
+	private static readonly char[] TrimChars = Environment.NewLine.ToCharArray();
 
 	public bool Success => Error == ErrorCodes.Success;
 
@@ -45,7 +45,7 @@ internal sealed class CoreResponse : IControlResponse
 		}
 		set
 		{
-			if (value == null)
+			if (string.IsNullOrEmpty(value))
 			{
 				m_commandResponse = string.Empty;
 				return;
@@ -102,6 +102,12 @@ internal sealed class CoreResponse : IControlResponse
 		{
 			Error = ErrorCodes.Timeout
 		};
+	}
+
+	internal CoreResponse(ErrorCodes error, string diagnostic)
+	{
+		m_errorCode = error;
+		Diagnostic = diagnostic;
 	}
 
 	internal CoreResponse(AddressSelector selector)

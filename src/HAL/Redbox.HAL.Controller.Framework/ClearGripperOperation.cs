@@ -72,4 +72,19 @@ public sealed class ClearGripperOperation : AbstractOperation<ErrorCodes>
 		}
 		return ErrorCodes.PickerObstructed;
 	}
+
+	public string GetPrintableLocation()
+	{
+		string result = "Location unknown";
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service.CurrentLocation != null)
+		{
+			result = service.CurrentLocation.ToString();
+		}
+		else if (service.AtVendDoor)
+		{
+			result = "Vend Door";
+		}
+		return result;
+	}
 }

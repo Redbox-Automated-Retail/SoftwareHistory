@@ -1,24 +1,16 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
-namespace Redbox.HAL.Controller.Framework;
+namespace Redbox.HAL.Controller.Framework.Services;
 
 internal sealed class PersistentCounterService : IPersistentCounterService
 {
 	private readonly IDataTable<IPersistentCounter> CounterTable;
 
-	private readonly IDataTable<IHardwareCorrectionStatistic> StatsTable;
-
 	private readonly List<string> WeeklyResettableCounters = new List<string>();
 
 	private readonly Dictionary<string, IPersistentCounter> Counters = new Dictionary<string, IPersistentCounter>();
-
-	public bool Exists(string name)
-	{
-		return Counters.ContainsKey(name);
-	}
 
 	public IPersistentCounter Find(string name)
 	{
@@ -113,53 +105,6 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		return Reset(persistentCounter);
 	}
 
-	public bool Insert(HardwareCorrectionStatistic type, IExecutionContext context, bool correctionOk)
-	{
-		if (!ControllerConfiguration.Instance.TrackHardwareCorrections)
-		{
-			return true;
-		}
-		IHardwareCorrectionStatistic p = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewStatistic(type, context.ProgramName, correctionOk, DateTime.Now);
-		return StatsTable.Insert(p);
-	}
-
-	public bool RemoveAll(HardwareCorrectionStatistic stat)
-	{
-		try
-		{
-			List<IHardwareCorrectionStatistic> list = StatsTable.LoadEntries();
-			List<IHardwareCorrectionStatistic> list2 = new List<IHardwareCorrectionStatistic>();
-			using (new DisposeableList<IHardwareCorrectionStatistic>(list2))
-			{
-				using (new DisposeableList<IHardwareCorrectionStatistic>(list))
-				{
-					foreach (IHardwareCorrectionStatistic item in list)
-					{
-						if (item.Statistic == stat)
-						{
-							list2.Add(item);
-						}
-					}
-				}
-				return StatsTable.Delete(list2);
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Failed to delete HardwareCorrection info.", e);
-			return false;
-		}
-	}
-
-	public List<IHardwareCorrectionStatistic> GetStats(HardwareCorrectionStatistic key)
-	{
-		List<IHardwareCorrectionStatistic> list = StatsTable.LoadEntries();
-		using (new DisposeableList<IHardwareCorrectionStatistic>(list))
-		{
-			return list.FindAll((IHardwareCorrectionStatistic each) => each.Statistic == key);
-		}
-	}
-
 	public void AddWeeklyResettable(IPersistentCounter counter)
 	{
 		if (!WeeklyResettableCounters.Contains(counter.Name))
@@ -186,7 +131,7 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		}
 	}
 
-	internal PersistentCounterService()
+	internal PersistentCounterService(IDataTableService dts)
 	{
 		foreach (TimeoutCounters value in Enum.GetValues(typeof(TimeoutCounters)))
 		{
@@ -196,9 +141,7 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 				WeeklyResettableCounters.Add(item);
 			}
 		}
-		IDataTableService service = ServiceLocator.Instance.GetService<IDataTableService>();
-		CounterTable = service.GetTable<IPersistentCounter>();
-		StatsTable = service.GetTable<IHardwareCorrectionStatistic>();
+		CounterTable = dts.GetTable<IPersistentCounter>();
 		List<IPersistentCounter> list = CounterTable.LoadEntries();
 		using (new DisposeableList<IPersistentCounter>(list))
 		{

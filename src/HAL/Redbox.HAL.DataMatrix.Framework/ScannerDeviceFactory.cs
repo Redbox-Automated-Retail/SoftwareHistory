@@ -27,10 +27,10 @@ internal sealed class ScannerDeviceFactory : IScannerDeviceService, IConfigurati
 		LogHelper.Instance.Log("[ScannerFactory] Configuration load.");
 		ConfiguredService = BarcodeConfiguration.Instance.ScannerService;
 		SetConfiguredDevice();
-		foreach (IConfigurationObserver configurableScanner in ConfigurableScanners)
+		ConfigurableScanners.ForEach(delegate(IConfigurationObserver each)
 		{
-			configurableScanner.NotifyConfigurationLoaded();
-		}
+			each.NotifyConfigurationLoaded();
+		});
 	}
 
 	public void NotifyConfigurationChangeStart()
@@ -38,20 +38,20 @@ internal sealed class ScannerDeviceFactory : IScannerDeviceService, IConfigurati
 		LogHelper.Instance.Log("[ScannerFactory] Configuration change start.");
 		m_configuredDevice.Stop();
 		m_configuredDevice = m_nilInstance;
-		foreach (IConfigurationObserver configurableScanner in ConfigurableScanners)
+		ConfigurableScanners.ForEach(delegate(IConfigurationObserver each)
 		{
-			configurableScanner.NotifyConfigurationChangeStart();
-		}
+			each.NotifyConfigurationChangeStart();
+		});
 	}
 
 	public void NotifyConfigurationChangeEnd()
 	{
 		LogHelper.Instance.Log("[ScannerFactory] Configuration change end.");
 		ConfiguredService = BarcodeConfiguration.Instance.ScannerService;
-		foreach (IConfigurationObserver configurableScanner in ConfigurableScanners)
+		ConfigurableScanners.ForEach(delegate(IConfigurationObserver each)
 		{
-			configurableScanner.NotifyConfigurationChangeEnd();
-		}
+			each.NotifyConfigurationChangeEnd();
+		});
 		SetConfiguredDevice();
 		m_configuredDevice.Start();
 	}

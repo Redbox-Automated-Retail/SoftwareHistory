@@ -55,7 +55,7 @@ public sealed class PersistentMapService : IPersistentMap, IPersistentMapService
 
 	public void SetValue<T>(string key, T value)
 	{
-		using (new WithUpgradeableReadLock(Lock))
+		using (new WithWriteLock(Lock))
 		{
 			try
 			{
@@ -64,16 +64,15 @@ public sealed class PersistentMapService : IPersistentMap, IPersistentMapService
 				{
 					persistentOption.UpdateValue(value.ToString());
 					Table.Update(persistentOption);
-					return;
 				}
-				using (new WithWriteLock(Lock))
+				else
 				{
 					InsertUnderLock(key, value);
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("WARNING: SecretOption.SetValueInner caught an exception.", e);
+				LogHelper.Instance.Log("[PersistentMapService] SetValue caught an exception.", e);
 			}
 		}
 	}

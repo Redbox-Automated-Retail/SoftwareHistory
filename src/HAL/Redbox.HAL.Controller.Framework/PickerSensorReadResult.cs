@@ -61,4 +61,17 @@ internal sealed class PickerSensorReadResult : IPickerSensorReadResult
 			}
 		}
 	}
+
+	internal PickerSensorReadResult(IReadInputsResult result)
+	{
+		Error = result.Error;
+		for (int i = 0; i < PickerSensorBits.Length; i++)
+		{
+			m_sensors[i] = Error != ErrorCodes.Success || result.Inputs[PickerSensorBits[i]] == "1";
+			if (m_sensors[i])
+			{
+				m_blockedCount++;
+			}
+		}
+	}
 }

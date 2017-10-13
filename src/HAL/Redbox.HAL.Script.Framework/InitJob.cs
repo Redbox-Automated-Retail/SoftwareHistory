@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Redbox.HAL.Component.Model;
@@ -9,6 +10,14 @@ namespace Redbox.HAL.Script.Framework;
 [NativeJob(ProgramName = "init", Operand = "INIT")]
 internal sealed class InitJob : NativeJobAdapter
 {
+	private class EventEntryComparer : IComparer<EventLogEntry>
+	{
+		public int Compare(EventLogEntry x, EventLogEntry y)
+		{
+			return y.TimeGenerated.CompareTo(x.TimeGenerated);
+		}
+	}
+
 	private bool CameraStarted;
 
 	private static int? m_emulatedInitWaitTime;
@@ -137,7 +146,7 @@ internal sealed class InitJob : NativeJobAdapter
 					{
 						base.Context.CreateResult(StackEnd.Top, "PICKER OBSTRUCTED", "The picker is obstructed and cannot be moved.", base.MotionService.CurrentLocation.Deck, base.MotionService.CurrentLocation.Slot, null, null, null);
 					}
-					string text4 = $"The picker is obstructed and cannot be moved; clear gripper returned {errorCodes.ToString()}.";
+					string text4 = $"The picker is obstructed and cannot be moved ( {clearGripperOperation.GetPrintableLocation()} ); clear gripper returned {errorCodes.ToString()}.";
 					applicationLog.Write(text4);
 					LogHelper.Instance.Log(text4, LogEntryType.Error);
 					AddError(text4);
@@ -175,8 +184,67 @@ internal sealed class InitJob : NativeJobAdapter
 		finally
 		{
 			StartCamera();
+			if (base.Context.ID == ExecutionEngine.Instance.InitJob.ID)
+			{
+				CheckShutdown(base.Context, service);
+			}
 			applicationLog.Write("Initialization complete.");
 			base.Context.Send("INIT STOP");
+		}
+	}
+
+	internal InitJob(ExecutionResult r, ExecutionContext c)
+		: base(r, c)
+	{
+	}
+
+	private void CheckShutdown(ExecutionContext ctx, IRuntimeService runtimeService)
+	{
+		if (!ControllerConfiguration.Instance.TrackDirtyShutdown)
+		{
+			return;
+		}
+		EventLog eventLog = Array.Find(EventLog.GetEventLogs(), (EventLog each) => each.Log == "System");
+		if (eventLog == null)
+		{
+			return;
+		}
+		List<EventLogEntry> list = new List<EventLogEntry>();
+		using (new DisposeableList<EventLogEntry>(list))
+		{
+			foreach (EventLogEntry entry in eventLog.Entries)
+			{
+				if (entry.InstanceId == 41 || entry.InstanceId == 12)
+				{
+					list.Add(entry);
+				}
+			}
+			if (list.Count == 0)
+			{
+				return;
+			}
+			list.Sort(new EventEntryComparer());
+			EventLogEntry e = list[0];
+			if (e.InstanceId == 41)
+			{
+				IHardwareCorrectionStatisticService service = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
+				List<IHardwareCorrectionStatistic> stats = service.GetStats(HardwareCorrectionStatistic.UnexpectedPowerLoss);
+				if (stats.Count > 0)
+				{
+					IHardwareCorrectionStatistic hardwareCorrectionStatistic = stats.Find((IHardwareCorrectionStatistic each) => each.CorrectionTime == e.TimeGenerated && each.ProgramName == "init");
+					if (hardwareCorrectionStatistic != null)
+					{
+						LogHelper.Instance.Log("[init, {0}] Kiosk shutdown due to power event ( id = {1} timestamp = {2} ) - event exists.", ctx.ID, e.InstanceId, e.TimeGenerated);
+						return;
+					}
+				}
+				LogHelper.Instance.Log("[init, {0}] Kiosk shutdown due to power event ( id = {1} timestamp = {2} )", ctx.ID, e.InstanceId, e.TimeGenerated);
+				service.Insert(HardwareCorrectionStatistic.UnexpectedPowerLoss, ctx, correctionOk: false, e.TimeGenerated);
+			}
+			else
+			{
+				LogHelper.Instance.Log("[init, {0}] Kiosk shutdown was ok", ctx.ID);
+			}
 		}
 	}
 
@@ -236,11 +304,6 @@ internal sealed class InitJob : NativeJobAdapter
 		{
 			cameraTuner.Dispose();
 		}
-	}
-
-	internal InitJob(ExecutionResult r, ExecutionContext c)
-		: base(r, c)
-	{
 	}
 
 	private bool TryToFixCamera()

@@ -11,6 +11,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("ac4de7e8-e979-475b-8202-536a9cd79c7a")]
-[assembly: AssemblyFileVersion("1.10.0.32")]
+[assembly: AssemblyFileVersion("1.10.0.74")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.10.0.32")]
+[assembly: AssemblyVersion("1.10.0.74")]

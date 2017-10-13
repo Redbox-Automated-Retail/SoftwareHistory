@@ -63,6 +63,23 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 		return errorCodes == ErrorCodes.Success;
 	}
 
+	public bool TestAndReset(IFormattedLog log)
+	{
+		return TestAndReset(log, quick: true);
+	}
+
+	public bool TestAndReset(IFormattedLog log, bool quick)
+	{
+		bool flag = true;
+		if (!CommunicationOk())
+		{
+			log.WriteFormatted("Attempt to reset Motion Controller ...", LogEntryType.Info);
+			flag = Reset(log, quick: true);
+			log.WriteFormatted(flag ? " ... inline reset of device interfaces succeeded; init axes." : " ... inline reset of device interfaces FAILED.", (!flag) ? LogEntryType.Error : LogEntryType.Info);
+		}
+		return flag;
+	}
+
 	public bool Initialize()
 	{
 		return Controller.InitializeCommunication();

@@ -432,10 +432,6 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 
 	private void LogFormattedMessage(string format, params object[] parms)
 	{
-		if (!IsTrackingEmptyStuck)
-		{
-			return;
-		}
 		string arg = string.Format(format, parms);
 		try
 		{
@@ -563,10 +559,10 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 	private ILocation FromXML(XmlNode node, ErrorList errors)
 	{
 		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		int? attributeValue = XmlNodeExtensions.GetAttributeValue<int?>(node, "deck", null);
-		int? attributeValue2 = XmlNodeExtensions.GetAttributeValue<int?>(node, "slot", null);
-		string attributeValue3 = XmlNodeExtensions.GetAttributeValue<string>(node, "id", null);
-		string attributeValue4 = XmlNodeExtensions.GetAttributeValue<string>(node, "ReturnTime", null);
+		int? attributeValue = node.GetAttributeValue<int?>("deck", null);
+		int? attributeValue2 = node.GetAttributeValue<int?>("slot", null);
+		string attributeValue3 = node.GetAttributeValue<string>("id", null);
+		string attributeValue4 = node.GetAttributeValue<string>("ReturnTime", null);
 		DateTime? returnTime = null;
 		if (!string.IsNullOrEmpty(attributeValue4) && !attributeValue4.Equals("NONE"))
 		{
@@ -580,9 +576,9 @@ public sealed class InventoryService : IInventoryService, IConfigurationObserver
 				returnTime = null;
 			}
 		}
-		bool attributeValue5 = XmlNodeExtensions.GetAttributeValue(node, "excluded", defaultValue: false);
-		int attributeValue6 = XmlNodeExtensions.GetAttributeValue(node, "emptyStuckCount", 0);
-		MerchFlags flags = Enum<MerchFlags>.ParseIgnoringCase(XmlNodeExtensions.GetAttributeValue(node, "merchFlags", "None"), MerchFlags.None);
+		bool attributeValue5 = node.GetAttributeValue("excluded", defaultValue: false);
+		int attributeValue6 = node.GetAttributeValue("emptyStuckCount", 0);
+		MerchFlags flags = Enum<MerchFlags>.ParseIgnoringCase(node.GetAttributeValue("merchFlags", "None"), MerchFlags.None);
 		if (!attributeValue.HasValue || !attributeValue2.HasValue || string.IsNullOrEmpty(attributeValue3))
 		{
 			errors.Add(Error.NewError("P004", "A valid deck, slot, and id must be specified for each item element.", "Add a valid item element with a deck, slot, and id attributes."));

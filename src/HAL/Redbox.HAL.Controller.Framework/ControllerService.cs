@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Controller.Framework.Services;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -54,9 +55,11 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 	public void Initialize(ErrorList errors, IDictionary<string, object> initProperties)
 	{
 		ControllerConfiguration.Instance.Initialize();
+		IDataTableService service = ServiceLocator.Instance.GetService<IDataTableService>();
 		ServiceLocator.Instance.AddService(typeof(IKioskConfiguration), new KioskConfigurationService());
 		ServiceLocator.Instance.AddService(typeof(IInventoryService), new InventoryService());
-		ServiceLocator.Instance.AddService(typeof(IPersistentCounterService), new PersistentCounterService());
+		ServiceLocator.Instance.AddService(typeof(IPersistentCounterService), new PersistentCounterService(service));
+		ServiceLocator.Instance.AddService(typeof(IHardwareCorrectionStatisticService), new HardwareCorrectionStatisticService(service));
 		ServiceLocator.Instance.AddService(typeof(IKioskFunctionCheckService), new KioskFunctionCheckService());
 		ServiceLocator.Instance.AddService(typeof(IEmptySearchPatternService), new EmptySearchPatternService());
 		bool flag = true;
@@ -85,6 +88,8 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 		ServiceLocator.Instance.AddService(typeof(IAirExchangerService), new IceQubeAirExchangerService());
 		ServiceLocator.Instance.AddService(typeof(IDumpbinService), new DumpbinServiceBridge());
 		ServiceLocator.Instance.AddService(typeof(IDoorSensorService), new DoorSensorService());
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		ServiceLocator.Instance.AddService(typeof(IPowerCycleDeviceService), new PowerCycleDeviceService(service2));
 	}
 
 	public void Shutdown()

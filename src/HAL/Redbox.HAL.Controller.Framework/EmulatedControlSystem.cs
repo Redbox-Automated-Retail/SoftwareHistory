@@ -201,6 +201,16 @@ internal sealed class EmulatedControlSystem : IControlSystem, ICoreCommandExecut
 		return ErrorCodes.Timeout;
 	}
 
+	public ErrorCodes EngageQlm(bool h, IFormattedLog log)
+	{
+		return ErrorCodes.Timeout;
+	}
+
+	public ErrorCodes DisengageQlm(IFormattedLog log)
+	{
+		return DisengageQlm(home: true, log);
+	}
+
 	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)
 	{
 		return ErrorCodes.Timeout;

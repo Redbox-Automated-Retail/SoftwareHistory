@@ -201,24 +201,11 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[XmlConfiguration(DefaultValue = "false")]
 	public bool RebootKioskDuringQlm { get; set; }
 
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Move Correction Flags")]
-	[Description("Set of flags describing which jobs can reset the motion controller when not responsive.")]
-	[XmlConfiguration(DefaultValue = "0")]
-	public int MoveCorrectionFlags { get; set; }
-
 	[Category("Behavior")]
 	[DisplayName("Dump VMZ State")]
 	[Description("If set to true, clean/thin will dump the zone after the job.")]
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool DumpVMZState { get; set; }
-
-	[Category("Behavior")]
-	[DisplayName("Correct Motion Controller Communication")]
-	[Description("If set to true ( the default ), after a QLM engage/disengage, if HAL can't communicate with the Arcus, it will try to reset the DIEs.")]
-	[XmlConfiguration(DefaultValue = "true")]
-	public bool CorrectMotionControllerCommunication { get; set; }
 
 	[Category("Behavior")]
 	[DisplayName("Vend Disk Poll Count")]
@@ -358,7 +345,7 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Category("Behavior")]
 	[DisplayName("AggressiveClearPickerOnPut")]
 	[Description("If true, try to clear the picker more aggressively during a PUT.")]
-	[XmlConfiguration(DefaultValue = "true")]
+	[XmlConfiguration(DefaultValue = "false")]
 	public bool AggressiveClearPickerOnPut { get; set; }
 
 	[Category("Configuration")]
@@ -459,13 +446,6 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 
 	[Browsable(false)]
 	[Category("Configuration")]
-	[DisplayName("Ringlight Connector")]
-	[Description("Tells the service which ringlight connector is attached..")]
-	[XmlConfiguration(DefaultValue = "2")]
-	public int RinglightConnector { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
 	[DisplayName("Threshold for Camera alert")]
 	[Description("An integer describing how many consecutive failures happen before an alert is generated from return.")]
 	[XmlConfiguration(DefaultValue = "2")]
@@ -482,21 +462,14 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Category("Behavior")]
 	[DisplayName("Restart Controller During User Jobs")]
 	[Description("If true, will restart the controller during a user job.")]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	public bool RestartControllerDuringUserJobs { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Redeploy Segment Offset")]
-	[Description("An integer describing the offset from the start of a quadrant used for redeploy.")]
-	[XmlConfiguration(DefaultValue = "5")]
-	public int RedeploySegmentOffset { get; set; }
 
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Track Hardware Corrections")]
 	[Description("If true, will track hardware correction stats.")]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	public bool TrackHardwareCorrections { get; set; }
 
 	[Browsable(false)]
@@ -692,7 +665,7 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Category("Behavior")]
 	[DisplayName("Preposition Vend Fraud Move")]
 	[Description("If true, move below the vend door until auth signal arrives.")]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	public bool PrepositionVendFraudMove { get; set; }
 
 	[Browsable(false)]
@@ -708,6 +681,41 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Description("In ms, the time the hw healer job will pause between checks.")]
 	[XmlConfiguration(DefaultValue = "900000")]
 	public int HardwareHealerPauseTime { get; set; }
+
+	[Browsable(false)]
+	[Category("Configuration")]
+	[DisplayName("Router Power Cycle Pause")]
+	[Description("In ms, the pause between router power cycle.")]
+	[XmlConfiguration(DefaultValue = "0")]
+	public int RouterPowerCyclePause { get; set; }
+
+	[Browsable(false)]
+	[Category("Configuration")]
+	[DisplayName("Clear Sensor Pause Delay")]
+	[Description("In ms, the pause between sensor reads during clear sensor.")]
+	[XmlConfiguration(DefaultValue = "200")]
+	public int ClearSensorPauseDelay { get; set; }
+
+	[Browsable(false)]
+	[Category("Behavior")]
+	[DisplayName("Track Dirty Shutdown")]
+	[Description("If true will test for dirty shutdown & capture the event.")]
+	[XmlConfiguration(DefaultValue = "true")]
+	public bool TrackDirtyShutdown { get; set; }
+
+	[Browsable(false)]
+	[Category("Behavior")]
+	[DisplayName("Handle Hardware Correction Events")]
+	[Description("If true will allow contexts to handle correction events.")]
+	[XmlConfiguration(DefaultValue = "true")]
+	public bool HandleHardwareCorrectionEvents { get; set; }
+
+	[Browsable(false)]
+	[Category("Behavior")]
+	[DisplayName("Home On Lower Limit Error")]
+	[Description("If true will home the motors if the lower limit is tripped.")]
+	[XmlConfiguration(DefaultValue = "true")]
+	public bool HomeOnLowerLimitError { get; set; }
 
 	[Browsable(false)]
 	public bool IsVMZMachine => MerchMode != MerchandizingMode.QLM;
@@ -914,6 +922,10 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 
 	protected override void UpgradeInner(XmlDocument document, ErrorList errors)
 	{
+		document.DocumentElement.SelectSingleNodeAndSetValue("Controller/AggressiveClearPickerOnPut", value: false);
+		document.DocumentElement.SelectSingleNodeAndSetValue("Controller/RestartControllerDuringUserJobs", value: true);
+		document.DocumentElement.SelectSingleNodeAndSetValue("Controller/TrackHardwareCorrections", value: true);
+		document.DocumentElement.SelectSingleNodeAndSetValue("Controller/PrepositionVendFraudMove", value: true);
 	}
 
 	protected override void StorePropertiesInner(XmlDocument document, ErrorList errors)

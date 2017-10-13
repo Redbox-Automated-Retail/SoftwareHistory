@@ -10,7 +10,7 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Fraud", flushOnWrite: false, "Fraud");
 		applicationLog.Write("Read Fraud Disc Start.");
-		if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
+		if (base.MotionService.MoveVend(MoveMode.Get, applicationLog) != ErrorCodes.Success)
 		{
 			EndJob(errored: true);
 			return;

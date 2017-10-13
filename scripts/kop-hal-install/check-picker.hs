@@ -2,7 +2,7 @@
         # CHECK PICKER Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.0.32
+	# VERSION 1.10.0.74
         #
 
 	GRIPPER		CHECK-PICKER

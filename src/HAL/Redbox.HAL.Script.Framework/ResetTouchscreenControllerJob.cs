@@ -30,7 +30,7 @@ internal sealed class ResetTouchscreenControllerJob : NativeJobAdapter
 		{
 			applicationLog.WriteFormatted("Unable to locate a touchscreen.");
 		}
-		ServiceLocator.Instance.GetService<IPersistentCounterService>().Insert(HardwareCorrectionStatistic.Touchscreen, base.Context, flag);
+		ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().Insert(HardwareCorrectionStatistic.Touchscreen, base.Context, flag);
 		if (!flag)
 		{
 			AddError("Touchscreen rest failure.");

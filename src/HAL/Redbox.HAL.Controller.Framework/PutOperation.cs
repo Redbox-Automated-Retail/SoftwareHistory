@@ -45,32 +45,29 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 			}
 			Controller.StartRollerIn();
 			bool num = ClearDiskFromPicker();
-			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-			service.SpinWait(100);
+			RuntimeService.SpinWait(100);
 			if (num)
 			{
 				LogHelper.Instance.Log($"PUT: Disk cannot be placed into {PutLocation.ToString()} because it cannot clear sensor 2.", LogEntryType.Error);
 				Controller.LogPickerSensorState(LogEntryType.Error);
 				Controller.StopRoller();
-				service.SpinWait(100);
+				RuntimeService.SpinWait(100);
 				if (!Controller.TrackOpen().Success)
 				{
 					Result.Code = ErrorCodes.TrackOpenTimeout;
 					return Result;
 				}
 				Controller.TrackClose();
-				service.SpinWait(100);
+				RuntimeService.SpinWait(100);
 				if (!Controller.RollerToPosition(RollerPosition.Position5, 8000).Success)
 				{
 					LogHelper.Instance.Log("Put: roll item back to sensor 5 returned TIMEOUT");
 					LogHelper.Instance.Log("PUT: unable to roll item into slot, and cannot move it back into the picker.", LogEntryType.Error);
+					Controller.LogPickerSensorState(LogEntryType.Error);
 					Result.Code = ErrorCodes.PickerObstructed;
 					return Result;
 				}
-				IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-				PutLocation.ID = "UNKNOWN";
-				service2.Save(PutLocation);
-				Result.Code = ErrorCodes.SlotInUse;
+				OnSlotInUse();
 				return Result;
 			}
 			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
@@ -94,55 +91,45 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 				UpdateInventory();
 				return Result;
 			}
-			LogHelper.Instance.Log("PUT: can't put disk in slot.", LogEntryType.Error);
+			LogHelper.Instance.Log("[PUT] can't put disk in slot.", LogEntryType.Error);
 			Controller.LogPickerSensorState(LogEntryType.Error);
 			if (ControllerConfiguration.Instance.AggressiveClearPickerOnPut)
 			{
-				Controller.TrackCycle();
-				Controller.StartRollerIn();
-				PushIntoSlot();
-				Controller.StopRoller();
-				pickerSensorReadResult = Controller.ReadSensors();
-				if (pickerSensorReadResult.Error != ErrorCodes.Success)
-				{
-					Result.Code = ErrorCodes.SensorReadError;
-					return Result;
-				}
-				if (!pickerSensorReadResult.Sensors[0])
-				{
-					UpdateAggressivePutCounter();
-					UpdateInventory();
-					return Result;
-				}
-				Controller.TrackOpen();
-				PushIntoSlot();
-				Controller.TrackClose();
-				pickerSensorReadResult = Controller.ReadSensors();
-				if (pickerSensorReadResult.Error != ErrorCodes.Success)
-				{
-					Result.Code = ErrorCodes.SensorReadError;
-					return Result;
-				}
-				if (!pickerSensorReadResult.Sensors[0])
-				{
-					UpdateInventory();
-					UpdateAggressivePutCounter();
-					return Result;
-				}
-				LogHelper.Instance.Log("AggressivePut not able to clear the disk.", LogEntryType.Error);
-				Controller.LogPickerSensorState(LogEntryType.Error);
-				ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("AggressivePutFailures");
+				OnAggressivePut();
 			}
-			Controller.StartRollerOut();
-			PullFrom(PutLocation, ControllerConfiguration.Instance.NumberOfPulls);
-			IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position5, 5000);
-			LogHelper.Instance.Log($"Put: gripperClear: false, rollerTo 5 returned {controlResponse.ToString()}", LogEntryType.Error);
-			Controller.LogPickerSensorState(LogEntryType.Error);
-			service.SpinWait(100);
-			Controller.StopRoller();
-			bool flag = PickerBoard.IsFull();
-			LogHelper.Instance.Log($"PUT: move to sensor 5 returns {flag}", LogEntryType.Info);
-			Result.Code = ErrorCodes.PickerObstructed;
+			else
+			{
+				if (!Controller.TrackOpen().Success)
+				{
+					Result.Code = ErrorCodes.TrackOpenTimeout;
+					return Result;
+				}
+				PullFrom(PutLocation);
+				if (!Controller.TrackClose().Success)
+				{
+					Result.Code = ErrorCodes.TrackCloseTimeout;
+					return Result;
+				}
+				if (!Controller.RollerToPosition(RollerPosition.Position5, 5000).Success)
+				{
+					Controller.LogPickerSensorState(LogEntryType.Error);
+					RuntimeService.SpinWait(100);
+					Controller.StopRoller();
+					Result.Code = ErrorCodes.PickerObstructed;
+				}
+				else
+				{
+					IPickerSensorReadResult pickerSensorReadResult2 = Controller.ReadSensors();
+					if (!pickerSensorReadResult2.Sensors[0] && !pickerSensorReadResult2.Sensors[5])
+					{
+						OnSlotInUse();
+					}
+					else
+					{
+						Result.Code = ErrorCodes.PickerObstructed;
+					}
+				}
+			}
 			return Result;
 		}
 		finally
@@ -167,18 +154,70 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 		Observer = observer;
 	}
 
+	private void OnAggressivePut()
+	{
+		Controller.TrackCycle();
+		Controller.StartRollerIn();
+		PushIntoSlot();
+		Controller.StopRoller();
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
+		if (pickerSensorReadResult.Error != ErrorCodes.Success)
+		{
+			Result.Code = ErrorCodes.SensorReadError;
+			return;
+		}
+		if (!pickerSensorReadResult.Sensors[0])
+		{
+			UpdateAggressivePutCounter();
+			UpdateInventory();
+			return;
+		}
+		Controller.TrackOpen();
+		PushIntoSlot();
+		Controller.TrackClose();
+		pickerSensorReadResult = Controller.ReadSensors();
+		if (pickerSensorReadResult.Error != ErrorCodes.Success)
+		{
+			Result.Code = ErrorCodes.SensorReadError;
+			return;
+		}
+		if (!pickerSensorReadResult.Sensors[0])
+		{
+			UpdateInventory();
+			UpdateAggressivePutCounter();
+			return;
+		}
+		LogHelper.Instance.Log("AggressivePut not able to clear the disk.", LogEntryType.Error);
+		Controller.LogPickerSensorState(LogEntryType.Error);
+		PersistentCounterService.Increment("AggressivePutFailures");
+		Controller.StartRollerOut();
+		PullFrom(PutLocation);
+		IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position5, 5000);
+		LogHelper.Instance.Log(LogEntryType.Error, "[PUT] gripperClear: false, rollerTo 5 returned {0}", controlResponse.ToString());
+		Controller.LogPickerSensorState(LogEntryType.Error);
+		RuntimeService.SpinWait(100);
+		Controller.StopRoller();
+		LogHelper.Instance.Log("[PUT]: picker full = {0}", PickerBoard.IsFull());
+		Result.Code = ErrorCodes.PickerObstructed;
+	}
+
+	private void OnSlotInUse()
+	{
+		PutLocation.ID = "UNKNOWN";
+		InventoryService.Save(PutLocation);
+		Result.Code = ErrorCodes.SlotInUse;
+	}
+
 	private void UpdateAggressivePutCounter()
 	{
 		LogHelper.Instance.Log("Aggressive PUT was able to clear disk.", LogEntryType.Info);
-		ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("AggressivePutSuccesses");
+		PersistentCounterService.Increment("AggressivePutSuccesses");
 	}
 
 	private void UpdateInventory()
 	{
 		ILocation original = null;
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		Result.IsDuplicate = service.IsBarcodeDuplicate(ID, out original);
-		ServiceLocator.Instance.GetService<IDecksService>();
+		Result.IsDuplicate = InventoryService.IsBarcodeDuplicate(ID, out original);
 		Result.StoredMatrix = (IsSuspiciousId(ID) ? "UNKNOWN" : ID);
 		if (PutLocation.Deck == 7 && PutLocation.IsWide)
 		{
@@ -193,12 +232,12 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 			{
 				LogHelper.Instance.Log("Mark the original matrix ID = {0} at Deck = {1} Slot = {2} ); marking as {3}", ID, original.Deck, original.Slot, "UNKNOWN");
 				original.ID = "UNKNOWN";
-				service.Save(original);
+				InventoryService.Save(original);
 			}
-			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("DUPLICATE-COUNT");
+			PersistentCounterService.Increment("DUPLICATE-COUNT");
 		}
 		PutLocation.ID = Result.StoredMatrix;
-		service.Save(PutLocation);
+		InventoryService.Save(PutLocation);
 	}
 
 	private bool IsSuspiciousId(string id)

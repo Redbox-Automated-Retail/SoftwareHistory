@@ -93,7 +93,7 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 			return;
 		}
 		base.Context.Send("MoveToVend");
-		if (CorrectiveMoveVend(MoveMode.None) != ErrorCodes.Success)
+		if (base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
 			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
@@ -164,6 +164,6 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 	{
 		base.ControlSystem.VendDoorClose();
 		base.ControlSystem.TrackClose();
-		CorrectiveMoveVend(MoveMode.Get);
+		base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 	}
 }

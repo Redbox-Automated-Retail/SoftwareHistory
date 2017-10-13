@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Configuration;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -120,7 +120,7 @@ internal sealed class DecksManager : IDecksService
 				(deck as Deck).ToXmlWriter(xmlTextWriter);
 			}
 			xmlTextWriter.Flush();
-			XmlNodeExtensions.SelectSingleNodeAndSetInnerXml(document.DocumentElement, "Controller/Decks", stringWriter);
+			document.DocumentElement.SelectSingleNodeAndSetInnerXml("Controller/Decks", stringWriter);
 		}
 		LogHelper.Instance.Log("Completed decks save.", LogEntryType.Info);
 	}

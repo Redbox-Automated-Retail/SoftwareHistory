@@ -15,7 +15,7 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 		IControlResponse controlResponse = Controller.VendDoorRent();
 		if (!controlResponse.Success)
 		{
-			LogHelper.Instance.Log(LogEntryType.Error, "[RejectDisk]: VENDDOOR RENT failed with error {0}", controlResponse.Diagnostic);
+			LogHelper.Instance.Log(LogEntryType.Error, "[RejectDisk]: VENDDOOR RENT failed with error {0}", controlResponse);
 			return ErrorCodes.VendDoorRentTimeout;
 		}
 		IPickerSensorReadResult pickerSensorReadResult = null;

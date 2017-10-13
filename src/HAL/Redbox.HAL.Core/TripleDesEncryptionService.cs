@@ -38,6 +38,31 @@ public sealed class TripleDesEncryptionService : IEncryptionService
 		return Encoding.UTF8.GetString(Decrypt(inputArray));
 	}
 
+	public string HashFile(string fullFilePath)
+	{
+		using SHA1CryptoServiceProvider algorithm = new SHA1CryptoServiceProvider();
+		return HashFile(algorithm, fullFilePath);
+	}
+
+	public string HashFile(HashAlgorithm algorithm, string fullFilePath)
+	{
+		if (!File.Exists(fullFilePath))
+		{
+			throw new ArgumentException("fullFilePath doesn't exist.");
+		}
+		byte[] array = null;
+		using (FileStream inputStream = new FileStream(fullFilePath, FileMode.Open))
+		{
+			array = algorithm.ComputeHash(inputStream);
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < array.Length; i++)
+		{
+			stringBuilder.Append(array[i].ToString("x2"));
+		}
+		return stringBuilder.ToString();
+	}
+
 	private byte[] DoTransform(ICryptoTransform transform, byte[] inputArray)
 	{
 		using MemoryStream memoryStream = new MemoryStream();

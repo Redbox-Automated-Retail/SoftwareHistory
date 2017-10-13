@@ -56,8 +56,6 @@ public sealed class RuntimeService : IRuntimeService
 
 	private readonly StringDictionary Values = new StringDictionary();
 
-	private static RuntimeService m_instance = new RuntimeService();
-
 	public string KioskId
 	{
 		get
@@ -81,7 +79,7 @@ public sealed class RuntimeService : IRuntimeService
 			}
 			catch (Exception ex)
 			{
-				LogHelper.Instance.Log("[{0}] Unable to read secret option 'ID':", GetType().Name);
+				LogHelper.Instance.Log("[{0}] Unable to read Kiosk ID", GetType().Name);
 				LogHelper.Instance.Log(ex.Message);
 				m_kioskId = null;
 			}
@@ -177,20 +175,24 @@ public sealed class RuntimeService : IRuntimeService
 		return array;
 	}
 
+	public bool ForceSafeCopy(string source, string dest)
+	{
+		return ForceSafeCopy(TextWriter.Null, source, dest);
+	}
+
+	public bool ForceSafeCopy(TextWriter w, string source, string dest)
+	{
+		return OnCopy(w, source, dest, force: true);
+	}
+
+	public bool SafeCopy(string source, string dest)
+	{
+		return SafeCopy(TextWriter.Null, source, dest);
+	}
+
 	public bool SafeCopy(TextWriter writer, string source, string dest)
 	{
-		string arg = $"copy {source} -> {dest}";
-		try
-		{
-			File.Copy(source, dest);
-			writer.WriteLine("[{0}] {1}: SUCCESS", GetType().Name, arg);
-			return true;
-		}
-		catch (Exception ex)
-		{
-			writer.WriteLine("[{0}] {1}: FAILURE reason = {2}", GetType().Name, arg, ex.Message);
-			return false;
-		}
+		return OnCopy(writer, source, dest, force: false);
 	}
 
 	public bool SafeMove(TextWriter writer, string source, string dest)
@@ -237,21 +239,20 @@ public sealed class RuntimeService : IRuntimeService
 		}
 		Platform = Platform.Unknown;
 		OperatingSystem oSVersion = Environment.OSVersion;
-		Version version = oSVersion.Version;
 		if (oSVersion.Platform != PlatformID.Win32NT)
 		{
 			return Platform;
 		}
-		switch (version.Major)
+		switch (oSVersion.Version.Major)
 		{
 		case 5:
-			if (version.Minor != 0)
+			if (oSVersion.Version.Minor != 0)
 			{
 				Platform = Platform.WindowsXP;
 			}
 			break;
 		case 6:
-			if (version.Minor != 0)
+			if (oSVersion.Version.Minor != 0)
 			{
 				Platform = Platform.Windows7;
 			}
@@ -306,6 +307,22 @@ public sealed class RuntimeService : IRuntimeService
 		SYSTEM_INFO lpSystemInfo = default(SYSTEM_INFO);
 		GetSystemInfo(ref lpSystemInfo);
 		PageSize = (int)lpSystemInfo.dwPageSize;
+	}
+
+	private bool OnCopy(TextWriter writer, string source, string dest, bool force)
+	{
+		string arg = $"copy {source} -> {dest}";
+		try
+		{
+			File.Copy(source, dest, force);
+			writer.WriteLine("[{0}] {1}: SUCCESS", GetType().Name, arg);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			writer.WriteLine("[{0}] {1}: FAILURE reason = {2}", GetType().Name, arg, ex.Message);
+			return false;
+		}
 	}
 
 	private string CreateBackupName(string path)

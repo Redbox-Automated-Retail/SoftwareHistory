@@ -26,5 +26,10 @@ internal sealed class KioskFunctionCheckService : IKioskFunctionCheckService
 	{
 		IDataTableService service = ServiceLocator.Instance.GetService<IDataTableService>();
 		Table = service.GetTable<IKioskFunctionCheckData>();
+		if (!Table.Exists)
+		{
+			bool flag = Table.Create();
+			LogHelper.Instance.Log("[KioskFunctionCheckService] KFC table doesn't exist; create returned {0}", flag ? "SUCCESS" : "FAILURE");
+		}
 	}
 }

@@ -11,7 +11,7 @@ internal sealed class FraudTestTakeReadReturnJob : NativeJobAdapter
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Fraud", flushOnWrite: false, "Fraud-take-read-return");
 		applicationLog.Write("Take/Test/Return Start.");
 		using FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: false);
-		if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
+		if (base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			EndJob(errored: true);
 			return;

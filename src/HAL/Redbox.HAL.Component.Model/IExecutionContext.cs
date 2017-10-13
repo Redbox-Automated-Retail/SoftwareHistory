@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-public interface IExecutionContext
+public interface IExecutionContext : IHardwareCorrectionObserver
 {
 	IFormattedLog ContextLog { get; }
 

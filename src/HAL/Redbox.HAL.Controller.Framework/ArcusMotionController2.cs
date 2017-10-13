@@ -433,12 +433,9 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 	{
 		string command = ((axis == Axis.X) ? "EX" : "PY");
 		string text = SendReciveRaw(command);
-		if (text != null)
+		if (text != null && int.TryParse(text.Substring(text.IndexOf('=') + 1), out var result))
 		{
-			if (int.TryParse(text.Substring(text.IndexOf('=') + 1), out var result))
-			{
-				return result;
-			}
+			return result;
 		}
 		return null;
 	}

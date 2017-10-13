@@ -31,6 +31,8 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 		AbeDeviceDescriptor abeDeviceDescriptor = new AbeDeviceDescriptor(debug: true);
 		base.Context.CreateInfoResult("AbeDeviceStatus", abeDeviceDescriptor.Locate() ? "ATTACHED" : "NOT ATTACHED");
 		base.Context.CreateInfoResult("QuickReturnStatus", QuickReturnDevice.Instance.GetStatus().ToString());
+		base.Context.CreateInfoResult("RouterPowerRelay", (ControllerConfiguration.Instance.RouterPowerCyclePause > 0) ? "Configured" : "Not Configured");
+		base.Context.CreateInfoResult("SupportsArcusReset", (ControllerConfiguration.Instance.RestartControllerDuringUserJobs && ControllerConfiguration.Instance.TrackHardwareCorrections) ? "Configured" : "Not Configured");
 	}
 
 	internal KioskConfigurationJob(ExecutionResult result, ExecutionContext ctx)

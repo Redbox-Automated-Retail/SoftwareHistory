@@ -2,7 +2,7 @@
         # Clean VMZ Aggregate Instruction
         # Copyright (C) 2012 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.0.32
+	# VERSION 1.10.0.74
         #
 	
 	APPLOG		CONFIGURE	SUBDIRECTORY="VMZ"
@@ -14,13 +14,12 @@
 		EXIT		"The clean-vmz job is not supported on non-VMZ machines."
 	ENDIF
 	
-	HOMEY
-	POP                 HOMEY-RESULT
-	IF                  HOMEY-RESULT != "SUCCESS"
-		RESULT			CODE=HOMEY-RESULT MESSAGE="The HOMEY instruction failed." 
-		VMZ		AGGREGATE-CLEAN
-		EXIT            "The homing operation on the Y axis failed."
-	ENDIF	
+	MOTIONCONTROL	HOMEALL	CHECKCOM="TRUE"
+	POP                 HOMEALL-RESULT
+	IF                  TRUE != HOMEALL-RESULT 
+		RESULT			CODE="HOMEAXESFAILURE" MESSAGE="Homing the axes failed." 
+		EXIT            "The homing operation failed."
+	ENDIF
 	
 	GRIPPER		CHECK-PICKER
 	POP		CP-RESULT

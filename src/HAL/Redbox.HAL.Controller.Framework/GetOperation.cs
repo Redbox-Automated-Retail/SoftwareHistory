@@ -63,7 +63,7 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 			return;
 		}
 		Controller.StartRollerOut();
-		ErrorCodes errorCodes = PullFrom(Location, ControllerConfiguration.Instance.NumberOfPulls);
+		ErrorCodes errorCodes = PullFrom(Location);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			Controller.StopRoller();

@@ -1,79 +1,69 @@
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "one-disk-quick-deck-test", Operand = "ONE-DISK-QUICK-DECK-TEST")]
+[NativeJob(ProgramName = "one-disk-quick-deck-test")]
 internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 {
-	private readonly int[] TestSlots = new int[2] { 30, 60 };
-
 	protected override void ExecuteInner()
 	{
-		ApplicationLog appLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "OneDiskQuickTest");
-		int errors = 0;
-		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
+		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "OneDiskQuickTest");
+		if (!ControllerConfiguration.Instance.IsVMZMachine)
 		{
-			if (deck.IsQlm)
-			{
-				appLog.Write("The deck is a qlm deck - finish test.");
-				return true;
-			}
-			if (!TestDeck(deck))
-			{
-				int num = errors + 1;
-				errors = num;
-				return false;
-			}
-			IDeck byNumber = base.DecksService.GetByNumber(deck.Number + 1);
-			if (byNumber == null || byNumber.IsQlm)
-			{
-				return true;
-			}
-			if (!MoveAndPut(byNumber.Number, 1, "UNKNOWN"))
-			{
-				AddError("Unable to place the into the slot.");
-				int num = errors + 1;
-				errors = num;
-				return false;
-			}
-			return true;
-		});
-		if (errors <= 0)
+			applicationLog.WriteFormatted("** the machine is not configured for a VMZ - bailing **");
+			AddError("Misconfigured test");
+			return;
+		}
+		int num = base.Context.PopTop<int>();
+		int slot = base.Context.PopTop<int>();
+		if (!MoveAndGet(num, slot))
 		{
-			if (!MoveAndPut(1, 1, "UNKNOWN"))
+			AddError("Failure to retrieve disk from start position.");
+			return;
+		}
+		int num2 = base.Context.PopTop<int>();
+		bool flag = false;
+		int[] array = new int[2] { 30, 60 };
+		int[] array2 = new int[3] { 1, 30, 60 };
+		for (int i = 1; i <= num2; i++)
+		{
+			if (flag)
 			{
-				AddError("Unable to place the disk back into the source slot.");
+				break;
 			}
-			base.MotionService.MoveVend(MoveMode.Get, appLog);
+			int[] array3 = ((i == num) ? array : array2);
+			foreach (int slot2 in array3)
+			{
+				if (!MoveAndPut(i, slot2, "UNKNOWN"))
+				{
+					AddError("Unable to place the disk at a test location.");
+					flag = true;
+					break;
+				}
+				if (!MoveAndGet(i, slot2))
+				{
+					AddError("Unable to get the disk from test location.");
+					flag = true;
+					break;
+				}
+			}
+		}
+		if (!flag)
+		{
+			if (!MoveAndPut(num, slot, "UNKNOWN"))
+			{
+				AddError("Unable to place the disk at a test location.");
+			}
+			else
+			{
+				base.MotionService.MoveVend(MoveMode.Get, applicationLog);
+			}
 		}
 	}
 
 	internal OneDiskQuickTestJob(ExecutionResult r, ExecutionContext c)
 		: base(r, c)
 	{
-	}
-
-	private bool TestDeck(IDeck deck)
-	{
-		if (!MoveAndGet(deck.Number, 1))
-		{
-			AddError("Failure to retrieve disk from start position.");
-			return false;
-		}
-		int[] testSlots = TestSlots;
-		foreach (int slot in testSlots)
-		{
-			if (!MoveAndPut(deck.Number, slot, "UNKNOWN"))
-			{
-				AddError("Unable to place the disk at a test location.");
-				return false;
-			}
-			if (!MoveAndGet(deck.Number, slot))
-			{
-				AddError("Unable to get the disk from test location.");
-				return false;
-			}
-		}
-		return true;
 	}
 }

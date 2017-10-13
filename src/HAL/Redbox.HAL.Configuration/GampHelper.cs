@@ -8,6 +8,8 @@ namespace Redbox.HAL.Configuration;
 
 public sealed class GampHelper
 {
+	public const string GampPath = "c:\\Gamp";
+
 	internal const int DenseQuadrants = 6;
 
 	internal const int SparseQuadrants = 12;
@@ -46,22 +48,13 @@ public sealed class GampHelper
 
 	public IDictionary<string, int> ReadLegacySystemDataFile()
 	{
-		string path = "C:\\gamp\\SystemData.dat";
-		Dictionary<string, int> dictionary = new Dictionary<string, int>();
-		if (!File.Exists(path))
+		Dictionary<string, int> parameters = new Dictionary<string, int>();
+		Action<string, int> action = delegate(string key, int value)
 		{
-			return dictionary;
-		}
-		string[] array = File.ReadAllLines(path);
-		for (int i = 0; i < array.Length; i++)
-		{
-			string[] array2 = array[i].Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array2.Length >= 2 && int.TryParse(array2[1], out var result))
-			{
-				dictionary[array2[0]] = result;
-			}
-		}
-		return dictionary;
+			parameters[key] = value;
+		};
+		OnReadSystemData(action);
+		return parameters;
 	}
 
 	public GampBackupResult WriteSystemData(IDictionary<string, int> data, bool createBackup)
@@ -197,5 +190,44 @@ public sealed class GampHelper
 			list.Add((int)num.Value);
 		}
 		return list;
+	}
+
+	public void ConvertToVMZ()
+	{
+		IDictionary<string, int> dictionary = ReadLegacySystemDataFile();
+		for (int i = 1; i <= 9; i++)
+		{
+			string key = $"PlatterMaxSlots{i}";
+			if (dictionary.ContainsKey(key))
+			{
+				dictionary[key] = 90;
+			}
+		}
+		if (dictionary.ContainsKey("QLMDeckNumber"))
+		{
+			dictionary["QLMDeckNumber"] = 0;
+		}
+		if (dictionary.ContainsKey("LastDecknNumber"))
+		{
+			dictionary["LastDecknNumber"] = 9;
+		}
+		WriteSystemData(dictionary, createBackup: true);
+	}
+
+	private void OnReadSystemData(Action<string, int> action)
+	{
+		if (!File.Exists("C:\\gamp\\SystemData.dat"))
+		{
+			return;
+		}
+		string[] array = File.ReadAllLines("C:\\gamp\\SystemData.dat");
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			if (array2.Length >= 2 && int.TryParse(array2[1], out var result))
+			{
+				action(array2[0], result);
+			}
+		}
 	}
 }

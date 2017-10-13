@@ -4,8 +4,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class EmulatedTrack : ITrack
 {
-	public TrackState TrackState => TrackState.Closed;
-
 	public IControlResponse Close()
 	{
 		return CoreResponse.TimedOutResponse();

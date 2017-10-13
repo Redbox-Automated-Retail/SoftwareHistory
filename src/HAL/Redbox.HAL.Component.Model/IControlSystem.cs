@@ -76,6 +76,10 @@ public interface IControlSystem
 
 	ErrorCodes EngageQlm(IFormattedLog log);
 
+	ErrorCodes EngageQlm(bool home, IFormattedLog log);
+
+	ErrorCodes DisengageQlm(IFormattedLog log);
+
 	ErrorCodes DisengageQlm(bool home, IFormattedLog log);
 
 	IControlResponse DropQlm();

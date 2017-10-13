@@ -2,7 +2,7 @@
         # THIN Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.0.32
+	# VERSION 1.10.0.74
         #
         
         LOG                 "Begin thin request."
@@ -33,24 +33,6 @@
 	ENDIF
 	
 	POP
-	
-	MOTIONCONTROL		COMSTATUS
-	POP		MC-STATUS
-	IF	"OK" != MC-STATUS
-		APPLOG	"Motion controller not available; attempt reboot."
-		LOG		"Motion controller not available; attempt reboot." ENTRYTYPE=ERROR
-		SYSCALL	REBOOT
-		APPLOG	"Thin job restarted."
-		LOG		"Restarting thin job."
-		
-		MOTIONCONTROL		COMSTATUS
-		POP		MC-STATUS
-		IF	"OK" != MC-STATUS
-			APPLOG	"Communication with the motion controller isn't working."
-			LOG		"Communication with the motion controller isn't working." ENTRYTYPE=ERROR
-			EXIT		"The motion controller isn't working."
-		ENDIF
-	ENDIF
 	
         ; The top of the stack should have the number of items to thin.
         POP					ITEMS-TO-THIN
@@ -96,24 +78,6 @@ _THIN_DONE:
 
 _DISENGAGE:
 	QLM		ENDQLMOP
-		
-	MOTIONCONTROL		COMSTATUS
-	POP		MC-STATUS
-	IF	"OK" != MC-STATUS
-		APPLOG	"Motion controller not available; attempt reboot."
-		LOG		"Motion controller not available; attempt reboot." ENTRYTYPE=ERROR
-		SYSCALL	REBOOT
-		APPLOG	"Thin job restarted."
-		LOG		"Restarting thin job."
-		
-		MOTIONCONTROL		COMSTATUS
-		POP		MC-STATUS
-		IF	"OK" != MC-STATUS
-			APPLOG	"The job completed; however, communication with the motion controller isn't working."
-			LOG		"The job completed; however, communication with the motion controller isn't working."	ENTRYTYPE=ERROR
-			EXIT		"The motion controller isn't working."
-		ENDIF
-	ENDIF
 	
 _REAL_THIN_END:
 	NOP

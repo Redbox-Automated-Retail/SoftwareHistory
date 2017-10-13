@@ -40,5 +40,9 @@ public interface IMotionControlService
 
 	bool Reset(IFormattedLog log, bool quick);
 
+	bool TestAndReset(IFormattedLog log);
+
+	bool TestAndReset(IFormattedLog log, bool quick);
+
 	void Shutdown();
 }

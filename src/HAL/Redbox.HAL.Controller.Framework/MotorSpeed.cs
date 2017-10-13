@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Xml;
-using Redbox.HAL.Core;
+using Redbox.HAL.Configuration;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -36,9 +36,9 @@ public sealed class MotorSpeed
 
 	public static MotorSpeed FromXmlNode(XmlNode node, MotorGear gear)
 	{
-		int nodeValue = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("Low"), 500);
-		int nodeValue2 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("High"), 3000);
-		int nodeValue3 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("AccelerationTime"), 300);
+		int nodeValue = node.SelectSingleNode("Low").GetNodeValue(500);
+		int nodeValue2 = node.SelectSingleNode("High").GetNodeValue(3000);
+		int nodeValue3 = node.SelectSingleNode("AccelerationTime").GetNodeValue(300);
 		return new MotorSpeed(nodeValue, nodeValue2, nodeValue3, gear);
 	}
 
@@ -46,9 +46,9 @@ public sealed class MotorSpeed
 	{
 		if (node != null)
 		{
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "Low", Low);
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "High", High);
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "AccelerationTime", AccelerationTime);
+			node.SelectSingleNodeAndSetValue("Low", Low);
+			node.SelectSingleNodeAndSetValue("High", High);
+			node.SelectSingleNodeAndSetValue("AccelerationTime", AccelerationTime);
 		}
 	}
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
@@ -169,21 +170,21 @@ public sealed class Deck : IDeck
 
 	internal static Deck FromXmlNode(XmlNode node)
 	{
-		int attributeValue = XmlNodeExtensions.GetAttributeValue(node, "Number", 1);
-		int attributeValue2 = XmlNodeExtensions.GetAttributeValue(node, "Offset", -18760);
-		bool attributeValue3 = XmlNodeExtensions.GetAttributeValue(node, "IsQlm", defaultValue: false);
-		decimal attributeValue4 = XmlNodeExtensions.GetAttributeValue(node, "SlotWidth", 166.6667m);
-		int attributeValue5 = XmlNodeExtensions.GetAttributeValue(node, "NumberOfSlots", 90);
-		int? attributeValue6 = XmlNodeExtensions.GetAttributeValue<int?>(node, "SellThruSlots", null);
-		int? attributeValue7 = XmlNodeExtensions.GetAttributeValue<int?>(node, "SellThruOffset", null);
+		int attributeValue = node.GetAttributeValue("Number", 1);
+		int attributeValue2 = node.GetAttributeValue("Offset", -18760);
+		bool attributeValue3 = node.GetAttributeValue("IsQlm", defaultValue: false);
+		decimal attributeValue4 = node.GetAttributeValue("SlotWidth", 166.6667m);
+		int attributeValue5 = node.GetAttributeValue("NumberOfSlots", 90);
+		int? attributeValue6 = node.GetAttributeValue<int?>("SellThruSlots", null);
+		int? attributeValue7 = node.GetAttributeValue<int?>("SellThruOffset", null);
 		List<Quadrant> list = new List<Quadrant>();
 		int num = 0;
 		foreach (XmlNode childNode in node.ChildNodes)
 		{
-			int attributeValue8 = XmlNodeExtensions.GetAttributeValue(childNode, "Offset", 780);
-			int? attributeValue9 = XmlNodeExtensions.GetAttributeValue<int?>(childNode, "StartSlot", null);
-			int? attributeValue10 = XmlNodeExtensions.GetAttributeValue<int?>(childNode, "EndSlot", null);
-			bool attributeValue11 = XmlNodeExtensions.GetAttributeValue(childNode, "IsExcluded", defaultValue: false);
+			int attributeValue8 = childNode.GetAttributeValue("Offset", 780);
+			int? attributeValue9 = childNode.GetAttributeValue<int?>("StartSlot", null);
+			int? attributeValue10 = childNode.GetAttributeValue<int?>("EndSlot", null);
+			bool attributeValue11 = childNode.GetAttributeValue("IsExcluded", defaultValue: false);
 			Range range = null;
 			if (attributeValue9.HasValue && attributeValue10.HasValue)
 			{

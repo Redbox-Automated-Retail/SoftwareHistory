@@ -24,7 +24,7 @@ public sealed class SerialBoardInstruction : Instruction
 		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
-			context.ServiceLog("SerialBoardInstruction: converted '{0}' to operand None", base.Operands[0].Value);
+			context.ServiceLog("SerialBoardInstruction: converted operand '{0}' to None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.ClosePort:
 		{
@@ -40,10 +40,5 @@ public sealed class SerialBoardInstruction : Instruction
 			break;
 		}
 		}
-	}
-
-	private bool IsValidOperand(string operand)
-	{
-		return Enum<ExpectedOperand>.ParseIgnoringCase(operand, ExpectedOperand.None) != ExpectedOperand.None;
 	}
 }

@@ -10,6 +10,11 @@ internal sealed class TakeDiskAtDoorJob : NativeJobAdapter
 	{
 		try
 		{
+			if (base.ControlSystem.ReadSensors().IsFull)
+			{
+				base.Context.CreateInfoResult("PickerFull", "The picker is full.");
+				return;
+			}
 			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.None, base.Context.AppLog);
 			if (errorCodes != ErrorCodes.Success)
 			{

@@ -53,6 +53,11 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		return snapResult;
 	}
 
+	public bool ValidateSettings()
+	{
+		return false;
+	}
+
 	public bool TestConfiguration(IMessageSink sink)
 	{
 		return true;

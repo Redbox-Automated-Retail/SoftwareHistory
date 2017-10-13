@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace Redbox.HAL.Component.Model;
 
 public interface IEncryptionService
@@ -9,4 +11,8 @@ public interface IEncryptionService
 	string EncryptToBase64(string source);
 
 	string DecryptFromBase64(string source);
+
+	string HashFile(string fullFilePath);
+
+	string HashFile(HashAlgorithm algorithm, string fullFilePath);
 }

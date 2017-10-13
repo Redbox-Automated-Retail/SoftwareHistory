@@ -4,8 +4,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal class TrackImpl : ITrack
 {
-	private TrackState m_trackState;
-
 	private readonly ControlSystem ControlSystem;
 
 	private const int TrackOpenBit = 3;
@@ -13,8 +11,6 @@ internal class TrackImpl : ITrack
 	private const int TrackClosedBit = 2;
 
 	private const int OpTries = 2;
-
-	public TrackState TrackState => m_trackState;
 
 	public IControlResponse Open()
 	{
@@ -34,14 +30,12 @@ internal class TrackImpl : ITrack
 	private IControlResponse RetryableTrackCommand(TrackState state)
 	{
 		IControlResponse controlResponse = null;
-		m_trackState = TrackState.Unknown;
 		CommandType type = ((state == TrackState.Open) ? CommandType.TrackOpen : CommandType.TrackClose);
 		for (int i = 0; i < 2; i++)
 		{
 			controlResponse = ControlSystem.ExecuteControllerCommand(type, 5000);
 			if (controlResponse.Success)
 			{
-				m_trackState = state;
 				return controlResponse;
 			}
 			if (controlResponse.CommError)

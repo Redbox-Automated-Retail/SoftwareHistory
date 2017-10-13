@@ -34,7 +34,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 	{
 		base.Context.CreateInfoResult("PutFailureMaxAttempts", "Failed to file disk.", idInPicker);
 		base.Context.Send("MaxPutAwayAttemptsExceeded");
-		if (CorrectiveMoveVend(MoveMode.Put) != ErrorCodes.Success)
+		if (base.MotionService.MoveVend(MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
 			base.Context.CreateInfoResult("MachineError", "The MOVEVEND instruction failed.");
@@ -78,7 +78,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 			AddError("Gripper is obstructed.");
 			return;
 		}
-		ErrorCodes errorCodes = CorrectiveMoveVend(MoveMode.Get);
+		ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MachineError", $"There was an error while executing the MOVEVEND instruction: {errorCodes.ToString()}");
@@ -160,7 +160,7 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context);
 		if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
 		{
-			CorrectiveMoveVend(MoveMode.Get);
+			base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 		}
 	}
 

@@ -46,7 +46,7 @@ internal sealed class FraudTestSellRelayJob : NativeJobAdapter
 			IControlResponse controlResponse = base.ControlSystem.SetFinger(GripperFingerState.Rent);
 			if (!controlResponse.Success)
 			{
-				AddError($"GripperSell returned error {controlResponse.Diagnostic}");
+				AddError($"GripperSell returned error {controlResponse}");
 				break;
 			}
 			service.Wait(num3);
@@ -55,14 +55,14 @@ internal sealed class FraudTestSellRelayJob : NativeJobAdapter
 			controlResponse = base.ControlSystem.SetFinger(GripperFingerState.Rent);
 			if (!controlResponse.Success)
 			{
-				AddError($"GripperRent returned error {controlResponse.Diagnostic}");
+				AddError($"GripperRent returned error {controlResponse}");
 				break;
 			}
 			service.Wait(num3);
 			controlResponse = base.ControlSystem.SetFinger(GripperFingerState.Closed);
 			if (!controlResponse.Success)
 			{
-				AddError($"GripperClose returned error {controlResponse.Diagnostic}");
+				AddError($"GripperClose returned error {controlResponse}");
 				break;
 			}
 			service.Wait(num3);

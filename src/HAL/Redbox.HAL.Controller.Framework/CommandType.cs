@@ -178,8 +178,16 @@ public enum CommandType
 	UnknownVendDoorOpenCommand,
 	[CommandProperties(Address = AddressSelector.H002, Command = "K2")]
 	VendDoorKillCommand,
+	[CommandProperties(Address = AddressSelector.H002, Command = "O3")]
+	PowerAux20,
+	[CommandProperties(Address = AddressSelector.H002, Command = "P3")]
+	DisableAux20,
 	[CommandProperties(Address = AddressSelector.H002, Command = "O4")]
-	KillPowerToAUXUSB,
+	PowerAux21,
 	[CommandProperties(Address = AddressSelector.H002, Command = "P4")]
-	PowerAUXUSB
+	DisableAux21,
+	[CommandProperties(Address = AddressSelector.H002, Command = "M1")]
+	QlmLift,
+	[CommandProperties(Address = AddressSelector.H002, Command = "L1")]
+	QlmDrop
 }

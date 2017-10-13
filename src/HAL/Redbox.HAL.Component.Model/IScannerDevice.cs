@@ -25,4 +25,6 @@ public interface IScannerDevice : IDisposable
 	ISnapResult Snap();
 
 	ISnapResult Snap(string path);
+
+	bool ValidateSettings();
 }

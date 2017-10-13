@@ -87,7 +87,7 @@ internal sealed class PickAtOffsetJob : NativeJobAdapter
 
 	private void FormatPickError(string s, IControlResponse response)
 	{
-		base.Context.CreateInfoResult("PickError", $"GET failed: {s} ({(response.TimedOut ? ErrorCodes.Timeout.ToString().ToUpper() : response.Diagnostic)})");
+		base.Context.CreateInfoResult("PickError", $"GET failed: {s} ({response})");
 		AddError("Hardware Error");
 	}
 }

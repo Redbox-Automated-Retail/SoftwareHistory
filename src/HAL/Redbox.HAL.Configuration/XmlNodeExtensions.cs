@@ -3,7 +3,7 @@ using System.Xml;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
-namespace Redbox.HAL.Common.GUI.Functions;
+namespace Redbox.HAL.Configuration;
 
 public static class XmlNodeExtensions
 {
@@ -17,9 +17,19 @@ public static class XmlNodeExtensions
 		GetTargetNode(node, path).InnerXml = instance.ToString();
 	}
 
-	public static T GetNodeValue<T>(this XmlNode node)
+	public static T GetNodeValue<T>(this XmlNode node, T defaultValue)
 	{
-		return node.GetNodeValue(default(T));
+		try
+		{
+			if (node != null && !string.IsNullOrEmpty(node.InnerText))
+			{
+				return (T)ConversionHelper.ChangeType(ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(node.InnerText), typeof(T));
+			}
+		}
+		catch (ArgumentException)
+		{
+		}
+		return defaultValue;
 	}
 
 	public static T GetAttributeValue<T>(this XmlNode node, string attributeName)
@@ -33,7 +43,7 @@ public static class XmlNodeExtensions
 		{
 			if (node != null && node.Attributes[attributeName] != null)
 			{
-				return (T)ConversionHelper.ChangeType(node.Attributes[attributeName].Value, typeof(T));
+				return (T)ConversionHelper.ChangeType(ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(node.Attributes[attributeName].Value), typeof(T));
 			}
 		}
 		catch (ArgumentException)
@@ -56,21 +66,6 @@ public static class XmlNodeExtensions
 			node.Attributes.Append(xmlAttribute);
 		}
 		xmlAttribute.Value = value.ToString();
-	}
-
-	public static T GetNodeValue<T>(this XmlNode node, T defaultValue)
-	{
-		try
-		{
-			if (node != null && !string.IsNullOrEmpty(node.InnerText))
-			{
-				return (T)ConversionHelper.ChangeType(ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(node.InnerText), typeof(T));
-			}
-		}
-		catch (ArgumentException)
-		{
-		}
-		return defaultValue;
 	}
 
 	private static XmlNode GetTargetNode(XmlNode node, string path)

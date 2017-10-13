@@ -11,7 +11,7 @@ internal sealed class ClearHardwareStatisticsJob : NativeJobAdapter
 		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(base.Context.PopTop<string>(), HardwareCorrectionStatistic.None);
 		if (hardwareCorrectionStatistic != HardwareCorrectionStatistic.None)
 		{
-			ServiceLocator.Instance.GetService<IPersistentCounterService>().RemoveAll(hardwareCorrectionStatistic);
+			ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().RemoveAll(hardwareCorrectionStatistic);
 		}
 	}
 

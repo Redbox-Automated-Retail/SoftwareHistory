@@ -5,7 +5,7 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "vend", Operand = "VEND")]
+[NativeJob(ProgramName = "vend")]
 internal sealed class VendJob : NativeJobAdapter, IGetObserver
 {
 	private VendMethod Method;
@@ -53,6 +53,10 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			ILocation location = null;
 			string method = base.Context.PopTop<string>();
 			Method = ConvertToMethod(method);
+			if (VendMethod.Preposition == Method)
+			{
+				RegisterForCorrectionEvents();
+			}
 			string overrideName = ((Method == VendMethod.Location) ? "field-remove" : "vend");
 			ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "vend", flushOnWrite: false, overrideName);
 			base.Context.RegisterHandler(delegate(string signal)
@@ -135,7 +139,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 						continue;
 					}
 				}
-				base.Context.AppLog.Write($"Trying to vend ID: {text} at Deck = {location.Deck} Slot = {location.Slot}", LogEntryType.Info);
+				base.Context.AppLog.Write(LogEntryType.Info, "Trying to vend ID: {0} at Deck = {1} Slot = {2}", text, location.Deck, location.Slot);
 				TransactionResult transactionResult = MoveAndGet(location, text);
 				if (TransactionResult.MachineError == transactionResult)
 				{
@@ -160,7 +164,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 						break;
 					}
 				}
-				if (CorrectiveMoveVend(MoveMode.None) != ErrorCodes.Success)
+				if (base.MotionService.MoveVend(MoveMode.None, applicationLog) != ErrorCodes.Success)
 				{
 					base.Context.Send("MachineError");
 					WaitForSignal();
@@ -210,7 +214,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 				IPersistentCounter persistentCounter = service3.Find("EmptyOrStuckCount");
 				if (persistentCounter != null && persistentCounter.Value > ControllerConfiguration.Instance.EmptyStuckAlertThreshold)
 				{
-					LogHelper.Instance.Log($"The Empty/Stuck counter for alert generation has exceeded its threshold (value = {persistentCounter.Value})", LogEntryType.Error);
+					LogHelper.Instance.Log(LogEntryType.Error, "The Empty/Stuck counter for alert generation has exceeded its threshold (value = {0})", persistentCounter.Value);
 					if (ControllerConfiguration.Instance.AlertForEmptyStuck)
 					{
 						base.Context.CreateInfoResult("EmptyStuckThresholdExceeded", "There are too many empty/stuck failures transactions on this kiosk, please investigate.");
@@ -230,7 +234,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			catch
 			{
 			}
-			CorrectiveMoveVend(MoveMode.Get);
+			base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 		}
 	}
 

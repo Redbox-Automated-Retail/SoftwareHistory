@@ -35,6 +35,10 @@ internal sealed class CortexSettingsValidator
 			{
 				sink.Send($"The register {array[0]} received an unexpected response.");
 			}
+			else
+			{
+				sink.Send($"Register {array[0]} matched expected value");
+			}
 			Thread.Sleep(200);
 		}
 		return true;

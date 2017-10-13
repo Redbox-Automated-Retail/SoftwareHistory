@@ -101,8 +101,6 @@ public class Instruction : ICloneable<Instruction>
 		}
 	}
 
-	internal VariableAction VariableAction { get; set; }
-
 	internal bool IsLabel { get; set; }
 
 	internal virtual bool CreatesVariableDef => false;

@@ -6,8 +6,6 @@ namespace Redbox.HAL.Script.Framework;
 [NativeJob(ProgramName = "adjacent-bin-test", Operand = "ADJACENT-BIN-TEST")]
 internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 {
-	private readonly int[] SourceDiskSlots = new int[2] { 30, 60 };
-
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "AdjacentDumpSlotTest");
@@ -18,15 +16,15 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 		}
 		int deck = ServiceLocator.Instance.GetService<IDumpbinService>().PutLocation.Deck;
 		IDeck byNumber = base.DecksService.GetByNumber(deck);
-		if (!PutToAdjacentAndTest(byNumber.Number, 2, 81))
+		if (!PutToAdjacentAndTest(byNumber.Number, 1, 81))
 		{
 			AddError("Test failure!");
 		}
-		else if (!PutToAdjacentAndTest(byNumber.Number, 3, 85))
+		else if (!PutToAdjacentAndTest(byNumber.Number, 2, 85))
 		{
 			AddError("Test failure!");
 		}
-		else if (!MoveAndGet(byNumber.Number, 4))
+		else if (!MoveAndGet(byNumber.Number, 3))
 		{
 			AddError("Test failure!");
 		}
@@ -38,7 +36,7 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 		{
 			AddError("Test failure!");
 		}
-		else if (!FileToBin(byNumber.Number))
+		else if (!FileDiskInPickerToBin())
 		{
 			AddError("Test failure!");
 		}
@@ -46,7 +44,7 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 		{
 			AddError("Test failure!");
 		}
-		else if (!FileToBin(byNumber.Number))
+		else if (!FileDiskInPickerToBin())
 		{
 			AddError("Test failure!");
 		}
@@ -54,7 +52,7 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 		{
 			AddError("Test failure!");
 		}
-		else if (!FileToBin(byNumber.Number))
+		else if (!FileDiskInPickerToBin())
 		{
 			AddError("Test failure!");
 		}
@@ -65,7 +63,7 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 	{
 	}
 
-	private bool FileToBin(int deck)
+	private bool FileDiskInPickerToBin()
 	{
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
 		if (base.MotionService.MoveTo(service.PutLocation, MoveMode.Put, base.AppLog) != ErrorCodes.Success)

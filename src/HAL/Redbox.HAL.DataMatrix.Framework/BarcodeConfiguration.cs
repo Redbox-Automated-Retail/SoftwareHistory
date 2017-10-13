@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Xml;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
@@ -51,12 +50,6 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 	public int WritePause { get; set; }
 
 	[Category("Settings")]
-	[DisplayName("Reboot On Start")]
-	[Description("In ms.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool RebootOnStart { get; private set; }
-
-	[Category("Settings")]
 	[DisplayName("Cycle Camera On Use")]
 	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
 	[XmlConfiguration(DefaultValue = "false")]
@@ -79,12 +72,6 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 	[Description("The configured scanner.")]
 	[XmlConfiguration(DefaultValue = "false")]
 	public bool LogDetailedScan { get; private set; }
-
-	[Category("Settings")]
-	[DisplayName("Insert Read Stats")]
-	[Description("If true, will insert read data.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool InsertReadStats { get; private set; }
 
 	[Category("Settings")]
 	[DisplayName("Expected Read Codes")]

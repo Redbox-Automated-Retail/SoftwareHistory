@@ -50,8 +50,7 @@ internal abstract class Abstract3MCommand
 	protected byte[] Read(SafeFileHandle handle, int responseLength)
 	{
 		byte[] array = new byte[responseLength];
-		byte[] array2 = array;
-		if (!Win32.ReadFile(handle, array2, array2.Length, out var _, IntPtr.Zero))
+		if (!Win32.ReadFile(handle, array, array.Length, out var _, IntPtr.Zero))
 		{
 			array = ErrorResponse;
 			LogHelper.Instance.Log("[{0}] ReadFile failed: Error = {1}", GetType().Name, Marshal.GetLastWin32Error());

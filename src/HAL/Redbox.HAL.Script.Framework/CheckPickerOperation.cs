@@ -66,7 +66,7 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 			ErrorCodes errorCodes = clearGripperOperation.Execute();
 			if (errorCodes != ErrorCodes.Success)
 			{
-				Context.AppLog.Write($"There is an item stuck in the gripper; clear gripper returned error {errorCodes.ToString()}.", LogEntryType.Info);
+				Context.AppLog.Write(LogEntryType.Error, "There is an item stuck in the gripper ( {0} ); clear gripper returned error {1}.", clearGripperOperation.GetPrintableLocation(), errorCodes.ToString());
 				Context.CreateItemStuckResult(vendId);
 				Context.SymbolTable.Add("MSTESTER-SYMBOL-PICKER-FULL", "The gripper is obstructed.");
 				return ErrorCodes.PickerObstructed;

@@ -60,46 +60,47 @@ public sealed class QlmInstruction : Instruction
 		{
 			return;
 		}
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
 		bool home = true;
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("HOME");
 		if (keyValuePair != null && bool.TryParse(keyValuePair.Value, out var result2))
 		{
 			home = result2;
 		}
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
 		if (string.Compare(token.Value, "HALT", ignoreCase: true) == 0)
 		{
-			context.PushTop(service.HaltQlmOperation().Success ? "SUCCESS" : "TIMEOUT");
+			context.PushTop(service2.HaltQlmOperation().Success ? "SUCCESS" : "TIMEOUT");
 		}
 		else if (string.Compare(token.Value, "ENGAGE", ignoreCase: true) == 0)
 		{
-			ErrorCodes errorCodes = service.EngageQlm(context.AppLog);
-			if (errorCodes == ErrorCodes.Success)
+			ErrorCodes errorCodes = service2.EngageQlm(home, context.AppLog);
+			if (errorCodes == ErrorCodes.Success && !context.IsImmediate)
 			{
-				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
+				service.TestAndReset(context.AppLog);
 			}
 			context.PushTop(errorCodes.ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "LIFT", ignoreCase: true) == 0)
 		{
-			service.LiftQlm();
+			service2.LiftQlm();
 		}
 		else if (string.Compare(token.Value, "DROP", ignoreCase: true) == 0)
 		{
-			service.DropQlm();
+			service2.DropQlm();
 		}
 		else if (string.Compare(token.Value, "DISENGAGE", ignoreCase: true) == 0)
 		{
-			ErrorCodes errorCodes2 = service.DisengageQlm(home, context.AppLog);
-			if (errorCodes2 == ErrorCodes.Success)
+			ErrorCodes errorCodes2 = service2.DisengageQlm(home, context.AppLog);
+			if (errorCodes2 == ErrorCodes.Success && !context.IsImmediate)
 			{
-				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
+				service.TestAndReset(context.AppLog);
 			}
 			context.PushTop(errorCodes2.ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "STATUS", ignoreCase: true) == 0)
 		{
-			context.PushTop(service.GetQlmStatus().ToString().ToUpper());
+			context.PushTop(service2.GetQlmStatus().ToString().ToUpper());
 		}
 		else if (string.Compare(token.Value, "ENDQLMOP", ignoreCase: true) == 0)
 		{
@@ -113,9 +114,9 @@ public sealed class QlmInstruction : Instruction
 					failCode = Enum<ErrorCodes>.ParseIgnoringCase(keyValuePairValue, ErrorCodes.Success);
 				}
 			}
-			if (MerchandizingHelper.Instance.CleanupJob(result, context, failCode))
+			if (MerchandizingHelper.Instance.CleanupJob(result, context, failCode) && !context.IsImmediate)
 			{
-				MerchandizingHelper.Instance.CorrectMotionControlCommunication(context);
+				service.TestAndReset(context.AppLog);
 			}
 		}
 		else if (string.Compare(token.Value, "CLEAR-PICKER") == 0)
@@ -134,16 +135,16 @@ public sealed class QlmInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "UNLOAD-DISK") == 0)
 		{
-			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
 			int num = CurrentSlot(result, context);
 			if (num != 0)
 			{
-				if (!service2.EmptyCountExceeds(0))
+				if (!service3.EmptyCountExceeds(0))
 				{
 					context.PushTop(MerchandizeResult.MachineFull.ToString().ToUpper());
 				}
-				IDecksService service3 = ServiceLocator.Instance.GetService<IDecksService>();
-				MerchandizeResult merchandizeResult = new UnloadHelper(context, result).UnloadDisk(service3.QlmDeck.Number, num);
+				IDecksService service4 = ServiceLocator.Instance.GetService<IDecksService>();
+				MerchandizeResult merchandizeResult = new UnloadHelper(context, result).UnloadDisk(service4.QlmDeck.Number, num);
 				string text = merchandizeResult.ToString().ToUpper();
 				if (merchandizeResult != MerchandizeResult.Success)
 				{

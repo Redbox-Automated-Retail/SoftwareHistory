@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
@@ -129,8 +130,8 @@ internal sealed class DumpbinService : IDumpbinService
 		{
 			foreach (XmlNode item in xmlNodeList)
 			{
-				string attributeValue = XmlNodeExtensions.GetAttributeValue(item, "id", "UNKNOWN");
-				string attributeValue2 = XmlNodeExtensions.GetAttributeValue<string>(item, "PutTime", null);
+				string attributeValue = item.GetAttributeValue("id", "UNKNOWN");
+				string attributeValue2 = item.GetAttributeValue<string>("PutTime", null);
 				DateTime timestamp = DateTime.Now;
 				if (attributeValue2 != null)
 				{

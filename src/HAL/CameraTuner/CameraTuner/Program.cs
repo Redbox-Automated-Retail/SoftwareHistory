@@ -55,7 +55,7 @@ public class Program : IDisposable
 
 	public Program()
 	{
-		InstanceLock = new NamedLock(AppGuid.ToString(), LockScope.Local);
+		InstanceLock = new NamedLock(AppGuid.ToString());
 	}
 
 	private void DisposeInner(bool fromDispose)

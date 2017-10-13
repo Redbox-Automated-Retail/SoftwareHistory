@@ -69,15 +69,6 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 			base.Context.CreateResult(putResult.ToString().ToUpper(), "The slot is in use.", putResult.PutLocation.Deck, putResult.PutLocation.Slot, putResult.StoredMatrix, null, null);
 			return FileDiscIterationResult.Continue;
 		}
-		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
-		{
-			ErrorCodes errorCodes = clearGripperOperation.Execute();
-			if (errorCodes == ErrorCodes.Success)
-			{
-				return FileDiscIterationResult.Continue;
-			}
-			base.Context.ServiceLog("[BeforeNextPut] clear gripper returned status {0}", errorCodes.ToString());
-		}
 		base.Context.Send("MachineError");
 		base.Context.CreateResult(putResult.ToString().ToUpper(), "The PUT instruction failed.", putResult.PutLocation.Deck, putResult.PutLocation.Slot, putResult.StoredMatrix, null, null);
 		return FileDiscIterationResult.Halt;
@@ -143,7 +134,7 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 					base.Context.Send("MachineFull");
 					return;
 				}
-				if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
+				if (base.MotionService.MoveVend(MoveMode.Get, applicationLog) != ErrorCodes.Success)
 				{
 					base.Context.Send("MachineError");
 					base.Context.CreateInfoResult("MachineError", "Unable to move to the vend position.");
@@ -243,13 +234,17 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 					}, scannedId);
 				}
 			}
-			if (CorrectiveMoveVend(MoveMode.Get) != ErrorCodes.Success)
+			IPickerSensorReadResult pickerSensorReadResult2 = base.ControlSystem.ReadSensors();
+			if (pickerSensorReadResult2.Error == ErrorCodes.Success && !pickerSensorReadResult2.IsFull)
 			{
-				AddError("Unable to move to the vend position.");
-			}
-			else
-			{
-				base.Context.Send("Bail");
+				if (base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+				{
+					AddError("Unable to move to the vend position.");
+				}
+				else
+				{
+					base.Context.Send("Bail");
+				}
 			}
 		}
 		finally
@@ -385,11 +380,11 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 
 	private ErrorCodes ReturnDiskToUser()
 	{
-		CorrectiveMoveVend(MoveMode.None);
+		base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog);
 		IControlResponse controlResponse = base.ControlSystem.VendDoorRent();
 		if (!controlResponse.Success)
 		{
-			base.Context.AppLog.Write($"VENDDOOR RENT reported error {controlResponse.Diagnostic}.", LogEntryType.Error);
+			base.Context.AppLog.Write($"VENDDOOR RENT reported error {controlResponse}.", LogEntryType.Error);
 			base.Context.Send("MachineError");
 			return ErrorCodes.VendDoorRentTimeout;
 		}

@@ -1,4 +1,5 @@
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -29,6 +30,31 @@ internal abstract class NativeJobAdapter
 		Result.Errors.Add(Error.NewError("E999", "Execution context error.", errMsg));
 	}
 
+	protected void RegisterForCorrectionEvents()
+	{
+		if (!ControllerConfiguration.Instance.HandleHardwareCorrectionEvents)
+		{
+			return;
+		}
+		Context.StartHardwareCorrectionEvent += delegate(HardwareCorrectionEventArgs s)
+		{
+			LogHelper.Instance.Log("[{0} {1}] Received hardware correction {2} start event.", Context.ProgramName, Context.ID, s.Statistic);
+			Context.Send($"HardwareCorrectionStart:{s.Statistic}");
+		};
+		Context.EndHardwareCorrectionEvent += delegate(HardwareCorrectionEventArgs s)
+		{
+			LogHelper.Instance.Log("[{0} {1}] Received hardware correction {2} end event (status = {3}).", Context.ProgramName, Context.ID, s.Statistic, s.CorrectionOk);
+			if (s.CorrectionOk)
+			{
+				Context.Send($"HardwareCorrectionSuccess:{s.Statistic}");
+			}
+			else
+			{
+				Context.Send($"HardwareCorrectionFailure:{s.Statistic}");
+			}
+		};
+	}
+
 	protected void ShowEmptyStuck(ILocation location)
 	{
 		if (ServiceLocator.Instance.GetService<IMoveDecoratorService>().ShowEmptyStuck(Context, location) != ErrorCodes.Success)
@@ -54,11 +80,6 @@ internal abstract class NativeJobAdapter
 		}
 		ControlSystem.TrackCycle();
 		return ServiceLocator.Instance.GetService<IControllerService>().Put(id, AppLog).Success;
-	}
-
-	protected ErrorCodes CorrectiveMoveVend(MoveMode mode)
-	{
-		return ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(mode, Context.AppLog);
 	}
 
 	protected bool ContextSwitchRequested()

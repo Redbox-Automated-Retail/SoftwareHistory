@@ -22,6 +22,8 @@ internal sealed class CoreCommand
 
 	internal readonly int WaitPauseTime;
 
+	internal readonly string CommandName;
+
 	private static readonly char[] CommaSplit = new char[1] { ',' };
 
 	internal string Command { get; private set; }
@@ -45,114 +47,136 @@ internal sealed class CoreCommand
 
 	internal CoreResponse Execute()
 	{
-		if (ControllerConfiguration.Instance.EnableCommandTrace)
+		CommandTrace trace = new CommandTrace(ControllerConfiguration.Instance.EnableCommandTrace);
+		try
 		{
-			LogHelper.Instance.Log("[CoreCommand] Executing command {0}", Command);
-		}
-		CoreResponse coreResponse = SendCommand(Command);
-		if (coreResponse.CommError || !StatusBit.HasValue)
-		{
-			return coreResponse;
-		}
-		coreResponse.Error = WaitForCommand();
-		if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
-		{
-			string[] array = ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries);
-			foreach (string command in array)
+			trace.Trace("[CoreCommand] Executing command {0}", CommandName);
+			CoreResponse coreResponse = SendCommand(Command, trace);
+			try
 			{
-				SendCommand(command);
+				if (coreResponse.CommError || !StatusBit.HasValue)
+				{
+					return coreResponse;
+				}
+				coreResponse.Error = WaitForCommand(trace);
+				if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
+				{
+					Array.ForEach(ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries), delegate(string s)
+					{
+						SendCommand(s, trace);
+					});
+				}
+				return coreResponse;
+			}
+			finally
+			{
+				trace.Trace("[CoreCommand] {0} returned {1}", CommandName, coreResponse.ToString());
 			}
 		}
-		return coreResponse;
+		finally
+		{
+			if (trace != null)
+			{
+				((IDisposable)trace).Dispose();
+			}
+		}
 	}
 
-	internal ErrorCodes WaitForCommand()
+	private ErrorCodes WaitForCommand(CommandTrace trace)
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		TimeSpan timespan = new TimeSpan(0, 0, 0, 0, WaitPauseTime);
-		if (ControllerConfiguration.Instance.EnableCommandTrace)
+		trace.Enter();
+		trace.Trace("[WaitForCommand] Start.");
+		try
 		{
-			LogHelper.Instance.Log("[WaitForCommand] Start.");
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			do
+			{
+				service.SpinWait(timespan);
+				CoreResponse coreResponse = SendCommand("S", trace);
+				if (coreResponse.CommError)
+				{
+					return ErrorCodes.CommunicationError;
+				}
+				trace.Trace("[WaitForCommand] {0}", coreResponse.OpCodeResponse);
+				if (!coreResponse.IsBitSet(StatusBit.Value))
+				{
+					return ErrorCodes.Success;
+				}
+			}
+			while (executionTimer.ElapsedMilliseconds <= OperationTimeout);
+			return ErrorCodes.Timeout;
 		}
-		using ExecutionTimer executionTimer = new ExecutionTimer();
-		do
+		finally
 		{
-			service.SpinWait(timespan);
-			CoreResponse coreResponse = SendCommand("S");
-			if (coreResponse.CommError)
-			{
-				return ErrorCodes.CommunicationError;
-			}
-			if (!coreResponse.IsBitSet(StatusBit.Value))
-			{
-				return ErrorCodes.Success;
-			}
+			trace.Exit();
 		}
-		while (executionTimer.ElapsedMilliseconds <= OperationTimeout);
-		return ErrorCodes.Timeout;
 	}
 
-	internal CoreResponse SendCommand(string command)
+	private CoreResponse SendCommand(string command, CommandTrace trace)
 	{
-		CoreResponse coreResponse = new CoreResponse(Address);
-		Port.ResetBuffers();
-		using (IChannelResponse channelResponse = Port.SendRecv(Address.ToString(), 5000))
+		trace.Enter();
+		try
 		{
-			coreResponse.Error = ((!channelResponse.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
-			if (!channelResponse.CommOk)
+			CoreResponse coreResponse = new CoreResponse(Address);
+			Port.ResetBuffers();
+			using (IChannelResponse channelResponse = Port.SendRecv(Address.ToString(), 5000))
 			{
-				LogHelper.Instance.Log("[SendCommand] Selector on address {0} timed out; port = {1}.", Address.ToString(), Port.Name);
-				coreResponse.Diagnostic = ComputeCommunicationError(Address);
-				return coreResponse;
+				coreResponse.Error = ((!channelResponse.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
+				if (!channelResponse.CommOk)
+				{
+					LogHelper.Instance.Log(" [SendCommand] Command {0} on address {1} ( port = {2} )timed out.", command, Address.ToString(), Port.Name);
+					coreResponse.Diagnostic = ComputeCommunicationError(Address);
+					return coreResponse;
+				}
+				trace.Trace("[SendCommand] Command {0} selector response {1}", command, Encoding.ASCII.GetString(channelResponse.RawResponse));
 			}
+			Port.ResetBuffers();
+			using IChannelResponse channelResponse2 = Port.SendRecv(command, CommandWait);
+			coreResponse.Error = ((!channelResponse2.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
+			if (channelResponse2.CommOk)
+			{
+				coreResponse.OpCodeResponse = Encoding.ASCII.GetString(channelResponse2.RawResponse);
+				trace.Trace("[SendCommand] Command {0} response {1}", command, coreResponse.OpCodeResponse);
+			}
+			return coreResponse;
 		}
-		Port.ResetBuffers();
-		using IChannelResponse channelResponse2 = Port.SendRecv(command, CommandWait);
-		coreResponse.Error = ((!channelResponse2.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
-		if (channelResponse2.CommOk)
+		finally
 		{
-			coreResponse.OpCodeResponse = Encoding.ASCII.GetString(channelResponse2.RawResponse);
-			if (ControllerConfiguration.Instance.EnableCommandTrace)
-			{
-				LogHelper.Instance.Log("[SendCommand] Command {0} Response {1}", command, coreResponse.OpCodeResponse);
-			}
+			trace.Exit();
 		}
-		return coreResponse;
 	}
 
 	private string ComputeCommunicationError(AddressSelector address)
 	{
-		string text = $"{BoardName(address)} is not responsive.";
-		LogHelper.Instance.Log(text, LogEntryType.Error);
-		return text;
-	}
-
-	private string BoardName(AddressSelector address)
-	{
 		string text = null;
-		return address switch
+		string text2 = string.Format("{0} is not responsive.", address switch
 		{
 			AddressSelector.H001 => "PCB", 
 			AddressSelector.H002 => "AUX board", 
 			AddressSelector.H101 => "SER board", 
 			AddressSelector.H555 => "QR device", 
 			_ => $"Unknown board {address.ToString()}", 
-		};
+		});
+		LogHelper.Instance.Log(text2, LogEntryType.Error);
+		return text2;
 	}
 
 	private CoreCommand(CommandType type, int? timeout, RedboxSerialPort port)
 	{
 		Port = port;
+		CommandName = type.ToString();
 		FieldInfo field = typeof(CommandType).GetField(type.ToString());
 		if (field == null)
 		{
-			LogHelper.Instance.Log("[CoreCommand] Could not locate type field on {0}", type.ToString());
+			LogHelper.Instance.Log("[CoreCommand] Could not locate type field on {0}", CommandName);
 			return;
 		}
 		CommandPropertiesAttribute properties = CommandPropertiesAttribute.GetProperties(field);
 		if (properties == null)
 		{
-			LogHelper.Instance.Log("[CoreCommand] Could not locate PropertiesAttribute on {0}", type.ToString());
+			LogHelper.Instance.Log("[CoreCommand] Could not locate PropertiesAttribute on {0}", CommandName);
 			return;
 		}
 		Command = properties.Command;
@@ -166,7 +190,7 @@ internal sealed class CoreCommand
 			StatusBit = properties.StatusBit;
 			if (OperationTimeout == 0 || WaitPauseTime == 0)
 			{
-				LogHelper.Instance.Log("[CoreCommand] On CommandType {0} there is a status bit but Timeout = {1} and WaitPause = {2}", type.ToString(), OperationTimeout, WaitPauseTime);
+				LogHelper.Instance.Log("[CoreCommand] On CommandType {0} there is a status bit but Timeout = {1} and WaitPause = {2}", CommandName, OperationTimeout, WaitPauseTime);
 			}
 		}
 		CommandWait = ((-1 != properties.CommandWait) ? properties.CommandWait : 8000);

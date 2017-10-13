@@ -6,11 +6,17 @@ namespace Redbox.HAL.Controller.Framework;
 
 public abstract class AbstractOperation<T> : IDisposable
 {
+	protected readonly IInventoryService InventoryService;
+
+	protected readonly IRuntimeService RuntimeService;
+
 	protected readonly IControlSystem Controller;
 
 	protected readonly IMotionControlService MotionService;
 
 	protected readonly IDecksService DeckService;
+
+	protected readonly IPersistentCounterService PersistentCounterService;
 
 	private bool Disposed;
 
@@ -35,11 +41,12 @@ public abstract class AbstractOperation<T> : IDisposable
 			num2 = num3;
 		}
 		bool result = false;
+		int clearSensorPauseDelay = ControllerConfiguration.Instance.ClearSensorPauseDelay;
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
 			while (true)
 			{
-				service.SpinWait(50);
+				service.SpinWait(clearSensorPauseDelay);
 				IPickerSensorReadResult pickerSensorReadResult = service2.ReadSensors();
 				if (pickerSensorReadResult.Error != ErrorCodes.Success)
 				{
@@ -72,11 +79,11 @@ public abstract class AbstractOperation<T> : IDisposable
 	protected bool ClearDiskFromPicker()
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		int milliseconds = 300;
+		int clearSensorPauseDelay = ControllerConfiguration.Instance.ClearSensorPauseDelay;
 		bool flag = WaitToClear(PickerSensor.Sensor2, PickerSensor.Sensor5, 8000);
 		if (!flag)
 		{
-			service.SpinWait(milliseconds);
+			service.SpinWait(clearSensorPauseDelay);
 			bool[] array = null;
 			bool flag2 = true;
 			for (int i = 0; (i < 3) & flag2; i++)
@@ -91,7 +98,7 @@ public abstract class AbstractOperation<T> : IDisposable
 				}
 				array = Controller.ReadSensors().Sensors;
 				flag2 = array[1] || array[2] || array[3] || array[4];
-				service.SpinWait(milliseconds);
+				service.SpinWait(clearSensorPauseDelay);
 			}
 			array = Controller.ReadSensors().Sensors;
 			flag = array[1] || array[2] || array[3] || array[4];
@@ -134,6 +141,11 @@ public abstract class AbstractOperation<T> : IDisposable
 			Controller.SetFinger(GripperFingerState.Open);
 			Controller.RetractArm();
 		}
+	}
+
+	protected ErrorCodes PullFrom(ILocation location)
+	{
+		return PullFrom(location, ControllerConfiguration.Instance.NumberOfPulls);
 	}
 
 	protected ErrorCodes PullFrom(ILocation location, int pulls)
@@ -221,6 +233,9 @@ public abstract class AbstractOperation<T> : IDisposable
 		DeckService = ServiceLocator.Instance.GetService<IDecksService>();
 		MotionService = ServiceLocator.Instance.GetService<IMotionControlService>();
 		Controller = ServiceLocator.Instance.GetService<IControlSystem>();
+		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
+		InventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
+		PersistentCounterService = ServiceLocator.Instance.GetService<IPersistentCounterService>();
 	}
 
 	private ErrorCodes PushWithArm(int timeout)

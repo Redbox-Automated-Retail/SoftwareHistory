@@ -129,6 +129,11 @@ internal sealed class ApplicationLog : IFormattedLog
 		Context.ServiceLog(msg, type);
 	}
 
+	internal void Write(LogEntryType t, string fmt, params object[] stuff)
+	{
+		Write(string.Format(fmt, stuff), t);
+	}
+
 	internal void Close()
 	{
 		if (m_open)

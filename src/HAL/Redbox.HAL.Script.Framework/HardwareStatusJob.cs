@@ -10,7 +10,7 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 	{
 		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		int num = 0;
-		if (!base.MotionService.IsInitialized && (!ControllerConfiguration.Instance.FixArcusDuringStatusJob || !base.MotionService.Reset(base.AppLog, quick: true)))
+		if (ControllerConfiguration.Instance.FixArcusDuringStatusJob && !base.MotionService.TestAndReset(base.Context.AppLog))
 		{
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "Could not talk with the motion controller.");
 			num++;

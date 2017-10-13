@@ -27,28 +27,9 @@ internal sealed class NilScanner : IScannerDevice, IDisposable
 		return false;
 	}
 
-	public ISnapResult Snap(string fileName)
-	{
-		return new SnapResult(fileName);
-	}
-
-	public ISnapResult Snap()
-	{
-		return new SnapResult(null);
-	}
-
-	public bool ResetDeviceDriver()
-	{
-		return false;
-	}
-
 	public bool Stop()
 	{
 		return false;
-	}
-
-	public void Disconnect()
-	{
 	}
 
 	public bool Restart()
@@ -64,6 +45,21 @@ internal sealed class NilScanner : IScannerDevice, IDisposable
 	public string FindInstalledPort()
 	{
 		return "NONE";
+	}
+
+	public ISnapResult Snap()
+	{
+		return new SnapResult(null);
+	}
+
+	public ISnapResult Snap(string fileName)
+	{
+		return new SnapResult(fileName);
+	}
+
+	public bool ValidateSettings()
+	{
+		return false;
 	}
 
 	internal NilScanner()

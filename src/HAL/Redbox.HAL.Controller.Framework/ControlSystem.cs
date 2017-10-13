@@ -24,7 +24,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	public VendDoorState VendDoorState { get; private set; }
 
-	public TrackState TrackState => Track.TrackState;
+	public TrackState TrackState { get; private set; }
 
 	public IControlResponse Initialize()
 	{
@@ -88,21 +88,27 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	public IControlResponse TrackOpen()
 	{
+		TrackState = TrackState.Unknown;
 		IControlResponse controlResponse = Track.Open();
 		if (!controlResponse.Success)
 		{
 			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.TrackOpen);
+			return controlResponse;
 		}
+		TrackState = TrackState.Open;
 		return controlResponse;
 	}
 
 	public IControlResponse TrackClose()
 	{
+		TrackState = TrackState.Unknown;
 		IControlResponse controlResponse = Track.Close();
 		if (!controlResponse.Success)
 		{
 			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.TrackClose);
+			return controlResponse;
 		}
+		TrackState = TrackState.Closed;
 		return controlResponse;
 	}
 
@@ -380,7 +386,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	public IPickerSensorReadResult ReadSensors()
 	{
-		if (TrackState.Closed != Track.TrackState)
+		if (TrackState.Closed != TrackState)
 		{
 			IControlResponse controlResponse = TrackClose();
 			if (!controlResponse.Success)
@@ -462,7 +468,17 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	public ErrorCodes EngageQlm(IFormattedLog log)
 	{
-		return QLM.Engage(log);
+		return EngageQlm(home: true, log);
+	}
+
+	public ErrorCodes EngageQlm(bool home, IFormattedLog log)
+	{
+		return QLM.Engage(home, log);
+	}
+
+	public ErrorCodes DisengageQlm(IFormattedLog log)
+	{
+		return DisengageQlm(home: true, log);
 	}
 
 	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)
@@ -505,6 +521,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		VendDoor = new VendDoorImpl();
 		VendDoorState = VendDoorState.Unknown;
 		Track = new TrackImpl(this);
+		TrackState = TrackState.Unknown;
 		Port = RedboxSerialPort.Create(new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.ControllerPortName)
 		{
 			Baud = 9600,
@@ -536,13 +553,9 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 
 	private CoreResponse SendCommand(CoreCommand command)
 	{
-		if (command.Port == null)
+		if (command.Port == null || !command.Port.Open())
 		{
-			return CoreResponse.CommErrorResponse();
-		}
-		if (!command.Port.Open())
-		{
-			LogHelper.Instance.Log($"ControlSystem.Instance: unable to open port {command.Port.Name}.", LogEntryType.Error);
+			LogHelper.Instance.Log(LogEntryType.Error, "[ControlSystem] Unable to open port {0} ( command = {1} )", (command.Port == null) ? "unconfigured" : command.Port.Name, command.CommandName);
 			return CoreResponse.CommErrorResponse();
 		}
 		try
@@ -551,7 +564,7 @@ internal sealed class ControlSystem : IControlSystem, ICoreCommandExecutor
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"ControlSystem.Instance.SendCommands on port {command.Port.Name} caught an exception.", e);
+			LogHelper.Instance.Log($"[ControlSystem] Execute {command.CommandName} on port {command.Port.Name} caught an exception.", e);
 			return CoreResponse.CommErrorResponse();
 		}
 	}

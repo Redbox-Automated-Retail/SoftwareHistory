@@ -25,32 +25,32 @@ internal static class QLM
 		return QlmStatus.Disengaged;
 	}
 
-	internal static ErrorCodes Engage(IFormattedLog log)
+	internal static ErrorCodes Engage(bool home, IFormattedLog log)
 	{
-		if (ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			return ErrorCodes.Timeout;
-		}
-		if (ServiceLocator.Instance.GetService<IMotionControlService>().HomeAxis(Axis.X, log) != ErrorCodes.Success)
-		{
-			return ErrorCodes.HomeXTimeout;
-		}
-		IDeck qlmDeck = ServiceLocator.Instance.GetService<IDecksService>().QlmDeck;
-		if (qlmDeck != null)
-		{
-			ServiceLocator.Instance.GetService<IInventoryService>().MarkDeckInventory(qlmDeck, "UNKNOWN");
-		}
-		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmEngage, 120000);
-		if (coreResponse.TimedOut)
-		{
-			ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment(TimeoutCounters.QlmEngage);
-		}
-		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
-		LogResult(log, result, "ENGAGE");
-		return result;
+		return OnLifterOperation(home, log, CommandType.QlmEngage, TimeoutCounters.QlmEngage);
 	}
 
 	internal static ErrorCodes Disengage(bool home, IFormattedLog log)
+	{
+		return OnLifterOperation(home, log, CommandType.QlmDisengage, TimeoutCounters.QlmDisengage);
+	}
+
+	internal static IControlResponse Drop()
+	{
+		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmDrop);
+	}
+
+	internal static IControlResponse Lift()
+	{
+		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmLift);
+	}
+
+	internal static IControlResponse HaltOperation()
+	{
+		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmHalt);
+	}
+
+	private static ErrorCodes OnLifterOperation(bool home, IFormattedLog log, CommandType type, TimeoutCounters counter)
 	{
 		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
@@ -66,39 +66,19 @@ internal static class QLM
 		{
 			ServiceLocator.Instance.GetService<IInventoryService>().MarkDeckInventory(qlmDeck, "UNKNOWN");
 		}
-		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmDisengage, 120000);
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(type, 120000);
 		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
 		if (coreResponse.TimedOut)
 		{
-			service2.Increment(TimeoutCounters.QlmDisengage);
+			service2.Increment(counter);
 		}
-		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
-		LogResult(log, result, "DISENGAGE");
-		return result;
-	}
-
-	internal static IControlResponse Drop()
-	{
-		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmDisengage);
-	}
-
-	internal static IControlResponse Lift()
-	{
-		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmEngage);
-	}
-
-	internal static IControlResponse HaltOperation()
-	{
-		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.QlmHalt);
-	}
-
-	private static void LogResult(IFormattedLog log, ErrorCodes result, string state)
-	{
-		string msg = $"QLM {state} returned status {result.ToString().ToUpper()}.";
-		log.WriteFormatted(msg, (result != ErrorCodes.Success) ? LogEntryType.Error : LogEntryType.Info);
-		if (result != ErrorCodes.Success)
+		ErrorCodes errorCodes = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
+		string msg = $"{type.ToString()} returned status {errorCodes.ToString().ToUpper()}.";
+		log.WriteFormatted(msg, (errorCodes != ErrorCodes.Success) ? LogEntryType.Error : LogEntryType.Info);
+		if (errorCodes != ErrorCodes.Success)
 		{
 			ServiceLocator.Instance.GetService<IControlSystem>().LogInputs(ControlBoards.Aux, LogEntryType.Error);
 		}
+		return errorCodes;
 	}
 }

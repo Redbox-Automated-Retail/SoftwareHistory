@@ -1,20 +1,23 @@
 using System;
 using System.Collections.Generic;
 
-namespace Redbox.HAL.Core;
+namespace Redbox.HAL.Component.Model;
 
 public struct DisposeableList<T> : IDisposable
 {
-	private readonly IList<T> TheList;
-
 	private bool m_disposed;
+
+	private readonly IList<T> TheList;
 
 	public void Dispose()
 	{
 		if (!m_disposed)
 		{
 			m_disposed = true;
-			TheList.Clear();
+			if (TheList != null && TheList.Count > 0)
+			{
+				TheList.Clear();
+			}
 		}
 	}
 

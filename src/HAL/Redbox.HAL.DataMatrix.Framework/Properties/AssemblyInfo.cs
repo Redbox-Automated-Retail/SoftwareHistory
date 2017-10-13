@@ -11,6 +11,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("Copyright © 2016 Redbox Automated Retail, LLC")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("349250ef-7c1c-4914-bce5-b1b0a4014a98")]
-[assembly: AssemblyFileVersion("1.10.0.32")]
+[assembly: AssemblyFileVersion("1.10.0.74")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.10.0.32")]
+[assembly: AssemblyVersion("1.10.0.74")]

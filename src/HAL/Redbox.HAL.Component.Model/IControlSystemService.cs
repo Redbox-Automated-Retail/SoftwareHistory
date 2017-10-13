@@ -7,4 +7,6 @@ public interface IControlSystemService
 	void AddHandler(IControlSystemObserver observer);
 
 	void RemoveHandler(IControlSystemObserver observer);
+
+	bool Restart();
 }

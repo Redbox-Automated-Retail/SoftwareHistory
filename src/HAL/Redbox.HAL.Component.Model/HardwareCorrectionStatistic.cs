@@ -5,5 +5,8 @@ public enum HardwareCorrectionStatistic
 	None,
 	Arcus,
 	Camera,
-	Touchscreen
+	Touchscreen,
+	ControllerRestart,
+	RouterRecycle,
+	UnexpectedPowerLoss
 }

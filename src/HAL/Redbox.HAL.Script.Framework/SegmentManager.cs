@@ -223,9 +223,16 @@ internal sealed class SegmentManager : IGetObserver
 			LogHelper.Instance.Log("[SegmentManager]: There are no empty slots available for transfer.");
 			return MerchandizeResult.MachineFull;
 		}
+		MerchFlags flags = source.Flags;
 		ITransferResult transferResult = ServiceLocator.Instance.GetService<IControllerService>().Transfer(source, emptySearchResult.EmptyLocations, this, manager.Context.AppLog);
 		if (transferResult.Transferred)
 		{
+			if (MerchFlags.Unload == flags && transferResult.Destination.Flags != flags)
+			{
+				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+				transferResult.Destination.Flags = flags;
+				service.Save(transferResult.Destination);
+			}
 			manager.ProcessTransfer(source, transferResult.Destination);
 			return MerchandizeResult.Success;
 		}

@@ -43,7 +43,7 @@ public sealed class CounterInstruction : Instruction
 			break;
 		}
 		case Ops.Create:
-			context.PushTop(service.Exists(keyValuePairValue) ? "SUCCESS" : "FAILURE");
+			context.PushTop((service.Find(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
 			break;
 		case Ops.Decrement:
 		{

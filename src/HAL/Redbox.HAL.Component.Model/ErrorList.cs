@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace Redbox.HAL.Component.Model;
 
@@ -39,10 +41,33 @@ public sealed class ErrorList : List<Error>, ICloneable
 		return RemoveAll((Error each) => each.Code == code);
 	}
 
+	public void Dump(TextWriter writer)
+	{
+		writer.WriteLine(FormatList());
+	}
+
+	public void DumpToLog()
+	{
+		LogHelper.Instance.Log(FormatList());
+	}
+
 	public object Clone()
 	{
 		ErrorList errorList = new ErrorList();
 		errorList.AddRange(this);
 		return errorList;
+	}
+
+	private string FormatList()
+	{
+		StringBuilder builder = new StringBuilder();
+		builder.AppendLine("-- Errors --");
+		ForEach(delegate(Error e)
+		{
+			builder.AppendLine($" Code        : {e.Code}");
+			builder.AppendLine($" Description : {e.Description}");
+			builder.AppendLine($" Details     : {e.Details}");
+		});
+		return builder.ToString();
 	}
 }

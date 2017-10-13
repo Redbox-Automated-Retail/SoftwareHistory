@@ -241,8 +241,18 @@ public sealed class ClientControlSystem : IControlSystem
 
 	public ErrorCodes EngageQlm(IFormattedLog log)
 	{
+		return EngageQlm(home: true, log);
+	}
+
+	public ErrorCodes EngageQlm(bool home, IFormattedLog log)
+	{
 		using InstructionHelper instructionHelper = new InstructionHelper(Service);
 		return instructionHelper.ExecuteErrorCode("QLM ENGAGE");
+	}
+
+	public ErrorCodes DisengageQlm(IFormattedLog log)
+	{
+		return DisengageQlm(home: true, log);
 	}
 
 	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)

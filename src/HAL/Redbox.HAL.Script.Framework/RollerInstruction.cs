@@ -55,15 +55,15 @@ public sealed class RollerInstruction : Instruction
 		{
 			if (string.Compare(token.Value, "IN", ignoreCase: true) == 0)
 			{
-				service.StartRollerIn();
+				HandleError(service.StartRollerIn(), context);
 			}
 			else if (string.Compare(token.Value, "OUT", ignoreCase: true) == 0)
 			{
-				service.StartRollerOut();
+				HandleError(service.StartRollerOut(), context);
 			}
 			else if (string.Compare(token.Value, "STOP", ignoreCase: true) == 0)
 			{
-				service.StopRoller();
+				HandleError(service.StopRoller(), context);
 			}
 		}
 	}

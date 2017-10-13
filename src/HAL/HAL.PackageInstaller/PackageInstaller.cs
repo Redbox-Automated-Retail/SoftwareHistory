@@ -53,10 +53,10 @@ internal sealed class PackageInstaller : IDisposable
 		if (InstallErrors.ContainsError())
 		{
 			Writer.WriteLine("** Installation failed with the following errors **");
-			foreach (Error installError in InstallErrors)
+			InstallErrors.ForEach(delegate(Error error)
 			{
-				Writer.WriteLine("{0}: {1}: {2} ", installError.Code, installError.Description, installError.Details);
-			}
+				Writer.WriteLine("{0}: {1}: {2} ", error.Code, error.Description, error.Details);
+			});
 		}
 		Writer.Dispose();
 	}
@@ -96,69 +96,67 @@ internal sealed class PackageInstaller : IDisposable
 			list.Add("C:\\Program Files\\Redbox\\KioskLogs");
 			list.Add(Path.Combine(RuntimeService.AssemblyDirectory, "data"));
 			list.Add("c:\\Program Files\\Redbox\\HALService\\Video");
-			foreach (string item in list)
+			list.ForEach(delegate(string directory)
 			{
 				try
 				{
-					if (!Directory.Exists(item))
+					if (!Directory.Exists(directory))
 					{
-						Directory.CreateDirectory(item);
+						Directory.CreateDirectory(directory);
 					}
 				}
 				catch (Exception ex)
 				{
 					Writer.WriteLine("Unable to create directory: {0}", ex.Message);
 				}
-			}
+			});
 		}
 	}
 
 	private void InstallDatabases()
 	{
-		string[] defaultDatabases = DefaultDatabases;
-		foreach (string arg in defaultDatabases)
+		Array.ForEach(DefaultDatabases, delegate(string fileName)
 		{
-			string text = RuntimeService.RuntimePath($"data\\{arg}");
+			string text = RuntimeService.RuntimePath($"data\\{fileName}");
 			if (File.Exists(text))
 			{
-				Writer.WriteLine("The database {0} already exists - take no further action.", arg);
-				continue;
+				Writer.WriteLine("The database {0} already exists - take no further action.", fileName);
+				return;
 			}
-			string text2 = RuntimeService.RuntimePath($"{arg}.default");
-			string arg2 = $"copy {text2} -> {text}";
+			string text2 = RuntimeService.RuntimePath($"{fileName}.default");
+			string arg = $"copy {text2} -> {text}";
 			try
 			{
 				File.Copy(text2, text);
-				Writer.WriteLine("{0}: SUCCESS", arg2);
+				Writer.WriteLine("{0}: SUCCESS", arg);
 			}
 			catch (Exception ex)
 			{
-				InstallErrors.Add(Error.NewError("I001", "Copy failure", $"{arg2}: FAILURE reason = {ex.Message}"));
+				InstallErrors.Add(Error.NewError("I001", "Copy failure", $"{arg}: FAILURE reason = {ex.Message}"));
 			}
-		}
+		});
 	}
 
 	private void BackupConfiguration()
 	{
 		RuntimeService.CreateBackup(ConfigurationFullPath, BackupAction.Copy);
-		List<BackupEntry> list = new List<BackupEntry>();
-		using (new DisposeableList<BackupEntry>(list))
+		List<FileInfo> backups = new List<FileInfo>();
+		using (new DisposeableList<FileInfo>(backups))
 		{
-			string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml");
-			for (int i = 0; i < files.Length; i++)
+			Array.ForEach(Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml"), delegate(string bf)
 			{
-				BackupEntry backupEntry = new BackupEntry(files[i]);
-				if (!backupEntry.FileName.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !backupEntry.FileName.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase) && backupEntry.CreateDate.HasValue)
+				FileInfo fileInfo = new FileInfo(bf);
+				if (!fileInfo.Name.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !fileInfo.Name.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase))
 				{
-					list.Add(backupEntry);
+					backups.Add(fileInfo);
 				}
-			}
-			list.Sort((BackupEntry x, BackupEntry y) => x.CreateDate.Value.CompareTo(y.CreateDate.Value));
-			if (list.Count > 2)
+			});
+			backups.Sort((FileInfo x, FileInfo y) => x.CreationTime.CompareTo(y.CreationTime));
+			if (backups.Count > 2)
 			{
-				for (int num = 0; num < list.Count - 2; num++)
+				for (int num = 0; num < backups.Count - 2; num++)
 				{
-					RuntimeService.SafeDelete(list[num].FullPath);
+					RuntimeService.SafeDelete(backups[num].FullName);
 				}
 			}
 		}
@@ -235,18 +233,18 @@ internal sealed class PackageInstaller : IDisposable
 
 	private void OnUpgrade()
 	{
-		foreach (IPackageInstallHandler packageHandler in PackageHandlers)
+		PackageHandlers.ForEach(delegate(IPackageInstallHandler handler)
 		{
-			packageHandler.OnUpgrade(InstallErrors, Writer);
-		}
+			handler.OnUpgrade(InstallErrors, Writer);
+		});
 	}
 
 	private void OnNewInstall()
 	{
-		foreach (IPackageInstallHandler packageHandler in PackageHandlers)
+		PackageHandlers.ForEach(delegate(IPackageInstallHandler handler)
 		{
-			packageHandler.OnNewInstall(InstallErrors, Writer);
-		}
+			handler.OnNewInstall(InstallErrors, Writer);
+		});
 	}
 
 	private static void Main(string[] args)
@@ -254,100 +252,103 @@ internal sealed class PackageInstaller : IDisposable
 		ServiceLocator.Instance.AddService(typeof(ITableTypeFactory), new TableTypeFactory());
 		ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
 		ServiceLocator.Instance.AddService(typeof(IRuntimeService), new RuntimeService());
-		using PackageInstaller packageInstaller = new PackageInstaller();
-		if (packageInstaller.ServiceIsInstalled())
+		PackageInstaller installer = new PackageInstaller();
+		try
 		{
-			ServiceController serviceController = new ServiceController("halsvc$default");
+			if (installer.ServiceIsInstalled())
+			{
+				ServiceController serviceController = new ServiceController("halsvc$default");
+				try
+				{
+					serviceController.Stop();
+					serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30.0));
+				}
+				catch
+				{
+				}
+			}
+			installer.CreateDirectories();
+			Platform platform = installer.RuntimeService.GetPlatform();
+			string text = "1.0.0.x";
 			try
 			{
-				serviceController.Stop();
-				serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(30.0));
+				text = typeof(PackageInstaller).Assembly.GetName().Version.ToString();
 			}
 			catch
 			{
+				text = "1.0.0.x";
 			}
-		}
-		packageInstaller.CreateDirectories();
-		Platform platform = packageInstaller.RuntimeService.GetPlatform();
-		string text = "1.0.0.x";
-		try
-		{
-			text = typeof(PackageInstaller).Assembly.GetName().Version.ToString();
-		}
-		catch
-		{
-			text = "1.0.0.x";
-		}
-		packageInstaller.Writer.WriteLine("HAL package installer version {0} running on {1} at {2} (platform = {3})", text, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), platform.ToString());
-		if (Platform.Windows7 != platform)
-		{
-			packageInstaller.Writer.WriteLine("** ERROR ** This version is not supported on this platform ( {0} )", platform.ToString());
-			return;
-		}
-		packageInstaller.InstallDatabases();
-		if (packageInstaller.InstallErrors.ContainsError())
-		{
-			packageInstaller.Writer.WriteLine("** There were problems copying databases - ABORTING install: **");
+			installer.Writer.WriteLine("HAL package installer version {0} running on {1} at {2} (platform = {3})", text, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), platform.ToString());
+			if (Platform.Windows7 != platform)
 			{
-				foreach (Error installError in packageInstaller.InstallErrors)
+				installer.Writer.WriteLine("** ERROR ** This version is not supported on this platform ( {0} )", platform.ToString());
+				return;
+			}
+			installer.InstallDatabases();
+			if (installer.InstallErrors.ContainsError())
+			{
+				installer.Writer.WriteLine("** There were problems copying databases - ABORTING install: **");
+				installer.InstallErrors.ForEach(delegate(Error error)
 				{
-					packageInstaller.Writer.WriteLine(installError.ToString());
-				}
+					installer.Writer.WriteLine(error.ToString());
+				});
 				return;
 			}
-		}
-		ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(exclusive: false));
-		ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
-		ConfigurationService configurationService = ConfigurationService.Make(packageInstaller.ConfigurationFullPath);
-		ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
-		packageInstaller.RegisterHandlers();
-		if (File.Exists(packageInstaller.ConfigurationFullPath))
-		{
-			packageInstaller.BackupConfiguration();
-			packageInstaller.Writer.WriteLine("The configuration file is already present.");
-			configurationService.LoadAndUpgrade(packageInstaller.InstallErrors);
-			packageInstaller.OnUpgrade();
-		}
-		else
-		{
-			packageInstaller.Writer.WriteLine("Installing configuration from GAMP.");
-			string text2 = packageInstaller.RuntimeService.RuntimePath("HAL.xml.default");
-			try
+			ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(exclusive: false));
+			ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
+			ConfigurationService configurationService = ConfigurationService.Make(installer.ConfigurationFullPath);
+			ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
+			installer.RegisterHandlers();
+			if (File.Exists(installer.ConfigurationFullPath))
 			{
-				File.Copy(text2, packageInstaller.ConfigurationFullPath);
-			}
-			catch (Exception ex)
-			{
-				packageInstaller.InstallErrors.Add(Error.NewError("I004", "Configuration install failed.", $"Unable to move file '{text2}' - error: {ex.Message}"));
-				return;
-			}
-			configurationService.LoadAndImport(packageInstaller.InstallErrors);
-			if (packageInstaller.InstallErrors.ErrorCount == 0)
-			{
-				packageInstaller.OnNewInstall();
+				installer.BackupConfiguration();
+				installer.Writer.WriteLine("The configuration file is already present.");
+				configurationService.LoadAndUpgrade(installer.InstallErrors);
+				installer.OnUpgrade();
 			}
 			else
 			{
-				packageInstaller.Writer.WriteLine("** Gamp data import failed - the configuration file may be incomplete. **");
+				installer.Writer.WriteLine("Installing configuration from GAMP.");
+				string text2 = installer.RuntimeService.RuntimePath("HAL.xml.default");
+				try
+				{
+					File.Copy(text2, installer.ConfigurationFullPath);
+				}
+				catch (Exception ex)
+				{
+					installer.InstallErrors.Add(Error.NewError("I004", "Configuration install failed.", $"Unable to move file '{text2}' - error: {ex.Message}"));
+					return;
+				}
+				configurationService.LoadAndImport(installer.InstallErrors);
+				if (installer.InstallErrors.ErrorCount == 0)
+				{
+					installer.OnNewInstall();
+				}
+				else
+				{
+					installer.Writer.WriteLine("** Gamp data import failed - the configuration file may be incomplete. **");
+				}
 			}
-		}
-		RegistryKey registryKey = null;
-		string assemblyFile = Path.Combine(packageInstaller.RuntimeService.AssemblyDirectory, "halsvc-win32.exe");
-		try
-		{
-			AssemblyName assemblyName = AssemblyName.GetAssemblyName(assemblyFile);
-			string subkey = "SOFTWARE\\Redbox\\HAL";
-			registryKey = Registry.LocalMachine.CreateSubKey(subkey);
-			registryKey?.SetValue("Product Version", assemblyName.Version.ToString());
-		}
-		catch (Exception arg)
-		{
-			packageInstaller.Writer.WriteLine("Unable to set service registry key.", arg);
+			string assemblyFile = Path.Combine(installer.RuntimeService.AssemblyDirectory, "halsvc-win32.exe");
+			try
+			{
+				using RegistryKey registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\HAL");
+				AssemblyName assemblyName = AssemblyName.GetAssemblyName(assemblyFile);
+				registryKey.SetValue("Product Version", assemblyName.Version.ToString());
+			}
+			catch (Exception ex2)
+			{
+				installer.Writer.WriteLine("Unable to set service registry key.", ex2);
+				installer.InstallErrors.Add(Error.NewError("I001", "Service registration failure", ex2));
+			}
+			installer.InstallService();
 		}
 		finally
 		{
-			registryKey?.Close();
+			if (installer != null)
+			{
+				((IDisposable)installer).Dispose();
+			}
 		}
-		packageInstaller.InstallService();
 	}
 }

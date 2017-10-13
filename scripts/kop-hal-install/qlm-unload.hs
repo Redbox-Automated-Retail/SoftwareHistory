@@ -2,7 +2,7 @@
         # QLM-UNLOAD Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.0.32
+	# VERSION 1.10.0.74
         #
 	
 	VMZ	IS-CONFIGURED
@@ -67,24 +67,6 @@ _VMZ_UNLOAD_DONE:
 	ENDIF
 	
 	POP		MAX-QLM-SLOTS
-		
-	MOTIONCONTROL		COMSTATUS
-	POP		MC-STATUS
-	IF	"OK" != MC-STATUS
-		APPLOG	"Motion controller not available; attempt reboot."
-		LOG		"Motion controller not available; attempt reboot." ENTRYTYPE=ERROR
-		SYSCALL	REBOOT
-		APPLOG	"Unload job restarted."
-		LOG		"Restarting unload job."
-		
-		MOTIONCONTROL		COMSTATUS
-		POP		MC-STATUS
-		IF	"OK" != MC-STATUS
-			APPLOG	"Communication with the motion controller isn't working."
-			LOG		"Communication with the motion controller isn't working." ENTRYTYPE=ERROR
-			EXIT		"The motion controller isn't working."
-		ENDIF
-	ENDIF
 
 	SET		QLM-SLOT		1
 	        
@@ -115,25 +97,7 @@ _VMZ_UNLOAD_DONE:
 _UNLOAD_DONE:
 	
 	QLM		ENDQLMOP
-	
-	MOTIONCONTROL		COMSTATUS
-	POP		MC-STATUS
-	IF	"OK" != MC-STATUS
-		APPLOG	"Motion controller not available; attempt reboot."
-		LOG		"Motion controller not available; attempt reboot." ENTRYTYPE=ERROR
-		SYSCALL	REBOOT
-		APPLOG	"Job restarted."
-		LOG		"Restarting job."
 		
-		MOTIONCONTROL		COMSTATUS
-		POP		MC-STATUS
-		IF	"OK" != MC-STATUS
-			APPLOG	"The job completed; however, communication with the motion controller isn't working."
-			LOG		"The job completed; however, communication with the motion controller isn't working."	ENTRYTYPE=ERROR
-			EXIT		"The motion controller isn't working."
-		ENDIF
-	ENDIF
-	
 _END:		
     	NOP
 	

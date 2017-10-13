@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Xml;
-using Redbox.HAL.Core;
+using Redbox.HAL.Configuration;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -37,10 +37,10 @@ public sealed class MotorGear
 
 	public static MotorGear FromXmlNode(XmlNode node)
 	{
-		double nodeValue = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("StepRatio"), 10.0);
-		int nodeValue2 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("PulseRatio"), 0);
-		int nodeValue3 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("EncoderRatio"), 0);
-		int nodeValue4 = XmlNodeExtensions.GetNodeValue2(node.SelectSingleNode("StepResolution"), 4);
+		double nodeValue = node.SelectSingleNode("StepRatio").GetNodeValue(10.0);
+		int nodeValue2 = node.SelectSingleNode("PulseRatio").GetNodeValue(0);
+		int nodeValue3 = node.SelectSingleNode("EncoderRatio").GetNodeValue(0);
+		int nodeValue4 = node.SelectSingleNode("StepResolution").GetNodeValue(4);
 		return new MotorGear(nodeValue, nodeValue2, nodeValue3, nodeValue4);
 	}
 
@@ -48,10 +48,10 @@ public sealed class MotorGear
 	{
 		if (node != null)
 		{
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "StepRatio", StepRatio);
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "PulseRatio", PulseRatio);
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "EncoderRatio", EncoderRatio);
-			XmlNodeExtensions.SelectSingleNodeAndSetValue(node, "StepResolution", StepResolution);
+			node.SelectSingleNodeAndSetValue("StepRatio", StepRatio);
+			node.SelectSingleNodeAndSetValue("PulseRatio", PulseRatio);
+			node.SelectSingleNodeAndSetValue("EncoderRatio", EncoderRatio);
+			node.SelectSingleNodeAndSetValue("StepResolution", StepResolution);
 		}
 	}
 

@@ -14,6 +14,6 @@ using System.Security.Permissions;
 [assembly: AssemblyTrademark("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("f7cef224-bfdb-4b52-830a-0d99503c6bcc")]
-[assembly: AssemblyFileVersion("1.10.0.32")]
+[assembly: AssemblyFileVersion("1.10.0.74")]
 [assembly: InternalsVisibleTo("Redbox.HAL.NewVMZ")]
-[assembly: AssemblyVersion("1.10.0.32")]
+[assembly: AssemblyVersion("1.10.0.74")]

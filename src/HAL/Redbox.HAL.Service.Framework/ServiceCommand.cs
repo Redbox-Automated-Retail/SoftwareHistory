@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;

@@ -33,6 +33,12 @@ public interface IRuntimeService
 
 	byte[] ReadToBuffer(string fileName);
 
+	bool ForceSafeCopy(string source, string dest);
+
+	bool ForceSafeCopy(TextWriter writer, string source, string dest);
+
+	bool SafeCopy(string source, string dest);
+
 	bool SafeCopy(TextWriter writer, string source, string dest);
 
 	bool SafeMove(TextWriter writer, string source, string dest);

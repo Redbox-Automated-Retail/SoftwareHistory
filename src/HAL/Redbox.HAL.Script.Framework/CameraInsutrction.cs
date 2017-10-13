@@ -31,7 +31,8 @@ public class CameraInsutrction : Instruction
 		ResetReturnCounter,
 		ReturnErrorCount,
 		SnapDecode,
-		ScanForPort
+		ScanForPort,
+		ValidateSettings
 	}
 
 	public override string Mnemonic => "CAMERA";
@@ -113,6 +114,9 @@ public class CameraInsutrction : Instruction
 		}
 		case ExpectedOperand.ScanForPort:
 			context.PushTop(configuredDevice.FindInstalledPort());
+			break;
+		case ExpectedOperand.ValidateSettings:
+			configuredDevice.ValidateSettings();
 			break;
 		case ExpectedOperand.Reset:
 			break;

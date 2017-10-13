@@ -11,7 +11,7 @@ using Redbox.HAL.Core;
 namespace Redbox.HAL.Script.Framework;
 
 [Serializable]
-public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
+public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, IHardwareCorrectionObserver
 {
 	public readonly ExecutionStatus Status = new ExecutionStatus();
 
@@ -166,6 +166,26 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext
 			{
 				SymbolTable.Add("_EE_AUTOSCHEDULED", true);
 			}
+		}
+	}
+
+	internal event OnHardwareCorrectionStart StartHardwareCorrectionEvent;
+
+	internal event OnHardwareCorrectionEnd EndHardwareCorrectionEvent;
+
+	public void HardwareCorrectionStart(HardwareCorrectionEventArgs s)
+	{
+		if (StartHardwareCorrectionEvent != null)
+		{
+			StartHardwareCorrectionEvent(s);
+		}
+	}
+
+	public void HardwareCorrectionEnd(HardwareCorrectionEventArgs s)
+	{
+		if (EndHardwareCorrectionEvent != null)
+		{
+			EndHardwareCorrectionEvent(s);
 		}
 	}
 

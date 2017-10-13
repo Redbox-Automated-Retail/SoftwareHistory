@@ -9,11 +9,18 @@ namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposable, IConfigurationObserver
 {
+	private class ValidatorSink : IMessageSink
+	{
+		public bool Send(string message)
+		{
+			LogHelper.Instance.Log("[CortexService] <Validate message> {0}", message);
+			return true;
+		}
+	}
+
 	private RedboxSerialPort Port;
 
 	private string ConfiguredPortName;
-
-	private bool RebootOnStart;
 
 	private CortexStartupAction StartupAction;
 
@@ -29,62 +36,13 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 
 	private readonly RedboxSerialPortConfiguration Configuration;
 
+	public string Name => Service.ToString();
+
 	public bool RequiresExternalLighting => false;
 
 	public bool IsConnected { get; private set; }
 
 	public bool InError => false;
-
-	public string Name => Service.ToString();
-
-	public bool Restart()
-	{
-		if (HardCycleOnReboot)
-		{
-			Stop();
-			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(500);
-			return Start();
-		}
-		return RestartDecoder();
-	}
-
-	public bool TestConfiguration(IMessageSink sink)
-	{
-		return new CortexSettingsValidator(this).Validate(sink);
-	}
-
-	public bool ResetDeviceDriver()
-	{
-		return false;
-	}
-
-	public IScanResult Scan()
-	{
-		if (!IsConnected)
-		{
-			LogHelper.Instance.Log("[Cortex Service] Scan is called without initialization.");
-			ScanResult scanResult = new ScanResult();
-			scanResult.ResetOnException();
-			scanResult.DeviceError = true;
-			return scanResult;
-		}
-		return Scan(SnapOnDecodeFailure);
-	}
-
-	public ISnapResult Snap()
-	{
-		return Snap(GenerateSnapFileName());
-	}
-
-	public ISnapResult Snap(string fileName)
-	{
-		if (!IsConnected)
-		{
-			LogHelper.Instance.Log("[Cortex Service] Snap: camera is not connected.");
-			return new SnapResult(fileName);
-		}
-		return SnapInner(fileName);
-	}
 
 	public bool Start()
 	{
@@ -102,10 +60,6 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		{
 			LogHelper.Instance.Log("[Cortex Service] Unable to open communcation port.");
 			return false;
-		}
-		if (RebootOnStart)
-		{
-			RestartDecoder();
 		}
 		new InfaredLightCommand().Send(Port);
 		switch (StartupAction)
@@ -146,6 +100,33 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		return true;
 	}
 
+	public bool Restart()
+	{
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		if (HardCycleOnReboot)
+		{
+			Stop();
+			service.Wait(500);
+			return Start();
+		}
+		new RebootCommand().Send(Port);
+		service.Wait(WakeupPause);
+		return true;
+	}
+
+	public IScanResult Scan()
+	{
+		if (!IsConnected)
+		{
+			LogHelper.Instance.Log("[Cortex Service] Scan is called without initialization.");
+			ScanResult scanResult = new ScanResult();
+			scanResult.ResetOnException();
+			scanResult.DeviceError = true;
+			return scanResult;
+		}
+		return Scan(SnapOnDecodeFailure);
+	}
+
 	public string FindInstalledPort()
 	{
 		RedboxSerialPort redboxSerialPort = PortManager.Instance.Scan(Configuration, TestPort, Mode);
@@ -157,6 +138,26 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		LogHelper.Instance.Log("[Cortex Service] FindInstalledPort: found port {0}", name);
 		redboxSerialPort.Dispose();
 		return name;
+	}
+
+	public ISnapResult Snap()
+	{
+		return Snap(GenerateSnapFileName());
+	}
+
+	public ISnapResult Snap(string fileName)
+	{
+		if (!IsConnected)
+		{
+			LogHelper.Instance.Log("[Cortex Service] Snap: camera is not connected.");
+			return new SnapResult(fileName);
+		}
+		return SnapInner(fileName);
+	}
+
+	public bool ValidateSettings()
+	{
+		return new CortexSettingsValidator(this).Validate(new ValidatorSink());
 	}
 
 	public void NotifyConfigurationLoaded()
@@ -173,7 +174,6 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		Configuration.OpenWait = BarcodeConfiguration.Instance.CortexPortOpenWait;
 		Configuration.WritePause = BarcodeConfiguration.Instance.WritePause;
 		ConfiguredPortName = BarcodeConfiguration.Instance.SnapDecodePort;
-		RebootOnStart = BarcodeConfiguration.Instance.RebootOnStart;
 		StartupAction = BarcodeConfiguration.Instance.CortexStartupAction;
 		SnapOnDecodeFailure = BarcodeConfiguration.Instance.CortexSnapOnDecodeFailure;
 		LogDetailedScan = BarcodeConfiguration.Instance.LogDetailedScan;
@@ -229,14 +229,6 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		}
 		scanResult.ExecutionTime = decodeCommand.ExecutionTime;
 		return scanResult;
-	}
-
-	private bool RestartDecoder()
-	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		new RebootCommand().Send(Port);
-		service.Wait(WakeupPause);
-		return true;
 	}
 
 	private ISnapResult SnapInner(string fileName)

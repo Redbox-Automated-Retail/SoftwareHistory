@@ -17,7 +17,9 @@ public sealed class MotionControlInstruction : Instruction
 		XPos,
 		YPos,
 		Homeall,
-		ComCheck
+		ComCheck,
+		Restart,
+		TestAndReset
 	}
 
 	public override string Mnemonic => "MOTIONCONTROL";
@@ -116,6 +118,12 @@ public sealed class MotionControlInstruction : Instruction
 				ErrorCodes errorCodes = service.InitAxes(context.AppLog);
 				context.PushTop(errorCodes == ErrorCodes.Success);
 			}
+			break;
+		case Operand.Restart:
+			context.PushTop(service.Reset(context.AppLog, quick: true) ? "SUCCESS" : "TIMEOUT");
+			break;
+		case Operand.TestAndReset:
+			context.PushTop(service.TestAndReset(context.AppLog, quick: true) ? "SUCCESS" : "TIMEOUT");
 			break;
 		}
 	}

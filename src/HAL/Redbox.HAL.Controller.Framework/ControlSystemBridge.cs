@@ -61,6 +61,16 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 		}
 	}
 
+	public bool Restart()
+	{
+		if (!Shutdown())
+		{
+			return false;
+		}
+		Thread.Sleep(1200);
+		return Initialize().Success;
+	}
+
 	public IControlResponse Initialize()
 	{
 		IControlResponse controlResponse = Implementor.Initialize();
@@ -253,7 +263,17 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 
 	public ErrorCodes EngageQlm(IFormattedLog log)
 	{
-		return Implementor.EngageQlm(log);
+		return EngageQlm(home: true, log);
+	}
+
+	public ErrorCodes EngageQlm(bool home, IFormattedLog log)
+	{
+		return Implementor.EngageQlm(home, log);
+	}
+
+	public ErrorCodes DisengageQlm(IFormattedLog log)
+	{
+		return DisengageQlm(home: true, log);
 	}
 
 	public ErrorCodes DisengageQlm(bool home, IFormattedLog log)

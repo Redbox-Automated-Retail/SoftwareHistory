@@ -14,5 +14,5 @@ using log4net.Config;
 [assembly: AssemblyTrademark("HAL, HAL Script trademarks of Redbox Automated Retail LLC")]
 [assembly: ComVisible(false)]
 [assembly: Guid("53480c77-d951-4aa3-a768-162678907b9b")]
-[assembly: AssemblyFileVersion("1.10.0.32")]
-[assembly: AssemblyVersion("1.10.0.32")]
+[assembly: AssemblyFileVersion("1.10.0.74")]
+[assembly: AssemblyVersion("1.10.0.74")]

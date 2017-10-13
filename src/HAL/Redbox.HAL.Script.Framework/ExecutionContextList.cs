@@ -31,14 +31,7 @@ internal class ExecutionContextList : IList<ExecutionContext>, ICollection<Execu
 
 	public IEnumerable<ExecutionContext> EnumerateGarbage(bool force)
 	{
-		List<ExecutionContext> list = m_list;
-		Predicate<ExecutionContext> predicate2 = default(Predicate<ExecutionContext>);
-		Predicate<ExecutionContext> predicate = predicate2;
-		if (predicate == null)
-		{
-			predicate = (predicate2 = (ExecutionContext c) => (force && c.IsComplete) || c.Status == ExecutionContextStatus.Garbage);
-		}
-		foreach (ExecutionContext item in list.FindAll(predicate))
+		foreach (ExecutionContext item in m_list.FindAll((ExecutionContext c) => (force && c.IsComplete) || c.Status == ExecutionContextStatus.Garbage))
 		{
 			yield return item;
 		}

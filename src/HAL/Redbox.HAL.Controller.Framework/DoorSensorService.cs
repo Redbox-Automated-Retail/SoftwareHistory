@@ -8,8 +8,6 @@ internal sealed class DoorSensorService : IConfigurationObserver, IDoorSensorSer
 
 	private bool m_enabled = true;
 
-	private readonly object m_queryLock = new object();
-
 	public bool SensorsEnabled
 	{
 		get
@@ -105,20 +103,17 @@ internal sealed class DoorSensorService : IConfigurationObserver, IDoorSensorSer
 
 	private DoorSensorResult RawQuery()
 	{
-		lock (m_queryLock)
+		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
+		if (coreResponse.CommError)
 		{
-			CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
-			if (coreResponse.CommError)
-			{
-				return DoorSensorResult.AuxReadError;
-			}
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			if (!coreResponse.IsSensorSet(AuxSensor.QlmDown))
-			{
-				service.LogInputs(ControlBoards.Aux, LogEntryType.Error);
-				return DoorSensorResult.FrontDoor;
-			}
-			return DoorSensorResult.Ok;
+			return DoorSensorResult.AuxReadError;
 		}
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		if (!coreResponse.IsSensorSet(AuxSensor.QlmDown))
+		{
+			service.LogInputs(ControlBoards.Aux, LogEntryType.Error);
+			return DoorSensorResult.FrontDoor;
+		}
+		return DoorSensorResult.Ok;
 	}
 }

@@ -10,7 +10,7 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 	{
 		int num = base.Context.PopTop<int>();
 		int num2 = base.Context.PopTop<int>();
-		ErrorCodes errorCodes = CorrectiveMoveVend(MoveMode.Get);
+		ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			HandleHWError(errorCodes.ToString());
@@ -45,7 +45,7 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 		base.ControlSystem.TrackCycle();
 		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).Success)
 		{
-			errorCodes = CorrectiveMoveVend(MoveMode.None);
+			errorCodes = base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog);
 			if (errorCodes == ErrorCodes.Success)
 			{
 				using (VendItemOperation vendItemOperation = new VendItemOperation())
