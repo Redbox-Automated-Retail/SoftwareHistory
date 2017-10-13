@@ -7,9 +7,9 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Lua;
 using Redbox.REDS.Framework;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Marketing;
@@ -17,7 +17,6 @@ using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
-using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -46,28 +45,9 @@ public class StartViewController
 		public static int MaximumCarouselItems = 11;
 	}
 
-	private class TitleRollupOverlayButtonProperties
-	{
-		public string ButtonText { get; set; }
-
-		public Visibility Visibility { get; set; }
-
-		public bool Enabled { get; set; }
-	}
-
 	private static Action _toggleCultureCallback;
 
 	private static Action _startIdleTimerCallback;
-
-	private static Action _showBrowseViewCollectionsCallback;
-
-	private static Action<LuaTable> _showCollectionItemsCallback;
-
-	private static Action<LuaTable, bool, LuaTable, string> _checkForWarningPopupsCallback;
-
-	private static Func<LuaTable, bool> _isProductInShoppingCartCallback;
-
-	private static Func<LuaTable, bool> _isProductEarlyReleaseCallback;
 
 	private static IIdleTimerService IdleTimerService => ServiceLocator.Instance.GetService<IIdleTimerService>();
 
@@ -77,7 +57,7 @@ public class StartViewController
 
 	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
-	public static void ConfigureStartView(Action toggleCultureCallback, Action startIdleTimerCallback, Action showBrowseViewCollectionsCallback, Action<LuaTable> showCollectionItemsCallback, Action<LuaTable, bool, LuaTable, string> checkForWarningPopupsCallback, Func<LuaTable, bool> isProductInShoppingCart, Func<LuaTable, bool> isProductEarlyRelease)
+	public static void ConfigureStartView(Action toggleCultureCallback, Action startIdleTimerCallback)
 	{
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = "Newest";
 		FrameworkElement startViewUserControl = GetStartViewUserControl();
@@ -85,11 +65,6 @@ public class StartViewController
 		{
 			_toggleCultureCallback = toggleCultureCallback;
 			_startIdleTimerCallback = startIdleTimerCallback;
-			_showBrowseViewCollectionsCallback = showBrowseViewCollectionsCallback;
-			_showCollectionItemsCallback = showCollectionItemsCallback;
-			_checkForWarningPopupsCallback = checkForWarningPopupsCallback;
-			_isProductInShoppingCartCallback = isProductInShoppingCart;
-			_isProductEarlyReleaseCallback = isProductEarlyRelease;
 			StartViewModel startViewModel = new StartViewModel();
 			ConfigureButtonsAndText(startViewModel, startViewUserControl);
 			startViewModel.OnToggleLanguage += ToggleLanguage;
@@ -100,7 +75,8 @@ public class StartViewController
 			startViewModel.OnReturnButtonClicked += GoToReturnProductView;
 			startViewModel.OnHelpButtonClicked += GoToHelpDocumentView;
 			startViewModel.OnBannerClicked += BannerClicked;
-			startViewModel.OnBuyMoviesOrGamesButtonClicked += GoToForSaleMovieBrowseView;
+			startViewModel.OnBuyMoviesButtonClicked += GoToForSaleMovieBrowseView;
+			startViewModel.OnBuyGamesButtonClicked += GoToForSaleGamesBrowseView;
 			MarketingAdService?.StartSession();
 			ConfigureBurnInTimers(startViewModel);
 			ConfigureStartViewIdleTimer();
@@ -148,9 +124,11 @@ public class StartViewController
 			SetCultureSpecificText(startViewModel, startViewUserControl, flag);
 			startViewModel.RentOrBuyGamesButtonVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
 			IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
-			bool canSellUsedMovies = service.CanSellUsedMovies;
-			bool flag2 = service.PurchasePrice > 0m;
-			startViewModel.BuyMoviesOrGamesButtonVisibility = ((!(canSellUsedMovies & flag2)) ? Visibility.Collapsed : Visibility.Visible);
+			bool flag2 = service.CanSellUsedMovies && service.PurchasePrice > 0m;
+			startViewModel.BuyMoviesOrGamesButtonVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
+			startViewModel.BuyGamesButtonVisibility = ((!flag2 || !service.CanSellUsedGames) ? Visibility.Collapsed : Visibility.Visible);
+			startViewModel.BuyMoviesButtonWidth = (service.CanSellUsedGames ? 135 : 290);
+			startViewModel.BuyMoviesButtonTextMargin = (service.CanSellUsedGames ? new Thickness(15.0) : new Thickness(100.0, 5.0, 0.0, 0.0));
 			ServiceLocator.Instance.GetService<IMacroService>()["Start:BuyMoviesOrGames"] = "Movies" + (service.CanSellUsedGames ? " and Games" : string.Empty);
 		}
 	}
@@ -275,30 +253,23 @@ public class StartViewController
 			break;
 		case StartViewBannerType.collections:
 		{
-			LuaTable luaTable = null;
+			ICollectionProduct collection = null;
 			if (startViewModelFromView.BannerCollectionId != "ALL")
 			{
 				long result = 0L;
 				long.TryParse(startViewModelFromView.BannerCollectionId, out result);
-				luaTable = OrchestrationService.RentalGetCollection(result, null, null, null, null);
-				if (luaTable == null)
+				IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+				if (service != null)
 				{
-					LogHelper.Instance.Log("collection banner click: invalid collection id {0}.  Showing all collections instead.", startViewModelFromView.BannerCollectionId);
+					service.GetCollection(result, out collection);
+					if (collection == null)
+					{
+						LogHelper.Instance.Log("collection banner click: invalid collection id {0}.  Showing all collections instead.", startViewModelFromView.BannerCollectionId);
+					}
 				}
 			}
 			PrepareToLeaveStartView();
-			OrchestrationService.ViewShow("browse_view");
-			if (luaTable == null)
-			{
-				if (_showBrowseViewCollectionsCallback != null)
-				{
-					_showBrowseViewCollectionsCallback();
-				}
-			}
-			else if (_showCollectionItemsCallback != null)
-			{
-				_showCollectionItemsCallback(luaTable);
-			}
+			ShowCollectionBrowseView(collection);
 			break;
 		}
 		case StartViewBannerType.none:
@@ -316,6 +287,7 @@ public class StartViewController
 		string text = null;
 		StartViewBannerType startViewBannerType = StartViewBannerType.none;
 		Image image = null;
+		BitmapImage bitmapImage = null;
 		if (MarketingAdService != null)
 		{
 			MarketingAd screenAd = MarketingAdService.GetScreenAd(MarketingAdLocation.Welcome, createImpression: true);
@@ -366,7 +338,6 @@ public class StartViewController
 				image = null;
 			}
 		}
-		BitmapImage bitmapImage = null;
 		if (image != null)
 		{
 			bitmapImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
@@ -515,7 +486,7 @@ public class StartViewController
 		OrchestrationService.RentalRefreshIfNeeded();
 		List<IKioskProduct> list = OrchestrationService.RentalGetCarouselProducts();
 		List<DisplayProductModel> list2 = new List<DisplayProductModel>();
-		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		ServiceLocator.Instance.GetService<IBitmapCacheService>();
 		foreach (IKioskProduct item in list)
 		{
 			DisplayProductModel displayProductModel = new DisplayProductModel
@@ -524,56 +495,27 @@ public class StartViewController
 			};
 			displayProductModel.ConfigureForCarousel();
 			displayProductModel.AddButtonLabelText = BundleFunctions.GetDictionaryStringValue("strings", "carousel_add_button_label");
-			BitmapImage image = null;
-			switch (item.KioskProductType)
+			displayProductModel.Image = OrchestrationService.GetProductBitmapImage(item);
+			if (item.KioskProductType == KioskProductType.Collection && item is ICollectionProduct)
 			{
-			case KioskProductType.None:
-				image = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
-				break;
-			case KioskProductType.Title:
-			case KioskProductType.MDV:
-			case KioskProductType.TitleRollup:
-				if (item is ITitleProduct titleProduct)
-				{
-					if (OrchestrationService.DataServiceRegisterImage(titleProduct.ImageFile, titleProduct.ImageFile))
-					{
-						image = service.GetBitmapImage(titleProduct.ImageFile);
-					}
-					else if (titleProduct.TitleFamily == TitleFamily.Movies)
-					{
-						image = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
-					}
-					else if (titleProduct.TitleFamily == TitleFamily.Games)
-					{
-						image = Redbox.Rental.UI.Views.Constants.Images.GameMissingBoxArt;
-					}
-				}
-				break;
-			case KioskProductType.Collection:
-				if (item is ICollectionProduct)
-				{
-					image = Redbox.Rental.UI.Views.Constants.Images.CollectionsCarousel;
-					displayProductModel.AddButtonLabelText = BundleFunctions.GetDictionaryStringValue("strings", "carousel_add_item_to_cart_button_for_collection");
-				}
-				break;
-			default:
-				image = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
-				break;
+				displayProductModel.AddButtonLabelText = BundleFunctions.GetDictionaryStringValue("strings", "carousel_add_item_to_cart_button_for_collection");
 			}
-			displayProductModel.Image = image;
 			list2.Add(displayProductModel);
 		}
 		carouselModel.CarouselDisplayProductModels = list2;
-		startViewModel.CarouselModel = carouselModel;
-		bool flag = (startViewModel?.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
-		startViewModel.LoadingTitlesImageVisibility = (flag ? Visibility.Collapsed : Visibility.Visible);
+		if (startViewModel != null)
+		{
+			startViewModel.CarouselModel = carouselModel;
+			bool flag = (startViewModel?.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
+			startViewModel.LoadingTitlesImageVisibility = (flag ? Visibility.Collapsed : Visibility.Visible);
+		}
 	}
 
 	private static void CarouselModel_OnTitleRollupOverlayVisibilityChange(Visibility newVisibility)
 	{
 		if (newVisibility == Visibility.Visible)
 		{
-			IKioskProduct centerCarouselProduct = GetStartViewModelFromView()?.CarouselModel?.TitleRollupOverlayModel?.DisplayProductModel?.Data as IKioskProduct;
+			IKioskProduct centerCarouselProduct = GetStartViewModelFromView()?.CarouselModel?.TitleRollupOverlayModel?.BrowseItemModel?.Data as IKioskProduct;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.CenterCarouselProduct = centerCarouselProduct;
 		}
 		else
@@ -582,23 +524,23 @@ public class StartViewController
 		}
 	}
 
-	private static void CarouselModel_OnTitleRollupOverlayAddBlurayProduct(DisplayProductModel displayProductModel)
+	private static void CarouselModel_OnTitleRollupOverlayAddBlurayProduct(IBrowseItemModel browseItemModel, object parameter)
 	{
-		if (displayProductModel?.Data is TitleRollupProduct titleRollupProduct)
+		if (browseItemModel?.Data is TitleRollupProduct titleRollupProduct)
 		{
 			AddProductToCart(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray));
 		}
 	}
 
-	private static void CarouselModel_OnTitleRollupOverlayAddDVDProduct(DisplayProductModel displayProductModel)
+	private static void CarouselModel_OnTitleRollupOverlayAddDVDProduct(IBrowseItemModel browseItemModel, object parameter)
 	{
-		if (displayProductModel?.Data is TitleRollupProduct titleRollupProduct)
+		if (browseItemModel?.Data is TitleRollupProduct titleRollupProduct)
 		{
 			AddProductToCart(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.DVD));
 		}
 	}
 
-	private static void CarouselModel_OnTitleRollupOverlayTimeout(DisplayProductModel displayProductModel)
+	private static void CarouselModel_OnTitleRollupOverlayTimeout(IBrowseItemModel browseItemModel, object parameter)
 	{
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
 		if (startViewModelFromView != null)
@@ -607,7 +549,7 @@ public class StartViewController
 		}
 	}
 
-	private static void CarouselModel_OnTitleRollupOverlayCancel(DisplayProductModel displayProductModel)
+	private static void CarouselModel_OnTitleRollupOverlayCancel(IBrowseItemModel browseItemModel, object parameter)
 	{
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
 		if (startViewModelFromView != null)
@@ -618,115 +560,49 @@ public class StartViewController
 		}
 	}
 
-	private static void CarouselModel_OnAddDisplayProductModel(DisplayProductModel displayProductModel)
+	private static void CarouselModel_OnAddDisplayProductModel(IBrowseItemModel browseItemModel, object parameter)
 	{
-		if (!(displayProductModel.Data is IKioskProduct kioskProduct))
+		if (!(browseItemModel.Data is IKioskProduct kioskProduct))
 		{
 			return;
 		}
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
-		switch (kioskProduct.KioskProductType)
+		if (startViewModelFromView != null)
 		{
-		case KioskProductType.Title:
-		case KioskProductType.MDV:
-			startViewModelFromView.CarouselModel.IsAnimationOn = false;
-			AddProductToCart(kioskProduct as ITitleProduct);
-			break;
-		case KioskProductType.TitleRollup:
-			startViewModelFromView.CarouselModel.IsAnimationOn = false;
-			if (kioskProduct is TitleRollupProduct titleRollupProduct)
+			switch (kioskProduct.KioskProductType)
 			{
-				TitleRollupOverlayButtonProperties titleRollupOverlayButtonProperties = GetTitleRollupOverlayButtonProperties(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.DVD), isPurchase: false);
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.DVDButtonText = titleRollupOverlayButtonProperties.ButtonText;
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.DVDButtonVisibility = titleRollupOverlayButtonProperties.Visibility;
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.DVDButtonEnabled = titleRollupOverlayButtonProperties.Enabled;
-				titleRollupOverlayButtonProperties = GetTitleRollupOverlayButtonProperties(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray), isPurchase: false);
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.BlurayButtonText = titleRollupOverlayButtonProperties.ButtonText;
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.BlurayButtonVisibility = titleRollupOverlayButtonProperties.Visibility;
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.BlurayButtonEnabled = titleRollupOverlayButtonProperties.Enabled;
-				startViewModelFromView.CarouselModel.TitleRollupOverlayModel.Visibility = Visibility.Visible;
+			case KioskProductType.Title:
+			case KioskProductType.MDV:
+				startViewModelFromView.CarouselModel.IsAnimationOn = false;
+				AddProductToCart(kioskProduct as ITitleProduct);
+				break;
+			case KioskProductType.TitleRollup:
+				startViewModelFromView.CarouselModel.IsAnimationOn = false;
+				TitleRollupUtilities.ConfigureTitleRollupOverlay(browseItemModel, startViewModelFromView.CarouselModel.TitleRollupOverlayModel, showDigitalCodeInfo: false, isPurchase: false);
+				break;
+			case KioskProductType.Collection:
+				startViewModelFromView.CarouselModel.IsAnimationOn = false;
+				OrchestrationService.CreateStartViewAnalytics(AnalyticsSessionType.BrowseVend);
+				SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
+				PrepareToLeaveStartView();
+				ShowCollectionBrowseView(kioskProduct);
+				break;
+			case KioskProductType.None:
+				break;
 			}
-			break;
-		case KioskProductType.Collection:
-			startViewModelFromView.CarouselModel.IsAnimationOn = false;
-			OrchestrationService.CreateStartViewAnalytics(AnalyticsSessionType.BrowseVend);
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
-			ShowCollectionBrowseView(kioskProduct);
-			break;
-		case KioskProductType.None:
-			break;
 		}
 	}
 
 	private static void AddProductToCart(ITitleProduct titleProduct)
 	{
-		if (titleProduct == null)
-		{
-			return;
-		}
-		OrchestrationService.CreateStartViewAnalytics(AnalyticsSessionType.BrowseVend);
-		SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
-		if (_checkForWarningPopupsCallback == null)
-		{
-			return;
-		}
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ItemAddedFromView = service?.Peek();
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductAddedFromCarousel = true;
-		SetBrowseFiltersBasedOnSelectedProduct(titleProduct);
-		LuaTable luaTable = titleProduct?.ToDictionary()?.ToLuaTable();
-		if (_isProductEarlyReleaseCallback != null && _isProductEarlyReleaseCallback(luaTable))
-		{
-			StartViewModel startViewModelFromView = GetStartViewModelFromView();
-			if (startViewModelFromView != null)
-			{
-				startViewModelFromView.CarouselModel.IsAnimationOn = true;
-			}
-		}
-		else
-		{
-			_checkForWarningPopupsCallback(luaTable, arg2: false, null, "rental");
-		}
-	}
-
-	private static TitleRollupOverlayButtonProperties GetTitleRollupOverlayButtonProperties(ITitleProduct titleProduct, bool isPurchase)
-	{
-		TitleRollupOverlayButtonProperties titleRollupOverlayButtonProperties = new TitleRollupOverlayButtonProperties
-		{
-			Visibility = Visibility.Collapsed
-		};
 		if (titleProduct != null)
 		{
-			string arg = ((titleProduct.TitleType == TitleType.DVD) ? "DVD" : ((titleProduct.TitleType == TitleType.Bluray) ? "BLU-RAY" : null));
-			titleRollupOverlayButtonProperties.ButtonText = BundleFunctions.GetDictionaryStringValue("strings", "title_rollup_overlay_unavailable_text");
-			if (_isProductInShoppingCartCallback != null && _isProductInShoppingCartCallback(titleProduct.ToDictionary().ToLuaTable()))
-			{
-				titleRollupOverlayButtonProperties.ButtonText = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "title_rollup_overlay_cart_text"), arg);
-				titleRollupOverlayButtonProperties.Visibility = Visibility.Visible;
-			}
-			else if (!titleProduct.InStock)
-			{
-				titleRollupOverlayButtonProperties.ButtonText = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "title_rollup_overlay_oos_text"), arg);
-				titleRollupOverlayButtonProperties.Visibility = Visibility.Visible;
-			}
-			else if (isPurchase)
-			{
-				decimal moviePurchasePrice = titleProduct.MoviePurchasePrice;
-				if (moviePurchasePrice > 0m)
-				{
-					titleRollupOverlayButtonProperties.ButtonText = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "title_rollup_overlay_buy_text"), arg, BundleFunctions.GetDictionaryStringValue("strings", "currency_symbol"), $"{moviePurchasePrice:N2}");
-					titleRollupOverlayButtonProperties.Visibility = Visibility.Visible;
-					titleRollupOverlayButtonProperties.Enabled = true;
-				}
-			}
-			else if (titleProduct.IsAvailable && titleProduct.InStock)
-			{
-				titleRollupOverlayButtonProperties.ButtonText = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "title_rollup_overlay_add_text"), arg);
-				titleRollupOverlayButtonProperties.Visibility = Visibility.Visible;
-				titleRollupOverlayButtonProperties.Enabled = true;
-			}
+			OrchestrationService.CreateStartViewAnalytics(AnalyticsSessionType.BrowseVend);
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductAddedFromCarousel = true;
+			SetBrowseFiltersBasedOnSelectedProduct(titleProduct);
+			BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false);
 		}
-		return titleRollupOverlayButtonProperties;
 	}
 
 	private static void SetBrowseFiltersBasedOnSelectedProduct(ITitleProduct titleProduct)
@@ -743,9 +619,9 @@ public class StartViewController
 		}
 	}
 
-	private static void CarouselModel_OnDisplayProductModelSelected(DisplayProductModel displayProductModel)
+	private static void CarouselModel_OnDisplayProductModelSelected(IBrowseItemModel browseItemModel, object parameter)
 	{
-		if (!(displayProductModel.Data is IKioskProduct kioskProduct))
+		if (!(browseItemModel.Data is IKioskProduct kioskProduct))
 		{
 			return;
 		}
@@ -759,14 +635,18 @@ public class StartViewController
 		case KioskProductType.TitleRollup:
 			if (kioskProduct is ITitleProduct browseFiltersBasedOnSelectedProduct)
 			{
-				GetStartViewModelFromView().CarouselModel.IsAnimationOn = false;
-				SetBrowseFiltersBasedOnSelectedProduct(browseFiltersBasedOnSelectedProduct);
-				OrchestrationService.ExecuteScript("browse_products");
-				Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = true;
-				IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-				Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductDetailShownFromView = service.Peek();
-				PrepareToLeaveStartView();
-				OrchestrationService.ViewShow("product_detail_view");
+				StartViewModel startViewModelFromView = GetStartViewModelFromView();
+				if (startViewModelFromView != null)
+				{
+					startViewModelFromView.CarouselModel.IsAnimationOn = false;
+					SetBrowseFiltersBasedOnSelectedProduct(browseFiltersBasedOnSelectedProduct);
+					OrchestrationService.ExecuteScript("browse_products");
+					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = true;
+					IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductDetailShownFromView = service.Peek();
+					PrepareToLeaveStartView();
+					OrchestrationService.ViewShow("product_detail_view");
+				}
 			}
 			break;
 		case KioskProductType.Collection:
@@ -780,28 +660,17 @@ public class StartViewController
 
 	private static void ShowCollectionBrowseView(IKioskProduct kioskProduct)
 	{
-		if (!(kioskProduct is ICollectionProduct collectionProduct))
-		{
-			return;
-		}
+		ICollectionProduct collectionProduct = kioskProduct as ICollectionProduct;
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.CarouselCollectionsSelected = true;
-		LuaTable luaTable = null;
-		if (collectionProduct.Id != 0L)
-		{
-			luaTable = OrchestrationService.RentalGetCollection(collectionProduct.Id, null, null, null, null);
-		}
 		OrchestrationService.ViewShow("browse_view");
-		if (luaTable != null)
-		{
-			if (_showCollectionItemsCallback != null)
-			{
-				_showCollectionItemsCallback(luaTable);
-			}
-		}
-		else if (_showBrowseViewCollectionsCallback != null)
-		{
-			_showBrowseViewCollectionsCallback();
-		}
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.PushBrowseStateSet();
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseCollections = collectionProduct == null || collectionProduct.Id == 0;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseCollectionProduct = ((collectionProduct == null || collectionProduct.Id == 0L) ? null : collectionProduct);
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct = Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseCollectionProduct;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = TitleFamily.Movies;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.All;
+		OrchestrationService.ViewShow("browse_view");
 	}
 
 	private static void ToggleLocalizationCulture()
@@ -818,7 +687,8 @@ public class StartViewController
 
 	private static void SetCultureSpecificText(StartViewModel startViewModel, FrameworkElement startViewUserControl, bool hasInstockGames)
 	{
-		bool flag = ServiceLocator.Instance.GetService<IStoreManager>()?.CanSellUsedGames ?? false;
+		IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
+		bool flag = service != null && service.CanSellUsedMovies && service.PurchasePrice > 0m && service.CanSellUsedGames;
 		startViewModel.AllMoviesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "movie_button_rent_label");
 		startViewModel.AllMoviesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "Alt_StartView_Movies");
 		startViewModel.PickUpButtonText = BundleFunctions.GetDictionaryStringValue("strings", "pickup");
@@ -826,14 +696,14 @@ public class StartViewController
 		startViewModel.ToggleLanguageButtonText = BundleFunctions.GetDictionaryStringValue("strings", "toggle_language_button_label");
 		startViewModel.BurnInViewLabelText = BundleFunctions.GetDictionaryStringValue("strings", "burn_in_view_label");
 		startViewModel.BuyMoviesOrGamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "buy_movies_or_games_line1");
-		if (flag)
-		{
-			startViewModel.BuyMoviesOrGamesButtonTextLine1 = startViewModel.BuyMoviesOrGamesButtonTextLine1 + " " + BundleFunctions.GetDictionaryStringValue("strings", "buy_movies_or_games_line1_games");
-		}
 		startViewModel.BuyMoviesOrGamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "buy_movies_or_games_line2");
-		startViewModel.BuyMoviesOrGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? GetStyle(startViewUserControl, "font_bryant_bold_14") : GetStyle(startViewUserControl, "font_bryant_bold_16"));
-		startViewModel.BuyMoviesOrGamesButtonTextLine2Style = GetStyle(startViewUserControl, "font_bryant_bold_28");
-		startViewModel.AllMoviesButtonTextLine2Style = GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_bryant_bold_28" : "font_bryant_bold_34");
+		startViewModel.BuyGamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "buy_games_line1");
+		startViewModel.BuyGamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "buy_games_line2");
+		startViewModel.BuyMoviesOrGamesButtonTextLine1Style = ((!flag) ? (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_20") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_20")) : (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_14") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_16")));
+		startViewModel.BuyMoviesOrGamesButtonTextLine2Style = ((!flag) ? (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_28") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_34")) : (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_18") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_24")));
+		startViewModel.BuyGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_14") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_16"));
+		startViewModel.BuyGamesButtonTextLine2Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_18") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_24"));
+		startViewModel.AllMoviesButtonTextLine2Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_bryant_bold_28" : "font_bryant_bold_34");
 		if (hasInstockGames)
 		{
 			if (flag)
@@ -844,22 +714,11 @@ public class StartViewController
 			{
 				startViewModel.GamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_rent_label");
 			}
-			startViewModel.GamesButtonTextLine1Style = GetStyle(startViewUserControl, (flag && OrchestrationService.IsCultureSpanish()) ? "font_bryant_bold_18" : "font_bryant_bold_20");
+			startViewModel.GamesButtonTextLine1Style = WPFFunctions.GetStyle(startViewUserControl, (flag && OrchestrationService.IsCultureSpanish()) ? "font_bryant_bold_18" : "font_bryant_bold_20");
 			startViewModel.GamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_games_label");
 		}
 		startViewModel.AdaTurnedOnLabelVisibility = ((!ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
 		startViewModel.AdaTurnedOnLabelText = BundleFunctions.GetDictionaryStringValue("strings", "ada_turned_on_label_text");
-	}
-
-	private static Style GetStyle(FrameworkElement frameworkElement, string styleName)
-	{
-		Style result = null;
-		object obj = frameworkElement.FindResource(styleName);
-		if (obj != null)
-		{
-			result = obj as Style;
-		}
-		return result;
 	}
 
 	private static void PrepareToLeaveStartView()
@@ -881,14 +740,20 @@ public class StartViewController
 	private static void GoToForSaleMovieBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("buy_movies_or_games_button", TitleFamily.Movies, "browse_products");
+		GoToBrowseView("buy_movies_button", TitleFamily.Movies, "browse_products");
+	}
+
+	private static void GoToForSaleGamesBrowseView()
+	{
+		PrepareToLeaveStartView();
+		GoToBrowseView("buy_games_button", TitleFamily.Games, "browse_products");
 	}
 
 	private static void GoToGameView()
 	{
 		PrepareToLeaveStartView();
-		string scriptToRun = ((Redbox.Rental.Services.Configuration.Configuration.Instance.EnablePlatformScreen && !ApplicationState.Instance.IsABEOn) ? "select_platform" : "browse_products");
-		GoToBrowseView("games_button", TitleFamily.Games, scriptToRun);
+		_ = Redbox.Rental.Services.Configuration.Configuration.Instance;
+		GoToBrowseView("games_button", TitleFamily.Games, "browse_products");
 	}
 
 	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily, string scriptToRun)
@@ -899,7 +764,7 @@ public class StartViewController
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleFamily;
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
-		if (pressedButtonName == "buy_movies_or_games_button")
+		if (pressedButtonName == "buy_movies_button" || pressedButtonName == "buy_games_button")
 		{
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ForSale;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = "for-sale";

@@ -4,15 +4,34 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
+using System.Windows.Media;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Browse;
 using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Controls;
 
 public partial class DisplayProductUserControl : UserControl, IComponentConnector
 {
+	public static readonly DependencyProperty ShowVacantItemBackgroundProperty = DependencyProperty.Register("ShowVacantItemBackground", typeof(bool), typeof(DisplayProductUserControl), new FrameworkPropertyMetadata(false)
+	{
+		AffectsRender = true
+	});
+
 	private DisplayProductModel _displayProductModel;
+
+	public bool ShowVacantItemBackground
+	{
+		get
+		{
+			return (bool)GetValue(ShowVacantItemBackgroundProperty);
+		}
+		set
+		{
+			SetValue(ShowVacantItemBackgroundProperty, value);
+		}
+	}
 
 	public DisplayProductUserControl()
 	{
@@ -22,49 +41,85 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 
 	public void ApplyStyle()
 	{
-		(ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme)?.SetStyle(AddButton);
+		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
+		obj?.SetStyle(AddButton);
+		obj?.SetStyle(CornerAddButton);
+		obj?.SetStyle(CancelButton);
 	}
 
 	private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
 	{
 		_displayProductModel = base.DataContext as DisplayProductModel;
-		SetAddButtonType();
-		SetAddButtonPosition();
-	}
-
-	public void SetAddButtonPosition()
-	{
-		if (_displayProductModel != null)
+		MainGrid.Visibility = ((_displayProductModel == null && !ShowVacantItemBackground) ? Visibility.Collapsed : Visibility.Visible);
+		if (_displayProductModel == null && ShowVacantItemBackground)
 		{
-			switch (_displayProductModel.AddButtonPosition)
+			MainGrid.Background = new SolidColorBrush(Colors.White);
+			AddButton.Visibility = Visibility.Collapsed;
+			ADAMiniCartAddButtonViewbox.Visibility = Visibility.Collapsed;
+			CornerAddButton.Visibility = Visibility.Collapsed;
+			CornerAddButtonPlusSign.Visibility = Visibility.Collapsed;
+			CornerAddButtonText.Visibility = Visibility.Collapsed;
+			CornerShadow.Visibility = Visibility.Collapsed;
+			ComingSoonButton.Visibility = Visibility.Collapsed;
+			CancelButton.Visibility = Visibility.Collapsed;
+			Flag.Visibility = Visibility.Collapsed;
+			FlagText.Visibility = Visibility.Collapsed;
+		}
+		else if (_displayProductModel != null)
+		{
+			if (_displayProductModel.Banner != null)
 			{
-			case DisplayProductModel.AddButtonPositions.LowerLeftCorner:
-				AddButton.Margin = new Thickness(0.0, 0.0, 3.0, 3.0);
-				break;
-			case DisplayProductModel.AddButtonPositions.OverhangLowerLeftCorner:
-				AddButton.Margin = new Thickness(0.0, 0.0, -34.0, -34.0);
-				break;
+				switch (_displayProductModel.Banner.BannerSize)
+				{
+				case BannerSize.Large:
+					Grid.SetRow(Banner, 1);
+					Grid.SetRowSpan(Banner, 3);
+					Grid.SetRow(BannerTextViewBox, 0);
+					Grid.SetRowSpan(BannerTextViewBox, 1);
+					Banner.RowDefinitions[0].Height = new GridLength(0.7, GridUnitType.Star);
+					Banner.RowDefinitions[1].Height = new GridLength(1.0, GridUnitType.Star);
+					Banner.RowDefinitions[1].Height = new GridLength(1.0, GridUnitType.Star);
+					BannerText.VerticalAlignment = VerticalAlignment.Top;
+					break;
+				case BannerSize.Regular:
+					Grid.SetRow(Banner, 2);
+					Grid.SetRowSpan(Banner, 2);
+					Grid.SetRow(BannerTextViewBox, 1);
+					Grid.SetRowSpan(BannerTextViewBox, 1);
+					BannerText.VerticalAlignment = VerticalAlignment.Center;
+					break;
+				case BannerSize.Mini:
+					Grid.SetRow(Banner, 3);
+					Grid.SetRowSpan(Banner, 1);
+					Grid.SetRow(BannerTextViewBox, 0);
+					Grid.SetRowSpan(BannerTextViewBox, 3);
+					BannerText.VerticalAlignment = VerticalAlignment.Center;
+					break;
+				}
+			}
+			CancelButton.Visibility = _displayProductModel.CancelButtonVisibility;
+			ADAMiniCartAddButtonViewbox.Visibility = _displayProductModel.ADAMiniCartAddButtonVisibility;
+			if (_displayProductModel.ADAMiniCartAddButtonVisibility == Visibility.Visible)
+			{
+				MainGrid.Background = new SolidColorBrush(Colors.Transparent);
 			}
 		}
+		UserControl_SizeChanged(null, null);
 	}
 
-	private void SetAddButtonType()
+	private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		if (_displayProductModel != null)
-		{
-			switch (_displayProductModel.AddButtonType)
-			{
-			case DisplayProductModel.AddButtonTypes.PlusSign:
-				AddButton.Width = 40.0;
-				AddButton.Height = 40.0;
-				AddButtonText.Visibility = Visibility.Collapsed;
-				break;
-			case DisplayProductModel.AddButtonTypes.PlusSignWithText:
-				AddButton.Width = 220.0;
-				AddButton.Height = 68.0;
-				AddButtonText.Visibility = Visibility.Visible;
-				break;
-			}
-		}
+		Flag.Height = ImageBorder.ActualHeight * 0.18;
+		Flag.Width = ImageBorder.ActualWidth * 0.9;
+		double num = (0.0 - Flag.Height) / 2.0;
+		Flag.Margin = new Thickness(num * 2.0 / 3.0, num, 0.0, 0.0);
+		CancelButton.Width = ImageBorder.ActualWidth * 0.53;
+		CancelButton.Height = ImageBorder.ActualWidth * 0.53;
+		CancelButton.Margin = new Thickness(0.0, (0.0 - ImageBorder.ActualWidth) * 0.18, (0.0 - ImageBorder.ActualWidth) * 0.2082, 0.0);
+		CancelButton.BorderThickness = new Thickness(ImageBorder.ActualWidth * 0.0378);
+		AddButton.Width = ImageBorder.ActualWidth * 0.8328;
+		AddButton.Height = ImageBorder.ActualWidth * 0.2574;
+		AddButton.CornerRadius = AddButton.Height / 2.0;
+		AddButton.Margin = new Thickness(0.0, 0.0, ImageBorder.ActualWidth * -0.0945, AddButton.Height / -2.0);
 	}
 }

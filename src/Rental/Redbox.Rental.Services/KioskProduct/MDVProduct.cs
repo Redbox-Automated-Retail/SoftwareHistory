@@ -375,7 +375,45 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
+	public bool IsEmptyCase => ProductId == 1139;
+
 	public bool IsSellable => false;
+
+	public bool IsRentable
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.IsRentable;
+			}
+			return false;
+		}
+	}
+
+	public bool IsSellableAndInStock
+	{
+		get
+		{
+			if (IsSellable)
+			{
+				return InStock;
+			}
+			return false;
+		}
+	}
+
+	public bool IsRentableAndInStock
+	{
+		get
+		{
+			if (IsRentable)
+			{
+				return InStock;
+			}
+			return false;
+		}
+	}
 
 	public decimal GamePurchasePrice
 	{
@@ -432,6 +470,18 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 	public bool InStock => _titleProducts.All((ITitleProduct tp) => tp.InStock);
 
 	public bool ShowOutOfStock => _titleProducts.Any((ITitleProduct tp) => tp.ShowOutOfStock);
+
+	public bool HasBeenInStock
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.HasBeenInStock;
+			}
+			return false;
+		}
+	}
 
 	public string SortAlpha
 	{

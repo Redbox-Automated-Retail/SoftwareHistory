@@ -85,12 +85,41 @@ public class KioskProductView
 		}
 	}
 
+	public IKioskProduct GetProduct(long productId, bool excludeTitleRollup)
+	{
+		IKioskProduct kioskProduct = null;
+		kioskProduct = _movieProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+		if (kioskProduct == null)
+		{
+			kioskProduct = FilterToBlueray(_movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+			if (kioskProduct == null)
+			{
+				kioskProduct = FilterToDigitalCode(_movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+				if (kioskProduct == null)
+				{
+					kioskProduct = _gamesProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+				}
+			}
+		}
+		if (excludeTitleRollup && kioskProduct is TitleRollupProduct titleRollupProduct)
+		{
+			kioskProduct = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+		}
+		return kioskProduct;
+	}
+
 	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		if (titleType == TitleType.Bluray)
 		{
 			list.AddRange(from item in FilterToBlueray(_movieProducts)
+				where ApplyMainFilter(item, browseFilter)
+				select (item));
+		}
+		else if (titleType == TitleType.DigitalCode)
+		{
+			list.AddRange(from item in FilterToDigitalCode(_movieProducts)
 				where ApplyMainFilter(item, browseFilter)
 				select (item));
 		}
@@ -126,25 +155,26 @@ public class KioskProductView
 			list = FilterToTitles(list);
 		}
 		list = ApplyMainFilter(list, browseFilter);
-		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
+		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
 	}
 
 	public List<IKioskProduct> GetCarouselProducts(bool showCollections)
 	{
+		BrowseViewFilter browseFilter = BrowseViewFilter.All;
 		List<IKioskProduct> resultList = new List<IKioskProduct>();
 		int num = 11;
-		(from x in _movieProducts.OrderList(BrowseSort.SortDate)
+		(from x in _movieProducts.OrderList(BrowseSort.SortDate, browseFilter)
 			where IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)
 			select x).Take(num)?.ForEach(resultList.Add);
-		(from x in _movieProducts.OrderList(BrowseSort.SortDate)
+		(from x in _movieProducts.OrderList(BrowseSort.SortDate, browseFilter)
 			where IsCarouselViewable(x, Genres.Top20Movies) && !resultList.Contains(x)
 			select x).Take(num - resultList.Count)?.ForEach(resultList.Add);
-		(from x in _movieProducts.OrderList(BrowseSort.SortDate)
+		(from x in _movieProducts.OrderList(BrowseSort.SortDate, browseFilter)
 			where IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)
 			select x).Take(num - resultList.Count)?.ForEach(resultList.Add);
-		if (showCollections && resultList.Count() >= 5)
+		if (showCollections)
 		{
-			resultList.Insert(5, new CollectionProduct(new Collection
+			resultList.Insert(Math.Min(5, resultList.Count()), new CollectionProduct(new Collection
 			{
 				Name = "Default",
 				Id = 0L
@@ -152,31 +182,19 @@ public class KioskProductView
 			{
 				ImageFile = "image_collections_carousel"
 			});
-			if (resultList.Count > num)
-			{
-				resultList.RemoveAt(resultList.Count() - 1);
-			}
 		}
-		List<ITitleProduct> list = (from x in _gamesProducts.OrderList(BrowseSort.SortDate)
+		List<ITitleProduct> list = (from x in _gamesProducts.OrderList(BrowseSort.SortDate, browseFilter)
 			where IsCarouselViewable(x, null) && !resultList.Contains(x)
 			select x).Take(2).ToList();
-		if (GetInStockGameCount() >= 3 && list != null && list.Any() && (resultList.Count >= 5 || (list.Count() >= 2 && resultList.Count >= 4)))
+		if (GetInStockGameCount() >= 3 && list != null && list.Any())
 		{
-			resultList.Insert(6, list.FirstOrDefault());
-			if (resultList.Count > num)
-			{
-				resultList.RemoveAt(resultList.Count - 1);
-			}
+			resultList.Insert(Math.Min(6, resultList.Count()), list.FirstOrDefault());
 			if (list.Count() >= 2)
 			{
-				if (resultList.Count == num)
-				{
-					resultList.RemoveAt(resultList.Count - 1);
-				}
-				resultList.Add(list.LastOrDefault());
+				resultList.Insert(Math.Min(num, resultList.Count()), list.Skip(1).FirstOrDefault());
 			}
 		}
-		return resultList;
+		return resultList.Take(num).ToList();
 	}
 
 	public List<IKioskProduct> GetCollectionProducts()
@@ -232,13 +250,9 @@ public class KioskProductView
 		return false;
 	}
 
-	private bool IsRentable(ITitleProduct kioskProduct)
+	private bool IsRentable(ITitleProduct titleProduct)
 	{
-		if (kioskProduct != null && kioskProduct.IsValidProduct && kioskProduct.IsAvailable && kioskProduct.InStock)
-		{
-			return !kioskProduct.DoNotRent;
-		}
-		return false;
+		return titleProduct?.IsRentableAndInStock ?? false;
 	}
 
 	private bool IsSellable(IKioskProduct kioskProduct)
@@ -247,16 +261,11 @@ public class KioskProductView
 		{
 			return false;
 		}
-		if (kioskProduct is MDVProduct)
+		if (!(kioskProduct is ITitleProduct titleProduct))
 		{
 			return false;
 		}
-		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-		if (titleProduct != null && titleProduct.ComingSoon)
-		{
-			return false;
-		}
-		return titleProduct?.IsSellable ?? false;
+		return titleProduct.IsSellableAndInStock;
 	}
 
 	public IKioskProduct GetTitleRollupProduct(long productGroupId)
@@ -321,6 +330,27 @@ public class KioskProductView
 		return list;
 	}
 
+	private List<ITitleProduct> FilterToDigitalCode(List<ITitleProduct> kioskProducts)
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		kioskProducts.ForEach(delegate(ITitleProduct item)
+		{
+			if (item is TitleRollupProduct)
+			{
+				list.AddRange(FilterToDigitalCode(((TitleRollupProduct)item).KioskProducts));
+			}
+			if (item is MDVProduct && ((MDVProduct)item).TitleType == TitleType.DigitalCode)
+			{
+				list.Add(item);
+			}
+			if (item is TitleProduct && ((TitleProduct)item).TitleType == TitleType.DigitalCode)
+			{
+				list.Add(item);
+			}
+		});
+		return list;
+	}
+
 	private bool ApplyTitleTypeFilter(ITitleProduct titleProduct, TitleType titleType)
 	{
 		return titleProduct.TitleType == titleType;
@@ -338,7 +368,7 @@ public class KioskProductView
 
 	public bool ApplyMainFilter(ITitleProduct titleProduct, BrowseViewFilter browseFilter)
 	{
-		if (titleProduct.IsValidProduct && (titleProduct.IsAvailable || titleProduct.ComingSoon) && !titleProduct.DoNotRent && (titleProduct.InStock || titleProduct.ShowOutOfStock || titleProduct.ComingSoon))
+		if ((titleProduct.IsRentable || titleProduct.IsSellable || titleProduct.ComingSoon) && (titleProduct.InStock || titleProduct.ShowOutOfStock || titleProduct.ComingSoon))
 		{
 			return ApplyBrowseFilter(titleProduct, browseFilter);
 		}
@@ -347,7 +377,7 @@ public class KioskProductView
 
 	private bool ApplyBrowseFilter(ITitleProduct titleProduct, BrowseViewFilter browseFilter)
 	{
-		if ((browseFilter != BrowseViewFilter.All || !titleProduct.IsAvailable) && (browseFilter != BrowseViewFilter.ComingSoon || !titleProduct.ComingSoon))
+		if ((browseFilter != BrowseViewFilter.All || (!IsRentable(titleProduct) && !titleProduct.ShowOutOfStock)) && (browseFilter != BrowseViewFilter.ComingSoon || !titleProduct.ComingSoon))
 		{
 			if (browseFilter == BrowseViewFilter.ForSale)
 			{
@@ -571,42 +601,43 @@ public class KioskProductView
 		{
 			{
 				TitleType.Xbox360,
-				GetGameConfig(service, "GameEnableXbox360")
+				GetGameConfig(service, ConfigSetting.GameEnableXbox360)
 			},
 			{
 				TitleType.XboxOne,
-				GetGameConfig(service, "GameEnableXboxOne")
+				GetGameConfig(service, ConfigSetting.GameEnableXboxOne)
 			},
 			{
 				TitleType.PS3,
-				GetGameConfig(service, "GameEnablePS3")
+				GetGameConfig(service, ConfigSetting.GameEnablePS3)
 			},
 			{
 				TitleType.PS4,
-				GetGameConfig(service, "GameEnablePS4")
+				GetGameConfig(service, ConfigSetting.GameEnablePS4)
 			},
 			{
 				TitleType.Wii,
-				GetGameConfig(service, "GameEnableWii")
+				GetGameConfig(service, ConfigSetting.GameEnableWii)
 			},
 			{
 				TitleType.WiiU,
-				GetGameConfig(service, "GameEnableWiiU")
+				GetGameConfig(service, ConfigSetting.GameEnableWiiU)
+			},
+			{
+				TitleType.NintendoSwitch,
+				GetGameConfig(service, ConfigSetting.GameEnableNintendoSwitch)
 			}
 		};
 	}
 
 	private bool GetGameConfig(IConfigurationService configService, string settingName)
 	{
-		if (configService == null)
+		bool value = false;
+		if (configService != null && !configService.TryGetValue<bool>("system", "Games", settingName, out value))
 		{
-			return false;
+			value = false;
 		}
-		if (configService.TryGetValue<bool>("system", "Games", settingName, out var value))
-		{
-			return value;
-		}
-		return false;
+		return value;
 	}
 
 	private void LoadMovies()

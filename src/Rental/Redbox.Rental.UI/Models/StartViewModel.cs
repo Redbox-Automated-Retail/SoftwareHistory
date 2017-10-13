@@ -53,6 +53,20 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty BuyMoviesOrGamesButtonVisibilityProperty = DependencyProperty.Register("BuyMoviesOrGamesButtonVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty BuyMoviesButtonWidthProperty = DependencyProperty.Register("BuyMoviesButtonWidth", typeof(int), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyMoviesButtonTextMarginProperty = DependencyProperty.Register("BuyMoviesButtonTextMargin", typeof(Thickness), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyGamesButtonTextLine1Property = DependencyProperty.Register("BuyGamesButtonTextLine1", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyGamesButtonTextLine1StyleProperty = DependencyProperty.Register("BuyGamesButtonTextLine1Style", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyGamesButtonTextLine2Property = DependencyProperty.Register("BuyGamesButtonTextLine2", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyGamesButtonTextLine2StyleProperty = DependencyProperty.Register("BuyGamesButtonTextLine2Style", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyGamesButtonVisibilityProperty = DependencyProperty.Register("BuyGamesButtonVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
 	public bool BurnInModeEnabled { get; set; }
 
 	public string AllMoviesButtonTextLine1
@@ -235,6 +249,111 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
+	public int BuyMoviesButtonWidth
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(BuyMoviesButtonWidthProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyMoviesButtonWidthProperty, value);
+			});
+		}
+	}
+
+	public Thickness BuyMoviesButtonTextMargin
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(BuyMoviesButtonTextMarginProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyMoviesButtonTextMarginProperty, value);
+			});
+		}
+	}
+
+	public string BuyGamesButtonTextLine1
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BuyGamesButtonTextLine1Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyGamesButtonTextLine1Property, value);
+			});
+		}
+	}
+
+	public Style BuyGamesButtonTextLine1Style
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(BuyGamesButtonTextLine1StyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyGamesButtonTextLine1StyleProperty, value);
+			});
+		}
+	}
+
+	public string BuyGamesButtonTextLine2
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BuyGamesButtonTextLine2Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyGamesButtonTextLine2Property, value);
+			});
+		}
+	}
+
+	public Style BuyGamesButtonTextLine2Style
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(BuyGamesButtonTextLine2StyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyGamesButtonTextLine2StyleProperty, value);
+			});
+		}
+	}
+
+	public Visibility BuyGamesButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BuyGamesButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyGamesButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public string PickUpButtonText
 	{
 		get
@@ -408,7 +527,9 @@ public class StartViewModel : DependencyObject
 
 	public event Action OnRentOrBuyGameButtonClicked;
 
-	public event Action OnBuyMoviesOrGamesButtonClicked;
+	public event Action OnBuyMoviesButtonClicked;
+
+	public event Action OnBuyGamesButtonClicked;
 
 	public event Action OnPickupButtonClicked;
 
@@ -454,9 +575,14 @@ public class StartViewModel : DependencyObject
 		OnRentOrBuyGameButtonClicked?.Invoke();
 	}
 
-	public void ProcessBuyMoviesOrGamesButtonClick()
+	public void ProcessBuyMoviesButtonClick()
 	{
-		OnBuyMoviesOrGamesButtonClicked?.Invoke();
+		OnBuyMoviesButtonClicked?.Invoke();
+	}
+
+	public void ProcessBuyGamesButtonClick()
+	{
+		OnBuyGamesButtonClicked?.Invoke();
 	}
 
 	public void ProcessPickupButtonClick()

@@ -11,6 +11,8 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IResourceBundleService
 {
+	bool IsRentalRunning { get; }
+
 	IResourceBundleSet ActiveBundleSet { get; }
 
 	IResourceBundle ActiveBundle { get; }

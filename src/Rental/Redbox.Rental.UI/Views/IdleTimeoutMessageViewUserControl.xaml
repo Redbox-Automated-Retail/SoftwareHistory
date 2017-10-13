@@ -7,33 +7,15 @@
   <Grid>
     <Grid Background="#FF000000" Opacity="0.6" />
     <Grid Margin="128, 96,128, 96">
-      <Border Background="#FFFFFFFF" CornerRadius="28" BorderBrush="#A21018" BorderThickness="5">
-        <TextBlock Name="MessageText" Text="Culture Specific Message" Margin="62,46" Foreground="#B5121B" Style="{StaticResource font_target_large_overlays}" />
+      <Border Background="#FFFFFFFF" CornerRadius="28" BorderBrush="#E42045" BorderThickness="5">
+        <TextBlock Name="MessageText" Text="Culture Specific Message" Margin="62,46" Foreground="#E42045" Style="{StaticResource font_target_large_overlays}" />
       </Border>
-      <Border Name="NoButton" Margin="62,482,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="32" BorderBrush="#FFD3D3D3" BorderThickness="2" Width="191" Height="66">
-        <UIElement.InputBindings>
-          <MouseBinding Gesture="LeftClick" Command="{x:Static local:Commands.No}" />
-        </UIElement.InputBindings>
-        <Border.Background>
-          <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-            <GradientStop Color="#969494" Offset="0" />
-            <GradientStop Color="#676666" Offset="1" />
-          </LinearGradientBrush>
-        </Border.Background>
+      <controls:RoundedButton x:Name="NoButton" Margin="62,482,0,0" Style="{StaticResource warm_purple_no_border_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="32" BorderBrush="#FFD3D3D3" BorderThickness="2" Width="191" Height="66" Command="{x:Static local:Commands.No}">
         <TextBlock Name="ButtonNo_Text" Style="{StaticResource font_target_small_button_overlays}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFFFF" Text="Nope" />
-      </Border>
-      <Border Name="YesButton" Margin="535,482,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="32" BorderBrush="#860C13" BorderThickness="3" Width="171" Height="66">
-        <UIElement.InputBindings>
-          <MouseBinding Gesture="LeftClick" Command="{x:Static local:Commands.Yes}" />
-        </UIElement.InputBindings>
-        <Border.Background>
-          <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-            <GradientStop Color="#B50E1B" Offset="0" />
-            <GradientStop Color="#8F0E15" Offset="1" />
-          </LinearGradientBrush>
-        </Border.Background>
+      </controls:RoundedButton>
+      <controls:RoundedButton x:Name="YesButton" Margin="535,482,0,0" Style="{StaticResource rubine_no_border_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="32" BorderBrush="#860C13" BorderThickness="3" Width="171" Height="66" Command="{x:Static local:Commands.Yes}">
         <TextBlock Name="ButtonYes_Text" Style="{StaticResource font_target_small_button_overlays}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFFFF" Text="Yup" />
-      </Border>
+      </controls:RoundedButton>
     </Grid>
   </Grid>
 </controls:TextToSpeechUserControl>

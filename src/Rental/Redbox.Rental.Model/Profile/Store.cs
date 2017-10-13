@@ -18,6 +18,8 @@ public class Store : ILuaKeyValue
 
 	public decimal PurchaseTaxRate { get; set; }
 
+	public decimal DigitalPurchaseTaxRate { get; set; }
+
 	public decimal PurchasePrice { get; set; }
 
 	public long VendorId { get; set; }

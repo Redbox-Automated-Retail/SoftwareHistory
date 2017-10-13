@@ -8,7 +8,9 @@ public static class Commands
 
 	public static readonly RoutedCommand RentOrBuyGamesCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand BuyMoviesOrGamesCommand = new RoutedCommand();
+	public static readonly RoutedCommand BuyMoviesCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BuyGamesCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand ReturnProductCommand = new RoutedCommand();
 
@@ -24,19 +26,57 @@ public static class Commands
 
 	public static readonly RoutedCommand BannerClickCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand DisplayProductSelectedCommand = new RoutedCommand();
+	public static readonly RoutedCommand CollectionCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand DisplayProductAddCommand = new RoutedCommand();
+	public static readonly RoutedCommand MoreInfoCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand DisplayProductCancelCommand = new RoutedCommand();
+	public static readonly RoutedCommand BuyCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand PrimaryCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BluRayCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseItemSelectedCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseItemAddCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseItemCancelCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand AddDVDCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand AddBluRayCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand AddDigitalCodeCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand DigitalCodeInfoCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand CancelTitleRollupOverlayCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand TitleRollupOverlayTimeoutCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand StatisticsPopupCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand CheckOutCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseFilterCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseTopMenuCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ResetIdleTimerCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand PageLeftCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand PageRightCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseGroupSelectedCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ToggleTitleFamilyCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand StartOverCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand GoBackCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand MoreCollectionsCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand CancelDialogCommand = new RoutedCommand();
 }

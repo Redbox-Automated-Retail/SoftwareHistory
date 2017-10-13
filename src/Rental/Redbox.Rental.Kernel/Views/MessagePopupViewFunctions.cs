@@ -27,7 +27,13 @@ public class MessagePopupViewFunctions
 	[KernelFunction(Name = "kernel.show_bluray_alert")]
 	internal static void ShowBlurayAlert(Action timeOutAction, Action backAction, Action continueAction)
 	{
-		MessagePopupViewController.ShowBlurayAlert(timeOutAction, backAction, continueAction);
+		MessagePopupViewController.ShowBlurayAlert(timeOutAction, backAction, continueAction, hideBackground: false);
+	}
+
+	[KernelFunction(Name = "kernel.show_digital_code_alert")]
+	internal static void ShowDigitalCodeAlert(Action backAction, Action okAction, Action timeOutAction)
+	{
+		MessagePopupViewController.ShowDigitalCodeAlert(backAction, okAction, timeOutAction);
 	}
 
 	[KernelFunction(Name = "kernel.show_message_popup_view_return_success")]
@@ -58,6 +64,12 @@ public class MessagePopupViewFunctions
 	internal static void ShowMessagePopupViewVendError(Action timeOutAction, Action continueAction)
 	{
 		MessagePopupViewController.ShowMessagePopupViewVendError(timeOutAction, continueAction);
+	}
+
+	[KernelFunction(Name = "kernel.show_message_popup_view_digital_code")]
+	internal static void ShowMessagePopupViewDigitalCode(string price, Action backAction, Action buyAction, Action timeOutAction)
+	{
+		MessagePopupViewController.ShowMessagePopupViewDigitalCode(price, backAction, buyAction, timeOutAction);
 	}
 
 	[KernelFunction(Name = "kernel.hide_message_popup_view")]

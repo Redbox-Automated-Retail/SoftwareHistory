@@ -106,17 +106,31 @@ public static class KioskProductExtensions
 		return titleProduct.Genres.Contains(genreFilter);
 	}
 
-	public static List<ITitleProduct> OrderList(this List<ITitleProduct> source, BrowseSort browseSort)
+	public static List<ITitleProduct> OrderList(this List<ITitleProduct> source, BrowseSort browseSort, BrowseViewFilter browseFilter)
 	{
 		return browseSort switch
 		{
 			BrowseSort.MerchandiseDate => (from item in source
-				orderby item.SortMerchandise, item.SortBoxOfficeGross descending, item.SortName descending
+				orderby !InStock(item, browseFilter), item.SortMerchandise, item.SortBoxOfficeGross descending, item.SortName descending
 				select item).ToList(), 
 			BrowseSort.Alpha => source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList(), 
 			_ => (from item in source
-				orderby item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
+				orderby browseFilter != BrowseViewFilter.ForSale && item.ShowOutOfStock, item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
 				select item).ToList(), 
+		};
+	}
+
+	private static bool InStock(ITitleProduct titleProduct, BrowseViewFilter browseFilter)
+	{
+		if (titleProduct == null)
+		{
+			return false;
+		}
+		return browseFilter switch
+		{
+			BrowseViewFilter.All => titleProduct.IsRentableAndInStock, 
+			BrowseViewFilter.ForSale => titleProduct.IsSellableAndInStock, 
+			_ => false, 
 		};
 	}
 
@@ -148,7 +162,7 @@ public static class KioskProductExtensions
 
 	public static BrowseSort ConvertToBrowseSort(this string selectedSort, BrowseViewFilter browseViewFilter)
 	{
-		if (selectedSort.Equals("alpha", StringComparison.CurrentCultureIgnoreCase))
+		if (selectedSort != null && selectedSort.Equals("alpha", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return BrowseSort.Alpha;
 		}
@@ -212,6 +226,14 @@ public static class KioskProductExtensions
 		{
 			return TitleType.Bluray;
 		}
+		if (type.Equals("Digital Code", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.DigitalCode;
+		}
+		if (type.Equals("DigitalCode", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.DigitalCode;
+		}
 		if (type.Equals("Xbox 360", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.Xbox360;
@@ -220,10 +242,6 @@ public static class KioskProductExtensions
 		{
 			return TitleType.Xbox360;
 		}
-		if (type.Equals("PS3", StringComparison.CurrentCultureIgnoreCase))
-		{
-			return TitleType.PS3;
-		}
 		if (type.Equals("XBOX ONE", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.XboxOne;
@@ -231,6 +249,26 @@ public static class KioskProductExtensions
 		if (type.Equals("XBOXONE", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.XboxOne;
+		}
+		if (type.Equals("PSP", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PSP;
+		}
+		if (type.Equals("PS2", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PS2;
+		}
+		if (type.Equals("PS3", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PS3;
+		}
+		if (type.Equals("PS4", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.PS4;
+		}
+		if (type.Equals("DS", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType.DS;
 		}
 		if (type.Equals("WII", StringComparison.CurrentCultureIgnoreCase))
 		{
@@ -244,25 +282,17 @@ public static class KioskProductExtensions
 		{
 			return TitleType.WiiU;
 		}
-		if (type.Equals("PS4", StringComparison.CurrentCultureIgnoreCase))
+		if (type.Equals("NINTENDO SWITCH", StringComparison.CurrentCultureIgnoreCase))
 		{
-			return TitleType.PS4;
+			return TitleType.NintendoSwitch;
 		}
-		if (type.Equals("PSP", StringComparison.CurrentCultureIgnoreCase))
+		if (type.Equals("NINTENDOSWITCH", StringComparison.CurrentCultureIgnoreCase))
 		{
-			return TitleType.PSP;
-		}
-		if (type.Equals("PS2", StringComparison.CurrentCultureIgnoreCase))
-		{
-			return TitleType.PS2;
+			return TitleType.NintendoSwitch;
 		}
 		if (type.Equals("PC", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.PC;
-		}
-		if (type.Equals("DS", StringComparison.CurrentCultureIgnoreCase))
-		{
-			return TitleType.DS;
 		}
 		return TitleType.All;
 	}

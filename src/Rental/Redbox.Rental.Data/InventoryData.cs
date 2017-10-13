@@ -58,8 +58,9 @@ public class InventoryData : IInventoryData
 	public InventoryData(IKernelHelperService kernelHelperService)
 	{
 		_kernelHelperService = kernelHelperService;
-		_runningPath = Path.GetDirectoryName(typeof(BlockListData).Assembly.Location);
-		_dataPath = Path.Combine(_runningPath, "..\\data");
+		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
+		_runningPath = service.RunningPath;
+		_dataPath = service.DataPath;
 		_rapidStatusStagedPath = Path.Combine(_dataPath, "RapidStatus.data");
 		_rapidStatusActivePath = Path.Combine(_dataPath, "RapidStatus.active");
 		_inventoryActionStagedPath = Path.Combine(_dataPath, "InventoryAction.data");

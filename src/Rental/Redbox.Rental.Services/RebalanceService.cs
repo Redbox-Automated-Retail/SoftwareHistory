@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 
 namespace Redbox.Rental.Services;
@@ -37,8 +38,17 @@ public class RebalanceService : IRebalance
 
 	public RebalanceService(string kioskIdFilter)
 	{
-		_runningPath = Path.GetDirectoryName(typeof(RebalanceService).Assembly.Location);
-		_dataPath = Path.Combine(_runningPath, "..\\data");
+		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
+		if (service == null)
+		{
+			_runningPath = Path.GetDirectoryName(typeof(RebalanceService).Assembly.Location);
+			_dataPath = Path.Combine(_runningPath, "..\\data");
+		}
+		else
+		{
+			_runningPath = service.RunningPath;
+			_dataPath = service.DataPath;
+		}
 		_kioskId = Convert.ToInt32(kioskIdFilter);
 	}
 

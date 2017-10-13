@@ -1,0 +1,24 @@
+namespace Redbox.Rental.Model.Browse;
+
+public enum BrowseFilterType
+{
+	AllNewest,
+	BluRay,
+	ForSale,
+	ComingSoon,
+	AtoZ,
+	DigitalCode,
+	XboxOne,
+	Xbox360,
+	PS3,
+	PS4,
+	Wii,
+	WiiU,
+	NintendoSwitch,
+	Top20,
+	Action,
+	Drama,
+	Horror,
+	Comedy,
+	Family
+}

@@ -1,6 +1,5 @@
 using System;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Lua;
 using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views.StartView;
@@ -8,9 +7,9 @@ namespace Redbox.Rental.Kernel.Views.StartView;
 public static class StartViewFunctions
 {
 	[KernelFunction(Name = "kernel.configure_start_view")]
-	internal static void ConfigureStartView(Action toggleCultureCallback, Action startIdleTimerCallback, Action showBrowseViewCollectionsCallback, Action<LuaTable> showCollectionItemsCallback, Action<LuaTable, bool, LuaTable, string> checkForWarningPopupsCallback, Func<LuaTable, bool> isProductInShoppingCart, Func<LuaTable, bool> isProductEarlyRelease)
+	internal static void ConfigureStartView(Action toggleCultureCallback, Action startIdleTimerCallback)
 	{
-		StartViewController.ConfigureStartView(toggleCultureCallback, startIdleTimerCallback, showBrowseViewCollectionsCallback, showCollectionItemsCallback, checkForWarningPopupsCallback, isProductInShoppingCart, isProductEarlyRelease);
+		StartViewController.ConfigureStartView(toggleCultureCallback, startIdleTimerCallback);
 	}
 
 	[KernelFunction(Name = "kernel.reload_carousel")]

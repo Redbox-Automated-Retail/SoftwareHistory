@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl x:Class="Redbox.Rental.UI.Controls.RedboxClassicProductCarouselUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localModels="clr-namespace:Redbox.Rental.UI.Models" DataContextChanged="UserControl_DataContextChanged">
   <UIElement.CommandBindings>
-    <CommandBinding Command="{x:Static localbase:Commands.DisplayProductSelectedCommand}" Executed="DisplayProductSelectedCommandBinding_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.DisplayProductAddCommand}" Executed="DisplayProductAddCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.BrowseItemSelectedCommand}" Executed="DisplayProductSelectedCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.BrowseItemAddCommand}" Executed="DisplayProductAddCommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid>
     <Grid Name="CarouselContainer" />

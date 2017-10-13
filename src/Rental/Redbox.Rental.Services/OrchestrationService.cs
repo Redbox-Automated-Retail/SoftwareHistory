@@ -1,18 +1,159 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows.Media.Imaging;
+using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.KioskProduct;
+using Redbox.Rental.Services.Session;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services;
 
 public static class OrchestrationService
 {
+	private static Action _idleTimerExpireSessionCallback;
+
+	private static Action<long> _getEmailAddressAndRegisterEmailReminderCallback;
+
+	public static bool IsCollectionsPopupEnabled()
+	{
+		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+		if (instance != null && !instance.BrowseState.CollectionsPopupShown && RentalIsCollectionsEnabled())
+		{
+			return RentalShowCollectionsPopup();
+		}
+		return false;
+	}
+
+	public static bool IsCollectionsPopupTimerEnabled()
+	{
+		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
+		if (IsCollectionsPopupEnabled())
+		{
+			return (service?.CollectionsPopUpTimer ?? 0) > 0;
+		}
+		return false;
+	}
+
+	public static void RegisterIdleTimerExpireSessionCallback(Action idleTimerExpireSessionCallback)
+	{
+		_idleTimerExpireSessionCallback = idleTimerExpireSessionCallback;
+	}
+
+	public static void RegisterGetEmailAddressAndRegisterEmailReminderCallback(Action<long> getEmailAddressAndRegisterEmailReminderCallback)
+	{
+		_getEmailAddressAndRegisterEmailReminderCallback = getEmailAddressAndRegisterEmailReminderCallback;
+	}
+
+	public static void InvokeGetEmailAddressAndRegisterEmailReminderCallback(long productId)
+	{
+		if (_getEmailAddressAndRegisterEmailReminderCallback != null)
+		{
+			_getEmailAddressAndRegisterEmailReminderCallback(productId);
+		}
+	}
+
+	public static void InvokeIdleTimerExpireSessionCallback()
+	{
+		if (_idleTimerExpireSessionCallback != null)
+		{
+			_idleTimerExpireSessionCallback();
+		}
+	}
+
+	public static int GetIdleTimerTimeout()
+	{
+		int num = 40000;
+		if (IsCollectionsPopupEnabled())
+		{
+			num = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>()?.CollectionsPopUpTimer ?? 0;
+			num = Math.Min(Math.Max(num, 16000), 60000);
+		}
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
+		if (service != null && service2 != null)
+		{
+			string timeoutType = ((service2.Peek() == "help_document_view") ? "help" : "long");
+			num = service.GetTimeout(timeoutType, num);
+		}
+		return num;
+	}
+
+	public static void ResetApplicationIdleTimerTimeout()
+	{
+		IIdleTimerService service = ServiceLocator.Instance.GetService<IIdleTimerService>();
+		if (service != null)
+		{
+			IIdleTimer idleTimer = service.GetIdleTimer("idle_timer");
+			if (idleTimer != null && (idleTimer.Timeout ?? 0) != GetIdleTimerTimeout())
+			{
+				idleTimer.Timeout = GetIdleTimerTimeout();
+			}
+		}
+	}
+
+	public static BitmapImage GetProductBitmapImage(IKioskProduct kioskProduct)
+	{
+		BitmapImage result = null;
+		if (kioskProduct != null)
+		{
+			switch (kioskProduct.KioskProductType)
+			{
+			case KioskProductType.None:
+				result = Constants.Images.MovieMissingBoxArt;
+				break;
+			case KioskProductType.Title:
+			case KioskProductType.MDV:
+			case KioskProductType.TitleRollup:
+				if (kioskProduct is ITitleProduct titleProduct)
+				{
+					if (DataServiceRegisterBitmapImage(titleProduct.ImageFile, titleProduct.ImageFile))
+					{
+						result = ServiceLocator.Instance.GetService<IBitmapCacheService>().GetBitmapImage(titleProduct.ImageFile);
+					}
+					else if (titleProduct.TitleFamily == TitleFamily.Movies)
+					{
+						result = Constants.Images.MovieMissingBoxArt;
+					}
+					else if (titleProduct.TitleFamily == TitleFamily.Games)
+					{
+						result = Constants.Images.GameMissingBoxArt;
+					}
+				}
+				break;
+			case KioskProductType.Collection:
+				if (kioskProduct is ICollectionProduct)
+				{
+					result = Constants.Images.CollectionsCarousel;
+				}
+				break;
+			default:
+				result = Constants.Images.MovieMissingBoxArt;
+				break;
+			}
+		}
+		return result;
+	}
+
+	public static BitmapImage GetSubPlatformBitmapImage(ITitleProduct kioskProduct)
+	{
+		BitmapImage result = null;
+		long? num = kioskProduct?.SubPlatformId;
+		if (num.HasValue && num > 0)
+		{
+			result = Constants.SubPlatformImages.GetSubPlatformImage((Constants.SubPlatforms)num.Value);
+		}
+		return result;
+	}
+
 	public static bool DataServiceRegisterImage(string name, string cacheName)
 	{
 		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
@@ -27,6 +168,45 @@ public static class OrchestrationService
 			return false;
 		}
 		return service.RegisterImage(name, image) != null;
+	}
+
+	public static bool DataServiceRegisterBitmapImage(string name, string cacheName)
+	{
+		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		if (service.GetBitmapImage(name) != null)
+		{
+			return true;
+		}
+		byte[] image = ServiceLocator.Instance.GetService<IDataService>().GetImage(cacheName);
+		if (image == null)
+		{
+			LogHelper.Instance.Log("OrchestrationService.DataServiceRegisterBitmapImage was not able to read any data for name: {0} cacheName {1}", name, cacheName);
+			return false;
+		}
+		return service.RegisterBitmapImage(name, image) != null;
+	}
+
+	public static void RegisterPricingService(Action pricingSetChangeCallback)
+	{
+		IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
+		if (service == null)
+		{
+			return;
+		}
+		service.ClearOnPricingSetChange();
+		service.OnPricingSetChange += delegate
+		{
+			LogHelper.Instance.Log(">  Price change detected; force web broker to re-register");
+			if (pricingSetChangeCallback != null)
+			{
+				pricingSetChangeCallback();
+			}
+		};
+	}
+
+	public static void ReloadPricingService()
+	{
+		ServiceLocator.Instance.GetService<IPricingService>()?.Reload();
 	}
 
 	public static List<IKioskProduct> RentalGetCarouselProducts()
@@ -138,6 +318,17 @@ public static class OrchestrationService
 		return false;
 	}
 
+	public static bool RentalShowCollectionsPopup()
+	{
+		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
+		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		if (service == null || service2 == null)
+		{
+			return false;
+		}
+		return service.ShowCollectionsPopUp;
+	}
+
 	public static void CreateStartViewAnalytics(string sessionType)
 	{
 		CreateStartViewAnalytics(Enum<AnalyticsSessionType>.ParseIgnoringCase(sessionType, AnalyticsSessionType.BrowseVend));
@@ -181,6 +372,62 @@ public static class OrchestrationService
 	public static string GetOtherCulture()
 	{
 		return ServiceLocator.Instance.GetService<IStoreManager>()?.GetAlternateCulture();
+	}
+
+	public static bool GetCanSellUsedGames()
+	{
+		return ServiceLocator.Instance.GetService<IStoreManager>()?.CanSellUsedGames ?? false;
+	}
+
+	public static bool GetCanSellUsedMovies()
+	{
+		return ServiceLocator.Instance.GetService<IStoreManager>()?.CanSellUsedMovies ?? false;
+	}
+
+	public static object GetResourceProperty(string resourceName, string propertyName)
+	{
+		return ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetResource(resourceName)?[propertyName];
+	}
+
+	public static List<Dictionary<string, object>> GetResourceTable(string name)
+	{
+		XmlNode xml = ServiceLocator.Instance.GetService<IResourceBundleService>().GetXml(name);
+		if (xml == null)
+		{
+			return null;
+		}
+		XmlNodeList xmlNodeList = xml.SelectNodes("row");
+		if (xmlNodeList == null)
+		{
+			return null;
+		}
+		List<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
+		foreach (XmlNode item in xmlNodeList)
+		{
+			XmlNodeList xmlNodeList2 = item.SelectNodes("column");
+			if (xmlNodeList2 == null)
+			{
+				continue;
+			}
+			Dictionary<string, object> dictionary = new Dictionary<string, object>();
+			foreach (XmlNode item2 in xmlNodeList2)
+			{
+				string attributeValue = item2.GetAttributeValue<string>("name");
+				object value = item2.GetNodeValue(string.Empty);
+				string attributeValue2 = item2.GetAttributeValue<string>("type");
+				if (!string.IsNullOrEmpty(attributeValue2))
+				{
+					Type type = attributeValue2.ToType();
+					if (type != null)
+					{
+						value = ConversionHelper.ChangeType(value, type);
+					}
+				}
+				dictionary[attributeValue] = value;
+			}
+			list.Add(dictionary);
+		}
+		return list;
 	}
 
 	public static void CreateStartViewAnalytics(AnalyticsSessionType sessionType)

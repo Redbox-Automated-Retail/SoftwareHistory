@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using Redbox.Core;
 using Redbox.Lua;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Browse;
+using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.KioskProduct;
@@ -9,7 +13,11 @@ namespace Redbox.Rental.Services.Session;
 
 public class BrowseState : IBrowseState
 {
-	private string _browseSelectedSort;
+	private Stack<IBrowseStateSet> _browseStateSetStack = new Stack<IBrowseStateSet>();
+
+	private IKioskProduct _browseSelectionSelectedProduct;
+
+	private LuaTable _browseSelectionSelectedProductLuaTable;
 
 	public string ItemAddedFromView { get; set; }
 
@@ -17,17 +25,58 @@ public class BrowseState : IBrowseState
 
 	public IKioskProduct BrowseSelectionSelectedProduct
 	{
+		get
+		{
+			return _browseSelectionSelectedProduct;
+		}
 		set
 		{
-			BrowseSelectionSelectedProductLuaTable = value?.ToDictionary()?.ToLuaTable();
+			_browseSelectionSelectedProduct = value;
+			_browseSelectionSelectedProductLuaTable = value?.ToDictionary()?.ToLuaTable();
 		}
 	}
 
-	public LuaTable BrowseSelectionSelectedProductLuaTable { get; set; }
+	public LuaTable BrowseSelectionSelectedProductLuaTable
+	{
+		get
+		{
+			return _browseSelectionSelectedProductLuaTable;
+		}
+		set
+		{
+			SetBrowseSelectionSelectedProductLuaTable(value);
+		}
+	}
 
 	public IKioskProduct CenterCarouselProduct { get; set; }
 
 	public LuaTable CenterCarouselProductLuaTable => CenterCarouselProduct?.ToDictionary()?.ToLuaTable();
+
+	public List<IKioskProduct> BrowseProductsShown
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().BrowseProductsShown;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().BrowseProductsShown = value;
+		}
+	}
+
+	public List<IBrowseItemModel> TTSBrowseItemModelsShown
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().TTSBrowseItemModelsShown;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().TTSBrowseItemModelsShown = value;
+		}
+	}
+
+	public LuaTable BrowseProductsShownLuaTable => BrowseProductsShown?.ToDictionary()?.ToLuaTable();
 
 	public bool CollectionsPopupShown { get; set; }
 
@@ -61,7 +110,17 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public BrowseViewFilter BrowseMode { get; set; }
+	public BrowseViewFilter BrowseMode
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().BrowseMode;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().BrowseMode = value;
+		}
+	}
 
 	public string BrowseTitleFamily
 	{
@@ -75,7 +134,17 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public TitleFamily TitleFamily { get; set; }
+	public TitleFamily TitleFamily
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().TitleFamily;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().TitleFamily = value;
+		}
+	}
 
 	public int? BrowseGenre
 	{
@@ -89,9 +158,29 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public Genres? Genre { get; set; }
+	public Genres? Genre
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().Genre;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().Genre = value;
+		}
+	}
 
-	public int PageNumber { get; set; }
+	public int PageNumber
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().PageNumber;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().PageNumber = value;
+		}
+	}
 
 	public string BrowseTitleType
 	{
@@ -105,42 +194,192 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public TitleType TitleType { get; set; }
+	public TitleType TitleType
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().TitleType;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().TitleType = value;
+		}
+	}
 
-	public string SelectedAlphaGroupName { get; set; }
+	public bool BrowseCollections
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().BrowseCollections;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().BrowseCollections = value;
+		}
+	}
+
+	public ICollectionProduct BrowseCollectionProduct
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().BrowseCollectionProduct;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().BrowseCollectionProduct = value;
+		}
+	}
+
+	public string SelectedAlphaGroupName
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().SelectedAlphaGroupName;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().SelectedAlphaGroupName = value;
+		}
+	}
 
 	public string BrowseSelectedSort
 	{
 		get
 		{
-			return _browseSelectedSort;
+			return _browseStateSetStack.Peek().BrowseSelectedSort;
 		}
 		set
 		{
-			switch (value)
+			_browseStateSetStack.Peek().BrowseSelectedSort = value;
+		}
+	}
+
+	public List<IBrowseItemModel> BrowseItemModels
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().BrowseItemModels;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().BrowseItemModels = value;
+		}
+	}
+
+	public bool IsNonBrowseView
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().IsNonBrowseView;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().IsNonBrowseView = value;
+		}
+	}
+
+	public BrowseState()
+	{
+		PushBrowseStateSet();
+	}
+
+	private void SetBrowseSelectionSelectedProductLuaTable(LuaTable value)
+	{
+		_browseSelectionSelectedProductLuaTable = value;
+		IKioskProduct kioskProduct = null;
+		IDataService dataService = ServiceLocator.Instance.GetService(typeof(IDataService)) as IDataService;
+		long result = 0L;
+		if (_browseSelectionSelectedProductLuaTable != null && long.TryParse(_browseSelectionSelectedProductLuaTable["product_id"].ToString(), out result))
+		{
+			int result2 = 0;
+			if (int.TryParse(_browseSelectionSelectedProductLuaTable["kiosk_product_type"].ToString(), out result2) && Enum.TryParse<KioskProductType>(result2.ToString(), out var result3))
 			{
-			case "alpha":
-			case "Newest":
-			case "for-sale":
-			case "coming-soon":
-			case "Blu-ray":
-			case "Xbox 360":
-			case "Xbox One":
-			case "PS3":
-			case "PS4":
-			case "Wii":
-			case "Wii U":
-			case "Top 20":
-			case "Action":
-			case "Comedy":
-			case "Drama":
-			case "Family":
-			case "Horror":
-				_browseSelectedSort = value;
-				break;
-			default:
-				throw new ArgumentException("Invalid value for BrowseSelectedSort: {0}", value);
+				bool excludeTitleRollup = result3 != KioskProductType.TitleRollup;
+				dataService.GetProduct(result, excludeTitleRollup, out kioskProduct);
 			}
 		}
+		_browseSelectionSelectedProduct = kioskProduct;
+	}
+
+	public void PushBrowseStateSet()
+	{
+		_browseStateSetStack.Push(new BrowseStateSet());
+	}
+
+	public IBrowseStateSet PopBrowseStateSet()
+	{
+		IBrowseStateSet result = null;
+		if (_browseStateSetStack.Count > 1)
+		{
+			result = _browseStateSetStack.Pop();
+		}
+		return result;
+	}
+
+	public void PushCollectionsBrowseStateSet()
+	{
+		PushBrowseStateSet();
+		IsNonBrowseView = false;
+		BrowseCollections = true;
+		BrowseCollectionProduct = null;
+		PageNumber = 1;
+		TitleFamily = TitleFamily.Movies;
+		TitleType = TitleType.All;
+		BrowseMode = BrowseViewFilter.All;
+		BrowseSelectedSort = "Newest";
+		SelectedAlphaGroupName = null;
+		Genre = null;
+	}
+
+	public void PushCollectionBrowseStateSet(ICollectionProduct collectionProduct)
+	{
+		PushBrowseStateSet();
+		IsNonBrowseView = false;
+		BrowseCollections = false;
+		BrowseCollectionProduct = collectionProduct;
+		PageNumber = 1;
+		TitleFamily = TitleFamily.Movies;
+		TitleType = TitleType.All;
+		BrowseMode = BrowseViewFilter.All;
+		BrowseSelectedSort = "Newest";
+		SelectedAlphaGroupName = null;
+		Genre = null;
+	}
+
+	public void PushNonBrowseViewBrowseStateSet()
+	{
+		PushBrowseStateSet();
+		IsNonBrowseView = true;
+		BrowseCollections = false;
+		BrowseCollectionProduct = null;
+		PageNumber = 1;
+		TitleFamily = TitleFamily.Movies;
+		TitleType = TitleType.All;
+		BrowseMode = BrowseViewFilter.All;
+		BrowseSelectedSort = "Newest";
+		SelectedAlphaGroupName = null;
+		Genre = null;
+	}
+
+	public void UnwindBrowseStateSetStack()
+	{
+		while (_browseStateSetStack.Count > 1)
+		{
+			_browseStateSetStack.Pop();
+		}
+	}
+
+	public void SetDefaultBrowseStateSet()
+	{
+		IsNonBrowseView = false;
+		BrowseCollections = false;
+		BrowseCollectionProduct = null;
+		PageNumber = 1;
+		TitleFamily = TitleFamily.Movies;
+		TitleType = TitleType.All;
+		BrowseMode = BrowseViewFilter.All;
+		BrowseSelectedSort = "Newest";
+		SelectedAlphaGroupName = null;
+		Genre = null;
 	}
 }

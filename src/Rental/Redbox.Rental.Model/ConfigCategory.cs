@@ -15,4 +15,6 @@ public static class ConfigCategory
 	public static string MarketingGeneral = "MarketingGeneral";
 
 	public static string Documents = "Documents";
+
+	public static string KioskHealth = "KioskHealth";
 }

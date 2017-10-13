@@ -6,7 +6,7 @@
         <Setter Property="Template">
           <Setter.Value>
             <ControlTemplate TargetType="{x:Type UserControl}">
-              <Polygon Name="Chevron1" Fill="#9B0911">
+              <Polygon Name="Chevron1" Fill="#D01D3E">
                 <Polygon.Points>
                   <Point X="-268" Y="-268" />
                   <Point X="-193" Y="-268" />

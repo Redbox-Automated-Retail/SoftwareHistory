@@ -13,4 +13,6 @@ public static class MachineSettings
 	public static string GameHasContentWii = "GameHasContentWii";
 
 	public static string GameHasContentWiiU = "GameHasContentWiiU";
+
+	public static string GameHasContentNintendoSwitch = "GameHasContentNintendoSwitch";
 }

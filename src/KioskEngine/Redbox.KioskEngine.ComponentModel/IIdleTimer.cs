@@ -4,6 +4,8 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IIdleTimer
 {
+	int? Timeout { get; set; }
+
 	void Initialize(int timeout, Action action);
 
 	void Start();
@@ -11,4 +13,8 @@ public interface IIdleTimer
 	void Stop();
 
 	void Reset();
+
+	void Suspend();
+
+	void Resume();
 }

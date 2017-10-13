@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl x:Class="Redbox.Rental.UI.Controls.Animations.RedboxDiscUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls.Animations">
   <Grid>
-    <Border BorderBrush="#FFFFFFFF" BorderThickness="10" CornerRadius="40" Background="#B4121A">
-      <Image Name="redbox_logo" Margin="0,0,0,0" Width="266" Height="80" VerticalAlignment="Center" HorizontalAlignment="Center" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/kiosk-2-redbox-logo.png" />
+    <Border BorderBrush="#E42045" BorderThickness="10" CornerRadius="40" Background="#FFFFFFFF">
+      <Image Name="redbox_logo" Margin="0,0,0,0" Width="266" Height="80" VerticalAlignment="Center" HorizontalAlignment="Center" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoRubine.png" />
     </Border>
   </Grid>
 </UserControl>

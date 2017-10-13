@@ -1,7 +1,11 @@
-using System;
+﻿using System;
+using System.CodeDom.Compiler;
+using System.Diagnostics;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.UI.Controls;
 
 namespace Redbox.Rental.UI.Views;
@@ -79,8 +83,16 @@ public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl
 	public IdleTimeoutMessageViewUserControl()
 	{
 		InitializeComponent();
+		ApplyTheme();
 		RegisterRoutedCommand("Yes", Commands.Yes);
 		RegisterRoutedCommand("No", Commands.No);
+	}
+
+	private void ApplyTheme()
+	{
+		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
+		obj?.SetStyle(YesButton);
+		obj?.SetStyle(NoButton);
 	}
 
 	private void TimerTick(object sender, EventArgs e)

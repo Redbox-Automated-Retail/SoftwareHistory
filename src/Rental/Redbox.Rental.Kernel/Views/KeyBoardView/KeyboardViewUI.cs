@@ -24,8 +24,6 @@ internal class KeyboardViewUI
 
 	private IViewService _viewService;
 
-	private IActor _errorLabel;
-
 	private IActor _okButton;
 
 	private IActor _okArrowButton;
@@ -96,15 +94,15 @@ internal class KeyboardViewUI
 		actor.Y = 0;
 		actor.Width = 1024;
 		actor.Height = 768;
-		actor.OptionFlags = RenderOptionFlags.Image;
-		actor.Image = GetImage("product_detail_background");
+		actor.BackgroundColor = Color.White;
+		actor.OptionFlags = RenderOptionFlags.Background;
 		_rendService.ActiveScene.AddFirst(actor);
 		IActor actor2 = _rendService.ActiveScene.CreateActor();
 		actor2.X = 0;
 		actor2.Y = 654;
 		actor2.Width = 1024;
 		actor2.Height = 768 - actor2.Y;
-		actor2.BackgroundColor = Color.FromArgb(60, 60, 60);
+		actor2.BackgroundColor = Color.FromArgb(56, 11, 69);
 		actor2.OptionFlags = RenderOptionFlags.Background;
 		_rendService.ActiveScene.AddLast(actor2);
 		IActor actor3 = _rendService.ActiveScene.CreateActor();
@@ -112,7 +110,7 @@ internal class KeyboardViewUI
 		actor3.Y = actor2.Y + 3;
 		actor3.Width = 1024;
 		actor3.Height = 768 - actor3.Y;
-		actor3.BackgroundColor = Color.FromArgb(41, 41, 41);
+		actor3.BackgroundColor = Color.FromArgb(56, 11, 69);
 		actor3.OptionFlags = RenderOptionFlags.Background;
 		_rendService.ActiveScene.AddLast(actor3);
 		if (KeyboardType != KeyboardViewType.Promo)
@@ -131,7 +129,7 @@ internal class KeyboardViewUI
 			_rendService.ActiveScene.AddLast(actor4);
 		}
 		Font font = _fontCacheService.GetFont("font_target_small");
-		_okButton = _rendService.ActiveScene.CreateActor().AddRedButtonStyle();
+		_okButton = _rendService.ActiveScene.CreateActor().AddRubineButtonStyle();
 		_okButton.Name = "ok_button";
 		_okButton.X = 803;
 		_okButton.Y = 674;
@@ -156,7 +154,7 @@ internal class KeyboardViewUI
 		_okArrowButton.Image = GetImage("image_next_white_arrow_big");
 		_okArrowButton.Hit += OnOkButtonPress;
 		_rendService.ActiveScene.AddLast(_okArrowButton);
-		IActor actor5 = _rendService.ActiveScene.CreateActor().AddGrayButtonStyle();
+		IActor actor5 = _rendService.ActiveScene.CreateActor().AddDarkGrayButtonStyle();
 		actor5.Name = "cancel_button";
 		actor5.X = 583;
 		actor5.Y = _okButton.Y;
@@ -304,7 +302,7 @@ internal class KeyboardViewUI
 		Font font = _fontCacheService.GetFont("font_target_small_bold");
 		Font font2 = _fontCacheService.GetFont("font_akzidenz_bold_tiny");
 		IStyleSheet styleSheet = ServiceLocator.Instance.GetService<IStyleSheetService>().GetStyleSheet("style_sheet_common");
-		IStyleSheetStyle style = styleSheet.GetStyle("red_button_style");
+		IStyleSheetStyle style = styleSheet.GetStyle("rubine_button_style");
 		_rendService.ActiveScene.SuspendDrawing();
 		DisplayBackground();
 		DisplayHeader();
@@ -320,7 +318,7 @@ internal class KeyboardViewUI
 		actor.HorizontalAlignment = StringAlignment.Center;
 		actor.Font = font;
 		actor.StrokeWeight = 3f;
-		actor.Image = GetImage("image_email_entry_field");
+		actor.Image = GetImage("image_email_entry_box");
 		actor.OptionFlags = RenderOptionFlags.Text | RenderOptionFlags.Image;
 		_rendService.ActiveScene.AddLast(actor);
 		int startXPos = -3;
@@ -398,7 +396,7 @@ internal class KeyboardViewUI
 
 	private IActor CreateCharacter(Font font, IStyleSheetStyle style, string text, int x, int y, int? width = null)
 	{
-		IActor actor = _rendService.ActiveScene.CreateActor().AddRedButtonStyle();
+		IActor actor = _rendService.ActiveScene.CreateActor().AddRubineButtonStyle();
 		actor.Name = text.Replace(" ", "_") + "_button";
 		actor.X = x;
 		actor.Y = y;
@@ -536,7 +534,7 @@ internal class KeyboardViewUI
 			_okButton.HorizontalAlignment = StringAlignment.Near;
 		}
 		_okArrowButton.Enabled = false;
-		_okArrowButton.Image = GetImage("image_next_right_arrow_gray");
+		_okArrowButton.Image = GetImage("image_next_white_arrow_big");
 	}
 
 	private Image GetImage(string name)

@@ -36,8 +36,9 @@ public class BlockListData : IBlockListData
 	public BlockListData(IKernelService kernelService)
 	{
 		_kernelService = kernelService;
-		_runningPath = Path.GetDirectoryName(typeof(BlockListData).Assembly.Location);
-		_dataPath = Path.Combine(_runningPath, "..\\data");
+		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
+		_runningPath = service.RunningPath;
+		_dataPath = service.DataPath;
 		_blockListStagedPath = Path.Combine(_dataPath, "BlockList.staged");
 		_blockListActivePath = Path.Combine(_dataPath, "BlockList.active");
 	}

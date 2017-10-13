@@ -341,7 +341,15 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
+	public bool IsEmptyCase => ProductId == 1139;
+
 	public bool IsSellable => _kioskProducts.Any((ITitleProduct kp) => kp.IsSellable);
+
+	public bool IsRentable => _kioskProducts.Any((ITitleProduct kp) => kp.IsRentable);
+
+	public bool IsSellableAndInStock => _kioskProducts.Any((ITitleProduct kp) => kp.IsSellableAndInStock);
+
+	public bool IsRentableAndInStock => _kioskProducts.Any((ITitleProduct kp) => kp.IsRentableAndInStock);
 
 	public decimal GamePurchasePrice
 	{
@@ -371,11 +379,44 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsAvailable => _kioskProducts.Any((ITitleProduct kp) => kp.IsAvailable);
 
-	public bool ComingSoon => _kioskProducts.All((ITitleProduct kp) => kp.ComingSoon);
+	public bool ComingSoon
+	{
+		get
+		{
+			List<ITitleProduct> list = _kioskProducts.Where((ITitleProduct kp) => kp.TitleType != TitleType.DigitalCode).ToList();
+			if (list.Count == 0)
+			{
+				return false;
+			}
+			return list.All((ITitleProduct kp) => kp.ComingSoon);
+		}
+	}
 
 	public bool InStock => _kioskProducts.Any((ITitleProduct kp) => kp.InStock);
 
-	public bool ShowOutOfStock => _kioskProducts.All((ITitleProduct kp) => kp.ShowOutOfStock);
+	public bool ShowOutOfStock
+	{
+		get
+		{
+			List<ITitleProduct> list = _kioskProducts.Where((ITitleProduct kp) => kp.TitleType != TitleType.DigitalCode).ToList();
+			if (list.Count == 0)
+			{
+				return false;
+			}
+			if (list.Any((ITitleProduct kp) => kp.InStock))
+			{
+				return false;
+			}
+			list = list.Where((ITitleProduct kp) => kp.HasBeenInStock).ToList();
+			if (list.Count == 0)
+			{
+				return false;
+			}
+			return list.All((ITitleProduct kp) => kp.ShowOutOfStock);
+		}
+	}
+
+	public bool HasBeenInStock => _kioskProducts.Any((ITitleProduct kp) => kp.HasBeenInStock);
 
 	public string SortAlpha
 	{

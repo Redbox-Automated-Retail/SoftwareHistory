@@ -4,6 +4,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
+using Redbox.Rental.Services;
 using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views;
@@ -40,11 +41,10 @@ public class ComingSoonViewFunctions
 			BitmapImage image = null;
 			if (!string.IsNullOrEmpty(text3) && text3.StartsWith("cache:"))
 			{
-				string imageName = text3.Substring(6);
-				IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-				if (service != null)
+				string text4 = text3.Substring(6);
+				if (OrchestrationService.DataServiceRegisterBitmapImage(text4, text4))
 				{
-					image = service.GetBitmapImage(imageName);
+					image = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.GetBitmapImage(text4);
 				}
 			}
 			IComingSoonTitle item = new ComingSoonTitle

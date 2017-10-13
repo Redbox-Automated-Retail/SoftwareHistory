@@ -50,7 +50,7 @@ public enum Genres : long
 	Bluray = 1022L,
 	[Description("redbox Replay")]
 	RedboxReplayMovies = 1025L,
-	[Description("ActionGames")]
+	[Description("Action Games")]
 	ActionGames = 1026L,
 	[Description("Fighting")]
 	Fighting = 1028L,

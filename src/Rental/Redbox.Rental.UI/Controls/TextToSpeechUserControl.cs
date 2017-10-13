@@ -1,19 +1,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 
 namespace Redbox.Rental.UI.Controls;
 
-public class TextToSpeechUserControl : UserControl, ITextToSpeechControl
+public class TextToSpeechUserControl : RentalUserControl, ITextToSpeechControl
 {
 	private Dictionary<string, RoutedCommand> m_routedCommands = new Dictionary<string, RoutedCommand>();
 
 	protected Dictionary<string, RoutedCommand> RoutedCommands => m_routedCommands;
+
+	public virtual ISpeechControl GetSpeechControl()
+	{
+		return null;
+	}
 
 	public virtual string ControlText(string controlName)
 	{

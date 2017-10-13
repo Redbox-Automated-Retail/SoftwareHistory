@@ -14,11 +14,7 @@ namespace Redbox.Rental.UI.Views;
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "StartView")]
 public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, IComponentConnector
 {
-	public IActor Actor { get; set; }
-
 	private StartViewModel StartViewModel => base.DataContext as StartViewModel;
-
-	public event WPFHitHandler OnWPFHit;
 
 	public StartViewUserControl()
 	{
@@ -26,10 +22,12 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		ApplyTheme();
 		RegisterRoutedCommand("RentOrBuyMoviesCommand", Redbox.Rental.UI.Commands.RentOrBuyMoviesCommand);
 		RegisterRoutedCommand("RentOrBuyGamesCommand", Redbox.Rental.UI.Commands.RentOrBuyGamesCommand);
-		RegisterRoutedCommand("BuyMoviesOrGamesCommand", Redbox.Rental.UI.Commands.BuyMoviesOrGamesCommand);
+		RegisterRoutedCommand("BuyMoviesCommand", Redbox.Rental.UI.Commands.BuyMoviesCommand);
+		RegisterRoutedCommand("BuyGamesCommand", Redbox.Rental.UI.Commands.BuyGamesCommand);
 		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
 		RegisterRoutedCommand("ReturnProductCommand", Redbox.Rental.UI.Commands.ReturnProductCommand);
 		RegisterRoutedCommand("HelpCommand", Redbox.Rental.UI.Commands.HelpCommand);
+		PostTouchScreenHealthActivity();
 	}
 
 	private void ApplyTheme()
@@ -37,7 +35,8 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(all_movies_button);
 		obj?.SetStyle(games_button);
-		obj?.SetStyle(buy_movies_or_games_button);
+		obj?.SetStyle(buy_movies_button);
+		obj?.SetStyle(buy_games_button);
 		obj?.SetStyle(return_button);
 		obj?.SetStyle(online_pickup_button);
 		obj?.SetStyle(handicap_button);
@@ -67,9 +66,14 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		e.CanExecute = true;
 	}
 
-	private void BuyMoviesOrGameCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+	private void BuyMoviesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 	{
-		e.CanExecute = buy_movies_or_games_button.Visibility == Visibility.Visible;
+		e.CanExecute = buy_movies_button.Visibility == Visibility.Visible;
+	}
+
+	private void BuyGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+	{
+		e.CanExecute = buy_games_button.Visibility == Visibility.Visible;
 	}
 
 	private void RentGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -77,9 +81,15 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		e.CanExecute = games_button.Visibility == Visibility.Visible;
 	}
 
-	private void BuyMoviesOrGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	private void BuyMoviesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessBuyMoviesOrGamesButtonClick();
+		StartViewModel?.ProcessBuyMoviesButtonClick();
+		HandleWPFHit();
+	}
+
+	private void BuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		StartViewModel?.ProcessBuyGamesButtonClick();
 		HandleWPFHit();
 	}
 
@@ -99,11 +109,6 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 	{
 		StartViewModel?.ProcessReturnButtonClicked();
 		HandleWPFHit();
-	}
-
-	private void HandleWPFHit()
-	{
-		OnWPFHit?.Invoke(Actor);
 	}
 
 	private void HelpCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)

@@ -19,4 +19,6 @@ public interface IKernelExtensionHost : IDisposable
 	void HandleHostCrash(Exception e);
 
 	bool CanSwitch(out ErrorList errors);
+
+	void RegisterCommunicationActivity(Action<object, EventArgs> action);
 }

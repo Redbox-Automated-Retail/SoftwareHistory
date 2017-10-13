@@ -24,6 +24,8 @@ public class DataService : IDataService
 
 	private IKioskData _kioskData;
 
+	private IEngineApplication _engine;
+
 	private string _runningPath;
 
 	private string _dataPath;
@@ -54,15 +56,16 @@ public class DataService : IDataService
 
 	private bool HasKioskDataStagedInstance => _kioskDataStagedInstance != null;
 
-	public DataService(IKernelService kernelService, IDataServiceInstance dataServiceInstance, IProfileData profileData, ICacheData cacheData, IKioskData kioskData)
+	public DataService(IKernelService kernelService, IDataServiceInstance dataServiceInstance, IProfileData profileData, ICacheData cacheData, IKioskData kioskData, IEngineApplication engine)
 	{
 		_kernelService = kernelService;
 		_dataServiceInstance = dataServiceInstance;
 		_profileData = profileData;
 		_cacheData = cacheData;
 		_kioskData = kioskData;
-		_runningPath = Path.GetDirectoryName(typeof(DataService).Assembly.Location);
-		_dataPath = Path.Combine(_runningPath, "..\\data");
+		_engine = engine;
+		_runningPath = engine.RunningPath;
+		_dataPath = engine.DataPath;
 	}
 
 	public ErrorList Initialize()
@@ -300,6 +303,26 @@ public class DataService : IDataService
 		return errorList;
 	}
 
+	public ErrorList GetProduct(long productId, bool excludeTitleRollup, out IKioskProduct kioskProduct)
+	{
+		WaitForFirstLoad();
+		kioskProduct = null;
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				kioskProduct = _kioskProductView.GetProduct(productId, excludeTitleRollup);
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetProduct", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
 	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, out List<IKioskProduct> products)
 	{
 		WaitForFirstLoad();
@@ -402,6 +425,55 @@ public class DataService : IDataService
 	public int GetInStockGameCount()
 	{
 		return _kioskProductView?.GetInStockGameCount() ?? 0;
+	}
+
+	public List<SubPlatform> GetSubPlatforms()
+	{
+		List<SubPlatform> list = new List<SubPlatform>();
+		if (_dataServiceInstance?.ProfileDataInstance?.SubPlatforms != null)
+		{
+			foreach (KeyValuePair<long, SubPlatform> subPlatform in _dataServiceInstance.ProfileDataInstance.SubPlatforms)
+			{
+				list.Add(subPlatform.Value);
+			}
+		}
+		return list;
+	}
+
+	public List<ProductType> GetProductTypes()
+	{
+		List<ProductType> list = new List<ProductType>();
+		if (_dataServiceInstance?.ProfileDataInstance?.ProductTypes != null)
+		{
+			foreach (KeyValuePair<long, ProductType> productType in _dataServiceInstance.ProfileDataInstance.ProductTypes)
+			{
+				list.Add(productType.Value);
+			}
+		}
+		return list;
+	}
+
+	public Store GetStore()
+	{
+		long kioskId = ServiceLocator.Instance.GetService<IStoreManager>().KioskId;
+		Store store;
+		if (_dataServiceInstance.ProfileDataInstance.Stores.ContainsKey(kioskId))
+		{
+			store = _dataServiceInstance.ProfileDataInstance.Stores[kioskId];
+		}
+		else
+		{
+			store = new Store
+			{
+				StoreId = 0L
+			};
+			store.Sellthru = true;
+			store.PurchasePrice = 5m;
+			store.PurchaseTaxRate = 8m;
+			store.RentalTaxRate = 8m;
+			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");
+		}
+		return store;
 	}
 
 	private ErrorList PerformActionWhileLocked(Action action)
@@ -541,25 +613,8 @@ public class DataService : IDataService
 
 	private void RefreshView()
 	{
+		Store store = GetStore();
 		IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
-		long kioskId = service.KioskId;
-		Store store;
-		if (_dataServiceInstance.ProfileDataInstance.Stores.ContainsKey(kioskId))
-		{
-			store = _dataServiceInstance.ProfileDataInstance.Stores[kioskId];
-		}
-		else
-		{
-			store = new Store
-			{
-				StoreId = 0L
-			};
-			store.Sellthru = true;
-			store.PurchasePrice = 5m;
-			store.PurchaseTaxRate = 8m;
-			store.RentalTaxRate = 8m;
-			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");
-		}
 		service.SellThru = store.Sellthru;
 		service.PurchasePrice = store.PurchasePrice;
 		_kioskProductView = new KioskProductView(store, _dataServiceInstance.ProfileDataInstance, _dataServiceInstance.CacheDataInstance, _dataServiceInstance.KioskDataInstance, service);

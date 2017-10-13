@@ -41,88 +41,67 @@
   </UIElement.CommandBindings>
   <Grid>
     <Grid Name="upperpart_gray_background" Height="568" Width="1024" VerticalAlignment="Top" Background="#EAEAEA" />
-    <Grid Name="center_gray_background" Background="#9F9F9F" Margin="0,568,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Height="54" Width="1024">
-      <Border Name="back_button" Style="{StaticResource gray_button_style}" Margin="23,0,0,0" Width="114" VerticalAlignment="Center">
-        <UIElement.InputBindings>
-          <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.GoBack}" />
-        </UIElement.InputBindings>
+    <Grid Name="center_gray_background" Background="#D8D8D8" Margin="0,568,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Height="54" Width="1024">
+      <controls:RoundedButton x:Name="back_button" Style="{StaticResource help_back_button_style}" Margin="23,8,0,12" Width="114" VerticalAlignment="Center" HorizontalAlignment="Left" Height="34" Command="{x:Static local:HelpViewCommands.GoBack}">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
-          <Image Width="21" Height="18" Margin="0,0,15,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/back-white-arrow.png" />
-          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_target_smaller}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFFFF" Text="BACK" />
+          <Image Width="21" Height="18" Margin="0,0,15,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/back-rubine-arrow.png" />
+          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_target_smaller}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="BACK" />
         </StackPanel>
-      </Border>
+      </controls:RoundedButton>
       <StackPanel Margin="230,0,0,0" Orientation="Horizontal">
-        <Border Name="close_button" Style="{StaticResource gray_button_style}" Margin="227,0,0,0" Visibility="Collapsed">
-          <UIElement.InputBindings>
-            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.GoBack}" />
-          </UIElement.InputBindings>
+        <controls:RoundedButton x:Name="close_button" Style="{StaticResource help_gray_button_style}" Margin="227,0,0,0" Visibility="Collapsed" Command="{x:Static local:HelpViewCommands.GoBack}">
           <Grid>
             <TextBlock Name="ButtonClose_Text" Style="{StaticResource gray_button_text_style}" Text="Close" />
           </Grid>
-        </Border>
-        <Border Name="faq_button" Style="{StaticResource gray_button_style}" IsEnabled="False">
-          <UIElement.InputBindings>
-            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
-          </UIElement.InputBindings>
+        </controls:RoundedButton>
+        <controls:RoundedButton x:Name="faq_button" Style="{StaticResource help_gray_button_style}" IsEnabled="False" Command="{x:Static local:HelpViewCommands.ShowDocument}">
           <Grid>
             <TextBlock Name="ButtonFAQ_Text" Style="{StaticResource gray_button_text_style}" IsEnabled="True" Text="Rental FAQ" />
             <Border Name="brdRentalFaqUpdated" Style="{StaticResource help_updated_border_style}">
               <TextBlock Name="txtRentalFaqUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" Margin="2,-1" VerticalAlignment="Top" />
             </Border>
           </Grid>
-        </Border>
-        <Border Name="terms_button" Style="{StaticResource gray_button_style}">
-          <UIElement.InputBindings>
-            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
-          </UIElement.InputBindings>
+        </controls:RoundedButton>
+        <controls:RoundedButton x:Name="terms_button" Style="{StaticResource help_gray_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}">
           <Grid>
-            <TextBlock Name="ButtonTerms_Text" Style="{StaticResource gray_button_text_style}" Text="Transaction Terms" Margin="0,0,0,0" />
+            <TextBlock Name="ButtonTerms_Text" Style="{StaticResource gray_button_text_style}" Text="Transaction Terms" />
             <Border Name="brdTransactionTermsUpdated" Style="{StaticResource help_updated_border_style}">
               <TextBlock Name="txtTransactionTermsUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" FontFamily="Arial" />
             </Border>
           </Grid>
-        </Border>
-        <Border Name="terms_redbox_card_button" Style="{StaticResource gray_button_style}">
-          <UIElement.InputBindings>
-            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
-          </UIElement.InputBindings>
+        </controls:RoundedButton>
+        <controls:RoundedButton x:Name="terms_redbox_card_button" Style="{StaticResource help_gray_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}">
           <Grid>
             <TextBlock Name="ButtonTermsRedboxCard_Text" Style="{StaticResource gray_button_text_style}" Text="Redbox Card Terms" />
             <Border Name="brdRedboxCardTermsUpdated" Style="{StaticResource help_updated_border_style}">
               <TextBlock Name="txtRedboxCardTermsUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" />
             </Border>
           </Grid>
-        </Border>
-        <Border Name="privacy_button" Style="{StaticResource gray_button_style}">
-          <UIElement.InputBindings>
-            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
-          </UIElement.InputBindings>
+        </controls:RoundedButton>
+        <controls:RoundedButton x:Name="privacy_button" Style="{StaticResource help_gray_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}">
           <Grid>
             <TextBlock Name="ButtonPrivacy_Text" Style="{StaticResource gray_button_text_style}" Text="Privacy" />
             <Border Name="brdPrivacyUpdated" Style="{StaticResource help_updated_border_style}">
               <TextBlock Name="txtPrivacyUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" />
             </Border>
           </Grid>
-        </Border>
-        <Border Name="play_pass_button" Style="{StaticResource gray_button_style}">
-          <UIElement.InputBindings>
-            <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.ShowDocument}" />
-          </UIElement.InputBindings>
+        </controls:RoundedButton>
+        <controls:RoundedButton x:Name="play_pass_button" Style="{StaticResource help_gray_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}">
           <Grid>
             <TextBlock Name="ButtonPlayPass_Text" Style="{StaticResource gray_button_text_style}" Text="Play Pass" />
             <Border Name="brdPlayPassUpdated" Style="{StaticResource help_updated_border_style}">
               <TextBlock Name="txtPlayPassUpdated" Style="{StaticResource help_updated_text_style}" Text="Updated" />
             </Border>
           </Grid>
-        </Border>
+        </controls:RoundedButton>
       </StackPanel>
     </Grid>
     <TextBlock Name="title_label" Margin="25,14,0,0" Width="512" Height="42" Foreground="#2C2E32" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Title" Style="{StaticResource font_target_medium}" />
-    <TextBlock Name="contact_redbox_label" Margin="110,29,0,0" Width="600" Height="40" Foreground="#2C2E32" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Contact Redbox customer service at 1.866.REDBOX3 (1.866.733.2693)" Style="{StaticResource font_akzidenz_regular_small}" />
-    <TextBlock Name="store_number_label" Margin="864,29,0,0" Width="90" Height="40" Foreground="#FF000000" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Kiosk ID:" Style="{StaticResource font_akzidenz_regular_16}" />
-    <TextBlock Name="store_number_text" Margin="945,29,0,0" Width="110" Height="40" Foreground="#FF000000" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Store#" Style="{StaticResource font_akzidenz_regular_16}" />
+    <TextBlock Name="contact_redbox_label" Margin="110,29,0,0" Width="600" Height="40" Foreground="#2C2E32" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Contact Redbox customer service at 1.866.REDBOX3 (1.866.733.2693)" Style="{StaticResource font_montserrat_regular_17}" />
+    <TextBlock Name="store_number_label" Margin="864,29,0,0" Width="90" Height="40" Foreground="#FF000000" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Kiosk ID:" Style="{StaticResource font_montserrat_regular_18}" />
+    <TextBlock Name="store_number_text" Margin="945,29,0,0" Width="110" Height="40" Foreground="#FF000000" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Store#" Style="{StaticResource font_montserrat_regular_18}" />
     <Grid Name="draw_line" Margin="19,69,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="985" Height="3" Background="#2C2E32" />
-    <TextBlock Name="page_counter" Margin="470,72,0,0" Width="600" Height="40" Foreground="#2C2E32" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Page" Style="{StaticResource font_akzidenz_regular_tiny}" />
+    <TextBlock Name="page_counter" Margin="470,72,0,0" Width="600" Height="40" Foreground="#2C2E32" VerticalAlignment="Top" HorizontalAlignment="Left" Text="Page" Style="{StaticResource font_montserrat_regular_13}" />
     <Image Name="left_arrow" Margin="0,197,0,0" Height="292" Width="53" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/left-navigation-arrow.png">
       <UIElement.InputBindings>
         <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.PageLeft}" />
@@ -135,8 +114,8 @@
     </Image>
     <Rectangle Name="DocumentPageVisual" Margin="85,93,0,0" Width="886" Height="455" VerticalAlignment="Top" HorizontalAlignment="Left" />
     <Grid Name="action_zone_background_border" Margin="0,622,0,0" Width="1024" Height="69" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#303030" />
-    <Grid Name="action_zone_background" Margin="0,624,0,0" Width="1024" Height="146" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#3C3C3C" />
-    <Image Name="redbox_logo" Margin="50,667,0,0" Width="133" Height="40" VerticalAlignment="Top" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/redbox-logo.png">
+    <Grid Name="action_zone_background" Margin="0,624,0,0" Width="1024" Height="146" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#380B44" />
+    <Image Name="redbox_logo" Margin="50,0,0,59" Width="133" Height="40" VerticalAlignment="Bottom" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite.png">
       <UIElement.InputBindings>
         <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.RedboxLogoCommand}" />
       </UIElement.InputBindings>

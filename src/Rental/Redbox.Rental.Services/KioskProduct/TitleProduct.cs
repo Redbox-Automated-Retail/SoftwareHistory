@@ -82,11 +82,13 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
+	public bool IsEmptyCase => ProductId == 1139;
+
 	public bool IsSellable
 	{
 		get
 		{
-			if (!SellThru)
+			if (DoNotRent || !IsValidProduct || !SellThru)
 			{
 				return false;
 			}
@@ -121,6 +123,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				}
 				if (!SellThruDate.HasValue)
 				{
+					if (TitleType == TitleType.DigitalCode)
+					{
+						return true;
+					}
 					IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
 					if (service == null)
 					{
@@ -137,6 +143,46 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				}
 			}
 			return true;
+		}
+	}
+
+	public bool IsRentable
+	{
+		get
+		{
+			if (DoNotRent || !IsValidProduct)
+			{
+				return false;
+			}
+			if (TitleType == TitleType.DigitalCode)
+			{
+				return false;
+			}
+			return IsAvailable;
+		}
+	}
+
+	public bool IsSellableAndInStock
+	{
+		get
+		{
+			if (IsSellable)
+			{
+				return InStock;
+			}
+			return false;
+		}
+	}
+
+	public bool IsRentableAndInStock
+	{
+		get
+		{
+			if (IsRentable)
+			{
+				return InStock;
+			}
+			return false;
 		}
 	}
 
@@ -160,6 +206,14 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return 0m;
 			}
+			if (TitleType == TitleType.DigitalCode)
+			{
+				if (!SellThruPrice.HasValue)
+				{
+					return 0m;
+				}
+				return GetAdjustedPurchasePrice(SellThruPrice.Value);
+			}
 			return GetAdjustedPurchasePrice(SellThruPrice ?? _store.PurchasePrice);
 		}
 	}
@@ -178,13 +232,31 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public bool IsAvailable => DateTime.Now > MerchandiseDate;
+	public bool IsAvailable
+	{
+		get
+		{
+			if (TitleType == TitleType.DigitalCode)
+			{
+				return true;
+			}
+			return DateTime.Now > MerchandiseDate;
+		}
+	}
 
 	public bool ComingSoon
 	{
 		get
 		{
+			if (DoNotRent || !IsValidProduct)
+			{
+				return false;
+			}
 			if (ProductId == 1139)
+			{
+				return false;
+			}
+			if (TitleType == TitleType.DigitalCode || TitleType == TitleType.NintendoSwitch)
 			{
 				return false;
 			}
@@ -210,6 +282,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return false;
 			}
+			if (TitleType == TitleType.DigitalCode)
+			{
+				return false;
+			}
 			if (!_titleCache.LastDateOutOfStock.HasValue)
 			{
 				return false;
@@ -219,6 +295,18 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				return false;
 			}
 			return (DateTime.Now.Date - _titleCache.LastDateOutOfStock.Value).Days < 25;
+		}
+	}
+
+	public bool HasBeenInStock
+	{
+		get
+		{
+			if (!_titleCache.LastDateOutOfStock.HasValue)
+			{
+				return false;
+			}
+			return true;
 		}
 	}
 
@@ -266,10 +354,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 		if (_store.State == "MD")
 		{
-			decimal purchaseTaxRate = _store.PurchaseTaxRate;
-			if (purchaseTaxRate > 0m)
+			decimal num = ((TitleType == TitleType.DigitalCode) ? _store.DigitalPurchaseTaxRate : _store.PurchaseTaxRate);
+			if (num > 0m)
 			{
-				return Math.Round(price * (purchaseTaxRate / 100m + 1m), 2);
+				return Math.Round(price * (num / 100m + 1m), 2);
 			}
 		}
 		return price;

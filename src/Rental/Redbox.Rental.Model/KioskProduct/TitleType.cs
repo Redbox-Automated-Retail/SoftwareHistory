@@ -2,17 +2,19 @@ namespace Redbox.Rental.Model.KioskProduct;
 
 public enum TitleType
 {
-	All,
-	DVD,
-	Bluray,
-	Xbox360,
-	PS2,
-	PS3,
-	PSP,
-	Wii,
-	DS,
-	PC,
-	WiiU,
-	PS4,
-	XboxOne
+	All = 0,
+	DVD = 1,
+	Bluray = 2,
+	Xbox360 = 3,
+	PS2 = 4,
+	PS3 = 5,
+	PSP = 6,
+	Wii = 7,
+	DS = 8,
+	PC = 9,
+	WiiU = 10,
+	PS4 = 11,
+	XboxOne = 12,
+	DigitalCode = 17,
+	NintendoSwitch = 18
 }

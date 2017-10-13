@@ -41,8 +41,9 @@ public class KioskData : IKioskData
 	public KioskData(IKernelService kernelService)
 	{
 		_kernelService = kernelService;
-		_runningPath = Path.GetDirectoryName(typeof(KioskData).Assembly.Location);
-		_dataPath = Path.Combine(_runningPath, "..\\data");
+		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
+		_runningPath = service.RunningPath;
+		_dataPath = service.DataPath;
 		_versionsStagedPath = Path.Combine(_dataPath, "KioskDataVersions.staged");
 		_versionsActivePath = Path.Combine(_dataPath, "KioskDataVersions.active");
 		_collectionsStagedPath = Path.Combine(_dataPath, "KioskDataCollections.staged");

@@ -11,13 +11,16 @@ public class BundleFunctions
 	public static string GetDictionaryStringValue(string dictionaryName, string key)
 	{
 		string result = null;
-		Dictionary<string, object> dictionary = GetDictionary(dictionaryName);
-		if (dictionary != null)
+		if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(dictionaryName))
 		{
-			object value = null;
-			if (dictionary.TryGetValue(key, out value))
+			Dictionary<string, object> dictionary = GetDictionary(dictionaryName);
+			if (dictionary != null)
 			{
-				result = value as string;
+				object value = null;
+				if (dictionary.TryGetValue(key, out value))
+				{
+					result = value as string;
+				}
 			}
 		}
 		return result;

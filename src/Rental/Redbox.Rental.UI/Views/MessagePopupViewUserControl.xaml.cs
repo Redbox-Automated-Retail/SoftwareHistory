@@ -1,9 +1,14 @@
-using System;
+﻿using System;
+using System.CodeDom.Compiler;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.UI.Controls;
+using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
@@ -17,85 +22,7 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	private bool m_timerDisabled;
 
-	public double BackgroundOpacity
-	{
-		get
-		{
-			return DarkBackground.Opacity;
-		}
-		set
-		{
-			DarkBackground.Opacity = value;
-		}
-	}
-
-	public string Message
-	{
-		get
-		{
-			return MessageText.Text;
-		}
-		set
-		{
-			MessageText.Text = value;
-		}
-	}
-
-	public string Title
-	{
-		get
-		{
-			return TitleText.Text;
-		}
-		set
-		{
-			TitleText.Text = value;
-		}
-	}
-
-	public string TitleStyle
-	{
-		set
-		{
-			SetStyle(TitleText, value);
-		}
-	}
-
-	public string MessageStyle
-	{
-		set
-		{
-			SetStyle(MessageText, value);
-		}
-	}
-
-	public string Button1Text
-	{
-		get
-		{
-			return Button1_Text.Text;
-		}
-		set
-		{
-			Button1_Text.Text = value;
-			Button1.Visibility = (string.IsNullOrEmpty(Button1_Text.Text) ? Visibility.Hidden : Visibility.Visible);
-		}
-	}
-
-	public string Button2Text
-	{
-		get
-		{
-			return Button2_Text.Text;
-		}
-		set
-		{
-			Button2_Text.Text = value;
-			Button2.Visibility = (string.IsNullOrEmpty(Button2_Text.Text) ? Visibility.Hidden : Visibility.Visible);
-		}
-	}
-
-	public int Timeout
+	private int Timeout
 	{
 		get
 		{
@@ -111,34 +38,28 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 			m_dispatcherTimer = new DispatcherTimer();
 			m_dispatcherTimer.Interval = new TimeSpan(m_timeout * 10000);
 			m_dispatcherTimer.Tick += TimerTick;
-			m_dispatcherTimer.Start();
+			if (m_timeout > 0)
+			{
+				m_dispatcherTimer.Start();
+			}
 		}
 	}
 
-	public event Action OnButton1Clicked;
-
-	public event Action OnButton2Clicked;
-
-	public event Action OnTimeOut;
+	private MessagePopupViewModel Model => base.DataContext as MessagePopupViewModel;
 
 	public MessagePopupViewUserControl()
 	{
 		InitializeComponent();
+		ApplyTheme();
 		RegisterRoutedCommand("Button1", MessagePopupViewCommands.Button1);
 		RegisterRoutedCommand("Button2", MessagePopupViewCommands.Button2);
-		Message = null;
-		Title = null;
-		Button1Text = null;
-		Button2Text = null;
 	}
 
-	private void SetStyle(FrameworkElement frameworkElement, string styleName)
+	private void ApplyTheme()
 	{
-		object obj = FindResource(styleName);
-		if (obj != null && frameworkElement != null && obj is Style style)
-		{
-			frameworkElement.Style = style;
-		}
+		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
+		obj?.SetStyle(Button1);
+		obj?.SetStyle(Button2);
 	}
 
 	public void StopTimer()
@@ -166,27 +87,40 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 				}
 			}
 		}
-		if (flag && OnTimeOut != null)
+		if (flag && Model?.OnTimeOut != null)
 		{
-			OnTimeOut();
+			Model.OnTimeOut();
 		}
 	}
 
 	private void Button1CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StopTimer(executeTimeoutEvent: false);
-		if (OnButton1Clicked != null)
+		if (Model?.OnButton1Clicked != null)
 		{
-			OnButton1Clicked();
+			Model.OnButton1Clicked();
 		}
 	}
 
 	private void Button2CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StopTimer(executeTimeoutEvent: false);
-		if (OnButton2Clicked != null)
+		if (Model?.OnButton2Clicked != null)
 		{
-			OnButton2Clicked();
+			Model.OnButton2Clicked();
+		}
+	}
+
+	private void TextToSpeechUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+	{
+		if (Model != null)
+		{
+			Timeout = Model.TimeOut;
+			if (Model.ContentUserControl != null)
+			{
+				UserControlContainer.Children.Clear();
+				UserControlContainer.Children.Add(Model.ContentUserControl);
+			}
 		}
 	}
 }

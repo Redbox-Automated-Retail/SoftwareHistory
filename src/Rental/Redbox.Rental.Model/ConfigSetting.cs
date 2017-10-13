@@ -8,6 +8,8 @@ public static class ConfigSetting
 
 	public static string SellThruDays = "SellThruDays";
 
+	public static string SendAppCrashAlert = "SendAppCrashAlert";
+
 	public static string GameEnableXbox360 = "GameEnableXbox360";
 
 	public static string GameEnableXboxOne = "GameEnableXboxOne";
@@ -19,6 +21,8 @@ public static class ConfigSetting
 	public static string GameEnableWii = "GameEnableWii";
 
 	public static string GameEnableWiiU = "GameEnableWiiU";
+
+	public static string GameEnableNintendoSwitch = "GameEnableNintendoSwitch";
 
 	public static string DefaultCulture = "DefaultCulture";
 

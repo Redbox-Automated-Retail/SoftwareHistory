@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Redbox.Lua;
+using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Model.Session;
@@ -41,21 +43,49 @@ public interface IBrowseState
 
 	TitleType TitleType { get; set; }
 
+	bool BrowseCollections { get; set; }
+
+	ICollectionProduct BrowseCollectionProduct { get; set; }
+
 	int PageNumber { get; set; }
 
 	int? BrowseGenre { get; set; }
 
 	Genres? Genre { get; set; }
 
+	List<IBrowseItemModel> BrowseItemModels { get; set; }
+
 	IKioskProduct CenterCarouselProduct { get; set; }
 
 	LuaTable CenterCarouselProductLuaTable { get; }
 
-	IKioskProduct BrowseSelectionSelectedProduct { set; }
+	IKioskProduct BrowseSelectionSelectedProduct { get; set; }
 
 	LuaTable BrowseSelectionSelectedProductLuaTable { get; set; }
 
 	string ProductDetailShownFromView { get; set; }
 
 	string ItemAddedFromView { get; set; }
+
+	bool IsNonBrowseView { get; set; }
+
+	List<IKioskProduct> BrowseProductsShown { get; set; }
+
+	List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }
+
+	LuaTable BrowseProductsShownLuaTable { get; }
+
+	void PushBrowseStateSet();
+
+	IBrowseStateSet PopBrowseStateSet();
+
+	void UnwindBrowseStateSetStack();
+
+	void PushCollectionsBrowseStateSet();
+
+	void PushCollectionBrowseStateSet(ICollectionProduct collectionProduct);
+
+	void PushNonBrowseViewBrowseStateSet();
+
+	void SetDefaultBrowseStateSet();
 }

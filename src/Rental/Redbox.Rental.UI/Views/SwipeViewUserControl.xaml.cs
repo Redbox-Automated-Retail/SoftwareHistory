@@ -26,8 +26,6 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 
 	private Dictionary<SwipeViewType, Type> _swipeViewTypeAnimationControls;
 
-	public IActor Actor { get; set; }
-
 	public string TitleText
 	{
 		get
@@ -157,8 +155,6 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		}
 	}
 
-	public event WPFHitHandler OnWPFHit;
-
 	public event Action OnGoBack;
 
 	public event Action OnTimeOut;
@@ -212,14 +208,6 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		HandleWPFHit();
 	}
 
-	private void HandleWPFHit()
-	{
-		if (OnWPFHit != null)
-		{
-			OnWPFHit(Actor);
-		}
-	}
-
 	private void InitializeSwipeViewTypeAnimationControls()
 	{
 		_swipeViewTypeAnimationControls = new Dictionary<SwipeViewType, Type>
@@ -237,5 +225,9 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 				typeof(SwipeCreditsUserControl)
 			}
 		};
+	}
+
+	private void SwipeRegularCheckOutUserControl_Loaded(object sender, RoutedEventArgs e)
+	{
 	}
 }

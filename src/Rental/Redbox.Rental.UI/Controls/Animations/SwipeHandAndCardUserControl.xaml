@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl x:Class="Redbox.Rental.UI.Controls.Animations.SwipeHandAndCardUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls.Animations">
   <Grid>
-    <Path Name="RightCardReader" Fill="#E61C24" Stroke="#FFFFFFFF" StrokeThickness="5" Width="28" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,98">
+    <Path Name="RightCardReader" Fill="#E42045" Stroke="#FFFFFFFF" StrokeThickness="5" Width="28" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,98">
       <Path.Data>
         <PathGeometry>
           <PathGeometry.Figures>
@@ -24,7 +24,7 @@
       </Path.Data>
     </Path>
     <Grid Name="CardAndHand">
-      <Path Name="Finger2" Fill="#E61C24" Stroke="#FFFFFFFF" StrokeThickness="5" Width="148" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,60">
+      <Path Name="Finger2" Fill="#E42045" Stroke="#FFFFFFFF" StrokeThickness="5" Width="148" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,60">
         <Path.Data>
           <PathGeometry>
             <PathGeometry.Figures>
@@ -39,7 +39,7 @@
           </PathGeometry>
         </Path.Data>
       </Path>
-      <Path Name="Finger1" Fill="#E61C24" Stroke="#FFFFFFFF" StrokeThickness="5" Width="150" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,60">
+      <Path Name="Finger1" Fill="#E42045" Stroke="#FFFFFFFF" StrokeThickness="5" Width="150" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,60">
         <Path.Data>
           <PathGeometry>
             <PathGeometry.Figures>
@@ -76,7 +76,7 @@
           </StackPanel>
         </Grid>
       </Border>
-      <Path Name="Hand" StrokeThickness="5" Stroke="#FFFFFFFF" Fill="#E61C24" Width="328" Height="350" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,60">
+      <Path Name="Hand" StrokeThickness="5" Stroke="#FFFFFFFF" Fill="#E42045" Width="328" Height="350" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,60">
         <UIElement.OpacityMask>
           <LinearGradientBrush EndPoint="1,1" StartPoint="0,0">
             <GradientStop Color="#FFFFFFFF" Offset="0.6" />
@@ -132,7 +132,7 @@
         </Path.Data>
       </Path>
     </Grid>
-    <Path Name="LeftCardReader" Fill="#E61C24" Stroke="#FFFFFFFF" StrokeThickness="5" Width="58" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-30,100">
+    <Path Name="LeftCardReader" Fill="#E42045" Stroke="#FFFFFFFF" StrokeThickness="5" Width="58" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-30,100">
       <Path.Data>
         <PathGeometry>
           <PathGeometry.Figures>

@@ -9,8 +9,6 @@ public interface IConfiguration
 
 	Dictionary<TitleType, bool> GameHasContentTypes { get; }
 
-	bool EnablePlatformScreen { get; }
-
 	int BurnInTimeout { get; }
 
 	int BurnInViewDuration { get; }

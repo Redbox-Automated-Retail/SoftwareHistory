@@ -90,7 +90,7 @@ public class CollectionProduct : KioskProduct, ICollectionProduct, IKioskProduct
 		get
 		{
 			List<ITitleProduct> source = (from p in _kioskProducts.ToTitleProducts()
-				where p.IsValidProduct && p.IsAvailable && !p.DoNotRent && (p.InStock || p.ShowOutOfStock)
+				where (p.IsRentable || p.IsSellable) && (p.InStock || p.ShowOutOfStock)
 				select p).ToList();
 			List<ITitleProduct> list = source.Where((ITitleProduct p) => p.InStock).ToList();
 			List<ITitleProduct> collection = source.Where((ITitleProduct p) => !p.InStock).ToList();

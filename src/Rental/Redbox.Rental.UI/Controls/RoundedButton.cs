@@ -269,6 +269,11 @@ public class RoundedButton : Button, IThemedControl
 
 	public event EventHandler OnAnimationComplete;
 
+	public RoundedButton()
+	{
+		base.Focusable = false;
+	}
+
 	protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
 	{
 		base.OnRenderSizeChanged(sizeInfo);
@@ -282,7 +287,7 @@ public class RoundedButton : Button, IThemedControl
 
 	private static void AdjustGlassHighlight(RoundedButton roundedButton)
 	{
-		roundedButton.GlassHighlightWidth = roundedButton.ActualWidth - roundedButton.CornerRadius;
+		roundedButton.GlassHighlightWidth = Math.Max(roundedButton.ActualWidth - roundedButton.CornerRadius, 0.0);
 		roundedButton.GlassHighlightHeight = roundedButton.CornerRadius * 0.66;
 		roundedButton.GlassHighlightCornerRadius = roundedButton.CornerRadius * 0.66;
 	}

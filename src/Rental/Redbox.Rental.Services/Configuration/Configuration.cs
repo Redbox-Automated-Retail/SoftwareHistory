@@ -14,8 +14,6 @@ public class Configuration : IConfiguration
 
 		public const string General = "General";
 
-		public const string EnablePlatformScreen = "EnablePlatformScreen";
-
 		public const string BurnInTimeout = "BurnInTimeout";
 
 		public const string BurnInViewDuration = "BurnInViewDuration";
@@ -24,8 +22,6 @@ public class Configuration : IConfiguration
 	private Dictionary<TitleType, bool> _enabledGameTypes;
 
 	private Dictionary<TitleType, bool> _gameHasContentTypes;
-
-	private bool _enablePlatformScreen;
 
 	private int _burnInTimeout;
 
@@ -47,6 +43,7 @@ public class Configuration : IConfiguration
 				_enabledGameTypes.Add(TitleType.PS4, GetGameConfig(service, ConfigSetting.GameEnablePS4));
 				_enabledGameTypes.Add(TitleType.Wii, GetGameConfig(service, ConfigSetting.GameEnableWii));
 				_enabledGameTypes.Add(TitleType.WiiU, GetGameConfig(service, ConfigSetting.GameEnableWiiU));
+				_enabledGameTypes.Add(TitleType.NintendoSwitch, GetGameConfig(service, ConfigSetting.GameEnableNintendoSwitch));
 			}
 			return _enabledGameTypes;
 		}
@@ -66,12 +63,11 @@ public class Configuration : IConfiguration
 				_gameHasContentTypes.Add(TitleType.PS4, GetMachineSetting(service, MachineSettings.GameHasContentPS4));
 				_gameHasContentTypes.Add(TitleType.Wii, GetMachineSetting(service, MachineSettings.GameHasContentWii));
 				_gameHasContentTypes.Add(TitleType.WiiU, GetMachineSetting(service, MachineSettings.GameHasContentWiiU));
+				_gameHasContentTypes.Add(TitleType.NintendoSwitch, GetMachineSetting(service, MachineSettings.GameHasContentNintendoSwitch));
 			}
 			return _gameHasContentTypes;
 		}
 	}
-
-	public bool EnablePlatformScreen => _enablePlatformScreen;
 
 	public int BurnInTimeout => _burnInTimeout;
 
@@ -85,7 +81,6 @@ public class Configuration : IConfiguration
 	private void Initialize()
 	{
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		_enablePlatformScreen = GetGameConfig(service, "EnablePlatformScreen");
 		_burnInTimeout = ConfigGetValue(service, "system", "General", "BurnInTimeout", 1800000);
 		_burnInViewDuration = ConfigGetValue(service, "system", "General", "BurnInViewDuration", 30000);
 	}
@@ -102,15 +97,12 @@ public class Configuration : IConfiguration
 
 	private bool GetGameConfig(IConfigurationService configService, string settingName)
 	{
-		if (configService == null)
+		bool value = false;
+		if (configService != null && !configService.TryGetValue<bool>("system", "Games", settingName, out value))
 		{
-			return false;
+			value = false;
 		}
-		if (configService.TryGetValue<bool>("system", "Games", settingName, out var value))
-		{
-			return value;
-		}
-		return false;
+		return value;
 	}
 
 	private static T ConfigGetValue<T>(IConfigurationService configService, string configFile, string categoryName, string settingName, T defaultValue)

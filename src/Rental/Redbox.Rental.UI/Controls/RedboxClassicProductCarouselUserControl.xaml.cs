@@ -215,7 +215,7 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 			if (_carouselModel != null)
 			{
 				_carouselModel.TitleRollupOverlayModel.FontSize = fontSize;
-				_carouselModel.TitleRollupOverlayModel.DisplayProductModel = _rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex];
+				_carouselModel.TitleRollupOverlayModel.BrowseItemModel = _rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex];
 			}
 		}
 	}
@@ -258,7 +258,7 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 							(Transform)value2
 						}
 					};
-					double num = 7.0;
+					double num = 2.0;
 					Thickness value4 = new Thickness(2.0);
 					Thickness value5 = new Thickness(num);
 					double num2 = value5.Bottom - value4.Bottom;
@@ -542,8 +542,8 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 			displayProductUserControl.RenderTransform = null;
 			displayProductUserControl.DataContext = _rotatingCarouselProducts[index];
 		}
-		_carouselModel.TitleRollupOverlayModel.DisplayProductModel = _rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex];
-		_carouselModel.ProcessCarouselRotation(_rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex]);
+		_carouselModel.TitleRollupOverlayModel.BrowseItemModel = _rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex];
+		_carouselModel.ProcessCarouselRotation(_rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex], null);
 	}
 
 	private void InitializeCarouselPositions()
@@ -586,7 +586,7 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 		if (displayProductUserControl == _displayProductUserControlList[_carouselPositions.CenterCarouselPositionIndex])
 		{
 			DisplayProductModel displayProductModel = displayProductUserControl.DataContext as DisplayProductModel;
-			_carouselModel.ProcessDisplayProductModelSelected(displayProductModel);
+			_carouselModel.ProcessDisplayProductModelSelected(displayProductModel, e.Parameter);
 		}
 		else if (displayProductUserControl.Tag != null)
 		{
@@ -609,7 +609,7 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 			if (displayProductUserControl != null)
 			{
 				DisplayProductModel displayProductModel = displayProductUserControl.DataContext as DisplayProductModel;
-				_carouselModel.ProcessAddDisplayProductModel(displayProductModel);
+				_carouselModel.ProcessAddDisplayProductModel(displayProductModel, e.Parameter);
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using Redbox.Rental.Model.Browse;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -57,19 +58,19 @@ public class CarouselModel : DependencyObject
 		}
 	}
 
-	public event DisplayProductModelEvent OnCarouselRotation;
+	public event BrowseItemModelEvent OnCarouselRotation;
 
-	public event DisplayProductModelEvent OnDisplayProductModelSelected;
+	public event BrowseItemModelEvent OnDisplayProductModelSelected;
 
-	public event DisplayProductModelEvent OnAddDisplayProductModel;
+	public event BrowseItemModelEvent OnAddDisplayProductModel;
 
-	public event DisplayProductModelEvent OnTitleRollupOverlayCancel;
+	public event BrowseItemModelEvent OnTitleRollupOverlayCancel;
 
-	public event DisplayProductModelEvent OnTitleRollupOverlayTimeout;
+	public event BrowseItemModelEvent OnTitleRollupOverlayTimeout;
 
-	public event DisplayProductModelEvent OnTitleRollupOverlayAddDVD;
+	public event BrowseItemModelEvent OnTitleRollupOverlayAddDVD;
 
-	public event DisplayProductModelEvent OnTitleRollupOverlayAddBluray;
+	public event BrowseItemModelEvent OnTitleRollupOverlayAddBluray;
 
 	public event VisibilityChanged OnTitleRollupOverlayVisibilityChange;
 
@@ -90,24 +91,24 @@ public class CarouselModel : DependencyObject
 		ProcessTitleRollupVisibilityChange(newVisibility);
 	}
 
-	private void TitleRollupOverlayModel_OnTitleRollupOverlayAddBluray(DisplayProductModel displayProductModel)
+	private void TitleRollupOverlayModel_OnTitleRollupOverlayAddBluray(IBrowseItemModel browseItemModel, object parameter)
 	{
-		ProcessTitleRollupOverlayAddBluray(displayProductModel);
+		ProcessTitleRollupOverlayAddBluray(browseItemModel, parameter);
 	}
 
-	private void TitleRollupOverlayModel_OnTitleRollupOverlayAddDVD(DisplayProductModel displayProductModel)
+	private void TitleRollupOverlayModel_OnTitleRollupOverlayAddDVD(IBrowseItemModel browseItemModel, object parameter)
 	{
-		ProcessTitleRollupOverlayAddDVD(displayProductModel);
+		ProcessTitleRollupOverlayAddDVD(browseItemModel, parameter);
 	}
 
-	private void TitleRollupOverlayModel_OnTitleRollupOverlayTimeout(DisplayProductModel displayProductModel)
+	private void TitleRollupOverlayModel_OnTitleRollupOverlayTimeout(IBrowseItemModel browseItemModel, object parameter)
 	{
-		ProcessTitleRollupOverlayTimeout(displayProductModel);
+		ProcessTitleRollupOverlayTimeout(browseItemModel, parameter);
 	}
 
-	private void TitleRollupOverlayModel_OnTitleRollupOverlayCancel(DisplayProductModel displayProductModel)
+	private void TitleRollupOverlayModel_OnTitleRollupOverlayCancel(IBrowseItemModel browseItemModel, object parameter)
 	{
-		ProcessTitleRollupOverlayCancel(displayProductModel);
+		ProcessTitleRollupOverlayCancel(browseItemModel, parameter);
 	}
 
 	public void ProcessTitleRollupVisibilityChange(Visibility newVisibility)
@@ -118,59 +119,59 @@ public class CarouselModel : DependencyObject
 		}
 	}
 
-	public void ProcessTitleRollupOverlayAddBluray(DisplayProductModel displayProductModel)
+	public void ProcessTitleRollupOverlayAddBluray(IBrowseItemModel browseItemModel, object parameter)
 	{
 		if (OnTitleRollupOverlayAddBluray != null)
 		{
-			OnTitleRollupOverlayAddBluray(displayProductModel);
+			OnTitleRollupOverlayAddBluray(browseItemModel, parameter);
 		}
 	}
 
-	public void ProcessTitleRollupOverlayAddDVD(DisplayProductModel displayProductModel)
+	public void ProcessTitleRollupOverlayAddDVD(IBrowseItemModel browseItemModel, object parameter)
 	{
 		if (OnTitleRollupOverlayAddDVD != null)
 		{
-			OnTitleRollupOverlayAddDVD(displayProductModel);
+			OnTitleRollupOverlayAddDVD(browseItemModel, parameter);
 		}
 	}
 
-	public void ProcessTitleRollupOverlayTimeout(DisplayProductModel displayProductModel)
+	public void ProcessTitleRollupOverlayTimeout(IBrowseItemModel browseItemModel, object parameter)
 	{
 		if (OnTitleRollupOverlayTimeout != null)
 		{
-			OnTitleRollupOverlayTimeout(displayProductModel);
+			OnTitleRollupOverlayTimeout(browseItemModel, parameter);
 		}
 	}
 
-	public void ProcessTitleRollupOverlayCancel(DisplayProductModel displayProductModel)
+	public void ProcessTitleRollupOverlayCancel(IBrowseItemModel browseItemModel, object parameter)
 	{
 		if (OnTitleRollupOverlayCancel != null)
 		{
-			OnTitleRollupOverlayCancel(displayProductModel);
+			OnTitleRollupOverlayCancel(browseItemModel, parameter);
 		}
 	}
 
-	public void ProcessAddDisplayProductModel(DisplayProductModel displayProductModel)
+	public void ProcessAddDisplayProductModel(DisplayProductModel displayProductModel, object parameter)
 	{
 		if (OnAddDisplayProductModel != null)
 		{
-			OnAddDisplayProductModel(displayProductModel);
+			OnAddDisplayProductModel(displayProductModel, parameter);
 		}
 	}
 
-	public void ProcessCarouselRotation(DisplayProductModel displayProductModel)
+	public void ProcessCarouselRotation(DisplayProductModel displayProductModel, object parameter)
 	{
 		if (OnCarouselRotation != null)
 		{
-			OnCarouselRotation(displayProductModel);
+			OnCarouselRotation(displayProductModel, parameter);
 		}
 	}
 
-	public void ProcessDisplayProductModelSelected(DisplayProductModel displayProductModel)
+	public void ProcessDisplayProductModelSelected(DisplayProductModel displayProductModel, object parameter)
 	{
 		if (OnDisplayProductModelSelected != null)
 		{
-			OnDisplayProductModelSelected(displayProductModel);
+			OnDisplayProductModelSelected(displayProductModel, parameter);
 		}
 	}
 

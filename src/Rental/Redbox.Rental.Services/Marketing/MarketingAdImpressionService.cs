@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Marketing;
@@ -31,8 +32,8 @@ public class MarketingAdImpressionService : IMarketingAdImpressionService
 	public MarketingAdImpressionService(IStoreManager storeManagerService)
 	{
 		_storeManagerService = storeManagerService;
-		string path = Path.Combine(Path.GetDirectoryName(typeof(MarketingAdImpressionService).Assembly.Location), "..\\data");
-		_impressionFileName = Path.Combine(path, "marketingadimpressions.json");
+		string dataPath = ServiceLocator.Instance.GetService<IEngineApplication>().DataPath;
+		_impressionFileName = Path.Combine(dataPath, "marketingadimpressions.json");
 		if (_changeTimer == null)
 		{
 			_changeTimer = new Timer(delegate

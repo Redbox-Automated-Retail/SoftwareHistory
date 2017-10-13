@@ -4,34 +4,96 @@
     <CommandBinding Command="{x:Static localbase:Commands.CancelTitleRollupOverlayCommand}" Executed="CancelTitleRollupOverlayCommand_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.AddDVDCommand}" Executed="AddDVDCommand_Executed" CanExecute="AddDVDCommand_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.AddBluRayCommand}" Executed="AddBlurayCommand_Executed" CanExecute="AddBlurayCommand_CanExecute" />
+    <CommandBinding Command="{x:Static localbase:Commands.AddDigitalCodeCommand}" Executed="AddDigitalCodeCommand_Executed" CanExecute="DigitalCodeCommand_CanExecute" />
+    <CommandBinding Command="{x:Static localbase:Commands.DigitalCodeInfoCommand}" Executed="DigitalCodeInfoCommand_Executed" CanExecute="DigitalCodeCommand_CanExecute" />
   </UIElement.CommandBindings>
   <Grid>
-    <Border Name="Border" CornerRadius="4" BorderThickness="4" BorderBrush="#970E16">
+    <Border Name="Border" CornerRadius="1" BorderThickness="2" BorderBrush="#E42045">
       <Grid ShowGridLines="False">
         <Panel.Background>
           <SolidColorBrush Color="Black" Opacity="0.8" />
         </Panel.Background>
         <Grid.RowDefinitions>
-          <RowDefinition Height="15*" />
-          <RowDefinition Height="25*" />
-          <RowDefinition Height="15*" />
-          <RowDefinition Height="25*" />
-          <RowDefinition Height="15*" />
+          <RowDefinition Height="10*" />
+          <RowDefinition Height="20*" />
+          <RowDefinition Height="10*" />
+          <RowDefinition Height="20*" />
+          <RowDefinition Height="10*" />
+          <RowDefinition Height="{Binding Path=GridDigitalCodeButtonGridRowHeight, FallbackValue=20*}" />
+          <RowDefinition Height="{Binding Path=GridDigitalCodeButtonMarginGridRowHeight, FallbackValue=10*}" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="10*" />
           <ColumnDefinition Width="80*" />
           <ColumnDefinition Width="10*" />
         </Grid.ColumnDefinitions>
-        <local:RoundedButton x:Name="DVDButton" Grid.Row="1" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource classic_red_button_style}" Command="{x:Static localbase:Commands.AddDVDCommand}" Visibility="{Binding Path=DVDButtonVisibility, FallbackValue=Visible}">
-          <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=DVDButtonText, FallbackValue=+ DVD}" />
+        <local:RoundedButton x:Name="DVDButton" Grid.Row="1" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource rubine_white_border_button_style}" Command="{x:Static localbase:Commands.AddDVDCommand}" Visibility="{Binding Path=DVDButtonVisibility, FallbackValue=Visible}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="10*" />
+              <ColumnDefinition Width="80*" />
+              <ColumnDefinition Width="10*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="{Binding Path=DVDButtonMarginGridRowHeight, FallbackValue=30*}" />
+              <RowDefinition Height="{Binding Path=DVDButtonTextGridRowHeight, FallbackValue=40*}" />
+              <RowDefinition Height="{Binding Path=DVDButtonMarginGridRowHeight, FallbackValue=30*}" />
+            </Grid.RowDefinitions>
+            <Viewbox Grid.Column="1" Grid.Row="1">
+              <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=DVDButtonText, FallbackValue=+ DVD}" />
+            </Viewbox>
+          </Grid>
         </local:RoundedButton>
-        <local:RoundedButton x:Name="BlurayButton" Grid.Row="3" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource classic_blue_button_style}" Command="{x:Static localbase:Commands.AddBluRayCommand}" Visibility="{Binding Path=BlurayButtonVisibility, FallbackValue=Visible}">
-          <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=BlurayButtonText, FallbackValue=+ BLU-RAY}" />
+        <local:RoundedButton x:Name="BlurayButton" Grid.Row="3" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_button_style}" Command="{x:Static localbase:Commands.AddBluRayCommand}" Visibility="{Binding Path=BlurayButtonVisibility, FallbackValue=Visible}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="10*" />
+              <ColumnDefinition Width="80*" />
+              <ColumnDefinition Width="10*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="{Binding Path=BlurayButtonMarginGridRowHeight, FallbackValue=30*}" />
+              <RowDefinition Height="{Binding Path=BlurayButtonTextGridRowHeight, FallbackValue=40*}" />
+              <RowDefinition Height="{Binding Path=BlurayButtonMarginGridRowHeight, FallbackValue=30*}" />
+            </Grid.RowDefinitions>
+            <Viewbox Grid.Column="1" Grid.Row="1">
+              <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=BlurayButtonText, FallbackValue=+ BLU-RAY}" />
+            </Viewbox>
+          </Grid>
+        </local:RoundedButton>
+        <local:RoundedButton x:Name="DigitalCodeButton" Grid.Row="5" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource classic_yellow_button_style}" Command="{x:Static localbase:Commands.AddDigitalCodeCommand}" Visibility="{Binding Path=DigitalCodeButtonVisibility, FallbackValue=Visible}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="10*" />
+              <ColumnDefinition Width="80*" />
+              <ColumnDefinition Width="10*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="{Binding Path=DigitalCodeButtonMarginGridRowHeight, FallbackValue=30*}" />
+              <RowDefinition Height="{Binding Path=DigitalCodeButtonTextGridRowHeight, FallbackValue=40*}" />
+              <RowDefinition Height="{Binding Path=DigitalCodeButtonMarginGridRowHeight, FallbackValue=30*}" />
+            </Grid.RowDefinitions>
+            <Viewbox Grid.Column="1" Grid.Row="1">
+              <TextBlock TextAlignment="Center" Foreground="#FFFFFFFF" Style="{StaticResource font_bryant_bold_12}" FontSize="{Binding Path=FontSize, FallbackValue=16}" Text="{Binding Path=DigitalCodeButtonText, FallbackValue=+ DIGITAL CODE}" />
+            </Viewbox>
+          </Grid>
         </local:RoundedButton>
       </Grid>
     </Border>
-    <local:RoundedButton x:Name="CancelButton" Width="42" Height="42" Style="{StaticResource classic_gray_button_style}" Command="{x:Static localbase:Commands.CancelTitleRollupOverlayCommand}" BorderColor="#970E16" BorderGradientColor="#970E16" CornerRadius="21" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-21,-21">
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,12" Visibility="{Binding Path=DigitalCodeInfoVisibility, FallbackValue=Hidden}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="20*" />
+        <ColumnDefinition Width="80*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="20" />
+      </Grid.RowDefinitions>
+      <local:RoundedButton x:Name="DigitalCodeInfoButton" Grid.Column="0" Grid.Row="0" Width="20" Height="20" Style="{StaticResource white_info_button_style}" Command="{x:Static localbase:Commands.DigitalCodeInfoCommand}" CornerRadius="21" Margin="0,0,5,0">
+        <TextBlock Style="{StaticResource font_cooper_12}">i</TextBlock>
+      </local:RoundedButton>
+      <TextBlock Grid.Column="1" Grid.Row="0" Style="{StaticResource font_bryant_10}" Foreground="#FFFFFFFF" VerticalAlignment="Center" Text="{Binding Path=DigitalCodeInfoText, FallbackValue=What's a Digital Code?}" />
+    </Grid>
+    <local:RoundedButton x:Name="CancelButton" Width="42" Height="42" Style="{StaticResource classic_cancel_button_style}" Command="{x:Static localbase:Commands.CancelTitleRollupOverlayCommand}" BorderColor="#E42045" BorderGradientColor="#E42045" CornerRadius="21" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-21,-21">
       <TextBlock Style="{StaticResource font_bryant_bold_18}">X</TextBlock>
     </local:RoundedButton>
   </Grid>

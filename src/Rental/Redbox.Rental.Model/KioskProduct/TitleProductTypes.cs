@@ -2,7 +2,7 @@ namespace Redbox.Rental.Model.KioskProduct;
 
 public static class TitleProductTypes
 {
-	public static TitleType[] GameFamilyTitleTypes = new TitleType[10]
+	public static TitleType[] GameFamilyTitleTypes = new TitleType[11]
 	{
 		TitleType.Xbox360,
 		TitleType.PS2,
@@ -13,12 +13,14 @@ public static class TitleProductTypes
 		TitleType.PC,
 		TitleType.WiiU,
 		TitleType.PS4,
-		TitleType.XboxOne
+		TitleType.XboxOne,
+		TitleType.NintendoSwitch
 	};
 
-	public static TitleType[] MovieFamilyTitleTypes = new TitleType[2]
+	public static TitleType[] MovieFamilyTitleTypes = new TitleType[3]
 	{
 		TitleType.DVD,
-		TitleType.Bluray
+		TitleType.Bluray,
+		TitleType.DigitalCode
 	};
 }

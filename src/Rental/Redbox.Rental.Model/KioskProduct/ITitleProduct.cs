@@ -57,6 +57,14 @@ public interface ITitleProduct : IKioskProduct
 
 	bool IsSellable { get; }
 
+	bool IsSellableAndInStock { get; }
+
+	bool IsRentable { get; }
+
+	bool IsRentableAndInStock { get; }
+
+	bool IsEmptyCase { get; }
+
 	decimal GamePurchasePrice { get; }
 
 	decimal MoviePurchasePrice { get; }
@@ -78,6 +86,8 @@ public interface ITitleProduct : IKioskProduct
 	bool InStock { get; }
 
 	bool ShowOutOfStock { get; }
+
+	bool HasBeenInStock { get; }
 
 	string SortAlpha { get; }
 

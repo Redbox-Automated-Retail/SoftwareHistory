@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Markup;
@@ -35,7 +34,7 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		public string AnalyticsButtonName { get; set; }
 	}
 
-	private List<Border> BorderButtons = new List<Border>();
+	private List<RoundedButton> HelpButtons = new List<RoundedButton>();
 
 	public bool ShowFAQUpdated;
 
@@ -73,8 +72,6 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 
 	private bool m_showAsPopup;
 
-	public IActor Actor { get; set; }
-
 	public HelpDocuments CurrentHelpDocument
 	{
 		get
@@ -84,12 +81,12 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		set
 		{
 			m_currentHelpDocument = value;
-			foreach (Border borderButton in BorderButtons)
+			foreach (RoundedButton helpButton in HelpButtons)
 			{
-				borderButton.IsEnabled = (HelpDocuments)borderButton.Tag != m_currentHelpDocument;
+				helpButton.IsEnabled = (HelpDocuments)helpButton.Tag != m_currentHelpDocument;
 				HelpDocumentInfo value2 = null;
-				HelpDocumentInfoList.TryGetValue((HelpDocuments)borderButton.Tag, out value2);
-				borderButton.Visibility = ((value2 != null && !value2.Visible) ? Visibility.Hidden : Visibility.Visible);
+				HelpDocumentInfoList.TryGetValue((HelpDocuments)helpButton.Tag, out value2);
+				helpButton.Visibility = ((value2 != null && !value2.Visible) ? Visibility.Hidden : Visibility.Visible);
 			}
 			LoadXpsDocument();
 			SetTitle();
@@ -188,8 +185,6 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 
 	public Dictionary<HelpDocuments, HelpDocumentInfo> HelpDocumentInfoList => m_helpDocumentInfoList;
 
-	public event WPFHitHandler OnWPFHit;
-
 	public event HelpDocumentChangedHandler OnHelpDocumentChanged;
 
 	public event HelpDocumentChangedHandler OnHelpDocumentButtonPress;
@@ -205,15 +200,16 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	public HelpViewUserControl()
 	{
 		InitializeComponent();
+		ApplyTheme();
 		faq_button.Tag = HelpDocuments.Faq;
 		terms_button.Tag = HelpDocuments.Terms;
 		terms_redbox_card_button.Tag = HelpDocuments.TermsReboxCard;
 		privacy_button.Tag = HelpDocuments.Privacy;
 		play_pass_button.Tag = HelpDocuments.PlayPass;
-		BorderButtons.Add(faq_button);
-		BorderButtons.Add(terms_button);
-		BorderButtons.Add(terms_redbox_card_button);
-		BorderButtons.Add(privacy_button);
+		HelpButtons.Add(faq_button);
+		HelpButtons.Add(terms_button);
+		HelpButtons.Add(terms_redbox_card_button);
+		HelpButtons.Add(privacy_button);
 		InitializePlayPassButton();
 		RegisterRoutedCommand("ShowDocument", HelpViewCommands.ShowDocument);
 		RegisterRoutedCommand("PageLeft", HelpViewCommands.PageLeft);
@@ -222,13 +218,25 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		LoadConfigurations();
 	}
 
+	private void ApplyTheme()
+	{
+		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
+		obj?.SetStyle(back_button);
+		obj?.SetStyle(close_button);
+		obj?.SetStyle(faq_button);
+		obj?.SetStyle(terms_button);
+		obj?.SetStyle(terms_redbox_card_button);
+		obj?.SetStyle(privacy_button);
+		obj?.SetStyle(play_pass_button);
+	}
+
 	private void InitializePlayPassButton()
 	{
 		IResource resource = ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-play-pass");
 		play_pass_button.Visibility = ((resource == null) ? Visibility.Hidden : Visibility.Visible);
 		if (resource != null)
 		{
-			BorderButtons.Add(play_pass_button);
+			HelpButtons.Add(play_pass_button);
 		}
 	}
 
@@ -385,11 +393,6 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		}
 	}
 
-	private void HandleWPFHit()
-	{
-		OnWPFHit?.Invoke(Actor);
-	}
-
 	private void AnimatePaddleClick(object paddle)
 	{
 	}
@@ -397,9 +400,9 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	private void ShowDocumentCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		bool flag = false;
-		if (e.OriginalSource is Border border)
+		if (e.OriginalSource is RoundedButton roundedButton)
 		{
-			CurrentHelpDocument = (HelpDocuments)border.Tag;
+			CurrentHelpDocument = (HelpDocuments)roundedButton.Tag;
 			flag = true;
 		}
 		else if (e.Parameter != null)

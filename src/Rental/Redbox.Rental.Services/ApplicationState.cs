@@ -1,11 +1,15 @@
+using System.Collections.Generic;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Services;
 
 public class ApplicationState : IApplicationState
 {
+	private string _inCartTemplateName;
+
 	private bool _isADAAccessible;
 
 	private static ApplicationState _applicationState;
@@ -46,4 +50,29 @@ public class ApplicationState : IApplicationState
 			return true;
 		}
 	}
+
+	public string InCartTemplateName
+	{
+		get
+		{
+			return _inCartTemplateName;
+		}
+		set
+		{
+			_inCartTemplateName = value;
+		}
+	}
+
+	public bool VerboseLogging
+	{
+		get
+		{
+			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Store", "VerboseLogging", "False");
+			bool result = false;
+			bool.TryParse(value, out result);
+			return result;
+		}
+	}
+
+	public List<IKioskProduct> BrowseProducts { get; set; }
 }

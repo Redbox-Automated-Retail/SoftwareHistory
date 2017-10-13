@@ -5,7 +5,7 @@
       <Border Width="176" Height="247" VerticalAlignment="Top" HorizontalAlignment="Center" BorderThickness="2" BorderBrush="#A5A5A5">
         <Image Name="TitleImage" Stretch="Fill" Source="{Binding Path=Image}" />
       </Border>
-      <TextBlock Name="TitleNameTextBlock" Margin="10,4,10,0" HorizontalAlignment="Center" Style="{StaticResource font_akzidenz_bold_tiny}" Text="{Binding Path=TitleName}" />
+      <TextBlock Name="TitleNameTextBlock" Margin="10,4,10,0" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_bold_13}" Text="{Binding Path=TitleName}" />
       <TextBlock Name="TitleReleaseDateTextBlock" Margin="10,0,10,0" HorizontalAlignment="Center" Style="{StaticResource font_smaller_italic}" Text="{Binding Path=ReleaseDate}" />
     </StackPanel>
   </Grid>

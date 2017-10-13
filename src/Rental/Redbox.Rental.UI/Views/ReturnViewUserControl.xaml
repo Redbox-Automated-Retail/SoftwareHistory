@@ -3,22 +3,22 @@
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static local:ReturnViewCommands.GoBack}" Executed="GoBackCommandBinding_Executed" />
   </UIElement.CommandBindings>
-  <Grid Background="#B5121B">
+  <Grid Background="#E42045">
     <Image Name="ad_image" Width="728" Height="90" VerticalAlignment="Top" Margin="12" />
     <animations:InsertDiscAnimationUserControl x:Name="InsertDiscAnimation" VerticalAlignment="Center" HorizontalAlignment="Left" />
-    <Border Name="back_button" BorderBrush="#860C13" BorderThickness="3" CornerRadius="34" Width="194" Height="66" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="35,665,0,0">
+    <Border Name="back_button" BorderBrush="#792D8D" BorderThickness="3" CornerRadius="34" Width="194" Height="66" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="35,665,0,0">
       <Border.Background>
         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-          <GradientStop Color="#B50E1B" Offset="0" />
-          <GradientStop Color="#8F0E15" Offset="1" />
+          <GradientStop Color="WHITE" Offset="0" />
+          <GradientStop Color="WHITE" Offset="1" />
         </LinearGradientBrush>
       </Border.Background>
       <UIElement.InputBindings>
         <MouseBinding Gesture="LeftClick" Command="{x:Static local:ReturnViewCommands.GoBack}" />
       </UIElement.InputBindings>
       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
-        <Image Width="31.5" Height="27" Margin="0,0,15,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/back-white-arrow.png" />
-        <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_target_small}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFFFF" Text="BACK" />
+        <Image Width="31.5" Height="27" Margin="0,0,15,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/back-rubine-arrow.png" />
+        <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_target_small}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="BACK" />
       </StackPanel>
     </Border>
   </Grid>

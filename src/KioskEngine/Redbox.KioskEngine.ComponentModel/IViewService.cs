@@ -56,4 +56,6 @@ public interface IViewService
 	void GoBack(object context, bool popOnly);
 
 	void GoBackSafe(object context, bool popOnly);
+
+	void UnwindTo(string viewName, bool discard, object context);
 }

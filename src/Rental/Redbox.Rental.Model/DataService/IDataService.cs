@@ -23,6 +23,8 @@ public interface IDataService
 
 	bool RefreshIfNeeded();
 
+	ErrorList GetProduct(long productId, bool excludeTitleRollup, out IKioskProduct kioskProduct);
+
 	ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, out List<IKioskProduct> products);
 
 	ErrorList GetTitleRollupProduct(long productGroupId, out IKioskProduct kioskProduct);
@@ -36,4 +38,10 @@ public interface IDataService
 	bool GetIsProductThinned(long productId);
 
 	int GetInStockGameCount();
+
+	Store GetStore();
+
+	List<SubPlatform> GetSubPlatforms();
+
+	List<ProductType> GetProductTypes();
 }

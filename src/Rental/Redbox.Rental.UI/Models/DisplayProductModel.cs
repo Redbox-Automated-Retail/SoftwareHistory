@@ -1,22 +1,133 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Redbox.Rental.Model.Browse;
 
 namespace Redbox.Rental.UI.Models;
 
-public class DisplayProductModel : DependencyObject
+public class DisplayProductModel : BrowseItemModel
 {
-	public enum AddButtonTypes
-	{
-		PlusSign,
-		PlusSignWithText
-	}
-
 	public enum AddButtonPositions
 	{
 		LowerLeftCorner,
 		OverhangLowerLeftCorner
 	}
+
+	public static readonly DependencyProperty HeaderProperty = DependencyProperty.Register("Header", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty DescriptionProperty = DependencyProperty.Register("Description", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RatingProperty = DependencyProperty.Register("Rating", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty FormatProperty = DependencyProperty.Register("Format", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RunningTimeProperty = DependencyProperty.Register("RunningTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ReleaseYearProperty = DependencyProperty.Register("ReleaseYear", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty CCSupportedProperty = DependencyProperty.Register("CCSupported", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty GenresProperty = DependencyProperty.Register("Genres", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty GenresLabelProperty = DependencyProperty.Register("GenresLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty StarringProperty = DependencyProperty.Register("Starring", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty StarringLabelProperty = DependencyProperty.Register("StarringLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty DirectedByProperty = DependencyProperty.Register("DirectedBy", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ReturnTimeProperty = DependencyProperty.Register("ReturnTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ReturnTimeLabelProperty = DependencyProperty.Register("ReturnTimeLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PriceADayProperty = DependencyProperty.Register("PriceADay", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PriceLabelProperty = DependencyProperty.Register("PriceLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RatingLabelProperty = DependencyProperty.Register("RatingLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RatingDescriptionProperty = DependencyProperty.Register("RatingDescription", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RatingVisibilityProperty = DependencyProperty.Register("RatingVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty FormatVisibilityProperty = DependencyProperty.Register("FormatVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RunningTimeVisibilityProperty = DependencyProperty.Register("RunningTimeVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ReleaseYearVisibilityProperty = DependencyProperty.Register("ReleaseYearVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AdImageProperty = DependencyProperty.Register("AdImage", typeof(BitmapImage), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AdImageVisibilityProperty = DependencyProperty.Register("AdImageVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AdHeightProperty = DependencyProperty.Register("AdHeight", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MainHeightProperty = DependencyProperty.Register("MainHeight", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty FlagMarginProperty = DependencyProperty.Register("FlagMargin", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyTextProperty = DependencyProperty.Register("BuyText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyPriceTextProperty = DependencyProperty.Register("BuyPriceText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyPriceVisibilityProperty = DependencyProperty.Register("BuyPriceVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyButtonHeightProperty = DependencyProperty.Register("BuyButtonHeight", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyButtonTextStyleProperty = DependencyProperty.Register("BuyButtonTextStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ShowBuyProperty = DependencyProperty.Register("ShowBuy", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ShowCollectionsProperty = DependencyProperty.Register("ShowCollections", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty CollectionsEnabledProperty = DependencyProperty.Register("CollectionsEnabled", typeof(bool), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty CollectionTextLine1Property = DependencyProperty.Register("CollectionTextLine1", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty CollectionTextLine2Property = DependencyProperty.Register("CollectionTextLine2", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ShowPrimaryProperty = DependencyProperty.Register("ShowPrimary", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ShowBluRayProperty = DependencyProperty.Register("ShowBluRay", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PrimaryOutOfStockVisibilityProperty = DependencyProperty.Register("PrimaryOutOfStockVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BluRayOutOfStockVisibilityProperty = DependencyProperty.Register("BluRayOutOfStockVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PrimaryEnabledProperty = DependencyProperty.Register("PrimaryEnabled", typeof(bool), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BluRayEnabledProperty = DependencyProperty.Register("BluRayEnabled", typeof(bool), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PrimaryTextProperty = DependencyProperty.Register("PrimaryText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PrimaryLine2TextProperty = DependencyProperty.Register("PrimaryLine2Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OutOfStockVisibilityProperty = DependencyProperty.Register("OutOfStockVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OutOfStockLine1TextProperty = DependencyProperty.Register("OutOfStockLine1Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OutOfStockLine2TextProperty = DependencyProperty.Register("OutOfStockLine2Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OutOfStockLine3TextProperty = DependencyProperty.Register("OutOfStockLine3Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BluRayTextProperty = DependencyProperty.Register("BluRayText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BluRayLine2TextProperty = DependencyProperty.Register("BluRayLine2Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty NotEmptyCaseVisibilityProperty = DependencyProperty.Register("NotEmptyCaseVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty StarringVisibilityProperty = DependencyProperty.Register("StarringVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SubPlatformVisibilityProperty = DependencyProperty.Register("SubPlatformVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SubPlatformImageProperty = DependencyProperty.Register("SubPlatformImage", typeof(BitmapImage), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ComingSoonVisibilityProperty = DependencyProperty.Register("ComingSoonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AddButtonBarVisibilityProperty = DependencyProperty.Register("AddButtonBarVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ComingSoonLabelTextProperty = DependencyProperty.Register("ComingSoonLabelText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty AddButtonLabelTextProperty = DependencyProperty.Register("AddButtonLabelText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -39,6 +150,11 @@ public class DisplayProductModel : DependencyObject
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty DisplayImageOpacityProperty = DependencyProperty.Register("DisplayImageOpacity", typeof(double), typeof(DisplayProductModel), new FrameworkPropertyMetadata(0.0)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty AddButtonOpacityProperty = DependencyProperty.Register("AddButtonOpacity", typeof(double), typeof(DisplayProductModel), new FrameworkPropertyMetadata(1.0)
 	{
 		AffectsRender = true
@@ -46,14 +162,162 @@ public class DisplayProductModel : DependencyObject
 
 	public static readonly DependencyProperty AddButtonPositionProperty = DependencyProperty.Register("AddButtonPosition", typeof(AddButtonPositions), typeof(DisplayProductModel), new FrameworkPropertyMetadata(AddButtonPositions.LowerLeftCorner));
 
-	public static readonly DependencyProperty AddButtonTypeProperty = DependencyProperty.Register("AddButtonType", typeof(AddButtonTypes), typeof(DisplayProductModel), new FrameworkPropertyMetadata(AddButtonTypes.PlusSign));
-
 	public static readonly DependencyProperty AddButtonVisibilityProperty = DependencyProperty.Register("AddButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
 	{
 		AffectsRender = true
 	});
 
-	public object Data { get; set; }
+	public static readonly DependencyProperty AddButtonPlusSignVisibilityProperty = DependencyProperty.Register("AddButtonPlusSignVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Visible)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty CornerAddButtonVisibilityProperty = DependencyProperty.Register("CornerAddButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ADAMiniCartAddButtonVisibilityProperty = DependencyProperty.Register("ADAMiniCartAddButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ADAMiniCartAddButtonTextProperty = DependencyProperty.Register("ADAMiniCartAddButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty AddButtonTextVisibilityProperty = DependencyProperty.Register("AddButtonTextVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty CornerAddButtonTextProperty = DependencyProperty.Register("CornerAddButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty RightAddButtonVisibilityProperty = DependencyProperty.Register("RightAddButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DisplayCornerAddButtonVisibilityProperty = DependencyProperty.Register("DisplayCornerAddButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty BackgroundBrushProperty = DependencyProperty.Register("BackgroundBrush", typeof(Brush), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty BannerVisibilityProperty = DependencyProperty.Register("BannerVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty BannerBackgroundBrushProperty = DependencyProperty.Register("BannerBackgroundBrush", typeof(Brush), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty BannerTextProperty = DependencyProperty.Register("BannerText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty BannerProperty = DependencyProperty.Register("Banner", typeof(Banner), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty FlagVisibilityProperty = DependencyProperty.Register("FlagVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Visible)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DisplayFlagVisibilityProperty = DependencyProperty.Register("DisplayFlagVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Visible)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty FlagTextProperty = DependencyProperty.Register("FlagText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty FlagStyleProperty = DependencyProperty.Register("FlagStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty AddButtonStyleProperty = DependencyProperty.Register("AddButtonStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty CancelButtonVisibilityProperty = DependencyProperty.Register("CancelButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ImageBackgroundVisibilityProperty = DependencyProperty.Register("ImageBackgroundVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty SeparatorLineStyleProperty = DependencyProperty.Register("SeparatorLineStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty SeparatorLineVisibilityProperty = DependencyProperty.Register("SeparatorLineVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Visible)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty TitleStyleProperty = DependencyProperty.Register("TitleStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ComingSoonButtonVisibilityProperty = DependencyProperty.Register("ComingSoonButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ComingSoonButtonTextProperty = DependencyProperty.Register("ComingSoonButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ComingSoonButtonStyleProperty = DependencyProperty.Register("ComingSoonButtonStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ComingSoonButtonCheckMarkVisibilityProperty = DependencyProperty.Register("ComingSoonButtonCheckMarkVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public Visibility SeparatorLineVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SeparatorLineVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SeparatorLineVisibilityProperty, value);
+			});
+		}
+	}
+
+	public bool LockAspectRatio { get; set; }
 
 	public BitmapImage Image
 	{
@@ -160,20 +424,82 @@ public class DisplayProductModel : DependencyObject
 		}
 	}
 
-	public AddButtonTypes AddButtonType
+	public Visibility AddButtonPlusSignVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (AddButtonTypes)GetValue(AddButtonTypeProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddButtonPlusSignVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(AddButtonTypeProperty, value);
+				SetValue(AddButtonPlusSignVisibilityProperty, value);
 			});
 		}
 	}
+
+	public Visibility ComingSoonButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ComingSoonButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ComingSoonButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility ComingSoonButtonCheckMarkVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ComingSoonButtonCheckMarkVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ComingSoonButtonCheckMarkVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string ComingSoonButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ComingSoonButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ComingSoonButtonTextProperty, value);
+			});
+		}
+	}
+
+	public Style ComingSoonButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(ComingSoonButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ComingSoonButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public double DisplayImageOpacity => base.Dispatcher.Invoke(() => (double)GetValue(DisplayImageOpacityProperty));
 
 	public double ImageOpacity
 	{
@@ -187,6 +513,7 @@ public class DisplayProductModel : DependencyObject
 			{
 				SetValue(ImageOpacityProperty, value);
 			});
+			UpdateDisplayImageOpacity();
 		}
 	}
 
@@ -194,7 +521,7 @@ public class DisplayProductModel : DependencyObject
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddButtonVisibilityProperty));
+			return base.Dispatcher.Invoke(() => (!base.IsBorderItem) ? ((Visibility)GetValue(AddButtonVisibilityProperty)) : Visibility.Collapsed);
 		}
 		set
 		{
@@ -205,15 +532,1297 @@ public class DisplayProductModel : DependencyObject
 		}
 	}
 
+	public Visibility DisplayCornerAddButtonVisibility => base.Dispatcher.Invoke(() => (!base.IsBorderItem) ? ((Visibility)GetValue(DisplayCornerAddButtonVisibilityProperty)) : Visibility.Collapsed);
+
+	public Visibility CornerAddButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CornerAddButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CornerAddButtonVisibilityProperty, value);
+				UpdateDisplayCornerAddButtonVisibility();
+			});
+		}
+	}
+
+	public Visibility ADAMiniCartAddButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ADAMiniCartAddButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ADAMiniCartAddButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string ADAMiniCartAddButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ADAMiniCartAddButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ADAMiniCartAddButtonTextProperty, value);
+			});
+		}
+	}
+
+	public string CornerAddButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(CornerAddButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CornerAddButtonTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility AddButtonTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddButtonTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AddButtonTextVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RightAddButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (!base.IsBorderItem) ? ((Visibility)GetValue(RightAddButtonVisibilityProperty)) : Visibility.Collapsed);
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RightAddButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Brush BackgroundBrush
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(BackgroundBrushProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BackgroundBrushProperty, value);
+			});
+		}
+	}
+
+	public Visibility BannerVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BannerVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BannerVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Brush BannerBackgroundBrush
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(BannerBackgroundBrushProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BannerBackgroundBrushProperty, value);
+			});
+		}
+	}
+
+	public string BannerText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BannerTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BannerTextProperty, value);
+			});
+		}
+	}
+
+	public Banner Banner
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Banner)GetValue(BannerProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BannerProperty, value);
+			});
+		}
+	}
+
+	public Visibility CancelButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CancelButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CancelButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility ImageBackgroundVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ImageBackgroundVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ImageBackgroundVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility DisplayFlagVisibility => base.Dispatcher.Invoke(() => (Visibility)GetValue(DisplayFlagVisibilityProperty));
+
+	public Visibility FlagVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(FlagVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FlagVisibilityProperty, value);
+			});
+			UpdateDisplayFlagVisibility();
+		}
+	}
+
+	public string FlagText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(FlagTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FlagTextProperty, value);
+			});
+		}
+	}
+
+	public Style FlagStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(FlagStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FlagStyleProperty, value);
+			});
+		}
+	}
+
+	public Style AddButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(AddButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AddButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public Style SeparatorLineStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(SeparatorLineStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SeparatorLineStyleProperty, value);
+			});
+		}
+	}
+
+	public Style TitleStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(TitleStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(TitleStyleProperty, value);
+			});
+		}
+	}
+
+	public string Header
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(HeaderProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HeaderProperty, value);
+			});
+		}
+	}
+
+	public string Description
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DescriptionProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DescriptionProperty, value);
+			});
+		}
+	}
+
+	public string Rating
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RatingProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RatingProperty, value);
+			});
+		}
+	}
+
+	public string Format
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(FormatProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FormatProperty, value);
+			});
+		}
+	}
+
+	public string RunningTime
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RunningTimeProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RunningTimeProperty, value);
+			});
+		}
+	}
+
+	public string ReleaseYear
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ReleaseYearProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ReleaseYearProperty, value);
+			});
+		}
+	}
+
+	public Visibility CCSupported
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CCSupportedProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CCSupportedProperty, value);
+			});
+		}
+	}
+
+	public string Starring
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(StarringProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(StarringProperty, value);
+			});
+		}
+	}
+
+	public string StarringLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(StarringLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(StarringLabelProperty, value);
+			});
+		}
+	}
+
+	public string Genres
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(GenresProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(GenresProperty, value);
+			});
+		}
+	}
+
+	public string GenresLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(GenresLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(GenresLabelProperty, value);
+			});
+		}
+	}
+
+	public string DirectedBy
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DirectedByProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DirectedByProperty, value);
+			});
+		}
+	}
+
+	public string ReturnTime
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ReturnTimeProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ReturnTimeProperty, value);
+			});
+		}
+	}
+
+	public string ReturnTimeLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ReturnTimeLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ReturnTimeLabelProperty, value);
+			});
+		}
+	}
+
+	public string PriceADay
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PriceADayProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PriceADayProperty, value);
+			});
+		}
+	}
+
+	public string PriceLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PriceLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PriceLabelProperty, value);
+			});
+		}
+	}
+
+	public string RatingLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RatingLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RatingLabelProperty, value);
+			});
+		}
+	}
+
+	public string RatingDescription
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RatingDescriptionProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RatingDescriptionProperty, value);
+			});
+		}
+	}
+
+	public Visibility RatingVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RatingVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RatingVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility FormatVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(FormatVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FormatVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RunningTimeVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RunningTimeVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RunningTimeVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility ReleaseYearVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ReleaseYearVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ReleaseYearVisibilityProperty, value);
+			});
+		}
+	}
+
+	public BitmapImage AdImage
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (BitmapImage)GetValue(AdImageProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AdImageProperty, value);
+			});
+		}
+	}
+
+	public Visibility AdImageVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AdImageVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AdImageVisibilityProperty, value);
+			});
+		}
+	}
+
+	public int AdHeight
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(AdHeightProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AdHeightProperty, value);
+			});
+		}
+	}
+
+	public int MainHeight
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(MainHeightProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MainHeightProperty, value);
+			});
+		}
+	}
+
+	public Thickness FlagMargin
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(FlagMarginProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FlagMarginProperty, value);
+			});
+		}
+	}
+
+	public Visibility ShowCollections
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ShowCollectionsProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ShowCollectionsProperty, value);
+			});
+		}
+	}
+
+	public bool CollectionsEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(CollectionsEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CollectionsEnabledProperty, value);
+			});
+		}
+	}
+
+	public string CollectionTextLine1
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(CollectionTextLine1Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CollectionTextLine1Property, value);
+			});
+		}
+	}
+
+	public string CollectionTextLine2
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(CollectionTextLine2Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CollectionTextLine2Property, value);
+			});
+		}
+	}
+
+	public Visibility ShowBuy
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ShowBuyProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ShowBuyProperty, value);
+			});
+		}
+	}
+
+	public Visibility ShowPrimary
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ShowPrimaryProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ShowPrimaryProperty, value);
+			});
+		}
+	}
+
+	public bool PrimaryEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(PrimaryEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PrimaryEnabledProperty, value);
+			});
+		}
+	}
+
+	public Visibility ShowBluRay
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ShowBluRayProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ShowBluRayProperty, value);
+			});
+		}
+	}
+
+	public bool BluRayEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(BluRayEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BluRayEnabledProperty, value);
+			});
+		}
+	}
+
+	public Visibility OutOfStockVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(OutOfStockVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string OutOfStockLine1Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OutOfStockLine1TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockLine1TextProperty, value);
+			});
+		}
+	}
+
+	public string OutOfStockLine2Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OutOfStockLine2TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockLine2TextProperty, value);
+			});
+		}
+	}
+
+	public string OutOfStockLine3Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OutOfStockLine3TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockLine3TextProperty, value);
+			});
+		}
+	}
+
+	public string PrimaryText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PrimaryTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PrimaryTextProperty, value);
+			});
+		}
+	}
+
+	public string PrimaryLine2Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PrimaryLine2TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PrimaryLine2TextProperty, value);
+			});
+		}
+	}
+
+	public Visibility PrimaryOutOfStockVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PrimaryOutOfStockVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PrimaryOutOfStockVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string BluRayText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BluRayTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BluRayTextProperty, value);
+			});
+		}
+	}
+
+	public string BluRayLine2Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BluRayLine2TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BluRayLine2TextProperty, value);
+			});
+		}
+	}
+
+	public Visibility BluRayOutOfStockVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BluRayOutOfStockVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BluRayOutOfStockVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string BuyText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BuyTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyTextProperty, value);
+			});
+		}
+	}
+
+	public string BuyPriceText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BuyPriceTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyPriceTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility BuyPriceVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BuyPriceVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyPriceVisibilityProperty, value);
+			});
+		}
+	}
+
+	public int BuyButtonHeight
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(BuyButtonHeightProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyButtonHeightProperty, value);
+			});
+		}
+	}
+
+	public Style BuyButtonTextStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(BuyButtonTextStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyButtonTextStyleProperty, value);
+			});
+		}
+	}
+
+	public Visibility NotEmptyCaseVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(NotEmptyCaseVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(NotEmptyCaseVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility StarringVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(StarringVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(StarringVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility SubPlatformVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SubPlatformVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SubPlatformVisibilityProperty, value);
+			});
+		}
+	}
+
+	public BitmapImage SubPlatformImage
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (BitmapImage)GetValue(SubPlatformImageProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SubPlatformImageProperty, value);
+			});
+		}
+	}
+
+	public Visibility ComingSoonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ComingSoonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ComingSoonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility AddButtonBarVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddButtonBarVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AddButtonBarVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string ComingSoonLabelText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ComingSoonLabelTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ComingSoonLabelTextProperty, value);
+			});
+		}
+	}
+
+	protected override void SetVisibileItemIndex(int value)
+	{
+		base.SetVisibileItemIndex(value);
+		string cornerAddButtonText = (ADAMiniCartAddButtonText = (value + 1).ToString());
+		CornerAddButtonText = cornerAddButtonText;
+	}
+
+	protected override void SetIsBorderItem(bool value)
+	{
+		base.SetIsBorderItem(value);
+		UpdateDisplayCornerAddButtonVisibility();
+		UpdateDisplayImageOpacity();
+		UpdateDisplayFlagVisibility();
+	}
+
+	protected override void SetIsBottomRow(bool value)
+	{
+		base.SetIsBottomRow(value);
+		SeparatorLineVisibility = (base.IsBottomRow ? Visibility.Collapsed : Visibility.Visible);
+	}
+
+	private void UpdateDisplayImageOpacity()
+	{
+		base.Dispatcher.Invoke(delegate
+		{
+			SetValue(DisplayImageOpacityProperty, base.IsBorderItem ? 0.8 : ImageOpacity);
+		});
+	}
+
+	private void UpdateDisplayCornerAddButtonVisibility()
+	{
+		base.Dispatcher.Invoke(delegate
+		{
+			SetValue(DisplayCornerAddButtonVisibilityProperty, base.IsBorderItem ? Visibility.Collapsed : CornerAddButtonVisibility);
+		});
+	}
+
+	private void UpdateDisplayFlagVisibility()
+	{
+		base.Dispatcher.Invoke(delegate
+		{
+			SetValue(DisplayFlagVisibilityProperty, base.IsBorderItem ? Visibility.Collapsed : FlagVisibility);
+		});
+	}
+
 	public void ConfigureForCarousel()
 	{
 		ImageBorderColor = Color.FromRgb(60, 56, 57);
 		ImageBorderThickness = new Thickness(2.0);
 		ImageBorderCornerRadius = 5.0;
 		ImageOpacity = 1.0;
+		ImageBackgroundVisibility = Visibility.Collapsed;
 		AddButtonOpacity = 1.0;
 		AddButtonVisibility = Visibility.Collapsed;
-		AddButtonType = AddButtonTypes.PlusSignWithText;
+		FlagVisibility = Visibility.Collapsed;
 		AddButtonPosition = AddButtonPositions.OverhangLowerLeftCorner;
+		CornerAddButtonVisibility = Visibility.Collapsed;
+		CancelButtonVisibility = Visibility.Collapsed;
+	}
+
+	public void ConfigureForBrowse()
+	{
+		ImageBorderColor = Color.FromRgb(60, 56, 57);
+		ImageBorderThickness = new Thickness(1.0);
+		ImageBorderCornerRadius = 0.0;
+		ImageBackgroundVisibility = Visibility.Collapsed;
+		AddButtonOpacity = 1.0;
+		AddButtonPosition = AddButtonPositions.LowerLeftCorner;
+		CancelButtonVisibility = Visibility.Collapsed;
+		AddButtonVisibility = Visibility.Collapsed;
+		BackgroundBrush = new SolidColorBrush(Colors.White);
+	}
+
+	public void ConfigureForAToZBrowse()
+	{
+		ImageBorderColor = Color.FromRgb(60, 56, 57);
+		ImageBorderThickness = new Thickness(1.0);
+		ImageBorderCornerRadius = 0.0;
+		ImageBackgroundVisibility = Visibility.Collapsed;
+		AddButtonOpacity = 1.0;
+		AddButtonPosition = AddButtonPositions.LowerLeftCorner;
+		CancelButtonVisibility = Visibility.Collapsed;
+		AddButtonVisibility = Visibility.Collapsed;
+		CornerAddButtonVisibility = Visibility.Collapsed;
+		FlagVisibility = Visibility.Collapsed;
+	}
+
+	public void ConfigureForMiniCart()
+	{
+		ImageBorderColor = Color.FromRgb(162, 16, 24);
+		ImageBorderThickness = new Thickness(3.0);
+		ImageBorderCornerRadius = 0.0;
+		ImageOpacity = 1.0;
+		ImageBackgroundVisibility = Visibility.Visible;
+		AddButtonOpacity = 1.0;
+		AddButtonVisibility = Visibility.Collapsed;
+		FlagVisibility = Visibility.Hidden;
+		AddButtonPosition = AddButtonPositions.LowerLeftCorner;
+		CornerAddButtonVisibility = Visibility.Collapsed;
+		AddButtonPlusSignVisibility = Visibility.Collapsed;
+		ADAMiniCartAddButtonVisibility = Visibility.Collapsed;
+	}
+
+	public void ConfigureForADAMiniCart()
+	{
+		ImageBackgroundVisibility = Visibility.Collapsed;
+		AddButtonOpacity = 1.0;
+		AddButtonPosition = AddButtonPositions.LowerLeftCorner;
+		CancelButtonVisibility = Visibility.Collapsed;
+		AddButtonVisibility = Visibility.Collapsed;
+		ImageOpacity = 0.0;
+	}
+
+	public void ConfigureForTitleDetail()
+	{
+		ImageBorderColor = Color.FromRgb(60, 56, 57);
+		ImageBorderThickness = new Thickness(0.0);
+		ImageBorderCornerRadius = 0.0;
+		ImageOpacity = 1.0;
+		ImageBackgroundVisibility = Visibility.Collapsed;
+		AddButtonOpacity = 1.0;
+		AddButtonVisibility = Visibility.Collapsed;
+		FlagVisibility = Visibility.Visible;
+		base.IsBorderItem = false;
+		AddButtonPosition = AddButtonPositions.OverhangLowerLeftCorner;
+		CornerAddButtonVisibility = Visibility.Collapsed;
+		CancelButtonVisibility = Visibility.Collapsed;
+		ComingSoonButtonCheckMarkVisibility = Visibility.Collapsed;
+		ComingSoonButtonVisibility = Visibility.Collapsed;
+		BannerVisibility = Visibility.Collapsed;
+		AddButtonTextVisibility = Visibility.Collapsed;
 	}
 }

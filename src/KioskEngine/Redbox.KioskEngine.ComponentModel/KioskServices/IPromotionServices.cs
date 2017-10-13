@@ -23,4 +23,6 @@ public interface IPromotionServices
 	IOptInItem NewOptInItem();
 
 	void MarketingAdImpressions(long kioskId, List<MarketingAdImpressionData> impressions);
+
+	void SendKioskEvents(long kioskId, List<KioskEventData> events);
 }

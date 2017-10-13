@@ -1,15 +1,14 @@
 using System.CodeDom.Compiler;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Globalization;
 using System.Resources;
 using System.Runtime.CompilerServices;
 
-namespace Properties;
+namespace Redbox.KioskEngine.Bootstrap.Properties;
 
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [DebuggerNonUserCode]
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "2.0.0.0")]
 [CompilerGenerated]
 internal class Resources
 {
@@ -22,9 +21,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Properties.Resources", typeof(Resources).Assembly);
+				ResourceManager resourceManager = new ResourceManager("Redbox.KioskEngine.Bootstrap.Properties.Resources", typeof(Resources).Assembly);
 				resourceMan = resourceManager;
 			}
 			return resourceMan;
@@ -41,69 +40,6 @@ internal class Resources
 		set
 		{
 			resourceCulture = value;
-		}
-	}
-
-	internal static byte[] FlippedCursor
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("FlippedCursor", resourceCulture);
-			return (byte[])obj;
-		}
-	}
-
-	internal static byte[] MoveDown
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("MoveDown", resourceCulture);
-			return (byte[])obj;
-		}
-	}
-
-	internal static byte[] MoveUp
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("MoveUp", resourceCulture);
-			return (byte[])obj;
-		}
-	}
-
-	internal static byte[] MoveUpDown
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("MoveUpDown", resourceCulture);
-			return (byte[])obj;
-		}
-	}
-
-	internal static Bitmap SourceCodePrintDocument
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("SourceCodePrintDocument", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap SyntaxBoxControl
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("SyntaxBoxControl", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
-
-	internal static Bitmap SyntaxDocument
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("SyntaxDocument", resourceCulture);
-			return (Bitmap)obj;
 		}
 	}
 

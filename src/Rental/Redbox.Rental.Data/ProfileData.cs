@@ -338,6 +338,15 @@ public class ProfileData : IProfileData
 				Zip = dictionary.ToString("zip"),
 				CollectionMethod = dictionary.ToInt32("collection_method", 6)
 			};
+			decimal? num = dictionary.ToDecimal("digital_purchase_tax_rate", null);
+			if (num.HasValue)
+			{
+				store.DigitalPurchaseTaxRate = num.Value;
+			}
+			else
+			{
+				store.DigitalPurchaseTaxRate = store.PurchaseTaxRate;
+			}
 			instance.Stores[store.StoreId] = store;
 		});
 	}
