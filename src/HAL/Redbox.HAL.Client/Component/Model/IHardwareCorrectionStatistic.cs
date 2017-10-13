@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IHardwareCorrectionStatistic
+public interface IHardwareCorrectionStatistic
 {
 	HardwareCorrectionStatistic Statistic { get; }
 

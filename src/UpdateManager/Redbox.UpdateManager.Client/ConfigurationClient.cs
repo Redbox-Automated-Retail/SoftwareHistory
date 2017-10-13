@@ -20,74 +20,76 @@ public class ConfigurationClient
 
 			public static List<TypeMap> GetTypeMapList()
 			{
-				List<TypeMap> list = new List<TypeMap>();
-				list.Add(new TypeMap
+				return new List<TypeMap>
 				{
-					TypeName = "bool",
-					Type = typeof(bool)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "boolean",
-					Type = typeof(bool)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "string",
-					Type = typeof(string)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "integer",
-					Type = typeof(int)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "int",
-					Type = typeof(int)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "long",
-					Type = typeof(long)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "float",
-					Type = typeof(float)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "double",
-					Type = typeof(double)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "date",
-					Type = typeof(DateTime)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "datetime",
-					Type = typeof(DateTime)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "timespan",
-					Type = typeof(TimeSpan)
-				});
-				list.Add(new TypeMap
-				{
-					TypeName = "blob",
-					Type = typeof(byte[])
-				});
-				return list;
+					new TypeMap
+					{
+						TypeName = "bool",
+						Type = typeof(bool)
+					},
+					new TypeMap
+					{
+						TypeName = "boolean",
+						Type = typeof(bool)
+					},
+					new TypeMap
+					{
+						TypeName = "string",
+						Type = typeof(string)
+					},
+					new TypeMap
+					{
+						TypeName = "integer",
+						Type = typeof(int)
+					},
+					new TypeMap
+					{
+						TypeName = "int",
+						Type = typeof(int)
+					},
+					new TypeMap
+					{
+						TypeName = "long",
+						Type = typeof(long)
+					},
+					new TypeMap
+					{
+						TypeName = "float",
+						Type = typeof(float)
+					},
+					new TypeMap
+					{
+						TypeName = "double",
+						Type = typeof(double)
+					},
+					new TypeMap
+					{
+						TypeName = "date",
+						Type = typeof(DateTime)
+					},
+					new TypeMap
+					{
+						TypeName = "datetime",
+						Type = typeof(DateTime)
+					},
+					new TypeMap
+					{
+						TypeName = "timespan",
+						Type = typeof(TimeSpan)
+					},
+					new TypeMap
+					{
+						TypeName = "blob",
+						Type = typeof(byte[])
+					}
+				};
 			}
 
 			public static Type GetType(string typeName)
 			{
-				List<TypeMap> typeMapList = GetTypeMapList();
-				TypeMap typeMap = typeMapList.Where((TypeMap tm) => tm.TypeName.Equals(typeName, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+				TypeMap typeMap = (from tm in GetTypeMapList()
+					where tm.TypeName.Equals(typeName, StringComparison.CurrentCultureIgnoreCase)
+					select tm).FirstOrDefault();
 				if (typeMap == null)
 				{
 					return typeof(string);
@@ -95,8 +97,6 @@ public class ConfigurationClient
 				return typeMap.Type;
 			}
 		}
-
-		private const string ConfigFileStaged = ".configstaged";
 
 		private string _filePath;
 
@@ -113,6 +113,8 @@ public class ConfigurationClient
 		private int _inCheckup;
 
 		private ClientConfigFile _clientConfigFile;
+
+		private const string ConfigFileStaged = ".configstaged";
 
 		private readonly object _lock = new object();
 
@@ -166,8 +168,7 @@ public class ConfigurationClient
 					{
 						return false;
 					}
-					Type type = TypeMap.GetType(clientConfigurationData.SettingDataType);
-					if (type == typeof(byte[]))
+					if (TypeMap.GetType(clientConfigurationData.SettingDataType) == typeof(byte[]))
 					{
 						byte[] value2 = new byte[0];
 						if (clientConfigurationData.Value.Length > 0)
@@ -213,8 +214,7 @@ public class ConfigurationClient
 					{
 						return false;
 					}
-					Type type = TypeMap.GetType(clientConfigurationData.SettingDataType);
-					if (type == typeof(byte[]))
+					if (TypeMap.GetType(clientConfigurationData.SettingDataType) == typeof(byte[]))
 					{
 						value = new byte[0];
 						if (clientConfigurationData.Value.Length > 0)
@@ -365,24 +365,31 @@ public class ConfigurationClient
 
 		internal void CheckForUpdates()
 		{
-			if (Interlocked.CompareExchange(ref _inCheckup, 1, 0) == 1)
-			{
-				return;
-			}
 			try
 			{
-				if (IsExpired())
+				if (Interlocked.CompareExchange(ref _inCheckup, 1, 0) == 1)
 				{
-					if (NeedsActivation() && _canActivate())
+					return;
+				}
+				try
+				{
+					if (IsExpired())
 					{
-						ActivateConfigFile();
+						if (NeedsActivation() && _canActivate())
+						{
+							ActivateConfigFile();
+						}
+						UpdateLastCheckup();
 					}
-					UpdateLastCheckup();
+				}
+				finally
+				{
+					_inCheckup = 0;
 				}
 			}
-			finally
+			catch (Exception e)
 			{
-				_inCheckup = 0;
+				LogHelper.Instance.Log("There was an exception in ConfigurationClient.CheckForUpdates", e);
 			}
 		}
 
@@ -406,8 +413,7 @@ public class ConfigurationClient
 
 		private bool NeedsActivation()
 		{
-			string path = Path.ChangeExtension(_filePath, ".configstaged");
-			return File.Exists(path);
+			return File.Exists(Path.ChangeExtension(_filePath, ".configstaged"));
 		}
 
 		private void ActivateConfigFile()
@@ -442,12 +448,12 @@ public class ConfigurationClient
 					}
 					else
 					{
-						_clientConfigFile = StringExtensions.ToObject<ClientConfigFile>(text);
+						_clientConfigFile = text.ToObject<ClientConfigFile>();
 					}
 				}
 				catch (Exception e)
 				{
-					LogHelper.Instance.Log("An unhandled exception occured in InternalClientConfigFile.LoadConfigFile.", e);
+					LogHelper.Instance.Log("An unhandled exception occurred in InternalClientConfigFile.LoadConfigFile.", e);
 					_clientConfigFile = null;
 				}
 			}
@@ -740,7 +746,7 @@ public class ConfigurationClient
 		if (!clientCommandResult.Success)
 		{
 			LogHelper.Instance.Log("Error activating configuration file {0}.", configFileId);
-			clientCommandResult.Errors.ForEach(delegate(Error e)
+			clientCommandResult.Errors.ForEach(delegate(Redbox.IPC.Framework.Error e)
 			{
 				LogHelper.Instance.Log("Code {0}, Description {1}, Details {3}", e.Code, e.Description, e.Details);
 			});

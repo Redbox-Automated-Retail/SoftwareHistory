@@ -1,8 +1,12 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum HardwareCorrectionStatistic
+public enum HardwareCorrectionStatistic
 {
 	None,
 	Arcus,
-	Camera
+	Camera,
+	Touchscreen,
+	ControllerRestart,
+	RouterRecycle,
+	UnexpectedPowerLoss
 }

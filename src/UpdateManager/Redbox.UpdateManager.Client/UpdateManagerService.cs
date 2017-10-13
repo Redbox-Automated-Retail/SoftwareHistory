@@ -45,16 +45,18 @@ public class UpdateManagerService : IDisposable
 
 	public static UpdateManagerService GetService(string url)
 	{
-		UpdateManagerService updateManagerService = new UpdateManagerService(url);
-		updateManagerService.Timeout = 600000;
-		return updateManagerService;
+		return new UpdateManagerService(url)
+		{
+			Timeout = 600000
+		};
 	}
 
 	public static UpdateManagerService GetService(string url, int timeout)
 	{
-		UpdateManagerService updateManagerService = new UpdateManagerService(url);
-		updateManagerService.Timeout = timeout;
-		return updateManagerService;
+		return new UpdateManagerService(url)
+		{
+			Timeout = timeout
+		};
 	}
 
 	public ClientCommandResult ActivateConfigFile(long configFileId)
@@ -68,7 +70,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("data get id: 'config-store-number'");
 		if (clientCommandResult.Success)
 		{
-			number = StringExtensions.ToObject<string>(clientCommandResult.CommandMessages[0]);
+			number = clientCommandResult.CommandMessages[0].ToObject<string>();
 		}
 		return clientCommandResult;
 	}
@@ -85,8 +87,8 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("client get-dvd-data-state");
 		if (clientCommandResult.Success)
 		{
-			lastRun = StringExtensions.ToObject<DateTime>(clientCommandResult.CommandMessages[0]);
-			state = StringExtensions.ToObject<SubscriptionState>(clientCommandResult.CommandMessages[1]);
+			lastRun = clientCommandResult.CommandMessages[0].ToObject<DateTime>();
+			state = clientCommandResult.CommandMessages[1].ToObject<SubscriptionState>();
 		}
 		return clientCommandResult;
 	}
@@ -97,7 +99,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("client list-current-downloads");
 		if (clientCommandResult.Success)
 		{
-			jobs = StringExtensions.ToObject<List<Download>>(clientCommandResult.CommandMessages[0]);
+			jobs = clientCommandResult.CommandMessages[0].ToObject<List<Download>>();
 		}
 		return clientCommandResult;
 	}
@@ -109,7 +111,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString(command);
 		if (clientCommandResult.Success)
 		{
-			running = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			running = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return clientCommandResult;
 	}
@@ -120,7 +122,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("data get id: 'config-developer-mode-flag'");
 		if (clientCommandResult.Success)
 		{
-			isDeveloperUI = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			isDeveloperUI = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return clientCommandResult;
 	}
@@ -131,7 +133,7 @@ public class UpdateManagerService : IDisposable
 		ClientCommandResult clientCommandResult = ExecuteCommandString("data get id: 'config-initial-subscription-state-flag'");
 		if (clientCommandResult.Success)
 		{
-			initialSubscriptionState = StringExtensions.ToObject<bool>(clientCommandResult.CommandMessages[0]);
+			initialSubscriptionState = clientCommandResult.CommandMessages[0].ToObject<bool>();
 		}
 		return clientCommandResult;
 	}
@@ -240,8 +242,7 @@ public class UpdateManagerService : IDisposable
 		{
 			if (createdNew)
 			{
-				Process[] processesByName = Process.GetProcessesByName("kioskengine");
-				return processesByName.Length > 0;
+				return Process.GetProcessesByName("kioskengine").Length != 0;
 			}
 			return true;
 		}

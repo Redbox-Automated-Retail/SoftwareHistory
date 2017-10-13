@@ -24,6 +24,10 @@ public sealed class MachineConfiguration : JobExecutor
 
 	public bool HasABEDevice { get; private set; }
 
+	public bool HasRouterPowerRelay { get; private set; }
+
+	public bool ArcusResetConfigured { get; private set; }
+
 	protected override string JobName => "kiosk-configuration-job";
 
 	public MachineConfiguration(HardwareService service)
@@ -66,6 +70,12 @@ public sealed class MachineConfiguration : JobExecutor
 				break;
 			case "AbeDeviceStatus":
 				HasABEDevice = result.Message.Equals("ATTACHED", StringComparison.CurrentCultureIgnoreCase);
+				break;
+			case "RouterPowerRelay":
+				HasRouterPowerRelay = result.Message == "Configured";
+				break;
+			case "SupportsArcusReset":
+				ArcusResetConfigured = result.Message == "Configured";
 				break;
 			}
 		}
