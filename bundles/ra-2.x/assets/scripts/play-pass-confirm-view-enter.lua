@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-idle_timer:suspend()
+kernel.suspend_idle_timer( "idle_timer" )
 
 kernel.timercreate(
 	"play_pass_confirm_view_timer",

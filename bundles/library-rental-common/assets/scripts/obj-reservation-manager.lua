@@ -12,8 +12,50 @@ function newreservationmanager()
 	t.card_hash_id = nil
 	t.session_id = nil
 
+    t.get_broker_service_prices = function( self, for_rop_flow )
+        kernel.log("Get broker service prices")
+		local dvdPrice = StoreManager.PricingManager:get_product_type_price( "movies", "dvd", null, for_rop_flow )
+		local blurayPrice = StoreManager.PricingManager:get_product_type_price( "movies", "blu-ray", null, for_rop_flow )
+		local gamePrice = StoreManager.PricingManager:get_product_type_price( "games", "*", null, for_rop_flow )
+        local current_price_set = StoreManager.PricingManager:get_current_price_set()
+        local current_price_set_id = 1
+        if current_price_set ~= nil and current_price_set.PriceSetID ~= nil then
+            current_price_set_id = current_price_set.PriceSetID
+        end
+
+		local servicePrices = {
+			Movie = {
+				default = {
+					initial_night = dvdPrice.initial_night,
+					extra_night = dvdPrice.extra_night,
+					non_return = dvdPrice.non_return,
+					non_return_days = dvdPrice.non_return_days,
+					purchase_price = StoreManager:get_purchase_price(),
+					expiration_price = dvdPrice.expiration_price,
+					pricesetid = current_price_set_id },
+				BluRay  = {
+					initial_night = blurayPrice.initial_night,
+					extra_night = blurayPrice.extra_night,
+					non_return = blurayPrice.non_return,
+					non_return_days = blurayPrice.non_return_days,
+					expiration_price = blurayPrice.expiration_price,
+					pricesetid = current_price_set_id },
+					},
+			Game  = {
+				default = {
+					initial_night = gamePrice.initial_night,
+					extra_night = gamePrice.extra_night,
+					non_return = gamePrice.non_return,
+					non_return_days = gamePrice.non_return_days,
+					expiration_price = gamePrice.expiration_price,
+					pricesetid = current_price_set_id },
+					}
+			}
+		return servicePrices
+	end
+
 	t.init = function( self )
-		local servicePrices = StoreManager.PricingManager:get_broker_service_prices()
+		local servicePrices = self:get_broker_service_prices()
 		
 		kernel.resvsvcs_register3(
 			StoreManager:get_number(),
@@ -46,7 +88,7 @@ function newreservationmanager()
 					is_mdv )
 					
 				local result = { success = false, items = {} }
-				local pricesNotAdjusted = StoreManager.PricingManager:get_broker_service_prices( true )
+				local pricesNotAdjusted = self:get_broker_service_prices( true )
 				
 				local reservation = {
 					transaction_date = reserve_date,
@@ -87,15 +129,19 @@ function newreservationmanager()
 				
 				local shopping_cart_barcodes = ShoppingCart:get_barcodes_to_vend()
 				local multi_disc_products = {}
-				for k, v in ipairs( ShoppingCart.items ) do
-					if is_multi_disc( v.product_id ) == true then
-						local product_id_list = ProductGroup[MultiDiscXREF[v.product_id].product_group_id].product_id_list
-						for k2, v2 in ipairs( product_id_list ) do
-							if v2 ~= v.product_id and ShoppingCart:has_item( v2 ) == false and MasterProductCatalog[v2] ~= nil then
-								table.insert( multi_disc_products, MasterProductCatalog[v2] )
-							end
-						end
-					end
+                local shopping_cart_item_count = kernel.rental_shopping_cart_item_count( ShoppingCart.session_id )
+                for k=1,shopping_cart_item_count do
+                    local v = kernel.get_rental_shopping_cart_item( ShoppingCart.session_id, k )
+                    if v ~= nil then
+					    if is_multi_disc( v.product_id ) == true then
+						    local product_id_list = ProductGroup[MultiDiscXREF[v.product_id].product_group_id].product_id_list
+						    for k2, v2 in ipairs( product_id_list ) do
+							    if v2 ~= v.product_id and ShoppingCart:has_item( v2 ) == false and MasterProductCatalog[v2] ~= nil then
+								    table.insert( multi_disc_products, MasterProductCatalog[v2] )
+							    end
+						    end
+					    end
+                    end
 				end
 				local multi_disc_barcodes = get_barcodes_for_products( multi_disc_products )
 				for k, v in ipairs( multi_disc_barcodes ) do
@@ -128,8 +174,8 @@ function newreservationmanager()
 					end
 				end
 
-				local process_visible_browse_products = function (browse_set_name)
-					local productList = kernel.get_visible_browse_products(browse_set_name)
+				local process_visible_browse_products = function ()
+					local productList = kernel.get_visible_browse_products()
 					if productList ~= nil then
 						for i=1, #productList do
 							add_product_to_visible_list( productList[i] )
@@ -140,11 +186,9 @@ function newreservationmanager()
 				if kernel.peekview() == "start_view" and center_carousel_product ~= nil then
 					add_product_to_visible_list( center_carousel_product )		
 				end
-				if kernel.peekview() == "browse_view"
-				or kernel.peekview() == "browse_filter_alpha_view" then
-					process_visible_browse_products("Main")
-				elseif kernel.peekview() == "browse_view_collection" then
-					process_visible_browse_products("Collection")
+
+				if kernel.peekview() == "browse_view" then
+					process_visible_browse_products()
 				end
 				if kernel.peekview() == "product_detail_view" then
 					add_product_to_visible_list( kernel.get_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable") )
@@ -155,10 +199,14 @@ function newreservationmanager()
 					end
 				end
 				if kernel.peekview() == "blu_ray_upsell_view" then
-					for k, v in ipairs( ShoppingCart.blu_ray_upsell.items ) do
-						if v.offer == nil then
-							table.insert( products_visible_to_user, { product_id = v.blu_ray_product_id, action = "rental" } )
-						end
+                    local blurayUpsellItemCount = kernel.current_rental_shopping_cart_get_bluray_upsell_item_count( false )
+                    for k=1,blurayUpsellItemCount do
+                        local v = kernel.current_rental_shopping_cart_get_bluray_upsell_item_by_index( k )
+                        if v ~= nil then
+						    if v.offer == nil then
+							    table.insert( products_visible_to_user, { product_id = v.blu_ray_product_id, action = "rental" } )
+						    end
+                        end
 					end
 				end
 				

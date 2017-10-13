@@ -8,7 +8,7 @@
 		<scene
 			width="1024"
 			height="768"
-			backgroundColor="159, 159, 159" 
+			backgroundColor="255, 255, 255" 
 			stylesheet="style_sheet_common"
 			onEnter="shopping_cart_view_enter"
 			onLeave="shopping_cart_view_leave">
@@ -18,9 +18,9 @@
 				x="0"
 				y="0"
 				width="1024"
-				height="568"
-				image="image_cart_background"
-				optionFlags="Image" />
+				height="768"
+				backgroundColor="white"
+				optionFlags="Background" />
 
 			<actor
 				name="upperpart_gray_background_border"
@@ -30,14 +30,23 @@
 				height="2"
 				optionFlags="Background"
 				backgroundColor="black" />
-				
+
 			<actor
-                name="lowerpart_gray_background"
-                x="0"
-                y="622"
+				name="cart_background_curved"
+				x="0"
+				y="310"
 				width="1024"
-				height="150"
-                backgroundColor="58,58,58"
+				height="310"
+				image="image_background_curved"
+				optionFlags="Image" />
+
+			<actor
+                name="lowerpart_eggplant_background"
+                x="-1"
+                y="619"
+				width="1025"
+				height="149"
+                backgroundColor="56,11,68"
                 optionFlags="Background" />
 				
 			<actor
@@ -58,34 +67,13 @@
 				visible="true"
 				image="image_add_movie_add_game_es_MX"
 				optionFlags="Image"/>
-				
-			<actor
-				name="add_movie_add_game_reflection"
-				x="720"
-				y="526"
-				width="151"
-				height="-140"
-				visible="true"
-				opacity="0.32"
-				image="image_add_movie_add_game_es_MX"
-				optionFlags="Image"/>
-				
-			<actor
-				name="add_movie_add_game_reflection_opacity_hiding"
-				x="720"
-				y="386"
-				width="151"
-				height="140"
-				visible="true"
-				image="image_transparent"
-				optionFlags="Image"/>
-				
+			
 			<actor 
 				name="games_button"
 				x="720"
-				y="316"
+				y="281"
 				width="151"
-				height="70"
+				height="104"
 				visible="true"
 				hitFlags="Enabled" />
 				
@@ -94,7 +82,7 @@
 				x="720"
 				y="170"
 				width="151"
-				height="146"
+				height="109"
 				visible="true"
 				hitFlags="Enabled" />
 
@@ -104,19 +92,10 @@
 				y="502"
 				width="990"
 				optionFlags="Text"
-				foregroundColor="black"
+				foregroundColor="white"
 				font="font_akzidenz_regular_tiny_9"
 				visible="false" />
 
-			<actor
-				name="bottom_section_border"
-				x="0"
-				y="568"
-				width="1024"
-				height="2"
-				backgroundColor="165,165,165"
-				optionFlags="Background" />
- 
 			<actor
 				name="back_button"
 				x="8"
@@ -127,16 +106,15 @@
 				font="font_target_smaller"
 				cornerSize="18,18"
 				strokeWeight="2"
-				borderColor="white"
-				style="gray_button_style" />
+				style="white_button_style" />
    
 			<actor
                 name="back_button_arrow"
-                x="29"
-                y="585"
-				width="21"
-				height="18"
-                image="image_back_white_arrow"
+                x="33"
+                y="587"
+				width="14"
+				height="13"
+                image="image_arrow_start_over"
                 optionFlags="Image" />
 		
 			<actor
@@ -145,42 +123,21 @@
 				y="576"
 				width="121"
 				height="36"
-				addToFront="true"
 				text="Utilize Cr&#233;dito"
 				font="font_target_smaller"
 				cornerSize="18,18"
 				strokeWeight="2"
-				style="red_button_style" />
-
-			<actor 
-				name="redbox_logo_border"
-				x="0"
-				y="622"
-				width="180"
-				height="146"
-				optionFlags="DrawBorder"
-				borderColor="78,78,78"
-				visible="true" />		
-
+				style="rubine_button_style" />
+			
 		    <actor
 				name="redbox_logo"
 				x="25"
 				y="667"
-				width="133"
-				height="40"
+				width="148"
+				height="37"
 				hitFlags="Enabled"
-				style="redbox_logo" />
-				
-			<actor 
-				name="terms_conditions_border"
-				x="180"
-				y="622"
-				width="225"
-				height="146"
-				optionFlags="DrawBorder"
-				borderColor="78,78,78"
-				visible = "true" />	
-				
+				style="redbox_logo_new" />
+			
 			<actor
 				name="Terms_conditions_button"
 				x="196"
@@ -192,18 +149,8 @@
 				font="font_akzidenz_bold_smaller"
 				cornerSize="34,49"
 				strokeWeight="2"
-				style="gray_button_style" />	
-				
-			<actor
-				name="promo_code_border"
-				x="405"
-				y="622"
-				width="151"
-				height="146"
-				optionFlags="DrawBorder"
-				borderColor="78,78,78"
-				visible = "true" />	
-				
+				style="rubine_button_style" />
+			
 			<actor
 				name="promo_code_button"
 				x="427"
@@ -211,22 +158,12 @@
 				width="106"
 				height="106"
 				onHit="add_promo_code"
-				text="Promoci&#243;n"	
-				font="font_akzidenz_bold_smaller"		
-				cornerSize="52,52"				
+				text="Promoci&#243;n"
+				font="font_akzidenz_bold_smaller"	
+				cornerSize="52,52"
 				strokeWeight="2"
-				style="gray_button_style" />		
-				
-			<actor 
-				name="label_total_border"
-				x="556"
-				y="622"
-				width="468"
-				height="146"
-				optionFlags="DrawBorder"
-				borderColor="78,78,78"
-				visible = "true" />	
-				
+				style="white_button_style" />
+			
 			<actor
 				name="promo_code_label"
 				x="580"
@@ -322,7 +259,7 @@
 				cornerSize="34,26"
 				font="font_target_small_bold"
 				text="PAGAR (${Total})"
-				style="red_button_style" />	
+				style="orange_button_style" />	
 
 		</scene>
 	</aspect>

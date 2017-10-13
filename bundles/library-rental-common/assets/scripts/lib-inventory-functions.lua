@@ -97,6 +97,10 @@ function update_game_has_content_registry_keys( product_type )
 			kernel.log( "Found Content Xbox One" )
 			kernel.setmachinevalue( "Store", "GameHasContentXboxOne", "true" )
 			GameHasContentXboxOne = true
+		elseif product_type.product_type_name == 'Nintendo Switch' and GameEnableNintendoSwitch == true and GameHasContentNintendoSwitch == false then
+			kernel.log( "Found Content Nintendo Switch" )
+			kernel.setmachinevalue( "Store", "GameHasContentNintendoSwitch", "true" )
+			GameHasContentNintendoSwitch = true
 		end
 	end 
 end

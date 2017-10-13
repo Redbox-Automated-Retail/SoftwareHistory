@@ -40,7 +40,7 @@ function handle_disconnected_usb_card_reader()
 	kernel.setmacro( "MaintenanceView:ErrorCode", "0072CDRR" )
 	kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "0072CDRR" ] or "image_red_diagonal_stripes" )
 	view_show( "maintenance_view" )
-	idle_timer:suspend()
+	kernel.suspend_idle_timer( "idle_timer" )
 	--[[AlertManager.send_alert(
 		"HardwareError",
 		"application-startup.lua",
@@ -99,9 +99,10 @@ function idle_timer_expire_session()
 	view_unwindtobottom_safe( "application_startup::idle_timer_expire_session" )
 end
 
+-- don't convert the idle_timer_callback to .net till all the views that use it are converted to .net
 function idle_timer_callback()
-	if is_collections_popup_timer_enabled() then
-		check_collections_popup("time") 
+	if kernel.is_collections_popup_timer_enabled() then
+		kernel.check_collections_popup("time") 
 	else
 		idle_timer_show_prompt(idle_timer_expire_session)
 	end
@@ -130,59 +131,6 @@ function idle_timer_show_prompt(expire_session)
     end
 end
 
-function idle_timer_show_prompt_english(expire_session)
-	local message_view_manager = newmessageviewmanager()
-	message_view_manager:show()
-	view_analytics_event( "context", "idleTimer" )
-
-	message_view_manager:hide_message()
-	message_view_manager:set_idle_timer_title("Need more time?")
-	message_view_manager:show_first_button("NO THANKS", expire_session )
-	message_view_manager:show_second_button(
-		"YES",
-		function() view_goback_safe( "need_more_time:second_button", false ) end
-	)
-	message_view_manager:start_timer( expire_session )
-end
-
-function is_collections_popup_enabled()
-    local marketing_config = kernel.get_marketing_config()
-	return kernel.get_session_value("BrowseState.CollectionsPopupShown") == false and kernel.rental_is_collections_enabled() and marketing_config ~= nil and marketing_config.show_collections_popup
-end
-
-function is_collections_popup_timer_enabled()
-    local marketing_config = kernel.get_marketing_config()
-	return is_collections_popup_enabled() and marketing_config ~= nil and marketing_config.collections_popup_timer ~= nil and marketing_config.collections_popup_timer > 0
-end
-
-function get_idle_timer_timeout()
-	local timeout = 40000
-	if is_collections_popup_timer_enabled() then
-        local marketing_config = kernel.get_marketing_config()
-		timeout = marketing_config.collections_popup_timer;
-		-- don't allow more than 1 minute or less than 16 seconds
-		if timeout > 60000 then
-			timeout = 60000
-		end
-		if timeout < 16000 then
-			timeout = 16000
-		end
-	end
-    
-    timeout = kernel.ttsgettimeout( kernel.peekview() == "help_document_view" and "help" or "long", timeout ) 
-	return timeout
-end
-
-function initialize_idle_timer()
-	-- the idle time is used for both the normal "need more time?" dialog and the collections popup
-	local timeout = get_idle_timer_timeout()
-	local current_timeout = kernel.gettimerperiod("idle_timer")
-	if current_timeout ~= timeout then
-		kernel.log("Changing idle timer with time out: " .. tostring(timeout))
-		kernel.set_timer_period_and_duetime("idle_timer", timeout, timeout)
-	end
-end
-
 local function start_the_application()
     if (kernel.peekview() == "application_load_view") then
         view_popview("remove startup wait view")
@@ -205,10 +153,7 @@ local function start_the_application()
 	end
 
 	-- initialize the user idle timer
-	idle_timer:initialize(
-		get_idle_timer_timeout(),
-		idle_timer_callback
-	)
+    kernel.initialize_idle_timer("idle_timer", kernel.get_idle_timer_timeout(), idle_timer_callback)
 
 	-- Send up the machine model information
 	local qlm_count = 0
@@ -349,11 +294,6 @@ local function load_registry_key_values()
 		"Store",
 		"VerboseLogging",
 		"False" ) == "True"
-	--[[DisplayModifiedShoppingCart = kernel.getmachinevalueordefault(
-		"Store",
-		"DisplayModifiedShoppingCart",
-		"False" ) == "True"]]
-	DisplayModifiedShoppingCart = true
 	EnableCreditsButton = kernel.config_getvalue(
 		"system",
 		"General",
@@ -458,6 +398,14 @@ local function load_registry_key_values()
 		"Store",
 		"GameHasContentWiiU",
 		"false" ) == "true"
+	GameEnableNintendoSwitch = kernel.config_getvalue(
+		"system",
+		"Games",
+		"GameEnableNintendoSwitch" ) == true
+	GameHasContentNintendoSwitch = kernel.getmachinevalueordefault(
+		"Store",
+		"GameHasContentNintendoSwitch",
+		"false" ) == "true"
 	ForcedAirExchangerConfigured = kernel.config_getvalue(
 		"system",
 		"General",
@@ -548,10 +496,10 @@ local function register_default_hardware_handlers()
 		end )
 	kernel.registercorruptdb(
 		function( db_name )
-			kernel.log( "> Corrupt Db detected, processing." )
 			kernel.setmacro( "MaintenanceView:ErrorCode", "SOFT-FILE01" )
 			kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND["SOFT-FILE01"] or "image_green_diagonal_stripes"  )
 			if kernel.peekview() ~= "maintenance_view" then
+    			kernel.log( "> Corrupt Db detected, processing." )
 				view_show( "maintenance_view" )
 			end
 			return true
@@ -565,7 +513,7 @@ local function register_default_hardware_handlers()
 				elseif action == "Connected" then
 					kernel.log( "The USB card reader was connected, resuming operation." )
 					view_unwindtobottom( "card_reader_connected" )
-					idle_timer:resume()
+					kernel.resume_idle_timer( "idle_timer" )
 					--[[AlertManager.send_alert(
 						"HardwareError",
 						"application-startup.lua",
@@ -674,14 +622,22 @@ end
 --************************************************
 AlertManager = newalertmanager()
 StoreManager = newstoremanager()
+kernel.register_pricing_service( 
+    -- pricing set changed callback
+    function() 
+        if ReservationManager ~= nil then
+            kernel.log("Pricing set changed. Initializing ReservationManager")
+            ReservationManager:init()
+        end
+    end )
 StoreManager:init()
 StoreManager:reload_pricing_data( "_v2" )
 StoreManager:check_product_catalog_for_games_platforms()
 ShoppingCartList = {}
 HardwareManager = newhardwaremanager()
-idle_timer = newidletimer( "idle_timer" )
-
-
+kernel.create_idle_timer( "idle_timer" )
+kernel.register_idle_timer_expire_session_callback(idle_timer_expire_session)
+kernel.register_get_email_address_and_register_email_reminder_callback(get_email_address_and_register_email_reminder)
 --************************************************
 --
 -- Set Global variable values
@@ -933,3 +889,6 @@ kernel.marketing_ad_start_application()
 
 -- force load of first xps help document to speed up load of help screen
 kernel.load_xps_document("document-faqs")
+
+-- force load of product images
+kernel.cache_product_images()

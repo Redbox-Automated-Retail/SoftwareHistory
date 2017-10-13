@@ -70,7 +70,7 @@
 				cornerSize="32,15"
 				font="font_target_small_button_overlays"
 				visible="true"
-				style="light_gray_with_gray_border_button_style" />
+				style="warm_purple_button_style" />
 				
 			<actor
 				name="back_button_arrow"
@@ -91,7 +91,7 @@
 				font="font_target_small_button_overlays"
 				text="RENT"
 				visible="true"	
-				style="red_button_style" />
+				style="rubine_button_style" />
 				
 		</scene>
 	</aspect>

@@ -30,6 +30,52 @@
 			</state>
 		</style>
 		
+		<style name="rubine_button_style">
+			<state name="enabled">
+				<property name="borderColor" value="white" />
+				<property name="backgroundColor" value="228,32,69" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="3" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+			<state name="disabled">
+				<property name="borderColor" value="white" />
+				<property name="backgroundColor" value="155,155,155" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="3" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+		</style>
+		
+		<style name="orange_button_style">
+			<state name="enabled">
+				<property name="borderColor" value="white" />
+				<property name="backgroundColor" value="240,92,39" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="3" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+			<state name="disabled">
+				<property name="borderColor" value="155,155,155" />
+				<property name="backgroundColor" value="155,155,155" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="3" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+		</style>
+		
 		<style name="blue_button_style">
 			<state name="enabled">
 				<property name="gradientAngle" value="90" />
@@ -156,7 +202,53 @@
 				<property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
 			</state>
 		</style>
-
+		
+		<style name="white_button_style">
+			<state name="enabled">
+				<property name="borderColor" value="228,32,69" />
+				<property name="backgroundColor" value="white" />
+				<property name="foregroundColor" value="228,32,69" />
+				<property name="strokeWeight" value="2.5" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+			<state name="disabled">
+				<property name="borderColor" value="white" />
+				<property name="backgroundColor" value="228,32,69" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="2.5" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+		</style>
+		
+		<style name="warm_purple_button_style">
+			<state name="enabled">
+				<property name="borderColor" value="121,45,141" />
+				<property name="backgroundColor" value="121,45,141" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="2.5" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+			<state name="disabled">
+				<property name="borderColor" value="155,155,155" />
+				<property name="backgroundColor" value="155,155,155" />
+				<property name="foregroundColor" value="white" />
+				<property name="strokeWeight" value="2.5" />
+				<property name="verticalAlignment" value="center" />
+				<property name="horizontalAlignment" value="center" />
+				<property name="hitFlags" value="Enabled" />
+				<property name="optionFlags" value="Background, DrawBorder, Text" />
+			</state>
+		</style>
+		
 		<style name="gray_button_white_border_style">
 			<state name="enabled">
 				<property name="gradientAngle" value="90" />
@@ -375,32 +467,6 @@
 			</state>
 		</style>
 
-		<style name="pagination_left_style">
-			<state name="enabled">
-				<property name="width" value="35" />
-				<property name="height" value="19" />
-				<property name="hitFlags" value="None" />
-				<property name="verticalAlignment" value="center" />
-				<property name="horizontalAlignment" value="center" />
-				<property name="foregroundColor" value="white" />
-				<property name="image" value="image_browse_pagination_L" />
-				<property name="optionFlags" value="Text" />
-			</state>
-		</style>
-
-		<style name="pagination_right_style">
-			<state name="enabled">
-				<property name="width" value="35" />
-				<property name="height" value="19" />
-				<property name="hitFlags" value="None" />
-				<property name="verticalAlignment" value="center" />
-				<property name="horizontalAlignment" value="center" />
-				<property name="foregroundColor" value="gray" />
-				<property name="image" value="image_browse_pagination_R" />
-				<property name="optionFlags" value="Text" />
-			</state>
-		</style>
-
 		<style name="redbox_logo">
 			<state name="enabled">
 				<property name="image" value="image_redbox_logo" />
@@ -408,9 +474,9 @@
 			</state>
 		</style>
 
-		<style name="redbox_logo_red">
+		<style name="redbox_logo_new">
 			<state name="enabled">
-				<property name="image" value="image_redbox_logo_red" />
+				<property name="image" value="image_logo" />
 				<property name="optionFlags" value="Image" />
 			</state>
 		</style>
@@ -671,46 +737,6 @@
 			</state>
 		</style>
 
-		<style name="browse_add_movie_accessible_style">
-			<state name="enabled">
-				<property name="width" value="60" />
-				<property name="height" value="60" />
-				<property name="verticalAlignment" value="center" />
-				<property name="horizontalAlignment" value="center" />
-				<property name="textRegion" value="0,0,60,53" />
-				<property name="foregroundColor" value="234,234,234" />
-				<property name="hotSpot" value="-5,-5,65,65" />
-				<property name="hitFlags" value="Enabled" />
-				<property name="image" value="image_round_red_button" />
-				<property name="optionFlags" value="Image, Text" />
-			</state>
-		</style>
-
-		<style name="browse_add_movie_accessible_style_small">
-			<state name="enabled">
-				<property name="width" value="50" />
-				<property name="height" value="50" />
-				<property name="verticalAlignment" value="center" />
-				<property name="horizontalAlignment" value="center" />
-				<property name="foregroundColor" value="234,234,234" />
-				<property name="textRegion" value="0,0,50,45" />
-				<property name="hitFlags" value="Enabled" />
-				<property name="image" value="image_round_red_button" />
-				<property name="optionFlags" value="Image, Text" />
-			</state>
-			<state name="disabled">
-				<property name="width" value="50" />
-				<property name="height" value="50" />
-				<property name="verticalAlignment" value="center" />
-				<property name="horizontalAlignment" value="center" />
-				<property name="foregroundColor" value="200,200,200" />
-				<property name="textRegion" value="0,0,50,45" />
-				<property name="hitFlags" value="Enabled" />
-				<property name="image" value="image_round_gray_button" />
-				<property name="optionFlags" value="Image, Text" />
-			</state>
-		</style>
-
 		<style name="selectedmovie_border_style">
 			<state name="enabled">
 				<property name="width" value="82" />
@@ -758,16 +784,92 @@
 				<property name="optionFlags" value="Text, DrawBorder, BackgroundGradient" />
 			</state>
 		</style>
-		
-		<style name="reco_add_item_style">
-			<state name="enabled">
-				<property name="width" value="50" />
-				<property name="height" value="50" />
-				<property name="hotSpot" value="0,0,60,60" />
-				<property name="hitFlags" value="Enabled" />
-				<property name="image" value="image_add_plus_button" />
-				<property name="optionFlags" value="Image" />
-			</state>
-		</style>
-	</aspect>
+
+    <style name="reco_add_item_style">
+      <state name="enabled">
+        <property name="width" value="50" />
+        <property name="height" value="50" />
+        <property name="hotSpot" value="0,0,60,60" />
+        <property name="hitFlags" value="Enabled" />
+        <property name="image" value="image_add_plus_button" />
+        <property name="optionFlags" value="Image" />
+      </state>
+    </style>
+
+    <style name="rubine_button_style_white_border">
+      <state name="enabled">
+        <property name="gradientAngle" value="90" />
+        <property name="horizontalAlignment" value="center" />
+        <property name="verticalAlignment" value="center" />
+        <property name="backgroundColor" value="228,32,69" />
+        <property name="gradientTargetColor" value="228,32,69" />
+        <property name="foregroundColor" value="white" />
+        <property name="borderColor" value="white" />
+        <property name="strokeWeight" value="4" />
+        <property name="cornerSize" value="32,15" />
+        <property name="hitFlags" value="Enabled" />
+        <property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+      </state>
+    </style>
+
+    <style name="purple_button_style_white_border">
+      <state name="enabled">
+        <property name="gradientAngle" value="90" />
+        <property name="horizontalAlignment" value="center" />
+        <property name="verticalAlignment" value="center" />
+        <property name="backgroundColor" value="121, 45, 141" />
+        <property name="gradientTargetColor" value="121, 45, 141" />
+        <property name="foregroundColor" value="white" />
+        <property name="borderColor" value="white" />
+        <property name="strokeWeight" value="4" />
+        <property name="cornerSize" value="32,15" />
+        <property name="hitFlags" value="Enabled" />
+        <property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+      </state>
+    </style>
+
+    <style name="rubine_button_style_no_border">
+      <state name="enabled">
+        <property name="gradientAngle" value="90" />
+        <property name="horizontalAlignment" value="center" />
+        <property name="verticalAlignment" value="center" />
+        <property name="backgroundColor" value="228,32,69" />
+        <property name="gradientTargetColor" value="228,32,69" />
+        <property name="foregroundColor" value="white" />
+        <property name="borderColor" value="228,32,69" />
+        <property name="strokeWeight" value="4" />
+        <property name="cornerSize" value="32,15" />
+        <property name="hitFlags" value="Enabled" />
+        <property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+      </state>
+    </style>
+
+    <style name="white_rubine_next_button_style">
+      <state name="enabled">
+        <property name="gradientAngle" value="90" />
+        <property name="borderColor" value="228,32,69" />
+        <property name="backgroundColor" value="white" />
+        <property name="gradientTargetColor" value="white" />
+        <property name="foregroundColor" value="228,32,69" />
+        <property name="strokeWeight" value="3" />
+        <property name="verticalAlignment" value="center" />
+        <property name="horizontalAlignment" value="center" />
+        <property name="hitFlags" value="Enabled" />
+        <property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+      </state>
+      <state name="disabled">
+        <property name="gradientAngle" value="90" />
+        <property name="borderColor" value="155,155,155" />
+        <property name="backgroundColor" value="155,155,155" />
+        <property name="gradientTargetColor" value="155,155,155" />
+        <property name="foregroundColor" value="white" />
+        <property name="strokeWeight" value="3" />
+        <property name="verticalAlignment" value="center" />
+        <property name="horizontalAlignment" value="center" />
+        <property name="hitFlags" value="Enabled" />
+        <property name="optionFlags" value="BackgroundGradient, DrawBorder, Text" />
+      </state>
+    </style>
+
+  </aspect>
 </resource>

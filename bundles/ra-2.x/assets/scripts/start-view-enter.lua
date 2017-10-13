@@ -3,18 +3,15 @@
 -- Copyright (C) 2017 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
-kernel.reset_browse_controls()
 kernel.ttsinreturnflow(false)
 kernel.timerstart( "reservation-expire-timer" )
 
-idle_timer:stop()
+kernel.stop_idle_timer( "idle_timer" )
 
 kernel.initialize_session()
 
-price_set_item = false  
 -- idle timer needs to be reinitialized because of the collections popup
-initialize_idle_timer()
-overlay_scene_manager = newtitlerollupoverlay()  -- this can be removed when the browse view is converted to WPF
+kernel.reset_application_idle_timer_timeout()
 
 if kernel.ttsenabled() or kernel.get_application_state_value("IsADAAccessible") == true then
     kernel.set_application_state_value("IsADAAccessible", true)
@@ -156,23 +153,4 @@ end
 
 GetUsedMemory()
 
-function is_product_in_shoppingCart( product )
-    local result = false
-    if (product ~= nil) then
-        result = ShoppingCart:has_item( product.product_id ) == true
-        kernel.log("IsProductInShoppingCart " .. tostring(product.product_id) .. " : " .. tostring(result))
-    end
-    return result
-end
-
-function is_product_early_release( product )
-    local result = false
-    result = StoreManager.PricingManager:is_early_released( product ) 
-    if (product ~= nil) then
-        kernel.log("IsProductEarlyRelease " .. tostring(product.product_id) .. " : " .. tostring(result))
-    end
-    return result
-end
-
-
-kernel.configure_start_view(localization_reload_resources, start_idle_timer_callback, show_browse_view_collections, show_collection_items, check_for_warning_popups, is_product_in_shoppingCart, is_product_early_release)
+kernel.configure_start_view(localization_reload_resources, start_idle_timer_callback)

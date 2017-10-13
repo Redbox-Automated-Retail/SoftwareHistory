@@ -4,9 +4,11 @@
 --
 
 browse_rent_or_sellthru = "rent"
-if kernel.get_application_state_value("IsADAAccessible") == true then
-	browse_view_name = "browse_view_ada_accessible"
-else
-	browse_view_name = "browse_view"
-end
+--if kernel.get_application_state_value("IsADAAccessible") == true then
+--	browse_view_name = "browse_view_ada_accessible"
+--else
+--	browse_view_name = "browse_view"
+--end
+
+browse_view_name = "browse_view"
 view_show_safe( browse_view_name )

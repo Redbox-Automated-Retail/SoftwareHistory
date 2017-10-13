@@ -6,4 +6,4 @@
 
 blu_ray_upsell_view_timer:stop()
 
-idle_timer:resume()
+kernel.resume_idle_timer( "idle_timer" )

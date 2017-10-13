@@ -16,9 +16,8 @@ end
 
 swipe_view_next_func = function()
 	ShoppingCart:add_multi_disc_discs()
-	ShoppingCart:set_multi_disc_flags()
 	ShoppingCart:prepos_vend()
-	if #ShoppingCart.items > 0 then
+	if kernel.current_rental_shopping_cart_item_count() > 0 then
 		if ShoppingCart:is_gift_card() == true then
 			if GiftCardsEnabled == true then
 				if credit_button_hit == true then
@@ -91,11 +90,11 @@ check_for_campaign_opt_in = function()
     and ShoppingCart.play_pass_prompt == false then
 		kernel.log( "ShowOptinForNormalCheckout:" ..tostring( ShowOptinForNormalCheckout )
 			.. " ShowOptinForCreditsCheckout:" ..tostring( ShowOptinForCreditsCheckout )
-			.. " ShoppingCart.session_use_credits:" ..ShoppingCart.session_use_credits )
+			.. " ShoppingCart.session_use_credits:" .. kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ))
 
 		if ( ShowOptinForNormalCheckout and ShowOptinForCreditsCheckout )
-		or ( ShowOptinForNormalCheckout and ( ShoppingCart.session_use_credits == "OptedOut" or ShoppingCart.session_use_credits == "NotSpecified" ))
-		or ( ShowOptinForCreditsCheckout and ShoppingCart.session_use_credits == "OptedIn" ) then
+		or ( ShowOptinForNormalCheckout and ( kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ) == "OptedOut" or kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ) == "NotSpecified" ))
+		or ( ShowOptinForCreditsCheckout and kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ) == "OptedIn" ) then
 			kernel.log("check_for_campaign_opt_in - setting alternate_optin to true")
 			ShoppingCart.alternate_optin = true
 		end
@@ -190,7 +189,7 @@ function process_authorize_result( result )
         elseif pending_counts.game_purchase_count + ShoppingCart:get_count( "Games", "purchase" ) > OfflineGamePurchaseLimit then
 			result.success = false
 			result.properties.response = "OfflineGamePurchaseLimitExceeded"
-        elseif pending_counts.total_count + #ShoppingCart.items > OfflineItemsLimit then
+        elseif pending_counts.total_count + kernel.current_rental_shopping_cart_item_count() > OfflineItemsLimit then
 			result.success = false
 			result.properties.response = "OfflineItemsLimitExceeded"
         end
@@ -200,12 +199,17 @@ function process_authorize_result( result )
 				result.properties.response = "Error"
 			end
 		end
-		for k, v in pairs( ShoppingCart.items ) do
-			if MasterProductCatalog[v.product_id].sell_thru_new ~= nil and MasterProductCatalog[v.product_id].sell_thru_new == true then
-				result.success = false
-				result.properties.response = "OfflineSellThruNewRefused"
-				break
-			end
+
+        local shopping_cart_item_count = kernel.rental_shopping_cart_item_count( ShoppingCart.session_id )
+        for k=1,shopping_cart_item_count do
+            local v = kernel.get_rental_shopping_cart_item( ShoppingCart.session_id, k )
+            if v ~= nil then
+			    if MasterProductCatalog[v.product_id].sell_thru_new ~= nil and MasterProductCatalog[v.product_id].sell_thru_new == true then
+				    result.success = false
+				    result.properties.response = "OfflineSellThruNewRefused"
+				    break
+			    end
+            end
 		end
 		if ShoppingCart:is_gift_card() == true then
 			result.success = false
@@ -225,7 +229,7 @@ function process_authorize_result( result )
 			BadCardList:remove_current_account_if_bad()
 		end
 		message_view_manager:hide( true )
-		idle_timer:stop()
+		kernel.stop_idle_timer( "idle_timer" )
 		kernel.setmacro( "ComingSoonTitleIDs", "" )
 		
 		local keyboard_manager = newkeyboardmanager()
@@ -278,7 +282,7 @@ function process_authorize_result( result )
 					kernel.log("Email changed: ".. tostring(email_changed))
 					if MarketingOptInEnabled and kernel.ttsenabled() == false and email_changed then
 						-- Show a 'Please Wait' screen while the lookup is working
-						idle_timer:suspend()
+						kernel.suspend_idle_timer( "idle_timer" )
 						view_show_safe( "please_wait_message" )
 						
 						-- Perform a 2nd email lookup
@@ -286,7 +290,7 @@ function process_authorize_result( result )
 							StoreManager:get_number(), 
 							ShoppingCart.email,
 							function( email_lookup_result )
-								idle_timer:resume()
+								kernel.resume_idle_timer( "idle_timer" )
 								marketing_opt_in_flow( email_lookup_result.properties.confirmation_status )
 							end )
 					else
@@ -315,7 +319,7 @@ function process_authorize_result( result )
 				end )
 			keyboard_manager:show( strings.email_tag )
 			view_analytics_event( "context", "emailAddress" )
-			idle_timer:stop()
+			kernel.stop_idle_timer( "idle_timer" )
 
 			keyboard_manager:set_cancel_button_text( strings.email_cancel_message )
 			keyboard_manager:start_idle_timer(
@@ -476,8 +480,8 @@ function process_authorize_result( result )
 			elseif result.properties.response == "CodeAlreadyUsed" then
                 if rtwo_in_cart_template_is_running() then
                     ShoppingCart.in_cart_do_not_show = true
-                    ShoppingCart.in_cart_promo_offer_made = false
-                    ShoppingCart.in_cart_promo_offer_cancel = false
+                    kernel.rental_shopping_cart_update_in_cart_offer_made( ShoppingCart.session_id, false)
+                    kernel.rental_shopping_cart_update_in_cart_offer_cancel( ShoppingCart.session_id, false )
                 end
                 ShoppingCart:clear_promo_code()
 				view_analytics_event( "context", "promoAlreadyUsed" )
@@ -555,7 +559,6 @@ key_pad_next_getcustomercredits_func = function()
 			and result.properties.has_profile == true
 			and result.properties.stand_alone == false then
 				view_show_safe( "credit_balance_view" )
-
 				if result.properties.first_name == nil or result.properties.first_name == "" then
 					kernel.setactortext( "welcome_message_name", strings.credit_balance_hi .. "," )
                     kernel.setmacro( "TTS:CreditViewWelcomeMessageName", strings.credit_balance_hi .. "," )
@@ -583,7 +586,6 @@ key_pad_next_getcustomercredits_func = function()
 				kernel.setactortext( "red_coin_credits_used", credits_used )
 
 				local subtotal_amount, tax_amount = calculate_totals()
-
 				local credits_amount = 0
 				if result.properties.credit_allocations ~= nil then
 					for _, v in pairs( result.properties.credit_allocations ) do
@@ -631,20 +633,24 @@ key_pad_next_getcustomercredits_func = function()
 					local has_blu_rays = false
 					local has_games = false
 					local has_purchases = false
-					for k, v in ipairs( ShoppingCart.items ) do
-						if v.action == "purchase" then
-							has_purchases = true
-						else
-							if v.product_type == "DVD" then
-								has_dvds = true
-							end
-							if v.product_type == "Blu-ray" then
-								has_blu_rays = true
-							end
-							if v.product_family == "Games" then
-								has_games = true
-							end
-						end
+                    local shopping_cart_item_count = kernel.rental_shopping_cart_item_count( ShoppingCart.session_id )
+                    for k=1,shopping_cart_item_count do
+                        local v = kernel.get_rental_shopping_cart_item( ShoppingCart.session_id, k )
+                        if v ~= nil then
+						    if v.action == "purchase" then
+							    has_purchases = true
+						    else
+							    if v.product_type == "DVD" then
+								    has_dvds = true
+							    end
+							    if v.product_type == "Blu-ray" then
+								    has_blu_rays = true
+							    end
+							    if v.product_family == "Games" then
+								    has_games = true
+							    end
+						    end
+                        end
 					end
 					local do_not_apply_text = strings.credit_balance_do_not_apply_1
 					if has_dvds == true then

@@ -13,6 +13,10 @@ function newvendmanager()
 
 	t.vsm_shown_counter = 0
 
+    t.show_wait_screen = false
+    t.arcus_reset = false
+    t.disc_vended_after_arcus_reset = false
+
 	t.message_view_manager = newmessageviewmanager()
 
 	t.init = function( self )
@@ -28,27 +32,29 @@ function newvendmanager()
 	end
 
 	t.prepos_vend_continue = function( self )
+
 		HardwareManager.hardware_event_responders.VendGraphicDisplay = function( args, jobid )
             kernel.log( "VendGraphicDisplay" )
             local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
             local show_ad = ad ~= nil and ad.visible == true
-			if show_ad == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil then
+			if (show_ad == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil )
+                and t.show_wait_screen == false
+            then
                 if kernel.peekview() ~= "vsm_view"  then
                     kernel.log( "Show VSM" )
                     t.show_vsm_view(ad)
                 end
-            elseif coming_soon_product_list ~= nil then
+            elseif coming_soon_product_list ~= nil and t.show_wait_screen == false then
                 view_show_safe( "coming_soon_view" )
 			else
 				view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.VendGraphicDisplay" )
-                kernel.log( "Show Animation PleaseWait" )
-                kernel.vend_view_show_animation("PleaseWait")
+                t.show_animation()
 			end
 		end
 		HardwareManager.hardware_event_responders.PickupGraphicDisplay = function( args, jobid )
 			--Display the vend animation once the kiosk starts pushing the disc out of the picker.
 			view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.PickupGraphicDisplay" )
-			if ShoppingCart.pickup_recommendations_shown == true then
+			if kernel.rental_shopping_cart_get_pickup_recommendations_shown( ShoppingCart.session_id ) == true then
                 kernel.log( "Show Animation RecomendationOnPickupVend" )
                 kernel.vend_view_show_animation("RecomendationOnPickupVend")
 			else
@@ -68,11 +74,34 @@ function newvendmanager()
 			self,
 			barcodes_to_vend,
 			on_complete )
+
 		if self.vending == true then
 			kernel.log( "VendManager:vend: vending flag is true, exiting function." )
 			return
 		end
+
 		HardwareManager:reset_event_responders()
+        if kernel.is_arcus_reset_enabled() then
+            HardwareManager.hardware_event_responders.HardwareCorrectionStart = function( args, jobid)
+                kernel.notify_arcus_reset("HardwareCorrectionStart")
+                self.show_wait_screen = true
+                self.arcus_reset = true
+            end
+            HardwareManager.hardware_event_responders.HardwareCorrectionSuccess = function( args, jobid)
+                self.show_wait_screen = false
+                kernel.notify_arcus_reset("HardwareCorrectionSuccess")
+            end
+            HardwareManager.hardware_event_responders.HardwareCorrectionFailure = function( args, jobid)
+                self.show_wait_screen = false
+                kernel.notify_arcus_reset("HardwareCorrectionFailure")
+            end
+            HardwareManager.hardware_event_responders.ItemVended = function(args, jobid)
+                if self.arcus_reset then
+                    self.disc_vended_after_arcus_reset = true
+                end
+            end
+        end
+
 		kernel.log( "VendManager: barcodes_to_vend follows:" )
 		for k, v in ipairs( barcodes_to_vend ) do
 			kernel.log( "...VendManager: k = " .. tostring( k ) .. ", v = " .. tostring( v ) )
@@ -211,6 +240,13 @@ function newvendmanager()
 							kernel.log( "VendManager: Vend was successful." )
 							view_unwindtobottom_safe( "prepos_vend:vend successful" )
 						end
+                        if t.arcus_reset then
+                            if t.disc_vended_after_arcus_reset then
+                                kernel.notify_arcus_reset("HardwareCorrectionVendSuccess")
+                            else
+                                kernel.notify_arcus_reset("HardwareCorrectionVendFailure")
+                            end
+                        end
 				--    end,
 				--    nil )
 			end,
@@ -277,12 +313,14 @@ function newvendmanager()
 	end
 
 	t.show_movie_or_coming_soon = function( barcodes_to_vend )
-		if safe_to_change_view() == true
+        if t.show_wait_screen then
+            t.show_animation()
+        elseif safe_to_change_view() == true
         and kernel.vend_view_get_animation() == "None"
 		and kernel.peekview() ~= "vsm_view"
 		then
 			if ( barcodes_to_vend == nil or #barcodes_to_vend == 0 )
-			and ( ShoppingCart.items == nil or #ShoppingCart.items == 0 )
+			and ( kernel.current_rental_shopping_cart_item_count() == 0 )
 			and ReservationManager ~= nil
 			and ReservationManager:get_barcodes_to_vend() ~= nil
 			and #ReservationManager:get_barcodes_to_vend() > 0 then
@@ -292,8 +330,9 @@ function newvendmanager()
 			kernel.analyticsaddnode( "session", "vendingMovie", ShoppingCart.session_id )
 
             local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
-			if ( ad ~= nil and ad.visible == true ) or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil
-			or ( #ShoppingCart.items == 0 and (barcodes_to_vend == nil or #barcodes_to_vend == 0 ))
+			if ( ad ~= nil and ad.visible == true ) 
+                or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil
+			    or ( kernel.current_rental_shopping_cart_item_count == 0 and (barcodes_to_vend == nil or #barcodes_to_vend == 0 ))
 			then
                 t.setup_vsm_view()
 			else
@@ -306,7 +345,7 @@ function newvendmanager()
 						kernel.timerstop( "coming-soon-timer")
 						local title_generator = newcomingsoongenerator()
 
-						local items_to_vend = ShoppingCart.items
+						local items_to_vend = kernel.get_rental_shopping_cart_items( ShoppingCart.session_id )
 						if #items_to_vend == 0 then
 							for _, barcode in ipairs( barcodes_to_vend ) do
 								local barcode_to_product = BarcodeToProduct[barcode]

@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-kernel.setactortext( "discs_image_number_text", tostring( #ShoppingCart.items ) )
+kernel.setactortext( "discs_image_number_text", tostring( kernel.current_rental_shopping_cart_item_count() ) )
 
 kernel.timercreate(
 	"multi_disc_vend_view_timer",

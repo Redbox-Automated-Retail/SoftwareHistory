@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-idle_timer:stop()
+kernel.stop_idle_timer( "idle_timer" )
 
 -- Custom RNF-Idle-Timer - on timeout goes directly back to the welcome screen
 if not kernel.timerexists( "rnf_idle_timer" ) then

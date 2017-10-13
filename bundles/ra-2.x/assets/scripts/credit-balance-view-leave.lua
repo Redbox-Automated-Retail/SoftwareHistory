@@ -6,4 +6,4 @@
 
 kernel.timerstop( "credit_balance_view_timer" )
 kernel.timerremove( "credit_balance_view_timer" )
-idle_timer:resume()
+kernel.resume_idle_timer( "idle_timer" )

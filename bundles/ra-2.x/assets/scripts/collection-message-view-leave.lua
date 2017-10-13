@@ -4,4 +4,3 @@
 -- All Rights Reserved
 --
 
-collections_message_view_timer:stop()

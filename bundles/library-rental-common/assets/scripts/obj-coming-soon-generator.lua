@@ -62,14 +62,6 @@ function newcomingsoongenerator()
 	local is_in_date_range3 = function( product )
 		-- This function will account for early release titles [$3 Firsts]
 		local release_date_string = product.merchandise_date
-		local alt_price_data = StoreManager.PricingManager.AlternatePriceTitles[ product.product_id ]
-		if alt_price_data ~= nil then
-			-- This is an early release title, move the release date string value up (x) days before using in compare logic
-			local release_date = kernel.datetimeparsefromstringdate( product.merchandise_date )
-			local early_date = kernel.dateadd( release_date, "-" .. tostring( alt_price_data.release_early_days ) )
-			release_date_string = string.format( "%4d%02d%02d%02d%02d", early_date.year, early_date.month, early_date.day, early_date.hour, early_date.min )
-			kernel.log( "> OrigRelease:" .. product.merchandise_date .. ", EarlyRelease: " .. release_date_string )
-		end
 		return is_in_date_range( release_date_string )
 	end
 
@@ -211,15 +203,6 @@ function newcomingsoongenerator()
 			end
 		end
 		
-		-- Early Release Titles get priority when building the cache
-		for k, v in ipairs( StoreManager.PricingManager.AlternatePriceTitles ) do
-			local early_product = MasterProductCatalog[ k ]
-			if early_product ~= nil then
-				process_product( early_product )
-			end
-			if #results >= max_result_count then break end
-		end
-
 		-- Use standard release titles to fill out the cache list
 		for _, product in _MasterProductCatalog:pairs() do
 			if #results >= max_result_count then break end

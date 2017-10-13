@@ -8,12 +8,10 @@ if kernel.getlasthitactorname() == nil then
 	return
 end
 
-if kernel.getlasthitactorname() == "next_button" or kernel.getlasthitactorname() == "image_next_white_arrow_big" then
+if kernel.getlasthitactorname() == "next_button" then
 	
     kernel.disableactor( "next_button" )
-	kernel.setactorforegroundcolor( "next_button", "gray" )	
-	kernel.hideactor( "image_next_white_arrow_big" )
-    kernel.showactor( "next_button_right_arrow_icon" )
+	kernel.hideactor( "next_button_right_arrow_icon" )
 
     key_pad_value = kernel.getmacro( "KeyPad:Text" )
 	
@@ -35,12 +33,7 @@ elseif kernel.getlasthitactorname() == "clearall_button" then
 	kernel.setmacro( "KeyPad:Text", "" )
 	kernel.markactordirty( "text_label" )
 	kernel.disableactor( "next_button" )
-	kernel.setactorforegroundcolor( "next_button", "gray" )
-
-	-- for validating right arrow on next button 
---	kernel.setactorbackgroundcolor( "next_button", "gray" )
-	kernel.showactor("next_button_right_arrow_icon")
-	kernel.hideactor("image_next_white_arrow_big")
+	kernel.hideactor("next_button_right_arrow_icon")
 	
 	if kernel.ttsenabled() == true then
 		kernel.setmacro( "TTSKeyPad:Text", "" )	
@@ -54,10 +47,7 @@ elseif kernel.getlasthitactorname() == "back_button" then
 	kernel.setmacro( "KeyPad:Text", key_pad_value)
 	kernel.markactordirty( "text_label" )
 	kernel.disableactor( "next_button" )
-	kernel.setactorforegroundcolor( "next_button", "gray" )
---	kernel.setactorbackgroundcolor( "next_button", "30,30,30" )
-	kernel.hideactor("image_next_white_arrow_big")
-	kernel.showactor("next_button_right_arrow_icon")
+	kernel.hideactor("next_button_right_arrow_icon")
 
 	if kernel.ttsenabled() == true then
 		local splitzip = ""
@@ -80,18 +70,7 @@ kernel.markactordirty( "text_label" )
 
 if string.len( text ) == key_pad_minimum_length then
 	kernel.enableactor( "next_button" )
-	kernel.setactorforegroundcolor( "next_button", "white" )
---	kernel.setactorbackgroundcolor( "next_button", "gray" )
-	kernel.hideactor("next_button_right_arrow_icon")
-	kernel.showactor("image_next_white_arrow_big")
-	
---[[else
-	kernel.disableactor( "next_button" )
-	kernel.setactorforegroundcolor( "next_button", "gray" )
-	kernel.setactorbackgroundcolor( "next_button", "gray" )
 	kernel.showactor("next_button_right_arrow_icon")
-	kernel.hideactor("image_next_white_arrow_big")
-]]
 end
 
 if kernel.ttsenabled() == true then

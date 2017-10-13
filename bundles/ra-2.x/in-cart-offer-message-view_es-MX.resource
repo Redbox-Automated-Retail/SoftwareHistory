@@ -32,7 +32,7 @@
 				height="576"
 				cornerSize="28,28"
 				strokeWeight="5"
-				borderColor="162,16,24"
+				borderColor="228,32,69"
 				backgroundColor="255,255,255"
 				hitFlags="None"
 				optionFlags="Background, DrawBorder" /> 
@@ -45,7 +45,7 @@
 				height="45"
 				text="${InCartPromoHeaderMessage}"
 				font="font_target_medium"
-				foregroundColor="184, 0, 0"
+				foregroundColor="228,32,69"
 				horizontalAlignment="near"
 				optionFlags="Text" />
 
@@ -71,7 +71,7 @@
 				cornerSize="32,15"
 				font="font_target_small_button_overlays"
 				visible="true"
-				style="light_gray_with_gray_border_button_style" />
+				style="warm_purple_button_style" />
 				
 			<actor
 				name="yes_button"
@@ -83,7 +83,7 @@
 				font="font_target_small_button_overlays"
 				text="${InCartPromoYesButton}"
 				visible="true"	
-				style="red_button_style" />
+				style="rubine_button_style" />
 
 		</scene>
 	</aspect>

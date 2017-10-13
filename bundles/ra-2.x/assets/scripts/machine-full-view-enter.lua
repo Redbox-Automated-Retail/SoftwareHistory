@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-idle_timer:stop()
+kernel.stop_idle_timer( "idle_timer" )
 
 machine_full_idle_timer = newidletimer("machine_full_idle_timer")
 machine_full_idle_timer:initialize(

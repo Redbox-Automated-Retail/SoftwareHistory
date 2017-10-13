@@ -271,6 +271,17 @@ function newreturnmanager( shopping_cart )
 	                return false
                 end
 
+				local function is_digital_code( barcode )
+                    local product = BarcodeToProduct[barcode]
+                    if product ~= nil and product.product_id ~= nil then
+                        local master_product = MasterProductCatalog[product.product_id]
+                        if master_product ~= nil and master_product.product_type_id == 17 then
+                            return true
+                        end
+                    end
+                    return false
+				end
+
                 local returned_item_id = nil
 				local bad_codes = {}
 				local should_show_success = false
@@ -360,6 +371,11 @@ function newreturnmanager( shopping_cart )
 	                                "Security hardware having issues"
                                 )
                             end
+
+							if is_digital_code( v.item_id ) then
+								BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Unknown Title" }
+								kernel.log( "Digital Code returned: barcode = " .. tostring( v.item_id ) .. ", status = Unknown Title - inserted into BarcodeStatus" )
+							end
 
 							returned_item_id = v.item_id
 							should_show_success = ( v.message == "The item was successfully returned." )

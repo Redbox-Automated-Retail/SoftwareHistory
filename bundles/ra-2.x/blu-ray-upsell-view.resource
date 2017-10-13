@@ -19,7 +19,7 @@
 				width="924"
 				height="668"
 				backgroundColor="white"
-				borderColor="138, 7, 13"
+				borderColor="228,32,69"
 				strokeWeight="5"
 				cornerSize="28,28"
 				optionFlags="Background, DrawBorder" />
@@ -31,7 +31,7 @@
 				width="1024"
 				text="Upgrade to Blu-ray&#8482;"
 				font="font_target_large_52"
-				foregroundColor="30, 154, 228"
+				foregroundColor="228,32,69"
 				horizontalAlignment="center"
 				optionFlags="Text" />
 				
@@ -85,7 +85,7 @@
 				cornerSize="35,35"
 				text="NO THANKS"
 				font="font_target_small_button_overlays"
-				style="light_gray_with_gray_border_button_style" />
+				style="purple_button_style_white_border" />
 				
 			<actor
 				name="upgrade_button"
@@ -96,7 +96,7 @@
 				cornerSize="35,35"
 				text="UPGRADE"
 				font="font_target_small_button_overlays"
-				style="red_button_style" />
+				style="rubine_button_style_white_border" />
 		</scene>
 	</aspect>
 </resource>

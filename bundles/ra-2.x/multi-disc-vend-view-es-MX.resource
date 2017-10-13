@@ -9,7 +9,7 @@
 			name="Default"
 			width="1024"
 			height="768"
-			backgroundColor="181,18,27"
+			backgroundColor="228,32,69"
 			stylesheet="style_sheet_common"
 			onEnter="multi_disc_vend_view_enter"
 			onLeave="multi_disc_vend_view_leave">

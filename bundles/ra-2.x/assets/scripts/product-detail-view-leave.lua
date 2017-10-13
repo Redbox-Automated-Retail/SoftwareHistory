@@ -4,4 +4,4 @@
 -- All Rights Reserved
 --
 
-kernel.removekeypressnotify("product_detail_view")
+--kernel.removekeypressnotify("product_detail_view")

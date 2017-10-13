@@ -32,7 +32,7 @@
 				height="668"
 				backgroundColor="white"
 				cornerSize="28,28"
-				borderColor="162,16,24"
+				borderColor="228,32,69"
 				strokeWeight="5"
 				optionFlags="Background, DrawBorder" />
       
@@ -50,7 +50,7 @@
 				x="100"
 				y="100"
 				font="font_target_medium_small"
-				foregroundColor="180,18,13"
+				foregroundColor="228,32,69"
 				optionFlags="Text" />
 				
 			<actor
@@ -68,7 +68,7 @@
 				y="135"
 				width="50"
 				font="font_target_medium_small"
-				foregroundColor="180,18,13"
+				foregroundColor="228,32,69"
 				horizontalAlignment="center"
 				optionFlags="Text" />
 				
@@ -87,7 +87,7 @@
 				y="135"
 				width="50"
 				font="font_target_medium_small"
-				foregroundColor="180,18,13"
+				foregroundColor="228,32,69"
 				horizontalAlignment="center"
 				optionFlags="Text" />
 				
@@ -147,7 +147,7 @@
 				height="30"
 				font="font_akzidenz_bold_smaller"
 				cornerSize="30,30"
-				style="gray_button_style" />
+				style="warm_purple_button_style" />
 
       <actor
 				name="credits_do_not_apply_message"
@@ -183,7 +183,7 @@
 				y="362"
 				width="240"
 				height="40"
-				backgroundColor="174,4,13"
+				backgroundColor="228,32,69"
 				optionFlags="Background" />
 				
 			<actor
@@ -270,7 +270,7 @@
 				text="    CANCELA"
 				font="font_target_medium"
 				cornerSize="30,30"
-				style="gray_button_style" />
+				style="warm_purple_button_style" />
 				
 			<actor
 				name="back_button_arrow"
@@ -288,7 +288,7 @@
 				text="CONFIRMO"
 				font="font_target_medium"
 				cornerSize="30,30"
-				style="red_button_style" />
+				style="rubine_button_style" />
 		</scene>
 	</aspect>
 </resource>

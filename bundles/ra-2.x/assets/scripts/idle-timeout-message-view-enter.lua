@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-idle_timer:suspend()
+kernel.suspend_idle_timer( "idle_timer" )
 
 local timeout = kernel.ttsgettimeout( "medium", 15000 )
 kernel.configure_idle_timeout_message_view(

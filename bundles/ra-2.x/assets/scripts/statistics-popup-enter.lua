@@ -101,7 +101,7 @@ local DisplayRows = function (actorprefix, data, x, y)
 end
 
 
-idle_timer:suspend()
+kernel.suspend_idle_timer( "idle_timer" )
 local product_type = ProductTypes[statistics_popup_view_product.product_type_id]
 local product_family = ProductFamilies[product_type.product_family_id]
 

@@ -45,6 +45,9 @@
 			<column name="promo_code_prompt_message">Please enter your promo code.</column>
 			<column name="promo_code_game_required_title">Add a Game!</column>
 			<column name="promo_code_game_required_message">You can only use that promo code for a video game. Add one to your cart and then reenter your code, and you'll get the first rental day free.</column>
+			<column name="promo_code_rxgx_title">You have entered a promo code for Rent {0} {1} Get {2} {3}.</column>
+			<column name="promo_code_rxgx_message">In addition to your cart, please add at least {0} to use this promo code.</column>
+			<column name="and">and</column>
 
 
 			<column name="email_tag">EMAIL ADDRESS</column>
@@ -55,8 +58,8 @@
 			<column name="coming_soon_email_optin_email_prompt_message">What email address would you like your reminder sent to? If you ask for other reminders during this visit, we'll send them here too.</column>
 			<column name="coming_soon_email_optin_email_marketing_message">Redbox will never sell your email address to any third parties. We promise.</column>
 
-      <column name="disc_return_message">Please insert your disc.</column>
-      <column name="inventory_full_message">The Redbox kiosk is unable to accept your return at this time.&#10;&#10;Please call customer service at&#10;1-866-REDBOX3 (1.866.733.2693).</column>
+			<column name="disc_return_message">Please insert your disc.</column>
+			<column name="inventory_full_message">The Redbox kiosk is unable to accept your return at this time.&#10;&#10;Please call customer service at&#10;1-866-REDBOX3 (1.866.733.2693).</column>
 			<column name="inventory_updated_message">Please wait a sec while we put your disc away.&#10;&#10;And then stick around to see what's new to rent!</column>
 			<column name="invalid_card_message">Sorry, your card could not be recognized. Please try again.</column>
 
@@ -73,16 +76,16 @@
 			<column name="authorization_failure_message">Your card could not be authorized.  Please try again.</column>
 			<column name="sell_thru_new_offline_denied">Sorry, there was a problem with the purchased items in your cart.&#10;Please remove these items from your cart in order to continue. </column>
       
-      <column name="offline_game_rental_limit_exceeded_message_header">You're at the limit!</column>
-      <column name="offline_game_rental_limit_exceeded_message">You can have up to {0} discs, and only {1} can be {2}.&#10;&#10;Please remove discs from your cart to continue.</column>
-      <column name="offline_game_purchase_limit_exceeded_message_header">You're at the limit!</column>
-      <column name="offline_game_purchase_limit_exceeded_message">You can have up to {0} discs, and only {1} can be {2}.&#10;&#10;Please remove discs from your cart to continue.</column>
-      <column name="offline_game_limit_exceeded_message_game">a game</column>
-      <column name="offline_game_limit_exceeded_message_games">games</column>
-      <column name="offline_items_limit_exceeded_message_header">You're at the limit!</column>
-      <column name="offline_items_limit_exceeded_message">You can have up to {0} discs.&#10;&#10;Please remove discs from your cart to continue.</column>
+			<column name="offline_game_rental_limit_exceeded_message_header">You're at the limit!</column>
+			<column name="offline_game_rental_limit_exceeded_message">You can have up to {0} discs, and only {1} can be {2}.&#10;&#10;Please remove discs from your cart to continue.</column>
+			<column name="offline_game_purchase_limit_exceeded_message_header">You're at the limit!</column>
+			<column name="offline_game_purchase_limit_exceeded_message">You can have up to {0} discs, and only {1} can be {2}.&#10;&#10;Please remove discs from your cart to continue.</column>
+			<column name="offline_game_limit_exceeded_message_game">a game</column>
+			<column name="offline_game_limit_exceeded_message_games">games</column>
+			<column name="offline_items_limit_exceeded_message_header">You're at the limit!</column>
+			<column name="offline_items_limit_exceeded_message">You can have up to {0} discs.&#10;&#10;Please remove discs from your cart to continue.</column>
       
-      <column name="game_limit_exceeded_message_header">You’ve reached the limit.</column>
+			<column name="game_limit_exceeded_message_header">You’ve reached the limit.</column>
 			<column name="game_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 may be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 may be games.&#10;&#10;To continue, please remove something from your cart.</column>
 			<column name="rental_limit_exceeded_message_header">You’ve reached the limit.</column>
 			<column name="rental_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 may be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 may be games.&#10;&#10;To continue, please remove something from your cart.</column>
@@ -97,16 +100,16 @@
 			<column name="sold_out_message">This Redbox kiosk has no titles available for purchase. Sorry for the inconvenience, Please check back for availability soon.</column>
 			<column name="maintenance_message">This Redbox kiosk is under maintenance.  Please come back later.</column>
 
-      <column name="movie_button_rent_label">RENT</column>
-      <column name="games_button_rent_label">RENT</column>
-      <column name="games_button_rent_and_buy_label">RENT</column>
-      <column name="games_button_games_label">GAMES</column>
-      <column name="return_button_label">RETURN</column>
-      <column name="toggle_language_button_label">ESPA&#209;OL</column>
-      <column name="carousel_add_button_label">RENT IT NOW!</column>
+			<column name="movie_button_rent_label">RENT</column>
+			<column name="games_button_rent_label">RENT</column>
+			<column name="games_button_rent_and_buy_label">RENT</column>
+			<column name="games_button_games_label">GAMES</column>
+			<column name="return_button_label">RETURN</column>
+			<column name="toggle_language_button_label">ESPA&#209;OL</column>
+			<column name="carousel_add_button_label">RENT IT NOW!</column>
 
 
-      <column name="yes_button">YES</column>
+			<column name="yes_button">YES</column>
 			<column name="back_button">BACK</column>
 			<column name="okay_button">OK</column>
 			<column name="continue_button">CONTINUE</column>
@@ -118,8 +121,8 @@
 			<column name="try_again_button">TRY AGAIN</column>
 			<column name="return_error">Return Error</column>
 			<column name="backward_insert_error">Please try again with the big Redbox logo facing you and the arrow pointing toward the kiosk.</column>
-      <column name="oops">Oops!</column>
-      <column name="unrecognized_barcode_returned_message">The disc you are trying to return is not from Redbox. Please take your disc from the slot and check again because we can only accept Redbox discs.&#10;&#10;By the way, we'd love to have you as a customer, so stick around and browse what's At the Box or visit redbox.com anytime.</column>
+			<column name="oops">Oops!</column>
+			<column name="unrecognized_barcode_returned_message">The disc you are trying to return is not from Redbox. Please take your disc from the slot and check again because we can only accept Redbox discs.&#10;&#10;By the way, we'd love to have you as a customer, so stick around and browse what's At the Box or visit redbox.com anytime.</column>
 
 			<column name="title_thanks">Thanks!</column>
 			<column name="currency_symbol">$</column>
@@ -127,7 +130,7 @@
 			<column name="faq_title">FAQ</column>
 			<column name="terms_of_use_title">Terms</column>
 			<column name="privacy_policy_title">Privacy</column>
-      <column name="play_pass_title">Play Pass</column>
+			<column name="play_pass_title">Play Pass</column>
 
 			<column name="postal_code_tag">ENTER ZIP CODE</column>
 			<column name="reservation_error_message">Redbox is unable to match your credit card with a reservation record.&#10;&#10;Is it possible that you used another card to make your reservation?&#10;&#10;If not, please call customer service at &#10;1-866-REDBOX3(1.866.733.2693).</column>
@@ -154,6 +157,7 @@
 			<column name="genre_1093">TOP 20</column>
 			<column name="genre_1093a">TOP</column>
 			<column name="genre_1093b">20</column>
+			<column name="genre_1094">FAMILY</column>
 			<column name="genre_1028">FIGHTING</column>
 			<column name="genre_1030">MUSIC &amp; PARTY</column>
 			<column name="genre_1032">PUZZLES &amp; CARDS</column>
@@ -226,7 +230,7 @@
 			<column name="esrb_everyone">EVERYONE</column>
 			<column name="esrb_everyone_10_plus">EVERYONE 10+</column>
 			<column name="esrb_teen">TEEN</column>
-			<column name="esrb_mature">MATURE</column>
+			<column name="esrb_mature">Mature</column>
 			<column name="esrb_rating_pending">RATING PENDING</column>
 			<column name="esrb_adults_only">ADULTS ONLY</column>
 
@@ -290,16 +294,16 @@
 			<column name="price_a_day">a day</column>
 			<column name="blu_ray">Blu-ray</column>
 			<column name="dvd">DVD</column>
+			<column name="game">Game</column>
+			<column name="any">Any</column>
+			<column name="other_item">other item</column>
 
 			<column name="a_day">a day</column>
-			<column name="first_day">first day</column>
-			<column name="extra_day">per additional day</column>
-
+			
 			<column name="nonstandered_priced_item_header">Heads Up: {0} Firsts</column>
 			<column name="nonstandered_priced_item">This movie costs {0} to rent the first day and {EXTRANIGHT} for each day after that.&#10;&#10;Movies that are {0} Firsts come to Redbox 28 days ahead of schedule. Be among the first to watch this DVD!</column>
-
-			<column name="purchase">purchase</column>
-      
+			
+			
 			<column name="in_cart_remove_item_warning_header">Are You Sure?</column>
 			<column name="in_cart_remove_item_warning_message">If you remove that disc from your cart, you won't qualify anymore for the special pricing on your other cart item(s).&#10;&#10;Do you still want to remove it?</column>
 
@@ -321,21 +325,21 @@
 
 			<column name="abe_mode_text">ADA mode</column>
 			<column name="abe_mode_description">All subsequent screens have been modified to meet ADA requirements. Select how you would like to browse using the buttons below.&#10;&#10;To purchase ADA compatible seating call 1-866-REDBOX3 or visit redbox.com.</column>
-			<column name="ada_purchase_price_message">BUY {0} {1}{2}</column>
+			<column name="ada_purchase_price_message">Buy {0} {1}{2}</column>
 			<column name="abe_purchase_price_message">Do you want to buy this {0} for {1}{2}?</column>
-      <column name="ada_turned_on_label_text">Screens will now be ADA-compatible.&#10;Use the buttons on the left to continue.</column>
+			<column name="ada_turned_on_label_text">Screens will now be ADA-compatible.&#10;Use the buttons on the left to continue.</column>
 
 
 
-      <column name="start_view_title">top picks</column>
+			<column name="start_view_title">top picks</column>
 			<column name="help_page_counter">{0} OF {1}</column>
 			<column name="faq_button">Rental FAQs</column>
-      <column name="transaction_terms_button">Transaction Terms</column>
+			<column name="transaction_terms_button">Transaction Terms</column>
 			<column name="terms_redbox_card_button">Redbox Card Terms</column>
 			<column name="privacy_button">Privacy</column>
 			<column name="play_pass_button">Play Pass</column>
-      <column name="help_updated_button">Updated</column>
-      <column name="close_button">Close</column>
+			<column name="help_updated_button">Updated</column>
+			<column name="close_button">Close</column>
 			<column name="contact_redbox_label">Contact Redbox customer service at 1.866.REDBOX3 (1.866.733.2693)</column>
       
 
@@ -374,8 +378,9 @@
 			<column name="title_rollup_overlay_add_text">+ {0}</column>
 
 			<column name="carousel_add_item_to_cart_button_for_collection">SEE ALL</column>			
-			<column name="add_to_cart_label">Press     to add items for rental</column>			
-			<column name="add_to_cart_ada_label">To rent a disc, touch its picture or its  number above.</column>			
+			<column name="add_to_cart_label1">Press</column>
+			<column name="add_to_cart_label2">to add items for rental</column>
+			<column name="add_to_cart_ada_label">To rent a disc, touch its picture or its number above.</column>			
 
 			<column name="collections_popup_text">Can't find something you like?  Check out our collections</column>			
 			<column name="collections_popup_see_all_collections">SEE ALL COLLECTIONS</column>
@@ -383,57 +388,95 @@
 			<column name="use_promo_button">USE PROMO&#10;&#038; ADD ITEM(S)</column>
 			<column name="do_not_use_promo_button">DO NOT USE PROMO</column>
       
-      <column name="tsp_invalid_header">That promo code is not valid.</column>
-      <column name="tsp_invalid_message">Sorry about that. The promo code you entered does not apply to the title(s) in your cart.&#10;&#10;Please add a valid title to your cart to use this promo code.</column>
+			<column name="tsp_invalid_header">That promo code is not valid.</column>
+			<column name="tsp_invalid_message">Sorry about that. The promo code you entered does not apply to the title(s) in your cart.&#10;&#10;Please add a valid title to your cart to use this promo code.</column>
+
+			<column name="passive_sale_note">*Daily rental charges don't include applicable tax. Discs kept after 9 p.m. the next day, and each day after, are subject to additional daily rental charges. If you keep a disc for the maximum rental period, it's yours to keep, and no further charges apply. See complete Terms for the rules for renting from Redbox. All Digital Code sales are final.</column>
+
+			<column name="zip_code_auth_text">By tapping Next, you agree to an authorization hold period of up to {0} days per item on this card. You will only be charged for the actual number of rental days plus applicable taxes for which you keep your items.</column>
       
-      <column name="passive_sale_note">*Daily rental charges don't include applicable tax. Discs kept after 9 p.m. the next day, and each day after, are subject to additional daily rental charges. If you keep a disc for the maximum rental period, it's yours to keep, and no further charges apply. See complete Terms for the rules for renting from Redbox.</column>
-      
-      <column name="zip_code_auth_text">By tapping Next, you agree to an authorization hold period of up to {0} days per item on this card. You will only be charged for the actual number of rental days plus applicable taxes for which you keep your items.</column>
-      
-      <column name="play_pass_prompt_message">EARN UP TO {0} POINTS*&#10;FOR THIS RENTAL</column>
-      <column name="play_pass_prompt_disclaimer_message">*If you're renting with a credit or promo code, points won't be issued. Once earned, free movie night credit will be deposited into your account and expires 60 days after issuance. Payment card required to use the credit. By clicking "Join Now", you agree to the full governing terms, available here and at www.redbox.com/redboxplaypass.</column>
-      <column name="play_pass_terms">Terms</column>
-      <column name="play_pass_join_now">JOIN NOW</column>
-      <column name="play_pass_confirm_message">Welcome to Redbox Play Pass!&#10;You've just earned {0} points*.</column>
-      <column name="play_pass_email_message">An email has been sent to&#10;{0}&#10;with instructions on how to redeem your free movie night.</column>
-      <column name="play_pass_confirm_disclaimer_message">*If you rented with a credit or promo code, points won't be issued. Points can take up to 24 hours to appear in your account. By clicking "Join Now", you agree to the full governing terms, available here and at www.redbox.com/redboxplaypass.</column>
+			<column name="play_pass_prompt_message">EARN UP TO {0} POINTS*&#10;FOR THIS RENTAL</column>
+			<column name="play_pass_prompt_disclaimer_message">*If you're renting with a credit or promo code, points won't be issued. Once earned, free movie night credit will be deposited into your account and expires 60 days after issuance. Payment card required to use the credit. By clicking "Join Now", you agree to the full governing terms, available here and at www.redbox.com/redboxplaypass.</column>
+			<column name="play_pass_terms">Terms</column>
+			<column name="play_pass_join_now">JOIN NOW</column>
+			<column name="play_pass_confirm_message">Welcome to Redbox Play Pass!&#10;You've just earned {0} points*.</column>
+			<column name="play_pass_email_message">An email has been sent to&#10;{0}&#10;with instructions on how to redeem your free movie night.</column>
+			<column name="play_pass_confirm_disclaimer_message">*If you rented with a credit or promo code, points won't be issued. Points can take up to 24 hours to appear in your account. By clicking "Join Now", you agree to the full governing terms, available here and at www.redbox.com/redboxplaypass.</column>
 
-      <column name="reservation_swipe_title">Swipe your card&#10;to pick up your&#10;reservation.</column>
-      <column name="reservation_swipe_message">You can swipe your card up&#10;or down - it doesn't matter.</column>
-      <column name="regular_checkout_swipe_title">Ready. Set.&#10;Swipe!</column>
-      <column name="regular_checkout_swipe_message">You can swipe your card up&#10;or down - it doesn't matter.</column>
-      <column name="credits_swipe_title">Let's see&#10;those credits.</column>
-      <column name="credits_swipe_message">&#10;To pay with credits, swipe a card&#10;(up or down) that's associated with&#10;your account.</column>
-      <column name="vending_disc_please_wait_title">THANK YOU!</column>
-      <column name="vending_disc_please_wait_message">Please wait for your disc.</column>
-      <column name="vending_disc_rentals_on_their_way_title">Your rentals&#10;are on&#10;their way!</column>
-      <column name="vending_disc_rentals_on_their_way_charged_once_title">Your rentals&#10;are on&#10;their way!</column>
-      <column name="vending_disc_rentals_on_their_way_charged_once_message">Your card will only be charged once.</column>
+			<column name="reservation_swipe_title">Swipe your card&#10;to pick up your&#10;reservation.</column>
+			<column name="reservation_swipe_message">You can swipe your card up&#10;or down - it doesn't matter.</column>
+			<column name="regular_checkout_swipe_title">Ready. Set.&#10;Swipe!</column>
+			<column name="regular_checkout_swipe_message">You can swipe your card up&#10;or down - it doesn't matter.</column>
+			<column name="credits_swipe_title">Let's see&#10;those credits.</column>
+			<column name="credits_swipe_message">&#10;To pay with credits, swipe a card&#10;(up or down) that's associated with&#10;your account.</column>
+			<column name="vending_disc_please_wait_title">THANK YOU!</column>
+			<column name="vending_disc_please_wait_message">Please wait for your disc.</column>
+			<column name="vending_disc_rentals_on_their_way_title">Your rentals&#10;are on&#10;their way!</column>
+			<column name="vending_disc_rentals_on_their_way_charged_once_title">Your rentals&#10;are on&#10;their way!</column>
+			<column name="vending_disc_rentals_on_their_way_charged_once_message">Your card will only be charged once.</column>
 
-      <column name="start_over_button">     Start Over</column>
-      <column name="newest_button">Newest</column>
-      <column name="abc_button">A-Z</column>
-      <column name="blu_ray_button">Blu-ray</column>
-      <column name="for_sale_button">For Sale</column>
-      <column name="coming_soon_button">Coming Soon</column>
+			<column name="start_over_button">Start Over</column>
+			<column name="newest_button">Newest</column>
+			<column name="abc_button">A-Z</column>
+			<column name="blu_ray_button">Blu-ray</column>
+			<column name="digital_code_button">Digital Code</column>
+			<column name="for_sale_button">For Sale</column>
+			<column name="coming_soon_button">Coming Soon</column>
+			<column name="more_collections">MORE COLLECTIONS</column>
 
-      <column name="top_20_filter_button">Top 20</column>
-      <column name="action_filter_button">Action</column>
-      <column name="drama_filter_button">Drama</column>
-      <column name="horror_filter_button">Horror</column>
-      <column name="comedy_filter_button">Comedy</column>
-      <column name="family_filter_button">Family</column>
+			<column name="top_20_filter_button">Top 20</column>
+			<column name="action_filter_button">Action</column>
+			<column name="drama_filter_button">Drama</column>
+			<column name="horror_filter_button">Horror</column>
+			<column name="comedy_filter_button">Comedy</column>
+			<column name="family_filter_button">Family</column>
 
-      <column name="xbox_360_button">Xbox 360</column>
-      <column name="xbox_one_button">Xbox One</column>
-      <column name="ps3_button">PS3</column>
-      <column name="ps4_button">PS4</column>
-      <column name="wii_button">Wii</column>
-      <column name="wii_u_button">Wii U</column>
+			<column name="xbox_360_button">Xbox 360</column>
+			<column name="xbox_one_button">Xbox One</column>
+			<column name="ps3_button">PS3</column>
+			<column name="ps4_button">PS4</column>
+			<column name="wii_button">Wii</column>
+			<column name="wii_u_button">Wii U</column>
+			<column name="nintendo_switch_button">Nintendo Switch</column>
 
-      <column name="buy_movies_or_games_line1">MOVIES</column>
-      <column name="buy_movies_or_games_line1_games">&#38; GAMES</column>
-      <column name="buy_movies_or_games_line2">FOR SALE</column>
-    </row>
+
+			<column name="buy_movies_or_games_line1">BUY</column>
+			<column name="buy_movies_or_games_line2">MOVIES</column>
+			<column name="buy_games_line1">BUY</column>
+			<column name="buy_games_line2">GAMES</column>
+
+			<column name="digital_code">Digital Code</column>
+			<column name="digital_code_banner">Digital Code     </column>
+			<column name="nintendo_switch">Nintendo Switch</column>
+			<column name="cart_rental">Rental</column>
+			<column name="cart_purchase">Purchase</column>
+			<column name="cart_type_action">{0} {1}</column>
+			<column name="cart_day">/day</column>
+			<column name="cart_first_day">/first day</column>
+			<column name="cart_additional_day">/additional day</column>
+			<column name="add">ADD</column>
+			
+			<column name="title_rollup_overlay_digital_code_info">What's a Digital Code?</column>
+			
+			<column name="digital_code_popup_title">What's a Digital Code?</column>
+			<column name="digital_code_popup_message">Digital codes allow you to unlock your selection online, so you can stream or download to whichever devices you choose. Here's how:</column>
+			<column name="digital_code_popup_message_line_1">Upon purchasing, your code will be delivered instantly on a paper copy, right here at this Redbox.</column>
+			<column name="digital_code_popup_message_line_2">Your printout contains a web address, where you'll go to enter your code.</column>
+			<column name="digital_code_popup_message_line_3">Simply enter your code to download to any of your devices and enjoy the show!</column>
+			<column name="digital_code_popup_buy_button">BUY DIGITAL CODE ${0}</column>
+
+			<column name="digital_code_alert_title">Digital Code In Cart</column>
+			<column name="digital_code_alert_message">You’ve added a code for a digital version of this movie to your cart. Smart choice! Complete your purchase and your code will be delivered instantly, right here at this Redbox.</column>
+
+			<column name="title_detail_buy">BUY</column>
+			<column name="title_detail_collection_text">SEE RELATED&#10;COLLECTIONS</column>
+			<column name="starring_label">Starring: </column>
+			<column name="genres_label">Category: </column>
+			<column name="return_time_label">Return: </column>
+
+			<column name="out_of_stock_line1">Text LOCATE to 727272</column>
+			<column name="out_of_stock_line2">to find other Redbox kiosks nearby that might have this {0}.*</column>
+			<column name="out_of_stock_line3">*WHEN YOU TEXT LOCATE TO 727272, YOU WILL GET UP TO 2 MESSAGES. Up to 2 msgs&#47;week. Msg &#38; data rates may apply. Text STOP to quit, HELP for help.</column>
+		</row>
 	</aspect>
 </resource>

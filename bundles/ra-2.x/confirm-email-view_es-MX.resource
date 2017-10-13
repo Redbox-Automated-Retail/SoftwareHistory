@@ -12,17 +12,18 @@
 			stylesheet="style_sheet_common"
 			onEnter="confirm_email_view_enter"
 			onLeave="confirm_email_view_leave">
-			
-			<actor
+
+      <actor
 				name="back_ground_image"
 				width="1024"
 				height="768"
-				x="0"
+        backgroundColor="228,32,69"
+        gradientTargetColor="170,40,110"
+        x="0"
 				y="0"
-				image="image_tickets_red_background"
-				optionFlags="Image"	/>
-		
-			<actor
+				optionFlags="BackgroundGradient"	/>
+
+      <actor
 				name="title_label"
 				x="60"
 				y="80"
@@ -53,7 +54,7 @@
 				x="0"
 				y="628"
 				optionFlags="Background, TextShadow"
-				backgroundColor="60,57,57"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="142"
 				visible="true" />
@@ -63,7 +64,7 @@
 				x="0"
 				y="626"
 				optionFlags="Background, TextShadow"
-				backgroundColor="80,72,72"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="2"
 				visible="true" />
@@ -78,7 +79,7 @@
 				cornerSize="32,15"
 				font="font_target_small_button_overlays"
 				visible="true"
-				style="light_gray_with_gray_border_button_style" />
+				style="purple_button_style_white_border" />
 				
 			<actor
 				name="confirm_email_yes_button"
@@ -90,7 +91,7 @@
 				font="font_target_small_button_overlays"
 				text="S&#205;"
 				visible="true"	
-				style="red_button_style" />
+				style="rubine_button_style_white_border" />
 		</scene>
 	</aspect>
 </resource>

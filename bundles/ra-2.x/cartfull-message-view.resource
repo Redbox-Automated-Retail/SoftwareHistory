@@ -4,6 +4,7 @@
 	<property name="version" value="2.0,Core,A" />
 	<property name="active_flag" value="passive" />
 	<aspect name="content">
+    <!-- this is still used in the non-wpf code when adding an item from a lua screen.  When that is moved to .net this view can go away -->
 		<scene
 			name="Default"
 			width="1024"
@@ -30,7 +31,7 @@
 				cornerSize="28,28"
 				strokeWeight="5"
 				optionFlags="Background , DrawBorder"
-				borderColor	="138,7,24"
+				borderColor	="228,32,69"
 				backgroundColor="255,255,255"
 				visible="true"	/>
 				<!-- except the border color difference the above actor can be replaced with cart_full_label_border-->
@@ -44,7 +45,7 @@
 				font="font_target_large_overlays"
 				optionFlags="Text"
 				horizontalAlignment="near"
-				foregroundColor="181, 18, 27"
+				borderColor	="228,32,69"
 				text= "${CartfullWarning:Header}"
 				visible="true"	/>
 
@@ -72,7 +73,7 @@
 				text="CONTINUE"
 				onHit="hide_cart_full"
 				visible="true"
-				style="red_button_style" />
+				style="rubine_button_style_white_border" />
 				
 		</scene>
 	</aspect>

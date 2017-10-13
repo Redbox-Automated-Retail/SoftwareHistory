@@ -7,7 +7,7 @@
 
 
 
-idle_timer:suspend()
+kernel.suspend_idle_timer( "idle_timer" )
 
 local timeout = kernel.ttsgettimeout( "long", 40000 )
 kernel.timercreate(

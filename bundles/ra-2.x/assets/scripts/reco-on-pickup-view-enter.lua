@@ -7,7 +7,7 @@
 kernel.log( "reco_on_pickup_view_enter - started" )
 
 -- Allows newer views on the stack to know the reco_view is on the stack
-ShoppingCart.pickup_recommendations_shown = true
+kernel.rental_shopping_cart_set_pickup_recommendations_shown( ShoppingCart.session_id, true )
 
 -- Get the customer information for the kernel.resvsvcs_modresvpickup call
 local reference_number = ""
@@ -89,45 +89,49 @@ kernel.setactortext( "label_cart_description", string.gsub( cart_title,"{0}", re
 local function display_cart_items()
 	kernel.log( "reco_on_pickup_view_enter:display_cart_items()" )
 
-	for k, v in ipairs( ShoppingCart.items ) do
-		-- Hide the Add More Assets
-		kernel.hideactor( "label_add_more_" .. k )
-		kernel.hideactor( "cart_add_more_arrow_" .. k )
+    local shopping_cart_item_count = kernel.rental_shopping_cart_item_count( ShoppingCart.session_id )
+    for k=1,shopping_cart_item_count do
+        local v = kernel.get_rental_shopping_cart_item( ShoppingCart.session_id, k )
+        if v ~= nil then
+		    -- Hide the Add More Assets
+		    kernel.hideactor( "label_add_more_" .. k )
+		    kernel.hideactor( "cart_add_more_arrow_" .. k )
 		
-		-- Get the product object to display
-		local catalog_entry = MasterProductCatalog[v.product_id]
+		    -- Get the product object to display
+		    local catalog_entry = MasterProductCatalog[v.product_id]
 
-		-- Show the Title Image
-		draw_image( catalog_entry, "cart_image_" .. k )
+		    -- Show the Title Image
+		    draw_image( catalog_entry, "cart_image_" .. k )
 		
-		-- Show the Title Name for reserved titles and the cost/day for reco titles
-		if k <= reserved_count then
-			kernel.setactortext( "label_reserved_title_" .. k, strings.reserved_title )
-		else
-			local product_pricing = StoreManager.PricingManager:get_product_price( v.product_id )
-			local cost_per_day = string.format( "%.2f", product_pricing.extra_night )
-			local localized_cost_per_day = string.gsub( strings.totals_per_day,"{0}", cost_per_day )
-			kernel.setactortext( "label_reserved_title_" .. k,  "("..localized_cost_per_day..")" )
-			kernel.showactor( "label_reserved_title_" .. k )
-		end
+		    -- Show the Title Name for reserved titles and the cost/day for reco titles
+		    if k <= reserved_count then
+			    kernel.setactortext( "label_reserved_title_" .. k, strings.reserved_title )
+		    else
+			    local product_pricing = StoreManager.PricingManager:get_product_price( v.product_id )
+			    local cost_per_day = string.format( "%.2f", product_pricing.extra_night )
+			    local localized_cost_per_day = string.gsub( strings.totals_per_day,"{0}", cost_per_day )
+			    kernel.setactortext( "label_reserved_title_" .. k,  "("..localized_cost_per_day..")" )
+			    kernel.showactor( "label_reserved_title_" .. k )
+		    end
 		
-		-- Show the Blu-ray flag for blu-rays
-		if catalog_entry.product_type_id == 2 then
-			kernel.showactor( "cart_bluray_banner_" .. k )
-		else
-			kernel.hideactor( "cart_bluray_banner_" .. k )
-		end
+		    -- Show the Blu-ray flag for blu-rays
+		    if catalog_entry.product_type_id == 2 then
+			    kernel.showactor( "cart_bluray_banner_" .. k )
+		    else
+			    kernel.hideactor( "cart_bluray_banner_" .. k )
+		    end
 		
-		-- Show the Remove Button for newly added titles
-		if k > reserved_count then
-			kernel.showactor( "cart_remove_button_" .. k )
-		else
-			kernel.hideactor( "cart_remove_button_" .. k )
-		end
+		    -- Show the Remove Button for newly added titles
+		    if k > reserved_count then
+			    kernel.showactor( "cart_remove_button_" .. k )
+		    else
+			    kernel.hideactor( "cart_remove_button_" .. k )
+		    end
+        end
 	end
 	
 	-- Display the empty slots
-	for i = #ShoppingCart.items + 1, max_reco_cart_items do
+	for i = kernel.current_rental_shopping_cart_item_count() + 1, max_reco_cart_items do
 		-- Setup the empty slots
 		kernel.setactorimage( "cart_image_" .. i, "add_more_box" )
 		kernel.setactortext( "label_add_more_" .. i, strings.add_more )
@@ -169,7 +173,7 @@ local function display_reco_items()
 				kernel.hideactor( "reco_bluray_banner_" .. k )
 				kernel.disableactor( "reco_image_" .. k )
 			else
-				if #ShoppingCart.items < max_reco_cart_items then
+				if kernel.current_rental_shopping_cart_item_count() < max_reco_cart_items then
 					kernel.showactor( "reco_add_button_" .. k )
 					kernel.setactorwidth( "reco_bluray_banner_" .. k, 65 )
 				else
@@ -223,7 +227,7 @@ display_reco_items()
 local function display_totals()
 	kernel.log( "reco_on_pickup_view_enter:display_totals()" )
 
-	if #ShoppingCart.items > reserved_count then
+	if kernel.current_rental_shopping_cart_item_count() > reserved_count then
 		local reserved_titles_subtotal = 0
 		local reserved_discount_amount = 0
 		local reserved_applied_credit_amount = 0
@@ -377,7 +381,7 @@ local function display_totals()
 	end
 	
 	-- Move the Pay button depending on if text need to be displayed below
-	if #ShoppingCart.items > reserved_count then
+	if kernel.current_rental_shopping_cart_item_count() > reserved_count then
 		kernel.setactory( "pay_button", 648 )
 	else
 		kernel.setactory( "pay_button", 663 )
@@ -389,7 +393,7 @@ display_totals()
 
 
 local function add_reco_item( item ) 
-	local cart_items_pre_click = #ShoppingCart.items
+	local cart_items_pre_click = kernel.current_rental_shopping_cart_item_count()
 
 	-- Add to the cart if not already full
 	if cart_items_pre_click < max_reco_cart_items then
@@ -402,7 +406,7 @@ local function add_reco_item( item )
 		check_for_warning_popups( selected_product, false, nil, "rental" )
 
 		-- Refresh the Cart and Reco items
-		if  cart_items_pre_click ~= #ShoppingCart.items then
+		if  cart_items_pre_click ~= kernel.current_rental_shopping_cart_item_count() then
 			display_cart_items()
 			display_reco_items()
 			display_totals()
@@ -459,9 +463,12 @@ end
 local vend_only_reserved_titles = function()
 	kernel.log( "reco_on_pickup_view_enter:vend_only_reserved_titles" )
 	
-	while reserved_count > 0 and #ShoppingCart.items > reserved_count do
-		kernel.log( "reco_on_pickup_view_enter:removing " .. tostring( ShoppingCart.items[#ShoppingCart.items].product_id ) )
-		ShoppingCart:remove_item( #ShoppingCart.items, false )
+	while reserved_count > 0 and kernel.current_rental_shopping_cart_item_count() > reserved_count do
+        local v = kernel.get_rental_shopping_cart_item( ShoppingCart.session_id, kernel.current_rental_shopping_cart_item_count())
+        if v ~= nil then
+		    kernel.log( "reco_on_pickup_view_enter:removing " .. tostring( v.product_id ) )
+        end
+		ShoppingCart:remove_item( kernel.current_rental_shopping_cart_item_count(), false )
 	end
 	
 	view_show_safe( "vend_view" )
@@ -485,7 +492,7 @@ local reco_pay_or_vend = function()
 	reco_idle_timer:stop()
 	kernel.timerremove( "reco_idle_timer" )
 	
-	if ( #ShoppingCart.items > reserved_count ) then
+	if ( kernel.current_rental_shopping_cart_item_count() > reserved_count ) then
 		ShoppingCart:resv_authorize(
 			reference_number,
 			function( result )
@@ -514,7 +521,7 @@ end
 kernel.registeractorhitnotify(
 	"pay_button",
 	function()
-		if #ShoppingCart.items > reserved_count then 
+		if kernel.current_rental_shopping_cart_item_count() > reserved_count then 
 			view_analytics_event( "buttonPress", "pay_button" )
 		else
 			view_analytics_event( "buttonPress", "pickup_button" )
@@ -573,5 +580,5 @@ if not kernel.timerexists( "reco_idle_timer" ) then
 end
 
 -- Stop the standard idle_timer
-idle_timer:stop()
+kernel.stop_idle_timer( "idle_timer" )
 kernel.log( "reco_on_pickup_view_enter - completed" )

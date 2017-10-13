@@ -8,7 +8,7 @@ local zip = split(Stores[store_id].zip, "-", 1)
 kernel.setmacro("StoreNumber", store_id)
 kernel.setmacro("MaintenanceView:ZipCode", tostring(zip[1]))
 kernel.setmacro( "MaintenanceView:ErrorCode", "0016SYNC" )
-idle_timer:stop()
+kernel.stop_idle_timer( "idle_timer" )
 
 kernel.timercreate(
 	"maintenance-sync-view-timer",

@@ -3,4 +3,4 @@
 -- Copyright (C) 2016 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
-idle_timer:resume()
+kernel.resume_idle_timer( "idle_timer" )

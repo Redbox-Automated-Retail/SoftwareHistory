@@ -8,19 +8,11 @@
 			name="Default"
 			width="1024"
 			height="768"
+			backgroundColor="228,32,69"
 			stylesheet="style_sheet_common"
 			onEnter="reservation_not_found_view_enter"
 			onLeave="reservation_not_found_view_leave">
 			
-			<actor
-				name="back_ground_image"
-				width="1024"
-				height="768"
-				x="0"
-				y="0"
-				image="image_tickets_red_background"
-				optionFlags="Image"	/>
-		
 			<actor
 				name="phone_image"
 				width="279"
@@ -61,7 +53,7 @@
 				x="0"
 				y="628"
 				optionFlags="Background, TextShadow"
-				backgroundColor="60,57,57"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="142"
 				visible="true" />
@@ -71,7 +63,7 @@
 				x="0"
 				y="626"
 				optionFlags="Background, TextShadow"
-				backgroundColor="80,72,72"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="2"
 				visible="true" />
@@ -86,7 +78,7 @@
 				font="font_target_small_button_overlays"
 				text="OK"
 				visible="true"	
-				style="red_button_style" />
+				style="white_rubine_next_button_style" />
 
 		</scene>
 	</aspect>

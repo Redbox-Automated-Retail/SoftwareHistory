@@ -6,18 +6,21 @@
 	<property name="culture" value="es-MX" />
 	<aspect name="content">
 		<scene
+      name="Default"
 			width="1024"
 			height="768"
 			stylesheet="style_sheet_common"
 			onEnter="email_view_next" >
-			<actor
+
+      <actor
 				name="back_ground_image"
 				width="1024"
 				height="768"
-				x="0"
+        backgroundColor="228,32,69"
+        gradientTargetColor="170,40,110"
+        x="0"
 				y="0"
-				image="image_tickets_red_background"
-				optionFlags="Image"	/>
+				optionFlags="BackgroundGradient"	/>
 
       <actor
 				name="ad"
@@ -63,29 +66,30 @@
 				x="0"
 				y="626"
 				optionFlags="Background, TextShadow"
-				backgroundColor="60,57,57"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="142"
 				visible="true" />
 
 			<actor
 				name="email_view_next_button"
-				x="803"
+				x="780"
 				y="657"
-				width="196"
+				width="210"
 				height="66"
 				cornerSize="33,25"
 				font="font_target_small"
-				text="    CONTINUAR"
-				style="red_next_button_style" />
+				text="CONTINUAR"
+				style="rubine_button_style_white_border" />
 				
 			<actor
-                name="image_next_right_arrow"
-                x="955"
-                y="678"
+        name="image_next_right_arrow"
+        x="955"
+        y="678"
 				image="image_next_white_arrow_big"
-                hitFlags="enabled"
-                optionFlags="Image" />
+        hitFlags="enabled"
+        optionFlags="Image" />
+      
 		</scene>
 	</aspect>
 </resource>

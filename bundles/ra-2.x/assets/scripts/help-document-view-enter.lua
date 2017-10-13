@@ -4,10 +4,10 @@
 -- All Rights Reserved
 --
 
-if ShoppingCart ~= nil and ShoppingCart.pickup_recommendations_shown == false and kernel.getlasthitactorname() ~= "play_pass_disclaimer_button" then
+if ShoppingCart ~= nil and kernel.rental_shopping_cart_get_pickup_recommendations_shown( ShoppingCart.session_id ) == false and kernel.getlasthitactorname() ~= "play_pass_disclaimer_button" then
     -- reinitialize idle timer for TTS Help view timeout
-    initialize_idle_timer()
-    idle_timer:start()
+    kernel.reset_application_idle_timer_timeout()
+    kernel.start_idle_timer( "idle_timer" )
 end
 
 local go_back_action = function()
@@ -25,10 +25,10 @@ if kernel.getlasthitactorname() == "Terms_conditions_button" or kernel.getlasthi
 end
 
 if kernel.getlasthitactorname() == "play_pass_disclaimer_button" then
-    idle_timer:suspend()
+    kernel.suspend_idle_timer( "idle_timer" )
     go_back_action = function()
         play_pass_help_view_timer:stop()
-        idle_timer:resume()
+        kernel.resume_idle_timer( "idle_timer" )
 
         local prior_view = kernel.peekpriorview()
 
@@ -50,7 +50,7 @@ if kernel.getlasthitactorname() == "play_pass_disclaimer_button" then
 end
 
 -- For the Recomendations On Pickup - Do not allow access to FMA
-if ShoppingCart ~= nil and ShoppingCart.pickup_recommendations_shown == true then
+if ShoppingCart ~= nil and kernel.rental_shopping_cart_get_pickup_recommendations_shown( ShoppingCart.session_id ) == true then
     rebox_logo_action = nil
 end
 

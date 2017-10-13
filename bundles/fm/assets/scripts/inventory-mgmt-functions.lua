@@ -354,7 +354,7 @@ reload_inventory = function()
     local product_family_lookup = {}
 	local product_type = getprofiletable( "profile", "ProductType" )
 
-	for _, v in product_type:ipairs() do
+	for _, v in product_type:pairs() do
 		product_type_lookup[v["product_type_id"]] = v["product_type_name"]
 		product_family_lookup[v["product_type_id"]] = v["product_family_id"]
 	end
@@ -439,7 +439,13 @@ reload_inventory = function()
 							end
 							local product_type_id = catalog_item["product_type_id"]
 							if product_type_id ~= nil then
-								row.media = product_type_lookup[tonumber(product_type_id)]
+								if product_type_id == 17 then
+									row.media = "DC"
+								elseif product_type_id == 18 then
+									row.media = "Switch"
+								else
+									row.media = product_type_lookup[tonumber(product_type_id)]
+								end
 								row.rating = get_rating(product_family_lookup[tonumber(product_type_id)], catalog_item.rating_id)
 							else
 								row.media = ""
@@ -807,8 +813,7 @@ filter_by_tabs = function( value )
 				result = false
 			end
 		end
-	elseif (value["media"] == "Wii U" or value["media"] == "Wii" or value["media"] == "PC" or value["media"] == "DS" or value["media"] == "PSP"
-	or value["media"] == "PS4" or value["media"] == "PS3" or value["media"] == "PS2" or value["media"] == "Xbox 360" or value["media"] == "Xbox One" ) 
+	elseif (value["media"] == "Wii U" or value["media"] == "Wii" or value["media"] == "PC" or value["media"] == "DS" or value["media"] == "PSP" or value["media"] == "PS4" or value["media"] == "PS3" or value["media"] == "PS2" or value["media"] == "Xbox 360" or value["media"] == "Xbox One" or value["media"] == "Switch") 
 	and filter_titles_tables.game_rating[ value["rating"]] 
 	and filter_titles_tables.media["Games"] == true then
 		if last_hit_filter_tag == "Thinned" then
@@ -836,7 +841,7 @@ filter_by_all_tab = function( value )
 	and filter_titles_tables.media[value["media"]] == true
 	and filter_titles_tables.movie_rating[value["rating"]] == true then
 		result = true
-	elseif (value["media"] == "Wii U" or value["media"] == "Wii" or value["media"] == "PC" or value["media"] == "DS" or value["media"] == "PSP" or value["media"] == "PS4" or value["media"] == "PS3" or value["media"] == "PS2" or value["media"] == "Xbox 360" or value["media"] == "Xbox One") 
+	elseif (value["media"] == "Wii U" or value["media"] == "Wii" or value["media"] == "PC" or value["media"] == "DS" or value["media"] == "PSP" or value["media"] == "PS4" or value["media"] == "PS3" or value["media"] == "PS2" or value["media"] == "Xbox 360" or value["media"] == "Xbox One" or value["media"] == "Switch") 
 	and filter_titles_tables.game_rating[ value["rating"]] 
 	and filter_titles_tables.media["Games"] == true then
 		result = true

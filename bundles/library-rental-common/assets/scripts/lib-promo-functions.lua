@@ -4,8 +4,8 @@
 -- All Rights Reserved
 --
 
-
-local function CartCountByCriteria(
+-- note: CartCountByCriteria this was ported to .net but still exists for the Lua side for the short term....
+local function CartCountByCriteria(  
 	cart, 
 	action, 
 	add_sequence, 
@@ -23,7 +23,8 @@ local function CartCountByCriteria(
 
 	local count = 0
 	local counted_items = {}
-	for k, v in ipairs( cart.items ) do
+    local shopping_cart_items = kernel.get_rental_shopping_cart_items( cart.session_id )
+	for k, v in ipairs( shopping_cart_items ) do
 		kernel.log( ">  item " .. v.product_id .. " a:" .. v.action .. ", s:" .. v.add_sequence .. 
 			", pt:" .. v.product_type .. ", pf:" .. v.product_family .. ", pid:" .. v.product_id )
 		if ( action == nil or action == "*" or action == v.action)
@@ -172,8 +173,8 @@ function CartQualifiesForInCartOffer( shopping_cart )
 	end
 
 	-- If the offer should only be made once, don't show it twice
-	if shopping_cart.in_cart_promo_offer_made ~= nil 
-	and shopping_cart.in_cart_promo_offer_made == true 
+	if kernel.rental_shopping_cart_get_in_cart_offer_made( shopping_cart.session_id ) ~= nil 
+	and kernel.rental_shopping_cart_get_in_cart_offer_made( shopping_cart.session_id ) == true 
 	and ask_only_once == true 
 	then
 		kernel.log( ">  offer already presented, returning False" )
@@ -259,13 +260,6 @@ function LoadInCartPromoMessaging()
 	end
 end
 
-function CartHasAnyPostOfferItems( shopping_cart )
-    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
-        return false
-    end
-    return CartCountByCriteria( shopping_cart, nil, "post_offer" ) > 0
-end
-
 function CartHasProductTypeFamily( shopping_cart, product_type, product_family )
     if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
         return false
@@ -273,219 +267,9 @@ function CartHasProductTypeFamily( shopping_cart, product_type, product_family )
     return CartCountByCriteria( shopping_cart, nil, nil, product_type, product_family ) > 0
 end
 
-function CartSatisfiesInCartOffer( shopping_cart )
-	kernel.log( "CartSatisfiesInCartOffer BEGIN" )
-	if InCartPromoRules == nil then
-		if VerboseLogging == true then kernel.log( "> In cart Promo is null" ) end
-		return false, nil
-	end
-    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
-        return false, nil
-    end
-
-	if shopping_cart.in_cart_promo_offer_made == nil or shopping_cart.in_cart_promo_offer_made == false then
-		-- The offer does not apply if it was never shown to the customer
-		if VerboseLogging == true then kernel.log( "> offer was never presented to cusotmer" ) end
-		return false, nil
-	end
-
-	local redemption_data = nil
-	local condition_results = {}
-	local condition_index = 0
-
-		for k, v in ipairs( InCartPromoRules ) do
-			if v.satisfy_condition ~= nil then
-				-- Get accurate cart counts according to satisfy_condition details
-				local min_cart = true
-				local max_cart = true
-				local true_count = 0
-				if v.satisfy_condition == "product" then
-					true_count = CartCountByCriteria( 
-						shopping_cart, 
-						v.item_action, 
-						v.add_sequence, 
-						v.product_type, 
-						v.product_family, 
-						v.product_id_list, 
-						v.exclude_id_list,
-						v.product_type_list )
-				end
-				if v.satisfy_condition == "cart" then
-					true_count = CartCountByCriteria( shopping_cart, v.item_action, v.add_sequence, nil, nil, nil, nil, nil )
-				end
-				
-				-- Compare totals with defined min and max values to allow the discount
-				if v.min_qty ~= nil and v.min_qty ~= "" and true_count < tonumber( v.min_qty ) then
-					if VerboseLogging == true then kernel.log( ">> c:min_qty=" ..tostring(v.min_qty) .. " true_count=" ..tostring( true_count )) end
-					min_cart = false
-				end
-				if v.max_qty ~= nil and v.max_qty ~= "" and true_count > tonumber( v.max_qty ) then
-					if VerboseLogging == true then kernel.log( ">> c:max_qty=" ..tostring(v.max_qty) .. " true_count=" ..tostring( true_count )) end
-					max_cart = false
-				end
-				condition_index = condition_index + 1
-				condition_results[condition_index] =  min_cart == true and max_cart == true
-				if VerboseLogging == true then
-					kernel.log( ">  offer condition (" .. tostring(condition_index) ..") " .. v.satisfy_condition .. " returns " .. 
-						tostring(min_cart == true and max_cart == true ))
-				end
-			end
-			
-			-- Grab the redemption data for use later
-			if v.redemption_code ~= nil then
-				redemption_data = v
-			end
-		end
-		
-	-- Assumption is that ALL defined contraint rules must be true; a single false kills the deal
-	local condition_outcome = true
-	for k, v in pairs( condition_results ) do
-		if v == false then
-			kernel.log( ">  failed condition " .. tostring( k ) )
-			condition_outcome = false
-		end
-	end
-
-	return condition_outcome, redemption_data
-end
-
-
-function UpdateInCartPromoValue( shopping_cart )
-    if free_in_cart_template_is_running() or rtwo_in_cart_template_is_running() then
-        return
-    end
-
-	-- Satisfy conditions must be checked before moving on
-	local discount_valid, redemption_data = CartSatisfiesInCartOffer( shopping_cart )
-	local promo_code = kernel.rental_promotion_get_promotion()
-	if discount_valid == false 
-	and ( promo_code == nil or redemption_data == nil )
-	then
-		-- The discount was never taken, okay to leave
-		return
-	end
-
-	if promo_code ~= nil then
-		if promo_code.name ~= nil
-		and promo_code.name ~= redemption_data.redemption_code then
-			-- The user added a different program after viewing the offer, they are DONE
-			return
-		end
-		if promo_code.name ~= nil
-		and promo_code.name == redemption_data.redemption_code
-		and discount_valid == false then
-			-- The user no longer qualifies for the offer, remove the code and the discount
-			shopping_cart:clear_promo_code()
-			return
-		end
-	end
-
-
-	if discount_valid == true then
-		-- The user qualifies, add the discount (and re-calc now that we have qty-based discounts)
-	
-		local promo_price = nil
-		-- There should only be ONE redemption rule defined in the active file
-	
-		-- Discount is one specified value (like initial_night) from the price set of the designated product type
-		if redemption_data.redemption_rule == "product_type"
-		and redemption_data.product_family ~= nil
-		and redemption_data.product_type ~= nil
-		then
-			local price_object = StoreManager.PricingManager:get_product_type_price( redemption_data.product_family, redemption_data.product_type, nil )
-			if price_object ~= nil then
-				promo_price = price_object[ redemption_data.redemption_amount ]
-			end
-		end
-
-		-- Discount is a fixed amount no matter what is in the cart once validation has passed
-		if redemption_data.redemption_rule == "fixed_amount"
-		and redemption_data.redemption_amount ~= nil 
-		then
-			promo_price = redemption_data.redemption_amount
-		end
-
-		-- Remaining offers need this data
-		local qualified_count, qualified_items = CartCountByCriteria( 
-			shopping_cart, 
-			redemption_data.item_action, 
-			redemption_data.add_sequence, 
-			redemption_data.product_type, 
-			redemption_data.product_family, 
-			redemption_data.product_id_list,
-			redemption_data.exclude_id_list,
-			redemption_data.product_type_list )
-
-		-- Discount is a fixed amount x the allowed quantity in the cart which were added post-offer
-		if redemption_data.redemption_rule == "qty_based_amount"
-		and redemption_data.redemption_amount ~= nil 
-		then
-			kernel.log( "qty_based_amount = " .. tostring( redemption_data.redemption_amount ) .. " *  " .. tostring( qualified_count ) )
-			if qualified_count > tonumber( redemption_data.max_qty ) then
-				kernel.log( "> user exceeded the max qty on a qty-based-amount in-cart, resetting discount to max allowed" )
-				qualified_count = tonumber( redemption_data.max_qty )
-			end
-			promo_price = redemption_data.redemption_amount * qualified_count
-		end
-
-		-- Discount is for the initial_night value of qualifying cart items, possibly of mixed types / prices
-		if redemption_data.redemption_rule == "post_offer_first_night" then
-			local first_night_charges = {}
-			local count = 0
-			for _, v in ipairs( qualified_items ) do
-				local price_object = StoreManager.PricingManager:get_product_type_price( v.product_family, v.product_type, nil )
-				if price_object ~= nil and price_object.initial_night ~= nil then
-					count = count + 1
-					first_night_charges[ count ] = tonumber( price_object.initial_night )
-				end
-			end
-			-- Order the charges from lowest cost to highest cost
-			table.sort( first_night_charges, function( a, b ) return a < b end )
-			local max_apply_number = tonumber( redemption_data.max_qty  )
-			if qualified_count < max_apply_number then
-				max_apply_number = qualified_count
-			end
-			-- Add the initial night prices to the discount total, up to the max allowed
-			promo_price = 0
-			local used_count = 1
-			while used_count <= max_apply_number do
-				promo_price = promo_price + first_night_charges[ used_count ]
-				used_count = used_count + 1
-			end
-		end
-
-
-		-- Once the amount is calculated, assign it to the cart object
-		if promo_price ~= nil then
-			local promo_code = {
-				name = redemption_data.redemption_code,
-				original_price = promo_price,
-                price = promo_price,
-				quantity = 1,
-				intent = "FixedValue",
-				original_percent = 0,
-                percent = 0,
-				rent_qty = 0,
-				rent_format = nil,
-				get_qty = 0,
-				get_format = nil,
-                campaign_titles = nil
-			}
-			kernel.rental_promotion_set_promotion( promo_code )
-			kernel.sessionsetdiscount2(
-				shopping_cart.session_id,
-				promo_code.name,
-				promo_code.price )
-			
-			kernel.log( "UpdateInCartPromoValue: A Promocode is being used, setting session_use_credits to OptedOut" )
-			shopping_cart:set_use_credits( "OptedOut" )
-		end
-		
-	end
-
-end
-
 function LoadInCartData()
+    kernel.rental_promotion_load_incart_data()
+
 	-- Fall through logic is by design if config-based in-cart data not created or deployed correctly
 	
 	local function add_multi_discs( product_ids_string )
@@ -551,7 +335,7 @@ function LoadInCartData()
 
 					-- All required data has been loaded and the rule set template has been filled
 					InCartPromoRules = working_rule_set
-					InCartTemplateName = iccsVars.template_name
+                    kernel.set_application_state_value("InCartTemplateName", iccsVars.template_name)
 					kernel.log( "> InCart template loaded successfully" )
 					return
 				else
@@ -568,7 +352,7 @@ function LoadInCartData()
 	-- If the code gets here there is no config in-cart set, or it is missing files or data values, use old file-based method only
 	InCartPromoRules = kernel.gettable( "in_cart_promotion_v2" )
 	local program_name = kernel.getresourceproperty( "in_cart_promotion_v2", "program_name" )
-	InCartTemplateName = program_name
+    kernel.set_application_state_value("InCartTemplateName", program_name)
 	kernel.log( "InCart loaded: " .. tostring( program_name ) )
 end
 
@@ -584,8 +368,8 @@ function GetInCartTitleLists( ignore_offer_status )
 
 	if ( ignore_offer_status == true 
 	or ShoppingCart ~= nil
-	and ShoppingCart.in_cart_promo_offer_made == true
-	and ShoppingCart.in_cart_promo_offer_cancel == false )
+	and kernel.rental_shopping_cart_get_in_cart_offer_made( ShoppingCart.session_id ) == true
+	and kernel.rental_shopping_cart_get_in_cart_offer_cancel( ShoppingCart.session_id ) == false )
 	and _in_cart ~= nil then
 		if _in_cart.product_id_list ~= nil 
 		and #_in_cart.product_id_list > 0 then
@@ -639,19 +423,11 @@ local function is_excluded( exclude_ids, product_id )
 end
 
 function free_in_cart_template_is_running()
-    return InCartTemplateName ~= nil and ( InCartTemplateName == "FREE DVD I" or InCartTemplateName == "FREE BLU-RAY J" or InCartTemplateName == "FREE GAME K" )
+    return kernel.rental_promotion_free_in_cart_template_is_running()
 end
 
 function free_in_cart_template_is_cart_valid()
-    local product_family = get_value( "product_family" )
-    local product_type = get_value( "product_type" )
-	local exclude_ids = string.split( get_value( "exclude_id_list" ), "," )
-    for k, v in ipairs( ShoppingCart.items ) do
-        if v.action == "rental" and is_excluded( exclude_ids, v.product_id ) == false and v.product_family == product_family and ( v.product_type == product_type or product_type == "*" ) then
-            return true
-        end
-    end
-    return false
+    return kernel.rental_promotion_is_free_in_cart_valid()
 end
 
 function free_in_cart_template_set_promo()
@@ -683,22 +459,15 @@ end
 
 function free_in_cart_template_show_message()
     local promo_code = kernel.rental_promotion_get_promotion()
-    return promo_code == nil and free_in_cart_template_is_running() and free_in_cart_template_is_cart_valid() and ShoppingCart.in_cart_promo_offer_made == false
+    return promo_code == nil and free_in_cart_template_is_running() and free_in_cart_template_is_cart_valid() and kernel.rental_shopping_cart_get_in_cart_offer_made( ShoppingCart.session_id ) == false
 end
 
 function rtwo_in_cart_template_is_running()
-    return InCartTemplateName ~= nil and InCartTemplateName == "RTWO MONEY OFF L"
+    return kernel.rental_promotion_rent_two_in_cart_template_is_running()
 end
 
 function rtwo_in_cart_template_get_valid_item_count()
-	local valid_item_count = 0
-    local exclude_ids = string.split( get_value( "exclude_id_list" ), "," )
-    for k, v in ipairs( ShoppingCart.items ) do
-        if v.action == "rental" and is_excluded( exclude_ids, v.product_id ) == false then
-            valid_item_count = valid_item_count + 1
-        end
-    end
-    return valid_item_count
+    return kernel.rental_promotion_rent_two_in_cart_item_count()
 end
 
 function rtwo_in_cart_template_set_promo()
@@ -732,7 +501,7 @@ function rtwo_in_cart_template_show_message()
     if rtwo_in_cart_template_is_running() == false then
         return false
     end
-    local show_first_message = rtwo_in_cart_template_get_valid_item_count() == 1 and ShoppingCart.in_cart_promo_offer_made == false
+    local show_first_message = rtwo_in_cart_template_get_valid_item_count() == 1 and kernel.rental_shopping_cart_get_in_cart_offer_made( ShoppingCart.session_id ) == false
     local show_second_message = rtwo_in_cart_template_get_valid_item_count() > 1
     local promo_code = kernel.rental_promotion_get_promotion()
     return promo_code == nil and ShoppingCart.in_cart_do_not_show == false and ( show_first_message or show_second_message )

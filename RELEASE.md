@@ -1,17 +1,17 @@
-# Penguin SR (2017-07-26)
+# Superman (2017-10-13)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2017-07-26
-- Store labels: kop-rental-bundles-PenguinSR
+- Date (first download in the snapshots): 2017-10-13
+- Store labels: kop-rental-bundles-Superman
 - Package revisions:
-  - `kop-rental-bundles` revision 56 (`41F8FB1ECF53E55212A0F45544E1BAAD2426550E`)
+  - `kop-rental-bundles` revision 60 (`979B29E5D3FC4BF810FC588834AF208960405053`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `cp.bundle` |  |  | `EAF2019B6306B0AC703DEF6DEED57CBB81BEE272` | exact |
-| `fm.bundle` |  |  | `230904872638EF632E8CD33364BEA63354C34904` | exact |
-| `library-rental-common.bundle` |  |  | `83EE65DB3121EFC79977808056B16508C571FF1D` | exact |
-| `ra-2.x.bundle` |  |  | `AEFAF64D491DA114764771F1302791C48B631168` | exact |
+| `fm.bundle` |  |  | `AB21E61B7E39BD74352CABFA26D79790F624C7BA` | exact |
+| `library-rental-common.bundle` |  |  | `F56FD152C42E0D3D226752683E5E5637DC03159E` | exact |
+| `ra-2.x.bundle` |  |  | `38BA820FC06BEC7023F613D74D6BC79C611CBD68` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

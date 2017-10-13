@@ -6,4 +6,4 @@
 
 kernel.timerstop( "play_pass_prompt_view_timer" )
 kernel.timerremove( "play_pass_prompt_view_timer" )
-idle_timer:resume()
+kernel.resume_idle_timer( "idle_timer" )

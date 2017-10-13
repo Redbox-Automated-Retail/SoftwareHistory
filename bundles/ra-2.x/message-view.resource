@@ -31,7 +31,7 @@
 				height="576"
 				cornerSize="28,28"
 				strokeWeight="5"
-				borderColor="162,16,24"
+				borderColor="228,32,69"
 				backgroundColor="255,255,255"
 				hitFlags="None"
 				optionFlags="Background, DrawBorder" /> 
@@ -44,7 +44,7 @@
 				height="45"
 				text="${MessageTimeoutTitle}"
 				font="font_target_large_overlays"
-				foregroundColor="181, 18, 27"
+				foregroundColor="228,32,69"
 				horizontalAlignment="near"
 				optionFlags="Text"
 				visible="false" />
@@ -57,7 +57,7 @@
 				height="45"
 				text="${MessageTitle}"
 				font="font_target_large_overlays"
-				foregroundColor="181, 18, 27"
+				foregroundColor="228,32,69"
 				horizontalAlignment="near"
 				optionFlags="Text"
 				visible="false" />
@@ -70,7 +70,7 @@
 				height="45"
 				text="${MessageHeaderText}"
 				font="font_target_medium_large"
-				foregroundColor="181,18,27"
+				foregroundColor="228,32,69"
 				horizontalAlignment="near"
 				optionFlags="Text"
 				visible="false" />
@@ -83,7 +83,7 @@
 				height="45"
 				text="${BlacklistMessageLabel}"
 				font="font_target_medium"
-				foregroundColor="181, 18, 27"
+				foregroundColor="228,32,69"
 				horizontalAlignment="near"
 				optionFlags="Text"
 				visible="false" />
@@ -124,7 +124,7 @@
 				cornerSize="32,15"
 				font="font_target_small_button_overlays"
 				visible="false"
-				style="light_gray_with_gray_border_button_style" />
+				style="warm_purple_button_style" />
 				
 			<actor
 				name="second_button"
@@ -136,7 +136,7 @@
 				font="font_target_small_button_overlays"
 				text=""
 				visible="false"	
-				style="red_button_style" />
+				style="rubine_button_style" />
 				
 			<actor
 				name="third_button"
@@ -148,7 +148,7 @@
 				font="font_target_small_medium"
 				text=""
 				visible="false"	
-				style="red_button_style" />
+				style="rubine_button_style" />
 				
 			<actor
 				name="fourth_button"
@@ -160,7 +160,7 @@
 				font="font_target_small_medium"
 				text=""
 				visible="false"	
-				style="red_button_style" />
+				style="rubine_button_style" />
 				
 			<actor
 				name="back_button_arrow"

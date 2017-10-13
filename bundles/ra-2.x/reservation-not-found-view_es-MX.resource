@@ -5,23 +5,15 @@
 	<property name="active_flag" value="active" />
 	<property name="culture" value="es-MX" />
 	<aspect name="content">
-		<scene
+    <scene
 			name="Default"
 			width="1024"
 			height="768"
+			backgroundColor="228,32,69"
 			stylesheet="style_sheet_common"
 			onEnter="reservation_not_found_view_enter"
 			onLeave="reservation_not_found_view_leave">
-			
-			<actor
-				name="back_ground_image"
-				width="1024"
-				height="768"
-				x="0"
-				y="0"
-				image="image_tickets_red_background"
-				optionFlags="Image"	/>
-		
+
 			<actor
 				name="phone_image"
 				width="279"
@@ -57,27 +49,27 @@
 				optionFlags="Text"
 				visible="true" />
 
-			<actor
+      <actor
 				name="footer_area"
 				x="0"
 				y="628"
 				optionFlags="Background, TextShadow"
-				backgroundColor="60,57,57"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="142"
 				visible="true" />
-			
-			<actor
+
+      <actor
 				name="footer_highlight"
 				x="0"
 				y="626"
 				optionFlags="Background, TextShadow"
-				backgroundColor="80,72,72"
+				backgroundColor="56,11,69"
 				width="1024"
 				height="2"
 				visible="true" />
-				
-			<actor
+
+      <actor
 				name="reservation_not_found_ok_button"
 				x="794"
 				y="660"
@@ -87,7 +79,7 @@
 				font="font_target_small_button_overlays"
 				text="OK"
 				visible="true"	
-				style="red_button_style" />
+				style="white_rubine_next_button_style" />
 
 		</scene>
 	</aspect>

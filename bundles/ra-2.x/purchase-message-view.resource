@@ -29,7 +29,7 @@
 				cornerSize="28,28"
 				strokeWeight="5"
 				optionFlags="Background , DrawBorder"
-				borderColor	="138,7,24"
+				borderColor	="228,32,69"
 				backgroundColor="255,255,255"
 				visible="true"	/>
 				<!-- except the border color difference the above actor can be replaced with cart_full_label_border-->
@@ -43,7 +43,7 @@
 				font="font_target_large_overlays"
 				optionFlags="Text"
 				horizontalAlignment="near"
-				foregroundColor="181, 18, 27"
+				foregroundColor="228,32,69"
 				text= "${PurchaseWarning:Header}"
 				visible="true"	/>
 
@@ -56,7 +56,7 @@
 				font="font_target_medium_overlays"
 				optionFlags="Text"
 				horizontalAlignment="near"
-				foregroundColor="181, 18, 27"
+				foregroundColor="228,32,69"
 				text= "${PurchaseWarning:Header}"
 				visible="true"	/>
 
@@ -84,17 +84,8 @@
 				cornerSize="32,15"
 				font="font_target_small_button_overlays"
 				visible="true"	
-				style="light_gray_with_gray_border_button_style" />
+				style="purple_button_style_white_border" />
 
-			<actor
-				name="warning_back_button_arrow"
-				x="212"
-				y="600"
-				tag="back"
-				image="image_back-white-arrow-gray-background"
-				optionFlags="image" 
-				visible="true"	/>		
-		
 			<actor
 				name="warning_continue_button"
 				x="663"
@@ -107,7 +98,7 @@
 				tag="continue_button"
 				hitFlags="enabled"
 				visible="true"
-				style="red_button_style" />
+				style="rubine_button_style_white_border" />
 
 		</scene>
 	</aspect>

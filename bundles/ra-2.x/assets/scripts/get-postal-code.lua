@@ -4,7 +4,7 @@
 -- All Rights Reserved
 --
 
-idle_timer:start()
+kernel.start_idle_timer( "idle_timer" )
 
 kernel.setmacro( "KeyPad:MessageLabel", strings.postal_code_prompt_message )
 kernel.setmacro( "KeyPad:PanelTag", strings.postal_code_tag )

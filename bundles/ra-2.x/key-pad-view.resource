@@ -5,6 +5,7 @@
 	<property name="active_flag" value="passive" />
 	<aspect name="content">
 		<scene
+      name="Default"
 			width="1024"
 			height="768"
 			stylesheet="style_sheet_common"
@@ -45,14 +46,21 @@
 				width="275"
 				height="67"
 				font="font_target_small_bold"
-				strokeWeight="3"				
 				text="${KeyPad:Text}"
-				foregroundColor="0,0,0"
 				verticalAlignment="center"
 				horizontalAlignment="center"
-				image="image_zip_entry_field"
-				optionFlags="Image, Text" />
-      
+				optionFlags="Text" />
+
+      <actor
+				name="one_button_shadow"
+				x="370" 
+				y="220" 
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
       <actor
 				name="one_button"
 				x="372"
@@ -64,9 +72,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update" 
 				cornerSize="36,36"
-				style="red_button_style_bold_border" /> 
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="two_button_shadow"
+				x="472" 
+				y="220"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="two_button"
 				x="474"
 				y="218"
@@ -77,9 +95,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="three_button_shadow"
+				x="574"
+				y="220"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="three_button"
 				x="576"
 				y="218"
@@ -90,9 +118,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="four_button_shadow"
+				x="370"
+				y="312"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="four_button"
 				x="372"
 				y="310"
@@ -103,9 +141,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="five_button_shadow"
+				x="472"
+				y="312"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="five_button"
 				x="474"
 				y="310"
@@ -116,9 +164,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="six_button_shadow"
+				x="574"
+				y="312"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="six_button"
 				x="576"
 				y="310"
@@ -129,9 +187,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="seven_button_shadow"
+				x="370"
+				y="404"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="seven_button"
 				x="372"
 				y="402"
@@ -142,9 +210,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="eight_button_shadow"
+				x="472"
+				y="404"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="eight_button"
 				x="474"
 				y="402"
@@ -155,9 +233,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="nine_button_shadow"
+				x="574"
+				y="404"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="nine_button"
 				x="576"
 				y="402"
@@ -168,9 +256,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="clearall_button_shadow"
+				x="370"
+				y="496"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="clearall_button"
 				x="372"
 				y="494"
@@ -181,9 +279,19 @@
 				onHit="key_pad_update"
 				cornerSize="36,36"
 				textRegion="12,22,50,35"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="zero_button_shadow"
+				x="472"
+				y="496"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="zero_button"
 				x="474"
 				y="494"
@@ -194,9 +302,19 @@
 				font="font_target_small_bold"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
-				
-			<actor
+				style="rubine_button_style_white_border" />
+
+      <actor
+				name="back_button_shadow"
+				x="574"
+				y="496"
+				width="79"
+				height="77"
+				cornerSize="36,36"
+        backgroundColor="215,215,215"
+        opacity="100"
+        optionFlags="Background"/>
+      <actor
 				name="back_button"
 				x="576"
 				y="494"
@@ -206,7 +324,7 @@
 				font="font_akzidenz_bold_tiny"
 				onHit="key_pad_update"
 				cornerSize="36,36"
-				style="red_button_style_bold_border" />
+				style="rubine_button_style_white_border" />
 
       <actor
 				name="note_label"
@@ -235,27 +353,19 @@
 				width="196"
 				height="66"
 				onHit="key_pad_update"
-				text="          NEXT"
+				text="NEXT"
 				font="font_target_small"
 				cornerSize="32,32"
-				style="red_next_button_style" />
+				style="white_rubine_next_button_style" />
+
       
-	    <actor
+      <actor
         name="next_button_right_arrow_icon"
-        x="915"
-        y="682"
-        image="image_email_entry_right_arrow_icon"
+        x="921"
+        y="689"
+        image="image_next_red_arrow"
         hitFlags="enabled"
         optionFlags="Image" />
-      
-			<actor
-        name="image_next_white_arrow_big"
-        x="915"
-        y="682"
-        onHit="key_pad_update"
-        image="image_next_white_arrow_big"
-        hitFlags="enabled"
-        optionFlags="Image" />	 
-		</scene>
+    </scene>
 	</aspect>
 </resource>

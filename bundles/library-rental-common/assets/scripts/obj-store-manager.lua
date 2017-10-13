@@ -73,17 +73,6 @@ function newstoremanager()
 		return self.PricingManager:get_adjusted_price( self.store.purchase_price, "purchase" )
 	end
 
-	t.get_purchase_new_price = function( self )
-		if self.PricingManager ~= nil then
-			local new_dvd_price = self.PricingManager:get_price_setting( "movies", "newdvd", "initial_night", "rental" )
-			if new_dvd_price ~= nil then
-				new_dvd_price = self.PricingManager:get_adjusted_price( new_dvd_price, "purchase" )
-			end
-			return new_dvd_price
-		end
-		return nil
-	end
-
 	t.is_sell_thru_enabled = function( self )
         return kernel.get_can_sell_used()
 	end
@@ -152,8 +141,9 @@ function newstoremanager()
 		local rapid_status_all = kernel.rental_inventory_get_rapidstatus_all()
 		if rapid_status_all ~= nil then
             
-            BarcodeStatus:clear()
-            kernel.log( "activated new rapid status file, cleared BarcodeStatus table" )
+			--[[removed for Digital Code returns]]
+            --BarcodeStatus:clear()
+            --kernel.log( "activated new rapid status file, cleared BarcodeStatus table" )
             
             for k, v in pairs( rapid_status_all ) do
 				local barcodes = ProductToBarcode[v.product_id]

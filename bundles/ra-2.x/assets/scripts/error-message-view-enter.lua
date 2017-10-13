@@ -4,5 +4,5 @@
 -- All Rights Reserved
 --
 
-idle_timer:suspend()
+kernel.suspend_idle_timer( "idle_timer" )
 
