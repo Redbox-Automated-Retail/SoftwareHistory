@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<localViews:ViewUserControl x:Class="Redbox.Rental.UI.Views.PleaseWaitViewControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:localViews="clr-namespace:Redbox.Rental.UI.Views" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
+  <Border Name="MainControl" Width="1024" Height="768" Background="{StaticResource RubineRedRadialGradientBrush}">
+    <Redbox:GridExt RowHeights="120,65,65,*">
+      <TextBlock Grid.Row="1" Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_48}" Text="{Binding titleText, FallbackValue=Just a sec}" />
+      <TextBlock Grid.Row="2" Foreground="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_medium_36}" Text="{Binding messageText, FallbackValue=There is a lot going on in here}" />
+      <Redbox:SpinControl Grid.Row="0" Grid.RowSpan="4" Period="2" Radius="96" RepeatForever="True" IsAnimated="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid>
+          <Ellipse StrokeThickness="9">
+            <Shape.Stroke>
+              <LinearGradientBrush EndPoint="0.445,0.997" StartPoint="0.555,0.003">
+                <GradientStop Color="White" Offset="0" />
+                <GradientStop Color="#FFDEE5F3" Offset="1" />
+              </LinearGradientBrush>
+            </Shape.Stroke>
+          </Ellipse>
+          <Ellipse StrokeThickness="11" Margin="70">
+            <Shape.Stroke>
+              <LinearGradientBrush EndPoint="0.445,0.997" StartPoint="0.555,0.003">
+                <GradientStop Color="White" Offset="0" />
+                <GradientStop Color="#FFDEE5F3" Offset="1" />
+              </LinearGradientBrush>
+            </Shape.Stroke>
+          </Ellipse>
+          <Grid>
+            <Ellipse StrokeThickness="11" Margin="34">
+              <Shape.Stroke>
+                <LinearGradientBrush EndPoint="0.445,0.997" StartPoint="0.555,0.003">
+                  <GradientStop Color="White" Offset="0" />
+                  <GradientStop Color="#FFDEE5F3" Offset="1" />
+                </LinearGradientBrush>
+              </Shape.Stroke>
+            </Ellipse>
+            <Ellipse StrokeThickness="11" Margin="49">
+              <Shape.Stroke>
+                <LinearGradientBrush EndPoint="0.445,0.997" StartPoint="0.555,0.003">
+                  <GradientStop Color="White" Offset="0" />
+                  <GradientStop Color="#FFDEE5F3" Offset="1" />
+                </LinearGradientBrush>
+              </Shape.Stroke>
+            </Ellipse>
+            <UIElement.Clip>
+              <RectangleGeometry Rect="0,0,96,96" />
+            </UIElement.Clip>
+          </Grid>
+        </Grid>
+      </Redbox:SpinControl>
+    </Redbox:GridExt>
+  </Border>
+</localViews:ViewUserControl>

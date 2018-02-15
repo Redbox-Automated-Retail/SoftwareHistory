@@ -1,11 +1,9 @@
-﻿using System;
-using System.CodeDom.Compiler;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
+using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Browse;
@@ -125,6 +123,12 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 	private void MoreCollectionsCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		FilterBarModel?.ProcessOnMoreCollectionsButtonClicked();
+		Commands.ResetIdleTimerCommand.Execute(null, this);
+	}
+
+	private void HomeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		FilterBarModel?.ProcessOnHomeButtonClicked();
 		Commands.ResetIdleTimerCommand.Execute(null, this);
 	}
 }

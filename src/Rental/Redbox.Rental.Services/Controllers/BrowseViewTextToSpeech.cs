@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
@@ -120,7 +121,6 @@ public class BrowseViewTextToSpeech
 			BrowseViewModel browseViewModel = getBrowseViewModelFunction();
 			if (browseViewModel != null)
 			{
-				AddStartOverEvent(speechPart, browseViewModel);
 				AddCheckOutEvent(speechPart, browseViewModel);
 				speechPart.Texts.Add(new TextPart
 				{
@@ -130,10 +130,7 @@ public class BrowseViewTextToSpeech
 				{
 					Text = "Press Enter to Checkout."
 				});
-				speechPart.Texts.Add(new TextPart
-				{
-					Text = "Press 0 to start over."
-				});
+				AddStartOverOrHomeEventAndText(speechPart, browseViewModel);
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
@@ -181,7 +178,6 @@ public class BrowseViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "AvailableTitles"
 				});
-				AddStartOverEvent(speechPart, browseViewModel);
 				AddCheckOutEvent(speechPart, browseViewModel);
 				int num = RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0;
 				speechPart.Texts.Add(new TextPart
@@ -192,6 +188,7 @@ public class BrowseViewTextToSpeech
 				{
 					Text = "Press Enter to Checkout."
 				});
+				AddStartOverOrHomeEventAndText(speechPart, browseViewModel);
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
@@ -218,7 +215,6 @@ public class BrowseViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "MainMenu"
 				});
-				AddStartOverEvent(speechPart, browseViewModel);
 				AddCheckOutEvent(speechPart, browseViewModel);
 				speechPart.Texts.Add(new TextPart
 				{
@@ -232,10 +228,7 @@ public class BrowseViewTextToSpeech
 				{
 					Text = "Press cancel to go back to list of options."
 				});
-				speechPart.Texts.Add(new TextPart
-				{
-					Text = "Press 0 to start over."
-				});
+				AddStartOverOrHomeEventAndText(speechPart, browseViewModel);
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
@@ -264,7 +257,6 @@ public class BrowseViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "MainMenu"
 				});
-				AddStartOverEvent(speechPart, browseViewModel);
 				AddCheckOutEvent(speechPart, browseViewModel);
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
@@ -350,10 +342,7 @@ public class BrowseViewTextToSpeech
 						Text = $"To hear {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} more titles, press the plus key."
 					});
 				}
-				speechPart.Texts.Add(new TextPart
-				{
-					Text = "Press 0 to start over."
-				});
+				AddStartOverOrHomeEventAndText(speechPart, browseViewModel);
 				if ((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) > 0)
 				{
 					speechPart.Texts.Add(new TextPart
@@ -415,7 +404,6 @@ public class BrowseViewTextToSpeech
 					}
 				});
 				AddCheckOutEvent(speechPart, browseViewModel);
-				AddStartOverEvent(speechPart, browseViewModel);
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = $"To browse all {BrowsingFamily}, press 1."
@@ -435,10 +423,52 @@ public class BrowseViewTextToSpeech
 				{
 					Text = string.Format("To select {0} press 5.", (BrowseState.TitleFamily == TitleFamily.Movies) ? "Games" : "Movies")
 				});
-				speechPart.Texts.Add(new TextPart
+				if (browseViewModel.SignInButtonVisibility == Visibility.Visible)
 				{
-					Text = "Press 0 to start over."
-				});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To sign in press 6."
+					});
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "6",
+						Action = delegate
+						{
+							browseViewModel?.ProcessOnSignInButtonClicked();
+						}
+					});
+				}
+				if (browseViewModel.SignOutButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To sign out press 6."
+					});
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "6",
+						Action = delegate
+						{
+							browseViewModel?.ProcessOnSignOutButtonClicked();
+						}
+					});
+				}
+				if (browseViewModel.MyPerksButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To access my perks press 7."
+					});
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "7",
+						Action = delegate
+						{
+							browseViewModel?.ProcessOnMyPerksButtonClicked();
+						}
+					});
+				}
+				AddStartOverOrHomeEventAndText(speechPart, browseViewModel);
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
@@ -688,16 +718,38 @@ public class BrowseViewTextToSpeech
 		});
 	}
 
-	private static void AddStartOverEvent(ISpeechPart speechPart, BrowseViewModel browseViewModel)
+	private static void AddStartOverOrHomeEventAndText(ISpeechPart speechPart, BrowseViewModel browseViewModel)
 	{
-		speechPart.Events.Add(new MapKeyPressToAction
+		if (browseViewModel.BrowseFilterBarModel.HomeButtonVisibility == Visibility.Visible)
 		{
-			KeyCode = "0",
-			Action = delegate
+			speechPart.Events.Add(new MapKeyPressToAction
 			{
-				browseViewModel?.BrowseFilterBarModel?.ProcessOnStartOverButtonClicked();
-			}
-		});
+				KeyCode = "0",
+				Action = delegate
+				{
+					browseViewModel?.BrowseFilterBarModel?.ProcessOnHomeButtonClicked();
+				}
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "Press 0 to go home."
+			});
+		}
+		if (browseViewModel.BrowseFilterBarModel.StartOverButtonVisibility == Visibility.Visible)
+		{
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "0",
+				Action = delegate
+				{
+					browseViewModel?.BrowseFilterBarModel?.ProcessOnStartOverButtonClicked();
+				}
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "Press 0 to start over."
+			});
+		}
 	}
 
 	private static void AddCheckOutEvent(ISpeechPart speechPart, BrowseViewModel browseViewModel)

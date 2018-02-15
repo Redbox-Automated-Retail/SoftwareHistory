@@ -28,6 +28,14 @@ public class PricingRecord : IPricingRecord
 		public const string PromoValue = "promo_value";
 
 		public const string Purchase = "purchase";
+
+		public const string ProductPricingId = "product_price_id";
+
+		public const string InitialDays = "initial_days";
+
+		public const string DefaultInitialNightPrice = "default_initial_night";
+
+		public const string DefaultExtraNightPrice = "default_extra_night";
 	}
 
 	public TitleFamily TitleFamily { get; set; }
@@ -46,7 +54,46 @@ public class PricingRecord : IPricingRecord
 
 	public decimal PromoValue { get; set; }
 
+	public long? ProductPricingId { get; set; }
+
+	public int? InitialDays { get; set; }
+
+	public decimal? DefaultInitialNightPrice { get; set; }
+
+	public decimal? DefaultExtraNightPrice { get; set; }
+
+	public int? PriceSetId { get; set; }
+
 	public decimal Purchase { get; set; }
+
+	public bool IsMultiNightPrice
+	{
+		get
+		{
+			if (InitialDays.HasValue)
+			{
+				return InitialDays > 1;
+			}
+			return false;
+		}
+	}
+
+	public bool IsHotDeal
+	{
+		get
+		{
+			if (!IsMultiNightPrice && DefaultInitialNightPrice.HasValue)
+			{
+				decimal? num = DefaultInitialNightPrice - (decimal?)InitialNight;
+				if (!(num.GetValueOrDefault() > 0m))
+				{
+					return false;
+				}
+				return num.HasValue;
+			}
+			return false;
+		}
+	}
 
 	public bool IsEqual(IPricingRecord pricingRecord)
 	{
@@ -88,6 +135,26 @@ public class PricingRecord : IPricingRecord
 		{
 			num = Purchase.CompareTo(pricingRecord.Purchase);
 		}
+		if (num == 0)
+		{
+			num = (ProductPricingId ?? (-999)).CompareTo(pricingRecord.ProductPricingId ?? (-999));
+		}
+		if (num == 0)
+		{
+			num = (InitialDays ?? (-999)).CompareTo(pricingRecord.InitialDays ?? (-999));
+		}
+		if (num == 0)
+		{
+			num = (DefaultInitialNightPrice ?? (-999m)).CompareTo(pricingRecord.DefaultInitialNightPrice ?? (-999m));
+		}
+		if (num == 0)
+		{
+			num = (DefaultExtraNightPrice ?? (-999m)).CompareTo(pricingRecord.DefaultExtraNightPrice ?? (-999m));
+		}
+		if (num == 0)
+		{
+			num = (PriceSetId ?? (-999)).CompareTo(pricingRecord.PriceSetId ?? (-999));
+		}
 		return num;
 	}
 
@@ -103,7 +170,12 @@ public class PricingRecord : IPricingRecord
 			NonReturn = NonReturn,
 			NonReturnDays = NonReturnDays,
 			PromoValue = PromoValue,
-			Purchase = Purchase
+			Purchase = Purchase,
+			ProductPricingId = ProductPricingId,
+			InitialDays = InitialDays,
+			DefaultInitialNightPrice = DefaultInitialNightPrice,
+			DefaultExtraNightPrice = DefaultExtraNightPrice,
+			PriceSetId = PriceSetId
 		};
 	}
 
@@ -127,6 +199,10 @@ public class PricingRecord : IPricingRecord
 			{ "non_return_days", NonReturnDays },
 			{ "promo_value", PromoValue },
 			{ "purchase", Purchase },
+			{ "product_price_id", ProductPricingId },
+			{ "initial_days", InitialDays },
+			{ "default_initial_night", DefaultInitialNightPrice },
+			{ "default_extra_night", DefaultExtraNightPrice },
 			{
 				"price_set_id",
 				ServiceLocator.Instance.GetService<IPricingService>()?.CurrentPriceSet?.PriceSetId ?? "1"

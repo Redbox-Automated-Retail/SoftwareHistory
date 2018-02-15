@@ -1,25 +1,73 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.Pricing;
 
 public class PricingService : IPricingService
 {
-	private string _pricingConfigName;
-
-	private IPricingSet _currentPricingSet;
-
 	private Store _store;
 
-	public IPricingSet CurrentPriceSet => _currentPricingSet;
+	private IBundleBasedPricingService _bundleBasedPricingService;
+
+	private IKioskPricingService _kioskPricingService;
+
+	private IConfiguration _configuration;
+
+	private IPricingData _pricingData;
+
+	private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+	private int _lockTimeout = 3000;
+
+	private Timer _changeTimer;
+
+	private int _inRefresh;
+
+	public bool IsPricingEngineEnabled
+	{
+		get
+		{
+			if (_kioskPricingService == null)
+			{
+				return false;
+			}
+			if (!_kioskPricingService.IsPricingEngineDataAvailable)
+			{
+				return false;
+			}
+			if (!_configuration.EnablePricingEngine)
+			{
+				return false;
+			}
+			return true;
+		}
+	}
+
+	public IPricingSet CurrentPriceSet
+	{
+		get
+		{
+			if (IsPricingEngineEnabled)
+			{
+				IPricingSet currentPriceSet = _kioskPricingService.CurrentPriceSet;
+				if (currentPriceSet != null)
+				{
+					return currentPriceSet;
+				}
+			}
+			return _bundleBasedPricingService.CurrentPriceSet;
+		}
+	}
 
 	private Store Store
 	{
@@ -35,6 +83,66 @@ public class PricingService : IPricingService
 
 	public event PricingSetChange OnPricingSetChange;
 
+	public PricingService(IKernelService kernelService, IStoreManager storeManager)
+	{
+		_bundleBasedPricingService = new BundleBasedPricingService();
+		_pricingData = new PricingData(kernelService, storeManager);
+		_kioskPricingService = new KioskPricingService(_pricingData, storeManager.KioskId);
+		_configuration = Redbox.Rental.Services.Configuration.Configuration.Instance;
+		if (_changeTimer == null)
+		{
+			_changeTimer = new Timer(delegate
+			{
+				OnTimer();
+			});
+		}
+	}
+
+	public void Start()
+	{
+		try
+		{
+			LogHelper.Instance.Log("PricingService.Start");
+			int seconds = new Random().Next(5, 55);
+			int minutes = 2;
+			_changeTimer.Change(new TimeSpan(0, 1, seconds), new TimeSpan(0, minutes, seconds));
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("PricingService.Start - an exception occurred.", e);
+		}
+	}
+
+	public void Stop()
+	{
+		try
+		{
+			LogHelper.Instance.Log("PricingService.Stop");
+			_changeTimer.Change(-1, -1);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("PricingService.Stop - an exception occurred.", e);
+		}
+	}
+
+	private void OnTimer()
+	{
+		if (Interlocked.CompareExchange(ref _inRefresh, 1, 0) == 1)
+		{
+			LogHelper.Instance.Log("PricingService.Refresh - exiting already in OnTimer");
+			return;
+		}
+		try
+		{
+			_pricingData.LoadStaged();
+		}
+		finally
+		{
+			_inRefresh = 0;
+		}
+	}
+
 	public void ClearOnPricingSetChange()
 	{
 		OnPricingSetChange = null;
@@ -42,59 +150,126 @@ public class PricingService : IPricingService
 
 	public void Reload()
 	{
-		GetPricingConfigName();
-		LogHelper.Instance.Log(">  Pricing Service Load...");
-		IPricingSet pricingSet = GetPricingSet(_pricingConfigName);
-		bool flag = false;
-		if (_currentPricingSet != null)
+		LogHelper.Instance.Log("PricingService.Reload");
+		try
 		{
-			LogHelper.Instance.Log(">  Checking for price changes...");
-			flag = !pricingSet.IsEqual(_currentPricingSet);
+			IBundleBasedPricingService bundleBasedPricingService = _bundleBasedPricingService;
+			if (bundleBasedPricingService != null && bundleBasedPricingService.Reload() && OnPricingSetChange != null)
+			{
+				OnPricingSetChange();
+			}
 		}
-		_currentPricingSet = pricingSet;
-		if (flag && OnPricingSetChange != null)
+		catch (Exception e)
 		{
-			OnPricingSetChange(_currentPricingSet);
+			LogHelper.Instance.Log("PricingService.Reload - Unhandled exception occurred", e);
 		}
 	}
 
-	public IPricingRecord GetProductPricingRecord(long productId)
+	public void UpdatePricingInstance()
 	{
-		IPricingRecord result = null;
-		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-		if (productId != 0L)
+		LogHelper.Instance.Log("PricingService.UpdatePricingInstance");
+		try
 		{
-			service.GetProduct(productId, excludeTitleRollup: true, out var kioskProduct);
-			if (kioskProduct != null)
+			if (_kioskPricingService != null)
 			{
-				if (kioskProduct is ITitleProduct titleProduct)
-				{
-					result = GetProductTypePricingRecord(titleProduct.TitleFamily, titleProduct.TitleType, forRecommendationOnPickupFlow: false);
-				}
+				_kioskPricingService.UpdatePricingInstance();
 			}
-			else
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("PricingService.UpdatePricingInstance - Unhandled exception occurred", e);
+		}
+	}
+
+	public IPricingRecord GetPurchasePricing(ITitleProduct titleProduct)
+	{
+		if (IsPricingEngineEnabled)
+		{
+			return _kioskPricingService.GetPurchasePricing(titleProduct);
+		}
+		return null;
+	}
+
+	public IPricingRecord GetOneDayProductPricingRecord(ITitleProduct titleProduct)
+	{
+		return GetOneDayProductPricingRecord(titleProduct.ProductId);
+	}
+
+	public IPricingRecord GetOneDayProductPricingRecord(long productId)
+	{
+		IPricingRecord pricingRecord = null;
+		if (IsPricingEngineEnabled)
+		{
+			pricingRecord = _kioskPricingService.GetOneDayProductPricingRecord(productId);
+		}
+		if (pricingRecord == null)
+		{
+			pricingRecord = _bundleBasedPricingService.GetProductPricingRecord(productId);
+		}
+		return pricingRecord;
+	}
+
+	public IList<IPricingRecord> GetProductPricingRecords(ITitleProduct titleProduct)
+	{
+		return GetProductPricingRecords(titleProduct.ProductId);
+	}
+
+	public IList<IPricingRecord> GetProductPricingRecords(long productId)
+	{
+		IList<IPricingRecord> list = null;
+		if (IsPricingEngineEnabled)
+		{
+			list = _kioskPricingService.GetProductPricingRecords(productId);
+		}
+		if (list == null)
+		{
+			list = new List<IPricingRecord>();
+			list.Add(_bundleBasedPricingService.GetProductPricingRecord(productId));
+		}
+		return list;
+	}
+
+	public IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool useAdjustedPrices)
+	{
+		IPricingRecord pricingRecord = null;
+		if (IsPricingEngineEnabled)
+		{
+			pricingRecord = _kioskPricingService.GetProductTypePricingRecord(titleFamily, titleType, useAdjustedPrices);
+		}
+		if (pricingRecord == null)
+		{
+			pricingRecord = _bundleBasedPricingService.GetProductTypePricingRecord(titleFamily, titleType, useAdjustedPrices);
+		}
+		return pricingRecord;
+	}
+
+	public decimal? GetPriceSetting(TitleFamily titleFamily, TitleType titleType, string settingName, RentalShoppingCartItemAction action)
+	{
+		decimal? result = null;
+		IPricingRecord productTypePricingRecord = GetProductTypePricingRecord(titleFamily, titleType, useAdjustedPrices: false);
+		if (productTypePricingRecord != null)
+		{
+			switch (settingName)
 			{
-				LogHelper.Instance.Log("Error in PricingService.GetProductPricingRecord.  Unable to find product with id {0}", productId);
+			case "initial_night":
+				result = productTypePricingRecord.InitialNight;
+				break;
+			case "extra_night":
+				result = productTypePricingRecord.ExtraNight;
+				break;
+			case "expiration_price":
+				result = productTypePricingRecord.ExpirationPrice;
+				break;
+			case "promo_value":
+				result = productTypePricingRecord.PromoValue;
+				break;
+			}
+			if (result.HasValue && result.HasValue)
+			{
+				result = GetAdjustedPrice(result.Value, action, titleType);
 			}
 		}
 		return result;
-	}
-
-	public IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool forRecommendationOnPickupFlow)
-	{
-		IPricingRecord pricingRecord = null;
-		IPricingRecord pricingRecord2 = _currentPricingSet?.PriceRecords.FirstOrDefault((IPricingRecord x) => x.TitleFamily == titleFamily && (x.TitleType == titleType || x.TitleType == TitleType.All));
-		if (pricingRecord2 != null)
-		{
-			pricingRecord = pricingRecord2.Clone();
-			if (!forRecommendationOnPickupFlow)
-			{
-				pricingRecord.InitialNight = GetAdjustedPrice(pricingRecord.InitialNight, RentalShoppingCartItemAction.rental, titleType);
-				pricingRecord.ExtraNight = GetAdjustedPrice(pricingRecord.ExtraNight, RentalShoppingCartItemAction.rental, titleType);
-				pricingRecord.ExpirationPrice = GetAdjustedPrice(pricingRecord.ExpirationPrice, RentalShoppingCartItemAction.rental, titleType);
-			}
-		}
-		return pricingRecord;
 	}
 
 	public decimal GetAdjustedPrice(decimal price, RentalShoppingCartItemAction action, TitleType titleType)
@@ -115,35 +290,6 @@ public class PricingService : IPricingService
 			if (num != 0m)
 			{
 				result = Math.Round(price * (num / 100m + 1m), 2);
-			}
-		}
-		return result;
-	}
-
-	public decimal? GetPriceSetting(TitleFamily titleFamily, TitleType titleType, string settingName, RentalShoppingCartItemAction action)
-	{
-		decimal? result = null;
-		IPricingRecord pricingRecord = _currentPricingSet?.PriceRecords.FirstOrDefault((IPricingRecord x) => x.TitleFamily == titleFamily && (x.TitleType == titleType || x.TitleType == TitleType.All));
-		if (pricingRecord != null)
-		{
-			switch (settingName)
-			{
-			case "initial_night":
-				result = pricingRecord.InitialNight;
-				break;
-			case "extra_night":
-				result = pricingRecord.ExtraNight;
-				break;
-			case "expiration_price":
-				result = pricingRecord.ExpirationPrice;
-				break;
-			case "promo_value":
-				result = pricingRecord.PromoValue;
-				break;
-			}
-			if (result.HasValue && result.HasValue)
-			{
-				result = GetAdjustedPrice(result.Value, action, titleType);
 			}
 		}
 		return result;
@@ -182,99 +328,5 @@ public class PricingService : IPricingService
 	public decimal GetEmptyCasePrice()
 	{
 		return GetPriceSetting(TitleFamily.Movies, TitleType.DVD, "initial_night", RentalShoppingCartItemAction.purchase) ?? 0m;
-	}
-
-	private void GetPricingConfigName()
-	{
-		LogHelper.Instance.Log(">  Looking for pricing configuration...");
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		_pricingConfigName = null;
-		service?.TryGetValue<string>("system", "General", "PricingTableName", out _pricingConfigName);
-		if (string.IsNullOrEmpty(_pricingConfigName))
-		{
-			_pricingConfigName = "pricing";
-			LogHelper.Instance.Log(">  Default to 'pricing' and standard pricing process...");
-			return;
-		}
-		LogHelper.Instance.Log(">  Found pricing configuration '{0}'", _pricingConfigName);
-		if (OrchestrationService.GetResourceTable(_pricingConfigName) == null)
-		{
-			LogHelper.Instance.Log(">  Pricing configuration file not found...");
-			_pricingConfigName = "pricing";
-			LogHelper.Instance.Log(">  Default to 'pricing' and standard pricing process...");
-		}
-	}
-
-	private IPricingSet GetPricingSet(string pricingConfigName)
-	{
-		IPricingSet pricingSet = null;
-		List<Dictionary<string, object>> resourceTable = OrchestrationService.GetResourceTable(pricingConfigName);
-		if (resourceTable != null)
-		{
-			pricingSet = new PricingSet();
-			foreach (Dictionary<string, object> item in resourceTable)
-			{
-				IPricingRecord pricingRecord = new PricingRecord();
-				string stringValue = GetStringValue(item, "family");
-				if (Enum.TryParse<TitleFamily>(stringValue, ignoreCase: true, out var result))
-				{
-					pricingRecord.TitleFamily = result;
-					string text = GetStringValue(item, "type");
-					if (text == "*")
-					{
-						text = "All";
-					}
-					text = text?.Replace("-", string.Empty);
-					if (Enum.TryParse<TitleType>(text, ignoreCase: true, out var result2))
-					{
-						pricingRecord.TitleType = result2;
-						pricingRecord.InitialNight = GetDecimalValue(item, "initial_night");
-						pricingRecord.ExtraNight = GetDecimalValue(item, "extra_night");
-						pricingRecord.ExpirationPrice = GetDecimalValue(item, "expiration_price");
-						pricingRecord.NonReturnDays = GetDecimalValue(item, "non_return_days");
-						pricingRecord.PromoValue = GetDecimalValue(item, "promo_value");
-						if (Store?.State == "MD")
-						{
-							pricingRecord.NonReturn = Math.Round(pricingRecord.InitialNight * (Store.RentalTaxRate / 100m + 1m), 2) * pricingRecord.NonReturnDays;
-						}
-						else
-						{
-							pricingRecord.NonReturn = pricingRecord.InitialNight * pricingRecord.NonReturnDays;
-						}
-					}
-					else
-					{
-						LogHelper.Instance.Log("Error in PricingService.GetPricingSet.  Unable to parse TitleType {0} in pricingConfigName {1}", text, pricingConfigName);
-					}
-				}
-				else
-				{
-					LogHelper.Instance.Log("Error in PricingService.GetPricingSet.  Unable to parse TitleFamily {0} in pricingConfigName {1}", stringValue, pricingConfigName);
-				}
-				pricingSet.PriceRecords.Add(pricingRecord);
-			}
-			pricingSet.PriceSetId = OrchestrationService.GetResourceProperty(pricingConfigName, "price_set_id")?.ToString();
-		}
-		return pricingSet;
-	}
-
-	private string GetStringValue(Dictionary<string, object> values, string key)
-	{
-		string result = null;
-		if (values.TryGetValue(key, out var value))
-		{
-			result = value?.ToString() ?? null;
-		}
-		return result;
-	}
-
-	private decimal GetDecimalValue(Dictionary<string, object> values, string key)
-	{
-		decimal result = 0m;
-		if (values.TryGetValue(key, out var value) && value != null)
-		{
-			decimal.TryParse(value.ToString(), out result);
-		}
-		return result;
 	}
 }

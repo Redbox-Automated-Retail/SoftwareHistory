@@ -25,8 +25,7 @@ public static class ActorFunctions
 		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
 		IActor actor = scene.CreateActor();
 		actor.Name = actorName;
-		IViewFrame viewFrame = service2.PeekViewFrame();
-		if (viewFrame != null && viewFrame.ViewWindow.HasValue)
+		if (service2.PeekViewFrame()?.ViewFrame is IViewFrame { ViewWindow: not null } viewFrame)
 		{
 			actor.X = x + viewFrame.ViewWindow.Value.X;
 			actor.Y = y + viewFrame.ViewWindow.Value.Y;
@@ -329,8 +328,7 @@ public static class ActorFunctions
 		IActor actor = GetActor(actorName);
 		if (actor != null)
 		{
-			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame();
-			if (viewFrame != null && viewFrame.ViewWindow.HasValue)
+			if (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame()?.ViewFrame is IViewFrame { ViewWindow: not null } viewFrame)
 			{
 				actor.X = x + viewFrame.ViewWindow.Value.X;
 				actor.Y = y + viewFrame.ViewWindow.Value.Y;
@@ -391,8 +389,7 @@ public static class ActorFunctions
 		IActor actor = GetActor(actorName);
 		if (actor != null)
 		{
-			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame();
-			if (viewFrame != null && viewFrame.ViewWindow.HasValue)
+			if (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame()?.ViewFrame is IViewFrame { ViewWindow: not null } viewFrame)
 			{
 				actor.X = x + viewFrame.ViewWindow.Value.X;
 			}
@@ -409,8 +406,7 @@ public static class ActorFunctions
 		IActor actor = GetActor(actorName);
 		if (actor != null)
 		{
-			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame();
-			if (viewFrame != null && viewFrame.ViewWindow.HasValue)
+			if (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame()?.ViewFrame is IViewFrame { ViewWindow: not null } viewFrame)
 			{
 				actor.Y = y + viewFrame.ViewWindow.Value.Y;
 			}

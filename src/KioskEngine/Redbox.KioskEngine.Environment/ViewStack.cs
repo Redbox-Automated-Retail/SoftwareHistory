@@ -5,17 +5,17 @@ using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.KioskEngine.Environment;
 
-internal class ViewStack : IEnumerable<IViewFrame>, IEnumerable
+internal class ViewStack : IEnumerable<IViewFrameInstance>, IEnumerable
 {
-	private sealed class ViewStackEnumerator : IEnumerator<IViewFrame>, IDisposable, IEnumerator
+	private sealed class ViewStackEnumerator : IEnumerator<IViewFrameInstance>, IDisposable, IEnumerator
 	{
-		private readonly IEnumerator<string> m_baseEnumerator;
+		private readonly IEnumerator<IViewFrameInstance> m_baseEnumerator;
 
-		public IViewFrame Current => ViewService.Instance.GetViewFrame(m_baseEnumerator.Current);
+		public IViewFrameInstance Current => m_baseEnumerator?.Current;
 
 		object IEnumerator.Current => Current;
 
-		public ViewStackEnumerator(IEnumerator<string> baseEnumerator)
+		public ViewStackEnumerator(IEnumerator<IViewFrameInstance> baseEnumerator)
 		{
 			m_baseEnumerator = baseEnumerator;
 		}
@@ -36,11 +36,11 @@ internal class ViewStack : IEnumerable<IViewFrame>, IEnumerable
 		}
 	}
 
-	private readonly Stack<string> m_stack = new Stack<string>();
+	private readonly Stack<IViewFrameInstance> m_stack = new Stack<IViewFrameInstance>();
 
 	public int Count => m_stack.Count;
 
-	public IEnumerator<IViewFrame> GetEnumerator()
+	public IEnumerator<IViewFrameInstance> GetEnumerator()
 	{
 		return new ViewStackEnumerator(m_stack.GetEnumerator());
 	}
@@ -55,23 +55,30 @@ internal class ViewStack : IEnumerable<IViewFrame>, IEnumerable
 		m_stack.Clear();
 	}
 
-	public IViewFrame Pop()
+	public IViewFrameInstance Pop()
 	{
-		return (m_stack.Count == 0) ? null : ViewService.Instance.GetViewFrame(m_stack.Pop());
+		return (m_stack.Count == 0) ? null : m_stack.Pop();
 	}
 
-	public IViewFrame Peek()
+	public IViewFrameInstance Peek()
 	{
-		return (m_stack.Count == 0) ? null : ViewService.Instance.GetViewFrame(m_stack.Peek());
+		return (m_stack.Count == 0) ? null : m_stack.Peek();
 	}
 
-	public void Push(string viewName)
+	public void Push(Guid id, string viewName, object parameter = null)
 	{
-		m_stack.Push(viewName);
+		IBaseViewFrame viewFrame = ViewService.Instance.GetViewFrame(viewName);
+		IViewFrameInstance item = new ViewFrameInstance
+		{
+			Id = id,
+			ViewFrame = viewFrame,
+			Parameter = parameter
+		};
+		m_stack.Push(item);
 	}
 
 	public string PeekViewName()
 	{
-		return (m_stack.Count == 0) ? null : m_stack.Peek();
+		return (m_stack.Count == 0) ? null : m_stack.Peek()?.ViewFrame?.ViewName;
 	}
 }

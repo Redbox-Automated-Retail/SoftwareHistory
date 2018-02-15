@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Controls.DisplayProductCheckoutUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localbase="clr-namespace:Redbox.Rental.UI">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="13*" />
+      <ColumnDefinition Width="63*" />
+      <ColumnDefinition Width="24*" />
+    </Grid.ColumnDefinitions>
+    <local:DisplayProductUserControl Height="78" VerticalAlignment="Center" />
+    <Line Name="SeparatorLine" Grid.ColumnSpan="3" X2="1000" Fill="#979797" Margin="0,0,0,0" Stroke="#979797" StrokeThickness="2" Opacity="0.22" VerticalAlignment="Bottom" />
+    <StackPanel Name="ProductDescriptionTextPanel" Grid.Column="1" Margin="3,0,0,0" VerticalAlignment="Center">
+      <TextBlock TextWrapping="Wrap">
+        <Span Style="{StaticResource span_font_montserrat_bold_13}" Foreground="#FF000000">
+          <Run Name="ProductTitleText" Text="{Binding Path=ProductTitleText, FallbackValue=Star Wars The Force Awakens}" />
+        </Span> <Span Style="{StaticResource span_font_montserrat_regular_13}" Foreground="#4a4a4a"><Run Name="ProductTypeAndActionText" Text="{Binding Path=ProductTypeText, FallbackValue=- DVD}" /></Span></TextBlock>
+      <TextBlock Name="ProductDescriptionLine2Text" Style="{StaticResource font_montserrat_regular_13}" Foreground="#4a4a4a" Text="{Binding Path=ProductDescriptionLine2Text, FallbackValue=1-night rental | Extra night $1.50 | Earning 3000+ pts}" />
+      <TextBlock Name="ProductDescriptionLine3Text" Style="{StaticResource font_montserrat_regular_13}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=ProductDescriptionLine3Text, FallbackValue=PROMO APPLIED: $1 OFF Blu-ray}" />
+    </StackPanel>
+    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+      <TextBlock Name="ProductCartPriceText" Grid.Column="2" Style="{StaticResource font_montserrat_bold_16}" VerticalAlignment="Center" Foreground="#FF000000" Margin="5,0,5,0" Text="{Binding Path=ProductCartPriceText, FallbackValue=$2.00}" />
+      <Redbox:RoundedButton Name="TopCancelButton" Grid.Column="2" Style="{StaticResource light_gray_white_border_button_with_dropshadow_style}" DropShadowOpacity="0.4" Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" BorderThickness="2" VerticalAlignment="Center" UsedDefaultCornerRadius="True" Width="40" Height="40" Margin="35,0,7,0" Visibility="{Binding Path=TopCancelButtonVisibility, FallbackValue=Visible}">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="5*" />
+            <RowDefinition Height="90*" />
+            <RowDefinition Height="5*" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5*" />
+            <ColumnDefinition Width="90*" />
+            <ColumnDefinition Width="5*" />
+          </Grid.ColumnDefinitions>
+          <Viewbox Grid.Row="1" Grid.Column="1">
+            <UserControl Style="{StaticResource delete_x_style}" />
+          </Viewbox>
+        </Grid>
+      </Redbox:RoundedButton>
+    </StackPanel>
+    <Redbox:RoundedButton Name="BottomCancelButton" Style="{StaticResource classic_gray_button_style}" Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" BorderColor="White" BorderGradientColor="White" BorderThickness="2" HorizontalAlignment="Right" VerticalAlignment="Top" UsedDefaultCornerRadius="True" Width="43" Height="43" Margin="0,-75,-15,0" Visibility="{Binding Path=BottomCancelButtonVisibility, FallbackValue=Collapsed}">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="20*" />
+          <RowDefinition Height="60*" />
+          <RowDefinition Height="20*" />
+        </Grid.RowDefinitions>
+        <Viewbox Grid.Row="1">
+          <TextBlock Style="{StaticResource font_montserrat_bold_24}">X</TextBlock>
+        </Viewbox>
+      </Grid>
+    </Redbox:RoundedButton>
+  </Grid>
+</UserControl>

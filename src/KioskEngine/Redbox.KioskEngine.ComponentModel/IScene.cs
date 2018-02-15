@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Redbox.KioskEngine.ComponentModel;
@@ -60,4 +61,10 @@ public interface IScene : IDisposable
 	void Render(Graphics context, out bool changed);
 
 	void MakeDirty(Rectangle[] rectangles);
+
+	void PrcoessWPFHit();
+
+	void AddWPFGridChild(FrameworkElement frameworkElement);
+
+	FrameworkElement GetWPFGridChild(object tag);
 }

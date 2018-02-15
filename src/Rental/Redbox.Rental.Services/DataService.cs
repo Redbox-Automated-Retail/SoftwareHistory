@@ -469,6 +469,7 @@ public class DataService : IDataService
 			};
 			store.Sellthru = true;
 			store.PurchasePrice = 5m;
+			store.State = "IL";
 			store.PurchaseTaxRate = 8m;
 			store.RentalTaxRate = 8m;
 			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");

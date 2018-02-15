@@ -27,6 +27,7 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
 		RegisterRoutedCommand("ReturnProductCommand", Redbox.Rental.UI.Commands.ReturnProductCommand);
 		RegisterRoutedCommand("HelpCommand", Redbox.Rental.UI.Commands.HelpCommand);
+		RegisterRoutedCommand("SignInCommand", Redbox.Rental.UI.Commands.SignInCommand);
 		PostTouchScreenHealthActivity();
 	}
 
@@ -136,6 +137,12 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 	private void BannerClickCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StartViewModel.ProcessBannerClicked();
+		HandleWPFHit();
+	}
+
+	private void SignInCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		StartViewModel?.ProcessSignInButtonClicked();
 		HandleWPFHit();
 	}
 }

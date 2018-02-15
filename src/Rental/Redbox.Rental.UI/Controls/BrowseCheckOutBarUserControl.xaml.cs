@@ -33,7 +33,7 @@ public partial class BrowseCheckOutBarUserControl : UserControl, IWPFActor, ICom
 
 	private void HandleWPFHit()
 	{
-		OnWPFHit?.Invoke(Actor);
+		ServiceLocator.Instance.GetService<IRenderingService>()?.ActiveScene?.PrcoessWPFHit();
 	}
 
 	private void CheckOutCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -50,6 +50,24 @@ public partial class BrowseCheckOutBarUserControl : UserControl, IWPFActor, ICom
 	private void ToggleTitleFamilyCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		BrowseViewModel?.ProcessOnToggleTitleFamilyButtonClicked();
+		HandleWPFHit();
+	}
+
+	private void SignInCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		BrowseViewModel?.ProcessOnSignInButtonClicked();
+		HandleWPFHit();
+	}
+
+	private void SignOutCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		BrowseViewModel?.ProcessOnSignOutButtonClicked();
+		HandleWPFHit();
+	}
+
+	private void MyPerksCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		BrowseViewModel?.ProcessOnMyPerksButtonClicked();
 		HandleWPFHit();
 	}
 }

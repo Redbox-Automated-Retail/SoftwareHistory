@@ -13,6 +13,18 @@ public class ProductFlag
 		public const string BlueFlag = "blue_flag_style";
 
 		public const string OrangeFlag = "orange_flag_style";
+
+		public const string RubineFlag = "rubine_flag_style";
+
+		public const string WarmPurpleFlag = "warm_purple_flag_style";
+
+		public const string CharcoalGreyFlag = "charcoal_grey_flag_style";
+
+		public const string MarigoldFlag = "marigold_flag_style";
+
+		public const string DarkishPinkFlag = "darkish_pink_flag_style";
+
+		public const string OffYellowFlag = "off_yellow_flag_style";
 	}
 
 	public class FlagKeyNameConstants
@@ -30,6 +42,10 @@ public class ProductFlag
 		public const string AwardWinnerKey = "flag_award_winner";
 
 		public const string ClassicsKey = "flag_classics";
+
+		public const string HotDealKey = "flag_hot_deal";
+
+		public const string PointsKey = "flag_points";
 	}
 
 	public ProductFlags Flag { get; set; }

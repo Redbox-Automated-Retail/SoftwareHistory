@@ -494,7 +494,7 @@ public static class KioskProductExtensions
 			["merchandise_date"] = product.MerchandiseDate,
 			["do_not_rent_date"] = product.DoNotRentDate,
 			["is_sellable"] = product.IsSellable,
-			["purchase_price"] = (product.IsMovie ? product.MoviePurchasePrice : product.GamePurchasePrice),
+			["purchase_price"] = product.PurchasePrice,
 			["sell_thru"] = product.SellThru,
 			["sell_thru_new"] = product.SellThruNew,
 			["sellthru_date"] = product.SellThruDate,

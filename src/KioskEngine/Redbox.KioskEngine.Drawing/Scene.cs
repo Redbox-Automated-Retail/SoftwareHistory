@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
@@ -180,6 +181,11 @@ public class Scene : IScene, IDisposable
 		return actor;
 	}
 
+	public void PrcoessWPFHit()
+	{
+		OnWPFHit?.Invoke(null);
+	}
+
 	public void Dispose()
 	{
 		foreach (IActor actor in Actors)
@@ -211,7 +217,7 @@ public class Scene : IScene, IDisposable
 				}
 				if (LastSceneRenderType == RenderType.WPF)
 				{
-					Application.OpenForms["HostForm"]?.Focus();
+					System.Windows.Forms.Application.OpenForms["HostForm"]?.Focus();
 				}
 			}
 		}
@@ -267,6 +273,27 @@ public class Scene : IScene, IDisposable
 			Actors.Remove(actor);
 			MakeDirty(new Rectangle[1] { actor.Bounds });
 		}
+	}
+
+	public void AddWPFGridChild(FrameworkElement frameworkElement)
+	{
+		if (frameworkElement != null)
+		{
+			WPFGrid.Children.Add(frameworkElement);
+		}
+	}
+
+	public FrameworkElement GetWPFGridChild(object tag)
+	{
+		FrameworkElement result = null;
+		foreach (object child in WPFGrid.Children)
+		{
+			if (child is FrameworkElement { Tag: not null } frameworkElement && frameworkElement.Tag.Equals(tag))
+			{
+				result = frameworkElement;
+			}
+		}
+		return result;
 	}
 
 	public void AddLast(IActor actor)

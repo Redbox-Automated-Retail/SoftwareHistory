@@ -2,26 +2,30 @@ using System;
 using System.Collections.Generic;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Services.ShoppingCart;
 
 public class RentalShoppingCartItem : IRentalShoppingCartItem
 {
+	private ITitleProduct _titleProduct;
+
 	private List<Genres> _genres = new List<Genres>();
 
-	public long ProductId { get; set; }
+	public long ProductId => _titleProduct.ProductId;
 
-	public TitleType TitleType { get; set; }
+	public TitleType TitleType => _titleProduct.TitleType;
 
-	public Ratings Rating { get; set; }
+	public Ratings Rating => (Ratings)(_titleProduct.RatingId ?? 0);
 
-	public DateTime MerchandiseDate { get; set; }
+	public DateTime MerchandiseDate => _titleProduct.MerchandiseDate;
 
 	public List<Genres> Genres => _genres;
 
-	public TitleFamily TitleFamily { get; set; }
+	public TitleFamily TitleFamily => _titleProduct.TitleFamily;
 
 	public RentalShoppingCartItemAction Action { get; set; }
 
@@ -29,19 +33,19 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 
 	public ItemSourceType SourceType { get; set; }
 
-	public bool MultiDisc { get; set; }
+	public bool MultiDisc => _titleProduct is MDVProduct;
 
-	public int? DiscNumber { get; set; }
+	public int? DiscNumber => _titleProduct.DiscNumber;
 
 	public decimal Price { get; set; }
 
 	public decimal ExtendedPrice => Price * Quantity;
 
-	public decimal PurchasePrice { get; set; }
+	public decimal PurchasePrice => _titleProduct.PurchasePrice;
 
 	public decimal TaxRate { get; set; }
 
-	public string SortName { get; set; }
+	public string SortName => _titleProduct.SortName;
 
 	public LineItemStatus Status { get; set; }
 
@@ -50,6 +54,15 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 	public decimal Quantity { get; set; }
 
 	public IPricingRecord PricingRecord { get; set; }
+
+	public ILoyaltyPointsRecord LoyaltyPointsRecord { get; set; }
+
+	public ITitleProduct TitleProduct => _titleProduct;
+
+	public RentalShoppingCartItem(ITitleProduct titleProduct)
+	{
+		_titleProduct = titleProduct;
+	}
 
 	public override string ToString()
 	{

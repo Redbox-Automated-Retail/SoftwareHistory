@@ -6,6 +6,7 @@ using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services;
+using Redbox.Rental.Services.Promotion;
 
 namespace Redbox.Rental.Kernel;
 
@@ -14,7 +15,7 @@ public static class PromotionFunctions
 	[KernelFunction(Name = "kernel.rental_promotion_get_promotion")]
 	internal static LuaTable GetPromotion()
 	{
-		Promotion promotion = PromotionService.Instance.GetPromotion();
+		IPromotion promotion = PromotionService.Instance.GetPromotion();
 		if (promotion == null)
 		{
 			return null;
@@ -22,13 +23,20 @@ public static class PromotionFunctions
 		return GetPromotionAsLuaFormat(promotion).ToLuaTable();
 	}
 
+	[KernelFunction(Name = "kernel.get_in_cart_promo_code")]
+	internal static string GetInCartPromoCode()
+	{
+		return PromotionService.Instance.GetInCartPromoCode();
+	}
+
 	[KernelFunction(Name = "kernel.rental_promotion_set_promotion")]
 	internal static void SetPromotion(LuaTable promotion)
 	{
-		Promotion luaTableAsPromotion = GetLuaTableAsPromotion(promotion);
+		IPromotion luaTableAsPromotion = GetLuaTableAsPromotion(promotion);
 		if (luaTableAsPromotion != null)
 		{
 			PromotionService.Instance.SetPromotion(luaTableAsPromotion);
+			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ValidateAndUpdatePromoCode();
 		}
 	}
 
@@ -38,22 +46,10 @@ public static class PromotionFunctions
 		return PromotionService.Instance.IsFreeInCartOfferRunning;
 	}
 
-	[KernelFunction(Name = "kernel.rental_promotion_is_free_in_cart_valid")]
-	internal static bool IsFreeInCartOfferValid()
-	{
-		return PromotionService.Instance.IsFreeInCartOfferValid;
-	}
-
 	[KernelFunction(Name = "kernel.rental_promotion_rent_two_in_cart_template_is_running")]
 	internal static bool IsRentTwoInCartOfferRunning()
 	{
 		return PromotionService.Instance.IsRentTwoInCartOfferRunning;
-	}
-
-	[KernelFunction(Name = "kernel.rental_promotion_rent_two_in_cart_item_count")]
-	internal static int GetRentTwoInCartOfferItemCount()
-	{
-		return PromotionService.Instance.GetRentTwoInCartOfferItemCount();
 	}
 
 	[KernelFunction(Name = "kernel.rental_promotion_load_incart_data")]
@@ -68,15 +64,7 @@ public static class PromotionFunctions
 		PromotionService.Instance.ClearPromotion();
 	}
 
-	[KernelFunction(Name = "kernel.rental_promotion_cart_satisfies_in_cart_offer")]
-	internal static bool CartSatisfiesInCartOffer(string id)
-	{
-		Guid id2 = new Guid(id);
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(id2);
-		return PromotionService.Instance.CartSatisfiesInCartOffer(rentalShoppingCart);
-	}
-
-	private static Dictionary<string, object> GetPromotionAsLuaFormat(Promotion promotion)
+	private static Dictionary<string, object> GetPromotionAsLuaFormat(IPromotion promotion)
 	{
 		Dictionary<string, object> dictionary = new Dictionary<string, object>();
 		dictionary["name"] = promotion.Name;
@@ -101,7 +89,7 @@ public static class PromotionFunctions
 		return dictionary;
 	}
 
-	private static Promotion GetLuaTableAsPromotion(LuaTable promotion)
+	private static IPromotion GetLuaTableAsPromotion(LuaTable promotion)
 	{
 		try
 		{

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<UserControl x:Class="Redbox.Rental.UI.Controls.DisplayProductAToZUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localbase="clr-namespace:Redbox.Rental.UI" DataContextChanged="UserControl_DataContextChanged" SizeChanged="UserControl_SizeChanged">
+<UserControl x:Class="Redbox.Rental.UI.Controls.DisplayProductAToZUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localbase="clr-namespace:Redbox.Rental.UI" DataContextChanged="UserControl_DataContextChanged" SizeChanged="UserControl_SizeChanged">
   <UIElement.InputBindings>
     <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.BrowseItemSelectedCommand}" />
   </UIElement.InputBindings>
@@ -18,7 +18,7 @@
           <RowDefinition Height="2.5*" />
         </Grid.RowDefinitions>
         <Viewbox Grid.Row="1">
-          <local:RoundedButton x:Name="AddButton" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" Width="50" Height="50" CornerRadius="25" DockPanel.Dock="Right" Style="{Binding Path=AddButtonStyle, FallbackValue={StaticResource classic_rubine_button_style}}" Visibility="{Binding Path=RightAddButtonVisibility}">
+          <Redbox:RoundedButton Name="AddButton" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" Width="50" Height="50" CornerRadius="25" DockPanel.Dock="Right" Style="{Binding Path=AddButtonStyle, FallbackValue={StaticResource classic_rubine_button_style}}" Visibility="{Binding Path=RightAddButtonVisibility}">
             <Grid>
               <Grid.RowDefinitions>
                 <RowDefinition Height="15*" />
@@ -32,7 +32,7 @@
                 <TextBlock Name="AddButtonText" HorizontalAlignment="Center" Style="{StaticResource font_target_large}" Foreground="#FFFFFFFF" Text="{Binding Path=CornerAddButtonText, FallbackValue=10}" Visibility="{Binding Path=AddButtonTextVisibility}" />
               </Viewbox>
             </Grid>
-          </local:RoundedButton>
+          </Redbox:RoundedButton>
         </Viewbox>
       </Grid>
       <TextBlock Name="ProductName" Grid.Row="1" Grid.Column="1" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left" VerticalAlignment="Center" Style="{Binding Path=TitleStyle, FallbackValue={StaticResource font_montserrat_regular_18}}" Text="{Binding Path=Name, FallbackValue=Product Name}" />

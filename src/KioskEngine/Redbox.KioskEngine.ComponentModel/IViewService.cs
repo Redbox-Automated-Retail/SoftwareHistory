@@ -7,7 +7,7 @@ public interface IViewService
 {
 	int ViewStackCount { get; }
 
-	ReadOnlyCollection<IViewFrame> Stack { get; }
+	ReadOnlyCollection<IViewFrameInstance> Stack { get; }
 
 	string LastHitActorName { get; set; }
 
@@ -27,7 +27,7 @@ public interface IViewService
 
 	string Peek(int index);
 
-	void ClearCache();
+	void ClearCache(bool clearResourceViewsOnly);
 
 	string PopDiscard();
 
@@ -41,11 +41,13 @@ public interface IViewService
 
 	int GetActiveHitHandlerCount();
 
+	void Push(string viewName, object parameter);
+
 	void Push(string viewName);
 
-	IViewFrame PeekViewFrame();
+	IViewFrameInstance PeekViewFrame();
 
-	IViewFrame GetViewFrame(string viewName);
+	IBaseViewFrame GetViewFrame(string viewName);
 
 	bool IsInMaintenanceMode();
 
@@ -58,4 +60,8 @@ public interface IViewService
 	void GoBackSafe(object context, bool popOnly);
 
 	void UnwindTo(string viewName, bool discard, object context);
+
+	void UnwindToSafe(string unwindToViewName, bool discard, object context);
+
+	void CacheViewFrame(IBaseViewFrame baseViewFrame);
 }

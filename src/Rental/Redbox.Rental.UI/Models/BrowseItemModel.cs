@@ -73,7 +73,7 @@ public class BrowseItemModel : DependencyObject, IBrowseItemModel
 		}
 		set
 		{
-			SetVisibileItemIndex(value);
+			SetVisibleItemIndex(value);
 		}
 	}
 
@@ -125,7 +125,7 @@ public class BrowseItemModel : DependencyObject, IBrowseItemModel
 		return _visibleItemIndex;
 	}
 
-	protected virtual void SetVisibileItemIndex(int value)
+	protected virtual void SetVisibleItemIndex(int value)
 	{
 		_visibleItemIndex = value;
 	}

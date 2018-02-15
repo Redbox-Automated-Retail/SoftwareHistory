@@ -12,6 +12,16 @@ public class MessagePopupViewModel : DependencyObject
 
 	public Action OnTimeOut;
 
+	public static readonly DependencyProperty BorderBrushColorProperty = DependencyProperty.Register("BorderBrushColor", typeof(string), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty MainGridMarginProperty = DependencyProperty.Register("MainGridMargin", typeof(Thickness), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty Button1TextProperty = DependencyProperty.Register("Button1Text", typeof(string), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
 	{
 		AffectsRender = true
@@ -272,6 +282,36 @@ public class MessagePopupViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(Button2StyleProperty, value);
+			});
+		}
+	}
+
+	public string BorderBrushColor
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(BorderBrushColorProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BorderBrushColorProperty, value);
+			});
+		}
+	}
+
+	public Thickness MainGridMargin
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(MainGridMarginProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MainGridMarginProperty, value);
 			});
 		}
 	}

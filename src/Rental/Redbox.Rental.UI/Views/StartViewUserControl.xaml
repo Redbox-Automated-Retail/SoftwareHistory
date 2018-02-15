@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.StartViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
+<localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.StartViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Executed="RentOrBuyMoviesCommandBinding_Executed" CanExecute="RentOrBuyMoviesCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Executed="RentOrBuyGamesCommandBinding_Executed" CanExecute="RentGamesCommandBinding_CanExecute" />
@@ -12,6 +12,7 @@
     <CommandBinding Command="{x:Static localbase:Commands.ToggleADAModeCommand}" Executed="ToggleADAModeCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ExitBurnInViewCommand}" Executed="ExitBurnInViewCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.BannerClickCommand}" Executed="BannerClickCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.SignInCommand}" Executed="SignInCommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid Name="MainGrid" Focusable="False" Background="#FF000000" Width="1500" Height="1152">
     <TextBlock Name="ExitBurnInViewLabel" Style="{StaticResource font_target_large}" Foreground="#E42045" TextAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0, 668,0,0" Width="1024" Text="{Binding Path=BurnInViewLabelText, FallbackValue=touch here to rent or return}">
@@ -35,20 +36,20 @@
       <Grid Name="navigation_side_bar" Background="#E42045" Margin="8,0,0,0" Width="320" Height="768" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="1.0" />
       <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logo@2x.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="44,35,0,0" Height="60" />
       <StackPanel Margin="25,215,0,0">
-        <localControls:RoundedButton x:Name="all_movies_button" Style="{StaticResource white_rubinetopurple_border_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Height="118" Width="290" CornerRadius="59" Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Focusable="False">
+        <Redbox:RoundedButton Name="all_movies_button" Style="{StaticResource white_purple_border_gradient_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Height="118" Width="290" CornerRadius="59" Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Focusable="False">
           <Grid>
-            <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type localControls:RoundedButton}}}">
+            <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
               <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/movieicon.png" HorizontalAlignment="Left" Margin="12,25,0,25" Width="116" />
             </DockPanel>
             <StackPanel VerticalAlignment="Center" Margin="100,0,0,0">
-              <TextBlock Name="all_movies_button_text_line1" Style="{StaticResource font_bryant_bold_20}" Foreground="#FF000000" Height="23" Text="{Binding Path=AllMoviesButtonTextLine1, FallbackValue=RENT}" />
-              <TextBlock Name="all_movies_button_text_line2" Style="{Binding Path=AllMoviesButtonTextLine2Style, FallbackValue={StaticResource font_bryant_bold_34}}" Text="{Binding Path=AllMoviesButtonTextLine2, FallbackValue=MOVIES}" />
+              <TextBlock Name="all_movies_button_text_line1" Style="{StaticResource font_montserrat_regular_26}" Foreground="#FF000000" Text="{Binding Path=AllMoviesButtonTextLine1, FallbackValue=RENT}" />
+              <TextBlock Name="all_movies_button_text_line2" Style="{Binding Path=AllMoviesButtonTextLine2Style, FallbackValue={StaticResource font_museo_slab_900_32}}" Text="{Binding Path=AllMoviesButtonTextLine2, FallbackValue=MOVIES}" />
             </StackPanel>
           </Grid>
-        </localControls:RoundedButton>
-        <localControls:RoundedButton x:Name="games_button" Style="{StaticResource white_rubinetopurple_border_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0" Height="118" Width="290" CornerRadius="59" Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Focusable="False" Visibility="{Binding Path=RentOrBuyGamesButtonVisibility, FallbackValue=Visible}">
+        </Redbox:RoundedButton>
+        <Redbox:RoundedButton Name="games_button" Style="{StaticResource white_purple_border_gradient_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0" Height="118" Width="290" CornerRadius="59" Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Focusable="False" Visibility="{Binding Path=RentOrBuyGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding RentGamesEnabled}">
           <Grid>
-            <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type localControls:RoundedButton}}}">
+            <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
               <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/gameControllerIconCopy.png" HorizontalAlignment="Left" Margin="18,20,0,32" Width="110" RenderTransformOrigin="0.5,0.5">
                 <UIElement.RenderTransform>
                   <TransformGroup>
@@ -61,62 +62,44 @@
               </Image>
             </DockPanel>
             <StackPanel VerticalAlignment="Center" Margin="100,0,0,0">
-              <TextBlock Name="games_button_text_line1" Style="{StaticResource font_bryant_bold_20}" Foreground="#FF000000" TextWrapping="Wrap" Height="27" Text="{Binding Path=GamesButtonTextLine1, FallbackValue=RENT}" />
-              <TextBlock Name="games_button_text_line2" Style="{StaticResource font_bryant_bold_34}" Text="{Binding Path=GamesButtonTextLine2, FallbackValue=GAMES}" />
+              <TextBlock Name="games_button_text_line1" Style="{StaticResource font_montserrat_regular_26}" Foreground="#FF000000" TextWrapping="Wrap" Text="{Binding Path=GamesButtonTextLine1, FallbackValue=RENT}" />
+              <TextBlock Name="games_button_text_line2" Style="{StaticResource font_museo_slab_900_32}" Text="{Binding Path=GamesButtonTextLine2, FallbackValue=GAMES}" />
             </StackPanel>
           </Grid>
-        </localControls:RoundedButton>
+        </Redbox:RoundedButton>
         <StackPanel Orientation="Horizontal">
-          <localControls:RoundedButton x:Name="buy_movies_button" Style="{StaticResource white_rubinetopurple_border_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0" Height="90" CornerRadius="45" Command="{x:Static localbase:Commands.BuyMoviesCommand}" Focusable="False" Width="{Binding Path=BuyMoviesButtonWidth, FallbackValue=290}" Visibility="{Binding Path=BuyMoviesOrGamesButtonVisibility, FallbackValue=Visible}">
+          <Redbox:RoundedButton Name="buy_movies_button" Style="{StaticResource white_purple_border_gradient_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0" Height="90" CornerRadius="45" Command="{x:Static localbase:Commands.BuyMoviesCommand}" Focusable="False" Width="{Binding Path=BuyMoviesButtonWidth, FallbackValue=290}" Visibility="{Binding Path=BuyMoviesOrGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyMoviesEnabled}">
             <Grid>
-              <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type localControls:RoundedButton}}}" />
+              <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
               <StackPanel VerticalAlignment="Center" Margin="{Binding Path=BuyMoviesButtonTextMargin, FallbackValue=15}">
-                <TextBlock Name="buy_movies_button_text_line1" Foreground="#FF000000" TextWrapping="Wrap" Style="{Binding Path=BuyMoviesOrGamesButtonTextLine1Style, FallbackValue={StaticResource font_bryant_bold_12}}" Text="{Binding Path=BuyMoviesOrGamesButtonTextLine1, FallbackValue=BUY}" />
-                <TextBlock Name="buy_movies_button_text_line2" Style="{Binding Path=BuyMoviesOrGamesButtonTextLine2Style, FallbackValue={StaticResource font_bryant_bold_20}}" Text="{Binding Path=BuyMoviesOrGamesButtonTextLine2, FallbackValue=MOVIES}" />
+                <TextBlock Name="buy_movies_button_text_line1" Foreground="#FF000000" TextWrapping="Wrap" Style="{Binding Path=BuyMoviesOrGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_regular_22}}" Text="{Binding Path=BuyMoviesOrGamesButtonTextLine1, FallbackValue=BUY}" />
+                <TextBlock Name="buy_movies_button_text_line2" Style="{Binding Path=BuyMoviesOrGamesButtonTextLine2Style, FallbackValue={StaticResource font_museo_slab_900_24}}" Text="{Binding Path=BuyMoviesOrGamesButtonTextLine2, FallbackValue=MOVIES}" />
               </StackPanel>
             </Grid>
-          </localControls:RoundedButton>
-          <localControls:RoundedButton x:Name="buy_games_button" Style="{StaticResource white_rubinetopurple_border_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,10,0,0" Height="90" Width="135" CornerRadius="45" Command="{x:Static localbase:Commands.BuyGamesCommand}" Focusable="False" Visibility="{Binding Path=BuyGamesButtonVisibility, FallbackValue=Collapsed}">
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="buy_games_button" Style="{StaticResource white_purple_border_gradient_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,10,0,0" Height="90" Width="135" CornerRadius="45" Command="{x:Static localbase:Commands.BuyGamesCommand}" Focusable="False" Visibility="{Binding Path=BuyGamesButtonVisibility, FallbackValue=Collapsed}" IsEnabled="{Binding BuyGamesEnabled}">
             <Grid>
-              <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type localControls:RoundedButton}}}" />
+              <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
               <StackPanel VerticalAlignment="Center" Margin="15">
-                <TextBlock Name="buy_games_button_text_line1" Foreground="#FF000000" TextWrapping="Wrap" Style="{Binding Path=BuyGamesButtonTextLine1Style, FallbackValue={StaticResource font_bryant_bold_12}}" Text="{Binding Path=BuyGamesButtonTextLine1, FallbackValue=BUY}" />
-                <TextBlock Name="buy_games_button_text_line2" Style="{Binding Path=BuyGamesButtonTextLine2Style, FallbackValue={StaticResource font_bryant_bold_20}}" Text="{Binding Path=BuyGamesButtonTextLine2, FallbackValue=GAMES}" />
+                <TextBlock Name="buy_games_button_text_line1" Foreground="#FF000000" TextWrapping="Wrap" Style="{Binding Path=BuyGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_regular_22}}" Text="{Binding Path=BuyGamesButtonTextLine1, FallbackValue=BUY}" />
+                <TextBlock Name="buy_games_button_text_line2" Style="{Binding Path=BuyGamesButtonTextLine2Style, FallbackValue={StaticResource font_museo_slab_900_24}}" Text="{Binding Path=BuyGamesButtonTextLine2, FallbackValue=GAMES}" />
               </StackPanel>
             </Grid>
-          </localControls:RoundedButton>
+          </Redbox:RoundedButton>
         </StackPanel>
       </StackPanel>
       <StackPanel Margin="25,585,0,0">
-        <localControls:RoundedButton x:Name="online_pickup_button" Style="{StaticResource warmpurple_white_border_button_style}" Width="290" Height="77" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="39" BorderThickness="2" Command="{x:Static localbase:Commands.PickupProductCommand}" Focusable="False">
-          <Grid>
-            <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type localControls:RoundedButton}}}">
-              <Grid Height="45">
-                <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/pickupicon.png" Margin="20,0,0,0" HorizontalAlignment="Left" />
-              </Grid>
-            </DockPanel>
-            <StackPanel Margin="100,0,0,0" VerticalAlignment="Center">
-              <TextBlock Style="{StaticResource font_bryant_bold_28}" Text="{Binding Path=PickUpButtonText, FallbackValue=PICK UP}" />
-            </StackPanel>
-          </Grid>
-        </localControls:RoundedButton>
-        <localControls:RoundedButton x:Name="return_button" Style="{StaticResource warmpurple_white_border_button_style}" Margin="0,10,0,0" Width="290" Height="77" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="39" BorderThickness="2" Command="{x:Static localbase:Commands.ReturnProductCommand}" Focusable="False">
-          <Grid>
-            <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type localControls:RoundedButton}}}">
-              <Grid Height="45">
-                <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/returnicon.png" Margin="35,0,0,0" HorizontalAlignment="Left" />
-              </Grid>
-            </DockPanel>
-            <StackPanel Orientation="Horizontal" Margin="100,0,0,0">
-              <TextBlock TextAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_bryant_bold_28}" Text="{Binding Path=ReturnButtonText, FallbackValue=RETURN}" />
-            </StackPanel>
-          </Grid>
-        </localControls:RoundedButton>
+        <Redbox:RoundedButton Name="online_pickup_button" Style="{StaticResource warmpurple_white_border_button_style}" Width="290" Height="77" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="39" BorderThickness="2" Command="{x:Static localbase:Commands.PickupProductCommand}" Focusable="False">
+          <TextBlock Style="{StaticResource font_museo_slab_900_36}" Text="{Binding Path=PickUpButtonText, FallbackValue=PICK UP}" />
+        </Redbox:RoundedButton>
+        <Redbox:RoundedButton Name="return_button" Style="{StaticResource warmpurple_white_border_button_style}" Margin="0,10,0,0" Width="290" Height="77" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="39" BorderThickness="2" Command="{x:Static localbase:Commands.ReturnProductCommand}" Focusable="False">
+          <TextBlock TextAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_36}" Text="{Binding Path=ReturnButtonText, FallbackValue=RETURN}" />
+        </Redbox:RoundedButton>
       </StackPanel>
-      <Grid Name="ada_turned_on_label_grid" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="400,690,0,0" Width="285">
+      <Grid Name="ada_turned_on_label_grid" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="478,640,0,0" Width="285">
         <TextBlock Name="ada_turned_on_label" Style="{StaticResource font_montserrat_regular_11}" Background="#FFFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Top" Text="{Binding Path=AdaTurnedOnLabelText, FallbackValue=Screens will now be ADA-compatible. nUse the buttons on the left to continue.}" Visibility="{Binding Path=AdaTurnedOnLabelVisibility, FallbackValue=collapsed}" />
       </Grid>
-      <localControls:RoundedButton x:Name="handicap_button" Style="{StaticResource rubine_white_border_button_style}" CornerRadius="31" Margin="695,678,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="62" Height="62" Command="{x:Static localbase:Commands.ToggleADAModeCommand}" Focusable="False">
+      <Redbox:RoundedButton Name="handicap_button" Style="{StaticResource rubine_white_border_button_style}" CornerRadius="31" Margin="460,678,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="62" Height="62" Command="{x:Static localbase:Commands.ToggleADAModeCommand}" Focusable="False">
         <UserControl Name="handicap_button_icon_off" Foreground="#FFFFFFFF" Style="{StaticResource handicap_icon}" Margin="-2, 4, 0,0" Width="67" Height="67" VerticalAlignment="Top" HorizontalAlignment="Left" RenderTransformOrigin="0.5,0.5">
           <UIElement.RenderTransform>
             <TransformGroup>
@@ -127,8 +110,8 @@
             </TransformGroup>
           </UIElement.RenderTransform>
         </UserControl>
-      </localControls:RoundedButton>
-      <Grid Name="handicap_button_on" Margin="695, 678, 0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="{Binding Path=AdaTurnedOnLabelVisibility}">
+      </Redbox:RoundedButton>
+      <Grid Name="handicap_button_on" Margin="460, 678, 0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Visibility="{Binding Path=AdaTurnedOnLabelVisibility}">
         <UIElement.InputBindings>
           <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.ToggleADAModeCommand}" />
         </UIElement.InputBindings>
@@ -148,12 +131,17 @@
           </UIElement.RenderTransform>
         </UserControl>
       </Grid>
-      <localControls:RoundedButton x:Name="espanol_button" Style="{StaticResource rubine_white_border_button_style}" CornerRadius="31" Margin="770,678,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="148" Height="62" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False">
-        <TextBlock VerticalAlignment="Center" Style="{StaticResource font_bryant_bold_18}" Text="{Binding Path=ToggleLanguageButtonText, FallbackValue=ESPAÑOL}" />
-      </localControls:RoundedButton>
-      <localControls:RoundedButton x:Name="help_button" Style="{StaticResource rubine_white_border_button_style}" CornerRadius="31" Margin="932,678,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="62" Height="62" Command="{x:Static localbase:Commands.HelpCommand}" Focusable="False">
-        <TextBlock Style="{StaticResource font_bryant_bold_28}">?</TextBlock>
-      </localControls:RoundedButton>
+      <Redbox:RoundedButton Name="espanol_button" Style="{StaticResource rubine_white_border_button_style}" CornerRadius="31" Margin="537,678,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="148" Height="62" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False">
+        <TextBlock VerticalAlignment="Center" Style="{StaticResource font_montserrat_regular_22}" Text="{Binding Path=ToggleLanguageButtonText, FallbackValue=ESPAÑOL}" />
+      </Redbox:RoundedButton>
+      <Redbox:RoundedButton Name="help_button" Style="{StaticResource rubine_white_border_button_style}" CornerRadius="31" Margin="697,678,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="62" Height="62" Command="{x:Static localbase:Commands.HelpCommand}" Focusable="False">
+        <TextBlock Style="{StaticResource font_montserrat_regular_30}">?</TextBlock>
+      </Redbox:RoundedButton>
+      <Grid Margin="775,678,0,0" Width="230" Height="62" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <Redbox:RoundedButton Name="sign_in_button" CornerRadius="31" VerticalAlignment="Top" HorizontalAlignment="Right" Width="auto" Height="62" Focusable="False" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding SignInVisibility}">
+          <TextBlock Margin="24,0" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In}" />
+        </Redbox:RoundedButton>
+      </Grid>
     </Grid>
   </Grid>
 </localControls:TextToSpeechUserControl>

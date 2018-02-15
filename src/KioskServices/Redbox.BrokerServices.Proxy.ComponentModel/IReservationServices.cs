@@ -11,8 +11,6 @@ public interface IReservationServices
 
 	void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback);
 
-	void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, RemoteServiceCallback callback);
-
 	void Expire(string storeNumber, long referenceNumber, RemoteServiceCallback callback);
 
 	void Register(string storeNumber, IDictionary<string, IDictionary<string, IDictionary<string, decimal>>> prices, ReservationRequestCallback reservationRequestCallback);
@@ -28,4 +26,6 @@ public interface IReservationServices
 	IReservedItem NewReservedItem();
 
 	IReservationResult NewReservationResult();
+
+	void SimulateCreateReservation();
 }

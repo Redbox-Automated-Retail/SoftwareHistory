@@ -8,6 +8,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskServices.Proxy.Request;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -322,7 +323,7 @@ public class MerchantServicesProxy : IMerchantServices
 		return m_working == 0;
 	}
 
-	public void Reconcile(string sessionId, RemoteServiceCallback callback)
+	public void Reconcile(string sessionId, string customerProfileNumber, RemoteServiceCallback callback)
 	{
 		IMacroService macroService = ServiceLocator.Instance.GetService<IMacroService>();
 		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
@@ -341,7 +342,7 @@ public class MerchantServicesProxy : IMerchantServices
 				LogHelper.Instance.Log("Enqueue call to remote IMerchantServices.Reconcile, URL: {0}", KioskServicesProxy.Instance.Url);
 				ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 				bool isOffline = session.ShoppingCart.Type == ShoppingCartType.Offline;
-				var anon = new
+				var message = new
 				{
 					MessageType = "Reconcile",
 					MessageId = Guid.NewGuid(),
@@ -351,8 +352,6 @@ public class MerchantServicesProxy : IMerchantServices
 					EngineVersion = macroService["EngineVersion"],
 					BundleVersion = macroService["ProductVersion"],
 					KioskId = int.Parse(session.StoreNumber),
-					DiscountCode = session.ShoppingCart.DiscountCode,
-					DiscountValue = session.ShoppingCart.DiscountValue,
 					ReferenceNumber = session.ShoppingCart.ReferenceNumber,
 					CreditCard = new Dictionary<string, object>
 					{
@@ -394,51 +393,14 @@ public class MerchantServicesProxy : IMerchantServices
 							session.ShoppingCart.ExpiryMonth
 						}
 					},
-					Contents = new Dictionary<string, object>(),
 					TransactionDate = DateTime.Now,
 					PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
-					PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned
+					PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
+					PropertyBag = session.ShoppingCart.PropertyBag,
+					ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+					CustomerProfileNumber = customerProfileNumber
 				};
-				foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in session.ShoppingCart.Groups)
-				{
-					var anon2 = new
-					{
-						Items = new List<object>(),
-						Totals = new
-						{
-							TaxRate = group.Value.Totals.TaxRate * 100m,
-							SubTotal = group.Value.Totals.SubTotal,
-							TaxAmount = group.Value.Totals.TaxAmount,
-							GrandTotal = group.Value.Totals.GrandTotal,
-							DiscountedSubtotal = group.Value.Totals.DiscountedSubtotal
-						}
-					};
-					foreach (IShoppingCartLineItem item in group.Value.Items)
-					{
-						var anon3 = new
-						{
-							Barcode = item.Barcode,
-							ProductFamily = item.ProductFamily,
-							ProductType = item.ProductType,
-							Prices = new Dictionary<string, decimal>(),
-							VendStatus = item.Status.ToVendStatus(),
-							BlurayUpsell = new Dictionary<string, object>(),
-							MultiDisc = item.MultiDisc
-						};
-						foreach (KeyValuePair<string, decimal> price in item.Prices)
-						{
-							string key = price.Key.Replace("_", string.Empty);
-							anon3.Prices[key] = price.Value;
-						}
-						foreach (KeyValuePair<string, object> item2 in item.BlurayUpsell)
-						{
-							anon3.BlurayUpsell[item2.Key] = item2.Value;
-						}
-						anon2.Items.Add(anon3);
-					}
-					anon.Contents[group.Key] = anon2;
-				}
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Reconcile", anon);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Reconcile", message);
 			}
 			catch (Exception e)
 			{
@@ -476,7 +438,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void PreAuth(string sessionId, RemoteServiceCallback completeCallback)
+	public void PreAuth(string sessionId, string customerProfileNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -496,15 +458,13 @@ public class MerchantServicesProxy : IMerchantServices
 							LogHelper.Instance.Log("Live call to remote IMerchantServices.PreAuth, URL: {0}", KioskServicesProxy.Instance.Url);
 							IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 							ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-							var anon = new
+							var message = new
 							{
 								MessageType = "PreAuth",
 								MessageId = Guid.NewGuid(),
 								EngineVersion = service["EngineVersion"],
 								BundleVersion = service["ProductVersion"],
 								KioskId = int.Parse(session.StoreNumber),
-								DiscountCode = session.ShoppingCart.DiscountCode,
-								DiscountValue = session.ShoppingCart.DiscountValue,
 								CreditCard = new Dictionary<string, object>
 								{
 									{
@@ -549,50 +509,13 @@ public class MerchantServicesProxy : IMerchantServices
 										session.ShoppingCart.ExpiryMonth
 									}
 								},
-								Contents = new Dictionary<string, object>(),
 								TransactionDate = DateTime.Now,
-								UseCredits = session.ShoppingCart.UseCredits.ToString()
+								UseCredits = session.ShoppingCart.UseCredits.ToString(),
+								ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+								CustomerProfileNumber = customerProfileNumber
 							};
 							session.ShoppingCart.ClearTrackData();
-							foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in session.ShoppingCart.Groups)
-							{
-								var anon2 = new
-								{
-									Items = new List<object>(),
-									Totals = new
-									{
-										TaxRate = group.Value.Totals.TaxRate * 100m,
-										SubTotal = group.Value.Totals.SubTotal,
-										TaxAmount = group.Value.Totals.TaxAmount,
-										GrandTotal = group.Value.Totals.GrandTotal,
-										DiscountedSubtotal = group.Value.Totals.DiscountedSubtotal
-									}
-								};
-								foreach (IShoppingCartLineItem item2 in group.Value.Items)
-								{
-									var anon3 = new
-									{
-										Barcode = item2.Barcode,
-										ProductFamily = item2.ProductFamily,
-										ProductType = item2.ProductType,
-										Prices = new Dictionary<string, decimal>(),
-										BlurayUpsell = new Dictionary<string, object>(),
-										MultiDisc = item2.MultiDisc
-									};
-									foreach (KeyValuePair<string, decimal> price in item2.Prices)
-									{
-										string key = price.Key.Replace("_", string.Empty);
-										anon3.Prices[key] = price.Value;
-									}
-									foreach (KeyValuePair<string, object> item3 in item2.BlurayUpsell)
-									{
-										anon3.BlurayUpsell[item3.Key] = item3.Value;
-									}
-									anon2.Items.Add(anon3);
-								}
-								anon.Contents[group.Key] = anon2;
-							}
-							IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(anon);
+							IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 							remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 							if (dictionary.ContainsKey("ServerName"))
 							{
@@ -689,7 +612,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void Authorize(string sessionId, RemoteServiceCallback completeCallback)
+	public void Authorize(string sessionId, string customerProfileNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -697,6 +620,7 @@ public class MerchantServicesProxy : IMerchantServices
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
 			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+			_ = ServiceLocator.Instance.GetService<IPersonalizationServices>()?.CustomerProfileNumber;
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -711,15 +635,13 @@ public class MerchantServicesProxy : IMerchantServices
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.Authorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-						var anon = new
+						var message = new
 						{
 							MessageType = "Authorize",
 							MessageId = Guid.NewGuid(),
 							EngineVersion = service["EngineVersion"],
 							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
-							DiscountCode = session.ShoppingCart.DiscountCode,
-							DiscountValue = session.ShoppingCart.DiscountValue,
 							CreditCard = new Dictionary<string, object>
 							{
 								{
@@ -764,54 +686,18 @@ public class MerchantServicesProxy : IMerchantServices
 									session.ShoppingCart.ExpiryMonth
 								}
 							},
-							Contents = new Dictionary<string, object>(),
 							TransactionDate = DateTime.Now,
 							UseCredits = session.ShoppingCart.UseCredits.ToString(),
 							AuthAcceptFlag = session.ShoppingCart.AuthAcceptFlag,
 							AuthRuleId = session.ShoppingCart.AuthRuleId,
 							AuthAmount = session.ShoppingCart.AuthAmount,
-							SkipAuthRule = session.ShoppingCart.SkipAuthRule
+							SkipAuthRule = session.ShoppingCart.SkipAuthRule,
+							PropertyBag = session.ShoppingCart.PropertyBag,
+							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+							CustomerProfileNumber = customerProfileNumber
 						};
 						session.ShoppingCart.ClearTrackData();
-						foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in session.ShoppingCart.Groups)
-						{
-							var anon2 = new
-							{
-								Items = new List<object>(),
-								Totals = new
-								{
-									TaxRate = group.Value.Totals.TaxRate * 100m,
-									SubTotal = group.Value.Totals.SubTotal,
-									TaxAmount = group.Value.Totals.TaxAmount,
-									GrandTotal = group.Value.Totals.GrandTotal,
-									DiscountedSubtotal = group.Value.Totals.DiscountedSubtotal
-								}
-							};
-							foreach (IShoppingCartLineItem item2 in group.Value.Items)
-							{
-								var anon3 = new
-								{
-									Barcode = item2.Barcode,
-									ProductFamily = item2.ProductFamily,
-									ProductType = item2.ProductType,
-									Prices = new Dictionary<string, decimal>(),
-									BlurayUpsell = new Dictionary<string, object>(),
-									MultiDisc = item2.MultiDisc
-								};
-								foreach (KeyValuePair<string, decimal> price in item2.Prices)
-								{
-									string key = price.Key.Replace("_", string.Empty);
-									anon3.Prices[key] = price.Value;
-								}
-								foreach (KeyValuePair<string, object> item3 in item2.BlurayUpsell)
-								{
-									anon3.BlurayUpsell[item3.Key] = item3.Value;
-								}
-								anon2.Items.Add(anon3);
-							}
-							anon.Contents[group.Key] = anon2;
-						}
-						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(anon);
+						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("ServerName"))
@@ -847,9 +733,9 @@ public class MerchantServicesProxy : IMerchantServices
 						if (arrayList != null)
 						{
 							int num = 1;
-							foreach (Dictionary<string, object> item4 in arrayList)
+							foreach (Dictionary<string, object> item2 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item4["Name"]);
+								dictionary4.Add("offer_" + num, item2["Name"]);
 								num++;
 							}
 						}
@@ -974,7 +860,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void GCAuthorize(string sessionId, RemoteServiceCallback completeCallback)
+	public void GCAuthorize(string sessionId, string customerProfileNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -996,15 +882,13 @@ public class MerchantServicesProxy : IMerchantServices
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.GCAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-						var anon = new
+						var message = new
 						{
 							MessageType = "GCAuthorize",
 							MessageId = Guid.NewGuid(),
 							EngineVersion = service["EngineVersion"],
 							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
-							DiscountCode = session.ShoppingCart.DiscountCode,
-							DiscountValue = session.ShoppingCart.DiscountValue,
 							CreditCard = new Dictionary<string, object>
 							{
 								{
@@ -1045,49 +929,13 @@ public class MerchantServicesProxy : IMerchantServices
 									session.ShoppingCart.ExpiryMonth
 								}
 							},
-							Contents = new Dictionary<string, object>(),
 							TransactionDate = DateTime.Now,
-							UseCredits = session.ShoppingCart.UseCredits.ToString()
+							UseCredits = session.ShoppingCart.UseCredits.ToString(),
+							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+							CustomerProfileNumber = customerProfileNumber
 						};
 						session.ShoppingCart.ClearTrackData();
-						foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in session.ShoppingCart.Groups)
-						{
-							var anon2 = new
-							{
-								Items = new List<object>(),
-								Totals = new
-								{
-									TaxRate = group.Value.Totals.TaxRate * 100m,
-									SubTotal = group.Value.Totals.SubTotal,
-									TaxAmount = group.Value.Totals.TaxAmount,
-									GrandTotal = group.Value.Totals.GrandTotal,
-									DiscountedSubtotal = group.Value.Totals.DiscountedSubtotal
-								}
-							};
-							foreach (IShoppingCartLineItem item2 in group.Value.Items)
-							{
-								var anon3 = new
-								{
-									Barcode = item2.Barcode,
-									ProductFamily = item2.ProductFamily,
-									ProductType = item2.ProductType,
-									Prices = new Dictionary<string, decimal>(),
-									BlurayUpsell = new Dictionary<string, object>()
-								};
-								foreach (KeyValuePair<string, decimal> price in item2.Prices)
-								{
-									string key = price.Key.Replace("_", string.Empty);
-									anon3.Prices[key] = price.Value;
-								}
-								foreach (KeyValuePair<string, object> item3 in item2.BlurayUpsell)
-								{
-									anon3.BlurayUpsell[item3.Key] = item3.Value;
-								}
-								anon2.Items.Add(anon3);
-							}
-							anon.Contents[group.Key] = anon2;
-						}
-						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(anon);
+						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("ServerName"))
@@ -1123,9 +971,9 @@ public class MerchantServicesProxy : IMerchantServices
 						if (arrayList != null)
 						{
 							int num = 1;
-							foreach (Dictionary<string, object> item4 in arrayList)
+							foreach (Dictionary<string, object> item2 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item4["Name"]);
+								dictionary4.Add("offer_" + num, item2["Name"]);
 								num++;
 							}
 						}
@@ -1262,7 +1110,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void ReservationAuthorize(string sessionId, long referenceNumber, RemoteServiceCallback completeCallback)
+	public void ReservationAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -1284,15 +1132,13 @@ public class MerchantServicesProxy : IMerchantServices
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ReservationAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-						var anon = new
+						var message = new
 						{
 							MessageType = "ResvAuth",
 							MessageId = Guid.NewGuid(),
 							EngineVersion = service["EngineVersion"],
 							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
-							DiscountCode = session.ShoppingCart.DiscountCode,
-							DiscountValue = session.ShoppingCart.DiscountValue,
 							CreditCard = new Dictionary<string, object>
 							{
 								{
@@ -1337,46 +1183,14 @@ public class MerchantServicesProxy : IMerchantServices
 									session.ShoppingCart.ExpiryMonth
 								}
 							},
-							Contents = new Dictionary<string, object>(),
 							TransactionDate = DateTime.Now,
 							UseCredits = session.ShoppingCart.UseCredits.ToString(),
-							ReferenceNumber = referenceNumber
+							ReferenceNumber = referenceNumber,
+							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+							CustomerProfileNumber = customerProfileNumber
 						};
 						session.ShoppingCart.ClearTrackData();
-						foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in session.ShoppingCart.Groups)
-						{
-							var anon2 = new
-							{
-								Items = new List<object>(),
-								Totals = new
-								{
-									TaxRate = group.Value.Totals.TaxRate * 100m,
-									SubTotal = group.Value.Totals.SubTotal,
-									TaxAmount = group.Value.Totals.TaxAmount,
-									GrandTotal = group.Value.Totals.GrandTotal,
-									DiscountedSubtotal = group.Value.Totals.DiscountedSubtotal
-								}
-							};
-							foreach (IShoppingCartLineItem item2 in group.Value.Items)
-							{
-								var anon3 = new
-								{
-									Barcode = item2.Barcode,
-									ProductFamily = item2.ProductFamily,
-									ProductType = item2.ProductType,
-									Prices = new Dictionary<string, decimal>(),
-									SourceType = item2.SourceType
-								};
-								foreach (KeyValuePair<string, decimal> price in item2.Prices)
-								{
-									string key = price.Key.Replace("_", string.Empty);
-									anon3.Prices[key] = price.Value;
-								}
-								anon2.Items.Add(anon3);
-							}
-							anon.Contents[group.Key] = anon2;
-						}
-						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(anon);
+						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("ServerName"))
@@ -1411,9 +1225,9 @@ public class MerchantServicesProxy : IMerchantServices
 						if (arrayList != null)
 						{
 							int num = 1;
-							foreach (Dictionary<string, object> item3 in arrayList)
+							foreach (Dictionary<string, object> item2 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item3["Name"]);
+								dictionary4.Add("offer_" + num, item2["Name"]);
 								num++;
 							}
 						}
@@ -1703,6 +1517,75 @@ public class MerchantServicesProxy : IMerchantServices
 						Result = remoteServiceResult,
 						Message = "Invoking completeCallback from MerchantServicesProxy.ValidatePickup."
 					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	public void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, RemoteServiceCallback callback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			ErrorList errorList = null;
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				LogHelper.Instance.Log("Enqueue call to remote IMerchantServices.ModResvPickup, URL: {0}", KioskServicesProxy.Instance.Url);
+				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+				if (ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId) == null)
+				{
+					LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
+				}
+				else
+				{
+					var message = new
+					{
+						MessageType = "ModResvPickup",
+						MessageId = Guid.NewGuid(),
+						EngineVersion = service["EngineVersion"],
+						BundleVersion = service["ProductVersion"],
+						Email = emailAddress,
+						KioskId = int.Parse(storeNumber),
+						ReferenceNumber = referenceNumber,
+						Items = new Dictionary<string, object>(),
+						PickupDate = DateTime.Now,
+						ModifiedCart = modifiedCart,
+						ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId)
+					};
+					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "ModResvPickup", message);
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in MerchantServicesProxy.ModResvPickup.", e);
+			}
+			finally
+			{
+				try
+				{
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
+					{
+						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+						{
+							Success = true
+						};
+						if (errorList != null)
+						{
+							remoteServiceResult.Errors.AddRange(errorList);
+							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+						}
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
+						{
+							Callback = callback,
+							Result = remoteServiceResult,
+							Message = "Invoking callback from MerchantServicesProxy.ModResvPickup."
+						});
+					}
 				}
 				finally
 				{

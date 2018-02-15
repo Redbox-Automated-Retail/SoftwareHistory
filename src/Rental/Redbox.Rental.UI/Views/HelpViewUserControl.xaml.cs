@@ -10,6 +10,7 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Xps.Packaging;
 using System.Xml;
+using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.REDS.Framework;
@@ -44,7 +45,7 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 
 	public bool ShowPrivacyUpdated;
 
-	public bool ShowPlayPassUpdated;
+	public bool ShowPerksUpdated;
 
 	public string HelpUpdatedButton = "Updated";
 
@@ -56,7 +57,7 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 
 	public string PrivacyDocument = "document-privacy-policy";
 
-	public string PlayPassDocument = "document-play-pass";
+	public string PerksDocument = "document-perks";
 
 	private Dictionary<HelpDocuments, HelpDocumentInfo> m_helpDocumentInfoList = new Dictionary<HelpDocuments, HelpDocumentInfo>();
 
@@ -232,7 +233,7 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 
 	private void InitializePlayPassButton()
 	{
-		IResource resource = ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-play-pass");
+		IResource resource = ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-perks");
 		play_pass_button.Visibility = ((resource == null) ? Visibility.Hidden : Visibility.Visible);
 		if (resource != null)
 		{
@@ -457,15 +458,15 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		{
 			ShowPrivacyUpdated = value;
 		}
-		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPlayPassUpdated, out value))
+		if (service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPerksUpdated, out value))
 		{
-			ShowPlayPassUpdated = value;
+			ShowPerksUpdated = value;
 		}
 		brdRentalFaqUpdated.Visibility = ((!ShowFAQUpdated) ? Visibility.Hidden : Visibility.Visible);
 		brdTransactionTermsUpdated.Visibility = ((!ShowTermsUpdated) ? Visibility.Hidden : Visibility.Visible);
 		brdRedboxCardTermsUpdated.Visibility = ((!ShowRedboxCardUpdated) ? Visibility.Hidden : Visibility.Visible);
 		brdPrivacyUpdated.Visibility = ((!ShowPrivacyUpdated) ? Visibility.Hidden : Visibility.Visible);
-		brdPlayPassUpdated.Visibility = ((!ShowPlayPassUpdated) ? Visibility.Hidden : Visibility.Visible);
+		brdPlayPassUpdated.Visibility = ((!ShowPerksUpdated) ? Visibility.Hidden : Visibility.Visible);
 		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.FAQDocument, out var value2))
 		{
 			FAQDocument = value2;
@@ -482,9 +483,9 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 		{
 			PrivacyDocument = value2;
 		}
-		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PlayPassDocument, out value2))
+		if (service.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PerksDocument, out value2))
 		{
-			PlayPassDocument = value2;
+			PerksDocument = value2;
 		}
 	}
 }

@@ -72,6 +72,8 @@ public class TitleDetailModel : DependencyObject
 
 	public event Action GoBackHit;
 
+	public event Action StatisticPopup;
+
 	public event Action<TitleDetailModel> OnTitleDetailModelChanged;
 
 	internal ISpeechControl ProcessGetSpeechControl()
@@ -107,6 +109,11 @@ public class TitleDetailModel : DependencyObject
 	public void ProcessGoBackHit()
 	{
 		GoBackHit?.Invoke();
+	}
+
+	public void ProcessStatisticPopup()
+	{
+		StatisticPopup?.Invoke();
 	}
 
 	private static void OnBrowseProductControlModelPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

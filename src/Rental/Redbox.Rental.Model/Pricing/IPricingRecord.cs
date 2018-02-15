@@ -23,6 +23,20 @@ public interface IPricingRecord
 
 	decimal Purchase { get; set; }
 
+	long? ProductPricingId { get; set; }
+
+	int? InitialDays { get; set; }
+
+	decimal? DefaultInitialNightPrice { get; set; }
+
+	decimal? DefaultExtraNightPrice { get; set; }
+
+	int? PriceSetId { get; set; }
+
+	bool IsMultiNightPrice { get; }
+
+	bool IsHotDeal { get; }
+
 	IPricingRecord Clone();
 
 	bool IsEqual(IPricingRecord pricingRecord);

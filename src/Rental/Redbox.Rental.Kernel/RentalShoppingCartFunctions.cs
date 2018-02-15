@@ -7,7 +7,11 @@ using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services;
+using Redbox.Rental.Services.Pricing;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Kernel;
 
@@ -21,15 +25,130 @@ public static class RentalShoppingCartFunctions
 		return id2.ToString();
 	}
 
-	[KernelFunction(Name = "kernel.remove_rental_shopping_cart")]
-	public static void RemoveRentalShoppingCart(string id)
+	[KernelFunction(Name = "kernel.rental_shopping_cart_add_item_with_prices")]
+	public static void AddItemWithPrices(string sessionId, LuaTable catalogEntry, string actionCode, string sourceType, LuaTable priceData, string initialNightPrice)
 	{
-		Guid id2 = new Guid(id);
-		ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.RemoveRentalShoppingCart(id2);
+		if (catalogEntry == null || priceData == null)
+		{
+			return;
+		}
+		IPricingRecord pricingRecord = null;
+		long result = 0L;
+		long.TryParse(GetLuaTableStringValue(catalogEntry, "product_id"), out result);
+		if (result != 0L)
+		{
+			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+			IKioskProduct kioskProduct = null;
+			service?.GetProduct(result, excludeTitleRollup: true, out kioskProduct);
+			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
+			if (titleProduct != null)
+			{
+				pricingRecord = GetPricingRecordFromPriceSetData(priceData)?.PriceRecords.FirstOrDefault((IPricingRecord x) => (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.DVD && x.TitleType == TitleType.DVD && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.Bluray && x.TitleType == TitleType.Bluray && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Games && x.TitleType == TitleType.All && x.TitleFamily == TitleFamily.Games));
+				if (pricingRecord != null)
+				{
+					decimal result2 = 0m;
+					if (decimal.TryParse(initialNightPrice, out result2))
+					{
+						pricingRecord.InitialNight = result2;
+					}
+				}
+			}
+		}
+		AddItem(sessionId, catalogEntry, actionCode, sourceType, pricingRecord);
+	}
+
+	private static IPricingSet GetPricingRecordFromPriceSetData(LuaTable priceData)
+	{
+		IPricingSet pricingSet = null;
+		LogHelper.Instance.Log("Getting reservation item price set values");
+		if (priceData != null)
+		{
+			pricingSet = new PricingSet();
+			if (priceData["Movie"] is LuaTable luaTable)
+			{
+				if (luaTable["default"] is LuaTable luaTable2)
+				{
+					IPricingRecord pricingRecord = new PricingRecord
+					{
+						TitleFamily = TitleFamily.Movies,
+						TitleType = TitleType.DVD
+					};
+					pricingSet.PriceRecords.Add(pricingRecord);
+					AssignPriceValuesFromLuaTable(pricingRecord, luaTable2);
+				}
+				if (luaTable["BluRay"] is LuaTable luaTable3)
+				{
+					IPricingRecord pricingRecord2 = new PricingRecord
+					{
+						TitleFamily = TitleFamily.Movies,
+						TitleType = TitleType.Bluray
+					};
+					pricingSet.PriceRecords.Add(pricingRecord2);
+					AssignPriceValuesFromLuaTable(pricingRecord2, luaTable3);
+				}
+			}
+			if (priceData["Game"] is LuaTable luaTable4)
+			{
+				LuaTable luaTable5 = luaTable4["default"] as LuaTable;
+				IPricingRecord pricingRecord3 = new PricingRecord
+				{
+					TitleFamily = TitleFamily.Games,
+					TitleType = TitleType.All
+				};
+				pricingSet.PriceRecords.Add(pricingRecord3);
+				AssignPriceValuesFromLuaTable(pricingRecord3, luaTable5);
+			}
+		}
+		return pricingSet;
+	}
+
+	private static void AssignPriceValuesFromLuaTable(IPricingRecord pricingRecord, LuaTable luaTable)
+	{
+		if (GetDecimalValue(luaTable, "initial_night", out var value))
+		{
+			pricingRecord.InitialNight = value;
+		}
+		if (GetDecimalValue(luaTable, "extra_night", out value))
+		{
+			pricingRecord.ExtraNight = value;
+		}
+		if (GetDecimalValue(luaTable, "non_return", out value))
+		{
+			pricingRecord.NonReturn = value;
+		}
+		if (GetDecimalValue(luaTable, "non_return_days", out value))
+		{
+			pricingRecord.NonReturnDays = value;
+		}
+		if (GetDecimalValue(luaTable, "expiration_price", out value))
+		{
+			pricingRecord.ExpirationPrice = value;
+		}
+	}
+
+	private static bool GetDecimalValue(LuaTable luaTable, string propertyName, out decimal value)
+	{
+		bool result = false;
+		value = 0m;
+		if (luaTable != null)
+		{
+			object obj = luaTable[propertyName];
+			if (obj != null && decimal.TryParse(obj.ToString(), out var result2))
+			{
+				value = result2;
+				result = true;
+			}
+		}
+		return result;
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_add_item")]
 	public static void AddItem(string sessionId, LuaTable catalogEntry, string actionCode, string sourceType)
+	{
+		AddItem(sessionId, catalogEntry, actionCode, sourceType, null);
+	}
+
+	public static void AddItem(string sessionId, LuaTable catalogEntry, string actionCode, string sourceType, IPricingRecord pricingRecord)
 	{
 		if (catalogEntry == null)
 		{
@@ -59,8 +178,8 @@ public static class RentalShoppingCartFunctions
 			}
 			rentalShoppingCartItem.Quantity = 1m;
 			rentalShoppingCartItem.Status = LineItemStatus.Pending;
-			Guid shoppingCartSessionId = new Guid(sessionId);
-			service?.AddItemToRentalShoppingCart(shoppingCartSessionId, rentalShoppingCartItem);
+			Guid id = new Guid(sessionId);
+			(service?.GetRentalShoppingCart(id))?.AddItem(rentalShoppingCartItem, pricingRecord);
 		}
 		else
 		{
@@ -130,10 +249,15 @@ public static class RentalShoppingCartFunctions
 		});
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_get_in_cart_offer_made")]
-	public static bool GetInCartPromoOfferMade(string sessionId)
+	[KernelFunction(Name = "kernel.rental_shopping_cart_update_in_cart_do_not_show")]
+	public static void UpdateInCartDoNowShow(string sessionId, string value)
 	{
-		return GetValueFromRentalShoppingCartFunction(sessionId, (IRentalShoppingCart rentalShoppingCart) => rentalShoppingCart.InCartPromoOfferMade);
+		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
+		{
+			bool result = false;
+			bool.TryParse(value, out result);
+			rentalShoppingCart.InCartDoNotShow = result;
+		});
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_update_in_cart_title_marketing")]
@@ -696,23 +820,6 @@ public static class RentalShoppingCartFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_validate_and_update_promo_code")]
-	public static LuaTable ValidateAndUpdatePromoCode(string sessionId)
-	{
-		LuaTable result = null;
-		IPromoCodeInfo valueFromRentalShoppingCartFunction = GetValueFromRentalShoppingCartFunction(sessionId, (IRentalShoppingCart rentalShoppingCart) => rentalShoppingCart.ValidateAndUpdatePromoCode());
-		if (valueFromRentalShoppingCartFunction != null)
-		{
-			result = new Dictionary<string, object>
-			{
-				{ "is_cart_valid", valueFromRentalShoppingCartFunction.IsCartValid },
-				{ "title", valueFromRentalShoppingCartFunction.Title },
-				{ "message", valueFromRentalShoppingCartFunction.Message }
-			}.ToLuaTable();
-		}
-		return result;
-	}
-
 	[KernelFunction(Name = "kernel.rental_shopping_cart_send_cart_to_analytics")]
 	public static void SendRentalShoppingCartToAnalytics(string sessionId)
 	{
@@ -720,6 +827,31 @@ public static class RentalShoppingCartFunctions
 		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
 		{
 			rentalShoppingCartService?.SendRentalShoppingCartToAnalytics(rentalShoppingCart);
+		});
+	}
+
+	[KernelFunction(Name = "kernel.show_check_out_keyboard_view")]
+	public static void showCheckOutKeyboardView(string emailAddress, Action<string> LuaContinueCallback, Action LuaCancelCallback)
+	{
+		OrchestrationService.ViewShow("keyboard_email_receipt_view", new KeyboardInfo
+		{
+			MaxLength = 64,
+			KeyboardText = (string.IsNullOrEmpty(emailAddress) ? "" : emailAddress),
+			IsValidEntry = ValidationServices.IsValidEmailAddress,
+			CancelAction = delegate
+			{
+				if (LuaCancelCallback != null)
+				{
+					LuaCancelCallback();
+				}
+			},
+			ContinueAction = delegate(string keyboardText)
+			{
+				if (LuaContinueCallback != null)
+				{
+					LuaContinueCallback(keyboardText);
+				}
+			}
 		});
 	}
 

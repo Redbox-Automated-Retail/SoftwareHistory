@@ -50,6 +50,7 @@ public class RedboxRentalService : IRedboxRental
 		if (service3 != null)
 		{
 			service3.RegisterThemedControls("Redbox.Rental.UI.exe");
+			service3.RegisterThemedControls("Redbox.ControlPanel.UI.exe");
 			ITheme theme = service3.Themes.Find((ITheme x) => x.Name == "Redbox Classic");
 			if (theme != null)
 			{

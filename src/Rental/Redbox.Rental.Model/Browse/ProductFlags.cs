@@ -9,5 +9,7 @@ public enum ProductFlags
 	BackAgain,
 	Classics,
 	New,
-	LastChance
+	LastChance,
+	HotDeal,
+	Points
 }

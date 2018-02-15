@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<controls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.SignInViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:ui="clr-namespace:Redbox.Rental.UI" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:controls="clr-namespace:Redbox.Rental.UI.Controls" xmlns:views="clr-namespace:Redbox.Rental.UI.Views">
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static views:SignInViewUserControlCommands.EmailAndPasswordCommand}" Executed="EmailAndPasswordCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static views:SignInViewUserControlCommands.PhoneAndPinCommand}" Executed="PhoneAndPinCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static views:SignInViewUserControlCommands.CancelCommand}" Executed="CancelCommandBinding_Executed" />
+  </UIElement.CommandBindings>
+  <Grid>
+    <Panel.Background>
+      <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#CA2351" Offset="0.0" />
+        <GradientStop Color="#E12046" Offset="0.5" />
+        <GradientStop Color="#CA2351" Offset="1.0" />
+      </LinearGradientBrush>
+    </Panel.Background>
+    <TextBlock Name="header_label" VerticalAlignment="Top" Margin="0,132,0,0" Width="470" Height="114" Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_48}" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=HeaderLabelText, FallbackValue=Sign in to get some points}" />
+    <Redbox:RoundedButton Name="EmailAndPasswordButton" VerticalAlignment="Top" Margin="0,331,0,0" Width="391" Height="78" UsedDefaultCornerRadius="True" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:SignInViewUserControlCommands.EmailAndPasswordCommand}">
+      <TextBlock Style="{StaticResource font_museo_slab_900_28}" Margin="40,20" Text="{Binding Path=EmailAndPasswordButtonText, FallbackValue=Email &amp; Password}" />
+    </Redbox:RoundedButton>
+    <Redbox:RoundedButton Name="PhoneAndPinButton" VerticalAlignment="Top" Margin="0,443,0,0" Width="391" MinHeight="78" Height="auto" UsedDefaultCornerRadius="True" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:SignInViewUserControlCommands.PhoneAndPinCommand}">
+      <TextBlock Style="{StaticResource font_museo_slab_900_28}" Margin="40,20" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=PhoneAndPinButtonText, FallbackValue=Phone &amp; 4-Digit PIN}" />
+    </Redbox:RoundedButton>
+    <Redbox:RoundedButton Name="CancelButton" VerticalAlignment="Top" Margin="0,653,0,0" Width="234" Height="78" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_button_style}" Command="{x:Static views:SignInViewUserControlCommands.CancelCommand}">
+      <TextBlock Style="{StaticResource font_museo_slab_900_28}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
+    </Redbox:RoundedButton>
+  </Grid>
+</controls:TextToSpeechUserControl>

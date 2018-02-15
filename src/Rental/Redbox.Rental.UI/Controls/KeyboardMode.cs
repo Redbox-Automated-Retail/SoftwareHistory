@@ -1,0 +1,12 @@
+namespace Redbox.Rental.UI.Controls;
+
+public enum KeyboardMode
+{
+	NONE_OR_UNKNOWN,
+	EMAIL_COMING_SOON,
+	EMAIL_RECEIPTS_PROMO,
+	EMAIL_SYMBOLS,
+	PROMOTIONS_CODE,
+	ACCOUNT_SIGN_IN,
+	ACCOUNT_EMAIL_CHANGED
+}

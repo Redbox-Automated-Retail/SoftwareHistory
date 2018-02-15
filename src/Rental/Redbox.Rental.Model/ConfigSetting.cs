@@ -56,7 +56,7 @@ public static class ConfigSetting
 
 	public static string ShowPrivacyUpdated = "ShowPrivacyUpdated";
 
-	public static string ShowPlayPassUpdated = "ShowPlayPassUpdated";
+	public static string ShowPerksUpdated = "ShowPerksUpdated";
 
 	public static string FAQDocument = "FAQDocument";
 
@@ -66,5 +66,5 @@ public static class ConfigSetting
 
 	public static string PrivacyDocument = "PrivacyDocument";
 
-	public static string PlayPassDocument = "PlayPassDocument";
+	public static string PerksDocument = "PerksDocument";
 }

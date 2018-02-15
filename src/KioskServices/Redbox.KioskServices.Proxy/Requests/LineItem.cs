@@ -1,0 +1,24 @@
+using Redbox.KioskEngine.ComponentModel;
+
+namespace Redbox.KioskServices.Proxy.Requests;
+
+public class LineItem
+{
+	public long ProductId { get; set; }
+
+	public VendStatus VendStatus { get; set; }
+
+	public string ProductFamily { get; set; }
+
+	public string ProductType { get; set; }
+
+	public bool MultiDisc { get; set; }
+
+	public Pricing Pricing { get; set; }
+
+	public string Barcode { get; set; }
+
+	public BlurayUpsell BlurayUpsell { get; set; }
+
+	public ItemSourceType? SourceType { get; set; }
+}

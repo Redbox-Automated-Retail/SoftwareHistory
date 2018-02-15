@@ -5,27 +5,31 @@ namespace Redbox.Rental.Model;
 
 public interface IPromotion
 {
-	bool IsFreeInCartOfferRunning { get; }
+	string Name { get; set; }
 
-	bool IsRentTwoInCartOfferRunning { get; }
+	decimal OriginalPrice { get; set; }
 
-	bool IsFreeInCartOfferValid { get; }
+	decimal Price { get; set; }
 
-	Promotion GetPromotion();
+	int Quantity { get; set; }
 
-	void SetPromotion(Promotion promotion);
+	PromotionIntentCode Intent { get; set; }
 
-	void ClearPromotion();
+	decimal OriginalPercent { get; set; }
 
-	void LoadInCartData();
+	decimal Percent { get; set; }
 
-	int GetRentTwoInCartOfferItemCount();
+	byte RentQuantity { get; set; }
 
-	void UpdateInCartPromoValue(IRentalShoppingCart rentalShoppingCart);
+	PromotionRentFormat? RentFormat { get; set; }
 
-	bool CartSatisfiesInCartOffer(IRentalShoppingCart rentalShoppingCart);
+	byte GetQuantity { get; set; }
 
-	List<long> GetInCartIncludeTitleList();
+	PromotionGetFormat? GetFormat { get; set; }
 
-	List<long> GetInCartExcludeTitleList();
+	ICampaignTitles CampaignTitles { get; set; }
+
+	IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
+
+	IList<IPromotionItem> PromotionItems { get; set; }
 }

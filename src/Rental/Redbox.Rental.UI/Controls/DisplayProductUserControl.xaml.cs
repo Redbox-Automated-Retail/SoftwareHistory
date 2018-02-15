@@ -41,10 +41,7 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 
 	public void ApplyStyle()
 	{
-		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
-		obj?.SetStyle(AddButton);
-		obj?.SetStyle(CornerAddButton);
-		obj?.SetStyle(CancelButton);
+		(ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme)?.SetStyle(AddButton);
 	}
 
 	private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -55,13 +52,7 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 		{
 			MainGrid.Background = new SolidColorBrush(Colors.White);
 			AddButton.Visibility = Visibility.Collapsed;
-			ADAMiniCartAddButtonViewbox.Visibility = Visibility.Collapsed;
-			CornerAddButton.Visibility = Visibility.Collapsed;
-			CornerAddButtonPlusSign.Visibility = Visibility.Collapsed;
-			CornerAddButtonText.Visibility = Visibility.Collapsed;
-			CornerShadow.Visibility = Visibility.Collapsed;
 			ComingSoonButton.Visibility = Visibility.Collapsed;
-			CancelButton.Visibility = Visibility.Collapsed;
 			Flag.Visibility = Visibility.Collapsed;
 			FlagText.Visibility = Visibility.Collapsed;
 		}
@@ -97,8 +88,6 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 					break;
 				}
 			}
-			CancelButton.Visibility = _displayProductModel.CancelButtonVisibility;
-			ADAMiniCartAddButtonViewbox.Visibility = _displayProductModel.ADAMiniCartAddButtonVisibility;
 			if (_displayProductModel.ADAMiniCartAddButtonVisibility == Visibility.Visible)
 			{
 				MainGrid.Background = new SolidColorBrush(Colors.Transparent);
@@ -113,10 +102,6 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 		Flag.Width = ImageBorder.ActualWidth * 0.9;
 		double num = (0.0 - Flag.Height) / 2.0;
 		Flag.Margin = new Thickness(num * 2.0 / 3.0, num, 0.0, 0.0);
-		CancelButton.Width = ImageBorder.ActualWidth * 0.53;
-		CancelButton.Height = ImageBorder.ActualWidth * 0.53;
-		CancelButton.Margin = new Thickness(0.0, (0.0 - ImageBorder.ActualWidth) * 0.18, (0.0 - ImageBorder.ActualWidth) * 0.2082, 0.0);
-		CancelButton.BorderThickness = new Thickness(ImageBorder.ActualWidth * 0.0378);
 		AddButton.Width = ImageBorder.ActualWidth * 0.8328;
 		AddButton.Height = ImageBorder.ActualWidth * 0.2574;
 		AddButton.CornerRadius = AddButton.Height / 2.0;

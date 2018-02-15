@@ -8,11 +8,7 @@
     <CommandBinding Command="{x:Static localbase:Commands.BluRayCommand}" Executed="RentBluRay_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ResetIdleTimerCommand}" Executed="ResetIdleTimerCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.MoreInfoCommand}" Executed="MoreInfo_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.StatisticsPopupCommand}" Executed="StatisticsPopup_Executed" />
   </UIElement.CommandBindings>
-  <UIElement.InputBindings>
-    <KeyBinding Key="D" Modifiers="Ctrl" Command="{x:Static localbase:Commands.StatisticsPopupCommand}" />
-  </UIElement.InputBindings>
   <Grid Background="#FFFFFFFF">
     <Image Name="BackgroundImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/backgroundTexture.png" HorizontalAlignment="Left" VerticalAlignment="Top" Height="768" Visibility="{Binding Path=BackgroundImageVisibility, FallbackValue=Collapsed}" />
     <localControls:BrowseUserControl x:Name="BrowseProductControl" Height="768" Margin="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" ShowPaddles="True" Background="#00FFFFFF" DataContext="{Binding Path=BrowseProductControlModel}" />

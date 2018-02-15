@@ -8,6 +8,7 @@ using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.Services;
 
@@ -20,11 +21,8 @@ public class TitleDetailViewTextToSpeech
 		internal static string Buttons = "Buttons";
 	}
 
-	private static Func<TitleDetailModel> _getModelFunc;
-
 	public static ISpeechControl GetSpeechControl(Func<TitleDetailModel> getModel)
 	{
-		_getModelFunc = getModel;
 		SpeechControl obj = new SpeechControl
 		{
 			Name = "tts_product_detail_view",
@@ -111,16 +109,37 @@ public class TitleDetailViewTextToSpeech
 			}
 			TextPart item7 = new TextPart
 			{
-				Text = "Price: " + ((DisplayProductModel)browseItem).PriceADay
+				Text = "1-Night Rental: " + ((DisplayProductModel)browseItem).OneNightPrice
 			};
 			part.Texts.Add(item7);
-			if (obj != null && !obj.IsEmptyCase)
+			TextPart item8 = new TextPart
 			{
-				TextPart item8 = new TextPart
+				Text = "Return: " + ((DisplayProductModel)browseItem).OneNightReturnTime
+			};
+			part.Texts.Add(item8);
+			if (obj != null && obj.HasMultiNightPrice)
+			{
+				TextPart item9 = new TextPart
 				{
-					Text = "Return: " + ((DisplayProductModel)browseItem).ReturnTime
+					Text = "Multi-Night Rental: " + ((DisplayProductModel)browseItem).MultiNightPrice
 				};
-				part.Texts.Add(item8);
+				part.Texts.Add(item9);
+			}
+			if (obj != null && obj.HasMultiNightPrice)
+			{
+				TextPart item10 = new TextPart
+				{
+					Text = "Return: " + ((DisplayProductModel)browseItem).MultiNightReturnTime
+				};
+				part.Texts.Add(item10);
+			}
+			if (obj != null && obj.HasHotDeal)
+			{
+				TextPart item11 = new TextPart
+				{
+					Text = ((DisplayProductModel)browseItem).HotDealText
+				};
+				part.Texts.Add(item11);
 			}
 		};
 		return part;
@@ -181,7 +200,7 @@ public class TitleDetailViewTextToSpeech
 			{
 				TextPart item2 = new TextPart
 				{
-					Text = $"To add the {TitleTypeProperties.Properties[primaryProduct.TitleType].Name} title {item.Name} to your cart, press Enter."
+					Text = $"To add the {TitleTypeProperties.Properties[primaryProduct.TitleType].GetName(Resources.ResourceManager)} title {item.Name} to your cart, press Enter."
 				};
 				part.Texts.Add(item2);
 			}
@@ -189,7 +208,7 @@ public class TitleDetailViewTextToSpeech
 			{
 				TextPart item3 = new TextPart
 				{
-					Text = $"To buy this {arg} for ${(primaryProduct.IsMovie ? primaryProduct.MoviePurchasePrice : primaryProduct.GamePurchasePrice)}, press 2"
+					Text = $"To buy this {arg} for ${primaryProduct.PurchasePrice}, press 2"
 				};
 				part.Texts.Add(item3);
 			}

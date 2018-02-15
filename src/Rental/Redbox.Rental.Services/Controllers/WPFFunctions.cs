@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Media;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -14,6 +15,17 @@ public class WPFFunctions
 			{
 				result = obj as Style;
 			}
+		}
+		return result;
+	}
+
+	public static Brush GetBrush(FrameworkElement frameworkElement, string brushName)
+	{
+		Brush result = null;
+		object obj = frameworkElement.FindResource(brushName);
+		if (obj != null)
+		{
+			result = obj as Brush;
 		}
 		return result;
 	}

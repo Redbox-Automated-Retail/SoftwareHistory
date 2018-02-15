@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.ShoppingCartViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" DataContextChanged="ShoppingCartViewUserControl_DataContextChanged">
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static localbase:Commands.GoBackCommand}" Executed="GoBackCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Executed="TermsAndPrivacyCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.PromoCodeCommand}" Executed="PromoCodeCommandBinding_Executed" CanExecute="PromoCodeCommandBinding_CanExecute" />
+    <CommandBinding Command="{x:Static localbase:Commands.UseCreditsCommand}" Executed="UseCreditsCommandBinding_Executed" CanExecute="UseCreditsCommandBinding_CanExecute" />
+    <CommandBinding Command="{x:Static localbase:Commands.PayCommand}" Executed="PayCommandBinding_Executed" CanExecute="PayCommandBinding_CanExecute" />
+    <CommandBinding Command="{x:Static localbase:Commands.AddMovieCommand}" Executed="AddMovieCommandCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.AddGameCommand}" Executed="AddGameCommandCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.UpdateBagCommand}" Executed="UpdateBagCommandCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" Executed="BrowseItemCancelCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.SignInCommand}" Executed="SignInCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.UsePointsCommand}" Executed="UsePointsCommandBinding_Executed" CanExecute="UsePointsCommandBinding_CanExecute" />
+  </UIElement.CommandBindings>
+  <Grid>
+    <Grid Name="MainDividerGrid" Background="#FFFFFFFF">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="76" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+      <Grid Name="Header">
+        <Panel.Background>
+          <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+            <GradientStop Color="#722D7A" Offset="-2.5" />
+            <GradientStop Color="#E42045" Offset="0.5" />
+            <GradientStop Color="#722D7A" Offset="2.5" />
+          </LinearGradientBrush>
+        </Panel.Background>
+        <TextBlock Name="LabelTop" Style="{StaticResource font_museo_slab_900_36}" Foreground="#FFFFFFFF" Margin="42,18,0,0" Text="{Binding Path=LabelTop, FallbackValue=My bag}" />
+      </Grid>
+      <Grid Name="SubDividerGrid" Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="63*" />
+          <ColumnDefinition Width="37*" />
+        </Grid.ColumnDefinitions>
+        <Line Name="DividingLine" Y1="0" Y2="654" Fill="#979797" Margin="0,23,0,23" Stroke="#979797" StrokeThickness="2" HorizontalAlignment="Right" Opacity="0.22" />
+        <DockPanel Name="LeftSideDockPanel" LastChildFill="True">
+          <DockPanel Name="ButtonBar" Height="80" Dock="Bottom" Margin="36,0,23,0">
+            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Width="163" Height="59" UsedDefaultCornerRadius="True" VerticalAlignment="Center" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.GoBackCommand}">
+              <TextBlock Name="BackButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=BackButtonText, FallbackValue=Back}" />
+            </Redbox:RoundedButton>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <Redbox:RoundedButton Name="AddMovieButton" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" Width="205" Height="59" Margin="3,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.AddMovieCommand}" Visibility="{Binding Path=AddMovieButtonVisibility}">
+                <TextBlock Name="AddMovieButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=AddMovieButtonText, FallbackValue=Add Movie}" />
+              </Redbox:RoundedButton>
+              <Redbox:RoundedButton Name="AddGameButton" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" Width="205" Height="59" Margin="3,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.AddGameCommand}" Visibility="{Binding Path=AddGameButtonVisibility}">
+                <TextBlock Name="AddGameButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=AddGameButtonText, FallbackValue=Add Game}" />
+              </Redbox:RoundedButton>
+              <Redbox:RoundedButton Name="UpdateBagButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Width="225" Height="59" Margin="3,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.UpdateBagCommand}" Visibility="{Binding Path=UpdateBagButtonVisibility}">
+                <TextBlock Name="UpdateBagButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=UpdateBagButtonText, FallbackValue=Update Bag}" />
+              </Redbox:RoundedButton>
+            </StackPanel>
+          </DockPanel>
+          <StackPanel Name="LeftSideTopPanel" Orientation="Vertical" Margin="36,14,23,0">
+            <StackPanel Name="ShoppingCartStackPanel" Orientation="Vertical" />
+            <StackPanel Name="ProductStackPanel" Orientation="Vertical" />
+            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_12}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,3" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
+            <Line Name="PassiveSaleNoteBottomLine" X2="1000" Fill="#979797" Margin="0,3,0,3" Stroke="#979797" StrokeThickness="2" Opacity="0.22" />
+          </StackPanel>
+        </DockPanel>
+        <DockPanel Name="RightSideDockPanel" Grid.Column="1" LastChildFill="True">
+          <StackPanel Name="RightSideTopPanel" Orientation="Vertical" DockPanel.Dock="Top">
+            <TextBlock Name="PriceHeaderText" Margin="24,24,24,7" Style="{StaticResource font_museo_slab_900_18}" Foreground="#4a4a4a" Text="{Binding Path=PriceHeaderText, FallbackValue=Payment Summary}" />
+            <localControls:PricingUserControl Grid.Column="1" VerticalAlignment="Top" Margin="24,0,24,0" DataContext="{Binding Path=PricingModel}" />
+            <TextBlock Name="LoyaltySystemErrorText" Margin="24,0,24,0" Style="{StaticResource font_montserrat_regular_16}" TextWrapping="Wrap" Foreground="#d0021b" Text="{Binding Path=LoyaltySystemErrorText, FallbackValue=Uh oh - our points system is down but well get it fixed ASAP.}" />
+          </StackPanel>
+          <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" DockPanel.Dock="Bottom">
+            <Redbox:RoundedButton Name="PayButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PayCommand}">
+              <TextBlock Name="PayButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PayButtonText, FallbackValue=Pay Now}" />
+            </Redbox:RoundedButton>
+            <Grid Name="SpacerGrid" Height="50" Visibility="{Binding Path=SignInButtonVisibility}" />
+            <TextBlock Name="DontMissYourPerksText" HorizontalAlignment="Center" Style="{StaticResource font_museo_slab_900_18}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=DontMissYourPerksText, FallbackValue=Dont miss your Perks!}" Visibility="{Binding Path=SignInButtonVisibility}" />
+            <Redbox:RoundedButton Name="SignInButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.SignInCommand}" Visibility="{Binding Path=SignInButtonVisibility}">
+              <TextBlock Name="SignInButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=SignInButtonText, FallbackValue=Sign In}" />
+            </Redbox:RoundedButton>
+            <Redbox:RoundedButton Name="UsePointsButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.UsePointsCommand}" Visibility="{Binding Path=UsePointsButtonVisibility}">
+              <TextBlock Name="UsePointsButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=UsePointsButtonText, FallbackValue=Use Points}" />
+            </Redbox:RoundedButton>
+            <Redbox:RoundedButton Name="PromoCodeButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PromoCodeCommand}">
+              <TextBlock Name="PromoCodeButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PromoCodeButtonText, FallbackValue=Add Promos}" />
+            </Redbox:RoundedButton>
+            <Redbox:RoundedButton Name="UseCreditsButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Width="315" Height="59" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.UseCreditsCommand}" Visibility="{Binding Path=UseCreditsButtonVisibility, FallbackValue=Visible}">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Name="CreditsButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=UseCreditsButtonText, FallbackValue=Use Credits}" />
+              </StackPanel>
+            </Redbox:RoundedButton>
+            <Redbox:RoundedButton Name="TermsAndPrivacyButton" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" Height="37" Width="315" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Margin="0,6,0,6">
+              <TextBlock Name="TermsAndPrivacyButtonText" Style="{StaticResource font_museo_slab_900_16}" Text="{Binding Path=TermsAndPrivacyButtonText, FallbackValue=Terms &amp; Privacy}" />
+            </Redbox:RoundedButton>
+            <TextBlock Name="TermsText" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#4a4a4a" Margin="5,7,5,13" TextWrapping="Wrap" HorizontalAlignment="Center" Text="{Binding Path=TermsText, FallbackValue=By pressing PAY Now or Use Credits you agree to the Terms}" />
+          </StackPanel>
+        </DockPanel>
+      </Grid>
+    </Grid>
+    <Grid Name="DividerGrid">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="149" />
+      </Grid.RowDefinitions>
+      <StackPanel Name="ShoppingCartFrameStackPanel" Orientation="Vertical" Margin="0,170,0,0">
+        <Grid Name="ADASpacer" Height="60" Visibility="{Binding Path=ADASpacerVisibility}" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</localControls:TextToSpeechUserControl>

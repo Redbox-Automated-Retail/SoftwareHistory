@@ -3,29 +3,23 @@ using System.Drawing;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
-public interface IViewFrame : IDisposable
+public interface IViewFrame : IBaseViewFrame, IDisposable
 {
 	int Width { get; }
 
 	int Height { get; }
 
-	bool Clear { get; }
+	new bool Clear { get; }
 
 	bool Cached { get; }
 
-	IScene Scene { get; }
-
-	string ViewName { get; }
+	new IScene Scene { get; }
 
 	string ViewVersion { get; }
 
 	RenderType ViewRenderType { get; }
 
-	string ActiveFlag { get; }
-
 	string SceneName { get; }
-
-	ErrorList Errors { get; }
 
 	Rectangle? ViewWindow { get; }
 
@@ -37,9 +31,7 @@ public interface IViewFrame : IDisposable
 
 	string OnLeaveResourceName { get; }
 
-	void UpdateScene();
+	new bool RaiseOnEnter(IViewFrameInstance viewFrameInstance);
 
-	void RaiseOnEnter();
-
-	void RaiseOnLeave();
+	new void RaiseOnLeave(IViewFrameInstance viewFrameInstance);
 }

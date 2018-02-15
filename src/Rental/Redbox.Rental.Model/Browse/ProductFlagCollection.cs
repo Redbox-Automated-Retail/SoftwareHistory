@@ -16,45 +16,57 @@ public class ProductFlagCollection : List<ProductFlag>
 				{
 					new ProductFlag
 					{
+						Flag = ProductFlags.New,
+						TextKeyName = "flag_new",
+						FlagStyleName = "rubine_flag_style"
+					},
+					new ProductFlag
+					{
 						Flag = ProductFlags.AwardWinner,
 						TextKeyName = "flag_award_winner",
-						FlagStyleName = "gold_flag_style"
+						FlagStyleName = "off_yellow_flag_style"
 					},
 					new ProductFlag
 					{
 						Flag = ProductFlags.BackAgain,
 						TextKeyName = "flag_back_again",
-						FlagStyleName = "red_flag_style"
+						FlagStyleName = "rubine_flag_style"
 					},
 					new ProductFlag
 					{
 						Flag = ProductFlags.Classics,
 						TextKeyName = "flag_classics",
-						FlagStyleName = "red_flag_style"
+						FlagStyleName = "rubine_flag_style"
 					},
 					new ProductFlag
 					{
 						Flag = ProductFlags.ComingSoon,
 						TextKeyName = "flag_coming_soon",
-						FlagStyleName = "blue_flag_style"
+						FlagStyleName = "warm_purple_flag_style"
 					},
 					new ProductFlag
 					{
 						Flag = ProductFlags.LastChance,
 						TextKeyName = "flag_last_chance",
-						FlagStyleName = "orange_flag_style"
-					},
-					new ProductFlag
-					{
-						Flag = ProductFlags.New,
-						TextKeyName = "flag_new",
-						FlagStyleName = "red_flag_style"
+						FlagStyleName = "darkish_pink_flag_style"
 					},
 					new ProductFlag
 					{
 						Flag = ProductFlags.OutOfStock,
 						TextKeyName = "flag_out_of_stock",
-						FlagStyleName = "gray_flag_style"
+						FlagStyleName = "charcoal_grey_flag_style"
+					},
+					new ProductFlag
+					{
+						Flag = ProductFlags.HotDeal,
+						TextKeyName = "flag_hot_deal",
+						FlagStyleName = "orange_flag_style"
+					},
+					new ProductFlag
+					{
+						Flag = ProductFlags.Points,
+						TextKeyName = "flag_points",
+						FlagStyleName = "rubine_flag_style"
 					}
 				};
 			}

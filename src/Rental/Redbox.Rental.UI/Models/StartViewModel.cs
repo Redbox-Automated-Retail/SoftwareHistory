@@ -21,8 +21,6 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty GamesButtonTextLine1Property = DependencyProperty.Register("GamesButtonTextLine1", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty GamesButtonTextLine1StyleProperty = DependencyProperty.Register("GamesButtonTextLine1Style", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty GamesButtonTextLine2Property = DependencyProperty.Register("GamesButtonTextLine2", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty PickUpButtonTextProperty = DependencyProperty.Register("PickUpButtonText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
@@ -30,6 +28,8 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty ReturnButtonTextProperty = DependencyProperty.Register("ReturnButtonText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty ToggleLanguageButtonTextProperty = DependencyProperty.Register("ToggleLanguageButtonText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ToggleSignInButtonTextProperty = DependencyProperty.Register("ToggleSignInButtonText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BurnInVisibilityProperty = DependencyProperty.Register("BurnInVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
@@ -42,6 +42,10 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty BannerVisibilityProperty = DependencyProperty.Register("BannerVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty LoadingTitlesImageVisibilityProperty = DependencyProperty.Register("LoadingTitlesImageVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty SignInVisibilityProperty = DependencyProperty.Register("SignInVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty SignInButtonEnabledProperty = DependencyProperty.Register("SignInButtonEnabled", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
 	public static readonly DependencyProperty BuyMoviesOrGamesButtonTextLine1Property = DependencyProperty.Register("BuyMoviesOrGamesButtonTextLine1", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
@@ -66,6 +70,12 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty BuyGamesButtonTextLine2StyleProperty = DependencyProperty.Register("BuyGamesButtonTextLine2Style", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BuyGamesButtonVisibilityProperty = DependencyProperty.Register("BuyGamesButtonVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty RentGamesEnabledProperty = DependencyProperty.Register("RentGamesButtonEnabled", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
+
+	public static readonly DependencyProperty BuyGamesEnabledProperty = DependencyProperty.Register("BuyGamesButtonEnabled", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
+
+	public static readonly DependencyProperty BuyMoviesEnabledProperty = DependencyProperty.Register("BuyMoviesButtonEnabled", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
 	public bool BurnInModeEnabled { get; set; }
 
@@ -140,21 +150,6 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(GamesButtonTextLine1Property, value);
-			});
-		}
-	}
-
-	public Style GamesButtonTextLine1Style
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Style)GetValue(GamesButtonTextLine1StyleProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(GamesButtonTextLine1StyleProperty, value);
 			});
 		}
 	}
@@ -354,6 +349,66 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
+	public bool RentGamesEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(RentGamesEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RentGamesEnabledProperty, value);
+			});
+		}
+	}
+
+	public bool BuyGamesEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(BuyGamesEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyGamesEnabledProperty, value);
+			});
+		}
+	}
+
+	public bool BuyMoviesEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(BuyMoviesEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyMoviesEnabledProperty, value);
+			});
+		}
+	}
+
+	public bool SignInButtonEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(SignInButtonEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SignInButtonEnabledProperty, value);
+			});
+		}
+	}
+
 	public string PickUpButtonText
 	{
 		get
@@ -395,6 +450,21 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ToggleLanguageButtonTextProperty, value);
+			});
+		}
+	}
+
+	public string ToggleSignInButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ToggleSignInButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ToggleSignInButtonTextProperty, value);
 			});
 		}
 	}
@@ -504,6 +574,21 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
+	public Visibility SignInVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SignInVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SignInVisibilityProperty, value);
+			});
+		}
+	}
+
 	public CarouselModel CarouselModel
 	{
 		get
@@ -534,6 +619,8 @@ public class StartViewModel : DependencyObject
 	public event Action OnPickupButtonClicked;
 
 	public event Action OnReturnButtonClicked;
+
+	public event Action OnSignInButtonClicked;
 
 	public event Action OnHelpButtonClicked;
 
@@ -598,5 +685,10 @@ public class StartViewModel : DependencyObject
 	public void ProcessHelpButtonClicked()
 	{
 		OnHelpButtonClicked?.Invoke();
+	}
+
+	public void ProcessSignInButtonClicked()
+	{
+		OnSignInButtonClicked?.Invoke();
 	}
 }

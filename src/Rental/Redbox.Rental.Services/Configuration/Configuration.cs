@@ -14,9 +14,25 @@ public class Configuration : IConfiguration
 
 		public const string General = "General";
 
+		public const string Personalization = "Personalization";
+
 		public const string BurnInTimeout = "BurnInTimeout";
 
 		public const string BurnInViewDuration = "BurnInViewDuration";
+
+		public const string EnableCreditsButton = "EnableCreditsButton";
+
+		public const string PromptForCredits = "PromptForCredits";
+
+		public const string EarlyIDEnabled = "EarlyIDEnabled";
+
+		public const string LoyaltyEnabled = "LoyaltyEnabled";
+
+		public const string SignInTimeout = "SignInTimeout";
+
+		public const string SignInADATimeout = "SignInADATimeout";
+
+		public const string EnablePricingEngine = "EnablePricingEngine";
 	}
 
 	private Dictionary<TitleType, bool> _enabledGameTypes;
@@ -26,6 +42,18 @@ public class Configuration : IConfiguration
 	private int _burnInTimeout;
 
 	private int _burnInViewDuration;
+
+	private bool _enableCreditsButton;
+
+	private bool _earlyIdEnabled;
+
+	private bool _loyaltyEnabled;
+
+	private int _signInTimeout;
+
+	private int _signInADATimeout;
+
+	private bool _enablePricingEngine;
 
 	public static IConfiguration Instance => Singleton<Configuration>.Instance;
 
@@ -73,6 +101,18 @@ public class Configuration : IConfiguration
 
 	public int BurnInViewDuration => _burnInViewDuration;
 
+	public bool EnableCreditsButton => _enableCreditsButton;
+
+	public bool EarlyIdEnabled => _earlyIdEnabled;
+
+	public bool LoyaltyEnabled => _loyaltyEnabled;
+
+	public int SignInTimeout => _signInTimeout;
+
+	public int SignInADATimeout => _signInADATimeout;
+
+	public bool EnablePricingEngine => _enablePricingEngine;
+
 	private Configuration()
 	{
 		Initialize();
@@ -83,6 +123,12 @@ public class Configuration : IConfiguration
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 		_burnInTimeout = ConfigGetValue(service, "system", "General", "BurnInTimeout", 1800000);
 		_burnInViewDuration = ConfigGetValue(service, "system", "General", "BurnInViewDuration", 30000);
+		_enableCreditsButton = ConfigGetValue(service, "system", "General", "EnableCreditsButton", defaultValue: true);
+		_earlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
+		_loyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
+		_signInTimeout = ConfigGetValue(service, "system", "Personalization", "SignInTimeout", 20000);
+		_signInADATimeout = ConfigGetValue(service, "system", "Personalization", "SignInADATimeout", 90000);
+		_enablePricingEngine = ConfigGetValue(service, "system", "General", "EnablePricingEngine", defaultValue: true);
 	}
 
 	private bool GetMachineSetting(IMachineSettingsStore machineSettingStore, string key)

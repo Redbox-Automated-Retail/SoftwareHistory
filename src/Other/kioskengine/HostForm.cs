@@ -46,8 +46,6 @@ public class HostForm : Form, ITrackDataService
 
 	private const int WM_COPYDATA = 74;
 
-	private bool _ignoreNextKeyPress = false;
-
 	private bool m_isCursorHidden;
 
 	private DateTime _keyPressStartAfter = DateTime.MinValue;
@@ -317,22 +315,20 @@ public class HostForm : Form, ITrackDataService
 		{
 		case Keys.Home:
 		{
-			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service2 != null)
+			ITextToSpeechService service4 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service4 != null)
 			{
-				_ignoreNextKeyPress = true;
-				service2.AudioDeviceConnected = true;
-				IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
-				service2.RunSpeechWorkflow("tts_" + service3.PeekViewFrame().ViewName);
+				service4.AudioDeviceConnected = true;
+				service4.RunSpeechWorkflow($"tts_{ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame()?.ViewFrame?.ViewName}");
 			}
 			break;
 		}
 		case Keys.End:
 		{
-			ITextToSpeechService service5 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service5 != null)
+			ITextToSpeechService service3 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if (service3 != null)
 			{
-				service5.AudioDeviceConnected = false;
+				service3.AudioDeviceConnected = false;
 			}
 			break;
 		}
@@ -420,11 +416,11 @@ public class HostForm : Form, ITrackDataService
 			break;
 		case Keys.F10:
 		{
-			IRenderingService service4 = ServiceLocator.Instance.GetService<IRenderingService>();
+			IRenderingService service5 = ServiceLocator.Instance.GetService<IRenderingService>();
 			string name = "ADALine";
-			if (service4.ActiveScene.SceneRenderType == RenderType.WPF)
+			if (service5.ActiveScene.SceneRenderType == RenderType.WPF)
 			{
-				System.Windows.Controls.UserControl userControl = (service4.ActiveScene.Actors.First?.Value)?.WPFFrameworkElement as System.Windows.Controls.UserControl;
+				System.Windows.Controls.UserControl userControl = (service5.ActiveScene.Actors.First?.Value)?.WPFFrameworkElement as System.Windows.Controls.UserControl;
 				Grid grid = userControl?.Content as Grid;
 				IEnumerator enumerator = grid.Children.GetEnumerator();
 				bool flag = false;
@@ -460,15 +456,15 @@ public class HostForm : Form, ITrackDataService
 			}
 			else
 			{
-				service4.ActiveScene.SuspendDrawing();
-				IActor actor = service4.ActiveScene.GetActor(name);
+				service5.ActiveScene.SuspendDrawing();
+				IActor actor = service5.ActiveScene.GetActor(name);
 				if (actor != null)
 				{
-					service4.ActiveScene.Remove(actor);
+					service5.ActiveScene.Remove(actor);
 				}
 				else
 				{
-					IActor actor2 = service4.ActiveScene.CreateActor();
+					IActor actor2 = service5.ActiveScene.CreateActor();
 					actor2.Name = name;
 					actor2.Y = 286;
 					actor2.X = 0;
@@ -479,9 +475,9 @@ public class HostForm : Form, ITrackDataService
 					actor2.HitFlags = HitTestFlags.None;
 					actor2.ForegroundColor = System.Drawing.Color.GreenYellow;
 					actor2.OptionFlags = RenderOptionFlags.Background;
-					service4.ActiveScene.AddLast(actor2);
+					service5.ActiveScene.AddLast(actor2);
 				}
-				service4.ActiveScene.ResumeDrawing();
+				service5.ActiveScene.ResumeDrawing();
 			}
 			break;
 		}
@@ -496,17 +492,21 @@ public class HostForm : Form, ITrackDataService
 			}
 			m_isCursorHidden = !m_isCursorHidden;
 			break;
+		case Keys.F12:
+		{
+			IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
+			if (service2.Peek() == "product_detail_view")
+			{
+				service2.Push("title_details_dev_view", false);
+				service2.Show();
+			}
+			break;
+		}
 		}
 	}
 
 	public void OnKeyPress(object sender, KeyPressEventArgs e)
 	{
-		if (_ignoreNextKeyPress)
-		{
-			_ignoreNextKeyPress = false;
-			LogHelper.Instance.Log("Ignoring OnKeyPress: {0}", e.KeyChar);
-			return;
-		}
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		if (e.KeyChar == '\u001b')
 		{

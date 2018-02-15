@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.ConfirmEmailViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
+  <UIElement.CommandBindings>
+    <CommandBinding Command="{x:Static localbase:Commands.Button1Command}" Executed="Button1_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.Button2Command}" Executed="Button2_Executed" />
+  </UIElement.CommandBindings>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="626" />
+      <RowDefinition Height="142" />
+    </Grid.RowDefinitions>
+    <Panel.Background>
+      <LinearGradientBrush>
+        <GradientStop Color="#AA286E" Offset="0" />
+        <GradientStop Color="#E42045" Offset="1" />
+      </LinearGradientBrush>
+    </Panel.Background>
+    <StackPanel Grid.Row="0" Margin="60,104,20,0">
+      <TextBlock Style="{StaticResource font_target_large_52}" Foreground="#FFFFFFFF" Text="{Binding HeaderText, FallbackValue=Want free stuff from us?}" />
+      <TextBlock Style="{StaticResource font_target_medium_20}" Margin="0,43,0,0" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding BodyText, FallbackValue=Get a free movie night (plus updates on releases and deals) when you sign up for our emails. Touch YES to get started.}" />
+      <TextBlock Style="{StaticResource font_target_small}" Foreground="#FFFFFFFF" Text="{Binding OptionalBodyText}" Visibility="{Binding OptionalBodyTextVisibility, FallbackValue=Collapsed}" />
+    </StackPanel>
+    <Grid Row="1" Background="#380B45">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,32,39,42">
+        <Redbox:RoundedButton Width="191" Style="{StaticResource warmpurple_white_border_button_style}" Command="{x:Static localbase:Commands.Button1Command}" Visibility="{Binding Button1Visibility, FallbackValue=Visible}">
+          <TextBlock Style="{StaticResource font_target_small_button_overlays}" Text="{Binding Button1Text, FallbackValue=YES}" />
+        </Redbox:RoundedButton>
+        <Redbox:RoundedButton Width="191" Margin="23,0,0,0" Style="{StaticResource warmpurple_white_border_button_style}" Command="{x:Static localbase:Commands.Button2Command}" Visibility="{Binding Button2Visibility, FallbackValue=Visible}">
+          <TextBlock Style="{StaticResource font_target_small_button_overlays}" Text="{Binding Button2Text, FallbackValue=NOT NOW}" />
+        </Redbox:RoundedButton>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</localControls:TextToSpeechUserControl>

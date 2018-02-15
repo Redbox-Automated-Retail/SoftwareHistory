@@ -13,10 +13,13 @@ using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -77,6 +80,7 @@ public class StartViewController
 			startViewModel.OnBannerClicked += BannerClicked;
 			startViewModel.OnBuyMoviesButtonClicked += GoToForSaleMovieBrowseView;
 			startViewModel.OnBuyGamesButtonClicked += GoToForSaleGamesBrowseView;
+			startViewModel.OnSignInButtonClicked += ProcessSignInSignOutCommand;
 			MarketingAdService?.StartSession();
 			ConfigureBurnInTimers(startViewModel);
 			ConfigureStartViewIdleTimer();
@@ -120,16 +124,27 @@ public class StartViewController
 		}
 		if (startViewModel != null && startViewUserControl != null)
 		{
-			bool flag = (ServiceLocator.Instance.GetService<IDataService>()?.GetInStockGameCount() ?? 0) > 0;
+			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+			bool flag = (service?.GetInStockGameCount() ?? 0) > 0;
 			SetCultureSpecificText(startViewModel, startViewUserControl, flag);
-			startViewModel.RentOrBuyGamesButtonVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
-			IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
-			bool flag2 = service.CanSellUsedMovies && service.PurchasePrice > 0m;
+			IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
+			bool flag2 = service2.CanSellUsedMovies && service2.PurchasePrice > 0m;
 			startViewModel.BuyMoviesOrGamesButtonVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
-			startViewModel.BuyGamesButtonVisibility = ((!flag2 || !service.CanSellUsedGames) ? Visibility.Collapsed : Visibility.Visible);
-			startViewModel.BuyMoviesButtonWidth = (service.CanSellUsedGames ? 135 : 290);
-			startViewModel.BuyMoviesButtonTextMargin = (service.CanSellUsedGames ? new Thickness(15.0) : new Thickness(100.0, 5.0, 0.0, 0.0));
-			ServiceLocator.Instance.GetService<IMacroService>()["Start:BuyMoviesOrGames"] = "Movies" + (service.CanSellUsedGames ? " and Games" : string.Empty);
+			startViewModel.BuyGamesButtonVisibility = ((!flag2 || !service2.CanSellUsedGames) ? Visibility.Collapsed : Visibility.Visible);
+			startViewModel.RentOrBuyGamesButtonVisibility = Visibility.Visible;
+			List<IKioskProduct> products = null;
+			Redbox.KioskEngine.ComponentModel.ErrorList source = service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, out products);
+			bool buyGamesEnabled = !source.Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Games);
+			bool buyMoviesEnabled = !source.Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Movies);
+			startViewModel.RentGamesEnabled = flag;
+			startViewModel.BuyGamesEnabled = buyGamesEnabled;
+			startViewModel.BuyMoviesEnabled = buyMoviesEnabled;
+			startViewModel.BuyMoviesButtonWidth = (service2.CanSellUsedGames ? 135 : 290);
+			startViewModel.BuyMoviesButtonTextMargin = (service2.CanSellUsedGames ? new Thickness(15.0) : new Thickness(100.0, 5.0, 0.0, 0.0));
+			ServiceLocator.Instance.GetService<IMacroService>()["Start:BuyMoviesOrGames"] = "Movies" + (service2.CanSellUsedGames ? " and Games" : string.Empty);
+			IPersonalizationService service3 = ServiceLocator.Instance.GetService<IPersonalizationService>();
+			startViewModel.SignInVisibility = ((service3 == null || !service3.IsEarlyIdEnabled) ? Visibility.Collapsed : Visibility.Visible);
+			startViewModel.SignInButtonEnabled = service3?.IsEarlyIdEnabled ?? false;
 		}
 	}
 
@@ -242,14 +257,14 @@ public class StartViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.Bluray;
 			PrepareToLeaveStartView();
-			OrchestrationService.ExecuteScript("browse_products");
+			OrchestrationService.ViewShow("browse_view");
 			break;
 		case StartViewBannerType.game:
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = TitleFamily.Games;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
 			PrepareToLeaveStartView();
-			OrchestrationService.ExecuteScript("browse_products");
+			OrchestrationService.ViewShow("browse_view");
 			break;
 		case StartViewBannerType.collections:
 		{
@@ -483,6 +498,7 @@ public class StartViewController
 		carouselModel.OnTitleRollupOverlayAddDVD += CarouselModel_OnTitleRollupOverlayAddDVDProduct;
 		carouselModel.OnTitleRollupOverlayAddBluray += CarouselModel_OnTitleRollupOverlayAddBlurayProduct;
 		carouselModel.OnTitleRollupOverlayVisibilityChange += CarouselModel_OnTitleRollupOverlayVisibilityChange;
+		carouselModel.ShowAddButton = !(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.IsFull ?? true);
 		OrchestrationService.RentalRefreshIfNeeded();
 		List<IKioskProduct> list = OrchestrationService.RentalGetCarouselProducts();
 		List<DisplayProductModel> list2 = new List<DisplayProductModel>();
@@ -609,10 +625,6 @@ public class StartViewController
 	{
 		if (titleProduct != null)
 		{
-			string key = ((titleProduct.TitleFamily == TitleFamily.Games) ? "browse_family_games" : "browse_family_movies");
-			OrchestrationService.SetMacro("Browse:ProductFamily", BundleFunctions.GetDictionaryStringValue("strings", key));
-			string key2 = ((titleProduct.TitleFamily == TitleFamily.Games) ? "Games" : "Movies");
-			OrchestrationService.SetMacro("TTS:BrowsingFamily", BundleFunctions.GetDictionaryStringValue("strings", key2));
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleProduct.TitleFamily;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
@@ -640,11 +652,12 @@ public class StartViewController
 				{
 					startViewModelFromView.CarouselModel.IsAnimationOn = false;
 					SetBrowseFiltersBasedOnSelectedProduct(browseFiltersBasedOnSelectedProduct);
-					OrchestrationService.ExecuteScript("browse_products");
+					OrchestrationService.ViewShow("browse_view");
 					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = true;
 					IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductDetailShownFromView = service.Peek();
 					PrepareToLeaveStartView();
+					ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("context", ("productDisplayed," + ((ITitleProduct)kioskProduct)?.ProductId) ?? string.Empty);
 					OrchestrationService.ViewShow("product_detail_view");
 				}
 			}
@@ -687,8 +700,8 @@ public class StartViewController
 
 	private static void SetCultureSpecificText(StartViewModel startViewModel, FrameworkElement startViewUserControl, bool hasInstockGames)
 	{
-		IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
-		bool flag = service != null && service.CanSellUsedMovies && service.PurchasePrice > 0m && service.CanSellUsedGames;
+		OrchestrationService.SetCurrentUICulture();
+		ServiceLocator.Instance.GetService<IStoreManager>();
 		startViewModel.AllMoviesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "movie_button_rent_label");
 		startViewModel.AllMoviesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "Alt_StartView_Movies");
 		startViewModel.PickUpButtonText = BundleFunctions.GetDictionaryStringValue("strings", "pickup");
@@ -699,26 +712,16 @@ public class StartViewController
 		startViewModel.BuyMoviesOrGamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "buy_movies_or_games_line2");
 		startViewModel.BuyGamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "buy_games_line1");
 		startViewModel.BuyGamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "buy_games_line2");
-		startViewModel.BuyMoviesOrGamesButtonTextLine1Style = ((!flag) ? (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_20") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_20")) : (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_14") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_16")));
-		startViewModel.BuyMoviesOrGamesButtonTextLine2Style = ((!flag) ? (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_28") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_34")) : (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_18") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_24")));
-		startViewModel.BuyGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_14") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_16"));
-		startViewModel.BuyGamesButtonTextLine2Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_18") : WPFFunctions.GetStyle(startViewUserControl, "font_bryant_bold_24"));
-		startViewModel.AllMoviesButtonTextLine2Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_bryant_bold_28" : "font_bryant_bold_34");
-		if (hasInstockGames)
-		{
-			if (flag)
-			{
-				startViewModel.GamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_rent_and_buy_label");
-			}
-			else
-			{
-				startViewModel.GamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_rent_label");
-			}
-			startViewModel.GamesButtonTextLine1Style = WPFFunctions.GetStyle(startViewUserControl, (flag && OrchestrationService.IsCultureSpanish()) ? "font_bryant_bold_18" : "font_bryant_bold_20");
-			startViewModel.GamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_games_label");
-		}
+		startViewModel.BuyMoviesOrGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_regular_16") : WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_regular_22"));
+		startViewModel.BuyMoviesOrGamesButtonTextLine2Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_museo_slab_900_18") : WPFFunctions.GetStyle(startViewUserControl, "font_museo_slab_900_24"));
+		startViewModel.BuyGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_regular_16") : WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_regular_22"));
+		startViewModel.BuyGamesButtonTextLine2Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_museo_slab_900_18") : WPFFunctions.GetStyle(startViewUserControl, "font_museo_slab_900_24"));
+		startViewModel.AllMoviesButtonTextLine2Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_museo_slab_900_28" : "font_museo_slab_900_32");
+		startViewModel.GamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_rent_label");
+		startViewModel.GamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_games_label");
 		startViewModel.AdaTurnedOnLabelVisibility = ((!ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
 		startViewModel.AdaTurnedOnLabelText = BundleFunctions.GetDictionaryStringValue("strings", "ada_turned_on_label_text");
+		startViewModel.ToggleSignInButtonText = (PersonalizationFunctions.IsSignedIn ? Resources.sign_out_button : Resources.button_sign_in);
 	}
 
 	private static void PrepareToLeaveStartView()
@@ -729,55 +732,49 @@ public class StartViewController
 		{
 			startViewModelFromView.CarouselModel.IsAnimationOn = false;
 		}
+		if (ApplicationState.Instance.IsABEOn)
+		{
+			ApplicationState.Instance.IsADAAccessible = true;
+		}
 	}
 
 	private static void GoToMovieBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("all_movies_button", TitleFamily.Movies, "browse_products");
+		GoToBrowseView("all_movies_button", TitleFamily.Movies);
 	}
 
 	private static void GoToForSaleMovieBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("buy_movies_button", TitleFamily.Movies, "browse_products");
+		GoToBrowseView("buy_movies_button", TitleFamily.Movies);
 	}
 
 	private static void GoToForSaleGamesBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("buy_games_button", TitleFamily.Games, "browse_products");
+		GoToBrowseView("buy_games_button", TitleFamily.Games);
 	}
 
 	private static void GoToGameView()
 	{
 		PrepareToLeaveStartView();
 		_ = Redbox.Rental.Services.Configuration.Configuration.Instance;
-		GoToBrowseView("games_button", TitleFamily.Games, "browse_products");
+		GoToBrowseView("games_button", TitleFamily.Games);
 	}
 
-	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily, string scriptToRun)
+	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily)
 	{
 		OrchestrationService.CreateStartViewAnalytics(AnalyticsSessionType.BrowseVend);
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", pressedButtonName);
-		OrchestrationService.RemoveTimer("carousel-wait");
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleFamily;
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
 		if (pressedButtonName == "buy_movies_button" || pressedButtonName == "buy_games_button")
 		{
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ForSale;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = "for-sale";
 		}
-		if (ApplicationState.Instance.IsABEOn)
-		{
-			ApplicationState.Instance.IsADAAccessible = true;
-			string key = ((titleFamily == TitleFamily.Games) ? "browse_family_games" : "browse_family_movies");
-			OrchestrationService.SetMacro("Browse:ProductFamily", BundleFunctions.GetDictionaryStringValue("strings", key));
-		}
-		string key2 = ((titleFamily == TitleFamily.Games) ? "Games" : "Movies");
-		OrchestrationService.SetMacro("TTS:BrowsingFamily", BundleFunctions.GetDictionaryStringValue("strings", key2));
-		OrchestrationService.ExecuteScript(scriptToRun);
+		OrchestrationService.ViewShow("browse_view");
 	}
 
 	private static void GoToPickupReservationSwipeView()
@@ -796,5 +793,27 @@ public class StartViewController
 	{
 		PrepareToLeaveStartView();
 		OrchestrationService.ExecuteScript("help");
+	}
+
+	private static void ProcessSignInSignOutCommand()
+	{
+		PrepareToLeaveStartView();
+		OrchestrationService.CreateStartViewAnalytics(AnalyticsSessionType.BrowseVend);
+		ISessionAnalyticsService sessionAnalyticsService = SessionAnalyticsService;
+		if (sessionAnalyticsService != null)
+		{
+			IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+			sessionAnalyticsService.AddViewEvent("buttonPress", (personalizationSession != null && personalizationSession.IsLoggedIn) ? "SignOut" : "SignIn");
+		}
+		IPersonalizationSession personalizationSession2 = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+		if (personalizationSession2 != null && personalizationSession2.IsLoggedIn)
+		{
+			PersonalizationFunctions.ShowLogoutDialog(setKeepSessionOnStartViewEnterToTrue: true);
+			return;
+		}
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
+		service.Push("browse_view");
+		OrchestrationService.ViewShow("prompt_sign_in_view");
 	}
 }

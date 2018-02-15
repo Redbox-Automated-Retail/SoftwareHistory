@@ -11,6 +11,12 @@ public class BrowseViewModel : DependencyObject
 
 	public Action OnToggleTitleFamilyButtonClicked;
 
+	public Action OnSignInButtonClicked;
+
+	public Action OnSignOutButtonClicked;
+
+	public Action OnMyPerksButtonClicked;
+
 	public Func<ISpeechControl> OnGetSpeechControl;
 
 	public static readonly DependencyProperty BrowseGroupSelectionProperty = DependencyProperty.Register("BrowseGroupSelection", typeof(DisplayGroupSelectionModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
@@ -21,17 +27,13 @@ public class BrowseViewModel : DependencyObject
 
 	public static readonly DependencyProperty CheckOutButtonStyleProperty = DependencyProperty.Register("CheckOutButtonStyle", typeof(Style), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty AddToCartLabel1TextProperty = DependencyProperty.Register("AddToCartLabel1Text", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty AddToCartLabel2TextProperty = DependencyProperty.Register("AddToCartLabel2Text", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty AddToADACartLabelTextProperty = DependencyProperty.Register("AddToADACartLabelText", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty AddToCartLabelVisibilityProperty = DependencyProperty.Register("AddToCartLabelVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty SwitchProductFamilyButtonVisibilityProperty = DependencyProperty.Register("SwitchProductFamilyButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty AddToADACartLabelVisibilityProperty = DependencyProperty.Register("AddToADACartLabelVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty MiniCartVisibilityProperty = DependencyProperty.Register("MiniCartVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty BackgroundImageVisibilityProperty = DependencyProperty.Register("BackgroundImageVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
@@ -44,6 +46,24 @@ public class BrowseViewModel : DependencyObject
 	public static readonly DependencyProperty BrowseFilterBarModelProperty = DependencyProperty.Register("BrowseFilterBarModel", typeof(FilterBarModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BrowseTopMenuModelProperty = DependencyProperty.Register("BrowseTopMenuModel", typeof(TopMenuModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SignInButtonVisibilityProperty = DependencyProperty.Register("SignInButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty SignOutButtonVisibilityProperty = DependencyProperty.Register("SignOutButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty MyPerksButtonVisibilityProperty = DependencyProperty.Register("MyPerksButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty EmptyCartSpacesVisibilityProperty = DependencyProperty.Register("EmptyCartSpacesVisibilityVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty EmptyCartAddItemMessageVisibilityProperty = DependencyProperty.Register("EmptyCartAddItemMessageVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public string SignInButtonText { get; set; }
+
+	public string SignOutButtonText { get; set; }
+
+	public string MyPerksButtonText { get; set; }
+
+	public string DontMissYourPerksText { get; set; }
 
 	public BrowseControlModel BrowseProductControlModel
 	{
@@ -135,36 +155,6 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
-	public string AddToCartLabel1Text
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(AddToCartLabel1TextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddToCartLabel1TextProperty, value);
-			});
-		}
-	}
-
-	public string AddToCartLabel2Text
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(AddToCartLabel2TextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddToCartLabel2TextProperty, value);
-			});
-		}
-	}
-
 	public string AddToADACartLabelText
 	{
 		get
@@ -195,17 +185,17 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
-	public Visibility AddToCartLabelVisibility
+	public Visibility MiniCartVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddToCartLabelVisibilityProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MiniCartVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(AddToCartLabelVisibilityProperty, value);
+				SetValue(MiniCartVisibilityProperty, value);
 			});
 		}
 	}
@@ -272,6 +262,85 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
+	public Visibility SignInButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SignInButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SignInButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility SignOutButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SignOutButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SignOutButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility MyPerksButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MyPerksButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MyPerksButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility EmptyCartSpacesVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(EmptyCartSpacesVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(EmptyCartSpacesVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility EmptyCartAddItemMessageVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(EmptyCartAddItemMessageVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(EmptyCartAddItemMessageVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string AddToCartLabel1Text { get; set; }
+
+	public string AddToCartLabel2Text { get; set; }
+
 	public event Action<BrowseViewModel> OnBrowseProductControlModelChanged;
 
 	public ISpeechControl ProcessGetSpeechControl()
@@ -298,6 +367,21 @@ public class BrowseViewModel : DependencyObject
 		{
 			OnToggleTitleFamilyButtonClicked();
 		}
+	}
+
+	public void ProcessOnSignInButtonClicked()
+	{
+		OnSignInButtonClicked?.Invoke();
+	}
+
+	public void ProcessOnSignOutButtonClicked()
+	{
+		OnSignOutButtonClicked?.Invoke();
+	}
+
+	public void ProcessOnMyPerksButtonClicked()
+	{
+		OnMyPerksButtonClicked?.Invoke();
 	}
 
 	private static void OnBrowseProductControlModelPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

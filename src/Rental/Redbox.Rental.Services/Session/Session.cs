@@ -1,5 +1,6 @@
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Session;
 
 namespace Redbox.Rental.Services.Session;
@@ -11,6 +12,8 @@ public class Session : ISession
 	public IBrowseState BrowseState { get; set; }
 
 	public IHelpState HelpState { get; set; }
+
+	public IPersonalizationSession PersonalizationSession { get; set; }
 
 	public Session()
 	{

@@ -146,16 +146,17 @@ public class ViewStackToolWindow : ToolWindow
 	{
 		m_stackListView.BeginUpdate();
 		m_stackListView.Items.Clear();
-		foreach (IViewFrame item in ServiceLocator.Instance.GetService<IViewService>().Stack)
+		foreach (IViewFrameInstance item in ServiceLocator.Instance.GetService<IViewService>().Stack)
 		{
-			ListViewItem listViewItem = new ListViewItem(item.ViewName)
+			ListViewItem listViewItem = new ListViewItem(item?.ViewFrame.ViewName)
 			{
 				Tag = item
 			};
-			listViewItem.SubItems.Add(item.SceneName);
-			listViewItem.SubItems.Add(item.Clear.ToString());
-			listViewItem.SubItems.Add(item.Width.ToString());
-			listViewItem.SubItems.Add(item.Height.ToString());
+			IViewFrame viewFrame = item.ViewFrame as IViewFrame;
+			listViewItem.SubItems.Add((viewFrame != null) ? viewFrame.SceneName : item?.ViewFrame?.Scene?.Name);
+			listViewItem.SubItems.Add(item?.ViewFrame?.Clear.ToString());
+			listViewItem.SubItems.Add(viewFrame?.Width.ToString());
+			listViewItem.SubItems.Add(viewFrame?.Height.ToString());
 			m_stackListView.Items.Add(listViewItem);
 		}
 		m_stackListView.EndUpdate();

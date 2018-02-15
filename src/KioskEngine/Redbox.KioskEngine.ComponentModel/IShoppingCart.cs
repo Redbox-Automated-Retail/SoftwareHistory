@@ -50,6 +50,8 @@ public interface IShoppingCart
 
 	int PlayPassPointsEarned { get; }
 
+	IDictionary<string, string> PropertyBag { get; }
+
 	void SetDiscount(string code, decimal value);
 
 	void ClearDiscount();
@@ -83,4 +85,8 @@ public interface IShoppingCart
 	void SetPlayPassPromptAccepted(bool playPassPromptAccepted, int playPassPointsEarned);
 
 	void SetBlocklisted(bool value);
+
+	string GetPropertyBagEntry(string key);
+
+	void SetPropertyBagEntry(string key, string value);
 }

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
+using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 
 namespace Redbox.Rental.Services.KioskProduct;
@@ -20,6 +22,29 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 	private IKioskProduct _primaryProduct;
 
 	private ITitleProduct _primaryTitle;
+
+	public Dictionary<string, BarcodeProduct> BarCodeProducts
+	{
+		get
+		{
+			Dictionary<string, BarcodeProduct> retBarCodes = new Dictionary<string, BarcodeProduct>();
+			foreach (ITitleProduct kioskProduct in _kioskProducts)
+			{
+				kioskProduct.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
+				{
+					retBarCodes.Add(x.Key, x.Value);
+				});
+			}
+			foreach (KeyValuePair<long, MDVProduct> allMDVProduct in _allMDVProducts)
+			{
+				allMDVProduct.Value.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
+				{
+					retBarCodes.Add(x.Key, x.Value);
+				});
+			}
+			return retBarCodes;
+		}
+	}
 
 	public List<ITitleProduct> KioskProducts => _kioskProducts;
 
@@ -351,29 +376,11 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool IsRentableAndInStock => _kioskProducts.Any((ITitleProduct kp) => kp.IsRentableAndInStock);
 
-	public decimal GamePurchasePrice
-	{
-		get
-		{
-			if (!IsGame)
-			{
-				return 0m;
-			}
-			return _kioskProducts.Max((ITitleProduct kp) => kp.GamePurchasePrice);
-		}
-	}
+	public decimal PurchasePrice => _kioskProducts.Max((ITitleProduct kp) => kp.PurchasePrice);
 
-	public decimal MoviePurchasePrice
-	{
-		get
-		{
-			if (!IsMovie)
-			{
-				return 0m;
-			}
-			return _kioskProducts.Max((ITitleProduct kp) => kp.MoviePurchasePrice);
-		}
-	}
+	public IPricingRecord PurchasePriceRecord => _primaryTitle?.PurchasePriceRecord;
+
+	public IList<IPricingRecord> RentalPriceRecords => _primaryTitle?.RentalPriceRecords;
 
 	public bool DoNotRent => _kioskProducts.All((ITitleProduct kp) => kp.DoNotRent);
 
@@ -417,6 +424,10 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 	}
 
 	public bool HasBeenInStock => _kioskProducts.Any((ITitleProduct kp) => kp.HasBeenInStock);
+
+	public bool HasHotDeal => _kioskProducts.Any((ITitleProduct kp) => kp.HasHotDeal);
+
+	public bool HasMultiNightPrice => _kioskProducts.Any((ITitleProduct kp) => kp.HasMultiNightPrice);
 
 	public string SortAlpha
 	{

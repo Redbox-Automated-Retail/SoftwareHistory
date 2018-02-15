@@ -192,20 +192,9 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 		RentalShoppingCartItem result = null;
 		if (titleProduct != null)
 		{
-			Ratings rating = (Ratings)(titleProduct.RatingId ?? 0);
-			bool multiDisc = titleProduct is MDVProduct;
-			result = new RentalShoppingCartItem
-			{
-				ProductId = titleProduct.ProductId,
-				Rating = rating,
-				TitleType = titleProduct.TitleType,
-				MerchandiseDate = titleProduct.MerchandiseDate,
-				TitleFamily = titleProduct.TitleFamily,
-				MultiDisc = multiDisc,
-				PurchasePrice = (titleProduct.IsMovie ? titleProduct.MoviePurchasePrice : titleProduct.GamePurchasePrice),
-				DiscNumber = titleProduct.DiscNumber,
-				SortName = titleProduct.SortName
-			};
+			_ = titleProduct.RatingId ?? 0;
+			_ = titleProduct is MDVProduct;
+			result = new RentalShoppingCartItem(titleProduct);
 			titleProduct?.Genres.ForEach(delegate(long x)
 			{
 				try

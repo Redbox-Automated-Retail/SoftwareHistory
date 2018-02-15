@@ -22,6 +22,8 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	private bool m_timerDisabled;
 
+	private Guid? ViewFrameId { get; set; }
+
 	private int Timeout
 	{
 		get
@@ -53,6 +55,7 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 		ApplyTheme();
 		RegisterRoutedCommand("Button1", MessagePopupViewCommands.Button1);
 		RegisterRoutedCommand("Button2", MessagePopupViewCommands.Button2);
+		ViewFrameId = (ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame())?.Id;
 	}
 
 	private void ApplyTheme()
@@ -64,12 +67,20 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	public void StopTimer()
 	{
+		Model.OnTimeOut = null;
 		StopTimer(executeTimeoutEvent: false);
 	}
 
 	private void TimerTick(object sender, EventArgs e)
 	{
-		StopTimer(executeTimeoutEvent: true);
+		IViewFrameInstance viewFrameInstance = ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame();
+		bool flag = viewFrameInstance?.Id == ViewFrameId;
+		if (!flag)
+		{
+			string arg = viewFrameInstance?.ViewFrame?.ViewName ?? "Unknown View";
+			LogHelper.Instance.Log($"message_popup_view time out when on {arg}");
+		}
+		StopTimer(flag);
 	}
 
 	private void StopTimer(bool executeTimeoutEvent)
@@ -95,19 +106,27 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	private void Button1CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StopTimer(executeTimeoutEvent: false);
-		if (Model?.OnButton1Clicked != null)
+		if (!base.IsMultiClickBlocked)
 		{
-			Model.OnButton1Clicked();
+			base.IsMultiClickBlocked = true;
+			StopTimer();
+			if (Model?.OnButton1Clicked != null)
+			{
+				Model.OnButton1Clicked();
+			}
 		}
 	}
 
 	private void Button2CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StopTimer(executeTimeoutEvent: false);
-		if (Model?.OnButton2Clicked != null)
+		if (!base.IsMultiClickBlocked)
 		{
-			Model.OnButton2Clicked();
+			base.IsMultiClickBlocked = true;
+			StopTimer();
+			if (Model?.OnButton2Clicked != null)
+			{
+				Model.OnButton2Clicked();
+			}
 		}
 	}
 
@@ -120,6 +139,14 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 			{
 				UserControlContainer.Children.Clear();
 				UserControlContainer.Children.Add(Model.ContentUserControl);
+			}
+			if (string.IsNullOrEmpty(Model.Button1Text))
+			{
+				ButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
+			}
+			if (string.IsNullOrEmpty(Model.Button2Text))
+			{
+				ButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
 			}
 		}
 	}

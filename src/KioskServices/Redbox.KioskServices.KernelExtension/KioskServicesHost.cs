@@ -92,6 +92,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		ServiceLocator.Instance.AddService(typeof(IAuthenticationServices), AuthenticationServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IDigitalServices), DigitalServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IMarketingOptinServices), MarketingOptinServicesProxy.Instance);
+		ServiceLocator.Instance.AddService(typeof(IPersonalizationServices), PersonalizationServicesProxy.Instance);
+		ServiceLocator.Instance.AddService(typeof(ILoyaltyServices), LoyaltyServicesProxy.Instance);
 		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
 		if (service != null)
 		{
@@ -105,6 +107,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.AddPreferencePage("KoiskServices_MarketingOptinServices", "Remote Services\\Marketing Optin Services", "Kiosk Services/Marketing Optin Services", PreferencePageTarget.LocalSystem, new MarketingOptinPreferencesPage());
 			service.AddPreferencePage("KoiskServices_ReservationAuthServices", "Remote Services\\Reservation Auth Services", "Kiosk Services/Reservation Auth Services", PreferencePageTarget.LocalSystem, new ReservationAuthPreferencePage());
 			service.AddPreferencePage("KioskServices_GiftCardAuth", "Remote Services\\Merchant Services", "Kiosk Services/Gift Card Auth", PreferencePageTarget.LocalSystem, new GiftCardAuthPreferencePage());
+			service.AddPreferencePage("KioskServices_PersonalizationLogin", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Login", PreferencePageTarget.LocalSystem, new PersonalizationPreferencePage());
+			service.AddPreferencePage("KioskServices_LoyaltyServices", "Remote Services\\Loyalty Services", "Kiosk Services/Loyalty Services", PreferencePageTarget.LocalSystem, new LoyaltyServicesPreferencePage());
 		}
 		return result;
 	}

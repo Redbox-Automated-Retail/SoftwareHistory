@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<UserControl x:Class="Redbox.Rental.UI.Controls.BrowseUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localui="clr-namespace:Redbox.Rental.UI" DataContextChanged="UserControl_DataContextChanged" SizeChanged="UserControl_SizeChanged">
+<UserControl x:Class="Redbox.Rental.UI.Controls.BrowseUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:localui="clr-namespace:Redbox.Rental.UI" DataContextChanged="UserControl_DataContextChanged" SizeChanged="UserControl_SizeChanged">
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static localui:Commands.PageLeftCommand}" Executed="PageLeftCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localui:Commands.PageRightCommand}" Executed="PageRightCommandBinding_Executed" />
@@ -26,8 +26,8 @@
         <Grid Name="NextPageGrid" Width="{Binding Path=PageGridWidth, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
       </StackPanel>
     </Grid>
-    <local:RoundedButton x:Name="LeftPaddleButton" Style="{StaticResource left_paddle_button_style}" Command="{x:Static localui:Commands.PageLeftCommand}" Width="54" Height="306" HorizontalAlignment="Left" RenderTransformOrigin="0,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=PaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
-    <local:RoundedButton x:Name="RightPaddleButton" Style="{StaticResource right_paddle_button_style}" Command="{x:Static localui:Commands.PageRightCommand}" Width="54" Height="306" HorizontalAlignment="Right" Margin="0,0,0,0" RenderTransformOrigin="1,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=PaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
+    <Redbox:RoundedButton Name="LeftPaddleButton" Style="{StaticResource left_paddle_button_style}" Command="{x:Static localui:Commands.PageLeftCommand}" Width="54" Height="306" HorizontalAlignment="Left" RenderTransformOrigin="0,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=PaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
+    <Redbox:RoundedButton Name="RightPaddleButton" Style="{StaticResource right_paddle_button_style}" Command="{x:Static localui:Commands.PageRightCommand}" Width="54" Height="306" HorizontalAlignment="Right" Margin="0,0,0,0" RenderTransformOrigin="1,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=PaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
     <Grid Name="NoResultsGrid" Visibility="Collapsed">
       <StackPanel Name="NoResultsPanel" Orientation="Vertical" VerticalAlignment="Center">
         <Rectangle Height="20">

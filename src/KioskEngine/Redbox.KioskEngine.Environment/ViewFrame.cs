@@ -9,7 +9,7 @@ using Redbox.REDS.Framework;
 
 namespace Redbox.KioskEngine.Environment;
 
-internal sealed class ViewFrame : IViewFrame, IDisposable
+internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDisposable
 {
 	private sealed class ActorProperties
 	{
@@ -113,27 +113,17 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		public string WPFControlAssemblyName;
 	}
 
-	private readonly Redbox.KioskEngine.ComponentModel.ErrorList m_errors = new Redbox.KioskEngine.ComponentModel.ErrorList();
-
 	private readonly IDictionary<string, ActorProperties> m_actors = new Dictionary<string, ActorProperties>();
 
 	public int Width { get; internal set; }
 
 	public int Height { get; internal set; }
 
-	public bool Clear { get; internal set; }
-
 	public bool Cached { get; internal set; }
-
-	public IScene Scene { get; internal set; }
-
-	public string ViewName { get; internal set; }
 
 	public string ViewVersion { get; internal set; }
 
 	public RenderType ViewRenderType { get; internal set; }
-
-	public string ActiveFlag { get; internal set; }
 
 	public string SceneName { get; internal set; }
 
@@ -149,24 +139,22 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 
 	public string OnLeaveResourceName { get; internal set; }
 
-	public Redbox.KioskEngine.ComponentModel.ErrorList Errors => m_errors;
-
-	public void UpdateScene()
+	public override void UpdateScene(IViewFrameInstance viewFrameInstance)
 	{
 		try
 		{
-			Scene.SuspendDrawing();
-			Scene.SceneRenderType = ViewRenderType;
-			if (Clear)
+			base.Scene.SuspendDrawing();
+			base.Scene.SceneRenderType = ViewRenderType;
+			if (base.Clear)
 			{
-				Scene.Clear();
-				Scene.BackgroundColor = BackgroundColor;
-				Scene.BackgroundImage = BackgroundImage;
+				base.Scene.Clear();
+				base.Scene.BackgroundColor = BackgroundColor;
+				base.Scene.BackgroundImage = BackgroundImage;
 			}
 			foreach (string key in m_actors.Keys)
 			{
 				ActorProperties actorProperties = m_actors[key];
-				IActor actor = Scene.CreateActor();
+				IActor actor = base.Scene.CreateActor();
 				actor.Name = key;
 				actor.Tag = actorProperties.Tag;
 				actor.RelativeToActorName = actorProperties.RelativeToActor;
@@ -217,13 +205,13 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 					catch (Exception e2)
 					{
 						LogHelper.Instance.Log("An unhandled exception was raised in ViewFrame, actor.Hit delegate.", e2);
-						LogHelper.Instance.Log("View name = {0}, actor name = {1}", ViewName, actor.Name);
+						LogHelper.Instance.Log("View name = {0}, actor name = {1}", base.ViewName, actor.Name);
 					}
 				};
 				actor.Image = actorProperties.Image;
-				Scene.AddLast(actor);
+				base.Scene.AddLast(actor);
 			}
-			Scene.ResumeDrawing();
+			base.Scene.ResumeDrawing();
 		}
 		catch (Exception e)
 		{
@@ -231,39 +219,39 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		}
 	}
 
-	public void RaiseOnEnter()
+	public override bool RaiseOnEnter(IViewFrameInstance viewFrameInstance)
 	{
 		if (string.IsNullOrEmpty(OnEnterResourceName))
 		{
-			LogHelper.Instance.Log("No on enter script specified for view named: {0}", ViewName);
-			return;
+			return false;
 		}
-		LogHelper.Instance.Log("Executing on enter script ({0}) for view named: {1}", OnEnterResourceName, ViewName);
+		LogHelper.Instance.Log("Executing on enter script ({0}) for view named: {1}", OnEnterResourceName, base.ViewName);
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		service.ExecuteScript(OnEnterResourceName);
+		return true;
 	}
 
-	public void RaiseOnLeave()
+	public override void RaiseOnLeave(IViewFrameInstance viewFrameInstance)
 	{
 		if (string.IsNullOrEmpty(OnLeaveResourceName))
 		{
-			LogHelper.Instance.Log("No on leave script specified for view named: {0}", ViewName);
+			LogHelper.Instance.Log("No on leave script specified for view named: {0}", base.ViewName);
 			return;
 		}
-		LogHelper.Instance.Log("Executing on leave script ({0}) for view named: {1}", OnLeaveResourceName, ViewName);
+		LogHelper.Instance.Log("Executing on leave script ({0}) for view named: {1}", OnLeaveResourceName, base.ViewName);
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		service.ExecuteScript(OnLeaveResourceName);
 	}
 
 	public void Parse()
 	{
-		Errors.Clear();
+		base.Errors.Clear();
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		IStyleSheetService service2 = ServiceLocator.Instance.GetService<IStyleSheetService>();
 		IRenderingService service3 = ServiceLocator.Instance.GetService<IRenderingService>();
 		IResource viewResource = GetViewResource();
 		ViewVersion = viewResource["version"] as string;
-		ActiveFlag = viewResource["active_flag"] as string;
+		base.ActiveFlag = viewResource["active_flag"] as string;
 		XmlNode xmlNode = GetViewGraph().ChildNodes[0];
 		string attributeValue = xmlNode.GetAttributeValue("render_type", "GDI");
 		if (!string.IsNullOrEmpty(attributeValue))
@@ -276,7 +264,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 			{
 			}
 		}
-		Clear = xmlNode.GetAttributeValue("clear", defaultValue: true);
+		base.Clear = xmlNode.GetAttributeValue("clear", defaultValue: true);
 		Width = xmlNode.GetAttributeValue<int>("width");
 		Height = xmlNode.GetAttributeValue<int>("height");
 		Cached = xmlNode.GetAttributeValue<bool>("cached");
@@ -301,7 +289,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 			}
 			else
 			{
-				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V002", $"backgroundImage: Bitmap resource '{attributeValue3}' not found.", "The resource name specified in the view attribute backgroundImage was not found."));
+				base.Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V002", $"backgroundImage: Bitmap resource '{attributeValue3}' not found.", "The resource name specified in the view attribute backgroundImage was not found."));
 			}
 		}
 		BackgroundColor = xmlNode.GetAttributeValue("backgroundColor", Color.FromArgb(153, 153, 152));
@@ -310,7 +298,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		{
 			return;
 		}
-		Scene = service3.GetScene(SceneName) ?? service3.GetScene("Default");
+		base.Scene = service3.GetScene(SceneName) ?? service3.GetScene("Default");
 		foreach (XmlNode item in xmlNodeList)
 		{
 			string attributeValue4 = item.GetAttributeValue<string>("name");
@@ -369,7 +357,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 			actorProperties.Font = service.GetFont(text, out var resourceFound);
 			if (!string.IsNullOrEmpty(text) && !resourceFound)
 			{
-				Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V003", $"{attributeValue4}.font: Font resource '{text}' not found.", $" Actor {attributeValue4} is referencing a font resource named '{text}' that was not found."));
+				base.Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V003", $"{attributeValue4}.font: Font resource '{text}' not found.", $" Actor {attributeValue4} is referencing a font resource named '{text}' that was not found."));
 			}
 			string text2 = item.GetAttributeValue<string>("image");
 			if (string.IsNullOrEmpty(text2) && styleSheetState != null)
@@ -392,7 +380,7 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 					actorProperties.Height = 32;
 					actorProperties.OptionFlags |= RenderOptionFlags.DrawBorder;
 					actorProperties.ErrorText = $"Bitmap resource '{text2}' not found.";
-					Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V004", $"{attributeValue4}.image: Bitmap resource '{text2}' not found.", $"Actor {attributeValue4} is referencing a bitmap resource named '{text2}' that was not found."));
+					base.Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("V004", $"{attributeValue4}.image: Bitmap resource '{text2}' not found.", $"Actor {attributeValue4} is referencing a bitmap resource named '{text2}' that was not found."));
 				}
 			}
 			if (ViewWindow.HasValue)
@@ -420,10 +408,10 @@ internal sealed class ViewFrame : IViewFrame, IDisposable
 		{
 			return null;
 		}
-		IResource resource = service.GetResource(ViewName);
+		IResource resource = service.GetResource(base.ViewName);
 		if (resource == null)
 		{
-			throw new ArgumentException($"View resource {ViewName} was not found.");
+			throw new ArgumentException($"View resource {base.ViewName} was not found.");
 		}
 		return resource;
 	}

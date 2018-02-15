@@ -42,6 +42,8 @@ public class IdleTimerService : IIdleTimerService
 		{
 			if (_innerIdleTimers.ContainsKey(name))
 			{
+				_innerIdleTimers[name]?.Stop();
+				ServiceLocator.Instance.GetService<ITimerService>()?.RemoveTimer(name);
 				_innerIdleTimers.Remove(name);
 			}
 		}

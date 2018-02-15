@@ -9,7 +9,6 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.Lua;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -38,7 +37,7 @@ public class PromotionServicesProxy : IPromotionServices
 	{
 		get
 		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Promotion Services", "LiveCall", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Promotion Services", "LiveCall", defaultValue: true);
 		}
 		set
 		{
@@ -120,7 +119,8 @@ public class PromotionServicesProxy : IPromotionServices
 				{
 					cardHash = text;
 				}
-				errorList = service2.Enqueue(200, "KioskOptIn", new
+				IEnumerable<IOptInItem> enumerable = (optInItems ?? new List<IOptInItem>()).Where((IOptInItem x) => !string.IsNullOrEmpty(x.OptInMethodData));
+				errorList = (enumerable.Any() ? service2.Enqueue(200, "KioskOptIn", new
 				{
 					MessageType = "KioskOptIn",
 					MessageId = Guid.NewGuid(),
@@ -129,8 +129,8 @@ public class PromotionServicesProxy : IPromotionServices
 					BundleVersion = service["ProductVersion"],
 					RequestDate = DateTime.Now,
 					CardHash = cardHash,
-					OptInItems = optInItems
-				});
+					OptInItems = enumerable
+				}) : new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("U001", "No Valid Optins To Send", (optInItems?.Count() ?? 0) + " items were missing OptInMethodData") });
 			}
 			catch (Exception e)
 			{
@@ -310,17 +310,13 @@ public class PromotionServicesProxy : IPromotionServices
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CampaignTitles") ? (dictionary["CampaignTitles"] as Dictionary<string, object>) : null);
 						if (dictionary2 != null)
 						{
-							IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
-							LuaTable luaTable = (LuaTable)service2.NewTable();
-							int num = 1;
-							foreach (object item in dictionary2["Titles"] as ArrayList)
+							ArrayList value = dictionary2["Titles"] as ArrayList;
+							Dictionary<string, object> value2 = new Dictionary<string, object>
 							{
-								luaTable[num++] = item;
-							}
-							LuaTable luaTable2 = (LuaTable)service2.NewTable();
-							luaTable2["include"] = (bool)dictionary2["Include"];
-							luaTable2["titles"] = luaTable;
-							remoteServiceResult.Properties["campaign_titles"] = luaTable2;
+								["include"] = (bool)dictionary2["Include"],
+								["titles"] = value
+							};
+							remoteServiceResult.Properties["campaign_titles"] = value2;
 						}
 						if (dictionary.ContainsKey("ServerName"))
 						{

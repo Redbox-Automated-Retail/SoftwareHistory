@@ -13,6 +13,8 @@ public class CarouselModel : DependencyObject
 
 	public static readonly DependencyProperty IsAnimationOnProperty = DependencyProperty.Register("IsAnimationOn", typeof(bool), typeof(CarouselModel), new FrameworkPropertyMetadata(true, OnIsAnimationOnPropertyChanged));
 
+	public bool ShowAddButton { get; set; }
+
 	public List<DisplayProductModel> CarouselDisplayProductModels
 	{
 		get

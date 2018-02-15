@@ -8,6 +8,8 @@ public interface ITotals
 
 	decimal TaxAmount { get; }
 
+	decimal DiscountAmountUsed { get; }
+
 	decimal GrandTotal { get; }
 
 	List<ISubTotalGroup> SubTotalGroups { get; }

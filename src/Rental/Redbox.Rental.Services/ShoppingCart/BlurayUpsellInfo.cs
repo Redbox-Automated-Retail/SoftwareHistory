@@ -105,7 +105,7 @@ public class BlurayUpsellInfo : IBlurayUpsellInfo
 			foreach (IRentalShoppingCartItem item in _rentalShoppingCart.Items.Where((IRentalShoppingCartItem x) => x.Action == RentalShoppingCartItemAction.rental && x.TitleType == TitleType.DVD && !_items.Any((IBlurayUpsellItem y) => y.DVDProductId == x.ProductId)))
 			{
 				dataService.GetProduct(item.ProductId, excludeTitleRollup: true, out var kioskProduct);
-				if (kioskProduct == null || !(kioskProduct is ITitleProduct { TitleType: TitleType.DVD } titleProduct) || titleProduct.TitleRollupProductGroupId <= 0)
+				if (kioskProduct == null || !(kioskProduct is ITitleProduct { TitleType: TitleType.DVD, HasMultiNightPrice: false } titleProduct) || titleProduct.TitleRollupProductGroupId <= 0)
 				{
 					continue;
 				}

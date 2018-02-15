@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Redbox.Rental.Model.Cache;
+using Redbox.Rental.Model.Pricing;
 
 namespace Redbox.Rental.Model.KioskProduct;
 
@@ -18,6 +20,8 @@ public interface ITitleProduct : IKioskProduct
 	TitleType TitleType { get; }
 
 	TitleFamily TitleFamily { get; }
+
+	Dictionary<string, BarcodeProduct> BarCodeProducts { get; }
 
 	long? RatingId { get; }
 
@@ -65,9 +69,11 @@ public interface ITitleProduct : IKioskProduct
 
 	bool IsEmptyCase { get; }
 
-	decimal GamePurchasePrice { get; }
+	decimal PurchasePrice { get; }
 
-	decimal MoviePurchasePrice { get; }
+	IPricingRecord PurchasePriceRecord { get; }
+
+	IList<IPricingRecord> RentalPriceRecords { get; }
 
 	bool SellThru { get; }
 
@@ -88,6 +94,10 @@ public interface ITitleProduct : IKioskProduct
 	bool ShowOutOfStock { get; }
 
 	bool HasBeenInStock { get; }
+
+	bool HasHotDeal { get; }
+
+	bool HasMultiNightPrice { get; }
 
 	string SortAlpha { get; }
 

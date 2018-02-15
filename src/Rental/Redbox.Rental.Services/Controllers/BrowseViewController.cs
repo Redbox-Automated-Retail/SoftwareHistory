@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows;
@@ -22,6 +23,8 @@ using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -33,13 +36,13 @@ public class BrowseViewController
 
 		public string GenresLabel { get; set; }
 
-		public string ADay { get; set; }
+		public string OneNightPriceLabel { get; set; }
 
-		public string PriceLabel { get; set; }
+		public string OneNightReturnTimeLabel { get; set; }
 
-		public string ReturnTime { get; set; }
+		public string MultiNightPriceLabel { get; set; }
 
-		public string ReturnTimeLabel { get; set; }
+		public string MultiNightReturnTimeLabel { get; set; }
 
 		public BitmapImage AdImage { get; set; }
 
@@ -69,14 +72,24 @@ public class BrowseViewController
 
 		public string Games { get; set; }
 
-		public Style FontTargetSmallMediumStyle { get; set; }
+		public Style FontMuseo16Style { get; set; }
 
-		public Style FontTargetMediumSmallStyle { get; set; }
+		public Style FontMuseo20Style { get; set; }
+
+		public string PriceFor { get; set; }
+
+		public string Night { get; set; }
+
+		public IPricingService PricingService { get; set; }
+
+		public bool IsInCartBrowse { get; set; }
 	}
 
 	private static RentalShoppingCartChanged ShoppingCartChangeEventHandler;
 
 	private static IBrowseState BrowseState => Redbox.Rental.Services.Session.Session.Instance.BrowseState;
+
+	private static IViewService ViewService => ServiceLocator.Instance.GetService<IViewService>();
 
 	private static IIdleTimerService IdleTimerService => ServiceLocator.Instance.GetService<IIdleTimerService>();
 
@@ -156,7 +169,7 @@ public class BrowseViewController
 			ConfigureTTS(browseViewModel);
 			browseViewUserControl.DataContext = browseViewModel;
 			CommandManager.InvalidateRequerySuggested();
-			(IdleTimerService?.GetIdleTimer(BrowseFunctions.Constants.IdleTimerName))?.Start();
+			(IdleTimerService?.GetIdleTimer("idle_timer"))?.Start();
 		}
 	}
 
@@ -203,7 +216,7 @@ public class BrowseViewController
 		{
 			if (IsADAMode)
 			{
-				topMenuModel.MenuBackgroundText = BundleFunctions.GetDictionaryStringValue("strings", (BrowseState.TitleFamily == TitleFamily.Games) ? "browse_family_games" : "browse_family_movies");
+				topMenuModel.MenuBackgroundText = ((BrowseState.TitleFamily == TitleFamily.Games) ? Resources.browse_family_games : Resources.browse_family_movies);
 				topMenuModel.MenuTextStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "browse_top_menu_text_ada_style");
 			}
 			topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "browse_top_menu_background_ada_style");
@@ -261,11 +274,10 @@ public class BrowseViewController
 			BrowseState.BrowseCollectionProduct = null;
 			BrowseState.BrowseCollections = false;
 			BrowseState.PageNumber = 1;
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+			ServiceLocator.Instance.GetService<IMacroService>();
 			BrowseState.Genre = null;
 			if (BrowseState.TitleFamily == TitleFamily.Games)
 			{
-				service["Browse:ProductFamily"] = BundleFunctions.GetDictionaryStringValue("strings", "browse_family_games");
 				if (BrowseState.BrowseSelectedSort == "Blu-ray" || BrowseState.BrowseSelectedSort == "Digital Code" || BrowseState.BrowseSelectedSort == "alpha")
 				{
 					BrowseState.BrowseSelectedSort = "Newest";
@@ -294,25 +306,21 @@ public class BrowseViewController
 					BrowseState.BrowseMode = BrowseViewFilter.All;
 				}
 			}
-			else
+			else if (BrowseState.BrowseSelectedSort == "Xbox 360" || BrowseState.BrowseSelectedSort == "Xbox One" || BrowseState.BrowseSelectedSort == "PS2" || BrowseState.BrowseSelectedSort == "PS3" || BrowseState.BrowseSelectedSort == "PS4" || BrowseState.BrowseSelectedSort == "NintendoDS" || BrowseState.BrowseSelectedSort == "Wii" || BrowseState.BrowseSelectedSort == "Wii U" || BrowseState.BrowseSelectedSort == "Nintendo Switch" || BrowseState.BrowseSelectedSort == null)
 			{
-				service["Browse:ProductFamily"] = BundleFunctions.GetDictionaryStringValue("strings", "browse_family_movies");
-				if (BrowseState.BrowseSelectedSort == "Xbox 360" || BrowseState.BrowseSelectedSort == "Xbox One" || BrowseState.BrowseSelectedSort == "PS2" || BrowseState.BrowseSelectedSort == "PS3" || BrowseState.BrowseSelectedSort == "PS4" || BrowseState.BrowseSelectedSort == "NintendoDS" || BrowseState.BrowseSelectedSort == "Wii" || BrowseState.BrowseSelectedSort == "Wii U" || BrowseState.BrowseSelectedSort == "Nintendo Switch" || BrowseState.BrowseSelectedSort == null)
+				BrowseState.BrowseSelectedSort = "Newest";
+			}
+			else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale)
+			{
+				if (OrchestrationService.GetCanSellUsedMovies())
+				{
+					BrowseState.BrowseSelectedSort = "for-sale";
+					BrowseState.BrowseMode = BrowseViewFilter.ForSale;
+				}
+				else
 				{
 					BrowseState.BrowseSelectedSort = "Newest";
-				}
-				else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale)
-				{
-					if (OrchestrationService.GetCanSellUsedMovies())
-					{
-						BrowseState.BrowseSelectedSort = "for-sale";
-						BrowseState.BrowseMode = BrowseViewFilter.ForSale;
-					}
-					else
-					{
-						BrowseState.BrowseSelectedSort = "Newest";
-						BrowseState.BrowseMode = BrowseViewFilter.All;
-					}
+					BrowseState.BrowseMode = BrowseViewFilter.All;
 				}
 			}
 			ConfigureBrowseView();
@@ -367,7 +375,7 @@ public class BrowseViewController
 				BrowseMenuButton browseMenuButton = null;
 				browseMenuButton = ((!OrchestrationService.RentalIsCollectionsEnabled()) ? ((BrowseMenuButton)CreateGenreMenuButton(Genres.Top20Movies, highlightSelectedGenre)) : ((BrowseMenuButton)new BrowseCollectionsMenuButton
 				{
-					Text = BundleFunctions.GetDictionaryStringValue("strings", "Collections"),
+					Text = Resources.Collections,
 					IsSelected = BrowseState.BrowseCollections
 				}));
 				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
@@ -414,10 +422,10 @@ public class BrowseViewController
 
 	private static BrowseProductFamilyMenuButton CreateProductFamilyMenuButton(TitleFamily productFamily, ArrowDirection arrowDirection, int x)
 	{
-		string key = ((productFamily == TitleFamily.Movies) ? "To_Movies" : "To_Games");
+		string text = ((productFamily == TitleFamily.Movies) ? Resources.To_Movies : Resources.To_Games);
 		BrowseProductFamilyMenuButton browseProductFamilyMenuButton = new BrowseProductFamilyMenuButton
 		{
-			Text = BundleFunctions.GetDictionaryStringValue("strings", key),
+			Text = text,
 			FilterValue = productFamily,
 			ArrowDirection = arrowDirection,
 			IsButtonEnabled = true
@@ -438,8 +446,8 @@ public class BrowseViewController
 			FilterValue = genre,
 			IsSelected = (highlightSelectedGenre && genre2 == genre)
 		};
-		string key = (genre.HasValue ? $"genre_{(int)genre.Value}" : ((BrowseState.TitleFamily == TitleFamily.Movies) ? "Movies_ALL" : "Games_ALL"));
-		obj.Text = BundleFunctions.GetDictionaryStringValue("strings", key);
+		string name = (genre.HasValue ? $"genre_{(int)genre.Value}" : ((BrowseState.TitleFamily == TitleFamily.Movies) ? "Movies_ALL" : "Games_ALL"));
+		obj.Text = Resources.ResourceManager.GetString(name);
 		return obj;
 	}
 
@@ -459,44 +467,66 @@ public class BrowseViewController
 		{
 			BrowseState.UnwindBrowseStateSetStack();
 			BrowseState.SetDefaultBrowseStateSet();
-			OrchestrationService.ExecuteScript("view_shopping_cart");
+			ShoppingCartViewFunctions.ViewShoppingCart();
 		};
 		browseViewModel.OnToggleTitleFamilyButtonClicked = delegate
 		{
 			BrowseState.TitleFamily = ((BrowseState.TitleFamily != TitleFamily.Movies) ? TitleFamily.Movies : TitleFamily.Games);
 			BrowseState.TitleType = TitleType.All;
+			BrowseState.BrowseMode = BrowseViewFilter.All;
 			BrowseState.BrowseSelectedSort = "Newest";
 			BrowseState.Genre = null;
 			BrowseState.PageNumber = 1;
 			ConfigureBrowseView();
 		};
+		browseViewModel.OnSignInButtonClicked = delegate
+		{
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "signin");
+			OrchestrationService.ViewShow("sign_in_view");
+		};
+		browseViewModel.OnSignOutButtonClicked = delegate
+		{
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "signout");
+			PersonalizationFunctions.ShowLogoutDialog();
+		};
+		browseViewModel.OnMyPerksButtonClicked = HandleMyPerksButtonClick;
 		string checkOutButtonText = null;
 		Style style = null;
 		int num = RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0;
 		if (ShowNoThanks())
 		{
 			style = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "classic_gray_button_style");
-			checkOutButtonText = BundleFunctions.GetDictionaryStringValue("strings", "no_thanks_button");
+			checkOutButtonText = Resources.no_thanks_button;
 		}
 		else
 		{
-			style = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "classic_orange_button_style");
-			string dictionaryStringValue = BundleFunctions.GetDictionaryStringValue("strings", "check_out_button_text");
-			if (dictionaryStringValue.Contains("{0}"))
+			style = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "warmpurple_white_border_button_with_dropshadow_style");
+			string check_out_button_text = Resources.check_out_button_text;
+			if (check_out_button_text.Contains("{0}"))
 			{
-				checkOutButtonText = string.Format(dictionaryStringValue, num);
+				checkOutButtonText = string.Format(check_out_button_text, num);
 			}
 		}
 		browseViewModel.IsADAAccessible = ApplicationState.Instance.IsADAAccessible;
 		browseViewModel.CheckOutButtonText = checkOutButtonText;
 		browseViewModel.CheckOutButtonStyle = style;
 		browseViewModel.SwitchProductFamilyButtonVisibility = ((!ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-		browseViewModel.SwitchProductFamilyButtonText = BundleFunctions.GetDictionaryStringValue("strings", (BrowseState.TitleFamily == TitleFamily.Movies) ? "To_Games" : "To_Movies");
-		browseViewModel.AddToCartLabelVisibility = ((num != 0 || ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-		browseViewModel.AddToCartLabel1Text = BundleFunctions.GetDictionaryStringValue("strings", "add_to_cart_label1");
-		browseViewModel.AddToCartLabel2Text = BundleFunctions.GetDictionaryStringValue("strings", "add_to_cart_label2");
-		browseViewModel.AddToADACartLabelText = BundleFunctions.GetDictionaryStringValue("strings", "add_to_cart_ada_label");
+		browseViewModel.SwitchProductFamilyButtonText = ((BrowseState.TitleFamily == TitleFamily.Movies) ? Resources.Games : Resources.Movies);
+		browseViewModel.AddToADACartLabelText = Resources.add_to_cart_ada_label;
 		browseViewModel.AddToADACartLabelVisibility = ((!IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
+		browseViewModel.DontMissYourPerksText = Resources.perks_dont_miss;
+		browseViewModel.SignInButtonText = Resources.sign_in;
+		browseViewModel.SignInButtonVisibility = ((!PersonalizationFunctions.IsSignInEnabled) ? Visibility.Collapsed : Visibility.Visible);
+		browseViewModel.SignOutButtonText = Resources.sign_out_button;
+		browseViewModel.SignOutButtonVisibility = ((!PersonalizationFunctions.IsSignedIn) ? Visibility.Collapsed : Visibility.Visible);
+		browseViewModel.MyPerksButtonText = Resources.my_perks;
+		browseViewModel.MyPerksButtonVisibility = ((!PersonalizationFunctions.IsLoyaltySignedIn) ? Visibility.Collapsed : Visibility.Visible);
+	}
+
+	private static void HandleMyPerksButtonClick()
+	{
+		SessionAnalyticsService?.AddViewEvent("buttonPress", "myperks");
+		PersonalizationFunctions.ShowMemberPerks();
 	}
 
 	private static bool ShowNoThanks()
@@ -569,13 +599,21 @@ public class BrowseViewController
 			ConfigureBrowseFilterBar();
 			CommandManager.InvalidateRequerySuggested();
 		};
-		filterBarModel.StartOverButtonVisibility = ((BrowseState.BrowseCollections || BrowseState.BrowseCollectionProduct != null || InTitleMarketingMode) ? Visibility.Collapsed : Visibility.Visible);
-		filterBarModel.StartOverButtonText = BundleFunctions.GetDictionaryStringValue("strings", "start_over_button");
+		filterBarModel.OnHomeButtonClicked += delegate
+		{
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "Home");
+			ApplicationState.Instance.KeepSessionOnStartViewEnter = true;
+			OrchestrationService.ExecuteScript("start_over");
+		};
+		filterBarModel.HomeButtonText = Resources.home_button;
+		filterBarModel.HomeButtonVisibility = ((!PersonalizationFunctions.IsSignedIn || BrowseState.BrowseCollections || BrowseState.BrowseCollectionProduct != null || InTitleMarketingMode) ? Visibility.Collapsed : Visibility.Visible);
+		filterBarModel.StartOverButtonVisibility = ((PersonalizationFunctions.IsSignedIn || BrowseState.BrowseCollections || BrowseState.BrowseCollectionProduct != null || InTitleMarketingMode) ? Visibility.Collapsed : Visibility.Visible);
+		filterBarModel.StartOverButtonText = Resources.start_over_button;
 		filterBarModel.StartOverButtonStyle = WPFFunctions.GetStyle(browseViewUserControl, OrchestrationService.IsCultureSpanish() ? "spanish_start_over_button_style" : "english_start_over_button_style");
 		filterBarModel.BackButtonVisibility = ((!BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null) ? Visibility.Collapsed : Visibility.Visible);
-		filterBarModel.BackButtonText = BundleFunctions.GetDictionaryStringValue("strings", "back_button");
+		filterBarModel.BackButtonText = Resources.back_button;
 		filterBarModel.MoreCollectionsButtonVisibility = ((BrowseState.BrowseCollectionProduct == null) ? Visibility.Collapsed : Visibility.Visible);
-		filterBarModel.MoreCollectionsButtonText = BundleFunctions.GetDictionaryStringValue("strings", "more_collections");
+		filterBarModel.MoreCollectionsButtonText = Resources.more_collections;
 		filterBarModel.FilterBarTextVisibility = ((BrowseState.BrowseCollectionProduct == null) ? Visibility.Collapsed : Visibility.Visible);
 		filterBarModel.FilterBarText = BrowseState.BrowseCollectionProduct?.LegalInfo;
 		IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
@@ -713,7 +751,7 @@ public class BrowseViewController
 		browseProductControl.SetPageNumber(Math.Max(BrowseState.PageNumber, 1), PageChangeSource.None);
 		BrowseControlModel browseControlModel = browseProductControl;
 		IBrowseState browseState = BrowseState;
-		browseControlModel.NoResultsText = BundleFunctions.GetDictionaryStringValue("strings", (browseState != null && browseState.TitleFamily == TitleFamily.Movies) ? "filter_movies_empty" : "filter_games_empty");
+		browseControlModel.NoResultsText = ((browseState != null && browseState.TitleFamily == TitleFamily.Movies) ? Resources.filter_movies_empty : Resources.filter_games_empty);
 		browseProductControl.ShowNoResultsMessage = true;
 		browseProductControl.BorderShadowVisibility = Visibility.Collapsed;
 		DisplayGroupSelectionModel displayGroupSelectionModel = new DisplayGroupSelectionModel();
@@ -776,7 +814,7 @@ public class BrowseViewController
 			else
 			{
 				browseProductControl.PaddleOverlapWidth = 24.0;
-				browseProductControl.BrowseItemMargin = new Thickness(8.0, 36.0, 8.0, 0.0);
+				browseProductControl.BrowseItemMargin = new Thickness(6.0, 36.0, 6.0, 0.0);
 				browseProductControl.RowCount = 2;
 				browseProductControl.ColumnCount = 5;
 			}
@@ -796,7 +834,7 @@ public class BrowseViewController
 				List<long> exclude = null;
 				if (rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel)
 				{
-					Promotion promotion = PromotionService.Instance.GetPromotion();
+					IPromotion promotion = PromotionService.Instance.GetPromotion();
 					if (promotion?.CampaignTitles != null && promotion?.CampaignTitles?.Titles != null)
 					{
 						List<long> list = new List<long>();
@@ -842,7 +880,7 @@ public class BrowseViewController
 				});
 				continue;
 			}
-			browseProductControl.BrowseControls.Add(new DisplayProductUserControl
+			browseProductControl.BrowseControls.Add(new DisplayProductWithCommandsUserControl
 			{
 				Name = $"product_{num + 1}",
 				HorizontalAlignment = HorizontalAlignment.Center,
@@ -991,6 +1029,7 @@ public class BrowseViewController
 					BrowseState.ProductDetailShownFromView = service.Peek();
 				}
 				PrepareToLeaveBrowseView();
+				ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("context", ("productDisplayed," + ((ITitleProduct)kioskProduct)?.ProductId) ?? string.Empty);
 				OrchestrationService.ViewShow("product_detail_view");
 			}
 			break;
@@ -1036,7 +1075,17 @@ public class BrowseViewController
 	{
 		if (browseItemModel?.Data is TitleRollupProduct titleRollupProduct)
 		{
-			BrowseFunctions.AddProductToCart(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray), BrowseFunctions.IsPurchase);
+			ITitleProduct titleProduct = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray);
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+			if (titleProduct.HasMultiNightPrice && !BrowseFunctions.IsPurchase && !flag)
+			{
+				OrchestrationService.ViewShow("multi_night_pricing_popup_view", titleProduct);
+			}
+			else
+			{
+				BrowseFunctions.AddProductToCart(titleProduct, BrowseFunctions.IsPurchase);
+			}
 		}
 	}
 
@@ -1044,7 +1093,17 @@ public class BrowseViewController
 	{
 		if (browseItemModel?.Data is TitleRollupProduct titleRollupProduct)
 		{
-			BrowseFunctions.AddProductToCart(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.DVD), BrowseFunctions.IsPurchase);
+			ITitleProduct titleProduct = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.DVD);
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+			if (titleProduct.HasMultiNightPrice && !BrowseFunctions.IsPurchase && !flag)
+			{
+				OrchestrationService.ViewShow("multi_night_pricing_popup_view", titleProduct);
+			}
+			else
+			{
+				BrowseFunctions.AddProductToCart(titleProduct, BrowseFunctions.IsPurchase);
+			}
 		}
 	}
 
@@ -1083,8 +1142,25 @@ public class BrowseViewController
 			{
 			case KioskProductType.Title:
 			case KioskProductType.MDV:
-				BrowseFunctions.AddProductToCart(kioskProduct as ITitleProduct, BrowseFunctions.IsPurchase);
+			{
+				ITitleProduct titleProduct = kioskProduct as ITitleProduct;
+				if ((titleProduct?.ProductId ?? 0) == 1139)
+				{
+					BrowseFunctions.AddProductToCart(titleProduct, isPurchase: true);
+					break;
+				}
+				IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+				bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+				if (titleProduct.HasMultiNightPrice && !BrowseFunctions.IsPurchase && !flag)
+				{
+					OrchestrationService.ViewShow("multi_night_pricing_popup_view", titleProduct);
+				}
+				else
+				{
+					BrowseFunctions.AddProductToCart(titleProduct, BrowseFunctions.IsPurchase);
+				}
 				break;
+			}
 			case KioskProductType.TitleRollup:
 			{
 				if (browseViewModelFromView?.BrowseProductControlModel?.TitleRollupOverlayModel != null)
@@ -1095,7 +1171,7 @@ public class BrowseViewController
 				TitleRollupProduct titleRollupProduct = kioskProduct as TitleRollupProduct;
 				if ((titleRollupProduct?.ProductId ?? 0) == 1139)
 				{
-					BrowseFunctions.AddProductToCart(titleRollupProduct, BrowseFunctions.IsPurchase);
+					BrowseFunctions.AddProductToCart(titleRollupProduct, isPurchase: true);
 				}
 				else
 				{
@@ -1117,30 +1193,46 @@ public class BrowseViewController
 	{
 		IKioskProduct kioskProduct = browseItemModel.Data as IKioskProduct;
 		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-		IComingSoonOptinInfo comingSoonOptinInfo = RentalShoppingCartService?.CurrentRentalShoppingCart?.ComingSoonOptInInfo;
-		if (titleProduct == null || comingSoonOptinInfo == null)
+		IComingSoonOptinInfo comingSoonOptInInfo = RentalShoppingCartService?.CurrentRentalShoppingCart?.ComingSoonOptInInfo;
+		if (titleProduct == null || comingSoonOptInInfo == null)
 		{
 			return;
 		}
-		if (!string.IsNullOrEmpty(comingSoonOptinInfo.EmailAddress))
+		if (!string.IsNullOrEmpty(comingSoonOptInInfo.EmailAddress))
 		{
-			if (comingSoonOptinInfo.OptInItems?.FirstOrDefault((IOptInItem x) => x.ItemId == titleProduct.ProductId) == null)
+			if (comingSoonOptInInfo.OptInItems?.FirstOrDefault((IOptInItem x) => x.ItemId == titleProduct.ProductId) == null)
 			{
-				comingSoonOptinInfo.AddProduct(titleProduct.ProductId);
+				comingSoonOptInInfo.AddProduct(titleProduct.ProductId);
 			}
 			else
 			{
-				comingSoonOptinInfo.RemoveProduct(titleProduct.ProductId);
+				comingSoonOptInInfo.RemoveProduct(titleProduct.ProductId);
 			}
 			if (browseItemModel is DisplayProductModel browseItemModel2)
 			{
 				ConfigureDisplayProductModel(kioskProduct, browseItemModel2, isADAMiniCart: false, GetDisplayProductModelConstants());
 			}
+			return;
 		}
-		else
+		OrchestrationService.ViewShow("keyboard_email_coming_soon_view", new KeyboardInfo
 		{
-			OrchestrationService.InvokeGetEmailAddressAndRegisterEmailReminderCallback(titleProduct.ProductId);
-		}
+			MaxLength = 64,
+			KeyboardText = comingSoonOptInInfo.EmailAddress,
+			CancelAction = delegate
+			{
+				ViewService?.GoBack("go back", popOnly: false);
+			},
+			IsValidEntry = ValidationServices.IsValidEmailAddress,
+			ContinueAction = delegate(string keyboardText)
+			{
+				if (comingSoonOptInInfo != null && ViewService != null)
+				{
+					comingSoonOptInInfo.EmailAddress = keyboardText;
+					comingSoonOptInInfo.AddProduct(titleProduct.ProductId);
+					ViewService.UnwindTo("browse_view", discard: true, "KeyboardView: KeyboardMode.EMAIL_COMING_SOON  - NEXT button");
+				}
+			}
+		});
 	}
 
 	private static void ConfigureMiniCartControl()
@@ -1165,10 +1257,9 @@ public class BrowseViewController
 			int num = (ApplicationState.Instance.IsADAAccessible ? 10 : 5);
 			for (int i = 0; i < num; i++)
 			{
-				browseControlModel.BrowseControls.Add(new DisplayProductUserControl
+				browseControlModel.BrowseControls.Add(new DisplayProductWithCommandsUserControl
 				{
 					Name = $"minicart_product_{i + 1}",
-					ShowVacantItemBackground = !ApplicationState.Instance.IsADAAccessible,
 					HorizontalAlignment = HorizontalAlignment.Center,
 					VerticalAlignment = VerticalAlignment.Center
 				});
@@ -1184,6 +1275,11 @@ public class BrowseViewController
 				browseControlModel.BrowseItems = CreateBrowseItemsFromCartItems();
 			}
 			browseViewModel.MiniCartControlModel = browseControlModel;
+			browseViewModel.MiniCartVisibility = Visibility.Visible;
+			browseViewModel.EmptyCartSpacesVisibility = (IsADAMode ? Visibility.Collapsed : Visibility.Visible);
+			browseViewModel.EmptyCartAddItemMessageVisibility = ((IsADAMode || (RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) != 0) ? Visibility.Collapsed : Visibility.Visible);
+			browseViewModel.AddToCartLabel1Text = Resources.add_to_cart_label1;
+			browseViewModel.AddToCartLabel2Text = Resources.add_to_cart_label2;
 		}
 	}
 
@@ -1261,12 +1357,12 @@ public class BrowseViewController
 						Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
 					};
 					displayProductModel.ConfigureForMiniCart();
-					displayProductModel.CancelButtonVisibility = ((InTitleMarketingMode && item.Sequence == RentalShoppingCartItemSequence.pre_offer) ? Visibility.Collapsed : Visibility.Visible);
+					displayProductModel.MiniCartCancelButtonVisibility = ((InTitleMarketingMode && item.Sequence == RentalShoppingCartItemSequence.pre_offer) ? Visibility.Collapsed : Visibility.Visible);
 					bool flag = item.Action == RentalShoppingCartItemAction.purchase;
 					displayProductModel.Banner = (flag ? BannerCollection.Instance.FirstOrDefault((Banner x) => x.BannerType == BannerType.Purchase) : null);
 					displayProductModel.BannerVisibility = ((displayProductModel.Banner == null) ? Visibility.Collapsed : Visibility.Visible);
-					displayProductModel.BannerText = ((flag && displayProductModel.Banner != null) ? BundleFunctions.GetDictionaryStringValue("strings", displayProductModel.Banner.TextKey) : null);
-					displayProductModel.BannerBackgroundBrush = ((flag && displayProductModel.Banner != null) ? GetBrush(GetBrowseViewUserControl(), displayProductModel.Banner.BannerStyleName) : null);
+					displayProductModel.BannerText = ((flag && displayProductModel.Banner != null) ? Resources.ResourceManager.GetString(displayProductModel.Banner.TextKey) : null);
+					displayProductModel.BannerBackgroundBrush = ((flag && displayProductModel.Banner != null) ? WPFFunctions.GetBrush(GetBrowseViewUserControl(), displayProductModel.Banner.BannerStyleName) : null);
 					list.Add(displayProductModel);
 				}
 			}
@@ -1302,29 +1398,34 @@ public class BrowseViewController
 		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
 		DisplayProductModelConstants obj = new DisplayProductModelConstants
 		{
-			StarringLabel = BundleFunctions.GetDictionaryStringValue("strings", "starring_label"),
-			GenresLabel = BundleFunctions.GetDictionaryStringValue("strings", "genres_label"),
-			ADay = BundleFunctions.GetDictionaryStringValue("strings", "price_a_day"),
-			PriceLabel = BundleFunctions.GetDictionaryStringValue("strings", "price_tag"),
-			ReturnTime = ReturnTime(),
-			ReturnTimeLabel = BundleFunctions.GetDictionaryStringValue("strings", "return_time_label"),
+			StarringLabel = Resources.starring_label,
+			GenresLabel = Resources.genres_label,
+			OneNightPriceLabel = Resources.one_night_price_label,
+			OneNightReturnTimeLabel = Resources.return_time_label,
+			MultiNightPriceLabel = Resources.multi_night_price_label,
+			MultiNightReturnTimeLabel = Resources.return_time_label,
 			AdImage = GetAdImage()
 		};
-		obj.AdHeight = ((obj.AdImage != null) ? 115 : 20);
-		obj.MainHeight = ((obj.AdImage != null) ? 490 : 590);
+		obj.AdHeight = ((obj.AdImage != null) ? 110 : 20);
+		obj.MainHeight = ((obj.AdImage != null) ? 470 : 560);
 		obj.ShowCollections = service?.ShowCollections ?? false;
-		obj.CollectionTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "title_detail_collection_text");
-		obj.BuyText = BundleFunctions.GetDictionaryStringValue("strings", "title_detail_buy");
+		obj.CollectionTextLine1 = Resources.title_detail_collection_text;
+		obj.BuyText = Resources.title_detail_buy;
 		obj.TitleRollupOverlayButtonTextValues = new TitleRollupUtilities.TitleRollupOverlayButtonTextValues();
-		obj.Add = BundleFunctions.GetDictionaryStringValue("strings", "add");
-		obj.ComingSoonLabel = BundleFunctions.GetDictionaryStringValue("strings", "coming_label");
-		obj.OutOfStockLine1Text = BundleFunctions.GetDictionaryStringValue("strings", "out_of_stock_line1");
-		obj.OutOfStockLine2Text = BundleFunctions.GetDictionaryStringValue("strings", "out_of_stock_line2");
-		obj.OutOfStockLine3Text = BundleFunctions.GetDictionaryStringValue("strings", "out_of_stock_line3");
-		obj.Movies = BundleFunctions.GetDictionaryStringValue("strings", "Movies");
-		obj.Games = BundleFunctions.GetDictionaryStringValue("strings", "Games");
-		obj.FontTargetMediumSmallStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "font_target_medium_small");
-		obj.FontTargetSmallMediumStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "font_target_small_medium");
+		obj.Add = Resources.add;
+		obj.ComingSoonLabel = Resources.coming_label;
+		obj.OutOfStockLine1Text = Resources.out_of_stock_line1;
+		obj.OutOfStockLine2Text = Resources.out_of_stock_line2;
+		obj.OutOfStockLine3Text = Resources.out_of_stock_line3;
+		obj.Movies = Resources.Movies;
+		obj.Games = Resources.Games;
+		obj.FontMuseo20Style = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "font_museo_slab_900_20");
+		obj.FontMuseo16Style = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "font_museo_slab_900_16");
+		obj.PriceFor = Resources.price_for;
+		obj.Night = Resources.night;
+		obj.PricingService = ServiceLocator.Instance.GetService<IPricingService>();
+		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
+		obj.IsInCartBrowse = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 		return obj;
 	}
 
@@ -1335,6 +1436,8 @@ public class BrowseViewController
 		if (kioskProducts != null)
 		{
 			DisplayProductModelConstants displayProductModelConstants = GetDisplayProductModelConstants();
+			Stopwatch stopwatch = new Stopwatch();
+			stopwatch.Start();
 			foreach (IKioskProduct kioskProduct in kioskProducts)
 			{
 				DisplayProductModel displayProductModel = new DisplayProductModel
@@ -1366,6 +1469,8 @@ public class BrowseViewController
 				}
 				list.Add(displayProductModel);
 			}
+			stopwatch.Stop();
+			LogHelper.Instance.Log($"BrowseViewController Create Browse Items stopwatch: {stopwatch.Elapsed}");
 		}
 		return list;
 	}
@@ -1404,51 +1509,73 @@ public class BrowseViewController
 		return null;
 	}
 
-	private static string PriceADay(IKioskProduct product, DisplayProductModelConstants displayProductModelConstants)
+	private static string GetPriceText(IKioskProduct kioskProduct, int pricingRecordIndex, DisplayProductModelConstants displayProductModelConstants)
 	{
-		string result = string.Empty;
-		IPricingService pricingService = ServiceLocator.Instance.GetService<IPricingService>();
-		if (product != null && pricingService != null)
+		List<string> priceText = new List<string>();
+		((kioskProduct is TitleRollupProduct) ? ((TitleRollupProduct)kioskProduct).KioskProducts : ((kioskProduct is ITitleProduct) ? new List<ITitleProduct> { (ITitleProduct)kioskProduct } : null))?.ForEach(delegate(ITitleProduct tp)
 		{
-			string aDay = displayProductModelConstants.ADay;
-			TitleRollupProduct titleRollup = product as TitleRollupProduct;
-			List<ITitleProduct> list = titleRollup?.KioskProducts;
-			if (list == null && product is ITitleProduct)
+			IList<IPricingRecord> list = displayProductModelConstants.PricingService?.GetProductPricingRecords(tp.ProductId);
+			if (tp.TitleType != TitleType.DigitalCode)
 			{
-				list = new List<ITitleProduct> { (ITitleProduct)product };
-			}
-			List<string> prices = new List<string>();
-			list?.ForEach(delegate(ITitleProduct x)
-			{
-				IPricingRecord productPricingRecord = pricingService.GetProductPricingRecord(x.ProductId);
-				if (productPricingRecord != null)
+				IPricingRecord pricingRecord = ((list != null && list.Count > pricingRecordIndex) ? list[pricingRecordIndex] : null);
+				if (pricingRecord != null)
 				{
-					string text = ((titleRollup != null && TitleTypeProperties.Properties.ContainsKey(x.TitleType)) ? TitleTypeProperties.Properties[x.TitleType].Name : string.Empty);
-					if (((ITitleProduct)product).IsEmptyCase)
-					{
-						prices.Add("$" + pricingService.GetEmptyCasePrice());
-					}
-					else
-					{
-						prices.Add("$" + productPricingRecord.InitialNight + " " + aDay + " " + text);
-					}
+					string arg = ((TitleTypeProperties.Properties.ContainsKey(tp.TitleType) && TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager) != null) ? $" {displayProductModelConstants.PriceFor} {TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager)}" : string.Empty);
+					string arg2 = (((pricingRecord.InitialDays ?? 1) > 1) ? string.Format(" {0} {1} {2}{3}", displayProductModelConstants.PriceFor, pricingRecord.InitialDays ?? 1, displayProductModelConstants.Night, (pricingRecord.InitialDays > 1) ? "s" : string.Empty) : string.Empty);
+					priceText.Add($"{pricingRecord.InitialNight:C}{arg}{arg2}");
 				}
-			});
-			result = string.Join(", ", prices);
-		}
-		return result;
+			}
+		});
+		return string.Join("\n", priceText);
 	}
 
-	public static string ReturnTime()
+	private static string GetReturnTimeText(IKioskProduct kioskProduct, int pricingRecordIndex, DisplayProductModelConstants displayProductModelConstants)
 	{
-		_ = string.Empty;
-		DateTime dateTime = DateTime.Now.AddDays(1.0);
-		string text = dateTime.DayOfWeek.ToString();
-		if (OrchestrationService.IsCultureSpanish())
+		List<string> returnTimeText = new List<string>();
+		((kioskProduct is TitleRollupProduct) ? ((TitleRollupProduct)kioskProduct).KioskProducts : ((kioskProduct is ITitleProduct) ? new List<ITitleProduct> { (ITitleProduct)kioskProduct } : null))?.ForEach(delegate(ITitleProduct tp)
 		{
-			text = BundleFunctions.GetDictionaryStringValue("strings", text);
+			if (tp.TitleType != TitleType.DigitalCode)
+			{
+				IList<IPricingRecord> list = displayProductModelConstants.PricingService?.GetProductPricingRecords(tp.ProductId);
+				IPricingRecord pricingRecord = ((list != null && list.Count > pricingRecordIndex) ? list[pricingRecordIndex] : null);
+				if (pricingRecord != null)
+				{
+					DateTime dateTime = DateTime.Now.AddDays(pricingRecord.InitialDays ?? 1);
+					string arg = Resources.ResourceManager.GetString(dateTime.DayOfWeek.ToString());
+					string arg2 = ((pricingRecordIndex > 0 && TitleTypeProperties.Properties.ContainsKey(tp.TitleType) && TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager) != null) ? $" {displayProductModelConstants.PriceFor} {TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager)}" : string.Empty);
+					returnTimeText.Add($"9pm {arg}, {dateTime.ToShortDateString()}{arg2}");
+				}
+			}
+		});
+		if (pricingRecordIndex <= 0)
+		{
+			if (returnTimeText.Count <= 0)
+			{
+				return string.Empty;
+			}
+			return returnTimeText[0];
 		}
-		return $"9pm {text}, {dateTime.ToShortDateString()}";
+		return string.Join("\n", returnTimeText);
+	}
+
+	private static string GetHotDealText(IKioskProduct kioskProduct)
+	{
+		List<string> hotDealText = new List<string>();
+		((kioskProduct is TitleRollupProduct) ? ((TitleRollupProduct)kioskProduct).KioskProducts : ((kioskProduct is ITitleProduct) ? new List<ITitleProduct> { (ITitleProduct)kioskProduct } : null))?.ForEach(delegate(ITitleProduct tp)
+		{
+			if (tp.TitleType != TitleType.DigitalCode)
+			{
+				(ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(tp.ProductId))?.ForEach(delegate(IPricingRecord pr)
+				{
+					if (pr.IsHotDeal)
+					{
+						string arg = ((TitleTypeProperties.Properties.ContainsKey(tp.TitleType) && TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager) != null) ? $" {TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager)}" : string.Empty);
+						hotDealText.Add($"{pr.ExtraNight:C}{arg}");
+					}
+				});
+			}
+		});
+		return string.Format(Resources.hot_deal_text, string.Join(", ", hotDealText));
 	}
 
 	private static string GetAlphaGroupCharacter(ITitleProduct browseItem)
@@ -1473,7 +1600,7 @@ public class BrowseViewController
 		{
 			_ = titleProduct.TitleType;
 			TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value2);
-			format = value2?.Name;
+			format = value2?.GetName(Resources.ResourceManager);
 		}
 		string ratingLabel = string.Empty;
 		string ratingDescription = string.Empty;
@@ -1493,7 +1620,7 @@ public class BrowseViewController
 			else
 			{
 				ratingLabel = "MPAA Rating: ";
-				ratingDescription = value.Name;
+				ratingDescription = ((value.Code == Ratings.NR.ToString()) ? "Not rated by the MPAA" : value.Name);
 			}
 		}
 		else
@@ -1502,9 +1629,12 @@ public class BrowseViewController
 		}
 		Visibility showCollections = ((titleProduct == null || titleProduct.ComingSoon || !displayProductModelConstants.ShowCollections || ((!(titleProduct?.Collections?.Any())) ?? true)) ? Visibility.Collapsed : Visibility.Visible);
 		bool flag = titleProduct is TitleRollupProduct && titleProduct.KioskProductType == KioskProductType.TitleRollup;
-		IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
-		decimal num = (titleProduct.IsEmptyCase ? service.GetEmptyCasePrice() : ((titleProduct.TitleFamily == TitleFamily.Movies) ? titleProduct.MoviePurchasePrice : titleProduct.GamePurchasePrice));
+		IList<IPricingRecord> list = displayProductModelConstants.PricingService?.GetProductPricingRecords(titleProduct.ProductId);
+		bool flag2 = list != null && list.Count > 1;
+		decimal num = (titleProduct.IsEmptyCase ? displayProductModelConstants.PricingService.GetEmptyCasePrice() : titleProduct.PurchasePrice);
 		string format2 = ((num - decimal.Round(num) != 0m) ? "${0:F2}" : "${0:F0}");
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		bool flag3 = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 		browseItemModel.Header = titleProduct.ProductName;
 		browseItemModel.Description = titleProduct.ProductDescription;
 		browseItemModel.Rating = value?.Name;
@@ -1517,13 +1647,21 @@ public class BrowseViewController
 		browseItemModel.Genres = GetGenreText(titleProduct?.Genres);
 		browseItemModel.GenresLabel = displayProductModelConstants?.GenresLabel;
 		browseItemModel.DirectedBy = string.Join(", ", titleProduct?.Directors ?? new List<string>());
-		browseItemModel.PriceADay = PriceADay(titleProduct, displayProductModelConstants);
-		browseItemModel.PriceLabel = displayProductModelConstants.PriceLabel;
+		browseItemModel.OneNightPrice = GetPriceText(titleProduct, 0, displayProductModelConstants);
+		browseItemModel.OneNightPriceLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModelConstants.OneNightPriceLabel : null);
+		browseItemModel.MultiNightPrice = GetPriceText(titleProduct, 1, displayProductModelConstants);
+		browseItemModel.MultiNightPriceLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModelConstants.MultiNightPriceLabel : null);
+		browseItemModel.MultiNightPriceVisibility = ((!flag2 || flag3 || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.RatingLabel = ratingLabel;
 		browseItemModel.RatingDescription = ratingDescription;
 		browseItemModel.RatingVisibility = ratingVisibility;
-		browseItemModel.ReturnTime = displayProductModelConstants.ReturnTime;
-		browseItemModel.ReturnTimeLabel = displayProductModelConstants.ReturnTimeLabel;
+		browseItemModel.OneNightReturnTime = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? GetReturnTimeText(titleProduct, 0, displayProductModelConstants) : null);
+		browseItemModel.OneNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModelConstants.OneNightReturnTimeLabel : null);
+		browseItemModel.MultiNightReturnTime = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? GetReturnTimeText(titleProduct, 1, displayProductModelConstants) : null);
+		browseItemModel.MultiNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModelConstants.MultiNightReturnTimeLabel : null);
+		browseItemModel.MultiNightReturnTimeVisibility = ((!flag2 || flag3 || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
+		browseItemModel.HotDealText = GetHotDealText(titleProduct);
+		browseItemModel.HotDealTextVisibility = ((!titleProduct.HasHotDeal) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.RunningTimeVisibility = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsMovie || string.IsNullOrEmpty(titleProduct?.RunningTime)) ? Visibility.Collapsed : Visibility.Visible);
 		int releaseYearVisibility;
 		if (titleProduct != null && !titleProduct.IsEmptyCase && titleProduct != null)
@@ -1535,13 +1673,13 @@ public class BrowseViewController
 				if (true)
 				{
 					releaseYearVisibility = 0;
-					goto IL_03ae;
+					goto IL_0522;
 				}
 			}
 		}
 		releaseYearVisibility = 2;
-		goto IL_03ae;
-		IL_03ae:
+		goto IL_0522;
+		IL_0522:
 		browseItemModel.ReleaseYearVisibility = (Visibility)releaseYearVisibility;
 		browseItemModel.FormatVisibility = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsGame) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.AdImageVisibility = ((displayProductModelConstants.AdImage == null) ? Visibility.Collapsed : Visibility.Visible);
@@ -1555,8 +1693,7 @@ public class BrowseViewController
 		browseItemModel.CollectionsEnabled = titleProduct?.Collections?.Any() ?? false;
 		browseItemModel.CollectionTextLine1 = displayProductModelConstants.CollectionTextLine1;
 		browseItemModel.BuyText = displayProductModelConstants.BuyText;
-		browseItemModel.BuyButtonHeight = ((flag && !titleProduct.IsEmptyCase) ? 88 : 94);
-		browseItemModel.BuyButtonTextStyle = ((!flag) ? displayProductModelConstants.FontTargetSmallMediumStyle : (OrchestrationService.IsCultureSpanish() ? displayProductModelConstants.FontTargetSmallMediumStyle : displayProductModelConstants.FontTargetMediumSmallStyle));
+		browseItemModel.BuyButtonTextStyle = (flag ? displayProductModelConstants.FontMuseo20Style : displayProductModelConstants.FontMuseo16Style);
 		browseItemModel.BuyPriceText = string.Format(format2, num);
 		browseItemModel.BuyPriceVisibility = ((flag && !titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.StarringVisibility = ((titleProduct == null || !titleProduct.IsMovie || titleProduct == null || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
@@ -1569,7 +1706,7 @@ public class BrowseViewController
 	private static void ConfigureDisplayProductModel(IKioskProduct eachKioskProduct, DisplayProductModel browseItemModel, bool isADAMiniCart, DisplayProductModelConstants displayProductModelConstants)
 	{
 		ITitleProduct titleProduct = eachKioskProduct as ITitleProduct;
-		bool flag = titleProduct?.IsEmptyCase ?? false;
+		bool isEmptyCase = titleProduct?.IsEmptyCase ?? false;
 		BannerType bannerType = BannerType.None;
 		browseItemModel.ComingSoonButtonVisibility = Visibility.Collapsed;
 		if (BrowseState.BrowseSelectedSort != "alpha")
@@ -1581,34 +1718,30 @@ public class BrowseViewController
 				string text = null;
 				if ((RentalShoppingCartService?.CurrentRentalShoppingCart?.ComingSoonOptInInfo?.OptInItems)?.FirstOrDefault((IOptInItem x) => x.ItemId == (titleProduct?.ProductId ?? 0)) != null)
 				{
-					text = string.Format("{0}", BundleFunctions.GetDictionaryStringValue("strings", "email_optin_reminder_set_button_text"));
+					text = $"{Resources.email_optin_reminder_set_button_text}";
 					browseItemModel.ComingSoonButtonStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "classic_green_button_style");
 					browseItemModel.ComingSoonButtonCheckMarkVisibility = Visibility.Visible;
 				}
 				else
 				{
-					text = string.Format("{0}", BundleFunctions.GetDictionaryStringValue("strings", "email_optin_button_text"));
+					text = $"{Resources.email_optin_button_text}";
 					browseItemModel.ComingSoonButtonStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), "rubine_white_border_button_style");
 					browseItemModel.ComingSoonButtonCheckMarkVisibility = Visibility.Collapsed;
 				}
 				browseItemModel.ComingSoonButtonText = text;
 				browseItemModel.ComingSoonButtonVisibility = Visibility.Visible;
 			}
-			else if (titleProduct.TitleType == TitleType.Bluray)
+			else
 			{
-				bannerType = BannerType.Bluray;
-			}
-			else if (titleProduct.TitleType == TitleType.DigitalCode)
-			{
-				bannerType = BannerType.DigitalCode;
+				bannerType = BrowseFunctions.GetProductBannerType(titleProduct);
 			}
 		}
-		bool flag2 = IsProductSelected(titleProduct);
+		bool flag = IsProductSelected(titleProduct);
 		IBrowseState browseState = BrowseState;
 		if (browseState == null || browseState.BrowseMode != BrowseViewFilter.ComingSoon)
 		{
 			IRentalShoppingCartService rentalShoppingCartService = RentalShoppingCartService;
-			if ((rentalShoppingCartService != null && rentalShoppingCartService.CurrentRentalShoppingCartIsFull) || !titleProduct.IsAvailable || (flag2 | flag) || !titleProduct.InStock)
+			if ((((rentalShoppingCartService != null && rentalShoppingCartService.CurrentRentalShoppingCartIsFull) || !titleProduct.IsAvailable) | flag) || !titleProduct.InStock)
 			{
 				if (BrowseState?.BrowseSelectedSort == "alpha")
 				{
@@ -1618,20 +1751,35 @@ public class BrowseViewController
 				{
 					browseItemModel.ImageOpacity = 0.4;
 				}
-				goto IL_0203;
+				goto IL_01c7;
 			}
 		}
 		browseItemModel.ImageOpacity = 1.0;
-		goto IL_0203;
-		IL_039f:
+		goto IL_01c7;
+		IL_01c7:
+		BrowseFunctions.ConfigureBanner(browseItemModel, titleProduct, isADAMiniCart, bannerType, GetBrowseViewUserControl());
+		ProductFlags browseProductFlag = GetBrowseProductFlag(titleProduct, isEmptyCase, flag);
+		BrowseFunctions.ConfigureProductFlag(browseItemModel, browseProductFlag, isADAMiniCart, GetBrowseViewUserControl());
 		int num;
-		bool flag3 = (byte)num != 0;
-		browseItemModel.CanAdd = flag3 || BrowseState.BrowseMode == BrowseViewFilter.ComingSoon;
-		Visibility visibility = ((!flag3 && !IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
+		if (!IsShoppingCartFull)
+		{
+			ITitleProduct titleProduct3 = titleProduct;
+			if (titleProduct3 != null && titleProduct3.IsAvailable && !flag)
+			{
+				num = ((titleProduct?.InStock ?? false) ? 1 : 0);
+				goto IL_022a;
+			}
+		}
+		num = 0;
+		goto IL_022a;
+		IL_022a:
+		bool flag2 = (byte)num != 0;
+		browseItemModel.CanAdd = flag2 || BrowseState.BrowseMode == BrowseViewFilter.ComingSoon;
+		Visibility visibility = ((!flag2 && !IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.CornerAddButtonVisibility = ((!isADAMiniCart) ? visibility : Visibility.Collapsed);
 		browseItemModel.RightAddButtonVisibility = ((visibility == Visibility.Collapsed) ? Visibility.Hidden : visibility);
 		browseItemModel.ADAMiniCartAddButtonVisibility = ((!isADAMiniCart) ? Visibility.Collapsed : Visibility.Visible);
-		browseItemModel.AddButtonPlusSignVisibility = (IsADAMode ? Visibility.Collapsed : Visibility.Visible);
+		browseItemModel.AddButtonPlusSignVisibility = (IsADAMode ? Visibility.Hidden : Visibility.Visible);
 		browseItemModel.AddButtonTextVisibility = ((!IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.AddButtonStyle = (IsADAMode ? WPFFunctions.GetStyle(GetBrowseViewUserControl(), "rubine_white_border_button_style") : WPFFunctions.GetStyle(GetBrowseViewUserControl(), "classic_rubine_button_style"));
 		if (isADAMiniCart)
@@ -1646,11 +1794,11 @@ public class BrowseViewController
 		{
 			browseItemModel.ConfigureForBrowse();
 		}
-		bool flag4 = titleProduct is TitleRollupProduct && titleProduct.KioskProductType == KioskProductType.TitleRollup;
-		Visibility showBuy = ((IsShoppingCartFull || (!titleProduct.IsSellable && !titleProduct.IsEmptyCase) || !(flag4 ? (!((TitleRollupProduct)titleProduct).KioskProducts.All((ITitleProduct x) => RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(x.ProductId))) : (!RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(titleProduct.ProductId)))) ? Visibility.Collapsed : Visibility.Visible);
+		bool flag3 = titleProduct is TitleRollupProduct && titleProduct.KioskProductType == KioskProductType.TitleRollup;
+		Visibility showBuy = ((IsShoppingCartFull || (!titleProduct.IsSellable && !titleProduct.IsEmptyCase) || !(flag3 ? (!((TitleRollupProduct)titleProduct).KioskProducts.All((ITitleProduct x) => RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(x.ProductId))) : (!RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(titleProduct.ProductId)))) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.ShowBuy = showBuy;
 		IKioskProduct kioskProduct2;
-		if (!flag4)
+		if (!flag3)
 		{
 			IKioskProduct kioskProduct = ((titleProduct.TitleType != TitleType.Bluray) ? titleProduct : null);
 			kioskProduct2 = kioskProduct;
@@ -1659,27 +1807,27 @@ public class BrowseViewController
 		{
 			kioskProduct2 = ((TitleRollupProduct)titleProduct).PrimaryProduct;
 		}
-		ITitleProduct titleProduct3 = (ITitleProduct)kioskProduct2;
-		ITitleProduct titleProduct4 = (flag4 ? ((TitleRollupProduct)titleProduct).KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray) : ((titleProduct.TitleType == TitleType.Bluray) ? titleProduct : null));
-		if (titleProduct3 != null && titleProduct4 != null && titleProduct3.ProductId == titleProduct4.ProductId)
+		ITitleProduct titleProduct4 = (ITitleProduct)kioskProduct2;
+		ITitleProduct titleProduct5 = (flag3 ? ((TitleRollupProduct)titleProduct).KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray) : ((titleProduct.TitleType == TitleType.Bluray) ? titleProduct : null));
+		if (titleProduct4 != null && titleProduct5 != null && titleProduct4.ProductId == titleProduct5.ProductId)
 		{
-			titleProduct3 = null;
+			titleProduct4 = null;
 		}
-		TitleRollupOverlayButtonProperties titleRollupOverlayButtonProperties = ((titleProduct3 != null && !titleProduct3.IsEmptyCase) ? TitleRollupUtilities.GetTitleRollupOverlayButtonProperties(titleProduct3, isPurchase: false, displayProductModelConstants.TitleRollupOverlayButtonTextValues) : null);
-		TitleRollupOverlayButtonProperties titleRollupOverlayButtonProperties2 = ((titleProduct4 != null && !titleProduct4.IsEmptyCase) ? TitleRollupUtilities.GetTitleRollupOverlayButtonProperties(titleProduct4, isPurchase: false, displayProductModelConstants.TitleRollupOverlayButtonTextValues) : null);
+		TitleRollupOverlayButtonProperties titleRollupOverlayButtonProperties = ((titleProduct4 != null && !titleProduct4.IsEmptyCase) ? TitleRollupUtilities.GetTitleRollupOverlayButtonProperties(titleProduct4, isPurchase: false, displayProductModelConstants.TitleRollupOverlayButtonTextValues) : null);
+		TitleRollupOverlayButtonProperties titleRollupOverlayButtonProperties2 = ((titleProduct5 != null && !titleProduct5.IsEmptyCase) ? TitleRollupUtilities.GetTitleRollupOverlayButtonProperties(titleProduct5, isPurchase: false, displayProductModelConstants.TitleRollupOverlayButtonTextValues) : null);
 		browseItemModel.ShowPrimary = titleRollupOverlayButtonProperties?.Visibility ?? Visibility.Collapsed;
 		browseItemModel.ShowBluRay = titleRollupOverlayButtonProperties2?.Visibility ?? Visibility.Collapsed;
 		browseItemModel.PrimaryEnabled = titleRollupOverlayButtonProperties?.Enabled ?? false;
 		browseItemModel.BluRayEnabled = titleRollupOverlayButtonProperties2?.Enabled ?? false;
-		string text2 = ((!((titleProduct?.IsMovie ?? false) & flag4) || titleProduct.IsEmptyCase) ? displayProductModelConstants.Add : (titleRollupOverlayButtonProperties?.ButtonText ?? string.Empty));
-		bool flag5 = text2 != null && text2.Split('\n').Count() > 1;
-		string primaryText = (flag5 ? text2.Split('\n')[0] : text2);
-		string primaryLine2Text = (flag5 ? text2.Split('\n')[1] : text2);
-		bool flag6 = (titleRollupOverlayButtonProperties2?.ButtonText?.Split('\n').Count() ?? 0) > 1;
-		string bluRayText = (flag6 ? titleRollupOverlayButtonProperties2.ButtonText.Split('\n')[0] : titleRollupOverlayButtonProperties2?.ButtonText);
-		string bluRayLine2Text = (flag6 ? titleRollupOverlayButtonProperties2.ButtonText.Split('\n')[1] : titleRollupOverlayButtonProperties2?.ButtonText);
-		browseItemModel.PrimaryOutOfStockVisibility = ((!flag5) ? Visibility.Collapsed : Visibility.Visible);
-		browseItemModel.BluRayOutOfStockVisibility = ((!flag6) ? Visibility.Collapsed : Visibility.Visible);
+		string text2 = ((!((titleProduct?.IsMovie ?? false) & flag3) || titleProduct.IsEmptyCase) ? displayProductModelConstants.Add : (titleRollupOverlayButtonProperties?.ButtonText ?? string.Empty));
+		bool flag4 = text2 != null && text2.Split('\n').Count() > 1;
+		string primaryText = (flag4 ? text2.Split('\n')[0] : text2);
+		string primaryLine2Text = (flag4 ? text2.Split('\n')[1] : text2);
+		bool flag5 = (titleRollupOverlayButtonProperties2?.ButtonText?.Split('\n').Count() ?? 0) > 1;
+		string bluRayText = (flag5 ? titleRollupOverlayButtonProperties2.ButtonText.Split('\n')[0] : titleRollupOverlayButtonProperties2?.ButtonText);
+		string bluRayLine2Text = (flag5 ? titleRollupOverlayButtonProperties2.ButtonText.Split('\n')[1] : titleRollupOverlayButtonProperties2?.ButtonText);
+		browseItemModel.PrimaryOutOfStockVisibility = ((!flag4) ? Visibility.Collapsed : Visibility.Visible);
+		browseItemModel.BluRayOutOfStockVisibility = ((!flag5) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.PrimaryText = primaryText;
 		browseItemModel.PrimaryLine2Text = primaryLine2Text;
 		browseItemModel.BluRayText = bluRayText;
@@ -1687,64 +1835,25 @@ public class BrowseViewController
 		int addButtonBarVisibility;
 		if (!IsShoppingCartFull)
 		{
-			ITitleProduct titleProduct5 = titleProduct;
-			if (titleProduct5 != null && !titleProduct5.ComingSoon)
+			ITitleProduct titleProduct6 = titleProduct;
+			if (titleProduct6 != null && !titleProduct6.ComingSoon)
 			{
-				ITitleProduct titleProduct6 = titleProduct;
-				if (titleProduct6 != null && titleProduct6.InStock)
+				ITitleProduct titleProduct7 = titleProduct;
+				if (titleProduct7 != null && titleProduct7.InStock)
 				{
 					addButtonBarVisibility = 0;
-					goto IL_0826;
+					goto IL_06b1;
 				}
 			}
 		}
 		addButtonBarVisibility = 2;
-		goto IL_0826;
-		IL_0826:
+		goto IL_06b1;
+		IL_06b1:
 		browseItemModel.AddButtonBarVisibility = (Visibility)addButtonBarVisibility;
-		ITitleProduct titleProduct7 = titleProduct;
-		browseItemModel.OutOfStockVisibility = ((titleProduct7 == null || titleProduct7.InStock || titleProduct.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
 		ITitleProduct titleProduct8 = titleProduct;
-		browseItemModel.ComingSoonVisibility = ((titleProduct8 == null || !titleProduct8.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
-		return;
-		IL_0203:
-		browseItemModel.BannerVisibility = ((isADAMiniCart || bannerType == BannerType.None) ? Visibility.Collapsed : Visibility.Visible);
-		if (bannerType != BannerType.None)
-		{
-			Banner banner = (browseItemModel.Banner = BannerCollection.Instance.Find((Banner x) => x.BannerType == bannerType));
-			if (banner.BannerType == BannerType.ComingSoon)
-			{
-				if (titleProduct != null)
-				{
-					browseItemModel.BannerText = string.Format("{1} {0:M/d}", titleProduct.MerchandiseDate, BundleFunctions.GetDictionaryStringValue("strings", banner.TextKey));
-				}
-			}
-			else
-			{
-				browseItemModel.BannerText = BundleFunctions.GetDictionaryStringValue("strings", banner.TextKey);
-			}
-			browseItemModel.BannerBackgroundBrush = GetBrush(GetBrowseViewUserControl(), banner.BannerStyleName);
-		}
-		ProductFlags productFlags = GetProductFlag(titleProduct, flag, flag2);
-		ProductFlag productFlag = ProductFlagCollection.Instance.FirstOrDefault((ProductFlag x) => x.Flag == productFlags);
-		browseItemModel.FlagVisibility = ((isADAMiniCart || productFlag == null || productFlag.Flag == ProductFlags.None) ? Visibility.Collapsed : Visibility.Visible);
-		browseItemModel.FlagStyle = WPFFunctions.GetStyle(GetBrowseViewUserControl(), productFlag?.FlagStyleName);
-		browseItemModel.FlagText = BundleFunctions.GetDictionaryStringValue("strings", productFlag?.TextKeyName);
-		if (browseItemModel.FlagVisibility == Visibility.Visible)
-		{
-			browseItemModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
-		}
-		if (!IsShoppingCartFull)
-		{
-			ITitleProduct titleProduct9 = titleProduct;
-			if (titleProduct9 != null && titleProduct9.IsAvailable && (!flag2 | flag))
-			{
-				num = ((titleProduct?.InStock ?? false) ? 1 : 0);
-				goto IL_039f;
-			}
-		}
-		num = 0;
-		goto IL_039f;
+		browseItemModel.OutOfStockVisibility = ((titleProduct8 == null || titleProduct8.InStock || titleProduct.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
+		ITitleProduct titleProduct9 = titleProduct;
+		browseItemModel.ComingSoonVisibility = ((titleProduct9 == null || !titleProduct9.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
 	private static bool IsProductSelected(ITitleProduct titleProduct)
@@ -1770,51 +1879,26 @@ public class BrowseViewController
 		return flag;
 	}
 
-	private static ProductFlags GetProductFlag(ITitleProduct titleProduct, bool isEmptyCase, bool isProductSelected)
+	private static ProductFlags GetBrowseProductFlag(ITitleProduct titleProduct, bool isEmptyCase, bool isProductSelected)
 	{
 		ProductFlags result = ProductFlags.None;
-		if (titleProduct != null)
+		if (titleProduct != null && !IsShoppingCartFull && !InTitleMarketingMode)
 		{
-			double totalDays = (DateTime.Now - titleProduct.MerchandiseDate).TotalDays;
-			_ = (DateTime.Now - titleProduct.SortDate).TotalDays;
-			bool flag = ServiceLocator.Instance.GetService<IDataService>()?.GetIsProductThinned(titleProduct.ProductId) ?? false;
-			if (!IsShoppingCartFull && !InTitleMarketingMode)
+			if (isEmptyCase && !titleProduct.InStock)
 			{
-				if (isEmptyCase && !titleProduct.InStock)
-				{
-					result = ProductFlags.OutOfStock;
-				}
-				else if (!titleProduct.IsAvailable)
-				{
-					result = ProductFlags.ComingSoon;
-				}
-				else if (BrowseState.BrowseMode != BrowseViewFilter.ForSale && titleProduct.ShowOutOfStock)
-				{
-					result = ProductFlags.OutOfStock;
-				}
-				else if (!isProductSelected)
-				{
-					if (titleProduct.Genres.Contains(1002L))
-					{
-						result = ProductFlags.AwardWinner;
-					}
-					else if (totalDays <= 14.0 && titleProduct.Genres.Contains(1025L) && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Games)
-					{
-						result = ProductFlags.BackAgain;
-					}
-					else if (totalDays <= 14.0 && titleProduct.Genres.Contains(1095L) && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Movies)
-					{
-						result = ProductFlags.Classics;
-					}
-					else if (totalDays <= 28.0)
-					{
-						result = ProductFlags.New;
-					}
-					else if ((totalDays >= 105.0 && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Games) & flag)
-					{
-						result = ProductFlags.LastChance;
-					}
-				}
+				result = ProductFlags.OutOfStock;
+			}
+			else if (!titleProduct.IsAvailable)
+			{
+				result = ProductFlags.ComingSoon;
+			}
+			else if (BrowseState.BrowseMode != BrowseViewFilter.ForSale && titleProduct.ShowOutOfStock)
+			{
+				result = ProductFlags.OutOfStock;
+			}
+			else if (!isProductSelected)
+			{
+				result = BrowseFunctions.GetProductFlag(titleProduct);
 			}
 		}
 		return result;
@@ -1831,7 +1915,7 @@ public class BrowseViewController
 			List<long> include = new List<long>();
 			List<long> exclude = new List<long>();
 			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-			if (rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel && !PromotionService.Instance.IsFreeInCartOfferRunning)
+			if (rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel)
 			{
 				include = PromotionService.Instance.GetInCartIncludeTitleList();
 				exclude = PromotionService.Instance.GetInCartExcludeTitleList();
@@ -1867,17 +1951,6 @@ public class BrowseViewController
 			{
 				return result2;
 			}
-		}
-		return result;
-	}
-
-	private static System.Windows.Media.Brush GetBrush(FrameworkElement frameworkElement, string brushName)
-	{
-		System.Windows.Media.Brush result = null;
-		object obj = frameworkElement.FindResource(brushName);
-		if (obj != null)
-		{
-			result = obj as System.Windows.Media.Brush;
 		}
 		return result;
 	}
@@ -2051,7 +2124,7 @@ public class BrowseViewController
 		}
 		foreach (BrowseFilter item in list)
 		{
-			item.Text = BundleFunctions.GetDictionaryStringValue("strings", item.Name);
+			item.Text = Resources.ResourceManager.GetString(item.Name);
 		}
 		return list;
 	}

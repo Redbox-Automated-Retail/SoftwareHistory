@@ -44,12 +44,11 @@ internal static class ViewFunctions
 		{
 			return null;
 		}
-		IViewFrame viewFrame = service.PeekViewFrame();
-		if (viewFrame == null)
+		if (!(service.PeekViewFrame()?.ViewFrame is IViewFrame { ViewWindow: var viewWindow } viewFrame))
 		{
 			return null;
 		}
-		if (viewFrame.ViewWindow.HasValue)
+		if (viewWindow.HasValue)
 		{
 			return new LuaTable(KernelService.Instance.LuaRuntime)
 			{
@@ -69,10 +68,10 @@ internal static class ViewFunctions
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		if (service != null)
 		{
-			IViewFrame viewFrame = service.PeekViewFrame();
-			if (viewFrame != null)
+			IViewFrameInstance viewFrameInstance = service.PeekViewFrame();
+			if (viewFrameInstance?.ViewFrame.Scene != null)
 			{
-				result = viewFrame.Scene.SceneRenderType.ToString();
+				result = viewFrameInstance.ViewFrame.Scene.SceneRenderType.ToString();
 			}
 		}
 		return result;

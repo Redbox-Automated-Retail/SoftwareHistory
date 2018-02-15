@@ -7,8 +7,8 @@ namespace Redbox.Rental.Kernel.Views.IdleTimeoutMessageView;
 public class IdleTimeoutMessageViewFunctions
 {
 	[KernelFunction(Name = "kernel.configure_idle_timeout_message_view")]
-	internal static void ConfigureIdleTimeoutMessageView(int timeout, Action noButtonAction, Action yesButtonAction)
+	internal static void ConfigureIdleTimeoutMessageView(Action noButtonAction)
 	{
-		IdleTimeoutMessageViewController.ConfigureIdleTimeoutMessageView(timeout, noButtonAction, yesButtonAction);
+		IdleTimeoutMessageViewController.ConfigureIdleTimeoutMessageView(noButtonAction);
 	}
 }

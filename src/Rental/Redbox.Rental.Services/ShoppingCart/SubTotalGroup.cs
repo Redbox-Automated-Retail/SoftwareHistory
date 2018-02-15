@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskProduct;
@@ -21,25 +20,18 @@ public class SubTotalGroup : ISubTotalGroup
 		get
 		{
 			decimal? result = null;
-			Promotion promotion = _rentalShoppingCart.Promotion;
-			if (Action == RentalShoppingCartItemAction.rental && promotion != null)
+			if (Action == RentalShoppingCartItemAction.rental)
 			{
-				decimal amount = Amount;
-				if (promotion.Intent == PromotionIntentCode.PercentOffCartTotal)
+				IPromotion promotion = _rentalShoppingCart.Promotion;
+				decimal num = _rentalShoppingCart?.Items?.Where((IRentalShoppingCartItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled) && (x.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.Sum((IRentalShoppingCartItem x) => x.ExtendedPrice) ?? 0m;
+				if (num > 0m || (promotion?.Price ?? 0m) > 0m)
 				{
-					decimal num = decimal.Round(amount * promotion.Percent, 2, MidpointRounding.AwayFromZero);
-					result = amount - num;
-					promotion.Price = num;
-					(ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(_rentalShoppingCart.ShoppingSessionId.ToString()))?.ShoppingCart?.SetDiscount(promotion.Name, promotion.Price);
+					result = Amount - (promotion?.Price ?? 0m) - num;
 				}
-				else
+				if (result.HasValue)
 				{
-					result = amount - (decimal)promotion.Quantity * promotion.Price;
+					result = Math.Max(decimal.Round(result.Value, 16, MidpointRounding.AwayFromZero), 0m);
 				}
-			}
-			if (result.HasValue)
-			{
-				result = Math.Max(decimal.Round(result.Value, 16, MidpointRounding.AwayFromZero), 0m);
 			}
 			return result;
 		}

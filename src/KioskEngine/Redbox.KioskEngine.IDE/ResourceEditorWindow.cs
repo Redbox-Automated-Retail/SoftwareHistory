@@ -116,10 +116,10 @@ public class ResourceEditorWindow : DockContent
 					service.Push(m_resource.Name);
 					int num = 0;
 					int num2 = 0;
-					IViewFrame viewFrame = service.GetViewFrame(m_resource.Name);
+					IViewFrame viewFrame = service.GetViewFrame(m_resource.Name) as IViewFrame;
 					int num3;
 					int num4;
-					if (viewFrame.ViewWindow.HasValue)
+					if (viewFrame != null && viewFrame.ViewWindow.HasValue)
 					{
 						num3 = viewFrame.ViewWindow.Value.Height;
 						num4 = viewFrame.ViewWindow.Value.Width;

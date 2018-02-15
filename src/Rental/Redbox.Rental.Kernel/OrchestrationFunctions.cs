@@ -33,10 +33,10 @@ public static class OrchestrationFunctions
 		OrchestrationService.RegisterIdleTimerExpireSessionCallback(idleTimerExpireSessionCallback);
 	}
 
-	[KernelFunction(Name = "kernel.register_get_email_address_and_register_email_reminder_callback")]
-	internal static void RegisterGetEmailAddressAndRegisterEmailReminderCallback(Action<long> getEmailAddressAndRegisterEmailReminderCallback)
+	[KernelFunction(Name = "kernel.register_view_definitions")]
+	internal static void RegisterViewDefinitions()
 	{
-		OrchestrationService.RegisterGetEmailAddressAndRegisterEmailReminderCallback(getEmailAddressAndRegisterEmailReminderCallback);
+		OrchestrationService.RegisterViewDefinitions();
 	}
 
 	[KernelFunction(Name = "kernel.reload_pricing_service")]
@@ -66,7 +66,7 @@ public static class OrchestrationFunctions
 		LuaTable result = null;
 		if (long.TryParse(productIdValue, out var result2))
 		{
-			IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecord(result2);
+			IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(result2);
 			if (pricingRecord != null)
 			{
 				result = pricingRecord.ToDictionary().ToLuaTable();
@@ -232,7 +232,7 @@ public static class OrchestrationFunctions
 			Enum.TryParse<TitleType>(titleTypeValue, ignoreCase: true, out result3);
 			bool result4 = false;
 			bool.TryParse(forRecommendationOnPickupFlowValue, out result4);
-			IPricingRecord productTypePricingRecord = service.GetProductTypePricingRecord(result2, result3, result4);
+			IPricingRecord productTypePricingRecord = service.GetProductTypePricingRecord(result2, result3, !result4);
 			if (productTypePricingRecord != null)
 			{
 				result = productTypePricingRecord.ToDictionary().ToLuaTable();

@@ -12,18 +12,18 @@ public class ViewService : IViewService
 
 	private DateTime? m_viewShownOn;
 
-	private readonly IDictionary<string, ViewFrame> m_viewFrameCache = new Dictionary<string, ViewFrame>();
+	private readonly IDictionary<string, IBaseViewFrame> m_viewFrameCache = new Dictionary<string, IBaseViewFrame>();
 
 	public static ViewService Instance => Singleton<ViewService>.Instance;
 
 	public int ViewStackCount => InnerStack.Count;
 
-	public ReadOnlyCollection<IViewFrame> Stack
+	public ReadOnlyCollection<IViewFrameInstance> Stack
 	{
 		get
 		{
-			List<IViewFrame> list = new List<IViewFrame>();
-			foreach (IViewFrame item in InnerStack)
+			List<IViewFrameInstance> list = new List<IViewFrameInstance>();
+			foreach (IViewFrameInstance item in InnerStack)
 			{
 				list.Add(item);
 			}
@@ -42,25 +42,37 @@ public class ViewService : IViewService
 	public void Reset()
 	{
 		InnerStack.Clear();
-		ClearCache();
+		ClearCache(clearResourceViewsOnly: true);
 		RaiseViewStateChanged();
 	}
 
 	public void ShowFrameInDebug()
 	{
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
-		IViewFrame viewFrame = InnerStack.Peek();
-		LogHelper.Instance.Log("Showing view '{0}' from TOS in DEBUG window: clear = {1}, viewWindow = {2}, width = {3}, height = {4}, scene = {5}, onEnter = {6}, onLeave = {7}.", viewFrame.ViewName, viewFrame.Clear, viewFrame.ViewWindow, viewFrame.Width, viewFrame.Height, viewFrame.SceneName, viewFrame.OnEnterResourceName, viewFrame.OnLeaveResourceName);
-		viewFrame.UpdateScene();
-		if (viewFrame.Errors.ContainsError())
+		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+		LogShowViewFrameInstance(viewFrameInstance);
+		viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
+		if (viewFrameInstance.ViewFrame.Errors.ContainsError())
 		{
 			ErrorForm errorForm = new ErrorForm
 			{
-				Errors = viewFrame.Errors,
-				Text = $"Errors for view resource: {viewFrame.ViewName}"
+				Errors = viewFrameInstance?.ViewFrame?.Errors,
+				Text = $"Errors for view resource: {viewFrameInstance?.ViewFrame?.ViewName}"
 			};
 			errorForm.Show();
 			errorForm.BringToFront();
+		}
+	}
+
+	private void LogShowViewFrameInstance(IViewFrameInstance viewFrameInstance)
+	{
+		if (viewFrameInstance?.ViewFrame is IViewFrame viewFrame)
+		{
+			LogHelper.Instance.Log("Showing view '{0}' from TOS: clear = {1}, viewWindow = {2}, width = {3}, height = {4}, scene = {5}, onEnter = {6}, onLeave = {7}.", viewFrame.ViewName, viewFrame.Clear, viewFrame.ViewWindow, viewFrame.Width, viewFrame.Height, viewFrame.SceneName, viewFrame.OnEnterResourceName, viewFrame.OnLeaveResourceName);
+		}
+		else if (viewFrameInstance?.ViewFrame is IWPFViewFrame iWPFViewFrame)
+		{
+			LogHelper.Instance.Log("Showing view '{0}' from TOS", iWPFViewFrame.ViewName);
 		}
 	}
 
@@ -100,20 +112,21 @@ public class ViewService : IViewService
 			shoppingSession?.AddEvent(ShoppingSessionEventType.ShowView, "View stack empty.");
 			return;
 		}
-		IViewFrame viewFrame = InnerStack.Peek();
-		service.Filter["view_name"] = viewFrame.ViewName;
-		LogHelper.Instance.Log("Showing view '{0}' from TOS: clear = {1}, viewWindow = {2}, width = {3}, height = {4}, scene = {5}, onEnter = {6}, onLeave = {7}.", viewFrame.ViewName, viewFrame.Clear, viewFrame.ViewWindow, viewFrame.Width, viewFrame.Height, viewFrame.SceneName, viewFrame.OnEnterResourceName, viewFrame.OnLeaveResourceName);
-		viewFrame.UpdateScene();
+		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+		service.Filter["view_name"] = viewFrameInstance?.ViewFrame?.ViewName;
+		LogShowViewFrameInstance(viewFrameInstance);
+		viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
 		if (shoppingSession != null)
 		{
 			ISessionAnalyticsService service5 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 			if (service5 != null)
 			{
+				IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
 				Dictionary<string, string> dictionary = new Dictionary<string, string>();
-				dictionary.Add("viewName", viewFrame.ViewName);
+				dictionary.Add("viewName", viewFrameInstance.ViewFrame.ViewName);
 				dictionary.Add("viewSequence", shoppingSession.ViewsShown.ToString());
-				dictionary.Add("viewVersion", viewFrame.ViewVersion ?? "not defined");
-				dictionary.Add("activeFlag", viewFrame.ActiveFlag ?? "not defined");
+				dictionary.Add("viewVersion", viewFrame?.ViewVersion ?? "not defined");
+				dictionary.Add("activeFlag", viewFrameInstance?.ViewFrame?.ActiveFlag ?? "not defined");
 				dictionary.Add("viewCulture", service.Filter["culture"] ?? string.Empty);
 				dictionary.Add("viewStart", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
 				service5.AddNode("views", "view");
@@ -121,20 +134,33 @@ public class ViewService : IViewService
 				service5.AddNode("view", "viewEvents");
 			}
 		}
-		viewFrame.RaiseOnEnter();
-		m_viewShownOn = DateTime.Now;
-		m_lastShownView = viewFrame.ViewName;
-		ITextToSpeechService service6 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-		if (service6 != null && service6.TTSEnabled)
+		if (!viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance))
 		{
-			service6.RunSpeechWorkflow("tts_" + viewFrame.ViewName);
+			LogHelper.Instance.Log("No on enter script specified for view named: {0}", viewFrameInstance.ViewFrame.ViewName);
 		}
-		if (viewFrame.Errors.ContainsError())
+		m_viewShownOn = DateTime.Now;
+		m_lastShownView = viewFrameInstance.ViewFrame.ViewName;
+		TTSRunSpeech(viewFrameInstance);
+		ShowErrors(viewFrameInstance);
+	}
+
+	private void TTSRunSpeech(IViewFrameInstance viewFrameInstance)
+	{
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service != null && service.TTSEnabled)
+		{
+			service.RunSpeechWorkflow("tts_" + viewFrameInstance.ViewFrame.ViewName);
+		}
+	}
+
+	private void ShowErrors(IViewFrameInstance viewFrameInstance)
+	{
+		if (viewFrameInstance.ViewFrame.Errors.ContainsError())
 		{
 			ErrorForm errorForm = new ErrorForm
 			{
-				Errors = viewFrame.Errors,
-				Text = $"Errors for view resource: {viewFrame.ViewName}"
+				Errors = viewFrameInstance.ViewFrame.Errors,
+				Text = $"Errors for view resource: {viewFrameInstance.ViewFrame.ViewName}"
 			};
 			errorForm.Show();
 			errorForm.BringToFront();
@@ -149,11 +175,13 @@ public class ViewService : IViewService
 			LogHelper.Instance.Log("View stack is empty; nothing to pop.");
 			return null;
 		}
-		IViewFrame viewFrame = InnerStack.Pop();
-		LogHelper.Instance.Log("Pop view '{0}' from TOS; executing onLeave = {1}", viewFrame.ViewName, viewFrame.OnLeaveResourceName);
-		viewFrame.RaiseOnLeave();
-		IViewFrame viewFrame2 = InnerStack.Peek();
-		if (viewFrame2 != null && !viewFrame2.Clear)
+		IViewFrameInstance viewFrameInstance = InnerStack.Pop();
+		if (viewFrameInstance.ViewFrame is IViewFrame viewFrame)
+		{
+			LogHelper.Instance.Log("Pop view '{0}' from TOS; executing onLeave = {1}", viewFrameInstance.ViewFrame.ViewName, viewFrame.OnLeaveResourceName);
+		}
+		viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
+		if (InnerStack.Peek()?.ViewFrame is IViewFrame { Clear: false })
 		{
 			string text = Pop();
 			LogHelper.Instance.Log("Redraw view '{0}' down the stack for transparent TOS view.", text);
@@ -162,7 +190,7 @@ public class ViewService : IViewService
 			Show();
 		}
 		RaiseViewStateChanged();
-		return viewFrame.ViewName;
+		return viewFrameInstance.ViewFrame.ViewName;
 	}
 
 	public string Peek()
@@ -174,11 +202,11 @@ public class ViewService : IViewService
 	{
 		string result = null;
 		int num = 0;
-		foreach (IViewFrame item in InnerStack)
+		foreach (IViewFrameInstance item in InnerStack)
 		{
 			if (index == num)
 			{
-				result = item?.ViewName;
+				result = item?.ViewFrame?.ViewName;
 				break;
 			}
 			num++;
@@ -186,32 +214,56 @@ public class ViewService : IViewService
 		return result;
 	}
 
-	public void ClearCache()
+	public void ClearCache(bool clearResourceViewsOnly)
 	{
-		LogHelper.Instance.Log("Clearing ViewFrame cache.");
-		m_viewFrameCache.Clear();
+		LogHelper.Instance.Log("Clearing ViewFrame cache. ResourceViewsOnly: {0}", clearResourceViewsOnly);
+		if (!clearResourceViewsOnly)
+		{
+			m_viewFrameCache.Clear();
+		}
+		else
+		{
+			List<string> list = new List<string>();
+			foreach (KeyValuePair<string, IBaseViewFrame> item in m_viewFrameCache)
+			{
+				if (item.Value is IViewFrame)
+				{
+					list.Add(item.Key);
+				}
+			}
+			foreach (string item2 in list)
+			{
+				if (m_viewFrameCache.ContainsKey(item2))
+				{
+					m_viewFrameCache.Remove(item2);
+				}
+			}
+		}
 		RaiseViewStateChanged();
 	}
 
 	public string PopDiscard()
 	{
-		IViewFrame viewFrame = InnerStack.Pop();
-		if (viewFrame != null)
+		IViewFrameInstance viewFrameInstance = InnerStack.Pop();
+		if (viewFrameInstance?.ViewFrame != null)
 		{
 			RaiseViewStateChanged();
-			viewFrame.RaiseOnLeave();
-			return viewFrame.ViewName;
+			viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
+			return viewFrameInstance.ViewFrame.ViewName;
 		}
 		return null;
 	}
 
 	public void EnterTopOfStock()
 	{
-		IViewFrame viewFrame = InnerStack.Peek();
-		if (viewFrame != null)
+		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+		if (viewFrameInstance != null)
 		{
-			viewFrame.Scene.MakeDirty(null);
-			viewFrame.RaiseOnEnter();
+			if (viewFrameInstance.ViewFrame is IViewFrame viewFrame)
+			{
+				viewFrame.Scene.MakeDirty(null);
+			}
+			viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance);
 			RaiseViewStateChanged();
 		}
 	}
@@ -244,31 +296,57 @@ public class ViewService : IViewService
 
 	public void Push(string viewName)
 	{
-		InnerStack.Peek()?.RaiseOnLeave();
-		InnerStack.Push(viewName);
-		LogHelper.Instance.Log("Push view '{0}' to TOS.", viewName);
+		Push(viewName, null);
+	}
+
+	public void Push(string viewName, object parameter)
+	{
+		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+		if (viewFrameInstance?.ViewFrame != null)
+		{
+			viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
+		}
+		Guid guid = Guid.NewGuid();
+		InnerStack.Push(guid, viewName, parameter);
+		LogHelper.Instance.Log("Push view '{0}' {1} to TOS.", viewName, guid);
 		RaiseViewStateChanged();
 	}
 
-	public IViewFrame PeekViewFrame()
+	public IViewFrameInstance PeekViewFrame()
 	{
 		return InnerStack.Peek();
 	}
 
-	public IViewFrame GetViewFrame(string viewName)
+	public void CacheViewFrame(IBaseViewFrame baseViewFrame)
 	{
+		if (baseViewFrame != null && !string.IsNullOrEmpty(baseViewFrame.ViewName))
+		{
+			m_viewFrameCache[baseViewFrame.ViewName] = baseViewFrame;
+		}
+	}
+
+	public IBaseViewFrame GetViewFrame(string viewName)
+	{
+		IBaseViewFrame baseViewFrame = null;
 		if (m_viewFrameCache.ContainsKey(viewName))
 		{
-			return m_viewFrameCache[viewName];
+			baseViewFrame = m_viewFrameCache[viewName];
 		}
-		LogHelper.Instance.Log("Cache miss, building cached ViewFrame for view named: {0}", viewName);
-		ViewFrame viewFrame = new ViewFrame
+		else
 		{
-			ViewName = viewName
-		};
-		viewFrame.Parse();
-		m_viewFrameCache[viewName] = viewFrame;
-		return viewFrame;
+			LogHelper.Instance.Log("Cache miss, building cached ViewFrame for view named: {0}", viewName);
+			ViewFrame viewFrame = new ViewFrame
+			{
+				ViewName = viewName
+			};
+			viewFrame.Parse();
+			baseViewFrame = viewFrame;
+			if (baseViewFrame != null)
+			{
+				m_viewFrameCache[viewName] = baseViewFrame;
+			}
+		}
+		return baseViewFrame;
 	}
 
 	public bool IsInMaintenanceMode()
@@ -309,6 +387,18 @@ public class ViewService : IViewService
 			return;
 		}
 		LogHelper.Instance.Log("view_goback_safe({0}) denied.", context);
+	}
+
+	public void UnwindToSafe(string unwindToViewName, bool discard, object context)
+	{
+		if (IsSafeToChangeView())
+		{
+			UnwindTo(unwindToViewName, discard, context);
+		}
+		else
+		{
+			LogHelper.Instance.Log(string.Concat("UnwindToSafe( ", context, " ) denied."));
+		}
 	}
 
 	public void UnwindTo(string unwindToViewName, bool discard, object context)

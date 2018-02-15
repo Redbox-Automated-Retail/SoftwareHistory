@@ -16,6 +16,8 @@ using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -54,7 +56,7 @@ public class TitleDetailsController
 		titleDetailModel.CollectionButtonHit += OnCollectionButton;
 		titleDetailModel.MoreInfoHit += OnMoreInfoHit;
 		titleDetailModel.GoBackHit += OnGoBack;
-		titleDetailModel.BackText = BundleFunctions.GetDictionaryStringValue("strings", "back_button");
+		titleDetailModel.BackText = Resources.back_button;
 		return titleDetailModel;
 	}
 
@@ -104,9 +106,7 @@ public class TitleDetailsController
 		{
 			string subItemValue = ((prevPageNumber < newPageNumber) ? "product-detail-page-next" : "product-detail-page-back");
 			BrowseState.BrowseSelectionSelectedProduct = browseProductControl.BrowseItems[newPageNumber - 1].Data as IKioskProduct;
-			ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			service?.AddViewEvent("pageChange", subItemValue);
-			service?.AddViewEvent("context", ("productDisplayed," + ((ITitleProduct)BrowseState.BrowseSelectionSelectedProduct)?.ProductId) ?? string.Empty);
+			ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("pageChange", subItemValue);
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = false;
 			browseProductControl.TitleRollupOverlayModel.Visibility = Visibility.Collapsed;
 			ConfigureTTS();
@@ -191,11 +191,32 @@ public class TitleDetailsController
 
 	private static void OnMoreInfoHit(IBrowseItemModel model)
 	{
+		IComingSoonOptinInfo comingSoonOptinInfo = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ComingSoonOptInInfo;
 		SessionAnalyticsService?.AddViewEvent("buttonPress", "see-related-collection");
-		if (model?.Data is ITitleProduct titleProduct)
+		ITitleProduct titleProduct = model?.Data as ITitleProduct;
+		if (titleProduct == null)
 		{
-			OrchestrationService.InvokeGetEmailAddressAndRegisterEmailReminderCallback(titleProduct.ProductId);
+			return;
 		}
+		OrchestrationService.ViewShow("keyboard_email_coming_soon_view", new KeyboardInfo
+		{
+			MaxLength = 64,
+			KeyboardText = comingSoonOptinInfo.EmailAddress,
+			CancelAction = delegate
+			{
+				ViewService?.GoBack("go back", popOnly: false);
+			},
+			IsValidEntry = ValidationServices.IsValidEmailAddress,
+			ContinueAction = delegate(string keyboardText)
+			{
+				if (comingSoonOptinInfo != null && ViewService != null)
+				{
+					comingSoonOptinInfo.EmailAddress = keyboardText;
+					comingSoonOptinInfo.AddProduct(titleProduct.ProductId);
+					ViewService.UnwindTo("browse_view", discard: true, "KeyboardView: KeyboardMode.EMAIL_COMING_SOON  - NEXT button");
+				}
+			}
+		});
 	}
 
 	private static void OnRent(long productId)
@@ -214,40 +235,39 @@ public class TitleDetailsController
 	{
 		if (displayProductModel?.Data is ITitleProduct titleProduct)
 		{
-			if (titleProduct is TitleRollupProduct)
+			ITitleProduct titleProduct2 = ((titleProduct is TitleRollupProduct) ? (((TitleRollupProduct)titleProduct).PrimaryProduct as ITitleProduct) : titleProduct);
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "rent," + titleProduct2.ProductId);
+			OnRent(titleProduct2.ProductId);
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+			if (titleProduct2.HasMultiNightPrice && !flag)
 			{
-				ITitleProduct titleProduct2 = ((TitleRollupProduct)titleProduct).PrimaryProduct as ITitleProduct;
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "rent," + titleProduct2.ProductId);
-				OnRent(titleProduct2.ProductId);
-				AddToCart(titleProduct2, isPurchase: false);
+				OrchestrationService.ViewShow("multi_night_pricing_popup_view", titleProduct2);
 			}
 			else
 			{
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "rent," + titleProduct.ProductId);
-				OnRent(titleProduct.ProductId);
-				AddToCart(titleProduct, isPurchase: false);
+				AddToCart(titleProduct2, isPurchase: false);
 			}
 		}
 	}
 
 	public static void OnRentBluRay(IBrowseItemModel displayProductModel, object commandType)
 	{
-		if (!(displayProductModel?.Data is ITitleProduct titleProduct))
+		if (displayProductModel?.Data is ITitleProduct titleProduct)
 		{
-			return;
-		}
-		if (titleProduct is TitleRollupProduct)
-		{
-			ITitleProduct titleProduct2 = ((TitleRollupProduct)titleProduct).KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray);
+			ITitleProduct titleProduct2 = ((titleProduct is TitleRollupProduct) ? ((TitleRollupProduct)titleProduct).KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.Bluray) : titleProduct);
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "rent," + titleProduct2.ProductId);
 			OnRent(titleProduct2.ProductId);
-			AddToCart(titleProduct2, isPurchase: false);
-		}
-		else
-		{
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "rent," + titleProduct.ProductId);
-			OnRent(titleProduct.ProductId);
-			AddToCart(titleProduct, isPurchase: false);
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+			if (titleProduct2.HasMultiNightPrice && !flag)
+			{
+				OrchestrationService.ViewShow("multi_night_pricing_popup_view", titleProduct2);
+			}
+			else
+			{
+				AddToCart(titleProduct2, isPurchase: false);
+			}
 		}
 	}
 
@@ -301,7 +321,7 @@ public class TitleDetailsController
 		{
 			SessionAnalyticsService?.AddViewEvent("context", "whatdigitalcode_message_view");
 			ITitleProduct product = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.DigitalCode);
-			MessagePopupViewController.ShowMessagePopupViewDigitalCode($"{product.MoviePurchasePrice:N2}", delegate
+			MessagePopupViewController.ShowMessagePopupViewDigitalCode($"{product.PurchasePrice:N2}", delegate
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-whatdigitalcode-mesage-view");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code info back button", popOnly: false);

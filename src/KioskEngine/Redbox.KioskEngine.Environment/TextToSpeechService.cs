@@ -105,48 +105,40 @@ public class TextToSpeechService : ITextToSpeechService
 				LogHelper.Instance.Log($"TTS((> TextToSpeechService.AudioDeviceConnected Not in Rental Application. Currently {manifestInfo.ProductName}");
 				return;
 			}
-			ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-			if (service2 != null && !service2.HasValidData())
+			ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+			IShoppingSessionService service3 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+			if (CanReturnToStartView())
 			{
-				ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-				IShoppingSessionService service4 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-				if (CanReturnToStartView())
+				LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
+				if (service3 != null)
 				{
-					LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
-					if (service4 != null)
+					IShoppingSession currentSession = service3.GetCurrentSession();
+					if (service2 != null)
 					{
-						IShoppingSession currentSession = service4.GetCurrentSession();
-						if (service3 != null)
+						service2.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
 						{
-							service3.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
-							{
-								{ "subItemType", "Timeout" },
-								{ "subItemValue", "HeadphonesConnected" }
-							}, currentSession.Id.ToString());
-							service3.AddNode("session", "pricing");
-						}
-						currentSession.Abandon("HeadphonesConnected");
-						currentSession.End();
-						service3?.Close(currentSession.Id.ToString());
+							{ "subItemType", "Timeout" },
+							{ "subItemValue", "HeadphonesConnected" }
+						}, currentSession.Id.ToString());
+						service2.AddNode("session", "pricing");
 					}
-					UnwindToStartView(service);
+					currentSession.Abandon("HeadphonesConnected");
+					currentSession.End();
+					service2?.Close(currentSession.Id.ToString());
 				}
-				else if (service == null)
-				{
-					LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. Unable to find ViewService.");
-				}
-				else if (InReturnFlow)
-				{
-					LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. In Return Flow.");
-				}
-				else
-				{
-					LogHelper.Instance.Log($"TTS AudioDeviceConnected - Can't Unwind. On page {service.Peek()}");
-				}
+				UnwindToStartView(service);
+			}
+			else if (service == null)
+			{
+				LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. Unable to find ViewService.");
+			}
+			else if (InReturnFlow)
+			{
+				LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. In Return Flow.");
 			}
 			else
 			{
-				LogHelper.Instance.Log("TTS AudioDeviceConnected - Track Data has errors or is missing.");
+				LogHelper.Instance.Log($"TTS AudioDeviceConnected - Can't Unwind. On page {service.Peek()}");
 			}
 		}
 	}
@@ -209,17 +201,29 @@ public class TextToSpeechService : ITextToSpeechService
 		if (_speechControl == null)
 		{
 			LogHelper.Instance.Log("TTS((> Attempting to get Speech Control for {0} from the view.", resourceName);
-			IViewFrame viewFrame = ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame();
+			ITextToSpeechControl textToSpeechControl = null;
+			IViewFrameInstance viewFrameInstance = ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame();
+			IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
 			if (viewFrame?.Scene != null)
 			{
 				foreach (IActor actor in viewFrame.Scene.Actors)
 				{
-					if (actor?.WPFFrameworkElement is ITextToSpeechControl textToSpeechControl)
+					textToSpeechControl = actor?.WPFFrameworkElement as ITextToSpeechControl;
+					if (textToSpeechControl != null)
 					{
-						_speechControl = textToSpeechControl.GetSpeechControl();
-						LogHelper.Instance.Log("TTS((> Loaded Speech Control for {0} from the view. {1} speech parts loaded", resourceName, _speechControl?.SpeechParts?.Count ?? 0);
+						break;
 					}
 				}
+			}
+			else if (viewFrameInstance?.ViewFrame is IWPFViewFrame)
+			{
+				IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
+				textToSpeechControl = service2.GetScene("Default")?.GetWPFGridChild(viewFrameInstance?.Id) as ITextToSpeechControl;
+			}
+			if (textToSpeechControl != null)
+			{
+				_speechControl = textToSpeechControl.GetSpeechControl();
+				LogHelper.Instance.Log("TTS((> Loaded Speech Control for {0} from the view. {1} speech parts loaded", resourceName, _speechControl?.SpeechParts?.Count ?? 0);
 			}
 		}
 		if (_speechControl == null)
@@ -250,7 +254,7 @@ public class TextToSpeechService : ITextToSpeechService
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		if (service != null)
 		{
-			result = service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && service.Peek() != "swipe_view" && !InReturnFlow;
+			result = service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && !service.Stack.Any((IViewFrameInstance x) => x?.ViewFrame?.ViewName == "swipe_view") && !InReturnFlow;
 		}
 		return result;
 	}
@@ -563,11 +567,14 @@ public class TextToSpeechService : ITextToSpeechService
 					}
 				};
 				IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
-				IViewFrame viewFrame = service2.PeekViewFrame();
-				IActor actor = viewFrame.Scene.GetActor(actor_name);
-				if (actor != null && (!string.IsNullOrEmpty(mapKeyPressToActorHitEvent.Command) || (actor.Visible && actor.Enabled)))
+				IViewFrameInstance viewFrameInstance = service2.PeekViewFrame();
+				if (viewFrameInstance.ViewFrame is IViewFrame viewFrame)
 				{
-					m_keyHandlers.Add(mapKeyPressToActorHitEvent.KeyCode, value10);
+					IActor actor = viewFrame.Scene.GetActor(actor_name);
+					if (actor != null && (!string.IsNullOrEmpty(mapKeyPressToActorHitEvent.Command) || (actor.Visible && actor.Enabled)))
+					{
+						m_keyHandlers.Add(mapKeyPressToActorHitEvent.KeyCode, value10);
+					}
 				}
 			}
 			else
@@ -584,6 +591,10 @@ public class TextToSpeechService : ITextToSpeechService
 				Action value11 = delegate
 				{
 					mapKeyPressToAction.Action();
+					if (mapKeyPressToAction.ActionText != null)
+					{
+						mapKeyPressToAction.Text = mapKeyPressToAction.ActionText();
+					}
 					if (mapKeyPressToAction.Text != null)
 					{
 						string text = mapKeyPressToAction.Text;
@@ -741,7 +752,7 @@ public class TextToSpeechService : ITextToSpeechService
 			{
 				TTSFinalizeKeyEntry();
 			}
-			IViewFrame viewFrame2 = ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame();
+			IViewFrame viewFrame2 = (ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame())?.ViewFrame as IViewFrame;
 			if (viewFrame2?.Scene?.Actors != null)
 			{
 				foreach (IActor actor2 in viewFrame2.Scene.Actors)
@@ -1118,8 +1129,8 @@ public class TextToSpeechService : ITextToSpeechService
 	{
 		LogHelper.Instance.Log("TTS((> Execute Command requested: {0}, {1}, {2}", actorName, command, parameter);
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		IViewFrame viewFrame = service.PeekViewFrame();
-		IActor actor = viewFrame.Scene.GetActor(actorName);
+		IViewFrameInstance viewFrameInstance = service.PeekViewFrame();
+		IActor actor = ((!(viewFrameInstance.ViewFrame is IViewFrame viewFrame)) ? null : viewFrame.Scene?.GetActor(actorName));
 		if (actor != null)
 		{
 			if (actor.WPFFrameworkElement != null)
@@ -1151,8 +1162,8 @@ public class TextToSpeechService : ITextToSpeechService
 		try
 		{
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IViewFrame viewFrame = service.PeekViewFrame();
-			IActor actor = viewFrame.Scene.GetActor(actorName);
+			IViewFrameInstance viewFrameInstance = service.PeekViewFrame();
+			IActor actor = ((!(viewFrameInstance.ViewFrame is IViewFrame viewFrame)) ? null : viewFrame.Scene?.GetActor(actorName));
 			if (actor == null)
 			{
 				LogHelper.Instance.Log("TTS((> actor NOT FOUND in scene.");

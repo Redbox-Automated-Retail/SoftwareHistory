@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Redbox.BrokerServices.Proxy;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.BrokerServices.KernelExtension;
@@ -29,6 +31,12 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 
 	private Label m_headerLabel;
 
+	private Button button1;
+
+	private Label m_reservationCount;
+
+	private Label label1;
+
 	public GeneralPreferencePage()
 	{
 		InitializeComponent();
@@ -46,6 +54,8 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		m_brokerServicesTimeoutTextBox.Text = BrokerServicesProxy.Instance.Timeout.ToString();
 		m_simulateServerBusyCheckBox.Checked = ReservationServicesProxy.Instance.SimulateServerBusyError;
 		m_simulateCommunicationsErrorCheckBox.Checked = ReservationServicesProxy.Instance.SimulateCommunicationsFailure;
+		Dictionary<string, object> obj = ServiceLocator.Instance.GetService<IDataStoreService>()?.GetAll("local", "Reservation");
+		m_reservationCount.Text = obj?.Count.ToString() ?? "0";
 	}
 
 	private void OnLeaveBrokerServicesUrlTextBox(object sender, EventArgs e)
@@ -81,6 +91,11 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		ReservationServicesProxy.Instance.SimulateCommunicationsFailure = m_simulateCommunicationsErrorCheckBox.Checked;
 	}
 
+	private void OnCreateReservationClick(object sender, EventArgs e)
+	{
+		_ = m_liveCallCheckBox.Checked;
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -102,6 +117,9 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		this.m_simulateServerBusyCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_simulateCommunicationsErrorCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_headerLabel = new System.Windows.Forms.Label();
+		this.button1 = new System.Windows.Forms.Button();
+		this.label1 = new System.Windows.Forms.Label();
+		this.m_reservationCount = new System.Windows.Forms.Label();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
 		this.m_brokerServicesTimeoutTextBox.Location = new System.Drawing.Point(107, 108);
@@ -162,8 +180,31 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		this.m_headerLabel.TabIndex = 7;
 		this.m_headerLabel.Text = "  Broker Service: General";
 		this.m_headerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+		this.button1.Location = new System.Drawing.Point(365, 466);
+		this.button1.Name = "button1";
+		this.button1.Size = new System.Drawing.Size(141, 23);
+		this.button1.TabIndex = 8;
+		this.button1.Text = "Create Reservation";
+		this.button1.UseVisualStyleBackColor = true;
+		this.button1.Click += new System.EventHandler(OnCreateReservationClick);
+		this.label1.AutoSize = true;
+		this.label1.Location = new System.Drawing.Point(367, 441);
+		this.label1.Name = "label1";
+		this.label1.Size = new System.Drawing.Size(98, 13);
+		this.label1.TabIndex = 9;
+		this.label1.Text = "Reservation Count:";
+		this.m_reservationCount.AutoSize = true;
+		this.m_reservationCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 12f);
+		this.m_reservationCount.Location = new System.Drawing.Point(471, 436);
+		this.m_reservationCount.Name = "m_reservationCount";
+		this.m_reservationCount.Size = new System.Drawing.Size(18, 20);
+		this.m_reservationCount.TabIndex = 10;
+		this.m_reservationCount.Text = "0";
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.m_reservationCount);
+		base.Controls.Add(this.label1);
+		base.Controls.Add(this.button1);
 		base.Controls.Add(this.m_headerLabel);
 		base.Controls.Add(this.m_simulateServerBusyCheckBox);
 		base.Controls.Add(this.m_simulateCommunicationsErrorCheckBox);

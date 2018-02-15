@@ -12,4 +12,16 @@ public interface IConfiguration
 	int BurnInTimeout { get; }
 
 	int BurnInViewDuration { get; }
+
+	bool EnableCreditsButton { get; }
+
+	bool EarlyIdEnabled { get; }
+
+	bool LoyaltyEnabled { get; }
+
+	int SignInTimeout { get; }
+
+	int SignInADATimeout { get; }
+
+	bool EnablePricingEngine { get; }
 }

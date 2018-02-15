@@ -144,8 +144,8 @@ public class HelpViewController
 		});
 		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewUserControl.HelpDocumentInfo
 		{
-			DocumentName = helpViewUserControl.PlayPassDocument,
-			DefaultDocumentName = "document-play-pass",
+			DocumentName = helpViewUserControl.PerksDocument,
+			DefaultDocumentName = "document-perks",
 			Title = BundleFunctions.GetDictionaryStringValue("strings", "play_pass_title"),
 			Visible = true,
 			AnalyticsButtonName = "show_play_pass"

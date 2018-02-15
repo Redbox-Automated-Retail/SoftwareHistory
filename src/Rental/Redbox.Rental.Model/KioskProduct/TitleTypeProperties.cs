@@ -18,105 +18,105 @@ public static class TitleTypeProperties
 						TitleType.All,
 						new TitleTypeProperty
 						{
-							Name = "All"
+							NameResource = "title_type_name_all"
 						}
 					},
 					{
 						TitleType.DVD,
 						new TitleTypeProperty
 						{
-							Name = "DVD"
+							NameResource = "title_type_name_dvd"
 						}
 					},
 					{
 						TitleType.Bluray,
 						new TitleTypeProperty
 						{
-							Name = "Blu-ray"
+							NameResource = "title_type_name_bluray"
 						}
 					},
 					{
 						TitleType.Xbox360,
 						new TitleTypeProperty
 						{
-							Name = "Xbox 360"
+							NameResource = "title_type_name_xbox360"
 						}
 					},
 					{
 						TitleType.PS2,
 						new TitleTypeProperty
 						{
-							Name = "PS2"
+							NameResource = "title_type_name_ps2"
 						}
 					},
 					{
 						TitleType.PS3,
 						new TitleTypeProperty
 						{
-							Name = "PS3"
+							NameResource = "title_type_name_ps3"
 						}
 					},
 					{
 						TitleType.PSP,
 						new TitleTypeProperty
 						{
-							Name = "PSP"
+							NameResource = "title_type_name_psp"
 						}
 					},
 					{
 						TitleType.Wii,
 						new TitleTypeProperty
 						{
-							Name = "Wii"
+							NameResource = "title_type_name_wii"
 						}
 					},
 					{
 						TitleType.DS,
 						new TitleTypeProperty
 						{
-							Name = "DS"
+							NameResource = "title_type_name_ds"
 						}
 					},
 					{
 						TitleType.PC,
 						new TitleTypeProperty
 						{
-							Name = "PC"
+							NameResource = "title_type_name_pc"
 						}
 					},
 					{
 						TitleType.WiiU,
 						new TitleTypeProperty
 						{
-							Name = "Wii U"
+							NameResource = "title_type_name_wiiu"
 						}
 					},
 					{
 						TitleType.PS4,
 						new TitleTypeProperty
 						{
-							Name = "PS4"
+							NameResource = "title_type_name_ps4"
 						}
 					},
 					{
 						TitleType.XboxOne,
 						new TitleTypeProperty
 						{
-							Name = "Xbox One"
+							NameResource = "title_type_name_xboxone"
 						}
 					},
 					{
 						TitleType.DigitalCode,
 						new TitleTypeProperty
 						{
-							Name = "Digital Code"
+							NameResource = "title_type_name_digital_code"
 						}
 					},
 					{
 						TitleType.NintendoSwitch,
 						new TitleTypeProperty
 						{
-							Name = "Nintendo Switch"
+							NameResource = "title_type_name_nintendo_switch"
 						}
 					}
 				};

@@ -30,12 +30,16 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Services;
 using Redbox.Rental.Services.KioskEvents;
 using Redbox.Rental.Services.KioskHealth;
+using Redbox.Rental.Services.Loyalty;
 using Redbox.Rental.Services.Marketing;
+using Redbox.Rental.Services.Personalization;
 using Redbox.Rental.Services.Pricing;
 using Redbox.Rental.Services.ShoppingCart;
 using Redbox.UpdateServices.KernelExtension;
@@ -419,6 +423,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			}
 			Uri resourceLocator = new Uri("Redbox.Rental.UI;component/Assets/StyleDictionary.xaml", UriKind.Relative);
 			System.Windows.Application.Current.Resources.MergedDictionaries.Add(System.Windows.Application.LoadComponent(resourceLocator) as ResourceDictionary);
+			Uri resourceLocator2 = new Uri("Redbox.ControlPanel.UI;component/Assets/StyleDictionary.xaml", UriKind.Relative);
+			System.Windows.Application.Current.Resources.MergedDictionaries.Add(System.Windows.Application.LoadComponent(resourceLocator2) as ResourceDictionary);
 		}
 		catch (Exception e)
 		{
@@ -620,6 +626,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
+			ControlPanelService instance = new ControlPanelService();
+			ServiceLocator.Instance.AddService(typeof(IControlPanelService), instance);
 			MarketingConfigurationManager marketingConfigurationManager = new MarketingConfigurationManager(service2);
 			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), marketingConfigurationManager);
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
@@ -629,19 +637,22 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			KioskEventService kioskEventService = new KioskEventService(storeManagerService, kioskHealthConfiguration);
 			kioskEventService.Start();
 			ServiceLocator.Instance.AddService(typeof(IKioskEventService), kioskEventService);
-			RentalHealthService instance = new RentalHealthService();
-			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance);
+			RentalHealthService instance2 = new RentalHealthService();
+			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance2);
 			KernelHelperService kernelHelperService = new KernelHelperService();
 			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
 			BlockListData blockListData = new BlockListData(service);
 			ServiceLocator.Instance.AddService(typeof(IBlockListData), blockListData);
-			BlockListService instance2 = new BlockListService(storeManagerService, blockListData);
-			ServiceLocator.Instance.AddService(typeof(IBlockList), instance2);
+			BlockListService instance3 = new BlockListService(storeManagerService, blockListData);
+			ServiceLocator.Instance.AddService(typeof(IBlockList), instance3);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IInventoryData), inventoryData);
-			InventoryService instance3 = new InventoryService(inventoryData);
-			ServiceLocator.Instance.AddService(typeof(IInventory), instance3);
+			InventoryService instance4 = new InventoryService(inventoryData);
+			ServiceLocator.Instance.AddService(typeof(IInventory), instance4);
+			PricingService pricingService = new PricingService(service, storeManagerService);
+			ServiceLocator.Instance.AddService(typeof(IPricingService), pricingService);
+			pricingService.Start();
 			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(DataPath, "ProfileImages\\"), new CacheData(), new KioskData(service), this);
 			ServiceLocator.Instance.AddService(typeof(IDataService), dataService);
 			dataService.Initialize();
@@ -652,11 +663,11 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			MarketingAdImpressionService marketingAdImpressionService = new MarketingAdImpressionService(storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IMarketingAdImpressionService), marketingAdImpressionService);
 			marketingAdImpressionService.Start();
-			MarketingAdService instance4 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service3);
-			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance4);
+			MarketingAdService instance5 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service3);
+			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance5);
 			RentalShoppingCartService.Instance.Initialize();
-			PricingService instance5 = new PricingService();
-			ServiceLocator.Instance.AddService(typeof(IPricingService), instance5);
+			ServiceLocator.Instance.AddService(typeof(IPersonalizationService), new PersonalizationService());
+			ServiceLocator.Instance.AddService(typeof(ILoyaltyService), new LoyaltyService());
 			RedboxRentalService redboxRentalService = new RedboxRentalService();
 			ServiceLocator.Instance.AddService(typeof(IRedboxRental), redboxRentalService);
 			errorList.AddRange(redboxRentalService.Initialize());
@@ -768,13 +779,15 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		service15.Stop();
 		IMarketingAdImpressionService service16 = ServiceLocator.Instance.GetService<IMarketingAdImpressionService>();
 		service16.Stop();
-		IKioskEventService service17 = ServiceLocator.Instance.GetService<IKioskEventService>();
+		IPricingService service17 = ServiceLocator.Instance.GetService<IPricingService>();
 		service17.Stop();
+		IKioskEventService service18 = ServiceLocator.Instance.GetService<IKioskEventService>();
+		service18.Stop();
 		ServiceLocator.Instance.GetService<IKernelExtensionService>()?.DeactivateAllExtensions();
-		IConfigurationService service18 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service18 != null)
+		IConfigurationService service19 = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (service19 != null)
 		{
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = service18.Stop();
+			Redbox.KioskEngine.ComponentModel.ErrorList errorList = service19.Stop();
 			errorList.ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)
 			{
 				LogHelper.Instance.Log("Code: {0} Desc: {1} Details: {2}", error.Code, error.Description, error.Details);

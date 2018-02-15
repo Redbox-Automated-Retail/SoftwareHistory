@@ -1,16 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Views;
@@ -21,7 +26,7 @@ public static class OrchestrationService
 {
 	private static Action _idleTimerExpireSessionCallback;
 
-	private static Action<long> _getEmailAddressAndRegisterEmailReminderCallback;
+	public static bool TTSEnabled => ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
 
 	public static bool IsCollectionsPopupEnabled()
 	{
@@ -48,17 +53,10 @@ public static class OrchestrationService
 		_idleTimerExpireSessionCallback = idleTimerExpireSessionCallback;
 	}
 
-	public static void RegisterGetEmailAddressAndRegisterEmailReminderCallback(Action<long> getEmailAddressAndRegisterEmailReminderCallback)
+	public static void RegisterViewDefinitions()
 	{
-		_getEmailAddressAndRegisterEmailReminderCallback = getEmailAddressAndRegisterEmailReminderCallback;
-	}
-
-	public static void InvokeGetEmailAddressAndRegisterEmailReminderCallback(long productId)
-	{
-		if (_getEmailAddressAndRegisterEmailReminderCallback != null)
-		{
-			_getEmailAddressAndRegisterEmailReminderCallback(productId);
-		}
+		ServiceLocator.Instance.GetService<IViewService>().ClearCache(clearResourceViewsOnly: false);
+		WPFViewFrame.CacheWPFViewFrames("Redbox.Rental.Services.dll");
 	}
 
 	public static void InvokeIdleTimerExpireSessionCallback()
@@ -77,14 +75,42 @@ public static class OrchestrationService
 			num = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>()?.CollectionsPopUpTimer ?? 0;
 			num = Math.Min(Math.Max(num, 16000), 60000);
 		}
+		else if (Redbox.Rental.Services.Configuration.Configuration.Instance.EarlyIdEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout > 0)
+		{
+			IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+			if (personalizationSession != null && personalizationSession.IsLoggedIn)
+			{
+				num = Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout;
+			}
+		}
 		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
 		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
 		if (service != null && service2 != null)
 		{
-			string timeoutType = ((service2.Peek() == "help_document_view") ? "help" : "long");
-			num = service.GetTimeout(timeoutType, num);
+			num = TTSGetTimeout((service2.Peek() == "help_document_view") ? "help" : "long", num);
 		}
 		return num;
+	}
+
+	public static int TTSGetTimeout(string timeoutType, int defaultTimeout)
+	{
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service != null && service.TTSEnabled)
+		{
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.EarlyIdEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout > 0)
+			{
+				IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+				if (personalizationSession != null && personalizationSession.IsLoggedIn)
+				{
+					defaultTimeout = Redbox.Rental.Services.Configuration.Configuration.Instance.SignInADATimeout;
+					goto IL_005f;
+				}
+			}
+			defaultTimeout = service.GetTimeout(timeoutType, defaultTimeout);
+		}
+		goto IL_005f;
+		IL_005f:
+		return defaultTimeout;
 	}
 
 	public static void ResetApplicationIdleTimerTimeout()
@@ -108,7 +134,7 @@ public static class OrchestrationService
 			switch (kioskProduct.KioskProductType)
 			{
 			case KioskProductType.None:
-				result = Constants.Images.MovieMissingBoxArt;
+				result = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
 				break;
 			case KioskProductType.Title:
 			case KioskProductType.MDV:
@@ -121,22 +147,22 @@ public static class OrchestrationService
 					}
 					else if (titleProduct.TitleFamily == TitleFamily.Movies)
 					{
-						result = Constants.Images.MovieMissingBoxArt;
+						result = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
 					}
 					else if (titleProduct.TitleFamily == TitleFamily.Games)
 					{
-						result = Constants.Images.GameMissingBoxArt;
+						result = Redbox.Rental.UI.Views.Constants.Images.GameMissingBoxArt;
 					}
 				}
 				break;
 			case KioskProductType.Collection:
 				if (kioskProduct is ICollectionProduct)
 				{
-					result = Constants.Images.CollectionsCarousel;
+					result = Redbox.Rental.UI.Views.Constants.Images.CollectionsCarousel;
 				}
 				break;
 			default:
-				result = Constants.Images.MovieMissingBoxArt;
+				result = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
 				break;
 			}
 		}
@@ -149,7 +175,7 @@ public static class OrchestrationService
 		long? num = kioskProduct?.SubPlatformId;
 		if (num.HasValue && num > 0)
 		{
-			result = Constants.SubPlatformImages.GetSubPlatformImage((Constants.SubPlatforms)num.Value);
+			result = Redbox.Rental.UI.Views.Constants.SubPlatformImages.GetSubPlatformImage((Redbox.Rental.UI.Views.Constants.SubPlatforms)num.Value);
 		}
 		return result;
 	}
@@ -236,10 +262,14 @@ public static class OrchestrationService
 
 	public static bool RentalRefreshIfNeeded()
 	{
-		LogHelper.Instance.Log("RentalRefreshIfNeeded");
+		LogHelper.Instance.Log("OrchestrationService.RentalRefreshIfNeeded");
 		try
 		{
-			return ServiceLocator.Instance.GetService<IDataService>().RefreshIfNeeded();
+			LogHelper.Instance.Log("OrchestrationService.RentalRefreshIfNeeded - DataService");
+			bool result = ServiceLocator.Instance.GetService<IDataService>().RefreshIfNeeded();
+			LogHelper.Instance.Log("OrchestrationService.RentalRefreshIfNeeded - PricingService");
+			ServiceLocator.Instance.GetService<IPricingService>().UpdatePricingInstance();
+			return result;
 		}
 		catch (Exception e)
 		{
@@ -345,17 +375,47 @@ public static class OrchestrationService
 		ResetCurrentView();
 	}
 
+	public static void SetCurrentUICulture()
+	{
+		string text = ServiceLocator.Instance.GetService<IResourceBundleService>()?.Filter["culture"] ?? null;
+		if (text != null)
+		{
+			string name = Thread.CurrentThread.CurrentUICulture.Name;
+			if (!text.Equals(name))
+			{
+				Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(text);
+			}
+		}
+	}
+
 	public static void ViewShow(string viewName)
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		service.Push(viewName);
-		service.Show();
+		service?.Push(viewName);
+		service?.Show();
+	}
+
+	public static void ViewShow(string viewName, object parameter)
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		service?.Push(viewName, parameter);
+		service?.Show();
+	}
+
+	public static void ViewGoBack(object context, bool popOnly)
+	{
+		ServiceLocator.Instance.GetService<IViewService>()?.GoBack(context, popOnly);
+	}
+
+	public static void ViewGoBackSafe(object context, bool popOnly)
+	{
+		ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe(context, popOnly);
 	}
 
 	private static void ResetCurrentView()
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		service.ClearCache();
+		service.ClearCache(clearResourceViewsOnly: true);
 		service.Show();
 	}
 
@@ -460,6 +520,16 @@ public static class OrchestrationService
 		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent(subItemType, subItemValue);
 	}
 
+	public static void AnalyticsAddNode(string parentNodeName, string nodeName)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddNode(parentNodeName, nodeName);
+	}
+
+	public static void AnalyticsAddAttribute(string parentNodeName, string attributeName, string attributeValue)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttribute(parentNodeName, attributeName, attributeValue);
+	}
+
 	public static void RemoveTimer(string timerName)
 	{
 		ServiceLocator.Instance.GetService<ITimerService>()?.RemoveTimer(timerName);
@@ -472,6 +542,11 @@ public static class OrchestrationService
 		{
 			service[name] = value;
 		}
+	}
+
+	public static string GetMacro(string name)
+	{
+		return ServiceLocator.Instance.GetService<IMacroService>()?[name];
 	}
 
 	public static object[] ExecuteScript(string name)
@@ -487,5 +562,67 @@ public static class OrchestrationService
 			}
 		}
 		return list.ToArray();
+	}
+
+	public static void SuspendIdleTimer(string idleTimerName)
+	{
+		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Suspend();
+	}
+
+	public static void ResetIdleTimer(string idleTimerName)
+	{
+		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Reset();
+	}
+
+	public static void ResumeIdleTimer(string idleTimerName)
+	{
+		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Resume();
+	}
+
+	public static void StopIdleTimer(string idleTimerName)
+	{
+		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Stop();
+	}
+
+	public static void StartIdleTimer(string idleTimerName, bool reset = false)
+	{
+		IIdleTimer idleTimer = ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName);
+		idleTimer?.Start();
+		if (reset)
+		{
+			idleTimer?.Reset();
+		}
+	}
+
+	public static IIdleTimer GetIdleTimer(string idleTimerName)
+	{
+		return ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName);
+	}
+
+	public static IIdleTimer CreateIdleTimer(string idleTimerName)
+	{
+		IIdleTimerService service = ServiceLocator.Instance.GetService<IIdleTimerService>();
+		IIdleTimer idleTimer = service?.GetIdleTimer(idleTimerName);
+		if (idleTimer == null)
+		{
+			idleTimer = service?.CreateIdleTimer(idleTimerName);
+		}
+		return idleTimer;
+	}
+
+	public static void StartIdleTimer(int timeOutTime, Action idleTimerRoutine, string idleTimerName = null)
+	{
+		IIdleTimer idleTimer = GetIdleTimer(idleTimerName);
+		if (idleTimer == null)
+		{
+			idleTimer = CreateIdleTimer(idleTimerName);
+		}
+		idleTimer?.Initialize(timeOutTime, idleTimerRoutine);
+		idleTimer?.Start();
+	}
+
+	public static void RemoveIdleTimer(string idleTimerName)
+	{
+		ServiceLocator.Instance.GetService<IIdleTimerService>()?.RemoveIdleTimer(idleTimerName);
 	}
 }

@@ -21,6 +21,7 @@ public class ApplicationState : IApplicationState
 			if (_applicationState == null)
 			{
 				_applicationState = new ApplicationState();
+				ServiceLocator.Instance.AddService(typeof(IApplicationState), _applicationState);
 			}
 			return _applicationState;
 		}
@@ -37,6 +38,8 @@ public class ApplicationState : IApplicationState
 			_isADAAccessible = value;
 		}
 	}
+
+	public bool KeepSessionOnStartViewEnter { get; set; }
 
 	public bool IsABEOn
 	{

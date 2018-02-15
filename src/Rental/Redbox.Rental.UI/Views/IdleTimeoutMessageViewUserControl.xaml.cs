@@ -1,6 +1,4 @@
-﻿using System;
-using System.CodeDom.Compiler;
-using System.Diagnostics;
+using System;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Threading;

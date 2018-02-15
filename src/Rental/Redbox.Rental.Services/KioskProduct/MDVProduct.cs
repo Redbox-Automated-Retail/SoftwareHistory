@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
+using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 
 namespace Redbox.Rental.Services.KioskProduct;
@@ -16,6 +18,22 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 	private ITitleProduct _primaryTitle;
 
 	protected List<ITitleProduct> _titleProducts = new List<ITitleProduct>();
+
+	public Dictionary<string, BarcodeProduct> BarCodeProducts
+	{
+		get
+		{
+			Dictionary<string, BarcodeProduct> retBarCodes = new Dictionary<string, BarcodeProduct>();
+			foreach (KeyValuePair<long, ITitleProduct> allTitleProduct in _allTitleProducts)
+			{
+				allTitleProduct.Value.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
+				{
+					retBarCodes.Add(x.Key, x.Value);
+				});
+			}
+			return retBarCodes;
+		}
+	}
 
 	private ProductGroup _productGroup { get; set; }
 
@@ -415,29 +433,21 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public decimal GamePurchasePrice
+	public decimal PurchasePrice
 	{
 		get
 		{
-			if (!IsGame || _primaryTitle == null)
+			if (_primaryTitle != null)
 			{
-				return 0m;
+				return _primaryTitle.PurchasePrice;
 			}
-			return _primaryTitle.GamePurchasePrice;
+			return 0m;
 		}
 	}
 
-	public decimal MoviePurchasePrice
-	{
-		get
-		{
-			if (!IsMovie || _primaryTitle == null)
-			{
-				return 0m;
-			}
-			return _primaryTitle.MoviePurchasePrice;
-		}
-	}
+	public IPricingRecord PurchasePriceRecord => _primaryTitle?.PurchasePriceRecord;
+
+	public IList<IPricingRecord> RentalPriceRecords => _primaryTitle?.RentalPriceRecords;
 
 	public long TitleRollupProductGroupId { get; set; }
 
@@ -482,6 +492,10 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 			return false;
 		}
 	}
+
+	public bool HasHotDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsHotDeal ?? false) ?? false;
+
+	public bool HasMultiNightPrice => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsMultiNightPrice ?? false) ?? false;
 
 	public string SortAlpha
 	{

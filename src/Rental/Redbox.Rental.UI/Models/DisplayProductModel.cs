@@ -37,13 +37,29 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty DirectedByProperty = DependencyProperty.Register("DirectedBy", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty ReturnTimeProperty = DependencyProperty.Register("ReturnTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty OneNightReturnTimeProperty = DependencyProperty.Register("OneNightReturnTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty ReturnTimeLabelProperty = DependencyProperty.Register("ReturnTimeLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty OneNightReturnTimeLabelProperty = DependencyProperty.Register("OneNightReturnTimeLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty PriceADayProperty = DependencyProperty.Register("PriceADay", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty MultiNightReturnTimeProperty = DependencyProperty.Register("MultiNightReturnTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty PriceLabelProperty = DependencyProperty.Register("PriceLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty MultiNightReturnTimeLabelProperty = DependencyProperty.Register("MultiNightReturnTimeLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MultiNightReturnTimeVisibilityProperty = DependencyProperty.Register("MultiNightReturnTimeVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OneNightPriceProperty = DependencyProperty.Register("OneNightPrice", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OneNightPriceLabelProperty = DependencyProperty.Register("OneNightPriceLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MultiNightPriceProperty = DependencyProperty.Register("MultiNightPrice", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MultiNightPriceLabelProperty = DependencyProperty.Register("MultiightPriceLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MultiNightPriceVisibilityProperty = DependencyProperty.Register("MultiNightPriceVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty HotDealTextProperty = DependencyProperty.Register("HotDealText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty HotDealTextVisibilityProperty = DependencyProperty.Register("HotDealTextVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RatingLabelProperty = DependencyProperty.Register("RatingLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -72,8 +88,6 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty BuyPriceTextProperty = DependencyProperty.Register("BuyPriceText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BuyPriceVisibilityProperty = DependencyProperty.Register("BuyPriceVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty BuyButtonHeightProperty = DependencyProperty.Register("BuyButtonHeight", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BuyButtonTextStyleProperty = DependencyProperty.Register("BuyButtonTextStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -128,6 +142,12 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty AddButtonBarVisibilityProperty = DependencyProperty.Register("AddButtonBarVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty ComingSoonLabelTextProperty = DependencyProperty.Register("ComingSoonLabelText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty CornerContainerVisibilityProperty = DependencyProperty.Register("CornerContainerVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty CornerIncludeButtonVisibilityProperty = DependencyProperty.Register("CornerIncludeButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty CornerExcludeButtonVisibilityProperty = DependencyProperty.Register("CornerExcludeButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty AddButtonLabelTextProperty = DependencyProperty.Register("AddButtonLabelText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -258,6 +278,11 @@ public class DisplayProductModel : BrowseItemModel
 	});
 
 	public static readonly DependencyProperty CancelButtonVisibilityProperty = DependencyProperty.Register("CancelButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty MiniCartCancelButtonVisibilityProperty = DependencyProperty.Register("MiniCartCancelButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
 	{
 		AffectsRender = true
 	});
@@ -715,6 +740,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public Visibility MiniCartCancelButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MiniCartCancelButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MiniCartCancelButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility ImageBackgroundVisibility
 	{
 		get
@@ -1003,62 +1043,182 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public string ReturnTime
+	public string OneNightReturnTime
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ReturnTimeProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(OneNightReturnTimeProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ReturnTimeProperty, value);
+				SetValue(OneNightReturnTimeProperty, value);
 			});
 		}
 	}
 
-	public string ReturnTimeLabel
+	public string OneNightReturnTimeLabel
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ReturnTimeLabelProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(OneNightReturnTimeLabelProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ReturnTimeLabelProperty, value);
+				SetValue(OneNightReturnTimeLabelProperty, value);
 			});
 		}
 	}
 
-	public string PriceADay
+	public string MultiNightReturnTime
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(PriceADayProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(MultiNightReturnTimeProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(PriceADayProperty, value);
+				SetValue(MultiNightReturnTimeProperty, value);
 			});
 		}
 	}
 
-	public string PriceLabel
+	public string MultiNightReturnTimeLabel
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(PriceLabelProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(MultiNightReturnTimeLabelProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(PriceLabelProperty, value);
+				SetValue(MultiNightReturnTimeLabelProperty, value);
+			});
+		}
+	}
+
+	public Visibility MultiNightReturnTimeVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MultiNightReturnTimeVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MultiNightReturnTimeVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string OneNightPrice
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OneNightPriceProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OneNightPriceProperty, value);
+			});
+		}
+	}
+
+	public string OneNightPriceLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OneNightPriceLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OneNightPriceLabelProperty, value);
+			});
+		}
+	}
+
+	public string MultiNightPrice
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MultiNightPriceProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MultiNightPriceProperty, value);
+			});
+		}
+	}
+
+	public string MultiNightPriceLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MultiNightPriceLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MultiNightPriceLabelProperty, value);
+			});
+		}
+	}
+
+	public Visibility MultiNightPriceVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MultiNightPriceVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MultiNightPriceVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string HotDealText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(HotDealTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HotDealTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility HotDealTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(HotDealTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HotDealTextVisibilityProperty, value);
 			});
 		}
 	}
@@ -1558,21 +1718,6 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public int BuyButtonHeight
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (int)GetValue(BuyButtonHeightProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(BuyButtonHeightProperty, value);
-			});
-		}
-	}
-
 	public Style BuyButtonTextStyle
 	{
 		get
@@ -1693,9 +1838,54 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	protected override void SetVisibileItemIndex(int value)
+	public Visibility CornerContainerVisibility
 	{
-		base.SetVisibileItemIndex(value);
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CornerContainerVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CornerContainerVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility CornerIncludeButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CornerIncludeButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CornerIncludeButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility CornerExcludeButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CornerExcludeButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CornerExcludeButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	protected override void SetVisibleItemIndex(int value)
+	{
+		base.SetVisibleItemIndex(value);
 		string cornerAddButtonText = (ADAMiniCartAddButtonText = (value + 1).ToString());
 		CornerAddButtonText = cornerAddButtonText;
 	}
@@ -1794,6 +1984,17 @@ public class DisplayProductModel : BrowseItemModel
 		CornerAddButtonVisibility = Visibility.Collapsed;
 		AddButtonPlusSignVisibility = Visibility.Collapsed;
 		ADAMiniCartAddButtonVisibility = Visibility.Collapsed;
+	}
+
+	public void ConfigureForUpdateADACart()
+	{
+		ImageBorderColor = Color.FromRgb(60, 56, 57);
+		ImageBorderThickness = new Thickness(1.0);
+		ImageBorderCornerRadius = 0.0;
+		ImageBackgroundVisibility = Visibility.Collapsed;
+		CancelButtonVisibility = Visibility.Visible;
+		AddButtonVisibility = Visibility.Collapsed;
+		ImageOpacity = 1.0;
 	}
 
 	public void ConfigureForADAMiniCart()

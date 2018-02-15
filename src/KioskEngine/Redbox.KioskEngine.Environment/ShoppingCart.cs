@@ -10,6 +10,8 @@ internal sealed class ShoppingCart : IShoppingCart
 {
 	private readonly IDictionary<string, IShoppingCartLineItemGroup> m_groups = new Dictionary<string, IShoppingCartLineItemGroup>();
 
+	private readonly IDictionary<string, string> m_propertyBag = new Dictionary<string, string>();
+
 	public string Email { get; internal set; }
 
 	public bool Blocklisted { get; internal set; }
@@ -55,6 +57,8 @@ internal sealed class ShoppingCart : IShoppingCart
 	public bool PlayPassPromptAccepted { get; internal set; }
 
 	public int PlayPassPointsEarned { get; internal set; }
+
+	public IDictionary<string, string> PropertyBag => m_propertyBag;
 
 	public ShoppingCart(Guid shoppingSessionId)
 	{
@@ -227,5 +231,18 @@ internal sealed class ShoppingCart : IShoppingCart
 		LogHelper.Instance.Log("SetPlayPassPromptAccepted on Shopping Cart for Shopping Session '{0}': playPassPromptAccepted={1}, playPassPointsEarned={2}", ShoppingSessionId, playPassPromptAccepted, playPassPointsEarned);
 		PlayPassPromptAccepted = playPassPromptAccepted;
 		PlayPassPointsEarned = playPassPointsEarned;
+	}
+
+	public void SetPropertyBagEntry(string key, string value)
+	{
+		if (!string.IsNullOrWhiteSpace(key))
+		{
+			m_propertyBag[key] = value;
+		}
+	}
+
+	public string GetPropertyBagEntry(string key)
+	{
+		return m_propertyBag.ContainsKey(key) ? m_propertyBag[key] : null;
 	}
 }

@@ -1,3 +1,3 @@
 namespace Redbox.Rental.Model.Pricing;
 
-public delegate void PricingSetChange(IPricingSet newPricingSet);
+public delegate void PricingSetChange();

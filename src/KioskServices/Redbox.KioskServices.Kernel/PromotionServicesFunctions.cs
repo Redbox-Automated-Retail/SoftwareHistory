@@ -8,28 +8,6 @@ namespace Redbox.KioskServices.Kernel;
 
 internal static class PromotionServicesFunctions
 {
-	[KernelFunction(Name = "kernel.promosvcs_validatecode")]
-	internal static void ValidatePromotionCode(string storeNumber, string promotionCode, LuaFunction validationCallback)
-	{
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
-		if (service == null)
-		{
-			return;
-		}
-		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
-		if (callbackService != null)
-		{
-			service.ValidatePromotionCode(storeNumber, promotionCode, delegate(IRemoteServiceResult r)
-			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
-				{
-					Function = validationCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
-			});
-		}
-	}
-
 	[KernelFunction(Name = "kernel.promosvcs_kioskoptin")]
 	internal static void KioskOptIn(string storeNumber, LuaTable optInItems, LuaFunction callback)
 	{

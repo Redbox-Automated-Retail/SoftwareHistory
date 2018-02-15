@@ -3,6 +3,7 @@ using System.Windows;
 using Redbox.Core;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.UI.Models;
@@ -150,7 +151,7 @@ public class TitleRollupUtilities
 		};
 		if (titleProduct != null && titleRollupOverlayButtonTextValues != null)
 		{
-			string arg = ((titleProduct.TitleType == TitleType.DVD) ? "DVD" : ((titleProduct.TitleType == TitleType.Bluray) ? "BLU-RAY" : ((titleProduct.TitleType == TitleType.DigitalCode) ? BundleFunctions.GetDictionaryStringValue("strings", "digital_code").ToUpper() : null)));
+			string arg = ((titleProduct.TitleType == TitleType.DVD) ? "DVD" : ((titleProduct.TitleType == TitleType.Bluray) ? "Blu-ray" : ((titleProduct.TitleType == TitleType.DigitalCode) ? BundleFunctions.GetDictionaryStringValue("strings", "digital_code") : null)));
 			titleRollupOverlayButtonProperties.ButtonText = titleRollupOverlayButtonTextValues.TitleRollupOverlayUnavailableText;
 			if (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.HasItem(titleProduct.ProductId) ?? false)
 			{
@@ -164,17 +165,18 @@ public class TitleRollupUtilities
 			}
 			else if (isPurchase)
 			{
-				decimal moviePurchasePrice = titleProduct.MoviePurchasePrice;
-				if (moviePurchasePrice > 0m && titleProduct.IsSellable)
+				decimal purchasePrice = titleProduct.PurchasePrice;
+				if (purchasePrice > 0m && titleProduct.IsSellable)
 				{
-					titleRollupOverlayButtonProperties.ButtonText = string.Format(titleRollupOverlayButtonTextValues.TitleRollupOverlayBuyText, arg, titleRollupOverlayButtonTextValues.CurrencySymbol, $"{moviePurchasePrice:N2}");
+					titleRollupOverlayButtonProperties.ButtonText = string.Format(titleRollupOverlayButtonTextValues.TitleRollupOverlayBuyText, arg, titleRollupOverlayButtonTextValues.CurrencySymbol, $"{purchasePrice:N2}");
 					titleRollupOverlayButtonProperties.Visibility = Visibility.Visible;
 					titleRollupOverlayButtonProperties.Enabled = true;
 				}
 			}
 			else if (titleProduct.IsAvailable && titleProduct.InStock)
 			{
-				titleRollupOverlayButtonProperties.ButtonText = string.Format(titleRollupOverlayButtonTextValues.TitleRollupOverlayAddText, arg);
+				IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(titleProduct.ProductId);
+				titleRollupOverlayButtonProperties.ButtonText = ((pricingRecord != null) ? $"{string.Format(titleRollupOverlayButtonTextValues.TitleRollupOverlayAddText, arg)}\n{pricingRecord.InitialNight:C}" : string.Format(titleRollupOverlayButtonTextValues.TitleRollupOverlayAddText, arg));
 				titleRollupOverlayButtonProperties.Visibility = Visibility.Visible;
 				titleRollupOverlayButtonProperties.Enabled = true;
 			}

@@ -351,7 +351,7 @@ public static class BundleFunctions
 	private static void ResetCurrentView()
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		service.ClearCache();
+		service.ClearCache(clearResourceViewsOnly: true);
 		service.Show();
 	}
 }

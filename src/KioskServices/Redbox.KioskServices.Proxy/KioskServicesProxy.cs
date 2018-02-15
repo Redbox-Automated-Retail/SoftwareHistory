@@ -109,13 +109,25 @@ public class KioskServicesProxy
 			{
 				dictionary.Remove("Username");
 			}
-			if (dictionary.ContainsKey("Password") && dictionary["Password"] != null)
+			if (dictionary.ContainsKey("Password"))
 			{
 				dictionary.Remove("Password");
 			}
 			if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
 			{
 				dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
+			}
+			if (dictionary.ContainsKey("EmailAddress") && dictionary["EmailAddress"] != null)
+			{
+				dictionary["EmailAddress"] = ObfuscateMessageData(dictionary["EmailAddress"].ToString(), 'x', 1, 0);
+			}
+			if (dictionary.ContainsKey("PhoneNumber") && dictionary["PhoneNumber"] != null)
+			{
+				dictionary["PhoneNumber"] = ObfuscateMessageData(dictionary["PhoneNumber"].ToString(), 'x', 1, 0);
+			}
+			if (dictionary.ContainsKey("Pin"))
+			{
+				dictionary.Remove("Pin");
 			}
 			if (dictionary.ContainsKey("CardHash") && dictionary["CardHash"] != null)
 			{
@@ -176,6 +188,22 @@ public class KioskServicesProxy
 					dictionary4["FirstName"] = ObfuscateMessageData(dictionary4["FirstName"].ToString(), 'x', 1, 0);
 				}
 			}
+			if (dictionary.ContainsKey("FirstName") && dictionary["FirstName"] != null)
+			{
+				dictionary["FirstName"] = ObfuscateMessageData(dictionary["FirstName"].ToString(), 'x', 1, 0);
+			}
+			if (dictionary.ContainsKey("PhoneNumber") && dictionary["PhoneNumber"] != null)
+			{
+				dictionary["PhoneNumber"] = ObfuscateMessageData(dictionary["PhoneNumber"].ToString(), 'x', 1, 0);
+			}
+			if (dictionary.ContainsKey("PostalCode") && dictionary["PostalCode"] != null)
+			{
+				dictionary["PostalCode"] = ObfuscateMessageData(dictionary["PostalCode"].ToString(), '#', 1, 0);
+			}
+			if (dictionary.ContainsKey("BirthDate") && dictionary["BirthDate"] != null)
+			{
+				dictionary["BirthDate"] = ObfuscateMessageData(dictionary["BirthDate"].ToString(), '#', 1, 0);
+			}
 			if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
 			{
 				dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
@@ -183,6 +211,10 @@ public class KioskServicesProxy
 			if (dictionary.ContainsKey("email") && dictionary["email"] != null)
 			{
 				dictionary["email"] = ObfuscateMessageData(dictionary["email"].ToString(), 'x', 1, 0);
+			}
+			if (dictionary.ContainsKey("LoginEmail") && dictionary["LoginEmail"] != null)
+			{
+				dictionary["LoginEmail"] = ObfuscateMessageData(dictionary["LoginEmail"].ToString(), 'x', 1, 0);
 			}
 			if (dictionary.ContainsKey("CustomerProfileLastName") && dictionary["CustomerProfileLastName"] != null)
 			{

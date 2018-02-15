@@ -89,34 +89,6 @@ internal static class ReservationServicesFunctions
 		pickupResults.Dispose();
 	}
 
-	[KernelFunction(Name = "kernel.resvsvcs_modresvpickup")]
-	internal static void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, LuaFunction callback)
-	{
-		IReservationServices service = ServiceLocator.Instance.GetService<IReservationServices>();
-		if (service == null)
-		{
-			return;
-		}
-		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
-		if (callbackService == null)
-		{
-			return;
-		}
-		RemoteServiceCallback callback2 = null;
-		if (callback != null)
-		{
-			callback2 = delegate(IRemoteServiceResult r)
-			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
-				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
-			};
-		}
-		service.ModResvPickup(storeNumber, emailAddress, referenceNumber, sessionId, modifiedCart, callback2);
-	}
-
 	[KernelFunction(Name = "kernel.resvsvcs_reset")]
 	internal static void Reset()
 	{
@@ -362,7 +334,7 @@ internal static class ReservationServicesFunctions
 				}
 			}
 		}
-		ReservationRequestCallback3 reservationRequestCallback = delegate(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIds, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv)
+		ReservationRequestCallback3 reservationRequestCallback = delegate(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIds, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv, bool isLoyaltyRedemption)
 		{
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IReservationResult reservationResult = reservationServices.NewReservationResult();
@@ -416,7 +388,7 @@ internal static class ReservationServicesFunctions
 			{
 				luaTable10[num5++] = ccId;
 			}
-			ReadOnlyCollection<object> readOnlyCollection = requestCallback.Call(cardId, email, referenceNumber, reserveDate.ToString("yyyyMMddHHmmss"), luaTable3, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, luaTable6, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, luaTable7, isGc, luaTable9, luaTable10, taxRate, zip, isMdv);
+			ReadOnlyCollection<object> readOnlyCollection = requestCallback.Call(cardId, email, referenceNumber, reserveDate.ToString("yyyyMMddHHmmss"), luaTable3, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, luaTable6, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, luaTable7, isGc, luaTable9, luaTable10, taxRate, zip, isMdv, isLoyaltyRedemption);
 			LuaTable luaTable11 = ((readOnlyCollection != null && readOnlyCollection.Count > 0) ? ((LuaTable)readOnlyCollection[0]) : null);
 			if (luaTable11 != null)
 			{

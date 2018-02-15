@@ -8,6 +8,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskServices.Proxy.Request;
 using Redbox.Lua;
 
 namespace Redbox.KioskServices.Proxy;
@@ -311,7 +312,7 @@ public class DigitalServicesProxy : IDigitalServices
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqeue call to remote IDigitalServices.GetCustomerCredits");
 				ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-				var anon = new
+				var message = new
 				{
 					MessageType = "GetCustomerCredits",
 					MessageId = Guid.NewGuid(),
@@ -365,44 +366,11 @@ public class DigitalServicesProxy : IDigitalServices
 							session.ShoppingCart.ExpiryMonth
 						}
 					},
-					Contents = new Dictionary<string, object>(),
+					ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
 					TransactionDate = DateTime.Now
 				};
 				session.ShoppingCart.ClearTrackData();
-				foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in session.ShoppingCart.Groups)
-				{
-					var anon2 = new
-					{
-						Items = new List<object>(),
-						Totals = new
-						{
-							TaxRate = group.Value.Totals.TaxRate * 100m,
-							SubTotal = group.Value.Totals.SubTotal,
-							TaxAmount = group.Value.Totals.TaxAmount,
-							GrandTotal = group.Value.Totals.GrandTotal,
-							DiscountedSubtotal = group.Value.Totals.DiscountedSubtotal
-						}
-					};
-					foreach (IShoppingCartLineItem item in group.Value.Items)
-					{
-						var anon3 = new
-						{
-							Barcode = item.Barcode,
-							ProductFamily = item.ProductFamily,
-							ProductType = item.ProductType,
-							MultiDisc = item.MultiDisc,
-							Prices = new Dictionary<string, decimal>()
-						};
-						foreach (KeyValuePair<string, decimal> price in item.Prices)
-						{
-							string key = price.Key.Replace("_", string.Empty);
-							anon3.Prices[key] = price.Value;
-						}
-						anon2.Items.Add(anon3);
-					}
-					anon.Contents[group.Key] = anon2;
-				}
-				IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(anon);
+				IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 				remoteServiceResult.Properties["response"] = DigitalServicesResponse.Valid.ToString();
 				remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
 				remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
@@ -443,12 +411,12 @@ public class DigitalServicesProxy : IDigitalServices
 				int num = 0;
 				if (dictionary.ContainsKey("CreditAllocations"))
 				{
-					foreach (IDictionary<string, object> item2 in (ArrayList)dictionary["CreditAllocations"])
+					foreach (IDictionary<string, object> item in (ArrayList)dictionary["CreditAllocations"])
 					{
 						LuaTable luaTable2 = (LuaTable)service3.NewTable();
-						luaTable2["barcode"] = (item2.ContainsKey("Barcode") ? ((string)item2["Barcode"]) : string.Empty);
-						luaTable2["amount"] = (item2.ContainsKey("Amount") ? ((decimal)item2["Amount"]) : 0m);
-						luaTable2["number_applied"] = (item2.ContainsKey("NumberApplied") ? ((int)item2["NumberApplied"]) : 0);
+						luaTable2["barcode"] = (item.ContainsKey("Barcode") ? ((string)item["Barcode"]) : string.Empty);
+						luaTable2["amount"] = (item.ContainsKey("Amount") ? ((decimal)item["Amount"]) : 0m);
+						luaTable2["number_applied"] = (item.ContainsKey("NumberApplied") ? ((int)item["NumberApplied"]) : 0);
 						luaTable[num++] = luaTable2;
 					}
 				}

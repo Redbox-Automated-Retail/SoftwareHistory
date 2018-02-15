@@ -174,12 +174,14 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 		{
 			if (rotatingCarouselProduct == _rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex])
 			{
-				rotatingCarouselProduct.AddButtonVisibility = Visibility.Visible;
+				CarouselModel carouselModel = _carouselModel;
+				if (carouselModel != null && carouselModel.ShowAddButton)
+				{
+					rotatingCarouselProduct.AddButtonVisibility = Visibility.Visible;
+					continue;
+				}
 			}
-			else
-			{
-				rotatingCarouselProduct.AddButtonVisibility = Visibility.Collapsed;
-			}
+			rotatingCarouselProduct.AddButtonVisibility = Visibility.Collapsed;
 		}
 	}
 

@@ -17,11 +17,15 @@ public class FilterBarModel : DependencyObject
 
 	public static readonly DependencyProperty StartOverButtonVisibilityProperty = DependencyProperty.Register("StartOverButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty HomeButtonVisibilityProperty = DependencyProperty.Register("HomeButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
 	public static readonly DependencyProperty BackButtonVisibilityProperty = DependencyProperty.Register("BackButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public string StartOverButtonText { get; set; }
 
 	public Style StartOverButtonStyle { get; set; }
+
+	public string HomeButtonText { get; set; }
 
 	public string BackButtonText { get; set; }
 
@@ -74,6 +78,21 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public Visibility HomeButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(HomeButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HomeButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility BackButtonVisibility
 	{
 		get
@@ -121,6 +140,8 @@ public class FilterBarModel : DependencyObject
 
 	public event Action OnStartOverButtonClicked;
 
+	public event Action OnHomeButtonClicked;
+
 	public event Action OnBackButtonClicked;
 
 	public event Action OnMoreCollectionsButtonClicked;
@@ -133,6 +154,11 @@ public class FilterBarModel : DependencyObject
 		{
 			OnStartOverButtonClicked();
 		}
+	}
+
+	public void ProcessOnHomeButtonClicked()
+	{
+		OnHomeButtonClicked?.Invoke();
 	}
 
 	public void ProcessOnBrowseFilterButtonClicked(BrowseFilter browseFilter)

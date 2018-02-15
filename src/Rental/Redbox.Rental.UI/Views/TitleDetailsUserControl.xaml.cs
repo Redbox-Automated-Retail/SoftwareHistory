@@ -98,8 +98,5 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 
 	private void StatisticsPopup_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		service?.Push("statistics_popup_view");
-		service?.Show();
 	}
 }

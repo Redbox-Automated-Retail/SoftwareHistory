@@ -12,6 +12,81 @@ public class Constants
 		public const string BrowseView = "BrowseView";
 
 		public const string TitleDetailsView = "TitleDetailsView";
+
+		public const string ShoppingCartView = "ShoppingCartView";
+
+		public const string ShoppingCartUpdateADAView = "ShoppingCartUpdateADAView";
+
+		public const string ConfirmEmailView = "ConfirmEmailView";
+
+		public const string ZipCodeView = "ZipCodeView";
+
+		public const string TitleDetailsDevView = "TitleDetailsDevView";
+
+		public const string KeyboardEmailComingSoonView = "KeyboardEmailComingSoonView";
+
+		public const string KeyboardEmailReceiptView = "KeyboardEmailReceiptView";
+
+		public const string KeyboardEmailChangeView = "KeyboardEmailChangeView";
+
+		public const string KeyboardPromoView = "KeyboardPromoView";
+
+		public const string KeyboardSignInView = "KeyboardSignInView";
+
+		public const string MemberPointsView = "MemberPointsView";
+
+		public const string MemberPerksView = "MemberPerksView";
+
+		public const string GeneralMessageView = "GeneralMessageView";
+
+		public const string PromptSignInView = "PromptSignInView";
+
+		public const string PleaseWaitView = "PleaseWaitView";
+
+		public const string PhoneAndPinView = "PhoneAndPinView";
+
+		public const string SignInView = "SignInView";
+
+		public const string MultiNightPricingPopupView = "MultiNightPricingPopupView";
+	}
+
+	public class ViewNames
+	{
+		public const string BrowseView = "browse_view";
+
+		public const string ShoppingCartView = "shopping_cart_view";
+
+		public const string ShoppingCartUpdateADAView = "shopping_cart_update_ada_view";
+
+		public const string KeyboardEmailComingSoonView = "keyboard_email_coming_soon_view";
+
+		public const string KeyboardEmailReceiptView = "keyboard_email_receipt_view";
+
+		public const string KeyboardEmailChangeView = "keyboard_email_change_view";
+
+		public const string KeyboardPromoView = "keyboard_promo_view";
+
+		public const string KeyboardSignInView = "keyboard_sign_in_view";
+
+		public const string MemberPerksView = "member_perks_view";
+
+		public const string MemberPointsView = "member_points_view";
+
+		public const string GeneralMessageView = "general_message_view";
+
+		public const string PromptSignInView = "prompt_sign_in_view";
+
+		public const string PleaseWaitView = "please_wait_view";
+
+		public const string PhoneAndPinView = "phone_and_pin_view";
+
+		public const string SignInView = "sign_in_view";
+
+		public const string TitleDetailsDevModeView = "title_details_dev_view";
+
+		public const string MultiNightPricingPopupView = "multi_night_pricing_popup_view";
+
+		public const string BluRayUpsellView = "blu_ray_upsell_view";
 	}
 
 	public class ThemeNames

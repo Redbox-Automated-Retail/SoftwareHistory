@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Redbox.Core;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Pricing;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -19,6 +23,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	private IProfileDataInstance _profile;
 
 	private IStoreManager _storeManager;
+
+	private IPricingService _pricingService;
+
+	public Dictionary<string, BarcodeProduct> BarCodeProducts => _titleCache.BarcodeProducts;
 
 	public override string ProductName => _title.LongName;
 
@@ -88,7 +96,27 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	{
 		get
 		{
-			if (DoNotRent || !IsValidProduct || !SellThru)
+			if (IsEmptyCase)
+			{
+				return true;
+			}
+			if (PricingService.IsPricingEngineEnabled)
+			{
+				if (PriceEngineIsSellable)
+				{
+					return PurchasePrice > 0m;
+				}
+				return false;
+			}
+			return NoPriceEngineIsSellable;
+		}
+	}
+
+	private bool NoPriceEngineIsSellable
+	{
+		get
+		{
+			if (DoNotRent || !IsValidProduct || !SellThru || !IsAvailable)
 			{
 				return false;
 			}
@@ -98,7 +126,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				{
 					return false;
 				}
-				if (GamePurchasePrice <= 0m)
+				if (PurchasePrice <= 0m)
 				{
 					return false;
 				}
@@ -117,7 +145,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				{
 					return false;
 				}
-				if (MoviePurchasePrice <= 0m)
+				if (PurchasePrice <= 0m)
 				{
 					return false;
 				}
@@ -146,10 +174,38 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
+	private bool PriceEngineIsSellable
+	{
+		get
+		{
+			if (IsEmptyCase)
+			{
+				return true;
+			}
+			if (DoNotRent || !IsValidProduct || !SellThru || !IsAvailable)
+			{
+				return false;
+			}
+			if (IsGame && !_storeManager.CanSellUsedGames)
+			{
+				return false;
+			}
+			if (IsMovie && !_storeManager.CanSellUsedMovies)
+			{
+				return false;
+			}
+			return true;
+		}
+	}
+
 	public bool IsRentable
 	{
 		get
 		{
+			if (IsEmptyCase)
+			{
+				return true;
+			}
 			if (DoNotRent || !IsValidProduct)
 			{
 				return false;
@@ -186,22 +242,42 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public decimal GamePurchasePrice
+	public decimal PurchasePrice
 	{
 		get
 		{
-			if (!IsGame)
+			if (IsEmptyCase)
 			{
+				return PricingService.GetEmptyCasePrice();
+			}
+			if (PricingService.IsPricingEngineEnabled)
+			{
+				if (PriceEngineIsSellable)
+				{
+					return PurchasePriceRecord?.Purchase ?? 0m;
+				}
 				return 0m;
 			}
-			return GetAdjustedPurchasePrice(SellThruPrice ?? 0m);
+			return NoPricingEnginePurchasePrice;
 		}
 	}
 
-	public decimal MoviePurchasePrice
+	private decimal NoPricingEnginePurchasePrice
 	{
 		get
 		{
+			if (IsEmptyCase)
+			{
+				return PricingService.GetEmptyCasePrice();
+			}
+			if (IsGame)
+			{
+				if (!IsGame)
+				{
+					return 0m;
+				}
+				return GetAdjustedPurchasePrice(SellThruPrice ?? 0m);
+			}
 			if (!IsMovie)
 			{
 				return 0m;
@@ -215,6 +291,54 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				return GetAdjustedPurchasePrice(SellThruPrice.Value);
 			}
 			return GetAdjustedPurchasePrice(SellThruPrice ?? _store.PurchasePrice);
+		}
+	}
+
+	public IPricingRecord PurchasePriceRecord
+	{
+		get
+		{
+			if (IsEmptyCase)
+			{
+				return new PricingRecord
+				{
+					Purchase = PricingService.GetEmptyCasePrice()
+				};
+			}
+			if (PricingService.IsPricingEngineEnabled)
+			{
+				return PricingService.GetPurchasePricing(this);
+			}
+			return new PricingRecord
+			{
+				Purchase = NoPricingEnginePurchasePrice
+			};
+		}
+	}
+
+	public IList<IPricingRecord> RentalPriceRecords
+	{
+		get
+		{
+			if (PricingService.IsPricingEngineEnabled)
+			{
+				return PricingService.GetProductPricingRecords(this);
+			}
+			return new List<IPricingRecord> { PricingService.GetOneDayProductPricingRecord(this) };
+		}
+	}
+
+	private IConfiguration Config => Redbox.Rental.Services.Configuration.Configuration.Instance;
+
+	private IPricingService PricingService
+	{
+		get
+		{
+			if (_pricingService == null)
+			{
+				_pricingService = ServiceLocator.Instance.GetService<IPricingService>();
+			}
+			return _pricingService;
 		}
 	}
 
@@ -309,6 +433,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			return true;
 		}
 	}
+
+	public bool HasHotDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsHotDeal ?? false) ?? false;
+
+	public bool HasMultiNightPrice => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsMultiNightPrice ?? false) ?? false;
 
 	public string SortAlpha => _title.SortName.ToLower();
 

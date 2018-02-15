@@ -95,7 +95,8 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 		{
 			return;
 		}
-		IViewFrame viewFrame = service2.GetViewFrame(viewName);
+		IBaseViewFrame viewFrame = service2.GetViewFrame(viewName);
+		IViewFrame viewFrame2 = viewFrame as IViewFrame;
 		IShoppingSession session = service.GetSession(sessionId);
 		if (viewFrame != null && session != null)
 		{
@@ -106,7 +107,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 			Dictionary<string, string> dictionary = new Dictionary<string, string>();
 			dictionary.Add("viewName", viewName);
 			dictionary.Add("viewSequence", session.ViewsShown.ToString());
-			dictionary.Add("viewVersion", viewFrame.ViewVersion ?? "not defined");
+			dictionary.Add("viewVersion", viewFrame2?.ViewVersion ?? "not defined");
 			dictionary.Add("activeFlag", viewFrame.ActiveFlag ?? "not defined");
 			dictionary.Add("viewCulture", service3.Filter["culture"] ?? string.Empty);
 			dictionary.Add("viewStart", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
