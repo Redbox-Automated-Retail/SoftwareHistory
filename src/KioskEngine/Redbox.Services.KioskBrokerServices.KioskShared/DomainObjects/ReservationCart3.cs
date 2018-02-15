@@ -55,4 +55,6 @@ public class ReservationCart3
 	public bool IsMnp { get; set; }
 
 	public bool IsMdv { get; set; }
+
+	public bool LoyaltyRedemption { get; set; }
 }
