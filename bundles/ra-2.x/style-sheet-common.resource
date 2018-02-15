@@ -473,14 +473,7 @@
 				<property name="optionFlags" value="Image" />
 			</state>
 		</style>
-
-		<style name="redbox_logo_new">
-			<state name="enabled">
-				<property name="image" value="image_logo" />
-				<property name="optionFlags" value="Image" />
-			</state>
-		</style>
-
+		
 		<style name="topten_movie_style">
 			<state name="enabled">
 				<property name="width" value="206" />

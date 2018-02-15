@@ -45,8 +45,6 @@ kernel.registeractorhitnotify(
 	end
 )
 
-kernel.setactortext( "disclaimer_button", strings.play_pass_terms )
-
 kernel.registeractorhitnotify(
 	"disclaimer_button",
 	function()
@@ -56,6 +54,14 @@ kernel.registeractorhitnotify(
 	end
 )
 
+kernel.registeractorhitnotify(
+	"disclaimer_button_2",
+	function()
+        view_analytics_event( "buttonPress", "play_pass_disclaimer_button" )
+        kernel.setlasthitactorname( "play_pass_disclaimer_button" )
+        view_show_safe( "help_document_view" )
+	end
+)
 
 local ad = kernel.marketing_ad_get_screen_ad( "Credits", true )
 if ad ~= nil and ad.visible == true then
@@ -72,6 +78,8 @@ if ad ~= nil and ad.visible == true then
     kernel.moveactory( "red_coin_credits_used", 40 )
     kernel.moveactory( "credits_disclaimer", 40 )
     kernel.moveactory( "disclaimer_button", 40 )
+    kernel.moveactory( "credits_disclaimer_2", 40 )
+    kernel.moveactory( "disclaimer_button_2", 40 )
     kernel.moveactory( "credits_do_not_apply_message", 40 )
     kernel.moveactory( "subtotal_heading", 40 )
     kernel.moveactory( "subtotal_amount", 40 )

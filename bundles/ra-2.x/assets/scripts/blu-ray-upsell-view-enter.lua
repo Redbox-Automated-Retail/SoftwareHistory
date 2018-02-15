@@ -70,7 +70,7 @@ for k=1,blurayUpsellItemCount do
 			    121,
 			    29,
 			    {
-				    text = string.format( "$%.2f", StoreManager.PricingManager:get_product_price( v.blu_ray_product_id ).initial_night ) .. " " .. strings.a_day,
+				    text = string.format( "$%.2f", StoreManager.PricingManager:get_product_price( v.blu_ray_product_id ).initial_night ),
 				    font = "font_target_11_italic",
 				    foregroundColor = "black",
 				    horizontalAlignment = "center",

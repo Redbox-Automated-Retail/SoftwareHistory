@@ -14,6 +14,8 @@ if kernel.getmachinevalueordefault( "Store", "OutOfOrder", "false" ) == "true" t
 	kernel.applyunsafeshutdown()
 end
 
+kernel.register_view_definitions()
+
 if not in_maintenance_mode() then
     view_show("application_load_view")
 end
@@ -637,7 +639,7 @@ ShoppingCartList = {}
 HardwareManager = newhardwaremanager()
 kernel.create_idle_timer( "idle_timer" )
 kernel.register_idle_timer_expire_session_callback(idle_timer_expire_session)
-kernel.register_get_email_address_and_register_email_reminder_callback(get_email_address_and_register_email_reminder)
+-- kernel.register_get_email_address_and_register_email_reminder_callback(get_email_address_and_register_email_reminder)
 --************************************************
 --
 -- Set Global variable values
@@ -767,6 +769,7 @@ kernel.timercreate(
 	function()
 		local initstatus = kernel.hardwaregetinitstatus()
 		kernel.log( "HAL init Running in state " .. tostring( initstatus["status"] ))
+
 		if initstatus["status"] == "COMPLETED" or initstatus["status"] == "ERRORED" then
 			kernel.log( "HAL init Completed, resuming Rental Application launch." )
 			kernel.timerremove( "hal_init_status_check_timer" )

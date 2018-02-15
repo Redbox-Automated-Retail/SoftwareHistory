@@ -116,7 +116,7 @@ function newstoremanager()
 		-- Product Pricing
 		self.PricingManager:reload()
 		-- In cart promotion
-		LoadInCartData()
+		kernel.rental_promotion_load_incart_data()
 		-- Email Opt In Campaign
 		EmailOptinCampaign = GetKioskOptinCampaign()
 		kernel.log( "EmailOptin loaded: " .. tostring( kernel.getresourceproperty( "opt_in_campaign", "program_name" )))

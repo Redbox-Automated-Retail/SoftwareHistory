@@ -3,134 +3,150 @@
 -- Copyright (C) 2017 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
-kernel.ttsinreturnflow(false)
-kernel.timerstart( "reservation-expire-timer" )
 
-kernel.stop_idle_timer( "idle_timer" )
+if kernel.get_application_state_value("KeepSessionOnStartViewEnter") == false then
+    kernel.log("start_view entered.  starting new session")
 
-kernel.initialize_session()
+    kernel.ttsinreturnflow(false)
+    kernel.timerstart( "reservation-expire-timer" )
 
--- idle timer needs to be reinitialized because of the collections popup
-kernel.reset_application_idle_timer_timeout()
+    kernel.stop_idle_timer( "idle_timer" )
 
-if kernel.ttsenabled() or kernel.get_application_state_value("IsADAAccessible") == true then
-    kernel.set_application_state_value("IsADAAccessible", true)
-end
+    kernel.initialize_session()
 
-kernel.setlasthitactorname( nil )
+    -- idle timer needs to be reinitialized because of the collections popup
+    kernel.reset_application_idle_timer_timeout()
 
-local _ProductCatalog = ProductCatalog
-strings = kernel.getdictionary( "strings" )
+    if kernel.ttsenabled() or kernel.get_application_state_value("IsADAAccessible") == true then
+        kernel.set_application_state_value("IsADAAccessible", true)
+    end
 
--- Reload pricing in case the date has changed since last session
-if StoreManager ~= nil then
-	StoreManager:reload_pricing_data( "_v2" )
-	StoreManager:check_product_catalog_for_games_platforms()
-end
-kernel.log( "start-view-enter - started updating cache table")
-for k,v in _ProductCatalog:pairs() do
-	local product = MasterProductCatalog[v.product_id]
-	if product ~= nil then
-			local product_catalog = ProductCatalog[v.product_id]
-			local current_date = get_current_date_string( "%4d%02d%02d%02d%02d" )
-			local release_date = string.sub(product.merchandise_date, 1, 12)
+    kernel.setlasthitactorname( nil )
 
-            -- making changes to only update values when one changes, this loop is causing a performance problem when hitting the start over button
-            local isAvailable = product_catalog.is_available
-            local isComingSoon = product_catalog.is_coming_soon
+    local _ProductCatalog = ProductCatalog
+    strings = kernel.getdictionary( "strings" )
 
-			local newIsAvailable = current_date > release_date or StoreManager.PricingManager:is_early_released( product )
-			local newIsComingSoon = not (release_date <= current_date	or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
+    -- Reload pricing in case the date has changed since last session
+    if StoreManager ~= nil then
+	    StoreManager:reload_pricing_data( "_v2" )
+	    StoreManager:check_product_catalog_for_games_platforms()
+    end
+    kernel.log( "start-view-enter - started updating cache table")
+    for k,v in _ProductCatalog:pairs() do
+	    local product = MasterProductCatalog[v.product_id]
+	    if product ~= nil then
+			    local product_catalog = ProductCatalog[v.product_id]
+			    local current_date = get_current_date_string( "%4d%02d%02d%02d%02d" )
+			    local release_date = string.sub(product.merchandise_date, 1, 12)
 
-            if ( (isAvailable ~= newIsAvailable) or (isComingSoon ~= newIsComingSoon)) then
-			    product_catalog.is_available = newIsAvailable
-			    product_catalog.is_coming_soon = newIsComingSoon
-			    ProductCatalog[v.product_id] = product_catalog
-            end
-	end
-end
-kernel.log( "start-view-enter - finished updating cache table")
+                -- making changes to only update values when one changes, this loop is causing a performance problem when hitting the start over button
+                local isAvailable = product_catalog.is_available
+                local isComingSoon = product_catalog.is_coming_soon
 
-ProductGenreData = {
-	["Movies"] = {
-		filter_genres = {
-			[1093] = strings.lower_genre_1093,
-			[1000] = strings.lower_genre_1000,
-			[1004] = strings.lower_genre_1004,
-			[1005] = strings.lower_genre_1005,
-			[1006] = strings.lower_genre_1006,
-			[1009] = strings.lower_genre_1009
-		}
-	},
-	["Games"] = {
-		filter_genres = {
-			[1026] = strings.lower_genre_1026,
-			[1094] = strings.lower_genre_1006,
-			[1028] = strings.lower_genre_1028,
-			[1030] = strings.lower_genre_1030,
-			[1034] = strings.lower_genre_1034,
-			[1036] = strings.lower_genre_1036
-		}
-	}
-}
+			    local newIsAvailable = current_date > release_date or StoreManager.PricingManager:is_early_released( product )
+			    local newIsComingSoon = not (release_date <= current_date	or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
 
--- N.B. Added per Jim Polubinski for Quick Return integration
---      If nothing was suspended with the companion function, this does nothing.
---      JDP 20090903
-if FMAMaintenanceMode == false then
-	kernel.hardwaremaintenancemoderesumejobs()
-end
+                if ( (isAvailable ~= newIsAvailable) or (isComingSoon ~= newIsComingSoon)) then
+			        product_catalog.is_available = newIsAvailable
+			        product_catalog.is_coming_soon = newIsComingSoon
+			        ProductCatalog[v.product_id] = product_catalog
+                end
+	    end
+    end
+    kernel.log( "start-view-enter - finished updating cache table")
 
-if kernel.getlastshownview() == kernel.get_start_over_view_name() then
-	kernel.applysafeshutdown()
-	kernel.trimbitmapcache( 128 )
-	local hardware_manager = newhardwaremanager()
-	hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
-		AlertManager.send_job_alert(
-			"HardwareError",
-			"HAL script: check-picker.hs sent message MaxPutAwayAttemptsExceeded",
-			"Unable to put an item away after the configured number of slot retries. Placing the kiosk into maintenance mode",
-			jobid,
-			"mm:MaxPutAwayAttemptsExceeded, 005PMXA"
-		)
-		if not in_maintenance_mode() then
-			kernel.setmacro( "MaintenanceView:ErrorCode", "005PMXA" )
-			kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "005PMXA" ] or "red_diagonal_stripes" )
-			view_show( "maintenance_view" )
-		end
-	end
-	local jobs = hardware_manager:get_hardware_jobs_by_program(
-		{ "check-picker" },
-		{ "Stopped", "Completed", "Garbage", "Errored" } )
-	if table_count( jobs ) == 0 then
-		hardware_manager:check_picker()
-	end
-end
+    ProductGenreData = {
+	    ["Movies"] = {
+		    filter_genres = {
+			    [1093] = strings.lower_genre_1093,
+			    [1000] = strings.lower_genre_1000,
+			    [1004] = strings.lower_genre_1004,
+			    [1005] = strings.lower_genre_1005,
+			    [1006] = strings.lower_genre_1006,
+			    [1009] = strings.lower_genre_1009
+		    }
+	    },
+	    ["Games"] = {
+		    filter_genres = {
+			    [1026] = strings.lower_genre_1026,
+			    [1094] = strings.lower_genre_1006,
+			    [1028] = strings.lower_genre_1028,
+			    [1030] = strings.lower_genre_1030,
+			    [1034] = strings.lower_genre_1034,
+			    [1036] = strings.lower_genre_1036
+		    }
+	    }
+    }
 
--- Pre-setting these values back to defaults here saves time
-kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
-kernel.set_session_value("BrowseState.BrowseGenre", nil)
+    -- N.B. Added per Jim Polubinski for Quick Return integration
+    --      If nothing was suspended with the companion function, this does nothing.
+    --      JDP 20090903
+    if FMAMaintenanceMode == false then
+	    kernel.hardwaremaintenancemoderesumejobs()
+    end
 
-kernel.set_session_value("BrowseState.IsShoppingCartFullMessagesOpen", false)
-kernel.set_session_value("BrowseState.ShoppingCartFullMessagesShown", false)
+    if kernel.getlastshownview() == kernel.get_start_over_view_name() then
+	    kernel.applysafeshutdown()
+	    kernel.trimbitmapcache( 128 )
+	    local hardware_manager = newhardwaremanager()
+	    hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
+		    AlertManager.send_job_alert(
+			    "HardwareError",
+			    "HAL script: check-picker.hs sent message MaxPutAwayAttemptsExceeded",
+			    "Unable to put an item away after the configured number of slot retries. Placing the kiosk into maintenance mode",
+			    jobid,
+			    "mm:MaxPutAwayAttemptsExceeded, 005PMXA"
+		    )
+		    if not in_maintenance_mode() then
+			    kernel.setmacro( "MaintenanceView:ErrorCode", "005PMXA" )
+			    kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "005PMXA" ] or "red_diagonal_stripes" )
+			    view_show( "maintenance_view" )
+		    end
+	    end
+	    local jobs = hardware_manager:get_hardware_jobs_by_program(
+		    { "check-picker" },
+		    { "Stopped", "Completed", "Garbage", "Errored" } )
+	    if table_count( jobs ) == 0 then
+		    hardware_manager:check_picker()
+	    end
+    end
 
--- Handles those edge cases where the user does not come from the standard UI path
-kernel.log( "CloseAnalyticsOnStartView = " .. tostring( CloseAnalyticsOnStartView ))
-if CloseAnalyticsOnStartView == true then
-	ShoppingCart:close_analytics( "True" )
-	CloseAnalyticsOnStartView = false
-end
+    -- Pre-setting these values back to defaults here saves time
+    kernel.set_session_value("BrowseState.BrowseFilterMode", "All")
+    kernel.set_session_value("BrowseState.BrowseGenre", nil)
 
-if language_switch == nil or language_switch == false then
-	ShoppingCart = newshoppingcart()
-	ShoppingCart:start_new()
-	ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
+    kernel.set_session_value("BrowseState.IsShoppingCartFullMessagesOpen", false)
+    kernel.set_session_value("BrowseState.ShoppingCartFullMessagesShown", false)
+
+    -- Handles those edge cases where the user does not come from the standard UI path
+    kernel.log( "CloseAnalyticsOnStartView = " .. tostring( CloseAnalyticsOnStartView ))
+    if CloseAnalyticsOnStartView == true then
+	    ShoppingCart:close_analytics( "True" )
+	    CloseAnalyticsOnStartView = false
+    end
+
+    if language_switch == nil or language_switch == false then
+	    ShoppingCart = newshoppingcart()
+	    ShoppingCart:start_new()
+	    ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
+    else
+	    language_switch = false
+    end
+
+    kernel.set_session_value("BrowseState.BrowseTitleFamily", "Movies")
+    ProductCatalog:get_default_family()
+
+
+    function GetUsedMemory()
+	    collectgarbage( "collect" )
+    end
+
+    GetUsedMemory()
 else
-	language_switch = false
+  kernel.log("start_view entered.  Keeping existing session")
+  kernel.set_application_state_value("KeepSessionOnStartViewEnter", false)
+  kernel.resume_idle_timer( "idle_timer" )
 end
-
-kernel.set_session_value("BrowseState.BrowseTitleFamily", "Movies")
-ProductCatalog:get_default_family()
 
 -- callback from the .net side now that the start_idle_time is in .net
 function start_idle_timer_callback()
@@ -147,10 +163,5 @@ function start_idle_timer_callback()
 	end
 end
 
-function GetUsedMemory()
-	collectgarbage( "collect" )
-end
-
-GetUsedMemory()
 
 kernel.configure_start_view(localization_reload_resources, start_idle_timer_callback)

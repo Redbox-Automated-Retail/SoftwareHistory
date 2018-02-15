@@ -28,8 +28,10 @@
       <column name="totals_per_day">${0} por día</column>
       <column name="terms_privacy">Términos y Privacidad</column>
       <column name="pay">PAGAR</column>
+
       <column name="charged_once">Se aplicará un solo cargo a tu tarjeta.</column>
       <column name="by_pressing_pay">Marca ‘PAGAR’ para aceptar los términos.</column>
+
 
       <column name="promo_code_tag">PROMOCIÓN</column>
       <column name="promo_code_prompt_message">Ingrese su promoción.</column>
@@ -130,7 +132,7 @@
       <column name="faq_title">FAQ</column>
       <column name="terms_of_use_title">Términos</column>
       <column name="privacy_policy_title">Privacidad</column>
-      <column name="play_pass_title">Play Pass</column>
+      <column name="play_pass_title">Perks</column>
 
       <column name="postal_code_tag">ENTRAR CÓDIGO POSTAL</column>
       <column name="reservation_error_message">Redbox no se ajustó su tarjeta con &#10;una reservación.&#10;&#10;¿Recuerda si usó otra tarjeta?&#10;&#10;Si continua con problemas llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
@@ -252,13 +254,14 @@
       <column name="recommendations_more_new_movies">¡MÁS PELÍCULAS&#10;DE JUSTO</column>
 
       <column name="flag_out_of_stock">AGOTADO</column>
-      <column name="flag_coming_soon">¡PRÓXIMAMENTE!</column>
-      <column name="flag_new">¡NUEVO!</column>
-      <column name="flag_last_chance">¡ÚLTIMA CHANCE!</column>
-      <column name="flag_back_again">¡REVIENE!</column>
+      <column name="flag_coming_soon">PRÓXIMAMENTE</column>
+      <column name="flag_new">NUEVO</column>
+      <column name="flag_last_chance">ÚLTIMA CHANCE</column>
+      <column name="flag_back_again">REVIENE</column>
       <column name="flag_price_test">{0} PRIMICIAS</column>
-      <column name="flag_award_winner">¡GANADOR!</column>
-      <column name="flag_classics">¡CLÁSICO!</column>
+      <column name="flag_award_winner">GANADOR</column>
+      <column name="flag_classics">CLÁSICO</column>
+	  <column name="flag_hot_deal">REBAJA</column>
 
       <column name="products_used">Disco Previavisto En Caja</column>
       <column name="products_new">Nuevos Productos</column>
@@ -285,8 +288,6 @@
       <column name="credit_popup_back">    CANCELA</column>
       <column name="credit_popup_pay_with_card">USA MI TARJETA</column>
 
-      <column name="credit_lable_bottom_text">Marca 'PAGAR' o 'UTILIZE CRÉDITOS' para aceptar los términos.</column>
-
       <column name="credits_remaining_singular_header">¡Tiene 1 crédito disponible!</column>
       <column name="credits_remaining_singular_body">¿Quiere utilizarlo?</column>
       <column name="credits_remaining_plural_header">¡Tiene {0} créditos disponible!</column>
@@ -294,24 +295,22 @@
       <column name="pay_with_credits_yes">SÍ, UTILIZA&#10;MIS CRÉDITO(S)</column>
       <column name="pay_with_credits_no">NO, PAGO CON&#10;TARJETA</column>
 
-      <column name="price_tag">Precio:</column>
+      <column name="one_night_price_label">Alquila Por 1-Noche:</column>
+	  <column name="multi_night_price_label">Alquila Por Multi-Noche:</column>
+	  <column name="night">noche</column>
       <column name="first_day_price">Primer Día:</column>
       <column name="extra_day_price">Días Adicionales:</column>
-      <column name="price_a_day">por día</column>
+      <column name="price_for">por</column>
       <column name="blu_ray">Blu-ray</column>
       <column name="dvd">DVD</column>
       <column name="game">Juego</column>
       <column name="any">Alguna</column>
       <column name="other_item">otro artículo</column>
-
-      <column name="a_day">por día</column>
+	  
+	  <column name="hot_deal_text">Las noches de renta para artículos de rebaja son de {0}. El precio puede cambiar en cualquier momento. Sólo se muestra en ciertos titulos, ubicaciones y fechas - estás de suerte.</column>
 
       <column name="nonstandered_priced_item_header">Ojo: {0} Primicias</column>
       <column name="nonstandered_priced_item">El alquiler de ésta película cuesta {0} por el primer día y {EXTRANIGHT} por cada día siguiente.&#10;&#10;Las películas que son {0} Primicias llegan a Redbox 28 días antes de lo normal. Sé de los primeros en ver éste DVD!</column>
-
-
-      <column name="in_cart_remove_item_warning_header">¿Seguro?</column>
-      <column name="in_cart_remove_item_warning_message">Si lo saque este disco del carrito, se cancelaría&#10;la oferta y el descuento que recibiría de&#10;lo(s) adicional(es).&#10;&#10;¿Quiere seguir?</column>
 
       <column name="customer_black_list_title">Tarjeta inválida</column>
       <column name="customer_black_list_body">Lo sentimos, esta tarjeta no es válida para recoger su reservaci&#243;n.  No se cargaría para esta transacción.&#10;&#10;Si tiene alguna pregunta adicional, favor llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
@@ -322,8 +321,8 @@
       <column name="burn_in_view_label">Toque aquí para alquiler o devolver</column>
 
       <column name="email_optin_offer_message">¿Quieres información acerca esta?</column>
-      <column name="email_optin_button_text">CORREO</column>
-      <column name="email_optin_reminder_set_button_text">ANOTADA</column>
+      <column name="email_optin_button_text">Correo</column>
+      <column name="email_optin_reminder_set_button_text">Anotada</column>
 
       <column name="cart_full_header">Su Caja Esta Llena</column>
       <column name="cart_full_body">Finaliza ahora o hacer cambios.</column>
@@ -341,7 +340,7 @@
       <column name="transaction_terms_button">Condiciones de Transacción </column>
       <column name="terms_redbox_card_button">T&#233;rminos Tarjeta</column>
       <column name="privacy_button">Privacidad</column>
-      <column name="play_pass_button">Play Pass</column>
+      <column name="play_pass_button">Perks</column>
       <column name="help_updated_button">Actualizado</column>
       <column name="close_button">Cerrar</column>
       <column name="contact_redbox_label">&#191;Necesita ayuda? 1.866.REDBOX3 (1.866.733.2693)</column>
@@ -370,11 +369,11 @@
       <column name="mini_cart_purchase_text">COMPRA</column>
       <column name="mini_cart_discs_text">{0} DISCOS</column>
 
-      <column name="title_rollup_overlay_unavailable_text">NO DISPONIBLE</column>
-      <column name="title_rollup_overlay_cart_text">{0}&#10;EN CARRITO</column>
-      <column name="title_rollup_overlay_oos_text">{0}&#10;AGOTADO</column>
-      <column name="title_rollup_overlay_buy_text">COMPRE {0}&#10;{1}{2}</column>
-      <column name="title_rollup_overlay_add_text">+ {0}</column>
+      <column name="title_rollup_overlay_unavailable_text">no disponible</column>
+      <column name="title_rollup_overlay_cart_text">{0}&#10;en carrito</column>
+      <column name="title_rollup_overlay_oos_text">{0}&#10;agotado</column>
+      <column name="title_rollup_overlay_buy_text">Compre {0}&#10;{1}{2}</column>
+      <column name="title_rollup_overlay_add_text">Agregue {0}</column>
 
       <column name="carousel_add_item_to_cart_button_for_collection">VER TODO</column>
       <column name="add_to_cart_label1">Presione</column>
@@ -391,8 +390,13 @@
       <column name="tsp_invalid_message">Lo sentimos. El código promocional usado no es aplicable al título(s) que se encuentra en su carrito.&#10;&#10;Por favor, sírvase añadir un título válido a su carrito para poder utilizar este código promocional.</column>
 
       <column name="passive_sale_note">*La tarifa de alquiler diario indicada no incluye impuestos. Para incurrir en una sola tarifa de alquiler, debe devolver el art&#237;culo a las 9:00 p.m. del d&#237;a siguiente en la zona horaria en que realice la devoluci&#243;n. Por cada d&#237;a adicional que no devuelva el art&#237;culo a las 9:00 p.m., hora local, su alquiler seguir&#225; vigente y se le cargar&#225; una tarifa de alquiler adicional diaria, m&#225;s impuestos. Si mantiene en su poder un art&#237;culo m&#225;s all&#225; del periodo m&#225;ximo de alquiler permitido, ese art&#237;culo pasar&#225; a ser de su propiedad y Redbox le cobrar&#225; entonces el cargo m&#225;ximo por dicho art&#237;culo. Ver las reglas completos por T&#233;rminos. Todas las ventas de códigos digitales son definitivas.</column>
-
+		
+	  <column name="keypad_clear_all_button_text">CANCELA</column>
+	  <column name="keypad_back_button_text">ATR&#193;S</column>
+	  <column name="zip_code_header_text">C&#211;DIGO POSTAL</column>
+	  <column name="zip_code_note_text">El c&#243;digo postal asociado a su tarjeta de cr&#233;dito es necesario para fines de verificaci&#243;n.</column>
       <column name="zip_code_auth_text">Al hacer uso A continuación, usted está de acuerdo a un período de retención de autorización de hasta {0} días por artículo en esta tarjeta. Sólo se le cobrará por el número real de días de alquiler más los impuestos aplicables para el cual mantiene sus artículos.</column>
+	  <column name="zip_code_next_button_text">CONTINUAR</column>
 
       <column name="play_pass_prompt_message">GANA HASTA {0} PUNTOS*&#10;POR ESTE ALQUILER</column>
       <column name="play_pass_prompt_disclaimer_message">*No se emitirán puntos si estás alquilando con un crédito o con un código promocional. Una vez ganado, el crédito para una noche de cine gratis se depositará en tu cuenta, y caducará 60 días luego de haber sido emitido. Se requiere tarjeta de crédito o débito para utilizar el crédito en tu cuenta. Al hacer clic en "Hacerse Miembro", estás aceptando todos los términos establecidos en el acuerdo, disponibles aquí y en www.redbox.com/redboxplaypass.</column>
@@ -418,7 +422,7 @@
       <column name="newest_button">&#218;ltimos</column>
       <column name="abc_button">A-Z</column>
       <column name="blu_ray_button">Blu-ray</column>
-	  <column name="digital_code_button">Código Digital</column>
+      <column name="digital_code_button">Código Digital</column>
       <column name="for_sale_button">Se Vende</column>
       <column name="coming_soon_button">Pr&#243;ximamente</column>
       <column name="more_collections">MAS COLECCIÓNES</column>
@@ -435,26 +439,23 @@
       <column name="ps3_button">PS3</column>
       <column name="ps4_button">PS4</column>
       <column name="wii_button">Wii</column>
-	  <column name="wii_u_button">Wii U</column>
-	  <column name="nintendo_switch_button">Nintendo Switch</column>
+      <column name="wii_u_button">Wii U</column>
+      <column name="nintendo_switch_button">Nintendo Switch</column>
 
 
-	  <column name="buy_movies_or_games_line1">PELÍCULAS</column>
-	  <column name="buy_movies_or_games_line2">EN VENTA</column>
+      <column name="buy_movies_or_games_line1">PELÍCULAS</column>
+      <column name="buy_movies_or_games_line2">EN VENTA</column>
       <column name="buy_games_line1">JUEGOS</column>
       <column name="buy_games_line2">EN VENTA</column>
 
       <column name="digital_code">Código Digital</column>
-	  <column name="digital_code_banner">Código Digital       </column>
-	  <column name="nintendo_switch">Nintendo Switch</column>
-      <column name="cart_rental">Alquiler</column>
-      <column name="cart_purchase">Compra</column>
-      <column name="cart_type_action">{1} de {0}</column>
+      <column name="digital_code_banner">Código Digital       </column>
+      <column name="nintendo_switch">Nintendo Switch</column>
       <column name="cart_day">/día</column>
       <column name="cart_first_day">/primer día</column>
       <column name="cart_additional_day">/día adicional</column>
 
-      <column name="add">AGREGUE</column>
+      <column name="add">Agregue</column>
 
       <column name="title_rollup_overlay_digital_code_info">¿Qué es un Código Digital?</column>
 
@@ -467,9 +468,9 @@
 
       <column name="digital_code_alert_title">Código Digital En El Carrito</column>
       <column name="digital_code_alert_message">Has agregado a tu carrito un código para una versión digital de esta película. Es una opción inteligente! Completa tu compra y tu código será entregado inmediatamente, aquí mismo en este Redbox.</column>
-      
-      <column name="title_detail_buy">COMPRA</column>
-      <column name="title_detail_collection_text">VER LA COLECCIÓN&#10;RELACIONADA</column>
+
+      <column name="title_detail_buy">Compra</column>
+      <column name="title_detail_collection_text">Colección Relacionada</column>
       <column name="starring_label">Protagonizado: </column>
       <column name="genres_label">Plataforma: </column>
       <column name="return_time_label">Fecha y Hora Límite: </column>
@@ -477,6 +478,6 @@
       <column name="out_of_stock_line1">Textea “LOCATE” a 727272</column>
       <column name="out_of_stock_line2">y se encuentra otros quioscos que tengan este {0}.*</column>
       <column name="out_of_stock_line3">*Textea “Locate” a 727272 y recibiría al máximo 2 mensajes. Reciba al máximo 2 mensajes por semana. Cargos de mensajes y de data se aplican. Textea STOP a quitarse de recibir mensajes, o HELP para recibir ayuda.</column>
-    </row>
+	</row>
   </aspect>
 </resource>

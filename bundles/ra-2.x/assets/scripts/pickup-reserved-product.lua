@@ -195,6 +195,7 @@ swipe_view_next_func = function()
 						and ( res_version_2 == true or ( res_version_3 == true and ShoppingCart:is_gift_card() == false and ReservationManager:is_gc() == false ) )
 						and ReservationManager:is_mnp() == false
 						and ReservationManager:is_mdv() == false
+                        and ReservationManager:is_loyalty_redemption() == false
 						and result.properties.is_online == true
 						and result.properties.stand_alone == false
                         and ReservationManager:has_purchase() == false

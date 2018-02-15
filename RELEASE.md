@@ -1,17 +1,17 @@
-# Superman (2017-10-13)
+# Venom SR (2018-02-15)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2017-10-13
-- Store labels: kop-rental-bundles-Superman
+- Date (first download in the snapshots): 2018-02-15
+- Store labels: kop-rental-bundles-venomSR
 - Package revisions:
-  - `kop-rental-bundles` revision 60 (`979B29E5D3FC4BF810FC588834AF208960405053`)
+  - `kop-rental-bundles` revision 68 (`7BD70BCA6B245A51094BFE48D3B21CE5D5B3A931`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `cp.bundle` |  |  | `EAF2019B6306B0AC703DEF6DEED57CBB81BEE272` | exact |
-| `fm.bundle` |  |  | `AB21E61B7E39BD74352CABFA26D79790F624C7BA` | exact |
-| `library-rental-common.bundle` |  |  | `F56FD152C42E0D3D226752683E5E5637DC03159E` | exact |
-| `ra-2.x.bundle` |  |  | `38BA820FC06BEC7023F613D74D6BC79C611CBD68` | exact |
+| `fm.bundle` |  |  | `2E3DAE97033E70C30936B0564C9BDC9353878A94` | exact |
+| `library-rental-common.bundle` |  |  | `B576FD7EAB337B260171386A4044BAA612566871` | exact |
+| `ra-2.x.bundle` |  |  | `35F8ACD05C0A72F5A81E66161E175DED2FB1E9A7` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

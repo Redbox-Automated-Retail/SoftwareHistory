@@ -35,16 +35,16 @@
 				strokeWeight="5"
 				optionFlags="Background, DrawBorder" />
       
-      <actor
-        name="ad"
-        x="178"
-        y="65"
-        width="668"
-        height="83"
-        visible="false"
-        optionFlags="Image" />
+			<actor
+				name="ad"
+				x="178"
+				y="65"
+				width="668"
+				height="83"
+				visible="false"
+				optionFlags="Image" />
       
-      <actor
+			<actor
 				name="welcome_message_name"
 				x="100"
 				y="100"
@@ -127,28 +127,50 @@
 				foregroundColor="255,221,153"
 				horizontalAlignment="center"
 				optionFlags="Text" />
-				
+			
 			<actor
 				name="credits_disclaimer"
 				x="115"
 				y="450"
 				width="440"
-				text="Available credits will be applied each night for this transaction. Your credit card will be charged once your credits run out.  If you're redeeming Redbox Play Pass credits for the first time, your rental confirms that you accept the Play Pass Terms &amp; Conditions. Click here to read them."
+				text="If you're using your Redbox Perks points or remaining Play Pass credits for the first time, your rental confirms that you accept the"
 				font="font_akzidenz_regular_tiny"
 				foregroundColor="80,80,80"
 				optionFlags="Text" />
-
-      <actor
+			
+			<actor
 				name="disclaimer_button"
-				x="267"
-				y="530"
-				width="90"
-				height="30"
-				font="font_akzidenz_bold_smaller"
+				x="420"
+				y="468"
+				width="130"
+				height="17"
+				text="Redbox Perks Terms"
+				font="font_akzidenz_regular_tiny"
 				cornerSize="30,30"
 				style="warm_purple_button_style" />
-
-      <actor
+			
+			<actor
+				name="credits_disclaimer_2"
+				x="115"
+				y="480"
+				width="440"
+				text="or"
+				font="font_akzidenz_regular_tiny"
+				foregroundColor="80,80,80"
+				optionFlags="Text" />
+			
+			<actor
+				name="disclaimer_button_2"
+				x="132"
+				y="483"
+				width="190"
+				height="17"
+				text="Play Pass Terms &amp; Conditions"
+				font="font_akzidenz_regular_tiny"
+				cornerSize="30,30"
+				style="warm_purple_button_style" />
+			
+			<actor
 				name="credits_do_not_apply_message"
 				x="590"
 				y="249"
@@ -251,7 +273,7 @@
 				horizontalAlignment="far"
 				optionFlags="Text" />
 
-      <actor
+			<actor
 				name="credits_left"
 				x="590"
 				y="499"

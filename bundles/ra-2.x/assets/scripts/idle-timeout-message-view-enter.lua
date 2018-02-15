@@ -5,10 +5,4 @@
 --
 
 kernel.suspend_idle_timer( "idle_timer" )
-
-local timeout = kernel.ttsgettimeout( "medium", 15000 )
-kernel.configure_idle_timeout_message_view(
-    timeout,
-    idle_timer_expire_session,
-    function() view_goback_safe( "need_more_time:second_button", false ) end
-)
+kernel.configure_idle_timeout_message_view(idle_timer_expire_session)

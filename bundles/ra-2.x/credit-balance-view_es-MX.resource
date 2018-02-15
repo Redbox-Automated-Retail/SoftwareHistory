@@ -36,14 +36,14 @@
 				strokeWeight="5"
 				optionFlags="Background, DrawBorder" />
       
-      <actor
-        name="ad"
-        x="178"
-        y="65"
-        width="668"
-        height="83"
-        visible="false"
-        optionFlags="Image" />
+			<actor
+				name="ad"
+				x="178"
+				y="65"
+				width="668"
+				height="83"
+				visible="false"
+				optionFlags="Image" />
       
 			<actor
 				name="welcome_message_name"
@@ -133,23 +133,45 @@
 				name="credits_disclaimer"
 				x="115"
 				y="450"
-				width="440"
-				text="Se utiliza y se aplica cr&#233;ditos de su cuenta cada noche para est&#225; transacci&#243;n. En el momento que se acaban se cargar&#237;a el balance a su tarjeta de cr&#233;dito.  Si estas redimiendo créditos de Redbox Play Pass por la primera vez, tu alquilar confirma que tu acceptas los Términos  y Condiciones de Play Pass. Haz clic aquí para leer las."
+				width="400"
+				text="Si está usando sus puntos de Redbox Perks o sus créditos restantes de Play Pass por primera vez, al alquilar, confirma que acepta los"
 				font="font_akzidenz_regular_tiny"
 				foregroundColor="80,80,80"
 				optionFlags="Text" />
-
-      <actor
+			
+			<actor
 				name="disclaimer_button"
-				x="267"
-				y="530"
-				width="90"
-				height="30"
-				font="font_akzidenz_bold_smaller"
+				x="115"
+				y="484"
+				width="160"
+				height="17"
+				text="Términos de Redbox Perks"
+				font="font_akzidenz_regular_tiny"
 				cornerSize="30,30"
 				style="warm_purple_button_style" />
-
-      <actor
+			
+			<actor
+				name="credits_disclaimer_2"
+				x="281"
+				y="483"
+				width="440"
+				text="o"
+				font="font_akzidenz_regular_tiny"
+				foregroundColor="80,80,80"
+				optionFlags="Text" />
+			
+			<actor
+				name="disclaimer_button_2"
+				x="293"
+				y="484"
+				width="225"
+				height="17"
+				text="Términos y Condiciones de Play Pass"
+				font="font_akzidenz_regular_tiny"
+				cornerSize="30,30"
+				style="warm_purple_button_style" />
+			
+			<actor
 				name="credits_do_not_apply_message"
 				x="590"
 				y="249"
@@ -157,7 +179,7 @@
 				font="font_akzidenz_regular_tiny"
 				foregroundColor="black"
 				optionFlags="Text" />
-				
+			
 			<actor
 				name="subtotal_heading"
 				x="597"
@@ -252,7 +274,7 @@
 				horizontalAlignment="far"
 				optionFlags="Text" />
 
-      <actor
+			<actor
 				name="credits_left"
 				x="592"
 				y="499"

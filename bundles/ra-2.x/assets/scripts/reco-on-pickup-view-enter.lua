@@ -43,7 +43,14 @@ for k, v in ipairs( reservation_barcodes ) do
 	and MasterProductCatalog[product.product_id] ~= nil then
 		local catalog_entry = MasterProductCatalog[product.product_id]
 		catalog_entry.barcode = v
-		ShoppingCart:add_item( catalog_entry, 1, "rental", "Reservation" )	
+        local price_charged = nil
+        for _, v in ipairs( reservation.reservation_titles ) do
+            if product.product_id == v.title_id then
+                price_charged = v.price
+            end
+        end
+        
+		ShoppingCart:add_reservation_item( catalog_entry, 1, "rental", "Reservation", reservation.prices, price_charged )	
 	end
 end
 

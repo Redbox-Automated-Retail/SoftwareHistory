@@ -18,7 +18,7 @@ local rebox_logo_action = function()
 end
 local show_as_popup = false
 
-if kernel.getlasthitactorname() == "Terms_conditions_button" or kernel.getlasthitactorname() == "terms_conditions_button" then
+if kernel.getlasthitactorname() == "terms_conditions_button" or kernel.peekpriorview() == "shopping_cart_view" then
     kernel.set_session_value( "HelpState.CurrentHelpDocument", "Terms" )
     kernel.set_session_value( "HelpState.CurrentHelpDocumentPage", "1" )
     rebox_logo_action = nil

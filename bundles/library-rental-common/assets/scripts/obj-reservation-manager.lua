@@ -85,7 +85,8 @@ function newreservationmanager()
 					cc_ids,
 					tax_rate,
 					zip_code,
-					is_mdv )
+					is_mdv,
+                    is_loyalty_redemption)
 					
 				local result = { success = false, items = {} }
 				local pricesNotAdjusted = self:get_broker_service_prices( true )
@@ -115,7 +116,8 @@ function newreservationmanager()
 					cc_ids = cc_ids,
 					tax_rate = tax_rate,
 					zip_code = zip_code,
-					is_mdv = is_mdv
+					is_mdv = is_mdv,
+                    is_loyalty_redemption = is_loyalty_redemption
 				}
 				
 				local products = {}
@@ -627,6 +629,16 @@ function newreservationmanager()
         end
         return false
     end
+
+    t.is_loyalty_redemption = function( self )
+		local reservations = self:get_account_reservations()
+		for _, v in pairs( reservations or {} ) do
+			if v.is_loyalty_redemption ~= nil and v.is_loyalty_redemption == true then
+				return true
+			end
+		end
+		return false
+	end
 
 	t.remove_orphaned_reservations = function( self )
 		kernel.log("Remove Orphan Reservations BEGIN")

@@ -3,6 +3,8 @@
 -- Copyright (C) 2009 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
+
+result_holder_item = nil
 check_email_address = false
 if not ShoppingCart:check_out() then
 	return
@@ -20,7 +22,7 @@ swipe_view_next_func = function()
 	if kernel.current_rental_shopping_cart_item_count() > 0 then
 		if ShoppingCart:is_gift_card() == true then
 			if GiftCardsEnabled == true then
-				if credit_button_hit == true then
+				if kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ) == "OptedIn" then
 					key_pad_next_getcustomercredits_func()
 				else
 					ShoppingCart:set_use_credits( "OptedOut" )
@@ -49,14 +51,14 @@ swipe_view_next_func = function()
                         ShoppingCart.prompt_required = result.properties.prompt_required
                         ShoppingCart.auth_days = result.properties.auth_days
                         kernel.sessionsetvariableauthvalues( ShoppingCart.session_id, result.properties.prompt_required, result.properties.auth_rule_id, result.properties.auth_amount, result.properties.skip_auth_rule )
-                        kernel.executescript( "get_postal_code" )
+                        view_show_safe("zip_code_view")
 		            end
 	            )
             else
                 ShoppingCart.prompt_required = false
                 ShoppingCart.auth_days = 0
                 kernel.sessionsetvariableauthvalues( ShoppingCart.session_id, false, 0, 0, true )
-                kernel.executescript( "get_postal_code" )
+                view_show_safe("zip_code_view")
             end
 		end
 	else
@@ -175,6 +177,25 @@ marketing_opt_in_flow = function( optin_status )
     end
 end
 
+function keyboard_continue_func()
+	local result = result_holder_item
+	kernel.analyticsaddelement( "session", "hasCheckout", "True", ShoppingCart.session_id )
+    -- If user has a profile and email - continue the vend process
+	if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
+		ShoppingCart.email = result.properties.email
+		-- show the email and change data screen
+		view_show_safe( "email_view" )
+        local ad = kernel.marketing_ad_get_screen_ad( "EmailNotification", true )
+        if ad ~= nil and ad.visible == true then
+            kernel.showactor( "ad" )
+            kernel.setactorimage( "ad", ad.image_name )
+        end
+		set_email_view_text( result.properties.email )
+	else
+		marketing_opt_in_flow( ShoppingCart.marketing_opt_in )
+	end
+end
+
 function process_authorize_result( result )
     local message_view_manager = newmessageviewmanager()
 	if result.properties.is_online == false
@@ -231,107 +252,44 @@ function process_authorize_result( result )
 		message_view_manager:hide( true )
 		kernel.stop_idle_timer( "idle_timer" )
 		kernel.setmacro( "ComingSoonTitleIDs", "" )
-		
-		local keyboard_manager = newkeyboardmanager()
-
-		local keyboard_continue_func = function()
-			keyboard_manager:hide( true )
-			kernel.analyticsaddelement( "session", "hasCheckout", "True", ShoppingCart.session_id )
-			keyboard_manager:stop_idle_timer()
-			
-            -- If user has a profile and email - continue the vend process
-			if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
-				ShoppingCart.email = result.properties.email
-				-- show the email and change data screen
-				view_show_safe( "email_view" )
-                local ad = kernel.marketing_ad_get_screen_ad( "EmailNotification", true )
-                if ad ~= nil and ad.visible == true then
-                    kernel.showactor( "ad" )
-                    kernel.setactorimage( "ad", ad.image_name )
-                end
-				set_email_view_text( result.properties.email )
-			else
-				marketing_opt_in_flow( ShoppingCart.marketing_opt_in )
-			end
-		end
 
 		ShoppingCart.has_customer_profile = result.properties.has_profile
-
         ShoppingCart.play_pass_prompt = result.properties.play_pass_prompt
         ShoppingCart.play_pass_points_earned = result.properties.play_pass_points_earned
+		
+		result_holder_item = result
 
 		-- If user has a profile and email - continue the vend process
 		if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
 			-- show the email and change data screen
 			keyboard_continue_func()
 		else
-			-- No profile or email - allow user to enter an e-mail
-			keyboard_manager:init( 64 )
-			if result.properties.email ~= nil then
-				keyboard_manager:set_value( result.properties.email )
-				check_email_address = true
-			end
-			keyboard_manager:set_message( strings.email_prompt_message )
-			keyboard_manager:set_marketing( strings.email_marketing_message )
-			keyboard_manager:set_enter_event(
-				function()
-					local email_changed = result.properties.email ~= keyboard_manager:get_value()
-					ShoppingCart.email = keyboard_manager:get_value()
-					keyboard_manager:stop_idle_timer()
-					--Based on marketing opt-in determine flow
-					kernel.log("Email changed: ".. tostring(email_changed))
-					if MarketingOptInEnabled and kernel.ttsenabled() == false and email_changed then
-						-- Show a 'Please Wait' screen while the lookup is working
-						kernel.suspend_idle_timer( "idle_timer" )
-						view_show_safe( "please_wait_message" )
-						
-						-- Perform a 2nd email lookup
-						kernel.merchsvcs_emaillookup( 
-							StoreManager:get_number(), 
-							ShoppingCart.email,
-							function( email_lookup_result )
-								kernel.resume_idle_timer( "idle_timer" )
-								marketing_opt_in_flow( email_lookup_result.properties.confirmation_status )
-							end )
-					else
-						-- Do the normal flow
-						keyboard_continue_func()
+			local continue_callback = function( emailAddress )
+				local result = result_holder_item
+				local email_changed = result.properties.email ~= emailAddress
+				ShoppingCart.email = emailAddress
+				--Based on marketing opt-in determine flow
+				kernel.log("Email changed: ".. tostring(email_changed))
+				if MarketingOptInEnabled and kernel.ttsenabled() == false and email_changed then
+					-- Show a 'Please Wait' screen while the lookup is working
+					kernel.suspend_idle_timer( "idle_timer" )
+					view_show_safe( "please_wait_message" )
+					-- Perform a 2nd email lookup
+					local lookup_routine =  function( email_lookup_result )
+						kernel.resume_idle_timer( "idle_timer" )
+						marketing_opt_in_flow( email_lookup_result.properties.confirmation_status )
 					end
-				end )
-			keyboard_manager:set_cancel_event(
-				function()
-					ShoppingCart.marketing_opt_in = "DoNotShow"
+					kernel.merchsvcs_emaillookup(StoreManager:get_number(), ShoppingCart.email, lookup_routine)
+				else
+					-- Do the normal flow
 					keyboard_continue_func()
-				end )
-			keyboard_manager:set_actor_hit_event(
-				function( text )
-					if keyboard_manager:get_error() ~= "" then
-						keyboard_manager:set_error( "" )
-					end
-				end )
-			keyboard_manager:set_validate_event(
-				function( text )
-					EmailValidator = newemailvalidator()
-					if EmailValidator.validate_email( text ) == false then
-						return strings.email_error_message
-					end
-					return nil
-				end )
-			keyboard_manager:show( strings.email_tag )
-			view_analytics_event( "context", "emailAddress" )
-			kernel.stop_idle_timer( "idle_timer" )
-
-			keyboard_manager:set_cancel_button_text( strings.email_cancel_message )
-			keyboard_manager:start_idle_timer(
-				function()
-					ShoppingCart.email = result.properties.email -- Defect #4036 don't clear email on a timeout
-					if keyboard_manager.cancel_event ~= nil then
-						keyboard_manager:raise_cancel_event()
-					else
-						view_unwindtobottom_safe( "check_out::keyboard_manager:idle_timer (on_expire:cancel_event = nil)" )
-					end
-				end,
-				15000 )
+				end
+			end
+			local cancel_callback =  function()
+				ShoppingCart.marketing_opt_in = "DoNotShow"
+				keyboard_continue_func()
+			end
+			kernel.show_check_out_keyboard_view(result.properties.email, continue_callback, cancel_callback)
 		end -- result.has_profile && result.properties.email
 	elseif result.properties.response == "OfflineCardBlocklisted" then
 		ShoppingCart:prepos_vend_abort()
@@ -478,8 +436,8 @@ function process_authorize_result( result )
 				message_view_manager:set_message_header( strings.promo_code_not_valid_message_title )
 				message_view_manager:set_message( strings.promo_code_not_valid_message )
 			elseif result.properties.response == "CodeAlreadyUsed" then
-                if rtwo_in_cart_template_is_running() then
-                    ShoppingCart.in_cart_do_not_show = true
+                if kernel.rental_promotion_rent_two_in_cart_template_is_running() then
+                    kernel.rental_shopping_cart_update_in_cart_do_not_show(ShoppingCart.session_id, true)
                     kernel.rental_shopping_cart_update_in_cart_offer_made( ShoppingCart.session_id, false)
                     kernel.rental_shopping_cart_update_in_cart_offer_cancel( ShoppingCart.session_id, false )
                 end
@@ -795,7 +753,7 @@ end
 
 -- setup the WPF swipe view
 local swipe_view_type = "RegularCheckOut"
-if (credit_button_hit) then
+if (kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ) == "OptedIn") then
     swipe_view_type = "Credits"
 end
 kernel.set_swipe_view_parameters(swipe_view_cancel_func, swipe_view_next_func, swipe_view_type)

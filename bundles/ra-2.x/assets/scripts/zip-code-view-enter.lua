@@ -1,15 +1,13 @@
 --
--- get-postal-code.lua
--- Copyright (C) 2009 Redbox Automated Retail, LLC.
+-- zip-code-view-enter.lua
+-- Copyright (C) 2017 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
 
 kernel.start_idle_timer( "idle_timer" )
+already_sent_auth = false
 
-kernel.setmacro( "KeyPad:MessageLabel", strings.postal_code_prompt_message )
-kernel.setmacro( "KeyPad:PanelTag", strings.postal_code_tag )
-kernel.setmacro( "KeyPad:Text", "" )
-
+local auth_days_text = ""
 if ShoppingCart.prompt_required == true then
     local function convert_auth_days( auth_days )
         local auth_days_lookup = { 
@@ -35,13 +33,30 @@ if ShoppingCart.prompt_required == true then
         end
         return auth_days_lookup[5].en
     end
-    kernel.setmacro( "KeyPad:AuthText", string.gsub( strings.zip_code_auth_text, "{0}", convert_auth_days( ShoppingCart.auth_days ) ) )
-else
-    kernel.setmacro( "KeyPad:AuthText", "" )
+    auth_days_text = string.gsub( strings.zip_code_auth_text, "{0}", convert_auth_days( ShoppingCart.auth_days ) )
 end
 
-key_pad_minimum_length = 5
-key_pad_value = nil
+kernel.configure_zip_code_view(
+	auth_days_text,
+    function( display_text )
+        if already_sent_auth then
+            kernel.log("Already sent auth")
+            return
+        end
+        already_sent_auth = true
+		if kernel.get_rental_shopping_use_credits( ShoppingCart.session_id ) == "OptedIn" then
+			ShoppingCart.postal_code = display_text
+			key_pad_next_getcustomercredits_func()
+		else
+			if key_pad_next_authorize_func ~= nil then
+				ShoppingCart.postal_code = display_text
+				show_credits_popup = true
+				key_pad_next_authorize_func()
+			else
+				view_goback_safe( "keypad:next_button", false )
+			end
+		end
+	end
+)
 
-view_show_safe( "key_pad_view" )
 view_analytics_event( "context", "postalCode" )
