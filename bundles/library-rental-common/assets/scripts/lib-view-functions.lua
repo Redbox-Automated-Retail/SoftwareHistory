@@ -69,10 +69,12 @@ function view_unwindto_safe( name, discard, context )
 end
 
 function view_unwindtobottom( context )
+    -- this is obsolete.  Call kernel.close_open_session_and_start_new_rental_session(reason) instead
 	view_unwindto( kernel.get_start_over_view_name(), true, context )
 end
 
 function view_unwindtobottom_safe( context )
+    -- this is obsolete. Call kernel.close_open_session_and_start_new_rental_session(reason) instead
 	if safe_to_change_view() == true then			
 		view_unwindtobottom( context )
 	else

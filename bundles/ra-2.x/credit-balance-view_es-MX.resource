@@ -172,6 +172,16 @@
 				style="warm_purple_button_style" />
 			
 			<actor
+				name="service_fee_disclaimer"
+				x="115"
+				y="510"
+				width="440"
+				font="font_akzidenz_regular_tiny"
+				foregroundColor="80,80,80"
+				visible="false"
+				optionFlags="Text" />
+			
+			<actor
 				name="credits_do_not_apply_message"
 				x="590"
 				y="249"
@@ -182,7 +192,7 @@
 			
 			<actor
 				name="subtotal_heading"
-				x="597"
+				x="577"
 				y="332"
 				text="Subtotal"
 				font="font_arial_regular_medium"
@@ -191,7 +201,7 @@
 				
 			<actor
 				name="subtotal_amount"
-				x="723"
+				x="743"
 				y="332"
 				width="100"
 				font="font_arial_regular_medium"
@@ -201,16 +211,16 @@
 				
 			<actor
 				name="credits_background"
-				x="590"
+				x="570"
 				y="362"
-				width="240"
+				width="280"
 				height="40"
 				backgroundColor="228,32,69"
 				optionFlags="Background" />
 				
 			<actor
 				name="credits_heading"
-				x="597"
+				x="577"
 				y="369"
 				text="Cr&#233;ditos"
 				font="font_arial_regular_medium"
@@ -219,18 +229,39 @@
 				
 			<actor
 				name="credits_amount"
-				x="723"
+				x="743"
 				y="369"
 				width="100"
 				font="font_arial_regular_medium"
 				foregroundColor="255,255,255"
 				horizontalAlignment="far"
 				optionFlags="Text" />
-				
+			
+			<actor
+				name="service_fee_heading"
+				x="577"
+				y="406"
+				text="Cargo por Servicio"
+				font="font_arial_regular_medium"
+				foregroundColor="110,110,110"
+				visible="false"
+				optionFlags="Text" />
+
+			<actor
+				name="service_fee_amount"
+				x="743"
+				y="406"
+				width="100"
+				font="font_arial_regular_medium"
+				foregroundColor="110,110,110"
+				horizontalAlignment="far"
+				visible="false"
+				optionFlags="Text" />
+			
 			<actor
 				name="tax_heading"
-				x="597"
-				y="407"
+				x="577"
+				y="406"
 				text="Impuesto"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -238,8 +269,8 @@
 				
 			<actor
 				name="tax_amount"
-				x="723"
-				y="407"
+				x="743"
+				y="406"
 				width="100"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -248,17 +279,17 @@
 				
 			<actor
 				name="grey_line"
-				x="590"
-				y="437"
-				width="240"
+				x="570"
+				y="434"
+				width="280"
 				height="4"
 				backgroundColor="204,204,204"
 				optionFlags="Background" />
 				
 			<actor
 				name="total_heading"
-				x="597"
-				y="447"
+				x="577"
+				y="443"
 				text="Nuevo total"
 				font="font_medium"
 				foregroundColor="black"
@@ -266,8 +297,8 @@
 				
 			<actor
 				name="total_amount"
-				x="723"
-				y="447"
+				x="743"
+				y="443"
 				width="100"
 				font="font_medium"
 				foregroundColor="black"

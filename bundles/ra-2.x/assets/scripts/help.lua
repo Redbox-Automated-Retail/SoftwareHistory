@@ -16,5 +16,3 @@ kernel.set_session_value("HelpState.CurrentHelpDocumentPage", "1")
 
 view_show_safe( "help_document_view" )
 
--- Necessary for those times when this is launched from the Start/Welcome View
-CloseAnalyticsOnStartView = true

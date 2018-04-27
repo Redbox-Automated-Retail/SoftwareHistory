@@ -86,6 +86,10 @@
       <column name="offline_game_limit_exceeded_message_games">games</column>
       <column name="offline_items_limit_exceeded_message_header">You're at the limit!</column>
       <column name="offline_items_limit_exceeded_message">You can have up to {0} discs.&#10;&#10;Please remove discs from your cart to continue.</column>
+      <column name="offline_items_limit_zero_message">At this time, we are temporarily unable to rent out any movies and games. We are sorry for this inconvenience. But download the app, and find the next closest Redbox location.</column>
+      <column name="offline_game_rental_and_purchase_limit_zero_message">At this time, we are temporarily unable to allow the rental or purchase of games.  So please remove them from your cart and continue on to rent up to {0} new release movies!  See you back here at the cart soon.</column>
+      <column name="offline_game_rental_limit_zero_message">At this time, we are temporarily unable to rent out any games.  So please remove them from your cart and continue on to rent up to {0} new release movies!  See you back here at the cart soon.</column>
+      <column name="offline_game_purchase_limit_zero_message">At this time, we are temporarily unable to allow the purchase of games.  So please remove them from your cart and continue on to rent up to {0} new release movies!  See you back here at the cart soon.</column>
 
       <column name="game_limit_exceeded_message_header">You’ve reached the limit.</column>
       <column name="game_limit_exceeded_message">If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 may be a game.&#10;&#10;Credit cards that have been to Redbox before can rent 5 discs, and only 2 may be games.&#10;&#10;To continue, please remove something from your cart.</column>
@@ -297,6 +301,7 @@
       <column name="price_for">for</column>
       <column name="blu_ray">Blu-ray</column>
       <column name="dvd">DVD</column>
+      <column name="_4k_uhd">4K UHD</column>
       <column name="game">Game</column>
       <column name="any">Any</column>
       <column name="other_item">other item</column>
@@ -478,6 +483,8 @@
       <column name="out_of_stock_line1">Text LOCATE to 727272</column>
       <column name="out_of_stock_line2">to find other Redbox kiosks nearby that might have this {0}.*</column>
       <column name="out_of_stock_line3">*WHEN YOU TEXT LOCATE TO 727272, YOU WILL GET UP TO 2 MESSAGES. Up to 2 msgs&#47;week. Msg &#38; data rates may apply. Text STOP to quit, HELP for help.</column>
+	  
+	  <column name="service_fee_disclaimer">All checkouts may be subject to a service fee of {0}&#162;</column>
     </row>
   </aspect>
 </resource>

@@ -16,6 +16,8 @@ kernel.timercreate(
 	timeout,
 	function()
 		ShoppingCart:prepos_vend_abort()
+        ShoppingCart:set_use_credits( "OptedOut" )
+        kernel.set_rental_shopping_applied_credits(ShoppingCart.session_id, "0")
 		view_unwindto_safe( "shopping_cart_view", false, "credit_balance_view_timer:timeout" )
 	end
 )
@@ -25,6 +27,8 @@ kernel.registeractorhitnotify(
 	"back_button",
 	function()
 		ShoppingCart:prepos_vend_abort()
+        ShoppingCart:set_use_credits( "OptedOut" )
+        kernel.set_rental_shopping_applied_credits(ShoppingCart.session_id, "0")
 		view_unwindto_safe( "shopping_cart_view", false, "credit_balance_view:back_button" )
 	end
 )
@@ -63,6 +67,25 @@ kernel.registeractorhitnotify(
 	end
 )
 
+local default_service_fee_cents = ShoppingCart:default_service_fee_cents()
+if default_service_fee_cents > 0 then
+	local service_fee_disclaimer_text = string.gsub( strings.service_fee_disclaimer, "{0}", default_service_fee_cents )
+	kernel.setactortext( "service_fee_disclaimer", service_fee_disclaimer_text )
+	kernel.setmacro( "TTS:CreditViewServiceFeeDisclaimerText", service_fee_disclaimer_text )
+	kernel.showactor( "service_fee_disclaimer" )
+end
+
+if ShoppingCart:service_fee_enabled() == true then
+	kernel.showactor( "service_fee_heading" )
+    kernel.showactor( "service_fee_amount" )
+	kernel.moveactory( "tax_heading", 37 )
+    kernel.moveactory( "tax_amount", 37 )
+    kernel.moveactory( "grey_line", 37 )
+    kernel.moveactory( "total_heading", 37 )
+    kernel.moveactory( "total_amount", 37 )
+    kernel.moveactory( "credits_left", 37 )
+end
+
 local ad = kernel.marketing_ad_get_screen_ad( "Credits", true )
 if ad ~= nil and ad.visible == true then
     kernel.showactor( "ad" )
@@ -80,13 +103,16 @@ if ad ~= nil and ad.visible == true then
     kernel.moveactory( "disclaimer_button", 40 )
     kernel.moveactory( "credits_disclaimer_2", 40 )
     kernel.moveactory( "disclaimer_button_2", 40 )
+	kernel.moveactory( "service_fee_disclaimer", 40 )
     kernel.moveactory( "credits_do_not_apply_message", 40 )
     kernel.moveactory( "subtotal_heading", 40 )
     kernel.moveactory( "subtotal_amount", 40 )
     kernel.moveactory( "credits_background", 40 )
     kernel.moveactory( "credits_heading", 40 )
     kernel.moveactory( "credits_amount", 40 )
-    kernel.moveactory( "tax_heading", 40 )
+	kernel.moveactory( "service_fee_heading", 40 )
+    kernel.moveactory( "service_fee_amount", 40 )
+	kernel.moveactory( "tax_heading", 40 )
     kernel.moveactory( "tax_amount", 40 )
     kernel.moveactory( "grey_line", 40 )
     kernel.moveactory( "total_heading", 40 )

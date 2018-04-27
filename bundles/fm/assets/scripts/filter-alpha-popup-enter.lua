@@ -37,7 +37,7 @@ local alpha_table = { [1] = "A",
 					[26] = "Z",
 					[27] = "0-9"}
 
-filter_titles_tables = { media = { [ "DVD" ] = false, [ "Blu-ray" ] = false, [ "Games" ] = false },
+filter_titles_tables = { media = { [ "DVD" ] = false, [ "Blu-ray" ] = false, ["4K UHD"] = false, ["DigitalCode"] = false, [ "Games" ] = false },
 						movie_rating = { [ "G" ] = false, [ "PG" ] = false, [ "PG-13" ] = false, [ "R" ] = false, [ "NR" ] = false, [ "TVMA" ] = false, [ "TVPG" ] = false, [ "TV14" ] = false, [ "TVG" ] = false, [ "TVY" ] = false, [ "TVY7" ] = false, },
 						game_rating = { [ "E" ] = false, [ "E 10+" ] = false, [ "T" ] = false, [ "M (17+)" ] = false, [ "RP" ] = false, ["AO (18+)"] = false } }
 	

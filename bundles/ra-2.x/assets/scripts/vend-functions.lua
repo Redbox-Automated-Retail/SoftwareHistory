@@ -232,13 +232,13 @@ function newvendmanager()
 								end
 								local did_handle = handle_critical_hardware_errors( "vend", job_result.job_id, bad_codes )
 								if not did_handle then
-									view_unwindtobottom_safe( "handle_critical_hardware_errors" )
+									kernel.close_open_session_and_start_new_rental_session( "handle_critical_hardware_errors" )
 								end
 							end
                             kernel.show_message_popup_view_vend_error(continue_handler, continue_handler)
 						else
 							kernel.log( "VendManager: Vend was successful." )
-							view_unwindtobottom_safe( "prepos_vend:vend successful" )
+							kernel.close_open_session_and_start_new_rental_session( "prepos_vend:vend successful" )
 						end
                         if t.arcus_reset then
                             if t.disc_vended_after_arcus_reset then

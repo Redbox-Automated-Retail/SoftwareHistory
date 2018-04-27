@@ -15,7 +15,7 @@ function newreturnmanager( shopping_cart )
 	t.init = function( self )
 		kernel.log( "ReturnManager:init()" )
 		self.has_ended = false
-        kernel.ttsinreturnflow(true)
+        kernel.set_session_value("BrowseState.InReturnFlow", true)
 		self.did_show_success_message = false
 		self.error_message_view_manager = newerrormessageviewmanager()
 	end
@@ -29,22 +29,22 @@ function newreturnmanager( shopping_cart )
             if (message == strings.hardware_error_message) then
                 kernel.show_message_popup_view_hardware_error(
 				    function()
-					    view_unwindtobottom_safe( "ReturnManager:show_message timer expired" )
+					    kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_message timer expired" )
 				    end,
 				    function()
-					    view_unwindtobottom_safe( "ReturnManager:show_message second button clicked" )
+					    kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_message second button clicked" )
 				    end
                 )
             else
                 -- this code should never run but just in case...
-			    view_unwindtobottom_safe( "ReturnManager:show_message unexpected message text." )
+			    kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_message unexpected message text." )
             end
 		else
 			self.error_message_view_manager:show()
 			self.error_message_view_manager:set_message( message )
 		end
 		self.has_ended = true
-        kernel.ttsinreturnflow( false )
+        kernel.set_session_value("BrowseState.InReturnFlow", false)
 	end
 
 	t.close_session_show_maintenance = function( self, abandon_reason, alert_type, jobid, error_code, screen_code )
@@ -52,7 +52,7 @@ function newreturnmanager( shopping_cart )
 		self.shopping_cart:abandon( abandon_reason )
 		self:show_message( strings.hardware_error_message, false )
 		self.has_ended = true
-        kernel.ttsinreturnflow( false )
+        kernel.set_session_value("BrowseState.InReturnFlow", false)
 		if screen_code == nil then
 			screen_code = "RPCSSM"
 		end
@@ -69,7 +69,7 @@ function newreturnmanager( shopping_cart )
 				    kernel.setculture( "en-US" )
 			    end
 			    localization_reload_resources()
-			    view_unwindtobottom_safe( "ReturnManager:show_success_message switch_culture_unwind()" )
+			    kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_success_message switch_culture_unwind()" )
 		    end
 		    if self.shopping_cart ~= nil and self.shopping_cart.session_id ~= nil then
 			    self.shopping_cart:commit( "User successfully returned product with barcode: " .. tostring( item_id ), true )
@@ -77,36 +77,36 @@ function newreturnmanager( shopping_cart )
 
             kernel.show_message_popup_view_return_success(switch_culture_unwind)
 		    self.has_ended = true
-            kernel.ttsinreturnflow( false )
+            kernel.set_session_value("BrowseState.InReturnFlow", false)
         end
 	end
 	
 	t.show_backward_inserted_message = function( self )
         kernel.show_message_popup_view_return_backward_inserted(
 			function()
-				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message timer expired" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_backward_inserted_message timer expired" )
 			end,
 			function()
-				view_unwindtobottom_safe( "ReturnManager:show_backward_inserted_message second button clicked" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_backward_inserted_message second button clicked" )
 			end
         )
 
 		self.has_ended = true
-        kernel.ttsinreturnflow( false )
+        kernel.set_session_value("BrowseState.InReturnFlow", false)
 	end
 
 	t.show_unrecognized_barcode_returned_message = function( self )
         kernel.show_message_popup_view_return_unrecognized_barcode(
 			function()
-				view_unwindtobottom_safe( "ReturnManager:show_unrecognized_barcode_returned_message timer" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_unrecognized_barcode_returned_message timer" )
 			end,
 			function()
-				view_unwindtobottom_safe( "ReturnManager:show_unrecognized_barcode_returned_message continue button" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager:show_unrecognized_barcode_returned_message continue button" )
 			end
         )
 
 		self.has_ended = true
-        kernel.ttsinreturnflow( false )
+        kernel.set_session_value("BrowseState.InReturnFlow", false)
 	end
 
 	t.begin_return = function( self, return_type )
@@ -144,7 +144,7 @@ function newreturnmanager( shopping_cart )
 					jobid,
 					"ReturnEndWithBackwardDisc, Customer Return")
 				-- Here maintenance view check is done in the stack
-				view_unwindtobottom_safe( "ReturnManager: ReturnEndWithBackwardDisc" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager: ReturnEndWithBackwardDisc" )
 			end
 
 			hardware_manager.hardware_event_responders.MachineFull = function( args, jobid )
@@ -440,7 +440,7 @@ function newreturnmanager( shopping_cart )
 				or kernel.is_message_popup_view_showing() )
 				and not self.has_ended then
 					self.has_ended = true
-                    kernel.ttsinreturnflow( false )
+                    kernel.set_session_value("BrowseState.InReturnFlow", false)
                     kernel.message_popup_view_stop_timer()
 					if kernel.getculture() ~= "en-US" then
 						if DefaultCulture ~= nil and DefaultCulture ~= "" then
@@ -450,7 +450,7 @@ function newreturnmanager( shopping_cart )
 						end
 						localization_reload_resources()
 					end
-					view_unwindto_safe( kernel.get_start_over_view_name(), true, "ReturnManager: on_complete, has_ended == false" )					
+					kernel.close_open_session_and_start_new_rental_session( "ReturnManager: on_complete, has_ended == false" )					
 				end
 			end,
 			function()
@@ -468,10 +468,10 @@ function newreturnmanager( shopping_cart )
 
 		if not result.success then
 			self.has_ended = true
-            kernel.ttsinreturnflow( false )
+            kernel.set_session_value("BrowseState.InReturnFlow", false)
 			if not in_maintenance_mode() then
 				kernel.log("return-product view_unwindtobottom()")
-				view_unwindtobottom_safe( "ReturnManager: unable to create_return" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager: unable to create_return" )
 			end
 			return
 		end
@@ -490,7 +490,7 @@ function newreturnmanager( shopping_cart )
 
 				kernel.log( "User cancelled return: " .. tostring( result.job_id ) )
 				kernel.hardwareterminatejob( result.job_id )
-				view_unwindtobottom_safe( "ReturnManager: return_back_button pressed" )
+				kernel.close_open_session_and_start_new_rental_session( "ReturnManager: return_back_button pressed" )
 			end 
         )
 	end

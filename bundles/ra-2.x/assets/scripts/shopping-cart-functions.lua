@@ -36,10 +36,9 @@ function newshoppingcart()
 	local t = {}
 
 	t.vend_manager = newvendmanager()
-	t.recommendations_generator = newrecommendationsgenerator()
+
 	t.messagebox = newmessageboxmanager()
 
-	t.marketing_opt_in = "DoNotShow"
 	t.alternate_optin = false
 	t.alternate_optin_not_shown = true
 	
@@ -60,12 +59,7 @@ function newshoppingcart()
     t.play_pass_points_earned = 0
 
 	t.abandon = function( self, reason )
-		if ComingSoonOptIn == true then
-            kernel.promosvcs_coming_soon_kioskoptin()
-		end
-		kernel.sessionabandon2( self.session_id, reason )
-		kernel.sessionend2( self.session_id )
-		kernel.sessionsave2( self.session_id )
+        kernel.abandon_rental_shopping_cart( self.session_id, reason )
 	end
 
 	t.commit = function( self, reason, should_end_and_save )
@@ -80,9 +74,7 @@ function newshoppingcart()
 	end
 
 	t.close_analytics = function( self, abandoned )
-		self:send_cart_to_analytics()
-		SubmitAnalyticsPricing( self.session_id )
-		kernel.analyticsclose( self.session_id, abandoned )
+        kernel.close_shopping_cart_analytics(self.session_id, abandoned)
 	end
 
 	t.end_session = function( self )
@@ -97,7 +89,6 @@ function newshoppingcart()
 			return
 		end
 		kernel.sessionend2( self.session_id )
-		kernel.sessionsave2( self.session_id )
 	end
 
 	t.check_out = function( self )
@@ -281,6 +272,8 @@ function newshoppingcart()
 				}
 				kernel.analyticsaddattributes( "authorize", authResponse, self.session_id )
 
+				self:analytics_add_auth_account_info(r)
+
 				if on_complete ~= nil then
 					on_complete( r )
 				end
@@ -288,6 +281,14 @@ function newshoppingcart()
 		)
 	end
 	
+	t.analytics_add_auth_account_info = function( self, response)
+		kernel.analyticsaddauthtransactionInfo(
+			response.properties.customer_profile_number,
+			response.properties.account_number,
+			response.properties.reference_number,
+			self.session_id)
+	end
+
 	t.resv_authorize = function( self, reference_number, on_complete )
 		kernel.log( "ShoppingCart:resv_authorize BEGIN" )
 		
@@ -338,6 +339,8 @@ function newshoppingcart()
 					response = r.response
 				}
 				kernel.analyticsaddattributes( "resvAuthorize", authResponse, self.session_id )
+
+				self:analytics_add_auth_account_info(r)
 
 				if on_complete ~= nil then
 					on_complete( r )
@@ -467,10 +470,6 @@ function newshoppingcart()
         kernel.rental_shopping_cart_set_session_cart_groups( self.session_id )
 	end
 
-	t.send_cart_to_analytics = function( self )
-        kernel.rental_shopping_cart_send_cart_to_analytics( self.session_id )
-	end
-
     t.get_count = function( self, product_family, action )
         return kernel.rental_shopping_cart_item_count( self.session_id, product_family, action)
     end
@@ -481,20 +480,13 @@ function newshoppingcart()
 		return item_count, as_a_rental
 	end
 
-	t.add_item = function( self, catalog_entry, qty, action_code, source_type )
-        -- add to rental shopping cart
-        kernel.rental_shopping_cart_add_item( self.session_id, catalog_entry, action_code, source_type )
-	end
-
-    t.add_reservation_item = function( self, catalog_entry, qty, action_code, source_type, price_data, price_charged )
-        -- add to rental shopping cart
-        kernel.rental_shopping_cart_add_item_with_prices( self.session_id, catalog_entry, action_code, source_type, price_data, price_charged )
-	end
-
-	t.remove_item = function( self, index, user_removed )
-        -- removed item from rental shopping cart
-        kernel.rental_shopping_cart_remove_item(self.session_id, index, user_removed )
-
+	t.total = function( self )
+		kernel.log( "Total shopping cart" )
+        local rental_totals = kernel.rental_shopping_cart_get_total( self.session_id )
+		if rental_totals ~= nil then
+            kernel.log( ">  st:" .. tostring( rental_totals.sub_total ) .. ", t:" .. tostring( rental_totals.tax_amount ) .. ", dau:" .. tostring( rental_totals.discount_amount_used ) .. ", sf:" .. tostring( rental_totals.service_fee ) .. ", gt:" .. tostring( rental_totals.grand_total ) )
+        end
+        return rental_totals
 	end
 
 	t.sub_total = function( self )
@@ -599,7 +591,6 @@ function newshoppingcart()
 				end
 				self:close_analytics( "False" )
 				kernel.sessionend2( self.session_id )
-				kernel.sessionsave2( self.session_id )
 			end )
 			
 		if self.vend_manager.vending == false then
@@ -715,7 +706,6 @@ function newshoppingcart()
 				
 				self:close_analytics( "False" )
 				kernel.sessionend2( self.session_id )
-				kernel.sessionsave2( self.session_id )
 			end
 		)
 		self.vend_manager:prepos_vend_continue()
@@ -868,6 +858,8 @@ function newshoppingcart()
 				}
 				kernel.analyticsaddattributes( "gc_authorize", authResponse, self.session_id )
 				
+				self:analytics_add_auth_account_info(r)
+
 				if on_complete ~= nil then
 					on_complete( r )
 				end
@@ -917,6 +909,14 @@ function newshoppingcart()
 	t.contains_multi_disc = function( self )
         kernel.rental_shopping_cart_has_mult_disc_item( self.session_id )
 	end
-	
+
+	t.service_fee_enabled = function( self )
+		return kernel.rental_shopping_cart_service_fee_enabled( self.session_id )
+	end
+
+	t.default_service_fee_cents = function( self )
+		return kernel.rental_shopping_cart_default_service_fee_cents( self.session_id )
+	end
+
 	return t
 end

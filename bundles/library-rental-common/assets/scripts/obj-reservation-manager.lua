@@ -16,13 +16,14 @@ function newreservationmanager()
         kernel.log("Get broker service prices")
 		local dvdPrice = StoreManager.PricingManager:get_product_type_price( "movies", "dvd", null, for_rop_flow )
 		local blurayPrice = StoreManager.PricingManager:get_product_type_price( "movies", "blu-ray", null, for_rop_flow )
+		local _4k = StoreManager.PricingManager:get_product_type_price( "movies", "_4kuhd", null, for_rop_flow )
 		local gamePrice = StoreManager.PricingManager:get_product_type_price( "games", "*", null, for_rop_flow )
         local current_price_set = StoreManager.PricingManager:get_current_price_set()
         local current_price_set_id = 1
         if current_price_set ~= nil and current_price_set.PriceSetID ~= nil then
             current_price_set_id = current_price_set.PriceSetID
         end
-
+		-- these property name must match ReservationFunctions.GetPricingrecordFromPriceSetData
 		local servicePrices = {
 			Movie = {
 				default = {
@@ -39,8 +40,15 @@ function newreservationmanager()
 					non_return = blurayPrice.non_return,
 					non_return_days = blurayPrice.non_return_days,
 					expiration_price = blurayPrice.expiration_price,
+					pricesetid = current_price_set_id },					
+				_4kuhd = {
+					initial_night = _4k.initial_night,
+					extra_night = _4k.extra_night,
+					non_return = _4k.non_return,
+					non_return_days = _4k.non_return_days,
+					expiration_price = _4k.expiration_price,
 					pricesetid = current_price_set_id },
-					},
+				},
 			Game  = {
 				default = {
 					initial_night = gamePrice.initial_night,
@@ -55,6 +63,7 @@ function newreservationmanager()
 	end
 
 	t.init = function( self )
+        kernel.log("ReservationManager:init")
 		local servicePrices = self:get_broker_service_prices()
 		
 		kernel.resvsvcs_register3(
@@ -86,7 +95,9 @@ function newreservationmanager()
 					tax_rate,
 					zip_code,
 					is_mdv,
-                    is_loyalty_redemption)
+                    is_loyalty_redemption,
+					defaultservicefee,
+					actualservicefee)
 					
 				local result = { success = false, items = {} }
 				local pricesNotAdjusted = self:get_broker_service_prices( true )
@@ -117,7 +128,9 @@ function newreservationmanager()
 					tax_rate = tax_rate,
 					zip_code = zip_code,
 					is_mdv = is_mdv,
-                    is_loyalty_redemption = is_loyalty_redemption
+                    is_loyalty_redemption = is_loyalty_redemption,
+					default_service_fee = defaultservicefee,
+					actual_service_Fee = actualservicefee
 				}
 				
 				local products = {}
@@ -185,31 +198,15 @@ function newreservationmanager()
 					end
 				end
                 local center_carousel_product = kernel.get_session_value("BrowseState.CenterCarouselProductLuaTable")
-				if kernel.peekview() == "start_view" and center_carousel_product ~= nil then
+				if kernel.is_rental_session_active() == false and center_carousel_product ~= nil then
 					add_product_to_visible_list( center_carousel_product )		
 				end
 
-				if kernel.peekview() == "browse_view" then
+				if kernel.peekview() == "browse_view" or kernel.peekview() == "recommendation_on_pickup_view" or kernel.peekview() == "upsell_view" then
 					process_visible_browse_products()
 				end
 				if kernel.peekview() == "product_detail_view" then
 					add_product_to_visible_list( kernel.get_session_value("BrowseState.BrowseSelectionSelectedProductLuaTable") )
-				end
-				if ShoppingCart.recommendations_generator.recommended_list ~= nil and #ShoppingCart.recommendations_generator.recommended_list > 0 then
-					for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
-						table.insert( products_visible_to_user, { product_id = v.product_id, action = "rental" } )
-					end
-				end
-				if kernel.peekview() == "blu_ray_upsell_view" then
-                    local blurayUpsellItemCount = kernel.current_rental_shopping_cart_get_bluray_upsell_item_count( false )
-                    for k=1,blurayUpsellItemCount do
-                        local v = kernel.current_rental_shopping_cart_get_bluray_upsell_item_by_index( k )
-                        if v ~= nil then
-						    if v.offer == nil then
-							    table.insert( products_visible_to_user, { product_id = v.blu_ray_product_id, action = "rental" } )
-						    end
-                        end
-					end
 				end
 				
 				local in_play_barcodes = get_barcodes_for_products( products_visible_to_user, shopping_cart_barcodes )
@@ -261,7 +258,7 @@ function newreservationmanager()
 					account_reservations[reference_number] = reservation
 					Reservations[card_id] = account_reservations -- writes the reservation locally to the database
 					result.success = true					
-					if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.peekview() == kernel.get_start_over_view_name() then
+					if need_to_reload_carousel ~= nil and need_to_reload_carousel == true and kernel.is_rental_session_active() == false then
                         kernel.reload_carousel(true)
 					end
 				else
@@ -319,7 +316,7 @@ function newreservationmanager()
 			)
 		end
 	end
-
+    --unused?
 	t.does_account_have_reservations = function( self )
 		return self:get_accounts_reservations() ~= nil
 	end
@@ -347,10 +344,12 @@ function newreservationmanager()
 	end
 
 	t.get_account_reservations = function( self, run_expire )
+        kernel.log("ReservationManager:get_account_reservations")
 		if run_expire == nil then
 			run_expire = false
 		end
 		if not kernel.trackdataisvalid() then
+            kernel.log("ReservationManager:get_account_reservations - track data is not valid")
 			return nil
 		end
 		self.card_hash_id = self:get_key_card_hash_id( kernel.trackgethashid() )
@@ -428,6 +427,7 @@ function newreservationmanager()
 	end
 
 	t.start_new = function(self)
+        kernel.log("ReservationManager:start_new")
         self.vend_manager:init()
 		self.cache.barcodes = {}
 	end
@@ -437,7 +437,6 @@ function newreservationmanager()
 
 		self.session_id = ShoppingCart.session_id
 		kernel.analyticsaddnode( "session", "onlinePickup", self.session_id )
-		CloseAnalyticsOnStartView = false
 
         local barcodes_to_vend = self:get_barcodes_to_vend()
         if barcodes_to_vend == nil
@@ -531,7 +530,7 @@ function newreservationmanager()
 					update_barcode_status( barcodes_to_reset, "Known" )
                 end
 				
-				SubmitAnalyticsPricing( t.session_id )
+				kernel.submit_analytics_pricing( t.session_id )
 				kernel.analyticsclose( t.session_id, "False" )
 				kernel.log("ReservationManager:Vend_Manager.OnComplete() COMPLETE")
 				
@@ -551,17 +550,20 @@ function newreservationmanager()
 		if self.cache.barcodes == nil
 		or #self.cache.barcodes <= 0  then
 			self.cache.barcodes = {}
-			local reservations = self:get_account_reservations()
+			local reservations = self:get_account_reservations() or {}
+            kernel.log( "ReservationManager:get_barcodes_to_vend - get_account_reservations count: " .. tostring(#reservations) )
 			local barcodes = {}
-			for _, res in pairs( reservations or {} ) do
+			for _, res in pairs( reservations ) do
 				for _, codes in pairs( res.barcodes or {} ) do
 					for _, code in ipairs( codes or {} ) do
+                        kernel.log( "ReservationManager:get_barcodes_to_vend - barcode: " .. tostring(code) )
 						barcodes[#barcodes + 1]  = code
 					end
 				end
 			end
 			self.cache.barcodes = barcodes
 		end
+        kernel.log( "ReservationManager:get_barcodes_to_vend barcode count: " .. tostring(#(self.cache.barcodes or {})) )
 		return self.cache.barcodes
 	end
 
@@ -634,6 +636,16 @@ function newreservationmanager()
 		local reservations = self:get_account_reservations()
 		for _, v in pairs( reservations or {} ) do
 			if v.is_loyalty_redemption ~= nil and v.is_loyalty_redemption == true then
+				return true
+			end
+		end
+		return false
+	end
+
+    t.uses_credits =  function( self )
+		local reservations = self:get_account_reservations()
+		for _, v in pairs( reservations or {} ) do
+			if v.applied_credit ~= nil and v.applied_credit == true then
 				return true
 			end
 		end

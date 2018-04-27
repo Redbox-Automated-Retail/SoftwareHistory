@@ -4,13 +4,23 @@
 
 	<aspect name="content">
 
-		<scene
+    <scene
+    render_type="WPF"
 		name="Default"
 		width="1024"
 		height="768"
 		onEnter="control_panel_enter">
 
-		  <actor
+      <actor
+				name="ControlPanelViewUserControl"
+				x="0"
+				y="0"
+				width="1024"
+				height="768"
+        WPFControlAssemblyName="Redbox.ControlPanel.UI.exe"
+        WPFControlName="ControlPanelViewUserControl"/>
+
+		  <!--<actor
 			name="title_arrow_label"
 			x="0"
 			y="0"
@@ -56,7 +66,7 @@
 			optionFlags="Background, Text"
 			/>
 
-			<!-- Group: Kiosk -->
+			--><!-- Group: Kiosk --><!--
 		  <actor
 			name="kiosk_label"
 			x="20"
@@ -76,7 +86,7 @@
 			optionFlags="Background, Text, TextShadow"
 			/>
 
-			<!-- Row 1 -->
+			--><!-- Row 1 --><!--
 			<actor
 			name="start_kiosk"
 			x="89"
@@ -161,7 +171,7 @@
 			text="Start Field Maintenance"
 			optionFlags="Background, Text, TextShadow, DrawBorder" />
 
-		<!-- Row 2 -->
+		--><!-- Row 2 --><!--
 		<actor
 			name="open_ms_hal_tester"
 			x="89"
@@ -236,7 +246,7 @@
 			visible="false"
 			/>
 
-			<!-- Folder Files -->
+			--><!-- Folder Files --><!--
 		  <actor
 			name="folder_label"
 			x="20"
@@ -255,7 +265,7 @@
 			optionFlags="Background, Text, TextShadow"
 			/>
 
-			<!-- Row 1 -->
+			--><!-- Row 1 --><!--
 			<actor
 			name="open_c_drive"
 			x="89"
@@ -340,7 +350,7 @@
 			horizontalAlignment="center"
 			optionFlags="Background, Text, TextShadow, DrawBorder" />
 
-			<!-- row 2 -->
+			--><!-- row 2 --><!--
 			<actor
 			name="redbox_directory"
 			x="89"
@@ -415,7 +425,7 @@
 			visible="false"
 			/>
 
-			<!-- computer -->
+			--><!-- computer --><!--
 		  <actor
 			name="computer_label"
 			x="20"
@@ -434,7 +444,7 @@
 			optionFlags="Background, Text, TextShadow"
 			/>
 
-			<!-- row 1 -->
+			--><!-- row 1 --><!--
 			<actor
 			name="reboot"
 			x="89"
@@ -561,7 +571,7 @@
 			horizontalAlignment="center"
 			optionFlags="Background, Text, TextShadow, DrawBorder" />
 
-			<!-- row 2 -->
+			--><!-- row 2 --><!--
 			<actor
 			name="display"
 			x="89"
@@ -625,7 +635,7 @@
 			horizontalAlignment="center"
 			optionFlags="Background, Text, TextShadow, DrawBorder" />
 
-			<!-- add remove programs x=531 -->
+			--><!-- add remove programs x=531 --><!--
 			<actor
 			name="add_remove_programs"
 			x="532"
@@ -718,7 +728,7 @@
 			optionFlags="Background, Text, TextShadow"
 			/>
 
-			<!-- maintenance mode -->
+			--><!-- maintenance mode --><!--
 			<actor
 			name="start_maintenance_mode"
 			x="89"
@@ -739,7 +749,7 @@
 			horizontalAlignment="center"
 			optionFlags="Background, Text, TextShadow, DrawBorder" />
 
-			<!-- setup -->
+			--><!-- setup --><!--
 			<actor
 			name="setup_button"
 			x="237"
@@ -822,7 +832,7 @@
 			horizontalAlignment="center"
 			optionFlags="Background, Text, TextShadow, DrawBorder" />
 
-			<!-- store stats -->
+			--><!-- store stats --><!--
 			<actor
 			name="information"
 			x="788"
@@ -876,7 +886,7 @@
 			text="Time Zone: ${TimeZone}"
 			optionFlags="Text, TextShadow" />
 
-			<!-- Out of Order Warning -->
+			--><!-- Out of Order Warning --><!--
 			<actor
 			name="out_of_order_message"
 			x="788"
@@ -897,7 +907,7 @@
 			verticalAlignment="center"
 			visible="false"
 			enabled="false"
-			/>
+			/>-->
 
 
 		</scene>

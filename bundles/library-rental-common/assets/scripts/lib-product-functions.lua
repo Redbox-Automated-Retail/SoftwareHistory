@@ -172,29 +172,3 @@ ProductCatalog.in_stock = function( self, product_id, history )
 	end
 end
 
-ProductCatalog.in_stock_product = function( self, product )
-	if product ~= nil and product.kiosk_product_type ==  3 then
-		local dvd_product = nil
-		local blu_ray_product = nil
-		if product.dvd_index ~= nil and product.dvd_index > 0 then
-			dvd_product = product.kiosk_products[product.dvd_index]
-		end
-		if product.blu_ray_index ~= nil and product.blu_ray_index > 0 then
-			blu_ray_product = product.kiosk_products[product.blu_ray_index]
-		end
-		
-		local dvd_in_stock = false
-		local blu_ray_in_stock = false
-		if dvd_product ~= nil and dvd_product.product_id ~= nil then
-			dvd_in_stock = self:in_stock( dvd_product.product_id )
-		end
-		if blu_ray_product ~= nil and blu_ray_product.product_id ~= nil then
-			blu_ray_in_stock = self:in_stock( blu_ray_product.product_id )
-		end
-		
-		return dvd_in_stock or blu_ray_in_stock
-	elseif product ~= nil and product.product_id ~= nil then
-		return self:in_stock( product.product_id )
-	end
-	return false
-end

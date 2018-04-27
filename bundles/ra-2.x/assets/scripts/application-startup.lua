@@ -98,7 +98,7 @@ function idle_timer_expire_session()
 		kernel.setculture( "en-US" )
 	end
 	localization_reload_resources()
-	view_unwindtobottom_safe( "application_startup::idle_timer_expire_session" )
+	kernel.close_open_session_and_start_new_rental_session( "application_startup::idle_timer_expire_session" )
 end
 
 -- don't convert the idle_timer_callback to .net till all the views that use it are converted to .net
@@ -145,11 +145,11 @@ local function start_the_application()
 		initialize_scheduled_tasks()
 		if not kernel.hasvalidcardreader() then
 			--kernel.pushview replaced with view_show function which will inturn call the kernel.pushview
-			view_show( kernel.get_start_over_view_name() )
+            kernel.close_open_session_and_start_new_rental_session()
 			handle_disconnected_usb_card_reader()
 		else
 			if not in_maintenance_mode() then
-				view_show( kernel.get_start_over_view_name() )
+                kernel.close_open_session_and_start_new_rental_session()
 			end
 		end
 	end
@@ -170,9 +170,6 @@ local function start_the_application()
 			kernel.healthsvcs_enqueuestatistic( "Deck" .. tostring( i ), tostring( max_slots ) )
 		end
 	end
-
-	-- This is required for Kiosk Analytics to control unusual view paths which are difficult to track
-	CloseAnalyticsOnStartView = false
 end
 
 local function get_excluded_slots()
@@ -344,10 +341,10 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"MarketingOptIn" ) == true
-	RecommendationOnPickup = kernel.config_getvalue(
-		"system",
-		"General",
-		"RecommendationOnPickup" ) == true
+--	RecommendationOnPickup = kernel.config_getvalue(
+--		"system",
+--		"General",
+--		"RecommendationOnPickup" ) == true
 	GiftCardsEnabled = kernel.config_getvalue(
 		"system",
 		"General",
@@ -428,18 +425,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"ShowAuthChangeMessage" ) == true
-	OfflineItemsLimit = kernel.config_getvalue(
-		"system",
-		"General",
-		"OfflineItemsLimit" ) or 3
-	OfflineGameRentalLimit = kernel.config_getvalue(
-		"system",
-		"General",
-		"OfflineGameRentalLimit" ) or 1
-	OfflineGamePurchaseLimit = kernel.config_getvalue(
-		"system",
-		"General",
-		"OfflineGamePurchaseLimit" ) or 2
 end
 
 local function create_coming_soon_cache_tables()
@@ -482,12 +467,12 @@ local function register_default_hardware_handlers()
 	kernel.registercanshutdown(
 		function()
 			kernel.log( "Kiosk Engine is requesting a shut-down" )
-			return kernel.peekview() == kernel.get_start_over_view_name() or kernel.peekview() == "maintenance_view"
+			return kernel.is_rental_session_active() == false or kernel.peekview() == "maintenance_view"
 		end )
 	kernel.registercanrestart(
 		function()
 			kernel.log( "Kiosk Engine is requesting a restart" )
-			return kernel.peekview() == kernel.get_start_over_view_name()
+			return kernel.is_rental_session_active() == false
 		end )
 	kernel.registershowmaintenanceview(
 		function()
@@ -514,7 +499,8 @@ local function register_default_hardware_handlers()
 					handle_disconnected_usb_card_reader()
 				elseif action == "Connected" then
 					kernel.log( "The USB card reader was connected, resuming operation." )
-					view_unwindtobottom( "card_reader_connected" )
+                    view_unwindtobottom( "clear maintenance view - card_reader_connected" )
+					kernel.close_open_session_and_start_new_rental_session( "card_reader_connected" )
 					kernel.resume_idle_timer( "idle_timer" )
 					--[[AlertManager.send_alert(
 						"HardwareError",
@@ -616,6 +602,96 @@ local function verify_hardware_status_before_launching_application()
 	)
 end
 
+local function start_new_rental_session_callback() 
+    kernel.log( "> Running start_new_rental_session_callback" )
+
+    -- this code was formerly in start-view-enter.lua but was moved to so it can be called from .net
+    -- commented out code is now in .net
+
+
+    local _ProductCatalog = ProductCatalog
+    strings = kernel.getdictionary( "strings" )
+
+    -- Reload pricing in case the date has changed since last session
+    if StoreManager ~= nil then
+	    StoreManager:reload_pricing_data( "_v2" )
+	    StoreManager:check_product_catalog_for_games_platforms()
+    end
+    kernel.log( "start-view-enter - started updating cache table")
+    for k,v in _ProductCatalog:pairs() do
+	    local product = MasterProductCatalog[v.product_id]
+	    if product ~= nil then
+			    local product_catalog = ProductCatalog[v.product_id]
+			    local current_date = get_current_date_string( "%4d%02d%02d%02d%02d" )
+			    local release_date = string.sub(product.merchandise_date, 1, 12)
+
+                -- making changes to only update values when one changes, this loop is causing a performance problem when hitting the start over button
+                local isAvailable = product_catalog.is_available
+                local isComingSoon = product_catalog.is_coming_soon
+
+			    local newIsAvailable = current_date > release_date or StoreManager.PricingManager:is_early_released( product )
+			    local newIsComingSoon = not (release_date <= current_date	or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
+
+                if ( (isAvailable ~= newIsAvailable) or (isComingSoon ~= newIsComingSoon)) then
+			        product_catalog.is_available = newIsAvailable
+			        product_catalog.is_coming_soon = newIsComingSoon
+			        ProductCatalog[v.product_id] = product_catalog
+                end
+	    end
+    end
+    kernel.log( "start-view-enter - finished updating cache table")
+
+    -- N.B. Added per Jim Polubinski for Quick Return integration
+    --      If nothing was suspended with the companion function, this does nothing.
+    --      JDP 20090903
+    if FMAMaintenanceMode == false then
+	    kernel.hardwaremaintenancemoderesumejobs()
+    end
+
+    if kernel.getlastshownview() == kernel.get_start_over_view_name() then
+	    kernel.applysafeshutdown()
+	    kernel.trimbitmapcache( 128 )
+	    local hardware_manager = newhardwaremanager()
+	    hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
+		    AlertManager.send_job_alert(
+			    "HardwareError",
+			    "HAL script: check-picker.hs sent message MaxPutAwayAttemptsExceeded",
+			    "Unable to put an item away after the configured number of slot retries. Placing the kiosk into maintenance mode",
+			    jobid,
+			    "mm:MaxPutAwayAttemptsExceeded, 005PMXA"
+		    )
+		    if not in_maintenance_mode() then
+			    kernel.setmacro( "MaintenanceView:ErrorCode", "005PMXA" )
+			    kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "005PMXA" ] or "red_diagonal_stripes" )
+			    view_show( "maintenance_view" )
+		    end
+	    end
+	    local jobs = hardware_manager:get_hardware_jobs_by_program(
+		    { "check-picker" },
+		    { "Stopped", "Completed", "Garbage", "Errored" } )
+	    if table_count( jobs ) == 0 then
+		    hardware_manager:check_picker()
+	    end
+    end
+
+    if language_switch == nil or language_switch == false then
+	    ShoppingCart = newshoppingcart()
+	    ShoppingCart:start_new()
+	    ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
+    else
+	    language_switch = false
+    end
+
+    ProductCatalog:get_default_family()
+
+
+    function GetUsedMemory()
+	    collectgarbage( "collect" )
+    end
+
+    GetUsedMemory()
+
+end
 
 --************************************************
 --
@@ -640,6 +716,7 @@ HardwareManager = newhardwaremanager()
 kernel.create_idle_timer( "idle_timer" )
 kernel.register_idle_timer_expire_session_callback(idle_timer_expire_session)
 -- kernel.register_get_email_address_and_register_email_reminder_callback(get_email_address_and_register_email_reminder)
+kernel.register_start_new_rental_session_callback(start_new_rental_session_callback)
 --************************************************
 --
 -- Set Global variable values
@@ -795,7 +872,7 @@ kernel.timercreate(
 	PricingReloadTimeout,
 	function()
 		if StoreManager ~= nil
-		and kernel.peekview() == "start_view" then
+		and kernel.is_rental_session_active() == false then
 			kernel.log( "Reloading Pricing information..." )
 			StoreManager:reload_pricing_data( "_v2" )
 			StoreManager:check_product_catalog_for_games_platforms()

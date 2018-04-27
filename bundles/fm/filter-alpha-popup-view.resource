@@ -136,6 +136,62 @@
         foregroundColor="black"
         visible="true"
         enabled="true" />
+
+      <actor
+        name="4k_uhd_check_box_image"
+        x="47"
+        y="194"
+        optionFlags="Background, Image, Text, TextShadow"
+        image="check_box"
+        tag="unchecked"
+        hitFlags="Enabled"
+        onHit="filter_titles"
+        backgroundColor="192,192,192"
+        width="50"
+        height="46"
+        visible="true"
+        enabled="true" />
+
+      <actor
+          name="4k_uhd_label"
+          x="104"
+          y="203"
+          width="70"
+          height="20"
+          text="4K UHD"
+          font="medium_font"
+          optionFlags="Text"
+          foregroundColor="black"
+          visible="true"
+          enabled="true" />
+
+      <actor
+        name="digital_code_check_box_image"
+        x="197"
+        y="194"
+        optionFlags="Background, Image, Text, TextShadow"
+        image="check_box"
+        tag="unchecked"
+        hitFlags="Enabled"
+        onHit="filter_titles"
+        backgroundColor="192,192,192"
+        width="50"
+        height="46"
+        visible="true"
+        enabled="true" />
+
+      <actor
+          name="digital_code_label"
+          x="254"
+          y="203"
+          width="70"
+          height="20"
+          text="Digital Code"
+          font="medium_font"
+          optionFlags="Text"
+          foregroundColor="black"
+          visible="true"
+          enabled="true" />
 		
 	<actor
         name="games_check_box_image"

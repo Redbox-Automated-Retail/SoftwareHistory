@@ -410,8 +410,8 @@ reload_inventory = function()
 					if product ~= nil then
 						row.product_id = product.product_id
 						if product.status ~= nil and row.status ~= "Reserved" then
-                            row.status = get_rapid_status( barcode, nil )
-                            if row.status == nil then
+							row.status = get_rapid_status( barcode, nil )
+							if row.status == nil then
 								-- if the barcode is not in rapid status then revert to inventory status unless the inventory status is equal to Rebalance, Redeployment or Thinned
 								-- this happens when a barcode is unthinned
 								if product.status  == "Rebalancing" or product.status == "Redeployment" or product.status == "Thinned" then
@@ -434,10 +434,10 @@ reload_inventory = function()
 						end
 						if catalog_item ~= nil then
 							row.title = tostring(catalog_item["sort_name"])
-							if row.status == "Unknown Title" then
+							local product_type_id = catalog_item["product_type_id"]
+							if row.status == "Unknown Title" and product_type_id ~= 17 then
 								row.status = "Known" --Override the display while sync catches up, saying unknown title while showing the title makes us look bad
 							end
-							local product_type_id = catalog_item["product_type_id"]
 							if product_type_id ~= nil then
 								if product_type_id == 17 then
 									row.media = "DC"
@@ -876,7 +876,7 @@ showinventory = function(entry_point)
 					result = filter_by_title( value )
 				end
 				return result
-			end)			
+			end)
 	else 
 		Inventory_filtered_Table = filtertable(
 			Inventory_All_Table,

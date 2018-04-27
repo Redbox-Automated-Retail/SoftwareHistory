@@ -16,19 +16,6 @@ function newpricingmanager()
         kernel.reload_pricing_service()
 	end
 	
-	t.update_default_price_set = function ( self, price_data )
-		--price_data={ 
-		--	Movie={ 
-		--		default={ purchase_price=7, extra_night=1.2, expiration_price=1.2, initial_night=1.2, pricesetid=1, non_return=24, non_return_days=20 },
-		--		BluRay={ extra_night=1.5, expiration_price=1.5, initial_night=1.5, pricesetid=1, non_return=33, non_return_days=22 }
-		--	},
-		--	Game={
-		--		default={ extra_night=2, expiration_price=2, initial_night=2, pricesetid=1, non_return=58, non_return_days=29 }
-		--	}
-		--}
-		kernel.pricing_service_update_current_price_set( price_data )
-	end
-	
 	t.is_early_released = function( self, product )
         -- early release code was never used and has been removed
         return false

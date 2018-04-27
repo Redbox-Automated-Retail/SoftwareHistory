@@ -6,14 +6,18 @@
 
 media_actors = { "DVD_check_box_image", 
 				"blu_ray_check_box_image", 
+                "4k_uhd_check_box_image", 
+                "digital_code_check_box_image", 
 				"games_check_box_image", 
-				"MT_all_check_box_image",				
+				"MT_all_check_box_image",
+                
 				"G_check_box_image", 
 				"PG_check_box_image", 
 				"PG13_check_box_image", 
 				"R_check_box_image",
 				"NR_check_box_image",
-				"MR_all_check_box_image",				
+				"MR_all_check_box_image",
+                
 				"E_check_box_image",
 				"E10_check_box_image",
 				"T_check_box_image",
@@ -48,10 +52,10 @@ for i,v in pairs( media_actors ) do
 			kernel.setactortag( v , "checked" )
 			kernel.setactorimage( v , "check_box_checked" )
 			--uncheck the check box "all" in media when any media type is checked
-			if i > 0 and i < 5 then
+			if i > 0 and i < 6 then
 				uncheck_all_media_checkbox()
 			--uncheck the check box "all" in movie_rating when any movie rating is checked
-			elseif i > 4 and i < 11 then
+			elseif i > 4 and i < 13 then
 				uncheck_all_movie_rating()
 			--uncheck the check box "all" in game_rating when any game rating is checked
 			else
@@ -71,6 +75,10 @@ for i,v in pairs( media_actors ) do
 			kernel.setactortag( "DVD_check_box_image" , "unchecked" )
 			kernel.setactorimage( "blu_ray_check_box_image" , "check_box" )
 			kernel.setactortag( "blu_ray_check_box_image" , "unchecked" )
+            kernel.setactorimage( "4k_uhd_check_box_image" , "check_box" )
+			kernel.setactortag( "4k_uhd_check_box_image" , "unchecked" )
+            kernel.setactorimage( "digital_code_check_box_image" , "check_box" )
+			kernel.setactortag( "digital_code_check_box_image" , "unchecked" )
 			kernel.setactorimage( "games_check_box_image" , "check_box" )
 			kernel.setactortag( "games_check_box_image" , "unchecked" )			
 			kernel.setactortag( "MT_all_check_box_image" , "checked" )

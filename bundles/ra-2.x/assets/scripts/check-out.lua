@@ -184,19 +184,18 @@ function keyboard_continue_func()
 	if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
 		ShoppingCart.email = result.properties.email
 		-- show the email and change data screen
-		view_show_safe( "email_view" )
-        local ad = kernel.marketing_ad_get_screen_ad( "EmailNotification", true )
-        if ad ~= nil and ad.visible == true then
-            kernel.showactor( "ad" )
-            kernel.setactorimage( "ad", ad.image_name )
-        end
-		set_email_view_text( result.properties.email )
+		kernel.show_email_receipt_view(ShoppingCart.email)
 	else
-		marketing_opt_in_flow( ShoppingCart.marketing_opt_in )
+		marketing_opt_in_flow( kernel.get_rental_shopping_marketing_opt_in_confirmation_status(ShoppingCart.session_id) )
 	end
 end
 
 function process_authorize_result( result )
+    -- get offline limits from config
+    OfflineItemsLimit = kernel.get_rental_config_value("OfflineItemsLimit")
+    OfflineGameRentalLimit = kernel.get_rental_config_value("OfflineGameRentalLimit")
+    OfflineGamePurchaseLimit = kernel.get_rental_config_value("OfflineGamePurchaseLimit")
+
     local message_view_manager = newmessageviewmanager()
 	if result.properties.is_online == false
 	    or result.properties.stand_alone == true 
@@ -204,7 +203,22 @@ function process_authorize_result( result )
 		result.success = true
 		ShoppingCart:set_cart_type( "Offline" )
         local pending_counts = kernel.queuependingcounts()
-        if pending_counts.game_rental_count + ShoppingCart:get_count( "Games", "rental" ) > OfflineGameRentalLimit then
+
+        -- the order of these conditions is important for proper processing
+        if OfflineItemsLimit == 0 then
+			result.success = false
+			result.properties.response = "OfflineItemsLimitZero"
+        elseif OfflineGameRentalLimit == 0 and OfflineGamePurchaseLimit == 0 and 
+                pending_counts.game_rental_count + ShoppingCart:get_count( "Games", "rental" ) + pending_counts.game_purchase_count + ShoppingCart:get_count( "Games", "purchase" ) > 0 then
+			result.success = false
+			result.properties.response = "OfflineGameRentalAndPurchaseLimitZero"
+        elseif OfflineGameRentalLimit == 0 and pending_counts.game_rental_count + ShoppingCart:get_count( "Games", "rental" ) > 0 then
+			result.success = false
+			result.properties.response = "OfflineGameRentalLimitZero"
+        elseif OfflineGamePurchaseLimit == 0 and pending_counts.game_purchase_count + ShoppingCart:get_count( "Games", "purchase" ) > 0 then
+			result.success = false
+			result.properties.response = "OfflineGamePurchaseLimitZero"
+        elseif pending_counts.game_rental_count + ShoppingCart:get_count( "Games", "rental" ) > OfflineGameRentalLimit then
 			result.success = false
 			result.properties.response = "OfflineGameRentalLimitExceeded"
         elseif pending_counts.game_purchase_count + ShoppingCart:get_count( "Games", "purchase" ) > OfflineGamePurchaseLimit then
@@ -242,7 +256,7 @@ function process_authorize_result( result )
 			result.properties.response = "OfflineCardBlocklisted"
 		end
 	end
-	ShoppingCart.marketing_opt_in = result.properties.confirmation_status or "DoNotShow"
+	kernel.set_rental_shopping_marketing_opt_in_confirmation_status( ShoppingCart.session_id, result.properties.confirmation_status or "DoNotShow" )
 	if result.success then
 		if EnableOfflineBadCardList
 		and result.properties.is_online
@@ -286,7 +300,7 @@ function process_authorize_result( result )
 				end
 			end
 			local cancel_callback =  function()
-				ShoppingCart.marketing_opt_in = "DoNotShow"
+				kernel.set_rental_shopping_marketing_opt_in_confirmation_status( ShoppingCart.session_id , "DoNotShow" )
 				keyboard_continue_func()
 			end
 			kernel.show_check_out_keyboard_view(result.properties.email, continue_callback, cancel_callback)
@@ -390,7 +404,23 @@ function process_authorize_result( result )
 			message_view_manager:hide_first_button()
 			message_view_manager:show_second_button( strings.continue_button, auth_retry )
 			message_view_manager:start_timer( auth_retry )
-			if result.properties.response == "OfflineGameRentalLimitExceeded" then
+            if result.properties.response == "OfflineItemsLimitZero" then
+				view_analytics_event( "context", "OfflineItemsLimitZero" )
+                message_view_manager:set_message_header( strings.oops )
+                message_view_manager:set_message( strings.offline_items_limit_zero_message )
+            elseif result.properties.response == "OfflineGameRentalAndPurchaseLimitZero" then
+				view_analytics_event( "context", "OfflineGameRentalAndPurchaseLimitZero" )
+                message_view_manager:set_message_header( strings.oops )
+                message_view_manager:set_message( string.gsub( strings.offline_game_rental_and_purchase_limit_zero_message, "{0}", OfflineItemsLimit ))
+            elseif result.properties.response == "OfflineGameRentalLimitZero" then
+				view_analytics_event( "context", "OfflineGameRentalLimitZero" )
+                message_view_manager:set_message_header( strings.oops )
+                message_view_manager:set_message( string.gsub( strings.offline_game_rental_limit_zero_message, "{0}", OfflineItemsLimit ))
+            elseif result.properties.response == "OfflineGamePurchaseLimitZero" then
+				view_analytics_event( "context", "OfflineGamePurchaseLimitZero" )
+                message_view_manager:set_message_header( strings.oops )
+                message_view_manager:set_message( string.gsub( strings.offline_game_purchase_limit_zero_message, "{0}", OfflineItemsLimit ))
+			elseif result.properties.response == "OfflineGameRentalLimitExceeded" then
 				view_analytics_event( "context", "offlineGameRentalLimitExceeded" )
                 message_view_manager:set_message_header( strings.offline_game_rental_limit_exceeded_message_header )
                 local game_or_games = strings.offline_game_limit_exceeded_message_game
@@ -495,28 +525,16 @@ key_pad_next_getcustomercredits_func = function()
 	--Remove credit_message_view from the stack once the user wants to pay with credits
 	view_goback_safe( "check_out::remove credit message", true )
 
-	local calculate_totals = function()
-		local subtotal_by_group = ShoppingCart:sub_total()
-		local subtotal_amount = 0
-		local tax_amount = 0
-		for _, v in pairs( subtotal_by_group ) do
-			if v.discounted_amount ~= nil then
-				subtotal_amount = subtotal_amount + v.discounted_amount
-			else
-				subtotal_amount = subtotal_amount + v.amount
-			end
-			tax_amount = tax_amount + v.tax_amount
-		end
-		return subtotal_amount, tax_amount
-	end
-
 	ShoppingCart:get_customer_credits(
 		function( result )
 			if result.success == true
 			and result.properties.is_online == true
 			and result.properties.has_profile == true
 			and result.properties.stand_alone == false then
+                kernel.set_rental_shopping_applied_credits(ShoppingCart.session_id, result.properties.total_credits_applied)
+				
 				view_show_safe( "credit_balance_view" )
+				
 				if result.properties.first_name == nil or result.properties.first_name == "" then
 					kernel.setactortext( "welcome_message_name", strings.credit_balance_hi .. "," )
                     kernel.setmacro( "TTS:CreditViewWelcomeMessageName", strings.credit_balance_hi .. "," )
@@ -540,46 +558,74 @@ key_pad_next_getcustomercredits_func = function()
 					kernel.setactortext( "welcome_message_credits_available", credits_available )
                     kernel.setmacro( "TTS:CreditViewCreditsAvailable", credits_available )
 				end
-
 				kernel.setactortext( "red_coin_credits_used", credits_used )
 
-				local subtotal_amount, tax_amount = calculate_totals()
+				local sub_total = 0
+				local tax_amount = 0
+				local service_fee = 0
+				local grand_total = 0
+
+				local total = ShoppingCart:total()
+				if total ~= nil then
+					sub_total = total.sub_total
+					tax_amount = total.tax_amount
+					service_fee = total.service_fee
+					grand_total = total.grand_total
+				end
+
+                local subtotal_text = "$" .. string.format( "%.2f", kernel.round( sub_total, 2 ) )
+				kernel.setactortext( "subtotal_amount", subtotal_text )
+                kernel.setmacro( "TTS:CreditBalanceViewSubtotal", subtotal_text )
+
 				local credits_amount = 0
 				if result.properties.credit_allocations ~= nil then
 					for _, v in pairs( result.properties.credit_allocations ) do
 						credits_amount = credits_amount + v.amount
 					end
 				end
-				local credited_tax_amount = kernel.round( credits_amount * ( StoreManager:get_rental_tax_rate() / 100 ), 16 )
-
-				local total_amount = subtotal_amount - credits_amount + ( tax_amount - credited_tax_amount )
-
-                local subtotal_text = "$" .. string.format( "%.2f", kernel.round( subtotal_amount, 2 ) )
-				kernel.setactortext( "subtotal_amount", subtotal_text )
-                kernel.setmacro( "TTS:CreditBalanceViewSubtotal", subtotal_text )
-
                 local credit_amount_text = "-$" .. string.format( "%.2f", kernel.round( credits_amount, 2 ) )
 				kernel.setactortext( "credits_amount", credit_amount_text )
                 kernel.setmacro( "TTS:CreditBalanceViewCreditAmount", credit_amount_text )
 
+                local service_fee_amount_text = "$" .. string.format( "%.2f", kernel.round( service_fee, 2 ) )
+				kernel.setactortext( "service_fee_amount", service_fee_amount_text )
+                kernel.setmacro( "TTS:CreditBalanceViewServiceFeeAmount", service_fee_amount_text )
+
+				local credited_tax_amount = kernel.round( credits_amount * ( StoreManager:get_rental_tax_rate() / 100 ), 16 )
                 local tax_amount_text = "$" .. string.format( "%.2f", kernel.round( tax_amount - credited_tax_amount, 2 ) )
 				kernel.setactortext( "tax_amount", tax_amount_text )
                 kernel.setmacro( "TTS:CreditBalanceViewTaxAmount", tax_amount_text )
+
+				local total_amount = grand_total - credits_amount - credited_tax_amount
+				if total_amount < 0 then
+					total_amount = 0
+				end
+                local total_amount_text = "$" .. string.format( "%.2f", kernel.round( total_amount, 2 ) )
+				kernel.setactortext( "total_amount", total_amount_text )
+                kernel.setmacro( "TTS:CreditBalanceViewTotalAmount", total_amount_text )
 
 				if credits_amount == 0 then
 					kernel.setactortext( "total_heading", "Total" )
 				end
 
-                local total_amount_text = "$" .. string.format( "%.2f", kernel.round( total_amount, 2 ) )
-				kernel.setactortext( "total_amount", total_amount_text )
-                kernel.setmacro( "TTS:CreditBalanceViewTotalAmount", total_amount_text )
+				if ShoppingCart:service_fee_enabled() == true and service_fee == 0 then
+					kernel.hideactor( "service_fee_heading" )
+					kernel.hideactor( "service_fee_amount" )
+					kernel.moveactory( "tax_heading", -37 )
+					kernel.moveactory( "tax_amount", -37 )
+					kernel.moveactory( "grey_line", -37 )
+					kernel.moveactory( "total_heading", -37 )
+					kernel.moveactory( "total_amount", -37 )
+					kernel.moveactory( "credits_left", -37 )
+				end
 
 				if StoreManager.store ~= nil and StoreManager.store.state ~= nil and ( StoreManager.store.state == "MD" or StoreManager.store.state == "SC" ) then
 					kernel.hideactor( "tax_heading" )
 					kernel.hideactor( "tax_amount" )
-					kernel.moveactory( "grey_line", -30 )
-					kernel.moveactory( "total_heading", -30 )
-					kernel.moveactory( "total_amount", -30 )
+					kernel.moveactory( "grey_line", -37 )
+					kernel.moveactory( "total_heading", -37 )
+					kernel.moveactory( "total_amount", -37 )
+					kernel.moveactory( "credits_left", -37 )
 				end
 
                 local credits_left_text = string.gsub( strings.credit_balance_credits_left, "{0}", tostring( credits_available - credits_used ) )
@@ -729,9 +775,16 @@ key_pad_next_getcustomercredits_func = function()
 					end
 				)
 				message_view_manager:show_back_button_arrow( nil )
-				local subtotal_amount, tax_amount = calculate_totals()
+
+				local grand_total = 0
+
+				local total = ShoppingCart:total()
+				if total ~= nil then
+					grand_total = total.grand_total
+				end
+
 				message_view_manager:show_third_button(
-					strings.credit_popup_pay_with_card .. " ($" .. string.format( "%.2f", kernel.round( subtotal_amount + tax_amount, 2 ) ) .. ")",
+					strings.credit_popup_pay_with_card .. " ($" .. string.format( "%.2f", kernel.round( grand_total, 2 ) ) .. ")",
 					function()
 						--Remove credit_message_view from the stack when the credit card is not recognized or when kiosk is offline.
 						view_goback_safe( "check_out::remove credits_error message", true )
@@ -750,6 +803,8 @@ key_pad_next_getcustomercredits_func = function()
 		end
 	)
 end
+
+kernel.register_marketing_opt_in_flow_callback(marketing_opt_in_flow)
 
 -- setup the WPF swipe view
 local swipe_view_type = "RegularCheckOut"

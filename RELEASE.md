@@ -1,17 +1,17 @@
-# Venom SR (2018-02-15)
+# Yoda SR2 (2018-04-27)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2018-02-15
-- Store labels: kop-rental-bundles-venomSR
+- Date (first download in the snapshots): 2018-04-27
+- Store labels: kop-rental-bundles-YodaSR2
 - Package revisions:
-  - `kop-rental-bundles` revision 68 (`7BD70BCA6B245A51094BFE48D3B21CE5D5B3A931`)
+  - `kop-rental-bundles` revision 74 (`5C29D4C302005A9B7AAD91ED621FA9B867D6AA34`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `EAF2019B6306B0AC703DEF6DEED57CBB81BEE272` | exact |
-| `fm.bundle` |  |  | `2E3DAE97033E70C30936B0564C9BDC9353878A94` | exact |
-| `library-rental-common.bundle` |  |  | `B576FD7EAB337B260171386A4044BAA612566871` | exact |
-| `ra-2.x.bundle` |  |  | `35F8ACD05C0A72F5A81E66161E175DED2FB1E9A7` | exact |
+| `cp.bundle` |  |  | `C0E850BF7867F0D20F399E949EDAF25CFBB0E2F6` | exact |
+| `fm.bundle` |  |  | `8A0324FDB16BF471274F4FC8DE89739F962A486D` | exact |
+| `library-rental-common.bundle` |  |  | `E9759A9549DB4AE32232ABEB0F982AC65AD29C24` | exact |
+| `ra-2.x.bundle` |  |  | `A0ADA03699628BA0341FFD194153DD3A039DF1D6` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

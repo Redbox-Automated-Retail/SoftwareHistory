@@ -11,7 +11,11 @@ if ShoppingCart ~= nil and kernel.rental_shopping_cart_get_pickup_recommendation
 end
 
 local go_back_action = function()
-    view_goback_safe( "go_back", false )
+    if kernel.peekpriorview() == kernel.get_start_over_view_name() and kernel.is_personalization_session_signed_in() == false then
+        kernel.close_open_session_and_start_new_rental_session()
+    else 
+        view_goback_safe( "go_back", false )
+    end
 end
 local rebox_logo_action = function()
     kernel.executescript( "activate_fa" )

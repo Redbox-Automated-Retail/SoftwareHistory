@@ -88,6 +88,10 @@
       <column name="offline_game_limit_exceeded_message_games">pueden ser juegos</column>
       <column name="offline_items_limit_exceeded_message_header">¡Has llegado al límite!</column>
       <column name="offline_items_limit_exceeded_message">Puedes tener hasta {0} discos.&#10;&#10;Por favor retira los discos de tu carrito para continuar.</column>
+      <column name="offline_items_limit_zero_message">En este momento, temporalmente no podemos alquilar ninguna película o juego. Lo sentimos por este inconveniente. Pero descarga la aplicación móvil y encuentra la próxima ubicación de Redbox más cercana.</column>
+      <column name="offline_game_rental_and_purchase_limit_zero_message">En este momento, no podemos permitir temporalmente el alquiler o la compra de juegos. Por lo tanto, elimínelos de su carrito y continúe alquilando hasta {0} nuevas películas. Nos vemos aquí en el carrito pronto.</column>
+      <column name="offline_game_rental_limit_zero_message">En este momento, temporalmente no podemos alquilar ningún juego. Por lo tanto, elimínelos de su carrito y continúe alquilando hasta {0} nuevas películas. Nos vemos aquí en el carrito pronto.</column>
+      <column name="offline_game_purchase_limit_zero_message">En este momento, temporalmente no podemos permitir la compra de juegos. Por lo tanto, elimínelos de su carrito y continúe alquilando hasta {0} nuevas películas.  Nos vemos aquí en el carrito pronto.</column>
 
       <column name="game_limit_exceeded_message_header">Sobrepasó el límite</column>
       <column name="game_limit_exceeded_message">Lo sentimos, hay un límite de de 3 películas y 1 juego al máximo con una tarjeta usada la primera vez con Redbox.&#10;&#10;Se permite 5 películas y 2 juegos al máximo con tarjetas previamente usada con Redbox.&#10;&#10;Por favor deslice otra tarjeta o saca un disco del carrito.</column>
@@ -303,6 +307,7 @@
       <column name="price_for">por</column>
       <column name="blu_ray">Blu-ray</column>
       <column name="dvd">DVD</column>
+      <column name="_4k_uhd">4K UHD</column>
       <column name="game">Juego</column>
       <column name="any">Alguna</column>
       <column name="other_item">otro artículo</column>
@@ -478,6 +483,8 @@
       <column name="out_of_stock_line1">Textea “LOCATE” a 727272</column>
       <column name="out_of_stock_line2">y se encuentra otros quioscos que tengan este {0}.*</column>
       <column name="out_of_stock_line3">*Textea “Locate” a 727272 y recibiría al máximo 2 mensajes. Reciba al máximo 2 mensajes por semana. Cargos de mensajes y de data se aplican. Textea STOP a quitarse de recibir mensajes, o HELP para recibir ayuda.</column>
+	  
+	  <column name="service_fee_disclaimer">Cada transacci&#243;n podr&#237;a estar sujeta a un Cargo por Servicio de {0}&#162;</column>
 	</row>
   </aspect>
 </resource>

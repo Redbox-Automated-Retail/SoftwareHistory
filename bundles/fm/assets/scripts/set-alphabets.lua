@@ -29,6 +29,14 @@ if kernel.getactortag( "blu_ray_check_box_image" ) == "checked" then
 	filter_titles_tables.media[ "Blu-ray" ] = true
 end
 
+if kernel.getactortag( "4k_uhd_check_box_image" ) == "checked" then
+	filter_titles_tables.media[ "4K UHD" ] = true
+end
+
+if kernel.getactortag( "digital_code_check_box_image" ) == "checked" then
+	filter_titles_tables.media[ "DC" ] = true
+end
+
 if kernel.getactortag( "games_check_box_image" ) == "checked" then
 	filter_titles_tables.media[ "Games" ] = true
 end
@@ -36,11 +44,16 @@ end
 if kernel.getactortag( "MT_all_check_box_image" ) == "checked"
 or (kernel.getactortag( "DVD_check_box_image" ) == "unchecked"
 	and kernel.getactortag( "blu_ray_check_box_image" ) == "unchecked"
-	and kernel.getactortag( "games_check_box_image" ) == "unchecked")
+	and kernel.getactortag( "games_check_box_image" ) == "unchecked"
+    and kernel.getactortag( "4k_uhd_check_box_image" ) == "unchecked"
+    and kernel.getactortag( "digital_code_check_box_image" ) == "unchecked"
+    )
 then
 	filter_titles_tables.media[ "DVD" ] = true
 	filter_titles_tables.media[ "Blu-ray" ] = true
 	filter_titles_tables.media[ "Games" ] = true
+    filter_titles_tables.media[ "4K UHD" ] = true
+    filter_titles_tables.media[ "DC" ] = true
 end
 
 if kernel.getactortag( "G_check_box_image" ) == "checked" then
@@ -119,6 +132,8 @@ if (kernel.getactortag( "GR_all_check_box_image" ) == "checked"
 or (kernel.getactortag( "DVD_check_box_image" ) == "unchecked"
 	and kernel.getactortag( "blu_ray_check_box_image" ) == "unchecked"
 	and kernel.getactortag( "games_check_box_image" ) == "unchecked"
+    and kernel.getactortag( "4k_uhd_box_image" ) == "unchecked"
+    and kernel.getactortag( "digital_code_box_image" ) == "unchecked"
 	and kernel.getactortag( "G_check_box_image" ) == "unchecked"
 	and kernel.getactortag( "PG_check_box_image" ) == "unchecked"
 	and kernel.getactortag( "PG13_check_box_image" ) == "unchecked"

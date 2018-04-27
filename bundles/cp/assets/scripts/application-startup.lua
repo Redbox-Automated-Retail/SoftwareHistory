@@ -3,7 +3,8 @@
 -- Copyright (C) 2009 Redbox Automated Retail, LLC.
 -- All Rights Reserved
 --
-
+--[[
+kernel.update_user_name( 'N/A' )
 config = kernel.getdictionary( 'config' )
 strings = kernel.getdictionary( 'strings' )
 
@@ -84,12 +85,15 @@ function initialize()
 
 	view_show( 'control_panel_view' )
 end
-
+--]]
+kernel.showlogin();
+--[[
 kernel.showlogin(
 	"Redbox Control Panel Login",
 	300000,
 	function( user_data )
 		local function successful_login( user_id, password, <redacted>, is_online )
+            kernel.update_user_name(user_id)
 			kernel.healthsvcs_sendauditevent(
 				StoreNumber,
 				"CP_Login",
@@ -169,4 +173,4 @@ kernel.showlogin(
 		kernel.logto( "UserLoginLog", "Control Panel | Login cancel button pressed" )
 		kernel.activatedefaultbundle()
 	end )
-
+--]]

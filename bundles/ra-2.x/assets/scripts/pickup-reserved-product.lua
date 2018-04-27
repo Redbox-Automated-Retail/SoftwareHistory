@@ -17,14 +17,9 @@ ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
 kernel.view_analytics_start("OnlinePickup")
 view_analytics_event( "buttonPress", "pickup_reservation_button" )
 
--- There are many divergent UI paths which lead out from here, many of which result in cancellation
--- But once the swipe view is up, the code will not know if it was an online pickup anymore
-CloseAnalyticsOnStartView = true
-
-
 local function reservation_error_handler()
 	local function continue_func()
-		view_unwindtobottom_safe( "reservation_error_handler" )
+		kernel.close_open_session_and_start_new_rental_session( "reservation_error_handler" )
 	end
 	view_show_safe( "reservation_not_found_view" )
 end
@@ -34,7 +29,7 @@ show_customer_blacklisted_message = function( on_ok_or_timerexpired )
 		if on_ok_or_timerexpired ~= nil then
 			on_ok_or_timerexpired()
 		end
-		view_unwindto_safe( kernel.get_start_over_view_name(), true, "show_customer_blacklisted_message" )
+		kernel.close_open_session_and_start_new_rental_session( "show_customer_blacklisted_message" )
 	end
 	local message_view_manager = newmessageviewmanager()
 	message_view_manager:show()
@@ -167,6 +162,77 @@ swipe_view_next_func = function()
 			continue_func()
 		end
 		
+
+        local vend_only_reserved_titles = function(email_address, reference_number)
+	        kernel.log( "recommendation_on_pickup_view:vend_only_reserved_titles" )
+	        kernel.rental_shopping_cart_remove_non_reserved_products(ShoppingCart.session_id)
+	        view_show_safe( "vend_view" )
+	        if quick_return_is_running == false then
+		        ShoppingCart.vend_manager:show_movie_or_coming_soon()
+	        end
+	        ShoppingCart:vend_reservation_cart( email_address, reference_number, false )
+        end
+
+        local vend_all_titles = function(email_address, reference_number)
+	        kernel.log( "recommendation_on_pickup_view:vend_all_titles" )
+	        view_show_safe( "vend_view" )
+	        if quick_return_is_running == false then
+		        ShoppingCart.vend_manager:show_movie_or_coming_soon()
+	        end
+	        ShoppingCart:vend_reservation_cart( email_address, reference_number, true )
+        end
+
+        local reservation_authorize = function(email_address, reference_number)
+		    ShoppingCart:resv_authorize(
+			    reference_number,
+			    function( result )
+				    if result.success == true then
+					    vend_all_titles(email_address, reference_number)
+				    else
+					    kernel.log( "recommendation_on_pickup_view:reservation_authorize - resv_authorize failed" )
+					    local message_view_manager = newtwolinemessageviewmanager()
+					    message_view_manager:show()
+					    if result.properties.response ~= "Approved" then
+						    view_analytics_event( "context", tostring( result.properties.response ) )
+					    end
+					    message_view_manager:set_message_header( strings.rop_auth_fail_header )
+					    message_view_manager:set_message_line_one( strings.rop_auth_fail_message_line_one )
+					    message_view_manager:set_message_line_two( strings.rop_auth_fail_message_line_two )
+                        
+					    message_view_manager:start_timer( 
+                            function() 
+                                vend_only_reserved_titles(email_address, reference_number)
+                            end
+                        )
+				    end
+			    end
+		    )
+        end
+
+        local get_reservation_info = function ()
+            kernel.log("ReservationManager:get_reservation_info - calling get reservation barcodes callback")
+            local reference_number = ""
+            local reservation = nil
+            local email_address = ""
+            local account_reservations = ReservationManager:get_account_reservations() or {}
+            kernel.log( "ReservationManager:get_reservation_info - number of reservations found: " .. tostring(#account_reservations) )
+            for ref, res in pairs( account_reservations ) do
+	            reference_number = ref
+	            reservation = res
+	            email_address = res.email_address
+            end
+            ShoppingCart.reservation_card_hash_id = ReservationManager.card_hash_id
+            local reservation_info = {}
+            reservation_info.barcodes = ReservationManager:get_barcodes_to_vend()
+            reservation_info.reference_number = reference_number
+            reservation_info.reservation = reservation
+            reservation_info.email_address = email_address
+            kernel.log( "ReservationManager:get_reservation_info - reservation info dump - reference_numer: " .. tostring( reservation_info.reference_number or "" )
+                            .. " email address contains data: " .. tostring( reservation_info.email_address ~= nil and reservation_info.email_address ~= '' )
+                            .. " barcodes: " .. tostring( #(reservation_info.barcodes or {}) ) )
+            return reservation_info
+        end
+
 		ShoppingCart:validatepickup(
 			reference_numbers,
 			function( result )
@@ -174,6 +240,7 @@ swipe_view_next_func = function()
 				or result.properties.stand_alone == true then
 					ShoppingCart:set_blocklisted( ShoppingCart:is_card_blocklisted() )
 					if ShoppingCart.blocklisted == true then
+                        kernel.log("pickup_reserved_product:swipe_view_next_func blocklisted=true")
 						result.success = false
 					else
 						result.success = true
@@ -185,46 +252,50 @@ swipe_view_next_func = function()
 
 					local function qualify_for_reco()
 						local qualifies = false
-						local num_reserved_titles = #ReservationManager:get_barcodes_to_vend()
+                        local barcodes = ReservationManager:get_barcodes_to_vend()
+						local num_reserved_titles = #barcodes
 						local res_version_2 = ReservationManager:is_reservations_version( 2 )
 						local res_version_3 = ReservationManager:is_reservations_version( 3 )
 
 						kernel.log( "pickup_reserved_product:qualify_for_reco() - num_reservations=" .. tostring( num_reservations ) .. "   res_version_2:" .. tostring( res_version_2 ) .. "   res_version_3:" .. tostring( res_version_3 ) .. "   num_reserved_titles=" .. tostring( num_reserved_titles ) )
+						kernel.log( "pickup_reserved_product:qualify_for_reco() part 2 - is_gift_card=" .. tostring( ShoppingCart:is_gift_card() ) .. "   is_gc:" .. tostring( ReservationManager:is_gc() ) .. "   is_mnp:" .. tostring( ReservationManager:is_mnp() ) .. "   is_mdv=" .. tostring( ReservationManager:is_mdv() ) )
+						kernel.log( "pickup_reserved_product:qualify_for_reco() part 3 - is_loyalty_redemption=" .. tostring( ReservationManager:is_loyalty_redemption() ) .. "   is_online:" .. tostring( result.properties.is_online ) .. "   stand_alone:" .. tostring( result.properties.stand_alone ) .. "   has_purchase=" .. tostring( ReservationManager:has_purchase() ) )
 						if num_reservations == 1
-						and num_reserved_titles < 5
-						and ( res_version_2 == true or ( res_version_3 == true and ShoppingCart:is_gift_card() == false and ReservationManager:is_gc() == false ) )
-						and ReservationManager:is_mnp() == false
-						and ReservationManager:is_mdv() == false
-                        and ReservationManager:is_loyalty_redemption() == false
-						and result.properties.is_online == true
-						and result.properties.stand_alone == false
-                        and ReservationManager:has_purchase() == false
+    						and num_reserved_titles < 5
+	    					and ( res_version_2 == true or ( res_version_3 == true and ShoppingCart:is_gift_card() == false and ReservationManager:is_gc() == false ) )
+		    				and ReservationManager:is_mnp() == false
+			    			and ReservationManager:is_mdv() == false
+                            and ReservationManager:is_loyalty_redemption() == false
+                            and ReservationManager:uses_credits() == false
+    						and result.properties.is_online == true
+	    					and result.properties.stand_alone == false
+                            and ReservationManager:has_purchase() == false
                         then
-							ShoppingCart.recommendations_generator:GenerateRecomendationsTop20()
-							local reco_list = ShoppingCart.recommendations_generator.recommended_list
-							if #reco_list > 2 then
+                            if kernel.get_recommended_product_count() > 2 then
 								qualifies = true
 							end
 						end
+                        kernel.log( "pickup_reserved_product:qualify_for_reco() qualifies: " .. tostring(qualifies) )
 						return qualifies
 					end
 
+                    kernel.register_get_reservation_info_callback(get_reservation_info)
+
+                    RecommendationOnPickup = kernel.config_getvalue( "system", "General", "RecommendationOnPickup" ) == true
 					if RecommendationOnPickup == true and qualify_for_reco() and kernel.ttsenabled() == false then
 						-- Account qualifies for Recomendations On Pickup
 						
 						-- Add recommended information to KA
-						local recommended_titles = ""
-						for k, v in ipairs( ShoppingCart.recommendations_generator.recommended_list ) do
-							recommended_titles = recommended_titles .. tostring( v.product_id )
-							if k ~= #ShoppingCart.recommendations_generator.recommended_list then
-								recommended_titles = recommended_titles .. ","
-							end
-						end
-						kernel.analyticsaddelement( "session", "recommendationsFlow", "True", ShoppingCart.session_id )
-						kernel.analyticsaddelement( "session", "recommendedTitles", recommended_titles, ShoppingCart.session_id )
-						kernel.analyticsaddelement( "session", "recommendedTitlesShown", tostring( #ShoppingCart.recommendations_generator.recommended_list ), ShoppingCart.session_id )
+                        kernel.add_recommended_products_to_analytics()
 						
-						view_show_safe( "reco_on_pickup_view" )
+                        -- get ready to show recommendation on pickup view
+                        kernel.register_reservation_authorize_callback(reservation_authorize)
+                        kernel.register_vend_only_reserved_titles_callback(vend_only_reserved_titles)
+                        -- TODO-RECO '99999' is sent up for the postal code because the postal code from the reservation is not passed through
+                        ShoppingCart.postal_code = '99999'
+
+						view_show_safe( "recommendation_on_pickup_view" )
+                        
 					else
 						kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
 						local msg = string.gsub( strings.reservation_pickup_body, "{0}", tostring( num_reservations ) )

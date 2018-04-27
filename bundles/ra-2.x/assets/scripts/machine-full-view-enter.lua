@@ -27,14 +27,6 @@ kernel.registeractorhitnotify(
 	"machine_full_rent_button",
 	function()
 		view_analytics_event( "buttonPress", "machine_full_rent_button" )
-		CloseAnalyticsOnStartView = true
-		if ShoppingCart ~= nil then
-			ShoppingCart:close_analytics( "True" )
-			ShoppingCart:abandon( "User chose to abandon session." )
-			ShoppingCart = newshoppingcart()
-			ShoppingCart:start_new()
-			ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
-		end
-        kernel.view_analytics_start("BrowseVend")
-		kernel.executescript( "browse_products" )
+        kernel.close_open_session_and_start_new_rental_session()
+        view_show_safe( "browse_view" )
 	end )

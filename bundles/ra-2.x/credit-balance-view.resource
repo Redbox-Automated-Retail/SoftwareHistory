@@ -171,6 +171,16 @@
 				style="warm_purple_button_style" />
 			
 			<actor
+				name="service_fee_disclaimer"
+				x="115"
+				y="510"
+				width="440"
+				font="font_akzidenz_regular_tiny"
+				foregroundColor="80,80,80"
+				visible="false"
+				optionFlags="Text" />
+			
+			<actor
 				name="credits_do_not_apply_message"
 				x="590"
 				y="249"
@@ -225,11 +235,32 @@
 				foregroundColor="255,255,255"
 				horizontalAlignment="far"
 				optionFlags="Text" />
-				
+			
+			<actor
+				name="service_fee_heading"
+				x="597"
+				y="406"
+				text="Service Fee"
+				font="font_arial_regular_medium"
+				foregroundColor="110,110,110"
+				visible="false"
+				optionFlags="Text" />
+
+			<actor
+				name="service_fee_amount"
+				x="723"
+				y="406"
+				width="100"
+				font="font_arial_regular_medium"
+				foregroundColor="110,110,110"
+				horizontalAlignment="far"
+				visible="false"
+				optionFlags="Text" />
+			
 			<actor
 				name="tax_heading"
 				x="597"
-				y="407"
+				y="406"
 				text="Tax"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -238,7 +269,7 @@
 			<actor
 				name="tax_amount"
 				x="723"
-				y="407"
+				y="406"
 				width="100"
 				font="font_arial_regular_medium"
 				foregroundColor="110,110,110"
@@ -248,7 +279,7 @@
 			<actor
 				name="grey_line"
 				x="590"
-				y="437"
+				y="434"
 				width="240"
 				height="4"
 				backgroundColor="204,204,204"
@@ -257,7 +288,7 @@
 			<actor
 				name="total_heading"
 				x="597"
-				y="447"
+				y="443"
 				text="New total"
 				font="font_medium"
 				foregroundColor="black"
@@ -266,7 +297,7 @@
 			<actor
 				name="total_amount"
 				x="723"
-				y="447"
+				y="443"
 				width="100"
 				font="font_medium"
 				foregroundColor="black"
