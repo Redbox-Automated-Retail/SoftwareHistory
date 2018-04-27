@@ -8,6 +8,5 @@ public enum HardwareCorrectionStatistic
 	Touchscreen,
 	ControllerRestart,
 	RouterRecycle,
-	UnexpectedPowerLoss,
-	CreditCardReaderReset
+	UnexpectedPowerLoss
 }
