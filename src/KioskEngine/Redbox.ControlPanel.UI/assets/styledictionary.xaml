@@ -43,25 +43,20 @@
     <Setter Property="FontSize" Value="15.96" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
-  <Style x:Key="out_of_order_style" TargetType="{x:Type Label}" BasedOn="{StaticResource label_style}">
-    <Setter Property="FontFamily" Value="Arial" />
-    <Setter Property="FontSize" Value="20" />
-    <Setter Property="BorderThickness" Value="3" />
-    <Setter Property="Background" Value="#FFFFFF00" />
-    <Setter Property="Height" Value="50" />
-    <Setter Property="Width" Value="239" />
-    <Setter Property="BorderBrush" Value="#FF000000" />
-    <Setter Property="Foreground" Value="#FF000000" />
-  </Style>
   <Style x:Key="title_label_style" TargetType="{x:Type Label}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
-    <Setter Property="Height" Value="50" />
-    <Setter Property="Width" Value="940" />
-    <Setter Property="Background" Value="#FF8B0000" />
     <Setter Property="FontSize" Value="31.92" />
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Fonts/#Tahoma" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="out_of_order_style" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="Arial" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Background" Value="#FFFFFF00" />
+    <Setter Property="Foreground" Value="#FF000000" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style x:Key="rounded_x_button_style" TargetType="{x:Type Button}">
     <Setter Property="Background" Value="#FFD3D3D3" />
@@ -114,14 +109,71 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <Style x:Key="x_button_style" TargetType="{x:Type Button}">
+  <Style x:Key="wp_rounded_button_style" TargetType="{x:Type Button}">
+    <Setter Property="Margin" Value="0,0,10,10" />
+    <Setter Property="Background" Value="#990000" />
+    <Setter Property="Foreground" Value="#FFF5F5F5" />
+    <Setter Property="Height" Value="78" />
+    <Setter Property="Width" Value="142" />
+    <Setter Property="FontSize" Value="15.96" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Fonts/#Verdana" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Grid Width="{TemplateBinding FrameworkElement.Width}" Height="{TemplateBinding FrameworkElement.Height}" MaxWidth="{TemplateBinding FrameworkElement.MaxWidth}" MaxHeight="{TemplateBinding FrameworkElement.MaxHeight}" ClipToBounds="True">
+            <Border Name="border" CornerRadius="10" BorderBrush="#FFFFFFFF" BorderThickness="2" Background="{TemplateBinding Control.Background}">
+              <TextBlock Name="content" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=Content, RelativeSource={RelativeSource TemplatedParent}}" />
+            </Border>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+              <Setter Property="FrameworkElement.Cursor" Value="Hand" />
+            </Trigger>
+            <Trigger Property="UIElement.IsFocused" Value="True">
+              <Setter Property="Background" Value="#FFFFA500" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="sp_rounded_button_style" TargetType="{x:Type Button}" BasedOn="{StaticResource wp_rounded_button_style}">
+    <Setter Property="Margin" Value="0,0,10,0" />
+  </Style>
+  <Style x:Key="x_flat_button_style" TargetType="{x:Type Button}">
     <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Background" Value="#FFD3D3D3" />
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="FontSize" Value="31.92" />
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Fonts/#Tahoma" />
     <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="BorderBrush" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Border BorderBrush="{TemplateBinding Control.BorderBrush}" BorderThickness="{TemplateBinding Control.BorderThickness}" Padding="{TemplateBinding Control.Padding}">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding Control.HorizontalContentAlignment}" Margin="{TemplateBinding Control.Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding Control.VerticalContentAlignment}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsKeyboardFocused" Value="True" />
+            <Trigger Property="Button.IsDefaulted" Value="True" />
+            <Trigger Property="IsPressed" Value="True" />
+            <Trigger Property="ToggleButton.IsChecked" Value="true" />
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" Property="Foreground" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="UIElement.IsMouseOver" Value="True">
+        <Setter Property="Background" Value="#FFD3D3D3" />
+      </Trigger>
+      <Trigger Property="UIElement.IsFocused" Value="True" />
+    </Style.Triggers>
   </Style>
   <Style x:Key="x_text_block_style" TargetType="{x:Type TextBlock}">
     <Setter Property="VerticalAlignment" Value="Center" />
@@ -347,5 +399,26 @@
         </ControlTemplate>
       </Setter.Value>
     </Setter>
+  </Style>
+  <Style x:Key="login_text_style" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="Arial" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Width" Value="auto" />
+    <Setter Property="Foreground" Value="#FF000000" />
+  </Style>
+  <Style x:Key="login_text_box_style" TargetType="{x:Type TextBox}">
+    <Setter Property="FontFamily" Value="Arial" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Width" Value="400" />
+    <Setter Property="Foreground" Value="#FF000000" />
+  </Style>
+  <Style x:Key="login_password_box_style" TargetType="{x:Type PasswordBox}">
+    <Setter Property="FontFamily" Value="Arial" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Width" Value="400" />
+    <Setter Property="Foreground" Value="#FF000000" />
   </Style>
 </ResourceDictionary>

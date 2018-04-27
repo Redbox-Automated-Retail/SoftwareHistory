@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using Redbox.Core;
@@ -34,52 +34,100 @@ public class TitleDevDetailsController : BaseViewController
 		IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
 		ServiceLocator.Instance.GetService<IStoreManager>();
 		TitleDetailDevModel titleDetailDevModel = new TitleDetailDevModel();
-		TitleRollupProduct titleRollupProduct = (TitleRollupProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
-		string text = titleRollupProduct.ProductId.ToString();
-		string productName = titleRollupProduct.ProductName;
-		Dictionary<string, BarcodeProduct> barCodeProducts = titleRollupProduct.BarCodeProducts;
-		IPricingRecord pricingRecord = service?.GetOneDayProductPricingRecord(titleRollupProduct.ProductId);
+		ITitleProduct titleProductObj = (ITitleProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
 		titleDetailDevModel.OnCloseButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.OnCloseButtonClicked, new Action(GoBackAction));
 		titleDetailDevModel.OnBlurayButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.OnBlurayButtonClicked, new Action(BluRayAction));
 		titleDetailDevModel.OnDvdButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.OnDvdButtonClicked, new Action(DVDAction));
 		titleDetailDevModel.OnTitleRollupButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.OnTitleRollupButtonClicked, new Action(TitleRollUpAction));
 		titleDetailDevModel.OnDigitalButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.OnDigitalButtonClicked, new Action(DigitalCodeAction));
-		titleDetailDevModel.DevTitle = text + " - " + productName;
-		titleDetailDevModel.ComingSoonDays = titleRollupProduct.ComingSoonDays;
-		DateTime dateTime = (titleRollupProduct.NationalStreetDate.HasValue ? titleRollupProduct.NationalStreetDate.Value : DateTime.MinValue);
-		titleDetailDevModel.NationalStreetDate = ((dateTime == DateTime.MinValue) ? string.Empty : dateTime.ToString("yyyyMMddHHmmss"));
-		titleDetailDevModel.BoxOfficeGross = titleRollupProduct.BoxOfficeGross;
-		titleDetailDevModel.ClosedCaptioned = titleRollupProduct.ClosedCaptioned;
-		titleDetailDevModel.SellThruNew = titleRollupProduct.SellThruNew;
-		titleDetailDevModel.ProductTypeId = titleRollupProduct.ProductTypeId;
-		titleDetailDevModel.MerchandiseDate = titleRollupProduct.MerchandiseDate.ToShortDateString();
-		titleDetailDevModel.SortDate = titleRollupProduct.SortDate.ToShortDateString();
-		dateTime = (titleRollupProduct.ReleaseDate.HasValue ? titleRollupProduct.ReleaseDate.Value : DateTime.MinValue);
-		titleDetailDevModel.ReleaseDate = ((dateTime == DateTime.MinValue) ? string.Empty : dateTime.ToString("yyyyMMddHHmmss"));
-		titleDetailDevModel.SellThru = titleRollupProduct.SellThru;
-		titleDetailDevModel.PromoValue = pricingRecord.PromoValue;
-		titleDetailDevModel.ExtraNight = pricingRecord.ExtraNight;
-		titleDetailDevModel.ExpirationPrice = pricingRecord.ExpirationPrice;
-		titleDetailDevModel.InitialNight = pricingRecord.InitialNight;
-		titleDetailDevModel.PriceSetId = pricingRecord.ProductPricingId.ToString();
-		titleDetailDevModel.Purchase = pricingRecord.Purchase;
-		titleDetailDevModel.NonReturn = pricingRecord.NonReturn;
-		titleDetailDevModel.NonReturnDays = pricingRecord.NonReturnDays;
-		titleDetailDevModel.GenreIds = titleRollupProduct.Genres;
-		titleDetailDevModel.IsComingSoon = titleRollupProduct.ComingSoon;
-		titleDetailDevModel.InStock = titleRollupProduct.InStock;
-		titleDetailDevModel.CanBeSold = titleRollupProduct.IsSellable;
-		titleDetailDevModel.ProductFamilyName = titleRollupProduct.TitleFamily.ToString();
-		titleDetailDevModel.ProductTypeName = titleRollupProduct.TitleType.ToString();
-		titleDetailDevModel.IsAvailable = titleRollupProduct.IsAvailable;
-		titleDetailDevModel.ShowOutOfStock = titleRollupProduct.ShowOutOfStock;
-		titleDetailDevModel.Type = titleRollupProduct.KioskProductType.ToString();
-		titleDetailDevModel.BarCodes = barCodeProducts;
-		IBitmapCacheService service2 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-		titleDetailDevModel.ImgFile = service2.GetBitmapImage(titleRollupProduct.ImageFile);
-		titleDetailDevModel.IsBluRay = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.Bluray).Any();
-		titleDetailDevModel.IsDigitalTitle = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DigitalCode).Any();
+		titleDetailDevModel.On4KUhdButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.On4KUhdButtonClicked, new Action(FourKUhdAction));
+		SetTitleProductDetails(titleDetailDevModel, titleProductObj, service);
 		return titleDetailDevModel;
+	}
+
+	private static void SetTitleProductDetails(TitleDetailDevModel viewModel, ITitleProduct TitleProductObj, IPricingService pricingService)
+	{
+		TitleProductDetailDevModel titleProductDetailDevModel = CreateTitleProductDetailDevModel(TitleProductObj, pricingService);
+		viewModel.Products.Add((TitleProductObj.KioskProductType != KioskProductType.TitleRollup) ? TitleProductObj.TitleType : TitleType.All, titleProductDetailDevModel);
+		viewModel.CurrentProduct = titleProductDetailDevModel;
+		viewModel.CurrentProduct.HasRollup = false;
+		if (TitleProductObj is TitleRollupProduct)
+		{
+			TitleRollupProduct titleRollupProduct = (TitleRollupProduct)TitleProductObj;
+			titleProductDetailDevModel.IsDvd = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DVD).Any();
+			titleProductDetailDevModel.IsBluRay = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.Bluray).Any();
+			titleProductDetailDevModel.IsDigitalTitle = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DigitalCode).Any();
+			titleProductDetailDevModel.Is4KUhdTitle = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType._4KUHD).Any();
+			titleProductDetailDevModel.HasRollup = true;
+			titleProductDetailDevModel.TitleRollupProductGroupId = titleRollupProduct.ProductGroupId;
+			{
+				foreach (TitleProduct kioskProduct in titleRollupProduct.KioskProducts)
+				{
+					TitleProductDetailDevModel titleProductDetailDevModel2 = CreateTitleProductDetailDevModel(kioskProduct, pricingService);
+					titleProductDetailDevModel2.HasRollup = true;
+					titleProductDetailDevModel2.IsDvd = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DVD).Any();
+					titleProductDetailDevModel2.IsBluRay = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.Bluray).Any();
+					titleProductDetailDevModel2.IsDigitalTitle = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DigitalCode).Any();
+					titleProductDetailDevModel2.Is4KUhdTitle = titleRollupProduct.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType._4KUHD).Any();
+					viewModel.Products.Add(kioskProduct.TitleType, titleProductDetailDevModel2);
+				}
+				return;
+			}
+		}
+		titleProductDetailDevModel.IsDvd = false;
+		titleProductDetailDevModel.IsBluRay = false;
+		titleProductDetailDevModel.IsDigitalTitle = false;
+	}
+
+	private static TitleProductDetailDevModel CreateTitleProductDetailDevModel(ITitleProduct TitleProductObj, IPricingService pricingService)
+	{
+		string text = TitleProductObj.ProductId.ToString();
+		string productName = TitleProductObj.ProductName;
+		ObservableCollection<BarcodeProduct> barCodes = new ObservableCollection<BarcodeProduct>(TitleProductObj.BarCodeProducts.Values.ToList());
+		IPricingRecord pricingRecord = pricingService?.GetOneDayProductPricingRecord(TitleProductObj.ProductId);
+		TitleProductDetailDevModel titleProductDetailDevModel = new TitleProductDetailDevModel();
+		titleProductDetailDevModel.DevTitle = text + " - " + productName;
+		titleProductDetailDevModel.ComingSoonDays = TitleProductObj.ComingSoonDays;
+		DateTime dateTime = (TitleProductObj.NationalStreetDate.HasValue ? TitleProductObj.NationalStreetDate.Value : DateTime.MinValue);
+		titleProductDetailDevModel.NationalStreetDate = ((dateTime == DateTime.MinValue) ? string.Empty : dateTime.ToShortDateString());
+		titleProductDetailDevModel.BoxOfficeGross = TitleProductObj.BoxOfficeGross;
+		titleProductDetailDevModel.ClosedCaptioned = TitleProductObj.ClosedCaptioned;
+		titleProductDetailDevModel.SellThruNew = TitleProductObj.SellThruNew;
+		titleProductDetailDevModel.ProductTypeId = TitleProductObj.ProductTypeId;
+		titleProductDetailDevModel.MerchandiseDate = TitleProductObj.MerchandiseDate.ToShortDateString();
+		titleProductDetailDevModel.SortDate = TitleProductObj.SortDate.ToShortDateString();
+		dateTime = (TitleProductObj.ReleaseDate.HasValue ? TitleProductObj.ReleaseDate.Value : DateTime.MinValue);
+		titleProductDetailDevModel.ReleaseDate = ((dateTime == DateTime.MinValue) ? string.Empty : dateTime.ToShortDateString());
+		titleProductDetailDevModel.SellThru = TitleProductObj.SellThru;
+		if (pricingRecord != null)
+		{
+			titleProductDetailDevModel.PromoValue = pricingRecord.PromoValue;
+			titleProductDetailDevModel.ExtraNight = pricingRecord.ExtraNight;
+			titleProductDetailDevModel.ExpirationPrice = pricingRecord.ExpirationPrice;
+			titleProductDetailDevModel.InitialNight = pricingRecord.InitialNight;
+			titleProductDetailDevModel.PriceSetId = pricingRecord.ProductPricingId.ToString();
+			titleProductDetailDevModel.Purchase = pricingRecord.Purchase;
+			titleProductDetailDevModel.NonReturn = pricingRecord.NonReturn;
+			titleProductDetailDevModel.NonReturnDays = pricingRecord.NonReturnDays;
+		}
+		titleProductDetailDevModel.GenreIds = TitleProductObj.Genres;
+		foreach (long genre in TitleProductObj.Genres)
+		{
+			titleProductDetailDevModel.GenreList.Add((genre.ToString() + " " + Enum.Parse(typeof(Genres), genre.ToString())).ToUpper());
+		}
+		titleProductDetailDevModel.IsComingSoon = TitleProductObj.ComingSoon;
+		titleProductDetailDevModel.InStock = TitleProductObj.InStock;
+		titleProductDetailDevModel.CanBeSold = TitleProductObj.IsSellable;
+		titleProductDetailDevModel.ProductFamilyName = TitleProductObj.TitleFamily.ToString();
+		titleProductDetailDevModel.ProductTypeName = TitleProductObj.TitleType.ToString();
+		titleProductDetailDevModel.IsAvailable = TitleProductObj.IsAvailable;
+		titleProductDetailDevModel.ShowOutOfStock = TitleProductObj.ShowOutOfStock;
+		titleProductDetailDevModel.Type = TitleProductObj.KioskProductType.ToString();
+		titleProductDetailDevModel.BarCodes = barCodes;
+		titleProductDetailDevModel.TitleRollupProductGroupId = TitleProductObj.TitleRollupProductGroupId;
+		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		titleProductDetailDevModel.ImgFile = service.GetBitmapImage(TitleProductObj.ImageFile);
+		return titleProductDetailDevModel;
 	}
 
 	private static void GoBackAction()
@@ -91,83 +139,50 @@ public class TitleDevDetailsController : BaseViewController
 	private static void DVDAction()
 	{
 		BaseViewController.StopIdleTimer();
-		TitleRollupProduct obj = (TitleRollupProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
-		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-		TitleDetailDevModel model = viewUserControl.DataContext as TitleDetailDevModel;
-		List<ITitleProduct> list = obj.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DVD).ToList();
-		model.BarCodes = new Dictionary<string, BarcodeProduct>();
-		foreach (ITitleProduct item in list)
+		TitleDetailDevModel titleDetailDevModel = BaseViewController.GetViewUserControl().DataContext as TitleDetailDevModel;
+		if (titleDetailDevModel.Products.ContainsKey(TitleType.DVD))
 		{
-			item.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
-			{
-				model.BarCodes.Add(x.Key, x.Value);
-			});
+			titleDetailDevModel.CurrentProduct = titleDetailDevModel.Products[TitleType.DVD];
 		}
-		if (list.Count != 0)
-		{
-			model.Type = list.FirstOrDefault().TitleType.ToString();
-		}
-		viewUserControl.DataContext = model;
 	}
 
 	private static void TitleRollUpAction()
 	{
 		BaseViewController.StopIdleTimer();
-		TitleRollupProduct titleRollupProduct = (TitleRollupProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
-		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-		TitleDetailDevModel titleDetailDevModel = viewUserControl.DataContext as TitleDetailDevModel;
-		titleDetailDevModel.BarCodes = titleRollupProduct.BarCodeProducts;
-		titleDetailDevModel.Type = titleRollupProduct.KioskProductType.ToString();
-		viewUserControl.DataContext = titleDetailDevModel;
+		TitleDetailDevModel titleDetailDevModel = BaseViewController.GetViewUserControl().DataContext as TitleDetailDevModel;
+		if (titleDetailDevModel.Products.ContainsKey(TitleType.All))
+		{
+			titleDetailDevModel.CurrentProduct = titleDetailDevModel.Products[TitleType.All];
+		}
 	}
 
 	private static void DigitalCodeAction()
 	{
 		BaseViewController.StopIdleTimer();
-		TitleRollupProduct obj = (TitleRollupProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
-		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-		TitleDetailDevModel model = viewUserControl.DataContext as TitleDetailDevModel;
-		List<ITitleProduct> list = obj.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.DigitalCode).ToList();
-		model.BarCodes = new Dictionary<string, BarcodeProduct>();
-		foreach (ITitleProduct item in list)
+		TitleDetailDevModel titleDetailDevModel = BaseViewController.GetViewUserControl().DataContext as TitleDetailDevModel;
+		if (titleDetailDevModel.Products.ContainsKey(TitleType.DigitalCode))
 		{
-			item.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
-			{
-				model.BarCodes.Add(x.Key, x.Value);
-			});
+			titleDetailDevModel.CurrentProduct = titleDetailDevModel.Products[TitleType.DigitalCode];
 		}
-		if (list.Count != 0)
-		{
-			model.Type = list.FirstOrDefault().TitleType.ToString();
-		}
-		viewUserControl.DataContext = model;
 	}
 
 	private static void BluRayAction()
 	{
-		try
+		BaseViewController.StopIdleTimer();
+		TitleDetailDevModel titleDetailDevModel = BaseViewController.GetViewUserControl().DataContext as TitleDetailDevModel;
+		if (titleDetailDevModel.Products.ContainsKey(TitleType.Bluray))
 		{
-			BaseViewController.StopIdleTimer();
-			TitleRollupProduct obj = (TitleRollupProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
-			FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-			TitleDetailDevModel model = viewUserControl.DataContext as TitleDetailDevModel;
-			List<ITitleProduct> list = obj.KioskProducts.Where((ITitleProduct b) => b.TitleType == TitleType.Bluray).ToList();
-			model.BarCodes = new Dictionary<string, BarcodeProduct>();
-			foreach (ITitleProduct item in list)
-			{
-				item.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
-				{
-					model.BarCodes.Add(x.Key, x.Value);
-				});
-			}
-			if (list.Count != 0)
-			{
-				model.Type = list.FirstOrDefault().TitleType.ToString();
-			}
-			viewUserControl.DataContext = model;
+			titleDetailDevModel.CurrentProduct = titleDetailDevModel.Products[TitleType.Bluray];
 		}
-		catch (Exception)
+	}
+
+	private static void FourKUhdAction()
+	{
+		BaseViewController.StopIdleTimer();
+		TitleDetailDevModel titleDetailDevModel = BaseViewController.GetViewUserControl().DataContext as TitleDetailDevModel;
+		if (titleDetailDevModel.Products.ContainsKey(TitleType._4KUHD))
 		{
+			titleDetailDevModel.CurrentProduct = titleDetailDevModel.Products[TitleType._4KUHD];
 		}
 	}
 }

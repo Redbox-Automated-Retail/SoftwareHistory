@@ -74,6 +74,8 @@ public class CarouselModel : DependencyObject
 
 	public event BrowseItemModelEvent OnTitleRollupOverlayAddBluray;
 
+	public event BrowseItemModelEvent OnTitleRollupOverlayAdd4kUhd;
+
 	public event VisibilityChanged OnTitleRollupOverlayVisibilityChange;
 
 	public event Action<CarouselModel> OnIsAnimationOnChanged;
@@ -85,6 +87,7 @@ public class CarouselModel : DependencyObject
 		TitleRollupOverlayModel.OnTitleRollupOverlayTimeout += TitleRollupOverlayModel_OnTitleRollupOverlayTimeout;
 		TitleRollupOverlayModel.OnTitleRollupOverlayAddDVD += TitleRollupOverlayModel_OnTitleRollupOverlayAddDVD;
 		TitleRollupOverlayModel.OnTitleRollupOverlayAddBluray += TitleRollupOverlayModel_OnTitleRollupOverlayAddBluray;
+		TitleRollupOverlayModel.OnTitleRollupOverlayAdd4kUhd += TitleRollupOverlayModel_OnTitleRollupOverlayAdd4kUhd;
 		TitleRollupOverlayModel.OnTitleRollupOverlayVisibilityChange += TitleRollupOverlayModel_OnTitleRollupOverlayVisibilityChange;
 	}
 
@@ -96,6 +99,11 @@ public class CarouselModel : DependencyObject
 	private void TitleRollupOverlayModel_OnTitleRollupOverlayAddBluray(IBrowseItemModel browseItemModel, object parameter)
 	{
 		ProcessTitleRollupOverlayAddBluray(browseItemModel, parameter);
+	}
+
+	private void TitleRollupOverlayModel_OnTitleRollupOverlayAdd4kUhd(IBrowseItemModel browseItemModel, object parameter)
+	{
+		ProcessTitleRollupOverlayAdd4kUhd(browseItemModel, parameter);
 	}
 
 	private void TitleRollupOverlayModel_OnTitleRollupOverlayAddDVD(IBrowseItemModel browseItemModel, object parameter)
@@ -118,6 +126,14 @@ public class CarouselModel : DependencyObject
 		if (OnTitleRollupOverlayVisibilityChange != null)
 		{
 			OnTitleRollupOverlayVisibilityChange(newVisibility);
+		}
+	}
+
+	public void ProcessTitleRollupOverlayAdd4kUhd(IBrowseItemModel browseItemModel, object parameter)
+	{
+		if (OnTitleRollupOverlayAdd4kUhd != null)
+		{
+			OnTitleRollupOverlayAdd4kUhd(browseItemModel, parameter);
 		}
 	}
 

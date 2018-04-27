@@ -16,14 +16,4 @@ internal static class TextToSpeechFunctions
 	{
 		return ServiceLocator.Instance.GetService<ITextToSpeechService>()?.GetTimeout(timeoutType, defaultTimeout) ?? defaultTimeout;
 	}
-
-	[KernelFunction(Name = "kernel.ttsinreturnflow")]
-	internal static void TTSInReturnFlow(bool inReturnFlow)
-	{
-		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-		if (service != null)
-		{
-			service.InReturnFlow = inReturnFlow;
-		}
-	}
 }

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model.Browse;
@@ -216,10 +218,11 @@ public class BrowseViewTextToSpeech
 					Value = "MainMenu"
 				});
 				AddCheckOutEvent(speechPart, browseViewModel);
-				speechPart.Texts.Add(new TextPart
-				{
-					Text = $"You are now browsing by {BrowseState?.BrowseSelectedSort}."
-				});
+				List<ITextPart> texts = speechPart.Texts;
+				TextPart textPart = new TextPart();
+				IBrowseState browseState = BrowseState;
+				textPart.Text = $"You are now browsing by {((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null)}.";
+				texts.Add(textPart);
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = $"There are a total of {browseViewModel?.BrowseProductControlModel?.BrowseItems?.Count ?? 0} titles available with up to {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} titles per screen."
@@ -408,7 +411,7 @@ public class BrowseViewTextToSpeech
 				{
 					Text = $"To browse all {BrowsingFamily}, press 1."
 				});
-				if (BrowseState.BrowseSelectedSort == "alpha")
+				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
@@ -502,11 +505,30 @@ public class BrowseViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "AvailableTitles"
 				});
+				int num = 1;
+				BrowseViewModel browseViewModel2 = browseViewModel;
+				if (browseViewModel2 != null && browseViewModel2.BrowseFilterBarModel?.FormatFilterButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "1",
+						Action = delegate
+						{
+							browseViewModel?.BrowseFilterBarModel.ProcessOnFormatFilterButtonClicked();
+							CommandManager.InvalidateRequerySuggested();
+						}
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To filter by format press 1."
+					});
+					num++;
+				}
 				if (browseViewModel?.BrowseFilterBarModel?.Filters != null)
 				{
 					foreach (BrowseFilter eachFilter in browseViewModel.BrowseFilterBarModel.Filters)
 					{
-						string text = (browseViewModel.BrowseFilterBarModel.Filters.IndexOf(eachFilter) + 1).ToString();
+						string text = (browseViewModel.BrowseFilterBarModel.Filters.IndexOf(eachFilter) + num).ToString();
 						speechPart.Events.Add(new MapKeyPressToAction
 						{
 							KeyCode = text,
@@ -561,7 +583,7 @@ public class BrowseViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "AvailableTitles"
 				});
-				if (BrowseState.BrowseSelectedSort == "alpha")
+				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 				{
 					AddAlphaCharacterEvent(speechPart, browseViewModel, "0", "#");
 					AddAlphaCharacterEvent(speechPart, browseViewModel, "1", "#");

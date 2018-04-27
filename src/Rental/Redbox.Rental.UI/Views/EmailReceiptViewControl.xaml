@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<local:ViewUserControl x:Class="Redbox.Rental.UI.Views.EmailReceiptViewControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
+  <Redbox:GridExt Name="MainControl" RowHeights="110,*,130" Height="768" Width="1024" Background="{StaticResource RubineRedGradientBrush}">
+    <Grid Name="AdBannerGrid" Row="0" Height="90" Width="728" Margin="0,12" Visibility="Collapsed">
+      <Image Name="AdImageElem" Source="{Binding BannerImage}" />
+    </Grid>
+    <Grid Row="1">
+      <StackPanel Margin="40,0">
+        <TextBlock Name="TitleTextElem" HorizontalAlignment="Left" Margin="0,60" Style="{StaticResource font_montserrat_medium_34}" Foreground="#FFFFFFFF" Text="{Binding TitleText, FallbackValue=Your receipt will be sent to this email address:}" />
+        <TextBlock Name="MessageTextElem" HorizontalAlignment="Left" Margin="0,20" Style="{StaticResource font_montserrat_regular_40}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding MessageText, FallbackValue=bonjovi@gmail.com}" />
+        <TextBlock Name="CommentTextElem" HorizontalAlignment="Left" Style="{StaticResource font_montserrat_medium_24}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding CommentText, FallbackValue=You can change it at any time at redbox.com/account.}" />
+      </StackPanel>
+    </Grid>
+    <Grid Row="2" Background="{StaticResource EggplantBrush}">
+      <Redbox:RoundedButton Name="NextButton" MinWidth="180" MinHeight="70" Height="70" Style="{StaticResource rubine_white_border_button}" UsedDefaultCornerRadius="True" HorizontalAlignment="Right" Margin="40,0" Command="{Binding ContinueButtonCommand}">
+        <TextBlock Name="CapButtonText" Margin="45,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=ContinueButtonText, FallbackValue=Next}" />
+      </Redbox:RoundedButton>
+    </Grid>
+  </Redbox:GridExt>
+</local:ViewUserControl>

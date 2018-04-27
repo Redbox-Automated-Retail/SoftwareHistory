@@ -36,15 +36,15 @@ public class KeyboardLogic : BaseLogic
 	{
 		Model = model;
 		Model.KeyboardError = "";
-		Model.KeyButtonCommand = RegisterRoutedCommand(Commands.KeyButtonCommand, KeyButtonCommand_Execute);
-		Model.BackButtonCommand = RegisterRoutedCommand(Commands.BackButtonCommand, BackButtonCommand_Execute);
-		Model.ClearButtonCommand = RegisterRoutedCommand(Commands.ClearButtonCommand, ClearButtonCommand_Execute);
-		Model.DomainButtonCommand = RegisterRoutedCommand(Commands.DomainButtonCommand, DomainButtonCommand_Execute);
-		Model.DotComButtonCommand = RegisterRoutedCommand(Commands.DotComButtonCommand, DotComButtonCommand_Execute);
-		Model.SpaceButtonCommand = RegisterRoutedCommand(Commands.SpaceButtonCommand, SpaceButtonCommand_Execute);
-		Model.CancelButtonCommand = RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
-		Model.ContinueButtonCommand = RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute);
-		Model.EmailSelectedCommand = RegisterRoutedCommand(Commands.EmailSelectedCommand, EmailSelectedCommand_Execute);
+		Model.KeyButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.KeyButtonCommand, KeyButtonCommand_Execute);
+		Model.BackButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.BackButtonCommand, BackButtonCommand_Execute);
+		Model.ClearButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ClearButtonCommand, ClearButtonCommand_Execute);
+		Model.DomainButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.DomainButtonCommand, DomainButtonCommand_Execute);
+		Model.DotComButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.DotComButtonCommand, DotComButtonCommand_Execute);
+		Model.SpaceButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.SpaceButtonCommand, SpaceButtonCommand_Execute);
+		Model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
+		Model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute, ContinueButtonCommand_canExecute);
+		Model.EmailSelectedCommand = DynamicRouting.RegisterRoutedCommand(Commands.EmailSelectedCommand, EmailSelectedCommand_Execute);
 	}
 
 	public bool InitControlTextMode()
@@ -98,7 +98,7 @@ public class KeyboardLogic : BaseLogic
 		switch (KeyboardMode)
 		{
 		case KeyboardMode.ACCOUNT_SIGN_IN:
-			flag = IsValidEntries != null && IsValidEntries(Model.KeyboardText, "\a\f\v");
+			flag = IsValidEntries != null && IsValidEntries(Model.KeyboardText, Model.KeyboardCode);
 			if (!flag)
 			{
 				Model.KeyboardError = GetErrorMessage();
@@ -162,7 +162,7 @@ public class KeyboardLogic : BaseLogic
 		{
 			Model.KeyboardError = string.Empty;
 		}
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
 		CommandManager.InvalidateRequerySuggested();
 	}
 
@@ -253,18 +253,36 @@ public class KeyboardLogic : BaseLogic
 
 	public void SpaceButtonCommand_Execute()
 	{
-		Model.KeyboardText += " ";
+		if (!Model.KeyEmailMode)
+		{
+			Model.KeyboardCode += " ";
+		}
 		UpdateContinue();
 	}
 
 	public void CancelButtonCommand_Execute()
 	{
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "startbrowsing");
 		CancelButton_Execute();
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+	}
+
+	public bool ContinueButtonCommand_canExecute()
+	{
+		if (KeyboardMode != KeyboardMode.ACCOUNT_SIGN_IN)
+		{
+			return true;
+		}
+		if (!string.IsNullOrWhiteSpace(Model.KeyboardText))
+		{
+			return !string.IsNullOrEmpty(Model.KeyboardCode);
+		}
+		return false;
 	}
 
 	public void ContinueButtonCommand_Execute()
 	{
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "signin");
 		Model.KeyboardError = ContinueButtonExecute();
 		if (!string.IsNullOrEmpty(Model.KeyboardError))
 		{

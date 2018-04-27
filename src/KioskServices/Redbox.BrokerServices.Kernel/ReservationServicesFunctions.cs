@@ -334,7 +334,7 @@ internal static class ReservationServicesFunctions
 				}
 			}
 		}
-		ReservationRequestCallback3 reservationRequestCallback = delegate(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIds, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv, bool isLoyaltyRedemption)
+		ReservationRequestCallback3 reservationRequestCallback = delegate(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIds, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv, bool isLoyaltyRedemption, decimal defaultServiceFee, decimal actualServiceFee)
 		{
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IReservationResult reservationResult = reservationServices.NewReservationResult();
@@ -388,7 +388,7 @@ internal static class ReservationServicesFunctions
 			{
 				luaTable10[num5++] = ccId;
 			}
-			ReadOnlyCollection<object> readOnlyCollection = requestCallback.Call(cardId, email, referenceNumber, reserveDate.ToString("yyyyMMddHHmmss"), luaTable3, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, luaTable6, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, luaTable7, isGc, luaTable9, luaTable10, taxRate, zip, isMdv, isLoyaltyRedemption);
+			ReadOnlyCollection<object> readOnlyCollection = requestCallback.Call(cardId, email, referenceNumber, reserveDate.ToString("yyyyMMddHHmmss"), luaTable3, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, luaTable6, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, luaTable7, isGc, luaTable9, luaTable10, taxRate, zip, isMdv, isLoyaltyRedemption, defaultServiceFee, actualServiceFee);
 			LuaTable luaTable11 = ((readOnlyCollection != null && readOnlyCollection.Count > 0) ? ((LuaTable)readOnlyCollection[0]) : null);
 			if (luaTable11 != null)
 			{

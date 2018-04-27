@@ -1,6 +1,8 @@
+using Redbox.ControlPanel.UI;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Services;
 
 namespace Redbox.Rental.Kernel;
 
@@ -14,5 +16,12 @@ public static class ControlPanelFunctions
 		{
 			service.LoggedInUser = userName;
 		}
+	}
+
+	[KernelFunction(Name = "kernel.showlogin")]
+	internal static void ShowLogin()
+	{
+		OrchestrationService.RegisterViewDefinitions();
+		Redbox.ControlPanel.UI.ControlPanelFunctions.ShowLogin();
 	}
 }

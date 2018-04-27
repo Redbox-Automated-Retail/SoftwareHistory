@@ -1,144 +1,95 @@
 ﻿using System;
 using System.CodeDom.Compiler;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Markup;
-using Redbox.Core;
+using System.Windows.Media.Imaging;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Controls.Animations;
 
 namespace Redbox.Rental.UI.Views;
 
-public partial class VendViewUserControl : UserControl, IWPFActor, IComponentConnector
+public partial class VendViewUserControl : BaseUserControl, IWPFActor, IComponentConnector
 {
-	private Dictionary<VendViewType, Type> _vendViewTypeAnimationControls;
+	public bool IsPickup { get; set; }
 
-	public IActor Actor { get; set; }
-
-	public string TitleText
+	public string[] TextMessages
 	{
-		get
-		{
-			return VendAnimationControl?.TitleText;
-		}
 		set
 		{
-			IVendDiscAnimationControl vendAnimationControl = VendAnimationControl;
-			if (vendAnimationControl != null)
+			if (VendDiscControl != null)
 			{
-				vendAnimationControl.TitleText = value;
+				VendDiscControl.VendDiscMessages = value;
 			}
 		}
 	}
 
-	public string MessageText
+	public bool IsSignedIn
 	{
-		get
-		{
-			return VendAnimationControl?.MessageText;
-		}
 		set
 		{
-			IVendDiscAnimationControl vendAnimationControl = VendAnimationControl;
-			if (vendAnimationControl != null)
+			if (VendDiscControl != null)
 			{
-				vendAnimationControl.MessageText = value;
+				VendDiscControl.IsSignedIn = value;
 			}
 		}
 	}
 
-	private IVendDiscAnimationControl VendAnimationControl
+	public bool IsLoyaltySignedIn
 	{
-		get
+		set
 		{
-			IVendDiscAnimationControl result = null;
-			if (AnimationContainer.Children.Count > 0)
+			if (VendDiscControl != null)
 			{
-				result = AnimationContainer.Children[0] as IVendDiscAnimationControl;
+				VendDiscControl.IsLoyaltySignedIn = value;
 			}
-			return result;
 		}
 	}
+
+	private IVendDiscAnimationControl VendAnimationControl => VendDiscControl;
 
 	public VendViewType VendType
 	{
 		get
 		{
-			VendViewType result = VendViewType.None;
-			if (AnimationContainer.Children.Count > 0)
-			{
-				foreach (KeyValuePair<VendViewType, Type> vendViewTypeAnimationControl in _vendViewTypeAnimationControls)
-				{
-					if (vendViewTypeAnimationControl.Value == AnimationContainer.Children[0].GetType())
-					{
-						result = vendViewTypeAnimationControl.Key;
-					}
-				}
-			}
-			return result;
+			return VendDiscControl.VendType;
 		}
 		set
 		{
-			AnimationContainer.Children.Clear();
-			object obj = Activator.CreateInstance(_vendViewTypeAnimationControls[value]);
-			if (obj != null)
+			VendDiscControl.VendType = value;
+			VendDiscControl.IsPickupDisc = IsPickup;
+			switch (value)
 			{
-				if (obj is FrameworkElement frameworkElement)
-				{
-					frameworkElement.VerticalAlignment = VerticalAlignment.Center;
-					AnimationContainer.Children.Add(frameworkElement);
-				}
-				else
-				{
-					LogHelper.Instance.Log("Error: {0} is not a UIElement", _vendViewTypeAnimationControls[value]);
-				}
-			}
-			else
-			{
-				LogHelper.Instance.Log("Error: Unable to instanciate instance of {0}", _vendViewTypeAnimationControls[value]);
+			case VendViewType.RentalsOnTheirWay:
+				VendDiscControl.IsAnimated = true;
+				break;
+			case VendViewType.RecomendationOnPickupVend:
+				VendDiscControl.IsAnimated = true;
+				break;
+			case VendViewType.None:
+			case VendViewType.PleaseWait:
+				break;
 			}
 		}
 	}
 
-	public event WPFHitHandler OnWPFHit;
+	public BitmapImage BannerImage
+	{
+		set
+		{
+			AdImageElem.Source = value;
+			VendBannerGrid.Visibility = ((AdImageElem.Source == null) ? Visibility.Collapsed : Visibility.Visible);
+		}
+	}
 
 	public VendViewUserControl()
 	{
 		InitializeComponent();
-		InitializeVendViewTypeAnimationControls();
-		AnimationContainer.Children.Clear();
+		InitVisibilityHasChanged();
 	}
 
-	private void HandleWPFHit()
+	protected override void VisibleHasChanged()
 	{
-		if (OnWPFHit != null)
-		{
-			OnWPFHit(Actor);
-		}
-	}
-
-	private void InitializeVendViewTypeAnimationControls()
-	{
-		_vendViewTypeAnimationControls = new Dictionary<VendViewType, Type>
-		{
-			{
-				VendViewType.None,
-				typeof(Grid)
-			},
-			{
-				VendViewType.PleaseWait,
-				typeof(VendDiscPleaseWaitUserControl)
-			},
-			{
-				VendViewType.RentalsOnTheirWay,
-				typeof(VendDiscAnimationUserControl)
-			},
-			{
-				VendViewType.RecomendationOnPickupVend,
-				typeof(VendDiscAnimationUserControl)
-			}
-		};
 	}
 }

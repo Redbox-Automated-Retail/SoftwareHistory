@@ -39,8 +39,6 @@ public class ApplicationState : IApplicationState
 		}
 	}
 
-	public bool KeepSessionOnStartViewEnter { get; set; }
-
 	public bool IsABEOn
 	{
 		get

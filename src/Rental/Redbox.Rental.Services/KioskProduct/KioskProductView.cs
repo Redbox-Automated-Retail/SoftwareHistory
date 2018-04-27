@@ -91,15 +91,19 @@ public class KioskProductView
 		kioskProduct = _movieProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
 		if (kioskProduct == null)
 		{
-			kioskProduct = FilterToBlueray(_movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
-			if (kioskProduct == null)
-			{
-				kioskProduct = FilterToDigitalCode(_movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
-				if (kioskProduct == null)
-				{
-					kioskProduct = _gamesProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
-				}
-			}
+			kioskProduct = FilterToFormat(TitleType.Bluray, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+		}
+		if (kioskProduct == null)
+		{
+			kioskProduct = FilterToFormat(TitleType.DigitalCode, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+		}
+		if (kioskProduct == null)
+		{
+			kioskProduct = FilterToFormat(TitleType._4KUHD, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+		}
+		if (kioskProduct == null)
+		{
+			kioskProduct = _gamesProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
 		}
 		if (excludeTitleRollup && kioskProduct is TitleRollupProduct titleRollupProduct)
 		{
@@ -111,15 +115,9 @@ public class KioskProductView
 	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
-		if (titleType == TitleType.Bluray)
+		if (titleFamily == TitleFamily.Movies && titleType != TitleType.All)
 		{
-			list.AddRange(from item in FilterToBlueray(_movieProducts)
-				where ApplyMainFilter(item, browseFilter)
-				select (item));
-		}
-		else if (titleType == TitleType.DigitalCode)
-		{
-			list.AddRange(from item in FilterToDigitalCode(_movieProducts)
+			list.AddRange(from item in FilterToFormat(titleType, _movieProducts)
 				where ApplyMainFilter(item, browseFilter)
 				select (item));
 		}
@@ -275,6 +273,33 @@ public class KioskProductView
 			select item.Value).FirstOrDefault();
 	}
 
+	public IKioskProduct GetProductByBarcode(string barcode)
+	{
+		IKioskProduct kioskProduct = null;
+		kioskProduct = _movieProducts.FirstOrDefault((ITitleProduct x) => x.BarCodeProducts?.ContainsKey(barcode) ?? false);
+		if (kioskProduct == null)
+		{
+			kioskProduct = FilterToFormat(TitleType.Bluray, _movieProducts).FirstOrDefault((ITitleProduct x) => x.BarCodeProducts?.ContainsKey(barcode) ?? false);
+			if (kioskProduct == null)
+			{
+				kioskProduct = FilterToFormat(TitleType.DigitalCode, _movieProducts).FirstOrDefault((ITitleProduct x) => x.BarCodeProducts?.ContainsKey(barcode) ?? false);
+				if (kioskProduct == null)
+				{
+					kioskProduct = FilterToFormat(TitleType._4KUHD, _movieProducts).FirstOrDefault((ITitleProduct x) => x.BarCodeProducts?.ContainsKey(barcode) ?? false);
+					if (kioskProduct == null)
+					{
+						kioskProduct = _gamesProducts.FirstOrDefault((ITitleProduct x) => x.BarCodeProducts?.ContainsKey(barcode) ?? false);
+					}
+				}
+			}
+		}
+		if (kioskProduct is TitleRollupProduct titleRollupProduct)
+		{
+			kioskProduct = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.BarCodeProducts?.ContainsKey(barcode) ?? false);
+		}
+		return kioskProduct;
+	}
+
 	private List<ITitleProduct> FilterInCarts(List<ITitleProduct> list, List<long> include, List<long> exclude)
 	{
 		if (include != null || exclude != null)
@@ -309,41 +334,20 @@ public class KioskProductView
 		return list;
 	}
 
-	private List<ITitleProduct> FilterToBlueray(List<ITitleProduct> kioskProducts)
+	private List<ITitleProduct> FilterToFormat(TitleType titleType, List<ITitleProduct> kioskProducts)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		kioskProducts.ForEach(delegate(ITitleProduct item)
 		{
 			if (item is TitleRollupProduct)
 			{
-				list.AddRange(FilterToBlueray(((TitleRollupProduct)item).KioskProducts));
+				list.AddRange(FilterToFormat(titleType, ((TitleRollupProduct)item).KioskProducts));
 			}
-			if (item is MDVProduct && ((MDVProduct)item).TitleType == TitleType.Bluray)
+			if (item is MDVProduct && ((MDVProduct)item).TitleType == titleType)
 			{
 				list.Add(item);
 			}
-			if (item is TitleProduct && ((TitleProduct)item).TitleType == TitleType.Bluray)
-			{
-				list.Add(item);
-			}
-		});
-		return list;
-	}
-
-	private List<ITitleProduct> FilterToDigitalCode(List<ITitleProduct> kioskProducts)
-	{
-		List<ITitleProduct> list = new List<ITitleProduct>();
-		kioskProducts.ForEach(delegate(ITitleProduct item)
-		{
-			if (item is TitleRollupProduct)
-			{
-				list.AddRange(FilterToDigitalCode(((TitleRollupProduct)item).KioskProducts));
-			}
-			if (item is MDVProduct && ((MDVProduct)item).TitleType == TitleType.DigitalCode)
-			{
-				list.Add(item);
-			}
-			if (item is TitleProduct && ((TitleProduct)item).TitleType == TitleType.DigitalCode)
+			if (item is TitleProduct && ((TitleProduct)item).TitleType == titleType)
 			{
 				list.Add(item);
 			}

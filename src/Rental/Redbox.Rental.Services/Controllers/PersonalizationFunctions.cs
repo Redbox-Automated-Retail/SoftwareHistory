@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.ShoppingCart;
@@ -93,21 +94,13 @@ public class PersonalizationFunctions
 		});
 	}
 
-	public static void ShowLogoutDialog(bool setKeepSessionOnStartViewEnterToTrue = false)
+	public static void ShowLogoutDialog()
 	{
 		MessagePopupViewController.ShowLogOutWarning(delegate
 		{
-			if (setKeepSessionOnStartViewEnterToTrue)
-			{
-				ApplicationState.Instance.KeepSessionOnStartViewEnter = true;
-			}
 			OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnly: false);
 		}, delegate
 		{
-			if (setKeepSessionOnStartViewEnterToTrue)
-			{
-				ApplicationState.Instance.KeepSessionOnStartViewEnter = true;
-			}
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "back");
 			OrchestrationService.ViewGoBackSafe("Sign Out view:hide()", popOnly: false);
 		}, delegate
@@ -116,7 +109,7 @@ public class PersonalizationFunctions
 			Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LogOut();
 			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart.ClearAllLoyaltyPointsRecords();
 			LogHelper.Instance.Log("User has signed out.  Closing session and returning to welcome screen.");
-			OrchestrationService.ExecuteScript("start_over");
+			ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(null);
 		});
 	}
 
@@ -166,6 +159,7 @@ public class PersonalizationFunctions
 				if (Redbox.Rental.Services.Session.Session.Instance != null)
 				{
 					Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = loginResult.PersonalizationSession;
+					OrchestrationService.AnalyticsAddLoggedInCustomerProfileNumber(loginResult.PersonalizationSession?.CustomerProfileNumber);
 				}
 				OrchestrationService.ResetApplicationIdleTimerTimeout();
 				OrchestrationService.ViewGoBackSafe("Login process finished - pop Keyboard / phone view", popOnly: false);
@@ -229,6 +223,60 @@ public class PersonalizationFunctions
 		}, delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnly: false);
+		});
+	}
+
+	public static void ShowEmailReceiptAddress(string emailAddress)
+	{
+		LogHelper.Instance.Log("Email Receipt starting.");
+		int num = 8000;
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service != null)
+		{
+			num = service.GetTimeout("shorter", num);
+		}
+		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
+		Action continueAction = (continueAction = delegate
+		{
+			timerService?.RemoveTimer("email_next_timer");
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			if (rentalShoppingCart != null)
+			{
+				OrchestrationService.InvokeMarketingOptInFlowCallback(rentalShoppingCart.MarketingOptInConfirmationStatus.ToString());
+			}
+		});
+		(timerService?.CreateTimer("email_next_timer", num, num, delegate
+		{
+			continueAction();
+		}))?.Start();
+		OrchestrationService.ViewShow("email_receipt_view", new EmailReceiptInfo
+		{
+			ContinueAction = continueAction,
+			EmailAddress = emailAddress
+		});
+	}
+
+	public static void ShowHasJoinedTextClub()
+	{
+		LogHelper.Instance.Log("Joined Text Club starting.");
+		OrchestrationService.ViewShow("joind_text_club_view", new SimpleInfo
+		{
+			ContinueAction = delegate
+			{
+				OrchestrationService.ViewGoBackSafe("Joined Text Club closed", popOnly: false);
+			}
+		});
+	}
+
+	public static void ShowHasJoinedPerks()
+	{
+		LogHelper.Instance.Log("Joined Perks starting.");
+		OrchestrationService.ViewShow("joined_perks_view", new SimpleInfo
+		{
+			ContinueAction = delegate
+			{
+				OrchestrationService.ViewGoBackSafe("Joined Perks closed", popOnly: false);
+			}
 		});
 	}
 

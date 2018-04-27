@@ -5,10 +5,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
+using System.Windows.Media;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.Model.Browse;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
 
@@ -38,7 +40,7 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 		FrameworkElement frameworkElement = source as FrameworkElement;
 		while (frameworkElement != null && !(frameworkElement is UserControl))
 		{
-			frameworkElement = frameworkElement.Parent as FrameworkElement;
+			frameworkElement = VisualTreeHelper.GetParent(frameworkElement) as FrameworkElement;
 		}
 		return frameworkElement as UserControl;
 	}
@@ -69,18 +71,10 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 		HandleWPFHit();
 	}
 
-	private void RentPrimary_Executed(object sender, ExecutedRoutedEventArgs e)
+	private void RentProduct_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		IBrowseItemModel model = GetBrowseItemUserControl(e.OriginalSource)?.DataContext as IBrowseItemModel;
-		Model.ProcessAddPrimaryItem(model, e.Parameter);
-		HandleWPFHit();
-	}
-
-	private void RentBluRay_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		IBrowseItemModel model = GetBrowseItemUserControl(e.OriginalSource)?.DataContext as IBrowseItemModel;
-		Model.ProcessAddBluRay(model, e.Parameter);
-		ServiceLocator.Instance.GetService<IViewService>();
+		Model.ProcessAddProduct(model, e.Parameter, (TitleType)((Control)e.OriginalSource).Tag);
 		HandleWPFHit();
 	}
 

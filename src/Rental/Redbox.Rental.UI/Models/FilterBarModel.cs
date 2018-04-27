@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using Redbox.Rental.Model.Browse;
+using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -21,6 +22,14 @@ public class FilterBarModel : DependencyObject
 
 	public static readonly DependencyProperty BackButtonVisibilityProperty = DependencyProperty.Register("BackButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
+	public static readonly DependencyProperty FormatFilterButtonVisibilityProperty = DependencyProperty.Register("FormatFilterButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty FormatFilterButtonTextProperty = DependencyProperty.Register("FormatFilterButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(string.Empty));
+
+	public static readonly DependencyProperty FormatFilterButtonStyleProperty = DependencyProperty.Register("FormatFilterButtonStyle", typeof(Style), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SelectedFormatProperty = DependencyProperty.Register("SelectedFormat", typeof(TitleType?), typeof(FilterBarModel), new FrameworkPropertyMetadata(null, SelectedFormatChanged));
+
 	public string StartOverButtonText { get; set; }
 
 	public Style StartOverButtonStyle { get; set; }
@@ -32,6 +41,12 @@ public class FilterBarModel : DependencyObject
 	public List<BrowseFilter> Filters { get; set; }
 
 	public Thickness FilterMargin { get; set; }
+
+	public Dictionary<TitleType, string> FormatFilterButtonStrings { get; set; }
+
+	public Style FormatFilterButtonUnselectedStyle { get; set; }
+
+	public Style FormatFilterButtonSelectedStyle { get; set; }
 
 	public Visibility MoreCollectionsButtonVisibility
 	{
@@ -108,6 +123,21 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public Visibility FormatFilterButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(FormatFilterButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FormatFilterButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility FilterBarTextVisibility
 	{
 		get
@@ -138,6 +168,51 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public string FormatFilterButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(FormatFilterButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FormatFilterButtonTextProperty, value);
+			});
+		}
+	}
+
+	public TitleType SelectedFormat
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (TitleType)GetValue(SelectedFormatProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SelectedFormatProperty, value);
+			});
+		}
+	}
+
+	public Style FormatFilterButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(FormatFilterButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FormatFilterButtonStyleProperty, value);
+			});
+		}
+	}
+
 	public event Action OnStartOverButtonClicked;
 
 	public event Action OnHomeButtonClicked;
@@ -147,6 +222,8 @@ public class FilterBarModel : DependencyObject
 	public event Action OnMoreCollectionsButtonClicked;
 
 	public event Action<BrowseFilter> OnBrowseFilterButtonClicked;
+
+	public event Action OnFormatFilterButtonClicked;
 
 	public void ProcessOnStartOverButtonClicked()
 	{
@@ -159,6 +236,14 @@ public class FilterBarModel : DependencyObject
 	public void ProcessOnHomeButtonClicked()
 	{
 		OnHomeButtonClicked?.Invoke();
+	}
+
+	public void ProcessOnFormatFilterButtonClicked()
+	{
+		if (OnFormatFilterButtonClicked != null)
+		{
+			OnFormatFilterButtonClicked();
+		}
 	}
 
 	public void ProcessOnBrowseFilterButtonClicked(BrowseFilter browseFilter)
@@ -182,6 +267,20 @@ public class FilterBarModel : DependencyObject
 		if (OnMoreCollectionsButtonClicked != null)
 		{
 			OnMoreCollectionsButtonClicked();
+		}
+	}
+
+	private static void SelectedFormatChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
+	{
+		if (obj != null && obj is FilterBarModel)
+		{
+			FilterBarModel filterBarModel = (FilterBarModel)obj;
+			TitleType titleType = ((args.NewValue != null) ? ((TitleType?)args.NewValue).Value : TitleType.All);
+			if (filterBarModel.FormatFilterButtonStrings.ContainsKey(titleType))
+			{
+				filterBarModel.FormatFilterButtonText = filterBarModel.FormatFilterButtonStrings[titleType];
+				filterBarModel.FormatFilterButtonStyle = ((titleType == TitleType.All) ? filterBarModel.FormatFilterButtonUnselectedStyle : filterBarModel.FormatFilterButtonSelectedStyle);
+			}
 		}
 	}
 }

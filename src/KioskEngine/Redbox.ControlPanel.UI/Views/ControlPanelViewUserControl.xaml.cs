@@ -20,6 +20,31 @@ namespace Redbox.ControlPanel.UI.Views;
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "ControlPanelViewUserControl")]
 public partial class ControlPanelViewUserControl : System.Windows.Controls.UserControl, IComponentConnector
 {
+	private static class ProcessNames
+	{
+		public static readonly string CMD = "cmd.exe";
+
+		public static readonly string CONTROL = "control.exe";
+
+		public static readonly string EXPLORER = "explorer.exe";
+
+		public static readonly string MMC = "mmc.exe";
+
+		public static readonly string NOTEPAD = "notepad.exe";
+
+		public static readonly string HAL = "halsvc-win32";
+
+		public static readonly string UpadateManager = "updatemgrd";
+
+		public static readonly List<string> ExclusionList = new List<string> { EXPLORER, HAL, UpadateManager };
+
+		public static readonly List<string> CloseOnlyList = new List<string> { CMD, CONTROL, MMC, NOTEPAD };
+	}
+
+	private static Dictionary<int, string> _priorExistingProcesses;
+
+	private static List<int> _pidList;
+
 	private bool _maintenancemodestate;
 
 	private DateTimeFormatInfo _fmt = new CultureInfo("hr-HR").DateTimeFormat;
@@ -29,6 +54,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	public ControlPanelViewUserControl()
 	{
 		InitializeComponent();
+		AcquireExistingProcesses();
 		UpdateEloPcapStatus();
 		UpdateWatchDogStatus();
 		SetInfoLabel();
@@ -37,10 +63,6 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		UpdateTouchScreenStatus();
 		SetOutOfOrderMode();
 		UpdateHalServiceStatus();
-		if (Environment.OSVersion.Version.Major >= 6)
-		{
-			hyper_terminal_button.Visibility = Visibility.Hidden;
-		}
 		_idleTimer.Interval = TimeSpan.FromSeconds(1.0);
 		_idleTimer.IsEnabled = true;
 		close_button.Focusable = false;
@@ -55,39 +77,28 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		};
 	}
 
-	private void SetInfoLabel()
+	private void AcquireExistingProcesses()
 	{
-		long? kioskId = ProcessFunctions.kioskId;
-		lblKioskId.Content = kioskId.ToString();
-		lblDate.Content = DateTime.Today.ToShortDateString();
-		string timeZoneName = (TimeZone.CurrentTimeZone.IsDaylightSavingTime(DateTime.Now) ? TimeZone.CurrentTimeZone.DaylightName : TimeZone.CurrentTimeZone.StandardName);
-		timeZoneName = GetTzAbbreviation(timeZoneName);
-		lblTimeZone.Content = timeZoneName;
-		lblTime.Content = DateTime.Now.ToString("T", _fmt);
+		_priorExistingProcesses = ProcessFunctions.GetRunningProcessIds();
+		_pidList = new List<int>();
 	}
 
-	private void UpdateTime()
+	private static int LaunchProcess(string processName, string args, bool hiddenProcess)
 	{
-		if (DateTime.Now.Subtract(ProcessFunctions.timeOfCPStart).TotalMinutes > 1.0)
+		int num = ProcessFunctions.LaunchProcess(processName, args, hiddenProcess);
+		if (!processName.Equals(ProcessNames.EXPLORER) && num > 0 && !_pidList.Contains(num))
 		{
-			if (!ProcessFunctions.ListRunningProcesses().Any((KeyValuePair<int, ProcessFunctions.ProcessDetails> x) => string.Compare(x.Value.Name, "MSHALTESTER", ignoreCase: true) == 0))
-			{
-				CloseControlPanel();
-			}
-			else
-			{
-				ProcessFunctions.timeOfCPStart = DateTime.Now;
-			}
+			_pidList.Add(num);
 		}
-		lblTime.Content = DateTime.Now.ToString("T", _fmt);
+		return num;
 	}
 
 	private void CloseControlPanel()
 	{
 		System.Windows.Forms.Application.OpenForms["SecureBrowser"]?.Close();
-		List<int> list = (from x in ProcessFunctions.ListRunningProcesses()
+		List<int> list = (from x in ProcessFunctions.GetRunningProcesses()
 			where string.Compare(x.Value.Name, "MSHALTESTER", ignoreCase: true) == 0
-			select x)?.Select((KeyValuePair<int, ProcessFunctions.ProcessDetails> x) => x.Value.Pid).ToList();
+			select x)?.Select((KeyValuePair<int, ProcessDetails> x) => x.Value.Pid).ToList();
 		if (list != null && list.Any())
 		{
 			ProcessFunctions.KillProcesses(list);
@@ -106,6 +117,52 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		{
 			LogHelper.Instance.Log("Unexpected exception closing Control Panel window. ", ex.Message);
 		}
+		KillRunningProcesses();
+	}
+
+	private void KillRunningProcesses()
+	{
+		ProcessFunctions.CloseExploreWindows();
+		List<int> pidList = _pidList;
+		foreach (KeyValuePair<int, ProcessDetails> processItem in ProcessFunctions.GetRunningProcesses())
+		{
+			if (ProcessNames.CloseOnlyList.Any((string x) => string.Compare(processItem.Value.Name, x.RemoveString(".exe"), ignoreCase: true) == 0) || (string.Compare(processItem.Value.Name, "rundll32", ignoreCase: true) == 0 && !_priorExistingProcesses.ContainsKey(processItem.Key)))
+			{
+				LogHelper.Instance.Log($"Killing {processItem.Value.Name}");
+				pidList.Add(processItem.Key);
+			}
+		}
+		if (pidList != null && pidList.Any())
+		{
+			ProcessFunctions.KillProcesses(pidList);
+		}
+	}
+
+	private void SetInfoLabel()
+	{
+		long? kioskId = ProcessFunctions.kioskId;
+		lblKioskId.Content = kioskId.ToString();
+		lblDate.Content = DateTime.Today.ToShortDateString();
+		string timeZoneName = (TimeZone.CurrentTimeZone.IsDaylightSavingTime(DateTime.Now) ? TimeZone.CurrentTimeZone.DaylightName : TimeZone.CurrentTimeZone.StandardName);
+		timeZoneName = GetTzAbbreviation(timeZoneName);
+		lblTimeZone.Content = timeZoneName;
+		lblTime.Content = DateTime.Now.ToString("T", _fmt);
+	}
+
+	private void UpdateTime()
+	{
+		if (DateTime.Now.Subtract(ProcessFunctions.timeOfCPStart).TotalMinutes > 10.0)
+		{
+			if (!ProcessFunctions.GetRunningProcesses().Any((KeyValuePair<int, ProcessDetails> x) => string.Compare(x.Value.Name, "MSHALTESTER", ignoreCase: true) == 0))
+			{
+				CloseControlPanel();
+			}
+			else
+			{
+				ProcessFunctions.timeOfCPStart = DateTime.Now;
+			}
+		}
+		lblTime.Content = DateTime.Now.ToString("T", _fmt);
 	}
 
 	private void GetMaintenanceMode()
@@ -161,9 +218,9 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		SetOutOfOrderMode();
 	}
 
-	private void UpdateCloseKioskStatus()
+	private void EnableCloseKioskButton(bool enable)
 	{
-		if (ProcessFunctions.ListRunningProcesses().Any((KeyValuePair<int, ProcessFunctions.ProcessDetails> rp) => rp.Value.Name == "halsvc-win32"))
+		if (enable)
 		{
 			close_kiosk_button.Foreground = Brushes.White;
 			close_kiosk_button.IsEnabled = true;
@@ -173,6 +230,12 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 			close_kiosk_button.Foreground = Brushes.Gray;
 			close_kiosk_button.IsEnabled = false;
 		}
+	}
+
+	private void UpdateCloseKioskStatus()
+	{
+		Dictionary<int, ProcessDetails> runningProcesses = ProcessFunctions.GetRunningProcesses();
+		EnableCloseKioskButton(runningProcesses.Any((KeyValuePair<int, ProcessDetails> rp) => rp.Value.Name == "halsvc-win32"));
 	}
 
 	private void UpdateTouchScreenStatus()
@@ -200,23 +263,28 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 			ProcessFunctions.RemoveTimer("hal_status_timer");
 			toggle_hal_service_button.Content = "Stop HAL\nService";
 			toggle_hal_service_button.IsEnabled = true;
+			close_kiosk_button.IsEnabled = true;
 			break;
 		case "Stopped":
 			ProcessFunctions.StopTimer("hal_status_timer");
 			ProcessFunctions.RemoveTimer("hal_status_timer");
 			toggle_hal_service_button.Content = "Start HAL\nService";
 			toggle_hal_service_button.IsEnabled = true;
+			close_kiosk_button.IsEnabled = false;
 			break;
 		case "StartPending":
 			toggle_hal_service_button.Content = "Starting HAL\nService";
 			toggle_hal_service_button.IsEnabled = false;
+			close_kiosk_button.IsEnabled = false;
 			break;
 		case "StopPending":
 			toggle_hal_service_button.Content = "Stopping HAL\nService";
 			toggle_hal_service_button.IsEnabled = false;
+			close_kiosk_button.IsEnabled = false;
 			break;
 		default:
 			toggle_hal_service_button.IsEnabled = false;
+			close_kiosk_button.IsEnabled = false;
 			break;
 		}
 	}
@@ -270,6 +338,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void RebootButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("reboot");
 		try
 		{
 			if (System.Windows.MessageBox.Show("Are you sure you want to reboot the kiosk?", "Redbox Control Panel", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
@@ -285,53 +354,63 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void OpenCdriveButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_c_drive");
 		open_c_drive_button.Focus();
-		ProcessFunctions.LaunchProcess("explorer.exe", "C:\\", hiddenProcess: false);
+		LaunchProcess(ProcessNames.EXPLORER, "C:\\", hiddenProcess: false);
 	}
 
 	private void OpenCommandPromptButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("cmd.exe", "/K cd c:\\program files", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("command_prompt");
+		LaunchProcess(ProcessNames.CMD, "/K cd c:\\program files", hiddenProcess: false);
 	}
 
 	private void RedboxFolderButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("explorer.exe", "C:\\Program Files\\Redbox", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("redbox_directory");
+		LaunchProcess(ProcessNames.EXPLORER, "C:\\Program Files\\Redbox", hiddenProcess: false);
 	}
 
 	private void NotepadButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("notepad.exe", null, hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("notepad");
+		LaunchProcess(ProcessNames.NOTEPAD, null, hiddenProcess: false);
 	}
 
 	private void OpenHalServiceLogsButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("explorer.exe", "C:\\Program Files\\Redbox\\KioskLogs", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_hal_service_logs");
+		LaunchProcess(ProcessNames.EXPLORER, "C:\\Program Files\\Redbox\\KioskLogs", hiddenProcess: false);
 	}
 
 	private void ComputerManagementButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("mmc.exe", Environment.SystemDirectory + "\\compmgmt.msc", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("computer_management");
+		LaunchProcess(ProcessNames.MMC, Environment.SystemDirectory + "\\compmgmt.msc", hiddenProcess: false);
 	}
 
 	private void DeviceManagementButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("mmc.exe", Environment.SystemDirectory + "\\devmgmt.msc", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("device_manager");
+		LaunchProcess(ProcessNames.MMC, Environment.SystemDirectory + "\\devmgmt.msc", hiddenProcess: false);
 	}
 
 	private void KioskEngineLogsFolderButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("explorer.exe", "C:\\Program Files\\Redbox\\REDS\\Kiosk Engine\\logs", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("kiosk_engine_logs_folder");
+		LaunchProcess(ProcessNames.EXPLORER, "C:\\Program Files\\Redbox\\REDS\\Kiosk Engine\\logs", hiddenProcess: false);
 	}
 
 	private void DateTimeButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("control.exe", "timedate.cpl", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("date_time");
+		LaunchProcess(ProcessNames.CONTROL, "timedate.cpl", hiddenProcess: false);
 	}
 
 	private void ControlPanelButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("control.exe", "", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("control_panel");
+		LaunchProcess(ProcessNames.CONTROL, "", hiddenProcess: false);
 	}
 
 	public void SetConfigureButtonFocus(object sender, RoutedEventArgs e)
@@ -341,6 +420,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void ConfigureKioskButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("configure_kiosk");
 		try
 		{
 			ConfigureKiosk.Visibility = Visibility.Visible;
@@ -362,6 +442,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void CloseKioskButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("close_kiosk");
 		try
 		{
 			CloseKiosk.Visibility = Visibility.Visible;
@@ -376,6 +457,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void ToggleMaintenanceModeButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("toggle_maintenance_mode");
 		ServiceLocator.Instance.GetService<IResourceBundleService>();
 		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
 		if (service == null)
@@ -407,11 +489,13 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void StartKioskButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("start_kiosk");
 		CloseControlPanel();
 	}
 
 	private void CameraFolderButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_camera_directory");
 		try
 		{
 			object servicePath = ProcessFunctions.GetServicePath("HalSvc$Default");
@@ -420,7 +504,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 				string fullPath = ProcessFunctions.GetFullPath(string.Concat(servicePath, "\\..\\video"));
 				if (!string.IsNullOrEmpty(fullPath))
 				{
-					ProcessFunctions.LaunchProcess("explorer.exe", fullPath.ToString(), hiddenProcess: false);
+					LaunchProcess(ProcessNames.EXPLORER, fullPath.ToString(), hiddenProcess: false);
 					return;
 				}
 				LogHelper.Instance.Log("Unexpected error: Could not find path to video directory: " + servicePath);
@@ -440,6 +524,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void StartSecureBrowserButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("secure_browser");
 		try
 		{
 			Dictionary<string, object> table = ProcessFunctions.GetTable("approved_urls");
@@ -453,17 +538,13 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		}
 	}
 
-	private void HyperTerminalButtonClick(object sender, RoutedEventArgs e)
-	{
-		ProcessFunctions.LaunchProcess("c:\\program files\\Windows NT\\hypertrm.exe", "", hiddenProcess: false);
-	}
-
 	private void OpenKaseyaConfigButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_kaseya_config");
 		string kaseyainiPath = ProcessFunctions.GetKaseyainiPath();
 		if (!string.IsNullOrEmpty(kaseyainiPath))
 		{
-			ProcessFunctions.LaunchProcess("notepad.exe", kaseyainiPath, hiddenProcess: false);
+			LaunchProcess(ProcessNames.NOTEPAD, kaseyainiPath, hiddenProcess: false);
 			return;
 		}
 		LogHelper.Instance.Log("Unexpected Error:  Unable to locate Kaseya directory.");
@@ -472,31 +553,37 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void DisplayButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("control.exe", "desk.cpl", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("display");
+		LaunchProcess(ProcessNames.CONTROL, "desk.cpl", hiddenProcess: false);
 	}
 
 	private void CloseButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("logout");
 		CloseControlPanel();
 	}
 
 	private void NetworkButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("control.exe", "ncpa.cpl", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("network");
+		LaunchProcess(ProcessNames.CONTROL, "ncpa.cpl", hiddenProcess: false);
 	}
 
 	private void AddRemoveProgramsButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("control.exe", "appwiz.cpl", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("add_remove_programs");
+		LaunchProcess(ProcessNames.CONTROL, "appwiz.cpl", hiddenProcess: false);
 	}
 
 	private void EventViewerButtonClick(object sender, RoutedEventArgs e)
 	{
-		ProcessFunctions.LaunchProcess("mmc.exe", Environment.SystemDirectory + "\\eventvwr.msc", hiddenProcess: false);
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("event_viewer");
+		LaunchProcess(ProcessNames.MMC, Environment.SystemDirectory + "\\eventvwr.msc", hiddenProcess: false);
 	}
 
 	private void KillProcessButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("kill_process");
 		List<string> processNamesToIgnore = new List<string> { "halsvc-win32" };
 		KillHandler killHandler = ProcessFunctions.KillProcesses;
 		ProcessFunctions.ShowTaskManager(processNamesToIgnore, killHandler);
@@ -504,11 +591,13 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void ToggleOutOfOrderButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("toggle_out_of_order");
 		ToggleOutOforder();
 	}
 
 	private void EloPcapControlButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("elo_pcap");
 		string text = ProcessFunctions.TouchScreenDriver();
 		if (!string.IsNullOrEmpty(text))
 		{
@@ -518,6 +607,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void WatchDogToggleButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("toggle_watch_dog");
 		try
 		{
 			bool flag = ProcessFunctions.GetMachineSettingValue("Store", "WatchDogEnabled", "true").ToUpper() == "true".ToUpper();
@@ -533,6 +623,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void StartFieldMaintenanceButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("start_field_maintanence_application");
 		while (System.Windows.Forms.Application.OpenForms["SecureBrowser"] != null)
 		{
 			System.Windows.Forms.Application.OpenForms["SecureBrowser"].Close();
@@ -550,20 +641,24 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 			LogHelper.Instance.Log("Control Panel, Start Field Maintenance button click has unexpected exception.", ex);
 			System.Windows.MessageBox.Show("Unexpected exception starting Field Maintenance. " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
+		KillRunningProcesses();
 	}
 
 	private void ToggleHalServiceButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("toggle_hal_service");
 		try
 		{
 			string serviceStatus = ProcessFunctions.GetServiceStatus("halsvc$default");
 			if (serviceStatus == "Running")
 			{
 				ProcessFunctions.StopService("halsvc$default");
+				EnableCloseKioskButton(enable: false);
 			}
 			else if (serviceStatus == "Stopped")
 			{
 				ProcessFunctions.StartService("halsvc$default");
+				EnableCloseKioskButton(enable: true);
 			}
 			ProcessFunctions.TimerFiredHandler timerHandler = UpdateHalServiceStatus;
 			ProcessFunctions.CreateTimer("hal_status_timer", 100, 100, timerHandler);
@@ -577,6 +672,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void MsHalTesterButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("ms_hal_tester");
 		string text = "C:\\Program Files\\Redbox\\MS HAL Tester\\bin";
 		if (!ProcessFunctions.DoesDirectoryExist(text))
 		{
@@ -593,6 +689,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private void ToggleTouchScreenButtonClick(object sender, RoutedEventArgs e)
 	{
+		ProcessFunctions.PerformActivityLogAndSendAuditEvent("toggle_touch_screen");
 		try
 		{
 			ProcessFunctions.ToggleTouchScreen();

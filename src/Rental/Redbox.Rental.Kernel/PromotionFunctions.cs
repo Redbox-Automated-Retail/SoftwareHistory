@@ -36,7 +36,9 @@ public static class PromotionFunctions
 		if (luaTableAsPromotion != null)
 		{
 			PromotionService.Instance.SetPromotion(luaTableAsPromotion);
-			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ValidateAndUpdatePromoCode();
+			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+			service?.CurrentRentalShoppingCart?.ValidateAndUpdatePromoCode();
+			service?.CurrentRentalShoppingCart?.UpdateServiceFee();
 		}
 	}
 

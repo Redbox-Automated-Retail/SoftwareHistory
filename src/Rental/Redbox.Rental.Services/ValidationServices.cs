@@ -224,18 +224,9 @@ public static class ValidationServices
 
 	public static bool IsValidCode(string codeValue)
 	{
-		if (codeValue != null)
+		if (!string.IsNullOrEmpty(codeValue))
 		{
-			if ("\a\f\v".Equals(codeValue))
-			{
-				return true;
-			}
-			bool num = _hasMiniMaxChars.IsMatch(codeValue);
-			bool flag = _hasNumber.IsMatch(codeValue);
-			bool flag2 = _hasUpperChar.IsMatch(codeValue);
-			bool flag3 = _hasLowerChar.IsMatch(codeValue);
-			bool flag4 = _hasSymbols.IsMatch(codeValue);
-			return num & flag & flag2 & flag3 & flag4;
+			return true;
 		}
 		return false;
 	}

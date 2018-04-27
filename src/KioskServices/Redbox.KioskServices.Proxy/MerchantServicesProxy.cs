@@ -150,6 +150,42 @@ public class MerchantServicesProxy : IMerchantServices
 		}
 	}
 
+	public string AccountNumber
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "AccountNumber", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "AccountNumber", value);
+		}
+	}
+
+	public string TransactionId
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "TransactionId", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "TransactionId", value);
+		}
+	}
+
+	public string CPAccountNumber
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "CPAccountNumber", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "CPAccountNumber", value);
+		}
+	}
+
 	public string CPFirstName
 	{
 		get
@@ -742,6 +778,8 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["offers"] = dictionary4;
 						remoteServiceResult.Properties["play_pass_prompt"] = dictionary.ContainsKey("PlayPassPrompt") && (bool)dictionary["PlayPassPrompt"];
 						remoteServiceResult.Properties["play_pass_points_earned"] = (dictionary.ContainsKey("PlayPassPointsEarned") ? dictionary["PlayPassPointsEarned"] : ((object)0));
+						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
+						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -817,6 +855,9 @@ public class MerchantServicesProxy : IMerchantServices
 						{
 							remoteServiceResult.Properties["total_credits_available"] = DigitalServicesProxy.Instance.TotalCreditsAvailable;
 						}
+						remoteServiceResult.Properties["reference_number"] = TransactionId;
+						remoteServiceResult.Properties["account_number"] = AccountNumber;
+						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
 						Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
 						int num3 = 1;
@@ -987,6 +1028,8 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["gift_card_max_discs"] = dictionary6["MaxDiscs"];
 							remoteServiceResult.Properties["gift_card_max_games"] = dictionary6["MaxGames"];
 						}
+						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
+						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -1057,6 +1100,9 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["first_name"] = CPFirstName;
 						remoteServiceResult.Properties["last_name"] = CPLastName;
 						remoteServiceResult.Properties["is_rbi"] = IsRBI;
+						remoteServiceResult.Properties["reference_number"] = TransactionId;
+						remoteServiceResult.Properties["account_number"] = AccountNumber;
+						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						remoteServiceResult.Properties["total_credits_applied"] = 0;
 						if (GCAuthorizeResponse == GCAuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
 						{
@@ -1232,6 +1278,8 @@ public class MerchantServicesProxy : IMerchantServices
 							}
 						}
 						remoteServiceResult.Properties["offers"] = dictionary4;
+						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
+						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -1301,6 +1349,9 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["email"] = EmailAddress;
 						remoteServiceResult.Properties["first_name"] = CPFirstName;
 						remoteServiceResult.Properties["last_name"] = CPLastName;
+						remoteServiceResult.Properties["reference_number"] = TransactionId;
+						remoteServiceResult.Properties["account_number"] = AccountNumber;
+						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						remoteServiceResult.Properties["total_credits_applied"] = 0;
 						if (ResvAuthAuthorizeResponse == AuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
 						{

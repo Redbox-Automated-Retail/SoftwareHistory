@@ -4,15 +4,13 @@ public class Banner
 {
 	public class BannerStyleNameConstants
 	{
-		public const string Bluray = "banner_bluray_background";
-
 		public const string ComingSoon = "banner_coming_soon_background";
 
 		public const string Purchase = "banner_purchase_background";
 
 		public const string MultipleDisc = "banner_multiple_disc_background";
 
-		public const string DigitalCode = "banner_digital_code_background";
+		public const string Format = "banner_format_background";
 	}
 
 	public class TextKeyConstants
@@ -24,6 +22,10 @@ public class Banner
 		public const string Purchase = "mini_cart_purchase_text";
 
 		public const string DigitalCode = "digital_code_banner";
+
+		public const string Dvd = "dvd";
+
+		public const string _4k_uhd = "_4k_uhd";
 	}
 
 	public BannerType BannerType { get; set; }
@@ -32,5 +34,5 @@ public class Banner
 
 	public string BannerStyleName { get; set; }
 
-	public string TextKey { get; set; }
+	public string TextResourceName { get; set; }
 }

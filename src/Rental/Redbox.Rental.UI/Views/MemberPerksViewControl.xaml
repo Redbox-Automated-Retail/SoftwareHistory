@@ -117,7 +117,7 @@
           </Redbox:GridExt>
         </Border>
         <Redbox:RoundedButton Name="CancelButtonElem" Grid.Row="1" Grid.Column="0" Margin="0,20,60,20" Height="56" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
-          <TextBlock Name="CancelButtonTextElem" Margin="30,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Back" Style="{StaticResource font_museo_slab_900_25}" />
+          <TextBlock Name="CancelButtonTextElem" Margin="30,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding CancelButtonText, FallbackValue=Back}" />
         </Redbox:RoundedButton>
       </Grid>
     </Border>

@@ -33,6 +33,7 @@ public class WPFViewFrame : BaseViewFrame, IWPFViewFrame, IBaseViewFrame
 				frameworkElement.Tag = viewFrameInstance?.Id;
 				base.Scene.AddWPFGridChild(frameworkElement);
 			}
+			base.Scene.WPFGrid?.Focus();
 			base.Scene.ResumeDrawing();
 		}
 		catch (Exception e)

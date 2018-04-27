@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,7 +15,9 @@ namespace Redbox.Rental.UI.Controls;
 
 public class RentalUserControl : UserControl
 {
-	private static Timer DelayTimer { get; set; }
+	private int _isRunning;
+
+	private static System.Timers.Timer DelayTimer { get; set; }
 
 	public bool IsDesign { get; set; }
 
@@ -63,7 +67,7 @@ public class RentalUserControl : UserControl
 	{
 		if (setTimer)
 		{
-			DelayTimer = new Timer(500.0);
+			DelayTimer = new System.Timers.Timer(500.0);
 			DelayTimer.Elapsed += delegate
 			{
 				DisposeDelayTimer();
@@ -108,5 +112,30 @@ public class RentalUserControl : UserControl
 				yield return item2;
 			}
 		}
+	}
+
+	protected static DependencyProperty CreateDependencyProperty<TOwner>(string propertyName, Type propertyType, object defaultValue = null, bool affectsRender = true)
+	{
+		return DependencyProperty.Register(propertyName, propertyType, typeof(TOwner), new FrameworkPropertyMetadata(defaultValue)
+		{
+			AffectsRender = affectsRender
+		});
+	}
+
+	protected void RunCommandOnce(Action action)
+	{
+		if (Interlocked.CompareExchange(ref _isRunning, 1, 0) == 1)
+		{
+			LogHelper.Instance.Log("RunCommandOnce - Skipping Click...");
+		}
+		else
+		{
+			action?.Invoke();
+		}
+	}
+
+	protected void CompleteRunOnce()
+	{
+		_isRunning = 0;
 	}
 }

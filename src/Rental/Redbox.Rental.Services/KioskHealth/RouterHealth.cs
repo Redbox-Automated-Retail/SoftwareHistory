@@ -61,20 +61,6 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 		}
 	}
 
-	private bool IsOnStartView
-	{
-		get
-		{
-			bool result = false;
-			string text = ServiceLocator.Instance.GetService<IViewService>().Peek();
-			if (text == "start_view" || text == "maintenance_view")
-			{
-				result = true;
-			}
-			return result;
-		}
-	}
-
 	private bool CanReset
 	{
 		get
@@ -83,7 +69,7 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 			{
 				return false;
 			}
-			if (!IsOnStartView)
+			if (OrchestrationService.IsRentalSessionActive())
 			{
 				return false;
 			}

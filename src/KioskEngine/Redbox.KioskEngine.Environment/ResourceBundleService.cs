@@ -98,6 +98,8 @@ public class ResourceBundleService : IResourceBundleService
 		}
 	}
 
+	public string CurrentBundleName { get; set; }
+
 	public string DefaultBundleName
 	{
 		get
@@ -235,6 +237,7 @@ public class ResourceBundleService : IResourceBundleService
 			if (!errorList.ContainsError())
 			{
 				ActiveBundleSet = new ResourceBundleSet($"Bundle Set: {manifestInfo.ProductName}, {manifestInfo.ProductVersion}", ActiveBundle, list2);
+				CurrentBundleName = manifestInfo.ProductName;
 				IMacroService service3 = ServiceLocator.Instance.GetService<IMacroService>();
 				service3["ProductName"] = manifestInfo.ProductName;
 				service3["ProductVersion"] = manifestInfo.ProductVersion;
@@ -258,14 +261,16 @@ public class ResourceBundleService : IResourceBundleService
 						});
 					}
 					service4.RegisterFunctions(kernelFunctionRegistryService.GetKernelFunctions());
+					ICallbackService service5 = ServiceLocator.Instance.GetService<ICallbackService>();
+					service5.Resume();
 					if (ShowDebugger)
 					{
 						ShowDebugger = false;
-						IDebugService service5 = ServiceLocator.Instance.GetService<IDebugService>();
-						if (service5 != null)
+						IDebugService service6 = ServiceLocator.Instance.GetService<IDebugService>();
+						if (service6 != null)
 						{
-							service5.IsApplicationRunning = false;
-							service5.ActivateDebugger();
+							service6.IsApplicationRunning = false;
+							service6.ActivateDebugger();
 						}
 					}
 					else
@@ -283,8 +288,6 @@ public class ResourceBundleService : IResourceBundleService
 							service4.ExecuteApplication();
 						}
 					}
-					ICallbackService service6 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service6.Resume();
 				}
 			}
 			LogHelper.Instance.Log("Time to switch bundle: {0}", executionTimer.Elapsed);

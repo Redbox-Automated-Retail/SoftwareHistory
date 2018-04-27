@@ -67,10 +67,6 @@ public class CollectionMessageViewController
 		collectionMessageModel.OnCancelDialog = delegate
 		{
 			sessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-collection-mesage-view");
-			if (viewService?.Peek(1) == viewService.GetStartOverViewName() && (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false))
-			{
-				ApplicationState.Instance.KeepSessionOnStartViewEnter = true;
-			}
 			viewService?.GoBackSafe("collection message view cancelled", popOnly: false);
 		};
 		collectionMessageModel.OnSeeAllCollections = delegate

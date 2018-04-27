@@ -52,7 +52,7 @@ public class SignInViewController : BaseViewController
 	private static void SignInViewModel_OnEmailAndPasswordButtonClicked()
 	{
 		BaseViewController.StopIdleTimer();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "emailpassword");
+		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-email-browse");
 		OrchestrationService.ViewGoBackSafe("SignInViewController email sign in", popOnly: true);
 		PersonalizationFunctions.ShowEmailLogin(SignInCancelButtonTypes.Back);
 	}
@@ -60,7 +60,7 @@ public class SignInViewController : BaseViewController
 	private static void SignInViewModel_OnPhoneAndPinButtonClicked()
 	{
 		BaseViewController.StopIdleTimer();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "phonepin");
+		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-phone-browse");
 		OrchestrationService.ViewGoBackSafe("PromptSignInController phone sign in", popOnly: true);
 		PersonalizationFunctions.ShowPhoneNumberLogin(SignInCancelButtonTypes.Back);
 	}
@@ -68,7 +68,7 @@ public class SignInViewController : BaseViewController
 	private static void SignInViewModel_OnCancelButtonClicked()
 	{
 		BaseViewController.StopIdleTimer();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "cancel");
+		BaseViewController.AnalyticsAddViewEvent("buttonPress", "cancel");
 		OrchestrationService.ViewGoBackSafe("PromptSignInController cancel", popOnly: false);
 	}
 }

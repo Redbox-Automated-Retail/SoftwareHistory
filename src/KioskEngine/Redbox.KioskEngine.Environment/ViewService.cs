@@ -123,7 +123,12 @@ public class ViewService : IViewService
 			{
 				IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
 				Dictionary<string, string> dictionary = new Dictionary<string, string>();
-				dictionary.Add("viewName", viewFrameInstance.ViewFrame.ViewName);
+				string value = viewFrameInstance.ViewFrame.ViewName;
+				if (viewFrameInstance.Parameter != null && (viewFrameInstance.Parameter as IViewAnalyticsName)?.ViewAnalyticsName != null)
+				{
+					value = ((IViewAnalyticsName)viewFrameInstance.Parameter).ViewAnalyticsName;
+				}
+				dictionary.Add("viewName", value);
 				dictionary.Add("viewSequence", shoppingSession.ViewsShown.ToString());
 				dictionary.Add("viewVersion", viewFrame?.ViewVersion ?? "not defined");
 				dictionary.Add("activeFlag", viewFrameInstance?.ViewFrame?.ActiveFlag ?? "not defined");

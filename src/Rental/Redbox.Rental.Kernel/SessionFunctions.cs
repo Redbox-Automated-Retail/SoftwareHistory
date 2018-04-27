@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
+using Redbox.Rental.Services;
 using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Kernel;
@@ -12,10 +14,28 @@ public static class SessionFunctions
 {
 	private static BaseSettingFunctions _baseSettingFunctions = new BaseSettingFunctions();
 
-	[KernelFunction(Name = "kernel.initialize_session")]
-	public static void InitializeSession()
+	[KernelFunction(Name = "kernel.close_open_session_and_start_new_rental_session")]
+	public static void CloseOpenSessionAndStartNewRentalSession(string newSessionContext)
 	{
-		Session.Instance = new Session();
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(newSessionContext);
+	}
+
+	[KernelFunction(Name = "kernel.is_personalization_session_signed_in")]
+	public static bool IsPersonalizationSessionSignedIn()
+	{
+		return OrchestrationService.IsPersonalizationSessionSignedIn();
+	}
+
+	[KernelFunction(Name = "kernel.is_rental_session_active")]
+	public static bool IsRentalSessionActive()
+	{
+		return OrchestrationService.IsRentalSessionActive();
+	}
+
+	[KernelFunction(Name = "kernel.close_shopping_cart_analytics")]
+	public static void CloseShoppingCartAnalytics(string sessionId, string isSessionAbandoned)
+	{
+		OrchestrationService.CloseShoppingCartAnalytics((sessionId != null) ? new Guid(sessionId) : Guid.NewGuid(), isSessionAbandoned);
 	}
 
 	[KernelFunction(Name = "kernel.get_session_value")]

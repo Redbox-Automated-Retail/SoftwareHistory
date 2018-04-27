@@ -27,6 +27,14 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 		public bool isOpen { get; set; }
 
+		public string loggedInCustomerProfileNumber { get; set; }
+
+		public string customerProfileNumber { get; set; }
+
+		public string accountNumber { get; set; }
+
+		public string transactionID { get; set; }
+
 		public AnalyticsSession(string newSessionId, AnalyticsSessionType newSessionType)
 		{
 			sessionId = newSessionId;
@@ -138,6 +146,56 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 		AddAttribute("viewEvent", "subItemValue", subItemValue, sessionId);
 	}
 
+	public void AddLoggedInCustomerProfileNumber(string customerProfileNumber)
+	{
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service != null)
+		{
+			IShoppingSession currentSession = service.GetCurrentSession();
+			if (currentSession != null)
+			{
+				AddLoggedInCustomerProfileNumber(customerProfileNumber, currentSession.Id.ToString());
+			}
+		}
+	}
+
+	public void AddLoggedInCustomerProfileNumber(string customerProfileNumber, string sessionId)
+	{
+		if (!m_analyticsSessions.ContainsKey(sessionId))
+		{
+			LogHelper.Instance.Log($"Requested analytics session ({sessionId}) not found to add logged in Customer Profile Number.");
+		}
+		else
+		{
+			m_analyticsSessions[sessionId].loggedInCustomerProfileNumber = customerProfileNumber;
+		}
+	}
+
+	public void AddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId)
+	{
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service != null)
+		{
+			IShoppingSession currentSession = service.GetCurrentSession();
+			if (currentSession != null)
+			{
+				AddAuthTransactionInfo(customerProfileNumber, accountNumber, transactionId, currentSession.Id.ToString());
+			}
+		}
+	}
+
+	public void AddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId, string sessionId)
+	{
+		if (!m_analyticsSessions.ContainsKey(sessionId))
+		{
+			LogHelper.Instance.Log($"Requested analytics session ({sessionId}) not found to add auth transaction info.");
+			return;
+		}
+		m_analyticsSessions[sessionId].customerProfileNumber = customerProfileNumber;
+		m_analyticsSessions[sessionId].accountNumber = accountNumber;
+		m_analyticsSessions[sessionId].transactionID = transactionId;
+	}
+
 	public void Close(string sessionId)
 	{
 		LogHelper.Instance.Log($"Analytics:Close({sessionId}) requested");
@@ -162,6 +220,10 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				DateTime? viewShownTime = service.GetViewShownTime();
 				AddAttribute("view", "viewDuration", (now - viewShownTime).ToString(), sessionId);
 			}
+			AddElementIfNeeded("session", "loggedInCustomerProfileNumber", analyticsSession.loggedInCustomerProfileNumber, sessionId);
+			AddElementIfNeeded("session", "customerProfileNumber", analyticsSession.customerProfileNumber, sessionId);
+			AddElementIfNeeded("session", "accountNumber", analyticsSession.accountNumber, sessionId);
+			AddElementIfNeeded("session", "transactionID", analyticsSession.transactionID, sessionId);
 			AddElement("session", "sessionEnd", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"), sessionId);
 			AddElement("session", "sessionDuration", (DateTime.Now - analyticsSession.startTime).ToString(), sessionId);
 			analyticsSession.isOpen = false;
@@ -358,6 +420,78 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 		}
 	}
 
+	public void AddOrUpdateElement(string parentNodeName, string elementName, string elementValue)
+	{
+		try
+		{
+			XElement lastNode = GetLastNode(parentNodeName);
+			if (lastNode != null)
+			{
+				XElement xElement = lastNode.Elements().FirstOrDefault((XElement xElement2) => xElement2.Name == elementName);
+				if (xElement == null)
+				{
+					lastNode.Add(new XElement(elementName, elementValue));
+				}
+				else
+				{
+					xElement.Value = elementValue;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log($"An exception was raised in SessionAnalyticsService.AddOrUpdateElement({parentNodeName},{elementName},{elementValue})", e);
+		}
+	}
+
+	public void AddOrUpdateElement(string parentNodeName, string elementName, string elementValue, string bufferedSessionID)
+	{
+		try
+		{
+			XElement lastNode = GetLastNode(parentNodeName, bufferedSessionID);
+			if (lastNode != null)
+			{
+				XElement xElement = lastNode.Elements().FirstOrDefault((XElement xElement2) => xElement2.Name == elementName);
+				if (xElement == null)
+				{
+					lastNode.Add(new XElement(elementName, elementValue));
+				}
+				else
+				{
+					xElement.Value = elementValue;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log($"An exception was raised in SessionAnalyticsService.AddOrUpdateElement({parentNodeName},{elementName},{elementValue},{bufferedSessionID})", e);
+		}
+	}
+
+	public void RemoveElement(string parentNodeName, string elementName)
+	{
+		try
+		{
+			GetLastNode(parentNodeName)?.Elements().FirstOrDefault((XElement xElement) => xElement.Name == elementName)?.Remove();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log($"An exception was raised in SessionAnalyticsService.RemoveElement({parentNodeName},{elementName})", e);
+		}
+	}
+
+	public void RemoveElement(string parentNodeName, string elementName, string bufferedSessionId)
+	{
+		try
+		{
+			GetLastNode(parentNodeName, bufferedSessionId)?.Elements().FirstOrDefault((XElement xElement) => xElement.Name == elementName)?.Remove();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log($"An exception was raised in SessionAnalyticsService.RemoveElement({parentNodeName},{elementName},{bufferedSessionId})", e);
+		}
+	}
+
 	public void AddAttribute(string parentNodeName, string attributeName, string attributeValue)
 	{
 		try
@@ -466,5 +600,13 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 		Buffer.BlockCopy(array, 0, array2, 4, array.Length);
 		Buffer.BlockCopy(BitConverter.GetBytes(bytes.Length), 0, array2, 0, 4);
 		return Convert.ToBase64String(array2);
+	}
+
+	private void AddElementIfNeeded(string parentNodeName, string element, string value, string sessionId)
+	{
+		if (!string.IsNullOrWhiteSpace(value))
+		{
+			AddElement(parentNodeName, element, value, sessionId);
+		}
 	}
 }

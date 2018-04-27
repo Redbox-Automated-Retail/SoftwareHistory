@@ -323,6 +323,26 @@ public class DataService : IDataService
 		return errorList;
 	}
 
+	public ErrorList GetProductByBarcode(string barcode, out IKioskProduct kioskProduct)
+	{
+		WaitForFirstLoad();
+		kioskProduct = null;
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				kioskProduct = _kioskProductView.GetProductByBarcode(barcode);
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetProductByBarcode", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
 	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, out List<IKioskProduct> products)
 	{
 		WaitForFirstLoad();
@@ -472,6 +492,8 @@ public class DataService : IDataService
 			store.State = "IL";
 			store.PurchaseTaxRate = 8m;
 			store.RentalTaxRate = 8m;
+			store.ServiceFee = 0.1m;
+			store.ServiceFeeTaxRate = 8m;
 			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");
 		}
 		return store;

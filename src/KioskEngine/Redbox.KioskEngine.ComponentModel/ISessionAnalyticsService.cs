@@ -26,6 +26,14 @@ public interface ISessionAnalyticsService
 
 	void AddElements(string parentNodeName, Dictionary<string, string> elements);
 
+	void AddOrUpdateElement(string parentNodeName, string elementName, string elementValue);
+
+	void AddOrUpdateElement(string parentNodeName, string elementName, string elementValue, string bufferedSessionID);
+
+	void RemoveElement(string parentNodeName, string elementName);
+
+	void RemoveElement(string parentNodeName, string elementName, string bufferedSessionId);
+
 	void AddAttribute(string parentNodeName, string attributeName, string attributeValue);
 
 	void AddAttributes(string parentNodeName, Dictionary<string, string> attributes);
@@ -41,4 +49,12 @@ public interface ISessionAnalyticsService
 	void AddAttribute(string parentNodeName, string attributeName, string attributeValue, string bufferedSessionID);
 
 	void AddAttributes(string parentNodeName, Dictionary<string, string> attributes, string bufferedSessionID);
+
+	void AddLoggedInCustomerProfileNumber(string customerProfileNumber);
+
+	void AddLoggedInCustomerProfileNumber(string customerProfileNumber, string sessionId);
+
+	void AddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId);
+
+	void AddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId, string sessionId);
 }

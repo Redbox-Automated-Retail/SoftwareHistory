@@ -26,7 +26,12 @@
 												<xs:attribute name="productType" type="xs:string" />
 												<xs:attribute name="status" type="xs:string" />
 												<xs:attribute name="sourceType" type="xs:string" />
-											</xs:complexType>
+                        <xs:attribute name="extraNight" type="xs:string" />
+                        <xs:attribute name="productPricingId" type="xs:string" />
+                        <xs:attribute name="initialDays" type="xs:string" />
+                        <xs:attribute name="defaultInitialNightPrice" type="xs:string" />
+                        <xs:attribute name="defaultExtraNightPrice" type="xs:string" />
+                      </xs:complexType>
 										</xs:element>
 									</xs:sequence>
 								</xs:complexType>
@@ -205,7 +210,11 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="abandon" type="xs:string" minOccurs="0" maxOccurs="1" />
-				<xs:element name="sessionEnd" type="xs:string" minOccurs="1" maxOccurs="1" />
+        <xs:element name="loggedInCustomerProfileNumber" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="customerProfileNumber" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="transactionID" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="accountNumber" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="sessionEnd" type="xs:string" minOccurs="1" maxOccurs="1" />
 				<xs:element name="sessionDuration" type="xs:string" minOccurs="1" maxOccurs="1" />
 			</xs:all>
 		</xs:complexType>

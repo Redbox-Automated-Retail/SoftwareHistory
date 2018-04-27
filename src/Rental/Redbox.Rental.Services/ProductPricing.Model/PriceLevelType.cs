@@ -7,5 +7,6 @@ public enum PriceLevelType
 	Dvd,
 	Bluray,
 	Games,
-	DigitalCode
+	DigitalCode,
+	_4KUHD
 }

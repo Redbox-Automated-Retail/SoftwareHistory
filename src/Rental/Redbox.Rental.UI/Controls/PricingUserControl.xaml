@@ -6,22 +6,31 @@
       <RowDefinition Height="auto" />
       <RowDefinition Height="auto" />
       <RowDefinition Height="auto" />
+      <RowDefinition Height="auto" />
+      <RowDefinition Height="auto" />
+      <RowDefinition Height="auto" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="60*" />
       <ColumnDefinition Width="40*" />
     </Grid.ColumnDefinitions>
-    <TextBlock Name="SubtotalLabel" Grid.Row="0" Grid.Column="0" Margin="0,7,0,7" Style="{StaticResource font_museo_slab_900_16}" Foreground="#4a4a4a" Text="{Binding Path=SubtotalLabelText, FallbackValue=Subtotal}" />
-    <TextBlock Name="SubtotalValue" Grid.Row="0" Grid.Column="1" Margin="0,7,0,7" HorizontalAlignment="Right" Style="{StaticResource font_museo_slab_900_16}" Foreground="#4a4a4a" Text="{Binding Path=SubtotalValueText, FallbackValue=$0.00}" />
-    <TextBlock Name="DiscountLabel" Grid.Row="1" Grid.Column="0" Margin="0,7,0,7" Style="{StaticResource font_montserrat_medium_16}" Foreground="#d0011b" Text="{Binding Path=DiscountLabelText, FallbackValue=Discounts}" Visibility="{Binding Path=DiscountLineVisibility}" />
-    <TextBlock Name="DiscountValue" Grid.Row="1" Grid.Column="1" Margin="0,7,0,7" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_medium_16}" Foreground="#d0011b" Text="{Binding Path=DiscountValueText, FallbackValue=$0.00}" Visibility="{Binding Path=DiscountLineVisibility}" />
-    <TextBlock Name="TaxLabel" Grid.Row="2" Grid.Column="0" Margin="0,7,0,7" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Text="{Binding Path=TaxLabelText, FallbackValue=Tax}" Visibility="{Binding Path=TaxLineVisibility}" />
-    <TextBlock Name="TaxValue" Grid.Row="2" Grid.Column="1" Margin="0,7,0,7" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Text="{Binding Path=TaxValueText, FallbackValue=$0.00}" Visibility="{Binding Path=TaxLineVisibility}" />
-    <TextBlock Name="TotalLabel" Grid.Row="3" Grid.Column="0" Margin="0,7,0,7" Style="{StaticResource font_montserrat_bold_30}" Foreground="#4a4a4a" Text="{Binding Path=TotalLabelText, FallbackValue=Total:}" />
-    <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,7,0,7" Orientation="Horizontal" HorizontalAlignment="Right">
-      <TextBlock Name="TotalValueCurrentSign" Grid.Row="3" Grid.Column="1" Margin="0,6,3,0" HorizontalAlignment="Right" Text="$" Style="{StaticResource font_montserrat_bold_15}" Foreground="#4a4a4a" />
-      <TextBlock Name="TotalValue" Grid.Row="3" Grid.Column="1" Margin="0,0,0,0" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_bold_30}" Foreground="#4a4a4a" Text="{Binding Path=TotalValueText, FallbackValue=0.00}" />
+    <TextBlock Name="ReservedDiscsLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=ReservedDiscsLabelText, FallbackValue=Reserved Discs}" Visibility="{Binding Path=ReservedDiscsLineVisibility}" />
+    <TextBlock Name="ReservedDiscsFeeValue" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=ReservedDiscsValueText, FallbackValue=$0.00}" Visibility="{Binding Path=ReservedDiscsLineVisibility}" />
+    <TextBlock Name="AddedDiscsLabel" Grid.Row="1" Grid.Column="0" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=AddedDiscsLabelText, FallbackValue=Added Discs}" Visibility="{Binding Path=AddedDiscsLineVisibility}" />
+    <TextBlock Name="AddedDiscsFeeValue" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=AddedDiscsValueText, FallbackValue=$0.00}" Visibility="{Binding Path=AddedDiscsLineVisibility}" />
+    <TextBlock Name="SubtotalLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource font_museo_slab_900_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=SubtotalLabelText, FallbackValue=Subtotal}" Visibility="{Binding Path=SubtotalLineVisibility}" />
+    <TextBlock Name="SubtotalValue" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_museo_slab_900_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=SubtotalValueText, FallbackValue=$0.00}" Visibility="{Binding Path=SubtotalLineVisibility}" />
+    <TextBlock Name="DiscountLabel" Grid.Row="3" Grid.Column="0" Style="{StaticResource font_montserrat_medium_16}" Foreground="#d0011b" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=DiscountLabelText, FallbackValue=Discounts}" Visibility="{Binding Path=DiscountLineVisibility}" />
+    <TextBlock Name="DiscountValue" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_medium_16}" Foreground="#d0011b" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=DiscountValueText, FallbackValue=$0.00}" Visibility="{Binding Path=DiscountLineVisibility}" />
+    <TextBlock Name="ServiceFeeLabel" Grid.Row="4" Grid.Column="0" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=ServiceFeeLabelText, FallbackValue=Service Fee}" Visibility="{Binding Path=ServiceFeeLineVisibility}" />
+    <TextBlock Name="ServiceFeeValue" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=ServiceFeeValueText, FallbackValue=$0.00}" Visibility="{Binding Path=ServiceFeeLineVisibility}" />
+    <TextBlock Name="TaxLabel" Grid.Row="5" Grid.Column="0" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=TaxLabelText, FallbackValue=Tax}" Visibility="{Binding Path=TaxLineVisibility}" />
+    <TextBlock Name="TaxValue" Grid.Row="5" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_regular_16}" Foreground="#4a4a4a" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=TaxValueText, FallbackValue=$0.00}" Visibility="{Binding Path=TaxLineVisibility}" />
+    <TextBlock Name="TotalLabel" Grid.Row="6" Grid.Column="0" Margin="0,7,0,7" Style="{StaticResource font_montserrat_bold_30}" Foreground="#4a4a4a" Text="{Binding Path=TotalLabelText, FallbackValue=Total:}" />
+    <StackPanel Grid.Row="6" Grid.Column="1" Margin="0,7,0,7" Orientation="Horizontal" HorizontalAlignment="Right">
+      <TextBlock Name="TotalValueCurrentSign" Grid.Row="6" Grid.Column="1" Margin="0,6,3,0" HorizontalAlignment="Right" Text="$" Style="{StaticResource font_montserrat_bold_15}" Foreground="#4a4a4a" />
+      <TextBlock Name="TotalValue" Grid.Row="6" Grid.Column="1" Margin="0,0,0,0" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_bold_30}" Foreground="#4a4a4a" Text="{Binding Path=TotalValueText, FallbackValue=0.00}" />
     </StackPanel>
-    <Line Name="TotalLine" X1="0" X2="1000" Grid.Row="3" Grid.ColumnSpan="2" Stroke="#979797" StrokeThickness="1" />
+    <Line Name="TotalLine" X1="0" X2="1000" Grid.Row="6" Grid.ColumnSpan="2" Stroke="#979797" StrokeThickness="1" />
   </Grid>
 </UserControl>

@@ -434,7 +434,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public bool HasHotDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsHotDeal ?? false) ?? false;
+	public bool HasDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsDeal ?? false) ?? false;
 
 	public bool HasMultiNightPrice => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsMultiNightPrice ?? false) ?? false;
 

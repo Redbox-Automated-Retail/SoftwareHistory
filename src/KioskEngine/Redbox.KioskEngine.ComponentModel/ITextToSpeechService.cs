@@ -6,8 +6,6 @@ public interface ITextToSpeechService
 
 	bool AudioDeviceConnected { get; set; }
 
-	bool InReturnFlow { get; set; }
-
 	event AudioDeviceConnectionChanged OnAudioDeviceConnectionChanged;
 
 	void Reset();
@@ -17,4 +15,6 @@ public interface ITextToSpeechService
 	void TTSRepeatSequence();
 
 	int GetTimeout(string timeoutType, int defaultTimeout);
+
+	void ClearOnAudioDeviceConnectionChanged();
 }

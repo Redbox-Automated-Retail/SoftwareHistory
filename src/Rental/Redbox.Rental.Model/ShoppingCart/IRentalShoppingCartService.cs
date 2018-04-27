@@ -27,6 +27,8 @@ public interface IRentalShoppingCartService
 
 	void RemoveMultiDiscDiscsFromRentalShoppingCart(Guid shoppingCartSessionId);
 
+	void RemoveNonReservedProductsFromRentalShoppingCart(Guid shoppingCartSessionId);
+
 	IRentalShoppingCartItem CreateRentalShoppingCartItemFromTitleProduct(ITitleProduct titleProduct);
 
 	IRentalShoppingCartItem CreateRentalShoppingCartItemFromProductId(long productId);

@@ -157,6 +157,8 @@ public class DisplayGroupModel : BrowseItemModel
 
 	public string ComingSoonButtonText { get; set; }
 
+	public Brush BackgroundBrush { get; set; }
+
 	public Style SelectedTitleStyle { get; set; }
 
 	public Style UnselectedTitleStyle { get; set; }

@@ -1,5 +1,4 @@
 using System.Windows.Input;
-using Redbox.Rental.UI.ControllersLogic;
 
 namespace Redbox.Rental.UI;
 
@@ -53,9 +52,7 @@ public class Commands
 
 	public static readonly RoutedCommand AddBluRayCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand AddDigitalCodeCommand = new RoutedCommand();
-
-	public static readonly RoutedCommand DigitalCodeInfoCommand = new RoutedCommand();
+	public static readonly RoutedCommand Add4kUhdCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand CancelTitleRollupOverlayCommand = new RoutedCommand();
 
@@ -111,37 +108,49 @@ public class Commands
 
 	public static readonly RoutedCommand CancelDialogCommand = new RoutedCommand();
 
-	public static readonly LogicRoutedCommand KeyButtonCommand = new LogicRoutedCommand();
+	public static readonly RoutedCommand FormatFilterPopupCommand = new RoutedCommand();
 
-	public static readonly LogicRoutedCommand BackButtonCommand = new LogicRoutedCommand();
+	public static readonly RoutedCommand NoThanksCommand = new RoutedCommand();
 
-	public static readonly LogicRoutedCommand ClearButtonCommand = new LogicRoutedCommand();
+	public static readonly RoutedCommand UpgradeCommand = new RoutedCommand();
 
-	public static readonly LogicRoutedCommand DomainButtonCommand = new LogicRoutedCommand();
+	public static readonly RoutedCommand ToggleUpsellCommand = new RoutedCommand();
 
-	public static readonly LogicRoutedCommand DotComButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand KeyButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand SpaceButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand BackButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand CancelButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand ClearButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand ContinueButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand DomainButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand CapButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand DotComButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand EmailSelectedCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand SpaceButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand SnapshotButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand CancelButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand PerksButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand ContinueButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand PromoButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand CapButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand PhonePinButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand EmailSelectedCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand EmailCodeButtonCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand SelectedButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand PointsIncludeCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand SnapshotButtonCommand = new DynamicRoutedCommand();
 
-	public static readonly LogicRoutedCommand PointsExcludeCommand = new LogicRoutedCommand();
+	public static readonly DynamicRoutedCommand PerksButtonCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand PromoButtonCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand PhonePinButtonCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand EmailCodeButtonCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand PointsIncludeCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand PointsExcludeCommand = new DynamicRoutedCommand();
+
+	public static readonly RoutedCommand PickupCommand = new RoutedCommand();
 }

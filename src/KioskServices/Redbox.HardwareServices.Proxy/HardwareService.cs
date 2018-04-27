@@ -998,7 +998,7 @@ public class HardwareService : IHardwareService
 		return errorList;
 	}
 
-	public Redbox.KioskEngine.ComponentModel.ErrorList ExecuteImmediate(string command, HardwareImmediateExecutionHandler eventHandler, bool clearStack)
+	public Redbox.KioskEngine.ComponentModel.ErrorList ExecuteImmediate(string command, HardwareImmediateExecutionHandler eventHandler, bool clearStack, string bundleName = null)
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList result = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		Interlocked.Increment(ref m_working);
@@ -1023,14 +1023,22 @@ public class HardwareService : IHardwareService
 							job.ClearStack();
 						}
 					}
-					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new HardwareImmediateExecutionCallback
+					IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+					if (bundleName != null && bundleName != service.CurrentBundleName)
 					{
-						EventHandler = eventHandler,
-						Command = command,
-						Stack = stack,
-						Errors = errorList,
-						Success = hardwareCommandResult.Success
-					});
+						LogHelper.Instance.Log($"Bundle started on {bundleName} and attempted to execute on {service?.CurrentBundleName ?? string.Empty}");
+					}
+					else
+					{
+						ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new HardwareImmediateExecutionCallback
+						{
+							EventHandler = eventHandler,
+							Command = command,
+							Stack = stack,
+							Errors = errorList,
+							Success = hardwareCommandResult.Success
+						});
+					}
 				}
 			}
 			finally

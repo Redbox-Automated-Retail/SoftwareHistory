@@ -10,96 +10,25 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services;
-using Redbox.Rental.Services.Pricing;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Kernel;
 
 public static class RentalShoppingCartFunctions
 {
+	[KernelFunction(Name = "kernel.abandon_rental_shopping_cart")]
+	public static void AbandonRentalShoppingCart(string id, string reason)
+	{
+		Guid id2 = ((id != null) ? new Guid(id) : Guid.NewGuid());
+		(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(id2))?.Abandon(reason);
+	}
+
 	[KernelFunction(Name = "kernel.create_rental_shopping_cart")]
 	public static string CreateRentalShoppingCart(string id)
 	{
 		Guid id2 = ((id != null) ? new Guid(id) : Guid.NewGuid());
 		ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CreateNew(id2);
 		return id2.ToString();
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_add_item_with_prices")]
-	public static void AddItemWithPrices(string sessionId, LuaTable catalogEntry, string actionCode, string sourceType, LuaTable priceData, string initialNightPrice)
-	{
-		if (catalogEntry == null || priceData == null)
-		{
-			return;
-		}
-		IPricingRecord pricingRecord = null;
-		long result = 0L;
-		long.TryParse(GetLuaTableStringValue(catalogEntry, "product_id"), out result);
-		if (result != 0L)
-		{
-			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			IKioskProduct kioskProduct = null;
-			service?.GetProduct(result, excludeTitleRollup: true, out kioskProduct);
-			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-			if (titleProduct != null)
-			{
-				pricingRecord = GetPricingRecordFromPriceSetData(priceData)?.PriceRecords.FirstOrDefault((IPricingRecord x) => (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.DVD && x.TitleType == TitleType.DVD && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.Bluray && x.TitleType == TitleType.Bluray && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Games && x.TitleType == TitleType.All && x.TitleFamily == TitleFamily.Games));
-				if (pricingRecord != null)
-				{
-					decimal result2 = 0m;
-					if (decimal.TryParse(initialNightPrice, out result2))
-					{
-						pricingRecord.InitialNight = result2;
-					}
-				}
-			}
-		}
-		AddItem(sessionId, catalogEntry, actionCode, sourceType, pricingRecord);
-	}
-
-	private static IPricingSet GetPricingRecordFromPriceSetData(LuaTable priceData)
-	{
-		IPricingSet pricingSet = null;
-		LogHelper.Instance.Log("Getting reservation item price set values");
-		if (priceData != null)
-		{
-			pricingSet = new PricingSet();
-			if (priceData["Movie"] is LuaTable luaTable)
-			{
-				if (luaTable["default"] is LuaTable luaTable2)
-				{
-					IPricingRecord pricingRecord = new PricingRecord
-					{
-						TitleFamily = TitleFamily.Movies,
-						TitleType = TitleType.DVD
-					};
-					pricingSet.PriceRecords.Add(pricingRecord);
-					AssignPriceValuesFromLuaTable(pricingRecord, luaTable2);
-				}
-				if (luaTable["BluRay"] is LuaTable luaTable3)
-				{
-					IPricingRecord pricingRecord2 = new PricingRecord
-					{
-						TitleFamily = TitleFamily.Movies,
-						TitleType = TitleType.Bluray
-					};
-					pricingSet.PriceRecords.Add(pricingRecord2);
-					AssignPriceValuesFromLuaTable(pricingRecord2, luaTable3);
-				}
-			}
-			if (priceData["Game"] is LuaTable luaTable4)
-			{
-				LuaTable luaTable5 = luaTable4["default"] as LuaTable;
-				IPricingRecord pricingRecord3 = new PricingRecord
-				{
-					TitleFamily = TitleFamily.Games,
-					TitleType = TitleType.All
-				};
-				pricingSet.PriceRecords.Add(pricingRecord3);
-				AssignPriceValuesFromLuaTable(pricingRecord3, luaTable5);
-			}
-		}
-		return pricingSet;
 	}
 
 	private static void AssignPriceValuesFromLuaTable(IPricingRecord pricingRecord, LuaTable luaTable)
@@ -140,68 +69,6 @@ public static class RentalShoppingCartFunctions
 			}
 		}
 		return result;
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_add_item")]
-	public static void AddItem(string sessionId, LuaTable catalogEntry, string actionCode, string sourceType)
-	{
-		AddItem(sessionId, catalogEntry, actionCode, sourceType, null);
-	}
-
-	public static void AddItem(string sessionId, LuaTable catalogEntry, string actionCode, string sourceType, IPricingRecord pricingRecord)
-	{
-		if (catalogEntry == null)
-		{
-			return;
-		}
-		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		long result = 0L;
-		long.TryParse(GetLuaTableStringValue(catalogEntry, "product_id"), out result);
-		IRentalShoppingCartItem rentalShoppingCartItem = service.CreateRentalShoppingCartItemFromProductId(result);
-		if (rentalShoppingCartItem != null)
-		{
-			ItemSourceType result2 = ItemSourceType.Browse;
-			if (!string.IsNullOrEmpty(sourceType))
-			{
-				Enum.TryParse<ItemSourceType>(sourceType, out result2);
-			}
-			rentalShoppingCartItem.SourceType = result2;
-			RentalShoppingCartItemAction result3 = RentalShoppingCartItemAction.rental;
-			if (!string.IsNullOrEmpty(actionCode))
-			{
-				Enum.TryParse<RentalShoppingCartItemAction>(actionCode, out result3);
-			}
-			rentalShoppingCartItem.Action = result3;
-			if (rentalShoppingCartItem.SourceType == ItemSourceType.Reservation)
-			{
-				rentalShoppingCartItem.Barcode = GetLuaTableStringValue(catalogEntry, "barcode");
-			}
-			rentalShoppingCartItem.Quantity = 1m;
-			rentalShoppingCartItem.Status = LineItemStatus.Pending;
-			Guid id = new Guid(sessionId);
-			(service?.GetRentalShoppingCart(id))?.AddItem(rentalShoppingCartItem, pricingRecord);
-		}
-		else
-		{
-			LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.AddItem. Unable to find product with id {0}", result);
-		}
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_remove_item")]
-	public static void RemoveItem(string sessionId, string indexValue, string userRemovedValue)
-	{
-		bool result = true;
-		if (!bool.TryParse(userRemovedValue, out result))
-		{
-			result = true;
-		}
-		int result2 = 0;
-		if (int.TryParse(indexValue, out result2))
-		{
-			result2--;
-			Guid id = new Guid(sessionId);
-			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.RemoveItemFromRentalShoppingCart(id, result2, result);
-		}
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_clear")]
@@ -349,22 +216,6 @@ public static class RentalShoppingCartFunctions
 		}
 	}
 
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_bluray_upsell_dialog_needs_to_be_shown")]
-	public static bool DialogNeedsToBeShown()
-	{
-		return (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart)?.BlurayUpsellInfo.DialogNeedsToBeShown ?? false;
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_bluray_upsell_set_do_not_show_again")]
-	public static void SetDoNotShowAgain(bool doNotShowAgain)
-	{
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart != null)
-		{
-			rentalShoppingCart.BlurayUpsellInfo.DoNotShowAgain = doNotShowAgain;
-		}
-	}
-
 	[KernelFunction(Name = "kernel.current_rental_shopping_cart_coming_soon_optin_set_email_address")]
 	public static void SetEmailAddress(string emailAddress)
 	{
@@ -389,15 +240,6 @@ public static class RentalShoppingCartFunctions
 		}
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_set_pickup_recommendations_shown")]
-	public static void SetPickupRecommendationsShown(string sessionId, bool pickupRecommendationsShown)
-	{
-		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			rentalShoppingCart.PickupRecommendationsShown = pickupRecommendationsShown;
-		});
-	}
-
 	[KernelFunction(Name = "kernel.rental_shopping_cart_get_pickup_recommendations_shown")]
 	public static bool GetPickupRecommendationsShown(string id)
 	{
@@ -407,67 +249,6 @@ public static class RentalShoppingCartFunctions
 			result = rentalShoppingCart.PickupRecommendationsShown;
 		});
 		return result;
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_bluray_upsell_add_missing_upsell_items")]
-	public static void AddMissingUpsellItems()
-	{
-		(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart)?.BlurayUpsellInfo.AddMissingBlurayUpsellItems();
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_reject_undecided_bluray_upsell_items")]
-	public static void RejectUndecidedBlurayUpsellItems()
-	{
-		(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart)?.BlurayUpsellInfo.RejectUndecidedUpsellItems();
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_remove_undecided_bluray_upsell_items")]
-	public static void RemoveUndecidedBlurayUpsellItems()
-	{
-		(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart)?.BlurayUpsellInfo.RemoveUndecidedUpsellItems();
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_bluray_upsell_set_offer_response")]
-	public static void SetOfferResponse(long dvdProductId, string offerResponseValue)
-	{
-		BlurayUpsellItemOfferResponse result = BlurayUpsellItemOfferResponse.none;
-		if (Enum.TryParse<BlurayUpsellItemOfferResponse>(offerResponseValue, out result))
-		{
-			(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart)?.BlurayUpsellInfo.SetUpsellOffer(dvdProductId, result);
-			return;
-		}
-		LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.SetOfferResponse. Unable to parse offer response value {0}", offerResponseValue);
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_get_bluray_upsell_item_count")]
-	public static int GetBlurayUpsellItemCount(bool includeOnlyUndecied)
-	{
-		int result = 0;
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart != null)
-		{
-			result = rentalShoppingCart.BlurayUpsellInfo.Items.Count((IBlurayUpsellItem x) => !includeOnlyUndecied || x.OfferResponse == BlurayUpsellItemOfferResponse.none);
-		}
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_get_bluray_upsell_item_by_index")]
-	public static LuaTable GetBlurayUpsellItemByIndex(int index)
-	{
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart != null && rentalShoppingCart.BlurayUpsellInfo.Items.Count >= index)
-		{
-			IBlurayUpsellItem blurayUpsellItem = rentalShoppingCart.BlurayUpsellInfo.Items[index - 1];
-			dictionary["dvd_product_id"] = blurayUpsellItem.DVDProductId;
-			dictionary["blu_ray_product_id"] = blurayUpsellItem.BlurayProductId;
-			dictionary["offer"] = ((blurayUpsellItem.OfferResponse == BlurayUpsellItemOfferResponse.none) ? null : blurayUpsellItem.OfferResponse.ToString());
-		}
-		if (dictionary.Count <= 0)
-		{
-			return null;
-		}
-		return dictionary.ToLuaTable();
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_add_multi_disc_discs")]
@@ -490,20 +271,13 @@ public static class RentalShoppingCartFunctions
 		}
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_remove_item_product_id")]
-	public static void RemoveItemByProduct(string sessionId, LuaTable product, string userRemovedValue)
+	[KernelFunction(Name = "kernel.rental_shopping_cart_remove_non_reserved_products")]
+	public static void RemoveNonReservedProductsFromRentalShoppingCart(string sessionId)
 	{
-		bool result = true;
-		if (!bool.TryParse(userRemovedValue, out result))
+		if (sessionId != null)
 		{
-			result = true;
-		}
-		long result2 = 0L;
-		if (product != null && product["product_id"] != null)
-		{
-			long.TryParse(product["product_id"].ToString(), out result2);
 			Guid shoppingCartSessionId = new Guid(sessionId);
-			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.RemoveItemFromRentalShoppingCartByProductId(shoppingCartSessionId, result2, result);
+			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.RemoveNonReservedProductsFromRentalShoppingCart(shoppingCartSessionId);
 		}
 	}
 
@@ -756,6 +530,43 @@ public static class RentalShoppingCartFunctions
 		}
 	}
 
+	[KernelFunction(Name = "kernel.set_rental_shopping_applied_credits")]
+	public static void SetAppliedCredits(string id, string value)
+	{
+		int appliedCredits = 0;
+		if (int.TryParse(value, out appliedCredits))
+		{
+			ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
+			{
+				rentalShoppingCart.AppliedCredits = appliedCredits;
+			});
+		}
+	}
+
+	[KernelFunction(Name = "kernel.get_rental_shopping_marketing_opt_in_confirmation_status")]
+	public static string GetMarketingOptInConfirmationStatus(string id)
+	{
+		OptInConfirmationStatus result = OptInConfirmationStatus.DoNotShow;
+		ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
+		{
+			result = rentalShoppingCart.MarketingOptInConfirmationStatus;
+		});
+		return result.ToString();
+	}
+
+	[KernelFunction(Name = "kernel.set_rental_shopping_marketing_opt_in_confirmation_status")]
+	public static void SetMarketingOptInConfirmationStatus(string id, string value)
+	{
+		OptInConfirmationStatus newMarketingOptInConfirmationStatus = OptInConfirmationStatus.DoNotShow;
+		if (Enum.TryParse<OptInConfirmationStatus>(value, ignoreCase: true, out newMarketingOptInConfirmationStatus))
+		{
+			ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
+			{
+				rentalShoppingCart.MarketingOptInConfirmationStatus = newMarketingOptInConfirmationStatus;
+			});
+		}
+	}
+
 	[KernelFunction(Name = "kernel.get_rental_shopping_cart_items")]
 	public static LuaTable GetRentalShoppingCartItems(string id)
 	{
@@ -790,6 +601,29 @@ public static class RentalShoppingCartFunctions
 		{
 			rentalShoppingCart.ClearPromoCode();
 		});
+	}
+
+	[KernelFunction(Name = "kernel.rental_shopping_cart_get_total")]
+	public static LuaTable GetTotals(string sessionId)
+	{
+		LuaTable result = null;
+		ITotals totals = null;
+		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
+		{
+			totals = rentalShoppingCart.Totals;
+		});
+		if (totals != null)
+		{
+			result = new Dictionary<string, object>
+			{
+				{ "sub_total", totals.SubTotal },
+				{ "tax_amount", totals.TaxAmount },
+				{ "discount_amount_used", totals.DiscountAmountUsed },
+				{ "service_fee", totals.ServiceFee },
+				{ "grand_total", totals.GrandTotal }
+			}.ToLuaTable();
+		}
+		return result;
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_get_sub_total")]
@@ -855,6 +689,28 @@ public static class RentalShoppingCartFunctions
 		});
 	}
 
+	[KernelFunction(Name = "kernel.rental_shopping_cart_service_fee_enabled")]
+	public static bool ServiceFeeEnabled(string sessionId)
+	{
+		bool result = false;
+		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
+		{
+			result = rentalShoppingCart.ServiceFeeEnabled;
+		});
+		return result;
+	}
+
+	[KernelFunction(Name = "kernel.rental_shopping_cart_default_service_fee_cents")]
+	public static int DefaultServiceFeeCents(string sessionId)
+	{
+		int result = 0;
+		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
+		{
+			result = (int)(rentalShoppingCart.DefaultServiceFee * 100m);
+		});
+		return result;
+	}
+
 	private static Dictionary<string, object> CreateLuaTableFromRentalShoppingCartItem(IRentalShoppingCart rentalShoppingCart, IRentalShoppingCartItem rentalShoppingCartItem)
 	{
 		Dictionary<string, object> dictionary = new Dictionary<string, object>();
@@ -874,12 +730,12 @@ public static class RentalShoppingCartFunctions
 			dictionary["status"] = rentalShoppingCartItem.Status.ToString();
 			dictionary["quantity"] = rentalShoppingCartItem.Quantity;
 			dictionary["source_type"] = rentalShoppingCartItem.SourceType.ToString();
-			IBlurayUpsellItem blurayUpsellItem = rentalShoppingCart?.BlurayUpsellInfo?.Items.FirstOrDefault((IBlurayUpsellItem x) => x.DVDProductId == rentalShoppingCartItem.ProductId || x.BlurayProductId == rentalShoppingCartItem.ProductId);
+			IUpsellItem upsellItem = rentalShoppingCart?.UpsellInfo?.Items.FirstOrDefault((IUpsellItem x) => x.OriginalProductId == rentalShoppingCartItem.ProductId || x.UpsellProductId == rentalShoppingCartItem.ProductId);
 			Dictionary<string, object> dictionary2 = new Dictionary<string, object>();
-			if (blurayUpsellItem != null)
+			if (upsellItem != null)
 			{
-				dictionary2.Add("product_group_id", blurayUpsellItem.ProductGroupId);
-				dictionary2.Add("offer", blurayUpsellItem.OfferResponse.ToString());
+				dictionary2.Add("product_group_id", upsellItem.ProductGroupId);
+				dictionary2.Add("offer", upsellItem.OfferResponse.ToString());
 				dictionary2.Add("title_id", rentalShoppingCartItem.ProductId);
 			}
 			dictionary["blu_ray_upsell"] = dictionary2.ToLuaTable();

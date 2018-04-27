@@ -9,7 +9,6 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
@@ -207,8 +206,6 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		displayCheckoutProductModel.ProductDescriptionLine2Text = $"{text}{arg3}";
 		displayCheckoutProductModel.ProductDescriptionLine3Text = productDescriptionLine3Text;
 		displayCheckoutProductModel.ProductCartPriceText = $"{rentalShoppingCartItem.Price:C}";
-		BannerType productBannerType = BrowseFunctions.GetProductBannerType(titleProduct);
-		BrowseFunctions.ConfigureBanner(displayCheckoutProductModel, titleProduct, hideBanner: false, productBannerType, BaseViewController.GetViewUserControl());
 		displayCheckoutProductModel.TopCancelButtonVisibility = (BaseViewController.IsADAMode ? Visibility.Collapsed : Visibility.Visible);
 		displayCheckoutProductModel.BottomCancelButtonVisibility = ((!BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 	}
@@ -301,6 +298,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				};
 				PromotionService.Instance.SetPromotion(promotion);
 				IPromoCodeValidationInfo promoCodeValidationInfo = BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.ValidateAndUpdatePromoCode();
+				BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.UpdateServiceFee();
 				Action action = delegate
 				{
 					BaseViewController.GetViewService().UnwindToSafe("shopping_cart_view", discard: false, "ShoppingCart:get_promo_code (on_complete)");
@@ -318,7 +316,6 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				{
 					if (!promoCodeValidationInfo.IsCartValid)
 					{
-						OrchestrationService.AnalyticsAddViewEvent("context", "rxgxWarning");
 						MessagePopupViewController.ShowRxGxPromoCodeInvalidWarning(action, action, promoCodeValidationInfo.Message);
 					}
 					else
@@ -330,7 +327,6 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				{
 					if (!promoCodeValidationInfo.IsCartValid)
 					{
-						OrchestrationService.AnalyticsAddViewEvent("context", "titlelevelpromoWarning");
 						MessagePopupViewController.ShowTitleLevelPromoCodeInvalidWarning(action, action);
 					}
 					else
@@ -355,28 +351,23 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				OrchestrationService.AnalyticsAddViewEvent("context", "promoCodeDecline");
 				if (promoCodeValidationResult.Response == PromotionValidationResponse.CodeAlreadyUsed.ToString())
 				{
-					OrchestrationService.AnalyticsAddViewEvent("context", "promoAlreadyUsed");
 					MessagePopupViewController.ShowPromoCodeAlreadyUsedWarning(action2, action2);
 				}
 				else if (promoCodeValidationResult.Response == PromotionValidationResponse.CodeNotValidAtThisLocation.ToString())
 				{
-					OrchestrationService.AnalyticsAddViewEvent("context", "promoInvalidLocation");
 					MessagePopupViewController.ShowPromoCodeNotValidAtThisLocationWarning(action2, action2);
 				}
 				else if (promoCodeValidationResult.Response == PromotionValidationResponse.Error.ToString() || promoCodeValidationResult.Response == "Server Busy" || promoCodeValidationResult.Response == "Communications Failure")
 				{
 					flag = false;
-					OrchestrationService.AnalyticsAddViewEvent("context", "promoCantBeUsed");
 					MessagePopupViewController.ShowPromoCodeValidationFailureWarning(action2, action2);
 				}
 				else if (promoCodeValidationResult.Response == "GameRequired")
 				{
-					OrchestrationService.AnalyticsAddViewEvent("context", "promoCantBeUsed");
 					MessagePopupViewController.ShowPromoCodeGameRequiredWarning(action2, action2);
 				}
 				else
 				{
-					OrchestrationService.AnalyticsAddViewEvent("context", "promoNotValid");
 					MessagePopupViewController.ShowPromoCodeNotValidWarning(action2, action2);
 				}
 				OrchestrationService.AnalyticsAddAttribute("promoCode", "online", flag.ToString());
@@ -416,7 +407,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 	private static void ShoppingCartViewModel_OnSignInButtonClicked()
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "SignIn");
+		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "signin-cart");
 		OrchestrationService.ViewShow("sign_in_view");
 	}
 
@@ -446,7 +437,6 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				OrchestrationService.ExecuteScript("check_out");
 				return;
 			}
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("context", "rxgxWarning");
 			string message = $"{promoCodeValidationInfo.Title}{Environment.NewLine + Environment.NewLine}{promoCodeValidationInfo.Message}";
 			MessagePopupViewController.ShowRxGxPromoCodeInvalidWarning(delegate
 			{
@@ -537,7 +527,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 	{
 		BrowseState.TitleFamily = titleFamily;
 		BrowseState.TitleType = TitleType.All;
-		BrowseState.BrowseSelectedSort = "Newest";
+		BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
 		BrowseState.Genre = genre;
 		BrowseState.BrowseMode = BrowseViewFilter.All;
 		BrowseState.PageNumber = 1;
@@ -559,6 +549,9 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			shoppingCartViewModel.TermsText = (flag ? Resources.credit_label_bottom_text : Resources.by_pressing_pay);
 			shoppingCartViewModel.UseCreditsButtonText = Resources.use_credits_button;
 			shoppingCartViewModel.PassiveSaleNote = Resources.passive_sale_note;
+			int num = (int)((rentalShoppingCart?.DefaultServiceFee ?? 0m) * 100m);
+			shoppingCartViewModel.ServiceFeeText = string.Format(Resources.service_fee_text, num);
+			shoppingCartViewModel.ServiceFeeTextVisibility = ((num <= 0) ? Visibility.Collapsed : Visibility.Visible);
 			shoppingCartViewModel.TermsAndPrivacyButtonText = Resources.terms_privacy;
 			shoppingCartViewModel.PromoCodeButtonText = Resources.promo_code_button;
 			shoppingCartViewModel.SignInButtonText = Resources.sign_in;
@@ -568,6 +561,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			shoppingCartViewModel.UsePointsButtonEnabled = (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) > 0;
 			shoppingCartViewModel.DontMissYourPerksText = Resources.perks_dont_miss;
 			shoppingCartViewModel.PricingModel.DiscountLabelText = Resources.discount_label;
+			shoppingCartViewModel.PricingModel.ServiceFeeLabelText = Resources.service_fee_label;
 			shoppingCartViewModel.PricingModel.SubtotalLabelText = Resources.subtotal_label;
 			shoppingCartViewModel.PricingModel.TaxLabelText = Resources.tax_label;
 			shoppingCartViewModel.PricingModel.TotalLabelText = Resources.total_label;
@@ -584,6 +578,8 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			}
 			shoppingCartViewModel.PricingModel.DiscountValueText = text2;
 			shoppingCartViewModel.PricingModel.DiscountLineVisibility = ((!((rentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
+			shoppingCartViewModel.PricingModel.ServiceFeeValueText = $"{rentalShoppingCart?.Totals?.ServiceFee:C}";
+			shoppingCartViewModel.PricingModel.ServiceFeeLineVisibility = ((!((rentalShoppingCart?.Totals?.ServiceFee ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 			shoppingCartViewModel.PayButtonEnabled = rentalShoppingCart != null && rentalShoppingCart.Count > 0;
 			shoppingCartViewModel.PayButtonText = Resources.pay_button;
 			FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();

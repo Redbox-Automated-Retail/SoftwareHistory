@@ -40,13 +40,15 @@ public class MemberPointsLogic : BaseLogic
 	public void CancelButtonCommand_Execute()
 	{
 		CancelAction?.Invoke();
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "cancel");
 	}
 
 	public void ContinueButtonCommand_Execute()
 	{
 		ContinueAction?.Invoke();
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "okay");
 	}
 
 	public List<DisplayProductModel> GetSelectedCartItems()
@@ -143,8 +145,9 @@ public class MemberPointsLogic : BaseLogic
 			if (!Model.SelectedProductIds.Contains(shoppingCartItem.ProductId))
 			{
 				Model.SelectedProductIds.Add(shoppingCartItem.ProductId);
+				long productId = shoppingCartItem.ProductId;
+				BaseLogic.AnalyticsAddViewEvent("buttonPress", $"redeem,{productId}");
 			}
-			Model.ContinueButtonEnabled = true;
 		}
 	}
 
@@ -156,8 +159,9 @@ public class MemberPointsLogic : BaseLogic
 			if (Model.SelectedProductIds.Contains(shoppingCartItem.ProductId))
 			{
 				Model.SelectedProductIds.Remove(shoppingCartItem.ProductId);
+				long productId = shoppingCartItem.ProductId;
+				BaseLogic.AnalyticsAddViewEvent("buttonPress", $"cancelredeem,{productId}");
 			}
-			Model.ContinueButtonEnabled = true;
 		}
 	}
 
@@ -168,10 +172,10 @@ public class MemberPointsLogic : BaseLogic
 		ContinueAction = memberInfo.ContinueAction;
 		Info = memberInfo;
 		Model = pointsModel;
-		Model.PointsIncludeCommand = RegisterRoutedCommand<IRentalShoppingCartItem>(Commands.PointsIncludeCommand, PointsIncludeCommand_Execute);
-		Model.PointsExcludeCommand = RegisterRoutedCommand<IRentalShoppingCartItem>(Commands.PointsExcludeCommand, PointsExcludeCommand_Execute);
-		Model.CancelButtonCommand = RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
+		Model.PointsIncludeCommand = DynamicRouting.RegisterRoutedCommand<IRentalShoppingCartItem>(Commands.PointsIncludeCommand, PointsIncludeCommand_Execute);
+		Model.PointsExcludeCommand = DynamicRouting.RegisterRoutedCommand<IRentalShoppingCartItem>(Commands.PointsExcludeCommand, PointsExcludeCommand_Execute);
+		Model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
 		Func<bool> canExecute = () => Model.ContinueButtonEnabled;
-		Model.ContinueButtonCommand = RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute, canExecute);
+		Model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute, canExecute);
 	}
 }

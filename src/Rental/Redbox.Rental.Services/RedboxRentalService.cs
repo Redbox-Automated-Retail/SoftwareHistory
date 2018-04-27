@@ -1,17 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services;
 
 public class RedboxRentalService : IRedboxRental
 {
+	public class Constants
+	{
+		public class Timers
+		{
+			public const string ReservationExpireTimer = "reservation-expire-timer";
+		}
+	}
+
 	public ErrorList Initialize()
 	{
 		ErrorList errorList = new ErrorList();
@@ -26,6 +38,58 @@ public class RedboxRentalService : IRedboxRental
 		return errorList;
 	}
 
+	public void CloseOpenSessionAndStartNewRentalSession(string newSessionContext)
+	{
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		if (rentalShoppingCart != null)
+		{
+			OrchestrationService.CloseShoppingCartAnalytics(rentalShoppingCart.ShoppingSessionId, true.ToString());
+			rentalShoppingCart.Abandon("User chose to abandon session.");
+			ApplicationState.Instance.IsADAAccessible = false;
+		}
+		StartNewRentalSession(newSessionContext);
+	}
+
+	private void StartNewRentalSession(string context)
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service == null || !service.IsSafeToChangeView())
+		{
+			LogHelper.Instance.Log($"Unable to start new session. view cannot be changed. Current view: {service?.Peek()}");
+			return;
+		}
+		LogHelper.Instance.Log($"Starting new session. context: {context}");
+		while ((service?.ViewStackCount ?? 0) > 0)
+		{
+			service.Pop();
+		}
+		OrchestrationService.StartTimer("reservation-expire-timer");
+		OrchestrationService.StopIdleTimer("idle_timer");
+		Redbox.Rental.Services.Configuration.Configuration.Instance.SessionReload();
+		Redbox.Rental.Services.Session.Session.Instance = new Redbox.Rental.Services.Session.Session();
+		OrchestrationService.ResetApplicationIdleTimerTimeout();
+		ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if ((service2 != null && service2.TTSEnabled) || ApplicationState.Instance.IsADAAccessible)
+		{
+			ApplicationState.Instance.IsADAAccessible = true;
+		}
+		if (service != null)
+		{
+			service.LastHitActorName = null;
+		}
+		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance?.BrowseState;
+		if (browseState != null)
+		{
+			browseState.BrowseMode = BrowseViewFilter.All;
+			browseState.Genre = null;
+			browseState.IsShoppingCartFullMessagesOpen = false;
+			browseState.ShoppingCartFullMessagesShown = false;
+			browseState.TitleFamily = TitleFamily.Movies;
+		}
+		OrchestrationService.InvokeStartNewRentalSessionCallback();
+		OrchestrationService.ViewShow(service.GetStartOverViewName());
+	}
+
 	private void InitializeDesktop()
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -37,13 +101,8 @@ public class RedboxRentalService : IRedboxRental
 		ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
 		if (service2 != null)
 		{
-			service2.OnAudioDeviceConnectionChanged += delegate(ITextToSpeechService textToSpeachService, bool isConnected)
-			{
-				if (Redbox.Rental.Services.Session.Session.Instance != null && Redbox.Rental.Services.Session.Session.Instance.BrowseState != null)
-				{
-					ApplicationState.Instance.IsADAAccessible = isConnected;
-				}
-			};
+			service2.ClearOnAudioDeviceConnectionChanged();
+			service2.OnAudioDeviceConnectionChanged += HandleTextToSpeechAudioDeviceConnectionChanged;
 			RegisterTTSWithRentalShoppingCartService();
 		}
 		IThemeService service3 = ServiceLocator.Instance.GetService<IThemeService>();
@@ -63,6 +122,60 @@ public class RedboxRentalService : IRedboxRental
 			{
 				LogHelper.Instance.Log("Unable to set default theme to Redbox Classic", LogEntryType.Info);
 			}
+		}
+	}
+
+	private bool CanForceStartOfNewRentalSession()
+	{
+		bool result = true;
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service != null)
+		{
+			result = service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && !service.Stack.Any((IViewFrameInstance x) => x?.ViewFrame?.ViewName == "swipe_view") && !(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.InReturnFlow ?? false);
+		}
+		return result;
+	}
+
+	private void HandleTextToSpeechAudioDeviceConnectionChanged(ITextToSpeechService textToSpeachService, bool isConnected)
+	{
+		if (Redbox.Rental.Services.Session.Session.Instance != null && Redbox.Rental.Services.Session.Session.Instance.BrowseState != null)
+		{
+			ApplicationState.Instance.IsADAAccessible = isConnected;
+		}
+		if (isConnected)
+		{
+			ResourceBundleService.Instance.GetManifest(out var manifestInfo);
+			_ = ResourceBundleService.Instance.Filter["view_name"];
+			if (manifestInfo?.ProductName != "Rental Application")
+			{
+				LogHelper.Instance.Log($"TTS((> TextToSpeechService.AudioDeviceConnected Not in Rental Application. Currently {manifestInfo?.ProductName}");
+				return;
+			}
+			ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+			IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+			if (!CanForceStartOfNewRentalSession())
+			{
+				return;
+			}
+			LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
+			if (service2 != null)
+			{
+				IShoppingSession currentSession = service2.GetCurrentSession();
+				if (service != null)
+				{
+					service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
+					{
+						{ "subItemType", "Timeout" },
+						{ "subItemValue", "HeadphonesConnected" }
+					}, currentSession.Id.ToString());
+					service.AddNode("session", "pricing");
+				}
+			}
+			CloseOpenSessionAndStartNewRentalSession("TTS Audio Device connected");
+		}
+		else if (CanForceStartOfNewRentalSession())
+		{
+			CloseOpenSessionAndStartNewRentalSession("TTS Audio Device disconnected");
 		}
 	}
 

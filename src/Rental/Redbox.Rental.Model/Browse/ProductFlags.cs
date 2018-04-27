@@ -11,5 +11,7 @@ public enum ProductFlags
 	New,
 	LastChance,
 	HotDeal,
-	Points
+	FlashDeal,
+	Points,
+	Excluded
 }

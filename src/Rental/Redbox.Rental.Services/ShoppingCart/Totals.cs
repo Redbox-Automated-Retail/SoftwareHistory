@@ -12,11 +12,13 @@ public class Totals : ITotals
 
 	public decimal SubTotal => _subTotalGroups.Sum((ISubTotalGroup x) => x.SubTotal);
 
-	public decimal TaxAmount => _subTotalGroups.Sum((ISubTotalGroup x) => x.TaxAmount);
+	public decimal TaxAmount => _subTotalGroups.Sum((ISubTotalGroup x) => x.TaxAmount) + (_rentalShoppingCart?.ServiceFee?.TaxAmount ?? 0m);
 
 	public decimal DiscountAmountUsed => _subTotalGroups.Sum((ISubTotalGroup x) => x.DiscountAmountUsed);
 
-	public decimal GrandTotal => SubTotal + TaxAmount;
+	public decimal ServiceFee => _rentalShoppingCart?.ServiceFee?.ActualAmount ?? 0m;
+
+	public decimal GrandTotal => SubTotal + ServiceFee + TaxAmount;
 
 	public List<ISubTotalGroup> SubTotalGroups => _subTotalGroups;
 

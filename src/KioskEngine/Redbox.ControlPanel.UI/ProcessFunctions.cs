@@ -7,9 +7,11 @@ using System.DirectoryServices;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
 using System.ServiceProcess;
+using System.Text;
 using System.Xml;
 using Microsoft.Win32;
 using Redbox.Core;
@@ -26,19 +28,6 @@ internal static class ProcessFunctions
 {
 	public delegate void TimerFiredHandler();
 
-	internal struct ProcessDetails
-	{
-		public string Name { get; set; }
-
-		public string Memory { get; set; }
-
-		public string WindowTitle { get; set; }
-
-		public string StartTime { get; set; }
-
-		public int Pid { get; set; }
-	}
-
 	internal struct Item(string p1, int p2, int p3, string p4)
 	{
 		public string barcode = p1;
@@ -49,6 +38,8 @@ internal static class ProcessFunctions
 
 		public string status = p4;
 	}
+
+	private delegate bool EnumWindowsDelegate(IntPtr hwnd, IntPtr lParam);
 
 	private static char[] AdminPassword = new char[10] { 'W', 'i', 'A', 'M', 's', 'o', 'c', 'a', 'P', '?' };
 
@@ -63,6 +54,10 @@ internal static class ProcessFunctions
 	internal static List<IState> tableStates = new List<IState>();
 
 	internal static List<IBanner> tableBanners = new List<IBanner>();
+
+	private const string User32Dll = "user32.dll";
+
+	private const uint WM_CLOSE = 16u;
 
 	internal static int LaunchProcess(string processName, string args, bool hiddenProcess)
 	{
@@ -127,37 +122,39 @@ internal static class ProcessFunctions
 		return -1;
 	}
 
-	internal static bool KillProcesses(List<int> processes)
+	internal static bool KillProcesses(List<int> processIds)
 	{
-		try
+		LogHelper.Instance.Log($"Killing {processIds?.Count() ?? 0} processes.");
+		foreach (int processId in processIds)
 		{
-			foreach (int process in processes)
+			try
 			{
-				KillProcessById(process);
+				KillProcessById(processId);
 			}
-			return true;
+			catch (Exception ex)
+			{
+				if (!ex.Message.Contains("is not running"))
+				{
+					LogHelper.Instance.Log("Error in KillProcesses Function KillProcessId.", ex);
+					return false;
+				}
+			}
 		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Error in KillProcesses Function KillProcessId.", e);
-			return false;
-		}
+		return true;
 	}
 
-	internal static int LaunchHiddenProcess(string processName, string args)
+	internal static Dictionary<int, string> GetRunningProcessIds()
 	{
-		try
+		Dictionary<int, string> dictionary = new Dictionary<int, string>();
+		Process[] processes = Process.GetProcesses();
+		foreach (Process process in processes)
 		{
-			LaunchProcess(processName, args, hiddenProcess: true);
+			dictionary.Add(process.Id, process.ProcessName);
 		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Error in Kernel Function LaunchProcess.", e);
-		}
-		return -1;
+		return dictionary;
 	}
 
-	internal static Dictionary<int, ProcessDetails> ListRunningProcesses()
+	internal static Dictionary<int, ProcessDetails> GetRunningProcesses()
 	{
 		Dictionary<int, ProcessDetails> dictionary = new Dictionary<int, ProcessDetails>();
 		ProcessDetails value = default(ProcessDetails);
@@ -172,20 +169,6 @@ internal static class ProcessFunctions
 			dictionary.Add(process.Id, value);
 		}
 		return dictionary;
-	}
-
-	internal static List<int> ListRunningRunDLL32Processes()
-	{
-		List<int> list = new List<int>();
-		Process[] processes = Process.GetProcesses();
-		foreach (Process process in processes)
-		{
-			if (string.CompareOrdinal(process.ProcessName.ToLower(), 0, "rundll32", 0, "rundll32".Length) == 0)
-			{
-				list.Add(process.Id);
-			}
-		}
-		return list;
 	}
 
 	internal static void ShowTaskManager(List<string> processNamesToIgnore, KillHandler killHandler)
@@ -246,7 +229,7 @@ internal static class ProcessFunctions
 
 	internal static string GetFullPath(string path)
 	{
-		if (string.IsNullOrEmpty(path) || HasInvalidChars(path))
+		if (InvalidPath(path))
 		{
 			return null;
 		}
@@ -255,7 +238,7 @@ internal static class ProcessFunctions
 
 	internal static string GetFileName(string path)
 	{
-		if (string.IsNullOrEmpty(path) || HasInvalidChars(path))
+		if (InvalidPath(path))
 		{
 			return null;
 		}
@@ -334,7 +317,7 @@ internal static class ProcessFunctions
 
 	internal static bool DoesFileExist(string path)
 	{
-		if (string.IsNullOrEmpty(path) || HasInvalidChars(path))
+		if (InvalidPath(path))
 		{
 			return false;
 		}
@@ -407,7 +390,7 @@ internal static class ProcessFunctions
 
 	internal static bool DoesDirectoryExist(string path)
 	{
-		if (string.IsNullOrEmpty(path) || HasInvalidChars(path))
+		if (InvalidPath(path))
 		{
 			return false;
 		}
@@ -416,7 +399,7 @@ internal static class ProcessFunctions
 
 	internal static string CombinePaths(string first, string second)
 	{
-		if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(second) || HasInvalidChars(first) || HasInvalidChars(second))
+		if (InvalidPath(first) || InvalidPath(second))
 		{
 			return null;
 		}
@@ -628,7 +611,8 @@ internal static class ProcessFunctions
 			}
 			else
 			{
-				inventoryItems.Add(service.CreateInventoryItem(barcode, num2, num3, Enum<InventoryItemStatus>.ParseIgnoringCase(item.status, InventoryItemStatus.In)));
+				InventoryItemStatus status = Enum<InventoryItemStatus>.ParseIgnoringCase(item.status, InventoryItemStatus.In);
+				inventoryItems.Add(service.CreateInventoryItem(barcode, num2, num3, status));
 				num++;
 			}
 		}
@@ -678,7 +662,7 @@ internal static class ProcessFunctions
 		service.GetPendingStores(bannerId, stateId, resultCallback);
 	}
 
-	private static void KillProcessById(int processId)
+	private static void TaskKill(int processId)
 	{
 		try
 		{
@@ -687,6 +671,25 @@ internal static class ProcessFunctions
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("Error in Function KillProcessById.", e);
+		}
+	}
+
+	private static void KillProcessById(int processId)
+	{
+		using Process process = Process.GetProcessById(processId);
+		if (process != null && !process.HasExited)
+		{
+			try
+			{
+				process.Kill();
+				process.WaitForExit();
+				return;
+			}
+			catch (Exception)
+			{
+				TaskKill(processId);
+				return;
+			}
 		}
 	}
 
@@ -777,8 +780,57 @@ internal static class ProcessFunctions
 		return false;
 	}
 
+	private static bool InvalidPath(string path)
+	{
+		if (!string.IsNullOrEmpty(path))
+		{
+			return HasInvalidChars(path);
+		}
+		return true;
+	}
+
 	internal static void InnerSendAuditEvent(string storeNumber, string eventType, string userName, string source, string message)
 	{
 		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAuditEvent(storeNumber, eventType, DateTime.Now, userName, message, source, null);
 	}
+
+	internal static void PerformActivityLogAndSendAuditEvent(string tag)
+	{
+		string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+		LogHelper.Instance.LogTo("ControlPanelActionLog", tag);
+		InnerSendAuditEvent(kioskId.ToString(), tag, userName, "CP Bundle", "Activate Control Panel function.");
+	}
+
+	private static bool EnumWindowsCallback(IntPtr hwnd, IntPtr lParam)
+	{
+		IntPtr lpdwProcessId = default(IntPtr);
+		GetWindowThreadProcessId(hwnd, out lpdwProcessId);
+		if (Process.GetProcessById(lpdwProcessId.ToInt32()).ProcessName == "explorer")
+		{
+			StringBuilder stringBuilder = new StringBuilder(255);
+			RealGetWindowClass(hwnd, stringBuilder, 255u);
+			if (stringBuilder.ToString().Equals("CabinetWClass"))
+			{
+				SendMessage(hwnd, 16u, IntPtr.Zero, IntPtr.Zero);
+			}
+		}
+		return true;
+	}
+
+	internal static void CloseExploreWindows()
+	{
+		EnumWindows(EnumWindowsCallback, IntPtr.Zero);
+	}
+
+	[DllImport("user32.dll")]
+	private static extern bool EnumWindows(EnumWindowsDelegate lpEnumFunc, IntPtr lParam);
+
+	[DllImport("user32.dll")]
+	private static extern uint RealGetWindowClass(IntPtr hwnd, StringBuilder pszType, uint cchType);
+
+	[DllImport("user32.dll")]
+	private static extern IntPtr GetWindowThreadProcessId(IntPtr hWnd, out IntPtr lpdwProcessId);
+
+	[DllImport("user32.dll")]
+	private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 }

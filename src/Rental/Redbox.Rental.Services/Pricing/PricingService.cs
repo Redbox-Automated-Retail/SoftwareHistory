@@ -211,7 +211,7 @@ public class PricingService : IPricingService
 
 	public IList<IPricingRecord> GetProductPricingRecords(ITitleProduct titleProduct)
 	{
-		return GetProductPricingRecords(titleProduct.ProductId);
+		return GetProductPricingRecords(titleProduct?.ProductId ?? 0);
 	}
 
 	public IList<IPricingRecord> GetProductPricingRecords(long productId)
@@ -241,6 +241,15 @@ public class PricingService : IPricingService
 			pricingRecord = _bundleBasedPricingService.GetProductTypePricingRecord(titleFamily, titleType, useAdjustedPrices);
 		}
 		return pricingRecord;
+	}
+
+	public IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType)
+	{
+		if (IsPricingEngineEnabled)
+		{
+			return _kioskPricingService.GetActiveProductTypePricingRecord(titleFamily, titleType);
+		}
+		return null;
 	}
 
 	public decimal? GetPriceSetting(TitleFamily titleFamily, TitleType titleType, string settingName, RentalShoppingCartItemAction action)

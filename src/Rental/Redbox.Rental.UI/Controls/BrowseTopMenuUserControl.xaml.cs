@@ -1,3 +1,6 @@
+﻿using System;
+using System.CodeDom.Compiler;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -10,22 +13,13 @@ using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Controls;
 
-public partial class BrowseTopMenuUserControl : UserControl, IWPFActor, IComponentConnector
+public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IComponentConnector
 {
-	public IActor Actor { get; set; }
-
 	private TopMenuModel BrowseTopMenuModel => base.DataContext as TopMenuModel;
-
-	public event WPFHitHandler OnWPFHit;
 
 	public BrowseTopMenuUserControl()
 	{
 		InitializeComponent();
-	}
-
-	private void HandleWPFHit()
-	{
-		OnWPFHit?.Invoke(Actor);
 	}
 
 	private static Style GetStyle(FrameworkElement frameworkElement, string styleName)
@@ -133,10 +127,20 @@ public partial class BrowseTopMenuUserControl : UserControl, IWPFActor, ICompone
 
 	private void MenuButton_Click(object sender, RoutedEventArgs e)
 	{
-		if (e.OriginalSource is RoundedButton { DataContext: BrowseMenuButton dataContext })
+		RunCommandOnce(delegate
 		{
-			BrowseTopMenuModel?.ProcessOnBrowseMenuButtonClicked(dataContext);
-			Commands.ResetIdleTimerCommand.Execute(null, this);
-		}
+			try
+			{
+				if (e.OriginalSource is RoundedButton { DataContext: BrowseMenuButton dataContext })
+				{
+					BrowseTopMenuModel?.ProcessOnBrowseMenuButtonClicked(dataContext);
+					Commands.ResetIdleTimerCommand.Execute(null, this);
+				}
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 }

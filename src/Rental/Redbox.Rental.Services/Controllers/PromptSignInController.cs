@@ -43,7 +43,7 @@ public class PromptSignInController : BaseViewController
 	private static void ProcessEmailCodeAction()
 	{
 		BaseViewController.StopIdleTimer();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "emailpassword");
+		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-email-home");
 		OrchestrationService.ViewGoBackSafe("PromptSignInController email sign in", popOnly: true);
 		PersonalizationFunctions.ShowEmailLogin(SignInCancelButtonTypes.StartBrowsing);
 	}
@@ -51,7 +51,7 @@ public class PromptSignInController : BaseViewController
 	private static void ProcessPhonePinAction()
 	{
 		BaseViewController.StopIdleTimer();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "phonepin");
+		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-phone-home");
 		OrchestrationService.ViewGoBackSafe("PromptSignInController phone sign in", popOnly: true);
 		PersonalizationFunctions.ShowPhoneNumberLogin(SignInCancelButtonTypes.StartBrowsing);
 	}

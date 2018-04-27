@@ -15,7 +15,9 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
+using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Views;
@@ -26,7 +28,91 @@ public static class OrchestrationService
 {
 	private static Action _idleTimerExpireSessionCallback;
 
+	private static Action _startNewRentalSessionCallback;
+
+	private static Action<string> _marketingOptInFlowCallback;
+
 	public static bool TTSEnabled => ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
+
+	private static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+
+	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+
+	private static IViewService ViewService => ServiceLocator.Instance.GetService<IViewService>();
+
+	public static bool IsRentalSessionActive()
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (!PersonalizationFunctions.IsSignedIn)
+		{
+			if (service?.Peek() != service?.GetStartOverViewName())
+			{
+				return service?.Peek() != "maintenance_view";
+			}
+			return false;
+		}
+		return true;
+	}
+
+	public static bool IsPersonalizationSessionSignedIn()
+	{
+		return PersonalizationFunctions.IsSignedIn;
+	}
+
+	public static void CloseShoppingCartAnalytics(Guid sessionId, string isSessionAbandoned)
+	{
+		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+		IRentalShoppingCart rentalShoppingCart = service?.GetRentalShoppingCart(sessionId);
+		if (rentalShoppingCart != null)
+		{
+			service.SendRentalShoppingCartToAnalytics(rentalShoppingCart);
+			SubmitAnalyticsPricing(sessionId.ToString());
+			ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+			if (service2 != null && service2.SessionExists(sessionId.ToString()) && service2.IsOpen(sessionId.ToString()))
+			{
+				service2.AddElement("session", "abandon", isSessionAbandoned ?? "True", sessionId.ToString());
+				service2.Close(sessionId.ToString());
+			}
+		}
+	}
+
+	public static void SubmitAnalyticsPricing(string sessionId)
+	{
+		IPricingSet pricingSet = ServiceLocator.Instance.GetService<IPricingService>()?.CurrentPriceSet;
+		if (pricingSet?.PriceRecords == null)
+		{
+			return;
+		}
+		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+		if (service == null || !service.SessionExists(sessionId) || service == null || !service.IsOpen(sessionId))
+		{
+			return;
+		}
+		service.AddNode("session", "pricing", sessionId);
+		foreach (IPricingRecord priceRecord in pricingSet.PriceRecords)
+		{
+			string attributeValue = priceRecord.TitleType.ToString().ToLower();
+			switch (priceRecord.TitleType)
+			{
+			case TitleType.All:
+				attributeValue = "*";
+				break;
+			case TitleType.Bluray:
+				attributeValue = "blu-ray";
+				break;
+			}
+			service.AddNode("pricing", "productPrice", sessionId);
+			service.AddAttribute("productPrice", "productFamily", priceRecord.TitleFamily.ToString().ToLower(), sessionId);
+			service.AddAttribute("productPrice", "productType", attributeValue, sessionId);
+			service.AddAttribute("productPrice", "currency", "USD", sessionId);
+			service.AddElement("productPrice", "firstNightAmt", priceRecord.InitialNight.ToString("0.##"), sessionId);
+			service.AddElement("productPrice", "nonReturnDays", priceRecord.NonReturnDays.ToString("0.##"), sessionId);
+			service.AddElement("productPrice", "nonReturnAmt", priceRecord.NonReturn.ToString("0.##"), sessionId);
+			service.AddElement("productPrice", "extraNightAmt", priceRecord.ExtraNight.ToString("0.##"), sessionId);
+			service.AddElement("productPrice", "expirationPrice", priceRecord.ExpirationPrice.ToString("0.##"), sessionId);
+			service.AddElement("productPrice", "pricesetid", pricingSet.PriceSetId ?? "1", sessionId);
+		}
+	}
 
 	public static bool IsCollectionsPopupEnabled()
 	{
@@ -53,6 +139,16 @@ public static class OrchestrationService
 		_idleTimerExpireSessionCallback = idleTimerExpireSessionCallback;
 	}
 
+	public static void RegisterStartNewRentalSessionCallback(Action startNewRentalSessionCallback)
+	{
+		_startNewRentalSessionCallback = startNewRentalSessionCallback;
+	}
+
+	public static void RegisterMarketingOptInFlowCallback(Action<string> marketingOptInFlowCallback)
+	{
+		_marketingOptInFlowCallback = marketingOptInFlowCallback;
+	}
+
 	public static void RegisterViewDefinitions()
 	{
 		ServiceLocator.Instance.GetService<IViewService>().ClearCache(clearResourceViewsOnly: false);
@@ -64,6 +160,22 @@ public static class OrchestrationService
 		if (_idleTimerExpireSessionCallback != null)
 		{
 			_idleTimerExpireSessionCallback();
+		}
+	}
+
+	public static void InvokeStartNewRentalSessionCallback()
+	{
+		if (_startNewRentalSessionCallback != null)
+		{
+			_startNewRentalSessionCallback();
+		}
+	}
+
+	public static void InvokeMarketingOptInFlowCallback(string optInConfirmationStatus)
+	{
+		if (_marketingOptInFlowCallback != null)
+		{
+			_marketingOptInFlowCallback(optInConfirmationStatus);
 		}
 	}
 
@@ -165,17 +277,6 @@ public static class OrchestrationService
 				result = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
 				break;
 			}
-		}
-		return result;
-	}
-
-	public static BitmapImage GetSubPlatformBitmapImage(ITitleProduct kioskProduct)
-	{
-		BitmapImage result = null;
-		long? num = kioskProduct?.SubPlatformId;
-		if (num.HasValue && num > 0)
-		{
-			result = Redbox.Rental.UI.Views.Constants.SubPlatformImages.GetSubPlatformImage((Redbox.Rental.UI.Views.Constants.SubPlatforms)num.Value);
 		}
 		return result;
 	}
@@ -361,7 +462,7 @@ public static class OrchestrationService
 
 	public static void CreateStartViewAnalytics(string sessionType)
 	{
-		CreateStartViewAnalytics(Enum<AnalyticsSessionType>.ParseIgnoringCase(sessionType, AnalyticsSessionType.BrowseVend));
+		StarteUserInteraction(Enum<AnalyticsSessionType>.ParseIgnoringCase(sessionType, AnalyticsSessionType.BrowseVend));
 	}
 
 	public static string GetCulture()
@@ -410,6 +511,11 @@ public static class OrchestrationService
 	public static void ViewGoBackSafe(object context, bool popOnly)
 	{
 		ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe(context, popOnly);
+	}
+
+	public static void UnwindToSafe(string unwindToViewName, bool discard, object context)
+	{
+		ServiceLocator.Instance.GetService<IViewService>()?.UnwindToSafe(unwindToViewName, discard, context);
 	}
 
 	private static void ResetCurrentView()
@@ -490,34 +596,49 @@ public static class OrchestrationService
 		return list;
 	}
 
-	public static void CreateStartViewAnalytics(AnalyticsSessionType sessionType)
+	public static void StarteUserInteraction(AnalyticsSessionType sessionType = AnalyticsSessionType.BrowseVend)
 	{
+		LogHelper.Instance.Log($"OrchestrationService.StartUserInteraction - Session Type: {sessionType}");
 		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		if (service == null)
+		if (!service.StartUserInteraction())
 		{
+			LogHelper.Instance.Log("OrchestrationService.StartUserInteraction - session already started");
 			return;
 		}
 		IShoppingSession currentSession = service.GetCurrentSession();
-		if (currentSession == null)
+		if (currentSession != null)
 		{
-			return;
-		}
-		_ = currentSession.Id;
-		ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		if (service2 != null && !service2.SessionExists(currentSession.Id.ToString()))
-		{
-			service2.Start(currentSession.Id.ToString(), sessionType);
-			IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
-			if (service3 != null)
+			_ = currentSession.Id;
+			ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+			if (service2 != null && !service2.SessionExists(currentSession.Id.ToString()))
 			{
-				service2.AddView(currentSession.Id.ToString(), service3?.GetStartOverViewName());
+				service2.Start(currentSession.Id.ToString(), sessionType);
+				IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
+				if (service3 != null)
+				{
+					service2.AddView(currentSession.Id.ToString(), service3?.GetStartOverViewName());
+				}
 			}
+		}
+		RentalRefreshIfNeeded();
+	}
+
+	public static void AnalyticsAddCurrentView()
+	{
+		Guid? guid = RentalShoppingCartService?.CurrentRentalShoppingCart?.ShoppingSessionId;
+		string text = ViewService?.PeekViewFrame()?.ViewFrame?.ViewName;
+		if (guid.HasValue && !string.IsNullOrWhiteSpace(text) && SessionAnalyticsService != null && !string.IsNullOrWhiteSpace(text))
+		{
+			SessionAnalyticsService.AddView(guid.ToString(), text);
 		}
 	}
 
 	public static void AnalyticsAddViewEvent(string subItemType, string subItemValue)
 	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent(subItemType, subItemValue);
+		if (SessionAnalyticsService != null)
+		{
+			SessionAnalyticsService.AddViewEvent(subItemType, subItemValue);
+		}
 	}
 
 	public static void AnalyticsAddNode(string parentNodeName, string nodeName)
@@ -528,6 +649,11 @@ public static class OrchestrationService
 	public static void AnalyticsAddAttribute(string parentNodeName, string attributeName, string attributeValue)
 	{
 		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttribute(parentNodeName, attributeName, attributeValue);
+	}
+
+	public static void AnalyticsAddLoggedInCustomerProfileNumber(string customerProfileNumber)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddLoggedInCustomerProfileNumber(customerProfileNumber);
 	}
 
 	public static void RemoveTimer(string timerName)
@@ -624,5 +750,10 @@ public static class OrchestrationService
 	public static void RemoveIdleTimer(string idleTimerName)
 	{
 		ServiceLocator.Instance.GetService<IIdleTimerService>()?.RemoveIdleTimer(idleTimerName);
+	}
+
+	public static void StartTimer(string name)
+	{
+		(ServiceLocator.Instance.GetService<ITimerService>()?.GetTimer(name))?.Start();
 	}
 }

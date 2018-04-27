@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -80,12 +79,6 @@ internal static class ShoppingSessionFunctions
 	internal static void AddLineItem(string sessionId, string groupName, string barcode, string status, decimal price, decimal quantity, LuaTable prices)
 	{
 		AddLineItem4(sessionId, groupName, barcode, status, price, quantity, prices, string.Empty, string.Empty, ItemSourceType.Browse.ToString());
-	}
-
-	[KernelFunction(Name = "kernel.sessionsave")]
-	internal static void SaveSession()
-	{
-		SaveSession("__active__");
 	}
 
 	[KernelFunction(Name = "kernel.sessionsetlineitemstatus")]
@@ -283,22 +276,15 @@ internal static class ShoppingSessionFunctions
 			return;
 		}
 		IShoppingCartLineItemGroup shoppingCartLineItemGroup = session.ShoppingCart.GetGroup(groupName);
-		if (shoppingCartLineItemGroup == null)
+		if (shoppingCartLineItemGroup != null)
 		{
-			return;
-		}
-		IShoppingCartLineItem shoppingCartLineItem = shoppingCartLineItemGroup.AddLineItem(barcode, Enum<LineItemStatus>.ParseIgnoringCase(status, LineItemStatus.Pending), price, quantity, productFamily, productType, Enum<ItemSourceType>.ParseIgnoringCase(sourceType, ItemSourceType.Browse));
-		if (shoppingCartLineItem != null && prices != null && blurayUpsell != null)
-		{
-			AddPricesToLineItem(prices, shoppingCartLineItem);
-			if (blurayUpsell.Keys.Count > 0)
+			IShoppingCartLineItem shoppingCartLineItem = shoppingCartLineItemGroup.AddLineItem(barcode, Enum<LineItemStatus>.ParseIgnoringCase(status, LineItemStatus.Pending), price, quantity, productFamily, productType, Enum<ItemSourceType>.ParseIgnoringCase(sourceType, ItemSourceType.Browse));
+			if (shoppingCartLineItem != null && prices != null && blurayUpsell != null)
 			{
-				shoppingCartLineItem.SetBlurayUpsell("ProductGroupId", Convert.ToInt32(blurayUpsell["product_group_id"]));
-				shoppingCartLineItem.SetBlurayUpsell("Offer", blurayUpsell["offer"].ToString());
-				shoppingCartLineItem.SetBlurayUpsell("TitleId", Convert.ToInt64(blurayUpsell["title_id"]));
+				AddPricesToLineItem(prices, shoppingCartLineItem);
+				prices.Dispose();
+				blurayUpsell.Dispose();
 			}
-			prices.Dispose();
-			blurayUpsell.Dispose();
 		}
 	}
 
@@ -316,30 +302,17 @@ internal static class ShoppingSessionFunctions
 			return;
 		}
 		IShoppingCartLineItemGroup shoppingCartLineItemGroup = session.ShoppingCart.GetGroup(groupName);
-		if (shoppingCartLineItemGroup == null)
+		if (shoppingCartLineItemGroup != null)
 		{
-			return;
-		}
-		IShoppingCartLineItem shoppingCartLineItem = shoppingCartLineItemGroup.AddLineItem(barcode, Enum<LineItemStatus>.ParseIgnoringCase(status, LineItemStatus.Pending), price, quantity, productFamily, productType, Enum<ItemSourceType>.ParseIgnoringCase(sourceType, ItemSourceType.Browse));
-		if (shoppingCartLineItem != null && prices != null && blurayUpsell != null)
-		{
-			AddPricesToLineItem(prices, shoppingCartLineItem);
-			if (blurayUpsell.Keys.Count > 0)
+			IShoppingCartLineItem shoppingCartLineItem = shoppingCartLineItemGroup.AddLineItem(barcode, Enum<LineItemStatus>.ParseIgnoringCase(status, LineItemStatus.Pending), price, quantity, productFamily, productType, Enum<ItemSourceType>.ParseIgnoringCase(sourceType, ItemSourceType.Browse));
+			if (shoppingCartLineItem != null && prices != null && blurayUpsell != null)
 			{
-				shoppingCartLineItem.SetBlurayUpsell("ProductGroupId", Convert.ToInt32(blurayUpsell["product_group_id"]));
-				shoppingCartLineItem.SetBlurayUpsell("Offer", blurayUpsell["offer"].ToString());
-				shoppingCartLineItem.SetBlurayUpsell("TitleId", Convert.ToInt64(blurayUpsell["title_id"]));
+				AddPricesToLineItem(prices, shoppingCartLineItem);
+				shoppingCartLineItem.SetMultiDisc(multiDisc);
+				prices.Dispose();
+				blurayUpsell.Dispose();
 			}
-			shoppingCartLineItem.SetMultiDisc(multiDisc);
-			prices.Dispose();
-			blurayUpsell.Dispose();
 		}
-	}
-
-	[KernelFunction(Name = "kernel.sessionsave2")]
-	internal static void SaveSession(string sessionId)
-	{
-		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
 	}
 
 	[KernelFunction(Name = "kernel.sessionsetlineitemstatus2")]

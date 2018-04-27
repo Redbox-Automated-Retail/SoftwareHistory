@@ -674,7 +674,8 @@ public static class HardwareFunctions
 		{
 			return null;
 		}
-		return CreateResultTable(string.Empty, service.ExecuteImmediate(command, eventHandler, clearStack));
+		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		return CreateResultTable(string.Empty, service.ExecuteImmediate(command, eventHandler, clearStack, service2?.CurrentBundleName));
 	}
 
 	[KernelFunction(Name = "kernel.hardwaregetprogramresults")]
@@ -723,14 +724,17 @@ public static class HardwareFunctions
 		IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
 		LuaTable luaTable2 = (LuaTable)(luaTable["results"] = (LuaTable)service2.NewTable());
 		int num = 1;
-		foreach (Redbox.KioskEngine.ComponentModel.Error item in errors)
+		if (errors != null)
 		{
-			LuaTable luaTable3 = (LuaTable)service2.NewTable();
-			luaTable3["code"] = item.Code;
-			luaTable3["details"] = item.Details;
-			luaTable3["is_warning"] = item.IsWarning;
-			luaTable3["description"] = item.Description;
-			luaTable2[num++] = luaTable3;
+			foreach (Redbox.KioskEngine.ComponentModel.Error item in errors)
+			{
+				LuaTable luaTable3 = (LuaTable)service2.NewTable();
+				luaTable3["code"] = item.Code;
+				luaTable3["details"] = item.Details;
+				luaTable3["is_warning"] = item.IsWarning;
+				luaTable3["description"] = item.Description;
+				luaTable2[num++] = luaTable3;
+			}
 		}
 		return luaTable;
 	}

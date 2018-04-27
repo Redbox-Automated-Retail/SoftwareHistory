@@ -5,7 +5,6 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.Requests;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -77,29 +76,30 @@ internal class ProxyMessageHelper
 			{
 				LineItemGroupType groupType = ((item.Key == RentalShoppingCartItemAction.rental) ? LineItemGroupType.Rental : LineItemGroupType.Purchase);
 				List<LineItem> list = new List<LineItem>();
-				foreach (IRentalShoppingCartItem lineItem in item)
+				foreach (IRentalShoppingCartItem item2 in item)
 				{
-					IPricingRecord pricingRecord = lineItem?.PricingRecord;
-					IBlurayUpsellItem blurayUpsellItem = rentalShoppingCart.BlurayUpsellInfo?.Items.FirstOrDefault((IBlurayUpsellItem x) => (lineItem.TitleType == TitleType.DVD && lineItem.ProductId == x.DVDProductId && x.OfferResponse == BlurayUpsellItemOfferResponse.rejected) || (lineItem.TitleType == TitleType.Bluray && lineItem.ProductId == x.BlurayProductId && x.OfferResponse == BlurayUpsellItemOfferResponse.accepted));
+					IUpsellItem upsellItemByRentalShoppingCartItem = rentalShoppingCart.UpsellInfo.GetUpsellItemByRentalShoppingCartItem(item2);
 					BlurayUpsell blurayUpsell = null;
-					if (blurayUpsellItem != null)
+					if (upsellItemByRentalShoppingCartItem != null)
 					{
 						blurayUpsell = new BlurayUpsell
 						{
-							ProductGroupId = (int)blurayUpsellItem.ProductGroupId,
-							TitleId = lineItem.ProductId,
-							Offer = blurayUpsellItem.OfferResponse.ToString()
+							ProductGroupId = (int)upsellItemByRentalShoppingCartItem.ProductGroupId,
+							TitleId = item2.ProductId,
+							Offer = upsellItemByRentalShoppingCartItem.OfferResponse.ToString(),
+							TypeId = (int)upsellItemByRentalShoppingCartItem.TypeId
 						};
 					}
+					IPricingRecord pricingRecord = item2?.PricingRecord;
 					list.Add(new LineItem
 					{
-						Barcode = lineItem.Barcode,
+						Barcode = item2.Barcode,
 						BlurayUpsell = blurayUpsell,
-						SourceType = lineItem.SourceType,
-						MultiDisc = lineItem.MultiDisc,
-						ProductFamily = lineItem.TitleFamily.ToString(),
-						ProductId = lineItem.ProductId,
-						ProductType = lineItem.TitleType.ToString(),
+						SourceType = item2.SourceType,
+						MultiDisc = item2.MultiDisc,
+						ProductFamily = item2.TitleFamily.ToString(),
+						ProductId = item2.ProductId,
+						ProductType = item2.TitleType.GetDisplayName(),
 						Pricing = new Pricing
 						{
 							DefaultExtraNight = pricingRecord?.DefaultExtraNightPrice,
@@ -114,7 +114,7 @@ internal class ProxyMessageHelper
 							ProductPriceId = (int)(pricingRecord?.ProductPricingId ?? 0),
 							Purchase = (pricingRecord?.Purchase ?? 0m)
 						},
-						VendStatus = ConvertToVendStatus(lineItem.Status)
+						VendStatus = ConvertToVendStatus(item2.Status)
 					});
 				}
 				ISubTotalGroup subTotalGroup = rentalShoppingCart.Totals.SubTotalGroups.FirstOrDefault((ISubTotalGroup y) => item.Key == y.Action);
@@ -132,6 +132,13 @@ internal class ProxyMessageHelper
 					}
 				});
 			}
+		}
+		if (rentalShoppingCart.ServiceFee != null && shoppingCart.ServiceFee != null)
+		{
+			shoppingCart.ServiceFee.DefaultAmount = rentalShoppingCart.ServiceFee.DefaultAmount;
+			shoppingCart.ServiceFee.ActualAmount = rentalShoppingCart.ServiceFee.ActualAmount;
+			shoppingCart.ServiceFee.TaxRate = rentalShoppingCart.ServiceFee.TaxRate;
+			shoppingCart.ServiceFee.TaxAmount = rentalShoppingCart.ServiceFee.TaxAmount;
 		}
 		return shoppingCart;
 	}

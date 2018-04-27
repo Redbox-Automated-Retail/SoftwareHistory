@@ -37,7 +37,8 @@ public class MemberPerksViewController : BaseViewController
 				PromoButtonVisibility = Visibility.Collapsed,
 				SnapshotButtonText = Resources.perks_snapshot_btn_text,
 				PerksButtonText = Resources.perks_perks_btn_text,
-				PromosButtonText = Resources.perks_promos_btn_text
+				PromosButtonText = Resources.perks_promos_btn_text,
+				CancelButtonText = Resources.perks_cancel_btn_text
 			};
 			switch (perksInfo.TierName.ToLower())
 			{

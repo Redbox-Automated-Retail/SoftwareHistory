@@ -45,7 +45,11 @@ public class ProductFlag
 
 		public const string HotDealKey = "flag_hot_deal";
 
+		public const string FlashDealKey = "flag_flash_deal";
+
 		public const string PointsKey = "flag_points";
+
+		public const string ExcludedKey = "flag_excluded";
 	}
 
 	public ProductFlags Flag { get; set; }

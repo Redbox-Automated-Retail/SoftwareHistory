@@ -6,27 +6,17 @@ namespace Redbox.Rental.UI.Models;
 
 public class TitleRollupOverlayModel : DependencyObject
 {
-	public static readonly DependencyProperty FontSizeProperty = DependencyProperty.Register("FontSize", typeof(double), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(16.0));
+	public static readonly DependencyProperty _4kUhdButtonTextProperty = DependencyProperty.Register("_4kUhdButtonText", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty DigitalCodeInfoVisibilityProperty = DependencyProperty.Register("DigitalCodeInfoVisibility", typeof(Visibility), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(Visibility.Hidden));
+	public static readonly DependencyProperty _4kUhdButtonLine2TextProperty = DependencyProperty.Register("_4kUhdButtonLine2Text", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty DigitalCodeInfoTextProperty = DependencyProperty.Register("DigitalCodeInfoText", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty _4kUhdButtonVisibilityProperty = DependencyProperty.Register("_4kUhdButtonVisibility", typeof(Visibility), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
-	public static readonly DependencyProperty DigitalCodeButtonTextProperty = DependencyProperty.Register("DigitalCodeButtonText", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty DigitalCodeButtonMarginGridRowHeightProperty = DependencyProperty.Register("DigitalCodeButtonMarginGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty DigitalCodeButtonTextGridRowHeightProperty = DependencyProperty.Register("DigitalCodeButtonTextGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty DigitalCodeButtonVisibilityProperty = DependencyProperty.Register("DigitalCodeButtonVisibility", typeof(Visibility), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty DigitalCodeButtonEnabledProperty = DependencyProperty.Register("DigitalCodeButtonEnabled", typeof(bool), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(false));
+	public static readonly DependencyProperty _4kUhdButtonEnabledProperty = DependencyProperty.Register("_4kUhdButtonEnabled", typeof(bool), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(false));
 
 	public static readonly DependencyProperty BlurayButtonTextProperty = DependencyProperty.Register("BlurayButtonText", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty BlurayButtonMarginGridRowHeightProperty = DependencyProperty.Register("BlurayButtonMarginGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty BlurayButtonTextGridRowHeightProperty = DependencyProperty.Register("BlurayButtonTextGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty BlurayButtonLine2TextProperty = DependencyProperty.Register("BlurayButtonLine2Text", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BlurayButtonVisibilityProperty = DependencyProperty.Register("BlurayButtonVisibility", typeof(Visibility), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
@@ -34,9 +24,7 @@ public class TitleRollupOverlayModel : DependencyObject
 
 	public static readonly DependencyProperty DVDButtonTextProperty = DependencyProperty.Register("DVDButtonText", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty DVDButtonMarginGridRowHeightProperty = DependencyProperty.Register("DVDButtonMarginGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty DVDButtonTextGridRowHeightProperty = DependencyProperty.Register("DVDButtonTextGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty DVDButtonLine2TextProperty = DependencyProperty.Register("DVDButtonLine2Text", typeof(string), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty DVDButtonVisibilityProperty = DependencyProperty.Register("DVDButtonVisibility", typeof(Visibility), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
@@ -44,113 +32,53 @@ public class TitleRollupOverlayModel : DependencyObject
 
 	public static readonly DependencyProperty VisibilityProperty = DependencyProperty.Register("Visibility", typeof(Visibility), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
-	public static readonly DependencyProperty GridDigitalCodeButtonGridRowHeightProperty = DependencyProperty.Register("GridDigitalCodeButtonGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty Grid4kUhdButtonGridRowHeightProperty = DependencyProperty.Register("Grid4kUhdButtonGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty GridDigitalCodeButtonMarginGridRowHeightProperty = DependencyProperty.Register("GridDigitalCodeButtonMarginGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty Grid4kUhdButtonMarginGridRowHeightProperty = DependencyProperty.Register("Grid4kUhdButtonMarginGridRowHeight", typeof(GridLength), typeof(TitleRollupOverlayModel), new FrameworkPropertyMetadata(null));
 
 	private TimeSpan _timeout = TimeSpan.FromSeconds(10.0);
 
-	public double FontSize
+	public string _4kUhdButtonText
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (double)GetValue(FontSizeProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(_4kUhdButtonTextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(FontSizeProperty, value);
+				SetValue(_4kUhdButtonTextProperty, value);
 			});
 		}
 	}
 
-	public string DigitalCodeInfoText
+	public string _4kUhdButtonLine2Text
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(DigitalCodeInfoTextProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(_4kUhdButtonLine2TextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(DigitalCodeInfoTextProperty, value);
+				SetValue(_4kUhdButtonLine2TextProperty, value);
 			});
 		}
 	}
 
-	public string DigitalCodeButtonText
+	public Visibility _4kUhdButtonVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(DigitalCodeButtonTextProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(_4kUhdButtonVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(DigitalCodeButtonTextProperty, value);
-			});
-		}
-	}
-
-	public GridLength DigitalCodeButtonMarginGridRowHeight
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(DigitalCodeButtonMarginGridRowHeightProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(DigitalCodeButtonMarginGridRowHeightProperty, value);
-			});
-		}
-	}
-
-	public GridLength DigitalCodeButtonTextGridRowHeight
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(DigitalCodeButtonTextGridRowHeightProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(DigitalCodeButtonTextGridRowHeightProperty, value);
-			});
-		}
-	}
-
-	public Visibility DigitalCodeButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DigitalCodeButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(DigitalCodeButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility DigitalCodeInfoVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DigitalCodeInfoVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(DigitalCodeInfoVisibilityProperty, value);
+				SetValue(_4kUhdButtonVisibilityProperty, value);
 			});
 		}
 	}
@@ -170,32 +98,17 @@ public class TitleRollupOverlayModel : DependencyObject
 		}
 	}
 
-	public GridLength BlurayButtonMarginGridRowHeight
+	public string BlurayButtonLine2Text
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(BlurayButtonMarginGridRowHeightProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(BlurayButtonLine2TextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(BlurayButtonMarginGridRowHeightProperty, value);
-			});
-		}
-	}
-
-	public GridLength BlurayButtonTextGridRowHeight
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(BlurayButtonTextGridRowHeightProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(BlurayButtonTextGridRowHeightProperty, value);
+				SetValue(BlurayButtonLine2TextProperty, value);
 			});
 		}
 	}
@@ -230,32 +143,17 @@ public class TitleRollupOverlayModel : DependencyObject
 		}
 	}
 
-	public GridLength DVDButtonMarginGridRowHeight
+	public string DVDButtonLine2Text
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(DVDButtonMarginGridRowHeightProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(DVDButtonLine2TextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(DVDButtonMarginGridRowHeightProperty, value);
-			});
-		}
-	}
-
-	public GridLength DVDButtonTextGridRowHeight
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(DVDButtonTextGridRowHeightProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(DVDButtonTextGridRowHeightProperty, value);
+				SetValue(DVDButtonLine2TextProperty, value);
 			});
 		}
 	}
@@ -320,47 +218,47 @@ public class TitleRollupOverlayModel : DependencyObject
 		}
 	}
 
-	public bool DigitalCodeButtonEnabled
+	public bool _4kUhdButtonEnabled
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (bool)GetValue(DigitalCodeButtonEnabledProperty));
+			return base.Dispatcher.Invoke(() => (bool)GetValue(_4kUhdButtonEnabledProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(DigitalCodeButtonEnabledProperty, value);
+				SetValue(_4kUhdButtonEnabledProperty, value);
 			});
 		}
 	}
 
-	public GridLength GridDigitalCodeButtonGridRowHeight
+	public GridLength Grid4kUhdButtonGridRowHeight
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(GridDigitalCodeButtonGridRowHeightProperty));
+			return base.Dispatcher.Invoke(() => (GridLength)GetValue(Grid4kUhdButtonGridRowHeightProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(GridDigitalCodeButtonGridRowHeightProperty, value);
+				SetValue(Grid4kUhdButtonGridRowHeightProperty, value);
 			});
 		}
 	}
 
-	public GridLength GridDigitalCodeButtonMarginGridRowHeight
+	public GridLength Grid4kUhdButtonMarginGridRowHeight
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (GridLength)GetValue(GridDigitalCodeButtonMarginGridRowHeightProperty));
+			return base.Dispatcher.Invoke(() => (GridLength)GetValue(Grid4kUhdButtonMarginGridRowHeightProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(GridDigitalCodeButtonMarginGridRowHeightProperty, value);
+				SetValue(Grid4kUhdButtonMarginGridRowHeightProperty, value);
 			});
 		}
 	}
@@ -387,9 +285,7 @@ public class TitleRollupOverlayModel : DependencyObject
 
 	public event BrowseItemModelEvent OnTitleRollupOverlayAddBluray;
 
-	public event BrowseItemModelEvent OnTitleRollupOverlayAddDigitalCode;
-
-	public event BrowseItemModelEvent OnTitleRollupOverlayDigitalCodeInfo;
+	public event BrowseItemModelEvent OnTitleRollupOverlayAdd4kUhd;
 
 	public event VisibilityChanged OnTitleRollupOverlayVisibilityChange;
 
@@ -401,19 +297,11 @@ public class TitleRollupOverlayModel : DependencyObject
 		}
 	}
 
-	public void ProcessTitleRollupOverlayDigitalCodeInfo(IBrowseItemModel browseItemModel, object parameter)
+	public void ProcessTitleRollupOverlayAdd4kUhd(IBrowseItemModel browseItemModel, object parameter)
 	{
-		if (OnTitleRollupOverlayDigitalCodeInfo != null)
+		if (OnTitleRollupOverlayAddBluray != null)
 		{
-			OnTitleRollupOverlayDigitalCodeInfo(browseItemModel, parameter);
-		}
-	}
-
-	public void ProcessTitleRollupOverlayAddDigitalCode(IBrowseItemModel browseItemModel, object parameter)
-	{
-		if (OnTitleRollupOverlayAddDigitalCode != null)
-		{
-			OnTitleRollupOverlayAddDigitalCode(browseItemModel, parameter);
+			OnTitleRollupOverlayAdd4kUhd(browseItemModel, parameter);
 		}
 	}
 

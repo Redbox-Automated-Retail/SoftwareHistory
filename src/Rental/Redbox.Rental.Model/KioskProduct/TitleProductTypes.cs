@@ -17,10 +17,11 @@ public static class TitleProductTypes
 		TitleType.NintendoSwitch
 	};
 
-	public static TitleType[] MovieFamilyTitleTypes = new TitleType[3]
+	public static TitleType[] MovieFamilyTitleTypes = new TitleType[4]
 	{
 		TitleType.DVD,
 		TitleType.Bluray,
-		TitleType.DigitalCode
+		TitleType.DigitalCode,
+		TitleType._4KUHD
 	};
 }

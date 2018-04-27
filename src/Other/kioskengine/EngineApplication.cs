@@ -440,7 +440,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			{
 				return false;
 			}
+			base.MainForm.WindowState = FormWindowState.Minimized;
 			base.MainForm.Show();
+			base.MainForm.WindowState = FormWindowState.Normal;
 			return true;
 		}
 		ErrorForm errorForm = new ErrorForm
@@ -843,6 +845,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		IKernelExtensionService kernelExtensionService = ServiceLocator.Instance.GetService<IKernelExtensionService>();
 		MethodInvoker invoker = delegate
 		{
+			base.MainForm.TopMost = true;
+			base.MainForm.TopMost = false;
 			Redbox.KioskEngine.ComponentModel.ErrorList errorList = ResourceBundleService.Instance.Switch(out var previousBundle);
 			if (!errorList.ContainsError())
 			{

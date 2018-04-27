@@ -24,9 +24,9 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		get
 		{
 			Dictionary<string, BarcodeProduct> retBarCodes = new Dictionary<string, BarcodeProduct>();
-			foreach (KeyValuePair<long, ITitleProduct> allTitleProduct in _allTitleProducts)
+			foreach (ITitleProduct titleProduct in _titleProducts)
 			{
-				allTitleProduct.Value.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
+				titleProduct.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
 				{
 					retBarCodes.Add(x.Key, x.Value);
 				});
@@ -493,7 +493,7 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public bool HasHotDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsHotDeal ?? false) ?? false;
+	public bool HasDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsDeal ?? false) ?? false;
 
 	public bool HasMultiNightPrice => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsMultiNightPrice ?? false) ?? false;
 

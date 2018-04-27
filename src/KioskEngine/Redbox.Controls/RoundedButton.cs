@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Redbox.Controls.Themes;
@@ -303,6 +304,15 @@ public class RoundedButton : Button, IThemedControl
 	public RoundedButton()
 	{
 		base.Focusable = false;
+	}
+
+	protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
+	{
+		if (e.ClickCount > 1)
+		{
+			e.Handled = true;
+		}
+		base.OnPreviewMouseDown(e);
 	}
 
 	protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)

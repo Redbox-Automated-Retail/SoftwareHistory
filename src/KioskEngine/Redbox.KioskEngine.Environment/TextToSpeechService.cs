@@ -12,7 +12,6 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
-using Redbox.REDS.Framework;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -77,77 +76,35 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 		set
 		{
-			if (m_audioDeviceConnected == value)
+			if (m_audioDeviceConnected != value)
 			{
-				return;
-			}
-			m_audioDeviceConnected = value;
-			_speechControl = null;
-			_currentSpeechPart = null;
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			if (!m_audioDeviceConnected)
-			{
-				LogHelper.Instance.Log("TTS((> Headphones disconnected.");
-				Reset();
-				FireOnAudioDeviceConnectionChanged(isConnected: false);
-				if (CanReturnToStartView())
+				m_audioDeviceConnected = value;
+				_speechControl = null;
+				_currentSpeechPart = null;
+				IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+				if (!m_audioDeviceConnected)
 				{
-					UnwindToStartView(service);
+					LogHelper.Instance.Log("TTS((> Headphones disconnected.");
+					Reset();
+					FireOnAudioDeviceConnectionChanged(isConnected: false);
 				}
-				return;
-			}
-			LogHelper.Instance.Log("TTS((> Headphones connected.");
-			FireOnAudioDeviceConnectionChanged(isConnected: true);
-			IResource manifest = ResourceBundleService.Instance.GetManifest(out var manifestInfo);
-			string text = ResourceBundleService.Instance.Filter["view_name"];
-			if (manifestInfo.ProductName != "Rental Application")
-			{
-				LogHelper.Instance.Log($"TTS((> TextToSpeechService.AudioDeviceConnected Not in Rental Application. Currently {manifestInfo.ProductName}");
-				return;
-			}
-			ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			IShoppingSessionService service3 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			if (CanReturnToStartView())
-			{
-				LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
-				if (service3 != null)
+				else
 				{
-					IShoppingSession currentSession = service3.GetCurrentSession();
-					if (service2 != null)
-					{
-						service2.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
-						{
-							{ "subItemType", "Timeout" },
-							{ "subItemValue", "HeadphonesConnected" }
-						}, currentSession.Id.ToString());
-						service2.AddNode("session", "pricing");
-					}
-					currentSession.Abandon("HeadphonesConnected");
-					currentSession.End();
-					service2?.Close(currentSession.Id.ToString());
+					LogHelper.Instance.Log("TTS((> Headphones connected.");
+					FireOnAudioDeviceConnectionChanged(isConnected: true);
 				}
-				UnwindToStartView(service);
-			}
-			else if (service == null)
-			{
-				LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. Unable to find ViewService.");
-			}
-			else if (InReturnFlow)
-			{
-				LogHelper.Instance.Log("TTS AudioDeviceConnected - Can't Unwind. In Return Flow.");
-			}
-			else
-			{
-				LogHelper.Instance.Log($"TTS AudioDeviceConnected - Can't Unwind. On page {service.Peek()}");
 			}
 		}
 	}
 
 	public bool TTSEnabled => AudioDeviceConnected;
 
-	public bool InReturnFlow { get; set; }
-
 	public event AudioDeviceConnectionChanged OnAudioDeviceConnectionChanged;
+
+	public void ClearOnAudioDeviceConnectionChanged()
+	{
+		OnAudioDeviceConnectionChanged = null;
+	}
 
 	public void Reset()
 	{
@@ -248,17 +205,6 @@ public class TextToSpeechService : ITextToSpeechService
 		}
 	}
 
-	private bool CanReturnToStartView()
-	{
-		bool result = true;
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		if (service != null)
-		{
-			result = service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && !service.Stack.Any((IViewFrameInstance x) => x?.ViewFrame?.ViewName == "swipe_view") && !InReturnFlow;
-		}
-		return result;
-	}
-
 	private TextToSpeechService()
 	{
 		LogHelper.Instance.Log("TTS((> Service Initialized.");
@@ -273,6 +219,7 @@ public class TextToSpeechService : ITextToSpeechService
 		m_textReplacement.Add("msgs", "messages");
 		m_textReplacement.Add("*", "");
 		m_textReplacement.Add("a-z", "'a' to z");
+		m_textReplacement.Add("uhd", "u h d");
 	}
 
 	private void ProcessSpeechPart(ISpeechPart speechPart)
@@ -1199,13 +1146,6 @@ public class TextToSpeechService : ITextToSpeechService
 		{
 			LogHelper.Instance.Log("TTS((> ClickActor: exception - " + ex.Message);
 		}
-	}
-
-	private void UnwindToStartView(IViewService viewService)
-	{
-		viewService.Reset();
-		viewService.Push("start_view");
-		viewService.Show();
 	}
 
 	[DllImport("user32.dll")]

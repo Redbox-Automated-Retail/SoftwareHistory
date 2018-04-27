@@ -18,9 +18,9 @@ public class PromptSignInLogic : BaseLogic
 	public PromptSignInLogic(PromptSignInModel model)
 	{
 		Model = model;
-		Model.EmailCodeButtonCommand = RegisterRoutedCommand(Commands.EmailCodeButtonCommand, EmailCodeButtonCommand_Execute);
-		Model.PhonePinButtonCommand = RegisterRoutedCommand(Commands.PhonePinButtonCommand, PhonePinButtonCommand_Execute);
-		Model.ContinueButtonCommand = RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute);
+		Model.EmailCodeButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.EmailCodeButtonCommand, EmailCodeButtonCommand_Execute);
+		Model.PhonePinButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.PhonePinButtonCommand, PhonePinButtonCommand_Execute);
+		Model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute);
 	}
 
 	public void EmailCodeButtonCommand_Execute()

@@ -22,7 +22,7 @@ public class WPFFunctions
 	public static Brush GetBrush(FrameworkElement frameworkElement, string brushName)
 	{
 		Brush result = null;
-		object obj = frameworkElement.FindResource(brushName);
+		object obj = frameworkElement?.FindResource(brushName);
 		if (obj != null)
 		{
 			result = obj as Brush;

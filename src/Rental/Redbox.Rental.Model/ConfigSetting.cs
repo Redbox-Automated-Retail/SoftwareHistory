@@ -48,6 +48,8 @@ public static class ConfigSetting
 
 	public static string EnableMarketingAds = "EnableMarketingAds";
 
+	public static string EnableFlashDeals = "EnableFlashDeals";
+
 	public static string ShowFAQUpdated = "ShowFAQUpdated";
 
 	public static string ShowTermsUpdated = "ShowTermsUpdated";

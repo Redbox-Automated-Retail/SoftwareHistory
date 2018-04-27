@@ -7,5 +7,7 @@ public enum BannerType
 	ComingSoon,
 	Purchase,
 	MultipleDisc,
-	DigitalCode
+	DigitalCode,
+	_4KUHD,
+	DVD
 }

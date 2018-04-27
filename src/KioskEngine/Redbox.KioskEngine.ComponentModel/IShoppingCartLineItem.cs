@@ -20,13 +20,9 @@ public interface IShoppingCartLineItem
 
 	ItemSourceType SourceType { get; }
 
-	IDictionary<string, object> BlurayUpsell { get; }
-
 	bool MultiDisc { get; }
 
 	void SetPrice(string name, decimal value);
-
-	void SetBlurayUpsell(string name, object value);
 
 	void SetStatus(LineItemStatus status);
 

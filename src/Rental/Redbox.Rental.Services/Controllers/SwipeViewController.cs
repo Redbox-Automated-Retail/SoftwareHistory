@@ -133,7 +133,6 @@ public class SwipeViewController
 			if (service == null || !service.HasValidData())
 			{
 				AddAttribute("cardSwipe", "result", "invalid", ShoppingCartSessionId);
-				AddViewEvent("context", "cardNotRecognized");
 				Action action = delegate
 				{
 					GoBackSafe("bad_swipe_action");

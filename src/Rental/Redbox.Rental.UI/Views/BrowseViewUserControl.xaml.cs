@@ -30,7 +30,7 @@ public partial class BrowseViewUserControl : TextToSpeechUserControl, IWPFActor,
 
 	private void ApplyTheme()
 	{
-		(ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme)?.SetStyle(TitleRollupOverlay);
+		_ = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 	}
 
 	private void ResetIdleTimerCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -41,28 +41,5 @@ public partial class BrowseViewUserControl : TextToSpeechUserControl, IWPFActor,
 	private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
 	{
 		_browseViewModel = base.DataContext as BrowseViewModel;
-		if (_browseViewModel != null && _browseViewModel.BrowseProductControlModel != null)
-		{
-			_browseViewModel.BrowseProductControlModel.OnSelectedDisplayProductUserControlSizeAndPositionChanged += _browseControlModel_OnSelectedDisplayProductUserControlSizeAndPositionChanged;
-			_browseViewModel.OnBrowseProductControlModelChanged += _browseControlModel_OnBrowseProductControlModelChanged;
-		}
-	}
-
-	private void _browseControlModel_OnBrowseProductControlModelChanged(BrowseViewModel browseViewModel)
-	{
-		if (browseViewModel != null)
-		{
-			browseViewModel.BrowseProductControlModel.OnSelectedDisplayProductUserControlSizeAndPositionChanged += _browseControlModel_OnSelectedDisplayProductUserControlSizeAndPositionChanged;
-		}
-	}
-
-	private void _browseControlModel_OnSelectedDisplayProductUserControlSizeAndPositionChanged(BrowseControlModel obj)
-	{
-		if (_browseViewModel != null)
-		{
-			TitleRollupOverlay.Width = _browseViewModel.BrowseProductControlModel.SelectedBrowseItemSizeAndPosition.Width;
-			TitleRollupOverlay.Height = _browseViewModel.BrowseProductControlModel.SelectedBrowseItemSizeAndPosition.Height;
-			TitleRollupOverlay.Margin = new Thickness(_browseViewModel.BrowseProductControlModel.SelectedBrowseItemSizeAndPosition.Left, _browseViewModel.BrowseProductControlModel.SelectedBrowseItemSizeAndPosition.Top + BrowseProductControl.Margin.Top, 0.0, 0.0);
-		}
 	}
 }

@@ -70,6 +70,12 @@ public class KioskPricingService : IKioskPricingService
 				return null;
 			}
 			pricingSet.PriceRecords.Add(productTypePricingRecord3);
+			IPricingRecord productTypePricingRecord4 = GetProductTypePricingRecord(TitleFamily.Movies, TitleType._4KUHD, useAdjustedPrices: false);
+			if (productTypePricingRecord4 == null)
+			{
+				return null;
+			}
+			pricingSet.PriceRecords.Add(productTypePricingRecord4);
 			return pricingSet;
 		}
 	}
@@ -99,13 +105,13 @@ public class KioskPricingService : IKioskPricingService
 		_pricingDataInstance = _pricingData.GetActiveInstance(force);
 		if (_pricingDataInstance == null)
 		{
-			LogHelper.Instance.Log("KIoskPricingService.UpdatePricingInstance - no instance exists", LogEntryType.Error);
+			LogHelper.Instance.Log("KioskPricingService.UpdatePricingInstance - no instance exists", LogEntryType.Error);
 		}
 		else if (_pricingDataInstance.KioskPricing.KioskPricing.ContainsKey(_kioskId))
 		{
 			_kioskPricing = _pricingDataInstance.KioskPricing.KioskPricing[_kioskId];
 			_pricingDateTime = DateTime.Now;
-			LogHelper.Instance.Log("KioskPricingService.UpdatePricingInstance - found pricing data for this kiosk");
+			LogHelper.Instance.Log($"KioskPricingService.UpdatePricingInstance - found pricing data for this kiosk - using time {_pricingDateTime}");
 		}
 		else
 		{
@@ -137,6 +143,10 @@ public class KioskPricingService : IKioskPricingService
 			{
 				defaultRentalPricingDTO = GetActiveServiceDefaultRentalPricing(_pricingDataInstance.DefaultRentalPricing, _pricingDateTime, 0L, PriceLevelType.Bluray);
 			}
+			if (titleType == TitleType._4KUHD)
+			{
+				defaultRentalPricingDTO = GetActiveServiceDefaultRentalPricing(_pricingDataInstance.DefaultRentalPricing, _pricingDateTime, 0L, PriceLevelType._4KUHD);
+			}
 			break;
 		case TitleFamily.Games:
 			if (titleType == TitleType.All)
@@ -150,6 +160,28 @@ public class KioskPricingService : IKioskPricingService
 			return defaultRentalPricingDTO.ToPricingRecord(titleFamily, titleType);
 		}
 		return result;
+	}
+
+	public IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType)
+	{
+		if (!IsPricingEngineDataAvailable)
+		{
+			return null;
+		}
+		PriceLevelType priceLevel = GetPriceLevel(titleFamily, titleType);
+		DefaultRentalPricingDTO activeServiceDefaultRentalPricing = GetActiveServiceDefaultRentalPricing(_pricingDataInstance.DefaultRentalPricing, _pricingDateTime, 0L, priceLevel);
+		RentalPricingDTO activeServiceRentalPricing = GetActiveServiceRentalPricing(_pricingDataInstance.RentalPricing, _pricingDateTime, 0L, priceLevel);
+		if (activeServiceDefaultRentalPricing == null)
+		{
+			return null;
+		}
+		if (activeServiceRentalPricing == null)
+		{
+			return null;
+		}
+		activeServiceRentalPricing.DefaultInitialNight = activeServiceDefaultRentalPricing.InitialNight;
+		activeServiceRentalPricing.DefaultExtraNight = activeServiceDefaultRentalPricing.ExtraNight;
+		return activeServiceRentalPricing.ToPricingRecord(titleFamily, titleType);
 	}
 
 	public IPricingRecord GetOneDayProductPricingRecord(long productId)
@@ -175,11 +207,12 @@ public class KioskPricingService : IKioskPricingService
 		if (kioskProduct == null)
 		{
 			LogHelper.Instance.Log($"Error in KioskPricingService.GetProductPricingRecords  Unable to find product with id {productId}");
+			return null;
 		}
-		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-		if (titleProduct == null)
+		if (!(kioskProduct is ITitleProduct titleProduct))
 		{
 			LogHelper.Instance.Log($"Error in KioskPricingService.GetProductPricingRecords  KioskProduct is not a TitleProduct with id {productId}");
+			return null;
 		}
 		List<IPricingRecord> productPricingRecordsByProductId = GetProductPricingRecordsByProductId(productId, titleProduct.TitleFamily, titleProduct.TitleType);
 		IPricingRecord productTypePricingRecord = GetProductTypePricingRecord(titleProduct.TitleFamily, titleProduct.TitleType, useAdjustedPrices: false);
@@ -217,6 +250,8 @@ public class KioskPricingService : IKioskPricingService
 				return PriceLevelType.Dvd;
 			case TitleType.Bluray:
 				return PriceLevelType.Bluray;
+			case TitleType._4KUHD:
+				return PriceLevelType._4KUHD;
 			}
 			break;
 		case TitleFamily.Games:
@@ -251,7 +286,6 @@ public class KioskPricingService : IKioskPricingService
 		{
 			rentalPricingDTO.DefaultInitialNight = drp.InitialNight;
 			rentalPricingDTO.DefaultExtraNight = drp.ExtraNight;
-			rentalPricingDTO.ExpirePrice = drp.InitialNight;
 		}
 		if (activeMNPServiceRentalPricing != null && activeMNPServiceRentalPricing.Count > 0)
 		{
@@ -259,7 +293,6 @@ public class KioskPricingService : IKioskPricingService
 			{
 				x.DefaultInitialNight = drp.InitialNight;
 				x.DefaultExtraNight = drp.ExtraNight;
-				x.ExpirePrice = drp.InitialNight;
 			});
 		}
 		List<IPricingRecord> list = new List<IPricingRecord>();
@@ -344,6 +377,7 @@ public class KioskPricingService : IKioskPricingService
 		}
 		rp.InitialNight = AdjustPrice(rp.InitialNight, Store.RentalTaxRate);
 		rp.ExtraNight = AdjustPrice(rp.ExtraNight, Store.RentalTaxRate);
+		rp.ExpirePrice = AdjustPrice(rp.ExpirePrice, Store.RentalTaxRate);
 		rp.NonReturnPrice = AdjustPrice(rp.NonReturnPrice, Store.RentalTaxRate);
 		return rp;
 	}
@@ -375,6 +409,7 @@ public class KioskPricingService : IKioskPricingService
 		}
 		drp.InitialNight = AdjustPrice(drp.InitialNight, Store.RentalTaxRate);
 		drp.ExtraNight = AdjustPrice(drp.ExtraNight, Store.RentalTaxRate);
+		drp.ExpirePrice = AdjustPrice(drp.ExpirePrice, Store.RentalTaxRate);
 		drp.NonReturnPrice = AdjustPrice(drp.NonReturnPrice, Store.RentalTaxRate);
 		return drp;
 	}

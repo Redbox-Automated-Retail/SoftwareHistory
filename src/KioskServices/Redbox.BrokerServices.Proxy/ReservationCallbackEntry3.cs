@@ -48,7 +48,7 @@ public class ReservationCallbackEntry3 : ICallbackEntry
 			List<int> list = (dictionary2.ContainsKey(key) ? dictionary2[key] : (dictionary2[key] = new List<int>()));
 			list.Add(title.TitleID);
 		}
-		IReservationResult reservationResult = ReservationServicesProxy.Instance.RequestCallback3(Cart.CardID, Cart.Email, Cart.ReferenceNumber, Cart.ReserveDate, dictionary2, Cart.AppliedCredit, Cart.AppliedHiveOnlinePromotion, Cart.AppliedTitleMarketing, Cart.CustomerNumber, Cart.DiscountedSubTotal, Cart.GrandTotal, Cart.HistoryTitleIDs, Cart.HiveOnlinePromotionDiscount, Cart.IsMnp, Cart.NumberOfCreditsRemaining, Cart.PromoCode, Cart.SubTotal, Cart.Tax, Cart.Titles, Cart.IsGc, Cart.GcIds, Cart.CcIds, Cart.TaxRate, Cart.Zip, Cart.IsMdv, Cart.LoyaltyRedemption);
+		IReservationResult reservationResult = ReservationServicesProxy.Instance.RequestCallback3(Cart.CardID, Cart.Email, Cart.ReferenceNumber, Cart.ReserveDate, dictionary2, Cart.AppliedCredit, Cart.AppliedHiveOnlinePromotion, Cart.AppliedTitleMarketing, Cart.CustomerNumber, Cart.DiscountedSubTotal, Cart.GrandTotal, Cart.HistoryTitleIDs, Cart.HiveOnlinePromotionDiscount, Cart.IsMnp, Cart.NumberOfCreditsRemaining, Cart.PromoCode, Cart.SubTotal, Cart.Tax, Cart.Titles, Cart.IsGc, Cart.GcIds, Cart.CcIds, Cart.TaxRate, Cart.Zip, Cart.IsMdv, Cart.LoyaltyRedemption, Cart.DefaultServiceFeeAmount, Cart.ActualServiceFeeAmount);
 		BrokerResult.ReservationSucceeded = reservationResult.Success;
 		BrokerResult.ErrorMessage = reservationResult.ErrorMessage;
 		List<TitleResult> list3 = new List<TitleResult>();

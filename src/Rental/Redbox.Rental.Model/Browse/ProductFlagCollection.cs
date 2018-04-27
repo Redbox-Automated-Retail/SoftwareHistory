@@ -64,9 +64,21 @@ public class ProductFlagCollection : List<ProductFlag>
 					},
 					new ProductFlag
 					{
+						Flag = ProductFlags.FlashDeal,
+						TextKeyName = "flag_flash_deal",
+						FlagStyleName = "orange_flag_style"
+					},
+					new ProductFlag
+					{
 						Flag = ProductFlags.Points,
 						TextKeyName = "flag_points",
 						FlagStyleName = "rubine_flag_style"
+					},
+					new ProductFlag
+					{
+						Flag = ProductFlags.Excluded,
+						TextKeyName = "flag_excluded",
+						FlagStyleName = "charcoal_grey_flag_style"
 					}
 				};
 			}

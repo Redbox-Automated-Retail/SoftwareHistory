@@ -6,6 +6,8 @@ using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Services.Controllers;
+using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -133,11 +135,22 @@ public class TitleDetailViewTextToSpeech
 				};
 				part.Texts.Add(item10);
 			}
-			if (obj != null && obj.HasHotDeal)
+			if (browseItem is DisplayProductModel)
+			{
+				DisplayProductModel obj2 = (DisplayProductModel)browseItem;
+				if (obj2 != null && obj2.ServiceFeeTextVisibility == Visibility.Visible)
+				{
+					part.Texts.Add(new TextPart
+					{
+						Text = "Service Fee: " + ((DisplayProductModel)browseItem)?.ServiceFeeText
+					});
+				}
+			}
+			if (obj != null && obj.HasDeal)
 			{
 				TextPart item11 = new TextPart
 				{
-					Text = ((DisplayProductModel)browseItem).HotDealText
+					Text = ((DisplayProductModel)browseItem).DealText
 				};
 				part.Texts.Add(item11);
 			}
@@ -178,13 +191,9 @@ public class TitleDetailViewTextToSpeech
 					{
 						model.ProcessMoreInfoHit(item);
 					}
-					else if (primaryProduct.TitleType == TitleType.Bluray)
-					{
-						model.ProcessAddBluRay(item, null);
-					}
 					else
 					{
-						model.ProcessAddPrimaryItem(item, null);
+						model.ProcessAddProduct(item, null, primaryProduct.TitleType);
 					}
 				}
 			});
@@ -196,7 +205,7 @@ public class TitleDetailViewTextToSpeech
 					model.ProcessBuyButtonHit(item, null);
 				}
 			});
-			if ((displayProductModel.ShowPrimary == Visibility.Visible && displayProductModel.PrimaryEnabled) || (displayProductModel.ShowBluRay == Visibility.Visible && displayProductModel.BluRayEnabled))
+			if (displayProductModel.ButtonData.Any((TilteDetailRentalFormatButtonData b) => b.Format == primaryProduct.TitleType && b.IsEnabled))
 			{
 				TextPart item2 = new TextPart
 				{
@@ -279,6 +288,9 @@ public class TitleDetailViewTextToSpeech
 
 	private static IBrowseItemModel GetBrowseItem(Func<TitleDetailModel> getModel)
 	{
-		return (getModel?.Invoke())?.BrowseProductControlModel?.BrowseItems?.FirstOrDefault((IBrowseItemModel x) => ((ITitleProduct)x.Data)?.ProductId == ((ITitleProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct)?.ProductId);
+		TitleDetailModel obj = getModel?.Invoke();
+		bool isAda = ApplicationState.Instance.IsADAAccessible;
+		ITitleProduct selectedProduct = (ITitleProduct)Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
+		return obj?.BrowseProductControlModel?.BrowseItems?.FirstOrDefault((IBrowseItemModel x) => (!isAda || !(selectedProduct is TitleRollupProduct)) ? (((ITitleProduct)x.Data)?.ProductId == selectedProduct?.ProductId) : TitleRollupUtilities.IsAdaDefaultTitle((ITitleProduct)x.Data, (TitleRollupProduct)selectedProduct));
 	}
 }

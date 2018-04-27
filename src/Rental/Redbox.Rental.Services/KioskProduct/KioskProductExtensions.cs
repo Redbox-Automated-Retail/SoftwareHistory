@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Session;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -160,9 +161,9 @@ public static class KioskProductExtensions
 		return result;
 	}
 
-	public static BrowseSort ConvertToBrowseSort(this string selectedSort, BrowseViewFilter browseViewFilter)
+	public static BrowseSort ConvertToBrowseSort(this BrowseSelectedSort selectedSort, BrowseViewFilter browseViewFilter)
 	{
-		if (selectedSort != null && selectedSort.Equals("alpha", StringComparison.CurrentCultureIgnoreCase))
+		if (selectedSort.Equals(BrowseSelectedSort.Alpha))
 		{
 			return BrowseSort.Alpha;
 		}
@@ -233,6 +234,18 @@ public static class KioskProductExtensions
 		if (type.Equals("DigitalCode", StringComparison.CurrentCultureIgnoreCase))
 		{
 			return TitleType.DigitalCode;
+		}
+		if (type.Equals("4K UHD", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType._4KUHD;
+		}
+		if (type.Equals("4KUHD", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType._4KUHD;
+		}
+		if (type.Equals("_4KUHD", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return TitleType._4KUHD;
 		}
 		if (type.Equals("Xbox 360", StringComparison.CurrentCultureIgnoreCase))
 		{
@@ -573,63 +586,49 @@ public static class KioskProductExtensions
 
 	public static Dictionary<string, object> ToDictionary(this TitleRollupProduct product)
 	{
-		Dictionary<string, object> dict = new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase);
-		dict["kiosk_product_type"] = (int)product.KioskProductType;
-		dict["product_name"] = product.ProductName;
-		dict["product_description"] = product.ProductDescription;
-		dict["collections"] = product.Collections;
-		dict["product_id"] = product.ProductId;
-		dict["stars"] = product.Stars;
-		dict["starring"] = product.Starring;
-		dict["running_time"] = product.RunningTime;
-		dict["product_type_id"] = product.ProductTypeId;
-		dict["rating_id"] = product.RatingId;
-		dict["long_name"] = product.LongName;
-		dict["sort_name"] = product.SortName;
-		dict["image_file"] = product.ImageFile;
-		dict["description"] = product.Description;
-		dict["genres"] = product.Genres.ToGenreDictionary();
-		dict["release_date"] = product.ReleaseDate;
-		dict["box_office_gross"] = product.BoxOfficeGross;
-		dict["directors"] = product.Directors;
-		dict["coming_soon_days"] = product.ComingSoonDays;
-		dict["sort_date"] = product.SortDate;
-		dict["national_street_date"] = product.NationalStreetDate;
-		dict["closed_captioned"] = product.ClosedCaptioned;
-		dict["merchandise_date"] = product.MerchandiseDate;
-		dict["do_not_rent_date"] = product.DoNotRentDate;
-		dict["is_sellable"] = product.IsSellable;
-		dict["sell_thru"] = product.SellThru;
-		dict["sell_thru_new"] = product.SellThruNew;
-		dict["sellthru_date"] = product.SellThruDate;
-		dict["sellthru_price"] = product.SellThruPrice;
-		dict["disc_number"] = product.DiscNumber;
-		dict["sub_platform_id"] = product.SubPlatformId;
-		dict["number_of_players_text"] = product.NumberOfPlayersText;
-		dict["do_not_rent"] = product.DoNotRent;
-		dict["is_game"] = product.IsGame;
-		dict["is_movie"] = product.IsMovie;
-		dict["is_available"] = product.IsAvailable;
-		dict["coming_soon"] = product.ComingSoon;
-		dict["in_stock"] = product.InStock;
-		dict["show_out_of_stock"] = product.ShowOutOfStock;
-		dict["kiosk_products"] = product.KioskProducts.ToDictionary();
-		dict["dvd_index"] = 0;
-		dict["blu_ray_index"] = 0;
-		int index = 1;
-		product.KioskProducts.ForEach(delegate(ITitleProduct item)
+		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
 		{
-			if (item.TitleType == TitleType.DVD)
-			{
-				dict["dvd_index"] = index;
-			}
-			else if (item.TitleType == TitleType.Bluray)
-			{
-				dict["blu_ray_index"] = index;
-			}
-			index++;
-		});
-		return dict;
+			["kiosk_product_type"] = (int)product.KioskProductType,
+			["product_name"] = product.ProductName,
+			["product_description"] = product.ProductDescription,
+			["collections"] = product.Collections,
+			["product_id"] = product.ProductId,
+			["stars"] = product.Stars,
+			["starring"] = product.Starring,
+			["running_time"] = product.RunningTime,
+			["product_type_id"] = product.ProductTypeId,
+			["rating_id"] = product.RatingId,
+			["long_name"] = product.LongName,
+			["sort_name"] = product.SortName,
+			["image_file"] = product.ImageFile,
+			["description"] = product.Description,
+			["genres"] = product.Genres.ToGenreDictionary(),
+			["release_date"] = product.ReleaseDate,
+			["box_office_gross"] = product.BoxOfficeGross,
+			["directors"] = product.Directors,
+			["coming_soon_days"] = product.ComingSoonDays,
+			["sort_date"] = product.SortDate,
+			["national_street_date"] = product.NationalStreetDate,
+			["closed_captioned"] = product.ClosedCaptioned,
+			["merchandise_date"] = product.MerchandiseDate,
+			["do_not_rent_date"] = product.DoNotRentDate,
+			["is_sellable"] = product.IsSellable,
+			["sell_thru"] = product.SellThru,
+			["sell_thru_new"] = product.SellThruNew,
+			["sellthru_date"] = product.SellThruDate,
+			["sellthru_price"] = product.SellThruPrice,
+			["disc_number"] = product.DiscNumber,
+			["sub_platform_id"] = product.SubPlatformId,
+			["number_of_players_text"] = product.NumberOfPlayersText,
+			["do_not_rent"] = product.DoNotRent,
+			["is_game"] = product.IsGame,
+			["is_movie"] = product.IsMovie,
+			["is_available"] = product.IsAvailable,
+			["coming_soon"] = product.ComingSoon,
+			["in_stock"] = product.InStock,
+			["show_out_of_stock"] = product.ShowOutOfStock,
+			["kiosk_products"] = product.KioskProducts.ToDictionary()
+		};
 	}
 
 	public static Dictionary<string, object> ToDictionary(this CollectionProduct product)

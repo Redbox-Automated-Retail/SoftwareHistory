@@ -189,12 +189,17 @@ public class SpinControl : BaseContainer
 	protected virtual void AnimationBegin()
 	{
 		SetChildSpinSize();
+		RotateAnimation.BeginTime = TimeSpan.FromMilliseconds(0.0);
 		RotateAnimation.Duration = new Duration(TimeSpan.FromSeconds(Period));
 		if (RepeatForever)
 		{
 			RotateAnimation.RepeatBehavior = RepeatBehavior.Forever;
 		}
-		(base.RenderTransform as RotateTransform).BeginAnimation(RotateTransform.AngleProperty, RotateAnimation);
+		if (base.RenderTransform == null)
+		{
+			IsAnimatedChanged();
+		}
+		(base.RenderTransform as RotateTransform)?.BeginAnimation(RotateTransform.AngleProperty, RotateAnimation);
 	}
 
 	protected void SetChildSpinSize(Size? size = null)

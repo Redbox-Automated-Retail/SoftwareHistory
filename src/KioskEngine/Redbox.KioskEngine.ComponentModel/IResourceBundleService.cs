@@ -23,6 +23,8 @@ public interface IResourceBundleService
 
 	string SwitchStatusMessage { get; set; }
 
+	string CurrentBundleName { get; set; }
+
 	string DefaultBundleName { get; set; }
 
 	string[] SearchPath { get; set; }

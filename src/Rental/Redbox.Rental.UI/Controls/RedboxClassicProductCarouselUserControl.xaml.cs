@@ -211,12 +211,8 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 			TitleRollupOverlay.Width = _carouselPositions.CenterCarouselPosition.Width;
 			TitleRollupOverlay.Height = _carouselPositions.CenterCarouselPosition.Height;
 			TitleRollupOverlay.Margin = new Thickness(_carouselPositions.CenterCarouselPosition.Left, _carouselPositions.CenterCarouselPosition.Top, 0.0, 0.0);
-			double num = 145.0;
-			double num2 = _carouselPositions.CenterCarouselPosition.Width / num;
-			double fontSize = 16.0 * num2;
 			if (_carouselModel != null)
 			{
-				_carouselModel.TitleRollupOverlayModel.FontSize = fontSize;
 				_carouselModel.TitleRollupOverlayModel.BrowseItemModel = _rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex];
 			}
 		}

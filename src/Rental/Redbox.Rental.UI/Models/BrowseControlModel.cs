@@ -88,21 +88,6 @@ public class BrowseControlModel : DependencyObject
 		}
 	}
 
-	public TitleRollupOverlayModel TitleRollupOverlayModel
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (TitleRollupOverlayModel)GetValue(TitleRollupOverlayModelProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TitleRollupOverlayModelProperty, value);
-			});
-		}
-	}
-
 	public SizeAndPosition SelectedBrowseItemSizeAndPosition
 	{
 		get
@@ -137,7 +122,7 @@ public class BrowseControlModel : DependencyObject
 
 	public int ItemsOnCurrentPage => base.Dispatcher.Invoke(() => (PageNumber >= TotalPages) ? ((BrowseItems?.Count ?? 0) % ItemsPerPage) : ItemsPerPage);
 
-	public int TotalPages => base.Dispatcher.Invoke(() => (BrowseItems?.Count ?? 0) / ItemsPerPage + (((BrowseItems?.Count ?? 0) % ItemsPerPage > 1) ? 1 : 0));
+	public int TotalPages => base.Dispatcher.Invoke(() => (BrowseItems?.Count ?? 0) / ItemsPerPage + (((BrowseItems?.Count ?? 0) % ItemsPerPage > 0) ? 1 : 0));
 
 	public event BrowseItemModelEvent OnBrowseItemModelSelected;
 
@@ -150,11 +135,6 @@ public class BrowseControlModel : DependencyObject
 	public event BrowseItemsModelEvent OnNotifyBrowseItemsShown;
 
 	public event Action<BrowseControlModel> OnSelectedDisplayProductUserControlSizeAndPositionChanged;
-
-	public BrowseControlModel()
-	{
-		TitleRollupOverlayModel = new TitleRollupOverlayModel();
-	}
 
 	public void SetPageNumber(int value, PageChangeSource pageChangeSource)
 	{

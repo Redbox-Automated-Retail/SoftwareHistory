@@ -228,7 +228,7 @@ public class PhoneAndPinViewModel : DependencyObject
 		set
 		{
 			_pinDisplayText = value;
-			SecurePinDisplayText = ((value == Resources.phone_and_pin_default_pin_display) ? value : new string('*', value.Length));
+			SecurePinDisplayText = ((value == Resources.phone_and_pin_default_pin_display || string.IsNullOrWhiteSpace(value) || value.Length == 1) ? value : $"{new string('*', value.Length - 1)}{value.Substring(value.Length - 1)}");
 		}
 	}
 

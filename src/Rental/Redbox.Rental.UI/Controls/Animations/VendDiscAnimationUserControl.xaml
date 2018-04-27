@@ -1,11 +1,32 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<UserControl x:Class="Redbox.Rental.UI.Controls.Animations.VendDiscAnimationUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls.Animations">
-  <Grid Background="#B5121B" Width="2048">
+<UserControl x:Class="Redbox.Rental.UI.Controls.Animations.VendDiscAnimationUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls.Animations" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls">
+  <FrameworkElement.Resources>
+    <ResourceDictionary />
+  </FrameworkElement.Resources>
+  <Grid Background="#E32044" Width="2048">
     <local:RedChevronUserControl x:Name="RedChevron" VerticalAlignment="Top" HorizontalAlignment="Left" />
-    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="75" Width="430" TextBlock.Foreground="#FFFFFFFF">
-      <TextBlock Name="TitleTextBlock" Style="{StaticResource font_target_large}" TextWrapping="Wrap">Culture specific title</TextBlock>
-      <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_smaller}" TextWrapping="Wrap">Culture specific message goes here at runtime</TextBlock>
-    </StackPanel>
-    <local:RedboxDiscUserControl x:Name="RedboxDisc" VerticalAlignment="Center" HorizontalAlignment="Left" Width="460" Height="460" Margin="520, 0" AnimationScrollDirection="Right" />
+    <Redbox:GridExt RowHeights="auto,auto" VerticalAlignment="Center">
+      <Redbox:GridExt Row="0" RowHeights="auto" Margin="35,0" Width="575" HorizontalAlignment="Left">
+        <StackPanel Name="VendDiscPickup" Margin="75" HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.Foreground="#FFFFFFFF" Visibility="{Binding MessageGroup1Visibility, FallbackValue=Collapsed}">
+          <TextBlock Name="TitleTextBlock" Style="{StaticResource font_target_large}" TextWrapping="Wrap">Culture specific title</TextBlock>
+          <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_smaller}" TextWrapping="Wrap">Culture specific message goes here at runtime</TextBlock>
+        </StackPanel>
+      </Redbox:GridExt>
+      <Redbox:GridExt Name="VendDiscServe" Row="1" RowHeights="auto,auto,auto" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="35" Width="575" TextBlock.Foreground="#FFFFFFFF" Visibility="{Binding MessageGroup2Visibility, FallbackValue=Visible}">
+        <Redbox:GridExt Name="MessageGridBlock1" Row="0" ColumnWidths="85,*" RowHeights="80">
+          <UserControl Name="MessageCheck1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource white_check_mark_style}" />
+          <TextBlock Name="MessageTextBlock1" Grid.Column="1" Style="{StaticResource font_museo_slab_900_36}" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding MessageTextBlock1, FallbackValue=Racking up your points}" />
+        </Redbox:GridExt>
+        <Redbox:GridExt Name="MessageGridBlock2" Row="1" ColumnWidths="85,*" RowHeights="80">
+          <UserControl Name="MessageCheck2" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource white_check_mark_style}" />
+          <TextBlock Name="MessageTextBlock2" Grid.Column="1" Style="{StaticResource font_museo_slab_900_36}" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding MessageTextBlock1, FallbackValue=Signing out your account}" />
+        </Redbox:GridExt>
+        <Redbox:GridExt Name="MessageGridBlock3" Row="2" ColumnWidths="85,*" RowHeights="80">
+          <UserControl Name="MessageCheck3" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource white_check_mark_style}" />
+          <TextBlock Name="MessageTextBlock3" Grid.Column="1" Style="{StaticResource font_museo_slab_900_36}" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding MessageTextBlock3, FallbackValue=Serving up your discs}" />
+        </Redbox:GridExt>
+      </Redbox:GridExt>
+    </Redbox:GridExt>
+    <local:RedboxDiscUserControl x:Name="RedboxDisc" VerticalAlignment="Center" HorizontalAlignment="Left" Width="340" Height="340" Margin="640, 0" AnimationScrollDirection="Right" />
   </Grid>
 </UserControl>

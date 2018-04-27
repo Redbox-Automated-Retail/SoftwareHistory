@@ -8,9 +8,12 @@ public class ShoppingCart
 
 	public List<Discount> Discounts { get; set; }
 
+	public ServiceFee ServiceFee { get; set; }
+
 	public ShoppingCart()
 	{
 		Groups = new List<LineItemGroup>();
 		Discounts = new List<Discount>();
+		ServiceFee = new ServiceFee();
 	}
 }

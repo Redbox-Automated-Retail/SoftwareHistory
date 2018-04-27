@@ -10,4 +10,10 @@ public class CheckoutFunctions
 	{
 		ShoppingCartViewFunctions.ViewShoppingCart();
 	}
+
+	[KernelFunction(Name = "kernel.show_email_receipt_view")]
+	internal static void ShowEmailReceiptView(string emailAddress)
+	{
+		PersonalizationFunctions.ShowEmailReceiptAddress(emailAddress);
+	}
 }

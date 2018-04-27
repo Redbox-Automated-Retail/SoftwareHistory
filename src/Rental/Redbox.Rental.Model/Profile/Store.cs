@@ -47,4 +47,8 @@ public class Store : ILuaKeyValue
 	public string Zip { get; set; }
 
 	public int? CollectionMethod { get; set; }
+
+	public decimal ServiceFee { get; set; }
+
+	public decimal ServiceFeeTaxRate { get; set; }
 }

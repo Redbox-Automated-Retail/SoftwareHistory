@@ -97,7 +97,7 @@ public interface IHardwareService
 
 	ErrorList GetProgramResults(string jobId, out ReadOnlyCollection<IHardwareResult> hardwareResults);
 
-	ErrorList ExecuteImmediate(string command, HardwareImmediateExecutionHandler eventHandler, bool clearStack);
+	ErrorList ExecuteImmediate(string command, HardwareImmediateExecutionHandler eventHandler, bool clearStack, string bundleName);
 
 	ErrorList GetSchedulerStatus(out string status);
 

@@ -7,12 +7,6 @@ namespace Redbox.KioskEngine.Kernel;
 
 internal static class SessionAnalyticsFunctions
 {
-	[KernelFunction(Name = "kernel.analyticsstart")]
-	internal static void AnalyticsStart(string sessionId, string sessionType)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.Start(sessionId, Enum<AnalyticsSessionType>.ParseIgnoringCase(sessionType, AnalyticsSessionType.BrowseVend));
-	}
-
 	[KernelFunction(Name = "kernel.analyticssessionexists")]
 	internal static bool AnalyticsSessionExists(string sessionId)
 	{
@@ -81,6 +75,36 @@ internal static class SessionAnalyticsFunctions
 		{
 			Dictionary<string, string> elements = ConvertToDictionary(table);
 			service.AddElements(parentNodeName, elements, sessionId);
+		}
+	}
+
+	[KernelFunction(Name = "kernel.analyticsaddorupdateelement")]
+	internal static void AnalyticsAddOrUpdateElement(string parentNodeName, string elementName, string elementValue, string sessionId)
+	{
+		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+		if (service != null && service.SessionExists(sessionId))
+		{
+			service.AddOrUpdateElement(parentNodeName, elementName, elementValue, sessionId);
+		}
+	}
+
+	[KernelFunction(Name = "kernel.analyticsaddauthtransactionInfo")]
+	internal static void AnalyticsAddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId, string sessionId)
+	{
+		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+		if (service != null && service.SessionExists(sessionId))
+		{
+			service.AddAuthTransactionInfo(customerProfileNumber, accountNumber, transactionId, sessionId);
+		}
+	}
+
+	[KernelFunction(Name = "kernel.analyticsremoveelement")]
+	internal static void AnalyticsRemoveElement(string parentNodeName, string elementName, string sessionId)
+	{
+		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+		if (service != null && service.SessionExists(sessionId))
+		{
+			service.RemoveElement(parentNodeName, elementName, sessionId);
 		}
 	}
 

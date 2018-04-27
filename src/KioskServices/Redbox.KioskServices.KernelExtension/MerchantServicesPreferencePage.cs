@@ -62,6 +62,18 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private CheckBox m_isRBICheckBox;
 
+	private TextBox m_transactionIdTextBox;
+
+	private Label label7;
+
+	private TextBox m_accountNumberTextBox;
+
+	private Label label2;
+
+	private TextBox m_cpAccountNumberTextBox;
+
+	private Label label8;
+
 	public MerchantServicesPreferencePage()
 	{
 		InitializeComponent();
@@ -86,7 +98,10 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 			m_authorizeResponseTypeComboBox.Items.Add(item);
 		}
 		m_authorizeResponseTypeComboBox.SelectedIndex = m_authorizeResponseTypeComboBox.FindString(MerchantServicesProxy.Instance.AuthorizeResponse.ToString());
+		m_accountNumberTextBox.Text = MerchantServicesProxy.Instance.AccountNumber;
+		m_transactionIdTextBox.Text = MerchantServicesProxy.Instance.TransactionId;
 		m_customerProfileCheckBox.Checked = MerchantServicesProxy.Instance.HasCustomerProfile;
+		m_cpAccountNumberTextBox.Text = MerchantServicesProxy.Instance.CPAccountNumber;
 		m_cpFirstNameTextBox.Text = MerchantServicesProxy.Instance.CPFirstName;
 		m_cpLastNameTextBox.Text = MerchantServicesProxy.Instance.CPLastName;
 		m_EmailAddressTextBox.Text = MerchantServicesProxy.Instance.EmailAddress;
@@ -215,6 +230,30 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
+	private void m_cpAccountNumberTextBox_Leave(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			MerchantServicesProxy.Instance.CPAccountNumber = (string.IsNullOrWhiteSpace(m_cpAccountNumberTextBox.Text) ? string.Empty : m_cpAccountNumberTextBox.Text);
+		}
+	}
+
+	private void m_transactionIdTextBox_Leave(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			MerchantServicesProxy.Instance.TransactionId = (string.IsNullOrWhiteSpace(m_transactionIdTextBox.Text) ? string.Empty : m_transactionIdTextBox.Text);
+		}
+	}
+
+	private void m_accountNumberTextBox_Leave(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			MerchantServicesProxy.Instance.AccountNumber = (string.IsNullOrWhiteSpace(m_accountNumberTextBox.Text) ? string.Empty : m_accountNumberTextBox.Text);
+		}
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -250,6 +289,12 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.label6 = new System.Windows.Forms.Label();
 		this.m_confirmationStatusComboBox = new System.Windows.Forms.ComboBox();
 		this.m_isRBICheckBox = new System.Windows.Forms.CheckBox();
+		this.label2 = new System.Windows.Forms.Label();
+		this.m_accountNumberTextBox = new System.Windows.Forms.TextBox();
+		this.m_transactionIdTextBox = new System.Windows.Forms.TextBox();
+		this.label7 = new System.Windows.Forms.Label();
+		this.label8 = new System.Windows.Forms.Label();
+		this.m_cpAccountNumberTextBox = new System.Windows.Forms.TextBox();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
 		this.m_enableOfflineBadCardListCheckBox.AutoSize = true;
@@ -339,42 +384,42 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_deleteOfferButton.UseVisualStyleBackColor = true;
 		this.m_deleteOfferButton.Click += new System.EventHandler(m_deleteOfferButton_Click);
 		this.m_customerProfileCheckBox.AutoSize = true;
-		this.m_customerProfileCheckBox.Location = new System.Drawing.Point(30, 238);
+		this.m_customerProfileCheckBox.Location = new System.Drawing.Point(30, 226);
 		this.m_customerProfileCheckBox.Name = "m_customerProfileCheckBox";
 		this.m_customerProfileCheckBox.Size = new System.Drawing.Size(124, 17);
 		this.m_customerProfileCheckBox.TabIndex = 47;
 		this.m_customerProfileCheckBox.Text = "Has Customer Profile";
 		this.m_customerProfileCheckBox.UseVisualStyleBackColor = true;
 		this.m_customerProfileCheckBox.CheckedChanged += new System.EventHandler(OnHasCustomerProfileCheckChanged);
-		this.m_cpFirstNameTextBox.Location = new System.Drawing.Point(169, 260);
+		this.m_cpFirstNameTextBox.Location = new System.Drawing.Point(169, 267);
 		this.m_cpFirstNameTextBox.Name = "m_cpFirstNameTextBox";
 		this.m_cpFirstNameTextBox.Size = new System.Drawing.Size(317, 20);
 		this.m_cpFirstNameTextBox.TabIndex = 48;
 		this.m_cpFirstNameTextBox.Leave += new System.EventHandler(CPFirstNameTextBox_Leave);
 		this.label3.AutoSize = true;
-		this.label3.Location = new System.Drawing.Point(50, 263);
+		this.label3.Location = new System.Drawing.Point(49, 270);
 		this.label3.Name = "label3";
 		this.label3.Size = new System.Drawing.Size(74, 13);
 		this.label3.TabIndex = 49;
 		this.label3.Text = "CP First Name";
 		this.label4.AutoSize = true;
-		this.label4.Location = new System.Drawing.Point(50, 286);
+		this.label4.Location = new System.Drawing.Point(50, 294);
 		this.label4.Name = "label4";
 		this.label4.Size = new System.Drawing.Size(75, 13);
 		this.label4.TabIndex = 51;
 		this.label4.Text = "CP Last Name";
-		this.m_cpLastNameTextBox.Location = new System.Drawing.Point(169, 283);
+		this.m_cpLastNameTextBox.Location = new System.Drawing.Point(169, 291);
 		this.m_cpLastNameTextBox.Name = "m_cpLastNameTextBox";
 		this.m_cpLastNameTextBox.Size = new System.Drawing.Size(317, 20);
 		this.m_cpLastNameTextBox.TabIndex = 50;
 		this.m_cpLastNameTextBox.Leave += new System.EventHandler(CPLastNameTextBox_Leave);
 		this.label5.AutoSize = true;
-		this.label5.Location = new System.Drawing.Point(50, 309);
+		this.label5.Location = new System.Drawing.Point(50, 317);
 		this.label5.Name = "label5";
 		this.label5.Size = new System.Drawing.Size(73, 13);
 		this.label5.TabIndex = 53;
 		this.label5.Text = "Email Address";
-		this.m_EmailAddressTextBox.Location = new System.Drawing.Point(169, 306);
+		this.m_EmailAddressTextBox.Location = new System.Drawing.Point(169, 314);
 		this.m_EmailAddressTextBox.Name = "m_EmailAddressTextBox";
 		this.m_EmailAddressTextBox.Size = new System.Drawing.Size(317, 20);
 		this.m_EmailAddressTextBox.TabIndex = 52;
@@ -393,15 +438,54 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_confirmationStatusComboBox.TabIndex = 55;
 		this.m_confirmationStatusComboBox.SelectedIndexChanged += new System.EventHandler(OnSelectedConfirmationStatusChanged);
 		this.m_isRBICheckBox.AutoSize = true;
-		this.m_isRBICheckBox.Location = new System.Drawing.Point(53, 325);
+		this.m_isRBICheckBox.Location = new System.Drawing.Point(53, 333);
 		this.m_isRBICheckBox.Name = "m_isRBICheckBox";
 		this.m_isRBICheckBox.Size = new System.Drawing.Size(52, 17);
 		this.m_isRBICheckBox.TabIndex = 64;
 		this.m_isRBICheckBox.Text = "IsRBI";
 		this.m_isRBICheckBox.UseVisualStyleBackColor = true;
 		this.m_isRBICheckBox.CheckedChanged += new System.EventHandler(OnIsRBICheckChanged);
+		this.label2.AutoSize = true;
+		this.label2.Location = new System.Drawing.Point(30, 181);
+		this.label2.Name = "label2";
+		this.label2.Size = new System.Drawing.Size(87, 13);
+		this.label2.TabIndex = 65;
+		this.label2.Text = "Account Number";
+		this.m_accountNumberTextBox.Location = new System.Drawing.Point(169, 178);
+		this.m_accountNumberTextBox.Name = "m_accountNumberTextBox";
+		this.m_accountNumberTextBox.Size = new System.Drawing.Size(317, 20);
+		this.m_accountNumberTextBox.TabIndex = 66;
+		this.m_accountNumberTextBox.Leave += new System.EventHandler(m_accountNumberTextBox_Leave);
+		this.m_transactionIdTextBox.Location = new System.Drawing.Point(169, 202);
+		this.m_transactionIdTextBox.Name = "m_transactionIdTextBox";
+		this.m_transactionIdTextBox.Size = new System.Drawing.Size(317, 20);
+		this.m_transactionIdTextBox.TabIndex = 68;
+		this.m_transactionIdTextBox.Leave += new System.EventHandler(m_transactionIdTextBox_Leave);
+		this.label7.AutoSize = true;
+		this.label7.Location = new System.Drawing.Point(30, 205);
+		this.label7.Name = "label7";
+		this.label7.Size = new System.Drawing.Size(77, 13);
+		this.label7.TabIndex = 67;
+		this.label7.Text = "Transaction ID";
+		this.label8.AutoSize = true;
+		this.label8.Location = new System.Drawing.Point(49, 246);
+		this.label8.Name = "label8";
+		this.label8.Size = new System.Drawing.Size(104, 13);
+		this.label8.TabIndex = 69;
+		this.label8.Text = "CP Account Number";
+		this.m_cpAccountNumberTextBox.Location = new System.Drawing.Point(169, 243);
+		this.m_cpAccountNumberTextBox.Name = "m_cpAccountNumberTextBox";
+		this.m_cpAccountNumberTextBox.Size = new System.Drawing.Size(317, 20);
+		this.m_cpAccountNumberTextBox.TabIndex = 70;
+		this.m_cpAccountNumberTextBox.Leave += new System.EventHandler(m_cpAccountNumberTextBox_Leave);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.m_cpAccountNumberTextBox);
+		base.Controls.Add(this.label8);
+		base.Controls.Add(this.m_transactionIdTextBox);
+		base.Controls.Add(this.label7);
+		base.Controls.Add(this.m_accountNumberTextBox);
+		base.Controls.Add(this.label2);
 		base.Controls.Add(this.m_isRBICheckBox);
 		base.Controls.Add(this.m_confirmationStatusComboBox);
 		base.Controls.Add(this.label6);

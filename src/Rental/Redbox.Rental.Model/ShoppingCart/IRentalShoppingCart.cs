@@ -19,7 +19,7 @@ public interface IRentalShoppingCart
 
 	int MaximumCapacity { get; }
 
-	IBlurayUpsellInfo BlurayUpsellInfo { get; }
+	IUpsellInfo UpsellInfo { get; }
 
 	IComingSoonOptinInfo ComingSoonOptInInfo { get; }
 
@@ -39,13 +39,25 @@ public interface IRentalShoppingCart
 
 	CreditElection UseCredits { get; set; }
 
+	int AppliedCredits { get; set; }
+
+	OptInConfirmationStatus MarketingOptInConfirmationStatus { get; set; }
+
 	bool NeedLookupOfLoyaltyPointsToBeEarned { get; }
 
 	bool HasItemsToBeRedeemed { get; }
 
+	IServiceFee ServiceFee { get; set; }
+
+	bool ServiceFeeEnabled { get; }
+
+	decimal DefaultServiceFee { get; }
+
 	event RentalShoppingCartChanged OnChange;
 
 	int GetCount(long productId);
+
+	void Abandon(string reason);
 
 	void AddItem(IRentalShoppingCartItem rentalShoppingCartItem);
 
@@ -76,4 +88,10 @@ public interface IRentalShoppingCart
 	List<IRentalShoppingCartItem> GetItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria);
 
 	List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, bool includeMultiNightPricedItems, bool includeLoyaltyRedeemedItems);
+
+	void UpdateServiceFee();
+
+	void SetDefaultServiceFee(decimal defaultServiceFee);
+
+	void AddCartItemToAnalytics(IRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved, ISessionAnalyticsService analytics);
 }

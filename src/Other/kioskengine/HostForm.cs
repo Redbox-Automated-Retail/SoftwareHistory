@@ -579,6 +579,7 @@ public class HostForm : Form, ITrackDataService
 			service.ActiveScene.MakeDirty(null);
 			EngineApplication.Instance.ActivateActivatedHandlers();
 			Focus();
+			BringToFront();
 		}
 	}
 

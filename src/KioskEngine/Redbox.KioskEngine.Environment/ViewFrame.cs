@@ -211,6 +211,7 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 				actor.Image = actorProperties.Image;
 				base.Scene.AddLast(actor);
 			}
+			base.Scene.WPFGrid?.Focus();
 			base.Scene.ResumeDrawing();
 		}
 		catch (Exception e)

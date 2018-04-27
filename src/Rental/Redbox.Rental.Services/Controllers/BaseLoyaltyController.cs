@@ -2,7 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Redbox.Core;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
+using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -45,5 +47,10 @@ public class BaseLoyaltyController : BaseViewController
 			}, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
 		};
 		loyaltyService.EstimateRedemptionPoints(BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart, estimatRedemptionPointsResultCallback);
+	}
+
+	protected static TitleType GetItemTitleType(IRentalShoppingCartItem rentalShoppingCartItem)
+	{
+		return rentalShoppingCartItem.TitleType;
 	}
 }

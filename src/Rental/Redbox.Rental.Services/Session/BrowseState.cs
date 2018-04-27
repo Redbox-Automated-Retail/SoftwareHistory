@@ -90,6 +90,8 @@ public class BrowseState : IBrowseState
 
 	public bool BluRayWarningShown { get; set; }
 
+	public bool _4kWarningShown { get; set; }
+
 	public bool MatureGameWarningShown { get; set; }
 
 	public bool IsShoppingCartFullMessagesOpen { get; set; }
@@ -242,7 +244,7 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public string BrowseSelectedSort
+	public BrowseSelectedSort BrowseSelectedSort
 	{
 		get
 		{
@@ -277,6 +279,8 @@ public class BrowseState : IBrowseState
 			_browseStateSetStack.Peek().IsNonBrowseView = value;
 		}
 	}
+
+	public bool InReturnFlow { get; set; }
 
 	public BrowseState()
 	{
@@ -326,7 +330,7 @@ public class BrowseState : IBrowseState
 		TitleFamily = TitleFamily.Movies;
 		TitleType = TitleType.All;
 		BrowseMode = BrowseViewFilter.All;
-		BrowseSelectedSort = "Newest";
+		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
 	}
@@ -341,7 +345,7 @@ public class BrowseState : IBrowseState
 		TitleFamily = TitleFamily.Movies;
 		TitleType = TitleType.All;
 		BrowseMode = BrowseViewFilter.All;
-		BrowseSelectedSort = "Newest";
+		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
 	}
@@ -356,7 +360,7 @@ public class BrowseState : IBrowseState
 		TitleFamily = TitleFamily.Movies;
 		TitleType = TitleType.All;
 		BrowseMode = BrowseViewFilter.All;
-		BrowseSelectedSort = "Newest";
+		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
 	}
@@ -378,7 +382,7 @@ public class BrowseState : IBrowseState
 		TitleFamily = TitleFamily.Movies;
 		TitleType = TitleType.All;
 		BrowseMode = BrowseViewFilter.All;
-		BrowseSelectedSort = "Newest";
+		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
 	}

@@ -45,9 +45,27 @@ public class Constants
 
 		public const string PhoneAndPinView = "PhoneAndPinView";
 
+		public const string RecommendationOnPickupView = "RecommendationOnPickupView";
+
 		public const string SignInView = "SignInView";
 
 		public const string MultiNightPricingPopupView = "MultiNightPricingPopupView";
+
+		public const string JoinedPerksView = "JoinedPerksView";
+
+		public const string JoinedTextClubView = "JoinedTextClubView";
+
+		public const string EmailReceiptView = "EmailReceiptView";
+
+		public const string ControlPanelLoginView = "ControlPanelLoginView";
+
+		public const string FormatSelectionPopupView = "FormatSelectionPopupView";
+
+		public const string RentalFormatSelectionPopupView = "RentalFormatSelectionPopupView";
+
+		public const string UpsellView = "UpsellView";
+
+		public const string MessagePopupView = "MessagePopupViewUserControl";
 	}
 
 	public class ViewNames
@@ -68,6 +86,8 @@ public class Constants
 
 		public const string KeyboardSignInView = "keyboard_sign_in_view";
 
+		public const string MaintenanceView = "maintenance_view";
+
 		public const string MemberPerksView = "member_perks_view";
 
 		public const string MemberPointsView = "member_points_view";
@@ -80,13 +100,35 @@ public class Constants
 
 		public const string PhoneAndPinView = "phone_and_pin_view";
 
+		public const string RecommendationOnPickupView = "recommendation_on_pickup_view";
+
+		public const string StartView = "start_view";
+
 		public const string SignInView = "sign_in_view";
 
 		public const string TitleDetailsDevModeView = "title_details_dev_view";
 
 		public const string MultiNightPricingPopupView = "multi_night_pricing_popup_view";
 
-		public const string BluRayUpsellView = "blu_ray_upsell_view";
+		public const string UpsellView = "upsell_view";
+
+		public const string JoinedPerksView = "joined_perks_view";
+
+		public const string JoinedTextClubView = "joind_text_club_view";
+
+		public const string EmailReceiptView = "email_receipt_view";
+
+		public const string ControlPanelLoginView = "control_panel_login_view";
+
+		public const string FormatFilterPopupView = "format_filter_popup_view";
+
+		public const string PurchasePopupView = "purchase_popup_view";
+
+		public const string RentalPopupView = "rental_popup_view";
+
+		public const string MessagePopupView = "message_popup_view";
+
+		public const string _4kAlertPopupView = "4K_warning_popup_view";
 	}
 
 	public class ThemeNames

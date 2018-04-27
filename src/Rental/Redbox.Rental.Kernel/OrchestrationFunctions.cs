@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
@@ -21,6 +20,12 @@ public static class OrchestrationFunctions
 		OrchestrationService.CreateStartViewAnalytics(sessionType);
 	}
 
+	[KernelFunction(Name = "kernel.submit_analytics_pricing")]
+	internal static void SubmitAnalyticsPricing(string sessionId)
+	{
+		OrchestrationService.SubmitAnalyticsPricing(sessionId);
+	}
+
 	[KernelFunction(Name = "kernel.register_pricing_service")]
 	internal static void RegisterPricingService(Action pricingSetChangeCallback)
 	{
@@ -31,6 +36,18 @@ public static class OrchestrationFunctions
 	internal static void RegisterIdleTimerExpireSessionCallback(Action idleTimerExpireSessionCallback)
 	{
 		OrchestrationService.RegisterIdleTimerExpireSessionCallback(idleTimerExpireSessionCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_start_new_rental_session_callback")]
+	internal static void RegisterStartNewRentalSessionCallback(Action startNewRentalSessionCallback)
+	{
+		OrchestrationService.RegisterStartNewRentalSessionCallback(startNewRentalSessionCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_marketing_opt_in_flow_callback")]
+	internal static void RegisterMarketingOptInFlowCallback(Action<string> marketingOptInFlowCallback)
+	{
+		OrchestrationService.RegisterMarketingOptInFlowCallback(marketingOptInFlowCallback);
 	}
 
 	[KernelFunction(Name = "kernel.register_view_definitions")]
@@ -94,57 +111,6 @@ public static class OrchestrationFunctions
 			}.ToLuaTable();
 		}
 		return result;
-	}
-
-	[KernelFunction(Name = "kernel.pricing_service_update_current_price_set")]
-	internal static void UpdateCurrentPriceSet(LuaTable priceData)
-	{
-		LogHelper.Instance.Log("Updating current price set values");
-		IPricingSet pricingSet = ServiceLocator.Instance.GetService<IPricingService>()?.CurrentPriceSet;
-		if (pricingSet == null || priceData == null)
-		{
-			return;
-		}
-		if (priceData["Movie"] is LuaTable luaTable)
-		{
-			if (luaTable["default"] is LuaTable luaTable2)
-			{
-				IPricingRecord pricingRecord = pricingSet.PriceRecords.FirstOrDefault((IPricingRecord x) => x.TitleFamily == TitleFamily.Movies && x.TitleType == TitleType.DVD);
-				if (pricingRecord != null)
-				{
-					AssignPriceValuesFromLuaTable(pricingRecord, luaTable2);
-				}
-			}
-			else
-			{
-				LogHelper.Instance.Log("Unable to find dvd price data.");
-			}
-			if (luaTable["BluRay"] is LuaTable luaTable3)
-			{
-				IPricingRecord pricingRecord2 = pricingSet.PriceRecords.FirstOrDefault((IPricingRecord x) => x.TitleFamily == TitleFamily.Movies && x.TitleType == TitleType.Bluray);
-				if (pricingRecord2 != null)
-				{
-					AssignPriceValuesFromLuaTable(pricingRecord2, luaTable3);
-				}
-			}
-			else
-			{
-				LogHelper.Instance.Log("Unable to find bluray price data.");
-			}
-		}
-		if (priceData["Game"] is LuaTable luaTable4)
-		{
-			LuaTable luaTable5 = luaTable4["default"] as LuaTable;
-			IPricingRecord pricingRecord3 = pricingSet.PriceRecords.FirstOrDefault((IPricingRecord x) => x.TitleFamily == TitleFamily.Games && x.TitleType == TitleType.All);
-			if (pricingRecord3 != null)
-			{
-				AssignPriceValuesFromLuaTable(pricingRecord3, luaTable5);
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("Unable to find games price data.");
-		}
 	}
 
 	private static void AssignPriceValuesFromLuaTable(IPricingRecord pricingRecord, LuaTable luaTable)

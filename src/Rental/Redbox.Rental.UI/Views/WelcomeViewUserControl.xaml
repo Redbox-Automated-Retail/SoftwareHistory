@@ -18,10 +18,10 @@
       </EventTrigger>
     </FrameworkElement.Triggers>
     <Grid Name="grid1" Height="768" Width="1024">
-      <localControls:WelcomeUserControl1 />
+      <localControls:JoinedUserControl1 />
     </Grid>
     <Grid Name="grid2" Margin="1024,0,0,0" Height="768" Width="1024">
-      <localControls:WelcomeUserControl2 />
+      <localControls:JoinedUserControl2 />
     </Grid>
   </Grid>
 </UserControl>

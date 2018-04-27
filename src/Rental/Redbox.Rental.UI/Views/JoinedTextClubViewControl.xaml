@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<local:ViewUserControl x:Class="Redbox.Rental.UI.Views.JoinedTextClubViewControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
+  <Grid Name="MainControl">
+    <localControls:JoinedUserControl x:Name="JoinedElem" />
+    <StackPanel Margin="80,30">
+      <TextBlock Name="TitleTextElem" HorizontalAlignment="Center" Margin="0,20" Style="{StaticResource font_museo_slab_900_48}" Foreground="#FFFFFFFF" Text="{Binding TitleText, FallbackValue=Almost done!}" />
+      <TextBlock Name="MessageTextElem" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_medium_34}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding MessageText, FallbackValue=Text us back to confirm its all good}" />
+      <TextBlock Name="CommentTextElem" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_medium_24}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding CommentText, FallbackValue=(Your message is arriving right about…now)}" />
+    </StackPanel>
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="280" Margin="0,0,0,184">
+      <Image Name="PhoneTextImage" Width="260" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/phone-text-icon.png" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+  </Grid>
+</local:ViewUserControl>

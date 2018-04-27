@@ -95,7 +95,7 @@ public interface ITitleProduct : IKioskProduct
 
 	bool HasBeenInStock { get; }
 
-	bool HasHotDeal { get; }
+	bool HasDeal { get; }
 
 	bool HasMultiNightPrice { get; }
 

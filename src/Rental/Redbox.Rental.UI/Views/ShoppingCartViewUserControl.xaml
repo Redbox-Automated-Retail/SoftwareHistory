@@ -55,7 +55,8 @@
           <StackPanel Name="LeftSideTopPanel" Orientation="Vertical" Margin="36,14,23,0">
             <StackPanel Name="ShoppingCartStackPanel" Orientation="Vertical" />
             <StackPanel Name="ProductStackPanel" Orientation="Vertical" />
-            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_12}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,3" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
+            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,3" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
+            <TextBlock Name="ServiceFeeText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,3" Text="{Binding Path=ServiceFeeText, FallbackValue=All checkouts may be subject to a service fee of 10¢.}" Visibility="{Binding Path=ServiceFeeTextVisibility}" />
             <Line Name="PassiveSaleNoteBottomLine" X2="1000" Fill="#979797" Margin="0,3,0,3" Stroke="#979797" StrokeThickness="2" Opacity="0.22" />
           </StackPanel>
         </DockPanel>

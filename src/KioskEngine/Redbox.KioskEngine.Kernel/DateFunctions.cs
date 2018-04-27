@@ -74,17 +74,25 @@ public static class DateFunctions
 	{
 		DateTime? dateTime = left.ToDateTime();
 		DateTime? dateTime2 = right.ToDateTime();
-		left.Dispose();
-		right.Dispose();
-		if (!dateTime.HasValue)
+		int result;
+		try
 		{
-			throw new ArgumentNullException("left");
+			if (!dateTime.HasValue || !dateTime.HasValue)
+			{
+				throw new ArgumentNullException("left");
+			}
+			if (!dateTime2.HasValue || !dateTime2.HasValue)
+			{
+				throw new ArgumentNullException("right");
+			}
 		}
-		if (!dateTime2.HasValue)
+		finally
 		{
-			throw new ArgumentNullException("right");
+			result = dateTime.Value.CompareTo(dateTime2.Value);
+			left.Dispose();
+			right.Dispose();
 		}
-		return dateTime.Value.CompareTo(dateTime2.Value);
+		return result;
 	}
 
 	[KernelFunction(Name = "kernel.stringdatecompare")]

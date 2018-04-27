@@ -27,7 +27,6 @@ public class MemberPerksLogic : BaseLogic
 			HighLimit = 19.0,
 			Threshold = 10.0,
 			ImagePath = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/perks_star.png",
-			ImageName = Resources.perks_tier_title1?.ToUpper(),
 			LabelText = "10"
 		},
 		new Snapshot
@@ -36,7 +35,6 @@ public class MemberPerksLogic : BaseLogic
 			HighLimit = 29.0,
 			Threshold = 20.0,
 			ImagePath = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/perks_superstar.png",
-			ImageName = Resources.perks_tier_title2?.ToUpper(),
 			LabelText = "20"
 		},
 		new Snapshot
@@ -45,7 +43,6 @@ public class MemberPerksLogic : BaseLogic
 			HighLimit = 69.0,
 			Threshold = 50.0,
 			ImagePath = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/perks_legend.png",
-			ImageName = Resources.perks_tier_title3?.ToUpper(),
 			LabelText = "50+"
 		},
 		new Snapshot
@@ -116,6 +113,9 @@ public class MemberPerksLogic : BaseLogic
 	protected void PopulatePerks(PerksMemberInfo memberInfo)
 	{
 		double num = memberInfo.YearRentals;
+		Snapshots[0].ImageName = Resources.perks_tier_title1?.ToUpper();
+		Snapshots[1].ImageName = Resources.perks_tier_title2?.ToUpper();
+		Snapshots[2].ImageName = Resources.perks_tier_title3?.ToUpper();
 		Snapshots.Rentals = num;
 		for (int i = 0; i < 4; i++)
 		{
@@ -265,7 +265,8 @@ public class MemberPerksLogic : BaseLogic
 		MemberPerksModel model = Model;
 		bool perksSelected = (Model.PromosSelected = false);
 		model.PerksSelected = perksSelected;
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "snapshot");
 	}
 
 	public void PerksButtonCommand_Execute()
@@ -274,7 +275,8 @@ public class MemberPerksLogic : BaseLogic
 		MemberPerksModel model = Model;
 		bool snapshotSelected = (Model.PromosSelected = false);
 		model.SnapshotSelected = snapshotSelected;
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "perks");
 	}
 
 	public void PromoButtonCommand_Execute()
@@ -283,17 +285,20 @@ public class MemberPerksLogic : BaseLogic
 		MemberPerksModel model = Model;
 		bool snapshotSelected = (Model.PerksSelected = false);
 		model.SnapshotSelected = snapshotSelected;
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "promo");
 	}
 
 	public void CancelButtonCommand_Execute()
 	{
 		CloseAction?.Invoke();
-		HandleWPFHit();
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", "back");
 	}
 
 	public void SelectedButtonCommand_Execute(string buttonValue)
 	{
+		BaseLogic.AnalyticsAddViewEvent("buttonPress", buttonValue);
 	}
 
 	public MemberPerksLogic(MemberPerksModel perksModel, PerksMemberInfo memberInfo)
@@ -301,7 +306,8 @@ public class MemberPerksLogic : BaseLogic
 		Instructions = true;
 		CloseAction = memberInfo.CancelAction;
 		Model = perksModel;
-		Model.CancelButtonCommand = RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
+		Model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
+		Model.SelectedButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.SelectedButtonCommand, SelectedButtonCommand_Execute);
 		PopulatePerks(memberInfo);
 	}
 }

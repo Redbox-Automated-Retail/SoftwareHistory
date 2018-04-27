@@ -17,4 +17,6 @@ public interface IShoppingSessionService : IDisposable
 	IShoppingSession GetCurrentSession();
 
 	IShoppingSession GetSession(string id);
+
+	bool StartUserInteraction();
 }

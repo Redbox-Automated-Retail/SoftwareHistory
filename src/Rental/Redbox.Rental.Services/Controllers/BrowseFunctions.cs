@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -11,6 +12,7 @@ using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
@@ -53,10 +55,15 @@ public class BrowseFunctions
 
 	public static void AddProductToCart(ITitleProduct titleProduct, bool isPurchase)
 	{
-		AddProductToCart(titleProduct, isPurchase, null);
+		AddProductToCart(titleProduct, isPurchase, null, ItemSourceType.Browse);
 	}
 
 	public static void AddProductToCart(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	{
+		AddProductToCart(titleProduct, isPurchase, pricingRecord, ItemSourceType.Browse);
+	}
+
+	public static void AddProductToCart(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		if (titleProduct != null)
 		{
@@ -74,7 +81,7 @@ public class BrowseFunctions
 			_adaPurchaseWarningShown = false;
 			_digitalCodeWarningShown = false;
 			_subPlatformWarningShown = false;
-			AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
+			AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 		}
 	}
 
@@ -134,7 +141,14 @@ public class BrowseFunctions
 		ProductFlag productFlag = ProductFlagCollection.Instance.FirstOrDefault((ProductFlag x) => x.Flag == productFlags);
 		displayProductModel.FlagVisibility = ((hideFlag || productFlag == null || productFlag.Flag == ProductFlags.None) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.FlagStyle = WPFFunctions.GetStyle(frameworkElementToGetStyleFrom, productFlag?.FlagStyleName);
-		displayProductModel.FlagText = BundleFunctions.GetDictionaryStringValue("strings", productFlag?.TextKeyName);
+		if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
+		{
+			displayProductModel.FlagText = Resources.flag_flash_deal;
+		}
+		else
+		{
+			displayProductModel.FlagText = BundleFunctions.GetDictionaryStringValue("strings", productFlag?.TextKeyName);
+		}
 		if (displayProductModel.FlagVisibility == Visibility.Visible)
 		{
 			displayProductModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
@@ -146,9 +160,9 @@ public class BrowseFunctions
 		ProductFlags result = ProductFlags.None;
 		if (titleProduct != null)
 		{
-			if (titleProduct.HasHotDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != "Digital Code")
+			if (titleProduct.HasDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.DigitalCode)
 			{
-				result = ProductFlags.HotDeal;
+				result = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.EnableFlashDeals) ? ProductFlags.HotDeal : ProductFlags.FlashDeal);
 			}
 			else if (titleProduct.Genres.Contains(1002L))
 			{
@@ -179,7 +193,7 @@ public class BrowseFunctions
 		return result;
 	}
 
-	public static BannerType GetProductBannerType(ITitleProduct titleProduct)
+	public static BannerType GetProductBannerType(ITitleProduct titleProduct, bool showDvdBanners = false)
 	{
 		BannerType result = BannerType.None;
 		if (titleProduct != null)
@@ -187,6 +201,14 @@ public class BrowseFunctions
 			if (titleProduct.TitleType == TitleType.Bluray)
 			{
 				result = BannerType.Bluray;
+			}
+			else if (titleProduct.TitleType == TitleType._4KUHD)
+			{
+				result = BannerType._4KUHD;
+			}
+			else if (showDvdBanners && titleProduct.TitleType == TitleType.DVD && !(titleProduct is TitleRollupProduct))
+			{
+				result = BannerType.DVD;
 			}
 			else if (titleProduct.TitleType == TitleType.DigitalCode)
 			{
@@ -208,24 +230,24 @@ public class BrowseFunctions
 		{
 			if (titleProduct != null)
 			{
-				displayProductModel.BannerText = string.Format("{1} {0:M/d}", titleProduct.MerchandiseDate, BundleFunctions.GetDictionaryStringValue("strings", banner.TextKey));
+				displayProductModel.BannerText = string.Format("{1} {0:M/d}", titleProduct.MerchandiseDate, Resources.ResourceManager.GetString(banner.TextResourceName));
 			}
 		}
 		else
 		{
-			displayProductModel.BannerText = BundleFunctions.GetDictionaryStringValue("strings", banner.TextKey);
+			displayProductModel.BannerText = Resources.ResourceManager.GetString(banner.TextResourceName);
 		}
 		displayProductModel.BannerBackgroundBrush = WPFFunctions.GetBrush(frameworkElementToGetStyleFrom, banner.BannerStyleName);
 	}
 
-	private static void AddProductToCartIfUserApprovesWarnings(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static void AddProductToCartIfUserApprovesWarnings(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
-		if (CheckForADAPurchaseWarning(titleProduct, isPurchase, pricingRecord) && CheckForMatureRatingWarning(titleProduct, isPurchase, pricingRecord) && CheckForBluRayWarning(titleProduct, isPurchase, pricingRecord) && CheckForSubPlatformWarning(titleProduct, isPurchase, pricingRecord) && CheckForPurchaseWarning(titleProduct, isPurchase, pricingRecord) && CheckForDigitalCodeWarning(titleProduct, isPurchase, pricingRecord))
+		if (CheckForADAPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForMatureRatingWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckFor4kWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForBluRayWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForSubPlatformWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForDigitalCodeWarning(titleProduct, isPurchase, pricingRecord, itemSourceType))
 		{
 			IRentalShoppingCartItem rentalShoppingCartItem = RentalShoppingCartService?.CreateRentalShoppingCartItemFromTitleProduct(titleProduct);
 			if (rentalShoppingCartItem != null)
 			{
-				rentalShoppingCartItem.SourceType = ItemSourceType.Browse;
+				rentalShoppingCartItem.SourceType = itemSourceType;
 				rentalShoppingCartItem.Action = (isPurchase ? RentalShoppingCartItemAction.purchase : RentalShoppingCartItemAction.rental);
 				rentalShoppingCartItem.Quantity = 1m;
 				rentalShoppingCartItem.Status = LineItemStatus.Pending;
@@ -252,7 +274,7 @@ public class BrowseFunctions
 		}
 	}
 
-	private static bool CheckForADAPurchaseWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static bool CheckForADAPurchaseWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
 		if ((ApplicationState.Instance.IsADAAccessible && !_adaPurchaseWarningShown) & isPurchase)
@@ -285,19 +307,18 @@ public class BrowseFunctions
 			{
 				_adaPurchaseWarningShown = true;
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("ada_purchase_message_view:continue", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
+				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 			});
 		}
 		return result;
 	}
 
-	private static bool CheckForBluRayWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static bool CheckForBluRayWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
 		if (titleProduct.TitleType == TitleType.Bluray && !BrowseState.BluRayWarningShown)
 		{
 			result = false;
-			SessionAnalyticsService?.AddViewEvent("context", "blurayWarning");
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 			if (service != null)
 			{
@@ -314,13 +335,43 @@ public class BrowseFunctions
 			{
 				BrowseState.BluRayWarningShown = true;
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("bluray_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
-			}, BrowseState.ProductAddedFromCarousel && BrowseState.MovieMatureWarningShown);
+				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+			}, hideBackground: false);
 		}
 		return result;
 	}
 
-	private static bool CheckForSubPlatformWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static bool CheckFor4kWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	{
+		bool result = true;
+		if (titleProduct.TitleType == TitleType._4KUHD && !BrowseState._4kWarningShown)
+		{
+			result = false;
+			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+			if (service != null)
+			{
+				service["MatureWarning:Header"] = Resources.four_k_alert_title;
+				service["Bluray:Message"] = Resources.four_k_alert;
+			}
+			MessagePopupViewController.Show4KAlert(delegate
+			{
+				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
+			}, delegate
+			{
+				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel");
+				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:hide()", popOnly: false);
+			}, delegate
+			{
+				BrowseState._4kWarningShown = true;
+				SessionAnalyticsService?.AddViewEvent("buttonPress", "gotit");
+				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
+				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+			}, hideBackground: false, "4KDialog");
+		}
+		return result;
+	}
+
+	private static bool CheckForSubPlatformWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
 		if (!_subPlatformWarningShown)
@@ -347,7 +398,6 @@ public class BrowseFunctions
 									.Replace("Eye Camera", "Playstation Eye Camera");
 								string arg2 = string.Format("\n{0}{1} {2}", arg, BundleFunctions.GetDictionaryStringValue("strings", "subplatform_for"), productType?.ProductTypeName);
 								result = false;
-								SessionAnalyticsService?.AddViewEvent("context", "subplatformWarning");
 								IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
 								if (service2 != null)
 								{
@@ -364,7 +414,7 @@ public class BrowseFunctions
 								{
 									_subPlatformWarningShown = true;
 									ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("subplatform_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-									AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
+									AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 								});
 							}
 							else
@@ -383,13 +433,12 @@ public class BrowseFunctions
 		return result;
 	}
 
-	private static bool CheckForPurchaseWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static bool CheckForPurchaseWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
 		if ((!_purchaseWarningShown & isPurchase) && titleProduct.ProductId != 1139 && titleProduct.ProductTypeId != 17)
 		{
 			result = false;
-			SessionAnalyticsService?.AddViewEvent("context", "purchaseWarning");
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 			if (service != null)
 			{
@@ -406,19 +455,18 @@ public class BrowseFunctions
 			{
 				_purchaseWarningShown = true;
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("purchase_message_view:continue", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
+				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 			});
 		}
 		return result;
 	}
 
-	private static bool CheckForDigitalCodeWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static bool CheckForDigitalCodeWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
 		if (!_digitalCodeWarningShown && titleProduct.ProductTypeId == 17)
 		{
 			result = false;
-			SessionAnalyticsService?.AddViewEvent("context", "digitalcodeincart_message_view");
 			MessagePopupViewController.ShowDigitalCodeAlert(delegate
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-digitalcodeincart-mesage-view");
@@ -428,7 +476,7 @@ public class BrowseFunctions
 				_digitalCodeWarningShown = true;
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "ok-digitalcodeincart-mesage-view");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert ok button", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
+				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 			}, delegate
 			{
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert time out", popOnly: false);
@@ -437,14 +485,15 @@ public class BrowseFunctions
 		return result;
 	}
 
-	private static bool CheckForMatureRatingWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
+	private static bool CheckForMatureRatingWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
 		if (titleProduct != null && (titleProduct.RatingId == 8 || titleProduct.RatingId == 18 || titleProduct.RatingId == 20 || titleProduct.RatingId == 21) && ((!BrowseState.MovieMatureWarningShown && titleProduct.TitleFamily == TitleFamily.Movies) || (!BrowseState.MatureGameWarningShown && titleProduct.TitleFamily == TitleFamily.Games)))
 		{
 			result = false;
-			SessionAnalyticsService?.AddViewEvent("context", titleProduct.TitleFamily.ToString());
-			SessionAnalyticsService?.AddViewEvent("context", "matureWarning");
+			List<string> list = new List<string>();
+			list.Add(titleProduct.TitleFamily.ToString());
+			list.Add("matureWarning");
 			Ratings result2 = Ratings.None;
 			Enum.TryParse<Ratings>(titleProduct?.RatingId?.ToString() ?? string.Empty, out result2);
 			RatingsProperty ratingsProperty = ((result2 != Ratings.None) ? RatingsProperties.Properties[result2] : null);
@@ -484,9 +533,9 @@ public class BrowseFunctions
 				{
 					BrowseState.MatureGameWarningShown = true;
 				}
-				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("rrated_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord);
-			});
+				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("rrated_message_view:continue", popOnly: false);
+				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+			}, list);
 		}
 		return result;
 	}

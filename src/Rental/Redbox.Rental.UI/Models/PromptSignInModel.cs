@@ -19,11 +19,11 @@ public class PromptSignInModel : BaseModel<PromptSignInModel>
 
 	public PromptSignInLogic Logic { get; set; }
 
-	public LogicRoutedCommand EmailCodeButtonCommand { get; set; }
+	public DynamicRoutedCommand EmailCodeButtonCommand { get; set; }
 
-	public LogicRoutedCommand PhonePinButtonCommand { get; set; }
+	public DynamicRoutedCommand PhonePinButtonCommand { get; set; }
 
-	public LogicRoutedCommand ContinueButtonCommand { get; set; }
+	public DynamicRoutedCommand ContinueButtonCommand { get; set; }
 
 	public string SignInLeftTitle
 	{

@@ -6,36 +6,6 @@ namespace Redbox.Rental.Kernel.Views;
 
 public class MessagePopupViewFunctions
 {
-	[KernelFunction(Name = "kernel.show_sub_platform_warning")]
-	internal static void ShowSubPlatformWarning(Action timeOutAction, Action backAction, Action continueAction)
-	{
-		MessagePopupViewController.ShowSubPlatformWarning(timeOutAction, backAction, continueAction);
-	}
-
-	[KernelFunction(Name = "kernel.show_purchase_warning")]
-	internal static void ShowPurchaseWarning(Action timeOutAction, Action backAction, Action continueAction)
-	{
-		MessagePopupViewController.ShowPurchaseWarning(timeOutAction, backAction, continueAction);
-	}
-
-	[KernelFunction(Name = "kernel.show_mature_warning")]
-	internal static void ShowMatureWarning(Action timeOutAction, Action backAction, Action continueAction)
-	{
-		MessagePopupViewController.ShowMatureWarning(timeOutAction, backAction, continueAction);
-	}
-
-	[KernelFunction(Name = "kernel.show_bluray_alert")]
-	internal static void ShowBlurayAlert(Action timeOutAction, Action backAction, Action continueAction)
-	{
-		MessagePopupViewController.ShowBlurayAlert(timeOutAction, backAction, continueAction, hideBackground: false);
-	}
-
-	[KernelFunction(Name = "kernel.show_digital_code_alert")]
-	internal static void ShowDigitalCodeAlert(Action backAction, Action okAction, Action timeOutAction)
-	{
-		MessagePopupViewController.ShowDigitalCodeAlert(backAction, okAction, timeOutAction);
-	}
-
 	[KernelFunction(Name = "kernel.show_message_popup_view_return_success")]
 	internal static void ShowMessagePopupViewReturnSuccess(Action timeOutAction)
 	{

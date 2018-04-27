@@ -50,29 +50,29 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 
 	public Action<bool> SetControlTextMode { get; set; }
 
-	public LogicRoutedCommand KeyButtonCommand { get; set; }
+	public DynamicRoutedCommand KeyButtonCommand { get; set; }
 
-	public LogicRoutedCommand CapButtonCommand { get; set; }
+	public DynamicRoutedCommand CapButtonCommand { get; set; }
 
-	public LogicRoutedCommand ShiftButtonCommand { get; set; }
+	public DynamicRoutedCommand ShiftButtonCommand { get; set; }
 
-	public LogicRoutedCommand BackButtonCommand { get; set; }
+	public DynamicRoutedCommand BackButtonCommand { get; set; }
 
-	public LogicRoutedCommand ClearButtonCommand { get; set; }
+	public DynamicRoutedCommand ClearButtonCommand { get; set; }
 
-	public LogicRoutedCommand DomainButtonCommand { get; set; }
+	public DynamicRoutedCommand DomainButtonCommand { get; set; }
 
-	public LogicRoutedCommand DotComButtonCommand { get; set; }
+	public DynamicRoutedCommand DotComButtonCommand { get; set; }
 
-	public LogicRoutedCommand SpaceButtonCommand { get; set; }
+	public DynamicRoutedCommand SpaceButtonCommand { get; set; }
 
-	public LogicRoutedCommand CancelButtonCommand { get; set; }
+	public DynamicRoutedCommand CancelButtonCommand { get; set; }
 
-	public LogicRoutedCommand ContinueButtonCommand { get; set; }
+	public DynamicRoutedCommand ContinueButtonCommand { get; set; }
 
-	public LogicRoutedCommand EmailSelectedCommand { get; set; }
+	public DynamicRoutedCommand EmailSelectedCommand { get; set; }
 
-	public LogicRoutedCommand CodeSelectedCommand { get; set; }
+	public DynamicRoutedCommand CodeSelectedCommand { get; set; }
 
 	public string KeyboardText
 	{
@@ -100,9 +100,10 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 			string text = string.Empty;
 			if (value != null)
 			{
+				int num = value.Length - 1;
 				for (int i = 0; i < value.Length; i++)
 				{
-					text += "*";
+					text = ((i != num) ? (text + "*") : (text + value[num]));
 				}
 			}
 			KeyboardStars = text;

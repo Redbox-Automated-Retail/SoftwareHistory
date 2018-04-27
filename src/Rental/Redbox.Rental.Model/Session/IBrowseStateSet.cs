@@ -10,7 +10,7 @@ public interface IBrowseStateSet
 
 	BrowseViewFilter BrowseMode { get; set; }
 
-	string BrowseSelectedSort { get; set; }
+	BrowseSelectedSort BrowseSelectedSort { get; set; }
 
 	string SelectedAlphaGroupName { get; set; }
 

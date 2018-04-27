@@ -2,16 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Rental.Model.DataService;
-using Redbox.Rental.Model.KioskProduct;
 using Redbox.Services.KioskBrokerServices.KioskShared.DomainObjects;
-using Redbox.Services.KioskBrokerServices.KioskShared.Enums;
 
 namespace Redbox.BrokerServices.Proxy;
 
@@ -516,33 +512,13 @@ public class ReservationServicesProxy : IReservationServices
 		return new LocalReservationResult();
 	}
 
-	public void SimulateCreateReservation()
+	public IReservationResult SimulateCreateReservation(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIDs, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv, bool isLoyaltyRedemption, decimal defaultServiceFee, decimal actualServiceFee)
 	{
-		if (!LiveCall)
+		if (LiveCall)
 		{
-			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			List<IKioskProduct> products = null;
-			service.GetCarouselProducts(showCollections: false, out products);
-			IEnumerable<IKioskProduct> enumerable = products.Take(2);
-			List<int> value = enumerable.Select((IKioskProduct x) => (int)((ITitleProduct)x).ProductId).ToList();
-			Dictionary<string, List<int>> productsToReserve = new Dictionary<string, List<int>> { { "rental", value } };
-			List<ReservationTitle3> titleList = new List<ReservationTitle3>();
-			enumerable.ForEach(delegate(IKioskProduct x)
-			{
-				ITitleProduct titleProduct = (ITitleProduct)x;
-				titleList.Add(new ReservationTitle3
-				{
-					TitleID = (int)titleProduct.ProductId,
-					ReservationType = ReservationType.Rental,
-					NumberOfCredits = 0,
-					Price = 1m,
-					Discount = 0m,
-					DiscountedPrice = 0m,
-					ItemID = 0
-				});
-			});
-			RequestCallback3("tE+xZHoxAjrOrueI34+SXg4Q+xwchyIQu8vdRMSTz3k=", "joecool@redbox.com", 123456789L, DateTime.Now, productsToReserve, appliedCredit: false, appliedHiveOnlinePromotion: false, appliedTitleMarketing: false, "", 3m, 3m, new List<int>(), 0m, isMultiNightPricing: false, 0, null, 3m, 0m, titleList, isGc: false, new List<string>(), new List<string>(), 0m, "99999", isMdv: false, isLoyaltyRedemption: true);
+			return null;
 		}
+		return RequestCallback3(cardId, email, referenceNumber, reserveDate, productsToReserve, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, historyTitleIDs, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, reservationTitles, isGc, gcIds, ccIds, taxRate, zip, isMdv, isLoyaltyRedemption, defaultServiceFee, actualServiceFee);
 	}
 
 	private ReservationServicesProxy()

@@ -26,6 +26,8 @@ public interface IPricingService
 
 	IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool useAdjustedPrices);
 
+	IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType);
+
 	IPricingRecord GetOneDayProductPricingRecord(ITitleProduct titleProduct);
 
 	IPricingRecord GetOneDayProductPricingRecord(long productId);

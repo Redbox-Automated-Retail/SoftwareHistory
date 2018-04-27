@@ -19,6 +19,8 @@ public interface IBrowseState
 
 	bool BluRayWarningShown { get; set; }
 
+	bool _4kWarningShown { get; set; }
+
 	bool MatureGameWarningShown { get; set; }
 
 	bool IsShoppingCartFullMessagesOpen { get; set; }
@@ -31,7 +33,7 @@ public interface IBrowseState
 
 	BrowseViewFilter BrowseMode { get; set; }
 
-	string BrowseSelectedSort { get; set; }
+	BrowseSelectedSort BrowseSelectedSort { get; set; }
 
 	string SelectedAlphaGroupName { get; set; }
 
@@ -74,6 +76,8 @@ public interface IBrowseState
 	List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }
 
 	LuaTable BrowseProductsShownLuaTable { get; }
+
+	bool InReturnFlow { get; set; }
 
 	void PushBrowseStateSet();
 

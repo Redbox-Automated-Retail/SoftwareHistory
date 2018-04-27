@@ -39,6 +39,8 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public static readonly DependencyProperty LoyaltySystemErrorTextProperty = DependencyProperty.Register("LoyaltySystemErrorText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty ServiceFeeTextVisibilityProperty = DependencyProperty.Register("ServiceFeeTextVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
 	public string LabelTop { get; set; }
 
 	public string PriceHeaderText { get; set; }
@@ -52,6 +54,8 @@ public class ShoppingCartViewModel : DependencyObject
 	public string DontMissYourPerksText { get; set; }
 
 	public string PassiveSaleNote { get; set; }
+
+	public string ServiceFeeText { get; set; }
 
 	public string TermsAndPrivacyButtonText { get; set; }
 
@@ -296,6 +300,21 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
+	public Visibility ServiceFeeTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ServiceFeeTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ServiceFeeTextVisibilityProperty, value);
+			});
+		}
+	}
+
 	public event Action OnBackButtonClicked;
 
 	public event Action OnTermsAndPrivacyButtonClicked;
@@ -320,7 +339,13 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public ShoppingCartViewModel()
 	{
-		PricingModel = new PricingModel();
+		PricingModel = new PricingModel
+		{
+			SubtotalLineVisibility = Visibility.Visible,
+			AddedDiscsLineVisibility = Visibility.Collapsed,
+			ReservedDiscsLineVisibility = Visibility.Collapsed,
+			PricingLineMargin = new Thickness(0.0, 7.0, 0.0, 7.0)
+		};
 	}
 
 	public void ProcessOnCancelBrowseItemModel(DisplayProductModel displayProductModel, object parameter)

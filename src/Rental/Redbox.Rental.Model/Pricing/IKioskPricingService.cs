@@ -13,6 +13,8 @@ public interface IKioskPricingService
 
 	IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool useAdjustedPrices);
 
+	IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType);
+
 	IPricingRecord GetOneDayProductPricingRecord(long productId);
 
 	List<IPricingRecord> GetProductPricingRecords(long productId);

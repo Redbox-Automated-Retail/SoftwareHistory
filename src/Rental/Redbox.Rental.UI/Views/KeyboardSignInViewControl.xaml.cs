@@ -76,6 +76,7 @@ public partial class KeyboardSignInViewControl : KeyboardControl, IComponentConn
 			int buttonState = (CodeElem.ButtonState = 0);
 			emailElem.ButtonState = buttonState;
 		}
+		ContinueButtonElem.IsEnabled = base.Model.ContinueButtonCommand.CanExecute(null);
 	}
 
 	protected override void KeyPressed(SymbolMode mode)
@@ -97,7 +98,8 @@ public partial class KeyboardSignInViewControl : KeyboardControl, IComponentConn
 
 	protected override void ContinueTouched()
 	{
-		if (base.Model.ContinueButtonCommand.CanExecute(null))
+		ContinueButtonElem.IsEnabled = base.Model.ContinueButtonCommand.CanExecute(null);
+		if (ContinueButtonElem.IsEnabled)
 		{
 			base.Model.ContinueButtonCommand.Execute(null);
 		}

@@ -17,6 +17,5 @@
     <localControls:BrowseUserControl x:Name="BrowseProductControl" Margin="0,70,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="494" Width="1024" ShowPaddles="True" DataContext="{Binding Path=BrowseProductControlModel}" />
     <localControls:BrowseTopMenuUserControl VerticalAlignment="Top" DataContext="{Binding Path=BrowseTopMenuModel}" />
     <localControls:BrowseGroupSelectionUserControl Height="37" VerticalAlignment="Top" DataContext="{Binding Path=BrowseGroupSelection}" Margin="{Binding Path=BrowseGroupSelectionMargin, FallbackValue={StaticResource DefaultBrowseGroupSelectionMargin}}" Visibility="{Binding Path=BrowseGroupSelectionVisibility}" />
-    <localControls:TitleRollupOverlayUserControl x:Name="TitleRollupOverlay" Width="150" Height="210" Margin="300,200,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" DataContext="{Binding Path=BrowseProductControlModel.TitleRollupOverlayModel}" />
   </Grid>
 </localControls:TextToSpeechUserControl>

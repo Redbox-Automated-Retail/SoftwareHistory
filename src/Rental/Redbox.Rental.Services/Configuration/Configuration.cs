@@ -33,6 +33,20 @@ public class Configuration : IConfiguration
 		public const string SignInADATimeout = "SignInADATimeout";
 
 		public const string EnablePricingEngine = "EnablePricingEngine";
+
+		public const string ComingSoonOptInEnabled = "ComingSoonOptIn";
+
+		public const string ServiceFeeEnabled = "ServiceFeeEnabled";
+
+		public const string BlurayUpsellEnabled = "BluRayUpsellEnabled";
+
+		public const string _4kUpsellEnabled = "4KUpsellEnabled";
+
+		public const string OfflineItemsLimit = "OfflineItemsLimit";
+
+		public const string OfflineGameRentalLimit = "OfflineGameRentalLimit";
+
+		public const string OfflineGamePurchaseLimit = "OfflineGamePurchaseLimit";
 	}
 
 	private Dictionary<TitleType, bool> _enabledGameTypes;
@@ -42,6 +56,8 @@ public class Configuration : IConfiguration
 	private int _burnInTimeout;
 
 	private int _burnInViewDuration;
+
+	private bool _comingSoonOptInEnabled;
 
 	private bool _enableCreditsButton;
 
@@ -54,6 +70,20 @@ public class Configuration : IConfiguration
 	private int _signInADATimeout;
 
 	private bool _enablePricingEngine;
+
+	private bool _serviceFeeEnabled;
+
+	private bool __4KUpsellEnabled;
+
+	private bool _blurayUpsellEnabled;
+
+	private int _offlineItemsLimit;
+
+	private int _offlineGameRentalLimit;
+
+	private int _offlineGamePurchaseLimit;
+
+	private bool _enableFlashDeals;
 
 	public static IConfiguration Instance => Singleton<Configuration>.Instance;
 
@@ -105,6 +135,8 @@ public class Configuration : IConfiguration
 
 	public bool EarlyIdEnabled => _earlyIdEnabled;
 
+	public bool ComingSoonOptInEnabled => _comingSoonOptInEnabled;
+
 	public bool LoyaltyEnabled => _loyaltyEnabled;
 
 	public int SignInTimeout => _signInTimeout;
@@ -112,6 +144,20 @@ public class Configuration : IConfiguration
 	public int SignInADATimeout => _signInADATimeout;
 
 	public bool EnablePricingEngine => _enablePricingEngine;
+
+	public bool ServiceFeeEnabled => _serviceFeeEnabled;
+
+	public bool BlurayUpsellEnabled => _blurayUpsellEnabled;
+
+	public bool _4KUpsellEnabled => __4KUpsellEnabled;
+
+	public int OfflineItemsLimit => _offlineItemsLimit;
+
+	public int OfflineGameRentalLimit => _offlineGameRentalLimit;
+
+	public int OfflineGamePurchaseLimit => _offlineGamePurchaseLimit;
+
+	public bool EnableFlashDeals => _enableFlashDeals;
 
 	private Configuration()
 	{
@@ -123,12 +169,26 @@ public class Configuration : IConfiguration
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 		_burnInTimeout = ConfigGetValue(service, "system", "General", "BurnInTimeout", 1800000);
 		_burnInViewDuration = ConfigGetValue(service, "system", "General", "BurnInViewDuration", 30000);
-		_enableCreditsButton = ConfigGetValue(service, "system", "General", "EnableCreditsButton", defaultValue: true);
-		_earlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
-		_loyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
 		_signInTimeout = ConfigGetValue(service, "system", "Personalization", "SignInTimeout", 20000);
 		_signInADATimeout = ConfigGetValue(service, "system", "Personalization", "SignInADATimeout", 90000);
 		_enablePricingEngine = ConfigGetValue(service, "system", "General", "EnablePricingEngine", defaultValue: true);
+		SessionReload();
+	}
+
+	public void SessionReload()
+	{
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		_comingSoonOptInEnabled = ConfigGetValue(service, "system", "General", "ComingSoonOptIn", defaultValue: true);
+		_enableCreditsButton = ConfigGetValue(service, "system", "General", "EnableCreditsButton", defaultValue: true);
+		_earlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
+		_loyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
+		_serviceFeeEnabled = ConfigGetValue(service, "system", "General", "ServiceFeeEnabled", defaultValue: false);
+		_blurayUpsellEnabled = ConfigGetValue(service, "system", "General", "BluRayUpsellEnabled", defaultValue: false);
+		__4KUpsellEnabled = ConfigGetValue(service, "system", "General", "4KUpsellEnabled", defaultValue: false);
+		_offlineItemsLimit = ConfigGetValue(service, "system", "General", "OfflineItemsLimit", 3);
+		_offlineGameRentalLimit = ConfigGetValue(service, "system", "General", "OfflineGameRentalLimit", 1);
+		_offlineGamePurchaseLimit = ConfigGetValue(service, "system", "General", "OfflineGamePurchaseLimit", 2);
+		_enableFlashDeals = ConfigGetValue(service, ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.EnableFlashDeals, defaultValue: false);
 	}
 
 	private bool GetMachineSetting(IMachineSettingsStore machineSettingStore, string key)

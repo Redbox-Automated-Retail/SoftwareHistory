@@ -8,6 +8,8 @@ public enum BrowseFilterType
 	ComingSoon,
 	AtoZ,
 	DigitalCode,
+	Dvd,
+	_4KUHD,
 	XboxOne,
 	Xbox360,
 	PS3,

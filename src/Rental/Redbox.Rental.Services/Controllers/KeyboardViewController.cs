@@ -141,7 +141,6 @@ public class KeyboardViewController : BaseViewController
 	{
 		_ = keyboardLogic.KeyboardInfo;
 		_ = keyboardLogic.Model;
-		OrchestrationService.AnalyticsAddViewEvent("context", "emailAddress");
 	}
 
 	private static void InitForAccountSignIn(KeyboardLogic keyboardLogic)
@@ -169,6 +168,7 @@ public class KeyboardViewController : BaseViewController
 		{
 			keyboardSignInViewControl.UpdateKeyStates();
 		}
+		BaseViewController.AnalyticsAddViewEvent("context", "EmailSignIn");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 
@@ -181,6 +181,7 @@ public class KeyboardViewController : BaseViewController
 		model.ContinueButtonText = Resources.keyboard_change_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		InitForEmail(keyboardLogic);
+		BaseViewController.AnalyticsAddViewEvent("context", "EmailChanged");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 
@@ -194,6 +195,7 @@ public class KeyboardViewController : BaseViewController
 		model.ContinueButtonText = Resources.keyboard_receipt_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		InitForEmail(keyboardLogic);
+		BaseViewController.AnalyticsAddViewEvent("context", "EmailReceipt");
 		StartKeyboardIdleTimer();
 	}
 
@@ -207,6 +209,7 @@ public class KeyboardViewController : BaseViewController
 		model.ContinueButtonText = Resources.coming_soon_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		InitForEmail(keyboardLogic);
+		BaseViewController.AnalyticsAddViewEvent("context", "EmailCommingSoon");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 
@@ -220,7 +223,7 @@ public class KeyboardViewController : BaseViewController
 		model.CancelButtonText = Resources.promo_code_cancel_btn;
 		model.ContinueButtonText = Resources.promo_code_continue_btn;
 		model.EmailPromptText = Resources.promo_code_input_prompt;
-		OrchestrationService.AnalyticsAddViewEvent("context", "promoCode");
+		BaseViewController.AnalyticsAddViewEvent("context", "promoCode");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 

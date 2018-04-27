@@ -1,7 +1,6 @@
 using System;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
@@ -42,11 +41,7 @@ public class IdleTimeoutMessageViewController
 		idleTimeoutMessageViewUserControl.OnButtonNoClicked += noButtonAction;
 		idleTimeoutMessageViewUserControl.OnButtonYesClicked += delegate
 		{
-			IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
-			if (service3?.Peek(1) == service3.GetStartOverViewName() && (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false))
-			{
-				ApplicationState.Instance.KeepSessionOnStartViewEnter = true;
-			}
+			ServiceLocator.Instance.GetService<IViewService>();
 			OrchestrationService.ViewGoBackSafe("need_more_time:second_button", popOnly: false);
 		};
 		int num = 15000;

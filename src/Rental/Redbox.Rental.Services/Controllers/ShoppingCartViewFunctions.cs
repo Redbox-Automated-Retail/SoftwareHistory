@@ -8,6 +8,7 @@ using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
+using Redbox.Rental.Services.ViewDefinitions;
 using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.Services.Controllers;
@@ -29,9 +30,19 @@ public class ShoppingCartViewFunctions
 			BrowseState.ItemAddedFromView = null;
 			ShowInCartOfferMessage();
 		}
-		else if (rentalShoppingCart != null && rentalShoppingCart.BlurayUpsellInfo.DialogNeedsToBeShown)
+		else if (rentalShoppingCart != null && rentalShoppingCart.UpsellInfo.GetDialogNeedsToBeShown(TitleType.DVD))
 		{
-			OrchestrationService.ViewShow("blu_ray_upsell_view");
+			OrchestrationService.ViewShow("upsell_view", new ShowUpsellViewParameter
+			{
+				TitleType = TitleType.DVD
+			});
+		}
+		else if (rentalShoppingCart != null && rentalShoppingCart.UpsellInfo.GetDialogNeedsToBeShown(TitleType.Bluray))
+		{
+			OrchestrationService.ViewShow("upsell_view", new ShowUpsellViewParameter
+			{
+				TitleType = TitleType.Bluray
+			});
 		}
 		else
 		{
@@ -111,7 +122,7 @@ public class ShoppingCartViewFunctions
 				{
 					BrowseState.TitleFamily = inCartPromoActionRule.TitleFamily;
 					BrowseState.Genre = null;
-					BrowseState.BrowseSelectedSort = "Newest";
+					BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
 					BrowseState.PageNumber = 1;
 					BrowseState.TitleType = inCartPromoActionRule.TitleType;
 					BrowseState.BrowseMode = BrowseViewFilter.All;

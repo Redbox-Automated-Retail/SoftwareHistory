@@ -94,6 +94,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 		{
 			return;
 		}
+		bool flag = false;
 		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
 		{
 			IKioskProduct kioskProduct = null;
@@ -110,6 +111,10 @@ public class MemberPointsViewController : BaseLoyaltyController
 				ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 				BannerType productBannerType = BrowseFunctions.GetProductBannerType(titleProduct);
 				BrowseFunctions.ConfigureBanner(displayProductModel, titleProduct, hideBanner: false, productBannerType, BaseViewController.GetViewUserControl());
+				if (BaseLoyaltyController.GetItemTitleType(item) == TitleType._4KUHD)
+				{
+					flag = true;
+				}
 				displayProductModel.CancelButtonVisibility = Visibility.Collapsed;
 				ConfigureProductFlag(displayProductModel, ProductFlags.Points);
 				model.DisplayProductModels.Add(displayProductModel);
@@ -122,6 +127,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 				item.LoyaltyPointsRecord.ToBeRedeemed = false;
 			}
 		}
+		model.PointsCartMessage = (flag ? Resources.points_cannot_redeem_message : string.Empty);
 	}
 
 	private static void ProcessRedemptionPoints(PointsMemberInfo pointsInfo)
@@ -162,9 +168,15 @@ public class MemberPointsViewController : BaseLoyaltyController
 
 	public static void ConfigureProductFlag(DisplayProductModel displayProductModel, ProductFlags productFlags, ILoyaltyPointsRecord pointsRecord = null)
 	{
-		if (displayProductModel == null)
+		if (displayProductModel == null || displayProductModel.Data == null)
 		{
 			return;
+		}
+		IRentalShoppingCartItem rentalShoppingCartItem = displayProductModel.Data as IRentalShoppingCartItem;
+		bool flag = TitleType._4KUHD == BaseLoyaltyController.GetItemTitleType(rentalShoppingCartItem);
+		if (flag)
+		{
+			productFlags = ProductFlags.Excluded;
 		}
 		ProductFlag productFlag = ProductFlagCollection.Instance.FirstOrDefault((ProductFlag x) => x.Flag == productFlags);
 		displayProductModel.FlagVisibility = BaseViewController.BoolToVisibility(productFlag != null && productFlag.Flag != ProductFlags.None);
@@ -173,25 +185,28 @@ public class MemberPointsViewController : BaseLoyaltyController
 		{
 			displayProductModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
 		}
+		double imageOpacity = 1.0;
 		if (pointsRecord != null)
 		{
 			displayProductModel.CornerContainerVisibility = BaseViewController.BoolToVisibility(show: true);
-			if (pointsRecord.CanRedeem)
+			bool flag2 = pointsRecord.CanRedeem && !flag;
+			if (flag2)
 			{
 				displayProductModel.FlagText = string.Format(Resources.flag_points, pointsRecord.PointsToRedeem);
-				displayProductModel.CornerIncludeButtonVisibility = BaseViewController.BoolToVisibility(show: true);
 			}
 			else
 			{
-				displayProductModel.FlagText = Resources.perks_cannot_redeem;
-				displayProductModel.CornerIncludeButtonVisibility = BaseViewController.BoolToVisibility(show: false);
+				displayProductModel.FlagText = Resources.points_cannot_redeem;
+				imageOpacity = 0.7;
 			}
+			displayProductModel.CornerIncludeButtonVisibility = BaseViewController.BoolToVisibility(flag2);
 		}
 		else
 		{
 			displayProductModel.FlagText = string.Empty;
 			displayProductModel.CornerContainerVisibility = BaseViewController.BoolToVisibility(show: false);
 		}
+		displayProductModel.ImageOpacity = imageOpacity;
 	}
 
 	public static void GetRedemptionPoints(Action<IEstimateRedemptionPointsResult> processEstimateRedemptionPoints)
@@ -249,6 +264,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 			}
 		}
 		BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ValidateAndUpdatePromoCode();
+		BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.UpdateServiceFee();
 		if (MemberPointsLogic.Info != null && MemberPointsLogic.Info.ContinueAction != null)
 		{
 			MemberPointsLogic.Info.ContinueAction();

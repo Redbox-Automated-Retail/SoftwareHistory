@@ -51,15 +51,19 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 
 	public static readonly DependencyProperty MemberTierProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("MemberTier", typeof(TierType), TierType.Member);
 
+	public static readonly DependencyProperty CancelButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("CancelButtonText", TYPES.STRING);
+
 	public MemberPerksLogic Logic { get; set; }
 
-	public LogicRoutedCommand SnapshotButtonCommand { get; set; }
+	public DynamicRoutedCommand SelectedButtonCommand { get; set; }
 
-	public LogicRoutedCommand PerksButtonCommand { get; set; }
+	public DynamicRoutedCommand SnapshotButtonCommand { get; set; }
 
-	public LogicRoutedCommand PromoButtonCommand { get; set; }
+	public DynamicRoutedCommand PerksButtonCommand { get; set; }
 
-	public LogicRoutedCommand CancelButtonCommand { get; set; }
+	public DynamicRoutedCommand PromoButtonCommand { get; set; }
+
+	public DynamicRoutedCommand CancelButtonCommand { get; set; }
 
 	public Visibility SnapshotButtonVisibility
 	{
@@ -402,6 +406,21 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(MemberTierProperty, value);
+			});
+		}
+	}
+
+	public string CancelButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(CancelButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CancelButtonTextProperty, value);
 			});
 		}
 	}

@@ -78,7 +78,7 @@ public class PricingRecord : IPricingRecord
 		}
 	}
 
-	public bool IsHotDeal
+	public bool IsDeal
 	{
 		get
 		{

@@ -7,11 +7,13 @@ using System.Windows.Markup;
 using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "MessagePopupViewUserControl")]
 public partial class MessagePopupViewUserControl : TextToSpeechUserControl, IComponentConnector
 {
 	private int m_timeout;
@@ -106,28 +108,48 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	private void Button1CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		if (!base.IsMultiClickBlocked)
+		RunCommandOnce(delegate
 		{
-			base.IsMultiClickBlocked = true;
-			StopTimer();
-			if (Model?.OnButton1Clicked != null)
+			try
 			{
-				Model.OnButton1Clicked();
+				if (!base.IsMultiClickBlocked)
+				{
+					base.IsMultiClickBlocked = true;
+					StopTimer();
+					if (Model?.OnButton1Clicked != null)
+					{
+						Model.OnButton1Clicked();
+					}
+				}
 			}
-		}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void Button2CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		if (!base.IsMultiClickBlocked)
+		RunCommandOnce(delegate
 		{
-			base.IsMultiClickBlocked = true;
-			StopTimer();
-			if (Model?.OnButton2Clicked != null)
+			try
 			{
-				Model.OnButton2Clicked();
+				if (!base.IsMultiClickBlocked)
+				{
+					base.IsMultiClickBlocked = true;
+					StopTimer();
+					if (Model?.OnButton2Clicked != null)
+					{
+						Model.OnButton2Clicked();
+					}
+				}
 			}
-		}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void TextToSpeechUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -149,5 +171,10 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 				ButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
 			}
 		}
+	}
+
+	public override ISpeechControl GetSpeechControl()
+	{
+		return Model?.OnGetSpeechControl();
 	}
 }

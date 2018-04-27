@@ -7,4 +7,6 @@ public class BlurayUpsell
 	public string Offer { get; set; }
 
 	public long TitleId { get; set; }
+
+	public int? TypeId { get; set; }
 }

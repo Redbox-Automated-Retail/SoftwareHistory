@@ -336,7 +336,9 @@ public class ProfileData : IProfileData
 				County = dictionary.ToString("county"),
 				State = dictionary.ToString("state"),
 				Zip = dictionary.ToString("zip"),
-				CollectionMethod = dictionary.ToInt32("collection_method", 6)
+				CollectionMethod = dictionary.ToInt32("collection_method", 6),
+				ServiceFee = dictionary.ToDecimal("service_fee"),
+				ServiceFeeTaxRate = dictionary.ToDecimal("service_fee_tax_rate")
 			};
 			decimal? num = dictionary.ToDecimal("digital_purchase_tax_rate", null);
 			if (num.HasValue)

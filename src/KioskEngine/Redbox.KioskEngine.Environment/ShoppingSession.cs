@@ -7,6 +7,8 @@ namespace Redbox.KioskEngine.Environment;
 
 internal sealed class ShoppingSession : IShoppingSession
 {
+	private bool _startedUserInteraction = false;
+
 	private readonly List<IShoppingSessionError> m_errors = new List<IShoppingSessionError>();
 
 	private readonly List<IShoppingSessionEvent> m_events = new List<IShoppingSessionEvent>();
@@ -114,5 +116,15 @@ internal sealed class ShoppingSession : IShoppingSession
 		AddEvent(ShoppingSessionEventType.Abandon, (!string.IsNullOrEmpty(reason)) ? reason : "Session abandon.");
 		Status = ShoppingSessionStatus.Abandon;
 		LogHelper.Instance.Log("...Abandon complete.");
+	}
+
+	public bool StartUserInteraction()
+	{
+		if (_startedUserInteraction)
+		{
+			return false;
+		}
+		_startedUserInteraction = true;
+		return true;
 	}
 }

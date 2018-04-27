@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.Model.Browse;
+using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -60,9 +61,7 @@ public class TitleDetailModel : DependencyObject
 		}
 	}
 
-	public event Action<IBrowseItemModel, object> AddPrimary;
-
-	public event Action<IBrowseItemModel, object> AddBluRay;
+	public event Action<IBrowseItemModel, object, TitleType> RentProduct;
 
 	public event Action<IBrowseItemModel, object> BuyButtonHit;
 
@@ -81,14 +80,9 @@ public class TitleDetailModel : DependencyObject
 		return OnGetSpeechControl?.Invoke();
 	}
 
-	public void ProcessAddPrimaryItem(IBrowseItemModel model, object o)
+	public void ProcessAddProduct(IBrowseItemModel model, object o, TitleType t)
 	{
-		AddPrimary?.Invoke(model, o);
-	}
-
-	public void ProcessAddBluRay(IBrowseItemModel model, object o)
-	{
-		AddBluRay?.Invoke(model, o);
+		RentProduct?.Invoke(model, o, t);
 	}
 
 	public void ProcessBuyButtonHit(IBrowseItemModel model, object o)

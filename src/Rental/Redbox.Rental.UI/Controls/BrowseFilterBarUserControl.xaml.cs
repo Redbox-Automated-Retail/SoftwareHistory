@@ -131,4 +131,10 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 		FilterBarModel?.ProcessOnHomeButtonClicked();
 		Commands.ResetIdleTimerCommand.Execute(null, this);
 	}
+
+	private void FormatFilterPopupCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		FilterBarModel?.ProcessOnFormatFilterButtonClicked();
+		Commands.ResetIdleTimerCommand.Execute(null, this);
+	}
 }

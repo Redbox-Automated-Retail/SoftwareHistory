@@ -215,7 +215,7 @@ public partial class CloseKioskViewUserControl : UserControl, IComponentConnecto
 
 	public ErrorList HardwareExecuteImmediate(string command, HardwareImmediateExecutionHandler eventHandler, bool clearStack)
 	{
-		return ServiceLocator.Instance.GetService<IHardwareService>()?.ExecuteImmediate(command, eventHandler, clearStack);
+		return ServiceLocator.Instance.GetService<IHardwareService>()?.ExecuteImmediate(command, eventHandler, clearStack, null);
 	}
 
 	public void ProcessUpdateAfterHardwareExec(string command, bool success, object stack, object errors)

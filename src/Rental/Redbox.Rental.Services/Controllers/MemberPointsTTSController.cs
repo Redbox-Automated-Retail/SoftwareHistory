@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
+using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.UI.ControllersLogic;
 using Redbox.Rental.UI.Models;
 
@@ -37,7 +39,7 @@ public class MemberPointsTTSController : BaseTTSController<MemberPointsTTSContro
 	{
 		speechPart.Events.Add(new MapKeyPressToAction
 		{
-			KeyCode = "0",
+			KeyCode = "CANCEL",
 			Action = delegate
 			{
 				logic.CancelButtonCommand_Execute();
@@ -55,7 +57,7 @@ public class MemberPointsTTSController : BaseTTSController<MemberPointsTTSContro
 
 	private static Func<string> CreateSelectedCartItemAction(int cartIndex, DisplayProductModel displayModel)
 	{
-		return () => $"you have selected item {cartIndex} title, {displayModel.Name} to redeem.";
+		return () => (!IsCartItem4K(displayModel)) ? $"you have selected item {cartIndex} title, {displayModel.Name} to redeem." : $"you cannot redeem 4 K titles. Item {cartIndex} title, {displayModel.Name}, cannot be redeemed.";
 	}
 
 	private static Func<string> CreateSelectedCartItemsAction(MemberPointsLogic logic)
@@ -96,11 +98,28 @@ public class MemberPointsTTSController : BaseTTSController<MemberPointsTTSContro
 		};
 	}
 
-	private static Action CreateUpdatePointsAction(int index, MemberPointsLogic logic, bool bAdd)
+	private static TitleType GetTitleType(DisplayProductModel displayModel)
+	{
+		return (displayModel.Data as IRentalShoppingCartItem).TitleType;
+	}
+
+	private static bool IsCartItem4K(DisplayProductModel displayModel)
+	{
+		if (displayModel != null)
+		{
+			return GetTitleType(displayModel) == TitleType._4KUHD;
+		}
+		return false;
+	}
+
+	private static Action CreateUpdatePointsAction(int index, MemberPointsLogic logic, bool bAdd, DisplayProductModel displayModel)
 	{
 		return delegate
 		{
-			logic.UpdatePointsInfo(index, bAdd);
+			if (!IsCartItem4K(displayModel))
+			{
+				logic.UpdatePointsInfo(index, bAdd);
+			}
 		};
 	}
 
@@ -124,7 +143,7 @@ public class MemberPointsTTSController : BaseTTSController<MemberPointsTTSContro
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = "To exit My Points, and go back to the previous screen, press 0."
+				Text = "To exit My Points, and go back to the previous screen, press CANCEL."
 			});
 			speechPart.Texts.Add(new TextPart
 			{
@@ -156,14 +175,14 @@ public class MemberPointsTTSController : BaseTTSController<MemberPointsTTSContro
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
 					KeyCode = $"PLUS{num}",
-					Action = CreateUpdatePointsAction(num - 1, logic, bAdd: true),
+					Action = CreateUpdatePointsAction(num - 1, logic, bAdd: true, item),
 					ActionText = CreateSelectedCartItemAction(num, item)
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
 					KeyCode = $"MINUS{num}",
-					Action = CreateUpdatePointsAction(num - 1, logic, bAdd: false),
-					Text = $"Item {num} title, {item.Name} is no longer selected."
+					Action = CreateUpdatePointsAction(num - 1, logic, bAdd: false, item),
+					Text = (IsCartItem4K(item) ? $"Item {num} title, {item.Name} has not been selected." : $"Item {num} title, {item.Name} is no longer selected.")
 				});
 			}
 			speechPart.Events.Add(new MapKeyPressToAction

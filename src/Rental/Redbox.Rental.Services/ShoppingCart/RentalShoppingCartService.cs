@@ -5,7 +5,9 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Services.ShoppingCart;
@@ -61,11 +63,12 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 	public IRentalShoppingCart CreateNew(Guid id)
 	{
 		IRentalShoppingCart value = null;
+		Store store = (ServiceLocator.Instance.GetService(typeof(IDataService)) as IDataService)?.GetStore();
 		lock (m_syncObject)
 		{
 			if (!_rentalShoppingCarts.TryGetValue(id, out value))
 			{
-				value = new RentalShoppingCart(id);
+				value = new RentalShoppingCart(id, (!Redbox.Rental.Services.Configuration.Configuration.Instance.ServiceFeeEnabled) ? 0m : (store?.ServiceFee ?? 0m), (!Redbox.Rental.Services.Configuration.Configuration.Instance.ServiceFeeEnabled) ? 0m : (store?.ServiceFeeTaxRate ?? 0m));
 				_rentalShoppingCarts[id] = value;
 				LogHelper.Instance.Log("Creating Rental Shopping Cart with id: {0}", id);
 			}
@@ -162,7 +165,32 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 				return;
 			}
 		}
-		LogHelper.Instance.Log("Error in RentalShoppingCartService.AddMultiDiscDiscsToCurrentRentalShoppingCart.  Unable to find rental shopping cart with id: {0}", shoppingCartSessionId);
+		LogHelper.Instance.Log("Error in RentalShoppingCartService.RemoveMultiDiscDiscsFromRentalShoppingCart.  Unable to find rental shopping cart with id: {0}", shoppingCartSessionId);
+	}
+
+	public void RemoveNonReservedProductsFromRentalShoppingCart(Guid shoppingCartSessionId)
+	{
+		IRentalShoppingCart rentalShoppingCart = GetRentalShoppingCart(shoppingCartSessionId);
+		if (rentalShoppingCart != null)
+		{
+			List<IRentalShoppingCartItem> list = new List<IRentalShoppingCartItem>();
+			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+			{
+				if (item.SourceType != ItemSourceType.Reservation)
+				{
+					list.Add(item);
+				}
+			}
+			{
+				foreach (IRentalShoppingCartItem item2 in list)
+				{
+					LogHelper.Instance.Log("removing non-reserved product id {0}", item2.ProductId);
+					rentalShoppingCart.RemoveItem(item2, userRemoved: false);
+				}
+				return;
+			}
+		}
+		LogHelper.Instance.Log("Error in RentalShoppingCartService.RemoveNonReservedProductsFromRentalShoppingCart.  Unable to find rental shopping cart with id: {0}", shoppingCartSessionId);
 	}
 
 	public IRentalShoppingCartItem CreateRentalShoppingCartItemFromProductId(long productId)
@@ -275,34 +303,16 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 			num3 = rentalShoppingCart.Totals.GrandTotal;
 		}
 		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		if (service != null && service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()))
+		if (service == null || !service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()) || !service.IsOpen(rentalShoppingCart.ShoppingSessionId.ToString()))
 		{
-			service.AddElement("shoppingCart", "subTotal", num.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
-			service.AddElement("shoppingCart", "taxAmount", num2.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
-			service.AddElement("shoppingCart", "grandTotal", num3.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
+			return;
 		}
+		service.AddElement("shoppingCart", "subTotal", num.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
+		service.AddElement("shoppingCart", "taxAmount", num2.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
+		service.AddElement("shoppingCart", "grandTotal", num3.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
 		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
 		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("productID", item.ProductId.ToString());
-			dictionary.Add("action", item.Action.ToString());
-			dictionary.Add("price", item.Price.ToString());
-			dictionary.Add("quantity", item.Quantity.ToString());
-			dictionary.Add("taxRate", item.TaxRate.ToString());
-			dictionary.Add("removed", "False");
-			dictionary.Add("status", item.Status.ToString());
-			dictionary.Add("productFamily", item.TitleFamily.ToString());
-			dictionary.Add("productType", item.TitleType.ToString());
-			dictionary.Add("barcode", item.Barcode ?? string.Empty);
-			dictionary.Add("sourceType", item.SourceType.ToString());
-			if (!rentalShoppingCart.InCartPromoOfferCancel && rentalShoppingCart.InCartPromoOfferMade)
-			{
-				dictionary.Add("add_sequence", item.Sequence.ToString());
-			}
-			if (service != null && service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()))
-			{
-				service.AddNode("cartItems", "cartItem", dictionary, rentalShoppingCart.ShoppingSessionId.ToString());
-			}
+			rentalShoppingCart.AddCartItemToAnalytics(item, userRemoved: false, service);
 		}
 	}
 

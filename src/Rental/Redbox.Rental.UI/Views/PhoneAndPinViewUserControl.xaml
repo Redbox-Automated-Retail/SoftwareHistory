@@ -15,7 +15,7 @@
       <UIElement.InputBindings>
         <MouseBinding Gesture="LeftClick" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PhoneDisplayCommand}" />
       </UIElement.InputBindings>
-      <TextBlock Name="PhoneDisplayText" VerticalAlignment="Center" Margin="29,0,0,0" Style="{StaticResource font_montserrat_extralight_22}" Text="{Binding Path=PhoneDisplayText, FallbackValue=mobile number}" />
+      <TextBlock Name="PhoneDisplayText" VerticalAlignment="Center" Margin="29,0,0,0" Style="{StaticResource font_montserrat_extralight_22}" Text="{Binding Path=PhoneDisplayText, FallbackValue=000-000-0000}" />
     </Border>
     <Border CornerRadius="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="264,156,0,0" Width="500" Height="64" BorderThickness="1" Background="#FFFFFFFF" BorderBrush="{Binding Path=PinDisplayBorderBrush, FallbackValue=#A5A5A5}">
       <UIElement.Effect>

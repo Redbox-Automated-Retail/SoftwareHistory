@@ -36,6 +36,13 @@ public static class TitleTypeProperties
 						}
 					},
 					{
+						TitleType._4KUHD,
+						new TitleTypeProperty
+						{
+							NameResource = "title_type_name_4kuhd"
+						}
+					},
+					{
 						TitleType.Xbox360,
 						new TitleTypeProperty
 						{

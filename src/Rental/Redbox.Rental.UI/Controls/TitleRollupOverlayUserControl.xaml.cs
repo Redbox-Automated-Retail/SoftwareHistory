@@ -44,8 +44,7 @@ public partial class TitleRollupOverlayUserControl : UserControl, IComponentConn
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(DVDButton);
 		obj?.SetStyle(BlurayButton);
-		obj?.SetStyle(DigitalCodeButton);
-		obj?.SetStyle(DigitalCodeInfoButton);
+		obj?.SetStyle(_4kUhdButton);
 		obj?.SetStyle(CancelButton);
 	}
 
@@ -198,39 +197,28 @@ public partial class TitleRollupOverlayUserControl : UserControl, IComponentConn
 		}
 	}
 
-	private void DigitalCodeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+	private void Add4kUhdCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 	{
-		e.CanExecute = CanExecuteDigitalCodeCommand();
+		e.CanExecute = CanExecuteAdd4kUhdCommand();
 	}
 
-	private bool CanExecuteDigitalCodeCommand()
+	private bool CanExecuteAdd4kUhdCommand()
 	{
 		bool result = false;
-		if (base.DataContext is TitleRollupOverlayModel { DigitalCodeButtonEnabled: not false })
+		if (base.DataContext is TitleRollupOverlayModel { _4kUhdButtonEnabled: not false })
 		{
 			result = true;
 		}
 		return result;
 	}
 
-	private void AddDigitalCodeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+	private void Add4kUhdCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StopTimer(executeTimeoutEvent: false);
-		if (CanExecuteDigitalCodeCommand() && base.DataContext is TitleRollupOverlayModel titleRollupOverlayModel)
+		if (CanExecuteAdd4kUhdCommand() && base.DataContext is TitleRollupOverlayModel titleRollupOverlayModel)
 		{
 			titleRollupOverlayModel.Visibility = Visibility.Collapsed;
-			titleRollupOverlayModel.ProcessTitleRollupOverlayAddDigitalCode(titleRollupOverlayModel.BrowseItemModel, e.Parameter);
-			Commands.ResetIdleTimerCommand.Execute(null, this);
-		}
-	}
-
-	private void DigitalCodeInfoCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		StopTimer(executeTimeoutEvent: false);
-		if (CanExecuteDigitalCodeCommand() && base.DataContext is TitleRollupOverlayModel titleRollupOverlayModel)
-		{
-			titleRollupOverlayModel.Visibility = Visibility.Collapsed;
-			titleRollupOverlayModel.ProcessTitleRollupOverlayDigitalCodeInfo(titleRollupOverlayModel.BrowseItemModel, e.Parameter);
+			titleRollupOverlayModel.ProcessTitleRollupOverlayAdd4kUhd(titleRollupOverlayModel.BrowseItemModel, e.Parameter);
 			Commands.ResetIdleTimerCommand.Execute(null, this);
 		}
 	}

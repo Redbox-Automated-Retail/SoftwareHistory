@@ -24,4 +24,22 @@ public interface IConfiguration
 	int SignInADATimeout { get; }
 
 	bool EnablePricingEngine { get; }
+
+	bool ComingSoonOptInEnabled { get; }
+
+	bool ServiceFeeEnabled { get; }
+
+	bool BlurayUpsellEnabled { get; }
+
+	bool _4KUpsellEnabled { get; }
+
+	bool EnableFlashDeals { get; }
+
+	int OfflineItemsLimit { get; }
+
+	int OfflineGameRentalLimit { get; }
+
+	int OfflineGamePurchaseLimit { get; }
+
+	void SessionReload();
 }

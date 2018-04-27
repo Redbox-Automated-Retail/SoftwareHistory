@@ -9,7 +9,7 @@ using Redbox.Rental.Model.Profile;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
-public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
+public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProduct, IKioskProduct
 {
 	protected List<ITitleProduct> _kioskProducts = new List<ITitleProduct>();
 
@@ -32,14 +32,7 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				kioskProduct.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
 				{
-					retBarCodes.Add(x.Key, x.Value);
-				});
-			}
-			foreach (KeyValuePair<long, MDVProduct> allMDVProduct in _allMDVProducts)
-			{
-				allMDVProduct.Value.BarCodeProducts.ToList().ForEach(delegate(KeyValuePair<string, BarcodeProduct> x)
-				{
-					retBarCodes.Add(x.Key, x.Value);
+					retBarCodes[x.Key] = x.Value;
 				});
 			}
 			return retBarCodes;
@@ -425,7 +418,7 @@ public class TitleRollupProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public bool HasBeenInStock => _kioskProducts.Any((ITitleProduct kp) => kp.HasBeenInStock);
 
-	public bool HasHotDeal => _kioskProducts.Any((ITitleProduct kp) => kp.HasHotDeal);
+	public bool HasDeal => _kioskProducts.Any((ITitleProduct kp) => kp.HasDeal);
 
 	public bool HasMultiNightPrice => _kioskProducts.Any((ITitleProduct kp) => kp.HasMultiNightPrice);
 

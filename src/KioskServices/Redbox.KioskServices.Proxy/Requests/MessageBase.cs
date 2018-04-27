@@ -24,7 +24,6 @@ public abstract class MessageBase : IMessage
 	protected MessageBase()
 	{
 		MessageId = Guid.NewGuid();
-		UseMessageControl = true;
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		EngineVersion = service["EngineVersion"];
 		BundleVersion = service["ProductVersion"];

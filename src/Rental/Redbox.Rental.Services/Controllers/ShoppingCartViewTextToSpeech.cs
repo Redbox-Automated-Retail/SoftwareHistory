@@ -44,7 +44,7 @@ public class ShoppingCartViewTextToSpeech
 		AddSpeechPartCheckForCartEmpty(result);
 		AddSpeechPartCartIsEmpty(result, getBrowseViewModelFunction);
 		AddSpeechPartListCartItems(result, getBrowseViewModelFunction);
-		AddSpeechPartDailyRentalCharge(result);
+		AddSpeechPartDailyRentalCharge(result, getBrowseViewModelFunction);
 		result.SpeechParts.ForEach(delegate(ISpeechPart x)
 		{
 			x.SpeechControl = result;
@@ -274,6 +274,14 @@ public class ShoppingCartViewTextToSpeech
 						Text = string.Format("The discount amount is {0}.", shoppingCartViewModel?.PricingModel?.DiscountValueText.Replace("-", string.Empty))
 					});
 				}
+				ShoppingCartViewModel shoppingCartViewModel2 = shoppingCartViewModel;
+				if (shoppingCartViewModel2 != null && shoppingCartViewModel2.PricingModel?.ServiceFeeLineVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = $"The service fee is {shoppingCartViewModel?.PricingModel?.ServiceFeeValueText}."
+					});
+				}
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = $"The subtotal amount is {shoppingCartViewModel?.PricingModel?.SubtotalValueText} and the tax is {shoppingCartViewModel?.PricingModel?.TaxValueText}."
@@ -330,7 +338,7 @@ public class ShoppingCartViewTextToSpeech
 		speechControl.SpeechParts.Add(speechPart);
 	}
 
-	private static void AddSpeechPartDailyRentalCharge(ISpeechControl speechControl)
+	private static void AddSpeechPartDailyRentalCharge(ISpeechControl speechControl, Func<ShoppingCartViewModel> getShoppingCartViewModelFunction)
 	{
 		ISpeechPart speechPart = new SpeechPart
 		{
@@ -371,6 +379,14 @@ public class ShoppingCartViewTextToSpeech
 			{
 				Text = Resources.passive_sale_note
 			});
+			ShoppingCartViewModel shoppingCartViewModel = getShoppingCartViewModelFunction();
+			if (shoppingCartViewModel != null && shoppingCartViewModel.ServiceFeeTextVisibility == Visibility.Visible)
+			{
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = shoppingCartViewModel.ServiceFeeText
+				});
+			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
 	}

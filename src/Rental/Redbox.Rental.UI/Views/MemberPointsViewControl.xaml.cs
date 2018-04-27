@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
 using Redbox.Controls;
-using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.UI.ControllersLogic;
@@ -38,33 +37,33 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 	public MemberPointsViewControl()
 	{
 		InitializeComponent();
-		ApplyTheme();
+		ApplyTheme<Control>(MainControl);
 		CartRoutedEventHandler += CartEventHandler;
 		RbPurpleBrush = (Brush)FindResource("RbPurpleBrush");
-	}
-
-	private void ApplyTheme()
-	{
-		ITheme theme = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
-		foreach (Control item in RentalUserControl.FindLogicalChildren<Control>(MainControl))
-		{
-			theme?.SetStyle(item);
-		}
 	}
 
 	private void CartEventHandler(object sender, RoutedEventArgs e)
 	{
 		CartRoutedEventArgs e2 = e as CartRoutedEventArgs;
 		DisplayProductWithCommandsUserControl displayProductWithCommandsUserControl = (DisplayProductWithCommandsUserControl)CartStackPanelElem.Children[int.Parse(e2.ButtonName)];
-		if (displayProductWithCommandsUserControl != null)
+		if (displayProductWithCommandsUserControl == null)
 		{
-			if (e2.Parameter)
+			return;
+		}
+		if (e2.Parameter)
+		{
+			RoundedButton cornerIncludeButtonElem = displayProductWithCommandsUserControl.CornerIncludeButtonElem;
+			if (cornerIncludeButtonElem.IsVisible)
 			{
-				CornerIncludeButton_Pressed(displayProductWithCommandsUserControl.CornerIncludeButtonElem, e);
+				CornerIncludeButton_Pressed(cornerIncludeButtonElem, e);
 			}
-			else
+		}
+		else
+		{
+			RoundedButton cornerExcludeButtonElem = displayProductWithCommandsUserControl.CornerExcludeButtonElem;
+			if (cornerExcludeButtonElem.IsVisible)
 			{
-				CornerEncludeButton_Pressed(displayProductWithCommandsUserControl.CornerExcludeButtonElem, e);
+				CornerExcludeButton_Pressed(cornerExcludeButtonElem, e);
 			}
 		}
 	}
@@ -110,7 +109,7 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 			};
 			int num = Model.DisplayProductModels.IndexOf(displayProductModel);
 			displayProductWithCommandsUserControl.CornerIncludeButtonElem.Click += CornerIncludeButton_Pressed;
-			displayProductWithCommandsUserControl.CornerExcludeButtonElem.Click += CornerEncludeButton_Pressed;
+			displayProductWithCommandsUserControl.CornerExcludeButtonElem.Click += CornerExcludeButton_Pressed;
 			displayProductWithCommandsUserControl.Name = $"Points_Item_{num}";
 			CartStackPanelElem.Children.Insert(num, displayProductWithCommandsUserControl);
 		}
@@ -126,7 +125,7 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 				DisplayProductWithCommandsUserControl displayProductWithCommandsUserControl2 = child2 as DisplayProductWithCommandsUserControl;
 				if (item2 == GetProductId(displayProductWithCommandsUserControl2))
 				{
-					DisplayProductModel displayModel = ChangeControlLook(displayProductWithCommandsUserControl2.CornerIncludeButtonElem, "FlagGrayColor", "FlagGrayShadow");
+					DisplayProductModel displayModel = ChangeControlLook(displayProductWithCommandsUserControl2.CornerIncludeButtonElem, "FlagGrayColor", "FlagGrayShadow", includeOpacity: true);
 					InvokeDisplayProductUserControl(Model.PointsIncludeCommand, displayModel);
 				}
 			}
@@ -138,7 +137,7 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 		PopulateDisplayProductModels();
 	}
 
-	private void InvokeDisplayProductUserControl(LogicRoutedCommand routeCommand, DisplayProductModel displayModel)
+	private void InvokeDisplayProductUserControl(DynamicRoutedCommand routeCommand, DisplayProductModel displayModel)
 	{
 		if (displayModel != null && displayModel != null)
 		{
@@ -146,11 +145,13 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 		}
 	}
 
-	private DisplayProductModel ChangeControlLook(RoundedButton buttonToHide, string flagColor, string shadowColor)
+	private DisplayProductModel ChangeControlLook(RoundedButton buttonToHide, string flagColor, string shadowColor, bool includeOpacity = false)
 	{
 		bool flag = buttonToHide.Name.Equals("CornerExcludeButtonElem");
 		Grid grid = buttonToHide.Parent as Grid;
 		DisplayProductUserControl obj = (grid.Parent as Grid).Children[0] as DisplayProductUserControl;
+		DisplayProductModel displayProductModel = obj.DataContext as DisplayProductModel;
+		displayProductModel.ImageOpacity = (includeOpacity ? 0.8 : 1.0);
 		Flag flag2 = obj.Flag;
 		if (grid.Children.Count > 1)
 		{
@@ -163,7 +164,7 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 			buttonToHide.Visibility = Visibility.Collapsed;
 			obj2.Visibility = Visibility.Visible;
 		}
-		return (DisplayProductModel)obj.DataContext;
+		return displayProductModel;
 	}
 
 	private void CornerIncludeButton_Pressed(object sender, RoutedEventArgs e)
@@ -179,21 +180,40 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 			}
 			else
 			{
-				DisplayProductModel displayModel = ChangeControlLook(roundedButton, "FlagGrayColor", "FlagGrayShadow");
+				DisplayProductModel displayModel = ChangeControlLook(roundedButton, "FlagGrayColor", "FlagGrayShadow", includeOpacity: true);
 				InvokeDisplayProductUserControl(Model.PointsIncludeCommand, displayModel);
 			}
+			UpdateContinueButton();
 			HandleWPFHit();
 		}
 	}
 
-	private void CornerEncludeButton_Pressed(object sender, RoutedEventArgs e)
+	private void CornerExcludeButton_Pressed(object sender, RoutedEventArgs e)
 	{
 		if (!base.IsMultiClickBlocked && Model != null)
 		{
 			base.IsMultiClickBlocked = true;
 			DisplayProductModel displayModel = ChangeControlLook(sender as RoundedButton, "FlagRubineColor", "FlagRubineShadow");
 			InvokeDisplayProductUserControl(Model.PointsExcludeCommand, displayModel);
+			UpdateContinueButton();
 			HandleWPFHit();
+		}
+	}
+
+	private void UpdateContinueButton()
+	{
+		bool continueButtonEnabled = false;
+		foreach (object child in CartStackPanelElem.Children)
+		{
+			if ((child as DisplayProductWithCommandsUserControl).CornerExcludeButtonElem.IsVisible)
+			{
+				continueButtonEnabled = true;
+				break;
+			}
+		}
+		if (Model != null)
+		{
+			Model.ContinueButtonEnabled = continueButtonEnabled;
 		}
 	}
 }

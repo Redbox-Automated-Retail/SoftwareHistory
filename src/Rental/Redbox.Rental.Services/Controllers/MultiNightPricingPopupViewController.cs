@@ -22,7 +22,7 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		{
 			MultiNightPricingPopupViewModel multiNightPricingPopupViewModel = new MultiNightPricingPopupViewModel();
 			multiNightPricingPopupViewModel.TitleProduct = titleProduct;
-			multiNightPricingPopupViewModel.HeaderText = GetHeaderText(titleProduct);
+			multiNightPricingPopupViewModel.HeaderText = titleProduct.ProductName;
 			multiNightPricingPopupViewModel.DescriptionText = Resources.multi_night_pricing_popup_description_text;
 			IList<IPricingRecord> list = (multiNightPricingPopupViewModel.PricingRecords = ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(titleProduct.ProductId));
 			bool flag = list != null && list.Count > 0;
@@ -84,11 +84,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		service?.RemoveTimer("MultiNightPricingPopupViewTimer");
 	}
 
-	private static string GetHeaderText(ITitleProduct titleProduct)
-	{
-		return $"{titleProduct.ProductName}{((TitleTypeProperties.Properties.ContainsKey(titleProduct.TitleType) && TitleTypeProperties.Properties[titleProduct.TitleType].GetName(Resources.ResourceManager) != null) ? $" - {TitleTypeProperties.Properties[titleProduct.TitleType].GetName(Resources.ResourceManager)}" : string.Empty)}";
-	}
-
 	private static string GetButtonText(IPricingRecord pricingRecord)
 	{
 		return string.Format(Resources.multi_night_pricing_popup_button_text, pricingRecord.InitialNight, pricingRecord.InitialDays ?? 1, (pricingRecord.InitialDays > 1) ? "s" : string.Empty);
@@ -105,6 +100,7 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		MultiNightPricingPopupViewModel multiNightPricingPopupViewModel = GetMultiNightPricingPopupViewModel();
 		if (multiNightPricingPopupViewModel != null && multiNightPricingPopupViewModel.TitleProduct != null && multiNightPricingPopupViewModel.PricingRecords != null && multiNightPricingPopupViewModel.PricingRecords.Count > 0)
 		{
+			OrchestrationService.ViewGoBackSafe("MultiNightPricingPopupViewController oneNightRental", popOnly: false);
 			BrowseFunctions.AddProductToCart(multiNightPricingPopupViewModel.TitleProduct, isPurchase: false, multiNightPricingPopupViewModel.PricingRecords[0]);
 		}
 	}
@@ -115,6 +111,7 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		MultiNightPricingPopupViewModel multiNightPricingPopupViewModel = GetMultiNightPricingPopupViewModel();
 		if (multiNightPricingPopupViewModel != null && multiNightPricingPopupViewModel.TitleProduct != null && multiNightPricingPopupViewModel.PricingRecords != null && multiNightPricingPopupViewModel.PricingRecords.Count > 1)
 		{
+			OrchestrationService.ViewGoBackSafe("MultiNightPricingPopupViewController multiNightRental", popOnly: false);
 			BrowseFunctions.AddProductToCart(multiNightPricingPopupViewModel.TitleProduct, isPurchase: false, multiNightPricingPopupViewModel.PricingRecords[1]);
 		}
 	}

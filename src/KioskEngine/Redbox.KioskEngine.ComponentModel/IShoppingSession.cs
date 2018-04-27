@@ -29,4 +29,6 @@ public interface IShoppingSession
 	void Commit(string reason);
 
 	void Abandon(string reason);
+
+	bool StartUserInteraction();
 }

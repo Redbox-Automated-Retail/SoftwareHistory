@@ -10,6 +10,8 @@ public interface ITotals
 
 	decimal DiscountAmountUsed { get; }
 
+	decimal ServiceFee { get; }
+
 	decimal GrandTotal { get; }
 
 	List<ISubTotalGroup> SubTotalGroups { get; }

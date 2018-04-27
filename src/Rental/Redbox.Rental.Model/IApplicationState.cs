@@ -13,7 +13,5 @@ public interface IApplicationState
 
 	bool VerboseLogging { get; }
 
-	bool KeepSessionOnStartViewEnter { get; set; }
-
 	List<IKioskProduct> BrowseProducts { get; set; }
 }

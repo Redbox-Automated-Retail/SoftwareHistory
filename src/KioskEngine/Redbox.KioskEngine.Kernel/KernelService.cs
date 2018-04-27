@@ -41,7 +41,6 @@ public sealed class KernelService : IKernelService, IDisposable
 	{
 		IsApplicationRunning = false;
 		m_startupScriptResourceName = null;
-		LoginFunctions.Reset();
 		EnvironmentFunctions.Reset();
 		LogHelper.Instance.Log("Reset kernel service.");
 		foreach (KeyValuePair<string, LuaFunction> compiledScript in m_compiledScripts)

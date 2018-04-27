@@ -8,10 +8,8 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Redbox.Controls;
-using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.UI.ControllersLogic;
-using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
@@ -61,16 +59,7 @@ public partial class MemberPerksViewControl : ViewUserControl, IComponentConnect
 	public MemberPerksViewControl()
 	{
 		InitializeComponent();
-		ApplyTheme();
-	}
-
-	private void ApplyTheme()
-	{
-		ITheme theme = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
-		foreach (Control item in RentalUserControl.FindLogicalChildren<Control>(MainControl))
-		{
-			theme?.SetStyle(item);
-		}
+		ApplyTheme<Control>(MainControl);
 	}
 
 	private Ellipse CreateBackgroundDots(StackPanel dots)
@@ -192,15 +181,27 @@ public partial class MemberPerksViewControl : ViewUserControl, IComponentConnect
 	private void SnapshotButton_Pressed(object sender, RoutedEventArgs e)
 	{
 		HandleWPFHit();
+		if (Model != null)
+		{
+			ViewUserControl.InvokeRoutedCommand(Model.SelectedButtonCommand, "SnapshotButton");
+		}
 	}
 
 	private void PerksButton_Pressed(object sender, RoutedEventArgs e)
 	{
 		HandleWPFHit();
+		if (Model != null)
+		{
+			ViewUserControl.InvokeRoutedCommand(Model.SelectedButtonCommand, "PerksButton");
+		}
 	}
 
 	private void PromosButton_Pressed(object sender, RoutedEventArgs e)
 	{
 		HandleWPFHit();
+		if (Model != null)
+		{
+			ViewUserControl.InvokeRoutedCommand(Model.SelectedButtonCommand, "PromosButton");
+		}
 	}
 }

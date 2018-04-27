@@ -1,10 +1,11 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 
 namespace Redbox.Rental.UI.Models;
 
-public class MessagePopupViewModel : DependencyObject
+public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 {
 	public Action OnButton1Clicked;
 
@@ -315,4 +316,6 @@ public class MessagePopupViewModel : DependencyObject
 			});
 		}
 	}
+
+	public Func<ISpeechControl> OnGetSpeechControl { get; set; }
 }

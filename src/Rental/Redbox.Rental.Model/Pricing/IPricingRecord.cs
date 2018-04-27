@@ -35,7 +35,7 @@ public interface IPricingRecord
 
 	bool IsMultiNightPrice { get; }
 
-	bool IsHotDeal { get; }
+	bool IsDeal { get; }
 
 	IPricingRecord Clone();
 

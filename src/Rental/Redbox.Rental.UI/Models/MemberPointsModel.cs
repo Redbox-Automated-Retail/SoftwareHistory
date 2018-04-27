@@ -10,6 +10,8 @@ public class MemberPointsModel : BaseModel<MemberPointsModel>
 
 	public static readonly DependencyProperty PointsMessageProperty = BaseModel<MemberPointsModel>.CreateDependencyProperty("PointsMessage", TYPES.STRING);
 
+	public static readonly DependencyProperty PointsCartMessageProperty = BaseModel<MemberPointsModel>.CreateDependencyProperty("PointsCartMessage", TYPES.STRING);
+
 	public static readonly DependencyProperty PointsMarketingProperty = BaseModel<MemberPointsModel>.CreateDependencyProperty("PointsMarketing", TYPES.STRING);
 
 	public static readonly DependencyProperty CancelButtonTextProperty = BaseModel<MemberPointsModel>.CreateDependencyProperty("CancelButtonText", TYPES.STRING);
@@ -26,13 +28,13 @@ public class MemberPointsModel : BaseModel<MemberPointsModel>
 
 	public List<long> EntryShoppingProductIds { get; set; }
 
-	public LogicRoutedCommand PointsIncludeCommand { get; set; }
+	public DynamicRoutedCommand PointsIncludeCommand { get; set; }
 
-	public LogicRoutedCommand PointsExcludeCommand { get; set; }
+	public DynamicRoutedCommand PointsExcludeCommand { get; set; }
 
-	public LogicRoutedCommand CancelButtonCommand { get; set; }
+	public DynamicRoutedCommand CancelButtonCommand { get; set; }
 
-	public LogicRoutedCommand ContinueButtonCommand { get; set; }
+	public DynamicRoutedCommand ContinueButtonCommand { get; set; }
 
 	public string PointsTitle
 	{
@@ -60,6 +62,21 @@ public class MemberPointsModel : BaseModel<MemberPointsModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(PointsMessageProperty, value);
+			});
+		}
+	}
+
+	public string PointsCartMessage
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PointsCartMessageProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PointsCartMessageProperty, value);
 			});
 		}
 	}

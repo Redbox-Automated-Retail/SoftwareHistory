@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.PromptSignInUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False" xmlns:views="clr-namespace:Redbox.Rental.UI.Views">
-  <Grid Background="{StaticResource RubineRedGradientBrush}" Width="1024" Height="768">
+<localControls:ViewUserControl x:Class="Redbox.Rental.UI.Views.PromptSignInUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Views" Focusable="False">
+  <Grid Name="MainControl" Background="{StaticResource RubineRedGradientBrush}" Width="1024" Height="768">
     <Border BorderThickness="0" Margin="0,99">
       <UniformGrid Columns="2" Rows="1">
         <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#FFFFFFFF">
@@ -26,4 +26,4 @@
       </UniformGrid>
     </Border>
   </Grid>
-</localControls:TextToSpeechUserControl>
+</localControls:ViewUserControl>

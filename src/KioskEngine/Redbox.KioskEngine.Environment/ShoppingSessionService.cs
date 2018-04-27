@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using VistaDB.Provider;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -21,10 +20,6 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 
 	public static ShoppingSessionService Instance => Singleton<ShoppingSessionService>.Instance;
 
-	internal VistaDBConnection Connection { get; set; }
-
-	internal string DatabasePath { get; set; }
-
 	public void Reset()
 	{
 		LogHelper.Instance.Log("Reset Shopping Session Service.");
@@ -36,10 +31,6 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 		lock (m_syncObject)
 		{
 			Reset();
-			if (Connection != null)
-			{
-				Connection.Dispose();
-			}
 		}
 	}
 
@@ -159,6 +150,14 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 	{
 		LogHelper.Instance.Log("Setting current Shopping Session to: {0}", id);
 		m_currentSessionId = id;
+	}
+
+	public bool StartUserInteraction()
+	{
+		lock (m_syncObject)
+		{
+			return GetCurrentSession()?.StartUserInteraction() ?? false;
+		}
 	}
 
 	private ShoppingSessionService()

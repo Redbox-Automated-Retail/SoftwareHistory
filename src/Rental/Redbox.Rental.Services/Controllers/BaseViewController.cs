@@ -1,12 +1,15 @@
 using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.Controllers;
@@ -34,6 +37,16 @@ public class BaseViewController
 	protected static T GetViewModel<T>() where T : class
 	{
 		return GetViewUserControl()?.DataContext as T;
+	}
+
+	protected static void AnalyticsAddCurrentView()
+	{
+		OrchestrationService.AnalyticsAddCurrentView();
+	}
+
+	protected static void AnalyticsAddViewEvent(string subItemType, string subItemValue)
+	{
+		SessionAnalyticsService?.AddViewEvent(subItemType, subItemValue);
 	}
 
 	protected static void ProcessWPFHit()
@@ -89,6 +102,29 @@ public class BaseViewController
 	protected static void ResetIdleTimer()
 	{
 		OrchestrationService.ResetIdleTimer(IdleTimerName);
+	}
+
+	protected static bool GetPickupStatus()
+	{
+		return (RentalShoppingCartService?.CurrentRentalShoppingCart)?.PickupRecommendationsShown ?? false;
+	}
+
+	protected static BitmapImage GetBundleBitmapImage(string resourceName)
+	{
+		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		BitmapImage result = null;
+		Image image = null;
+		image = ((!resourceName.StartsWith("cache:")) ? ServiceLocator.Instance.GetService<IResourceBundleService>().GetBitmap(resourceName) : service?.GetImage(resourceName.Substring(6)));
+		if (image != null)
+		{
+			result = service?.ToBitmapImage(image);
+		}
+		return result;
+	}
+
+	protected static MarketingAd GetMarketingAd(MarketingAdLocation location, bool createImpression)
+	{
+		return ServiceLocator.Instance.GetService<IMarketingAdService>().GetScreenAd(location, createImpression);
 	}
 
 	protected static SecureString StringToSecureString(string source)

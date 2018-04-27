@@ -108,6 +108,9 @@ public class InventoryServicesProxy : IInventoryServices
 
 	public void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, RemoteServiceCallback callback)
 	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		string bundleVersion = service["ProductVersion"];
+		string engineVersion = service["EngineVersion"];
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
@@ -115,20 +118,18 @@ public class InventoryServicesProxy : IInventoryServices
 			{
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.Return, URL: {0}", KioskServicesProxy.Instance.Url);
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
 				if (!DateTime.TryParse(returnTime, null, DateTimeStyles.AssumeLocal, out var result))
 				{
 					LogHelper.Instance.Log("Invalid date time passed to Return : {0}.", returnTime);
 					result = DateTime.Now;
 				}
-				errorList = service2.Enqueue(200, "Return", new
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Return", new
 				{
 					MessageType = "Return",
 					MessageId = Guid.NewGuid(),
 					KioskId = int.Parse(storeNumber),
-					EngineVersion = service["EngineVersion"],
-					BundleVersion = service["ProductVersion"],
+					EngineVersion = engineVersion,
+					BundleVersion = bundleVersion,
 					ReturnDate = result,
 					ReturnType = returnType,
 					Barcode = barcode,
@@ -145,8 +146,8 @@ public class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -157,7 +158,7 @@ public class InventoryServicesProxy : IInventoryServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
