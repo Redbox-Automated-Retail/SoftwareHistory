@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Client.Executors;
@@ -13,6 +14,26 @@ public sealed class HardwareService
 	private const int DefaultTimeout = 60000;
 
 	private IPCProtocol m_protocol;
+
+	public bool SupportsCameraFraudScan
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.SupportsFraudScan;
+		}
+	}
+
+	public DateTime? IRHardwareInstalled
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.IRHardwareInstall;
+		}
+	}
 
 	public bool HasABEDevice
 	{
@@ -470,6 +491,11 @@ public sealed class HardwareService
 	public HardwareCommandResult RemoveHardwareCorrectionStats(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJob("clear-all-hardware-statistics", null, enableDebugging: false, schedule, out job);
+	}
+
+	public HardwareCommandResult TestAndResetCCR(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJob("test-and-reset-ccr", null, enableDebugging: false, schedule, out job);
 	}
 
 	public HardwareCommandResult GetConfiguration(string name)
