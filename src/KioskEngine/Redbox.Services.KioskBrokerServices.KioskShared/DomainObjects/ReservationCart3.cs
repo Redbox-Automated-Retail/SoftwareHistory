@@ -57,4 +57,8 @@ public class ReservationCart3
 	public bool IsMdv { get; set; }
 
 	public bool LoyaltyRedemption { get; set; }
+
+	public decimal DefaultServiceFeeAmount { get; set; }
+
+	public decimal ActualServiceFeeAmount { get; set; }
 }
