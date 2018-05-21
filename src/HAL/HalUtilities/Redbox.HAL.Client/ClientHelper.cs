@@ -32,41 +32,30 @@ public sealed class ClientHelper : IDisposable
 			Sink.WriteMessage("The service is not configured.");
 			return false;
 		}
-		if (!Service.GetInitStatus(out var status).Success)
-		{
-			Sink.WriteMessage("Unable to determine init status.");
-			return false;
-		}
-		if ("COMPLETED" == status || "ERRORED" == status)
-		{
-			Sink.WriteMessage("Boot init ended with status: {0}", status);
-			return false;
-		}
-		return true;
+		return BootstrapInitRunningChecked();
+	}
+
+	public bool WaitforInit()
+	{
+		return WaitforInit(250);
 	}
 
 	public bool WaitforInit(int pause)
 	{
 		Sink.WriteMessage("Checking for bootstrap init.");
-		while (BootstrapInitRunning())
+		DateTime dateTime = DateTime.Now;
+		TimeSpan value = new TimeSpan(0, 0, 5);
+		while (BootstrapInitRunningChecked())
 		{
-			Sink.WriteMessage("{0}: still waiting for bootstrap init.", DateTime.Now.ToLongTimeString());
+			DateTime now = DateTime.Now;
+			if (now.Subtract(value) >= dateTime)
+			{
+				dateTime = now;
+				Sink.WriteMessage("{0}: still waiting for bootstrap init.", now.ToLongTimeString());
+			}
 			Thread.Sleep(pause);
 		}
-		Sink.WriteMessage("Init done");
 		return true;
-	}
-
-	public bool WaitforInit()
-	{
-		return WaitforInit(5000);
-	}
-
-	public bool WaitforInit(InitComplete onDone)
-	{
-		bool result = WaitforInit();
-		onDone?.Invoke();
-		return result;
 	}
 
 	public HardwareService Connect()
@@ -221,5 +210,20 @@ public sealed class ClientHelper : IDisposable
 			}
 		}
 		return array;
+	}
+
+	private bool BootstrapInitRunningChecked()
+	{
+		if (!Service.GetInitStatus(out var status).Success)
+		{
+			Sink.WriteMessage("Unable to determine init status.");
+			return false;
+		}
+		if ("COMPLETED" == status || "ERRORED" == status)
+		{
+			Sink.WriteMessage("Boot init ended with status: {0}", status);
+			return false;
+		}
+		return true;
 	}
 }

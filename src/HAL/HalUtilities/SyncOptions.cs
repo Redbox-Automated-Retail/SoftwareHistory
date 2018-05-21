@@ -11,5 +11,6 @@ internal enum SyncOptions
 	Attach = 4,
 	OutputSuccessfulSyncCompare = 8,
 	AsyncSoftSync = 0x10,
-	All = Debug | Analyze | Attach | OutputSuccessfulSyncCompare | AsyncSoftSync
+	ParseFrauds = 0x20,
+	All = Debug | Analyze | Attach | OutputSuccessfulSyncCompare | AsyncSoftSync | ParseFrauds
 }

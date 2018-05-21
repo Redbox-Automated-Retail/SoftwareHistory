@@ -1,16 +1,16 @@
-# Superman (1.10.0.74)
+# Zelda SR2 (1.10.2.5)
 
-- Product: HAL 1.10.0.74
-- Date (first download in the snapshots): 2017-10-13
-- Store labels: kop-hal-install-Superman
+- Product: HAL Utilities 1.10.2.5
+- Date (first download in the snapshots): 2018-05-21
+- Store labels: kop-tools-ZeldaSR2
 - Package revisions:
-  - `kop-tools` revision 38 (`2A4385488526B652C1E075F485D3CA97AE561573`)
+  - `kop-tools` revision 43 (`C26DDD7DCE4522A48F9C23F2C2663B4D9E260796`)
   - `kop-hal-install` revision 48 (`31969EB150ABB57140EF7D2B2F012FE72D74630B`)
   - `kop-ms-hal-tester` revision 39 (`AAF7D2F76C8ACDE475021AD8EE2EBAB61FCB16CC`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.10.0.74 | `452EC289048038683009D43601BC869AE839A6A6` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.10.2.5 | `A69A2244FFED307857E14CCEBC0C6D97B69F1F8F` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.10.0.74 | `13BD320C3E2F95F4ABCE11DD8C6CADD87CA8B55A` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

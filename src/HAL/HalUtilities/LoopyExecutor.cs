@@ -10,7 +10,7 @@ internal sealed class LoopyExecutor : JobExecutor
 
 	protected override string JobName => "loopy";
 
-	internal static void RunExecutor(int iterations, HardwareService s)
+	internal static void Run(int iterations, HardwareService s)
 	{
 		new ConsoleLogger(enableDebug: true);
 		using LoopyExecutor loopyExecutor = new LoopyExecutor(s, iterations);

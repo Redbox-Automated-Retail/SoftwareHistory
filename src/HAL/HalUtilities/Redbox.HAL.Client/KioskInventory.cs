@@ -39,9 +39,9 @@ public sealed class KioskInventory : IDisposable
 
 	private readonly List<IInventoryLocation> DeckInfo = new List<IInventoryLocation>();
 
-	public IList<IInventoryLocation> DeckInventory => DeckInfo;
+	public List<IInventoryLocation> DeckInventory => DeckInfo;
 
-	public IList<IDumpbinItem> DumpbinItems => DumpbinInfo;
+	public List<IDumpbinItem> DumpbinItems => DumpbinInfo;
 
 	public void Dispose()
 	{

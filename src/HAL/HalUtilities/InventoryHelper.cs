@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Redbox.HAL.Client;
@@ -8,6 +9,48 @@ namespace HALUtilities;
 
 internal sealed class InventoryHelper : IDisposable
 {
+	private class FraudLocInfo
+	{
+		internal readonly List<DecodeInfo> Dumps = new List<DecodeInfo>();
+
+		internal readonly Location Location;
+
+		public override string ToString()
+		{
+			return $"Deck = {Location.Deck} Slot = {Location.Slot}";
+		}
+
+		internal bool HasSecureRead()
+		{
+			return Dumps.FindAll((DecodeInfo each) => each.IsSecure).Count > 0;
+		}
+
+		internal FraudLocInfo(int deck, int slot)
+		{
+			Location = new Location
+			{
+				Deck = deck,
+				Slot = slot
+			};
+		}
+	}
+
+	private class DecodeInfo
+	{
+		internal readonly bool IsSecure;
+
+		internal string Matrix;
+
+		internal int Count;
+
+		internal DecodeInfo(string matrix, int count)
+		{
+			Matrix = matrix;
+			Count = count;
+			IsSecure = matrix.Equals("YES", StringComparison.CurrentCultureIgnoreCase);
+		}
+	}
+
 	private bool Disposed;
 
 	private int completedSyncs;
@@ -84,7 +127,7 @@ internal sealed class InventoryHelper : IDisposable
 		LogHelper.Instance.Log("  {0} mismatches.", inventoryMismatches);
 		if (inventoryMatches + inventoryMismatches != 717)
 		{
-			LogHelper.Instance.Log("Wrong analysis - expected 717, found {0}", inventoryMatches + inventoryMismatches);
+			LogHelper.Instance.Log("!! Analysis Error !! expected 717, found {0}", inventoryMatches + inventoryMismatches);
 		}
 	}
 
@@ -142,6 +185,10 @@ internal sealed class InventoryHelper : IDisposable
 				{
 					CompareSyncResults(job, (options & SyncOptions.OutputSuccessfulSyncCompare) != 0);
 				}
+				if ((options & SyncOptions.ParseFrauds) != SyncOptions.None)
+				{
+					ParseFraudsFromId(job.ID, vend: false);
+				}
 				if (thread != null)
 				{
 					Event.Set();
@@ -152,10 +199,72 @@ internal sealed class InventoryHelper : IDisposable
 		return hardwareCommandResult.Success;
 	}
 
-	internal InventoryHelper(HardwareService service)
+	internal void ParseFraudsFromFile(string fullPath, TextWriter output)
+	{
+		ParseFraudsFromFile(fullPath, output, vendFrauds: false);
+	}
+
+	internal void ParseFraudsFromFile(string fullPath, TextWriter output, bool vendFrauds)
+	{
+		List<FraudLocInfo> list = new List<FraudLocInfo>();
+		using (new DisposeableList<FraudLocInfo>(list))
+		{
+			using (TextReader textReader = new StreamReader(fullPath))
+			{
+				FraudLocInfo fraudLocInfo = null;
+				char[] separator = new char[1] { ' ' };
+				while (true)
+				{
+					string text = textReader.ReadLine();
+					if (text == null)
+					{
+						break;
+					}
+					if (!text.Contains("Vend time is set") && !text.Contains("Random sync") && !text.Contains("Sync Deck") && !text.Contains("PUT Deck") && !text.Contains("-- read dump --"))
+					{
+						if (text.Contains("GET Deck"))
+						{
+							string[] array = text.Split(separator);
+							int deck = Convert.ToInt32(array[6]);
+							int slot = Convert.ToInt32(array[9]);
+							fraudLocInfo = new FraudLocInfo(deck, slot);
+							list.Add(fraudLocInfo);
+						}
+						else if (text.Contains("Matrix"))
+						{
+							string[] array2 = text.Split(separator);
+							DecodeInfo item = new DecodeInfo(array2[6], Convert.ToInt32(array2[8]));
+							fraudLocInfo.Dumps.Add(item);
+						}
+						else
+						{
+							Console.WriteLine("Unrecognized line '{0}'", text);
+						}
+					}
+				}
+			}
+			output.WriteLine("Found {0} total sync locations", list.Count);
+			List<FraudLocInfo> list2 = list.FindAll((FraudLocInfo each) => !each.HasSecureRead());
+			output.WriteLine(" There are {0} locations WITH a secure read", list.Count - list2.Count);
+			output.WriteLine(" There are {0} locations without a secure read", list2.Count);
+			if (vendFrauds)
+			{
+				VendFrauds(list2);
+			}
+		}
+	}
+
+	internal void ParseFraudsFromId(string programId, bool vend)
+	{
+		string fullPath = $"c:\\Program Files\\Redbox\\KioskLogs\\Sync\\sync-{programId}.log";
+		using StreamWriter output = new StreamWriter($"fraud-analysis-{programId}.log");
+		ParseFraudsFromFile(fullPath, output, vend);
+	}
+
+	internal InventoryHelper(HardwareService service, ClientHelper helper)
 	{
 		Service = service;
-		Helper = new ClientHelper(service);
+		Helper = helper;
 	}
 
 	private void RunSoftSync()
@@ -173,6 +282,44 @@ internal sealed class InventoryHelper : IDisposable
 				{
 					completedSyncs++;
 				}
+			}
+		}
+	}
+
+	private void VendFrauds(List<FraudLocInfo> without)
+	{
+		KioskInventory ij = new KioskInventory(Service);
+		try
+		{
+			List<Location> vendLocs = new List<Location>();
+			without.ForEach(delegate(FraudLocInfo each)
+			{
+				IInventoryLocation inventoryLocation = ij.DeckInventory.Find((IInventoryLocation z) => z.Location.Deck == each.Location.Deck && z.Location.Slot == each.Location.Slot);
+				if (inventoryLocation != null && inventoryLocation.Matrix != "EMPTY")
+				{
+					vendLocs.Add(each.Location);
+				}
+			});
+			HardwareCommandResult hardwareCommandResult = Service.LoadBin(vendLocs, new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.High
+			}, out var job);
+			if (!hardwareCommandResult.Success)
+			{
+				Console.WriteLine("Failed to schedule load-bin job.");
+				hardwareCommandResult.Errors.Dump(Console.Out);
+			}
+			else
+			{
+				Console.WriteLine("Starting load-bin job {0}", job.ID);
+				Helper.WaitForJob(job, out var _);
+			}
+		}
+		finally
+		{
+			if (ij != null)
+			{
+				((IDisposable)ij).Dispose();
 			}
 		}
 	}
