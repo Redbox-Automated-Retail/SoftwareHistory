@@ -40,7 +40,7 @@
 		y="2"
 		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
 		backgroundColor="DarkRed"
-		text="  Software Versions - Yoda"
+		text="  Software Versions - Zelda"
 		foregroundColor="White"
 		verticalAlignment="center"
 		font="medium_larger_font"

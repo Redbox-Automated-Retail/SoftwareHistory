@@ -1,17 +1,17 @@
-# Yoda SR2 (2018-04-27)
+# Zelda SR2 (2018-05-21)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2018-04-27
-- Store labels: kop-rental-bundles-YodaSR2
+- Date (first download in the snapshots): 2018-05-21
+- Store labels: kop-rental-bundles-ZeldaSR2
 - Package revisions:
-  - `kop-rental-bundles` revision 74 (`5C29D4C302005A9B7AAD91ED621FA9B867D6AA34`)
+  - `kop-rental-bundles` revision 77 (`B548E8C1ED093BA76148FBEA359264232F30AC15`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `C0E850BF7867F0D20F399E949EDAF25CFBB0E2F6` | exact |
-| `fm.bundle` |  |  | `8A0324FDB16BF471274F4FC8DE89739F962A486D` | exact |
-| `library-rental-common.bundle` |  |  | `E9759A9549DB4AE32232ABEB0F982AC65AD29C24` | exact |
-| `ra-2.x.bundle` |  |  | `A0ADA03699628BA0341FFD194153DD3A039DF1D6` | exact |
+| `cp.bundle` |  |  | `6F75A21BBEE258455B007FDCAEC8AE887AB7EB59` | exact |
+| `fm.bundle` |  |  | `778D20BAD89F59869D98EC133CC77061BDEDDB0E` | exact |
+| `library-rental-common.bundle` |  |  | `E8D4ED15651F611384468BC5F0CDAF97BA241EA2` | exact |
+| `ra-2.x.bundle` |  |  | `14216F0360404D37CC14CACE6327A88377C00D1D` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

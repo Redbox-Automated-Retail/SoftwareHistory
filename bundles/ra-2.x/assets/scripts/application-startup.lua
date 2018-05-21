@@ -138,7 +138,8 @@ local function start_the_application()
         view_popview("remove startup wait view")
         -- Preload help view because if you are the first person to view help it occassionally shows a black screen 
         -- for up to 30 seconds and then shows the help screen. This issue should go away after all the views are WPF
-        view_show("help_document_view")
+        --view_show("help_document_view")
+		kernel.show_full_help_view(false, false)
         view_popview("remove preloaded help document view")
     end
 	if not run_initial_sync() then

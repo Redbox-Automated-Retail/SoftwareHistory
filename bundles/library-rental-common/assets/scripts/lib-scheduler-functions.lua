@@ -126,6 +126,14 @@ stats_run_daily_timer = function()
     kernel.healthsvcs_enqueueproperty( "ABEKeypad", has_abe_device )
     kernel.log( "Got Abe Keypad State" )
 	
+	-- IR Camera install Check
+	local ir_camera_installed = kernel.irhardwareinstalled()
+    kernel.log("Got IR Camera install date")
+	if ir_camera_installed ~= nil then
+		kernel.healthsvcs_enqueueproperty("IRCamera", ir_camera_installed)
+		kernel.log("Sent IR Camera install date")
+	end
+
 	--Create duplicate barcode alert
 	kernel.log( "Duplicate barcode daily timer executing..." )
 	local total_dupes = 0

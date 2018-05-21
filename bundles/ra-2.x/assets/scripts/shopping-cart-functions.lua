@@ -385,6 +385,7 @@ function newshoppingcart()
 				}
 				kernel.log( pickupValidationResponse )
 				kernel.analyticsaddattributes( "pickupValidation", pickupValidationResponse, self.session_id )
+				self:analytics_add_auth_account_info(r)
 
 				if on_complete ~= nil then
 					on_complete( r )

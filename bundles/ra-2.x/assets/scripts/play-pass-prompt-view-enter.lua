@@ -46,7 +46,8 @@ kernel.registeractorhitnotify(
 	function()
         view_analytics_event( "buttonPress", "play_pass_disclaimer_button" )
         kernel.setlasthitactorname( "play_pass_disclaimer_button" )
-        view_show_safe( "help_document_view" )
+        --view_show_safe( "help_document_view" )
+		kernel.show_play_pass_disclaimer_view(false)
 	end
 )
 kernel.registeractorhitnotify(
