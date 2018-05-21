@@ -67,6 +67,8 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private readonly MoveHelper MoveHelper;
 
+	private readonly Button[] FormButtons;
+
 	private const int MaxMoveXUnits = 10;
 
 	private const int MaxMoveYUnits = 200;
@@ -289,6 +291,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private TextBox m_getOffsetTB;
 
+	private BackgroundWorker m_startupWorker;
+
+	private BackgroundWorker m_runInitWorker;
+
+	private BackgroundWorker m_runVerticalSyncWorker;
+
 	private int SourceDeck => m_sourceDeckTextBox.GetInteger("Source Deck", OutputBox);
 
 	private int SourceSlot => m_sourceSlotTextBox.GetInteger("Source Slot", OutputBox);
@@ -377,6 +385,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		CameraHelper = new CameraAdapter(HardwareService);
 		MoveHelper = new MoveHelper(HardwareService);
 		ServiceLocator.Instance.AddService(typeof(IControlSystem), new ClientControlSystem(HardwareService));
+		FormButtons = new Button[63]
+		{
+			m_clearOutputButton, m_readPosButton, m_runInitButton, m_homeXButton, m_homeYButton, m_resetProteusButton, m_testArcusCommButton, button57, button5, button47,
+			button50, button51, button53, button54, m_qlmTestButton, button22, button66, button20, m_showTimeoutLogButton, m_readLimitsButton,
+			button36, button37, button38, button39, button64, button31, button32, m_gripperSellButton, button34, button35,
+			button28, button29, button30, m_qlmEngageButton, m_qlmDisengageButton, m_qlmStopButton, m_qlmCaseStatusButton, m_qlmUpButton, m_qlmDownButton, m_qlmDoorStatus,
+			m_snapImageButton, m_startButtonCamera, m_cameraPreview, m_cameraWorkingButton, button19, button26, button7, button8, button10, button11,
+			button12, button13, button16, button14, button17, button18, button1, button2, button3, button4,
+			m_closeSerialButton, m_getWithOffset, m_takeDiskButton
+		};
 		if (Settings.Default.TestCommOnStartup && !Helper.TestCommunication())
 		{
 			OutputBox.Write("Failed to communicate with HAL.");
@@ -405,32 +423,13 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 			id = "UNKNOWN";
 		}
 		m_kioskIDTextBox.Text = id;
-		ThreadPool.QueueUserWorkItem(delegate
+		if (!Helper.BootstrapInitRunning())
 		{
-			Helper.WaitforInit(FinishInit);
-		});
-	}
-
-	private void AfterInit()
-	{
-		m_configureDevicesButton.Enabled = m_secure;
-		m_deckConfigurationButton.Enabled = m_secure;
-		m_updateConfigurationButton.Enabled = m_secure;
-		m_sensorCheckBox.Enabled = m_secure;
-		Button[] array = FormButtons();
-		for (int i = 0; i < array.Length; i++)
-		{
-			array[i].Enabled = true;
+			OnStartupComplete();
+			return;
 		}
-		ChangeUIAfterconfig();
-		DisplayInventoryStats();
-	}
-
-	private void FinishInit()
-	{
-		StopJobs();
-		CompileScripts();
-		Invoke(new Action(AfterInit));
+		OutputBox.Write("Checking for bootstrap init.");
+		m_startupWorker.RunWorkerAsync();
 	}
 
 	private void OnSensorReadDone(bool readError)
@@ -467,13 +466,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		{
 			OutputBox.Write($"Door sensor configuration shows: NOT CONFIGURED.");
 		}
-		if ((machineConfiguration.QuickReturnStatus & DeviceStatus.Found) != DeviceStatus.None)
-		{
-			OutputBox.Write("A Quick Return device is attached; it {0} configured.", ((machineConfiguration.QuickReturnStatus & DeviceStatus.Configured) != DeviceStatus.None) ? "is" : "is not");
-		}
+		m_gripperSellButton.Enabled = !machineConfiguration.HasFraudDevice;
 		if (machineConfiguration.HasFraudDevice)
 		{
-			m_gripperSellButton.Enabled = false;
 			OutputBox.Write("The kiosk is configured with a fraud sensor.");
 		}
 		CameraHelper.Reset(machineConfiguration.LegacyCamera);
@@ -484,7 +479,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 			ToggleNonLegacyStart();
 		}
 		ChangeQlmPanelState();
-		ExchangerFanStatus fanButtonState = AirExchangerState.Configure(machineConfiguration.AirExchangerStatus, machineConfiguration.AirExchangerFanStatus);
+		ExchangerFanStatus fanButtonState = AirExchangerState.Configure(machineConfiguration);
 		SetFanButtonState(fanButtonState);
 		m_cameraWorkingButton.Enabled = CameraHelper.CameraInError();
 	}
@@ -527,15 +522,14 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		{
 			return;
 		}
-		string[] files = Directory.GetFiles(path, "*.hs");
-		foreach (string path2 in files)
+		Array.ForEach(Directory.GetFiles(path, "*.hs"), delegate(string script)
 		{
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path2);
-			if (!HardwareService.CompileProgram(path2, fileNameWithoutExtension, requiresClientConnection: false).Success)
+			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(script);
+			if (!HardwareService.CompileProgram(script, fileNameWithoutExtension, requiresClientConnection: false).Success)
 			{
 				LogHelper.Instance.Log("Failed to compile script {0} ", fileNameWithoutExtension);
 			}
-		}
+		});
 	}
 
 	private void OnDropQLM(object sender, EventArgs args)
@@ -1010,27 +1004,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void OnRunInit(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
-		{
-			using InitJob initJob = new InitJob(HardwareService);
-			initJob.Run();
-			if (HardwareJobStatus.Completed == initJob.EndStatus)
-			{
-				OutputBox.Write("Init succeeded.");
-			}
-			else
-			{
-				if (initJob.Errors.Count <= 0)
-				{
-					return;
-				}
-				foreach (Error error in initJob.Errors)
-				{
-					OutputBox.Write(error.Details);
-				}
-				OutputBox.Write("Init didn't succeed; errors follow:");
-			}
-		}
+		m_runInitButton.BackColor = Color.Red;
+		ToggleFormButtons(enable: false);
+		m_runInitWorker.RunWorkerAsync();
 	}
 
 	private void OnClearOutput(object sender, EventArgs e)
@@ -1440,49 +1416,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			try
-			{
-				HardwareJobSchedule schedule = new HardwareJobSchedule
-				{
-					Priority = HardwareJobPriority.Highest
-				};
-				if (!HardwareService.ScheduleJob("hardware-status", string.Empty, enableDebugging: false, schedule, out var job).Success)
-				{
-					OutputBox.Write("Unable to run job hardware-status");
-					return;
-				}
-				if (!Helper.WaitForJob(job, out var _))
-				{
-					OutputBox.Write("Unable to run job hardware-status");
-					return;
-				}
-				if (!job.GetResults(out var results).Success)
-				{
-					OutputBox.Write($"Unable to read the results for job {job.ID}");
-					return;
-				}
-				if (results[0].Code == "HardwareStatusOk")
-				{
-					OutputBox.Write("Hardware status ok.");
-				}
-				else
-				{
-					OutputBox.Write("Hardware error status follows:");
-					ProgramResult[] array = results;
-					foreach (ProgramResult programResult in array)
-					{
-						if (!(programResult.Code == "HardwareStatusInError"))
-						{
-							OutputBox.Write(programResult.Message);
-						}
-					}
-				}
-				HardwareService.TrashJob(job.ID);
-			}
-			catch (Exception)
-			{
-				OutputBox.Write("ERROR: hardware-status failed.");
-			}
+			RunHardwareStatus();
 		}
 	}
 
@@ -1542,26 +1476,15 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	private void button20_Click(object sender, EventArgs e)
 	{
 		m_errorProvider.Clear();
-		using (Manager.MakeAspect(sender))
+		int sourceSlot = SourceSlot;
+		if (-1 == sourceSlot)
 		{
-			int sourceSlot = SourceSlot;
-			if (-1 == sourceSlot)
-			{
-				m_errorProvider.SetError(m_sourceSlotTextBox, "Need a valid slot!");
-				return;
-			}
-			using VerticalSync verticalSync = new VerticalSync(HardwareService, sourceSlot);
-			verticalSync.Run();
-			if (HardwareJobStatus.Completed == verticalSync.EndStatus)
-			{
-				OutputBox.Write("The job completed successfully.");
-				return;
-			}
-			foreach (ProgramResult result in verticalSync.Results)
-			{
-				OutputBox.Write($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
-			}
+			m_errorProvider.SetError(m_sourceSlotTextBox, "Need a valid slot!");
+			return;
 		}
+		ToggleFormButtons(enable: false);
+		button20.BackColor = Color.Red;
+		m_runVerticalSyncWorker.RunWorkerAsync(sourceSlot);
 	}
 
 	private void m_cameraWorkingButton_Click(object sender, EventArgs e)
@@ -1667,20 +1590,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		}
 	}
 
-	private Button[] FormButtons()
-	{
-		return new Button[64]
-		{
-			m_openLogsButton, m_clearOutputButton, m_readPosButton, m_runInitButton, m_homeXButton, m_homeYButton, m_resetProteusButton, m_testArcusCommButton, button57, button5,
-			button47, button50, button51, button53, button54, m_qlmTestButton, button22, button66, button20, m_showTimeoutLogButton,
-			m_readLimitsButton, button36, button37, button38, button39, button64, button31, button32, m_gripperSellButton, button34,
-			button35, button28, button29, button30, m_qlmEngageButton, m_qlmDisengageButton, m_qlmStopButton, m_qlmCaseStatusButton, m_qlmUpButton, m_qlmDownButton,
-			m_qlmDoorStatus, m_snapImageButton, m_startButtonCamera, m_cameraPreview, m_cameraWorkingButton, button19, button26, button7, button8, button10,
-			button11, button12, button13, button16, button14, button17, button18, button1, button2, button3,
-			button4, m_closeSerialButton, m_getWithOffset, m_takeDiskButton
-		};
-	}
-
 	private void button6_Click(object sender, EventArgs e)
 	{
 		using (Manager.MakeAspect(sender))
@@ -1772,6 +1681,148 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		{
 			m_offsetGetRadioButton = radioButton;
 		}
+	}
+
+	private void ToggleFormButtons(bool enable)
+	{
+		m_configureDevicesButton.Enabled = m_secure & enable;
+		m_deckConfigurationButton.Enabled = m_secure & enable;
+		m_updateConfigurationButton.Enabled = m_secure & enable;
+		m_sensorCheckBox.Enabled = m_secure & enable;
+		m_openLogsButton.Enabled = m_secure & enable;
+		Array.ForEach(FormButtons, delegate(Button each)
+		{
+			each.Enabled = enable;
+		});
+	}
+
+	private void RunHardwareStatus()
+	{
+		try
+		{
+			HardwareJobSchedule schedule = new HardwareJobSchedule
+			{
+				Priority = HardwareJobPriority.Highest
+			};
+			if (!HardwareService.ScheduleJob("hardware-status", string.Empty, enableDebugging: false, schedule, out var job).Success)
+			{
+				OutputBox.Write("Unable to run job hardware-status");
+				return;
+			}
+			if (!Helper.WaitForJob(job, out var _))
+			{
+				OutputBox.Write("Unable to run job hardware-status");
+				return;
+			}
+			if (!job.GetResults(out var results).Success)
+			{
+				OutputBox.Write("Unable to read the results for job {0}", job.ID);
+				return;
+			}
+			if (results[0].Code == "HardwareStatusOk")
+			{
+				OutputBox.Write("Hardware status ok.");
+			}
+			else
+			{
+				OutputBox.Write("Hardware error status follows:");
+				ProgramResult[] array = results;
+				foreach (ProgramResult programResult in array)
+				{
+					if (!(programResult.Code == "HardwareStatusInError"))
+					{
+						OutputBox.Write(programResult.Message);
+					}
+				}
+			}
+			HardwareService.TrashJob(job.ID);
+		}
+		catch (Exception)
+		{
+			OutputBox.Write("ERROR: hardware-status failed.");
+		}
+	}
+
+	private void m_runVerticalSyncBackground_DoWork(object sender, DoWorkEventArgs e)
+	{
+		int slot = (int)e.Argument;
+		VerticalSync verticalSync = new VerticalSync(HardwareService, slot);
+		verticalSync.Run();
+		e.Result = verticalSync;
+	}
+
+	private void m_runVerticalSyncBackground_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+	{
+		button20.BackColor = Color.LightGray;
+		ToggleFormButtons(enable: true);
+		using VerticalSync verticalSync = e.Result as VerticalSync;
+		if (HardwareJobStatus.Completed == verticalSync.EndStatus)
+		{
+			OutputBox.Write("The job completed successfully.");
+			return;
+		}
+		verticalSync.Results.ForEach(delegate(ProgramResult res)
+		{
+			OutputBox.Write($"Failure at Deck {res.Deck} Slot {res.Slot} MSG: {res.Message}");
+		});
+	}
+
+	private void m_runInitBackground_DoWork(object sender, DoWorkEventArgs e)
+	{
+		InitJob initJob = new InitJob(HardwareService);
+		initJob.Run();
+		e.Result = initJob;
+	}
+
+	private void m_runInitBackground_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+	{
+		using InitJob initJob = e.Result as InitJob;
+		ToggleFormButtons(enable: true);
+		m_runInitButton.BackColor = Color.LightGray;
+		if (HardwareJobStatus.Completed == initJob.EndStatus)
+		{
+			OutputBox.Write("Init succeeded.");
+		}
+		else if (initJob.Errors.Count > 0)
+		{
+			initJob.Errors.ForEach(delegate(Error error)
+			{
+				OutputBox.Write(error.Details);
+			});
+			OutputBox.Write("Init didn't succeed; errors follow:");
+		}
+	}
+
+	private void m_startupWorker_DoWork(object sender, DoWorkEventArgs e)
+	{
+		int bootInitPause = Settings.Default.BootInitPause;
+		DateTime dateTime = DateTime.Now;
+		TimeSpan value = new TimeSpan(0, 0, 5);
+		while (Helper.BootstrapInitRunning())
+		{
+			DateTime now = DateTime.Now;
+			if (now.Subtract(value) >= dateTime)
+			{
+				dateTime = now;
+				OutputBox.Write("{0}: still waiting for bootstrap init.", now.ToLongTimeString());
+			}
+			Thread.Sleep(bootInitPause);
+		}
+	}
+
+	private void m_startupWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+	{
+		OnStartupComplete();
+	}
+
+	private void OnStartupComplete()
+	{
+		StopJobs();
+		CompileScripts();
+		ToggleFormButtons(enable: true);
+		ChangeUIAfterconfig();
+		RunHardwareStatus();
+		DisplayInventoryStats();
 	}
 
 	protected override void Dispose(bool disposing)
@@ -1894,6 +1945,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		this.m_takeDiskButton = new System.Windows.Forms.Button();
 		this.m_openLogsButton = new System.Windows.Forms.Button();
 		this.m_configureDevicesButton = new System.Windows.Forms.Button();
+		this.m_startupWorker = new System.ComponentModel.BackgroundWorker();
+		this.m_runInitWorker = new System.ComponentModel.BackgroundWorker();
+		this.m_runVerticalSyncWorker = new System.ComponentModel.BackgroundWorker();
 		this.groupBox2.SuspendLayout();
 		this.groupBox3.SuspendLayout();
 		this.groupBox4.SuspendLayout();
@@ -2885,6 +2939,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		this.m_configureDevicesButton.Text = "Configure Devices";
 		this.m_configureDevicesButton.UseVisualStyleBackColor = false;
 		this.m_configureDevicesButton.Click += new System.EventHandler(button67_Click);
+		this.m_startupWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(m_startupWorker_DoWork);
+		this.m_startupWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(m_startupWorker_RunWorkerCompleted);
+		this.m_runInitWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(m_runInitBackground_DoWork);
+		this.m_runInitWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(m_runInitBackground_RunWorkerCompleted);
+		this.m_runVerticalSyncWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(m_runVerticalSyncBackground_DoWork);
+		this.m_runVerticalSyncWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(m_runVerticalSyncBackground_RunWorkerCompleted);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		this.BackColor = System.Drawing.Color.WhiteSmoke;

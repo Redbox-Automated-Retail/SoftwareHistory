@@ -20,14 +20,6 @@ public class EditSlotData : Form
 		Down
 	}
 
-	private class ESDOutput : OutputBox
-	{
-		internal ESDOutput(ListBox box)
-			: base(box)
-		{
-		}
-	}
-
 	private int CurrentEY;
 
 	private int CurrentEX;
@@ -158,7 +150,7 @@ public class EditSlotData : Form
 	public EditSlotData(HardwareService service, DecksConfigurationManager mgr)
 	{
 		InitializeComponent();
-		OutputBox = new ESDOutput(m_OutputListBox);
+		OutputBox = new OutputBox(m_OutputListBox);
 		Service = service;
 		Manager = mgr;
 		XmlNode xmlNode = Manager.FindDeckNode(8);

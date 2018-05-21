@@ -110,7 +110,9 @@ public class ConfiguredDevicesForm : Form
 
 	private readonly ButtonAspectsManager Manager;
 
-	private readonly byte[] CenterItemProgram;
+	private readonly OutputBox IrOutput;
+
+	private bool m_irConfigured;
 
 	private readonly AirExchangerState ExchangerState;
 
@@ -124,13 +126,9 @@ public class ConfiguredDevicesForm : Form
 
 	private bool m_displayEngineeringTab;
 
-	private readonly QRInstallHelper QuickReturnControl;
-
 	private IContainer components;
 
 	private TabControl m_devicesTab;
-
-	private TabPage m_quickReturnTab;
 
 	private TabPage m_airExchangerTab;
 
@@ -270,7 +268,7 @@ public class ConfiguredDevicesForm : Form
 
 	private Button m_displaySessionsButton;
 
-	private TabPage tabPage1;
+	private TabPage m_hwSurveyTab;
 
 	private Button button16;
 
@@ -352,6 +350,44 @@ public class ConfiguredDevicesForm : Form
 
 	private Button m_testRouterRelay;
 
+	private TabPage m_irCameraTab;
+
+	private Button button37;
+
+	private Button button39;
+
+	private Button button38;
+
+	private TextBox textBox2;
+
+	private TextBox textBox1;
+
+	private Button button41;
+
+	private ListBox m_irCameraOutput;
+
+	private Button button42;
+
+	private Button button40;
+
+	private BackgroundWorker m_verticalSyncWorker;
+
+	private BackgroundWorker m_runInitWorker;
+
+	private GroupBox groupBox8;
+
+	private GroupBox groupBox7;
+
+	private Button button44;
+
+	private Button button43;
+
+	private Button button46;
+
+	private Button button45;
+
+	private Button button47;
+
 	public bool DisplayEngineeringTab
 	{
 		get
@@ -406,26 +442,21 @@ public class ConfiguredDevicesForm : Form
 		HardwareStatsOutput = new ConfiguredDeviceOuptutBox(m_hwStatsOutput);
 		EngineeringOutput = new ConfiguredDeviceOuptutBox(m_engineeringOutput);
 		ExchangerState = new AirExchangerState(service);
+		IrOutput = new ConfiguredDeviceOuptutBox(m_irCameraOutput);
 		using (MachineConfiguration machineConfiguration = new MachineConfiguration(Service))
 		{
 			machineConfiguration.Run();
-			ExchangerState.Configure(machineConfiguration.AirExchangerStatus, machineConfiguration.AirExchangerFanStatus);
+			ExchangerState.Configure(machineConfiguration);
 			HasFraudSensor = machineConfiguration.HasFraudDevice;
 			HasCortexCamera = !machineConfiguration.LegacyCamera;
 			HasRouterPowerRelay = machineConfiguration.HasRouterPowerRelay;
-			QuickReturnControl = new QRInstallHelper(Service, machineConfiguration.QuickReturnStatus);
 			ArcusResetConfigured = machineConfiguration.ArcusResetConfigured;
+			m_irConfigured = machineConfiguration.HasIRHardware;
 		}
-		QuickReturnControl.Dock = DockStyle.Fill;
-		m_quickReturnTab.Controls.Add(QuickReturnControl);
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.AppendLine("ROLLER POS=6 TIMEOUT=4000 WAIT=TRUE ");
-		stringBuilder.AppendLine(" ROLLER POS=3 TIMEOUT=4000 WAIT=TRUE ");
-		stringBuilder.AppendLine(" CLEAR");
-		CenterItemProgram = Encoding.ASCII.GetBytes(stringBuilder.ToString());
 		listView1.Columns.Add("Component", 200);
 		listView1.Columns.Add("Value", 200);
 		RouterPowerCyclePause = 1500;
+		OnConfigureIceQubeBoard();
 	}
 
 	private void ConfigureCortexPanel()
@@ -449,24 +480,56 @@ public class ConfiguredDevicesForm : Form
 	{
 		switch (m_devicesTab.SelectedIndex)
 		{
-		case 1:
+		case 0:
 			OnConfigureIceQubeBoard();
 			break;
-		case 2:
+		case 1:
 			ConfigureCortexPanel();
 			break;
-		case 3:
+		case 2:
 			OnConfigureFraudSensor();
 			break;
-		case 4:
+		case 3:
 			OnConfigureKioskTest();
 			break;
-		case 6:
+		case 5:
 			ConfigureRouterGroup();
 			ConfigureArcusGroup();
 			break;
-		case 5:
+		case 6:
+			ConfigureIrCameraGroup();
 			break;
+		case 4:
+			break;
+		}
+	}
+
+	private void ConfigureIrCameraGroup()
+	{
+		Button button = button37;
+		Button button2 = button38;
+		Button button3 = button39;
+		Button button4 = button40;
+		Button button5 = button41;
+		Button button6 = button42;
+		Button button7 = button43;
+		Button button8 = button44;
+		Button button9 = button45;
+		Button button10 = button46;
+		bool flag = (button47.Enabled = !HasCortexCamera);
+		bool flag3 = (button10.Enabled = flag);
+		bool flag5 = (button9.Enabled = flag3);
+		bool flag7 = (button8.Enabled = flag5);
+		bool flag9 = (button7.Enabled = flag7);
+		bool flag11 = (button6.Enabled = flag9);
+		bool flag13 = (button5.Enabled = flag11);
+		bool flag15 = (button4.Enabled = flag13);
+		bool flag17 = (button3.Enabled = flag15);
+		bool enabled = (button2.Enabled = flag17);
+		button.Enabled = enabled;
+		if (!HasCortexCamera)
+		{
+			button37.Text = (m_irConfigured ? "Un-configure" : "Configure");
 		}
 	}
 
@@ -492,18 +555,7 @@ public class ConfiguredDevicesForm : Form
 	{
 		FraudSensorOutput.Write("Fraud sensor is {0}.", HasFraudSensor ? "enabled" : "disabled");
 		m_configureFraudSensor.Text = (HasFraudSensor ? "Disable" : "Enable");
-		Button fraudPOSTButton = m_fraudPOSTButton;
-		bool enabled = (m_resetFraudButton.Enabled = HasFraudSensor);
-		fraudPOSTButton.Enabled = enabled;
-		Button powerOnFraudSensor = m_powerOnFraudSensor;
-		enabled = (m_powerOffFraudSensor.Enabled = HasFraudSensor);
-		powerOnFraudSensor.Enabled = enabled;
-		Button startFraudScan = m_startFraudScan;
-		enabled = (m_stopFraudScan.Enabled = HasFraudSensor);
-		startFraudScan.Enabled = enabled;
-		Button testDiskForMarkers = m_testDiskForMarkers;
-		enabled = (m_testFraudButton.Enabled = HasFraudSensor);
-		testDiskForMarkers.Enabled = enabled;
+		m_configureFraudSensor.Enabled = HasFraudSensor;
 	}
 
 	private void WriteToOutput(string msg)
@@ -522,14 +574,8 @@ public class ConfiguredDevicesForm : Form
 		OnConfigureIceQubeBoard();
 	}
 
-	private void m_configureAuxBoardButton_Click(object sender, EventArgs e)
-	{
-		m_iceQubeExchangerLabel.Text = "Power Relay board no longer supported.";
-	}
-
 	private void OnExecuteFraudSensorInstruction(object sender, EventArgs e)
 	{
-		ExecuteInstruction(sender, FraudSensorOutput, "FRAUDSENSOR");
 	}
 
 	private void OnExecuteIceQubeBoardCommand(object sender, EventArgs e)
@@ -560,15 +606,21 @@ public class ConfiguredDevicesForm : Form
 
 	private void m_installCortexButton_Click(object sender, EventArgs e)
 	{
-		ToggleCortex(sender, install: true);
+		if (ToggleCortex(sender, install: true))
+		{
+			HasCortexCamera = true;
+		}
 	}
 
 	private void m_uninstallCortexButton_Click(object sender, EventArgs e)
 	{
-		ToggleCortex(sender, install: false);
+		if (ToggleCortex(sender, install: false))
+		{
+			HasCortexCamera = false;
+		}
 	}
 
-	private void ToggleCortex(object sender, bool install)
+	private bool ToggleCortex(object sender, bool install)
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		using (Manager.MakeAspect(sender))
@@ -579,7 +631,7 @@ public class ConfiguredDevicesForm : Form
 				if (string.IsNullOrEmpty(instructionHelper.ExecuteGeneric(instruction)))
 				{
 					WriteToBox("Unable to change camera configuration.");
-					return;
+					return false;
 				}
 				WriteToBox("Successfully changed camera configuration.");
 				service.Wait(2000);
@@ -620,6 +672,7 @@ public class ConfiguredDevicesForm : Form
 			Button uninstallCortexButton = m_uninstallCortexButton;
 			bool enabled = (m_startCortexButton.Enabled = install);
 			uninstallCortexButton.Enabled = enabled;
+			return true;
 		}
 	}
 
@@ -632,7 +685,6 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			WriteToBox("Waiting for camera to start - could take up to 15s.");
 			using InstructionHelper instructionHelper = new InstructionHelper(Service);
 			string value = instructionHelper.ExecuteGeneric("CAMERA START");
 			if (string.IsNullOrEmpty(value))
@@ -645,23 +697,6 @@ public class ConfiguredDevicesForm : Form
 		}
 	}
 
-	private void RunPostTest()
-	{
-		using (FraudSensorPost fraudSensorPost = new FraudSensorPost(Service))
-		{
-			fraudSensorPost.AddSink(ProcessPostEvent);
-			fraudSensorPost.Run();
-			foreach (ProgramResult result in fraudSensorPost.Results)
-			{
-				FraudSensorOutput.Write("{0} : {1}", result.Code, result.Message);
-			}
-		}
-		BeginInvoke((MethodInvoker)delegate
-		{
-			m_fraudPOSTButton.Enabled = true;
-		});
-	}
-
 	private void ProcessPostEvent(HardwareJob job, DateTime time, string msg)
 	{
 		FraudSensorOutput.Write("[{0} {1}] {2}", time.ToShortDateString(), time.ToShortTimeString(), msg);
@@ -671,11 +706,9 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			bool flag = !HasFraudSensor;
+			bool hasFraudSensor = !HasFraudSensor;
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine($"SETCFG \"EnableSecureDiskValidator\" \"{flag.ToString()}\" TYPE=CONTROLLER");
-			stringBuilder.AppendLine($" SETCFG \"EnableFraudSensorCheck\" \"{flag.ToString()}\" TYPE=CONTROLLER");
-			stringBuilder.AppendLine($" SETCFG \"FraudScanJobBitmask2\" \"{(flag ? 32 : 0)}\" TYPE=CONTROLLER");
+			stringBuilder.AppendLine($"SETCFG \"EnableSecureDiskValidator\" \"{hasFraudSensor.ToString()}\" TYPE=CONTROLLER");
 			stringBuilder.AppendLine(" CLEAR");
 			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			if (!hardwareCommandResult.Success)
@@ -685,7 +718,7 @@ public class ConfiguredDevicesForm : Form
 			}
 			else
 			{
-				HasFraudSensor = flag;
+				HasFraudSensor = hasFraudSensor;
 				OnConfigureFraudSensor();
 			}
 		}
@@ -693,52 +726,14 @@ public class ConfiguredDevicesForm : Form
 
 	private void m_testFraudButton_Click(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
-		{
-			using FraudTestExecutor fraudTestExecutor = new FraudTestExecutor(Service);
-			fraudTestExecutor.Run();
-			foreach (ProgramResult result in fraudTestExecutor.Results)
-			{
-				FraudSensorOutput.Write("Code: {0}, Message = {1}", result.Code, result.Message);
-			}
-		}
 	}
 
 	private void m_testUserDiskForFraud(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
-		{
-			using FraudTakeReadReturnExecutor fraudTakeReadReturnExecutor = new FraudTakeReadReturnExecutor(Service);
-			fraudTakeReadReturnExecutor.Run();
-			foreach (ProgramResult result in fraudTakeReadReturnExecutor.Results)
-			{
-				FraudSensorOutput.Write("Code: {0}, Message = {1}", result.Code, result.Message);
-			}
-		}
 	}
 
 	private void button1_Click_2(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
-		{
-			int integer = m_fraudDeckTB.GetInteger("Deck", FraudSensorOutput);
-			int integer2 = m_fraudSlotTB.GetInteger("Slot", FraudSensorOutput);
-			if (-1 == integer || -1 == integer2)
-			{
-				FraudSensorOutput.Write("Check deck and slot!");
-				return;
-			}
-			CompositeFunctions.GetItem(integer, integer2, FraudSensorOutput, Service);
-			Service.ExecuteImmediateProgram(CenterItemProgram, out var _);
-		}
-	}
-
-	private void button2_Click(object sender, EventArgs e)
-	{
-		using (Manager.MakeAspect(sender))
-		{
-			CompositeFunctions.VendDisk(Service, FraudSensorOutput);
-		}
 	}
 
 	private void button4_Click_1(object sender, EventArgs e)
@@ -764,10 +759,10 @@ public class ConfiguredDevicesForm : Form
 		{
 			using TakeDiskAtDoorJob takeDiskAtDoorJob = new TakeDiskAtDoorJob(Service);
 			takeDiskAtDoorJob.Run();
-			foreach (ProgramResult result in takeDiskAtDoorJob.Results)
+			takeDiskAtDoorJob.Results.ForEach(delegate(ProgramResult res)
 			{
-				OutputBox.Write("Code: {0} Message: {1}", result.Code, result.Message);
-			}
+				OutputBox.Write("Code: {0} Message: {1}", res.Code, res.Message);
+			});
 		}
 	}
 
@@ -823,10 +818,10 @@ public class ConfiguredDevicesForm : Form
 		{
 			fraudStressTestExecutor.AddSink(ProcessPostEvent);
 			fraudStressTestExecutor.Run();
-			foreach (ProgramResult result in fraudStressTestExecutor.Results)
+			fraudStressTestExecutor.Results.ForEach(delegate(ProgramResult pr)
 			{
-				FraudSensorOutput.Write("{0} : {1}", result.Code, result.Message);
-			}
+				FraudSensorOutput.Write("{0} : {1}", pr.Code, pr.Message);
+			});
 		}
 		BeginInvoke((MethodInvoker)delegate
 		{
@@ -878,22 +873,23 @@ public class ConfiguredDevicesForm : Form
 
 	private void button9_Click(object sender, EventArgs e)
 	{
-		using (Manager.MakeAspect(sender))
-		{
-			m_initTB.Text = FunctionTest.RunInit().ToString().ToUpper();
-		}
+		button9.BackColor = Color.Red;
+		ToggleKfcButtons(enable: false);
+		m_runInitWorker.RunWorkerAsync();
 	}
 
 	private void button17_Click(object sender, EventArgs e)
 	{
+		errorProvider1.Clear();
 		int integer = m_sourceSlotTB.GetInteger("Test Slot", KioskTestOutput);
-		if (-1 != integer)
+		if (-1 == integer)
 		{
-			using (Manager.MakeAspect(sender))
-			{
-				m_verticalTestTB.Text = FunctionTest.RunVertialSlotTest(integer).ToString().ToUpper();
-			}
+			errorProvider1.SetError(m_sourceSlotTB, "Select slot");
+			return;
 		}
+		ToggleKfcButtons(enable: false);
+		button17.BackColor = Color.Red;
+		m_verticalSyncWorker.RunWorkerAsync(integer);
 	}
 
 	private void button18_Click(object sender, EventArgs e)
@@ -924,6 +920,21 @@ public class ConfiguredDevicesForm : Form
 	private void button16_Click(object sender, EventArgs e)
 	{
 		m_sourceSlotTB.InputNumber();
+	}
+
+	private void ToggleKfcButtons(bool enable)
+	{
+		Button button = button8;
+		Button button2 = button20;
+		Button button3 = button12;
+		Button button4 = button9;
+		Button button5 = button17;
+		bool flag = (button18.Enabled = enable);
+		bool flag3 = (button5.Enabled = flag);
+		bool flag5 = (button4.Enabled = flag3);
+		bool flag7 = (button3.Enabled = flag5);
+		bool enabled = (button2.Enabled = flag7);
+		button.Enabled = enabled;
 	}
 
 	private void button20_Click(object sender, EventArgs e)
@@ -1473,6 +1484,162 @@ public class ConfiguredDevicesForm : Form
 		}
 	}
 
+	private void button37_Click_1(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			bool flag = !m_irConfigured;
+			DateTime dateTime = DateTime.Now.ToUniversalTime();
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine(string.Format("SETCFG \"IRHardwareInstallDate\" \"{0}\" TYPE=CAMERA", flag ? dateTime.ToString() : "NONE"));
+			stringBuilder.AppendLine("CLEAR");
+			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			if (!hardwareCommandResult.Success)
+			{
+				IrOutput.Dump(hardwareCommandResult);
+				IrOutput.Write("Failed to update configuration.");
+			}
+			else
+			{
+				m_irConfigured = flag;
+				ConfigureIrCameraGroup();
+			}
+		}
+	}
+
+	private void button38_Click_1(object sender, EventArgs e)
+	{
+		textBox1.InputNumber();
+	}
+
+	private void button39_Click(object sender, EventArgs e)
+	{
+		textBox2.InputNumber();
+	}
+
+	private void button41_Click(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			new CameraAdapter(Service).LaunchAndWaitForTuner();
+		}
+	}
+
+	private void button42_Click(object sender, EventArgs e)
+	{
+		int integer = textBox1.GetInteger("Deck", IrOutput);
+		if (-1 == integer)
+		{
+			errorProvider1.SetError(textBox1, "Please specify a valid deck");
+			return;
+		}
+		int integer2 = textBox2.GetInteger("Slot", IrOutput);
+		if (-1 == integer2)
+		{
+			errorProvider1.SetError(textBox2, "Please specify a valid slot");
+			return;
+		}
+		CompositeFunctions.GetItem(integer, integer2, IrOutput, Service);
+		using (Manager.MakeAspect(sender))
+		{
+			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(Service);
+			IrOutput.Write(string.Format("Found {0} barcodes ({1}), time = {2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
+		}
+	}
+
+	private void button40_Click_1(object sender, EventArgs e)
+	{
+		using (Manager.MakeAspect(sender))
+		{
+			int integer = textBox1.GetInteger("Deck", IrOutput);
+			if (-1 == integer)
+			{
+				errorProvider1.SetError(textBox1, "Please specify a valid deck");
+				return;
+			}
+			int integer2 = textBox2.GetInteger("Slot", IrOutput);
+			if (-1 == integer2)
+			{
+				errorProvider1.SetError(textBox2, "Please specify a valid deck");
+			}
+			else
+			{
+				CompositeFunctions.PutItem(Service, integer, integer2, IrOutput);
+			}
+		}
+	}
+
+	private void m_runInitWorker_DoWork(object sender, DoWorkEventArgs e)
+	{
+		e.Result = FunctionTest.RunInit().ToString().ToUpper();
+	}
+
+	private void m_runInitWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+	{
+		ToggleKfcButtons(enable: true);
+		button9.BackColor = Color.LightGray;
+		m_initTB.Text = e.Result as string;
+	}
+
+	private void m_verticalSyncWorker_DoWork(object sender, DoWorkEventArgs e)
+	{
+		int slot = (int)e.Argument;
+		e.Result = FunctionTest.RunVertialSlotTest(slot).ToString().ToUpper();
+	}
+
+	private void m_verticalSyncWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+	{
+		ToggleKfcButtons(enable: true);
+		m_verticalTestTB.Text = e.Result as string;
+		button17.BackColor = Color.LightGray;
+	}
+
+	private void button43_Click(object sender, EventArgs e)
+	{
+		using ButtonAspects aspect = Manager.MakeAspect(sender);
+		OnExecuteResponseInstruction(aspect);
+	}
+
+	private void OnExecuteResponseInstruction(ButtonAspects aspect)
+	{
+		string tagInstruction = aspect.GetTagInstruction();
+		using InstructionHelper instructionHelper = new InstructionHelper(Service);
+		string text = instructionHelper.ExecuteGeneric(tagInstruction);
+		IrOutput.Write("{0} - {1}", tagInstruction, text);
+	}
+
+	private void OnExecuteBlindInstruction(ButtonAspects aspect)
+	{
+		string tagInstruction = aspect.GetTagInstruction();
+		using InstructionHelper instructionHelper = new InstructionHelper(Service);
+		instructionHelper.Execute(tagInstruction);
+		IrOutput.Write(tagInstruction);
+	}
+
+	private void button44_Click(object sender, EventArgs e)
+	{
+		using ButtonAspects aspect = Manager.MakeAspect(sender);
+		OnExecuteResponseInstruction(aspect);
+	}
+
+	private void button45_Click(object sender, EventArgs e)
+	{
+		using ButtonAspects aspect = Manager.MakeAspect(sender);
+		OnExecuteBlindInstruction(aspect);
+	}
+
+	private void button46_Click(object sender, EventArgs e)
+	{
+		using ButtonAspects aspect = Manager.MakeAspect(sender);
+		OnExecuteBlindInstruction(aspect);
+	}
+
+	private void button47_Click(object sender, EventArgs e)
+	{
+		using ButtonAspects aspect = Manager.MakeAspect(sender);
+		OnExecuteResponseInstruction(aspect);
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -1486,7 +1653,6 @@ public class ConfiguredDevicesForm : Form
 	{
 		this.components = new System.ComponentModel.Container();
 		this.m_devicesTab = new System.Windows.Forms.TabControl();
-		this.m_quickReturnTab = new System.Windows.Forms.TabPage();
 		this.m_airExchangerTab = new System.Windows.Forms.TabPage();
 		this.button10 = new System.Windows.Forms.Button();
 		this.m_iceQubeOutput = new System.Windows.Forms.ListBox();
@@ -1554,23 +1720,45 @@ public class ConfiguredDevicesForm : Form
 		this.label1 = new System.Windows.Forms.Label();
 		this.button2 = new System.Windows.Forms.Button();
 		this.m_kioskTestOutput = new System.Windows.Forms.ListBox();
-		this.tabPage1 = new System.Windows.Forms.TabPage();
+		this.m_hwSurveyTab = new System.Windows.Forms.TabPage();
 		this.listView1 = new System.Windows.Forms.ListView();
 		this.button16 = new System.Windows.Forms.Button();
 		this.button11 = new System.Windows.Forms.Button();
 		this.m_hwCorrections = new System.Windows.Forms.TabPage();
+		this.groupBox4 = new System.Windows.Forms.GroupBox();
+		this.m_testRouterRelay = new System.Windows.Forms.Button();
+		this.m_configureRouterRelay = new System.Windows.Forms.Button();
 		this.groupBox6 = new System.Windows.Forms.GroupBox();
 		this.m_restartArcus = new System.Windows.Forms.Button();
 		this.m_configureArcus = new System.Windows.Forms.Button();
 		this.groupBox5 = new System.Windows.Forms.GroupBox();
 		this.m_restartTouchscreen = new System.Windows.Forms.Button();
 		this.m_hwCorrectiontypeGB = new System.Windows.Forms.GroupBox();
+		this.radioButton5 = new System.Windows.Forms.RadioButton();
+		this.radioButton4 = new System.Windows.Forms.RadioButton();
 		this.radioButton2 = new System.Windows.Forms.RadioButton();
 		this.radioButton3 = new System.Windows.Forms.RadioButton();
 		this.button24 = new System.Windows.Forms.Button();
 		this.radioButton1 = new System.Windows.Forms.RadioButton();
 		this.button23 = new System.Windows.Forms.Button();
 		this.m_hwStatsOutput = new System.Windows.Forms.ListBox();
+		this.m_irCameraTab = new System.Windows.Forms.TabPage();
+		this.groupBox8 = new System.Windows.Forms.GroupBox();
+		this.button47 = new System.Windows.Forms.Button();
+		this.button42 = new System.Windows.Forms.Button();
+		this.button40 = new System.Windows.Forms.Button();
+		this.button38 = new System.Windows.Forms.Button();
+		this.button39 = new System.Windows.Forms.Button();
+		this.textBox2 = new System.Windows.Forms.TextBox();
+		this.textBox1 = new System.Windows.Forms.TextBox();
+		this.groupBox7 = new System.Windows.Forms.GroupBox();
+		this.button46 = new System.Windows.Forms.Button();
+		this.button45 = new System.Windows.Forms.Button();
+		this.button44 = new System.Windows.Forms.Button();
+		this.button41 = new System.Windows.Forms.Button();
+		this.button43 = new System.Windows.Forms.Button();
+		this.m_irCameraOutput = new System.Windows.Forms.ListBox();
+		this.button37 = new System.Windows.Forms.Button();
 		this.m_engineeringTab = new System.Windows.Forms.TabPage();
 		this.groupBox3 = new System.Windows.Forms.GroupBox();
 		this.button36 = new System.Windows.Forms.Button();
@@ -1592,11 +1780,8 @@ public class ConfiguredDevicesForm : Form
 		this.m_engineeringOutput = new System.Windows.Forms.ListBox();
 		this.m_exitButton = new System.Windows.Forms.Button();
 		this.errorProvider1 = new System.Windows.Forms.ErrorProvider(this.components);
-		this.radioButton4 = new System.Windows.Forms.RadioButton();
-		this.radioButton5 = new System.Windows.Forms.RadioButton();
-		this.groupBox4 = new System.Windows.Forms.GroupBox();
-		this.m_configureRouterRelay = new System.Windows.Forms.Button();
-		this.m_testRouterRelay = new System.Windows.Forms.Button();
+		this.m_verticalSyncWorker = new System.ComponentModel.BackgroundWorker();
+		this.m_runInitWorker = new System.ComponentModel.BackgroundWorker();
 		this.m_devicesTab.SuspendLayout();
 		this.m_airExchangerTab.SuspendLayout();
 		this.m_cortexTab.SuspendLayout();
@@ -1604,23 +1789,26 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox1.SuspendLayout();
 		this.m_kioskFunctionCheck.SuspendLayout();
 		this.groupBox2.SuspendLayout();
-		this.tabPage1.SuspendLayout();
+		this.m_hwSurveyTab.SuspendLayout();
 		this.m_hwCorrections.SuspendLayout();
+		this.groupBox4.SuspendLayout();
 		this.groupBox6.SuspendLayout();
 		this.groupBox5.SuspendLayout();
 		this.m_hwCorrectiontypeGB.SuspendLayout();
+		this.m_irCameraTab.SuspendLayout();
+		this.groupBox8.SuspendLayout();
+		this.groupBox7.SuspendLayout();
 		this.m_engineeringTab.SuspendLayout();
 		this.groupBox3.SuspendLayout();
 		((System.ComponentModel.ISupportInitialize)this.errorProvider1).BeginInit();
-		this.groupBox4.SuspendLayout();
 		base.SuspendLayout();
-		this.m_devicesTab.Controls.Add(this.m_quickReturnTab);
 		this.m_devicesTab.Controls.Add(this.m_airExchangerTab);
 		this.m_devicesTab.Controls.Add(this.m_cortexTab);
 		this.m_devicesTab.Controls.Add(this.m_fraudSensorTab);
 		this.m_devicesTab.Controls.Add(this.m_kioskFunctionCheck);
-		this.m_devicesTab.Controls.Add(this.tabPage1);
+		this.m_devicesTab.Controls.Add(this.m_hwSurveyTab);
 		this.m_devicesTab.Controls.Add(this.m_hwCorrections);
+		this.m_devicesTab.Controls.Add(this.m_irCameraTab);
 		this.m_devicesTab.Controls.Add(this.m_engineeringTab);
 		this.m_devicesTab.Location = new System.Drawing.Point(2, 12);
 		this.m_devicesTab.Name = "m_devicesTab";
@@ -1628,13 +1816,6 @@ public class ConfiguredDevicesForm : Form
 		this.m_devicesTab.SelectedIndex = 0;
 		this.m_devicesTab.Size = new System.Drawing.Size(1057, 626);
 		this.m_devicesTab.TabIndex = 0;
-		this.m_quickReturnTab.BackColor = System.Drawing.Color.LightGray;
-		this.m_quickReturnTab.Location = new System.Drawing.Point(4, 56);
-		this.m_quickReturnTab.Name = "m_quickReturnTab";
-		this.m_quickReturnTab.Padding = new System.Windows.Forms.Padding(3);
-		this.m_quickReturnTab.Size = new System.Drawing.Size(1049, 566);
-		this.m_quickReturnTab.TabIndex = 0;
-		this.m_quickReturnTab.Text = "Quick Return Device";
 		this.m_airExchangerTab.BackColor = System.Drawing.Color.LightGray;
 		this.m_airExchangerTab.Controls.Add(this.button10);
 		this.m_airExchangerTab.Controls.Add(this.m_iceQubeOutput);
@@ -1779,6 +1960,7 @@ public class ConfiguredDevicesForm : Form
 		this.button15.UseVisualStyleBackColor = true;
 		this.button15.Visible = false;
 		this.button15.Click += new System.EventHandler(button15_Click);
+		this.button14.Enabled = false;
 		this.button14.Location = new System.Drawing.Point(510, 428);
 		this.button14.Name = "button14";
 		this.button14.Size = new System.Drawing.Size(120, 52);
@@ -1828,6 +2010,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_stressIterationsTB.Size = new System.Drawing.Size(100, 20);
 		this.m_stressIterationsTB.TabIndex = 19;
 		this.m_stressIterationsTB.Visible = false;
+		this.button13.Enabled = false;
 		this.button13.Location = new System.Drawing.Point(670, 495);
 		this.button13.Name = "button13";
 		this.button13.Size = new System.Drawing.Size(99, 65);
@@ -1843,6 +2026,7 @@ public class ConfiguredDevicesForm : Form
 		this.button3.Text = "Clear Output";
 		this.button3.UseVisualStyleBackColor = true;
 		this.button3.Click += new System.EventHandler(button3_Click_1);
+		this.button7.Enabled = false;
 		this.button7.Location = new System.Drawing.Point(510, 493);
 		this.button7.Name = "button7";
 		this.button7.Size = new System.Drawing.Size(120, 65);
@@ -1851,6 +2035,7 @@ public class ConfiguredDevicesForm : Form
 		this.button7.Text = "Shutdown Control System";
 		this.button7.UseVisualStyleBackColor = true;
 		this.button7.Click += new System.EventHandler(button7_Click);
+		this.button6.Enabled = false;
 		this.button6.Location = new System.Drawing.Point(670, 372);
 		this.button6.Name = "button6";
 		this.button6.Size = new System.Drawing.Size(75, 50);
@@ -1858,6 +2043,7 @@ public class ConfiguredDevicesForm : Form
 		this.button6.Text = "Slot";
 		this.button6.UseVisualStyleBackColor = true;
 		this.button6.Click += new System.EventHandler(button6_Click);
+		this.button5.Enabled = false;
 		this.button5.Location = new System.Drawing.Point(670, 316);
 		this.button5.Name = "button5";
 		this.button5.Size = new System.Drawing.Size(75, 50);
@@ -1865,6 +2051,7 @@ public class ConfiguredDevicesForm : Form
 		this.button5.Text = "Deck";
 		this.button5.UseVisualStyleBackColor = true;
 		this.button5.Click += new System.EventHandler(button5_Click_1);
+		this.button4.Enabled = false;
 		this.button4.Location = new System.Drawing.Point(510, 372);
 		this.button4.Name = "button4";
 		this.button4.Size = new System.Drawing.Size(120, 50);
@@ -1894,6 +2081,7 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox1.TabIndex = 7;
 		this.groupBox1.TabStop = false;
 		this.groupBox1.Text = "Sensor Tests";
+		this.m_powerOffFraudSensor.Enabled = false;
 		this.m_powerOffFraudSensor.Location = new System.Drawing.Point(222, 85);
 		this.m_powerOffFraudSensor.Name = "m_powerOffFraudSensor";
 		this.m_powerOffFraudSensor.Size = new System.Drawing.Size(150, 60);
@@ -1902,6 +2090,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_powerOffFraudSensor.Text = "Turn Off Power";
 		this.m_powerOffFraudSensor.UseVisualStyleBackColor = true;
 		this.m_powerOffFraudSensor.Click += new System.EventHandler(OnExecuteFraudSensorInstruction);
+		this.m_powerOnFraudSensor.Enabled = false;
 		this.m_powerOnFraudSensor.Location = new System.Drawing.Point(23, 85);
 		this.m_powerOnFraudSensor.Name = "m_powerOnFraudSensor";
 		this.m_powerOnFraudSensor.Size = new System.Drawing.Size(150, 60);
@@ -1910,6 +2099,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_powerOnFraudSensor.Text = "Power Sensor";
 		this.m_powerOnFraudSensor.UseVisualStyleBackColor = true;
 		this.m_powerOnFraudSensor.Click += new System.EventHandler(OnExecuteFraudSensorInstruction);
+		this.m_testDiskForMarkers.Enabled = false;
 		this.m_testDiskForMarkers.Location = new System.Drawing.Point(23, 218);
 		this.m_testDiskForMarkers.Name = "m_testDiskForMarkers";
 		this.m_testDiskForMarkers.Size = new System.Drawing.Size(150, 60);
@@ -1917,6 +2107,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_testDiskForMarkers.Text = "Test Disk In Picker";
 		this.m_testDiskForMarkers.UseVisualStyleBackColor = true;
 		this.m_testDiskForMarkers.Click += new System.EventHandler(m_testFraudButton_Click);
+		this.m_stopFraudScan.Enabled = false;
 		this.m_stopFraudScan.Location = new System.Drawing.Point(222, 152);
 		this.m_stopFraudScan.Name = "m_stopFraudScan";
 		this.m_stopFraudScan.Size = new System.Drawing.Size(150, 60);
@@ -1925,6 +2116,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_stopFraudScan.Text = "Stop Scan";
 		this.m_stopFraudScan.UseVisualStyleBackColor = true;
 		this.m_stopFraudScan.Click += new System.EventHandler(OnExecuteFraudSensorInstruction);
+		this.m_startFraudScan.Enabled = false;
 		this.m_startFraudScan.Location = new System.Drawing.Point(23, 152);
 		this.m_startFraudScan.Name = "m_startFraudScan";
 		this.m_startFraudScan.Size = new System.Drawing.Size(150, 60);
@@ -1933,6 +2125,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_startFraudScan.Text = "Start Scan";
 		this.m_startFraudScan.UseVisualStyleBackColor = true;
 		this.m_startFraudScan.Click += new System.EventHandler(OnExecuteFraudSensorInstruction);
+		this.m_resetFraudButton.Enabled = false;
 		this.m_resetFraudButton.Location = new System.Drawing.Point(222, 19);
 		this.m_resetFraudButton.Name = "m_resetFraudButton";
 		this.m_resetFraudButton.Size = new System.Drawing.Size(150, 60);
@@ -1941,6 +2134,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_resetFraudButton.Text = "Reset";
 		this.m_resetFraudButton.UseVisualStyleBackColor = true;
 		this.m_resetFraudButton.Click += new System.EventHandler(OnExecuteFraudSensorInstruction);
+		this.m_testFraudButton.Enabled = false;
 		this.m_testFraudButton.Location = new System.Drawing.Point(222, 218);
 		this.m_testFraudButton.Name = "m_testFraudButton";
 		this.m_testFraudButton.Size = new System.Drawing.Size(150, 60);
@@ -1948,6 +2142,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_testFraudButton.Text = "Take - Test - Return";
 		this.m_testFraudButton.UseVisualStyleBackColor = true;
 		this.m_testFraudButton.Click += new System.EventHandler(m_testUserDiskForFraud);
+		this.m_fraudPOSTButton.Enabled = false;
 		this.m_fraudPOSTButton.Location = new System.Drawing.Point(23, 19);
 		this.m_fraudPOSTButton.Name = "m_fraudPOSTButton";
 		this.m_fraudPOSTButton.Size = new System.Drawing.Size(150, 60);
@@ -1956,6 +2151,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_fraudPOSTButton.Text = "Last POST Result";
 		this.m_fraudPOSTButton.UseVisualStyleBackColor = true;
 		this.m_fraudPOSTButton.Click += new System.EventHandler(OnExecuteFraudSensorInstruction);
+		this.button1.Enabled = false;
 		this.button1.Location = new System.Drawing.Point(510, 309);
 		this.button1.Name = "button1";
 		this.button1.Size = new System.Drawing.Size(120, 57);
@@ -2144,16 +2340,16 @@ public class ConfiguredDevicesForm : Form
 		this.m_kioskTestOutput.Name = "m_kioskTestOutput";
 		this.m_kioskTestOutput.Size = new System.Drawing.Size(441, 485);
 		this.m_kioskTestOutput.TabIndex = 0;
-		this.tabPage1.BackColor = System.Drawing.Color.LightGray;
-		this.tabPage1.Controls.Add(this.listView1);
-		this.tabPage1.Controls.Add(this.button16);
-		this.tabPage1.Controls.Add(this.button11);
-		this.tabPage1.Location = new System.Drawing.Point(4, 56);
-		this.tabPage1.Name = "tabPage1";
-		this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-		this.tabPage1.Size = new System.Drawing.Size(1049, 566);
-		this.tabPage1.TabIndex = 7;
-		this.tabPage1.Text = "Hardware Survey";
+		this.m_hwSurveyTab.BackColor = System.Drawing.Color.LightGray;
+		this.m_hwSurveyTab.Controls.Add(this.listView1);
+		this.m_hwSurveyTab.Controls.Add(this.button16);
+		this.m_hwSurveyTab.Controls.Add(this.button11);
+		this.m_hwSurveyTab.Location = new System.Drawing.Point(4, 56);
+		this.m_hwSurveyTab.Name = "m_hwSurveyTab";
+		this.m_hwSurveyTab.Padding = new System.Windows.Forms.Padding(3);
+		this.m_hwSurveyTab.Size = new System.Drawing.Size(1049, 566);
+		this.m_hwSurveyTab.TabIndex = 7;
+		this.m_hwSurveyTab.Text = "Hardware Survey";
 		this.listView1.Location = new System.Drawing.Point(20, 35);
 		this.listView1.Name = "listView1";
 		this.listView1.Size = new System.Drawing.Size(502, 378);
@@ -2187,6 +2383,28 @@ public class ConfiguredDevicesForm : Form
 		this.m_hwCorrections.Size = new System.Drawing.Size(1049, 566);
 		this.m_hwCorrections.TabIndex = 9;
 		this.m_hwCorrections.Text = "Hardware Corrections";
+		this.groupBox4.Controls.Add(this.m_testRouterRelay);
+		this.groupBox4.Controls.Add(this.m_configureRouterRelay);
+		this.groupBox4.Location = new System.Drawing.Point(513, 279);
+		this.groupBox4.Name = "groupBox4";
+		this.groupBox4.Size = new System.Drawing.Size(200, 175);
+		this.groupBox4.TabIndex = 8;
+		this.groupBox4.TabStop = false;
+		this.groupBox4.Text = "Router ";
+		this.m_testRouterRelay.Location = new System.Drawing.Point(23, 100);
+		this.m_testRouterRelay.Name = "m_testRouterRelay";
+		this.m_testRouterRelay.Size = new System.Drawing.Size(120, 50);
+		this.m_testRouterRelay.TabIndex = 1;
+		this.m_testRouterRelay.Text = "Power Cycle";
+		this.m_testRouterRelay.UseVisualStyleBackColor = true;
+		this.m_testRouterRelay.Click += new System.EventHandler(button38_Click);
+		this.m_configureRouterRelay.Location = new System.Drawing.Point(23, 31);
+		this.m_configureRouterRelay.Name = "m_configureRouterRelay";
+		this.m_configureRouterRelay.Size = new System.Drawing.Size(120, 50);
+		this.m_configureRouterRelay.TabIndex = 0;
+		this.m_configureRouterRelay.Text = "Configure";
+		this.m_configureRouterRelay.UseVisualStyleBackColor = true;
+		this.m_configureRouterRelay.Click += new System.EventHandler(button37_Click);
 		this.groupBox6.Controls.Add(this.m_restartArcus);
 		this.groupBox6.Controls.Add(this.m_configureArcus);
 		this.groupBox6.Location = new System.Drawing.Point(782, 280);
@@ -2235,6 +2453,24 @@ public class ConfiguredDevicesForm : Form
 		this.m_hwCorrectiontypeGB.TabIndex = 4;
 		this.m_hwCorrectiontypeGB.TabStop = false;
 		this.m_hwCorrectiontypeGB.Text = "Correction Type";
+		this.radioButton5.AutoSize = true;
+		this.radioButton5.Location = new System.Drawing.Point(23, 93);
+		this.radioButton5.Name = "radioButton5";
+		this.radioButton5.Size = new System.Drawing.Size(141, 17);
+		this.radioButton5.TabIndex = 6;
+		this.radioButton5.TabStop = true;
+		this.radioButton5.Tag = "UnexpectedPowerLoss";
+		this.radioButton5.Text = "Unexpected Power Loss";
+		this.radioButton5.UseVisualStyleBackColor = true;
+		this.radioButton4.AutoSize = true;
+		this.radioButton4.Location = new System.Drawing.Point(23, 70);
+		this.radioButton4.Name = "radioButton4";
+		this.radioButton4.Size = new System.Drawing.Size(57, 17);
+		this.radioButton4.TabIndex = 5;
+		this.radioButton4.TabStop = true;
+		this.radioButton4.Tag = "RouterRecycle";
+		this.radioButton4.Text = "Router";
+		this.radioButton4.UseVisualStyleBackColor = true;
 		this.radioButton2.AutoSize = true;
 		this.radioButton2.Location = new System.Drawing.Point(23, 116);
 		this.radioButton2.Name = "radioButton2";
@@ -2281,6 +2517,135 @@ public class ConfiguredDevicesForm : Form
 		this.m_hwStatsOutput.Name = "m_hwStatsOutput";
 		this.m_hwStatsOutput.Size = new System.Drawing.Size(422, 420);
 		this.m_hwStatsOutput.TabIndex = 0;
+		this.m_irCameraTab.BackColor = System.Drawing.Color.LightGray;
+		this.m_irCameraTab.Controls.Add(this.groupBox8);
+		this.m_irCameraTab.Controls.Add(this.groupBox7);
+		this.m_irCameraTab.Controls.Add(this.m_irCameraOutput);
+		this.m_irCameraTab.Controls.Add(this.button37);
+		this.m_irCameraTab.Location = new System.Drawing.Point(4, 56);
+		this.m_irCameraTab.Name = "m_irCameraTab";
+		this.m_irCameraTab.Size = new System.Drawing.Size(1049, 566);
+		this.m_irCameraTab.TabIndex = 11;
+		this.m_irCameraTab.Text = "IR Camera";
+		this.groupBox8.Controls.Add(this.button47);
+		this.groupBox8.Controls.Add(this.button42);
+		this.groupBox8.Controls.Add(this.button40);
+		this.groupBox8.Controls.Add(this.button38);
+		this.groupBox8.Controls.Add(this.button39);
+		this.groupBox8.Controls.Add(this.textBox2);
+		this.groupBox8.Controls.Add(this.textBox1);
+		this.groupBox8.Location = new System.Drawing.Point(25, 293);
+		this.groupBox8.Name = "groupBox8";
+		this.groupBox8.Size = new System.Drawing.Size(348, 205);
+		this.groupBox8.TabIndex = 11;
+		this.groupBox8.TabStop = false;
+		this.groupBox8.Text = "Disk Control";
+		this.button47.Location = new System.Drawing.Point(177, 109);
+		this.button47.Name = "button47";
+		this.button47.Size = new System.Drawing.Size(115, 75);
+		this.button47.TabIndex = 10;
+		this.button47.Tag = "CONTROLSYSTEM CENTER";
+		this.button47.Text = "Center disk";
+		this.button47.UseVisualStyleBackColor = true;
+		this.button47.Click += new System.EventHandler(button47_Click);
+		this.button42.Location = new System.Drawing.Point(17, 19);
+		this.button42.Name = "button42";
+		this.button42.Size = new System.Drawing.Size(115, 75);
+		this.button42.TabIndex = 8;
+		this.button42.Text = "Get and Read From";
+		this.button42.UseVisualStyleBackColor = true;
+		this.button42.Click += new System.EventHandler(button42_Click);
+		this.button40.Location = new System.Drawing.Point(17, 109);
+		this.button40.Name = "button40";
+		this.button40.Size = new System.Drawing.Size(115, 75);
+		this.button40.TabIndex = 9;
+		this.button40.Text = "Put Back";
+		this.button40.UseVisualStyleBackColor = true;
+		this.button40.Click += new System.EventHandler(button40_Click_1);
+		this.button38.Location = new System.Drawing.Point(144, 19);
+		this.button38.Name = "button38";
+		this.button38.Size = new System.Drawing.Size(75, 39);
+		this.button38.TabIndex = 1;
+		this.button38.Text = "Deck";
+		this.button38.UseVisualStyleBackColor = true;
+		this.button38.Click += new System.EventHandler(button38_Click_1);
+		this.button39.Location = new System.Drawing.Point(144, 64);
+		this.button39.Name = "button39";
+		this.button39.Size = new System.Drawing.Size(75, 39);
+		this.button39.TabIndex = 2;
+		this.button39.Text = "Slot";
+		this.button39.UseVisualStyleBackColor = true;
+		this.button39.Click += new System.EventHandler(button39_Click);
+		this.textBox2.Location = new System.Drawing.Point(225, 74);
+		this.textBox2.Name = "textBox2";
+		this.textBox2.Size = new System.Drawing.Size(100, 20);
+		this.textBox2.TabIndex = 4;
+		this.textBox1.Location = new System.Drawing.Point(225, 29);
+		this.textBox1.Name = "textBox1";
+		this.textBox1.Size = new System.Drawing.Size(100, 20);
+		this.textBox1.TabIndex = 3;
+		this.groupBox7.Controls.Add(this.button46);
+		this.groupBox7.Controls.Add(this.button45);
+		this.groupBox7.Controls.Add(this.button44);
+		this.groupBox7.Controls.Add(this.button41);
+		this.groupBox7.Controls.Add(this.button43);
+		this.groupBox7.Location = new System.Drawing.Point(25, 31);
+		this.groupBox7.Name = "groupBox7";
+		this.groupBox7.Size = new System.Drawing.Size(292, 238);
+		this.groupBox7.TabIndex = 10;
+		this.groupBox7.TabStop = false;
+		this.groupBox7.Text = "Camera Control";
+		this.button46.Location = new System.Drawing.Point(163, 91);
+		this.button46.Name = "button46";
+		this.button46.Size = new System.Drawing.Size(115, 60);
+		this.button46.TabIndex = 14;
+		this.button46.Tag = "RINGLIGHT OFF";
+		this.button46.Text = "Ringlight Off";
+		this.button46.UseVisualStyleBackColor = true;
+		this.button46.Click += new System.EventHandler(button46_Click);
+		this.button45.Location = new System.Drawing.Point(163, 25);
+		this.button45.Name = "button45";
+		this.button45.Size = new System.Drawing.Size(115, 60);
+		this.button45.TabIndex = 13;
+		this.button45.Tag = "RINGLIGHT ON";
+		this.button45.Text = "Ringlight On";
+		this.button45.UseVisualStyleBackColor = true;
+		this.button45.Click += new System.EventHandler(button45_Click);
+		this.button44.Location = new System.Drawing.Point(17, 90);
+		this.button44.Name = "button44";
+		this.button44.Size = new System.Drawing.Size(115, 60);
+		this.button44.TabIndex = 12;
+		this.button44.Tag = "CAMERA STOP";
+		this.button44.Text = "Stop Camera";
+		this.button44.UseVisualStyleBackColor = true;
+		this.button44.Click += new System.EventHandler(button44_Click);
+		this.button41.Location = new System.Drawing.Point(17, 157);
+		this.button41.Name = "button41";
+		this.button41.Size = new System.Drawing.Size(115, 60);
+		this.button41.TabIndex = 6;
+		this.button41.Text = "Launch Tuner";
+		this.button41.UseVisualStyleBackColor = true;
+		this.button41.Click += new System.EventHandler(button41_Click);
+		this.button43.Location = new System.Drawing.Point(17, 25);
+		this.button43.Name = "button43";
+		this.button43.Size = new System.Drawing.Size(115, 60);
+		this.button43.TabIndex = 12;
+		this.button43.Tag = "CAMERA START";
+		this.button43.Text = "Start Camera";
+		this.button43.UseVisualStyleBackColor = true;
+		this.button43.Click += new System.EventHandler(button43_Click);
+		this.m_irCameraOutput.FormattingEnabled = true;
+		this.m_irCameraOutput.Location = new System.Drawing.Point(562, 67);
+		this.m_irCameraOutput.Name = "m_irCameraOutput";
+		this.m_irCameraOutput.Size = new System.Drawing.Size(441, 420);
+		this.m_irCameraOutput.TabIndex = 7;
+		this.button37.Location = new System.Drawing.Point(411, 31);
+		this.button37.Name = "button37";
+		this.button37.Size = new System.Drawing.Size(120, 72);
+		this.button37.TabIndex = 0;
+		this.button37.Text = "button37";
+		this.button37.UseVisualStyleBackColor = true;
+		this.button37.Click += new System.EventHandler(button37_Click_1);
 		this.m_engineeringTab.BackColor = System.Drawing.Color.LightGray;
 		this.m_engineeringTab.Controls.Add(this.groupBox3);
 		this.m_engineeringTab.Controls.Add(this.button28);
@@ -2426,46 +2791,10 @@ public class ConfiguredDevicesForm : Form
 		this.m_exitButton.UseVisualStyleBackColor = false;
 		this.m_exitButton.Click += new System.EventHandler(m_exitButton_Click);
 		this.errorProvider1.ContainerControl = this;
-		this.radioButton4.AutoSize = true;
-		this.radioButton4.Location = new System.Drawing.Point(23, 70);
-		this.radioButton4.Name = "radioButton4";
-		this.radioButton4.Size = new System.Drawing.Size(57, 17);
-		this.radioButton4.TabIndex = 5;
-		this.radioButton4.TabStop = true;
-		this.radioButton4.Tag = "RouterRecycle";
-		this.radioButton4.Text = "Router";
-		this.radioButton4.UseVisualStyleBackColor = true;
-		this.radioButton5.AutoSize = true;
-		this.radioButton5.Location = new System.Drawing.Point(23, 93);
-		this.radioButton5.Name = "radioButton5";
-		this.radioButton5.Size = new System.Drawing.Size(141, 17);
-		this.radioButton5.TabIndex = 6;
-		this.radioButton5.TabStop = true;
-		this.radioButton5.Tag = "UnexpectedPowerLoss";
-		this.radioButton5.Text = "Unexpected Power Loss";
-		this.radioButton5.UseVisualStyleBackColor = true;
-		this.groupBox4.Controls.Add(this.m_testRouterRelay);
-		this.groupBox4.Controls.Add(this.m_configureRouterRelay);
-		this.groupBox4.Location = new System.Drawing.Point(513, 279);
-		this.groupBox4.Name = "groupBox4";
-		this.groupBox4.Size = new System.Drawing.Size(200, 175);
-		this.groupBox4.TabIndex = 8;
-		this.groupBox4.TabStop = false;
-		this.groupBox4.Text = "Router ";
-		this.m_configureRouterRelay.Location = new System.Drawing.Point(23, 31);
-		this.m_configureRouterRelay.Name = "m_configureRouterRelay";
-		this.m_configureRouterRelay.Size = new System.Drawing.Size(120, 50);
-		this.m_configureRouterRelay.TabIndex = 0;
-		this.m_configureRouterRelay.Text = "Configure";
-		this.m_configureRouterRelay.UseVisualStyleBackColor = true;
-		this.m_configureRouterRelay.Click += new System.EventHandler(button37_Click);
-		this.m_testRouterRelay.Location = new System.Drawing.Point(23, 100);
-		this.m_testRouterRelay.Name = "m_testRouterRelay";
-		this.m_testRouterRelay.Size = new System.Drawing.Size(120, 50);
-		this.m_testRouterRelay.TabIndex = 1;
-		this.m_testRouterRelay.Text = "Power Cycle";
-		this.m_testRouterRelay.UseVisualStyleBackColor = true;
-		this.m_testRouterRelay.Click += new System.EventHandler(button38_Click);
+		this.m_verticalSyncWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(m_verticalSyncWorker_DoWork);
+		this.m_verticalSyncWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(m_verticalSyncWorker_RunWorkerCompleted);
+		this.m_runInitWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(m_runInitWorker_DoWork);
+		this.m_runInitWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(m_runInitWorker_RunWorkerCompleted);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.ClientSize = new System.Drawing.Size(1116, 715);
@@ -2486,17 +2815,21 @@ public class ConfiguredDevicesForm : Form
 		this.m_kioskFunctionCheck.PerformLayout();
 		this.groupBox2.ResumeLayout(false);
 		this.groupBox2.PerformLayout();
-		this.tabPage1.ResumeLayout(false);
+		this.m_hwSurveyTab.ResumeLayout(false);
 		this.m_hwCorrections.ResumeLayout(false);
+		this.groupBox4.ResumeLayout(false);
 		this.groupBox6.ResumeLayout(false);
 		this.groupBox5.ResumeLayout(false);
 		this.m_hwCorrectiontypeGB.ResumeLayout(false);
 		this.m_hwCorrectiontypeGB.PerformLayout();
+		this.m_irCameraTab.ResumeLayout(false);
+		this.groupBox8.ResumeLayout(false);
+		this.groupBox8.PerformLayout();
+		this.groupBox7.ResumeLayout(false);
 		this.m_engineeringTab.ResumeLayout(false);
 		this.groupBox3.ResumeLayout(false);
 		this.groupBox3.PerformLayout();
 		((System.ComponentModel.ISupportInitialize)this.errorProvider1).EndInit();
-		this.groupBox4.ResumeLayout(false);
 		base.ResumeLayout(false);
 	}
 }

@@ -20,7 +20,7 @@ public static class CompositeFunctions
 			}
 			if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
 			{
-				box.Write("There was a HW error: " + result.Message);
+				box.Write(result.Message);
 			}
 		}
 		box.Write("Disk not taken - pulled back in.");

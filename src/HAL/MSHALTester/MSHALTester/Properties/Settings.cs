@@ -69,6 +69,11 @@ public sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("False")]
 	public bool DisplayEngineeringTab => (bool)this["DisplayEngineeringTab"];
 
+	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("500")]
+	public int BootInitPause => (int)this["BootInitPause"];
+
 	private void SettingChangingEventHandler(object sender, SettingChangingEventArgs e)
 	{
 	}

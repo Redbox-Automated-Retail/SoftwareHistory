@@ -1,12 +1,12 @@
 # Zelda SR2 (1.10.2.5)
 
-- Product: HAL Utilities 1.10.2.5
+- Product: MS HAL Tester 1.10.2.5
 - Date (first download in the snapshots): 2018-05-21
-- Store labels: kop-tools-ZeldaSR2
+- Store labels: kop-ms-hal-tester-ZeldaSR2
 - Package revisions:
   - `kop-tools` revision 43 (`C26DDD7DCE4522A48F9C23F2C2663B4D9E260796`)
   - `kop-hal-install` revision 48 (`31969EB150ABB57140EF7D2B2F012FE72D74630B`)
-  - `kop-ms-hal-tester` revision 39 (`AAF7D2F76C8ACDE475021AD8EE2EBAB61FCB16CC`)
+  - `kop-ms-hal-tester` revision 44 (`34443AE8011771DAFFEC5D1F7583D30EADD66098`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `CFC2DD667B4585C3C1259312B2D3F566F910B34C` | exact |
 | `unload-thin.hs` |  |  | `C2BED1A7A355B4A00D19B5720C7E368E8D82F0BF` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.10.0.74 | `FBCC9E5DACE981F8FE5C2DFC6950974FF9CA6E62` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.10.2.5 | `BDD3B053F48B9DAE5045FA64D45246C0064B32E9` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

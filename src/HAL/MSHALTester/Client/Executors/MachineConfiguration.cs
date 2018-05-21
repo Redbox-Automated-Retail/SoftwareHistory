@@ -42,11 +42,18 @@ public sealed class MachineConfiguration : JobExecutor
 
 	public bool ArcusResetConfigured { get; private set; }
 
+	public bool HasIRHardware => IRHardwareInstall.HasValue;
+
+	public bool SupportsFraudScan { get; private set; }
+
+	public DateTime? IRHardwareInstall { get; private set; }
+
 	protected override string JobName => "kiosk-configuration-job";
 
 	public MachineConfiguration(HardwareService service)
 		: base(service)
 	{
+		IRHardwareInstall = null;
 	}
 
 	protected override void OnJobCompleted()
@@ -96,6 +103,24 @@ public sealed class MachineConfiguration : JobExecutor
 				break;
 			case "SupportsArcusReset":
 				ArcusResetConfigured = result.Message == "Configured";
+				break;
+			case "SupportsFraudScan":
+				SupportsFraudScan = result.Message == "Configured";
+				break;
+			case "IRCameraHardwareInstall":
+				if (result.Message != "NONE")
+				{
+					try
+					{
+						IRHardwareInstall = DateTime.Parse(result.Message);
+						break;
+					}
+					catch
+					{
+						IRHardwareInstall = null;
+						break;
+					}
+				}
 				break;
 			}
 		});

@@ -34,13 +34,13 @@ public class OutputBox
 
 	public void Dump(HardwareCommandResult r)
 	{
-		foreach (Error error in r.Errors)
+		r.Errors.ForEach(delegate(Error err)
 		{
-			Write(error.ToString());
-		}
+			Write(err.ToString());
+		});
 	}
 
-	protected OutputBox(ListBox box)
+	public OutputBox(ListBox box)
 	{
 		TheBox = box;
 	}

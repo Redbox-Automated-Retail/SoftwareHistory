@@ -12,6 +12,26 @@ public sealed class HardwareService
 {
 	private const int DefaultTimeout = 60000;
 
+	public bool SupportsCameraFraudScan
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.SupportsFraudScan;
+		}
+	}
+
+	public bool HasSecureCameraHardware
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.HasIRHardware;
+		}
+	}
+
 	public bool HasABEDevice
 	{
 		get
@@ -468,6 +488,11 @@ public sealed class HardwareService
 	public HardwareCommandResult RemoveHardwareCorrectionStats(HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJob("clear-all-hardware-statistics", null, enableDebugging: false, schedule, out job);
+	}
+
+	public HardwareCommandResult TestAndResetCCR(HardwareJobSchedule s, out HardwareJob job)
+	{
+		return ScheduleJob("test-and-reset-ccr", null, enableDebugging: false, s, out job);
 	}
 
 	public HardwareCommandResult GetConfiguration(string name)

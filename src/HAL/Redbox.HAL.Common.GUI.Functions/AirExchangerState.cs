@@ -1,4 +1,5 @@
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;
@@ -13,10 +14,10 @@ public sealed class AirExchangerState
 
 	public bool Configured { get; private set; }
 
-	public ExchangerFanStatus Configure(AirExchangerStatus exchgrStatus, ExchangerFanStatus fanStatus)
+	public ExchangerFanStatus Configure(MachineConfiguration config)
 	{
-		Configured = exchgrStatus != AirExchangerStatus.NotConfigured;
-		FanStatus = fanStatus;
+		Configured = config.AirExchangerStatus != AirExchangerStatus.NotConfigured;
+		FanStatus = config.AirExchangerFanStatus;
 		return FanStatus;
 	}
 
