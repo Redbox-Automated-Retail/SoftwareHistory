@@ -7,7 +7,7 @@ namespace Redbox.KioskEngine.Environment;
 
 internal sealed class ShoppingSession : IShoppingSession
 {
-	private bool _startedUserInteraction = false;
+	private bool _startedUserInteraction;
 
 	private readonly List<IShoppingSessionError> m_errors = new List<IShoppingSessionError>();
 

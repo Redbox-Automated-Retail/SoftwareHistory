@@ -7,38 +7,54 @@
     <CommandBinding Command="{x:Static views:PhoneAndPinViewUserControlCommands.SignInCommand}" Executed="SignInCommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid Background="#FFFFFFFF">
-    <TextBlock Name="header_label" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="293,21,0,0" Width="481" Height="50" Foreground="#782D8D" Style="{StaticResource font_montserrat_regular_24}" Text="{Binding Path=HeaderLabelText, FallbackValue=Sign in to something awesome}" />
-    <Border CornerRadius="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="264,71,0,0" Width="500" Height="64" BorderThickness="1" Background="#FFFFFFFF" BorderBrush="{Binding Path=PhoneDisplayBorderBrush, FallbackValue=#A5A5A5}">
-      <UIElement.Effect>
-        <DropShadowEffect Direction="180" ShadowDepth="{Binding Path=PhoneDisplayBorderShadowDepth, FallbackValue=4}" Color="{Binding Path=PhoneDisplayBorderColor, FallbackValue=#E1E1E1}" />
-      </UIElement.Effect>
-      <UIElement.InputBindings>
-        <MouseBinding Gesture="LeftClick" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PhoneDisplayCommand}" />
-      </UIElement.InputBindings>
-      <TextBlock Name="PhoneDisplayText" VerticalAlignment="Center" Margin="29,0,0,0" Style="{StaticResource font_montserrat_extralight_22}" Text="{Binding Path=PhoneDisplayText, FallbackValue=000-000-0000}" />
-    </Border>
-    <Border CornerRadius="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="264,156,0,0" Width="500" Height="64" BorderThickness="1" Background="#FFFFFFFF" BorderBrush="{Binding Path=PinDisplayBorderBrush, FallbackValue=#A5A5A5}">
-      <UIElement.Effect>
-        <DropShadowEffect Direction="180" ShadowDepth="{Binding Path=PinDisplayBorderShadowDepth, FallbackValue=4}" Color="{Binding Path=PinDisplayBorderColor, FallbackValue=#E1E1E1}" />
-      </UIElement.Effect>
-      <UIElement.InputBindings>
-        <MouseBinding Gesture="LeftClick" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PinDisplayCommand}" />
-      </UIElement.InputBindings>
-      <TextBlock Name="PinDisplayText" VerticalAlignment="Center" Margin="29,0,0,0" Style="{StaticResource font_montserrat_extralight_22}" Text="{Binding Path=SecurePinDisplayText, FallbackValue=4-Digit PIN}" />
-    </Border>
-    <TextBlock Name="error_message" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="165,230,0,0" Width="700" Height="25" Foreground="#E42045" TextAlignment="Center" Style="{StaticResource font_montserrat_regular_18}" Text="{Binding Path=ErrorMessageText, FallbackValue=''}" />
-    <controls:KeypadUserControl HorizontalAlignment="Left" VerticalAlignment="Top" Margin="370,255,0,0" Height="359" Width="284" DataContext="{Binding Path=KeypadModel}" />
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-      <Redbox:RoundedButton Name="ADAPhoneButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,680,0,0" Width="285" Height="59" CornerRadius="30" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PhoneDisplayCommand}" Visibility="{Binding Path=ADAPhoneButtonVisibility, FallbackValue=Collapsed}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="2*" />
+      <RowDefinition Height="4*" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Vertical">
+      <TextBlock Name="header_label" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,54,0,0" Foreground="#782D8D" Style="{StaticResource font_museo_slab_900_48}" Text="{Binding Path=HeaderLabelText, FallbackValue=Sign in to something awesome}" />
+      <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,20,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_regular_22}" Text="{Binding Path=SubHeadLabelText, FallbackValue=Dont have a PIN? Go to Redbox.com to set up your Box Sign In.}" />
+    </StackPanel>
+    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="120,0,0,0">
+      <TextBlock HorizontalAlignment="Left" Margin="29,55,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_regular_14}" Text="{Binding Path=PhoneLabelText, FallbackValue=Enter Mobile Number}" />
+      <Border CornerRadius="30" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0" Width="360" Height="64" BorderThickness="1" Background="#FFFFFFFF" BorderBrush="{Binding Path=PhoneDisplayBorderBrush, FallbackValue=#A5A5A5}">
+        <UIElement.Effect>
+          <DropShadowEffect Direction="180" ShadowDepth="{Binding Path=PhoneDisplayBorderShadowDepth, FallbackValue=4}" Color="{Binding Path=PhoneDisplayBorderColor, FallbackValue=#E1E1E1}" />
+        </UIElement.Effect>
+        <UIElement.InputBindings>
+          <MouseBinding Gesture="LeftClick" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PhoneDisplayCommand}" />
+        </UIElement.InputBindings>
+        <TextBlock Name="PhoneDisplayText" VerticalAlignment="Center" Margin="29,0,0,0" Style="{StaticResource font_montserrat_extralight_22}" Text="{Binding Path=PhoneDisplayText, FallbackValue=000-000-0000}" />
+      </Border>
+      <TextBlock HorizontalAlignment="Left" Margin="29,27,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_regular_14}" Text="{Binding Path=PinLabelText, FallbackValue=Enter 4-digit PIN}" />
+      <Border CornerRadius="30" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0" Width="360" Height="64" BorderThickness="1" Background="#FFFFFFFF" BorderBrush="{Binding Path=PinDisplayBorderBrush, FallbackValue=#A5A5A5}">
+        <UIElement.Effect>
+          <DropShadowEffect Direction="180" ShadowDepth="{Binding Path=PinDisplayBorderShadowDepth, FallbackValue=4}" Color="{Binding Path=PinDisplayBorderColor, FallbackValue=#E1E1E1}" />
+        </UIElement.Effect>
+        <UIElement.InputBindings>
+          <MouseBinding Gesture="LeftClick" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PinDisplayCommand}" />
+        </UIElement.InputBindings>
+        <TextBlock Name="PinDisplayText" VerticalAlignment="Center" Margin="29,0,0,0" Style="{StaticResource font_montserrat_extralight_22}" Text="{Binding Path=SecurePinDisplayText, FallbackValue=****}" />
+      </Border>
+      <TextBlock Name="error_message" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="360" TextWrapping="Wrap" Margin="0,10,0,0" Foreground="#E42045" TextAlignment="Center" Style="{StaticResource font_montserrat_regular_16}" Text="{Binding Path=ErrorMessageText, FallbackValue=''}" />
+    </StackPanel>
+    <controls:KeypadUserControl Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Height="359" Width="284" DataContext="{Binding Path=KeypadModel}" />
+    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,49,21">
+      <Redbox:RoundedButton Name="ADAPhoneButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0" Width="285" Height="59" CornerRadius="30" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PhoneDisplayCommand}" Visibility="{Binding Path=ADAPhoneButtonVisibility, FallbackValue=Collapsed}">
         <TextBlock Style="{StaticResource font_museo_slab_900_18}" Text="{Binding Path=ADAPhoneButtonText, FallbackValue=Mobile Number}" />
       </Redbox:RoundedButton>
-      <Redbox:RoundedButton Name="ADAPinButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,680,52,0" Width="112" Height="59" CornerRadius="30" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PinDisplayCommand}" Visibility="{Binding Path=ADAPinButtonVisibility, FallbackValue=Collapsed}">
+      <Redbox:RoundedButton Name="ADAPinButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,0,0,0" Width="112" Height="59" CornerRadius="30" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.PinDisplayCommand}" Visibility="{Binding Path=ADAPinButtonVisibility, FallbackValue=Collapsed}">
         <TextBlock Style="{StaticResource font_museo_slab_900_18}" Text="{Binding Path=ADAPinButtonText, FallbackValue=PIN}" />
       </Redbox:RoundedButton>
-      <Redbox:RoundedButton Name="StartButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,661,0,0" Width="313" Height="78" CornerRadius="35" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.StartCommand}">
+      <Redbox:RoundedButton Name="StartButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,0,0,0" Width="313" Height="78" CornerRadius="35" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.StartCommand}">
         <TextBlock Style="{StaticResource font_museo_slab_900_28}" Text="{Binding Path=StartButtonText, FallbackValue=Start Browsing}" />
       </Redbox:RoundedButton>
-      <Redbox:RoundedButton Name="SignInButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,661,0,0" Width="183" Height="78" CornerRadius="35" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.SignInCommand}" IsEnabled="{Binding Path=IsSignInButtonEnabled}">
+      <Redbox:RoundedButton Name="SignInButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,0,0,0" Width="183" Height="78" CornerRadius="35" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:PhoneAndPinViewUserControlCommands.SignInCommand}" IsEnabled="{Binding Path=IsSignInButtonEnabled}">
         <TextBlock Style="{StaticResource font_museo_slab_900_28}" Text="{Binding Path=SignInButtonText, FallbackValue=Sign In}" />
       </Redbox:RoundedButton>
     </StackPanel>

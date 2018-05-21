@@ -198,8 +198,7 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 						{
 							ViewService.Instance.LastHitActorTag = actor.Tag;
 							ViewService.Instance.LastHitActorName = actor.Name;
-							IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-							service.ExecuteScript(onHitScriptName);
+							ServiceLocator.Instance.GetService<IResourceBundleService>().ExecuteScript(onHitScriptName);
 						}
 					}
 					catch (Exception e2)
@@ -227,8 +226,7 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 			return false;
 		}
 		LogHelper.Instance.Log("Executing on enter script ({0}) for view named: {1}", OnEnterResourceName, base.ViewName);
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.ExecuteScript(OnEnterResourceName);
+		ServiceLocator.Instance.GetService<IResourceBundleService>().ExecuteScript(OnEnterResourceName);
 		return true;
 	}
 
@@ -240,8 +238,7 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 			return;
 		}
 		LogHelper.Instance.Log("Executing on leave script ({0}) for view named: {1}", OnLeaveResourceName, base.ViewName);
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		service.ExecuteScript(OnLeaveResourceName);
+		ServiceLocator.Instance.GetService<IResourceBundleService>().ExecuteScript(OnLeaveResourceName);
 	}
 
 	public void Parse()
@@ -281,8 +278,7 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 		string attributeValue3 = xmlNode.GetAttributeValue<string>("backgroundImage");
 		if (!string.IsNullOrEmpty(attributeValue3))
 		{
-			IMacroService service4 = ServiceLocator.Instance.GetService<IMacroService>();
-			attributeValue3 = service4.ExpandProperties(attributeValue3);
+			attributeValue3 = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(attributeValue3);
 			Image bitmap = service.GetBitmap(attributeValue3);
 			if (bitmap != null)
 			{
@@ -367,8 +363,7 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 			}
 			if (!string.IsNullOrEmpty(text2))
 			{
-				IMacroService service5 = ServiceLocator.Instance.GetService<IMacroService>();
-				text2 = service5.ExpandProperties(text2);
+				text2 = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(text2);
 				Image bitmap2 = service.GetBitmap(text2);
 				if (bitmap2 != null)
 				{
@@ -409,11 +404,6 @@ internal sealed class ViewFrame : BaseViewFrame, IViewFrame, IBaseViewFrame, IDi
 		{
 			return null;
 		}
-		IResource resource = service.GetResource(base.ViewName);
-		if (resource == null)
-		{
-			throw new ArgumentException($"View resource {base.ViewName} was not found.");
-		}
-		return resource;
+		return service.GetResource(base.ViewName) ?? throw new ArgumentException($"View resource {base.ViewName} was not found.");
 	}
 }

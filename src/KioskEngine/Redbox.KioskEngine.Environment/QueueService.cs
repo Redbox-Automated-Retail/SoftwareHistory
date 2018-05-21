@@ -45,13 +45,11 @@ public class QueueService : IQueueService, IDisposable
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Queue Service", "ReadPeriodMin", 8000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Queue Service", "ReadPeriodMin", 8000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Queue Service", "ReadPeriodMin", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Queue Service", "ReadPeriodMin", value);
 		}
 	}
 
@@ -59,13 +57,11 @@ public class QueueService : IQueueService, IDisposable
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Remote Services\\Queue Service", "ReadPeriodMax", 30000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Queue Service", "ReadPeriodMax", 30000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Remote Services\\Queue Service", "ReadPeriodMax", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Queue Service", "ReadPeriodMax", value);
 		}
 	}
 
@@ -568,7 +564,11 @@ public class QueueService : IQueueService, IDisposable
 		byte[] array = new byte[4];
 		rNGCryptoServiceProvider.GetBytes(array);
 		int num = BitConverter.ToInt32(array, 0);
-		return (min == max) ? min : (min + Math.Abs(num % (max - min)));
+		if (min != max)
+		{
+			return min + Math.Abs(num % (max - min));
+		}
+		return min;
 	}
 
 	private byte[] ToEncryptedMessage(object message)

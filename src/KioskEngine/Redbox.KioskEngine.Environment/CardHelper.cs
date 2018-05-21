@@ -31,11 +31,9 @@ public static class CardHelper
 
 	public static string ExtractFromSecure(SecureString value)
 	{
-		IntPtr intPtr = default(IntPtr);
 		try
 		{
-			intPtr = Marshal.SecureStringToBSTR(value);
-			return Marshal.PtrToStringBSTR(intPtr);
+			return Marshal.PtrToStringBSTR(Marshal.SecureStringToBSTR(value));
 		}
 		catch
 		{

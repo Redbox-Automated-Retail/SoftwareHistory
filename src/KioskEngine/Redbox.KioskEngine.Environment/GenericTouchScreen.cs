@@ -10,7 +10,7 @@ public class GenericTouchScreen : IDisposable
 {
 	private readonly LowLevelMouseHook m_hook;
 
-	private bool m_disposed = false;
+	private bool m_disposed;
 
 	public virtual string Driver => string.Empty;
 

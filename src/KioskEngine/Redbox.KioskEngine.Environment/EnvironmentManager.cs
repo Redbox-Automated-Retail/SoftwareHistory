@@ -82,17 +82,13 @@ public class EnvironmentManager : IEnvironmentNotificationService
 			{
 				LogHelper.Instance.Log("...No valid credit card reader found.");
 				HasValidCardReader = false;
+				return result;
 			}
-			else
-			{
-				LogHelper.Instance.Log("...Valid credit card reader found.");
-				HasValidCardReader = true;
-			}
-		}
-		else
-		{
+			LogHelper.Instance.Log("...Valid credit card reader found.");
 			HasValidCardReader = true;
+			return result;
 		}
+		HasValidCardReader = true;
 		return result;
 	}
 
@@ -232,8 +228,7 @@ public class EnvironmentManager : IEnvironmentNotificationService
 
 	public void LaunchSecureBrowser(IDictionary<string, string> approvedUrls, NavigateUrlCallback navigateUrlCallback)
 	{
-		SecureBrowser secureBrowser = new SecureBrowser(approvedUrls, navigateUrlCallback);
-		secureBrowser.Show();
+		new SecureBrowser(approvedUrls, navigateUrlCallback).Show();
 	}
 
 	public void RaiseValidReader()

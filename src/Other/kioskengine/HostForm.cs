@@ -36,7 +36,7 @@ public class HostForm : Form, ITrackDataService
 
 	private int _keyId = 99999;
 
-	private bool _useStoreCertificate = false;
+	private bool _useStoreCertificate;
 
 	private const char TrackEnd = '?';
 
@@ -50,7 +50,7 @@ public class HostForm : Form, ITrackDataService
 
 	private DateTime _keyPressStartAfter = DateTime.MinValue;
 
-	private IContainer components = null;
+	private IContainer components;
 
 	public int KeyId => _keyId;
 
@@ -76,8 +76,8 @@ public class HostForm : Form, ITrackDataService
 			m_isCursorHidden = true;
 		}
 		base.ShowInTaskbar = service.GetValue("Ide", "ShowKioskEngineInTaskBar", defaultValue: false);
-		string value = service.GetValue<string>("Store", "Environment", null);
-		bool value2 = service.GetValue("Ide", "ShowChrome", defaultValue: false);
+		service.GetValue<string>("Store", "Environment", null);
+		service.GetValue("Ide", "ShowChrome", defaultValue: false);
 		if (Debugger.IsAttached)
 		{
 			base.FormBorderStyle = FormBorderStyle.Sizable;
@@ -142,14 +142,22 @@ public class HostForm : Form, ITrackDataService
 		if (_useStoreCertificate)
 		{
 			X509Certificate2 storeCertificate = GetStoreCertificate();
-			return (value != null) ? CardHelper.EncryptCreditCardFromCertificate(value, storeCertificate) : null;
+			if (value == null)
+			{
+				return null;
+			}
+			return CardHelper.EncryptCreditCardFromCertificate(value, storeCertificate);
 		}
 		string bundleCertificateXML = GetBundleCertificateXML();
 		if (bundleCertificateXML == null)
 		{
 			return null;
 		}
-		return (value != null) ? CardHelper.EncryptCreditCardFromXmlKey(value, bundleCertificateXML) : null;
+		if (value == null)
+		{
+			return null;
+		}
+		return CardHelper.EncryptCreditCardFromXmlKey(value, bundleCertificateXML);
 	}
 
 	private X509Certificate2 GetStoreCertificate()
@@ -164,8 +172,7 @@ public class HostForm : Form, ITrackDataService
 		{
 			return null;
 		}
-		XmlNode xml = ResourceBundleService.Instance.GetXml((string)manifest["public_key"]);
-		return xml.InnerXml;
+		return ResourceBundleService.Instance.GetXml((string)manifest["public_key"]).InnerXml;
 	}
 
 	public void ClearNotify()
@@ -209,37 +216,65 @@ public class HostForm : Form, ITrackDataService
 
 	public bool HasValidData()
 	{
-		return TrackDataErrors != null && TrackDataContainer != null && !TrackDataErrors.ContainsError();
+		if (TrackDataErrors != null && TrackDataContainer != null)
+		{
+			return !TrackDataErrors.ContainsError();
+		}
+		return false;
 	}
 
 	public string GetFirstName()
 	{
-		return (TrackDataContainer != null) ? TrackDataContainer.FirstName : null;
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return TrackDataContainer.FirstName;
 	}
 
 	public string GetLastName()
 	{
-		return (TrackDataContainer != null) ? TrackDataContainer.LastName : null;
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return TrackDataContainer.LastName;
 	}
 
 	public string GetLastFour()
 	{
-		return (TrackDataContainer != null) ? TrackDataContainer.LastFour : null;
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return TrackDataContainer.LastFour;
 	}
 
 	public CardType? GetCardType()
 	{
-		return (TrackDataContainer != null) ? TrackDataContainer.CardType : ((CardType?)null);
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return TrackDataContainer.CardType;
 	}
 
 	public string GetExpiryMonth()
 	{
-		return (TrackDataContainer != null) ? TrackDataContainer.ExpiryMonth : null;
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return TrackDataContainer.ExpiryMonth;
 	}
 
 	public string GetExpiryYear()
 	{
-		return (TrackDataContainer != null) ? TrackDataContainer.ExpiryYear : null;
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return TrackDataContainer.ExpiryYear;
 	}
 
 	public void StopTrackParsing()
@@ -260,7 +295,11 @@ public class HostForm : Form, ITrackDataService
 
 	public string GenerateCardHashId()
 	{
-		return (TrackDataContainer != null) ? CardHelper.GenerateCardId(TrackDataContainer.AccountNumber) : null;
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return CardHelper.GenerateCardId(TrackDataContainer.AccountNumber);
 	}
 
 	protected override void WndProc(ref Message m)
@@ -302,10 +341,9 @@ public class HostForm : Form, ITrackDataService
 
 	private string EncodePassword(string originalPassword)
 	{
-		MD5 mD = new MD5CryptoServiceProvider();
+		MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
 		byte[] bytes = Encoding.Default.GetBytes(originalPassword);
-		byte[] array = mD.ComputeHash(bytes);
-		return BitConverter.ToString(array);
+		return BitConverter.ToString(mD5CryptoServiceProvider.ComputeHash(bytes));
 	}
 
 	public void OnKeyDown(object sender, KeyEventArgs e)
@@ -338,8 +376,7 @@ public class HostForm : Form, ITrackDataService
 		case Keys.F2:
 			if (service != null && service.Filter["environment"] != "Production")
 			{
-				ManageViewsForm manageViewsForm = new ManageViewsForm();
-				manageViewsForm.ShowDialog();
+				new ManageViewsForm().ShowDialog();
 			}
 			break;
 		case Keys.F4:
@@ -369,8 +406,7 @@ public class HostForm : Form, ITrackDataService
 				}
 				foreach (XmlNode item2 in xmlNodeList2)
 				{
-					string attributeValue = item2.GetAttributeValue<string>("name");
-					if (attributeValue == "F4PasswordHash")
+					if (item2.GetAttributeValue<string>("name") == "F4PasswordHash")
 					{
 						text = item2.GetNodeValue(string.Empty);
 						break;
@@ -385,9 +421,9 @@ public class HostForm : Form, ITrackDataService
 			if (unlockForm.ShowDialog() == DialogResult.OK)
 			{
 				SHA256Managed sHA256Managed = new SHA256Managed();
-				string text2 = Convert.ToBase64String(sHA256Managed.ComputeHash(sHA256Managed.ComputeHash(Encoding.UTF8.GetBytes(unlockForm.Password))));
+				string obj = Convert.ToBase64String(sHA256Managed.ComputeHash(sHA256Managed.ComputeHash(Encoding.UTF8.GetBytes(unlockForm.Password))));
 				sHA256Managed.Clear();
-				if (text2 == text)
+				if (obj == text)
 				{
 					preferencesManager.ShowDialog();
 				}
@@ -407,8 +443,7 @@ public class HostForm : Form, ITrackDataService
 		case Keys.F6:
 			if (service != null && service.Filter["environment"] != "Production")
 			{
-				ManageTimersForm manageTimersForm = new ManageTimersForm();
-				manageTimersForm.ShowDialog();
+				new ManageTimersForm().ShowDialog();
 			}
 			break;
 		case Keys.F8:
@@ -542,7 +577,7 @@ public class HostForm : Form, ITrackDataService
 		}
 		if (e.KeyChar == '`')
 		{
-			IResource manifest = ResourceBundleService.Instance.GetManifest(out var manifestInfo);
+			ResourceBundleService.Instance.GetManifest(out var manifestInfo);
 			string text = ResourceBundleService.Instance.Filter["view_name"];
 			if (manifestInfo.ProductName != "Rental Application" || (manifestInfo.ProductName == "Rental Application" && (text == "start_view" || text == "welcome_view")))
 			{

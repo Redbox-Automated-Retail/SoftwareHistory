@@ -174,7 +174,8 @@ public class MemberPointsViewController : BaseLoyaltyController
 		}
 		IRentalShoppingCartItem rentalShoppingCartItem = displayProductModel.Data as IRentalShoppingCartItem;
 		bool flag = TitleType._4KUHD == BaseLoyaltyController.GetItemTitleType(rentalShoppingCartItem);
-		if (flag)
+		bool flag2 = pointsRecord != null && !pointsRecord.CanRedeem;
+		if (flag | flag2)
 		{
 			productFlags = ProductFlags.Excluded;
 		}
@@ -189,8 +190,8 @@ public class MemberPointsViewController : BaseLoyaltyController
 		if (pointsRecord != null)
 		{
 			displayProductModel.CornerContainerVisibility = BaseViewController.BoolToVisibility(show: true);
-			bool flag2 = pointsRecord.CanRedeem && !flag;
-			if (flag2)
+			bool canRedeem = pointsRecord.CanRedeem;
+			if (canRedeem && !flag)
 			{
 				displayProductModel.FlagText = string.Format(Resources.flag_points, pointsRecord.PointsToRedeem);
 			}
@@ -199,7 +200,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 				displayProductModel.FlagText = Resources.points_cannot_redeem;
 				imageOpacity = 0.7;
 			}
-			displayProductModel.CornerIncludeButtonVisibility = BaseViewController.BoolToVisibility(flag2);
+			displayProductModel.CornerIncludeButtonVisibility = BaseViewController.BoolToVisibility(canRedeem);
 		}
 		else
 		{

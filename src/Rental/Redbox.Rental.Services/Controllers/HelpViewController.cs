@@ -1,43 +1,466 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Xps.Packaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.Session;
+using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
-public class HelpViewController
+public class HelpViewController : BaseViewController
 {
-	internal static void UpdateMacrosAndText(HelpViewUserControl helpViewUserControl)
+	public static void ShowFullHelpView(bool allowFMA, bool restartTimer, string analyticsContext = null)
 	{
+		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
+		{
+			ShowFaq = true,
+			ShowTerms = true,
+			ShowRedboxCard = true,
+			ShowPrivacy = true,
+			ShowPerks = true,
+			ShowMobileFaq = true,
+			AnalysisContext = analyticsContext
+		};
+		helpViewControllerParameters.GoBackAction = delegate
+		{
+			CreateAnalyticsEvent("buttonPress", "back");
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			string obj = service?.Peek(1);
+			if (restartTimer)
+			{
+				OrchestrationService.ResetApplicationIdleTimerTimeout();
+			}
+			if (obj == service?.GetStartOverViewName() && !OrchestrationService.IsPersonalizationSessionSignedIn())
+			{
+				ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(null);
+			}
+			else
+			{
+				OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+			}
+		};
+		if (allowFMA)
+		{
+			helpViewControllerParameters.ClickRedboxLogoAction = delegate
+			{
+				OrchestrationService.ExecuteScript("activate_fa");
+			};
+		}
+		if (restartTimer)
+		{
+			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			OrchestrationService.StartIdleTimer("idle_timer");
+		}
+		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
+	}
+
+	public static void ShowTermsAndConditions(string analysisContext = null)
+	{
+		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
+		{
+			ShowFaq = true,
+			ShowTerms = true,
+			ShowRedboxCard = true,
+			ShowPrivacy = true,
+			ShowPerks = true,
+			ShowMobileFaq = true,
+			AnalysisContext = analysisContext
+		};
+		helpViewControllerParameters.GoBackAction = delegate
+		{
+			CreateAnalyticsEvent("buttonPress", "back");
+			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+		};
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.Terms;
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
+		}
+		OrchestrationService.ResetApplicationIdleTimerTimeout();
+		OrchestrationService.StartIdleTimer("idle_timer");
+		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
+	}
+
+	public static void ShowMobileFaqAndPrivacy(string analysisContext)
+	{
+		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
+		{
+			ShowFaq = false,
+			ShowTerms = false,
+			ShowRedboxCard = false,
+			ShowPrivacy = true,
+			ShowPerks = false,
+			ShowMobileFaq = true,
+			AnalysisContext = analysisContext
+		};
+		helpViewControllerParameters.GoBackAction = delegate
+		{
+			CreateAnalyticsEvent("buttonPress", "back");
+			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+		};
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.MobileFaq;
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
+		}
+		OrchestrationService.ResetApplicationIdleTimerTimeout();
+		OrchestrationService.StartIdleTimer("idle_timer");
+		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
+	}
+
+	public static void ShowPerks(bool isFromCreditBalance = false, string analysisContext = null)
+	{
+		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
+		{
+			ShowFaq = false,
+			ShowTerms = false,
+			ShowRedboxCard = false,
+			ShowPrivacy = false,
+			ShowPerks = false,
+			ShowMobileFaq = false,
+			AnalysisContext = analysisContext
+		};
+		helpViewControllerParameters.GoBackAction = delegate
+		{
+			CreateAnalyticsEvent("buttonPress", "back");
+			OrchestrationService.ResumeIdleTimer("idle_timer");
+			OrchestrationService.StopIdleTimer("play_pass_help_view_timer");
+			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+			if (isFromCreditBalance)
+			{
+				LogHelper.Instance.Log("showing credit_balance_view again");
+				OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+				OrchestrationService.ViewShow("credit_balance_view");
+			}
+		};
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.PlayPass;
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
+		}
+		OrchestrationService.SuspendIdleTimer("idle_timer");
+		OrchestrationService.CreateIdleTimer("play_pass_help_view_timer");
+		OrchestrationService.StartIdleTimer(40000, helpViewControllerParameters.GoBackAction, "play_pass_help_view_timer");
+		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
+	}
+
+	public static void ShowHelpView(bool giftCardEnabled, Action goBackAction, Action clickRedboxLogoAction, bool showAsPopup)
+	{
+		OrchestrationService.ViewShow("help_document_view", new HelpViewControllerParameters
+		{
+			GoBackAction = goBackAction,
+			ClickRedboxLogoAction = clickRedboxLogoAction,
+			ShowFaq = !showAsPopup,
+			ShowTerms = !showAsPopup,
+			ShowRedboxCard = !showAsPopup,
+			ShowPrivacy = !showAsPopup,
+			ShowPerks = !showAsPopup,
+			ShowMobileFaq = !showAsPopup
+		});
+	}
+
+	public static void ConfigureHelpView(HelpViewControllerParameters parameters)
+	{
+		HelpViewUserControl helpViewUserControl = (HelpViewUserControl)BaseViewController.GetViewUserControl();
 		if (helpViewUserControl == null)
 		{
 			return;
 		}
-		HelpViewUserControl.HelpDocumentInfo value = null;
-		helpViewUserControl.HelpDocumentInfoList.TryGetValue(helpViewUserControl.CurrentHelpDocument, out value);
+		if (!string.IsNullOrWhiteSpace(parameters.AnalysisContext))
+		{
+			BaseViewController.SessionAnalyticsService?.AddViewEvent("context", parameters.AnalysisContext);
+		}
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		HelpViewModel viewModel = (HelpViewModel)helpViewUserControl.DataContext;
+		if (viewModel == null)
+		{
+			viewModel = new HelpViewModel();
+		}
+		viewModel.OnHelpDocumentChanged += delegate(HelpDocuments helpDocument)
+		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = helpDocument;
+			}
+		};
+		viewModel.OnHelpDocumentPageChanged += delegate(int pageNumber)
+		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = pageNumber;
+			}
+		};
+		viewModel.OnHelpDocumentButtonPress += delegate(HelpDocuments helpDocument)
+		{
+			HelpViewModel.HelpDocumentInfo value2 = null;
+			viewModel.HelpDocumentInfoList.TryGetValue(helpDocument, out value2);
+			if (value2 != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = helpDocument;
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
+				viewModel.CurrentHelpDocument = helpDocument;
+				viewModel.CurrentHelpDocumentPage = 1;
+				viewModel.XpsDocument = LoadXpsDocument(value2);
+				SetTitle(viewModel);
+				viewModel.ShowContactText = viewModel.CurrentHelpDocument == HelpDocuments.Faq;
+				CreateAnalyticsEvent("buttonPress", value2.AnalyticsButtonName);
+			}
+		};
+		viewModel.OnGoBack += parameters.GoBackAction;
+		viewModel.OnRedboxLogoCommand += parameters.ClickRedboxLogoAction;
+		viewModel.OnHelpPaddleButtonPressed += delegate(string source)
+		{
+			string arg = ((source == "Left") ? "help-page-back," : "help-page-next,");
+			arg = $"{arg}{viewModel.TitleText}";
+			CreateAnalyticsEvent("pageChange", arg);
+		};
+		if (service != null)
+		{
+			viewModel.StoreNumberText = service["StoreNumber"];
+		}
+		viewModel.BackButtonText = Resources.back_button;
+		viewModel.ContactText = Resources.contact_redbox_label;
+		viewModel.PageCounterText = Resources.help_page_counter;
+		viewModel.StoreNumberLabel = Resources.kiosk_id_label;
+		viewModel.CloseButtonText = Resources.close_button;
+		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
+		bool value = false;
+		service2.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GiftCardsEnabled, out value);
+		BuildHelpDocInfoList(value, viewModel, service2);
+		HelpDocuments helpDocuments = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocument ?? HelpDocuments.Faq;
+		BuildHelpDocButtons(parameters, viewModel, service2, helpDocuments);
+		viewModel.CurrentHelpDocument = helpDocuments;
+		viewModel.XpsDocument = LoadXpsDocument(viewModel.HelpDocumentInfoList[helpDocuments]);
+		SetTitle(viewModel);
+		viewModel.ShowContactText = helpDocuments == HelpDocuments.Faq;
+		ConfigureTTS(viewModel);
+		helpViewUserControl.DataContext = viewModel;
+		viewModel.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocumentPage ?? 1;
+	}
+
+	private static void BuildHelpDocButtons(HelpViewControllerParameters parameters, HelpViewModel viewModel, IConfigurationService config, HelpDocuments currentHelpDoc)
+	{
+		viewModel.HelpButtonList = new ObservableCollection<HelpButtonData>();
+		if (parameters.ShowFaq)
+		{
+			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowFAQUpdated, out var value);
+			viewModel.HelpButtonList.Add(new HelpButtonData
+			{
+				ButtonText = Resources.faq_button,
+				UpdatedText = Resources.help_updated_button,
+				ShowUpdatedFlag = value,
+				DocumentToShow = HelpDocuments.Faq,
+				IsEnabled = (currentHelpDoc != HelpDocuments.Faq)
+			});
+		}
+		if (parameters.ShowTerms)
+		{
+			bool value = false;
+			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowTermsUpdated, out value);
+			viewModel.HelpButtonList.Add(new HelpButtonData
+			{
+				ButtonText = Resources.transaction_terms_button,
+				UpdatedText = Resources.help_updated_button,
+				ShowUpdatedFlag = value,
+				DocumentToShow = HelpDocuments.Terms,
+				IsEnabled = (currentHelpDoc != HelpDocuments.Terms)
+			});
+		}
+		if (parameters.ShowRedboxCard)
+		{
+			bool value2 = false;
+			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GiftCardsEnabled, out value2);
+			if (value2)
+			{
+				bool value = false;
+				config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowRedboxCardUpdated, out value);
+				viewModel.HelpButtonList.Add(new HelpButtonData
+				{
+					ButtonText = Resources.terms_redbox_card_button,
+					UpdatedText = Resources.help_updated_button,
+					ShowUpdatedFlag = value,
+					DocumentToShow = HelpDocuments.TermsReboxCard,
+					IsEnabled = (currentHelpDoc != HelpDocuments.TermsReboxCard)
+				});
+			}
+		}
+		if (parameters.ShowPrivacy)
+		{
+			bool value = false;
+			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPrivacyUpdated, out value);
+			viewModel.HelpButtonList.Add(new HelpButtonData
+			{
+				ButtonText = Resources.privacy_button,
+				UpdatedText = Resources.help_updated_button,
+				ShowUpdatedFlag = value,
+				DocumentToShow = HelpDocuments.Privacy,
+				IsEnabled = (currentHelpDoc != HelpDocuments.Privacy)
+			});
+		}
+		if (parameters.ShowPerks && ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-perks") != null)
+		{
+			bool value = false;
+			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPerksUpdated, out value);
+			viewModel.HelpButtonList.Add(new HelpButtonData
+			{
+				ButtonText = Resources.play_pass_button,
+				UpdatedText = Resources.help_updated_button,
+				ShowUpdatedFlag = value,
+				DocumentToShow = HelpDocuments.PlayPass,
+				IsEnabled = (currentHelpDoc != HelpDocuments.PlayPass)
+			});
+		}
+		if (parameters.ShowMobileFaq && ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-mobile-faqs") != null)
+		{
+			bool value = false;
+			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowMobileFaqUpdated, out value);
+			viewModel.HelpButtonList.Add(new HelpButtonData
+			{
+				ButtonText = Resources.mobile_faq_button,
+				UpdatedText = Resources.help_updated_button,
+				ShowUpdatedFlag = value,
+				DocumentToShow = HelpDocuments.MobileFaq,
+				IsEnabled = (currentHelpDoc != HelpDocuments.MobileFaq)
+			});
+		}
+	}
+
+	private static void BuildHelpDocInfoList(bool giftCardEnabled, HelpViewModel viewModel, IConfigurationService config)
+	{
+		string documentName = "document-faqs";
+		string documentName2 = "document-terms";
+		string documentName3 = "document-terms-redbox-card";
+		string documentName4 = "document-privacy-policy";
+		string documentName5 = "document-perks";
+		string documentName6 = "document-mobile-faqs";
+		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.FAQDocument, out var value))
+		{
+			documentName = value;
+		}
+		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.TermsDocument, out value))
+		{
+			documentName2 = value;
+		}
+		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.RedboxCardDocument, out value))
+		{
+			documentName3 = value;
+		}
+		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PrivacyDocument, out value))
+		{
+			documentName4 = value;
+		}
+		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PerksDocument, out value))
+		{
+			documentName5 = value;
+		}
+		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.MobileFaqDocument, out value))
+		{
+			documentName6 = value;
+		}
+		viewModel.HelpDocumentInfoList = new Dictionary<HelpDocuments, HelpViewModel.HelpDocumentInfo>();
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Faq, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = documentName,
+			DefaultDocumentName = "document-faqs",
+			Title = Resources.faq_title,
+			Visible = true,
+			AnalyticsButtonName = "show_faq",
+			AbeTitle = Resources.faq_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Terms, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = documentName2,
+			DefaultDocumentName = "document-terms",
+			Title = Resources.terms_of_use_title,
+			Visible = true,
+			AnalyticsButtonName = "show_terms",
+			AbeTitle = Resources.terms_of_use_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.TermsReboxCard, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = documentName3,
+			DefaultDocumentName = "document-terms-redbox-card",
+			Title = Resources.terms_of_use_title,
+			Visible = giftCardEnabled,
+			AnalyticsButtonName = "show_terms_redbox_card",
+			AbeTitle = Resources.redbox_card_terms_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Privacy, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = documentName4,
+			DefaultDocumentName = "document-privacy-policy",
+			Title = Resources.privacy_policy_title,
+			Visible = true,
+			AnalyticsButtonName = "show_privacy",
+			AbeTitle = Resources.privacy_policy_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = documentName5,
+			DefaultDocumentName = "document-perks",
+			Title = Resources.play_pass_title,
+			Visible = true,
+			AnalyticsButtonName = "show_play_pass",
+			AbeTitle = Resources.play_pass_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.MobileFaq, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = documentName6,
+			DefaultDocumentName = "document-mobile-faqs",
+			Title = Resources.mobile_faq_title,
+			Visible = true,
+			AnalyticsButtonName = "show_mobile_faq",
+			AbeTitle = Resources.mobile_faq_title_abe
+		});
+	}
+
+	private static void SetTitle(HelpViewModel viewModel)
+	{
+		HelpViewModel.HelpDocumentInfo value = null;
+		viewModel.HelpDocumentInfoList.TryGetValue(viewModel.CurrentHelpDocument, out value);
 		if (value != null)
 		{
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+			viewModel.TitleText = value.Title;
+		}
+	}
+
+	private static XpsDocument LoadXpsDocument(HelpViewModel.HelpDocumentInfo helpDocumentInfo)
+	{
+		XpsDocument xpsDocument = null;
+		if (helpDocumentInfo != null)
+		{
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 			if (service != null)
 			{
-				string text = null;
-				string arg = string.Format(arg2: service["Help:Title"] = helpViewUserControl.CurrentHelpDocument switch
+				xpsDocument = service.GetXpsDocument(helpDocumentInfo.DocumentName);
+				if (xpsDocument == null)
 				{
-					HelpDocuments.Faq => "Rental Frequently Asked Questions", 
-					HelpDocuments.Terms => "Rental Terms", 
-					_ => value.Title, 
-				}, format: "Page {0} of {1} in document {2} is as follows:", arg0: helpViewUserControl.CurrentHelpDocumentPage, arg1: helpViewUserControl.HelpDocumentPageCount);
-				service["Help:DocumentText"] = $"{arg} {helpViewUserControl.CurrentPageText}";
+					LogHelper.Instance.Log("Unable to get Xps document {0}", helpDocumentInfo.DocumentName);
+					if (!helpDocumentInfo.DocumentName.Equals(helpDocumentInfo.DefaultDocumentName, StringComparison.CurrentCultureIgnoreCase))
+					{
+						xpsDocument = service.GetXpsDocument(helpDocumentInfo.DefaultDocumentName);
+						if (xpsDocument == null)
+						{
+							LogHelper.Instance.Log("Unable to get default Xps document {0}", helpDocumentInfo.DefaultDocumentName);
+						}
+					}
+				}
 			}
-			helpViewUserControl.SetString("contact_redbox_label", (helpViewUserControl.CurrentHelpDocument == HelpDocuments.Faq) ? BundleFunctions.GetDictionaryStringValue("strings", "contact_redbox_label") : null);
 		}
-		ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-		if (service2 != null && service2.TTSEnabled)
+		else
 		{
-			service2.TTSRepeatSequence();
+			LogHelper.Instance.Log("Help document info missing in LoadXpsDocument");
 		}
+		return xpsDocument;
 	}
 
 	internal static void CreateAnalyticsEvent(string subItemType, string subItemValue)
@@ -61,113 +484,26 @@ public class HelpViewController
 		}
 	}
 
-	public static void ConfigureHelpView(bool giftCardEnabled, Action goBackAction, Action clickRedboxLogoAction, bool showAsPopup)
+	private static HelpViewModel GetViewModel()
 	{
-		IActor actor = ActorFunctions.GetActor("HelpViewUserControl");
-		if (actor == null)
+		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
+		if (viewUserControl != null)
 		{
-			return;
+			return viewUserControl.DataContext as HelpViewModel;
 		}
-		HelpViewUserControl helpViewUserControl = actor.WPFFrameworkElement as HelpViewUserControl;
-		if (helpViewUserControl == null)
+		return null;
+	}
+
+	private static void ConfigureTTS(HelpViewModel viewModel)
+	{
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service != null && service.TTSEnabled)
 		{
-			return;
+			viewModel.OnGetSpeechControl = () => HelpViewTextToSpeech.GetSpeechControl(GetViewModel);
 		}
-		IMacroService macroService = ServiceLocator.Instance.GetService<IMacroService>();
-		helpViewUserControl.OnHelpDocumentChanged += delegate(HelpDocuments helpDocument)
-		{
-			if (Redbox.Rental.Services.Session.Session.Instance != null)
-			{
-				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = helpDocument;
-			}
-		};
-		helpViewUserControl.OnHelpDocumentPageChanged += delegate(int pageNumber)
-		{
-			if (Redbox.Rental.Services.Session.Session.Instance != null)
-			{
-				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = pageNumber;
-			}
-		};
-		helpViewUserControl.OnHelpDocumentButtonPress += delegate
-		{
-			UpdateMacrosAndText(helpViewUserControl);
-			HelpViewUserControl.HelpDocumentInfo value = null;
-			helpViewUserControl.HelpDocumentInfoList.TryGetValue(helpViewUserControl.CurrentHelpDocument, out value);
-			if (value != null)
-			{
-				CreateAnalyticsEvent("buttonPress", value.AnalyticsButtonName);
-			}
-		};
-		helpViewUserControl.OnGoBack += goBackAction;
-		helpViewUserControl.OnRedboxLogoCommand += clickRedboxLogoAction;
-		helpViewUserControl.OnHelpPaddleButtonPressed += delegate(string source)
-		{
-			UpdateMacrosAndText(helpViewUserControl);
-			string text = ((source == "Left") ? "help-page-back," : "help-page-next,");
-			if (macroService != null)
-			{
-				text = string.Format("{0}{1}", text, macroService["Help:Title"]);
-			}
-			CreateAnalyticsEvent("pageChange", text);
-		};
-		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.Faq, new HelpViewUserControl.HelpDocumentInfo
-		{
-			DocumentName = helpViewUserControl.FAQDocument,
-			DefaultDocumentName = "document-faqs",
-			Title = BundleFunctions.GetDictionaryStringValue("strings", "faq_title"),
-			Visible = true,
-			AnalyticsButtonName = "show_faq"
-		});
-		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.Terms, new HelpViewUserControl.HelpDocumentInfo
-		{
-			DocumentName = helpViewUserControl.TermsDocument,
-			DefaultDocumentName = "document-terms",
-			Title = BundleFunctions.GetDictionaryStringValue("strings", "terms_of_use_title"),
-			Visible = true,
-			AnalyticsButtonName = "show_terms"
-		});
-		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.TermsReboxCard, new HelpViewUserControl.HelpDocumentInfo
-		{
-			DocumentName = helpViewUserControl.RedboxCardDocument,
-			DefaultDocumentName = "document-terms-redbox-card",
-			Title = BundleFunctions.GetDictionaryStringValue("strings", "terms_of_use_title"),
-			Visible = giftCardEnabled,
-			AnalyticsButtonName = "show_terms_redbox_card"
-		});
-		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.Privacy, new HelpViewUserControl.HelpDocumentInfo
-		{
-			DocumentName = helpViewUserControl.PrivacyDocument,
-			DefaultDocumentName = "document-privacy-policy",
-			Title = BundleFunctions.GetDictionaryStringValue("strings", "privacy_policy_title"),
-			Visible = true,
-			AnalyticsButtonName = "show_privacy"
-		});
-		helpViewUserControl.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewUserControl.HelpDocumentInfo
-		{
-			DocumentName = helpViewUserControl.PerksDocument,
-			DefaultDocumentName = "document-perks",
-			Title = BundleFunctions.GetDictionaryStringValue("strings", "play_pass_title"),
-			Visible = true,
-			AnalyticsButtonName = "show_play_pass"
-		});
-		BundleFunctions.GetDictionary("strings");
-		helpViewUserControl.SetString("ButtonGoBack_Text", BundleFunctions.GetDictionaryStringValue("strings", "back_button"));
-		helpViewUserControl.SetString("contact_redbox_label", BundleFunctions.GetDictionaryStringValue("strings", "contact_redbox_label"));
-		helpViewUserControl.SetString("help_page_counter", BundleFunctions.GetDictionaryStringValue("strings", "help_page_counter"));
-		if (macroService != null)
-		{
-			helpViewUserControl.SetString("store_number_text", macroService["StoreNumber"]);
-		}
-		helpViewUserControl.SetString("ButtonFAQ_Text", BundleFunctions.GetDictionaryStringValue("strings", "faq_button"));
-		helpViewUserControl.SetString("ButtonTerms_Text", BundleFunctions.GetDictionaryStringValue("strings", "transaction_terms_button"));
-		helpViewUserControl.SetString("ButtonTermsRedboxCard_Text", BundleFunctions.GetDictionaryStringValue("strings", "terms_redbox_card_button"));
-		helpViewUserControl.SetString("ButtonPrivacy_Text", BundleFunctions.GetDictionaryStringValue("strings", "privacy_button"));
-		helpViewUserControl.SetString("ButtonPlayPass_Text", BundleFunctions.GetDictionaryStringValue("strings", "play_pass_button"));
-		helpViewUserControl.SetUpdatedText(BundleFunctions.GetDictionaryStringValue("strings", "help_updated_button"));
-		helpViewUserControl.CurrentHelpDocument = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocument ?? HelpDocuments.Faq;
-		helpViewUserControl.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocumentPage ?? 1;
-		UpdateMacrosAndText(helpViewUserControl);
-		helpViewUserControl.SetString("ButtonClose_Text", BundleFunctions.GetDictionaryStringValue("strings", "close_button"));
-		helpViewUserControl.ShowAsPopup = showAsPopup;
+	}
+
+	internal static void LeaveHelpView()
+	{
 	}
 }

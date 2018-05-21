@@ -352,6 +352,8 @@ public class Resources
 
 	public static string faq_title => ResourceManager.GetString("faq_title", resourceCulture);
 
+	public static string faq_title_abe => ResourceManager.GetString("faq_title_abe", resourceCulture);
+
 	public static string filter_games_empty => ResourceManager.GetString("filter_games_empty", resourceCulture);
 
 	public static string filter_movies_empty => ResourceManager.GetString("filter_movies_empty", resourceCulture);
@@ -512,6 +514,8 @@ public class Resources
 
 	public static string joined_perks_btn_text => ResourceManager.GetString("joined_perks_btn_text", resourceCulture);
 
+	public static string joined_perks_footer => ResourceManager.GetString("joined_perks_footer", resourceCulture);
+
 	public static string joined_perks_message => ResourceManager.GetString("joined_perks_message", resourceCulture);
 
 	public static string joined_perks_title => ResourceManager.GetString("joined_perks_title", resourceCulture);
@@ -566,6 +570,8 @@ public class Resources
 
 	public static string keyboard_symbols_btn_text => ResourceManager.GetString("keyboard_symbols_btn_text", resourceCulture);
 
+	public static string kiosk_id_label => ResourceManager.GetString("kiosk_id_label", resourceCulture);
+
 	public static string lower_genre_1000 => ResourceManager.GetString("lower_genre_1000", resourceCulture);
 
 	public static string lower_genre_1004 => ResourceManager.GetString("lower_genre_1004", resourceCulture);
@@ -615,6 +621,12 @@ public class Resources
 	public static string mini_cart_discs_text => ResourceManager.GetString("mini_cart_discs_text", resourceCulture);
 
 	public static string mini_cart_purchase_text => ResourceManager.GetString("mini_cart_purchase_text", resourceCulture);
+
+	public static string mobile_faq_button => ResourceManager.GetString("mobile_faq_button", resourceCulture);
+
+	public static string mobile_faq_title => ResourceManager.GetString("mobile_faq_title", resourceCulture);
+
+	public static string mobile_faq_title_abe => ResourceManager.GetString("mobile_faq_title_abe", resourceCulture);
 
 	public static string Monday => ResourceManager.GetString("Monday", resourceCulture);
 
@@ -800,6 +812,10 @@ public class Resources
 
 	public static string personalization_service_error_KLI0005 => ResourceManager.GetString("personalization_service_error_KLI0005", resourceCulture);
 
+	public static string personalization_service_error_UPA0001 => ResourceManager.GetString("personalization_service_error_UPA0001", resourceCulture);
+
+	public static string personalization_service_error_UPA0002 => ResourceManager.GetString("personalization_service_error_UPA0002", resourceCulture);
+
 	public static string phone_and_pin_ada_phone_button_text => ResourceManager.GetString("phone_and_pin_ada_phone_button_text", resourceCulture);
 
 	public static string phone_and_pin_ada_pin_button_text => ResourceManager.GetString("phone_and_pin_ada_pin_button_text", resourceCulture);
@@ -810,9 +826,15 @@ public class Resources
 
 	public static string phone_and_pin_header_text => ResourceManager.GetString("phone_and_pin_header_text", resourceCulture);
 
+	public static string phone_and_pin_phone_label_text => ResourceManager.GetString("phone_and_pin_phone_label_text", resourceCulture);
+
+	public static string phone_and_pin_pin_label_text => ResourceManager.GetString("phone_and_pin_pin_label_text", resourceCulture);
+
 	public static string phone_and_pin_sign_in_button_text => ResourceManager.GetString("phone_and_pin_sign_in_button_text", resourceCulture);
 
 	public static string phone_and_pin_start_button_text => ResourceManager.GetString("phone_and_pin_start_button_text", resourceCulture);
+
+	public static string phone_and_pin_sub_header_text => ResourceManager.GetString("phone_and_pin_sub_header_text", resourceCulture);
 
 	public static string pickup => ResourceManager.GetString("pickup", resourceCulture);
 
@@ -844,6 +866,8 @@ public class Resources
 
 	public static string play_pass_title => ResourceManager.GetString("play_pass_title", resourceCulture);
 
+	public static string play_pass_title_abe => ResourceManager.GetString("play_pass_title_abe", resourceCulture);
+
 	public static string points_cancel_btn => ResourceManager.GetString("points_cancel_btn", resourceCulture);
 
 	public static string points_cannot_redeem => ResourceManager.GetString("points_cannot_redeem", resourceCulture);
@@ -869,6 +893,8 @@ public class Resources
 	public static string privacy_button => ResourceManager.GetString("privacy_button", resourceCulture);
 
 	public static string privacy_policy_title => ResourceManager.GetString("privacy_policy_title", resourceCulture);
+
+	public static string privacy_policy_title_abe => ResourceManager.GetString("privacy_policy_title_abe", resourceCulture);
 
 	public static string products_new => ResourceManager.GetString("products_new", resourceCulture);
 
@@ -920,6 +946,26 @@ public class Resources
 
 	public static string promo_code_validation_failure_message_title => ResourceManager.GetString("promo_code_validation_failure_message_title", resourceCulture);
 
+	public static string promo_perks_btn_terms => ResourceManager.GetString("promo_perks_btn_terms", resourceCulture);
+
+	public static string promo_perks_btn1_text => ResourceManager.GetString("promo_perks_btn1_text", resourceCulture);
+
+	public static string promo_perks_btn2_text => ResourceManager.GetString("promo_perks_btn2_text", resourceCulture);
+
+	public static string promo_perks_circle1 => ResourceManager.GetString("promo_perks_circle1", resourceCulture);
+
+	public static string promo_perks_circle2 => ResourceManager.GetString("promo_perks_circle2", resourceCulture);
+
+	public static string promo_perks_circle3 => ResourceManager.GetString("promo_perks_circle3", resourceCulture);
+
+	public static string promo_perks_comment => ResourceManager.GetString("promo_perks_comment", resourceCulture);
+
+	public static string promo_perks_footer => ResourceManager.GetString("promo_perks_footer", resourceCulture);
+
+	public static string promo_perks_message => ResourceManager.GetString("promo_perks_message", resourceCulture);
+
+	public static string promo_perks_title => ResourceManager.GetString("promo_perks_title", resourceCulture);
+
 	public static string ps3_button => ResourceManager.GetString("ps3_button", resourceCulture);
 
 	public static string ps4_button => ResourceManager.GetString("ps4_button", resourceCulture);
@@ -939,6 +985,8 @@ public class Resources
 	public static string recommendations_more_new_movies => ResourceManager.GetString("recommendations_more_new_movies", resourceCulture);
 
 	public static string recommendations_new_movies => ResourceManager.GetString("recommendations_new_movies", resourceCulture);
+
+	public static string redbox_card_terms_title_abe => ResourceManager.GetString("redbox_card_terms_title_abe", resourceCulture);
 
 	public static string regular_checkout_swipe_message => ResourceManager.GetString("regular_checkout_swipe_message", resourceCulture);
 
@@ -1047,6 +1095,8 @@ public class Resources
 	public static string tax_label => ResourceManager.GetString("tax_label", resourceCulture);
 
 	public static string terms_of_use_title => ResourceManager.GetString("terms_of_use_title", resourceCulture);
+
+	public static string terms_of_use_title_abe => ResourceManager.GetString("terms_of_use_title_abe", resourceCulture);
 
 	public static string terms_privacy => ResourceManager.GetString("terms_privacy", resourceCulture);
 

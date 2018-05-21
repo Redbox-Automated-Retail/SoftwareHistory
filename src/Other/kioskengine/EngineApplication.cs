@@ -280,9 +280,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	public void RegisterMouseDoubleClickHandler(string name, MouseClickHandler handler)
 	{
-		if (!m_mouseDoubleClickHandlers.ContainsKey(name))
-		{
-		}
+		m_mouseDoubleClickHandlers.ContainsKey(name);
 	}
 
 	public void RemoveMouseDoubleClickHandler(string name)
@@ -314,11 +312,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	{
 		try
 		{
-			string cachePath = GetCachePath();
-			string[] files = Directory.GetFiles(cachePath, pattern);
-			foreach (string path in files)
+			string[] files = Directory.GetFiles(GetCachePath(), pattern);
+			for (int i = 0; i < files.Length; i++)
 			{
-				File.Delete(path);
+				File.Delete(files[i]);
 			}
 		}
 		catch (Exception e)
@@ -332,8 +329,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		LogHelper.Instance.Log("Flush file cache service.");
 		try
 		{
-			string cachePath = GetCachePath();
-			string[] files = Directory.GetFiles(cachePath, "*.*");
+			string[] files = Directory.GetFiles(GetCachePath(), "*.*");
 			foreach (string text in files)
 			{
 				LogHelper.Instance.Log("...Delete file '{0}'", text);
@@ -366,8 +362,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	public string GetCachePath()
 	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string text = Path.Combine(service.ExpandProperties("${RunningPath}"), "..\\cache");
+		string text = Path.Combine(ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties("${RunningPath}"), "..\\cache");
 		if (!Directory.Exists(text))
 		{
 			Directory.CreateDirectory(text);
@@ -378,13 +373,21 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public byte[] GetFileContent(string fileName)
 	{
 		string path = Path.Combine(GetCachePath(), fileName);
-		return (!File.Exists(path)) ? null : File.ReadAllBytes(path);
+		if (File.Exists(path))
+		{
+			return File.ReadAllBytes(path);
+		}
+		return null;
 	}
 
 	public string GetFileContentAsString(string fileName)
 	{
 		string path = Path.Combine(GetCachePath(), fileName);
-		return (!File.Exists(path)) ? null : File.ReadAllText(path);
+		if (File.Exists(path))
+		{
+			return File.ReadAllText(path);
+		}
+		return null;
 	}
 
 	public void ShutDown()
@@ -398,9 +401,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		base.MainForm.BackColor = RenderingService.Instance.BackgroundColor;
 		BufferedGraphicsManager.Current.MaximumBuffer = base.MainForm.DisplayRectangle.Size;
 		ServiceLocator.Instance.AddService(typeof(ITrackDataService), instance);
-		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-		service.Register(base.MainForm.Handle);
-		IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
+		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>().Register(base.MainForm.Handle);
+		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		ElementHost elementHost = new ElementHost
 		{
 			Parent = base.MainForm,
@@ -409,11 +411,11 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		};
 		elementHost.BackColor = Color.Red;
 		_elementHost = elementHost;
-		IScene scene = service2.CreateScene("Default", base.MainForm.ClientSize.Width, base.MainForm.ClientSize.Height, RenderingService.Instance.BackgroundColor, elementHost);
+		IScene scene = service.CreateScene("Default", base.MainForm.ClientSize.Width, base.MainForm.ClientSize.Height, RenderingService.Instance.BackgroundColor, elementHost);
 		scene.OnWPFHit += Scene_OnWPFHit;
 		scene.OnWPFKeyDown += Scene_OnWPFKeyDown;
 		scene.OnWPFKeyUp += Scene_OnWPFKeyUp;
-		service2.ActiveScene = scene;
+		service.ActiveScene = scene;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		try
 		{
@@ -445,10 +447,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			base.MainForm.WindowState = FormWindowState.Normal;
 			return true;
 		}
-		ErrorForm errorForm = new ErrorForm
-		{
-			Errors = errorList
-		};
+		ErrorForm errorForm = new ErrorForm();
+		errorForm.Errors = errorList;
 		errorForm.ShowDialog();
 		return false;
 	}
@@ -471,8 +471,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		uint wScanCode = MapVirtualKey((uint)num, MapType.MAPVK_VK_TO_VSC);
 		StringBuilder stringBuilder = new StringBuilder(2);
 		int num2 = ToUnicode((uint)num, wScanCode, lpKeyState, stringBuilder, stringBuilder.Capacity, 0u);
-		int num3 = num2;
-		if (num3 != -1 && num3 != 0)
+		if (num2 != -1 && num2 != 0)
 		{
 			result = stringBuilder[0];
 		}
@@ -491,8 +490,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	private void Scene_OnWPFKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
 	{
-		Keys keyData = (Keys)KeyInterop.VirtualKeyFromKey(e.Key);
-		System.Windows.Forms.KeyEventArgs e2 = new System.Windows.Forms.KeyEventArgs(keyData);
+		System.Windows.Forms.KeyEventArgs e2 = new System.Windows.Forms.KeyEventArgs((Keys)KeyInterop.VirtualKeyFromKey(e.Key));
 		((HostForm)base.MainForm).OnKeyDown(sender, e2);
 	}
 
@@ -757,8 +755,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		IShoppingSessionService service11 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
 		IDataStoreService service12 = ServiceLocator.Instance.GetService<IDataStoreService>();
 		ISchedulerService service13 = ServiceLocator.Instance.GetService<ISchedulerService>();
-		IStyleSheetService service14 = ServiceLocator.Instance.GetService<IStyleSheetService>();
-		service14.Reset();
+		ServiceLocator.Instance.GetService<IStyleSheetService>().Reset();
 		service2?.Reset();
 		service.Reset();
 		service13.Shutdown();
@@ -777,24 +774,15 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		service11.Dispose();
 		service5.Dispose();
 		service12.CloseAllStores();
-		IKioskHealthService service15 = ServiceLocator.Instance.GetService<IKioskHealthService>();
-		service15.Stop();
-		IMarketingAdImpressionService service16 = ServiceLocator.Instance.GetService<IMarketingAdImpressionService>();
-		service16.Stop();
-		IPricingService service17 = ServiceLocator.Instance.GetService<IPricingService>();
-		service17.Stop();
-		IKioskEventService service18 = ServiceLocator.Instance.GetService<IKioskEventService>();
-		service18.Stop();
+		ServiceLocator.Instance.GetService<IKioskHealthService>().Stop();
+		ServiceLocator.Instance.GetService<IMarketingAdImpressionService>().Stop();
+		ServiceLocator.Instance.GetService<IPricingService>().Stop();
+		ServiceLocator.Instance.GetService<IKioskEventService>().Stop();
 		ServiceLocator.Instance.GetService<IKernelExtensionService>()?.DeactivateAllExtensions();
-		IConfigurationService service19 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service19 != null)
+		ServiceLocator.Instance.GetService<IConfigurationService>()?.Stop().ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)
 		{
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = service19.Stop();
-			errorList.ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)
-			{
-				LogHelper.Instance.Log("Code: {0} Desc: {1} Details: {2}", error.Code, error.Description, error.Details);
-			});
-		}
+			LogHelper.Instance.Log("Code: {0} Desc: {1} Details: {2}", error.Code, error.Description, error.Details);
+		});
 		base.OnMainFormClosed(sender, e);
 	}
 
@@ -816,22 +804,18 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				checkMainFormStatus = false;
 			}
 			ResourceBundleService.Instance.ShowDebugger = selectBundleForm.ShowDebugger;
+			return result;
 		}
-		else
+		IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
+		if (service != null && service.GetValue<string>("Core", "DefaultBundle") != "NONE")
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			if (service != null && service.GetValue<string>("Core", "DefaultBundle") != "NONE")
-			{
-				ResourceBundleService.Instance.ActivateDefaultBundle();
-				checkMainFormStatus = false;
-			}
-			else
-			{
-				checkMainFormStatus = true;
-				m_keyPressHandlers.Clear();
-				base.MainForm.Close();
-			}
+			ResourceBundleService.Instance.ActivateDefaultBundle();
+			checkMainFormStatus = false;
+			return result;
 		}
+		checkMainFormStatus = true;
+		m_keyPressHandlers.Clear();
+		base.MainForm.Close();
 		return result;
 	}
 
@@ -855,10 +839,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			}
 			else
 			{
-				ErrorForm errorForm = new ErrorForm
-				{
-					Errors = errorList
-				};
+				ErrorForm errorForm = new ErrorForm();
+				errorForm.Errors = errorList;
 				errorForm.ShowDialog();
 				ResourceBundleService.Instance.SetSwitchToBundle(previousBundle);
 			}
@@ -892,8 +874,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				if (m_enableMaintenanceMode)
 				{
 					IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-					if (service != null && m_corruptDbName.Length > 0 && !service.RaiseCorruptDb(m_corruptDbName))
+					if (service != null && m_corruptDbName.Length > 0)
 					{
+						service.RaiseCorruptDb(m_corruptDbName);
 					}
 				}
 				RenderScene();
@@ -918,7 +901,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			_waitTimer.Elapsed += _waitTimer_Elapsed;
 			_waitTimer.AutoReset = false;
 		}
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
+		ServiceLocator.Instance.GetService<IRenderingService>();
 		try
 		{
 			ActivateIdleHandlers();
@@ -1076,43 +1059,42 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	private Redbox.KioskEngine.ComponentModel.ErrorList InitializeConfiguration()
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service2 != null)
+		ServiceLocator.Instance.GetService<IMacroService>();
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (service != null)
 		{
 			LogHelper.Instance.Log("Starting Update Manager Configuration Service.");
-			errorList.AddRange(service2.Start());
+			errorList.AddRange(service.Start());
 			DirectoryInfo directoryInfo = new DirectoryInfo(DataPath);
 			try
 			{
 				FileInfo[] files = directoryInfo.GetFiles("*.config");
-				FileInfo[] array = files;
-				foreach (FileInfo file in array)
+				foreach (FileInfo file in files)
 				{
 					LogHelper.Instance.Log("> adding " + file.Name);
 					string name = Path.GetFileNameWithoutExtension(file.Name);
-					service2.Add(name, file.FullName, "default", null, null, delegate
+					service.Add(name, file.FullName, "default", null, null, delegate
 					{
 						LogHelper.Instance.Log("A new {0} file was loaded.", Path.GetFileName(file.Name));
 						if (name.Equals(ConfigFile.KioskHealth, StringComparison.CurrentCultureIgnoreCase))
 						{
-							IKioskEventService service3 = ServiceLocator.Instance.GetService<IKioskEventService>();
-							if (service3 == null)
+							IKioskEventService service2 = ServiceLocator.Instance.GetService<IKioskEventService>();
+							if (service2 == null)
 							{
 								LogHelper.Instance.Log("Event service was not found when trying to trigger a new health config file.");
 							}
 							else
 							{
-								service3.Restart();
+								service2.Restart();
 							}
-							IKioskHealthService service4 = ServiceLocator.Instance.GetService<IKioskHealthService>();
-							if (service4 == null)
+							IKioskHealthService service3 = ServiceLocator.Instance.GetService<IKioskHealthService>();
+							if (service3 == null)
 							{
 								LogHelper.Instance.Log("Health service was not found when trying to trigger a new health config file.");
 							}
 							else
 							{
-								service4.Restart();
+								service3.Restart();
 							}
 						}
 					});

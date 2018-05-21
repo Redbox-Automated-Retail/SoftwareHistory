@@ -142,7 +142,6 @@ internal class DataStoreProvider : IDataStoreService
 
 	internal static string GetPath(string dataStore)
 	{
-		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
-		return Path.Combine(service.DataPath, $"{dataStore}.data");
+		return Path.Combine(ServiceLocator.Instance.GetService<IEngineApplication>().DataPath, $"{dataStore}.data");
 	}
 }

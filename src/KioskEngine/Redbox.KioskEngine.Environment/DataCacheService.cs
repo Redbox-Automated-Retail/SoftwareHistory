@@ -22,8 +22,7 @@ public class DataCacheService : IDataCacheService
 	{
 		try
 		{
-			IVistaDBDatabase profileStore = DataStoreCache.GetProfileStore(GetPath());
-			using IVistaDBTable vistaDBTable = profileStore.OpenTable("Cache", exclusive: false, readOnly: true);
+			using IVistaDBTable vistaDBTable = DataStoreCache.GetProfileStore(GetPath()).OpenTable("Cache", exclusive: false, readOnly: true);
 			if (vistaDBTable.Find($"Name: '{name}'; Type: {(int)type}", "IX_Key", partialMatching: false, softPosition: false))
 			{
 				return (byte[])vistaDBTable.CurrentRow["Data"].Value;
@@ -40,9 +39,7 @@ public class DataCacheService : IDataCacheService
 	{
 		if (string.IsNullOrWhiteSpace(_profilePath))
 		{
-			IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
-			string dataPath = service.DataPath;
-			_profilePath = Path.Combine(dataPath, "profile.data");
+			_profilePath = Path.Combine(ServiceLocator.Instance.GetService<IEngineApplication>().DataPath, "profile.data");
 		}
 		return _profilePath;
 	}

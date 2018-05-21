@@ -191,23 +191,23 @@ public class PromotionService : IPromotionService
 				{
 					promoCodeValidationResult.IntentCode = result7;
 				}
-				if (result.Properties.ContainsKey("campaign_titles"))
+				if (result.Properties.ContainsKey("campaign_titles") && result.Properties["campaign_titles"] is Dictionary<string, object> dictionary)
 				{
-					ICampaignTitles campaignTitles = new CampaignTitles
+					promoCodeValidationResult.CampaignTitles = new CampaignTitles
 					{
 						Titles = new List<long>()
 					};
-					if (result.Properties["campaign_titles"] is IDictionary<string, object> dictionary)
+					if (dictionary.ContainsKey("include") && bool.TryParse(dictionary["include"]?.ToString(), out var result8))
 					{
-						campaignTitles.Include = (bool)dictionary["include"];
-						if (dictionary["include"] is ArrayList arrayList)
+						promoCodeValidationResult.CampaignTitles.Include = result8;
+					}
+					if (dictionary.ContainsKey("titles") && dictionary["titles"] is ArrayList arrayList)
+					{
+						foreach (object item in arrayList)
 						{
-							foreach (object item in arrayList)
+							if (long.TryParse(item?.ToString(), out var result9))
 							{
-								if (long.TryParse(item?.ToString(), out var result8))
-								{
-									campaignTitles.Titles.Add(result8);
-								}
+								promoCodeValidationResult.CampaignTitles.Titles.Add(result9);
 							}
 						}
 					}

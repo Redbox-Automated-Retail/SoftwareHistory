@@ -73,8 +73,7 @@ public static class SchemaMigrator
 			{
 				num--;
 			}
-			int num2 = num.Value + 1;
-			for (int j = num2; j < list.Count; j++)
+			for (int j = num.Value + 1; j < list.Count; j++)
 			{
 				string text3 = list[j];
 				LogHelper.Instance.Log("...Executing migration script: {0}", text3.Replace(text + ".", string.Empty));

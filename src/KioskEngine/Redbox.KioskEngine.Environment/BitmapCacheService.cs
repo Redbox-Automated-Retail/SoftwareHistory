@@ -269,9 +269,7 @@ public class BitmapCacheService : IBitmapCacheService, IDisposable
 
 	public int TrimCache(int maximumItems)
 	{
-		int num = 0;
-		num = TrimBitmapImageCache(maximumItems);
-		return num + TrimImageCache(maximumItems);
+		return TrimBitmapImageCache(maximumItems) + TrimImageCache(maximumItems);
 	}
 
 	private int TrimBitmapImageCache(int maximumItems)

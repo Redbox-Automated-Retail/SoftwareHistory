@@ -1167,7 +1167,7 @@ public class MerchantServicesProxy : IMerchantServices
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				if (session == null || session.ShoppingCart.ReferenceNumber.HasValue)
+				if (session == null)
 				{
 					remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
 				}
@@ -1486,12 +1486,23 @@ public class MerchantServicesProxy : IMerchantServices
 						}
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
+						if (remoteServiceResult.Success && dictionary.ContainsKey("ReferenceNumbers"))
+						{
+							ArrayList arrayList = (ArrayList)dictionary["ReferenceNumbers"];
+							if (arrayList.Count > 0)
+							{
+								remoteServiceResult.Properties["reference_number"] = arrayList[0];
+								session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(arrayList[0]));
+							}
+						}
+						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
+						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
-							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList != null && arrayList.Count > 0)
+							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList2 != null && arrayList2.Count > 0)
 							{
-								if (arrayList[0] is Dictionary<string, object> dictionary2)
+								if (arrayList2[0] is Dictionary<string, object> dictionary2)
 								{
 									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary2["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
@@ -1546,6 +1557,13 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = AuthorizeResponse == AuthorizeResponse.Approved;
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.ToString();
 						remoteServiceResult.Properties["is_online"] = true;
+						remoteServiceResult.Properties["reference_number"] = TransactionId;
+						if (!string.IsNullOrEmpty(TransactionId))
+						{
+							session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(TransactionId));
+						}
+						remoteServiceResult.Properties["account_number"] = AccountNumber;
+						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 					}
 				}
 			}

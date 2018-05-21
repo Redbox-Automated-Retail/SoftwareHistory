@@ -30,6 +30,10 @@ public class StyleSheet : IStyleSheet
 
 	public IStyleSheetStyle GetStyle(string name)
 	{
-		return m_styles.ContainsKey(name) ? m_styles[name] : null;
+		if (!m_styles.ContainsKey(name))
+		{
+			return null;
+		}
+		return m_styles[name];
 	}
 }

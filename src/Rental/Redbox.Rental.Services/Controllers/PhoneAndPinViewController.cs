@@ -38,6 +38,9 @@ public class PhoneAndPinViewController : BaseViewController
 			phoneAndPinViewModel.PhoneRequiredLength = 10;
 			phoneAndPinViewModel.PinRequiredLength = 4;
 			phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_header_text;
+			phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sub_header_text;
+			phoneAndPinViewModel.PhoneLabelText = Resources.phone_and_pin_phone_label_text;
+			phoneAndPinViewModel.PinLabelText = Resources.phone_and_pin_pin_label_text;
 			phoneAndPinViewModel.ErrorMessageText = "";
 			phoneAndPinViewModel.ADAPhoneButtonText = Resources.phone_and_pin_ada_phone_button_text;
 			phoneAndPinViewModel.ADAPhoneButtonVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);

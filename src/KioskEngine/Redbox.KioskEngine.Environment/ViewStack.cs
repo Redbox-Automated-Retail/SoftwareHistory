@@ -57,12 +57,20 @@ internal class ViewStack : IEnumerable<IViewFrameInstance>, IEnumerable
 
 	public IViewFrameInstance Pop()
 	{
-		return (m_stack.Count == 0) ? null : m_stack.Pop();
+		if (m_stack.Count != 0)
+		{
+			return m_stack.Pop();
+		}
+		return null;
 	}
 
 	public IViewFrameInstance Peek()
 	{
-		return (m_stack.Count == 0) ? null : m_stack.Peek();
+		if (m_stack.Count != 0)
+		{
+			return m_stack.Peek();
+		}
+		return null;
 	}
 
 	public void Push(Guid id, string viewName, object parameter = null)
@@ -79,6 +87,10 @@ internal class ViewStack : IEnumerable<IViewFrameInstance>, IEnumerable
 
 	public string PeekViewName()
 	{
-		return (m_stack.Count == 0) ? null : m_stack.Peek()?.ViewFrame?.ViewName;
+		if (m_stack.Count != 0)
+		{
+			return m_stack.Peek()?.ViewFrame?.ViewName;
+		}
+		return null;
 	}
 }

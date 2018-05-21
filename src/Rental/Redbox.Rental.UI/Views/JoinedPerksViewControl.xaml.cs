@@ -13,6 +13,8 @@ namespace Redbox.Rental.UI.Views;
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "JoinedPerksView")]
 public partial class JoinedPerksViewControl : ViewUserControl, IComponentConnector
 {
+	private SimpleModel Model { get; set; }
+
 	public JoinedPerksViewControl()
 	{
 		InitializeComponent();
@@ -20,19 +22,31 @@ public partial class JoinedPerksViewControl : ViewUserControl, IComponentConnect
 		base.SpeechViewName = "joined_perks_view";
 	}
 
+	protected override void DataContextHasChanged()
+	{
+		if (base.DataContext != null && base.DataContext is SimpleModel)
+		{
+			Model = base.DataContext as SimpleModel;
+		}
+	}
+
 	protected override void InitSpeechPart(ISpeechPart speechPart)
 	{
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = TitleTextElem.Text
+			Text = Model.TitleText
 		});
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = MessageTextElem.Text
+			Text = Model.MessageText
 		});
 		speechPart.Texts.Add(new TextPart
 		{
 			Text = "To continue press ENTER"
+		});
+		speechPart.Texts.Add(new TextPart
+		{
+			Text = Model.FooterText
 		});
 		speechPart.Events.Add(new MapKeyPressToAction
 		{
@@ -40,7 +54,7 @@ public partial class JoinedPerksViewControl : ViewUserControl, IComponentConnect
 			Function = "TTSRepeatSpeechPart",
 			Action = delegate
 			{
-				ViewUserControl.InvokeRoutedCommand(GetModel<SimpleModel>()?.ContinueButtonCommand);
+				ViewUserControl.InvokeRoutedCommand(Model.ContinueButtonCommand);
 			}
 		});
 		speechPart.Loop = true;

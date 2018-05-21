@@ -77,6 +77,7 @@ internal class CachedVistaDBDataStoreProvider : CachedDataStoreProvider
 					vistaDBTable.Next();
 				}
 			}
+			return dictionary;
 		}
 		catch (Exception e)
 		{
@@ -87,6 +88,5 @@ internal class CachedVistaDBDataStoreProvider : CachedDataStoreProvider
 		{
 			DataStoreCache.CloseStore(DataStoreProvider.GetPath(dataStore));
 		}
-		return dictionary;
 	}
 }

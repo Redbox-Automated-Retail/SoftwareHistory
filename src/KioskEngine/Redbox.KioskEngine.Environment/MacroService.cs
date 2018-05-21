@@ -55,7 +55,6 @@ public class MacroService : IMacroService
 
 	static MacroService()
 	{
-		string directoryName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-		FunctionFactory.ScanDir(directoryName, failOnError: false);
+		FunctionFactory.ScanDir(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), failOnError: false);
 	}
 }

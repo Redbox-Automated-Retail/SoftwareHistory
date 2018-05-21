@@ -24,8 +24,7 @@ internal class Resources
 		{
 			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.KioskEngine.Environment.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.KioskEngine.Environment.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}
@@ -44,95 +43,25 @@ internal class Resources
 		}
 	}
 
-	internal static Bitmap Authentication
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Authentication", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Authentication => (Bitmap)ResourceManager.GetObject("Authentication", resourceCulture);
 
-	internal static Bitmap DatabaseSchema
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("DatabaseSchema", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap DatabaseSchema => (Bitmap)ResourceManager.GetObject("DatabaseSchema", resourceCulture);
 
-	internal static Bitmap Health
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Health", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Health => (Bitmap)ResourceManager.GetObject("Health", resourceCulture);
 
-	internal static Bitmap Inventory
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Inventory", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Inventory => (Bitmap)ResourceManager.GetObject("Inventory", resourceCulture);
 
-	internal static Bitmap MerchantService
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("MerchantService", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap MerchantService => (Bitmap)ResourceManager.GetObject("MerchantService", resourceCulture);
 
-	internal static Bitmap Promotion
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Promotion", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Promotion => (Bitmap)ResourceManager.GetObject("Promotion", resourceCulture);
 
-	internal static Bitmap QueueService
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("QueueService", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap QueueService => (Bitmap)ResourceManager.GetObject("QueueService", resourceCulture);
 
-	internal static Bitmap Reservation
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Reservation", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Reservation => (Bitmap)ResourceManager.GetObject("Reservation", resourceCulture);
 
-	internal static Bitmap ShoppingSession
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("ShoppingSession", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap ShoppingSession => (Bitmap)ResourceManager.GetObject("ShoppingSession", resourceCulture);
 
-	internal static Bitmap Store
-	{
-		get
-		{
-			object obj = ResourceManager.GetObject("Store", resourceCulture);
-			return (Bitmap)obj;
-		}
-	}
+	internal static Bitmap Store => (Bitmap)ResourceManager.GetObject("Store", resourceCulture);
 
 	internal Resources()
 	{

@@ -60,8 +60,7 @@ public class SpeechPart : ISpeechPart
 	{
 		foreach (INeededMacro neededMacro in NeededMacros)
 		{
-			string text = macroService[neededMacro.Name];
-			if (text != null)
+			if (macroService[neededMacro.Name] != null)
 			{
 				macrosFound.Add(neededMacro.Name, macroService[neededMacro.Name]);
 				continue;
@@ -132,7 +131,7 @@ public class SpeechPart : ISpeechPart
 			}
 			else if (text2.IfActorVisible != null)
 			{
-				IActor actor = ((!((viewService?.PeekViewFrame())?.ViewFrame is IViewFrame viewFrame)) ? null : viewFrame.Scene?.GetActor(text2.IfActorVisible));
+				IActor actor = ((viewService?.PeekViewFrame())?.ViewFrame as IViewFrame)?.Scene?.GetActor(text2.IfActorVisible);
 				bool flag2 = true;
 				if (!string.IsNullOrEmpty(text2.IfControlEnabled) && actor?.WPFFrameworkElement != null && actor.WPFFrameworkElement is ITextToSpeechControl textToSpeechControl)
 				{

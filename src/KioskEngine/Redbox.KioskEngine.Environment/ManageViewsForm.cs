@@ -11,7 +11,7 @@ public class ManageViewsForm : Form
 {
 	private bool m_isActivated;
 
-	private IContainer components = null;
+	private IContainer components;
 
 	private ListView m_viewListView;
 

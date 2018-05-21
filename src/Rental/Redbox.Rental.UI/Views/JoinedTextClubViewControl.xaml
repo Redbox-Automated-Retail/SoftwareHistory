@@ -4,11 +4,10 @@
     <localControls:JoinedUserControl x:Name="JoinedElem" />
     <StackPanel Margin="80,30">
       <TextBlock Name="TitleTextElem" HorizontalAlignment="Center" Margin="0,20" Style="{StaticResource font_museo_slab_900_48}" Foreground="#FFFFFFFF" Text="{Binding TitleText, FallbackValue=Almost done!}" />
-      <TextBlock Name="MessageTextElem" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_medium_34}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding MessageText, FallbackValue=Text us back to confirm its all good}" />
-      <TextBlock Name="CommentTextElem" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_medium_24}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding CommentText, FallbackValue=(Your message is arriving right about…now)}" />
+      <TextBlock Name="MessageTextElem" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_bold_21}" TextAlignment="Center" TextWrapping="Wrap" Foreground="#FFFFFFFF" Text="{Binding MessageText, FallbackValue=Text us back to confirm its all good}" />
     </StackPanel>
-    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="280" Margin="0,0,0,184">
-      <Image Name="PhoneTextImage" Width="260" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/phone-text-icon.png" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="200" Margin="0,0,0,270">
+      <Image Name="PhoneTextImage" Width="200" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/phone-text-icon.png" HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Grid>
   </Grid>
 </local:ViewUserControl>

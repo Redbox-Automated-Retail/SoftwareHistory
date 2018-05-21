@@ -10,6 +10,8 @@ public static class ConfigSetting
 
 	public static string SendAppCrashAlert = "SendAppCrashAlert";
 
+	public static string GiftCardsEnabled = "GiftCardsEnabled";
+
 	public static string GameEnableXbox360 = "GameEnableXbox360";
 
 	public static string GameEnableXboxOne = "GameEnableXboxOne";
@@ -60,6 +62,8 @@ public static class ConfigSetting
 
 	public static string ShowPerksUpdated = "ShowPerksUpdated";
 
+	public static string ShowMobileFaqUpdated = "ShowMobileFAQUpdated";
+
 	public static string FAQDocument = "FAQDocument";
 
 	public static string TermsDocument = "TermsDocument";
@@ -69,4 +73,6 @@ public static class ConfigSetting
 	public static string PrivacyDocument = "PrivacyDocument";
 
 	public static string PerksDocument = "PerksDocument";
+
+	public static string MobileFaqDocument = "MobileFAQDocument";
 }

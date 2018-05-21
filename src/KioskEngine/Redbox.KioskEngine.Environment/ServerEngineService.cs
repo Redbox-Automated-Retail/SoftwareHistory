@@ -15,13 +15,11 @@ public class ServerEngineService : IServerEngineService
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Local Services\\Server Engine", "ServerEngineServiceURL", "rcp://localhost:7008");
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Local Services\\Server Engine", "ServerEngineServiceURL", "rcp://localhost:7008");
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Local Services\\Server Engine", "ServerEngineServiceURL", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Local Services\\Server Engine", "ServerEngineServiceURL", value);
 			Reset();
 		}
 	}
@@ -30,13 +28,11 @@ public class ServerEngineService : IServerEngineService
 	{
 		get
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return service.GetValue("Local Services\\Server Engine", "ServerEngineServiceTimeout", 30000);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Local Services\\Server Engine", "ServerEngineServiceTimeout", 30000);
 		}
 		set
 		{
-			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			service.SetValue("Local Services\\Server Engine", "ServerEngineServiceTimeout", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Local Services\\Server Engine", "ServerEngineServiceTimeout", value);
 			Reset();
 		}
 	}

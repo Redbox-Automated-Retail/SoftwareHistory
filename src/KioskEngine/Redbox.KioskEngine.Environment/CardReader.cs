@@ -16,9 +16,9 @@ public class CardReader
 		{
 			List<string> cardReaders = GetCardReaders();
 			HidDevice[] array = hidDeviceManager.EnumerateDevices();
-			foreach (HidDevice hidDevice in array)
+			for (int i = 0; i < array.Length; i++)
 			{
-				string devicePath = hidDevice.DevicePath.ToLower();
+				string devicePath = array[i].DevicePath.ToLower();
 				string s = string.Format("{0},{1}", GetIdFromPath(devicePath, "vid_"), GetIdFromPath(devicePath, "pid_"));
 				SHA256Managed sHA256Managed = new SHA256Managed();
 				string item = Convert.ToBase64String(sHA256Managed.ComputeHash(sHA256Managed.ComputeHash(Encoding.UTF8.GetBytes(s))));

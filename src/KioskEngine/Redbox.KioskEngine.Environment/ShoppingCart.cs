@@ -144,7 +144,11 @@ internal sealed class ShoppingCart : IShoppingCart
 	public IShoppingCartLineItemGroup GetGroup(string name)
 	{
 		LogHelper.Instance.Log("Get Group '{0}' on Shopping Cart for Shopping Session '{1}'", name, ShoppingSessionId);
-		return Groups.ContainsKey(name) ? Groups[name] : null;
+		if (!Groups.ContainsKey(name))
+		{
+			return null;
+		}
+		return Groups[name];
 	}
 
 	public void SetGroup(string groupName, decimal taxRate, decimal subTotal, decimal discountedSubtotal, decimal taxAmount, decimal grandTotal)
@@ -243,6 +247,10 @@ internal sealed class ShoppingCart : IShoppingCart
 
 	public string GetPropertyBagEntry(string key)
 	{
-		return m_propertyBag.ContainsKey(key) ? m_propertyBag[key] : null;
+		if (!m_propertyBag.ContainsKey(key))
+		{
+			return null;
+		}
+		return m_propertyBag[key];
 	}
 }

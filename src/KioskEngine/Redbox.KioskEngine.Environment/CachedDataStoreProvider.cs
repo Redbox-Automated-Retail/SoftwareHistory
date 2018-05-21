@@ -56,8 +56,7 @@ internal class CachedDataStoreProvider : DataStoreProvider
 	protected override ReadOnlyCollection<string> OnGetKeys(string dataStore, string tableName)
 	{
 		List<string> keys = new List<string>();
-		Dictionary<string, object> cachedTableCreate = GetCachedTableCreate(dataStore, tableName);
-		cachedTableCreate.ForEach(delegate(KeyValuePair<string, object> pair)
+		GetCachedTableCreate(dataStore, tableName).ForEach(delegate(KeyValuePair<string, object> pair)
 		{
 			keys.Add(pair.Key);
 		});
@@ -75,8 +74,7 @@ internal class CachedDataStoreProvider : DataStoreProvider
 
 	protected override void OnSet(string dataStore, string tableName, string keyName, object data)
 	{
-		Dictionary<string, object> cachedTableCreate = GetCachedTableCreate(dataStore, tableName);
-		cachedTableCreate[keyName] = data as string;
+		GetCachedTableCreate(dataStore, tableName)[keyName] = data as string;
 	}
 
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
@@ -114,8 +112,7 @@ internal class CachedDataStoreProvider : DataStoreProvider
 		{
 			return false;
 		}
-		Dictionary<string, Dictionary<string, object>> dictionary = _cache[dataStore];
-		return dictionary.ContainsKey(tableName);
+		return _cache[dataStore].ContainsKey(tableName);
 	}
 
 	private Dictionary<string, Dictionary<string, object>> GetCachedDataStore(string dataStore)

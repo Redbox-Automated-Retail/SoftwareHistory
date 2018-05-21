@@ -42,6 +42,10 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 
 	private DataGridViewTextBoxColumn Barcodes;
 
+	private DateTimePicker dtp_IRInstallDate;
+
+	private Label label4;
+
 	public ReturnPreferencePage()
 	{
 		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
@@ -60,6 +64,7 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 
 	public bool SaveValues(IPreferencePage preferencePage)
 	{
+		_hardwareService.IRCameraInstalledOn = dtp_IRInstallDate.Value.ToUniversalTime();
 		return true;
 	}
 
@@ -69,6 +74,10 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		cb_fraudSensor.Checked = _hardwareService.HasFraudSensor;
 		cmb_returnType.DataSource = Enum.GetValues(typeof(ReturnType));
 		cmb_returnType.SelectedItem = _hardwareService.ReturnType;
+		if (_hardwareService.IRCameraInstalledOn.HasValue)
+		{
+			dtp_IRInstallDate.Value = _hardwareService.IRCameraInstalledOn.Value.ToLocalTime();
+		}
 	}
 
 	private void OnAddUnknown(object sender, EventArgs e)
@@ -126,6 +135,8 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		this.btn_addBarcode = new System.Windows.Forms.Button();
 		this.dgv_returnQueue = new System.Windows.Forms.DataGridView();
 		this.Barcodes = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.dtp_IRInstallDate = new System.Windows.Forms.DateTimePicker();
+		this.label4 = new System.Windows.Forms.Label();
 		((System.ComponentModel.ISupportInitialize)this.dgv_returnQueue).BeginInit();
 		base.SuspendLayout();
 		this.m_headerLabel.Anchor = System.Windows.Forms.AnchorStyles.Top;
@@ -211,8 +222,21 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		this.Barcodes.HeaderText = "";
 		this.Barcodes.Name = "Barcodes";
 		this.Barcodes.ReadOnly = true;
+		this.dtp_IRInstallDate.Location = new System.Drawing.Point(16, 241);
+		this.dtp_IRInstallDate.Name = "dtp_IRInstallDate";
+		this.dtp_IRInstallDate.Size = new System.Drawing.Size(236, 20);
+		this.dtp_IRInstallDate.TabIndex = 65;
+		this.label4.AutoSize = true;
+		this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75f, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+		this.label4.Location = new System.Drawing.Point(13, 222);
+		this.label4.Name = "label4";
+		this.label4.Size = new System.Drawing.Size(197, 16);
+		this.label4.TabIndex = 66;
+		this.label4.Text = "IR Camera Installation Date";
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.label4);
+		base.Controls.Add(this.dtp_IRInstallDate);
 		base.Controls.Add(this.dgv_returnQueue);
 		base.Controls.Add(this.btn_addBarcode);
 		base.Controls.Add(this.label3);

@@ -512,37 +512,54 @@ public class RentalShoppingCart : IRentalShoppingCart
 				{
 					promoCodeValidationInfo = ValidatePromoConsideringMultiNightPricing(ValidateFirstNightGame, Promotion);
 				}
-				else if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FixedValue)
+				else
 				{
-					promoCodeValidationInfo = ValidatePromoConsideringMultiNightPricing(ValidateFixedValuePromo, Promotion);
+					if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FixedValue)
+					{
+						ICampaignTitles campaignTitles = Promotion.CampaignTitles;
+						if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
+						{
+							promoCodeValidationInfo = ValidatePromoConsideringMultiNightPricing(ValidateTitleSpecificPromo, Promotion);
+							goto IL_02e4;
+						}
+					}
+					if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FixedValue)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringMultiNightPricing(ValidateFixedValuePromo, Promotion);
+					}
 				}
 			}
-			Promotion.QualifyingItems.Clear();
-			Promotion.PromotionItems.Clear();
-			Promotion.Price = promoCodeValidationInfo.Price;
-			Promotion.Percent = promoCodeValidationInfo.Percent;
-			if (promoCodeValidationInfo.IsCartValid)
-			{
-				promoCodeValidationInfo.QualifyingItems.ForEach(delegate(IRentalShoppingCartItem x)
-				{
-					Promotion.QualifyingItems.Add(x);
-				});
-				promoCodeValidationInfo.PromotionItems.ForEach(delegate(IPromotionItem x)
-				{
-					Promotion.PromotionItems.Add(x);
-				});
-			}
-			ShoppingSession?.ShoppingCart.SetDiscount(Promotion.Name, Promotion.Price);
-			LogHelper.Instance.Log("Validate Promo {0}.  IsValid:{1} {2}  Total Promo discounts: {3}", Promotion?.Intent, promoCodeValidationInfo.IsCartValid, promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing ? "InvalidBecauseOfMultiNightPricing" : null, promoCodeValidationInfo.Price);
-			LogHelper.Instance.Log("Promo Qualifying items: {0}", promoCodeValidationInfo.QualifyingItems.Select((IRentalShoppingCartItem x) => x.ProductId).ToList().Join(", "));
-			LogHelper.Instance.Log("Promo Redemption items: {0}", promoCodeValidationInfo.PromotionItems.Select((IPromotionItem x) => $"{x.RentalShoppingCartItem?.ProductId} {x.PromotionAmount:C2}").ToList().Join(", "));
-			LogHelper.Instance.Log("Loyalty Redemption items: {0}", (from x in Items
-				where x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false
-				select $"{x.ProductId} {x?.PricingRecord?.InitialNight ?? 0m:C2}").ToList().Join(", "));
-			LogHelper.Instance.Log("Total Loyalty discounts {0}", Items.Where((IRentalShoppingCartItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false).Sum((IRentalShoppingCartItem x) => x?.PricingRecord?.InitialNight ?? 0m));
-			LogHelper.Instance.Log("Total discounts {0}", Totals.DiscountAmountUsed);
+			goto IL_02e4;
 		}
+		goto IL_059e;
+		IL_059e:
 		return promoCodeValidationInfo;
+		IL_02e4:
+		Promotion.QualifyingItems.Clear();
+		Promotion.PromotionItems.Clear();
+		Promotion.Price = promoCodeValidationInfo.Price;
+		Promotion.Percent = promoCodeValidationInfo.Percent;
+		if (promoCodeValidationInfo.IsCartValid)
+		{
+			promoCodeValidationInfo.QualifyingItems.ForEach(delegate(IRentalShoppingCartItem x)
+			{
+				Promotion.QualifyingItems.Add(x);
+			});
+			promoCodeValidationInfo.PromotionItems.ForEach(delegate(IPromotionItem x)
+			{
+				Promotion.PromotionItems.Add(x);
+			});
+		}
+		ShoppingSession?.ShoppingCart.SetDiscount(Promotion.Name, Promotion.Price);
+		LogHelper.Instance.Log("Validate Promo {0}.  IsValid:{1} {2}  Total Promo discounts: {3}", Promotion?.Intent, promoCodeValidationInfo.IsCartValid, promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing ? "InvalidBecauseOfMultiNightPricing" : null, promoCodeValidationInfo.Price);
+		LogHelper.Instance.Log("Promo Qualifying items: {0}", promoCodeValidationInfo.QualifyingItems.Select((IRentalShoppingCartItem x) => x.ProductId).ToList().Join(", "));
+		LogHelper.Instance.Log("Promo Redemption items: {0}", promoCodeValidationInfo.PromotionItems.Select((IPromotionItem x) => $"{x.RentalShoppingCartItem?.ProductId} {x.PromotionAmount:C2}").ToList().Join(", "));
+		LogHelper.Instance.Log("Loyalty Redemption items: {0}", (from x in Items
+			where x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false
+			select $"{x.ProductId} {x?.PricingRecord?.InitialNight ?? 0m:C2}").ToList().Join(", "));
+		LogHelper.Instance.Log("Total Loyalty discounts {0}", Items.Where((IRentalShoppingCartItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false).Sum((IRentalShoppingCartItem x) => x?.PricingRecord?.InitialNight ?? 0m));
+		LogHelper.Instance.Log("Total discounts {0}", Totals.DiscountAmountUsed);
+		goto IL_059e;
 	}
 
 	public void ClearLoyaltyPointsToBeEarned()
@@ -646,6 +663,27 @@ public class RentalShoppingCart : IRentalShoppingCart
 		obj.IncludeLoyaltyRedeemedItems = false;
 		obj.IncludeMultiNightPricedItems = includeMultiNightPricedItems;
 		return obj;
+	}
+
+	private IPromoCodeValidationInfo ValidateTitleSpecificPromo(IPromotion promotion, bool includeMultiNightPricedItems)
+	{
+		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
+		List<IRentalShoppingCartItem> list = (from x in GetItemsByCriteria(GetPromoEligibleItemsFilterCriteria(includeMultiNightPricedItems))
+			orderby x.PricingRecord.InitialNight, x.ProductId
+			select x).ToList();
+		promoCodeValidationInfo.IsCartValid = list.Any();
+		foreach (IRentalShoppingCartItem item in list)
+		{
+			decimal promotionAmount = Math.Min(promotion.OriginalPrice, item?.PricingRecord?.InitialNight ?? 0m);
+			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
+			{
+				RentalShoppingCartItem = item,
+				PromotionAmount = promotionAmount
+			});
+			promoCodeValidationInfo.QualifyingItems.Add(item);
+		}
+		promoCodeValidationInfo.Price = promoCodeValidationInfo.PromotionItems.Sum((IPromotionItem x) => x.PromotionAmount);
+		return promoCodeValidationInfo;
 	}
 
 	private IPromoCodeValidationInfo ValidateFixedValuePromo(IPromotion promotion, bool includeMultiNightPricedItems)

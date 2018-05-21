@@ -78,7 +78,7 @@ public class ProductFlagCollection : List<ProductFlag>
 					{
 						Flag = ProductFlags.Excluded,
 						TextKeyName = "flag_excluded",
-						FlagStyleName = "charcoal_grey_flag_style"
+						FlagStyleName = "gray_flag_style"
 					}
 				};
 			}

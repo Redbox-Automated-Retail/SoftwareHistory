@@ -14,23 +14,16 @@ public class RentalHealthService : IRentalHealthService
 {
 	private const string _kfcJson = "KFC.json";
 
-	private string FullKFCJsonPath
-	{
-		get
-		{
-			IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
-			return Path.Combine(service.DataPath, "KFC.json");
-		}
-	}
+	private string FullKFCJsonPath => Path.Combine(ServiceLocator.Instance.GetService<IEngineApplication>().DataPath, "KFC.json");
 
 	public void KioskFunctionCheck()
 	{
 		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
-		ILogger service = ServiceLocator.Instance.GetService<ILogger>();
-		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-		string storeNumber = service2["StoreNumber"];
+		ServiceLocator.Instance.GetService<ILogger>();
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		string storeNumber = service["StoreNumber"];
 		string timerName = "KioskFunctionCheckTimer";
-		ITimer timer = timerService.CreateTimer(timerName, 1200000, null, delegate
+		timerService.CreateTimer(timerName, 1200000, null, delegate
 		{
 			timerService.RemoveTimer(timerName);
 			try
@@ -50,8 +43,7 @@ public class RentalHealthService : IRentalHealthService
 			{
 				LogHelper.Instance.LogException("An error has occurred in RentalHealthService.KioskFunctionCheck", e);
 			}
-		});
-		timer.Start();
+		}).Start();
 	}
 
 	private IList<IKioskFunctionCheckData> GetHardwareKFC()
@@ -92,8 +84,7 @@ public class RentalHealthService : IRentalHealthService
 				LogHelper.Instance.Log(string.Format("Unable to read KFC json, File {0} doesn't exist.", "KFC.json"), LogEntryType.Info);
 				return new List<RentalKioskFunctionCheckData>();
 			}
-			string json = File.ReadAllText(FullKFCJsonPath, Encoding.ASCII);
-			List<RentalKioskFunctionCheckData> list = json.ToObject<List<RentalKioskFunctionCheckData>>();
+			List<RentalKioskFunctionCheckData> list = File.ReadAllText(FullKFCJsonPath, Encoding.ASCII).ToObject<List<RentalKioskFunctionCheckData>>();
 			LogHelper.Instance.Log($"Found {list?.Count() ?? 0} records in KFC.json file.", LogEntryType.Info);
 			return list;
 		}

@@ -10,29 +10,35 @@ using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
-[ThemedControl(ThemeName = "Redbox Classic", ControlName = "JoinedTextClubView")]
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "JoinTextClubPromoView")]
 public partial class JoinedTextClubViewControl : ViewUserControl, IComponentConnector
 {
+	private SimpleModel Model { get; set; }
+
 	public JoinedTextClubViewControl()
 	{
 		InitializeComponent();
 		ApplyTheme<Control>(MainControl);
-		base.SpeechViewName = "joind_text_club_view";
+		base.SpeechViewName = "joined_text_club_promo_view";
+	}
+
+	protected override void DataContextHasChanged()
+	{
+		if (base.DataContext != null && base.DataContext is SimpleModel)
+		{
+			Model = base.DataContext as SimpleModel;
+		}
 	}
 
 	protected override void InitSpeechPart(ISpeechPart speechPart)
 	{
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = TitleTextElem.Text
+			Text = Model.TitleText
 		});
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = MessageTextElem.Text
-		});
-		speechPart.Texts.Add(new TextPart
-		{
-			Text = CommentTextElem.Text
+			Text = Model.MessageText
 		});
 		speechPart.Texts.Add(new TextPart
 		{
@@ -44,7 +50,7 @@ public partial class JoinedTextClubViewControl : ViewUserControl, IComponentConn
 			Function = "TTSRepeatSpeechPart",
 			Action = delegate
 			{
-				ViewUserControl.InvokeRoutedCommand(GetModel<SimpleModel>()?.ContinueButtonCommand);
+				ViewUserControl.InvokeRoutedCommand(Model.ContinueButtonCommand);
 			}
 		});
 		speechPart.Loop = true;

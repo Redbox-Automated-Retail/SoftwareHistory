@@ -48,11 +48,11 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private ISpeechPart _currentSpeechPart;
 
-	private int m_speechRate = 0;
+	private int m_speechRate;
 
 	private int m_speechVolume = 80;
 
-	private int m_working = 0;
+	private int m_working;
 
 	private Dictionary<string, Delegate> m_keyHandlers = new Dictionary<string, Delegate>();
 
@@ -81,7 +81,7 @@ public class TextToSpeechService : ITextToSpeechService
 				m_audioDeviceConnected = value;
 				_speechControl = null;
 				_currentSpeechPart = null;
-				IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+				ServiceLocator.Instance.GetService<IViewService>();
 				if (!m_audioDeviceConnected)
 				{
 					LogHelper.Instance.Log("TTS((> Headphones disconnected.");
@@ -174,8 +174,7 @@ public class TextToSpeechService : ITextToSpeechService
 			}
 			else if (viewFrameInstance?.ViewFrame is IWPFViewFrame)
 			{
-				IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
-				textToSpeechControl = service2.GetScene("Default")?.GetWPFGridChild(viewFrameInstance?.Id) as ITextToSpeechControl;
+				textToSpeechControl = ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.GetWPFGridChild(viewFrameInstance?.Id) as ITextToSpeechControl;
 			}
 			if (textToSpeechControl != null)
 			{
@@ -286,7 +285,7 @@ public class TextToSpeechService : ITextToSpeechService
 			return;
 		}
 		service2.RemoveTimer("TTSTimer");
-		bool loop = speechPart.Loop;
+		_ = speechPart.Loop;
 		int startPause = speechPart.StartPause;
 		TimerCallback callback = delegate
 		{
@@ -300,8 +299,7 @@ public class TextToSpeechService : ITextToSpeechService
 		else
 		{
 			LogHelper.Instance.Log("TTS((> dueTime = " + startPause);
-			ITimer timer = service2.CreateTimer("TTSTimer", startPause, null, callback);
-			timer.Start();
+			service2.CreateTimer("TTSTimer", startPause, null, callback).Start();
 		}
 	}
 
@@ -311,11 +309,10 @@ public class TextToSpeechService : ITextToSpeechService
 		{
 			ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
 			service.RemoveTimer("TTSTimer");
-			ITimer timer = service.CreateTimer("TTSTimer", delay, null, delegate
+			service.CreateTimer("TTSTimer", delay, null, delegate
 			{
 				RunSpeechPart(speechPart);
-			});
-			timer.Start();
+			}).Start();
 		}
 		else
 		{
@@ -407,9 +404,9 @@ public class TextToSpeechService : ITextToSpeechService
 							if (eachSpeechPartEvent.Value != null)
 							{
 								int goToSequence = 0;
-								bool flag = int.TryParse(eachSpeechPartEvent.Value, out goToSequence);
+								bool num = int.TryParse(eachSpeechPartEvent.Value, out goToSequence);
 								ISpeechPart speechPart2 = null;
-								speechPart2 = ((!flag) ? _speechControl.SpeechParts.FirstOrDefault((ISpeechPart x) => x.Name == eachSpeechPartEvent.Value) : _speechControl.SpeechParts.FirstOrDefault((ISpeechPart x) => x.Sequence == goToSequence));
+								speechPart2 = ((!num) ? _speechControl.SpeechParts.FirstOrDefault((ISpeechPart x) => x.Name == eachSpeechPartEvent.Value) : _speechControl.SpeechParts.FirstOrDefault((ISpeechPart x) => x.Sequence == goToSequence));
 								RunSpeechPart(speechPart2);
 							}
 						};
@@ -513,9 +510,7 @@ public class TextToSpeechService : ITextToSpeechService
 						}
 					}
 				};
-				IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
-				IViewFrameInstance viewFrameInstance = service2.PeekViewFrame();
-				if (viewFrameInstance.ViewFrame is IViewFrame viewFrame)
+				if (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame().ViewFrame is IViewFrame viewFrame)
 				{
 					IActor actor = viewFrame.Scene.GetActor(actor_name);
 					if (actor != null && (!string.IsNullOrEmpty(mapKeyPressToActorHitEvent.Command) || (actor.Visible && actor.Enabled)))
@@ -688,12 +683,11 @@ public class TextToSpeechService : ITextToSpeechService
 			if (m_keySequenceDelay > 0 && timerService != null)
 			{
 				timerService.RemoveTimer("TTSInputTimer");
-				ITimer timer = timerService.CreateTimer("TTSInputTimer", m_keySequenceDelay, null, delegate
+				timerService.CreateTimer("TTSInputTimer", m_keySequenceDelay, null, delegate
 				{
 					timerService.RemoveTimer("TTSInputTimer");
 					TTSFinalizeKeyEntry();
-				});
-				timer.Start();
+				}).Start();
 			}
 			else
 			{
@@ -1041,11 +1035,10 @@ public class TextToSpeechService : ITextToSpeechService
 		int endPause = _currentSpeechPart.EndPause;
 		if (endPause > 0)
 		{
-			ITimer timer = service.CreateTimer("TTSTimer", endPause, null, delegate
+			service.CreateTimer("TTSTimer", endPause, null, delegate
 			{
 				RunNextSpeechPart();
-			});
-			timer.Start();
+			}).Start();
 		}
 		else
 		{
@@ -1075,9 +1068,7 @@ public class TextToSpeechService : ITextToSpeechService
 	private void ExecuteActorCommand(string actorName, string command, string parameter)
 	{
 		LogHelper.Instance.Log("TTS((> Execute Command requested: {0}, {1}, {2}", actorName, command, parameter);
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		IViewFrameInstance viewFrameInstance = service.PeekViewFrame();
-		IActor actor = ((!(viewFrameInstance.ViewFrame is IViewFrame viewFrame)) ? null : viewFrame.Scene?.GetActor(actorName));
+		IActor actor = (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame().ViewFrame as IViewFrame)?.Scene?.GetActor(actorName);
 		if (actor != null)
 		{
 			if (actor.WPFFrameworkElement != null)
@@ -1108,9 +1099,7 @@ public class TextToSpeechService : ITextToSpeechService
 		LogHelper.Instance.Log("TTS((> Click Actor requested: " + actorName);
 		try
 		{
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IViewFrameInstance viewFrameInstance = service.PeekViewFrame();
-			IActor actor = ((!(viewFrameInstance.ViewFrame is IViewFrame viewFrame)) ? null : viewFrame.Scene?.GetActor(actorName));
+			IActor actor = (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame().ViewFrame as IViewFrame)?.Scene?.GetActor(actorName);
 			if (actor == null)
 			{
 				LogHelper.Instance.Log("TTS((> actor NOT FOUND in scene.");

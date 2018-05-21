@@ -5,13 +5,13 @@
     <Redbox:GridExt RowHeights="*,*">
       <Grid Row="0" Background="{StaticResource RubineRedRadialGradientBrush}" />
       <Grid Row="1">
-        <Redbox:RoundedButton Name="ContinueButtonElem" Width="auto" Margin="10,20,5,35" HorizontalAlignment="Center" VerticalAlignment="Bottom" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Command="{Binding ContinueButtonCommand}">
+        <Redbox:RoundedButton Name="ContinueButtonElem" Width="auto" Margin="10,20,5,110" HorizontalAlignment="Center" VerticalAlignment="Bottom" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Command="{Binding ContinueButtonCommand}">
           <TextBlock Name="ContinueButtonTextElem" Margin="45,0" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="140" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding ContinueButtonText}" />
         </Redbox:RoundedButton>
       </Grid>
     </Redbox:GridExt>
-    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="380" Margin="0,0,0,140">
-      <Ellipse Height="375" Width="375" VerticalAlignment="Bottom" Fill="#FFFFFFFF" Stroke="{StaticResource RubineRedBrush}" StrokeThickness="3" />
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="300" Margin="0,0,0,220">
+      <Ellipse Height="300" Width="300" VerticalAlignment="Bottom" Fill="#FFFFFFFF" Stroke="{StaticResource RubineRedBrush}" StrokeThickness="3" />
     </Grid>
   </Grid>
 </local:RentalUserControl>

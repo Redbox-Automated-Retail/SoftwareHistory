@@ -98,7 +98,11 @@ public class StyleSheetService : IStyleSheetService
 
 	public IStyleSheet GetStyleSheet(string name)
 	{
-		return m_stylesheets.ContainsKey(name) ? m_stylesheets[name] : null;
+		if (!m_stylesheets.ContainsKey(name))
+		{
+			return null;
+		}
+		return m_stylesheets[name];
 	}
 
 	private StyleSheetService()

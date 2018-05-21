@@ -150,10 +150,8 @@ public class Program : IDisposable
 			if (errorList.ContainsError())
 			{
 				errorList.ToLogHelper();
-				ErrorForm errorForm = new ErrorForm
-				{
-					Errors = errorList
-				};
+				ErrorForm errorForm = new ErrorForm();
+				errorForm.Errors = errorList;
 				errorForm.ShowDialog();
 			}
 			else
@@ -263,8 +261,7 @@ public class Program : IDisposable
 				return null;
 			}
 			byte[] bytes = File.ReadAllBytes(KioskUnhandledExceptionFilePath);
-			string json = Encoding.ASCII.GetString(bytes);
-			return json.ToObject<KioskUnhandledException>();
+			return Encoding.ASCII.GetString(bytes).ToObject<KioskUnhandledException>();
 		}
 		catch (Exception e)
 		{

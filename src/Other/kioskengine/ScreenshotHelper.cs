@@ -25,16 +25,16 @@ public static class ScreenshotHelper
 		string[] files = Directory.GetFiles(text, "screenshot_*.png");
 		int num = 0;
 		string[] array = files;
-		foreach (string path in array)
+		for (int i = 0; i < array.Length; i++)
 		{
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
+			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(array[i]);
 			int num2 = fileNameWithoutExtension.IndexOf("_");
 			if (num2 >= 0 && int.TryParse(fileNameWithoutExtension.Substring(num2 + 1), out var result) && result > num)
 			{
 				num = result;
 			}
 		}
-		string path2 = $"screenshot_{num + 1}.png";
-		bitmap.Save(Path.Combine(text, path2), ImageFormat.Png);
+		string path = $"screenshot_{num + 1}.png";
+		bitmap.Save(Path.Combine(text, path), ImageFormat.Png);
 	}
 }

@@ -48,17 +48,15 @@ public class ViewService : IViewService
 
 	public void ShowFrameInDebug()
 	{
-		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
+		ServiceLocator.Instance.GetService<IRenderingService>();
 		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
 		LogShowViewFrameInstance(viewFrameInstance);
 		viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
 		if (viewFrameInstance.ViewFrame.Errors.ContainsError())
 		{
-			ErrorForm errorForm = new ErrorForm
-			{
-				Errors = viewFrameInstance?.ViewFrame?.Errors,
-				Text = $"Errors for view resource: {viewFrameInstance?.ViewFrame?.ViewName}"
-			};
+			ErrorForm errorForm = new ErrorForm();
+			errorForm.Errors = viewFrameInstance?.ViewFrame?.Errors;
+			errorForm.Text = $"Errors for view resource: {viewFrameInstance?.ViewFrame?.ViewName}";
 			errorForm.Show();
 			errorForm.BringToFront();
 		}
@@ -162,11 +160,9 @@ public class ViewService : IViewService
 	{
 		if (viewFrameInstance.ViewFrame.Errors.ContainsError())
 		{
-			ErrorForm errorForm = new ErrorForm
-			{
-				Errors = viewFrameInstance.ViewFrame.Errors,
-				Text = $"Errors for view resource: {viewFrameInstance.ViewFrame.ViewName}"
-			};
+			ErrorForm errorForm = new ErrorForm();
+			errorForm.Errors = viewFrameInstance.ViewFrame.Errors;
+			errorForm.Text = $"Errors for view resource: {viewFrameInstance.ViewFrame.ViewName}";
 			errorForm.Show();
 			errorForm.BringToFront();
 			RaiseViewStateChanged();
@@ -340,10 +336,8 @@ public class ViewService : IViewService
 		else
 		{
 			LogHelper.Instance.Log("Cache miss, building cached ViewFrame for view named: {0}", viewName);
-			ViewFrame viewFrame = new ViewFrame
-			{
-				ViewName = viewName
-			};
+			ViewFrame viewFrame = new ViewFrame();
+			viewFrame.ViewName = viewName;
 			viewFrame.Parse();
 			baseViewFrame = viewFrame;
 			if (baseViewFrame != null)

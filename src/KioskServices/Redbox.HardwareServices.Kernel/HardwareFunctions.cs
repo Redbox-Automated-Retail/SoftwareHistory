@@ -871,6 +871,23 @@ public static class HardwareFunctions
 		return hasAbeDevice.ToString();
 	}
 
+	[KernelFunction(Name = "kernel.irhardwareinstalled")]
+	internal static string IRHardwareInstalled()
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		if (service == null)
+		{
+			return null;
+		}
+		service.IRHardwareInstalled(out var installDate);
+		string result = null;
+		if (installDate.HasValue)
+		{
+			result = installDate.Value.ToString("o");
+		}
+		return result;
+	}
+
 	private static LuaTable CreateResultTable(string jobId, ErrorList errors)
 	{
 		IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();

@@ -46,7 +46,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	internal Dictionary<string, AnalyticsSession> m_analyticsSessions = new Dictionary<string, AnalyticsSession>();
 
-	private int m_working = 0;
+	private int m_working;
 
 	public static SessionAnalyticsService Instance => Singleton<SessionAnalyticsService>.Instance;
 
@@ -254,21 +254,18 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
-			ErrorList errorList = null;
 			try
 			{
 				Interlocked.Increment(ref m_working);
 				AnalyticsSession analyticsSession = m_analyticsSessions[sessionId];
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-				IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-				string s = service3.Filter["store_number"];
+				string s = ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["store_number"];
 				XDocument document = analyticsSession.document;
 				string text = document.ToString(SaveOptions.DisableFormatting);
 				byte priority = (byte)((!(MachineSettingsStore.Instance.GetValue("Store", "SendAnalyticsOffPeak", "True") == "True")) ? 200 : 0);
 				string name = "Redbox.KioskEngine.Environment.XMLSchema.KioskAnalyticsSchema.xsd";
-				Stream manifestResourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
-				XmlSchema schema = XmlSchema.Read(manifestResourceStream, SchemaValidationHandler);
+				XmlSchema schema = XmlSchema.Read(Assembly.GetExecutingAssembly().GetManifestResourceStream(name), SchemaValidationHandler);
 				XmlSchemaSet xmlSchemaSet = new XmlSchemaSet();
 				xmlSchemaSet.Add(schema);
 				bool validationErrored = false;
@@ -287,7 +284,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				}
 				if (!validationErrored)
 				{
-					errorList = service2.Enqueue(priority, "KioskAnalytics", new
+					service2.Enqueue(priority, "KioskAnalytics", new
 					{
 						MessageType = "KioskAnalytics",
 						MessageId = Guid.NewGuid(),
@@ -322,7 +319,11 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	public bool IsOpen(string sessionId)
 	{
-		return m_analyticsSessions.ContainsKey(sessionId) && m_analyticsSessions[sessionId].isOpen;
+		if (!m_analyticsSessions.ContainsKey(sessionId))
+		{
+			return false;
+		}
+		return m_analyticsSessions[sessionId].isOpen;
 	}
 
 	public bool SessionExists(string sessionId)
@@ -570,19 +571,31 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	private XElement GetLastNode(string parentNodeName)
 	{
-		return (ActiveSession == null) ? null : GetLastNode(parentNodeName, ActiveSession);
+		if (ActiveSession != null)
+		{
+			return GetLastNode(parentNodeName, ActiveSession);
+		}
+		return null;
 	}
 
 	private XElement GetLastNode(string parentNodeName, XDocument document)
 	{
 		IEnumerable<XElement> source = document.Descendants(parentNodeName);
-		return source.Any() ? source.Last() : null;
+		if (!source.Any())
+		{
+			return null;
+		}
+		return source.Last();
 	}
 
 	private XElement GetLastNode(string parentNodeName, string sessionID)
 	{
 		AnalyticsSession analyticsSession = (m_analyticsSessions.ContainsKey(sessionID) ? m_analyticsSessions[sessionID] : null);
-		return (analyticsSession != null) ? GetLastNode(parentNodeName, analyticsSession.document) : null;
+		if (analyticsSession == null)
+		{
+			return null;
+		}
+		return GetLastNode(parentNodeName, analyticsSession.document);
 	}
 
 	private static string CompressString(string text)

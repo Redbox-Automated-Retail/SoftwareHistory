@@ -1384,6 +1384,12 @@ public class HardwareService : IHardwareService
 		return errorList;
 	}
 
+	public Redbox.KioskEngine.ComponentModel.ErrorList IRHardwareInstalled(out DateTime? installDate)
+	{
+		installDate = Service.IRHardwareInstalled;
+		return new Redbox.KioskEngine.ComponentModel.ErrorList();
+	}
+
 	internal string ConfigureJob(Redbox.HAL.Client.HardwareJob job, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, Redbox.KioskEngine.ComponentModel.ErrorList errors)
 	{
 		m_activeJobs.Add(job);

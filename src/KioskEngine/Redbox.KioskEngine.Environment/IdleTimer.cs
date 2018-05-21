@@ -26,8 +26,7 @@ public class IdleTimer : IIdleTimer
 		}
 		set
 		{
-			ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-			ITimer timer = service.GetTimer(Name);
+			ITimer timer = ServiceLocator.Instance.GetService<ITimerService>().GetTimer(Name);
 			if (timer != null)
 			{
 				timer.Period = value;

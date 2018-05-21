@@ -26,7 +26,11 @@ internal class PreferencePage : IPreferencePage
 
 	public T GetValue<T>(string settingName, T defaultValue)
 	{
-		return (Target == PreferencePageTarget.LocalSystem) ? MachineSettingsStore.Instance.GetValue(SettingPath, settingName, defaultValue) : UserSettingsStore.Instance.GetValue(SettingPath, settingName, defaultValue);
+		if (Target != PreferencePageTarget.LocalSystem)
+		{
+			return UserSettingsStore.Instance.GetValue(SettingPath, settingName, defaultValue);
+		}
+		return MachineSettingsStore.Instance.GetValue(SettingPath, settingName, defaultValue);
 	}
 
 	public void SetValue(string settingName, object value)

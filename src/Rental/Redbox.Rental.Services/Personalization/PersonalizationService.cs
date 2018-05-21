@@ -22,6 +22,8 @@ public class PersonalizationService : IPersonalizationService
 
 	private Action<ILoginResult> _loginResultCallback;
 
+	private Action<IUpdateAccountResult> _updateAccountResultCallback;
+
 	private LoginType _loginType;
 
 	public bool IsEarlyIdEnabled => Redbox.Rental.Services.Configuration.Configuration.Instance?.EarlyIdEnabled ?? false;
@@ -36,6 +38,15 @@ public class PersonalizationService : IPersonalizationService
 	public void LoginWithPhoneNumber(string phoneNumber, SecureString pin, Action<ILoginResult> loginResultCallback)
 	{
 		Login(null, null, phoneNumber, pin, loginResultCallback);
+	}
+
+	public void UpdateAccount(string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, Action<IUpdateAccountResult> resultCallback)
+	{
+		_updateAccountResultCallback = resultCallback;
+		IPersonalizationServices service = ServiceLocator.Instance.GetService<IPersonalizationServices>();
+		int kioskId = (int)(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0);
+		RemoteServiceCallback completeCallback = ProcessUpdateAccountResult;
+		service?.UpdateAccount(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback);
 	}
 
 	private void Login(string emailAddress, SecureString password, string phoneNumber, SecureString pin, Action<ILoginResult> loginResultCallback)
@@ -120,6 +131,31 @@ public class PersonalizationService : IPersonalizationService
 		{
 			_loginResultCallback(loginResult);
 		}
+	}
+
+	private void ProcessUpdateAccountResult(IRemoteServiceResult result)
+	{
+		UpdateAccountResult updateAccountResult = new UpdateAccountResult
+		{
+			Success = result.Success,
+			UpdateAccountResponseError = UpdateAccountResponseErrors.None
+		};
+		if (!result.Success && result.Properties.ContainsKey("response") && result.Properties["response"] is UpdateAccountResponseErrors)
+		{
+			switch (updateAccountResult.UpdateAccountResponseError = (UpdateAccountResponseErrors)result.Properties["response"])
+			{
+			case UpdateAccountResponseErrors.PhoneNumberConflict:
+				updateAccountResult.ErrorMessage = Resources.personalization_service_error_UPA0001;
+				break;
+			case UpdateAccountResponseErrors.CommunicationError:
+				updateAccountResult.ErrorMessage = Resources.personalization_service_error_UPA0002;
+				break;
+			default:
+				updateAccountResult.ErrorMessage = Resources.personalization_service_error_UPA0002;
+				break;
+			}
+		}
+		_updateAccountResultCallback?.Invoke(updateAccountResult);
 	}
 
 	private static int GetInt(object obj)

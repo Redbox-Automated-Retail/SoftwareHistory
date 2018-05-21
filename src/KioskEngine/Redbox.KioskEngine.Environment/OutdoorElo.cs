@@ -70,15 +70,13 @@ public class OutdoorElo : GenericTouchScreen
 		{
 			if (File.Exists(ControlFile))
 			{
-				Process[] driverProcess = GetDriverProcess("EloPCap_Control");
-				driverProcess.ForEach(delegate(Process process)
+				GetDriverProcess("EloPCap_Control").ForEach(delegate(Process process)
 				{
 					process.Kill();
 				});
 				StringBuilder stringBuilder = new StringBuilder();
 				WindowsAPI.GetPrivateProfileString("Output", "EnabledBoo1", "1", stringBuilder, stringBuilder.Capacity, ControlFile);
-				string strA = stringBuilder.ToString();
-				return string.Compare(strA, "1") == 0;
+				return string.Compare(stringBuilder.ToString(), "1") == 0;
 			}
 			return true;
 		}

@@ -815,7 +815,8 @@ public class StartViewController
 	private static void GoToHelpDocumentView()
 	{
 		PrepareToLeaveStartView();
-		OrchestrationService.ExecuteScript("help");
+		OrchestrationService.StarteUserInteraction();
+		HelpViewController.ShowFullHelpView(allowFMA: true, restartTimer: true);
 	}
 
 	private static void ProcessSignInSignOutCommand()

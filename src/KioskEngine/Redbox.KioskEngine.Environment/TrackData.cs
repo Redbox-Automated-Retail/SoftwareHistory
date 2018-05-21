@@ -32,8 +32,7 @@ public class TrackData
 		trackData = new TrackData();
 		try
 		{
-			string text = CardHelper.ExtractFromSecure(value);
-			string[] array = text.Split(';');
+			string[] array = CardHelper.ExtractFromSecure(value).Split(';');
 			if (array.Length == 0)
 			{
 				errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("T008", "No valid tracks in data stream.", "Valid track data is required."));
@@ -43,8 +42,7 @@ public class TrackData
 			{
 				trackData.Track1 = CardHelper.CopyToSecure(array[0]);
 				trackData.Track2 = CardHelper.CopyToSecure(array[1]);
-				Regex regex = new Regex("[a-z][^0-9][a-z]*", RegexOptions.IgnoreCase);
-				MatchCollection matchCollection = regex.Matches(CardHelper.ExtractFromSecure(trackData.Track1));
+				MatchCollection matchCollection = new Regex("[a-z][^0-9][a-z]*", RegexOptions.IgnoreCase).Matches(CardHelper.ExtractFromSecure(trackData.Track1));
 				if (matchCollection.Count > 1)
 				{
 					trackData.FirstName = matchCollection[0].Groups[0].Value;
@@ -60,8 +58,7 @@ public class TrackData
 				trackData.Track1.Clear();
 				trackData.Track2 = CardHelper.CopyToSecure(array[0]);
 			}
-			string text2 = CardHelper.ExtractFromSecure(trackData.Track2);
-			string[] array2 = text2.Split('=');
+			string[] array2 = CardHelper.ExtractFromSecure(trackData.Track2).Split('=');
 			trackData.AccountNumber = CardHelper.CopyToSecure(array2[0]);
 			if (trackData.AccountNumber == null || trackData.AccountNumber.Length < 13 || trackData.AccountNumber.Length > 16)
 			{

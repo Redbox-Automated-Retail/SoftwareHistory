@@ -316,7 +316,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		};
 		recommendationOnPickupViewModel.OnTermsAndPrivacyButtonClicked = delegate
 		{
-			OrchestrationService.ExecuteScript("help");
+			HelpViewController.ShowTermsAndConditions();
 		};
 	}
 

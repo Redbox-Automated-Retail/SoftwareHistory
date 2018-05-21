@@ -70,8 +70,7 @@ public class WPFViewFrame : BaseViewFrame, IWPFViewFrame, IBaseViewFrame
 		{
 			return;
 		}
-		string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-		string text = Path.Combine(directoryName, assemblyName);
+		string text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), assemblyName);
 		if (File.Exists(text))
 		{
 			Assembly assembly = Assembly.LoadFile(text);
@@ -81,8 +80,7 @@ public class WPFViewFrame : BaseViewFrame, IWPFViewFrame, IBaseViewFrame
 					where x.IsClass && x.IsDefined(typeof(ViewDefinitionAttribute))
 					select x)
 				{
-					object obj = Activator.CreateInstance(item);
-					if (obj is IViewDefinition viewDefinition)
+					if (Activator.CreateInstance(item) is IViewDefinition viewDefinition)
 					{
 						IRenderingService service2 = ServiceLocator.Instance.GetService<IRenderingService>();
 						IWPFViewFrame baseViewFrame = new WPFViewFrame

@@ -286,12 +286,18 @@ public class Scene : IScene, IDisposable
 	public FrameworkElement GetWPFGridChild(object tag)
 	{
 		FrameworkElement result = null;
-		foreach (object child in WPFGrid.Children)
+		if (WPFGrid != null)
 		{
-			if (child is FrameworkElement { Tag: not null } frameworkElement && frameworkElement.Tag.Equals(tag))
+			WPFGrid.Dispatcher.Invoke(delegate
 			{
-				result = frameworkElement;
-			}
+				foreach (object child in WPFGrid.Children)
+				{
+					if (child is FrameworkElement { Tag: not null } frameworkElement && frameworkElement.Tag.Equals(tag))
+					{
+						result = frameworkElement;
+					}
+				}
+			});
 		}
 		return result;
 	}

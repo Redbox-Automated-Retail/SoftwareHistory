@@ -5,6 +5,8 @@ namespace Redbox.Rental.UI.Views;
 
 public class SimpleInfo
 {
+	public object Obj { get; set; }
+
 	public Action CancelAction { get; set; }
 
 	public Action ContinueAction { get; set; }

@@ -103,7 +103,7 @@ public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl
 		bool flag = false;
 		lock (m_lockObject)
 		{
-			m_dispatcherTimer.Stop();
+			m_dispatcherTimer?.Stop();
 			if (!m_timerDisabled)
 			{
 				m_timerDisabled = true;

@@ -12,4 +12,6 @@ public interface IPersonalizationService
 	void LoginWithEmail(string emailAddress, SecureString password, Action<ILoginResult> loginResultCallback);
 
 	void LoginWithPhoneNumber(string phoneNumber, SecureString pin, Action<ILoginResult> loginResultCallback);
+
+	void UpdateAccount(string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, Action<IUpdateAccountResult> resultCallback);
 }

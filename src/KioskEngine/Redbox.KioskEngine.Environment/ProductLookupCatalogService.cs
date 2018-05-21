@@ -11,7 +11,7 @@ public class ProductLookupCatalogService : IProductLookupCatalogService
 {
 	public ProductLookupCatalogModel GetProductLookupCatalog(string path)
 	{
-		Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> dictionary = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
+		new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
 		try
 		{
 			ProductLookupCatalogModel productLookupCatalogModel = new ProductLookupCatalogModel

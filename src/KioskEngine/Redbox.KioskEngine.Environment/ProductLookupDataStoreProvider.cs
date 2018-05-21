@@ -50,9 +50,7 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
 	{
-		if (!(tableName == "Version"))
-		{
-		}
+		_ = tableName == "Version";
 	}
 
 	protected override ReadOnlyCollection<string> OnGetKeys(string dataStore, string tableName)
@@ -78,7 +76,6 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 
 	protected override ReadOnlyCollection<string> OnGetTables(string dataStore)
 	{
-		List<string> list = new List<string> { "Version", "BarcodeToProduct" };
-		return list.AsReadOnly();
+		return new List<string> { "Version", "BarcodeToProduct" }.AsReadOnly();
 	}
 }

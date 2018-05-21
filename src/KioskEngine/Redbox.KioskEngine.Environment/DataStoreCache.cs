@@ -22,8 +22,7 @@ public class DataStoreCache
 	public static void CloseAll()
 	{
 		LogHelper.Instance.Log("Close all data store caches.");
-		List<string> list = new List<string>(m_databases.Keys);
-		foreach (string item in list)
+		foreach (string item in new List<string>(m_databases.Keys))
 		{
 			LogHelper.Instance.Log("...Close data store: {0}", item);
 			CloseStore(item);

@@ -29,17 +29,18 @@ public partial class EmailReceiptViewControl : ViewUserControl, IComponentConnec
 
 	protected override void InitSpeechPart(ISpeechPart speechPart)
 	{
+		SimpleModel model = GetModel<SimpleModel>();
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = TitleTextElem.Text
+			Text = model?.TitleText
 		});
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = MessageTextElem.Text
+			Text = model?.MessageText
 		});
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = CommentTextElem.Text
+			Text = model.CommentText
 		});
 		speechPart.Texts.Add(new TextPart
 		{

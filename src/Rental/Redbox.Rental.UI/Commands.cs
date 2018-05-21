@@ -144,6 +144,8 @@ public class Commands
 
 	public static readonly DynamicRoutedCommand PromoButtonCommand = new DynamicRoutedCommand();
 
+	public static readonly DynamicRoutedCommand OtherButtonCommand = new DynamicRoutedCommand();
+
 	public static readonly DynamicRoutedCommand PhonePinButtonCommand = new DynamicRoutedCommand();
 
 	public static readonly DynamicRoutedCommand EmailCodeButtonCommand = new DynamicRoutedCommand();

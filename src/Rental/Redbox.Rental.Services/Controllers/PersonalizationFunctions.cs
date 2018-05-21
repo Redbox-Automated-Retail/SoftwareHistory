@@ -162,6 +162,9 @@ public class PersonalizationFunctions
 					OrchestrationService.AnalyticsAddLoggedInCustomerProfileNumber(loginResult.PersonalizationSession?.CustomerProfileNumber);
 				}
 				OrchestrationService.ResetApplicationIdleTimerTimeout();
+				string value = service?.PeekViewFrame()?.ViewFrame?.ViewName;
+				"phone_and_pin_view".Equals(value);
+				"keyboard_sign_in_view".Equals(value);
 				OrchestrationService.ViewGoBackSafe("Login process finished - pop Keyboard / phone view", popOnly: false);
 			}
 			else if (loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyIsDown)
@@ -256,26 +259,47 @@ public class PersonalizationFunctions
 		});
 	}
 
-	public static void ShowHasJoinedTextClub()
+	public static void ShowJoinedPerksConformation(SimpleInfo simpleInfo)
 	{
-		LogHelper.Instance.Log("Joined Text Club starting.");
-		OrchestrationService.ViewShow("joind_text_club_view", new SimpleInfo
+		if (simpleInfo != null)
 		{
-			ContinueAction = delegate
+			simpleInfo.Model = null;
+			LogHelper.Instance.Log("Conformation of Joining Perks: starting.");
+			simpleInfo.ContinueAction = delegate
 			{
-				OrchestrationService.ViewGoBackSafe("Joined Text Club closed", popOnly: false);
-			}
-		});
+				OrchestrationService.ViewGoBackSafe("Joined Text Club canceled", popOnly: false);
+			};
+			OrchestrationService.ViewShow("joined_perks_view", simpleInfo);
+		}
 	}
 
-	public static void ShowHasJoinedPerks()
+	public static void ShowPromoToJoinPerks(object otherInfo)
 	{
-		LogHelper.Instance.Log("Joined Perks starting.");
-		OrchestrationService.ViewShow("joined_perks_view", new SimpleInfo
+		LogHelper.Instance.Log("Promo to Join Perks: starting.");
+		SimpleInfo simpleInfo = new SimpleInfo
+		{
+			Obj = otherInfo,
+			CancelAction = delegate
+			{
+				OrchestrationService.ViewGoBackSafe("Promo to Join Perks canceled", popOnly: false);
+			}
+		};
+		simpleInfo.ContinueAction = delegate
+		{
+			OrchestrationService.ViewGoBackSafe("Promo to Join Perks closed", popOnly: false);
+			ShowJoinedPerksConformation(simpleInfo);
+		};
+		OrchestrationService.ViewShow("join_perks_promo_view", simpleInfo);
+	}
+
+	public static void ShowPromoToJoinTextClub()
+	{
+		LogHelper.Instance.Log("Promo to Joined Text Club: starting.");
+		OrchestrationService.ViewShow("joined_text_club_promo_view", new SimpleInfo
 		{
 			ContinueAction = delegate
 			{
-				OrchestrationService.ViewGoBackSafe("Joined Perks closed", popOnly: false);
+				OrchestrationService.ViewGoBackSafe("Joined Text Club canceled", popOnly: false);
 			}
 		});
 	}

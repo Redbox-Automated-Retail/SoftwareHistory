@@ -99,6 +99,12 @@ public class PhoneAndPinViewModel : DependencyObject
 
 	public string SignInButtonText { get; set; }
 
+	public string SubHeadLabelText { get; set; }
+
+	public string PhoneLabelText { get; set; }
+
+	public string PinLabelText { get; set; }
+
 	public KeypadModel KeypadModel
 	{
 		get

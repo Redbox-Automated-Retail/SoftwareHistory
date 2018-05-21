@@ -55,22 +55,18 @@ public class ThemeService : IThemeService
 
 	public void RegisterThemedControls(string assemblyName)
 	{
-		string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-		string text = Path.Combine(directoryName, assemblyName);
+		string text = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), assemblyName);
 		LogHelper.Instance.Log($"Registering themed controls in assembly {text}", LogEntryType.Info);
 		if (!File.Exists(text))
 		{
 			return;
 		}
-		Assembly assembly = Assembly.LoadFile(text);
-		List<Type> list = (from t in assembly.GetTypes()
+		foreach (Type item in (from t in Assembly.LoadFile(text).GetTypes()
 			where t.IsDefined(typeof(ThemedControlAttribute))
-			select t).ToList();
-		foreach (Type item in list)
+			select t).ToList())
 		{
 			object[] customAttributes = item.GetCustomAttributes(inherit: true);
-			object[] array = customAttributes;
-			foreach (object obj in array)
+			foreach (object obj in customAttributes)
 			{
 				ThemedControlAttribute themedControlAttribute = obj as ThemedControlAttribute;
 				if (themedControlAttribute != null)

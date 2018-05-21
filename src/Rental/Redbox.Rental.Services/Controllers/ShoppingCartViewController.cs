@@ -219,7 +219,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		shoppingCartViewModel.OnUsePointsButtonClicked += ShoppingCartViewModel_OnUsePointsButtonClicked;
 		shoppingCartViewModel.OnTermsAndPrivacyButtonClicked += delegate
 		{
-			OrchestrationService.ExecuteScript("help");
+			HelpViewController.ShowTermsAndConditions();
 		};
 		shoppingCartViewModel.OnPromoCodeButtonClicked += delegate
 		{

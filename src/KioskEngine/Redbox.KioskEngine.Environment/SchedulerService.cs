@@ -44,7 +44,11 @@ public class SchedulerService : ISchedulerService
 			{
 				return false;
 			}
-			return JobName == schedulerEntry.JobName && CronExpression == schedulerEntry.CronExpression;
+			if (JobName == schedulerEntry.JobName)
+			{
+				return CronExpression == schedulerEntry.CronExpression;
+			}
+			return false;
 		}
 
 		public override int GetHashCode()

@@ -23,8 +23,7 @@ internal class Resources
 		{
 			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.KioskEngine.Bootstrap.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.KioskEngine.Bootstrap.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}

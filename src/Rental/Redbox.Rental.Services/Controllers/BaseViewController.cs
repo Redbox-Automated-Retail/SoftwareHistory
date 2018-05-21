@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
@@ -125,6 +126,11 @@ public class BaseViewController
 	protected static MarketingAd GetMarketingAd(MarketingAdLocation location, bool createImpression)
 	{
 		return ServiceLocator.Instance.GetService<IMarketingAdService>().GetScreenAd(location, createImpression);
+	}
+
+	protected static void InvokeActionOnIdle(Action action)
+	{
+		Application.Current.Dispatcher.BeginInvoke(action, DispatcherPriority.SystemIdle);
 	}
 
 	protected static SecureString StringToSecureString(string source)

@@ -51,9 +51,11 @@ public class Constants
 
 		public const string MultiNightPricingPopupView = "MultiNightPricingPopupView";
 
+		public const string JoinPerksPromoView = "JoinPerksPromoView";
+
 		public const string JoinedPerksView = "JoinedPerksView";
 
-		public const string JoinedTextClubView = "JoinedTextClubView";
+		public const string JoinTextClubPromoView = "JoinTextClubPromoView";
 
 		public const string EmailReceiptView = "EmailReceiptView";
 
@@ -66,6 +68,8 @@ public class Constants
 		public const string UpsellView = "UpsellView";
 
 		public const string MessagePopupView = "MessagePopupViewUserControl";
+
+		public const string HelpView = "HelpViewUserControl";
 	}
 
 	public class ViewNames
@@ -112,9 +116,11 @@ public class Constants
 
 		public const string UpsellView = "upsell_view";
 
+		public const string JoinPerksPromoView = "join_perks_promo_view";
+
 		public const string JoinedPerksView = "joined_perks_view";
 
-		public const string JoinedTextClubView = "joind_text_club_view";
+		public const string JoinTextClubPromoView = "joined_text_club_promo_view";
 
 		public const string EmailReceiptView = "email_receipt_view";
 
@@ -129,6 +135,8 @@ public class Constants
 		public const string MessagePopupView = "message_popup_view";
 
 		public const string _4kAlertPopupView = "4K_warning_popup_view";
+
+		public const string HelpView = "help_document_view";
 	}
 
 	public class ThemeNames

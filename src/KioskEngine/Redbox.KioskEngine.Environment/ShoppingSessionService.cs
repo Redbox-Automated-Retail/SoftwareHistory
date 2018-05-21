@@ -95,7 +95,7 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 			if (m_sessions.ContainsKey("__active__"))
 			{
 				LogHelper.Instance.Log("The Shopping Session cache contains the Legacy ID.");
-				IShoppingSession shoppingSession = m_sessions["__active__"];
+				_ = m_sessions["__active__"];
 			}
 			if (m_sessions.Count > 0)
 			{
@@ -112,17 +112,17 @@ public class ShoppingSessionService : IShoppingSessionService, IDisposable
 				}
 			}
 			m_sessions.Clear();
-			ShoppingSession shoppingSession2 = new ShoppingSession((!string.IsNullOrEmpty(sessionId)) ? new Guid(sessionId) : Guid.NewGuid(), logStartEvent: true)
+			ShoppingSession shoppingSession = new ShoppingSession((!string.IsNullOrEmpty(sessionId)) ? new Guid(sessionId) : Guid.NewGuid(), logStartEvent: true)
 			{
 				StartedOn = DateTime.Now,
 				StoreNumber = storeNumber
 			};
-			shoppingSession2.ShoppingCart = new ShoppingCart(shoppingSession2.Id)
+			shoppingSession.ShoppingCart = new ShoppingCart(shoppingSession.Id)
 			{
 				Type = ShoppingCartType.Online
 			};
-			string text = shoppingSession2.Id.ToString();
-			m_sessions[text] = shoppingSession2;
+			string text = shoppingSession.Id.ToString();
+			m_sessions[text] = shoppingSession;
 			LogHelper.Instance.Log("Shopping Session '{0}' added to cache and started.", text);
 			return text;
 		}

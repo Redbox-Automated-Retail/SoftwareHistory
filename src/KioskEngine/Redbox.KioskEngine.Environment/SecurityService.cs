@@ -18,11 +18,9 @@ public class SecurityService : ISecurityService
 		try
 		{
 			using PrincipalContext context = new PrincipalContext(ContextType.Machine);
-			UserPrincipal userPrincipal = new UserPrincipal(context)
-			{
-				Name = userName,
-				DisplayName = userName
-			};
+			UserPrincipal userPrincipal = new UserPrincipal(context);
+			userPrincipal.Name = userName;
+			userPrincipal.DisplayName = userName;
 			userPrincipal.SetPassword(password);
 			userPrincipal.UserCannotChangePassword = true;
 			userPrincipal.AccountExpirationDate = DateTime.Now.AddDays(numberOfDaysToExpire);

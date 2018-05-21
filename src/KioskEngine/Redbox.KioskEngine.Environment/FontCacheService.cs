@@ -43,7 +43,11 @@ public class FontCacheService : IFontCacheService, IDisposable
 
 	public Font GetFont(string name)
 	{
-		return Fonts.ContainsKey(name) ? Fonts[name] : null;
+		if (!Fonts.ContainsKey(name))
+		{
+			return null;
+		}
+		return Fonts[name];
 	}
 
 	public Font RegisterFont(string name, string familyName, float size, FontStyle style)
@@ -69,7 +73,7 @@ public class FontCacheService : IFontCacheService, IDisposable
 		if (fontFamily == null)
 		{
 			IntPtr intPtr = Marshal.AllocCoTaskMem(data.Length);
-			IntPtr intPtr2 = AddFontMemResourceEx(data, data.Length, IntPtr.Zero, out var _);
+			AddFontMemResourceEx(data, data.Length, IntPtr.Zero, out var _);
 			Marshal.Copy(data, 0, intPtr, data.Length);
 			PrivateFonts.AddMemoryFont(intPtr, data.Length);
 			Marshal.FreeCoTaskMem(intPtr);

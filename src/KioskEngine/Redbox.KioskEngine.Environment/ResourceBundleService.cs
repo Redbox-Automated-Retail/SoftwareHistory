@@ -39,8 +39,7 @@ public class ResourceBundleService : IResourceBundleService
 			{
 				return false;
 			}
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			return service["ProductName"] == "Rental Application";
+			return ServiceLocator.Instance.GetService<IMacroService>()["ProductName"] == "Rental Application";
 		}
 	}
 
@@ -78,7 +77,11 @@ public class ResourceBundleService : IResourceBundleService
 		get
 		{
 			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
-			return (service != null) ? service.GetValue("Core", "BundleSearchPath", new string[1] { "..\\bundles" }) : new string[1] { "..\\bundles" };
+			if (service != null)
+			{
+				return service.GetValue("Core", "BundleSearchPath", new string[1] { "..\\bundles" });
+			}
+			return new string[1] { "..\\bundles" };
 		}
 		set
 		{
@@ -190,8 +193,7 @@ public class ResourceBundleService : IResourceBundleService
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			errorList.AddRange(Deactivate());
-			ManualResetEvent manualResetEvent2 = new ManualResetEvent(initialState: false);
-			manualResetEvent2.WaitOne(5000);
+			new ManualResetEvent(initialState: false).WaitOne(5000);
 			LogHelper.Instance.Log("Activate resource bundle: {0}", SwitchToBundle.Storage.BundlePath);
 			ActiveBundle = SwitchToBundle;
 			Filter = ActiveBundle.CreateFilter();
@@ -211,14 +213,12 @@ public class ResourceBundleService : IResourceBundleService
 				}
 			}
 			SwitchToBundle = null;
-			Redbox.REDS.Framework.ErrorList source = ActiveBundle.Activate(Filter, out var manifestInfo);
-			source.CopyToLocalCollection(errorList);
+			ActiveBundle.Activate(Filter, out var manifestInfo).CopyToLocalCollection(errorList);
 			List<IResourceBundle> list2 = new List<IResourceBundle>();
 			List<string> list3 = new List<string> { manifestInfo.StartupScript };
 			foreach (IBundleSpecifier require in manifestInfo.Requires)
 			{
-				Redbox.REDS.Framework.ErrorList bundle = InnerBundles.GetBundle(require.Name, require.Version.ToString(), out var bundle2, out var manifestInfo2);
-				bundle.CopyToLocalCollection(errorList);
+				InnerBundles.GetBundle(require.Name, require.Version.ToString(), out var bundle, out var manifestInfo2).CopyToLocalCollection(errorList);
 				if (manifestInfo2 == null)
 				{
 					continue;
@@ -232,7 +232,7 @@ public class ResourceBundleService : IResourceBundleService
 				{
 					list3.Add(manifestInfo2.StartupScript);
 				}
-				list2.Add(bundle2);
+				list2.Add(bundle);
 			}
 			if (!errorList.ContainsError())
 			{
@@ -261,16 +261,15 @@ public class ResourceBundleService : IResourceBundleService
 						});
 					}
 					service4.RegisterFunctions(kernelFunctionRegistryService.GetKernelFunctions());
-					ICallbackService service5 = ServiceLocator.Instance.GetService<ICallbackService>();
-					service5.Resume();
+					ServiceLocator.Instance.GetService<ICallbackService>().Resume();
 					if (ShowDebugger)
 					{
 						ShowDebugger = false;
-						IDebugService service6 = ServiceLocator.Instance.GetService<IDebugService>();
-						if (service6 != null)
+						IDebugService service5 = ServiceLocator.Instance.GetService<IDebugService>();
+						if (service5 != null)
 						{
-							service6.IsApplicationRunning = false;
-							service6.ActivateDebugger();
+							service5.IsApplicationRunning = false;
+							service5.ActivateDebugger();
 						}
 					}
 					else
@@ -295,8 +294,7 @@ public class ResourceBundleService : IResourceBundleService
 		}
 		finally
 		{
-			IEngineApplication service7 = ServiceLocator.Instance.GetService<IEngineApplication>();
-			service7.AppStarting = false;
+			ServiceLocator.Instance.GetService<IEngineApplication>().AppStarting = false;
 			switchStatusForm.Close();
 		}
 	}
@@ -354,8 +352,8 @@ public class ResourceBundleService : IResourceBundleService
 			string[] files2 = Directory.GetFiles(item, "*.bundle");
 			if (files2.Length != 0)
 			{
-				string[] array = files2;
-				foreach (string text2 in array)
+				string[] searchPath = files2;
+				foreach (string text2 in searchPath)
 				{
 					ResourceBundle resourceBundle = new ResourceBundle(text2, ResourceBundleStorageType.Zipped);
 					Redbox.REDS.Framework.ErrorList errorList2 = resourceBundle.LoadResources();
@@ -367,22 +365,18 @@ public class ResourceBundleService : IResourceBundleService
 						}
 						continue;
 					}
-					Redbox.REDS.Framework.ErrorList source = InnerBundles.AddBundleVersion(resourceBundle);
-					source.CopyToLocalCollection(errorList);
+					InnerBundles.AddBundleVersion(resourceBundle).CopyToLocalCollection(errorList);
 					if (!errorList.ContainsError())
 					{
 						LogHelper.Instance.Log("......Loaded bundle '{0}'.", text2);
 					}
 				}
-				continue;
 			}
-			string[] files3 = Directory.GetFiles(item, "manifest.resource");
-			if (files3.Length == 1)
+			else if (Directory.GetFiles(item, "manifest.resource").Length == 1)
 			{
 				ResourceBundle resourceBundle2 = new ResourceBundle(item, ResourceBundleStorageType.FileSystem);
 				resourceBundle2.LoadResources();
-				Redbox.REDS.Framework.ErrorList source2 = InnerBundles.AddBundleVersion(resourceBundle2);
-				source2.CopyToLocalCollection(errorList);
+				InnerBundles.AddBundleVersion(resourceBundle2).CopyToLocalCollection(errorList);
 				if (!errorList.ContainsError())
 				{
 					LogHelper.Instance.Log("......Loaded loose bundle '{0}'.", item);
@@ -404,16 +398,14 @@ public class ResourceBundleService : IResourceBundleService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList ActivateDefaultBundle()
 	{
-		string defaultBundleName = DefaultBundleName;
-		BundleSpecifier bundleSpecifier = new BundleSpecifier(defaultBundleName);
+		BundleSpecifier bundleSpecifier = new BundleSpecifier(DefaultBundleName);
 		return Activate(bundleSpecifier.Name, bundleSpecifier.Version.ToString());
 	}
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList Activate(string productName, string productVersion)
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		Redbox.REDS.Framework.ErrorList bundle = InnerBundles.GetBundle(productName, productVersion, out var bundle2, out var manifestInfo);
-		bundle.CopyToLocalCollection(errorList);
+		InnerBundles.GetBundle(productName, productVersion, out var bundle, out var manifestInfo).CopyToLocalCollection(errorList);
 		if (manifestInfo != null && manifestInfo.BundleType != BundleType.Application)
 		{
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("B122", "Only Application bundles may be activated.", "Specify a bundle that has a type of Application."));
@@ -421,7 +413,7 @@ public class ResourceBundleService : IResourceBundleService
 		}
 		if (!errorList.ContainsError())
 		{
-			SwitchToBundle = bundle2;
+			SwitchToBundle = bundle;
 		}
 		return errorList;
 	}
@@ -446,8 +438,7 @@ public class ResourceBundleService : IResourceBundleService
 		IKernelExtensionService service3 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
 		errorList.AddRange(service3.DeactivateAllExtensions());
 		LogHelper.Instance.Log("Deactivate all kernel extensions", LogEntryType.Info);
-		IMacroService service4 = ServiceLocator.Instance.GetService<IMacroService>();
-		service4.Clear(new string[2] { "RunningPath", "EngineVersion" });
+		ServiceLocator.Instance.GetService<IMacroService>().Clear(new string[2] { "RunningPath", "EngineVersion" });
 		ResetServices(errorList);
 		ActiveBundle = null;
 		ActiveBundleSet = null;
@@ -456,8 +447,7 @@ public class ResourceBundleService : IResourceBundleService
 
 	public void Restart()
 	{
-		IResource manifest = GetManifest(out var manifestInfo);
-		if (manifest != null)
+		if (GetManifest(out var manifestInfo) != null)
 		{
 			Activate(manifestInfo.ProductName, manifestInfo.ProductVersion);
 		}
@@ -470,38 +460,44 @@ public class ResourceBundleService : IResourceBundleService
 
 	public IResourceBundle GetBundle(IBundleSpecifier bundleSpecifier)
 	{
-		Redbox.REDS.Framework.ErrorList bundle = InnerBundles.GetBundle(bundleSpecifier.Name, bundleSpecifier.Version.ToString(), out var bundle2, out var _);
-		return bundle2;
+		InnerBundles.GetBundle(bundleSpecifier.Name, bundleSpecifier.Version.ToString(), out var bundle, out var _);
+		return bundle;
 	}
 
 	public IResource GetResource(string resourceName)
 	{
-		return (ActiveBundleSet != null) ? ActiveBundleSet.GetResource(resourceName, Filter) : null;
+		if (ActiveBundleSet == null)
+		{
+			return null;
+		}
+		return ActiveBundleSet.GetResource(resourceName, Filter);
 	}
 
 	public ReadOnlyCollection<IResource> GetResources(string typeName)
 	{
-		return (ActiveBundleSet != null) ? ActiveBundleSet.GetResources(typeName, Filter) : new List<IResource>().AsReadOnly();
+		if (ActiveBundleSet == null)
+		{
+			return new List<IResource>().AsReadOnly();
+		}
+		return ActiveBundleSet.GetResources(typeName, Filter);
 	}
 
 	public ReadOnlyCollection<IResource> GetResourcesUnfiltered(string typeName)
 	{
-		return (ActiveBundleSet != null) ? ActiveBundleSet.GetResourcesUnfiltered(typeName) : new List<IResource>().AsReadOnly();
+		if (ActiveBundleSet == null)
+		{
+			return new List<IResource>().AsReadOnly();
+		}
+		return ActiveBundleSet.GetResourcesUnfiltered(typeName);
 	}
 
 	public IDictionary<string, IResourceType> GetResourceTypes()
 	{
-		IDictionary<string, IResourceType> result;
 		if (ActiveBundleSet == null)
 		{
-			IDictionary<string, IResourceType> dictionary = new Dictionary<string, IResourceType>();
-			result = dictionary;
+			return new Dictionary<string, IResourceType>();
 		}
-		else
-		{
-			result = ActiveBundleSet.GetResourceTypes();
-		}
-		return result;
+		return ActiveBundleSet.GetResourceTypes();
 	}
 
 	public Font GetFont(string resourceName, out bool resourceFound)
@@ -543,7 +539,11 @@ public class ResourceBundleService : IResourceBundleService
 	public IResource GetManifest(out IManifestInfo manifestInfo)
 	{
 		manifestInfo = null;
-		return (ActiveBundle != null) ? ActiveBundle.GetManifest(Filter, out manifestInfo) : null;
+		if (ActiveBundle == null)
+		{
+			return null;
+		}
+		return ActiveBundle.GetManifest(Filter, out manifestInfo);
 	}
 
 	public XmlNode GetXml(string resourceName)
@@ -577,12 +577,10 @@ public class ResourceBundleService : IResourceBundleService
 			if (array != null)
 			{
 				string text = string.Format("memorystream://{0}", aspect.Properties["file"]);
-				Uri uri = new Uri(text);
-				Package package = PackageStore.GetPackage(uri);
+				Package package = PackageStore.GetPackage(new Uri(text));
 				if (package == null)
 				{
-					MemoryStream stream = new MemoryStream(array);
-					package = Package.Open(stream);
+					package = Package.Open(new MemoryStream(array));
 					PackageStore.AddPackage(new Uri(text), package);
 				}
 				result = new XpsDocument(package, CompressionOption.Fast, text);
@@ -646,8 +644,7 @@ public class ResourceBundleService : IResourceBundleService
 
 	public ReadOnlyCollection<object> ExecuteScript(string resourceName)
 	{
-		IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-		return service.ExecuteScript(resourceName);
+		return ServiceLocator.Instance.GetService<IKernelService>().ExecuteScript(resourceName);
 	}
 
 	private ResourceBundleService()
@@ -660,34 +657,34 @@ public class ResourceBundleService : IResourceBundleService
 		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
 		ITimerService service3 = ServiceLocator.Instance.GetService<ITimerService>();
 		IInputService service4 = ServiceLocator.Instance.GetService<IInputService>();
-		ISoundService service5 = ServiceLocator.Instance.GetService<ISoundService>();
-		IKernelService service6 = ServiceLocator.Instance.GetService<IKernelService>();
-		ISchedulerService service7 = ServiceLocator.Instance.GetService<ISchedulerService>();
-		IRenderingService service8 = ServiceLocator.Instance.GetService<IRenderingService>();
-		IDataStoreService service9 = ServiceLocator.Instance.GetService<IDataStoreService>();
-		IFontCacheService service10 = ServiceLocator.Instance.GetService<IFontCacheService>();
-		IStyleSheetService service11 = ServiceLocator.Instance.GetService<IStyleSheetService>();
-		IBitmapCacheService service12 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
-		IShoppingSessionService service13 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		IEnvironmentNotificationService service14 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-		IKernelFunctionRegistryService service15 = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
-		service7?.Reset();
+		ServiceLocator.Instance.GetService<ISoundService>();
+		IKernelService service5 = ServiceLocator.Instance.GetService<IKernelService>();
+		ISchedulerService service6 = ServiceLocator.Instance.GetService<ISchedulerService>();
+		IRenderingService service7 = ServiceLocator.Instance.GetService<IRenderingService>();
+		IDataStoreService service8 = ServiceLocator.Instance.GetService<IDataStoreService>();
+		IFontCacheService service9 = ServiceLocator.Instance.GetService<IFontCacheService>();
+		IStyleSheetService service10 = ServiceLocator.Instance.GetService<IStyleSheetService>();
+		IBitmapCacheService service11 = ServiceLocator.Instance.GetService<IBitmapCacheService>();
+		IShoppingSessionService service12 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		IEnvironmentNotificationService service13 = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		IKernelFunctionRegistryService service14 = ServiceLocator.Instance.GetService<IKernelFunctionRegistryService>();
+		service6?.Reset();
 		service3?.Reset();
-		if (service8.ActiveScene != null)
+		if (service7.ActiveScene != null)
 		{
-			service8.ActiveScene.Clear();
+			service7.ActiveScene.Clear();
 		}
 		service2.Reset();
-		service11?.Reset();
-		service12.DropCache();
-		service10.DropCache();
-		service6.Reset();
-		service15.Reset();
-		service4.Reset();
+		service10?.Reset();
+		service11.DropCache();
+		service9.DropCache();
+		service5.Reset();
 		service14.Reset();
+		service4.Reset();
 		service13.Reset();
+		service12.Reset();
 		service.Reset();
-		service9.CloseAllStores();
+		service8.CloseAllStores();
 	}
 
 	public void RegisterAssemblyFunctions(string name, Assembly assembly)

@@ -132,4 +132,6 @@ public interface IHardwareService
 	ErrorList RemoveHardwareCorrectionStats(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList RemoveHardwareCorrectionStats(HardwareCorrectionStatisticType stat, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
+
+	ErrorList IRHardwareInstalled(out DateTime? installDate);
 }

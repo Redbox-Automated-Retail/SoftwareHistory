@@ -42,9 +42,7 @@ internal class CachedProductLookupProvider : CachedDataStoreProvider
 
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
 	{
-		if (!(tableName == "Version"))
-		{
-		}
+		_ = tableName == "Version";
 	}
 
 	protected override ReadOnlyCollection<string> OnGetKeys(string dataStore, string tableName)
@@ -57,8 +55,7 @@ internal class CachedProductLookupProvider : CachedDataStoreProvider
 				Dictionary<string, Dictionary<string, object>> cachedDataStoreCreate = GetCachedDataStoreCreate(dataStore);
 				if (cachedDataStoreCreate.ContainsKey(tableName))
 				{
-					Dictionary<string, object> dictionary = cachedDataStoreCreate[tableName];
-					foreach (KeyValuePair<string, object> item in dictionary)
+					foreach (KeyValuePair<string, object> item in cachedDataStoreCreate[tableName])
 					{
 						list.Add(item.Key);
 					}
@@ -72,8 +69,7 @@ internal class CachedProductLookupProvider : CachedDataStoreProvider
 
 	protected override ReadOnlyCollection<string> OnGetTables(string dataStore)
 	{
-		List<string> list = new List<string> { "Version", "BarcodeToProduct" };
-		return list.AsReadOnly();
+		return new List<string> { "Version", "BarcodeToProduct" }.AsReadOnly();
 	}
 
 	protected override Dictionary<string, object> GetCachedTableCreate(string dataStore, string tableName)

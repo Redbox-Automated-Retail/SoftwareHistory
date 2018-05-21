@@ -1225,12 +1225,12 @@
     </Style.Triggers>
   </Style>
   <Style x:Key="help_updated_border_style" TargetType="{x:Type Border}">
-    <Setter Property="Margin" Value="0,-16,12,0" />
-    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="Margin" Value="0,-12,0,0" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Top" />
-    <Setter Property="Border.CornerRadius" Value="4" />
+    <Setter Property="Border.CornerRadius" Value="8" />
     <Setter Property="Height" Value="16" />
-    <Setter Property="Width" Value="70" />
+    <Setter Property="MinWidth" Value="70" />
     <Setter Property="Background" Value="#F05C27" />
   </Style>
   <Style x:Key="help_updated_text_style" TargetType="{x:Type TextBlock}">
@@ -1239,7 +1239,7 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="TextBlock.Padding" Value="6,2,6,2" />
     <Setter Property="Margin" Value="0,0,0,0" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontSize" Value="10" />
     <Setter Property="FontFamily" Value="Arial" />
     <Setter Property="UIElement.Effect">
       <Setter.Value>
@@ -2302,6 +2302,10 @@
         <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#9B9B9B" />
       </Trigger>
     </Style.Triggers>
+  </Style>
+  <Style x:Key="style_rubine_white_border_button" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource style_rb_purple_white_border_button}">
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#E42045" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#E42045" />
   </Style>
   <Style x:Key="white_rubine_gradient_border_button" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource flat_rounded_button_style}">
     <Setter Property="BorderThickness" Value="3" />

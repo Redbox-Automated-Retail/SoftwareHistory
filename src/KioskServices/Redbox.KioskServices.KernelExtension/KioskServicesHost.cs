@@ -92,7 +92,14 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		ServiceLocator.Instance.AddService(typeof(IAuthenticationServices), AuthenticationServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IDigitalServices), DigitalServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IMarketingOptinServices), MarketingOptinServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IPersonalizationServices), PersonalizationServicesProxy.Instance);
+		if (GetPzSLiveCall())
+		{
+			ServiceLocator.Instance.AddService(typeof(IPersonalizationServices), PersonalizationServicesProxy.Instance);
+		}
+		else
+		{
+			ServiceLocator.Instance.AddService(typeof(IPersonalizationServices), PersonalizationServicesProxySimulator.Instance);
+		}
 		ServiceLocator.Instance.AddService(typeof(ILoyaltyServices), LoyaltyServicesProxy.Instance);
 		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
 		if (service != null)
@@ -186,5 +193,10 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		{
 			return false;
 		}
+	}
+
+	private static bool GetPzSLiveCall()
+	{
+		return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "LiveCall", defaultValue: true);
 	}
 }

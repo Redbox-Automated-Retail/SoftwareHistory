@@ -24,174 +24,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 
 	public static PersonalizationServicesProxy Instance => Singleton<PersonalizationServicesProxy>.Instance;
 
-	public KioskLoginResponseErrors ResponseCode
-	{
-		get
-		{
-			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "KioskLoginResponseError", "Error");
-			return (KioskLoginResponseErrors)Enum.Parse(typeof(KioskLoginResponseErrors), value, ignoreCase: true);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "KioskLoginResponseError", value);
-		}
-	}
-
-	public bool LiveCall
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "LiveCall", defaultValue: true);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "LiveCall", value);
-		}
-	}
-
-	public bool SimulateSuccess
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "SimulateSuccess", defaultValue: false);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "SimulateSuccess", value);
-		}
-	}
-
-	public string CustomerProfileNumber
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "CustomerProfileNumber", "SimulatedValue");
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "CustomerProfileNumber", value);
-		}
-	}
-
-	public string FirstName
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "FirstName", "SimulatedValue");
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "FirstName", value);
-		}
-	}
-
-	public string LoginEmail
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "LoginEmail", "SimulatedValue");
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "LoginEmail", value);
-		}
-	}
-
-	public string PhoneNumber
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PhoneNumber", "SimulatedValue");
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PhoneNumber", value);
-		}
-	}
-
-	public string PostalCode
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PostalCode", "SimulatedValue");
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PostalCode", value);
-		}
-	}
-
-	public DateTime? BirthDate
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "BirthDate", DateTime.MinValue);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "BirthDate", value);
-		}
-	}
-
-	public int LoyaltyPointBalance
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "LoyaltyPointBalance", 0);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "LoyaltyPointBalance", value);
-		}
-	}
-
-	public string LoyaltyTier
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "LoyaltyTier", "SimulatedValue");
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "LoyaltyTier", value);
-		}
-	}
-
-	public int LoyaltyTierCounter
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "LoyaltyTierCounter", 0);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "LoyaltyTierCounter", value);
-		}
-	}
-
-	public int PointsExpiring
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PointsExpiring", 0);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PointsExpiring", value);
-		}
-	}
-
-	public DateTime? PointsExpirationDate
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PointsExpirationDate", DateTime.MinValue);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PointsExpirationDate", value);
-		}
-	}
+	public string CustomerProfileNumber { get; set; }
 
 	private PersonalizationServicesProxy()
 	{
@@ -201,14 +34,12 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 	{
 		string password2 = SecureStringToString(password);
 		string pin2 = SecureStringToString(pin);
-		if (LiveCall)
-		{
-			PerformLiveLogin(kioskId, emailAddress, password2, phoneNumber, pin2, completeCallback);
-		}
-		else
-		{
-			PerformSimulatedLogin(kioskId, emailAddress, password2, phoneNumber, pin2, completeCallback);
-		}
+		PerformLiveLogin(kioskId, emailAddress, password2, phoneNumber, pin2, completeCallback);
+	}
+
+	public void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback)
+	{
+		PerformLiveAccountUpdate(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback);
 	}
 
 	private static string SecureStringToString(SecureString value)
@@ -356,16 +187,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 		});
 	}
 
-	private static object GetResponseValue(IDictionary<string, object> response, string key, object DefaultValue)
-	{
-		if (!response.ContainsKey(key) || response[key] == null)
-		{
-			return DefaultValue;
-		}
-		return response[key];
-	}
-
-	private void PerformSimulatedLogin(int kioskId, string emailAddress, string password, string phoneNumber, string pin, RemoteServiceCallback completeCallback)
+	private void PerformLiveAccountUpdate(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -375,40 +197,59 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				LogHelper.Instance.Log("Simulate call to remote IPersonalization.Login");
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				_ = new
+				if (!StoreServicesProxy.Instance.IsStandAlone)
 				{
-					KioskId = kioskId,
-					MessageId = Guid.NewGuid(),
-					MessageType = "KioskLogin",
-					EngineVersion = service["EngineVersion"],
-					BundleVersion = service["ProductVersion"],
-					EmailAddress = emailAddress,
-					PhoneNumber = phoneNumber
-				};
-				remoteServiceResult.Success = SimulateSuccess;
-				remoteServiceResult.Properties["CustomerProfileNumber"] = CustomerProfileNumber;
-				remoteServiceResult.Properties["FirstName"] = FirstName;
-				remoteServiceResult.Properties["LoginEmail"] = LoginEmail;
-				remoteServiceResult.Properties["PhoneNumber"] = PhoneNumber;
-				remoteServiceResult.Properties["PostalCode"] = PostalCode;
-				remoteServiceResult.Properties["BirthDate"] = BirthDate;
-				remoteServiceResult.Properties["LoyaltyPointBalance"] = LoyaltyPointBalance;
-				remoteServiceResult.Properties["LoyaltyTier"] = LoyaltyTier;
-				remoteServiceResult.Properties["LoyaltyTierCounter"] = LoyaltyTierCounter;
-				remoteServiceResult.Properties["PointsExpiring"] = PointsExpiring;
-				remoteServiceResult.Properties["PointsExpirationDate"] = PointsExpirationDate;
-				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
-				if (!SimulateSuccess)
+					LogHelper.Instance.Log("Live call to remote IPersonalization.UpdateAccount, URL: {0}", KioskServicesProxy.Instance.Url);
+					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+					IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
+					{
+						KioskId = kioskId,
+						MessageId = Guid.NewGuid(),
+						MessageType = "UpdateAccount",
+						EngineVersion = service["EngineVersion"],
+						BundleVersion = service["ProductVersion"],
+						CustomerProfileNumber = customerProfileNumber,
+						Email = emailAddress,
+						MobilePhoneNumber = phoneNumber,
+						Pin = Encrypt(SecureStringToString(pin)),
+						PunchCardOptin = punchcardOptIn,
+						TextClubOptin = textClubOptIn
+					});
+					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+					remoteServiceResult.Properties["MobliePhoneNumber"] = GetResponseValue(dictionary, "MobliePhoneNumber", null)?.ToString();
+					if (dictionary.ContainsKey("ServerName"))
+					{
+						remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+					}
+					if (!remoteServiceResult.Success)
+					{
+						ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+						if (arrayList != null && arrayList.Count > 0)
+						{
+							if (arrayList[0] is Dictionary<string, object> dictionary2)
+							{
+								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(UpdateAccountResponseErrors?), (string)dictionary2["Code"]);
+								remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)UpdateAccountResponseErrors.Error);
+							}
+						}
+						else
+						{
+							remoteServiceResult.Properties["response"] = UpdateAccountResponseErrors.Error;
+						}
+					}
+				}
+				else
 				{
-					remoteServiceResult.Properties["response"] = ResponseCode;
+					LogHelper.Instance.Log("In stand alone mode, skipping call to UpdateAccount.", LogEntryType.Info);
+					remoteServiceResult.Properties["response"] = UpdateAccountResponseErrors.CommunicationError;
+					remoteServiceResult.Properties["is_online"] = false;
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in PersonalizationServicesProxy.PerformSimulatedLogin.", e);
-				remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+				LogHelper.Instance.Log("An unhandled exception was raised in PersonalizationServicesProxy.UpdateAccount.", e);
+				remoteServiceResult.Properties["response"] = UpdateAccountResponseErrors.Error;
 			}
 			finally
 			{
@@ -421,7 +262,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
-						Message = "Invoking completeCallback from PersonalizationServicesProxy.PerformSimulatedLogin."
+						Message = "Invoking completeCallback from PersonalizationServicesProxy.PerformLiveUpdateAccount."
 					});
 				}
 				finally
@@ -430,6 +271,15 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 				}
 			}
 		});
+	}
+
+	private static object GetResponseValue(IDictionary<string, object> response, string key, object DefaultValue)
+	{
+		if (!response.ContainsKey(key) || response[key] == null)
+		{
+			return DefaultValue;
+		}
+		return response[key];
 	}
 
 	private static string Encrypt(string data)

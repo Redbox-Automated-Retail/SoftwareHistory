@@ -28,8 +28,7 @@ public class IdeService : IIdeService
 			{
 				return new List<string>().AsReadOnly();
 			}
-			string[] value = service.GetValue("Ide", "RecentProjects", new string[0]);
-			return new List<string>(value).AsReadOnly();
+			return new List<string>(service.GetValue("Ide", "RecentProjects", new string[0])).AsReadOnly();
 		}
 	}
 
@@ -90,8 +89,7 @@ public class IdeService : IIdeService
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		IResource resource = service.ActiveBundleSet.GetResource(resourceName, service.Filter);
 		Show();
-		IdeMainForm ideMainForm = (IdeMainForm)MainForm;
-		ideMainForm.OpenResourceEditor(resource, lineNumber, error);
+		((IdeMainForm)MainForm).OpenResourceEditor(resource, lineNumber, error);
 	}
 
 	public void SetDebuggerInstance(object instance)
