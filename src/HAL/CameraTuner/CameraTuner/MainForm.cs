@@ -317,6 +317,32 @@ public class MainForm : Form
 		WriteErrorText(string.Empty);
 	}
 
+	private void MapVideoCodes()
+	{
+		IBarcodeReader reader = BarcodeReaderFactory.Instance.GetConfiguredReader();
+		StreamWriter output = new StreamWriter("file_to_barcode.csv");
+		try
+		{
+			Array.ForEach(Directory.GetFiles(ImagesFolder, "*.jpg"), delegate(string each)
+			{
+				IScanResult scanResult = reader.Scan(each);
+				string arg = "UNKNOWN";
+				if (scanResult.DecodeResults.Count > 0)
+				{
+					arg = scanResult.DecodeResults[0].Matrix;
+				}
+				output.WriteLine("{0},{1}", each, arg);
+			});
+		}
+		finally
+		{
+			if (output != null)
+			{
+				((IDisposable)output).Dispose();
+			}
+		}
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)

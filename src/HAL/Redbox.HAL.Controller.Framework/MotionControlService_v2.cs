@@ -25,14 +25,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 
 	public void NotifyConfigurationLoaded()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			Controller = new EmulatedMotionController2();
-		}
-		else
-		{
-			Controller = new ArcusMotionController2();
-		}
+		Controller = new ArcusMotionController2();
 		Controller.OnConfigurationLoad();
 	}
 

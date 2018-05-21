@@ -6,8 +6,6 @@ namespace Redbox.HAL.Script.Framework;
 
 internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 {
-	internal override FraudScanJobMask BitValue => FraudScanJobMask.SyncLocations;
-
 	public void OnStuck(IGetResult result)
 	{
 		HandleStuck(result);

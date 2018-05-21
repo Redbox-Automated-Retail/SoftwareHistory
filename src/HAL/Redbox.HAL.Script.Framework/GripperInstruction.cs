@@ -159,20 +159,13 @@ public sealed class GripperInstruction : Instruction
 			break;
 		case "READ-DISC":
 		{
-			CenterDiskMethod centerDiskMethod = CenterDiskMethod.None;
+			CenterDiskMethod method = CenterDiskMethod.None;
 			KeyValuePair keyValuePair2 = base.Operands.GetKeyValuePair("SHUFFLE");
 			if (keyValuePair2 != null)
 			{
-				centerDiskMethod = Enum<CenterDiskMethod>.ParseIgnoringCase(keyValuePair2.Value, CenterDiskMethod.None);
+				method = Enum<CenterDiskMethod>.ParseIgnoringCase(keyValuePair2.Value, CenterDiskMethod.None);
 			}
-			using Scanner scanner = new Scanner();
-			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk || scanResult.ReadCode || centerDiskMethod == CenterDiskMethod.None)
-			{
-				PushReadResults(scanResult, context);
-				break;
-			}
-			service.Center(centerDiskMethod);
+			using Scanner scanner = new Scanner(method, service);
 			PushReadResults(scanner.Read(), context);
 			break;
 		}

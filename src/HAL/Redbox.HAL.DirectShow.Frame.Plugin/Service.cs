@@ -36,13 +36,17 @@ internal sealed class Service : ICameraPlugin
 			{
 				implementors = Enum<Implementors>.ParseIgnoringCase((string)properties["Implementor"], Implementors.Legacy);
 			}
-			if (implementors == Implementors.Slim)
+			switch (implementors)
 			{
+			case Implementors.Slim:
 				m_plugin = new SlimFrameService();
-			}
-			else
-			{
+				break;
+			case Implementors.Slim_v2:
+				m_plugin = new SlimFrameService_v2();
+				break;
+			default:
 				m_plugin = new LegacyService();
+				break;
 			}
 			LogHelper.Instance.Log("[DirectShowPlugin {0}] Implementing service is {1}", typeof(Service).Assembly.GetName().Version, implementors.ToString());
 			m_plugin.InitWithProperties(properties);

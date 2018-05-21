@@ -11,5 +11,6 @@ public enum DeviceStatus
 	Enabled = 4,
 	Disabled = 8,
 	DriverMatched = 0x10,
-	Configured = 0x20
+	Configured = 0x20,
+	NotStarted = 0x40
 }

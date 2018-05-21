@@ -53,13 +53,11 @@ internal class RandomSyncDecorator : SyncDecorator
 				AddError("Job error.");
 				return SyncResult.HardwareError;
 			}
-			ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
-			using Scanner scanner = new Scanner();
-			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			service.TrackCycle();
+			using Scanner scanner = new Scanner(service);
+			if (!scanner.Read().SnapOk)
 			{
-				string msg = $"Read disk returned a camera error status {scanResult.Diagnostic} ( ID = {scanResult.ScannedMatrix} )";
-				Context.AppLog.Write(msg, LogEntryType.Error);
 				Context.CreateResult("MachineError", "The CAMERA CAPTURE request timed out.", null, null, null, null, null);
 				return SyncResult.HardwareError;
 			}

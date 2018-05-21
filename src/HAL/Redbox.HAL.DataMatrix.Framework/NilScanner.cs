@@ -27,6 +27,11 @@ internal sealed class NilScanner : IScannerDevice, IDisposable
 		return false;
 	}
 
+	public bool Start(bool unused)
+	{
+		return false;
+	}
+
 	public bool Stop()
 	{
 		return false;

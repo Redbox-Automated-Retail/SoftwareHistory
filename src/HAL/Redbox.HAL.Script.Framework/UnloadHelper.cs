@@ -1,4 +1,3 @@
-using System;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
@@ -85,22 +84,9 @@ internal struct UnloadHelper : IFileDiskHandler
 			return;
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		using Scanner scanner = new Scanner();
-		CenterDiskMethod[] readMethods = m_readMethods;
-		foreach (CenterDiskMethod method in readMethods)
+		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
 		{
-			service.Center(method);
-			ScanResult scanResult = scanner.Read();
-			text = scanResult.ScannedMatrix;
-			if (!scanResult.SnapOk)
-			{
-				text = "UNKNOWN";
-				break;
-			}
-			if (scanResult.ReadCode)
-			{
-				break;
-			}
+			text = scanner.Read().ScannedMatrix;
 		}
 		using FileDiskOperation fileDiskOperation = new FileDiskOperation(new DefaultHandler(), Context);
 		if (fileDiskOperation.PutDiscAway(result, text) != ErrorCodes.Success)
@@ -116,74 +102,56 @@ internal struct UnloadHelper : IFileDiskHandler
 		ServiceLocator.Instance.GetService<IPersistentCounterService>();
 		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
 		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		ErrorCodes errorCodes = ErrorCodes.Success;
 		string text = "UNKNOWN";
-		FraudValidator fraudValidator = new FraudValidator(Context, FraudScanJobMask.Unload);
-		try
+		ErrorCodes errorCodes = service.MoveTo(srcDeck, srcSlot, MoveMode.Get, Context.AppLog);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			errorCodes = service.MoveTo(srcDeck, srcSlot, MoveMode.Get, Context.AppLog);
-			if (errorCodes != ErrorCodes.Success)
+			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
+			Context.CreateResult("MachineError", "There was an error executing the MOVE instruction.", srcDeck, srcSlot, null, null, null);
+			MerchandizingHelper.Instance.AddError(Result, "The MOVE instruction failed.");
+			return MerchandizeResult.HardwareError;
+		}
+		IGetResult getResult = service2.Get(Context.AppLog);
+		if (getResult.IsSlotEmpty)
+		{
+			Context.CreateResult("QlmUnloadQlmSlotEmpty", "There was no item found at this location.", srcDeck, srcSlot, null, null, null);
+			return MerchandizeResult.EmptyStuck;
+		}
+		if (!getResult.Success)
+		{
+			if (isVMZMachine && getResult.ItemStuck)
 			{
-				MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
-				Context.CreateResult("MachineError", "There was an error executing the MOVE instruction.", srcDeck, srcSlot, null, null, null);
-				MerchandizingHelper.Instance.AddError(Result, "The MOVE instruction failed.");
-				return MerchandizeResult.HardwareError;
-			}
-			IGetResult getResult = service2.Get(Context.AppLog);
-			if (getResult.IsSlotEmpty)
-			{
-				Context.CreateResult("QlmUnloadQlmSlotEmpty", "There was no item found at this location.", srcDeck, srcSlot, null, null, null);
+				IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
+				ILocation location = service3.Get(srcDeck, srcSlot);
+				location.Flags = MerchFlags.None;
+				service3.Save(location);
+				Context.CreateResult("UnloadEmptyStuck", "The disk at this location is stuck.", srcDeck, srcSlot, null, null, null);
 				return MerchandizeResult.EmptyStuck;
 			}
-			if (!getResult.Success)
+			Context.CreateResult("MachineError", string.Format("A hardware error occurred in the get from {0}.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, null, null, null);
+			MerchandizingHelper.Instance.AddError(Result, string.Format("An error occurred getting an item from the {0}.", isVMZMachine ? "VMZ" : "QLM"));
+			using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
 			{
-				if (isVMZMachine && getResult.ItemStuck)
+				if (clearGripperOperation.Execute() == ErrorCodes.Success)
 				{
-					IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
-					ILocation location = service3.Get(srcDeck, srcSlot);
-					location.Flags = MerchFlags.None;
-					service3.Save(location);
-					Context.CreateResult("UnloadEmptyStuck", "The disk at this location is stuck.", srcDeck, srcSlot, null, null, null);
-					return MerchandizeResult.EmptyStuck;
-				}
-				Context.CreateResult("MachineError", string.Format("A hardware error occurred in the get from {0}.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, null, null, null);
-				MerchandizingHelper.Instance.AddError(Result, string.Format("An error occurred getting an item from the {0}.", isVMZMachine ? "VMZ" : "QLM"));
-				using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
-				{
-					if (clearGripperOperation.Execute() == ErrorCodes.Success)
-					{
-						MerchandizingHelper.Instance.CleanupJob(Result, Context, ErrorCodes.Success);
-					}
-				}
-				return MerchandizeResult.HardwareError;
-			}
-			fraudValidator.StartScan();
-			using Scanner scanner = new Scanner();
-			ScanResult scanResult = scanner.SmartReadDisk(m_readMethods);
-			text = scanResult.ScannedMatrix;
-			if (!scanResult.SnapOk)
-			{
-				Context.AppLog.Write("The camera is not taking images.", LogEntryType.Error);
-				text = "UNKNOWN";
-				if (ControllerConfiguration.Instance.IsVMZMachine)
-				{
-					Result.Errors.Add(Error.NewError("E997", "CAMERA CAPTURE error.", "The camera isn't working."));
+					MerchandizingHelper.Instance.CleanupJob(Result, Context, ErrorCodes.Success);
 				}
 			}
-			if (!scanResult.ReadCode)
+			return MerchandizeResult.HardwareError;
+		}
+		ScanResult scanResult = Scanner.SmartReadDisk(m_readMethods);
+		text = scanResult.ScannedMatrix;
+		if (!scanResult.SnapOk)
+		{
+			text = "UNKNOWN";
+			if (ControllerConfiguration.Instance.IsVMZMachine)
 			{
-				Context.AppLog.Write("The barcode couldn't be read.", LogEntryType.Info);
-				Context.CreateResult("QlmUnloadBadRead", "The READ request failed because no barcode could be read.", srcDeck, srcSlot, null, null, null);
-			}
-			else if (fraudValidator.ScanConfigured)
-			{
-				IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(text);
-				fraudValidator.Publish(scanResult2, text);
+				Result.Errors.Add(Error.NewError("E997", "CAMERA CAPTURE error.", "The camera isn't working."));
 			}
 		}
-		finally
+		if (!scanResult.ReadCode)
 		{
-			((IDisposable)fraudValidator/*cast due to constrained. prefix*/).Dispose();
+			Context.CreateResult("QlmUnloadBadRead", "The READ request failed because no barcode could be read.", srcDeck, srcSlot, null, null, null);
 		}
 		Context.CreateResult("QlmUnloadBarcodeFromQlm", string.Format("The item pulled from the {0} has the following barcode.", isVMZMachine ? "VMZ" : "QLM"), srcDeck, srcSlot, text, null, null);
 		if (ControllerConfiguration.Instance.IsVMZMachine)
@@ -192,7 +160,7 @@ internal struct UnloadHelper : IFileDiskHandler
 			if (errorCodes != ErrorCodes.Success)
 			{
 				MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
-				MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
+				MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 				return MerchandizeResult.HardwareError;
 			}
 			IPutResult putResult = service2.Put(text, Context.AppLog);
@@ -223,7 +191,7 @@ internal struct UnloadHelper : IFileDiskHandler
 		if (errorCodes2 != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes2);
-			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
+			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();

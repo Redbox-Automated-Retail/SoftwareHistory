@@ -8,7 +8,7 @@ internal sealed class SlimFrameService : AbstractDirectShowControl
 {
 	private DirectShowFrameControl Control;
 
-	protected override bool ControlStartup(string moniker)
+	protected override bool OnStartup(string moniker)
 	{
 		Control = new DirectShowFrameControl(moniker, GrabTime, Debug);
 		bool flag = false;
@@ -32,25 +32,25 @@ internal sealed class SlimFrameService : AbstractDirectShowControl
 		Control.PlayingFinished += base.PlayingFinished;
 		Control.Start();
 		Thread.Sleep(WakeupPause);
-		LogHelper.Instance.Log("DirectShow frame service control running.");
+		LogHelper.Instance.Log("{0} Control running.", LogHeader);
 		return true;
 	}
 
-	protected override void CoreSnap(string fileName)
+	protected override void OnSnap(string fileName)
 	{
 		if (!Control.SimulateTrigger(fileName, SnapTimeout))
 		{
-			LogHelper.Instance.Log("[DirectShowSlim Service] Image received wait timed out.");
+			LogHelper.Instance.Log("{0} Image received wait timed out.", LogHeader);
 		}
 	}
 
-	protected override bool ControlShutdown()
+	protected override bool OnShutdown()
 	{
 		Control.SignalToStop();
 		Control.WaitForStop();
 		Control.PlayingFinished -= base.PlayingFinished;
 		Control = null;
-		LogHelper.Instance.Log(">> SlimService plugin shutdown.");
+		LogHelper.Instance.Log("{0} plugin shutdown.", LogHeader);
 		return true;
 	}
 

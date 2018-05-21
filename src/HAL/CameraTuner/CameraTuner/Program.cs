@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
 using Redbox.HAL.CameraTuner.Properties;
+using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.CameraTuner;
@@ -46,6 +47,7 @@ public class Program : IDisposable
 		{
 			Environment.Exit(10);
 		}
+		ServiceLocator.Instance.AddService(typeof(IEncryptionService), new TripleDesEncryptionService());
 		if (Settings.Default.EmulatedTunerFailure)
 		{
 			Environment.Exit(2);

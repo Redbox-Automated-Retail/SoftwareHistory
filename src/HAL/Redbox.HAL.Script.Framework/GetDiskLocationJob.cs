@@ -2,7 +2,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "get-barcode-vmz-location", Operand = "GET-BARCODE-VMZ-LOCATION")]
+[NativeJob(ProgramName = "get-barcode-vmz-location")]
 internal sealed class GetDiskLocationJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()

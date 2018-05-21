@@ -31,11 +31,10 @@ internal sealed class TakeDiskAtDoorJob : NativeJobAdapter
 			if (ErrorCodes.PickerFull != errorCodes2)
 			{
 				base.Context.CreateInfoResult("ReceiveFailure", errorCodes2.ToString().ToUpper());
+				return;
 			}
-			else
-			{
-				base.Context.CreateInfoResult("ItemReceived", "Item received in picker.");
-			}
+			base.Context.CreateInfoResult("ItemReceived", "Item received in picker.");
+			base.ControlSystem.TrackCycle();
 		}
 		finally
 		{

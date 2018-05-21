@@ -275,29 +275,20 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			}
 		}
 		base.ControlSystem.TrackCycle();
-		using Scanner scanner = new Scanner();
-		ScanResult scanResult = scanner.Read();
+		ScanResult scanResult = null;
+		using (Scanner scanner = new Scanner(base.ControlSystem))
+		{
+			scanResult = scanner.Read();
+		}
 		if (!scanResult.SnapOk)
 		{
 			base.Context.CreateCameraCaptureErrorResult();
-			base.AppLog.LogCaptureProblem();
 			return FileFraudedDisk(source, id);
 		}
 		if (!scanResult.ReadCode)
 		{
-			base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
-			scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
-			{
-				base.Context.CreateCameraCaptureErrorResult();
-				base.AppLog.LogCaptureProblem();
-				return FileFraudedDisk(source, id);
-			}
-			if (!scanResult.ReadCode)
-			{
-				string msg = $"The barcode in the picker could not be read; scanned ID = {scanResult.ScannedMatrix}; item assumed vended.";
-				base.Context.AppLog.Write(msg, LogEntryType.Info);
-			}
+			string msg = $"The barcode in the picker could not be read; scanned ID = {scanResult.ScannedMatrix}; item assumed vended.";
+			base.Context.AppLog.Write(msg, LogEntryType.Info);
 		}
 		if (scanResult.ScannedMatrix == id)
 		{
@@ -310,7 +301,11 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			{
 				return ErrorCodes.SensorReadError;
 			}
-			return pickerSensorReadResult.IsFull ? ErrorCodes.PickerFull : ErrorCodes.PickerEmpty;
+			if (!pickerSensorReadResult.IsFull)
+			{
+				return ErrorCodes.PickerEmpty;
+			}
+			return ErrorCodes.PickerFull;
 		}
 		base.Context.AppLog.Write($"Item ID = {id} was not taken; it did not match the barcode of the item in the picker ID = {scanResult.ScannedMatrix}.");
 		base.Context.ServiceLog("The barcode in the picker could not be matched to the requested item; returned ID = {0}; item assumed vended.", scanResult.ScannedMatrix);

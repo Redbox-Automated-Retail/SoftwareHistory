@@ -17,12 +17,11 @@ internal abstract class ThinHelper
 	{
 		get
 		{
-			if (m_debug.HasValue)
+			if (!m_debug.HasValue)
 			{
-				return m_debug.Value;
+				IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
+				m_debug = map.GetValue("DebugVMZ", def: false);
 			}
-			IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
-			m_debug = map.GetValue("DebugVMZ", def: false);
 			return m_debug.Value;
 		}
 	}
@@ -146,7 +145,7 @@ internal abstract class ThinHelper
 		if (errorCodes != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
-			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
+			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
@@ -172,7 +171,7 @@ internal abstract class ThinHelper
 		Context.AppLog.Write("Unable to find a slot for the thin; put it back and bail.", LogEntryType.Info);
 		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(source, MoveMode.Put, Context.AppLog) != ErrorCodes.Success)
 		{
-			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
+			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
@@ -198,7 +197,7 @@ internal abstract class ThinHelper
 		if (errorCodes != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
-			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context, leaveResult: true);
+			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
 		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();

@@ -113,11 +113,6 @@ internal sealed class ApplicationLog : IFormattedLog
 		Write(HardwareMessageCatalog.LookupFailure(id), LogEntryType.Error);
 	}
 
-	internal void LogCaptureProblem()
-	{
-		WriteAndFlush("No image was captured.");
-	}
-
 	internal void Write(string msg)
 	{
 		WriteAndFlush(msg);
@@ -177,37 +172,33 @@ internal sealed class ApplicationLog : IFormattedLog
 
 	private void ConfigureAndOpen(string directory, string fileName, bool flushOnWrite, bool appends)
 	{
-		string text = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath;
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			text = ServiceLocator.Instance.GetService<IRuntimeService>().RuntimePath("Logs");
-		}
-		string text2 = text;
+		string logsBasePath = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath;
+		string text = logsBasePath;
 		if (!string.IsNullOrEmpty(directory))
 		{
-			text2 = Path.Combine(text, directory);
-			if (!System.IO.Directory.Exists(text2))
+			text = Path.Combine(logsBasePath, directory);
+			if (!System.IO.Directory.Exists(text))
 			{
 				try
 				{
-					System.IO.Directory.CreateDirectory(text2);
+					System.IO.Directory.CreateDirectory(text);
 				}
 				catch (Exception e)
 				{
 					LogHelper.Instance.Log("Unable to create subdirectory.", e);
-					text2 = text;
+					text = logsBasePath;
 				}
 			}
 		}
 		Configured = true;
-		Directory = text2;
+		Directory = text;
 		FileName = fileName;
 		FlushOnWrite = flushOnWrite;
 		AppendToExisting = appends;
-		string text3 = Path.Combine(Directory, FileName);
-		if (AppendToExisting && File.Exists(text3) && new FileInfo(text3).Length >= 1024000)
+		string text2 = Path.Combine(Directory, FileName);
+		if (AppendToExisting && File.Exists(text2) && new FileInfo(text2).Length >= 1024000)
 		{
-			CreateBackup(text3);
+			CreateBackup(text2);
 		}
 		Open();
 	}

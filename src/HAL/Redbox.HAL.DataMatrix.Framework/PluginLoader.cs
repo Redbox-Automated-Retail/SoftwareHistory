@@ -42,9 +42,9 @@ internal sealed class PluginLoader
 			return;
 		}
 		string[] array = files;
-		for (int i = 0; i < array.Length; i++)
+		foreach (string xmlPath in array)
 		{
-			CameraPluginDescriptor cameraPluginDescriptor = CameraPluginDescriptor.FromXml(array[i]);
+			CameraPluginDescriptor cameraPluginDescriptor = CameraPluginDescriptor.FromXml(xmlPath);
 			if (cameraPluginDescriptor != null)
 			{
 				PluginDescriptors.Add(cameraPluginDescriptor);
@@ -55,8 +55,11 @@ internal sealed class PluginLoader
 	private bool LocatePluginInner(CameraPluginDescriptor descriptor, out ICameraPlugin plugin)
 	{
 		plugin = null;
-		Type[] exportedTypes = Assembly.LoadFrom(Path.Combine(PluginsDirectory, descriptor.AssemblyName)).GetExportedTypes();
-		foreach (Type type in exportedTypes)
+		string assemblyFile = Path.Combine(PluginsDirectory, descriptor.AssemblyName);
+		Assembly assembly = Assembly.LoadFrom(assemblyFile);
+		Type[] exportedTypes = assembly.GetExportedTypes();
+		Type[] array = exportedTypes;
+		foreach (Type type in array)
 		{
 			if (type.FullName.Equals(descriptor.PluginNamespace))
 			{

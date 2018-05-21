@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using ClearImage;
 using RBDM;
@@ -14,6 +15,11 @@ internal sealed class ClearImageReaderV2 : IBarcodeReader
 	public bool IsLicensed { get; private set; }
 
 	public IScanResult Scan(string file)
+	{
+		return Scan(file, BarcodeConfiguration.Instance.ExpectedCodes);
+	}
+
+	public IScanResult Scan(string file, int expectedCodes)
 	{
 		ScanResult scanResult = new ScanResult();
 		if (!IsLicensed)
@@ -31,7 +37,7 @@ internal sealed class ClearImageReaderV2 : IBarcodeReader
 				int num = 0;
 				using (ExecutionTimer executionTimer = new ExecutionTimer())
 				{
-					num = TheReader.Find(BarcodeConfiguration.Instance.ExpectedCodes);
+					num = TheReader.Find(expectedCodes);
 					executionTimer.Stop();
 					scanResult.ExecutionTime = executionTimer.Elapsed;
 				}
@@ -77,7 +83,8 @@ internal sealed class ClearImageReaderV2 : IBarcodeReader
 		LogHelper.Instance.Log("Clearimage v2 reader.init()");
 		try
 		{
-			int hModule = Marshal.GetHINSTANCE(GetType().Module).ToInt32();
+			Module module = GetType().Module;
+			int hModule = Marshal.GetHINSTANCE(module).ToInt32();
 			CiServer ciServer = new CiServerClass();
 			ciServer.OpenExt(hModule, 74391114, 0);
 			TheReader = new clsRBDM

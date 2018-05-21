@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -17,7 +16,7 @@ internal sealed class HardwareSurveyJob : NativeJobAdapter
 		base.Context.CreateInfoResult("KioskId", service.KioskId);
 		IUsbDeviceService service2 = ServiceLocator.Instance.GetService<IUsbDeviceService>();
 		base.Context.CreateInfoResult("AuxRelayBoard", "Not Configured");
-		base.Context.CreateInfoResult("QuickReturnStatus", QuickReturnDevice.Instance.GetStatus().ToString());
+		base.Context.CreateInfoResult("QuickReturnStatus", DeviceStatus.None.ToString());
 		IAirExchangerService service3 = ServiceLocator.Instance.GetService<IAirExchangerService>();
 		DeviceStatus deviceStatus = DeviceStatus.None;
 		if (service3.Configured)
@@ -35,7 +34,7 @@ internal sealed class HardwareSurveyJob : NativeJobAdapter
 		IDeviceDescriptor deviceDescriptor = service2.FindActiveCamera(matchDriver: false);
 		base.Context.CreateInfoResult("CameraInfo", (deviceDescriptor == null) ? "NONE" : deviceDescriptor.Friendlyname);
 		DeviceStatus deviceStatus2 = DeviceStatus.None;
-		if (new AbeDeviceDescriptor().Locate())
+		if (new AbeDeviceDescriptor(service2).Locate())
 		{
 			deviceStatus2 = DeviceStatus.Found;
 		}

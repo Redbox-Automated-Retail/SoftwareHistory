@@ -13,11 +13,6 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 		try
 		{
 			ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "RetrofitDeckTest");
-			if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-			{
-				applicationLog.Write("HAL is running emulated - do not run job.");
-				return;
-			}
 			if (!ControllerConfiguration.Instance.IsVMZMachine)
 			{
 				applicationLog.Write("The kiosk is still configured for a QLM - bail test.");

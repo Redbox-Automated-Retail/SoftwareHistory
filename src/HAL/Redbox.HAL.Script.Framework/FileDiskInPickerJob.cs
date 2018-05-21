@@ -20,9 +20,8 @@ internal sealed class FileDiskInPickerJob : NativeJobAdapter
 			return;
 		}
 		string matrix = "UNKNOWN";
-		using (Scanner scanner = new Scanner())
+		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, base.ControlSystem))
 		{
-			base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{

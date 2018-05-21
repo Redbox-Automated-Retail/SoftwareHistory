@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
 
@@ -16,6 +17,28 @@ internal sealed class ScannerDeviceFactory : IScannerDeviceService, IConfigurati
 	private readonly LegacyScanner LegacyDevice;
 
 	private readonly NilScanner m_nilInstance = new NilScanner();
+
+	public DateTime? IRHardwareInstall
+	{
+		get
+		{
+			string iRHardwareInstallDate = BarcodeConfiguration.Instance.IRHardwareInstallDate;
+			if ("NONE" == iRHardwareInstallDate)
+			{
+				return null;
+			}
+			DateTime? dateTime = null;
+			try
+			{
+				return DateTime.Parse(iRHardwareInstallDate);
+			}
+			catch
+			{
+				dateTime = null;
+			}
+			return dateTime;
+		}
+	}
 
 	public IScannerDevice GetConfiguredDevice()
 	{

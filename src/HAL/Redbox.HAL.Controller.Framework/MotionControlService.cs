@@ -34,14 +34,7 @@ internal sealed class MotionControlService : IMotionControlService, IConfigurati
 	public void NotifyConfigurationLoaded()
 	{
 		LogHelper.Instance.Log("[MotionControlService] Notify configuration loaded.");
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			Controller = new EmulatedMotionController(this);
-		}
-		else
-		{
-			Controller = new ArcusMotionController(this);
-		}
+		Controller = new ArcusMotionController(this);
 		Controller.NotifyConfigurationLoaded();
 	}
 

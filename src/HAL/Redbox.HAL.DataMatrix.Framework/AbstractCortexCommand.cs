@@ -58,7 +58,8 @@ internal abstract class AbstractCortexCommand
 		try
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
-			if (!port.SendRecv(Command, ReadTimeout).CommOk)
+			IChannelResponse channelResponse = port.SendRecv(Command, ReadTimeout);
+			if (!channelResponse.CommOk)
 			{
 				LogHelper.Instance.Log("[Cortex Service] Communication error with the device.");
 				PortError = true;

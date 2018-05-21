@@ -15,6 +15,17 @@ internal struct FileDiskOperation : IDisposable
 	{
 	}
 
+	internal ErrorCodes PutDiscAway(ExecutionResult result)
+	{
+		string idInPicker = "UNKNOWN";
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
+		{
+			idInPicker = scanner.Read().ScannedMatrix;
+		}
+		return PutDiscAway(result, idInPicker);
+	}
+
 	internal ErrorCodes PutDiscAway(ExecutionResult result, string idInPicker)
 	{
 		using IEmptySearchResult emptySearchResult = ServiceLocator.Instance.GetService<IEmptySearchPatternService>().FindMultipleEmptyLocations();

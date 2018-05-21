@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.IPC.Framework;
 using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
@@ -33,10 +32,10 @@ public sealed class JobCommand
 		using (new DisposeableList<ExecutionContext>(list))
 		{
 			list.Sort((ExecutionContext x, ExecutionContext y) => x.Priority.CompareTo(y.Priority));
-			foreach (ExecutionContext item in list)
+			list.ForEach(delegate(ExecutionContext each)
 			{
-				CommandHelper.FormatJob(item, context);
-			}
+				CommandHelper.FormatJob(each, context);
+			});
 		}
 	}
 
@@ -93,11 +92,7 @@ public sealed class JobCommand
 	[Usage("JOB disconnect job: job-id")]
 	public void Disconnect(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job != null)
-		{
-			DisconnectJob(job);
-		}
+		DisconnectJob(CommandHelper.GetJob(jobId, context.Errors, required: true));
 	}
 
 	[CommandForm(Name = "connect")]
@@ -241,7 +236,7 @@ public sealed class JobCommand
 				return;
 			}
 		}
-		ExecutionContext executionContext = ScheduleJob(name, label, startTime, priority ?? ProgramPriority.Normal, debugging ?? false);
+		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob(name, label, startTime, priority ?? ProgramPriority.Normal);
 		context.Errors.AddRange(executionContext.Result.Errors);
 		if (!context.Errors.ContainsError() & flag)
 		{
@@ -305,16 +300,7 @@ public sealed class JobCommand
 	[Usage("JOB quick-return-status")]
 	public void QuickReturnIsRunning(CommandContext context)
 	{
-		string text = (QuickReturnDevice.Instance.IsConfigured ? "ACTIVE" : "INACTIVE");
-		LogHelper.Instance.Log($"JOB quick-return-status status: {text}");
-		context.Messages.Add(text);
-	}
-
-	private static ExecutionContext ScheduleJob(string programName, string label, DateTime? startTime, ProgramPriority priority, bool enableDebugging)
-	{
-		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob(programName, label, startTime, priority);
-		executionContext.EnableDebugging = enableDebugging;
-		return executionContext;
+		context.Messages.Add("INACTIVE");
 	}
 
 	private static void DisconnectJob(ExecutionContext executionContext)

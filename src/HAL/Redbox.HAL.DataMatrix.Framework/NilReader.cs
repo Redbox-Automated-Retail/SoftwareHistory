@@ -12,4 +12,9 @@ internal class NilReader : IBarcodeReader
 	{
 		return Result;
 	}
+
+	public IScanResult Scan(string file, int notUsed)
+	{
+		return Result;
+	}
 }

@@ -3,50 +3,30 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core.Descriptors;
 
-public sealed class QuickReturnDescriptor : IDeviceDescriptor, IDriverDescriptor
+public sealed class QuickReturnDescriptor : AbstractDeviceDescriptor
 {
-	public string Vendor => "0403";
+	private readonly IDriverDescriptor Driver = new DriverDescriptor("2.4.6.0", "FTDI");
 
-	public string Product => "6001";
-
-	public string Friendlyname => "Quick Return";
-
-	public IDeviceSetupClass SetupClass { get; private set; }
-
-	public Version DriverVersion { get; private set; }
-
-	public string Provider => "FTDI";
-
-	public bool ResetDriver()
+	protected override bool OnResetDriver()
 	{
 		throw new NotImplementedException();
 	}
 
-	public bool MatchDriver()
-	{
-		if (ServiceLocator.Instance.GetService<IUsbDeviceService>().MatchDriver(this, this))
-		{
-			LogHelper.Instance.Log("[{0}] driver matched.", GetType().Name);
-			return true;
-		}
-		LogHelper.Instance.Log("[{0}]Could not match driver.", GetType().Name);
-		return false;
-	}
-
-	public bool Locate()
-	{
-		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDevice(this).Found;
-	}
-
-	public DeviceStatus GetStatus()
+	protected override DeviceStatus OnGetStatus()
 	{
 		throw new NotImplementedException();
 	}
 
-	public QuickReturnDescriptor()
+	protected override bool OnMatchDriver()
 	{
-		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
-		SetupClass = service.Get(DeviceClass.Ports);
-		DriverVersion = new Version("2.4.6.0");
+		return OnMatchDriver(this, Driver);
+	}
+
+	public QuickReturnDescriptor(IUsbDeviceService service)
+		: base(service, DeviceClass.Ports)
+	{
+		base.Vendor = "0403";
+		base.Product = "6001";
+		base.Friendlyname = "Quick Return";
 	}
 }

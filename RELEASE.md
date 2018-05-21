@@ -1,47 +1,47 @@
 # Zelda SR2 (1.10.2.5)
 
-- Product: MS HAL Tester 1.10.2.5
+- Product: HAL 1.10.2.5
 - Date (first download in the snapshots): 2018-05-21
-- Store labels: kop-ms-hal-tester-ZeldaSR2
+- Store labels: kop-hal-install-ZeldaSR2
 - Package revisions:
   - `kop-tools` revision 43 (`C26DDD7DCE4522A48F9C23F2C2663B4D9E260796`)
-  - `kop-hal-install` revision 48 (`31969EB150ABB57140EF7D2B2F012FE72D74630B`)
+  - `kop-hal-install` revision 53 (`20571A8E81C1A4F4113535CE7309266C2B4D5276`)
   - `kop-ms-hal-tester` revision 44 (`34443AE8011771DAFFEC5D1F7583D30EADD66098`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
 | `HalUtilities.exe` | HalUtilities | 1.10.2.5 | `A69A2244FFED307857E14CCEBC0C6D97B69F1F8F` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
-| `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.10.0.74 | `13BD320C3E2F95F4ABCE11DD8C6CADD87CA8B55A` | exact |
+| `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.10.2.5 | `F2A815F8944EFAF23DF4ADC0F92025D907B94B6C` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |
 | `Redbox.HAL.ICameraPlugin.Vidcap.dll` | Redbox.HAL.ICameraPlugin.Vidcap | 1.3.0.119 | `95CFFEAB28433C2BFFACD3FA187D20F7592A5BEE` | exact |
-| `CameraTuner.exe` | CameraTuner | 1.10.0.74 | `7D27F81BE0771AFD7B0035BFB02C57E2FB9BFB77` | exact |
-| `HAL.PackageInstaller.exe` | HAL.PackageInstaller | 1.10.0.74 | `83584B09E253BDF65CCEFE798E49CFAC42BE971E` | exact |
+| `CameraTuner.exe` | CameraTuner | 1.10.2.5 | `D0EF158331A6F9C164DAB44682FC990844240669` | exact |
+| `HAL.PackageInstaller.exe` | HAL.PackageInstaller | 1.10.2.5 | `5940969682902D47E5087B4C70BD2872B8657D61` | exact |
 | `halmgmtc.exe` | halmgmtc | 1.10.0.14 | `FE8D6864D238216054E430EA10ED059260AF3127` | exact |
-| `halsvc-win32.exe` | halsvc-win32 | 1.10.0.74 | `D21D053CDE6550E7A68A4F94F1348020A59428FC` | exact |
+| `halsvc-win32.exe` | halsvc-win32 | 1.10.2.5 | `C9A75FD15CED6EE9A781BD9C4490A01A1C51F192` | exact |
 | `Redbox.HAL.Camera.Framework.dll` | Redbox.HAL.Camera.Framework | 1.3.0.119 | `FB97B63A1FE5CD18223D4CF2658887476E8DDC01` | exact |
 | `Redbox.HAL.ClearimageV1.dll` | Redbox.HAL.ClearimageV1 | 1.3.0.119 | `4C0B8ADFEC5568F9332E27924AA26476614AE11A` | exact |
-| `Redbox.HAL.Component.Model.dll` | Redbox.HAL.Component.Model | 1.10.0.74 | `608567BEBF0E4009D306D4E069A0F089E8B429D1` | exact |
-| `Redbox.HAL.Configuration.dll` | Redbox.HAL.Configuration | 1.10.0.74 | `2920929FFBBE21E3B6B2D51E67CD8C760F8A045B` | exact |
-| `Redbox.HAL.Controller.Framework.dll` | Redbox.HAL.Controller.Framework | 1.10.0.74 | `EB679563846687D8A11E2A7568B5381F02CFFB63` | exact |
-| `Redbox.HAL.Core.dll` | Redbox.HAL.Core | 1.10.0.74 | `007B8F5FB27DF0C17C661521E70ED2E4AF165F1D` | exact |
-| `Redbox.HAL.DataMatrix.Framework.dll` | Redbox.HAL.DataMatrix.Framework | 1.10.0.74 | `69A7B7855826DCCFCD07150BE67B3D685B9EF1A2` | exact |
-| `Redbox.HAL.DataStorage.dll` | Redbox.HAL.DataStorage | 1.10.0.74 | `4D5BC2879E26AE58ABFA948DD7DA84506BBAB1E7` | exact |
-| `Redbox.HAL.IPC.Framework.dll` | Redbox.HAL.IPC.Framework | 1.10.0.74 | `A60EE4C3439FA41529B65B68C637920ACEB9A4D6` | exact |
-| `Redbox.HAL.Script.Framework.dll` | Redbox.HAL.Script.Framework | 1.10.0.74 | `44287E03914BDDAFB5DBEEB83BDF537C557B69B8` | exact |
-| `Redbox.HAL.Service.Framework.dll` | Redbox.HAL.Service.Framework | 1.10.0.74 | `31367FB3D1AE60C6C4B28E0F57F4A5F2699684A3` | exact |
-| `check-picker.hs` |  |  | `3730E505128D4362A6E9743858C9C912D6532F8D` | exact |
-| `clean-vmz.hs` |  |  | `71CC0D2C1A2C7EB3EEBF31741B83B8244BD73279` | exact |
+| `Redbox.HAL.Component.Model.dll` | Redbox.HAL.Component.Model | 1.10.2.5 | `9720EAA01EDB26E7EA36100F987A136511F6350A` | exact |
+| `Redbox.HAL.Configuration.dll` | Redbox.HAL.Configuration | 1.10.2.5 | `93A6A640C9D5D3E09990BC89D3C3870A8E5B167D` | exact |
+| `Redbox.HAL.Controller.Framework.dll` | Redbox.HAL.Controller.Framework | 1.10.2.5 | `334F6BA54E3E2AA1F2783D8DF1D6AC0DBE5976C1` | exact |
+| `Redbox.HAL.Core.dll` | Redbox.HAL.Core | 1.10.2.5 | `2021B24426B8028E41CE492353659FEA93EA72D8` | exact |
+| `Redbox.HAL.DataMatrix.Framework.dll` | Redbox.HAL.DataMatrix.Framework | 1.10.2.5 | `99E39ACB191F1158E4800481B35E7E3110806683` | exact |
+| `Redbox.HAL.DataStorage.dll` | Redbox.HAL.DataStorage | 1.10.2.5 | `D30BD5D736490E87A9FA97EA5FAF236DF1AC4B63` | exact |
+| `Redbox.HAL.IPC.Framework.dll` | Redbox.HAL.IPC.Framework | 1.10.2.5 | `EFD18F86284C1983B5E3F022DDB2ECA75E1B7653` | exact |
+| `Redbox.HAL.Script.Framework.dll` | Redbox.HAL.Script.Framework | 1.10.2.5 | `13046C6CF1EA9497019AFE0701DEA2658F92D747` | exact |
+| `Redbox.HAL.Service.Framework.dll` | Redbox.HAL.Service.Framework | 1.10.2.5 | `EE1EB1123A8CD40D5F656A66122212CA756575A3` | exact |
+| `check-picker.hs` |  |  | `82EA40B0E7AC45FF9EEFBA2A2538F6B02A80EABA` | exact |
+| `clean-vmz.hs` |  |  | `D2864AF109DE086FE0940519F5B3AB1BC9AD7BF0` | exact |
 | `clear-picker.hs` |  |  | `2B2F0948C7BDEDDFB983F0E34B09E09C1DF1F913` | exact |
-| `qlm-unload.hs` |  |  | `CECE31DDD898F524B1C6E5CDFE44C1A4141ABD14` | exact |
+| `qlm-unload.hs` |  |  | `F663A27F6EF04DA0E4853E02F694916DF767A65F` | exact |
 | `quick-return-restart.hs` |  |  | `5677AE6C2892D15860C0E5FF9AC48F5895F502EB` | exact |
 | `quick-return-setup.hs` |  |  | `3A9733D3E7F1A5C10CA84D825154BF19C2321BE1` | exact |
 | `return-unknown.hs` |  |  | `4765FC03268247F4785FAFE6AA0D26830AF75867` | exact |
-| `sync-locations.hs` |  |  | `5FD3CE0C89610B24A11867B1E2DD48401D7C0CBF` | exact |
-| `sync.hs` |  |  | `19C361EB6A0436EC6E1EBD562E7AE29AD7EB3708` | exact |
-| `thin-vmz.hs` |  |  | `DA7A85BACD864C75B5C9C359E635C109D5E9B955` | exact |
-| `thin.hs` |  |  | `CFC2DD667B4585C3C1259312B2D3F566F910B34C` | exact |
-| `unload-thin.hs` |  |  | `C2BED1A7A355B4A00D19B5720C7E368E8D82F0BF` | exact |
+| `sync-locations.hs` |  |  | `A94CC18726910DD2733C73DFDDC19603C4EAD76C` | exact |
+| `sync.hs` |  |  | `5ED2D489C53A41499CF9B6070CC81FA0E857F2A4` | exact |
+| `thin-vmz.hs` |  |  | `6C832C35900ED87F86AAEF2A38C7B87705F44DC2` | exact |
+| `thin.hs` |  |  | `B0819F918CF273AA9B3DCC6CCA8CA25614F452F2` | exact |
+| `unload-thin.hs` |  |  | `821D229607A964D1329B5FB4C13336A1BE13D0A0` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
 | `MSHALTester.exe` | MSHALTester | 1.10.2.5 | `BDD3B053F48B9DAE5045FA64D45246C0064B32E9` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |

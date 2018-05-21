@@ -61,11 +61,6 @@ internal static class QLM
 		{
 			return ErrorCodes.HomeXTimeout;
 		}
-		IDeck qlmDeck = ServiceLocator.Instance.GetService<IDecksService>().QlmDeck;
-		if (qlmDeck != null)
-		{
-			ServiceLocator.Instance.GetService<IInventoryService>().MarkDeckInventory(qlmDeck, "UNKNOWN");
-		}
 		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(type, 120000);
 		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
 		if (coreResponse.TimedOut)

@@ -8,6 +8,8 @@ namespace Redbox.HAL.DirectShow.Frame.Plugin;
 
 internal abstract class AbstractDirectShowControl : ICameraPlugin
 {
+	protected readonly string LogHeader;
+
 	protected int SnapTimeout;
 
 	protected Size ImageSize;
@@ -31,27 +33,32 @@ internal abstract class AbstractDirectShowControl : ICameraPlugin
 		FilterInfoCollection filterInfoCollection = new FilterInfoCollection(FilterCategory.VideoInputDevice);
 		if (filterInfoCollection == null || filterInfoCollection.Count == 0)
 		{
-			LogHelper.Instance.Log("DirectShow Frame service: unable to find any video devices.");
+			LogHelper.Instance.Log("{0} Unable to find any video devices.", LogHeader);
 			return false;
 		}
-		return IsRunning = ControlStartup(filterInfoCollection[0].MonikerString);
+		return IsRunning = OnStartup(filterInfoCollection[0].MonikerString);
 	}
 
 	public void Snap(string file)
 	{
 		if (!IsRunning)
 		{
-			LogHelper.Instance.Log("Direct show control is not in the running state.");
+			LogHelper.Instance.Log("{0} Control is not in the running state.", LogHeader);
 		}
 		else
 		{
-			CoreSnap(file);
+			OnSnap(file);
 		}
 	}
 
 	public bool Stop()
 	{
-		return Shutdown();
+		if (!IsRunning)
+		{
+			return false;
+		}
+		IsRunning = false;
+		return OnShutdown();
 	}
 
 	public void InitWithProperties(IDictionary<string, object> properties)
@@ -83,6 +90,7 @@ internal abstract class AbstractDirectShowControl : ICameraPlugin
 				Debug = false;
 			}
 		}
+		OnGetProperties(properties);
 	}
 
 	protected int GetIntProperty(object o, int def)
@@ -101,7 +109,7 @@ internal abstract class AbstractDirectShowControl : ICameraPlugin
 	{
 		if (ReasonToFinishPlaying.StoppedByUser != reason)
 		{
-			LogHelper.Instance.Log("[DirectShowService ERROR]Video capture ended with an error status {0}", reason.ToString());
+			LogHelper.Instance.Log("{0} ERROR: Video capture ended with an error status {1}", LogHeader, reason.ToString());
 		}
 	}
 
@@ -111,22 +119,16 @@ internal abstract class AbstractDirectShowControl : ICameraPlugin
 		SnapTimeout = 5000;
 		WakeupPause = 5000;
 		GrabTime = 500;
+		LogHeader = $"[DirectShowPlugin:{GetType().Name}]";
 	}
 
-	protected abstract void CoreSnap(string fileName);
+	protected abstract void OnSnap(string fileName);
 
-	protected abstract bool ControlShutdown();
+	protected abstract bool OnShutdown();
 
-	protected abstract bool ControlStartup(string moniker);
+	protected abstract bool OnStartup(string moniker);
 
-	private bool Shutdown()
+	protected virtual void OnGetProperties(IDictionary<string, object> properties)
 	{
-		if (!IsRunning)
-		{
-			LogHelper.Instance.Log("DirectShowService::Shutdown(): camera isn't running - bypass stop.");
-			return false;
-		}
-		IsRunning = false;
-		return ControlShutdown();
 	}
 }

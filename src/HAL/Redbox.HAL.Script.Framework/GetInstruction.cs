@@ -82,7 +82,7 @@ public sealed class GetInstruction : Instruction
 		{
 			flag2 = result5;
 		}
-		if (context.IsImmediate && ControllerConfiguration.Instance.Mode == ControllerMode.Normal)
+		if (context.IsImmediate)
 		{
 			test = true;
 		}

@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -75,11 +74,6 @@ public sealed class MoveInstruction : Instruction
 		{
 			int keyValuePairValue = GetKeyValuePairValue<int>(keyValuePair2, result.Errors, context);
 			if (result.Errors.Count > 0)
-			{
-				context.PushTop(ErrorCodes.InvalidLocation.ToString().ToUpper());
-				return;
-			}
-			if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
 			{
 				context.PushTop(ErrorCodes.InvalidLocation.ToString().ToUpper());
 				return;

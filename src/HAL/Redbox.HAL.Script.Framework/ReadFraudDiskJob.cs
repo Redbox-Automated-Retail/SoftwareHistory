@@ -38,21 +38,14 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 		}
 		base.ControlSystem.TrackCycle();
 		bool errored = true;
-		using Scanner scanner = new Scanner();
-		for (int i = 0; i < 2; i++)
+		using (Scanner scanner = new Scanner(base.ControlSystem))
 		{
 			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
-			{
-				break;
-			}
 			if (scanResult.ReadCode)
 			{
 				base.Context.CreateInfoResult("FraudItem", "This is the barcode to be marked as fraud.", scanResult.ScannedMatrix);
 				errored = false;
-				break;
 			}
-			base.ControlSystem.Center(CenterDiskMethod.DrumAndBack);
 		}
 		EndJob(errored);
 	}

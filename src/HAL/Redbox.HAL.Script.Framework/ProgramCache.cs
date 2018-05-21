@@ -166,7 +166,7 @@ internal sealed class ProgramCache : IDisposable
 					return CompileProgramInner(stream, programName);
 				}
 			}
-			if (ControllerConfiguration.Instance.Mode == ControllerMode.Normal && ControllerConfiguration.Instance.AllowProgramCacheReplacement2)
+			if (ControllerConfiguration.Instance.AllowProgramCacheReplacement2)
 			{
 				using (new WithWriteLock(CacheLock))
 				{

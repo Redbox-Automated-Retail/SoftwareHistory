@@ -14,7 +14,7 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 
 	private readonly string[] InvalidQueryResponse = new string[1] { "INVALID QUERY RESPONSE" };
 
-	private readonly IDeviceDescriptor ArcusDescriptor = new ArcusDeviceDescriptor();
+	private readonly IDeviceDescriptor ArcusDescriptor;
 
 	private readonly List<string> ErrorCorrectPreamble = new List<string>();
 
@@ -184,6 +184,8 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 	{
 		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		DebugEnabled = map.GetValue("ArcusDebug", def: false);
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		ArcusDescriptor = new ArcusDeviceDescriptor(service);
 		Port = RedboxSerialPort.Create(new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.MotionControllerPortName)
 		{
 			WriteTerminator = RedboxSerialPort.WriteCharsCRNull,

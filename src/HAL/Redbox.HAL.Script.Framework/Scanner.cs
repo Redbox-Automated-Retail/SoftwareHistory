@@ -6,86 +6,139 @@ namespace Redbox.HAL.Script.Framework;
 
 internal sealed class Scanner : IDisposable
 {
+	private readonly IScannerDeviceService ScannerDeviceService;
+
 	private readonly IControlSystem ControlSystem;
+
+	private readonly IScannerDevice Device;
 
 	private bool Disposed;
 
-	private static readonly CenterDiskMethod[] ReadFromDoor = new CenterDiskMethod[2]
-	{
-		CenterDiskMethod.None,
-		CenterDiskMethod.DrumAndBack
-	};
-
-	private static readonly CenterDiskMethod[] ReadFromDrum = new CenterDiskMethod[2]
-	{
-		CenterDiskMethod.None,
-		CenterDiskMethod.VendDoorAndBack
-	};
-
-	internal bool CameraStarted { get; private set; }
-
-	internal IScannerDevice Device { get; private set; }
-
 	public void Dispose()
 	{
-		if (Disposed)
+		if (!Disposed)
 		{
-			return;
-		}
-		Disposed = true;
-		if (Device != null)
-		{
-			if (Device.RequiresExternalLighting)
+			Disposed = true;
+			if (Device != null && Device.RequiresExternalLighting)
 			{
-				ControlSystem.ToggleRingLight(on: false, null);
+				ControlSystem.ToggleRingLight(on: false, ScannerDeviceService.IRHardwareInstall.HasValue ? ControllerConfiguration.Instance.IRRinglightShutdownPause : 0);
 			}
-			Device = null;
+			GC.SuppressFinalize(this);
 		}
-		GC.SuppressFinalize(this);
+	}
+
+	internal static ScanResult SmartReadDisk(CenterDiskMethod[] methods)
+	{
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		if (!ServiceLocator.Instance.GetService<IScannerDeviceService>().IRHardwareInstall.HasValue)
+		{
+			return OnNonIRScan(service, methods);
+		}
+		return OnIRScan(service, methods);
 	}
 
 	internal ScanResult Read()
 	{
 		using IScanResult sr = Device.Scan();
-		return new ScanResult(sr);
+		ScanResult scanResult = new ScanResult(sr);
+		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
+		if (!scanResult.SnapOk)
+		{
+			LogHelper.Instance.Log(LogEntryType.Error, "[{0}, {1}]: Read disk returned a camera error status CAMERA CAPTURE ERROR", activeContext.ProgramName, activeContext.ID);
+			activeContext?.ContextLog.WriteFormatted("No image was captured.");
+		}
+		else if (!scanResult.ReadCode)
+		{
+			LogHelper.Instance.Log(LogEntryType.Error, "[{0}, {1}]: No barcodes read on image.", activeContext.ProgramName, activeContext.ID);
+			activeContext?.ContextLog.WriteFormatted("No barcodes read on image.");
+		}
+		return scanResult;
 	}
 
-	internal Scanner()
+	internal Scanner(IControlSystem cs)
 	{
-		ControlSystem = ServiceLocator.Instance.GetService<IControlSystem>();
-		Device = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
-		CameraStarted = Device.Start();
-		if (CameraStarted && Device.RequiresExternalLighting)
+		Disposed = false;
+		ControlSystem = cs;
+		ScannerDeviceService = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		Device = ScannerDeviceService.GetConfiguredDevice();
+		Device.Start();
+		OnStartRinglight();
+	}
+
+	internal Scanner(CenterDiskMethod method, IControlSystem cs)
+	{
+		Disposed = false;
+		ControlSystem = cs;
+		ScannerDeviceService = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		Device = ScannerDeviceService.GetConfiguredDevice();
+		Device.Start();
+		if (ScannerDeviceService.IRHardwareInstall.HasValue)
 		{
-			ControlSystem.ToggleRingLight(on: true, ControllerConfiguration.Instance.SyncRinglightWarmupTime);
+			if (method != CenterDiskMethod.None)
+			{
+				ControlSystem.Center(method);
+			}
+			OnStartRinglight();
+		}
+		else
+		{
+			OnStartRinglight();
+			if (method != CenterDiskMethod.None)
+			{
+				ControlSystem.Center(method);
+			}
 		}
 	}
 
-	internal ScanResult SmartReadDisk(CenterDiskMethod[] methods)
+	private static ScanResult OnNonIRScan(IControlSystem cs, CenterDiskMethod[] methods)
 	{
 		ScanResult scanResult = null;
-		bool flag = false;
+		using Scanner scanner = new Scanner(cs);
 		foreach (CenterDiskMethod method in methods)
 		{
-			ControlSystem.Center(method);
-			while (true)
-			{
-				scanResult = Read();
-				if (scanResult.SnapOk)
-				{
-					break;
-				}
-				if (!ControllerConfiguration.Instance.EnableCameraReset | flag)
-				{
-					return scanResult;
-				}
-				Device.Restart();
-				flag = true;
-			}
-			if (scanResult.ReadCode)
+			cs.Center(method);
+			scanResult = scanner.OnReadWithRetry();
+			if (!scanResult.SnapOk || scanResult.ReadCode)
 			{
 				return scanResult;
 			}
+		}
+		return scanResult;
+	}
+
+	private static ScanResult OnIRScan(IControlSystem cs, CenterDiskMethod[] methods)
+	{
+		ScanResult scanResult = null;
+		for (int i = 0; i < methods.Length; i++)
+		{
+			using Scanner scanner = new Scanner(methods[i], cs);
+			scanResult = scanner.OnReadWithRetry();
+			if (!scanResult.SnapOk || scanResult.ReadCode)
+			{
+				return scanResult;
+			}
+		}
+		return scanResult;
+	}
+
+	private void OnStartRinglight()
+	{
+		if (Device.RequiresExternalLighting)
+		{
+			ControlSystem.ToggleRingLight(on: true, ScannerDeviceService.IRHardwareInstall.HasValue ? ControllerConfiguration.Instance.IRRinglightStartupPause : ControllerConfiguration.Instance.RinglightWarmupPause2);
+		}
+	}
+
+	private ScanResult OnReadWithRetry()
+	{
+		ScanResult scanResult = Read();
+		if (scanResult.SnapOk || !ControllerConfiguration.Instance.EnableCameraReset)
+		{
+			return scanResult;
+		}
+		if (Device.Restart())
+		{
+			scanResult = Read();
 		}
 		return scanResult;
 	}

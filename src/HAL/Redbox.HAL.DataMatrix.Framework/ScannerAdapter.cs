@@ -22,7 +22,8 @@ internal abstract class ScannerAdapter : IDisposable
 
 	protected string GenerateSnapFileName()
 	{
-		string path = ServiceLocator.Instance.GetService<IRuntimeService>().GenerateUniqueFile("jpg");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string path = service.GenerateUniqueFile("jpg");
 		return Path.Combine(BarcodeConfiguration.Instance.WorkingPath, path);
 	}
 

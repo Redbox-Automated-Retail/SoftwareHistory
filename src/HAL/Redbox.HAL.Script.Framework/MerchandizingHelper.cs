@@ -77,6 +77,7 @@ internal class MerchandizingHelper
 				AddError(result, "Engaging the QLM case timed out.");
 				return false;
 			}
+			ClearQlmInventory();
 			context.CreateInfoResult("QlmDeckEngageSuccess", "The QLM engaged successfully.");
 			service3.TestAndReset(context.AppLog);
 		}
@@ -107,6 +108,7 @@ internal class MerchandizingHelper
 				result.Errors.Add(Error.NewError("E999", "Execution context error.", "The QLM Case didn't disengage."));
 				return false;
 			}
+			ClearQlmInventory();
 			context.CreateInfoResult("QlmDeckDisengageSuccess", "The QLM disengaged successfully.");
 		}
 		bool result2 = true;
@@ -130,18 +132,21 @@ internal class MerchandizingHelper
 		result.Errors.Add(Error.NewError("E999", "Item stuck in gripper.", "Unable to file disc."));
 	}
 
-	internal void ExitOnMoveError(ExecutionResult result, ExecutionContext context, bool leaveResult)
+	internal void ExitOnMoveError(ExecutionResult result, ExecutionContext context)
 	{
-		if (leaveResult)
-		{
-			context.CreateMoveErrorResult();
-		}
+		context.CreateMoveErrorResult();
 		result.Errors.Add(Error.NewError("E999", "Move failure", "The MOVE instruction failed."));
 	}
 
 	internal void AddError(ExecutionResult result, string desc)
 	{
 		result.Errors.Add(Error.NewError("E999", desc, "There was an unrecoverable error during a merchandizing operation."));
+	}
+
+	private void ClearQlmInventory()
+	{
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		ServiceLocator.Instance.GetService<IInventoryService>().MarkDeckInventory(service.QlmDeck, "UNKNOWN");
 	}
 
 	private MerchandizingHelper()

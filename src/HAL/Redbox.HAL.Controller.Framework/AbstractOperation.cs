@@ -150,10 +150,6 @@ public abstract class AbstractOperation<T> : IDisposable
 
 	protected ErrorCodes PullFrom(ILocation location, int pulls)
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return ErrorCodes.Success;
-		}
 		GripperFingerState gripperFingerState = ((!location.IsWide) ? GripperFingerState.Rent : GripperFingerState.Open);
 		for (int i = 0; i < pulls; i++)
 		{

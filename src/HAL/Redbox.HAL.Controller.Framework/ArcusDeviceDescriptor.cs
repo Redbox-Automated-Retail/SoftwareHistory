@@ -2,52 +2,24 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core.Descriptors;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class ArcusDeviceDescriptor : IDeviceDescriptor
+internal sealed class ArcusDeviceDescriptor : AbstractDeviceDescriptor
 {
-	public string Vendor => "1589";
-
-	public string Product => "a001";
-
-	public string Friendlyname => "Proteus XES";
-
-	public IDeviceSetupClass SetupClass { get; private set; }
-
-	public override string ToString()
-	{
-		return $"vid_{Vendor}&pid_{Product}";
-	}
-
-	public bool MatchDriver()
-	{
-		return false;
-	}
-
-	public bool Locate()
-	{
-		return false;
-	}
-
-	public DeviceStatus GetStatus()
-	{
-		return DeviceStatus.Unknown;
-	}
-
-	public bool ResetDriver()
+	protected override bool OnResetDriver()
 	{
 		Thread.Sleep(3000);
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		if (!service.SetDeviceState(this, DeviceState.Disable))
+		if (!UsbService.SetDeviceState(this, DeviceState.Disable))
 		{
 			return false;
 		}
-		if (!service.SetDeviceState(this, DeviceState.Enable))
+		if (!UsbService.SetDeviceState(this, DeviceState.Enable))
 		{
 			return false;
 		}
-		if (service.SetDeviceState(this, DeviceState.Enable))
+		if (UsbService.SetDeviceState(this, DeviceState.Enable))
 		{
 			return true;
 		}
@@ -65,9 +37,26 @@ internal sealed class ArcusDeviceDescriptor : IDeviceDescriptor
 		}
 	}
 
-	internal ArcusDeviceDescriptor()
+	protected override bool OnLocate()
 	{
-		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
-		SetupClass = service.Get(DeviceClass.None);
+		return false;
+	}
+
+	protected override DeviceStatus OnGetStatus()
+	{
+		return DeviceStatus.Unknown;
+	}
+
+	protected override bool OnMatchDriver()
+	{
+		return false;
+	}
+
+	internal ArcusDeviceDescriptor(IUsbDeviceService usb)
+		: base(usb, DeviceClass.None)
+	{
+		base.Vendor = "1589";
+		base.Product = "a001";
+		base.Friendlyname = "Proteus XES";
 	}
 }

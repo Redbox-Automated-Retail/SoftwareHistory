@@ -78,58 +78,41 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 			return ErrorCodes.PickerEmpty;
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		FraudValidator fraudValidator = new FraudValidator(Context, FraudScanJobMask.CheckPicker);
-		try
+		Context.Send("ItemInPicker");
+		Context.ServiceLog("Picker is full, trying to find a slot for product.");
+		string text = "UNKNOWN";
+		if (service.VendDoorState != VendDoorState.Closed)
 		{
-			Context.Send("ItemInPicker");
-			Context.ServiceLog("Picker is full, trying to find a slot for product.");
-			string text = "UNKNOWN";
-			if (service.VendDoorState != VendDoorState.Closed)
+			service.VendDoorClose();
+		}
+		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
+		{
+			ScanResult scanResult = scanner.Read();
+			if (!scanResult.SnapOk)
 			{
-				service.VendDoorClose();
+				Context.CreateCameraCaptureErrorResult();
 			}
-			service.Center(CenterDiskMethod.VendDoorAndBack);
-			fraudValidator.StartScan();
-			using (Scanner scanner = new Scanner())
+			else if (!scanResult.ReadCode)
 			{
-				ScanResult scanResult = scanner.Read();
-				if (!scanResult.SnapOk)
-				{
-					Context.ServiceLog(LogEntryType.Error, "The CAMERA CAPTURE instruction errored with status = {0}.", scanResult.Diagnostic);
-					Context.CreateCameraCaptureErrorResult();
-				}
-				else if (!scanResult.ReadCode)
-				{
-					Context.ServiceLog("The barcode couldn't be read.");
-					Context.CreateInfoResult("BadIdRead", "The READ request failed.");
-				}
-				else
-				{
-					text = scanResult.ScannedMatrix;
-					if (fraudValidator.ScanConfigured)
-					{
-						IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(text);
-						fraudValidator.Publish(scanResult2, text);
-					}
-				}
-			}
-			Context.ServiceLog("The ID in the picker: {0}", text);
-			using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, Context);
-			ErrorCodes errorCodes2 = fileDiskOperation.PutDiscAway(result, text);
-			if (errorCodes2 != ErrorCodes.Success)
-			{
-				Context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", errorCodes2);
+				Context.CreateInfoResult("BadIdRead", "The READ request failed.");
 			}
 			else
 			{
-				OnComplete();
+				text = scanResult.ScannedMatrix;
 			}
-			return (errorCodes2 == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
 		}
-		finally
+		Context.ServiceLog("The ID in the picker: {0}", text);
+		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, Context);
+		ErrorCodes errorCodes2 = fileDiskOperation.PutDiscAway(result, text);
+		if (errorCodes2 != ErrorCodes.Success)
 		{
-			((IDisposable)fraudValidator/*cast due to constrained. prefix*/).Dispose();
+			Context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", errorCodes2);
 		}
+		else
+		{
+			OnComplete();
+		}
+		return (errorCodes2 == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
 	}
 
 	internal CheckPickerOperation(ExecutionContext context)

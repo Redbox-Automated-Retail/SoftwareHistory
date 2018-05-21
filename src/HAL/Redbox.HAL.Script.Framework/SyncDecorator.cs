@@ -16,8 +16,6 @@ internal abstract class SyncDecorator
 		CenterDiskMethod.DrumAndBack
 	};
 
-	internal virtual FraudScanJobMask BitValue => FraudScanJobMask.Sync;
-
 	protected void UpdateSymbol(string name, object value)
 	{
 		if (Context.SymbolTable.ContainsKey(name))
@@ -67,15 +65,11 @@ internal abstract class SyncDecorator
 	{
 	}
 
-	internal ScanResult ReadDisk(Scanner scanner)
+	internal ScanResult ReadDisk()
 	{
-		ScanResult scanResult = scanner.SmartReadDisk(m_readMethods);
-		if (!scanResult.SnapOk)
-		{
-			LogHelper.Instance.Log("ReadDiscInPicker returned status {0}", scanResult.Diagnostic);
-		}
-		OnReadDisk(scanResult);
-		return scanResult;
+		ScanResult result = Scanner.SmartReadDisk(m_readMethods);
+		OnReadDisk(result);
+		return result;
 	}
 
 	internal void AddError(string msg)

@@ -1,4 +1,3 @@
-using System;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
@@ -16,12 +15,6 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			base.Context.CreateInfoResult("PickerEmpty", "The picker is empty.");
-			AddError("The picker is empty.");
-			return;
-		}
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "VMZ", flushOnWrite: true, "Tester-Put-In-Bin");
 		if (!PickerBoard.IsFull())
 		{
@@ -45,57 +38,41 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			return;
 		}
 		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-		FraudValidator fraudValidator = new FraudValidator(base.Context, FraudScanJobMask.PutDiskInBin);
-		try
+		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
+		if (errorCodes != ErrorCodes.Success)
 		{
-			fraudValidator.StartScan();
-			IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
-			using Scanner scanner = new Scanner();
-			ErrorCodes errorCodes = service3.MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
-			if (errorCodes != ErrorCodes.Success)
-			{
-				base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
-				AddError("The MOVE instruction failed.");
-				return;
-			}
-			string text = "UNKNOWN";
-			CenterDiskMethod[] returnReadMethods = m_returnReadMethods;
-			foreach (CenterDiskMethod method in returnReadMethods)
-			{
-				service2.Wait(1000);
-				base.ControlSystem.Center(method);
-				ScanResult scanResult = scanner.Read();
-				if (!scanResult.SnapOk)
-				{
-					base.Context.CreateCameraCaptureErrorResult();
-					break;
-				}
-				if (scanResult.ReadCode)
-				{
-					text = scanResult.ScannedMatrix;
-					if (fraudValidator.ScanConfigured)
-					{
-						IFraudScanResult scanResult2 = fraudValidator.MultipassValidate(text);
-						fraudValidator.Publish(scanResult2, text);
-					}
-					break;
-				}
-			}
-			IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(text, applicationLog);
-			if (!putResult.Success)
-			{
-				base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
-				AddError("The PUT instruction failed.");
-				return;
-			}
-			base.Context.CreateInfoResult("PutToBinOK", "The disk was successfully filed", text);
-			applicationLog.WriteFormatted("The barcode {0} was put into the dump bin.", text);
-			service.DumpContents(base.AppLog);
+			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
+			AddError("The MOVE instruction failed.");
+			return;
 		}
-		finally
+		string text = "UNKNOWN";
+		CenterDiskMethod[] returnReadMethods = m_returnReadMethods;
+		foreach (CenterDiskMethod method in returnReadMethods)
 		{
-			((IDisposable)fraudValidator/*cast due to constrained. prefix*/).Dispose();
+			service2.Wait(1000);
+			using Scanner scanner = new Scanner(method, base.ControlSystem);
+			ScanResult scanResult = scanner.Read();
+			if (!scanResult.SnapOk)
+			{
+				base.Context.CreateCameraCaptureErrorResult();
+				break;
+			}
+			if (scanResult.ReadCode)
+			{
+				text = scanResult.ScannedMatrix;
+				break;
+			}
 		}
+		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(text, applicationLog);
+		if (!putResult.Success)
+		{
+			base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
+			AddError("The PUT instruction failed.");
+			return;
+		}
+		base.Context.CreateInfoResult("PutToBinOK", "The disk was successfully filed", text);
+		applicationLog.WriteFormatted("The barcode {0} was put into the dump bin.", text);
+		service.DumpContents(base.AppLog);
 	}
 
 	internal PutDiskInDumpBinJob(ExecutionResult result, ExecutionContext ctx)

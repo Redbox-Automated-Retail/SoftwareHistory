@@ -9,6 +9,11 @@ public sealed class DriverDescriptor : IDriverDescriptor
 
 	public string Provider { get; private set; }
 
+	public DriverDescriptor(string version, string provider)
+		: this(new Version(version), provider)
+	{
+	}
+
 	public DriverDescriptor(Version version, string provider)
 	{
 		DriverVersion = version;

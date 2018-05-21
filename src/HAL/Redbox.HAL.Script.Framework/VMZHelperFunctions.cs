@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -16,10 +15,6 @@ internal class VMZHelperFunctions
 
 	internal MerchandizeResult UnloadDisc(ExecutionResult result, ExecutionContext context)
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return MerchandizeResult.Success;
-		}
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		ILocation loc = null;
 		ServiceLocator.Instance.GetService<IDecksService>().ForAllDecksDo(delegate(IDeck deck)

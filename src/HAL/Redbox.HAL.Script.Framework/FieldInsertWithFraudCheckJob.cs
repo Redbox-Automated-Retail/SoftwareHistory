@@ -86,7 +86,6 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 			AddError("Unable to move to the vend door.");
 			return;
 		}
-		using FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: false);
 		if (!base.ControlSystem.VendDoorRent().Success)
 		{
 			base.Context.CreateInfoResult("MachineError", "VENDDOOR RENT timed out.");
@@ -128,40 +127,32 @@ internal sealed class FieldInsertWithFraudCheckJob : NativeJobAdapter, IFileDisk
 		}
 		applicationLog.Write("Item received into picker.");
 		base.ControlSystem.TrackCycle();
-		fraudValidator.StartScan();
-		using Scanner scanner = new Scanner();
-		ScanResult scanResult = scanner.Read();
-		if (!scanResult.SnapOk)
+		ScanResult scanResult = null;
+		bool flag = false;
+		using (Scanner scanner = new Scanner(base.ControlSystem))
 		{
-			applicationLog.Write($"The READ-DISC instruction returned an error {scanResult.Diagnostic}");
-			base.Context.CreateCameraCaptureErrorResult();
-			ReturnItem();
-			return;
+			scanResult = scanner.Read();
+			if (!scanResult.SnapOk)
+			{
+				base.Context.CreateCameraCaptureErrorResult();
+				flag = true;
+			}
+			else if (!scanResult.ReadCode)
+			{
+				base.Context.CreateInfoResult("BadIdRead", "The READ request failed.");
+				flag = true;
+			}
 		}
-		if (!scanResult.ReadCode)
+		if (flag)
 		{
-			applicationLog.Write("The barcode couldn't be read.");
-			base.Context.CreateInfoResult("BadIdRead", "The READ request failed.");
 			ReturnItem();
 			return;
 		}
 		base.Context.CreateInfoResult("BarcodeRead", "The returned item's barcode.", scanResult.ScannedMatrix);
 		applicationLog.Write($"The ID in the picker: {scanResult.ScannedMatrix}");
 		base.Context.Send($"ReturnEnd:{scanResult.ScannedMatrix}");
-		IFraudScanResult fraudScanResult = fraudValidator.MultipassValidate(scanResult.ScannedMatrix);
-		fraudValidator.Publish(fraudScanResult, scanResult.ScannedMatrix);
-		if (fraudScanResult.ScanError != ErrorCodes.Success || !fraudScanResult.Valid)
-		{
-			applicationLog.WriteFormatted("Scan error code = {0} is valid = {1}; returning item to user.", fraudScanResult.ScanError.ToString(), fraudScanResult.Valid);
-			ReturnItem();
-			return;
-		}
-		applicationLog.WriteFormatted("Fraud markers detected on item {0}", scanResult.ScannedMatrix);
-		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context);
-		if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
-		{
-			base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
-		}
+		applicationLog.WriteFormatted("Scan error code = {0} is valid = False; returning item to user.", ErrorCodes.DeviceNotConfigured.ToString().ToUpper());
+		ReturnItem();
 	}
 
 	internal FieldInsertWithFraudCheckJob(ExecutionResult result, ExecutionContext ctx)

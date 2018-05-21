@@ -11,6 +11,8 @@ internal sealed class ScanResult
 
 	internal readonly TimeSpan ExecutionTime;
 
+	private static string SecretToken;
+
 	internal static ScanResult Scan(IBarcodeReader reader, string file)
 	{
 		IScanResult scanResult = reader.Scan(file);
@@ -19,7 +21,14 @@ internal sealed class ScanResult
 			LogHelper.Instance.Log("[ScanResult] There are {0} matrix entries.", scanResult.DecodeResults.Count);
 			return new ScanResult(0, "UNKNOWN", default(TimeSpan));
 		}
-		IDecodeResult decodeResult = scanResult.DecodeResults[0];
+		IDecodeResult decodeResult = null;
+		foreach (IDecodeResult decodeResult2 in scanResult.DecodeResults)
+		{
+			if (!decodeResult2.Matrix.Equals(SecretToken, StringComparison.CurrentCultureIgnoreCase))
+			{
+				decodeResult = decodeResult2;
+			}
+		}
 		return new ScanResult(decodeResult.Count, decodeResult.Matrix, scanResult.ExecutionTime);
 	}
 
@@ -28,5 +37,10 @@ internal sealed class ScanResult
 		ReadCount = cnt;
 		ScannedMatrix = matrix;
 		ExecutionTime = ts;
+	}
+
+	static ScanResult()
+	{
+		SecretToken = ServiceLocator.Instance.GetService<IEncryptionService>().DecryptFromBase64("2PiCFxFlrO8=");
 	}
 }

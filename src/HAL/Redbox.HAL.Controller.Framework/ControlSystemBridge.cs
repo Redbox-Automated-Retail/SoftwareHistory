@@ -30,16 +30,8 @@ internal sealed class ControlSystemBridge : IConfigurationObserver, IControlSyst
 	public void NotifyConfigurationLoaded()
 	{
 		LogHelper.Instance.Log("[ControlSystemBridge] Configuration load.");
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			EmulatedControlSystem instance = (EmulatedControlSystem)(Implementor = new EmulatedControlSystem());
-			ServiceLocator.Instance.AddService(typeof(ICoreCommandExecutor), instance);
-		}
-		else
-		{
-			ControlSystem instance2 = (ControlSystem)(Implementor = new ControlSystem());
-			ServiceLocator.Instance.AddService(typeof(ICoreCommandExecutor), instance2);
-		}
+		ControlSystem instance = (ControlSystem)(Implementor = new ControlSystem());
+		ServiceLocator.Instance.AddService(typeof(ICoreCommandExecutor), instance);
 	}
 
 	public void AddHandler(IControlSystemObserver observer)

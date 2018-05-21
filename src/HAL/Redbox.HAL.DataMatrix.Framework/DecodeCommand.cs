@@ -88,7 +88,8 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 					{
 						LogHelper.Instance.Log(" >> Reponse packet: data (barcode = {0} Number = {1}).", text, packet.PacketNumber);
 					}
-					if (DataPackets.FindAll((int each) => each == packet.PacketNumber).Count != 0)
+					List<int> list = DataPackets.FindAll((int each) => each == packet.PacketNumber);
+					if (list.Count != 0)
 					{
 						continue;
 					}

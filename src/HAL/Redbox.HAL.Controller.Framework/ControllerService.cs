@@ -84,7 +84,7 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 		ControlSystemBridge instance = new ControlSystemBridge();
 		ServiceLocator.Instance.AddService(typeof(IControlSystemService), instance);
 		ServiceLocator.Instance.AddService(typeof(IControlSystem), instance);
-		ServiceLocator.Instance.AddService(typeof(IDiskValidatorService), new DiskValidatorService(new FraudSensor()));
+		ServiceLocator.Instance.AddService(typeof(IDiskValidatorService), new DiskValidatorService());
 		ServiceLocator.Instance.AddService(typeof(IAirExchangerService), new IceQubeAirExchangerService());
 		ServiceLocator.Instance.AddService(typeof(IDumpbinService), new DumpbinServiceBridge());
 		ServiceLocator.Instance.AddService(typeof(IDoorSensorService), new DoorSensorService());

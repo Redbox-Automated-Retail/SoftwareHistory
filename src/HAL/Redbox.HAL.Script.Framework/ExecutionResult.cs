@@ -43,6 +43,11 @@ public sealed class ExecutionResult
 		AddError(ExecutionErrors.InvalidOperand, details);
 	}
 
+	internal void OnDeprecatedOperand(string details)
+	{
+		AddError(ExecutionErrors.DeprecatedOperand, details);
+	}
+
 	internal void AddError(ExecutionErrors error, string details)
 	{
 		Error item = Error.NewError(ExecutionErrorsTable.ErrorCodeTable[error], ExecutionErrorsTable.ErrorTable[error], details);

@@ -9,5 +9,5 @@ public interface IUsbDeviceSearchResult : IDisposable
 
 	ErrorList Errors { get; }
 
-	IList<IDeviceDescriptor> Matches { get; }
+	List<IDeviceDescriptor> Matches { get; }
 }

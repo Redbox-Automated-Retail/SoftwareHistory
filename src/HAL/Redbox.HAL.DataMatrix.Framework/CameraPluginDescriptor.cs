@@ -37,21 +37,22 @@ internal sealed class CameraPluginDescriptor
 			}
 			CameraPluginDescriptor cameraPluginDescriptor = new CameraPluginDescriptor();
 			cameraPluginDescriptor.DescriptorPath = xmlPath;
-			foreach (XmlNode childNode in xmlNode.ChildNodes)
+			XmlNodeList childNodes = xmlNode.ChildNodes;
+			foreach (XmlNode item in childNodes)
 			{
-				if (childNode.Name.Equals("PluginType"))
+				if (item.Name.Equals("PluginType"))
 				{
-					cameraPluginDescriptor.PluginName = childNode.Attributes.GetNamedItem("Name").Value;
-					cameraPluginDescriptor.Version = childNode.Attributes.GetNamedItem("Version").Value;
+					cameraPluginDescriptor.PluginName = item.Attributes.GetNamedItem("Name").Value;
+					cameraPluginDescriptor.Version = item.Attributes.GetNamedItem("Version").Value;
 				}
-				else if (childNode.Name.Equals("Assembly"))
+				else if (item.Name.Equals("Assembly"))
 				{
-					cameraPluginDescriptor.AssemblyName = childNode.Attributes.GetNamedItem("Name").Value;
+					cameraPluginDescriptor.AssemblyName = item.Attributes.GetNamedItem("Name").Value;
 				}
-				else if (childNode.Name.Equals("PluginProvider"))
+				else if (item.Name.Equals("PluginProvider"))
 				{
-					cameraPluginDescriptor.PluginServiceProviderMethodName = childNode.Attributes.GetNamedItem("Method").Value;
-					cameraPluginDescriptor.PluginNamespace = childNode.Attributes.GetNamedItem("Namespace").Value;
+					cameraPluginDescriptor.PluginServiceProviderMethodName = item.Attributes.GetNamedItem("Method").Value;
+					cameraPluginDescriptor.PluginNamespace = item.Attributes.GetNamedItem("Namespace").Value;
 				}
 			}
 			return cameraPluginDescriptor;

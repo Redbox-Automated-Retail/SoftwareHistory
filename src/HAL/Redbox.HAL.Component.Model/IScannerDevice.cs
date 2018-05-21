@@ -14,6 +14,8 @@ public interface IScannerDevice : IDisposable
 
 	bool Start();
 
+	bool Start(bool testFunction);
+
 	bool Stop();
 
 	bool Restart();

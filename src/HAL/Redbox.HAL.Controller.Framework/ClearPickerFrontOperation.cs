@@ -6,10 +6,6 @@ public sealed class ClearPickerFrontOperation : AbstractOperation<bool>
 {
 	public override bool Execute()
 	{
-		if (ControllerConfiguration.Instance.Mode == ControllerMode.Emulated)
-		{
-			return true;
-		}
 		if (!Controller.SetFinger(GripperFingerState.Rent).Success)
 		{
 			return false;

@@ -19,8 +19,6 @@ public interface IUsbDeviceService
 
 	bool MatchDriver(IDeviceDescriptor descriptor, IDriverDescriptor driverInfo);
 
-	IUsbDeviceSearchResult FindDeviceByVendor(IDeviceDescriptor desc);
-
 	IUsbDeviceSearchResult FindDevice(IDeviceDescriptor descriptor);
 
 	IUsbDeviceSearchResult FindVendorDevices(string _vendor);
@@ -33,5 +31,7 @@ public interface IUsbDeviceService
 
 	ITouchscreenDescriptor FindTouchScreen();
 
-	IDeviceDescriptor FindUps();
+	IQueryUsbDeviceResult FindCCR();
+
+	IQueryUsbDeviceResult FindCamera();
 }

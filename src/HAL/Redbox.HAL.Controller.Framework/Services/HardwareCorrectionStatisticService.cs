@@ -12,6 +12,11 @@ internal sealed class HardwareCorrectionStatisticService : IHardwareCorrectionSt
 
 	private readonly IDataTable<IHardwareCorrectionStatistic> StatsTable;
 
+	public bool Insert(HardwareCorrectionEventArgs args, IExecutionContext context)
+	{
+		return Insert(args.Statistic, context, args.CorrectionOk);
+	}
+
 	public bool Insert(HardwareCorrectionStatistic type, IExecutionContext context, bool correctionOk)
 	{
 		return Insert(type, context, correctionOk, DateTime.Now);

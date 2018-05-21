@@ -1,54 +1,34 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Core.Descriptors;
 
 namespace Redbox.HAL.Core;
 
-public sealed class AbeDeviceDescriptor : IDeviceDescriptor
+public sealed class AbeDeviceDescriptor : AbstractDeviceDescriptor
 {
 	private readonly bool Debug;
 
-	public string Vendor => "2047";
-
-	public string Product => "0902";
-
-	public string Friendlyname => "ABE Device";
-
-	public IDeviceSetupClass SetupClass { get; private set; }
-
-	public override string ToString()
+	public AbeDeviceDescriptor(IUsbDeviceService service)
+		: this(service, debug: false)
 	{
-		return $"vid_{Vendor}&pid_{Product}";
 	}
 
-	public bool MatchDriver()
+	public AbeDeviceDescriptor(IUsbDeviceService s, bool debug)
+		: base(s, DeviceClass.HIDClass)
 	{
-		throw new NotImplementedException();
+		Debug = debug;
+		base.Vendor = "2047";
+		base.Product = "0902";
+		base.Friendlyname = "ABE Device";
 	}
 
-	public bool Locate()
-	{
-		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDevice(this).Found;
-	}
-
-	public DeviceStatus GetStatus()
-	{
-		throw new NotImplementedException("AbeDeviceDescriptor::GetStatus is not implemented.");
-	}
-
-	public bool ResetDriver()
+	protected override bool OnResetDriver()
 	{
 		throw new NotImplementedException("AbeDeviceDescriptor::ResetDriver is not implemented.");
 	}
 
-	public AbeDeviceDescriptor(bool debug)
+	protected override DeviceStatus OnGetStatus()
 	{
-		Debug = debug;
-		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
-		SetupClass = service.Get(DeviceClass.HIDClass);
-	}
-
-	public AbeDeviceDescriptor()
-		: this(debug: false)
-	{
+		throw new NotImplementedException("AbeDeviceDescriptor::GetStatus is not implemented.");
 	}
 }

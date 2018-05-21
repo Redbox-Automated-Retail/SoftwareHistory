@@ -7,6 +7,16 @@ namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposable, IConfigurationObserver
 {
+	private enum CameraGeneration
+	{
+		Unknown,
+		First,
+		Second,
+		Third,
+		Fourth,
+		Fifth
+	}
+
 	private ICameraPlugin Plugin;
 
 	public bool RequiresExternalLighting => true;
@@ -21,6 +31,11 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool Start()
 	{
+		return Start(test: false);
+	}
+
+	public bool Start(bool test)
+	{
 		if (IsConnected)
 		{
 			return true;
@@ -28,7 +43,13 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		try
 		{
 			InError = false;
-			return IsConnected = Plugin.Start();
+			IsConnected = Plugin.Start();
+			if (!test)
+			{
+				return IsConnected;
+			}
+			ISnapResult snapResult = Snap();
+			return snapResult.SnapOk;
 		}
 		catch (Exception e)
 		{
@@ -88,19 +109,20 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			return false;
 		}
 		Stop();
-		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(500);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		service.SpinWait(500);
 		LogHelper.Instance.Log("[Legacy Camera Service] Cycle camera driver.");
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
+		IUsbDeviceService service2 = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		IDeviceDescriptor deviceDescriptor = service2.FindActiveCamera(matchDriver: false);
 		if (deviceDescriptor != null)
 		{
 			LogHelper.Instance.Log("Found camera {0}", deviceDescriptor.Friendlyname);
-			CameraGeneration cameraGeneration = default(CameraTranslator).From(deviceDescriptor);
+			CameraGeneration cameraGeneration = From(deviceDescriptor);
 			if (CameraGeneration.Third == cameraGeneration || CameraGeneration.Fourth == cameraGeneration)
 			{
 				LogHelper.Instance.Log("The running driver for the camera {0}", deviceDescriptor.MatchDriver() ? "is correct" : "is not correct.");
 			}
-			DeviceStatus deviceStatus = service.FindDeviceStatus(deviceDescriptor);
+			DeviceStatus deviceStatus = service2.FindDeviceStatus(deviceDescriptor);
 			if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None && (deviceStatus & DeviceStatus.Enabled) != DeviceStatus.None)
 			{
 				bool flag = deviceDescriptor.ResetDriver();
@@ -113,9 +135,11 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 	public IScanResult Scan()
 	{
 		string text = GenerateSnapFileName();
-		if (Snap(text).SnapOk)
+		ISnapResult snapResult = Snap(text);
+		if (snapResult.SnapOk)
 		{
-			IScanResult scanResult = BarcodeReaderFactory.Instance.GetConfiguredReader().Scan(text);
+			IBarcodeReader configuredReader = BarcodeReaderFactory.Instance.GetConfiguredReader();
+			IScanResult scanResult = configuredReader.Scan(text);
 			if (BarcodeConfiguration.Instance.DeleteBitmapOnSuccessfulRead && scanResult.DecodeResults.Count > 0)
 			{
 				try
@@ -130,10 +154,9 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			}
 			return scanResult;
 		}
-		return new ScanResult
-		{
-			DeviceError = true
-		};
+		ScanResult scanResult2 = new ScanResult();
+		scanResult2.DeviceError = true;
+		return scanResult2;
 	}
 
 	public void NotifyConfigurationLoaded()
@@ -221,5 +244,22 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			}
 		}
 		Plugin.InitWithProperties(BarcodeConfiguration.Instance.Properties);
+	}
+
+	private CameraGeneration From(IDeviceDescriptor descriptor)
+	{
+		if (descriptor == null)
+		{
+			return CameraGeneration.Unknown;
+		}
+		if (descriptor.Vendor.Equals("1871") && (descriptor.Product.Equals("0d01", StringComparison.CurrentCultureIgnoreCase) || descriptor.Product.Equals("0f01", StringComparison.CurrentCultureIgnoreCase)))
+		{
+			return CameraGeneration.Fourth;
+		}
+		if (descriptor.Vendor.Equals("0c45", StringComparison.CurrentCultureIgnoreCase) && descriptor.Product.Equals("627b", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return CameraGeneration.Third;
+		}
+		return CameraGeneration.Unknown;
 	}
 }

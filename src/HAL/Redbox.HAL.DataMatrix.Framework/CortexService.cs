@@ -46,6 +46,11 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool Start()
 	{
+		return Start(unused: false);
+	}
+
+	public bool Start(bool unused)
+	{
 		if (IsConnected)
 		{
 			return true;
@@ -61,7 +66,8 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 			LogHelper.Instance.Log("[Cortex Service] Unable to open communcation port.");
 			return false;
 		}
-		new InfaredLightCommand().Send(Port);
+		InfaredLightCommand infaredLightCommand = new InfaredLightCommand();
+		infaredLightCommand.Send(Port);
 		switch (StartupAction)
 		{
 		case CortexStartupAction.Decode:
@@ -109,7 +115,8 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 			service.Wait(500);
 			return Start();
 		}
-		new RebootCommand().Send(Port);
+		RebootCommand rebootCommand = new RebootCommand();
+		rebootCommand.Send(Port);
 		service.Wait(WakeupPause);
 		return true;
 	}
@@ -157,7 +164,8 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool ValidateSettings()
 	{
-		return new CortexSettingsValidator(this).Validate(new ValidatorSink());
+		CortexSettingsValidator cortexSettingsValidator = new CortexSettingsValidator(this);
+		return cortexSettingsValidator.Validate(new ValidatorSink());
 	}
 
 	public void NotifyConfigurationLoaded()
@@ -188,10 +196,11 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 	internal CortexService()
 		: base(ScannerServices.Cortex)
 	{
-		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		IPersistentMapService service = ServiceLocator.Instance.GetService<IPersistentMapService>();
+		IPersistentMap map = service.GetMap();
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
 		Configuration = new RedboxSerialPortConfiguration();
-		int value = map.GetValue("CortexReadBuffer", service.PageSize << 1);
+		int value = map.GetValue("CortexReadBuffer", service2.PageSize << 1);
 		Configuration.ReceiveBufferSize = value;
 		LogHelper.Instance.Log("[CortexService] Receive buffer size = {0}", value);
 		Configuration.WriteTimeout = 2000;
@@ -219,7 +228,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		}
 		scanResult.Add(decodeCommand.FoundCodes);
 		InsertStat(scanResult, clearImage: false, decodeCommand.ExecutionTime.TotalSeconds);
-		if ((scanResult.DecodeResults.Count == 0) & snapOnFailure)
+		if (scanResult.DecodeResults.Count == 0 && snapOnFailure)
 		{
 			ISnapResult snapResult = Snap();
 			if (!snapResult.SnapOk)
@@ -287,7 +296,8 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 				LogHelper.Instance.Log(fmt, executionTimer.ElapsedMilliseconds);
 			}
 		}
-		new DeleteFileCommand(imagePacket).Send(Port);
+		DeleteFileCommand deleteFileCommand = new DeleteFileCommand(imagePacket);
+		deleteFileCommand.Send(Port);
 		return new SnapResult(fileName);
 	}
 

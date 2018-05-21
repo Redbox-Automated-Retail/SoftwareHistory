@@ -9,18 +9,12 @@ internal sealed class TesterReadDiskJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		if (ControllerMode.Emulated == ControllerConfiguration.Instance.Mode)
-		{
-			PushResults(TimeSpan.FromMilliseconds(0.34), 4, "999999");
-			return;
-		}
 		if (!PickerBoard.IsFull())
 		{
 			base.Context.CreateInfoResult("NoDisk", "The picker is empty.");
 			return;
 		}
-		using Scanner scanner = new Scanner();
-		base.ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
+		using Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, base.ControlSystem);
 		ScanResult scanResult = scanner.Read();
 		if (!scanResult.SnapOk)
 		{

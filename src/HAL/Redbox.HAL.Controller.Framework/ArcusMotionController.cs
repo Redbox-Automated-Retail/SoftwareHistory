@@ -8,7 +8,7 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class ArcusMotionController : MotionController
 {
-	private readonly IDeviceDescriptor ArcusDescriptor = new ArcusDeviceDescriptor();
+	private readonly IDeviceDescriptor ArcusDescriptor;
 
 	private readonly bool DebugEnabled;
 
@@ -271,6 +271,8 @@ internal sealed class ArcusMotionController : MotionController
 	{
 		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		DebugEnabled = map.GetValue("ArcusDebug", def: false);
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		ArcusDescriptor = new ArcusDeviceDescriptor(service);
 		RedboxSerialPortConfiguration conf = new RedboxSerialPortConfiguration(ControllerConfiguration.Instance.MotionControllerPortName)
 		{
 			WriteTerminator = RedboxSerialPort.WriteCharsCRNull,

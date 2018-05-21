@@ -21,18 +21,22 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 		{
 			base.Context.CreateInfoResult("DoorSensorStatus", service.Query().ToString().ToUpper());
 		}
-		base.Context.CreateInfoResult("QuickReturn", QuickReturnDevice.Instance.IsConfigured ? "Configured" : "Not configured");
+		base.Context.CreateInfoResult("QuickReturn", "Not configured");
 		IAirExchangerService service2 = ServiceLocator.Instance.GetService<IAirExchangerService>();
 		base.Context.CreateInfoResult("AirExchangerConfigured", service2.Configured ? "Configured" : "Not configured");
 		base.Context.CreateInfoResult("AirExchangerStatus", service2.CheckStatus().ToString());
 		base.Context.CreateInfoResult("AirExchangerFanStatus", service2.FanStatus.ToString());
-		IDiskValidatorService service3 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		base.Context.CreateInfoResult("FraudSensorEnabled", service3.IsConfigured ? "Enabled" : "Not Enabled");
-		AbeDeviceDescriptor abeDeviceDescriptor = new AbeDeviceDescriptor(debug: true);
+		ServiceLocator.Instance.GetService<IDiskValidatorService>();
+		IUsbDeviceService service3 = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		base.Context.CreateInfoResult("FraudSensorEnabled", ControllerConfiguration.Instance.EnableSecureDiskValidator ? "Enabled" : "Not Enabled");
+		AbeDeviceDescriptor abeDeviceDescriptor = new AbeDeviceDescriptor(service3, debug: true);
 		base.Context.CreateInfoResult("AbeDeviceStatus", abeDeviceDescriptor.Locate() ? "ATTACHED" : "NOT ATTACHED");
-		base.Context.CreateInfoResult("QuickReturnStatus", QuickReturnDevice.Instance.GetStatus().ToString());
+		base.Context.CreateInfoResult("QuickReturnStatus", DeviceStatus.None.ToString());
 		base.Context.CreateInfoResult("RouterPowerRelay", (ControllerConfiguration.Instance.RouterPowerCyclePause > 0) ? "Configured" : "Not Configured");
 		base.Context.CreateInfoResult("SupportsArcusReset", (ControllerConfiguration.Instance.RestartControllerDuringUserJobs && ControllerConfiguration.Instance.TrackHardwareCorrections) ? "Configured" : "Not Configured");
+		IScannerDeviceService service4 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		base.Context.CreateInfoResult("SupportsFraudScan", "Not Configured");
+		base.Context.CreateInfoResult("IRCameraHardwareInstall", service4.IRHardwareInstall.HasValue ? service4.IRHardwareInstall.ToString() : "NONE");
 	}
 
 	internal KioskConfigurationJob(ExecutionResult result, ExecutionContext ctx)

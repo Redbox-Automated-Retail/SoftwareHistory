@@ -1,81 +1,40 @@
 using System;
-using System.Threading;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core.Descriptors;
 
-internal sealed class MicrotouchDescriptor : ITouchscreenDescriptor, IDeviceDescriptor, IDriverDescriptor
+internal sealed class MicrotouchDescriptor : AbstractTouchscreenDescriptor
 {
-	public string Vendor => "0596";
-
-	public string Product => "0001";
-
-	public string Friendlyname => "3M";
-
-	public IDeviceSetupClass SetupClass { get; private set; }
-
-	public Version DriverVersion { get; private set; }
-
-	public string Provider => "3M";
-
-	public override string ToString()
-	{
-		return $"vid_{Vendor}&pid_{Product}";
-	}
-
-	public bool SoftReset()
+	protected override bool OnSoftReset()
 	{
 		return new _3mSoftResetCommand().Reset();
 	}
 
-	public bool HardReset()
+	protected override bool OnHardReset()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		bool result = false;
-		if (service.SetDeviceState(this, DeviceState.Disable))
-		{
-			Thread.Sleep(2000);
-			result = service.SetDeviceState(this, DeviceState.Enable);
-			Thread.Sleep(2000);
-		}
-		return result;
+		return OnResetDriver(2000);
 	}
 
-	public string ReadFirmware()
+	protected override string OnReadFirmware()
 	{
 		return new _3mFirmwareCommand().GetFirmwareRevision();
 	}
 
-	public bool ResetDriver()
+	protected override DeviceStatus OnGetStatus()
 	{
 		throw new NotImplementedException();
 	}
 
-	public bool MatchDriver()
+	protected override bool OnMatchDriver()
 	{
-		if (ServiceLocator.Instance.GetService<IUsbDeviceService>().MatchDriver(this, this))
-		{
-			LogHelper.Instance.Log("Touch screen driver matched.");
-			return true;
-		}
-		LogHelper.Instance.Log("Could not match TS driver.");
-		return false;
+		return OnMatchDriver(this, DriverDesc);
 	}
 
-	public bool Locate()
+	internal MicrotouchDescriptor(IUsbDeviceService s, DeviceClass clazz, IDriverDescriptor desc)
+		: base(s, clazz, desc)
 	{
-		return ServiceLocator.Instance.GetService<IUsbDeviceService>().FindDevice(this).Found;
-	}
-
-	public DeviceStatus GetStatus()
-	{
-		throw new NotImplementedException();
-	}
-
-	internal MicrotouchDescriptor(DeviceClass clazz)
-	{
-		DriverVersion = new Version("7.13.14.0");
-		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
-		SetupClass = service.Get(clazz);
+		base.Vendor = "0596";
+		base.Product = "0001";
+		base.Friendlyname = "3M";
 	}
 }

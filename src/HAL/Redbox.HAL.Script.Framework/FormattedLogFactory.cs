@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -28,17 +27,7 @@ public sealed class FormattedLogFactory : IFormattedLogFactoryService
 
 	private readonly IFormattedLog m_nilLog = new NullLog();
 
-	public string LogsBasePath
-	{
-		get
-		{
-			if (ControllerMode.Emulated != ControllerConfiguration.Instance.Mode)
-			{
-				return "c:\\Program Files\\Redbox\\KioskLogs";
-			}
-			return "c:\\bin\\KioskLogs";
-		}
-	}
+	public string LogsBasePath => "c:\\Program Files\\Redbox\\KioskLogs";
 
 	public IFormattedLog NilLog => m_nilLog;
 

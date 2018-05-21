@@ -2,13 +2,76 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurationObserver, IControlSystemObserver
+internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurationObserver
 {
+	internal sealed class FraudScanResult : IFraudScanResult
+	{
+		public bool Valid { get; internal set; }
+
+		public ErrorCodes ScanError { get; internal set; }
+
+		internal FraudScanResult()
+		{
+			Valid = false;
+			ScanError = ErrorCodes.Success;
+		}
+	}
+
+	private class NilFraudSensor : IFraudSensor
+	{
+		private readonly DiskValidatorService Validator;
+
+		public ErrorCodes LastPostResult => ErrorCodes.DeviceNotConfigured;
+
+		public ErrorCodes Initialize(IFormattedLog log)
+		{
+			return ErrorCodes.DeviceNotConfigured;
+		}
+
+		public ErrorCodes Shutdown()
+		{
+			return ErrorCodes.DeviceNotConfigured;
+		}
+
+		public ErrorCodes Reset(IFormattedLog log)
+		{
+			return ErrorCodes.DeviceNotConfigured;
+		}
+
+		public ErrorCodes StartScan()
+		{
+			return ErrorCodes.DeviceNotConfigured;
+		}
+
+		public ErrorCodes StopScan()
+		{
+			return ErrorCodes.DeviceNotConfigured;
+		}
+
+		public IFraudScanResult Validate()
+		{
+			return Validator.OnlyResult;
+		}
+
+		internal NilFraudSensor(DiskValidatorService s)
+		{
+			Validator = s;
+		}
+	}
+
+	private readonly FraudScanResult OnlyResult = new FraudScanResult
+	{
+		ScanError = ErrorCodes.DeviceNotConfigured,
+		Valid = false
+	};
+
 	private int m_persistentPostFailureCount;
 
-	public bool IsConfigured { get; private set; }
+	public bool IsConfigured => false;
 
 	public IFraudSensor FraudSensor { get; private set; }
+
+	private bool CorrectFailedFraudPost => false;
 
 	public void NotifyConfigurationChangeStart()
 	{
@@ -16,14 +79,12 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		if (IsConfigured)
 		{
 			FraudSensor.Shutdown();
-			ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(ControllerConfiguration.Instance.FraudSensorPostWait);
 		}
 	}
 
 	public void NotifyConfigurationChangeEnd()
 	{
 		LogHelper.Instance.Log("[DiskValidatorService] NotifyConfigurationEnd.");
-		IsConfigured = ControllerConfiguration.Instance.EnableSecureDiskValidator;
 		if (IsConfigured)
 		{
 			IFormattedLog nilLog = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().NilLog;
@@ -34,39 +95,14 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 
 	public void NotifyConfigurationLoaded()
 	{
-		IsConfigured = ControllerConfiguration.Instance.EnableSecureDiskValidator;
 		LogHelper.Instance.Log("[DiskValidatorService] ConfigurationLoad: Enabled = {0}.", IsConfigured.ToString());
-	}
-
-	public void OnSystemInitialize(ErrorCodes initError)
-	{
-		LogHelper.Instance.Log("[DiskValidatorService] On initialize.");
-		if (initError == ErrorCodes.Success && IsConfigured)
-		{
-			IFormattedLog nilLog = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().NilLog;
-			ErrorCodes errorCodes = FraudSensor.Initialize(nilLog);
-			LogHelper.Instance.Log("[DiskValidator] Fraud sensor initialization returned {0}", errorCodes.ToString());
-		}
-	}
-
-	public void OnSystemShutdown()
-	{
-		LogHelper.Instance.Log("[DiskValidatorService] On shutdown.");
-		if (IsConfigured)
-		{
-			FraudSensor.Shutdown();
-		}
 	}
 
 	public IFraudScanResult Validate(string matrix)
 	{
 		if (!IsConfigured)
 		{
-			return new FraudScanResult
-			{
-				ScanError = ErrorCodes.DeviceNotConfigured,
-				Valid = false
-			};
+			return OnlyResult;
 		}
 		return FraudSensor.Validate();
 	}
@@ -77,7 +113,7 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		{
 			m_persistentPostFailureCount = 0;
 		}
-		else if (ControllerConfiguration.Instance.CorrectFailedFraudPost && m_persistentPostFailureCount <= 2)
+		else if (CorrectFailedFraudPost && m_persistentPostFailureCount <= 2)
 		{
 			ErrorCodes errorCodes = FraudSensor.Reset(log);
 			log.WriteFormatted($"[CorrectErroredPost] POST returned {errorCodes.ToString()}");
@@ -92,10 +128,9 @@ internal sealed class DiskValidatorService : IDiskValidatorService, IConfigurati
 		}
 	}
 
-	internal DiskValidatorService(IFraudSensor sensor)
+	internal DiskValidatorService()
 	{
-		FraudSensor = sensor;
 		ControllerConfiguration.Instance.AddObserver(this);
-		ServiceLocator.Instance.GetService<IControlSystemService>().AddHandler(this);
+		FraudSensor = new NilFraudSensor(this);
 	}
 }

@@ -77,13 +77,6 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[XmlConfiguration(DefaultValue = "4")]
 	public int PutAwayItemAttempts { get; set; }
 
-	[Category("Configuration")]
-	[DisplayName("Controller Mode")]
-	[ValidValueListProvider("GetModes")]
-	[Description("The mode under which the controller driver runs.  If set to Emulated, all hardware instructions will be emulated based on the configured emulation state.")]
-	[XmlConfiguration(DefaultValue = "Normal")]
-	public ControllerMode Mode { get; set; }
-
 	[Category("Behavior")]
 	[DisplayName("Number of Pulls")]
 	[Description("The number of times the picker will attempt to pull the disk from the slot.")]
@@ -162,8 +155,20 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Category("Configuration")]
 	[DisplayName("Sync Ringlight Warmup Time")]
 	[Description("If value is greater than 0, wait value ms after turning on the ringlight during sync.")]
+	[XmlConfiguration(DefaultValue = "1500")]
+	public int RinglightWarmupPause2 { get; set; }
+
+	[Category("Configuration")]
+	[DisplayName("Ringlight Shutdown Pause")]
+	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
 	[XmlConfiguration(DefaultValue = "500")]
-	public int SyncRinglightWarmupTime { get; set; }
+	public int IRRinglightShutdownPause { get; set; }
+
+	[Category("Configuration")]
+	[DisplayName("IR Ringlight Startup Pause")]
+	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
+	[XmlConfiguration(DefaultValue = "1000")]
+	public int IRRinglightStartupPause { get; set; }
 
 	[Category("Behavior")]
 	[DisplayName("Move Timeout")]
@@ -564,69 +569,6 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	public bool ClearPickerOnHome { get; set; }
 
 	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Sensor POST Wait")]
-	[Description("In ms, the time to wait after power cycle to read inputs.")]
-	[XmlConfiguration(DefaultValue = "1000")]
-	public int FraudSensorPostWait { get; set; }
-
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Enable Fraud Sensor Check")]
-	[Description("If true, will enable fraud sensor POST checks during idle time.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool EnableFraudSensorCheck { get; set; }
-
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Enable Fraud Sensor Trace")]
-	[Description("If true, will enable fraud sensor diagnostic logging.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool EnableFraudSensorTrace { get; set; }
-
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Enable Fraud Sensor Post Trace")]
-	[Description("If true, will enable fraud sensor post diagnostic logging.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool EnableFraudSensorPostTrace { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Stop Scan Wait")]
-	[Description("If true, will enable fraud sensor diagnostic logging.")]
-	[XmlConfiguration(DefaultValue = "350")]
-	public int FraudStopScanWait { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Start Scan Wait")]
-	[Description("If true, will enable fraud sensor diagnostic logging.")]
-	[XmlConfiguration(DefaultValue = "200")]
-	public int FraudStartScanWait { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Post Poller Pause Time")]
-	[Description("In ms, the time the fraud post poller pauses between POSTs.")]
-	[XmlConfiguration(DefaultValue = "3600000")]
-	public int FraudPostPollerPauseTime { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Reset Pause")]
-	[Description("Time in ms that the fraud reset routine will pause between stop & initialize.")]
-	[XmlConfiguration(DefaultValue = "1000")]
-	public int FraudResetPause { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Scan Job Bitmask")]
-	[Description("Bitmask indicating which jobs to leave scan results in.")]
-	[XmlConfiguration(DefaultValue = "0")]
-	public int FraudScanJobBitmask2 { get; set; }
-
-	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Lower Limit As Error")]
 	[Description("If true, will treat lower limit as error during normal moves.")]
@@ -639,20 +581,6 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Description("If true, will reject disks not recognized as Redbox barcodes during return.")]
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool EnableUnrecognizedBarcodeReject { get; set; }
-
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Correct Failed Fraud Post")]
-	[Description("If true, try and correct a failed POST.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool CorrectFailedFraudPost { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Fraud Scan Validate Delay")]
-	[Description("If true, will delay the scan start for read.")]
-	[XmlConfiguration(DefaultValue = "900")]
-	public int FraudScanValidateDelay { get; set; }
 
 	[Browsable(false)]
 	[Category("Behavior")]
@@ -718,6 +646,20 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	public bool HomeOnLowerLimitError { get; set; }
 
 	[Browsable(false)]
+	[Category("Configuration")]
+	[DisplayName("CCR Watchdog Sleep")]
+	[Description("In ms, the amount of time the CCR watchdog sleeps before checking the CCR.")]
+	[XmlConfiguration(DefaultValue = "1800000")]
+	public int CCRWatchdogSleep { get; set; }
+
+	[Browsable(false)]
+	[Category("Behavior")]
+	[DisplayName("Disable Auto Exposure At Init")]
+	[Description("If true, will disable auto exposure on gen 4 cameras if set.")]
+	[XmlConfiguration(DefaultValue = "1800000")]
+	public bool DisableAutoExposureAtInit { get; set; }
+
+	[Browsable(false)]
 	public bool IsVMZMachine => MerchMode != MerchandizingMode.QLM;
 
 	protected override string FileNodeName => "Controller";
@@ -727,42 +669,30 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 		get
 		{
 			int result = 90;
-			if (ControllerMode.Normal == Mode)
+			RegistryKey registryKey = null;
+			try
 			{
-				RegistryKey registryKey = null;
-				try
+				registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
+				if (registryKey != null)
 				{
-					registryKey = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store");
-					if (registryKey != null)
+					object value = registryKey.GetValue("MaxSlots");
+					if (value != null)
 					{
-						object value = registryKey.GetValue("MaxSlots");
-						if (value != null)
-						{
-							result = (int)ConversionHelper.ChangeType(value, typeof(int));
-						}
+						result = (int)ConversionHelper.ChangeType(value, typeof(int));
 					}
 				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("Unable to read secret option 'MaxSlots'", e);
-					result = -1;
-				}
-				finally
-				{
-					registryKey?.Close();
-				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("Unable to read secret option 'MaxSlots'", e);
+				result = -1;
+			}
+			finally
+			{
+				registryKey?.Close();
 			}
 			return result;
 		}
-	}
-
-	public string[] GetModes()
-	{
-		return new string[2]
-		{
-			ControllerMode.Normal.ToString(),
-			ControllerMode.Emulated.ToString()
-		};
 	}
 
 	public string[] GetMotionControllerTypes()

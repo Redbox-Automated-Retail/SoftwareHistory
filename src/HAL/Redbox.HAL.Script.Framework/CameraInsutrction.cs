@@ -27,12 +27,12 @@ public class CameraInsutrction : Instruction
 		ShowProperties,
 		IsWorking,
 		IRCamera,
-		Reset,
 		ResetReturnCounter,
 		ReturnErrorCount,
 		SnapDecode,
 		ScanForPort,
-		ValidateSettings
+		ValidateSettings,
+		Restart
 	}
 
 	public override string Mnemonic => "CAMERA";
@@ -107,7 +107,7 @@ public class CameraInsutrction : Instruction
 			break;
 		case ExpectedOperand.SnapDecode:
 		{
-			using Scanner scanner = new Scanner();
+			using Scanner scanner = new Scanner(service);
 			ScanResult scanResult = scanner.Read();
 			context.PushTop(scanResult.ScannedMatrix);
 			break;
@@ -118,7 +118,8 @@ public class CameraInsutrction : Instruction
 		case ExpectedOperand.ValidateSettings:
 			configuredDevice.ValidateSettings();
 			break;
-		case ExpectedOperand.Reset:
+		case ExpectedOperand.Restart:
+			context.PushTop(configuredDevice.Restart().ToString().ToUpper());
 			break;
 		}
 	}

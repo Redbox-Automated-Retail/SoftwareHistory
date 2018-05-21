@@ -6,10 +6,6 @@ namespace Redbox.HAL.Script.Framework;
 
 internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 {
-	private delegate void OnDiskReturned(string barcode);
-
-	private delegate void OnFileDisk(string barcode);
-
 	private bool CameraErrored;
 
 	private static int m_cameraErrors = 0;
@@ -98,8 +94,7 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
 		try
 		{
-			IDiskValidatorService service3 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-			service3.CorrectErroredPost(applicationLog);
+			ServiceLocator.Instance.GetService<IDiskValidatorService>().CorrectErroredPost(applicationLog);
 			using (FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: false))
 			{
 				if (IsQuick)
@@ -216,11 +211,6 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 					{
 						base.Context.CreateInfoResult("CameraCaptureFailure", "Return has detected a duplicate barcode.");
 					}
-					if (service3.IsConfigured)
-					{
-						IFraudScanResult scanResult = fraudValidator.MultipassValidateChecked(scannedId);
-						fraudValidator.Publish(scanResult, scannedId);
-					}
 					FileDiskInKiosk(scannedId);
 				}
 				else
@@ -252,10 +242,10 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 			base.ControlSystem.StopRoller();
 			if (ControllerConfiguration.Instance.IsVMZMachine)
 			{
-				IInventoryService service4 = ServiceLocator.Instance.GetService<IInventoryService>();
-				IDumpbinService service5 = ServiceLocator.Instance.GetService<IDumpbinService>();
-				base.Context.CreateInfoResult("EmptySlotCount", service4.GetMachineEmptyCount().ToString());
-				base.Context.CreateInfoResult("DumpBinRemainingCapacity", service5.RemainingSpace().ToString());
+				IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
+				IDumpbinService service4 = ServiceLocator.Instance.GetService<IDumpbinService>();
+				base.Context.CreateInfoResult("EmptySlotCount", service3.GetMachineEmptyCount().ToString());
+				base.Context.CreateInfoResult("DumpBinRemainingCapacity", service4.RemainingSpace().ToString());
 				base.Context.CreateInfoResult("ReturnSlotBufferValue", ControllerConfiguration.Instance.ReturnSlotBuffer.ToString());
 			}
 			if (CameraErrored && ControllerConfiguration.Instance.FixCameraAfterReturn)
@@ -265,13 +255,12 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 		}
 	}
 
-	private void ReturnToUserOrFile(OnFileDisk handler, OnDiskReturned returnedHandler, string barcode)
+	private void ReturnToUserOrFile(Action<string> handler, Action<string> returnedHandler, string barcode)
 	{
 		ErrorCodes errorCodes = ReturnDiskToUser();
 		if (ErrorCodes.PickerEmpty == errorCodes)
 		{
 			returnedHandler(barcode);
-			base.Context.AppLog.WriteFormatted("The disk was returned to the user.");
 			DisplayQRState("Busy", haltPoll: false, null);
 			return;
 		}
@@ -413,56 +402,86 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 
 	private bool ReadDisk(out string scannedId)
 	{
-		scannedId = "UNKNOWN";
-		if (IsQuick)
+		if (!ServiceLocator.Instance.GetService<IScannerDeviceService>().IRHardwareInstall.HasValue)
 		{
-			QuickReturnDevice.Instance.DisplayState("Wait");
+			return OnReadWithLegacy(out scannedId);
 		}
-		using Scanner scanner = new Scanner();
+		return OnReadWithIR(out scannedId);
+	}
+
+	private bool OnReadWithIR(out string scannedId)
+	{
+		scannedId = "UNKNOWN";
 		CenterDiskMethod[] centerMethods = CenterMethods;
 		foreach (CenterDiskMethod method in centerMethods)
 		{
 			base.ControlSystem.Center(method);
+			using Scanner scanner = new Scanner(base.ControlSystem);
 			ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)
 			{
-				CameraErrored = true;
-				scannedId = "UNKNOWN";
-				base.AppLog.LogCaptureProblem();
-				if (!ControllerConfiguration.Instance.FixCameraAfterReturn || ++m_cameraErrors >= ControllerConfiguration.Instance.ReturnCameraAlertThreshold)
-				{
-					base.Context.CreateInfoResult("CameraCaptureFailure", "The CAMERA CAPTURE instruction failed.");
-				}
-				return false;
+				return OnCameraFailure();
 			}
 			m_cameraErrors = 0;
-			scannedId = scanResult.ScannedMatrix;
 			if (scanResult.ReadCode)
 			{
-				base.Context.Send($"ReturnEnd:{scannedId}");
-				return true;
+				scannedId = scanResult.ScannedMatrix;
+				return OnBarcodeRead(scannedId);
 			}
 		}
-		base.Context.AppLog.Write("No barcodes read on image.", LogEntryType.Info);
-		base.Context.CreateInfoResult("BadIdRead", "The READ request failed.", scannedId);
 		scannedId = "UNKNOWN";
+		return OnNoRead(scannedId);
+	}
+
+	private bool OnReadWithLegacy(out string scannedId)
+	{
+		scannedId = "UNKNOWN";
+		using (Scanner scanner = new Scanner(base.ControlSystem))
+		{
+			CenterDiskMethod[] centerMethods = CenterMethods;
+			foreach (CenterDiskMethod method in centerMethods)
+			{
+				base.ControlSystem.Center(method);
+				ScanResult scanResult = scanner.Read();
+				if (!scanResult.SnapOk)
+				{
+					return OnCameraFailure();
+				}
+				m_cameraErrors = 0;
+				if (scanResult.ReadCode)
+				{
+					scannedId = scanResult.ScannedMatrix;
+					return OnBarcodeRead(scannedId);
+				}
+			}
+		}
+		scannedId = "UNKNOWN";
+		return OnNoRead(scannedId);
+	}
+
+	private bool OnNoRead(string scannedId)
+	{
+		base.Context.CreateInfoResult("BadIdRead", "The READ request failed.", scannedId);
 		return false;
+	}
+
+	private bool OnCameraFailure()
+	{
+		CameraErrored = true;
+		if (!ControllerConfiguration.Instance.FixCameraAfterReturn || ++m_cameraErrors >= ControllerConfiguration.Instance.ReturnCameraAlertThreshold)
+		{
+			base.Context.CreateInfoResult("CameraCaptureFailure", "The CAMERA CAPTURE instruction failed.");
+		}
+		return false;
+	}
+
+	private bool OnBarcodeRead(string matrix)
+	{
+		base.Context.Send($"ReturnEnd:{matrix}");
+		return true;
 	}
 
 	private void DisplayQRState(string name, bool haltPoll, int? waitAfterDisplay)
 	{
-		if (IsQuick)
-		{
-			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-			QuickReturnDevice.Instance.DisplayState(name);
-			if (waitAfterDisplay.HasValue)
-			{
-				service.Wait(waitAfterDisplay.Value);
-			}
-			if (haltPoll)
-			{
-				QuickReturnPoller.Instance.Shutdown(joinThread: true);
-			}
-		}
 	}
 }

@@ -63,7 +63,6 @@ internal class KioskTestAdapter : IDisposable
 			HandleMachineError();
 			return;
 		}
-		using Scanner scanner = new Scanner();
 		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
 		if (!service.Get(AppLog).Success)
 		{
@@ -71,18 +70,12 @@ internal class KioskTestAdapter : IDisposable
 			HandleMachineError();
 			return;
 		}
-		ControlSystem.Center(CenterDiskMethod.VendDoorAndBack);
-		ScanResult scanResult = scanner.Read();
-		string scannedMatrix = scanResult.ScannedMatrix;
-		if (!scanResult.SnapOk)
+		string text = "UNKNOWN";
+		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, ControlSystem))
 		{
-			AppLog.Write($"CAMERA CAPTURE returned an error status {scanResult.Diagnostic}", LogEntryType.Error);
+			text = scanner.Read().ScannedMatrix;
 		}
-		if (!scanResult.ReadCode)
-		{
-			AppLog.Write("The barcode in the picker could not be read.", LogEntryType.Error);
-		}
-		if (flag && !VendDisk(scannedMatrix))
+		if (flag && !VendDisk(text))
 		{
 			HandleMachineError();
 			return;
@@ -94,7 +87,7 @@ internal class KioskTestAdapter : IDisposable
 			return;
 		}
 		ControlSystem.TrackCycle();
-		if (!service.Put(scannedMatrix, AppLog).Success)
+		if (!service.Put(text, AppLog).Success)
 		{
 			Context.CreateInfoResult("PutFailed", "Kiosk failed to put disc into slot");
 			HandleMachineError();
