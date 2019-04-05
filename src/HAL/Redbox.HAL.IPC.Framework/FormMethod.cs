@@ -98,7 +98,8 @@ internal class FormMethod
 	{
 		foreach (FormMethodParameter requiredParameter in RequiredParameters)
 		{
-			if (tokenizer.Tokens.GetKeyValuePair(requiredParameter.KeyName) == null)
+			KeyValuePair keyValuePair = tokenizer.Tokens.GetKeyValuePair(requiredParameter.KeyName);
+			if (keyValuePair == null)
 			{
 				result.Errors.Add(Error.NewError("S001", $"The named parameter '{requiredParameter.KeyName.ToLower()}:' is required.", "Submit the command specifying the missing named parameter."));
 			}

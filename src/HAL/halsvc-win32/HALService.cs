@@ -5,13 +5,15 @@ using System.Diagnostics;
 using System.ServiceProcess;
 using System.Threading;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Component.Model.Services;
 using Redbox.HAL.Configuration;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 using Redbox.HAL.DataMatrix.Framework;
 using Redbox.HAL.DataStorage;
 using Redbox.HAL.Script.Framework;
-using Redbox.HAL.Service.Framework;
+using Redbox.HAL.Service.Win32.Commands;
 using Redbox.HAL.Service.Win32.Properties;
 using log4net;
 
@@ -51,6 +53,11 @@ public class HALService : ServiceBase, ILogger
 	public void Log(string message, Exception e)
 	{
 		m_log.Error(message, e);
+	}
+
+	public void Log(string msg)
+	{
+		Log(msg, LogEntryType.Info);
 	}
 
 	public void Log(string message, LogEntryType type)
@@ -115,15 +122,16 @@ public class HALService : ServiceBase, ILogger
 
 	protected override void OnStop()
 	{
-		LogHelper.Instance.Log("Stop service request from OnStop.");
+		Log("Stop service request from OnStop.");
 		StopService();
 	}
 
 	protected override bool OnPowerEvent(PowerBroadcastStatus powerStatus)
 	{
-		LogHelper.Instance.Log("Stop service request from OnPowerEvent; powerStatus = {0} State = {1}.", powerStatus.ToString(), State.ToString());
+		LogHelper.Instance.Log("OnPowerEvent powerStatus = {0} State = {1}.", powerStatus.ToString(), State.ToString());
 		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
 		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IScannerDeviceService service3 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
 		lock (PowerStateLock)
 		{
 			if (PowerBroadcastStatus.Suspend == powerStatus)
@@ -133,6 +141,7 @@ public class HALService : ServiceBase, ILogger
 					State = PowerState.Suspended;
 					service.Suspend();
 					service2.Shutdown();
+					service3.Shutdown();
 				}
 			}
 			else if (PowerBroadcastStatus.ResumeSuspend == powerStatus && PowerState.Suspended == State)
@@ -146,15 +155,19 @@ public class HALService : ServiceBase, ILogger
 
 	protected override void OnShutdown()
 	{
-		LogHelper.Instance.Log("Stop service request from OnShutdown.");
+		Log("Stop service request from OnShutdown.");
 		StopService();
 		base.OnShutdown();
 	}
 
 	internal void StopService()
 	{
-		ServiceLocator.Instance.GetService<IExecutionService>().Shutdown();
-		ServiceLocator.Instance.GetService<IControllerService>().Shutdown();
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		service.Shutdown();
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		service2.Shutdown();
+		IScannerDeviceService service3 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		service3.Shutdown();
 		Log("Stop Hardware Abstraction Layer (HAL) Service.", LogEntryType.Info);
 		WriteEventLogEntry("Stop Hardware Abstraction Layer (HAL) Service.", EventLogEntryType.Information);
 		Proxy.Dispose();
@@ -172,58 +185,66 @@ public class HALService : ServiceBase, ILogger
 		IRuntimeService runtimeService = new RuntimeService();
 		string message = string.Format("{0} version {1} (.NET version {2}; OS = {3})", "Start Hardware Abstraction Layer (HAL) Service", typeof(HALService).Assembly.GetName().Version, Environment.Version.ToString(), runtimeService.GetPlatform().ToString());
 		ErrorList errorList = new ErrorList();
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		dictionary.Add("MotionControlServiceVersion", Settings.Default.MotionControlServiceVersion);
-		dictionary.Add("CountersDBExclusiveMode", Settings.Default.CountersDBExclusiveMode);
+		Dictionary<string, object> initProperties = new Dictionary<string, object>();
 		try
 		{
 			Log(message, LogEntryType.Info);
 			WriteEventLogEntry("Start Hardware Abstraction Layer (HAL) Service", EventLogEntryType.Information);
-			ServiceLocator.Instance.AddService(typeof(ITableTypeFactory), new TableTypeFactory());
-			ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
-			ServiceLocator.Instance.AddService(typeof(ILogger), this);
-			ServiceLocator.Instance.AddService(typeof(IEncryptionService), new TripleDesEncryptionService());
-			ServiceLocator.Instance.AddService(typeof(IRuntimeService), runtimeService);
-			ServiceLocator.Instance.AddService(typeof(IDeviceSetupClassFactory), new DeviceSetupClassFactory());
-			ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), new UsbDeviceService(Settings.Default.UsbServiceDebug));
-			ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(Settings.Default.CountersDBExclusiveMode));
-			ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
-			ConfigurationService configurationService = ConfigurationService.Make(runtimeService.RuntimePath("HAL.xml"));
-			ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
+			ServiceLocator.Instance.AddService<ITableTypeFactory>(new TableTypeFactory());
+			ServiceLocator.Instance.AddService<IFormattedLogFactoryService>(new FormattedLogFactory());
+			ServiceLocator.Instance.AddService<ILogger>(this);
+			ServiceLocator.Instance.AddService<IEncryptionService>(new TripleDesEncryptionService());
+			ServiceLocator.Instance.AddService<IRuntimeService>(runtimeService);
+			ServiceLocator.Instance.AddService<IPortManagerService>(new PortManager());
+			ServiceLocator.Instance.AddService<IZipFileService>(new ZipFileService(runtimeService));
+			ServiceLocator.Instance.AddService<IDeviceSetupClassFactory>(new DeviceSetupClassFactory());
+			ServiceLocator.Instance.AddService<IUsbDeviceService>(new UsbDeviceService(Settings.Default.UsbServiceDebug));
+			ServiceLocator.Instance.AddService<IDataTableService>(new DataTableService(Settings.Default.CountersDBExclusiveMode));
+			ServiceLocator.Instance.AddService<IPersistentMapService>(new PersistentMapService());
+			string configFile = runtimeService.RuntimePath("HAL.xml");
+			ConfigurationService configurationService = ConfigurationService.Make(configFile);
+			ServiceLocator.Instance.AddService<IConfigurationService>(configurationService);
 			ControllerService controllerService = new ControllerService();
-			ServiceLocator.Instance.AddService(typeof(IControllerService), controllerService);
-			controllerService.Initialize(errorList, dictionary);
+			ServiceLocator.Instance.AddService<IControllerService>(controllerService);
+			controllerService.Initialize(errorList, initProperties);
+			LogHelper.Instance.Log("Loading Barcode Configuration Instance.");
 			BarcodeConfiguration.NewInstance();
-			IExecutionService executionService = ExecutionEngine.NewEngine(runtimeService.InstallPath("Scripts"));
-			ServiceLocator.Instance.AddService(typeof(IExecutionService), executionService);
+			LogHelper.Instance.Log("Loading BarcodeReaderFactory.");
+			BarcodeReaderFactory barcodeReaderFactory = new BarcodeReaderFactory();
+			ServiceLocator.Instance.AddService<IBarcodeReaderFactory>(barcodeReaderFactory);
+			LogHelper.Instance.Log("Initializing barcode reader factory.");
+			barcodeReaderFactory.Initialize(errorList);
+			string scriptsPath = runtimeService.InstallPath("Scripts");
+			LogHelper.Instance.Log("Loading ExecutionEngine.");
+			IExecutionService executionService = ExecutionEngine.NewEngine(scriptsPath);
+			ServiceLocator.Instance.AddService<IExecutionService>(executionService);
 			executionService.Initialize(errorList);
 			configurationService.Load(errorList);
 			if (errorList.ContainsError())
 			{
-				foreach (Error item in errorList)
+				errorList.ForEach(delegate(Error initError)
 				{
-					Log($"Error = {item}", LogEntryType.Info);
-				}
+					Log($"Error = {initError}", LogEntryType.Error);
+				});
 				Log("The HAL service encountered startup problems, and is stopping.", LogEntryType.Error);
 				Log("Failed to load configuration.", LogEntryType.Error);
 				WriteEventLogEntry("HAL Service encountered startup problems, and is stopping.", EventLogEntryType.Error);
 				Stop();
+				return;
+			}
+			IpcHostVersion version = Enum<IpcHostVersion>.Parse(Settings.Default.ServiceHostGeneration, IpcHostVersion.Legacy);
+			IPCProxy.InitializeServices(version);
+			Proxy = IPCProxy.Parse(Settings.Default.ServiceProtocol);
+			if (!Proxy.ProtocolValid)
+			{
+				string text = "ProtocolURI is malformed; please fix. HAL service is exiting.";
+				Log(text, LogEntryType.Fatal);
+				WriteEventLogEntry(text, EventLogEntryType.Error);
 			}
 			else
 			{
-				IPCProxy.InitializeServices(Enum<IpcHostVersion>.Parse(Settings.Default.ServiceHostGeneration, IpcHostVersion.Legacy));
-				Proxy = IPCProxy.Parse(Settings.Default.ServiceProtocol);
-				if (!Proxy.ProtocolValid)
-				{
-					string text = "ProtocolURI is malformed; please fix. HAL service is exiting.";
-					Log(text, LogEntryType.Fatal);
-					WriteEventLogEntry(text, EventLogEntryType.Error);
-				}
-				else
-				{
-					executionService.StartScheduler();
-					Proxy.StartListener();
-				}
+				executionService.Start();
+				Proxy.StartListener();
 			}
 		}
 		catch (Exception e)
@@ -240,7 +261,7 @@ public class HALService : ServiceBase, ILogger
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("Unable to log error message to diagnostic log.", e);
+			Log("Unable to log error message to diagnostic log.", e);
 		}
 	}
 
@@ -253,7 +274,7 @@ public class HALService : ServiceBase, ILogger
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("Unable to write to the event log.", e);
+			Log("Unable to write to the event log.", e);
 			return false;
 		}
 	}

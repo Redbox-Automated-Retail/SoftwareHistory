@@ -2,7 +2,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class GetOperation : AbstractOperation<IGetResult>
+internal sealed class GetOperation : AbstractOperation<GetResult>
 {
 	private IFormattedLog Log;
 
@@ -16,7 +16,7 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 
 	private readonly GetResult Result;
 
-	public override IGetResult Execute()
+	public override GetResult Execute()
 	{
 		if (Validate())
 		{
@@ -32,17 +32,7 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 
 	internal GetOperation(ILocation location, IGetObserver observer, IFormattedLog log)
 	{
-		IGetObserver observer2;
-		if (observer != null)
-		{
-			observer2 = observer;
-		}
-		else
-		{
-			IGetObserver instance = DefaultGetObserver.Instance;
-			observer2 = instance;
-		}
-		Observer = observer2;
+		Observer = observer;
 		Log = log;
 		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
 		Deck = service.GetFrom(location);
@@ -78,25 +68,38 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 			Result.Update(ErrorCodes.TrackCloseTimeout);
 			return;
 		}
-		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
-		if (pickerSensorReadResult.Sensors[0] && !pickerSensorReadResult.Sensors[1])
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			Result.Update(pickerSensorReadResult.Error);
+			return;
+		}
+		if (pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1) && !pickerSensorReadResult.IsInputActive(PickerInputs.Sensor2))
 		{
 			errorCodes = PullFrom(Location, 1);
 		}
-		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(300);
+		RuntimeService.SpinWait(300);
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		if (Controller.RollerToPosition(RollerPosition.Position4, 6000, logSensors: false).Success)
 		{
 			service.Reset(Location);
 			return;
 		}
-		if (PickerBoard.IsFull())
+		IPickerSensorReadResult pickerSensorReadResult2 = Controller.ReadPickerSensors();
+		if (!pickerSensorReadResult2.Success)
 		{
+			Result.Update(ErrorCodes.SensorReadError);
+			return;
+		}
+		if (pickerSensorReadResult2.IsFull)
+		{
+			LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Info, "[GET] Disk did not make it to sensor 4.");
+			pickerSensorReadResult2.Log(LogEntryType.Error);
 			OnStuck();
 			return;
 		}
-		LogHelper.Instance.Log("GET: no disk in picker after pull.", LogEntryType.Info);
-		Controller.LogPickerSensorState();
+		LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Info, "[GET] no disk in picker after pull.");
+		pickerSensorReadResult2.Log();
 		Result.Update(ErrorCodes.SlotEmpty);
 		if (Observer.OnEmpty(Result))
 		{
@@ -106,16 +109,22 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 
 	private void OnStuck()
 	{
-		LogHelper.Instance.Log("Disk did not make it to sensor 4.", LogEntryType.Error);
-		Controller.LogPickerSensorState(LogEntryType.Error);
 		Controller.StartRollerIn();
 		try
 		{
 			bool flag = ClearDiskFromPicker();
 			PushIntoSlot();
-			LogHelper.Instance.Log(LogEntryType.Error, "GET: couldn't get disc, ClearDiscFromPicker returned {0}", flag ? "TIMEOUT" : "SUCCESS");
-			Controller.LogPickerSensorState(LogEntryType.Error);
-			Result.Update(PickerBoard.IsFull() ? ErrorCodes.PickerObstructed : ErrorCodes.ItemStuck);
+			LogHelper.Instance.WithContext(false, LogEntryType.Error, "[GET] couldn't get disc, ClearDiscFromPicker returned {0}", flag ? "TIMEOUT" : "SUCCESS");
+			IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+			pickerSensorReadResult.Log(LogEntryType.Error);
+			if (!pickerSensorReadResult.Success)
+			{
+				Result.Update(ErrorCodes.SensorReadError);
+			}
+			else
+			{
+				Result.Update(pickerSensorReadResult.IsFull ? ErrorCodes.PickerObstructed : ErrorCodes.ItemStuck);
+			}
 		}
 		finally
 		{
@@ -131,9 +140,9 @@ internal sealed class GetOperation : AbstractOperation<IGetResult>
 			Result.Update(ErrorCodes.TrackCloseTimeout);
 			return false;
 		}
-		if (Controller.ReadSensors().IsFull)
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+		if (pickerSensorReadResult.IsFull)
 		{
-			LogHelper.Instance.Log($">> ControllerService.Get: {ErrorCodes.PickerFull.ToString()}", LogEntryType.Info);
 			Result.Update(ErrorCodes.PickerFull);
 			return false;
 		}

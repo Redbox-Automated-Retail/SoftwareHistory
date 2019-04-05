@@ -11,15 +11,47 @@ internal sealed class CoreResponse : IControlResponse
 
 	private string m_commandResponse = string.Empty;
 
+	private static CoreResponse m_timeoutResponse = null;
+
+	private static CoreResponse m_commErrorResponse = null;
+
 	private static readonly char[] TrimChars = Environment.NewLine.ToCharArray();
 
-	public bool Success => Error == ErrorCodes.Success;
+	public bool Success => ErrorCodes.Success == Error;
 
 	public bool TimedOut => ErrorCodes.Timeout == Error;
 
 	public bool CommError => ErrorCodes.CommunicationError == Error;
 
 	public string Diagnostic { get; internal set; }
+
+	internal static CoreResponse CommErrorResponse
+	{
+		get
+		{
+			if (m_commErrorResponse == null)
+			{
+				CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
+				coreResponse.Error = ErrorCodes.CommunicationError;
+				m_commErrorResponse = coreResponse;
+			}
+			return m_commErrorResponse;
+		}
+	}
+
+	internal static CoreResponse TimedOutResponse
+	{
+		get
+		{
+			if (m_timeoutResponse == null)
+			{
+				CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
+				coreResponse.Error = ErrorCodes.Timeout;
+				m_timeoutResponse = coreResponse;
+			}
+			return m_timeoutResponse;
+		}
+	}
 
 	internal ErrorCodes Error
 	{
@@ -32,7 +64,7 @@ internal sealed class CoreResponse : IControlResponse
 			m_errorCode = value;
 			if (ErrorCodes.CommunicationError == m_errorCode)
 			{
-				OpCodeResponse = "COMMUNICATION ERROR";
+				OpCodeResponse = string.Empty;
 			}
 		}
 	}
@@ -64,44 +96,18 @@ internal sealed class CoreResponse : IControlResponse
 		return Diagnostic;
 	}
 
-	internal bool IsSensorSet(AuxSensor sensor)
-	{
-		return IsBitSet((int)sensor);
-	}
-
 	internal bool IsBitSet(int bit)
 	{
 		if (m_errorCode != ErrorCodes.Success)
 		{
 			return false;
 		}
-		if (string.IsNullOrEmpty(OpCodeResponse))
-		{
-			LogHelper.Instance.Log("IsBitSet: opcode response is null or empty!", LogEntryType.Info);
-			return false;
-		}
 		if (OpCodeResponse.Length < bit + 1)
 		{
-			LogHelper.Instance.Log($"IsBitSet: opcode response is {OpCodeResponse}; this is insufficient for bit test.", LogEntryType.Info);
+			LogHelper.Instance.Log("IsBitSet: opcode response is {0}; this is insufficient for bit test.", OpCodeResponse);
 			return false;
 		}
 		return OpCodeResponse[bit] == '1';
-	}
-
-	internal static CoreResponse CommErrorResponse()
-	{
-		return new CoreResponse(AddressSelector.H101)
-		{
-			Error = ErrorCodes.CommunicationError
-		};
-	}
-
-	internal static CoreResponse TimedOutResponse()
-	{
-		return new CoreResponse(AddressSelector.H101)
-		{
-			Error = ErrorCodes.Timeout
-		};
 	}
 
 	internal CoreResponse(ErrorCodes error, string diagnostic)

@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -70,14 +71,14 @@ public sealed class QlmInstruction : Instruction
 		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
 		if (string.Compare(token.Value, "HALT", ignoreCase: true) == 0)
 		{
-			context.PushTop(service2.HaltQlmOperation().Success ? "SUCCESS" : "TIMEOUT");
+			context.PushTop(service2.HaltQlmLifter().Success ? base.SuccessMessage : base.TimeoutMessage);
 		}
 		else if (string.Compare(token.Value, "ENGAGE", ignoreCase: true) == 0)
 		{
 			ErrorCodes errorCodes = service2.EngageQlm(home, context.AppLog);
 			if (errorCodes == ErrorCodes.Success && !context.IsImmediate)
 			{
-				service.TestAndReset(context.AppLog);
+				service.TestAndReset();
 			}
 			context.PushTop(errorCodes.ToString().ToUpper());
 		}
@@ -94,7 +95,7 @@ public sealed class QlmInstruction : Instruction
 			ErrorCodes errorCodes2 = service2.DisengageQlm(home, context.AppLog);
 			if (errorCodes2 == ErrorCodes.Success && !context.IsImmediate)
 			{
-				service.TestAndReset(context.AppLog);
+				service.TestAndReset();
 			}
 			context.PushTop(errorCodes2.ToString().ToUpper());
 		}
@@ -116,7 +117,7 @@ public sealed class QlmInstruction : Instruction
 			}
 			if (MerchandizingHelper.Instance.CleanupJob(result, context, failCode) && !context.IsImmediate)
 			{
-				service.TestAndReset(context.AppLog);
+				service.TestAndReset();
 			}
 		}
 		else if (string.Compare(token.Value, "CLEAR-PICKER") == 0)
@@ -148,7 +149,7 @@ public sealed class QlmInstruction : Instruction
 				string text = merchandizeResult.ToString().ToUpper();
 				if (merchandizeResult != MerchandizeResult.Success)
 				{
-					context.ServiceLog("Unload-Disc returned status {0}", text);
+					LogHelper.Instance.WithContext("Unload-Disc returned status {0}", text);
 				}
 				context.PushTop(text);
 			}
@@ -166,7 +167,7 @@ public sealed class QlmInstruction : Instruction
 				string text2 = merchandizeResult2.ToString().ToUpper();
 				if (merchandizeResult2 != MerchandizeResult.Success)
 				{
-					context.ServiceLog("thin-disk returned status {0}", text2);
+					LogHelper.Instance.WithContext("thin-disk returned status {0}", text2);
 				}
 				context.PushTop(text2);
 			}

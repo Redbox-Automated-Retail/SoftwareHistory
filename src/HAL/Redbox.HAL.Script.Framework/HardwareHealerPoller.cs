@@ -3,8 +3,8 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[Poller(Name = "HardwareHealer")]
-internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
+[Poller(Name = "HardwareHealer", ConfigNotifications = true)]
+internal class HardwareHealerPoller : ScriptPoller
 {
 	private bool m_configured;
 
@@ -22,40 +22,22 @@ internal class HardwareHealerPoller : ScriptPoller, IConfigurationObserver
 
 	protected override bool IsConfigured => m_configured;
 
-	public void NotifyConfigurationLoaded()
+	protected override void OnConfigurationLoad()
 	{
-		LogHelper.Instance.Log("[HardwareHealer] Configuration loaded.");
 		m_configured = ControllerConfiguration.Instance.EnableHardwareHealing;
 		m_pauseTime = ControllerConfiguration.Instance.HardwareHealerPauseTime;
 	}
 
-	public void NotifyConfigurationChangeStart()
+	protected override void OnConfigurationChangeEnd()
 	{
-		LogHelper.Instance.Log("[HardwareHealer] Configuration change start.");
-		Shutdown();
-	}
-
-	public void NotifyConfigurationChangeEnd()
-	{
-		LogHelper.Instance.Log("[HardwareHealer] Configuration change end.");
 		m_configured = ControllerConfiguration.Instance.EnableHardwareHealing;
 		m_pauseTime = ControllerConfiguration.Instance.HardwareHealerPauseTime;
-		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
-		{
-			Start();
-		}
 	}
 
 	protected override bool CoreExecute()
 	{
-		ScheduleAndBlockOnJob().Trash();
+		ScheduleAndBlockOnJob();
 		return true;
-	}
-
-	internal override void Initialize()
-	{
-		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
-		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private HardwareHealerPoller()

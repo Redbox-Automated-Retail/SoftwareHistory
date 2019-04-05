@@ -20,12 +20,11 @@ public sealed class GetInstruction : Instruction
 			}
 			using PeekOperation peekOperation = new PeekOperation();
 			IPeekResult peekResult = peekOperation.Execute();
-			string message = $"GET disk at Deck = {gr.Location.Deck} Slot = {gr.Location.Slot} shows SLOTEMPTY; PEEK returns {peekResult.ToString()}";
-			LogHelper.Instance.Log(message, LogEntryType.Info);
 			if (!peekResult.TestOk || peekResult.IsFull)
 			{
 				gr.Update(ErrorCodes.ItemStuck);
-				ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(gr.Location);
+				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+				service.UpdateEmptyStuck(gr.Location);
 				return false;
 			}
 			return true;
@@ -35,7 +34,8 @@ public sealed class GetInstruction : Instruction
 		{
 			if (TestSlot)
 			{
-				ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(gr.Location);
+				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+				service.UpdateEmptyStuck(gr.Location);
 			}
 		}
 
@@ -87,10 +87,12 @@ public sealed class GetInstruction : Instruction
 			test = true;
 		}
 		GetInstructionObserver observer = new GetInstructionObserver(test);
-		IGetResult getResult = ServiceLocator.Instance.GetService<IControllerService>().Get(observer, context.AppLog);
-		if (getResult.Success & flag)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service.Get(observer);
+		if (getResult.Success && flag)
 		{
-			ServiceLocator.Instance.GetService<IControlSystem>().Center(CenterDiskMethod.VendDoorAndBack);
+			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+			service2.Center(CenterDiskMethod.VendDoorAndBack);
 		}
 		if (flag2)
 		{

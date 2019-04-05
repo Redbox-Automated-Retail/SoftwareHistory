@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -33,14 +34,16 @@ public sealed class DeckInstruction : Instruction
 			AddError("E777", "Missing 'NUMBER' operand to DECK.", result.Errors);
 			return;
 		}
-		IDeck byNumber = ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(nullableNumericOperand.Value);
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck byNumber = service.GetByNumber(nullableNumericOperand.Value);
 		if (deckOperands == DeckOperands.MaxSlots)
 		{
 			context.PushTop(byNumber.NumberOfSlots);
 		}
 		else if (DeckOperands.Reset == deckOperands)
 		{
-			ServiceLocator.Instance.GetService<IInventoryService>().ResetAndMark(byNumber, "EMPTY");
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			service2.ResetAndMark(byNumber, "EMPTY");
 		}
 	}
 }

@@ -4,62 +4,46 @@ using System.Runtime.InteropServices;
 using ClearImage;
 using RBDM;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-internal sealed class ClearImageReaderV2 : IBarcodeReader
+internal sealed class ClearImageReaderV2 : AbstractBarcodeReader
 {
 	private readonly clsRBDM TheReader;
 
-	public bool IsLicensed { get; private set; }
-
-	public IScanResult Scan(string file)
+	protected override void OnScan(ScanResult result)
 	{
-		return Scan(file, BarcodeConfiguration.Instance.ExpectedCodes);
-	}
-
-	public IScanResult Scan(string file, int expectedCodes)
-	{
-		ScanResult scanResult = new ScanResult();
-		if (!IsLicensed)
+		if (!base.IsLicensed)
 		{
 			LogHelper.Instance.Log("This version isn't licensed.");
-			scanResult.ResetOnException();
-			return scanResult;
+			result.ResetOnException();
+			return;
 		}
+		int maxBcIn = 6;
 		for (int i = 0; i < 2; i++)
 		{
 			bool flag = false;
 			try
 			{
-				TheReader.Image.Open(file);
-				int num = 0;
-				using (ExecutionTimer executionTimer = new ExecutionTimer())
-				{
-					num = TheReader.Find(expectedCodes);
-					executionTimer.Stop();
-					scanResult.ExecutionTime = executionTimer.Elapsed;
-				}
+				TheReader.Image.Open(result.ImagePath);
+				using ExecutionTimer executionTimer = new ExecutionTimer();
+				int num = TheReader.Find(maxBcIn);
+				executionTimer.Stop();
+				result.ExecutionTime = executionTimer.Elapsed;
 				if (num > 0)
 				{
 					foreach (CiBarcode barcode in TheReader.Barcodes)
 					{
-						foreach (string computeFilter in BarcodeConfiguration.Instance.ComputeFilterList)
-						{
-							if (!computeFilter.Equals(barcode.Text, StringComparison.CurrentCultureIgnoreCase))
-							{
-								scanResult.Add(barcode.Text);
-							}
-						}
+						result.Add(barcode.Text);
 					}
 				}
 			}
 			catch (Exception e)
 			{
 				flag = true;
-				LogHelper.Instance.Log("ClearImageScanner: exception during scan.", e);
-				scanResult.ResetOnException();
+				LogHelper.Instance.Log("[ClearImageReaderV2] Exception during scan.", e);
+				result.ResetOnException();
 			}
 			try
 			{
@@ -67,20 +51,19 @@ internal sealed class ClearImageReaderV2 : IBarcodeReader
 			}
 			catch (Exception e2)
 			{
-				LogHelper.Instance.Log("Exception closing barcode image.", e2);
+				LogHelper.Instance.Log("[ClearImageReaderV2] Exception closing barcode image.", e2);
 			}
 			if (!flag)
 			{
-				return scanResult;
+				return;
 			}
 		}
-		scanResult.ResetOnException();
-		return scanResult;
+		result.ResetOnException();
 	}
 
 	internal ClearImageReaderV2()
+		: base(BarcodeServices.Inlite)
 	{
-		LogHelper.Instance.Log("Clearimage v2 reader.init()");
 		try
 		{
 			Module module = GetType().Module;
@@ -92,13 +75,13 @@ internal sealed class ClearImageReaderV2 : IBarcodeReader
 				Ci = ciServer,
 				Image = ciServer.CreateImage()
 			};
-			IsLicensed = true;
+			base.IsLicensed = true;
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in BarcodeReader.InitializeClearImage.  Calling CiServer.OpenExt to send license key failed.", e);
+			LogHelper.Instance.Log("An unhandled exception was raised in BarcodeReader.InitializeClearImage. Calling CiServer.OpenExt to send license key failed.", e);
 			TheReader = null;
-			IsLicensed = false;
+			base.IsLicensed = false;
 		}
 	}
 }

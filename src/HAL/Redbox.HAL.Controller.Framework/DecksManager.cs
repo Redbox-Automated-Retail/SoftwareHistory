@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -77,16 +77,13 @@ internal sealed class DecksManager : IDecksService
 
 	public void ForAllReverseDecksDo(Predicate<IDeck> predicate)
 	{
-		int num = Decks.Count;
-		while (num >= 1)
+		for (int num = Decks.Count; num >= 1; num--)
 		{
 			IDeck obj = Decks[num - 1];
-			if (predicate(obj))
+			if (!predicate(obj))
 			{
-				num--;
-				continue;
+				break;
 			}
-			break;
 		}
 	}
 
@@ -111,15 +108,15 @@ internal sealed class DecksManager : IDecksService
 	{
 		using (StringWriter stringWriter = new StringWriter())
 		{
-			XmlTextWriter xmlTextWriter = new XmlTextWriter(stringWriter)
+			XmlTextWriter xmlTextWriter = new XmlTextWriter(stringWriter);
+			xmlTextWriter.Formatting = Formatting.Indented;
+			XmlTextWriter xmlTextWriter2 = xmlTextWriter;
+			foreach (IDeck deck2 in Decks)
 			{
-				Formatting = Formatting.Indented
-			};
-			foreach (IDeck deck in Decks)
-			{
-				(deck as Deck).ToXmlWriter(xmlTextWriter);
+				Deck deck = deck2 as Deck;
+				deck.ToXmlWriter(xmlTextWriter2);
 			}
-			xmlTextWriter.Flush();
+			xmlTextWriter2.Flush();
 			document.DocumentElement.SelectSingleNodeAndSetInnerXml("Controller/Decks", stringWriter);
 		}
 		LogHelper.Instance.Log("Completed decks save.", LogEntryType.Info);

@@ -2,20 +2,20 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class ClearGripperOperation : AbstractOperation<ErrorCodes>
+internal sealed class ClearGripperOperation : AbstractOperation<ErrorCodes>
 {
 	public override ErrorCodes Execute()
 	{
 		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		if (Controller.TrackState != TrackState.Closed && !Controller.TrackClose().Success)
+		ErrorCodes errorCodes = CloseTrackChecked();
+		if (errorCodes != ErrorCodes.Success)
 		{
-			LogHelper.Instance.Log("[ClearGripper] Track closed failed.");
-			return ErrorCodes.TrackCloseTimeout;
+			return errorCodes;
 		}
 		for (int i = 0; i < 2; i++)
 		{
-			IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
-			if (pickerSensorReadResult.Error != ErrorCodes.Success)
+			IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
 			{
 				return pickerSensorReadResult.Error;
 			}
@@ -23,10 +23,9 @@ public sealed class ClearGripperOperation : AbstractOperation<ErrorCodes>
 			{
 				return ErrorCodes.Success;
 			}
-			bool[] sensors = pickerSensorReadResult.Sensors;
-			if (!sensors[0])
+			if (!pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1))
 			{
-				if (!sensors[5])
+				if (!pickerSensorReadResult.IsInputActive(PickerInputs.Sensor6))
 				{
 					return ErrorCodes.Success;
 				}
@@ -48,11 +47,11 @@ public sealed class ClearGripperOperation : AbstractOperation<ErrorCodes>
 				}
 				continue;
 			}
-			if (sensors[5])
+			if (pickerSensorReadResult.IsInputActive(PickerInputs.Sensor6))
 			{
 				return ErrorCodes.PickerObstructed;
 			}
-			if (!sensors[1] && !sensors[2] && !sensors[3] && !sensors[4])
+			if (ClearPickerBlockedCount(pickerSensorReadResult) == 0)
 			{
 				try
 				{
@@ -67,24 +66,9 @@ public sealed class ClearGripperOperation : AbstractOperation<ErrorCodes>
 			else
 			{
 				Controller.SetFinger(GripperFingerState.Rent);
-				Controller.RollerToPosition(RollerPosition.Position5, 8000);
+				Controller.RollerToPosition(RollerPosition.Position5);
 			}
 		}
 		return ErrorCodes.PickerObstructed;
-	}
-
-	public string GetPrintableLocation()
-	{
-		string result = "Location unknown";
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		if (service.CurrentLocation != null)
-		{
-			result = service.CurrentLocation.ToString();
-		}
-		else if (service.AtVendDoor)
-		{
-			result = "Vend Door";
-		}
-		return result;
 	}
 }

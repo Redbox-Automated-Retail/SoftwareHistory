@@ -31,10 +31,15 @@ internal sealed class ArcusLimitResponse : IMotionControlLimitResponse
 	{
 		ReadOk = false;
 		Limits = null;
-		if (queryResponse != null)
+		if (queryResponse == null)
 		{
-			string[] array = queryResponse.Trim().Split(',');
-			if (array.Length == 28 && int.TryParse(array[13].TrimEnd('.'), out var result))
+			return;
+		}
+		string[] array = queryResponse.Trim().Split(',');
+		if (array.Length == 28)
+		{
+			string s = array[13].TrimEnd('.');
+			if (int.TryParse(s, out var result))
 			{
 				ReadOk = true;
 				Limits = new IMotionControlLimit[2];

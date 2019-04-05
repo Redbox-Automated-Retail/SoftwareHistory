@@ -5,8 +5,8 @@ using System.Security;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[SuppressUnmanagedCodeSecurity]
 [Guid("56a86897-0ad4-11ce-b03a-0020af0ba770")]
+[SuppressUnmanagedCodeSecurity]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IReferenceClock
 {

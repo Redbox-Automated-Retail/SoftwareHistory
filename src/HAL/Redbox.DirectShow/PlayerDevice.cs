@@ -40,7 +40,7 @@ public class PlayerDevice : IVideoSource
 
 	private object sync = new object();
 
-	private bool? isCrossbarAvailable;
+	private bool? isCrossbarAvailable = null;
 
 	private VideoInput[] crossbarVideoInputs;
 
@@ -482,7 +482,9 @@ public class PlayerDevice : IVideoSource
 			{
 				throw new NotSupportedException("The video source does not support camera control.");
 			}
-			flag = ((IAMCameraControl)obj).Set(property, value, controlFlags) >= 0;
+			IAMCameraControl iAMCameraControl = (IAMCameraControl)obj;
+			int num = iAMCameraControl.Set(property, value, controlFlags);
+			flag = num >= 0;
 			Marshal.ReleaseComObject(obj);
 			return flag;
 		}
@@ -510,7 +512,9 @@ public class PlayerDevice : IVideoSource
 			{
 				throw new NotSupportedException("The video source does not support camera control.");
 			}
-			flag = ((IAMCameraControl)obj).Get(property, out value, out controlFlags) >= 0;
+			IAMCameraControl iAMCameraControl = (IAMCameraControl)obj;
+			int num = iAMCameraControl.Get(property, out value, out controlFlags);
+			flag = num >= 0;
 			Marshal.ReleaseComObject(obj);
 			return flag;
 		}
@@ -538,7 +542,9 @@ public class PlayerDevice : IVideoSource
 			{
 				throw new NotSupportedException("The video source does not support camera control.");
 			}
-			flag = ((IAMCameraControl)obj).GetRange(property, out minValue, out maxValue, out stepSize, out defaultValue, out controlFlags) >= 0;
+			IAMCameraControl iAMCameraControl = (IAMCameraControl)obj;
+			int range = iAMCameraControl.GetRange(property, out minValue, out maxValue, out stepSize, out defaultValue, out controlFlags);
+			flag = range >= 0;
 			Marshal.ReleaseComObject(obj);
 			return flag;
 		}
@@ -568,9 +574,19 @@ public class PlayerDevice : IVideoSource
 		IAMCrossbar iAMCrossbar = null;
 		try
 		{
-			obj = Activator.CreateInstance(Type.GetTypeFromCLSID(Clsid.CaptureGraphBuilder2) ?? throw new ApplicationException("Failed creating capture graph builder"));
+			Type typeFromCLSID = Type.GetTypeFromCLSID(Clsid.CaptureGraphBuilder2);
+			if (typeFromCLSID == null)
+			{
+				throw new ApplicationException("Failed creating capture graph builder");
+			}
+			obj = Activator.CreateInstance(typeFromCLSID);
 			captureGraphBuilder = (ICaptureGraphBuilder2)obj;
-			obj2 = Activator.CreateInstance(Type.GetTypeFromCLSID(Clsid.FilterGraph) ?? throw new ApplicationException("Failed creating filter graph"));
+			typeFromCLSID = Type.GetTypeFromCLSID(Clsid.FilterGraph);
+			if (typeFromCLSID == null)
+			{
+				throw new ApplicationException("Failed creating filter graph");
+			}
+			obj2 = Activator.CreateInstance(typeFromCLSID);
 			filterGraph = (IFilterGraph2)obj2;
 			captureGraphBuilder.SetFiltergraph((IGraphBuilder)filterGraph);
 			sourceObject = FilterInfo.CreateFilter(deviceMoniker);
@@ -586,7 +602,12 @@ public class PlayerDevice : IVideoSource
 			catch
 			{
 			}
-			obj3 = Activator.CreateInstance(Type.GetTypeFromCLSID(Clsid.SampleGrabber) ?? throw new ApplicationException("Failed creating sample grabber"));
+			typeFromCLSID = Type.GetTypeFromCLSID(Clsid.SampleGrabber);
+			if (typeFromCLSID == null)
+			{
+				throw new ApplicationException("Failed creating sample grabber");
+			}
+			obj3 = Activator.CreateInstance(typeFromCLSID);
 			sampleGrabber2 = (ISampleGrabber)obj3;
 			baseFilter2 = (IBaseFilter)obj3;
 			filterGraph.AddFilter(baseFilter, "source");
@@ -830,7 +851,8 @@ public class PlayerDevice : IVideoSource
 	{
 		try
 		{
-			((ISpecifyPropertyPages)sourceObject).GetPages(out var pPages);
+			ISpecifyPropertyPages specifyPropertyPages = (ISpecifyPropertyPages)sourceObject;
+			specifyPropertyPages.GetPages(out var pPages);
 			FilterInfo filterInfo = new FilterInfo(deviceMoniker);
 			Win32.OleCreatePropertyFrame(parentWindow, 0, 0, filterInfo.Name, 1, ref sourceObject, pPages.cElems, pPages.pElems, 0, 0, IntPtr.Zero);
 			Marshal.FreeCoTaskMem(pPages.pElems);

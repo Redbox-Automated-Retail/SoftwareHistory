@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -18,11 +17,25 @@ internal sealed class DumpbinService : IDumpbinService
 
 	private readonly IRange<int> Slots;
 
-	public ILocation PutLocation => ServiceLocator.Instance.GetService<IInventoryService>().Get(Deck, Slots.Start + 1);
+	public ILocation PutLocation
+	{
+		get
+		{
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			return service.Get(Deck, Slots.Start + 1);
+		}
+	}
 
 	public int Capacity => 60;
 
-	public ILocation RotationLocation => ServiceLocator.Instance.GetService<IInventoryService>().Get(Deck, 1);
+	public ILocation RotationLocation
+	{
+		get
+		{
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			return service.Get(Deck, 1);
+		}
+	}
 
 	public bool IsFull()
 	{
@@ -58,7 +71,10 @@ internal sealed class DumpbinService : IDumpbinService
 		ServiceLocator.Instance.GetService<IRuntimeService>();
 		try
 		{
-			using StreamWriter streamWriter = new StreamWriter(File.Open(Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("Service"), "DumpBinInventory.log"), FileMode.Append, FileAccess.Write, FileShare.Read));
+			IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+			string path = service.CreateSubpath("Service");
+			string path2 = Path.Combine(path, "DumpBinInventory.log");
+			using StreamWriter streamWriter = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
 			DumpContents(streamWriter);
 			streamWriter.WriteLine();
 		}

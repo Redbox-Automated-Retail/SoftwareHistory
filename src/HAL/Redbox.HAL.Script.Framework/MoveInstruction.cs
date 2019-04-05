@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -83,7 +84,8 @@ public sealed class MoveInstruction : Instruction
 				context.PushTop(ErrorCodes.InvalidLocation.ToString().ToUpper());
 				return;
 			}
-			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMoveDecoratorService>().ShowEmptyStuck(context, service.CurrentLocation, keyValuePairValue);
+			using MoveDecoratorService moveDecoratorService = new MoveDecoratorService(context);
+			ErrorCodes errorCodes = moveDecoratorService.ShowEmptyStuck(service.CurrentLocation, keyValuePairValue);
 			if (errorCodes == ErrorCodes.Success)
 			{
 				context.PushTop(keyValuePairValue);

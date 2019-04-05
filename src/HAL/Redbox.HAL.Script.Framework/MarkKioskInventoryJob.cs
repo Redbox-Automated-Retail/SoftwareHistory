@@ -2,7 +2,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "mark-kiosk-inventory", Operand = "MARK-KIOSK-INVENTORY")]
+[NativeJob(ProgramName = "mark-kiosk-inventory")]
 internal sealed class MarkKioskInventoryJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()

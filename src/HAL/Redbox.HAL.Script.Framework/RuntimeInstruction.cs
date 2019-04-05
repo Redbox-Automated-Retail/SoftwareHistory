@@ -28,8 +28,10 @@ public sealed class RuntimeInstruction : Instruction
 		if (base.Operands.Count != 1)
 		{
 			AddError("E999", "The RUNTIME instruction expects one token", result.Errors);
+			return;
 		}
-		else if (base.Operands[0].Value.Equals("YIELD-ONLY", StringComparison.CurrentCultureIgnoreCase))
+		string value = base.Operands[0].Value;
+		if (value.Equals("YIELD-ONLY", StringComparison.CurrentCultureIgnoreCase))
 		{
 			ExecutionEngine.Instance.PerformContextSwitch(runtimeOnly: true);
 		}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core.Descriptors;
 
 namespace Redbox.HAL.Core;
@@ -55,7 +56,8 @@ public sealed class UsbDeviceService : IUsbDeviceService
 			int revision = (int)(DriverVersion & 0xFFFF);
 			int build = (int)((DriverVersion >> 16) & 0xFFFF);
 			int minor = (int)((DriverVersion >> 32) & 0xFFFF);
-			return new Version((int)(DriverVersion >> 48), minor, build, revision);
+			int major = (int)(DriverVersion >> 48);
+			return new Version(major, minor, build, revision);
 		}
 	}
 
@@ -116,26 +118,6 @@ public sealed class UsbDeviceService : IUsbDeviceService
 	}
 
 	private delegate ProcessDeviceInfoResult ProcessDeviceInfo(IntPtr devInfo, ref SP_DEVINFO_DATA did);
-
-	private readonly DriverDescriptor Driver_Elo = new DriverDescriptor(new Version("5.5.1.4"), "Elo Touch Solutions");
-
-	private readonly DriverDescriptor Driver_GeneralTouch_HID1 = new DriverDescriptor(new Version("4.2.2.1"), "General Touch Technology Co.,Ltd.");
-
-	private readonly DriverDescriptor Driver_GeneralTouch_HID2 = new DriverDescriptor(new Version("2.10.1781.0"), "General Touch Technology Co., Ltd.");
-
-	private readonly DriverDescriptor Driver_TouchBase = new DriverDescriptor(new Version("4.0.2.0"), "Touch-Base Ltd");
-
-	private readonly List<ITouchscreenDescriptor> TouchScreenDescriptors = new List<ITouchscreenDescriptor>();
-
-	private readonly List<IDeviceDescriptor> CreditCardReaders = new List<IDeviceDescriptor>();
-
-	private readonly IDriverDescriptor Gen4DriverDescriptor = new DriverDescriptor(new Version("2.1.0.0"), "AVEO");
-
-	private readonly IDriverDescriptor Gen3DriverDescriptor = new DriverDescriptor(new Version("5.7.19104.104"), "Sonix");
-
-	private readonly List<IDeviceDescriptor> Cameras = new List<IDeviceDescriptor>();
-
-	private readonly bool Debug;
 
 	private const int CR_SUCCESS = 0;
 
@@ -259,6 +241,26 @@ public sealed class UsbDeviceService : IUsbDeviceService
 
 	private const int SPDRP_BASE_CONTAINERID = 36;
 
+	private readonly DriverDescriptor Driver_Elo = new DriverDescriptor(new Version("5.5.1.4"), "Elo Touch Solutions");
+
+	private readonly DriverDescriptor Driver_GeneralTouch_HID1 = new DriverDescriptor(new Version("4.2.2.1"), "General Touch Technology Co.,Ltd.");
+
+	private readonly DriverDescriptor Driver_GeneralTouch_HID2 = new DriverDescriptor(new Version("2.10.1781.0"), "General Touch Technology Co., Ltd.");
+
+	private readonly DriverDescriptor Driver_TouchBase = new DriverDescriptor(new Version("4.0.2.0"), "Touch-Base Ltd");
+
+	private readonly List<ITouchscreenDescriptor> TouchScreenDescriptors = new List<ITouchscreenDescriptor>();
+
+	private readonly List<IDeviceDescriptor> CreditCardReaders = new List<IDeviceDescriptor>();
+
+	private readonly IDriverDescriptor Gen4DriverDescriptor = new DriverDescriptor(new Version("2.1.0.0"), "AVEO");
+
+	private readonly IDriverDescriptor Gen3DriverDescriptor = new DriverDescriptor(new Version("5.7.19104.104"), "Sonix");
+
+	private readonly List<IDeviceDescriptor> Cameras = new List<IDeviceDescriptor>();
+
+	private readonly bool Debug;
+
 	public IDeviceDescriptor FindActiveCamera(bool matchDriver)
 	{
 		IDeviceDescriptor deviceDescriptor = Cameras.Find((IDeviceDescriptor each) => each.Locate());
@@ -303,13 +305,12 @@ public sealed class UsbDeviceService : IUsbDeviceService
 				LogHelper.Instance.Log("[{0}] Found HWID {1}; change state to {2} returned {3}", GetType().Name, text, state.ToString(), flag ? "OK" : "FAIL");
 				if (!flag)
 				{
-					int num = failures + 1;
-					failures = num;
+					failures++;
 				}
 			}
 			return ProcessDeviceInfoResult.Continue;
 		});
-		return failures == 0;
+		return 0 == failures;
 	}
 
 	public bool ChangeByHWID(IDeviceDescriptor descriptor, DeviceState state)
@@ -500,7 +501,8 @@ public sealed class UsbDeviceService : IUsbDeviceService
 		}
 		StringBuilder clazzNameBuffer = MakeBuffer();
 		Guid deviceClass = Guid.Empty;
-		IDeviceSetupClass deviceSetupClass = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>().Get(clazz);
+		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
+		IDeviceSetupClass deviceSetupClass = service.Get(clazz);
 		if (deviceSetupClass != null)
 		{
 			deviceClass = deviceSetupClass.Guid;
@@ -724,16 +726,14 @@ public sealed class UsbDeviceService : IUsbDeviceService
 			DeviceStatus deviceStatus = FindDeviceStatus(descriptor);
 			if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None)
 			{
-				return new QueryUsbDeviceResult(descriptor)
-				{
-					Status = deviceStatus
-				};
+				QueryUsbDeviceResult queryUsbDeviceResult = new QueryUsbDeviceResult(descriptor);
+				queryUsbDeviceResult.Status = deviceStatus;
+				return queryUsbDeviceResult;
 			}
 		}
-		return new QueryUsbDeviceResult(null)
-		{
-			Status = DeviceStatus.None
-		};
+		QueryUsbDeviceResult queryUsbDeviceResult2 = new QueryUsbDeviceResult(null);
+		queryUsbDeviceResult2.Status = DeviceStatus.None;
+		return queryUsbDeviceResult2;
 	}
 
 	private bool MatchDriverInner(IntPtr hDevInfo, ref SP_DEVINFO_DATA did, IDriverDescriptor driverInfo, string hwid)
@@ -824,10 +824,9 @@ public sealed class UsbDeviceService : IUsbDeviceService
 
 	private StringBuilder MakeBuffer()
 	{
-		return new StringBuilder("")
-		{
-			Capacity = 1000
-		};
+		StringBuilder stringBuilder = new StringBuilder("");
+		stringBuilder.Capacity = 1000;
+		return stringBuilder;
 	}
 
 	private bool Match(IDeviceDescriptor left, IDeviceDescriptor right)

@@ -2,7 +2,7 @@
         # THIN VMZ Aggregate Instruction
         # Copyright (C) 2012 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.2.5
+	# VERSION 1.12.1.52
         #
 	
 	APPLOG		CONFIGURE	SUBDIRECTORY="VMZ"

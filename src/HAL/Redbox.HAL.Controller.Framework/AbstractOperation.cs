@@ -1,6 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -18,6 +18,8 @@ public abstract class AbstractOperation<T> : IDisposable
 
 	protected readonly IPersistentCounterService PersistentCounterService;
 
+	protected readonly IControllerService ControllerService;
+
 	private bool Disposed;
 
 	public void Dispose()
@@ -28,40 +30,26 @@ public abstract class AbstractOperation<T> : IDisposable
 
 	public abstract T Execute();
 
-	protected bool WaitToClear(PickerSensor highSensor, PickerSensor lowSensor, int timeout)
+	protected bool WaitToClear()
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-		int num = (int)(lowSensor - 1);
-		int num2 = (int)(highSensor - 1);
-		if (highSensor < lowSensor)
-		{
-			int num3 = num;
-			num = num2;
-			num2 = num3;
-		}
+		return WaitToClear(8000);
+	}
+
+	protected bool WaitToClear(int timeout)
+	{
 		bool result = false;
 		int clearSensorPauseDelay = ControllerConfiguration.Instance.ClearSensorPauseDelay;
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
 			while (true)
 			{
-				service.SpinWait(clearSensorPauseDelay);
-				IPickerSensorReadResult pickerSensorReadResult = service2.ReadSensors();
-				if (pickerSensorReadResult.Error != ErrorCodes.Success)
+				RuntimeService.SpinWait(clearSensorPauseDelay);
+				IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+				if (!pickerSensorReadResult.Success)
 				{
-					LogHelper.Instance.Log("WaittoClear: sensor read timed out.", LogEntryType.Error);
 					return true;
 				}
-				int num4 = 0;
-				for (int i = num; i <= num2; i++)
-				{
-					if (pickerSensorReadResult.Sensors[i])
-					{
-						num4++;
-					}
-				}
-				if (num4 == 0)
+				if (ClearPickerBlockedCount(pickerSensorReadResult) == 0)
 				{
 					result = false;
 					break;
@@ -80,30 +68,81 @@ public abstract class AbstractOperation<T> : IDisposable
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		int clearSensorPauseDelay = ControllerConfiguration.Instance.ClearSensorPauseDelay;
-		bool flag = WaitToClear(PickerSensor.Sensor2, PickerSensor.Sensor5, 8000);
+		bool flag = WaitToClear(8000);
 		if (!flag)
 		{
 			service.SpinWait(clearSensorPauseDelay);
-			bool[] array = null;
 			bool flag2 = true;
-			for (int i = 0; (i < 3) & flag2; i++)
+			IPickerSensorReadResult pickerSensorReadResult;
+			for (int i = 0; i < 3; i++)
 			{
+				if (!flag2)
+				{
+					break;
+				}
 				if (flag2)
 				{
 					if (i > 0)
 					{
 						LogHelper.Instance.Log("2-5 didn't timeout; sensors show something in picker.", LogEntryType.Info);
 					}
-					WaitToClear(PickerSensor.Sensor2, PickerSensor.Sensor5, 3000);
+					WaitToClear(3000);
 				}
-				array = Controller.ReadSensors().Sensors;
-				flag2 = array[1] || array[2] || array[3] || array[4];
+				pickerSensorReadResult = Controller.ReadPickerSensors();
+				if (!pickerSensorReadResult.Success)
+				{
+					return true;
+				}
+				flag2 = ClearPickerBlockedCount(pickerSensorReadResult) > 0;
 				service.SpinWait(clearSensorPauseDelay);
 			}
-			array = Controller.ReadSensors().Sensors;
-			flag = array[1] || array[2] || array[3] || array[4];
+			pickerSensorReadResult = Controller.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
+			{
+				return true;
+			}
+			flag = ClearPickerBlockedCount(pickerSensorReadResult) > 0;
 		}
 		return flag;
+	}
+
+	protected ErrorCodes WaitSensor(PickerInputs sensor, InputState state)
+	{
+		return WaitSensor(sensor, state, 4000);
+	}
+
+	protected ErrorCodes WaitSensor(PickerInputs sensor, InputState state, int timeout)
+	{
+		int waitSensorPauseTime = ControllerConfiguration.Instance.WaitSensorPauseTime;
+		ErrorCodes errorCodes = ErrorCodes.Success;
+		using (ExecutionTimer executionTimer = new ExecutionTimer())
+		{
+			while (true)
+			{
+				RuntimeService.SpinWait(waitSensorPauseTime);
+				IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+				if (!pickerSensorReadResult.Success)
+				{
+					errorCodes = ErrorCodes.SensorReadError;
+					break;
+				}
+				if (!pickerSensorReadResult.IsInState(sensor, state))
+				{
+					if (executionTimer.ElapsedMilliseconds > timeout)
+					{
+						errorCodes = ErrorCodes.Timeout;
+						break;
+					}
+					continue;
+				}
+				break;
+			}
+		}
+		if (errorCodes != ErrorCodes.Success && ErrorCodes.Timeout != errorCodes)
+		{
+			LogHelper.Instance.WithContext(LogEntryType.Error, "WaitSensor returned error {0}.", errorCodes.ToString().ToUpper());
+		}
+		return errorCodes;
 	}
 
 	protected ErrorCodes SettleDiskInSlot()
@@ -118,7 +157,6 @@ public abstract class AbstractOperation<T> : IDisposable
 			{
 				Controller.RetractArm();
 				Controller.SetFinger(GripperFingerState.Closed);
-				LogHelper.Instance.Log("[SettleDisk] Timeout for GripperArmExtend; attempt to set fingers to Open");
 				Controller.SetFinger(GripperFingerState.Open);
 				if (!Controller.ExtendArm().Success)
 				{
@@ -161,7 +199,8 @@ public abstract class AbstractOperation<T> : IDisposable
 				}
 				return ErrorCodes.GripperOpenTimeout;
 			}
-			if (DeckService.GetByNumber(MotionService.CurrentLocation.Deck).IsQlm)
+			IDeck byNumber = DeckService.GetByNumber(MotionService.CurrentLocation.Deck);
+			if (byNumber.IsQlm)
 			{
 				int qlmExtendTime = ControllerConfiguration.Instance.QlmExtendTime;
 				if (ControllerConfiguration.Instance.QlmTimedExtend)
@@ -177,7 +216,6 @@ public abstract class AbstractOperation<T> : IDisposable
 			{
 				Controller.RetractArm();
 				Controller.SetFinger(GripperFingerState.Closed);
-				LogHelper.Instance.Log($"Timeout for GripperArmExtend; attempt to set fingers to {gripperFingerState.ToString()}", LogEntryType.Info);
 				Controller.SetFinger(gripperFingerState);
 				if (!Controller.ExtendArm().Success)
 				{
@@ -220,6 +258,47 @@ public abstract class AbstractOperation<T> : IDisposable
 		return ErrorCodes.Success;
 	}
 
+	protected int ClearPickerBlockedCount(IPickerSensorReadResult readResult)
+	{
+		int num = 0;
+		if (readResult.IsInputActive(PickerInputs.Sensor2))
+		{
+			num++;
+		}
+		if (readResult.IsInputActive(PickerInputs.Sensor3))
+		{
+			num++;
+		}
+		if (readResult.IsInputActive(PickerInputs.Sensor4))
+		{
+			num++;
+		}
+		if (readResult.IsInputActive(PickerInputs.Sensor5))
+		{
+			num++;
+		}
+		return num;
+	}
+
+	protected ErrorCodes OpenDoorChecked()
+	{
+		VendDoorState vendDoorState = Controller.VendDoorState;
+		if (VendDoorState.Rent != vendDoorState && !Controller.VendDoorRent().Success)
+		{
+			return ErrorCodes.VendDoorRentTimeout;
+		}
+		return ErrorCodes.Success;
+	}
+
+	protected ErrorCodes CloseTrackChecked()
+	{
+		if (Controller.TrackState != TrackState.Closed && !Controller.TrackClose().Success)
+		{
+			return ErrorCodes.TrackCloseTimeout;
+		}
+		return ErrorCodes.Success;
+	}
+
 	protected virtual void OnDispose()
 	{
 	}
@@ -232,6 +311,7 @@ public abstract class AbstractOperation<T> : IDisposable
 		RuntimeService = ServiceLocator.Instance.GetService<IRuntimeService>();
 		InventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
 		PersistentCounterService = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		ControllerService = ServiceLocator.Instance.GetService<IControllerService>();
 	}
 
 	private ErrorCodes PushWithArm(int timeout)

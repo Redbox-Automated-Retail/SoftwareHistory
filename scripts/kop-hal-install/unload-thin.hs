@@ -2,7 +2,7 @@
         # QLM-UNLOAD Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.2.5
+	# VERSION 1.12.1.52
         #
 
         LOG                 "Begin QLM unload request."
@@ -30,24 +30,6 @@
 	
 	POP		MAX-QLM-SLOTS
 		 
-	MOTIONCONTROL		COMSTATUS
-	POP		MC-STATUS
-	IF	"OK" != MC-STATUS
-		APPLOG	"Motion controller not available; attempt reboot."
-		LOG		"Motion controller not available; attempt reboot." ENTRYTYPE=ERROR
-		SYSCALL	REBOOT
-		APPLOG	"Unload/Thin job restarted."
-		LOG		"Restarting unload/thin job."
-		
-		MOTIONCONTROL		COMSTATUS
-		POP		MC-STATUS
-		IF	"OK" != MC-STATUS
-			APPLOG	"Communication with the motion controller isn't working."
-			LOG		"Communication with the motion controller isn't working." ENTRYTYPE=ERROR
-			EXIT		"The motion controller isn't working."
-		ENDIF
-	ENDIF
-			
 	SET					QLM-SLOT 1
 	        
 	RESULT				CODE="QlmUnloadStart" MESSAGE="Starting Qlm Unload run." END=BOTTOM
@@ -128,24 +110,6 @@ _JOB_DONE:
 _DISENGAGE:
 	
 	QLM		ENDQLMOP
-	
-	MOTIONCONTROL		COMSTATUS
-	POP		MC-STATUS
-	IF	"OK" != MC-STATUS
-		APPLOG	"Motion controller not available; attempt reboot."
-		LOG		"Motion controller not available; attempt reboot." ENTRYTYPE=ERROR
-		SYSCALL	REBOOT
-		APPLOG	"Unload/Thin job restarted."
-		LOG		"Restarting unload/thin job."
-		
-		MOTIONCONTROL		COMSTATUS
-		POP		MC-STATUS
-		IF	"OK" != MC-STATUS
-			APPLOG	"The job completed; however, communication with the motion controller isn't working."
-			LOG		"The job completed; however, communication with the motion controller isn't working."	ENTRYTYPE=ERROR
-			EXIT		"The motion controller isn't working."
-		ENDIF
-	ENDIF
 _END:		
     	NOP
 	

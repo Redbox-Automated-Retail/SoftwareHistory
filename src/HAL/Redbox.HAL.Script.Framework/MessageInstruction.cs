@@ -27,7 +27,8 @@ public sealed class MessageInstruction : Instruction
 			object[] args = ConvertSymbolsToParameterArray(result.Errors, context);
 			if (!result.Errors.ContainsError())
 			{
-				string message = string.Format((base.Operands[0].Type == TokenType.StringLiteral) ? base.Operands[0].Value : ((string)context.GetSymbolValue(base.Operands[0].Value, result.Errors)), args);
+				string format = ((base.Operands[0].Type == TokenType.StringLiteral) ? base.Operands[0].Value : ((string)context.GetSymbolValue(base.Operands[0].Value, result.Errors)));
+				string message = string.Format(format, args);
 				context.Send(message);
 			}
 		}

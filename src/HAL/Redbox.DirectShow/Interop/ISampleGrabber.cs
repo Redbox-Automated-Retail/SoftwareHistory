@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[Guid("6B652FFF-11FE-4FCE-92AD-0266B5D7C78F")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+[Guid("6B652FFF-11FE-4FCE-92AD-0266B5D7C78F")]
 public interface ISampleGrabber
 {
 	[PreserveSig]

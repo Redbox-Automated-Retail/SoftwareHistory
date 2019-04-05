@@ -1,3 +1,5 @@
+using Redbox.HAL.Component.Model;
+
 namespace Redbox.HAL.Script.Framework;
 
 public sealed class ExecutionStatus
@@ -8,7 +10,11 @@ public sealed class ExecutionStatus
 
 	public static bool operator ==(ExecutionStatus status, ExecutionContextStatus right)
 	{
-		return status?.Value.Equals(right) ?? false;
+		if (status != null)
+		{
+			return status.Value.Equals(right);
+		}
+		return false;
 	}
 
 	public static bool operator !=(ExecutionStatus status, ExecutionContextStatus right)
@@ -23,13 +29,13 @@ public sealed class ExecutionStatus
 
 	public override bool Equals(object obj)
 	{
-		if (this == obj)
+		if (object.ReferenceEquals(this, obj))
 		{
 			return true;
 		}
-		if (obj is ExecutionStatus { Value: var value })
+		if (obj is ExecutionStatus executionStatus)
 		{
-			return value.Equals(Value);
+			return executionStatus.Value.Equals(Value);
 		}
 		return false;
 	}

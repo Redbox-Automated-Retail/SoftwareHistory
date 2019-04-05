@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -29,8 +30,6 @@ public class CameraInsutrction : Instruction
 		IRCamera,
 		ResetReturnCounter,
 		ReturnErrorCount,
-		SnapDecode,
-		ScanForPort,
 		ValidateSettings,
 		Restart
 	}
@@ -58,7 +57,8 @@ public class CameraInsutrction : Instruction
 			flag = boolValue;
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
+		IScannerDeviceService service2 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		IScannerDevice configuredDevice = service2.GetConfiguredDevice();
 		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
 		case ExpectedOperand.IRCamera:
@@ -86,14 +86,10 @@ public class CameraInsutrction : Instruction
 			if (!snapResult.SnapOk)
 			{
 				context.PushTop("CAPTURE ERROR");
-				string msg = "CAMERA CAPTURE returned a capture error.";
-				context.AppLog.Write(msg, LogEntryType.Error);
+				break;
 			}
-			else
-			{
-				context.PushTop(snapResult.Path);
-				context.PushTop("SUCCESS");
-			}
+			context.PushTop(snapResult.Path);
+			context.PushTop("SUCCESS");
 			break;
 		}
 		case ExpectedOperand.IsWorking:
@@ -104,16 +100,6 @@ public class CameraInsutrction : Instruction
 			break;
 		case ExpectedOperand.ReturnErrorCount:
 			context.PushTop(ReturnJob.CameraErrorCount);
-			break;
-		case ExpectedOperand.SnapDecode:
-		{
-			using Scanner scanner = new Scanner(service);
-			ScanResult scanResult = scanner.Read();
-			context.PushTop(scanResult.ScannedMatrix);
-			break;
-		}
-		case ExpectedOperand.ScanForPort:
-			context.PushTop(configuredDevice.FindInstalledPort());
 			break;
 		case ExpectedOperand.ValidateSettings:
 			configuredDevice.ValidateSettings();

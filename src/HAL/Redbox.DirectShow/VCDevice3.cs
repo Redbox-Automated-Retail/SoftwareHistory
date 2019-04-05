@@ -40,7 +40,7 @@ public class VCDevice3 : IVideoSource
 
 	private readonly object m_listLock = new object();
 
-	private bool? isCrossbarAvailable;
+	private bool? isCrossbarAvailable = null;
 
 	private VideoInput[] crossbarVideoInputs;
 

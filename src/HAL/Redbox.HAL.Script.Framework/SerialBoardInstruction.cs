@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -24,11 +24,11 @@ public sealed class SerialBoardInstruction : Instruction
 		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
-			context.ServiceLog("SerialBoardInstruction: converted operand '{0}' to None", base.Operands[0].Value);
+			LogHelper.Instance.WithContext("SerialBoardInstruction: converted operand '{0}' to None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.ClosePort:
 		{
-			string instance = (service.Shutdown() ? "SUCCESS" : "TIMEOUT");
+			string instance = (service.Shutdown() ? base.SuccessMessage : base.TimeoutMessage);
 			Thread.Sleep(500);
 			context.PushTop(instance);
 			break;

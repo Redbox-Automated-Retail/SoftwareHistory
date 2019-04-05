@@ -2,20 +2,12 @@
         # SYNC Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.10.2.5
+	# VERSION 1.12.1.52
         #
 
 	LOG			"Begin sync request."
 	
 	APPLOG		CONFIGURE		SUBDIRECTORY="Sync" 
-	
-	SET			YIELD-TIME		0
-	QUICKRETURN		POLLSTATUS
-	POP		QR-STATUS
-	IF	"ACTIVE" == QR-STATUS
-		SET	YIELD-TIME	2000
-	ENDIF
-	
 	
 	GRIPPER		CHECK-PICKER
 	POP		CP-RESULT
@@ -77,7 +69,7 @@ _NEXT_ITEM:
 			SET			LAST-SLOT END-SLOT
 		ENDIF
 	ENDIF
-	YIELD		YIELD-TIME
+	YIELD
 	JUMP        _NEXT_ITEM
         
 _SYNC_DONE:

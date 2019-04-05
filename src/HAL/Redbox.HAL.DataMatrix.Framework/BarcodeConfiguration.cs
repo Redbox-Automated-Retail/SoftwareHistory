@@ -1,130 +1,142 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.Xml;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.HAL.Configuration;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
 public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 {
-	internal readonly ReadOnlyCollection<string> ComputeFilterList;
-
 	internal readonly IDictionary<string, object> Properties;
 
 	internal readonly string WorkingPath;
 
-	private readonly string[] LegacyProperties = new string[13]
+	private readonly string[] LegacyProperties = new string[14]
 	{
 		"Mode", "VideoFormat", "WorkingPath", "CaptureFrameRate", "CameraDeviceName", "CameraDriver", "CompressionCodecName", "VideoCaptureSpinWaitTime", "BitmapSelectionStrategy", "CenteredDiskSnapTime",
-		"VideocapActiveXSpinTime", "CenterDiskBeforeRead", "CycleCameraOnUse"
+		"VideocapActiveXSpinTime", "CenterDiskBeforeRead", "CycleCameraOnUse", "DeleteBitmapOnSuccessfulRead"
 	};
 
 	private static readonly object InstanceLock = new object();
 
-	[XmlConfiguration(DefaultValue = "true")]
-	[Category("Settings")]
-	[DisplayName("Delete Bitmap On Successful Read")]
-	[Description("If true, will delete the bitmap used to read the barcode, if successfully read.")]
-	public bool DeleteBitmapOnSuccessfulRead { get; set; }
-
 	[Description("Sets the plugin to use in legacy scan mode.")]
-	[Category("Settings")]
-	[DisplayName("Camera Plugin")]
 	[XmlConfiguration(DefaultValue = "DirectShowFrame")]
+	[DisplayName("Camera Plugin")]
+	[Category("Settings")]
 	public string CameraPlugin { get; set; }
 
-	[XmlConfiguration(DefaultValue = "NONE")]
-	[DisplayName("Snap Decode Port")]
-	[Description("The port the snap/decode device is configured.")]
 	[Category("Settings")]
+	[Description("The port the snap/decode device is configured.")]
+	[DisplayName("Snap Decode Port")]
+	[XmlConfiguration(DefaultValue = "NONE")]
 	public string SnapDecodePort { get; set; }
 
 	[XmlConfiguration(DefaultValue = "500")]
-	[Category("Settings")]
 	[DisplayName("Write Pause")]
 	[Description("In ms.")]
+	[Category("Settings")]
 	public int WritePause { get; set; }
 
-	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
 	[XmlConfiguration(DefaultValue = "false")]
-	[Category("Settings")]
 	[DisplayName("Cycle Camera On Use")]
+	[Description("If true, starts/stops the camera; otherwise, keeps it on.")]
+	[Category("Settings")]
 	public bool CycleCameraOnUse { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
-	[Description("If true, uses CI to take a photo & try decode.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	[DisplayName("Use CI On Fail")]
+	[Description("If true, uses CI to take a photo & try decode.")]
 	public bool UseInliteOnFail { get; private set; }
 
-	[Category("Settings")]
-	[Description("The configured scanner.")]
-	[DisplayName("Scanner Service")]
 	[XmlConfiguration(DefaultValue = "Legacy")]
+	[Category("Settings")]
+	[DisplayName("Scanner Service")]
+	[Description("The configured scanner.")]
 	public ScannerServices ScannerService { get; set; }
 
-	[DisplayName("Log Detailed Scan")]
-	[Description("The configured scanner.")]
 	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Settings")]
+	[DisplayName("Log Detailed Scan")]
+	[Description("The configured scanner.")]
 	public bool LogDetailedScan { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "4")]
 	[DisplayName("Expected Read Codes")]
 	[Category("Settings")]
 	[Description("For the scanner, the max number of barcodes.")]
+	[XmlConfiguration(DefaultValue = "4")]
 	public int ExpectedCodes { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "2000")]
 	[Category("Settings")]
 	[DisplayName("Scan Timeout")]
 	[Description("In ms, the time to wait for a scan to complete.")]
+	[XmlConfiguration(DefaultValue = "2000")]
 	public int ScanTimeout { get; private set; }
 
-	[DisplayName("Scanner Wakeup Pause")]
 	[Description("In ms, the time to wait for the scanner after boot.")]
-	[Category("Settings")]
 	[XmlConfiguration(DefaultValue = "15000")]
+	[Category("Settings")]
+	[DisplayName("Scanner Wakeup Pause")]
 	public int ScannerWakeupPause { get; private set; }
 
-	[DisplayName("Cortex Wakeup Action")]
-	[Browsable(false)]
-	[Category("Settings")]
-	[XmlConfiguration(DefaultValue = "Decode")]
-	[Description("The action to take on startup of the Cortex camera.")]
-	public CortexStartupAction CortexStartupAction { get; private set; }
-
-	[Category("Settings")]
-	[DisplayName("Filter Excess Codes")]
-	[Browsable(false)]
 	[Description("If true, will trim read code count to 4.")]
+	[DisplayName("Filter Excess Codes")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Browsable(false)]
+	[Category("Settings")]
 	public bool FilterExcessReadCodes { get; private set; }
 
 	[Browsable(false)]
+	[XmlConfiguration(DefaultValue = "50")]
 	[Category("Settings")]
 	[DisplayName("Cortex Port Open Wait")]
 	[Description("Time to wait for the port after open (in ms).")]
-	[XmlConfiguration(DefaultValue = "50")]
 	public int CortexPortOpenWait { get; private set; }
 
-	[DisplayName("Cortex Snap On Decode Failure")]
+	[Browsable(false)]
+	[Category("Settings")]
 	[Description("If true, will snap an image on decode failure.")]
 	[XmlConfiguration(DefaultValue = "false")]
-	[Browsable(false)]
-	[Category("Settings")]
+	[DisplayName("Cortex Snap On Decode Failure")]
 	public bool CortexSnapOnDecodeFailure { get; private set; }
 
-	[XmlConfiguration(DefaultValue = "NONE")]
-	[DisplayName("IR HardwareInstallDate")]
-	[Description("Timestamp of when the IR hardware was installed.")]
+	[Browsable(false)]
+	[Description("Size of the Cortex port buffer.")]
+	[XmlConfiguration(DefaultValue = "8192")]
+	[Category("Settings")]
+	[DisplayName("Cortex Port Buffer Size")]
+	public int CortexPortBufferSize { get; private set; }
+
+	[Category("Settings")]
+	[DisplayName("Use Runtime Path")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[Description("If true, uses runtime video path")]
+	public bool UseRuntimePath { get; set; }
+
+	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If true, uses HD field for images")]
 	[Browsable(false)]
 	[Category("Settings")]
+	[DisplayName("Use Cortex HD Field")]
+	public bool UseCortexHDField { get; set; }
+
+	[Description("Timestamp of when the IR hardware was installed.")]
+	[Category("Settings")]
+	[DisplayName("IR HardwareInstallDate")]
+	[XmlConfiguration(DefaultValue = "NONE")]
+	[Browsable(false)]
 	public string IRHardwareInstallDate { get; set; }
+
+	[Description("If true, uses CI to support fraud validation.")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Settings")]
+	[DisplayName("Use CI For Fraud Validation")]
+	public bool UseInliteForFraudValidation { get; private set; }
 
 	protected override string FileNodeName => "Camera";
 
@@ -140,7 +152,7 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 				IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 				service.RegisterConfiguration(Configurations.Camera.ToString(), Instance);
 				ScannerDeviceFactory scannerDeviceFactory = new ScannerDeviceFactory();
-				ServiceLocator.Instance.AddService(typeof(IScannerDeviceService), scannerDeviceFactory);
+				ServiceLocator.Instance.AddService<IScannerDeviceService>(scannerDeviceFactory);
 				Instance.AddObserver(scannerDeviceFactory);
 			}
 			return Instance;
@@ -185,32 +197,31 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 			{
 				document.DocumentElement.RemoveChild(xmlNode);
 			}
-			XmlNode xmlNode2 = document.DocumentElement.SelectSingleNode(FileNodeName);
-			if (xmlNode2 == null)
+			XmlNode cameraNode = document.DocumentElement.SelectSingleNode(FileNodeName);
+			if (cameraNode == null)
 			{
 				XmlElement newChild = document.CreateElement(FileNodeName);
 				document.DocumentElement.AppendChild(newChild);
 				StoreProperties(document, new ErrorList());
 				return;
 			}
-			List<XmlNode> list = new List<XmlNode>();
-			using (new DisposeableList<XmlNode>(list))
+			List<XmlNode> toRemove = new List<XmlNode>();
+			using (new DisposeableList<XmlNode>(toRemove))
 			{
-				string[] legacyProperties = LegacyProperties;
-				foreach (string text in legacyProperties)
+				Array.ForEach(LegacyProperties, delegate(string property)
 				{
-					foreach (XmlNode childNode in xmlNode2.ChildNodes)
+					foreach (XmlNode childNode in cameraNode.ChildNodes)
 					{
-						if (childNode.Name == text)
+						if (childNode.Name == property)
 						{
-							list.Add(childNode);
+							toRemove.Add(childNode);
 						}
 					}
-				}
-				foreach (XmlNode item in list)
+				});
+				toRemove.ForEach(delegate(XmlNode n)
 				{
-					xmlNode2.RemoveChild(item);
-				}
+					cameraNode.RemoveChild(n);
+				});
 			}
 		}
 		catch (Exception e)
@@ -224,8 +235,6 @@ public sealed class BarcodeConfiguration : AttributeXmlConfiguration
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		WorkingPath = service.InstallPath("Video");
-		string[] list = new string[1] { "redbox" };
-		ComputeFilterList = new ReadOnlyCollection<string>(list);
 		Properties = new Dictionary<string, object>();
 		Properties["WorkingPath"] = WorkingPath;
 		Properties["VideoFormat"] = new Size(640, 480);

@@ -4,17 +4,19 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Attributes;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.Configuration;
 
 public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IConfigurationObserver
 {
+	private const BindingFlags PropertyFlags = BindingFlags.Instance | BindingFlags.Public;
+
 	private readonly Type ThisType;
 
 	private readonly List<IConfigurationObserver> Observers = new List<IConfigurationObserver>();
-
-	private const BindingFlags PropertyFlags = BindingFlags.Instance | BindingFlags.Public;
 
 	[Browsable(false)]
 	public string RootName { get; private set; }
@@ -59,7 +61,8 @@ public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IC
 	{
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
-			foreach (XmlNode childNode in document.DocumentElement.SelectSingleNode(FileNodeName).ChildNodes)
+			XmlNode xmlNode = document.DocumentElement.SelectSingleNode(FileNodeName);
+			foreach (XmlNode childNode in xmlNode.ChildNodes)
 			{
 				string name = childNode.Name;
 				try
@@ -94,7 +97,8 @@ public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IC
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
 			PropertyInfo[] properties = ThisType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-			foreach (PropertyInfo propertyInfo in properties)
+			PropertyInfo[] array = properties;
+			foreach (PropertyInfo propertyInfo in array)
 			{
 				if (Attribute.GetCustomAttribute(propertyInfo, typeof(XmlConfigurationAttribute)) is XmlConfigurationAttribute)
 				{
@@ -131,7 +135,8 @@ public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IC
 		ThisType = type;
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		PropertyInfo[] properties = ThisType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-		foreach (PropertyInfo propertyInfo in properties)
+		PropertyInfo[] array = properties;
+		foreach (PropertyInfo propertyInfo in array)
 		{
 			if (Attribute.GetCustomAttribute(propertyInfo, typeof(XmlConfigurationAttribute)) is XmlConfigurationAttribute xmlConfigurationAttribute)
 			{

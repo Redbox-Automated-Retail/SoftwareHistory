@@ -3,8 +3,12 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class PutOperation : AbstractOperation<IPutResult>
+internal sealed class PutOperation : AbstractOperation<PutResult>
 {
+	private const string AggressivePutFailuresCounter = "AggressivePutFailures";
+
+	private const string AggressivePutSuccessCounter = "AggressivePutSuccesses";
+
 	private readonly string ID;
 
 	private readonly IPutObserver Observer;
@@ -15,134 +19,18 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 
 	private readonly IFormattedLog Log;
 
-	private const string AggressivePutFailuresCounter = "AggressivePutFailures";
-
-	private const string AggressivePutSuccessCounter = "AggressivePutSuccesses";
-
-	public override IPutResult Execute()
+	public override PutResult Execute()
 	{
-		try
+		Result.Code = OnCorePut();
+		if (Result.Code != ErrorCodes.Success)
 		{
-			if (PutLocation.IsWide)
-			{
-				SettleDiskInSlot();
-			}
-			if (Controller.TrackState != TrackState.Closed && !Controller.TrackClose().Success)
-			{
-				Result.Code = ErrorCodes.TrackCloseTimeout;
-				return Result;
-			}
-			if (!Controller.RetractArm().Success)
-			{
-				Result.Code = ErrorCodes.GripperRetractTimeout;
-				return Result;
-			}
-			if (!Controller.SetFinger(GripperFingerState.Rent).Success)
-			{
-				LogHelper.Instance.Log("PUT: SetGripperFinger to Rent timed out.", LogEntryType.Error);
-				Result.Code = ErrorCodes.GripperRentTimeout;
-				return Result;
-			}
-			Controller.StartRollerIn();
-			bool num = ClearDiskFromPicker();
-			RuntimeService.SpinWait(100);
-			if (num)
-			{
-				LogHelper.Instance.Log($"PUT: Disk cannot be placed into {PutLocation.ToString()} because it cannot clear sensor 2.", LogEntryType.Error);
-				Controller.LogPickerSensorState(LogEntryType.Error);
-				Controller.StopRoller();
-				RuntimeService.SpinWait(100);
-				if (!Controller.TrackOpen().Success)
-				{
-					Result.Code = ErrorCodes.TrackOpenTimeout;
-					return Result;
-				}
-				Controller.TrackClose();
-				RuntimeService.SpinWait(100);
-				if (!Controller.RollerToPosition(RollerPosition.Position5, 8000).Success)
-				{
-					LogHelper.Instance.Log("Put: roll item back to sensor 5 returned TIMEOUT");
-					LogHelper.Instance.Log("PUT: unable to roll item into slot, and cannot move it back into the picker.", LogEntryType.Error);
-					Controller.LogPickerSensorState(LogEntryType.Error);
-					Result.Code = ErrorCodes.PickerObstructed;
-					return Result;
-				}
-				OnSlotInUse();
-				return Result;
-			}
-			if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
-			{
-				LogHelper.Instance.Log("Sensor wait for 2, 5 didn't time out.", LogEntryType.Info);
-			}
-			ErrorCodes errorCodes = PushIntoSlot();
-			if (errorCodes != ErrorCodes.Success)
-			{
-				LogHelper.Instance.Log($"PUT: item_cleared_gripper: PushIntoSlot returned {errorCodes.ToString().ToUpper()}", LogEntryType.Error);
-			}
-			Controller.StopRoller();
-			IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
-			if (pickerSensorReadResult.Error != ErrorCodes.Success)
-			{
-				Result.Code = ErrorCodes.SensorReadError;
-				return Result;
-			}
-			if (!pickerSensorReadResult.Sensors[0])
-			{
-				UpdateInventory();
-				return Result;
-			}
-			LogHelper.Instance.Log("[PUT] can't put disk in slot.", LogEntryType.Error);
-			Controller.LogPickerSensorState(LogEntryType.Error);
-			if (ControllerConfiguration.Instance.AggressiveClearPickerOnPut)
-			{
-				OnAggressivePut();
-			}
-			else
-			{
-				if (!Controller.TrackOpen().Success)
-				{
-					Result.Code = ErrorCodes.TrackOpenTimeout;
-					return Result;
-				}
-				PullFrom(PutLocation);
-				if (!Controller.TrackClose().Success)
-				{
-					Result.Code = ErrorCodes.TrackCloseTimeout;
-					return Result;
-				}
-				if (!Controller.RollerToPosition(RollerPosition.Position5, 5000).Success)
-				{
-					Controller.LogPickerSensorState(LogEntryType.Error);
-					RuntimeService.SpinWait(100);
-					Controller.StopRoller();
-					Result.Code = ErrorCodes.PickerObstructed;
-				}
-				else
-				{
-					IPickerSensorReadResult pickerSensorReadResult2 = Controller.ReadSensors();
-					if (!pickerSensorReadResult2.Sensors[0] && !pickerSensorReadResult2.Sensors[5])
-					{
-						OnSlotInUse();
-					}
-					else
-					{
-						Result.Code = ErrorCodes.PickerObstructed;
-					}
-				}
-			}
-			return Result;
+			Observer.OnFailedPut(Result, Log);
 		}
-		finally
+		else
 		{
-			if (Result.Code != ErrorCodes.Success)
-			{
-				Observer.OnFailedPut(Result, Log);
-			}
-			else
-			{
-				Observer.OnSuccessfulPut(Result, Log);
-			}
+			Observer.OnSuccessfulPut(Result, Log);
 		}
+		return Result;
 	}
 
 	internal PutOperation(string id, IPutObserver observer, ILocation putLocation, IFormattedLog log)
@@ -154,38 +42,131 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 		Observer = observer;
 	}
 
-	private void OnAggressivePut()
+	private ErrorCodes OnCorePut()
+	{
+		if (PutLocation.IsWide)
+		{
+			SettleDiskInSlot();
+		}
+		if (Controller.TrackState != TrackState.Closed && !Controller.TrackClose().Success)
+		{
+			return ErrorCodes.TrackCloseTimeout;
+		}
+		if (!Controller.RetractArm().Success)
+		{
+			return ErrorCodes.GripperRetractTimeout;
+		}
+		if (!Controller.SetFinger(GripperFingerState.Rent).Success)
+		{
+			LogHelper.Instance.Log("PUT: SetGripperFinger to Rent timed out.", LogEntryType.Error);
+			return ErrorCodes.GripperRentTimeout;
+		}
+		Controller.StartRollerIn();
+		bool flag = ClearDiskFromPicker();
+		RuntimeService.SpinWait(100);
+		if (flag)
+		{
+			LogHelper.Instance.WithContext(LogEntryType.Error, "PUT: Disk cannot be placed into {0} because it cannot clear sensor 2.", PutLocation.ToString());
+			Controller.LogPickerSensorState(LogEntryType.Error);
+			Controller.StopRoller();
+			RuntimeService.SpinWait(100);
+			if (!Controller.TrackOpen().Success)
+			{
+				return ErrorCodes.TrackOpenTimeout;
+			}
+			Controller.TrackClose();
+			RuntimeService.SpinWait(100);
+			IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position5, 8000);
+			if (!controlResponse.Success)
+			{
+				LogHelper.Instance.Log("Put: roll item back to sensor 5 returned TIMEOUT");
+				LogHelper.Instance.Log("PUT: unable to roll item into slot, and cannot move it back into the picker.", LogEntryType.Error);
+				Controller.LogPickerSensorState(LogEntryType.Error);
+				return ErrorCodes.PickerObstructed;
+			}
+			return OnSlotInUse();
+		}
+		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
+		{
+			LogHelper.Instance.Log("Sensor wait for 2, 5 didn't time out.", LogEntryType.Info);
+		}
+		ErrorCodes errorCodes = PushIntoSlot();
+		if (errorCodes != ErrorCodes.Success)
+		{
+			LogHelper.Instance.Log(LogEntryType.Error, "PUT: item_cleared_gripper: PushIntoSlot returned {0}", errorCodes.ToString().ToUpper());
+		}
+		Controller.StopRoller();
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			return ErrorCodes.SensorReadError;
+		}
+		if (!pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1))
+		{
+			UpdateInventory();
+			return ErrorCodes.Success;
+		}
+		LogHelper.Instance.Log("[PUT] can't put disk in slot.", LogEntryType.Error);
+		Controller.LogPickerSensorState(LogEntryType.Error);
+		if (ControllerConfiguration.Instance.AggressiveClearPickerOnPut)
+		{
+			return OnAggressivePut();
+		}
+		if (!Controller.TrackOpen().Success)
+		{
+			return ErrorCodes.TrackOpenTimeout;
+		}
+		PullFrom(PutLocation);
+		if (!Controller.TrackClose().Success)
+		{
+			return ErrorCodes.TrackCloseTimeout;
+		}
+		IControlResponse controlResponse2 = Controller.RollerToPosition(RollerPosition.Position5, 5000);
+		if (!controlResponse2.Success)
+		{
+			Controller.LogPickerSensorState(LogEntryType.Error);
+			RuntimeService.SpinWait(100);
+			Controller.StopRoller();
+			return ErrorCodes.PickerObstructed;
+		}
+		IPickerSensorReadResult pickerSensorReadResult2 = Controller.ReadPickerSensors();
+		if (pickerSensorReadResult2.IsInputActive(PickerInputs.Sensor1) || pickerSensorReadResult2.IsInputActive(PickerInputs.Sensor6))
+		{
+			return ErrorCodes.PickerObstructed;
+		}
+		return OnSlotInUse();
+	}
+
+	private ErrorCodes OnAggressivePut()
 	{
 		Controller.TrackCycle();
 		Controller.StartRollerIn();
 		PushIntoSlot();
 		Controller.StopRoller();
-		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadSensors();
-		if (pickerSensorReadResult.Error != ErrorCodes.Success)
+		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
 		{
-			Result.Code = ErrorCodes.SensorReadError;
-			return;
+			return ErrorCodes.SensorReadError;
 		}
-		if (!pickerSensorReadResult.Sensors[0])
+		if (!pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1))
 		{
 			UpdateAggressivePutCounter();
 			UpdateInventory();
-			return;
+			return ErrorCodes.Success;
 		}
 		Controller.TrackOpen();
 		PushIntoSlot();
 		Controller.TrackClose();
-		pickerSensorReadResult = Controller.ReadSensors();
-		if (pickerSensorReadResult.Error != ErrorCodes.Success)
+		pickerSensorReadResult = Controller.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
 		{
-			Result.Code = ErrorCodes.SensorReadError;
-			return;
+			return ErrorCodes.SensorReadError;
 		}
-		if (!pickerSensorReadResult.Sensors[0])
+		if (!pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1))
 		{
 			UpdateInventory();
 			UpdateAggressivePutCounter();
-			return;
+			return ErrorCodes.Success;
 		}
 		LogHelper.Instance.Log("AggressivePut not able to clear the disk.", LogEntryType.Error);
 		Controller.LogPickerSensorState(LogEntryType.Error);
@@ -194,18 +175,18 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 		PullFrom(PutLocation);
 		IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position5, 5000);
 		LogHelper.Instance.Log(LogEntryType.Error, "[PUT] gripperClear: false, rollerTo 5 returned {0}", controlResponse.ToString());
-		Controller.LogPickerSensorState(LogEntryType.Error);
+		IPickerSensorReadResult pickerSensorReadResult2 = Controller.ReadPickerSensors();
+		pickerSensorReadResult2.Log(LogEntryType.Error);
 		RuntimeService.SpinWait(100);
 		Controller.StopRoller();
-		LogHelper.Instance.Log("[PUT]: picker full = {0}", PickerBoard.IsFull());
-		Result.Code = ErrorCodes.PickerObstructed;
+		return ErrorCodes.PickerObstructed;
 	}
 
-	private void OnSlotInUse()
+	private ErrorCodes OnSlotInUse()
 	{
 		PutLocation.ID = "UNKNOWN";
 		InventoryService.Save(PutLocation);
-		Result.Code = ErrorCodes.SlotInUse;
+		return ErrorCodes.SlotInUse;
 	}
 
 	private void UpdateAggressivePutCounter()
@@ -225,12 +206,14 @@ internal sealed class PutOperation : AbstractOperation<IPutResult>
 		}
 		if (Result.IsDuplicate)
 		{
+			IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+			service.GetActiveContext();
 			Result.OriginalMatrixLocation = original;
 			Result.StoredMatrix = (ControllerConfiguration.Instance.MarkDuplicatesUnknown ? "UNKNOWN" : string.Format("{0}{1}", ID, "(DUPLICATE)"));
-			LogHelper.Instance.Log("The ID {0} is a duplicate ( original at Deck = {1} Slot = {2} ); marking as {3}", ID, original.Deck, original.Slot, Result.StoredMatrix);
+			LogHelper.Instance.WithContext("The ID {0} is a duplicate ( original at Deck = {1} Slot = {2} ); marking as {3}", ID, original.Deck, original.Slot, Result.StoredMatrix);
 			if (ControllerConfiguration.Instance.MarkOriginalMatrixUnknown)
 			{
-				LogHelper.Instance.Log("Mark the original matrix ID = {0} at Deck = {1} Slot = {2} ); marking as {3}", ID, original.Deck, original.Slot, "UNKNOWN");
+				LogHelper.Instance.WithContext("Mark the original matrix ID = {0} at Deck = {1} Slot = {2} ); marking as {3}", ID, original.Deck, original.Slot, "UNKNOWN");
 				original.ID = "UNKNOWN";
 				InventoryService.Save(original);
 			}

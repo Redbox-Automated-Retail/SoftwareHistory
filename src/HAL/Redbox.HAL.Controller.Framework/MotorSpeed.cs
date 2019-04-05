@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Xml;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -10,15 +10,15 @@ public sealed class MotorSpeed
 	[Description("The low (start) speed of the motor specified in pulses per second.")]
 	public int Low { get; private set; }
 
-	[DisplayName("High Speed")]
 	[Description("The high (target) speed of the motor specified in pulses per second.")]
+	[DisplayName("High Speed")]
 	public int High { get; private set; }
 
 	[Browsable(false)]
 	public MotorGear Gear { get; private set; }
 
-	[DisplayName("Acceleration Time (in milliseconds)")]
 	[Description("The amount of time in milliseconds between acceleration from the low speed to the high speed.")]
+	[DisplayName("Acceleration Time (in milliseconds)")]
 	public int AccelerationTime { get; private set; }
 
 	public MotorSpeed(int low, int high, int accelerationTime, MotorGear gear)

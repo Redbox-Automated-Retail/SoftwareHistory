@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -47,7 +48,7 @@ public sealed class InventoryInstruction : Instruction
 			}
 			IDeck byNumber = service.GetByNumber(deckOperand.Value);
 			Range slotRange = new Range(1, byNumber.NumberOfSlots);
-			IList<int> list = inventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
+			List<int> list = inventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
 			context.PushTop(list);
 			LogHelper.Instance.Log("Inventory: reset {0} empty slots on deck {1} to UNKNOWN", list, deckOperand.Value);
 		}
@@ -90,12 +91,12 @@ public sealed class InventoryInstruction : Instruction
 		{
 			location.ID = "UNKNOWN";
 			inventoryService.Save(location);
-			context.PushTop("SUCCESS");
+			context.PushTop(base.SuccessMessage);
 		}
 		else if (InventoryOperands.SetEmpty == inventoryOperands)
 		{
 			inventoryService.Reset(location);
-			context.PushTop("SUCCESS");
+			context.PushTop(base.SuccessMessage);
 		}
 		else
 		{

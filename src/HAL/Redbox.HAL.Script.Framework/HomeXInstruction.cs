@@ -12,8 +12,9 @@ public sealed class HomeXInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		string instance = ServiceLocator.Instance.GetService<IMotionControlService>().HomeAxis(Axis.X, context.AppLog).ToString()
-			.ToUpper();
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.HomeAxis(Axis.X);
+		string instance = errorCodes.ToString().ToUpper();
 		context.PushTop(instance);
 	}
 }

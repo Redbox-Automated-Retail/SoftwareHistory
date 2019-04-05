@@ -31,13 +31,15 @@ public sealed class InspectInstruction : Instruction
 			AddError("E004", "Deck or slot are undefined, reissue the INSPECT instruction specifying both deck and slot values.", result.Errors);
 			return;
 		}
-		IDeck byNumber = ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(deck);
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck byNumber = service.GetByNumber(deck);
 		if (byNumber == null || !byNumber.IsSlotValid(slot))
 		{
 			context.PushTop(ErrorCodes.InvalidLocation.ToString().ToUpper());
 			return;
 		}
-		ILocation location = ServiceLocator.Instance.GetService<IInventoryService>().Get(deck, slot);
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+		ILocation location = service2.Get(deck, slot);
 		context.PushTop(location.ID);
 	}
 }

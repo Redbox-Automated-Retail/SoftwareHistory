@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Component.Model.Threading;
 
 namespace Redbox.HAL.DataStorage;
 
@@ -49,7 +50,7 @@ public sealed class PersistentMapService : IPersistentMap, IPersistentMapService
 					return defVal;
 				}
 			}
-			return (T)ConversionHelper.ChangeType(persistentOption.Value, typeof(T));
+			return ConversionHelper.ChangeType<T>(persistentOption.Value);
 		}
 	}
 
@@ -86,7 +87,8 @@ public sealed class PersistentMapService : IPersistentMap, IPersistentMapService
 
 	private void InsertUnderLock<T>(string key, T val)
 	{
-		IPersistentOption persistentOption = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewPersistentOption(key, val.ToString());
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		IPersistentOption persistentOption = service.NewPersistentOption(key, val.ToString());
 		Table.Insert(persistentOption);
 		Options.Add(persistentOption);
 	}

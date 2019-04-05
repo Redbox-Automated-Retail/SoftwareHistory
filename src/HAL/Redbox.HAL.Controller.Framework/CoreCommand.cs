@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Text;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -10,7 +10,7 @@ internal sealed class CoreCommand
 {
 	internal readonly int OperationTimeout;
 
-	internal readonly RedboxSerialPort Port;
+	internal readonly ICommPort Port;
 
 	internal readonly int? StatusBit;
 
@@ -28,21 +28,14 @@ internal sealed class CoreCommand
 
 	internal string Command { get; private set; }
 
-	internal static CoreCommand Create(CommandType type, int? timeout, RedboxSerialPort port)
+	internal static CoreCommand Create(CommandType type, int? timeout, ICommPort port)
 	{
 		return new CoreCommand(type, timeout, port);
 	}
 
-	internal static CoreCommand Create(CommandType type, RedboxSerialPort port)
+	internal static CoreCommand Create(CommandType type, ICommPort port)
 	{
 		return new CoreCommand(type, null, port);
-	}
-
-	internal static CoreCommand Create(CommandType type, RedboxSerialPort port, params object[] args)
-	{
-		CoreCommand coreCommand = new CoreCommand(type, null, port);
-		coreCommand.Command = string.Format(coreCommand.Command, args);
-		return coreCommand;
 	}
 
 	internal CoreResponse Execute()
@@ -61,7 +54,8 @@ internal sealed class CoreCommand
 				coreResponse.Error = WaitForCommand(trace);
 				if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
 				{
-					Array.ForEach(ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries), delegate(string s)
+					string[] array = ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries);
+					Array.ForEach(array, delegate(string s)
 					{
 						SendCommand(s, trace);
 					});
@@ -120,25 +114,27 @@ internal sealed class CoreCommand
 		try
 		{
 			CoreResponse coreResponse = new CoreResponse(Address);
-			Port.ResetBuffers();
 			using (IChannelResponse channelResponse = Port.SendRecv(Address.ToString(), 5000))
 			{
 				coreResponse.Error = ((!channelResponse.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
 				if (!channelResponse.CommOk)
 				{
-					LogHelper.Instance.Log(" [SendCommand] Command {0} on address {1} ( port = {2} )timed out.", command, Address.ToString(), Port.Name);
+					LogHelper.Instance.Log(" [SendCommand] Selector {0} ( port = {1} )communication error.", Address.ToString(), Port.DisplayName);
 					coreResponse.Diagnostic = ComputeCommunicationError(Address);
 					return coreResponse;
 				}
 				trace.Trace("[SendCommand] Command {0} selector response {1}", command, Encoding.ASCII.GetString(channelResponse.RawResponse));
 			}
-			Port.ResetBuffers();
 			using IChannelResponse channelResponse2 = Port.SendRecv(command, CommandWait);
 			coreResponse.Error = ((!channelResponse2.CommOk) ? ErrorCodes.CommunicationError : ErrorCodes.Success);
 			if (channelResponse2.CommOk)
 			{
 				coreResponse.OpCodeResponse = Encoding.ASCII.GetString(channelResponse2.RawResponse);
 				trace.Trace("[SendCommand] Command {0} response {1}", command, coreResponse.OpCodeResponse);
+			}
+			else
+			{
+				LogHelper.Instance.Log(" [SendCommand] Command {0} on address {1} ( port = {2} ) communication error.", command, Address.ToString(), Port.DisplayName);
 			}
 			return coreResponse;
 		}
@@ -163,7 +159,7 @@ internal sealed class CoreCommand
 		return text2;
 	}
 
-	private CoreCommand(CommandType type, int? timeout, RedboxSerialPort port)
+	private CoreCommand(CommandType type, int? timeout, ICommPort port)
 	{
 		Port = port;
 		CommandName = type.ToString();

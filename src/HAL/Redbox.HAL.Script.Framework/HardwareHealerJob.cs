@@ -12,26 +12,21 @@ internal class HardwareHealerJob : NativeJobAdapter
 		ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: false, null);
 		if (ControllerConfiguration.Instance.EnableLeiweHealing)
 		{
-			bool flag = false;
-			for (int i = 0; i < 2; i++)
+			IControlSystemRevision revision = base.ControlSystem.GetRevision();
+			if (!revision.Success)
 			{
-				if (base.ControlSystem.GetBoardVersion(ControlBoards.Serial) != "TIMEOUT" && base.ControlSystem.GetBoardVersion(ControlBoards.Aux) != "TIMEOUT" && base.ControlSystem.GetBoardVersion(ControlBoards.Picker) != "TIMEOUT")
-				{
-					flag = true;
-					break;
-				}
 				base.ControlSystem.Shutdown();
 				Thread.Sleep(500);
 				base.ControlSystem.Initialize();
-			}
-			if (!flag)
-			{
-				AddError("Failed to reset boards.");
+				if (!base.ControlSystem.GetRevision().Success)
+				{
+					AddError("Failed to reset boards.");
+				}
 			}
 		}
-		if (ControllerConfiguration.Instance.EnableArcusHealing && !base.MotionService.CommunicationOk())
+		if (ControllerConfiguration.Instance.EnableArcusHealing)
 		{
-			if (!base.MotionService.Reset(base.Context.AppLog, quick: false))
+			if (!base.MotionService.TestAndReset(quick: false))
 			{
 				AddError("Can't reset controller.");
 			}
@@ -40,14 +35,16 @@ internal class HardwareHealerJob : NativeJobAdapter
 				base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
 			}
 		}
-		if (ControllerConfiguration.Instance.EnableCameraHealing)
+		if (!ControllerConfiguration.Instance.EnableCameraHealing)
 		{
-			IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
-			if (!configuredDevice.Snap().SnapOk)
-			{
-				bool flag2 = configuredDevice.Restart();
-				base.Context.ServiceLog("Camera snap returned failure; restart device returned {0}", flag2.ToString());
-			}
+			return;
+		}
+		IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
+		using ISnapResult snapResult = configuredDevice.Snap();
+		if (!snapResult.SnapOk)
+		{
+			bool flag = configuredDevice.Restart();
+			LogHelper.Instance.WithContext("Camera snap returned failure; restart device returned {0}", flag.ToString());
 		}
 	}
 

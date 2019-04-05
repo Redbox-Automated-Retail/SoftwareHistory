@@ -23,12 +23,16 @@ internal sealed class RouterPowerCycleDevice : PowerCycleDevice, IConfigurationO
 
 	protected override ErrorCodes OnPowerCut()
 	{
-		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.PowerAux21).Error;
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.PowerAux21);
+		return coreResponse.Error;
 	}
 
 	protected override ErrorCodes OnPowerSupply()
 	{
-		return ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.DisableAux21).Error;
+		ICoreCommandExecutor service = ServiceLocator.Instance.GetService<ICoreCommandExecutor>();
+		CoreResponse coreResponse = service.ExecuteControllerCommand(CommandType.DisableAux21);
+		return coreResponse.Error;
 	}
 
 	internal RouterPowerCycleDevice()

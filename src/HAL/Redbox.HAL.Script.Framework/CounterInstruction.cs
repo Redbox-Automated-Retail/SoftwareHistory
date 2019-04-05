@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -43,7 +44,7 @@ public sealed class CounterInstruction : Instruction
 			break;
 		}
 		case Ops.Create:
-			context.PushTop((service.Find(keyValuePairValue) != null) ? "SUCCESS" : "FAILURE");
+			context.PushTop((service.Find(keyValuePairValue) != null) ? base.SuccessMessage : "FAILURE");
 			break;
 		case Ops.Decrement:
 		{
@@ -54,7 +55,7 @@ public sealed class CounterInstruction : Instruction
 				break;
 			}
 			context.PushTop(persistentCounter.Value);
-			context.PushTop("SUCCESS");
+			context.PushTop(base.SuccessMessage);
 			break;
 		}
 		case Ops.Increment:
@@ -66,7 +67,7 @@ public sealed class CounterInstruction : Instruction
 				break;
 			}
 			context.PushTop(persistentCounter.Value);
-			context.PushTop("SUCCESS");
+			context.PushTop(base.SuccessMessage);
 			break;
 		}
 		case Ops.Get:
@@ -74,7 +75,7 @@ public sealed class CounterInstruction : Instruction
 			if (keyValuePairValue.Equals("DUMPBIN", StringComparison.CurrentCultureIgnoreCase))
 			{
 				context.PushTop(service2.CurrentCount());
-				context.PushTop("SUCCESS");
+				context.PushTop(base.SuccessMessage);
 				break;
 			}
 			IPersistentCounter persistentCounter = service.Find(keyValuePairValue);
@@ -84,11 +85,11 @@ public sealed class CounterInstruction : Instruction
 				break;
 			}
 			context.PushTop(persistentCounter.Value);
-			context.PushTop("SUCCESS");
+			context.PushTop(base.SuccessMessage);
 			break;
 		}
 		case Ops.Reset:
-			context.PushTop(service.Reset(keyValuePairValue) ? "SUCCESS" : "FAILURE");
+			context.PushTop(service.Reset(keyValuePairValue) ? base.SuccessMessage : "FAILURE");
 			break;
 		}
 	}

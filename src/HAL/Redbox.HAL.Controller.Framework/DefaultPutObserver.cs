@@ -1,12 +1,9 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class DefaultPutObserver : IPutObserver
+internal sealed class DefaultPutObserver : IPutToObserver, IPutObserver
 {
-	internal static DefaultPutObserver Instance => Singleton<DefaultPutObserver>.Instance;
-
 	public void OnSuccessfulPut(IPutResult result, IFormattedLog log)
 	{
 	}
@@ -15,7 +12,7 @@ internal sealed class DefaultPutObserver : IPutObserver
 	{
 	}
 
-	private DefaultPutObserver()
+	public void OnMoveError(ErrorCodes error)
 	{
 	}
 }

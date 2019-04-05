@@ -16,15 +16,13 @@ internal class DumpBinThinHelper : ThinHelper
 		if (service.IsFull())
 		{
 			base.Context.CreateInfoResult("DumpBinIsFull", "The dump bin is filled to capacity.");
-			base.Context.AppLog.Write("The dump bin is full.");
 			return MerchandizeResult.DumpBinFull;
 		}
 		base.Context.AppLog.Write($"Attempt thin of item {id}");
 		ILocation location = service2.Lookup(id);
 		if (location == null)
 		{
-			base.Context.AppLog.LogLookupFailure(id);
-			base.Context.CreateInfoResult("ThinLookupFailed", "The LOOKUP request failed because the item was not found.", id);
+			base.Context.CreateLookupErrorResult("ThinLookupFailed", id);
 			return MerchandizeResult.LookupFailure;
 		}
 		MerchandizeResult merchandizeResult = FetchThin(location, id);

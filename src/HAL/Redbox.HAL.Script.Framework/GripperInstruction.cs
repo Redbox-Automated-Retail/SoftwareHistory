@@ -41,8 +41,6 @@ public sealed class GripperInstruction : Instruction
 		public const string VendDiscAtDoor = "VEND-DISC-AT-DOOR";
 
 		public const string CheckPicker = "CHECK-PICKER";
-
-		public const string ReadDisk = "READ-DISC";
 	}
 
 	public override string Mnemonic => "GRIPPER";
@@ -77,26 +75,18 @@ public sealed class GripperInstruction : Instruction
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
 		switch (text)
 		{
 		case "VEND-DISC-AT-DOOR":
-		{
-			using VendItemOperation vendItemOperation = new VendItemOperation();
-			context.PushTop(vendItemOperation.Execute().Status.ToString().ToUpper());
+			context.PushTop(service3.VendItemInPicker().Status.ToString().ToUpper());
 			break;
-		}
 		case "REJECT-DISC-AT-DOOR":
-		{
-			using RejectDiskOperation rejectDiskOperation = new RejectDiskOperation(ControllerConfiguration.Instance.RejectAtDoorAttempts);
-			context.PushTop(rejectDiskOperation.Execute().ToString().ToUpper());
+			context.PushTop(service3.RejectDiskInPicker().ToString().ToUpper());
 			break;
-		}
 		case "ACCEPT-DISC-AT-DOOR":
-		{
-			using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
-			context.PushTop(acceptDiskOperation.Execute().ToString().ToUpper());
+			context.PushTop(service3.AcceptDiskAtDoor().ToString().ToUpper());
 			break;
-		}
 		case "OPEN":
 			TestFingerOperation(GripperFingerState.Open, context);
 			break;
@@ -107,8 +97,18 @@ public sealed class GripperInstruction : Instruction
 			TestFingerOperation(GripperFingerState.Rent, context);
 			break;
 		case "STATUS":
-			context.PushTop(PickerBoard.IsFull() ? "FULL" : "EMPTY");
+		{
+			IPickerSensorReadResult pickerSensorReadResult = service.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success || pickerSensorReadResult.IsFull)
+			{
+				context.PushTop("FULL");
+			}
+			else
+			{
+				context.PushTop("EMPTY");
+			}
 			break;
+		}
 		case "EXTEND":
 		{
 			IControlResponse controlResponse = service.ExtendArm();
@@ -155,20 +155,8 @@ public sealed class GripperInstruction : Instruction
 			break;
 		}
 		case "CLEAR":
-			context.PushTop(new ClearGripperOperation().Execute() == ErrorCodes.Success);
+			context.PushTop(service3.ClearGripper() == ErrorCodes.Success);
 			break;
-		case "READ-DISC":
-		{
-			CenterDiskMethod method = CenterDiskMethod.None;
-			KeyValuePair keyValuePair2 = base.Operands.GetKeyValuePair("SHUFFLE");
-			if (keyValuePair2 != null)
-			{
-				method = Enum<CenterDiskMethod>.ParseIgnoringCase(keyValuePair2.Value, CenterDiskMethod.None);
-			}
-			using Scanner scanner = new Scanner(method, service);
-			PushReadResults(scanner.Read(), context);
-			break;
-		}
 		case "PUSH":
 		case "PUSH-IN":
 		{
@@ -177,8 +165,11 @@ public sealed class GripperInstruction : Instruction
 			break;
 		}
 		case "PUSH-OUT":
-			context.PushTop(PickerBoard.PushOut().ToString().ToUpper());
+		{
+			ErrorCodes errorCodes = service3.PushOut();
+			context.PushTop(errorCodes.ToString().ToUpper());
 			break;
+		}
 		case "CHECK-PICKER":
 		{
 			string vendId = null;
@@ -199,7 +190,7 @@ public sealed class GripperInstruction : Instruction
 		default:
 		{
 			string text3 = $"Unrecognized operand {text}";
-			context.ServiceLog(text3, LogEntryType.Error);
+			LogHelper.Instance.WithContext(LogEntryType.Error, text3);
 			result.Errors.Add(Error.NewError("E001", "Unknown operand", text3));
 			break;
 		}
@@ -208,24 +199,16 @@ public sealed class GripperInstruction : Instruction
 
 	private void TestFingerOperation(GripperFingerState state, ExecutionContext context)
 	{
-		IControlResponse response = ServiceLocator.Instance.GetService<IControlSystem>().SetFinger(state);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IControlResponse response = service.SetFinger(state);
 		HandleError(response, context);
-	}
-
-	private void PushReadResults(ScanResult status, ExecutionContext context)
-	{
-		if (status.SnapOk)
-		{
-			context.PushTop(status.ScannedMatrix);
-		}
-		context.PushTop(status.Diagnostic);
 	}
 
 	private bool ValidateOperand(string operand)
 	{
-		if (string.Compare(operand, "OPEN", ignoreCase: true) != 0 && string.Compare(operand, "CLOSE", ignoreCase: true) != 0 && string.Compare(operand, "STATUS", ignoreCase: true) != 0 && string.Compare(operand, "EXTEND", ignoreCase: true) != 0 && string.Compare(operand, "EXTEND-FOR-TIME", ignoreCase: true) != 0 && string.Compare(operand, "RETRACT", ignoreCase: true) != 0 && string.Compare(operand, "RENT", ignoreCase: true) != 0 && string.Compare(operand, "PUSH", ignoreCase: true) != 0 && string.Compare(operand, "PEEK", ignoreCase: true) != 0 && string.Compare(operand, "CLEAR", ignoreCase: true) != 0 && string.Compare(operand, "PUSH-OUT", ignoreCase: true) != 0 && string.Compare(operand, "PUSH-IN", ignoreCase: true) != 0 && string.Compare(operand, "ACCEPT-DISC-AT-DOOR", ignoreCase: true) != 0 && string.Compare(operand, "REJECT-DISC-AT-DOOR", ignoreCase: true) != 0 && string.Compare(operand, "VEND-DISC-AT-DOOR", ignoreCase: true) != 0 && string.Compare(operand, "CHECK-PICKER", ignoreCase: true) != 0)
+		if (string.Compare(operand, "OPEN", ignoreCase: true) != 0 && string.Compare(operand, "CLOSE", ignoreCase: true) != 0 && string.Compare(operand, "STATUS", ignoreCase: true) != 0 && string.Compare(operand, "EXTEND", ignoreCase: true) != 0 && string.Compare(operand, "EXTEND-FOR-TIME", ignoreCase: true) != 0 && string.Compare(operand, "RETRACT", ignoreCase: true) != 0 && string.Compare(operand, "RENT", ignoreCase: true) != 0 && string.Compare(operand, "PUSH", ignoreCase: true) != 0 && string.Compare(operand, "PEEK", ignoreCase: true) != 0 && string.Compare(operand, "CLEAR", ignoreCase: true) != 0 && string.Compare(operand, "PUSH-OUT", ignoreCase: true) != 0 && string.Compare(operand, "PUSH-IN", ignoreCase: true) != 0 && string.Compare(operand, "ACCEPT-DISC-AT-DOOR", ignoreCase: true) != 0 && string.Compare(operand, "REJECT-DISC-AT-DOOR", ignoreCase: true) != 0 && string.Compare(operand, "VEND-DISC-AT-DOOR", ignoreCase: true) != 0)
 		{
-			return string.Compare(operand, "READ-DISC", ignoreCase: true) == 0;
+			return string.Compare(operand, "CHECK-PICKER", ignoreCase: true) == 0;
 		}
 		return true;
 	}

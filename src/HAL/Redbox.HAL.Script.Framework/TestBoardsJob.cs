@@ -1,34 +1,20 @@
+using System;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "test-boards-job", Operand = "TEST-BOARDS-JOB")]
+[NativeJob(ProgramName = "test-boards-job")]
 internal class TestBoardsJob : NativeJobAdapter
 {
-	private readonly ControlBoards[] Boards = new ControlBoards[3]
-	{
-		ControlBoards.Serial,
-		ControlBoards.Aux,
-		ControlBoards.Picker
-	};
-
 	protected override void ExecuteInner()
 	{
-		int num = 0;
-		ControlBoards[] boards = Boards;
-		for (int i = 0; i < boards.Length; i++)
+		IControlSystemRevision revision = base.ControlSystem.GetRevision();
+		Array.ForEach(revision.Responses, delegate(IBoardVersionResponse each)
 		{
-			ControlBoards board = boards[i];
-			string boardVersion = base.ControlSystem.GetBoardVersion(board);
-			string arg = "responsive";
-			if (boardVersion == "TIMEOUT")
-			{
-				num++;
-				arg = "not responsive";
-			}
-			base.Context.CreateInfoResult("VersionResult", $"{board.ToString().ToUpper()} board {arg}");
-		}
-		if (num > 0)
+			string arg = (each.ReadSuccess ? "responsive" : "not responsive");
+			base.Context.CreateInfoResult("VersionResult", $"{each.BoardName.ToString().ToUpper()} board {arg}");
+		});
+		if (!revision.Success)
 		{
 			AddError("One or more comm failures.");
 		}

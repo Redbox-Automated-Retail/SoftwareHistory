@@ -3,26 +3,26 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "get-non-barcode-inventory", Operand = "GET-NON-BARCODE-INVENTORY")]
+[NativeJob(ProgramName = "get-non-barcode-inventory")]
 internal sealed class GetNonBarcodeInventory : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IList<ILocation> unknowns = base.InventoryService.GetUnknowns();
+		List<ILocation> unknowns = base.InventoryService.GetUnknowns();
 		using (new DisposeableList<ILocation>(unknowns))
 		{
-			foreach (ILocation item in unknowns)
+			unknowns.ForEach(delegate(ILocation each)
 			{
-				base.Context.CreateResult("UnknownLocation", "The location is UNKNOWN.", item.Deck, item.Slot, "UNKNOWN", null, null);
-			}
+				base.Context.CreateResult("UnknownLocation", "The location is UNKNOWN.", each.Deck, each.Slot, "UNKNOWN", null, null);
+			});
 		}
-		IList<ILocation> emptySlots = base.InventoryService.GetEmptySlots();
+		List<ILocation> emptySlots = base.InventoryService.GetEmptySlots();
 		using (new DisposeableList<ILocation>(emptySlots))
 		{
-			foreach (ILocation item2 in emptySlots)
+			emptySlots.ForEach(delegate(ILocation each)
 			{
-				base.Context.CreateResult("EmptyLocation", "The location is EMPTY.", item2.Deck, item2.Slot, "EMPTY", null, null);
-			}
+				base.Context.CreateResult("EmptyLocation", "The location is EMPTY.", each.Deck, each.Slot, "EMPTY", null, null);
+			});
 		}
 	}
 

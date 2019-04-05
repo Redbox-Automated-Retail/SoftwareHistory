@@ -8,9 +8,7 @@ public interface IEmptySearchPatternService
 
 	void RemoveObserver(IExcludeEmptySearchLocationObserver observer);
 
-	IEmptySearchResult FindMultipleEmptyLocations();
-
-	IEmptySearchResult FindOneEmpty();
+	IEmptySearchResult FindEmptyLocations();
 
 	IEmptySearchResult FindEmptyOutsideOf(ILocation top);
 }

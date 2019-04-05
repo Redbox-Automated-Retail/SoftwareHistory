@@ -1,5 +1,5 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -8,10 +8,12 @@ internal sealed class ClearHardwareStatisticsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(base.Context.PopTop<string>(), HardwareCorrectionStatistic.None);
+		string value = base.Context.PopTop<string>();
+		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(value, HardwareCorrectionStatistic.None);
 		if (hardwareCorrectionStatistic != HardwareCorrectionStatistic.None)
 		{
-			ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().RemoveAll(hardwareCorrectionStatistic);
+			IHardwareCorrectionStatisticService service = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
+			service.RemoveAll(hardwareCorrectionStatistic);
 		}
 	}
 

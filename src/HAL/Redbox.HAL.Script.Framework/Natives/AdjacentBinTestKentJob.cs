@@ -10,12 +10,15 @@ internal sealed class AdjacentBinTestKentJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "KioskTest", flushOnWrite: false, "AdjacentDumpSlotTest");
-		if (ServiceLocator.Instance.GetService<IDecksService>().QlmDeck != null)
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck qlmDeck = service.QlmDeck;
+		if (qlmDeck != null)
 		{
 			applicationLog.Write("The kiosk shows a QLM configuration - go no further.");
 			return;
 		}
-		int deck = ServiceLocator.Instance.GetService<IDumpbinService>().PutLocation.Deck;
+		IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
+		int deck = service2.PutLocation.Deck;
 		IDeck byNumber = base.DecksService.GetByNumber(deck);
 		if (!PutToAdjacentAndTest(byNumber.Number, 2, 81))
 		{
@@ -73,7 +76,8 @@ internal sealed class AdjacentBinTestKentJob : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).Success)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service2.Put("UNKNOWN").Success)
 		{
 			AddError("Test failure.");
 			return false;
@@ -83,13 +87,16 @@ internal sealed class AdjacentBinTestKentJob : NativeJobAdapter
 
 	private bool TestAdjacentWithDisk(int deck, int testSlot)
 	{
-		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(deck, testSlot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service.MoveTo(deck, testSlot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
 		{
 			AddError("Test failure!");
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).IsSlotInUse)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service2.Put("UNKNOWN");
+		if (!putResult.IsSlotInUse)
 		{
 			return false;
 		}

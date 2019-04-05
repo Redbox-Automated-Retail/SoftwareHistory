@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Threading;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -98,16 +98,22 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		return Controller.MoveToTarget(ref target);
 	}
 
-	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log, ref OffsetMoveData data)
+	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode)
 	{
-		ErrorCodes errorCodes = AxesInitialized();
-		if (errorCodes != ErrorCodes.Success)
-		{
-			LogMoveError(deck, slot, errorCodes, log);
-			return errorCodes;
-		}
-		ILocation currentLocation = ServiceLocator.Instance.GetService<IInventoryService>().Get(deck, slot);
-		IDeck byNumber = ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(deck);
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		return MoveTo(deck, slot, mode, service.GetActiveContext().ContextLog);
+	}
+
+	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log)
+	{
+		OffsetMoveData data = default(OffsetMoveData);
+		return MoveTo(deck, slot, mode, log, ref data);
+	}
+
+	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog _log, ref OffsetMoveData data)
+	{
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck byNumber = service.GetByNumber(deck);
 		if (byNumber == null)
 		{
 			return ErrorCodes.DeckOutOfRange;
@@ -115,6 +121,12 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		if (!byNumber.IsSlotValid(slot))
 		{
 			return ErrorCodes.SlotOutOfRange;
+		}
+		ErrorCodes errorCodes = AxesInitialized();
+		if (errorCodes != ErrorCodes.Success)
+		{
+			LogMoveError(deck, slot, errorCodes);
+			return errorCodes;
 		}
 		int num = byNumber.YOffset;
 		int num2 = (byNumber.IsQlm ? ControllerConfiguration.Instance.QlmYOffset : 50);
@@ -173,7 +185,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		switch (errorCodes2)
 		{
 		case ErrorCodes.ArcusNotResponsive:
-			if (ResetMotionControllerChecked(log))
+			if (ResetMotionControllerChecked())
 			{
 				errorCodes2 = MoveWithCheck(ref target2);
 			}
@@ -185,24 +197,20 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 			}
 			break;
 		}
-		LogMoveError(deck, slot, errorCodes2, log);
+		LogMoveError(deck, slot, errorCodes2);
 		if (errorCodes2 == ErrorCodes.Success)
 		{
 			AtVendDoor = false;
-			CurrentLocation = currentLocation;
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			CurrentLocation = service2.Get(deck, slot);
 		}
 		return errorCodes2;
 	}
 
-	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log)
+	public ErrorCodes MoveTo(ILocation location, MoveMode mode)
 	{
-		OffsetMoveData data = default(OffsetMoveData);
-		return MoveTo(deck, slot, mode, log, ref data);
-	}
-
-	public ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log, ref OffsetMoveData data)
-	{
-		return MoveTo(location.Deck, location.Slot, mode, log, ref data);
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		return MoveTo(location.Deck, location.Slot, mode, service.GetActiveContext().ContextLog);
 	}
 
 	public ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log)
@@ -210,125 +218,111 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		return MoveTo(location.Deck, location.Slot, mode, log);
 	}
 
+	public ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log, ref OffsetMoveData data)
+	{
+		return MoveTo(location.Deck, location.Slot, mode, log, ref data);
+	}
+
 	public ErrorCodes MoveVend(MoveMode mode, IFormattedLog writer)
 	{
 		ErrorCodes errorCodes = AxesInitialized();
 		if (errorCodes != ErrorCodes.Success)
 		{
-			LogMoveVendError(writer, errorCodes);
+			LogMoveVendError(errorCodes);
 			return errorCodes;
 		}
 		ErrorCodes errorCodes2 = CheckAndReset();
 		if (errorCodes2 != ErrorCodes.Success)
 		{
-			LogMoveVendError(writer, errorCodes2);
+			LogMoveVendError(errorCodes2);
 			return errorCodes2;
 		}
 		ErrorCodes errorCodes3 = Controller.MoveToVend(mode);
-		if (ErrorCodes.ArcusNotResponsive == errorCodes3 && ResetMotionControllerChecked(writer))
+		if (ErrorCodes.ArcusNotResponsive == errorCodes3 && ResetMotionControllerChecked())
 		{
 			errorCodes3 = Controller.MoveToVend(mode);
 		}
-		LogMoveVendError(writer, errorCodes3);
-		AtVendDoor = errorCodes3 == ErrorCodes.Success;
+		LogMoveVendError(errorCodes3);
+		AtVendDoor = ErrorCodes.Success == errorCodes3;
 		return errorCodes3;
 	}
 
-	public ErrorCodes InitAxes(IFormattedLog log)
+	public ErrorCodes InitAxes()
 	{
-		return InitAxes(log, fast: false);
+		return InitAxes(fast: false);
 	}
 
-	public ErrorCodes InitAxes(IFormattedLog log, bool fast)
+	public ErrorCodes InitAxes(bool fast)
 	{
 		if (ControllerConfiguration.Instance.RestartControllerDuringUserJobs && !CommunicationOk())
 		{
-			bool flag = OnReset();
-			InsertCorrectionStat(flag);
-			if (!flag)
-			{
-				return ErrorCodes.ArcusNotResponsive;
-			}
-		}
-		using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
-		if (ControllerConfiguration.Instance.ClearPickerOnHome)
-		{
-			clearPickerFrontOperation.Execute();
-		}
-		log.WriteFormatted("Home the X motor.");
-		int num = (fast ? 1 : 2);
-		for (int i = 0; i < num; i++)
-		{
-			ErrorCodes errorCodes = HomeAxisChecked(Axis.X, log);
+			ErrorCodes errorCodes = OnReset();
+			InsertCorrectionStat(ErrorCodes.Success == errorCodes);
 			if (errorCodes != ErrorCodes.Success)
 			{
-				log.WriteFormatted("HOME X returned error status {0}", errorCodes.ToString().ToUpper());
+				OnResetFailure(errorCodes);
 				return errorCodes;
 			}
-			if (i == 0)
-			{
-				MoveTarget target = new MoveTarget
-				{
-					Axis = Axis.X,
-					XCoordinate = -200,
-					YCoordinate = null
-				};
-				Controller.MoveToTarget(ref target);
-			}
 		}
-		log.WriteFormatted("Home the Y Motor.");
-		ErrorCodes errorCodes2 = HomeAxisChecked(Axis.Y, log);
-		if (errorCodes2 != ErrorCodes.Success)
-		{
-			log.WriteFormatted("HOME Y returned error status {0}", errorCodes2.ToString().ToUpper());
-		}
-		return errorCodes2;
+		return OnInitAxes(fast);
 	}
 
-	public ErrorCodes HomeAxis(Axis axis, IFormattedLog log)
+	public ErrorCodes HomeAxis(Axis axis)
 	{
-		ErrorCodes errorCodes = HomeAxisChecked(axis, log);
+		return HomeAxisChecked(axis);
+	}
+
+	public ErrorCodes Reset(bool quick)
+	{
+		ErrorCodes errorCodes = OnReset();
+		if (errorCodes == ErrorCodes.Success)
+		{
+			errorCodes = OnInitAxes(quick);
+		}
 		if (errorCodes != ErrorCodes.Success)
 		{
-			string msg = $"HOME{axis.ToString().ToUpper()} returned an error status {errorCodes.ToString().ToUpper()}";
-			log.WriteFormatted(msg, LogEntryType.Error);
+			OnResetFailure(errorCodes);
+		}
+		else
+		{
+			LogHelper.Instance.WithContext("RESET of motion controller returned {0}", errorCodes.ToString().ToUpper());
 		}
 		return errorCodes;
 	}
 
-	public bool Reset(IFormattedLog log, bool quick)
+	public bool TestAndReset()
 	{
-		if (!OnReset())
-		{
-			return false;
-		}
-		ErrorCodes errorCodes = InitAxes(log, quick);
-		LogHelper.Instance.Log("[{0}]: Restart returned {1}", GetType().Name, errorCodes.ToString().ToUpper());
-		log?.WriteFormatted("RESET of motion controller returned {0}", errorCodes.ToString());
-		return errorCodes == ErrorCodes.Success;
+		return TestAndReset(quick: true);
 	}
 
-	public bool TestAndReset(IFormattedLog log)
+	public bool TestAndReset(bool quick)
 	{
-		return TestAndReset(log, quick: true);
-	}
-
-	public bool TestAndReset(IFormattedLog log, bool quick)
-	{
-		bool flag = true;
-		if (!CommunicationOk())
+		if (CommunicationOk())
 		{
-			log.WriteFormatted("Attempt to reset Motion Controller ...", LogEntryType.Info);
-			flag = Reset(log, quick: true);
-			log.WriteFormatted(flag ? " ... inline reset of device interfaces succeeded; init axes." : " ... inline reset of device interfaces FAILED.", (!flag) ? LogEntryType.Error : LogEntryType.Info);
+			return true;
 		}
-		return flag;
+		return Reset(quick: true) == ErrorCodes.Success;
 	}
 
 	public void Shutdown()
 	{
 		XAxisHomed = (YAxisHomed = false);
 		Controller.OnShutdown();
+	}
+
+	public string GetPrintableLocation()
+	{
+		string result = "Location unknown";
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service.CurrentLocation != null)
+		{
+			result = service.CurrentLocation.ToString();
+		}
+		else if (service.AtVendDoor)
+		{
+			result = "Vend Door";
+		}
+		return result;
 	}
 
 	internal MotionControlService_v2()
@@ -346,7 +340,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		return errorCodes;
 	}
 
-	private ErrorCodes HomeAxisChecked(Axis axis, IFormattedLog log)
+	private ErrorCodes HomeAxisChecked(Axis axis)
 	{
 		ErrorCodes errorCodes = CheckAndReset();
 		if (errorCodes != ErrorCodes.Success)
@@ -364,9 +358,8 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		ErrorCodes errorCodes2 = Controller.HomeAxis(axis);
 		if (errorCodes2 != ErrorCodes.Success)
 		{
-			string text = $"The HOME{axis.ToString().ToUpper()} failed with status {errorCodes2.ToString().ToUpper()}";
-			LogHelper.Instance.Log(LogEntryType.Error, text);
-			log.WriteFormatted(text);
+			string msg = $"HOME {axis.ToString().ToUpper()} returned an error status {errorCodes2.ToString().ToUpper()}";
+			LogHelper.Instance.WithContext(LogEntryType.Error, msg);
 		}
 		else
 		{
@@ -393,12 +386,12 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		if (!XAxisHomed)
 		{
 			num++;
-			LogHelper.Instance.Log("The X axis did not init.");
+			LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Info, "The X axis did not init.");
 		}
 		if (!YAxisHomed)
 		{
 			num++;
-			LogHelper.Instance.Log("The Y axis did not init.");
+			LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Info, "The Y axis did not init.");
 		}
 		if (num != 0)
 		{
@@ -416,7 +409,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 				ErrorCodes errorCodes = vetoer.CanMove();
 				if (errorCodes != ErrorCodes.Success)
 				{
-					LogHelper.Instance.Log("[MotionService] Move veto returned code {0}", errorCodes.ToString());
+					LogHelper.Instance.WithContext(false, LogEntryType.Error, "Move veto returned code {0}", errorCodes.ToString());
 					return errorCodes;
 				}
 			}
@@ -426,16 +419,50 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		return ErrorCodes.Success;
 	}
 
-	private bool ResetMotionControllerChecked(IFormattedLog log)
+	private ErrorCodes OnInitAxes(bool fast)
+	{
+		using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
+		if (ControllerConfiguration.Instance.ClearPickerOnHome)
+		{
+			clearPickerFrontOperation.Execute();
+		}
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IFormattedLog contextLog = service.GetActiveContext().ContextLog;
+		contextLog.WriteFormatted("Home the X motor.");
+		int num = (fast ? 1 : 2);
+		for (int i = 0; i < num; i++)
+		{
+			ErrorCodes errorCodes = HomeAxisChecked(Axis.X);
+			if (errorCodes != ErrorCodes.Success)
+			{
+				return errorCodes;
+			}
+			if (i == 0)
+			{
+				MoveTarget target = new MoveTarget
+				{
+					Axis = Axis.X,
+					XCoordinate = -200,
+					YCoordinate = null
+				};
+				Controller.MoveToTarget(ref target);
+			}
+		}
+		contextLog.WriteFormatted("Home the Y Motor.");
+		return HomeAxisChecked(Axis.Y);
+	}
+
+	private bool ResetMotionControllerChecked()
 	{
 		if (!ControllerConfiguration.Instance.RestartControllerDuringUserJobs)
 		{
 			return false;
 		}
-		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IExecutionContext activeContext = service.GetActiveContext();
 		HardwareCorrectionEventArgs e = new HardwareCorrectionEventArgs(HardwareCorrectionStatistic.Arcus);
 		activeContext?.HardwareCorrectionStart(e);
-		e.CorrectionOk = Reset(log, quick: true);
+		e.CorrectionOk = Reset(quick: true) == ErrorCodes.Success;
 		activeContext?.HardwareCorrectionEnd(e);
 		InsertCorrectionStat(activeContext, e.CorrectionOk);
 		return e.CorrectionOk;
@@ -443,7 +470,8 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 
 	private void InsertCorrectionStat(bool ok)
 	{
-		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IExecutionContext activeContext = service.GetActiveContext();
 		InsertCorrectionStat(activeContext, ok);
 	}
 
@@ -451,63 +479,44 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 	{
 		if (activeContext != null)
 		{
-			ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().Insert(HardwareCorrectionStatistic.Arcus, activeContext, ok);
+			IHardwareCorrectionStatisticService service = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
+			service.Insert(HardwareCorrectionStatistic.Arcus, activeContext, ok);
 		}
 	}
 
-	private void LogMoveVendError(IFormattedLog writer, ErrorCodes error)
+	private void LogMoveVendError(ErrorCodes error)
 	{
-		if (error != ErrorCodes.Success && writer != null)
+		if (error != ErrorCodes.Success)
 		{
-			string text = $"MOVEVEND returned an error status {error.ToString().ToUpper()}";
-			writer.WriteFormatted(text);
-			LogHelper.Instance.Log(text, LogEntryType.Error);
+			LogHelper.Instance.WithContext(LogEntryType.Error, "MOVEVEND returned an error status {0}", error.ToString().ToUpper());
 		}
 	}
 
-	private void LogMoveError(int deck, int slot, ErrorCodes error, IFormattedLog log)
+	private void LogMoveError(int deck, int slot, ErrorCodes error)
 	{
-		if (log != null && error != ErrorCodes.Success)
+		if (error != ErrorCodes.Success)
 		{
-			string text = $"MOVE Deck = {deck} Slot = {slot} returned an error status {error.ToString().ToUpper()}";
-			log.WriteFormatted(text);
-			LogHelper.Instance.Log(text, LogEntryType.Error);
+			LogHelper.Instance.WithContext(LogEntryType.Error, "MOVE Deck = {0} Slot = {1} returned an error status {2}", deck, slot, error.ToString().ToUpper());
 		}
 	}
 
-	private ErrorCodes OnLowerLimitError(IFormattedLog log, ref MoveTarget target)
-	{
-		if (!ControllerConfiguration.Instance.HomeOnLowerLimitError)
-		{
-			return ErrorCodes.Timeout;
-		}
-		LogHelper.Instance.Log("[MotionControlService] Move returned LowerLimitError; attempting correction.");
-		if (InitAxes(log) != ErrorCodes.Success)
-		{
-			return ErrorCodes.Timeout;
-		}
-		ErrorCodes errorCodes = MoveWithCheck(ref target);
-		if (ErrorCodes.LowerLimitError != errorCodes)
-		{
-			return errorCodes;
-		}
-		return ErrorCodes.Timeout;
-	}
-
-	private bool OnReset()
+	private ErrorCodes OnReset()
 	{
 		Shutdown();
 		if (!Controller.OnResetDeviceDriver())
 		{
-			LogHelper.Instance.Log("[{0}]: ResetDevice driver returned FALSE", GetType().Name);
-			return false;
+			return ErrorCodes.ArcusNotResponsive;
 		}
 		Initialize();
-		if (!Controller.CommunicationOk())
+		if (Controller.CommunicationOk())
 		{
-			LogHelper.Instance.Log("[{0}]: After reset, channel still down. I'm sorry.", GetType().Name);
-			return false;
+			return ErrorCodes.Success;
 		}
-		return true;
+		return ErrorCodes.ArcusNotResponsive;
+	}
+
+	private void OnResetFailure(ErrorCodes failure)
+	{
+		LogHelper.Instance.WithContext(false, LogEntryType.Error, "Reset of motion controller returned error {0}", failure);
 	}
 }

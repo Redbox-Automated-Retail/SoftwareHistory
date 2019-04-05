@@ -4,7 +4,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Compression;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.IPC.Framework;
 
@@ -127,8 +128,13 @@ public static class ProtocolHelper
 	{
 		foreach (string message in messages)
 		{
-			context.Messages.Add(message);
+			FormatEventMessage(message, context);
 		}
+	}
+
+	public static void FormatEventMessage(string message, CommandContext context)
+	{
+		context.Messages.Add(message);
 	}
 
 	public static void FormatFile(string path, CommandContext context)
@@ -139,24 +145,30 @@ public static class ProtocolHelper
 
 	public static void FormatCompressedFile(string path, CommandContext context)
 	{
-		ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
+		ICompressionAlgorithm algorithm = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.GZip);
 		byte[] inArray = File.ReadAllBytes(path);
-		FormatGzipCompressedMessage(algorithm.Compress(Encoding.ASCII.GetBytes(Convert.ToBase64String(inArray))), context);
+		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(Convert.ToBase64String(inArray)));
+		FormatGzipCompressedMessage(buffer, context);
 	}
 
 	public static void FormatCompressedString(string value, CommandContext context)
 	{
-		FormatLzmaCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(value)), context);
+		ICompressionAlgorithm algorithm = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA);
+		byte[] buffer = algorithm.Compress(Encoding.ASCII.GetBytes(value));
+		FormatLzmaCompressedMessage(buffer, context);
 	}
 
 	public static void FormatCompressedBytes(byte[] buffer, CommandContext context)
 	{
-		FormatLzmaCompressedMessage(CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(buffer), context);
+		ICompressionAlgorithm algorithm = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA);
+		byte[] buffer2 = algorithm.Compress(buffer);
+		FormatLzmaCompressedMessage(buffer2, context);
 	}
 
 	public static byte[] DecompressBase64String(string value)
 	{
-		return CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Decompress(StringExtensions.Base64ToBytes(value));
+		ICompressionAlgorithm algorithm = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA);
+		return algorithm.Decompress(StringExtensions.Base64ToBytes(value));
 	}
 
 	private static void FormatLzmaCompressedMessage(byte[] buffer, CommandContext context)

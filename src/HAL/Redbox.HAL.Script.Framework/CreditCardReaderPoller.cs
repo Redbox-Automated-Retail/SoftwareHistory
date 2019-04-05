@@ -3,8 +3,8 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[Poller(Name = "CreditCardReaderPoller")]
-internal sealed class CreditCardReaderPoller : ScriptPoller, IConfigurationObserver
+[Poller(Name = "CCRWatchdog", ConfigNotifications = true)]
+internal sealed class CreditCardReaderPoller : ScriptPoller
 {
 	private int m_pollSleep;
 
@@ -18,38 +18,20 @@ internal sealed class CreditCardReaderPoller : ScriptPoller, IConfigurationObser
 
 	protected override int PollSleep => m_pollSleep;
 
-	public void NotifyConfigurationLoaded()
+	protected override void OnConfigurationLoad()
 	{
-		LogHelper.Instance.Log("[CreditCardReaderPoller] Configuration loaded.");
 		m_pollSleep = ControllerConfiguration.Instance.CCRWatchdogSleep;
 	}
 
-	public void NotifyConfigurationChangeStart()
+	protected override void OnConfigurationChangeEnd()
 	{
-		LogHelper.Instance.Log("[CreditCardReaderPoller] Configuration change start.");
-		Shutdown();
-	}
-
-	public void NotifyConfigurationChangeEnd()
-	{
-		LogHelper.Instance.Log("[CreditCardReaderPoller] Configuration change end.");
 		m_pollSleep = ControllerConfiguration.Instance.CCRWatchdogSleep;
-		if (EngineModes.Normal == ExecutionEngine.Instance.Mode)
-		{
-			Start();
-		}
 	}
 
 	protected override bool CoreExecute()
 	{
-		ScheduleAndBlockOnJob().Trash();
+		ScheduleAndBlockOnJob();
 		return true;
-	}
-
-	internal override void Initialize()
-	{
-		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
-		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private CreditCardReaderPoller()

@@ -34,13 +34,15 @@ internal class QlmThinHelper : ThinHelper
 	{
 		int thinSlot = GetThinSlot();
 		result = MerchandizeResult.Success;
-		IDeck qlmDeck = ServiceLocator.Instance.GetService<IDecksService>().QlmDeck;
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck qlmDeck = service.QlmDeck;
 		if (thinSlot > qlmDeck.NumberOfSlots)
 		{
 			result = MerchandizeResult.QLMFull;
 			return null;
 		}
-		return ServiceLocator.Instance.GetService<IInventoryService>().Get(qlmDeck.Number, thinSlot);
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+		return service2.Get(qlmDeck.Number, thinSlot);
 	}
 
 	internal QlmThinHelper(ExecutionResult result, ExecutionContext context)

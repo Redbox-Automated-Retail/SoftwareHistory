@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -41,7 +42,7 @@ public sealed class AirExchangerInstruction : Instruction
 		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
-			context.ServiceLog("{0} instruction: converted '{1}' to operand None", Mnemonic, base.Operands[0].Value);
+			LogHelper.Instance.WithContext(LogEntryType.Error, "{0} instruction: converted '{1}' to operand None", Mnemonic, base.Operands[0].Value);
 			break;
 		case ExpectedOperand.IsConfigured:
 			context.PushTop(service.Configured);

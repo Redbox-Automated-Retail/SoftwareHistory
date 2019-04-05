@@ -28,8 +28,6 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 
 	private VideoCapabilities videoResolution;
 
-	private VideoCapabilities snapshotResolution;
-
 	private Thread thread;
 
 	private VideoCapabilities[] videoCapabilities;
@@ -40,7 +38,7 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 
 	private int m_request;
 
-	private bool? isCrossbarAvailable;
+	private bool? isCrossbarAvailable = null;
 
 	private VideoInput[] crossbarVideoInputs;
 
@@ -55,59 +53,6 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 	private static Dictionary<string, VideoCapabilities[]> cacheVideoCapabilities = new Dictionary<string, VideoCapabilities[]>();
 
 	private static Dictionary<string, VideoInput[]> cacheCrossbarVideoInputs = new Dictionary<string, VideoInput[]>();
-
-	public VideoInput CrossbarVideoInput
-	{
-		get
-		{
-			return crossbarVideoInput;
-		}
-		set
-		{
-			needToSetVideoInput = true;
-			crossbarVideoInput = value;
-		}
-	}
-
-	public VideoInput[] AvailableCrossbarVideoInputs
-	{
-		get
-		{
-			if (crossbarVideoInputs == null)
-			{
-				lock (cacheCrossbarVideoInputs)
-				{
-					if (!string.IsNullOrEmpty(deviceMoniker) && cacheCrossbarVideoInputs.ContainsKey(deviceMoniker))
-					{
-						crossbarVideoInputs = cacheCrossbarVideoInputs[deviceMoniker];
-					}
-				}
-				if (crossbarVideoInputs == null)
-				{
-					if (!IsRunning)
-					{
-						WorkerThread(runGraph: false);
-					}
-					else
-					{
-						for (int i = 0; i < 500; i++)
-						{
-							if (crossbarVideoInputs != null)
-							{
-								break;
-							}
-							Thread.Sleep(10);
-						}
-					}
-				}
-			}
-			if (crossbarVideoInputs == null)
-			{
-				return new VideoInput[0];
-			}
-			return crossbarVideoInputs;
-		}
-	}
 
 	public virtual string Source => deviceMoniker;
 
@@ -146,18 +91,6 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 		set
 		{
 			videoResolution = value;
-		}
-	}
-
-	public VideoCapabilities SnapshotResolution
-	{
-		get
-		{
-			return snapshotResolution;
-		}
-		set
-		{
-			snapshotResolution = value;
 		}
 	}
 
@@ -201,8 +134,6 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 		}
 	}
 
-	public object SourceObject => sourceObject;
-
 	protected abstract bool SnapRequested { get; }
 
 	public event NewFrameEventHandler NewFrame
@@ -215,7 +146,15 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 		}
 	}
 
-	public event VideoSourceErrorEventHandler VideoSourceError;
+	public event VideoSourceErrorEventHandler VideoSourceError
+	{
+		add
+		{
+		}
+		remove
+		{
+		}
+	}
 
 	public event PlayingFinishedEventHandler PlayingFinished;
 
@@ -257,7 +196,7 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 			BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, FrameSize.Width, FrameSize.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 			int stride = bitmapData.Stride;
 			int stride2 = bitmapData.Stride;
-			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + stride2 * (FrameSize.Height - 1);
+			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + (nint)stride2 * (nint)(FrameSize.Height - 1);
 			byte* ptr2 = (byte*)buffer.ToPointer();
 			for (int i = 0; i < FrameSize.Height; i++)
 			{
@@ -302,54 +241,30 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 
 	public void SignalToStop()
 	{
+		SignalToStop(wait: true);
+	}
+
+	public void SignalToStop(bool wait)
+	{
 		if (thread != null)
 		{
 			StopEvent.Set();
+			if (wait)
+			{
+				thread.Join();
+			}
+			Free();
 		}
 	}
 
 	public void WaitForStop()
 	{
-		if (thread != null)
-		{
-			thread.Join();
-			Free();
-		}
+		SignalToStop();
 	}
 
 	public void Stop()
 	{
-		if (IsRunning)
-		{
-			thread.Abort();
-			WaitForStop();
-		}
-	}
-
-	public bool CheckIfCrossbarAvailable()
-	{
-		lock (sync)
-		{
-			if (!isCrossbarAvailable.HasValue)
-			{
-				if (!IsRunning)
-				{
-					WorkerThread(runGraph: false);
-				}
-				else
-				{
-					for (int i = 0; i < 500; i++)
-					{
-						if (isCrossbarAvailable.HasValue)
-						{
-							break;
-						}
-						Thread.Sleep(10);
-					}
-				}
-			}
-			return isCrossbarAvailable.HasValue && isCrossbarAvailable.Value;
-		}
+		SignalToStop();
 	}
 
 	public bool SimulateTrigger(string fileName, int waitTime)
@@ -387,11 +302,20 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 		return true;
 	}
 
+	protected abstract void OnFree();
+
 	private void Free()
 	{
 		thread = null;
 		StopEvent.Close();
 		StartEvent.Close();
+		try
+		{
+			OnFree();
+		}
+		catch
+		{
+		}
 	}
 
 	private void WorkerThread()
@@ -529,12 +453,8 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 				LogHelper.Instance.Log("[{0}] Shutdown statistics: there were {1} frames received via video.", ControlMoniker, framesReceived);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
-			if (VideoSourceError != null)
-			{
-				VideoSourceError(this, new VideoSourceErrorEventArgs(ex.Message));
-			}
 		}
 		finally
 		{

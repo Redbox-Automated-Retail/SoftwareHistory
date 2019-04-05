@@ -37,11 +37,12 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 
 	public AirExchangerStatus CheckStatus()
 	{
-		if (Configured)
+		if (!Configured)
 		{
-			return CheckStatusInner();
+			return AirExchangerStatus.NotConfigured;
 		}
-		return AirExchangerStatus.NotConfigured;
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		return CheckStatusInner(service);
 	}
 
 	public void TurnOnFan()
@@ -53,9 +54,10 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 				LogHelper.Instance.Log("Fan is already on - bypass.");
 				return;
 			}
-			ToggleLatch(on: false);
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			TurnOnFanChecked(service);
 			Thread.Sleep(500);
-			Reset();
+			ResetChecked(service);
 		}
 	}
 
@@ -65,27 +67,12 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 		{
 			if (ExchangerFanStatus.Off == FanStatus)
 			{
-				LogHelper.Instance.Log("Fan is already off - bypass.");
+				LogHelper.Instance.WithContext("Air exchanger fan is already off - bypass.");
 				return;
 			}
-			ToggleLatch(on: true);
+			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+			TurnOffFanChecked(service);
 			Thread.Sleep(10500);
-		}
-	}
-
-	public void LatchOn()
-	{
-		if (Configured)
-		{
-			ToggleLatch(on: true);
-		}
-	}
-
-	public void LatchOff()
-	{
-		if (Configured)
-		{
-			ToggleLatch(on: false);
 		}
 	}
 
@@ -95,27 +82,20 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 		{
 			return AirExchangerStatus.NotConfigured;
 		}
-		ToggleLatch(on: true);
-		Thread.Sleep(1500);
-		ToggleLatch(on: false);
-		Thread.Sleep(1500);
-		return CheckStatusInner();
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		return ResetChecked(service);
 	}
 
 	public int PersistentFailureCount()
 	{
-		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<IPersistentCounterService>().Find("IceQubeResetFailures");
-		if (persistentCounter == null)
-		{
-			LogHelper.Instance.Log("Unable to create IceQube counter.", LogEntryType.Error);
-			return 0;
-		}
-		return persistentCounter.Value;
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		return service.Find("IceQubeResetFailures")?.Value ?? 0;
 	}
 
 	public bool ShouldRetry()
 	{
-		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<IPersistentCounterService>().Find("IceQubeResetFailures");
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		IPersistentCounter persistentCounter = service.Find("IceQubeResetFailures");
 		if (persistentCounter == null)
 		{
 			return false;
@@ -125,13 +105,14 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 
 	public void ResetFailureCount()
 	{
-		LogHelper.Instance.Log("IceQubeBoard reset failure counter.");
-		ServiceLocator.Instance.GetService<IPersistentCounterService>().Reset("IceQubeResetFailures");
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		service.Reset("IceQubeResetFailures");
 	}
 
 	public void IncrementResetFailureCount()
 	{
-		ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("IceQubeResetFailures");
+		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		service.Increment("IceQubeResetFailures");
 	}
 
 	internal IceQubeAirExchangerService()
@@ -140,20 +121,44 @@ internal class IceQubeAirExchangerService : IAirExchangerService, IConfiguration
 		ControllerConfiguration.Instance.AddObserver(this);
 	}
 
-	private void ToggleLatch(bool on)
+	private AirExchangerStatus ResetChecked(IControlSystem cs)
 	{
-		ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(on ? CommandType.QlmDoorUnlock : CommandType.QlmDoorLock);
-		FanStatus = (on ? ExchangerFanStatus.Off : ExchangerFanStatus.On);
+		int millisecondsTimeout = 1500;
+		TurnOffFanChecked(cs);
+		Thread.Sleep(millisecondsTimeout);
+		TurnOnFanChecked(cs);
+		Thread.Sleep(millisecondsTimeout);
+		return CheckStatusInner(cs);
 	}
 
-	private AirExchangerStatus CheckStatusInner()
+	private bool TurnOnFanChecked(IControlSystem cs)
 	{
-		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
-		if (coreResponse.CommError)
+		IControlResponse controlResponse = cs.LockQlmDoor();
+		if (controlResponse.Success)
+		{
+			FanStatus = ExchangerFanStatus.On;
+		}
+		return controlResponse.Success;
+	}
+
+	private bool TurnOffFanChecked(IControlSystem cs)
+	{
+		IControlResponse controlResponse = cs.UnlockQlmDoor();
+		if (controlResponse.Success)
+		{
+			FanStatus = ExchangerFanStatus.Off;
+		}
+		return controlResponse.Success;
+	}
+
+	private AirExchangerStatus CheckStatusInner(IControlSystem cs)
+	{
+		IReadInputsResult<AuxInputs> readInputsResult = cs.ReadAuxInputs();
+		if (!readInputsResult.Success)
 		{
 			return AirExchangerStatus.Error;
 		}
-		if (!coreResponse.IsSensorSet(AuxSensor.QlmBayDoor))
+		if (!readInputsResult.IsInputActive(AuxInputs.QlmBayDoor))
 		{
 			return AirExchangerStatus.Error;
 		}

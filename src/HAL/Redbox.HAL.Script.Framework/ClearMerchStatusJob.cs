@@ -23,7 +23,7 @@ internal sealed class ClearMerchStatusJob : NativeJobAdapter
 				ILocation location = service.Lookup(id);
 				if (location != null && SegmentManager.Instance.InCompressedZone(location) && !SegmentManager.Instance.IsNonThinType(location.Flags))
 				{
-					base.Context.ServiceLog("The flags at {0} are changed from {1} -> None", location.ToString(), location.Flags.ToString());
+					LogHelper.Instance.WithContext("The flags at {0} are changed from {1} -> None", location.ToString(), location.Flags.ToString());
 					location.Flags = MerchFlags.None;
 					service.Save(location);
 					num++;

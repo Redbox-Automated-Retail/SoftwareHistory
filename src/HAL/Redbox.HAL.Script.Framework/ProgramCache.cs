@@ -4,8 +4,9 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Threading;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -89,7 +90,8 @@ internal sealed class ProgramCache : IDisposable
 			{
 				LogHelper.Instance.Log($"Compile program {fileNameWithoutExtension} from file {text3}", LogEntryType.Info);
 			}
-			using MemoryStream stream = new MemoryStream(ServiceLocator.Instance.GetService<IRuntimeService>().ReadToBuffer(text3));
+			IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+			using MemoryStream stream = new MemoryStream(service2.ReadToBuffer(text3));
 			ExecutionResult executionResult2 = CompileInner(stream, fileNameWithoutExtension);
 			errorList.AddRange(executionResult2.Errors);
 			if (!executionResult2.Errors.ContainsError())
@@ -109,29 +111,23 @@ internal sealed class ProgramCache : IDisposable
 	internal NativeJobAdapter MakeJobFromOperand(ExecutionContext ctx, ExecutionResult result, string key)
 	{
 		NativeJobAdapter result2 = null;
-		if (!(key == "RETURN"))
+		string text;
+		if ((text = key) != null && text == "RETURN")
 		{
-			if (key == "QUICKRETURN")
-			{
-				result2 = new ReturnJob(result, ctx, isQuick: true);
-			}
-			else if (OperandToType.ContainsKey(key))
-			{
-				try
-				{
-					result2 = (NativeJobAdapter)Activator.CreateInstance(OperandToType[key], BindingFlags.Instance | BindingFlags.NonPublic, null, new object[2] { result, ctx }, null);
-				}
-				catch (Exception ex)
-				{
-					LogHelper.Instance.Log("Unable to create job {0}", key);
-					LogHelper.Instance.Log(ex.Message);
-					result2 = null;
-				}
-			}
+			result2 = new ReturnJob(result, ctx);
 		}
-		else
+		else if (OperandToType.ContainsKey(key))
 		{
-			result2 = new ReturnJob(result, ctx, isQuick: false);
+			try
+			{
+				result2 = (NativeJobAdapter)Activator.CreateInstance(OperandToType[key], BindingFlags.Instance | BindingFlags.NonPublic, null, new object[2] { result, ctx }, null);
+			}
+			catch (Exception ex)
+			{
+				LogHelper.Instance.Log("Unable to create job {0}", key);
+				LogHelper.Instance.Log(ex.Message);
+				result2 = null;
+			}
 		}
 		return result2;
 	}
@@ -179,10 +175,9 @@ internal sealed class ProgramCache : IDisposable
 			{
 				LogHelper.Instance.Log($"Not allowing replacement of program {programName}", LogEntryType.Info);
 			}
-			return new ExecutionResult
-			{
-				ExecutionTime = new TimeSpan(0L)
-			};
+			ExecutionResult executionResult = new ExecutionResult();
+			executionResult.ExecutionTime = new TimeSpan(0L);
+			return executionResult;
 		}
 	}
 
@@ -209,8 +204,9 @@ internal sealed class ProgramCache : IDisposable
 		{
 			foreach (string key in CompiledPrograms.Keys)
 			{
-				string text = NoShowJobs.Find((string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase));
-				if (text == null)
+				List<string> noShowJobs = NoShowJobs;
+				Predicate<string> match = (string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase);
+				if (noShowJobs.Find(match) == null)
 				{
 					list.Add(key);
 				}
@@ -266,9 +262,9 @@ internal sealed class ProgramCache : IDisposable
 					continue;
 				}
 				ConstructorInfo[] array3 = constructors;
-				for (int j = 0; j < array3.Length; j++)
+				foreach (ConstructorInfo constructorInfo in array3)
 				{
-					ParameterInfo[] parameters = array3[j].GetParameters();
+					ParameterInfo[] parameters = constructorInfo.GetParameters();
 					if (parameters == null || parameters.Length == 0)
 					{
 						LogHelper.Instance.Log("Type {0} has a ctor that does not match.", type.ToString());

@@ -38,7 +38,12 @@ internal sealed class DumpbinServiceBridge : IDumpbinService, IConfigurationObse
 
 	public bool IsFull()
 	{
-		return Implementor.IsFull();
+		bool flag = Implementor.IsFull();
+		if (flag)
+		{
+			LogHelper.Instance.WithContext("The dumpbin is full.");
+		}
+		return flag;
 	}
 
 	public bool IsBin(ILocation loc)

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Threading;
 
 namespace Redbox.DirectShow;
 
@@ -31,6 +31,11 @@ public sealed class FrameControlModern : AbstractDirectShowFrameControl
 	protected override void OnImageCaptured()
 	{
 		ImageCapturedEvent.Set();
+	}
+
+	protected override void OnFree()
+	{
+		ImageCapturedEvent.Close();
 	}
 
 	internal FrameControlModern(string moniker, int grab, bool debug)

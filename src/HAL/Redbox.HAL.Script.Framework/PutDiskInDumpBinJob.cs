@@ -3,20 +3,21 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "put-disk-in-picker-in-bin", Operand = "PUT-DISK-IN-PICKER-IN-BIN")]
+[NativeJob(ProgramName = "put-disk-in-picker-in-bin")]
 internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 {
-	private readonly CenterDiskMethod[] m_returnReadMethods = new CenterDiskMethod[2]
-	{
-		CenterDiskMethod.VendDoorAndBack,
-		CenterDiskMethod.DrumAndBack
-	};
-
 	protected override void ExecuteInner()
 	{
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "VMZ", flushOnWrite: true, "Tester-Put-In-Bin");
-		if (!PickerBoard.IsFull())
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			base.Context.CreateInfoResult("PickerSensorReadError", $"Read picker sensors failed with error {pickerSensorReadResult.Error}");
+			AddError("Hardware error.");
+			return;
+		}
+		if (!pickerSensorReadResult.IsFull)
 		{
 			base.Context.CreateInfoResult("PickerEmpty", "The picker is empty.");
 			applicationLog.Write("The picker is empty.");
@@ -33,37 +34,20 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 		if (service.IsFull())
 		{
 			base.Context.CreateInfoResult("DumpBinFull", "The dump bin is full.");
-			applicationLog.Write("The dumpbin is full.");
 			AddError("The dumpbin is full.");
 			return;
 		}
-		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service2.MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
 			AddError("The MOVE instruction failed.");
 			return;
 		}
-		string text = "UNKNOWN";
-		CenterDiskMethod[] returnReadMethods = m_returnReadMethods;
-		foreach (CenterDiskMethod method in returnReadMethods)
-		{
-			service2.Wait(1000);
-			using Scanner scanner = new Scanner(method, base.ControlSystem);
-			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
-			{
-				base.Context.CreateCameraCaptureErrorResult();
-				break;
-			}
-			if (scanResult.ReadCode)
-			{
-				text = scanResult.ScannedMatrix;
-				break;
-			}
-		}
-		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(text, applicationLog);
+		string text = Scanner.ReadDiskInPicker(ReadDiskOptions.LeaveCaptureResult, base.Context);
+		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service3.Put(text);
 		if (!putResult.Success)
 		{
 			base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");

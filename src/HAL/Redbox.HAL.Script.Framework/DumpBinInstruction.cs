@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -40,7 +41,7 @@ public sealed class DumpBinInstruction : Instruction
 		case ExpectedOperand.None:
 		{
 			string text = $"DumpBinInstruction: unrecognized operand '{base.Operands[0].Value}'.";
-			context.ServiceLog(text);
+			LogHelper.Instance.WithContext(text);
 			result.Errors.Add(Error.NewError("E001", "Unrecognized operand.", text));
 			break;
 		}

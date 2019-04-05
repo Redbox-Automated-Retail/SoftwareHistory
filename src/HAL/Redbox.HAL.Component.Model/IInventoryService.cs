@@ -8,6 +8,8 @@ public interface IInventoryService
 {
 	bool IsTrackingEmptyStuck { get; }
 
+	void AddObserver(IInventoryObserver o);
+
 	bool MachineIsFull();
 
 	bool EmptyCountExceeds(int numberOfEmpty);
@@ -26,11 +28,11 @@ public interface IInventoryService
 
 	int GetExcludedSlotsCount();
 
-	IList<ILocation> GetExcludedSlots();
+	List<ILocation> GetExcludedSlots();
 
-	IList<ILocation> GetEmptySlots();
+	List<ILocation> GetEmptySlots();
 
-	IList<ILocation> GetUnknowns();
+	List<ILocation> GetUnknowns();
 
 	bool IsBarcodeDuplicate(string id, out ILocation original);
 
@@ -44,11 +46,19 @@ public interface IInventoryService
 
 	bool MarkDeckInventory(IDeck deck, string newMatrix);
 
-	IList<int> SwapEmptyWith(IDeck deck, string id, MerchFlags flags, IRange<int> slotRange);
+	List<int> SwapEmptyWith(IDeck deck, string id, MerchFlags flags, IRange<int> slotRange);
 
 	bool ResetAndMark(IDeck deck, string id);
 
 	void GetState(XmlTextWriter writer);
 
 	void ResetState(XmlDocument document, ErrorList errors);
+
+	void Rebuild(ErrorList errors);
+
+	void InstallFromLegacy(ErrorList errors, TextWriter writer);
+
+	ErrorCodes CheckIntegrity();
+
+	ErrorCodes CheckIntegrity(bool testStore);
 }

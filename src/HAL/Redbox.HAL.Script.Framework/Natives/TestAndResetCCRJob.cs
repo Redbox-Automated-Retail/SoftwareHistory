@@ -5,9 +5,7 @@ namespace Redbox.HAL.Script.Framework.Natives;
 [NativeJob(ProgramName = "test-and-reset-ccr")]
 internal sealed class TestAndResetCCRJob : NativeJobAdapter
 {
-	private const string CCRErrorCode = "CCRErrorStatus";
-
-	private const string CCROkCode = "CCRStatusOk";
+	private const string CCRCode = "CCRStatus";
 
 	protected override void ExecuteInner()
 	{
@@ -17,13 +15,13 @@ internal sealed class TestAndResetCCRJob : NativeJobAdapter
 		if (!queryUsbDeviceResult.Found)
 		{
 			applicationLog.WriteFormatted("Unable to find CCR device.");
-			base.Context.CreateInfoResult("CCRErrorStatus", "Unable to locate CCR device");
+			base.Context.CreateInfoResult("CCRStatus", "Unable to locate CCR device");
 			AddError("No CCR");
 			return;
 		}
 		if (queryUsbDeviceResult.Running)
 		{
-			base.Context.CreateInfoResult("CCRStatusOk", "The CCR appears to be working.");
+			base.Context.CreateInfoResult("CCRStatus", "The CCR appears to be working.");
 			return;
 		}
 		applicationLog.WriteFormatted("Found device {0}", queryUsbDeviceResult);
@@ -41,17 +39,18 @@ internal sealed class TestAndResetCCRJob : NativeJobAdapter
 		if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None && (deviceStatus & DeviceStatus.Enabled) != DeviceStatus.None)
 		{
 			applicationLog.WriteFormatted("  ** Successfully reset the device **");
-			base.Context.CreateInfoResult("CCRStatusOk", "Successfully reset the CCR");
+			base.Context.CreateInfoResult("CCRStatus", "Successfully reset the CCR");
 			e.CorrectionOk = true;
 		}
 		else
 		{
 			applicationLog.WriteFormatted("  !!Failed to reset the device!!");
-			base.Context.CreateInfoResult("CCRErrorStatus", "Failed to reset the CCR.");
+			base.Context.CreateInfoResult("CCRStatus", "Failed to reset the CCR.");
 			AddError("Failed to restart CCR");
 			e.CorrectionOk = false;
 		}
-		ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().Insert(e, base.Context);
+		IHardwareCorrectionStatisticService service2 = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
+		service2.Insert(e, base.Context);
 	}
 
 	internal TestAndResetCCRJob(ExecutionResult result, ExecutionContext ctx)

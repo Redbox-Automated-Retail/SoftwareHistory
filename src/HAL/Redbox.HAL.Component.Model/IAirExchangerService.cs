@@ -12,10 +12,6 @@ public interface IAirExchangerService
 
 	void TurnOffFan();
 
-	void LatchOn();
-
-	void LatchOff();
-
 	AirExchangerStatus Reset();
 
 	int PersistentFailureCount();

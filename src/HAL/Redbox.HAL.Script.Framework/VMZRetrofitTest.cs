@@ -3,7 +3,7 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "test-retrofit-deck", Operand = "TEST-RETROFIT-DECK")]
+[NativeJob(ProgramName = "test-retrofit-deck")]
 internal sealed class VMZRetrofitTest : NativeJobAdapter
 {
 	private readonly int[] TestSlots = new int[5] { 16, 31, 46, 61, 76 };
@@ -110,7 +110,8 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			AddError("Test failure!");
 			return false;
 		}
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).Success)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service.Put("UNKNOWN").Success)
 		{
 			AddError("Test failure.");
 			return false;
@@ -127,7 +128,9 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).IsSlotInUse)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service.Put("UNKNOWN");
+		if (!putResult.IsSlotInUse)
 		{
 			return false;
 		}

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
@@ -174,7 +175,8 @@ internal sealed class VMZ
 				return null;
 			}
 		}
-		return ServiceLocator.Instance.GetService<IInventoryService>().Get(num2, num);
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+		return service2.Get(num2, num);
 	}
 
 	internal void DumpZone(IFormattedLog log)
@@ -202,16 +204,15 @@ internal sealed class VMZ
 			{
 				flag = false;
 			}
-			if (match(location))
+			if (!match(location))
 			{
-				location = ComputeNextHigherLocation(location);
-				if (location == null)
-				{
-					flag = false;
-				}
-				continue;
+				break;
 			}
-			break;
+			location = ComputeNextHigherLocation(location);
+			if (location == null)
+			{
+				flag = false;
+			}
 		}
 	}
 

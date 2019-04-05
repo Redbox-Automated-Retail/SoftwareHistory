@@ -8,6 +8,12 @@ namespace Redbox.HAL.Script.Framework;
 
 internal sealed class ApplicationLog : IFormattedLog
 {
+	private const int MaxFileSize = 1024000;
+
+	private const int BackDays = 60;
+
+	private const int BackDaysForImages = 168;
+
 	internal readonly ExecutionContext Context;
 
 	private TextWriter Log = StreamWriter.Null;
@@ -19,12 +25,6 @@ internal sealed class ApplicationLog : IFormattedLog
 	private string Directory;
 
 	private string FileName;
-
-	private const int MaxFileSize = 1024000;
-
-	private const int BackDays = 60;
-
-	private const int BackDaysForImages = 168;
 
 	internal bool AppendToExisting { get; private set; }
 
@@ -40,21 +40,10 @@ internal sealed class ApplicationLog : IFormattedLog
 		Write(msg);
 	}
 
-	public void WriteFormatted(string msg, LogEntryType type)
-	{
-		Write(msg, type);
-	}
-
 	public void WriteFormatted(string fmt, params object[] parm)
 	{
 		string msg = string.Format(fmt, parm);
 		Write(msg);
-	}
-
-	public void WriteFormatted(LogEntryType type, string fmt, params object[] parm)
-	{
-		string msg = string.Format(fmt, parm);
-		Write(msg, type);
 	}
 
 	internal void Serialize(SerializationInfo info)
@@ -95,38 +84,18 @@ internal sealed class ApplicationLog : IFormattedLog
 		return ctx.AppLog;
 	}
 
-	internal static ApplicationLog ConfigureAdditionalLog(string name, string subDirectory, ExecutionContext context)
-	{
-		string fileName = $"{name}.log";
-		ApplicationLog applicationLog = new ApplicationLog(context);
-		applicationLog.ConfigureAndOpen(subDirectory, fileName, flushOnWrite: false, appends: true);
-		return applicationLog;
-	}
-
-	internal void LogMachineFull()
-	{
-		Write(HardwareMessageCatalog.MachineFull(), LogEntryType.Error);
-	}
-
-	internal void LogLookupFailure(string id)
-	{
-		Write(HardwareMessageCatalog.LookupFailure(id), LogEntryType.Error);
-	}
-
 	internal void Write(string msg)
 	{
-		WriteAndFlush(msg);
-	}
-
-	internal void Write(string msg, LogEntryType type)
-	{
-		WriteAndFlush(msg);
-		Context.ServiceLog(msg, type);
-	}
-
-	internal void Write(LogEntryType t, string fmt, params object[] stuff)
-	{
-		Write(string.Format(fmt, stuff), t);
+		try
+		{
+			string arg = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
+			string value = (AppendToExisting ? $"{arg} {Context.ID} {msg}" : $"{DateTime.Now.ToShortTimeString()} {DateTime.Now.ToShortDateString()} {msg}");
+			Log.WriteLine(value);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("APPLOG caught an exception writing data.", e);
+		}
 	}
 
 	internal void Close()
@@ -159,7 +128,10 @@ internal sealed class ApplicationLog : IFormattedLog
 		string text = Path.Combine(Directory, FileName);
 		try
 		{
-			Log = new StreamWriter(File.Open(text, FileMode.Append, FileAccess.Write, FileShare.Read));
+			Log = new StreamWriter(File.Open(text, FileMode.Append, FileAccess.Write, FileShare.Read))
+			{
+				AutoFlush = FlushOnWrite
+			};
 			return m_open = true;
 		}
 		catch (Exception)
@@ -172,7 +144,8 @@ internal sealed class ApplicationLog : IFormattedLog
 
 	private void ConfigureAndOpen(string directory, string fileName, bool flushOnWrite, bool appends)
 	{
-		string logsBasePath = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath;
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string logsBasePath = service.LogsBasePath;
 		string text = logsBasePath;
 		if (!string.IsNullOrEmpty(directory))
 		{
@@ -196,9 +169,13 @@ internal sealed class ApplicationLog : IFormattedLog
 		FlushOnWrite = flushOnWrite;
 		AppendToExisting = appends;
 		string text2 = Path.Combine(Directory, FileName);
-		if (AppendToExisting && File.Exists(text2) && new FileInfo(text2).Length >= 1024000)
+		if (AppendToExisting && File.Exists(text2))
 		{
-			CreateBackup(text2);
+			FileInfo fileInfo = new FileInfo(text2);
+			if (fileInfo.Length >= 1024000)
+			{
+				CreateBackup(text2);
+			}
 		}
 		Open();
 	}
@@ -215,24 +192,6 @@ internal sealed class ApplicationLog : IFormattedLog
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log($"Unable to move {originalPath} to {text}.", e);
-		}
-	}
-
-	private void WriteAndFlush(string msg)
-	{
-		try
-		{
-			string arg = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
-			string value = (AppendToExisting ? $"{arg} {Context.ID} {msg}" : $"{DateTime.Now.ToShortTimeString()} {DateTime.Now.ToShortDateString()} {msg}");
-			Log.WriteLine(value);
-			if (FlushOnWrite)
-			{
-				Log.Flush();
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("APPLOG caught an exception writing data.", e);
 		}
 	}
 }

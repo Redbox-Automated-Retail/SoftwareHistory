@@ -11,6 +11,8 @@ internal sealed class WatchdogPoller : ScriptPoller
 {
 	private int m_gcCount;
 
+	private readonly string[] ignoreList = new string[8] { "quick-return", "qlm-unload", "thin", "unload-thin", "sync", "sync-locations", "clean-vmz", "thin-vmz" };
+
 	protected override int PollSleep => 1800000;
 
 	protected override string ThreadName => "Watchdog Poller";
@@ -23,103 +25,82 @@ internal sealed class WatchdogPoller : ScriptPoller
 
 	protected override bool CoreExecute()
 	{
-		int num = TrimLogs();
-		if (num > 0)
-		{
-			LogHelper.Instance.Log("Watchdog removed {0} files", num);
-		}
+		TrimLogs();
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
 		if (ControllerConfiguration.Instance.ResetTimeoutCountersWeekly)
 		{
-			ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob("reset-counters-job", string.Empty, DateTime.Now, ProgramPriority.Low);
-			executionContext.Resume();
+			IExecutionContext executionContext = service.ScheduleJob("reset-counters-job", string.Empty, null, ProgramPriority.Low);
+			executionContext.Pend();
 			executionContext.WaitForCompletion();
 			executionContext.Trash();
 		}
 		else
 		{
-			LogHelper.Instance.Log("Watchdog is configured to not reset timeout counters weekly.");
+			LogHelper.Instance.Log("Watchdog is not configured to reset timeout counters weekly.");
 		}
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
 		if (++m_gcCount > 2 && service.GetActiveContext() == null)
 		{
 			GC.Collect();
 			m_gcCount = 0;
 		}
-		int num2 = CleanErroredJobs();
-		if (num2 > 0)
-		{
-			LogHelper.Instance.Log("Watchdog cleaned {0} errored jobs.", num2);
-		}
-		num2 = CleanupJobs();
-		if (num2 > 0)
-		{
-			LogHelper.Instance.Log("Watchdog cleaned {0} jobs.", num2);
-		}
+		CleanErroredJobs();
+		CleanupJobs();
+		ExecutionEngine.Instance.CleanupJobs(force: false);
 		return true;
-	}
-
-	internal override void Initialize()
-	{
-		ServiceLocator.Instance.GetService<IExecutionService>().AddObserver(this);
 	}
 
 	private WatchdogPoller()
 	{
 	}
 
-	private int CleanErroredJobs()
+	private void ForeachJob(Action<IExecutionContext> action)
 	{
-		DateTime now = DateTime.Now;
-		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
-		int num = 0;
+		_ = DateTime.Now;
+		List<IExecutionContext> jobList = ExecutionEngine.Instance.GetJobList();
 		try
 		{
-			foreach (ExecutionContext item in list)
+			jobList.ForEach(delegate(IExecutionContext job)
 			{
-				if (!(item.Status != ExecutionContextStatus.Errored) && !item.IsImmediate && now >= item.CreatedOn.AddDays(5.0))
+				if (!job.IsImmediate)
 				{
-					num++;
-					item.Trash();
+					action(job);
 				}
-			}
-			ExecutionEngine.Instance.CleanupJobs(force: false);
-			return num;
+			});
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("Watchdog: clean errored jobs had an exception.", e);
-			return 0;
+			LogHelper.Instance.Log("Watchdog: Foreachjob caught an exception", e);
 		}
 	}
 
-	private int TrimLogs()
+	private void TrimLogs()
 	{
 		int num = 0;
 		DateTime now = DateTime.Now;
-		if (now.DayOfWeek != DayOfWeek.Sunday)
+		if (now.DayOfWeek != DayOfWeek.Sunday || now.Hour < 2 || now.Hour > 4)
 		{
-			return num;
+			return;
 		}
-		if (now.Hour < 2 || now.Hour > 4)
-		{
-			return num;
-		}
-		string[] directories = Directory.GetDirectories(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath);
-		foreach (string text in directories)
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string[] directories = Directory.GetDirectories(service.LogsBasePath);
+		string[] array = directories;
+		foreach (string text in array)
 		{
 			if (!text.Contains("Service") && !text.Contains("ErrorLogs"))
 			{
 				num += TrimFilesInSubdirectory(text, "*.log", ControllerConfiguration.Instance.ApplogDayAge);
 			}
 		}
-		return num + TrimFilesInSubdirectory("c:\\Program Files\\Redbox\\HALService\\Video", "*.jpg", ControllerConfiguration.Instance.WatchdogImageDayAge);
+		num += TrimFilesInSubdirectory("c:\\Program Files\\Redbox\\HALService\\Video", "*.jpg", ControllerConfiguration.Instance.WatchdogImageDayAge);
+		LogHelper.Instance.Log("Watchdog removed {0} files", num);
 	}
 
 	private int TrimFilesInSubdirectory(string directory, string filePattern, int ageInDays)
 	{
 		int num = 0;
 		string[] files = Directory.GetFiles(directory, filePattern);
-		foreach (string text in files)
+		string[] array = files;
+		foreach (string text in array)
 		{
 			FileInfo fileInfo = new FileInfo(text);
 			if (DateTime.Now.Subtract(fileInfo.LastWriteTime).Days < ageInDays)
@@ -147,15 +128,16 @@ internal sealed class WatchdogPoller : ScriptPoller
 		return num;
 	}
 
-	private bool JobIsIgnored(ExecutionContext context, string[] ignoreList)
+	private bool JobIsIgnored(IExecutionContext context)
 	{
 		if (ignoreList.Length == 0)
 		{
 			return false;
 		}
-		for (int i = 0; i < ignoreList.Length; i++)
+		string[] array = ignoreList;
+		foreach (string text in array)
 		{
-			if (ignoreList[i].Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase))
+			if (text.Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}
@@ -163,42 +145,51 @@ internal sealed class WatchdogPoller : ScriptPoller
 		return false;
 	}
 
-	private int CleanupJobs()
+	private void CleanupJobs()
 	{
-		string[] ignoreList = new string[8] { "quick-return", "qlm-unload", "thin", "unload-thin", "sync", "sync-locations", "clean-vmz", "thin-vmz" };
 		DateTime now = DateTime.Now;
-		int num = 1;
-		List<ExecutionContext> list = ExecutionEngine.Instance.SafeGetJobList();
-		int num2 = 0;
-		try
+		int time = 1;
+		int trashed = 0;
+		ForeachJob(delegate(IExecutionContext job)
 		{
-			foreach (ExecutionContext item in list)
+			ExecutionContextStatus status = job.GetStatus();
+			if ((ExecutionContextStatus.Stopped == status || ExecutionContextStatus.Completed == status) && !job.IsConnected && !JobIsIgnored(job) && job.ExecutionStart.HasValue)
 			{
-				if ((!(item.Status != ExecutionContextStatus.Stopped) || !(item.Status != ExecutionContextStatus.Completed)) && !item.IsImmediate && item.ConnectionState != ConnectionState.Connected && !JobIsIgnored(item, ignoreList) && item.ExecutionStart.HasValue)
+				DateTime dateTime = job.ExecutionStart.Value;
+				if (job.Result.ExecutionTime.HasValue)
 				{
-					DateTime dateTime = item.ExecutionStart.Value;
-					if (item.Result.ExecutionTime.HasValue)
-					{
-						dateTime = dateTime.Add(item.Result.ExecutionTime.Value);
-					}
-					else
-					{
-						num++;
-					}
-					if (now >= dateTime.AddHours(num))
-					{
-						num2++;
-						item.Trash();
-					}
+					dateTime = dateTime.Add(job.Result.ExecutionTime.Value);
+				}
+				else
+				{
+					time++;
+				}
+				if (now >= dateTime.AddHours(time))
+				{
+					trashed++;
+					job.Trash();
 				}
 			}
-			ExecutionEngine.Instance.CleanupJobs(force: false);
-			return num2;
-		}
-		catch (Exception e)
+		});
+		LogHelper.Instance.Log("Watchdog trashed {0} jobs.", trashed);
+	}
+
+	private void CleanErroredJobs()
+	{
+		DateTime now = DateTime.Now;
+		int cleaned = 0;
+		ForeachJob(delegate(IExecutionContext job)
 		{
-			LogHelper.Instance.Log("Watchdog: clean jobs had an exception.", e);
-			return 0;
-		}
+			if (job.GetStatus() == ExecutionContextStatus.Errored)
+			{
+				DateTime createdOn = job.CreatedOn;
+				if (now >= createdOn.AddDays(5.0))
+				{
+					cleaned++;
+					job.Trash();
+				}
+			}
+		});
+		LogHelper.Instance.Log("Watchdog trashed {0} errored jobs.", cleaned);
 	}
 }

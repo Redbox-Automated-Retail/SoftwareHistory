@@ -6,29 +6,42 @@ namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class ScanResult : IScanResult, IDisposable
 {
-	private readonly List<IDecodeResult> RawDecodeResults = new List<IDecodeResult>();
+	private readonly ISnapResult SnapResult;
+
+	private readonly List<DecodeResult> RawDecodeResults = new List<DecodeResult>();
 
 	private bool Disposed;
+
+	private bool DeleteOnDispose;
 
 	public bool DeviceError { get; internal set; }
 
 	public TimeSpan ExecutionTime { get; internal set; }
 
-	public IList<IDecodeResult> DecodeResults
+	public List<IDecodeResult> DecodeResults
 	{
 		get
 		{
-			List<IDecodeResult> list = new List<IDecodeResult>();
-			list.AddRange(RawDecodeResults);
-			return list;
+			List<IDecodeResult> rv = new List<IDecodeResult>();
+			RawDecodeResults.ForEach(delegate(DecodeResult each)
+			{
+				rv.Add(each);
+			});
+			return rv;
 		}
 	}
+
+	public string ImagePath { get; private set; }
 
 	public void Dispose()
 	{
 		if (!Disposed)
 		{
 			Disposed = true;
+			if (DeleteOnDispose && DecodeResults.Count > 0 && SnapResult != null)
+			{
+				SnapResult.Dispose();
+			}
 			RawDecodeResults.Clear();
 		}
 	}
@@ -41,28 +54,36 @@ internal sealed class ScanResult : IScanResult, IDisposable
 
 	internal void Add(string code)
 	{
-		DecodeResult decodeResult = RawDecodeResults.Find((IDecodeResult each) => each.Matrix == code) as DecodeResult;
-		if (decodeResult == null)
+		if (!code.Equals("redbox", StringComparison.CurrentCultureIgnoreCase))
 		{
-			decodeResult = new DecodeResult(code);
-			RawDecodeResults.Add(decodeResult);
-		}
-		if (!BarcodeConfiguration.Instance.FilterExcessReadCodes || decodeResult.Count < BarcodeConfiguration.Instance.ExpectedCodes)
-		{
-			decodeResult.Increment();
+			DecodeResult decodeResult = RawDecodeResults.Find((DecodeResult each) => each.Matrix == code);
+			if (decodeResult == null)
+			{
+				decodeResult = new DecodeResult(code);
+				RawDecodeResults.Add(decodeResult);
+			}
+			else
+			{
+				decodeResult.IncrementCount();
+			}
 		}
 	}
 
-	internal void Add(IEnumerable<string> codes)
+	internal ScanResult(ISnapResult sr)
+		: this(sr.Path)
 	{
-		foreach (string code in codes)
-		{
-			Add(code);
-		}
+		SnapResult = sr;
+		ImagePath = sr.Path;
+	}
+
+	internal ScanResult(string imagePath)
+	{
+		ExecutionTime = default(TimeSpan);
+		ImagePath = imagePath;
 	}
 
 	internal ScanResult()
+		: this(string.Empty)
 	{
-		ExecutionTime = default(TimeSpan);
 	}
 }

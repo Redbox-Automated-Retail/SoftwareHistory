@@ -95,7 +95,8 @@ public abstract class ClientSession : IIpcClientSession, IDisposable
 		bool result = false;
 		if (messages.Count > 0)
 		{
-			result = messages[messages.Count - 1].StartsWith("203 Command");
+			string text = messages[messages.Count - 1];
+			result = text.StartsWith("203 Command");
 		}
 		return result;
 	}
@@ -119,7 +120,10 @@ public abstract class ClientSession : IIpcClientSession, IDisposable
 		if (!m_resetEvent.WaitOne(Timeout))
 		{
 			list.Clear();
-			ProtocolHelper.FormatErrors(new ErrorList { Error.NewError("J888", $"Timeout threshold {Timeout} exceeded.", "Reissue the command when the service is not as busy.") }, list);
+			ErrorList errorList = new ErrorList();
+			errorList.Add(Error.NewError("J888", $"Timeout threshold {Timeout} exceeded.", "Reissue the command when the service is not as busy."));
+			ErrorList errors = errorList;
+			ProtocolHelper.FormatErrors(errors, list);
 			list.Add("545 Command failed.");
 		}
 		return list;

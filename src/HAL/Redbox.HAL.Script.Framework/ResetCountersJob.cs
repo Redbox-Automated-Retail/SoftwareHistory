@@ -7,7 +7,7 @@ namespace Redbox.HAL.Script.Framework;
 [NativeJob(ProgramName = "reset-counters-job", Operand = "RESET-COUNTERS-JOB")]
 internal sealed class ResetCountersJob : NativeJobAdapter
 {
-	private DateTime? m_lastReset;
+	private DateTime? m_lastReset = null;
 
 	private readonly IPersistentMap DataMap;
 

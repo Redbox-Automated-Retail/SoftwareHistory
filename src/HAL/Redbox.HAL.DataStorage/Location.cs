@@ -13,7 +13,14 @@ internal sealed class Location : ILocation
 
 	public bool IsEmpty => ID == "EMPTY";
 
-	public bool IsWide => ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(m_deck).IsSlotSellThru(m_slot);
+	public bool IsWide
+	{
+		get
+		{
+			IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+			return service.GetByNumber(m_deck).IsSlotSellThru(m_slot);
+		}
+	}
 
 	public int Deck => m_deck;
 

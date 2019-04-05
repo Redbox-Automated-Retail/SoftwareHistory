@@ -64,6 +64,12 @@ public sealed class FrameControlLegacy : AbstractDirectShowFrameControl
 		return result;
 	}
 
+	protected override void OnFree()
+	{
+		FrameReceivedEvent.Close();
+		ImageCapturedEvent.Close();
+	}
+
 	internal FrameControlLegacy(string moniker, int grab, bool debug)
 		: base(moniker, grab, debug)
 	{

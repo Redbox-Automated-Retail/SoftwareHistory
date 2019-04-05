@@ -5,7 +5,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmptySearchPatternService
+internal sealed class EmptySearchPatternService : IInventoryObserver, IEmptySearchPatternService
 {
 	private class ESPNode
 	{
@@ -29,69 +29,69 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 
 	private readonly object Lock = new object();
 
-	public void NotifyConfigurationChangeStart()
+	private readonly IInventoryService InventoryService;
+
+	public void OnInventoryInitialize()
 	{
-		LogHelper.Instance.Log("[EmptySearchService] Configuration start.");
+		LogHelper.Instance.Log("[EmptySearchService] Initialize.");
+		Rebuild();
 	}
 
-	public void NotifyConfigurationChangeEnd()
+	public void OnInventoryChange()
 	{
-		LogHelper.Instance.Log("[EmptySearchService] Configuration end.");
-		lock (Lock)
-		{
-			Pattern.Clear();
-			ComputeList();
-		}
+		LogHelper.Instance.Log("[EmptySearchService] OnInventoryRebuild.");
+		Rebuild();
 	}
 
-	public void NotifyConfigurationLoaded()
+	public void OnInventoryRebuild()
 	{
-		LogHelper.Instance.Log("[EmptySearchService] Configuration load.");
-		if (ControllerConfiguration.Instance.IsVMZMachine)
-		{
-			AddObserver(new VmzExcludePolicy());
-		}
-		else
-		{
-			AddObserver(new QlmExcludePolicy());
-		}
-		lock (Lock)
-		{
-			ComputeList();
-		}
+		LogHelper.Instance.Log("[EmptySearchService] OnInventoryRebuild.");
+		Rebuild();
 	}
 
 	public void DumpESP(bool dumpStore)
 	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		using StreamWriter streamWriter = new StreamWriter(File.Open(Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("Service"), "ESP.log"), FileMode.Append, FileAccess.Write, FileShare.Read));
-		string value = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: *** Dump of ESP list ***";
-		streamWriter.WriteLine(value);
-		foreach (ESPNode item in Pattern)
+		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string path = service.CreateSubpath("Service");
+		string path2 = Path.Combine(path, "ESP.log");
+		StreamWriter log = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
+		try
 		{
-			ILocation location = service.Get(item.Deck, item.Slot);
-			streamWriter.WriteLine("{0} Excluded = {1}", location.ToString(), location.Excluded.ToString());
+			string value = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: *** Dump of ESP list ***";
+			log.WriteLine(value);
+			Pattern.ForEach(delegate(ESPNode node)
+			{
+				ILocation location = InventoryService.Get(node.Deck, node.Slot);
+				log.WriteLine("{0} Excluded = {1}", location.ToString(), location.Excluded.ToString());
+			});
+			log.WriteLine();
 		}
-		streamWriter.WriteLine();
+		finally
+		{
+			if (log != null)
+			{
+				((IDisposable)log).Dispose();
+			}
+		}
 	}
 
-	public void AddObserver(IExcludeEmptySearchLocationObserver observer)
+	public void AddObserver(IExcludeEmptySearchLocationObserver veto)
 	{
 		lock (Lock)
 		{
-			Observers.Add(observer);
+			Observers.Add(veto);
 		}
 	}
 
-	public void RemoveObserver(IExcludeEmptySearchLocationObserver observer)
+	public void RemoveObserver(IExcludeEmptySearchLocationObserver v)
 	{
 		lock (Lock)
 		{
-			Observers.Remove(observer);
+			Observers.Remove(v);
 		}
 	}
 
-	public IEmptySearchResult FindMultipleEmptyLocations()
+	public IEmptySearchResult FindEmptyLocations()
 	{
 		EmptySearchResult emptySearchResult = new EmptySearchResult();
 		int num = SlotsAvailable();
@@ -99,10 +99,9 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 		{
 			return emptySearchResult;
 		}
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		foreach (ESPNode item in Pattern)
 		{
-			ILocation location = service.Get(item.Deck, item.Slot);
+			ILocation location = InventoryService.Get(item.Deck, item.Slot);
 			if (location.IsEmpty)
 			{
 				emptySearchResult.EmptyLocations.Add(location);
@@ -123,52 +122,52 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 		{
 			return emptySearchResult;
 		}
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		foreach (ESPNode item in Pattern)
 		{
-			ILocation location = service.Get(item.Deck, item.Slot);
-			if (top.Equals(location))
+			ILocation location = InventoryService.Get(item.Deck, item.Slot);
+			if (!top.Equals(location))
 			{
-				break;
+				if (location.IsEmpty)
+				{
+					emptySearchResult.EmptyLocations.Add(location);
+				}
+				if (emptySearchResult.EmptyLocations.Count == num)
+				{
+					break;
+				}
+				continue;
 			}
-			if (location.IsEmpty)
-			{
-				emptySearchResult.EmptyLocations.Add(location);
-			}
-			if (emptySearchResult.EmptyLocations.Count == num)
-			{
-				break;
-			}
+			break;
 		}
 		return emptySearchResult;
 	}
 
-	public IEmptySearchResult FindOneEmpty()
+	internal EmptySearchPatternService(IInventoryService iis)
 	{
-		EmptySearchResult emptySearchResult = new EmptySearchResult();
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		foreach (ESPNode item in Pattern)
-		{
-			ILocation location = service.Get(item.Deck, item.Slot);
-			if (location.IsEmpty)
-			{
-				emptySearchResult.EmptyLocations.Add(location);
-				break;
-			}
-		}
-		return emptySearchResult;
+		InventoryService = iis;
+		InventoryService.AddObserver(this);
 	}
 
-	internal EmptySearchPatternService()
+	private void Rebuild()
 	{
-		ControllerConfiguration.Instance.AddObserver(this);
+		lock (Lock)
+		{
+			Pattern.Clear();
+			ComputeList();
+			LogHelper.Instance.Log(" ESP statistics:");
+			LogHelper.Instance.Log("  Total entries: {0}", Pattern.Count);
+			LogHelper.Instance.Log("  There are {0} total excluded slots.", InventoryService.GetExcludedSlotsCount());
+		}
 	}
 
 	private int SlotsAvailable()
 	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (InventoryService.CheckIntegrity() != ErrorCodes.Success)
+		{
+			return 0;
+		}
 		int returnSlotBuffer = ControllerConfiguration.Instance.ReturnSlotBuffer;
-		int num = service.GetMachineEmptyCount() - returnSlotBuffer;
+		int num = InventoryService.GetMachineEmptyCount() - returnSlotBuffer;
 		if (num <= 0)
 		{
 			LogHelper.Instance.Log("[EmptySearchService] There are no empty slots available.");
@@ -183,23 +182,19 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 
 	private void AddLocation(IDeck deck, int slot, ref int idx)
 	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		ILocation location = service.Get(deck.Number, slot);
+		ILocation location = InventoryService.Get(deck.Number, slot);
 		if (location.Excluded)
 		{
-			LogHelper.Instance.Log(LogEntryType.Debug, "Location Deck = {0} Slot = {1} is already excluded.", deck.Number, slot);
+			LogHelper.Instance.Log(LogEntryType.Debug, "Location {0} is already excluded.", location);
 			return;
 		}
 		foreach (IExcludeEmptySearchLocationObserver observer in Observers)
 		{
 			if (observer.ShouldExclude(location))
 			{
-				LogHelper.Instance.Log(" Apply exclude policy to Deck = {0} Slot = {1}", deck.Number, slot);
-				if (!location.Excluded)
-				{
-					location.Excluded = true;
-					service.Save(location);
-				}
+				LogHelper.Instance.Log("[EmptySearchService] Apply exclude policy to {0}", location);
+				location.Excluded = true;
+				InventoryService.Save(location);
 				return;
 			}
 		}
@@ -246,49 +241,43 @@ internal sealed class EmptySearchPatternService : IConfigurationObserver, IEmpty
 					AddLocation(deck, n, ref idx);
 				}
 			}
+			return;
 		}
-		else
+		for (int num3 = 1; num3 < 6; num3++)
 		{
-			for (int num3 = 1; num3 < 6; num3++)
+			int[] array3 = array;
+			foreach (int number2 in array3)
 			{
-				int[] array2 = array;
-				foreach (int number2 in array2)
+				deck = service.GetByNumber(number2);
+				int num5 = num3 * deck.SlotsPerQuadrant + 1;
+				for (int num6 = num5; num6 <= num5 + deck.SlotsPerQuadrant - 1; num6++)
 				{
-					deck = service.GetByNumber(number2);
-					int num4 = num3 * deck.SlotsPerQuadrant + 1;
-					for (int num5 = num4; num5 <= num4 + deck.SlotsPerQuadrant - 1; num5++)
-					{
-						AddLocation(deck, num5, ref idx);
-					}
-				}
-			}
-			deck = service.GetByNumber(6);
-			for (int num6 = 16; num6 <= deck.NumberOfSlots; num6++)
-			{
-				AddLocation(deck, num6, ref idx);
-			}
-			deck = service.GetByNumber(7);
-			for (int num7 = 16; num7 <= deck.NumberOfSlots; num7++)
-			{
-				AddLocation(deck, num7, ref idx);
-			}
-			deck = service.GetByNumber(8);
-			for (int num8 = 16; num8 <= deck.NumberOfSlots; num8++)
-			{
-				AddLocation(deck, num8, ref idx);
-			}
-			for (int num9 = 1; num9 <= 8; num9++)
-			{
-				deck = service.GetByNumber(num9);
-				for (int num10 = 15; num10 >= 1; num10--)
-				{
-					AddLocation(deck, num10, ref idx);
+					AddLocation(deck, num6, ref idx);
 				}
 			}
 		}
-		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-		LogHelper.Instance.Log(" ESP statistics:");
-		LogHelper.Instance.Log("  Total entries: {0}", Pattern.Count);
-		LogHelper.Instance.Log("  There are {0} total excluded slots.", service2.GetExcludedSlotsCount());
+		deck = service.GetByNumber(6);
+		for (int num7 = 16; num7 <= deck.NumberOfSlots; num7++)
+		{
+			AddLocation(deck, num7, ref idx);
+		}
+		deck = service.GetByNumber(7);
+		for (int num8 = 16; num8 <= deck.NumberOfSlots; num8++)
+		{
+			AddLocation(deck, num8, ref idx);
+		}
+		deck = service.GetByNumber(8);
+		for (int num9 = 16; num9 <= deck.NumberOfSlots; num9++)
+		{
+			AddLocation(deck, num9, ref idx);
+		}
+		for (int num10 = 1; num10 <= 8; num10++)
+		{
+			deck = service.GetByNumber(num10);
+			for (int num11 = 15; num11 >= 1; num11--)
+			{
+				AddLocation(deck, num11, ref idx);
+			}
+		}
 	}
 }

@@ -18,7 +18,8 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	public void OnStuck(IGetResult result)
 	{
-		ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(result.Location);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 	}
 
 	public bool OnEmpty(IGetResult result)
@@ -29,8 +30,6 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			using (PeekOperation peekOperation = new PeekOperation())
 			{
 				IPeekResult peekResult = peekOperation.Execute();
-				string msg = $"GET disk at Deck = {result.Location.Deck} Slot = {result.Location.Slot} shows SLOTEMPTY; PEEK returns {peekResult.ToString()}";
-				LogHelper.Instance.Log(msg);
 				if (!peekResult.TestOk || peekResult.IsFull)
 				{
 					result.Update(ErrorCodes.ItemStuck);
@@ -47,7 +46,6 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	protected override void ExecuteInner()
 	{
-		IMoveDecoratorService service = ServiceLocator.Instance.GetService<IMoveDecoratorService>();
 		try
 		{
 			ILocation location = null;
@@ -58,23 +56,14 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 				RegisterForCorrectionEvents();
 			}
 			string overrideName = ((Method == VendMethod.Location) ? "field-remove" : "vend");
-			ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "vend", flushOnWrite: false, overrideName);
+			ApplicationLog log = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "vend", flushOnWrite: false, overrideName);
 			base.Context.RegisterHandler(delegate(string signal)
 			{
 				ReceivedSignal = signal;
 				SignalEvent.Set();
 			});
-			base.Context.AppLog.WriteFormatted(LogEntryType.Info, "Vend start, Method = {0}", Method.ToString());
+			LogHelper.Instance.WithContext("Vend start, Method = {0}", Method);
 			base.Context.Send("VendStart");
-			if (service.LowerLimitConfigured(base.Context))
-			{
-				IMotionControlLimitResponse motionControlLimitResponse = base.MotionService.ReadLimits();
-				if (motionControlLimitResponse.ReadOk && motionControlLimitResponse.IsLimitBlocked(MotionControlLimits.Lower))
-				{
-					ErrorCodes errorCodes = base.MotionService.HomeAxis(Axis.Y, applicationLog);
-					applicationLog.WriteFormatted("Controller shows lower limit active; HOMEY returned {0}", errorCodes.ToString());
-				}
-			}
 			int num = base.Context.PopTop<int>();
 			int num2 = num;
 			if (VendMethod.Location == Method)
@@ -86,7 +75,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 					return;
 				}
 			}
-			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			string text = null;
 			while (num > 0)
 			{
@@ -102,20 +91,18 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 				{
 					int deck = base.Context.PopTop<int>();
 					int slot = base.Context.PopTop<int>();
-					location = service2.Get(deck, slot);
+					location = service.Get(deck, slot);
 					text = location.ID;
 				}
 				else
 				{
 					text = base.Context.PopTop<string>();
-					if (PickerBoard.IsFull())
+					using (CheckPickerOperation checkPickerOperation2 = new CheckPickerOperation(base.Context))
 					{
-						using CheckPickerOperation checkPickerOperation2 = new CheckPickerOperation(base.Context);
-						ErrorCodes errorCodes2 = checkPickerOperation2.CheckPicker(base.Result, text);
-						if (ErrorCodes.PickerEmpty != errorCodes2)
+						ErrorCodes errorCodes = checkPickerOperation2.CheckPicker(base.Result, text);
+						if (ErrorCodes.PickerEmpty != errorCodes)
 						{
-							string msg = $"Check picker returned an error status {errorCodes2.ToString()}";
-							base.Context.AppLog.Write(msg, LogEntryType.Info);
+							LogHelper.Instance.WithContext("Check picker returned an error status {0}", errorCodes.ToString());
 							WaitForSignal();
 							AddError("Item stuck in the gripper.");
 							break;
@@ -125,12 +112,11 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 					{
 						base.Context.Send("FindItemToVend");
 					}
-					location = service2.Lookup(text);
+					location = service.Lookup(text);
 					if (location == null)
 					{
-						base.Context.AppLog.LogLookupFailure(text);
 						base.Context.Send("ItemNotFound");
-						base.Context.CreateInfoResult("VendError", "The LOOKUP request failed because the item was not found.", text);
+						base.Context.CreateLookupErrorResult("VendError", text);
 						if (--num <= 0)
 						{
 							WaitForSignal();
@@ -139,7 +125,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 						continue;
 					}
 				}
-				base.Context.AppLog.Write(LogEntryType.Info, "Trying to vend ID: {0} at Deck = {1} Slot = {2}", text, location.Deck, location.Slot);
+				LogHelper.Instance.WithContext(LogEntryType.Info, "Trying to vend ID: {0} at {1}", text, location);
 				TransactionResult transactionResult = MoveAndGet(location, text);
 				if (TransactionResult.MachineError == transactionResult)
 				{
@@ -158,17 +144,19 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 				}
 				if (ControllerConfiguration.Instance.PrepositionVendFraudMove && VendMethod.Preposition == Method)
 				{
-					ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(6, location.Slot, MoveMode.None, base.AppLog);
+					IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+					service2.MoveTo(6, location.Slot, MoveMode.None, base.AppLog);
 					if (!OnPrePosition(location, text))
 					{
 						break;
 					}
 				}
-				if (base.MotionService.MoveVend(MoveMode.None, applicationLog) != ErrorCodes.Success)
+				ErrorCodes errorCodes2 = base.MotionService.MoveVend(MoveMode.None, log);
+				if (errorCodes2 != ErrorCodes.Success)
 				{
 					base.Context.Send("MachineError");
 					WaitForSignal();
-					OnMachineError(text);
+					base.Context.OnMoveVendError(errorCodes2, text);
 					break;
 				}
 				base.ControlSystem.TrackCycle();
@@ -177,30 +165,26 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 					break;
 				}
 				base.Context.Send("PickupGraphicDisplay");
-				using (VendItemOperation vendItemOperation = new VendItemOperation())
+				IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+				IVendItemResult vendItemResult = service3.VendItemInPicker();
+				if (ErrorCodes.PickerEmpty == vendItemResult.Status)
 				{
-					VendItemResult vendItemResult = vendItemOperation.Execute();
-					if (ErrorCodes.PickerEmpty == vendItemResult.Status)
-					{
-						base.ControlSystem.VendDoorClose();
-						base.Context.Send("ItemVended");
-						string msg2 = $"The item {text} was taken.";
-						base.Context.AppLog.Write(msg2, LogEntryType.Info);
-						base.Context.CreateResult("ItemVended", "The item was successfully vended.", location.Deck, location.Slot, text, null, null);
-						num--;
-						continue;
-					}
-					if (ErrorCodes.PickerFull != vendItemResult.Status)
-					{
-						OnMachineError(text);
-						break;
-					}
-					if (!vendItemResult.Presented)
-					{
-						base.Context.AppLog.Write("The disk was not presented - home the Y axis.", LogEntryType.Error);
-						base.MotionService.HomeAxis(Axis.Y, base.AppLog);
-						base.ControlSystem.RollerToPosition(RollerPosition.Position6, 3000);
-					}
+					base.Context.Send("ItemVended");
+					LogHelper.Instance.WithContext("The item {0} was taken.", text);
+					base.Context.CreateResult("ItemVended", "The item was successfully vended.", location.Deck, location.Slot, text, null, null);
+					num--;
+					continue;
+				}
+				if (ErrorCodes.PickerFull != vendItemResult.Status)
+				{
+					OnMachineError(text);
+					break;
+				}
+				if (!vendItemResult.Presented)
+				{
+					LogHelper.Instance.WithContext(LogEntryType.Error, "The disk was not presented - home the Y axis.");
+					base.MotionService.HomeAxis(Axis.Y);
+					base.ControlSystem.RollerToPosition(RollerPosition.Position6, 3000);
 				}
 				OnFraudAttempt(location, text);
 				break;
@@ -210,22 +194,17 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		{
 			if (ControllerConfiguration.Instance.EmptyStuckAlertThreshold > 0)
 			{
-				IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-				IPersistentCounter persistentCounter = service3.Find("EmptyOrStuckCount");
+				IPersistentCounterService service4 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+				IPersistentCounter persistentCounter = service4.Find("EmptyOrStuckCount");
 				if (persistentCounter != null && persistentCounter.Value > ControllerConfiguration.Instance.EmptyStuckAlertThreshold)
 				{
 					LogHelper.Instance.Log(LogEntryType.Error, "The Empty/Stuck counter for alert generation has exceeded its threshold (value = {0})", persistentCounter.Value);
 					if (ControllerConfiguration.Instance.AlertForEmptyStuck)
 					{
 						base.Context.CreateInfoResult("EmptyStuckThresholdExceeded", "There are too many empty/stuck failures transactions on this kiosk, please investigate.");
-						service3.Reset(persistentCounter);
+						service4.Reset(persistentCounter);
 					}
 				}
-			}
-			if (service.LowerLimitConfigured(base.Context) && service.LowerLimitCounterExceeded())
-			{
-				service.LogLimitMessage(base.Context.AppLog);
-				base.Context.CreateInfoResult("AlertableThresholdExceeded", "Lower limit threshold exceeded.");
 			}
 			try
 			{
@@ -266,13 +245,11 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	private ErrorCodes OnFraudAttempt(ILocation source, string id)
 	{
-		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		if (service.AcceptDiskAtDoor() != ErrorCodes.PickerFull)
 		{
-			if (acceptDiskOperation.Execute() != ErrorCodes.PickerFull)
-			{
-				base.Context.AppLog.Write("Unable to move disc back to sensor 3; assume the disc is vended.", LogEntryType.Info);
-				return FileFraudedDisk(source, id);
-			}
+			LogHelper.Instance.WithContext("Unable to move disc back to sensor 3; assume the disc is vended.");
+			return FileFraudedDisk(source, id);
 		}
 		base.ControlSystem.TrackCycle();
 		ScanResult scanResult = null;
@@ -280,35 +257,32 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		{
 			scanResult = scanner.Read();
 		}
-		if (!scanResult.SnapOk)
+		using (scanResult)
 		{
-			base.Context.CreateCameraCaptureErrorResult();
-			return FileFraudedDisk(source, id);
-		}
-		if (!scanResult.ReadCode)
-		{
-			string msg = $"The barcode in the picker could not be read; scanned ID = {scanResult.ScannedMatrix}; item assumed vended.";
-			base.Context.AppLog.Write(msg, LogEntryType.Info);
-		}
-		if (scanResult.ScannedMatrix == id)
-		{
-			string msg2 = $"Item ID = {id} was not taken; the barcode in the picker matched the item requested to vend.";
-			base.Context.AppLog.Write(msg2, LogEntryType.Info);
-			base.Context.CreateResult("UnclaimedVend", "The vend request failed because the item was not taken.  It has been returned.", source.Deck, source.Slot, id, null, null);
-			FileDisk(source, scanResult.ScannedMatrix);
-			IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadSensors();
-			if (pickerSensorReadResult.Error != ErrorCodes.Success)
+			if (!scanResult.SnapOk)
 			{
-				return ErrorCodes.SensorReadError;
+				base.Context.CreateCameraCaptureErrorResult();
+				return FileFraudedDisk(source, id);
 			}
-			if (!pickerSensorReadResult.IsFull)
+			if (!scanResult.ReadCode)
 			{
-				return ErrorCodes.PickerEmpty;
+				LogHelper.Instance.WithContext("The barcode in the picker could not be read; scanned ID = {0}; item assumed vended.", scanResult.ScannedMatrix);
 			}
-			return ErrorCodes.PickerFull;
+			if (scanResult.ScannedMatrix == id)
+			{
+				LogHelper.Instance.WithContext("Item ID = {0} was not taken; the barcode in the picker matched the item requested to vend.", id);
+				base.Context.CreateResult("UnclaimedVend", "The vend request failed because the item was not taken.  It has been returned.", source.Deck, source.Slot, id, null, null);
+				FileDisk(source, scanResult.ScannedMatrix);
+				IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+				if (!pickerSensorReadResult.Success)
+				{
+					return ErrorCodes.SensorReadError;
+				}
+				return pickerSensorReadResult.IsFull ? ErrorCodes.PickerFull : ErrorCodes.PickerEmpty;
+			}
+			base.Context.AppLog.Write($"Item ID = {id} was not taken; it did not match the barcode of the item in the picker ID = {scanResult.ScannedMatrix}.");
+			LogHelper.Instance.WithContext("The barcode in the picker could not be matched to the requested item; returned ID = {0}; item assumed vended.", scanResult.ScannedMatrix);
 		}
-		base.Context.AppLog.Write($"Item ID = {id} was not taken; it did not match the barcode of the item in the picker ID = {scanResult.ScannedMatrix}.");
-		base.Context.ServiceLog("The barcode in the picker could not be matched to the requested item; returned ID = {0}; item assumed vended.", scanResult.ScannedMatrix);
 		base.ControlSystem.LogInputs(ControlBoards.Picker);
 		base.ControlSystem.LogInputs(ControlBoards.Aux);
 		return FileFraudedDisk(source, id);
@@ -319,8 +293,8 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		_ = $"Item ID = {id} was vended.";
 		base.Context.CreateResult("ItemVended", "The item was successfully vended.", source.Deck, source.Slot, id, null, null);
 		FileDisk(source, id);
-		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadSensors();
-		if (pickerSensorReadResult.Error != ErrorCodes.Success)
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
 		{
 			return ErrorCodes.SensorReadError;
 		}
@@ -333,20 +307,22 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	private bool FileDisk(ILocation location, string id)
 	{
-		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			return false;
 		}
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put(id, base.AppLog).Success)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service2.Put(id).Success)
 		{
 			return false;
 		}
 		if (CurrentGetResult != null)
 		{
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
 			location.Flags = CurrentGetResult.Flags;
 			location.ReturnDate = CurrentGetResult.ReturnTime;
-			service.Save(location);
+			service3.Save(location);
 		}
 		return true;
 	}
@@ -371,9 +347,9 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 	private TransactionResult MoveAndGet(ILocation loc, string barcode)
 	{
 		CurrentGetResult = null;
-		string msg = $"Move Deck = {loc.Deck} Slot = {loc.Slot} to get requested barcode = {barcode}.";
-		base.Context.AppLog.Write(msg, LogEntryType.Info);
-		switch (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(loc, MoveMode.Get, base.Context.AppLog))
+		LogHelper.Instance.WithContext("Move {0} to get requested barcode = {1}.", loc, barcode);
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		switch (service.MoveTo(loc, MoveMode.Get, base.Context.AppLog))
 		{
 		case ErrorCodes.Timeout:
 			base.Context.CreateInfoResult("MoveFailure", "The MOVE instruction returned TIMEOUT.", barcode);
@@ -383,8 +359,8 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			return TransactionResult.MachineError;
 		case ErrorCodes.Success:
 		{
-			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-			CurrentGetResult = service.Get(this, base.AppLog);
+			IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+			CurrentGetResult = service2.Get(this);
 			if (CurrentGetResult.Success)
 			{
 				return TransactionResult.Success;
@@ -397,10 +373,17 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			}
 			if (CurrentGetResult.ItemStuck && ControllerConfiguration.Instance.EmptyStuckAlertThreshold > 0 && Method != VendMethod.Location)
 			{
-				ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("EmptyOrStuckCount");
+				IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+				service3.Increment("EmptyOrStuckCount");
 			}
-			new ClearGripperOperation().Execute();
-			if (!PickerBoard.IsFull())
+			service2.ClearGripper();
+			IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
+			{
+				base.Context.Send("MachineError");
+				return TransactionResult.MachineError;
+			}
+			if (!pickerSensorReadResult.IsFull)
 			{
 				if (ErrorCodes.GripperExtendTimeout == CurrentGetResult.HardwareError)
 				{
@@ -420,7 +403,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 	private void OnMachineError(string barcode)
 	{
 		string text = "An unrecoverable error occurred in vend.";
-		base.Context.AppLog.Write(text, LogEntryType.Error);
+		LogHelper.Instance.WithContext(LogEntryType.Error, text);
 		base.Context.CreateInfoResult("MachineError", text, barcode);
 		AddError("MACHINE ERROR");
 	}
@@ -434,8 +417,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		int num = 300000;
 		if (!SignalEvent.WaitOne(num))
 		{
-			string msg = $"VEND: didn't receive a signal in the specified time ( {num}ms )";
-			base.Context.AppLog.Write(msg, LogEntryType.Info);
+			LogHelper.Instance.WithContext("Didn't receive a signal in the specified time ( {0}ms )", num);
 			base.Context.PushTop("TIMEOUT");
 			return false;
 		}
@@ -444,8 +426,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			ReceivedSignal = "NONE";
 		}
 		bool flag = ReceivedSignal.Equals("continue", StringComparison.CurrentCultureIgnoreCase);
-		string msg2 = string.Format("Received a signal '{0}' ( {1} ) within timeout.", ReceivedSignal, flag ? "expected" : "not expected");
-		base.Context.ServiceLog(msg2);
+		LogHelper.Instance.WithContext("Received a signal '{0}' ( {1} ) within timeout.", ReceivedSignal, flag ? "expected" : "not expected");
 		return flag;
 	}
 }

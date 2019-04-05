@@ -2,19 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
 public class Compiler
 {
-	private static Dictionary<string, bool> m_warningTable;
-
 	private const string DirectiveToken = "@";
 
 	private const string IncludeDirective = "INC";
 
 	private const string PragmaDirective = "PRAGMA";
+
+	private static Dictionary<string, bool> m_warningTable;
 
 	private static readonly Deque<string> m_configScriptPaths;
 
@@ -257,7 +258,7 @@ public class Compiler
 	public static void AppendSearchPath(string wholePath)
 	{
 		string[] array = ParseDelimitedPaths(wholePath);
-		if (array.Length != 0)
+		if (array.Length > 0)
 		{
 			m_configScriptPaths.AddManyToFront(array);
 		}
@@ -309,7 +310,8 @@ public class Compiler
 			{
 				return null;
 			}
-			return symbol.Value.Split(new string[1] { symbol.PairSeparator }, StringSplitOptions.RemoveEmptyEntries)[1];
+			string[] array = symbol.Value.Split(new string[1] { symbol.PairSeparator }, StringSplitOptions.RemoveEmptyEntries);
+			return array[1];
 		}
 		return symbol.Value;
 	}
@@ -394,23 +396,16 @@ public class Compiler
 
 	private static string[] ParseDelimitedPaths(string wholeLot)
 	{
-		List<string> list = new List<string>();
+		List<string> rv = new List<string>();
 		string[] array = wholeLot.Split(Path.PathSeparator);
-		foreach (string text in array)
+		Array.ForEach(array, delegate(string path)
 		{
-			try
+			if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
 			{
-				if (!string.IsNullOrEmpty(text) && Directory.Exists(text))
-				{
-					list.Add(text);
-				}
+				rv.Add(path);
 			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Error parsing path information: {0}", ex.Message);
-			}
-		}
-		return list.ToArray();
+		});
+		return rv.ToArray();
 	}
 
 	static Compiler()

@@ -2,29 +2,40 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public class RejectDiskOperation : AbstractOperation<ErrorCodes>
+internal sealed class RejectDiskOperation : AbstractOperation<ErrorCodes>
 {
 	private readonly int Attempts;
 
 	public override ErrorCodes Execute()
 	{
+		ErrorCodes errorCodes = OnReject();
+		if ((ErrorCodes.PickerEmpty == errorCodes || ErrorCodes.PickerFull == errorCodes) && VendDoorState.Closed != Controller.VendDoorState && !Controller.VendDoorClose().Success)
+		{
+			errorCodes = ErrorCodes.VendDoorCloseTimeout;
+		}
+		return errorCodes;
+	}
+
+	internal RejectDiskOperation(int attempts)
+	{
+		Attempts = attempts;
+	}
+
+	private ErrorCodes OnReject()
+	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
 		int attempts = Attempts;
-		LogHelper.Instance.Log("[RejectDisk]: called with {0} tries", Attempts);
 		int ms = 1000;
-		IControlResponse controlResponse = Controller.VendDoorRent();
-		if (!controlResponse.Success)
+		if (OpenDoorChecked() != ErrorCodes.Success)
 		{
-			LogHelper.Instance.Log(LogEntryType.Error, "[RejectDisk]: VENDDOOR RENT failed with error {0}", controlResponse);
 			return ErrorCodes.VendDoorRentTimeout;
 		}
 		IPickerSensorReadResult pickerSensorReadResult = null;
-		bool[] array = null;
 		while (attempts-- >= 0)
 		{
 			Controller.TrackCycle();
-			pickerSensorReadResult = Controller.ReadSensors();
-			if (pickerSensorReadResult.Error != ErrorCodes.Success)
+			pickerSensorReadResult = Controller.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
 			{
 				return ErrorCodes.SensorReadError;
 			}
@@ -36,22 +47,21 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 				}
 				return ErrorCodes.PickerEmpty;
 			}
-			LogHelper.Instance.Log("[RejectDisk] The picker is not clear.");
-			pickerSensorReadResult.LogSensorState();
-			array = pickerSensorReadResult.Sensors;
-			bool flag = array[3] || array[2] || array[1] || array[0];
-			if (array[5])
+			pickerSensorReadResult.Log();
+			bool flag = pickerSensorReadResult.IsInputActive(PickerInputs.Sensor4) || pickerSensorReadResult.IsInputActive(PickerInputs.Sensor3) || pickerSensorReadResult.IsInputActive(PickerInputs.Sensor2) || pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1);
+			if (pickerSensorReadResult.IsInputActive(PickerInputs.Sensor6))
 			{
 				if (flag)
 				{
-					PickerBoard.PushOut();
+					ControllerService.PushOut();
 					service.Wait(ms);
 					continue;
 				}
-				if (Controller.RollerToPosition(RollerPosition.Position3, 8000).Success)
+				IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position3, 8000);
+				if (controlResponse.Success)
 				{
-					pickerSensorReadResult = Controller.ReadSensors();
-					if (pickerSensorReadResult.Error != ErrorCodes.Success)
+					pickerSensorReadResult = Controller.ReadPickerSensors();
+					if (!pickerSensorReadResult.Success)
 					{
 						return ErrorCodes.SensorReadError;
 					}
@@ -72,12 +82,12 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 			}
 			else if (flag)
 			{
-				PickerBoard.PushOut();
+				ControllerService.PushOut();
 				service.Wait(1500);
 			}
 		}
-		pickerSensorReadResult = Controller.ReadSensors();
-		if (pickerSensorReadResult.Error != ErrorCodes.Success)
+		pickerSensorReadResult = Controller.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
 		{
 			return ErrorCodes.SensorReadError;
 		}
@@ -94,10 +104,5 @@ public class RejectDiskOperation : AbstractOperation<ErrorCodes>
 			return ErrorCodes.PickerObstructed;
 		}
 		return ErrorCodes.PickerFull;
-	}
-
-	public RejectDiskOperation(int attempts)
-	{
-		Attempts = attempts;
 	}
 }

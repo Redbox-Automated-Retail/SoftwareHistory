@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -106,7 +107,7 @@ internal struct OperandsHelper : IDisposable
 		T result = default(T);
 		try
 		{
-			result = (T)ConversionHelper.ChangeType(value, typeof(T));
+			result = ConversionHelper.ChangeType<T>(value);
 			return result;
 		}
 		catch (Exception e)

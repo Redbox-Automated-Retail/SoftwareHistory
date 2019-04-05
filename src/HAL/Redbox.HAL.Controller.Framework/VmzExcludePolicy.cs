@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 

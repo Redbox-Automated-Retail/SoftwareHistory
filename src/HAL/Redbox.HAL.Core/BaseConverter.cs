@@ -145,7 +145,8 @@ public class BaseConverter
 
 	public static string Convert(int fromRadix, NumberingSchemes fromScheme, int toRadix, NumberingSchemes toScheme, string value)
 	{
-		return new BaseConverter(fromRadix, fromScheme, toRadix, toScheme).Convert(value);
+		BaseConverter baseConverter = new BaseConverter(fromRadix, fromScheme, toRadix, toScheme);
+		return baseConverter.Convert(value);
 	}
 
 	public string Convert(string value)

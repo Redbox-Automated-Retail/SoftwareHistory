@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Configuration;
 
@@ -75,12 +75,14 @@ public sealed class ConfigurationService : IConfigurationService
 		}
 		foreach (string key in Configurations.Keys)
 		{
-			Configurations[key].LoadProperties(xmlDocument, errors);
+			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
+			attributeXmlConfiguration.LoadProperties(xmlDocument, errors);
 		}
 		LogHelper.Instance.Log("[Configuration Service] Broadcast configuration load.");
 		foreach (string key2 in Configurations.Keys)
 		{
-			Configurations[key2].NotifyConfigurationLoaded();
+			IConfigurationObserver configurationObserver = Configurations[key2];
+			configurationObserver.NotifyConfigurationLoaded();
 		}
 	}
 
@@ -99,7 +101,8 @@ public sealed class ConfigurationService : IConfigurationService
 		}
 		foreach (string key in Configurations.Keys)
 		{
-			Configurations[key].StoreProperties(xmlDocument, errors);
+			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
+			attributeXmlConfiguration.StoreProperties(xmlDocument, errors);
 		}
 		xmlDocument.Save(ConfigurationFile);
 	}
@@ -170,7 +173,8 @@ public sealed class ConfigurationService : IConfigurationService
 		}
 		foreach (string key in Configurations.Keys)
 		{
-			Configurations[key].Upgrade(xmlDocument, errors);
+			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
+			attributeXmlConfiguration.Upgrade(xmlDocument, errors);
 		}
 		xmlDocument.Save(ConfigurationFile);
 	}
@@ -237,14 +241,17 @@ public sealed class ConfigurationService : IConfigurationService
 		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
 		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
 		object result = null;
-		int result2;
 		if (match.Success)
 		{
 			result = match.Groups["indexer"].Captures[0].Value;
 		}
-		else if (match2.Success && int.TryParse(match2.Groups["indexer"].Captures[0].Value, out result2))
+		else if (match2.Success)
 		{
-			result = result2;
+			string value = match2.Groups["indexer"].Captures[0].Value;
+			if (int.TryParse(value, out var result2))
+			{
+				result = result2;
+			}
 		}
 		return result;
 	}
@@ -278,7 +285,8 @@ public sealed class ConfigurationService : IConfigurationService
 			}
 			try
 			{
-				obj = obj.GetType().InvokeMember(text, GetObjectFromPathBindingFlags, null, obj, args);
+				object obj3 = obj.GetType().InvokeMember(text, GetObjectFromPathBindingFlags, null, obj, args);
+				obj = obj3;
 				if (obj == null)
 				{
 					break;

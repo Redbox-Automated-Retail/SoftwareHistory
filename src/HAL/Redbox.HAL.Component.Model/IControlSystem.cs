@@ -24,7 +24,7 @@ public interface IControlSystem
 
 	IControlResponse TrackClose();
 
-	IControlResponse TrackCycle();
+	ErrorCodes TrackCycle();
 
 	void TimedExtend();
 
@@ -40,11 +40,13 @@ public interface IControlSystem
 
 	ErrorCodes Center(CenterDiskMethod method);
 
-	string GetBoardVersion(ControlBoards board);
+	IBoardVersionResponse GetBoardVersion(ControlBoards board);
 
-	string[] GetBoardVersions();
+	IControlSystemRevision GetRevision();
 
-	string[] ReadInputs(ControlBoards board);
+	IReadInputsResult<PickerInputs> ReadPickerInputs();
+
+	IReadInputsResult<AuxInputs> ReadAuxInputs();
 
 	void LogPickerSensorState();
 
@@ -56,15 +58,17 @@ public interface IControlSystem
 
 	IControlResponse SetSensors(bool on);
 
-	IPickerSensorReadResult ReadSensors();
+	IPickerSensorReadResult ReadPickerSensors();
 
-	IPickerSensorReadResult ReadImmediateSensors();
-
-	IControlResponse StopRoller();
+	IPickerSensorReadResult ReadPickerSensors(bool forceTrackClose);
 
 	IControlResponse StartRollerIn();
 
 	IControlResponse StartRollerOut();
+
+	IControlResponse StopRoller();
+
+	IControlResponse SetRollerState(RollerState state);
 
 	IControlResponse RollerToPosition(RollerPosition position);
 
@@ -82,9 +86,13 @@ public interface IControlSystem
 
 	ErrorCodes DisengageQlm(bool home, IFormattedLog log);
 
+	IControlResponse LockQlmDoor();
+
+	IControlResponse UnlockQlmDoor();
+
 	IControlResponse DropQlm();
 
 	IControlResponse LiftQlm();
 
-	IControlResponse HaltQlmOperation();
+	IControlResponse HaltQlmLifter();
 }

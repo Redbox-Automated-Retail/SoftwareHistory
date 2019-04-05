@@ -14,7 +14,8 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 			applicationLog.Write("The kiosk shows a QLM configuration - go no further.");
 			return;
 		}
-		int deck = ServiceLocator.Instance.GetService<IDumpbinService>().PutLocation.Deck;
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		int deck = service.PutLocation.Deck;
 		IDeck byNumber = base.DecksService.GetByNumber(deck);
 		if (!PutToAdjacentAndTest(byNumber.Number, 1, 81))
 		{
@@ -72,7 +73,8 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).Success)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (!service2.Put("UNKNOWN").Success)
 		{
 			AddError("Test failure.");
 			return false;
@@ -88,7 +90,9 @@ internal sealed class AdjacentDumpSlotTestJob : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).IsSlotInUse)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service.Put("UNKNOWN");
+		if (!putResult.IsSlotInUse)
 		{
 			return false;
 		}

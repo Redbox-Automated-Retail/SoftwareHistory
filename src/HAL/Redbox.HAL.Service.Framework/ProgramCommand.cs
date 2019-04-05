@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.HAL.IPC.Framework;
-using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Service.Framework;
@@ -26,19 +23,12 @@ public sealed class ProgramCommand
 		}
 	}
 
-	[CommandForm(Name = "remove")]
 	[Usage("PROGRAM remove name: progam-name")]
+	[CommandForm(Name = "remove")]
 	public void Remove(CommandContext context, [CommandKeyValue(IsRequired = true)] string name)
 	{
-		ExecutionEngine.Instance.RemoveProgram(name);
-		RewriteServiceStartup();
-	}
-
-	[CommandForm(Name = "add-search-path")]
-	[Usage("PROGRAM add-search-path paths: 'c:\\path1;c:\\path1\\path2'")]
-	public void AddSearchPath(CommandContext context, [CommandKeyValue(IsRequired = true)] string paths)
-	{
-		Compiler.AppendSearchPath(paths);
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		service.RemoveProgram(name);
 	}
 
 	[CommandForm(Name = "get")]
@@ -50,14 +40,14 @@ public sealed class ProgramCommand
 		ProtocolHelper.FormatCompressedBytes(service.ReadToBuffer(fileName), context);
 	}
 
-	[CommandForm(Name = "set")]
 	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
+	[CommandForm(Name = "set")]
 	public void Set(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
-		string path = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string path = service.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		File.WriteAllBytes(path, data);
 		CompileProgram(context.Errors, name, path);
-		RewriteServiceStartup();
 	}
 
 	[CommandForm(Name = "properties")]
@@ -71,7 +61,8 @@ public sealed class ProgramCommand
 	[Usage("PROGRAM list")]
 	public void List(CommandContext context)
 	{
-		context.Messages.AddRange(ExecutionEngine.Instance.GetPrograms());
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		context.Messages.AddRange(service.GetProgramList());
 	}
 
 	private static void CompileProgram(ErrorList errors, string programName, string path)
@@ -85,28 +76,10 @@ public sealed class ProgramCommand
 		{
 			programName = Path.GetFileNameWithoutExtension(path);
 		}
-		using MemoryStream stream = new MemoryStream(ServiceLocator.Instance.GetService<IRuntimeService>().ReadToBuffer(path));
-		ExecutionResult executionResult = ExecutionEngine.Instance.Compile(stream, programName);
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		using MemoryStream stream = new MemoryStream(service2.ReadToBuffer(path));
+		IExecutionResult executionResult = service.Compile(stream, programName);
 		errors.AddRange(executionResult.Errors);
-	}
-
-	private static void RewriteServiceStartup()
-	{
-		string path = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros("$(RunningPath)\\ServiceStartup.txt");
-		List<string> list = new List<string>(File.ReadAllLines(path));
-		int num = list.FindIndex((string each) => each.Contains("[["));
-		int num2 = list.FindIndex((string each) => each.Contains("]]"));
-		if (num != -1 && num2 != -1)
-		{
-			num++;
-			list.RemoveRange(num, num2 - num);
-			string[] programs = ExecutionEngine.Instance.GetPrograms();
-			for (int num3 = 0; num3 < programs.Length; num3++)
-			{
-				string[] array = programs[num3].Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-				list.Insert(num, string.Format("PROGRAM compile path: @'$(RunningPath)\\..\\Scripts\\{0}.hs'{1}", array[0], (string.Compare(array[2], true.ToString(), ignoreCase: true) == 0) ? " requires-client-connection: true" : string.Empty));
-			}
-			File.WriteAllLines(path, list.ToArray());
-		}
 	}
 }

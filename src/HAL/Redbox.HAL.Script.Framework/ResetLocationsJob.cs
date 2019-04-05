@@ -3,7 +3,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "reset-locations", Operand = "RESET-LOCATIONS")]
+[NativeJob(ProgramName = "reset-locations")]
 internal sealed class ResetLocationsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()

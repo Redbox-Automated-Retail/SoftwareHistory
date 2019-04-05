@@ -1,3 +1,4 @@
+using System;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework.Natives;
@@ -9,38 +10,37 @@ internal sealed class MSMoveToSlot : NativeJobAdapter
 	{
 		int num = base.Context.PopTop<int>();
 		int num2 = base.Context.PopTop<int>();
-		int num3 = 0;
+		int failures = 0;
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		if ("TIMEOUT" == service.GetBoardVersion(ControlBoards.Aux))
+		if (!service.GetBoardVersion(ControlBoards.Aux).ReadSuccess)
 		{
 			base.Context.CreateInfoResult("BoardVersionTimeout", "Move: AUX board not responsive.");
-			num3++;
+			failures++;
 		}
-		if ("TIMEOUT" == service.GetBoardVersion(ControlBoards.Picker))
+		if (!service.GetBoardVersion(ControlBoards.Picker).ReadSuccess)
 		{
 			base.Context.CreateInfoResult("BoardVersionTimeout", "Move: PCB not responsive.");
-			num3++;
+			failures++;
 		}
 		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		IMotionControlLimitResponse motionControlLimitResponse = service2.ReadLimits();
 		if (!motionControlLimitResponse.ReadOk)
 		{
 			base.Context.CreateInfoResult(ErrorCodes.ArcusNotResponsive.ToString().ToUpper(), "Unable to read limits.");
-			num3++;
+			failures++;
 		}
 		else
 		{
-			IMotionControlLimit[] limits = motionControlLimitResponse.Limits;
-			foreach (IMotionControlLimit motionControlLimit in limits)
+			Array.ForEach(motionControlLimitResponse.Limits, delegate(IMotionControlLimit limit)
 			{
-				if (motionControlLimit.Blocked)
+				if (limit.Blocked)
 				{
-					base.Context.CreateInfoResult("LimitBlocked", $"MOVE: {motionControlLimit.Limit.ToString().ToUpper()} LIMIT BLOCKED");
-					num3++;
+					base.Context.CreateInfoResult("LimitBlocked", $"MOVE: {limit.Limit.ToString().ToUpper()} LIMIT BLOCKED");
+					failures++;
 				}
-			}
+			});
 		}
-		if (num3 > 0)
+		if (failures > 0)
 		{
 			AddError("Job failure");
 			return;

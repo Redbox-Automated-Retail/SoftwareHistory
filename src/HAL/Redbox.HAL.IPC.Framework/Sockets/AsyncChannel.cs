@@ -5,7 +5,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework.Sockets;
 
-internal sealed class AsyncChannel : IDisposable, IIPCChannel
+internal sealed class AsyncChannel : IIPCChannel, IDisposable
 {
 	private bool Disposed;
 

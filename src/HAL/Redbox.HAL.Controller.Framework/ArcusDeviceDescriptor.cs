@@ -23,10 +23,11 @@ internal sealed class ArcusDeviceDescriptor : AbstractDeviceDescriptor
 		{
 			return true;
 		}
+		Process process = null;
 		bool flag = false;
 		try
 		{
-			Process process = Process.Start("c:\\Program Files\\Redbox\\hal-tools\\halutilities.exe", "-resetProteus");
+			process = Process.Start("c:\\Program Files\\Redbox\\hal-tools\\halutilities.exe", "-resetProteus");
 			process.WaitForExit();
 			return process.ExitCode == 0;
 		}

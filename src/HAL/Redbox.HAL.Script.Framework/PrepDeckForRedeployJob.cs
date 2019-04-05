@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -27,8 +26,9 @@ internal sealed class PrepDeckForRedeployJob : NativeJobAdapter
 				LogHelper.Instance.Log("Deck specified '{0}' is QLM; will not alter.", num3);
 				continue;
 			}
-			Range slotRange = new Range((!isVMZMachine) ? 1 : (VMZ.Instance.Bounds.End + 1), byNumber.NumberOfSlots);
-			IList<int> list = base.InventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
+			int start = ((!isVMZMachine) ? 1 : (VMZ.Instance.Bounds.End + 1));
+			Range slotRange = new Range(start, byNumber.NumberOfSlots);
+			List<int> list = base.InventoryService.SwapEmptyWith(byNumber, "UNKNOWN", MerchFlags.None, slotRange);
 			foreach (int item in list)
 			{
 				base.Context.CreateResult("LocationChanged", "The location was set to UNKNOWN", num3, item, null, null, null);

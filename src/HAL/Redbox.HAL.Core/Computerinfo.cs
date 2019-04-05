@@ -18,7 +18,8 @@ public sealed class Computerinfo
 
 	public Computerinfo()
 	{
-		foreach (ManagementObject instance in new ManagementClass("Win32_ComputerSystem").GetInstances())
+		ManagementClass managementClass = new ManagementClass("Win32_ComputerSystem");
+		foreach (ManagementObject instance in managementClass.GetInstances())
 		{
 			Manufacturer = instance["Manufacturer"].ToString();
 			Model = instance["Model"].ToString();

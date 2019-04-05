@@ -36,8 +36,9 @@ public sealed class HomeYInstruction : Instruction
 			using ClearPickerFrontOperation clearPickerFrontOperation = new ClearPickerFrontOperation();
 			clearPickerFrontOperation.Execute();
 		}
-		string instance = ServiceLocator.Instance.GetService<IMotionControlService>().HomeAxis(Axis.Y, context.AppLog).ToString()
-			.ToUpper();
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.HomeAxis(Axis.Y);
+		string instance = errorCodes.ToString().ToUpper();
 		context.PushTop(instance);
 	}
 

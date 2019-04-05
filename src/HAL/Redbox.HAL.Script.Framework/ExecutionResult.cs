@@ -3,17 +3,17 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-public sealed class ExecutionResult
+public sealed class ExecutionResult : IExecutionResult
 {
-	public readonly ErrorList Errors = new ErrorList();
+	public ErrorList Errors { get; private set; }
 
 	public TimeSpan? ExecutionTime { get; set; }
 
-	public bool RestartAtCurrentIP { get; set; }
+	internal bool RestartAtCurrentIP { get; set; }
 
-	public Instruction SwitchToContext { get; set; }
+	internal Instruction SwitchToContext { get; set; }
 
-	public void Reset()
+	internal void Reset()
 	{
 		Errors.Clear();
 		ExecutionTime = null;
@@ -21,7 +21,7 @@ public sealed class ExecutionResult
 		RestartAtCurrentIP = false;
 	}
 
-	public void UpdateExecutionTime(TimeSpan timeSpan)
+	internal void UpdateExecutionTime(TimeSpan timeSpan)
 	{
 		if (!ExecutionTime.HasValue)
 		{
@@ -43,14 +43,14 @@ public sealed class ExecutionResult
 		AddError(ExecutionErrors.InvalidOperand, details);
 	}
 
-	internal void OnDeprecatedOperand(string details)
-	{
-		AddError(ExecutionErrors.DeprecatedOperand, details);
-	}
-
 	internal void AddError(ExecutionErrors error, string details)
 	{
 		Error item = Error.NewError(ExecutionErrorsTable.ErrorCodeTable[error], ExecutionErrorsTable.ErrorTable[error], details);
 		Errors.Add(item);
+	}
+
+	internal ExecutionResult()
+	{
+		Errors = new ErrorList();
 	}
 }

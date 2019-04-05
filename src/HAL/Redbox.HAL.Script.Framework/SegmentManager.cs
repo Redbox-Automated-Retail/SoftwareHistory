@@ -27,13 +27,15 @@ internal sealed class SegmentManager : IGetObserver
 
 	public void OnStuck(IGetResult result)
 	{
-		ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(result.Location);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 	}
 
 	public bool OnEmpty(IGetResult result)
 	{
 		result.Update(ErrorCodes.ItemStuck);
-		ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(result.Location);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 		return false;
 	}
 
@@ -44,7 +46,7 @@ internal sealed class SegmentManager : IGetObserver
 
 	internal bool IsNonThinType(MerchFlags flags)
 	{
-		if (flags != MerchFlags.None)
+		if (MerchFlags.None != flags)
 		{
 			return MerchFlags.Unload == flags;
 		}
@@ -99,7 +101,8 @@ internal sealed class SegmentManager : IGetObserver
 		ILocation location = null;
 		foreach (MerchFlags item in IncreasingPriorityOrder)
 		{
-			location = MerchSegmentFactory.Get(item).FindHigh();
+			MerchSegment merchSegment = MerchSegmentFactory.Get(item);
+			location = merchSegment.FindHigh();
 			if (location != null)
 			{
 				return location;
@@ -114,7 +117,7 @@ internal sealed class SegmentManager : IGetObserver
 		MerchSegment merchSegment = MerchSegmentFactory.Get(flags);
 		ILocation location = merchSegment.FindHigh();
 		ILocation location2 = FindLastHigherPriority(merchSegment);
-		bool flag = location2 != null;
+		bool flag = null != location2;
 		if (!flag)
 		{
 			location2 = VMZ.Instance.First;
@@ -217,22 +220,18 @@ internal sealed class SegmentManager : IGetObserver
 
 	internal MerchandizeResult MoveNonThin(ILocation source, ILocation outside, MerchTransferManager manager)
 	{
-		using IEmptySearchResult emptySearchResult = ServiceLocator.Instance.GetService<IEmptySearchPatternService>().FindEmptyOutsideOf(outside);
+		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
+		using IEmptySearchResult emptySearchResult = service.FindEmptyOutsideOf(outside);
 		if (emptySearchResult.FoundEmpty == 0)
 		{
 			LogHelper.Instance.Log("[SegmentManager]: There are no empty slots available for transfer.");
 			return MerchandizeResult.MachineFull;
 		}
-		MerchFlags flags = source.Flags;
-		ITransferResult transferResult = ServiceLocator.Instance.GetService<IControllerService>().Transfer(source, emptySearchResult.EmptyLocations, this, manager.Context.AppLog);
+		_ = source.Flags;
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		ITransferResult transferResult = service2.Transfer(source, emptySearchResult.EmptyLocations, this);
 		if (transferResult.Transferred)
 		{
-			if (MerchFlags.Unload == flags && transferResult.Destination.Flags != flags)
-			{
-				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-				transferResult.Destination.Flags = flags;
-				service.Save(transferResult.Destination);
-			}
 			manager.ProcessTransfer(source, transferResult.Destination);
 			return MerchandizeResult.Success;
 		}
@@ -257,17 +256,15 @@ internal sealed class SegmentManager : IGetObserver
 
 	internal MerchandizeResult MoveThin(ILocation source, ILocation empty, MerchTransferManager mgr)
 	{
-		MerchFlags flags = source.Flags;
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		ITransferResult transferResult = ServiceLocator.Instance.GetService<IControllerService>().Transfer(source, empty, mgr.Context.AppLog);
+		ServiceLocator.Instance.GetService<IInventoryService>();
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		ITransferResult transferResult = service.Transfer(source, empty);
 		if (transferResult.Transferred)
 		{
 			if (Debug)
 			{
-				LogHelper.Instance.Log("MerchMetadata: xfer of {0} [Flags = {1}] to {2} was successful.", source.ToString(), flags.ToString(), empty.ToString());
+				LogHelper.Instance.Log("MerchMetadata: xfer of {0} [Flags = {1}] to {2} was successful.", source.ToString(), transferResult.Destination.Flags.ToString(), empty.ToString());
 			}
-			empty.Flags = flags;
-			service.Save(empty);
 		}
 		else
 		{
@@ -296,9 +293,11 @@ internal sealed class SegmentManager : IGetObserver
 			}
 			if (IsThinType(iterator.Location.Flags))
 			{
-				if (Compare(iterator.Location.Flags, flags) < 0)
+				int num = Compare(iterator.Location.Flags, flags);
+				if (num < 0)
 				{
-					ILocation empty = MerchSegmentFactory.Get(iterator.Location.Flags).GetEmpty();
+					MerchSegment merchSegment = MerchSegmentFactory.Get(iterator.Location.Flags);
+					ILocation empty = merchSegment.GetEmpty();
 					if (empty != null)
 					{
 						result = MoveThin(iterator.Location, empty, manager);
@@ -342,7 +341,8 @@ internal sealed class SegmentManager : IGetObserver
 		if (xferResult.Transferred)
 		{
 			context.CreateResult("DiskTransferSuccessful", Instance.InCompressedZone(xferResult.Source) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", xferResult.Source.Deck, xferResult.Source.Slot, "EMPTY", null, xferResult.Destination.ID);
-			if (ServiceLocator.Instance.GetService<IDumpbinService>().IsBin(xferResult.Destination))
+			IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+			if (service.IsBin(xferResult.Destination))
 			{
 				context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, xferResult.Destination.ID, null, null);
 			}

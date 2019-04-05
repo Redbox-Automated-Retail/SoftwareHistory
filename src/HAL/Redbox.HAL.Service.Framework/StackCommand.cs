@@ -1,9 +1,7 @@
 using System.ComponentModel;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.HAL.IPC.Framework;
-using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Service.Framework;
@@ -11,101 +9,64 @@ namespace Redbox.HAL.Service.Framework;
 [Command("stack")]
 public sealed class StackCommand
 {
-	[CommandForm(Name = "show")]
 	[Usage("STACK show job: job-id")]
 	[Description("Dumps a diagnostic list of the stack contents.")]
+	[CommandForm(Name = "show")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job == null)
+		IExecutionContext job = CommandHelper.GetJob(jobId, context.Errors);
+		if (job != null)
 		{
-			return;
-		}
-		using (new ResultsReader(job))
-		{
-			int num = job.StackDepth + job.ResultCount;
-			foreach (object item in job.EnumerateStack())
+			int position = job.StackDepth + job.ResultCount;
+			job.ForeachStackItem(delegate(object o)
 			{
-				context.Messages.Add($"{num--}: {item}");
-			}
-			foreach (string item2 in job.EnumerateResults())
+				context.Messages.Add($"{position--}: {o}");
+			});
+			job.ForeachResult(delegate(string r)
 			{
-				context.Messages.Add($"{num--}: {item2}");
-			}
+				context.Messages.Add($"{position--}: {r}");
+			});
 		}
 	}
 
 	[CommandForm(Name = "clear")]
-	[Usage("STACK clear job: job-id")]
 	[Description("Clears the execution engine's data stack.")]
+	[Usage("STACK clear job: job-id")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job != null)
-		{
-			job.ClearStack();
-			job.SaveDataStack();
-		}
+		CommandHelper.GetJob(jobId, context.Errors)?.ClearStack();
 	}
 
 	[CommandForm(Name = "remove-results")]
-	[Usage("STACK remove-results job: job-id")]
 	[Description("Removes only entries on the stack that were added using the RESULT instruction.")]
+	[Usage("STACK remove-results job: job-id")]
 	public void RemoveResults(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job != null)
-		{
-			job.RemoveResultsFromStack();
-			job.SaveDataStack();
-		}
+		CommandHelper.GetJob(jobId, context.Errors)?.ClearResults();
 	}
 
+	[Description("Pops any value at the specified end of the data stack for the designated job.  Values are popped from the top of the stack by default.")]
 	[CommandForm(Name = "pop")]
-	[Usage("STACK push job: job-id value: value [end: bottom|top]")]
-	[Description("Pushes value onto specified end of stack for the designated job.")]
+	[Usage("STACK pop job: job-id value: value [end: bottom|top]")]
 	public void Pop(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId, StackEnd? end)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
+		IExecutionContext job = CommandHelper.GetJob(jobId, context.Errors);
 		if (job != null)
 		{
-			context.Messages.Add((end == StackEnd.Bottom) ? job.PopBottom().ToString() : job.PopTop().ToString());
-			job.SaveDataStack();
+			context.Messages.Add(job.Pop(end ?? StackEnd.Top).ToString());
 		}
 	}
 
+	[Description("Pushes value onto specified end of stack for the designated job.")]
 	[CommandForm(Name = "push")]
-	[Usage("STACK pop job: job-id [end: bottom|top]")]
-	[Description("Pops any value at the specified end of the data stack for the designated job.  Values are popped from the top of the stack by default.")]
+	[Usage("STACK push job: job-id [end: bottom|top]")]
 	public void Push(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId, [CommandKeyValue(IsRequired = true)] string value, StackEnd? end)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job == null)
+		IExecutionContext job = CommandHelper.GetJob(jobId, context.Errors);
+		if (job != null)
 		{
-			return;
+			IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+			service.PushValue(job, value, end ?? StackEnd.Top, context.Errors);
 		}
-		Tokenizer tokenizer = new Tokenizer(1, string.Format("PUSH " + value));
-		tokenizer.Tokenize();
-		if (tokenizer.Errors.ContainsError())
-		{
-			context.Errors.AddRange(tokenizer.Errors);
-			return;
-		}
-		foreach (Token token in tokenizer.Tokens)
-		{
-			if (token.Type == TokenType.NumericLiteral || token.Type == TokenType.StringLiteral)
-			{
-				object instance = token.ConvertValue();
-				if (end == StackEnd.Bottom)
-				{
-					job.PushBottom(instance);
-				}
-				else
-				{
-					job.PushTop(instance);
-				}
-			}
-		}
-		job.SaveDataStack();
 	}
 }

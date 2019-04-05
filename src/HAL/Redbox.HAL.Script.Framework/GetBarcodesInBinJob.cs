@@ -8,7 +8,8 @@ internal sealed class GetBarcodesInBinJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IList<IDumpBinInventoryItem> barcodesInBin = ServiceLocator.Instance.GetService<IDumpbinService>().GetBarcodesInBin();
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		IList<IDumpBinInventoryItem> barcodesInBin = service.GetBarcodesInBin();
 		using (new DisposeableList<IDumpBinInventoryItem>(barcodesInBin))
 		{
 			foreach (IDumpBinInventoryItem item in barcodesInBin)

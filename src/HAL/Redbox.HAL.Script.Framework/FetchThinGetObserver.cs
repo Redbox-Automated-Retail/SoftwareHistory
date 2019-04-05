@@ -6,7 +6,8 @@ internal sealed class FetchThinGetObserver : IGetObserver
 {
 	public void OnStuck(IGetResult result)
 	{
-		ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(result.Location);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		service.UpdateEmptyStuck(result.Location);
 	}
 
 	public bool OnEmpty(IGetResult result)

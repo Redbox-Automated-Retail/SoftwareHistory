@@ -6,8 +6,8 @@ using System.Reflection;
 using System.ServiceProcess;
 using Microsoft.Win32;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Services;
 using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
 using Redbox.HAL.DataStorage;
 using Redbox.HAL.Script.Framework;
 
@@ -15,6 +15,14 @@ namespace Redbox.HAL.PackageInstaller;
 
 internal sealed class PackageInstaller : IDisposable
 {
+	private const int BackupsToKeep = 2;
+
+	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
+
+	private const string DefaultConfiguration = "HAL.xml.default";
+
+	private const string ConfigurationFileName = "hal.xml";
+
 	private readonly string[] DefaultDatabases = new string[2] { "HALCounters.vdb3", "HALData.vdb3" };
 
 	private readonly string ServiceInstallerBatchFile;
@@ -32,14 +40,6 @@ internal sealed class PackageInstaller : IDisposable
 	private readonly List<IPackageInstallHandler> PackageHandlers = new List<IPackageInstallHandler>();
 
 	private readonly ErrorList InstallErrors = new ErrorList();
-
-	private const int BackupsToKeep = 2;
-
-	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
-
-	private const string DefaultConfiguration = "HAL.xml.default";
-
-	private const string ConfigurationFileName = "hal.xml";
 
 	private bool Disposed;
 
@@ -143,7 +143,8 @@ internal sealed class PackageInstaller : IDisposable
 		List<FileInfo> backups = new List<FileInfo>();
 		using (new DisposeableList<FileInfo>(backups))
 		{
-			Array.ForEach(Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml"), delegate(string bf)
+			string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml");
+			Array.ForEach(files, delegate(string bf)
 			{
 				FileInfo fileInfo = new FileInfo(bf);
 				if (!fileInfo.Name.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !fileInfo.Name.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase))
@@ -165,9 +166,10 @@ internal sealed class PackageInstaller : IDisposable
 	private bool ServiceIsInstalled()
 	{
 		ServiceController[] services = ServiceController.GetServices();
-		for (int i = 0; i < services.Length; i++)
+		ServiceController[] array = services;
+		foreach (ServiceController serviceController in array)
 		{
-			if (services[i].ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
+			if (serviceController.ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}
@@ -204,9 +206,19 @@ internal sealed class PackageInstaller : IDisposable
 
 	private void RegisterHandlers()
 	{
+		Writer.WriteLine("Register package handlers");
 		string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "*.dll");
-		foreach (string text in files)
+		string[] array = new string[1] { "CortexDecoder.dll" };
+		string[] array2 = files;
+		foreach (string text in array2)
 		{
+			string file = Path.GetFileName(text);
+			string value = Array.Find(array, (string a) => a.Equals(file, StringComparison.CurrentCultureIgnoreCase));
+			if (!string.IsNullOrEmpty(value))
+			{
+				Writer.WriteLine(" Exclude {0} ( '{1}' ) from handler search", file, text);
+				continue;
+			}
 			try
 			{
 				Assembly assembly = Assembly.LoadFrom(text);
@@ -224,11 +236,11 @@ internal sealed class PackageInstaller : IDisposable
 			}
 			catch (Exception ex)
 			{
-				Writer.WriteLine("Unable to load assembly '{0}' to scan for installer handlers.", text);
-				Writer.WriteLine("Exception: {0}", ex.Message);
+				Writer.WriteLine(" Unable to load assembly '{0}' to scan for installer handlers.", text);
+				Writer.WriteLine(" Exception: {0}", ex.Message);
 			}
 		}
-		Writer.WriteLine("[Package Installer] there are {0} handlers registered.", PackageHandlers.Count);
+		Writer.WriteLine("There are {0} handlers registered.", PackageHandlers.Count);
 	}
 
 	private void OnUpgrade()
@@ -249,9 +261,9 @@ internal sealed class PackageInstaller : IDisposable
 
 	private static void Main(string[] args)
 	{
-		ServiceLocator.Instance.AddService(typeof(ITableTypeFactory), new TableTypeFactory());
-		ServiceLocator.Instance.AddService(typeof(IFormattedLogFactoryService), new FormattedLogFactory());
-		ServiceLocator.Instance.AddService(typeof(IRuntimeService), new RuntimeService());
+		ServiceLocator.Instance.AddService<ITableTypeFactory>(new TableTypeFactory());
+		ServiceLocator.Instance.AddService<IFormattedLogFactoryService>(new FormattedLogFactory());
+		ServiceLocator.Instance.AddService<IRuntimeService>(new RuntimeService());
 		PackageInstaller installer = new PackageInstaller();
 		try
 		{
@@ -294,10 +306,10 @@ internal sealed class PackageInstaller : IDisposable
 				});
 				return;
 			}
-			ServiceLocator.Instance.AddService(typeof(IDataTableService), new DataTableService(exclusive: false));
-			ServiceLocator.Instance.AddService(typeof(IPersistentMapService), new PersistentMapService());
+			ServiceLocator.Instance.AddService<IDataTableService>(new DataTableService(exclusive: false));
+			ServiceLocator.Instance.AddService<IPersistentMapService>(new PersistentMapService());
 			ConfigurationService configurationService = ConfigurationService.Make(installer.ConfigurationFullPath);
-			ServiceLocator.Instance.AddService(typeof(IConfigurationService), configurationService);
+			ServiceLocator.Instance.AddService<IConfigurationService>(configurationService);
 			installer.RegisterHandlers();
 			if (File.Exists(installer.ConfigurationFullPath))
 			{

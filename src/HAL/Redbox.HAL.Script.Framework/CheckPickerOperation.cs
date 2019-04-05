@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -15,7 +14,7 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 	public void MachineFull(ExecutionResult result, string idInPicker)
 	{
 		Context.Send("MachineFull");
-		Context.CreateInfoResult("MachineFull", "The FINDEMPTY request failed because the machine is full.", idInPicker);
+		Context.CreateMachineFullResult(idInPicker);
 	}
 
 	public FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, ErrorCodes moveResult, int deck, int slot)
@@ -55,64 +54,54 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 	internal ErrorCodes CheckPicker(ExecutionResult result, string vendId)
 	{
 		Context.Send("CheckPickerStart");
-		Context.ServiceLog("Check picker to see if we need to put something away.");
-		if (!PickerBoard.IsFull())
-		{
-			OnComplete();
-			return ErrorCodes.PickerEmpty;
-		}
-		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
-		{
-			ErrorCodes errorCodes = clearGripperOperation.Execute();
-			if (errorCodes != ErrorCodes.Success)
-			{
-				Context.AppLog.Write(LogEntryType.Error, "There is an item stuck in the gripper ( {0} ); clear gripper returned error {1}.", clearGripperOperation.GetPrintableLocation(), errorCodes.ToString());
-				Context.CreateItemStuckResult(vendId);
-				Context.SymbolTable.Add("MSTESTER-SYMBOL-PICKER-FULL", "The gripper is obstructed.");
-				return ErrorCodes.PickerObstructed;
-			}
-		}
-		if (!PickerBoard.IsFull())
-		{
-			OnComplete();
-			return ErrorCodes.PickerEmpty;
-		}
+		LogHelper.Instance.WithContext("Check picker to see if we need to put something away.");
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IPickerSensorReadResult pickerSensorReadResult = service.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			Context.CreateItemStuckResult(vendId);
+			Context.SetSymbolValue("MSTESTER-SYMBOL-PICKER-FULL", "Sensor read failed.");
+			return ErrorCodes.PickerObstructed;
+		}
+		if (!pickerSensorReadResult.IsFull)
+		{
+			OnComplete();
+			return ErrorCodes.PickerEmpty;
+		}
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (service2.ClearGripper() != ErrorCodes.Success)
+		{
+			Context.CreateItemStuckResult(vendId);
+			Context.SetSymbolValue("MSTESTER-SYMBOL-PICKER-FULL", "The gripper is obstructed.");
+			return ErrorCodes.PickerObstructed;
+		}
+		pickerSensorReadResult = service.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			Context.CreateItemStuckResult(vendId);
+			Context.SetSymbolValue("MSTESTER-SYMBOL-PICKER-FULL", "Sensor read failed.");
+			return ErrorCodes.PickerObstructed;
+		}
+		if (!pickerSensorReadResult.IsFull)
+		{
+			OnComplete();
+			return ErrorCodes.PickerEmpty;
+		}
 		Context.Send("ItemInPicker");
-		Context.ServiceLog("Picker is full, trying to find a slot for product.");
-		string text = "UNKNOWN";
+		LogHelper.Instance.WithContext("Picker is full, trying to find a slot for product.");
 		if (service.VendDoorState != VendDoorState.Closed)
 		{
 			service.VendDoorClose();
 		}
-		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
-		{
-			ScanResult scanResult = scanner.Read();
-			if (!scanResult.SnapOk)
-			{
-				Context.CreateCameraCaptureErrorResult();
-			}
-			else if (!scanResult.ReadCode)
-			{
-				Context.CreateInfoResult("BadIdRead", "The READ request failed.");
-			}
-			else
-			{
-				text = scanResult.ScannedMatrix;
-			}
-		}
-		Context.ServiceLog("The ID in the picker: {0}", text);
+		string text = Scanner.ReadDiskInPicker(ReadDiskOptions.LeaveCaptureResult | ReadDiskOptions.LeaveNoReadResult, Context);
+		LogHelper.Instance.WithContext("The ID in the picker: {0}", text);
 		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, Context);
-		ErrorCodes errorCodes2 = fileDiskOperation.PutDiscAway(result, text);
-		if (errorCodes2 != ErrorCodes.Success)
-		{
-			Context.ServiceLog(LogEntryType.Error, "PutDiscAway returned status of {0}", errorCodes2);
-		}
-		else
+		ErrorCodes errorCodes = fileDiskOperation.PutDiscAway(result, text);
+		if (errorCodes == ErrorCodes.Success)
 		{
 			OnComplete();
 		}
-		return (errorCodes2 == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
+		return (errorCodes == ErrorCodes.Success) ? ErrorCodes.PickerEmpty : ErrorCodes.PickerFull;
 	}
 
 	internal CheckPickerOperation(ExecutionContext context)
@@ -124,6 +113,6 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 	private void OnComplete()
 	{
 		Context.Send("CheckPickerStop");
-		Context.ServiceLog("check-picker complete.");
+		LogHelper.Instance.WithContext("check-picker complete.");
 	}
 }

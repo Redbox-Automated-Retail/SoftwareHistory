@@ -30,7 +30,8 @@ public sealed class GampHelper
 
 	public int GetPlatterSlots()
 	{
-		List<List<int>> list = new GampHelper().ReadLegacySlotDataFile(removeZeroes: false);
+		GampHelper gampHelper = new GampHelper();
+		List<List<int>> list = gampHelper.ReadLegacySlotDataFile(removeZeroes: false);
 		if (list.Count == 0)
 		{
 			return -1;
@@ -116,7 +117,8 @@ public sealed class GampHelper
 		bool flag = false;
 		StringBuilder stringBuilder = new StringBuilder();
 		string[] array = File.ReadAllLines(path);
-		foreach (string text in array)
+		string[] array2 = array;
+		foreach (string text in array2)
 		{
 			List<int> list2 = new List<int>();
 			int result;
@@ -221,12 +223,13 @@ public sealed class GampHelper
 			return;
 		}
 		string[] array = File.ReadAllLines("C:\\gamp\\SystemData.dat");
-		for (int i = 0; i < array.Length; i++)
+		string[] array2 = array;
+		foreach (string text in array2)
 		{
-			string[] array2 = array[i].Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array2.Length >= 2 && int.TryParse(array2[1], out var result))
+			string[] array3 = text.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			if (array3.Length >= 2 && int.TryParse(array3[1], out var result))
 			{
-				action(array2[0], result);
+				action(array3[0], result);
 			}
 		}
 	}

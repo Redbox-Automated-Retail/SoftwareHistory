@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -15,24 +14,10 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 			EndJob(errored: true);
 			return;
 		}
-		if (!base.ControlSystem.VendDoorRent().Success)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		ErrorCodes errorCodes = service.AcceptDiskAtDoor();
+		if (ErrorCodes.PickerFull != errorCodes)
 		{
-			EndJob(errored: true);
-			return;
-		}
-		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
-		{
-			ErrorCodes errorCodes = acceptDiskOperation.Execute();
-			if (ErrorCodes.PickerFull != errorCodes)
-			{
-				applicationLog.Write($"GRIPPER ACCEPT-DISK-AT-DOOR returned error status {errorCodes.ToString()}", LogEntryType.Error);
-				EndJob(errored: true);
-				return;
-			}
-		}
-		if (!base.ControlSystem.VendDoorClose().Success)
-		{
-			applicationLog.Write("Disk is in picker; cannot close the vend door.", LogEntryType.Error);
 			EndJob(errored: true);
 			return;
 		}
@@ -40,7 +25,7 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 		bool errored = true;
 		using (Scanner scanner = new Scanner(base.ControlSystem))
 		{
-			ScanResult scanResult = scanner.Read();
+			using ScanResult scanResult = scanner.Read();
 			if (scanResult.ReadCode)
 			{
 				base.Context.CreateInfoResult("FraudItem", "This is the barcode to be marked as fraud.", scanResult.ScannedMatrix);
@@ -57,20 +42,28 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 
 	private void EndJob(bool errored)
 	{
-		if (errored)
+		try
 		{
-			base.Context.CreateInfoResult("HardwareError", "A hardware error occurred.", "UNKNOWN");
-		}
-		if (PickerBoard.IsFull())
-		{
-			using VendItemOperation vendItemOperation = new VendItemOperation();
-			VendItemResult vendItemResult = vendItemOperation.Execute();
-			if (ErrorCodes.PickerEmpty != vendItemResult.Status)
+			if (errored)
 			{
-				base.AppLog.Write($"GRIPPER VEND-DISC-AT-DOOR returned error status {vendItemResult.ToString()}", LogEntryType.Error);
+				base.Context.CreateInfoResult("HardwareError", "A hardware error occurred.", "UNKNOWN");
 			}
+			IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
+			{
+				base.Context.CreateInfoResult("HardwareError", $"Read picker sensors returned error {pickerSensorReadResult.Error}", "UNKNOWN");
+				return;
+			}
+			if (pickerSensorReadResult.IsFull)
+			{
+				IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+				service.VendItemInPicker();
+			}
+			base.ControlSystem.VendDoorClose();
 		}
-		base.ControlSystem.VendDoorClose();
-		base.AppLog.Write("Read fraud disk end.");
+		finally
+		{
+			base.AppLog.Write("Read fraud disk end.");
+		}
 	}
 }

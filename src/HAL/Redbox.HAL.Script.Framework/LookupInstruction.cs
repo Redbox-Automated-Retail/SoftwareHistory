@@ -48,15 +48,12 @@ public sealed class LookupInstruction : Instruction
 			ILocation location = service.Lookup(text);
 			if (location == null)
 			{
-				context.AppLog.LogLookupFailure(text);
 				context.PushTop("NOT FOUND");
+				return;
 			}
-			else
-			{
-				context.PushTop(location.Slot);
-				context.PushTop(location.Deck);
-				context.PushTop("FOUND");
-			}
+			context.PushTop(location.Slot);
+			context.PushTop(location.Deck);
+			context.PushTop("FOUND");
 		}
 		else
 		{

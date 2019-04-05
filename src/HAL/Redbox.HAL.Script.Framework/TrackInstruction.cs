@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -20,7 +21,8 @@ public sealed class TrackInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return Enum<Commands>.ParseIgnoringCase(operand, Commands.None) != Commands.None;
+		Commands commands = Enum<Commands>.ParseIgnoringCase(operand, Commands.None);
+		return commands != Commands.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)
@@ -51,7 +53,7 @@ public sealed class TrackInstruction : Instruction
 			HandleError(service.TrackClose(), context);
 			break;
 		case Commands.Cycle:
-			HandleError(service.TrackCycle(), context);
+			context.PushTop(service.TrackCycle().ToString().ToUpper());
 			break;
 		}
 	}

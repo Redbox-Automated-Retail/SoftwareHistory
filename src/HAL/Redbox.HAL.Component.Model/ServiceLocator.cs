@@ -11,6 +11,11 @@ public sealed class ServiceLocator : IServiceProvider
 
 	public static ServiceLocator Instance => m_instance;
 
+	public void AddService<T>(object instance)
+	{
+		AddService(typeof(T), instance);
+	}
+
 	public void AddService(Type serviceType, object instance)
 	{
 		Services.AddService(serviceType, instance);
@@ -24,6 +29,11 @@ public sealed class ServiceLocator : IServiceProvider
 	public object GetService(Type serviceType)
 	{
 		return Services.GetService(serviceType);
+	}
+
+	public void RemoveService<T>()
+	{
+		Services.RemoveService(typeof(T));
 	}
 
 	public void RemoveService(Type serviceType)

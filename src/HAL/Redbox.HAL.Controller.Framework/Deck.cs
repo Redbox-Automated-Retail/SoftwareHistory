@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Controller.Framework;
 
@@ -35,7 +34,7 @@ public sealed class Deck : IDeck
 
 	public int SlotsPerQuadrant { get; private set; }
 
-	public IList<IQuadrant> Quadrants => m_quadrants;
+	public List<IQuadrant> Quadrants => m_quadrants;
 
 	public override int GetHashCode()
 	{
@@ -58,7 +57,7 @@ public sealed class Deck : IDeck
 
 	public static bool operator ==(Deck lhs, Deck rhs)
 	{
-		if ((object)lhs == rhs)
+		if (object.ReferenceEquals(lhs, rhs))
 		{
 			return true;
 		}

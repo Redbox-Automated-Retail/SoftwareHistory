@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal sealed class PollerManager : IPollerService
+internal sealed class PollerManager
 {
 	private readonly Dictionary<string, ScriptPoller> PollerMap = new Dictionary<string, ScriptPoller>();
 
@@ -22,10 +22,29 @@ internal sealed class PollerManager : IPollerService
 		return null;
 	}
 
+	public void StartPollers()
+	{
+		DoForAll(delegate(ScriptPoller poller)
+		{
+			poller.Start();
+			return true;
+		});
+	}
+
+	public void StopPollers()
+	{
+		DoForAll(delegate(ScriptPoller poller)
+		{
+			poller.Shutdown(joinThread: false);
+			return true;
+		});
+	}
+
 	public void InitializePollers()
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
-		string text = ServiceLocator.Instance.GetService<IRuntimeService>().RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		string text = service.RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
 		Assembly assembly = null;
 		try
 		{
@@ -44,9 +63,11 @@ internal sealed class PollerManager : IPollerService
 			{
 				try
 				{
-					ScriptPoller value = Activator.CreateInstance(type, nonPublic: true) as ScriptPoller;
-					PollerMap[array[0].Name] = value;
-					LogHelper.Instance.Log("[PollerManager] Registered poller {0}", array[0].Name);
+					ScriptPoller scriptPoller = Activator.CreateInstance(type, nonPublic: true) as ScriptPoller;
+					PollerMap[array[0].Name] = scriptPoller;
+					scriptPoller.PollerName = array[0].Name;
+					scriptPoller.ConfigNotifications = array[0].ConfigNotifications;
+					LogHelper.Instance.Log("[PollerManager] Registered poller {0}", scriptPoller.PollerName);
 				}
 				catch (Exception e2)
 				{
@@ -54,7 +75,7 @@ internal sealed class PollerManager : IPollerService
 				}
 			}
 		}
-		LogHelper.Instance.Log($"[PollerManager] Time to scan for {PollerMap.Keys.Count} pollers: {executionTimer.Elapsed}");
+		LogHelper.Instance.Log("[PollerManager] Time to scan for {0} pollers: {1}", PollerMap.Keys.Count, executionTimer.Elapsed);
 		DoForAll(delegate(ScriptPoller poller)
 		{
 			poller.Initialize();

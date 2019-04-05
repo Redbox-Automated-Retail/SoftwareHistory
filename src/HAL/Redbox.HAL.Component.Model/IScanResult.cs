@@ -7,7 +7,9 @@ public interface IScanResult : IDisposable
 {
 	bool DeviceError { get; }
 
-	IList<IDecodeResult> DecodeResults { get; }
+	List<IDecodeResult> DecodeResults { get; }
 
 	TimeSpan ExecutionTime { get; }
+
+	string ImagePath { get; }
 }

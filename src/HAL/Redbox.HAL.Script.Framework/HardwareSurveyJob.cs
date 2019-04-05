@@ -24,8 +24,7 @@ internal sealed class HardwareSurveyJob : NativeJobAdapter
 			deviceStatus |= DeviceStatus.Configured;
 		}
 		base.Context.CreateInfoResult("AirExchanger", deviceStatus.ToString());
-		IDiskValidatorService service4 = ServiceLocator.Instance.GetService<IDiskValidatorService>();
-		base.Context.CreateInfoResult("FraudSensorEnabled", service4.IsConfigured ? DeviceStatus.Configured.ToString() : DeviceStatus.None.ToString());
+		base.Context.CreateInfoResult("FraudSensorEnabled", DeviceStatus.None.ToString());
 		Computerinfo computerinfo = new Computerinfo();
 		base.Context.CreateInfoResult("PCManufacturer", computerinfo.Manufacturer);
 		base.Context.CreateInfoResult("PCModel", computerinfo.Model);
@@ -42,8 +41,8 @@ internal sealed class HardwareSurveyJob : NativeJobAdapter
 		ITouchscreenDescriptor touchscreenDescriptor = service2.FindTouchScreen();
 		base.Context.CreateInfoResult("TouchscreenDevice", (touchscreenDescriptor == null) ? "UNKNOWN" : touchscreenDescriptor.Friendlyname);
 		base.Context.CreateInfoResult("TouchscreenFirmware", (touchscreenDescriptor == null) ? "UNKNOWN" : touchscreenDescriptor.ReadFirmware());
-		IControlSystem service5 = ServiceLocator.Instance.GetService<IControlSystem>();
-		base.Context.CreateInfoResult("ControllerFirmware", service5.GetBoardVersion(ControlBoards.Serial));
+		IControlSystem service4 = ServiceLocator.Instance.GetService<IControlSystem>();
+		base.Context.CreateInfoResult("ControllerFirmware", service4.GetBoardVersion(ControlBoards.Serial).Version);
 		List<IDeviceDescriptor> list = service2.FindDevices(DeviceClass.Monitor);
 		string message = "UNKNOWN";
 		foreach (IDeviceDescriptor item in list)

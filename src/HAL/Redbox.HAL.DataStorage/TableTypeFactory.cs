@@ -12,23 +12,21 @@ public sealed class TableTypeFactory : ITableTypeFactory
 
 	public ILocation NewLocation(int deck, int slot, string id, DateTime? returnTime, bool excluded, int stuck, MerchFlags flags)
 	{
-		return new Location(deck, slot)
-		{
-			ReturnDate = returnTime,
-			Excluded = excluded,
-			StuckCount = stuck,
-			Flags = flags,
-			ID = id
-		};
+		Location location = new Location(deck, slot);
+		location.ReturnDate = returnTime;
+		location.Excluded = excluded;
+		location.StuckCount = stuck;
+		location.Flags = flags;
+		location.ID = id;
+		return location;
 	}
 
 	public IPersistentCounter NewCounter(string name, int defaultValue)
 	{
-		return new PersistentCounter
-		{
-			Name = name,
-			Value = defaultValue
-		};
+		PersistentCounter persistentCounter = new PersistentCounter();
+		persistentCounter.Name = name;
+		persistentCounter.Value = defaultValue;
+		return persistentCounter;
 	}
 
 	public IDumpBinInventoryItem NewBinItem(string barcode, DateTime timestamp)
@@ -38,37 +36,34 @@ public sealed class TableTypeFactory : ITableTypeFactory
 
 	public IPersistentOption NewPersistentOption(string name, string value)
 	{
-		return new PersistentOption
-		{
-			Key = name,
-			Value = value
-		};
+		PersistentOption persistentOption = new PersistentOption();
+		persistentOption.Key = name;
+		persistentOption.Value = value;
+		return persistentOption;
 	}
 
 	public IHardwareCorrectionStatistic NewStatistic(HardwareCorrectionStatistic stat, string programName, bool correctionOk, DateTime timestamp)
 	{
-		return new HardwareCorrectionStat
-		{
-			Statistic = stat,
-			ProgramName = programName,
-			CorrectionOk = correctionOk,
-			CorrectionTime = timestamp
-		};
+		HardwareCorrectionStat hardwareCorrectionStat = new HardwareCorrectionStat();
+		hardwareCorrectionStat.Statistic = stat;
+		hardwareCorrectionStat.ProgramName = programName;
+		hardwareCorrectionStat.CorrectionOk = correctionOk;
+		hardwareCorrectionStat.CorrectionTime = timestamp;
+		return hardwareCorrectionStat;
 	}
 
 	public IKioskFunctionCheckData NewCheckData(string verticalSlotTestResult, string initResult, string vendDoorTestResult, string trackTestResult, string snapDecodeTestResult, string touchscreenDriverTestResult, string cameraDriverTestResult, DateTime timestamp, string userIdentifier)
 	{
-		return new KioskFunctionCheckData
-		{
-			VerticalSlotTestResult = verticalSlotTestResult,
-			InitTestResult = initResult,
-			VendDoorTestResult = vendDoorTestResult,
-			TrackTestResult = trackTestResult,
-			SnapDecodeTestResult = snapDecodeTestResult,
-			TouchscreenDriverTestResult = touchscreenDriverTestResult,
-			CameraDriverTestResult = cameraDriverTestResult,
-			Timestamp = timestamp,
-			UserIdentifier = userIdentifier
-		};
+		KioskFunctionCheckData kioskFunctionCheckData = new KioskFunctionCheckData();
+		kioskFunctionCheckData.VerticalSlotTestResult = verticalSlotTestResult;
+		kioskFunctionCheckData.InitTestResult = initResult;
+		kioskFunctionCheckData.VendDoorTestResult = vendDoorTestResult;
+		kioskFunctionCheckData.TrackTestResult = trackTestResult;
+		kioskFunctionCheckData.SnapDecodeTestResult = snapDecodeTestResult;
+		kioskFunctionCheckData.TouchscreenDriverTestResult = touchscreenDriverTestResult;
+		kioskFunctionCheckData.CameraDriverTestResult = cameraDriverTestResult;
+		kioskFunctionCheckData.Timestamp = timestamp;
+		kioskFunctionCheckData.UserIdentifier = userIdentifier;
+		return kioskFunctionCheckData;
 	}
 }

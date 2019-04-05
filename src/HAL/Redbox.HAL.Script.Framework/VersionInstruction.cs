@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -31,17 +32,20 @@ public class VersionInstruction : Instruction
 				result.Errors.Add(Error.NewError("E001", "Unrecognized board option.", $"The option {token.Value} is not a board."));
 				return;
 			}
-			string boardVersion = service.GetBoardVersion(controlBoards);
+			IBoardVersionResponse boardVersion = service.GetBoardVersion(controlBoards);
 			context.PushTop(boardVersion);
+			return;
 		}
-		else
+		IControlSystemRevision revision = service.GetRevision();
+		if (!revision.Success)
 		{
-			string[] boardVersions = service.GetBoardVersions();
-			foreach (string instance in boardVersions)
-			{
-				context.PushTop(instance);
-			}
-			context.PushTop("REVISION A");
+			context.PushTop(ErrorCodes.CommunicationError.ToString().ToUpper());
+			return;
 		}
+		Array.ForEach(revision.Responses, delegate(IBoardVersionResponse each)
+		{
+			context.PushTop(each);
+		});
+		context.PushTop($"REVISION {revision.Revision}");
 	}
 }

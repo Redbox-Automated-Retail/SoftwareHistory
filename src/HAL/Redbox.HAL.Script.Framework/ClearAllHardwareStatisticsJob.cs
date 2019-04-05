@@ -7,7 +7,8 @@ internal sealed class ClearAllHardwareStatisticsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().RemoveAll();
+		IHardwareCorrectionStatisticService service = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
+		service.RemoveAll();
 	}
 
 	internal ClearAllHardwareStatisticsJob(ExecutionResult result, ExecutionContext ctx)

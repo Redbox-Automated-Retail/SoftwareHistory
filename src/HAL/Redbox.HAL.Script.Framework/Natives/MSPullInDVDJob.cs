@@ -3,14 +3,20 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework.Natives;
 
-[NativeJob(ProgramName = "ms-pull-in-dvd", Operand = "MS-PULL-IN-DVD")]
+[NativeJob(ProgramName = "ms-pull-in-dvd")]
 internal sealed class MSPullInDVDJob : NativeJobAdapter
 {
 	private string ErrorCode = "SUCCESS";
 
 	protected override void ExecuteInner()
 	{
-		if (!base.ControlSystem.ReadSensors().IsFull)
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			ErrorCode = "PICKERSENSORREADFAILURE";
+			return;
+		}
+		if (!pickerSensorReadResult.IsFull)
 		{
 			base.Context.CreateInfoResult("InvalidJobUse", "Picker is clear.");
 			AddError("pull-in-dvd failed.");
@@ -21,9 +27,14 @@ internal sealed class MSPullInDVDJob : NativeJobAdapter
 			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
 			GripperFingerState finger = GripperFingerState.Rent;
 			ILocation currentLocation = service.CurrentLocation;
-			if (currentLocation != null && ServiceLocator.Instance.GetService<IDecksService>().GetFrom(currentLocation).IsSlotSellThru(currentLocation.Slot))
+			if (currentLocation != null)
 			{
-				finger = GripperFingerState.Open;
+				IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
+				IDeck deck = service2.GetFrom(currentLocation);
+				if (deck.IsSlotSellThru(currentLocation.Slot))
+				{
+					finger = GripperFingerState.Open;
+				}
 			}
 			if (!base.ControlSystem.TrackOpen().Success)
 			{
@@ -59,7 +70,7 @@ internal sealed class MSPullInDVDJob : NativeJobAdapter
 			{
 				ErrorCode = "TRACK CLOSE TIMEOUT";
 			}
-			else if (!base.ControlSystem.RollerToPosition(RollerPosition.Position4, 3000).Success)
+			else if (!base.ControlSystem.RollerToPosition(RollerPosition.Position4).Success)
 			{
 				ErrorCode = "ROLLER POS4 TIMEOUT";
 			}

@@ -19,16 +19,15 @@ internal sealed class TestQlmJob : NativeJobAdapter
 			AddError("The kiosk is not configured for a QLM.");
 			return;
 		}
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-		if (service2.QlmDeck == null)
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		if (service.QlmDeck == null)
 		{
 			applicationLog.Write("The kiosk is not configured with a QLM.");
 			base.Context.CreateInfoResult("SyncFailure", "Kiosk is not configured for a QLM.");
 			AddError("The kiosk is not configured for a QLM.");
 			return;
 		}
-		QlmStatus qlmStatus = service.GetQlmStatus();
+		QlmStatus qlmStatus = base.ControlSystem.GetQlmStatus();
 		if (QlmStatus.Engaged != qlmStatus)
 		{
 			applicationLog.Write($"The QLM status instruction returned {qlmStatus.ToString()}");
@@ -36,15 +35,21 @@ internal sealed class TestQlmJob : NativeJobAdapter
 			AddError("There is no QLM in the bay.");
 			return;
 		}
-		if (!PickerBoard.IsFull())
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			base.Context.CreateInfoResult("HardwareError", $"Read picker sensors returned error {pickerSensorReadResult.Error}");
+			return;
+		}
+		if (!pickerSensorReadResult.IsFull)
 		{
 			applicationLog.Write("There is not a disk in the picker for a test - bailing.");
 			AddError("There is no disk in the picker.");
 			base.Context.CreateInfoResult("SyncFailure", "There is no disk in the picker.");
 			return;
 		}
-		IRuntimeService service3 = ServiceLocator.Instance.GetService<IRuntimeService>();
-		int number = service2.QlmDeck.Number;
+		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+		int number = service.QlmDeck.Number;
 		int[] targetSlots = TargetSlots;
 		foreach (int num in targetSlots)
 		{
@@ -54,14 +59,14 @@ internal sealed class TestQlmJob : NativeJobAdapter
 				AddError("Unable to PUT disk.");
 				return;
 			}
-			service3.Wait(1000);
+			service2.Wait(1000);
 			if (!MoveAndGet(number, num))
 			{
 				base.Context.CreateResult("SyncFailure", "Filing the disk to the QLM failed.", number, num, null, null, null);
 				AddError("Failure to get disk.");
 				return;
 			}
-			service3.Wait(500);
+			service2.Wait(500);
 		}
 		applicationLog.Write("The sync completed successfully.");
 		base.MotionService.MoveVend(MoveMode.Get, applicationLog);

@@ -1,54 +1,45 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "ms-vend-disk-in-picker", Operand = "MS-VEND-DISK-IN-PICKER")]
+[NativeJob(ProgramName = "ms-vend-disk-in-picker")]
 internal sealed class VendDiskInPickerJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		try
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
 		{
-			if (!PickerBoard.IsFull())
-			{
-				base.Context.CreateInfoResult("EmptyPicker", "No disk in picker.");
-				return;
-			}
-			ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.None, base.AppLog);
-			if (errorCodes != ErrorCodes.Success)
-			{
-				base.Context.CreateInfoResult("HardwareError", $"MOVEVEND returned error {errorCodes.ToString().ToUpper()}");
-				return;
-			}
-			using (VendItemOperation vendItemOperation = new VendItemOperation())
-			{
-				VendItemResult vendItemResult = vendItemOperation.Execute();
-				switch (vendItemResult.Status)
-				{
-				case ErrorCodes.TrackCloseTimeout:
-				case ErrorCodes.VendDoorRentTimeout:
-				case ErrorCodes.SensorReadError:
-					base.Context.CreateInfoResult("HardwareError", $"VendItem returned {vendItemResult.Status.ToString().ToUpper()}");
-					return;
-				case ErrorCodes.PickerEmpty:
-					base.Context.CreateInfoResult("ItemVended", "The item was vended.");
-					return;
-				}
-			}
-			using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
-			ErrorCodes errorCodes2 = acceptDiskOperation.Execute();
-			if (ErrorCodes.PickerFull != errorCodes2)
-			{
-				base.Context.CreateInfoResult("TakeDiskError", $"Accept disk returned error {errorCodes2.ToString().ToUpper()}");
-			}
+			base.Context.CreateInfoResult("HardwareError", $"Read picker sensors returned error {pickerSensorReadResult.Error}");
+			return;
 		}
-		finally
+		if (!pickerSensorReadResult.IsFull)
 		{
-			if (!base.ControlSystem.VendDoorClose().Success)
-			{
-				base.Context.CreateInfoResult("HardwareError", "Unable to close the vend door.");
-			}
+			base.Context.CreateInfoResult("EmptyPicker", "No disk in picker.");
+			return;
+		}
+		ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.None, base.AppLog);
+		if (errorCodes != ErrorCodes.Success)
+		{
+			base.Context.CreateInfoResult("HardwareError", $"MOVEVEND returned error {errorCodes.ToString().ToUpper()}");
+			return;
+		}
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IVendItemResult vendItemResult = service.VendItemInPicker();
+		if (ErrorCodes.PickerEmpty == vendItemResult.Status)
+		{
+			base.Context.CreateInfoResult("ItemVended", "The item was vended.");
+			return;
+		}
+		if (ErrorCodes.PickerFull != vendItemResult.Status)
+		{
+			base.Context.CreateInfoResult("HardwareError", vendItemResult.Presented ? $"VendItem returned {vendItemResult.Status.ToString().ToUpper()}" : "The disk was not presented.");
+			return;
+		}
+		ErrorCodes errorCodes2 = service.AcceptDiskAtDoor();
+		if (ErrorCodes.PickerFull != errorCodes2)
+		{
+			base.Context.CreateInfoResult("TakeDiskError", $"Take disk returned error {errorCodes2.ToString().ToUpper()}");
 		}
 	}
 

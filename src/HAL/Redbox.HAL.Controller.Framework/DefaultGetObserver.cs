@@ -1,12 +1,9 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Controller.Framework;
 
-public sealed class DefaultGetObserver : IGetObserver
+public sealed class DefaultGetObserver : IGetFromObserver, IGetObserver
 {
-	internal static DefaultGetObserver Instance => Singleton<DefaultGetObserver>.Instance;
-
 	public void OnStuck(IGetResult result)
 	{
 	}
@@ -16,7 +13,7 @@ public sealed class DefaultGetObserver : IGetObserver
 		return true;
 	}
 
-	private DefaultGetObserver()
+	public void OnMoveError(ErrorCodes error)
 	{
 	}
 }

@@ -1,6 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;

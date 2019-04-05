@@ -10,10 +10,15 @@ public static class Singleton<T> where T : class
 	static Singleton()
 	{
 		Type typeFromHandle = typeof(T);
-		if (typeFromHandle.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Length != 0)
+		if (typeFromHandle.GetConstructors(BindingFlags.Instance | BindingFlags.Public).Length > 0)
 		{
 			throw new SingletonException("A Singleton<T> class must not implement public instance constructors.");
 		}
-		Instance = (typeFromHandle.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null) ?? throw new SingletonException("A Singleton<T> class must implement a non-public instance constructor.")).Invoke(null) as T;
+		ConstructorInfo constructor = typeFromHandle.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+		if (constructor == null)
+		{
+			throw new SingletonException("A Singleton<T> class must implement a non-public instance constructor.");
+		}
+		Instance = constructor.Invoke(null) as T;
 	}
 }

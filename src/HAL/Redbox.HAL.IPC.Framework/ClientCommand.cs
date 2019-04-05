@@ -5,16 +5,18 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Compression;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
 public class ClientCommand<T> where T : ClientCommandResult, new()
 {
-	private TextWriter m_logFile;
-
 	private const string IPCLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs\\IPCFramework";
+
+	private TextWriter m_logFile;
 
 	private IPCProtocol m_protocol;
 
@@ -95,14 +97,17 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 				session.ConnectThrowOnError();
 			}
 			List<string> list = session.ExecuteCommand(CommandText);
-			val.Success = session.IsStatusOK(list);
+			bool success = session.IsStatusOK(list);
+			val.Success = success;
 			if (list.Count > 0)
 			{
-				val.StatusMessage = list[list.Count - 1];
+				string statusMessage = list[list.Count - 1];
+				val.StatusMessage = statusMessage;
 				list.RemoveAt(list.Count - 1);
 			}
 			val.CommandMessages.AddRange(list);
-			foreach (int item in ConvertMessages(val))
+			List<int> list2 = ConvertMessages(val);
+			foreach (int item in list2)
 			{
 				if (item < val.CommandMessages.Count)
 				{
@@ -128,7 +133,8 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 		}
 		finally
 		{
-			val.ExecutionTime = executionTimer.Elapsed;
+			TimeSpan elapsed = executionTimer.Elapsed;
+			val.ExecutionTime = elapsed;
 			ExecutionTime = val.ExecutionTime;
 		}
 		return val;
@@ -206,12 +212,12 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 			}
 			else if (result.CommandMessages[i].StartsWith("LZMA|"))
 			{
-				ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
+				ICompressionAlgorithm algorithm = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA);
 				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm.Decompress(StringExtensions.Base64ToBytes(result.CommandMessages[i].Substring(5))));
 			}
 			else if (result.CommandMessages[i].StartsWith("GZIP|"))
 			{
-				ICompressionAlgorithm algorithm2 = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
+				ICompressionAlgorithm algorithm2 = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.GZip);
 				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm2.Decompress(StringExtensions.Base64ToBytes(result.CommandMessages[i].Substring(5))));
 			}
 		}

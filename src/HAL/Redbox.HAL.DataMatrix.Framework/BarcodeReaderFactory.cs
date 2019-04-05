@@ -2,38 +2,73 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-public sealed class BarcodeReaderFactory
+public sealed class BarcodeReaderFactory : IBarcodeReaderFactory
 {
-	private readonly IBarcodeReader Reader;
+	private readonly IBarcodeReader NilReader = new NilReader();
 
-	private static readonly BarcodeReaderFactory _Instance;
+	private ClearImageReaderV2 m_clearImageReader;
 
-	public static BarcodeReaderFactory Instance => _Instance;
+	private CortexDecoder m_cortexDecoder;
+
+	private IBarcodeReader Reader;
+
+	public string ImagePath => BarcodeConfiguration.Instance.WorkingPath;
 
 	public IBarcodeReader GetConfiguredReader()
 	{
 		return Reader;
 	}
 
-	private BarcodeReaderFactory()
+	public void Initialize(ErrorList errors)
 	{
-		try
+		SetConfiguredReader();
+		if (Reader == null)
 		{
-			Reader = new ClearImageReaderV2();
-			if (!Reader.IsLicensed)
-			{
-				Reader = new NilReader();
-			}
-			LogHelper.Instance.Log("[Barcode Reader] The reader {0} licensed.", Reader.IsLicensed ? "is" : "is not");
-		}
-		catch
-		{
-			Reader = new NilReader();
+			errors.Add(Error.NewError("D001", "No reader found", "Unable to find a licensed reader"));
 		}
 	}
 
-	static BarcodeReaderFactory()
+	public BarcodeReaderFactory()
 	{
-		_Instance = new BarcodeReaderFactory();
+		LogHelper.Instance.Log("Barcode Reader Factory - constructor.");
+	}
+
+	private void SetConfiguredReader()
+	{
+		LogHelper.Instance.Log("Set Configured Reader -- get cortex decoder");
+		IBarcodeReader barcodeReader = GetCortexDecoder();
+		if (barcodeReader == null || !barcodeReader.IsLicensed)
+		{
+			LogHelper.Instance.Log("Set Configured Reader -- get inlite reader");
+			barcodeReader = GetInliteReader();
+		}
+		if (barcodeReader == null)
+		{
+			barcodeReader = NilReader;
+		}
+		Reader = barcodeReader;
+		LogHelper.Instance.Log("[BarcodeReaderFactory] Configured reader {0} {1} licensed.", Reader.Service, Reader.IsLicensed ? "is" : "is not");
+	}
+
+	private CortexDecoder GetCortexDecoder()
+	{
+		if (m_cortexDecoder == null)
+		{
+			m_cortexDecoder = new CortexDecoder();
+		}
+		return m_cortexDecoder;
+	}
+
+	private ClearImageReaderV2 GetInliteReader()
+	{
+		if (m_clearImageReader == null)
+		{
+			ClearImageReaderV2 clearImageReaderV = new ClearImageReaderV2();
+			if (clearImageReaderV.IsLicensed)
+			{
+				m_clearImageReader = clearImageReaderV;
+			}
+		}
+		return m_clearImageReader;
 	}
 }

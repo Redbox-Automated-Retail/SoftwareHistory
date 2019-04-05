@@ -28,8 +28,6 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 		}
 	}
 
-	internal bool IsQuick { get; set; }
-
 	public void MachineFull(ExecutionResult result, string id)
 	{
 		base.Context.Send("MachineFull");
@@ -80,215 +78,188 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 		m_cameraErrors = 0;
 	}
 
-	internal ReturnJob(ExecutionResult result, ExecutionContext context, bool isQuick)
+	internal ReturnJob(ExecutionResult result, ExecutionContext context)
 		: base(result, context)
 	{
-		IsQuick = isQuick;
 	}
 
 	protected override void ExecuteInner()
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		ServiceLocator.Instance.GetService<IRuntimeService>();
 		string scannedId = "UNKNOWN";
-		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Return", flushOnWrite: false, IsQuick ? "quick-return" : null);
-		IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Return", flushOnWrite: false, null);
 		try
 		{
-			ServiceLocator.Instance.GetService<IDiskValidatorService>().CorrectErroredPost(applicationLog);
-			using (FraudValidator fraudValidator = new FraudValidator(base.Context, startScan: false))
+			LogHelper.Instance.WithContext("Return start.");
+			IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
 			{
-				if (IsQuick)
+				base.Context.CreateInfoResult("MachineError", "Unable to read picker sensors.");
+				AddError("Unable to read picker sensors.");
+				return;
+			}
+			if (pickerSensorReadResult.IsFull)
+			{
+				using CheckPickerOperation checkPickerOperation = new CheckPickerOperation(base.Context);
+				if (checkPickerOperation.CheckPicker(base.Result, null) != ErrorCodes.PickerEmpty)
 				{
-					service2.Increment("QuickReturnAttention");
-				}
-				base.Context.ServiceLog("Begin return request.");
-				applicationLog.Write("Return start.");
-				IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadSensors();
-				if (pickerSensorReadResult.Error != ErrorCodes.Success)
-				{
-					applicationLog.Write("Unable to read the picker sensors.");
-					base.Context.CreateInfoResult("MachineError", "Unable to read picker sensors.");
-					AddError("Unable to read picker sensors.");
-					DisplayQRState("Error", haltPoll: true, 5000);
+					AddError("Failed to put disk away.");
 					return;
 				}
-				if (PickerBoard.IsFull())
-				{
-					using CheckPickerOperation checkPickerOperation = new CheckPickerOperation(base.Context);
-					if (checkPickerOperation.CheckPicker(base.Result, null) != ErrorCodes.PickerEmpty)
-					{
-						AddError("Failed to put disk away.");
-						DisplayQRState("Error", haltPoll: true, 5000);
-						return;
-					}
-				}
-				if (base.InventoryService.MachineIsFull())
-				{
-					applicationLog.LogMachineFull();
-					DisplayQRState("Error", haltPoll: false, 5000);
-					base.Context.Send("MachineFull");
-					return;
-				}
-				if (base.MotionService.MoveVend(MoveMode.Get, applicationLog) != ErrorCodes.Success)
-				{
-					base.Context.Send("MachineError");
-					base.Context.CreateInfoResult("MachineError", "Unable to move to the vend position.");
-					AddError("Unable to move to the vend position.");
-					DisplayQRState("Error", haltPoll: true, 5000);
-					return;
-				}
-				if (!IsQuick)
-				{
-					service.Wait(1000);
-				}
+			}
+			if (base.InventoryService.MachineIsFull())
+			{
+				base.Context.Send("MachineFull");
+			}
+			else if (base.MotionService.MoveVend(MoveMode.Get, applicationLog) != ErrorCodes.Success)
+			{
+				OnMoveVendError();
+			}
+			else
+			{
 				if (ContextSwitchRequested())
 				{
 					return;
 				}
 				base.Context.Send("DisableCancel");
-				if (!base.ControlSystem.VendDoorRent().Success)
+				base.Context.Send("BlockingOnSensor");
+				IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+				ErrorCodes errorCodes = service.AcceptDiskAtDoor();
+				if (ErrorCodes.SensorReadError == errorCodes)
 				{
-					applicationLog.Write("Unable to set the vend door to the rent position.");
 					base.Context.Send("MachineError");
-					base.Context.CreateInfoResult("MachineError", "Unable to set the vend door to RENT.");
-					DisplayQRState("Error", haltPoll: true, 5000);
+					AddError("Machine error during accept disc.");
 					return;
 				}
-				DisplayQRState("Return", haltPoll: false, null);
-				base.Context.Send("BlockingOnSensor");
-				using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
+				if (ErrorCodes.PickerEmpty == errorCodes)
 				{
-					ErrorCodes errorCodes = acceptDiskOperation.Execute();
-					applicationLog.WriteFormatted("TakeDiskAtVendDoor returned {0}", errorCodes.ToString());
-					if (ErrorCodes.SensorReadError == errorCodes)
+					applicationLog.Write("An item was not put in the picker.");
+					return;
+				}
+				if (ErrorCodes.VendDoorRentTimeout == errorCodes)
+				{
+					base.Context.Send("MachineError");
+					base.Context.CreateInfoResult("MachineError", "Unable to set the vend door to RENT.");
+					return;
+				}
+				if (ErrorCodes.PickerObstructed == errorCodes || ErrorCodes.VendDoorCloseTimeout == errorCodes)
+				{
+					ErrorCodes errorCodes2 = RejectDisk();
+					if (ErrorCodes.PickerEmpty == errorCodes2 || ErrorCodes.PickerFull != errorCodes2)
 					{
-						base.Context.Send("MachineError");
-						AddError("Machine error during accept disc.");
-						DisplayQRState("Error", haltPoll: true, 5000);
 						return;
-					}
-					if (ErrorCodes.PickerEmpty == errorCodes)
-					{
-						applicationLog.Write("An item was not put in the picker.", LogEntryType.Info);
-						DisplayQRState("Busy", haltPoll: false, null);
-						if (IsQuick)
-						{
-							service2.Increment("QuickReturnNoInsertDisk");
-						}
-						return;
-					}
-					if (ErrorCodes.PickerObstructed == errorCodes || ErrorCodes.VendDoorCloseTimeout == errorCodes)
-					{
-						DisplayQRState("Error", haltPoll: false, null);
-						ErrorCodes errorCodes2 = RejectDisk();
-						if (ErrorCodes.PickerEmpty == errorCodes2)
-						{
-							DisplayQRState("Busy", haltPoll: false, null);
-							return;
-						}
-						if (ErrorCodes.PickerFull != errorCodes2)
-						{
-							DisplayQRState("Error", haltPoll: true, 5000);
-							return;
-						}
 					}
 				}
-				base.Context.AppLog.Write("Item received into picker.", LogEntryType.Info);
+				LogHelper.Instance.WithContext("Item received into picker.");
 				base.ControlSystem.TrackCycle();
-				fraudValidator.StartScan();
 				if (!ReadDisk(out scannedId))
 				{
-					DisplayQRState("Insert-Error", haltPoll: false, null);
 					base.Context.Send("ItemInsertError");
 					ReturnToUserOrFile(FileDiskInKiosk, delegate
 					{
 					}, scannedId);
 				}
-				else if (ServiceLocator.Instance.GetService<IBarcodeValidatorService>().IsValid(scannedId))
+				else
 				{
-					DisplayQRState("Success", haltPoll: false, null);
-					if (ControllerConfiguration.Instance.MarkDuplicatesUnknown && ControllerConfiguration.Instance.LeaveDuplicateResultInReturn && base.InventoryService.IsBarcodeDuplicate(scannedId, out var _))
+					IBarcodeValidatorService service2 = ServiceLocator.Instance.GetService<IBarcodeValidatorService>();
+					if (service2.IsValid(scannedId))
 					{
-						base.Context.CreateInfoResult("CameraCaptureFailure", "Return has detected a duplicate barcode.");
+						if (ControllerConfiguration.Instance.MarkDuplicatesUnknown && ControllerConfiguration.Instance.LeaveDuplicateResultInReturn && base.InventoryService.IsBarcodeDuplicate(scannedId, out var _))
+						{
+							base.Context.CreateInfoResult("CameraCaptureFailure", "Return has detected a duplicate barcode.");
+						}
+						FileDiskInKiosk(scannedId);
 					}
-					FileDiskInKiosk(scannedId);
-				}
-				else
-				{
-					base.Context.Send("UnrecognizedBarcodeReturned");
-					base.Context.AppLog.WriteFormatted($"The barcode {scannedId} is not a recognized Redbox barcode.");
-					DisplayQRState("Error", haltPoll: false, 100);
-					ReturnToUserOrFile(FileUnrecognizedDisk, delegate(string barcode)
+					else
 					{
-						base.Context.CreateInfoResult("NonRedboxDiskReturnedToUser", "The disk was returned to the user.", barcode);
-					}, scannedId);
+						base.Context.Send("UnrecognizedBarcodeReturned");
+						base.Context.AppLog.WriteFormatted($"The barcode {scannedId} is not a recognized Redbox barcode.");
+						ReturnToUserOrFile(FileUnrecognizedDisk, delegate(string barcode)
+						{
+							base.Context.CreateInfoResult("NonRedboxDiskReturnedToUser", "The disk was returned to the user.", barcode);
+						}, scannedId);
+					}
 				}
-			}
-			IPickerSensorReadResult pickerSensorReadResult2 = base.ControlSystem.ReadSensors();
-			if (pickerSensorReadResult2.Error == ErrorCodes.Success && !pickerSensorReadResult2.IsFull)
-			{
-				if (base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+				IPickerSensorReadResult pickerSensorReadResult2 = base.ControlSystem.ReadPickerSensors();
+				if (pickerSensorReadResult2.Success && !pickerSensorReadResult2.IsFull)
 				{
-					AddError("Unable to move to the vend position.");
-				}
-				else
-				{
-					base.Context.Send("Bail");
+					if (base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+					{
+						AddError("Unable to move to the vend position.");
+					}
+					else
+					{
+						base.Context.Send("Bail");
+					}
 				}
 			}
 		}
 		finally
 		{
-			base.ControlSystem.StopRoller();
 			if (ControllerConfiguration.Instance.IsVMZMachine)
 			{
 				IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
-				IDumpbinService service4 = ServiceLocator.Instance.GetService<IDumpbinService>();
 				base.Context.CreateInfoResult("EmptySlotCount", service3.GetMachineEmptyCount().ToString());
+				IDumpbinService service4 = ServiceLocator.Instance.GetService<IDumpbinService>();
 				base.Context.CreateInfoResult("DumpBinRemainingCapacity", service4.RemainingSpace().ToString());
 				base.Context.CreateInfoResult("ReturnSlotBufferValue", ControllerConfiguration.Instance.ReturnSlotBuffer.ToString());
 			}
 			if (CameraErrored && ControllerConfiguration.Instance.FixCameraAfterReturn)
 			{
-				ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().Restart();
+				IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
+				configuredDevice.Restart();
 			}
 		}
 	}
 
-	private void ReturnToUserOrFile(Action<string> handler, Action<string> returnedHandler, string barcode)
+	private void ReturnToUserOrFile(Action<string> onFileDisk, Action<string> onDiskReturned, string barcode)
 	{
-		ErrorCodes errorCodes = ReturnDiskToUser();
-		if (ErrorCodes.PickerEmpty == errorCodes)
+		if (base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog) != ErrorCodes.Success)
 		{
-			returnedHandler(barcode);
-			DisplayQRState("Busy", haltPoll: false, null);
+			OnMoveVendError();
 			return;
 		}
-		if (ErrorCodes.PickerFull == errorCodes)
+		LogHelper.Instance.WithContext("Start pushing item out of picker.");
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IVendItemResult vendItemResult = service.VendItemInPicker();
+		if (ErrorCodes.PickerEmpty == vendItemResult.Status)
+		{
+			onDiskReturned(barcode);
+			base.Context.AppLog.WriteFormatted("The disk was returned to the user.");
+			return;
+		}
+		if (ErrorCodes.PickerFull != vendItemResult.Status)
+		{
+			base.Context.Send("MachineError");
+			AddError("Hardware error.");
+			return;
+		}
+		LogHelper.Instance.WithContext("Disk not taken; accepting disk into kiosk.");
+		ErrorCodes errorCodes = service.AcceptDiskAtDoor();
+		if (ErrorCodes.PickerEmpty == errorCodes)
+		{
+			onDiskReturned(barcode);
+			base.Context.AppLog.WriteFormatted("The disk was returned to the user.");
+		}
+		else if (ErrorCodes.PickerFull == errorCodes)
 		{
 			base.Context.AppLog.Write("Customer did not take disc; accept into kiosk.");
 			base.ControlSystem.TrackCycle();
-			handler(barcode);
-			return;
+			onFileDisk(barcode);
 		}
-		if (ErrorCodes.PickerObstructed == errorCodes)
+		else if (ErrorCodes.PickerObstructed == errorCodes || ErrorCodes.VendDoorCloseTimeout == errorCodes)
 		{
-			base.Context.AppLog.WriteFormatted("ReturnToUser returned {0}; reject disk.", errorCodes.ToString());
 			ErrorCodes errorCodes2 = RejectDisk();
-			LogHelper.Instance.Log(LogEntryType.Error, "[Return] RejectDisk returned {0} (job ID = {1})", errorCodes2.ToString(), base.Context.ID);
 			if (ErrorCodes.PickerFull == errorCodes2)
 			{
 				base.ControlSystem.TrackCycle();
-				handler(barcode);
-				return;
+				onFileDisk(barcode);
 			}
-			if (ErrorCodes.PickerEmpty == errorCodes2)
+			else
 			{
-				DisplayQRState("Busy", haltPoll: false, null);
-				return;
+				_ = 28;
 			}
 		}
-		DisplayQRState("Error", haltPoll: true, 5000);
 	}
 
 	private void FileUnrecognizedDisk(string matrix)
@@ -302,14 +273,16 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 				FileDiskInKiosk("UNKNOWN");
 				return;
 			}
-			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(service.PutLocation, MoveMode.Put, appLog);
+			IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+			ErrorCodes errorCodes = service2.MoveTo(service.PutLocation, MoveMode.Put, appLog);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MachineError", $"MOVE failed with error {errorCodes.ToString()}");
 				AddError("The MOVE instruction failed.");
 				return;
 			}
-			IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(matrix, appLog);
+			IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+			IPutResult putResult = service3.Put(matrix);
 			if (!putResult.Success)
 			{
 				base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
@@ -329,80 +302,47 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 
 	private void FileDiskInKiosk(string scannedId)
 	{
-		IPersistentCounterService service = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		base.AppLog.Write($"The ID in the picker: {scannedId}", LogEntryType.Info);
-		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context, correctMotionControl: true);
-		ErrorCodes errorCodes = fileDiskOperation.PutDiscAway(base.Result, scannedId);
-		base.Context.AppLog.Write($"PutDiskAway returned status {errorCodes.ToString()}");
-		if (errorCodes != ErrorCodes.Success)
+		ServiceLocator.Instance.GetService<IPersistentCounterService>();
+		LogHelper.Instance.WithContext("The ID in the picker: {0}", scannedId);
+		using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context);
+		if (fileDiskOperation.PutDiscAway(base.Result, scannedId) != ErrorCodes.Success)
 		{
 			AddError("Failed to file disk.");
-			DisplayQRState("Error", haltPoll: true, 5000);
 		}
-		if (IsQuick)
-		{
-			service.Increment("QuickReturnSuccessful");
-		}
-		DisplayQRState("Busy", haltPoll: false, null);
 	}
 
 	private ErrorCodes RejectDisk()
 	{
-		using RejectDiskOperation rejectDiskOperation = new RejectDiskOperation(ControllerConfiguration.Instance.RejectAtDoorAttempts);
-		ErrorCodes errorCodes = rejectDiskOperation.Execute();
-		string message = $"[Return.RejectDisk] Return ( ID = {base.Context.ID} ) returned status {errorCodes.ToString()}";
-		LogHelper.Instance.Log(message, LogEntryType.Error);
-		if (ErrorCodes.VendDoorRentTimeout == errorCodes || ErrorCodes.SensorReadError == errorCodes)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		ErrorCodes errorCodes = service.RejectDiskInPicker();
+		switch (errorCodes)
 		{
+		case ErrorCodes.VendDoorRentTimeout:
+		case ErrorCodes.VendDoorCloseTimeout:
+		case ErrorCodes.SensorReadError:
 			base.Context.Send("MachineError");
-			base.Context.ServiceLog("There was a hardware error ejecting the disc.");
-			base.Context.AppLog.Write("Eject disc returned an error code; check the logs.");
 			AddError("MACHINE ERROR");
-		}
-		else if (ErrorCodes.PickerObstructed == errorCodes)
-		{
+			break;
+		case ErrorCodes.PickerObstructed:
 			base.Context.CreateItemStuckResult(null);
 			AddError("There is an item stuck in the gripper.");
+			break;
 		}
 		return errorCodes;
 	}
 
-	private ErrorCodes ReturnDiskToUser()
+	private void OnMoveVendError()
 	{
-		base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog);
-		IControlResponse controlResponse = base.ControlSystem.VendDoorRent();
-		if (!controlResponse.Success)
-		{
-			base.Context.AppLog.Write($"VENDDOOR RENT reported error {controlResponse}.", LogEntryType.Error);
-			base.Context.Send("MachineError");
-			return ErrorCodes.VendDoorRentTimeout;
-		}
-		base.Context.ServiceLog("Start pushing item out of picker.");
-		using (VendItemOperation vendItemOperation = new VendItemOperation())
-		{
-			VendItemResult vendItemResult = vendItemOperation.Execute();
-			if (ErrorCodes.PickerEmpty == vendItemResult.Status)
-			{
-				base.Context.AppLog.Write("Disk was returned to user.");
-				return (!base.ControlSystem.VendDoorClose().Success) ? ErrorCodes.VendDoorCloseTimeout : ErrorCodes.PickerEmpty;
-			}
-			if (ErrorCodes.PickerFull != vendItemResult.Status)
-			{
-				base.Context.Send("MachineError");
-				base.Context.ServiceLog("EjectBackwardDisk: TakeDiskAtVendDoor returned error {0}", vendItemResult.Status.ToString());
-				base.Context.AppLog.Write("There was an error while returning the disk to the user; check the error logs.", LogEntryType.Error);
-				AddError("Hardware error.");
-				return vendItemResult.Status;
-			}
-		}
-		base.Context.ServiceLog("Disk not taken; accepting disk into kiosk.");
-		using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
-		return acceptDiskOperation.Execute();
+		base.Context.Send("MachineError");
+		base.Context.CreateInfoResult("MachineError", "Unable to move to the vend position.");
+		AddError("Unable to move to the vend position.");
 	}
 
 	private bool ReadDisk(out string scannedId)
 	{
-		if (!ServiceLocator.Instance.GetService<IScannerDeviceService>().IRHardwareInstall.HasValue)
+		IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		IScannerDevice configuredDevice = service.GetConfiguredDevice();
+		if (!configuredDevice.SupportsSecureReads)
 		{
 			return OnReadWithLegacy(out scannedId);
 		}
@@ -412,21 +352,42 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 	private bool OnReadWithIR(out string scannedId)
 	{
 		scannedId = "UNKNOWN";
-		CenterDiskMethod[] centerMethods = CenterMethods;
-		foreach (CenterDiskMethod method in centerMethods)
+		CenterDiskMethod[] methods = new CenterDiskMethod[CenterMethods.Length];
+		Array.Copy(CenterMethods, methods, CenterMethods.Length);
+		base.Context.ContextLog.WriteFormatted("Number Of Center Methods before resize {0}", methods.Length);
+		Scanner.CheckAndResizeForAdditionalFraudAttempts(ref methods);
+		base.Context.AppLog.WriteFormatted("Number Of Center Methods: {0}, RetryEnabled: {1}, AdditionalAttempts: {2}", methods.Length, ControllerConfiguration.Instance.RetryReadOnNoMarkersFound, ControllerConfiguration.Instance.AdditionalFraudReadAttempts);
+		base.Context.ContextLog.WriteFormatted("Number Of Center Methods {0}", methods.Length);
+		for (int i = 0; i < methods.Length; i++)
 		{
-			base.ControlSystem.Center(method);
+			base.ControlSystem.Center(methods[i]);
 			using Scanner scanner = new Scanner(base.ControlSystem);
-			ScanResult scanResult = scanner.Read();
+			using ScanResult scanResult = scanner.Read();
+			scanResult.ReadAttempts = i + 1;
 			if (!scanResult.SnapOk)
 			{
+				Scanner.CreateJsonResult(scanResult);
 				return OnCameraFailure();
 			}
 			m_cameraErrors = 0;
+			if (i + 1 < methods.Length && ControllerConfiguration.Instance.RetryReadOnNoMarkersFound && scanResult.SecureTokensFound <= 0)
+			{
+				base.Context.AppLog.WriteFormatted("{0} - ReturnJob Retry Read Image - No Secure Tokens Found.", i);
+				continue;
+			}
 			if (scanResult.ReadCode)
 			{
-				scannedId = scanResult.ScannedMatrix;
+				using (FraudValidator fraudValidator = new FraudValidator(base.Context))
+				{
+					fraudValidator.Validate(scanResult);
+					scannedId = scanResult.ScannedMatrix;
+				}
+				Scanner.CreateJsonResult(scanResult);
 				return OnBarcodeRead(scannedId);
+			}
+			if (i + 1 > methods.Length)
+			{
+				Scanner.CreateJsonResult(scanResult);
 			}
 		}
 		scannedId = "UNKNOWN";
@@ -438,20 +399,27 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 		scannedId = "UNKNOWN";
 		using (Scanner scanner = new Scanner(base.ControlSystem))
 		{
-			CenterDiskMethod[] centerMethods = CenterMethods;
-			foreach (CenterDiskMethod method in centerMethods)
+			for (int i = 0; i < CenterMethods.Length; i++)
 			{
-				base.ControlSystem.Center(method);
-				ScanResult scanResult = scanner.Read();
+				base.ControlSystem.Center(CenterMethods[i]);
+				using ScanResult scanResult = scanner.Read();
+				scanResult.ReadAttempts = i + 1;
 				if (!scanResult.SnapOk)
 				{
+					Scanner.CreateJsonResult(scanResult);
 					return OnCameraFailure();
 				}
 				m_cameraErrors = 0;
 				if (scanResult.ReadCode)
 				{
 					scannedId = scanResult.ScannedMatrix;
+					Scanner.CreateJsonResult(scanResult);
+					scanResult.CopyToFraudFolder();
 					return OnBarcodeRead(scannedId);
+				}
+				if (i + 1 > CenterMethods.Length)
+				{
+					Scanner.CreateJsonResult(scanResult);
 				}
 			}
 		}
@@ -479,9 +447,5 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 	{
 		base.Context.Send($"ReturnEnd:{matrix}");
 		return true;
-	}
-
-	private void DisplayQRState(string name, bool haltPoll, int? waitAfterDisplay)
-	{
 	}
 }

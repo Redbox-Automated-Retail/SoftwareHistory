@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -107,23 +108,21 @@ public sealed class MotionControlInstruction : Instruction
 			break;
 		}
 		case Operand.Homeall:
-			if (!service.CommunicationOk())
+		{
+			if (!service.CommunicationOk() && service.Reset(quick: true) != ErrorCodes.Success)
 			{
-				bool flag = service.Reset(context.AppLog, quick: true);
-				LogHelper.Instance.Log("The motion controller is not responsive; driver reset returned {0}.", flag ? "SUCCESS" : "FAILURE");
-				context.PushTop(flag);
+				context.PushTop(false);
+				break;
 			}
-			else
-			{
-				ErrorCodes errorCodes = service.InitAxes(context.AppLog);
-				context.PushTop(errorCodes == ErrorCodes.Success);
-			}
+			ErrorCodes errorCodes = service.InitAxes();
+			context.PushTop(ErrorCodes.Success == errorCodes);
 			break;
+		}
 		case Operand.Restart:
-			context.PushTop(service.Reset(context.AppLog, quick: true) ? "SUCCESS" : "TIMEOUT");
+			context.PushTop((service.Reset(quick: true) == ErrorCodes.Success) ? base.SuccessMessage : base.TimeoutMessage);
 			break;
 		case Operand.TestAndReset:
-			context.PushTop(service.TestAndReset(context.AppLog, quick: true) ? "SUCCESS" : "TIMEOUT");
+			context.PushTop(service.TestAndReset(quick: true) ? base.SuccessMessage : base.TimeoutMessage);
 			break;
 		}
 	}

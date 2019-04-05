@@ -6,5 +6,9 @@ public interface IScannerDeviceService
 {
 	DateTime? IRHardwareInstall { get; }
 
+	CameraGeneration CurrentCameraGeneration { get; }
+
 	IScannerDevice GetConfiguredDevice();
+
+	void Shutdown();
 }

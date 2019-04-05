@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Configuration;
 

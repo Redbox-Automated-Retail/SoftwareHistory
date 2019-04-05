@@ -16,7 +16,7 @@ public interface IDeck
 
 	int YOffset { get; }
 
-	IList<IQuadrant> Quadrants { get; }
+	List<IQuadrant> Quadrants { get; }
 
 	bool IsSlotValid(int slot);
 

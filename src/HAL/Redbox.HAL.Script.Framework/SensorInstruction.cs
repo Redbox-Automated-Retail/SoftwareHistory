@@ -51,11 +51,11 @@ public sealed class SensorInstruction : Instruction
 		}
 		else if (string.Compare(token.Value, "READ-AUX-INPUTS", ignoreCase: true) == 0)
 		{
-			PushInputs(context, ControlBoards.Aux, "AUX-QLM");
+			PushInputs(context, service.ReadAuxInputs());
 		}
 		else if (string.Compare(token.Value, "READ-PICKER-INPUTS", ignoreCase: true) == 0)
 		{
-			PushInputs(context, ControlBoards.Picker, "PICKER CONTROLLER");
+			PushInputs(context, service.ReadPickerInputs());
 		}
 		else
 		{
@@ -63,20 +63,19 @@ public sealed class SensorInstruction : Instruction
 			{
 				return;
 			}
-			IPickerSensorReadResult pickerSensorReadResult = service.ReadImmediateSensors();
-			if (pickerSensorReadResult.Error != ErrorCodes.Success)
+			IPickerSensorReadResult sensorReadResult = service.ReadPickerSensors(forceTrackClose: false);
+			if (!sensorReadResult.Success)
 			{
 				context.PushTop(0);
 				return;
 			}
-			int num = 1;
-			bool[] sensors = pickerSensorReadResult.Sensors;
-			foreach (bool flag in sensors)
+			int count = 1;
+			sensorReadResult.Foreach(delegate(PickerInputs each)
 			{
-				string instance = string.Format("SENSOR{0}-{1}", num++, flag ? "BLOCKED" : "CLEAR");
+				string instance = string.Format("SENSOR{0}-{1}", count++, sensorReadResult.IsInputActive(each) ? "BLOCKED" : "CLEAR");
 				context.PushTop(instance);
-			}
-			context.PushTop(pickerSensorReadResult.Sensors.Length);
+			});
+			context.PushTop(sensorReadResult.InputCount);
 		}
 	}
 
@@ -94,14 +93,16 @@ public sealed class SensorInstruction : Instruction
 		return true;
 	}
 
-	private void PushInputs(ExecutionContext ctx, ControlBoards board, string header)
+	private void PushInputs<T>(ExecutionContext ctx, IReadInputsResult<T> sensors)
 	{
-		string[] array = ServiceLocator.Instance.GetService<IControlSystem>().ReadInputs(board);
-		int counter = 1;
-		Array.ForEach(array, delegate(string each)
+		if (sensors.Success)
 		{
-			ctx.PushTop($"{header} I/O {counter++} = {each}");
-		});
-		ctx.PushTop(array.Length);
+			sensors.Foreach(delegate(T each)
+			{
+				ctx.PushTop(sensors.IsInputActive(each) ? "1" : "0");
+			});
+			ctx.PushTop(sensors.InputCount);
+		}
+		ctx.PushTop(sensors.Error);
 	}
 }

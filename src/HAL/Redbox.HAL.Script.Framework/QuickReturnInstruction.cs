@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -24,7 +25,8 @@ public sealed class QuickReturnInstruction : Instruction
 			return;
 		}
 		string text = string.Empty;
-		if (forms != Forms.PollStatus)
+		Forms forms2 = forms;
+		if (forms2 != Forms.PollStatus)
 		{
 			text = "Only the POLLSTATUS form of QUICKRETURN is supported.";
 		}
@@ -41,17 +43,20 @@ public sealed class QuickReturnInstruction : Instruction
 			AddError("E002", "There are no operands for this instruction.", result.Errors);
 			return;
 		}
-		switch (CheckForm(base.Operands[0].Value))
+		Forms forms = CheckForm(base.Operands[0].Value);
+		if (forms == Forms.Unknown)
 		{
-		case Forms.Unknown:
 			AddError("E002", "There is an unknown form of this instruction.", result.Errors);
-			break;
-		case Forms.PollStatus:
+			return;
+		}
+		Forms forms2 = forms;
+		if (forms2 == Forms.PollStatus)
+		{
 			context.PushTop("INACTIVE");
-			break;
-		default:
+		}
+		else
+		{
 			result.AddError(ExecutionErrors.InvalidOperand, "The QUICKRETURN operand is no longer supported.");
-			break;
 		}
 	}
 

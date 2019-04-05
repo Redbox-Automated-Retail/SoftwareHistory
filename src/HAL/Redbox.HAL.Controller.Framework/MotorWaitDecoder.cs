@@ -19,6 +19,11 @@ internal struct MotorWaitDecoder
 		_ => StatusCode.ToString(), 
 	};
 
+	internal string FormatError(Axis axis, string response)
+	{
+		return $"Unable to reach target on axis {axis.ToString().ToUpper()}. Response {response} ( diagnostic = {Diagnostic} )";
+	}
+
 	internal bool MotorRunning(string response, MoveOperation operation)
 	{
 		if (!int.TryParse(response, out var result))

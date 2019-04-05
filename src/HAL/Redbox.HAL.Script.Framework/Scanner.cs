@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal sealed class Scanner : IDisposable
+internal struct Scanner : IDisposable
 {
 	private readonly IScannerDeviceService ScannerDeviceService;
 
@@ -14,6 +15,12 @@ internal sealed class Scanner : IDisposable
 
 	private bool Disposed;
 
+	private static CenterDiskMethod[] m_smartReadMethods = new CenterDiskMethod[2]
+	{
+		CenterDiskMethod.VendDoorAndBack,
+		CenterDiskMethod.DrumAndBack
+	};
+
 	public void Dispose()
 	{
 		if (!Disposed)
@@ -21,27 +28,67 @@ internal sealed class Scanner : IDisposable
 			Disposed = true;
 			if (Device != null && Device.RequiresExternalLighting)
 			{
-				ControlSystem.ToggleRingLight(on: false, ScannerDeviceService.IRHardwareInstall.HasValue ? ControllerConfiguration.Instance.IRRinglightShutdownPause : 0);
+				ControlSystem.ToggleRingLight(on: false, Device.SupportsSecureReads ? ControllerConfiguration.Instance.IRRinglightShutdownPause : 0);
 			}
 			GC.SuppressFinalize(this);
 		}
 	}
 
+	internal static ScanResult SmartReadDisk()
+	{
+		return SmartReadDisk(m_smartReadMethods);
+	}
+
 	internal static ScanResult SmartReadDisk(CenterDiskMethod[] methods)
 	{
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		if (!ServiceLocator.Instance.GetService<IScannerDeviceService>().IRHardwareInstall.HasValue)
+		IScannerDeviceService service2 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		IScannerDevice configuredDevice = service2.GetConfiguredDevice();
+		ScanResult result = (configuredDevice.SupportsSecureReads ? OnIRScan(service, methods) : OnNonIRScan(service, methods));
+		CreateJsonResult(result);
+		return result;
+	}
+
+	internal static string ReadDiskInPicker(ReadDiskOptions options, ExecutionContext context)
+	{
+		string result = "UNKNOWN";
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
 		{
-			return OnNonIRScan(service, methods);
+			using ScanResult scanResult = scanner.Read();
+			result = scanResult.ScannedMatrix;
+			if (!scanResult.SnapOk)
+			{
+				if ((options & ReadDiskOptions.LeaveCaptureResult) != ReadDiskOptions.None)
+				{
+					context.CreateCameraCaptureErrorResult();
+				}
+			}
+			else if (scanResult.ReadCode)
+			{
+				if ((options & ReadDiskOptions.CheckForDuplicate) != ReadDiskOptions.None)
+				{
+					IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
+					if (service2.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
+					{
+						context.CreateDuplicateItemResult(scanResult.ScannedMatrix);
+					}
+				}
+			}
+			else if ((options & ReadDiskOptions.LeaveNoReadResult) != ReadDiskOptions.None)
+			{
+				context.CreateNoBarcodeReadResult();
+			}
 		}
-		return OnIRScan(service, methods);
+		return result;
 	}
 
 	internal ScanResult Read()
 	{
-		using IScanResult sr = Device.Scan();
+		IScanResult sr = Device.Scan();
 		ScanResult scanResult = new ScanResult(sr);
-		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IExecutionContext activeContext = service.GetActiveContext();
 		if (!scanResult.SnapOk)
 		{
 			LogHelper.Instance.Log(LogEntryType.Error, "[{0}, {1}]: Read disk returned a camera error status CAMERA CAPTURE ERROR", activeContext.ProgramName, activeContext.ID);
@@ -49,14 +96,14 @@ internal sealed class Scanner : IDisposable
 		}
 		else if (!scanResult.ReadCode)
 		{
-			LogHelper.Instance.Log(LogEntryType.Error, "[{0}, {1}]: No barcodes read on image.", activeContext.ProgramName, activeContext.ID);
-			activeContext?.ContextLog.WriteFormatted("No barcodes read on image.");
+			LogHelper.Instance.WithContext(toFormattedLog: true, LogEntryType.Error, "No barcodes read on image.");
 		}
 		return scanResult;
 	}
 
 	internal Scanner(IControlSystem cs)
 	{
+		this = default(Scanner);
 		Disposed = false;
 		ControlSystem = cs;
 		ScannerDeviceService = ServiceLocator.Instance.GetService<IScannerDeviceService>();
@@ -67,12 +114,13 @@ internal sealed class Scanner : IDisposable
 
 	internal Scanner(CenterDiskMethod method, IControlSystem cs)
 	{
+		this = default(Scanner);
 		Disposed = false;
 		ControlSystem = cs;
 		ScannerDeviceService = ServiceLocator.Instance.GetService<IScannerDeviceService>();
 		Device = ScannerDeviceService.GetConfiguredDevice();
 		Device.Start();
-		if (ScannerDeviceService.IRHardwareInstall.HasValue)
+		if (Device.SupportsSecureReads)
 		{
 			if (method != CenterDiskMethod.None)
 			{
@@ -94,13 +142,18 @@ internal sealed class Scanner : IDisposable
 	{
 		ScanResult scanResult = null;
 		using Scanner scanner = new Scanner(cs);
-		foreach (CenterDiskMethod method in methods)
+		for (int i = 0; i < methods.Length; i++)
 		{
-			cs.Center(method);
+			cs.Center(methods[i]);
 			scanResult = scanner.OnReadWithRetry();
+			scanResult.ReadAttempts = i + 1;
 			if (!scanResult.SnapOk || scanResult.ReadCode)
 			{
 				return scanResult;
+			}
+			if (i != methods.Length - 1)
+			{
+				scanResult.Dispose();
 			}
 		}
 		return scanResult;
@@ -109,13 +162,24 @@ internal sealed class Scanner : IDisposable
 	private static ScanResult OnIRScan(IControlSystem cs, CenterDiskMethod[] methods)
 	{
 		ScanResult scanResult = null;
+		CheckAndResizeForAdditionalFraudAttempts(ref methods);
+		LogHelper.Instance.Log($"Number Of Center Methods: {methods.Length}, RetryEnabled: {ControllerConfiguration.Instance.RetryReadOnNoMarkersFound}, AdditionalAttempts: {ControllerConfiguration.Instance.AdditionalFraudReadAttempts}");
 		for (int i = 0; i < methods.Length; i++)
 		{
 			using Scanner scanner = new Scanner(methods[i], cs);
 			scanResult = scanner.OnReadWithRetry();
-			if (!scanResult.SnapOk || scanResult.ReadCode)
+			scanResult.ReadAttempts = i + 1;
+			if (!scanResult.SnapOk || (scanResult.ReadCode && (!ControllerConfiguration.Instance.RetryReadOnNoMarkersFound || (ControllerConfiguration.Instance.RetryReadOnNoMarkersFound && scanResult.SecureTokensFound > 0))))
 			{
 				return scanResult;
+			}
+			if (scanResult.ReadCode && ControllerConfiguration.Instance.RetryReadOnNoMarkersFound && scanResult.SecureTokensFound <= 0)
+			{
+				LogHelper.Instance.Log($"{i} - OnIRScan Retry Read Image - No Secure Tokens Found.");
+			}
+			if (i != methods.Length - 1)
+			{
+				scanResult.Dispose();
 			}
 		}
 		return scanResult;
@@ -125,7 +189,7 @@ internal sealed class Scanner : IDisposable
 	{
 		if (Device.RequiresExternalLighting)
 		{
-			ControlSystem.ToggleRingLight(on: true, ScannerDeviceService.IRHardwareInstall.HasValue ? ControllerConfiguration.Instance.IRRinglightStartupPause : ControllerConfiguration.Instance.RinglightWarmupPause2);
+			ControlSystem.ToggleRingLight(on: true, Device.SupportsSecureReads ? ControllerConfiguration.Instance.IRRinglightStartupPause : ControllerConfiguration.Instance.RinglightWarmupPause2);
 		}
 	}
 
@@ -141,5 +205,33 @@ internal sealed class Scanner : IDisposable
 			scanResult = Read();
 		}
 		return scanResult;
+	}
+
+	internal static void CheckAndResizeForAdditionalFraudAttempts(ref CenterDiskMethod[] methods)
+	{
+		if (ControllerConfiguration.Instance.RetryReadOnNoMarkersFound && ControllerConfiguration.Instance.AdditionalFraudReadAttempts > 0)
+		{
+			int num = methods.Length;
+			int num2 = num + ControllerConfiguration.Instance.AdditionalFraudReadAttempts;
+			LogHelper.Instance.Log($"original length: {num}, new length: {num2}");
+			Array.Resize(ref methods, num2);
+			for (int i = num; i < num2; i++)
+			{
+				methods[i] = CenterDiskMethod.None;
+			}
+		}
+	}
+
+	internal static void CreateJsonResult(ScanResult result)
+	{
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		IExecutionContext activeContext = service.GetActiveContext();
+		Dictionary<string, object> dictionary = new Dictionary<string, object>();
+		dictionary.Add("BarcodesRead", result.ReadCount);
+		dictionary.Add("SecureCodesRead", result.SecureTokensFound);
+		dictionary.Add("ReadAttempts", result.ReadAttempts);
+		dictionary.Add("ExecutionTime", result.ExecutionTime.ToString());
+		Dictionary<string, object> jsonMessage = dictionary;
+		activeContext.CreateJSONResult("CameraStatsJson", result.ScannedMatrix.ToString(), jsonMessage);
 	}
 }

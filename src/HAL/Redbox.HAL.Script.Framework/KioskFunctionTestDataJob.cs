@@ -17,8 +17,10 @@ internal sealed class KioskFunctionTestDataJob : NativeJobAdapter
 		string touchscreenDriverTestResult = base.Context.PopTop<string>();
 		DateTime timestamp = DateTime.Parse(base.Context.PopTop<string>());
 		string userIdentifier = base.Context.PopTop<string>();
-		IKioskFunctionCheckData data = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewCheckData(verticalSlotTestResult, initResult, vendDoorTestResult, trackTestResult, snapDecodeTestResult, touchscreenDriverTestResult, cameraDriverTestResult, timestamp, userIdentifier);
-		ServiceLocator.Instance.GetService<IKioskFunctionCheckService>().Add(data);
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		IKioskFunctionCheckData data = service.NewCheckData(verticalSlotTestResult, initResult, vendDoorTestResult, trackTestResult, snapDecodeTestResult, touchscreenDriverTestResult, cameraDriverTestResult, timestamp, userIdentifier);
+		IKioskFunctionCheckService service2 = ServiceLocator.Instance.GetService<IKioskFunctionCheckService>();
+		service2.Add(data);
 	}
 
 	internal KioskFunctionTestDataJob(ExecutionResult result, ExecutionContext ctx)

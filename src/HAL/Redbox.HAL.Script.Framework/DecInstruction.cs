@@ -40,11 +40,15 @@ public sealed class DecInstruction : Instruction
 		}
 		if (type == typeof(int))
 		{
-			obj = (int)obj - 1;
+			int num = (int)obj;
+			num--;
+			obj = num;
 		}
 		else if (type == typeof(decimal))
 		{
-			obj = (decimal)obj - 1m;
+			decimal num2 = (decimal)obj;
+			--num2;
+			obj = num2;
 		}
 		context.SetSymbolValue(token.Value, Convert.ChangeType(obj, type));
 	}

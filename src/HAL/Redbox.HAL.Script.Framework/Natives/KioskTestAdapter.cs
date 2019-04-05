@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework.Natives;
 
@@ -27,27 +26,19 @@ internal class KioskTestAdapter : IDisposable
 
 	protected virtual bool OnVendDisk(string matrix)
 	{
-		using (VendItemOperation vendItemOperation = new VendItemOperation(2))
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IVendItemResult vendItemResult = service.VendItemInPicker(2);
+		if (ErrorCodes.PickerEmpty == vendItemResult.Status)
 		{
-			VendItemResult vendItemResult = vendItemOperation.Execute();
-			if (ErrorCodes.PickerEmpty == vendItemResult.Status)
-			{
-				Context.AppLog.Write($"The item {matrix} was taken.", LogEntryType.Error);
-				return false;
-			}
-			if (ErrorCodes.PickerFull != vendItemResult.Status)
-			{
-				return false;
-			}
-		}
-		using AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation();
-		ErrorCodes errorCodes = acceptDiskOperation.Execute();
-		if (ErrorCodes.PickerFull != errorCodes)
-		{
-			Context.AppLog.Write($"Take disk at door returned code {errorCodes.ToString().ToUpper()}", LogEntryType.Info);
+			LogHelper.Instance.WithContext(LogEntryType.Error, "The item {0} was taken.", matrix);
 			return false;
 		}
-		return true;
+		if (ErrorCodes.PickerFull != vendItemResult.Status)
+		{
+			return false;
+		}
+		ErrorCodes errorCodes = service.AcceptDiskAtDoor();
+		return ErrorCodes.PickerFull == errorCodes;
 	}
 
 	internal void Run()
@@ -64,17 +55,14 @@ internal class KioskTestAdapter : IDisposable
 			return;
 		}
 		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		if (!service.Get(AppLog).Success)
+		IGetResult getResult = service.Get();
+		if (!getResult.Success)
 		{
 			Context.CreateInfoResult("GetError", "Failed to pull disc from slot");
 			HandleMachineError();
 			return;
 		}
-		string text = "UNKNOWN";
-		using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, ControlSystem))
-		{
-			text = scanner.Read().ScannedMatrix;
-		}
+		string text = Scanner.ReadDiskInPicker(ReadDiskOptions.None, Context);
 		if (flag && !VendDisk(text))
 		{
 			HandleMachineError();
@@ -87,7 +75,8 @@ internal class KioskTestAdapter : IDisposable
 			return;
 		}
 		ControlSystem.TrackCycle();
-		if (!service.Put(text, AppLog).Success)
+		IPutResult putResult = service.Put(text);
+		if (!putResult.Success)
 		{
 			Context.CreateInfoResult("PutFailed", "Kiosk failed to put disc into slot");
 			HandleMachineError();
@@ -123,22 +112,10 @@ internal class KioskTestAdapter : IDisposable
 			Context.CreateInfoResult("MoveVendError", "Failed to move to vend position");
 			return false;
 		}
-		if (!ControlSystem.TrackOpen().Success)
+		ErrorCodes errorCodes = ControlSystem.TrackCycle();
+		if (errorCodes != ErrorCodes.Success)
 		{
-			appLog.Write("Track Open timed out.", LogEntryType.Error);
-			Context.CreateInfoResult("TrackOpenTimeOut", "Track Open timedout.");
-			return false;
-		}
-		if (!ControlSystem.TrackClose().Success)
-		{
-			appLog.Write("Track Close timed out.", LogEntryType.Error);
-			Context.CreateInfoResult("TrackCloseTimeOut", "Track Close timedout.");
-			return false;
-		}
-		if (!ControlSystem.VendDoorRent().Success)
-		{
-			appLog.Write("Vend door timed out trying to open vend door.", LogEntryType.Error);
-			Context.CreateInfoResult("VendDoorTimeOut", "Vend door timed out trying to open vend door.");
+			Context.CreateInfoResult("TrackCycleFailure", $"Track cycle returned error {errorCodes}.");
 			return false;
 		}
 		return OnVendDisk(matrix);
@@ -146,7 +123,7 @@ internal class KioskTestAdapter : IDisposable
 
 	private void HandleMachineError()
 	{
-		Context.AppLog.Write("An unrecoverable error occurred in KioskTest.", LogEntryType.Error);
+		LogHelper.Instance.WithContext(LogEntryType.Error, "An unrecoverable error occurred in KioskTest.");
 		Context.CreateInfoResult("MachineError", "An unrecoverable error occurred in KioskTest");
 		AddError("MACHINE ERROR");
 	}

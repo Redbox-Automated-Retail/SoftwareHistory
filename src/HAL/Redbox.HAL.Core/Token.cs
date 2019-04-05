@@ -42,7 +42,7 @@ public class Token : ICloneable<Token>
 
 	public override bool Equals(object obj)
 	{
-		if (this == obj)
+		if (object.ReferenceEquals(this, obj))
 		{
 			return true;
 		}
@@ -98,9 +98,8 @@ public class Token : ICloneable<Token>
 
 	public Token Clone(params object[] parms)
 	{
-		return new Token(Type, Value, IsKeyValuePair)
-		{
-			PairSeparator = PairSeparator
-		};
+		Token token = new Token(Type, Value, IsKeyValuePair);
+		token.PairSeparator = PairSeparator;
+		return token;
 	}
 }

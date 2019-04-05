@@ -4,7 +4,7 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class LocationTestResult : IPeekResult
 {
-	public bool TestOk => Error == ErrorCodes.Success;
+	public bool TestOk => ErrorCodes.Success == Error;
 
 	public bool IsFull { get; internal set; }
 

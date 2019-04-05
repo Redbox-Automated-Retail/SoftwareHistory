@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -47,7 +48,7 @@ public sealed class VendDoorInstruction : Instruction
 				context.PushTop(service.ReadVendDoorPosition().ToString().ToUpper());
 				break;
 			case DoorCommands.Open:
-				context.PushTop("TIMEOUT");
+				context.PushTop(base.TimeoutMessage);
 				break;
 			case DoorCommands.Rent:
 				HandleError(service.VendDoorRent(), context);

@@ -17,9 +17,8 @@ internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 		IPeekResult peekResult = peekOperation.Execute();
 		if (!peekResult.TestOk)
 		{
-			string text = $"Peek Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} returned status {peekResult.Error.ToString().ToUpper()} after GET returned SLOTEMPTY";
-			UpdateSymbol("MSTESTER-SYMBOL-GET-ERR-MSG", text);
-			Context.AppLog.Write(text, LogEntryType.Error);
+			string value = $"Peek Deck={SyncLocation.Deck} Slot={SyncLocation.Slot} returned status {peekResult.Error.ToString().ToUpper()} after GET returned SLOTEMPTY";
+			UpdateSymbol("MSTESTER-SYMBOL-GET-ERR-MSG", value);
 			Context.CreateResult("MachineError", "An error occurred when attempting to peek the slot.", SyncLocation.Deck, SyncLocation.Slot, null, null, null);
 			AddError("There was an error performing a PEEK.");
 			HandleStuck(result);
@@ -47,7 +46,8 @@ internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 			num = 0;
 			timeSpan = default(TimeSpan);
 		}
-		string value = (ServiceLocator.Instance.GetService<IInventoryService>().IsBarcodeDuplicate(scannedMatrix, out var _) ? $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()} DUPLICATE" : $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()}");
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		string value = (service.IsBarcodeDuplicate(scannedMatrix, out var _) ? $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()} DUPLICATE" : $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()}");
 		UpdateSymbol("MSTESTER-SYMBOL-FORMATTED-DETAIL-MSG", value);
 	}
 
@@ -58,7 +58,8 @@ internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 
 	internal override IGetResult GetDisk(IFormattedLog applog)
 	{
-		return ServiceLocator.Instance.GetService<IControllerService>().Get(this, applog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Get(this);
 	}
 
 	internal override void OnGetFailure(IGetResult gr)

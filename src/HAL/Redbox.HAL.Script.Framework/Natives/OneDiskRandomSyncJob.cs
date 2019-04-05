@@ -21,91 +21,106 @@ internal sealed class OneDiskRandomSyncJob : NativeJobAdapter
 		bool isVMZMachine = ControllerConfiguration.Instance.IsVMZMachine;
 		int num3 = 0;
 		bool flag = false;
-		if (service2.MoveTo(1, 1, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+		try
 		{
-			flag = true;
-		}
-		else if (!service3.Get(base.Context.AppLog).Success)
-		{
-			flag = true;
-		}
-		while (!flag)
-		{
-			ILocation location = randomLocationSelector.SelectTargetLocation();
-			if (location == null)
+			if (service2.MoveTo(1, 1, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
 			{
-				break;
+				flag = true;
+				return;
 			}
-			if (location.Excluded)
+			IGetResult getResult = service3.Get();
+			if (!getResult.Success)
 			{
-				base.Context.AppLog.WriteFormatted("Not syncing excluded location {0}", location);
-				continue;
+				flag = true;
+				return;
 			}
-			if (!isVMZMachine && location.Deck == 8)
+			while (!flag)
 			{
-				if (base.ControlSystem.EngageQlm(base.Context.AppLog) != ErrorCodes.Success)
+				ILocation location = randomLocationSelector.SelectTargetLocation();
+				if (location == null)
 				{
-					flag = true;
+					break;
+				}
+				if (location.Excluded)
+				{
+					base.Context.AppLog.WriteFormatted("Not syncing excluded location {0}", location);
 					continue;
 				}
-				Thread.Sleep(1500);
-				if (base.ControlSystem.DisengageQlm(base.Context.AppLog) != ErrorCodes.Success)
+				if (!isVMZMachine && location.Deck == 8)
+				{
+					if (base.ControlSystem.EngageQlm(base.Context.AppLog) != ErrorCodes.Success)
+					{
+						flag = true;
+						continue;
+					}
+					Thread.Sleep(1500);
+					if (base.ControlSystem.DisengageQlm(base.Context.AppLog) != ErrorCodes.Success)
+					{
+						flag = true;
+					}
+					continue;
+				}
+				base.Context.AppLog.WriteFormatted("Sync {0}", location.ToString());
+				base.Context.Send($"Iteration {++num3}");
+				if (num != 0)
+				{
+					_ = num3 % num;
+				}
+				string id = "UNKNOWN";
+				using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
+				{
+					using ScanResult scanResult = scanner.Read();
+					id = scanResult.ScannedMatrix;
+					if (!scanResult.SnapOk)
+					{
+						base.Context.CreateCameraCaptureErrorResult();
+						flag = true;
+					}
+				}
+				if (service2.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+				{
+					flag = true;
+					break;
+				}
+				IPutResult putResult = service3.Put(id);
+				if (!putResult.Success)
+				{
+					flag = true;
+					break;
+				}
+				if (service2.MoveTo(location, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+				{
+					flag = true;
+					break;
+				}
+				IGetResult getResult2 = service3.Get();
+				if (!getResult2.Success || OnVendReceive(num2) != ErrorCodes.Success)
 				{
 					flag = true;
 				}
-				continue;
 			}
-			base.Context.AppLog.WriteFormatted("Sync {0}", location.ToString());
-			num3++;
-			if (num != 0)
+			if (flag)
 			{
-				_ = num3 % num == 0;
+				return;
 			}
-			else
-				_ = 0;
-			ScanResult scanResult = null;
-			using (Scanner scanner = new Scanner(CenterDiskMethod.VendDoorAndBack, service))
-			{
-				scanResult = scanner.Read();
-				if (!scanResult.SnapOk)
-				{
-					base.Context.CreateResult("MachineError", "The CAMERA CAPTURE request timed out.", null, null, null, null, null);
-					flag = true;
-				}
-			}
-			if (service2.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+			if (service2.MoveTo(1, 1, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 			{
 				flag = true;
+				return;
 			}
-			else if (!service3.Put(scanResult.ScannedMatrix, base.Context.AppLog).Success)
-			{
-				flag = true;
-			}
-			else if (service2.MoveTo(location, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
-			{
-				flag = true;
-			}
-			else if (!service3.Get(base.Context.AppLog).Success)
-			{
-				flag = true;
-			}
-			else if (OnVendReceive(num2) != ErrorCodes.Success)
+			IPutResult putResult2 = service3.Put("UNKNOWN");
+			if (!putResult2.Success)
 			{
 				flag = true;
 			}
 		}
-		if (service2.MoveTo(1, 1, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+		finally
 		{
-			flag = true;
-		}
-		else if (!service3.Put("UNKNOWN", base.Context.AppLog).Success)
-		{
-			flag = true;
-		}
-		applicationLog.WriteFormatted("Job visited {0} locations", num3);
-		if (flag)
-		{
-			AddError("Job error");
+			applicationLog.WriteFormatted("Job visited {0} locations", num3);
+			if (flag)
+			{
+				AddError("Job error");
+			}
 		}
 	}
 
@@ -116,33 +131,26 @@ internal sealed class OneDiskRandomSyncJob : NativeJobAdapter
 
 	private ErrorCodes OnVendReceive(int vendTime)
 	{
-		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.None, base.Context.AppLog);
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.MoveVend(MoveMode.None, base.Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			return errorCodes;
 		}
-		using (VendItemOperation vendItemOperation = new VendItemOperation(vendTime))
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IVendItemResult vendItemResult = service2.VendItemInPicker(vendTime);
+		if (!vendItemResult.Presented)
 		{
-			VendItemResult vendItemResult = vendItemOperation.Execute();
-			if (!vendItemResult.Presented)
-			{
-				base.Context.AppLog.Write("The disk was not presented to the user from the vend door.");
-				return ErrorCodes.PickerObstructed;
-			}
-			if (vendItemResult.Status == ErrorCodes.PickerEmpty)
-			{
-				base.Context.AppLog.Write("The disk is no longer present in the picker. This is not good.");
-				return vendItemResult.Status;
-			}
+			return ErrorCodes.PickerObstructed;
 		}
-		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
+		if (vendItemResult.Status != ErrorCodes.PickerFull)
 		{
-			ErrorCodes errorCodes2 = acceptDiskOperation.Execute();
-			if (ErrorCodes.PickerFull != errorCodes2)
-			{
-				base.Context.AppLog.WriteFormatted("Accept disk opertaion returned status {0}", errorCodes2.ToString());
-				return errorCodes2;
-			}
+			return vendItemResult.Status;
+		}
+		ErrorCodes errorCodes2 = service2.AcceptDiskAtDoor();
+		if (ErrorCodes.PickerFull != errorCodes2)
+		{
+			return errorCodes2;
 		}
 		return ErrorCodes.Success;
 	}

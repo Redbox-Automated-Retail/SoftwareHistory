@@ -9,38 +9,35 @@ public sealed class IPCMessageFactory : IIPCMessageFactory
 {
 	public IIPCMessage Create(MessageType p, MessageSeverity s, string message)
 	{
-		return new IPCMessage
-		{
-			Type = p,
-			Severity = s,
-			Message = message,
-			UID = Guid.NewGuid(),
-			Timestamp = DateTime.Now
-		};
+		IPCMessage iPCMessage = new IPCMessage();
+		iPCMessage.Type = p;
+		iPCMessage.Severity = s;
+		iPCMessage.Message = message;
+		iPCMessage.UID = Guid.NewGuid();
+		iPCMessage.Timestamp = DateTime.Now;
+		return iPCMessage;
 	}
 
 	public IIPCMessage CreateAck(Guid guid)
 	{
-		return new IPCMessage
-		{
-			Type = MessageType.Ack,
-			Severity = MessageSeverity.None,
-			Message = string.Empty,
-			UID = guid,
-			Timestamp = DateTime.Now
-		};
+		IPCMessage iPCMessage = new IPCMessage();
+		iPCMessage.Type = MessageType.Ack;
+		iPCMessage.Severity = MessageSeverity.None;
+		iPCMessage.Message = string.Empty;
+		iPCMessage.UID = guid;
+		iPCMessage.Timestamp = DateTime.Now;
+		return iPCMessage;
 	}
 
 	public IIPCMessage CreateNack(Guid guid)
 	{
-		return new IPCMessage
-		{
-			Type = MessageType.Nack,
-			Severity = MessageSeverity.None,
-			Message = string.Empty,
-			UID = guid,
-			Timestamp = DateTime.Now
-		};
+		IPCMessage iPCMessage = new IPCMessage();
+		iPCMessage.Type = MessageType.Nack;
+		iPCMessage.Severity = MessageSeverity.None;
+		iPCMessage.Message = string.Empty;
+		iPCMessage.UID = guid;
+		iPCMessage.Timestamp = DateTime.Now;
+		return iPCMessage;
 	}
 
 	public IIPCMessage Read(IIPCChannel channel)
@@ -63,14 +60,13 @@ public sealed class IPCMessageFactory : IIPCMessageFactory
 		string message = Encoding.ASCII.GetString(array, num2, num4);
 		num2 += num4;
 		DateTime timestamp = DateTime.FromBinary(BitConverter.ToInt64(array, num2));
-		return new IPCMessage
-		{
-			Type = type,
-			Severity = severity,
-			Message = message,
-			UID = uID,
-			Timestamp = timestamp
-		};
+		IPCMessage iPCMessage = new IPCMessage();
+		iPCMessage.Type = type;
+		iPCMessage.Severity = severity;
+		iPCMessage.Message = message;
+		iPCMessage.UID = uID;
+		iPCMessage.Timestamp = timestamp;
+		return iPCMessage;
 	}
 
 	public bool Write(IIPCMessage msg, IIPCChannel channel)

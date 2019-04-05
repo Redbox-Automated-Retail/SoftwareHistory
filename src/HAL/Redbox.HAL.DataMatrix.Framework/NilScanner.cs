@@ -5,13 +5,19 @@ namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class NilScanner : IScannerDevice, IDisposable
 {
-	public string Name => ScannerServices.Emulated.ToString();
-
 	public bool RequiresExternalLighting => false;
 
 	public bool IsConnected => false;
 
 	public bool InError => true;
+
+	public bool IsLegacy => true;
+
+	public bool SupportsSecureReads => false;
+
+	public ScannerServices Service => ScannerServices.Emulated;
+
+	public CameraGeneration CurrentCameraGeneration => CameraGeneration.Unknown;
 
 	public void Dispose()
 	{
@@ -63,6 +69,11 @@ internal sealed class NilScanner : IScannerDevice, IDisposable
 	}
 
 	public bool ValidateSettings()
+	{
+		return ValidateSettings(null);
+	}
+
+	public bool ValidateSettings(IMessageSink sink)
 	{
 		return false;
 	}

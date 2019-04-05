@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Threading;
 
 namespace Redbox.HAL.IPC.Framework.Server;
 
@@ -10,7 +10,7 @@ internal abstract class AbstractIPCServiceHost : IIpcServiceHost
 
 	private readonly object m_sessionLockObject = new object();
 
-	private readonly IList<ISession> m_sessions = new List<ISession>();
+	private readonly List<ISession> m_sessions = new List<ISession>();
 
 	public bool Alive
 	{

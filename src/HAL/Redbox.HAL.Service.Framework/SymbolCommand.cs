@@ -1,7 +1,7 @@
 using System.ComponentModel;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.HAL.IPC.Framework;
-using Redbox.HAL.Script.Framework;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Service.Framework;
@@ -14,30 +14,17 @@ public sealed class SymbolCommand
 	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job == null)
+		CommandHelper.GetJob(jobId, context.Errors)?.ForeachSymbol(delegate(IContextSymbol symbol)
 		{
-			return;
-		}
-		foreach (string symbolName in job.GetSymbolNames())
-		{
-			if (!symbolName.StartsWith("__"))
-			{
-				context.Messages.Add($"{symbolName}: {job.GetSymbolValue(symbolName, context.Errors)}");
-			}
-		}
+			context.Messages.Add($"{symbol.Key}: {symbol.Value}");
+		});
 	}
 
 	[CommandForm(Name = "clear")]
-	[Usage("SYMBOL clear job: job-id")]
 	[Description("Clears the execution engine's symbol list.")]
+	[Usage("SYMBOL clear job: job-id")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
-		ExecutionContext job = CommandHelper.GetJob(jobId, context.Errors, required: true);
-		if (job != null)
-		{
-			job.ClearSymbolTable();
-			job.SaveSymbolTable();
-		}
+		CommandHelper.GetJob(jobId, context.Errors)?.ClearSymbolTable();
 	}
 }

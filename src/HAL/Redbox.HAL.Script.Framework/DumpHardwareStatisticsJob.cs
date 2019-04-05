@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -11,19 +11,22 @@ internal sealed class DumpHardwareStatisticsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(base.Context.PopTop<string>(), HardwareCorrectionStatistic.None);
+		string value = base.Context.PopTop<string>();
+		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(value, HardwareCorrectionStatistic.None);
 		if (hardwareCorrectionStatistic == HardwareCorrectionStatistic.None)
 		{
 			return;
 		}
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string path = Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("Service"), $"{hardwareCorrectionStatistic.ToString()}CorrectionStats.txt");
-		service.SafeDelete(path);
-		IHardwareCorrectionStatisticService service2 = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
-		StreamWriter writer = new StreamWriter(path);
+		IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+		string path = service2.CreateSubpath("Service");
+		string path2 = Path.Combine(path, $"{hardwareCorrectionStatistic.ToString()}CorrectionStats.txt");
+		service.SafeDelete(path2);
+		IHardwareCorrectionStatisticService service3 = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
+		StreamWriter writer = new StreamWriter(path2);
 		try
 		{
-			List<IHardwareCorrectionStatistic> stats = service2.GetStats(hardwareCorrectionStatistic);
+			List<IHardwareCorrectionStatistic> stats = service3.GetStats(hardwareCorrectionStatistic);
 			stats.Sort((IHardwareCorrectionStatistic x, IHardwareCorrectionStatistic y) => x.CorrectionTime.CompareTo(y.CorrectionTime));
 			using (new DisposeableList<IHardwareCorrectionStatistic>(stats))
 			{

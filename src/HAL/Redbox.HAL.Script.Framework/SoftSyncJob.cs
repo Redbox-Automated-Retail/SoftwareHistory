@@ -2,12 +2,16 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "soft-sync", Operand = "SOFT-SYNC")]
+[NativeJob(ProgramName = "soft-sync")]
 internal sealed class SoftSyncJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		base.Context.ServiceLog("Begin soft sync request.");
+		LogHelper.Instance.WithContext("Begin soft sync request.");
+		if (!TestInventoryStore())
+		{
+			return;
+		}
 		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
 			int numberOfSlots = deck.NumberOfSlots;

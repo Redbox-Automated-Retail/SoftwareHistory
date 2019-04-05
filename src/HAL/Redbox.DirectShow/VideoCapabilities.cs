@@ -21,7 +21,7 @@ public class VideoCapabilities
 
 	public static bool operator ==(VideoCapabilities a, VideoCapabilities b)
 	{
-		if ((object)a == b)
+		if (object.ReferenceEquals(a, b))
 		{
 			return true;
 		}

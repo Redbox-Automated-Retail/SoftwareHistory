@@ -80,16 +80,15 @@ internal class GenericDeviceDescriptor : IDeviceDescriptor
 
 	internal static GenericDeviceDescriptor Create(string v, string p, DeviceClass clazz)
 	{
-		GenericDeviceDescriptor genericDeviceDescriptor = new GenericDeviceDescriptor
-		{
-			Vendor = v,
-			Product = p
-		};
+		GenericDeviceDescriptor genericDeviceDescriptor = new GenericDeviceDescriptor();
+		genericDeviceDescriptor.Vendor = v;
+		genericDeviceDescriptor.Product = p;
+		GenericDeviceDescriptor genericDeviceDescriptor2 = genericDeviceDescriptor;
 		if (clazz != DeviceClass.None)
 		{
 			IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
-			genericDeviceDescriptor.SetupClass = service.Get(clazz);
+			genericDeviceDescriptor2.SetupClass = service.Get(clazz);
 		}
-		return genericDeviceDescriptor;
+		return genericDeviceDescriptor2;
 	}
 }

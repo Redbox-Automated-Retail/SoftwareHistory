@@ -1,6 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Interop;
 
 namespace Redbox.HAL.IPC.Framework.Pipes;
 

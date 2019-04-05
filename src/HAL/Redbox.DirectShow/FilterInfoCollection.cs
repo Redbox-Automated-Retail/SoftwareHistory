@@ -4,13 +4,13 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using Microsoft.Win32;
 using Redbox.DirectShow.Interop;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.DirectShow;
 
 public class FilterInfoCollection : CollectionBase
 {
-	private static bool? m_useOldOption;
+	private static bool? m_useOldOption = null;
 
 	public FilterInfo this[int index] => (FilterInfo)base.InnerList[index];
 
@@ -37,7 +37,7 @@ public class FilterInfoCollection : CollectionBase
 					m_useOldOption = false;
 					return m_useOldOption.Value;
 				}
-				bool value2 = (bool)ConversionHelper.ChangeType(value, typeof(bool));
+				bool value2 = ConversionHelper.ChangeType<bool>(value);
 				m_useOldOption = value2;
 				return m_useOldOption.Value;
 			}
@@ -61,12 +61,19 @@ public class FilterInfoCollection : CollectionBase
 	private void CollectFilters(Guid category)
 	{
 		object obj = null;
+		ICreateDevEnum createDevEnum = null;
 		IEnumMoniker enumMoniker = null;
 		IMoniker[] array = new IMoniker[1];
 		try
 		{
-			obj = Activator.CreateInstance(Type.GetTypeFromCLSID(Clsid.SystemDeviceEnum) ?? throw new ApplicationException("Failed creating device enumerator"));
-			if (((ICreateDevEnum)obj).CreateClassEnumerator(ref category, out enumMoniker, 0) != 0)
+			Type typeFromCLSID = Type.GetTypeFromCLSID(Clsid.SystemDeviceEnum);
+			if (typeFromCLSID == null)
+			{
+				throw new ApplicationException("Failed creating device enumerator");
+			}
+			obj = Activator.CreateInstance(typeFromCLSID);
+			createDevEnum = (ICreateDevEnum)obj;
+			if (createDevEnum.CreateClassEnumerator(ref category, out enumMoniker, 0) != 0)
 			{
 				throw new ApplicationException("No devices of the category");
 			}
@@ -95,6 +102,7 @@ public class FilterInfoCollection : CollectionBase
 		}
 		finally
 		{
+			createDevEnum = null;
 			if (obj != null)
 			{
 				Marshal.ReleaseComObject(obj);

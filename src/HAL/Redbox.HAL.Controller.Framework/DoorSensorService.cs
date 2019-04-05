@@ -29,7 +29,8 @@ internal sealed class DoorSensorService : IConfigurationObserver, IDoorSensorSer
 		set
 		{
 			m_softwareOverride = value;
-			ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap().SetValue("SensorSoftwareOverride", m_softwareOverride);
+			IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
+			map.SetValue("SensorSoftwareOverride", m_softwareOverride);
 		}
 	}
 
@@ -97,21 +98,23 @@ internal sealed class DoorSensorService : IConfigurationObserver, IDoorSensorSer
 	{
 		IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
 		m_softwareOverride = map.GetValue("SensorSoftwareOverride", def: false);
-		ServiceLocator.Instance.GetService<IMotionControlService>().AddVeto(this);
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		service.AddVeto(this);
 		ControllerConfiguration.Instance.AddObserver(this);
 	}
 
 	private DoorSensorResult RawQuery()
 	{
-		CoreResponse coreResponse = ServiceLocator.Instance.GetService<ICoreCommandExecutor>().ExecuteControllerCommand(CommandType.AuxSensorsRead);
-		if (coreResponse.CommError)
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IReadInputsResult<AuxInputs> readInputsResult = service.ReadAuxInputs();
+		if (!readInputsResult.Success)
 		{
 			return DoorSensorResult.AuxReadError;
 		}
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		if (!coreResponse.IsSensorSet(AuxSensor.QlmDown))
+		if (!readInputsResult.IsInputActive(AuxInputs.QlmDown))
 		{
-			service.LogInputs(ControlBoards.Aux, LogEntryType.Error);
+			LogHelper.Instance.WithContext(LogEntryType.Error, "[DoorSensorService] read inputs shows door not closed");
+			readInputsResult.Log(LogEntryType.Error);
 			return DoorSensorResult.FrontDoor;
 		}
 		return DoorSensorResult.Ok;

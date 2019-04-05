@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.Controller.Framework.Services;
 
@@ -27,7 +27,8 @@ internal sealed class PowerCycleDeviceService : IPowerCycleDeviceService
 		{
 			text = rts.RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
 			Type typeFromHandle = typeof(IPowerCycleDevice);
-			Type[] types = Assembly.LoadFrom(text).GetTypes();
+			Assembly assembly = Assembly.LoadFrom(text);
+			Type[] types = assembly.GetTypes();
 			foreach (Type type in types)
 			{
 				if (!typeFromHandle.IsAssignableFrom(type) || type.IsInterface)
@@ -35,7 +36,7 @@ internal sealed class PowerCycleDeviceService : IPowerCycleDeviceService
 					continue;
 				}
 				PowerCycleDeviceAttribute[] array = (PowerCycleDeviceAttribute[])type.GetCustomAttributes(typeof(PowerCycleDeviceAttribute), inherit: false);
-				if (array.Length != 0)
+				if (array.Length > 0)
 				{
 					IPowerCycleDevice value = (IPowerCycleDevice)Activator.CreateInstance(type, nonPublic: true);
 					if (!Devices.ContainsKey(array[0].Device))

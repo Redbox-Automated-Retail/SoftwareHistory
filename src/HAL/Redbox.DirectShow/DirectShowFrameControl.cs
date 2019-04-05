@@ -12,6 +12,8 @@ namespace Redbox.DirectShow;
 
 public class DirectShowFrameControl : IVideoSource, ISampleGrabberCB
 {
+	private const string Moniker = "DirectShowSlim";
+
 	private string deviceMoniker;
 
 	private int framesReceived;
@@ -38,13 +40,11 @@ public class DirectShowFrameControl : IVideoSource, ISampleGrabberCB
 
 	private int m_request;
 
-	private bool? isCrossbarAvailable;
+	private bool? isCrossbarAvailable = null;
 
 	private VideoInput[] crossbarVideoInputs;
 
 	private VideoInput crossbarVideoInput = VideoInput.Default;
-
-	private const string Moniker = "DirectShowSlim";
 
 	private readonly ManualResetEvent StartEvent = new ManualResetEvent(initialState: false);
 
@@ -286,7 +286,7 @@ public class DirectShowFrameControl : IVideoSource, ISampleGrabberCB
 			BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, FrameSize.Width, FrameSize.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 			int stride = bitmapData.Stride;
 			int stride2 = bitmapData.Stride;
-			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + stride2 * (FrameSize.Height - 1);
+			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + (nint)stride2 * (nint)(FrameSize.Height - 1);
 			byte* ptr2 = (byte*)buffer.ToPointer();
 			for (int i = 0; i < FrameSize.Height; i++)
 			{

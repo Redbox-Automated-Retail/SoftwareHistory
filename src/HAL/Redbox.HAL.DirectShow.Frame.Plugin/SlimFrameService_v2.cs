@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Redbox.DirectShow;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.DirectShow.Frame.Plugin;
 
@@ -50,7 +50,6 @@ internal sealed class SlimFrameService_v2 : AbstractDirectShowControl
 	protected override bool OnShutdown()
 	{
 		Control.SignalToStop();
-		Control.WaitForStop();
 		Control.PlayingFinished -= base.PlayingFinished;
 		Control = null;
 		LogHelper.Instance.Log("[SlimFrameService_v2] Plugin shutdown.");

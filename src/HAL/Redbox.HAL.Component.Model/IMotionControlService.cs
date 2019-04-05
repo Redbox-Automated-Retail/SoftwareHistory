@@ -22,27 +22,33 @@ public interface IMotionControlService
 
 	ErrorCodes MoveAbsolute(Axis axis, int? xunits, int? yunits, bool checkSensors);
 
-	ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+	ErrorCodes MoveTo(int deck, int slot, MoveMode mode);
 
 	ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log);
 
-	ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+	ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+
+	ErrorCodes MoveTo(ILocation location, MoveMode mode);
 
 	ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log);
 
+	ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+
 	ErrorCodes MoveVend(MoveMode mode, IFormattedLog log);
 
-	ErrorCodes InitAxes(IFormattedLog log);
+	ErrorCodes InitAxes();
 
-	ErrorCodes InitAxes(IFormattedLog log, bool quick);
+	ErrorCodes InitAxes(bool quick);
 
-	ErrorCodes HomeAxis(Axis axis, IFormattedLog log);
+	ErrorCodes HomeAxis(Axis axis);
 
-	bool Reset(IFormattedLog log, bool quick);
+	ErrorCodes Reset(bool quick);
 
-	bool TestAndReset(IFormattedLog log);
+	bool TestAndReset();
 
-	bool TestAndReset(IFormattedLog log, bool quick);
+	bool TestAndReset(bool quick);
 
 	void Shutdown();
+
+	string GetPrintableLocation();
 }

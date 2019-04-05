@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -23,11 +24,9 @@ public class Instruction : ICloneable<Instruction>
 		AtLeastOne
 	}
 
-	protected const string SuccessMessage = "SUCCESS";
-
 	protected const string FailureMessage = "FAILURE";
 
-	protected const string TimeoutMessage = "TIMEOUT";
+	private const string ErrorMessageFormat = "The {0} instruction failed (line {1} of script {2}): {3}";
 
 	private TokenList m_operands;
 
@@ -36,8 +35,6 @@ public class Instruction : ICloneable<Instruction>
 	private int m_trueBranch = ProgramInstruction.EndLineNumber;
 
 	private int m_falseBranch = ProgramInstruction.InvalidLineNumber;
-
-	private const string ErrorMessageFormat = "The {0} instruction failed (line {1} of script {2}): {3}";
 
 	public Instruction FirstInstruction => Instructions[0];
 
@@ -80,6 +77,10 @@ public class Instruction : ICloneable<Instruction>
 	public int Y { get; internal set; }
 
 	protected virtual ExpectedOperands Expected => ExpectedOperands.AtLeastOne;
+
+	protected string SuccessMessage => ErrorCodes.Success.ToString().ToUpper();
+
+	protected string TimeoutMessage => ErrorCodes.Timeout.ToString().ToUpper();
 
 	internal virtual Branch BranchType => Branch.None;
 
@@ -373,7 +374,7 @@ public class Instruction : ICloneable<Instruction>
 		}
 		else
 		{
-			context.PushTop(response.TimedOut ? "TIMEOUT" : "SUCCESS");
+			context.PushTop(response.TimedOut ? TimeoutMessage : SuccessMessage);
 		}
 	}
 
@@ -445,7 +446,7 @@ public class Instruction : ICloneable<Instruction>
 		T result = default(T);
 		try
 		{
-			result = (T)ConversionHelper.ChangeType(value, typeof(T));
+			result = ConversionHelper.ChangeType<T>(value);
 			return result;
 		}
 		catch (Exception ex)
@@ -478,7 +479,7 @@ public class Instruction : ICloneable<Instruction>
 	internal int? GetTimeOutValue(ErrorList errors, ExecutionContext context)
 	{
 		int? result = null;
-		KeyValuePair keyValuePair = Operands.GetKeyValuePair("TIMEOUT");
+		KeyValuePair keyValuePair = Operands.GetKeyValuePair(TimeoutMessage);
 		if (keyValuePair == null)
 		{
 			return null;

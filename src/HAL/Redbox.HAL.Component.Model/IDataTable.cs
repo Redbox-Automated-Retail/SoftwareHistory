@@ -38,4 +38,6 @@ public interface IDataTable<T>
 	void UpdateTable(TextWriter writer, ErrorList errors);
 
 	void ExectuteSelectQuery(OnSelectResult callback, string query);
+
+	bool Recreate(ErrorList errors);
 }

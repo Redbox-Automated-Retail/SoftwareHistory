@@ -7,5 +7,7 @@ internal enum QlmOperation
 	Disengage,
 	Lift,
 	Drop,
-	Halt
+	Halt,
+	LockDoor,
+	UnlockDoor
 }

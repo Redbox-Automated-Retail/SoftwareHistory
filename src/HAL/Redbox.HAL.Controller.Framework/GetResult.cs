@@ -7,7 +7,7 @@ internal sealed class GetResult : IGetResult
 {
 	public ErrorCodes HardwareError { get; private set; }
 
-	public bool Success => HardwareError == ErrorCodes.Success;
+	public bool Success => ErrorCodes.Success == HardwareError;
 
 	public bool EmptyOrStuck
 	{

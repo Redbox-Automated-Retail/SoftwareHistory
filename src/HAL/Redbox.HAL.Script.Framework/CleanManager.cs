@@ -26,7 +26,7 @@ internal sealed class CleanManager
 				}
 				else if (service.IsStuck(vMZIterator.Location))
 				{
-					context.ServiceLog("CleanManager: don't process location {0} stuckFlags {1}", vMZIterator.Location.ToString(), vMZIterator.Location.StuckCount.ToString());
+					LogHelper.Instance.WithContext("CleanManager: don't process location {0} stuckFlags {1}", vMZIterator.Location.ToString(), vMZIterator.Location.StuckCount.ToString());
 				}
 				else if (manager.IsNonThinType(vMZIterator.Flags))
 				{
@@ -73,7 +73,8 @@ internal sealed class CleanManager
 			LogHelper.Instance.Log("[CleanSlot] Found enclosing segment [flags = {0}] for location {1}", merchSegment.Flags.ToString(), iterator.Location.ToString());
 		}
 		ILocation location = merchSegment.FindHigh();
-		if (ServiceLocator.Instance.GetService<IInventoryService>().IsStuck(location))
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (service.IsStuck(location))
 		{
 			return true;
 		}

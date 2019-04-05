@@ -4,11 +4,16 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "get-inventory-stats", Operand = "GET-INVENTORY-STATS")]
+[NativeJob(ProgramName = "get-inventory-stats")]
 internal sealed class InventoryStatisticsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
+		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: false, "InventoryStats");
+		if (!TestInventoryStore())
+		{
+			return;
+		}
 		int totalMachineSlots = 0;
 		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
 		{
@@ -18,12 +23,14 @@ internal sealed class InventoryStatisticsJob : NativeJobAdapter
 			}
 			return true;
 		});
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		int machineEmptyCount = service.GetMachineEmptyCount();
-		IList<ILocation> unknowns = service.GetUnknowns();
-		int excludedSlotsCount = service.GetExcludedSlotsCount();
-		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: false, "InventoryStats");
+		int machineEmptyCount = base.InventoryService.GetMachineEmptyCount();
+		List<ILocation> unknowns = base.InventoryService.GetUnknowns();
+		int excludedSlotsCount = base.InventoryService.GetExcludedSlotsCount();
 		int num = machineEmptyCount - ControllerConfiguration.Instance.ReturnSlotBuffer;
+		if (num < 0)
+		{
+			num = 0;
+		}
 		applicationLog.Write("Inventory snapshot.");
 		applicationLog.WriteFormatted(" Total Empty: {0}", machineEmptyCount);
 		applicationLog.WriteFormatted(" Usable empty: {0}", num);
@@ -39,10 +46,9 @@ internal sealed class InventoryStatisticsJob : NativeJobAdapter
 		base.Context.CreateInfoResult("TotalMachineSlots", totalMachineSlots.ToString());
 		base.Context.CreateInfoResult("DumpBinCapacity", base.DumpbinService.Capacity.ToString());
 		base.Context.CreateInfoResult("DumpBinCount", base.DumpbinService.CurrentCount().ToString());
-		if (service.MachineIsFull())
+		if (base.InventoryService.MachineIsFull())
 		{
-			applicationLog.LogMachineFull();
-			base.Context.CreateInfoResult("MachineFull", "The machine is full.");
+			base.Context.CreateMachineFullResult();
 		}
 	}
 

@@ -19,7 +19,8 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 			applicationLog.Write("Prep Zone for unload is supported only on VMZ machines. I'm sorry.");
 			return;
 		}
-		DoorSensorResult doorSensorResult = ServiceLocator.Instance.GetService<IDoorSensorService>().Query();
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		DoorSensorResult doorSensorResult = service.Query();
 		if (doorSensorResult != DoorSensorResult.Ok)
 		{
 			string text = $"Door sensor query returned error {doorSensorResult.ToString()}";
@@ -60,7 +61,8 @@ internal sealed class PrepZoneForUnloadJob : NativeJobAdapter
 			base.Context.CreateInfoResult("RotationsExceeded", "There are no more rotations to be made.");
 			return;
 		}
-		int num3 = first.Quadrants[num2].Slots.Start - 5;
+		IQuadrant quadrant = first.Quadrants[num2];
+		int num3 = quadrant.Slots.Start - 5;
 		if (num3 <= 0)
 		{
 			num3 = first.NumberOfSlots - Math.Abs(num3);

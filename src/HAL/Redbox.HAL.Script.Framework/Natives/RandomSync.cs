@@ -22,6 +22,7 @@ internal sealed class RandomSync : NativeJobAdapter
 		base.Context.AppLog.Write("Random sync test start.");
 		RandomLocationSelector randomLocationSelector = new RandomLocationSelector(base.DecksService, service);
 		int num3 = 0;
+		int num4 = 0;
 		bool flag = true;
 		while (flag)
 		{
@@ -32,25 +33,31 @@ internal sealed class RandomSync : NativeJobAdapter
 				break;
 			}
 			base.Context.AppLog.WriteFormatted("Sync {0}", location.ToString());
-			num3++;
+			num4++;
 			bool vend = false;
-			if (num != 0 && num3 % num == 0)
+			if (num != 0 && num4 % num == 0)
 			{
 				vend = true;
 			}
-			RandomSyncDecorator decorator = new RandomSyncDecorator(base.Context, base.Result, location, num2, vend);
-			SyncResult syncResult = SyncHelper.SyncSlot(base.Result, base.Context, location, decorator);
-			if (syncResult == SyncResult.HardwareError || syncResult == SyncResult.GetError)
+			RandomSyncDecorator randomSyncDecorator = new RandomSyncDecorator(base.Context, base.Result, location, num2, vend);
+			SyncResult syncResult = SyncHelper.SyncSlot(base.Result, base.Context, location, randomSyncDecorator);
+			SyncResult syncResult2 = syncResult;
+			if (syncResult2 == SyncResult.HardwareError || syncResult2 == SyncResult.GetError)
 			{
 				base.Context.AppLog.WriteFormatted("Sync returned error {0}", syncResult.ToString());
 				flag = false;
 				AddError("Sync encountered an error.");
+			}
+			if (randomSyncDecorator.SecureReads > 0)
+			{
+				num3++;
 			}
 			if (ContextSwitchRequested())
 			{
 				flag = false;
 			}
 		}
+		base.Context.AppLog.WriteFormatted("Disk count with secure code finds: {0}", num3);
 	}
 
 	internal RandomSync(ExecutionResult result, ExecutionContext context)

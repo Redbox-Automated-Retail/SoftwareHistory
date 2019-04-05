@@ -74,7 +74,8 @@ internal sealed class MerchTransferManager : IDisposable
 	{
 		m_successfulTransfers++;
 		Context.CreateResult("DiskTransferSuccessful", SegmentManager.Instance.InCompressedZone(source) ? "The item was moved internally in the VMZ." : "Transferred disk from VMZ to drum.", source.Deck, source.Slot, "EMPTY", null, dest.ID);
-		if (ServiceLocator.Instance.GetService<IDumpbinService>().IsBin(dest))
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		if (service.IsBin(dest))
 		{
 			Context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, dest.ID, null, null);
 		}

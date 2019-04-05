@@ -1,3 +1,4 @@
+using System;
 using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Script.Framework;
@@ -10,22 +11,9 @@ internal abstract class SyncDecorator
 
 	protected readonly ILocation SyncLocation;
 
-	private static readonly CenterDiskMethod[] m_readMethods = new CenterDiskMethod[2]
-	{
-		CenterDiskMethod.VendDoorAndBack,
-		CenterDiskMethod.DrumAndBack
-	};
-
 	protected void UpdateSymbol(string name, object value)
 	{
-		if (Context.SymbolTable.ContainsKey(name))
-		{
-			Context.SymbolTable[name] = value;
-		}
-		else
-		{
-			Context.SymbolTable.Add(name, value);
-		}
+		Context.SetSymbolValue(name, value);
 	}
 
 	protected virtual void OnMoveErrorInner(ErrorCodes result)
@@ -43,14 +31,34 @@ internal abstract class SyncDecorator
 		Context = ctx;
 	}
 
-	internal virtual SyncResult AfterDiskRead()
+	internal static SyncDecorator Get(SyncType type, ExecutionContext ctx, ExecutionResult r, ILocation syncLoc)
+	{
+		if (type == SyncType.None)
+		{
+			throw new ArgumentException("type");
+		}
+		SyncDecorator result = null;
+		switch (type)
+		{
+		case SyncType.Location:
+			result = new SyncLocationDecorator(ctx, r, syncLoc);
+			break;
+		case SyncType.Standard:
+			result = new StandardSyncDecorator(ctx, r, syncLoc);
+			break;
+		}
+		return result;
+	}
+
+	internal virtual SyncResult AfterDiskRead(ScanResult sr)
 	{
 		return SyncResult.Success;
 	}
 
 	internal virtual IGetResult GetDisk(IFormattedLog applog)
 	{
-		return ServiceLocator.Instance.GetService<IControllerService>().Get(applog);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Get();
 	}
 
 	internal virtual void OnGetFailure(IGetResult gr)
@@ -67,7 +75,7 @@ internal abstract class SyncDecorator
 
 	internal ScanResult ReadDisk()
 	{
-		ScanResult result = Scanner.SmartReadDisk(m_readMethods);
+		ScanResult result = Scanner.SmartReadDisk();
 		OnReadDisk(result);
 		return result;
 	}

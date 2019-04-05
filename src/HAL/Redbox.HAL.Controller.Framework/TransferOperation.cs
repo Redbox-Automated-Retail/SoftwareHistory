@@ -14,13 +14,13 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 
 	private readonly ILocation Source;
 
-	private readonly IFormattedLog Log;
-
 	private readonly IControllerService ControllerService;
 
 	private bool m_disposed;
 
 	private IGetResult GetResult;
+
+	internal bool PreserveFlagsOnPut { get; set; }
 
 	public void Dispose()
 	{
@@ -29,12 +29,7 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 
 	public void OnSuccessfulPut(IPutResult result, IFormattedLog log)
 	{
-		if (GetResult.ReturnTime.HasValue)
-		{
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-			result.PutLocation.ReturnDate = GetResult.ReturnTime;
-			service.Save(result.PutLocation);
-		}
+		OnRestoreState(result.PutLocation, PreserveFlagsOnPut);
 	}
 
 	public void OnFailedPut(IPutResult result, IFormattedLog log)
@@ -97,26 +92,25 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 		return transferResult;
 	}
 
-	internal TransferOperation(IControllerService service, ILocation source, IFormattedLog log)
+	internal TransferOperation(IControllerService service, ILocation source)
 	{
 		InventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
 		MotionService = ServiceLocator.Instance.GetService<IMotionControlService>();
 		ControlSystem = ServiceLocator.Instance.GetService<IControlSystem>();
 		ControllerService = service;
-		Log = log;
 		Source = source;
 	}
 
 	private void MoveAndPut(TransferResult result, ILocation destination)
 	{
-		ErrorCodes errorCodes = MotionService.MoveTo(destination, MoveMode.Put, Log);
+		ErrorCodes errorCodes = MotionService.MoveTo(destination, MoveMode.Put);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			result.TransferError = errorCodes;
 			return;
 		}
 		ControlSystem.TrackCycle();
-		IPutResult putResult = ControllerService.Put(this, GetResult.Previous, Log);
+		IPutResult putResult = ControllerService.Put(this, GetResult.Previous);
 		result.TransferError = putResult.Code;
 		if (putResult.Success)
 		{
@@ -126,31 +120,40 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 
 	private void ReturnToSource(TransferResult result)
 	{
-		ErrorCodes errorCodes = MotionService.MoveTo(Source, MoveMode.Put, Log);
+		ErrorCodes errorCodes = MotionService.MoveTo(Source, MoveMode.Put);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			result.TransferError = errorCodes;
 			return;
 		}
 		ControlSystem.TrackCycle();
-		if (ControllerService.Put(GetResult.Previous, Log).Success)
+		IPutResult putResult = ControllerService.Put(GetResult.Previous);
+		if (putResult.Success)
 		{
 			result.ReturnedToSource = true;
-			Source.Flags = GetResult.Flags;
-			Source.ReturnDate = GetResult.ReturnTime;
-			InventoryService.Save(Source);
+			OnRestoreState(Source, preserve: true);
 		}
+	}
+
+	private void OnRestoreState(ILocation location, bool preserve)
+	{
+		if (preserve)
+		{
+			location.Flags = GetResult.Flags;
+		}
+		location.ReturnDate = GetResult.ReturnTime;
+		InventoryService.Save(location);
 	}
 
 	private void FetchSource(TransferResult result, IGetObserver observer)
 	{
-		ErrorCodes errorCodes = MotionService.MoveTo(Source, MoveMode.Get, Log);
+		ErrorCodes errorCodes = MotionService.MoveTo(Source, MoveMode.Get);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			result.TransferError = errorCodes;
 			return;
 		}
-		GetResult = ControllerService.Get(observer, Log);
+		GetResult = ControllerService.Get(observer);
 		result.TransferError = ((!GetResult.Success) ? GetResult.HardwareError : ErrorCodes.Success);
 		if (GetResult.Success)
 		{
@@ -160,13 +163,13 @@ internal sealed class TransferOperation : IDisposable, IPutObserver
 
 	private void FetchSource(TransferResult result)
 	{
-		ErrorCodes errorCodes = MotionService.MoveTo(Source, MoveMode.Get, Log);
+		ErrorCodes errorCodes = MotionService.MoveTo(Source, MoveMode.Get);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			result.TransferError = errorCodes;
 			return;
 		}
-		GetResult = ControllerService.Get(Log);
+		GetResult = ControllerService.Get();
 		result.TransferError = ((!GetResult.Success) ? GetResult.HardwareError : ErrorCodes.Success);
 		if (GetResult.Success)
 		{

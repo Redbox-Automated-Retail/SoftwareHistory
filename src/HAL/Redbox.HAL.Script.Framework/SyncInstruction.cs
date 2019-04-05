@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -7,21 +8,10 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public sealed class SyncInstruction : Instruction
 {
-	private enum SyncType
-	{
-		None,
-		Standard,
-		Location
-	}
-
 	public override string Mnemonic => "SYNC";
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		if (!GetLocation(result, context, out var location))
-		{
-			return;
-		}
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("TYPE");
 		SyncType syncType = SyncType.Standard;
 		if (keyValuePair != null)
@@ -33,7 +23,13 @@ public sealed class SyncInstruction : Instruction
 				return;
 			}
 		}
-		SyncDecorator syncDecorator = null;
-		context.PushTop(SyncHelper.SyncSlot(decorator: (SyncType.Location != syncType) ? ((SyncDecorator)new StandardSyncDecorator(context, result, location)) : ((SyncDecorator)new SyncLocationDecorator(context, result, location)), result: result, context: context, loc: location).ToString().ToUpper());
+		if (!GetLocation(result, context, out var location))
+		{
+			result.Errors.Add(Error.NewError("E778", "Missing required operands.", "The DECK and SLOT operands are missing. Unrecognized sync type {0}"));
+			return;
+		}
+		SyncDecorator decorator = SyncDecorator.Get(syncType, context, result, location);
+		SyncResult syncResult = SyncHelper.SyncSlot(result, context, location, decorator);
+		context.PushTop(syncResult.ToString().ToUpper());
 	}
 }

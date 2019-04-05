@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -11,7 +12,7 @@ public sealed class AudioInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None) != AudioChannelState.None;
+		return AudioChannelState.None != Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None);
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)

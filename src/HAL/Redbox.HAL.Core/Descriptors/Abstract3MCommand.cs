@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Interop;
 
 namespace Redbox.HAL.Core.Descriptors;
 

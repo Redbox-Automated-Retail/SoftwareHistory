@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -36,7 +37,8 @@ public sealed class RinglightInstruction : Instruction
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
 		RinglightState ringlightState = Enum<RinglightState>.ParseIgnoringCase(base.Operands[0].Value, RinglightState.Off);
-		ServiceLocator.Instance.GetService<IControlSystem>().ToggleRingLight((RinglightState.On == ringlightState) ? true : false, null);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		service.ToggleRingLight((RinglightState.On == ringlightState) ? true : false, null);
 	}
 
 	private bool IsOperandValid(string op)

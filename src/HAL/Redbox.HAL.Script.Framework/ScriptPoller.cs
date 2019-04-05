@@ -1,22 +1,17 @@
 using System;
 using System.Threading;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Threading;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineChangeObserver
+internal abstract class ScriptPoller : IConfigurationObserver
 {
-	protected readonly ManualResetEvent JobCompletionHandle = new ManualResetEvent(initialState: false);
-
 	protected readonly ManualResetEvent PollEvent = new ManualResetEvent(initialState: false);
 
 	private readonly object SyncLock = new object();
 
-	private const int Polling = 1;
-
-	private const int NotPolling = 0;
-
-	private int m_pollingState;
+	private readonly AtomicFlag RunFlag = new AtomicFlag();
 
 	protected abstract string ThreadName { get; }
 
@@ -36,60 +31,63 @@ internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineCh
 	{
 		get
 		{
-			return Thread.VolatileRead(ref m_pollingState) == 1;
+			return RunFlag.IsSet;
 		}
 		set
 		{
-			Interlocked.Exchange(ref m_pollingState, value ? 1 : 0);
+			if (value)
+			{
+				RunFlag.Set();
+			}
+			else
+			{
+				RunFlag.Clear();
+			}
 		}
 	}
 
-	public void StatusChange(ExecutionContextStatus status)
+	internal string PollerName { get; set; }
+
+	internal bool ConfigNotifications { get; set; }
+
+	public void NotifyConfigurationLoaded()
 	{
-		if (IsComplete(status))
-		{
-			JobCompletionHandle.Set();
-		}
+		LogHelper.Instance.Log("[{0}Poller] Configuration loaded.", PollerName);
+		OnConfigurationLoad();
 	}
 
-	public void OnShutdown()
+	public void NotifyConfigurationChangeStart()
 	{
+		LogHelper.Instance.Log("[{0}Poller] Configuration change start.", PollerName);
 		Shutdown();
 	}
 
-	public void OnEngineChange(EngineModes newMode)
+	public void NotifyConfigurationChangeEnd()
 	{
-		OnEngineModeChange(newMode);
-	}
-
-	protected virtual void OnEngineModeChange(EngineModes newMode)
-	{
-		switch (newMode)
+		LogHelper.Instance.Log("[{0}Poller] Configuration change end.", PollerName);
+		OnConfigurationChangeEnd();
+		if (ExecutionEngine.Instance.Mode == EngineModes.Normal)
 		{
-		case EngineModes.Normal:
 			Start();
-			break;
-		case EngineModes.Maintenance:
-		case EngineModes.Diagnostic:
-		case EngineModes.Merchandizing:
-		case EngineModes.RebootPending:
-			Shutdown();
-			break;
-		case EngineModes.PowerSuspend:
-			Shutdown(joinThread: false);
-			break;
 		}
 	}
 
-	protected virtual ExecutionContext ScheduleAndBlockOnJob()
+	protected ExecutionContextStatus ScheduleAndBlockOnJob()
 	{
-		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJob(JobName, JobLabel, DateTime.Now, Priority);
-		executionContext.AddObserver(this);
-		executionContext.Resume();
-		JobCompletionHandle.WaitOne();
-		executionContext.RemoveObserver(this);
-		JobCompletionHandle.Reset();
-		return executionContext;
+		ExecutionContext executionContext = ExecutionEngine.Instance.ScheduleJobInternal(JobName, JobLabel, null, Priority);
+		executionContext.Pend();
+		executionContext.WaitForCompletion();
+		ExecutionContextStatus status = executionContext.GetStatus();
+		executionContext.Trash();
+		return status;
+	}
+
+	protected virtual void OnConfigurationLoad()
+	{
+	}
+
+	protected virtual void OnConfigurationChangeEnd()
+	{
 	}
 
 	protected virtual bool OnPollStart()
@@ -97,22 +95,27 @@ internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineCh
 		return true;
 	}
 
-	protected virtual void OnPollDone()
+	protected virtual bool CoreExecute()
 	{
+		ExecutionContextStatus executionContextStatus = ScheduleAndBlockOnJob();
+		return ExecutionContextStatus.Completed == executionContextStatus;
 	}
 
-	protected abstract bool CoreExecute();
-
-	protected bool IsComplete(ExecutionContextStatus status)
+	protected ScriptPoller()
 	{
-		if (status != ExecutionContextStatus.Errored && status != ExecutionContextStatus.Completed && status != ExecutionContextStatus.Garbage)
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		service.EngineModeChange += es_EngineModeChange;
+	}
+
+	internal void Initialize()
+	{
+		if (ConfigNotifications)
 		{
-			return status == ExecutionContextStatus.Stopped;
+			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+			IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
+			attributeXmlConfiguration.AddObserver(this);
 		}
-		return true;
 	}
-
-	internal abstract void Initialize();
 
 	internal void Start()
 	{
@@ -121,7 +124,6 @@ internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineCh
 			if (IsConfigured && !Running)
 			{
 				PollEvent.Reset();
-				JobCompletionHandle.Reset();
 				Running = true;
 				PollerThread = new Thread(Execute)
 				{
@@ -149,10 +151,24 @@ internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineCh
 				PollEvent.Set();
 				if (joinThread && PollerThread != null && !PollerThread.Join(5000))
 				{
-					LogHelper.Instance.Log("Shutdown: the thread did not join.");
+					LogHelper.Instance.Log("[ScriptPoller] Shutdown: thread '{0}' did not join.", ThreadName);
 				}
 				PollerThread = null;
-				LogHelper.Instance.Log("[{0}] is shutdown.", ThreadName);
+			}
+		}
+	}
+
+	private void es_EngineModeChange(object sender, EngineModeChangeEventArgs args)
+	{
+		if (IsConfigured)
+		{
+			if (args.NewMode == EngineModes.Normal)
+			{
+				Start();
+			}
+			else
+			{
+				Shutdown(joinThread: false);
 			}
 		}
 	}
@@ -161,13 +177,12 @@ internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineCh
 	{
 		try
 		{
-			LogHelper.Instance.Log("Start of the {0} thread.", ThreadName);
 			if (OnPollStart())
 			{
+				LogHelper.Instance.Log("[ScriptPoller] Start of the {0} thread.", ThreadName);
 				while (Running && CoreExecute() && !PollEvent.WaitOne(PollSleep))
 				{
 				}
-				OnPollDone();
 			}
 		}
 		catch (Exception e)
@@ -176,7 +191,7 @@ internal abstract class ScriptPoller : IStatusChangeObserver, IExecutionEngineCh
 		}
 		finally
 		{
-			LogHelper.Instance.Log("{0} thread exiting.", ThreadName);
+			LogHelper.Instance.Log("[ScriptPoller] {0} thread has ended.", ThreadName);
 			Running = false;
 		}
 	}

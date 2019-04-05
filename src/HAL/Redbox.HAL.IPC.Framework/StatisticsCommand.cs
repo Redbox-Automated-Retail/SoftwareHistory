@@ -1,5 +1,5 @@
 using System.Reflection;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -13,13 +13,15 @@ public class StatisticsCommand
 	{
 		BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public;
 		FieldInfo[] fields = typeof(Statistics).GetFields(bindingAttr);
-		foreach (FieldInfo fieldInfo in fields)
+		FieldInfo[] array = fields;
+		foreach (FieldInfo fieldInfo in array)
 		{
 			string item = $"{fieldInfo.Name} = {fieldInfo.GetValue(Statistics.Instance)}";
 			context.Messages.Add(item);
 		}
 		PropertyInfo[] properties = typeof(Statistics).GetProperties(bindingAttr);
-		foreach (PropertyInfo propertyInfo in properties)
+		PropertyInfo[] array2 = properties;
+		foreach (PropertyInfo propertyInfo in array2)
 		{
 			string item2 = $"{propertyInfo.Name} = {propertyInfo.GetValue(Statistics.Instance, null)}";
 			context.Messages.Add(item2);

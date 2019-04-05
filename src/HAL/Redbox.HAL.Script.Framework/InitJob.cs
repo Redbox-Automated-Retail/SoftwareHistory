@@ -24,36 +24,49 @@ internal sealed class InitJob : NativeJobAdapter
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "init", flushOnWrite: true, null);
 		applicationLog.Write("Init start.");
 		applicationLog.Write("RESET controller boards.");
-		if (base.Context.ID == ExecutionEngine.Instance.InitJob.ID)
+		object symbolValue = base.Context.GetSymbolValue("__EE_BOOTSTRAP_INIT", base.Result.Errors);
+		bool flag = false;
+		if (base.Result.Errors.Count == 0)
 		{
-			service.Wait(ControllerConfiguration.Instance.MinInitWakeupTime);
-			LogHelper.Instance.Log("Wait for COM ports complete.");
+			flag = (bool)symbolValue;
+		}
+		else
+		{
+			base.Result.Errors.Clear();
+		}
+		if (flag)
+		{
 			if (ControllerConfiguration.Instance.DisableAutoExposureAtInit)
 			{
 				ExposureFixer.ResetCameraProperties();
 			}
+			service.Wait(ControllerConfiguration.Instance.MinInitWakeupTime);
+			LogHelper.Instance.Log("Wait for COM ports complete.");
 		}
-		if (ServiceLocator.Instance.GetService<IControlSystemService>().IsInitialized)
-		{
-			base.ControlSystem.Shutdown();
-			service.Wait(2000);
-		}
-		if (!base.ControlSystem.Initialize().Success)
-		{
-			applicationLog.Write("Reset of the boards timed out.");
-			LogHelper.Instance.Log("RESET instruction returned timeout; maybe communication error?", LogEntryType.Error);
-			base.Context.Send("RESET instruction returned timeout.");
-			base.Context.CreateInfoResult("RESET", "RESET instruction timed out.");
-			AddError("RESET instruction returned timeout.");
-			return;
-		}
-		ServiceLocator.Instance.GetService<IMotionControlService>().Initialize();
 		try
 		{
+			IControlSystemService service2 = ServiceLocator.Instance.GetService<IControlSystemService>();
+			if (service2.IsInitialized)
+			{
+				base.ControlSystem.Shutdown();
+				service.Wait(2000);
+			}
+			IControlResponse controlResponse = base.ControlSystem.Initialize();
+			if (!controlResponse.Success)
+			{
+				applicationLog.Write("Reset of the boards timed out.");
+				LogHelper.Instance.Log("RESET instruction returned timeout; maybe communication error?", LogEntryType.Error);
+				base.Context.Send("RESET instruction returned timeout.");
+				base.Context.CreateInfoResult("RESET", "RESET instruction timed out.");
+				AddError("RESET instruction returned timeout.");
+				return;
+			}
+			IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+			service3.Initialize();
 			applicationLog.Write("RESET completed successfully; get controller board VERSION stamps.");
 			base.Context.Send("GET VERSION INFO");
-			string[] boardVersions = base.ControlSystem.GetBoardVersions();
-			if (boardVersions[boardVersions.Length - 1] == "TIMEOUT")
+			IControlSystemRevision revision = base.ControlSystem.GetRevision();
+			if (!revision.Success)
 			{
 				applicationLog.Write("The Version instruction timed out.");
 				LogHelper.Instance.Log("VERSION instruction returned timeout.", LogEntryType.Error);
@@ -62,11 +75,11 @@ internal sealed class InitJob : NativeJobAdapter
 				AddError("VERSION instruction returned timeout.");
 				return;
 			}
-			for (int num = boardVersions.Length - 1; num >= 0; num--)
+			Array.ForEach(revision.Responses, delegate(IBoardVersionResponse each)
 			{
-				base.Context.CreateInfoResult("VERSION INFO", boardVersions[num].Trim());
-			}
-			base.Context.CreateInfoResult("VERSION INFO", "A");
+				base.Context.CreateInfoResult("VERSION INFO", each.Version);
+			});
+			base.Context.CreateInfoResult("VERSION INFO", revision.Revision);
 			base.Context.Send("TEST TRACK");
 			base.ControlSystem.TrackOpen();
 			service.Wait(200);
@@ -74,7 +87,6 @@ internal sealed class InitJob : NativeJobAdapter
 			service.Wait(200);
 			if (!base.ControlSystem.TrackOpen().Success)
 			{
-				applicationLog.Write("TRACK OPEN timed out.");
 				base.Context.CreateInfoResult("TRACK OPEN FAILED", "The TRACK OPEN instruction timed out.");
 				AddError("TRACK OPEN instruction failed.");
 				return;
@@ -82,7 +94,6 @@ internal sealed class InitJob : NativeJobAdapter
 			service.Wait(200);
 			if (!base.ControlSystem.TrackClose().Success)
 			{
-				applicationLog.Write("TRACK CLOSE timed out.");
 				base.Context.CreateInfoResult("TRACK CLOSE FAILED", "The TRACK CLOSE instruction timed out.");
 				AddError("TRACK CLOSE instruction failed.");
 				return;
@@ -90,29 +101,25 @@ internal sealed class InitJob : NativeJobAdapter
 			service.Wait(200);
 			applicationLog.Write("Ensure the gripper is not obstructed.");
 			base.Context.Send("CHECK OBSTRUCTIONS");
-			using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
+			IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
+			ErrorCodes errorCodes = service4.ClearGripper();
+			if (errorCodes != ErrorCodes.Success)
 			{
-				ErrorCodes errorCodes = clearGripperOperation.Execute();
-				if (errorCodes != ErrorCodes.Success)
+				if (base.MotionService.CurrentLocation != null)
 				{
-					if (base.MotionService.CurrentLocation != null)
-					{
-						base.Context.CreateResult(StackEnd.Top, "PICKER OBSTRUCTED", "The picker is obstructed and cannot be moved.", base.MotionService.CurrentLocation.Deck, base.MotionService.CurrentLocation.Slot, null, null, null);
-					}
-					string text = $"The picker is obstructed and cannot be moved ( {clearGripperOperation.GetPrintableLocation()} ); clear gripper returned {errorCodes.ToString()}.";
-					applicationLog.Write(text);
-					LogHelper.Instance.Log(text, LogEntryType.Error);
-					AddError(text);
-					return;
+					base.Context.CreateResult(StackEnd.Top, "PICKER OBSTRUCTED", "The picker is obstructed and cannot be moved.", base.MotionService.CurrentLocation.Deck, base.MotionService.CurrentLocation.Slot, null, null, null);
 				}
+				string errMsg = $"The picker is obstructed and cannot be moved: clear gripper returned {errorCodes.ToString()}.";
+				AddError(errMsg);
+				return;
 			}
-			ErrorCodes errorCodes2 = base.MotionService.InitAxes(applicationLog);
+			ErrorCodes errorCodes2 = base.MotionService.InitAxes();
 			if (errorCodes2 != ErrorCodes.Success)
 			{
-				string text2 = $"Initializing the axes failed with code {errorCodes2.ToString()}";
-				base.Result.Errors.Add(Error.NewError("E999", "Init axes error.", text2));
-				applicationLog.WriteFormatted(text2, LogEntryType.Error);
-				base.Context.CreateInfoResult("InitError", text2);
+				string text = $"Initializing the axes failed with code {errorCodes2.ToString()}";
+				base.Result.Errors.Add(Error.NewError("E999", "Init axes error.", text));
+				applicationLog.WriteFormatted(text, LogEntryType.Error);
+				base.Context.CreateInfoResult("InitError", text);
 				return;
 			}
 			StartCamera();
@@ -136,7 +143,7 @@ internal sealed class InitJob : NativeJobAdapter
 		finally
 		{
 			StartCamera();
-			if (base.Context.ID == ExecutionEngine.Instance.InitJob.ID)
+			if (flag)
 			{
 				CheckShutdown(base.Context, service);
 			}
@@ -156,7 +163,8 @@ internal sealed class InitJob : NativeJobAdapter
 		{
 			return;
 		}
-		EventLog eventLog = Array.Find(EventLog.GetEventLogs(), (EventLog each) => each.Log == "System");
+		EventLog[] eventLogs = EventLog.GetEventLogs();
+		EventLog eventLog = Array.Find(eventLogs, (EventLog each) => each.Log == "System");
 		if (eventLog == null)
 		{
 			return;
@@ -210,8 +218,7 @@ internal sealed class InitJob : NativeJobAdapter
 			{
 				flag = configuredDevice.Restart();
 			}
-			string msg = $"CAMERA START returned {flag}";
-			base.Context.ServiceLog(msg);
+			LogHelper.Instance.WithContext("CAMERA START returned {0}", flag);
 		}
 	}
 }

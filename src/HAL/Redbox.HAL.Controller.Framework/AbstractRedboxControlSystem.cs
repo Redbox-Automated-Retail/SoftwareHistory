@@ -21,9 +21,9 @@ internal abstract class AbstractRedboxControlSystem
 
 	internal abstract CoreResponse SetPickerSensors(bool on);
 
-	internal abstract CoreResponse SetFinger(GripperFingerState state, int retries);
+	internal abstract CoreResponse SetFinger(GripperFingerState state);
 
-	internal abstract CoreResponse SetRoller(RollerOp op);
+	internal abstract CoreResponse SetRoller(RollerState state);
 
 	internal abstract CoreResponse RollerToPosition(RollerPosition position, int opTimeout);
 
@@ -31,9 +31,9 @@ internal abstract class AbstractRedboxControlSystem
 
 	internal abstract CoreResponse ExtendArm(int timeout);
 
-	internal abstract CoreResponse RetractArm(int timeout, int retryCount);
+	internal abstract CoreResponse RetractArm(int timeout);
 
-	internal abstract CoreResponse SetTrack(TrackState state, int retryCount);
+	internal abstract CoreResponse SetTrack(TrackState state);
 
 	internal abstract CoreResponse SetVendDoor(VendDoorState state);
 
@@ -43,9 +43,11 @@ internal abstract class AbstractRedboxControlSystem
 
 	internal abstract CoreResponse OnQlm(QlmOperation op);
 
-	internal abstract ReadInputsResult ReadInputs(ControlBoards board);
+	internal abstract ReadAuxInputsResult ReadAuxInputs();
+
+	internal abstract ReadPickerInputsResult ReadPickerInputs();
 
 	internal abstract BoardVersionResponse GetBoardVersion(ControlBoards board);
 
-	internal abstract ControllerRevision GetRevision();
+	internal abstract IControlSystemRevision GetRevision();
 }

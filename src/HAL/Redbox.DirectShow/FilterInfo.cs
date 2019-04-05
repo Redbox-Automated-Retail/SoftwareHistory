@@ -61,13 +61,14 @@ public class FilterInfo : IComparable
 	private string GetName(IMoniker moniker)
 	{
 		object ppvObj = null;
+		IPropertyBag propertyBag = null;
 		try
 		{
 			Guid riid = typeof(IPropertyBag).GUID;
 			moniker.BindToStorage(null, null, ref riid, out ppvObj);
-			IPropertyBag obj = (IPropertyBag)ppvObj;
+			propertyBag = (IPropertyBag)ppvObj;
 			object pVar = "";
-			int num = obj.Read("FriendlyName", ref pVar, IntPtr.Zero);
+			int num = propertyBag.Read("FriendlyName", ref pVar, IntPtr.Zero);
 			if (num != 0)
 			{
 				Marshal.ThrowExceptionForHR(num);
@@ -85,6 +86,7 @@ public class FilterInfo : IComparable
 		}
 		finally
 		{
+			propertyBag = null;
 			if (ppvObj != null)
 			{
 				Marshal.ReleaseComObject(ppvObj);

@@ -1,5 +1,4 @@
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -16,63 +15,55 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 			HandleHWError(errorCodes.ToString());
 			return;
 		}
-		if (!base.ControlSystem.VendDoorRent().Success)
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		ErrorCodes errorCodes2 = service.AcceptDiskAtDoor();
+		switch (errorCodes2)
 		{
-			HandleHWError("Venddoor Rent Timeout.");
-			return;
-		}
-		using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
+		case ErrorCodes.PickerEmpty:
+			base.Context.CreateInfoResult("NoReceivedItem", "No disk was placed in the picker.");
+			break;
+		default:
+			HandleHWError(errorCodes2.ToString());
+			break;
+		case ErrorCodes.PickerFull:
 		{
-			ErrorCodes errorCodes2 = acceptDiskOperation.Execute();
-			switch (errorCodes2)
+			IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+			errorCodes = service2.MoveTo(num, num2, MoveMode.Put, base.Context.AppLog);
+			if (errorCodes != ErrorCodes.Success)
 			{
-			case ErrorCodes.PickerEmpty:
-				base.Context.CreateInfoResult("NoReceivedItem", "No disk was placed in the picker.");
-				return;
-			default:
-				HandleHWError(errorCodes2.ToString());
-				return;
-			case ErrorCodes.PickerFull:
+				HandleHWError(errorCodes.ToString());
 				break;
 			}
-		}
-		errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(num, num2, MoveMode.Put, base.Context.AppLog);
-		if (errorCodes != ErrorCodes.Success)
-		{
-			HandleHWError(errorCodes.ToString());
-			return;
-		}
-		base.ControlSystem.TrackCycle();
-		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN", base.AppLog).Success)
-		{
-			errorCodes = base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog);
-			if (errorCodes == ErrorCodes.Success)
+			base.ControlSystem.TrackCycle();
+			IPutResult putResult = service.Put("UNKNOWN");
+			if (putResult.Success)
 			{
-				using (VendItemOperation vendItemOperation = new VendItemOperation())
-				{
-					VendItemResult vendItemResult = vendItemOperation.Execute();
-					if (vendItemResult.Status == ErrorCodes.PickerEmpty)
-					{
-						base.Context.CreateInfoResult("ItemTakenByMerchandizer", "The disk was taken by the merchandizer.");
-						AddError("Disk not filed.");
-					}
-					else if (vendItemResult.Status == ErrorCodes.PickerFull)
-					{
-						base.Context.CreateInfoResult("ItemNotTaken", "The disk was taken by the merchandizer.");
-						AddError("Disk not filed.");
-					}
-					else
-					{
-						HandleHWError(vendItemResult.Status.ToString());
-					}
-					return;
-				}
+				base.Context.CreateResult("ItemReturned", "The marker disk was filed.", num, num2, "UNKNOWN", null, null);
+				break;
 			}
-			HandleHWError(errorCodes.ToString());
+			errorCodes = base.MotionService.MoveVend(MoveMode.None, base.Context.AppLog);
+			if (errorCodes != ErrorCodes.Success)
+			{
+				HandleHWError(errorCodes.ToString());
+				break;
+			}
+			IVendItemResult vendItemResult = service.VendItemInPicker();
+			if (vendItemResult.Status == ErrorCodes.PickerEmpty)
+			{
+				base.Context.CreateInfoResult("ItemTakenByMerchandizer", "The disk was taken by the merchandizer.");
+				AddError("Disk not filed.");
+			}
+			else if (vendItemResult.Status == ErrorCodes.PickerFull)
+			{
+				base.Context.CreateInfoResult("ItemNotTaken", "The disk was taken by the merchandizer.");
+				AddError("Disk not filed.");
+			}
+			else
+			{
+				HandleHWError(vendItemResult.Status.ToString());
+			}
+			break;
 		}
-		else
-		{
-			base.Context.CreateResult("ItemReturned", "The marker disk was filed.", num, num2, "UNKNOWN", null, null);
 		}
 	}
 

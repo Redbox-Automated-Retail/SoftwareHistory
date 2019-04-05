@@ -1,5 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -72,7 +73,7 @@ public sealed class ControlSystemInstruction : Instruction
 			controlResponse = service.LiftQlm();
 			break;
 		case Ops.HaltQlmOperation:
-			controlResponse = service.HaltQlmOperation();
+			controlResponse = service.HaltQlmLifter();
 			break;
 		default:
 			result.AddError(ExecutionErrors.InvalidSymbolValue, $"The value {base.Operands[0].Value} is unrecognized.");

@@ -8,7 +8,7 @@ internal sealed class GetExcludedLocationsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IList<ILocation> excludedSlots = base.InventoryService.GetExcludedSlots();
+		List<ILocation> excludedSlots = base.InventoryService.GetExcludedSlots();
 		using (new DisposeableList<ILocation>(excludedSlots))
 		{
 			if (excludedSlots.Count == 0)
@@ -16,10 +16,10 @@ internal sealed class GetExcludedLocationsJob : NativeJobAdapter
 				base.Context.CreateInfoResult("NoExcludedSlots", "There are no excluded slots.");
 				return;
 			}
-			foreach (ILocation item in excludedSlots)
+			excludedSlots.ForEach(delegate(ILocation loc)
 			{
-				base.Context.CreateResult("ExcludedSlot", "The location is excluded.", item.Deck, item.Slot, null, null, null);
-			}
+				base.Context.CreateResult("ExcludedSlot", "The location is excluded.", loc.Deck, loc.Slot, null, null, null);
+			});
 		}
 	}
 

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -40,7 +41,7 @@ public sealed class DoorSensorInstruction : Instruction
 		switch (expectedOperand)
 		{
 		case ExpectedOperand.None:
-			context.ServiceLog("DoorSensor instruction: converted '{0}' to operand None", base.Operands[0].Value);
+			LogHelper.Instance.WithContext("DoorSensor instruction: converted '{0}' to operand None", base.Operands[0].Value);
 			break;
 		case ExpectedOperand.IsConfigured:
 			context.PushTop(service.SensorsEnabled);
@@ -52,7 +53,9 @@ public sealed class DoorSensorInstruction : Instruction
 				val = "off";
 			}
 			bool flag = (service.SoftwareOverride = val.Equals("off", StringComparison.CurrentCultureIgnoreCase));
-			using (StreamWriter streamWriter = new StreamWriter(File.Open(Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath, "Service\\DoorSensorConfiguration.log"), FileMode.Append, FileAccess.Write, FileShare.Read)))
+			IFormattedLogFactoryService service2 = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
+			string path = Path.Combine(service2.LogsBasePath, "Service\\DoorSensorConfiguration.log");
+			using (StreamWriter streamWriter = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
 			{
 				streamWriter.WriteLine(flag ? $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors have a software override in place: they are not active - *UNCHECKED MOVEMENT IS POSSIBLE*." : $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: Door sensors do not have a software override; they are active.");
 			}

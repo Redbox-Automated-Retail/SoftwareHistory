@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Controller.Framework;
 
@@ -7,21 +8,32 @@ namespace Redbox.HAL.Script.Framework;
 [NativeJob(ProgramName = "return-unknown")]
 internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 {
-	private string Previous;
+	private string ReceivedSignal = string.Empty;
+
+	private string Previous = "UNKNOWN";
 
 	private bool IsFieldInsert;
+
+	private readonly int SignalWait = 30000;
+
+	private readonly EventWaitHandle WaitEvent = new EventWaitHandle(initialState: false, EventResetMode.ManualReset);
+
+	private static readonly CenterDiskMethod[] m_methods = new CenterDiskMethod[2]
+	{
+		CenterDiskMethod.None,
+		CenterDiskMethod.DrumAndBack
+	};
 
 	public FileDiscIterationResult MoveError(ExecutionResult result, string idInPicker, ErrorCodes moveResult, int deck, int slot)
 	{
 		base.Context.Send("MachineError");
-		base.Context.CreateInfoResult("MachineError", "The MOVE instruction failed.");
+		base.Context.CreateMoveErrorResult(deck, slot);
 		return FileDiscIterationResult.Halt;
 	}
 
 	public void MachineFull(ExecutionResult result, string id)
 	{
 		base.Context.Send("MachineFull");
-		base.AppLog.LogMachineFull();
 	}
 
 	public FileDiscIterationResult OnFailedPut(ExecutionResult result, IPutResult putResult)
@@ -45,17 +57,10 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 			base.Context.CreateInfoResult("MachineError", "The MOVEVEND instruction failed.");
 			AddError("Machine error.");
 		}
-		else if (!base.ControlSystem.VendDoorRent().Success)
-		{
-			base.Context.CreateInfoResult("MachineError", "Unable to open the vend door.");
-			AddError("Machine error opening vend door.");
-		}
 		else
 		{
-			using (VendItemOperation vendItemOperation = new VendItemOperation())
-			{
-				vendItemOperation.Execute();
-			}
+			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+			service.VendItemInPicker();
 			AddError("Unable to put away disk.");
 		}
 	}
@@ -82,93 +87,97 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 
 	protected override void ExecuteInner()
 	{
-		Previous = base.Context.PopTop<string>();
-		IsFieldInsert = "FMA-INSERT" == Previous;
-		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, IsFieldInsert ? "Return" : "Unknowns", flushOnWrite: true, IsFieldInsert ? "FieldInsert" : "ReturnUnknown");
-		applicationLog.Write("Return-unknown start.");
-		if (base.InventoryService.MachineIsFull())
+		try
 		{
-			applicationLog.LogMachineFull();
-			base.Context.CreateInfoResult("MachineError", "The machine is full.");
-			base.Context.Send("MachineFull");
-			AddError("The machine is full.");
-		}
-		else if (PickerBoard.IsFull())
-		{
-			applicationLog.Write("The gripper is obstructed - exiting.");
-			base.Context.CreateInfoResult("ItemStuckInGripper", "There is a disc stuck in the picker.");
-			AddError("Gripper is obstructed.");
-		}
-		else
-		{
-			if (ContextSwitchRequested())
+			Previous = base.Context.PopTop<string>();
+			IsFieldInsert = "FMA-INSERT" == Previous;
+			base.Context.RegisterHandler(delegate(string signal)
 			{
+				try
+				{
+					ReceivedSignal = signal;
+					LogHelper.Instance.WithContext(false, LogEntryType.Info, "Received signal '{0}'", ReceivedSignal);
+					WaitEvent.Set();
+				}
+				catch (Exception e)
+				{
+					LogHelper.Instance.Log("[return-unknown] Handler received an exception", e);
+				}
+			});
+			ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, IsFieldInsert ? "Return" : "Unknowns", flushOnWrite: true, IsFieldInsert ? "FieldInsert" : "ReturnUnknown");
+			applicationLog.Write("Return-unknown start.");
+			if (base.InventoryService.MachineIsFull())
+			{
+				base.Context.CreateMachineFullResult();
+				base.Context.Send("MachineFull");
+				AddError("The machine is full.");
 				return;
 			}
-			ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
-			if (errorCodes != ErrorCodes.Success)
+			IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+			if (!pickerSensorReadResult.Success)
 			{
-				base.Context.CreateInfoResult("MachineError", $"There was an error while executing the MOVEVEND instruction: {errorCodes.ToString()}");
-				base.Context.Send("MachineError");
-				AddError("Unable to move to the vend door.");
-				return;
+				base.Context.CreateInfoResult("ItemStuckInGripper", "There is a disc stuck in the picker.");
+				AddError("Gripper is obstructed.");
 			}
-			if (!base.ControlSystem.VendDoorRent().Success)
+			else if (pickerSensorReadResult.IsFull)
 			{
-				base.Context.CreateInfoResult("MachineError", "VENDDOOR RENT timed out.");
-				applicationLog.Write("VENDDOOR RENT returned an error status.");
-				AddError("Unable to open the vend door.");
-				return;
+				applicationLog.Write("The gripper is obstructed - exiting.");
+				base.Context.CreateInfoResult("ItemStuckInGripper", "There is a disc stuck in the picker.");
+				AddError("Gripper is obstructed.");
 			}
-			base.Context.Send("BlockingOnSensor");
-			using (AcceptDiskOperation acceptDiskOperation = new AcceptDiskOperation())
+			else
 			{
-				switch (acceptDiskOperation.Execute())
+				if (ContextSwitchRequested())
+				{
+					return;
+				}
+				ErrorCodes errorCodes = base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
+				if (errorCodes != ErrorCodes.Success)
+				{
+					base.Context.CreateInfoResult("MachineError", $"There was an error while executing the MOVEVEND instruction: {errorCodes.ToString()}");
+					base.Context.Send("MachineError");
+					AddError("Unable to move to the vend door.");
+					return;
+				}
+				base.Context.Send("BlockingOnSensor");
+				switch (base.ControlService.AcceptDiskAtDoor())
 				{
 				case ErrorCodes.PickerEmpty:
-					applicationLog.Write("No item was put in the picker - exiting.");
 					base.Context.CreateInfoResult("NoReceivedItem", "No disc was received by picker.");
-					base.ControlSystem.VendDoorClose();
-					return;
+					break;
 				case ErrorCodes.PickerObstructed:
-					PickerBoard.PushOut();
+					base.ControlService.PushOut();
 					base.Context.CreateInfoResult("ItemStuckInGripper", "More than 3 sensors are lit.");
 					AddError("Item Stuck in gripper.");
-					return;
+					break;
+				case ErrorCodes.VendDoorRentTimeout:
+					base.Context.CreateInfoResult("MachineError", "VENDDOOR RENT timed out.");
+					AddError("Unable to open the vend door.");
+					break;
+				case ErrorCodes.VendDoorCloseTimeout:
+					base.Context.CreateInfoResult("MachineError", "Venddoor close timeout.");
+					AddError("Unable to close the vend door.");
+					break;
 				default:
-					applicationLog.Write("Accept disc into the picker returned a hardware error; check the error logs.");
 					base.Context.Send("MachineError");
 					base.Context.CreateInfoResult("MachineError", "Unable to accept disc in picker.");
 					AddError("Machine error during accept disc.");
-					return;
-				case ErrorCodes.PickerFull:
 					break;
-				}
-			}
-			if (base.ControlSystem.VendDoorClose().Success)
-			{
-				applicationLog.Write("Item received into picker.");
-				base.ControlSystem.TrackCycle();
-				ScanResult scanResult = null;
-				using (Scanner scanner = new Scanner(base.ControlSystem))
+				case ErrorCodes.PickerFull:
 				{
-					scanResult = scanner.Read();
+					applicationLog.Write("Item received into picker.");
+					base.ControlSystem.TrackCycle();
+					using ScanResult scanResult = Scanner.SmartReadDisk(m_methods);
 					if (!scanResult.SnapOk)
 					{
 						base.Context.CreateCameraCaptureErrorResult();
 					}
-				}
-				base.Context.CreateInfoResult("BarcodeRead", "The returned item's barcode.", scanResult.ScannedMatrix);
-				if (!scanResult.ReadCode)
-				{
-					applicationLog.Write("The barcode couldn't be read.");
-					base.Context.CreateInfoResult("BadIdRead", "The READ request failed.");
-					if (IsFieldInsert)
+					else if (!scanResult.ReadCode)
 					{
-						using (VendItemOperation vendItemOperation = new VendItemOperation())
+						base.Context.CreateNoBarcodeReadResult();
+						if (IsFieldInsert)
 						{
-							VendItemResult vendItemResult = vendItemOperation.Execute();
-							base.ControlSystem.VendDoorClose();
+							IVendItemResult vendItemResult = base.ControlService.VendItemInPicker();
 							switch (vendItemResult.Status)
 							{
 							case ErrorCodes.PickerEmpty:
@@ -176,50 +185,100 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 								return;
 							default:
 								base.Context.Send("MachineError");
-								applicationLog.Write("VendDisk returned an error code HARDWAREERROR");
 								base.Context.CreateInfoResult("MachineError", "Machine error ejecting the disc.");
 								AddError("Hardware error.");
 								return;
 							case ErrorCodes.PickerFull:
 								break;
 							}
-						}
-						using AcceptDiskOperation acceptDiskOperation2 = new AcceptDiskOperation();
-						ErrorCodes errorCodes2 = acceptDiskOperation2.Execute();
-						base.ControlSystem.VendDoorClose();
-						if (ErrorCodes.PickerEmpty == errorCodes2)
-						{
-							applicationLog.Write("The disk was taken by the user.");
-							return;
-						}
-						if (ErrorCodes.PickerFull != errorCodes2)
-						{
-							base.Context.CreateInfoResult("ItemStuckInGripper", "There is something obstructing the picker.");
-							AddError("Item stuck in the vend door.");
-							return;
+							ErrorCodes errorCodes2 = base.ControlService.AcceptDiskAtDoor();
+							if (ErrorCodes.PickerEmpty == errorCodes2)
+							{
+								applicationLog.Write("The disk was taken by the user.");
+								break;
+							}
+							if (ErrorCodes.PickerFull != errorCodes2)
+							{
+								base.Context.CreateInfoResult("ItemStuckInGripper", $"Accept disk at door returned error {errorCodes2.ToString().ToUpper()}");
+								AddError("Item stuck in the vend door.");
+								break;
+							}
 						}
 					}
+					else
+					{
+						applicationLog.Write($"The ID in the picker: {scanResult.ScannedMatrix}");
+						base.Context.CreateInfoResult("BarcodeRead", "The returned item's barcode.", scanResult.ScannedMatrix);
+						base.Context.Send($"ReturnEnd:{scanResult.ScannedMatrix}");
+						if (!IsFieldInsert)
+						{
+							ErrorCodes errorCodes3 = ScanAndWait(scanResult);
+							if (ErrorCodes.PickerEmpty == errorCodes3 || ErrorCodes.PickerFull != errorCodes3)
+							{
+								break;
+							}
+						}
+					}
+					using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context);
+					if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
+					{
+						base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
+					}
+					break;
 				}
-				else
-				{
-					applicationLog.Write($"The ID in the picker: {scanResult.ScannedMatrix}");
-					base.Context.Send($"ReturnEnd:{scanResult.ScannedMatrix}");
 				}
-				using FileDiskOperation fileDiskOperation = new FileDiskOperation(this, base.Context, correctMotionControl: true);
-				if (fileDiskOperation.PutDiscAway(base.Result, scanResult.ScannedMatrix) == ErrorCodes.Success)
-				{
-					base.MotionService.MoveVend(MoveMode.Get, base.Context.AppLog);
-				}
-				return;
 			}
-			applicationLog.Write("Unable to close venddoor.");
-			base.Context.CreateInfoResult("MachineError", "Venddoor close timeout.");
-			AddError("Unable to close the vend door.");
+		}
+		finally
+		{
+			WaitEvent.Close();
 		}
 	}
 
 	internal ReturnUnknownJob(ExecutionResult result, ExecutionContext ctx)
 		: base(result, ctx)
 	{
+		SignalWait = ControllerConfiguration.Instance.SignalWaitTimeout;
+	}
+
+	private ErrorCodes ScanAndWait(ScanResult scanResult)
+	{
+		using FraudValidator fraudValidator = new FraudValidator(base.Context);
+		FraudValidationResult fraudValidationResult = fraudValidator.Validate(scanResult);
+		if (FraudValidationResult.Photocopy != fraudValidationResult)
+		{
+			return ErrorCodes.PickerFull;
+		}
+		base.Context.Send($"PhotocopyBarcode:{scanResult.ScannedMatrix}");
+		if (!WaitEvent.WaitOne(SignalWait) || ReceivedSignal.Equals("continue", StringComparison.CurrentCultureIgnoreCase))
+		{
+			return ErrorCodes.PickerFull;
+		}
+		IVendItemResult vendItemResult = base.ControlService.VendItemInPicker();
+		switch (vendItemResult.Status)
+		{
+		case ErrorCodes.PickerEmpty:
+			base.Context.CreateInfoResult("BackwardDiscTaken", "The backward disc was taken.");
+			return vendItemResult.Status;
+		default:
+			base.Context.Send("MachineError");
+			base.Context.CreateInfoResult("MachineError", "Machine error ejecting the disc.");
+			AddError("Hardware error.");
+			return vendItemResult.Status;
+		case ErrorCodes.PickerFull:
+		{
+			ErrorCodes errorCodes = base.ControlService.AcceptDiskAtDoor();
+			if (ErrorCodes.PickerEmpty == errorCodes)
+			{
+				base.Context.AppLog.Write("The disk was taken by the user.");
+			}
+			else if (ErrorCodes.PickerFull != errorCodes)
+			{
+				base.Context.CreateInfoResult("ItemStuckInGripper", $"Accept disk at door returned error {errorCodes.ToString().ToUpper()}");
+				AddError("Item stuck in the vend door.");
+			}
+			return errorCodes;
+		}
+		}
 	}
 }

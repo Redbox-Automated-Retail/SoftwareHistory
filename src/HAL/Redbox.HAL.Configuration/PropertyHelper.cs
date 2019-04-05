@@ -4,7 +4,8 @@ using System.IO;
 using System.Reflection;
 using System.Xml;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Attributes;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Configuration;
 

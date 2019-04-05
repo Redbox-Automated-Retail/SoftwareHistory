@@ -20,7 +20,8 @@ public static class ExposureFixer
 	public static void ResetCameraProperties()
 	{
 		LogHelper.Instance.Log("Checking camera properties...");
-		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: false);
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
 		if (deviceDescriptor == null)
 		{
 			LogHelper.Instance.Log("Unable to find an active camera.");

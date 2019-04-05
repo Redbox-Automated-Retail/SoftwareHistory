@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Xml;
 using Redbox.HAL.Component.Model;
 
@@ -7,17 +6,9 @@ namespace Redbox.HAL.DataMatrix.Framework;
 
 internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposable, IConfigurationObserver
 {
-	private enum CameraGeneration
-	{
-		Unknown,
-		First,
-		Second,
-		Third,
-		Fourth,
-		Fifth
-	}
-
 	private ICameraPlugin Plugin;
+
+	private CameraGeneration _currentCameraGeneration;
 
 	public bool RequiresExternalLighting => true;
 
@@ -27,7 +18,48 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool InError { get; private set; }
 
-	public string Name => Service.ToString();
+	public bool IsLegacy => true;
+
+	public bool SupportsSecureReads
+	{
+		get
+		{
+			IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+			IBarcodeReaderFactory service2 = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
+			IBarcodeReader configuredReader = service2.GetConfiguredReader();
+			bool flag = configuredReader.Service == BarcodeServices.Cortex;
+			if (service.IRHardwareInstall.HasValue)
+			{
+				if (!flag && CurrentCameraGeneration != CameraGeneration.Fifth)
+				{
+					return BarcodeConfiguration.Instance.UseInliteForFraudValidation;
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public ScannerServices Service => ScannerServices.Legacy;
+
+	public CameraGeneration CurrentCameraGeneration
+	{
+		get
+		{
+			if (_currentCameraGeneration == CameraGeneration.Unknown)
+			{
+				LogHelper.Instance.Log("[Legacy Camera Service] locate camera generation.");
+				IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+				IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
+				if (deviceDescriptor != null)
+				{
+					LogHelper.Instance.Log("Found camera {0}", deviceDescriptor.Friendlyname);
+					_currentCameraGeneration = From(deviceDescriptor);
+				}
+			}
+			return _currentCameraGeneration;
+		}
+	}
 
 	public bool Start()
 	{
@@ -48,7 +80,7 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			{
 				return IsConnected;
 			}
-			ISnapResult snapResult = Snap();
+			using ISnapResult snapResult = Snap();
 			return snapResult.SnapOk;
 		}
 		catch (Exception e)
@@ -60,13 +92,9 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public ISnapResult Snap()
 	{
-		return Snap(GenerateSnapFileName());
-	}
-
-	public ISnapResult Snap(string snapFile)
-	{
-		Plugin.Snap(snapFile);
-		SnapResult snapResult = new SnapResult(snapFile);
+		string text = GenerateSnapFileName();
+		Plugin.Snap(text);
+		SnapResult snapResult = new SnapResult(text);
 		if (!snapResult.SnapOk)
 		{
 			InError = true;
@@ -75,6 +103,11 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 	}
 
 	public bool ValidateSettings()
+	{
+		return ValidateSettings(null);
+	}
+
+	public bool ValidateSettings(IMessageSink s)
 	{
 		return false;
 	}
@@ -134,37 +167,21 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public IScanResult Scan()
 	{
-		string text = GenerateSnapFileName();
-		ISnapResult snapResult = Snap(text);
-		if (snapResult.SnapOk)
+		ISnapResult snapResult = Snap();
+		if (!snapResult.SnapOk)
 		{
-			IBarcodeReader configuredReader = BarcodeReaderFactory.Instance.GetConfiguredReader();
-			IScanResult scanResult = configuredReader.Scan(text);
-			if (BarcodeConfiguration.Instance.DeleteBitmapOnSuccessfulRead && scanResult.DecodeResults.Count > 0)
-			{
-				try
-				{
-					File.Delete(text);
-				}
-				catch (Exception ex)
-				{
-					LogHelper.Instance.Log("[LegacyCameraService] Unable to delete file '{0}'", text);
-					LogHelper.Instance.Log(ex.Message);
-				}
-			}
+			ScanResult scanResult = new ScanResult();
+			scanResult.DeviceError = true;
 			return scanResult;
 		}
-		ScanResult scanResult2 = new ScanResult();
-		scanResult2.DeviceError = true;
-		return scanResult2;
+		IBarcodeReaderFactory service = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
+		IBarcodeReader configuredReader = service.GetConfiguredReader();
+		return configuredReader.Scan(snapResult);
 	}
 
 	public void NotifyConfigurationLoaded()
 	{
-		if (BarcodeConfiguration.Instance.ScannerService == Service && Plugin == null)
-		{
-			LoadPlugin(BarcodeConfiguration.Instance.CameraPlugin);
-		}
+		OnLoadPlugin();
 	}
 
 	public void NotifyConfigurationChangeStart()
@@ -173,15 +190,7 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public void NotifyConfigurationChangeEnd()
 	{
-		if (BarcodeConfiguration.Instance.ScannerService == Service && Plugin == null)
-		{
-			LoadPlugin(BarcodeConfiguration.Instance.CameraPlugin);
-		}
-	}
-
-	public string FindInstalledPort()
-	{
-		return "NONE";
+		OnLoadPlugin();
 	}
 
 	protected override void DisposeInner()
@@ -190,8 +199,15 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 	}
 
 	internal LegacyScanner()
-		: base(ScannerServices.Legacy)
 	{
+	}
+
+	private void OnLoadPlugin()
+	{
+		if (BarcodeConfiguration.Instance.ScannerService == Service && Plugin == null)
+		{
+			LoadPlugin(BarcodeConfiguration.Instance.CameraPlugin);
+		}
 	}
 
 	private void LoadPlugin(string driver)

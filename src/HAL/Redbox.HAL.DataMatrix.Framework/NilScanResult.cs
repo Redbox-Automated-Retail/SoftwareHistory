@@ -10,13 +10,15 @@ internal sealed class NilScanResult : IScanResult, IDisposable
 
 	private readonly List<IDecodeResult> Codes = new List<IDecodeResult>();
 
-	public bool DeviceError => true;
+	public bool DeviceError => false;
 
 	public string HardwareErrorDescription { get; private set; }
 
-	public IList<IDecodeResult> DecodeResults => Codes;
+	public List<IDecodeResult> DecodeResults => Codes;
 
 	public TimeSpan ExecutionTime => Time;
+
+	public string ImagePath => string.Empty;
 
 	public void Dispose()
 	{

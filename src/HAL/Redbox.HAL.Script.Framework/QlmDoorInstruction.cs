@@ -1,4 +1,5 @@
 using System;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -38,10 +39,10 @@ public sealed class QlmDoorInstruction : Instruction
 			switch (Enum<QlmOperands>.ParseIgnoringCase(token.Value, QlmOperands.None))
 			{
 			case QlmOperands.Lock:
-				context.PushTop("TIMEOUT");
+				context.PushTop(base.TimeoutMessage);
 				break;
 			case QlmOperands.Unlock:
-				context.PushTop("TIMEOUT");
+				context.PushTop(base.TimeoutMessage);
 				break;
 			case QlmOperands.Status:
 				context.PushTop("CLOSED");

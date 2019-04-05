@@ -21,7 +21,7 @@ public sealed class IPCProxy : IDisposable
 	public static void InitializeServices(IpcHostVersion version)
 	{
 		IpcServiceHostFactory instance = new IpcServiceHostFactory(version);
-		ServiceLocator.Instance.AddService(typeof(IIpcServiceHostFactory), instance);
+		ServiceLocator.Instance.AddService<IIpcServiceHostFactory>(instance);
 	}
 
 	public static IPCProxy Parse(string protocol)
@@ -74,7 +74,8 @@ public sealed class IPCProxy : IDisposable
 		if (File.Exists(serviceStartup))
 		{
 			using StreamReader reader = new StreamReader(serviceStartup);
-			new BatchCommandRunner(reader).Start();
+			BatchCommandRunner batchCommandRunner = new BatchCommandRunner(reader);
+			batchCommandRunner.Start();
 		}
 		return true;
 	}

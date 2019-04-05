@@ -6,4 +6,6 @@ namespace Redbox.HAL.Component.Model;
 public class PollerAttribute : Attribute
 {
 	public string Name { get; set; }
+
+	public bool ConfigNotifications { get; set; }
 }

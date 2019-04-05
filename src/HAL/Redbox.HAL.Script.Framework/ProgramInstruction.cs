@@ -22,12 +22,8 @@ public class ProgramInstruction : Instruction
 
 	public static ProgramInstruction CreateEmpty(string programName)
 	{
-		return new ProgramInstruction
-		{
-			Operands = 
-			{
-				new Token(TokenType.StringLiteral, programName, isKeyValuePair: false)
-			}
-		};
+		ProgramInstruction programInstruction = new ProgramInstruction();
+		programInstruction.Operands.Add(new Token(TokenType.StringLiteral, programName, isKeyValuePair: false));
+		return programInstruction;
 	}
 }

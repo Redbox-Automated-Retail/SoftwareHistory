@@ -148,7 +148,7 @@ public class IPCProtocol : IIpcProtocol
 			if (char.IsLetterOrDigit(currentToken))
 			{
 				AppendToAccumulator();
-				if (!PeekNextToken().HasValue)
+				if (!((int?)PeekNextToken()).HasValue)
 				{
 					Port = base.Accumulator.ToString();
 					AddTokenAndReset(TokenType.StringLiteral, isKeyValuePair: false);
@@ -242,7 +242,8 @@ public class IPCProtocol : IIpcProtocol
 
 		private bool DecodeChannel()
 		{
-			if (base.Accumulator.ToString().Equals("p", StringComparison.CurrentCultureIgnoreCase))
+			string text = base.Accumulator.ToString();
+			if (text.Equals("p", StringComparison.CurrentCultureIgnoreCase))
 			{
 				Channel = ChannelType.NamedPipe;
 				return true;
@@ -268,13 +269,12 @@ public class IPCProtocol : IIpcProtocol
 
 	public static IPCProtocol Parse(string protocolURI)
 	{
-		IPCProtocol iPCProtocol = new IPCProtocol(protocolURI)
-		{
-			Host = string.Empty,
-			Port = string.Empty,
-			IsSecure = false,
-			Channel = ChannelType.Unknown
-		};
+		IPCProtocol iPCProtocol = new IPCProtocol(protocolURI);
+		iPCProtocol.Host = string.Empty;
+		iPCProtocol.Port = string.Empty;
+		iPCProtocol.IsSecure = false;
+		iPCProtocol.Channel = ChannelType.Unknown;
+		IPCProtocol iPCProtocol2 = iPCProtocol;
 		ProtocolTokenizer protocolTokenizer = new ProtocolTokenizer(protocolURI);
 		try
 		{
@@ -292,24 +292,24 @@ public class IPCProtocol : IIpcProtocol
 			}
 			throw new UriFormatException("URI is malformed: see log for details.");
 		}
-		iPCProtocol.Host = protocolTokenizer.Host;
-		iPCProtocol.Port = protocolTokenizer.Port;
-		iPCProtocol.IsSecure = protocolTokenizer.IsSecure;
-		iPCProtocol.Channel = protocolTokenizer.Channel;
-		iPCProtocol.Scheme = protocolTokenizer.Scheme;
-		if (string.IsNullOrEmpty(iPCProtocol.Host) || string.IsNullOrEmpty(iPCProtocol.Port))
+		iPCProtocol2.Host = protocolTokenizer.Host;
+		iPCProtocol2.Port = protocolTokenizer.Port;
+		iPCProtocol2.IsSecure = protocolTokenizer.IsSecure;
+		iPCProtocol2.Channel = protocolTokenizer.Channel;
+		iPCProtocol2.Scheme = protocolTokenizer.Scheme;
+		if (string.IsNullOrEmpty(iPCProtocol2.Host) || string.IsNullOrEmpty(iPCProtocol2.Port))
 		{
 			throw new UriFormatException("Host or port isn't set.");
 		}
-		if (iPCProtocol.Channel == ChannelType.Unknown)
+		if (iPCProtocol2.Channel == ChannelType.Unknown)
 		{
 			throw new UriFormatException("The channel type is unknown; please correct your URI.");
 		}
-		if (iPCProtocol.Channel == ChannelType.Socket && !int.TryParse(iPCProtocol.Port, out var _))
+		if (iPCProtocol2.Channel == ChannelType.Socket && !int.TryParse(iPCProtocol2.Port, out var _))
 		{
 			throw new UriFormatException("Protocol is set up for sockets, but port isn't a valid address.");
 		}
-		return iPCProtocol;
+		return iPCProtocol2;
 	}
 
 	public string GetPipeName()

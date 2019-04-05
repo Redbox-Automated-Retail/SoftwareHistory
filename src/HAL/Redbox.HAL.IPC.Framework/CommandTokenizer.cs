@@ -80,7 +80,7 @@ public class CommandTokenizer : Tokenizer<CommandParserState>
 			base.CurrentState = CommandParserState.Whitespace;
 			return StateResult.Restart;
 		}
-		if (!PeekNextToken().HasValue)
+		if (!((int?)PeekNextToken()).HasValue)
 		{
 			AddTokenAndReset(TokenType.Mnemonic, isKeyValuePair: false);
 			return StateResult.Continue;
@@ -104,7 +104,7 @@ public class CommandTokenizer : Tokenizer<CommandParserState>
 			base.CurrentState = CommandParserState.Whitespace;
 			return StateResult.Restart;
 		}
-		if (!PeekNextToken().HasValue)
+		if (!((int?)PeekNextToken()).HasValue)
 		{
 			AppendToAccumulator();
 			AddTokenAndReset(TokenType.Symbol, isKeyValuePair: false);
@@ -161,7 +161,7 @@ public class CommandTokenizer : Tokenizer<CommandParserState>
 			AddTokenAndReset(TokenType.StringLiteral, ":");
 			base.CurrentState = CommandParserState.Whitespace;
 		}
-		else if (!PeekNextToken().HasValue)
+		else if (!((int?)PeekNextToken()).HasValue)
 		{
 			if (m_inQuotedValue)
 			{

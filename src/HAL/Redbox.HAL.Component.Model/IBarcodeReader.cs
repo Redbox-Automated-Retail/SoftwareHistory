@@ -4,7 +4,9 @@ public interface IBarcodeReader
 {
 	bool IsLicensed { get; }
 
+	BarcodeServices Service { get; }
+
 	IScanResult Scan(string file);
 
-	IScanResult Scan(string file, int expectedCodes);
+	IScanResult Scan(ISnapResult sr);
 }

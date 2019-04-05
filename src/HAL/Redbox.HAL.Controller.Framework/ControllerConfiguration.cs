@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Xml;
 using Microsoft.Win32;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Attributes;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Configuration;
 using Redbox.HAL.Core;
 
@@ -17,284 +19,284 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 
 	public static ControllerConfiguration Instance => Singleton<ControllerConfiguration>.Instance;
 
-	[Category("Configuration")]
 	[DisplayName("Decks")]
 	[CustomEditor("(Decks Collection)", GetMethodName = "ConvertDeckConfigurationToXml", SetMethodName = "UpdateDeckConfigurationFromXml")]
 	[Description("The physical description of the decks for the host of the connected HAL Service.")]
+	[Category("Configuration")]
 	public int DecksCount => Manager.DeckCount;
 
-	[Category("Behavior")]
-	[DisplayName("Gripper Push Timeout")]
 	[Description("The amount of time the gripper will overrun the limit switch beforing raising a timeout.")]
 	[XmlConfiguration(DefaultValue = "350")]
+	[DisplayName("Gripper Push Timeout")]
+	[Category("Behavior")]
 	public int PushTime { get; set; }
 
-	[Category("Behavior")]
+	[XmlConfiguration(DefaultValue = "120")]
 	[DisplayName("Gripper Extend Timeout")]
 	[Description("The amount of time the gripper will extend the arm before timing out; used when putting a DVD into the slot.")]
-	[XmlConfiguration(DefaultValue = "120")]
+	[Category("Behavior")]
 	public int RollInExtendTime { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Test Extend Timeout")]
 	[Description("The amount of time the gripper will overrun the limit switch beforing raising a timeout while testing for a DVD in the slot.")]
+	[DisplayName("Test Extend Timeout")]
 	[XmlConfiguration(DefaultValue = "800")]
+	[Category("Behavior")]
 	public int TestExtendTime { get; set; }
 
+	[Description("The amount of backoff to back off when receiving an item from the vend position.")]
 	[Category("Behavior")]
 	[DisplayName("Vend Position Receive Offset")]
-	[Description("The amount of backoff to back off when receiving an item from the vend position.")]
 	[XmlConfiguration(DefaultValue = "100")]
 	public int VendPositionReceiveOffset { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Arcus Write Pause")]
 	[Description("Controls how long (in milliseconds) HAL waits for the Arcus controller to fill its internal buffer before reading it.")]
 	[XmlConfiguration(DefaultValue = "20")]
+	[Category("Behavior")]
+	[DisplayName("Arcus Write Pause")]
 	public int ArcusWritePause { get; set; }
 
 	[Category("Behavior")]
 	[DisplayName("Arcus Motor Query Pause")]
-	[Description("Controls how long (in milliseconds) HAL waits between MST commands during a move.")]
 	[XmlConfiguration(DefaultValue = "75")]
+	[Description("Controls how long (in milliseconds) HAL waits between MST commands during a move.")]
 	public int ArcusMotorQueryPause { get; set; }
 
-	[Category("Configuration")]
-	[DisplayName("Y Position for Vend")]
 	[Description("Known as the vend position, this is the point on the Y axis that is equal to the vend door, allowing the picker to vend and return disks. This must be a negative integer value.")]
+	[DisplayName("Y Position for Vend")]
 	[XmlConfiguration(DefaultValue = "-86200")]
+	[Category("Configuration")]
 	public int VendYPosition { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Y drop back for HOMEY")]
 	[Description("The amount of back off movement on the Y axis during a HOMEY instruction.  This value should be used only on older machines where the upper Y axis limit switch is too close to the Y axis home switch.")]
 	[XmlConfiguration(DefaultValue = "0")]
+	[Category("Behavior")]
 	public int HomeYDropBack { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Attempts to put an item away.")]
 	[Description("The number of attempts to try and put something in the picker away.")]
+	[DisplayName("Attempts to put an item away.")]
+	[Category("Behavior")]
 	[XmlConfiguration(DefaultValue = "4")]
 	public int PutAwayItemAttempts { get; set; }
 
-	[Category("Behavior")]
+	[XmlConfiguration(DefaultValue = "2")]
 	[DisplayName("Number of Pulls")]
 	[Description("The number of times the picker will attempt to pull the disk from the slot.")]
-	[XmlConfiguration(DefaultValue = "2")]
+	[Category("Behavior")]
 	public int NumberOfPulls { get; set; }
 
+	[XmlConfiguration(DefaultValue = "COM3")]
+	[Description("The COM port to which to which the motion controller board is connected.")]
 	[Category("Configuration")]
 	[DisplayName("Motion Controller Port Name")]
 	[ValidValueListProvider("GetComPorts")]
-	[Description("The COM port to which to which the motion controller board is connected.")]
-	[XmlConfiguration(DefaultValue = "COM3")]
 	public string MotionControllerPortName { get; set; }
 
-	[Category("Configuration")]
-	[DisplayName("Motion Controller Timeout (ms)")]
 	[Description("The read timeout from the Motion Controller COM Port in milliseconds.")]
+	[DisplayName("Motion Controller Timeout (ms)")]
+	[Category("Configuration")]
 	[XmlConfiguration(DefaultValue = "5000")]
 	public int MotionControllerTimeout { get; private set; }
 
+	[Description("The X axis motor gear configuration.  The configuration of this property and its children affect the X Axis Speed properties.")]
+	[DisplayName("X Motor Gear")]
 	[Recurse]
 	[ExcludeType]
 	[Category("Configuration")]
-	[DisplayName("X Motor Gear")]
-	[Description("The X axis motor gear configuration.  The configuration of this property and its children affect the X Axis Speed properties.")]
 	public MotorGear GearX { get; private set; }
 
-	[Recurse]
-	[ExcludeType]
-	[Category("Configuration")]
 	[DisplayName("Y Motor Gear")]
 	[Description("The Y axis motor gear configuration.  The configuration of this property and its children affect the Y Axis Speed properties.")]
+	[ExcludeType]
+	[Recurse]
+	[Category("Configuration")]
 	public MotorGear GearY { get; private set; }
 
+	[Description("The COM port the main, picker, auxiliary, and alternate motion controller boards are connected to.")]
 	[Category("Configuration")]
+	[XmlConfiguration(DefaultValue = "COM1")]
 	[DisplayName("Controller Port Name")]
 	[ValidValueListProvider("GetComPorts")]
-	[Description("The COM port the main, picker, auxiliary, and alternate motion controller boards are connected to.")]
-	[XmlConfiguration(DefaultValue = "COM1")]
 	public string ControllerPortName { get; set; }
 
 	[Recurse]
-	[ExcludeType]
 	[Category("Configuration")]
 	[DisplayName("X Axis Initialization Speed")]
+	[ExcludeType]
 	[Description("The speed of the X axis for the HOMEX instruction.")]
 	public MotorSpeed InitAxisXSpeed { get; private set; }
 
+	[DisplayName("Y Axis Initialization Speed")]
+	[Category("Configuration")]
+	[Description("The speed of the Y axis for the HOMEY instruction.")]
 	[Recurse]
 	[ExcludeType]
-	[Category("Configuration")]
-	[DisplayName("Y Axis Initialization Speed")]
-	[Description("The speed of the Y axis for the HOMEY instruction.")]
 	public MotorSpeed InitAxisYSpeed { get; private set; }
 
+	[Description("The speed of the Y axis for the MOVE instruction.")]
+	[DisplayName("Y Axis Speed")]
 	[Recurse]
 	[ExcludeType]
 	[Category("Configuration")]
-	[DisplayName("Y Axis Speed")]
-	[Description("The speed of the Y axis for the MOVE instruction.")]
 	public MotorSpeed MoveAxisYSpeed { get; private set; }
 
 	[Recurse]
+	[Description("The speed of the X axis for the MOVE instruction.")]
+	[DisplayName("X Axis Speed")]
 	[ExcludeType]
 	[Category("Configuration")]
-	[DisplayName("X Axis Speed")]
-	[Description("The speed of the X axis for the MOVE instruction.")]
 	public MotorSpeed MoveAxisXSpeed { get; private set; }
 
-	[Recurse]
-	[ExcludeType]
-	[Category("Configuration")]
 	[DisplayName("XY Axis Speed")]
+	[Recurse]
+	[Category("Configuration")]
 	[Description("The speed of the combined X and Y axis for the MOVE instruction.")]
+	[ExcludeType]
 	public MotorSpeed MoveAxisXYSpeed { get; private set; }
 
-	[Category("Configuration")]
-	[DisplayName("Sync Ringlight Warmup Time")]
 	[Description("If value is greater than 0, wait value ms after turning on the ringlight during sync.")]
 	[XmlConfiguration(DefaultValue = "1500")]
+	[Category("Configuration")]
+	[DisplayName("Sync Ringlight Warmup Time")]
 	public int RinglightWarmupPause2 { get; set; }
 
-	[Category("Configuration")]
 	[DisplayName("Ringlight Shutdown Pause")]
-	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
 	[XmlConfiguration(DefaultValue = "500")]
-	public int IRRinglightShutdownPause { get; set; }
+	[Category("Configuration")]
+	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
+	public int RinglightShutdownPause { get; set; }
 
 	[Category("Configuration")]
-	[DisplayName("IR Ringlight Startup Pause")]
 	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
+	[DisplayName("IR Ringlight Startup Pause")]
 	[XmlConfiguration(DefaultValue = "1000")]
 	public int IRRinglightStartupPause { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Move Timeout")]
 	[Description("The timeout (in milliseconds) for an ARCUS move.")]
 	[XmlConfiguration(DefaultValue = "30000")]
+	[Category("Behavior")]
 	public int MoveTimeout { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Qlm Timed Extend")]
 	[Description("If set to true, will time-extend the fingers using the QlmExtendTime, ignoring the extend sensor.")]
+	[DisplayName("Qlm Timed Extend")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
 	public bool QlmTimedExtend { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Timeout for a gripper extend/retract operation.")]
-	[Description("The timeout value for a gripper extend/retract operation.")]
 	[XmlConfiguration(DefaultValue = "2000")]
+	[Category("Behavior")]
+	[Description("The timeout value for a gripper extend/retract operation.")]
 	public int GripperArmExtendRetractTimeout { get; set; }
 
 	[Category("Configuration")]
-	[DisplayName("Validate Position After Move")]
 	[Description("If set to Yes, validate the position after a move.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Validate Position After Move")]
 	public bool PrintEncoderPositionAfterMove2 { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Additional PUT push.")]
 	[Description("If set to true ( the default ), PUT will perform an extra gripper push to seat the disk.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
+	[DisplayName("Additional PUT push.")]
 	public bool AdditionalPutPush { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Reboot Kiosk During QLM")]
 	[Description("If set to true ( the default ), qlm/thin/qlm-thin will reboot when detecting an Arcus problem after engage/disengage.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
+	[DisplayName("Reboot Kiosk During QLM")]
 	public bool RebootKioskDuringQlm { get; set; }
 
+	[XmlConfiguration(DefaultValue = "true")]
 	[Category("Behavior")]
 	[DisplayName("Dump VMZ State")]
 	[Description("If set to true, clean/thin will dump the zone after the job.")]
-	[XmlConfiguration(DefaultValue = "true")]
 	public bool DumpVMZState { get; set; }
 
+	[XmlConfiguration(DefaultValue = "15")]
 	[Category("Behavior")]
 	[DisplayName("Vend Disk Poll Count")]
 	[Description("The number of times, during a VEND, to poll for a taken disk.")]
-	[XmlConfiguration(DefaultValue = "15")]
 	public int VendDiskPollCount { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Sync Error Threshold")]
 	[Description("The number of errors encountered before exiting a sync.")]
+	[DisplayName("Sync Error Threshold")]
 	[XmlConfiguration(DefaultValue = "20")]
+	[Category("Behavior")]
 	public int SyncErrorThreshold { get; set; }
 
+	[XmlConfiguration(DefaultValue = "10")]
 	[Category("Behavior")]
 	[DisplayName("Reject At Door Attempts")]
 	[Description("The number of attempts to reject a disk at the vend door.")]
-	[XmlConfiguration(DefaultValue = "10")]
 	public int RejectAtDoorAttempts { get; set; }
 
+	[Description("The number of errors encountered before exiting a sync.")]
 	[Category("Behavior")]
 	[DisplayName("Error Sync On Camera Failure")]
-	[Description("The number of errors encountered before exiting a sync.")]
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool ErrorSyncOnCameraFailure { get; set; }
 
+	[XmlConfiguration(DefaultValue = "true")]
 	[Category("Behavior")]
 	[DisplayName("Move Vend Door To AUX Sensor")]
 	[Description("If true, will try to move the vend door to the appropriate sensor on the AUX board.")]
-	[XmlConfiguration(DefaultValue = "true")]
 	public bool MoveVendDoorToAuxSensor { get; set; }
 
 	[Category("Behavior")]
-	[DisplayName("Query Position For Vend Move")]
 	[Description("If true, query the current position before moving; if at the target position, wont' request a move.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[DisplayName("Query Position For Vend Move")]
 	public bool QueryPositionForVendMove { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("QLM Approach Offset")]
 	[Description("If true, will try to move the vend door to the appropriate sensor on the AUX board.")]
 	[XmlConfiguration(DefaultValue = "500")]
+	[Category("Behavior")]
+	[DisplayName("QLM Approach Offset")]
 	public int QlmApproachOffset { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("QLM Y Offset")]
-	[Description("If true, will try to move the vend door to the appropriate sensor on the AUX board.")]
 	[XmlConfiguration(DefaultValue = "50")]
+	[Description("If true, will try to move the vend door to the appropriate sensor on the AUX board.")]
+	[Category("Behavior")]
 	public int QlmYOffset { get; set; }
 
 	[Category("Behavior")]
-	[DisplayName("QLM Extend Timeout")]
 	[Description("The amount of time the gripper will overrun the limit switch beforing raising a timeout while doing a grab on the QLM.")]
 	[XmlConfiguration(DefaultValue = "1500")]
+	[DisplayName("QLM Extend Timeout")]
 	public int QlmExtendTime { get; set; }
 
+	[XmlConfiguration(DefaultValue = "5000")]
+	[Description("The time, in milliseconds, for the init job to wait for the ports to come up.")]
 	[Browsable(false)]
 	[Category("Configuration")]
 	[DisplayName("Min Init Wakeup Time")]
-	[Description("The time, in milliseconds, for the init job to wait for the ports to come up.")]
-	[XmlConfiguration(DefaultValue = "5000")]
 	public int MinInitWakeupTime { get; set; }
 
-	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Allow Program Cache Replacement")]
-	[Description("If set to true, allows the program cache to accept overwrites of programs.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[Description("If set to true, allows the program cache to accept overwrites of programs.")]
 	public bool AllowProgramCacheReplacement2 { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Check Gripper Arm Sensors On Move")]
 	[Description("If set to true, will check both the forward and retract sensors if they're both set, and if they are, won't move.")]
+	[DisplayName("Check Gripper Arm Sensors On Move")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
 	public bool CheckGripperArmSensorsOnMove { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Gripper Rent On Move")]
-	[Description("If set to true, will check if the gripper is in the rent position, and if not, will move it to Rent.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If set to true, will check if the gripper is in the rent position, and if not, will move it to Rent.")]
+	[Category("Behavior")]
 	public bool GripperRentOnMove { get; set; }
 
+	[Description("If set to true, mark duplicate barcodes as UNKNOWN.")]
 	[Category("Behavior")]
 	[DisplayName("Mark Duplicate Unknown")]
-	[Description("If set to true, mark duplicate barcodes as UNKNOWN.")]
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool MarkDuplicatesUnknown { get; set; }
 
@@ -304,91 +306,98 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool MarkOriginalMatrixUnknown { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Rotate Drum During Unknown Removal")]
 	[Description("If set to true, will do a slot test, and if the slot is full, will rotate the drum 5 slots during an unknown removal if unable to grab a disk.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[DisplayName("Rotate Drum During Unknown Removal")]
+	[Category("Behavior")]
 	public bool RotateDrumDuringUnknownRemoval2 { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Leave Duplicate Result In Return")]
 	[Description("If set to true, will leave a CAMERA CAPTURE result during a return job if duplicates are detected.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[DisplayName("Leave Duplicate Result In Return")]
+	[Category("Behavior")]
 	public bool LeaveDuplicateResultInReturn { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Test Slot On Empty")]
 	[Description("If set to true, perform a PEEK (test slot) on the slot if GET returns SLOTEMPTY.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
 	public bool TestSlotOnEmpty { get; set; }
 
+	[XmlConfiguration(DefaultValue = "2")]
 	[Category("Behavior")]
 	[DisplayName("Mark Location Unknown Threshold")]
 	[Description("The count for errors before the slot is marked UNKNOWN.")]
-	[XmlConfiguration(DefaultValue = "2")]
 	public int MarkLocationUnknownThreshold { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Track Push Out Failures")]
 	[Description("If set to true, will fail a vend after 2 push out tries show any sensors 1-4 lit.")]
+	[Browsable(false)]
+	[DisplayName("Track Push Out Failures")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
 	public bool TrackPushOutFailures { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Track Problem Locations")]
 	[Description("If set to true, will track problems with slots.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
 	public bool TrackProblemLocations { get; set; }
 
-	[Category("Configuration")]
 	[DisplayName("Push Out Sleep Time")]
-	[Description("If greater than 0, will spin for the configured time in ms after clearing sensor 4 during a vend disk.")]
 	[XmlConfiguration(DefaultValue = "50")]
+	[Category("Configuration")]
+	[Description("If greater than 0, will spin for the configured time in ms after clearing sensor 4 during a vend disk.")]
 	public int PushOutSleepTime2 { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("AggressiveClearPickerOnPut")]
 	[Description("If true, try to clear the picker more aggressively during a PUT.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
+	[DisplayName("AggressiveClearPickerOnPut")]
 	public bool AggressiveClearPickerOnPut { get; set; }
 
-	[Category("Configuration")]
 	[DisplayName("EmptyStuckAlertThreshold")]
 	[Description("If Empty or stuck count exceeds this number during vend in a 24 hour period, generate a result that should trigger an alert.")]
 	[XmlConfiguration(DefaultValue = "15")]
+	[Category("Configuration")]
 	public int EmptyStuckAlertThreshold { get; set; }
 
+	[Description("If true, will leave a RESULT code for alert generation when the empty/stuck counter has exceeded its threshold.")]
 	[Category("Behavior")]
 	[DisplayName("Alert For Empty Stuck")]
-	[Description("If true, will leave a RESULT code for alert generation when the empty/stuck counter has exceeded its threshold.")]
 	[XmlConfiguration(DefaultValue = "false")]
 	public bool AlertForEmptyStuck { get; set; }
 
-	[Category("Behavior")]
 	[DisplayName("Fix Camera On Init")]
 	[Description("If true, will test if the camera is generating images, and if not, will try and reset it.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
 	public bool FixCameraOnInit2 { get; set; }
 
-	[Category("Behavior")]
-	[DisplayName("Validate Controller Home Status")]
-	[Description("If true, tells the hardware-status job to include the init status of the motion controller.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If true, tells the hardware-status job to include the init status of the motion controller.")]
+	[DisplayName("Validate Controller Home Status")]
+	[Category("Behavior")]
 	public bool ValidateControllerHomeStatus { get; set; }
 
-	[Category("Configuration")]
 	[DisplayName("Reboot Execution Prevention Window")]
-	[Description("In minutes, the time before kiosk reboot that the scheduler prevents jobs from running.")]
 	[XmlConfiguration(DefaultValue = "10")]
+	[Description("In minutes, the time before kiosk reboot that the scheduler prevents jobs from running.")]
+	[Category("Configuration")]
 	public int RebootExecutionPreventionWindow { get; set; }
 
+	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Enable Command Trace")]
+	[Category("Behavior")]
+	[Description("If true, will dump diagnostic information to the log about commands.")]
+	[Browsable(false)]
+	public bool EnableCommandTrace { get; set; }
+
+	[DisplayName("Enable Arcus Trace")]
+	[Description("If true, will dump diagnostic information to the log about Arcus commands.")]
+	[XmlConfiguration(DefaultValue = "false")]
 	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Enable Command Trace")]
-	[Description("If true, will dump diagnostic information to the log about commands.")]
-	[XmlConfiguration(DefaultValue = "false")]
-	public bool EnableCommandTrace { get; set; }
+	public bool EnableArcusTrace { get; set; }
 
 	[Category("Configuration")]
 	[DisplayName("Return Slot Buffer")]
@@ -396,271 +405,345 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[XmlConfiguration(DefaultValue = "1")]
 	public int ReturnSlotBuffer { get; set; }
 
-	[Category("Configuration")]
-	[DisplayName("Quick Return Power Off Window")]
 	[Description("The number of slots the kiosk must not to try and file disks to.")]
 	[XmlConfiguration(DefaultValue = "0:6")]
+	[DisplayName("Quick Return Power Off Window")]
+	[Category("Configuration")]
 	public string QuickReturnPowerOffWindow { get; set; }
 
+	[XmlConfiguration(DefaultValue = "NONE")]
 	[Category("Configuration")]
 	[DisplayName("Quick Return Port")]
 	[Description("The COM port on which the Quick return device is configured.")]
-	[XmlConfiguration(DefaultValue = "NONE")]
 	public string QuickReturnComPort { get; set; }
 
+	[Description("If true, will give the arcus a larger tolerance window.")]
+	[DisplayName("Widen Arcus Tolerance")]
+	[XmlConfiguration(DefaultValue = "false")]
 	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Widen Arcus Tolerance")]
-	[Description("If true, will give the arcus a larger tolerance window.")]
-	[XmlConfiguration(DefaultValue = "false")]
 	public bool WidenArcusTolerance { get; set; }
 
+	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Behavior")]
 	[DisplayName("Take Invalid Disk On Return")]
 	[Description("If true, will take the disk if the barcode can't be read.")]
-	[XmlConfiguration(DefaultValue = "false")]
 	public bool TakeInvalidDiskOnReturn { get; set; }
 
+	[DisplayName("Enable Door Check In Status")]
 	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Enable Door Check In Status")]
-	[Description("If set to true, will check the door sensors during the hardware status job.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If set to true, will check the door sensors during the hardware status job.")]
 	public bool EnableDoorCheckInStatus { get; set; }
 
 	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Check Gen4 Camera On Init")]
 	[Description("If set to true, will establish the correct driver is loaded and the device is enabled.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
+	[DisplayName("Check Gen4 Camera On Init")]
 	public bool CheckGen4CameraOnInit { get; set; }
 
 	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Enable Camera Reset")]
 	[Description("If set to true, will reset the camera during sync & return operations.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[DisplayName("Enable Camera Reset")]
+	[Category("Behavior")]
 	public bool EnableCameraReset { get; set; }
 
+	[XmlConfiguration(DefaultValue = "true")]
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Fix Camera After Return")]
 	[Description("If set to true, will reset the camera at the very end of return.")]
-	[XmlConfiguration(DefaultValue = "true")]
 	public bool FixCameraAfterReturn { get; set; }
 
-	[Browsable(false)]
-	[Category("Configuration")]
 	[DisplayName("Threshold for Camera alert")]
 	[Description("An integer describing how many consecutive failures happen before an alert is generated from return.")]
 	[XmlConfiguration(DefaultValue = "2")]
+	[Browsable(false)]
+	[Category("Configuration")]
 	public int ReturnCameraAlertThreshold { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Reset Timeout Counters Weekly")]
 	[Description("If set to true, will reset the hardware timeout counters every week on Sunday morning.")]
+	[Browsable(false)]
+	[DisplayName("Reset Timeout Counters Weekly")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
 	public bool ResetTimeoutCountersWeekly { get; set; }
 
 	[Browsable(false)]
+	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If true, will restart the controller during a user job.")]
 	[Category("Behavior")]
 	[DisplayName("Restart Controller During User Jobs")]
-	[Description("If true, will restart the controller during a user job.")]
-	[XmlConfiguration(DefaultValue = "true")]
 	public bool RestartControllerDuringUserJobs { get; set; }
 
-	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Track Hardware Corrections")]
+	[Browsable(false)]
 	[Description("If true, will track hardware correction stats.")]
+	[DisplayName("Track Hardware Corrections")]
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool TrackHardwareCorrections { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
 	[DisplayName("Enable Hardware Healing")]
-	[Description("If true, will schedule a healing test.")]
+	[Category("Behavior")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[Description("If true, will schedule a healing test.")]
 	public bool EnableHardwareHealing { get; set; }
 
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Enable Arcus Healing")]
-	[Description("Sets the mask of options for the hardware healer.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Description("Sets the mask of options for the hardware healer.")]
 	public bool EnableArcusHealing { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Enable Camera Healing")]
-	[Description("Sets the mask of options for the hardware healer.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
+	[Description("Sets the mask of options for the hardware healer.")]
+	[Browsable(false)]
+	[DisplayName("Enable Camera Healing")]
 	public bool EnableCameraHealing { get; set; }
 
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Enable Leiwe Healing")]
-	[Description("Sets the mask of options for the hardware healer.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Description("Sets the mask of options for the hardware healer.")]
 	public bool EnableLeiweHealing { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
 	[DisplayName("Enable Ice Qube Polling")]
 	[Description("If true, will enable polling & control of Ice Qube board.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[Category("Behavior")]
 	public bool EnableIceQubePolling { get; set; }
 
 	[Browsable(false)]
-	[Category("Configuration")]
 	[DisplayName("Watchdog Image Day Age")]
-	[Description("In days, the age of images to be deleted.")]
 	[XmlConfiguration(DefaultValue = "90")]
+	[Category("Configuration")]
+	[Description("In days, the age of images to be deleted.")]
 	public int WatchdogImageDayAge { get; set; }
 
-	[Browsable(false)]
-	[Category("Configuration")]
 	[DisplayName("Applog Day Age")]
+	[Category("Configuration")]
 	[Description("In days, the age of applogs to be deleted.")]
+	[Browsable(false)]
 	[XmlConfiguration(DefaultValue = "60")]
 	public int ApplogDayAge { get; set; }
 
 	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Fix Arcus During Status")]
 	[Description("If true, will try to correct an Arcus comm error during the hardware status job.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Fix Arcus During Status")]
 	public bool FixArcusDuringStatusJob { get; set; }
 
-	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Enable Secure Disk Validator")]
 	[Description("If true, will enable secure disk check in security service.")]
+	[Browsable(false)]
 	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Enable Secure Disk Validator")]
 	public bool EnableSecureDiskValidator { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Peek During Vend")]
 	[Description("If true, will PEEK slot during vend.")]
+	[Browsable(false)]
+	[DisplayName("Peek During Vend")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
 	public bool PeekDuringVend { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
 	[DisplayName("Test Slot During Removal")]
 	[Description("If true, will PEEK slot during vend-unknown.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[Category("Behavior")]
 	public bool TestSlotDuringRemoval { get; set; }
 
 	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Wait Sensor Pause Time")]
-	[Description("In ms, the time wait sensor routine will pause between reads.")]
 	[XmlConfiguration(DefaultValue = "100")]
+	[Description("In ms, the time wait sensor routine will pause between reads.")]
+	[DisplayName("Wait Sensor Pause Time")]
+	[Category("Configuration")]
 	public int WaitSensorPauseTime { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
 	[DisplayName("Clear Picker On Home")]
 	[Description("If true, will clear the picker during HOME operations.")]
+	[Category("Behavior")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
 	public bool ClearPickerOnHome { get; set; }
 
-	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Lower Limit As Error")]
 	[Description("If true, will treat lower limit as error during normal moves.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Lower Limit As Error")]
+	[Browsable(false)]
 	public bool LowerLimitAsError { get; set; }
 
+	[XmlConfiguration(DefaultValue = "true")]
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Enable Unrecognized Barcode Reject")]
 	[Description("If true, will reject disks not recognized as Redbox barcodes during return.")]
-	[XmlConfiguration(DefaultValue = "true")]
 	public bool EnableUnrecognizedBarcodeReject { get; set; }
 
+	[XmlConfiguration(DefaultValue = "false")]
+	[Description("If true, will use smooth move motion.")]
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Arcus Smooth Move")]
-	[Description("If true, will use smooth move motion.")]
-	[XmlConfiguration(DefaultValue = "false")]
 	public bool ArcusSmoothMove { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
 	[DisplayName("Preposition Vend Fraud Move")]
 	[Description("If true, move below the vend door until auth signal arrives.")]
 	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
+	[Browsable(false)]
 	public bool PrepositionVendFraudMove { get; set; }
 
 	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Fraud Scan Multi Pass")]
-	[Description("If true will shuffle the disk in the picker for a secondary read if no marker was detected.")]
-	[XmlConfiguration(DefaultValue = "true")]
-	public bool FraudScanMultiPass { get; set; }
-
-	[Browsable(false)]
-	[Category("Configuration")]
 	[DisplayName("Hardware Healer Pause Time")]
-	[Description("In ms, the time the hw healer job will pause between checks.")]
+	[Category("Configuration")]
 	[XmlConfiguration(DefaultValue = "900000")]
+	[Description("In ms, the time the hw healer job will pause between checks.")]
 	public int HardwareHealerPauseTime { get; set; }
 
-	[Browsable(false)]
-	[Category("Configuration")]
 	[DisplayName("Router Power Cycle Pause")]
-	[Description("In ms, the pause between router power cycle.")]
+	[Category("Configuration")]
 	[XmlConfiguration(DefaultValue = "0")]
+	[Description("In ms, the pause between router power cycle.")]
+	[Browsable(false)]
 	public int RouterPowerCyclePause { get; set; }
 
-	[Browsable(false)]
-	[Category("Configuration")]
-	[DisplayName("Clear Sensor Pause Delay")]
 	[Description("In ms, the pause between sensor reads during clear sensor.")]
-	[XmlConfiguration(DefaultValue = "200")]
+	[XmlConfiguration(DefaultValue = "300")]
+	[Browsable(false)]
+	[DisplayName("Clear Sensor Pause Delay")]
+	[Category("Configuration")]
 	public int ClearSensorPauseDelay { get; set; }
 
+	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If true will test for dirty shutdown & capture the event.")]
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Track Dirty Shutdown")]
-	[Description("If true will test for dirty shutdown & capture the event.")]
-	[XmlConfiguration(DefaultValue = "true")]
 	public bool TrackDirtyShutdown { get; set; }
 
 	[Browsable(false)]
+	[Description("If true will allow contexts to handle correction events.")]
 	[Category("Behavior")]
 	[DisplayName("Handle Hardware Correction Events")]
-	[Description("If true will allow contexts to handle correction events.")]
 	[XmlConfiguration(DefaultValue = "true")]
 	public bool HandleHardwareCorrectionEvents { get; set; }
 
+	[XmlConfiguration(DefaultValue = "true")]
+	[DisplayName("Validate Inputs Read Response")]
 	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Home On Lower Limit Error")]
-	[Description("If true will home the motors if the lower limit is tripped.")]
-	[XmlConfiguration(DefaultValue = "true")]
-	public bool HomeOnLowerLimitError { get; set; }
+	[Description("If true, will attempt response validation from controller.")]
+	public bool ValidateInputsReadResponse { get; set; }
 
+	[XmlConfiguration(DefaultValue = "20")]
+	[DisplayName("Picker Sensor Spin Time")]
 	[Browsable(false)]
 	[Category("Configuration")]
+	[Description("In ms, the time to spin during a picker sensor read.")]
+	public int PickerSensorSpinTime { get; set; }
+
+	[Category("Behavior")]
+	[Description("If true, will monitor the status of the inventory datastore.")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[DisplayName("Enable Inventory Database Check")]
+	public bool EnableInventoryDatabaseCheck { get; set; }
+
 	[DisplayName("CCR Watchdog Sleep")]
-	[Description("In ms, the amount of time the CCR watchdog sleeps before checking the CCR.")]
 	[XmlConfiguration(DefaultValue = "1800000")]
+	[Browsable(false)]
+	[Description("In ms, the amount of time the CCR watchdog sleeps before checking the CCR.")]
+	[Category("Configuration")]
 	public int CCRWatchdogSleep { get; set; }
 
 	[Browsable(false)]
+	[Category("Configuration")]
+	[DisplayName("Inventory Backup Pause")]
+	[Description("In ms, the amount of time the inventory backup watchdog will pause between backups.")]
+	[XmlConfiguration(DefaultValue = "0")]
+	public int InventoryBackupPause { get; set; }
+
+	[Category("Behavior")]
+	[Description("If true, will write detailed info about VMZ operations.")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[DisplayName("Enable VMZ Trace")]
+	public bool EnableVMZTrace { get; set; }
+
+	[XmlConfiguration(DefaultValue = "6000")]
+	[Description("In ms, the default timeout for roll to sensor operations.")]
+	[Browsable(false)]
+	[Category("Configuration")]
+	[DisplayName("Default Roll Sensor Timeout")]
+	public int DefaultRollSensorTimeout { get; set; }
+
+	[XmlConfiguration(DefaultValue = "15000")]
+	[Description("In ms, the default timeout for accepting the disk at the door.")]
+	[Category("Configuration")]
+	[Browsable(false)]
+	[DisplayName("Accept Disk Timeout")]
+	public int AcceptDiskTimeout { get; set; }
+
+	[DisplayName("Enable Photocopy Scan")]
+	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
+	[Browsable(false)]
+	[Description("If true, will perform a scan for photocopy disks.")]
+	public bool EnablePhotocopyScan { get; set; }
+
+	[Description("If true, will disable auto exposure on gen 4 cameras if set.")]
 	[Category("Behavior")]
 	[DisplayName("Disable Auto Exposure At Init")]
-	[Description("If true, will disable auto exposure on gen 4 cameras if set.")]
-	[XmlConfiguration(DefaultValue = "1800000")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
 	public bool DisableAutoExposureAtInit { get; set; }
 
 	[Browsable(false)]
-	public bool IsVMZMachine => MerchMode != MerchandizingMode.QLM;
+	[Category("Behavior")]
+	[DisplayName("Auto License Cortex Decoder")]
+	[Description("If true, will attempt to license the Cortex decoding software automatically.")]
+	[XmlConfiguration(DefaultValue = "true")]
+	public bool AutoLicenseCortexDecoder { get; set; }
+
+	[DisplayName("Ringlight Shutdown Pause")]
+	[Category("Configuration")]
+	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
+	[XmlConfiguration(DefaultValue = "500")]
+	public int IRRinglightShutdownPause { get; set; }
+
+	[Category("Configuration")]
+	[XmlConfiguration(DefaultValue = "30000")]
+	[DisplayName("Signal Wait Timeout")]
+	[Description("The time to wait for a signal from a client.")]
+	public int SignalWaitTimeout { get; set; }
+
+	[Category("Behavior")]
+	[DisplayName("Retry Read On No Markers Found")]
+	[XmlConfiguration(DefaultValue = "true")]
+	[Browsable(false)]
+	[Description("If true, will retake image and scan for fraud markers.  Depends on EnableCameraReset to be set to true.")]
+	public bool RetryReadOnNoMarkersFound { get; set; }
+
+	[XmlConfiguration(DefaultValue = "1")]
+	[Category("Behavior")]
+	[DisplayName("Additional Fraud Read Attempts")]
+	[Description("The number of attempts to try and read a disc without fraud markers. will recenter in some scenarios.")]
+	public int AdditionalFraudReadAttempts { get; set; }
+
+	[Browsable(false)]
+	public bool IsVMZMachine => MerchandizingMode.QLM != MerchMode;
 
 	protected override string FileNodeName => "Controller";
 
@@ -678,7 +761,7 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 					object value = registryKey.GetValue("MaxSlots");
 					if (value != null)
 					{
-						result = (int)ConversionHelper.ChangeType(value, typeof(int));
+						result = ConversionHelper.ChangeType<int>(value);
 					}
 				}
 			}
@@ -943,8 +1026,9 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 
 	internal void Initialize()
 	{
-		ServiceLocator.Instance.GetService<IConfigurationService>().RegisterConfiguration(Configurations.Controller.ToString(), this);
-		ServiceLocator.Instance.AddService(typeof(IDecksService), Manager);
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		service.RegisterConfiguration(Configurations.Controller.ToString(), this);
+		ServiceLocator.Instance.AddService<IDecksService>(Manager);
 	}
 
 	private ControllerConfiguration()

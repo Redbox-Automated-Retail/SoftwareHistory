@@ -1,6 +1,6 @@
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.Controller.Framework;
-using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
 
@@ -30,7 +30,6 @@ internal sealed class LoadBinJob : NativeJobAdapter
 		{
 			if (base.DumpbinService.IsFull())
 			{
-				base.Context.AppLog.Write("The dump bin is full.");
 				return;
 			}
 			ILocation location = null;
@@ -55,7 +54,7 @@ internal sealed class LoadBinJob : NativeJobAdapter
 				return;
 			}
 			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-			IGetResult getResult = service.Get(base.AppLog);
+			IGetResult getResult = service.Get();
 			if (!getResult.Success)
 			{
 				AddError("Unable to fetch disk from drum.");
@@ -66,7 +65,7 @@ internal sealed class LoadBinJob : NativeJobAdapter
 				AddError("There was an error during the move.");
 				return;
 			}
-			if (!service.Put(getResult.Previous, base.AppLog).Success)
+			if (!service.Put(getResult.Previous).Success)
 			{
 				AddError("Unable to place disk into drum.");
 				return;

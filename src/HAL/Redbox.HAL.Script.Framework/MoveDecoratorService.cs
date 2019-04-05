@@ -1,48 +1,31 @@
 using System;
-using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-internal sealed class MoveDecoratorService : IMoveDecoratorService, IConfigurationObserver
+internal struct MoveDecoratorService : IDisposable
 {
-	private bool m_configured;
+	private readonly ExecutionContext Context;
 
-	private int m_lowerLimitCounter;
+	private readonly int DefaultOffset;
 
-	private readonly int DefaultOffset = 5;
-
-	private readonly object Lock = new object();
-
-	private readonly List<string> ConfiguredPrograms = new List<string>();
-
-	public void NotifyConfigurationLoaded()
+	public void Dispose()
 	{
 	}
 
-	public void NotifyConfigurationChangeStart()
+	internal ErrorCodes ShowEmptyStuck(ILocation location)
 	{
+		return ShowEmptyStuck(location, DefaultOffset);
 	}
 
-	public void NotifyConfigurationChangeEnd()
+	internal ErrorCodes ShowEmptyStuck(ILocation location, int offset)
 	{
-		m_configured = ControllerConfiguration.Instance.LowerLimitAsError;
-	}
-
-	public ErrorCodes ShowEmptyStuck(ExecutionContext context, ILocation location)
-	{
-		return ShowEmptyStuck(context, location, DefaultOffset);
-	}
-
-	public ErrorCodes ShowEmptyStuck(ExecutionContext context, ILocation location, int offset)
-	{
-		ErrorCodes errorCodes = MoveOffset(context, location, offset);
+		ErrorCodes errorCodes = MoveOffset(location, offset);
 		if (errorCodes != ErrorCodes.Success)
 		{
-			if (!context.IsImmediate)
+			if (!Context.IsImmediate)
 			{
-				context.CreateInfoResult("MoveOffsetError", "There was an error moving the offset.");
+				Context.CreateInfoResult("MoveOffsetError", "There was an error moving the offset.");
 			}
 		}
 		else
@@ -51,66 +34,34 @@ internal sealed class MoveDecoratorService : IMoveDecoratorService, IConfigurati
 			service.SetFinger(GripperFingerState.Rent);
 			service.TimedExtend();
 			service.SetSensors(on: true);
-			if (!context.IsImmediate)
+			if (!Context.IsImmediate)
 			{
-				context.CreateInfoResult("MoveOffsetOk", "The damaged disk is located 5 slots left, starting at the disk next to the extended gripper fingers.");
+				Context.CreateInfoResult("MoveOffsetOk", "The damaged disk is located 5 slots left, starting at the disk next to the extended gripper fingers.");
 			}
 		}
 		return errorCodes;
 	}
 
-	public ErrorCodes MoveOffset(ExecutionContext context, ILocation location, int offset)
+	internal ErrorCodes MoveOffset(ILocation location, int offset)
 	{
-		IDeck deck = ServiceLocator.Instance.GetService<IDecksService>().GetFrom(location);
+		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
+		IDeck deck = service.GetFrom(location);
 		int num = location.Slot - offset;
 		if (num <= 0)
 		{
 			num = deck.NumberOfSlots - Math.Abs(num);
 		}
-		ErrorCodes result = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location.Deck, num, MoveMode.None, context.AppLog);
-		string msg = $"MOVE-OFFSET Deck = {deck.Number} Slot = {num} returned {result.ToString().ToUpper()}";
-		context.AppLog.Write(msg);
-		return result;
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service2.MoveTo(location.Deck, num, MoveMode.None, Context.AppLog);
+		string msg = $"MOVE-OFFSET Deck = {deck.Number} Slot = {num} returned {errorCodes.ToString().ToUpper()}";
+		Context.AppLog.Write(msg);
+		return errorCodes;
 	}
 
-	public void ConfigureLowerLimitFor(string program)
+	internal MoveDecoratorService(ExecutionContext context)
 	{
-		lock (Lock)
-		{
-			if (!ConfiguredPrograms.Contains(program))
-			{
-				ConfiguredPrograms.Add(program);
-			}
-		}
-	}
-
-	public bool LowerLimitConfigured(ExecutionContext context)
-	{
-		lock (Lock)
-		{
-			return m_configured && ConfiguredPrograms.Find((string each) => each.Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase)) != null;
-		}
-	}
-
-	public void LogLimitMessage(ApplicationLog log)
-	{
-		if (m_configured)
-		{
-			log.WriteFormatted("Lower limit counter threshold exceeded (counter = {0}).", m_lowerLimitCounter);
-		}
-	}
-
-	public bool LowerLimitCounterExceeded()
-	{
-		if (!m_configured)
-		{
-			return false;
-		}
-		return m_lowerLimitCounter >= 2;
-	}
-
-	internal MoveDecoratorService()
-	{
-		ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
+		this = default(MoveDecoratorService);
+		Context = context;
+		DefaultOffset = 5;
 	}
 }

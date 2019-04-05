@@ -8,17 +8,41 @@ public interface IControllerService
 
 	void Shutdown();
 
-	IGetResult Get(IFormattedLog log);
+	IGetResult Get();
 
-	IGetResult Get(IGetObserver observer, IFormattedLog log);
+	IGetResult Get(IGetObserver observer);
 
-	IPutResult Put(string id, IFormattedLog log);
+	IGetFromResult GetFrom(ILocation location);
 
-	IPutResult Put(IPutObserver observer, string id, IFormattedLog log);
+	IGetFromResult GetFrom(IGetFromObserver observer, ILocation location);
 
-	ITransferResult Transfer(ILocation source, ILocation destination, IFormattedLog log);
+	IPutResult Put(string id);
 
-	ITransferResult Transfer(ILocation source, IList<ILocation> destinations, IFormattedLog log);
+	IPutResult Put(IPutObserver observer, string id);
 
-	ITransferResult Transfer(ILocation source, IList<ILocation> destinations, IGetObserver observer, IFormattedLog log);
+	IPutToResult PutTo(string id, ILocation location);
+
+	IPutToResult PutTo(IPutToObserver observer, string id, ILocation location);
+
+	ITransferResult Transfer(ILocation source, ILocation destination);
+
+	ITransferResult Transfer(ILocation source, ILocation destination, bool preserveFlags);
+
+	ITransferResult Transfer(ILocation source, IList<ILocation> destinations, IGetObserver o);
+
+	ITransferResult Transfer(ILocation source, IList<ILocation> destinations, IGetObserver observer, bool preserveFlags);
+
+	ErrorCodes PushOut();
+
+	ErrorCodes ClearGripper();
+
+	IVendItemResult VendItemInPicker();
+
+	IVendItemResult VendItemInPicker(int attempts);
+
+	ErrorCodes AcceptDiskAtDoor();
+
+	ErrorCodes RejectDiskInPicker();
+
+	ErrorCodes RejectDiskInPicker(int attempts);
 }

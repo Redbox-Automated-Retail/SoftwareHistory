@@ -10,16 +10,19 @@ internal sealed class BoardVersionResponse : IBoardVersionResponse
 
 	public string BoardName { get; private set; }
 
-	internal BoardVersionResponse(CoreResponse response)
+	public override string ToString()
+	{
+		if (!ReadSuccess)
+		{
+			return ErrorCodes.Timeout.ToString().ToUpper();
+		}
+		return Version;
+	}
+
+	internal BoardVersionResponse(ControlBoards board, CoreResponse response)
 	{
 		ReadSuccess = response.Success;
 		Version = (ReadSuccess ? response.OpCodeResponse.Trim() : string.Empty);
-	}
-
-	internal BoardVersionResponse(ControlBoards board)
-	{
-		ReadSuccess = true;
 		BoardName = board.ToString();
-		Version = $"Emulated {board.ToString()} version.";
 	}
 }

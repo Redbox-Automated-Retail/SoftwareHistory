@@ -3,26 +3,13 @@ using Redbox.HAL.Component.Model;
 namespace Redbox.HAL.Script.Framework;
 
 [NativeJob(ProgramName = "vertical-sync", Operand = "VERTSYNC")]
-internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
+internal sealed class VerticalSyncJob : NativeJobAdapter
 {
-	private IGetResult GetResult;
-
-	public void OnSuccessfulPut(IPutResult result, IFormattedLog log)
-	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		result.PutLocation.Flags = GetResult.Flags;
-		result.PutLocation.ReturnDate = GetResult.ReturnTime;
-		service.Save(result.PutLocation);
-	}
-
-	public void OnFailedPut(IPutResult result, IFormattedLog log)
-	{
-	}
-
 	protected override void ExecuteInner()
 	{
 		int errors = 0;
 		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: false, "Sync", flushOnWrite: true, null);
+		IControllerService cs = ServiceLocator.Instance.GetService<IControllerService>();
 		int slot = base.Context.PopTop<int>();
 		applicationLog.Write($"Start vertical sync for slot {slot}");
 		base.DecksService.ForAllDecksDo(delegate(IDeck deck)
@@ -31,41 +18,17 @@ internal sealed class VerticalSyncJob : NativeJobAdapter, IPutObserver
 			{
 				return true;
 			}
-			ErrorCodes errorCodes = base.MotionService.MoveTo(deck.Number, slot, MoveMode.Get, base.AppLog);
-			if (errorCodes != ErrorCodes.Success)
+			ILocation location = base.InventoryService.Get(deck.Number, slot);
+			ITransferResult transferResult = cs.Transfer(location, location);
+			if (!transferResult.Transferred)
 			{
-				HandleError(deck.Number, slot, $"Move error: {errorCodes.ToString()}.");
-				int num = errors + 1;
-				errors = num;
-				return false;
-			}
-			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-			GetResult = service.Get(base.AppLog);
-			if (!GetResult.Success)
-			{
-				HandleError(deck.Number, slot, "Retrieving the disk failed.");
-				int num = errors + 1;
-				errors = num;
-				return false;
-			}
-			if (base.MotionService.MoveTo(deck.Number, slot, MoveMode.Put, base.AppLog) != ErrorCodes.Success)
-			{
-				HandleError(deck.Number, slot, "Move to PUT position failed.");
-				int num = errors + 1;
-				errors = num;
-				return false;
-			}
-			base.ControlSystem.TrackCycle();
-			if (!service.Put(GetResult.Previous, base.AppLog).Success)
-			{
-				HandleError(deck.Number, slot, "Filing the disk failed.");
-				int num = errors + 1;
-				errors = num;
+				HandleError(deck.Number, slot, $"Transfer failed with error {transferResult.TransferError}");
+				errors++;
 				return false;
 			}
 			return true;
 		});
-		if (errors <= 0)
+		if (errors == 0)
 		{
 			applicationLog.Write("The sync completed successfully.");
 			base.Context.CreateInfoResult("SyncSuccess", "The test succeeded.");

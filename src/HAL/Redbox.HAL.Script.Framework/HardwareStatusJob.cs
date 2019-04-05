@@ -3,14 +3,14 @@ using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.Script.Framework;
 
-[NativeJob(ProgramName = "hardware-status", Operand = "HW-STATUS")]
+[NativeJob(ProgramName = "hardware-status")]
 internal sealed class HardwareStatusJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
 		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		int num = 0;
-		if (ControllerConfiguration.Instance.FixArcusDuringStatusJob && !base.MotionService.TestAndReset(base.Context.AppLog))
+		if (ControllerConfiguration.Instance.FixArcusDuringStatusJob && !base.MotionService.TestAndReset())
 		{
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "Could not talk with the motion controller.");
 			num++;
@@ -20,28 +20,26 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "The door sensors are not in a safe mode.");
 			num++;
 		}
-		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		if (service2.ClearGripper() != ErrorCodes.Success)
 		{
-			if (clearGripperOperation.Execute() != ErrorCodes.Success)
-			{
-				num++;
-				base.Context.CreateInfoResult("GripperObstructed", "The gripper is obstructed.");
-			}
+			num++;
+			base.Context.CreateInfoResult("GripperObstructed", "The gripper is obstructed.");
 		}
-		if (PickerBoard.IsFull())
+		IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success || pickerSensorReadResult.IsFull)
 		{
 			num++;
 			base.Context.CreateInfoResult("GripperObstructed", "The picker is full.");
 		}
-		if (!base.ControlSystem.VendDoorClose().Success)
+		if (VendDoorState.Closed != base.ControlSystem.VendDoorState && !base.ControlSystem.VendDoorClose().Success)
 		{
 			num++;
 			base.Context.CreateInfoResult("VendDoorOpen", "Unable to close the vend door.");
 		}
-		if (!new InventoryDatabaseTest().Test())
+		if (!TestInventoryStore())
 		{
 			num++;
-			base.Context.CreateInfoResult("MachineError", "Inventory database integrity test failed.");
 		}
 		if (num == 0)
 		{

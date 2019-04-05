@@ -17,6 +17,8 @@ internal abstract class NativeJobAdapter
 
 	protected IControlSystem ControlSystem => ServiceLocator.Instance.GetService<IControlSystem>();
 
+	protected IControllerService ControlService => ServiceLocator.Instance.GetService<IControllerService>();
+
 	protected ExecutionResult Result { get; private set; }
 
 	protected ExecutionContext Context { get; private set; }
@@ -32,32 +34,25 @@ internal abstract class NativeJobAdapter
 
 	protected void RegisterForCorrectionEvents()
 	{
-		if (!ControllerConfiguration.Instance.HandleHardwareCorrectionEvents)
+		if (ControllerConfiguration.Instance.HandleHardwareCorrectionEvents)
 		{
-			return;
+			Context.StartHardwareCorrectionEvent += delegate(HardwareCorrectionEventArgs s)
+			{
+				LogHelper.Instance.WithContext(false, LogEntryType.Info, "Hardware correction start event ( Statistic = {0} ).", s.Statistic);
+				Context.Send($"HardwareCorrectionStart:{s.Statistic}");
+			};
+			Context.EndHardwareCorrectionEvent += delegate(HardwareCorrectionEventArgs s)
+			{
+				LogHelper.Instance.WithContext("Hardware correction end event ( Statistic = {0} status = {1} ).", s.Statistic, s.CorrectionOk);
+				Context.Send(s.CorrectionOk ? $"HardwareCorrectionSuccess:{s.Statistic}" : $"HardwareCorrectionFailure:{s.Statistic}");
+			};
 		}
-		Context.StartHardwareCorrectionEvent += delegate(HardwareCorrectionEventArgs s)
-		{
-			LogHelper.Instance.Log("[{0} {1}] Received hardware correction {2} start event.", Context.ProgramName, Context.ID, s.Statistic);
-			Context.Send($"HardwareCorrectionStart:{s.Statistic}");
-		};
-		Context.EndHardwareCorrectionEvent += delegate(HardwareCorrectionEventArgs s)
-		{
-			LogHelper.Instance.Log("[{0} {1}] Received hardware correction {2} end event (status = {3}).", Context.ProgramName, Context.ID, s.Statistic, s.CorrectionOk);
-			if (s.CorrectionOk)
-			{
-				Context.Send($"HardwareCorrectionSuccess:{s.Statistic}");
-			}
-			else
-			{
-				Context.Send($"HardwareCorrectionFailure:{s.Statistic}");
-			}
-		};
 	}
 
 	protected void ShowEmptyStuck(ILocation location)
 	{
-		if (ServiceLocator.Instance.GetService<IMoveDecoratorService>().ShowEmptyStuck(Context, location) != ErrorCodes.Success)
+		using MoveDecoratorService moveDecoratorService = new MoveDecoratorService(Context);
+		if (moveDecoratorService.ShowEmptyStuck(location) != ErrorCodes.Success)
 		{
 			AddError("There was an error moving to the offset position.");
 		}
@@ -69,7 +64,8 @@ internal abstract class NativeJobAdapter
 		{
 			return false;
 		}
-		return ServiceLocator.Instance.GetService<IControllerService>().Get(AppLog).Success;
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Get().Success;
 	}
 
 	protected bool MoveAndPut(int deck, int slot, string id)
@@ -79,7 +75,8 @@ internal abstract class NativeJobAdapter
 			return false;
 		}
 		ControlSystem.TrackCycle();
-		return ServiceLocator.Instance.GetService<IControllerService>().Put(id, AppLog).Success;
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		return service.Put(id).Success;
 	}
 
 	protected bool ContextSwitchRequested()
@@ -95,6 +92,18 @@ internal abstract class NativeJobAdapter
 		{
 			LogHelper.Instance.Log($"Context {Context.ID} {Context.ProgramName}: msg count = {Context.Messages.Count}", LogEntryType.Info);
 		}
+		return false;
+	}
+
+	protected bool TestInventoryStore()
+	{
+		if (InventoryService.CheckIntegrity() == ErrorCodes.Success)
+		{
+			return true;
+		}
+		Context.AppLog.WriteFormatted("The inventory store is corrupt.");
+		Context.CreateInfoResult("InventoryStoreError", "Inventory database integrity test failed.");
+		AddError("Datastore corrupt");
 		return false;
 	}
 

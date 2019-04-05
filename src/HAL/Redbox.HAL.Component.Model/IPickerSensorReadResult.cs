@@ -1,16 +1,8 @@
 namespace Redbox.HAL.Component.Model;
 
-public interface IPickerSensorReadResult
+public interface IPickerSensorReadResult : IReadInputsResult<PickerInputs>
 {
-	int BlockedCount { get; }
-
-	ErrorCodes Error { get; }
-
-	bool[] Sensors { get; }
-
 	bool IsFull { get; }
 
-	void LogSensorState();
-
-	void LogSensorState(LogEntryType type);
+	int BlockedCount { get; }
 }

@@ -35,15 +35,16 @@ public sealed class ConstInstruction : Instruction
 		_ = token2.Value;
 		if (token.Type == TokenType.ConstSymbol)
 		{
-			if (context.SymbolTable.TryGetValue(token.Value, out var _))
+			object symbolValue = context.GetSymbolValue(token.Value, result.Errors);
+			if (symbolValue != null)
 			{
 				string text = "Attempt to redefine CONST " + token.Value;
 				AddError("E002", text + "; not allowing update.", result.Errors);
 			}
 			else
 			{
-				object value2 = token2.ConvertValue();
-				context.SetSymbolValue(token.Value, value2);
+				object value = token2.ConvertValue();
+				context.SetSymbolValue(token.Value, value);
 			}
 		}
 	}

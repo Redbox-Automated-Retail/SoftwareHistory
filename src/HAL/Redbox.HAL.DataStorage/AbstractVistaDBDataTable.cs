@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 using VistaDB;
 using VistaDB.Provider;
 
@@ -120,7 +120,8 @@ public abstract class AbstractVistaDBDataTable<T> : IDataTable<T>
 	{
 		int num = -1;
 		using VistaDBConnection connection = Connect();
-		using VistaDBCommand vistaDBCommand = new VistaDBCommand($"select count(*) from {Name}", connection);
+		string commandText = $"select count(*) from {Name}";
+		using VistaDBCommand vistaDBCommand = new VistaDBCommand(commandText, connection);
 		return (int)vistaDBCommand.ExecuteScalar();
 	}
 
@@ -141,6 +142,21 @@ public abstract class AbstractVistaDBDataTable<T> : IDataTable<T>
 		{
 			callback?.Invoke(vistaDBDataReader);
 		}
+	}
+
+	public bool Recreate(ErrorList errors)
+	{
+		if (!Drop())
+		{
+			errors.Add(Error.NewError("I345", "Drop table error", $"Failed to drop table '{Name}'."));
+			return false;
+		}
+		if (!Create())
+		{
+			errors.Add(Error.NewError("I346", "Create table error", $"Failed to create table '{Name}'."));
+			return false;
+		}
+		return true;
 	}
 
 	protected AbstractVistaDBDataTable(IDataTableDescriptor descriptor, string tableName)
@@ -182,7 +198,8 @@ public abstract class AbstractVistaDBDataTable<T> : IDataTable<T>
 		bool requiresAlter = true;
 		ExectuteSelectQuery(delegate(DbDataReader reader)
 		{
-			if (reader.GetString(0).Contains(PrimaryKeyToken))
+			string text2 = reader.GetString(0);
+			if (text2.Contains(PrimaryKeyToken))
 			{
 				requiresAlter = false;
 			}

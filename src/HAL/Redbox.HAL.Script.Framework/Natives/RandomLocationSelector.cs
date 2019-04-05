@@ -14,7 +14,8 @@ internal sealed class RandomLocationSelector
 		{
 			return null;
 		}
-		int index = new Random(DateTime.Now.Millisecond).Next(0, Locations.Count - 1);
+		Random random = new Random(DateTime.Now.Millisecond);
+		int index = random.Next(0, Locations.Count - 1);
 		ILocation result = Locations[index];
 		Locations.RemoveAt(index);
 		return result;
@@ -23,13 +24,14 @@ internal sealed class RandomLocationSelector
 	internal RandomLocationSelector(IDecksService ds, IInventoryService iis)
 	{
 		RandomLocationSelector randomLocationSelector = this;
-		ds.ForAllDecksDo(delegate(IDeck _deck)
+		Predicate<IDeck> predicate = delegate(IDeck _deck)
 		{
 			for (int i = 1; i <= _deck.NumberOfSlots; i++)
 			{
 				randomLocationSelector.Locations.Add(iis.Get(_deck.Number, i));
 			}
 			return true;
-		});
+		};
+		ds.ForAllDecksDo(predicate);
 	}
 }

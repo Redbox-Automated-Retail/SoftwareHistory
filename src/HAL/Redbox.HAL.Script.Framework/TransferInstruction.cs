@@ -1,6 +1,5 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Controller.Framework;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.Script.Framework;
@@ -28,13 +27,20 @@ public sealed class TransferInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		if (PickerBoard.IsFull())
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		IPickerSensorReadResult pickerSensorReadResult = service.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			context.PushTop(ErrorCodes.SensorReadError.ToString().ToUpper());
+			return;
+		}
+		if (pickerSensorReadResult.IsFull)
 		{
 			context.PushTop("PICKERFULL");
 			LogHelper.Instance.Log("XFER: the picker is full - bail.");
 			return;
 		}
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 		KeyValuePair keyValuePair = base.Operands.GetKeyValuePair("SRC-DECK");
 		int? keyValuePairValue = GetKeyValuePairValue<int?>(keyValuePair, result.Errors, context);
 		if (!keyValuePairValue.HasValue)
@@ -55,27 +61,20 @@ public sealed class TransferInstruction : Instruction
 		int? keyValuePairValue3 = GetKeyValuePairValue<int?>(keyValuePair3, result.Errors, context);
 		KeyValuePair keyValuePair4 = base.Operands.GetKeyValuePair("DEST-SLOT");
 		int? keyValuePairValue4 = GetKeyValuePairValue<int?>(keyValuePair4, result.Errors, context);
-		if (result.Errors.Count > 0)
+		if (result.Errors.Count <= 0)
 		{
-			return;
-		}
-		if (!keyValuePairValue3.HasValue || !keyValuePairValue4.HasValue)
-		{
-			AddError("E004", "Expected key value pair SRC-DECK=y, SRC-SLOT=x, DEST-DECK=y, DEST-SLOT=x. The values of x and y may be numeric literals or symbols.", result.Errors);
-			return;
-		}
-		ILocation location = service.Get(value, value2);
-		ILocation location2 = service.Get(keyValuePairValue3.Value, keyValuePairValue4.Value);
-		LogHelper.Instance.Log("XFER: {0} to {1}", location.ToString(), location2.ToString());
-		ApplicationLog appLog = context.AppLog;
-		ITransferResult transferResult = ServiceLocator.Instance.GetService<IControllerService>().Transfer(location, location2, appLog);
-		if (transferResult.Transferred)
-		{
-			context.PushTop("SUCCESS");
-		}
-		else
-		{
-			context.PushTop(transferResult.TransferError.ToString().ToUpper());
+			if (!keyValuePairValue3.HasValue || !keyValuePairValue4.HasValue)
+			{
+				AddError("E004", "Expected key value pair SRC-DECK=y, SRC-SLOT=x, DEST-DECK=y, DEST-SLOT=x. The values of x and y may be numeric literals or symbols.", result.Errors);
+				return;
+			}
+			ILocation location = service2.Get(value, value2);
+			ILocation location2 = service2.Get(keyValuePairValue3.Value, keyValuePairValue4.Value);
+			LogHelper.Instance.Log("XFER: {0} to {1}", location.ToString(), location2.ToString());
+			_ = context.AppLog;
+			IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+			ITransferResult transferResult = service3.Transfer(location, location2, preserveFlags: false);
+			context.PushTop(transferResult.Transferred ? base.SuccessMessage : transferResult.TransferError.ToString().ToUpper());
 		}
 	}
 }

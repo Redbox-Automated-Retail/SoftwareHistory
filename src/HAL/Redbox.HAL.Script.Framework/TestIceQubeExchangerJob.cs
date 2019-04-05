@@ -19,7 +19,7 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 		{
 			return;
 		}
-		applicationLog.Write("Board status in error; attempt reset.", LogEntryType.Info);
+		LogHelper.Instance.WithContext("Air exchanger board status in error; attempt reset.");
 		AirExchangerStatus airExchangerStatus2 = AirExchangerStatus.NotConfigured;
 		for (int i = 0; i < 3; i++)
 		{
@@ -30,7 +30,8 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 				service.ResetFailureCount();
 				return;
 			}
-			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(2000);
+			IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
+			service2.Wait(2000);
 		}
 		if (AirExchangerStatus.Error == airExchangerStatus2)
 		{
@@ -49,9 +50,9 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 
 	private void OnPersistentError()
 	{
-		string msg = "The board is in persistent error; no further queries.";
-		base.Context.AppLog.Write(msg);
-		base.Context.ServiceLog(msg);
+		string text = "The board is in persistent error; no further queries.";
+		base.Context.AppLog.Write(text);
+		LogHelper.Instance.WithContext(text);
 		AddError("IceQube board in persistent error state.");
 	}
 }

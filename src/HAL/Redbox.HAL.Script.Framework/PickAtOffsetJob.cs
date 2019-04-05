@@ -16,7 +16,8 @@ internal sealed class PickAtOffsetJob : NativeJobAdapter
 		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 		ILocation location = service2.Get(deck, slot);
 		OffsetMoveData data = ((axis == Axis.X) ? new OffsetMoveData(value, 0) : new OffsetMoveData(0, value));
-		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location, MoveMode.None, service.NilLog, ref data);
+		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service3.MoveTo(location, MoveMode.None, service.NilLog, ref data);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveError", $"MOVE failed with status {errorCodes.ToString().ToUpper()}");
@@ -70,7 +71,7 @@ internal sealed class PickAtOffsetJob : NativeJobAdapter
 			FormatPickError("TrackCloseFailure", controlResponse);
 			return;
 		}
-		controlResponse = base.ControlSystem.RollerToPosition(RollerPosition.Position4, 4000);
+		controlResponse = base.ControlSystem.RollerToPosition(RollerPosition.Position4);
 		if (!controlResponse.Success)
 		{
 			FormatPickError("RollerToPos4Failure", controlResponse);

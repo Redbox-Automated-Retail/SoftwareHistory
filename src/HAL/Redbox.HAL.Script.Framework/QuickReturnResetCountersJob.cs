@@ -9,12 +9,12 @@ internal sealed class QuickReturnResetCountersJob : NativeJobAdapter
 	{
 		int errors = 0;
 		IPersistentCounterService pcs = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		new QuickReturnCounters().DoForeach(delegate(string counter)
+		QuickReturnCounters quickReturnCounters = new QuickReturnCounters();
+		quickReturnCounters.DoForeach(delegate(string counter)
 		{
 			if (!pcs.Reset(counter))
 			{
-				int num = errors + 1;
-				errors = num;
+				errors++;
 			}
 		});
 		if (errors > 0)

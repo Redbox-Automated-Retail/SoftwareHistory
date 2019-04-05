@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.IPC.Framework;
@@ -8,18 +10,22 @@ public class CommandService
 {
 	public static CommandService Instance => Singleton<CommandService>.Instance;
 
+	public void Register(IEnumerable<Type> types)
+	{
+		CommandRepository.Register(types);
+	}
+
 	public CommandResult Execute(ISession session, string input)
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		CommandResult commandResult = new CommandResult();
-		CommandContext commandContext = new CommandContext
-		{
-			Session = session,
-			MessageSink = session
-		};
+		CommandContext commandContext = new CommandContext();
+		commandContext.Session = session;
+		commandContext.MessageSink = session;
+		CommandContext commandContext2 = commandContext;
 		try
 		{
-			if (!GetTokenizer(input, commandResult, commandContext, out var tokenizer))
+			if (!GetTokenizer(input, commandResult, commandContext2, out var tokenizer))
 			{
 				return commandResult;
 			}
@@ -40,7 +46,7 @@ public class CommandService
 				TokenList symbols = tokenizer.Tokens.GetSymbols();
 				if ((symbols.Count == 0 && command.HasDefault()) || command.HasOnlyDefault())
 				{
-					command.InvokeDefault(commandResult, commandContext, tokenizer);
+					command.InvokeDefault(commandResult, commandContext2, tokenizer);
 					return commandResult;
 				}
 				if (symbols.Count == 0)
@@ -58,7 +64,7 @@ public class CommandService
 				{
 					return commandResult;
 				}
-				method.Invoke(commandResult, commandContext, tokenizer, command.GetInstance());
+				method.Invoke(commandResult, commandContext2, tokenizer, command.GetInstance());
 			}
 		}
 		catch (Exception e)
@@ -68,12 +74,12 @@ public class CommandService
 		finally
 		{
 			commandResult.ExecutionTime = executionTimer.Elapsed;
-			commandResult.Success = !commandContext.Errors.ContainsError() && !commandResult.Errors.ContainsError();
-			commandResult.Messages.AddRange(commandContext.Messages);
-			commandResult.Errors.AddRange(commandContext.Errors);
+			commandResult.Success = !commandContext2.Errors.ContainsError() && !commandResult.Errors.ContainsError();
+			commandResult.Messages.AddRange(commandContext2.Messages);
+			commandResult.Errors.AddRange(commandContext2.Errors);
 			Statistics.Instance.TrackCommandStatistics(commandResult.ExecutionTime);
-			commandContext.Messages.Clear();
-			commandContext.Errors.Clear();
+			commandContext2.Messages.Clear();
+			commandContext2.Errors.Clear();
 		}
 		return commandResult;
 	}
@@ -81,15 +87,13 @@ public class CommandService
 	private CommandService()
 	{
 		LogHelper.Instance.Log("Initializing CommandService.");
-		foreach (string item in CommandRepository.DiscoverInstalledCommands())
-		{
-			LogHelper.Instance.Log("Loaded command: " + item);
-		}
+		CommandRepository.DiscoverInstalledCommands();
 	}
 
 	private static bool GetTokenizer(string input, CommandResult result, CommandContext context, out CommandTokenizer tokenizer)
 	{
-		input = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(input);
+		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
+		input = service.ExpandConstantMacros(input);
 		tokenizer = new CommandTokenizer(0, input);
 		tokenizer.Tokenize();
 		if (tokenizer.Tokens.HasOnlyComments())
@@ -106,9 +110,10 @@ public class CommandService
 		{
 			context.Parameters[symbol.Value] = symbol.Value;
 		}
-		foreach (Token keyValuePair2 in tokenizer.Tokens.GetKeyValuePairs())
+		TokenList keyValuePairs = tokenizer.Tokens.GetKeyValuePairs();
+		foreach (Token item in keyValuePairs)
 		{
-			if (keyValuePair2.ConvertValue() is KeyValuePair keyValuePair)
+			if (item.ConvertValue() is KeyValuePair keyValuePair)
 			{
 				context.Parameters[$"{keyValuePair.Key}:"] = keyValuePair.Value;
 			}

@@ -18,13 +18,14 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		{
 			return Counters[name];
 		}
-		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewCounter(name, 0);
+		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
+		IPersistentCounter persistentCounter = service.NewCounter(name, 0);
 		if (CounterTable.Insert(persistentCounter))
 		{
 			Counters[name] = persistentCounter;
 			return persistentCounter;
 		}
-		LogHelper.Instance.Log("Unable to create counter {0}", name);
+		LogHelper.Instance.Log("[PersistentCounterService] Unable to create counter {0}", name);
 		return null;
 	}
 
@@ -71,7 +72,7 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"[PersistentCounterService] Decrement counter ( name = {name} ) caught an exception.", e);
+			LogHelper.Instance.Log($"[PersistentCounterService] Decrement counter ( {name} ) caught an exception.", e);
 			return null;
 		}
 	}

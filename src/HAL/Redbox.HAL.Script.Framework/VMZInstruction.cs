@@ -67,7 +67,7 @@ public sealed class VMZInstruction : Instruction
 				}
 				else
 				{
-					context.PushTop((result2.TransferFailures > 0) ? "TRANSFERFAILURE" : "SUCCESS");
+					context.PushTop((result2.TransferFailures > 0) ? "TRANSFERFAILURE" : base.SuccessMessage);
 				}
 			}
 			else if (string.Compare(base.Operands[0].Value, "MARK-UNLOAD", ignoreCase: true) == 0)
@@ -117,7 +117,8 @@ public sealed class VMZInstruction : Instruction
 			}
 			else if (string.Compare(base.Operands[0].Value, "UNLOAD-DISC", ignoreCase: true) == 0)
 			{
-				context.PushTop(VMZHelperFunctions.Instance.UnloadDisc(result, context).ToString().ToUpper());
+				MerchandizeResult merchandizeResult = VMZHelperFunctions.Instance.UnloadDisc(result, context);
+				context.PushTop(merchandizeResult.ToString().ToUpper());
 			}
 			else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN", ignoreCase: true) == 0)
 			{
@@ -175,11 +176,12 @@ public sealed class VMZInstruction : Instruction
 			context.PushTop(errorCodes.ToString().ToUpper());
 			return;
 		}
-		IGetResult getResult = ServiceLocator.Instance.GetService<IControllerService>().Get(context.AppLog);
+		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service3.Get();
 		if (getResult.Success)
 		{
 			VMZHelperFunctions.MoveViewable(context);
-			context.PushTop("SUCCESS");
+			context.PushTop(base.SuccessMessage);
 		}
 		else
 		{
@@ -200,7 +202,7 @@ public sealed class VMZInstruction : Instruction
 		MerchandizeResult merchandizeResult = ThinHelper.MakeInstance(result, context).ThinDisk(iD, flags);
 		if (merchandizeResult != MerchandizeResult.Success)
 		{
-			context.ServiceLog("Thin {0} returned status {1}", flags.ToString(), merchandizeResult);
+			LogHelper.Instance.WithContext("Thin {0} returned status {1}", flags.ToString(), merchandizeResult);
 		}
 		context.PushTop(merchandizeResult.ToString().ToUpper());
 	}

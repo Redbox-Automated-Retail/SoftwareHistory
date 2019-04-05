@@ -5,26 +5,13 @@ namespace Redbox.HAL.Script.Framework;
 
 internal abstract class ThinHelper
 {
-	private static bool? m_debug;
-
 	protected ApplicationLog AppLog => Context.AppLog;
 
 	protected ExecutionResult Result { get; private set; }
 
 	protected ExecutionContext Context { get; private set; }
 
-	internal static bool Debug
-	{
-		get
-		{
-			if (!m_debug.HasValue)
-			{
-				IPersistentMap map = ServiceLocator.Instance.GetService<IPersistentMapService>().GetMap();
-				m_debug = map.GetValue("DebugVMZ", def: false);
-			}
-			return m_debug.Value;
-		}
-	}
+	internal static bool Debug => ControllerConfiguration.Instance.EnableVMZTrace;
 
 	internal static ThinHelper MakeInstance(ExecutionResult result, ExecutionContext context)
 	{
@@ -42,16 +29,17 @@ internal abstract class ThinHelper
 			Context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the QLM.", loc.Deck, loc.Slot, id, null, null);
 			return MerchandizeResult.Success;
 		}
-		if (ServiceLocator.Instance.GetService<IDumpbinService>().IsBin(loc))
+		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
+		if (service.IsBin(loc))
 		{
 			Context.CreateResult("ThinTransferSuccessful", "The item was transferred from storage to the dump bin.", null, null, id, null, null);
 		}
 		else
 		{
 			Context.CreateResult(ControllerConfiguration.Instance.IsVMZMachine ? "DiskTransferSuccessful" : "ThinTransferSuccessful", "The item was transferred from storage to the VMZ.", loc.Deck, loc.Slot, id, null, null);
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 			loc.Flags = flags;
-			service.Save(loc);
+			service2.Save(loc);
 		}
 		return MerchandizeResult.Success;
 	}
@@ -63,17 +51,20 @@ internal abstract class ThinHelper
 		ILocation location = service.Lookup(id);
 		if (location == null)
 		{
-			Context.AppLog.LogLookupFailure(id);
-			Context.CreateInfoResult("ThinLookupFailed", "The LOOKUP request failed because the item was not found.", id);
+			Context.CreateLookupErrorResult("ThinLookupFailed", id);
 			return MerchandizeResult.LookupFailure;
 		}
-		if (ControllerConfiguration.Instance.IsVMZMachine && MerchSegmentFactory.Get(flags).Contains(location))
+		if (ControllerConfiguration.Instance.IsVMZMachine)
 		{
-			LogHelper.Instance.Log("The disk {0} {1} is already in its segment; do not move.", id, location.ToString());
-			location.Flags = flags;
-			service.Save(location);
-			Context.CreateResult("VMZThinNotMoved", "The thin item is already in the VMZ; do not move.", location.Deck, location.Slot, id, null, null);
-			return MerchandizeResult.DiskInVMZ;
+			MerchSegment merchSegment = MerchSegmentFactory.Get(flags);
+			if (merchSegment.Contains(location))
+			{
+				LogHelper.Instance.Log("The disk {0} {1} is already in its segment; do not move.", id, location.ToString());
+				location.Flags = flags;
+				service.Save(location);
+				Context.CreateResult("VMZThinNotMoved", "The thin item is already in the VMZ; do not move.", location.Deck, location.Slot, id, null, null);
+				return MerchandizeResult.DiskInVMZ;
+			}
 		}
 		ILocation location2 = FindEmptyTarget(flags, out var result);
 		if (Debug)
@@ -90,7 +81,8 @@ internal abstract class ThinHelper
 			{
 				return result;
 			}
-			if (!MerchSegmentFactory.Get(flags).CanDump)
+			MerchSegment merchSegment2 = MerchSegmentFactory.Get(flags);
+			if (!merchSegment2.CanDump)
 			{
 				return MerchandizeResult.VMZFull;
 			}
@@ -104,8 +96,7 @@ internal abstract class ThinHelper
 		location = service.Lookup(id);
 		if (location == null)
 		{
-			Context.AppLog.LogLookupFailure(id);
-			Context.CreateInfoResult("ThinLookupFailed", "The LOOKUP request failed because the item was not found.", id);
+			Context.CreateLookupErrorResult("ThinLookupFailed", id);
 			return MerchandizeResult.LookupFailure;
 		}
 		MerchandizeResult merchandizeResult = FetchThin(location, id);
@@ -133,23 +124,25 @@ internal abstract class ThinHelper
 	{
 		if (LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug))
 		{
-			Context.ServiceLog("Transfer from {0} --> {1}.", source.ToString(), target.ToString());
+			LogHelper.Instance.WithContext("Transfer from {0} --> {1}.", source.ToString(), target.ToString());
 		}
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
 		if (target == service.PutLocation && service.IsFull())
 		{
-			LogHelper.Instance.Log("The dumpbin is full.");
 			return MerchandizeResult.DumpBinFull;
 		}
-		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(target, MoveMode.Put, Context.AppLog);
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service2.MoveTo(target, MoveMode.Put, Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
 			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
-		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
-		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(id, Context.AppLog);
+		IControlSystem service3 = ServiceLocator.Instance.GetService<IControlSystem>();
+		service3.TrackCycle();
+		IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service4.Put(id);
 		if (putResult.Success)
 		{
 			return ProcessSuccessfulThin(target, id, flags);
@@ -168,14 +161,17 @@ internal abstract class ThinHelper
 
 	protected MerchandizeResult ReturnToSource(ILocation source, string id)
 	{
-		Context.AppLog.Write("Unable to find a slot for the thin; put it back and bail.", LogEntryType.Info);
-		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(source, MoveMode.Put, Context.AppLog) != ErrorCodes.Success)
+		LogHelper.Instance.WithContext("Unable to find a slot for the thin; put it back and bail.");
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service.MoveTo(source, MoveMode.Put, Context.AppLog) != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
-		if (ServiceLocator.Instance.GetService<IControllerService>().Put(id, Context.AppLog).Success)
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IPutResult putResult = service2.Put(id);
+		if (putResult.Success)
 		{
 			return MerchandizeResult.HardwareError;
 		}
@@ -193,15 +189,16 @@ internal abstract class ThinHelper
 		int deck = source.Deck;
 		int slot = source.Slot;
 		Context.CreateResult("ThinDiskFromDrum", "Removing disk from drum for thinning.", deck, slot, id, null, null);
-		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(source, MoveMode.Get, Context.AppLog);
+		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
+		ErrorCodes errorCodes = service.MoveTo(source, MoveMode.Get, Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes);
 			MerchandizingHelper.Instance.ExitOnMoveError(Result, Context);
 			return MerchandizeResult.HardwareError;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = (ControllerConfiguration.Instance.IsVMZMachine ? service.Get(new FetchThinGetObserver(), Context.AppLog) : service.Get(Context.AppLog));
+		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = (ControllerConfiguration.Instance.IsVMZMachine ? service2.Get(new FetchThinGetObserver()) : service2.Get());
 		if (getResult.IsSlotEmpty)
 		{
 			return MerchandizeResult.EmptyStuck;
@@ -210,18 +207,19 @@ internal abstract class ThinHelper
 		{
 			return MerchandizeResult.Success;
 		}
-		using (ClearGripperOperation clearGripperOperation = new ClearGripperOperation())
+		if (service2.ClearGripper() != ErrorCodes.Success)
 		{
-			ErrorCodes errorCodes2 = clearGripperOperation.Execute();
-			if (errorCodes2 != ErrorCodes.Success)
-			{
-				Context.AppLog.WriteFormatted(LogEntryType.Error, "[FetchThin] ( job = {0} ) clear gripper returned error {1}", Context.ID, errorCodes2.ToString());
-				Context.CreateResult("ThinItemStuck", "Could not retrieve the item.", deck, slot, null, null, null);
-				LogHelper.Instance.Log("Thin ( job = {0} ): the gripper is obstructed - bailing thin.", Context.ID);
-				return MerchandizeResult.HardwareError;
-			}
+			Context.CreateResult("ThinItemStuck", "Could not retrieve the item.", deck, slot, null, null, null);
+			LogHelper.Instance.WithContext("The gripper is obstructed - bailing thin.");
+			return MerchandizeResult.HardwareError;
 		}
-		if (!PickerBoard.IsFull())
+		IControlSystem service3 = ServiceLocator.Instance.GetService<IControlSystem>();
+		IPickerSensorReadResult pickerSensorReadResult = service3.ReadPickerSensors();
+		if (!pickerSensorReadResult.Success)
+		{
+			return MerchandizeResult.HardwareError;
+		}
+		if (!pickerSensorReadResult.IsFull)
 		{
 			Context.CreateResult("ThinItemStuck", "Could not retrieve the item.", deck, slot, null, null, null);
 			return MerchandizeResult.EmptyStuck;

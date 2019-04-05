@@ -2,19 +2,15 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
-internal class NilReader : IBarcodeReader
+internal sealed class NilReader : AbstractBarcodeReader
 {
-	private readonly NilScanResult Result = new NilScanResult("UNLICENSED READER");
-
-	public bool IsLicensed => false;
-
-	public IScanResult Scan(string file)
+	protected override void OnScan(ScanResult sr)
 	{
-		return Result;
+		sr.ResetOnException();
 	}
 
-	public IScanResult Scan(string file, int notUsed)
+	internal NilReader()
+		: base(BarcodeServices.None)
 	{
-		return Result;
 	}
 }
