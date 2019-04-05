@@ -1,12 +1,10 @@
-using System.IO;
-
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPersistentCounterService
+public interface IPersistentCounterService
 {
-	bool Exists(string name);
-
 	IPersistentCounter Find(string name);
+
+	IPersistentCounter Find(TimeoutCounters counter);
 
 	IPersistentCounter Increment(string name);
 
@@ -14,19 +12,11 @@ internal interface IPersistentCounterService
 
 	IPersistentCounter Decrement(string name);
 
+	IPersistentCounter Decrement(TimeoutCounters counter);
+
 	bool Reset(IPersistentCounter counter);
 
 	bool Reset(string name);
-
-	void LogTimeouts(TextWriter log);
-
-	void LogCounter(string counter, TextWriter writer);
-
-	bool Insert(HardwareCorrectionStatistic statistic, IExecutionContext context, bool correctionOk);
-
-	bool RemoveAll(HardwareCorrectionStatistic stat);
-
-	void LogStats(HardwareCorrectionStatistic key, TextWriter log);
 
 	void AddWeeklyResettable(IPersistentCounter counter);
 

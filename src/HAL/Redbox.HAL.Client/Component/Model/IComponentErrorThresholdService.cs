@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IComponentErrorThresholdService
+public interface IComponentErrorThresholdService
 {
 	bool Register(string key, IComponentErrorThreshold thresh);
 

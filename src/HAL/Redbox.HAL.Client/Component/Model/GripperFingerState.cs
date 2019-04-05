@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum GripperFingerState
+public enum GripperFingerState
 {
 	Unknown,
 	Closed,

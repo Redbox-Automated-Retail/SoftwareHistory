@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Core;
 
-internal enum StateResult
+public enum StateResult
 {
 	Continue = 1,
 	Restart,

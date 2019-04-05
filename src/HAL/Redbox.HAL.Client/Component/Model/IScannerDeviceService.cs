@@ -1,6 +1,14 @@
+using System;
+
 namespace Redbox.HAL.Component.Model;
 
-internal interface IScannerDeviceService
+public interface IScannerDeviceService
 {
+	DateTime? IRHardwareInstall { get; }
+
+	CameraGeneration CurrentCameraGeneration { get; }
+
 	IScannerDevice GetConfiguredDevice();
+
+	void Shutdown();
 }

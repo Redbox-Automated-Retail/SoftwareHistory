@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IControlSystem
+public interface IControlSystem
 {
 	VendDoorState VendDoorState { get; }
 
@@ -8,11 +8,11 @@ internal interface IControlSystem
 
 	IControlResponse Initialize();
 
-	void Shutdown();
+	bool Shutdown();
 
 	IControlResponse SetAudio(AudioChannelState newState);
 
-	void ToggleRingLight(bool on, int? sleepAfter);
+	IControlResponse ToggleRingLight(bool on, int? sleepAfter);
 
 	IControlResponse VendDoorRent();
 
@@ -24,7 +24,7 @@ internal interface IControlSystem
 
 	IControlResponse TrackClose();
 
-	IControlResponse TrackCycle();
+	ErrorCodes TrackCycle();
 
 	void TimedExtend();
 
@@ -40,11 +40,13 @@ internal interface IControlSystem
 
 	ErrorCodes Center(CenterDiskMethod method);
 
-	string GetBoardVersion(ControlBoards board);
+	IBoardVersionResponse GetBoardVersion(ControlBoards board);
 
-	string[] GetBoardVersions();
+	IControlSystemRevision GetRevision();
 
-	string[] ReadInputs(ControlBoards board);
+	IReadInputsResult<PickerInputs> ReadPickerInputs();
+
+	IReadInputsResult<AuxInputs> ReadAuxInputs();
 
 	void LogPickerSensorState();
 
@@ -56,17 +58,41 @@ internal interface IControlSystem
 
 	IControlResponse SetSensors(bool on);
 
-	IPickerSensorReadResult ReadSensors();
+	IPickerSensorReadResult ReadPickerSensors();
 
-	IPickerSensorReadResult ReadImmediateSensors();
-
-	IControlResponse StopRoller();
+	IPickerSensorReadResult ReadPickerSensors(bool forceTrackClose);
 
 	IControlResponse StartRollerIn();
 
 	IControlResponse StartRollerOut();
 
+	IControlResponse StopRoller();
+
+	IControlResponse SetRollerState(RollerState state);
+
+	IControlResponse RollerToPosition(RollerPosition position);
+
 	IControlResponse RollerToPosition(RollerPosition position, int opTimeout);
 
 	IControlResponse RollerToPosition(RollerPosition position, int opTimeout, bool logSensors);
+
+	QlmStatus GetQlmStatus();
+
+	ErrorCodes EngageQlm(IFormattedLog log);
+
+	ErrorCodes EngageQlm(bool home, IFormattedLog log);
+
+	ErrorCodes DisengageQlm(IFormattedLog log);
+
+	ErrorCodes DisengageQlm(bool home, IFormattedLog log);
+
+	IControlResponse LockQlmDoor();
+
+	IControlResponse UnlockQlmDoor();
+
+	IControlResponse DropQlm();
+
+	IControlResponse LiftQlm();
+
+	IControlResponse HaltQlmLifter();
 }

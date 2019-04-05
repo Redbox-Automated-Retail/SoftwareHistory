@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum TrackState
+public enum TrackState
 {
 	Unknown,
 	Closed,

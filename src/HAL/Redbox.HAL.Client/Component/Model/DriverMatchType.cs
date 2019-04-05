@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum DriverMatchType
+public enum DriverMatchType
 {
 	None,
 	HardwareId,

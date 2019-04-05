@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Compression;
 using Redbox.HAL.IPC.Framework;
 using Redbox.IPC.Framework;
 
@@ -12,8 +12,6 @@ namespace Redbox.HAL.Client;
 public sealed class HardwareService
 {
 	private const int DefaultTimeout = 60000;
-
-	private IPCProtocol m_protocol;
 
 	public bool SupportsCameraFraudScan
 	{
@@ -55,13 +53,33 @@ public sealed class HardwareService
 		}
 	}
 
+	public CameraGeneration CurrentCameraGeneration
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.CurrentCameraGeneration;
+		}
+	}
+
+	public BarcodeServices BarcodeDecoder
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.BarcodeDecoder;
+		}
+	}
+
 	public int? CommandTimeout { get; set; }
 
-	internal IPCProtocol Protocol => m_protocol;
+	internal IPCProtocol Protocol { get; private set; }
 
 	public HardwareService(IPCProtocol protocol)
 	{
-		m_protocol = protocol;
+		Protocol = protocol;
 	}
 
 	public HardwareCommandResult Init(HardwareJobSchedule schedule, out HardwareJob job)
@@ -161,12 +179,7 @@ public sealed class HardwareService
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("reset-locations", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
-			foreach (Location loc in locs)
-			{
-				job.Push(loc.Slot);
-				job.Push(loc.Deck);
-			}
-			job.Push(locs.Count);
+			PushLocs(locs, job);
 		}
 		return hardwareCommandResult;
 	}
@@ -241,13 +254,19 @@ public sealed class HardwareService
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("load-bin", schedule, out job);
 		if (hardwareCommandResult.Success)
 		{
-			foreach (Location loc in locs)
-			{
-				job.Push(loc.Slot);
-				job.Push(loc.Deck);
-			}
-			job.Push(locs.Count);
+			PushLocs(locs, job);
 			job.Push("LOCATION");
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult LoadBin(string[] barcodes, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("load-bin", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushArray(barcodes, job);
+			job.Push("BARCODE");
 		}
 		return hardwareCommandResult;
 	}
@@ -255,10 +274,9 @@ public sealed class HardwareService
 	public HardwareCommandResult Vend(string[] ids, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
-		if (hardwareCommandResult.Success && ids != null)
+		if (hardwareCommandResult.Success)
 		{
-			job.Push(ids);
-			job.Push(ids.Length);
+			PushArray(ids, job);
 			job.Push("BY-ID");
 		}
 		return hardwareCommandResult;
@@ -267,14 +285,9 @@ public sealed class HardwareService
 	public HardwareCommandResult Vend(List<Location> locations, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		HardwareCommandResult hardwareCommandResult = ScheduleJob("vend", schedule, out job);
-		if (hardwareCommandResult.Success && locations.Count > 0)
+		if (hardwareCommandResult.Success)
 		{
-			foreach (Location location in locations)
-			{
-				job.Push(location.Slot);
-				job.Push(location.Deck);
-			}
-			job.Push(locations.Count);
+			PushLocs(locations, job);
 			job.Push("BY-LOCATION");
 		}
 		return hardwareCommandResult;
@@ -345,6 +358,21 @@ public sealed class HardwareService
 			job.Push(range.Slots.End, range.EndDeck, range.Slots.Start, range.StartDeck);
 		}
 		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult HardSync(List<Location> locations, string label, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("sync-locations", label, enableDebugging: false, schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushLocs(locations, job);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult HardSync(List<Location> locations, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return HardSync(locations, null, schedule, out job);
 	}
 
 	public HardwareCommandResult FieldInsertFraudWithCheck(HardwareJobSchedule schedule, out HardwareJob job)
@@ -439,19 +467,29 @@ public sealed class HardwareService
 		return ScheduleJob("air-exchanger-status", schedule, out job);
 	}
 
+	public HardwareCommandResult MarkBarcodesUnknown(HardwareJobSchedule s, string[] barcodes, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("mark-barcodes-unknown", s, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushArray(barcodes, job);
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult MarkLocationsUnknown(HardwareJobSchedule s, List<Location> locs, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("mark-locations-unknown", s, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushLocs(locs, job);
+		}
+		return hardwareCommandResult;
+	}
+
 	public HardwareCommandResult ResetTouchscreenController(HardwareJobSchedule s, out HardwareJob job)
 	{
 		return ScheduleJob("reset-touchscreen-controller", s, out job);
-	}
-
-	public HardwareCommandResult PowerCycleRouter(HardwareJobSchedule s, out HardwareJob job)
-	{
-		return ScheduleJob("power-cycle-router", s, out job);
-	}
-
-	public HardwareCommandResult RebuildInventory(HardwareJobSchedule s, out HardwareJob job)
-	{
-		return ScheduleJob("rebuild-inventory-database", s, out job);
 	}
 
 	public HardwareCommandResult GetHardwareCorrectionStats(HardwareCorrectionStatistic stat, out List<IHardwareCorrectionStatistic> stats)
@@ -493,11 +531,6 @@ public sealed class HardwareService
 		return ScheduleJob("clear-all-hardware-statistics", null, enableDebugging: false, schedule, out job);
 	}
 
-	public HardwareCommandResult TestAndResetCCR(HardwareJobSchedule schedule, out HardwareJob job)
-	{
-		return ScheduleJob("test-and-reset-ccr", null, enableDebugging: false, schedule, out job);
-	}
-
 	public HardwareCommandResult GetConfiguration(string name)
 	{
 		return ExecuteCommand($"CONFIG get name: '{name}'");
@@ -505,8 +538,8 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetConfiguration(string name, string xmlConfig)
 	{
-		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
-		return ExecuteCommand($"CONFIG set name: '{name}' data: '{ByteHelper.ToBase64(inputArray)}'");
+		byte[] inArray = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
+		return ExecuteCommand($"CONFIG set name: '{name}' data: '{Convert.ToBase64String(inArray)}'");
 	}
 
 	public HardwareCommandResult LoadConfiguration(string path)
@@ -534,8 +567,13 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetInventoryState(string xml)
 	{
-		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
-		return ExecuteCommand($"CONFIG set-inventory-state data: '{ByteHelper.ToBase64(inputArray)}'");
+		byte[] inArray = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
+		return ExecuteCommand($"CONFIG set-inventory-state data: '{Convert.ToBase64String(inArray)}'");
+	}
+
+	public HardwareCommandResult PowerCycleRouter(HardwareJobSchedule s, out HardwareJob job)
+	{
+		return ScheduleJob("power-cycle-router", s, out job);
 	}
 
 	public HardwareCommandResult GetProgramScript(string programName)
@@ -545,8 +583,8 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetProgramScript(string programName, string script)
 	{
-		byte[] inputArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
-		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{ByteHelper.ToBase64(inputArray)}'");
+		byte[] inArray = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
+		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{Convert.ToBase64String(inArray)}'");
 	}
 
 	public HardwareCommandResult SetProgramRequiresClientConnection(string programName, bool requiresClientConnection)
@@ -716,7 +754,7 @@ public sealed class HardwareService
 	public HardwareCommandResult ExecuteImmediateProgram(byte[] bytes, out HardwareJob job)
 	{
 		job = null;
-		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB execute-immediate-base64 statement: '{ByteHelper.ToBase64(bytes)}'");
+		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB execute-immediate-base64 statement: '{Convert.ToBase64String(bytes)}'");
 		if (hardwareCommandResult.Success)
 		{
 			job = HardwareJob.Parse(this, hardwareCommandResult.CommandMessages[0]);
@@ -772,9 +810,19 @@ public sealed class HardwareService
 		return ExecuteCommand("SERVICE full-sync");
 	}
 
+	public HardwareCommandResult RebuildInventory(HardwareJobSchedule s, out HardwareJob job)
+	{
+		return ScheduleJob("rebuild-inventory-database", s, out job);
+	}
+
+	public HardwareCommandResult TestAndResetCCR(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJob("test-and-reset-ccr", null, enableDebugging: false, schedule, out job);
+	}
+
 	public HardwareCommandResult TestSomeData(int dataSize)
 	{
-		return ExecuteCommand($"SERVICE test-ipc-xfer size: '{dataSize.ToString()}'");
+		return ExecuteCommand($"ipctest test-ipc-xfer size: '{dataSize.ToString()}'");
 	}
 
 	public HardwareCommandResult GetKioskFunctionCheckData(out IList<IKioskFunctionCheckData> sessions)
@@ -809,30 +857,37 @@ public sealed class HardwareService
 
 	internal HardwareCommandResult ExecuteCommand(string command)
 	{
-		if (m_protocol.Channel == ChannelType.NamedPipe)
-		{
-			return NamedPipeClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, command);
-		}
-		return ClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, command);
+		return ClientCommand<HardwareCommandResult>.ExecuteCommand(Protocol, command);
 	}
 
 	internal HardwareCommandResult ExecuteCommand(string command, int timeout)
 	{
-		if (m_protocol.Channel == ChannelType.NamedPipe)
-		{
-			return NamedPipeClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, command);
-		}
-		return ClientCommand<HardwareCommandResult>.ExecuteCommand(m_protocol, timeout, command);
+		return ClientCommand<HardwareCommandResult>.ExecuteCommand(Protocol, timeout, command);
 	}
 
-	internal ClientSession GetSession()
+	internal IIpcClientSession GetSession()
 	{
-		return ClientSession.GetClientSession(m_protocol);
+		return ClientSessionFactory.GetClientSession(Protocol);
 	}
 
 	private HardwareCommandResult ScheduleJob(string name, HardwareJobSchedule schedule, out HardwareJob job)
 	{
 		return ScheduleJob(name, null, enableDebugging: false, schedule, out job);
+	}
+
+	private void PushLocs(List<Location> locs, HardwareJob job)
+	{
+		if (locs == null || locs.Count == 0)
+		{
+			job.Push(0);
+			return;
+		}
+		locs.ForEach(delegate(Location loc)
+		{
+			job.Push(loc.Slot);
+			job.Push(loc.Deck);
+		});
+		job.Push(locs.Count);
 	}
 
 	private void PushArray(string[] array, HardwareJob job)

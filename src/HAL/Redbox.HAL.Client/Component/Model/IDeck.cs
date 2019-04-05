@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDeck
+public interface IDeck
 {
 	int SlotsPerQuadrant { get; }
 
@@ -16,7 +16,7 @@ internal interface IDeck
 
 	int YOffset { get; }
 
-	IList<IQuadrant> Quadrants { get; }
+	List<IQuadrant> Quadrants { get; }
 
 	bool IsSlotValid(int slot);
 

@@ -2,7 +2,7 @@ using System.Net.Sockets;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class TcpServerSession : ServerSession
+public class TcpServerSession : ServerSession
 {
 	protected override int ReadBufferSize => 1024;
 

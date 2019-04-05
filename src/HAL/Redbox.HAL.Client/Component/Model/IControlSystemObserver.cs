@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IControlSystemObserver
+public interface IControlSystemObserver
 {
 	void OnSystemInitialize(ErrorCodes initError);
 

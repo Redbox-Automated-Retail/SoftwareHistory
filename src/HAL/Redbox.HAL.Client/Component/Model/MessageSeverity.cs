@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum MessageSeverity
+public enum MessageSeverity
 {
 	None,
 	Low,

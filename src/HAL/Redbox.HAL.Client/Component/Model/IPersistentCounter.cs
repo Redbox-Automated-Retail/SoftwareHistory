@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPersistentCounter
+public interface IPersistentCounter
 {
 	string Name { get; }
 

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum VendDoorState
+public enum VendDoorState
 {
 	Unknown,
 	Closed,

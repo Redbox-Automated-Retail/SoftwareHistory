@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface ILocation
+public interface ILocation
 {
 	bool IsEmpty { get; }
 

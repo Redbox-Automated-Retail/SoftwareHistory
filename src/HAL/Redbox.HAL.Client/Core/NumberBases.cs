@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Core;
 
-internal enum NumberBases
+public enum NumberBases
 {
 	Binary = 2,
 	Octal = 8,

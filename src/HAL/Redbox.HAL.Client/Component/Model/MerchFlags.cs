@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum MerchFlags : long
+public enum MerchFlags : long
 {
 	None,
 	Thin,

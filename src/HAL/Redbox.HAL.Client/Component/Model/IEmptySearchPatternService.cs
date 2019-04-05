@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IEmptySearchPatternService
+public interface IEmptySearchPatternService
 {
 	void DumpESP(bool dumpStore);
 
@@ -8,9 +8,7 @@ internal interface IEmptySearchPatternService
 
 	void RemoveObserver(IExcludeEmptySearchLocationObserver observer);
 
-	IEmptySearchResult FindMultipleEmptyLocations();
-
-	IEmptySearchResult FindOneEmpty();
+	IEmptySearchResult FindEmptyLocations();
 
 	IEmptySearchResult FindEmptyOutsideOf(ILocation top);
 }

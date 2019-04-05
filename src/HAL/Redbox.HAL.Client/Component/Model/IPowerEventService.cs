@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPowerEventService
+public interface IPowerEventService
 {
 	void Add(IPowerEventObserver observer);
 

@@ -4,7 +4,7 @@ using Redbox.HAL.Component.Model;
 namespace Redbox.HAL.Core;
 
 [Serializable]
-internal class Token : ICloneable<Token>
+public class Token : ICloneable<Token>
 {
 	public bool IsSymbolOrConst
 	{

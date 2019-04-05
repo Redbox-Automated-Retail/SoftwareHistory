@@ -2,17 +2,25 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IScannerDevice : IDisposable
+public interface IScannerDevice : IDisposable
 {
-	string Name { get; }
-
 	bool RequiresExternalLighting { get; }
 
 	bool IsConnected { get; }
 
 	bool InError { get; }
 
+	bool IsLegacy { get; }
+
+	bool SupportsSecureReads { get; }
+
+	ScannerServices Service { get; }
+
+	CameraGeneration CurrentCameraGeneration { get; }
+
 	bool Start();
+
+	bool Start(bool testFunction);
 
 	bool Stop();
 
@@ -20,9 +28,9 @@ internal interface IScannerDevice : IDisposable
 
 	IScanResult Scan();
 
-	string FindInstalledPort();
-
 	ISnapResult Snap();
 
-	ISnapResult Snap(string path);
+	bool ValidateSettings();
+
+	bool ValidateSettings(IMessageSink sink);
 }

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum ExchangerFanStatus
+public enum ExchangerFanStatus
 {
 	Unknown,
 	NotConfigured,

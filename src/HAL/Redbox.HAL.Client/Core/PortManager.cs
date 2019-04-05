@@ -2,73 +2,90 @@ using System;
 using System.Collections.Generic;
 using System.IO.Ports;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace Redbox.HAL.Core;
 
-internal sealed class PortManager
+public sealed class PortManager : IPortManagerService
 {
-	public delegate bool PortTest(RedboxSerialPort port);
-
 	private const string MsgHeader = "[Port Scanner]";
 
 	private readonly List<string> InUsePorts = new List<string>();
 
 	private readonly object ScanLock = new object();
 
-	public static PortManager Instance => Singleton<PortManager>.Instance;
+	public bool Register(ICommPort port)
+	{
+		lock (ScanLock)
+		{
+			return RegisterUnderLock(port);
+		}
+	}
 
-	public RedboxSerialPort Scan(RedboxSerialPortConfiguration conf, PortTest probe, PortModes mode)
+	public void Dispose(ICommPort port)
+	{
+		lock (ScanLock)
+		{
+			string item = port.PortName.ToUpper();
+			InUsePorts.Remove(item);
+			port.Dispose();
+		}
+	}
+
+	public ICommChannelConfiguration CreateConfiguration()
+	{
+		return new RedboxSerialPortConfiguration();
+	}
+
+	public ICommPort Create(SerialPort port)
+	{
+		return Create(port, CommPortReadModes.Async);
+	}
+
+	public ICommPort Create(SerialPort port, CommPortReadModes mode)
+	{
+		if (port == null)
+		{
+			throw new ArgumentException("port");
+		}
+		RedboxSerialPort redboxSerialPort = OnCreate(port, mode);
+		if (redboxSerialPort != null)
+		{
+			Register(redboxSerialPort);
+		}
+		return redboxSerialPort;
+	}
+
+	public ICommPort Scan(ICommChannelConfiguration conf, Predicate<ICommPort> probe, CommPortReadModes mode)
+	{
+		return Scan(null, conf, probe, mode);
+	}
+
+	public ICommPort Scan(string tryFirst, ICommChannelConfiguration conf, Predicate<ICommPort> probe, CommPortReadModes mode)
 	{
 		lock (ScanLock)
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
-			RedboxSerialPort result = TestPorts(conf, probe, mode);
-			executionTimer.Stop();
-			LogHelper.Instance.Log("[Port Scan] Time to scan ports: {0}ms", executionTimer.ElapsedMilliseconds);
-			return result;
-		}
-	}
-
-	public RedboxSerialPort Scan(string tryFirst, RedboxSerialPortConfiguration conf, PortTest probe, PortModes mode)
-	{
-		lock (ScanLock)
-		{
-			using ExecutionTimer executionTimer = new ExecutionTimer();
-			RedboxSerialPort redboxSerialPort = ScanInner(tryFirst, conf, probe, mode);
-			if (redboxSerialPort == null)
+			ICommPort commPort = null;
+			if (tryFirst != null)
 			{
-				redboxSerialPort = TestPorts(conf, probe, mode);
+				commPort = Probe(tryFirst, conf, probe, mode);
+			}
+			if (commPort == null)
+			{
+				commPort = ProbePorts(conf, probe, mode);
 			}
 			executionTimer.Stop();
 			LogHelper.Instance.Log("[Port Scan] Time to scan ports: {0}ms", executionTimer.ElapsedMilliseconds);
-			return redboxSerialPort;
-		}
-	}
-
-	internal void Register(string port)
-	{
-		lock (ScanLock)
-		{
-			string text = InUsePorts.Find((string each) => each.Equals(port, StringComparison.CurrentCultureIgnoreCase));
-			if (text == null)
+			if (commPort != null)
 			{
-				InUsePorts.Add(port);
+				RegisterUnderLock(commPort);
 			}
+			return commPort;
 		}
 	}
 
-	internal void Remove(string port)
-	{
-		lock (ScanLock)
-		{
-			if (!InUsePorts.Remove(port))
-			{
-				LogHelper.Instance.Log("[PortManager] Removing port {0} returned FALSE.", port);
-			}
-		}
-	}
-
-	private RedboxSerialPort ScanInner(string portName, RedboxSerialPortConfiguration conf, PortTest probe, PortModes mode)
+	private RedboxSerialPort Probe(string portName, ICommChannelConfiguration conf, Predicate<ICommPort> probe, CommPortReadModes mode)
 	{
 		string text = InUsePorts.Find((string each) => each.Equals(portName, StringComparison.CurrentCultureIgnoreCase));
 		if (text != null)
@@ -76,38 +93,71 @@ internal sealed class PortManager
 			LogHelper.Instance.Log("{0} The port {1} is reported in-use by the port manager.", "[Port Scanner]", portName);
 			return null;
 		}
-		conf.PortName = portName;
-		RedboxSerialPort redboxSerialPort = RedboxSerialPort.Create(conf, mode);
+		SerialPort port = new SerialPort(portName, 115200, Parity.None, 8, StopBits.One);
+		RedboxSerialPort redboxSerialPort = OnCreate(port, mode);
+		redboxSerialPort.Configure(conf);
 		LogHelper.Instance.Log("{0} try port {1}", "[Port Scanner]", portName);
 		if (!redboxSerialPort.Open())
 		{
-			LogHelper.Instance.Log("{0} The port wouldn't open.", "[Port Scanner]");
+			LogHelper.Instance.Log("{0} Could not open port {1}", "[Port Scanner]", portName);
 			redboxSerialPort.Dispose();
 			return null;
 		}
 		if (probe(redboxSerialPort))
 		{
+			LogHelper.Instance.Log("{0} Probe port {1} returned true", "[Port Scanner]", portName);
 			return redboxSerialPort;
 		}
 		redboxSerialPort.Dispose();
 		return null;
 	}
 
-	private RedboxSerialPort TestPorts(RedboxSerialPortConfiguration conf, PortTest probe, PortModes mode)
+	private bool RegisterUnderLock(ICommPort port)
+	{
+		string key = port.PortName.ToUpper();
+		string text = InUsePorts.Find((string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase));
+		if (text == null)
+		{
+			InUsePorts.Add(key);
+			return true;
+		}
+		return false;
+	}
+
+	private RedboxSerialPort OnCreate(SerialPort port, CommPortReadModes mode)
+	{
+		RedboxSerialPort result = null;
+		switch (mode)
+		{
+		case CommPortReadModes.Async:
+		{
+			AsyncReadPort asyncReadPort = new AsyncReadPort(port);
+			asyncReadPort.Mode = CommPortReadModes.Async;
+			result = asyncReadPort;
+			break;
+		}
+		case CommPortReadModes.Callback:
+		{
+			CallbackReadPort callbackReadPort = new CallbackReadPort(port);
+			callbackReadPort.Mode = CommPortReadModes.Callback;
+			result = callbackReadPort;
+			break;
+		}
+		}
+		return result;
+	}
+
+	private RedboxSerialPort ProbePorts(ICommChannelConfiguration conf, Predicate<ICommPort> probe, CommPortReadModes mode)
 	{
 		string[] portNames = SerialPort.GetPortNames();
 		foreach (string portName in portNames)
 		{
-			RedboxSerialPort redboxSerialPort = ScanInner(portName, conf, probe, mode);
+			RedboxSerialPort redboxSerialPort = Probe(portName, conf, probe, mode);
 			if (redboxSerialPort != null)
 			{
 				return redboxSerialPort;
 			}
 		}
 		return null;
-	}
-
-	private PortManager()
-	{
 	}
 }

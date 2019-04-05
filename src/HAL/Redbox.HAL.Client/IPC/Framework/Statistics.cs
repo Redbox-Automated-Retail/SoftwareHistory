@@ -3,7 +3,7 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class Statistics
+public class Statistics
 {
 	public long NumberOfBytesSent;
 

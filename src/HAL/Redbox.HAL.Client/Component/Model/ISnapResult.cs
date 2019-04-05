@@ -1,6 +1,8 @@
+using System;
+
 namespace Redbox.HAL.Component.Model;
 
-internal interface ISnapResult
+public interface ISnapResult : IDisposable
 {
 	bool SnapOk { get; }
 

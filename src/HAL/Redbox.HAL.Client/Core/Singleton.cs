@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Redbox.HAL.Core;
 
-internal static class Singleton<T> where T : class
+public static class Singleton<T> where T : class
 {
 	public static T Instance { get; private set; }
 

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IRange<T>
+public interface IRange<T>
 {
 	T Start { get; }
 

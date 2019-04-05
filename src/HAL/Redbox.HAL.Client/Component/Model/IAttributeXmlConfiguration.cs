@@ -2,7 +2,7 @@ using System.Xml;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IAttributeXmlConfiguration : IConfigurationObserver
+public interface IAttributeXmlConfiguration : IConfigurationObserver
 {
 	string RootName { get; }
 

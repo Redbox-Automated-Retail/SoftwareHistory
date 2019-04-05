@@ -1,12 +1,19 @@
 using System;
+using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class CommandService
+public class CommandService
 {
 	public static CommandService Instance => Singleton<CommandService>.Instance;
+
+	public void Register(IEnumerable<Type> types)
+	{
+		CommandRepository.Register(types);
+	}
 
 	public CommandResult Execute(ISession session, string input)
 	{
@@ -80,10 +87,7 @@ internal class CommandService
 	private CommandService()
 	{
 		LogHelper.Instance.Log("Initializing CommandService.");
-		foreach (string item in CommandRepository.DiscoverInstalledCommands())
-		{
-			LogHelper.Instance.Log("Loaded command: " + item);
-		}
+		CommandRepository.DiscoverInstalledCommands();
 	}
 
 	private static bool GetTokenizer(string input, CommandResult result, CommandContext context, out CommandTokenizer tokenizer)

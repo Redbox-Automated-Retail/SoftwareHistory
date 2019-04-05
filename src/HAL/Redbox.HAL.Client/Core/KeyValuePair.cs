@@ -3,7 +3,7 @@ using System;
 namespace Redbox.HAL.Core;
 
 [Serializable]
-internal class KeyValuePair
+public class KeyValuePair
 {
 	public string Key { get; private set; }
 

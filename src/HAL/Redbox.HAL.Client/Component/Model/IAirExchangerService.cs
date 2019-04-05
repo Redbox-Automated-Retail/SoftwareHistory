@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IAirExchangerService
+public interface IAirExchangerService
 {
 	ExchangerFanStatus FanStatus { get; }
 
@@ -11,10 +11,6 @@ internal interface IAirExchangerService
 	void TurnOnFan();
 
 	void TurnOffFan();
-
-	void LatchOn();
-
-	void LatchOff();
 
 	AirExchangerStatus Reset();
 

@@ -2,21 +2,28 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Client;
 
-public class ClientHelper
+public sealed class ClientHelper : IDisposable
 {
-	public delegate void InitComplete();
+	private bool Disposed;
 
-	private ManualResetEvent m_resetEvent = new ManualResetEvent(initialState: false);
+	private readonly IClientOutputSink Sink;
+
+	private readonly NullSink NullInstance = new NullSink();
 
 	public HardwareService Service { get; private set; }
 
-	private IClientOutputSink Sink { get; set; }
+	public void Dispose()
+	{
+		if (!Disposed)
+		{
+			Disposed = true;
+		}
+	}
 
 	public bool BootstrapInitRunning()
 	{
@@ -25,35 +32,30 @@ public class ClientHelper
 			Sink.WriteMessage("The service is not configured.");
 			return false;
 		}
-		HardwareCommandResult initStatus = Service.GetInitStatus(out var status);
-		if (!initStatus.Success)
-		{
-			Sink.WriteMessage("Unable to determine init status.");
-			return false;
-		}
-		if ("COMPLETED" == status || "ERRORED" == status)
-		{
-			Sink.WriteMessage("Boot init ended with status: {0}", status);
-			return false;
-		}
-		return true;
-	}
-
-	public bool WaitforInit(int pause)
-	{
-		return WaitForInitInner(pause);
+		return BootstrapInitRunningChecked();
 	}
 
 	public bool WaitforInit()
 	{
-		return WaitForInitInner(5000);
+		return WaitforInit(500);
 	}
 
-	public bool WaitforInit(InitComplete onDone)
+	public bool WaitforInit(int pause)
 	{
-		bool result = WaitForInitInner(5000);
-		onDone?.Invoke();
-		return result;
+		Sink.WriteMessage("Checking for bootstrap init.");
+		DateTime dateTime = DateTime.Now;
+		TimeSpan value = new TimeSpan(0, 0, 5);
+		while (BootstrapInitRunningChecked())
+		{
+			DateTime now = DateTime.Now;
+			if (now.Subtract(value) >= dateTime)
+			{
+				dateTime = now;
+				Sink.WriteMessage("{0}: still waiting for bootstrap init.", now.ToLongTimeString());
+			}
+			Thread.Sleep(pause);
+		}
+		return true;
 	}
 
 	public HardwareService Connect()
@@ -68,32 +70,6 @@ public class ClientHelper
 			throw new UriFormatException("The URI string is null or empty - please re-configure.");
 		}
 		return ConnectInner(ipc);
-	}
-
-	public HardwareService AutoConnect()
-	{
-		if (Service != null)
-		{
-			return Service;
-		}
-		Service = ConnectInner(Constants.HALIPCStrings.TcpServer);
-		if (Service != null)
-		{
-			LogHelper.Instance.Log("Autoconnect: found server running on {0}", Constants.HALIPCStrings.TcpServer);
-			return Service;
-		}
-		string text = FindLocalIP();
-		if (string.IsNullOrEmpty(text))
-		{
-			return Service = null;
-		}
-		string text2 = $"rcp://{text}:7001";
-		Service = ConnectInner(text2);
-		if (Service != null)
-		{
-			LogHelper.Instance.Log("Autoconnect: found server running on {0}", text2);
-		}
-		return Service;
 	}
 
 	public bool TestCommunication()
@@ -117,11 +93,13 @@ public class ClientHelper
 				_s0 = status;
 				waitForJob = status != HardwareJobStatus.Stopped && status != HardwareJobStatus.Errored && status != HardwareJobStatus.Garbage && status != HardwareJobStatus.Completed && status != HardwareJobStatus.Suspended;
 			};
-			job.Connect();
-			job.Pend();
+			if (!job.Connect().Success || !job.Pend().Success)
+			{
+				return false;
+			}
 			while (waitForJob)
 			{
-				m_resetEvent.WaitOne(250, exitContext: false);
+				Thread.Sleep(250);
 			}
 			endStatus = _s0;
 			return true;
@@ -154,35 +132,18 @@ public class ClientHelper
 			return default(T);
 		}
 		string[] stackEntriesInner = GetStackEntriesInner(job, 1);
-		return (T)ConversionHelper.ChangeType(stackEntriesInner[0], typeof(T));
+		return ConversionHelper.ChangeType<T>(stackEntriesInner[0]);
 	}
 
-	public ClientHelper(IClientOutputSink sink)
+	public ClientHelper(IClientOutputSink sink, HardwareService service)
 	{
-		Sink = ((sink == null) ? NullSink.Instance : sink);
-	}
-
-	public ClientHelper()
-	{
-		Sink = NullSink.Instance;
-	}
-
-	public ClientHelper(HardwareService service)
-	{
-		Sink = NullSink.Instance;
+		Sink = ((sink == null) ? NullInstance : sink);
 		Service = service;
 	}
 
-	private bool WaitForInitInner(int pause)
+	public ClientHelper(HardwareService service)
+		: this(null, service)
 	{
-		Sink.WriteMessage("Checking for bootstrap init.");
-		while (BootstrapInitRunning())
-		{
-			Sink.WriteMessage("{0}: still waiting for bootstrap init.", DateTime.Now.ToLongTimeString());
-			Thread.Sleep(pause);
-		}
-		Sink.WriteMessage("Init done");
-		return true;
 	}
 
 	private HardwareService ConnectInner(string ipcUrl)
@@ -244,5 +205,21 @@ public class ClientHelper
 			}
 		}
 		return array;
+	}
+
+	private bool BootstrapInitRunningChecked()
+	{
+		HardwareCommandResult initStatus = Service.GetInitStatus(out var status);
+		if (!initStatus.Success)
+		{
+			Sink.WriteMessage("Unable to determine init status.");
+			return false;
+		}
+		if ("COMPLETED" == status || "ERRORED" == status)
+		{
+			Sink.WriteMessage("Boot init ended with status: {0}", status);
+			return false;
+		}
+		return true;
 	}
 }

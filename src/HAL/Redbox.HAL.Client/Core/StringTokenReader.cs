@@ -1,8 +1,9 @@
 using System;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal class StringTokenReader : ITokenReader, IDisposable
+public class StringTokenReader : ITokenReader, IDisposable
 {
 	private readonly string m_statement;
 

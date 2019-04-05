@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IMotionControlService
+public interface IMotionControlService
 {
 	ILocation CurrentLocation { get; }
 
@@ -22,23 +22,33 @@ internal interface IMotionControlService
 
 	ErrorCodes MoveAbsolute(Axis axis, int? xunits, int? yunits, bool checkSensors);
 
-	ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+	ErrorCodes MoveTo(int deck, int slot, MoveMode mode);
 
 	ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log);
 
-	ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+	ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+
+	ErrorCodes MoveTo(ILocation location, MoveMode mode);
 
 	ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log);
 
+	ErrorCodes MoveTo(ILocation location, MoveMode mode, IFormattedLog log, ref OffsetMoveData data);
+
 	ErrorCodes MoveVend(MoveMode mode, IFormattedLog log);
 
-	ErrorCodes InitAxes(IFormattedLog log);
+	ErrorCodes InitAxes();
 
-	ErrorCodes InitAxesFast(IFormattedLog log);
+	ErrorCodes InitAxes(bool quick);
 
-	ErrorCodes HomeAxis(Axis axis, IFormattedLog log);
+	ErrorCodes HomeAxis(Axis axis);
 
-	bool Reset(IFormattedLog log, bool quick);
+	ErrorCodes Reset(bool quick);
+
+	bool TestAndReset();
+
+	bool TestAndReset(bool quick);
 
 	void Shutdown();
+
+	string GetPrintableLocation();
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IChannelResponse : IDisposable
+public interface IChannelResponse : IDisposable
 {
 	bool CommOk { get; }
 

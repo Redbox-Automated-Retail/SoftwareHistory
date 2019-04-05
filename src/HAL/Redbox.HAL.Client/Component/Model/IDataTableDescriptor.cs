@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDataTableDescriptor
+public interface IDataTableDescriptor
 {
 	string Source { get; }
 

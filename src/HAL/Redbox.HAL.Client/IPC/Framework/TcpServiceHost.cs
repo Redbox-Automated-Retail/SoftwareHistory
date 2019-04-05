@@ -5,13 +5,13 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class TcpServiceHost : IPCServiceHost
+public class TcpServiceHost : IPCServiceHost
 {
 	private TcpListener m_listener;
 
 	private int m_listenerPort;
 
-	public override void Start()
+	protected override void OnStart()
 	{
 		base.Alive = true;
 		IPAddress iPAddress;
@@ -43,7 +43,7 @@ internal class TcpServiceHost : IPCServiceHost
 			{
 				TcpClient client = m_listener.AcceptTcpClient();
 				TcpServerSession tcpServerSession = new TcpServerSession(client, this);
-				RegiserSession(tcpServerSession);
+				Register(tcpServerSession);
 				tcpServerSession.Start();
 			}
 			catch (SocketException ex)
@@ -61,9 +61,14 @@ internal class TcpServiceHost : IPCServiceHost
 		LogHelper.Instance.Log("End processing incoming requests.");
 	}
 
-	public override void Stop()
+	protected override void OnStop()
 	{
 		base.Alive = false;
 		m_listener.Stop();
+	}
+
+	internal TcpServiceHost(IIpcProtocol protocol, IHostInfo info)
+		: base(protocol, info)
+	{
 	}
 }

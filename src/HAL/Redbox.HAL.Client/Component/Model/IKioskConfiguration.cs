@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IKioskConfiguration
+public interface IKioskConfiguration
 {
 	bool IsVmz { get; }
 

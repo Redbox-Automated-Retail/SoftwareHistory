@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IGetResult
+public interface IGetResult
 {
 	bool Success { get; }
 

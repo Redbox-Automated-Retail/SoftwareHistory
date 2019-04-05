@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal struct OffsetMoveData
+public struct OffsetMoveData
 {
 	public int? XOffset { get; private set; }
 

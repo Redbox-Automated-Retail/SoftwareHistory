@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IControlResponse
+public interface IControlResponse
 {
 	bool Success { get; }
 

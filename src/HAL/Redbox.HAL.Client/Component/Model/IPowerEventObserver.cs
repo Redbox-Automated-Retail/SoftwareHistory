@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPowerEventObserver
+public interface IPowerEventObserver
 {
 	void OnSuspend();
 

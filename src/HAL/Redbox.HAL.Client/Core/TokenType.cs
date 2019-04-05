@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Core;
 
-internal enum TokenType
+public enum TokenType
 {
 	Mnemonic = 1,
 	Label,

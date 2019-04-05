@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPutObserver
+public interface IPutObserver
 {
 	void OnSuccessfulPut(IPutResult result, IFormattedLog log);
 

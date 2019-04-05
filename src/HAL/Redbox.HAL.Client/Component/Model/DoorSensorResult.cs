@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum DoorSensorResult
+public enum DoorSensorResult
 {
 	Ok,
 	FrontDoor,

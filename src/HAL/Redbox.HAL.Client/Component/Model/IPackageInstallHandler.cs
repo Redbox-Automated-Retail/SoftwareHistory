@@ -2,7 +2,7 @@ using System.IO;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPackageInstallHandler
+public interface IPackageInstallHandler
 {
 	void OnRegister();
 

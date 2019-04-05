@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IFormattedLogFactoryService
+public interface IFormattedLogFactoryService
 {
 	string LogsBasePath { get; }
 

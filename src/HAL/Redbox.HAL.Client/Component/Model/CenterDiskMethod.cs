@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum CenterDiskMethod
+public enum CenterDiskMethod
 {
 	None,
 	DrumAndBack,

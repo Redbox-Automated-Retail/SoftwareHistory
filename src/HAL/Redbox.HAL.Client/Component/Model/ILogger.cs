@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface ILogger
+public interface ILogger
 {
 	void Log(string message, Exception e);
 

@@ -4,7 +4,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class CommandContext
+public class CommandContext
 {
 	public readonly IDictionary<string, string> Parameters = new Dictionary<string, string>();
 

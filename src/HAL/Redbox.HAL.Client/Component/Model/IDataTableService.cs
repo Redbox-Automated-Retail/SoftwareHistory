@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDataTableService
+public interface IDataTableService
 {
 	IDataTable<T> GetTable<T>();
 

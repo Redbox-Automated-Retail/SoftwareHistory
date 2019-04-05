@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface ICameraPlugin
+public interface ICameraPlugin
 {
 	bool IsRunning { get; }
 

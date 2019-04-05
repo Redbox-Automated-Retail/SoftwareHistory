@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPersistentOption
+public interface IPersistentOption
 {
 	string Key { get; }
 

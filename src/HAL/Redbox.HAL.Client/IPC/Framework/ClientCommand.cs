@@ -5,12 +5,14 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Compression;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class ClientCommand<T> where T : ClientCommandResult, new()
+public class ClientCommand<T> where T : ClientCommandResult, new()
 {
 	private const string IPCLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs\\IPCFramework";
 
@@ -21,10 +23,6 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 	public string CommandText { get; internal set; }
 
 	public TimeSpan? ExecutionTime { get; private set; }
-
-	internal bool DisposeWhenDone { get; set; }
-
-	internal ClientSession Session { get; set; }
 
 	internal int? Timeout { get; set; }
 
@@ -70,37 +68,36 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 		return new ClientCommand<T>(protocol, timeout, command).Execute();
 	}
 
-	public static T ExecuteCommand(ClientSession session, string command)
+	public static T ExecuteCommand(IIpcClientSession session, string command)
 	{
-		return new ClientCommand<T>(session, disposeWhenDone: false, command).Execute();
-	}
-
-	public static T ExecuteCommand(ClientSession session, bool disposeWhenDone, string command)
-	{
-		return new ClientCommand<T>(session, disposeWhenDone, command).Execute();
+		return new ClientCommand<T>(command).Execute(session);
 	}
 
 	public T Execute()
+	{
+		using IIpcClientSession session = ClientSessionFactory.GetClientSession(m_protocol);
+		return Execute(session);
+	}
+
+	public T Execute(IIpcClientSession session)
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		T val = new T
 		{
 			CommandText = CommandText
 		};
-		bool flag = Session == null || DisposeWhenDone;
 		try
 		{
-			Session = Session ?? ClientSession.GetClientSession(m_protocol);
 			if (Timeout.HasValue)
 			{
-				Session.Timeout = Timeout.Value;
+				session.Timeout = Timeout.Value;
 			}
-			if (!Session.IsConnected)
+			if (!session.IsConnected)
 			{
-				Session.ConnectThrowOnError();
+				session.ConnectThrowOnError();
 			}
-			List<string> list = Session.ExecuteCommand(CommandText);
-			bool success = Session.IsStatusOK(list);
+			List<string> list = session.ExecuteCommand(CommandText);
+			bool success = session.IsStatusOK(list);
 			val.Success = success;
 			if (list.Count > 0)
 			{
@@ -139,18 +136,6 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 			TimeSpan elapsed = executionTimer.Elapsed;
 			val.ExecutionTime = elapsed;
 			ExecutionTime = val.ExecutionTime;
-			try
-			{
-				if (flag && Session != null)
-				{
-					Session.Dispose();
-				}
-			}
-			catch (Exception e2)
-			{
-				val.Success = false;
-				val.Errors.Add(Error.NewError("J999", "An unhandled exception was raised in ClientCommand.Execute.", e2));
-			}
 		}
 		return val;
 	}
@@ -172,15 +157,9 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 		Timeout = timeout;
 	}
 
-	protected ClientCommand(ClientSession session, bool disposeWhenDone, string command)
+	protected ClientCommand(string command)
 	{
-		Session = session;
 		CommandText = command;
-		DisposeWhenDone = disposeWhenDone;
-		if (Session != null)
-		{
-			m_protocol = Session.Protocol;
-		}
 	}
 
 	protected virtual void OnConnectionFailure(Exception e, ClientCommandResult result)
@@ -233,12 +212,12 @@ internal class ClientCommand<T> where T : ClientCommandResult, new()
 			}
 			else if (result.CommandMessages[i].StartsWith("LZMA|"))
 			{
-				ICompressionAlgorithm algorithm = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA);
+				ICompressionAlgorithm algorithm = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA);
 				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm.Decompress(StringExtensions.Base64ToBytes(result.CommandMessages[i].Substring(5))));
 			}
 			else if (result.CommandMessages[i].StartsWith("GZIP|"))
 			{
-				ICompressionAlgorithm algorithm2 = CompressionAlgorithm.GetAlgorithm(CompressionType.GZip);
+				ICompressionAlgorithm algorithm2 = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.GZip);
 				result.CommandMessages[i] = Encoding.ASCII.GetString(algorithm2.Decompress(StringExtensions.Base64ToBytes(result.CommandMessages[i].Substring(5))));
 			}
 		}

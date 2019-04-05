@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum AudioChannelState
+public enum AudioChannelState
 {
 	None,
 	On,

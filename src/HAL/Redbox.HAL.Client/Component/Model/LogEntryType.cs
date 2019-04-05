@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum LogEntryType
+public enum LogEntryType
 {
 	Info,
 	Debug,

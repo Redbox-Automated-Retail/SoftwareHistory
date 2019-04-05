@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Core;
 
-internal enum NumberingSchemes
+public enum NumberingSchemes
 {
 	AToZ,
 	ZeroToZ

@@ -3,13 +3,18 @@ using System.ComponentModel.Design;
 
 namespace Redbox.HAL.Component.Model;
 
-internal sealed class ServiceLocator : IServiceProvider
+public sealed class ServiceLocator : IServiceProvider
 {
 	private readonly ServiceContainer Services = new ServiceContainer();
 
 	private static readonly ServiceLocator m_instance;
 
 	public static ServiceLocator Instance => m_instance;
+
+	public void AddService<T>(object instance)
+	{
+		AddService(typeof(T), instance);
+	}
 
 	public void AddService(Type serviceType, object instance)
 	{
@@ -24,6 +29,11 @@ internal sealed class ServiceLocator : IServiceProvider
 	public object GetService(Type serviceType)
 	{
 		return Services.GetService(serviceType);
+	}
+
+	public void RemoveService<T>()
+	{
+		Services.RemoveService(typeof(T));
 	}
 
 	public void RemoveService(Type serviceType)

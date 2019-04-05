@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum Axis
+public enum Axis
 {
 	X,
 	Y,

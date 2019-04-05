@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum CompressionType
+public enum CompressionType
 {
 	None,
 	GZip,

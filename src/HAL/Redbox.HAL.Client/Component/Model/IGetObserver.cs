@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IGetObserver
+public interface IGetObserver
 {
 	void OnStuck(IGetResult result);
 

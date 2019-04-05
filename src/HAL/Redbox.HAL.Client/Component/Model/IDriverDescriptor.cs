@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDriverDescriptor
+public interface IDriverDescriptor
 {
 	Version DriverVersion { get; }
 

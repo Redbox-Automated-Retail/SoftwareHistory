@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IKioskFunctionCheckService
+public interface IKioskFunctionCheckService
 {
 	bool Add(IKioskFunctionCheckData data);
 

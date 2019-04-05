@@ -1,12 +1,12 @@
+using System;
+
 namespace Redbox.HAL.Component.Model;
 
-internal enum EngineModes
+[Flags]
+public enum EngineModes
 {
-	None,
-	Normal,
-	Maintenance,
-	Diagnostic,
-	Merchandizing,
-	PowerSuspend,
-	RebootPending
+	Normal = 0,
+	Maintenance = 1,
+	Diagnostic = 2,
+	Merchandizing = 4
 }

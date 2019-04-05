@@ -6,7 +6,7 @@ namespace Redbox.HAL.IPC.Framework;
 
 [Command("help")]
 [Description("The HELP command, with no parameters, returns a list of all available commands. The HELP command with a single parameter matching the name of another command will display the help specifically for that command, if available.")]
-internal class HelpCommand
+public class HelpCommand
 {
 	public void Default(CommandContext context)
 	{

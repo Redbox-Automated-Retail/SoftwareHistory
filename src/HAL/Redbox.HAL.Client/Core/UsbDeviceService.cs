@@ -1,57 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Core.Descriptors;
 
 namespace Redbox.HAL.Core;
 
-internal sealed class UsbDeviceService : IUsbDeviceService
+public sealed class UsbDeviceService : IUsbDeviceService
 {
-	private class DeviceDescriptor : IDeviceDescriptor
-	{
-		public string Vendor { get; internal set; }
-
-		public string Product { get; internal set; }
-
-		public string Friendlyname
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
-
-		public IDeviceSetupClass SetupClass
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
-
-		public bool ResetDriver()
-		{
-			throw new NotImplementedException();
-		}
-
-		public bool MatchDriver()
-		{
-			throw new NotImplementedException();
-		}
-
-		public bool Locate()
-		{
-			throw new NotImplementedException();
-		}
-
-		public DeviceStatus GetStatus()
-		{
-			throw new NotImplementedException();
-		}
-	}
-
 	private enum DriverType : uint
 	{
 		SPDIT_NODRIVER,
@@ -162,6 +120,8 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 	private delegate ProcessDeviceInfoResult ProcessDeviceInfo(IntPtr devInfo, ref SP_DEVINFO_DATA did);
 
 	private const int CR_SUCCESS = 0;
+
+	private const int CM_PROB_FAILED_START = 10;
 
 	private const int CM_PROB_DISABLED = 22;
 
@@ -281,25 +241,41 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 
 	private const int SPDRP_BASE_CONTAINERID = 36;
 
-	private readonly char[] HwidSeparator = new char[1] { '&' };
+	private readonly DriverDescriptor Driver_Elo = new DriverDescriptor(new Version("5.5.1.4"), "Elo Touch Solutions");
+
+	private readonly DriverDescriptor Driver_GeneralTouch_HID1 = new DriverDescriptor(new Version("4.2.2.1"), "General Touch Technology Co.,Ltd.");
+
+	private readonly DriverDescriptor Driver_GeneralTouch_HID2 = new DriverDescriptor(new Version("2.10.1781.0"), "General Touch Technology Co., Ltd.");
+
+	private readonly DriverDescriptor Driver_TouchBase = new DriverDescriptor(new Version("4.0.2.0"), "Touch-Base Ltd");
+
+	private readonly List<ITouchscreenDescriptor> TouchScreenDescriptors = new List<ITouchscreenDescriptor>();
+
+	private readonly List<IDeviceDescriptor> CreditCardReaders = new List<IDeviceDescriptor>();
+
+	private readonly IDriverDescriptor Gen4DriverDescriptor = new DriverDescriptor(new Version("2.1.0.0"), "AVEO");
+
+	private readonly IDriverDescriptor Gen3DriverDescriptor = new DriverDescriptor(new Version("5.7.19104.104"), "Sonix");
+
+	private readonly List<IDeviceDescriptor> Cameras = new List<IDeviceDescriptor>();
 
 	private readonly bool Debug;
 
 	public IDeviceDescriptor FindActiveCamera(bool matchDriver)
 	{
-		CameraDeviceHelper cameraDeviceHelper = new CameraDeviceHelper();
-		IDeviceDescriptor deviceDescriptor = cameraDeviceHelper.FindActiveCamera();
+		IDeviceDescriptor deviceDescriptor = Cameras.Find((IDeviceDescriptor each) => each.Locate());
 		if (deviceDescriptor == null)
 		{
 			return null;
 		}
+		LogHelper.Instance.Log("[UsbDeviceService] FindActiveCamera: HWID found {0}", deviceDescriptor.ToString());
 		if (!matchDriver)
 		{
 			return deviceDescriptor;
 		}
 		if (!deviceDescriptor.MatchDriver())
 		{
-			LogHelper.Instance.Log("[USBDeviceService] unable to match camera driver.");
+			LogHelper.Instance.Log("[{0}] unable to match camera driver.", GetType().Name);
 			return null;
 		}
 		return deviceDescriptor;
@@ -307,29 +283,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 
 	public IDeviceDescriptor FromQueryString(string hwid)
 	{
-		if (string.IsNullOrEmpty(hwid))
-		{
-			return null;
-		}
-		hwid = hwid.ToLower();
-		if (!hwid.StartsWith("vid"))
-		{
-			int num = hwid.IndexOf("vid");
-			if (num == -1)
-			{
-				return null;
-			}
-			hwid = hwid.Substring(num).ToLower();
-		}
-		string[] array = hwid.Split(HwidSeparator, StringSplitOptions.RemoveEmptyEntries);
-		if (array.Length < 2)
-		{
-			return null;
-		}
-		DeviceDescriptor deviceDescriptor = new DeviceDescriptor();
-		deviceDescriptor.Vendor = array[0].Substring(4).ToLower();
-		deviceDescriptor.Product = array[1].Substring(4).ToLower();
-		return deviceDescriptor;
+		return GenericDeviceDescriptor.Create(hwid, DeviceClass.None);
 	}
 
 	public bool SetDeviceState(IDeviceDescriptor descriptor, DeviceState state)
@@ -348,7 +302,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 			if (deviceDescriptor != null && Match(deviceDescriptor, descriptor))
 			{
 				bool flag = ChangeState(devInfo, ref did, state);
-				LogHelper.Instance.Log("Found HWID {0}; change state to {1} returned {2}", text, state.ToString(), flag ? "OK" : "FAIL");
+				LogHelper.Instance.Log("[{0}] Found HWID {1}; change state to {2} returned {3}", GetType().Name, text, state.ToString(), flag ? "OK" : "FAIL");
 				if (!flag)
 				{
 					failures++;
@@ -375,7 +329,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 			{
 				if (Debug)
 				{
-					LogHelper.Instance.Log("[ChangeByHWID] Change state of {0} to {1}", text, state.ToString());
+					LogHelper.Instance.Log("[{0}] Change state of {1} to {2}", GetType().Name, text, state.ToString());
 				}
 				result = (ChangeState(devInfo, ref did, state) ? ProcessDeviceInfoResult.Success : ProcessDeviceInfoResult.Error);
 			}
@@ -395,18 +349,28 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 				return ProcessDeviceInfoResult.Continue;
 			}
 			IDeviceDescriptor deviceDescriptor = FromQueryString(text);
+			LogHelper.Instance.Log("[USBService] Find device status hwid = {0}", text);
+			rv = DeviceStatus.None;
 			if (deviceDescriptor != null && Match(deviceDescriptor, deviceInfo))
 			{
-				rv = DeviceStatus.Unknown;
+				rv |= DeviceStatus.Found;
 				if (CM_Get_DevNode_Status(out var status, out var probNum, did.devInst, 0) == 0)
 				{
-					if ((status & 0x400) != 0 && 22 == probNum)
+					LogHelper.Instance.Log("[USBService] CM_Get_DevNode {0} ( {1} ) status = {2} problem = {3}", deviceInfo.ToString(), deviceInfo.Friendlyname, status, probNum);
+					if ((status & 0x400) != 0)
 					{
-						rv = DeviceStatus.Disabled;
+						if (22 == probNum)
+						{
+							rv |= DeviceStatus.Disabled;
+						}
+						else if (10 == probNum)
+						{
+							rv |= DeviceStatus.NotStarted;
+						}
 					}
 					else if ((status & 8) != 0)
 					{
-						rv = DeviceStatus.Enabled;
+						rv |= DeviceStatus.Enabled;
 					}
 					return ProcessDeviceInfoResult.Success;
 				}
@@ -456,26 +420,6 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 		});
 	}
 
-	public IUsbDeviceSearchResult FindDeviceByVendor(IDeviceDescriptor desc)
-	{
-		int lastError = 0;
-		UsbDeviceSearchResult result = new UsbDeviceSearchResult();
-		EnumerateDevices(desc.SetupClass.Guid, SearchFlags(desc), delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
-		{
-			string text = QueryHardwareId(devInfo, ref did, out lastError);
-			if (Debug && text != null)
-			{
-				LogHelper.Instance.Log("[FindDeviceByVendor] Examining clazz {0} HWID {1}", desc.SetupClass.Class.ToString(), text);
-			}
-			if (text != null && text.Equals(desc.Vendor, StringComparison.CurrentCultureIgnoreCase))
-			{
-				result.Matches.Add(desc);
-			}
-			return ProcessDeviceInfoResult.Continue;
-		});
-		return result;
-	}
-
 	public IUsbDeviceSearchResult FindDevice(IDeviceDescriptor descriptor)
 	{
 		int lastError = 0;
@@ -489,10 +433,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 			string text = QueryHardwareId(devInfo, ref did, out lastError);
 			if (text != null)
 			{
-				if (Debug)
-				{
-					LogHelper.Instance.Log("  [FindDeviceWithVid] found hwid = {0}", text);
-				}
+				LogHelper.Instance.Log("  [FindDeviceWithVid] found hwid = {0}", text);
 				IDeviceDescriptor deviceDescriptor = FromQueryString(text);
 				if (deviceDescriptor != null && Match(deviceDescriptor, descriptor))
 				{
@@ -529,64 +470,133 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 		return result;
 	}
 
-	public void EnumDevices(DeviceClass clazz, TextWriter writer)
+	public void EnumDevices(Action<string, string> onDeviceFound)
 	{
 		int lastError = 0;
-		Dictionary<string, List<string>> deviceMap = new Dictionary<string, List<string>>();
-		try
+		StringBuilder clazzNameBuffer = MakeBuffer();
+		EnumerateDevices(Guid.Empty, 6u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
 		{
-			string deviceClass = clazz.ToString();
-			StringBuilder clazzNameBuffer = MakeBuffer();
-			EnumerateDevices(Guid.Empty, 6u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
+			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
 			{
-				if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
+				lastError = Marshal.GetLastWin32Error();
+				LogHelper.Instance.Log("[{0}] SetupDiGetDeviceRegistryProperty returned error {1}", GetType().Name, lastError);
+				return ProcessDeviceInfoResult.Error;
+			}
+			string text = QueryHardwareId(devInfo, ref did, out lastError);
+			if (!string.IsNullOrEmpty(text))
+			{
+				onDeviceFound(clazzNameBuffer.ToString(), text);
+			}
+			return ProcessDeviceInfoResult.Continue;
+		});
+	}
+
+	public List<IDeviceDescriptor> FindDevices(DeviceClass clazz)
+	{
+		int lastError = 0;
+		List<IDeviceDescriptor> result = new List<IDeviceDescriptor>();
+		if (clazz == DeviceClass.None)
+		{
+			return result;
+		}
+		StringBuilder clazzNameBuffer = MakeBuffer();
+		Guid deviceClass = Guid.Empty;
+		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
+		IDeviceSetupClass deviceSetupClass = service.Get(clazz);
+		if (deviceSetupClass != null)
+		{
+			deviceClass = deviceSetupClass.Guid;
+		}
+		EnumerateDevices(deviceClass, 2u, delegate(IntPtr devInfo, ref SP_DEVINFO_DATA did)
+		{
+			if (!SetupDiGetDeviceRegistryProperty(devInfo, ref did, 7u, 0u, clazzNameBuffer, 1000u, IntPtr.Zero))
+			{
+				lastError = Marshal.GetLastWin32Error();
+				return ProcessDeviceInfoResult.Error;
+			}
+			DeviceClass deviceClass2 = Enum<DeviceClass>.ParseIgnoringCase(clazzNameBuffer.ToString(), DeviceClass.None);
+			if (Debug)
+			{
+				LogHelper.Instance.Log("[{0}] Requested search = {1}, found clazz = {2}", GetType().Name, clazz.ToString(), clazzNameBuffer.ToString());
+			}
+			if (deviceClass2 == clazz)
+			{
+				string text = QueryHardwareId(devInfo, ref did, out lastError);
+				if (!string.IsNullOrEmpty(text))
 				{
-					lastError = Marshal.GetLastWin32Error();
-					return ProcessDeviceInfoResult.Error;
-				}
-				if (clazz == DeviceClass.None)
-				{
-					List<string> list2 = null;
-					list2 = (deviceMap.ContainsKey(clazzNameBuffer.ToString()) ? deviceMap[clazzNameBuffer.ToString()] : (deviceMap[clazzNameBuffer.ToString()] = new List<string>()));
-					string text = QueryHardwareId(devInfo, ref did, out lastError);
-					if (!string.IsNullOrEmpty(text))
+					if (Debug)
 					{
-						list2.Add(text);
+						LogHelper.Instance.Log("[{0}] Requested search = {1}, found clazz = {2} HWID = {3}", GetType().Name, clazz.ToString(), clazzNameBuffer.ToString(), text);
+					}
+					GenericDeviceDescriptor genericDeviceDescriptor = GenericDeviceDescriptor.Create(text, deviceClass2);
+					if (genericDeviceDescriptor != null)
+					{
+						result.Add(genericDeviceDescriptor);
 					}
 				}
-				else if (deviceClass == clazzNameBuffer.ToString())
-				{
-					string arg = QueryHardwareId(devInfo, ref did, out lastError);
-					writer.WriteLine("Class {0} hwid {1}", clazzNameBuffer.ToString(), arg);
-				}
-				return ProcessDeviceInfoResult.Continue;
-			});
-			if (clazz != DeviceClass.None)
-			{
-				return;
 			}
-			foreach (string key in deviceMap.Keys)
-			{
-				List<string> list = deviceMap[key];
-				writer.WriteLine("Devices for class {0}", key);
-				foreach (string item in list)
-				{
-					writer.WriteLine("  HWID: {0}", item);
-				}
-			}
-		}
-		finally
+			return ProcessDeviceInfoResult.Continue;
+		});
+		return result;
+	}
+
+	public ITouchscreenDescriptor FindTouchScreen(bool matchDriver)
+	{
+		foreach (ITouchscreenDescriptor touchScreenDescriptor in TouchScreenDescriptors)
 		{
-			foreach (string key2 in deviceMap.Keys)
+			LogHelper.Instance.Log("[UsbDeviceService] Searching for device {0}", touchScreenDescriptor.ToString());
+			if (touchScreenDescriptor.Locate())
 			{
-				deviceMap[key2].Clear();
+				LogHelper.Instance.Log("[UsbDeviceService] Found Touchscreen device {0}.", touchScreenDescriptor.ToString());
+				if (!matchDriver)
+				{
+					return touchScreenDescriptor;
+				}
+				if (touchScreenDescriptor.MatchDriver())
+				{
+					LogHelper.Instance.Log("[UsbDeviceService] Touch screen driver matched.");
+					return touchScreenDescriptor;
+				}
 			}
 		}
+		LogHelper.Instance.Log("[UsbDeviceService] Could not match TS driver.");
+		return null;
+	}
+
+	public ITouchscreenDescriptor FindTouchScreen()
+	{
+		return FindTouchScreen(matchDriver: false);
+	}
+
+	public IQueryUsbDeviceResult FindCCR()
+	{
+		return OnLocate(CreditCardReaders);
+	}
+
+	public IQueryUsbDeviceResult FindCamera()
+	{
+		return OnLocate(Cameras);
 	}
 
 	public UsbDeviceService(bool debug)
 	{
 		Debug = debug;
+		DriverDescriptor desc = new DriverDescriptor(new Version("7.13.14.0"), "3M");
+		TouchScreenDescriptors.Add(new MicrotouchDescriptor(this, DeviceClass.HIDClass, desc));
+		TouchScreenDescriptors.Add(new MicrotouchDescriptor(this, DeviceClass.Mouse, desc));
+		TouchScreenDescriptors.Add(new GenericTouchscreenDescriptor("04e7", "0020", "Elo", Driver_Elo, this, DeviceClass.Mouse));
+		TouchScreenDescriptors.Add(new GenericTouchscreenDescriptor("04e7", "0042", "Elo_2", Driver_Elo, this, DeviceClass.Mouse));
+		TouchScreenDescriptors.Add(new GenericTouchscreenDescriptor("0dfc", "0001", "General Touch", Driver_GeneralTouch_HID2, this, DeviceClass.HIDClass));
+		TouchScreenDescriptors.Add(new GenericTouchscreenDescriptor("0dfc", "0001", "General Touch", Driver_GeneralTouch_HID2, this, DeviceClass.HIDClass));
+		TouchScreenDescriptors.Add(new GenericTouchscreenDescriptor("0dfc", "0001", "General Touch", Driver_GeneralTouch_HID1, this, DeviceClass.Mouse));
+		TouchScreenDescriptors.Add(new GenericTouchscreenDescriptor("14c8", "0003", "Zytronic", Driver_TouchBase, this, DeviceClass.Mouse));
+		IDeviceSetupClassFactory service = ServiceLocator.Instance.GetService<IDeviceSetupClassFactory>();
+		CreditCardReaders.Add(new IdTechRev1(this, service));
+		CreditCardReaders.Add(new IdTechRev2(this, service));
+		Cameras.Add(new Gen5DeviceDescriptor(this));
+		Cameras.Add(new LegacyDeviceDescriptor("1871", "0d01", "4th Gen (Color)", Gen4DriverDescriptor, this));
+		Cameras.Add(new LegacyDeviceDescriptor("1871", "0f01", "4th Gen", Gen4DriverDescriptor, this));
+		Cameras.Add(new LegacyDeviceDescriptor("0c45", "627b", "3rd Gen", Gen3DriverDescriptor, this));
 	}
 
 	public UsbDeviceService()
@@ -698,7 +708,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 			}
 			if (!SetupDiCallClassInstaller(18u, hDevInfo, ref devInfoData))
 			{
-				LogHelper.Instance.Log("SetupDiCallClassInstaller returned false.");
+				LogHelper.Instance.Log("SetupDiCallClassInstaller returned false ( Win32 error = {0} )", Marshal.GetLastWin32Error());
 				return false;
 			}
 			return true;
@@ -707,6 +717,23 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 		{
 			return false;
 		}
+	}
+
+	private QueryUsbDeviceResult OnLocate(List<IDeviceDescriptor> descriptors)
+	{
+		foreach (IDeviceDescriptor descriptor in descriptors)
+		{
+			DeviceStatus deviceStatus = FindDeviceStatus(descriptor);
+			if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None)
+			{
+				QueryUsbDeviceResult queryUsbDeviceResult = new QueryUsbDeviceResult(descriptor);
+				queryUsbDeviceResult.Status = deviceStatus;
+				return queryUsbDeviceResult;
+			}
+		}
+		QueryUsbDeviceResult queryUsbDeviceResult2 = new QueryUsbDeviceResult(null);
+		queryUsbDeviceResult2.Status = DeviceStatus.None;
+		return queryUsbDeviceResult2;
 	}
 
 	private bool MatchDriverInner(IntPtr hDevInfo, ref SP_DEVINFO_DATA did, IDriverDescriptor driverInfo, string hwid)
@@ -776,7 +803,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 		}
 		catch (Exception)
 		{
-			LogHelper.Instance.Log("Unable to enumerate device tree.");
+			LogHelper.Instance.Log("[UsbDeviceService] Unable to enumerate device tree.");
 			return false;
 		}
 		finally
@@ -790,7 +817,7 @@ internal sealed class UsbDeviceService : IUsbDeviceService
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("Clearing the device info list caught an exception.", e);
+				LogHelper.Instance.Log("[UsbDeviceService] Clearing the device info list caught an exception.", e);
 			}
 		}
 	}

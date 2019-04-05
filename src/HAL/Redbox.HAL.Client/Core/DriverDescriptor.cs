@@ -3,11 +3,16 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal sealed class DriverDescriptor : IDriverDescriptor
+public sealed class DriverDescriptor : IDriverDescriptor
 {
 	public Version DriverVersion { get; private set; }
 
 	public string Provider { get; private set; }
+
+	public DriverDescriptor(string version, string provider)
+		: this(new Version(version), provider)
+	{
+	}
 
 	public DriverDescriptor(Version version, string provider)
 	{

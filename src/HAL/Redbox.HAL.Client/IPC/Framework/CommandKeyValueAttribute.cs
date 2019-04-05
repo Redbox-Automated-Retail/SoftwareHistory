@@ -4,7 +4,7 @@ using Redbox.HAL.Component.Model;
 namespace Redbox.HAL.IPC.Framework;
 
 [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
-internal class CommandKeyValueAttribute : Attribute
+public class CommandKeyValueAttribute : Attribute
 {
 	public string KeyName { get; set; }
 

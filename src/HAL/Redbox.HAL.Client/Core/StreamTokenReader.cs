@@ -1,9 +1,10 @@
 using System;
 using System.IO;
+using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal class StreamTokenReader : ITokenReader, IDisposable
+public class StreamTokenReader : ITokenReader, IDisposable
 {
 	private int m_index;
 

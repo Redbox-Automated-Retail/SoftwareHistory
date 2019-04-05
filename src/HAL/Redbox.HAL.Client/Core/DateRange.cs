@@ -3,7 +3,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal class DateRange : IRange<DateTime>
+public class DateRange : IRange<DateTime>
 {
 	private string m_formatted;
 

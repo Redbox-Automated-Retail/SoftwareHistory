@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDeviceSetupClassFactory
+public interface IDeviceSetupClassFactory
 {
 	IDeviceSetupClass Get(DeviceClass clazz);
 }

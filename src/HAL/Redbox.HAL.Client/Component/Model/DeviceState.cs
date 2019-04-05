@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum DeviceState
+public enum DeviceState
 {
 	None,
 	Enable,

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.IPC.Framework;
 
-internal enum CommandParserState
+public enum CommandParserState
 {
 	Start = 1,
 	Command,

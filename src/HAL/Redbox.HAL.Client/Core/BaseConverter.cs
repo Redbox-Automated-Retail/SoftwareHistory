@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Redbox.HAL.Core;
 
-internal class BaseConverter
+public class BaseConverter
 {
 	private readonly string _toNumberingScheme;
 

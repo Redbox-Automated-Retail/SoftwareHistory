@@ -1,6 +1,6 @@
 namespace Redbox.HAL.IPC.Framework;
 
-internal enum BinaryEncoding
+public enum BinaryEncoding
 {
 	None,
 	Hex,

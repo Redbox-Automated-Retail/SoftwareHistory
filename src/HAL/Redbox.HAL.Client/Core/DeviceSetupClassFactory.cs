@@ -4,7 +4,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal sealed class DeviceSetupClassFactory : IDeviceSetupClassFactory
+public sealed class DeviceSetupClassFactory : IDeviceSetupClassFactory
 {
 	private class NoSetupClass : IDeviceSetupClass
 	{
@@ -67,6 +67,15 @@ internal sealed class DeviceSetupClassFactory : IDeviceSetupClassFactory
 		public Guid Guid => Mouse;
 	}
 
+	private class BatterySetupClass : IDeviceSetupClass
+	{
+		private readonly Guid Batt = new Guid("72631e54-78a4-11d0-bcf7-00aa00b7b32a");
+
+		public DeviceClass Class => DeviceClass.Battery;
+
+		public Guid Guid => Batt;
+	}
+
 	private readonly Dictionary<DeviceClass, IDeviceSetupClass> ClassMap = new Dictionary<DeviceClass, IDeviceSetupClass>();
 
 	public IDeviceSetupClass Get(DeviceClass clazz)
@@ -86,6 +95,7 @@ internal sealed class DeviceSetupClassFactory : IDeviceSetupClassFactory
 		ClassMap[DeviceClass.Monitor] = new MonitorSetupClass();
 		ClassMap[DeviceClass.HIDClass] = new HidSetupClass();
 		ClassMap[DeviceClass.Mouse] = new MouseSetupClass();
+		ClassMap[DeviceClass.Battery] = new BatterySetupClass();
 		ClassMap[DeviceClass.None] = new NoSetupClass();
 	}
 }

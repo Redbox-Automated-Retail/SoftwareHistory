@@ -1,7 +1,8 @@
 using System;
 using System.Reflection;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Compression;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.IPC.Framework;
 
@@ -47,7 +48,7 @@ internal class FormMethodParameter
 		};
 		if (array != null && MetaData.CompressionType != CompressionType.None)
 		{
-			array = CompressionAlgorithm.GetAlgorithm(MetaData.CompressionType).Decompress(array);
+			array = CompressionAlgorithmFactory.GetAlgorithm(MetaData.CompressionType).Decompress(array);
 		}
 		return array;
 	}

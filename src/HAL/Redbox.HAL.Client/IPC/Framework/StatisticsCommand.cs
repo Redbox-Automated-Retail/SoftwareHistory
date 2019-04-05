@@ -1,11 +1,11 @@
 using System.Reflection;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Attributes;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
 [Command("statistics")]
-internal class StatisticsCommand
+public class StatisticsCommand
 {
 	[CommandForm(Name = "show")]
 	[Usage("STATISTICS show")]

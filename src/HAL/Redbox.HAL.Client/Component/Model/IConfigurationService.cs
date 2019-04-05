@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IConfigurationService
+public interface IConfigurationService
 {
 	void LoadAndImport(ErrorList errors);
 

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPersistentMapService
+public interface IPersistentMapService
 {
 	IPersistentMap GetMap();
 }

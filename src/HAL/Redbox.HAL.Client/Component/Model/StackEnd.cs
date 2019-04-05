@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum StackEnd
+public enum StackEnd
 {
 	Bottom,
 	Top

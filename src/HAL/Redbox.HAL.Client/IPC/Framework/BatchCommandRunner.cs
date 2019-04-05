@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -7,15 +6,11 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class BatchCommandRunner : ISession, IMessageSink
+public sealed class BatchCommandRunner : ISession, IMessageSink
 {
 	private readonly ErrorList m_errorList = new ErrorList();
 
-	private readonly IDictionary<string, string> m_context = new Dictionary<string, string>();
-
 	private readonly StreamReader m_reader;
-
-	public IDictionary<string, string> Context => m_context;
 
 	public bool LogDetailedMessages { get; set; }
 
@@ -34,7 +29,7 @@ internal class BatchCommandRunner : ISession, IMessageSink
 	public BatchCommandRunner(StreamReader reader)
 	{
 		m_reader = reader;
-		LogDetailedMessages = false;
+		LogDetailedMessages = LogHelper.Instance.IsLevelEnabled(LogEntryType.Debug);
 	}
 
 	public bool Send(string message)

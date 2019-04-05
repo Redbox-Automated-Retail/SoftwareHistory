@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum MoveMode
+public enum MoveMode
 {
 	None,
 	Put,

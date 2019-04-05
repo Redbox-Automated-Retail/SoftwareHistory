@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDataTable<T>
+public interface IDataTable<T>
 {
 	bool Exists { get; }
 
@@ -38,4 +38,6 @@ internal interface IDataTable<T>
 	void UpdateTable(TextWriter writer, ErrorList errors);
 
 	void ExectuteSelectQuery(OnSelectResult callback, string query);
+
+	bool Recreate(ErrorList errors);
 }

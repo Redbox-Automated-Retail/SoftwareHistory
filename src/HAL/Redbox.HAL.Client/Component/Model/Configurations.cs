@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum Configurations
+public enum Configurations
 {
 	None,
 	Controller,

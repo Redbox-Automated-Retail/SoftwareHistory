@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum AirExchangerStatus
+public enum AirExchangerStatus
 {
 	NotConfigured,
 	Ok,

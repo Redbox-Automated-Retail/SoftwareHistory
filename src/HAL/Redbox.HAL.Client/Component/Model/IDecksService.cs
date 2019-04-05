@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDecksService
+public interface IDecksService
 {
 	IDeck QlmDeck { get; }
 

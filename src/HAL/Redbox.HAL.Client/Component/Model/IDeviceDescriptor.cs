@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDeviceDescriptor
+public interface IDeviceDescriptor
 {
 	string Vendor { get; }
 

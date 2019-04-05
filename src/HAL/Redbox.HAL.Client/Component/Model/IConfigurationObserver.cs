@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IConfigurationObserver
+public interface IConfigurationObserver
 {
 	void NotifyConfigurationLoaded();
 

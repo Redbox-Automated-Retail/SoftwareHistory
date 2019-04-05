@@ -22,7 +22,7 @@ internal sealed class UsbDeviceSearchResult : IUsbDeviceSearchResult, IDisposabl
 
 	public ErrorList Errors { get; private set; }
 
-	public IList<IDeviceDescriptor> Matches { get; private set; }
+	public List<IDeviceDescriptor> Matches { get; private set; }
 
 	public void Dispose()
 	{

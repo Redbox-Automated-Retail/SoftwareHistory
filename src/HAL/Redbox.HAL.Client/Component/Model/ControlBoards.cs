@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum ControlBoards
+public enum ControlBoards
 {
 	None,
 	Picker,

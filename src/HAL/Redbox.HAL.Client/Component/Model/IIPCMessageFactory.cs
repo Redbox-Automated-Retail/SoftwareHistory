@@ -1,8 +1,16 @@
+using System;
+
 namespace Redbox.HAL.Component.Model;
 
-internal interface IIPCMessageFactory
+public interface IIPCMessageFactory
 {
-	IIPCMessage Create(IPipeChannel channel);
+	IIPCMessage Create(MessageType t, MessageSeverity s, string message);
 
-	bool Write(IIPCMessage msg, IPipeChannel channel);
+	IIPCMessage CreateAck(Guid guid);
+
+	IIPCMessage CreateNack(Guid guid);
+
+	IIPCMessage Read(IIPCChannel channel);
+
+	bool Write(IIPCMessage msg, IIPCChannel channel);
 }

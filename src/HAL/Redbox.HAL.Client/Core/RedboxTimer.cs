@@ -4,7 +4,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal sealed class RedboxTimer
+public sealed class RedboxTimer
 {
 	private readonly Timer Timer;
 

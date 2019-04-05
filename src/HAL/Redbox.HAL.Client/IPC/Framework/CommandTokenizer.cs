@@ -3,7 +3,7 @@ using Redbox.HAL.Core;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class CommandTokenizer : Tokenizer<CommandParserState>
+public class CommandTokenizer : Tokenizer<CommandParserState>
 {
 	private bool m_isEscaped;
 

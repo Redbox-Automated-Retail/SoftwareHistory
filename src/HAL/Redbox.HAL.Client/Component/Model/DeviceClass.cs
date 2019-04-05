@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum DeviceClass
+public enum DeviceClass
 {
 	None,
 	Ports,
@@ -8,5 +8,6 @@ internal enum DeviceClass
 	Image,
 	Monitor,
 	HIDClass,
-	Mouse
+	Mouse,
+	Battery
 }

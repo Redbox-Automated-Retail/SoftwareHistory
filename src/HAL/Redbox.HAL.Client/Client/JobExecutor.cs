@@ -12,9 +12,9 @@ public abstract class JobExecutor : IDisposable
 
 	protected internal readonly HardwareCommandResult ScheduleResult;
 
-	private HardwareEvent UserEvent;
-
 	private readonly HardwareJob m_job;
+
+	private HardwareEvent UserEvent;
 
 	private HardwareJobStatus m_endStatus = HardwareJobStatus.Errored;
 
@@ -42,6 +42,7 @@ public abstract class JobExecutor : IDisposable
 		{
 			m_disposed = true;
 			DisposeInner();
+			Helper.Dispose();
 			Results.Clear();
 			Results = null;
 			Errors.Clear();
@@ -51,6 +52,10 @@ public abstract class JobExecutor : IDisposable
 
 	public void AddSink(HardwareEvent callback)
 	{
+		if (callback == null)
+		{
+			throw new ArgumentNullException("callback");
+		}
 		m_job.EventRaised += OnHardwareEvent;
 		UserEvent = callback;
 	}
@@ -63,7 +68,7 @@ public abstract class JobExecutor : IDisposable
 			return;
 		}
 		ID = m_job.ID;
-		SetupJob(m_job);
+		SetupJob();
 		if (!Helper.WaitForJob(m_job, out m_endStatus))
 		{
 			Errors.Add(Error.NewError("E786", "Job wait failure.", "Failed to wait for job."));
@@ -94,7 +99,7 @@ public abstract class JobExecutor : IDisposable
 		m_job.Trash();
 	}
 
-	protected virtual void SetupJob(HardwareJob job)
+	protected virtual void SetupJob()
 	{
 	}
 

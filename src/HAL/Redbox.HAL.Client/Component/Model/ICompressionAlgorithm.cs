@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface ICompressionAlgorithm
+public interface ICompressionAlgorithm
 {
 	byte[] Compress(byte[] source);
 

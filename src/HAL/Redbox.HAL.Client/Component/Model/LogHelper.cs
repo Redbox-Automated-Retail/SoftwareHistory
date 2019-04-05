@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal class LogHelper
+public sealed class LogHelper
 {
 	private static LogHelper m_instance;
 
@@ -45,6 +45,47 @@ internal class LogHelper
 		{
 			string message2 = string.Format(message, args);
 			service.Log(message2, type);
+		}
+	}
+
+	public void WithContext(string fmt, params object[] stuff)
+	{
+		WithContext(LogEntryType.Info, fmt, stuff);
+	}
+
+	public void WithContext(LogEntryType type, string msg)
+	{
+		WithContext(toFormattedLog: true, type, msg);
+	}
+
+	public void WithContext(LogEntryType type, string fmt, params object[] stuff)
+	{
+		WithContext(type, string.Format(fmt, stuff));
+	}
+
+	public void WithContext(bool toFormattedLog, LogEntryType type, string fmt, params object[] stuff)
+	{
+		WithContext(toFormattedLog, type, string.Format(fmt, stuff));
+	}
+
+	public void WithContext(bool toFormattedLog, LogEntryType type, string msg)
+	{
+		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
+		if (service == null)
+		{
+			Log(type, msg);
+			return;
+		}
+		IExecutionContext activeContext = service.GetActiveContext();
+		if (activeContext == null)
+		{
+			Log(type, msg);
+			return;
+		}
+		Log(type, "[{0}, {1}]: {2}", activeContext.ProgramName, activeContext.ID, msg);
+		if (toFormattedLog)
+		{
+			activeContext.ContextLog.WriteFormatted(msg);
 		}
 	}
 

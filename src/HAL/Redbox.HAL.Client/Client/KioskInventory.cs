@@ -39,9 +39,9 @@ public sealed class KioskInventory : IDisposable
 
 	private readonly List<IInventoryLocation> DeckInfo = new List<IInventoryLocation>();
 
-	public IList<IInventoryLocation> DeckInventory => DeckInfo;
+	public List<IInventoryLocation> DeckInventory => DeckInfo;
 
-	public IList<IDumpbinItem> DumpbinItems => DumpbinInfo;
+	public List<IDumpbinItem> DumpbinItems => DumpbinInfo;
 
 	public void Dispose()
 	{
@@ -51,13 +51,6 @@ public sealed class KioskInventory : IDisposable
 	~KioskInventory()
 	{
 		Dispose(fromDispose: false);
-	}
-
-	public KioskInventory()
-	{
-		ClientHelper clientHelper = new ClientHelper();
-		Service = clientHelper.AutoConnect();
-		Load();
 	}
 
 	public KioskInventory(HardwareService service)

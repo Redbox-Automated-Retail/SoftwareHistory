@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IQuadrant
+public interface IQuadrant
 {
 	int Offset { get; }
 

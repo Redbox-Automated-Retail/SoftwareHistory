@@ -3,14 +3,10 @@ namespace Redbox.HAL.Component.Model;
 public enum ErrorCodes
 {
 	Success,
-	Unknown,
 	Timeout,
 	CommunicationError,
-	PortOpenFailure,
-	MoveTimeout,
 	MotorNotHomed,
 	HomeXTimeout,
-	HomeYTimeout,
 	DoorOpen,
 	SensorError,
 	RollerToPos1Timeout,
@@ -21,7 +17,6 @@ public enum ErrorCodes
 	RollerToPos6Timeout,
 	GripperExtendTimeout,
 	GripperRetractTimeout,
-	GripperFingerSensorError,
 	TrackOpenTimeout,
 	TrackCloseTimeout,
 	GripperOpenTimeout,
@@ -38,9 +33,6 @@ public enum ErrorCodes
 	PickerEmpty,
 	SlotInUse,
 	SensorReadError,
-	NoItemInserted,
-	MultipleDisksInPicker,
-	LocationExcluded,
 	MotorError,
 	DeckOutOfRange,
 	InvalidLocation,
@@ -57,5 +49,7 @@ public enum ErrorCodes
 	FraudPostFailure,
 	InvalidDeviceState,
 	LowerLimitError,
-	UpperLimitError
+	UpperLimitError,
+	ServiceChannelError,
+	StoreError
 }

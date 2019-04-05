@@ -1,7 +1,12 @@
+using System;
+using System.IO;
+
 namespace Redbox.HAL.Component.Model;
 
-internal interface IRuntimeService
+public interface IRuntimeService
 {
+	string KioskId { get; }
+
 	string DataPath { get; }
 
 	string AssemblyDirectory { get; }
@@ -9,6 +14,8 @@ internal interface IRuntimeService
 	string InstallRoot { get; }
 
 	int PageSize { get; }
+
+	string ScriptsPath { get; }
 
 	string ExpandRuntimeMacros(string value);
 
@@ -18,5 +25,31 @@ internal interface IRuntimeService
 
 	string InstallPath(string subfolder);
 
+	string CreateBackup(string path);
+
+	string CreateBackup(string path, BackupAction action);
+
+	string GenerateUniqueFile(string suffix);
+
+	byte[] ReadToBuffer(string fileName);
+
+	bool ForceSafeCopy(string source, string dest);
+
+	bool ForceSafeCopy(TextWriter writer, string source, string dest);
+
+	bool SafeCopy(string source, string dest);
+
+	bool SafeCopy(TextWriter writer, string source, string dest);
+
+	bool SafeMove(TextWriter writer, string source, string dest);
+
+	bool SafeDelete(string path);
+
 	Platform GetPlatform();
+
+	void SpinWait(int milliseconds);
+
+	void SpinWait(TimeSpan timespan);
+
+	void Wait(int ms);
 }

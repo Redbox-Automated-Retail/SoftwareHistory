@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IDumpbinService
+public interface IDumpbinService
 {
 	ILocation PutLocation { get; }
 

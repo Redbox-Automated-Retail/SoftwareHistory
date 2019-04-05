@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal static class InventoryConstants
+public static class InventoryConstants
 {
 	public const string Empty = "EMPTY";
 

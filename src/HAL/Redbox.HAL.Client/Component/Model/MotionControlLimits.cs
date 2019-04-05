@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum MotionControlLimits
+public enum MotionControlLimits
 {
 	None,
 	Upper,

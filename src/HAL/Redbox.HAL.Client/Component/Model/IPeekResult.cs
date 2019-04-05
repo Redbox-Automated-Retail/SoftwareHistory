@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPeekResult
+public interface IPeekResult
 {
 	ILocation PeekLocation { get; }
 

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface ITransferResult
+public interface ITransferResult
 {
 	bool ReturnedToSource { get; }
 

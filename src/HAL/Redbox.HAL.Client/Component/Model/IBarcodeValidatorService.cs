@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IBarcodeValidatorService
+public interface IBarcodeValidatorService
 {
 	bool IsValid(string barcode);
 }

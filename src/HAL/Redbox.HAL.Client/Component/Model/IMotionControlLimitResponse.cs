@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IMotionControlLimitResponse
+public interface IMotionControlLimitResponse
 {
 	bool ReadOk { get; }
 

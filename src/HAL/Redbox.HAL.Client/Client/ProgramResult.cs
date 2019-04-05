@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Redbox.HAL.Client;
 
@@ -22,6 +24,8 @@ public sealed class ProgramResult
 	public DateTime? ReturnTime { get; internal set; }
 
 	public ResultItem PreviousItem { get; internal set; }
+
+	public IDictionary<string, object> MessageData { get; internal set; }
 
 	public ProgramResult(Guid id, DateTime timeStamp, int deck, int slot, string code, string itemId, string message)
 	{
@@ -62,6 +66,10 @@ public sealed class ProgramResult
 				programResult2.ItemID = new ResultItem(text);
 			}
 			programResult2.Message = array[6];
+			if (!string.IsNullOrEmpty(programResult2.Message) && programResult2.Message.StartsWith("{"))
+			{
+				programResult2.MessageData = JsonConvert.DeserializeObject<IDictionary<string, object>>(programResult2.Message);
+			}
 			if (9 == array.Length)
 			{
 				string text2 = array[7].Trim();

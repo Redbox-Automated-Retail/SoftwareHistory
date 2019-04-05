@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum RollerPosition
+public enum RollerPosition
 {
 	Position1 = 1,
 	Position2,

@@ -7,7 +7,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Core;
 
-internal abstract class TokenizerBase<T>
+public abstract class TokenizerBase<T>
 {
 	internal delegate StateResult StateHandler();
 

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal sealed class RedboxHardwareErrorThreshold
+public sealed class RedboxHardwareErrorThreshold
 {
 	private readonly int Threshold;
 

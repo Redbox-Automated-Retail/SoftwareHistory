@@ -2,7 +2,7 @@ using System;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface ITableTypeFactory
+public interface ITableTypeFactory
 {
 	ILocation NewLocation(int deck, int slot);
 

@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum Platform
+public enum Platform
 {
 	None,
 	Unknown,

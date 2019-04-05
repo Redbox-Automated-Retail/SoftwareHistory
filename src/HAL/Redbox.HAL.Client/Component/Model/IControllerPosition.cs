@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IControllerPosition
+public interface IControllerPosition
 {
 	int? XCoordinate { get; }
 

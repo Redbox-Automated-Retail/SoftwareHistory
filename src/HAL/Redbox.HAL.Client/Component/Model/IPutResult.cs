@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IPutResult
+public interface IPutResult
 {
 	bool Success { get; }
 

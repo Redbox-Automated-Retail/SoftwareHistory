@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal interface IMotionControlLimit
+public interface IMotionControlLimit
 {
 	MotionControlLimits Limit { get; }
 

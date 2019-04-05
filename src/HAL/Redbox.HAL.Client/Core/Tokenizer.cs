@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Core;
 
-internal class Tokenizer<T> : TokenizerBase<T>
+public class Tokenizer<T> : TokenizerBase<T>
 {
 	public TokenList Tokens { get; protected set; }
 

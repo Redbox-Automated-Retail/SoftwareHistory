@@ -5,7 +5,7 @@ using Redbox.HAL.Component.Model;
 namespace Redbox.HAL.Core;
 
 [Serializable]
-internal class TokenList : List<Token>, ICloneable<TokenList>
+public class TokenList : List<Token>, ICloneable<TokenList>
 {
 	public TokenList()
 	{

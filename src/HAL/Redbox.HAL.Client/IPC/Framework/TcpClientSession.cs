@@ -7,7 +7,7 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal class TcpClientSession : ClientSession
+public sealed class TcpClientSession : ClientSession
 {
 	private Stream m_stream;
 
@@ -40,8 +40,6 @@ internal class TcpClientSession : ClientSession
 		}
 	}
 
-	protected internal TcpClientSessionPool OwningPool { get; set; }
-
 	private TcpClient TransportClient
 	{
 		get
@@ -58,32 +56,7 @@ internal class TcpClientSession : ClientSession
 		}
 	}
 
-	public override bool Connect()
-	{
-		try
-		{
-			ConnectThrowOnError();
-			return true;
-		}
-		catch (IOException)
-		{
-			return false;
-		}
-	}
-
-	public override void Dispose()
-	{
-		if (OwningPool != null)
-		{
-			OwningPool.ReturnSession(this);
-		}
-		else
-		{
-			base.Dispose();
-		}
-	}
-
-	public override void ConnectThrowOnError()
+	protected override void OnConnectThrowOnError()
 	{
 		TransportClient = new TcpClient(base.Protocol.Host, m_clientPort);
 		ConsumeMessages();

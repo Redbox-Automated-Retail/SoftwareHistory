@@ -1,8 +1,9 @@
-using System.IO;
+using System;
+using System.Collections.Generic;
 
 namespace Redbox.HAL.Component.Model;
 
-internal interface IUsbDeviceService
+public interface IUsbDeviceService
 {
 	IDeviceDescriptor FindActiveCamera(bool matchDriver);
 
@@ -18,11 +19,19 @@ internal interface IUsbDeviceService
 
 	bool MatchDriver(IDeviceDescriptor descriptor, IDriverDescriptor driverInfo);
 
-	IUsbDeviceSearchResult FindDeviceByVendor(IDeviceDescriptor desc);
-
 	IUsbDeviceSearchResult FindDevice(IDeviceDescriptor descriptor);
 
 	IUsbDeviceSearchResult FindVendorDevices(string _vendor);
 
-	void EnumDevices(DeviceClass clazz, TextWriter writer);
+	void EnumDevices(Action<string, string> a);
+
+	List<IDeviceDescriptor> FindDevices(DeviceClass clazz);
+
+	ITouchscreenDescriptor FindTouchScreen(bool matchDriver);
+
+	ITouchscreenDescriptor FindTouchScreen();
+
+	IQueryUsbDeviceResult FindCCR();
+
+	IQueryUsbDeviceResult FindCamera();
 }

@@ -9,7 +9,7 @@ using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.IPC.Framework;
 
-internal abstract class ServerSession : ISession, IMessageSink
+public abstract class ServerSession : ISession, IMessageSink
 {
 	private readonly IPCServiceHost ServiceHost;
 
@@ -54,7 +54,7 @@ internal abstract class ServerSession : ISession, IMessageSink
 
 	public void Start()
 	{
-		Write($"Welcome! {ServiceHost.Name}, Version {ServiceHost.Version}, {ServiceHost.Copyright}");
+		Write($"Welcome! {ServiceHost.HostInfo.Product}, Version {ServiceHost.HostInfo.Version}, {ServiceHost.HostInfo.Copyright}");
 		Read();
 	}
 
@@ -223,7 +223,7 @@ internal abstract class ServerSession : ISession, IMessageSink
 		}
 		try
 		{
-			ServiceHost.UnregisterSession(this);
+			ServiceHost.Unregister(this);
 			return result;
 		}
 		catch (Exception e2)

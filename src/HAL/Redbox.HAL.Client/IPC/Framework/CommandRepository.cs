@@ -4,15 +4,15 @@ using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Configuration;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Attributes;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.IPC.Framework;
 
-[Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
 [Command("command-repository")]
-internal class CommandRepository
+[Description("The COMMAND-REPOSITORY command scans the execution directory of the cache service for .NET assembly files (.dll and .exe) that contain types marked with the CommandAttribute class.")]
+public class CommandRepository
 {
 	private static readonly IDictionary<string, Type> m_commands = new Dictionary<string, Type>();
 
@@ -134,6 +134,16 @@ internal class CommandRepository
 			m_instanceCache[value] = value2;
 		}
 		return value2;
+	}
+
+	internal static void Register(IEnumerable<Type> types)
+	{
+		FindCommands(types);
+		LogHelper.Instance.Log("Installed commands:");
+		foreach (string allCommand in AllCommands)
+		{
+			LogHelper.Instance.Log(" Command '{0}'.", allCommand);
+		}
 	}
 
 	private static List<string> FindCommands(IEnumerable<Type> types)

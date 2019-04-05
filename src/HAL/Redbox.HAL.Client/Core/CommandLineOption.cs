@@ -1,8 +1,9 @@
 using System;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Core;
 
-internal static class CommandLineOption
+public static class CommandLineOption
 {
 	public const string ColonDelimiter = ":";
 
@@ -34,7 +35,7 @@ internal static class CommandLineOption
 		{
 			return defVal;
 		}
-		return (T)ConversionHelper.ChangeType(optionValue, typeof(T));
+		return ConversionHelper.ChangeType<T>(optionValue);
 	}
 
 	public static T GetOptionVal<T>(string option, string delimiter, T defVal)
@@ -44,6 +45,6 @@ internal static class CommandLineOption
 		{
 			return defVal;
 		}
-		return (T)ConversionHelper.ChangeType(optionValue, typeof(T));
+		return ConversionHelper.ChangeType<T>(optionValue);
 	}
 }

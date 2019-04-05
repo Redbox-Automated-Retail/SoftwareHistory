@@ -1,6 +1,6 @@
 namespace Redbox.HAL.Component.Model;
 
-internal enum TimeoutCounters
+public enum TimeoutCounters
 {
 	FingerClose,
 	FingerOpen,
