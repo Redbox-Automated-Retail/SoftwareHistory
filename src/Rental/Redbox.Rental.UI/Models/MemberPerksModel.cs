@@ -1,49 +1,43 @@
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows;
 using Redbox.Rental.UI.ControllersLogic;
 
 namespace Redbox.Rental.UI.Models;
 
-public class MemberPerksModel : BaseModel<MemberPerksModel>
+public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 {
-	public static readonly DependencyProperty SnapshotButtonVisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotButtonVisibility", TYPES.VISIBILITY, Visibility.Visible);
-
-	public static readonly DependencyProperty SnapshotTitleProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotTitle", TYPES.STRING);
-
 	public static readonly DependencyProperty SnapshotPointsProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotPoints", TYPES.STRING);
+
+	public static readonly DependencyProperty SnapshotPointsLabelProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotPointsLabel", TYPES.STRING);
 
 	public static readonly DependencyProperty SnapshotExpireProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotExpire", TYPES.STRING);
 
-	public static readonly DependencyProperty SnapshotRentalsProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotRentals", TYPES.OBJECT);
+	public static readonly DependencyProperty EarnedRewardsMessageProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("EarnedRewardsMessage", TYPES.STRING);
 
-	public static readonly DependencyProperty SnapshotNextLevelProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotNextLevel", TYPES.STRING);
+	public static readonly DependencyProperty PerksLevelMessageProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksLevelMessage", TYPES.STRING);
 
 	public static readonly DependencyProperty PerksImageVisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksImageVisibility", TYPES.VISIBILITY, Visibility.Visible);
 
+	public static readonly DependencyProperty PerksTitleVisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksTitleVisibility", TYPES.VISIBILITY, Visibility.Visible);
+
 	public static readonly DependencyProperty PerksButtonVisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksButtonVisibility", TYPES.VISIBILITY, Visibility.Visible);
 
-	public static readonly DependencyProperty PerksTitleProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksTitle", TYPES.STRING);
+	public static readonly DependencyProperty PerksLevelProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksLevel", TYPES.STRING);
 
 	public static readonly DependencyProperty PerksImagePathProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksImagePath", TYPES.STRING);
 
 	public static readonly DependencyProperty PerksRentalsProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksRentals", TYPES.STRING);
 
-	public static readonly DependencyProperty PerksBulletsProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksBullets", TYPES.STRARRAY);
-
 	public static readonly DependencyProperty PromoButtonVisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromoButtonVisibility", TYPES.VISIBILITY, Visibility.Visible);
 
 	public static readonly DependencyProperty PromoTitleProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromoTitle", TYPES.STRING);
-
-	public static readonly DependencyProperty PromotionsProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("Promotions", TYPES.OBJECT);
-
-	public static readonly DependencyProperty SnapshotButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotButtonText", TYPES.STRING);
 
 	public static readonly DependencyProperty PerksButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksButtonText", TYPES.STRING);
 
 	public static readonly DependencyProperty PromosButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromosButtonText", TYPES.STRING);
 
 	public static readonly DependencyProperty PerksMarketingProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksMarketing", TYPES.STRING);
-
-	public static readonly DependencyProperty SnapshotSelectedProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("SnapshotSelected", TYPES.BOOL, false);
 
 	public static readonly DependencyProperty PerksSelectedProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksSelected", TYPES.BOOL, true);
 
@@ -52,6 +46,18 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 	public static readonly DependencyProperty MemberTierProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("MemberTier", typeof(TierType), TierType.Member);
 
 	public static readonly DependencyProperty CancelButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("CancelButtonText", TYPES.STRING);
+
+	public static readonly DependencyProperty InfoButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("InfoButtonText", TYPES.STRING);
+
+	public static readonly DependencyProperty PromoListMessageProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromoListMessage", TYPES.STRING);
+
+	public static readonly DependencyProperty ShowPromoListMessageProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("ShowPromoListMessage", TYPES.BOOL, false);
+
+	public static readonly DependencyProperty CurrentPagePromosProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("CurrentPagePromos", typeof(ObservableCollection<IPerksOfferListItem>), new ObservableCollection<IPerksOfferListItem>());
+
+	public static readonly DependencyProperty CurrentPageNumberProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("CurrentPageNumber", TYPES.INT, 1);
+
+	public static readonly DependencyProperty IsAdaModeProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("IsAdaMode", TYPES.BOOL, false);
 
 	public MemberPerksLogic Logic { get; set; }
 
@@ -65,32 +71,29 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 
 	public DynamicRoutedCommand CancelButtonCommand { get; set; }
 
-	public Visibility SnapshotButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SnapshotButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(SnapshotButtonVisibilityProperty, value);
-			});
-		}
-	}
+	public DynamicRoutedCommand InfoButtonCommand { get; set; }
 
-	public string SnapshotTitle
+	public DynamicRoutedCommand NextPagePressedCommand { get; set; }
+
+	public DynamicRoutedCommand PreviousPagePressedCommand { get; set; }
+
+	public DynamicRoutedCommand PageNumberPressedCommand { get; set; }
+
+	public DynamicRoutedCommand AddOrRemovePromoCommand { get; set; }
+
+	public DynamicRoutedCommand DetailsCommand { get; set; }
+
+	public bool IsAdaMode
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(SnapshotTitleProperty));
+			return base.Dispatcher.Invoke(() => (bool)GetValue(IsAdaModeProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(SnapshotTitleProperty, value);
+				SetValue(IsAdaModeProperty, value);
 			});
 		}
 	}
@@ -110,6 +113,21 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 		}
 	}
 
+	public string SnapshotPointsLabel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(SnapshotPointsLabelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SnapshotPointsLabelProperty, value);
+			});
+		}
+	}
+
 	public string SnapshotExpire
 	{
 		get
@@ -125,32 +143,32 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 		}
 	}
 
-	public object SnapshotRentals
+	public string EarnedRewardsMessage
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => GetValue(SnapshotRentalsProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(EarnedRewardsMessageProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(SnapshotRentalsProperty, value);
+				SetValue(EarnedRewardsMessageProperty, value);
 			});
 		}
 	}
 
-	public string SnapshotNextLevel
+	public string PerksLevelMessage
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(SnapshotNextLevelProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(PerksLevelMessageProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(SnapshotNextLevelProperty, value);
+				SetValue(PerksLevelMessageProperty, value);
 			});
 		}
 	}
@@ -170,6 +188,21 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 		}
 	}
 
+	public Visibility PerksTitleVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PerksTitleVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PerksTitleVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility PerksButtonVisibility
 	{
 		get
@@ -185,17 +218,17 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 		}
 	}
 
-	public string PerksTitle
+	public string PerksLevel
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(PerksTitleProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(PerksLevelProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(PerksTitleProperty, value);
+				SetValue(PerksLevelProperty, value);
 			});
 		}
 	}
@@ -230,21 +263,6 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 		}
 	}
 
-	public string[] PerksBullets
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string[])GetValue(PerksBulletsProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PerksBulletsProperty, value);
-			});
-		}
-	}
-
 	public Visibility PromoButtonVisibility
 	{
 		get
@@ -271,36 +289,6 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(PromoTitleProperty, value);
-			});
-		}
-	}
-
-	public object Promotions
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => GetValue(PromotionsProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PromotionsProperty, value);
-			});
-		}
-	}
-
-	public string SnapshotButtonText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(SnapshotButtonTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(SnapshotButtonTextProperty, value);
 			});
 		}
 	}
@@ -346,21 +334,6 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(PerksMarketingProperty, value);
-			});
-		}
-	}
-
-	public bool SnapshotSelected
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (bool)GetValue(SnapshotSelectedProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(SnapshotSelectedProperty, value);
 			});
 		}
 	}
@@ -424,4 +397,93 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>
 			});
 		}
 	}
+
+	public string InfoButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(InfoButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(InfoButtonTextProperty, value);
+			});
+		}
+	}
+
+	public string PromoListMessage
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PromoListMessageProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PromoListMessageProperty, value);
+			});
+		}
+	}
+
+	public bool ShowPromoListMessage
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(ShowPromoListMessageProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ShowPromoListMessageProperty, value);
+			});
+		}
+	}
+
+	public ObservableCollection<IPerksOfferListItem> CurrentPagePromos
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (ObservableCollection<IPerksOfferListItem>)GetValue(CurrentPagePromosProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CurrentPagePromosProperty, value);
+			});
+		}
+	}
+
+	public int CurrentPageNumber
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(CurrentPageNumberProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CurrentPageNumberProperty, value);
+			});
+		}
+	}
+
+	public List<IPerksOfferListItem> StoredPromoCodes { get; set; }
+
+	public bool IsPromoCodeListVisible { get; set; }
+
+	public bool IsEmptyPromoListMessageVisible { get; set; }
+
+	public string EmptyPromoListMessage { get; set; }
+
+	public int NumberOfPages { get; set; }
+
+	public int PromosPerPage { get; set; }
+
+	public PromoListLogic PromoLogic => Logic.PromoLogic;
 }

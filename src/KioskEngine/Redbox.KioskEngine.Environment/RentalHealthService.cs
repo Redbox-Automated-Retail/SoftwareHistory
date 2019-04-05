@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
@@ -26,23 +27,26 @@ public class RentalHealthService : IRentalHealthService
 		timerService.CreateTimer(timerName, 1200000, null, delegate
 		{
 			timerService.RemoveTimer(timerName);
-			try
+			Task.Run(delegate
 			{
-				IList<IKioskFunctionCheckData> hardwareKFC = GetHardwareKFC();
-				List<RentalKioskFunctionCheckData> source = ReadKFCJson();
-				DateTime lastUpdate = (source.Any() ? source.Max((RentalKioskFunctionCheckData x) => x.Timestamp) : DateTime.MinValue);
-				IEnumerable<IKioskFunctionCheckData> enumerable = hardwareKFC?.Where((IKioskFunctionCheckData x) => x.Timestamp > lastUpdate);
-				LogHelper.Instance.Log($"Found {enumerable?.Count() ?? 0} new Kiosk Function Check Entries.");
-				enumerable?.ForEach(delegate(IKioskFunctionCheckData x)
+				try
 				{
-					SendKioskFunctionCheckData(storeNumber, x);
-				});
-				UpdateKFCJson(hardwareKFC);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.LogException("An error has occurred in RentalHealthService.KioskFunctionCheck", e);
-			}
+					IList<IKioskFunctionCheckData> hardwareKFC = GetHardwareKFC();
+					List<RentalKioskFunctionCheckData> source = ReadKFCJson();
+					DateTime lastUpdate = (source.Any() ? source.Max((RentalKioskFunctionCheckData x) => x.Timestamp) : DateTime.MinValue);
+					IEnumerable<IKioskFunctionCheckData> enumerable = hardwareKFC?.Where((IKioskFunctionCheckData x) => x.Timestamp > lastUpdate);
+					LogHelper.Instance.Log($"Found {enumerable?.Count() ?? 0} new Kiosk Function Check Entries.");
+					enumerable?.ForEach(delegate(IKioskFunctionCheckData x)
+					{
+						SendKioskFunctionCheckData(storeNumber, x);
+					});
+					UpdateKFCJson(hardwareKFC);
+				}
+				catch (Exception e)
+				{
+					LogHelper.Instance.LogException("An error has occurred in RentalHealthService.KioskFunctionCheck", e);
+				}
+			});
 		}).Start();
 	}
 
@@ -72,6 +76,7 @@ public class RentalHealthService : IRentalHealthService
 		{
 			LogHelper.Instance.Log("No data retrieved from HAL.");
 		}
+		LogHelper.Instance.Log("GetHardwareKFC Complete.");
 		return data;
 	}
 

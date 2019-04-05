@@ -9,13 +9,17 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Controls.Animations;
 
 namespace Redbox.Rental.UI.Views;
 
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "SwipeView")]
 public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, IComponentConnector
 {
+	public Func<ISpeechControl> OnGetSpeechControl;
+
 	private int m_timeout;
 
 	private DispatcherTimer m_dispatcherTimer;
@@ -166,6 +170,11 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		RegisterRoutedCommand("GoBack", SwipeViewCommands.GoBack);
 	}
 
+	public override ISpeechControl GetSpeechControl()
+	{
+		return OnGetSpeechControl?.Invoke();
+	}
+
 	public void StopTimer()
 	{
 		StopTimer(executeTimeoutEvent: false);
@@ -219,10 +228,6 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			{
 				SwipeViewType.ReservationPickup,
 				typeof(SwipeRegularCheckOutUserControl)
-			},
-			{
-				SwipeViewType.Credits,
-				typeof(SwipeCreditsUserControl)
 			}
 		};
 	}

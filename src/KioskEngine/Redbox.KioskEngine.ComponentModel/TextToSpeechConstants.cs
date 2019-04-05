@@ -21,4 +21,12 @@ public class TextToSpeechConstants
 	public const string TTSNextSpeechPart = "TTSNextSpeechPart";
 
 	public const string TTSNextAudioSnippet = "TTSNextAudioSnippet";
+
+	public const string TTSVolumeUp = "TTSVolumeUp";
+
+	public const string TTSVolumeDown = "TTSVolumeDown";
+
+	public const string TTSFaster = "TTSFaster";
+
+	public const string TTSSlower = "TTSSlower";
 }

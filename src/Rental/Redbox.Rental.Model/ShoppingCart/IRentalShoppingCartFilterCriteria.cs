@@ -19,6 +19,10 @@ public interface IRentalShoppingCartFilterCriteria
 
 	List<TitleType> ProductTypes { get; set; }
 
+	int? ProductTypeId { get; set; }
+
+	List<int> FormatIds { get; set; }
+
 	bool IncludeMultiNightPricedItems { get; set; }
 
 	bool IncludeLoyaltyRedeemedItems { get; set; }

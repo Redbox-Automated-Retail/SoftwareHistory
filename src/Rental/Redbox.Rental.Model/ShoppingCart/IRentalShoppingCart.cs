@@ -37,9 +37,7 @@ public interface IRentalShoppingCart
 
 	bool PickupRecommendationsShown { get; set; }
 
-	CreditElection UseCredits { get; set; }
-
-	int AppliedCredits { get; set; }
+	bool PickupRecommendationsSelected { get; }
 
 	OptInConfirmationStatus MarketingOptInConfirmationStatus { get; set; }
 
@@ -79,6 +77,8 @@ public interface IRentalShoppingCart
 
 	IPromoCodeValidationInfo ValidateAndUpdatePromoCode();
 
+	void ReValidatePromoCodeAfterVend();
+
 	void SetShoppingCartGroups();
 
 	void ClearLoyaltyPointsToBeEarned();
@@ -87,7 +87,7 @@ public interface IRentalShoppingCart
 
 	List<IRentalShoppingCartItem> GetItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria);
 
-	List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, bool includeMultiNightPricedItems, bool includeLoyaltyRedeemedItems);
+	List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeLoyaltyRedeemedItems);
 
 	void UpdateServiceFee();
 

@@ -1,27 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <local:ViewUserControl x:Class="Redbox.Rental.UI.Views.JoinPerksPromoViewControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
   <Grid Name="MainControl" Background="#FFFFFFFF">
-    <Image Name="PinkDotsBackgroundImage" Height="768" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/backgroundTexture.png" HorizontalAlignment="Left" VerticalAlignment="Top" />
     <Redbox:GridExt RowHeights="*,*">
       <Grid Row="0" Background="{StaticResource RubineRedRadialGradientBrush}" />
-      <Redbox:GridExt Row="1" RowHeights="*,80,80,10">
-        <Grid Row="0" Margin="0,120,0,20">
-          <TextBlock Name="CommentTextElem" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource RbPurpleBrush}" Style="{StaticResource font_montserrat_bold_30}" Text="{Binding CommentText, FallbackValue=Sign up using *************.gmail.com}" />
+      <Redbox:GridExt Row="1" RowHeights="*,auto,70,80,10">
+        <Grid Row="0" Margin="0,100,0,0">
+          <TextBlock Name="CommentTextElem" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="{StaticResource RbPurpleBrush}" Style="{StaticResource font_montserrat_bold_30}" Text="{Binding CommentText, FallbackValue=Sign up using *************.gmail.com}" />
         </Grid>
-        <Grid Row="1" HorizontalAlignment="Center">
+        <Grid Row="1" Margin="225,20,162,20">
+          <CheckBox Grid.Row="1" Style="{StaticResource WarmPurpleCheckBoxStyle}" VerticalAlignment="Center" HorizontalAlignment="Left" Height="Auto" Margin="0,0,0,2" IsTabStop="False" IsChecked="{Binding Path=CheckboxChecked, FallbackValue=True}" Visibility="{Binding TextClubOptionVisibility}">
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10,0,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_medium_18}" TextWrapping="Wrap" Text="{Binding Path=CheckboxText, FallbackValue=I agree to the Redbox Perks terms and conditions and to receive Redbox emails and special offers.}" />
+          </CheckBox>
+        </Grid>
+        <Grid Row="2" HorizontalAlignment="Center">
           <StackPanel Orientation="Horizontal">
-            <Redbox:RoundedButton Name="CancelButtonElem" Width="auto" Margin="20,0" Style="{StaticResource style_white_rubine_border_button}" IsEnabled="True" Click="CancelButtonElem_Click">
+            <Redbox:RoundedButton Name="CancelButtonElem" Width="auto" Margin="20,0" Style="{StaticResource style_white_rubine_border_button}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
               <TextBlock Name="CancelButtonTextElem" Margin="40,0" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="100" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding CancelButtonText, FallbackValue=No Thanks}" />
             </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="ContinueButtonElem" Width="auto" Margin="20,0" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Click="ContinueButtonElem_Click">
+            <Redbox:RoundedButton Name="ContinueButtonElem" Width="auto" Margin="20,0" Style="{StaticResource style_rb_purple_white_border_button}" Command="{Binding ContinueButtonCommand}">
               <TextBlock Name="ContinueButtonTextElem" Margin="40,0" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="100" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding ContinueButtonText, FallbackValue=Create Account}" />
             </Redbox:RoundedButton>
           </StackPanel>
         </Grid>
-        <Redbox:GridExt Row="2" ColumnWidths="*,auto,*" Margin="20">
-          <TextBlock Name="FooterTextElem" Grid.Column="1" Foreground="{StaticResource RbPurpleBrush}" TextAlignment="Center" Style="{StaticResource font_montserrat_regular_14}" Text="{Binding FooterText, FallbackValue='Your free 1-night DVD rental will show up as points in your account&#xA;within 48 hours. By tapping CREATE ACCOUNT, you agree to the terms.'}" />
-          <Redbox:RoundedButton Name="TermsButtonElem" Grid.Column="2" Margin="20,0" Width="auto" Height="40" CornerRadius="20" HorizontalAlignment="Right" Style="{StaticResource style_rubine_white_border_button}" IsEnabled="True" Click="TermsButtonElem_Click">
-            <TextBlock Name="TermsButtonTextElem" Margin="20,0" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="80" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_16}" Text="{Binding OtherButtonText, FallbackValue=Terms}" />
+        <Redbox:GridExt Row="3" ColumnWidths="*,auto,auto" Margin="20">
+          <TextBlock Name="FooterTextElem" Grid.Column="1" Foreground="{StaticResource RbPurpleBrush}" TextAlignment="Left" Style="{StaticResource font_montserrat_medium_14}" Text="{Binding FooterText, FallbackValue='Your free 1-night DVD rental will show up as points in your account&#xA;within 48 hours. By tapping CREATE ACCOUNT, you agree to the terms.'}" />
+          <Redbox:RoundedButton Name="OtherButtonElem" Grid.Column="2" Margin="20,0" Width="auto" Height="40" CornerRadius="20" HorizontalAlignment="Right" Style="{StaticResource style_rubine_white_border_button}" IsEnabled="True" Command="{Binding OtherButtonCommand}">
+            <TextBlock Name="OtherButtonTextElem" Margin="20,0" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="80" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_16}" Text="{Binding OtherButtonText, FallbackValue=Terms}" />
           </Redbox:RoundedButton>
         </Redbox:GridExt>
       </Redbox:GridExt>
@@ -32,7 +36,7 @@
         <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Height="240" Margin="0,40,0,0">
           <StackPanel Orientation="Vertical">
             <Image Width="100" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/earn-free-dvd-rental-icon.png" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Name="Circle1TextElem" Margin="0,20,0,0" TextAlignment="Center" Style="{StaticResource font_montserrat_regular_18}" Foreground="{StaticResource RbPurpleBrush}" Text="{Binding Circle1Text, FallbackValue=Earn a free&#xA;DVD rental}" />
+            <TextBlock Name="Circle1TextElem" Margin="0,20,0,0" TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_18}" Foreground="{StaticResource RbPurpleBrush}" Text="{Binding Circle1Text, FallbackValue=Earn a free&#xA;DVD rental}" />
           </StackPanel>
         </Grid>
       </Grid>
@@ -41,7 +45,7 @@
         <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Height="240" Margin="0,60,0,0">
           <StackPanel Orientation="Vertical">
             <Image Width="120" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/additional-promo-stars.png" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Name="Circle2TextElem" Margin="0,30,0,0" TextAlignment="Center" Style="{StaticResource font_montserrat_regular_18}" Foreground="{StaticResource RbPurpleBrush}" Text="{Binding Circle2Text, FallbackValue=Snag additional&#xA;promos}" />
+            <TextBlock Name="Circle2TextElem" Margin="0,30,0,0" TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_18}" Foreground="{StaticResource RbPurpleBrush}" Text="{Binding Circle2Text, FallbackValue=Snag additional&#xA;promos}" />
           </StackPanel>
         </Grid>
       </Grid>
@@ -50,7 +54,7 @@
         <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Height="240" Margin="0,40,0,0">
           <StackPanel Orientation="Vertical">
             <Image Width="100" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/gift-icon.png" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Name="Circle3TextElem" Margin="0,20,0,0" TextAlignment="Center" Style="{StaticResource font_montserrat_regular_18}" Foreground="{StaticResource RbPurpleBrush}" Text="{Binding Circle3Text, FallbackValue=Get a surprise&#xA;b-day gift}" />
+            <TextBlock Name="Circle3TextElem" Margin="0,20,0,0" TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_18}" Foreground="{StaticResource RbPurpleBrush}" Text="{Binding Circle3Text, FallbackValue=Get a surprise&#xA;b-day gift}" />
           </StackPanel>
         </Grid>
       </Grid>

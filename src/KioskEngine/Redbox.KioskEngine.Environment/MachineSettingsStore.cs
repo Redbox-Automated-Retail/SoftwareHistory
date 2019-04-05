@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Win32;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -56,11 +57,19 @@ public class MachineSettingsStore : IMachineSettingsStore
 	public void RemoveValue(string path, string key)
 	{
 		RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(FormatPath(path), writable: true);
-		if (registryKey != null)
+		if (registryKey == null)
+		{
+			return;
+		}
+		try
 		{
 			registryKey.DeleteValue(key);
 			registryKey.Close();
 			EnvironmentManager.Instance.NotifyConfigurationCallbacks("machine", "removevalue", path, key, null);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException($"Failed to remove value {key} at path {path}.", e);
 		}
 	}
 

@@ -74,6 +74,14 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private Label label8;
 
+	private Label label9;
+
+	private TextBox m_CancelledReservations;
+
+	private TextBox m_InvalidReservations;
+
+	private Label label10;
+
 	public MerchantServicesPreferencePage()
 	{
 		InitializeComponent();
@@ -119,6 +127,8 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		{
 			m_offersListBox.Items.Add(item3);
 		}
+		m_CancelledReservations.Text = MerchantServicesProxy.Instance.CancelledReservations;
+		m_InvalidReservations.Text = MerchantServicesProxy.Instance.InvalidReservations;
 		m_isLoaded = true;
 	}
 
@@ -254,6 +264,42 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
+	private void m_CancelledReservations_Leave(object sender, EventArgs e)
+	{
+		if (!m_isLoaded)
+		{
+			return;
+		}
+		string[] array = m_CancelledReservations.Text.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (!long.TryParse(array[i], out var _))
+			{
+				MessageBox.Show("Cancelled reservations must be a comma-delimited list of reference numbers.");
+				return;
+			}
+		}
+		MerchantServicesProxy.Instance.CancelledReservations = (string.IsNullOrWhiteSpace(m_CancelledReservations.Text) ? string.Empty : m_CancelledReservations.Text);
+	}
+
+	private void m_InvalidReservations_Leave(object sender, EventArgs e)
+	{
+		if (!m_isLoaded)
+		{
+			return;
+		}
+		string[] array = m_InvalidReservations.Text.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (!long.TryParse(array[i], out var _))
+			{
+				MessageBox.Show("Invalid reservations must be a comma-delimited list of reference numbers.");
+				return;
+			}
+		}
+		MerchantServicesProxy.Instance.InvalidReservations = (string.IsNullOrWhiteSpace(m_InvalidReservations.Text) ? string.Empty : m_InvalidReservations.Text);
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -295,6 +341,10 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.label7 = new System.Windows.Forms.Label();
 		this.label8 = new System.Windows.Forms.Label();
 		this.m_cpAccountNumberTextBox = new System.Windows.Forms.TextBox();
+		this.label9 = new System.Windows.Forms.Label();
+		this.m_CancelledReservations = new System.Windows.Forms.TextBox();
+		this.label10 = new System.Windows.Forms.Label();
+		this.m_InvalidReservations = new System.Windows.Forms.TextBox();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
 		this.m_enableOfflineBadCardListCheckBox.AutoSize = true;
@@ -354,16 +404,16 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_headerLabel.Text = "  Kiosk Services: Payment Auth. && Customer Lookup";
 		this.m_headerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 		this.m_OffersLabel.AutoSize = true;
-		this.m_OffersLabel.Location = new System.Drawing.Point(31, 416);
+		this.m_OffersLabel.Location = new System.Drawing.Point(23, 438);
 		this.m_OffersLabel.Name = "m_OffersLabel";
 		this.m_OffersLabel.Size = new System.Drawing.Size(38, 13);
 		this.m_OffersLabel.TabIndex = 42;
 		this.m_OffersLabel.Text = "Offers:";
-		this.m_addOfferTextBox.Location = new System.Drawing.Point(75, 413);
+		this.m_addOfferTextBox.Location = new System.Drawing.Point(67, 435);
 		this.m_addOfferTextBox.Name = "m_addOfferTextBox";
 		this.m_addOfferTextBox.Size = new System.Drawing.Size(330, 20);
 		this.m_addOfferTextBox.TabIndex = 43;
-		this.m_addOfferButton.Location = new System.Drawing.Point(416, 413);
+		this.m_addOfferButton.Location = new System.Drawing.Point(408, 435);
 		this.m_addOfferButton.Name = "m_addOfferButton";
 		this.m_addOfferButton.Size = new System.Drawing.Size(75, 23);
 		this.m_addOfferButton.TabIndex = 44;
@@ -371,12 +421,12 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_addOfferButton.UseVisualStyleBackColor = true;
 		this.m_addOfferButton.Click += new System.EventHandler(m_addOfferButton_Click);
 		this.m_offersListBox.FormattingEnabled = true;
-		this.m_offersListBox.Location = new System.Drawing.Point(75, 439);
+		this.m_offersListBox.Location = new System.Drawing.Point(67, 461);
 		this.m_offersListBox.Name = "m_offersListBox";
 		this.m_offersListBox.ScrollAlwaysVisible = true;
 		this.m_offersListBox.Size = new System.Drawing.Size(330, 69);
 		this.m_offersListBox.TabIndex = 45;
-		this.m_deleteOfferButton.Location = new System.Drawing.Point(416, 485);
+		this.m_deleteOfferButton.Location = new System.Drawing.Point(408, 507);
 		this.m_deleteOfferButton.Name = "m_deleteOfferButton";
 		this.m_deleteOfferButton.Size = new System.Drawing.Size(75, 23);
 		this.m_deleteOfferButton.TabIndex = 46;
@@ -425,14 +475,14 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_EmailAddressTextBox.TabIndex = 52;
 		this.m_EmailAddressTextBox.Leave += new System.EventHandler(EmailAddressTextBox_Leave);
 		this.label6.AutoSize = true;
-		this.label6.Location = new System.Drawing.Point(31, 367);
+		this.label6.Location = new System.Drawing.Point(31, 351);
 		this.label6.Name = "label6";
 		this.label6.Size = new System.Drawing.Size(101, 13);
 		this.label6.TabIndex = 54;
 		this.label6.Text = "Confirmation Status:";
 		this.m_confirmationStatusComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 		this.m_confirmationStatusComboBox.FormattingEnabled = true;
-		this.m_confirmationStatusComboBox.Location = new System.Drawing.Point(169, 364);
+		this.m_confirmationStatusComboBox.Location = new System.Drawing.Point(169, 348);
 		this.m_confirmationStatusComboBox.Name = "m_confirmationStatusComboBox";
 		this.m_confirmationStatusComboBox.Size = new System.Drawing.Size(317, 21);
 		this.m_confirmationStatusComboBox.TabIndex = 55;
@@ -478,8 +528,34 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_cpAccountNumberTextBox.Size = new System.Drawing.Size(317, 20);
 		this.m_cpAccountNumberTextBox.TabIndex = 70;
 		this.m_cpAccountNumberTextBox.Leave += new System.EventHandler(m_cpAccountNumberTextBox_Leave);
+		this.label9.AutoSize = true;
+		this.label9.Location = new System.Drawing.Point(30, 378);
+		this.label9.Name = "label9";
+		this.label9.Size = new System.Drawing.Size(119, 13);
+		this.label9.TabIndex = 72;
+		this.label9.Text = "Cancelled Reservations";
+		this.m_CancelledReservations.Location = new System.Drawing.Point(169, 375);
+		this.m_CancelledReservations.Name = "m_CancelledReservations";
+		this.m_CancelledReservations.Size = new System.Drawing.Size(317, 20);
+		this.m_CancelledReservations.TabIndex = 71;
+		this.m_CancelledReservations.Leave += new System.EventHandler(m_CancelledReservations_Leave);
+		this.label10.AutoSize = true;
+		this.label10.Location = new System.Drawing.Point(30, 406);
+		this.label10.Name = "label10";
+		this.label10.Size = new System.Drawing.Size(103, 13);
+		this.label10.TabIndex = 73;
+		this.label10.Text = "Invalid Reservations";
+		this.m_InvalidReservations.Location = new System.Drawing.Point(169, 403);
+		this.m_InvalidReservations.Name = "m_InvalidReservations";
+		this.m_InvalidReservations.Size = new System.Drawing.Size(317, 20);
+		this.m_InvalidReservations.TabIndex = 74;
+		this.m_InvalidReservations.Leave += new System.EventHandler(m_InvalidReservations_Leave);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.m_InvalidReservations);
+		base.Controls.Add(this.label10);
+		base.Controls.Add(this.label9);
+		base.Controls.Add(this.m_CancelledReservations);
 		base.Controls.Add(this.m_cpAccountNumberTextBox);
 		base.Controls.Add(this.label8);
 		base.Controls.Add(this.m_transactionIdTextBox);

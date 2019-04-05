@@ -38,8 +38,6 @@ public class ShowMessagePopupViewParameter : IViewAnalyticsName
 
 	public string ActorTag { get; }
 
-	public bool HideBackground { get; }
-
 	public UserControl ContentUserControl { get; }
 
 	public string BorderBrushColor { get; }
@@ -61,21 +59,21 @@ public class ShowMessagePopupViewParameter : IViewAnalyticsName
 	}
 
 	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button2Text, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, string analyticsContext = null)
-		: this(titleText, titleStyle, messageText, messageStyle, button1Text, null, null, button2Text, null, null, timeout, button1Action, button2Action, timeOutAction, actorTag, hideBackground: false, null, null, default(Thickness), analyticsContext)
+		: this(titleText, titleStyle, messageText, messageStyle, button1Text, null, null, button2Text, null, null, timeout, button1Action, button2Action, timeOutAction, actorTag, null, null, default(Thickness), analyticsContext)
 	{
 	}
 
 	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button2Text, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, List<string> analyticsContextList = null)
-		: this(titleText, titleStyle, messageText, messageStyle, button1Text, null, null, button2Text, null, null, timeout, button1Action, button2Action, timeOutAction, actorTag, hideBackground: false, null, null, default(Thickness), analyticsContextList)
+		: this(titleText, titleStyle, messageText, messageStyle, button1Text, null, null, button2Text, null, null, timeout, button1Action, button2Action, timeOutAction, actorTag, null, null, default(Thickness), analyticsContextList)
 	{
 	}
 
-	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button1TextStyle, string button1Style, string button2Text, string button2TextStyle, string button2Style, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, bool hideBackground, UserControl contentUserControl, string borderBrushColor, Thickness mainGrifMargin, string analyticsContext = null, string viewName = null)
-		: this(titleText, titleStyle, messageText, messageStyle, button1Text, button1TextStyle, button1Style, button2Text, button2TextStyle, button2Style, timeout, button1Action, button2Action, timeOutAction, actorTag, hideBackground, contentUserControl, borderBrushColor, mainGrifMargin, (analyticsContext == null) ? null : new List<string> { analyticsContext }, viewName)
+	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button1TextStyle, string button1Style, string button2Text, string button2TextStyle, string button2Style, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, UserControl contentUserControl, string borderBrushColor, Thickness mainGrifMargin, string analyticsContext = null, string viewName = null)
+		: this(titleText, titleStyle, messageText, messageStyle, button1Text, button1TextStyle, button1Style, button2Text, button2TextStyle, button2Style, timeout, button1Action, button2Action, timeOutAction, actorTag, contentUserControl, borderBrushColor, mainGrifMargin, (analyticsContext == null) ? null : new List<string> { analyticsContext }, viewName)
 	{
 	}
 
-	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button1TextStyle, string button1Style, string button2Text, string button2TextStyle, string button2Style, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, bool hideBackground, UserControl contentUserControl, string borderBrushColor, Thickness mainGrifMargin, List<string> analyticsContextList = null, string viewName = null)
+	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button1TextStyle, string button1Style, string button2Text, string button2TextStyle, string button2Style, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, UserControl contentUserControl, string borderBrushColor, Thickness mainGrifMargin, List<string> analyticsContextList = null, string viewName = null)
 	{
 		TitleText = titleText;
 		TitleStyle = titleStyle;
@@ -92,7 +90,6 @@ public class ShowMessagePopupViewParameter : IViewAnalyticsName
 		Button2Action = button2Action;
 		TimeOutAction = timeOutAction;
 		ActorTag = actorTag;
-		HideBackground = hideBackground;
 		ContentUserControl = contentUserControl;
 		BorderBrushColor = borderBrushColor;
 		MainGridMargin = mainGrifMargin;

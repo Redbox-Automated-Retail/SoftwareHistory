@@ -47,6 +47,8 @@ public interface IBrowseState
 
 	bool BrowseCollections { get; set; }
 
+	BrowsePriceRangeParameter BrowsePriceRangeFilter { get; set; }
+
 	ICollectionProduct BrowseCollectionProduct { get; set; }
 
 	int PageNumber { get; set; }
@@ -78,6 +80,8 @@ public interface IBrowseState
 	LuaTable BrowseProductsShownLuaTable { get; }
 
 	bool InReturnFlow { get; set; }
+
+	bool NeedMarketingConfirm { get; set; }
 
 	void PushBrowseStateSet();
 

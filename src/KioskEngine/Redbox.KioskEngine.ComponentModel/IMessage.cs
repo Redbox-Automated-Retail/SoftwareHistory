@@ -8,7 +8,7 @@ public interface IMessage
 
 	string GUID { get; }
 
-	byte[] Data { get; }
+	byte[] Data { get; set; }
 
 	string Type { get; }
 

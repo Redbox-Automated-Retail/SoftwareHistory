@@ -9,6 +9,8 @@ namespace Redbox.Rental.UI.Models;
 
 public class BrowseControlModel : DependencyObject
 {
+	public static readonly DependencyProperty ShowPaddlesProperty = DependencyProperty.Register("ShowPaddles", typeof(bool), typeof(TitleDetailModel), new FrameworkPropertyMetadata(true));
+
 	public static readonly DependencyProperty SelectedDisplayProductUserControlSizeAndPositionProperty = DependencyProperty.Register("SelectedDisplayProductUserControlSizeAndPosition", typeof(SizeAndPosition), typeof(BrowseControlModel), new FrameworkPropertyMetadata(new SizeAndPosition(), OnSelectedDisplayProductUserControlSizeAndPositionPropertyChanged));
 
 	public static readonly DependencyProperty TitleRollupOverlayModelProperty = DependencyProperty.Register("TitleRollupOverlayModel", typeof(TitleRollupOverlayModel), typeof(BrowseControlModel), new FrameworkPropertyMetadata(null));
@@ -123,6 +125,21 @@ public class BrowseControlModel : DependencyObject
 	public int ItemsOnCurrentPage => base.Dispatcher.Invoke(() => (PageNumber >= TotalPages) ? ((BrowseItems?.Count ?? 0) % ItemsPerPage) : ItemsPerPage);
 
 	public int TotalPages => base.Dispatcher.Invoke(() => (BrowseItems?.Count ?? 0) / ItemsPerPage + (((BrowseItems?.Count ?? 0) % ItemsPerPage > 0) ? 1 : 0));
+
+	public bool ShowPaddles
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(ShowPaddlesProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ShowPaddlesProperty, value);
+			});
+		}
+	}
 
 	public event BrowseItemModelEvent OnBrowseItemModelSelected;
 

@@ -8,17 +8,37 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.Proxy;
 
 public class AuthenticationServicesProxy : IAuthenticationServices
 {
+	private class UserLoginInfo
+	{
+		public string UserId { get; set; }
+
+		public int FailedAttempts { get; set; }
+
+		public DateTime LastAttemptTime { get; set; }
+
+		public DateTime FirstAttemptTime { get; set; }
+	}
+
 	private static readonly byte[] m_keyValue = new Guid("{02CAD7C4-E0F5-4b1b-BD04-808B840A61D2}").ToByteArray();
 
 	private static readonly byte[] m_initialVector = new Guid("{AD186FCD-2ACD-41a8-958D-6CA7DAEB1DE5}").ToByteArray();
 
 	private int m_working;
+
+	private const int _maxRetries = 5;
+
+	private readonly TimeSpan _retryTime = TimeSpan.FromMinutes(1.0);
+
+	private readonly TimeSpan _lockoutTime = TimeSpan.FromMinutes(30.0);
+
+	private Dictionary<string, UserLoginInfo> _loginFailures = new Dictionary<string, UserLoginInfo>();
 
 	public static AuthenticationServicesProxy Instance => Singleton<AuthenticationServicesProxy>.Instance;
 
@@ -93,13 +113,22 @@ public class AuthenticationServicesProxy : IAuthenticationServices
 
 	public void Authenticate(string storeNumber, string userName, string password, bool useLdapAuthentication, RemoteServiceCallback completeCallback)
 	{
+		if (IsUserAccountLocked(userName))
+		{
+			SendLockoutResponse(storeNumber, userName, completeCallback);
+			return;
+		}
+		RemoteServiceCallback completeCallback2 = delegate(IRemoteServiceResult r)
+		{
+			RecordLoginAttempts(userName, r, completeCallback);
+		};
 		if (LiveCall)
 		{
-			PerformLiveCall(storeNumber, userName, password, useLdapAuthentication, completeCallback);
+			PerformLiveCall(storeNumber, userName, password, useLdapAuthentication, completeCallback2);
 		}
 		else
 		{
-			SimulateCall(storeNumber, userName, password, useLdapAuthentication, completeCallback);
+			SimulateCall(storeNumber, userName, password, useLdapAuthentication, completeCallback2);
 		}
 	}
 
@@ -176,7 +205,7 @@ public class AuthenticationServicesProxy : IAuthenticationServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -252,7 +281,7 @@ public class AuthenticationServicesProxy : IAuthenticationServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -297,5 +326,79 @@ public class AuthenticationServicesProxy : IAuthenticationServices
 		cryptoStream.Write(bytes, 0, bytes.Length);
 		cryptoStream.FlushFinalBlock();
 		return Convert.ToBase64String(memoryStream.ToArray());
+	}
+
+	private void SendLockoutResponse(string storeNumber, string userName, RemoteServiceCallback completeCallback)
+	{
+		LogHelper.Instance.Log($"AuthenticationServicesProxy ignoring request from locked accout: UserName {userName}");
+		RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+		remoteServiceResult.Success = false;
+		remoteServiceResult.Properties["response"] = AuthenticationResponse.AccountLocked.ToString();
+		completeCallback(remoteServiceResult);
+	}
+
+	private bool IsUserAccountLocked(string userName)
+	{
+		if (_loginFailures.ContainsKey(userName))
+		{
+			UserLoginInfo userLoginInfo = _loginFailures[userName];
+			if (userLoginInfo.FailedAttempts >= 5)
+			{
+				return DateTime.Now - userLoginInfo.LastAttemptTime < _lockoutTime;
+			}
+			return false;
+		}
+		return false;
+	}
+
+	private void RecordLoginAttempts(string userName, IRemoteServiceResult result, RemoteServiceCallback completeCallback)
+	{
+		try
+		{
+			if (result.Success)
+			{
+				if (_loginFailures.ContainsKey(userName))
+				{
+					_loginFailures.Remove(userName);
+				}
+			}
+			else
+			{
+				if (!(bool)result.Properties["is_online"])
+				{
+					return;
+				}
+				if (!_loginFailures.ContainsKey(userName))
+				{
+					_loginFailures.Add(userName, new UserLoginInfo
+					{
+						UserId = userName,
+						FailedAttempts = 1,
+						FirstAttemptTime = DateTime.Now,
+						LastAttemptTime = DateTime.Now
+					});
+					return;
+				}
+				UserLoginInfo userLoginInfo = _loginFailures[userName];
+				if (DateTime.Now - userLoginInfo.FirstAttemptTime > _retryTime)
+				{
+					userLoginInfo.FailedAttempts = 1;
+					userLoginInfo.FirstAttemptTime = DateTime.Now;
+				}
+				else
+				{
+					userLoginInfo.FailedAttempts++;
+				}
+				userLoginInfo.LastAttemptTime = DateTime.Now;
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("Exception encountered while recording failed login", e);
+		}
+		finally
+		{
+			completeCallback(result);
+		}
 	}
 }

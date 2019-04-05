@@ -283,6 +283,14 @@ public class Scene : IScene, IDisposable
 		}
 	}
 
+	public void RemoveWPFGridChild(FrameworkElement frameworkElement)
+	{
+		if (frameworkElement != null)
+		{
+			WPFGrid.Children.Remove(frameworkElement);
+		}
+	}
+
 	public FrameworkElement GetWPFGridChild(object tag)
 	{
 		FrameworkElement result = null;

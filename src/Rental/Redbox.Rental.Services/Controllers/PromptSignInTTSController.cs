@@ -40,11 +40,11 @@ public class PromptSignInTTSController
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = "To sign in with email and password press 1."
+				Text = "To sign in with phone number and four digit pin press 1."
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = "To sign in with phone number and four digit pin press 2."
+				Text = "To sign in with email and password press 2."
 			});
 			speechPart.Texts.Add(new TextPart
 			{
@@ -55,7 +55,7 @@ public class PromptSignInTTSController
 				KeyCode = "1",
 				Action = delegate
 				{
-					logic.EmailCodeButtonCommand_Execute();
+					logic.PhonePinButtonCommand_Execute();
 				}
 			});
 			speechPart.Events.Add(new MapKeyPressToAction
@@ -63,7 +63,7 @@ public class PromptSignInTTSController
 				KeyCode = "2",
 				Action = delegate
 				{
-					logic.PhonePinButtonCommand_Execute();
+					logic.EmailCodeButtonCommand_Execute();
 				}
 			});
 			speechPart.Events.Add(new MapKeyPressToAction

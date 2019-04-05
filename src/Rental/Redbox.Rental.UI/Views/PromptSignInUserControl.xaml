@@ -6,11 +6,11 @@
         <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#FFFFFFFF">
           <Redbox:GridExt HorizontalAlignment="Center" Width="auto" RowHeights="180,60,auto,40,auto,*">
             <TextBlock Grid.Row="0" Margin="30" Foreground="#FFFFFFFF" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_48}" Text="{Binding SignInLeftTitle, FallbackValue=Sign in to get some points}" />
-            <Redbox:RoundedButton Name="EmailButtonElem" Grid.Row="2" Grid.Column="1" UsedDefaultCornerRadius="True" Margin="40,0" MinHeight="78" Style="{StaticResource style_white_rubine_gradient_border_button}" Height="auto" Command="{Binding EmailCodeButtonCommand}">
-              <TextBlock Name="EmailButtonTextElem" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" TextAlignment="Center" TextWrapping="Wrap" Margin="40,20" Text="{Binding EmailCodeButtonText, FallbackValue=Email &amp; Password}" />
-            </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="PhoneButtonElem" Grid.Row="4" Grid.Column="1" UsedDefaultCornerRadius="True" Margin="40,0" MinHeight="78" Style="{StaticResource style_white_rubine_gradient_border_button}" Height="auto" Command="{Binding PhonePinButtonCommand}">
+            <Redbox:RoundedButton Name="PhoneButtonElem" Grid.Row="2" Grid.Column="1" UsedDefaultCornerRadius="True" Margin="40,0" MinHeight="78" Style="{StaticResource style_white_rubine_gradient_border_button}" Height="auto" Command="{Binding PhonePinButtonCommand}">
               <TextBlock Name="PhoneButtonTextElem" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" TextAlignment="Center" TextWrapping="Wrap" Margin="40,20" Text="{Binding PhonePinButtonText, FallbackValue=Phone &amp; 4-Digit PIN}" />
+            </Redbox:RoundedButton>
+            <Redbox:RoundedButton Name="EmailButtonElem" Grid.Row="4" Grid.Column="1" UsedDefaultCornerRadius="True" Margin="40,0" MinHeight="78" Style="{StaticResource style_white_rubine_gradient_border_button}" Height="auto" Command="{Binding EmailCodeButtonCommand}">
+              <TextBlock Name="EmailButtonTextElem" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" TextAlignment="Center" TextWrapping="Wrap" Margin="40,20" Text="{Binding EmailCodeButtonText, FallbackValue=Email &amp; Password}" />
             </Redbox:RoundedButton>
           </Redbox:GridExt>
         </Border>

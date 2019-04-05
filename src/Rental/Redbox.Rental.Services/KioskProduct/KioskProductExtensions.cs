@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -109,14 +110,15 @@ public static class KioskProductExtensions
 
 	public static List<ITitleProduct> OrderList(this List<ITitleProduct> source, BrowseSort browseSort, BrowseViewFilter browseFilter)
 	{
+		string outOfStockTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion;
 		return browseSort switch
 		{
 			BrowseSort.MerchandiseDate => (from item in source
-				orderby !InStock(item, browseFilter), item.SortMerchandise, item.SortBoxOfficeGross descending, item.SortName descending
+				orderby (!(outOfStockTitleDetailsABTestVersion == "B") || item.TitleFamily != TitleFamily.Movies) && !InStock(item, browseFilter), item.SortMerchandise, item.SortBoxOfficeGross descending, item.SortName descending
 				select item).ToList(), 
 			BrowseSort.Alpha => source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList(), 
 			_ => (from item in source
-				orderby browseFilter != BrowseViewFilter.ForSale && item.ShowOutOfStock, item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
+				orderby (!(outOfStockTitleDetailsABTestVersion == "B") || item.TitleFamily != TitleFamily.Movies) && browseFilter != BrowseViewFilter.ForSale && item.ShowOutOfStock, item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
 				select item).ToList(), 
 		};
 	}

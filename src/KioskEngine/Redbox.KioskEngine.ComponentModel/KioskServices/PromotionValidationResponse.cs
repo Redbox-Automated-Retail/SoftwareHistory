@@ -11,6 +11,8 @@ public enum PromotionValidationResponse
 	CodeNotValidAtThisLocation,
 	[ResponseCode(Name = "(D005)")]
 	KioskMissing,
+	[ResponseCode(Name = "(D006)")]
+	CodeForOnDemand,
 	[ResponseCode(Name = "(U001)")]
 	Error
 }

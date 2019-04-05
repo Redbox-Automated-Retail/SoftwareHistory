@@ -66,5 +66,7 @@ public interface IScene : IDisposable
 
 	void AddWPFGridChild(FrameworkElement frameworkElement);
 
+	void RemoveWPFGridChild(FrameworkElement frameworkElement);
+
 	FrameworkElement GetWPFGridChild(object tag);
 }

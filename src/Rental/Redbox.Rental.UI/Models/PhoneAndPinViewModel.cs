@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using System.Windows.Media;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
@@ -12,7 +11,8 @@ public class PhoneAndPinViewModel : DependencyObject
 	public enum DisplayType
 	{
 		Phone,
-		Pin
+		Pin,
+		PinConfirm
 	}
 
 	public Action<DisplayType> OnDisplayClicked;
@@ -21,47 +21,32 @@ public class PhoneAndPinViewModel : DependencyObject
 
 	public Action OnSignInButtonClicked;
 
+	public Action OnTermsButtonClicked;
+
+	public Action OnTextClubClicked;
+
 	public Func<ISpeechControl> OnGetSpeechControl;
 
 	private string _pinDisplayText;
 
+	private string _pinConfirmDisplayText;
+
 	public static readonly DependencyProperty KeypadModelProperty = DependencyProperty.Register("KeypadModel", typeof(KeypadModel), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty PhoneDisplayBorderBrushProperty = DependencyProperty.Register("PhoneDisplayBorderBrush", typeof(Brush), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null)
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty PhoneDisplayBorderShadowDepthProperty = DependencyProperty.Register("PhoneDisplayBorderShadowDepth", typeof(double), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(0.0)
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty PhoneDisplayBorderColorProperty = DependencyProperty.Register("PhoneDisplayBorderColor", typeof(Color), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(Colors.Gray)
-	{
-		AffectsRender = true
-	});
 
 	public static readonly DependencyProperty PhoneDisplayTextProperty = DependencyProperty.Register("PhoneDisplayText", typeof(string), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty PinDisplayBorderBrushProperty = DependencyProperty.Register("PinDisplayBorderBrush", typeof(Brush), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null)
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty PinDisplayBorderShadowDepthProperty = DependencyProperty.Register("PinDisplayBorderShadowDepth", typeof(double), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(0.0)
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty PinDisplayBorderColorProperty = DependencyProperty.Register("PinDisplayBorderColor", typeof(Color), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(Colors.Gray)
-	{
-		AffectsRender = true
-	});
-
 	public static readonly DependencyProperty SecurePinDisplayTextProperty = DependencyProperty.Register("SecurePinDisplayText", typeof(string), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty SecurePinConfirmDisplayTextProperty = DependencyProperty.Register("SecurePinConfirmDisplayText", typeof(string), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty ErrorMessageTextProperty = DependencyProperty.Register("ErrorMessageText", typeof(string), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty MobilePhoneErrorMessageTextProperty = DependencyProperty.Register("MobilePhoneErrorMessageText", typeof(string), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(null, MobilePhoneErrorMessageChanged));
+
+	public static readonly DependencyProperty MobilePhoneErrorVisibilityProperty = DependencyProperty.Register("MobilePhoneErrorVisibility", typeof(Visibility), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
 	{
 		AffectsRender = true
 	});
@@ -81,9 +66,24 @@ public class PhoneAndPinViewModel : DependencyObject
 		AffectsRender = true
 	});
 
-	public PhoneAndPinInfo PhoneAndPinInfo { get; set; }
+	public static readonly DependencyProperty IsStartButtonEnabledProperty = DependencyProperty.Register("IsStartButtonEnabled", typeof(bool), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(true)
+	{
+		AffectsRender = true
+	});
 
-	public DisplayType DisplayTypeFocus { get; set; }
+	public static readonly DependencyProperty DisplayTypeFocusProperty = DependencyProperty.Register("DisplayTypeFocus", typeof(DisplayType), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(DisplayType.Phone)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ConfirmPinButtonStateProperty = DependencyProperty.Register("ConfirmPinButtonState", typeof(int), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(0)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty SignUpForTextClubProperty = DependencyProperty.Register("SignUpForTextClub", typeof(bool), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(true, SignUpforTextClubChanged));
+
+	public PhoneAndPinInfo PhoneAndPinInfo { get; set; }
 
 	public int PhoneRequiredLength { get; set; }
 
@@ -105,6 +105,28 @@ public class PhoneAndPinViewModel : DependencyObject
 
 	public string PinLabelText { get; set; }
 
+	public string PinConfirmLabelText { get; set; }
+
+	public Visibility PinConfirmVisibility { get; set; }
+
+	public string TermsTitleText { get; set; }
+
+	public string TermsText { get; set; }
+
+	public Visibility TermsBarVisibility { get; set; }
+
+	public Visibility TextClubOptionVisibility { get; set; }
+
+	public string TextClubText { get; set; }
+
+	public bool TextClubEnabled { get; set; }
+
+	public string TermsButtonText { get; set; }
+
+	public Visibility BottomButtonBarVisibility { get; set; }
+
+	public Visibility RightSideButtonBarVisibility { get; set; }
+
 	public KeypadModel KeypadModel
 	{
 		get
@@ -116,51 +138,6 @@ public class PhoneAndPinViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(KeypadModelProperty, value);
-			});
-		}
-	}
-
-	public Brush PhoneDisplayBorderBrush
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Brush)GetValue(PhoneDisplayBorderBrushProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PhoneDisplayBorderBrushProperty, value);
-			});
-		}
-	}
-
-	public double PhoneDisplayBorderShadowDepth
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (double)GetValue(PhoneDisplayBorderShadowDepthProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PhoneDisplayBorderShadowDepthProperty, value);
-			});
-		}
-	}
-
-	public Color PhoneDisplayBorderColor
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Color)GetValue(PhoneDisplayBorderColorProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PhoneDisplayBorderColorProperty, value);
 			});
 		}
 	}
@@ -180,47 +157,17 @@ public class PhoneAndPinViewModel : DependencyObject
 		}
 	}
 
-	public Brush PinDisplayBorderBrush
+	public DisplayType DisplayTypeFocus
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Brush)GetValue(PinDisplayBorderBrushProperty));
+			return base.Dispatcher.Invoke(() => (DisplayType)GetValue(DisplayTypeFocusProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(PinDisplayBorderBrushProperty, value);
-			});
-		}
-	}
-
-	public double PinDisplayBorderShadowDepth
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (double)GetValue(PinDisplayBorderShadowDepthProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PinDisplayBorderShadowDepthProperty, value);
-			});
-		}
-	}
-
-	public Color PinDisplayBorderColor
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Color)GetValue(PinDisplayBorderColorProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PinDisplayBorderColorProperty, value);
+				SetValue(DisplayTypeFocusProperty, value);
 			});
 		}
 	}
@@ -238,6 +185,19 @@ public class PhoneAndPinViewModel : DependencyObject
 		}
 	}
 
+	public string PinConfirmDisplayText
+	{
+		get
+		{
+			return _pinConfirmDisplayText;
+		}
+		set
+		{
+			_pinConfirmDisplayText = value;
+			SecurePinConfirmDisplayText = ((value == Resources.phone_and_pin_default_pin_display || string.IsNullOrWhiteSpace(value) || value.Length == 1) ? value : $"{new string('*', value.Length - 1)}{value.Substring(value.Length - 1)}");
+		}
+	}
+
 	public string SecurePinDisplayText
 	{
 		get
@@ -249,6 +209,21 @@ public class PhoneAndPinViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(SecurePinDisplayTextProperty, value);
+			});
+		}
+	}
+
+	public string SecurePinConfirmDisplayText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(SecurePinConfirmDisplayTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SecurePinConfirmDisplayTextProperty, value);
 			});
 		}
 	}
@@ -281,6 +256,20 @@ public class PhoneAndPinViewModel : DependencyObject
 		}
 	}
 
+	public string TTSPinConfirmDisplayText
+	{
+		get
+		{
+			string text = "";
+			string pinConfirmDisplayText = PinConfirmDisplayText;
+			for (int i = 0; i < pinConfirmDisplayText.Length; i++)
+			{
+				text = text + pinConfirmDisplayText[i] + " ";
+			}
+			return text;
+		}
+	}
+
 	public string ErrorMessageText
 	{
 		get
@@ -292,6 +281,36 @@ public class PhoneAndPinViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ErrorMessageTextProperty, value);
+			});
+		}
+	}
+
+	public string MobilePhoneErrorMessageText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MobilePhoneErrorMessageTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MobilePhoneErrorMessageTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility MobilePhoneErrorVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MobilePhoneErrorVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MobilePhoneErrorVisibilityProperty, value);
 			});
 		}
 	}
@@ -341,6 +360,51 @@ public class PhoneAndPinViewModel : DependencyObject
 		}
 	}
 
+	public bool IsStartButtonEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(IsStartButtonEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(IsStartButtonEnabledProperty, value);
+			});
+		}
+	}
+
+	public int ConfirmPinButtonState
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(ConfirmPinButtonStateProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ConfirmPinButtonStateProperty, value);
+			});
+		}
+	}
+
+	public bool SignUpForTextClub
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(SignUpForTextClubProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SignUpForTextClubProperty, value);
+			});
+		}
+	}
+
 	public void ProcessOnDisplayClicked(DisplayType displayType)
 	{
 		if (OnDisplayClicked != null)
@@ -353,6 +417,8 @@ public class PhoneAndPinViewModel : DependencyObject
 	{
 		if (OnStartButtonClicked != null)
 		{
+			IsSignInButtonEnabled = false;
+			IsStartButtonEnabled = false;
 			OnStartButtonClicked();
 		}
 	}
@@ -361,7 +427,25 @@ public class PhoneAndPinViewModel : DependencyObject
 	{
 		if (OnSignInButtonClicked != null)
 		{
+			IsSignInButtonEnabled = false;
+			IsStartButtonEnabled = false;
 			OnSignInButtonClicked();
+		}
+	}
+
+	public void ProcessOnTermsButtonClicked()
+	{
+		if (OnTermsButtonClicked != null)
+		{
+			OnTermsButtonClicked();
+		}
+	}
+
+	public void ProcessOnTextClubClicked()
+	{
+		if (OnTextClubClicked != null)
+		{
+			OnTextClubClicked();
 		}
 	}
 
@@ -378,14 +462,38 @@ public class PhoneAndPinViewModel : DependencyObject
 	public void SetDefaultDisplays()
 	{
 		DisplayTypeFocus = DisplayType.Phone;
-		PhoneDisplayBorderBrush = new SolidColorBrush(Color.FromRgb(120, 45, 141));
-		PhoneDisplayBorderShadowDepth = 2.0;
-		PhoneDisplayBorderColor = Color.FromRgb(120, 45, 141);
-		PinDisplayBorderBrush = new SolidColorBrush(Color.FromRgb(165, 165, 165));
-		PinDisplayBorderShadowDepth = 4.0;
-		PinDisplayBorderColor = Color.FromRgb(225, 225, 225);
-		PhoneDisplayText = Resources.phone_and_pin_default_phone_display;
+		PhoneDisplayText = string.Empty;
 		PinDisplayText = Resources.phone_and_pin_default_pin_display;
+		PinConfirmDisplayText = Resources.phone_and_pin_default_pin_display;
+		PinConfirmVisibility = Visibility.Collapsed;
+		TextClubOptionVisibility = Visibility.Collapsed;
+		TermsBarVisibility = Visibility.Collapsed;
+		BottomButtonBarVisibility = Visibility.Visible;
+		RightSideButtonBarVisibility = Visibility.Collapsed;
 		IsSignInButtonEnabled = false;
+		IsStartButtonEnabled = true;
+	}
+
+	private static void MobilePhoneErrorMessageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		if (d is PhoneAndPinViewModel phoneAndPinViewModel)
+		{
+			if (string.IsNullOrEmpty(phoneAndPinViewModel.MobilePhoneErrorMessageText))
+			{
+				phoneAndPinViewModel.MobilePhoneErrorVisibility = Visibility.Collapsed;
+			}
+			else
+			{
+				phoneAndPinViewModel.MobilePhoneErrorVisibility = Visibility.Visible;
+			}
+		}
+	}
+
+	private static void SignUpforTextClubChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		if (d is PhoneAndPinViewModel phoneAndPinViewModel)
+		{
+			phoneAndPinViewModel.OnTextClubClicked?.Invoke();
+		}
 	}
 }

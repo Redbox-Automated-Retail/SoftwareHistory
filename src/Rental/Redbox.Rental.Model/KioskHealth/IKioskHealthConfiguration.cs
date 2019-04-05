@@ -20,6 +20,8 @@ public interface IKioskHealthConfiguration
 
 	int TouchScreenInActivity { get; }
 
+	int TouchScreenResetsToAlert { get; }
+
 	bool ArcusActive { get; }
 
 	bool ArcusReporting { get; }
@@ -39,4 +41,24 @@ public interface IKioskHealthConfiguration
 	bool HardwareCorrectionStatsActive { get; }
 
 	bool HardwareCorrectionStatsReporting { get; }
+
+	bool ViewActive { get; }
+
+	bool ViewReporting { get; }
+
+	int ViewHealingType { get; }
+
+	int ViewInActivity { get; }
+
+	int ViewInActivityABEMode { get; }
+
+	bool CCReaderActive { get; }
+
+	bool CCReaderSendNoDataEvents { get; }
+
+	int CCReaderNoDataAttemptsToAlert { get; }
+
+	bool CCReaderSendBadDataEvents { get; }
+
+	int CCReaderBadDataAttemptsToAlert { get; }
 }

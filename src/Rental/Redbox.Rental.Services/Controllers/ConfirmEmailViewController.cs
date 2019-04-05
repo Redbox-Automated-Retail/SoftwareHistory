@@ -6,12 +6,14 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.Services.Controllers;
 
-public class ConfirmEmailViewController
+public class ConfirmEmailViewController : BaseViewController
 {
 	private enum ItemId
 	{
@@ -35,6 +37,8 @@ public class ConfirmEmailViewController
 		public string CampaignName { get; set; }
 	}
 
+	private static object _lockObject = new object();
+
 	private static Action Callback { get; set; }
 
 	private static IIdleTimer IdleTimer { get; set; }
@@ -48,84 +52,123 @@ public class ConfirmEmailViewController
 		OrchestrationService.SetCurrentUICulture();
 	}
 
-	public static void ConfigureView(bool confirm, string email, Action callback)
+	public static void ConfigureView()
 	{
-		ItemType = (confirm ? Item_Type.MarketingConfirm : Item_Type.MarketingSubscribe);
-		Email = email;
-		Callback = callback;
-		FrameworkElement userControl = GetUserControl();
-		if (userControl != null)
+		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+		ItemType = ((instance != null && instance.BrowseState.NeedMarketingConfirm) ? Item_Type.MarketingConfirm : Item_Type.MarketingSubscribe);
+		Email = Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email;
+		Callback = delegate
 		{
-			userControl.DataContext = GetModel();
+			OrchestrationService.InvokeContinueVendCallback();
+		};
+		ConfirmEmailModel confirmEmailModel = CreateConfirmEmailModel();
+		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
+		if (viewUserControl != null)
+		{
+			viewUserControl.DataContext = confirmEmailModel;
 		}
 		CommandManager.InvalidateRequerySuggested();
-		ConfigureTTS();
+		ConfigureTTS(confirmEmailModel);
 		ConfigureIdleTimer();
 	}
 
 	private static void ConfigureIdleTimer()
 	{
-		IdleTimer = ServiceLocator.Instance.GetService<IIdleTimerService>().CreateIdleTimer("confirm_email_timer");
+		IdleTimer = ServiceLocator.Instance.GetService<IIdleTimerService>()?.CreateIdleTimer("confirm_email_timer");
 		int timeout = OrchestrationService.TTSGetTimeout("Medium", 20000);
 		IdleTimer.Initialize(timeout, OnTimeout);
 		IdleTimer.Start();
 	}
 
-	private static FrameworkElement GetUserControl()
-	{
-		return ActorFunctions.GetActor("ConfirmEmailViewUserControl")?.WPFFrameworkElement;
-	}
-
-	private static ConfirmEmailModel GetModel()
+	private static ConfirmEmailModel CreateConfirmEmailModel()
 	{
 		ConfirmEmailModel confirmEmailModel = new ConfirmEmailModel();
 		confirmEmailModel.HeaderText = Resources.confirm_email_header;
 		confirmEmailModel.BodyText = Resources.confirm_email_body;
 		confirmEmailModel.Button1Visibility = Visibility.Visible;
 		confirmEmailModel.Button2Visibility = Visibility.Visible;
-		confirmEmailModel.Button1Action += OnHit;
-		confirmEmailModel.Button2Action += OnCancel;
+		confirmEmailModel.Button1Action += OnYesButtonPress;
+		confirmEmailModel.Button2Action += OnCancelButtonPress;
 		return confirmEmailModel;
 	}
 
-	private static void ConfigureTTS()
+	private static void ConfigureTTS(ConfirmEmailModel model)
 	{
 		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-		FrameworkElement userControl = GetUserControl();
-		ConfirmEmailModel confirmEmailModel = userControl.DataContext as ConfirmEmailModel;
-		if (service != null && service.TTSEnabled && userControl != null)
+		if (service != null && service.TTSEnabled && model != null)
 		{
-			confirmEmailModel.OnGetSpeechControl = () => ConfirmEmailViewTextToSpeech.GetSpeechControl(GetModelFromView);
+			model.OnGetSpeechControl = () => ConfirmEmailViewTextToSpeech.GetSpeechControl(GetModelFromView);
 		}
 	}
 
 	private static ConfirmEmailModel GetModelFromView()
 	{
-		return GetUserControl()?.DataContext as ConfirmEmailModel;
+		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
+		if (viewUserControl != null)
+		{
+			return viewUserControl?.DataContext as ConfirmEmailModel;
+		}
+		return null;
 	}
 
-	public static void OnHit()
+	public static void OnYesButtonPress()
 	{
-		SendKioskOptin(1L, ItemType);
-		IdleTimer?.Stop();
-		RemoveTimer();
-		OrchestrationService.ViewShow("optin_thank_you_view");
+		ConfirmEmailModel modelFromView = GetModelFromView();
+		lock (_lockObject)
+		{
+			if (modelFromView != null && !modelFromView.HasActionExecuted)
+			{
+				modelFromView.HasActionExecuted = true;
+				SendKioskOptin(1L, ItemType);
+				IdleTimer?.Stop();
+				RemoveTimer();
+				OrchestrationService.ViewShow("optin_thank_you_view");
+			}
+			else
+			{
+				LogHelper.Instance.Log("ConfirmEmailView: Yes button not pressed because it was disabled.");
+			}
+		}
 	}
 
-	public static void OnCancel()
+	public static void OnCancelButtonPress()
 	{
-		SendKioskOptin(0L, ItemType);
-		IdleTimer?.Stop();
-		RemoveTimer();
-		Callback?.Invoke();
+		ConfirmEmailModel modelFromView = GetModelFromView();
+		lock (_lockObject)
+		{
+			if (modelFromView != null && !modelFromView.HasActionExecuted)
+			{
+				modelFromView.HasActionExecuted = true;
+				SendKioskOptin(0L, ItemType);
+				IdleTimer?.Stop();
+				RemoveTimer();
+				Callback?.Invoke();
+			}
+			else
+			{
+				LogHelper.Instance.Log("ConfirmEmailView: No button not pressed because it was disabled.");
+			}
+		}
 	}
 
 	public static void OnTimeout()
 	{
-		SendKioskOptin(2L, ItemType);
-		IdleTimer?.Stop();
-		RemoveTimer();
-		Callback?.Invoke();
+		ConfirmEmailModel modelFromView = GetModelFromView();
+		lock (_lockObject)
+		{
+			if (modelFromView != null && !modelFromView.HasActionExecuted)
+			{
+				modelFromView.HasActionExecuted = true;
+				SendKioskOptin(2L, ItemType);
+				IdleTimer?.Stop();
+				RemoveTimer();
+				Callback?.Invoke();
+			}
+			else
+			{
+				LogHelper.Instance.Log("ConfirmEmailView: Timeout was not executed because it was disabled.");
+			}
+		}
 	}
 
 	private static void RemoveTimer()

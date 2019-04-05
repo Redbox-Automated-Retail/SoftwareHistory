@@ -34,6 +34,9 @@ public partial class PhoneAndPinViewUserControl : TextToSpeechUserControl, IWPFA
 		obj?.SetStyle(ADAPinButton);
 		obj?.SetStyle(StartButton);
 		obj?.SetStyle(SignInButton);
+		obj?.SetStyle(RightSignInButton);
+		obj?.SetStyle(RightStartButton);
+		obj?.SetStyle(TermsButton);
 	}
 
 	private void PhoneDisplayCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -46,13 +49,53 @@ public partial class PhoneAndPinViewUserControl : TextToSpeechUserControl, IWPFA
 		PhoneAndPinViewModel?.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Pin);
 	}
 
+	private void PinConfirmDisplayCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		PhoneAndPinViewModel?.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.PinConfirm);
+	}
+
 	private void StartCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		PhoneAndPinViewModel?.ProcessOnStartButtonClicked();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				PhoneAndPinViewModel?.ProcessOnStartButtonClicked();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void SignInCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		PhoneAndPinViewModel?.ProcessOnSignInButtonClicked();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				PhoneAndPinViewModel?.ProcessOnSignInButtonClicked();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
+	}
+
+	private void TermsButtonCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				PhoneAndPinViewModel?.ProcessOnTermsButtonClicked();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 }

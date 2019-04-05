@@ -8,6 +8,7 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.Proxy;
@@ -106,7 +107,7 @@ public class InventoryServicesProxy : IInventoryServices
 	{
 	}
 
-	public void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, RemoteServiceCallback callback)
+	public void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, RemoteServiceCallback callback)
 	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		string bundleVersion = service["ProductVersion"];
@@ -123,7 +124,8 @@ public class InventoryServicesProxy : IInventoryServices
 					LogHelper.Instance.Log("Invalid date time passed to Return : {0}.", returnTime);
 					result = DateTime.Now;
 				}
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Return", new
+				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
+				ReturnMessage returnMessage = new ReturnMessage
 				{
 					MessageType = "Return",
 					MessageId = Guid.NewGuid(),
@@ -136,7 +138,18 @@ public class InventoryServicesProxy : IInventoryServices
 					Deck = deck,
 					Slot = slot,
 					FailedSecurityRead = failedSecurityRead
-				});
+				};
+				object obj = null;
+				obj = (string.IsNullOrEmpty(barcode) ? ((object)returnMessage) : ((object)new ReturnMessageWithClientData
+				{
+					ClientData = new ReturnMessageClientData
+					{
+						Barcode = barcode,
+						FileName = fileName
+					},
+					ReturnMessage = returnMessage
+				}));
+				errorList = service2.Enqueue(200, "Return", obj);
 			}
 			catch (Exception e)
 			{
@@ -146,8 +159,8 @@ public class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service2 != null)
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -158,7 +171,7 @@ public class InventoryServicesProxy : IInventoryServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service2.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -240,7 +253,7 @@ public class InventoryServicesProxy : IInventoryServices
 		{
 			ErrorList errorList = null;
 			Guid messageId = Guid.NewGuid();
-			int num = 0;
+			int newMessageId = 0;
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -267,12 +280,7 @@ public class InventoryServicesProxy : IInventoryServices
 					BundleVersion = service["ProductVersion"],
 					Discs = list
 				};
-				errorList = service2.EnqueueOnlyOne(200, "SoftSync", message);
-				Redbox.KioskEngine.ComponentModel.Error error = errorList.Find((Redbox.KioskEngine.ComponentModel.Error err) => err.Code == "QID");
-				if (error != null)
-				{
-					num = Convert.ToInt32(error.Description);
-				}
+				errorList = service2.EnqueueOnlyOne(200, "SoftSync", message, out newMessageId);
 			}
 			catch (Exception e)
 			{
@@ -293,7 +301,7 @@ public class InventoryServicesProxy : IInventoryServices
 						{
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
-							remoteServiceResult.Properties["softsync_queue_id"] = num.ToString();
+							remoteServiceResult.Properties["softsync_queue_id"] = newMessageId.ToString();
 							remoteServiceResult.Properties["message_guid"] = messageId.ToString();
 						}
 						service3.EnqueueCallback(new RemoteServiceCallbackEntry
@@ -448,21 +456,38 @@ public class InventoryServicesProxy : IInventoryServices
 		};
 	}
 
-	public void UpdateFraudStatus(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback)
+	public void UpdateFraudStatus(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback, long? transactionId = null, long? discId = null, DateTime? returnDate = null)
+	{
+		Dictionary<string, string> dictionary = new Dictionary<string, string>();
+		dictionary.Add("FraudType", "Paper");
+		if (discId.HasValue)
+		{
+			dictionary.Add("DiscId", discId.Value.ToString());
+		}
+		if (returnDate.HasValue)
+		{
+			dictionary.Add("ReturnDate", returnDate.Value.ToString("o"));
+		}
+		UpdateFraudStatusInternal(storeNumber, barcode, isFraud, readTime, completeCallback, transactionId, dictionary);
+	}
+
+	public void UpdateFraudStatusInternal(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback, long? transactionId = null, Dictionary<string, string> properties = null)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
+			ErrorList errorList = null;
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.UpdateFraudStatus, URL: {0}", KioskServicesProxy.Instance.Url);
+				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.UpdateFraudStatus");
 				if (!DateTime.TryParseExact(readTime, "yyyyMMddHHmmss", null, DateTimeStyles.None, out var result))
 				{
 					result = DateTime.Now;
 				}
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
+				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
+				var message = new
 				{
 					MessageType = "DiscFraud",
 					MessageId = Guid.NewGuid(),
@@ -471,9 +496,11 @@ public class InventoryServicesProxy : IInventoryServices
 					BundleVersion = service["ProductVersion"],
 					Barcode = barcode,
 					IsFraud = bool.Parse(isFraud),
-					TransactionDate = result
-				});
-				remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+					TransactionDate = result,
+					TransactionId = transactionId,
+					PropertyBag = properties
+				};
+				errorList = service2.Enqueue(60, "DiscFraud", message);
 			}
 			catch (Exception e)
 			{
@@ -483,7 +510,13 @@ public class InventoryServicesProxy : IInventoryServices
 			{
 				try
 				{
-					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (errorList != null)
+					{
+						remoteServiceResult.Errors.AddRange(errorList);
+						remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+					}
+					service3.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,

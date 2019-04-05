@@ -41,8 +41,13 @@ internal class ProxyMessageHelper
 
 	public static ShoppingCart CreateShoppingCart(Guid id)
 	{
+		IRentalShoppingCart obj = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(id);
+		return CreateShoppingCart(obj, obj.Promotion);
+	}
+
+	public static ShoppingCart CreateShoppingCart(IRentalShoppingCart rentalShoppingCart, IPromotion promo)
+	{
 		ShoppingCart shoppingCart = new ShoppingCart();
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(id);
 		if (rentalShoppingCart?.Items?.Any() ?? false)
 		{
 			(rentalShoppingCart?.Items?.Where((IRentalShoppingCartItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ForEach(delegate(IRentalShoppingCartItem x)
@@ -57,7 +62,6 @@ internal class ProxyMessageHelper
 			});
 			if (rentalShoppingCart.Promotion != null)
 			{
-				IPromotion promo = rentalShoppingCart.Promotion;
 				promo?.PromotionItems?.ForEach(delegate(IPromotionItem x)
 				{
 					shoppingCart.Discounts.Add(new Discount
@@ -67,7 +71,8 @@ internal class ProxyMessageHelper
 						PromotionCode = promo.Name,
 						PromotionCodeValue = promo.OriginalPrice,
 						PromotionIntentCode = promo.Intent,
-						ProductId = x.RentalShoppingCartItem.ProductId
+						ProductId = x.RentalShoppingCartItem.ProductId,
+						ApplyOnlyToProduct = (promo.IsValidatedPostVend ? new bool?(promo.IsProductSpecific) : ((bool?)null))
 					});
 				});
 			}
@@ -100,6 +105,8 @@ internal class ProxyMessageHelper
 						ProductFamily = item2.TitleFamily.ToString(),
 						ProductId = item2.ProductId,
 						ProductType = item2.TitleType.GetDisplayName(),
+						OfferCode = item2.OfferCode,
+						DiscNumber = item2.DiscNumber,
 						Pricing = new Pricing
 						{
 							DefaultExtraNight = pricingRecord?.DefaultExtraNightPrice,

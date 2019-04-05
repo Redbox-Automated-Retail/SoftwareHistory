@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 
 namespace Redbox.HardwareServices.Kernel;
@@ -338,7 +340,7 @@ public static class HardwareFunctions
 		{
 			return;
 		}
-		timerService.CreateTimer(jobid, 1500, -1, delegate
+		timerService.CreateTimer(jobid, 1500, 250, delegate
 		{
 			IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
 			if (service != null && (service.GetSchedulerStatus(out var status).ContainsError() || status == jobid || status == "Idle"))
@@ -739,6 +741,17 @@ public static class HardwareFunctions
 		return luaTable;
 	}
 
+	[KernelFunction(Name = "kernel.is_active_hardware_job")]
+	internal static bool IsActiveHardwareJob(string jobId)
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		ReadOnlyCollection<IHardwareJob> hardwareJobs = null;
+		service?.GetHardwareJobs(out hardwareJobs);
+		bool flag = hardwareJobs?.Any((IHardwareJob x) => x.ID == jobId && (x.Status == "Pending" || x.Status == "Running" || x.Status == "Suspended")) ?? false;
+		LogHelper.Instance.Log(string.Format("IsActiveHardwareJob {0}: {1};  Job count: {2}, jobs: {3} ", jobId, flag, hardwareJobs?.Count, string.Join(", ", hardwareJobs.Select((IHardwareJob x) => $"{x.ID}:{x.Status}").ToArray())));
+		return flag;
+	}
+
 	[KernelFunction(Name = "kernel.hardwaregetjobs")]
 	internal static LuaTable HardwareGetJobs()
 	{
@@ -886,6 +899,47 @@ public static class HardwareFunctions
 			result = installDate.Value.ToString("o");
 		}
 		return result;
+	}
+
+	[KernelFunction(Name = "kernel.hardwaresupportscamerafraudscan")]
+	internal static bool HardwareSupportsCameraFraudScan()
+	{
+		return ServiceLocator.Instance.GetService<IHardwareService>()?.SupportsCameraFraudScan ?? false;
+	}
+
+	[KernelFunction(Name = "kernel.enqueue_hardware_properties")]
+	internal static void EnqueueHardwareProperties()
+	{
+		IHardwareState service = ServiceLocator.Instance.GetService<IHardwareState>();
+		IHealthServices service2 = ServiceLocator.Instance.GetService<IHealthServices>();
+		if (service == null)
+		{
+			LogHelper.Instance.Log("Hardware State was not found.");
+		}
+		if (service2 == null)
+		{
+			LogHelper.Instance.Log("Health Service was not found.");
+		}
+		LogHelper.Instance.Log("Enqueue Hardware State properties.", LogEntryType.Info);
+		LogHelper.Instance.Log($"Camera: {service.CurrentCameraGeneration.ToString()}, Decoder: {service.BarcodeDecoder.ToString()}");
+		if (service.CurrentCameraGeneration >= 3)
+		{
+			service2.EnqueueProperty("CameraType", service.CurrentCameraGeneration.ToString());
+		}
+	}
+
+	[KernelFunction(Name = "kernel.sync_unknowns")]
+	internal static void SyncUnknowns(int? qlm_deck, bool forceSync = false)
+	{
+		LogHelper.Instance.Log($"HardwareFunctions.SyncUnknowns called with forceSync = {forceSync.ToString()}");
+		SyncUnknownProcessor.Instance.StartJob(qlm_deck, forceSync);
+	}
+
+	[KernelFunction(Name = "kernel.sync_empties")]
+	internal static void SyncEmpties()
+	{
+		LogHelper.Instance.Log("HardwareFunctions.SyncEmpties Called.");
+		SyncEmptiesProcessor.Instance.StartJob();
 	}
 
 	private static LuaTable CreateResultTable(string jobId, ErrorList errors)

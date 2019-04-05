@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Redbox.BrokerServices.Proxy;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy;
 
 namespace Redbox.BrokerServices.KernelExtension;
 
@@ -28,6 +29,16 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	private CheckBox m_simulateCommunicationsErrorCheckBox;
 
 	private Label m_headerLabel;
+
+	private Panel panel1;
+
+	private Button btnCancel;
+
+	private Label label2;
+
+	private TextBox txtRefNumber;
+
+	private Button btnValidate;
 
 	public GeneralPreferencePage()
 	{
@@ -81,6 +92,16 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		ReservationServicesProxy.Instance.SimulateCommunicationsFailure = m_simulateCommunicationsErrorCheckBox.Checked;
 	}
 
+	private void btnCancel_Click(object sender, EventArgs e)
+	{
+		ReservationServicesProxy.Instance.CancelReservation(long.Parse(txtRefNumber.Text));
+	}
+
+	private void btnValidate_Click(object sender, EventArgs e)
+	{
+		ReservationServicesProxy.Instance.ValidateReservation(StoreServicesProxy.Instance.StoreNumber, long.Parse(txtRefNumber.Text), null);
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -102,7 +123,13 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		this.m_simulateServerBusyCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_simulateCommunicationsErrorCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_headerLabel = new System.Windows.Forms.Label();
+		this.panel1 = new System.Windows.Forms.Panel();
+		this.btnCancel = new System.Windows.Forms.Button();
+		this.label2 = new System.Windows.Forms.Label();
+		this.txtRefNumber = new System.Windows.Forms.TextBox();
+		this.btnValidate = new System.Windows.Forms.Button();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
+		this.panel1.SuspendLayout();
 		base.SuspendLayout();
 		this.m_brokerServicesTimeoutTextBox.Location = new System.Drawing.Point(107, 108);
 		this.m_brokerServicesTimeoutTextBox.MaxLength = 6;
@@ -162,8 +189,42 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		this.m_headerLabel.TabIndex = 7;
 		this.m_headerLabel.Text = "  Broker Service: General";
 		this.m_headerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+		this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+		this.panel1.Controls.Add(this.btnValidate);
+		this.panel1.Controls.Add(this.btnCancel);
+		this.panel1.Controls.Add(this.label2);
+		this.panel1.Controls.Add(this.txtRefNumber);
+		this.panel1.Location = new System.Drawing.Point(17, 356);
+		this.panel1.Name = "panel1";
+		this.panel1.Size = new System.Drawing.Size(509, 56);
+		this.panel1.TabIndex = 8;
+		this.btnCancel.Location = new System.Drawing.Point(263, 3);
+		this.btnCancel.Name = "btnCancel";
+		this.btnCancel.Size = new System.Drawing.Size(119, 23);
+		this.btnCancel.TabIndex = 4;
+		this.btnCancel.Text = "Cancel Reservation";
+		this.btnCancel.UseVisualStyleBackColor = true;
+		this.btnCancel.Click += new System.EventHandler(btnCancel_Click);
+		this.label2.AutoSize = true;
+		this.label2.Location = new System.Drawing.Point(10, 18);
+		this.label2.Name = "label2";
+		this.label2.Size = new System.Drawing.Size(100, 13);
+		this.label2.TabIndex = 3;
+		this.label2.Text = "Reference Number:";
+		this.txtRefNumber.Location = new System.Drawing.Point(114, 18);
+		this.txtRefNumber.Name = "txtRefNumber";
+		this.txtRefNumber.Size = new System.Drawing.Size(100, 20);
+		this.txtRefNumber.TabIndex = 1;
+		this.btnValidate.Location = new System.Drawing.Point(263, 31);
+		this.btnValidate.Name = "btnValidate";
+		this.btnValidate.Size = new System.Drawing.Size(119, 23);
+		this.btnValidate.TabIndex = 5;
+		this.btnValidate.Text = "Validate Reservation";
+		this.btnValidate.UseVisualStyleBackColor = true;
+		this.btnValidate.Click += new System.EventHandler(btnValidate_Click);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.panel1);
 		base.Controls.Add(this.m_headerLabel);
 		base.Controls.Add(this.m_simulateServerBusyCheckBox);
 		base.Controls.Add(this.m_simulateCommunicationsErrorCheckBox);
@@ -175,6 +236,8 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 		base.Name = "GeneralPreferencePage";
 		base.Size = new System.Drawing.Size(542, 506);
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).EndInit();
+		this.panel1.ResumeLayout(false);
+		this.panel1.PerformLayout();
 		base.ResumeLayout(false);
 		base.PerformLayout();
 	}

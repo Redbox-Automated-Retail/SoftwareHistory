@@ -5,5 +5,6 @@ public enum PromotionGetFormat
 	Any,
 	Dvd,
 	BluRay,
+	FourKUhd,
 	Game
 }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Http;
@@ -11,6 +12,7 @@ using System.Web;
 using Redbox.Core;
 using Redbox.JSONPrettyPrinter;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.ComponentModel;
 using Redbox.REDS.Framework;
 
@@ -71,19 +73,6 @@ public class KioskServicesProxy
 		return ExecuteMessage(message.ToJson());
 	}
 
-	private string ObfuscateMessageData(string msgText, char newChar, int leading, int trailing)
-	{
-		if (leading + trailing > msgText.Length)
-		{
-			leading = 0;
-			trailing = 0;
-		}
-		string obj = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
-		string text = ((trailing > 0) ? msgText.Substring(msgText.Length - trailing, trailing) : string.Empty);
-		string text2 = new string(newChar, msgText.Length - (leading + trailing));
-		return obj + text2 + text;
-	}
-
 	public void RegisterCommunicationActivity(Action<object, EventArgs> action)
 	{
 		if (action != null)
@@ -105,34 +94,7 @@ public class KioskServicesProxy
 		try
 		{
 			Dictionary<string, object> dictionary = jsonRequest.ToObject<Dictionary<string, object>>();
-			if (dictionary.ContainsKey("Username") && dictionary["Username"] != null)
-			{
-				dictionary.Remove("Username");
-			}
-			if (dictionary.ContainsKey("Password"))
-			{
-				dictionary.Remove("Password");
-			}
-			if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
-			{
-				dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("EmailAddress") && dictionary["EmailAddress"] != null)
-			{
-				dictionary["EmailAddress"] = ObfuscateMessageData(dictionary["EmailAddress"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("PhoneNumber") && dictionary["PhoneNumber"] != null)
-			{
-				dictionary["PhoneNumber"] = ObfuscateMessageData(dictionary["PhoneNumber"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("Pin"))
-			{
-				dictionary.Remove("Pin");
-			}
-			if (dictionary.ContainsKey("CardHash") && dictionary["CardHash"] != null)
-			{
-				dictionary.Remove("CardHash");
-			}
+			ObfuscationHelper.ObfuscateDictionary(dictionary);
 			if (dictionary.ContainsKey("OptInItems") && dictionary["OptInItems"] != null)
 			{
 				foreach (object item in dictionary["OptInItems"] as ArrayList)
@@ -140,89 +102,30 @@ public class KioskServicesProxy
 					Dictionary<string, object> dictionary2 = item as Dictionary<string, object>;
 					if (dictionary2.ContainsKey("OptInMethodData") && dictionary2["OptInMethodData"] != null)
 					{
-						dictionary2["OptInMethodData"] = ObfuscateMessageData(dictionary2["OptInMethodData"].ToString(), 'x', 1, 0);
+						dictionary2["OptInMethodData"] = ObfuscationHelper.ObfuscateMessageData(dictionary2["OptInMethodData"].ToString(), 'x', 1, 0);
 					}
 				}
 			}
 			if (dictionary.ContainsKey("CreditCard"))
 			{
-				Dictionary<string, object> dictionary3 = (Dictionary<string, object>)dictionary["CreditCard"];
-				dictionary3.Remove("CardId");
-				dictionary3.Remove("Track2");
-				dictionary3.Remove("Number");
-				if (dictionary3.ContainsKey("LastFour") && dictionary3["LastFour"] != null)
-				{
-					dictionary3["LastFour"] = ObfuscateMessageData(dictionary3["LastFour"].ToString(), '#', 0, 1);
-				}
-				if (dictionary3.ContainsKey("LastName") && dictionary3["LastName"] != null)
-				{
-					dictionary3["LastName"] = ObfuscateMessageData(dictionary3["LastName"].ToString(), 'x', 2, 0);
-				}
-				if (dictionary3.ContainsKey("FirstName") && dictionary3["FirstName"] != null)
-				{
-					dictionary3["FirstName"] = ObfuscateMessageData(dictionary3["FirstName"].ToString(), 'x', 1, 0);
-				}
-				if (dictionary3.ContainsKey("PostalCode") && dictionary3["PostalCode"] != null)
-				{
-					dictionary3["PostalCode"] = ObfuscateMessageData(dictionary3["PostalCode"].ToString(), '#', 0, 1);
-				}
-				if (dictionary3.ContainsKey("ExpirationYear") && dictionary3["ExpirationYear"] != null)
-				{
-					dictionary3["ExpirationYear"] = ObfuscateMessageData(dictionary3["ExpirationYear"].ToString(), '#', 0, 0);
-				}
-				if (dictionary3.ContainsKey("ExpirationMonth") && dictionary3["ExpirationMonth"] != null)
-				{
-					dictionary3["ExpirationMonth"] = ObfuscateMessageData(dictionary3["ExpirationMonth"].ToString(), '#', 0, 0);
-				}
+				ObfuscationHelper.ObfuscateDictionary((Dictionary<string, object>)dictionary["CreditCard"]);
+			}
+			if (dictionary.ContainsKey("Image"))
+			{
+				ArrayList arrayList = dictionary["Image"] as ArrayList;
+				List<object> list = arrayList?.ToArray().ToList();
+				string arg = ((arrayList != null) ? string.Join(string.Empty, list.Take(Math.Min(10, arrayList.Count))) : string.Empty);
+				dictionary["Image"] = $"{arg} ... {list?.Count ?? 0}";
 			}
 			string text = dictionary.ToJson();
 			string prettyString = PrettyPrinter.GetPrettyString(text);
 			LogHelper.Instance.Log("KioskServicesProxy JSON request: {0}", (prettyString.Length <= 10000) ? prettyString : text);
 			string text2 = PerformRemoteMessage(jsonRequest);
 			dictionary = text2.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
+			ObfuscationHelper.ObfuscateDictionary(dictionary);
 			if (dictionary.ContainsKey("CustomerProfile"))
 			{
-				Dictionary<string, object> dictionary4 = (Dictionary<string, object>)dictionary["CustomerProfile"];
-				if (dictionary4.ContainsKey("FirstName") && dictionary4["FirstName"] != null)
-				{
-					dictionary4["FirstName"] = ObfuscateMessageData(dictionary4["FirstName"].ToString(), 'x', 1, 0);
-				}
-			}
-			if (dictionary.ContainsKey("FirstName") && dictionary["FirstName"] != null)
-			{
-				dictionary["FirstName"] = ObfuscateMessageData(dictionary["FirstName"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("PhoneNumber") && dictionary["PhoneNumber"] != null)
-			{
-				dictionary["PhoneNumber"] = ObfuscateMessageData(dictionary["PhoneNumber"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("PostalCode") && dictionary["PostalCode"] != null)
-			{
-				dictionary["PostalCode"] = ObfuscateMessageData(dictionary["PostalCode"].ToString(), '#', 1, 0);
-			}
-			if (dictionary.ContainsKey("BirthDate") && dictionary["BirthDate"] != null)
-			{
-				dictionary["BirthDate"] = ObfuscateMessageData(dictionary["BirthDate"].ToString(), '#', 1, 0);
-			}
-			if (dictionary.ContainsKey("Email") && dictionary["Email"] != null)
-			{
-				dictionary["Email"] = ObfuscateMessageData(dictionary["Email"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("email") && dictionary["email"] != null)
-			{
-				dictionary["email"] = ObfuscateMessageData(dictionary["email"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("LoginEmail") && dictionary["LoginEmail"] != null)
-			{
-				dictionary["LoginEmail"] = ObfuscateMessageData(dictionary["LoginEmail"].ToString(), 'x', 1, 0);
-			}
-			if (dictionary.ContainsKey("CustomerProfileLastName") && dictionary["CustomerProfileLastName"] != null)
-			{
-				dictionary["CustomerProfileLastName"] = ObfuscateMessageData(dictionary["CustomerProfileLastName"].ToString(), 'x', 2, 0);
-			}
-			if (dictionary.ContainsKey("CustomerProfileFirstName") && dictionary["CustomerProfileFirstName"] != null)
-			{
-				dictionary["CustomerProfileFirstName"] = ObfuscateMessageData(dictionary["CustomerProfileFirstName"].ToString(), 'x', 1, 0);
+				ObfuscationHelper.ObfuscateDictionary((Dictionary<string, object>)dictionary["CustomerProfile"]);
 			}
 			string input = dictionary.ToJson();
 			LogHelper.Instance.Log("KioskServicesProxy JSON response: {0}", PrettyPrinter.GetPrettyString(input));

@@ -25,6 +25,11 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty ProductDescriptionLine3TextVisibilityProperty = DependencyProperty.Register("ProductDescriptionLine3TextVisibility", typeof(Visibility), typeof(DisplayCheckoutProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
 	public string ProductTypeText { get; set; }
 
 	public string ProductTitleText { get; set; }
@@ -87,6 +92,21 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ProductDescriptionLine3TextProperty, value);
+			});
+		}
+	}
+
+	public Visibility ProductDescriptionLine3TextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ProductDescriptionLine3TextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ProductDescriptionLine3TextVisibilityProperty, value);
 			});
 		}
 	}

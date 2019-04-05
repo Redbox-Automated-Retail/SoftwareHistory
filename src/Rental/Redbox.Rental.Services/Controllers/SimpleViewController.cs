@@ -1,8 +1,7 @@
-using System;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Redbox.Rental.Model.Marketing;
-using Redbox.Rental.Services.Personalization;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -15,42 +14,54 @@ public class SimpleViewController : BaseViewController
 	private static void ConfigureView(SimpleInfo info, bool useIdleTimer)
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-		if (viewUserControl != null)
+		if (viewUserControl == null)
 		{
-			if (useIdleTimer)
-			{
-				BaseViewController.StopIdleTimer();
-			}
-			BaseViewController.SetCurrentUICulture();
-			SimpleModel model = info.Model;
-			model.CancelAction = info.CancelAction;
-			model.ContinueAction = info.ContinueAction;
-			if (model.CancelAction != null)
-			{
-				model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Redbox.Rental.UI.Commands.CancelButtonCommand, CancelButtonCommand_Execute);
-			}
-			if (model.ContinueAction != null)
-			{
-				model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Redbox.Rental.UI.Commands.ContinueButtonCommand, ContinueButtonCommand_Execute);
-			}
-			if (model.OtherAction != null)
-			{
-				model.OtherButtonCommand = DynamicRouting.RegisterRoutedCommand<Action>(Redbox.Rental.UI.Commands.OtherButtonCommand, OtherButtonCommand_Execute);
-			}
-			viewUserControl.DataContext = model;
-			if (useIdleTimer)
-			{
-				BaseViewController.StartIdleTimer();
-			}
+			return;
 		}
+		if (useIdleTimer)
+		{
+			BaseViewController.StopIdleTimer();
+		}
+		BaseViewController.SetCurrentUICulture();
+		SimpleModel model = info.Model;
+		model.Info = info;
+		model.CancelAction = info.CancelAction;
+		model.ContinueAction = info.ContinueAction;
+		model.OtherAction = info.OtherAction;
+		if (info.CheckBoxChangedAction != null)
+		{
+			model.CheckBoxChangedAction = delegate(bool isChecked)
+			{
+				BaseViewController.ProcessWPFHit();
+				info.CheckBoxChangedAction(isChecked);
+			};
+		}
+		if (model.CancelAction != null)
+		{
+			model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Redbox.Rental.UI.Commands.CancelButtonCommand, CancelButtonCommand_Execute);
+		}
+		if (model.ContinueAction != null)
+		{
+			model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Redbox.Rental.UI.Commands.ContinueButtonCommand, ContinueButtonCommand_Execute, ContinueButtonCommand_CanExecute);
+		}
+		if (model.OtherAction != null)
+		{
+			model.OtherButtonCommand = DynamicRouting.RegisterRoutedCommand(Redbox.Rental.UI.Commands.OtherButtonCommand, OtherButtonCommand_Execute);
+		}
+		viewUserControl.DataContext = model;
+		if (useIdleTimer)
+		{
+			BaseViewController.StartIdleTimer();
+		}
+		InvokeAnalytics(model, AnalyticsTypes.context);
 	}
 
 	public static void ConfigurePromoView(SimpleInfo info)
 	{
 		string arg = string.Empty;
-		if (info.Obj is PersonalizationSession)
+		if (info.Obj is ILoginEmailProvider)
 		{
-			arg = (info.Obj as PersonalizationSession).LoginEmailAddress;
+			arg = (info.Obj as ILoginEmailProvider).LoginEmailAddress;
 		}
 		if (info.Model == null)
 		{
@@ -65,14 +76,12 @@ public class SimpleViewController : BaseViewController
 				Circle1Text = Resources.promo_perks_circle1,
 				Circle2Text = Resources.promo_perks_circle2,
 				Circle3Text = Resources.promo_perks_circle3,
-				OtherButtonText = Resources.promo_perks_btn_terms
-			};
-			info.Model.OtherAction = delegate
-			{
-				HelpViewController.ShowTermsAndConditions();
+				OtherButtonText = Resources.promo_perks_btn_terms,
+				CheckboxChecked = false,
+				CheckboxText = Resources.promo_perks_checkbox_label
 			};
 		}
-		ConfigureView(info, useIdleTimer: true);
+		ConfigureView(info, !info.UseIdleTimer.HasValue || info.UseIdleTimer.Value);
 	}
 
 	public static void ConfigurePerksView(SimpleInfo info)
@@ -87,7 +96,7 @@ public class SimpleViewController : BaseViewController
 				TitleText = Resources.joined_perks_title
 			};
 		}
-		ConfigureView(info, useIdleTimer: true);
+		ConfigureView(info, !info.UseIdleTimer.HasValue || info.UseIdleTimer.Value);
 	}
 
 	public static void ConfigureTextView(SimpleInfo info)
@@ -101,7 +110,7 @@ public class SimpleViewController : BaseViewController
 				TitleText = Resources.joined_texing_title
 			};
 		}
-		ConfigureView(info, useIdleTimer: true);
+		ConfigureView(info, !info.UseIdleTimer.HasValue || info.UseIdleTimer.Value);
 	}
 
 	public static void ConfigureEmailReceiptView(EmailReceiptInfo info)
@@ -119,21 +128,35 @@ public class SimpleViewController : BaseViewController
 				BannerImage = bannerImage
 			};
 		}
-		ConfigureView(info, useIdleTimer: false);
+		ConfigureView(info, info.UseIdleTimer.HasValue && info.UseIdleTimer.Value);
 	}
 
-	public static void OtherButtonCommand_Execute(Action action)
+	private static void InvokeAnalytics(SimpleModel model, AnalyticsTypes analyticsType)
 	{
-		if (action != null)
+		model?.Info?.AnalyticsAction?.Invoke(analyticsType);
+	}
+
+	public static void OtherButtonCommand_Execute()
+	{
+		BaseViewController.StopIdleTimer();
+		SimpleModel viewModel = BaseViewController.GetViewModel<SimpleModel>();
+		InvokeAnalytics(viewModel, AnalyticsTypes.button3Press);
+		if (viewModel != null && viewModel.OtherAction != null)
 		{
-			BaseViewController.InvokeActionOnIdle(action);
+			viewModel.OtherAction();
 		}
+		else
+		{
+			OrchestrationService.ViewGoBackSafe("Problem: SimpleModel.OtherAction was not set", popOnly: false);
+		}
+		BaseViewController.ProcessWPFHit();
 	}
 
 	public static void CancelButtonCommand_Execute()
 	{
 		BaseViewController.StopIdleTimer();
 		SimpleModel viewModel = BaseViewController.GetViewModel<SimpleModel>();
+		InvokeAnalytics(viewModel, AnalyticsTypes.button2Press);
 		if (viewModel != null && viewModel.CancelAction != null)
 		{
 			viewModel.CancelAction();
@@ -149,6 +172,7 @@ public class SimpleViewController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		SimpleModel viewModel = BaseViewController.GetViewModel<SimpleModel>();
+		InvokeAnalytics(viewModel, AnalyticsTypes.button1Press);
 		if (viewModel != null && viewModel.ContinueAction != null)
 		{
 			viewModel.ContinueAction();
@@ -158,5 +182,15 @@ public class SimpleViewController : BaseViewController
 			OrchestrationService.ViewGoBackSafe("Problem: SimpleModel.ContinueAction was not set", popOnly: false);
 		}
 		BaseViewController.ProcessWPFHit();
+	}
+
+	private static bool ContinueButtonCommand_CanExecute()
+	{
+		SimpleModel viewModel = BaseViewController.GetViewModel<SimpleModel>();
+		if (viewModel != null && viewModel.CheckBoxChangedAction != null)
+		{
+			return viewModel.CheckboxChecked;
+		}
+		return true;
 	}
 }

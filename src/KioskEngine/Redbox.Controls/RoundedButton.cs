@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Redbox.Controls.Themes;
+using Redbox.Core;
 
 namespace Redbox.Controls;
 
@@ -352,8 +353,51 @@ public class RoundedButton : Button, IThemedControl
 		if (IsClickBeforeAnimation || !IsAnimated)
 		{
 			State = !State;
+			LogButtonClick();
 			base.OnClick();
 		}
+	}
+
+	private void LogButtonClick()
+	{
+		string text = null;
+		DependencyObject parent = VisualTreeHelper.GetParent(this);
+		while (parent != null && !(parent is Window) && !(parent is UserControl))
+		{
+			parent = VisualTreeHelper.GetParent(parent);
+		}
+		if (parent != null && parent is UserControl)
+		{
+			UserControl userControl = parent as UserControl;
+			text = userControl?.Name;
+			if (string.IsNullOrEmpty(text))
+			{
+				text = userControl?.GetType()?.ToString();
+			}
+		}
+		else if (parent != null && parent is Window)
+		{
+			Window window = parent as Window;
+			text = window?.Name;
+			if (string.IsNullOrEmpty(text))
+			{
+				text = window?.GetType()?.ToString();
+			}
+		}
+		string arg = "";
+		if (!string.IsNullOrEmpty(base.Name))
+		{
+			arg = $"Button Name: {base.Name}";
+		}
+		else
+		{
+			string text2 = base.Tag?.ToString();
+			if (!string.IsNullOrEmpty(text2))
+			{
+				arg = $"Tag: {text2.Substring(0, Math.Min(text2.Length, 50))}";
+			}
+		}
+		LogHelper.Instance.Log($"RoundedButton click: Parent: {text}, {arg}");
 	}
 
 	private void Animation_Completed(object sender, EventArgs e)

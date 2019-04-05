@@ -12,6 +12,14 @@ public static class ConfigSetting
 
 	public static string GiftCardsEnabled = "GiftCardsEnabled";
 
+	public static string GenerateOutOfStockAnaltyics = "GenerateOutOfStockAnalytics";
+
+	public static string MaxUnknownSyncs = "MaxUnknownSyncs";
+
+	public static string SyncUnknownEnabled = "SyncUnknownEnabled";
+
+	public static string SyncEmptyEnabled = "SyncEmptyEnabled";
+
 	public static string GameEnableXbox360 = "GameEnableXbox360";
 
 	public static string GameEnableXboxOne = "GameEnableXboxOne";
@@ -25,6 +33,8 @@ public static class ConfigSetting
 	public static string GameEnableWiiU = "GameEnableWiiU";
 
 	public static string GameEnableNintendoSwitch = "GameEnableNintendoSwitch";
+
+	public static string FlashDealFlagForGamesEnabled = "FlashDealFlagForGamesEnabled";
 
 	public static string DefaultCulture = "DefaultCulture";
 
@@ -75,4 +85,20 @@ public static class ConfigSetting
 	public static string PerksDocument = "PerksDocument";
 
 	public static string MobileFaqDocument = "MobileFAQDocument";
+
+	public static string WelcomeScreen = "WelcomeScreen";
+
+	public static string PriceFiltersOnBrowse = "PriceFiltersOnBrowse";
+
+	public static string PrmUpsellOnMnp = "PRMUpsellonMNP";
+
+	public static string ScreenSaverTimer = "ScreenSaverTimer";
+
+	public static string OutOfStockTitleDetails = "OutOfStockTitleDetails";
+
+	public static string StarRatingTitleDetails = "StarRatingTitleDetails";
+
+	public static string TVEnabled = "TVEnabled";
+
+	public static string TVTitleIds = "TVTitleIds";
 }

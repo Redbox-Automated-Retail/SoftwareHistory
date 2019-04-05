@@ -77,6 +77,10 @@ public class BrowseItemModel : DependencyObject, IBrowseItemModel
 		}
 	}
 
+	public int CurrentGridRow { get; set; }
+
+	public int CurrentGridColumn { get; set; }
+
 	protected virtual object GetData()
 	{
 		return _data;

@@ -20,6 +20,10 @@ public class RentalShoppingCartFilterCriteria : IRentalShoppingCartFilterCriteri
 
 	public List<TitleType> ProductTypes { get; set; }
 
+	public int? ProductTypeId { get; set; }
+
+	public List<int> FormatIds { get; set; }
+
 	public bool IncludeMultiNightPricedItems { get; set; }
 
 	public bool IncludeLoyaltyRedeemedItems { get; set; }

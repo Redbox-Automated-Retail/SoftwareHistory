@@ -26,6 +26,8 @@ public class Banner
 		public const string Dvd = "dvd";
 
 		public const string _4k_uhd = "_4k_uhd";
+
+		public const string MultipleDiscs = "disc_vend";
 	}
 
 	public BannerType BannerType { get; set; }

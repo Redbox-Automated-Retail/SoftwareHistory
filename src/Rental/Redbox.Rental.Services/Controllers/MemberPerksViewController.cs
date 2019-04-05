@@ -1,6 +1,10 @@
+using System.Collections.Generic;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.Services.Session;
+using Redbox.Rental.UI;
 using Redbox.Rental.UI.ControllersLogic;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -24,44 +28,170 @@ public class MemberPerksViewController : BaseViewController
 		}
 		BaseViewController.StopIdleTimer();
 		BaseViewController.SetCurrentUICulture();
-		MemberPerksModel memberPerksModel;
+		MemberPerksModel Model;
 		if (perksInfo.PerksModel != null && perksInfo.PerksLogic != null)
 		{
-			memberPerksModel = perksInfo.PerksModel;
+			Model = perksInfo.PerksModel;
 			MemberPerksLogic perksLogic = perksInfo.PerksLogic;
 		}
 		else
 		{
-			memberPerksModel = new MemberPerksModel
+			Model = new MemberPerksModel
 			{
-				PromoButtonVisibility = Visibility.Collapsed,
-				SnapshotButtonText = Resources.perks_snapshot_btn_text,
 				PerksButtonText = Resources.perks_perks_btn_text,
 				PromosButtonText = Resources.perks_promos_btn_text,
-				CancelButtonText = Resources.perks_cancel_btn_text
+				CancelButtonText = Resources.perks_cancel_btn_text,
+				EmptyPromoListMessage = Resources.perks_promo_empty_list_text,
+				PromosPerPage = 6,
+				IsAdaMode = BaseViewController.ApplicationState.IsADAAccessible
 			};
 			switch (perksInfo.TierName.ToLower())
 			{
 			default:
-				memberPerksModel.MemberTier = TierType.Member;
+				Model.MemberTier = TierType.Member;
 				break;
 			case "star":
-				memberPerksModel.MemberTier = TierType.Star;
+				Model.MemberTier = TierType.Star;
 				break;
 			case "superstar":
-				memberPerksModel.MemberTier = TierType.Superstar;
+				Model.MemberTier = TierType.Superstar;
 				break;
 			case "legend":
-				memberPerksModel.MemberTier = TierType.Legend;
+				Model.MemberTier = TierType.Legend;
 				break;
 			}
-			MemberPerksLogic perksLogic = (memberPerksModel.Logic = new MemberPerksLogic(memberPerksModel, perksInfo));
-			perksInfo.PerksModel = memberPerksModel;
+			MemberPerksLogic perksLogic = new MemberPerksLogic(Model, perksInfo, new PromoListLogic(Model));
+			Model.Logic = perksLogic;
+			Model.InfoButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(PerksPopupInfo info)
+			{
+				MoreInfoPopupCommand_Execute(info, perksInfo);
+			});
+			Model.InfoButtonText = Resources.perks_info_button_text;
+			Model.AddOrRemovePromoCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(StoredPromoCodeModel obj)
+			{
+				AddOrRemovePromoCommand_Execute(obj, Model);
+			});
+			Model.DetailsCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(PerksOfferListItemModel obj)
+			{
+				DetailsCommand_Execute(obj, Model);
+			});
+			UpdateStoredPromos(Model);
+			perksInfo.PerksModel = Model;
 			perksInfo.PerksLogic = perksLogic;
 		}
-		viewUserControl.DataContext = memberPerksModel;
-		ConfigureTTS(memberPerksModel);
+		viewUserControl.DataContext = Model;
+		ConfigureTTS(Model);
 		BaseViewController.StartIdleTimer();
+	}
+
+	private static void MoreInfoPopupCommand_Execute(PerksPopupInfo info, PerksMemberInfo perksInfo)
+	{
+		OrchestrationService.ViewShow("member_perks_popup_view", new PerksPopupInfo
+		{
+			Points = perksInfo.Points,
+			YearRentals = perksInfo.YearRentals,
+			TierName = perksInfo.TierName
+		});
+	}
+
+	private static void UpdateStoredPromos(MemberPerksModel model)
+	{
+		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+		string activePromoCode = string.Empty;
+		if (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart != null)
+		{
+			activePromoCode = BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.Promotion?.Name;
+		}
+		List<IPerksOfferListItem> list = PromoListLogic.CreateOfferListItemModels(model, personalizationSession, activePromoCode, '*', includeOffers: true);
+		model.IsPromoCodeListVisible = list.Count > 0;
+		model.IsEmptyPromoListMessageVisible = list.Count == 0;
+		model.PromosPerPage = 6;
+		model.CurrentPageNumber = PromoListLogic.FindPageOfSelectedPromo(model);
+	}
+
+	private static void AddOrRemovePromoCommand_Execute(StoredPromoCodeModel promoCodeModel, MemberPerksModel model)
+	{
+		promoCodeModel.Logic.AddRemovePromoButtonPressedAnalytics(promoCodeModel);
+		BaseViewController.ProcessWPFHit();
+		model.ShowPromoListMessage = false;
+		if (!promoCodeModel.IsAdded)
+		{
+			PromoConfirmationInfo promoConfirmationInfo = new PromoConfirmationInfo();
+			promoConfirmationInfo.promoCodeModel = promoCodeModel;
+			promoConfirmationInfo.ApplyPromoCodeAction = delegate
+			{
+				if (((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart)?.Items?.Count ?? 0) > 0)
+				{
+					ValidatePromoCode(promoCodeModel, model);
+				}
+				else
+				{
+					BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.ClearPromoCode();
+					SetSelectedPromo(promoCodeModel, model);
+				}
+			};
+			promoConfirmationInfo.CancelAction = delegate
+			{
+			};
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			service?.Push("promo_confirmation_view", promoConfirmationInfo);
+			service?.Show();
+		}
+		else if (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart != null)
+		{
+			BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ClearPromoCode();
+			BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ClearLoyaltyPointsToBeEarned();
+			promoCodeModel.IsAdded = false;
+			model.ShowPromoListMessage = true;
+			model.PromoListMessage = string.Format(Resources.perks_promo_remove_message, promoCodeModel.MaskedPromoCode);
+		}
+	}
+
+	private static void DetailsCommand_Execute(PerksOfferListItemModel perksOfferModel, MemberPerksModel model)
+	{
+		if (perksOfferModel.OfferStatus == "Active")
+		{
+			OrchestrationService.ViewShow("perks_offer_details_view", perksOfferModel);
+		}
+	}
+
+	private static void ValidatePromoCode(StoredPromoCodeModel promoCodeModel, MemberPerksModel model)
+	{
+		LogHelper.Instance.Log("calling ValidatePromoCode from MemberPerksView.");
+		IViewService viewService = ServiceLocator.Instance.GetService<IViewService>();
+		PromotionFunctions.ValidatePromoCode(doneCallback: delegate
+		{
+			viewService.UnwindToSafe("member_perks_view", discard: false, "MemberPerksView:get_promo_code (on_complete)");
+			SetSelectedPromo(promoCodeModel, model);
+		}, afterErrorMessageCallback: delegate
+		{
+			viewService.UnwindToSafe("member_perks_view", discard: false, "MemberPerksView:get_promo_code (on_error)");
+			if ((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart).Promotion == null)
+			{
+				ClearSelectedPromo(model);
+			}
+		}, promoCode: promoCodeModel.PromoCode);
+	}
+
+	private static void SetSelectedPromo(StoredPromoCodeModel promoCodeModel, MemberPerksModel model)
+	{
+		ClearSelectedPromo(model);
+		promoCodeModel.IsAdded = true;
+		model.ShowPromoListMessage = true;
+		model.PromoListMessage = string.Format(Resources.perks_promo_add_message, promoCodeModel.MaskedPromoCode);
+		ServiceLocator.Instance.GetService<IPersonalizationService>()?.SetSelectedPromo(promoCodeModel.PromoCode);
+	}
+
+	private static void ClearSelectedPromo(MemberPerksModel model)
+	{
+		foreach (IPerksOfferListItem storedPromoCode in model.StoredPromoCodes)
+		{
+			if (storedPromoCode is StoredPromoCodeModel)
+			{
+				((StoredPromoCodeModel)storedPromoCode).IsAdded = false;
+			}
+		}
+		ServiceLocator.Instance.GetService<IPersonalizationService>()?.ClearSelectedPromo();
 	}
 
 	public static void ClosingView(PerksMemberInfo perksInfo)

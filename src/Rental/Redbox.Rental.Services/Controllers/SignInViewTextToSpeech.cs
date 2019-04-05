@@ -54,7 +54,7 @@ public class SignInViewTextToSpeech
 					KeyCode = "1",
 					Action = delegate
 					{
-						signInViewModel.ProcessOnEmailAndPasswordButtonClicked();
+						signInViewModel.ProcessOnPhoneAndPinButtonClicked();
 					}
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
@@ -62,7 +62,7 @@ public class SignInViewTextToSpeech
 					KeyCode = "2",
 					Action = delegate
 					{
-						signInViewModel.ProcessOnPhoneAndPinButtonClicked();
+						signInViewModel.ProcessOnEmailAndPasswordButtonClicked();
 					}
 				});
 				speechPart.Texts.Add(new TextPart
@@ -71,11 +71,11 @@ public class SignInViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "To sign in, using email and password, press 1."
+					Text = "To sign in, using phone and pin, press 1."
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "To sign in, using phone and pin, press 2."
+					Text = "To sign in, using email and password, press 2."
 				});
 				speechPart.Texts.Add(new TextPart
 				{

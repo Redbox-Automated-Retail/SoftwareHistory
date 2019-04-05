@@ -1,13 +1,19 @@
-using System;
+﻿using System;
+using System.CodeDom.Compiler;
+using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Controls;
+using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "IdleTimeoutMessageView")]
 public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl, IComponentConnector
 {
 	private int m_timeout;
@@ -18,43 +24,9 @@ public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl
 
 	private bool m_timerDisabled;
 
-	public string Message
-	{
-		get
-		{
-			return MessageText.Text;
-		}
-		set
-		{
-			MessageText.Text = value;
-		}
-	}
+	private IdleTimeoutMessageViewModel _idleTimeoutMessageViewModel;
 
-	public string ButtonNoText
-	{
-		get
-		{
-			return ButtonNo_Text.Text;
-		}
-		set
-		{
-			ButtonNo_Text.Text = value;
-		}
-	}
-
-	public string ButtonYesTest
-	{
-		get
-		{
-			return ButtonYes_Text.Text;
-		}
-		set
-		{
-			ButtonYes_Text.Text = value;
-		}
-	}
-
-	public int Timeout
+	private int Timeout
 	{
 		get
 		{
@@ -74,10 +46,6 @@ public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl
 		}
 	}
 
-	public event Action OnButtonYesClicked;
-
-	public event Action OnButtonNoClicked;
-
 	public IdleTimeoutMessageViewUserControl()
 	{
 		InitializeComponent();
@@ -91,6 +59,11 @@ public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(YesButton);
 		obj?.SetStyle(NoButton);
+	}
+
+	public override ISpeechControl GetSpeechControl()
+	{
+		return _idleTimeoutMessageViewModel.OnGetSpeechControl();
 	}
 
 	private void TimerTick(object sender, EventArgs e)
@@ -122,18 +95,25 @@ public partial class IdleTimeoutMessageViewUserControl : TextToSpeechUserControl
 	private void YesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StopTimer(executeTimeoutEvent: false);
-		if (OnButtonYesClicked != null)
-		{
-			OnButtonYesClicked();
-		}
+		_idleTimeoutMessageViewModel?.ProcessOnButtonYesClicked();
 	}
 
 	private void NoCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StopTimer(executeTimeoutEvent: false);
-		if (OnButtonNoClicked != null)
+		_idleTimeoutMessageViewModel?.ProcessOnButtonNoClicked();
+	}
+
+	private void TextToSpeechUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+	{
+		_idleTimeoutMessageViewModel = base.DataContext as IdleTimeoutMessageViewModel;
+		if (_idleTimeoutMessageViewModel != null)
 		{
-			OnButtonNoClicked();
+			Timeout = _idleTimeoutMessageViewModel.Timeout;
+		}
+		else
+		{
+			StopTimer(executeTimeoutEvent: false);
 		}
 	}
 }

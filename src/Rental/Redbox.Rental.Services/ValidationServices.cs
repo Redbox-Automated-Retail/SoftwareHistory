@@ -86,6 +86,16 @@ public static class ValidationServices
 			errorMessage = "Missing . symbol";
 			return false;
 		}
+		if (text.StartsWith("."))
+		{
+			errorMessage = "Starting period found";
+			return false;
+		}
+		if (text.EndsWith("."))
+		{
+			errorMessage = "Ending period found";
+			return false;
+		}
 		int num2 = emailAddress.LastIndexOf(".");
 		if (!ValidateTopLevelDomain(emailAddress.Substring(Math.Min(num2 + 1, emailAddress.Length - 1))))
 		{

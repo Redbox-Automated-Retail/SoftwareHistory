@@ -11,6 +11,8 @@ internal sealed class ResultCallbackEntry : ICallbackEntry, IDisposable
 
 	public object[] Parameters { get; set; }
 
+	public string Name => "ResultCallbackEntry";
+
 	public bool EnableDebugger { get; set; }
 
 	public ResultCallbackEntry()

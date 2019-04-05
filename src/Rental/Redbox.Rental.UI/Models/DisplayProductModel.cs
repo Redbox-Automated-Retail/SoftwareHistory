@@ -14,6 +14,8 @@ public class DisplayProductModel : BrowseItemModel
 		OverhangLowerLeftCorner
 	}
 
+	public static readonly DependencyProperty StarRatingProperty = DependencyProperty.Register("StarRating", typeof(int?), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty HeaderProperty = DependencyProperty.Register("Header", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty DescriptionProperty = DependencyProperty.Register("Description", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -74,6 +76,8 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty RatingVisibilityProperty = DependencyProperty.Register("RatingVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty ReviewButtonVisibilityProperty = DependencyProperty.Register("ReviewButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty FormatVisibilityProperty = DependencyProperty.Register("FormatVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RunningTimeVisibilityProperty = DependencyProperty.Register("RunningTimeVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -93,10 +97,6 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty BuyTextProperty = DependencyProperty.Register("BuyText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BuyPriceTextProperty = DependencyProperty.Register("BuyPriceText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty BuyPriceVisibilityProperty = DependencyProperty.Register("BuyPriceVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty BuyChevronVisibilityProperty = DependencyProperty.Register("BuyChevronVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BuyButtonTextStyleProperty = DependencyProperty.Register("BuyButtonTextStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -137,6 +137,15 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty CornerIncludeButtonVisibilityProperty = DependencyProperty.Register("CornerIncludeButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty CornerExcludeButtonVisibilityProperty = DependencyProperty.Register("CornerExcludeButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty MDVFieldVisibilityProperty = DependencyProperty.Register("MDVFieldVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty MDVNumberOfDiscsTextProperty = DependencyProperty.Register("MDVNumberOfDiscsText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MDVDiscVendTextProperty = DependencyProperty.Register("MDVDiscVendText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty AddButtonLabelTextProperty = DependencyProperty.Register("AddButtonLabelText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -483,6 +492,51 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ComingSoonButtonCheckMarkVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility MDVFieldVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MDVFieldVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MDVFieldVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string MDVNumberOfDiscsText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MDVNumberOfDiscsTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MDVNumberOfDiscsTextProperty, value);
+			});
+		}
+	}
+
+	public string MDVDiscVendText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MDVDiscVendTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MDVDiscVendTextProperty, value);
 			});
 		}
 	}
@@ -1306,6 +1360,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public Visibility ReviewButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ReviewButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ReviewButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility FormatVisibility
 	{
 		get
@@ -1591,36 +1660,6 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public Visibility BuyPriceVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BuyPriceVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(BuyPriceVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility BuyChevronVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BuyChevronVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(BuyChevronVisibilityProperty, value);
-			});
-		}
-	}
-
 	public Style BuyButtonTextStyle
 	{
 		get
@@ -1786,6 +1825,25 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public int? StarRating
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int?)GetValue(StarRatingProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(StarRatingProperty, value);
+			});
+		}
+	}
+
+	public string ReviewsButtonText { get; set; }
+
+	public DynamicRoutedCommand ReviewsButtonCommand { get; set; }
+
 	public DisplayProductModelConstants DisplayProductModelConstants { get; set; }
 
 	public DisplayProductModel()
@@ -1910,6 +1968,26 @@ public class DisplayProductModel : BrowseItemModel
 		CornerAddButtonVisibility = Visibility.Collapsed;
 		AddButtonPlusSignVisibility = Visibility.Collapsed;
 		ADAMiniCartAddButtonVisibility = Visibility.Collapsed;
+	}
+
+	public void ConfigureForRecommendedTitlesPopup()
+	{
+		ImageBorderColor = Color.FromRgb(60, 56, 57);
+		ImageBorderThickness = new Thickness(1.0);
+		ImageBorderCornerRadius = 0.0;
+		ImageOpacity = 1.0;
+		LockAspectRatio = true;
+		AddButtonPlusSignVisibility = Visibility.Visible;
+		CornerAddButtonVisibility = Visibility.Visible;
+		AddButtonPosition = AddButtonPositions.LowerLeftCorner;
+		AddButtonOpacity = 1.0;
+		base.CanAdd = true;
+		BannerVisibility = Visibility.Collapsed;
+		FlagVisibility = Visibility.Collapsed;
+		ShowBuy = Visibility.Collapsed;
+		AddButtonBarVisibility = Visibility.Visible;
+		OutOfStockVisibility = Visibility.Collapsed;
+		ComingSoonVisibility = Visibility.Collapsed;
 	}
 
 	public void ConfigureForUpsell()

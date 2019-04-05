@@ -3,6 +3,8 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
 
@@ -30,6 +32,8 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 
 	public int _touchScreenInActivity;
 
+	private int _resetsBeforeAlert;
+
 	private Timer _changeTimer;
 
 	private DateTime _inActiveFrom;
@@ -37,6 +41,8 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 	private bool _resetOccurred;
 
 	private Guid? _relatedId;
+
+	private int _contiguousResetCount;
 
 	private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
@@ -222,7 +228,8 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 				{
 					return;
 				}
-				LogHelper.Instance.Log("TouchScreenHealth.NoActivity - Kiosk touch screen has been inactive for {0} minutes between {1} and {2}", _touchScreenInActivity, _touchScreenStartCheck, _touchScreenEndCheck);
+				_contiguousResetCount++;
+				LogHelper.Instance.Log("TouchScreenHealth.NoActivity - Kiosk touch screen has been inactive for {0} minutes between {1} and {2}. There are {3} resets without activity.", _touchScreenInActivity, _touchScreenStartCheck, _touchScreenEndCheck, _contiguousResetCount);
 				if (_touchScreenReporting)
 				{
 					KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthTouchScreen, KioskEventSubType.KioskHealth_TouchScreenInactivity, success: true, null, null, new
@@ -236,12 +243,17 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 					}
 					kioskEvent.RelatedId = _relatedId;
 					_kioskEvents.AddEvent(kioskEvent);
+					if (_contiguousResetCount % _resetsBeforeAlert == 0)
+					{
+						SendAlert(kioskEvent);
+					}
 				}
 				CorrectProblem();
 			}
 			else
 			{
 				ResetInActiveFrom();
+				_contiguousResetCount = 0;
 			}
 		}
 		catch (Exception e)
@@ -251,6 +263,19 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 		finally
 		{
 			_lock.ExitWriteLock();
+		}
+	}
+
+	private void SendAlert(KioskEvent kioskEvent, Action action = null)
+	{
+		IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
+		if (service != null)
+		{
+			IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
+			if (service2 != null)
+			{
+				service.SendAlert(service2.KioskId.ToString(), "ApplicationCrash", "TouchScreenInactivity", kioskEvent.Data, DateTime.Now, null, action);
+			}
 		}
 	}
 
@@ -308,6 +333,7 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 	{
 		_resetOccurred = false;
 		_relatedId = null;
+		_contiguousResetCount = 0;
 	}
 
 	private void ReadConfiguration()
@@ -318,6 +344,7 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 		_touchScreenStartCheck = _configuration.TouchScreenStartCheck;
 		_touchScreenEndCheck = _configuration.TouchScreenEndCheck;
 		_touchScreenInActivity = _configuration.TouchScreenInActivity;
+		_resetsBeforeAlert = _configuration.TouchScreenResetsToAlert;
 		LogHelper.Instance.Log("TouchScreenHealth Active {0}", _touchScreenActive);
 		LogHelper.Instance.Log("TouchScreenHealth Reporting {0}", _touchScreenReporting);
 		LogHelper.Instance.Log("TouchScreenHealth Healing {0}", _touchScreenHealing);

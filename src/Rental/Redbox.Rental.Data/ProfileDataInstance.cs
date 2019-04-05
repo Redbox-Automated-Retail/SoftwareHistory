@@ -132,6 +132,8 @@ public class ProfileDataInstance : IProfileDataInstance
 		}
 	}
 
+	public Dictionary<long, ProductGroupXREF> MultiDiscWorkaroundXREF { get; set; } = new Dictionary<long, ProductGroupXREF>();
+
 	public Dictionary<long, ProductRating> ProductRatings
 	{
 		get
@@ -203,6 +205,8 @@ public class ProfileDataInstance : IProfileDataInstance
 			_profileVersion = value;
 		}
 	}
+
+	public Dictionary<long, ReviewList> Reviews { get; set; } = new Dictionary<long, ReviewList>();
 
 	public string OriginMachine { get; set; }
 

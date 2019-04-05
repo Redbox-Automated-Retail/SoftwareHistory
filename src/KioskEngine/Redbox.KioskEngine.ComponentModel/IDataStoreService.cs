@@ -5,8 +5,6 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IDataStoreService
 {
-	void RegisterDataStoreProvider(string dataStore, string provider);
-
 	void Set(string dataStore, string tableName, string keyName, object data);
 
 	void BulkSet(string dataStore, string tableName, IDictionary<string, object> values);

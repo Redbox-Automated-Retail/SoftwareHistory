@@ -13,5 +13,11 @@ public interface IApplicationState
 
 	bool VerboseLogging { get; }
 
+	bool EnableOfflineBadCardList { get; set; }
+
 	List<IKioskProduct> BrowseProducts { get; set; }
+
+	bool IsStandAlone { get; set; }
+
+	bool NeedToReloadCarousel { get; set; }
 }

@@ -66,6 +66,14 @@ public class MultiNightPricingPopupViewTextToSpeech
 						multiNightPricingPopupViewModel.ProcessOnMultiNightButtonClicked();
 					}
 				});
+				speechPart.Events.Add(new MapKeyPressToAction
+				{
+					KeyCode = "3",
+					Action = delegate
+					{
+						multiNightPricingPopupViewModel.ProcessOnBuyButtonClicked();
+					}
+				});
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = multiNightPricingPopupViewModel.HeaderText
@@ -86,6 +94,13 @@ public class MultiNightPricingPopupViewTextToSpeech
 					speechPart.Texts.Add(new TextPart
 					{
 						Text = "For " + multiNightPricingPopupViewModel.MultiNightButtonText + ", press 2."
+					});
+				}
+				if (multiNightPricingPopupViewModel.BuyButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "For " + multiNightPricingPopupViewModel.BuyButtonText + ", press 3."
 					});
 				}
 				speechPart.Texts.Add(new TextPart

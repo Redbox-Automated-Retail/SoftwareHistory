@@ -10,10 +10,12 @@ using Redbox.BrokerServices.Proxy;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Services.KioskBrokerServices.KioskShared.DomainObjects;
 using Redbox.Services.KioskBrokerServices.KioskShared.Enums;
@@ -58,8 +60,6 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
-	private IDataStoreService _dss;
-
 	private IDataService _dataService;
 
 	private List<DropdownTitle> _allProducts;
@@ -76,7 +76,7 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	private decimal _discSubtotal;
 
-	private decimal _onlinePromo;
+	private decimal _onlinePromoValue;
 
 	private decimal _taxRate;
 
@@ -172,6 +172,8 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	private Label label16;
 
+	private CheckBox cbAuthorizeAtPickup;
+
 	private DataGridViewTextBoxColumn TitleID;
 
 	private DataGridViewComboBoxColumn Title;
@@ -182,21 +184,15 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	private DataGridViewTextBoxColumn Discount;
 
-	private DataGridViewTextBoxColumn Credits;
-
 	private DataGridViewTextBoxColumn DiscountedPrice;
 
-	private IDataStoreService dss
-	{
-		get
-		{
-			if (_dss == null)
-			{
-				_dss = ServiceLocator.Instance.GetService<IDataStoreService>();
-			}
-			return _dss;
-		}
-	}
+	private DataGridViewComboBoxColumn DiscountType;
+
+	private DataGridViewTextBoxColumn LoyaltyPoints;
+
+	private DataGridViewTextBoxColumn Credits;
+
+	private CheckBox cbNewHash;
 
 	private IDataService DataService
 	{
@@ -241,7 +237,6 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	public bool SaveValues(IPreferencePage preferencePage)
 	{
-		_dss = null;
 		_dataService = null;
 		_reservationTitles = null;
 		_titleBinding = null;
@@ -253,7 +248,7 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		UpdateReservationCount();
 		_allProducts = new List<DropdownTitle>();
 		List<IKioskProduct> products = new List<IKioskProduct>();
-		DataService.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.Alpha, null, null, null, isADAView: true, out products);
+		DataService.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.Alpha, null, null, null, isADAView: true, null, null, out products);
 		products.ForEach(delegate(IKioskProduct p)
 		{
 			_allProducts.Add(new DropdownTitle((ITitleProduct)p));
@@ -283,13 +278,32 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 			ReservationType.Purchase
 		};
 		obj2.DataSource = dataSource;
+		DataGridViewComboBoxColumn obj3 = (DataGridViewComboBoxColumn)dgvTitles.Columns["DiscountType"];
+		obj3.DataPropertyName = "DiscountType";
+		List<DiscountType> dataSource2 = new List<DiscountType>
+		{
+			(DiscountType)0,
+			(DiscountType)1,
+			(DiscountType)2,
+			(DiscountType)3
+		};
+		obj3.DataSource = dataSource2;
 		AddTitle();
 	}
 
 	private void UpdateReservationCount()
 	{
-		Dictionary<string, object> obj = dss?.GetAll("local", "Reservation");
-		m_reservationCount.Text = obj?.Count.ToString() ?? "0";
+		List<Redbox.Rental.Model.Reservation.IReservation> list = DataService?.GetAllReservations();
+		new Dictionary<string, int>();
+		List<string> list2 = new List<string>();
+		if (list != null)
+		{
+			foreach (Redbox.Rental.Model.Reservation.IReservation item in list)
+			{
+				list2.Add(item.ReferenceNumber);
+			}
+		}
+		m_reservationCount.Text = list2.Join(", ");
 	}
 
 	private void OnCreateReservationClick(object sender, EventArgs e)
@@ -327,7 +341,7 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 			{
 				FillTitlePricing(reservationTitle);
 			}
-			reservationTitle.DiscountedPrice = reservationTitle.Price - reservationTitle.Discount;
+			reservationTitle.DiscountedPrice = reservationTitle.Price + reservationTitle.Discount;
 			dgvTitles.RefreshEdit();
 			UpdateTotals();
 		}
@@ -370,10 +384,10 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 				}
 			}
 		}
-		_onlinePromo = nudOnlineDiscount.Value;
-		num2 += _onlinePromo;
+		nudOnlineDiscount.Value = num2;
+		_onlinePromoValue = num2;
 		lblSubTotal.Text = num.ToString("###,###.00");
-		_discSubtotal = num - num2;
+		_discSubtotal = num + num2;
 		lblDiscountedSubtotal.Text = _discSubtotal.ToString("###,###.00");
 		_taxRate = nudTaxRate.Value;
 		_taxAmt = _taxRate / 100m * _discSubtotal;
@@ -407,6 +421,10 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	public void SimulateCreateReservation()
 	{
+		//IL_01c0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e1: Expected O, but got Unknown
 		Dictionary<string, List<int>> dictionary = new Dictionary<string, List<int>>();
 		List<ReservationTitle3> list = new List<ReservationTitle3>();
 		bool flag = false;
@@ -425,8 +443,45 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 			}
 			dictionary[key].Add(title.TitleID);
 			flag = flag || _allProducts.FirstOrDefault((DropdownTitle p) => p.ProductId == title.TitleID)?.TitleProduct is MDVProduct;
+			DataService.GetProduct(title.LongTitleId, excludeTitleRollup: true, out var kioskProduct);
+			if (!(kioskProduct is MDVProduct mDVProduct))
+			{
+				continue;
+			}
+			foreach (ITitleProduct eachSecondardProduct in mDVProduct.TitleProducts)
+			{
+				if (!list.Any((ReservationTitle3 x) => x.TitleID == eachSecondardProduct.ProductId))
+				{
+					ReservationTitle3 reservationTitle = new ReservationTitle3
+					{
+						TitleID = (int)eachSecondardProduct.ProductId,
+						ReservationType = title.ReservationType
+					};
+					list.Add(reservationTitle);
+					dictionary[key].Add(reservationTitle.TitleID);
+				}
+			}
 		}
-		IReservationResult reservationResult = ReservationServicesProxy.Instance.SimulateCreateReservation("tE+xZHoxAjrOrueI34+SXg4Q+xwchyIQu8vdRMSTz3k=", "joecool@redbox.com", ++_transactionId, DateTime.Now, dictionary, cbAppliedCredit.Checked, cbAppliedPromo.Checked, cbAppliedMarketing.Checked, txtCustNum.Text, _discSubtotal, _grandTotal, new List<int>(), _onlinePromo, cbMultiNight.Checked, (int)nudRemainingCredits.Value, txtPromoCode.Text, _totalPrice, _taxAmt, list, isGc: false, new List<string>(), new List<string>(), _taxRate, "99999", flag, cbLoyaltyRedemption.Checked, nudSvcFeeDefault.Value, nudSvcFeeActual.Value);
+		ReservationCardHash val = new ReservationCardHash
+		{
+			Last4 = "1111",
+			CardBinHash = CardHelper.GenerateHash("411111")
+		};
+		string text = "tE+xZHoxAjrOrueI34+SXg4Q+xwchyIQu8vdRMSTz3k=";
+		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+		List<Redbox.Rental.Model.Reservation.IReservation> list2 = service?.GetReservations(text);
+		if (list2 == null)
+		{
+			list2 = new List<Redbox.Rental.Model.Reservation.IReservation>();
+		}
+		list2.AddRange(service?.GetReservations(val.CardBinHash + CardHelper.GenerateHash(val.Last4)));
+		long transactionId = _transactionId;
+		if (list2.Count > 0)
+		{
+			transactionId = list2.Max((Redbox.Rental.Model.Reservation.IReservation r) => long.Parse(r.ReferenceNumber));
+		}
+		_transactionId = transactionId;
+		IReservationResult reservationResult = ReservationServicesProxy.Instance.SimulateCreateReservation(text, "joecool@redbox.com", ++_transactionId, DateTime.Now, dictionary, cbAppliedCredit.Checked, cbAppliedPromo.Checked, cbAppliedMarketing.Checked, txtCustNum.Text, _discSubtotal, _grandTotal, new List<int>(), _onlinePromoValue, cbMultiNight.Checked, (int)nudRemainingCredits.Value, txtPromoCode.Text, _totalPrice, _taxAmt, list, isGc: false, new List<string>(), new List<string>(), _taxRate, "99999", flag, cbLoyaltyRedemption.Checked, nudSvcFeeDefault.Value, nudSvcFeeActual.Value, cbAuthorizeAtPickup.Checked, cbNewHash.Checked ? val : null, null);
 		StringBuilder stringBuilder = new StringBuilder();
 		foreach (IReservedItem item in reservationResult.Items)
 		{
@@ -464,7 +519,7 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		ReservationTitle reservationTitle = new ReservationTitle();
 		_titleBinding.Add(reservationTitle);
 		reservationTitle.TitleID = (int)_allProducts.First((DropdownTitle t) => !ReservationTitles.Any((ReservationTitle r) => r.TitleID == t.ProductId)).ProductId;
-		reservationTitle.ReservationType = ReservationType.Rental;
+		((ReservationTitle3)reservationTitle).ReservationType = ReservationType.Rental;
 		FillTitlePricing(reservationTitle);
 		dgvTitles.RefreshEdit();
 		UpdateTotals();
@@ -497,6 +552,15 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.label1 = new System.Windows.Forms.Label();
 		this.m_reservationCount = new System.Windows.Forms.Label();
 		this.dgvTitles = new System.Windows.Forms.DataGridView();
+		this.TitleID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.Title = new System.Windows.Forms.DataGridViewComboBoxColumn();
+		this.Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
+		this.Price = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.Discount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.DiscountedPrice = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.DiscountType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+		this.LoyaltyPoints = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.Credits = new System.Windows.Forms.DataGridViewTextBoxColumn();
 		this.btnAdd = new System.Windows.Forms.Button();
 		this.btnRemove = new System.Windows.Forms.Button();
 		this.cbAppliedCredit = new System.Windows.Forms.CheckBox();
@@ -529,17 +593,12 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.label14 = new System.Windows.Forms.Label();
 		this.nudSvcFeeActual = new System.Windows.Forms.NumericUpDown();
 		this.panel1 = new System.Windows.Forms.Panel();
+		this.cbAuthorizeAtPickup = new System.Windows.Forms.CheckBox();
 		this.lblSvcFeeTax = new System.Windows.Forms.Label();
 		this.label16 = new System.Windows.Forms.Label();
 		this.lblServiceFee = new System.Windows.Forms.Label();
 		this.label13 = new System.Windows.Forms.Label();
-		this.TitleID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-		this.Title = new System.Windows.Forms.DataGridViewComboBoxColumn();
-		this.Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
-		this.Price = new System.Windows.Forms.DataGridViewTextBoxColumn();
-		this.Discount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-		this.Credits = new System.Windows.Forms.DataGridViewTextBoxColumn();
-		this.DiscountedPrice = new System.Windows.Forms.DataGridViewTextBoxColumn();
+		this.cbNewHash = new System.Windows.Forms.CheckBox();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		((System.ComponentModel.ISupportInitialize)this.dgvTitles).BeginInit();
 		((System.ComponentModel.ISupportInitialize)this.nudTaxRate).BeginInit();
@@ -567,24 +626,57 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.label1.TabIndex = 9;
 		this.label1.Text = "Reservation Count:";
 		this.m_reservationCount.AutoSize = true;
-		this.m_reservationCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 12f);
-		this.m_reservationCount.Location = new System.Drawing.Point(107, 47);
+		this.m_reservationCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75f, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+		this.m_reservationCount.Location = new System.Drawing.Point(107, 50);
 		this.m_reservationCount.Name = "m_reservationCount";
-		this.m_reservationCount.Size = new System.Drawing.Size(18, 20);
+		this.m_reservationCount.Size = new System.Drawing.Size(15, 16);
 		this.m_reservationCount.TabIndex = 10;
 		this.m_reservationCount.Text = "0";
 		this.dgvTitles.AllowUserToAddRows = false;
 		this.dgvTitles.AllowUserToDeleteRows = false;
 		this.dgvTitles.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-		this.dgvTitles.Columns.AddRange(this.TitleID, this.Title, this.Type, this.Price, this.Discount, this.Credits, this.DiscountedPrice);
+		this.dgvTitles.Columns.AddRange(this.TitleID, this.Title, this.Type, this.Price, this.Discount, this.DiscountedPrice, this.DiscountType, this.LoyaltyPoints, this.Credits);
 		this.dgvTitles.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-		this.dgvTitles.Location = new System.Drawing.Point(0, 70);
+		this.dgvTitles.Location = new System.Drawing.Point(8, 65);
 		this.dgvTitles.Name = "dgvTitles";
 		this.dgvTitles.Size = new System.Drawing.Size(539, 185);
 		this.dgvTitles.TabIndex = 11;
 		this.dgvTitles.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(dgvTitles_CellValueChanged);
 		this.dgvTitles.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(dgvTitles_DataError);
 		this.dgvTitles.DefaultValuesNeeded += new System.Windows.Forms.DataGridViewRowEventHandler(dgvTitles_DefaultValuesNeeded);
+		this.TitleID.DataPropertyName = "TitleID";
+		this.TitleID.HeaderText = "TitleID";
+		this.TitleID.Name = "TitleID";
+		this.TitleID.ReadOnly = true;
+		this.TitleID.Width = 50;
+		this.Title.HeaderText = "Title";
+		this.Title.Name = "Title";
+		this.Title.Width = 150;
+		this.Type.HeaderText = "Type";
+		this.Type.Name = "Type";
+		this.Type.Width = 75;
+		this.Price.DataPropertyName = "Price";
+		this.Price.HeaderText = "Price";
+		this.Price.Name = "Price";
+		this.Price.Width = 50;
+		this.Discount.DataPropertyName = "Discount";
+		this.Discount.HeaderText = "Discount";
+		this.Discount.Name = "Discount";
+		this.Discount.Width = 55;
+		this.DiscountedPrice.DataPropertyName = "DiscountedPrice";
+		this.DiscountedPrice.HeaderText = "Discounted Price";
+		this.DiscountedPrice.Name = "DiscountedPrice";
+		this.DiscountedPrice.ReadOnly = true;
+		this.DiscountedPrice.Width = 75;
+		this.DiscountType.HeaderText = "Discount Type";
+		this.DiscountType.Name = "DiscountType";
+		this.LoyaltyPoints.DataPropertyName = "LoyaltyPoints";
+		this.LoyaltyPoints.HeaderText = "Loyalty Points";
+		this.LoyaltyPoints.Name = "LoyaltyPoints";
+		this.Credits.DataPropertyName = "NumberOfCredits";
+		this.Credits.HeaderText = "Credits";
+		this.Credits.Name = "Credits";
+		this.Credits.Width = 50;
 		this.btnAdd.Location = new System.Drawing.Point(4, 256);
 		this.btnAdd.Name = "btnAdd";
 		this.btnAdd.Size = new System.Drawing.Size(75, 23);
@@ -742,6 +834,7 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.nudTaxRate.ValueChanged += new System.EventHandler(nudTaxRate_ValueChanged);
 		this.nudOnlineDiscount.DecimalPlaces = 2;
 		this.nudOnlineDiscount.Location = new System.Drawing.Point(145, 101);
+		this.nudOnlineDiscount.Minimum = new decimal(new int[4] { 100, 0, 0, -2147483648 });
 		this.nudOnlineDiscount.Name = "nudOnlineDiscount";
 		this.nudOnlineDiscount.Size = new System.Drawing.Size(100, 20);
 		this.nudOnlineDiscount.TabIndex = 27;
@@ -777,6 +870,8 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.nudSvcFeeActual.TabIndex = 34;
 		this.nudSvcFeeActual.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
 		this.nudSvcFeeActual.ValueChanged += new System.EventHandler(nudSvcFeeActual_ValueChanged);
+		this.panel1.Controls.Add(this.cbNewHash);
+		this.panel1.Controls.Add(this.cbAuthorizeAtPickup);
 		this.panel1.Controls.Add(this.lblSvcFeeTax);
 		this.panel1.Controls.Add(this.label16);
 		this.panel1.Controls.Add(this.nudSvcFeeActual);
@@ -814,6 +909,13 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.panel1.Name = "panel1";
 		this.panel1.Size = new System.Drawing.Size(539, 233);
 		this.panel1.TabIndex = 12;
+		this.cbAuthorizeAtPickup.AutoSize = true;
+		this.cbAuthorizeAtPickup.Location = new System.Drawing.Point(4, 179);
+		this.cbAuthorizeAtPickup.Name = "cbAuthorizeAtPickup";
+		this.cbAuthorizeAtPickup.Size = new System.Drawing.Size(119, 17);
+		this.cbAuthorizeAtPickup.TabIndex = 41;
+		this.cbAuthorizeAtPickup.Text = "Authorize At Pickup";
+		this.cbAuthorizeAtPickup.UseVisualStyleBackColor = true;
 		this.lblSvcFeeTax.Location = new System.Drawing.Point(406, 169);
 		this.lblSvcFeeTax.Name = "lblSvcFeeTax";
 		this.lblSvcFeeTax.Size = new System.Drawing.Size(103, 13);
@@ -838,34 +940,13 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.label13.Size = new System.Drawing.Size(64, 13);
 		this.label13.TabIndex = 29;
 		this.label13.Text = "Service Fee";
-		this.TitleID.DataPropertyName = "TitleID";
-		this.TitleID.HeaderText = "TitleID";
-		this.TitleID.Name = "TitleID";
-		this.TitleID.ReadOnly = true;
-		this.TitleID.Width = 50;
-		this.Title.HeaderText = "Title";
-		this.Title.Name = "Title";
-		this.Title.Width = 150;
-		this.Type.HeaderText = "Type";
-		this.Type.Name = "Type";
-		this.Type.Width = 75;
-		this.Price.DataPropertyName = "Price";
-		this.Price.HeaderText = "Price";
-		this.Price.Name = "Price";
-		this.Price.Width = 50;
-		this.Discount.DataPropertyName = "Discount";
-		this.Discount.HeaderText = "Discount";
-		this.Discount.Name = "Discount";
-		this.Discount.Width = 55;
-		this.Credits.DataPropertyName = "NumberOfCredits";
-		this.Credits.HeaderText = "Credits";
-		this.Credits.Name = "Credits";
-		this.Credits.Width = 50;
-		this.DiscountedPrice.DataPropertyName = "DiscountedPrice";
-		this.DiscountedPrice.HeaderText = "Discounted Price";
-		this.DiscountedPrice.Name = "DiscountedPrice";
-		this.DiscountedPrice.ReadOnly = true;
-		this.DiscountedPrice.Width = 75;
+		this.cbNewHash.AutoSize = true;
+		this.cbNewHash.Location = new System.Drawing.Point(4, 199);
+		this.cbNewHash.Name = "cbNewHash";
+		this.cbNewHash.Size = new System.Drawing.Size(123, 17);
+		this.cbNewHash.TabIndex = 42;
+		this.cbNewHash.Text = "Use New Card Hash";
+		this.cbNewHash.UseVisualStyleBackColor = true;
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.Controls.Add(this.btnRemove);

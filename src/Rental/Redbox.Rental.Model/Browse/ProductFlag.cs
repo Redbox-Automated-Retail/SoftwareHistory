@@ -50,6 +50,8 @@ public class ProductFlag
 		public const string PointsKey = "flag_points";
 
 		public const string ExcludedKey = "flag_excluded";
+
+		public const string AwardNomineeKey = "flag_award_nominee";
 	}
 
 	public ProductFlags Flag { get; set; }

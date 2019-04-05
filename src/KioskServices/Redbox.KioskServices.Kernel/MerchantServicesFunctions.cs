@@ -6,6 +6,7 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskServices.Kernel;
 
@@ -29,13 +30,17 @@ internal static class MerchantServicesFunctions
 		{
 			callback2 = delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = callback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
+		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId)).ReValidatePromoCodeAfterVend();
 		service.Reconcile(sessionId, customerProfileNumber, callback2);
 	}
 
@@ -53,11 +58,14 @@ internal static class MerchantServicesFunctions
 			_ = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId;
 			service.PreAuth(sessionId, customerProfileNumber, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTableExtended() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTableExtended() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
@@ -76,11 +84,14 @@ internal static class MerchantServicesFunctions
 			_ = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId;
 			service.Authorize(sessionId, customerProfileNumber, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTableExtended() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTableExtended() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
@@ -99,11 +110,14 @@ internal static class MerchantServicesFunctions
 			_ = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId;
 			service.GCAuthorize(sessionId, customerProfileNumber, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTableExtended() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTableExtended() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
@@ -122,11 +136,14 @@ internal static class MerchantServicesFunctions
 			_ = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId;
 			service.ReservationAuthorize(sessionId, customerProfileNumber, long.Parse(referenceNumber), delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTableExtended() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTableExtended() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
@@ -152,16 +169,19 @@ internal static class MerchantServicesFunctions
 		_ = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId;
 		service.ValidatePickup(sessionId, list, delegate(IRemoteServiceResult r)
 		{
-			callbackService.EnqueueCallback(new ResultCallbackEntry
+			ICallbackService callbackService2 = callbackService;
+			ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 			{
-				Function = completeCallback,
-				Parameters = new LuaTable[1] { r.AsTable() }
-			});
+				Function = completeCallback
+			};
+			object[] parameters = new LuaTable[1] { r.AsTable() };
+			resultCallbackEntry.Parameters = parameters;
+			callbackService2.EnqueueCallback(resultCallbackEntry);
 		});
 	}
 
 	[KernelFunction(Name = "kernel.merchsvcs_emaillookup")]
-	internal static void EmailLookup(string storeNumber, string emailAddress, LuaFunction completeCallback)
+	internal static void EmailLookup(string storeNumber, string emailAddress, string accountNumber, LuaFunction completeCallback)
 	{
 		IMarketingOptinServices service = ServiceLocator.Instance.GetService<IMarketingOptinServices>();
 		if (service == null)
@@ -171,19 +191,22 @@ internal static class MerchantServicesFunctions
 		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
 		if (callbackService != null)
 		{
-			service.SendEmailConfirm(storeNumber, emailAddress, delegate(IRemoteServiceResult r)
+			service.SendEmailConfirm(storeNumber, emailAddress, accountNumber, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
 
-	[KernelFunction(Name = "kernel.resvsvcs_modresvpickup")]
-	internal static void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, LuaFunction callback)
+	[KernelFunction(Name = "kernel.merchsvcs_pickupauthorize")]
+	internal static void PickupAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, bool cartWasModified, LuaFunction callback)
 	{
 		IMerchantServices service = ServiceLocator.Instance.GetService<IMerchantServices>();
 		if (service == null)
@@ -195,18 +218,22 @@ internal static class MerchantServicesFunctions
 		{
 			return;
 		}
-		RemoteServiceCallback callback2 = null;
+		RemoteServiceCallback completeCallback = null;
 		if (callback != null)
 		{
-			callback2 = delegate(IRemoteServiceResult r)
+			completeCallback = delegate(IRemoteServiceResult r)
 			{
 				callbackService.EnqueueCallback(new ResultCallbackEntry
 				{
 					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
+					Parameters = new object[2]
+					{
+						referenceNumber,
+						r.AsTable()
+					}
 				});
 			};
 		}
-		service.ModResvPickup(storeNumber, emailAddress, referenceNumber, sessionId, modifiedCart, callback2);
+		service.PickupAuthorize(sessionId, customerProfileNumber, referenceNumber, cartWasModified, completeCallback);
 	}
 }

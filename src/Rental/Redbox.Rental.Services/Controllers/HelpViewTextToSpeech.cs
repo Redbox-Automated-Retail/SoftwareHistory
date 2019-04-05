@@ -160,7 +160,10 @@ public class HelpViewTextToSpeech
 			Value = "1",
 			Action = delegate
 			{
-				viewModel.CurrentHelpDocumentPage--;
+				if (viewModel.CurrentHelpDocumentPage > 1)
+				{
+					viewModel.CurrentHelpDocumentPage--;
+				}
 			}
 		});
 		speechPart.Events.Add(new MapKeyPressToAction
@@ -170,7 +173,10 @@ public class HelpViewTextToSpeech
 			Value = "1",
 			Action = delegate
 			{
-				viewModel.CurrentHelpDocumentPage++;
+				if (viewModel.CurrentHelpDocumentPage < viewModel.HelpDocumentPageCount)
+				{
+					viewModel.CurrentHelpDocumentPage++;
+				}
 			}
 		});
 	}

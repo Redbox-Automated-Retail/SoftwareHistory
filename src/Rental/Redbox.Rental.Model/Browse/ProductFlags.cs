@@ -13,5 +13,6 @@ public enum ProductFlags
 	HotDeal,
 	FlashDeal,
 	Points,
-	Excluded
+	Excluded,
+	AwardNominee
 }

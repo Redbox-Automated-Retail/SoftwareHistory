@@ -161,7 +161,10 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 		}
 		InitializeTitleRollupOverlay();
 		CommandManager.InvalidateRequerySuggested();
-		AnimateCarouselRotation();
+		if (_carouselModel.IsAnimationOn)
+		{
+			AnimateCarouselRotation();
+		}
 	}
 
 	private void SetDisplayProductModelsAddButtonVisibility()
@@ -568,6 +571,11 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 	{
 		_carouselImageSmallSize = new Point(216.0, 295.0);
 		_carouselImageLargeSize = new Point(280.0, 391.0);
+	}
+
+	private void DisplayProductSelectedCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+	{
+		e.CanExecute = true;
 	}
 
 	private void DisplayProductSelectedCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)

@@ -8,6 +8,8 @@ public class BrowseFilter : DependencyObject
 
 	public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(BrowseFilter), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty ButtonVisibilityProperty = DependencyProperty.Register("ButtonVisibility", typeof(Visibility), typeof(BrowseFilter), new FrameworkPropertyMetadata(Visibility.Visible));
+
 	private bool _isSelected;
 
 	public string Name { get; set; }
@@ -15,6 +17,20 @@ public class BrowseFilter : DependencyObject
 	public int Height { get; set; }
 
 	public int Width { get; set; }
+
+	public object Parameter { get; set; }
+
+	public bool IsVisible
+	{
+		get
+		{
+			return ButtonVisibility == Visibility.Visible;
+		}
+		set
+		{
+			ButtonVisibility = ((!value) ? Visibility.Collapsed : Visibility.Visible);
+		}
+	}
 
 	public string Text
 	{
@@ -58,6 +74,21 @@ public class BrowseFilter : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(IsButtonEnabledProperty, value);
+			});
+		}
+	}
+
+	public Visibility ButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ButtonVisibilityProperty, value);
 			});
 		}
 	}

@@ -8,21 +8,19 @@ public interface IQueueService : IDisposable
 
 	int QueueReadPeriodMax { get; set; }
 
-	event ProcessMessageDelegate ProcessMessage;
-
 	ErrorList Clear();
 
 	ErrorList GetDepth(out int count);
 
 	ErrorList Enqueue(byte priority, string type, object message);
 
-	ErrorList EnqueueOnlyOne(byte priority, string type, object message);
+	ErrorList EnqueueOnlyOne(byte priority, string type, object message, out int newMessageId);
 
 	ErrorList Update(int id, string message);
 
 	ErrorList ExportToXml(string fileName);
 
-	ErrorList Initialize(string path, int retry = 2);
+	ErrorList Initialize(string path, IQueueServiceData queueServiceData);
 
 	ErrorList ForEach(Action<IMessage> action);
 
@@ -39,4 +37,12 @@ public interface IQueueService : IDisposable
 	ErrorList DeleteMessageByType(string type);
 
 	ErrorList Dequeue(Predicate<IMessage> predicate);
+
+	T GetObjectFromMessageData<T>(IMessage message);
+
+	void ForEachPriority(Action<IQueueServicePriority> action);
+
+	bool RegisterMessageProcessorService(IQueueMessageProcessorService queueMessageProcessorService);
+
+	bool UnRegisterMessageProcessorService(IQueueMessageProcessorService queueMessageProcessorService);
 }

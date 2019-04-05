@@ -25,6 +25,8 @@ public class KioskHealthConfiguration : IKioskHealthConfiguration
 
 	public int TouchScreenInActivity => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.TouchScreenInActivity, 60);
 
+	public int TouchScreenResetsToAlert => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.TouchScreenResetsToAlert, 3);
+
 	public bool ArcusActive => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ArcusActive);
 
 	public bool ArcusReporting => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ArcusReporting);
@@ -44,6 +46,26 @@ public class KioskHealthConfiguration : IKioskHealthConfiguration
 	public bool HardwareCorrectionStatsActive => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.HardwareCorrectionStatsActive);
 
 	public bool HardwareCorrectionStatsReporting => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.HardwareCorrectionStatsReporting);
+
+	public bool ViewActive => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ViewActive);
+
+	public bool ViewReporting => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ViewReporting);
+
+	public int ViewHealingType => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ViewHealingType, 0);
+
+	public int ViewInActivity => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ViewInActivity, 600);
+
+	public int ViewInActivityABEMode => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.ViewInActivityABEMode, 900);
+
+	public bool CCReaderActive => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.CCReaderActive);
+
+	public bool CCReaderSendNoDataEvents => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.CCReaderSendNoDataEvents);
+
+	public int CCReaderNoDataAttemptsToAlert => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.CCReaderNoDataAttemptsToAlert, 3);
+
+	public bool CCReaderSendBadDataEvents => GetBoolean(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.CCReaderSendBadDataEvents);
+
+	public int CCReaderBadDataAttemptsToAlert => GetInt(ConfigFile.KioskHealth, ConfigCategory.KioskHealth, KioskHealthSettings.CCReaderBadDataAttemptsToAlert, 3);
 
 	public KioskHealthConfiguration(IConfigurationService configService)
 	{

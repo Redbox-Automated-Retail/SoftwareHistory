@@ -20,7 +20,7 @@
       <TextBlock Name="MarketingTextElem" Grid.Row="4" Margin="0" Style="{StaticResource keyboard_marketing_message_style}" Text="{Binding Path=MarketingText, FallbackValue=Marketing}" />
       <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
         <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Margin="5,24,10,24" CornerRadius="33" Style="{StaticResource style_white_rubine_border_button}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
-          <TextBlock Name="CancelButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=CancelButtonText, FallbackValue=No Thanks}" />
+          <TextBlock Name="CancelButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
         </Redbox:RoundedButton>
         <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Margin="10,24,5,24" CornerRadius="33" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Click="ContinueTouched">
           <TextBlock Name="ContinueButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=ContinueButtonText, FallbackValue=Create Account}" />

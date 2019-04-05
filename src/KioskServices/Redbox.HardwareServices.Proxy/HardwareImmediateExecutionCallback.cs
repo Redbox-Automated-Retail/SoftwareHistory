@@ -18,6 +18,8 @@ public class HardwareImmediateExecutionCallback : ICallbackEntry
 
 	public List<string> Errors { get; set; }
 
+	public string Name => "HardwareImmediateExecutionCallback";
+
 	public void Invoke()
 	{
 		try

@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
+using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.KioskHealth;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -13,6 +16,10 @@ public class ViewService : IViewService
 	private DateTime? m_viewShownOn;
 
 	private readonly IDictionary<string, IBaseViewFrame> m_viewFrameCache = new Dictionary<string, IBaseViewFrame>();
+
+	private bool m_isCriticalErrorViewShown;
+
+	private bool m_isCriticalErrorViewOnStack;
 
 	public static ViewService Instance => Singleton<ViewService>.Instance;
 
@@ -43,6 +50,8 @@ public class ViewService : IViewService
 	{
 		InnerStack.Clear();
 		ClearCache(clearResourceViewsOnly: true);
+		m_isCriticalErrorViewShown = false;
+		m_isCriticalErrorViewOnStack = false;
 		RaiseViewStateChanged();
 	}
 
@@ -76,75 +85,87 @@ public class ViewService : IViewService
 
 	public void Show()
 	{
-		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		IShoppingSession shoppingSession = null;
-		IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		if (service2 != null)
+		if (IsInMaintenanceMode() || !m_isCriticalErrorViewShown)
 		{
-			shoppingSession = service2.GetCurrentSession();
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			IShoppingSession shoppingSession = null;
+			IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+			if (service2 != null)
+			{
+				shoppingSession = service2.GetCurrentSession();
+				if (shoppingSession != null)
+				{
+					shoppingSession.ViewsShown++;
+				}
+			}
+			if (shoppingSession != null && m_viewShownOn.HasValue)
+			{
+				ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+				if (service3 != null)
+				{
+					service3.AddAttribute("view", "viewEnd", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
+					DateTime now = DateTime.Now;
+					DateTime? viewShownOn = m_viewShownOn;
+					service3.AddAttribute("view", "viewDuration", (now - viewShownOn).ToString());
+				}
+				m_lastShownView = null;
+			}
+			IRenderingService service4 = ServiceLocator.Instance.GetService<IRenderingService>();
+			if (InnerStack.Peek() == null)
+			{
+				LogHelper.Instance.Log("View stack is empty.");
+				service.Filter["view_name"] = null;
+				service4.ActiveScene.SuspendDrawing();
+				service4.ActiveScene.Clear();
+				service4.ActiveScene.ResumeDrawing();
+				shoppingSession?.AddEvent(ShoppingSessionEventType.ShowView, "View stack empty.");
+				return;
+			}
+			IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+			service.Filter["view_name"] = viewFrameInstance?.ViewFrame?.ViewName;
+			LogShowViewFrameInstance(viewFrameInstance);
+			viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
 			if (shoppingSession != null)
 			{
-				shoppingSession.ViewsShown++;
-			}
-		}
-		if (shoppingSession != null && m_viewShownOn.HasValue)
-		{
-			ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			if (service3 != null)
-			{
-				service3.AddAttribute("view", "viewEnd", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
-				DateTime now = DateTime.Now;
-				DateTime? viewShownOn = m_viewShownOn;
-				service3.AddAttribute("view", "viewDuration", (now - viewShownOn).ToString());
-			}
-			m_lastShownView = null;
-		}
-		IRenderingService service4 = ServiceLocator.Instance.GetService<IRenderingService>();
-		if (InnerStack.Peek() == null)
-		{
-			LogHelper.Instance.Log("View stack is empty.");
-			service.Filter["view_name"] = null;
-			service4.ActiveScene.SuspendDrawing();
-			service4.ActiveScene.Clear();
-			service4.ActiveScene.ResumeDrawing();
-			shoppingSession?.AddEvent(ShoppingSessionEventType.ShowView, "View stack empty.");
-			return;
-		}
-		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
-		service.Filter["view_name"] = viewFrameInstance?.ViewFrame?.ViewName;
-		LogShowViewFrameInstance(viewFrameInstance);
-		viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
-		if (shoppingSession != null)
-		{
-			ISessionAnalyticsService service5 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			if (service5 != null)
-			{
-				IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
-				Dictionary<string, string> dictionary = new Dictionary<string, string>();
-				string value = viewFrameInstance.ViewFrame.ViewName;
-				if (viewFrameInstance.Parameter != null && (viewFrameInstance.Parameter as IViewAnalyticsName)?.ViewAnalyticsName != null)
+				ISessionAnalyticsService service5 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+				if (service5 != null)
 				{
-					value = ((IViewAnalyticsName)viewFrameInstance.Parameter).ViewAnalyticsName;
+					IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
+					Dictionary<string, string> dictionary = new Dictionary<string, string>();
+					string value = viewFrameInstance.ViewFrame.ViewName;
+					if (viewFrameInstance.Parameter != null && (viewFrameInstance.Parameter as IViewAnalyticsName)?.ViewAnalyticsName != null)
+					{
+						value = ((IViewAnalyticsName)viewFrameInstance.Parameter).ViewAnalyticsName;
+					}
+					dictionary.Add("viewName", value);
+					dictionary.Add("viewSequence", shoppingSession.ViewsShown.ToString());
+					dictionary.Add("viewVersion", viewFrame?.ViewVersion ?? "not defined");
+					dictionary.Add("activeFlag", viewFrameInstance?.ViewFrame?.ActiveFlag ?? "not defined");
+					dictionary.Add("viewCulture", service.Filter["culture"] ?? string.Empty);
+					dictionary.Add("viewStart", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
+					service5.AddNode("views", "view");
+					service5.AddAttributes("view", dictionary);
+					service5.AddNode("view", "viewEvents");
 				}
-				dictionary.Add("viewName", value);
-				dictionary.Add("viewSequence", shoppingSession.ViewsShown.ToString());
-				dictionary.Add("viewVersion", viewFrame?.ViewVersion ?? "not defined");
-				dictionary.Add("activeFlag", viewFrameInstance?.ViewFrame?.ActiveFlag ?? "not defined");
-				dictionary.Add("viewCulture", service.Filter["culture"] ?? string.Empty);
-				dictionary.Add("viewStart", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
-				service5.AddNode("views", "view");
-				service5.AddAttributes("view", dictionary);
-				service5.AddNode("view", "viewEvents");
+			}
+			if (!viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance))
+			{
+				LogHelper.Instance.Log("No on enter script specified for view named: {0}", viewFrameInstance.ViewFrame.ViewName);
+			}
+			m_viewShownOn = DateTime.Now;
+			m_lastShownView = viewFrameInstance.ViewFrame.ViewName;
+			TTSRunSpeech(viewFrameInstance);
+			ServiceLocator.Instance.GetService<IViewHealth>()?.PostActivity("ShowView", "", shoppingSession?.Id.ToString());
+			ShowErrors(viewFrameInstance);
+			if (m_isCriticalErrorViewOnStack)
+			{
+				m_isCriticalErrorViewShown = true;
 			}
 		}
-		if (!viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance))
+		else
 		{
-			LogHelper.Instance.Log("No on enter script specified for view named: {0}", viewFrameInstance.ViewFrame.ViewName);
+			LogHelper.Instance.Log("View not shown due to critical error mode.");
 		}
-		m_viewShownOn = DateTime.Now;
-		m_lastShownView = viewFrameInstance.ViewFrame.ViewName;
-		TTSRunSpeech(viewFrameInstance);
-		ShowErrors(viewFrameInstance);
 	}
 
 	private void TTSRunSpeech(IViewFrameInstance viewFrameInstance)
@@ -171,6 +192,8 @@ public class ViewService : IViewService
 
 	public string Pop()
 	{
+		m_isCriticalErrorViewOnStack = false;
+		m_isCriticalErrorViewShown = false;
 		if (InnerStack.Peek() == null)
 		{
 			LogHelper.Instance.Log("View stack is empty; nothing to pop.");
@@ -182,13 +205,29 @@ public class ViewService : IViewService
 			LogHelper.Instance.Log("Pop view '{0}' from TOS; executing onLeave = {1}", viewFrameInstance.ViewFrame.ViewName, viewFrame.OnLeaveResourceName);
 		}
 		viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
-		if (InnerStack.Peek()?.ViewFrame is IViewFrame { Clear: false })
+		LogHelper.Instance.Log(ViewStackContentsToString());
+		IViewFrameInstance viewFrameInstance2 = InnerStack.Peek();
+		if (viewFrameInstance2?.ViewFrame is IViewFrame { Clear: false })
 		{
 			string text = Pop();
 			LogHelper.Instance.Log("Redraw view '{0}' down the stack for transparent TOS view.", text);
 			Show();
 			Push(text);
 			Show();
+		}
+		if (viewFrameInstance2?.ViewFrame is IWPFViewFrame { Clear: false })
+		{
+			IBaseViewFrame viewFrame3 = viewFrameInstance.ViewFrame;
+			if (viewFrame3 != null)
+			{
+				string text2 = (viewFrame3 as IViewFrame)?.Scene?.Actors?.First?.Value?.Name;
+				object tag = ((viewFrame3 is IWPFViewFrame) ? ((object)viewFrameInstance.Id) : text2);
+				FrameworkElement wPFGridChild = viewFrame3.Scene.GetWPFGridChild(tag);
+				if (wPFGridChild != null)
+				{
+					viewFrame3.Scene.RemoveWPFGridChild(wPFGridChild);
+				}
+			}
 		}
 		RaiseViewStateChanged();
 		return viewFrameInstance.ViewFrame.ViewName;
@@ -245,6 +284,8 @@ public class ViewService : IViewService
 
 	public string PopDiscard()
 	{
+		m_isCriticalErrorViewOnStack = false;
+		m_isCriticalErrorViewShown = false;
 		IViewFrameInstance viewFrameInstance = InnerStack.Pop();
 		if (viewFrameInstance?.ViewFrame != null)
 		{
@@ -300,17 +341,55 @@ public class ViewService : IViewService
 		Push(viewName, null);
 	}
 
-	public void Push(string viewName, object parameter)
+	public void PushCriticalErrorView(string viewName, object parameter)
 	{
-		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
-		if (viewFrameInstance?.ViewFrame != null)
+		Push(viewName, parameter, isCriticalErrorView: true);
+	}
+
+	public void Push(string viewName, object parameter, bool isCriticalErrorView = false)
+	{
+		if ((!m_isCriticalErrorViewOnStack | isCriticalErrorView) || viewName.Contains("maintenance_view"))
 		{
-			viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
+			m_isCriticalErrorViewOnStack = m_isCriticalErrorViewShown | isCriticalErrorView;
+			IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+			if (viewFrameInstance?.ViewFrame != null)
+			{
+				viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
+			}
+			Guid guid = Guid.NewGuid();
+			InnerStack.Push(guid, viewName, parameter);
+			LogHelper.Instance.Log("Push view '{0}' {1} to TOS.", viewName, guid);
+			LogHelper.Instance.Log(ViewStackContentsToString());
+			RaiseViewStateChanged();
 		}
-		Guid guid = Guid.NewGuid();
-		InnerStack.Push(guid, viewName, parameter);
-		LogHelper.Instance.Log("Push view '{0}' {1} to TOS.", viewName, guid);
-		RaiseViewStateChanged();
+		else
+		{
+			LogHelper.Instance.Log($"View {viewName} not shown due to critical error view or maintenance mode.");
+		}
+	}
+
+	public string ViewStackContentsToString()
+	{
+		StringBuilder stringBuilder = new StringBuilder($"View Stack Count: {InnerStack?.Count} Contents: ");
+		int num = 0;
+		if (InnerStack != null)
+		{
+			foreach (IViewFrameInstance item in InnerStack)
+			{
+				if (num < 10)
+				{
+					string arg = ((num > 0) ? ", " : null);
+					stringBuilder.Append($"{arg}{item?.ViewFrame?.ViewName}");
+				}
+				else if (num == 10)
+				{
+					stringBuilder.Append(", ...");
+					break;
+				}
+				num++;
+			}
+		}
+		return stringBuilder.ToString();
 	}
 
 	public IViewFrameInstance PeekViewFrame()

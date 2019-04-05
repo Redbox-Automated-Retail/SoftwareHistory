@@ -87,7 +87,7 @@ public class PricingService : IPricingService
 	{
 		_bundleBasedPricingService = new BundleBasedPricingService();
 		_pricingData = new PricingData(kernelService, storeManager);
-		_kioskPricingService = new KioskPricingService(_pricingData, storeManager.KioskId);
+		_kioskPricingService = new KioskPricingService(_pricingData, storeManager.KioskId, Redbox.Rental.Services.Configuration.Configuration.Instance);
 		_configuration = Redbox.Rental.Services.Configuration.Configuration.Instance;
 		if (_changeTimer == null)
 		{

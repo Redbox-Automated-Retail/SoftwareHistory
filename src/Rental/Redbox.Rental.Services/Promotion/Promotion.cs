@@ -30,13 +30,41 @@ public class Promotion : IPromotion
 
 	public ICampaignTitles CampaignTitles { get; set; }
 
+	public int? ProductTypeId { get; set; }
+
+	public List<int> FormatIds { get; set; }
+
 	public IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
 
 	public IList<IPromotionItem> PromotionItems { get; set; }
+
+	public bool IsProductSpecific
+	{
+		get
+		{
+			if (Intent != PromotionIntentCode.FirstNightFreeItem)
+			{
+				if (Intent == PromotionIntentCode.FixedValue)
+				{
+					ICampaignTitles campaignTitles = CampaignTitles;
+					if (campaignTitles == null)
+					{
+						return false;
+					}
+					return campaignTitles.Titles?.Count > 0;
+				}
+				return false;
+			}
+			return true;
+		}
+	}
+
+	public bool IsValidatedPostVend { get; set; }
 
 	public Promotion()
 	{
 		QualifyingItems = new List<IRentalShoppingCartItem>();
 		PromotionItems = new List<IPromotionItem>();
+		IsValidatedPostVend = false;
 	}
 }

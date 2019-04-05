@@ -49,10 +49,16 @@ public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IC
 		ITheme theme = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		foreach (BrowseMenuButton menuButton in topMenuModel.MenuButtons)
 		{
+			BrowseProductFamilyMenuButton browseProductFamilyMenuButton = menuButton as BrowseProductFamilyMenuButton;
+			Style style = GetStyle(this, "classic_menu_button_style");
+			if (browseProductFamilyMenuButton != null)
+			{
+				style = GetStyle(this, "gradient_menu_button_style");
+			}
 			RoundedButton roundedButton = new RoundedButton
 			{
 				DataContext = menuButton,
-				Style = GetStyle(this, "classic_menu_button_style"),
+				Style = style,
 				CornerRadius = 0.0,
 				Height = menuButton.Height,
 				HorizontalAlignment = HorizontalAlignment.Left,
@@ -76,7 +82,6 @@ public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IC
 				Path = new PropertyPath("Text"),
 				Source = menuButton
 			});
-			BrowseProductFamilyMenuButton browseProductFamilyMenuButton = menuButton as BrowseProductFamilyMenuButton;
 			StackPanel stackPanel = null;
 			if (browseProductFamilyMenuButton != null)
 			{

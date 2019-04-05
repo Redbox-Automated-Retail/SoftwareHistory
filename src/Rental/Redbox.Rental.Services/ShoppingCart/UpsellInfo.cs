@@ -7,6 +7,7 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Services.ShoppingCart;
@@ -127,6 +128,7 @@ public class UpsellInfo : IUpsellInfo
 			rentalShoppingCartItem2.Quantity = 1m;
 			rentalShoppingCartItem2.Action = RentalShoppingCartItemAction.rental;
 			rentalShoppingCartItem2.SourceType = GetUpsellItemSourceType(rentalShoppingCartItem2.TitleType);
+			rentalShoppingCartItem2.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(rentalShoppingCartItem2.TitleProduct);
 			_rentalShoppingCart.AddItem(rentalShoppingCartItem2);
 		}
 	}

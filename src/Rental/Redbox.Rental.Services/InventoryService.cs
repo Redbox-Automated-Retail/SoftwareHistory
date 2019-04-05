@@ -24,6 +24,71 @@ public class InventoryService : IInventory
 		_random = random.Next(0, 30);
 	}
 
+	public Inventory GetInventory(string barcode)
+	{
+		try
+		{
+			return _inventoryData.GetInventory(barcode);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("InventoryService.GetInventory - An unhandled exception occurred.", e);
+			return null;
+		}
+	}
+
+	public Dictionary<string, Inventory> GetInventories(List<string> barcodes)
+	{
+		try
+		{
+			return _inventoryData.GetInventories(barcodes);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("InventoryService.GetInventories - An unhandled exception occurred.", e);
+			return null;
+		}
+	}
+
+	public string GetInventoryDataCreatedOn()
+	{
+		try
+		{
+			return _inventoryData.GetInventoryDataCreatedOn();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("InventoryService.GetInventoryDataCreatedOn - An unhandled exception occurred.", e);
+			return null;
+		}
+	}
+
+	public string GetInventoryDataMachineOrigin()
+	{
+		try
+		{
+			return _inventoryData.GetInventoryDataMachineOrigin();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("InventoryService.GetInventoryDataMachineOrigin - An unhandled exception occurred.", e);
+			return null;
+		}
+	}
+
+	public long GetInventoryDataCount()
+	{
+		try
+		{
+			return _inventoryData.GetInventoryDataCount();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("InventoryService.GetInventoryDataCount - An unhandled exception occurred.", e);
+			return -1L;
+		}
+	}
+
 	public Inventory GetRapidStatus(string barcode)
 	{
 		try

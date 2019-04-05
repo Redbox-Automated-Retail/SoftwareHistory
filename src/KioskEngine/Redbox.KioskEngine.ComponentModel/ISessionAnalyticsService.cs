@@ -4,6 +4,8 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface ISessionAnalyticsService
 {
+	int MessagePriority { get; set; }
+
 	void Start(string sessionId, AnalyticsSessionType sessionType);
 
 	void AddView(string sessionId, string viewName);

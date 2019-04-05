@@ -49,9 +49,9 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 				{
 					string text2 = "";
 					string text3 = text;
-					foreach (char c in text3)
+					for (int i = 0; i < text3.Length; i++)
 					{
-						text2 += $", '{c}'";
+						text2 += ConvertToWord(text3[i].ToString());
 					}
 					result = $"The characters you entered are {text2}.";
 					break;
@@ -61,50 +61,92 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 		}
 		else
 		{
-			result = $"You have selected the keyboard character '{character}'";
+			result = $"You have selected the keyboard character {character}.";
 		}
 		return result;
 	}
 
 	private static string ConvertToWord(string character)
 	{
-		return character switch
+		switch (character)
 		{
-			" " => "space", 
-			"_" => "underscore", 
-			"-" => "hyphen", 
-			"." => "dot", 
-			"!" => "exclamation mark", 
-			"#" => "pound sign", 
-			"$" => "dollar sign", 
-			"%" => "percent sign", 
-			"^" => "caret", 
-			"&" => "ampersand", 
-			"*" => "asterisk", 
-			"(" => "left parenthesis", 
-			")" => "right parenthesis", 
-			"?" => "question mark", 
-			"<" => "less-than sign", 
-			">" => "greater-than sign", 
-			"~" => "tilde sign", 
-			"`" => "acute sign", 
-			"+" => "plus sign", 
-			"=" => "equal sign", 
-			"{" => "open brace", 
-			"}" => "close brace", 
-			"[" => "open bracket", 
-			"]" => "closed bracket", 
-			"|" => "pipe", 
-			"\\" => "backslash", 
-			"/" => "forward slash", 
-			":" => "colon", 
-			";" => "semicolon", 
-			"\"" => "double quote mark", 
-			"'" => "single quote mark", 
-			"," => "comma", 
-			"POUND" => "#", 
-			_ => character, 
-		};
+		case " ":
+			return "space";
+		case "_":
+			return "underscore";
+		case "-":
+			return "hyphen";
+		case ".":
+			return "dot";
+		case "!":
+			return "exclamation mark";
+		case "#":
+			return "pound sign";
+		case "$":
+			return "dollar sign";
+		case "%":
+			return "percent sign";
+		case "^":
+			return "caret";
+		case "&":
+			return "ampersand";
+		case "*":
+			return "asterisk";
+		case "(":
+			return "left parenthesis";
+		case ")":
+			return "right parenthesis";
+		case "?":
+			return "question mark";
+		case "<":
+			return "less-than sign";
+		case ">":
+			return "greater-than sign";
+		case "~":
+			return "tilde sign";
+		case "`":
+			return "acute sign";
+		case "+":
+			return "plus sign";
+		case "=":
+			return "equal sign";
+		case "{":
+			return "open brace";
+		case "}":
+			return "close brace";
+		case "[":
+			return "open bracket";
+		case "]":
+			return "closed bracket";
+		case "|":
+			return "pipe";
+		case "\\":
+			return "backslash";
+		case "/":
+			return "forward slash";
+		case ":":
+			return "colon";
+		case ";":
+			return "semicolon";
+		case "\"":
+			return "double quote mark";
+		case "'":
+			return "single quote mark";
+		case ",":
+			return "comma";
+		case "POUND":
+			return "#";
+		default:
+			if (character.Length == 1)
+			{
+				if (char.IsLetter(character[0]) && char.IsUpper(character[0]))
+				{
+					return string.Format(", capital {0}{1}", character, (character == "A") ? "," : "");
+				}
+				return $", '{character}'";
+			}
+			return character;
+		}
 	}
 
 	private static void AddAlphaCharacterEvent(ISpeechPart speechPart, KeyboardLogic keyboardLogic, string keyCode, string alphaCharacter)
@@ -130,14 +172,14 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 							keyboardLogic.SetControlTextMode(mode: true);
 							commandKey = true;
 							break;
-						case "@YAHOO.COM":
-						case "@GMAIL.COM":
-						case "@HOTMAIL.COM":
-						case "@AOL.COM":
+						case "@yahoo.com":
+						case "@gmail.com":
+						case "@hotmail.com":
+						case "@aol.com":
 							keyboardLogic.DomainButtonCommand_Execute(alphaCharacter);
 							specialKey = true;
 							break;
-						case ".COM":
+						case ".com":
 							keyboardLogic.DotComButtonCommand_Execute(alphaCharacter);
 							specialKey = true;
 							break;
@@ -245,11 +287,11 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 		});
 		if (keyboardLogic.KeyboardMode != KeyboardMode.PROMOTIONS_CODE)
 		{
-			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS0", "@YAHOO.COM");
-			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS1", "@GMAIL.COM");
-			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS2", "@HOTMAIL.COM");
-			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS3", "@AOL.COM");
-			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS4", ".COM");
+			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS0", "@yahoo.com");
+			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS1", "@gmail.com");
+			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS2", "@hotmail.com");
+			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS3", "@aol.com");
+			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS4", ".com");
 			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS", "@");
 			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUSPLUS", ".");
 			AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUSPLUS0", "_");
@@ -294,39 +336,65 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "0", "0");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "1", "1");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "2", "2");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "22", "A");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "222", "B");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "2222", "C");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "22", "a");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS22", "A");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "222", "b");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS222", "B");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "2222", "c");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS2222", "C");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "3", "3");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "33", "D");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "333", "E");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "3333", "F");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "33", "d");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS33", "D");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "333", "e");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS333", "E");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "3333", "f");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS3333", "F");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "4", "4");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "44", "G");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "444", "H");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "4444", "I");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "44", "g");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS44", "G");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "444", "h");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS444", "H");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "4444", "i");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS4444", "I");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "5", "5");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "55", "J");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "555", "K");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "5555", "L");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "55", "j");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS55", "J");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "555", "k");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS555", "K");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "5555", "l");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS5555", "L");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "6", "6");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "66", "M");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "666", "N");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "6666", "O");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "66", "m");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS66", "M");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "666", "n");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS666", "N");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "6666", "o");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS6666", "O");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "7", "7");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "77", "P");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "777", "Q");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "7777", "R");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "77777", "S");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "77", "p");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS77", "P");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "777", "q");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS777", "Q");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "7777", "r");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS7777", "R");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "77777", "s");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS77777", "S");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "8", "8");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "88", "T");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "888", "U");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "8888", "V");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "88", "t");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS88", "T");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "888", "u");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS888", "U");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "8888", "v");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS8888", "V");
 		AddAlphaCharacterEvent(speechPart, keyboardLogic, "9", "9");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "99", "W");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "999", "X");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "9999", "Y");
-		AddAlphaCharacterEvent(speechPart, keyboardLogic, "99999", "Z");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "99", "w");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS99", "W");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "999", "x");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS999", "X");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "9999", "y");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS9999", "Y");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "99999", "z");
+		AddAlphaCharacterEvent(speechPart, keyboardLogic, "PLUS99999", "Z");
 	}
 
 	private static void AddSpeechPartKeyboard(ISpeechControl speechControl, KeyboardLogic model)
@@ -411,7 +479,11 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 					}
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "Pressing the number 2 twice, will give you the alphabet A"
+						Text = "Pressing the number 2 twice, will give you lower case A"
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing PLUS, 2, 2, will give you a capital A"
 					});
 					speechPart.Texts.Add(new TextPart
 					{
@@ -456,7 +528,7 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 					{
 						speechPart.Texts.Add(new TextPart
 						{
-							Text = "When entering your email address you, may add a common domain to your email name quickly."
+							Text = "When entering your email address you may add a common domain to your email name quickly."
 						});
 						speechPart.Texts.Add(new TextPart
 						{

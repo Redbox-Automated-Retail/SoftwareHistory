@@ -100,6 +100,8 @@ public class BrowseState : IBrowseState
 
 	public int PaddleClickCount { get; set; }
 
+	public BrowsePriceRangeParameter BrowsePriceRangeFilter { get; set; }
+
 	public string BrowseFilterMode
 	{
 		get
@@ -281,6 +283,8 @@ public class BrowseState : IBrowseState
 	}
 
 	public bool InReturnFlow { get; set; }
+
+	public bool NeedMarketingConfirm { get; set; }
 
 	public BrowseState()
 	{

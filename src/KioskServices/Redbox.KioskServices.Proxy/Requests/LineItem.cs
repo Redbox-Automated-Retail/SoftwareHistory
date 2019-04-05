@@ -21,4 +21,8 @@ public class LineItem
 	public BlurayUpsell BlurayUpsell { get; set; }
 
 	public ItemSourceType? SourceType { get; set; }
+
+	public string OfferCode { get; set; }
+
+	public int? DiscNumber { get; set; }
 }

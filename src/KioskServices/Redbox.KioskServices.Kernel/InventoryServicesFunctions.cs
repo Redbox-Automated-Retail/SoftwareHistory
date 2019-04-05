@@ -14,13 +14,13 @@ internal static class InventoryServicesFunctions
 	[KernelFunction(Name = "kernel.invsvcs_return")]
 	internal static void Return(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime)
 	{
-		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead: false, null);
+		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead: false, null, null);
 	}
 
 	[KernelFunction(Name = "kernel.invsvcs_return2")]
-	internal static void Return2(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead)
+	internal static void Return2(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName)
 	{
-		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead, null);
+		InnerReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead, fileName, null);
 	}
 
 	[KernelFunction(Name = "kernel.invsvcs_snapshot")]
@@ -54,11 +54,14 @@ internal static class InventoryServicesFunctions
 		{
 			callback2 = delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = callback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
 		InnerSnapshot(storeNumber, items, list);
@@ -78,11 +81,14 @@ internal static class InventoryServicesFunctions
 		{
 			service.GetRentalCount(storeNumber, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
@@ -100,11 +106,14 @@ internal static class InventoryServicesFunctions
 		{
 			service.UpdateFraudStatus(storeNumber, barcode, isFraud, readTime, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
@@ -131,16 +140,19 @@ internal static class InventoryServicesFunctions
 			}
 			service.FmaDiscAction(storeNumber, username, jobName, jobTimeStamp, list, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}
 
-	private static void InnerReturn(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, LuaFunction callback)
+	private static void InnerReturn(string storeNumber, string returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, LuaFunction callback)
 	{
 		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
 		if (service == null)
@@ -162,11 +174,14 @@ internal static class InventoryServicesFunctions
 		{
 			callback2 = delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = callback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
 		if (!DateTime.TryParse(returnTime, null, DateTimeStyles.AssumeLocal, out var result))
@@ -174,7 +189,7 @@ internal static class InventoryServicesFunctions
 			LogHelper.Instance.Log("Invalid date time passed to InnerReturn : {0}.", returnTime);
 			result = DateTime.Now;
 		}
-		service.Return(storeNumber, Enum<ReturnType>.ParseIgnoringCase(returnType, ReturnType.KioskReturn), barcode, deck, slot, result.ToString(), failedSecurityRead, callback2);
+		service.Return(storeNumber, Enum<ReturnType>.ParseIgnoringCase(returnType, ReturnType.KioskReturn), barcode, deck, slot, result.ToString(), failedSecurityRead, fileName, callback2);
 	}
 
 	private static void InnerSnapshot(string storeNumber, LuaTable items, List<IInventoryItem> inventoryItems)

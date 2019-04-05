@@ -11,7 +11,6 @@ using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
-[ThemedControl(ThemeName = "Redbox Classic", ControlName = "StartView")]
 public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, IComponentConnector
 {
 	private StartViewModel StartViewModel => base.DataContext as StartViewModel;
@@ -22,13 +21,14 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		ApplyTheme();
 		RegisterRoutedCommand("RentOrBuyMoviesCommand", Redbox.Rental.UI.Commands.RentOrBuyMoviesCommand);
 		RegisterRoutedCommand("RentOrBuyGamesCommand", Redbox.Rental.UI.Commands.RentOrBuyGamesCommand);
+		RegisterRoutedCommand("RentTVCommand", Redbox.Rental.UI.Commands.RentTVCommand);
 		RegisterRoutedCommand("BuyMoviesCommand", Redbox.Rental.UI.Commands.BuyMoviesCommand);
 		RegisterRoutedCommand("BuyGamesCommand", Redbox.Rental.UI.Commands.BuyGamesCommand);
 		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
 		RegisterRoutedCommand("ReturnProductCommand", Redbox.Rental.UI.Commands.ReturnProductCommand);
 		RegisterRoutedCommand("HelpCommand", Redbox.Rental.UI.Commands.HelpCommand);
 		RegisterRoutedCommand("SignInCommand", Redbox.Rental.UI.Commands.SignInCommand);
-		PostTouchScreenHealthActivity();
+		PostHealthActivity();
 	}
 
 	private void ApplyTheme()
@@ -47,13 +47,30 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 
 	private void RentOrBuyMoviesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessRentMovieButtonClick();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			StartViewModel?.ProcessRentMovieButtonClick();
+			HandleWPFHit();
+		});
 	}
 
 	private void RentOrBuyMoviesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 	{
 		e.CanExecute = all_movies_button.Visibility == Visibility.Visible;
+	}
+
+	private void RentTVCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		RunCommandOnce(delegate
+		{
+			StartViewModel?.ProcessRentTVButtonClick();
+			HandleWPFHit();
+		});
+	}
+
+	private void RentTVCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+	{
+		e.CanExecute = tv_button.Visibility == Visibility.Visible;
 	}
 
 	private void ToggleLanguageModeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -84,50 +101,130 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 
 	private void BuyMoviesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessBuyMoviesButtonClick();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessBuyMoviesButtonClick();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void BuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessBuyGamesButtonClick();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessBuyGamesButtonClick();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void RentOrBuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessRentOrBuyGameButtonClick();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessRentOrBuyGameButtonClick();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void PickupProductCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessPickupButtonClick();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessPickupButtonClick();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void ReturnProductCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessReturnButtonClicked();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessReturnButtonClicked();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void HelpCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessHelpButtonClicked();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessHelpButtonClicked();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void ToggleADAModeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessToggleADAMode();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessToggleADAMode();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void ExitBurnInViewCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessExitBurnInView();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessExitBurnInView();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -136,13 +233,33 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 
 	private void BannerClickCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel.ProcessBannerClicked();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel.ProcessBannerClicked();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 
 	private void SignInCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		StartViewModel?.ProcessSignInButtonClicked();
-		HandleWPFHit();
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessSignInButtonClicked();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
 	}
 }

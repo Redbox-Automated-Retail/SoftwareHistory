@@ -20,6 +20,7 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 	public ShoppingCartViewUserControl()
 	{
 		InitializeComponent();
+		base.Loaded += ShoppingCartViewUserControl_Loaded;
 	}
 
 	public override ISpeechControl GetSpeechControl()
@@ -59,12 +60,6 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 	private void PayCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 	{
 		e.CanExecute = Model?.PayButtonEnabled ?? false;
-	}
-
-	private void UseCreditsCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		Model?.ProcessOnUseCreditsButtonClicked();
-		HandleWPFHit();
 	}
 
 	private void AddMovieCommandCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -124,11 +119,6 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 		HandleWPFHit();
 	}
 
-	private void UseCreditsCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = Model?.UseCreditsButtonEnabled ?? false;
-	}
-
 	private void UpdateBagCommandCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		Model?.ProcessOnUpdateBagButtonClicked();
@@ -147,5 +137,10 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 	private void UsePointsCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		Model?.ProcessOnUsePointsButtonClicked();
+	}
+
+	private void ShoppingCartViewUserControl_Loaded(object sender, RoutedEventArgs e)
+	{
+		Model?.ProcessOnLoaded();
 	}
 }

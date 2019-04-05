@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.ProductLookupCatalog;
 using Redbox.Rental.Model;
 
 namespace Redbox.Rental.Data;
@@ -15,7 +16,7 @@ public class InventoryData : IInventoryData
 
 	private ProductLookupCatalogModel _plcModel;
 
-	private InventoryDataFile _inventoryDataFile;
+	private InventoryDataJsonFile _inventoryDataJsonFile;
 
 	private DateTime? _inventoryActionModificationTime;
 
@@ -31,6 +32,10 @@ public class InventoryData : IInventoryData
 
 	private string _rapidStatusActivePath;
 
+	private string _inventoryDataPath;
+
+	private const string InventoryDataName = "inventory.data";
+
 	private const string RapidStatusStagedName = "RapidStatus.data";
 
 	private const string RapidStatusActiveName = "RapidStatus.active";
@@ -43,9 +48,9 @@ public class InventoryData : IInventoryData
 
 	private const string InventoryActionActiveName = "InventoryAction.active";
 
-	private string _inventoryDataPath;
+	private string _inventoryDataJsonPath;
 
-	private const string InventoryDataName = "InventoryData.json";
+	private const string InventoryDataJsonName = "InventoryData.json";
 
 	private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
@@ -65,7 +70,8 @@ public class InventoryData : IInventoryData
 		_rapidStatusActivePath = Path.Combine(_dataPath, "RapidStatus.active");
 		_inventoryActionStagedPath = Path.Combine(_dataPath, "InventoryAction.data");
 		_inventoryActionActivePath = Path.Combine(_dataPath, "InventoryAction.active");
-		_inventoryDataPath = Path.Combine(_dataPath, "InventoryData.json");
+		_inventoryDataJsonPath = Path.Combine(_dataPath, "InventoryData.json");
+		_inventoryDataPath = Path.Combine(_dataPath, "inventory.data");
 	}
 
 	public void Initialize()
@@ -114,9 +120,195 @@ public class InventoryData : IInventoryData
 		}
 	}
 
-	public Inventory GetRapidStatus(string barcode)
+	public long GetInventoryDataCount()
 	{
-		new Dictionary<string, Inventory>();
+		long result = 0L;
+		if (!_lock.TryEnterWriteLock(_lockTimeout))
+		{
+			LogHelper.Instance.LogError("InventoryData.GetInventoryDataCount", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+		}
+		else
+		{
+			try
+			{
+				using Archive archive = Archive.Open(_inventoryDataPath);
+				result = archive.Count;
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("InventoryData.GetInventoryDataCount - An unhandled exception occurred.", e);
+			}
+			finally
+			{
+				_lock.ExitWriteLock();
+			}
+		}
+		return result;
+	}
+
+	public string GetInventoryDataMachineOrigin()
+	{
+		string result = null;
+		if (!_lock.TryEnterWriteLock(_lockTimeout))
+		{
+			LogHelper.Instance.LogError("InventoryData.GetInventoryDataMachineOrigin", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+		}
+		else
+		{
+			try
+			{
+				using Archive archive = Archive.Open(_inventoryDataPath);
+				result = archive.GetOriginMachine();
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("InventoryData.GetInventoryDataMachineOrigin - An unhandled exception occurred.", e);
+			}
+			finally
+			{
+				_lock.ExitWriteLock();
+			}
+		}
+		return result;
+	}
+
+	public string GetInventoryDataCreatedOn()
+	{
+		string result = null;
+		if (!_lock.TryEnterWriteLock(_lockTimeout))
+		{
+			LogHelper.Instance.LogError("InventoryData.GetInventoryDataGeneratedOn", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+		}
+		else
+		{
+			try
+			{
+				using Archive archive = Archive.Open(_inventoryDataPath);
+				result = archive.GetCreatedOn();
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("InventoryData.GetInventoryDataGeneratedOn - An unhandled exception occurred.", e);
+			}
+			finally
+			{
+				_lock.ExitWriteLock();
+			}
+		}
+		return result;
+	}
+
+	public Redbox.KioskEngine.ComponentModel.Inventory GetInventory(string barcode)
+	{
+		Redbox.KioskEngine.ComponentModel.Inventory value = null;
+		if (!_lock.TryEnterWriteLock(_lockTimeout))
+		{
+			LogHelper.Instance.LogError("InventoryData.GetInventory", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+		}
+		else
+		{
+			try
+			{
+				GetInventoriesAlreadyLocked(new List<string> { barcode }).TryGetValue(barcode, out value);
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("InventoryData.GetInventory - An unhandled exception occurred.", e);
+			}
+			finally
+			{
+				_lock.ExitWriteLock();
+			}
+		}
+		return value;
+	}
+
+	public Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> GetInventories(List<string> barcodes)
+	{
+		Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> result = null;
+		if (!_lock.TryEnterWriteLock(_lockTimeout))
+		{
+			LogHelper.Instance.LogError("InventoryData.GetInventories", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+		}
+		else
+		{
+			try
+			{
+				result = GetInventoriesAlreadyLocked(barcodes);
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("InventoryData.GetInventories - An unhandled exception occurred.", e);
+			}
+			finally
+			{
+				_lock.ExitWriteLock();
+			}
+		}
+		return result;
+	}
+
+	private Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> GetInventoriesAlreadyLocked(List<string> barcodes)
+	{
+		Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> dictionary = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
+		List<string> list = new List<string>();
+		CheckForRapidStatusStagedFile();
+		if (_plcModel != null)
+		{
+			foreach (string barcode in barcodes)
+			{
+				_plcModel.Barcodes.TryGetValue(barcode, out var value);
+				if (value != null)
+				{
+					dictionary[barcode] = value;
+				}
+				else
+				{
+					list.Add(barcode);
+				}
+			}
+		}
+		else
+		{
+			list.AddRange(barcodes);
+		}
+		if (list.Count > 0)
+		{
+			foreach (KeyValuePair<string, Redbox.KioskEngine.ComponentModel.Inventory> item in GetInventoriesFromInventoryDataFile(list))
+			{
+				dictionary[item.Key] = item.Value;
+			}
+		}
+		return dictionary;
+	}
+
+	private Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> GetInventoriesFromInventoryDataFile(List<string> barcodes)
+	{
+		Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> dictionary = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
+		if (File.Exists(_inventoryDataPath))
+		{
+			using Archive archive = Archive.Open(_inventoryDataPath);
+			foreach (string barcode in barcodes)
+			{
+				Redbox.ProductLookupCatalog.Inventory inventory = archive.Find(barcode);
+				if (inventory != null)
+				{
+					dictionary[barcode] = new Redbox.KioskEngine.ComponentModel.Inventory
+					{
+						Barcode = barcode,
+						Code = (Redbox.KioskEngine.ComponentModel.InventoryStatusCode)inventory.Code,
+						TitleId = inventory.TitleId,
+						TotalRentalCount = inventory.TotalRentalCount
+					};
+				}
+			}
+		}
+		return dictionary;
+	}
+
+	public Redbox.KioskEngine.ComponentModel.Inventory GetRapidStatus(string barcode)
+	{
+		new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
 		if (!_lock.TryEnterWriteLock(_lockTimeout))
 		{
 			LogHelper.Instance.LogError("InventoryData.GetRapidStatus", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
@@ -203,11 +395,11 @@ public class InventoryData : IInventoryData
 		}
 		try
 		{
-			if (_inventoryDataFile == null)
+			if (_inventoryDataJsonFile == null)
 			{
 				return null;
 			}
-			return _inventoryDataFile.LastCompletedDate;
+			return _inventoryDataJsonFile.LastCompletedDate;
 		}
 		catch (Exception e)
 		{
@@ -230,11 +422,11 @@ public class InventoryData : IInventoryData
 		}
 		try
 		{
-			if (_inventoryDataFile == null)
+			if (_inventoryDataJsonFile == null)
 			{
 				return null;
 			}
-			return _inventoryDataFile.LastRunThinJobDate;
+			return _inventoryDataJsonFile.LastRunThinJobDate;
 		}
 		catch (Exception e)
 		{
@@ -256,11 +448,11 @@ public class InventoryData : IInventoryData
 		}
 		try
 		{
-			if (_inventoryDataFile == null)
+			if (_inventoryDataJsonFile == null)
 			{
-				_inventoryDataFile = new InventoryDataFile();
+				_inventoryDataJsonFile = new InventoryDataJsonFile();
 			}
-			_inventoryDataFile.LastCompletedDate = dt;
+			_inventoryDataJsonFile.LastCompletedDate = dt;
 			WriteInventoryData();
 		}
 		catch (Exception e)
@@ -282,11 +474,11 @@ public class InventoryData : IInventoryData
 		}
 		try
 		{
-			if (_inventoryDataFile == null)
+			if (_inventoryDataJsonFile == null)
 			{
-				_inventoryDataFile = new InventoryDataFile();
+				_inventoryDataJsonFile = new InventoryDataJsonFile();
 			}
-			_inventoryDataFile.LastRunThinJobDate = dt;
+			_inventoryDataJsonFile.LastRunThinJobDate = dt;
 			WriteInventoryData();
 		}
 		catch (Exception e)
@@ -381,41 +573,41 @@ public class InventoryData : IInventoryData
 	{
 		try
 		{
-			if (_inventoryDataFile == null)
+			if (_inventoryDataJsonFile == null)
 			{
 				LogHelper.Instance.Log("InventoryData.WriteInventoryData - no data to write");
 				return;
 			}
-			File.WriteAllBytes(_inventoryDataPath, Encoding.ASCII.GetBytes(_inventoryDataFile.ToJson()));
-			LogHelper.Instance.Log("InventoryData.WriteInventoryData - Writing {0}.", _inventoryDataFile.ToJson());
+			File.WriteAllBytes(_inventoryDataJsonPath, Encoding.ASCII.GetBytes(_inventoryDataJsonFile.ToJson()));
+			LogHelper.Instance.Log("InventoryData.WriteInventoryData - Writing {0}.", _inventoryDataJsonFile.ToJson());
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.LogException($"InventoryData.LoadInventoryData - An unhandled exception occurred", e);
-			_inventoryDataFile = null;
+			_inventoryDataJsonFile = null;
 		}
 	}
 
 	private void LoadInventoryData()
 	{
-		_inventoryDataFile = null;
+		_inventoryDataJsonFile = null;
 		try
 		{
-			if (!File.Exists(_inventoryDataPath))
+			if (!File.Exists(_inventoryDataJsonPath))
 			{
-				LogHelper.Instance.Log("InventoryData.LoadInventoryData - InventoryData file ({0}) does not exist", _inventoryDataPath);
+				LogHelper.Instance.Log("InventoryData.LoadInventoryData - InventoryData file ({0}) does not exist", _inventoryDataJsonPath);
 			}
 			else
 			{
-				_inventoryDataFile = Encoding.ASCII.GetString(File.ReadAllBytes(_inventoryDataPath)).ToObject<InventoryDataFile>();
-				LogHelper.Instance.Log("InventoryData.LoadInventoryData - InventoryData file contains LastCompletedDate {0}.", _inventoryDataFile.LastCompletedDate);
+				_inventoryDataJsonFile = Encoding.ASCII.GetString(File.ReadAllBytes(_inventoryDataJsonPath)).ToObject<InventoryDataJsonFile>();
+				LogHelper.Instance.Log("InventoryData.LoadInventoryData - InventoryData file contains LastCompletedDate {0}.", _inventoryDataJsonFile.LastCompletedDate);
 			}
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.LogException($"InventoryData.LoadInventoryData - An unhandled exception occurred", e);
-			_inventoryDataFile = null;
-			SafeDelete(_inventoryDataPath);
+			_inventoryDataJsonFile = null;
+			SafeDelete(_inventoryDataJsonPath);
 		}
 	}
 

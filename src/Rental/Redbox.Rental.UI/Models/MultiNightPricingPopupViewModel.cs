@@ -13,6 +13,8 @@ public class MultiNightPricingPopupViewModel : DependencyObject
 
 	public Action OnMultiNightButtonClicked;
 
+	public Action OnBuyButtonClicked;
+
 	public Action OnCancelButtonClicked;
 
 	public Func<ISpeechControl> OnGetSpeechControl;
@@ -33,6 +35,10 @@ public class MultiNightPricingPopupViewModel : DependencyObject
 
 	public string MultiNightButtonText { get; set; }
 
+	public Visibility BuyButtonVisibility { get; set; }
+
+	public string BuyButtonText { get; set; }
+
 	public string CancelButtonText { get; set; }
 
 	public string DisclaimerText { get; set; }
@@ -50,6 +56,14 @@ public class MultiNightPricingPopupViewModel : DependencyObject
 		if (OnMultiNightButtonClicked != null)
 		{
 			OnMultiNightButtonClicked();
+		}
+	}
+
+	public void ProcessOnBuyButtonClicked()
+	{
+		if (OnBuyButtonClicked != null)
+		{
+			OnBuyButtonClicked();
 		}
 	}
 

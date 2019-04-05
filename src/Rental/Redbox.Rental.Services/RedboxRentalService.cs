@@ -38,6 +38,11 @@ public class RedboxRentalService : IRedboxRental
 		return errorList;
 	}
 
+	public bool IsRentalSessionActive()
+	{
+		return OrchestrationService.IsRentalSessionActive();
+	}
+
 	public void CloseOpenSessionAndStartNewRentalSession(string newSessionContext)
 	{
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
@@ -123,6 +128,22 @@ public class RedboxRentalService : IRedboxRental
 				LogHelper.Instance.Log("Unable to set default theme to Redbox Classic", LogEntryType.Info);
 			}
 		}
+	}
+
+	public void RegisterEnvironmentChangeCallback()
+	{
+		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RegisterConfigurationCallback("watch-registry", delegate(string store, string action, string path, string key, string newValue)
+		{
+			if (store == "machine" && action == "set" && path == "Remote Services\\Merchant Services" && key == "EnableOfflineBadCardList")
+			{
+				bool result = true;
+				if (bool.TryParse(newValue, out result))
+				{
+					LogHelper.Instance.Log($"Configuration value changed for EnableOfflineBadCardList: {result}");
+					ApplicationState.Instance.EnableOfflineBadCardList = result;
+				}
+			}
+		});
 	}
 
 	private bool CanForceStartOfNewRentalSession()

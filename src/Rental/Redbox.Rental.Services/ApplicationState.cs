@@ -8,6 +8,8 @@ namespace Redbox.Rental.Services;
 
 public class ApplicationState : IApplicationState
 {
+	private bool _needToReloadCarousel;
+
 	private string _inCartTemplateName;
 
 	private bool _isADAAccessible;
@@ -75,5 +77,39 @@ public class ApplicationState : IApplicationState
 		}
 	}
 
+	public bool EnableOfflineBadCardList { get; set; }
+
 	public List<IKioskProduct> BrowseProducts { get; set; }
+
+	public bool IsStandAlone
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "StandAlone", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "StandAlone", value);
+		}
+	}
+
+	public bool NeedToReloadCarousel
+	{
+		get
+		{
+			return _needToReloadCarousel;
+		}
+		set
+		{
+			_needToReloadCarousel = value;
+		}
+	}
+
+	public ApplicationState()
+	{
+		string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", "True");
+		bool result = true;
+		bool.TryParse(value, out result);
+		EnableOfflineBadCardList = result;
+	}
 }

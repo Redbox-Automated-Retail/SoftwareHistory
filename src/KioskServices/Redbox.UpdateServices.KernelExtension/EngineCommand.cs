@@ -12,14 +12,6 @@ public class EngineCommand
 	[Usage("engine ping")]
 	public void Ping(CommandContext context)
 	{
-		try
-		{
-			LogHelper.Instance.Log("Engine Command: Ping");
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Error in EngineCommand Ping.", e);
-		}
 	}
 
 	[CommandForm(Name = "shutdown")]

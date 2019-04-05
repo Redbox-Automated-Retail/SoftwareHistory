@@ -72,56 +72,12 @@ public static class PricingExtensions
 		return true;
 	}
 
-	public static List<T> GetActiveDefaultRentalPricing<T>(this List<T> ppList, DateTime kioskDT) where T : IRentalPricing
-	{
-		return (from g in (from p in ppList.GetActiveProductPricing(kioskDT)
-				group p by p.PriceLevelType into g
-				select (g)).ToList()
-			select (from p in g
-				orderby p.StartDate descending, p.LocationRank, p.InitialNight descending
-				select p).First()).ToList();
-	}
-
 	public static T GetActiveDefaultRentalPricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, PriceLevelType plt) where T : IRentalPricing
 	{
 		return (from p in ppList.GetActiveProductPricing(kioskDT)
 			where p.PriceLevelType == plt || (p.PriceLevelType == PriceLevelType.Title && Convert.ToInt32(p.PriceLevelTypeValue) == titleId)
 			orderby p.StartDate descending, p.LocationRank, p.InitialNight
 			select p).FirstOrDefault();
-	}
-
-	public static T GetActiveDefaultRentalPricing<T>(this List<T> ppList, DateTime kioskDT, PriceLevelType plt) where T : IRentalPricing
-	{
-		if (plt != PriceLevelType.Dvd && plt != PriceLevelType.Bluray && plt != PriceLevelType.Games)
-		{
-			return default(T);
-		}
-		return (from p in ppList.GetActiveProductPricing(kioskDT)
-			where p.PriceLevelType == plt
-			orderby p.StartDate descending, p.LocationRank, p.InitialNight
-			select p).FirstOrDefault();
-	}
-
-	public static List<T> GetActiveRentalPricing<T>(this List<T> ppList, DateTime kioskDT) where T : IRentalPricing
-	{
-		return (from g in (from p in ppList.GetActiveProductPricing(kioskDT)
-				where p.InitialDays == 1
-				group p by p.PriceLevelType into g
-				select (g)).ToList()
-			select (from p in g
-				orderby p.LocationRank, p.ProductPriceId descending
-				select p).First()).ToList();
-	}
-
-	public static List<T> GetActiveMNPRentalPricing<T>(this List<T> ppList, DateTime kioskDT) where T : IRentalPricing
-	{
-		return (from g in (from p in ppList.GetActiveProductPricing(kioskDT)
-				where p.InitialDays > 1
-				group p by p.PriceLevelType into g
-				select (g)).ToList()
-			select (from p in g
-				orderby p.LocationRank, p.ProductPriceId descending
-				select p).First()).ToList();
 	}
 
 	public static T GetActiveRentalPricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, PriceLevelType plt) where T : IRentalPricing
@@ -140,23 +96,19 @@ public static class PricingExtensions
 			select p).ToList();
 	}
 
-	public static List<T> GetActivePurchasePricing<T>(this List<T> ppList, DateTime kioskDT) where T : IPurchasePricing
+	public static T GetActivePurchasePricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, bool useLowestPriceSortOrder) where T : IPurchasePricing
 	{
-		return (from g in (from p in ppList.GetActiveProductPricing(kioskDT)
-				group p by p.ProductId into g
-				select (g)).ToList()
-			select (from o in (from i in g
-					group i by i.PricingId into source
-					select source.ToList()).Last()
-				orderby o.PurchasePrice
-				select o).First()).ToList();
-	}
-
-	public static T GetActivePurchasePricing<T>(this List<T> ppList, DateTime kioskDT, long titleId) where T : IPurchasePricing
-	{
-		return (from p in ppList.GetActiveProductPricing(kioskDT)
+		List<T> activeProductPricing = ppList.GetActiveProductPricing(kioskDT);
+		if (useLowestPriceSortOrder)
+		{
+			return (from p in activeProductPricing
+				where p.ProductId == titleId
+				orderby p.PricingId descending, p.PurchasePrice
+				select p).FirstOrDefault();
+		}
+		return (from p in activeProductPricing
 			where p.ProductId == titleId
-			orderby p.PricingId descending, p.PurchasePrice
+			orderby p.PricingId descending, p.LocationRank, p.StartDate descending, p.PurchasePrice
 			select p).FirstOrDefault();
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
@@ -103,6 +104,17 @@ public static class RentalShoppingCartFunctions
 				LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.UpdateItemStatus.  Unable to parse status value {0}", statusValue);
 			}
 		});
+	}
+
+	[KernelFunction(Name = "kernel.rental_shopping_cart_assign_barcodes_to_vend")]
+	public static LuaTable AssignBarcodesToVend(string sessionId)
+	{
+		List<string> barcodeList = null;
+		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
+		{
+			barcodeList = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.AssignBarcodesToVend(rentalShoppingCart);
+		});
+		return barcodeList?.ToLuaTable();
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_update_in_cart_offer_made")]
@@ -261,16 +273,6 @@ public static class RentalShoppingCartFunctions
 		}
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_remove_multi_disc_discs")]
-	public static void RemoveMultiDiscDiscs(string sessionId)
-	{
-		if (sessionId != null)
-		{
-			Guid shoppingCartSessionId = new Guid(sessionId);
-			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.RemoveMultiDiscDiscsFromRentalShoppingCart(shoppingCartSessionId);
-		}
-	}
-
 	[KernelFunction(Name = "kernel.rental_shopping_cart_remove_non_reserved_products")]
 	public static void RemoveNonReservedProductsFromRentalShoppingCart(string sessionId)
 	{
@@ -317,22 +319,6 @@ public static class RentalShoppingCartFunctions
 		else
 		{
 			LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.HasItem.  Unable to find RentalShoppingCart with id {0}", sessionId);
-		}
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_has_mult_disc_item")]
-	public static bool HasMultiDiscItem(string sessionId)
-	{
-		bool result = false;
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(new Guid(sessionId));
-		if (rentalShoppingCart != null)
-		{
-			result = rentalShoppingCart.HasMultiDiscItem();
-		}
-		else
-		{
-			LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.HasMultiDiscItem.  Unable to find RentalShoppingCart with id {0}", sessionId);
 		}
 		return result;
 	}
@@ -506,43 +492,6 @@ public static class RentalShoppingCartFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.get_rental_shopping_use_credits")]
-	public static string GetUseCredits(string id)
-	{
-		CreditElection result = CreditElection.NotSpecified;
-		ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			result = rentalShoppingCart.UseCredits;
-		});
-		return result.ToString();
-	}
-
-	[KernelFunction(Name = "kernel.set_rental_shopping_use_credits")]
-	public static void SetUseCredits(string id, string value)
-	{
-		CreditElection newCreditElectionValue = CreditElection.NotSpecified;
-		if (Enum.TryParse<CreditElection>(value, ignoreCase: true, out newCreditElectionValue))
-		{
-			ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
-			{
-				rentalShoppingCart.UseCredits = newCreditElectionValue;
-			});
-		}
-	}
-
-	[KernelFunction(Name = "kernel.set_rental_shopping_applied_credits")]
-	public static void SetAppliedCredits(string id, string value)
-	{
-		int appliedCredits = 0;
-		if (int.TryParse(value, out appliedCredits))
-		{
-			ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
-			{
-				rentalShoppingCart.AppliedCredits = appliedCredits;
-			});
-		}
-	}
-
 	[KernelFunction(Name = "kernel.get_rental_shopping_marketing_opt_in_confirmation_status")]
 	public static string GetMarketingOptInConfirmationStatus(string id)
 	{
@@ -667,6 +616,8 @@ public static class RentalShoppingCartFunctions
 	[KernelFunction(Name = "kernel.show_check_out_keyboard_view")]
 	public static void showCheckOutKeyboardView(string emailAddress, Action<string> LuaContinueCallback, Action LuaCancelCallback)
 	{
+		object lockObject = new object();
+		bool hasActionExecuted = false;
 		OrchestrationService.ViewShow("keyboard_email_receipt_view", new KeyboardInfo
 		{
 			MaxLength = 64,
@@ -674,17 +625,31 @@ public static class RentalShoppingCartFunctions
 			IsValidEntry = ValidationServices.IsValidEmailAddress,
 			CancelAction = delegate
 			{
-				if (LuaCancelCallback != null)
+				LockHelper.TryLockObject(lockObject, delegate
 				{
-					LuaCancelCallback();
-				}
+					if (!hasActionExecuted)
+					{
+						hasActionExecuted = true;
+						if (LuaCancelCallback != null)
+						{
+							LuaCancelCallback();
+						}
+					}
+				}, "showCheckOutKeyboardView cancel action");
 			},
 			ContinueAction = delegate(string keyboardText)
 			{
-				if (LuaContinueCallback != null)
+				LockHelper.TryLockObject(lockObject, delegate
 				{
-					LuaContinueCallback(keyboardText);
-				}
+					if (!hasActionExecuted)
+					{
+						hasActionExecuted = true;
+						if (LuaContinueCallback != null)
+						{
+							LuaContinueCallback(keyboardText);
+						}
+					}
+				}, "showCheckOutKeyboardView continue action");
 			}
 		});
 	}

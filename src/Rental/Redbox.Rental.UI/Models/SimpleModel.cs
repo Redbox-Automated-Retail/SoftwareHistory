@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -28,11 +29,19 @@ public class SimpleModel : BaseModel<SimpleModel>
 
 	public static readonly DependencyProperty OtherButtonTextProperty = BaseModel<SimpleModel>.CreateDependencyProperty("OtherButtonText", TYPES.STRING, string.Empty);
 
+	public static readonly DependencyProperty CheckboxTextProperty = BaseModel<SimpleModel>.CreateDependencyProperty("CheckboxText", TYPES.STRING, string.Empty);
+
+	public static readonly DependencyProperty CheckboxCheckedProperty = DependencyProperty.Register("CheckboxChecked", TYPES.BOOL, typeof(SimpleModel), new FrameworkPropertyMetadata(false, CheckboxPropertyChanged));
+
 	public Action OtherAction { get; set; }
 
 	public Action CancelAction { get; set; }
 
 	public Action ContinueAction { get; set; }
+
+	public Action<bool> CheckBoxChangedAction { get; set; }
+
+	public SimpleInfo Info { get; set; }
 
 	public DynamicRoutedCommand OtherButtonCommand { get; set; }
 
@@ -202,6 +211,44 @@ public class SimpleModel : BaseModel<SimpleModel>
 			{
 				SetValue(OtherButtonTextProperty, value);
 			});
+		}
+	}
+
+	public string CheckboxText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(CheckboxTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CheckboxTextProperty, value);
+			});
+		}
+	}
+
+	public bool CheckboxChecked
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(CheckboxCheckedProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CheckboxCheckedProperty, value);
+			});
+		}
+	}
+
+	private static void CheckboxPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		if (d is SimpleModel simpleModel)
+		{
+			simpleModel.CheckBoxChangedAction(simpleModel.CheckboxChecked);
 		}
 	}
 }

@@ -9,7 +9,9 @@ public class BrowseViewModel : DependencyObject
 {
 	public Action OnCheckOutButtonClicked;
 
-	public Action OnToggleTitleFamilyButtonClicked;
+	public Action OnToggleTitleFamilyButton1Clicked;
+
+	public Action OnToggleTitleFamilyButton2Clicked;
 
 	public Action OnSignInButtonClicked;
 
@@ -29,7 +31,9 @@ public class BrowseViewModel : DependencyObject
 
 	public static readonly DependencyProperty AddToADACartLabelTextProperty = DependencyProperty.Register("AddToADACartLabelText", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty SwitchProductFamilyButtonVisibilityProperty = DependencyProperty.Register("SwitchProductFamilyButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+	public static readonly DependencyProperty SwitchProductFamilyButton1VisibilityProperty = DependencyProperty.Register("SwitchProductFamilyButton1Visibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty SwitchProductFamilyButton2VisibilityProperty = DependencyProperty.Register("SwitchProductFamilyButton2Visibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty AddToADACartLabelVisibilityProperty = DependencyProperty.Register("AddToADACartLabelVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
@@ -37,7 +41,9 @@ public class BrowseViewModel : DependencyObject
 
 	public static readonly DependencyProperty BackgroundImageVisibilityProperty = DependencyProperty.Register("BackgroundImageVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
-	public static readonly DependencyProperty SwitchProductFamilyButtonTextProperty = DependencyProperty.Register("SwitchProductFamilyButtonText", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty SwitchProductFamilyButton1TextProperty = DependencyProperty.Register("SwitchProductFamilyButton1Text", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SwitchProductFamilyButton2TextProperty = DependencyProperty.Register("SwitchProductFamilyButton2Text", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BrowseProductControlModelProperty = DependencyProperty.Register("BrowseProductControlModel", typeof(BrowseControlModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null, OnBrowseProductControlModelPropertyChanged));
 
@@ -200,17 +206,32 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
-	public Visibility SwitchProductFamilyButtonVisibility
+	public Visibility SwitchProductFamilyButton1Visibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SwitchProductFamilyButtonVisibilityProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SwitchProductFamilyButton1VisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(SwitchProductFamilyButtonVisibilityProperty, value);
+				SetValue(SwitchProductFamilyButton1VisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility SwitchProductFamilyButton2Visibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SwitchProductFamilyButton2VisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SwitchProductFamilyButton2VisibilityProperty, value);
 			});
 		}
 	}
@@ -230,17 +251,32 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
-	public string SwitchProductFamilyButtonText
+	public string SwitchProductFamilyButton1Text
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(SwitchProductFamilyButtonTextProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(SwitchProductFamilyButton1TextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(SwitchProductFamilyButtonTextProperty, value);
+				SetValue(SwitchProductFamilyButton1TextProperty, value);
+			});
+		}
+	}
+
+	public string SwitchProductFamilyButton2Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(SwitchProductFamilyButton2TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SwitchProductFamilyButton2TextProperty, value);
 			});
 		}
 	}
@@ -361,11 +397,19 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
-	public void ProcessOnToggleTitleFamilyButtonClicked()
+	public void ProcessOnToggleTitleFamilyButton1Clicked()
 	{
-		if (OnToggleTitleFamilyButtonClicked != null)
+		if (OnToggleTitleFamilyButton1Clicked != null)
 		{
-			OnToggleTitleFamilyButtonClicked();
+			OnToggleTitleFamilyButton1Clicked();
+		}
+	}
+
+	public void ProcessOnToggleTitleFamilyButton2Clicked()
+	{
+		if (OnToggleTitleFamilyButton2Clicked != null)
+		{
+			OnToggleTitleFamilyButton2Clicked();
 		}
 	}
 

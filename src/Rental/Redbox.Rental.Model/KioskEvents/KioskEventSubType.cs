@@ -31,4 +31,16 @@ public static class KioskEventSubType
 	public static int KioskHealth_HardwareStatRouterRecycle = 405;
 
 	public static int KioskHealth_HardwareStatUnexpectedPowerLoss = 406;
+
+	public static int KioskHealth_ViewTimeout = 500;
+
+	public static int KioskHealth_ViewReset = 501;
+
+	public static int KioskHealth_ViewActivity = 502;
+
+	public static int KioskHealth_CCReaderInactivity = 600;
+
+	public static int KioskHealth_CCReaderReadError = 601;
+
+	public static int KioskHealth_CCReaderActivity = 602;
 }

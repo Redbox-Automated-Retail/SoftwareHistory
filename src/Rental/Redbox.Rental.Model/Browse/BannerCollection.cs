@@ -50,6 +50,7 @@ public class BannerCollection : List<Banner>
 					{
 						BannerType = BannerType.MultipleDisc,
 						BannerStyleName = "banner_multiple_disc_background",
+						TextResourceName = "disc_vend",
 						BannerSize = BannerSize.Mini
 					},
 					new Banner

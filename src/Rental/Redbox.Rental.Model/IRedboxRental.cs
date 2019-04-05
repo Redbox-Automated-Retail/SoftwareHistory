@@ -7,4 +7,8 @@ public interface IRedboxRental
 	ErrorList Initialize();
 
 	void CloseOpenSessionAndStartNewRentalSession(string newSessionContext);
+
+	void RegisterEnvironmentChangeCallback();
+
+	bool IsRentalSessionActive();
 }

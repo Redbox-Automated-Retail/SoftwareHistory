@@ -46,7 +46,8 @@ public static class TitleTypeProperties
 						TitleType.Xbox360,
 						new TitleTypeProperty
 						{
-							NameResource = "title_type_name_xbox360"
+							NameResource = "title_type_name_xbox360",
+							AlternateNamesResource = "title_type_alternate_names_xbox360"
 						}
 					},
 					{
@@ -109,7 +110,8 @@ public static class TitleTypeProperties
 						TitleType.XboxOne,
 						new TitleTypeProperty
 						{
-							NameResource = "title_type_name_xboxone"
+							NameResource = "title_type_name_xboxone",
+							AlternateNamesResource = "title_type_alternate_names_xboxone"
 						}
 					},
 					{
@@ -123,7 +125,8 @@ public static class TitleTypeProperties
 						TitleType.NintendoSwitch,
 						new TitleTypeProperty
 						{
-							NameResource = "title_type_name_nintendo_switch"
+							NameResource = "title_type_name_nintendo_switch",
+							AlternateNamesResource = "title_type_alternate_names_nintendo_switch"
 						}
 					}
 				};

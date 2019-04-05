@@ -14,7 +14,7 @@ using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
-public class CollectionMessageViewController
+public class CollectionMessageViewController : BaseViewController
 {
 	public static void CheckCollectionsPopup(string reason)
 	{
@@ -47,8 +47,7 @@ public class CollectionMessageViewController
 		}
 		viewService.Push("collection_message_view");
 		viewService.Show();
-		IActor actorByNameAndTag = ActorFunctions.GetActorByNameAndTag("CollectionMessageViewUserControl", null);
-		if (actorByNameAndTag == null || !(actorByNameAndTag.WPFFrameworkElement is CollectionMessageViewUserControl collectionMessageViewUserControl))
+		if (!(BaseViewController.GetViewUserControl() is CollectionMessageViewUserControl collectionMessageViewUserControl))
 		{
 			return;
 		}

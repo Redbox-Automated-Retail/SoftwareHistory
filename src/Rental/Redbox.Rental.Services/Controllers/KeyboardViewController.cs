@@ -145,7 +145,7 @@ public class KeyboardViewController : BaseViewController
 
 	private static void InitForAccountSignIn(KeyboardLogic keyboardLogic)
 	{
-		KeyboardInfo keyboardInfo = keyboardLogic.KeyboardInfo;
+		_ = keyboardLogic.KeyboardInfo;
 		KeyboardModel model = keyboardLogic.Model;
 		model.TitleText = Resources.keyboard_sign_in_tag;
 		model.MessageText = Resources.keyboard_sign_in_message;
@@ -155,15 +155,6 @@ public class KeyboardViewController : BaseViewController
 		model.PasswordButtonText = Resources.keyboard_password_button_text;
 		model.CancelButtonText = Resources.keyboard_cancel_button_text;
 		model.ContinueButtonText = Resources.keyboard_continue_button_text;
-		switch (keyboardInfo.SignInCancelButtonType)
-		{
-		case SignInCancelButtonTypes.Back:
-			model.CancelButtonText = Resources.back_button;
-			break;
-		default:
-			model.CancelButtonText = Resources.keyboard_cancel_button_text;
-			break;
-		}
 		if (BaseViewController.GetViewUserControl() is KeyboardSignInViewControl keyboardSignInViewControl)
 		{
 			keyboardSignInViewControl.UpdateKeyStates();

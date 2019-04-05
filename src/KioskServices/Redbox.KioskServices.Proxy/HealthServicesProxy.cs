@@ -7,6 +7,7 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.REDS.Framework;
 
@@ -259,7 +260,7 @@ public class HealthServicesProxy : IHealthServices
 		});
 	}
 
-	public void SendAlert(string storeNumber, string alertType, string subType, string message, DateTime dateTime, RemoteServiceCallback callback)
+	public void SendAlert(string storeNumber, string alertType, string subType, string message, DateTime dateTime, RemoteServiceCallback callback, Action action = null, bool skipQueue = false)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -271,18 +272,37 @@ public class HealthServicesProxy : IHealthServices
 				{
 					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAlert, URL: {0}", KioskServicesProxy.Instance.Url);
 					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(byte.MaxValue, "KioskAlert", new
+					IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
+					if (skipQueue)
 					{
-						MessageType = "KioskAlert",
-						MessageId = Guid.NewGuid(),
-						KioskId = int.Parse(storeNumber),
-						EngineVersion = service["EngineVersion"],
-						BundleVersion = service["ProductVersion"],
-						SubType = subType,
-						Detail = message,
-						Type = alertType,
-						Time = dateTime
-					});
+						KioskServicesProxy.Instance.ExecuteMessage(new
+						{
+							MessageType = "KioskAlert",
+							MessageId = Guid.NewGuid(),
+							KioskId = int.Parse(storeNumber),
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
+							SubType = subType,
+							Detail = message,
+							Type = alertType,
+							Time = dateTime
+						});
+					}
+					else
+					{
+						errorList = service2.Enqueue(byte.MaxValue, "KioskAlert", new
+						{
+							MessageType = "KioskAlert",
+							MessageId = Guid.NewGuid(),
+							KioskId = int.Parse(storeNumber),
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
+							SubType = subType,
+							Detail = message,
+							Type = alertType,
+							Time = dateTime
+						});
+					}
 				}
 				else
 				{
@@ -306,8 +326,10 @@ public class HealthServicesProxy : IHealthServices
 			{
 				try
 				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service2 != null)
+					LogHelper.Instance.Log("Invoking action from HealthServicesProxy.SendAlert");
+					action?.Invoke();
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -318,7 +340,7 @@ public class HealthServicesProxy : IHealthServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service2.EnqueueCallback(new RemoteServiceCallbackEntry
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,

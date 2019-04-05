@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Redbox.Rental.Model.Promotion;
 
 public interface IPromoCodeValidationResult
@@ -29,4 +31,8 @@ public interface IPromoCodeValidationResult
 	PromotionGetFormat GetFormat { get; set; }
 
 	ICampaignTitles CampaignTitles { get; set; }
+
+	int? ProductTypeId { get; set; }
+
+	List<int> FormatIds { get; set; }
 }

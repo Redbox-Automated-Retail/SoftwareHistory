@@ -16,5 +16,11 @@ public static class ConfigCategory
 
 	public static string Documents = "Documents";
 
+	public static string Personalization = "Personalization";
+
+	public static string ABTesting = "AB Testing";
+
+	public static string ABTestParameters = "AB Test Parameters";
+
 	public static string KioskHealth = "KioskHealth";
 }

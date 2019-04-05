@@ -34,6 +34,8 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 
 	public static readonly DependencyProperty ContinueButtonTextProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("ContinueButtonText", TYPES.STRING);
 
+	public static readonly DependencyProperty ContinueButtonEnabledProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("ContinueButtonEnabled", TYPES.BOOL, false);
+
 	public static readonly DependencyProperty EmailButtonTextProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("EmailButtonText", TYPES.STRING);
 
 	public static readonly DependencyProperty PasswordButtonTextProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("PasswordButtonText", TYPES.STRING);
@@ -245,6 +247,21 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ContinueButtonTextProperty, value);
+			});
+		}
+	}
+
+	public bool ContinueButtonEnabled
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(ContinueButtonEnabledProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ContinueButtonEnabledProperty, value);
 			});
 		}
 	}

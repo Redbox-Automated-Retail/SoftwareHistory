@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Views.ReviewPopupViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:controls="clr-namespace:Redbox.Rental.UI.Controls" xmlns:designModel="clr-namespace:Redbox.Rental.UI.Models.DesignTime">
+  <Grid>
+    <Grid Name="BackgroundGrid" Background="#FF000000" Opacity="0.6" />
+    <Border Height="600" Width="510" Background="#FFFFFFFF" CornerRadius="20">
+      <StackPanel Margin="50,50,50,0">
+        <TextBlock Name="HeaderText" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,5" Foreground="{StaticResource LightBlackBrush}" Style="{StaticResource font_montserrat_semibold_22}" Text="{Binding Path=HeaderText, FallbackValue=Title}" />
+        <controls:ReviewListUserControl ItemsPerPage="2" HorizontalAlignment="Left" Width="410" ReviewModels="{Binding ReviewModels}" NextPageClickedCommand="{Binding NextPagePressedCommand}" PreviousPageClickedCommand="{Binding PreviousPagePressedCommand}" PageNumberClickedCommand="{Binding PageNumberPressedCommand}" />
+        <Redbox:RoundedButton Width="166" Height="60" VerticalAlignment="Top" Margin="0,30,0,0" CornerRadius="30" Style="{StaticResource style_rb_purple_white_border_button}" Command="{Binding BackCommand}">
+          <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=BackButtonText, FallbackValue=OK}" />
+        </Redbox:RoundedButton>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

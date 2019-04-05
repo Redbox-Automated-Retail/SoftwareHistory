@@ -1,11 +1,13 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.UI.Controls;
 
 namespace Redbox.Rental.UI.Views;
 
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "ComingSoonView")]
 public partial class ComingSoonViewUserControl : UserControl, IComponentConnector
 {
 	public string ComingSoonText

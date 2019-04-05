@@ -19,7 +19,7 @@ public partial class JoinedTextClubViewControl : ViewUserControl, IComponentConn
 	{
 		InitializeComponent();
 		ApplyTheme<Control>(MainControl);
-		base.SpeechViewName = "joined_text_club_promo_view";
+		base.SpeechViewName = "join_text_club_promo_view";
 	}
 
 	protected override void DataContextHasChanged()

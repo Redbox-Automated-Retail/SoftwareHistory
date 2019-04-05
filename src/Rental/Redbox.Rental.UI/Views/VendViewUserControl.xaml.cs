@@ -5,13 +5,17 @@ using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Media.Imaging;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Controls.Animations;
 
 namespace Redbox.Rental.UI.Views;
 
-public partial class VendViewUserControl : BaseUserControl, IWPFActor, IComponentConnector
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "VendView")]
+public partial class VendViewUserControl : TextToSpeechUserControl, IComponentConnector
 {
+	public Func<ISpeechControl> OnGetSpeechControl;
+
 	public bool IsPickup { get; set; }
 
 	public string[] TextMessages
@@ -83,13 +87,13 @@ public partial class VendViewUserControl : BaseUserControl, IWPFActor, IComponen
 		}
 	}
 
+	public override ISpeechControl GetSpeechControl()
+	{
+		return OnGetSpeechControl?.Invoke();
+	}
+
 	public VendViewUserControl()
 	{
 		InitializeComponent();
-		InitVisibilityHasChanged();
-	}
-
-	protected override void VisibleHasChanged()
-	{
 	}
 }

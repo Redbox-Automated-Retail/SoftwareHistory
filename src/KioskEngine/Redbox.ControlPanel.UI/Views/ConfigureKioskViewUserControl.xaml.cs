@@ -30,6 +30,8 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 
 	private string _selectedBannerName;
 
+	private string _marketName;
+
 	private string _kaseyaMarketName;
 
 	private string _dueTime;
@@ -102,6 +104,7 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 		_selectedBannerId = -1;
 		_selectedBannerName = string.Empty;
 		_kaseyaMarketName = string.Empty;
+		_marketName = string.Empty;
 		_dueTime = string.Empty;
 		next_button.Content = "Continue";
 		_storeSource = null;
@@ -127,7 +130,7 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 		try
 		{
 			string text = string.Concat("C:\\Program Files\\Redbox\\Reds\\Installers\\", result.Properties["kaseya_server"], "Install.exe");
-			LogHelper.Instance.Log(string.Format("Configuring Kiosk, {0}", "Kaseya Path: " + text));
+			LogHelper.Instance.Log($"Configuring Kiosk, Kaseya Path: {text}");
 			string arguments = string.Concat("/s /w /r /v /g=redbox.", result.Properties["ops_market"], " /m=redbox-", _selectedStoreId.ToString());
 			ProcessFunctions.StartProcessWaitForExit(text, arguments, 20000);
 			Spinner.Visibility = Visibility.Hidden;
@@ -200,6 +203,7 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 			lblConfirmBanner.Content = "Banner: " + _selectedBannerName;
 			lblConfirmStore.Content = "Store: " + _storeSource[selectedIndex].Id;
 			_selectedStoreId = _storeSource[selectedIndex].Id;
+			_marketName = _storeSource[selectedIndex].MarketName;
 			_kaseyaMarketName = _storeSource[selectedIndex].KaseyaMarketName;
 			_dueTime = _storeSource[selectedIndex].DueTime;
 		}
@@ -357,8 +361,8 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 			string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
 			ProcessFunctions.SendAuditEvent(_selectedStoreId.ToString(), eventType, userName, "CP Bundle", "Activate Control Panel function.");
 			ProcessFunctions.RenameComputer("redbox-" + _selectedStoreId);
-			ProcessFunctions.SetMachineSettingValue("Store", "Banner", _selectedBannerId.ToString());
-			ProcessFunctions.SetMachineSettingValue("Store", "Market", _kaseyaMarketName);
+			ProcessFunctions.SetMachineSettingValue("Store", "Banner", _selectedBannerName);
+			ProcessFunctions.SetMachineSettingValue("Store", "Market", _marketName);
 			ProcessFunctions.SetMachineSettingValue("Store", "Duetime", _dueTime);
 			RemoteServiceCallback completeCallback = GetOpsMarketResult;
 			ProcessFunctions.GetOpsMarket(_selectedStoreId.ToString(), completeCallback);

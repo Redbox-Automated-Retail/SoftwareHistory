@@ -42,4 +42,8 @@ public interface ITrackDataService
 	ErrorList GetTrackErrors();
 
 	string GenerateCardHashId();
+
+	string GenerateReservationCardHashId();
+
+	string HashString(string original);
 }

@@ -10,6 +10,7 @@
           </DataTrigger>
         </Style.Triggers>
       </Style>
+      <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <UIElement.InputBindings>
@@ -25,7 +26,7 @@
         <Grid.RowDefinitions>
           <RowDefinition MinHeight="20" MaxHeight="110" Height="{Binding AdHeight}" />
           <RowDefinition MinHeight="470" MaxHeight="600" Height="{Binding MainHeight}" />
-          <RowDefinition Height="110" />
+          <RowDefinition Height="140" />
         </Grid.RowDefinitions>
         <Grid Name="AdBanner" Row="0" ColumnSpan="2">
           <Image Name="AdImage" Stretch="None" VerticalAlignment="Top" HorizontalAlignment="Center" Height="90" Width="728" Source="{Binding AdImage}" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
@@ -41,7 +42,7 @@
           <DockPanel LastChildFill="True" Margin="20,0,0,0">
             <TextBlock Style="{StaticResource font_museo_slab_900_30}" DockPanel.Dock="Top" Margin="0,3,100,10" Foreground="#E42045" TextWrapping="Wrap" Text="{Binding Header, FallbackValue=HEADER}" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,0" DockPanel.Dock="Top">
-              <Border BorderThickness="2" BorderBrush="#B7ADA5" Visibility="{Binding RatingVisibility, FallbackValue=Collapsed}">
+              <Border BorderThickness="2" BorderBrush="#B7ADA5" Visibility="{Binding RatingVisibility, FallbackValue=Visible}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_regular_12}" FontWeight="Bold" Foreground="#8A7666" Margin="8,4,8,4" Text="{Binding Rating}" />
               </Border>
               <Border Margin="10,0,0,0" BorderThickness="2" BorderBrush="#B7ADA5" Visibility="{Binding FormatVisibility, FallbackValue=Collapsed}">
@@ -56,6 +57,10 @@
               <Border Margin="10,0,0,0" BorderThickness="2" BorderBrush="#B7ADA5" Visibility="{Binding CCSupported, FallbackValue=Collapsed}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_regular_12}" FontWeight="Bold" Foreground="#8A7666" Margin="8,4,8,4" Text="CC" />
               </Border>
+              <localControls:StarRatingUserControl Margin="20,0,0,0" NumberOfStars="{Binding StarRating, Mode=OneWay, FallbackValue=5}" Visibility="{Binding StarRating, Converter={StaticResource NullToVisibilityConverter}}" />
+              <Button Style="{StaticResource TransparentButton}" Command="{Binding ReviewsButtonCommand}" Visibility="{Binding ReviewButtonVisibility, FallbackValue=Collapsed}">
+                <TextBlock Margin="25,0,0,0" Style="{StaticResource font_montserrat_regular_13}" TextDecorations="Underline" Foreground="{StaticResource WarmPurpleBrush}" VerticalAlignment="Center" Text="{Binding ReviewsButtonText, FallbackValue=See Reviews &gt;}" Visibility="{Binding StarRating, Converter={StaticResource NullToVisibilityConverter}}" />
+              </Button>
             </StackPanel>
             <StackPanel Name="ProductDetails" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="-10,0,0,2" Visibility="{Binding NotEmptyCaseVisibility, FallbackValue=Visible}">
               <Rectangle Height="3" Width="Auto" Stroke="#792D8D" StrokeThickness="0" RadiusX="0" RadiusY="0" Fill="#792D8D" Margin="0,2,50,0" />
@@ -146,19 +151,18 @@
             <TextBlock Style="{StaticResource font_montserrat_regular_12}" Foreground="#303438" DockPanel.Dock="Top" Margin="0,20,50,10" TextWrapping="Wrap" Text="{Binding Description, FallbackValue=DESCRIPTION}" />
           </DockPanel>
         </Grid>
-        <Grid Name="Buttons" ColumnSpan="2" Row="3" VerticalAlignment="Bottom" Margin="16,0,-30,30">
+        <Grid Name="Buttons" ColumnSpan="2" Row="3" VerticalAlignment="Top" Margin="16,20,-30,30">
           <DockPanel>
-            <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Bottom">
+            <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Top">
               <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="163" CornerRadius="28" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
                 <TextBlock Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=DataContext.BackText, FallbackValue=Back, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:TitleDetailsUserControl}}}" />
               </Redbox:RoundedButton>
             </StackPanel>
             <StackPanel Name="rightButtons" Orientation="Horizontal" DockPanel.Dock="Right" FlowDirection="RightToLeft" VerticalAlignment="Bottom" Visibility="{Binding AddButtonBarVisibility, FallbackValue=Collapsed}">
               <Redbox:RoundedButton Name="buy_button" Style="{StaticResource style_rb_rubine_white_border_with_dropshadow_button}" Margin="0,0,25,0" Height="59" Width="180" CornerRadius="28" VerticalAlignment="Bottom" Command="{x:Static localbase:Commands.BuyCommand}" Focusable="False" Visibility="{Binding ShowBuy, FallbackValue=Visible}">
-                <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonTextStyle, FallbackValue={StaticResource font_museo_slab_900_20}}" Text="{Binding BuyText, FallbackValue=Buy}" />
-                  <localControls:ChevronUserControl Height="22" Margin="10,0,15,0" Visibility="{Binding BuyChevronVisibility, FallbackValue=Visible}" />
-                  <TextBlock Margin="5,0,0,0" TextAlignment="Center" Style="{Binding BuyButtonTextStyle, FallbackValue={StaticResource font_museo_slab_900_16}}" Visibility="{Binding BuyPriceVisibility, FallbackValue=Collapsed}" Text="{Binding BuyPriceText, FallbackValue=$$$}" />
+                <StackPanel Orientation="Vertical" FlowDirection="LeftToRight" HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonTextStyle, FallbackValue={StaticResource font_museo_slab_900_20}}" Text="{Binding BuyText, FallbackValue=Own It}" />
+                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonTextStyle, FallbackValue={StaticResource font_museo_slab_900_16}}" Text="{Binding BuyPriceText, FallbackValue=$$$}" />
                 </StackPanel>
               </Redbox:RoundedButton>
               <ItemsControl Name="FormatButtonsItemsControl" ItemsSource="{Binding ButtonData}">
@@ -185,7 +189,7 @@
                 <TextBlock Style="{StaticResource font_museo_slab_900_20}" TextAlignment="Center" Text="{Binding ComingSoonButtonText, FallbackValue=Email Me}" />
               </Redbox:RoundedButton>
             </StackPanel>
-            <Grid Name="outOfStock" DockPanel.Dock="Right" Width="350" VerticalAlignment="Bottom" HorizontalAlignment="Right" Visibility="{Binding OutOfStockVisibility, FallbackValue=Visible}">
+            <Grid Name="outOfStock" DockPanel.Dock="Right" Width="500" VerticalAlignment="Top" HorizontalAlignment="Right" Visibility="{Binding OutOfStockVisibility, FallbackValue=Visible}">
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />

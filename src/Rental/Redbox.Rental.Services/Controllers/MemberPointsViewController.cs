@@ -121,7 +121,6 @@ public class MemberPointsViewController : BaseLoyaltyController
 			}
 			if (item.LoyaltyPointsRecord != null && item.LoyaltyPointsRecord.ToBeRedeemed)
 			{
-				model.ContinueButtonEnabled = true;
 				model.SelectedProductIds.Add(item.ProductId);
 				model.EntryShoppingProductIds.Add(item.ProductId);
 				item.LoyaltyPointsRecord.ToBeRedeemed = false;

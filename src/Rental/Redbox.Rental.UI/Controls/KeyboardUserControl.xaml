@@ -49,9 +49,9 @@
         <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&gt;" />
       </Redbox:GridExt>
       <Redbox:GridExt Row="3" NumberOfColumns="12" Margin="33,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Back}" />
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="8" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear}" />
+        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
       </Redbox:GridExt>
     </Redbox:GridExt>
     <Redbox:GridExt Name="EmailGridElem" NumberOfRows="5" NumberOfColumns="1">
@@ -116,9 +116,9 @@
         </Redbox:RoundedButton>
       </Redbox:GridExt>
       <Redbox:GridExt Row="4" NumberOfColumns="13" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Back}" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
         <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="4" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear}" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
         <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="dotcom" Grid.ColumnSpan="3">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text=".com" />
         </Redbox:RoundedButton>
@@ -174,11 +174,11 @@
         <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="m" />
       </Redbox:GridExt>
       <Redbox:GridExt Row="4" NumberOfColumns="13" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Back}" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
         <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="7" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear}" />
+        <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
       </Redbox:GridExt>
-      <Redbox:GridExt Name="CaseKeysElem" Row="4" NumberOfColumns="2" Width="134" HorizontalAlignment="Left" Margin="-2,0,0,0" Visibility="{Binding Path=CaseKeysElem, FallbackValue=Visibile}">
+      <Redbox:GridExt Name="CaseKeysElem" Row="4" NumberOfColumns="2" Width="134" HorizontalAlignment="Left" Margin="-2,0,0,0" Visibility="{Binding Path=CaseKeysElem, FallbackValue=Visible}">
         <Redbox:RoundedButton Name="CapButton" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="cap_shift" Grid.ColumnSpan="2" State="{Binding KeyboardCapLock, Mode=TwoWay}" Click="CapButtonClicked">
           <TextBlock Name="CapButtonText" HorizontalAlignment="Center" VerticalAlignment="Center" Text="ABC" />
         </Redbox:RoundedButton>
@@ -230,9 +230,9 @@
         <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="M" />
       </Redbox:GridExt>
       <Redbox:GridExt Row="4" NumberOfColumns="10" Margin="99,0,99,0" Visibility="{Binding ElementName=PromoCodeElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Back}" />
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="6" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear}" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
       </Redbox:GridExt>
     </Redbox:GridExt>
   </Grid>

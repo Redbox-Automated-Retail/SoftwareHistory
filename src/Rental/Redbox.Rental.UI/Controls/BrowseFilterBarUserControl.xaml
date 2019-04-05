@@ -7,6 +7,7 @@
     <CommandBinding Command="{x:Static localbase:Commands.MoreCollectionsCommand}" Executed="MoreCollectionsCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.HomeCommand}" Executed="HomeCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.FormatFilterPopupCommand}" Executed="FormatFilterPopupCommandBinding_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.ForSaleFilterPopupCommand}" Executed="ForSaleFilterPopupCommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid Background="#FFFFFF" Height="59">
     <DockPanel LastChildFill="True">
@@ -34,6 +35,12 @@
         <Redbox:RoundedButton Name="FormatFilterButton" Command="{x:Static localbase:Commands.FormatFilterPopupCommand}" Height="32" Width="Auto" MinWidth="96" DockPanel.Dock="Right" Style="{Binding Path=FormatFilterButtonStyle, FallbackValue={StaticResource classic_rubine_radio_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=FormatFilterButtonVisibility, FallbackValue=Visible}">
           <StackPanel Orientation="Horizontal">
             <TextBlock Name="FormatFilterButtonText" Style="{StaticResource font_montserrat_regular_14}" Margin="15,0,5,0" Text="{Binding Path=FormatFilterButtonText, FallbackValue=Format}" />
+            <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/chevron.png" Height="14" Margin="5,0,15,0" />
+          </StackPanel>
+        </Redbox:RoundedButton>
+        <Redbox:RoundedButton Name="PriceRangeFilterButton" Command="{x:Static localbase:Commands.ForSaleFilterPopupCommand}" Height="32" Width="Auto" MinWidth="80" DockPanel.Dock="Right" Style="{Binding Path=PriceRangeFilterButtonStyle, FallbackValue={StaticResource classic_rubine_radio_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=PriceRangeFilterButtonVisibility, FallbackValue=Visible}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Name="PriceRangeFilterButtonText" Style="{StaticResource font_montserrat_regular_14}" Margin="15,0,5,0" Text="{Binding Path=PriceRangeFilterButtonText, FallbackValue=For Sale}" />
             <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/chevron.png" Height="14" Margin="5,0,15,0" />
           </StackPanel>
         </Redbox:RoundedButton>

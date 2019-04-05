@@ -5,13 +5,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
@@ -28,27 +29,11 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		public static int RecommendationOnPickupIdleTimerDuration = 40000;
 	}
 
-	private class ReservationValues
-	{
-		public string EmailAddress { get; set; }
-
-		public string ReferenceNumber { get; set; }
-
-		public List<long> CustomerHistory { get; set; }
-
-		public decimal PromoAmount { get; set; }
-
-		public string PromoCode { get; set; }
-
-		public ReservationValues()
-		{
-			CustomerHistory = new List<long>();
-		}
-	}
-
-	private static ReservationValues _reservationValues;
+	private static IReservationDetails _reservationValues;
 
 	private static RentalShoppingCartChanged ShoppingCartChangeEventHandler;
+
+	private static object _lockObject = new object();
 
 	private static IIdleTimerService IdleTimerService => ServiceLocator.Instance.GetService<IIdleTimerService>();
 
@@ -61,7 +46,14 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		{
 			OrchestrationService.StopIdleTimer("idle_timer");
 			RecommendationOnPickupViewModel recommendationOnPickupViewModel = new RecommendationOnPickupViewModel();
-			ConfigureShoppingCart(recommendationOnPickupViewModel);
+			ConfigureShoppingCart(recommendationOnPickupViewModel, clearCart: false);
+			if (string.IsNullOrEmpty(_reservationValues?.ReferenceNumber))
+			{
+				LogHelper.Instance.Log("No reservation found for mod resv pickup, aborting reservation pickup.");
+				OrchestrationService.StartIdleTimer("idle_timer");
+				ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(null);
+				return;
+			}
 			ConfigureShoppingCartChangeHandler();
 			ConfigureRecommendedTitlesBrowse(recommendationOnPickupViewModel);
 			ConfigureTextAndVisibility(recommendationOnPickupViewModel);
@@ -84,11 +76,11 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				MessagePopupViewController.ShowRecommendationOnPickupPrompt(delegate
 				{
 					OrchestrationService.ViewGoBackSafe("recommendation on pickup prompt timed out", popOnly: false);
-					ReservationFunctions.InvokeVendOnlyReservedTitlesCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+					PickupOnlyReservedTitlesFromTimeoutDialog();
 				}, delegate
 				{
 					OrchestrationService.ViewGoBackSafe("recommendation on pickup prompt - vend only reserved titles", popOnly: false);
-					ReservationFunctions.InvokeVendOnlyReservedTitlesCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+					PickupOnlyReservedTitlesFromTimeoutDialog();
 				}, delegate
 				{
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "keep_browsing_button");
@@ -99,17 +91,36 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		obj?.Start();
 	}
 
+	private static void PickupOnlyReservedTitlesFromTimeoutDialog()
+	{
+		if (_reservationValues.AuthorizeAtPickup)
+		{
+			foreach (IRentalShoppingCartItem item in RentalShoppingCart.Items.Where((IRentalShoppingCartItem i) => i.SourceType == ItemSourceType.Recommendation))
+			{
+				RentalShoppingCart.RemoveItem(item, userRemoved: false);
+			}
+			ReservationFunctions.InvokeAuthorizeOnPickupCallback(_reservationValues?.ReferenceNumber, cartWasModified: false);
+		}
+		else
+		{
+			ReservationFunctions.InvokeVendOnlyReservedTitlesCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+		}
+	}
+
 	private static void ConfigureRecommendedTitlesBrowse(RecommendationOnPickupViewModel recommendationOnPickupViewModel)
 	{
 		LogHelper.Instance.Log("RecommendationOnPickupController.ConfigureRecommendedTitlesBrowse");
 		bool includeBluray = RentalShoppingCart?.Items.Any((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation && x.TitleType == TitleType.Bluray) ?? false;
-		List<long> list = new List<long>();
-		list.AddRange(_reservationValues.CustomerHistory);
-		list.AddRange(RentalShoppingCart?.Items.Where((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation).Select((IRentalShoppingCartItem x) => x.ProductId));
-		List<IKioskProduct> list2 = GenerateRecommendations(includeBluray, list);
+		List<long> excludeProducts = new List<long>();
+		_reservationValues?.HistoryTitleIds.ForEach(delegate(int x)
+		{
+			excludeProducts.Add(x);
+		});
+		excludeProducts.AddRange(RentalShoppingCart?.Items.Where((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation).Select((IRentalShoppingCartItem x) => x.ProductId));
+		List<IKioskProduct> list = GenerateRecommendations(includeBluray, excludeProducts);
 		if (Redbox.Rental.Services.Session.Session.Instance?.BrowseState != null)
 		{
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseProductsShown = list2;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseProductsShown = list;
 		}
 		BrowseControlModel browseControlModel = new BrowseControlModel();
 		browseControlModel.RowCount = 1;
@@ -120,7 +131,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		browseControlModel.ShowNoResultsMessage = false;
 		browseControlModel.PageNumberVisibility = Visibility.Collapsed;
 		browseControlModel.OnAddBrowseItemModel += BrowseProductControl_OnAddDisplayProductModel;
-		browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(list2);
+		browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(list);
 		for (int num = 0; num < browseControlModel.RowCount * browseControlModel.ColumnCount * 3; num++)
 		{
 			browseControlModel.BrowseControls.Add(new DisplayProductWithTextFooterUserControl
@@ -171,9 +182,9 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 	private static void CurrentRentalShoppingCart_OnChange(IRentalShoppingCart rentalShoppingCart)
 	{
 		RecommendationOnPickupViewModel recommendationOnPickupViewModelFromView = GetRecommendationOnPickupViewModelFromView();
-		if (recommendationOnPickupViewModelFromView != null)
+		if (recommendationOnPickupViewModelFromView != null && !recommendationOnPickupViewModelFromView.IsViewUpdatingCart)
 		{
-			ConfigureShoppingCart(recommendationOnPickupViewModelFromView);
+			ConfigureShoppingCart(recommendationOnPickupViewModelFromView, clearCart: false);
 			ConfigureTextAndVisibility(recommendationOnPickupViewModelFromView);
 			if (recommendationOnPickupViewModelFromView?.BrowseProductControlModel?.BrowseItems != null)
 			{
@@ -259,7 +270,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 			List<long> list2 = new List<long> { 1139L };
 			list2.AddRange(excludeProducts);
 			List<IKioskProduct> products = null;
-			service.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, 1093L, null, list2, isADAView: true, out products);
+			service.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, 1093L, null, list2, isADAView: true, null, null, out products);
 			List<IKioskProduct> list3 = new List<IKioskProduct>();
 			foreach (IKioskProduct item in products)
 			{
@@ -306,13 +317,59 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 	{
 		recommendationOnPickupViewModel.OnPickupButtonClicked = delegate
 		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pickup_button");
-			ReservationFunctions.InvokeVendOnlyReservedTitlesCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+			LockHelper.TryLockObject(_lockObject, delegate
+			{
+				if (!recommendationOnPickupViewModel.HasPickupOrPayActionExecuted)
+				{
+					recommendationOnPickupViewModel.HasPickupOrPayActionExecuted = true;
+					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pickup_button");
+					AddSecondaryMdvDiscsBackToShoppingCart(RentalShoppingCart, recommendationOnPickupViewModel);
+					if (_reservationValues.AuthorizeAtPickup)
+					{
+						ReservationFunctions.InvokeAuthorizeOnPickupCallback(_reservationValues?.ReferenceNumber, cartWasModified: false);
+					}
+					else
+					{
+						ReservationFunctions.InvokeVendOnlyReservedTitlesCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("RecommendationOnPickupViewController.OnPickupButtonClicked Pickup button not pressed because it was disabled.");
+				}
+			}, "RecommendationOnPickupViewController.OnPickupButtonClicked");
 		};
 		recommendationOnPickupViewModel.OnPayButtonClicked = delegate
 		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pay_button");
-			ReservationFunctions.InvokeReservationAuthorizeCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+			LockHelper.TryLockObject(_lockObject, delegate
+			{
+				if (!recommendationOnPickupViewModel.HasPickupOrPayActionExecuted)
+				{
+					recommendationOnPickupViewModel.HasPickupOrPayActionExecuted = true;
+					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pay_button");
+					AddSecondaryMdvDiscsBackToShoppingCart(RentalShoppingCart, recommendationOnPickupViewModel);
+					if (_reservationValues.AuthorizeAtPickup)
+					{
+						List<long> list = new List<long>();
+						foreach (IRentalShoppingCartItem item in RentalShoppingCart.Items)
+						{
+							if (item.SourceType == ItemSourceType.Recommendation)
+							{
+								list.Add(item.ProductId);
+							}
+						}
+						ReservationFunctions.InvokeAuthorizeOnPickupCallback(_reservationValues?.ReferenceNumber, cartWasModified: true);
+					}
+					else
+					{
+						ReservationFunctions.InvokeReservationAuthorizeCallback(_reservationValues?.EmailAddress, _reservationValues?.ReferenceNumber);
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("RecommendationOnPickupViewController.OnPayButtonClicked Pay button not pressed because it was disabled.");
+				}
+			}, "RecommendationOnPickupViewController.OnPayButtonClicked");
 		};
 		recommendationOnPickupViewModel.OnTermsAndPrivacyButtonClicked = delegate
 		{
@@ -320,120 +377,65 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		};
 	}
 
-	private static void ConfigureShoppingCart(RecommendationOnPickupViewModel recommendationOnPickupViewModel)
+	private static void ConfigureShoppingCart(RecommendationOnPickupViewModel recommendationOnPickupViewModel, bool clearCart)
 	{
-		if (RentalShoppingCart != null)
+		if (RentalShoppingCart == null)
 		{
-			RentalShoppingCart.PickupRecommendationsShown = true;
-			PopulateShoppingCartWithReservationItems(RentalShoppingCart);
-			ConfigureShoppingCartControl(recommendationOnPickupViewModel);
+			return;
+		}
+		lock (recommendationOnPickupViewModel)
+		{
+			try
+			{
+				recommendationOnPickupViewModel.IsViewUpdatingCart = true;
+				PopulateShoppingCartWithReservationItems(RentalShoppingCart, clearCart, recommendationOnPickupViewModel);
+				RentalShoppingCart.PickupRecommendationsShown = true;
+				ConfigureShoppingCartControl(recommendationOnPickupViewModel);
+			}
+			finally
+			{
+				recommendationOnPickupViewModel.IsViewUpdatingCart = false;
+			}
 		}
 	}
 
-	private static void PopulateShoppingCartWithReservationItems(IRentalShoppingCart rentalShoppingCart)
+	private static void PopulateShoppingCartWithReservationItems(IRentalShoppingCart rentalShoppingCart, bool clearCart, RecommendationOnPickupViewModel recommendationOnPickupViewModel)
 	{
-		_reservationValues = new ReservationValues();
-		ReservationInfo reservationInfo = ReservationFunctions.InvokeGetReservationInfoCallback();
-		if (reservationInfo != null)
+		_reservationValues = ReservationFunctions.PopulateShoppingCartWithReservationItems(rentalShoppingCart, null, clearCart);
+		if (_reservationValues == null)
 		{
-			_reservationValues.EmailAddress = reservationInfo.EmailAddress;
-			_reservationValues.ReferenceNumber = reservationInfo.ReferenceNumber;
-			if (reservationInfo.CustomerHistory != null)
-			{
-				_reservationValues.CustomerHistory.AddRange(reservationInfo.CustomerHistory);
-			}
-			rentalShoppingCart?.SetDefaultServiceFee(reservationInfo.DefaultServiceFee);
-			LogHelper.Instance.Log($"Setting cart default service fee to {reservationInfo.DefaultServiceFee} from reservation.");
-			decimal promoAmount = 0m;
-			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			if (reservationInfo.Barcodes != null)
-			{
-				foreach (string barcode in reservationInfo.Barcodes)
-				{
-					IKioskProduct kioskProduct = null;
-					ErrorList productByBarcode = service.GetProductByBarcode(barcode, out kioskProduct);
-					if (productByBarcode == null || productByBarcode.Count == 0)
-					{
-						ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-						if (titleProduct != null)
-						{
-							ReservationTitle reservationTitle = reservationInfo?.ReservationData?.Titles.FirstOrDefault((ReservationTitle x) => x.ProductId == titleProduct.ProductId);
-							if (reservationTitle != null)
-							{
-								IRentalShoppingCartItem rentalShoppingCartItem = BaseViewController.RentalShoppingCartService?.CreateRentalShoppingCartItemFromTitleProduct(titleProduct);
-								rentalShoppingCartItem.SourceType = ItemSourceType.Reservation;
-								rentalShoppingCartItem.Barcode = barcode;
-								rentalShoppingCartItem.Action = reservationTitle.Action;
-								rentalShoppingCartItem.Quantity = 1m;
-								rentalShoppingCartItem.Status = LineItemStatus.Pending;
-								IPricingRecord pricingRecord = reservationInfo.PricingSet?.PriceRecords.FirstOrDefault((IPricingRecord x) => (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.DVD && x.TitleType == TitleType.DVD && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.Bluray && x.TitleType == TitleType.Bluray && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType._4KUHD && x.TitleType == TitleType._4KUHD && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Games && x.TitleType == TitleType.All && x.TitleFamily == TitleFamily.Games));
-								if (pricingRecord != null)
-								{
-									pricingRecord = pricingRecord.Clone();
-									pricingRecord.InitialNight = reservationTitle.Price;
-								}
-								if (reservationInfo.ReservationData.AppliedTitleMarketing)
-								{
-									promoAmount += reservationTitle.Discount;
-								}
-								if (!rentalShoppingCart.HasItem(titleProduct.ProductId))
-								{
-									rentalShoppingCart.AddItem(rentalShoppingCartItem, pricingRecord);
-									LogHelper.Instance.Log($"Adding reserved product {rentalShoppingCartItem.ProductId} to recommendation on pickup cart");
-								}
-							}
-						}
-						else
-						{
-							LogHelper.Instance.Log($"RecommendationOnPickupViewController.PopulateShoppingCartWithReservationItems - barcode {barcode} couldn't find a product.", LogEntryType.Info);
-						}
-					}
-					else
-					{
-						LogHelper.Instance.Log($"RecommendationOnPickupViewController.PopulateShoppingCartWithReservationItems - dataService.GetProductByBarcode returned errors: {productByBarcode}", LogEntryType.Info);
-					}
-				}
-			}
-			else
-			{
-				LogHelper.Instance.Log("RecommendationOnPickupViewController.PopulateShoppingCartWithReservationItems barcodes is null.", LogEntryType.Info);
-			}
-			if (reservationInfo.ReservationData.AppliedHiveOnlinePromo)
-			{
-				_reservationValues.PromoAmount = reservationInfo.ReservationData.HiveOnlinePromoDiscount;
-				LogHelper.Instance.Log($"recommendation_on_pickup_view_enter:- applied hive online promo, reserved discount amount: {_reservationValues.PromoAmount}");
-			}
-			else if (reservationInfo.ReservationData.AppliedTitleMarketing)
-			{
-				_reservationValues.PromoAmount = promoAmount;
-				LogHelper.Instance.Log($"recommendation_on_pickup_view_enter:- applied title marketing promo, reserved discount amount: {_reservationValues.PromoAmount}");
-			}
-			if (_reservationValues.PromoAmount > 0m)
-			{
-				IPromotion promotion = new Redbox.Rental.Services.Promotion.Promotion
-				{
-					Name = reservationInfo.ReservationData.PromoCode,
-					OriginalPrice = _reservationValues.PromoAmount,
-					Price = _reservationValues.PromoAmount,
-					Quantity = 1,
-					Intent = PromotionIntentCode.FixedValue,
-					OriginalPercent = 0m,
-					Percent = 0m,
-					RentQuantity = 0,
-					RentFormat = null,
-					GetQuantity = 0,
-					GetFormat = null,
-					CampaignTitles = null
-				};
-				PromotionService.Instance.SetPromotion(promotion);
-				PromotionService.Instance.SetShoppingCartDiscount(rentalShoppingCart?.ShoppingSessionId.ToString(), promotion);
-				BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.ValidateAndUpdatePromoCode();
-				BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.UpdateServiceFee();
-			}
-		}
-		else
-		{
+			_reservationValues = new ReservationDetails();
 			LogHelper.Instance.Log("RecommendationOnPickupViewController.PopulateShoppingCartWithReservationItems reservationInfo is null.", LogEntryType.Info);
+		}
+		List<IRentalShoppingCartItem> list = rentalShoppingCart.Items.Where((IRentalShoppingCartItem i) => i.MultiDisc && i.DiscNumber > 1).ToList();
+		foreach (IRentalShoppingCartItem item in list)
+		{
+			rentalShoppingCart.RemoveItem(item, userRemoved: false);
+		}
+		recommendationOnPickupViewModel.SecondaryMdvDiscs = list;
+	}
+
+	private static void AddSecondaryMdvDiscsBackToShoppingCart(IRentalShoppingCart rentalShoppingCart, RecommendationOnPickupViewModel recommendationOnPickupViewModel)
+	{
+		lock (recommendationOnPickupViewModel)
+		{
+			try
+			{
+				recommendationOnPickupViewModel.IsViewUpdatingCart = true;
+				if (recommendationOnPickupViewModel.SecondaryMdvDiscs == null)
+				{
+					return;
+				}
+				foreach (IRentalShoppingCartItem secondaryMdvDisc in recommendationOnPickupViewModel.SecondaryMdvDiscs)
+				{
+					rentalShoppingCart.AddItem(secondaryMdvDisc);
+				}
+				recommendationOnPickupViewModel.SecondaryMdvDiscs = null;
+			}
+			finally
+			{
+				recommendationOnPickupViewModel.IsViewUpdatingCart = false;
+			}
 		}
 	}
 

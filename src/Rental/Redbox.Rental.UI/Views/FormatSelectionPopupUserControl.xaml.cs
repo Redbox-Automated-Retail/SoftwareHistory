@@ -59,6 +59,6 @@ public partial class FormatSelectionPopupUserControl : TextToSpeechUserControl, 
 
 	public override ISpeechControl GetSpeechControl()
 	{
-		return FormatSelectionPopupViewModel?.OnGetSpeechControl();
+		return FormatSelectionPopupViewModel?.OnGetSpeechControl?.Invoke();
 	}
 }

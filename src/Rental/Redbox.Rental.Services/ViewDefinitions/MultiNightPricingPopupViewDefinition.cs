@@ -1,7 +1,7 @@
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
-using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Services.Controllers;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.ViewDefinitions;
 
@@ -16,7 +16,7 @@ public class MultiNightPricingPopupViewDefinition : BaseViewDefinition, IViewDef
 		base.Clear = false;
 		base.OnEnter = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			MultiNightPricingPopupViewController.ConfigureMultiNightPricingPopupView(viewFrameInstance?.Parameter as ITitleProduct);
+			MultiNightPricingPopupViewController.ConfigureMultiNightPricingPopupView(viewFrameInstance?.Parameter as MultiNightPricingPopupInfo);
 		};
 		base.OnLeave = delegate
 		{

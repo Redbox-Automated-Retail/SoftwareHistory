@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows.Input;
 using System.Windows.Markup;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
 
@@ -17,6 +18,11 @@ public partial class ConfirmEmailViewUserControl : TextToSpeechUserControl, IWPF
 	public ConfirmEmailViewUserControl()
 	{
 		InitializeComponent();
+	}
+
+	public override ISpeechControl GetSpeechControl()
+	{
+		return Model?.ProcessGetSpeechControl();
 	}
 
 	private void Button1_Executed(object sender, ExecutedRoutedEventArgs e)

@@ -13,6 +13,8 @@ internal sealed class RemoteServiceCallbackEntry : ICallbackEntry
 
 	public string Message { get; set; }
 
+	public string Name => "RemoteServiceCallbackEntry";
+
 	public void Invoke()
 	{
 		if (Callback == null)

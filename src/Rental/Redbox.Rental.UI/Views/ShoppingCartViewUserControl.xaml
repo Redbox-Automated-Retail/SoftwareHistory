@@ -4,7 +4,6 @@
     <CommandBinding Command="{x:Static localbase:Commands.GoBackCommand}" Executed="GoBackCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Executed="TermsAndPrivacyCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.PromoCodeCommand}" Executed="PromoCodeCommandBinding_Executed" CanExecute="PromoCodeCommandBinding_CanExecute" />
-    <CommandBinding Command="{x:Static localbase:Commands.UseCreditsCommand}" Executed="UseCreditsCommandBinding_Executed" CanExecute="UseCreditsCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.PayCommand}" Executed="PayCommandBinding_Executed" CanExecute="PayCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.AddMovieCommand}" Executed="AddMovieCommandCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.AddGameCommand}" Executed="AddGameCommandCommandBinding_Executed" />
@@ -55,8 +54,9 @@
           <StackPanel Name="LeftSideTopPanel" Orientation="Vertical" Margin="36,14,23,0">
             <StackPanel Name="ShoppingCartStackPanel" Orientation="Vertical" />
             <StackPanel Name="ProductStackPanel" Orientation="Vertical" />
-            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,3" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
-            <TextBlock Name="ServiceFeeText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,3" Text="{Binding Path=ServiceFeeText, FallbackValue=All checkouts may be subject to a service fee of 10¢.}" Visibility="{Binding Path=ServiceFeeTextVisibility}" />
+            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,1" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
+            <TextBlock Name="ServiceFeeText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=ServiceFeeText, FallbackValue=All checkouts may be subject to a service fee of 10¢.}" Visibility="{Binding Path=ServiceFeeTextVisibility}" />
+            <TextBlock Name="MDVFootnote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=MDVFootnote, FallbackValue=**Your card will be charged the full nightly fee plus applicable taxes until both discs are returned.}" Visibility="{Binding Path=MDVFootnoteVisibility}" />
             <Line Name="PassiveSaleNoteBottomLine" X2="1000" Fill="#979797" Margin="0,3,0,3" Stroke="#979797" StrokeThickness="2" Opacity="0.22" />
           </StackPanel>
         </DockPanel>
@@ -65,31 +65,45 @@
             <TextBlock Name="PriceHeaderText" Margin="24,24,24,7" Style="{StaticResource font_museo_slab_900_18}" Foreground="#4a4a4a" Text="{Binding Path=PriceHeaderText, FallbackValue=Payment Summary}" />
             <localControls:PricingUserControl Grid.Column="1" VerticalAlignment="Top" Margin="24,0,24,0" DataContext="{Binding Path=PricingModel}" />
             <TextBlock Name="LoyaltySystemErrorText" Margin="24,0,24,0" Style="{StaticResource font_montserrat_regular_16}" TextWrapping="Wrap" Foreground="#d0021b" Text="{Binding Path=LoyaltySystemErrorText, FallbackValue=Uh oh - our points system is down but well get it fixed ASAP.}" />
+            <Border Name="PointsAccrualBorder" Margin="24,0,24,0" BorderThickness="1" BorderBrush="#FFA9A9A9" CornerRadius="4" Visibility="{Binding PointsEstimateVisibility}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Image Grid.Column="0" Margin="10,0,0,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/icon-rewards.png" />
+                <TextBlock Grid.Column="1" Margin="20,14,10,14" FontFamily="montserrat" FontSize="16" TextWrapping="Wrap">
+                  <Run FontWeight="Regular" Text="{Binding PointsEstimateIntroText, FallbackValue=Youll earn}" /> <Run FontWeight="Bold" Text="{Binding PointsEstimateText, FallbackValue=750+ points}" /> <Run FontWeight="Regular" Text="{Binding PointsEstimateEndText, FallbackValue=for the stuff in your bag}" /></TextBlock>
+              </Grid>
+            </Border>
           </StackPanel>
           <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" DockPanel.Dock="Bottom">
             <Redbox:RoundedButton Name="PayButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PayCommand}">
-              <TextBlock Name="PayButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PayButtonText, FallbackValue=Pay Now}" />
+              <Viewbox MaxHeight="30" Margin="10,0,10,0">
+                <TextBlock Name="PayButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PayButtonText, FallbackValue=Pay Now}" />
+              </Viewbox>
             </Redbox:RoundedButton>
             <Grid Name="SpacerGrid" Height="50" Visibility="{Binding Path=SignInButtonVisibility}" />
             <TextBlock Name="DontMissYourPerksText" HorizontalAlignment="Center" Style="{StaticResource font_museo_slab_900_18}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=DontMissYourPerksText, FallbackValue=Dont miss your Perks!}" Visibility="{Binding Path=SignInButtonVisibility}" />
             <Redbox:RoundedButton Name="SignInButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.SignInCommand}" Visibility="{Binding Path=SignInButtonVisibility}">
-              <TextBlock Name="SignInButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=SignInButtonText, FallbackValue=Sign In}" />
+              <Viewbox MaxHeight="30" Margin="10,0,10,0">
+                <TextBlock Name="SignInButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=SignInButtonText, FallbackValue=Sign In}" />
+              </Viewbox>
             </Redbox:RoundedButton>
             <Redbox:RoundedButton Name="UsePointsButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.UsePointsCommand}" Visibility="{Binding Path=UsePointsButtonVisibility}">
-              <TextBlock Name="UsePointsButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=UsePointsButtonText, FallbackValue=Use Points}" />
+              <Viewbox MaxHeight="30" Margin="10,0,10,0">
+                <TextBlock Name="UsePointsButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=UsePointsButtonText, FallbackValue=Use Points}" />
+              </Viewbox>
             </Redbox:RoundedButton>
             <Redbox:RoundedButton Name="PromoCodeButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="315" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PromoCodeCommand}">
-              <TextBlock Name="PromoCodeButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PromoCodeButtonText, FallbackValue=Add Promos}" />
-            </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="UseCreditsButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Width="315" Height="59" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.UseCreditsCommand}" Visibility="{Binding Path=UseCreditsButtonVisibility, FallbackValue=Visible}">
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Name="CreditsButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=UseCreditsButtonText, FallbackValue=Use Credits}" />
-              </StackPanel>
+              <Viewbox MaxHeight="30" Margin="10,0,10,0">
+                <TextBlock Name="PromoCodeButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PromoCodeButtonText, FallbackValue=Add Promos}" />
+              </Viewbox>
             </Redbox:RoundedButton>
             <Redbox:RoundedButton Name="TermsAndPrivacyButton" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" Height="37" Width="315" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Margin="0,6,0,6">
               <TextBlock Name="TermsAndPrivacyButtonText" Style="{StaticResource font_museo_slab_900_16}" Text="{Binding Path=TermsAndPrivacyButtonText, FallbackValue=Terms &amp; Privacy}" />
             </Redbox:RoundedButton>
-            <TextBlock Name="TermsText" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#4a4a4a" Margin="5,7,5,13" TextWrapping="Wrap" HorizontalAlignment="Center" Text="{Binding Path=TermsText, FallbackValue=By pressing PAY Now or Use Credits you agree to the Terms}" />
+            <TextBlock Name="TermsText" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#4a4a4a" Margin="5,7,5,13" TextWrapping="Wrap" HorizontalAlignment="Center" Text="{Binding Path=TermsText, FallbackValue=By pressing PAY Now you agree to the Terms}" />
           </StackPanel>
         </DockPanel>
       </Grid>

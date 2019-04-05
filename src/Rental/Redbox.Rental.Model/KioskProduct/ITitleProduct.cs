@@ -110,4 +110,8 @@ public interface ITitleProduct : IKioskProduct
 	string SortName { get; }
 
 	long TitleRollupProductGroupId { get; set; }
+
+	decimal? DigitalRentPrice { get; }
+
+	List<long> RequiredAdditionalTitles { get; }
 }

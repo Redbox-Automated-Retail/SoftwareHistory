@@ -1,52 +1,42 @@
 using System;
-using System.Windows;
+using System.Drawing;
 using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
-public class ReturnViewController
+public class ReturnViewController : BaseViewController
 {
 	public static void ConfigureReturnView(Action goBackAction)
 	{
-		IActor actor = ActorFunctions.GetActor("ReturnViewUserControl");
-		if (actor != null)
+		OrchestrationService.SuspendIdleTimer("idle_timer");
+		if (BaseViewController.GetViewUserControl() is ReturnViewUserControl returnViewUserControl)
 		{
-			if (actor.WPFFrameworkElement is ReturnViewUserControl returnViewUserControl)
+			returnViewUserControl.OnGoBack += goBackAction;
+			_ = Resources.back_button;
+			string disc_return_message = Resources.disc_return_message;
+			returnViewUserControl.MessageText = disc_return_message;
+			BitmapImage adImage = null;
+			MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.Return, createImpression: true);
+			if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
 			{
-				returnViewUserControl.OnGoBack += goBackAction;
-				string dictionaryStringValue = BundleFunctions.GetDictionaryStringValue("strings", "back_button");
-				string dictionaryStringValue2 = BundleFunctions.GetDictionaryStringValue("strings", "disc_return_message");
-				returnViewUserControl.BackButtonText = dictionaryStringValue;
-				returnViewUserControl.MessageText = dictionaryStringValue2;
-				BitmapImage adImage = null;
-				MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.Return, createImpression: true);
-				if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
-				{
-					adImage = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmapImage(marketingAd.ImageName);
-				}
-				returnViewUserControl.AdImage = adImage;
+				Image image = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmap(marketingAd.ImageName);
+				adImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
 			}
-			else
-			{
-				LogHelper.Instance.Log("actor is not of type ReturnViewUserControl");
-			}
+			returnViewUserControl.AdImage = adImage;
 		}
 		else
 		{
-			LogHelper.Instance.Log("Unable to find actor ReturnViewUserControl");
+			LogHelper.Instance.Log("user control is not of type ReturnViewUserControl");
 		}
 	}
 
 	public static void SetBackButtonIsVisible(bool isEnabled)
 	{
-		IActor actor = ActorFunctions.GetActor("ReturnViewUserControl");
-		if (actor != null && actor.WPFFrameworkElement is ReturnViewUserControl returnViewUserControl)
-		{
-			returnViewUserControl.BackButtonVisibility = ((!isEnabled) ? Visibility.Hidden : Visibility.Visible);
-		}
+		_ = BaseViewController.GetViewUserControl() is ReturnViewUserControl;
 	}
 }

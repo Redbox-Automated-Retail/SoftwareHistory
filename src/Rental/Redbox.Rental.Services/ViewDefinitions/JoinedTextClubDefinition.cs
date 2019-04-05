@@ -5,12 +5,12 @@ using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.ViewDefinitions;
 
-[ViewDefinition(ViewName = "joined_text_club_promo_view")]
+[ViewDefinition(ViewName = "join_text_club_promo_view")]
 public class JoinedTextClubDefinition : BaseViewDefinition, IViewDefinition
 {
 	public JoinedTextClubDefinition()
 	{
-		base.ViewName = "joined_text_club_promo_view";
+		base.ViewName = "join_text_club_promo_view";
 		base.ActiveFlag = true;
 		base.ControlName = "JoinTextClubPromoView";
 		base.OnEnter = delegate(IViewFrameInstance viewFrameInstance)

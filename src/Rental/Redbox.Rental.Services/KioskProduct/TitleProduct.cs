@@ -8,7 +8,6 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Services.Configuration;
-using Redbox.Rental.Services.Pricing;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -25,6 +24,8 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	private IStoreManager _storeManager;
 
 	private IPricingService _pricingService;
+
+	private List<string> _availableStatuses = new List<string> { "Known", "Thinned", "Redeployment", "Rebalancing" };
 
 	public Dictionary<string, BarcodeProduct> BarCodeProducts => _titleCache.BarcodeProducts;
 
@@ -91,6 +92,8 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	public bool IsMovie => TitleFamily == TitleFamily.Movies;
 
 	public bool IsEmptyCase => ProductId == 1139;
+
+	public List<long> RequiredAdditionalTitles { get; private set; }
 
 	public bool IsSellable
 	{
@@ -396,7 +399,17 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public bool InStock => _titleCache.OnHandCount > 0;
+	public bool InStock
+	{
+		get
+		{
+			if (BarCodeProducts != null)
+			{
+				return BarCodeProducts.Any((KeyValuePair<string, BarcodeProduct> b) => _availableStatuses.Contains(b.Value.Status));
+			}
+			return false;
+		}
+	}
 
 	public bool ShowOutOfStock
 	{
@@ -434,7 +447,22 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public bool HasDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsDeal ?? false) ?? false;
+	public bool HasDeal
+	{
+		get
+		{
+			IList<IPricingRecord> obj = ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId);
+			bool hasMdvWorkaround = RequiredAdditionalTitles.Count > 0;
+			return obj?.Any(delegate(IPricingRecord pr)
+			{
+				if (pr == null)
+				{
+					return false;
+				}
+				return pr.IsDeal && !hasMdvWorkaround;
+			}) ?? false;
+		}
+	}
 
 	public bool HasMultiNightPrice => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_title.ProductId))?.Any((IPricingRecord pr) => pr?.IsMultiNightPrice ?? false) ?? false;
 
@@ -448,6 +476,21 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public string SortName => _title.SortName.ToLower();
 
+	public decimal? DigitalRentPrice
+	{
+		get
+		{
+			decimal? result = null;
+			if (_title.DigitalSDRentPrice.HasValue || _title.DigitalHDRentPrice.HasValue)
+			{
+				decimal? num = _title.DigitalHDRentPrice ?? _title.DigitalSDRentPrice;
+				decimal? num2 = _title.DigitalSDRentPrice ?? _title.DigitalHDRentPrice;
+				result = Math.Min(num.Value, num2.Value);
+			}
+			return result;
+		}
+	}
+
 	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store, IStoreManager storeManager)
 		: base(store)
 	{
@@ -457,6 +500,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		_titleType = titleType;
 		_profile = profile;
 		_storeManager = storeManager;
+		RequiredAdditionalTitles = GetRequiredAdditionalTitles();
 	}
 
 	public override string ToString()
@@ -489,5 +533,17 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			}
 		}
 		return price;
+	}
+
+	private List<long> GetRequiredAdditionalTitles()
+	{
+		List<long> list = new List<long>();
+		if (_profile != null && _title != null && _profile.MultiDiscWorkaroundXREF.ContainsKey(_title.ProductId))
+		{
+			long productGroupId = _profile.MultiDiscWorkaroundXREF[_title.ProductId].ProductGroupId;
+			ProductGroup productGroup = _profile.ProductGroups[productGroupId];
+			list.AddRange(productGroup.ProductIds.Where((long i) => i != _title.ProductId));
+		}
+		return list;
 	}
 }

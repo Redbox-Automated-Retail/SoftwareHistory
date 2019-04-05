@@ -49,7 +49,7 @@
               </Redbox:RoundedButton>
             </Redbox:GridExt>
           </Redbox:GridExt>
-          <Redbox:RoundedButton Name="AddButton" Style="{StaticResource rubine_white_border_button_style}" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="220" Height="68" CornerRadius="34" Margin="0,0,-25,-25" Focusable="False" Opacity="{Binding Path=AddButtonOpacity}" Visibility="{Binding Path=AddButtonVisibility, FallbackValue=Visible}">
+          <Redbox:RoundedButton Name="AddButton" Style="{StaticResource rubine_white_border_button_style}" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="220" Height="68" CornerRadius="34" Margin="0,0,-25,-25" Focusable="False" IsEnabled="True" Opacity="{Binding Path=AddButtonOpacity}" Visibility="{Binding Path=AddButtonVisibility, FallbackValue=Visible}">
             <Redbox:GridExt RowHeights="25*,50*,25*">
               <Viewbox Grid.Row="1">
                 <StackPanel Orientation="Horizontal">

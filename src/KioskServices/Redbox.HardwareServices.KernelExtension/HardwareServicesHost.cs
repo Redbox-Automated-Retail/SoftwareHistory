@@ -45,6 +45,7 @@ public class HardwareServicesHost : IKernelExtensionHost, IDisposable
 		LogHelper.Instance.Log("Hardware Services Kernel Extension Load:");
 		ErrorList errorList = new ErrorList();
 		errorList.AddRange(_hardwareService.Initialize());
+		HardwareAlertManagerService.Instance.Initialize();
 		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
 		if (service != null)
 		{
@@ -54,6 +55,7 @@ public class HardwareServicesHost : IKernelExtensionHost, IDisposable
 				service.AddPreferencePage("HardwareServices_Return", "Local Services\\Hardware Services", "Hardware Services/Return", PreferencePageTarget.LocalSystem, new ReturnPreferencePage());
 				service.AddPreferencePage("HardwareServices_Vend", "Local Services\\Hardware Services", "Hardware Services/Vend", PreferencePageTarget.LocalSystem, new VendPreferencePage());
 				service.AddPreferencePage("HardwareServices_Statistics", "Local Services\\Hardware Services", "Hardware Services/Statistics", PreferencePageTarget.LocalSystem, new StatisticsPreferencePage());
+				service.AddPreferencePage("HardwareServices_State", "Local Services\\Hardware Services", "Hardware Services/Hardware State", PreferencePageTarget.LocalSystem, new HardwareStatePage());
 			}
 		}
 		LogHelper.Instance.Log("...Loaded.");

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ProductPricing.Model;
 using Redbox.Core;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
@@ -23,6 +24,8 @@ public class KioskPricingService : IKioskPricingService
 	private DateTime _pricingDateTime = DateTime.Now;
 
 	private Store _store;
+
+	private IConfiguration _configuration;
 
 	public bool IsPricingEngineDataAvailable
 	{
@@ -93,10 +96,11 @@ public class KioskPricingService : IKioskPricingService
 		}
 	}
 
-	public KioskPricingService(IPricingData pricingData, long kioskId)
+	public KioskPricingService(IPricingData pricingData, long kioskId, IConfiguration configuration)
 	{
 		_pricingData = pricingData;
 		_kioskId = kioskId;
+		_configuration = configuration;
 		UpdatePricingInstance();
 	}
 
@@ -145,7 +149,7 @@ public class KioskPricingService : IKioskPricingService
 			}
 			if (titleType == TitleType._4KUHD)
 			{
-				defaultRentalPricingDTO = GetActiveServiceDefaultRentalPricing(_pricingDataInstance.DefaultRentalPricing, _pricingDateTime, 0L, PriceLevelType._4KUHD);
+				defaultRentalPricingDTO = GetActiveServiceDefaultRentalPricing(_pricingDataInstance.DefaultRentalPricing, _pricingDateTime, 0L, PriceLevelType.FourKUHD);
 			}
 			break;
 		case TitleFamily.Games:
@@ -251,7 +255,7 @@ public class KioskPricingService : IKioskPricingService
 			case TitleType.Bluray:
 				return PriceLevelType.Bluray;
 			case TitleType._4KUHD:
-				return PriceLevelType._4KUHD;
+				return PriceLevelType.FourKUHD;
 			}
 			break;
 		case TitleFamily.Games:
@@ -352,7 +356,7 @@ public class KioskPricingService : IKioskPricingService
 
 	private PurchasePricingDTO GetActiveServicePurchasePricing(List<PurchasePricing> ppList, DateTime dt, long titleId, bool isDigitalPurchase)
 	{
-		PurchasePricing activePurchasePricing = ppList.GetActivePurchasePricing(dt, titleId);
+		PurchasePricing activePurchasePricing = ppList.GetActivePurchasePricing(dt, titleId, _configuration.UseLowestPriceSortOrder);
 		if (activePurchasePricing == null)
 		{
 			return null;

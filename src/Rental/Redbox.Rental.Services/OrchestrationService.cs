@@ -2,18 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
@@ -30,7 +34,17 @@ public static class OrchestrationService
 
 	private static Action _startNewRentalSessionCallback;
 
+	private static Action _startIdleTimerCallback;
+
+	private static Action _localizationReloadCallback;
+
 	private static Action<string> _marketingOptInFlowCallback;
+
+	private static Action _continueVendCallback;
+
+	private static Action _finishVendCallback;
+
+	private static Func<bool> _getVendJobCompleteCallback;
 
 	public static bool TTSEnabled => ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
 
@@ -66,52 +80,23 @@ public static class OrchestrationService
 		if (rentalShoppingCart != null)
 		{
 			service.SendRentalShoppingCartToAnalytics(rentalShoppingCart);
-			SubmitAnalyticsPricing(sessionId.ToString());
-			ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			if (service2 != null && service2.SessionExists(sessionId.ToString()) && service2.IsOpen(sessionId.ToString()))
-			{
-				service2.AddElement("session", "abandon", isSessionAbandoned ?? "True", sessionId.ToString());
-				service2.Close(sessionId.ToString());
-			}
+			CloseAnalytics(sessionId, isSessionAbandoned);
 		}
 	}
 
-	public static void SubmitAnalyticsPricing(string sessionId)
+	public static void CloseAnalytics(Guid sessionId, string isSessionAbandoned)
 	{
-		IPricingSet pricingSet = ServiceLocator.Instance.GetService<IPricingService>()?.CurrentPriceSet;
-		if (pricingSet?.PriceRecords == null)
-		{
-			return;
-		}
 		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		if (service == null || !service.SessionExists(sessionId) || service == null || !service.IsOpen(sessionId))
+		if (service != null && service.SessionExists(sessionId.ToString()) && service.IsOpen(sessionId.ToString()))
 		{
-			return;
+			service.AddElement("session", "abandon", isSessionAbandoned ?? "True", sessionId.ToString());
+			service.Close(sessionId.ToString());
 		}
-		service.AddNode("session", "pricing", sessionId);
-		foreach (IPricingRecord priceRecord in pricingSet.PriceRecords)
-		{
-			string attributeValue = priceRecord.TitleType.ToString().ToLower();
-			switch (priceRecord.TitleType)
-			{
-			case TitleType.All:
-				attributeValue = "*";
-				break;
-			case TitleType.Bluray:
-				attributeValue = "blu-ray";
-				break;
-			}
-			service.AddNode("pricing", "productPrice", sessionId);
-			service.AddAttribute("productPrice", "productFamily", priceRecord.TitleFamily.ToString().ToLower(), sessionId);
-			service.AddAttribute("productPrice", "productType", attributeValue, sessionId);
-			service.AddAttribute("productPrice", "currency", "USD", sessionId);
-			service.AddElement("productPrice", "firstNightAmt", priceRecord.InitialNight.ToString("0.##"), sessionId);
-			service.AddElement("productPrice", "nonReturnDays", priceRecord.NonReturnDays.ToString("0.##"), sessionId);
-			service.AddElement("productPrice", "nonReturnAmt", priceRecord.NonReturn.ToString("0.##"), sessionId);
-			service.AddElement("productPrice", "extraNightAmt", priceRecord.ExtraNight.ToString("0.##"), sessionId);
-			service.AddElement("productPrice", "expirationPrice", priceRecord.ExpirationPrice.ToString("0.##"), sessionId);
-			service.AddElement("productPrice", "pricesetid", pricingSet.PriceSetId ?? "1", sessionId);
-		}
+	}
+
+	public static void RegisterEnvironmentChangeCallback()
+	{
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.RegisterEnvironmentChangeCallback();
 	}
 
 	public static bool IsCollectionsPopupEnabled()
@@ -144,9 +129,46 @@ public static class OrchestrationService
 		_startNewRentalSessionCallback = startNewRentalSessionCallback;
 	}
 
+	public static void RegisterStartIdleTimerCallback(Action startIdleTimerCallback)
+	{
+		_startIdleTimerCallback = startIdleTimerCallback;
+	}
+
+	public static void RegisterLocalizationReloadCallback(Action localizationReloadCallback)
+	{
+		_localizationReloadCallback = localizationReloadCallback;
+	}
+
 	public static void RegisterMarketingOptInFlowCallback(Action<string> marketingOptInFlowCallback)
 	{
 		_marketingOptInFlowCallback = marketingOptInFlowCallback;
+	}
+
+	public static void RegisterContinueVendCallback(Action continueVendCallback)
+	{
+		_continueVendCallback = continueVendCallback;
+	}
+
+	public static void InvokeContinueVendCallback()
+	{
+		if (_continueVendCallback != null)
+		{
+			_continueVendCallback();
+		}
+	}
+
+	public static void RegisterIsVendJobCompletedCallback(Func<bool> getVendJobCompleteCallback)
+	{
+		_getVendJobCompleteCallback = getVendJobCompleteCallback;
+	}
+
+	public static bool InvokeIsVendJobCompletedCallback()
+	{
+		if (_getVendJobCompleteCallback != null)
+		{
+			return _getVendJobCompleteCallback();
+		}
+		return true;
 	}
 
 	public static void RegisterViewDefinitions()
@@ -168,6 +190,22 @@ public static class OrchestrationService
 		if (_startNewRentalSessionCallback != null)
 		{
 			_startNewRentalSessionCallback();
+		}
+	}
+
+	public static void InvokeStartIdleTimerCallback()
+	{
+		if (_startIdleTimerCallback != null)
+		{
+			_startIdleTimerCallback();
+		}
+	}
+
+	public static void InvokeLocalizationReloadCallback()
+	{
+		if (_localizationReloadCallback != null)
+		{
+			_localizationReloadCallback();
 		}
 	}
 
@@ -279,6 +317,17 @@ public static class OrchestrationService
 			}
 		}
 		return result;
+	}
+
+	public static void ComingSoonKioskOptIn()
+	{
+		string storeNumber = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue<string>("Store", "ID");
+		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
+		List<IOptInItem> list = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ComingSoonOptInInfo.OptInItems;
+		if (list != null && list.Count > 0)
+		{
+			service.KioskOptIn(storeNumber, list, sendCardHash: false, null);
+		}
 	}
 
 	public static bool DataServiceRegisterImage(string name, string cacheName)
@@ -503,6 +552,13 @@ public static class OrchestrationService
 		service?.Show();
 	}
 
+	public static void ShowCriticalErrorView(string viewName, ShowMessagePopupViewParameter parameter)
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		service?.PushCriticalErrorView(viewName, parameter);
+		service?.Show();
+	}
+
 	public static void ViewGoBack(object context, bool popOnly)
 	{
 		ServiceLocator.Instance.GetService<IViewService>()?.GoBack(context, popOnly);
@@ -518,7 +574,7 @@ public static class OrchestrationService
 		ServiceLocator.Instance.GetService<IViewService>()?.UnwindToSafe(unwindToViewName, discard, context);
 	}
 
-	private static void ResetCurrentView()
+	public static void ResetCurrentView()
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		service.ClearCache(clearResourceViewsOnly: true);
@@ -646,9 +702,19 @@ public static class OrchestrationService
 		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddNode(parentNodeName, nodeName);
 	}
 
+	public static void AnalyticsAddNode(string parentNodeName, string nodeName, Guid sessionId)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddNode(parentNodeName, nodeName, sessionId.ToString());
+	}
+
 	public static void AnalyticsAddAttribute(string parentNodeName, string attributeName, string attributeValue)
 	{
 		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttribute(parentNodeName, attributeName, attributeValue);
+	}
+
+	public static void AnalyticsAddAttribute(string parentNodeName, Dictionary<string, string> attributes, Guid sessionId)
+	{
+		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttributes(parentNodeName, attributes, sessionId.ToString());
 	}
 
 	public static void AnalyticsAddLoggedInCustomerProfileNumber(string customerProfileNumber)
@@ -755,5 +821,84 @@ public static class OrchestrationService
 	public static void StartTimer(string name)
 	{
 		(ServiceLocator.Instance.GetService<ITimerService>()?.GetTimer(name))?.Start();
+	}
+
+	public static bool IsGiftCard()
+	{
+		return ServiceLocator.Instance.GetService<ITrackDataService>()?.GetCardType()?.ToString() == "RedboxGiftCard";
+	}
+
+	public static bool IsCardBlocklisted()
+	{
+		bool result = false;
+		bool flag = ServiceLocator.Instance.GetService<IHealthServices>()?.IsOnline ?? false;
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.OfflineBlockListEnabled && !flag && !IsGiftCard())
+		{
+			ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
+			if (service != null)
+			{
+				string firstName = service.GetFirstName();
+				string lastName = service.GetLastName();
+				Store store = ServiceLocator.Instance.GetService<IDataService>().GetStore();
+				int num = (int)((store != null) ? (store?.MarketId).Value : 0);
+				string text = store?.Zip;
+				IBlockList service2 = ServiceLocator.Instance.GetService<IBlockList>();
+				if (service2 == null)
+				{
+					LogHelper.Instance.Log("IBlockList interface has not been added to the service locater.");
+				}
+				else
+				{
+					LogHelper.Instance.Log("IsNameInBlockList(FirstName={0},LastName={1},Market_id={2},ZipCode={3})", "pci", "pci", num, text);
+					result = service2.IsNameInBlockList(firstName, lastName, num, text);
+				}
+			}
+		}
+		return result;
+	}
+
+	public static bool DoesShoppingCartContainAllReservedBarcodes()
+	{
+		bool result = true;
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		if (rentalShoppingCart != null)
+		{
+			foreach (string eachBarcode in ReservationFunctions.GetReservedBarcodesToVend())
+			{
+				if (!rentalShoppingCart.Items.Any((IRentalShoppingCartItem x) => x.Barcode == eachBarcode))
+				{
+					result = false;
+					LogHelper.Instance.Log($"Error: reserved barcode {eachBarcode} not found in shopping cart.");
+				}
+			}
+		}
+		return result;
+	}
+
+	public static void ShoppingCartCommit(string sessionId, string reason, bool shouldEndAndSave)
+	{
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ComingSoonOptInEnabled)
+		{
+			ComingSoonKioskOptIn();
+		}
+		IShoppingSession shoppingSession = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
+		shoppingSession?.Commit(reason);
+		if (shouldEndAndSave)
+		{
+			shoppingSession?.End();
+		}
+	}
+
+	public static void ShoppingCartEndSession(string sessionId)
+	{
+		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+		if (session != null)
+		{
+			if (session.Status == ShoppingSessionStatus.Active)
+			{
+				session.Abandon("Session was not properly ended; marking as abandoned.");
+			}
+			session.End();
+		}
 	}
 }

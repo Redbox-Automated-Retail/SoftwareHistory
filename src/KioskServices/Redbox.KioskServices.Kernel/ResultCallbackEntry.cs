@@ -7,6 +7,8 @@ namespace Redbox.KioskServices.Kernel;
 
 internal sealed class ResultCallbackEntry : ICallbackEntry, IDisposable
 {
+	public string Name => "ResultCallbackEntry";
+
 	public LuaFunction Function { get; set; }
 
 	public object[] Parameters { get; set; }

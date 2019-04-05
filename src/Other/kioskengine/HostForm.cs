@@ -19,6 +19,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.IDE;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model.KioskHealth;
 
 namespace Redbox.KioskEngine.Bootstrap;
 
@@ -85,6 +86,7 @@ public class HostForm : Form, ITrackDataService
 			MaximumSize = System.Drawing.Size.Empty;
 		}
 		TrackDataBuffer = new SecureString();
+		EngineApplication.DisableProcessWindowsGhosting();
 	}
 
 	public int GetKeyId()
@@ -279,7 +281,11 @@ public class HostForm : Form, ITrackDataService
 
 	public void StopTrackParsing()
 	{
-		AllowTrackDataParsing = false;
+		if (AllowTrackDataParsing)
+		{
+			AllowTrackDataParsing = false;
+			ServiceLocator.Instance.GetService<ICCReaderHealth>()?.EventOccurred(TrackDataContainer != null || TrackDataErrors != null, !HasValidData());
+		}
 	}
 
 	public void StartTrackParsing()
@@ -300,6 +306,20 @@ public class HostForm : Form, ITrackDataService
 			return null;
 		}
 		return CardHelper.GenerateCardId(TrackDataContainer.AccountNumber);
+	}
+
+	public string GenerateReservationCardHashId()
+	{
+		if (TrackDataContainer == null)
+		{
+			return null;
+		}
+		return CardHelper.GenerateReservationCardId(TrackDataContainer.AccountNumber);
+	}
+
+	public string HashString(string original)
+	{
+		return CardHelper.GenerateHash(original);
 	}
 
 	protected override void WndProc(ref Message m)
@@ -597,6 +617,9 @@ public class HostForm : Form, ITrackDataService
 				break;
 			case '@':
 				SendKeys.Send("{%}B6010562000017685{^}REDBOX                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
+				break;
+			case '#':
+				SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111=1608041103263?");
 				break;
 			}
 		}

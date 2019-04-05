@@ -14,8 +14,12 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using Redbox.BrokerServices.KernelExtension;
 using Redbox.Core;
+using Redbox.FraudServices.Proxy;
+using Redbox.FraudServices.Proxy.ComponentModel;
 using Redbox.GetOpts;
 using Redbox.HardwareServices.KernelExtension;
+using Redbox.KioskDataServices.Proxy;
+using Redbox.KioskDataServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.Bootstrap.Properties;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Drawing;
@@ -27,6 +31,7 @@ using Redbox.REDS.Framework;
 using Redbox.Rental.Data;
 using Redbox.Rental.Kernel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
@@ -35,6 +40,8 @@ using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Services;
+using Redbox.Rental.Services.Analytics;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskEvents;
 using Redbox.Rental.Services.KioskHealth;
 using Redbox.Rental.Services.Loyalty;
@@ -79,6 +86,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	internal System.Timers.Timer _waitTimer;
 
 	internal object _lockObject = new object();
+
+	private DateTime m_idleEventLastLoggedDate = DateTime.Now;
+
+	private long m_idleEventCounter;
+
+	private TimeSpan m_idleLoggingTargetInterval = TimeSpan.FromSeconds(15.0);
 
 	private string m_corruptDbName;
 
@@ -462,6 +475,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	[DllImport("user32.dll")]
 	public static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out][MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags);
 
+	[DllImport("user32.dll")]
+	public static extern void DisableProcessWindowsGhosting();
+
 	public static char? GetCharFromKey(Key key)
 	{
 		char? result = null;
@@ -471,7 +487,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		uint wScanCode = MapVirtualKey((uint)num, MapType.MAPVK_VK_TO_VSC);
 		StringBuilder stringBuilder = new StringBuilder(2);
 		int num2 = ToUnicode((uint)num, wScanCode, lpKeyState, stringBuilder, stringBuilder.Capacity, 0u);
-		if (num2 != -1 && num2 != 0)
+		if ((uint)(num2 - -1) > 1u)
 		{
 			result = stringBuilder[0];
 		}
@@ -560,17 +576,15 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.AddService(typeof(IKernelFunctionRegistryService), KernelFunctionRegistryService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IProductLookupCatalogService), new ProductLookupCatalogService());
 		ServiceLocator.Instance.AddService(typeof(IThemeService), ThemeService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IFraudService), FraudService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IPromotionService), PromotionService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IConfiguration), Configuration.Instance);
+		ServiceLocator.Instance.AddService(typeof(IAnalyticsService), AnalyticsService.Instance);
+		ServiceLocator.Instance.GetService<IAnalyticsService>()?.Initialize();
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service2 != null)
+		if (service2 != null && (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value) & value))
 		{
-			if (service2.TryGetValue<bool>("system", "General", "KioskAnalytics", out var value) & value)
-			{
-				ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
-			}
-			if (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value2) & value2)
-			{
-				ServiceLocator.Instance.AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
-			}
+			ServiceLocator.Instance.AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
 		}
 		InitializePreferencePages();
 		errorList.AddRange(SchedulerService.Instance.Initialize());
@@ -580,9 +594,20 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		errorList.AddRange(RenderingService.Instance.Initialize());
 		errorList.AddRange(KernelService.Instance.Initialize());
 		errorList.AddRange(EnvironmentManager.Instance.Initialize());
-		errorList.AddRange(QueueService.Instance.Initialize(Path.Combine(RunningPath, "message.data")));
+		errorList.AddRange(QueueService.Instance.Initialize(Path.Combine(RunningPath, "message.data"), new QueueServiceVistaDBData()));
+		IConfiguration service3 = ServiceLocator.Instance.GetService<IConfiguration>();
+		if (service3 != null && service3.KioskAnalyticsEnabled)
+		{
+			ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
+		}
+		ServiceLocator.Instance.AddService(typeof(IKioskSessionAnalyticsService), KioskSessionAnalyticsService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IBarcodeTrackingService), BarcodeTrackingService.Instance);
+		InitializeBarcodeTrackingService();
+		ServiceLocator.Instance.AddService(typeof(IUploadDiscImageService), UploadDiscImageService.Instance);
+		InitializeUploadDiscImageService();
 		errorList.AddRange(ShoppingSessionService.Instance.Initialize(Path.Combine(RunningPath, "session.data")));
 		errorList.AddRange(DebugService.Instance.Initialize());
+		_ = ApplicationState.Instance.IsStandAlone;
 		errorList.AddRange(KernelExtensionService.Instance.LoadAllExtensions());
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList2 = ResourceBundleService.Instance.Initialize(System.Windows.Forms.Application.ExecutablePath, Settings.Default.DevBundlePath);
 		if (errorList2.ContainsError())
@@ -619,6 +644,24 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		return errorList;
 	}
 
+	private void InitializeBarcodeTrackingService()
+	{
+		BarcodeTrackingService.Instance.CacheFileDataPath = DataPath;
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		if (service != null)
+		{
+			BarcodeTrackingService.Instance.MaxBatchSize = service.BarcodeTrackingMaxBatchSize;
+			BarcodeTrackingService.Instance.TimerInterval = service.BarcodeTrackingTimerDuration;
+			BarcodeTrackingService.Instance.IsActive = service.MonitorBarcodeTracking;
+			BarcodeTrackingService.Instance.BarcodeTrackingMessagePriority = service.BarcodeTrackingMessagePriority;
+		}
+	}
+
+	private void InitializeUploadDiscImageService()
+	{
+		UploadDiscImageService.Instance.IsActive = true;
+	}
+
 	public Redbox.KioskEngine.ComponentModel.ErrorList InitializeRedboxRental()
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
@@ -626,6 +669,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
+			ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+			IConfiguration service4 = ServiceLocator.Instance.GetService<IConfiguration>();
+			if (service3 != null && service4 != null)
+			{
+				service3.MessagePriority = service4.KioskAnalyticsMessagePriority;
+			}
 			ControlPanelService instance = new ControlPanelService();
 			ServiceLocator.Instance.AddService(typeof(IControlPanelService), instance);
 			MarketingConfigurationManager marketingConfigurationManager = new MarketingConfigurationManager(service2);
@@ -653,17 +702,17 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			PricingService pricingService = new PricingService(service, storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IPricingService), pricingService);
 			pricingService.Start();
-			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(DataPath, "ProfileImages\\"), new CacheData(), new KioskData(service), this);
+			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(DataPath, "ProfileImages\\"), new CacheData(), new LocalData(), new ReservationData(DataPath), new KioskData(service), this);
 			ServiceLocator.Instance.AddService(typeof(IDataService), dataService);
 			dataService.Initialize();
 			dataService.Start();
 			dataService.RefreshIfNeeded();
-			IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			service3.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
+			IResourceBundleService service5 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			service5.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
 			MarketingAdImpressionService marketingAdImpressionService = new MarketingAdImpressionService(storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IMarketingAdImpressionService), marketingAdImpressionService);
 			marketingAdImpressionService.Start();
-			MarketingAdService instance5 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service3);
+			MarketingAdService instance5 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service5);
 			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance5);
 			RentalShoppingCartService.Instance.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IPersonalizationService), new PersonalizationService());
@@ -684,6 +733,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			kioskHealthService.AddHealthItem(arcusHealth);
 			HardwareCorrectionStatsHealth healthItem = new HardwareCorrectionStatsHealth(kioskHealthConfiguration, kioskEventService);
 			kioskHealthService.AddHealthItem(healthItem);
+			ViewHealth viewHealth = new ViewHealth(kioskHealthConfiguration, kioskEventService);
+			ServiceLocator.Instance.AddService(typeof(IViewHealth), viewHealth);
+			kioskHealthService.AddHealthItem(viewHealth);
+			CCReaderHealth cCReaderHealth = new CCReaderHealth(kioskHealthConfiguration, kioskEventService);
+			ServiceLocator.Instance.AddService(typeof(ICCReaderHealth), cCReaderHealth);
+			kioskHealthService.AddHealthItem(cCReaderHealth);
 			kioskHealthService.Start();
 		}
 		catch (Exception ex)
@@ -778,6 +833,11 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.GetService<IMarketingAdImpressionService>().Stop();
 		ServiceLocator.Instance.GetService<IPricingService>().Stop();
 		ServiceLocator.Instance.GetService<IKioskEventService>().Stop();
+		IBarcodeTrackingService service14 = ServiceLocator.Instance.GetService<IBarcodeTrackingService>();
+		if (service14 != null)
+		{
+			service14.IsActive = false;
+		}
 		ServiceLocator.Instance.GetService<IKernelExtensionService>()?.DeactivateAllExtensions();
 		ServiceLocator.Instance.GetService<IConfigurationService>()?.Stop().ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)
 		{
@@ -865,11 +925,24 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			while (IsApplicationIdle && !_waitTimer.Enabled)
 			{
 				using ExecutionTimer executionTimer = new ExecutionTimer();
+				m_idleEventCounter++;
+				TimeSpan timeSpan = DateTime.Now - m_idleEventLastLoggedDate;
+				if (timeSpan > m_idleLoggingTargetInterval)
+				{
+					LogHelper.Instance.Log($"EngineApplication.IdleLoop: Target interval {m_idleLoggingTargetInterval}; Time since Last idle logged: {timeSpan};  Idle event count: {m_idleEventCounter}; invoke callbacks from IdleLoop: {!CallbackService.Instance.UseTimerToInvokeCallbacks}");
+					CallbackService.Instance.LogStatistics();
+					CallbackService.Instance.ResetStatistics();
+					m_idleEventLastLoggedDate = DateTime.Now;
+					m_idleEventCounter = 0L;
+				}
 				SwitchBundleIfNecessary();
 				TimerService.Instance.UpdateTimers();
 				TweenService.Instance.UpdateTweens();
-				while (executionTimer.ElapsedMilliseconds < 10 && CallbackService.Instance.InvokeNextCallback())
+				if (!CallbackService.Instance.UseTimerToInvokeCallbacks)
 				{
+					while (executionTimer.ElapsedMilliseconds < 10 && CallbackService.Instance.InvokeNextCallback())
+					{
+					}
 				}
 				if (m_enableMaintenanceMode)
 				{
@@ -887,7 +960,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	private void _waitTimer_Elapsed(object sender, ElapsedEventArgs e)
 	{
-		_elementHost.Child.Dispatcher.Invoke(delegate
+		_elementHost?.Child.Dispatcher.Invoke(delegate
 		{
 			IdleLoop();
 		});
@@ -901,7 +974,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			_waitTimer.Elapsed += _waitTimer_Elapsed;
 			_waitTimer.AutoReset = false;
 		}
-		ServiceLocator.Instance.GetService<IRenderingService>();
 		try
 		{
 			ActivateIdleHandlers();

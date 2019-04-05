@@ -13,14 +13,21 @@
         <GradientStop Color="#CA2351" Offset="1.0" />
       </LinearGradientBrush>
     </Panel.Background>
-    <TextBlock Name="header_label" VerticalAlignment="Top" Margin="0,132,0,0" Width="470" Height="114" Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_48}" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=HeaderLabelText, FallbackValue=Sign in to get some points}" />
-    <Redbox:RoundedButton Name="EmailAndPasswordButton" VerticalAlignment="Top" Margin="0,331,0,0" Width="391" Height="78" UsedDefaultCornerRadius="True" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:SignInViewUserControlCommands.EmailAndPasswordCommand}">
-      <TextBlock Style="{StaticResource font_museo_slab_900_28}" Margin="40,20" Text="{Binding Path=EmailAndPasswordButtonText, FallbackValue=Email &amp; Password}" />
-    </Redbox:RoundedButton>
-    <Redbox:RoundedButton Name="PhoneAndPinButton" VerticalAlignment="Top" Margin="0,443,0,0" Width="391" MinHeight="78" Height="auto" UsedDefaultCornerRadius="True" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:SignInViewUserControlCommands.PhoneAndPinCommand}">
-      <TextBlock Style="{StaticResource font_museo_slab_900_28}" Margin="40,20" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=PhoneAndPinButtonText, FallbackValue=Phone &amp; 4-Digit PIN}" />
-    </Redbox:RoundedButton>
-    <Redbox:RoundedButton Name="CancelButton" VerticalAlignment="Top" Margin="0,653,0,0" Width="234" Height="78" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_button_style}" Command="{x:Static views:SignInViewUserControlCommands.CancelCommand}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+    <TextBlock Name="header_label" Grid.Row="0" VerticalAlignment="Center" Margin="0,0,0,0" Width="470" Height="114" Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_48}" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=HeaderLabelText, FallbackValue=Sign in to get some points}" />
+    <StackPanel Orientation="Vertical" Grid.Row="1" VerticalAlignment="Center">
+      <Redbox:RoundedButton Name="PhoneAndPinButton" VerticalAlignment="Top" Margin="0,0,0,0" Width="391" MinHeight="78" Height="auto" UsedDefaultCornerRadius="True" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:SignInViewUserControlCommands.PhoneAndPinCommand}">
+        <TextBlock Style="{StaticResource font_museo_slab_900_28}" Margin="40,20" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=PhoneAndPinButtonText, FallbackValue=Phone &amp; 4-Digit PIN}" />
+      </Redbox:RoundedButton>
+      <Redbox:RoundedButton Name="EmailAndPasswordButton" VerticalAlignment="Top" Margin="0,40,0,0" Width="391" Height="78" UsedDefaultCornerRadius="True" Style="{StaticResource style_white_rubine_gradient_border_button}" Command="{x:Static views:SignInViewUserControlCommands.EmailAndPasswordCommand}">
+        <TextBlock Style="{StaticResource font_museo_slab_900_28}" Margin="40,20" Text="{Binding Path=EmailAndPasswordButtonText, FallbackValue=Email &amp; Password}" />
+      </Redbox:RoundedButton>
+    </StackPanel>
+    <Redbox:RoundedButton Name="CancelButton" Grid.Row="2" VerticalAlignment="Bottom" Margin="0,10,0,30" Width="234" Height="78" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_button_style}" Command="{x:Static views:SignInViewUserControlCommands.CancelCommand}">
       <TextBlock Style="{StaticResource font_museo_slab_900_28}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
     </Redbox:RoundedButton>
   </Grid>

@@ -19,7 +19,7 @@ public class FormatFilterPopupViewController : BaseViewController
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 			List<IKioskProduct> products = null;
-			service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.Movies, TitleType.DigitalCode, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, out products);
+			service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.Movies, TitleType.DigitalCode, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 			if (products != null)
 			{
 				return products.Count > 0;
@@ -118,7 +118,7 @@ public class FormatFilterPopupViewController : BaseViewController
 	{
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		List<IKioskProduct> products = null;
-		service?.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, out products);
+		service?.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 		if (products != null)
 		{
 			return products.Count > 0;

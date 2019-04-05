@@ -8,7 +8,7 @@ public interface IMarketingOptinServices
 
 	bool SimulateCommunicationsFailure { get; set; }
 
-	void SendEmailConfirm(string storeNumber, string emailAddress, RemoteServiceCallback completeCallback);
+	void SendEmailConfirm(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback);
 
 	bool CanSwitch();
 

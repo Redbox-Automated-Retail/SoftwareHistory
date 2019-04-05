@@ -13,8 +13,6 @@ public interface IConfiguration
 
 	int BurnInViewDuration { get; }
 
-	bool EnableCreditsButton { get; }
-
 	bool EarlyIdEnabled { get; }
 
 	bool LoyaltyEnabled { get; }
@@ -24,6 +22,8 @@ public interface IConfiguration
 	int SignInADATimeout { get; }
 
 	bool EnablePricingEngine { get; }
+
+	bool UseLowestPriceSortOrder { get; }
 
 	bool ComingSoonOptInEnabled { get; }
 
@@ -40,6 +40,64 @@ public interface IConfiguration
 	int OfflineGameRentalLimit { get; }
 
 	int OfflineGamePurchaseLimit { get; }
+
+	bool LoyaltySignUpEnabled { get; }
+
+	bool LoyaltySignUpAfterSwipeEnabled { get; }
+
+	bool OfflineBlockListEnabled { get; }
+
+	bool EnableIRSecurity { get; }
+
+	bool EnableImageSecurity { get; }
+
+	int UploadDiscImageMessagePriority { get; }
+
+	int KioskAnalyticsMessagePriority { get; }
+
+	string WelcomeScreenABTestVersion { get; }
+
+	string PriceFiltersOnBrowseABTestVersion { get; }
+
+	string PrmUpsellOnMnpABTestVersion { get; }
+
+	int ScreenSaverTimeout { get; }
+
+	string OutOfStockTitleDetailsABTestVersion { get; }
+
+	string StarRatingTitleDetailsABTestVersion { get; }
+
+	string TVEnabledABTestVersion { get; }
+
+	List<long> TVTitleIds { get; }
+
+	bool MonitorBarcodeTracking { get; }
+
+	int BarcodeTrackingMaxBatchSize { get; }
+
+	int BarcodeTrackingTimerDuration { get; }
+
+	int BarcodeTrackingMessagePriority { get; }
+
+	int KeepHalImagesForNumberOfDays { get; }
+
+	string FraudServicesUrl { get; }
+
+	bool AuthorizeAtPickup { get; }
+
+	string FraudServicesKey { get; }
+
+	bool KioskAnalyticsEnabled { get; }
+
+	bool SendKioskAnalyticsToKioskDataService { get; }
+
+	string KioskDataServicesUrl { get; }
+
+	string KioskDataServicesKey { get; }
+
+	bool UseTimerToInvokeCallbackEntries { get; }
+
+	bool FlashDealFlagForGamesEnabled { get; }
 
 	void SessionReload();
 }

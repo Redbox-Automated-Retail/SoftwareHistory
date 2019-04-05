@@ -4,6 +4,7 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.Proxy;
@@ -51,19 +52,79 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 		}
 	}
 
-	public void SendEmailConfirm(string storeNumber, string emailAddress, RemoteServiceCallback completeCallback)
+	public string CustomerProfileNumber
 	{
-		if (LiveCall)
+		get
 		{
-			SendLiveCall(storeNumber, emailAddress, completeCallback);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "CustomerProfileNumber", string.Empty);
 		}
-		else
+		set
 		{
-			SendSimulatedCall(storeNumber, emailAddress, completeCallback);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "CustomerProfileNumber", value);
 		}
 	}
 
-	public void SendSimulatedCall(string storeNumber, string emailAddress, RemoteServiceCallback completeCallback)
+	public string MobilePhoneNumber
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "MobilePhoneNumber", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "MobilePhoneNumber", value);
+		}
+	}
+
+	public bool PromptForPerks
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "PromptForPerks", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "PromptForPerks", value);
+		}
+	}
+
+	public bool PromptForEarlyId
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "PromptForEarlyId", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "PromptForEarlyId", value);
+		}
+	}
+
+	public bool TextClubEnabled
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Marketing Optin Services", "TextClubEnabled", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "TextClubEnabled", value);
+		}
+	}
+
+	public void SendEmailConfirm(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
+	{
+		if (LiveCall)
+		{
+			SendLiveCall(storeNumber, emailAddress, accountNumber, completeCallback);
+		}
+		else
+		{
+			SendSimulatedCall(storeNumber, emailAddress, accountNumber, completeCallback);
+		}
+	}
+
+	public void SendSimulatedCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -92,6 +153,11 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 					remoteServiceResult.Success = true;
 					remoteServiceResult.Properties["has_errors"] = false;
 					remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatusCode.ToString();
+					remoteServiceResult.Properties["customer_profile_number"] = CustomerProfileNumber;
+					remoteServiceResult.Properties["mobile_phone_number"] = MobilePhoneNumber;
+					remoteServiceResult.Properties["prompt_for_perks"] = PromptForPerks;
+					remoteServiceResult.Properties["prompt_for_early_id"] = PromptForEarlyId;
+					remoteServiceResult.Properties["text_club_enabled"] = TextClubEnabled;
 					remoteServiceResult.Properties["server_name"] = "Simulated";
 					remoteServiceResult.Properties["server_busy"] = false;
 					remoteServiceResult.Properties["is_online"] = true;
@@ -115,7 +181,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -131,7 +197,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 		});
 	}
 
-	public void SendLiveCall(string storeNumber, string emailAddress, RemoteServiceCallback completeCallback)
+	public void SendLiveCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -155,6 +221,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 					TransactionDate = dictionary,
 					CardId = service2.GenerateCardHashId(),
 					Email = emailAddress,
+					AccountNumber = accountNumber,
 					MessageId = Guid.NewGuid(),
 					KioskId = int.Parse(storeNumber),
 					EngineVersion = service["EngineVersion"],
@@ -163,6 +230,11 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 				});
 				remoteServiceResult.Success = dictionary2.ContainsKey("Success") && (bool)dictionary2["Success"];
 				remoteServiceResult.Properties["confirmation_status"] = ((ConfirmationStatus)dictionary2["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString();
+				remoteServiceResult.Properties["customer_profile_number"] = (dictionary2.ContainsKey("CustomerProfileNumber") ? ((string)dictionary2["CustomerProfileNumber"]) : string.Empty);
+				remoteServiceResult.Properties["mobile_phone_number"] = (dictionary2.ContainsKey("MobilePhoneNumber") ? ((string)dictionary2["MobilePhoneNumber"]) : string.Empty);
+				remoteServiceResult.Properties["prompt_for_perks"] = dictionary2.ContainsKey("PromptForPerks") && (bool)dictionary2["PromptForPerks"];
+				remoteServiceResult.Properties["prompt_for_early_id"] = dictionary2.ContainsKey("PromptForEarlyId") && (bool)dictionary2["PromptForEarlyId"];
+				remoteServiceResult.Properties["text_club_enabled"] = dictionary2.ContainsKey("TextClubEnabled") && (bool)dictionary2["TextClubEnabled"];
 			}
 			catch (Exception e)
 			{

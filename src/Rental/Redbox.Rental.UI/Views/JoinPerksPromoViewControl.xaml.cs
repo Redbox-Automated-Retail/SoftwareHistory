@@ -1,7 +1,6 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using Redbox.KioskEngine.ComponentModel;
@@ -15,8 +14,6 @@ namespace Redbox.Rental.UI.Views;
 public partial class JoinPerksPromoViewControl : ViewUserControl, IComponentConnector
 {
 	private SimpleModel Model { get; set; }
-
-	private bool OnlyOnce { get; set; } = true;
 
 	public JoinPerksPromoViewControl()
 	{
@@ -63,26 +60,62 @@ public partial class JoinPerksPromoViewControl : ViewUserControl, IComponentConn
 		{
 			Text = Model.CommentText + ","
 		});
-		speechPart.Texts.Add(new TextPart
+		if (Model.CheckboxChecked)
 		{
-			Text = "To Join press ENTER"
-		});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To Join press ENTER"
+			});
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "ENTER",
+				Function = "TTSRepeatSpeechPart",
+				Action = delegate
+				{
+					ViewUserControl.InvokeRoutedCommand(Model.ContinueButtonCommand);
+				}
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To not agree to the Redbox Perks terms and conditions and receive Redbox emails and special offers, press MINUS"
+			});
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "MINUS",
+				Function = "TTSRepeatSpeechPart",
+				Action = delegate
+				{
+					Model.CheckboxChecked = false;
+				}
+			});
+		}
+		else
+		{
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To agree to the Redbox Perks terms and conditions and receive Redbox emails and special offers, press PLUS"
+			});
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "PLUS",
+				Function = "TTSRepeatSpeechPart",
+				Action = delegate
+				{
+					Model.CheckboxChecked = true;
+				}
+			});
+		}
 		speechPart.Texts.Add(new TextPart
 		{
 			Text = "To exit with out joining press CANCEL"
 		});
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = Model.FooterText
+			Text = "To hear the terms press TAB"
 		});
-		speechPart.Events.Add(new MapKeyPressToAction
+		speechPart.Texts.Add(new TextPart
 		{
-			KeyCode = "ENTER",
-			Function = "TTSRepeatSpeechPart",
-			Action = delegate
-			{
-				ViewUserControl.InvokeRoutedCommand(Model.ContinueButtonCommand);
-			}
+			Text = Model.FooterText
 		});
 		speechPart.Events.Add(new MapKeyPressToAction
 		{
@@ -93,25 +126,15 @@ public partial class JoinPerksPromoViewControl : ViewUserControl, IComponentConn
 				ViewUserControl.InvokeRoutedCommand(Model.CancelButtonCommand);
 			}
 		});
-		speechPart.Loop = true;
-	}
-
-	private void CancelButtonElem_Click(object sender, RoutedEventArgs e)
-	{
-		ViewUserControl.InvokeRoutedCommand(Model.CancelButtonCommand);
-	}
-
-	private void ContinueButtonElem_Click(object sender, RoutedEventArgs e)
-	{
-		ViewUserControl.InvokeRoutedCommand(Model.ContinueButtonCommand);
-	}
-
-	private void TermsButtonElem_Click(object sender, RoutedEventArgs e)
-	{
-		if (OnlyOnce)
+		speechPart.Events.Add(new MapKeyPressToAction
 		{
-			OnlyOnce = false;
-			ViewUserControl.InvokeRoutedCommand(Model.OtherButtonCommand, Model.OtherAction);
-		}
+			KeyCode = "TAB",
+			Function = "TTSRepeatSpeechPart",
+			Action = delegate
+			{
+				ViewUserControl.InvokeRoutedCommand(Model.OtherButtonCommand);
+			}
+		});
+		speechPart.Loop = true;
 	}
 }

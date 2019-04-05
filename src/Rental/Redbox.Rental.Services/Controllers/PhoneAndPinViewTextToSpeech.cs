@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.UI.Models;
@@ -17,6 +18,10 @@ public class PhoneAndPinViewTextToSpeech
 		public const string HasDigitWithInstructions = "HasDigitWithInstructions";
 
 		public const string HasDigitWithoutInstructions = "HasDigitWithoutInstructions";
+
+		public const string Terms = "Terms";
+
+		public const string JoinTextClub = "JoinTextClub";
 	}
 
 	public static ISpeechControl GetSpeechControl(Func<PhoneAndPinViewModel> getPhoneAndPinViewModelFunction)
@@ -27,6 +32,15 @@ public class PhoneAndPinViewTextToSpeech
 		AddSpeechPartHasNoDigitWithInstructions(result, getPhoneAndPinViewModelFunction);
 		AddSpeechPartHasDigitWithInstructions(result, getPhoneAndPinViewModelFunction);
 		AddSpeechPartHasDigitWithoutInstructions(result, getPhoneAndPinViewModelFunction);
+		PhoneAndPinViewModel phoneAndPinViewModel = getPhoneAndPinViewModelFunction();
+		if (phoneAndPinViewModel.TermsBarVisibility == Visibility.Visible)
+		{
+			AddSpeechPartTerms(result, getPhoneAndPinViewModelFunction);
+		}
+		if (phoneAndPinViewModel.TextClubOptionVisibility == Visibility.Visible)
+		{
+			AddSpeechPartJoinTextClub(result, getPhoneAndPinViewModelFunction);
+		}
 		result.SpeechParts.ForEach(delegate(ISpeechPart x)
 		{
 			x.SpeechControl = result;
@@ -51,7 +65,7 @@ public class PhoneAndPinViewTextToSpeech
 			PhoneAndPinViewModel phoneAndPinViewModel = getPhoneAndPinViewModelFunction();
 			if (phoneAndPinViewModel != null)
 			{
-				string text = ((phoneAndPinViewModel.PhoneDisplayText != Resources.phone_and_pin_default_phone_display && phoneAndPinViewModel.PhoneDisplayText.Length > 0 && phoneAndPinViewModel.PinDisplayText != Resources.phone_and_pin_default_pin_display && phoneAndPinViewModel.PinDisplayText.Length > 0) ? "HasDigitWithInstructions" : "HasNoDigitWithInstructions");
+				string text = ((phoneAndPinViewModel.PhoneDisplayText.Length > 0 && phoneAndPinViewModel.PinDisplayText != Resources.phone_and_pin_default_pin_display && phoneAndPinViewModel.PinDisplayText.Length > 0) ? "HasDigitWithInstructions" : "HasNoDigitWithInstructions");
 				speechPart.RegularExpression = new RegularExpression
 				{
 					Success = text,
@@ -79,21 +93,7 @@ public class PhoneAndPinViewTextToSpeech
 			PhoneAndPinViewModel phoneAndPinViewModel = getPhoneAndPinViewModelFunction();
 			if (phoneAndPinViewModel != null)
 			{
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "PLUS",
-					Action = delegate
-					{
-						if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
-						{
-							phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Pin);
-						}
-						else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Pin)
-						{
-							phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Phone);
-						}
-					}
-				});
+				AddPlusKeyAction(speechPart, phoneAndPinViewModel);
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
 					KeyCode = "CANCEL",
@@ -215,6 +215,14 @@ public class PhoneAndPinViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
+					Text = phoneAndPinViewModel.HeaderLabelText
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = phoneAndPinViewModel.SubHeadLabelText
+				});
+				speechPart.Texts.Add(new TextPart
+				{
 					Text = "Please enter your phone number and pin with the help of the keypad."
 				});
 				speechPart.Texts.Add(new TextPart
@@ -225,17 +233,62 @@ public class PhoneAndPinViewTextToSpeech
 				{
 					Text = "The numbers are arranged in a standard telephone keypad pattern."
 				});
-				speechPart.Texts.Add(new TextPart
+				if (phoneAndPinViewModel.PinConfirmVisibility == Visibility.Visible)
 				{
-					Text = "Pressing plus switches between phone and pin."
-				});
-				speechPart.Texts.Add(new TextPart
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing plus switches between phone, pin and confirm pin."
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing cancel will go back without signing up."
+					});
+				}
+				else
 				{
-					Text = "Pressing cancel will go back without signing in."
-				});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing plus switches between phone and pin."
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing cancel will go back without signing in."
+					});
+				}
+				AddTabKeyActionForTerms(speechPart, phoneAndPinViewModel, "Press Tab to hear terms and conditions.");
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
+	}
+
+	private static void AddPlusKeyAction(ISpeechPart speechPart, PhoneAndPinViewModel phoneAndPinViewModel)
+	{
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "PLUS",
+			Action = delegate
+			{
+				if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
+				{
+					phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Pin);
+				}
+				else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Pin)
+				{
+					if (phoneAndPinViewModel.PinConfirmVisibility == Visibility.Visible)
+					{
+						phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.PinConfirm);
+					}
+					else
+					{
+						phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Phone);
+					}
+				}
+				else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.PinConfirm)
+				{
+					phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Phone);
+				}
+			}
+		});
 	}
 
 	private static void AddSpeechPartHasDigitWithInstructions(ISpeechControl speechControl, Func<PhoneAndPinViewModel> getPhoneAndPinViewModelFunction)
@@ -255,35 +308,8 @@ public class PhoneAndPinViewTextToSpeech
 			PhoneAndPinViewModel phoneAndPinViewModel = getPhoneAndPinViewModelFunction();
 			if (phoneAndPinViewModel != null)
 			{
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "PLUS",
-					Action = delegate
-					{
-						if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
-						{
-							phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Pin);
-						}
-						else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Pin)
-						{
-							phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Phone);
-						}
-					}
-				});
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "ENTER",
-					Action = delegate
-					{
-						if (phoneAndPinViewModel.IsSignInButtonEnabled)
-						{
-							phoneAndPinViewModel.ProcessOnSignInButtonClicked();
-						}
-					},
-					Function = "TTSSkipToSpeechPart",
-					Value = "HasDigitWithoutInstructions",
-					Text = "ENTER"
-				});
+				AddPlusKeyAction(speechPart, phoneAndPinViewModel);
+				AddEnterKeyAction(speechPart, phoneAndPinViewModel, "HasDigitWithoutInstructions");
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
 					KeyCode = "CANCEL",
@@ -425,7 +451,7 @@ public class PhoneAndPinViewTextToSpeech
 					Value = "HasDigitWithoutInstructions",
 					Text = "Zero"
 				});
-				if (phoneAndPinViewModel.PhoneDisplayText != Resources.phone_and_pin_default_phone_display && phoneAndPinViewModel.PhoneDisplayText.Length > 0)
+				if (phoneAndPinViewModel.PhoneDisplayText.Length > 0)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
@@ -437,6 +463,13 @@ public class PhoneAndPinViewTextToSpeech
 					speechPart.Texts.Add(new TextPart
 					{
 						Text = $"You have entered {phoneAndPinViewModel.TTSPinDisplayText} as your pin."
+					});
+				}
+				if (phoneAndPinViewModel.PinConfirmDisplayText != Resources.phone_and_pin_default_pin_display && phoneAndPinViewModel.PinConfirmDisplayText.Length > 0)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = $"You have entered {phoneAndPinViewModel.TTSPinConfirmDisplayText} as your pin confirmation."
 					});
 				}
 				if (phoneAndPinViewModel.IsSignInButtonEnabled)
@@ -454,17 +487,88 @@ public class PhoneAndPinViewTextToSpeech
 				{
 					Text = "To remove a single digit, press the minus key, which acts as the backspace key."
 				});
-				speechPart.Texts.Add(new TextPart
+				if (phoneAndPinViewModel.PinConfirmVisibility == Visibility.Visible)
 				{
-					Text = "Pressing plus switches between phone and pin."
-				});
-				speechPart.Texts.Add(new TextPart
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing plus switches between phone, pin and confirm pin."
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing cancel will go back without signing up."
+					});
+				}
+				else
 				{
-					Text = "Pressing cancel will go back without signing in."
-				});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing plus switches between phone and pin."
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "Pressing cancel will go back without signing in."
+					});
+				}
+				AddTabKeyActionForTerms(speechPart, phoneAndPinViewModel, "Press Tab to hear terms and conditions.");
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
+	}
+
+	private static void AddEnterKeyAction(ISpeechPart speechPart, PhoneAndPinViewModel phoneAndPinViewModel, string nextSpeechPart)
+	{
+		if (phoneAndPinViewModel.TextClubOptionVisibility == Visibility.Visible)
+		{
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "ENTER",
+				Action = delegate
+				{
+				},
+				Function = "TTSSkipToSpeechPart",
+				Value = "JoinTextClub",
+				Text = "ENTER"
+			});
+			return;
+		}
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "ENTER",
+			Action = delegate
+			{
+				if (phoneAndPinViewModel.IsSignInButtonEnabled)
+				{
+					phoneAndPinViewModel.ProcessOnSignInButtonClicked();
+				}
+			},
+			Function = "TTSSkipToSpeechPart",
+			Value = nextSpeechPart,
+			Text = "ENTER"
+		});
+	}
+
+	private static void AddTabKeyActionForTerms(ISpeechPart speechPart, PhoneAndPinViewModel phoneAndPinViewModel, string instructions)
+	{
+		if (phoneAndPinViewModel.TermsBarVisibility == Visibility.Visible)
+		{
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "TAB",
+				Action = delegate
+				{
+				},
+				Function = "TTSSkipToSpeechPart",
+				Value = "Terms",
+				Text = "tab"
+			});
+			if (!string.IsNullOrEmpty(instructions))
+			{
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = instructions
+				});
+			}
+		}
 	}
 
 	private static void AddSpeechPartHasDigitWithoutInstructions(ISpeechControl speechControl, Func<PhoneAndPinViewModel> getPhoneAndPinViewModelFunction)
@@ -484,35 +588,9 @@ public class PhoneAndPinViewTextToSpeech
 			PhoneAndPinViewModel phoneAndPinViewModel = getPhoneAndPinViewModelFunction();
 			if (phoneAndPinViewModel != null)
 			{
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "PLUS",
-					Action = delegate
-					{
-						if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
-						{
-							phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Pin);
-						}
-						else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Pin)
-						{
-							phoneAndPinViewModel.ProcessOnDisplayClicked(PhoneAndPinViewModel.DisplayType.Phone);
-						}
-					}
-				});
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "ENTER",
-					Action = delegate
-					{
-						if (phoneAndPinViewModel.IsSignInButtonEnabled)
-						{
-							phoneAndPinViewModel.ProcessOnSignInButtonClicked();
-						}
-					},
-					Function = "TTSSkipToSpeechPart",
-					Value = "HasDigitWithInstructions",
-					Text = "ENTER"
-				});
+				AddPlusKeyAction(speechPart, phoneAndPinViewModel);
+				AddEnterKeyAction(speechPart, phoneAndPinViewModel, "HasDigitWithInstructions");
+				AddTabKeyActionForTerms(speechPart, phoneAndPinViewModel, string.Empty);
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
 					KeyCode = "CANCEL",
@@ -653,6 +731,157 @@ public class PhoneAndPinViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "HasDigitWithoutInstructions",
 					Text = "Zero"
+				});
+			}
+		};
+		speechControl.SpeechParts.Add(speechPart);
+	}
+
+	private static void AddSpeechPartTerms(ISpeechControl speechControl, Func<PhoneAndPinViewModel> getPhoneAndPinViewModelFunction)
+	{
+		ISpeechPart speechPart = new SpeechPart
+		{
+			Name = "Terms",
+			Sequence = 4,
+			KeySequenceDelay = 0,
+			Loop = false,
+			StartPause = 100,
+			EndPause = 0
+		};
+		speechPart.Refresh = delegate
+		{
+			speechPart.Clear();
+			PhoneAndPinViewModel viewModel = getPhoneAndPinViewModelFunction();
+			if (viewModel != null)
+			{
+				string value = "HasNoDigitWithInstructions";
+				if (!string.IsNullOrEmpty(viewModel.PhoneDisplayText) || !string.IsNullOrEmpty(viewModel.PinConfirmDisplayText) || !string.IsNullOrEmpty(viewModel.PinDisplayText))
+				{
+					value = "HasDigitWithInstructions";
+				}
+				speechPart.Events.Add(new MapKeyPress
+				{
+					KeyCode = "CANCEL",
+					Function = "TTSSkipToSpeechPart",
+					Value = value,
+					Text = "cancel"
+				});
+				speechPart.Events.Add(new MapKeyPressToAction
+				{
+					KeyCode = "1",
+					Action = delegate
+					{
+						viewModel.ProcessOnTermsButtonClicked();
+					},
+					Function = "TTSSkipToSpeechPart",
+					Value = value,
+					Text = "Terms"
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "To return to phone and pin entry press the cancel key."
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "To hear the complete terms and conditions document press 1."
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = viewModel.TermsTitleText
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = viewModel.TermsText
+				});
+			}
+		};
+		speechControl.SpeechParts.Add(speechPart);
+	}
+
+	private static void AddSpeechPartJoinTextClub(ISpeechControl speechControl, Func<PhoneAndPinViewModel> getPhoneAndPinViewModelFunction)
+	{
+		ISpeechPart speechPart = new SpeechPart
+		{
+			Name = "JoinTextClub",
+			Sequence = 5,
+			KeySequenceDelay = 0,
+			Loop = false,
+			StartPause = 100,
+			EndPause = 0
+		};
+		speechPart.Refresh = delegate
+		{
+			speechPart.Clear();
+			PhoneAndPinViewModel viewModel = getPhoneAndPinViewModelFunction();
+			if (viewModel != null)
+			{
+				string value = "HasNoDigitWithInstructions";
+				if (!string.IsNullOrEmpty(viewModel.PhoneDisplayText) || !string.IsNullOrEmpty(viewModel.PinConfirmDisplayText) || !string.IsNullOrEmpty(viewModel.PinDisplayText))
+				{
+					value = "HasDigitWithInstructions";
+				}
+				if (viewModel.SignUpForTextClub)
+				{
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "2",
+						Action = delegate
+						{
+							viewModel.SignUpForTextClub = false;
+						},
+						Function = "TTSRepeatSpeechPart",
+						Text = "2"
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "If you do not wish to receive text messages with special deals press 2."
+					});
+				}
+				else
+				{
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "1",
+						Action = delegate
+						{
+							viewModel.SignUpForTextClub = true;
+						},
+						Function = "TTSRepeatSpeechPart",
+						Text = "1"
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To join our text club to get special deals press 1."
+					});
+				}
+				speechPart.Events.Add(new MapKeyPress
+				{
+					KeyCode = "CANCEL",
+					Function = "TTSSkipToSpeechPart",
+					Value = value,
+					Text = "cancel"
+				});
+				speechPart.Events.Add(new MapKeyPressToAction
+				{
+					KeyCode = "ENTER",
+					Action = delegate
+					{
+						if (viewModel.IsSignInButtonEnabled)
+						{
+							viewModel.ProcessOnSignInButtonClicked();
+						}
+					},
+					Function = "TTSSkipToSpeechPart",
+					Value = value,
+					Text = "ENTER"
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "If everything is correct, press the enter key."
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "To return to phone and pin entry press the cancel key."
 				});
 			}
 		};

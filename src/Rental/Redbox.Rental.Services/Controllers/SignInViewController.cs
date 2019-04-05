@@ -61,7 +61,7 @@ public class SignInViewController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-phone-browse");
-		OrchestrationService.ViewGoBackSafe("PromptSignInController phone sign in", popOnly: true);
+		OrchestrationService.ViewGoBackSafe("SignInViewController phone sign in", popOnly: true);
 		PersonalizationFunctions.ShowPhoneNumberLogin(SignInCancelButtonTypes.Back);
 	}
 
@@ -69,6 +69,6 @@ public class SignInViewController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		BaseViewController.AnalyticsAddViewEvent("buttonPress", "cancel");
-		OrchestrationService.ViewGoBackSafe("PromptSignInController cancel", popOnly: false);
+		OrchestrationService.ViewGoBackSafe("SignInViewController cancel", popOnly: false);
 	}
 }

@@ -144,11 +144,14 @@ internal static class HealthServicesFunctions
 		{
 			callback2 = delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = callback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
 		service.SendAlert(storeNumber, alertType, subType, message, DateTime.Now, callback2);
@@ -171,11 +174,14 @@ internal static class HealthServicesFunctions
 		{
 			callback2 = delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = callback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
 		service.SendAuditEvent(storeNumber, eventType, DateTime.Now, userName, message, source, callback2);

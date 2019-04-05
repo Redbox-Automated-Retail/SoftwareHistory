@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Model.ShoppingCart;
@@ -34,4 +35,6 @@ public interface IRentalShoppingCartService
 	IRentalShoppingCartItem CreateRentalShoppingCartItemFromProductId(long productId);
 
 	void SendRentalShoppingCartToAnalytics(IRentalShoppingCart rentalShoppingCart);
+
+	List<string> AssignBarcodesToVend(IRentalShoppingCart rentalShoppingCart);
 }

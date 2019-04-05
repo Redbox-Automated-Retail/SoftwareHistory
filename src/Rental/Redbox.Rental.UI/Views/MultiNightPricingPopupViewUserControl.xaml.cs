@@ -29,6 +29,7 @@ public partial class MultiNightPricingPopupViewUserControl : TextToSpeechUserCon
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(OneNightButton);
 		obj?.SetStyle(MultiNightButton);
+		obj?.SetStyle(BuyButton);
 		obj?.SetStyle(CancelButton);
 	}
 
@@ -40,6 +41,11 @@ public partial class MultiNightPricingPopupViewUserControl : TextToSpeechUserCon
 	private void MultiNightCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		MultiNightPricingPopupViewModel?.ProcessOnMultiNightButtonClicked();
+	}
+
+	private void BuyCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		MultiNightPricingPopupViewModel?.ProcessOnBuyButtonClicked();
 	}
 
 	private void CancelCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)

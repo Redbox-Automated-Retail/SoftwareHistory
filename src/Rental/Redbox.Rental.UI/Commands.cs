@@ -10,6 +10,8 @@ public class Commands
 
 	public static readonly RoutedCommand RentOrBuyGamesCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand RentTVCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand BuyMoviesCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BuyGamesCommand = new RoutedCommand();
@@ -74,7 +76,9 @@ public class Commands
 
 	public static readonly RoutedCommand BrowseGroupSelectedCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand ToggleTitleFamilyCommand = new RoutedCommand();
+	public static readonly RoutedCommand ToggleTitleFamily1Command = new RoutedCommand();
+
+	public static readonly RoutedCommand ToggleTitleFamily2Command = new RoutedCommand();
 
 	public static readonly RoutedCommand MyPerksCommand = new RoutedCommand();
 
@@ -85,8 +89,6 @@ public class Commands
 	public static readonly RoutedCommand PromoCodeCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand PayCommand = new RoutedCommand();
-
-	public static readonly RoutedCommand UseCreditsCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand UsePointsCommand = new RoutedCommand();
 
@@ -109,6 +111,8 @@ public class Commands
 	public static readonly RoutedCommand CancelDialogCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand FormatFilterPopupCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ForSaleFilterPopupCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand NoThanksCommand = new RoutedCommand();
 

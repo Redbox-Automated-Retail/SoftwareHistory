@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -23,6 +24,7 @@ using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
+using Redbox.Rental.UI;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -33,6 +35,18 @@ namespace Redbox.Rental.Services.Controllers;
 public class BrowseViewController
 {
 	private static RentalShoppingCartChanged ShoppingCartChangeEventHandler;
+
+	private const decimal _lowRangeTop = 3.99m;
+
+	private const decimal _midRangeBottom = 4.99m;
+
+	private const decimal _midRangeTop = 5.99m;
+
+	private const decimal _topRangeBottom = 6.99m;
+
+	private const decimal _lowCutoffPrice = 3.99m;
+
+	private const decimal _highCutoffPrice = 5.99m;
 
 	private static IBrowseState BrowseState => Redbox.Rental.Services.Session.Session.Instance.BrowseState;
 
@@ -56,7 +70,7 @@ public class BrowseViewController
 	{
 		get
 		{
-			if (BrowseState.TitleFamily == TitleFamily.Movies)
+			if (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.TV)
 			{
 				return ServiceLocator.Instance.GetService<IStoreManager>()?.CanSellUsedMovies ?? false;
 			}
@@ -74,19 +88,19 @@ public class BrowseViewController
 	{
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		List<IKioskProduct> products = null;
-		service?.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, out products);
+		service?.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 		foreach (IKioskProduct item in products)
 		{
 			OrchestrationService.GetProductBitmapImage(item);
 		}
-		service?.GetProducts(BrowseViewFilter.ComingSoon, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, out products);
+		service?.GetProducts(BrowseViewFilter.ComingSoon, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 		foreach (IKioskProduct item2 in products)
 		{
 			OrchestrationService.GetProductBitmapImage(item2);
 		}
 	}
 
-	public static void ConfigureBrowseView()
+	public static void ConfigureBrowseView(BrowseViewParameters parameters)
 	{
 		FrameworkElement viewUserControl = GetViewUserControl();
 		if (viewUserControl != null)
@@ -148,21 +162,29 @@ public class BrowseViewController
 
 	private static void ConfigureTopMenu(BrowseViewModel browseViewModel)
 	{
+		OrchestrationService.SetCurrentUICulture();
 		TopMenuModel topMenuModel = new TopMenuModel();
 		if (!ApplicationState.Instance.IsADAAccessible && !InTitleMarketingMode)
 		{
 			CreateMenuButtons(topMenuModel);
 		}
-		topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(GetViewUserControl(), "browse_top_menu_background_collection_style");
+		topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(GetViewUserControl(), "browse_top_menu_background_style");
 		topMenuModel.MenuBackgroundText = null;
 		if (IsADAMode || InTitleMarketingMode)
 		{
 			if (IsADAMode)
 			{
-				topMenuModel.MenuBackgroundText = ((BrowseState.TitleFamily == TitleFamily.Games) ? Resources.browse_family_games : Resources.browse_family_movies);
+				topMenuModel.MenuBackgroundText = Resources.browse_family_movies;
+				if (BrowseState.TitleFamily == TitleFamily.Games)
+				{
+					topMenuModel.MenuBackgroundText = Resources.browse_family_games;
+				}
+				else if (BrowseState.TitleFamily == TitleFamily.TV)
+				{
+					topMenuModel.MenuBackgroundText = Resources.browse_family_tv;
+				}
 				topMenuModel.MenuTextStyle = WPFFunctions.GetStyle(GetViewUserControl(), "browse_top_menu_text_ada_style");
 			}
-			topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(GetViewUserControl(), "browse_top_menu_background_ada_style");
 		}
 		else if (BrowseState.BrowseCollectionProduct != null)
 		{
@@ -191,7 +213,7 @@ public class BrowseViewController
 				flag = true;
 				BrowseState.UnwindBrowseStateSetStack();
 				UpdateDisplayProductModels(GetBrowseViewModelFromView().BrowseProductControlModel.BrowseItems, isADAMiniCart: false);
-				if (BrowseState.TitleFamily == TitleFamily.Games)
+				if (BrowseState.TitleFamily == TitleFamily.Games || BrowseState.TitleFamily == TitleFamily.TV)
 				{
 					BrowseState.SetDefaultBrowseStateSet();
 				}
@@ -249,6 +271,32 @@ public class BrowseViewController
 					BrowseState.BrowseMode = BrowseViewFilter.All;
 				}
 			}
+			else if (BrowseState.TitleFamily == TitleFamily.TV)
+			{
+				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Bluray || BrowseState.BrowseSelectedSort == BrowseSelectedSort.DigitalCode || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Dvd || BrowseState.BrowseSelectedSort == BrowseSelectedSort._4KUHD || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Xbox360 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.XboxOne || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Ps2 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Ps3 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Ps4 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.NintendoDS || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Wii || BrowseState.BrowseSelectedSort == BrowseSelectedSort.WiiU || BrowseState.BrowseSelectedSort == BrowseSelectedSort.NintendoSwitch)
+				{
+					BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
+					BrowseState.BrowseMode = BrowseViewFilter.All;
+				}
+				else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale)
+				{
+					if (OrchestrationService.GetCanSellUsedMovies())
+					{
+						BrowseState.BrowseSelectedSort = BrowseSelectedSort.ForSale;
+						BrowseState.BrowseMode = BrowseViewFilter.ForSale;
+					}
+					else
+					{
+						BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
+						BrowseState.BrowseMode = BrowseViewFilter.All;
+					}
+				}
+				else
+				{
+					BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
+					BrowseState.BrowseMode = BrowseViewFilter.All;
+				}
+			}
 			else if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Xbox360 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.XboxOne || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Ps2 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Ps3 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Ps4 || BrowseState.BrowseSelectedSort == BrowseSelectedSort.NintendoDS || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Wii || BrowseState.BrowseSelectedSort == BrowseSelectedSort.WiiU || BrowseState.BrowseSelectedSort == BrowseSelectedSort.NintendoSwitch)
 			{
 				BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
@@ -266,14 +314,14 @@ public class BrowseViewController
 					BrowseState.BrowseMode = BrowseViewFilter.All;
 				}
 			}
-			ConfigureBrowseView();
+			ConfigureBrowseView(BrowseFunctions.GetBrowseViewparameters());
 		}
 		else if (browseMenuButton is BrowseCollectionsMenuButton browseCollectionsMenuButton)
 		{
 			BrowseState.PushCollectionsBrowseStateSet();
 			BrowseState.CollectionsPopupShown = true;
 			OrchestrationService.AnalyticsAddViewEvent("filterChange", $"browse-filter-genre,{browseCollectionsMenuButton.Text}");
-			ConfigureBrowseView();
+			ConfigureBrowseView(BrowseFunctions.GetBrowseViewparameters());
 		}
 		BrowseViewModel browseViewModelFromView = GetBrowseViewModelFromView();
 		if (browseViewModelFromView?.BrowseTopMenuModel?.MenuButtons == null)
@@ -293,7 +341,7 @@ public class BrowseViewController
 				continue;
 			}
 			BrowseGenreMenuButton browseGenreMenuButton2 = menuButton as BrowseGenreMenuButton;
-			menuButton.IsSelected = browseMenuButton == menuButton || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.Movies && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue) || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.Games && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue);
+			menuButton.IsSelected = browseMenuButton == menuButton || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.Movies && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue) || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.Games && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue) || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.TV && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue);
 		}
 	}
 
@@ -313,39 +361,63 @@ public class BrowseViewController
 		{
 			TitleFamily titleFamily = BrowseState.TitleFamily;
 			bool highlightSelectedGenre = !BrowseState.BrowseCollections;
-			if (titleFamily == TitleFamily.Movies)
+			switch (titleFamily)
+			{
+			case TitleFamily.Movies:
 			{
 				BrowseMenuButton browseMenuButton = null;
-				browseMenuButton = ((!OrchestrationService.RentalIsCollectionsEnabled()) ? ((BrowseMenuButton)CreateGenreMenuButton(Genres.Top20Movies, highlightSelectedGenre)) : ((BrowseMenuButton)new BrowseCollectionsMenuButton
+				browseMenuButton = ((!OrchestrationService.RentalIsCollectionsEnabled()) ? ((BrowseMenuButton)CreateGenreMenuButton(Genres.Top20Movies, highlightSelectedGenre, null)) : ((BrowseMenuButton)new BrowseCollectionsMenuButton
 				{
 					Text = Resources.Collections,
 					IsSelected = BrowseState.BrowseCollections
 				}));
 				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
 				{
-					CreateGenreMenuButton(null, highlightSelectedGenre),
+					CreateGenreMenuButton(null, highlightSelectedGenre, null),
 					browseMenuButton,
-					CreateGenreMenuButton(Genres.ActionAndAdventure, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.Drama, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.Horror, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.Comedy, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.FamilyMovies, highlightSelectedGenre),
-					CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right)
+					CreateGenreMenuButton(Genres.ActionAndAdventure, highlightSelectedGenre, null),
+					CreateGenreMenuButton(Genres.Drama, highlightSelectedGenre, null),
+					CreateGenreMenuButton(Genres.Horror, highlightSelectedGenre, null),
+					CreateGenreMenuButton(Genres.Comedy, highlightSelectedGenre, null),
+					CreateGenreMenuButton(Genres.FamilyMovies, highlightSelectedGenre, null)
 				});
+				if (Redbox.Rental.Services.Configuration.Configuration.Instance.TVEnabledABTestVersion == "B")
+				{
+					topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
+					{
+						CreateProductFamilyMenuButton(TitleFamily.TV, ArrowDirection.Right),
+						CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right)
+					});
+				}
+				else
+				{
+					topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton> { CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right) });
+				}
+				break;
 			}
-			else
-			{
+			case TitleFamily.TV:
 				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
 				{
-					CreateGenreMenuButton(null, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.ActionGames, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.FamilyGames, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.Fighting, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.MusicAndParty, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.Shooter, highlightSelectedGenre),
-					CreateGenreMenuButton(Genres.Sports, highlightSelectedGenre),
-					CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Right)
+					CreateGenreMenuButton(null, highlightSelectedGenre, 126),
+					CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Right, 736),
+					CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right, 880)
 				});
+				break;
+			default:
+				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton> { CreateGenreMenuButton(null, highlightSelectedGenre, 126) });
+				if (Redbox.Rental.Services.Configuration.Configuration.Instance.TVEnabledABTestVersion == "B")
+				{
+					topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
+					{
+						CreateProductFamilyMenuButton(TitleFamily.TV, ArrowDirection.Right, 736),
+						CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Right, 880)
+					});
+				}
+				else
+				{
+					topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton> { CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Right, 880) });
+				}
+				break;
 			}
 		}
 		else if (BrowseState.BrowseCollectionProduct != null)
@@ -365,7 +437,16 @@ public class BrowseViewController
 
 	private static BrowseProductFamilyMenuButton CreateProductFamilyMenuButton(TitleFamily productFamily, ArrowDirection arrowDirection, int x)
 	{
-		string text = ((productFamily == TitleFamily.Movies) ? Resources.To_Movies : Resources.To_Games);
+		string text = Resources.To_Games;
+		switch (productFamily)
+		{
+		case TitleFamily.Movies:
+			text = Resources.To_Movies;
+			break;
+		case TitleFamily.TV:
+			text = Resources.To_TV;
+			break;
+		}
 		BrowseProductFamilyMenuButton browseProductFamilyMenuButton = new BrowseProductFamilyMenuButton
 		{
 			Text = text,
@@ -381,17 +462,34 @@ public class BrowseViewController
 		return browseProductFamilyMenuButton;
 	}
 
-	private static BrowseGenreMenuButton CreateGenreMenuButton(Genres? genre, bool highlightSelectedGenre)
+	private static BrowseGenreMenuButton CreateGenreMenuButton(Genres? genre, bool highlightSelectedGenre, int? width)
 	{
 		Genres? genre2 = BrowseState.Genre;
-		BrowseGenreMenuButton obj = new BrowseGenreMenuButton
+		BrowseGenreMenuButton browseGenreMenuButton = new BrowseGenreMenuButton
 		{
-			FilterValue = genre,
-			IsSelected = (highlightSelectedGenre && genre2 == genre)
+			FilterValue = genre
 		};
-		string name = (genre.HasValue ? $"genre_{(int)genre.Value}" : ((BrowseState.TitleFamily == TitleFamily.Movies) ? "Movies_ALL" : "Games_ALL"));
-		obj.Text = Resources.ResourceManager.GetString(name);
-		return obj;
+		browseGenreMenuButton.IsSelected = highlightSelectedGenre && genre2 == genre;
+		string name = "Games_ALL";
+		if (genre.HasValue)
+		{
+			name = $"genre_{(int)genre.Value}";
+		}
+		else if (BrowseState.TitleFamily == TitleFamily.Movies)
+		{
+			name = "Movies_ALL";
+		}
+		else if (BrowseState.TitleFamily == TitleFamily.TV)
+		{
+			name = "TV_ALL";
+		}
+		browseGenreMenuButton.Text = Resources.ResourceManager.GetString(name);
+		if (width.HasValue)
+		{
+			browseGenreMenuButton.Width = width.Value;
+			browseGenreMenuButton.FixedWidth = true;
+		}
+		return browseGenreMenuButton;
 	}
 
 	private static void ConfigureTTS(BrowseViewModel browseViewModel)
@@ -406,13 +504,14 @@ public class BrowseViewController
 
 	private static void ConfigureCheckOutBar(BrowseViewModel browseViewModel)
 	{
+		OrchestrationService.SetCurrentUICulture();
 		browseViewModel.OnCheckOutButtonClicked = delegate
 		{
 			BrowseState.UnwindBrowseStateSetStack();
 			BrowseState.SetDefaultBrowseStateSet();
 			ShoppingCartViewFunctions.ViewShoppingCart();
 		};
-		browseViewModel.OnToggleTitleFamilyButtonClicked = delegate
+		browseViewModel.OnToggleTitleFamilyButton1Clicked = delegate
 		{
 			BrowseState.TitleFamily = ((BrowseState.TitleFamily != TitleFamily.Movies) ? TitleFamily.Movies : TitleFamily.Games);
 			BrowseState.TitleType = TitleType.All;
@@ -420,7 +519,17 @@ public class BrowseViewController
 			BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
 			BrowseState.Genre = null;
 			BrowseState.PageNumber = 1;
-			ConfigureBrowseView();
+			ConfigureBrowseView(BrowseFunctions.GetBrowseViewparameters());
+		};
+		browseViewModel.OnToggleTitleFamilyButton2Clicked = delegate
+		{
+			BrowseState.TitleFamily = ((BrowseState.TitleFamily == TitleFamily.TV) ? TitleFamily.Games : TitleFamily.TV);
+			BrowseState.TitleType = TitleType.All;
+			BrowseState.BrowseMode = BrowseViewFilter.All;
+			BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
+			BrowseState.Genre = null;
+			BrowseState.PageNumber = 1;
+			ConfigureBrowseView(BrowseFunctions.GetBrowseViewparameters());
 		};
 		browseViewModel.OnSignInButtonClicked = delegate
 		{
@@ -453,8 +562,10 @@ public class BrowseViewController
 		browseViewModel.IsADAAccessible = ApplicationState.Instance.IsADAAccessible;
 		browseViewModel.CheckOutButtonText = checkOutButtonText;
 		browseViewModel.CheckOutButtonStyle = style;
-		browseViewModel.SwitchProductFamilyButtonVisibility = ((!ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-		browseViewModel.SwitchProductFamilyButtonText = ((BrowseState.TitleFamily == TitleFamily.Movies) ? Resources.Games : Resources.Movies);
+		browseViewModel.SwitchProductFamilyButton1Visibility = ((!ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
+		browseViewModel.SwitchProductFamilyButton2Visibility = ((!ApplicationState.Instance.IsADAAccessible || !(Redbox.Rental.Services.Configuration.Configuration.Instance.TVEnabledABTestVersion == "B")) ? Visibility.Collapsed : Visibility.Visible);
+		browseViewModel.SwitchProductFamilyButton1Text = ((BrowseState.TitleFamily == TitleFamily.Movies) ? Resources.Games : Resources.Movies);
+		browseViewModel.SwitchProductFamilyButton2Text = ((BrowseState.TitleFamily == TitleFamily.TV) ? Resources.Games : Resources.TV);
 		browseViewModel.AddToADACartLabelText = Resources.add_to_cart_ada_label;
 		browseViewModel.AddToADACartLabelVisibility = ((!IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 		browseViewModel.DontMissYourPerksText = Resources.perks_dont_miss;
@@ -494,6 +605,7 @@ public class BrowseViewController
 
 	private static void ConfigureBrowseFilterBar(FrameworkElement browseViewUserControl, BrowseViewModel browseViewModel)
 	{
+		OrchestrationService.SetCurrentUICulture();
 		FilterBarModel filterBarModel = new FilterBarModel();
 		filterBarModel.OnStartOverButtonClicked += delegate
 		{
@@ -542,6 +654,10 @@ public class BrowseViewController
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "format");
 			OrchestrationService.ViewShow("format_filter_popup_view");
 		};
+		filterBarModel.OnPriceRangeFilterButtonClicked += delegate
+		{
+			ShowPriceFilterDialog();
+		};
 		filterBarModel.HomeButtonText = Resources.home_button;
 		filterBarModel.HomeButtonVisibility = ((!PersonalizationFunctions.IsSignedIn || BrowseState.BrowseCollections || BrowseState.BrowseCollectionProduct != null || InTitleMarketingMode) ? Visibility.Collapsed : Visibility.Visible);
 		filterBarModel.StartOverButtonVisibility = ((PersonalizationFunctions.IsSignedIn || BrowseState.BrowseCollections || BrowseState.BrowseCollectionProduct != null || InTitleMarketingMode) ? Visibility.Collapsed : Visibility.Visible);
@@ -560,9 +676,12 @@ public class BrowseViewController
 		filterBarModel.FormatFilterButtonStrings.Add(TitleType.Bluray, Resources.blu_ray);
 		filterBarModel.FormatFilterButtonStrings.Add(TitleType.DigitalCode, Resources.digital_code);
 		filterBarModel.FormatFilterButtonStrings.Add(TitleType._4KUHD, Resources.four_k_uhd);
-		filterBarModel.FormatFilterButtonSelectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "classic_purple_radio_button_style");
-		filterBarModel.FormatFilterButtonUnselectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "classic_rubine_radio_button_style");
+		filterBarModel.FilterButtonSelectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "classic_purple_radio_button_style");
+		filterBarModel.FilterButtonUnselectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "classic_rubine_radio_button_style");
 		filterBarModel.SelectedFormat = BrowseState.TitleType;
+		filterBarModel.PriceRangeButtonDefaultText = Resources.price_range_select_button;
+		filterBarModel.PriceRangeFilterButtonVisibility = ((!ShouldShowPriceRangeFilterButton()) ? Visibility.Collapsed : Visibility.Visible);
+		filterBarModel.SelectedPriceRange = BrowseState.BrowsePriceRangeFilter;
 		IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
 		List<BrowseFilter> filters = null;
 		if (!BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null && !InTitleMarketingMode)
@@ -577,7 +696,7 @@ public class BrowseViewController
 			{
 				filter.IsSelected = browseFilter == filter;
 			}
-			HandleFilterButtonClick(browseFilter.ButtonType);
+			HandleFilterButtonClick(browseFilter);
 			if (BrowseState.TitleType == TitleType.All)
 			{
 				filterBarModel.SelectedFormat = TitleType.All;
@@ -586,22 +705,113 @@ public class BrowseViewController
 		browseViewModel.BrowseFilterBarModel = filterBarModel;
 	}
 
+	private static void ShowPriceFilterDialog()
+	{
+		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "price_filter");
+		OptionSelectionDialogInfo optionSelectionDialogInfo = new OptionSelectionDialogInfo
+		{
+			HeaderText = Resources.price_filter_title,
+			CancelButtonText = Resources.cancel_button,
+			ViewAnalyticsName = "filter_by_price_view",
+			ViewAnalyticsContext = "FilterByPriceDialog"
+		};
+		optionSelectionDialogInfo.CancelCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+		{
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "cancel");
+			OrchestrationService.ViewGoBackSafe("FilterByPriceDialog_cancel", popOnly: false);
+		}, (Func<bool>)null);
+		DynamicRoutedCommand command = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(BrowseFilter filter)
+		{
+			BrowsePriceRangeParameter browsePriceRangeParameter = (BrowsePriceRangeParameter)filter.Parameter;
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", browsePriceRangeParameter.analtyicsString);
+			HandleFilterButtonClick(filter);
+			OrchestrationService.ViewGoBackSafe("FilterByPriceDialog_filter_selected", popOnly: false);
+		});
+		string buttonText = string.Format(Resources.price_range_low_button_short, 3.99m.ToString("0.00"));
+		BrowseFilter browseFilter = new BrowseFilter
+		{
+			ButtonType = BrowseFilterType.PriceRange,
+			Name = "price_range_low_button",
+			Parameter = new BrowsePriceRangeParameter
+			{
+				PriceRangeHigh = 3.99m,
+				analtyicsString = "buy399range",
+				buttonText = buttonText
+			}
+		};
+		browseFilter.Text = string.Format(Resources.price_range_low_button, 3.99m.ToString("0.00"));
+		optionSelectionDialogInfo.ButtonData.Add(new ButtonData(browseFilter.Text, command, browseFilter));
+		buttonText = string.Format(Resources.price_range_mid_button_short, 4.99m.ToString("0.00"));
+		browseFilter = new BrowseFilter
+		{
+			ButtonType = BrowseFilterType.PriceRange,
+			Name = "price_range_mid_button",
+			Parameter = new BrowsePriceRangeParameter
+			{
+				PriceRangeLow = 4.99m,
+				PriceRangeHigh = 5.99m,
+				analtyicsString = "buymidrange",
+				buttonText = buttonText
+			}
+		};
+		browseFilter.Text = string.Format(Resources.price_range_mid_button, 4.99m.ToString("0.00"), 5.99m.ToString("0.00"));
+		optionSelectionDialogInfo.ButtonData.Add(new ButtonData(browseFilter.Text, command, browseFilter, isEnabled: true, string.Format("${0} to ${1}", 4.99m.ToString("0.00"), 5.99m.ToString("0.00"))));
+		buttonText = string.Format(Resources.price_range_high_button_short, 6.99m.ToString("0.00"));
+		browseFilter = new BrowseFilter
+		{
+			ButtonType = BrowseFilterType.PriceRange,
+			Name = "price_range_high_button",
+			Parameter = new BrowsePriceRangeParameter
+			{
+				PriceRangeLow = 6.99m,
+				analtyicsString = "buy699range",
+				buttonText = buttonText
+			}
+		};
+		browseFilter.Text = string.Format(Resources.price_range_high_button, 6.99m.ToString("0.00"));
+		optionSelectionDialogInfo.ButtonData.Add(new ButtonData(browseFilter.Text, command, browseFilter));
+		OrchestrationService.ViewShow("option_selection_dialog_view", optionSelectionDialogInfo);
+	}
+
 	private static bool ShouldShowFormatFilterButton()
 	{
-		if (BrowseState.TitleFamily == TitleFamily.Movies && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null)
+		if ((BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.TV) && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null)
 		{
 			return !InTitleMarketingMode;
 		}
 		return false;
 	}
 
-	internal static void HandleFilterButtonClick(BrowseFilterType browseFilterType)
+	private static bool ShouldShowPriceRangeFilterButton()
 	{
+		if (BrowseState.TitleFamily == TitleFamily.Movies && BrowseState.BrowseSelectedSort == BrowseSelectedSort.ForSale && Redbox.Rental.Services.Configuration.Configuration.Instance.PriceFiltersOnBrowseABTestVersion == "A")
+		{
+			return IsADAMode;
+		}
+		return false;
+	}
+
+	private static bool ShouldShowForSaleButton()
+	{
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.PriceFiltersOnBrowseABTestVersion == "B")
+		{
+			return true;
+		}
+		if (BrowseState.BrowseSelectedSort != BrowseSelectedSort.ForSale)
+		{
+			return !ShouldShowPriceRangeFilterButton();
+		}
+		return false;
+	}
+
+	internal static void HandleFilterButtonClick(BrowseFilter browseFilter)
+	{
+		BrowseFilterType buttonType = browseFilter.ButtonType;
 		if (IsADAMode)
 		{
 			BrowseState.Genre = null;
 		}
-		switch (browseFilterType)
+		switch (buttonType)
 		{
 		case BrowseFilterType.AllNewest:
 			SetBrowseFilters(BrowseViewFilter.All, BrowseSelectedSort.Newest, TitleType.All, "browse-filter-family,Newest", 1);
@@ -617,6 +827,10 @@ public class BrowseViewController
 			break;
 		case BrowseFilterType.ForSale:
 			SetBrowseFilters(BrowseViewFilter.ForSale, BrowseSelectedSort.ForSale, TitleType.All, "browse-filter-family,for-sale", 1);
+			if (ShouldShowPriceRangeFilterButton())
+			{
+				browseFilter.IsVisible = false;
+			}
 			break;
 		case BrowseFilterType.ComingSoon:
 			SetBrowseFilters(BrowseViewFilter.ComingSoon, BrowseSelectedSort.ComingSoon, TitleType.All, "browse-filter-family,Coming-soon", 1);
@@ -673,7 +887,33 @@ public class BrowseViewController
 			BrowseState.Genre = Genres.FamilyMovies;
 			SetBrowseFilters(GetGenreBrowseMode(), BrowseSelectedSort.Family, BrowseState.TitleType, "browse-filter-family,Family", 1);
 			break;
+		case BrowseFilterType.PriceRange:
+			if (browseFilter.Parameter is BrowsePriceRangeParameter browsePriceRangeParameter)
+			{
+				SetBrowseFilters(BrowseViewFilter.ForSale, BrowseSelectedSort.ForSale, TitleType.All, "browse-filter-family," + browsePriceRangeParameter.analtyicsString, 1, browsePriceRangeParameter);
+			}
+			break;
 		}
+		BrowseViewModel browseViewModelFromView = GetBrowseViewModelFromView();
+		if (browseViewModelFromView == null)
+		{
+			return;
+		}
+		foreach (BrowseFilter filter in browseViewModelFromView.BrowseFilterBarModel.Filters)
+		{
+			if (filter.ButtonType == BrowseFilterType.ForSale)
+			{
+				if (Redbox.Rental.Services.Configuration.Configuration.Instance.PriceFiltersOnBrowseABTestVersion != "B")
+				{
+					filter.IsVisible = ShouldShowForSaleButton();
+				}
+			}
+			else if (filter.ButtonType == BrowseFilterType.PriceRange)
+			{
+				filter.IsVisible = BrowseState.BrowseSelectedSort == BrowseSelectedSort.ForSale;
+			}
+		}
+		browseViewModelFromView.BrowseFilterBarModel.PriceRangeFilterButtonVisibility = ((!ShouldShowPriceRangeFilterButton()) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
 	private static BrowseViewFilter GetGenreBrowseMode()
@@ -685,11 +925,12 @@ public class BrowseViewController
 		return BrowseViewFilter.ForSale;
 	}
 
-	internal static void SetBrowseFilters(BrowseViewFilter browseMode, BrowseSelectedSort browseSelectedSort, TitleType titleType, string analyticAttributeValue, int? pageNumber)
+	internal static void SetBrowseFilters(BrowseViewFilter browseMode, BrowseSelectedSort browseSelectedSort, TitleType titleType, string analyticAttributeValue, int? pageNumber, BrowsePriceRangeParameter priceRange = null)
 	{
 		BrowseState.BrowseMode = browseMode;
 		BrowseState.BrowseSelectedSort = browseSelectedSort;
 		BrowseState.TitleType = titleType;
+		BrowseState.BrowsePriceRangeFilter = priceRange;
 		if (pageNumber.HasValue)
 		{
 			BrowseState.PageNumber = pageNumber.Value;
@@ -706,8 +947,13 @@ public class BrowseViewController
 				service.AddAttribute("viewEvent", "subItemValue", analyticAttributeValue, bufferedSessionID);
 			}
 		}
-		ConfigureBrowseControl();
-		ConfigureMiniCartControl();
+		BrowseViewModel browseViewModelFromView = GetBrowseViewModelFromView();
+		if (browseViewModelFromView != null)
+		{
+			browseViewModelFromView.BrowseFilterBarModel.SelectedPriceRange = priceRange;
+		}
+		ConfigureBrowseControl(browseViewModelFromView);
+		ConfigureMiniCartControl(browseViewModelFromView);
 	}
 
 	private static void ConfigureBrowseControl()
@@ -721,11 +967,24 @@ public class BrowseViewController
 		{
 			return;
 		}
+		OrchestrationService.SetCurrentUICulture();
 		browseViewModel.BackgroundImageVisibility = Visibility.Collapsed;
 		BrowseControlModel browseControlModel = new BrowseControlModel();
 		browseControlModel.SetPageNumber(Math.Max(BrowseState.PageNumber, 1), PageChangeSource.None);
+		browseControlModel.NoResultsText = Resources.filter_games_empty;
 		IBrowseState browseState = BrowseState;
-		browseControlModel.NoResultsText = ((browseState != null && browseState.TitleFamily == TitleFamily.Movies) ? Resources.filter_movies_empty : Resources.filter_games_empty);
+		if (browseState != null && browseState.TitleFamily == TitleFamily.Movies)
+		{
+			browseControlModel.NoResultsText = Resources.filter_movies_empty;
+		}
+		else
+		{
+			IBrowseState browseState2 = BrowseState;
+			if (browseState2 != null && browseState2.TitleFamily == TitleFamily.TV)
+			{
+				browseControlModel.NoResultsText = Resources.filter_tv_empty;
+			}
+		}
 		browseControlModel.ShowNoResultsMessage = true;
 		browseControlModel.BorderShadowVisibility = Visibility.Collapsed;
 		DisplayGroupSelectionModel displayGroupSelectionModel = new DisplayGroupSelectionModel();
@@ -821,15 +1080,15 @@ public class BrowseViewController
 				list = collectionProduct.GetInCartAvailableKioskProducts(TitleFamily.All, TitleType.All, include, exclude);
 			}
 			List<IKioskProduct> kioskProducts = list;
-			IBrowseState browseState2 = BrowseState;
-			browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(kioskProducts, browseState2 != null && browseState2.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseControlModel.VisibleItemCount, browseControlModel.PageNumber);
+			IBrowseState browseState3 = BrowseState;
+			browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(kioskProducts, browseState3 != null && browseState3.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseControlModel.VisibleItemCount, browseControlModel.PageNumber);
 		}
 		else
 		{
 			ApplicationState.Instance.BrowseProducts = GetBrowseKioskProducts();
 			List<IKioskProduct> browseProducts = ApplicationState.Instance.BrowseProducts;
-			IBrowseState browseState3 = BrowseState;
-			browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(browseProducts, browseState3 != null && browseState3.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseControlModel.VisibleItemCount, browseControlModel.PageNumber);
+			IBrowseState browseState4 = BrowseState;
+			browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(browseProducts, browseState4 != null && browseState4.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseControlModel.VisibleItemCount, browseControlModel.PageNumber);
 		}
 		if (BrowseState != null)
 		{
@@ -843,22 +1102,32 @@ public class BrowseViewController
 				{
 					Name = $"product_{num + 1}"
 				});
-				continue;
 			}
-			if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
+			else if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 			{
 				browseControlModel.BrowseControls.Add(new DisplayProductAToZUserControl
 				{
 					Name = $"product_{num + 1}"
 				});
-				continue;
 			}
-			browseControlModel.BrowseControls.Add(new DisplayProductBrowseUserControl
+			else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && BrowseState.TitleFamily == TitleFamily.Movies)
 			{
-				Name = $"product_{num + 1}",
-				HorizontalAlignment = HorizontalAlignment.Center,
-				VerticalAlignment = VerticalAlignment.Center
-			});
+				browseControlModel.BrowseControls.Add(new DisplayProductWithPriceBrowseUserControl
+				{
+					Name = $"product_{num + 1}",
+					HorizontalAlignment = HorizontalAlignment.Center,
+					VerticalAlignment = VerticalAlignment.Center
+				});
+			}
+			else
+			{
+				browseControlModel.BrowseControls.Add(new DisplayProductBrowseUserControl
+				{
+					Name = $"product_{num + 1}",
+					HorizontalAlignment = HorizontalAlignment.Center,
+					VerticalAlignment = VerticalAlignment.Center
+				});
+			}
 		}
 		if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 		{
@@ -1073,31 +1342,31 @@ public class BrowseViewController
 			case KioskProductType.Title:
 			case KioskProductType.MDV:
 			{
+				SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-modal-add-item");
+				SessionAnalyticsService?.AddViewEvent("gridPosition", $"row = {browseItemModel.CurrentGridRow}, column = {browseItemModel.CurrentGridColumn}.");
 				ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 				if ((titleProduct?.ProductId ?? 0) == 1139)
 				{
 					BrowseFunctions.AddProductToCart(titleProduct, isPurchase: true);
-					break;
-				}
-				IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-				bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
-				if (titleProduct.HasMultiNightPrice && !BrowseFunctions.IsPurchase && !flag)
-				{
-					OrchestrationService.ViewShow("multi_night_pricing_popup_view", titleProduct);
 				}
 				else
 				{
-					BrowseFunctions.AddProductToCart(titleProduct, BrowseFunctions.IsPurchase);
+					ProcessAddTitleProduct(titleProduct);
 				}
 				break;
 			}
 			case KioskProductType.TitleRollup:
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-modal-add-item");
+				SessionAnalyticsService?.AddViewEvent("gridPosition", $"row = {browseItemModel.CurrentGridRow}, column = {browseItemModel.CurrentGridColumn}.");
 				TitleRollupProduct titleRollupProduct = kioskProduct as TitleRollupProduct;
 				if ((titleRollupProduct?.ProductId ?? 0) == 1139)
 				{
 					BrowseFunctions.AddProductToCart(titleRollupProduct, isPurchase: true);
+				}
+				else if (!BrowseFunctions.IsPurchase && titleRollupProduct.KioskProducts.Count == 1)
+				{
+					ProcessAddTitleProduct(kioskProduct as ITitleProduct);
 				}
 				else
 				{
@@ -1108,11 +1377,116 @@ public class BrowseViewController
 			case KioskProductType.Collection:
 				OrchestrationService.StarteUserInteraction();
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
+				SessionAnalyticsService?.AddViewEvent("gridPosition", $"row = {browseItemModel.CurrentGridRow}, column = {browseItemModel.CurrentGridColumn}.");
 				break;
 			case KioskProductType.None:
 				break;
 			}
 		}
+	}
+
+	private static void ProcessAddTitleProduct(ITitleProduct titleProduct)
+	{
+		if (titleProduct.InStock || BrowseFunctions.IsPurchase)
+		{
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+			bool flag2 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock && titleProduct.IsMovie;
+			bool flag3 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct.IsSellableAndInStock && titleProduct.IsMovie;
+			if ((titleProduct.HasMultiNightPrice | flag2 | flag3) && !BrowseFunctions.IsPurchase && !flag)
+			{
+				string viewAnalyticsName = "multi_night_pricing_popup_view";
+				if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "B" && titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+				{
+					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
+				}
+				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+				{
+					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
+				}
+				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+				{
+					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
+				}
+				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+				{
+					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
+				}
+				OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
+				{
+					TitleProduct = titleProduct,
+					ShownFromView = "browse_view",
+					ViewAnalyticsName = viewAnalyticsName
+				});
+			}
+			else
+			{
+				BrowseFunctions.AddProductToCart(titleProduct, BrowseFunctions.IsPurchase);
+			}
+		}
+		else
+		{
+			ShowOutOfStockOptionsDialog(titleProduct);
+		}
+	}
+
+	private static void ShowOutOfStockOptionsDialog(ITitleProduct kioskProduct)
+	{
+		OptionSelectionDialogInfo optionSelectionDialogInfo = new OptionSelectionDialogInfo
+		{
+			ViewAnalyticsName = "message_popup_view",
+			ViewAnalyticsContext = "OutOfStockDialog",
+			HeaderText = kioskProduct.ProductName,
+			CancelButtonText = Resources.cancel_button
+		};
+		optionSelectionDialogInfo.CancelCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+		{
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_cancel");
+			ServiceLocator.Instance.GetService<IViewService>()?.GoBack("OutOfStockDialogCancel", popOnly: false);
+		}, (Func<bool>)null);
+		optionSelectionDialogInfo.DescriptionText = Resources.out_of_stock_movie_message;
+		ObservableCollection<ButtonData> observableCollection = new ObservableCollection<ButtonData>();
+		observableCollection.Add(new ButtonData(Resources.related_movies, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+		{
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_related_movies");
+			BrowseFunctions.ShowRelatedProductsDialog(kioskProduct);
+		}, (Func<bool>)null)));
+		optionSelectionDialogInfo.ButtonData = observableCollection;
+		OrchestrationService.ViewShow("option_selection_dialog_view", optionSelectionDialogInfo);
+	}
+
+	private static void ShowReserveOnlineMessage()
+	{
+		MessagePopupViewController.ShowReserveOnlineRentDialog(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogTimeout", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_rent_back");
+			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogBack", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_rent_gotit");
+			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
+			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
+		});
+	}
+
+	private static void ShowOnDemandMessage(decimal price)
+	{
+		MessagePopupViewController.ShowOnDemandMessage(price, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("OnDemandRentTimeout", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_back");
+			OrchestrationService.ViewGoBackSafe("OnDemandRentBack", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_gotit");
+			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
+			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
+		});
 	}
 
 	private static void ProcessComingSoonOptin(IBrowseItemModel browseItemModel)
@@ -1170,6 +1544,7 @@ public class BrowseViewController
 	{
 		if (browseViewModel != null)
 		{
+			OrchestrationService.SetCurrentUICulture();
 			BrowseControlModel browseControlModel = new BrowseControlModel();
 			browseControlModel.OnAddBrowseItemModel += BrowseProductControl_OnAddDisplayProductModel;
 			browseControlModel.BackgroundColor = Colors.Transparent;
@@ -1275,23 +1650,48 @@ public class BrowseViewController
 			{
 				IKioskProduct kioskProduct = null;
 				service.GetProduct(item.ProductId, excludeTitleRollup: true, out kioskProduct);
-				if (kioskProduct != null)
+				if (kioskProduct == null)
 				{
-					DisplayProductModel displayProductModel = new DisplayProductModel
-					{
-						Name = kioskProduct.ProductName,
-						Data = item,
-						Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
-					};
-					displayProductModel.ConfigureForMiniCart();
-					displayProductModel.MiniCartCancelButtonVisibility = ((InTitleMarketingMode && item.Sequence == RentalShoppingCartItemSequence.pre_offer) ? Visibility.Collapsed : Visibility.Visible);
-					bool flag = item.Action == RentalShoppingCartItemAction.purchase;
-					displayProductModel.Banner = (flag ? BannerCollection.Instance.FirstOrDefault((Banner x) => x.BannerType == BannerType.Purchase) : null);
-					displayProductModel.BannerVisibility = ((displayProductModel.Banner == null) ? Visibility.Collapsed : Visibility.Visible);
-					displayProductModel.BannerText = ((flag && displayProductModel.Banner != null) ? Resources.ResourceManager.GetString(displayProductModel.Banner.TextResourceName) : null);
-					displayProductModel.BannerBackgroundBrush = ((flag && displayProductModel.Banner != null) ? WPFFunctions.GetBrush(GetViewUserControl(), displayProductModel.Banner.BannerStyleName) : null);
-					list.Add(displayProductModel);
+					continue;
 				}
+				DisplayProductModel displayProductModel = new DisplayProductModel
+				{
+					Name = kioskProduct.ProductName,
+					Data = item,
+					Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
+				};
+				displayProductModel.ConfigureForMiniCart();
+				displayProductModel.MiniCartCancelButtonVisibility = ((InTitleMarketingMode && item.Sequence == RentalShoppingCartItemSequence.pre_offer) ? Visibility.Collapsed : Visibility.Visible);
+				service.GetProduct(item.ProductId, excludeTitleRollup: false, out var kioskProduct2);
+				MDVProduct mDVProduct = kioskProduct2 as MDVProduct;
+				bool flag = item.Action == RentalShoppingCartItemAction.purchase;
+				if (flag)
+				{
+					displayProductModel.Banner = BannerCollection.Instance.FirstOrDefault((Banner x) => x.BannerType == BannerType.Purchase);
+				}
+				else if (mDVProduct != null)
+				{
+					displayProductModel.Banner = BannerCollection.Instance.FirstOrDefault((Banner x) => x.BannerType == BannerType.MultipleDisc);
+				}
+				else
+				{
+					displayProductModel.Banner = null;
+				}
+				displayProductModel.BannerVisibility = ((displayProductModel.Banner == null) ? Visibility.Collapsed : Visibility.Visible);
+				if (flag && displayProductModel.Banner != null)
+				{
+					displayProductModel.BannerText = Resources.ResourceManager.GetString(displayProductModel.Banner.TextResourceName);
+				}
+				else if (mDVProduct != null)
+				{
+					displayProductModel.BannerText = string.Format("{1} {0}", Resources.ResourceManager.GetString(displayProductModel.Banner.TextResourceName), mDVProduct.TitleProducts.Count);
+				}
+				else
+				{
+					displayProductModel.BannerText = null;
+				}
+				displayProductModel.BannerBackgroundBrush = (((flag || mDVProduct != null) && displayProductModel.Banner != null) ? WPFFunctions.GetBrush(GetViewUserControl(), displayProductModel.Banner.BannerStyleName) : null);
+				list.Add(displayProductModel);
 			}
 		}
 		return list;
@@ -1346,6 +1746,8 @@ public class BrowseViewController
 		obj.OutOfStockLine3Text = Resources.out_of_stock_line3;
 		obj.Movies = Resources.Movies;
 		obj.Games = Resources.Games;
+		obj.Movie = Resources.Movie.ToLower();
+		obj.Game = Resources.game.ToLower();
 		obj.FontMuseo20Style = WPFFunctions.GetStyle(GetViewUserControl(), "font_museo_slab_900_20");
 		obj.FontMuseo16Style = WPFFunctions.GetStyle(GetViewUserControl(), "font_museo_slab_900_16");
 		obj.PriceFor = Resources.price_for;
@@ -1354,6 +1756,8 @@ public class BrowseViewController
 		obj.RentalShoppingCartService = RentalShoppingCartService;
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
 		obj.IsInCartBrowse = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+		obj.OutOfStockTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion;
+		obj.StarRatingTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.StarRatingTitleDetailsABTestVersion;
 		return obj;
 	}
 
@@ -1370,15 +1774,34 @@ public class BrowseViewController
 			foreach (IKioskProduct kioskProduct in kioskProducts)
 			{
 				ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-				DisplayProductModel displayProductModel = new DisplayProductModel
+				string productDisplayName = BrowseFunctions.GetProductDisplayName(titleProduct);
+				string arg = null;
+				if (titleProduct.IsGame)
+				{
+					TitleTypeProperty value = null;
+					TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value);
+					arg = $" {value?.GetName(Resources.ResourceManager)}";
+				}
+				string arg2 = ((titleProduct is MDVProduct mDVProduct) ? $" ({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text})" : null);
+				string header = $"{productDisplayName}{arg}{arg2}";
+				DisplayProductModel displayProductModel = ((BrowseState.BrowseMode != BrowseViewFilter.ForSale || BrowseState.TitleFamily != TitleFamily.Movies) ? new DisplayProductModel
 				{
 					Name = kioskProduct.ProductName,
 					Data = kioskProduct,
 					Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
 					LockAspectRatio = true,
-					Header = titleProduct.ProductName,
+					Header = header,
 					DisplayProductModelConstants = displayProductModelConstants
-				};
+				} : new DisplayProductWithPriceModel
+				{
+					Name = kioskProduct.ProductName,
+					Data = kioskProduct,
+					Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
+					LockAspectRatio = true,
+					Header = header,
+					DisplayProductModelConstants = displayProductModelConstants,
+					PriceText = GetForSalePriceText(titleProduct)
+				});
 				if (num3 >= num && num3 < num2)
 				{
 					ConfigureDisplayProductModel(kioskProduct, displayProductModel, isADAMiniCart, displayProductModelConstants);
@@ -1457,6 +1880,10 @@ public class BrowseViewController
 		}
 		ITitleProduct titleProduct = eachKioskProduct as ITitleProduct;
 		bool isEmptyCase = titleProduct?.IsEmptyCase ?? false;
+		MDVProduct mDVProduct = titleProduct as MDVProduct;
+		browseItemModel.MDVFieldVisibility = ((mDVProduct == null) ? Visibility.Collapsed : Visibility.Visible);
+		browseItemModel.MDVNumberOfDiscsText = ((mDVProduct != null) ? $"({mDVProduct.TitleProducts.Count} {Resources.discs_text})" : null);
+		browseItemModel.MDVDiscVendText = ((mDVProduct != null) ? $"{mDVProduct.TitleProducts.Count} {Resources.disc_vend}" : null);
 		BannerType bannerType = BannerType.None;
 		browseItemModel.ComingSoonButtonVisibility = Visibility.Collapsed;
 		if (BrowseState.BrowseSelectedSort != BrowseSelectedSort.Alpha)
@@ -1486,12 +1913,13 @@ public class BrowseViewController
 				bannerType = BrowseFunctions.GetProductBannerType(titleProduct, BrowseState.TitleType != TitleType.All);
 			}
 		}
-		bool flag = IsProductSelected(titleProduct);
+		bool flag = IsProductSelected(titleProduct, displayProductModelConstants);
+		bool flag2 = (!(displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B") || titleProduct.TitleFamily != TitleFamily.Movies) && !titleProduct.InStock;
 		IBrowseState browseState = BrowseState;
 		if (browseState == null || browseState.BrowseMode != BrowseViewFilter.ComingSoon)
 		{
 			IRentalShoppingCartService rentalShoppingCartService = RentalShoppingCartService;
-			if ((((rentalShoppingCartService != null && rentalShoppingCartService.CurrentRentalShoppingCartIsFull) || !titleProduct.IsAvailable) | flag) || !titleProduct.InStock)
+			if (((rentalShoppingCartService != null && rentalShoppingCartService.CurrentRentalShoppingCartIsFull) || !titleProduct.IsAvailable) | flag | flag2)
 			{
 				IBrowseState browseState2 = BrowseState;
 				if (browseState2 != null && browseState2.BrowseSelectedSort == BrowseSelectedSort.Alpha)
@@ -1502,39 +1930,17 @@ public class BrowseViewController
 				{
 					browseItemModel.ImageOpacity = 0.4;
 				}
-				goto IL_01cb;
+				goto IL_0266;
 			}
 		}
 		browseItemModel.ImageOpacity = 1.0;
-		goto IL_01cb;
-		IL_0470:
-		int addButtonBarVisibility;
-		browseItemModel.AddButtonBarVisibility = (Visibility)addButtonBarVisibility;
-		ITitleProduct titleProduct3 = titleProduct;
-		browseItemModel.OutOfStockVisibility = ((titleProduct3 == null || titleProduct3.InStock || titleProduct.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
-		ITitleProduct titleProduct4 = titleProduct;
-		browseItemModel.ComingSoonVisibility = ((titleProduct4 == null || !titleProduct4.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
-		return;
-		IL_01cb:
-		BrowseFunctions.ConfigureBanner(browseItemModel, titleProduct, isADAMiniCart, bannerType, GetViewUserControl());
-		ProductFlags browseProductFlag = GetBrowseProductFlag(titleProduct, isEmptyCase, flag);
-		BrowseFunctions.ConfigureProductFlag(browseItemModel, browseProductFlag, isADAMiniCart, GetViewUserControl());
+		goto IL_0266;
+		IL_02f8:
 		int num;
-		if (!IsShoppingCartFull)
-		{
-			ITitleProduct titleProduct5 = titleProduct;
-			if (titleProduct5 != null && titleProduct5.IsAvailable && !flag)
-			{
-				num = ((titleProduct?.InStock ?? false) ? 1 : 0);
-				goto IL_022e;
-			}
-		}
-		num = 0;
-		goto IL_022e;
-		IL_022e:
-		bool flag2 = (byte)num != 0;
-		browseItemModel.CanAdd = flag2 || BrowseState.BrowseMode == BrowseViewFilter.ComingSoon;
-		Visibility visibility = ((!flag2 && !IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
+		bool flag4;
+		bool flag3 = (byte)((uint)num & (flag4 ? 1u : 0u)) != 0;
+		browseItemModel.CanAdd = flag3 || BrowseState.BrowseMode == BrowseViewFilter.ComingSoon;
+		Visibility visibility = ((!flag3 && !IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.CornerAddButtonVisibility = ((!isADAMiniCart) ? visibility : Visibility.Collapsed);
 		browseItemModel.RightAddButtonVisibility = ((visibility == Visibility.Collapsed) ? Visibility.Hidden : visibility);
 		browseItemModel.ADAMiniCartAddButtonVisibility = ((!isADAMiniCart) ? Visibility.Collapsed : Visibility.Visible);
@@ -1553,44 +1959,65 @@ public class BrowseViewController
 		{
 			browseItemModel.ConfigureForBrowse();
 		}
-		bool flag3 = titleProduct is TitleRollupProduct && titleProduct.KioskProductType == KioskProductType.TitleRollup;
-		Visibility showBuy = ((IsShoppingCartFull || (!titleProduct.IsSellable && !titleProduct.IsEmptyCase) || !(flag3 ? (!((TitleRollupProduct)titleProduct).KioskProducts.All((ITitleProduct x) => RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(x.ProductId))) : (!RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(titleProduct.ProductId)))) ? Visibility.Collapsed : Visibility.Visible);
+		bool flag5 = titleProduct is TitleRollupProduct && titleProduct.KioskProductType == KioskProductType.TitleRollup;
+		Visibility showBuy = ((IsShoppingCartFull || (!titleProduct.IsSellableAndInStock && !titleProduct.IsEmptyCase) || !(flag5 ? (!((TitleRollupProduct)titleProduct).KioskProducts.All((ITitleProduct x) => RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(x.ProductId))) : (!RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(titleProduct.ProductId)))) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.ShowBuy = showBuy;
 		browseItemModel.ButtonData.Clear();
 		if (!titleProduct.IsEmptyCase)
 		{
-			if (flag3)
+			if (flag5)
 			{
 				foreach (ITitleProduct item in ((TitleRollupProduct)titleProduct).KioskProducts.OrderBy((ITitleProduct p) => p.TitleType))
 				{
-					AddFormatButtonData(browseItemModel, item, flag3, displayProductModelConstants);
+					AddFormatButtonData(browseItemModel, item, flag5, displayProductModelConstants);
 				}
 			}
 			else
 			{
-				AddFormatButtonData(browseItemModel, titleProduct, flag3, displayProductModelConstants);
+				AddFormatButtonData(browseItemModel, titleProduct, flag5, displayProductModelConstants);
 			}
 		}
+		bool flag6 = (titleProduct.TitleFamily == TitleFamily.Movies && displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B") || (titleProduct?.InStock ?? false);
+		int addButtonBarVisibility;
 		if (!IsShoppingCartFull)
 		{
-			ITitleProduct titleProduct6 = titleProduct;
-			if (titleProduct6 != null && !titleProduct6.ComingSoon)
+			ITitleProduct titleProduct3 = titleProduct;
+			if ((titleProduct3 != null && !titleProduct3.ComingSoon) & flag6)
 			{
-				ITitleProduct titleProduct7 = titleProduct;
-				if (titleProduct7 != null && titleProduct7.InStock)
-				{
-					addButtonBarVisibility = 0;
-					goto IL_0470;
-				}
+				addButtonBarVisibility = 0;
+				goto IL_0563;
 			}
 		}
 		addButtonBarVisibility = 2;
-		goto IL_0470;
+		goto IL_0563;
+		IL_0563:
+		browseItemModel.AddButtonBarVisibility = (Visibility)addButtonBarVisibility;
+		browseItemModel.OutOfStockVisibility = ((flag6 || titleProduct.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
+		ITitleProduct titleProduct4 = titleProduct;
+		browseItemModel.ComingSoonVisibility = ((titleProduct4 == null || !titleProduct4.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
+		return;
+		IL_0266:
+		BrowseFunctions.ConfigureBanner(browseItemModel, titleProduct, isADAMiniCart, bannerType, GetViewUserControl());
+		ProductFlags browseProductFlag = GetBrowseProductFlag(titleProduct, isEmptyCase, flag);
+		BrowseFunctions.ConfigureProductFlag(browseItemModel, browseProductFlag, isADAMiniCart, GetViewUserControl(), titleProduct, displayProductModelConstants);
+		flag4 = (displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B" && titleProduct.TitleFamily == TitleFamily.Movies) || (titleProduct?.InStock ?? false);
+		if (!IsShoppingCartFull)
+		{
+			ITitleProduct titleProduct5 = titleProduct;
+			if (titleProduct5 != null && titleProduct5.IsAvailable)
+			{
+				num = ((!flag) ? 1 : 0);
+				goto IL_02f8;
+			}
+		}
+		num = 0;
+		goto IL_02f8;
 	}
 
 	private static void AddFormatButtonData(DisplayProductModel browseItemModel, ITitleProduct product, bool isTitleRollup, DisplayProductModelConstants displayProductModelConstants)
 	{
-		TitleRollupFormatButtonProperties rollupFormatButtonProperties = TitleRollupUtilities.GetRollupFormatButtonProperties(product, isPurchase: false, displayProductModelConstants.TitleDetailFormatButtonTextValues);
+		bool showOutOfStock = product.TitleFamily == TitleFamily.Games || displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "A";
+		TitleRollupFormatButtonProperties rollupFormatButtonProperties = TitleRollupUtilities.GetRollupFormatButtonProperties(product, isPurchase: false, displayProductModelConstants.TitleDetailFormatButtonTextValues, showOutOfStock);
 		if (rollupFormatButtonProperties.Visibility == Visibility.Visible)
 		{
 			TilteDetailRentalFormatButtonData tilteDetailRentalFormatButtonData = new TilteDetailRentalFormatButtonData(rollupFormatButtonProperties.ButtonText, rollupFormatButtonProperties.TitleType, rollupFormatButtonProperties.ButtonTextLine2, rollupFormatButtonProperties.IsEnabled);
@@ -1602,7 +2029,7 @@ public class BrowseViewController
 		}
 	}
 
-	private static bool IsProductSelected(ITitleProduct titleProduct)
+	private static bool IsProductSelected(ITitleProduct titleProduct, DisplayProductModelConstants displayProductModelConstants)
 	{
 		bool flag = true;
 		if (titleProduct != null)
@@ -1613,7 +2040,8 @@ public class BrowseViewController
 				{
 					if ((BrowseState.BrowseMode == BrowseViewFilter.ForSale && kioskProduct.IsSellable) || (BrowseState.BrowseMode != BrowseViewFilter.ForSale && kioskProduct.IsRentable))
 					{
-						flag = flag && (!kioskProduct.InStock || (RentalShoppingCartService?.CurrentRentalShoppingCart.HasItem(kioskProduct.ProductId) ?? true));
+						bool flag2 = (!(displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B") || kioskProduct.TitleFamily != TitleFamily.Movies) && !kioskProduct.InStock;
+						flag = flag && (flag2 || (RentalShoppingCartService?.CurrentRentalShoppingCart.HasItem(kioskProduct.ProductId) ?? true));
 					}
 				}
 			}
@@ -1653,7 +2081,7 @@ public class BrowseViewController
 	private static List<IKioskProduct> GetBrowseKioskProducts()
 	{
 		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance.BrowseState;
-		LogHelper.Instance.Log("RentalGetProducts by browseMode: {0} family: {1} familyType: {2} selectedSort: {3} selectedGenere: {4}, isADAView: {5} ", browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseState.BrowseSelectedSort, browseState.Genre, ApplicationState.Instance.IsADAAccessible);
+		LogHelper.Instance.Log("RentalGetProducts by browseMode: {0} family: {1} familyType: {2} selectedSort: {3} selectedGenere: {4}, isADAView: {5}, priceFilterLow: {6}, priceFilterHigh {7} ", browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseState.BrowseSelectedSort, browseState.Genre, ApplicationState.Instance.IsADAAccessible, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh);
 		try
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
@@ -1666,7 +2094,7 @@ public class BrowseViewController
 				include = PromotionService.Instance.GetInCartIncludeTitleList();
 				exclude = PromotionService.Instance.GetInCartExcludeTitleList();
 			}
-			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, ApplicationState.Instance.IsADAAccessible, out var products2);
+			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, ApplicationState.Instance.IsADAAccessible, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2);
 			if (products.Count > 0)
 			{
 				products.ToLogHelper();
@@ -1767,14 +2195,220 @@ public class BrowseViewController
 		}
 		if (IsForSaleButtonEnabled)
 		{
+			bool isVisible = ShouldShowForSaleButton();
 			list.Add(new BrowseFilter
 			{
 				ButtonType = BrowseFilterType.ForSale,
 				Name = "for_sale_button",
 				Height = height,
 				Width = width,
-				IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale),
+				IsVisible = isVisible
 			});
+		}
+		if (browseState.TitleFamily == TitleFamily.Movies)
+		{
+			bool isVisible2 = browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale;
+			switch (configuration.PriceFiltersOnBrowseABTestVersion)
+			{
+			case "A":
+			{
+				if (IsADAMode)
+				{
+					break;
+				}
+				BrowseFilter obj3 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_range_low_button",
+					Height = height,
+					Width = 136
+				};
+				int isSelected3;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter3 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter3 == null)
+					{
+						isSelected3 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter3.PriceRangeHigh;
+						decimal num = 3.99m;
+						isSelected3 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected3 = 0;
+				}
+				obj3.IsSelected = (byte)isSelected3 != 0;
+				obj3.IsVisible = isVisible2;
+				obj3.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeHigh = 3.99m,
+					analtyicsString = "buy399range"
+				};
+				BrowseFilter browseFilter3 = obj3;
+				browseFilter3.Text = string.Format(Resources.price_range_low_button, 3.99m.ToString("0.00"));
+				list.Add(browseFilter3);
+				BrowseFilter obj4 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_range_mid_button",
+					Height = height,
+					Width = 107
+				};
+				int isSelected4;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter4 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter4 == null)
+					{
+						isSelected4 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter4.PriceRangeHigh;
+						decimal num = 5.99m;
+						isSelected4 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected4 = 0;
+				}
+				obj4.IsSelected = (byte)isSelected4 != 0;
+				obj4.IsVisible = isVisible2;
+				obj4.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeLow = 4.99m,
+					PriceRangeHigh = 5.99m,
+					analtyicsString = "buymidrange"
+				};
+				browseFilter3 = obj4;
+				browseFilter3.Text = string.Format(Resources.price_range_mid_button, 4.99m.ToString("0.00"), 5.99m.ToString("0.00"));
+				list.Add(browseFilter3);
+				BrowseFilter obj5 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_range_high_button",
+					Height = height,
+					Width = width
+				};
+				int isSelected5;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter5 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter5 == null)
+					{
+						isSelected5 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter5.PriceRangeLow;
+						decimal num = 6.99m;
+						isSelected5 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected5 = 0;
+				}
+				obj5.IsSelected = (byte)isSelected5 != 0;
+				obj5.IsVisible = isVisible2;
+				obj5.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeLow = 6.99m,
+					analtyicsString = "buy699range"
+				};
+				browseFilter3 = obj5;
+				browseFilter3.Text = string.Format(Resources.price_range_high_button, 6.99m.ToString("0.00"));
+				list.Add(browseFilter3);
+				break;
+			}
+			case "C":
+			{
+				BrowseFilter obj2 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_cutoff_low_button",
+					Height = height,
+					Width = 136
+				};
+				int isSelected2;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter2 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter2 == null)
+					{
+						isSelected2 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter2.PriceRangeHigh;
+						decimal num = 3.99m;
+						isSelected2 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected2 = 0;
+				}
+				obj2.IsSelected = (byte)isSelected2 != 0;
+				obj2.IsVisible = isVisible2;
+				obj2.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeHigh = 3.99m,
+					analtyicsString = "buy399"
+				};
+				BrowseFilter browseFilter2 = obj2;
+				browseFilter2.Text = string.Format(Resources.price_range_low_button, 3.99m.ToString("0.00"));
+				list.Add(browseFilter2);
+				break;
+			}
+			case "D":
+			{
+				BrowseFilter obj = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_cutoff_high_button",
+					Height = height,
+					Width = 136
+				};
+				int isSelected;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter == null)
+					{
+						isSelected = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter.PriceRangeHigh;
+						decimal num = 5.99m;
+						isSelected = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected = 0;
+				}
+				obj.IsSelected = (byte)isSelected != 0;
+				obj.IsVisible = isVisible2;
+				obj.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeHigh = 5.99m,
+					analtyicsString = "buy599"
+				};
+				BrowseFilter browseFilter = obj;
+				browseFilter.Text = string.Format(Resources.price_range_low_button, 5.99m.ToString("0.00"));
+				list.Add(browseFilter);
+				break;
+			}
+			}
 		}
 		if (IsADAMode && BrowseState.TitleFamily == TitleFamily.Movies)
 		{
@@ -1827,7 +2461,7 @@ public class BrowseViewController
 				IsSelected = IsGenreButtonSelected(BrowseSelectedSort.Family, Genres.FamilyMovies)
 			});
 		}
-		if (!IsADAMode)
+		if (!IsADAMode && BrowseState.TitleFamily != TitleFamily.TV)
 		{
 			list.Add(new BrowseFilter
 			{
@@ -1840,7 +2474,10 @@ public class BrowseViewController
 		}
 		foreach (BrowseFilter item in list)
 		{
-			item.Text = Resources.ResourceManager.GetString(item.Name);
+			if (item.ButtonType != BrowseFilterType.PriceRange)
+			{
+				item.Text = Resources.ResourceManager.GetString(item.Name);
+			}
 		}
 		return list;
 	}
@@ -1856,5 +2493,17 @@ public class BrowseViewController
 			return false;
 		}
 		return true;
+	}
+
+	private static string GetForSalePriceText(ITitleProduct titleProduct)
+	{
+		List<ITitleProduct> list = ((titleProduct is ITitleRollupProduct) ? ((ITitleRollupProduct)titleProduct).KioskProducts : new List<ITitleProduct> { titleProduct }).Where((ITitleProduct tp) => tp.IsSellableAndInStock).ToList();
+		if (list.Count == 0)
+		{
+			return string.Empty;
+		}
+		decimal price = list.Min((ITitleProduct tp) => tp.PurchasePrice);
+		bool flag = list.Count == 1 || list.All((ITitleProduct tp) => tp.PurchasePrice == price);
+		return string.Format("${0:F2}{1}", price, flag ? "" : "+");
 	}
 }

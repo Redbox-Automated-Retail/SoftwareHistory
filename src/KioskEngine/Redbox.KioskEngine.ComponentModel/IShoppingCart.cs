@@ -56,8 +56,6 @@ public interface IShoppingCart
 
 	void ClearDiscount();
 
-	void SetUseCredits(CreditElection value);
-
 	void SetType(ShoppingCartType type);
 
 	void SetEmail(string email);

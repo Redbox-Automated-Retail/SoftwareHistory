@@ -8,11 +8,52 @@ using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
 public class KioskProductView
 {
+	public class BarcodeForProductResult : IBarcodeForProductResult
+	{
+		public long ProductId { get; set; }
+
+		public string Barcode { get; set; }
+
+		public bool BarcodeAssigned { get; set; }
+
+		public LineItemStatus? Status { get; set; }
+
+		public RentalShoppingCartItemAction Action { get; set; }
+	}
+
+	private class BarcodeAndTotalRents
+	{
+		public string Barcode { get; set; }
+
+		public int RentalCount { get; set; }
+	}
+
+	private class ProductAndBarcodes
+	{
+		public long ProductId { get; set; }
+
+		public List<BarcodeAndRentalCount> BarcodesAndRentalCounts { get; set; }
+
+		public ProductAndBarcodes()
+		{
+			BarcodesAndRentalCounts = new List<BarcodeAndRentalCount>();
+		}
+	}
+
+	private class BarcodeAndRentalCount
+	{
+		public string Barcode { get; set; }
+
+		public int RentalCount { get; set; }
+	}
+
 	private Store _store;
 
 	private IStoreManager _storeManager;
@@ -20,6 +61,8 @@ public class KioskProductView
 	private Dictionary<long, ITitleProduct> _titleProducts = new Dictionary<long, ITitleProduct>();
 
 	private Dictionary<long, MDVProduct> _mdvProducts = new Dictionary<long, MDVProduct>();
+
+	private Dictionary<long, MDVProduct> _mdvWorkaroundProducts = new Dictionary<long, MDVProduct>();
 
 	private Dictionary<long, TitleRollupProduct> _titleRollupProducts = new Dictionary<long, TitleRollupProduct>();
 
@@ -29,9 +72,13 @@ public class KioskProductView
 
 	private List<MDVProduct> _mdvTitlesWithNoRollup = new List<MDVProduct>();
 
+	private List<MDVProduct> _mdvWorkaroundTitlesWithNoRollup = new List<MDVProduct>();
+
 	private List<ITitleProduct> _gamesProducts = new List<ITitleProduct>();
 
 	private List<ITitleProduct> _movieProducts = new List<ITitleProduct>();
+
+	private List<ITitleProduct> _tvProducts = new List<ITitleProduct>();
 
 	public IProfileDataInstance ProfileDataInstance { get; set; }
 
@@ -62,12 +109,15 @@ public class KioskProductView
 		LogHelper.Instance.Log("KioskProductView.LoadView start");
 		LoadTitleProducts();
 		LoadMDVProducts();
+		LoadMDVWorkaroundProducts();
 		LoadTitleRollupProducts();
 		LoadCollectionProducts();
 		LoadTitlesWithNoRollupOrMDV();
 		LoadMDVTitlesWithNoRollup();
+		LoadMDVWorkaroundTitlesWithNoRollup();
 		LoadMovies();
 		LoadGames();
+		LoadTV();
 		LogHelper.Instance.Log("KioskProductView.LoadView complete");
 	}
 
@@ -80,8 +130,10 @@ public class KioskProductView
 			AddTitleRollupProduct(titleProduct);
 			LoadTitlesWithNoRollupOrMDV();
 			LoadMDVTitlesWithNoRollup();
+			LoadMDVWorkaroundTitlesWithNoRollup();
 			LoadMovies();
 			LoadGames();
+			LoadTV();
 		}
 	}
 
@@ -92,32 +144,153 @@ public class KioskProductView
 		if (kioskProduct == null)
 		{
 			kioskProduct = FilterToFormat(TitleType.Bluray, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+			if (kioskProduct == null)
+			{
+				kioskProduct = FilterToFormat(TitleType.DigitalCode, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+				if (kioskProduct == null)
+				{
+					kioskProduct = FilterToFormat(TitleType._4KUHD, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+					if (kioskProduct == null)
+					{
+						kioskProduct = _gamesProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+						if (kioskProduct == null)
+						{
+							_titleProducts.TryGetValue(productId, out var value);
+							kioskProduct = value;
+						}
+					}
+				}
+			}
 		}
-		if (kioskProduct == null)
+		if (excludeTitleRollup)
 		{
-			kioskProduct = FilterToFormat(TitleType.DigitalCode, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
-		}
-		if (kioskProduct == null)
-		{
-			kioskProduct = FilterToFormat(TitleType._4KUHD, _movieProducts).FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
-		}
-		if (kioskProduct == null)
-		{
-			kioskProduct = _gamesProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
-		}
-		if (excludeTitleRollup && kioskProduct is TitleRollupProduct titleRollupProduct)
-		{
-			kioskProduct = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+			if (kioskProduct is TitleRollupProduct titleRollupProduct)
+			{
+				kioskProduct = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.ProductId == productId);
+			}
+			if (kioskProduct is MDVProduct mDVProduct)
+			{
+				kioskProduct = mDVProduct.PrimaryTitle;
+			}
 		}
 		return kioskProduct;
 	}
 
-	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView)
+	public List<IBarcodeForProductResult> GetBarcodesForProducts(List<ISearchBarcodeForProduct> searchProducts, List<string> excludeBarcodesList)
+	{
+		List<IBarcodeForProductResult> list = new List<IBarcodeForProductResult>();
+		if (searchProducts != null && searchProducts.Count > 0)
+		{
+			LogHelper.Instance.Log(string.Format("GetBarcodesForProducts Begin.  searching for products: {0}", searchProducts.Select((ISearchBarcodeForProduct x) => x.ProductId).ToList().Join(", ")));
+			IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+			foreach (ISearchBarcodeForProduct searchProduct in searchProducts)
+			{
+				IBarcodeForProductResult barcodeForProductResult = new BarcodeForProductResult
+				{
+					ProductId = searchProduct.ProductId,
+					Barcode = searchProduct.Barcode,
+					Action = searchProduct.Action
+				};
+				list.Add(barcodeForProductResult);
+				if (searchProduct.Barcode == null)
+				{
+					bool flag = false;
+					Dictionary<string, List<BarcodeAndTotalRents>> dictionary = new Dictionary<string, List<BarcodeAndTotalRents>>();
+					if (GetProduct(searchProduct.ProductId, excludeTitleRollup: true) is ITitleProduct titleProduct)
+					{
+						if (titleProduct.BarCodeProducts == null)
+						{
+							continue;
+						}
+						foreach (BarcodeProduct eachBarcodeProduct in titleProduct.BarCodeProducts.Values)
+						{
+							if (!list.Any((IBarcodeForProductResult x) => x.Barcode == eachBarcodeProduct.Barcode) && (excludeBarcodesList == null || !excludeBarcodesList.Contains(eachBarcodeProduct.Barcode)))
+							{
+								int rentalCount = (int)(service.GetInventory(eachBarcodeProduct.Barcode)?.TotalRentalCount ?? 0);
+								BarcodeAndTotalRents item = new BarcodeAndTotalRents
+								{
+									Barcode = eachBarcodeProduct.Barcode,
+									RentalCount = rentalCount
+								};
+								if (!dictionary.Keys.Contains(eachBarcodeProduct.Status))
+								{
+									dictionary[eachBarcodeProduct.Status] = new List<BarcodeAndTotalRents>();
+								}
+								dictionary[eachBarcodeProduct.Status].Add(item);
+							}
+							else
+							{
+								flag = true;
+							}
+						}
+						foreach (string item2 in new List<string> { "Known", "Thinned", "Redeployment", "Rebalancing" })
+						{
+							if (TryAssignBarcodeFromList(dictionary, item2, barcodeForProductResult))
+							{
+								break;
+							}
+						}
+						if (string.IsNullOrEmpty(barcodeForProductResult.Barcode))
+						{
+							if (flag)
+							{
+								LogHelper.Instance.Log($"> WARNING: Last Barcode Not Reservable for product id: {searchProduct.ProductId}");
+								barcodeForProductResult.Status = LineItemStatus.ProductSelected;
+							}
+							else
+							{
+								LogHelper.Instance.Log($">  WARNING: No vendable barcodes found for product id: {searchProduct.ProductId}");
+								barcodeForProductResult.Status = LineItemStatus.InventoryError;
+							}
+						}
+					}
+					else
+					{
+						LogHelper.Instance.Log($">  Warning: Unable to find title product for barcode: {searchProduct.Barcode}");
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log($">  Barcode {barcodeForProductResult.Barcode} was ALREADY assigned to product : {barcodeForProductResult.ProductId} ");
+				}
+			}
+			LogHelper.Instance.Log("GetBarcodesForProducts End.");
+		}
+		list.Sort((IBarcodeForProductResult a, IBarcodeForProductResult b) => (a.Barcode ?? "").CompareTo(b.Barcode ?? ""));
+		return list;
+	}
+
+	private bool TryAssignBarcodeFromList(Dictionary<string, List<BarcodeAndTotalRents>> barcodeAndTotalRentsByStatus, string status, IBarcodeForProductResult barcodeForProductResult)
+	{
+		if (barcodeAndTotalRentsByStatus != null && barcodeAndTotalRentsByStatus.TryGetValue(status, out var barcodeAndTotalRents) && barcodeAndTotalRents.Count > 0)
+		{
+			if (barcodeForProductResult.Action == RentalShoppingCartItemAction.rental)
+			{
+				barcodeForProductResult.Barcode = barcodeAndTotalRents.First((BarcodeAndTotalRents x) => x.RentalCount == barcodeAndTotalRents.Min((BarcodeAndTotalRents y) => y.RentalCount)).Barcode;
+			}
+			else
+			{
+				barcodeForProductResult.Barcode = barcodeAndTotalRents.First((BarcodeAndTotalRents x) => x.RentalCount == barcodeAndTotalRents.Max((BarcodeAndTotalRents y) => y.RentalCount)).Barcode;
+			}
+			barcodeForProductResult.BarcodeAssigned = true;
+			barcodeForProductResult.Status = LineItemStatus.ProductSelected;
+			LogHelper.Instance.Log($">  Barcode {barcodeForProductResult.Barcode} selected for product: {barcodeForProductResult.ProductId} ");
+		}
+		return !string.IsNullOrEmpty(barcodeForProductResult?.Barcode);
+	}
+
+	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		if (titleFamily == TitleFamily.Movies && titleType != TitleType.All)
 		{
 			list.AddRange(from item in FilterToFormat(titleType, _movieProducts)
+				where ApplyMainFilter(item, browseFilter)
+				select (item));
+		}
+		else if (titleFamily == TitleFamily.TV && titleType != TitleType.All)
+		{
+			list.AddRange(from item in FilterToFormat(titleType, _tvProducts)
 				where ApplyMainFilter(item, browseFilter)
 				select (item));
 		}
@@ -132,6 +305,12 @@ public class KioskProductView
 			if (titleFamily == TitleFamily.All || titleFamily == TitleFamily.Games)
 			{
 				list.AddRange(from item in _gamesProducts
+					where ApplyMainFilter(item, browseFilter)
+					select (item));
+			}
+			if (titleFamily == TitleFamily.TV)
+			{
+				list.AddRange(from item in _tvProducts
 					where ApplyMainFilter(item, browseFilter)
 					select (item));
 			}
@@ -151,6 +330,10 @@ public class KioskProductView
 		if (isADAView)
 		{
 			list = FilterToTitles(list);
+		}
+		if (browseFilter == BrowseViewFilter.ForSale && (priceRangeHigh.HasValue || priceRangeLow.HasValue))
+		{
+			list = list.Where((ITitleProduct item) => FilterByPrice(item, priceRangeLow, priceRangeHigh)).ToList();
 		}
 		list = ApplyMainFilter(list, browseFilter);
 		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
@@ -193,6 +376,14 @@ public class KioskProductView
 			}
 		}
 		return resultList.Take(num).ToList();
+	}
+
+	public List<ITitleProduct> GetOutOfStockMovies()
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		list.AddRange(_titleRollupProducts.Values.Where((TitleRollupProduct r) => r.KioskProducts.Any((ITitleProduct p) => !p.InStock)));
+		list.AddRange(_titlesWithNoRollup.Where((ITitleProduct t) => t.IsMovie && !t.InStock));
+		return list;
 	}
 
 	public List<IKioskProduct> GetCollectionProducts()
@@ -365,6 +556,23 @@ public class KioskProductView
 		return titleProduct.Genres.Contains(genreFilter);
 	}
 
+	private bool FilterByPrice(ITitleProduct item, decimal? priceRangeLow, decimal? priceRangeHigh)
+	{
+		bool flag = false;
+		if (item is TitleRollupProduct titleRollupProduct)
+		{
+			foreach (ITitleProduct kioskProduct in titleRollupProduct.KioskProducts)
+			{
+				flag = flag || (kioskProduct.IsSellableAndInStock && kioskProduct.PurchasePrice >= (priceRangeLow ?? 0.01m) && kioskProduct.PurchasePrice <= (priceRangeHigh ?? decimal.MaxValue));
+			}
+		}
+		else
+		{
+			flag = item.IsSellableAndInStock && item.PurchasePrice >= (priceRangeLow ?? 0.01m) && item.PurchasePrice <= (priceRangeHigh ?? decimal.MaxValue);
+		}
+		return flag;
+	}
+
 	private List<ITitleProduct> ApplyMainFilter(List<ITitleProduct> list, BrowseViewFilter browseFilter)
 	{
 		return list.Where((ITitleProduct kioskProduct) => ApplyMainFilter(kioskProduct, browseFilter)).ToList();
@@ -477,22 +685,116 @@ public class KioskProductView
 		});
 	}
 
+	private void LoadMDVWorkaroundProducts()
+	{
+		_mdvWorkaroundProducts.Clear();
+		ProfileDataInstance.ProductGroups.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 6).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
+		{
+			if (pair.Value.ProductIds.Any((long id) => _titleProducts.ContainsKey(id)))
+			{
+				AddMissingProductIds(pair.Value.ProductIds);
+				MDVProduct mDVProduct = new MDVProduct(pair.Value, _titleProducts, ProfileDataInstance, _store);
+				_mdvWorkaroundProducts[mDVProduct.ProductGroupId] = mDVProduct;
+			}
+		});
+	}
+
+	public ProductGroup GetMDVProductGroup(long productId)
+	{
+		ProductGroup result = null;
+		if (ProfileDataInstance?.ProductGroups != null)
+		{
+			result = (from pair in ProfileDataInstance.ProductGroups
+				where pair.Value.ProductGroupTypeId == 3 && pair.Value.ProductIds.Contains(productId)
+				select pair.Value).FirstOrDefault();
+		}
+		return result;
+	}
+
+	public List<string> GetAllUnmatchedMultiDiscBarcodes()
+	{
+		List<string> list = new List<string>();
+		IEnumerable<KeyValuePair<long, ProductGroup>> enumerable = ProfileDataInstance.ProductGroups.Where((KeyValuePair<long, ProductGroup> x) => x.Value.ProductGroupTypeId == 3);
+		if (enumerable != null)
+		{
+			IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+			foreach (KeyValuePair<long, ProductGroup> item in enumerable)
+			{
+				if (item.Value?.ProductIds == null)
+				{
+					continue;
+				}
+				List<long> productIds = item.Value?.ProductIds;
+				List<ProductAndBarcodes> productGroupBarcodes = GetProductGroupBarcodes(service, productIds);
+				int minimumBarcodeCount = productGroupBarcodes.Min((ProductAndBarcodes x) => x.BarcodesAndRentalCounts.Count);
+				if (productGroupBarcodes.Count <= 1 || !productGroupBarcodes.Any((ProductAndBarcodes x) => x.BarcodesAndRentalCounts.Count != minimumBarcodeCount))
+				{
+					continue;
+				}
+				foreach (ProductAndBarcodes item2 in productGroupBarcodes)
+				{
+					if (item2.BarcodesAndRentalCounts.Count > minimumBarcodeCount)
+					{
+						for (int num = minimumBarcodeCount; num < item2.BarcodesAndRentalCounts.Count; num++)
+						{
+							list.Add(item2.BarcodesAndRentalCounts[num].Barcode);
+						}
+					}
+				}
+			}
+		}
+		return list;
+	}
+
+	private List<ProductAndBarcodes> GetProductGroupBarcodes(IInventory inventoryService, List<long> productIds)
+	{
+		List<ProductAndBarcodes> list = new List<ProductAndBarcodes>();
+		foreach (long productId in productIds)
+		{
+			ProductAndBarcodes productAndBarcodes = new ProductAndBarcodes
+			{
+				ProductId = productId
+			};
+			ITitleProduct titleProduct = GetProduct(productId, excludeTitleRollup: true) as ITitleProduct;
+			if (titleProduct?.BarCodeProducts != null)
+			{
+				foreach (KeyValuePair<string, BarcodeProduct> barCodeProduct in titleProduct.BarCodeProducts)
+				{
+					if (barCodeProduct.Value != null)
+					{
+						BarcodeAndRentalCount barcodeAndRentalCount = new BarcodeAndRentalCount
+						{
+							Barcode = barCodeProduct.Value.Barcode
+						};
+						Inventory inventory = inventoryService.GetInventory(barCodeProduct.Value.Barcode);
+						if (inventory != null)
+						{
+							barcodeAndRentalCount.RentalCount = (int)inventory.TotalRentalCount;
+						}
+						productAndBarcodes.BarcodesAndRentalCounts.Add(barcodeAndRentalCount);
+					}
+				}
+			}
+			productAndBarcodes.BarcodesAndRentalCounts.Sort((BarcodeAndRentalCount a, BarcodeAndRentalCount b) => a.RentalCount.CompareTo(b.RentalCount));
+			list.Add(productAndBarcodes);
+		}
+		return list;
+	}
+
 	private MDVProduct AddMDVProduct(TitleProduct titleProduct)
 	{
-		ProductGroup productGroup = (from pair in ProfileDataInstance.ProductGroups
-			where pair.Value.ProductGroupTypeId == 3 && pair.Value.ProductIds.Contains(titleProduct.ProductId)
-			select pair.Value).FirstOrDefault();
-		if (productGroup == null)
+		ProductGroup mDVProductGroup = GetMDVProductGroup(titleProduct.ProductId);
+		if (mDVProductGroup == null)
 		{
 			return null;
 		}
-		if (_mdvProducts.ContainsKey(productGroup.ProductGroupId))
+		if (_mdvProducts.ContainsKey(mDVProductGroup.ProductGroupId))
 		{
-			LogHelper.Instance.Log("KioskProductView.AddMDVProduct - MDV product {0} already exists", productGroup.ProductGroupId);
+			LogHelper.Instance.Log("KioskProductView.AddMDVProduct - MDV product {0} already exists", mDVProductGroup.ProductGroupId);
 			return null;
 		}
-		AddMissingProductIds(productGroup.ProductIds);
-		MDVProduct mDVProduct = new MDVProduct(productGroup, _titleProducts, ProfileDataInstance, _store);
+		AddMissingProductIds(mDVProductGroup.ProductIds);
+		MDVProduct mDVProduct = new MDVProduct(mDVProductGroup, _titleProducts, ProfileDataInstance, _store);
 		_mdvProducts[mDVProduct.ProductGroupId] = mDVProduct;
 		return mDVProduct;
 	}
@@ -584,6 +886,20 @@ public class KioskProductView
 			});
 	}
 
+	private void LoadMDVWorkaroundTitlesWithNoRollup()
+	{
+		_mdvWorkaroundTitlesWithNoRollup.Clear();
+		_mdvWorkaroundProducts.Select((KeyValuePair<long, MDVProduct> item) => item.Value).ToList().ToList()
+			.ForEach(delegate(MDVProduct item)
+			{
+				if (item.IsMovie)
+				{
+					LogHelper.Instance.Log($"KioskProductView.LoadMDVWorkaroundTitlesWithNoRollup - MDV Rollup Title has no rollup productgroupid:{item.ProductGroupId} name:{item.ProductName}", LogEntryType.Debug);
+				}
+				_mdvWorkaroundTitlesWithNoRollup.Add(item);
+			});
+	}
+
 	private void LoadGames()
 	{
 		_gamesProducts.Clear();
@@ -655,5 +971,23 @@ public class KioskProductView
 		_movieProducts.AddRange(from item in _titlesWithNoRollup
 			where item.IsMovie
 			select (item));
+	}
+
+	private void LoadTV()
+	{
+		_tvProducts.Clear();
+		_tvProducts.AddRange((from a in _titleRollupProducts
+			select a.Value into item
+			where IsTV(item)
+			select item).Select((Func<TitleRollupProduct, ITitleProduct>)((TitleRollupProduct item) => item)));
+		_tvProducts.AddRange(_mdvTitlesWithNoRollup.Where((MDVProduct item) => IsTV(item)).Select((Func<MDVProduct, ITitleProduct>)((MDVProduct item) => item)));
+		_tvProducts.AddRange(from item in _titlesWithNoRollup
+			where IsTV(item)
+			select (item));
+	}
+
+	private bool IsTV(ITitleProduct titleProduct)
+	{
+		return Redbox.Rental.Services.Configuration.Configuration.Instance.TVTitleIds.Contains(titleProduct.ProductId);
 	}
 }

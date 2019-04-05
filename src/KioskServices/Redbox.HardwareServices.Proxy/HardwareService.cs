@@ -6,8 +6,8 @@ using System.Threading;
 using Microsoft.Win32;
 using Redbox.Core;
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.IPC.Framework;
 using Redbox.KioskEngine.ComponentModel;
@@ -28,15 +28,25 @@ public class HardwareService : IHardwareService
 
 	public static HardwareService Instance => Singleton<HardwareService>.Instance;
 
+	public IQueryable<Redbox.HAL.Client.HardwareJob> RunableReturnJobs => from x in m_activeJobs.AsQueryable()
+		where IsRunable(x.Status) && string.Compare(x.ProgramName, "return", ignoreCase: true) == 0
+		select x;
+
+	public bool SupportsCameraFraudScan => Service.SupportsCameraFraudScan;
+
+	public int CurrentCameraGeneration => (int)Service.CurrentCameraGeneration;
+
+	public int BarcodeDecoder => (int)Service.BarcodeDecoder;
+
 	public string Url
 	{
 		get
 		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "HardwareServiceURL", "rcp://localhost:7001");
+			return Redbox.Core.ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "HardwareServiceURL", "rcp://localhost:7001");
 		}
 		set
 		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "HardwareServiceURL", value);
+			Redbox.Core.ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "HardwareServiceURL", value);
 			Reset();
 		}
 	}
@@ -45,11 +55,11 @@ public class HardwareService : IHardwareService
 	{
 		get
 		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "HardwareServiceTimeout", 600000);
+			return Redbox.Core.ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Store Services", "HardwareServiceTimeout", 600000);
 		}
 		set
 		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "HardwareServiceTimeout", value);
+			Redbox.Core.ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Store Services", "HardwareServiceTimeout", value);
 			Reset();
 		}
 	}
@@ -58,34 +68,90 @@ public class HardwareService : IHardwareService
 
 	public bool CanSwitch()
 	{
-		IEnumerable<Redbox.HAL.Client.HardwareJob> enumerable = m_activeJobs.Where((Redbox.HAL.Client.HardwareJob item) => string.Compare(item.ProgramName, "return", ignoreCase: true) == 0);
+		if (RunableReturnJobs.Any())
+		{
+			CleanActiveJobs();
+		}
+		List<Redbox.HAL.Client.HardwareJob> list = RunableReturnJobs.ToList();
 		int num;
-		if (!enumerable.Any())
+		if (!list.Any())
 		{
 			num = ((m_working == 0) ? 1 : 0);
 			if (num != 0)
 			{
-				goto IL_0067;
+				goto IL_005b;
 			}
 		}
 		else
 		{
 			num = 0;
 		}
-		enumerable.ForEach(delegate(Redbox.HAL.Client.HardwareJob item)
+		list.ForEach(delegate(Redbox.HAL.Client.HardwareJob item)
 		{
-			LogHelper.Instance.Log("Return Job {0} Running", item.ID);
+			Redbox.Core.LogHelper.Instance.Log("Return Job {0} in state {1}", item.ID, item.Status.ToString());
 		});
-		goto IL_0067;
-		IL_0067:
+		goto IL_005b;
+		IL_005b:
 		return (byte)num != 0;
+	}
+
+	public bool IsRunable(HardwareJobStatus status)
+	{
+		if (status == HardwareJobStatus.Suspended || status == HardwareJobStatus.Pending || status == HardwareJobStatus.Running)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool IsComplete(string status)
+	{
+		return IsComplete((HardwareJobStatus)Enum.Parse(typeof(HardwareJobStatus), status));
+	}
+
+	public bool IsComplete(HardwareJobStatus status)
+	{
+		if (status == HardwareJobStatus.Stopped || status == HardwareJobStatus.Completed || status == HardwareJobStatus.Errored || status == HardwareJobStatus.Garbage)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public void CleanActiveJobs()
+	{
+		Redbox.KioskEngine.ComponentModel.ErrorList hardwareJobs = Instance.GetHardwareJobs(out var hardwareJobs2);
+		if ((hardwareJobs != null && hardwareJobs.Any()) || hardwareJobs2 == null)
+		{
+			return;
+		}
+		foreach (Redbox.HAL.Client.HardwareJob job in m_activeJobs.ToList())
+		{
+			if (!hardwareJobs2.Any((IHardwareJob x) => job.ID == x.ID))
+			{
+				RemoveJobFromActiveJobList(job.ID);
+			}
+		}
+	}
+
+	public void RemoveJobFromActiveJobList(string jobId)
+	{
+		lock (this)
+		{
+			Redbox.HAL.Client.HardwareJob hardwareJob = m_activeJobs.FirstOrDefault((Redbox.HAL.Client.HardwareJob x) => x.ID == jobId);
+			if (hardwareJob != null)
+			{
+				Redbox.Core.LogHelper.Instance.Log($"Removing From Active Job List JobId: {jobId} - ProgramName: {hardwareJob.ProgramName} - Label: {hardwareJob.Label} - Status: {hardwareJob.Status.ToString()}");
+				m_activeJobs.Remove(hardwareJob);
+			}
+		}
 	}
 
 	public void Reset()
 	{
-		LogHelper.Instance.Log("Reset hardware service:");
+		Redbox.Core.LogHelper.Instance.Log("Reset hardware service:");
 		string version = AssemblyInfoHelper.GetVersion(typeof(Redbox.HAL.Client.HardwareService).Assembly);
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IMacroService service = Redbox.Core.ServiceLocator.Instance.GetService<IMacroService>();
 		service["HALVersion"] = version;
 		service["HALServiceVersion"] = (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\HAL", "Product Version", version);
 		Service = new Redbox.HAL.Client.HardwareService(IPCProtocol.Parse(Url));
@@ -93,23 +159,27 @@ public class HardwareService : IHardwareService
 		{
 			foreach (Redbox.HAL.Client.HardwareJob activeJob in m_activeJobs)
 			{
-				LogHelper.Instance.Log("...Disconnect job '{0}'.", activeJob.ID);
+				Redbox.Core.LogHelper.Instance.Log("...Disconnect job '{0}'.", activeJob.ID);
 				activeJob.Disconnect();
 			}
-			LogHelper.Instance.Log("...Clear local job list.");
-			m_activeJobs.Clear();
+			Redbox.Core.LogHelper.Instance.Log("...Clear local job list.");
+			lock (this)
+			{
+				m_activeJobs.Clear();
+			}
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in HardwareService.Reset.", e);
+			Redbox.Core.LogHelper.Instance.Log("An unhandled exception was raised in HardwareService.Reset.", e);
 		}
 	}
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList Initialize()
 	{
-		LogHelper.Instance.Log("Initialize Hardware Service, URL: {0}", Url);
+		Redbox.Core.LogHelper.Instance.Log("Initialize Hardware Service, URL: {0}", Url);
 		Redbox.KioskEngine.ComponentModel.ErrorList result = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		ServiceLocator.Instance.AddService(typeof(IHardwareService), Instance);
+		Redbox.Core.ServiceLocator.Instance.AddService(typeof(IHardwareService), Instance);
+		Redbox.Core.ServiceLocator.Instance.AddService(typeof(IHardwareState), new HardwareState());
 		Reset();
 		return result;
 	}
@@ -399,7 +469,7 @@ public class HardwareService : IHardwareService
 	{
 		jobId = null;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		HardwareCommandResult hardwareCommandResult = Service.HardSync(new SyncRange(startDeck, endDeck, new Redbox.HAL.Core.Range(startSlot, endSlot)), new HardwareJobSchedule
+		HardwareCommandResult hardwareCommandResult = Service.HardSync(new SyncRange(startDeck, endDeck, new SlotRange(startSlot, endSlot)), new HardwareJobSchedule
 		{
 			Priority = HardwareJobPriority.Low,
 			StartTime = startTime
@@ -706,7 +776,7 @@ public class HardwareService : IHardwareService
 		{
 			Priority = HardwareJobPriority.Highest
 		}, out var job);
-		LogHelper.Instance.Log($"KernelFunction result.Success| {hardwareCommandResult.Success}");
+		Redbox.Core.LogHelper.Instance.Log($"HardwareService.FileMarkerDisc result.Success| {hardwareCommandResult.Success}");
 		if (!hardwareCommandResult.Success)
 		{
 			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
@@ -726,7 +796,7 @@ public class HardwareService : IHardwareService
 		{
 			Priority = HardwareJobPriority.Highest
 		}, out var job);
-		LogHelper.Instance.Log($"KernelFunction result.Success| {hardwareCommandResult.Success}");
+		Redbox.Core.LogHelper.Instance.Log($"HardwareService.ClearMerchStatus result.Success| {hardwareCommandResult.Success}");
 		if (!hardwareCommandResult.Success)
 		{
 			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
@@ -746,7 +816,7 @@ public class HardwareService : IHardwareService
 		{
 			Priority = HardwareJobPriority.Highest
 		}, out var job);
-		LogHelper.Instance.Log($"KernelFunction result.Success| {barcodeVMZPosition.Success}");
+		Redbox.Core.LogHelper.Instance.Log($"HardwareService.GetBarcodeVMZPosition result.Success| {barcodeVMZPosition.Success}");
 		if (!barcodeVMZPosition.Success)
 		{
 			barcodeVMZPosition.Errors.AddToLocalErrorList(errorList);
@@ -766,7 +836,7 @@ public class HardwareService : IHardwareService
 		{
 			Priority = HardwareJobPriority.Highest
 		}, out var job);
-		LogHelper.Instance.Log($"KernelFunction result.Success| {hardwareCommandResult.Success}");
+		Redbox.Core.LogHelper.Instance.Log($"HardwareService.FieldInsertFraudWithCheck result.Success| {hardwareCommandResult.Success}");
 		if (!hardwareCommandResult.Success)
 		{
 			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
@@ -784,7 +854,7 @@ public class HardwareService : IHardwareService
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		IList<Redbox.HAL.Component.Model.IKioskFunctionCheckData> sessions = null;
 		HardwareCommandResult kioskFunctionCheckData = Service.GetKioskFunctionCheckData(out sessions);
-		LogHelper.Instance.Log($"KernelFunction result.Success| {kioskFunctionCheckData.Success}");
+		Redbox.Core.LogHelper.Instance.Log($"HardwareService.GetKioskFunctionCheckData result.Success| {kioskFunctionCheckData.Success}");
 		if (!kioskFunctionCheckData.Success)
 		{
 			kioskFunctionCheckData.Errors.AddToLocalErrorList(errorList);
@@ -823,6 +893,7 @@ public class HardwareService : IHardwareService
 		else
 		{
 			job = job2.Trash();
+			RemoveJobFromActiveJobList(jobId);
 			if (!job.Success)
 			{
 				job.Errors.AddToLocalErrorList(errorList);
@@ -880,6 +951,7 @@ public class HardwareService : IHardwareService
 		else
 		{
 			job = job2.Terminate();
+			RemoveJobFromActiveJobList(jobId);
 			if (!job.Success)
 			{
 				job.Errors.AddToLocalErrorList(errorList);
@@ -965,7 +1037,8 @@ public class HardwareService : IHardwareService
 						MetaData = ((programResult.ItemID != null) ? programResult.ItemID.Metadata : null),
 						Timestamp = programResult.TimeStamp.ToString(),
 						PreviousItem = previousItem,
-						ReturnTime = ((!programResult.ReturnTime.HasValue) ? "NONE" : programResult.ReturnTime.ToString())
+						ReturnTime = ((!programResult.ReturnTime.HasValue) ? "NONE" : programResult.ReturnTime.ToString()),
+						MessageData = programResult.MessageData
 					});
 				}
 				hardwareResults = list.AsReadOnly();
@@ -1023,14 +1096,14 @@ public class HardwareService : IHardwareService
 							job.ClearStack();
 						}
 					}
-					IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+					IResourceBundleService service = Redbox.Core.ServiceLocator.Instance.GetService<IResourceBundleService>();
 					if (bundleName != null && bundleName != service.CurrentBundleName)
 					{
-						LogHelper.Instance.Log($"Bundle started on {bundleName} and attempted to execute on {service?.CurrentBundleName ?? string.Empty}");
+						Redbox.Core.LogHelper.Instance.Log($"Bundle started on {bundleName} and attempted to execute on {service?.CurrentBundleName ?? string.Empty}");
 					}
 					else
 					{
-						ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new HardwareImmediateExecutionCallback
+						Redbox.Core.ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new HardwareImmediateExecutionCallback
 						{
 							EventHandler = eventHandler,
 							Command = command,
@@ -1051,6 +1124,7 @@ public class HardwareService : IHardwareService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList ExecuteServiceCommand(string command)
 	{
+		Redbox.Core.LogHelper.Instance.Log(command, Redbox.Core.LogEntryType.Info);
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		HardwareCommandResult hardwareCommandResult = Service.ExecuteServiceCommand(command);
 		if (!hardwareCommandResult.Success)
@@ -1384,6 +1458,14 @@ public class HardwareService : IHardwareService
 		return errorList;
 	}
 
+	internal void RefreshHardwareState(Action<MachineConfiguration> callback)
+	{
+		Redbox.Core.ServiceLocator.Instance.GetService<IHardwareState>();
+		using MachineConfiguration machineConfiguration = new MachineConfiguration(Service);
+		machineConfiguration.Run();
+		callback?.Invoke(machineConfiguration);
+	}
+
 	public Redbox.KioskEngine.ComponentModel.ErrorList IRHardwareInstalled(out DateTime? installDate)
 	{
 		installDate = Service.IRHardwareInstalled;
@@ -1397,40 +1479,28 @@ public class HardwareService : IHardwareService
 		{
 			try
 			{
-				ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-				if (eventHandler != null && service != null)
+				ICallbackService service = Redbox.Core.ServiceLocator.Instance.GetService<ICallbackService>();
+				if (eventHandler != null && service != null && !(message == "DisableCancel"))
 				{
-					if (message == "ReturnEnd" || message == "DisableCancel")
+					service.EnqueueCallback(new HardwareEventCallback
 					{
-						HardwareEventCallback hardwareEventCallback = new HardwareEventCallback();
-						hardwareEventCallback.EventHandler = eventHandler;
-						hardwareEventCallback.TimeStamp = timeStamp.ToString();
-						hardwareEventCallback.JobId = j.ID;
-						hardwareEventCallback.Message = message;
-						hardwareEventCallback.Invoke();
-					}
-					else
-					{
-						service.EnqueueCallback(new HardwareEventCallback
-						{
-							EventHandler = eventHandler,
-							TimeStamp = timeStamp.ToString(),
-							JobId = j.ID,
-							Message = message
-						});
-					}
+						EventHandler = eventHandler,
+						TimeStamp = timeStamp.ToString(),
+						JobId = j.ID,
+						Message = message
+					});
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in job.EventRaised handler.", e);
+				Redbox.Core.LogHelper.Instance.Log("An unhandled exception was raised in job.EventRaised handler.", e);
 			}
 		};
 		job.StatusChanged += delegate(Redbox.HAL.Client.HardwareJob j, HardwareJobStatus jobStatus)
 		{
 			try
 			{
-				ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
+				ICallbackService service = Redbox.Core.ServiceLocator.Instance.GetService<ICallbackService>();
 				if (statusChangeHandler != null)
 				{
 					service?.EnqueueCallback(new HardwareStatusChangeCallback
@@ -1442,32 +1512,32 @@ public class HardwareService : IHardwareService
 				}
 				if (jobStatus == HardwareJobStatus.Stopped || jobStatus == HardwareJobStatus.Completed || jobStatus == HardwareJobStatus.Errored || jobStatus == HardwareJobStatus.Garbage)
 				{
-					LogHelper.Instance.Log("Disconnect from job '{0}', removing from active job list.", j.ID);
+					Redbox.Core.LogHelper.Instance.Log("Disconnect from job '{0}', removing from active job list.", j.ID);
 					j.Disconnect();
-					m_activeJobs.Remove(j);
+					RemoveJobFromActiveJobList(j.ID);
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in job.StatusChanged handler.", e);
+				Redbox.Core.LogHelper.Instance.Log("An unhandled exception was raised in job.StatusChanged handler.", e);
 			}
 		};
 		HardwareCommandResult stack = job.GetStack(out var stack2);
 		if (!stack.Success)
 		{
 			stack.Errors.AddToLocalErrorList(errors);
-			LogHelper.Instance.Log("The call to HAL's GetStack failed.");
+			Redbox.Core.LogHelper.Instance.Log("The call to HAL's GetStack failed.");
 		}
 		else
 		{
-			LogHelper.Instance.Log("HAL stack for job: {0}, script: {1}", job.ID, job.ProgramName);
+			Redbox.Core.LogHelper.Instance.Log("HAL stack for job: {0}, script: {1}", job.ID, job.ProgramName);
 			foreach (string item in stack2)
 			{
-				LogHelper.Instance.Log("...{0}", item);
+				Redbox.Core.LogHelper.Instance.Log("...{0}", item);
 			}
 			if (stack2.Count == 0)
 			{
-				LogHelper.Instance.Log("...The HAL stack is empty for this job.");
+				Redbox.Core.LogHelper.Instance.Log("...The HAL stack is empty for this job.");
 			}
 		}
 		stack = job.Connect();

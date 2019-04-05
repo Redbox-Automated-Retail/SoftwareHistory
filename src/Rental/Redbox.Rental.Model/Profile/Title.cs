@@ -62,4 +62,8 @@ public class Title : ILuaKeyValue
 	public decimal? SellThruPrice { get; set; }
 
 	public int? DiscNumber { get; set; }
+
+	public decimal? DigitalSDRentPrice { get; set; }
+
+	public decimal? DigitalHDRentPrice { get; set; }
 }

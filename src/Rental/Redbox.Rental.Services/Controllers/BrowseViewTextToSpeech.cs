@@ -51,11 +51,16 @@ public class BrowseViewTextToSpeech
 	{
 		get
 		{
-			if (BrowseState.TitleFamily != TitleFamily.Movies)
+			string result = "Games";
+			if (BrowseState.TitleFamily == TitleFamily.Movies)
 			{
-				return "Games";
+				result = "Movies";
 			}
-			return "Movies";
+			else if (BrowseState.TitleFamily == TitleFamily.TV)
+			{
+				result = "TV";
+			}
+			return result;
 		}
 	}
 
@@ -221,8 +226,30 @@ public class BrowseViewTextToSpeech
 				List<ITextPart> texts = speechPart.Texts;
 				TextPart textPart = new TextPart();
 				IBrowseState browseState = BrowseState;
-				textPart.Text = $"You are now browsing by {((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null)}.";
+				textPart.Text = $"You are now browsing by {((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null)} ";
 				texts.Add(textPart);
+				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.ForSale && BrowseState.BrowsePriceRangeFilter != null)
+				{
+					string text = "filtered by items with prices";
+					BrowsePriceRangeParameter browsePriceRangeFilter = BrowseState.BrowsePriceRangeFilter;
+					if (!browsePriceRangeFilter.PriceRangeLow.HasValue)
+					{
+						text = text + " of $" + browsePriceRangeFilter.PriceRangeHigh.Value.ToString("0.00") + " and under.";
+					}
+					else if (!browsePriceRangeFilter.PriceRangeHigh.HasValue)
+					{
+						text = text + " of $" + browsePriceRangeFilter.PriceRangeLow.Value.ToString("0.00") + " plus.";
+					}
+					else
+					{
+						text = text + " between $" + browsePriceRangeFilter.PriceRangeLow.Value.ToString("0.00");
+						text = text + " and $" + browsePriceRangeFilter.PriceRangeHigh.Value.ToString("0.00");
+					}
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = text
+					});
+				}
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = $"There are a total of {browseViewModel?.BrowseProductControlModel?.BrowseItems?.Count ?? 0} titles available with up to {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} titles per screen."
@@ -399,13 +426,26 @@ public class BrowseViewTextToSpeech
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
-					KeyCode = "5",
+					KeyCode = "4",
 					Text = "Switching",
 					Action = delegate
 					{
-						browseViewModel?.ProcessOnToggleTitleFamilyButtonClicked();
+						browseViewModel?.ProcessOnToggleTitleFamilyButton1Clicked();
 					}
 				});
+				BrowseViewModel browseViewModel2 = browseViewModel;
+				if (browseViewModel2 != null && browseViewModel2.SwitchProductFamilyButton2Visibility == Visibility.Visible)
+				{
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "5",
+						Text = "Switching",
+						Action = delegate
+						{
+							browseViewModel?.ProcessOnToggleTitleFamilyButton2Clicked();
+						}
+					});
+				}
 				AddCheckOutEvent(speechPart, browseViewModel);
 				speechPart.Texts.Add(new TextPart
 				{
@@ -424,8 +464,16 @@ public class BrowseViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = string.Format("To select {0} press 5.", (BrowseState.TitleFamily == TitleFamily.Movies) ? "Games" : "Movies")
+					Text = string.Format("To select {0} press 4.", (BrowseState.TitleFamily == TitleFamily.Movies) ? "Games" : "Movies")
 				});
+				BrowseViewModel browseViewModel3 = browseViewModel;
+				if (browseViewModel3 != null && browseViewModel3.SwitchProductFamilyButton2Visibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = string.Format("To select {0} press 5.", (BrowseState.TitleFamily == TitleFamily.TV) ? "Games" : "TV")
+					});
+				}
 				if (browseViewModel.SignInButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
@@ -460,7 +508,7 @@ public class BrowseViewTextToSpeech
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To access my perks press 7."
+						Text = "To access my Redbox press 7."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
@@ -524,9 +572,27 @@ public class BrowseViewTextToSpeech
 					});
 					num++;
 				}
+				BrowseViewModel browseViewModel3 = browseViewModel;
+				if (browseViewModel3 != null && browseViewModel3.BrowseFilterBarModel?.PriceRangeFilterButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "2",
+						Action = delegate
+						{
+							browseViewModel?.BrowseFilterBarModel.ProcessOnPriceRangeFilterButtonClicked();
+							CommandManager.InvalidateRequerySuggested();
+						}
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To filter by price range press 2."
+					});
+					num++;
+				}
 				if (browseViewModel?.BrowseFilterBarModel?.Filters != null)
 				{
-					foreach (BrowseFilter eachFilter in browseViewModel.BrowseFilterBarModel.Filters)
+					foreach (BrowseFilter eachFilter in browseViewModel.BrowseFilterBarModel.Filters.Where((BrowseFilter f) => f.IsVisible))
 					{
 						string text = (browseViewModel.BrowseFilterBarModel.Filters.IndexOf(eachFilter) + num).ToString();
 						speechPart.Events.Add(new MapKeyPressToAction

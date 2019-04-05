@@ -9,7 +9,12 @@ using System.Threading;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using Redbox.Core;
+using Redbox.KioskDataServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -52,6 +57,8 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 
 	public string ActiveSession { get; set; }
 
+	public int MessagePriority { get; set; }
+
 	public void Start(string sessionId, AnalyticsSessionType sessionType)
 	{
 		LogHelper.Instance.Log($"Analytics:Start({sessionId}) requested.");
@@ -86,11 +93,110 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				dictionary.Add("banner", service2.Filter["vendor"] ?? string.Empty);
 			}
 			AddElements("session", dictionary, sessionId);
+			AddOutOfStockElement();
+			AddABTestingElement();
+			AddConfiguredABTestsElement();
 			LogHelper.Instance.Log($"Analytics:Started({sessionId}) successfully.");
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An exception was raised in SessionAnalyticsService.Start()", e);
+		}
+	}
+
+	private void AddOutOfStockElement()
+	{
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		bool value = false;
+		if (!service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GenerateOutOfStockAnaltyics, out value) || !value)
+		{
+			return;
+		}
+		AddNode("session", "outofstock");
+		if (ServiceLocator.Instance.GetService<IDataService>().GetOutOfStockMovieProducts(out var products).ErrorCount != 0)
+		{
+			return;
+		}
+		foreach (ITitleProduct item in products)
+		{
+			Dictionary<string, string> dictionary = new Dictionary<string, string>();
+			if (item is ITitleRollupProduct titleRollupProduct)
+			{
+				dictionary.Add("groupid", titleRollupProduct.ProductGroupId.ToString());
+				AddOutOfStockAttributesForFormat(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct p) => p.TitleType == TitleType.DVD), TitleType.DVD, dictionary);
+				AddOutOfStockAttributesForFormat(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct p) => p.TitleType == TitleType.Bluray), TitleType.Bluray, dictionary);
+				AddOutOfStockAttributesForFormat(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct p) => p.TitleType == TitleType._4KUHD), TitleType._4KUHD, dictionary);
+				AddOutOfStockAttributesForFormat(titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct p) => p.TitleType == TitleType.DigitalCode), TitleType.DigitalCode, dictionary);
+			}
+			else
+			{
+				dictionary.Add("groupid", "none");
+				AddOutOfStockAttributesForFormat(item, TitleType.DVD, dictionary);
+				AddOutOfStockAttributesForFormat(item, TitleType.Bluray, dictionary);
+				AddOutOfStockAttributesForFormat(item, TitleType._4KUHD, dictionary);
+				AddOutOfStockAttributesForFormat(item, TitleType.DigitalCode, dictionary);
+			}
+			AddNode("outofstock", "product");
+			AddAttributes("product", dictionary);
+		}
+	}
+
+	private static void AddOutOfStockAttributesForFormat(ITitleProduct product, TitleType format, Dictionary<string, string> attributes)
+	{
+		string text = format.GetDisplayName().ToLower();
+		if (!char.IsLetter(text[0]))
+		{
+			text = "_" + text.Replace(" ", "");
+		}
+		if (product != null && product.TitleType == format)
+		{
+			attributes.Add(text + "id", product.ProductId.ToString());
+			attributes.Add(text + "stock", product.BarCodeProducts.Count.ToString());
+		}
+		else
+		{
+			attributes.Add(text + "id", "-1");
+			attributes.Add(text + "stock", "-1");
+		}
+	}
+
+	private void AddABTestingElement()
+	{
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (!service.GetSettingNames(ConfigFile.Marketing, ConfigCategory.ABTesting, out var list))
+		{
+			return;
+		}
+		bool flag = false;
+		foreach (string item in list)
+		{
+			if (service.TryGetValue<string>(ConfigFile.Marketing, ConfigCategory.ABTesting, item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
+			{
+				if (flag)
+				{
+					LogHelper.Instance.Log("SessionAnalyticsService More than one active A/B Test was found.", LogEntryType.Error);
+					break;
+				}
+				flag = true;
+				AddElement("session", "abTesting", item + "-" + value);
+			}
+		}
+	}
+
+	private void AddConfiguredABTestsElement()
+	{
+		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
+		if (!service.GetSettingNames(ConfigFile.Marketing, ConfigCategory.ABTesting, out var list))
+		{
+			return;
+		}
+		AddNode("session", "configuredABTests");
+		foreach (string item in list)
+		{
+			if (service.TryGetValue<string>(ConfigFile.Marketing, ConfigCategory.ABTesting, item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
+			{
+				AddElement("configuredABTests", "test", item + "-" + value);
+			}
 		}
 	}
 
@@ -263,7 +369,6 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				string s = ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["store_number"];
 				XDocument document = analyticsSession.document;
 				string text = document.ToString(SaveOptions.DisableFormatting);
-				byte priority = (byte)((!(MachineSettingsStore.Instance.GetValue("Store", "SendAnalyticsOffPeak", "True") == "True")) ? 200 : 0);
 				string name = "Redbox.KioskEngine.Environment.XMLSchema.KioskAnalyticsSchema.xsd";
 				XmlSchema schema = XmlSchema.Read(Assembly.GetExecutingAssembly().GetManifestResourceStream(name), SchemaValidationHandler);
 				XmlSchemaSet xmlSchemaSet = new XmlSchemaSet();
@@ -284,18 +389,37 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				}
 				if (!validationErrored)
 				{
-					service2.Enqueue(priority, "KioskAnalytics", new
+					ServiceLocator.Instance.GetService<IAnalyticsService>()?.WriteSessionToFile(sessionId, text);
+					IConfiguration service3 = ServiceLocator.Instance.GetService<IConfiguration>();
+					if (service3 != null && service3.SendKioskAnalyticsToKioskDataService)
 					{
-						MessageType = "KioskAnalytics",
-						MessageId = Guid.NewGuid(),
-						KioskId = int.Parse(s),
-						EngineVersion = service["EngineVersion"],
-						BundleVersion = service["ProductVersion"],
-						SessionId = sessionId,
-						StartTime = analyticsSession.startTime.ToString("yyyy/MM/dd HH:mm:ss"),
-						EndTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
-						SessionData = CompressString(text)
-					});
+						LogHelper.Instance.Log($"Enqueuing Kiosk Data Services message KioskAnalytics for session {analyticsSession.sessionId}.");
+						service2.Enqueue((byte)MessagePriority, "AddKioskSession", new AddKioskSessionRequest
+						{
+							KioskId = int.Parse(s),
+							SessionId = analyticsSession.sessionId,
+							StartTime = analyticsSession.startTime.ToString("yyyy/MM/dd HH:mm:ss"),
+							EndTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
+							IsUnCompressed = false,
+							SessionData = CompressString(text)
+						});
+					}
+					else
+					{
+						LogHelper.Instance.Log($"Enqueuing Kiosk Services message KioskAnalytics for session {analyticsSession.sessionId}.");
+						service2.Enqueue((byte)MessagePriority, "KioskAnalytics", new
+						{
+							MessageType = "KioskAnalytics",
+							MessageId = Guid.NewGuid(),
+							KioskId = int.Parse(s),
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
+							SessionId = sessionId,
+							StartTime = analyticsSession.startTime.ToString("yyyy/MM/dd HH:mm:ss"),
+							EndTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
+							SessionData = CompressString(text)
+						});
+					}
 					LogHelper.Instance.Log($"Analytics:Close({sessionId}) completed.");
 				}
 			}

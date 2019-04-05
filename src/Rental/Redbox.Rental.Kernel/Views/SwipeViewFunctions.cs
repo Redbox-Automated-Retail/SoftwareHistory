@@ -11,16 +11,4 @@ public class SwipeViewFunctions
 	{
 		SwipeViewController.SetSwipeViewParameters(cancelAction, continueAction, swipeViewType);
 	}
-
-	[KernelFunction(Name = "kernel.configure_swipe_view")]
-	public static void ConfigureSwipeView()
-	{
-		SwipeViewController.ConfigureSwipeView();
-	}
-
-	[KernelFunction(Name = "kernel.leave_swipe_view")]
-	public static void LeaveSwipeView()
-	{
-		SwipeViewController.LeaveSwipeView();
-	}
 }

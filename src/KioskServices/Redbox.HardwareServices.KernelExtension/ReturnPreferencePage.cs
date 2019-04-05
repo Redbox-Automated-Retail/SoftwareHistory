@@ -1,12 +1,14 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.HardwareServices.TestProxy;
 using Redbox.HardwareServices.TestProxy.Interfaces;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 
 namespace Redbox.HardwareServices.KernelExtension;
 
@@ -46,6 +48,16 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 
 	private Label label4;
 
+	private TextBox textBoxDiscImageFilename;
+
+	private Label labelDiscImageFilename;
+
+	private Label labelDiscImageFolder;
+
+	private TextBox textBoxDiscImageFolder;
+
+	private Button buttonCreateDummyFile;
+
 	public ReturnPreferencePage()
 	{
 		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
@@ -78,6 +90,8 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		{
 			dtp_IRInstallDate.Value = _hardwareService.IRCameraInstalledOn.Value.ToLocalTime();
 		}
+		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
+		textBoxDiscImageFolder.Text = service?.ImageFolderPath;
 	}
 
 	private void OnAddUnknown(object sender, EventArgs e)
@@ -85,9 +99,9 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_002a: Expected O, but got Unknown
-		(dgv_returnQueue.DataSource as BindingList<VendInventoryData>)?.Add(new VendInventoryData
+		(dgv_returnQueue.DataSource as BindingList<InventoryData>)?.Add(new InventoryData
 		{
-			Barcode = "Unknown"
+			Barcode = "UNKNOWN"
 		});
 	}
 
@@ -96,9 +110,9 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
 		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0042: Expected O, but got Unknown
-		if (dgv_returnQueue.DataSource is BindingList<VendInventoryData> bindingList && !string.IsNullOrWhiteSpace(txt_barcodeInput.Text))
+		if (dgv_returnQueue.DataSource is BindingList<InventoryData> bindingList && !string.IsNullOrWhiteSpace(txt_barcodeInput.Text))
 		{
-			bindingList.Add(new VendInventoryData
+			bindingList.Add(new InventoryData
 			{
 				Barcode = txt_barcodeInput.Text
 			});
@@ -110,6 +124,29 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 	{
 		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
 		_hardwareService.ReturnType = (ReturnType)cmb_returnType.SelectedItem;
+	}
+
+	private void buttonCreateDummyFile_Click(object sender, EventArgs e)
+	{
+		string randomFileName = Path.GetRandomFileName();
+		if (!File.Exists(randomFileName))
+		{
+			IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
+			if (service != null)
+			{
+				if (!Directory.Exists(service.ImageFolderPath))
+				{
+					Directory.CreateDirectory(service.ImageFolderPath);
+				}
+				File.WriteAllText(Path.Combine(service.ImageFolderPath, randomFileName), "dummy");
+			}
+		}
+		textBoxDiscImageFilename.Text = randomFileName;
+	}
+
+	private void textBoxDiscImageFilename_TextChanged(object sender, EventArgs e)
+	{
+		_hardwareService.ImageFileName = textBoxDiscImageFilename.Text;
 	}
 
 	protected override void Dispose(bool disposing)
@@ -137,6 +174,11 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		this.Barcodes = new System.Windows.Forms.DataGridViewTextBoxColumn();
 		this.dtp_IRInstallDate = new System.Windows.Forms.DateTimePicker();
 		this.label4 = new System.Windows.Forms.Label();
+		this.textBoxDiscImageFilename = new System.Windows.Forms.TextBox();
+		this.labelDiscImageFilename = new System.Windows.Forms.Label();
+		this.labelDiscImageFolder = new System.Windows.Forms.Label();
+		this.textBoxDiscImageFolder = new System.Windows.Forms.TextBox();
+		this.buttonCreateDummyFile = new System.Windows.Forms.Button();
 		((System.ComponentModel.ISupportInitialize)this.dgv_returnQueue).BeginInit();
 		base.SuspendLayout();
 		this.m_headerLabel.Anchor = System.Windows.Forms.AnchorStyles.Top;
@@ -207,7 +249,6 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		this.btn_addBarcode.UseVisualStyleBackColor = true;
 		this.btn_addBarcode.Click += new System.EventHandler(OnAddBarcode);
 		this.dgv_returnQueue.AllowUserToAddRows = false;
-		this.dgv_returnQueue.AllowUserToDeleteRows = false;
 		this.dgv_returnQueue.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 		this.dgv_returnQueue.ColumnHeadersVisible = false;
 		this.dgv_returnQueue.Columns.AddRange(this.Barcodes);
@@ -233,8 +274,44 @@ public class ReturnPreferencePage : UserControl, IPreferencePageHost
 		this.label4.Size = new System.Drawing.Size(197, 16);
 		this.label4.TabIndex = 66;
 		this.label4.Text = "IR Camera Installation Date";
+		this.textBoxDiscImageFilename.Location = new System.Drawing.Point(16, 302);
+		this.textBoxDiscImageFilename.Name = "textBoxDiscImageFilename";
+		this.textBoxDiscImageFilename.Size = new System.Drawing.Size(184, 20);
+		this.textBoxDiscImageFilename.TabIndex = 67;
+		this.textBoxDiscImageFilename.TextChanged += new System.EventHandler(textBoxDiscImageFilename_TextChanged);
+		this.labelDiscImageFilename.AutoSize = true;
+		this.labelDiscImageFilename.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75f, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+		this.labelDiscImageFilename.Location = new System.Drawing.Point(13, 283);
+		this.labelDiscImageFilename.Name = "labelDiscImageFilename";
+		this.labelDiscImageFilename.Size = new System.Drawing.Size(149, 16);
+		this.labelDiscImageFilename.TabIndex = 68;
+		this.labelDiscImageFilename.Text = "Disc Image filename";
+		this.labelDiscImageFolder.AutoSize = true;
+		this.labelDiscImageFolder.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75f, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+		this.labelDiscImageFolder.Location = new System.Drawing.Point(13, 335);
+		this.labelDiscImageFolder.Name = "labelDiscImageFolder";
+		this.labelDiscImageFolder.Size = new System.Drawing.Size(134, 16);
+		this.labelDiscImageFolder.TabIndex = 69;
+		this.labelDiscImageFolder.Text = "Disc Image folder:";
+		this.textBoxDiscImageFolder.Enabled = false;
+		this.textBoxDiscImageFolder.Location = new System.Drawing.Point(12, 354);
+		this.textBoxDiscImageFolder.Name = "textBoxDiscImageFolder";
+		this.textBoxDiscImageFolder.Size = new System.Drawing.Size(310, 20);
+		this.textBoxDiscImageFolder.TabIndex = 70;
+		this.buttonCreateDummyFile.Location = new System.Drawing.Point(211, 296);
+		this.buttonCreateDummyFile.Name = "buttonCreateDummyFile";
+		this.buttonCreateDummyFile.Size = new System.Drawing.Size(118, 30);
+		this.buttonCreateDummyFile.TabIndex = 71;
+		this.buttonCreateDummyFile.Text = "Create Dummy file";
+		this.buttonCreateDummyFile.UseVisualStyleBackColor = true;
+		this.buttonCreateDummyFile.Click += new System.EventHandler(buttonCreateDummyFile_Click);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.buttonCreateDummyFile);
+		base.Controls.Add(this.textBoxDiscImageFolder);
+		base.Controls.Add(this.labelDiscImageFolder);
+		base.Controls.Add(this.labelDiscImageFilename);
+		base.Controls.Add(this.textBoxDiscImageFilename);
 		base.Controls.Add(this.label4);
 		base.Controls.Add(this.dtp_IRInstallDate);
 		base.Controls.Add(this.dgv_returnQueue);

@@ -129,6 +129,18 @@ internal static class ShoppingSessionFunctions
 		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.Commit(reason);
 	}
 
+	[KernelFunction(Name = "kernel.is_session_committed")]
+	internal static bool IsSessionCommitted(string sessionId)
+	{
+		bool result = false;
+		IShoppingSession shoppingSession = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
+		if (shoppingSession != null)
+		{
+			result = shoppingSession.Status == ShoppingSessionStatus.Committed;
+		}
+		return result;
+	}
+
 	[KernelFunction(Name = "kernel.sessionaddevent2")]
 	internal static void AddNewEvent(string sessionId, string type, string description)
 	{
@@ -165,10 +177,16 @@ internal static class ShoppingSessionFunctions
 		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetBlocklisted(value);
 	}
 
-	[KernelFunction(Name = "kernel.sessionsetusecredits")]
-	internal static void SetUseCredits(string sessionId, CreditElection value)
+	[KernelFunction(Name = "kernel.session_get_is_blocklisted")]
+	internal static bool GetIsBlocklisted(string sessionId)
 	{
-		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetUseCredits(value);
+		bool result = false;
+		IShoppingSession shoppingSession = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
+		if (shoppingSession != null)
+		{
+			result = shoppingSession.ShoppingCart.Blocklisted;
+		}
+		return result;
 	}
 
 	[KernelFunction(Name = "kernel.sessioncaptureaccountdata2")]
@@ -380,11 +398,5 @@ internal static class ShoppingSessionFunctions
 	internal static void SetVariableAuthValues(string sessionId, bool authAcceptFlag, int authRuleId, decimal authAmount, bool skipAuthRule)
 	{
 		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetVariableAuthValues(authAcceptFlag, authRuleId, authAmount, skipAuthRule);
-	}
-
-	[KernelFunction(Name = "kernel.sessionsetplaypasspromptaccepted")]
-	internal static void SetPlayPassPromptAccepted(string sessionId, bool playPassPromptAccepted, int playPassPointsEarned)
-	{
-		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.ShoppingCart.SetPlayPassPromptAccepted(playPassPromptAccepted, playPassPointsEarned);
 	}
 }

@@ -13,4 +13,8 @@ public interface IBrowseItemModel
 	int VisibleItemIndex { get; set; }
 
 	bool CanAdd { get; set; }
+
+	int CurrentGridRow { get; set; }
+
+	int CurrentGridColumn { get; set; }
 }

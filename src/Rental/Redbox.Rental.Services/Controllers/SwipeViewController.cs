@@ -1,13 +1,17 @@
 using System;
+using System.Drawing;
 using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
+using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
-public class SwipeViewController
+public class SwipeViewController : BaseViewController
 {
 	private static Action _cancelAction;
 
@@ -53,8 +57,7 @@ public class SwipeViewController
 
 	public static void ConfigureSwipeView()
 	{
-		IActor actor = ActorFunctions.GetActor("SwipeViewUserControl");
-		if (actor == null || !(actor.WPFFrameworkElement is SwipeViewUserControl swipeViewUserControl))
+		if (!(BaseViewController.GetViewUserControl() is SwipeViewUserControl swipeViewUserControl))
 		{
 			return;
 		}
@@ -65,57 +68,129 @@ public class SwipeViewController
 			service.AddNode("authorizations", "cardSwipe", text);
 		}
 		swipeViewUserControl.SwipeType = _swipeViewType;
-		string dictionaryStringValue = BundleFunctions.GetDictionaryStringValue("strings", "back_button");
+		string back_button = Resources.back_button;
 		BitmapImage adImage = null;
-		string dictionaryStringValue2;
-		string dictionaryStringValue3;
-		switch (_swipeViewType)
+		SwipeViewType swipeViewType = _swipeViewType;
+		string titleText;
+		string messageText;
+		if (swipeViewType != SwipeViewType.RegularCheckOut && swipeViewType == SwipeViewType.ReservationPickup)
 		{
-		case SwipeViewType.ReservationPickup:
-		{
-			dictionaryStringValue2 = BundleFunctions.GetDictionaryStringValue("strings", "reservation_swipe_title");
-			dictionaryStringValue3 = BundleFunctions.GetDictionaryStringValue("strings", "reservation_swipe_message");
+			titleText = Resources.reservation_swipe_title;
+			messageText = Resources.reservation_swipe_message;
 			MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.Pickup, createImpression: true);
 			if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
 			{
-				adImage = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmapImage(marketingAd.ImageName);
+				Image image = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmap(marketingAd.ImageName);
+				adImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
 			}
-			break;
 		}
-		case SwipeViewType.Credits:
-			dictionaryStringValue2 = BundleFunctions.GetDictionaryStringValue("strings", "credits_swipe_title");
-			dictionaryStringValue3 = BundleFunctions.GetDictionaryStringValue("strings", "credits_swipe_message");
-			break;
-		default:
-			dictionaryStringValue2 = BundleFunctions.GetDictionaryStringValue("strings", "regular_checkout_swipe_title");
-			dictionaryStringValue3 = BundleFunctions.GetDictionaryStringValue("strings", "regular_checkout_swipe_message");
-			break;
-		}
-		swipeViewUserControl.BackButtonText = dictionaryStringValue;
-		swipeViewUserControl.TitleText = dictionaryStringValue2;
-		swipeViewUserControl.MessageText = dictionaryStringValue3;
-		swipeViewUserControl.AdImage = adImage;
-		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-		if (service2 != null)
+		else
 		{
-			ITextToSpeechService service3 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-			if (service3 != null && service3.TTSEnabled)
-			{
-				service2["TTS:SwipeTitle"] = dictionaryStringValue2;
-				service2["TTS:SwipeMessage"] = dictionaryStringValue3;
-				service3.TTSRepeatSequence();
-			}
+			titleText = Resources.regular_checkout_swipe_title;
+			messageText = Resources.regular_checkout_swipe_message;
 		}
+		swipeViewUserControl.BackButtonText = back_button;
+		swipeViewUserControl.TitleText = titleText;
+		swipeViewUserControl.MessageText = messageText;
+		swipeViewUserControl.AdImage = adImage;
+		swipeViewUserControl.OnGetSpeechControl = delegate
+		{
+			ISpeechControl result = new SpeechControl
+			{
+				Name = "tts_swipe_view"
+			};
+			AddSpeechPartTitle(result);
+			AddSpeechPartMessage(result);
+			result.SpeechParts.ForEach(delegate(ISpeechPart x)
+			{
+				x.SpeechControl = result;
+			});
+			return result;
+		};
 		swipeViewUserControl.OnGoBack += OnBackButtonPressed;
 		swipeViewUserControl.OnTimeOut += SwipeTimerTimeout;
-		ITrackDataService service4 = ServiceLocator.Instance.GetService<ITrackDataService>();
-		if (service4 != null)
+		ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+		if (service2 != null)
 		{
-			service4.StartTrackParsing();
-			service4.ClearNotify();
-			service4.Notify += TrackDataServiceNotify;
+			service2.StartTrackParsing();
+			service2.ClearNotify();
+			service2.Notify += TrackDataServiceNotify;
 		}
 		swipeViewUserControl.Timeout = 50000;
+	}
+
+	private static void AddSpeechPartTitle(ISpeechControl result)
+	{
+		ISpeechPart speechPart = new SpeechPart
+		{
+			Sequence = 0,
+			Name = "Title",
+			Loop = false,
+			StartPause = 500,
+			EndPause = 1000
+		};
+		speechPart.Refresh = delegate
+		{
+			speechPart.Clear();
+			AddBaseEvents(speechPart);
+			SwipeViewUserControl swipeViewUserControl = BaseViewController.GetViewUserControl() as SwipeViewUserControl;
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = swipeViewUserControl?.TitleText
+			});
+		};
+		result.SpeechParts.Add(speechPart);
+	}
+
+	private static void AddSpeechPartMessage(ISpeechControl result)
+	{
+		ISpeechPart speechPart = new SpeechPart
+		{
+			Sequence = 1,
+			Name = "Message",
+			Loop = true,
+			StartPause = 0,
+			EndPause = 5000
+		};
+		speechPart.Refresh = delegate
+		{
+			speechPart.Clear();
+			AddBaseEvents(speechPart);
+			SwipeViewUserControl swipeViewUserControl = BaseViewController.GetViewUserControl() as SwipeViewUserControl;
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = swipeViewUserControl?.MessageText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "The credit card swiper is located on your right."
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "If you wish to go back, press the CANCEL key."
+			});
+		};
+		result.SpeechParts.Add(speechPart);
+	}
+
+	private static void AddBaseEvents(ISpeechPart speechPart)
+	{
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "CANCEL",
+			Action = delegate
+			{
+				OnBackButtonPressed();
+			}
+		});
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "MINUS",
+			Action = delegate
+			{
+				OnBackButtonPressed();
+			}
+		});
 	}
 
 	public static void LeaveSwipeView()
@@ -160,11 +235,7 @@ public class SwipeViewController
 
 	private static void StopTimer()
 	{
-		IActor actor = ActorFunctions.GetActor("SwipeViewUserControl");
-		if (actor != null && actor.WPFFrameworkElement is SwipeViewUserControl swipeViewUserControl)
-		{
-			swipeViewUserControl.StopTimer();
-		}
+		(BaseViewController.GetViewUserControl() as SwipeViewUserControl)?.StopTimer();
 	}
 
 	private static void GoBackSafe(object content)
@@ -184,20 +255,27 @@ public class SwipeViewController
 
 	private static void OnBackButtonPressed()
 	{
-		AddViewEvent("buttonPress", "card-swipe-back");
-		AddAttribute("cardSwipe", "result", "cancelled", ShoppingCartSessionId);
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		if (service != null)
+		if (BaseViewController.GetViewService().Peek() == "swipe_view")
 		{
-			service["MatureWarning:Header"] = string.Empty;
-		}
-		if (_cancelAction != null)
-		{
-			_cancelAction();
+			AddViewEvent("buttonPress", "card-swipe-back");
+			AddAttribute("cardSwipe", "result", "cancelled", ShoppingCartSessionId);
+			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+			if (service != null)
+			{
+				service["MatureWarning:Header"] = string.Empty;
+			}
+			if (_cancelAction != null)
+			{
+				_cancelAction();
+			}
+			else
+			{
+				GoBackSafe("swipe_view:back_button");
+			}
 		}
 		else
 		{
-			GoBackSafe("swipe_view:back_button");
+			LogHelper.Instance.Log("Back button from swipe view not processed because the swipe view is not on top of the stack.");
 		}
 	}
 

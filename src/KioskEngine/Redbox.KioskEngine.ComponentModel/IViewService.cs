@@ -41,9 +41,11 @@ public interface IViewService
 
 	int GetActiveHitHandlerCount();
 
-	void Push(string viewName, object parameter);
+	void Push(string viewName, object parameter, bool isCriticalErrorView = false);
 
 	void Push(string viewName);
+
+	void PushCriticalErrorView(string viewName, object parameter);
 
 	IViewFrameInstance PeekViewFrame();
 

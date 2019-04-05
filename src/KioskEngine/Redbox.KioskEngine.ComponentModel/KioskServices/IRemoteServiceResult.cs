@@ -15,4 +15,8 @@ public interface IRemoteServiceResult
 	IDictionary<string, object> Properties { get; }
 
 	ReadOnlyCollection<IRemoteServiceProviderInstruction> Instructions { get; }
+
+	T GetProperty<T>(string keyName);
+
+	string ToObfuscatedString();
 }

@@ -38,7 +38,7 @@ internal sealed class ShoppingCart : IShoppingCart
 
 	public decimal DiscountValue { get; internal set; }
 
-	public CreditElection UseCredits { get; internal set; }
+	public CreditElection UseCredits => CreditElection.OptedOut;
 
 	public ShoppingCartType Type { get; internal set; }
 
@@ -84,12 +84,6 @@ internal sealed class ShoppingCart : IShoppingCart
 	{
 		LogHelper.Instance.Log("SetBlocklisted on Shopping Cart for Shopping Session '{0}': value={1}", ShoppingSessionId, value);
 		Blocklisted = value;
-	}
-
-	public void SetUseCredits(CreditElection value)
-	{
-		LogHelper.Instance.Log("SetUseCredits on Shopping Cart for Shopping Session '{0}': value={1}", ShoppingSessionId, value);
-		UseCredits = value;
 	}
 
 	public void SetType(ShoppingCartType type)

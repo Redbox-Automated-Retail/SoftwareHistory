@@ -5,7 +5,9 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -89,11 +91,11 @@ public class StoreServicesProxy : IStoreServices
 	{
 		get
 		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Store", "StandAlone", defaultValue: false);
+			return ServiceLocator.Instance.GetService<IApplicationState>().IsStandAlone;
 		}
 		set
 		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Store", "StandAlone", value);
+			ServiceLocator.Instance.GetService<IApplicationState>().IsStandAlone = value;
 		}
 	}
 

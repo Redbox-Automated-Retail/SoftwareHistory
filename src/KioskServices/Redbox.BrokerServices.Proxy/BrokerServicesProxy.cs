@@ -106,62 +106,12 @@ public class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 
 	public ReservationResult Reserve(ReservationCart cart)
 	{
-		ReservationCallbackEntry reservationCallbackEntry = new ReservationCallbackEntry
-		{
-			Cart = cart
-		};
-		try
-		{
-			using ExecutionTimer executionTimer = new ExecutionTimer();
-			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-			if (service != null)
-			{
-				service.EnqueueCallback(reservationCallbackEntry);
-				reservationCallbackEntry.ResetEvent.WaitOne();
-				LogHelper.Instance.Log("BrokerServicesProxy.Reserve execution time: {0}", executionTimer.Elapsed);
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An unhandled exception was raised in BrokerServicesProxy.Reserve.", e);
-			reservationCallbackEntry.BrokerResult.ErrorMessage = "An error ocurred during reserve.";
-			reservationCallbackEntry.ResetEvent.Set();
-		}
-		finally
-		{
-			reservationCallbackEntry.ResetEvent.Close();
-		}
-		return reservationCallbackEntry.BrokerResult;
+		return null;
 	}
 
 	public ReservationResult Reserve2(ReservationCart2 cart)
 	{
-		ReservationCallbackEntry2 reservationCallbackEntry = new ReservationCallbackEntry2
-		{
-			Cart = cart
-		};
-		try
-		{
-			using ExecutionTimer executionTimer = new ExecutionTimer();
-			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
-			if (service != null)
-			{
-				service.EnqueueCallback(reservationCallbackEntry);
-				reservationCallbackEntry.ResetEvent.WaitOne();
-				LogHelper.Instance.Log("BrokerServicesProxy.Reserve2 execution time: {0}", executionTimer.Elapsed);
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An unhandled exception was raised in BrokerServicesProxy.Reserve2.", e);
-			reservationCallbackEntry.BrokerResult.ErrorMessage = "An error ocurred during reserve2.";
-			reservationCallbackEntry.ResetEvent.Set();
-		}
-		finally
-		{
-			reservationCallbackEntry.ResetEvent.Close();
-		}
-		return reservationCallbackEntry.BrokerResult;
+		return null;
 	}
 
 	public ReservationResult Reserve3(ReservationCart3 cart)
@@ -192,6 +142,33 @@ public class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 			reservationCallbackEntry.ResetEvent.Close();
 		}
 		return reservationCallbackEntry.BrokerResult;
+	}
+
+	public CancelReservationResult CancelReservation(long referenceNumber)
+	{
+		CancelReservationCallbackEntry cancelReservationCallbackEntry = new CancelReservationCallbackEntry(referenceNumber);
+		try
+		{
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
+			if (service != null)
+			{
+				service.EnqueueCallback(cancelReservationCallbackEntry);
+				cancelReservationCallbackEntry.ResetEvent.WaitOne();
+				LogHelper.Instance.Log("BrokerServicesProxy.CancelReservation execution time: {0}", executionTimer.Elapsed);
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in BrokerServicesProxy.CancelReservation.", e);
+			cancelReservationCallbackEntry.BrokerResult.ErrorMessage = "An error ocurred during CancelReservation.";
+			cancelReservationCallbackEntry.ResetEvent.Set();
+		}
+		finally
+		{
+			cancelReservationCallbackEntry.ResetEvent.Close();
+		}
+		return cancelReservationCallbackEntry.BrokerResult;
 	}
 
 	private BrokerServicesProxy()

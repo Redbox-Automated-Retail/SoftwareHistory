@@ -60,4 +60,12 @@ public class DisplayProductModelConstants
 	public IRentalShoppingCartService RentalShoppingCartService { get; set; }
 
 	public bool IsInCartBrowse { get; set; }
+
+	public string Movie { get; set; }
+
+	public string Game { get; set; }
+
+	public string OutOfStockTitleDetailsABTestVersion { get; set; }
+
+	public string StarRatingTitleDetailsABTestVersion { get; set; }
 }

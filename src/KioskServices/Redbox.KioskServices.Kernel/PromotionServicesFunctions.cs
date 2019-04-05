@@ -47,11 +47,14 @@ internal static class PromotionServicesFunctions
 		{
 			callback2 = delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = callback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = callback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
 		service.KioskOptIn(storeNumber, list, sendCardHash, callback2);

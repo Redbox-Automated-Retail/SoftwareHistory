@@ -9,20 +9,6 @@ namespace Redbox.KioskEngine.Kernel;
 
 internal static class DataStoreFunctions
 {
-	[KernelFunction(Name = "kernel.datastoreregistprovider")]
-	internal static void RegisterProvider(string dataStore, string provider)
-	{
-		try
-		{
-			ServiceLocator.Instance.GetService<IDataStoreService>()?.RegisterDataStoreProvider(dataStore, provider);
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log(string.Format("An exception was raised in Kernel.DataStoreFunctions.RegisterDataStoreProvider({0},{1},{2}).", dataStore, provider), e);
-			EnvironmentFunctions.HandleDataStoreErrors(dataStore);
-		}
-	}
-
 	[KernelFunction(Name = "kernel.datastoreget")]
 	internal static object Get(string dataStore, string tableName, string keyName)
 	{

@@ -16,6 +16,8 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class HelpViewController : BaseViewController
 {
+	private const string LoyaltyTimeoutTimerName = "loyalty_help_view_timer";
+
 	public static void ShowFullHelpView(bool allowFMA, bool restartTimer, string analyticsContext = null)
 	{
 		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
@@ -89,7 +91,7 @@ public class HelpViewController : BaseViewController
 		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
 	}
 
-	public static void ShowMobileFaqAndPrivacy(string analysisContext)
+	public static void ShowMobileFaqAndPrivacy(string analysisContext, string idleTimerName = "idle_timer")
 	{
 		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
 		{
@@ -104,20 +106,30 @@ public class HelpViewController : BaseViewController
 		helpViewControllerParameters.GoBackAction = delegate
 		{
 			CreateAnalyticsEvent("buttonPress", "back");
-			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			OrchestrationService.StopIdleTimer("loyalty_help_view_timer");
+			OrchestrationService.RemoveIdleTimer("loyalty_help_view_timer");
+			OrchestrationService.ResumeIdleTimer(idleTimerName);
 			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
 		};
 		if (Redbox.Rental.Services.Session.Session.Instance != null)
 		{
-			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.MobileFaq;
+			if (ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-mobile-faqs") != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.MobileFaq;
+			}
+			else
+			{
+				Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.Privacy;
+			}
 			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
 		}
-		OrchestrationService.ResetApplicationIdleTimerTimeout();
-		OrchestrationService.StartIdleTimer("idle_timer");
+		OrchestrationService.SuspendIdleTimer(idleTimerName);
+		OrchestrationService.CreateIdleTimer("loyalty_help_view_timer");
+		OrchestrationService.StartIdleTimer(40000, helpViewControllerParameters.GoBackAction, "loyalty_help_view_timer");
 		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
 	}
 
-	public static void ShowPerks(bool isFromCreditBalance = false, string analysisContext = null)
+	public static void ShowJoinPerks(Action goBackAction)
 	{
 		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
 		{
@@ -127,19 +139,12 @@ public class HelpViewController : BaseViewController
 			ShowPrivacy = false,
 			ShowPerks = false,
 			ShowMobileFaq = false,
-			AnalysisContext = analysisContext
-		};
-		helpViewControllerParameters.GoBackAction = delegate
-		{
-			CreateAnalyticsEvent("buttonPress", "back");
-			OrchestrationService.ResumeIdleTimer("idle_timer");
-			OrchestrationService.StopIdleTimer("play_pass_help_view_timer");
-			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
-			if (isFromCreditBalance)
+			AnalysisContext = "perks_terms",
+			GoBackAction = delegate
 			{
-				LogHelper.Instance.Log("showing credit_balance_view again");
-				OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
-				OrchestrationService.ViewShow("credit_balance_view");
+				OrchestrationService.StopIdleTimer("loyalty_help_view_timer");
+				OrchestrationService.RemoveIdleTimer("loyalty_help_view_timer");
+				goBackAction?.Invoke();
 			}
 		};
 		if (Redbox.Rental.Services.Session.Session.Instance != null)
@@ -147,9 +152,8 @@ public class HelpViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.PlayPass;
 			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
 		}
-		OrchestrationService.SuspendIdleTimer("idle_timer");
-		OrchestrationService.CreateIdleTimer("play_pass_help_view_timer");
-		OrchestrationService.StartIdleTimer(40000, helpViewControllerParameters.GoBackAction, "play_pass_help_view_timer");
+		OrchestrationService.CreateIdleTimer("loyalty_help_view_timer");
+		OrchestrationService.StartIdleTimer(40000, helpViewControllerParameters.GoBackAction, "loyalty_help_view_timer");
 		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
 	}
 
@@ -170,6 +174,7 @@ public class HelpViewController : BaseViewController
 
 	public static void ConfigureHelpView(HelpViewControllerParameters parameters)
 	{
+		OrchestrationService.SetCurrentUICulture();
 		HelpViewUserControl helpViewUserControl = (HelpViewUserControl)BaseViewController.GetViewUserControl();
 		if (helpViewUserControl == null)
 		{
@@ -211,7 +216,7 @@ public class HelpViewController : BaseViewController
 				viewModel.CurrentHelpDocumentPage = 1;
 				viewModel.XpsDocument = LoadXpsDocument(value2);
 				SetTitle(viewModel);
-				viewModel.ShowContactText = viewModel.CurrentHelpDocument == HelpDocuments.Faq;
+				viewModel.ShowContactText = viewModel.CurrentHelpDocument == HelpDocuments.Faq || viewModel.CurrentHelpDocument == HelpDocuments.MobileFaq;
 				CreateAnalyticsEvent("buttonPress", value2.AnalyticsButtonName);
 			}
 		};
@@ -241,7 +246,7 @@ public class HelpViewController : BaseViewController
 		viewModel.CurrentHelpDocument = helpDocuments;
 		viewModel.XpsDocument = LoadXpsDocument(viewModel.HelpDocumentInfoList[helpDocuments]);
 		SetTitle(viewModel);
-		viewModel.ShowContactText = helpDocuments == HelpDocuments.Faq;
+		viewModel.ShowContactText = helpDocuments == HelpDocuments.Faq || viewModel.CurrentHelpDocument == HelpDocuments.MobileFaq;
 		ConfigureTTS(viewModel);
 		helpViewUserControl.DataContext = viewModel;
 		viewModel.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocumentPage ?? 1;

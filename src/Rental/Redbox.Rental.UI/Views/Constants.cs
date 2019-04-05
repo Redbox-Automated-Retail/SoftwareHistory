@@ -70,11 +70,49 @@ public class Constants
 		public const string MessagePopupView = "MessagePopupViewUserControl";
 
 		public const string HelpView = "HelpViewUserControl";
+
+		public const string RecommendedTitlesPopupView = "RecommendedTitlesPopupView";
+
+		public const string IdleTimeoutMessageView = "IdleTimeoutMessageView";
+
+		public const string ApplyPromoView = "ApplyPromoView";
+
+		public const string PromoConfirmationView = "PromoConfirmationView";
+
+		public const string PerksOfferDetailsView = "PerksOfferDetailsView";
+
+		public const string MemberPerksPopupView = "MemberPerksPopupView";
+
+		public const string ApplicationLoadView = "ApplicationLoadView";
+
+		public const string CollectionMessageView = "CollectionMessageView";
+
+		public const string ComingSoonView = "ComingSoonView";
+
+		public const string ReturnView = "ReturnView";
+
+		public const string SwipeView = "SwipeView";
+
+		public const string VendView = "VendView";
+
+		public const string OptionSelectionDialog = "OptionSelectionDialog";
+
+		public const string BulletListPopupView = "BulletListPopupView";
+
+		public const string ReviewPopupView = "ReviewPopupView";
+
+		public const string MultiDiscVendView = "MultiDiscVendView";
+
+		public const string ReservationDetailsView = "ReservationDetailsView";
 	}
 
 	public class ViewNames
 	{
 		public const string BrowseView = "browse_view";
+
+		public const string AdaBrowseView = "browse_view_ada_accessible";
+
+		public const string ProductDetailView = "product_detail_view";
 
 		public const string ShoppingCartView = "shopping_cart_view";
 
@@ -120,7 +158,7 @@ public class Constants
 
 		public const string JoinedPerksView = "joined_perks_view";
 
-		public const string JoinTextClubPromoView = "joined_text_club_promo_view";
+		public const string JoinTextClubPromoView = "join_text_club_promo_view";
 
 		public const string EmailReceiptView = "email_receipt_view";
 
@@ -136,7 +174,47 @@ public class Constants
 
 		public const string _4kAlertPopupView = "4K_warning_popup_view";
 
+		public const string MultiDiscAlertPopupView = "multi_disc_warning_popup_view";
+
 		public const string HelpView = "help_document_view";
+
+		public const string RecommendedTitlesPopupView = "recommended_titles_popup_view";
+
+		public const string IdleTimeoutMessageView = "idle_timeout_message_view";
+
+		public const string ApplyPromoView = "apply_promo_view";
+
+		public const string PromoConfirmationView = "promo_confirmation_view";
+
+		public const string PerksOfferDetailsView = "perks_offer_details_view";
+
+		public const string MemberPerksPopupView = "member_perks_popup_view";
+
+		public const string ApplicationLoadView = "application_load_view";
+
+		public const string CollectionMessageView = "collection_message_view";
+
+		public const string ComingSoonView = "coming_soon_view";
+
+		public const string ReturnView = "return_view";
+
+		public const string SwipeView = "swipe_view";
+
+		public const string VendView = "vend_view";
+
+		public const string OptionSelectionDialogView = "option_selection_dialog_view";
+
+		public const string ReserveOnlinePopupView = "reserve_online_popup_view";
+
+		public const string PerksInfoPopupView = "perks_info_popup_view";
+
+		public const string ReviewPopupView = "review_popup_view";
+
+		public const string ConfirmEmailView = "confirm_email_view";
+
+		public const string MultiDiscVendView = "multi_disc_vend_view";
+
+		public const string ReservationDetailsView = "reservation_details_view";
 	}
 
 	public class ThemeNames

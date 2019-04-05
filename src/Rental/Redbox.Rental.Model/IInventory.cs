@@ -19,4 +19,14 @@ public interface IInventory
 	List<RebalancesInModel> GetRebalancesIn();
 
 	int GetFillQuantity();
+
+	Inventory GetInventory(string barcode);
+
+	Dictionary<string, Inventory> GetInventories(List<string> barcodes);
+
+	string GetInventoryDataMachineOrigin();
+
+	string GetInventoryDataCreatedOn();
+
+	long GetInventoryDataCount();
 }

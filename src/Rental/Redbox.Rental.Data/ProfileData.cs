@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Web;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
@@ -89,6 +90,7 @@ public class ProfileData : IProfileData
 				LoadSubPlatform(vistaDBDatabaseProvider, profileDataInstance);
 				LoadVendors(vistaDBDatabaseProvider, profileDataInstance);
 				LoadVersion(vistaDBDatabaseProvider, profileDataInstance);
+				LoadReviews(vistaDBDatabaseProvider, profileDataInstance);
 				ExtractImages(vistaDBDatabaseProvider, profileDataInstance);
 				vistaDBDatabaseProvider.Close();
 			}
@@ -187,7 +189,9 @@ public class ProfileData : IProfileData
 				DoNotRentDate = dictionary.ToDateTime("do_not_rent_date", null),
 				SellThruDate = dictionary.ToDateTime("sellthru_date", null),
 				SellThruPrice = dictionary.ToDecimal("sellthru_price", null),
-				DiscNumber = dictionary.ToInt32("disc_number", null)
+				DiscNumber = dictionary.ToInt32("disc_number", null),
+				DigitalHDRentPrice = dictionary.ToDecimal("digital_hd_rent_price", null),
+				DigitalSDRentPrice = dictionary.ToDecimal("digital_sd_rent_price", null)
 			};
 			item.Genres = new List<long>();
 			dictionary.ToDictionaryObject("genres").ForEach(delegate(object g)
@@ -269,6 +273,19 @@ public class ProfileData : IProfileData
 				};
 			});
 		});
+		instance.ProductGroups.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 6).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
+		{
+			pair.Value.ProductIds.ForEach(delegate(long pn)
+			{
+				instance.MultiDiscWorkaroundXREF[pn] = new ProductGroupXREF
+				{
+					Key = Convert.ToString(pn),
+					Value = string.Format("{0} product_id = {1} , product_group_id = {2} {3}", "{", pn, pair.Value.ProductGroupId, "}"),
+					ProductId = pn,
+					ProductGroupId = pair.Value.ProductGroupId
+				};
+			});
+		});
 	}
 
 	private void LoadProductRating(VistaDBDatabaseProvider db, ProfileDataInstance instance)
@@ -338,7 +355,8 @@ public class ProfileData : IProfileData
 				Zip = dictionary.ToString("zip"),
 				CollectionMethod = dictionary.ToInt32("collection_method", 6),
 				ServiceFee = dictionary.ToDecimal("service_fee"),
-				ServiceFeeTaxRate = dictionary.ToDecimal("service_fee_tax_rate")
+				ServiceFeeTaxRate = dictionary.ToDecimal("service_fee_tax_rate"),
+				ReturnOnlyModeDate = dictionary.ToDateTime("return_only_mode_date", null)
 			};
 			decimal? num = dictionary.ToDecimal("digital_purchase_tax_rate", null);
 			if (num.HasValue)
@@ -409,6 +427,38 @@ public class ProfileData : IProfileData
 				profileVersion.VersionValue = dictionary.ToString("date");
 			}
 			instance.ProfileVersion.Add(profileVersion);
+		});
+	}
+
+	private void LoadReviews(VistaDBDatabaseProvider db, ProfileDataInstance instance)
+	{
+		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Review"));
+		ConvertToList(sqlData, "LoadReviews", delegate(string key, string value)
+		{
+			Dictionary<string, object> data = value.ParseLuaValue();
+			ReviewList item = new ReviewList
+			{
+				Key = key,
+				Value = value,
+				TitleId = long.Parse(key)
+			};
+			item.Reviews = new List<Review>();
+			data.ToDictionaryObject("reviews").ForEach(delegate(object r)
+			{
+				if (r is KeyValuePair<string, object> keyValuePair)
+				{
+					Dictionary<string, object> dictionary = (Dictionary<string, object>)keyValuePair.Value;
+					item.Reviews.Add(new Review
+					{
+						TitleId = dictionary.ToInt64("title_id"),
+						DisplayName = dictionary.ToString("display_name"),
+						ReviewDate = dictionary.ToDateTime("date_rated_cst", DateTime.MinValue).Value,
+						Stars = dictionary.ToInt32("rating"),
+						ReviewText = HttpUtility.HtmlDecode(dictionary.ToString("review_text"))
+					});
+				}
+			});
+			instance.Reviews[item.TitleId] = item;
 		});
 	}
 

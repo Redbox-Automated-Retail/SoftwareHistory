@@ -7,6 +7,12 @@ namespace Redbox.HardwareServices.Proxy.ComponentModel;
 
 public interface IHardwareService
 {
+	bool SupportsCameraFraudScan { get; }
+
+	int CurrentCameraGeneration { get; }
+
+	int BarcodeDecoder { get; }
+
 	void Reset();
 
 	bool CanSwitch();
@@ -134,4 +140,6 @@ public interface IHardwareService
 	ErrorList RemoveHardwareCorrectionStats(HardwareCorrectionStatisticType stat, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList IRHardwareInstalled(out DateTime? installDate);
+
+	bool IsComplete(string status);
 }

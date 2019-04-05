@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Kernel;
 
@@ -66,10 +67,24 @@ public static class EnvironmentFunctions
 	public static bool CanSwitch()
 	{
 		LogHelper.Instance.Log("Start CanSwitch Check");
-		IKernelExtensionService service = ServiceLocator.Instance.GetService<IKernelExtensionService>();
+		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		IKernelExtensionService service2 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
 		bool flag = ServiceLocator.Instance.GetService<IEngineApplication>()?.AppStarting ?? false;
 		LogHelper.Instance.Log("Performing Startup: {0}", flag);
-		bool flag2 = !flag && service.CanSwitch(out var _);
+		bool flag2 = true;
+		if (service != null && service.IsRentalRunning)
+		{
+			IRedboxRental service3 = ServiceLocator.Instance.GetService<IRedboxRental>();
+			if (service3 != null && service3.IsRentalSessionActive())
+			{
+				LogHelper.Instance.Log("CanSwitch Check: Rental Session Active: true");
+				flag2 = false;
+			}
+		}
+		if (flag2)
+		{
+			flag2 = !flag && service2.CanSwitch(out var _);
+		}
 		LogHelper.Instance.Log("CanSwitch: {0}", flag2);
 		return flag2;
 	}

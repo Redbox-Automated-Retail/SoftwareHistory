@@ -33,9 +33,21 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 
 	public ItemSourceType SourceType { get; set; }
 
-	public bool MultiDisc => _titleProduct is MDVProduct;
+	public bool MultiDisc
+	{
+		get
+		{
+			if (!(_titleProduct is MDVProduct))
+			{
+				return DiscNumber > 1;
+			}
+			return true;
+		}
+	}
 
 	public int? DiscNumber => _titleProduct.DiscNumber;
+
+	public string OfferCode { get; set; }
 
 	public decimal Price { get; set; }
 

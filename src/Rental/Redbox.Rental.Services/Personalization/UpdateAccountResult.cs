@@ -1,3 +1,4 @@
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.Personalization;
 
@@ -12,4 +13,6 @@ public class UpdateAccountResult : IUpdateAccountResult
 	public UpdateAccountResponseErrors UpdateAccountResponseError { get; set; }
 
 	public string ErrorMessage { get; set; }
+
+	public ErrorList RemoteServiceErrors { get; set; }
 }

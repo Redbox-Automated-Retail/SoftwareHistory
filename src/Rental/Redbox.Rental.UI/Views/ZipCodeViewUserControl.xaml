@@ -18,22 +18,22 @@
   <Grid Background="#FFFFFFFF">
     <StackPanel Margin="{Binding Path=StackPanelMargin}">
       <Image Name="ad_image" Width="668" Height="83" Margin="0,12,0,0" Source="{Binding Path=AdImageSource}" Visibility="{Binding Path=AdImageVisibility}" />
-      <TextBlock Name="header_label" Margin="19,0,0,0" Width="512" Height="42" Foreground="#2C2E32" HorizontalAlignment="Left" Style="{StaticResource font_target_medium}" Text="{Binding Path=HeaderLabelText}" />
+      <TextBlock Name="header_label" Margin="19,0,0,0" Width="512" Height="42" Foreground="#2C2E32" HorizontalAlignment="Left" Style="{StaticResource keyboard_prompt_message_style}" Text="{Binding Path=HeaderLabelText}" />
       <Grid Name="draw_line" Margin="20,0,0,10" HorizontalAlignment="Left" Width="985" Height="2" Background="#2C2E32" />
       <Border CornerRadius="30" Width="280" Height="65" BorderBrush="#A5A5A5" BorderThickness="1" Background="#FFFFFFFF">
         <UIElement.Effect>
           <DropShadowEffect Direction="180" ShadowDepth="4" Color="#E1E1E1" />
         </UIElement.Effect>
-        <TextBlock Name="DisplayText" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_target_small_bold}" Text="{Binding Path=DisplayText}" />
+        <TextBlock Name="DisplayText" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=DisplayText}" />
       </Border>
       <controls:KeypadUserControl Height="395" Width="310" DataContext="{Binding Path=KeypadModel}" />
     </StackPanel>
     <Grid Name="bottom_background" Margin="0,624,0,0" Width="1024" Height="146" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#380B44" />
-    <TextBlock Name="note1_label" Margin="20,640,0,0" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_regular_16}" Text="{Binding Path=Note1LabelText}" />
-    <TextBlock Name="note2_label" Margin="-284,680,0,0" Width="700" TextWrapping="Wrap" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_regular_16}" Text="{Binding Path=Note2LabelText}" />
+    <TextBlock Name="note1_label" Margin="20,640,0,0" Foreground="#FFFFFFFF" Style="{StaticResource font_akzidenz_regular_small}" Text="{Binding Path=Note1LabelText}" />
+    <TextBlock Name="note2_label" Margin="-284,680,0,0" Width="700" TextWrapping="Wrap" Foreground="#FFFFFFFF" Style="{StaticResource font_akzidenz_regular_small}" Text="{Binding Path=Note2LabelText}" />
     <Redbox:RoundedButton Name="NextButton" Margin="760,618,0,0" Width="196" Height="66" CornerRadius="32" Style="{StaticResource next_button_style}" Command="{x:Static views:ZipCodeViewUserControlCommands.NextCommand}" IsEnabled="{Binding Path=IsNextButtonEnabled}">
       <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-        <TextBlock Style="{StaticResource font_target_small}" Text="{Binding Path=NextButtonText}" />
+        <TextBlock Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=NextButtonText}" />
         <Image Width="15" Margin="5,2,0,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/next-right-arrow-rubine.png" Visibility="{Binding Path=NextButtonArrowVisibility}" />
       </StackPanel>
     </Redbox:RoundedButton>

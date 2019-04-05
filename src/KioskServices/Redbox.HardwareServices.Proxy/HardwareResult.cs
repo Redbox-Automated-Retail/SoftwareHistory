@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 
 namespace Redbox.HardwareServices.Proxy;
@@ -23,4 +24,11 @@ internal class HardwareResult : IHardwareResult
 	public string PreviousItem { get; internal set; }
 
 	public string ReturnTime { get; internal set; }
+
+	public IDictionary<string, object> MessageData { get; internal set; }
+
+	public override string ToString()
+	{
+		return $"deck={Deck}, slot = {Slot}, id = {ID}, previous_item='{PreviousItem}', message='{Message}', return_time={ReturnTime}, time_stamp={Timestamp}, item_id='{ItemID}', meta_data='{MetaData}', code='{Code}' ";
+	}
 }

@@ -8,5 +8,7 @@ public static class MultiNightPricingPopupViewUserControlCommands
 
 	public static readonly RoutedCommand MultiNightCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand BuyCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand CancelCommand = new RoutedCommand();
 }

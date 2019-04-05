@@ -9,6 +9,7 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -322,6 +323,8 @@ public class PromotionServicesProxy : IPromotionServices
 						{
 							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
 						}
+						remoteServiceResult.Properties["product_type_id"] = (dictionary.ContainsKey("ProductTypeId") ? dictionary["ProductTypeId"] : null);
+						remoteServiceResult.Properties["format_ids"] = (dictionary.ContainsKey("FormatIds") ? (dictionary["FormatIds"] as ArrayList) : null);
 						if (!remoteServiceResult.Success)
 						{
 							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -358,7 +361,7 @@ public class PromotionServicesProxy : IPromotionServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -423,6 +426,8 @@ public class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["get_qty"] = 0;
 					remoteServiceResult.Properties["get_format"] = null;
 					remoteServiceResult.Properties["campaign_titles"] = null;
+					remoteServiceResult.Properties["product_type_id"] = null;
+					remoteServiceResult.Properties["format_ids"] = null;
 				}
 				else
 				{
@@ -435,6 +440,8 @@ public class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["get_qty"] = 0;
 					remoteServiceResult.Properties["get_format"] = null;
 					remoteServiceResult.Properties["campaign_titles"] = null;
+					remoteServiceResult.Properties["product_type_id"] = null;
+					remoteServiceResult.Properties["format_ids"] = null;
 				}
 			}
 			catch (Exception e)
@@ -447,7 +454,7 @@ public class PromotionServicesProxy : IPromotionServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,

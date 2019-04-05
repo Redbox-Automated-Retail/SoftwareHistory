@@ -164,6 +164,7 @@ public class KeyboardLogic : BaseLogic
 		}
 		BaseLogic.HandleWPFHit();
 		CommandManager.InvalidateRequerySuggested();
+		Model.ContinueButtonEnabled = Model.ContinueButtonCommand.CanExecute(null);
 	}
 
 	public void KeyButtonCommand_Execute(string text)
@@ -181,6 +182,10 @@ public class KeyboardLogic : BaseLogic
 
 	public void BackButtonCommand_Execute()
 	{
+		if (Model.KeyboardText == null)
+		{
+			return;
+		}
 		if (Model.KeyEmailMode)
 		{
 			int num = Model.KeyboardText.Length - 1;
@@ -215,20 +220,28 @@ public class KeyboardLogic : BaseLogic
 
 	public void DomainButtonCommand_Execute(string text)
 	{
-		int num = Model.KeyboardText.IndexOf('@');
-		if (num > -1)
+		if (Model.KeyboardText != null)
 		{
-			Model.KeyboardText = Model.KeyboardText.Remove(num);
+			int num = Model.KeyboardText.IndexOf('@');
+			if (num > -1)
+			{
+				Model.KeyboardText = Model.KeyboardText.Remove(num);
+			}
+			if (Model.KeyboardText.Length > 0)
+			{
+				Model.KeyboardText += text;
+				SetControlTextMode(mode: false);
+			}
+			UpdateContinue();
 		}
-		if (Model.KeyboardText.Length > 0)
-		{
-			Model.KeyboardText += text;
-		}
-		UpdateContinue();
 	}
 
 	public void DotComButtonCommand_Execute(string text)
 	{
+		if (Model.KeyboardText == null)
+		{
+			return;
+		}
 		int num = Model.KeyboardText.IndexOf('@');
 		if (num == -1)
 		{
@@ -247,6 +260,7 @@ public class KeyboardLogic : BaseLogic
 				Model.KeyboardText = Model.KeyboardText.Remove(num + num2);
 			}
 			Model.KeyboardText += text;
+			SetControlTextMode(mode: false);
 		}
 		UpdateContinue();
 	}

@@ -101,7 +101,7 @@ public static class IRemoteServiceResultExtensions
 			{
 				luaTable[key] = obj;
 			}
-			else
+			else if (obj != null)
 			{
 				LogHelper.Instance.Log("IRemoteServiceResult: unexpected data type for Property[" + key + "] skipped.");
 			}

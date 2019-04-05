@@ -10,5 +10,17 @@ public class PhoneAndPinInfo
 
 	public SignInCancelButtonTypes SignInCancelButtonType { get; set; }
 
-	public Action<string, SecureString> SignInAction { get; set; }
+	public Action<string, SecureString, bool> SignInAction { get; set; }
+
+	public Action ContinueAction { get; set; }
+
+	public string MobilePhoneNumber { get; set; }
+
+	public bool IsSignUp { get; set; }
+
+	public bool IsAfterSwipe { get; set; }
+
+	public bool ShowTextClubOption { get; set; }
+
+	public string IdleTimerName { get; set; }
 }

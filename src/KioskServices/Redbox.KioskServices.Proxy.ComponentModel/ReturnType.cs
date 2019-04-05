@@ -12,5 +12,6 @@ public enum ReturnType
 	BackwardsDiscReturn,
 	UnplayableReturn,
 	CrossBorderReturn,
-	FailedSecurityRead
+	FailedIRSecurity,
+	FailedLabelAudit
 }

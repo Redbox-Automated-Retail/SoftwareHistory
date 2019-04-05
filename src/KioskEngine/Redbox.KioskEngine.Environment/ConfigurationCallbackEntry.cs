@@ -6,6 +6,8 @@ namespace Redbox.KioskEngine.Environment;
 
 internal sealed class ConfigurationCallbackEntry : ICallbackEntry
 {
+	public string Name => "ConfigurationCallbackEntry";
+
 	public string Store { get; set; }
 
 	public string Path { get; set; }

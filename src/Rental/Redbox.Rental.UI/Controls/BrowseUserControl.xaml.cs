@@ -28,12 +28,17 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 		Right
 	}
 
-	public static readonly DependencyProperty ShowPaddlesProperty = DependencyProperty.Register("ShowPaddles", typeof(bool), typeof(BrowseUserControl), new FrameworkPropertyMetadata(true, OnShowPaddlesPropertyChanged)
+	public static readonly DependencyProperty ShowPaddlesProperty = DependencyProperty.Register("ShowPaddles", typeof(bool), typeof(BrowseUserControl), new FrameworkPropertyMetadata(false, OnShowPaddlesPropertyChanged)
 	{
 		AffectsRender = true
 	});
 
-	public static readonly DependencyProperty PaddleVisibilityProperty = DependencyProperty.Register("PaddleVisibility", typeof(Visibility), typeof(BrowseUserControl), new FrameworkPropertyMetadata(Visibility.Visible)
+	public static readonly DependencyProperty LeftPaddleVisibilityProperty = DependencyProperty.Register("LeftPaddleVisibility", typeof(Visibility), typeof(BrowseUserControl), new FrameworkPropertyMetadata(Visibility.Visible)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty RightPaddleVisibilityProperty = DependencyProperty.Register("RightPaddleVisibility", typeof(Visibility), typeof(BrowseUserControl), new FrameworkPropertyMetadata(Visibility.Visible)
 	{
 		AffectsRender = true
 	});
@@ -106,15 +111,27 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 		}
 	}
 
-	public Visibility PaddleVisibility
+	public Visibility LeftPaddleVisibility
 	{
 		get
 		{
-			return (Visibility)GetValue(PaddleVisibilityProperty);
+			return (Visibility)GetValue(LeftPaddleVisibilityProperty);
 		}
 		set
 		{
-			SetValue(PaddleVisibilityProperty, value);
+			SetValue(LeftPaddleVisibilityProperty, value);
+		}
+	}
+
+	public Visibility RightPaddleVisibility
+	{
+		get
+		{
+			return (Visibility)GetValue(RightPaddleVisibilityProperty);
+		}
+		set
+		{
+			SetValue(RightPaddleVisibilityProperty, value);
 		}
 	}
 
@@ -183,8 +200,7 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 
 	private static void OnShowPaddlesPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
-		BrowseUserControl obj = d as BrowseUserControl;
-		obj.PaddleVisibility = ((!obj.ShowPaddles) ? Visibility.Collapsed : Visibility.Visible);
+		(d as BrowseUserControl).RenderNavigationButtons();
 	}
 
 	public int GetPageOfBrowseItemIndex(int browseItemIndex)
@@ -222,6 +238,9 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 			{
 				browseItemModel.IsBorderItem = isBorderPage;
 				browseItemModel.VisibleItemIndex = i;
+				RowAndColumn rowAndColumnFromIndex = GetRowAndColumnFromIndex(i);
+				browseItemModel.CurrentGridRow = rowAndColumnFromIndex.Row + 1;
+				browseItemModel.CurrentGridColumn = rowAndColumnFromIndex.Column + 1;
 				browseItemModel.IsBottomRow = ((_browseControlModel != null && _browseControlModel.LayoutDirection == BrowseLayoutDirection.LeftToRightThenTopToBottom) ? (i >= (RowCount - 1) * ColumnCount) : ((i + 1) % RowCount == 0));
 				list.Add(browseItemModel);
 			}
@@ -239,10 +258,18 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 
 	private void RenderNavigationButtons()
 	{
-		if (_browseControlModel != null && ShowPaddles)
+		if (_browseControlModel != null)
 		{
-			LeftPaddleButton.Visibility = ((_browseItemIndex <= 0) ? Visibility.Collapsed : Visibility.Visible);
-			RightPaddleButton.Visibility = ((_browseItemIndex + VisibleItemCount >= (_browseControlModel?.BrowseItems?.Count ?? 0)) ? Visibility.Collapsed : Visibility.Visible);
+			if (ShowPaddles)
+			{
+				LeftPaddleVisibility = ((_browseItemIndex <= 0) ? Visibility.Collapsed : Visibility.Visible);
+				RightPaddleVisibility = ((_browseItemIndex + VisibleItemCount >= (_browseControlModel?.BrowseItems?.Count ?? 0)) ? Visibility.Collapsed : Visibility.Visible);
+			}
+			else
+			{
+				LeftPaddleVisibility = Visibility.Collapsed;
+				RightPaddleVisibility = Visibility.Collapsed;
+			}
 		}
 	}
 

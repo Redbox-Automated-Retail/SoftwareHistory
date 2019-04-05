@@ -10,10 +10,4 @@ public class HelpViewFunctions
 	{
 		HelpViewController.ShowFullHelpView(allowFMA, restartTimer);
 	}
-
-	[KernelFunction(Name = "kernel.show_play_pass_disclaimer_view")]
-	internal static void ShowPlayPassDisclaimer(bool isFromCreditBalance = false)
-	{
-		HelpViewController.ShowPerks(isFromCreditBalance);
-	}
 }

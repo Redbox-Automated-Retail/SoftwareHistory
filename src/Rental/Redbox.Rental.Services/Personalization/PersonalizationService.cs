@@ -8,6 +8,7 @@ using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.Services.Personalization;
@@ -40,13 +41,31 @@ public class PersonalizationService : IPersonalizationService
 		Login(null, null, phoneNumber, pin, loginResultCallback);
 	}
 
-	public void UpdateAccount(string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, Action<IUpdateAccountResult> resultCallback)
+	public void SetSelectedPromo(string promoCode)
+	{
+		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+		if (personalizationSession != null)
+		{
+			personalizationSession.SelectedPromo = promoCode;
+		}
+	}
+
+	public void ClearSelectedPromo()
+	{
+		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+		if (personalizationSession != null)
+		{
+			personalizationSession.SelectedPromo = null;
+		}
+	}
+
+	public void UpdateAccount(string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, Action<IUpdateAccountResult> resultCallback, bool queued = false)
 	{
 		_updateAccountResultCallback = resultCallback;
 		IPersonalizationServices service = ServiceLocator.Instance.GetService<IPersonalizationServices>();
 		int kioskId = (int)(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0);
 		RemoteServiceCallback completeCallback = ProcessUpdateAccountResult;
-		service?.UpdateAccount(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback);
+		service?.UpdateAccount(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback, queued);
 	}
 
 	private void Login(string emailAddress, SecureString password, string phoneNumber, SecureString pin, Action<ILoginResult> loginResultCallback)
@@ -58,7 +77,8 @@ public class PersonalizationService : IPersonalizationService
 			IPersonalizationServices service = ServiceLocator.Instance.GetService<IPersonalizationServices>();
 			int kioskId = (int)(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0);
 			RemoteServiceCallback completeCallback = ProcessLoginResult;
-			service?.Login(kioskId, emailAddress, password, phoneNumber, pin, completeCallback);
+			string languageCode = OrchestrationService.GetCulture()?.Substring(0, 2);
+			service?.Login(kioskId, emailAddress, password, phoneNumber, pin, languageCode, completeCallback);
 		}
 		else
 		{
@@ -138,7 +158,8 @@ public class PersonalizationService : IPersonalizationService
 		UpdateAccountResult updateAccountResult = new UpdateAccountResult
 		{
 			Success = result.Success,
-			UpdateAccountResponseError = UpdateAccountResponseErrors.None
+			UpdateAccountResponseError = UpdateAccountResponseErrors.None,
+			RemoteServiceErrors = result.Errors
 		};
 		if (!result.Success && result.Properties.ContainsKey("response") && result.Properties["response"] is UpdateAccountResponseErrors)
 		{
@@ -158,57 +179,35 @@ public class PersonalizationService : IPersonalizationService
 		_updateAccountResultCallback?.Invoke(updateAccountResult);
 	}
 
-	private static int GetInt(object obj)
-	{
-		int result = 0;
-		Type type = obj.GetType();
-		if (type == typeof(int))
-		{
-			result = (int)obj;
-		}
-		else if (type == typeof(string))
-		{
-			int.TryParse((string)obj, out result);
-		}
-		return result;
-	}
-
-	private static T GetProperty<T>(IDictionary<string, object> dictionary, string keyName)
-	{
-		object obj = (dictionary.ContainsKey(keyName) ? dictionary[keyName] : null);
-		if (typeof(T) == typeof(string))
-		{
-			obj = ((obj != null) ? obj.ToString() : string.Empty);
-		}
-		else if (typeof(T) == typeof(int))
-		{
-			obj = GetInt(obj);
-		}
-		return (T)obj;
-	}
-
 	private static void PopulatePersonalizationSession(IRemoteServiceResult result, LoginResult loginResult)
 	{
 		loginResult.PersonalizationSession = new PersonalizationSession();
-		loginResult.PersonalizationSession.FirstName = GetProperty<string>(result.Properties, "FirstName");
+		loginResult.PersonalizationSession.CustomerProfileNumber = result.GetProperty<string>("CustomerProfileNumber");
+		loginResult.PersonalizationSession.LoginEmailAddress = result.GetProperty<string>("LoginEmail");
+		loginResult.PersonalizationSession.MobilePhoneNumber = result.GetProperty<string>("MobilePhoneNumber");
+		loginResult.PersonalizationSession.FirstName = result.GetProperty<string>("FirstName");
 		loginResult.PersonalizationSession.IsLoggedIn = true;
-		loginResult.PersonalizationSession.CustomerProfileNumber = GetProperty<string>(result.Properties, "CustomerProfileNumber");
-		loginResult.PersonalizationSession.LoginEmailAddress = GetProperty<string>(result.Properties, "LoginEmail");
+		loginResult.PersonalizationSession.PromptForPerks = result.GetProperty<bool>("PromptForPerks");
+		loginResult.PersonalizationSession.PromptForEarlyId = result.GetProperty<bool>("PromptForEarlyId");
+		loginResult.PersonalizationSession.TextClubEnabled = result.GetProperty<bool>("TextClubEnabled");
+		loginResult.PersonalizationSession.RecommendedTitles = result.GetProperty<List<IRecommendedTitles>>("RecommendedTitles");
+		loginResult.PersonalizationSession.StoredPromoCodes = result.GetProperty<List<IStoredPromoCode>>("StoredPromoCodes");
+		loginResult.PersonalizationSession.AcceptedOffers = result.GetProperty<List<IAcceptedOffer>>("AcceptedOffers");
 		loginResult.PersonalizationSession.LoyaltySession = new LoyaltySession();
-		loginResult.PersonalizationSession.LoyaltySession.PointsBalance = GetProperty<int>(result.Properties, "LoyaltyPointBalance");
+		loginResult.PersonalizationSession.LoyaltySession.PointsBalance = result.GetProperty<int>("LoyaltyPointBalance");
 		LoyaltyTiers result2 = LoyaltyTiers.None;
-		string property = GetProperty<string>(result.Properties, "LoyaltyTier");
+		string property = result.GetProperty<string>("LoyaltyTier");
 		if (property != string.Empty)
 		{
 			Enum.TryParse<LoyaltyTiers>(property, ignoreCase: true, out result2);
 		}
 		loginResult.PersonalizationSession.LoyaltySession.LoyaltyTier = result2;
 		loginResult.PersonalizationSession.LoyaltySession.LoyaltyTierName = property;
-		loginResult.PersonalizationSession.LoyaltySession.LoyaltyTierCounter = GetProperty<int>(result.Properties, "LoyaltyTierCounter");
-		loginResult.PersonalizationSession.LoyaltySession.PointsExpiring = GetProperty<int>(result.Properties, "PointsExpiring");
-		loginResult.PersonalizationSession.LoyaltySession.PointsExpirationDate = GetProperty<DateTime?>(result.Properties, "PointsExpirationDate");
-		loginResult.PersonalizationSession.LoyaltySession.BirthDate = GetProperty<DateTime?>(result.Properties, "BirthDate");
-		loginResult.PersonalizationSession.LoyaltySession.PostalCode = GetProperty<string>(result.Properties, "PostalCode");
-		loginResult.PersonalizationSession.LoyaltySession.PhoneNumber = GetProperty<string>(result.Properties, "PhoneNumber");
+		loginResult.PersonalizationSession.LoyaltySession.LoyaltyTierCounter = result.GetProperty<int>("LoyaltyTierCounter");
+		loginResult.PersonalizationSession.LoyaltySession.PointsExpiring = result.GetProperty<int>("PointsExpiring");
+		loginResult.PersonalizationSession.LoyaltySession.PointsExpirationDate = result.GetProperty<DateTime?>("PointsExpirationDate");
+		loginResult.PersonalizationSession.LoyaltySession.BirthDate = result.GetProperty<DateTime?>("BirthDate");
+		loginResult.PersonalizationSession.LoyaltySession.PostalCode = result.GetProperty<string>("PostalCode");
+		loginResult.PersonalizationSession.LoyaltySession.PhoneNumber = result.GetProperty<string>("PhoneNumber");
 	}
 }

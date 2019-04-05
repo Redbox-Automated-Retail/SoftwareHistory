@@ -30,6 +30,14 @@ public class FilterBarModel : DependencyObject
 
 	public static readonly DependencyProperty SelectedFormatProperty = DependencyProperty.Register("SelectedFormat", typeof(TitleType?), typeof(FilterBarModel), new FrameworkPropertyMetadata(null, SelectedFormatChanged));
 
+	public static readonly DependencyProperty PriceRangeFilterButtonVisibilityProperty = DependencyProperty.Register("PriceRangeFilterButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty PriceRangeFilterButtonTextProperty = DependencyProperty.Register("PriceRangeFilterButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(string.Empty));
+
+	public static readonly DependencyProperty PriceRangeFilterButtonStyleProperty = DependencyProperty.Register("PriceRangeFilterButtonStyle", typeof(Style), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SelectedPriceRangeProperty = DependencyProperty.Register("SelectedPriceRange", typeof(BrowsePriceRangeParameter), typeof(FilterBarModel), new FrameworkPropertyMetadata(new BrowsePriceRangeParameter(), SelectedPriceRangeChanged));
+
 	public string StartOverButtonText { get; set; }
 
 	public Style StartOverButtonStyle { get; set; }
@@ -38,15 +46,17 @@ public class FilterBarModel : DependencyObject
 
 	public string BackButtonText { get; set; }
 
+	public string PriceRangeButtonDefaultText { get; set; }
+
 	public List<BrowseFilter> Filters { get; set; }
 
 	public Thickness FilterMargin { get; set; }
 
 	public Dictionary<TitleType, string> FormatFilterButtonStrings { get; set; }
 
-	public Style FormatFilterButtonUnselectedStyle { get; set; }
+	public Style FilterButtonUnselectedStyle { get; set; }
 
-	public Style FormatFilterButtonSelectedStyle { get; set; }
+	public Style FilterButtonSelectedStyle { get; set; }
 
 	public Visibility MoreCollectionsButtonVisibility
 	{
@@ -213,6 +223,66 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public Visibility PriceRangeFilterButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PriceRangeFilterButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PriceRangeFilterButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Style PriceRangeFilterButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(PriceRangeFilterButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PriceRangeFilterButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public string PriceRangeFilterButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PriceRangeFilterButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PriceRangeFilterButtonTextProperty, value);
+			});
+		}
+	}
+
+	public BrowsePriceRangeParameter SelectedPriceRange
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (BrowsePriceRangeParameter)GetValue(SelectedPriceRangeProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SelectedPriceRangeProperty, value);
+			});
+		}
+	}
+
 	public event Action OnStartOverButtonClicked;
 
 	public event Action OnHomeButtonClicked;
@@ -224,6 +294,8 @@ public class FilterBarModel : DependencyObject
 	public event Action<BrowseFilter> OnBrowseFilterButtonClicked;
 
 	public event Action OnFormatFilterButtonClicked;
+
+	public event Action OnPriceRangeFilterButtonClicked;
 
 	public void ProcessOnStartOverButtonClicked()
 	{
@@ -243,6 +315,14 @@ public class FilterBarModel : DependencyObject
 		if (OnFormatFilterButtonClicked != null)
 		{
 			OnFormatFilterButtonClicked();
+		}
+	}
+
+	public void ProcessOnPriceRangeFilterButtonClicked()
+	{
+		if (OnFormatFilterButtonClicked != null)
+		{
+			OnPriceRangeFilterButtonClicked();
 		}
 	}
 
@@ -270,6 +350,25 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	private static void SelectedPriceRangeChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
+	{
+		if (obj != null && obj is FilterBarModel)
+		{
+			FilterBarModel filterBarModel = (FilterBarModel)obj;
+			BrowsePriceRangeParameter browsePriceRangeParameter = ((args.NewValue == null) ? null : ((BrowsePriceRangeParameter)args.NewValue));
+			if (browsePriceRangeParameter != null)
+			{
+				filterBarModel.PriceRangeFilterButtonText = browsePriceRangeParameter.buttonText;
+				filterBarModel.PriceRangeFilterButtonStyle = filterBarModel.FilterButtonSelectedStyle;
+			}
+			else
+			{
+				filterBarModel.PriceRangeFilterButtonStyle = filterBarModel.FilterButtonUnselectedStyle;
+				filterBarModel.PriceRangeFilterButtonText = filterBarModel.PriceRangeButtonDefaultText;
+			}
+		}
+	}
+
 	private static void SelectedFormatChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
 	{
 		if (obj != null && obj is FilterBarModel)
@@ -279,7 +378,7 @@ public class FilterBarModel : DependencyObject
 			if (filterBarModel.FormatFilterButtonStrings.ContainsKey(titleType))
 			{
 				filterBarModel.FormatFilterButtonText = filterBarModel.FormatFilterButtonStrings[titleType];
-				filterBarModel.FormatFilterButtonStyle = ((titleType == TitleType.All) ? filterBarModel.FormatFilterButtonUnselectedStyle : filterBarModel.FormatFilterButtonSelectedStyle);
+				filterBarModel.FormatFilterButtonStyle = ((titleType == TitleType.All) ? filterBarModel.FilterButtonUnselectedStyle : filterBarModel.FilterButtonSelectedStyle);
 			}
 		}
 	}

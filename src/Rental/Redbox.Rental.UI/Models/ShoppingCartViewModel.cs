@@ -17,10 +17,6 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public static readonly DependencyProperty PayButtonEnabledProperty = DependencyProperty.Register("PayButtonEnabled", typeof(bool), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(false));
 
-	public static readonly DependencyProperty UseCreditsButtonEnabledProperty = DependencyProperty.Register("UseCreditsButtonEnabled", typeof(bool), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(false));
-
-	public static readonly DependencyProperty UseCreditsButtonVisibilityProperty = DependencyProperty.Register("UseCreditsButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
 	public static readonly DependencyProperty ADASpacerVisibilityProperty = DependencyProperty.Register("ADASpacerVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty AddMovieButtonVisibilityProperty = DependencyProperty.Register("AddMovieButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
@@ -41,6 +37,12 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public static readonly DependencyProperty ServiceFeeTextVisibilityProperty = DependencyProperty.Register("ServiceFeeTextVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
+	public static readonly DependencyProperty MDVFootnoteVisibilityProperty = DependencyProperty.Register("MDVFootnoteVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty PointsEstimateTextProperty = DependencyProperty.Register("PointsEstimateText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty PointsEstimateVisibilityProperty = DependencyProperty.Register("PointsEstimateVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
 	public string LabelTop { get; set; }
 
 	public string PriceHeaderText { get; set; }
@@ -55,13 +57,13 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public string PassiveSaleNote { get; set; }
 
+	public string MDVFootnote { get; set; }
+
 	public string ServiceFeeText { get; set; }
 
 	public string TermsAndPrivacyButtonText { get; set; }
 
 	public string TermsText { get; set; }
-
-	public string UseCreditsButtonText { get; set; }
 
 	public string PromoCodeButtonText { get; set; }
 
@@ -74,6 +76,40 @@ public class ShoppingCartViewModel : DependencyObject
 	public string UpdateBagButtonText { get; set; }
 
 	public Style AddGameButtonStyle { get; set; }
+
+	public string PointsEstimateIntroText { get; set; }
+
+	public string PointsEstimateText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PointsEstimateTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PointsEstimateTextProperty, value);
+			});
+		}
+	}
+
+	public string PointsEstimateEndText { get; set; }
+
+	public Visibility PointsEstimateVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PointsEstimateVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PointsEstimateVisibilityProperty, value);
+			});
+		}
+	}
 
 	public string LoyaltySystemErrorText
 	{
@@ -131,36 +167,6 @@ public class ShoppingCartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(PricingModelProperty, value);
-			});
-		}
-	}
-
-	public Visibility UseCreditsButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(UseCreditsButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(UseCreditsButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public bool UseCreditsButtonEnabled
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (bool)GetValue(UseCreditsButtonEnabledProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(UseCreditsButtonEnabledProperty, value);
 			});
 		}
 	}
@@ -315,6 +321,21 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
+	public Visibility MDVFootnoteVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MDVFootnoteVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MDVFootnoteVisibilityProperty, value);
+			});
+		}
+	}
+
 	public event Action OnBackButtonClicked;
 
 	public event Action OnTermsAndPrivacyButtonClicked;
@@ -322,8 +343,6 @@ public class ShoppingCartViewModel : DependencyObject
 	public event Action OnPromoCodeButtonClicked;
 
 	public event Action OnPayButtonClicked;
-
-	public event Action OnUseCreditsButtonClicked;
 
 	public event Action OnAddMovieButtonClicked;
 
@@ -334,6 +353,8 @@ public class ShoppingCartViewModel : DependencyObject
 	public event Action OnSignInButtonClicked;
 
 	public event Action OnUsePointsButtonClicked;
+
+	public event Action OnLoaded;
 
 	public event Action<DisplayProductModel, object> OnCancelBrowseItemModel;
 
@@ -406,14 +427,6 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
-	public void ProcessOnUseCreditsButtonClicked()
-	{
-		if (OnUseCreditsButtonClicked != null)
-		{
-			OnUseCreditsButtonClicked();
-		}
-	}
-
 	public void ProcessOnAddMovieButtonClicked()
 	{
 		if (OnAddMovieButtonClicked != null)
@@ -438,5 +451,10 @@ public class ShoppingCartViewModel : DependencyObject
 	public void ProcessOnUsePointsButtonClicked()
 	{
 		OnUsePointsButtonClicked?.Invoke();
+	}
+
+	public void ProcessOnLoaded()
+	{
+		OnLoaded?.Invoke();
 	}
 }

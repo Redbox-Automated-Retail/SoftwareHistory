@@ -27,11 +27,23 @@ public class BaseLogic : DynamicRouting
 	public static void HandleWPFHit()
 	{
 		ServiceLocator.Instance.GetService<IRenderingService>()?.ActiveScene.PrcoessWPFHit();
-		ServiceLocator.Instance.GetService<ITouchScreenHealth>()?.PostActivity();
+		PostHealthActivity();
 	}
 
 	public static void AnalyticsAddViewEvent(string subItemType, string subItemValue)
 	{
 		SessionAnalyticsService?.AddViewEvent(subItemType, subItemValue);
+	}
+
+	protected static void ProcessWPFHit()
+	{
+		ServiceLocator.Instance.GetService<IRenderingService>()?.ActiveScene.PrcoessWPFHit();
+		PostHealthActivity();
+	}
+
+	protected static void PostHealthActivity()
+	{
+		ServiceLocator.Instance.GetService<ITouchScreenHealth>()?.PostActivity();
+		ServiceLocator.Instance.GetService<IViewHealth>()?.PostActivity("Button Press");
 	}
 }

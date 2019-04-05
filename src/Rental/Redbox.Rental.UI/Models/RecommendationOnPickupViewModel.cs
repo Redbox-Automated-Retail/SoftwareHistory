@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
+using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -30,6 +32,10 @@ public class RecommendationOnPickupViewModel : DependencyObject
 
 	public static readonly DependencyProperty PricingModelProperty = DependencyProperty.Register("PricingModel", typeof(PricingModel), typeof(RecommendationOnPickupViewModel), new FrameworkPropertyMetadata(null));
 
+	public bool HasPickupOrPayActionExecuted { get; set; }
+
+	public bool IsViewUpdatingCart { get; set; }
+
 	public string AddMoreText { get; set; }
 
 	public string TermsAndPrivacyButtonText { get; set; }
@@ -39,6 +45,8 @@ public class RecommendationOnPickupViewModel : DependencyObject
 	public string AgreeToTermsText { get; set; }
 
 	public string PickupButtonText { get; set; }
+
+	public List<IRentalShoppingCartItem> SecondaryMdvDiscs { get; set; }
 
 	public BrowseControlModel ShoppingCartControlModel
 	{
@@ -163,6 +171,7 @@ public class RecommendationOnPickupViewModel : DependencyObject
 	public RecommendationOnPickupViewModel()
 	{
 		PricingModel = new PricingModel();
+		IsViewUpdatingCart = false;
 	}
 
 	public void ProcessOnTermsAndPrivacyButtonClicked()

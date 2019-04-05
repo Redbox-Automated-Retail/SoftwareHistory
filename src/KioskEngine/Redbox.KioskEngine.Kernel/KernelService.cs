@@ -139,6 +139,11 @@ public sealed class KernelService : IKernelService, IDisposable
 		return null;
 	}
 
+	public void LogLuaFunctions()
+	{
+		LuaFunction.LogLuaFunctions();
+	}
+
 	public object ToLuaTable<T>(IEnumerable<T> enumerator)
 	{
 		if (enumerator == null)

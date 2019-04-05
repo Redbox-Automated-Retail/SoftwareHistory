@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using System.Windows.Media;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.UI.Models;
@@ -13,47 +12,102 @@ public class PhoneAndPinViewController : BaseViewController
 {
 	public static void ConfigurePhoneAndPinView(PhoneAndPinInfo phoneAndPinInfo)
 	{
-		BaseViewController.StartIdleTimer();
-		OrchestrationService.AnalyticsAddViewEvent("context", "PinSignIn");
-		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-		if (viewUserControl != null)
+		OrchestrationService.SetCurrentUICulture();
+		if (phoneAndPinInfo.IsSignUp)
 		{
-			if (phoneAndPinInfo.PhoneAndPinViewModel != null)
+			OrchestrationService.AnalyticsAddViewEvent("context", "EarlyIdTextClubOptIn");
+		}
+		else
+		{
+			OrchestrationService.AnalyticsAddViewEvent("context", "PinSignIn");
+			BaseViewController.StartIdleTimer();
+		}
+		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
+		if (viewUserControl == null)
+		{
+			return;
+		}
+		if (phoneAndPinInfo.PhoneAndPinViewModel != null)
+		{
+			phoneAndPinInfo.PhoneAndPinViewModel.IsStartButtonEnabled = true;
+			viewUserControl.DataContext = phoneAndPinInfo.PhoneAndPinViewModel;
+			return;
+		}
+		PhoneAndPinViewModel phoneAndPinViewModel = new PhoneAndPinViewModel();
+		phoneAndPinViewModel.KeypadModel = new KeypadModel();
+		phoneAndPinViewModel.KeypadModel.ClearAllButtonText = Resources.keypad_clear_all_button_text;
+		phoneAndPinViewModel.KeypadModel.BackButtonText = Resources.keypad_back_button_text;
+		KeypadModel keypadModel = phoneAndPinViewModel.KeypadModel;
+		keypadModel.OnNumberButtonClicked = (Action<string>)Delegate.Combine(keypadModel.OnNumberButtonClicked, new Action<string>(KeypadModel_OnNumberButtonClicked));
+		KeypadModel keypadModel2 = phoneAndPinViewModel.KeypadModel;
+		keypadModel2.OnClearAllButtonClicked = (Action)Delegate.Combine(keypadModel2.OnClearAllButtonClicked, new Action(KeypadModel_OnClearAllButtonClicked));
+		KeypadModel keypadModel3 = phoneAndPinViewModel.KeypadModel;
+		keypadModel3.OnBackButtonClicked = (Action)Delegate.Combine(keypadModel3.OnBackButtonClicked, new Action(KeypadModel_OnBackButtonClicked));
+		phoneAndPinViewModel.SetDefaultDisplays();
+		phoneAndPinViewModel.PhoneAndPinInfo = phoneAndPinInfo;
+		phoneAndPinViewModel.PhoneRequiredLength = 10;
+		phoneAndPinViewModel.PinRequiredLength = 4;
+		phoneAndPinViewModel.PhoneLabelText = Resources.phone_and_pin_phone_label_text;
+		phoneAndPinViewModel.PinLabelText = Resources.phone_and_pin_pin_label_text;
+		phoneAndPinViewModel.PinConfirmLabelText = Resources.phone_and_pin_confirm_pin_label_text;
+		phoneAndPinViewModel.ErrorMessageText = "";
+		phoneAndPinViewModel.MobilePhoneErrorMessageText = "";
+		if (!string.IsNullOrEmpty(phoneAndPinInfo.MobilePhoneNumber))
+		{
+			phoneAndPinViewModel.PhoneDisplayText = phoneAndPinInfo.MobilePhoneNumber;
+		}
+		if (phoneAndPinInfo.IsSignUp)
+		{
+			if (phoneAndPinInfo.IsAfterSwipe)
 			{
-				viewUserControl.DataContext = phoneAndPinInfo.PhoneAndPinViewModel;
-				return;
+				phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_sign_up_after_swipe_header_text;
+				phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sign_up_after_swipe_sub_header_text;
 			}
-			PhoneAndPinViewModel phoneAndPinViewModel = new PhoneAndPinViewModel();
-			phoneAndPinViewModel.KeypadModel = new KeypadModel();
-			phoneAndPinViewModel.KeypadModel.ClearAllButtonText = BundleFunctions.GetDictionaryStringValue("strings", "keypad_clear_all_button_text");
-			phoneAndPinViewModel.KeypadModel.BackButtonText = BundleFunctions.GetDictionaryStringValue("strings", "keypad_back_button_text");
-			KeypadModel keypadModel = phoneAndPinViewModel.KeypadModel;
-			keypadModel.OnNumberButtonClicked = (Action<string>)Delegate.Combine(keypadModel.OnNumberButtonClicked, new Action<string>(KeypadModel_OnNumberButtonClicked));
-			KeypadModel keypadModel2 = phoneAndPinViewModel.KeypadModel;
-			keypadModel2.OnClearAllButtonClicked = (Action)Delegate.Combine(keypadModel2.OnClearAllButtonClicked, new Action(KeypadModel_OnClearAllButtonClicked));
-			KeypadModel keypadModel3 = phoneAndPinViewModel.KeypadModel;
-			keypadModel3.OnBackButtonClicked = (Action)Delegate.Combine(keypadModel3.OnBackButtonClicked, new Action(KeypadModel_OnBackButtonClicked));
-			phoneAndPinViewModel.SetDefaultDisplays();
-			phoneAndPinViewModel.PhoneAndPinInfo = phoneAndPinInfo;
-			phoneAndPinViewModel.PhoneRequiredLength = 10;
-			phoneAndPinViewModel.PinRequiredLength = 4;
+			else
+			{
+				phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_sign_up_header_text;
+				phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sign_up_sub_header_text;
+			}
+			phoneAndPinViewModel.ADAPhoneButtonVisibility = Visibility.Collapsed;
+			phoneAndPinViewModel.ADAPinButtonVisibility = Visibility.Collapsed;
+			phoneAndPinViewModel.RightSideButtonBarVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
+			phoneAndPinViewModel.BottomButtonBarVisibility = (Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible ? Visibility.Collapsed : Visibility.Visible);
+			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button : Resources.phone_and_pin_sign_up_back_button_text);
+			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_up_button_text;
+			phoneAndPinViewModel.TermsTitleText = Resources.phone_and_pin_terms_title_text;
+			phoneAndPinViewModel.TermsText = Resources.phone_and_pin_terms_text;
+			phoneAndPinViewModel.TermsButtonText = Resources.terms_button_text;
+			phoneAndPinViewModel.TermsBarVisibility = Visibility.Visible;
+			phoneAndPinViewModel.PinConfirmVisibility = Visibility.Visible;
+			phoneAndPinViewModel.TextClubOptionVisibility = ((!phoneAndPinInfo.ShowTextClubOption) ? Visibility.Collapsed : Visibility.Visible);
+			phoneAndPinViewModel.TextClubText = Resources.text_club_option_text;
+			phoneAndPinViewModel.SignUpForTextClub = phoneAndPinInfo.ShowTextClubOption;
+			phoneAndPinViewModel.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnStartButtonClicked, new Action(OnMaybeLaterButtonClicked));
+			phoneAndPinViewModel.OnSignInButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnSignInButtonClicked, new Action(OnSignUpButtonClicked));
+			phoneAndPinViewModel.OnTextClubClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnTextClubClicked, new Action(OnTextClubCheckboxCliked));
+			phoneAndPinViewModel.MobilePhoneErrorMessageText = string.Empty;
+		}
+		else
+		{
 			phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_header_text;
 			phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sub_header_text;
-			phoneAndPinViewModel.PhoneLabelText = Resources.phone_and_pin_phone_label_text;
-			phoneAndPinViewModel.PinLabelText = Resources.phone_and_pin_pin_label_text;
-			phoneAndPinViewModel.ErrorMessageText = "";
 			phoneAndPinViewModel.ADAPhoneButtonText = Resources.phone_and_pin_ada_phone_button_text;
 			phoneAndPinViewModel.ADAPhoneButtonVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
 			phoneAndPinViewModel.ADAPinButtonText = Resources.phone_and_pin_ada_pin_button_text;
 			phoneAndPinViewModel.ADAPinButtonVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.back_button : Resources.phone_and_pin_start_button_text);
+			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button : Resources.phone_and_pin_start_button_text);
 			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_in_button_text;
-			phoneAndPinViewModel.OnDisplayClicked = (Action<PhoneAndPinViewModel.DisplayType>)Delegate.Combine(phoneAndPinViewModel.OnDisplayClicked, new Action<PhoneAndPinViewModel.DisplayType>(PhoneAndPinViewModel_OnDisplayClicked));
 			phoneAndPinViewModel.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnStartButtonClicked, new Action(PhoneAndPinViewModel_OnStartButtonClicked));
 			phoneAndPinViewModel.OnSignInButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnSignInButtonClicked, new Action(PhoneAndPinViewModel_OnSignInButtonClicked));
-			ConfigureTTS(phoneAndPinViewModel);
-			viewUserControl.DataContext = phoneAndPinViewModel;
 		}
+		phoneAndPinViewModel.OnDisplayClicked = (Action<PhoneAndPinViewModel.DisplayType>)Delegate.Combine(phoneAndPinViewModel.OnDisplayClicked, new Action<PhoneAndPinViewModel.DisplayType>(PhoneAndPinViewModel_OnDisplayClicked));
+		phoneAndPinViewModel.OnTermsButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnTermsButtonClicked, (Action)delegate
+		{
+			PhoneAndPinViewModel_OnTermsButtonClicked(phoneAndPinInfo.IdleTimerName);
+		});
+		ConfigureTTS(phoneAndPinViewModel);
+		phoneAndPinInfo.PhoneAndPinViewModel = phoneAndPinViewModel;
+		viewUserControl.DataContext = phoneAndPinViewModel;
 	}
 
 	public static void LeavePhoneAndPinView(PhoneAndPinInfo phoneAndPinInfo)
@@ -90,9 +144,10 @@ public class PhoneAndPinViewController : BaseViewController
 			return;
 		}
 		phoneAndPinViewModel.ErrorMessageText = "";
+		phoneAndPinViewModel.MobilePhoneErrorMessageText = "";
 		if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
 		{
-			if (phoneAndPinViewModel.PhoneDisplayText == Resources.phone_and_pin_default_phone_display)
+			if (string.IsNullOrEmpty(phoneAndPinViewModel.PhoneDisplayText))
 			{
 				phoneAndPinViewModel.PhoneDisplayText = "";
 				UpdateIsSignInButtonEnabled();
@@ -101,6 +156,10 @@ public class PhoneAndPinViewController : BaseViewController
 			{
 				phoneAndPinViewModel.PhoneDisplayText += key;
 				UpdateIsSignInButtonEnabled();
+			}
+			if (phoneAndPinViewModel.PhoneDisplayText.Length == phoneAndPinViewModel.PhoneRequiredLength)
+			{
+				PhoneAndPinViewModel_OnDisplayClicked(PhoneAndPinViewModel.DisplayType.Pin);
 			}
 		}
 		else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Pin)
@@ -116,6 +175,19 @@ public class PhoneAndPinViewController : BaseViewController
 				UpdateIsSignInButtonEnabled();
 			}
 		}
+		else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.PinConfirm)
+		{
+			if (phoneAndPinViewModel.PinConfirmDisplayText == Resources.phone_and_pin_default_pin_display)
+			{
+				phoneAndPinViewModel.PinConfirmDisplayText = "";
+				UpdateIsSignInButtonEnabled();
+			}
+			if (phoneAndPinViewModel.PinConfirmDisplayText.Length < phoneAndPinViewModel.PinRequiredLength)
+			{
+				phoneAndPinViewModel.PinConfirmDisplayText += key;
+				UpdateIsSignInButtonEnabled();
+			}
+		}
 	}
 
 	private static void KeypadModel_OnClearAllButtonClicked()
@@ -125,14 +197,20 @@ public class PhoneAndPinViewController : BaseViewController
 		if (phoneAndPinViewModel != null)
 		{
 			phoneAndPinViewModel.ErrorMessageText = "";
+			phoneAndPinViewModel.MobilePhoneErrorMessageText = "";
 			if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
 			{
-				phoneAndPinViewModel.PhoneDisplayText = Resources.phone_and_pin_default_phone_display;
+				phoneAndPinViewModel.PhoneDisplayText = string.Empty;
 				UpdateIsSignInButtonEnabled();
 			}
 			else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Pin)
 			{
 				phoneAndPinViewModel.PinDisplayText = Resources.phone_and_pin_default_pin_display;
+				UpdateIsSignInButtonEnabled();
+			}
+			else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.PinConfirm)
+			{
+				phoneAndPinViewModel.PinConfirmDisplayText = Resources.phone_and_pin_default_pin_display;
 				UpdateIsSignInButtonEnabled();
 			}
 		}
@@ -147,16 +225,16 @@ public class PhoneAndPinViewController : BaseViewController
 			return;
 		}
 		phoneAndPinViewModel.ErrorMessageText = "";
+		phoneAndPinViewModel.MobilePhoneErrorMessageText = "";
 		if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.Phone)
 		{
-			if (phoneAndPinViewModel.PhoneDisplayText != Resources.phone_and_pin_default_phone_display && phoneAndPinViewModel.PhoneDisplayText.Length > 0)
+			if (phoneAndPinViewModel.PhoneDisplayText.Length > 0)
 			{
 				phoneAndPinViewModel.PhoneDisplayText = phoneAndPinViewModel.PhoneDisplayText.Remove(phoneAndPinViewModel.PhoneDisplayText.Length - 1);
 				UpdateIsSignInButtonEnabled();
 			}
 			if (phoneAndPinViewModel.PhoneDisplayText == "")
 			{
-				phoneAndPinViewModel.PhoneDisplayText = Resources.phone_and_pin_default_phone_display;
 				UpdateIsSignInButtonEnabled();
 			}
 		}
@@ -173,6 +251,19 @@ public class PhoneAndPinViewController : BaseViewController
 				UpdateIsSignInButtonEnabled();
 			}
 		}
+		else if (phoneAndPinViewModel.DisplayTypeFocus == PhoneAndPinViewModel.DisplayType.PinConfirm)
+		{
+			if (phoneAndPinViewModel.PinConfirmDisplayText != Resources.phone_and_pin_default_pin_display && phoneAndPinViewModel.PinConfirmDisplayText.Length > 0)
+			{
+				phoneAndPinViewModel.PinConfirmDisplayText = phoneAndPinViewModel.PinConfirmDisplayText.Remove(phoneAndPinViewModel.PinConfirmDisplayText.Length - 1);
+				UpdateIsSignInButtonEnabled();
+			}
+			if (phoneAndPinViewModel.PinConfirmDisplayText == "")
+			{
+				phoneAndPinViewModel.PinConfirmDisplayText = Resources.phone_and_pin_default_pin_display;
+				UpdateIsSignInButtonEnabled();
+			}
+		}
 	}
 
 	private static void UpdateIsSignInButtonEnabled()
@@ -180,7 +271,27 @@ public class PhoneAndPinViewController : BaseViewController
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null)
 		{
-			phoneAndPinViewModel.IsSignInButtonEnabled = phoneAndPinViewModel.PhoneDisplayText != Resources.phone_and_pin_default_phone_display && phoneAndPinViewModel.PhoneDisplayText.Length == phoneAndPinViewModel.PhoneRequiredLength && phoneAndPinViewModel.PinDisplayText != Resources.phone_and_pin_default_pin_display && phoneAndPinViewModel.PinDisplayText.Length == phoneAndPinViewModel.PinRequiredLength;
+			phoneAndPinViewModel.IsSignInButtonEnabled = phoneAndPinViewModel.PhoneDisplayText.Length == phoneAndPinViewModel.PhoneRequiredLength && phoneAndPinViewModel.PinDisplayText != Resources.phone_and_pin_default_pin_display && phoneAndPinViewModel.PinDisplayText.Length == phoneAndPinViewModel.PinRequiredLength;
+			if (phoneAndPinViewModel.PhoneAndPinInfo.IsSignUp)
+			{
+				UpdatePinConfirmView(phoneAndPinViewModel);
+			}
+		}
+	}
+
+	private static void UpdatePinConfirmView(PhoneAndPinViewModel phoneAndPinViewModel)
+	{
+		bool flag = phoneAndPinViewModel.PinConfirmDisplayText == phoneAndPinViewModel.PinDisplayText;
+		phoneAndPinViewModel.IsSignInButtonEnabled &= flag;
+		if (!flag)
+		{
+			phoneAndPinViewModel.ConfirmPinButtonState = 1;
+			phoneAndPinViewModel.ErrorMessageText = Resources.phone_and_pin_confirm_error_text;
+		}
+		else
+		{
+			phoneAndPinViewModel.ConfirmPinButtonState = 0;
+			phoneAndPinViewModel.ErrorMessageText = string.Empty;
 		}
 	}
 
@@ -191,24 +302,18 @@ public class PhoneAndPinViewController : BaseViewController
 		if (phoneAndPinViewModel != null)
 		{
 			phoneAndPinViewModel.ErrorMessageText = "";
+			phoneAndPinViewModel.MobilePhoneErrorMessageText = "";
 			phoneAndPinViewModel.DisplayTypeFocus = displayType;
 			switch (displayType)
 			{
 			case PhoneAndPinViewModel.DisplayType.Phone:
-				phoneAndPinViewModel.PhoneDisplayBorderBrush = new SolidColorBrush(Color.FromRgb(120, 45, 141));
-				phoneAndPinViewModel.PhoneDisplayBorderShadowDepth = 2.0;
-				phoneAndPinViewModel.PhoneDisplayBorderColor = Color.FromRgb(120, 45, 141);
-				phoneAndPinViewModel.PinDisplayBorderBrush = new SolidColorBrush(Color.FromRgb(165, 165, 165));
-				phoneAndPinViewModel.PinDisplayBorderShadowDepth = 4.0;
-				phoneAndPinViewModel.PinDisplayBorderColor = Color.FromRgb(225, 225, 225);
+				UpdatePinConfirmView(phoneAndPinViewModel);
 				break;
 			case PhoneAndPinViewModel.DisplayType.Pin:
-				phoneAndPinViewModel.PhoneDisplayBorderBrush = new SolidColorBrush(Color.FromRgb(165, 165, 165));
-				phoneAndPinViewModel.PhoneDisplayBorderShadowDepth = 4.0;
-				phoneAndPinViewModel.PhoneDisplayBorderColor = Color.FromRgb(225, 225, 225);
-				phoneAndPinViewModel.PinDisplayBorderBrush = new SolidColorBrush(Color.FromRgb(120, 45, 141));
-				phoneAndPinViewModel.PinDisplayBorderShadowDepth = 2.0;
-				phoneAndPinViewModel.PinDisplayBorderColor = Color.FromRgb(120, 45, 141);
+				UpdatePinConfirmView(phoneAndPinViewModel);
+				break;
+			case PhoneAndPinViewModel.DisplayType.PinConfirm:
+				UpdatePinConfirmView(phoneAndPinViewModel);
 				break;
 			}
 		}
@@ -217,7 +322,12 @@ public class PhoneAndPinViewController : BaseViewController
 	private static void PhoneAndPinViewModel_OnStartButtonClicked()
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "startbrowsing");
+		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		OrchestrationService.ViewGoBackSafe("Phone and pin login cancel", popOnly: false);
+		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction != null)
+		{
+			phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction();
+		}
 	}
 
 	private static void PhoneAndPinViewModel_OnSignInButtonClicked()
@@ -226,7 +336,49 @@ public class PhoneAndPinViewController : BaseViewController
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
 		{
-			phoneAndPinViewModel.PhoneAndPinInfo.SignInAction(phoneAndPinViewModel.PhoneDisplayText, BaseViewController.StringToSecureString(phoneAndPinViewModel.PinDisplayText));
+			phoneAndPinViewModel.PhoneAndPinInfo.SignInAction(phoneAndPinViewModel.PhoneDisplayText, BaseViewController.StringToSecureString(phoneAndPinViewModel.PinDisplayText), arg3: false);
+		}
+	}
+
+	private static void PhoneAndPinViewModel_OnTermsButtonClicked(string idleTimerName)
+	{
+		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "terms");
+		HelpViewController.ShowMobileFaqAndPrivacy("perks_terms", idleTimerName);
+	}
+
+	private static void OnMaybeLaterButtonClicked()
+	{
+		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "maybelater");
+		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
+		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction != null)
+		{
+			phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction();
+		}
+	}
+
+	private static void OnSignUpButtonClicked()
+	{
+		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "signup");
+		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
+		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
+		{
+			phoneAndPinViewModel.PhoneAndPinInfo.SignInAction(phoneAndPinViewModel.PhoneDisplayText, BaseViewController.StringToSecureString(phoneAndPinViewModel.PinDisplayText), phoneAndPinViewModel.SignUpForTextClub);
+		}
+	}
+
+	private static void OnTextClubCheckboxCliked()
+	{
+		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
+		if (phoneAndPinViewModel != null)
+		{
+			if (phoneAndPinViewModel.SignUpForTextClub)
+			{
+				OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", "textcluboptin,true");
+			}
+			else
+			{
+				OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", "textcluboptin,false");
+			}
 		}
 	}
 }

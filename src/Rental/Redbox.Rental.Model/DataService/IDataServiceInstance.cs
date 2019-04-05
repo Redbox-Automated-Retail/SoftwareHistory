@@ -1,6 +1,8 @@
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.KioskData;
+using Redbox.Rental.Model.Local;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Model.Reservation;
 
 namespace Redbox.Rental.Model.DataService;
 
@@ -11,4 +13,8 @@ public interface IDataServiceInstance
 	ICacheDataInstance CacheDataInstance { get; set; }
 
 	IKioskDataInstance KioskDataInstance { get; set; }
+
+	ILocalDataInstance LocalDataInstance { get; set; }
+
+	IReservationDataInstance ReservationDataInstance { get; set; }
 }

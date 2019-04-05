@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -196,11 +199,162 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 		}
 	}
 
+	public string MobilePhoneNumber
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "MobilePhoneNumber", "SimulatedValue");
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "MobilePhoneNumber", value);
+		}
+	}
+
+	public bool PromptForPerks
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PromptForPerks", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PromptForPerks", value);
+		}
+	}
+
+	public bool PromptForEarlyId
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PromptForEarlyId", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PromptForEarlyId", value);
+		}
+	}
+
+	public bool TextClubEnabled
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "TextClubEnabled", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "TextClubEnabled", value);
+		}
+	}
+
+	public string RecommendedTitlesOfferCode
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "RecommendedTitlesOfferCode", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "RecommendedTitlesOfferCode", value);
+		}
+	}
+
+	public RecommendedTitlesIdType RecommendedTitlesIdType
+	{
+		get
+		{
+			if (!(ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "RecommendedTitlesIdType", "1") == "1"))
+			{
+				return RecommendedTitlesIdType.ProductGroupID;
+			}
+			return RecommendedTitlesIdType.TitleID;
+		}
+		set
+		{
+			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
+			int num = (int)value;
+			service.SetValue("Remote Services\\Personalization Services", "RecommendedTitlesIdType", num.ToString());
+		}
+	}
+
+	public string RecommendedTitleIds
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "RecommendedTitleIds", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "RecommendedTitleIds", value);
+		}
+	}
+
+	public List<IStoredPromoCode> StoredPromoCodes => new List<IStoredPromoCode>
+	{
+		new StoredPromoCode
+		{
+			PromoCode = "TESTCODE1",
+			UsageDescription = "Onceonly",
+			ExpirationText = "EXPIRES TODAY",
+			CampaignName = "Rent 1 disc, get a Free 1-night DVD rental",
+			ExpirationDate = DateTime.Now,
+			RedemptionTypeDescription = "FixedValue",
+			DaysUntilExpiration = null
+		},
+		new StoredPromoCode
+		{
+			PromoCode = "TESTBDAY",
+			UsageDescription = "birthday rental",
+			ExpirationText = "TWO DAYS LEFT",
+			CampaignName = "1 free birthday rental",
+			ExpirationDate = DateTime.Now.AddDays(2.0),
+			RedemptionTypeDescription = "FixedValue",
+			DaysUntilExpiration = 1
+		}
+	};
+
+	public List<IAcceptedOffer> AcceptedOffers => new List<IAcceptedOffer>
+	{
+		new AcceptedOffer
+		{
+			Status = "Active",
+			EndValueText = "2x pts",
+			Name = "Multi-night Rentals",
+			TimeToComplete = "7 D",
+			Description = "Earn 2X the points for every multi-night rental.",
+			CompleteDate = DateTime.Now.AddHours(1.0),
+			MaxValue = 0,
+			RemainderValue = 2,
+			CurrentValue = 0
+		},
+		new AcceptedOffer
+		{
+			Status = "Active",
+			EndValueText = "500 points",
+			Name = "Game Dash - Genre",
+			TimeToComplete = null,
+			Description = "Rent 6 Xbox or Playstation games in 14 days. ",
+			CompleteDate = DateTime.Now.AddHours(26.0),
+			CurrentValue = 2,
+			MaxValue = 6,
+			RemainderValue = 4
+		},
+		new AcceptedOffer
+		{
+			Status = "Completed",
+			EndValueText = "250 pts",
+			Name = "Maximize Your Cart",
+			TimeToComplete = "junk",
+			Description = "Rent 6 Xbox or Playstation games in 14 days. ",
+			CompleteDate = DateTime.Now.AddDays(15.0)
+		}
+	};
+
 	private PersonalizationServicesProxySimulator()
 	{
 	}
 
-	public void Login(int kioskId, string emailAddress, SecureString password, string phoneNumber, SecureString pin, RemoteServiceCallback completeCallback)
+	public void Login(int kioskId, string emailAddress, SecureString password, string phoneNumber, SecureString pin, string languageCode, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -223,7 +377,33 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 				remoteServiceResult.Properties["LoyaltyTierCounter"] = LoyaltyTierCounter;
 				remoteServiceResult.Properties["PointsExpiring"] = PointsExpiring;
 				remoteServiceResult.Properties["PointsExpirationDate"] = PointsExpirationDate;
+				remoteServiceResult.Properties["MobilePhoneNumber"] = MobilePhoneNumber;
+				remoteServiceResult.Properties["PromptForPerks"] = PromptForPerks;
+				remoteServiceResult.Properties["PromptForEarlyId"] = PromptForEarlyId;
+				remoteServiceResult.Properties["TextClubEnabled"] = TextClubEnabled;
 				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
+				RecommendedTitles recommendedTitles = new RecommendedTitles
+				{
+					OfferCode = RecommendedTitlesOfferCode
+				};
+				if (!string.IsNullOrEmpty(RecommendedTitleIds))
+				{
+					string[] array = RecommendedTitleIds.Split(',');
+					for (int i = 0; i < array.Length; i++)
+					{
+						if (long.TryParse(array[i], out var result))
+						{
+							recommendedTitles.Add(new RecommendedTitleId
+							{
+								Id = result,
+								IdType = RecommendedTitlesIdType
+							});
+						}
+					}
+				}
+				remoteServiceResult.Properties["RecommendedTitles"] = new List<IRecommendedTitles> { recommendedTitles };
+				remoteServiceResult.Properties["StoredPromoCodes"] = StoredPromoCodes;
+				remoteServiceResult.Properties["AcceptedOffers"] = AcceptedOffers;
 				if (!SimulateSuccess)
 				{
 					remoteServiceResult.Properties["response"] = ResponseCode;
@@ -240,7 +420,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -256,7 +436,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 		});
 	}
 
-	public void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback)
+	public void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback, bool queued = false)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -268,7 +448,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Simulate call to remote IPersonalization.UpdateAccount");
 				remoteServiceResult.Success = SimulateSuccess;
-				remoteServiceResult.Properties["MobilePhoneNumber"] = phoneNumber;
+				remoteServiceResult.Properties["MobilePhoneNumber"] = MobilePhoneNumber;
 				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
 				if (!SimulateSuccess)
 				{
@@ -286,7 +466,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,

@@ -55,12 +55,13 @@ public class RentalUserControl : UserControl
 		{
 			ServiceLocator.Instance.GetService<IRenderingService>()?.ActiveScene.PrcoessWPFHit();
 		}
-		PostTouchScreenHealthActivity();
+		PostHealthActivity();
 	}
 
-	protected void PostTouchScreenHealthActivity()
+	protected void PostHealthActivity()
 	{
 		ServiceLocator.Instance.GetService<ITouchScreenHealth>()?.PostActivity();
+		ServiceLocator.Instance.GetService<IViewHealth>()?.PostActivity("Button Press");
 	}
 
 	protected void SetDelayTimer(bool setTimer)

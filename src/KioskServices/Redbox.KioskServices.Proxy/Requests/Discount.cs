@@ -17,4 +17,6 @@ public class Discount
 	public int? RedemptionPoints { get; set; }
 
 	public decimal Amount { get; set; }
+
+	public bool? ApplyOnlyToProduct { get; set; }
 }

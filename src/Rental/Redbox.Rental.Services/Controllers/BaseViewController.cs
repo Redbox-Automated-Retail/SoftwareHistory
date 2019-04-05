@@ -31,8 +31,18 @@ public class BaseViewController
 
 	protected static FrameworkElement GetViewUserControl()
 	{
-		IViewFrameInstance obj = ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame();
-		return ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.GetWPFGridChild(obj?.Id);
+		IViewFrameInstance viewFrameInstance = ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame();
+		if (viewFrameInstance != null)
+		{
+			_ = viewFrameInstance.Id;
+			return GetViewUserControl(viewFrameInstance.Id);
+		}
+		return null;
+	}
+
+	protected static FrameworkElement GetViewUserControl(Guid userControlId)
+	{
+		return ServiceLocator.Instance.GetService<IRenderingService>().GetScene("Default")?.GetWPFGridChild(userControlId);
 	}
 
 	protected static T GetViewModel<T>() where T : class
@@ -53,12 +63,13 @@ public class BaseViewController
 	protected static void ProcessWPFHit()
 	{
 		ServiceLocator.Instance.GetService<IRenderingService>()?.ActiveScene.PrcoessWPFHit();
-		PostTouchScreenHealthActivity();
+		PostHealthActivity();
 	}
 
-	protected static void PostTouchScreenHealthActivity()
+	protected static void PostHealthActivity()
 	{
 		ServiceLocator.Instance.GetService<ITouchScreenHealth>()?.PostActivity();
+		ServiceLocator.Instance.GetService<IViewHealth>()?.PostActivity("Button Press");
 	}
 
 	protected static Visibility BoolToVisibility(bool show)

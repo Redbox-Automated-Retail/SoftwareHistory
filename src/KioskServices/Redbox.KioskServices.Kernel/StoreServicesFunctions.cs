@@ -29,11 +29,17 @@ internal static class StoreServicesFunctions
 				luaTable2[num++] = luaTable3;
 			}
 			((LuaTable)luaTable["properties"])["states"] = luaTable2;
-			ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new ResultCallbackEntry
+			ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+			if (service2 != null)
 			{
-				Function = completeCallback,
-				Parameters = new LuaTable[1] { luaTable }
-			});
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
+				{
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { luaTable };
+				resultCallbackEntry.Parameters = parameters;
+				service2.EnqueueCallback(resultCallbackEntry);
+			}
 		});
 	}
 
@@ -54,11 +60,17 @@ internal static class StoreServicesFunctions
 				luaTable2[num++] = luaTable3;
 			}
 			((LuaTable)luaTable["properties"])["banners"] = luaTable2;
-			ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new ResultCallbackEntry
+			ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+			if (service2 != null)
 			{
-				Function = completeCallback,
-				Parameters = new LuaTable[1] { luaTable }
-			});
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
+				{
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { luaTable };
+				resultCallbackEntry.Parameters = parameters;
+				service2.EnqueueCallback(resultCallbackEntry);
+			}
 		});
 	}
 
@@ -85,11 +97,17 @@ internal static class StoreServicesFunctions
 				luaTable2[num++] = luaTable3;
 			}
 			((LuaTable)luaTable["properties"])["stores"] = luaTable2;
-			ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new ResultCallbackEntry
+			ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+			if (service2 != null)
 			{
-				Function = completeCallback,
-				Parameters = new LuaTable[1] { luaTable }
-			});
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
+				{
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { luaTable };
+				resultCallbackEntry.Parameters = parameters;
+				service2.EnqueueCallback(resultCallbackEntry);
+			}
 		});
 	}
 
@@ -106,11 +124,14 @@ internal static class StoreServicesFunctions
 		{
 			service.GetOpsMarket(storeNumber, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = completeCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = completeCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}

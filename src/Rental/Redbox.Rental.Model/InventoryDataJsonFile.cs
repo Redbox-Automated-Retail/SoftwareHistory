@@ -1,0 +1,10 @@
+using System;
+
+namespace Redbox.Rental.Model;
+
+public class InventoryDataJsonFile
+{
+	public DateTime? LastCompletedDate { get; set; }
+
+	public DateTime? LastRunThinJobDate { get; set; }
+}

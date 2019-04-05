@@ -557,6 +557,16 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
+	public List<long> RequiredAdditionalTitles { get; private set; }
+
+	public decimal? DigitalRentPrice
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
+
 	public MDVProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

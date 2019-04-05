@@ -21,11 +21,14 @@ internal static class AuthenticationServicesFunctions
 		{
 			service.Authenticate(storeNumber, userName, password, useLdapAuthentication, delegate(IRemoteServiceResult r)
 			{
-				callbackService.EnqueueCallback(new ResultCallbackEntry
+				ICallbackService callbackService2 = callbackService;
+				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
 				{
-					Function = authenticationCallback,
-					Parameters = new LuaTable[1] { r.AsTable() }
-				});
+					Function = authenticationCallback
+				};
+				object[] parameters = new LuaTable[1] { r.AsTable() };
+				resultCallbackEntry.Parameters = parameters;
+				callbackService2.EnqueueCallback(resultCallbackEntry);
 			});
 		}
 	}

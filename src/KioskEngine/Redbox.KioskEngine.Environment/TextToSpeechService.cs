@@ -52,7 +52,7 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private int m_speechVolume = 80;
 
-	private int m_working;
+	private object m_speechSynthesizerLock = new object();
 
 	private Dictionary<string, Delegate> m_keyHandlers = new Dictionary<string, Delegate>();
 
@@ -219,6 +219,9 @@ public class TextToSpeechService : ITextToSpeechService
 		m_textReplacement.Add("*", "");
 		m_textReplacement.Add("a-z", "'a' to z");
 		m_textReplacement.Add("uhd", "u h d");
+		m_textReplacement.Add("pssst", "");
+		m_textReplacement.Add("pts", "points");
+		m_textReplacement.Add("onceonly", "once only");
 	}
 
 	private void ProcessSpeechPart(ISpeechPart speechPart)
@@ -510,7 +513,7 @@ public class TextToSpeechService : ITextToSpeechService
 						}
 					}
 				};
-				if (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame().ViewFrame is IViewFrame viewFrame)
+				if ((ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame())?.ViewFrame is IViewFrame viewFrame)
 				{
 					IActor actor = viewFrame.Scene.GetActor(actor_name);
 					if (actor != null && (!string.IsNullOrEmpty(mapKeyPressToActorHitEvent.Command) || (actor.Visible && actor.Enabled)))
@@ -956,37 +959,38 @@ public class TextToSpeechService : ITextToSpeechService
 		{
 			try
 			{
-				Interlocked.Increment(ref m_working);
-				if (!string.IsNullOrEmpty(speech) && AudioDeviceConnected)
+				lock (m_speechSynthesizerLock)
 				{
-					m_reader = new SpeechSynthesizer
+					if (!string.IsNullOrEmpty(speech) && AudioDeviceConnected)
 					{
-						Rate = m_speechRate,
-						Volume = m_speechVolume
-					};
-					LogHelper.Instance.Log("TTS((> Say: " + speech);
-					m_reader.SpeakAsync(speech);
-					m_reader.SpeakCompleted += ReaderSpeakCompleted;
+						m_reader = new SpeechSynthesizer
+						{
+							Rate = m_speechRate,
+							Volume = m_speechVolume
+						};
+						LogHelper.Instance.Log("TTS((> Say: " + speech);
+						m_reader.SpeakAsync(speech);
+						m_reader.SpeakCompleted += ReaderSpeakCompleted;
+					}
 				}
 			}
 			catch (Exception e)
 			{
 				LogHelper.Instance.Log("TTS((> An exception was raised in TextToSpeechService:SayTTS()", e);
 			}
-			finally
-			{
-				Interlocked.Decrement(ref m_working);
-			}
 		});
 	}
 
 	private void SilenceTTS()
 	{
-		if (m_reader != null)
+		lock (m_speechSynthesizerLock)
 		{
-			m_reader.SpeakAsyncCancelAll();
-			m_reader?.Dispose();
-			m_reader = null;
+			if (m_reader != null)
+			{
+				m_reader.SpeakAsyncCancelAll();
+				m_reader?.Dispose();
+				m_reader = null;
+			}
 		}
 	}
 
@@ -1068,7 +1072,7 @@ public class TextToSpeechService : ITextToSpeechService
 	private void ExecuteActorCommand(string actorName, string command, string parameter)
 	{
 		LogHelper.Instance.Log("TTS((> Execute Command requested: {0}, {1}, {2}", actorName, command, parameter);
-		IActor actor = (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame().ViewFrame as IViewFrame)?.Scene?.GetActor(actorName);
+		IActor actor = ((ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame())?.ViewFrame as IViewFrame)?.Scene?.GetActor(actorName);
 		if (actor != null)
 		{
 			if (actor.WPFFrameworkElement != null)
@@ -1099,7 +1103,7 @@ public class TextToSpeechService : ITextToSpeechService
 		LogHelper.Instance.Log("TTS((> Click Actor requested: " + actorName);
 		try
 		{
-			IActor actor = (ServiceLocator.Instance.GetService<IViewService>().PeekViewFrame().ViewFrame as IViewFrame)?.Scene?.GetActor(actorName);
+			IActor actor = ((ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrame())?.ViewFrame as IViewFrame)?.Scene?.GetActor(actorName);
 			if (actor == null)
 			{
 				LogHelper.Instance.Log("TTS((> actor NOT FOUND in scene.");

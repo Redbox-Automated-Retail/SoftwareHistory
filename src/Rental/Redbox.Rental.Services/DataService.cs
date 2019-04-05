@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -9,7 +10,10 @@ using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Local;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Model.Reservation;
+using Redbox.Rental.Model.Reservation.DataFile;
 using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Services;
@@ -21,6 +25,10 @@ public class DataService : IDataService
 	private IProfileData _profileData;
 
 	private ICacheData _cacheData;
+
+	private ILocalData _localData;
+
+	private IReservationData _reservationData;
 
 	private IKioskData _kioskData;
 
@@ -56,12 +64,14 @@ public class DataService : IDataService
 
 	private bool HasKioskDataStagedInstance => _kioskDataStagedInstance != null;
 
-	public DataService(IKernelService kernelService, IDataServiceInstance dataServiceInstance, IProfileData profileData, ICacheData cacheData, IKioskData kioskData, IEngineApplication engine)
+	public DataService(IKernelService kernelService, IDataServiceInstance dataServiceInstance, IProfileData profileData, ICacheData cacheData, ILocalData localData, IReservationData reservationData, IKioskData kioskData, IEngineApplication engine)
 	{
 		_kernelService = kernelService;
 		_dataServiceInstance = dataServiceInstance;
 		_profileData = profileData;
 		_cacheData = cacheData;
+		_localData = localData;
+		_reservationData = reservationData;
 		_kioskData = kioskData;
 		_engine = engine;
 		_runningPath = engine.RunningPath;
@@ -193,6 +203,21 @@ public class DataService : IDataService
 			LogHelper.Instance.Log("DataService.GetImage - Unhandled exception occured", e);
 		}
 		return null;
+	}
+
+	public bool IsAccountOnOfflineBadCardList(string hashId)
+	{
+		return _dataServiceInstance.LocalDataInstance.IsAccountOnOfflineBadCardList(hashId);
+	}
+
+	public void UpdateAccountOnOfflineBadCardList(string hashId)
+	{
+		_dataServiceInstance.LocalDataInstance.UpdateAccountOnOfflineBadCardList(hashId);
+	}
+
+	public void RemoveAccountFromOfflineBadCardList(string hashId)
+	{
+		_dataServiceInstance.LocalDataInstance.RemoveAccountFromOfflineBadCardList(hashId);
 	}
 
 	public ErrorList CacheTablesUpdate(string tableName, string key, object data)
@@ -343,7 +368,27 @@ public class DataService : IDataService
 		return errorList;
 	}
 
-	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, out List<IKioskProduct> products)
+	public bool IsMultiDisc(long productId)
+	{
+		bool result = false;
+		if (_kioskProductView != null)
+		{
+			return _kioskProductView?.GetMDVProductGroup(productId) != null;
+		}
+		return result;
+	}
+
+	public List<string> GetAllUnmatchedMultiDiscBarcodes()
+	{
+		List<string> result = new List<string>();
+		if (_kioskProductView != null)
+		{
+			result = _kioskProductView?.GetAllUnmatchedMultiDiscBarcodes();
+		}
+		return result;
+	}
+
+	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products)
 	{
 		WaitForFirstLoad();
 		products = null;
@@ -352,8 +397,61 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				products = _kioskProductView.GetProducts(browseFilter, titleFamily, titleType, browseSort, genreFilter, include, exclude, isADAView);
+				products = _kioskProductView.GetProducts(browseFilter, titleFamily, titleType, browseSort, genreFilter, include, exclude, isADAView, priceRangeLow, priceRangeHigh);
 			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetProducts", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
+	public List<IBarcodeForProductResult> GetBarcodesForProducts(List<ISearchBarcodeForProduct> searchProducts, List<string> excludeBarcodesList)
+	{
+		return _kioskProductView?.GetBarcodesForProducts(searchProducts, excludeBarcodesList);
+	}
+
+	public ErrorList GetOutOfStockMovieProducts(out IEnumerable<ITitleProduct> products)
+	{
+		WaitForFirstLoad();
+		products = null;
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				products = _kioskProductView.GetOutOfStockMovies();
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetOutOfStockMovieProducts", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
+	public ErrorList GetUnfilteredNonTitleRollupProducts(out IEnumerable<IKioskProduct> products)
+	{
+		WaitForFirstLoad();
+		products = null;
+		List<IKioskProduct> outputList = new List<IKioskProduct>();
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				_kioskProductView.TitleProducts.ForEach(delegate(KeyValuePair<long, ITitleProduct> x)
+				{
+					if (!(x.Value is TitleRollupProduct))
+					{
+						outputList.Add(x.Value);
+					}
+				});
+			}
+			products = outputList;
 		}
 		catch (Exception e)
 		{
@@ -447,6 +545,16 @@ public class DataService : IDataService
 		return _kioskProductView?.GetInStockGameCount() ?? 0;
 	}
 
+	public TitleType? GetProductTitleType(long productId)
+	{
+		TitleType? result = null;
+		if (_dataServiceInstance?.ProfileDataInstance?.Titles != null && _dataServiceInstance.ProfileDataInstance.Titles.TryGetValue(productId, out var value))
+		{
+			result = TitleProduct.GetTitleTypeFromProductTypeId(value.ProductTypeId);
+		}
+		return result;
+	}
+
 	public List<SubPlatform> GetSubPlatforms()
 	{
 		List<SubPlatform> list = new List<SubPlatform>();
@@ -473,6 +581,83 @@ public class DataService : IDataService
 		return list;
 	}
 
+	public List<IReservation> GetAllReservations()
+	{
+		List<IReservation> list = new List<IReservation>();
+		if (_dataServiceInstance?.ReservationDataInstance?.DataFiles != null)
+		{
+			foreach (KeyValuePair<string, IReservationDataFile> dataFile in _dataServiceInstance.ReservationDataInstance.DataFiles)
+			{
+				IReservation reservationFromReservationDataFile = GetReservationFromReservationDataFile(dataFile.Value);
+				if (reservationFromReservationDataFile != null)
+				{
+					list.Add(reservationFromReservationDataFile);
+				}
+			}
+		}
+		return list;
+	}
+
+	public List<IReservation> GetReservations(string hashedCardId)
+	{
+		return (from reservationDataFile in _dataServiceInstance.ReservationDataInstance.DataFiles.Values
+			where ((ReservationDataFile_V002)reservationDataFile).HashedCardId == hashedCardId
+			select GetReservationFromReservationDataFile(reservationDataFile)).ToList();
+	}
+
+	public IReservation GetReservation(string referenceNumber)
+	{
+		IReservation result = null;
+		if (_dataServiceInstance.ReservationDataInstance.DataFiles.TryGetValue(referenceNumber, out var value))
+		{
+			result = GetReservationFromReservationDataFile(value);
+		}
+		return result;
+	}
+
+	private IReservation GetReservationFromReservationDataFile(IReservationDataFile reservationDataFile)
+	{
+		IReservation result = null;
+		if (reservationDataFile is ReservationDataFile_V002 reservationDataFile2)
+		{
+			result = ReservationDataInstance.Conversions.ConvertToReservation(reservationDataFile2);
+		}
+		else
+		{
+			LogHelper.Instance.Log("Unable to convert IReservationDataFile to instance of ReservationDataFile_VXXX.");
+		}
+		return result;
+	}
+
+	public void DeleteReservation(string referenceNumber)
+	{
+		if (referenceNumber != null)
+		{
+			GetReservation(referenceNumber);
+			if (_dataServiceInstance.ReservationDataInstance.DataFiles.TryGetValue(referenceNumber, out var value) && value != null)
+			{
+				LogHelper.Instance.Log($"Deleting Reservation data file {value.FileName}");
+				_dataServiceInstance.ReservationDataInstance.DataFiles.Remove(referenceNumber);
+				_dataServiceInstance.ReservationDataInstance.Delete(value);
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("DeleteReservation - reference number must not be null.");
+		}
+	}
+
+	public bool SaveReservation(IReservation reservation)
+	{
+		if (reservation != null && reservation.HashedCardId != null && reservation.ReferenceNumber != null)
+		{
+			IReservationDataFile reservationDataFile = ReservationDataInstance.Conversions.ConvertToReservationDataFile(reservation);
+			_dataServiceInstance.ReservationDataInstance.DataFiles[reservation.ReferenceNumber] = reservationDataFile;
+			return _dataServiceInstance.ReservationDataInstance.Save(reservationDataFile);
+		}
+		return false;
+	}
+
 	public Store GetStore()
 	{
 		long kioskId = ServiceLocator.Instance.GetService<IStoreManager>().KioskId;
@@ -480,12 +665,16 @@ public class DataService : IDataService
 		if (_dataServiceInstance.ProfileDataInstance.Stores.ContainsKey(kioskId))
 		{
 			store = _dataServiceInstance.ProfileDataInstance.Stores[kioskId];
+			if ((store?.MarketId ?? 0) > 0)
+			{
+				store.Market = (_dataServiceInstance.ProfileDataInstance.Markets.ContainsKey(store.MarketId) ? _dataServiceInstance.ProfileDataInstance.Markets[store.MarketId] : null);
+			}
 		}
 		else
 		{
 			store = new Store
 			{
-				StoreId = 0L
+				StoreId = 1L
 			};
 			store.Sellthru = true;
 			store.PurchasePrice = 5m;
@@ -494,9 +683,23 @@ public class DataService : IDataService
 			store.RentalTaxRate = 8m;
 			store.ServiceFee = 0.1m;
 			store.ServiceFeeTaxRate = 8m;
+			store.Zip = "60181";
 			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");
 		}
 		return store;
+	}
+
+	public List<Review> GetReviews(long titleId)
+	{
+		List<Review> list = new List<Review>();
+		if (_dataServiceInstance?.ProfileDataInstance?.Reviews != null && _dataServiceInstance.ProfileDataInstance.Reviews.ContainsKey(titleId))
+		{
+			foreach (Review review in _dataServiceInstance.ProfileDataInstance.Reviews[titleId].Reviews)
+			{
+				list.Add(review);
+			}
+		}
+		return list;
 	}
 
 	private ErrorList PerformActionWhileLocked(Action action)
@@ -571,6 +774,8 @@ public class DataService : IDataService
 		if (IsFirstTime)
 		{
 			_dataServiceInstance.CacheDataInstance = _cacheData.LoadData();
+			_dataServiceInstance.LocalDataInstance = _localData.LoadData();
+			_dataServiceInstance.ReservationDataInstance = _reservationData.LoadData();
 		}
 		IProfileDataInstance profileDataInstance = null;
 		if (_profileData.HasStaged() || IsFirstTime)

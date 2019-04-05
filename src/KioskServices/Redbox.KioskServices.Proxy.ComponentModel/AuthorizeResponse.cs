@@ -35,5 +35,15 @@ public enum AuthorizeResponse
 	[ResponseCode(Name = "(A014)")]
 	CheckIfCustomerWantsToUseCredits,
 	[ResponseCode(Name = "(A024)")]
-	EnforceAccertify
+	EnforceAccertify,
+	[ResponseCode(Name = "(A025)")]
+	MissingReservation,
+	[ResponseCode(Name = "(A026)")]
+	ReservationCancelled,
+	[ResponseCode(Name = "(A027)")]
+	RopRentalLimitExceeded,
+	[ResponseCode(Name = "(A028)")]
+	NewCustomerRentalLimitExceeded,
+	[ResponseCode(Name = "(A029)")]
+	ReservationForOtherCustomer
 }

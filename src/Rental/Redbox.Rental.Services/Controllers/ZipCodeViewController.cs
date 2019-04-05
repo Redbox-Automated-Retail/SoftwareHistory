@@ -1,10 +1,12 @@
 using System;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
@@ -23,8 +25,8 @@ public class ZipCodeViewController
 		}
 		ZipCodeViewModel zipCodeViewModel = new ZipCodeViewModel();
 		zipCodeViewModel.KeypadModel = new KeypadModel();
-		zipCodeViewModel.KeypadModel.ClearAllButtonText = BundleFunctions.GetDictionaryStringValue("strings", "keypad_clear_all_button_text");
-		zipCodeViewModel.KeypadModel.BackButtonText = BundleFunctions.GetDictionaryStringValue("strings", "keypad_back_button_text");
+		zipCodeViewModel.KeypadModel.ClearAllButtonText = Resources.keypad_clear_all_button_text;
+		zipCodeViewModel.KeypadModel.BackButtonText = Resources.keypad_back_button_text;
 		KeypadModel keypadModel = zipCodeViewModel.KeypadModel;
 		keypadModel.OnNumberButtonClicked = (Action<string>)Delegate.Combine(keypadModel.OnNumberButtonClicked, new Action<string>(KeypadModel_OnNumberButtonClicked));
 		KeypadModel keypadModel2 = zipCodeViewModel.KeypadModel;
@@ -33,10 +35,10 @@ public class ZipCodeViewController
 		keypadModel3.OnBackButtonClicked = (Action)Delegate.Combine(keypadModel3.OnBackButtonClicked, new Action(KeypadModel_OnBackButtonClicked));
 		zipCodeViewModel.RequiredLength = 5;
 		zipCodeViewModel.DisplayText = "";
-		zipCodeViewModel.HeaderLabelText = BundleFunctions.GetDictionaryStringValue("strings", "zip_code_header_text");
-		zipCodeViewModel.Note1LabelText = BundleFunctions.GetDictionaryStringValue("strings", "zip_code_note_text");
+		zipCodeViewModel.HeaderLabelText = Resources.zip_code_header_text;
+		zipCodeViewModel.Note1LabelText = Resources.zip_code_note_text;
 		zipCodeViewModel.Note2LabelText = note2LabelText;
-		zipCodeViewModel.NextButtonText = BundleFunctions.GetDictionaryStringValue("strings", "zip_code_next_button_text");
+		zipCodeViewModel.NextButtonText = Resources.zip_code_next_button_text;
 		zipCodeViewModel.IsNextButtonEnabled = false;
 		zipCodeViewModel.OnNextButtonClicked = delegate(string s)
 		{
@@ -67,7 +69,8 @@ public class ZipCodeViewController
 		MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.ZipCode, createImpression: true);
 		if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
 		{
-			bitmapImage = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmapImage(marketingAd.ImageName);
+			Image image = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmap(marketingAd.ImageName);
+			bitmapImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
 		}
 		zipCodeViewModel.AdImageSource = bitmapImage;
 		zipCodeViewModel.AdImageVisibility = ((bitmapImage == null) ? Visibility.Collapsed : Visibility.Visible);

@@ -95,7 +95,12 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		m_removeToolStripButton.Enabled = m_queueListView.SelectedItems.Count > 0;
 		if (m_queueListView.SelectedItems.Count == 1)
 		{
-			m_syntaxDocument.Text = PrettyPrinter.GetPrettyString(m_queueListView.SelectedItems[0].Tag as string);
+			string text = m_queueListView.SelectedItems[0].Tag as string;
+			if (text.Length > 10000)
+			{
+				text = string.Empty;
+			}
+			m_syntaxDocument.Text = PrettyPrinter.GetPrettyString(text);
 		}
 		else
 		{
@@ -310,7 +315,9 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_queueListView.SelectedItems.Count != 0)
 		{
-			ServiceLocator.Instance.GetService<IQueueService>().Update(int.Parse(m_queueListView.SelectedItems[0].SubItems[0].Text), m_syntaxDocument.Text);
+			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
+			string s = m_queueListView.SelectedItems[0].SubItems[0].Text;
+			service.Update(int.Parse(s), m_syntaxDocument.Text);
 			RefreshList();
 		}
 	}
@@ -486,7 +493,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_syntaxBoxControl.InfoTipPosition = null;
 		this.m_syntaxBoxControl.InfoTipSelectedIndex = 1;
 		this.m_syntaxBoxControl.InfoTipVisible = false;
-		this.m_syntaxBoxControl.Location = new System.Drawing.Point(0, 382);
+		this.m_syntaxBoxControl.Location = new System.Drawing.Point(-1, 382);
 		this.m_syntaxBoxControl.LockCursorUpdate = false;
 		this.m_syntaxBoxControl.Name = "m_syntaxBoxControl";
 		this.m_syntaxBoxControl.ShowEOLMarker = true;

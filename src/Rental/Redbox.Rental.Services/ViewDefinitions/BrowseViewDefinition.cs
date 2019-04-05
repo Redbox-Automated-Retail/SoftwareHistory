@@ -1,6 +1,7 @@
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Services.Controllers;
+using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.ViewDefinitions;
 
@@ -12,9 +13,9 @@ public class BrowseViewDefinition : BaseViewDefinition, IViewDefinition
 		base.ViewName = "browse_view";
 		base.ActiveFlag = true;
 		base.ControlName = "BrowseView";
-		base.OnEnter = delegate
+		base.OnEnter = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			BrowseViewController.ConfigureBrowseView();
+			BrowseViewController.ConfigureBrowseView(viewFrameInstance?.Parameter as BrowseViewParameters);
 		};
 		base.OnLeave = delegate
 		{

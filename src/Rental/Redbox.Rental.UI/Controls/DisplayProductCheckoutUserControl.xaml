@@ -12,9 +12,15 @@
       <TextBlock TextWrapping="Wrap">
         <Span Style="{StaticResource span_font_montserrat_bold_13}" Foreground="#FF000000">
           <Run Name="ProductTitleText" Text="{Binding Path=ProductTitleText, FallbackValue=Star Wars The Force Awakens}" />
-        </Span> <Span Style="{StaticResource span_font_montserrat_regular_13}" Foreground="#4a4a4a"><Run Name="ProductTypeAndActionText" Text="{Binding Path=ProductTypeText, FallbackValue=- DVD}" /></Span></TextBlock>
+        </Span> <Span Style="{StaticResource span_font_montserrat_regular_13}" Foreground="#4a4a4a"><Run Name="ProductTypeAndActionText" Text="{Binding Path=ProductTypeText, FallbackValue=- DVD}" /></Span> <Span Style="{StaticResource span_font_montserrat_regular_13}" Foreground="#4a4a4a"><Run Name="MDVNumberOfDiscsText" Text="{Binding Path=MDVNumberOfDiscsText, FallbackValue=- (2 Discs)}" /></Span></TextBlock>
       <TextBlock Name="ProductDescriptionLine2Text" Style="{StaticResource font_montserrat_regular_13}" Foreground="#4a4a4a" Text="{Binding Path=ProductDescriptionLine2Text, FallbackValue=1-night rental | Extra night $1.50 | Earning 3000+ pts}" />
-      <TextBlock Name="ProductDescriptionLine3Text" Style="{StaticResource font_montserrat_regular_13}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=ProductDescriptionLine3Text, FallbackValue=PROMO APPLIED: $1 OFF Blu-ray}" />
+      <TextBlock Name="ProductDescriptionLine3Text" Style="{StaticResource font_montserrat_regular_13}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=ProductDescriptionLine3Text, FallbackValue=PROMO APPLIED: $1 OFF Blu-ray}" Visibility="{Binding Path=ProductDescriptionLine3TextVisibility}" />
+      <StackPanel Name="MDVDiscCountStackPanel" Orientation="Horizontal" Margin="0,3,0,0" Visibility="{Binding Path=MDVFieldVisibility}">
+        <Viewbox Height="18">
+          <UserControl Name="TwoDiscsIcon2" Style="{StaticResource two_discs_icon}" Visibility="{Binding Path=MDVFieldVisibility}" />
+        </Viewbox>
+        <TextBlock Name="MDVDiscVendText" Style="{StaticResource font_montserrat_regular_13}" VerticalAlignment="Center" Margin="2,0,0,0" Text="{Binding Path=MDVDiscVendText, FallbackValue=2 DISC VEND}" Visibility="{Binding Path=MDVFieldVisibility}" />
+      </StackPanel>
     </StackPanel>
     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
       <TextBlock Name="ProductCartPriceText" Grid.Column="2" Style="{StaticResource font_montserrat_bold_16}" VerticalAlignment="Center" Foreground="#FF000000" Margin="5,0,5,0" Text="{Binding Path=ProductCartPriceText, FallbackValue=$2.00}" />

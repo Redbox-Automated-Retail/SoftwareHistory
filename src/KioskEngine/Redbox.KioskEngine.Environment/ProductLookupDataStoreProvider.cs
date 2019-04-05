@@ -1,51 +1,76 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Redbox.ProductLookupCatalog;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Environment;
 
 internal class ProductLookupDataStoreProvider : DataStoreProvider
 {
+	private class Constants
+	{
+		public const string Version = "Version";
+
+		public const string BarcodeToProduct = "BarcodeToProduct";
+
+		public const string OriginalMachine = "origin_machine";
+
+		public const string GeneratedOn = "generated_on";
+	}
+
 	protected override long OnCount(string dataStore, string tableName)
 	{
-		if (tableName == "Version")
+		long result = 0L;
+		if (!(tableName == "Version"))
 		{
-			return 2L;
+			if (tableName == "BarcodeToProduct")
+			{
+				result = ServiceLocator.Instance.GetService<IInventory>()?.GetInventoryDataCount() ?? (-1);
+			}
 		}
-		using Archive archive = Archive.Open(DataStoreProvider.GetPath(dataStore));
-		return archive.GetNumberOfRecords();
+		else
+		{
+			result = 2L;
+		}
+		return result;
 	}
 
 	protected override object OnGet(string dataStore, string tableName, string keyName)
 	{
-		using Archive archive = Archive.Open(DataStoreProvider.GetPath(dataStore));
-		if (tableName == "Version")
+		object result = null;
+		IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+		if (service != null)
 		{
-			if (keyName == "origin_machine")
+			if (tableName == "BarcodeToProduct")
 			{
-				return "{ name = '" + archive.GetOriginMachine().Trim() + "' }";
+				Inventory inventory = service.GetInventory(keyName);
+				if (inventory != null)
+				{
+					string arg = inventory.Code.ToString();
+					if (inventory.Code == InventoryStatusCode.WrongTitle)
+					{
+						arg = "Wrong Title";
+					}
+					result = "{ " + $"product_id = {inventory.TitleId}, status = '{arg}', total_rental_count = {inventory.TotalRentalCount}" + " }";
+				}
 			}
-			if (keyName == "generated_on")
+			else if (tableName == "Version")
 			{
-				return "{ date = '" + archive.GetCreatedOn().Trim() + "' }";
+				if (!(keyName == "origin_machine"))
+				{
+					if (keyName == "generated_on")
+					{
+						result = "{ date = '" + service.GetInventoryDataCreatedOn()?.Trim() + "' }";
+					}
+				}
+				else
+				{
+					result = "{ name = '" + service.GetInventoryDataMachineOrigin()?.Trim() + "' }";
+				}
 			}
 		}
-		if (tableName != "BarcodeToProduct")
-		{
-			return null;
-		}
-		Inventory inventory = archive.Find(keyName);
-		if (inventory == null)
-		{
-			return null;
-		}
-		string arg = inventory.Code.ToString();
-		if (inventory.Code == InventoryStatusCode.WrongTitle)
-		{
-			arg = "Wrong Title";
-		}
-		return "{ " + $"product_id = {inventory.TitleId}, status = '{arg}', total_rental_count = {inventory.TotalRentalCount}" + " }";
+		return result;
 	}
 
 	protected override void OnBulkSet(string dataStore, string tableName, IDictionary<string, object> values)
@@ -59,15 +84,7 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 		{
 			if (tableName == "BarcodeToProduct")
 			{
-				List<string> list = new List<string>();
-				using (Archive archive = Archive.Open(DataStoreProvider.GetPath(dataStore)))
-				{
-					for (int i = 0; i < Math.Min(1000L, archive.GetNumberOfRecords()); i++)
-					{
-						list.Add(archive[i].Barcode);
-					}
-				}
-				return list.AsReadOnly();
+				return new List<string>().AsReadOnly();
 			}
 			return new List<string>().AsReadOnly();
 		}

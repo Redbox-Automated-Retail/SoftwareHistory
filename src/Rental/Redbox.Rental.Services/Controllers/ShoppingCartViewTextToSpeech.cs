@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 
@@ -17,7 +21,13 @@ public class ShoppingCartViewTextToSpeech
 
 		public const string CartIsEmpty = "CartIsEmpty";
 
-		public const string ListCartItems = "ListCartItems";
+		public const string ListCartItemsStart = "ListCartItemsStart";
+
+		public const string CartItem = "CartItem";
+
+		public const string CartTotals = "CartTotals";
+
+		public const string CartButtons = "CartButtons";
 
 		public const string DailyRentalCharge = "DailyRentalCharges";
 	}
@@ -63,7 +73,7 @@ public class ShoppingCartViewTextToSpeech
 		speechPart.Refresh = delegate
 		{
 			speechPart.Clear();
-			string text = ((CartCount == 0) ? "CartIsEmpty" : "ListCartItems");
+			string text = ((CartCount == 0) ? "CartIsEmpty" : "ListCartItemsStart");
 			speechPart.RegularExpression = new RegularExpression
 			{
 				Expression = "Jump",
@@ -119,21 +129,17 @@ public class ShoppingCartViewTextToSpeech
 				{
 					Text = "To update you cart, press 3."
 				});
-				AddSignInEventAndText(speechPart, shoppingCartViewModel);
-				AddUsePointsEventAndText(speechPart, shoppingCartViewModel);
+				AddSignInOrUsePointsEvent(speechPart, shoppingCartViewModel);
+				AddSignInOrUsePointsText(speechPart, shoppingCartViewModel);
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
 	}
 
-	private static void AddSignInEventAndText(ISpeechPart speechPart, ShoppingCartViewModel shoppingCartViewModel)
+	private static void AddSignInOrUsePointsEvent(ISpeechPart speechPart, ShoppingCartViewModel shoppingCartViewModel)
 	{
 		if (shoppingCartViewModel.SignInButtonVisibility == Visibility.Visible)
 		{
-			speechPart.Texts.Add(new TextPart
-			{
-				Text = "To sign in press 4."
-			});
 			speechPart.Events.Add(new MapKeyPressToAction
 			{
 				KeyCode = "4",
@@ -143,16 +149,8 @@ public class ShoppingCartViewTextToSpeech
 				}
 			});
 		}
-	}
-
-	private static void AddUsePointsEventAndText(ISpeechPart speechPart, ShoppingCartViewModel shoppingCartViewModel)
-	{
-		if (shoppingCartViewModel.UsePointsButtonVisibility == Visibility.Visible)
+		else if (shoppingCartViewModel.UsePointsButtonVisibility == Visibility.Visible)
 		{
-			speechPart.Texts.Add(new TextPart
-			{
-				Text = "To use points press 4."
-			});
 			speechPart.Events.Add(new MapKeyPressToAction
 			{
 				KeyCode = "4",
@@ -164,86 +162,42 @@ public class ShoppingCartViewTextToSpeech
 		}
 	}
 
+	private static void AddSignInOrUsePointsText(ISpeechPart speechPart, ShoppingCartViewModel shoppingCartViewModel)
+	{
+		if (shoppingCartViewModel.SignInButtonVisibility == Visibility.Visible)
+		{
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To sign in press 4."
+			});
+		}
+		else if (shoppingCartViewModel.UsePointsButtonVisibility == Visibility.Visible)
+		{
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To use points press 4."
+			});
+		}
+	}
+
 	private static void AddSpeechPartListCartItems(ISpeechControl speechControl, Func<ShoppingCartViewModel> getShoppingCartViewModelFunction)
 	{
+		int num = 3;
 		ISpeechPart speechPart = new SpeechPart
 		{
 			Sequence = 2,
-			Name = "ListCartItems",
-			Loop = true,
+			Name = "ListCartItemsStart",
+			Loop = false,
 			StartPause = 1000,
-			EndPause = 5000
+			EndPause = 0
 		};
 		speechPart.Refresh = delegate
 		{
 			speechPart.Clear();
-			ShoppingCartViewModel shoppingCartViewModel = getShoppingCartViewModelFunction();
-			if (shoppingCartViewModel != null)
+			ShoppingCartViewModel shoppingCartViewModel2 = getShoppingCartViewModelFunction();
+			if (shoppingCartViewModel2 != null)
 			{
-				AddNextAudioSnippetEvent(speechPart);
-				if (shoppingCartViewModel.PayButtonEnabled)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "ENTER",
-						Action = delegate
-						{
-							shoppingCartViewModel.ProcessOnPayButtonClicked();
-						}
-					});
-				}
-				if (shoppingCartViewModel.PromoCodeButtonEnabled)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "1",
-						Action = delegate
-						{
-							shoppingCartViewModel.ProcessOnPromoCodeButtonClicked();
-						}
-					});
-				}
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "2",
-					Action = delegate
-					{
-						shoppingCartViewModel.ProcessOnTermsAndPrivacyButtonClicked();
-					}
-				});
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "CANCEL",
-					Action = delegate
-					{
-						shoppingCartViewModel.ProcessOnBackButtonClicked();
-					}
-				});
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "3",
-					Action = delegate
-					{
-						shoppingCartViewModel.ProcessOnUpdateBagButtonClicked();
-					}
-				});
-				speechPart.Events.Add(new MapKeyPress
-				{
-					KeyCode = "5",
-					Function = "TTSSkipToSpeechPart",
-					Value = "DailyRentalCharges"
-				});
-				if (shoppingCartViewModel.UseCreditsButtonEnabled)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "6",
-						Action = delegate
-						{
-							shoppingCartViewModel.ProcessOnUseCreditsButtonClicked();
-						}
-					});
-				}
+				AddListCartItemsEvents(speechPart, shoppingCartViewModel2);
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = string.Format("Your cart has {0} title{1}.", CartCount, (CartCount != 1) ? "s" : null)
@@ -254,95 +208,232 @@ public class ShoppingCartViewTextToSpeech
 					{
 						Text = "The titles in your cart are as follows:"
 					});
-					int num = 0;
-					foreach (IRentalShoppingCartItem item in RentalShoppingCartService.CurrentRentalShoppingCart.Items)
+				}
+			}
+		};
+		speechControl.SpeechParts.Add(speechPart);
+		ShoppingCartViewModel shoppingCartViewModel = getShoppingCartViewModelFunction();
+		if (shoppingCartViewModel != null && CartCount > 0)
+		{
+			int num2 = 0;
+			List<SpeechPart> speechParts = new List<SpeechPart>();
+			foreach (IRentalShoppingCartItem eachCartItem in RentalShoppingCartService.CurrentRentalShoppingCart.Items)
+			{
+				int speechPartIndex = num2;
+				speechParts.Add(new SpeechPart
+				{
+					Sequence = num++,
+					Name = "CartItem" + num2,
+					Loop = false,
+					StartPause = 500,
+					EndPause = 0
+				});
+				speechParts[speechPartIndex].Refresh = delegate
+				{
+					speechParts[speechPartIndex].Clear();
+					ShoppingCartViewModel shoppingCartViewModel2 = getShoppingCartViewModelFunction();
+					if (shoppingCartViewModel2 != null)
 					{
-						DisplayCheckoutProductModel displayCheckoutProductModel = shoppingCartViewModel.DisplayProductModels[num];
-						num++;
+						AddListCartItemsEvents(speechParts[speechPartIndex], shoppingCartViewModel2);
+						DisplayCheckoutProductModel displayCheckoutProductModel = shoppingCartViewModel.DisplayProductModels[speechPartIndex];
 						string text = null;
-						text = ((item.Action != RentalShoppingCartItemAction.purchase) ? displayCheckoutProductModel.ProductDescriptionLine2Text.Replace("|", $"{item.Price:C}. ") : $"{item.Price:C} {item.Action}");
-						speechPart.Texts.Add(new TextPart
+						text = ((eachCartItem.Action != RentalShoppingCartItemAction.purchase) ? displayCheckoutProductModel.ProductDescriptionLine2Text.ReplaceFirst("|", $"{eachCartItem.Price:C}. ") : $"{eachCartItem.Price:C} {eachCartItem.Action}");
+						speechParts[speechPartIndex].Texts.Add(new TextPart
 						{
-							Text = $"{item.Action} title {displayCheckoutProductModel.Name} {text}."
+							Text = $"{eachCartItem.Action} title {displayCheckoutProductModel.Name} {text}."
 						});
 					}
-				}
+				};
+				speechControl.SpeechParts.Add(speechParts[num2]);
+				num2++;
+			}
+		}
+		SpeechPart speechPart2 = new SpeechPart
+		{
+			Sequence = num++,
+			Name = "CartTotals",
+			Loop = false,
+			StartPause = 500,
+			EndPause = 0
+		};
+		speechPart2.Refresh = delegate
+		{
+			speechPart2.Clear();
+			ShoppingCartViewModel shoppingCartViewModel2 = getShoppingCartViewModelFunction();
+			if (shoppingCartViewModel2 != null)
+			{
+				AddListCartItemsEvents(speechPart2, shoppingCartViewModel2);
 				if (!string.IsNullOrEmpty(shoppingCartViewModel?.PricingModel?.DiscountValueText))
 				{
-					speechPart.Texts.Add(new TextPart
+					speechPart2.Texts.Add(new TextPart
 					{
 						Text = string.Format("The discount amount is {0}.", shoppingCartViewModel?.PricingModel?.DiscountValueText.Replace("-", string.Empty))
 					});
 				}
-				ShoppingCartViewModel shoppingCartViewModel2 = shoppingCartViewModel;
-				if (shoppingCartViewModel2 != null && shoppingCartViewModel2.PricingModel?.ServiceFeeLineVisibility == Visibility.Visible)
+				ShoppingCartViewModel shoppingCartViewModel3 = shoppingCartViewModel;
+				if (shoppingCartViewModel3 != null && shoppingCartViewModel3.PricingModel?.ServiceFeeLineVisibility == Visibility.Visible)
 				{
-					speechPart.Texts.Add(new TextPart
+					speechPart2.Texts.Add(new TextPart
 					{
 						Text = $"The service fee is {shoppingCartViewModel?.PricingModel?.ServiceFeeValueText}."
 					});
 				}
-				speechPart.Texts.Add(new TextPart
+				speechPart2.Texts.Add(new TextPart
 				{
 					Text = $"The subtotal amount is {shoppingCartViewModel?.PricingModel?.SubtotalValueText} and the tax is {shoppingCartViewModel?.PricingModel?.TaxValueText}."
 				});
-				speechPart.Texts.Add(new TextPart
+				speechPart2.Texts.Add(new TextPart
 				{
 					Text = $"The total amount that will be charged to your credit card will be ${shoppingCartViewModel?.PricingModel?.TotalValueText}."
 				});
+				ShoppingCartViewModel shoppingCartViewModel4 = shoppingCartViewModel;
+				if (shoppingCartViewModel4 != null && shoppingCartViewModel4.PointsEstimateVisibility == Visibility.Visible)
+				{
+					speechPart2.Texts.Add(new TextPart
+					{
+						Text = string.Format($"You'll earn {shoppingCartViewModel?.PointsEstimateText} for the stuff in your bag.")
+					});
+				}
+			}
+		};
+		speechControl.SpeechParts.Add(speechPart2);
+		SpeechPart speechPart3 = new SpeechPart
+		{
+			Sequence = num++,
+			Name = "CartButtons",
+			Loop = false,
+			StartPause = 0,
+			EndPause = 37000
+		};
+		speechPart3.Refresh = delegate
+		{
+			speechPart3.Clear();
+			ShoppingCartViewModel shoppingCartViewModel2 = getShoppingCartViewModelFunction();
+			if (shoppingCartViewModel2 != null)
+			{
+				AddListCartItemsEvents(speechPart3, shoppingCartViewModel2);
 				if (shoppingCartViewModel.PayButtonEnabled)
 				{
-					speechPart.Texts.Add(new TextPart
+					speechPart3.Texts.Add(new TextPart
 					{
 						Text = "To pay with a credit card, press ENTER."
 					});
 				}
-				speechPart.Texts.Add(new TextPart
+				speechPart3.Texts.Add(new TextPart
 				{
 					Text = "To update your cart press 3."
 				});
 				if (shoppingCartViewModel.PromoCodeButtonEnabled)
 				{
-					speechPart.Texts.Add(new TextPart
+					IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+					string text;
+					if ((personalizationSession?.StoredPromoCodes?.Count ?? 0) > 0)
 					{
-						Text = "If you have a promo code, and would like to use it now, press 1."
+						int count = personalizationSession.StoredPromoCodes.Count;
+						text = string.Format("You have {0} promo{1} available. If you would like to use {2} now, ", count, (count > 1) ? "s" : "", (count > 1) ? "one" : "it");
+					}
+					else
+					{
+						text = "If you have a promo code, and would like to use it now, ";
+					}
+					text += "press 1.";
+					speechPart3.Texts.Add(new TextPart
+					{
+						Text = text
 					});
 				}
-				speechPart.Texts.Add(new TextPart
+				speechPart3.Texts.Add(new TextPart
 				{
-					Text = "By paying with credit card or by using credits you agree to the terms."
+					Text = "By paying with credit card you agree to the terms."
 				});
-				speechPart.Texts.Add(new TextPart
+				speechPart3.Texts.Add(new TextPart
 				{
 					Text = "To hear our terms and privacy in full, press 2."
 				});
-				speechPart.Texts.Add(new TextPart
+				speechPart3.Texts.Add(new TextPart
 				{
 					Text = "To go back to the previous screen, press the CANCEL key."
 				});
-				AddSignInEventAndText(speechPart, shoppingCartViewModel);
-				AddUsePointsEventAndText(speechPart, shoppingCartViewModel);
-				speechPart.Texts.Add(new TextPart
+				AddSignInOrUsePointsText(speechPart3, shoppingCartViewModel);
+				speechPart3.Texts.Add(new TextPart
 				{
 					Text = "To know more about our daily rental charges, press 5."
 				});
-				if (shoppingCartViewModel.UseCreditsButtonEnabled)
-				{
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = "To use credits, press 6."
-					});
-				}
 			}
+			speechPart3.RegularExpression = new RegularExpression
+			{
+				Expression = "Jump",
+				Value = "Jump",
+				Success = "ListCartItemsStart",
+				Failure = "ListCartItemsStart"
+			};
 		};
-		speechControl.SpeechParts.Add(speechPart);
+		speechControl.SpeechParts.Add(speechPart3);
+	}
+
+	private static void AddListCartItemsEvents(ISpeechPart speechPart, ShoppingCartViewModel shoppingCartViewModel)
+	{
+		AddNextAudioSnippetEvent(speechPart);
+		if (shoppingCartViewModel.PayButtonEnabled)
+		{
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "ENTER",
+				Action = delegate
+				{
+					shoppingCartViewModel.ProcessOnPayButtonClicked();
+				}
+			});
+		}
+		if (shoppingCartViewModel.PromoCodeButtonEnabled)
+		{
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "1",
+				Action = delegate
+				{
+					shoppingCartViewModel.ProcessOnPromoCodeButtonClicked();
+				}
+			});
+		}
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "2",
+			Action = delegate
+			{
+				shoppingCartViewModel.ProcessOnTermsAndPrivacyButtonClicked();
+			}
+		});
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "CANCEL",
+			Action = delegate
+			{
+				shoppingCartViewModel.ProcessOnBackButtonClicked();
+			}
+		});
+		speechPart.Events.Add(new MapKeyPressToAction
+		{
+			KeyCode = "3",
+			Action = delegate
+			{
+				shoppingCartViewModel.ProcessOnUpdateBagButtonClicked();
+			}
+		});
+		speechPart.Events.Add(new MapKeyPress
+		{
+			KeyCode = "5",
+			Function = "TTSSkipToSpeechPart",
+			Value = "DailyRentalCharges"
+		});
+		AddSignInOrUsePointsEvent(speechPart, shoppingCartViewModel);
 	}
 
 	private static void AddSpeechPartDailyRentalCharge(ISpeechControl speechControl, Func<ShoppingCartViewModel> getShoppingCartViewModelFunction)
 	{
 		ISpeechPart speechPart = new SpeechPart
 		{
-			Sequence = 3,
+			Sequence = 11,
 			Name = "DailyRentalCharges",
 			Loop = false,
 			StartPause = 0,

@@ -5,5 +5,7 @@ public enum KioskEventType
 	KioskHealthTouchScreen = 1,
 	KioskHealthArcus,
 	KioskHealthRouter,
-	KioskHealthHardwareCorrectionStat
+	KioskHealthHardwareCorrectionStat,
+	KioskHealthView,
+	KioskHealthCCReader
 }

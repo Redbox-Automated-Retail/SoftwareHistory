@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Browse;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.ShoppingCart;
@@ -87,10 +90,11 @@ public class PersonalizationFunctions
 		OrchestrationService.ViewShow("phone_and_pin_view", new PhoneAndPinInfo
 		{
 			SignInCancelButtonType = signInCancelButtonType,
-			SignInAction = delegate(string phone, SecureString pin)
+			SignInAction = delegate(string phone, SecureString pin, bool textClub)
 			{
 				StartLoginProcess(null, null, phone, pin);
-			}
+			},
+			IsSignUp = false
 		});
 	}
 
@@ -101,7 +105,8 @@ public class PersonalizationFunctions
 			OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnly: false);
 		}, delegate
 		{
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "back");
+			SessionAnalyticsService?.AddViewEvent("context", "SignOutDialog");
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "sign_out_back");
 			OrchestrationService.ViewGoBackSafe("Sign Out view:hide()", popOnly: false);
 		}, delegate
 		{
@@ -121,6 +126,17 @@ public class PersonalizationFunctions
 		}, delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Loyalty is down message popup continue", popOnly: false);
+		});
+	}
+
+	public static void ShowLoyaltyIsDownOnLoginDialog()
+	{
+		MessagePopupViewController.ShowLoyaltyIsDownOnLoginMessage(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("Loyalty is down on login message popup timeout", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("Loyalty is down on login message popup continue", popOnly: false);
 		});
 	}
 
@@ -159,13 +175,27 @@ public class PersonalizationFunctions
 				if (Redbox.Rental.Services.Session.Session.Instance != null)
 				{
 					Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = loginResult.PersonalizationSession;
+					Redbox.Rental.Services.Session.Session.Instance.UserInfo = new UserInfo
+					{
+						Email = loginResult.PersonalizationSession.LoginEmailAddress
+					};
+					CheckCartForOfferCodes();
 					OrchestrationService.AnalyticsAddLoggedInCustomerProfileNumber(loginResult.PersonalizationSession?.CustomerProfileNumber);
 				}
 				OrchestrationService.ResetApplicationIdleTimerTimeout();
-				string value = service?.PeekViewFrame()?.ViewFrame?.ViewName;
-				"phone_and_pin_view".Equals(value);
-				"keyboard_sign_in_view".Equals(value);
-				OrchestrationService.ViewGoBackSafe("Login process finished - pop Keyboard / phone view", popOnly: false);
+				bool flag = "keyboard_sign_in_view".Equals(service?.PeekViewFrame()?.ViewFrame?.ViewName);
+				OrchestrationService.ViewGoBackSafe("Login process finished - pop keyboard / phone view", popOnly: false);
+				if (IsSignedIn & flag)
+				{
+					LoyaltySignUpController.BeginAfterSignInLoyaltySignUpFlow(loginResult.PersonalizationSession.CustomerProfileNumber, loginResult.PersonalizationSession.LoginEmailAddress, loginResult.PersonalizationSession.MobilePhoneNumber, loginResult.PersonalizationSession.PromptForPerks, loginResult.PersonalizationSession.PromptForEarlyId, loginResult.PersonalizationSession.TextClubEnabled, delegate
+					{
+						ShowRecommendedTitlesIfNeeded(loginResult);
+					});
+				}
+				else if (IsSignedIn)
+				{
+					ShowRecommendedTitlesIfNeeded(loginResult);
+				}
 			}
 			else if (loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyIsDown)
 			{
@@ -174,7 +204,7 @@ public class PersonalizationFunctions
 					Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = loginResult.PersonalizationSession;
 				}
 				OrchestrationService.ViewGoBackSafe("Login process finished - pop Keyboard view", popOnly: true);
-				ShowLoyaltyIsDownDialog();
+				ShowLoyaltyIsDownOnLoginDialog();
 			}
 			else
 			{
@@ -207,10 +237,44 @@ public class PersonalizationFunctions
 		}, TaskScheduler.FromCurrentSynchronizationContext());
 	}
 
+	private static void ShowRecommendedTitlesIfNeeded(ILoginResult loginResult)
+	{
+		if (loginResult.PersonalizationSession.RecommendedTitles != null && loginResult.PersonalizationSession.RecommendedTitles.Count > 0 && loginResult.PersonalizationSession.RecommendedTitles[0] != null && loginResult.PersonalizationSession.RecommendedTitles[0].Count > 0)
+		{
+			IRecommendedTitles recommendedTitles = (ApplicationState.Instance.IsADAAccessible ? RecommendedTitlesPopupViewController.UnrollRecommendedTitles(loginResult.PersonalizationSession.RecommendedTitles[0]) : loginResult.PersonalizationSession.RecommendedTitles[0]);
+			int numberOfTitlesToShow = 20;
+			List<IBrowseItemModel> list = RecommendedTitlesPopupViewController.CreateBrowseItemsFromRecommendedTitles(recommendedTitles, numberOfTitlesToShow);
+			if (list != null && list.Count > 0)
+			{
+				RecommendedTitlesPopupInfo recommendedTitlesPopupInfo = new RecommendedTitlesPopupInfo();
+				recommendedTitlesPopupInfo.RecommendedTitles = recommendedTitles;
+				recommendedTitlesPopupInfo.NumberOfTitlesToShow = numberOfTitlesToShow;
+				recommendedTitlesPopupInfo.ShowOfferText = recommendedTitles.OfferCode == "RC";
+				recommendedTitlesPopupInfo.ShownFromView = "join_perks_promo_view";
+				OrchestrationService.ViewShow("recommended_titles_popup_view", recommendedTitlesPopupInfo);
+			}
+		}
+	}
+
+	private static void CheckCartForOfferCodes()
+	{
+		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
+		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
+		{
+			return;
+		}
+		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
+		{
+			item.OfferCode = GetLoyaltyOfferCode(item.TitleProduct);
+		}
+	}
+
 	public static void ShowMyPointsError()
 	{
 		MessagePopupViewController.ShowSimpleMessage(Resources.my_points_error_title, Resources.my_points_error_message, Resources.my_points_error_btn_text, delegate
 		{
+			SessionAnalyticsService?.AddViewEvent("context", "NotEnoughPointsDialog");
+			SessionAnalyticsService?.AddViewEvent("buttonPress", "not_enough_points_gotit");
 			OrchestrationService.ViewGoBackSafe("Message button GotIt pressed", popOnly: false);
 		}, delegate
 		{
@@ -220,13 +284,42 @@ public class PersonalizationFunctions
 
 	public static void ShowNotEnoughPointsError()
 	{
-		MessagePopupViewController.ShowSimpleMessage(Resources.womp_womp, Resources.not_enough_points, Resources.okay, delegate
+		MessagePopupViewController.ShowSimpleMessage(Resources.sorry, Resources.not_enough_points, Resources.okay, delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Message button Okay pressed", popOnly: false);
 		}, delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnly: false);
 		});
+	}
+
+	public static string GetLoyaltyOfferCode(ITitleProduct titleProduct)
+	{
+		string result = null;
+		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+		if (personalizationSession != null && personalizationSession.RecommendedTitles != null)
+		{
+			foreach (IRecommendedTitles recommendedTitle in personalizationSession.RecommendedTitles)
+			{
+				foreach (IRecommendedTitleId item in recommendedTitle)
+				{
+					if (item.IdType == RecommendedTitlesIdType.ProductGroupID)
+					{
+						if (item.Id == titleProduct.TitleRollupProductGroupId)
+						{
+							result = recommendedTitle.OfferCode;
+							break;
+						}
+					}
+					else if (item.Id == titleProduct.ProductId)
+					{
+						result = recommendedTitle.OfferCode;
+						break;
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 	public static void ShowEmailReceiptAddress(string emailAddress)
@@ -239,13 +332,22 @@ public class PersonalizationFunctions
 			num = service.GetTimeout("shorter", num);
 		}
 		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
+		object lockObject = new object();
+		bool hasActionExecuted = false;
 		Action continueAction = (continueAction = delegate
 		{
-			timerService?.RemoveTimer("email_next_timer");
-			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-			if (rentalShoppingCart != null)
+			lock (lockObject)
 			{
-				OrchestrationService.InvokeMarketingOptInFlowCallback(rentalShoppingCart.MarketingOptInConfirmationStatus.ToString());
+				if (!hasActionExecuted)
+				{
+					hasActionExecuted = true;
+					timerService?.RemoveTimer("email_next_timer");
+					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+					if (rentalShoppingCart != null)
+					{
+						OrchestrationService.InvokeMarketingOptInFlowCallback(rentalShoppingCart.MarketingOptInConfirmationStatus.ToString());
+					}
+				}
 			}
 		});
 		(timerService?.CreateTimer("email_next_timer", num, num, delegate
@@ -256,51 +358,6 @@ public class PersonalizationFunctions
 		{
 			ContinueAction = continueAction,
 			EmailAddress = emailAddress
-		});
-	}
-
-	public static void ShowJoinedPerksConformation(SimpleInfo simpleInfo)
-	{
-		if (simpleInfo != null)
-		{
-			simpleInfo.Model = null;
-			LogHelper.Instance.Log("Conformation of Joining Perks: starting.");
-			simpleInfo.ContinueAction = delegate
-			{
-				OrchestrationService.ViewGoBackSafe("Joined Text Club canceled", popOnly: false);
-			};
-			OrchestrationService.ViewShow("joined_perks_view", simpleInfo);
-		}
-	}
-
-	public static void ShowPromoToJoinPerks(object otherInfo)
-	{
-		LogHelper.Instance.Log("Promo to Join Perks: starting.");
-		SimpleInfo simpleInfo = new SimpleInfo
-		{
-			Obj = otherInfo,
-			CancelAction = delegate
-			{
-				OrchestrationService.ViewGoBackSafe("Promo to Join Perks canceled", popOnly: false);
-			}
-		};
-		simpleInfo.ContinueAction = delegate
-		{
-			OrchestrationService.ViewGoBackSafe("Promo to Join Perks closed", popOnly: false);
-			ShowJoinedPerksConformation(simpleInfo);
-		};
-		OrchestrationService.ViewShow("join_perks_promo_view", simpleInfo);
-	}
-
-	public static void ShowPromoToJoinTextClub()
-	{
-		LogHelper.Instance.Log("Promo to Joined Text Club: starting.");
-		OrchestrationService.ViewShow("joined_text_club_promo_view", new SimpleInfo
-		{
-			ContinueAction = delegate
-			{
-				OrchestrationService.ViewGoBackSafe("Joined Text Club canceled", popOnly: false);
-			}
 		});
 	}
 

@@ -61,7 +61,7 @@ public class TitleDetailModel : DependencyObject
 		}
 	}
 
-	public event Action<IBrowseItemModel, object, TitleType> RentProduct;
+	public event Action<IBrowseItemModel, object, TitleType, bool> RentProduct;
 
 	public event Action<IBrowseItemModel, object> BuyButtonHit;
 
@@ -82,7 +82,7 @@ public class TitleDetailModel : DependencyObject
 
 	public void ProcessAddProduct(IBrowseItemModel model, object o, TitleType t)
 	{
-		RentProduct?.Invoke(model, o, t);
+		RentProduct?.Invoke(model, o, t, arg4: false);
 	}
 
 	public void ProcessBuyButtonHit(IBrowseItemModel model, object o)

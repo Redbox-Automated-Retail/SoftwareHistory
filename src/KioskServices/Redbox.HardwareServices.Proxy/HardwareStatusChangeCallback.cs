@@ -13,6 +13,8 @@ public class HardwareStatusChangeCallback : ICallbackEntry
 
 	public string Status { get; set; }
 
+	public string Name => $"HardwareStatusChangeCallback - {JobId ?? string.Empty}";
+
 	public void Invoke()
 	{
 		if (EventHandler == null)

@@ -7,6 +7,7 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.KioskServices.Proxy.Request;
 using Redbox.KioskServices.Proxy.Requests;
@@ -215,7 +216,7 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -275,7 +276,7 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -363,7 +364,7 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -423,7 +424,7 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,

@@ -2,8 +2,8 @@
 <xs:schema id="KioskAnalytics" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:element name="session">
 		<xs:complexType>
-			<xs:all>
-				<xs:element name="sessionId" type="xs:string" minOccurs="1" maxOccurs="1"/>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element name="sessionId" type="xs:string" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="sessionType" type="xs:string" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="sessionStart" type="xs:string" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="shoppingCart" minOccurs="1" maxOccurs="1">
@@ -188,27 +188,6 @@
 				<xs:element name="recommendationsFlow" type="xs:string" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="recommendedTitles" type="xs:string" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="recommendedTitlesShown" type="xs:string" minOccurs="0" maxOccurs="1"/>
-				<xs:element name="pricing" minOccurs="1" maxOccurs="1">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="productPrice" minOccurs="0" maxOccurs="unbounded">
-								<xs:complexType>
-									<xs:all>
-										<xs:element name="firstNightAmt" type="xs:string" minOccurs="0" maxOccurs="1"/>
-										<xs:element name="nonReturnDays" type="xs:string" minOccurs="0" maxOccurs="1"/>
-										<xs:element name="nonReturnAmt" type="xs:string" minOccurs="0" maxOccurs="1"/>
-										<xs:element name="extraNightAmt" type="xs:string" minOccurs="0" maxOccurs="1"/>
-										<xs:element name="expirationPrice" type="xs:string" minOccurs="0" maxOccurs="1"/>
-										<xs:element name="pricesetid" type="xs:string" minOccurs="0" maxOccurs="1"/>
-									</xs:all>
-									<xs:attribute name="productFamily" type="xs:string" />
-									<xs:attribute name="productType" type="xs:string" />
-									<xs:attribute name="currency" type="xs:string" />
-								</xs:complexType>
-							</xs:element>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
 				<xs:element name="abandon" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="loggedInCustomerProfileNumber" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="customerProfileNumber" type="xs:string" minOccurs="0" maxOccurs="1" />
@@ -216,7 +195,24 @@
         <xs:element name="accountNumber" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="sessionEnd" type="xs:string" minOccurs="1" maxOccurs="1" />
 				<xs:element name="sessionDuration" type="xs:string" minOccurs="1" maxOccurs="1" />
-			</xs:all>
-		</xs:complexType>
-	</xs:element>
+        <xs:element name="abTesting" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="configuredABTests" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="test" minOccurs="0" maxOccurs="unbounded">
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="outofstock" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="product" minOccurs="0" maxOccurs="unbounded">
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+    </xs:element>
 </xs:schema>

@@ -484,6 +484,10 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 
 	public long TitleRollupProductGroupId { get; set; }
 
+	public List<long> RequiredAdditionalTitles { get; private set; }
+
+	public decimal? DigitalRentPrice => KioskProducts.FirstOrDefault()?.DigitalRentPrice;
+
 	public TitleRollupProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, Dictionary<long, MDVProduct> mdvProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

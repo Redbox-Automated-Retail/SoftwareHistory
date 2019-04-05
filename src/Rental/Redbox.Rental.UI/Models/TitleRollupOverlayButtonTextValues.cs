@@ -88,7 +88,7 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 		}
 	}
 
-	public string RentalPriceFormat => "{0}\n{1:C}";
+	public string RentalPriceFormat => "{0} {1:C}";
 
 	public string OutOfStockText => Resources.title_rollup_overlay_oos_text;
 

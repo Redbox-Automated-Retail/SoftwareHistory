@@ -66,7 +66,7 @@ public class TitleDetailViewTextToSpeech
 			});
 			TextPart item = new TextPart
 			{
-				Text = "You have selected to hear more about " + browseItem.Name
+				Text = "You have selected to hear more about " + browseItem?.Name
 			};
 			part.Texts.Add(item);
 			if (displayProductModel.OutOfStockVisibility == Visibility.Visible)

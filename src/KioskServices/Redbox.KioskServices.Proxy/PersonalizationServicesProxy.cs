@@ -10,7 +10,9 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -30,16 +32,23 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 	{
 	}
 
-	public void Login(int kioskId, string emailAddress, SecureString password, string phoneNumber, SecureString pin, RemoteServiceCallback completeCallback)
+	public void Login(int kioskId, string emailAddress, SecureString password, string phoneNumber, SecureString pin, string languageCode, RemoteServiceCallback completeCallback)
 	{
 		string password2 = SecureStringToString(password);
 		string pin2 = SecureStringToString(pin);
-		PerformLiveLogin(kioskId, emailAddress, password2, phoneNumber, pin2, completeCallback);
+		PerformLiveLogin(kioskId, emailAddress, password2, phoneNumber, pin2, languageCode, completeCallback);
 	}
 
-	public void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback)
+	public void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback, bool queued = false)
 	{
-		PerformLiveAccountUpdate(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback);
+		if (queued)
+		{
+			QueueAccountUpdate(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback);
+		}
+		else
+		{
+			PerformLiveAccountUpdate(kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, completeCallback);
+		}
 	}
 
 	private static string SecureStringToString(SecureString value)
@@ -83,7 +92,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 		return result;
 	}
 
-	private void PerformLiveLogin(int kioskId, string emailAddress, string password, string phoneNumber, string pin, RemoteServiceCallback completeCallback)
+	private void PerformLiveLogin(int kioskId, string emailAddress, string password, string phoneNumber, string pin, string languageCode, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -107,7 +116,8 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 						EmailAddress = emailAddress,
 						Password = Encrypt(password),
 						PhoneNumber = phoneNumber,
-						Pin = Encrypt(pin)
+						Pin = Encrypt(pin),
+						LanguageCode = languageCode
 					});
 					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
@@ -132,6 +142,85 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 						IDictionary<string, object> dateInfo2 = remoteServiceResult.Properties["BirthDate"] as IDictionary<string, object>;
 						remoteServiceResult.Properties["BirthDate"] = GetDateTime(dateInfo2);
 					}
+					remoteServiceResult.Properties["MobilePhoneNumber"] = GetResponseValue(dictionary, "MobilePhoneNumber", null)?.ToString();
+					remoteServiceResult.Properties["PromptForPerks"] = dictionary.ContainsKey("PromptForPerks") && (bool)dictionary["PromptForPerks"];
+					remoteServiceResult.Properties["PromptForEarlyId"] = dictionary.ContainsKey("PromptForEarlyId") && (bool)dictionary["PromptForEarlyId"];
+					remoteServiceResult.Properties["TextClubEnabled"] = dictionary.ContainsKey("TextClubEnabled") && (bool)dictionary["TextClubEnabled"];
+					if (dictionary.ContainsKey("RecommendedTitles") && dictionary["RecommendedTitles"] != null)
+					{
+						ArrayList obj = (ArrayList)dictionary["RecommendedTitles"];
+						remoteServiceResult.Properties["RecommendedTitles"] = new List<IRecommendedTitles>();
+						foreach (IDictionary<string, object> item in obj)
+						{
+							RecommendedTitles recommendedTitles = new RecommendedTitles
+							{
+								OfferCode = GetResponseValue(item, "OfferCode", string.Empty)?.ToString()
+							};
+							foreach (IDictionary<string, object> item2 in (ArrayList)GetResponseValue(item, "TitleIds", new ArrayList()))
+							{
+								RecommendedTitlesIdType idType = (RecommendedTitlesIdType)GetResponseValue(item2, "IdType", RecommendedTitlesIdType.ProductGroupID);
+								int num = (int)GetResponseValue(item2, "Id", -1);
+								recommendedTitles.Add(new RecommendedTitleId
+								{
+									Id = num,
+									IdType = idType
+								});
+							}
+							((List<IRecommendedTitles>)remoteServiceResult.Properties["RecommendedTitles"]).Add(recommendedTitles);
+						}
+					}
+					if (dictionary.ContainsKey("StoredPromoCodes") && dictionary["StoredPromoCodes"] != null)
+					{
+						ArrayList obj2 = (ArrayList)dictionary["StoredPromoCodes"];
+						List<IStoredPromoCode> list = new List<IStoredPromoCode>();
+						foreach (IDictionary<string, object> item3 in obj2)
+						{
+							StoredPromoCode storedPromoCode = new StoredPromoCode
+							{
+								PromoCode = GetResponseValue(item3, "PromoCode", string.Empty).ToString(),
+								CampaignName = GetResponseValue(item3, "CampaignName", string.Empty).ToString(),
+								UsageDescription = GetResponseValue(item3, "UsageDescription", string.Empty).ToString(),
+								RedemptionTypeDescription = GetResponseValue(item3, "RedemptionTypeDescription", string.Empty).ToString()
+							};
+							if (item3.ContainsKey("ExpirationDate") && item3["ExpirationDate"] != null)
+							{
+								IDictionary<string, object> dateInfo3 = item3["ExpirationDate"] as IDictionary<string, object>;
+								storedPromoCode.ExpirationDate = GetDateTime(dateInfo3);
+							}
+							storedPromoCode.ExpirationText = GetResponseValue(item3, "ExpirationText", string.Empty).ToString();
+							storedPromoCode.DaysUntilExpiration = (int?)GetResponseValue(item3, "DaysUntilExpiration", null);
+							list.Add(storedPromoCode);
+						}
+						remoteServiceResult.Properties["StoredPromoCodes"] = list;
+					}
+					if (dictionary.ContainsKey("AcceptedOffers"))
+					{
+						ArrayList obj3 = (ArrayList)dictionary["AcceptedOffers"];
+						List<IAcceptedOffer> list2 = new List<IAcceptedOffer>();
+						foreach (IDictionary<string, object> item4 in obj3)
+						{
+							list2.Add(new AcceptedOffer
+							{
+								Code = GetResponseValue(item4, "Code", string.Empty).ToString(),
+								Status = GetResponseValue(item4, "Status", string.Empty).ToString(),
+								StartDate = GetResponseDateTime(item4, "StartDate"),
+								EndDate = GetResponseDateTime(item4, "EndDate"),
+								Name = GetResponseValue(item4, "Name", string.Empty).ToString(),
+								Description = GetResponseValue(item4, "Description", string.Empty).ToString(),
+								OptedInDate = GetResponseDateTime(item4, "OptedInDate"),
+								TimeToComplete = GetResponseValue(item4, "TimeToComplete", string.Empty).ToString(),
+								CompleteDate = GetResponseDateTime(item4, "CompleteDate"),
+								LegalInformation = GetResponseValue(item4, "LegalInformation", string.Empty).ToString(),
+								CurrentValue = (int?)GetResponseValue(item4, "CurrentValue", null),
+								MaxValue = (int?)GetResponseValue(item4, "MaxValue", null),
+								EndValueText = GetResponseValue(item4, "EndValueText", string.Empty).ToString(),
+								RemainderValue = (int?)GetResponseValue(item4, "RemainderValue", null),
+								ShowInBannerPriority = (int?)GetResponseValue(item4, "ShowInBannerPriority", null),
+								ProgressTrackerCode = GetResponseValue(item4, "ProgressTrackerCode", string.Empty).ToString()
+							});
+						}
+						remoteServiceResult.Properties["AcceptedOffers"] = list2;
+					}
 					if (dictionary.ContainsKey("ServerName"))
 					{
 						remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
@@ -141,9 +230,9 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 						ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 						if (arrayList != null && arrayList.Count > 0)
 						{
-							if (arrayList[0] is Dictionary<string, object> dictionary2)
+							if (arrayList[0] is Dictionary<string, object> dictionary3)
 							{
-								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), (string)dictionary2["Code"]);
+								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), (string)dictionary3["Code"]);
 								remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)KioskLoginResponseErrors.Error);
 							}
 						}
@@ -171,7 +260,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -185,6 +274,16 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 				}
 			}
 		});
+	}
+
+	private DateTime? GetResponseDateTime(IDictionary<string, object> response, string key)
+	{
+		if (response.ContainsKey(key) && response[key] != null)
+		{
+			IDictionary<string, object> dateInfo = response[key] as IDictionary<string, object>;
+			return GetDateTime(dateInfo);
+		}
+		return null;
 	}
 
 	private void PerformLiveAccountUpdate(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback)
@@ -217,7 +316,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 					});
 					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-					remoteServiceResult.Properties["MobliePhoneNumber"] = GetResponseValue(dictionary, "MobliePhoneNumber", null)?.ToString();
+					remoteServiceResult.Properties["MobilePhoneNumber"] = GetResponseValue(dictionary, "MobilePhoneNumber", null)?.ToString();
 					if (dictionary.ContainsKey("ServerName"))
 					{
 						remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
@@ -257,13 +356,74 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
 					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult);
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
 						Message = "Invoking completeCallback from PersonalizationServicesProxy.PerformLiveUpdateAccount."
 					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	private void QueueAccountUpdate(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback callback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			ErrorList errorList = null;
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				LogHelper.Instance.Log("Enqueue call to remote IPersonalizationServices.QueueAccountUpdate, URL: {0}", KioskServicesProxy.Instance.Url);
+				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "UpdateAccount", new
+				{
+					KioskId = kioskId,
+					MessageId = Guid.NewGuid(),
+					MessageType = "UpdateAccount",
+					EngineVersion = service["EngineVersion"],
+					BundleVersion = service["ProductVersion"],
+					CustomerProfileNumber = customerProfileNumber,
+					Email = emailAddress,
+					MobilePhoneNumber = phoneNumber,
+					Pin = Encrypt(SecureStringToString(pin)),
+					PunchCardOptin = punchcardOptIn,
+					TextClubOptin = textClubOptIn
+				});
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in PersonalizationServicesProxy.QueueAccountUpdate.", e);
+			}
+			finally
+			{
+				try
+				{
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
+					{
+						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+						{
+							Success = true
+						};
+						if (errorList != null)
+						{
+							remoteServiceResult.Errors.AddRange(errorList);
+							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+						}
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
+						{
+							Callback = callback,
+							Result = remoteServiceResult,
+							Message = "Invoking callback from PersonalizationServicesProxy.QueueAccountUpdate."
+						});
+					}
 				}
 				finally
 				{

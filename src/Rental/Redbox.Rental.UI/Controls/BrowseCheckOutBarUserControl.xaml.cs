@@ -28,7 +28,8 @@ public partial class BrowseCheckOutBarUserControl : UserControl, IWPFActor, ICom
 	{
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(checkout_button);
-		obj?.SetStyle(SwitchProductFamilyButton);
+		obj?.SetStyle(SwitchProductFamilyButton1);
+		obj?.SetStyle(SwitchProductFamilyButton2);
 	}
 
 	private void HandleWPFHit()
@@ -47,9 +48,15 @@ public partial class BrowseCheckOutBarUserControl : UserControl, IWPFActor, ICom
 		e.CanExecute = true;
 	}
 
-	private void ToggleTitleFamilyCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	private void ToggleTitleFamily1CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		BrowseViewModel?.ProcessOnToggleTitleFamilyButtonClicked();
+		BrowseViewModel?.ProcessOnToggleTitleFamilyButton1Clicked();
+		HandleWPFHit();
+	}
+
+	private void ToggleTitleFamily2CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		BrowseViewModel?.ProcessOnToggleTitleFamilyButton2Clicked();
 		HandleWPFHit();
 	}
 

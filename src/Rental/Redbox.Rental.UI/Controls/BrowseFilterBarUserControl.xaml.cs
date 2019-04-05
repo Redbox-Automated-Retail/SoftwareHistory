@@ -68,7 +68,7 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 				DataContext = filter,
 				Style = GetStyle(this, "classic_rubine_radio_button_style"),
 				CornerRadius = 16.0,
-				Width = filter.Width,
+				MinWidth = filter.Width,
 				Height = filter.Height,
 				Margin = filterBarModel.FilterMargin,
 				Command = Commands.BrowseFilterCommand
@@ -76,6 +76,11 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 			roundedButton.SetBinding(UIElement.IsEnabledProperty, new Binding
 			{
 				Path = new PropertyPath("IsButtonEnabled"),
+				Source = filter
+			});
+			roundedButton.SetBinding(UIElement.VisibilityProperty, new Binding
+			{
+				Path = new PropertyPath("ButtonVisibility"),
 				Source = filter
 			});
 			TextBlock textBlock = new TextBlock
@@ -135,6 +140,12 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 	private void FormatFilterPopupCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		FilterBarModel?.ProcessOnFormatFilterButtonClicked();
+		Commands.ResetIdleTimerCommand.Execute(null, this);
+	}
+
+	private void ForSaleFilterPopupCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		FilterBarModel?.ProcessOnPriceRangeFilterButtonClicked();
 		Commands.ResetIdleTimerCommand.Execute(null, this);
 	}
 }

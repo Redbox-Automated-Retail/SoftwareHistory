@@ -14,5 +14,6 @@ public enum AuthenticationResponse
 	[ResponseCode(Name = "(B004)")]
 	AuthenticationFailed,
 	[ResponseCode(Name = "(U001)")]
-	Error
+	Error,
+	AccountLocked
 }

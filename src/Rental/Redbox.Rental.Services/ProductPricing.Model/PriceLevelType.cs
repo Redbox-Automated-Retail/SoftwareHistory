@@ -8,5 +8,5 @@ public enum PriceLevelType
 	Bluray,
 	Games,
 	DigitalCode,
-	_4KUHD
+	FourKUHD
 }

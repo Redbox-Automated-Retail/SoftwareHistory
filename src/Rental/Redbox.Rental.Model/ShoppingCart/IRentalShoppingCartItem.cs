@@ -31,6 +31,8 @@ public interface IRentalShoppingCartItem
 
 	int? DiscNumber { get; }
 
+	string OfferCode { get; set; }
+
 	decimal Price { get; set; }
 
 	decimal ExtendedPrice { get; }

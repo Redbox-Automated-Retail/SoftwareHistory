@@ -22,5 +22,6 @@ public enum BrowseFilterType
 	Drama,
 	Horror,
 	Comedy,
-	Family
+	Family,
+	PriceRange
 }

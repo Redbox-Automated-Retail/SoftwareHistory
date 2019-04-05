@@ -8,6 +8,7 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Services.ShoppingCart;
@@ -115,7 +116,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 			{
 				foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
 				{
-					dataService.GetProduct(item.ProductId, excludeTitleRollup: true, out var kioskProduct);
+					dataService.GetProduct(item.ProductId, excludeTitleRollup: false, out var kioskProduct);
 					if (kioskProduct == null || !(kioskProduct is MDVProduct mDVProduct))
 					{
 						continue;
@@ -130,6 +131,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 							rentalShoppingCartItem.SourceType = ItemSourceType.Browse;
 							rentalShoppingCartItem.Action = RentalShoppingCartItemAction.rental;
 							rentalShoppingCartItem.Quantity = 1m;
+							rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(titleProduct);
 							rentalShoppingCart.AddItem(rentalShoppingCartItem);
 							LogHelper.Instance.Log("MDV - adding product id {0}", titleProduct.ProductId);
 						}
@@ -151,7 +153,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
 			{
 				dataService.GetProduct(item.ProductId, excludeTitleRollup: true, out var kioskProduct);
-				if (kioskProduct != null && kioskProduct is MDVProduct { DiscNumber: not null, DiscNumber: var discNumber } && discNumber > 1)
+				if (kioskProduct != null && kioskProduct is TitleProduct { DiscNumber: not null, DiscNumber: var discNumber } && discNumber > 1)
 				{
 					list.Add(item);
 				}
@@ -314,6 +316,51 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 		{
 			rentalShoppingCart.AddCartItemToAnalytics(item, userRemoved: false, service);
 		}
+	}
+
+	public List<string> AssignBarcodesToVend(IRentalShoppingCart rentalShoppingCart)
+	{
+		LogHelper.Instance.Log("RentalShoppingCartService.AssignBarcodesToVend");
+		List<string> list = new List<string>();
+		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+		List<ISearchBarcodeForProduct> list2 = new List<ISearchBarcodeForProduct>();
+		if (rentalShoppingCart != null)
+		{
+			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+			{
+				list2.Add(new SearchBarcodeForProduct
+				{
+					ProductId = item.ProductId,
+					Barcode = item.Barcode,
+					Action = item.Action
+				});
+			}
+			List<IBarcodeForProductResult> list3 = service?.GetBarcodesForProducts(list2, null);
+			if (list3 != null)
+			{
+				foreach (IBarcodeForProductResult eachBarcodeForProductResult in list3)
+				{
+					if (eachBarcodeForProductResult.BarcodeAssigned)
+					{
+						IRentalShoppingCartItem rentalShoppingCartItem = rentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == eachBarcodeForProductResult.ProductId && x.Action == eachBarcodeForProductResult.Action);
+						if (rentalShoppingCartItem != null)
+						{
+							rentalShoppingCartItem.Barcode = eachBarcodeForProductResult.Barcode;
+							LogHelper.Instance.Log($"Assigning barcode {eachBarcodeForProductResult.Barcode} to rental shopping cart item with product {eachBarcodeForProductResult.ProductId} and action {eachBarcodeForProductResult.Action}");
+							if (eachBarcodeForProductResult.Status.HasValue)
+							{
+								rentalShoppingCartItem.Status = eachBarcodeForProductResult.Status.Value;
+							}
+						}
+					}
+					if (!string.IsNullOrEmpty(eachBarcodeForProductResult.Barcode))
+					{
+						list.Add(eachBarcodeForProductResult.Barcode);
+					}
+				}
+			}
+		}
+		return list;
 	}
 
 	private IShoppingSession GetCurrentShoppingSession()

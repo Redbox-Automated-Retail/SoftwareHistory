@@ -18,8 +18,9 @@ public class MessagePopupDefinition : BaseViewDefinition, IViewDefinition
 			OrchestrationService.StopIdleTimer("idle_timer");
 			MessagePopupViewController.ConfigureMessagePopupView((ShowMessagePopupViewParameter)viewFrameInstance.Parameter);
 		};
-		base.OnLeave = delegate
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
 		{
+			MessagePopupViewController.LeaveMessagePopupView(viewFrameInstance);
 			OrchestrationService.ResumeIdleTimer("idle_timer");
 		};
 	}

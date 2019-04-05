@@ -13,6 +13,7 @@ using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
+[ThemedControl(ThemeName = "Redbox Classic", ControlName = "CollectionMessageView")]
 public partial class CollectionMessageViewUserControl : TextToSpeechUserControl, IComponentConnector
 {
 	private int m_timeout;

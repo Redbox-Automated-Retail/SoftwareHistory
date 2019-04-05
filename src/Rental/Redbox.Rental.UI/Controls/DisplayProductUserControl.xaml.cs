@@ -42,6 +42,7 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 	public void ApplyStyle()
 	{
 		(ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme)?.SetStyle(AddButton);
+		AddButton.IsEnabled = true;
 	}
 
 	private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -106,5 +107,6 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 		AddButton.Height = ImageBorder.ActualWidth * 0.2574;
 		AddButton.CornerRadius = AddButton.Height / 2.0;
 		AddButton.Margin = new Thickness(0.0, 0.0, ImageBorder.ActualWidth * -0.0945, AddButton.Height / -2.0);
+		AddButton.IsEnabled = true;
 	}
 }

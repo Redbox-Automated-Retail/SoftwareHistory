@@ -1,14 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
+using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.KioskServices.Proxy.Request;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -354,12 +360,36 @@ public class MerchantServicesProxy : IMerchantServices
 		}
 	}
 
+	public string CancelledReservations
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "CancelledReservations", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "CancelledReservations", value);
+		}
+	}
+
+	public string InvalidReservations
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "InvalidReservations", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "InvalidReservations", value);
+		}
+	}
+
 	public bool CanSwitch()
 	{
 		return m_working == 0;
 	}
 
-	public void Reconcile(string sessionId, string customerProfileNumber, RemoteServiceCallback callback)
+	public void Reconcile(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
 	{
 		IMacroService macroService = ServiceLocator.Instance.GetService<IMacroService>();
 		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
@@ -369,6 +399,9 @@ public class MerchantServicesProxy : IMerchantServices
 			LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
 			return;
 		}
+		IRentalShoppingCartService service2 = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+		IRentalShoppingCart shoppingCart = service2.GetRentalShoppingCart(new Guid(sessionId));
+		IPromotion promotion = shoppingCart?.Promotion;
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
@@ -376,7 +409,7 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IMerchantServices.Reconcile, URL: {0}", KioskServicesProxy.Instance.Url);
-				ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+				ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
 				bool isOffline = session.ShoppingCart.Type == ShoppingCartType.Offline;
 				var message = new
 				{
@@ -393,19 +426,19 @@ public class MerchantServicesProxy : IMerchantServices
 					{
 						{
 							"KeyId",
-							service2.GetKeyId()
+							service3.GetKeyId()
 						},
 						{
 							"Number",
-							service2.GetNumber()
+							service3.GetNumber()
 						},
 						{
 							"CardType",
-							service2.GetCardType()
+							service3.GetCardType()
 						},
 						{
 							"CardId",
-							service2.GenerateCardHashId()
+							service3.GenerateCardHashId()
 						},
 						{ "LastFour", "9999" },
 						{
@@ -433,7 +466,7 @@ public class MerchantServicesProxy : IMerchantServices
 					PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
 					PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
 					PropertyBag = session.ShoppingCart.PropertyBag,
-					ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+					ShoppingCart = ProxyMessageHelper.CreateShoppingCart(shoppingCart, promotion),
 					CustomerProfileNumber = customerProfileNumber
 				};
 				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Reconcile", message);
@@ -446,8 +479,8 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service4 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -458,7 +491,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service4.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -474,7 +507,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void PreAuth(string sessionId, string customerProfileNumber, RemoteServiceCallback completeCallback)
+	public void PreAuth(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -587,7 +620,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Success = false;
 							RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
 							{
-								Type = InstructionType.WaitAbsolute
+								Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
 							};
 							remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 							remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
@@ -598,7 +631,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Success = false;
 							RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
 							{
-								Type = InstructionType.WaitForSuccessfulPing
+								Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 							};
 							remoteServiceResult.InnerInstructions.Add(item);
 							remoteServiceResult.Properties["is_online"] = false;
@@ -648,7 +681,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void Authorize(string sessionId, string customerProfileNumber, RemoteServiceCallback completeCallback)
+	public void Authorize(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -747,7 +780,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
 						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"] : null);
+						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
 						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
@@ -757,27 +790,19 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
 							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
-						Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("CreditSummary") ? (dictionary["CreditSummary"] as Dictionary<string, object>) : null);
-						if (dictionary3 != null)
-						{
-							remoteServiceResult.Properties["total_credits_applied"] = dictionary3["TotalCreditsApplied"];
-							remoteServiceResult.Properties["total_credits_available"] = dictionary3["TotalCreditsAvailable"];
-						}
 						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
+						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
 						if (arrayList != null)
 						{
 							int num = 1;
 							foreach (Dictionary<string, object> item2 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item2["Name"]);
+								dictionary3.Add("offer_" + num, item2["Name"]);
 								num++;
 							}
 						}
-						remoteServiceResult.Properties["offers"] = dictionary4;
-						remoteServiceResult.Properties["play_pass_prompt"] = dictionary.ContainsKey("PlayPassPrompt") && (bool)dictionary["PlayPassPrompt"];
-						remoteServiceResult.Properties["play_pass_points_earned"] = (dictionary.ContainsKey("PlayPassPointsEarned") ? dictionary["PlayPassPointsEarned"] : ((object)0));
+						remoteServiceResult.Properties["offers"] = dictionary3;
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
@@ -785,9 +810,9 @@ public class MerchantServicesProxy : IMerchantServices
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 							if (arrayList2 != null && arrayList2.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary6)
+								if (arrayList2[0] is Dictionary<string, object> dictionary5)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary6["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary5["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
 								}
 							}
@@ -822,7 +847,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitAbsolute
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
 						};
 						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
@@ -834,7 +859,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitForSuccessfulPing
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 						};
 						remoteServiceResult.InnerInstructions.Add(item);
 						remoteServiceResult.Properties["response"] = "Communications Failure";
@@ -850,24 +875,19 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["first_name"] = CPFirstName;
 						remoteServiceResult.Properties["last_name"] = CPLastName;
 						remoteServiceResult.Properties["is_rbi"] = IsRBI;
-						remoteServiceResult.Properties["total_credits_applied"] = 1;
-						if (AuthorizeResponse == AuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
-						{
-							remoteServiceResult.Properties["total_credits_available"] = DigitalServicesProxy.Instance.TotalCreditsAvailable;
-						}
 						remoteServiceResult.Properties["reference_number"] = TransactionId;
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
+						Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
 						int num3 = 1;
 						string[] userOffers = UserOffers;
 						foreach (string value in userOffers)
 						{
-							dictionary7.Add("offer_" + num3, value);
+							dictionary6.Add("offer_" + num3, value);
 							num3++;
 						}
-						remoteServiceResult.Properties["offers"] = dictionary7;
+						remoteServiceResult.Properties["offers"] = dictionary6;
 					}
 				}
 			}
@@ -901,7 +921,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void GCAuthorize(string sessionId, string customerProfileNumber, RemoteServiceCallback completeCallback)
+	public void GCAuthorize(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -990,7 +1010,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
 						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"] : null);
+						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
 						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
@@ -1000,33 +1020,27 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
 							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
-						Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("CreditSummary") ? (dictionary["CreditSummary"] as Dictionary<string, object>) : null);
-						if (dictionary3 != null)
-						{
-							remoteServiceResult.Properties["total_credits_applied"] = dictionary3["TotalCreditsApplied"];
-							remoteServiceResult.Properties["total_credits_available"] = dictionary3["TotalCreditsAvailable"];
-						}
 						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
+						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
 						if (arrayList != null)
 						{
 							int num = 1;
 							foreach (Dictionary<string, object> item2 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item2["Name"]);
+								dictionary3.Add("offer_" + num, item2["Name"]);
 								num++;
 							}
 						}
-						remoteServiceResult.Properties["offers"] = dictionary4;
-						Dictionary<string, object> dictionary6 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
-						if (dictionary6 != null)
+						remoteServiceResult.Properties["offers"] = dictionary3;
+						Dictionary<string, object> dictionary5 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
+						if (dictionary5 != null)
 						{
-							remoteServiceResult.Properties["gift_card_exists"] = (bool)dictionary6["Exists"];
-							remoteServiceResult.Properties["gift_card_status"] = ((GiftCardStatus)dictionary6["Status"]/*cast due to constrained. prefix*/).ToString();
-							remoteServiceResult.Properties["gift_card_balance"] = dictionary6["Balance"].ToString();
-							remoteServiceResult.Properties["gift_card_max_discs"] = dictionary6["MaxDiscs"];
-							remoteServiceResult.Properties["gift_card_max_games"] = dictionary6["MaxGames"];
+							remoteServiceResult.Properties["gift_card_exists"] = (bool)dictionary5["Exists"];
+							remoteServiceResult.Properties["gift_card_status"] = ((GiftCardStatus)dictionary5["Status"]/*cast due to constrained. prefix*/).ToString();
+							remoteServiceResult.Properties["gift_card_balance"] = dictionary5["Balance"].ToString();
+							remoteServiceResult.Properties["gift_card_max_discs"] = dictionary5["MaxDiscs"];
+							remoteServiceResult.Properties["gift_card_max_games"] = dictionary5["MaxGames"];
 						}
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
@@ -1035,9 +1049,9 @@ public class MerchantServicesProxy : IMerchantServices
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 							if (arrayList2 != null && arrayList2.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary7)
+								if (arrayList2[0] is Dictionary<string, object> dictionary6)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(GCAuthorizeResponse?), (string)dictionary7["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(GCAuthorizeResponse?), (string)dictionary6["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : GCAuthorizeResponse.Error.ToString());
 								}
 							}
@@ -1072,7 +1086,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitAbsolute
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
 						};
 						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
@@ -1084,7 +1098,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitForSuccessfulPing
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 						};
 						remoteServiceResult.InnerInstructions.Add(item);
 						remoteServiceResult.Properties["response"] = "Communications Failure";
@@ -1103,21 +1117,16 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["reference_number"] = TransactionId;
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
-						remoteServiceResult.Properties["total_credits_applied"] = 0;
-						if (GCAuthorizeResponse == GCAuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
-						{
-							remoteServiceResult.Properties["total_credits_available"] = DigitalServicesProxy.Instance.TotalCreditsAvailable;
-						}
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary8 = new Dictionary<string, object>();
+						Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
 						int num3 = 1;
 						string[] userOffers = UserOffers;
 						foreach (string value in userOffers)
 						{
-							dictionary8.Add("offer_" + num3, value);
+							dictionary7.Add("offer_" + num3, value);
 							num3++;
 						}
-						remoteServiceResult.Properties["offers"] = dictionary8;
+						remoteServiceResult.Properties["offers"] = dictionary7;
 						remoteServiceResult.Properties["gift_card_exists"] = Exists;
 						remoteServiceResult.Properties["gift_card_status"] = GCStatusType.ToString();
 						remoteServiceResult.Properties["gift_card_balance"] = Balance;
@@ -1156,7 +1165,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void ReservationAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, RemoteServiceCallback completeCallback)
+	public void ReservationAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -1250,7 +1259,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
 						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"] : null);
+						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
 						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
 						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
@@ -1259,25 +1268,19 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
 						}
-						Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("CreditSummary") ? (dictionary["CreditSummary"] as Dictionary<string, object>) : null);
-						if (dictionary3 != null)
-						{
-							remoteServiceResult.Properties["total_credits_applied"] = dictionary3["TotalCreditsApplied"];
-							remoteServiceResult.Properties["total_credits_available"] = dictionary3["TotalCreditsAvailable"];
-						}
 						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
+						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
 						if (arrayList != null)
 						{
 							int num = 1;
 							foreach (Dictionary<string, object> item2 in arrayList)
 							{
-								dictionary4.Add("offer_" + num, item2["Name"]);
+								dictionary3.Add("offer_" + num, item2["Name"]);
 								num++;
 							}
 						}
-						remoteServiceResult.Properties["offers"] = dictionary4;
+						remoteServiceResult.Properties["offers"] = dictionary3;
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
@@ -1285,9 +1288,9 @@ public class MerchantServicesProxy : IMerchantServices
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 							if (arrayList2 != null && arrayList2.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary6)
+								if (arrayList2[0] is Dictionary<string, object> dictionary5)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary6["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary5["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
 								}
 							}
@@ -1322,7 +1325,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitAbsolute
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
 						};
 						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
@@ -1334,7 +1337,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitForSuccessfulPing
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 						};
 						remoteServiceResult.InnerInstructions.Add(item);
 						remoteServiceResult.Properties["response"] = "Communications Failure";
@@ -1352,21 +1355,16 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["reference_number"] = TransactionId;
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
-						remoteServiceResult.Properties["total_credits_applied"] = 0;
-						if (ResvAuthAuthorizeResponse == AuthorizeResponse.CheckIfCustomerWantsToUseCredits && HasCustomerProfile)
-						{
-							remoteServiceResult.Properties["total_credits_available"] = DigitalServicesProxy.Instance.TotalCreditsAvailable;
-						}
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
+						Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
 						int num3 = 1;
 						string[] userOffers = UserOffers;
 						foreach (string value in userOffers)
 						{
-							dictionary7.Add("offer_" + num3, value);
+							dictionary6.Add("offer_" + num3, value);
 							num3++;
 						}
-						remoteServiceResult.Properties["offers"] = dictionary7;
+						remoteServiceResult.Properties["offers"] = dictionary6;
 					}
 				}
 			}
@@ -1400,7 +1398,249 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void ValidatePickup(string sessionId, List<long> referenceNumbers, RemoteServiceCallback completeCallback)
+	public void PickupAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, bool cartWasModified, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+			remoteServiceResult.Properties["is_online"] = true;
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+			_ = ServiceLocator.Instance.GetService<IPersonalizationServices>()?.CustomerProfileNumber;
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				if (session == null)
+				{
+					remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
+				}
+				else if (LiveCall)
+				{
+					if (!StoreServicesProxy.Instance.IsStandAlone)
+					{
+						LogHelper.Instance.Log("Live call to remote IMerchantServices.PickupAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
+						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+						var message = new
+						{
+							MessageType = "PickupAuthorize",
+							MessageId = Guid.NewGuid(),
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
+							KioskId = int.Parse(session.StoreNumber),
+							ReferenceNumber = referenceNumber,
+							CartWasModified = cartWasModified,
+							CreditCard = new Dictionary<string, object>
+							{
+								{
+									"KeyId",
+									service2.GetKeyId()
+								},
+								{
+									"Number",
+									service2.GetNumber()
+								},
+								{
+									"CardType",
+									service2.GetCardType()
+								},
+								{
+									"CardId",
+									service2.GenerateCardHashId()
+								},
+								{
+									"Track2",
+									ExtractFromSecure(session.ShoppingCart.TrackData)
+								},
+								{ "LastFour", "9999" },
+								{
+									"LastName",
+									session.ShoppingCart.LastName
+								},
+								{
+									"FirstName",
+									session.ShoppingCart.FirstName
+								},
+								{
+									"PostalCode",
+									session.ShoppingCart.PostalCode
+								},
+								{
+									"ExpirationYear",
+									session.ShoppingCart.ExpiryYear
+								},
+								{
+									"ExpirationMonth",
+									session.ShoppingCart.ExpiryMonth
+								}
+							},
+							TransactionDate = DateTime.Now,
+							UseCredits = session.ShoppingCart.UseCredits.ToString(),
+							AuthAcceptFlag = session.ShoppingCart.AuthAcceptFlag,
+							AuthRuleId = session.ShoppingCart.AuthRuleId,
+							AuthAmount = session.ShoppingCart.AuthAmount,
+							SkipAuthRule = session.ShoppingCart.SkipAuthRule,
+							PropertyBag = session.ShoppingCart.PropertyBag,
+							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+							CustomerProfileNumber = customerProfileNumber
+						};
+						session.ShoppingCart.ClearTrackData();
+						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
+						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+						if (dictionary.ContainsKey("ServerName"))
+						{
+							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+						}
+						if (remoteServiceResult.Success && dictionary.ContainsKey("ReferenceNumber"))
+						{
+							session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(dictionary["ReferenceNumber"]));
+						}
+						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
+						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
+						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
+						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
+						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
+						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
+						if (dictionary2 != null)
+						{
+							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
+							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
+							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
+						}
+						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
+						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
+						if (arrayList != null)
+						{
+							int num = 1;
+							foreach (Dictionary<string, object> item2 in arrayList)
+							{
+								dictionary3.Add("offer_" + num, item2["Name"]);
+								num++;
+							}
+						}
+						remoteServiceResult.Properties["offers"] = dictionary3;
+						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
+						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
+						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
+						{
+							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList2 != null && arrayList2.Count > 0)
+							{
+								if (arrayList2[0] is Dictionary<string, object> dictionary5)
+								{
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary5["Code"]);
+									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
+								}
+							}
+							else
+							{
+								remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
+							}
+						}
+					}
+					else
+					{
+						LogHelper.Instance.Log("In stand alone mode, skipping realtime call to PickupAuthorize.", LogEntryType.Info);
+						remoteServiceResult.Success = true;
+						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
+						remoteServiceResult.Properties["is_online"] = false;
+						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
+						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						new AutoResetEvent(initialState: false).WaitOne(1000);
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("Simulating call to IMerchantServices.PickupAuthorize.");
+					int num2 = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
+					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
+					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
+					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+					if (SimulateServerBusyError)
+					{
+						remoteServiceResult.Success = false;
+						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
+						{
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
+						};
+						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
+						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
+						remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
+						remoteServiceResult.Properties["is_online"] = false;
+					}
+					else if (SimulateCommunicationsFailure)
+					{
+						remoteServiceResult.Success = false;
+						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
+						{
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
+						};
+						remoteServiceResult.InnerInstructions.Add(item);
+						remoteServiceResult.Properties["response"] = "Communications Failure";
+						remoteServiceResult.Properties["is_online"] = false;
+					}
+					else
+					{
+						remoteServiceResult.Success = AuthorizeResponse == AuthorizeResponse.Approved;
+						remoteServiceResult.Properties["response"] = AuthorizeResponse.ToString();
+						remoteServiceResult.Properties["is_online"] = true;
+						remoteServiceResult.Properties["has_profile"] = HasCustomerProfile;
+						remoteServiceResult.Properties["email"] = EmailAddress;
+						remoteServiceResult.Properties["first_name"] = CPFirstName;
+						remoteServiceResult.Properties["last_name"] = CPLastName;
+						remoteServiceResult.Properties["is_rbi"] = IsRBI;
+						remoteServiceResult.Properties["reference_number"] = TransactionId;
+						remoteServiceResult.Properties["account_number"] = AccountNumber;
+						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
+						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
+						int num3 = 1;
+						string[] userOffers = UserOffers;
+						foreach (string value in userOffers)
+						{
+							dictionary6.Add("offer_" + num3, value);
+							num3++;
+						}
+						remoteServiceResult.Properties["offers"] = dictionary6;
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in MerchantServicesProxy.PickupAuthorize.", e);
+				remoteServiceResult.Success = true;
+				remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
+				remoteServiceResult.Properties["is_online"] = false;
+				remoteServiceResult.Properties["first_name"] = ((session != null) ? session.ShoppingCart.FirstName : "N/A");
+				remoteServiceResult.Properties["last_name"] = ((session != null) ? session.ShoppingCart.LastName : "N/A");
+			}
+			finally
+			{
+				try
+				{
+					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
+					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = completeCallback,
+						Result = remoteServiceResult,
+						Message = "Invoking completeCallback from MerchantServicesProxy.PickupAuthorize."
+					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	public void ValidatePickup(string sessionId, List<long> referenceNumbers, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -1491,18 +1731,39 @@ public class MerchantServicesProxy : IMerchantServices
 							ArrayList arrayList = (ArrayList)dictionary["ReferenceNumbers"];
 							if (arrayList.Count > 0)
 							{
-								remoteServiceResult.Properties["reference_number"] = arrayList[0];
+								remoteServiceResult.Properties["reference_number"] = arrayList[0].ToString();
 								session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(arrayList[0]));
 							}
 						}
+						if (!remoteServiceResult.Properties.ContainsKey("reference_number"))
+						{
+							remoteServiceResult.Properties["reference_number"] = null;
+						}
+						if (dictionary.ContainsKey("ValidReservations"))
+						{
+							ArrayList value = (ArrayList)dictionary["ValidReservations"];
+							remoteServiceResult.Properties["validated_reservations"] = value.ToLuaTable();
+						}
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
+						ArrayList arrayList2 = (dictionary.ContainsKey("CancelledReservations") ? (dictionary["CancelledReservations"] as ArrayList) : null);
+						List<long> list = new List<long>();
+						if (arrayList2 != null)
+						{
+							int num = 1;
+							foreach (int item2 in arrayList2)
+							{
+								list.Add(item2);
+								num++;
+							}
+						}
+						remoteServiceResult.Properties["cancelled_reservations"] = list.ToLuaTable();
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
-							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList2 != null && arrayList2.Count > 0)
+							ArrayList arrayList3 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList3 != null && arrayList3.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary2)
+								if (arrayList3[0] is Dictionary<string, object> dictionary2)
 								{
 									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary2["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
@@ -1526,15 +1787,15 @@ public class MerchantServicesProxy : IMerchantServices
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.ValidatePickup.");
-					int num = new Random().Next(1, 3);
-					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
+					int num3 = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num3 * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					if (SimulateServerBusyError)
 					{
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitAbsolute
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
 						};
 						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
@@ -1546,7 +1807,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
 						{
-							Type = InstructionType.WaitForSuccessfulPing
+							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 						};
 						remoteServiceResult.InnerInstructions.Add(item);
 						remoteServiceResult.Properties["response"] = "Communication Failure";
@@ -1564,6 +1825,27 @@ public class MerchantServicesProxy : IMerchantServices
 						}
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
+						string[] array = CancelledReservations.Split(',');
+						string[] source = InvalidReservations.Split(',');
+						List<long> list2 = new List<long>();
+						string[] array2 = array;
+						for (int i = 0; i < array2.Length; i++)
+						{
+							if (long.TryParse(array2[i], out var result))
+							{
+								list2.Add(result);
+							}
+						}
+						remoteServiceResult.Properties["cancelled_reservations"] = list2.ToLuaTable();
+						List<long> list3 = new List<long>();
+						foreach (long referenceNumber in referenceNumbers)
+						{
+							if (!list2.Contains(referenceNumber) && !source.Contains(referenceNumber.ToString()))
+							{
+								list3.Add(referenceNumber);
+							}
+						}
+						remoteServiceResult.Properties["validated_reservations"] = list3.ToLuaTable();
 					}
 				}
 			}
@@ -1579,7 +1861,7 @@ public class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !LiveCall;
+					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -1595,7 +1877,7 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, RemoteServiceCallback callback)
+	public void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -1653,6 +1935,139 @@ public class MerchantServicesProxy : IMerchantServices
 							Callback = callback,
 							Result = remoteServiceResult,
 							Message = "Invoking callback from MerchantServicesProxy.ModResvPickup."
+						});
+					}
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	public void PickupReconcile(string sessionId, string customerProfileNumber, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
+	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+		if (session == null)
+		{
+			LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
+			return;
+		}
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId));
+		foreach (string key in pickupResults.Keys)
+		{
+			foreach (IProductItem result in pickupResults[key])
+			{
+				IRentalShoppingCartItem rentalShoppingCartItem = rentalShoppingCart.Items.SingleOrDefault((IRentalShoppingCartItem i) => i.Barcode == result.Barcode);
+				if (rentalShoppingCartItem != null)
+				{
+					rentalShoppingCartItem.Status = result.Status;
+				}
+				else
+				{
+					LogHelper.Instance.LogError("Vend Reservation Mismatch", $"The item with barcode {result.Barcode} was not found in the shopping cart.");
+				}
+			}
+		}
+		IPromotion promo = rentalShoppingCart?.Promotion;
+		bool isOffline = session.ShoppingCart.Type == ShoppingCartType.Offline;
+		ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+		var reconcileRequest = new
+		{
+			MessageType = "PickupReconcile",
+			MessageId = Guid.NewGuid(),
+			IsOffline = isOffline,
+			Blocklisted = session.ShoppingCart.Blocklisted,
+			Email = session.ShoppingCart.Email,
+			EngineVersion = service["EngineVersion"],
+			BundleVersion = service["ProductVersion"],
+			KioskId = int.Parse(session.StoreNumber),
+			ReferenceNumber = referenceNumber,
+			CartWasModified = rentalShoppingCart.PickupRecommendationsSelected,
+			PickupDateTime = DateTime.Now,
+			CreditCard = new Dictionary<string, object>
+			{
+				{
+					"KeyId",
+					service2.GetKeyId()
+				},
+				{
+					"Number",
+					service2.GetNumber()
+				},
+				{
+					"CardType",
+					service2.GetCardType()
+				},
+				{
+					"CardId",
+					service2.GenerateCardHashId()
+				},
+				{ "LastFour", "9999" },
+				{
+					"LastName",
+					session.ShoppingCart.LastName
+				},
+				{
+					"FirstName",
+					session.ShoppingCart.FirstName
+				},
+				{
+					"PostalCode",
+					session.ShoppingCart.PostalCode
+				},
+				{
+					"ExpirationYear",
+					session.ShoppingCart.ExpiryYear
+				},
+				{
+					"ExpirationMonth",
+					session.ShoppingCart.ExpiryMonth
+				}
+			},
+			TransactionDate = DateTime.Now,
+			PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
+			PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
+			PropertyBag = session.ShoppingCart.PropertyBag,
+			ShoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo),
+			CustomerProfileNumber = customerProfileNumber
+		};
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			ErrorList errorList = null;
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				LogHelper.Instance.Log("Enqueue call to remote IMerchantServices.PickupReconcile, URL: {0}", KioskServicesProxy.Instance.Url);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "PickupReconcile", reconcileRequest);
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in MerchantServicesProxy.PickupReconcile.", e);
+			}
+			finally
+			{
+				try
+				{
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
+					{
+						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+						{
+							Success = true
+						};
+						if (errorList != null)
+						{
+							remoteServiceResult.Errors.AddRange(errorList);
+							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+						}
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						{
+							Callback = callback,
+							Result = remoteServiceResult,
+							Message = "Invoking callback from MerchantServicesProxy.PickupReconcile."
 						});
 					}
 				}

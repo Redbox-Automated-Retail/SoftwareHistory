@@ -265,6 +265,13 @@ public static class GenresProperties
 						{
 							Description = "Action"
 						}
+					},
+					{
+						Genres.AwardNominees,
+						new GenresProperty
+						{
+							Description = "Award Nominees"
+						}
 					}
 				};
 			}

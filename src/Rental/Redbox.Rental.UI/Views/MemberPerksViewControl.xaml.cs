@@ -15,7 +15,7 @@ using Redbox.Rental.UI.Models;
 namespace Redbox.Rental.UI.Views;
 
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "MemberPerksView")]
-public partial class MemberPerksViewControl : ViewUserControl, IComponentConnector, IStyleConnector
+public partial class MemberPerksViewControl : ViewUserControl, IComponentConnector
 {
 	public sealed class TierControl
 	{
@@ -114,22 +114,16 @@ public partial class MemberPerksViewControl : ViewUserControl, IComponentConnect
 		MemberPerksModel memberPerksModel = base.DataContext as MemberPerksModel;
 		int num = sectionalBar.GroupIndex - 1;
 		bool flag = true;
-		switch (memberPerksModel.MemberTier)
+		TierType memberTier = memberPerksModel.MemberTier;
+		if (memberTier != TierType.Member && (uint)(memberTier - 1) <= 2u && sectionalBar.Threshold == -1.0)
 		{
-		case TierType.Star:
-		case TierType.Superstar:
-		case TierType.Legend:
-			if (sectionalBar.Threshold == -1.0)
+			flag = false;
+			if (sectionalBar.IsThresholdReached && num == (int)(memberPerksModel.MemberTier - 1))
 			{
-				flag = false;
-				if (sectionalBar.IsThresholdReached && num == (int)(memberPerksModel.MemberTier - 1))
-				{
-					TierControl tierControl = PanelList[num];
-					tierControl.ImageElem.Opacity = 1.0;
-					tierControl.NameElem.Opacity = 1.0;
-				}
+				TierControl tierControl = PanelList[num];
+				tierControl.ImageElem.Opacity = 1.0;
+				tierControl.NameElem.Opacity = 1.0;
 			}
-			break;
 		}
 		if (flag)
 		{

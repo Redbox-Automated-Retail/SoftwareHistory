@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskProduct;
@@ -14,16 +13,22 @@ namespace Redbox.Rental.Kernel;
 
 public static class OrchestrationFunctions
 {
+	[KernelFunction(Name = "kernel.is_gift_card")]
+	internal static bool IsGiftCard()
+	{
+		return OrchestrationService.IsGiftCard();
+	}
+
+	[KernelFunction(Name = "kernel.is_card_blocklisted")]
+	internal static bool IsCardBlocklisted()
+	{
+		return OrchestrationService.IsCardBlocklisted();
+	}
+
 	[KernelFunction(Name = "kernel.view_analytics_start")]
 	internal static void ViewAnalyticsStart(string sessionType)
 	{
 		OrchestrationService.CreateStartViewAnalytics(sessionType);
-	}
-
-	[KernelFunction(Name = "kernel.submit_analytics_pricing")]
-	internal static void SubmitAnalyticsPricing(string sessionId)
-	{
-		OrchestrationService.SubmitAnalyticsPricing(sessionId);
 	}
 
 	[KernelFunction(Name = "kernel.register_pricing_service")]
@@ -44,16 +49,46 @@ public static class OrchestrationFunctions
 		OrchestrationService.RegisterStartNewRentalSessionCallback(startNewRentalSessionCallback);
 	}
 
+	[KernelFunction(Name = "kernel.register_start_idle_timer_callback")]
+	internal static void RegisterStartIdleTimerCallback(Action startIdleTimerCallback)
+	{
+		OrchestrationService.RegisterStartIdleTimerCallback(startIdleTimerCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_localization_reload_callback")]
+	internal static void RegisterLocalizationReloadCallback(Action callback)
+	{
+		OrchestrationService.RegisterLocalizationReloadCallback(callback);
+	}
+
 	[KernelFunction(Name = "kernel.register_marketing_opt_in_flow_callback")]
 	internal static void RegisterMarketingOptInFlowCallback(Action<string> marketingOptInFlowCallback)
 	{
 		OrchestrationService.RegisterMarketingOptInFlowCallback(marketingOptInFlowCallback);
 	}
 
+	[KernelFunction(Name = "kernel.register_continue_vend_callback")]
+	internal static void RegisterContinueVendCallback(Action continueVendCallback)
+	{
+		OrchestrationService.RegisterContinueVendCallback(continueVendCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_is_vend_job_completed_callback")]
+	internal static void RegisterIsVendJobCompletedCallback(Func<bool> isVendJobCompleteCallback)
+	{
+		OrchestrationService.RegisterIsVendJobCompletedCallback(isVendJobCompleteCallback);
+	}
+
 	[KernelFunction(Name = "kernel.register_view_definitions")]
 	internal static void RegisterViewDefinitions()
 	{
 		OrchestrationService.RegisterViewDefinitions();
+	}
+
+	[KernelFunction(Name = "kernel.register_environment_change_callback")]
+	internal static void RegisterEnvironmentChangeCallback()
+	{
+		OrchestrationService.RegisterEnvironmentChangeCallback();
 	}
 
 	[KernelFunction(Name = "kernel.reload_pricing_service")]
@@ -211,15 +246,23 @@ public static class OrchestrationFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.promosvcs_coming_soon_kioskoptin")]
-	internal static void ComingSoonKioskOptIn()
+	[KernelFunction(Name = "kernel.does_shopping_cart_contain_all_reserved_barcodes")]
+	internal static bool DoesShoppingCartContainAllReservedBarcodes()
 	{
-		string storeNumber = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue<string>("Store", "ID");
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
-		List<IOptInItem> list = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ComingSoonOptInInfo.OptInItems;
-		if (list != null && list.Count > 0)
-		{
-			service.KioskOptIn(storeNumber, list, sendCardHash: false, null);
-		}
+		return OrchestrationService.DoesShoppingCartContainAllReservedBarcodes();
+	}
+
+	[KernelFunction(Name = "kernel.shopping_cart_commit")]
+	internal static void ShoppingCartCommit(string sessionId, string reason, string shouldEndAndSave)
+	{
+		bool result = false;
+		bool.TryParse(shouldEndAndSave, out result);
+		OrchestrationService.ShoppingCartCommit(sessionId, reason, result);
+	}
+
+	[KernelFunction(Name = "kernel.shopping_cart_end_session")]
+	internal static void ShoppingCartEndSession(string sessionId)
+	{
+		OrchestrationService.ShoppingCartEndSession(sessionId);
 	}
 }

@@ -23,6 +23,8 @@ public interface IConfigurationService
 
 	bool TryGetValue<T>(string key, string category, string setting, out T value);
 
+	bool TryGetTimeSpanRangeValue(string key, string category, string setting, out TimeSpan? startTime, out TimeSpan? endTime);
+
 	bool TryGetObject(string key, string setting, out object value);
 
 	bool TryGetObject(string key, string category, string setting, out object value);

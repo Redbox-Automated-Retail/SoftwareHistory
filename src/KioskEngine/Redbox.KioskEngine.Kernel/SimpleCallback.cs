@@ -13,6 +13,8 @@ internal sealed class SimpleCallback : ICallbackEntry, IDisposable
 
 	public bool EnableDebugger { get; set; }
 
+	public string Name { get; set; } = "SimpleCallback";
+
 	public void Dispose()
 	{
 		if (Parameters != null)

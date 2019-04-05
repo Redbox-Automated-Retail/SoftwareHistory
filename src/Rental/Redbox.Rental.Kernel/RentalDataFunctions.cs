@@ -255,4 +255,48 @@ public static class RentalDataFunctions
 			return false;
 		}
 	}
+
+	[KernelFunction(Name = "kernel.is_multi_disc")]
+	internal static bool IsMultiDisc(string productId)
+	{
+		try
+		{
+			bool result = false;
+			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+			if (service != null)
+			{
+				long result2 = 0L;
+				if (long.TryParse(productId, out result2))
+				{
+					result = service.IsMultiDisc(result2);
+				}
+			}
+			return result;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.IsMultiDisc", e);
+			return false;
+		}
+	}
+
+	[KernelFunction(Name = "kernel.get_all_unmatched_multi_disc_barcodes")]
+	internal static LuaTable GetAllUnmatchedMultiDiscBarcodes()
+	{
+		try
+		{
+			LuaTable result = null;
+			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+			if (service != null)
+			{
+				result = service.GetAllUnmatchedMultiDiscBarcodes().ToLuaTable();
+			}
+			return result;
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An exception was raised in RentalDataFunctions.GetAllUnmatchedMultiDiscBarcodes", e);
+			return null;
+		}
+	}
 }

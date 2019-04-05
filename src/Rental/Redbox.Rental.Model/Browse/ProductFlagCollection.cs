@@ -24,7 +24,7 @@ public class ProductFlagCollection : List<ProductFlag>
 					{
 						Flag = ProductFlags.AwardWinner,
 						TextKeyName = "flag_award_winner",
-						FlagStyleName = "off_yellow_flag_style"
+						FlagStyleName = "warm_purple_flag_style"
 					},
 					new ProductFlag
 					{
@@ -79,6 +79,12 @@ public class ProductFlagCollection : List<ProductFlag>
 						Flag = ProductFlags.Excluded,
 						TextKeyName = "flag_excluded",
 						FlagStyleName = "gray_flag_style"
+					},
+					new ProductFlag
+					{
+						Flag = ProductFlags.AwardNominee,
+						TextKeyName = "flag_award_nominee",
+						FlagStyleName = "warm_purple_flag_style"
 					}
 				};
 			}

@@ -23,6 +23,8 @@ public interface IProfileDataInstance
 
 	Dictionary<long, ProductGroupXREF> MultiDiscXREF { get; set; }
 
+	Dictionary<long, ProductGroupXREF> MultiDiscWorkaroundXREF { get; set; }
+
 	Dictionary<long, ProductRating> ProductRatings { get; set; }
 
 	Dictionary<long, ProductType> ProductTypes { get; set; }
@@ -32,6 +34,8 @@ public interface IProfileDataInstance
 	Dictionary<long, SubPlatform> SubPlatforms { get; set; }
 
 	Dictionary<long, Vendor> Vendors { get; set; }
+
+	Dictionary<long, ReviewList> Reviews { get; set; }
 
 	List<ProfileVersion> ProfileVersion { get; set; }
 

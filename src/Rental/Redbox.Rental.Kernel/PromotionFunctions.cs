@@ -88,6 +88,8 @@ public static class PromotionFunctions
 			dictionary2["titles"] = promotion.CampaignTitles.Titles;
 			dictionary["campaign_titles"] = dictionary2;
 		}
+		dictionary["product_type_id"] = promotion.ProductTypeId;
+		dictionary["format_ids"] = promotion.FormatIds;
 		return dictionary;
 	}
 
@@ -128,6 +130,20 @@ public static class PromotionFunctions
 				promotion2.CampaignTitles = new CampaignTitles();
 				promotion2.CampaignTitles.Include = (bool)luaTable["include"];
 				promotion2.CampaignTitles.Titles = list;
+			}
+			promotion2.ProductTypeId = null;
+			if (promotion["product_type_id"] != null)
+			{
+				promotion2.ProductTypeId = int.Parse(promotion["product_type_id"].ToString());
+			}
+			promotion2.FormatIds = null;
+			if (promotion["format_ids"] != null)
+			{
+				promotion2.FormatIds = new List<int>();
+				foreach (object value2 in ((LuaTable)promotion["format_ids"]).Values)
+				{
+					promotion2.FormatIds.Add(int.Parse(value2.ToString()));
+				}
 			}
 			return promotion2;
 		}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.UpdateManager.Client;
@@ -151,6 +152,36 @@ public class ConfigurationService : IConfigurationService
 	public bool TryGetValue<T>(string key, string category, string setting, out T value)
 	{
 		return ConfigurationClient.Instance.TryGetValue<T>(key, category, setting, out value);
+	}
+
+	public bool TryGetTimeSpanRangeValue(string key, string category, string setting, out TimeSpan? startTime, out TimeSpan? endTime)
+	{
+		startTime = null;
+		endTime = null;
+		string value = null;
+		bool flag = false;
+		if (ConfigurationClient.Instance.TryGetValue<string>(key, category, setting, out value))
+		{
+			string[] array = value.Split('-');
+			if (array.Length == 2 && TimeSpan.TryParseExact(array[0], "h\\:mm", DateTimeFormatInfo.InvariantInfo, TimeSpanStyles.None, out var result) && TimeSpan.TryParseExact(array[1], "h\\:mm", DateTimeFormatInfo.InvariantInfo, TimeSpanStyles.None, out var result2))
+			{
+				if (result <= result2)
+				{
+					startTime = result;
+					endTime = result2;
+					flag = true;
+				}
+				else
+				{
+					LogHelper.Instance.Log($"Error in ConfigurationService.TryGetTimeSpanRangeValue: end time is less than start time : {value} for key: {key}, category: {category}, setting: {setting}");
+				}
+			}
+			if (!flag)
+			{
+				LogHelper.Instance.Log($"Error in ConfigurationService.TryGetTimeSpanRangeValue: invalid time span range value : {value} for key: {key}, category: {category}, setting: {setting}");
+			}
+		}
+		return flag;
 	}
 
 	public bool TryGetValue<T>(string key, string setting, out T value)

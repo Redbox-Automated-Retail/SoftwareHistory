@@ -79,5 +79,7 @@ public enum Genres : long
 	[Description("Adventure")]
 	Adventure = 1102L,
 	[Description("Action")]
-	Action = 1103L
+	Action = 1103L,
+	[Description("Award Nominees")]
+	AwardNominees = 1104L
 }

@@ -51,4 +51,8 @@ public class Store : ILuaKeyValue
 	public decimal ServiceFee { get; set; }
 
 	public decimal ServiceFeeTaxRate { get; set; }
+
+	public Market Market { get; set; }
+
+	public DateTime? ReturnOnlyModeDate { get; set; }
 }

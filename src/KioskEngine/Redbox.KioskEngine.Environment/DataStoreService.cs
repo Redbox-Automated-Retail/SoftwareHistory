@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Redbox.Core;
@@ -19,38 +18,6 @@ public class DataStoreService : IDataStoreService
 		ServiceLocator.Instance.AddService(typeof(IDataStoreService), Instance);
 		ServiceLocator.Instance.GetService<IPreferenceService>()?.AddPreferencePage("DataStoreService_General", "Core", "Engine Core/Data Stores", PreferencePageTarget.LocalSystem, new DataStorePreferencePage());
 		return result;
-	}
-
-	public void RegisterDataStoreProvider(string dataStore, string provider)
-	{
-		if (!m_providers.ContainsKey(dataStore))
-		{
-			DataStoreProvider dataStoreProvider = null;
-			if (provider.Equals("CachedDataStoreProvider", StringComparison.CurrentCultureIgnoreCase))
-			{
-				dataStoreProvider = new CachedDataStoreProvider();
-			}
-			else if (provider.Equals("CachedVistaDBDataStoreProvider", StringComparison.CurrentCultureIgnoreCase))
-			{
-				dataStoreProvider = new CachedVistaDBDataStoreProvider();
-			}
-			else if (provider.Equals("VistaDbDataStoreProvider", StringComparison.CurrentCultureIgnoreCase))
-			{
-				dataStoreProvider = new VistaDbDataStoreProvider();
-			}
-			else if (provider.Equals("ProductLookupDataStoreProvider", StringComparison.CurrentCultureIgnoreCase))
-			{
-				dataStoreProvider = new ProductLookupDataStoreProvider();
-			}
-			else if (provider.Equals("CachedProductLookupProvider", StringComparison.CurrentCultureIgnoreCase))
-			{
-				dataStoreProvider = new CachedProductLookupProvider();
-			}
-			if (dataStoreProvider != null)
-			{
-				m_providers[dataStore] = dataStoreProvider;
-			}
-		}
 	}
 
 	public void CloseAllStores()

@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Kernel;
 using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.KernelExtension;
 
 public class KioskServicesHost : IKernelExtensionHost, IDisposable
 {
+	private IQueueMessageProcessorService _queueMessageProcessorService;
+
 	public IKernelExtension Extension { get; set; }
 
 	public void Dispose()
@@ -63,13 +68,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH663", "Bundle Switch Error", "Can not switch while authentication service is performing work."));
 			return false;
 		}
-		flag = DigitalServicesProxy.Instance.CanSwitch();
-		LogHelper.Instance.Log("KioskService -> DigitalService CanSwitch: {0}", flag);
-		if (!flag)
-		{
-			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH662", "Bundle Switch Error", "Can not switch while digital service is performing work."));
-			return false;
-		}
 		LogHelper.Instance.Log("KioskService CanSwitch: True");
 		return true;
 	}
@@ -90,7 +88,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		ServiceLocator.Instance.AddService(typeof(IInventoryServices), InventoryServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IPromotionServices), PromotionServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IAuthenticationServices), AuthenticationServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IDigitalServices), DigitalServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IMarketingOptinServices), MarketingOptinServicesProxy.Instance);
 		if (GetPzSLiveCall())
 		{
@@ -110,12 +107,14 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.AddPreferencePage("KioskServices_InventoryServices", "Remote Services\\Inventory Services", "Kiosk Services/Inventory Services", PreferencePageTarget.LocalSystem, new InventoryServicesPreferencePage());
 			service.AddPreferencePage("KioskServices_MerchantServices", "Remote Services\\Merchant Services", "Kiosk Services/Merchant Services", PreferencePageTarget.LocalSystem, new MerchantServicesPreferencePage());
 			service.AddPreferencePage("KioskServices_PromotionServices", "Remote Services\\Promotion Services", "Kiosk Services/Promotion Services", PreferencePageTarget.LocalSystem, new PromotionServicesPreferencePage());
-			service.AddPreferencePage("KoiskServices_DigitalServices", "Remote Services\\Digital Services", "Kiosk Services/Digital Services", PreferencePageTarget.LocalSystem, new DigitalServicesPreferencePage());
 			service.AddPreferencePage("KoiskServices_MarketingOptinServices", "Remote Services\\Marketing Optin Services", "Kiosk Services/Marketing Optin Services", PreferencePageTarget.LocalSystem, new MarketingOptinPreferencesPage());
 			service.AddPreferencePage("KoiskServices_ReservationAuthServices", "Remote Services\\Reservation Auth Services", "Kiosk Services/Reservation Auth Services", PreferencePageTarget.LocalSystem, new ReservationAuthPreferencePage());
 			service.AddPreferencePage("KioskServices_GiftCardAuth", "Remote Services\\Merchant Services", "Kiosk Services/Gift Card Auth", PreferencePageTarget.LocalSystem, new GiftCardAuthPreferencePage());
-			service.AddPreferencePage("KioskServices_PersonalizationLogin", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Login", PreferencePageTarget.LocalSystem, new PersonalizationPreferencePage());
 			service.AddPreferencePage("KioskServices_LoyaltyServices", "Remote Services\\Loyalty Services", "Kiosk Services/Loyalty Services", PreferencePageTarget.LocalSystem, new LoyaltyServicesPreferencePage());
+			service.AddPreferencePage("KioskServices_PersonalizationGeneral", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/General", PreferencePageTarget.LocalSystem, new PersonalizationGeneralPreferencePage());
+			service.AddPreferencePage("KioskServices_PersonalizationLogin", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Login", PreferencePageTarget.LocalSystem, new PersonalizationPreferencePage());
+			service.AddPreferencePage("KioskServices_PersonalizationUpdateAccount", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Update Account", PreferencePageTarget.LocalSystem, new PersonalizationUpdateAccountPreferencePage());
+			service.AddPreferencePage("FraudService", "Local Services\\Fraud Services", "Kiosk Services/Fraud Services", PreferencePageTarget.LocalSystem, new FraudServicePreferencePage());
 		}
 		return result;
 	}
@@ -133,7 +132,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		LogHelper.Instance.Log("...Reset Kiosk Services Proxy.");
 		AuthenticationServicesProxy.Instance.Reset();
 		PromotionServicesProxy.Instance.Reset();
-		DigitalServicesProxy.Instance.Reset();
 		InventoryServicesProxy.Instance.Reset();
 		return result;
 	}
@@ -145,8 +143,19 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			service.ProcessMessage -= OnProcessMessage;
-			service.ProcessMessage += OnProcessMessage;
+			_queueMessageProcessorService = new QueueMessageProcessorService
+			{
+				Name = "KioskServices",
+				IsDefault = true,
+				BeforeMessageProcessing = OnBeforeMessageProcessing,
+				ProcessMessage = OnProcessMessage,
+				MessageProcessed = delegate(IMessage message, IDictionary<string, object> result2, object clientData)
+				{
+					OnMessageProcessed(message, result2, clientData);
+					ServiceLocator.Instance.GetService<IReservationServices>()?.ProcessValidationResponse(message, result2, clientData);
+				}
+			};
+			service.RegisterMessageProcessorService(_queueMessageProcessorService);
 		}
 		HealthServicesProxy.Instance.StartPingTimer();
 		return result;
@@ -157,9 +166,10 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		LogHelper.Instance.Log("Kiosk Services Kernel Extension Deactivate:");
 		ErrorList result = new ErrorList();
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		if (service != null)
+		if (service != null && _queueMessageProcessorService != null)
 		{
-			service.ProcessMessage -= OnProcessMessage;
+			service.UnRegisterMessageProcessorService(_queueMessageProcessorService);
+			_queueMessageProcessorService = null;
 		}
 		InventoryServicesProxy.Instance.Deactivate();
 		HealthServicesProxy.Instance.StopPingTimer();
@@ -177,8 +187,22 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		KioskServicesProxy.Instance.RegisterCommunicationActivity(action);
 	}
 
-	private static bool OnProcessMessage(IMessage message)
+	private static void OnBeforeMessageProcessing(IMessage message, out object clientData)
 	{
+		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
+		object clientData2 = null;
+		service?.HandleBeforeReturnMessageProcessing(message, out clientData2);
+		clientData = clientData2;
+	}
+
+	private static void OnMessageProcessed(IMessage message, IDictionary<string, object> result, object clientData)
+	{
+		ServiceLocator.Instance.GetService<IFraudService>()?.ProcessReturnResponse(message, result, clientData);
+	}
+
+	private static bool OnProcessMessage(IMessage message, out IDictionary<string, object> response)
+	{
+		response = new Dictionary<string, object>();
 		if (!HealthServicesProxy.Instance.IsOnline || HealthServicesProxy.Instance.IsServerBusy || StoreServicesProxy.Instance.IsStandAlone)
 		{
 			return false;
@@ -186,8 +210,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		try
 		{
 			string jsonRequest = Encoding.ASCII.GetString(message.Data);
-			IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(jsonRequest);
-			return dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+			response = KioskServicesProxy.Instance.ExecuteMessage(jsonRequest);
+			return response.ContainsKey("Success") && (bool)response["Success"];
 		}
 		catch
 		{

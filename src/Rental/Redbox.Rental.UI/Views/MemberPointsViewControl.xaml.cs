@@ -202,15 +202,7 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 
 	private void UpdateContinueButton()
 	{
-		bool continueButtonEnabled = false;
-		foreach (object child in CartStackPanelElem.Children)
-		{
-			if ((child as DisplayProductWithCommandsUserControl).CornerExcludeButtonElem.IsVisible)
-			{
-				continueButtonEnabled = true;
-				break;
-			}
-		}
+		bool continueButtonEnabled = !Model.EntryShoppingProductIds.IsEqualTo(Model.SelectedProductIds);
 		if (Model != null)
 		{
 			Model.ContinueButtonEnabled = continueButtonEnabled;

@@ -41,4 +41,6 @@ public interface IKernelService : IDisposable
 	object NewTable();
 
 	void RegisterFunctions(ReadOnlyCollection<KernelFunctionInfo> functionInfos);
+
+	void LogLuaFunctions();
 }

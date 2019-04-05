@@ -29,7 +29,15 @@ public interface IPromotion
 
 	ICampaignTitles CampaignTitles { get; set; }
 
+	int? ProductTypeId { get; set; }
+
+	List<int> FormatIds { get; set; }
+
 	IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
 
 	IList<IPromotionItem> PromotionItems { get; set; }
+
+	bool IsProductSpecific { get; }
+
+	bool IsValidatedPostVend { get; set; }
 }

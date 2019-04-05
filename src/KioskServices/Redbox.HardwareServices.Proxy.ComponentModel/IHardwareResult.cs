@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Redbox.HardwareServices.Proxy.ComponentModel;
 
 public interface IHardwareResult
@@ -21,4 +23,6 @@ public interface IHardwareResult
 	string PreviousItem { get; }
 
 	string ReturnTime { get; }
+
+	IDictionary<string, object> MessageData { get; }
 }

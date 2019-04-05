@@ -3,10 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Services.KioskBrokerServices.KioskShared.DomainObjects;
 
 namespace Redbox.BrokerServices.Proxy;
@@ -64,11 +66,9 @@ public class ReservationServicesProxy : IReservationServices
 		}
 	}
 
-	internal ReservationRequestCallback RequestCallback { get; private set; }
-
-	internal ReservationRequestCallback2 RequestCallback2 { get; private set; }
-
 	internal ReservationRequestCallback3 RequestCallback3 { get; private set; }
+
+	internal CancelReservationCallback CancelRequestCallback { get; private set; }
 
 	public bool CanSwitch()
 	{
@@ -105,6 +105,7 @@ public class ReservationServicesProxy : IReservationServices
 					KioskId = int.Parse(storeNumber),
 					ReferenceNumber = referenceNumber,
 					Blocklisted = isBlocklisted,
+					PickupDateTime = DateTime.Now,
 					Items = new Dictionary<string, object>()
 				};
 				foreach (KeyValuePair<string, ReadOnlyCollection<IProductItem>> pickupResult in pickupResults)
@@ -332,34 +333,134 @@ public class ReservationServicesProxy : IReservationServices
 		});
 	}
 
-	public void Register(string storeNumber, IDictionary<string, IDictionary<string, IDictionary<string, decimal>>> prices, ReservationRequestCallback reservationRequestCallback)
+	public void Cancel(string storeNumber, long referenceNumber, RemoteServiceCallback callback)
 	{
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		dictionary["Runtime"] = "Kiosk Engine";
-		dictionary["Version"] = AssemblyInfoHelper.GetVersion(Assembly.GetExecutingAssembly());
-		dictionary["PricingPolicy"] = prices;
-		if (int.TryParse(storeNumber, out var result))
+		ThreadPool.QueueUserWorkItem(delegate
 		{
-			RequestCallback = reservationRequestCallback;
-			BrokerServicesProxy.Instance.Register(result, dictionary.ToJson());
-		}
+			ErrorList errorList = null;
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				IObjectCacheService service = ServiceLocator.Instance.GetService<IObjectCacheService>();
+				if (service != null)
+				{
+					IServiceProxy serviceProxy = service.GetObject<IServiceProxy>("Kiosk Services Proxy");
+					LogHelper.Instance.Log("Enqueue call to remote IReservationServices.Cancel, URL: {0}", serviceProxy.GetProperty<string>("Url"));
+				}
+				IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "CancelReservation", new
+				{
+					MessageType = "CancelReservation",
+					MessageId = Guid.NewGuid(),
+					KioskId = int.Parse(storeNumber),
+					EngineVersion = service2["EngineVersion"],
+					BundleVersion = service2["ProductVersion"],
+					ReferenceNumber = referenceNumber
+				});
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in ReservationServicesProxy.Cancel.", e);
+			}
+			finally
+			{
+				try
+				{
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
+					{
+						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+						{
+							Success = true
+						};
+						if (errorList != null)
+						{
+							remoteServiceResult.Errors.AddRange(errorList);
+							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+						}
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						{
+							Callback = callback,
+							Result = remoteServiceResult,
+							Message = "Invoking callback from ReservationServicesProxy.Cancel."
+						});
+					}
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
 	}
 
-	public void Register(string storeNumber, IDictionary<string, IDictionary<string, IDictionary<string, decimal>>> prices, ReservationRequestCallback2 reservationRequestCallback)
+	public void ValidateReservation(string storeNumber, long referenceNumber, RemoteServiceCallback callback)
 	{
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		dictionary["Runtime"] = "Kiosk Engine";
-		dictionary["Version"] = AssemblyInfoHelper.GetVersion(Assembly.GetExecutingAssembly());
-		dictionary["PricingPolicy"] = prices;
-		dictionary["RecoOnPickup"] = true;
-		if (int.TryParse(storeNumber, out var result))
+		if (!LiveCall)
 		{
-			RequestCallback2 = reservationRequestCallback;
-			BrokerServicesProxy.Instance.Register(result, dictionary.ToJson());
+			return;
 		}
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			ErrorList errorList = null;
+			Thread.Sleep(30000);
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				IObjectCacheService service = ServiceLocator.Instance.GetService<IObjectCacheService>();
+				if (service != null)
+				{
+					IServiceProxy serviceProxy = service.GetObject<IServiceProxy>("Kiosk Services Proxy");
+					LogHelper.Instance.Log("Enqueue call to remote IReservationServices.ValidateReservation, URL: {0}", serviceProxy.GetProperty<string>("Url"));
+				}
+				IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "ValidateReservation", new
+				{
+					MessageType = "ValidateReservation",
+					MessageId = Guid.NewGuid(),
+					KioskId = int.Parse(storeNumber),
+					EngineVersion = service2["EngineVersion"],
+					BundleVersion = service2["ProductVersion"],
+					ReferenceNumber = referenceNumber
+				});
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in ReservationServicesProxy.ValidateReservation.", e);
+			}
+			finally
+			{
+				try
+				{
+					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service3 != null)
+					{
+						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+						{
+							Success = true
+						};
+						if (errorList != null)
+						{
+							remoteServiceResult.Errors.AddRange(errorList);
+							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+						}
+						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						{
+							Callback = callback,
+							Result = remoteServiceResult,
+							Message = "Invoking callback from ReservationServicesProxy.ValidateReservation."
+						});
+					}
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
 	}
 
-	public void Register(string storeNumber, IDictionary<string, IDictionary<string, IDictionary<string, decimal>>> prices, ReservationRequestCallback3 reservationRequestCallback)
+	public void Register(string storeNumber, IDictionary<string, IDictionary<string, IDictionary<string, decimal>>> prices, ReservationRequestCallback3 reservationRequestCallback, CancelReservationCallback cancelRequestCallback)
 	{
 		Dictionary<string, object> dictionary = new Dictionary<string, object>();
 		dictionary["Runtime"] = "Kiosk Engine";
@@ -379,10 +480,13 @@ public class ReservationServicesProxy : IReservationServices
 				dictionary["RecoOnPickup"] = value2;
 			}
 		}
+		dictionary["AuthorizeAtPickup"] = Configuration.Instance.AuthorizeAtPickup;
+		dictionary["CancelReservation"] = true;
 		dictionary["Features"] = Features.MultiDiscVend;
 		if (int.TryParse(storeNumber, out var result))
 		{
 			RequestCallback3 = reservationRequestCallback;
+			CancelRequestCallback = cancelRequestCallback;
 			BrokerServicesProxy.Instance.Register(result, dictionary.ToJson());
 		}
 	}
@@ -512,16 +616,63 @@ public class ReservationServicesProxy : IReservationServices
 		return new LocalReservationResult();
 	}
 
-	public IReservationResult SimulateCreateReservation(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIDs, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv, bool isLoyaltyRedemption, decimal defaultServiceFee, decimal actualServiceFee)
+	public ICancelReservationResult NewCancelReservationResult()
+	{
+		return new LocalCancelReservationResult();
+	}
+
+	public IReservationResult SimulateCreateReservation(string cardId, string email, long referenceNumber, DateTime reserveDate, IDictionary<string, List<int>> productsToReserve, bool appliedCredit, bool appliedHiveOnlinePromotion, bool appliedTitleMarketing, string customerNumber, decimal discountedSubTotal, decimal grandTotal, List<int> historyTitleIDs, decimal hiveOnlinePromotionDiscount, bool isMultiNightPricing, int numberOfCreditsRemaining, string promoCode, decimal subTotal, decimal tax, List<ReservationTitle3> reservationTitles, bool isGc, List<string> gcIds, List<string> ccIds, decimal taxRate, string zip, bool isMdv, bool isLoyaltyRedemption, decimal defaultServiceFee, decimal actualServiceFee, bool authorizeAtPickup, ReservationCardHash cardHashData, List<ReservationCardHash> alternateCardHashes)
 	{
 		if (LiveCall)
 		{
 			return null;
 		}
-		return RequestCallback3(cardId, email, referenceNumber, reserveDate, productsToReserve, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, historyTitleIDs, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, reservationTitles, isGc, gcIds, ccIds, taxRate, zip, isMdv, isLoyaltyRedemption, defaultServiceFee, actualServiceFee);
+		return RequestCallback3(cardId, email, referenceNumber, reserveDate, productsToReserve, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, historyTitleIDs, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, reservationTitles, isGc, gcIds, ccIds, taxRate, zip, isMdv, isLoyaltyRedemption, defaultServiceFee, actualServiceFee, authorizeAtPickup, cardHashData, alternateCardHashes);
+	}
+
+	public ICancelReservationResult CancelReservation(long referenceNumber)
+	{
+		return CancelRequestCallback(referenceNumber);
 	}
 
 	private ReservationServicesProxy()
 	{
+	}
+
+	public void ProcessValidationResponse(IMessage message, IDictionary<string, object> result, object clientData)
+	{
+		if (!(message?.Type == "ValidateReservation"))
+		{
+			return;
+		}
+		LogHelper.Instance.Log($"Executing queue service post-message processing for message type {message?.Type}");
+		bool flag = result.ContainsKey("Success") && (bool)result["Success"];
+		Dictionary<string, object> dictionary = Encoding.ASCII.GetString(message.Data).ToObject<Dictionary<string, object>>();
+		long result2 = 0L;
+		if (dictionary.ContainsKey("ReferenceNumber") && !long.TryParse(dictionary["ReferenceNumber"].ToString(), out result2))
+		{
+			LogHelper.Instance.Log($"Processing for message type {message?.Type} unable to retrieve ReferenceNumber");
+			flag = false;
+		}
+		if (flag && result.ContainsKey("IsValid"))
+		{
+			if ((bool)result["IsValid"])
+			{
+				LogHelper.Instance.Log($"Reservation with ReferenceNumber {result2} is valid.");
+			}
+			else if (CancelRequestCallback != null)
+			{
+				LogHelper.Instance.Log($"Reservation with ReferenceNumber {result2} is not valid. Removing the local reservation.");
+				CancelRequestCallback(result2, cancelOnServer: false);
+			}
+			else
+			{
+				LogHelper.Instance.Log($"ERROR: Reservation with ReferenceNumber {result2} is not valid but no cancel callback is supplied.");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log($"Processing for message type {message?.Type} ReferenceNumber {result2} was not successful.");
+		}
 	}
 }

@@ -8,6 +8,7 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
@@ -49,6 +50,10 @@ public class PromotionService : IPromotionService
 		public const string IsStandAlone = "stand_alone";
 
 		public const string ServerName = "server_name";
+
+		public const string ProductTypeId = "product_type_id";
+
+		public const string FormatIds = "format_ids";
 
 		public const string GameRequired = "GameRequired";
 	}
@@ -135,11 +140,13 @@ public class PromotionService : IPromotionService
 	public void SetPromotion(IPromotion promotion)
 	{
 		_promotion = promotion;
+		ServiceLocator.Instance.GetService<IPersonalizationService>()?.SetSelectedPromo(promotion.Name);
 	}
 
 	public void ClearPromotion()
 	{
 		_promotion = null;
+		ServiceLocator.Instance.GetService<IPersonalizationService>()?.ClearSelectedPromo();
 	}
 
 	public void ValidatePromoCodeOnServer(string promoCode, Action<IPromoCodeValidationResult> promoCodeValidationResultCallback)
@@ -212,6 +219,21 @@ public class PromotionService : IPromotionService
 						}
 					}
 				}
+				if (result.Properties.ContainsKey("product_type_id") && int.TryParse(result.Properties["product_type_id"]?.ToString(), out var result10))
+				{
+					promoCodeValidationResult.ProductTypeId = result10;
+				}
+				if (result.Properties.ContainsKey("format_ids") && result.Properties["format_ids"] is ArrayList arrayList2)
+				{
+					promoCodeValidationResult.FormatIds = new List<int>();
+					foreach (object item2 in arrayList2)
+					{
+						if (int.TryParse(item2?.ToString(), out var result11))
+						{
+							promoCodeValidationResult.FormatIds.Add(result11);
+						}
+					}
+				}
 			}
 			catch (Exception e)
 			{
@@ -274,11 +296,11 @@ public class PromotionService : IPromotionService
 								int num2 = 0;
 								if (promotionRule.OfferCondition == PromotionRule.Constants.Product)
 								{
-									num2 = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)?.Count ?? 0;
+									num2 = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)?.Count ?? 0;
 								}
 								else if (promotionRule.OfferCondition == PromotionRule.Constants.Cart)
 								{
-									num2 = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, TitleType.All, TitleFamily.All, null, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)?.Count ?? 0;
+									num2 = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, TitleType.All, TitleFamily.All, null, null, null, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)?.Count ?? 0;
 								}
 								else if (promotionRule.OfferCondition == PromotionRule.Constants.BrowseMinimumQuantity)
 								{
@@ -360,11 +382,11 @@ public class PromotionService : IPromotionService
 				{
 					if (promotionRule.SatisfyCondition == PromotionRule.Constants.Product)
 					{
-						promoCodeValidationInfo.QualifyingItems = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true);
+						promoCodeValidationInfo.QualifyingItems = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true);
 					}
 					else if (promotionRule.SatisfyCondition == PromotionRule.Constants.Cart)
 					{
-						promoCodeValidationInfo.QualifyingItems = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, TitleType.All, TitleFamily.All, null, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true);
+						promoCodeValidationInfo.QualifyingItems = rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, TitleType.All, TitleFamily.All, null, null, null, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true);
 					}
 					if (promoCodeValidationInfo.QualifyingItems.Count() < promotionRule.MinimumQuantity)
 					{
@@ -421,7 +443,7 @@ public class PromotionService : IPromotionService
 		if (service != null)
 		{
 			List<IKioskProduct> products = null;
-			service.GetProducts(BrowseViewFilter.All, titleFamily, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, out products);
+			service.GetProducts(BrowseViewFilter.All, titleFamily, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 			foreach (IKioskProduct item in products)
 			{
 				ITitleProduct titleProduct = item as ITitleProduct;
@@ -473,7 +495,7 @@ public class PromotionService : IPromotionService
 
 	private void ComputePostOfferPromoPrice(IRentalShoppingCart rentalShoppingCart, PromotionRule promotionRule, IPromoCodeValidationInfo result)
 	{
-		foreach (IRentalShoppingCartItem item in (from x in rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)
+		foreach (IRentalShoppingCartItem item in (from x in rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)
 			orderby x.PricingRecord.InitialNight, x.ProductId
 			select x).Take(promotionRule.MaximumQuantity).ToList())
 		{
@@ -488,7 +510,7 @@ public class PromotionService : IPromotionService
 
 	private void ComputeQuantityBasedAmountPromoPrice(IRentalShoppingCart rentalShoppingCart, PromotionRule promotionRule, IPromoCodeValidationInfo result)
 	{
-		List<IRentalShoppingCartItem> list = (from x in rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)
+		List<IRentalShoppingCartItem> list = (from x in rentalShoppingCart.GetItemsByCriteria(promotionRule.Action, promotionRule.Sequence, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, promotionRule.ProductTypes, null, null, includeMultiNightPricedItems: true, includeLoyaltyRedeemedItems: true)
 			orderby x.PricingRecord.InitialNight, x.ProductId
 			select x).ToList();
 		int num = list?.Count() ?? 0;
@@ -521,7 +543,7 @@ public class PromotionService : IPromotionService
 		{
 			return;
 		}
-		List<IRentalShoppingCartItem> list = (from x in rentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
+		List<IRentalShoppingCartItem> list = (from x in rentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, null, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
 			orderby x.PricingRecord.InitialNight, x.ProductId
 			select x).ToList();
 		decimal num = result2;
@@ -564,7 +586,7 @@ public class PromotionService : IPromotionService
 				num = productTypePricingRecord.InitialNight;
 			}
 		}
-		List<IRentalShoppingCartItem> list = (from x in rentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
+		List<IRentalShoppingCartItem> list = (from x in rentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, null, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
 			orderby x.PricingRecord.InitialNight, x.ProductId
 			select x).ToList();
 		decimal num2 = num;
@@ -715,7 +737,9 @@ public class PromotionService : IPromotionService
 				RentFormat = null,
 				GetQuantity = 0,
 				GetFormat = null,
-				CampaignTitles = null
+				CampaignTitles = null,
+				ProductTypeId = null,
+				FormatIds = null
 			};
 			SetPromotion(promotion);
 			SetShoppingCartDiscount(rentalShoppingCart?.ShoppingSessionId.ToString(), promotion);
@@ -731,7 +755,7 @@ public class PromotionService : IPromotionService
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		if (service.CurrentRentalShoppingCart != null)
 		{
-			IRentalShoppingCartItem rentalShoppingCartItem = (from x in service.CurrentRentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, titleTypeFromInCartPromo, titleFamilyFromInCartPromo, null, excludeProducts, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
+			IRentalShoppingCartItem rentalShoppingCartItem = (from x in service.CurrentRentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, titleTypeFromInCartPromo, titleFamilyFromInCartPromo, null, excludeProducts, null, null, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
 				orderby x?.PricingRecord?.InitialNight ?? 0m, x.ProductId
 				select x).FirstOrDefault();
 			promoCodeValidationInfo.IsCartValid = rentalShoppingCartItem != null;
@@ -755,7 +779,7 @@ public class PromotionService : IPromotionService
 		List<long> inCartExcludeTitleList = GetInCartExcludeTitleList();
 		if (RentalShoppingCart != null)
 		{
-			List<IRentalShoppingCartItem> list = (from x in RentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, TitleType.All, TitleFamily.All, null, inCartExcludeTitleList, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
+			List<IRentalShoppingCartItem> list = (from x in RentalShoppingCart.GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, TitleType.All, TitleFamily.All, null, inCartExcludeTitleList, null, null, null, includeMultiNightPricedItems: false, includeLoyaltyRedeemedItems: false)
 				orderby x?.PricingRecord?.InitialNight ?? 0m, x.ProductId
 				select x).ToList();
 			promoCodeValidationInfo.IsCartValid = list.Count() > 1;

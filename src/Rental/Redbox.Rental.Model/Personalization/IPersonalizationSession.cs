@@ -1,16 +1,34 @@
+using System.Collections.Generic;
+
 namespace Redbox.Rental.Model.Personalization;
 
-public interface IPersonalizationSession
+public interface IPersonalizationSession : ILoginEmailProvider
 {
 	string CustomerProfileNumber { get; set; }
 
-	string LoginEmailAddress { get; set; }
+	new string LoginEmailAddress { get; set; }
 
 	string FirstName { get; set; }
 
 	bool IsLoggedIn { get; set; }
 
+	bool PromptForPerks { get; set; }
+
+	bool PromptForEarlyId { get; set; }
+
+	bool TextClubEnabled { get; set; }
+
+	string MobilePhoneNumber { get; set; }
+
 	ILoyaltySession LoyaltySession { get; set; }
+
+	IList<IRecommendedTitles> RecommendedTitles { get; set; }
+
+	IList<IStoredPromoCode> StoredPromoCodes { get; set; }
+
+	IList<IAcceptedOffer> AcceptedOffers { get; set; }
+
+	string SelectedPromo { get; set; }
 
 	void LogOut();
 

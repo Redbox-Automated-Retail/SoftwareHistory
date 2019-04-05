@@ -8,5 +8,6 @@ public enum PromotionIntentCode
 	FixedValue,
 	PercentOffCartTotal,
 	FirstNightGameGameRequired,
-	RxGx
+	RxGx,
+	FirstNightFreeItem
 }
