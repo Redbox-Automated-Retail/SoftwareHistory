@@ -4,7 +4,7 @@
 - Date (first download in the snapshots): 2019-04-05
 - Store labels: none
 - Package revisions:
-  - `kop-v2-engine` revision 131 (`9AF50C4283A5F2323767413696588188562C4947`)
+  - `kop-v2-engine` revision 132 (`0633D57EAEBF555A3CD6FB46F22E2E25167182C5`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -29,6 +29,7 @@
 | `Redbox.IPC.Framework.dll` | Redbox.IPC.Framework | 1.1.1.2 | `131F71C3AE8CB860972365148FDC8B04199E7428` | exact |
 | `Redbox.JSONPrettyPrinter.dll` | Redbox.JSONPrettyPrinter | 1.1.0.7 | `11E5B2E72FAF345A7646162CA7F4F7397CCBDBF8` | exact |
 | `Redbox.KioskDataServices.Proxy.ComponentModel.dll` | Redbox.KioskDataServices.Proxy.ComponentModel | 1.38.0.44 | `00C899D43E00BBA03FFD6D82189D914F5FE3CEC8` | exact |
+| `Redbox.KioskDataServices.Proxy.dll` | Redbox.KioskDataServices.Proxy | 1.38.0.44 | `1CE1C8F081AE373A2623A190B0FE69B3BCB58E90` | exact |
 | `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.34.0.17 | `F5F4CBC0A59AEF02AA4064278CD8FB72076AD794` | stale (listed version 1D679B4D68… has no content) |
 | `Redbox.KioskEngine.Drawing.dll` | Redbox.KioskEngine.Drawing | 1.34.0.17 | `2D1AE5C58C20C6B524D8573DD21894485144DE88` | stale (listed version 73E4B89109… has no content) |
 | `Redbox.KioskEngine.Environment.dll` | Redbox.KioskEngine.Environment | 1.34.0.17 | `4CA2EE03339A71E68FD8F85AD9712B3993B83389` | stale (listed version 22AD58EA10… has no content) |
