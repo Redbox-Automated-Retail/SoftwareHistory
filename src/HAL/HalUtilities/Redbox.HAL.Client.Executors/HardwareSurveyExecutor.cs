@@ -1,6 +1,6 @@
 using System;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Client.Executors;
 

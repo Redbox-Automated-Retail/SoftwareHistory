@@ -34,6 +34,6 @@ internal sealed class ConsoleLogger : ILogger
 	internal ConsoleLogger(bool enableDebug)
 	{
 		EnableDebug = enableDebug;
-		ServiceLocator.Instance.AddService(typeof(ILogger), this);
+		ServiceLocator.Instance.AddService<ILogger>(this);
 	}
 }

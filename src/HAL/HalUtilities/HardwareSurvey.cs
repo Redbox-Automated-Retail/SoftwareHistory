@@ -2,15 +2,15 @@ using System;
 using System.IO;
 using Redbox.HAL.Client;
 using Redbox.HAL.Client.Executors;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Timers;
 
 namespace HALUtilities;
 
 internal sealed class HardwareSurvey
 {
-	private readonly SurveyModes Mode;
-
 	private const string SurveyFile = "HardwareSurvey.txt";
+
+	private readonly SurveyModes Mode;
 
 	internal void Run(HardwareService service)
 	{

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Compression;
 using Redbox.HAL.IPC.Framework;
 using Redbox.IPC.Framework;
 
@@ -22,13 +23,13 @@ public sealed class HardwareService
 		}
 	}
 
-	public bool HasSecureCameraHardware
+	public DateTime? IRHardwareInstalled
 	{
 		get
 		{
 			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
 			machineConfiguration.Run();
-			return machineConfiguration.HasIRHardware;
+			return machineConfiguration.IRHardwareInstall;
 		}
 	}
 
@@ -39,6 +40,36 @@ public sealed class HardwareService
 			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
 			machineConfiguration.Run();
 			return machineConfiguration.HasABEDevice;
+		}
+	}
+
+	public bool SupportsRouterReset
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.HasRouterPowerRelay;
+		}
+	}
+
+	public CameraGeneration CurrentCameraGeneration
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.CurrentCameraGeneration;
+		}
+	}
+
+	public BarcodeServices BarcodeDecoder
+	{
+		get
+		{
+			using MachineConfiguration machineConfiguration = new MachineConfiguration(this);
+			machineConfiguration.Run();
+			return machineConfiguration.BarcodeDecoder;
 		}
 	}
 
@@ -68,10 +99,9 @@ public sealed class HardwareService
 
 	public HardwareCommandResult CleanZone(out HardwareJob job)
 	{
-		HardwareJobSchedule schedule = new HardwareJobSchedule
-		{
-			Priority = HardwareJobPriority.Low
-		};
+		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
+		hardwareJobSchedule.Priority = HardwareJobPriority.Low;
+		HardwareJobSchedule schedule = hardwareJobSchedule;
 		return ScheduleJob("clean-vmz", schedule, out job);
 	}
 
@@ -226,6 +256,17 @@ public sealed class HardwareService
 		{
 			PushLocs(locs, job);
 			job.Push("LOCATION");
+		}
+		return hardwareCommandResult;
+	}
+
+	public HardwareCommandResult LoadBin(string[] barcodes, HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		HardwareCommandResult hardwareCommandResult = ScheduleJob("load-bin", schedule, out job);
+		if (hardwareCommandResult.Success)
+		{
+			PushArray(barcodes, job);
+			job.Push("BARCODE");
 		}
 		return hardwareCommandResult;
 	}
@@ -490,11 +531,6 @@ public sealed class HardwareService
 		return ScheduleJob("clear-all-hardware-statistics", null, enableDebugging: false, schedule, out job);
 	}
 
-	public HardwareCommandResult TestAndResetCCR(HardwareJobSchedule s, out HardwareJob job)
-	{
-		return ScheduleJob("test-and-reset-ccr", null, enableDebugging: false, s, out job);
-	}
-
 	public HardwareCommandResult GetConfiguration(string name)
 	{
 		return ExecuteCommand($"CONFIG get name: '{name}'");
@@ -502,7 +538,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetConfiguration(string name, string xmlConfig)
 	{
-		byte[] inArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
+		byte[] inArray = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xmlConfig));
 		return ExecuteCommand($"CONFIG set name: '{name}' data: '{Convert.ToBase64String(inArray)}'");
 	}
 
@@ -531,7 +567,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetInventoryState(string xml)
 	{
-		byte[] inArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
+		byte[] inArray = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(xml));
 		return ExecuteCommand($"CONFIG set-inventory-state data: '{Convert.ToBase64String(inArray)}'");
 	}
 
@@ -547,7 +583,7 @@ public sealed class HardwareService
 
 	public HardwareCommandResult SetProgramScript(string programName, string script)
 	{
-		byte[] inArray = CompressionAlgorithm.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
+		byte[] inArray = CompressionAlgorithmFactory.GetAlgorithm(CompressionType.LZMA).Compress(Encoding.ASCII.GetBytes(script));
 		return ExecuteCommand($"PROGRAM set name: '{programName}' data: '{Convert.ToBase64String(inArray)}'");
 	}
 
@@ -559,9 +595,9 @@ public sealed class HardwareService
 	public HardwareCommandResult ResumeJobs(HardwareJob[] jobs)
 	{
 		HardwareCommandResult hardwareCommandResult = new HardwareCommandResult();
-		for (int i = 0; i < jobs.Length; i++)
+		foreach (HardwareJob hardwareJob in jobs)
 		{
-			HardwareCommandResult hardwareCommandResult2 = jobs[i].Resume();
+			HardwareCommandResult hardwareCommandResult2 = hardwareJob.Resume();
 			if (!hardwareCommandResult2.Success && hardwareCommandResult2.Errors.Count > 0)
 			{
 				hardwareCommandResult.Errors.AddRange(hardwareCommandResult2.Errors);
@@ -774,6 +810,16 @@ public sealed class HardwareService
 		return ExecuteCommand("SERVICE full-sync");
 	}
 
+	public HardwareCommandResult RebuildInventory(HardwareJobSchedule s, out HardwareJob job)
+	{
+		return ScheduleJob("rebuild-inventory-database", s, out job);
+	}
+
+	public HardwareCommandResult TestAndResetCCR(HardwareJobSchedule schedule, out HardwareJob job)
+	{
+		return ScheduleJob("test-and-reset-ccr", null, enableDebugging: false, schedule, out job);
+	}
+
 	public HardwareCommandResult TestSomeData(int dataSize)
 	{
 		return ExecuteCommand($"ipctest test-ipc-xfer size: '{dataSize.ToString()}'");
@@ -836,11 +882,11 @@ public sealed class HardwareService
 			job.Push(0);
 			return;
 		}
-		foreach (Location loc in locs)
+		locs.ForEach(delegate(Location loc)
 		{
 			job.Push(loc.Slot);
 			job.Push(loc.Deck);
-		}
+		});
 		job.Push(locs.Count);
 	}
 

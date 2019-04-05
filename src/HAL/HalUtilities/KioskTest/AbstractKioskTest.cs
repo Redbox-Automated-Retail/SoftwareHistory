@@ -118,7 +118,8 @@ internal abstract class AbstractKioskTest : IDisposable
 		while (list.Count > 0)
 		{
 			bool flag = VendFrequency > 0 && Transfers % VendFrequency == 0;
-			int index = new Random(DateTime.Now.Millisecond).Next(0, list.Count - 1);
+			Random random = new Random(DateTime.Now.Millisecond);
+			int index = random.Next(0, list.Count - 1);
 			TestLocation testLocation2 = list[index];
 			list.RemoveAt(index);
 			LogHelper.Instance.Log("## Move Disc From Deck {0}, Slot {1} to Deck {2}, Slot {3} - Vend {4} ##", testLocation.Deck, testLocation.Slot, testLocation2.Deck, testLocation2.Slot, flag);

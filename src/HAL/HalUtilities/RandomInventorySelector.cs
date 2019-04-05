@@ -19,7 +19,8 @@ internal sealed class RandomInventorySelector : IDisposable
 		{
 			return null;
 		}
-		int index = new Random(DateTime.Now.Millisecond).Next(0, m_locs.Count - 1);
+		Random random = new Random(DateTime.Now.Millisecond);
+		int index = random.Next(0, m_locs.Count - 1);
 		IInventoryLocation result = m_locs[index];
 		m_locs.RemoveAt(index);
 		return result;
@@ -32,12 +33,12 @@ internal sealed class RandomInventorySelector : IDisposable
 		{
 			throw new Exception("Cannot load inventory.");
 		}
-		foreach (IInventoryLocation item in kioskInventory.DeckInventory)
+		kioskInventory.DeckInventory.ForEach(delegate(IInventoryLocation element)
 		{
-			if (item.Matrix != "EMPTY")
+			if (element.Matrix != "EMPTY")
 			{
-				m_locs.Add(item);
+				m_locs.Add(element);
 			}
-		}
+		});
 	}
 }

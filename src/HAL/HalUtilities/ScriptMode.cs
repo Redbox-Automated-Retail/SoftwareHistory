@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Redbox.HAL.Client;
-using Redbox.HAL.Common.GUI.Functions;
+using Redbox.HAL.Client.Services;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
 
@@ -66,7 +66,8 @@ internal class ScriptMode : IDisposable
 			m_console.Write("> ");
 			string statement = Console.ReadLine();
 			flag = ExecuteStatement(statement);
-			if (Service.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job).Success && job.GetStack(out var stack).Success)
+			HardwareCommandResult job = Service.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job2);
+			if (job.Success && job2.GetStack(out var stack).Success)
 			{
 				FormatStack(stack, m_console);
 			}
@@ -173,11 +174,12 @@ internal class ScriptMode : IDisposable
 		while (true)
 		{
 			string text = textReader.ReadLine();
-			if (text == null)
+			if (text != null)
 			{
-				break;
+				ExecuteStatement(text);
+				continue;
 			}
-			ExecuteStatement(text);
+			break;
 		}
 	}
 

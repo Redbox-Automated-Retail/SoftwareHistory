@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using Redbox.HAL.Client;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Timers;
 using Redbox.HAL.Core;
 using Redbox.HAL.IPC.Framework.Pipes;
 using Redbox.IPC.Framework;
@@ -171,9 +172,9 @@ internal sealed class IpcClientTester : IDisposable
 		Thread[] array = new Thread[iterations];
 		for (int i = 0; i < iterations; i++)
 		{
-			Thread obj = (array[i] = new Thread(RunDataTest));
-			obj.Name = $"Clientthread-{i}";
-			obj.Start(size);
+			Thread thread = (array[i] = new Thread(RunDataTest));
+			thread.Name = $"Clientthread-{i}";
+			thread.Start(size);
 		}
 		Array.ForEach(array, delegate(Thread t)
 		{

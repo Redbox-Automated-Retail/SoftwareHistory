@@ -12,11 +12,11 @@ internal static class ServiceHostRunner
 	internal static void Run(string protocol, bool debug)
 	{
 		new ConsoleLogger(debug);
-		IpcServiceHostFactory ipcServiceHostFactory = new IpcServiceHostFactory();
+		IIpcServiceHostFactory ipcServiceHostFactory = new IpcServiceHostFactory();
 		Assembly assembly = typeof(Program).Assembly;
-		IHostInfo info = ((IIpcServiceHostFactory)ipcServiceHostFactory).Create(assembly);
+		IHostInfo info = ipcServiceHostFactory.Create(assembly);
 		IPCProtocol protocol2 = IPCProtocol.Parse(protocol);
-		IIpcServiceHost ipcServiceHost = ((IIpcServiceHostFactory)ipcServiceHostFactory).Create((IIpcProtocol)protocol2, info);
+		IIpcServiceHost ipcServiceHost = ipcServiceHostFactory.Create(protocol2, info);
 		Thread thread = new Thread(ipcServiceHost.Start);
 		thread.Start();
 		Console.WriteLine("Press any key to halt.");

@@ -9,9 +9,9 @@ internal sealed class DumpHardwareStatisticsExecutor : JobExecutor
 
 	protected override string JobName => "dump-hardware-statistics";
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Stat.ToString());
+		base.Job.Push(Stat.ToString());
 	}
 
 	internal DumpHardwareStatisticsExecutor(HardwareService service, HardwareCorrectionStatistic s)

@@ -10,20 +10,20 @@ internal sealed class LoopyExecutor : JobExecutor
 
 	protected override string JobName => "loopy";
 
-	internal static void Run(int iterations, HardwareService s)
+	internal static void RunExecutor(int iterations, HardwareService s)
 	{
 		new ConsoleLogger(enableDebug: true);
 		using LoopyExecutor loopyExecutor = new LoopyExecutor(s, iterations);
-		loopyExecutor.Job.EventRaised += delegate(HardwareJob job, DateTime eventTime, string eventMessage)
+		loopyExecutor.AddSink(delegate(HardwareJob job, DateTime eventTime, string eventMessage)
 		{
 			LogHelper.Instance.Log("<EventReceived> Job = {0} Msg = {1}", job.ID, eventMessage);
-		};
+		});
 		loopyExecutor.Run();
 	}
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Iterations);
+		base.Job.Push(Iterations);
 	}
 
 	internal LoopyExecutor(HardwareService s, int iter)

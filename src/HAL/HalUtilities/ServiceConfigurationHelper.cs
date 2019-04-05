@@ -16,7 +16,8 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 	internal void BackupConfiguration(string kioskID)
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		using StreamWriter streamWriter = new StreamWriter(File.Open(service.RuntimePath("backup-log.txt"), FileMode.Append, FileAccess.Write, FileShare.Read));
+		string path = service.RuntimePath("backup-log.txt");
+		using StreamWriter streamWriter = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read));
 		string text = service.RuntimePath(kioskID);
 		if (!Directory.Exists(text))
 		{
@@ -121,13 +122,14 @@ internal sealed class ServiceConfigurationHelper : IDisposable
 				});
 				return false;
 			}
-			if (!job.GetStack(out var stack).Success)
+			HardwareCommandResult stack = job.GetStack(out var stack2);
+			if (!stack.Success)
 			{
 				validateFile.WriteLine("Couldn't validate: unable to get stack.");
 			}
 			else
 			{
-				string text3 = stack.Pop();
+				string text3 = stack2.Pop();
 				if (!text3.Equals(text2, StringComparison.CurrentCultureIgnoreCase))
 				{
 					validateFile.WriteLine("The new value {0} doesn't match {1}", text3, text2);

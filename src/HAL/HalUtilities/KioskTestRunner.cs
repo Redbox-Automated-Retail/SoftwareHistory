@@ -3,6 +3,7 @@ using HALUtilities.KioskTest;
 using Redbox.HAL.Client;
 using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Threading;
 using Redbox.HAL.Core;
 
 namespace HALUtilities;
@@ -11,7 +12,7 @@ internal sealed class KioskTestRunner : IDisposable
 {
 	private bool Disposed;
 
-	private readonly double? RunTime;
+	private readonly double? RunTime = null;
 
 	private readonly KioskTestLogger Logger;
 
@@ -57,7 +58,7 @@ internal sealed class KioskTestRunner : IDisposable
 	private KioskTestRunner(MachineInformation config, string[] args, HardwareService service)
 	{
 		Logger = new KioskTestLogger();
-		ServiceLocator.Instance.AddService(typeof(ILogger), Logger);
+		ServiceLocator.Instance.AddService<ILogger>(Logger);
 		if (config.Configuration == KioskConfiguration.None)
 		{
 			LogHelper.Instance.Log("Unsupported test configuration {0}", config);
@@ -73,7 +74,7 @@ internal sealed class KioskTestRunner : IDisposable
 			Test = new QlmKioskTest(config.Configuration, service);
 			break;
 		}
-		if (args.Length != 0)
+		if (args.Length > 0)
 		{
 			for (int i = 0; i < args.Length; i++)
 			{

@@ -8,6 +8,8 @@ using System.Timers;
 using Redbox.HAL.Client;
 using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Component.Model.Extensions;
+using Redbox.HAL.Component.Model.Services;
 using Redbox.HAL.Core;
 using Redbox.IPC.Framework;
 
@@ -15,15 +17,82 @@ namespace HALUtilities;
 
 internal sealed class Program
 {
-	private delegate IQueryUsbDeviceResult GetResult(IUsbDeviceService usb);
+	private class FraudLocInfo
+	{
+		internal readonly List<DecodeInfo> Dumps = new List<DecodeInfo>();
 
-	private static readonly ManualResetEvent GenericWaiter = new ManualResetEvent(initialState: false);
+		internal readonly Location Location;
+
+		internal string Matrix
+		{
+			get
+			{
+				List<DecodeInfo> list = Dumps.FindAll((DecodeInfo each) => !each.IsSecure);
+				if (list.Count == 0)
+				{
+					return "UNKNOWN";
+				}
+				if (list.Count > 1)
+				{
+					throw new InvalidOperationException();
+				}
+				return list[0].Matrix;
+			}
+		}
+
+		public override string ToString()
+		{
+			return $"Deck = {Location.Deck} Slot = {Location.Slot}";
+		}
+
+		internal bool HasSecureRead()
+		{
+			List<DecodeInfo> list = Dumps.FindAll((DecodeInfo each) => each.IsSecure);
+			return list.Count > 0;
+		}
+
+		internal FraudLocInfo(int deck, int slot)
+		{
+			Location = new Location
+			{
+				Deck = deck,
+				Slot = slot
+			};
+		}
+	}
+
+	private class DecodeInfo
+	{
+		internal readonly bool IsSecure;
+
+		internal string Matrix;
+
+		internal int Count;
+
+		internal DecodeInfo(string matrix, int count)
+		{
+			Matrix = matrix;
+			Count = count;
+			IsSecure = matrix.Equals("YES", StringComparison.CurrentCultureIgnoreCase);
+		}
+	}
+
+	[Flags]
+	private enum CorrectionOptions
+	{
+		None = 0,
+		RestartDevice = 1
+	}
+
+	private delegate IQueryUsbDeviceResult GetResult(IUsbDeviceService usb);
 
 	private const string CSVDirectory = "C:\\Program Files\\Redbox\\inventory-snapshots";
 
 	private const int ServiceTimeout = 30000;
 
 	private const string DuplicateCounterFile = "DuplicateCounter.log";
+
+	private static readonly ManualResetEvent GenericWaiter = new ManualResetEvent(initialState: false);
 
 	private static void PrintUsageAndExit()
 	{
@@ -35,6 +104,8 @@ internal sealed class Program
 		Console.WriteLine("HALUtilities.exe version {0}", typeof(Program).Assembly.GetName().Version);
 		Console.WriteLine("## Options ## ");
 		Console.WriteLine("  Where: ");
+		Console.WriteLine("  \t\t--cameraGeneration: returns which camera generation is in use.");
+		Console.WriteLine("  \t\t--decoderType: returns which barcode decoder is in use.");
 		Console.WriteLine("  \t\t--findTripplite:<true|false>  Probes for any tripplite devices attached to the computer.");
 		Console.WriteLine("  \t\t-findABEDevice  Probes for an attached ABE device via HAL service.");
 		Console.WriteLine("  \t\t-findABEDeviceThroughScan  Probes for an attached ABE device via USB query.");
@@ -61,10 +132,7 @@ internal sealed class Program
 		Console.WriteLine("  \t\t-version Report the tool's verison.");
 		Console.WriteLine("  \t\t-checkDupCounter Generate a log file if the machine has counters.");
 		Console.WriteLine("  \t\t-resetDupCounter Reset the duplicate barcode counter.");
-		Console.WriteLine("  \t\t-dumpQRStats Dumps the statistics for the QR device.");
-		Console.WriteLine("  \t\t-grabQRCounters Queries the quick return counters and writes them to QRStats.log.");
 		Console.WriteLine("  \t\t-updateReboot={time} Updates the reboot time and cycles the service.");
-		Console.WriteLine("  \t\t-cleanupQRTools Cleans up old Quick Return tools.");
 		Console.WriteLine("  \t\t-checkInventory={path} Checks HAL inventory against file specified.");
 		Console.WriteLine("  \t\t-assemblyVersions Dumps the HAL assembly versions to the console.");
 		Console.WriteLine("  \t\t-bmpconverter Specifies to run as bitmap converter; passes remaining arguments to converter.");
@@ -78,7 +146,8 @@ internal sealed class Program
 
 	private static void PrintSecureHelp()
 	{
-		PrintUsageAndExit(new string[10] { "  \t\t-randomSync  Runs a random sync of the kiosk.", "  \t\t-installDefaultInventoryDB Backs up old inventory DB, and copies default.", "  \t\t-installDefaultCountersDB Backs up old counters DB, and copies default.", "  \t\t-updateQREEPROM:\"<c:\asdf>\") Updates the images on the QR device, path is optional, if not provided it will use the assembly/qr-chamfer.", "  \t\t-configureDoorSensors:on|off Updates HAL to include/exclude door sensors.", "  \t\t-configureVMZ Configures the HAL instance for a VMZ machine.", "  \t\t-dumpTouchScreens Dumps touchscreen monitor info to TouchScreen.txt.", "  \t\t-backupConfig Backs up the hal.xml & gamp files.", "  \t\t-analyzeEmptyStuck:fullDump Analyzes empty/stuck in vend logs. If file is specified, will analyze just that file.", "  \t\t-fraudStressTest [--scanPause:pause --iterations:iter --readPause:rp] Runs a stress test on the fraud sensor." });
+		string[] secureOptions = new string[10] { "  \t\t-randomSync  Runs a random sync of the kiosk.", "  \t\t-installDefaultInventoryDB Backs up old inventory DB, and copies default.", "  \t\t-installDefaultCountersDB Backs up old counters DB, and copies default.", "  \t\t-updateQREEPROM:\"<c:\asdf>\") Updates the images on the QR device, path is optional, if not provided it will use the assembly/qr-chamfer.", "  \t\t-configureDoorSensors:on|off Updates HAL to include/exclude door sensors.", "  \t\t-configureVMZ Configures the HAL instance for a VMZ machine.", "  \t\t-dumpTouchScreens Dumps touchscreen monitor info to TouchScreen.txt.", "  \t\t-backupConfig Backs up the hal.xml & gamp files.", "  \t\t-analyzeEmptyStuck:fullDump Analyzes empty/stuck in vend logs. If file is specified, will analyze just that file.", "  \t\t-fraudStressTest [--scanPause:pause --iterations:iter --readPause:rp] Runs a stress test on the fraud sensor." };
+		PrintUsageAndExit(secureOptions);
 	}
 
 	private static void GenericimerFired(object source, ElapsedEventArgs e)
@@ -88,51 +157,50 @@ internal sealed class Program
 
 	private static string[] GetProgramArgs(string[] allArgs, int start)
 	{
-		string[] array = new string[allArgs.Length - (start + 1)];
+		int num = allArgs.Length - (start + 1);
+		string[] array = new string[num];
 		Array.Copy(allArgs, start + 1, array, 0, array.Length);
 		return array;
 	}
 
-	private static int OnSearchAndFix(GetResult getResult, IUsbDeviceService usb, bool fix, string fileName)
+	private static void OnSearchAndFix(GetResult getResult, IUsbDeviceService usb, CorrectionOptions options)
 	{
-		using (new GenericFileLogger(fileName))
+		new ConsoleLogger(enableDebug: true);
+		IQueryUsbDeviceResult queryUsbDeviceResult = getResult(usb);
+		if (!queryUsbDeviceResult.Found)
 		{
-			IQueryUsbDeviceResult queryUsbDeviceResult = getResult(usb);
-			if (!queryUsbDeviceResult.Found)
-			{
-				LogHelper.Instance.Log("Unable to find device.");
-				return 256;
-			}
-			int result = 0;
-			LogHelper.Instance.Log("Found device {0}", queryUsbDeviceResult);
-			if (queryUsbDeviceResult.Running)
-			{
-				LogHelper.Instance.Log("The device appears to be working.");
-			}
-			else if (fix)
-			{
-				if (queryUsbDeviceResult.IsNotStarted)
-				{
-					LogHelper.Instance.Log(" Device not started; RESET returned {0}", queryUsbDeviceResult.Descriptor.ResetDriver());
-				}
-				else if (queryUsbDeviceResult.IsDisabled)
-				{
-					LogHelper.Instance.Log(" Device not enabled; change to enable returned {0}", usb.ChangeByHWID(queryUsbDeviceResult.Descriptor, DeviceState.Enable));
-				}
-				DeviceStatus deviceStatus = usb.FindDeviceStatus(queryUsbDeviceResult.Descriptor);
-				LogHelper.Instance.Log(" Device status AFTER fix = {0}", deviceStatus);
-				if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None && (deviceStatus & DeviceStatus.Enabled) != DeviceStatus.None)
-				{
-					LogHelper.Instance.Log("  ** Successfully reset the device **");
-				}
-				else
-				{
-					LogHelper.Instance.Log("  !!Failed to reset the device!!");
-					result = 258;
-				}
-			}
-			return result;
+			LogHelper.Instance.Log("Unable to find device.");
+			Environment.Exit(256);
 		}
+		int exitCode = 0;
+		LogHelper.Instance.Log("Found device {0}", queryUsbDeviceResult);
+		if (queryUsbDeviceResult.Running)
+		{
+			LogHelper.Instance.Log("The device appears to be working.");
+		}
+		else if ((CorrectionOptions.RestartDevice & options) != CorrectionOptions.None)
+		{
+			if (queryUsbDeviceResult.IsNotStarted)
+			{
+				LogHelper.Instance.Log(" Device not started; RESET returned {0}", queryUsbDeviceResult.Descriptor.ResetDriver());
+			}
+			else if (queryUsbDeviceResult.IsDisabled)
+			{
+				LogHelper.Instance.Log(" Device not enabled; change to enable returned {0}", usb.ChangeByHWID(queryUsbDeviceResult.Descriptor, DeviceState.Enable));
+			}
+			DeviceStatus deviceStatus = usb.FindDeviceStatus(queryUsbDeviceResult.Descriptor);
+			LogHelper.Instance.Log(" Device status AFTER fix = {0}", deviceStatus);
+			if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None && (deviceStatus & DeviceStatus.Enabled) != DeviceStatus.None)
+			{
+				LogHelper.Instance.Log("  ** Successfully reset the device **");
+			}
+			else
+			{
+				LogHelper.Instance.Log("  !!Failed to reset the device!!");
+				exitCode = 258;
+			}
+		}
+		Environment.Exit(exitCode);
 	}
 
 	private static void Main(string[] args)
@@ -142,13 +210,13 @@ internal sealed class Program
 			PrintUsageAndExit();
 		}
 		IRuntimeService runtimeService = new RuntimeService();
-		ServiceLocator.Instance.AddService(typeof(IRuntimeService), runtimeService);
-		ServiceLocator.Instance.AddService(typeof(IDeviceSetupClassFactory), new DeviceSetupClassFactory());
+		ServiceLocator.Instance.AddService<IRuntimeService>(runtimeService);
+		ServiceLocator.Instance.AddService<IDeviceSetupClassFactory>(new DeviceSetupClassFactory());
 		UsbDeviceService usbDeviceService = new UsbDeviceService(debug: true);
-		ServiceLocator.Instance.AddService(typeof(IUsbDeviceService), usbDeviceService);
+		ServiceLocator.Instance.AddService<IUsbDeviceService>(usbDeviceService);
 		IPCProtocol protocol = IPCProtocol.Parse(Constants.HALIPCStrings.TcpServer);
-		HardwareService service = new HardwareService(protocol);
-		ClientHelper helper = new ClientHelper(service);
+		HardwareService hardwareService = new HardwareService(protocol);
+		ClientHelper clientHelper = new ClientHelper(hardwareService);
 		bool flag = true;
 		for (int i = 0; i < args.Length; i++)
 		{
@@ -158,180 +226,103 @@ internal sealed class Program
 				try
 				{
 					protocol = IPCProtocol.Parse(optionValue);
-					service = new HardwareService(protocol);
-					helper.Dispose();
-					helper = new ClientHelper(service);
+					hardwareService = new HardwareService(protocol);
+					clientHelper.Dispose();
+					clientHelper = new ClientHelper(hardwareService);
 				}
 				catch
 				{
 				}
 				continue;
 			}
-			if (args[i] == "-showIRConfig")
+			if (args[i] == "--cameraGeneration")
 			{
-				using (MachineConfiguration machineConfiguration = new MachineConfiguration(service))
-				{
-					machineConfiguration.Run();
-					Console.WriteLine("Has IR = {0}", machineConfiguration.HasIRHardware);
-					Console.WriteLine("Install date = {0}", machineConfiguration.IRHardwareInstall.HasValue ? machineConfiguration.IRHardwareInstall.ToString() : "NONE");
-				}
+				Console.WriteLine(hardwareService.CurrentCameraGeneration.ToString());
 				continue;
 			}
-			if (args[i].StartsWith("-syncFrauds"))
+			if (args[i] == "--decoderType")
 			{
-				SyncRange range = new SyncRange(1, 1, new Range(1, 12));
-				HardwareCommandResult hardwareCommandResult = service.HardSync(range, new HardwareJobSchedule
-				{
-					Priority = HardwareJobPriority.High
-				}, out var job);
-				if (!hardwareCommandResult.Success)
-				{
-					Console.WriteLine("Failed to schedule sync job.");
-					hardwareCommandResult.Errors.Dump(Console.Out);
-				}
-				else
-				{
-					helper.WaitForJob(job, out var endStatus);
-					Console.WriteLine("Sync job {0} ended with status {1}", job.ID, endStatus);
-				}
-				break;
+				Console.WriteLine(hardwareService.BarcodeDecoder.ToString());
+				continue;
 			}
-			if (args[i].StartsWith("--parseFrauds"))
+			if (args[i] == "-scheduleTestSync")
 			{
-				bool vendNonReads = CommandLineOption.GetOptionVal(args[i], defVal: false);
-				Array.ForEach(GetProgramArgs(args, 0), delegate(string file)
+				List<Location> list = new List<Location>();
+				list.Add(new Location
 				{
-					FileInfo fileInfo = new FileInfo(file);
-					string fullPath = file;
-					if (!File.Exists(file))
-					{
-						string text3 = $"c:\\Program Files\\Redbox\\KioskLogs\\Sync\\{fileInfo.Name}";
-						if (!File.Exists(text3))
-						{
-							Console.WriteLine("Unable to find sync file '{0}'", file);
-							Environment.Exit(256);
-						}
-						fullPath = text3;
-					}
-					string path12 = $"fraud-analysis-{Path.GetFileNameWithoutExtension(fileInfo.Name)}.txt";
-					using InventoryHelper inventoryHelper8 = new InventoryHelper(service, helper);
-					using StreamWriter output = new StreamWriter(path12);
-					inventoryHelper8.ParseFraudsFromFile(fullPath, output, vendNonReads);
+					Deck = 1,
+					Slot = 1
 				});
-				Environment.Exit(0);
-				continue;
+				list.Add(new Location
+				{
+					Deck = 1,
+					Slot = 2
+				});
+				List<Location> locations = list;
+				hardwareService.HardSync(locations, new HardwareJobSchedule
+				{
+					Priority = HardwareJobPriority.Low
+				}, out var _);
+				break;
 			}
 			if (args[i].StartsWith("--statusCCR"))
 			{
-				if (!CommandLineOption.GetOptionVal(args[i], defVal: true))
+				using (TestAndResetCCRExecutor testAndResetCCRExecutor = new TestAndResetCCRExecutor(hardwareService))
 				{
-					Environment.Exit(OnSearchAndFix((IUsbDeviceService _usb) => _usb.FindCCR(), usbDeviceService, fix: true, "CCRrestart.log"));
-				}
-				GenericFileLogger logger = new GenericFileLogger("c:\\Program Files\\Redbox\\hal-tools", "CCRrestart.log");
-				try
-				{
-					using TestAndResetCCRExecutor testAndResetCCRExecutor = new TestAndResetCCRExecutor(service);
 					testAndResetCCRExecutor.Run();
-					logger.Log($"Test and reset job {testAndResetCCRExecutor.ID} ended with status {testAndResetCCRExecutor.EndStatus.ToString().ToUpper()}", LogEntryType.Info);
-					testAndResetCCRExecutor.Results.ForEach(delegate(ProgramResult result)
+					if (HardwareJobStatus.Errored == testAndResetCCRExecutor.EndStatus)
 					{
-						logger.Log($"  {result.Code} --> {result.Message}", LogEntryType.Info);
-					});
-					break;
-				}
-				finally
-				{
-					if (logger != null)
+						Console.WriteLine("!! Failed to reset CCR !!");
+					}
+					else if (HardwareJobStatus.Completed == testAndResetCCRExecutor.EndStatus)
 					{
-						((IDisposable)logger).Dispose();
+						Console.WriteLine("CCR should be working.");
 					}
 				}
+				continue;
 			}
 			if (args[i].StartsWith("--statusCamera"))
 			{
-				Environment.Exit(OnSearchAndFix((IUsbDeviceService _usb) => _usb.FindCamera(), usbDeviceService, CommandLineOption.GetOptionVal(args[i], defVal: false), "CameraRestart.log"));
-				continue;
-			}
-			if (args[i].StartsWith("-findFwUpdates"))
-			{
-				AbeStatsAggregator.Aggregate("c:\\bin\\Storm\\Upgrades", Environment.ProcessorCount);
-				continue;
-			}
-			if (args[i].StartsWith("--aggregateArcusStats"))
-			{
-				AbstractHardwareStatsAggregator.Aggregate(CommandLineOption.GetOptionVal(args[i], Environment.ProcessorCount), "C:\\bin\\Arcus_Correction2", new List<StatsAggregatorFilter>
+				CorrectionOptions correctionOptions = CorrectionOptions.None;
+				if (CommandLineOption.GetOptionVal(args[i], defVal: false))
 				{
-					new DefaultStatsFilter(),
-					new TopOffendersFilter(5),
-					new FailedCorrectionsFilter()
-				});
-				continue;
-			}
-			if (args[i].StartsWith("--getCorrectiveStats"))
-			{
-				HardwareCorrectionStatistic optionVal = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
-				if (optionVal == HardwareCorrectionStatistic.None)
-				{
-					continue;
+					correctionOptions |= CorrectionOptions.RestartDevice;
 				}
-				using (DumpHardwareStatisticsExecutor dumpHardwareStatisticsExecutor = new DumpHardwareStatisticsExecutor(service, optionVal))
-				{
-					dumpHardwareStatisticsExecutor.Run();
-					if (HardwareJobStatus.Completed != dumpHardwareStatisticsExecutor.EndStatus)
-					{
-						continue;
-					}
-					string text = $"c:\\Program Files\\Redbox\\KioskLogs\\Service\\{optionVal}CorrectionStats.txt";
-					if (!File.Exists(text))
-					{
-						continue;
-					}
-					using KioskCorrectionInfo kioskCorrectionInfo = new KioskCorrectionInfo(text);
-					if (kioskCorrectionInfo.Stats.Count == 0)
-					{
-						try
-						{
-							File.Delete(text);
-						}
-						catch (Exception ex)
-						{
-							Console.WriteLine("Unable to delete stats file '{0}'", text);
-							Console.WriteLine(ex.Message);
-						}
-					}
-				}
+				OnSearchAndFix((IUsbDeviceService _usb) => _usb.FindCamera(), usbDeviceService, correctionOptions);
 				continue;
 			}
 			if (args[i].StartsWith("--removeStats"))
 			{
-				HardwareCorrectionStatistic optionVal2 = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
-				if (optionVal2 != HardwareCorrectionStatistic.None)
+				HardwareCorrectionStatistic optionVal = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
+				if (optionVal != HardwareCorrectionStatistic.None)
 				{
-					if (!service.RemoveHardwareCorrectionStats(optionVal2, new HardwareJobSchedule
+					HardwareCommandResult hardwareCommandResult = hardwareService.RemoveHardwareCorrectionStats(optionVal, new HardwareJobSchedule
 					{
 						Priority = HardwareJobPriority.High
-					}, out var job2).Success)
+					}, out var job2);
+					if (!hardwareCommandResult.Success)
 					{
 						Console.WriteLine("Failed to schedule remove stats job.");
 						continue;
 					}
-					helper.WaitForJob(job2, out var endStatus2);
-					Console.WriteLine("Remove all stats job {0} ended with status {1}", job2.ID, endStatus2);
+					clientHelper.WaitForJob(job2, out var endStatus);
+					Console.WriteLine("Remove all stats job {0} ended with status {1}", job2.ID, endStatus);
 				}
 				continue;
 			}
 			if (args[i].StartsWith("-removeAllStats"))
 			{
-				if (!service.RemoveHardwareCorrectionStats(new HardwareJobSchedule
+				HardwareCommandResult hardwareCommandResult2 = hardwareService.RemoveHardwareCorrectionStats(new HardwareJobSchedule
 				{
 					Priority = HardwareJobPriority.High
-				}, out var job3).Success)
+				}, out var job3);
+				if (!hardwareCommandResult2.Success)
 				{
 					Console.WriteLine("Failed to schedule remove all stats job.");
 					continue;
 				}
-				helper.WaitForJob(job3, out var endStatus3);
-				Console.WriteLine("Remove all stats job {0} ended with status {1}", job3.ID, endStatus3);
+				clientHelper.WaitForJob(job3, out var endStatus2);
+				Console.WriteLine("Remove all stats job {0} ended with status {1}", job3.ID, endStatus2);
 				continue;
 			}
 			if (args[i].StartsWith("--consoleDebug"))
@@ -342,9 +333,23 @@ internal sealed class Program
 			if (args[i] == "-customerReturn")
 			{
 				Thread thread = new Thread(CustomerReturn.RunExecutor);
-				thread.Start(service);
+				thread.Start(hardwareService);
 				thread.Join();
 				break;
+			}
+			if (args[i] == "-returnUnknown")
+			{
+				using (ReturnUnknownExecutor returnUnknownExecutor = new ReturnUnknownExecutor(hardwareService))
+				{
+					returnUnknownExecutor.Run();
+					Console.WriteLine("{0} ( ID = {1} ) ended with status {2}", returnUnknownExecutor.Job.ProgramName, returnUnknownExecutor.ID, returnUnknownExecutor.EndStatus);
+					Console.WriteLine(" -- program results --");
+					returnUnknownExecutor.Results.ForEach(delegate(ProgramResult each)
+					{
+						Console.WriteLine("  Code: {0}  Message {1}", each.Code, each.Message);
+					});
+					break;
+				}
 			}
 			if (args[i].StartsWith("-randomSync"))
 			{
@@ -375,7 +380,19 @@ internal sealed class Program
 				for (int num5 = 1; num5 <= num; num5++)
 				{
 					Console.WriteLine("Iteration {0} of {1} total.", num5, num);
-					JobExecutor jobExecutor = ((!flag2) ? ((JobExecutor)new RandomSyncExecutor(service, num2, num3)) : ((JobExecutor)new OneDiskRandomSyncExecutor(service, num2, num3)));
+					JobExecutor jobExecutor;
+					if (flag2)
+					{
+						jobExecutor = new OneDiskRandomSyncExecutor(hardwareService, num2, num3);
+						jobExecutor.AddSink(delegate(HardwareJob j, DateTime eventTime, string eventMessage)
+						{
+							Console.WriteLine("{0}: {1}", eventTime, eventMessage);
+						});
+					}
+					else
+					{
+						jobExecutor = new RandomSyncExecutor(hardwareService, num2, num3);
+					}
 					using (jobExecutor)
 					{
 						jobExecutor.Run();
@@ -393,7 +410,8 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("--loopy"))
 			{
-				LoopyExecutor.Run(CommandLineOption.GetOptionVal(args[i], 10), service);
+				int optionVal2 = CommandLineOption.GetOptionVal(args[i], 10);
+				LoopyExecutor.RunExecutor(optionVal2, hardwareService);
 				break;
 			}
 			if (args[i].StartsWith("--msgServer"))
@@ -418,13 +436,14 @@ internal sealed class Program
 			}
 			if ("-kioskTest" == args[i])
 			{
-				Environment.Exit(KioskTestRunner.RunKioskTest(GetProgramArgs(args, i), service));
+				string[] programArgs = GetProgramArgs(args, i);
+				Environment.Exit(KioskTestRunner.RunKioskTest(programArgs, hardwareService));
 				continue;
 			}
 			if (args[i] == "-findABEDevice")
 			{
 				new ConsoleLogger(flag);
-				Console.WriteLine("ABE device {0}", service.HasABEDevice ? "found" : "not found");
+				Console.WriteLine("ABE device {0}", hardwareService.HasABEDevice ? "found" : "not found");
 				continue;
 			}
 			if (args[i] == "-findABEDeviceThroughScan")
@@ -437,7 +456,8 @@ internal sealed class Program
 			if ("-findKFCDevices" == args[i])
 			{
 				string path = "KFC.log";
-				using (StreamWriter streamWriter = new StreamWriter(runtimeService.CreateBackup(path)))
+				string path2 = runtimeService.CreateBackup(path);
+				using (StreamWriter streamWriter = new StreamWriter(path2))
 				{
 					new ConsoleLogger(flag);
 					ITouchscreenDescriptor touchscreenDescriptor = usbDeviceService.FindTouchScreen(matchDriver: true);
@@ -449,7 +469,8 @@ internal sealed class Program
 					{
 						streamWriter.WriteLine("Found touchscreen HWID {0} {1}", touchscreenDescriptor.ToString(), touchscreenDescriptor.Friendlyname);
 					}
-					IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: true);
+					IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+					IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: true);
 					if (deviceDescriptor == null)
 					{
 						streamWriter.WriteLine("Could not find a camera or match its driver.");
@@ -463,9 +484,9 @@ internal sealed class Program
 			}
 			if ("-findActiveTouchScreen" == args[i])
 			{
-				string path2 = "TSLocator.log";
-				runtimeService.CreateBackup(path2);
-				using (StreamWriter streamWriter2 = new StreamWriter(path2))
+				string path3 = "TSLocator.log";
+				runtimeService.CreateBackup(path3);
+				using (StreamWriter streamWriter2 = new StreamWriter(path3))
 				{
 					new ConsoleLogger(flag);
 					ITouchscreenDescriptor touchscreenDescriptor2 = usbDeviceService.FindTouchScreen(matchDriver: true);
@@ -483,12 +504,12 @@ internal sealed class Program
 			if (args[i].StartsWith("--findActiveCamera"))
 			{
 				bool optionVal3 = CommandLineOption.GetOptionVal(args[i], defVal: false);
-				string path3 = "CameraLocator.log";
-				runtimeService.CreateBackup(path3);
-				using (StreamWriter streamWriter3 = new StreamWriter(path3))
+				string path4 = "CameraLocator.log";
+				runtimeService.CreateBackup(path4);
+				using (StreamWriter streamWriter3 = new StreamWriter(path4))
 				{
 					new ConsoleLogger(flag);
-					IDeviceDescriptor deviceDescriptor2 = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: true);
+					IDeviceDescriptor deviceDescriptor2 = usbDeviceService.FindActiveCamera(matchDriver: true);
 					if (deviceDescriptor2 == null)
 					{
 						streamWriter3.WriteLine("Could not find a camera or match its driver.");
@@ -508,20 +529,10 @@ internal sealed class Program
 			if ("-resetControlSystem" == args[i])
 			{
 				new ConsoleLogger(flag);
-				using (ResetControlSystemJob resetControlSystemJob = new ResetControlSystemJob(service))
+				using (ResetControlSystemJob resetControlSystemJob = new ResetControlSystemJob(hardwareService))
 				{
 					resetControlSystemJob.Run();
 					LogHelper.Instance.Log("ResetControlSystem job {0} ended with status {1}", resetControlSystemJob.ID, resetControlSystemJob.EndStatus.ToString());
-				}
-				continue;
-			}
-			if ("-resetMotionControl" == args[i])
-			{
-				new ConsoleLogger(flag);
-				using (ResetMotionControlExecutor resetMotionControlExecutor = new ResetMotionControlExecutor(service))
-				{
-					resetMotionControlExecutor.Run();
-					LogHelper.Instance.Log("ResetMotionControl job {0} ended with status {1}", resetMotionControlExecutor.ID, resetMotionControlExecutor.EndStatus.ToString());
 				}
 				continue;
 			}
@@ -536,18 +547,18 @@ internal sealed class Program
 			}
 			if (args[i] == "-interactive")
 			{
-				string[] programArgs = GetProgramArgs(args, i);
-				using (ScriptMode scriptMode = new ScriptMode(service))
+				string[] programArgs2 = GetProgramArgs(args, i);
+				using (ScriptMode scriptMode = new ScriptMode(hardwareService))
 				{
-					scriptMode.Run(programArgs);
+					scriptMode.Run(programArgs2);
 				}
 				continue;
 			}
 			if (args[i].StartsWith("-resetDeck"))
 			{
 				string optionVal4 = CommandLineOption.GetOptionVal(args[i], string.Empty);
-				string path4 = runtimeService.RuntimePath("resetdecks.txt");
-				StreamWriter vl = new StreamWriter(File.Open(path4, FileMode.Append, FileAccess.Write, FileShare.Read));
+				string path5 = runtimeService.RuntimePath("resetdecks.txt");
+				StreamWriter vl = new StreamWriter(File.Open(path5, FileMode.Append, FileAccess.Write, FileShare.Read));
 				try
 				{
 					if (string.IsNullOrEmpty(optionVal4))
@@ -557,17 +568,18 @@ internal sealed class Program
 					}
 					StringBuilder buffer = new StringBuilder();
 					char[] separator = new char[1] { ',' };
-					Array.ForEach(optionVal4.Split(separator, StringSplitOptions.RemoveEmptyEntries), delegate(string d)
+					string[] array = optionVal4.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+					Array.ForEach(array, delegate(string d)
 					{
 						vl.WriteLine(" Resetting deck {0}", d);
 						buffer.AppendLine($" DECK RESET NUMBER=\"{d}\"");
 					});
-					if (service == null)
+					if (hardwareService == null)
 					{
 						vl.WriteLine("Cannot connect to service. Please try again.");
 						break;
 					}
-					service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(buffer.ToString()), out var _);
+					hardwareService.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(buffer.ToString()), out var _);
 				}
 				finally
 				{
@@ -580,79 +592,81 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("--analyzeSync"))
 			{
-				new SyncCheck(CommandLineOption.GetOptionVal(args[i], "EMPTY"), runtimeService).Summarize();
+				string optionVal5 = CommandLineOption.GetOptionVal(args[i], "EMPTY");
+				SyncCheck syncCheck = new SyncCheck(optionVal5, runtimeService);
+				syncCheck.Summarize();
 				continue;
 			}
 			if (args[i].StartsWith("--analyzeRunningSync"))
 			{
 				using (DefaultConsole defaultConsole = new DefaultConsole())
 				{
-					string optionVal5 = CommandLineOption.GetOptionVal(args[i], "EMPTY");
-					if (optionVal5 == "EMPTY")
+					string optionVal6 = CommandLineOption.GetOptionVal(args[i], "EMPTY");
+					if (optionVal6 == "EMPTY")
 					{
 						defaultConsole.WriteLine("Invalid job id specified.");
 						break;
 					}
 					HardwareJob job5 = null;
-					HardwareCommandResult job6 = service.GetJob(optionVal5, out job5);
+					HardwareCommandResult job6 = hardwareService.GetJob(optionVal6, out job5);
 					if (!job6.Success || job5 == null)
 					{
 						job6.Errors.Dump(Console.Out);
 						break;
 					}
-					helper.WaitForJob(job5, out var endStatus4);
-					if (endStatus4 != HardwareJobStatus.Completed)
+					clientHelper.WaitForJob(job5, out var endStatus3);
+					if (endStatus3 != HardwareJobStatus.Completed)
 					{
-						defaultConsole.WriteLine("job {0} ended with status {1}", optionVal5, endStatus4.ToString());
+						defaultConsole.WriteLine("job {0} ended with status {1}", optionVal6, endStatus3.ToString());
 						break;
 					}
-					using InventoryHelper inventoryHelper = new InventoryHelper(service, helper);
+					using InventoryHelper inventoryHelper = new InventoryHelper(hardwareService);
 					inventoryHelper.CompareSyncResults(job5, outputSuccessfulCompare: false);
 				}
 				continue;
 			}
 			if (args[i].StartsWith("-analyzeEmptyStuck"))
 			{
-				bool optionVal6 = CommandLineOption.GetOptionVal(args[i], defVal: false);
-				EmptyStuckAnalyzer.Instance.AnalyzeByPattern(optionVal6);
+				bool optionVal7 = CommandLineOption.GetOptionVal(args[i], defVal: false);
+				EmptyStuckAnalyzer.Instance.AnalyzeByPattern(optionVal7);
 				continue;
 			}
 			if (args[i].StartsWith("-assemblyVersions"))
 			{
-				string path5 = "c:\\Program Files\\Redbox\\HALService\\bin";
-				List<string> list = new List<string>();
-				string[] array = new string[2] { "*.dll", "*.exe" };
-				foreach (string searchPattern in array)
+				string path6 = "c:\\Program Files\\Redbox\\HALService\\bin";
+				List<string> list2 = new List<string>();
+				string[] array2 = new string[2] { "*.dll", "*.exe" };
+				foreach (string searchPattern in array2)
 				{
-					list.AddRange(Directory.GetFiles(path5, searchPattern));
+					list2.AddRange(Directory.GetFiles(path6, searchPattern));
 				}
-				Console.WriteLine("{0} ( {1} files total )", DateTime.Now, list.Count);
-				list.ForEach(delegate(string assembly)
+				Console.WriteLine("{0} ( {1} files total )", DateTime.Now, list2.Count);
+				list2.ForEach(delegate(string assembly)
 				{
 					try
 					{
 						AssemblyName assemblyName = AssemblyName.GetAssemblyName(assembly);
 						Console.WriteLine("Assembly {0} has version {1}", assembly, assemblyName.Version.ToString());
 					}
-					catch (Exception ex4)
+					catch (Exception ex3)
 					{
-						Console.WriteLine("Unable to get version for {0}; message = {1}", assembly, ex4.Message);
+						Console.WriteLine("Unable to get version for {0}; message = {1}", assembly, ex3.Message);
 					}
 				});
 				continue;
 			}
 			if (args[i].StartsWith("-dumpDevices"))
 			{
-				string path6 = "AllDevices.txt";
-				runtimeService.CreateBackup(path6);
-				using (StreamWriter streamWriter4 = new StreamWriter(path6))
+				string path7 = "AllDevices.txt";
+				runtimeService.CreateBackup(path7);
+				using (StreamWriter streamWriter4 = new StreamWriter(path7))
 				{
 					Dictionary<string, List<string>> deviceMap = new Dictionary<string, List<string>>();
 					Action<string, string> onDeviceFound = delegate(string clazz, string hwid)
 					{
-						List<string> list3 = null;
-						list3 = (deviceMap.ContainsKey(clazz) ? deviceMap[clazz] : (deviceMap[clazz] = new List<string>()));
-						list3.Add(hwid);
+						List<string> list6 = null;
+						list6 = (deviceMap.ContainsKey(clazz) ? deviceMap[clazz] : (deviceMap[clazz] = new List<string>()));
+						list6.Add(hwid);
 					};
 					usbDeviceService.EnumDevices(onDeviceFound);
 					foreach (string key in deviceMap.Keys)
@@ -672,7 +686,7 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("-backupConfig"))
 			{
-				using (ServiceConfigurationHelper serviceConfigurationHelper = new ServiceConfigurationHelper(service))
+				using (ServiceConfigurationHelper serviceConfigurationHelper = new ServiceConfigurationHelper(hardwareService))
 				{
 					serviceConfigurationHelper.BackupConfiguration(runtimeService.KioskId);
 				}
@@ -680,7 +694,8 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("-configureVMZ"))
 			{
-				using (StreamWriter streamWriter5 = new StreamWriter(File.Open(runtimeService.RuntimePath("configure-VMZ.txt"), FileMode.Append, FileAccess.Write, FileShare.Read)))
+				string path8 = runtimeService.RuntimePath("configure-VMZ.txt");
+				using (StreamWriter streamWriter5 = new StreamWriter(File.Open(path8, FileMode.Append, FileAccess.Write, FileShare.Read)))
 				{
 					streamWriter5.WriteLine("The upgrade process is no longer supported.");
 				}
@@ -694,50 +709,51 @@ internal sealed class Program
 					Console.WriteLine(" The -configureDoorSensors switch requires an argument");
 					PrintSecureHelp();
 				}
-				HardwareCommandResult hardwareCommandResult2 = service.ScheduleJob("door-sensor-software-override", string.Empty, enableDebugging: false, new HardwareJobSchedule
+				HardwareCommandResult hardwareCommandResult3 = hardwareService.ScheduleJob("door-sensor-software-override", string.Empty, enableDebugging: false, new HardwareJobSchedule
 				{
 					Priority = HardwareJobPriority.Highest
 				}, out var job7);
-				if (!hardwareCommandResult2.Success)
+				if (!hardwareCommandResult3.Success)
 				{
 					Console.WriteLine("Failed to schedule configuration job.");
-					hardwareCommandResult2.Errors.Dump(Console.Out);
+					hardwareCommandResult3.Errors.Dump(Console.Out);
 					continue;
 				}
 				job7.Push(optionValue2);
 				job7.Pend();
-				helper.WaitForJob(job7, out var endStatus5);
-				Console.WriteLine("Change door sensor configuration ended with status {0}", endStatus5);
+				clientHelper.WaitForJob(job7, out var endStatus4);
+				Console.WriteLine("Change door sensor configuration ended with status {0}", endStatus4);
 				continue;
 			}
 			if (args[i].Contains("-checkInventory"))
 			{
 				string optionValue3 = CommandLineOption.GetOptionValue(args[i], "=");
-				string path7 = "InventoryCompare.txt";
-				runtimeService.CreateBackup(path7);
-				using (StreamWriter log = new StreamWriter(path7))
+				string path9 = "InventoryCompare.txt";
+				runtimeService.CreateBackup(path9);
+				using (StreamWriter log = new StreamWriter(path9))
 				{
-					InventoryChecker.Instance.CheckInventory(service, optionValue3, log);
+					InventoryChecker.Instance.CheckInventory(hardwareService, optionValue3, log);
 				}
 				continue;
 			}
 			if ("-resetDupCounter" == args[i])
 			{
-				if (service != null)
+				if (hardwareService != null)
 				{
-					new CounterHelper().ResetDuplicateCounterValue(service);
+					new CounterHelper().ResetDuplicateCounterValue(hardwareService);
 				}
 				continue;
 			}
 			if ("-checkDupCounter" == args[i])
 			{
 				runtimeService.CreateBackup("DuplicateCounter.log");
-				HardwareService hardwareService = service;
-				if (hardwareService == null)
+				HardwareService hardwareService2 = hardwareService;
+				if (hardwareService2 == null)
 				{
 					break;
 				}
-				new CounterHelper().GetDuplicateCounterValue(hardwareService, out var val);
+				CounterHelper counterHelper = new CounterHelper();
+				counterHelper.GetDuplicateCounterValue(hardwareService2, out var val);
 				if (val > 0)
 				{
 					using StreamWriter streamWriter6 = new StreamWriter("DuplicateCounter.log");
@@ -748,27 +764,27 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("--preposVend"))
 			{
-				int optionVal7 = CommandLineOption.GetOptionVal(args[i], 3);
+				int optionVal8 = CommandLineOption.GetOptionVal(args[i], 3);
 				using (DefaultConsole defaultConsole2 = new DefaultConsole())
 				{
-					using PrepositionTest prepositionTest = new PrepositionTest(optionVal7, service, defaultConsole2);
+					using PrepositionTest prepositionTest = new PrepositionTest(optionVal8, hardwareService, defaultConsole2);
 					defaultConsole2.Write("Type C for continue, otherwise bail:   ");
-					string text2 = Console.ReadLine();
-					prepositionTest.PreposJob.Signal((text2 == "C") ? "continue" : "bail");
-					helper.WaitForJob(prepositionTest.PreposJob, out var endStatus6);
-					defaultConsole2.WriteLine("Preposition job {0} ended with status {1}", prepositionTest.PreposJob.ID, endStatus6.ToString());
+					string text = Console.ReadLine();
+					prepositionTest.PreposJob.Signal((text == "C") ? "continue" : "bail");
+					clientHelper.WaitForJob(prepositionTest.PreposJob, out var endStatus5);
+					defaultConsole2.WriteLine("Preposition job {0} ended with status {1}", prepositionTest.PreposJob.ID, endStatus5.ToString());
 				}
 				continue;
 			}
 			if (args[i].StartsWith("-vendTest"))
 			{
-				int optionVal8 = CommandLineOption.GetOptionVal(args[i], 3);
+				int optionVal9 = CommandLineOption.GetOptionVal(args[i], 3);
 				int? startAt = null;
 				if (args.Length > 1 && args[i + 1].StartsWith("-next"))
 				{
 					startAt = CommandLineOption.GetOptionVal(args[i + 1], -1);
 				}
-				using (VendTest vendTest = new VendTest(optionVal8, service))
+				using (VendTest vendTest = new VendTest(optionVal9, hardwareService))
 				{
 					using DefaultConsole console = new DefaultConsole();
 					vendTest.Execute(console, startAt);
@@ -777,30 +793,30 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("--scheduleClean"))
 			{
-				int? optionVal9 = CommandLineOption.GetOptionVal<int?>(args[i], null);
+				int? optionVal10 = CommandLineOption.GetOptionVal<int?>(args[i], null);
 				using (DefaultConsole defaultConsole3 = new DefaultConsole())
 				{
-					if (optionVal9.HasValue && optionVal9 != -1)
+					if (optionVal10.HasValue && optionVal10 != -1)
 					{
 						RedboxTimer redboxTimer = new RedboxTimer("Clean", GenericimerFired);
-						redboxTimer.ScheduleAtNext(optionVal9.Value, 0);
+						redboxTimer.ScheduleAtNext(optionVal10.Value, 0);
 						defaultConsole3.WriteLine("Clean timer should fire {0} {1}", redboxTimer.NextFireTime.Value.ToShortDateString(), redboxTimer.NextFireTime.Value.ToShortTimeString());
 						GenericWaiter.WaitOne();
 					}
-					if (!service.CleanZone(out var job8).Success)
+					if (!hardwareService.CleanZone(out var job8).Success)
 					{
 						defaultConsole3.WriteLine("Failed to schedule clean job.");
 						break;
 					}
 					job8.Pend();
-					helper.WaitForJob(job8, out var endStatus7);
-					defaultConsole3.WriteLine("Clean {0} ended with status {1}", job8.ID, endStatus7.ToString());
+					clientHelper.WaitForJob(job8, out var endStatus6);
+					defaultConsole3.WriteLine("Clean {0} ended with status {1}", job8.ID, endStatus6.ToString());
 				}
 				continue;
 			}
 			if ("-e".Equals(args[i]))
 			{
-				using (InventoryHelper inventoryHelper2 = new InventoryHelper(service, helper))
+				using (InventoryHelper inventoryHelper2 = new InventoryHelper(hardwareService))
 				{
 					inventoryHelper2.FixType(SyncType.Empty);
 				}
@@ -808,7 +824,7 @@ internal sealed class Program
 			}
 			if ("-unknown".Equals(args[i]))
 			{
-				using (InventoryHelper inventoryHelper3 = new InventoryHelper(service, helper))
+				using (InventoryHelper inventoryHelper3 = new InventoryHelper(hardwareService))
 				{
 					inventoryHelper3.FixType(SyncType.Unknown);
 				}
@@ -816,18 +832,18 @@ internal sealed class Program
 			}
 			if (args[i].StartsWith("--fullSync"))
 			{
-				string optionVal10 = CommandLineOption.GetOptionVal(args[i], string.Empty);
+				string optionVal11 = CommandLineOption.GetOptionVal(args[i], string.Empty);
 				SyncOptions options = SyncOptions.None;
-				if (string.Empty != optionVal10)
+				if (string.Empty != optionVal11)
 				{
-					string[] array2 = optionVal10.Split(';');
-					if (array2.Length == 1)
+					string[] array3 = optionVal11.Split(';');
+					if (array3.Length == 1)
 					{
-						options = Enum<SyncOptions>.ParseIgnoringCase(array2[0], SyncOptions.None);
+						options = Enum<SyncOptions>.ParseIgnoringCase(array3[0], SyncOptions.None);
 					}
 					else
 					{
-						Array.ForEach(array2, delegate(string option)
+						Array.ForEach(array3, delegate(string option)
 						{
 							SyncOptions syncOptions = Enum<SyncOptions>.ParseIgnoringCase(option, SyncOptions.None);
 							options |= syncOptions;
@@ -835,7 +851,7 @@ internal sealed class Program
 					}
 				}
 				new ConsoleLogger((options & SyncOptions.Debug) != 0);
-				using (InventoryHelper inventoryHelper4 = new InventoryHelper(service, helper))
+				using (InventoryHelper inventoryHelper4 = new InventoryHelper(hardwareService))
 				{
 					inventoryHelper4.ScheduleFullSync(options);
 				}
@@ -843,7 +859,7 @@ internal sealed class Program
 			}
 			if ("-fullSync".Equals(args[i]))
 			{
-				using (InventoryHelper inventoryHelper5 = new InventoryHelper(service, helper))
+				using (InventoryHelper inventoryHelper5 = new InventoryHelper(hardwareService))
 				{
 					inventoryHelper5.ScheduleFullSync();
 				}
@@ -851,11 +867,11 @@ internal sealed class Program
 			}
 			if ("-dumpInventory".Equals(args[i]))
 			{
-				string path8 = runtimeService.RuntimePath("inventory.xml");
-				runtimeService.CreateBackup(path8);
-				using (InventoryHelper inventoryHelper6 = new InventoryHelper(service, helper))
+				string path10 = runtimeService.RuntimePath("inventory.xml");
+				runtimeService.CreateBackup(path10);
+				using (InventoryHelper inventoryHelper6 = new InventoryHelper(hardwareService))
 				{
-					inventoryHelper6.DumpInventoryToFile(path8);
+					inventoryHelper6.DumpInventoryToFile(path10);
 				}
 				continue;
 			}
@@ -875,7 +891,7 @@ internal sealed class Program
 				{
 					PrintUsageAndExit();
 				}
-				using (InventoryHelper inventoryHelper7 = new InventoryHelper(service, helper))
+				using (InventoryHelper inventoryHelper7 = new InventoryHelper(hardwareService))
 				{
 					if (inventoryHelper7.ImportInventoryFromFile(args[++i]))
 					{
@@ -896,9 +912,9 @@ internal sealed class Program
 					{
 						Directory.CreateDirectory("C:\\Program Files\\Redbox\\inventory-snapshots");
 					}
-					catch (Exception ex2)
+					catch (Exception ex)
 					{
-						Console.WriteLine("Unable to create directory: {0}", ex2.Message);
+						Console.WriteLine("Unable to create directory: {0}", ex.Message);
 					}
 				}
 				int num7 = 1;
@@ -906,30 +922,40 @@ internal sealed class Program
 				string empty = string.Empty;
 				do
 				{
-					string path9 = $"{runtimeService.KioskId}-{now.Month}-{now.Day}-{now.Year}-{num7++}.csv";
-					empty = Path.Combine("C:\\Program Files\\Redbox\\inventory-snapshots", path9);
+					string path11 = $"{runtimeService.KioskId}-{now.Month}-{now.Day}-{now.Year}-{num7++}.csv";
+					empty = Path.Combine("C:\\Program Files\\Redbox\\inventory-snapshots", path11);
 				}
 				while (File.Exists(empty));
-				using (KioskInventory kioskInventory = new KioskInventory(service))
+				using (KioskInventory kioskInventory = new KioskInventory(hardwareService))
 				{
 					List<IInventoryLocation> deckInventory = kioskInventory.DeckInventory;
-					using StreamWriter streamWriter7 = new StreamWriter(empty);
-					streamWriter7.WriteLine("Deck,Slot,Barcode");
-					foreach (IInventoryLocation item2 in deckInventory)
+					StreamWriter file = new StreamWriter(empty);
+					try
 					{
-						streamWriter7.WriteLine($"{item2.Location.Deck},{item2.Location.Slot},'{item2.Matrix}'");
+						file.WriteLine("Deck,Slot,Barcode");
+						deckInventory.ForEach(delegate(IInventoryLocation loc)
+						{
+							file.WriteLine($"{loc.Location.Deck},{loc.Location.Slot},'{loc.Matrix}'");
+						});
+						int itemCount = 1;
+						kioskInventory.DumpbinItems.ForEach(delegate(IDumpbinItem item)
+						{
+							file.WriteLine($"9,{itemCount++},'{item.Matrix}'");
+						});
 					}
-					int num8 = 1;
-					foreach (IDumpbinItem dumpbinItem in kioskInventory.DumpbinItems)
+					finally
 					{
-						streamWriter7.WriteLine($"9,{num8++},'{dumpbinItem.Matrix}'");
+						if (file != null)
+						{
+							((IDisposable)file).Dispose();
+						}
 					}
 				}
 				continue;
 			}
 			if ("-updateConfiguration".Equals(args[i]))
 			{
-				using (ServiceConfigurationHelper serviceConfigurationHelper2 = new ServiceConfigurationHelper(service))
+				using (ServiceConfigurationHelper serviceConfigurationHelper2 = new ServiceConfigurationHelper(hardwareService))
 				{
 					serviceConfigurationHelper2.UpdateOption(args[++i]);
 					break;
@@ -937,69 +963,72 @@ internal sealed class Program
 			}
 			if ("-version".Equals(args[i]))
 			{
-				string path10 = runtimeService.RuntimePath("version.txt");
+				string path12 = runtimeService.RuntimePath("version.txt");
 				Version version = typeof(Program).Assembly.GetName().Version;
-				using (StreamWriter streamWriter8 = new StreamWriter(path10))
+				using (StreamWriter streamWriter7 = new StreamWriter(path12))
 				{
-					streamWriter8.WriteLine(version);
+					streamWriter7.WriteLine(version);
 				}
 				Console.WriteLine("HALUtilities version: {0}", version);
 			}
 			else if ("-dumpExcluded".Equals(args[i]))
 			{
-				string path11 = runtimeService.RuntimePath("excluded.log");
-				using ExcludedLocsJob excludedLocsJob = new ExcludedLocsJob(service);
+				string path13 = runtimeService.RuntimePath("excluded.log");
+				using ExcludedLocsJob excludedLocsJob = new ExcludedLocsJob(hardwareService);
 				excludedLocsJob.Run();
-				using StreamWriter streamWriter9 = new StreamWriter(path11);
+				using StreamWriter streamWriter8 = new StreamWriter(path13);
 				IList<Location> excludedLocations = excludedLocsJob.ExcludedLocations;
 				if (excludedLocations.Count == 0)
 				{
-					streamWriter9.WriteLine("There are no excluded locations.");
+					streamWriter8.WriteLine("There are no excluded locations.");
 					continue;
 				}
-				streamWriter9.WriteLine("There are {0} locations total.", excludedLocsJob.Results.Count);
-				foreach (Location item3 in excludedLocations)
+				streamWriter8.WriteLine("There are {0} locations total.", excludedLocsJob.Results.Count);
+				foreach (Location item2 in excludedLocations)
 				{
-					streamWriter9.WriteLine("Excluded location deck = {0} slot = {1}", item3.Deck, item3.Slot);
+					streamWriter8.WriteLine("Excluded location deck = {0} slot = {1}", item2.Deck, item2.Slot);
 				}
 			}
 			else if (args[i].StartsWith("--hwSurvey"))
 			{
-				new HardwareSurvey(CommandLineOption.GetOptionVal(args[i], SurveyModes.Console)).Run(service);
+				SurveyModes optionVal12 = CommandLineOption.GetOptionVal(args[i], SurveyModes.Console);
+				new HardwareSurvey(optionVal12).Run(hardwareService);
 			}
 			else if (args[i].StartsWith("--3m"))
 			{
 				new ConsoleLogger(enableDebug: true);
-				new _3MTouchscreen(CommandLineOption.GetOptionVal(args[i], Operation_3m.None)).Execute(Console.Out);
+				Operation_3m optionVal13 = CommandLineOption.GetOptionVal(args[i], Operation_3m.None);
+				new _3MTouchscreen(optionVal13).Execute(Console.Out);
 			}
 			else if (args[i].StartsWith("--dumpStats"))
 			{
-				HardwareCorrectionStatistic optionVal11 = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
-				if (optionVal11 != HardwareCorrectionStatistic.None)
+				HardwareCorrectionStatistic optionVal14 = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
+				if (optionVal14 != HardwareCorrectionStatistic.None)
 				{
-					using DumpHardwareStatisticsExecutor dumpHardwareStatisticsExecutor2 = new DumpHardwareStatisticsExecutor(service, optionVal11);
-					dumpHardwareStatisticsExecutor2.Run();
+					using DumpHardwareStatisticsExecutor dumpHardwareStatisticsExecutor = new DumpHardwareStatisticsExecutor(hardwareService, optionVal14);
+					dumpHardwareStatisticsExecutor.Run();
 				}
 			}
 			else if (args[i].StartsWith("--resetStats"))
 			{
-				HardwareCorrectionStatistic optionVal12 = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
-				if (optionVal12 != HardwareCorrectionStatistic.None)
+				HardwareCorrectionStatistic optionVal15 = CommandLineOption.GetOptionVal(args[i], HardwareCorrectionStatistic.None);
+				if (optionVal15 != HardwareCorrectionStatistic.None)
 				{
-					using ResetHardwareStatisticsExecutor resetHardwareStatisticsExecutor = new ResetHardwareStatisticsExecutor(service, optionVal12);
+					using ResetHardwareStatisticsExecutor resetHardwareStatisticsExecutor = new ResetHardwareStatisticsExecutor(hardwareService, optionVal15);
 					resetHardwareStatisticsExecutor.Run();
 				}
 			}
 			else if (args[i] == "-resetTouchscreen")
 			{
 				new ConsoleLogger(enableDebug: true);
-				if (service.ResetTouchscreenController(new HardwareJobSchedule
+				HardwareCommandResult hardwareCommandResult4 = hardwareService.ResetTouchscreenController(new HardwareJobSchedule
 				{
 					Priority = HardwareJobPriority.High
-				}, out var job9).Success)
+				}, out var job9);
+				if (hardwareCommandResult4.Success)
 				{
-					helper.WaitForJob(job9, out var endStatus8);
-					Console.WriteLine("Reset touchscreen controller ended with status {0}", endStatus8.ToString());
+					clientHelper.WaitForJob(job9, out var endStatus7);
+					Console.WriteLine("Reset touchscreen controller ended with status {0}", endStatus7.ToString());
 				}
 				else
 				{
@@ -1008,13 +1037,14 @@ internal sealed class Program
 			}
 			else if (args[i].StartsWith("--dumpKFCSessions"))
 			{
-				OutputModes optionVal13 = CommandLineOption.GetOptionVal(args[i], OutputModes.Console);
-				using KioskFunctionCheckHelper kioskFunctionCheckHelper = new KioskFunctionCheckHelper(service);
-				kioskFunctionCheckHelper.DumpSessions(optionVal13);
+				OutputModes optionVal16 = CommandLineOption.GetOptionVal(args[i], OutputModes.Console);
+				using KioskFunctionCheckHelper kioskFunctionCheckHelper = new KioskFunctionCheckHelper(hardwareService);
+				kioskFunctionCheckHelper.DumpSessions(optionVal16);
 			}
 			else if (args[i] == "-ipcClient")
 			{
-				IpcClientTester.RunTest(GetProgramArgs(args, i));
+				string[] programArgs3 = GetProgramArgs(args, i);
+				IpcClientTester.RunTest(programArgs3);
 				Environment.Exit(0);
 			}
 			else if (args[i] == "-powerhouseBackup")
@@ -1038,18 +1068,18 @@ internal sealed class Program
 				{
 					Console.WriteLine("{0} --> {1}", optionValue4, tripleDesEncryptionService.HashFile(optionValue4));
 				}
-				catch (Exception ex3)
+				catch (Exception ex2)
 				{
 					Console.WriteLine("Hash failed with an exception:");
-					Console.WriteLine(ex3.Message);
-					Console.WriteLine(ex3.StackTrace);
+					Console.WriteLine(ex2.Message);
+					Console.WriteLine(ex2.StackTrace);
 				}
 			}
 			else if (args[i].StartsWith("-initSys"))
 			{
 				new ConsoleLogger(enableDebug: true);
 				int exitCode2 = 0;
-				using (InitJob initJob = new InitJob(service))
+				using (InitJob initJob = new InitJob(hardwareService))
 				{
 					initJob.Job.EventRaised += delegate(HardwareJob hardwareJob, DateTime eventTime, string eventMessage)
 					{
@@ -1067,17 +1097,17 @@ internal sealed class Program
 			}
 			else if (args[i].StartsWith("-powerCycleRouter"))
 			{
-				using PowerCycleRouterExecutor powerCycleRouterExecutor = new PowerCycleRouterExecutor(service);
+				using PowerCycleRouterExecutor powerCycleRouterExecutor = new PowerCycleRouterExecutor(hardwareService);
 				powerCycleRouterExecutor.Run();
 				Console.WriteLine("Power cycle router job {0} ended with status {1}", powerCycleRouterExecutor.ID, powerCycleRouterExecutor.EndStatus);
 			}
 			else if (args[i] == "-qlmUnload")
 			{
-				HardwareCommandResult hardwareCommandResult3 = service.Unload(new HardwareJobSchedule
+				HardwareCommandResult hardwareCommandResult5 = hardwareService.Unload(new HardwareJobSchedule
 				{
 					Priority = HardwareJobPriority.High
 				}, out var job10);
-				if (hardwareCommandResult3.Success)
+				if (hardwareCommandResult5.Success)
 				{
 					job10.Pend();
 					Console.WriteLine("{0} ( ID = {1} ) started", job10.ProgramName, job10.ID);
@@ -1085,23 +1115,23 @@ internal sealed class Program
 				else
 				{
 					Console.WriteLine("Failed to schedule job");
-					hardwareCommandResult3.Errors.Dump(Console.Out);
+					hardwareCommandResult5.Errors.Dump(Console.Out);
 				}
 			}
 			else if (args[i] == "-qlmThin")
 			{
-				List<string> list2 = new List<string>();
-				using (new DisposeableList<string>(list2))
+				List<string> list3 = new List<string>();
+				using (new DisposeableList<string>(list3))
 				{
-					for (int num9 = i + 1; num9 < args.Length; num9++)
+					for (int num8 = i + 1; num8 < args.Length; num8++)
 					{
-						list2.Add(args[num9]);
+						list3.Add(args[num8]);
 					}
-					HardwareCommandResult hardwareCommandResult4 = service.Thin(list2.ToArray(), new HardwareJobSchedule
+					HardwareCommandResult hardwareCommandResult6 = hardwareService.Thin(list3.ToArray(), new HardwareJobSchedule
 					{
 						Priority = HardwareJobPriority.High
 					}, out var job11);
-					if (hardwareCommandResult4.Success)
+					if (hardwareCommandResult6.Success)
 					{
 						job11.Pend();
 						Console.WriteLine("{0} ( ID = {1} ) started", job11.ProgramName, job11.ID);
@@ -1109,7 +1139,70 @@ internal sealed class Program
 					else
 					{
 						Console.WriteLine("Failed to schedule job");
-						hardwareCommandResult4.Errors.Dump(Console.Out);
+						hardwareCommandResult6.Errors.Dump(Console.Out);
+					}
+				}
+			}
+			else if (args[i].StartsWith("--rebuildInventory"))
+			{
+				bool optionVal17 = CommandLineOption.GetOptionVal(args[i], defVal: false);
+				using InventoryHelper inventoryHelper8 = new InventoryHelper(hardwareService);
+				inventoryHelper8.RebuildInventory(optionVal17);
+			}
+			else if (args[i].StartsWith("-restoreInventory"))
+			{
+				using InventoryHelper inventoryHelper9 = new InventoryHelper(hardwareService);
+				inventoryHelper9.RestoreInventory();
+			}
+			else if (args[i].StartsWith("--decodeResults"))
+			{
+				string optionVal18 = CommandLineOption.GetOptionVal<string>(args[i], null);
+				if (string.IsNullOrEmpty(optionVal18) || !File.Exists(optionVal18))
+				{
+					Console.WriteLine("please specify a valid file.");
+					break;
+				}
+				string[] array4 = File.ReadAllLines(optionVal18);
+				List<FraudLocInfo> list4 = new List<FraudLocInfo>();
+				FraudLocInfo fraudLocInfo = null;
+				char[] separator2 = new char[1] { ' ' };
+				string[] array2 = array4;
+				foreach (string text2 in array2)
+				{
+					if (text2.Contains("GET Deck"))
+					{
+						string[] array5 = text2.Split(separator2);
+						fraudLocInfo = new FraudLocInfo(Convert.ToInt32(array5[6]), Convert.ToInt32(array5[9]));
+						list4.Add(fraudLocInfo);
+					}
+					else if (text2.Contains("PUT Deck"))
+					{
+						fraudLocInfo = null;
+					}
+					else if (text2.Contains("Matrix"))
+					{
+						string[] array6 = text2.Split(separator2);
+						fraudLocInfo.Dumps.Add(new DecodeInfo(array6[6], Convert.ToInt32(array6[8])));
+					}
+				}
+				StreamWriter output = new StreamWriter(Path.GetFileNameWithoutExtension(optionVal18) + ".csv");
+				try
+				{
+					output.WriteLine("deck,slot,matrix,secure_found");
+					list4.ForEach(delegate(FraudLocInfo each)
+					{
+						output.WriteLine("{0},{1},{2},{3}", each.Location.Deck, each.Location.Slot, each.Matrix, each.HasSecureRead());
+					});
+					output.WriteLine(" -- decode stats -- ");
+					List<FraudLocInfo> list5 = list4.FindAll((FraudLocInfo each) => each.Matrix != "UNKNOWN");
+					output.WriteLine("  Items with found barcode: {0}", list5.Count);
+					output.WriteLine("  items with a secure read: {0}", list4.FindAll((FraudLocInfo each) => each.HasSecureRead()).Count);
+				}
+				finally
+				{
+					if (output != null)
+					{
+						((IDisposable)output).Dispose();
 					}
 				}
 			}

@@ -1,16 +1,16 @@
-# Zelda SR2 (1.10.2.5)
+# KISS (1.12.1.52)
 
-- Product: HAL 1.10.2.5
-- Date (first download in the snapshots): 2018-05-21
-- Store labels: kop-hal-install-ZeldaSR2
+- Product: HAL Utilities 1.12.1.52
+- Date (first download in the snapshots): 2019-04-05
+- Store labels: kop-tools-KISS
 - Package revisions:
-  - `kop-tools` revision 43 (`C26DDD7DCE4522A48F9C23F2C2663B4D9E260796`)
+  - `kop-tools` revision 52 (`6D9C0BE246480B98976B16A827E80B635F3DF80D`)
   - `kop-hal-install` revision 53 (`20571A8E81C1A4F4113535CE7309266C2B4D5276`)
   - `kop-ms-hal-tester` revision 44 (`34443AE8011771DAFFEC5D1F7583D30EADD66098`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.10.2.5 | `A69A2244FFED307857E14CCEBC0C6D97B69F1F8F` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.12.1.52 | `DC4CEB842B1EB8D9E0A61E8CB01FD8EEE680653A` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.10.2.5 | `F2A815F8944EFAF23DF4ADC0F92025D907B94B6C` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

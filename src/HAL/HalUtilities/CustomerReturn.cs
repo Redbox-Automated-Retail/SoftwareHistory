@@ -10,13 +10,18 @@ internal sealed class CustomerReturn : JobExecutor
 
 	internal static void RunExecutor(object o)
 	{
-		HardwareService s = o as HardwareService;
+		HardwareService service = o as HardwareService;
+		RunExecutor(service);
+	}
+
+	internal static void RunExecutor(HardwareService service)
+	{
 		new ConsoleLogger(enableDebug: true);
-		using CustomerReturn customerReturn = new CustomerReturn(s);
-		customerReturn.Job.EventRaised += delegate(HardwareJob job, DateTime eventTime, string eventMessage)
+		using CustomerReturn customerReturn = new CustomerReturn(service);
+		customerReturn.AddSink(delegate(HardwareJob job, DateTime eventTime, string eventMessage)
 		{
 			LogHelper.Instance.Log("<EventReceived> Job = {0} Msg = {1}", job.ID, eventMessage);
-		};
+		});
 		customerReturn.Run();
 	}
 

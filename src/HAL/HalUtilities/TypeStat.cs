@@ -8,8 +8,7 @@ internal class TypeStat
 
 	internal void Increment()
 	{
-		int count = Count + 1;
-		Count = count;
+		Count++;
 	}
 
 	internal TypeStat(StuckType t)

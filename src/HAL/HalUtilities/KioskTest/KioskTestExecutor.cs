@@ -20,12 +20,12 @@ internal sealed class KioskTestExecutor : JobExecutor
 		m_vend = vend;
 	}
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Destination.Slot);
-		job.Push(Destination.Deck);
-		job.Push(Source.Slot);
-		job.Push(Source.Deck);
-		job.Push(m_vend.ToString());
+		base.Job.Push(Destination.Slot);
+		base.Job.Push(Destination.Deck);
+		base.Job.Push(Source.Slot);
+		base.Job.Push(Source.Deck);
+		base.Job.Push(m_vend.ToString());
 	}
 }

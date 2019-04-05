@@ -8,8 +8,7 @@ internal class LookupFailStat
 
 	internal void Increment()
 	{
-		int count = Count + 1;
-		Count = count;
+		Count++;
 	}
 
 	internal LookupFailStat(string barcode)

@@ -10,8 +10,7 @@ internal class LocStat
 
 	internal void Increment()
 	{
-		int count = Count + 1;
-		Count = count;
+		Count++;
 	}
 
 	internal LocStat(int deck, int slot)

@@ -1,56 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
 
 namespace HALUtilities;
 
 internal sealed class InventoryHelper : IDisposable
 {
-	private class FraudLocInfo
-	{
-		internal readonly List<DecodeInfo> Dumps = new List<DecodeInfo>();
-
-		internal readonly Location Location;
-
-		public override string ToString()
-		{
-			return $"Deck = {Location.Deck} Slot = {Location.Slot}";
-		}
-
-		internal bool HasSecureRead()
-		{
-			return Dumps.FindAll((DecodeInfo each) => each.IsSecure).Count > 0;
-		}
-
-		internal FraudLocInfo(int deck, int slot)
-		{
-			Location = new Location
-			{
-				Deck = deck,
-				Slot = slot
-			};
-		}
-	}
-
-	private class DecodeInfo
-	{
-		internal readonly bool IsSecure;
-
-		internal string Matrix;
-
-		internal int Count;
-
-		internal DecodeInfo(string matrix, int count)
-		{
-			Matrix = matrix;
-			Count = count;
-			IsSecure = matrix.Equals("YES", StringComparison.CurrentCultureIgnoreCase);
-		}
-	}
-
 	private bool Disposed;
 
 	private int completedSyncs;
@@ -67,6 +25,7 @@ internal sealed class InventoryHelper : IDisposable
 		{
 			Disposed = true;
 			Helper.Dispose();
+			Event.Close();
 		}
 	}
 
@@ -76,6 +35,10 @@ internal sealed class InventoryHelper : IDisposable
 		if (!inventoryState.Errors.ContainsError())
 		{
 			File.WriteAllText(path, inventoryState.CommandMessages[0]);
+		}
+		else
+		{
+			inventoryState.Errors.Dump(Console.Out);
 		}
 	}
 
@@ -112,13 +75,11 @@ internal sealed class InventoryHelper : IDisposable
 			{
 				if (InventoryItemsEqual(_r, outputSuccessfulCompare))
 				{
-					int num = inventoryMatches + 1;
-					inventoryMatches = num;
+					inventoryMatches++;
 				}
 				else
 				{
-					int num = inventoryMismatches + 1;
-					inventoryMismatches = num;
+					inventoryMismatches++;
 				}
 			}
 		});
@@ -127,7 +88,7 @@ internal sealed class InventoryHelper : IDisposable
 		LogHelper.Instance.Log("  {0} mismatches.", inventoryMismatches);
 		if (inventoryMatches + inventoryMismatches != 717)
 		{
-			LogHelper.Instance.Log("!! Analysis Error !! expected 717, found {0}", inventoryMatches + inventoryMismatches);
+			LogHelper.Instance.Log("Wrong analysis - expected 717, found {0}", inventoryMatches + inventoryMismatches);
 		}
 	}
 
@@ -170,9 +131,14 @@ internal sealed class InventoryHelper : IDisposable
 			thread.Start();
 		}
 		HardwareCommandResult hardwareCommandResult = Service.FullSync();
-		if ((options & SyncOptions.Attach) != SyncOptions.None && hardwareCommandResult.Success)
+		if (!hardwareCommandResult.Success)
 		{
-			string[] array = hardwareCommandResult.CommandMessages[0].Split('|');
+			return false;
+		}
+		if ((options & SyncOptions.Attach) != SyncOptions.None)
+		{
+			string text = hardwareCommandResult.CommandMessages[0];
+			string[] array = text.Split('|');
 			if (Service.GetJob(array[0], out var job).Success)
 			{
 				job.EventRaised += delegate(HardwareJob hardwareJob, DateTime eventTime, string eventMessage)
@@ -185,141 +151,93 @@ internal sealed class InventoryHelper : IDisposable
 				{
 					CompareSyncResults(job, (options & SyncOptions.OutputSuccessfulSyncCompare) != 0);
 				}
-				if ((options & SyncOptions.ParseFrauds) != SyncOptions.None)
-				{
-					ParseFraudsFromId(job.ID, vend: false);
-				}
 				if (thread != null)
 				{
 					Event.Set();
 					LogHelper.Instance.Log(" ** Completed {0} soft syncs ** ", completedSyncs);
+					thread.Join(5000);
 				}
 			}
 		}
 		return hardwareCommandResult.Success;
 	}
 
-	internal void ParseFraudsFromFile(string fullPath, TextWriter output)
+	internal bool RestoreInventory()
 	{
-		ParseFraudsFromFile(fullPath, output, vendFrauds: false);
+		bool result = true;
+		HardwareCommandResult hardwareCommandResult = Service.ScheduleJob("restore-inventory-from-backup", "Utilities restore", enableDebugging: false, new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Highest
+		}, out var job);
+		if (hardwareCommandResult.Success)
+		{
+			Helper.WaitForJob(job, out var endStatus);
+			Console.WriteLine("Restore job {0} ended with status {1}", job.ID, endStatus);
+			if (HardwareJobStatus.Completed != endStatus)
+			{
+				Console.WriteLine("Restore job failed.");
+				if (job.GetErrors(out var errors).Success)
+				{
+					errors.Dump(Console.Out);
+				}
+				result = false;
+			}
+			job.Trash();
+		}
+		else
+		{
+			Console.WriteLine("Failed to schedule job.");
+			hardwareCommandResult.Errors.Dump(Console.Out);
+			result = false;
+		}
+		return result;
 	}
 
-	internal void ParseFraudsFromFile(string fullPath, TextWriter output, bool vendFrauds)
+	internal bool RebuildInventory(bool force)
 	{
-		List<FraudLocInfo> list = new List<FraudLocInfo>();
-		using (new DisposeableList<FraudLocInfo>(list))
+		bool flag = true;
+		using (HardwareStatusExecutor hardwareStatusExecutor = new HardwareStatusExecutor(Service))
 		{
-			using (TextReader textReader = new StreamReader(fullPath))
+			hardwareStatusExecutor.Run();
+			if (hardwareStatusExecutor.InventoryError || force)
 			{
-				FraudLocInfo fraudLocInfo = null;
-				char[] separator = new char[1] { ' ' };
-				while (true)
+				using RebuildInventoryExecutor rebuildInventoryExecutor = new RebuildInventoryExecutor(Service);
+				rebuildInventoryExecutor.Run();
+				Console.WriteLine("Rebuild job {0} ended with status {1}", rebuildInventoryExecutor.ID, rebuildInventoryExecutor.EndStatus);
+				flag = HardwareJobStatus.Completed == rebuildInventoryExecutor.EndStatus;
+				if (!flag)
 				{
-					string text = textReader.ReadLine();
-					if (text == null)
-					{
-						break;
-					}
-					if (!text.Contains("Vend time is set") && !text.Contains("Random sync") && !text.Contains("Sync Deck") && !text.Contains("PUT Deck") && !text.Contains("-- read dump --"))
-					{
-						if (text.Contains("GET Deck"))
-						{
-							string[] array = text.Split(separator);
-							int deck = Convert.ToInt32(array[6]);
-							int slot = Convert.ToInt32(array[9]);
-							fraudLocInfo = new FraudLocInfo(deck, slot);
-							list.Add(fraudLocInfo);
-						}
-						else if (text.Contains("Matrix"))
-						{
-							string[] array2 = text.Split(separator);
-							DecodeInfo item = new DecodeInfo(array2[6], Convert.ToInt32(array2[8]));
-							fraudLocInfo.Dumps.Add(item);
-						}
-						else
-						{
-							Console.WriteLine("Unrecognized line '{0}'", text);
-						}
-					}
+					Console.WriteLine("Rebuild job failed.");
+					rebuildInventoryExecutor.Errors.Dump(Console.Out);
 				}
 			}
-			output.WriteLine("Found {0} total sync locations", list.Count);
-			List<FraudLocInfo> list2 = list.FindAll((FraudLocInfo each) => !each.HasSecureRead());
-			output.WriteLine(" There are {0} locations WITH a secure read", list.Count - list2.Count);
-			output.WriteLine(" There are {0} locations without a secure read", list2.Count);
-			if (vendFrauds)
-			{
-				VendFrauds(list2);
-			}
 		}
+		return flag;
 	}
 
-	internal void ParseFraudsFromId(string programId, bool vend)
-	{
-		string fullPath = $"c:\\Program Files\\Redbox\\KioskLogs\\Sync\\sync-{programId}.log";
-		using StreamWriter output = new StreamWriter($"fraud-analysis-{programId}.log");
-		ParseFraudsFromFile(fullPath, output, vend);
-	}
-
-	internal InventoryHelper(HardwareService service, ClientHelper helper)
+	internal InventoryHelper(HardwareService service)
 	{
 		Service = service;
-		Helper = helper;
+		Helper = new ClientHelper(service);
 	}
 
 	private void RunSoftSync()
 	{
+		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
+		hardwareJobSchedule.Priority = HardwareJobPriority.High;
+		HardwareJobSchedule schedule = hardwareJobSchedule;
+		using ClientHelper clientHelper = new ClientHelper(Service);
 		while (!Event.WaitOne(30000))
 		{
-			if (Service.SoftSync(new HardwareJobSchedule
-			{
-				Priority = HardwareJobPriority.High
-			}, out var job).Success)
+			if (Service.SoftSync(schedule, out var job).Success)
 			{
 				job.Pend();
-				Helper.WaitForJob(job, out var endStatus);
+				clientHelper.WaitForJob(job, out var endStatus);
 				if (HardwareJobStatus.Completed == endStatus)
 				{
 					completedSyncs++;
 				}
-			}
-		}
-	}
-
-	private void VendFrauds(List<FraudLocInfo> without)
-	{
-		KioskInventory ij = new KioskInventory(Service);
-		try
-		{
-			List<Location> vendLocs = new List<Location>();
-			without.ForEach(delegate(FraudLocInfo each)
-			{
-				IInventoryLocation inventoryLocation = ij.DeckInventory.Find((IInventoryLocation z) => z.Location.Deck == each.Location.Deck && z.Location.Slot == each.Location.Slot);
-				if (inventoryLocation != null && inventoryLocation.Matrix != "EMPTY")
-				{
-					vendLocs.Add(each.Location);
-				}
-			});
-			HardwareCommandResult hardwareCommandResult = Service.LoadBin(vendLocs, new HardwareJobSchedule
-			{
-				Priority = HardwareJobPriority.High
-			}, out var job);
-			if (!hardwareCommandResult.Success)
-			{
-				Console.WriteLine("Failed to schedule load-bin job.");
-				hardwareCommandResult.Errors.Dump(Console.Out);
-			}
-			else
-			{
-				Console.WriteLine("Starting load-bin job {0}", job.ID);
-				Helper.WaitForJob(job, out var _);
-			}
-		}
-		finally
-		{
-			if (ij != null)
-			{
-				((IDisposable)ij).Dispose();
+				job.Trash();
 			}
 		}
 	}

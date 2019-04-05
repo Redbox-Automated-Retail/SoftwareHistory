@@ -19,11 +19,12 @@ public static class HardwareJobExtensions
 		{
 			array[i] = string.Empty;
 		}
-		if (job.GetStack(out var stack).Success && stack.Count >= depth)
+		HardwareCommandResult stack = job.GetStack(out var stack2);
+		if (stack.Success && stack2.Count >= depth)
 		{
 			for (int j = 0; j < depth; j++)
 			{
-				array[j] = stack.Pop();
+				array[j] = stack2.Pop();
 			}
 		}
 		return array;

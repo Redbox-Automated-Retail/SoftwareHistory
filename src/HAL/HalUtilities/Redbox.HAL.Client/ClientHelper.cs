@@ -2,18 +2,18 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Client;
 
 public sealed class ClientHelper : IDisposable
 {
-	public delegate void InitComplete();
-
 	private bool Disposed;
 
 	private readonly IClientOutputSink Sink;
+
+	private readonly NullSink NullInstance = new NullSink();
 
 	public HardwareService Service { get; private set; }
 
@@ -37,7 +37,7 @@ public sealed class ClientHelper : IDisposable
 
 	public bool WaitforInit()
 	{
-		return WaitforInit(250);
+		return WaitforInit(500);
 	}
 
 	public bool WaitforInit(int pause)
@@ -131,35 +131,28 @@ public sealed class ClientHelper : IDisposable
 		{
 			return default(T);
 		}
-		return (T)ConversionHelper.ChangeType(GetStackEntriesInner(job, 1)[0], typeof(T));
+		string[] stackEntriesInner = GetStackEntriesInner(job, 1);
+		return ConversionHelper.ChangeType<T>(stackEntriesInner[0]);
 	}
 
 	public ClientHelper(IClientOutputSink sink, HardwareService service)
 	{
-		IClientOutputSink sink2;
-		if (sink != null)
-		{
-			sink2 = sink;
-		}
-		else
-		{
-			IClientOutputSink instance = NullSink.Instance;
-			sink2 = instance;
-		}
-		Sink = sink2;
+		Sink = ((sink == null) ? NullInstance : sink);
 		Service = service;
 	}
 
 	public ClientHelper(HardwareService service)
-		: this(NullSink.Instance, service)
+		: this(null, service)
 	{
 	}
 
 	private HardwareService ConnectInner(string ipcUrl)
 	{
+		IPCProtocol iPCProtocol = null;
 		try
 		{
-			HardwareService hardwareService = new HardwareService(IPCProtocol.Parse(ipcUrl));
+			iPCProtocol = IPCProtocol.Parse(ipcUrl);
+			HardwareService hardwareService = new HardwareService(iPCProtocol);
 			return TestServiceConnection(hardwareService) ? hardwareService : null;
 		}
 		catch (UriFormatException)
@@ -184,7 +177,8 @@ public sealed class ClientHelper : IDisposable
 
 	private string FindLocalIP()
 	{
-		IPAddress[] addressList = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
+		IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+		IPAddress[] addressList = hostEntry.AddressList;
 		foreach (IPAddress iPAddress in addressList)
 		{
 			if (iPAddress.AddressFamily == AddressFamily.InterNetwork)
@@ -202,11 +196,12 @@ public sealed class ClientHelper : IDisposable
 		{
 			array[i] = string.Empty;
 		}
-		if (job.GetStack(out var stack).Success && stack.Count >= depth)
+		HardwareCommandResult stack = job.GetStack(out var stack2);
+		if (stack.Success && stack2.Count >= depth)
 		{
 			for (int j = 0; j < depth; j++)
 			{
-				array[j] = stack.Pop();
+				array[j] = stack2.Pop();
 			}
 		}
 		return array;
@@ -214,7 +209,8 @@ public sealed class ClientHelper : IDisposable
 
 	private bool BootstrapInitRunningChecked()
 	{
-		if (!Service.GetInitStatus(out var status).Success)
+		HardwareCommandResult initStatus = Service.GetInitStatus(out var status);
+		if (!initStatus.Success)
 		{
 			Sink.WriteMessage("Unable to determine init status.");
 			return false;

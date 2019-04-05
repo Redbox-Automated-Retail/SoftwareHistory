@@ -9,15 +9,15 @@ internal class SyncCheck
 {
 	private class SyncLocation
 	{
-		internal string GetMatrix;
-
-		internal string PutMatrix;
-
 		private const string deckTok = "Deck =";
 
 		private const string slotTok = "Slot =";
 
 		private const string idTok = "ID=";
+
+		internal string GetMatrix;
+
+		internal string PutMatrix;
 
 		internal int Deck { get; private set; }
 
@@ -89,7 +89,8 @@ internal class SyncCheck
 			{
 				if (char.IsWhiteSpace(array[i]))
 				{
-					if (!int.TryParse(text.Substring(0, i + 1), out result))
+					string s2 = text.Substring(0, i + 1);
+					if (!int.TryParse(s2, out result))
 					{
 						throw new ArgumentException($"Unrecognized line '{statement}'");
 					}
@@ -198,7 +199,8 @@ internal class SyncCheck
 						if (-1 != num)
 						{
 							int result = -1;
-							int deck = int.Parse(text.Substring(num + text2.Length, 1));
+							string s = text.Substring(num + text2.Length, 1);
+							int deck = int.Parse(s);
 							num = text.IndexOf(text3);
 							string text4 = text.Substring(num + text3.Length).TrimEnd();
 							if (!int.TryParse(text4, out result))
@@ -228,7 +230,12 @@ internal class SyncCheck
 							}
 							string value = "data (barcode = ";
 							int num2 = text.IndexOf(">> Reponse packet");
-							if (-1 != num2 && text.IndexOf(value) != -1)
+							if (-1 == num2)
+							{
+								continue;
+							}
+							int num3 = text.IndexOf(value);
+							if (num3 != -1)
 							{
 								if (text.Contains("YES") || text.Contains("yes"))
 								{

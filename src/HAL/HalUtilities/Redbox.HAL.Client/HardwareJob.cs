@@ -3,13 +3,61 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using Redbox.HAL.Component.Model;
-using Redbox.HAL.Core;
+using Redbox.HAL.Component.Model.Extensions;
 using Redbox.HAL.IPC.Framework;
 
 namespace Redbox.HAL.Client;
 
 public sealed class HardwareJob
 {
+	private class ConnectionInfo : IDisposable
+	{
+		private bool m_disposed;
+
+		private readonly ManualResetEvent ConnectEvent = new ManualResetEvent(initialState: false);
+
+		internal IIpcClientSession Session { get; private set; }
+
+		internal Thread EventThread { get; set; }
+
+		public void Dispose()
+		{
+			if (!m_disposed)
+			{
+				m_disposed = true;
+				ConnectEvent.Close();
+				Session.Dispose();
+			}
+		}
+
+		internal void Start()
+		{
+			EventThread.Start(this);
+		}
+
+		internal void Disconnect()
+		{
+			ConnectEvent.Set();
+		}
+
+		internal bool WaitDisconnect()
+		{
+			return WaitDisconnect(250);
+		}
+
+		internal bool WaitDisconnect(int ms)
+		{
+			return ConnectEvent.WaitOne(ms);
+		}
+
+		internal ConnectionInfo(IIpcClientSession session)
+		{
+			Session = session;
+		}
+	}
+
+	private ConnectionInfo Connection;
+
 	private readonly HardwareService Service;
 
 	public string ID { get; internal set; }
@@ -26,7 +74,7 @@ public sealed class HardwareJob
 
 	public TimeSpan? ExecutionTime { get; internal set; }
 
-	public bool IsLocallyConnected { get; private set; }
+	public bool IsLocallyConnected => null != Connection;
 
 	public HardwareJobStatus Status { get; internal set; }
 
@@ -92,7 +140,8 @@ public sealed class HardwareJob
 			string text = ((array.Length > 1) ? array[1] : array[0]);
 			if (text.StartsWith(">STATUS CHANGE<"))
 			{
-				HardwareJobStatus status = Enum<HardwareJobStatus>.ParseIgnoringCase(text.Substring(text.IndexOf("<") + 1).Trim(), HardwareJobStatus.Completed);
+				string value = text.Substring(text.IndexOf("<") + 1).Trim();
+				HardwareJobStatus status = Enum<HardwareJobStatus>.ParseIgnoringCase(value, HardwareJobStatus.Completed);
 				if (StatusChanged != null)
 				{
 					StatusChanged(this, status);
@@ -104,11 +153,13 @@ public sealed class HardwareJob
 			}
 		};
 		HardwareCommandResult result = ClientCommand<HardwareCommandResult>.ExecuteCommand(session, $"JOB connect job: '{ID}'");
-		IsLocallyConnected = true;
-		Thread thread = new Thread(EventPoll);
-		thread.Name = $"Hardware Job {ID} Event Thread";
-		thread.IsBackground = true;
-		thread.Start(session);
+		Connection = new ConnectionInfo(session);
+		Connection.EventThread = new Thread(EventPoll)
+		{
+			Name = $"Hardware Job {ID} Event Thread",
+			IsBackground = true
+		};
+		Connection.Start();
 		return result;
 	}
 
@@ -119,7 +170,11 @@ public sealed class HardwareJob
 
 	public void Disconnect()
 	{
-		IsLocallyConnected = false;
+		if (Connection != null)
+		{
+			Connection.Disconnect();
+			Connection = null;
+		}
 	}
 
 	public HardwareCommandResult ClearStack()
@@ -158,25 +213,21 @@ public sealed class HardwareJob
 	{
 		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"JOB get-results job: '{ID}'");
 		List<ProgramResult> list = new List<ProgramResult>();
-		try
+		using (new DisposeableList<ProgramResult>(list))
 		{
 			if (hardwareCommandResult.Success)
 			{
-				foreach (string commandMessage in hardwareCommandResult.CommandMessages)
+				hardwareCommandResult.CommandMessages.ForEach(delegate(string each)
 				{
-					ProgramResult programResult = ProgramResult.FromString(commandMessage);
+					ProgramResult programResult = ProgramResult.FromString(each);
 					if (programResult != null)
 					{
 						list.Add(programResult);
 					}
-				}
+				});
 			}
 			results = list.ToArray();
 			return hardwareCommandResult;
-		}
-		finally
-		{
-			list.Clear();
 		}
 	}
 
@@ -220,7 +271,7 @@ public sealed class HardwareJob
 		HardwareCommandResult hardwareCommandResult = ExecuteCommand($"STACK pop job: '{ID}'");
 		if (hardwareCommandResult.Success)
 		{
-			value = (T)ConversionHelper.ChangeType(hardwareCommandResult.CommandMessages[0], typeof(T));
+			value = ConversionHelper.ChangeType<T>(hardwareCommandResult.CommandMessages[0]);
 		}
 		return hardwareCommandResult;
 	}
@@ -229,12 +280,11 @@ public sealed class HardwareJob
 	{
 		if (values == null)
 		{
-			return new HardwareCommandResult
-			{
-				Success = false
-			};
+			HardwareCommandResult hardwareCommandResult = new HardwareCommandResult();
+			hardwareCommandResult.Success = false;
+			return hardwareCommandResult;
 		}
-		HardwareCommandResult hardwareCommandResult = null;
+		HardwareCommandResult hardwareCommandResult2 = null;
 		foreach (object obj in values)
 		{
 			object obj2 = obj;
@@ -242,17 +292,13 @@ public sealed class HardwareJob
 			{
 				obj2 = $"\"{obj}\"";
 			}
-			else if (obj2 is bool)
+			hardwareCommandResult2 = ExecuteCommand($"STACK push value: '{obj2}' job: '{ID}'");
+			if (!hardwareCommandResult2.Success)
 			{
-				obj2 = $"\"{obj.ToString()}\"";
-			}
-			hardwareCommandResult = ExecuteCommand($"STACK push value: '{obj2}' job: '{ID}'");
-			if (!hardwareCommandResult.Success)
-			{
-				return hardwareCommandResult;
+				return hardwareCommandResult2;
 			}
 		}
-		return hardwareCommandResult;
+		return hardwareCommandResult2;
 	}
 
 	public HardwareCommandResult SetDebugState(bool enabled)
@@ -406,45 +452,45 @@ public sealed class HardwareJob
 		{
 			return null;
 		}
-		HardwareJob hardwareJob = new HardwareJob(service)
-		{
-			ID = readOnlyCollection[0],
-			Label = readOnlyCollection[1],
-			ProgramName = readOnlyCollection[2],
-			Priority = Enum<HardwareJobPriority>.ParseIgnoringCase(readOnlyCollection[3], HardwareJobPriority.Normal),
-			Status = Enum<HardwareJobStatus>.ParseIgnoringCase(readOnlyCollection[5], HardwareJobStatus.Suspended),
-			ConnectionState = Enum<HardwareJobConnectionState>.ParseIgnoringCase(readOnlyCollection[7], HardwareJobConnectionState.Disconnected)
-		};
+		HardwareJob hardwareJob = new HardwareJob(service);
+		hardwareJob.ID = readOnlyCollection[0];
+		hardwareJob.Label = readOnlyCollection[1];
+		hardwareJob.ProgramName = readOnlyCollection[2];
+		hardwareJob.Priority = Enum<HardwareJobPriority>.ParseIgnoringCase(readOnlyCollection[3], HardwareJobPriority.Normal);
+		hardwareJob.Status = Enum<HardwareJobStatus>.ParseIgnoringCase(readOnlyCollection[5], HardwareJobStatus.Suspended);
+		hardwareJob.ConnectionState = Enum<HardwareJobConnectionState>.ParseIgnoringCase(readOnlyCollection[7], HardwareJobConnectionState.Disconnected);
+		HardwareJob hardwareJob2 = hardwareJob;
 		if (readOnlyCollection.Count == 10)
 		{
-			hardwareJob.EnableDebugging = readOnlyCollection[8] == "1";
-			hardwareJob.TraceExecution = readOnlyCollection[9] == "1";
+			hardwareJob2.EnableDebugging = readOnlyCollection[8] == "1";
+			hardwareJob2.TraceExecution = readOnlyCollection[9] == "1";
 		}
 		if (DateTime.TryParse(readOnlyCollection[4], out var result))
 		{
-			hardwareJob.StartTime = result;
+			hardwareJob2.StartTime = result;
 		}
 		if (TimeSpan.TryParse(readOnlyCollection[6], out var result2))
 		{
-			hardwareJob.ExecutionTime = result2;
+			hardwareJob2.ExecutionTime = result2;
 		}
-		return hardwareJob;
+		return hardwareJob2;
 	}
 
 	internal void EventPoll(object o)
 	{
-		IIpcClientSession ipcClientSession = o as IIpcClientSession;
-		while (IsLocallyConnected)
+		using (ConnectionInfo connectionInfo = o as ConnectionInfo)
 		{
-			if (!ClientCommand<HardwareCommandResult>.ExecuteCommand(ipcClientSession, "JOB scheduler-status").Success && EventRaised != null)
+			do
 			{
-				EventRaised(this, DateTime.Now, ">IPC EXCEPTION<");
+				HardwareCommandResult hardwareCommandResult = ClientCommand<HardwareCommandResult>.ExecuteCommand(connectionInfo.Session, "JOB scheduler-status");
+				if (!hardwareCommandResult.Success && EventRaised != null)
+				{
+					EventRaised(this, DateTime.Now, ">IPC EXCEPTION<");
+				}
 			}
-			Thread.Sleep(250);
+			while (!connectionInfo.WaitDisconnect());
 		}
-		string command = $"JOB disconnect job: '{ID}'";
-		ipcClientSession.Dispose();
-		ExecuteCommand(command);
+		ExecuteCommand($"JOB disconnect job: '{ID}'");
 	}
 
 	private HardwareCommandResult ExecuteCommand(string command)
