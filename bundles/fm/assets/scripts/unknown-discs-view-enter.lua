@@ -4,13 +4,43 @@
 -- All Rights Reserved
 
 progress_manager:stop()
-UnknownsAlertManager = newalertmanager()
 
 local resume_result = nil
 --shutdown the scheduler service to prevent scheduled syncs, thin, etc from starting
 scheduler_services.shutdown()
 
 local hardware_manager = newhardwaremanager()
+local responders = {}
+
+hardware_manager.default_status_change_handler = function( jobid, timestamp, message )
+	local i, _ = string.find( message, ">STATUS CHANGE<" )
+	if i == nil then
+		local tokens = {}
+		string.gsub(
+			message, "(%w+)",
+			function(token) tokens[#tokens+1] = token end )
+		if #tokens <= 0 then
+			return
+		end
+
+        local responder = responders[tokens[1]]
+		if responder == nil then
+			return
+		end
+
+        table.insert(tokens, #tokens+1, jobid)
+		responder( tokens, jobid )
+	end
+end
+
+
+responders.PhotocopyBarcode = function( args, jobId )
+ local value = kernel.is_paper_fraud( args[2] ) and 'continue' or 'reject'
+    local job_signal_command = 'JOB signal job: ' .. tostring( jobId ) .. ' value: ' .. value
+    kernel.log( job_signal_command )
+    kernel.hardwareexecuteservicecommand( job_signal_command )
+    --kernel.process_return_unknown_event( args[2], jobId )
+end
 local overlay_progress_manager = newprogressmanager()
 
 local excluded_unknowns = {}
@@ -270,7 +300,7 @@ local send_summary_alert = function()
 		"<br>"
 	end
 	
-	UnknownsAlertManager.send_alert(
+	kernel.hardware_alert_manager_send_alert(
 		"TitleEmpty",
 		"FMA: Remove Unknowns",
 		buffer,
@@ -382,7 +412,7 @@ kernel.registeractorhitnotify(
 							)
 
 							-- Send DiscAction Message
-							if DiscActionLogging == true and v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+							if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
 								barcode_list = { }
 								barcode_list[1] = { tostring(v.item_id), "1" } -- action 0=Inserted  1=Removed
 								kernel.fmadiscaction(
@@ -425,7 +455,7 @@ kernel.registeractorhitnotify(
 				end
 
 				if job_result.status == "Errored" then
-					completion_summary.errors = completion_summary.errors .. UnknownsAlertManager.format_errors( job_result.job_id )
+					completion_summary.errors = completion_summary.errors .. kernel.hardware_alert_manager_format_errors( job_result.job_id )
 				end
 			end,
 			nil,
@@ -466,15 +496,38 @@ kernel.registeractorhitnotify(
 					and trim( v.item_id ) ~= ""
 					and string.lower( v.item_id ) ~= "unknown"
 					and string.lower( v.item_id ) ~= "redbox" then
-						local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
+						
+                        local function contains_code( results, code )
+	                        for _, v in ipairs( results ) do
+		                        if v.code == code then
+			                        return true
+		                        end
+	                        end
+	                        return false
+                        end
 
-						kernel.invsvcs_return(
+                        local failedSecurityRead = contains_code( job_result.results, "NoFraudMarkersDetected" ) == true and kernel.is_paper_fraud( v.item_id ) == true
+                        local return_type = "BackwardsDiscReturn"
+
+                        if failedSecurityRead == true then
+                            return_type = "FailedIRSecurity"
+                            if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
+                                BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
+                                kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = fraud inserted into barcodestatus" )
+                            end
+                        end
+
+                        local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
+
+						kernel.invsvcs_return2(
 							StoreID,
-							"BackwardsDiscReturn",
+							return_type,
 							v.item_id,
 							v.deck,
 							v.slot,
-							current_unknown_return_time
+							current_unknown_return_time,
+                            failedSecurityRead,
+                            nil
 						)
 						table.insert( completion_summary.reinserted, { key=deck_slot_key, barcode=v.item_id, return_time=current_unknown_return_time, status="Successful return." } )
 
@@ -487,7 +540,7 @@ kernel.registeractorhitnotify(
 						)
 						
 						-- Send DiscAction Message
-						if DiscActionLogging == true and v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+						if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
 							barcode_list = { }
 							barcode_list[1] = { tostring(v.item_id), "0" } -- action 0=Inserted  1=Removed
 							kernel.fmadiscaction(
@@ -605,7 +658,7 @@ kernel.registeractorhitnotify(
 				end
 				
 				if job_result.status == "Errored" then
-					completion_summary.errors = completion_summary.errors .. UnknownsAlertManager.format_errors( job_result.job_id )
+					completion_summary.errors = completion_summary.errors .. kernel.hardware_alert_manager_format_errors( job_result.job_id )
 				end
 			end,
 			nil

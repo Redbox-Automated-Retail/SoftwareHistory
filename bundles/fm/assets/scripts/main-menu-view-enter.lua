@@ -128,7 +128,7 @@ kernel.setactortext( "unknown_count_value", tostring(getinventorycount( "Unknown
 kernel.setactortext( "fraud_discs_count_value", tostring( getinventorycount( "Fraud" ) ) )
 kernel.setactortext( "damaged_discs_count_value", tostring(getinventorycount( "Damaged" )) )
 kernel.setactortext( "distinct_title_count_value", tostring(getdistincttitlescount()) )
-kernel.setactortext( "reserved_disc_count_value", tostring(getreservationscount()) )
+kernel.setactortext( "reserved_disc_count_value", tostring(kernel.get_reserved_barcodes_count()) )
 kernel.setactortext( "rebalance_disc_count_value", "..." )
 kernel.setactortext( "thin_redeploys_outside_vmz_value", "..." )
 kernel.setactortext( "thins_outside_vmz_value", "..." )
@@ -312,12 +312,3 @@ else
 	end
 	kernel.setactortext( "info_label", tostring( qlm_info ) )
 end
-
-if EnableDiscSecurity == true then
-    kernel.showactor( "verify_fraud_button" )
-    kernel.setactory( "inv_mgmt_button", 550 )
-else
-    kernel.hideactor( "verify_fraud_button" )
-    kernel.setactory( "inv_mgmt_button", 440 )
-end
-

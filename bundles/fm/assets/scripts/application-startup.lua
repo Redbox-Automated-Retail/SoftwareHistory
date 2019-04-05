@@ -10,29 +10,18 @@ end
 
 strings = kernel.getdictionary( "strings" )
 
-SyncAlertManager = newalertmanager()
-
 result_summary = { ["count_undefined"] = 0, ["count_unknown"] = 0, ["count_empty"] = 0, ["count_success"] = 0, ["count_excluded"] = 0 }
 
 StoreID = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
 StoreManager = newstoremanager()
 StoreManager:init()
 StoreManager:reload_pricing_data()
-DiscActionLogging = kernel.config_getvalue(
-	"system",
-	"General",
-	"DiscAction" ) == true
 
 VMZMerchFlowTimeOut = kernel.config_getvalue(
 	"system",
 	"General",
 	"VMZMerchFlowTimeOut" ) or 900000 -- 15 minutes represented in seconds
 VMZMerchFlowEnabled = true
-
-EnableDiscSecurity = kernel.config_getvalue(
-		"system",
-		"General",
-		"EnableDiscSecurity" ) == true
 
 VerboseLogging = kernel.getmachinevalueordefault( "Store", "VerboseLogging", "False" ) == "True"
 
@@ -160,6 +149,8 @@ HardwareManager:executeimmediate(
 -- Ask HAL for deck/slot config if not already set; otherwise go ahead and start the application
 local current = os.date( "*t" )
 local current_string = string.format( "%4d%02d%02d", current.year, current.month, current.day )
+
+kernel.refresh_hardware_state()
 
 if max_decks ~= nil 
 and max_slots ~= nil 

@@ -4,34 +4,6 @@
 -- All Rights Reserved
 --
 
-BadCardList.is_current_account_bad = function( self )
-	return self[kernel.trackgethashid()] ~= nil
-end
-
-BadCardList.update_current_account = function( self )
-	local hash_id = kernel.trackgethashid()
-	local bad_card_info = self[hash_id]
-	if bad_card_info == nil then
-		bad_card_info = { number_of_attempts = 0 }
-	end
-	local now = os.date( "*t" )
-	bad_card_info.last_attempt = string.format(
-		"%4d%02d%02d%02d%02d",
-		now.year,
-		now.month,
-		now.day,
-		now.hour,
-		now.min )
-	bad_card_info.number_of_attempts = bad_card_info.number_of_attempts + 1
-	self[hash_id] = bad_card_info
-end
-
-BadCardList.remove_current_account_if_bad = function( self )
-	if self:is_current_account_bad() then
-		self:remove( kernel.trackgethashid() )
-	end
-end
-
 function newshoppingcart()
 	local t = {}
 
@@ -42,35 +14,14 @@ function newshoppingcart()
 	t.alternate_optin = false
 	t.alternate_optin_not_shown = true
 	
-	t.reservation_card_hash_id = nil
-	
 	t.has_customer_profile = false
 	
-	t.session_committed = false
-
-	t.blocklisted = false
-
     t.prompt_required = false
 
     t.auth_days = 0
 
-    t.play_pass_prompt = false
-
-    t.play_pass_points_earned = 0
-
 	t.abandon = function( self, reason )
         kernel.abandon_rental_shopping_cart( self.session_id, reason )
-	end
-
-	t.commit = function( self, reason, should_end_and_save )
-		if ComingSoonOptIn == true then
-			kernel.promosvcs_coming_soon_kioskoptin()
-		end
-		kernel.sessioncommit2( self.session_id, reason )
-		self.session_committed = true
-		if should_end_and_save then
-			self:save_session()
-		end
 	end
 
 	t.close_analytics = function( self, abandoned )
@@ -78,16 +29,10 @@ function newshoppingcart()
 	end
 
 	t.end_session = function( self )
-		if kernel.sessiongetstatus( self.session_id ) == "Active" then
-			kernel.sessionabandon2( self.session_id, "Session was not properly ended; marking as abandoned." )
-		end
-		self:save_session()
+        kernel.shopping_cart_end_session(self.session_id)
 	end
 
 	t.save_session = function( self )
-		if self.session_id == nil then
-			return
-		end
 		kernel.sessionend2( self.session_id )
 	end
 
@@ -115,10 +60,7 @@ function newshoppingcart()
 
 	t.start_new = function( self )
 		kernel.log("Shopping cart start_new() " )
-		self.email = nil
 		kernel.rental_promotion_clear_promotion()
-		self.postal_code = nil
-		self.blocklisted = false
 		self.vend_manager:init()
 		self.session_id = kernel.sessionstartnew2( StoreManager:get_number() )
 		kernel.log(">  session_id = " .. self.session_id )
@@ -126,21 +68,8 @@ function newshoppingcart()
         kernel.create_rental_shopping_cart( self.session_id )
 	end
 
-	t.set_cart_type = function( self, cart_type )
-		kernel.sessionsetcarttype2( self.session_id, cart_type )
-	end
-
 	t.add_session_event = function( self, event_type, event_description )
 		kernel.sessionaddevent2( self.session_id, event_type, event_description )
-	end
-
-	t.set_blocklisted = function( self, value )
-		self.blocklisted = value
-		kernel.sessionsetblocklisted( self.session_id, value )
-	end
-
-	t.set_use_credits = function( self, value )
-        kernel.set_rental_shopping_use_credits( self.session_id,  value )
 	end
 
 	t.preauth = function( self, on_complete )
@@ -150,8 +79,8 @@ function newshoppingcart()
 			return
 		end
 		kernel.log("PreAuth for Session ID: " .. self.session_id )
-		if self.postal_code ~= nil then
-			kernel.sessionsetpostalcode2( self.session_id, self.postal_code )
+		if kernel.get_session_value("UserInfo.PostalCode") ~= nil then
+			kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
 		end
 		self:get_barcodes_to_vend()
 		self:set_session_cart_groups()
@@ -202,8 +131,8 @@ function newshoppingcart()
 			return
 		end
 		kernel.log("Authorize for Session ID: " .. self.session_id )
-		if self.postal_code ~= nil then
-			kernel.sessionsetpostalcode2( self.session_id, self.postal_code )
+		if kernel.get_session_value("UserInfo.PostalCode") ~= nil then
+			kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
 		end
 		self:get_barcodes_to_vend()
 		self:set_session_cart_groups()
@@ -246,7 +175,7 @@ function newshoppingcart()
             customer_profile_number,
 			function( r )
 				if r.properties.response == "Approved" then
-					self:commit( "User checked out successfully." )
+					kernel.shopping_cart_commit(self.session_id, "User checked out successfully." )
 				else
 					-- Remove Invalid Promo Codes if authorization fails, otherwise they persist even if the user doesn't try it again!
 					if r.errors ~= nil and table_count( r.errors ) > 0 then
@@ -297,8 +226,8 @@ function newshoppingcart()
 			return
 		end
 		kernel.log("Resv. Authorize for Session ID: " .. self.session_id )
-		if self.postal_code ~= nil then
-			kernel.sessionsetpostalcode2( self.session_id, self.postal_code )
+		if kernel.get_session_value("UserInfo.PostalCode") ~= nil then
+			kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
 		end
 		self:get_barcodes_to_vend()
 		self:set_session_cart_groups()
@@ -396,8 +325,8 @@ function newshoppingcart()
 
 	t.reconcile = function( self )
 		kernel.log("Shopping cart reconcile() " )
-		if self.email ~= nil then
-			kernel.sessionsetemail2( self.session_id, self.email )
+		if kernel.get_session_value("UserInfo.Email") ~= nil then
+			kernel.sessionsetemail2( self.session_id, kernel.get_session_value("UserInfo.Email") )
 		end
 		self:set_session_cart_groups()
         
@@ -406,62 +335,36 @@ function newshoppingcart()
 		self:end_session()
 	end
 	
-	t.mod_resv_pickup = function( self, email, reference_number, modified_cart )
-		kernel.log( "ShoppingCart:mod_resv_pickup BEGIN" )
-		
-		if self.email ~= nil then
-			kernel.sessionsetemail2( self.session_id, email )
-		end
-		kernel.resvsvcs_modresvpickup(
-			StoreManager:get_number(),
-			email,
-			reference_number,
-			self.session_id,
-			modified_cart,
-			nil
-		)
-		self:end_session()
-		
-		kernel.log( "ShoppingCart:mod_resv_pickup COMPLETE" )
-	end
-	
-	t.get_customer_credits = function( self, on_complete )
+	t.pickupauthorize = function( self, reference_number, cart_was_modified, on_complete )
 		if not kernel.sessioncaptureaccountdata2( self.session_id ) then
-			self.messagebox:show( "WARNING: ShoppingCart:get_customer_credits was called with invalid account data." )
+			self.messagebox:show( "WARNING: ShoppingCart:pickupauthorize was called with invalid account data." )
 			return
 		end
 
-		if self.postal_code ~= nil then
-			kernel.sessionsetpostalcode2( self.session_id, self.postal_code )
-		end
-
-		self:set_session_cart_groups()
-        local shopping_cart_items = kernel.get_rental_shopping_cart_items( self.session_id )
-        for k,v in ipairs( shopping_cart_items ) do
-			kernel.log( "Session add Line Item: " .. tostring( v.barcode ) .. " for ".. tostring( v.action ) .. " Price: " .. tostring( v.price ) ..
-				" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) )
-			kernel.sessionaddlineitem3(
-				self.session_id,
-				v.action,
-				v.barcode,
-				v.status,
-				v.price,
-				v.quantity,
-				v.pricing_policy,
-				v.product_family,
-				v.product_type,
-				v.multi_disc )
+		if kernel.get_session_value("UserInfo.PostalCode") ~= nil then
+			kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
 		end
 
 		local error_message_view_manager = newerrormessageviewmanager()
 		error_message_view_manager:show()
 		error_message_view_manager:set_message( strings.authorization_message )
 
-		kernel.digitalsvcs_getcustomercredits(
+		kernel.log( "Pickup Authorize for Session ID: " .. self.session_id )
+		-- updated cart with barcodes and status
+		self:get_barcodes_to_vend()
+        local customer_profile_number = kernel.get_session_value("PersonalizationSession.CustomerProfileNumber")
+		kernel.merchsvcs_pickupauthorize(
 			self.session_id,
-			function( r )
+            customer_profile_number,
+			reference_number,
+			cart_was_modified,
+			function( reference_number, result )
+				if result.properties.response ~= nil then
+					kernel.log( "Pickup Authorize Response : ".. result.properties.response )
+				end
+
 				if on_complete ~= nil then
-					on_complete( r )
+					on_complete( reference_number, result )
 				end
 			end
 		)
@@ -587,7 +490,7 @@ function newshoppingcart()
 					self:clear_promo_code()
 				end
 
-				if self.session_committed == true then
+				if kernel.is_session_committed(self.session_id) then
 					self:reconcile()
 				end
 				self:close_analytics( "False" )
@@ -621,9 +524,10 @@ function newshoppingcart()
 		
 		kernel.analyticsaddnode( "session", "onlinePickup", self.session_id )
 		
+
 		local barcodes_to_vend = self:get_barcodes_to_vend()
-		if barcodes_to_vend == nil
-		or #barcodes_to_vend == 0 then
+		if barcodes_to_vend == nil or kernel.does_shopping_cart_contain_all_reserved_barcodes() == false then
+            -- send a kiosk alert
 			show_maintenance_view(
 				"shopping-cart-functions.lua",
 				"HardwareError",
@@ -631,82 +535,16 @@ function newshoppingcart()
 				"barcodes_to_vend is empty",
 				"0064SCBE",
 				false )
-			-- Remove all the items from the cart since none of them have inventory
-			kernel.rental_shopping_cart_clear( self.session_id )
+			-- since something has gone terribly wrong abort the session to prevent stuck vend or stuck queue
+            kernel.log("Aborting reservation pickup session because reserved barcode(s) were not found in the shopping cart.")
+			kernel.close_open_session_and_start_new_rental_session()
 			return
 		end
 		
 		self.vend_manager:prepos_vend(
 			barcodes_to_vend,
 			function( vend_results )
-				--OnComplete
-				for _, v in ipairs( vend_results ) do
-					kernel.log( "> vend_results b:" .. tostring( v.barcode ) .. ", s:" .. tostring( v.status ) )
-                    local item_index = kernel.get_rental_shopping_cart_item_index_by_barcode( self.session_id, v.barcode )
-                    if item_index > 0 then
-                        kernel.rental_shopping_cart_update_item_status( self.session_id, item_index, v.status )
-                    end
-				end
-				self:set_session_cart_groups()
-
-				local barcodes_to_reset = {}
-				
-                local shopping_cart_items = kernel.get_rental_shopping_cart_items( self.session_id )
-                for _,v in ipairs( shopping_cart_items ) do
-					kernel.log( "> local cart item: " .. tostring( v.barcode ) )
-					if v.status == "Pending"
-					or v.status == "ProductSelected" then
-                        -- update status in the lua object and on the .net side 
-                        kernel.log( "item not fullfilled" )
-						v.status = "NotFullfilled"
-                        kernel.rental_shopping_cart_update_item_status( self.session_id, _, "NotFullfilled" )
-					end
-					
-					if v.status ~= "Fullfilled" then
-						kernel.log("> Adding " .. tostring( v.barcode ) .. " to reset barcode list" )
-						barcodes_to_reset[#barcodes_to_reset + 1] = v.barcode
-					end
-					
-					-- this is where I need to add any barcodes which did not get added earlier due to prior pre-picker inventory issues!!
-					kernel.log( "Session update Line Item: " .. tostring( v.barcode ) .. " for ".. tostring( v.action ) .. " Price: " .. tostring( v.price ) ..
-						" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) .. " source type: " .. tostring( v.source_type ) )
-					kernel.sessionaddlineitem4(
-						self.session_id,
-						v.action,
-						v.barcode,
-						v.status,
-						v.price,
-						v.quantity,
-						v.pricing_policy,
-						v.product_family,
-						v.product_type,
-						v.source_type
-					)
-					
-					local attributes = {
-						barcode = tostring( v.barcode ),
-						status = tostring( v.status )
-					}
-					kernel.analyticsaddnode( "onlinePickup", "cartItem", self.session_id )
-					kernel.analyticsaddattributes( "cartItem", attributes, self.session_id )
-				end
-				
-				if self.session_committed == true then
-					self:mod_resv_pickup( email, reference_number, modified_cart )
-				end
-				
-				kernel.log( "ShoppingCart:vend_reservation_cart: Removing reservations for ..." ..  string.sub( self.reservation_card_hash_id or "NULL ", 1, 5 ) )
-				Reservations:remove( self.reservation_card_hash_id )
-				
-				if #barcodes_to_reset <= 0 then
-					kernel.log( "ShoppingCart:vend_reservation_cart: No barcodes to reset" )
-				else
-					kernel.log( "ShoppingCart:vend_reservation_cart: resetting status to Known for " .. tostring(#barcodes_to_reset) .. " discs" )
-					update_barcode_status( barcodes_to_reset, "Known" )
-				end
-				
-				self:close_analytics( "False" )
-				kernel.sessionend2( self.session_id )
+                kernel.recommendation_on_pickup_preposition_vend_complete(vend_results, reference_number, modified_cart)
 			end
 		)
 		self.vend_manager:prepos_vend_continue()
@@ -714,16 +552,7 @@ function newshoppingcart()
 	end
 	
 	t.get_barcodes_to_vend = function( self )
-        local shopping_cart_items = kernel.get_rental_shopping_cart_items( self.session_id )
-		local barcodes_for_products = get_barcodes_for_products( shopping_cart_items )
-        -- assign barcode and status to the rental shopping cart items
-        for k,v in ipairs( shopping_cart_items ) do
-            if v ~= nil then
-                kernel.rental_shopping_cart_update_item_barcode( self.session_id, k, v.barcode )
-                kernel.rental_shopping_cart_update_item_status( self.session_id, k, v.status )
-            end
-        end
-        return barcodes_for_products
+        return kernel.rental_shopping_cart_assign_barcodes_to_vend(self.session_id)
 	end
 
 	local function trim_spaces(s)
@@ -732,40 +561,6 @@ function newshoppingcart()
 	  local i1,i2 = string.find(s,'%s*$')
 	  if i2 >= i1 then s = string.sub(s,1,i1-1) end
 	  return s
-	end
-
-	t.generate_totals = function( self, credits_amount )
-		local subtotal_by_group = self:sub_total()
-		local totals = {}
-		totals["sub_total"] = 0
-		totals["tax_amount"] = 0
-		totals["discount_used"] = 0
-		for k,v in pairs( subtotal_by_group ) do
-			if v.discounted_amount ~= nil then
-				totals["sub_total"] = totals["sub_total"] + v.discounted_amount
-				totals["discount_used"] = totals["discount_used"] + v.amount - v.discounted_amount
-			else
-				totals["sub_total"] = totals["sub_total"] + v.amount
-			end
-			totals["tax_amount"] = totals["tax_amount"] + v.tax_amount
-		end
-
-		totals["total"] = totals["sub_total"] + totals["tax_amount"]
-
-		-- account for credits separately
-		if credits_amount ~= nil and credits_amount > 0 then
-				local credited_tax_amount = kernel.round( credits_amount * ( StoreManager.store.rental_tax_rate / 100 ), 16 )
-				totals["discount_used"] = totals["discount_used"] + credits_amount
-				totals["tax_amount"] = totals["tax_amount"] - credited_tax_amount
-				totals["sub_total"] = totals["sub_total"] - credits_amount
-				if StoreManager.store ~= nil and StoreManager.store.state ~= nil and StoreManager.store.state ~= "MD" and StoreManager.store.state ~= "SC" then
-					totals["total"] = totals["total"] - credits_amount - credited_tax_amount
-				else
-					totals["total"] = totals["total"] - credits_amount
-				end
-		end
-		
-		return totals
 	end
 
 	t.get_coming_soon_vend_screen_titles_automation = function( self )
@@ -779,18 +574,14 @@ function newshoppingcart()
 		return coming_soon_product_ids
 	end
 	
-	t.is_gift_card = function( self )
-		return kernel.trackgetcardtype() == "RedboxGiftCard"
-	end
-	
 	t.gc_authorize = function( self, on_complete )
 		if not kernel.sessioncaptureaccountdata2( self.session_id ) then
 			self.messagebox:show( "WARNING: ShoppingCart:gc_authorize was called with invalid account data." )
 			return
 		end
 		kernel.log( "GC Authorize for Session ID: " .. self.session_id )
-		--if self.postal_code ~= nil then
-			--kernel.sessionsetpostalcode2( self.session_id, self.postal_code )
+		--if kernel.get_session_value("UserInfo.PostalCode") ~= nil then
+			--kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
 		--end
 		self:get_barcodes_to_vend()
 		self:set_session_cart_groups()
@@ -833,7 +624,7 @@ function newshoppingcart()
             customer_profile_number,
 			function( r )
 				if r.properties.response == "Approved" then
-					self:commit( "User checked out successfully." )
+					kernel.shopping_cart_commit(self.session_id, "User checked out successfully." )
 				else
 					-- Remove Invalid Promo Codes if authorization fails, otherwise they persist even if the user doesn't try it again!
 					if r.errors ~= nil and table_count( r.errors ) > 0 then
@@ -868,20 +659,6 @@ function newshoppingcart()
 		)
 	end
 	
-	t.is_card_blocklisted = function( self )
-		local blocklisted = false
-		if OfflineBlockListEnabled == true 
-		and kernel.healthsvcs_isonline() == false
-		and self:is_gift_card() == false then
-			local first_name = kernel.trackgetfirstname() or ""
-			local last_name = kernel.trackgetlastname() or ""
-			local zip_code = StoreManager:get_store_zip() or ""
-			local market_id = StoreManager:get_store_market_id()
-			blocklisted = kernel.rental_is_name_in_blocklist( first_name, last_name, market_id, zip_code )
-		end
-		return blocklisted
-	end
-
 	t.set_items_to_not_vended = function( self )
         local shopping_cart_items = kernel.get_rental_shopping_cart_items( self.session_id )
         for k, v in ipairs( shopping_cart_items ) do
@@ -903,20 +680,16 @@ function newshoppingcart()
 		end
 	end
 	
-	t.add_multi_disc_discs = function( self )
-        kernel.rental_shopping_cart_add_multi_disc_discs( self.session_id )
-	end
-	
-	t.contains_multi_disc = function( self )
-        kernel.rental_shopping_cart_has_mult_disc_item( self.session_id )
-	end
-
 	t.service_fee_enabled = function( self )
 		return kernel.rental_shopping_cart_service_fee_enabled( self.session_id )
 	end
 
 	t.default_service_fee_cents = function( self )
 		return kernel.rental_shopping_cart_default_service_fee_cents( self.session_id )
+	end
+
+	t.get_pickup_recommendations_shown = function( self )
+		return kernel.rental_shopping_cart_get_pickup_recommendations_shown( self.session_id )
 	end
 
 	return t

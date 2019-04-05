@@ -204,7 +204,7 @@ function newvmzmerchflowfunctions()
 
 	local send_disc_action = function( results, disc_action_job_name, action )
 		local timestamp = nil
-		if DiscActionLogging == true and results ~= nil then
+		if results ~= nil then
 			local barcode_list = {}
 			for _, v in ipairs( results ) do
 				if timestamp == nil and v.time_stamp24 ~= nil and v.time_stamp24 ~= "" then
@@ -1218,17 +1218,14 @@ function newvmzmerchflowfunctions()
 		end
 
 		local reserved_barcodes = {}
-		for _, account_reservations in Reservations:pairs() do
-			for _, reservation in pairs(account_reservations) do
-				for _, barcode_list in pairs( reservation.barcodes ) do
-					for _, barcode in ipairs( barcode_list ) do
-						local row = {}
-						row.barcode = barcode
-						table.insert( reserved_barcodes, row )
-					end
-				end
+        local reserved_barcode_list = kernel.get_reserved_barcodes()
+        if reserved_barcode_list ~= nil and #reserved_barcode_list > 0 then
+			for _, barcode in pairs( reserved_barcode_list ) do
+				local row = {}
+				row.barcode = barcode
+				table.insert( reserved_barcodes, row )
 			end
-		end
+        end
 		
 		-- Call string of hardware jobs to get full status of flow
 		if #reserved_barcodes ~= 0 then
@@ -1480,6 +1477,8 @@ function newvmzmerchflowfunctions()
                 view_show( "card_reader_popup_view" )
 			end
 		end)
+
+		kernel.sync_empties()
 	end
 	
 	return t

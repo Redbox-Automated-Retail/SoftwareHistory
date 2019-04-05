@@ -34,10 +34,7 @@ kernel.registerdatastoreerrorhandler(
 			if dataStoreName ~= nil then
 				datafilename = dataStoreName .. ".data"
 			end
-			if AlertManager == nil then
-				AlertManager = newalertmanager()
-			end
-			AlertManager.send_alert(
+			kernel.hardware_alert_manager_send_alert(
 				"ApplicationCrash",
 				"Kiosk Engine Data File Error",
 				"There was an error accessing or updating the database: [ " .. 

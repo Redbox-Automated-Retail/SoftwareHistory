@@ -6,3 +6,4 @@
 
 MaintenanceModeTimer.stop( true )
 kernel.hardwarenotifymaintmodestate( false )
+kernel.refresh_hardware_state()

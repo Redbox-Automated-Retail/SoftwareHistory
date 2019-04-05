@@ -47,6 +47,9 @@ if deck_slot_valid == true then
 
 		if index + 1 == table_size then
 			sync_label = label .. start_deck .. "," .. starting_slot .. " - " .. last_deck .. "," .. ending_slot
+			if tostring( start_deck ) == "1" and tostring( last_deck ) == tostring( max_decks ) and tostring( starting_slot ) == "1" and tostring( ending_slot ) == tostring( max_slots ) then
+				sync_label = sync_label .. " - Full inventory sync."
+			end
 			hardware:hard_sync(
 				sync_label,
 				schedule_time.backing,

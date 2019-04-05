@@ -8,6 +8,7 @@
 			name="Default"
 			width="1024"
 			height="768"
+ 			onEnter="vsm_view_enter"
 			onLeave="vsm_view_leave">
 		
 			<actor

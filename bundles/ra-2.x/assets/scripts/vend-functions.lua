@@ -10,7 +10,7 @@ function newvendmanager()
 	t.vending = false
 	t.aborted_jobs = {}
 	t.job_id = nil
-
+    t.vend_job_completed = false
 	t.vsm_shown_counter = 0
 
     t.show_wait_screen = false
@@ -19,8 +19,15 @@ function newvendmanager()
 
 	t.message_view_manager = newmessageviewmanager()
 
+	kernel.register_is_vend_job_completed_callback( 
+		function() 
+			return t.vend_job_completed
+		end
+	)
+
 	t.init = function( self )
 		self.vending = false
+		self.vend_job_completed = false
 	end
 
 	t.prepos_vend_abort = function( self )
@@ -35,21 +42,28 @@ function newvendmanager()
 
 		HardwareManager.hardware_event_responders.VendGraphicDisplay = function( args, jobid )
             kernel.log( "VendGraphicDisplay" )
-            local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
-            local show_ad = ad ~= nil and ad.visible == true
-			if (show_ad == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil )
-                and t.show_wait_screen == false
-            then
-                if kernel.peekview() ~= "vsm_view"  then
-                    kernel.log( "Show VSM" )
-                    t.show_vsm_view(ad)
-                end
-            elseif coming_soon_product_list ~= nil and t.show_wait_screen == false then
-                view_show_safe( "coming_soon_view" )
-			else
-				view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.VendGraphicDisplay" )
-                t.show_animation()
-			end
+            -- flush the callback queue before proceeding because the vend job may have already finished and if so it
+            -- would close the current session and start a new one.  If so we don't want to show VSM, coming  soon or vend animiation
+            kernel.callbackflush()
+            if self.vend_job_completed == false then
+                local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
+                local show_ad = ad ~= nil and ad.visible == true
+			    if (show_ad == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil )
+                    and t.show_wait_screen == false
+                then
+                    if kernel.peekview() ~= "vsm_view"  then
+                        kernel.log( "Show VSM" )
+                        t.show_vsm_view(ad)
+                    end
+                elseif coming_soon_product_list ~= nil and t.show_wait_screen == false then
+                    view_show_safe( "coming_soon_view" )
+			    else
+				    view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.VendGraphicDisplay" )
+                    t.show_animation()
+			    end
+            else
+                kernel.log("VendGraphicDisplay processing aborted because vend job" .. tostring(jobid) .. " is already completed.")
+            end
 		end
 		HardwareManager.hardware_event_responders.PickupGraphicDisplay = function( args, jobid )
 			--Display the vend animation once the kiosk starts pushing the disc out of the picker.
@@ -79,6 +93,7 @@ function newvendmanager()
 			kernel.log( "VendManager:vend: vending flag is true, exiting function." )
 			return
 		end
+		self.vend_job_completed = false
 
 		HardwareManager:reset_event_responders()
         if kernel.is_arcus_reset_enabled() then
@@ -117,12 +132,15 @@ function newvendmanager()
 					-- Only change the vending flag if the aborted job is the current vending job
 					-- otherwise if the customer swipes again successfully you are incorrectly setting this flag!
 					if job_result.job_id == self.job_id then
+						self.vend_job_completed = true
 						self.vending = false
 					end
 					
 					return
 				end
-
+ 				if job_result.job_id == self.job_id then
+	              self.vend_job_completed = true
+			    end
 				local vended_count = 0
 				local vend_results = {}
 				local bad_codes = {}
@@ -160,7 +178,7 @@ function newvendmanager()
 							msg = msg .. "<br><br>Code: EmptyStuckThresholdExceeded"
 							msg = msg .. "<br><br>Message: There are too many empty/stuck failures transactions on this kiosk, please investigate."
 							kernel.log(msg)
-							AlertManager.send_alert(
+							kernel.hardware_alert_manager_send_alert(
 								"HardwareError",
 								"",
 								msg,
@@ -176,7 +194,7 @@ function newvendmanager()
 							msg = msg .. "<br><br>Code: " .. v.code .. " Customer Vend" 
 							msg = msg .. "<br><br>Message: The CAMERA CAPTURE instruction failed."
 							kernel.log(msg)
-							AlertManager.send_alert(
+							kernel.hardware_alert_manager_send_alert(
 								"HardwareError",
 								"",
 								msg,
@@ -313,6 +331,7 @@ function newvendmanager()
 	end
 
 	t.show_movie_or_coming_soon = function( barcodes_to_vend )
+        kernel.log("Vend Manager:Show movie or coming soon")
         if t.show_wait_screen then
             t.show_animation()
         elseif safe_to_change_view() == true
@@ -320,11 +339,12 @@ function newvendmanager()
 		and kernel.peekview() ~= "vsm_view"
 		then
 			if ( barcodes_to_vend == nil or #barcodes_to_vend == 0 )
-			and ( kernel.current_rental_shopping_cart_item_count() == 0 )
-			and ReservationManager ~= nil
-			and ReservationManager:get_barcodes_to_vend() ~= nil
-			and #ReservationManager:get_barcodes_to_vend() > 0 then
-				barcodes_to_vend = ReservationManager:get_barcodes_to_vend()
+			and ( kernel.current_rental_shopping_cart_item_count() == 0 ) then
+                kernel.log("Vend Manager:getting reserved barcodes to vend")
+                local temp_barcodes_to_vend = kernel.get_reserved_barcodes_to_vend()
+			    if temp_barcodes_to_vend ~= nil and #temp_barcodes_to_vend > 0 then
+				    barcodes_to_vend = temp_barcodes_to_vend
+                end
 			end
 
 			kernel.analyticsaddnode( "session", "vendingMovie", ShoppingCart.session_id )

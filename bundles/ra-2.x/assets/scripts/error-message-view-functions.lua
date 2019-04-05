@@ -53,7 +53,7 @@ function newerrormessageviewmanager()
 					if expired_func ~= nil then
 						expired_func()
 					end
-                    self:hide()
+                    --self:hide()
 				end )
 			kernel.timerstart( "prompt_timer" )
 		end,

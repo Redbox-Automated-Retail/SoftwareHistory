@@ -60,7 +60,6 @@
       <column name="coming_soon_email_optin_email_prompt_message">What email address would you like your reminder sent to? If you ask for other reminders during this visit, we'll send them here too.</column>
       <column name="coming_soon_email_optin_email_marketing_message">Redbox will never sell your email address to any third parties. We promise.</column>
 
-      <column name="disc_return_message">Please insert your disc.</column>
       <column name="inventory_full_message">The Redbox kiosk is unable to accept your return at this time.&#10;&#10;Please call customer service at&#10;1-866-REDBOX3 (1.866.733.2693).</column>
       <column name="inventory_updated_message">Please wait a sec while we put your disc away.&#10;&#10;And then stick around to see what's new to rent!</column>
       <column name="invalid_card_message">Sorry, your card could not be recognized. Please try again.</column>
@@ -265,37 +264,17 @@
       <column name="flag_price_test">{0} FIRSTS</column>
       <column name="flag_award_winner">AWARD WINNER</column>
       <column name="flag_classics">CLASSICS</column>
-	  <column name="flag_hot_deal">HOT DEAL</column>
+      <column name="flag_hot_deal">HOT DEAL</column>
+      <column name="flag_award_nominee">AWARD NOMINEE</column>
 
       <column name="products_used">Used Disc in Your Cart</column>
       <column name="products_new">New Products</column>
 
       <column name="postal_code_mismatch_message">Oops! The number you entered does not match your billing ZIP code.&#10;Your bank might issue a temporary authorization that may appear as a charge.&#10;These temporary authorizations will disappear in 7-30 days.</column>
 
-      <column name="credit_balance_hi">Hi</column>
-      <column name="credit_balance_do_not_apply_1">Restrictions apply. Some credits don't apply to: </column>
-      <column name="credit_balance_do_not_apply_2">. Review your credits at redbox.com/account.</column>
-      <column name="credit_balance_do_not_apply_DVDs">DVDs, </column>
-      <column name="credit_balance_do_not_apply_Blurays">Blu-rays, </column>
-      <column name="credit_balance_do_not_apply_Games">Games, </column>
-      <column name="credit_balance_do_not_apply_Purchases">Purchases, </column>
-      <column name="credit_balance_credits_left">(you'll have {0} credits after this)</column>
-      <column name="credit_popup_header">Sorry,</column>
-      <column name="credit_popup_not_recognized">We do not see any credits associated with this card. Visit redbox.com to check which cards are on your account, or to add more.</column>
-      <column name="credit_popup_offline">Credits aren't working at this kiosk right now.&#10;&#10;What would you like to do next?</column>
-      <column name="credit_popup_back">BACK</column>
-      <column name="credit_popup_pay_with_card">PAY WITH CARD</column>
-
-      <column name="credits_remaining_singular_header">You have 1 credit available.</column>
-      <column name="credits_remaining_singular_body">Would you like to use it?</column>
-      <column name="credits_remaining_plural_header">You have {0} credits available.</column>
-      <column name="credits_remaining_plural_body">Would you like to use them?</column>
-      <column name="pay_with_credits_yes">YES, USE&#10;MY CREDITS</column>
-      <column name="pay_with_credits_no">NO, PAY WITH&#10;CREDIT CARD</column>
-
       <column name="one_night_price_label">1-Night Rental:</column>
-	  <column name="multi_night_price_label">Multi-Night Rental:</column>
-	  <column name="night">night</column>
+      <column name="multi_night_price_label">Multi-Night Rental:</column>
+      <column name="night">night</column>
       <column name="first_day_price">First Day Price:</column>
       <column name="extra_day_price">Additional Days:</column>
       <column name="price_for">for</column>
@@ -305,8 +284,8 @@
       <column name="game">Game</column>
       <column name="any">Any</column>
       <column name="other_item">other item</column>
-	  
-	  <column name="hot_deal_text">Extra nights for Hot Deals are {0}. Our Hot Deal can change at any time. It only shows up for specific titles, locations, and dates - so you're in luck.</column>
+      
+      <column name="hot_deal_text">Extra nights for Hot Deals are {0}. Our Hot Deal can change at any time. It only shows up for specific titles, locations, and dates - so you're in luck.</column>
 
       <column name="nonstandered_priced_item_header">Heads Up: {0} Firsts</column>
       <column name="nonstandered_priced_item">This movie costs {0} to rent the first day and {EXTRANIGHT} for each day after that.&#10;&#10;Movies that are {0} Firsts come to Redbox 28 days ahead of schedule. Be among the first to watch this DVD!</column>
@@ -404,20 +383,10 @@
 			<column name="zip_code_auth_text">By tapping Next, you agree to an authorization hold period of up to {0} days per item on this card. You will only be charged for the actual number of rental days plus applicable taxes for which you keep your items.</column>
 			<column name="zip_code_next_button_text">NEXT</column>
       
-			<column name="play_pass_prompt_message">EARN UP TO {0} POINTS*&#10;FOR THIS RENTAL</column>
-			<column name="play_pass_prompt_disclaimer_message">*If you're renting with a credit or promo code, points won't be issued. Once earned, free movie night credit will be deposited into your account and expires 60 days after issuance. Payment card required to use the credit. By clicking "Join Now", you agree to the full governing terms, available here and at www.redbox.com/redboxplaypass.</column>
-			<column name="play_pass_terms">Terms</column>
-			<column name="play_pass_join_now">JOIN NOW</column>
-			<column name="play_pass_confirm_message">Welcome to Redbox Play Pass!&#10;You've just earned {0} points*.</column>
-			<column name="play_pass_email_message">An email has been sent to&#10;{0}&#10;with instructions on how to redeem your free movie night.</column>
-			<column name="play_pass_confirm_disclaimer_message">*If you rented with a credit or promo code, points won't be issued. Points can take up to 24 hours to appear in your account. By clicking "Join Now", you agree to the full governing terms, available here and at www.redbox.com/redboxplaypass.</column>
-
       <column name="reservation_swipe_title">Swipe your card&#10;to pick up your&#10;reservation.</column>
       <column name="reservation_swipe_message">You can swipe your card up&#10;or down - it doesn't matter.</column>
       <column name="regular_checkout_swipe_title">Ready. Set.&#10;Swipe!</column>
       <column name="regular_checkout_swipe_message">You can swipe your card up&#10;or down - it doesn't matter.</column>
-      <column name="credits_swipe_title">Let's see&#10;those credits.</column>
-      <column name="credits_swipe_message">&#10;To pay with credits, swipe a card&#10;(up or down) that's associated with&#10;your account.</column>
       <column name="vending_disc_please_wait_title">THANK YOU!</column>
       <column name="vending_disc_please_wait_message">Please wait for your disc.</column>
       <column name="vending_disc_rentals_on_their_way_title">Your rentals&#10;are on&#10;their way!</column>
@@ -483,8 +452,14 @@
       <column name="out_of_stock_line1">Text LOCATE to 727272</column>
       <column name="out_of_stock_line2">to find other Redbox kiosks nearby that might have this {0}.*</column>
       <column name="out_of_stock_line3">*WHEN YOU TEXT LOCATE TO 727272, YOU WILL GET UP TO 2 MESSAGES. Up to 2 msgs&#47;week. Msg &#38; data rates may apply. Text STOP to quit, HELP for help.</column>
-	  
-	  <column name="service_fee_disclaimer">All checkouts may be subject to a service fee of {0}&#162;</column>
+      
+      <column name="service_fee_disclaimer">All checkouts may be subject to a service fee of {0}&#162;</column>
+      
+      <column name="authorize_at_pickup_offline_header">Well, this is a downer</column>
+      <column name="authorize_at_pickup_offline_message">We weren't able to process your reservation. No worries, we've canceled it - and you won't be charged. While you're here, you can still look around and pick something up.</column>
+      
+      <column name="authorize_at_pickup_declined_header">Well, this is a downer</column>
+      <column name="authorize_at_pickup_declined_message">You credit card was declined. No worries, we've canceled any reservations tied to this card - and you won't be charged. While you're here, you can always use a different card to pick up something.</column>
     </row>
   </aspect>
 </resource>

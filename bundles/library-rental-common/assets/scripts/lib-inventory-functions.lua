@@ -4,16 +4,7 @@
 -- All Rights Reserved
 --
 
-
 local sync_inventory_functors = {}
-
-local function find_or_build_product_catalog_entry( product_id )
-	local product = ProductCatalog[product_id]
-	if product ~= nil then return product end
-	local master = MasterProductCatalog[product_id]
-	if master ~= nil then return { product_id = master.product_id } end
-	return nil
-end
 
 local function product_to_barcode_entry_count( barcodes )
 	local count = 0
@@ -27,6 +18,7 @@ local function product_to_barcode_entry_count( barcodes )
 	return count
 end
 
+-- converted to InventoryHelper.MakeBarcodePositionKey
 local function make_barcode_position_key( job_result )
 	return tostring( job_result.deck ) .. "@" .. tostring( job_result.slot )
 end
@@ -40,20 +32,12 @@ local function remove_barcode_position_barcode( slot, vended_barcode )
 	end
 end
 
-local function reset_barcode_position_status( barcode, job_result, status )
-	for _, account_reservations in Reservations:pairs() do
-		for _, reservation in pairs(account_reservations) do
-			for _, barcode_list in pairs( reservation.barcodes ) do
-				for _, resbarcode in ipairs( barcode_list ) do
-					if( tostring( barcode ) == tostring( resbarcode ) ) then
-						return "Reserved"
-					end
-				end
-			end
-		end
-	end
-	
-	return status
+local function reset_barcode_position_status( barcode, status )
+    if kernel.is_barcode_reserved(barcode) then
+		return "Reserved"
+    else	
+	    return status
+    end
 end
 
 local function create_or_update_product_to_barcode_entry( product_id, barcode, status )
@@ -105,91 +89,11 @@ function update_game_has_content_registry_keys( product_type )
 	end 
 end
 
-function is_multi_disc( product_id )
-	return product_id ~= nil and MultiDiscXREF[product_id] ~= nil and MultiDiscXREF[product_id].product_group_id ~= nil and ProductGroup[MultiDiscXREF[product_id].product_group_id] ~= nil and ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list ~= nil and #ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list > 0
-end
-
-function get_all_unmatched_multi_disc_barcodes()
-	local all_unmatched_multi_disc_barcodes = {}
-	
-	local product_group_ids = {}
-	for _, v in MultiDiscXREF:pairs() do
-		if v.product_group_id ~= nil and product_group_ids[v.product_group_id] == nil then
-			product_group_ids[v.product_group_id] = v.product_group_id
-		end
-	end
-	
-	for _, product_group_id in pairs( product_group_ids ) do
-		if ProductGroup[product_group_id] ~= nil and ProductGroup[product_group_id].product_id_list ~= nil then
-			local product_ids_and_barcodes = {}
-			
-			local product_id_list = ProductGroup[product_group_id].product_id_list
-			for _, product_id in pairs( product_id_list ) do
-				local barcodes_table = {}
-				
-				local barcodes = ProductToBarcode[product_id]
-				if barcodes ~= nil then
-					for barcode, _ in pairs( barcodes ) do
-						table.insert( barcodes_table, barcode )
-					end
-				end
-				
-				table.sort(
-					barcodes_table,
-					function( a, b )
-						local a_total_rental_count = 0
-						local b_total_rental_count = 0
-						
-						if BarcodeToProduct[a] ~= nil and BarcodeToProduct[a].total_rental_count ~= nil then
-							a_total_rental_count = BarcodeToProduct[a].total_rental_count
-						end
-						
-						if BarcodeToProduct[b] ~= nil and BarcodeToProduct[b].total_rental_count ~= nil then
-							b_total_rental_count = BarcodeToProduct[b].total_rental_count
-						end
-						
-						return a_total_rental_count < b_total_rental_count
-					end
-				)
-				
-				table.insert( product_ids_and_barcodes, { product_id = product_id, barcodes = barcodes_table } )
-			end
-			
-			local min_number_of_barcodes = 0
-			if product_ids_and_barcodes[1] ~= nil and product_ids_and_barcodes[1].barcodes ~= nil then
-				min_number_of_barcodes = #product_ids_and_barcodes[1].barcodes
-			end
-			
-			local max_number_of_barcodes = 0
-			
-			for _, product_id_and_barcodes in ipairs( product_ids_and_barcodes ) do
-				if #product_id_and_barcodes.barcodes < min_number_of_barcodes then
-					min_number_of_barcodes = #product_id_and_barcodes.barcodes
-				end
-				if #product_id_and_barcodes.barcodes > max_number_of_barcodes then
-					max_number_of_barcodes = #product_id_and_barcodes.barcodes
-				end
-			end
-			
-			if min_number_of_barcodes < max_number_of_barcodes then
-				for i = min_number_of_barcodes + 1, max_number_of_barcodes do
-					for _, product_id_and_barcodes in ipairs( product_ids_and_barcodes ) do
-						if product_id_and_barcodes.barcodes ~= nil and product_id_and_barcodes.barcodes[i] ~= nil then
-							table.insert( all_unmatched_multi_disc_barcodes, product_id_and_barcodes.barcodes[i] )
-						end
-					end
-				end
-			end
-		end
-	end
-	return all_unmatched_multi_disc_barcodes
-end
-
 function create_or_update_product_catalog_entry( product_id, history )
 	local master = MasterProductCatalog[product_id]
 	
 	local function in_stock( product_id, history )
-		if is_multi_disc( product_id ) == true then
+		if kernel.is_multi_disc( product_id ) == true then
 			for k, v in pairs( ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list ) do
 				local current_history = ProductHistory[v]
 				if current_history == nil or current_history.on_hand_count == nil or current_history.on_hand_count <= 0 then
@@ -310,7 +214,7 @@ local function sync_inventory_item_returned( job_result )
 
 	local barcode_to_product = BarcodeToProduct[barcode]
 
-	local new_status = barcodeisreserved( barcode ) and "Reserved" or item_status_based_on_barcode_to_product_and_barcode( barcode_to_product, barcode )
+	local new_status = kernel.is_barcode_reserved( barcode ) and "Reserved" or item_status_based_on_barcode_to_product_and_barcode( barcode_to_product, barcode )
 	BarcodePosition[key] = { ["barcode"] = barcode, ["status"] = new_status }
 
 	-- if couldn't read barcode or barcode not in barcodetoproduct
@@ -435,8 +339,8 @@ local function sync_inventory_soft_sync( job_result )
 
 	remove_barcode_position_barcode( barcode_position, barcode )
 	
-	local new_status = barcodeisreserved( barcode ) and "Reserved" or item_status_based_on_barcode_to_product_and_barcode( barcode_to_product, barcode )
-	local reset_status = reset_barcode_position_status( barcode, job_result, new_status )
+	local new_status = kernel.is_barcode_reserved( barcode ) and "Reserved" or item_status_based_on_barcode_to_product_and_barcode( barcode_to_product, barcode )
+	local reset_status = reset_barcode_position_status( barcode, new_status )
 	BarcodePosition[key] = { ["barcode"] = barcode, ["status"] = reset_status }
 
 	-- if couldn't read barcode or barcode not in barcodetoproduct
@@ -461,86 +365,6 @@ local function sync_inventory_soft_sync( job_result )
 	ProductHistory[product_id] = history --forces commit
 end
 
-function get_barcodes_for_products( products, exclude_list )
-	kernel.log( "Assigning barcodes to products in cart" )
-	local barcodes_to_vend = {}
-	local used_barcodes = {}
-	products = products or {}
-	exclude_list = exclude_list or {}
-	for _, v in ipairs( exclude_list ) do
-		used_barcodes[v] = true
-	end
-	
-	for k, v in ipairs( products ) do
-		if v.barcode == nil then
-			local work_table_known = {}
-			local work_table_thinned = {}
-			local work_table_redeployment = {}
-			local work_table_rebalancing = {}
-			
-			local in_kiosk_and_not_available = false
-			local barcodes_table = ProductToBarcode[v.product_id] or {}
-
-			for each_barcode, cached_info in pairs( barcodes_table ) do
-				if cached_info ~= nil then
-					local disc_info = BarcodeToProduct[each_barcode] or { total_rental_count = 0 }
-					if used_barcodes[each_barcode] == nil then
-						if cached_info.status == "Known" then
-							table.insert( work_table_known, { barcode = each_barcode, turns = disc_info.total_rental_count } )
-						elseif cached_info.status == "Thinned" then
-							table.insert( work_table_thinned, { barcode = each_barcode, turns = disc_info.total_rental_count } )
-						elseif cached_info.status == "Redeployment" then
-							table.insert( work_table_redeployment, { barcode = each_barcode, turns = disc_info.total_rental_count } )
-						elseif cached_info.status == "Rebalancing" then
-							table.insert( work_table_rebalancing, { barcode = each_barcode, turns = disc_info.total_rental_count } )
-						end
-					else
-						in_kiosk_and_not_available = true
-					end
-				else
-					kernel.log( ">  WARNING: Missing disc info in ProductToBarcode for barcode: " .. each_barcode )
-				end
-			end
-			
-			local barcode = ""
-			if #work_table_known > 0 then
-				table.sort(work_table_known, function( a, b ) return a.turns < b.turns end )
-				barcode = work_table_known[iif( v.action == "purchase", #work_table_known, 1 )].barcode
-			elseif #work_table_thinned > 0 then
-				table.sort(work_table_thinned, function( a, b ) return a.turns < b.turns end )
-				barcode = work_table_thinned[iif( v.action == "purchase", #work_table_thinned, 1 )].barcode
-			elseif #work_table_redeployment > 0 then
-				table.sort(work_table_redeployment, function( a, b ) return a.turns < b.turns end )
-				barcode = work_table_redeployment[iif( v.action == "purchase", #work_table_redeployment, 1 )].barcode
-			elseif #work_table_rebalancing > 0 then
-				table.sort(work_table_rebalancing, function( a, b ) return a.turns < b.turns end )
-				barcode = work_table_rebalancing[iif( v.action == "purchase", #work_table_rebalancing, 1 )].barcode
-			elseif in_kiosk_and_not_available then
-				kernel.log( ">  WARNING: Last Barcode Not Reservable: " .. tostring( v.product_id ) )
-				v.status = "ProductSelected"
-			else
-				kernel.log( ">  WARNING: No vendable barcodes found for product: " .. tostring( v.product_id ) )
-				v.status = "InventoryError"
-			end
-
-			if barcode ~= "" then
-				table.insert( barcodes_to_vend,	barcode )
-				v.barcode = barcode
-				v.status = "ProductSelected"
-				used_barcodes[barcode] = true
-				kernel.log( ">  Barcode " .. barcode .. " assigned to product " .. tostring( v.product_id ) )
-			end
-		else
-			table.insert( barcodes_to_vend, v.barcode )
-			kernel.log( ">  Barcode " .. v.barcode .. " was ALREADY assigned to product " .. tostring( v.product_id ) )
-		end
-	end
-	table.sort(
-		barcodes_to_vend,
-		function( a, b ) return a > b end )
-	return barcodes_to_vend
-end
-
 sync_inventory_functors["ItemReturned"] = sync_inventory_item_returned
 sync_inventory_functors["ItemVended"] = sync_inventory_item_vended
 sync_inventory_functors["SoftSync"] = sync_inventory_soft_sync
@@ -549,6 +373,7 @@ sync_inventory_functors["NonThinRemoved"] = sync_inventory_item_vended
 sync_inventory_functors["ThinTransferSuccessful"] = sync_inventory_item_vended
 sync_inventory_functors["QlmUnloadPutIntoDrum"] = sync_inventory_item_returned
 
+-- converted to InventoryHelper.SyncInventory()
 function sync_inventory( job_result )
 	if job_result.deck == 0 or job_result.slot == 0 then 
 		if job_result.code ~= "ThinTransferSuccessful" then 
@@ -628,7 +453,7 @@ function update_barcode_status( barcodes, status )
 				if barcode_info ~= nil then
 					barcode_info.status = status
 					if status == "Reserved" and rentable_barcode_count == 1 and kernel.is_product_in_carousel( product_id ) then
-						need_to_reload_carousel = true
+						kernel.set_application_state_value("NeedToReloadCarousel", true)
 						kernel.log( string.format( "Carousel will be refreshed after reservation call is completed, since the last copy of product_id: %s was reserved online on this kiosk.", product_id ) )
 					end
 				end
@@ -651,73 +476,7 @@ function update_barcode_status( barcodes, status )
 	end
 end
 
-function fix_duplicate_barcodes( new_barcode, new_location_key )
-	if new_barcode == nil or new_location_key == nil then return end
-	local hardware_manager = newhardwaremanager()
-	local job_label = "CLEAR DUPLICATE " .. new_barcode
-
-	-- Limit the number of attempts in case there is a hardare problem
-	local prior_job = DuplicateSlotFixes[ new_barcode ]
-	local current_date = get_current_date_string( "%4d%02d%02d%02d%02d" )
-	if prior_job == nil then
-		prior_job = { barcode=new_barcode, last_update=current_date, attempts=0 }
-	end
-	prior_job.attempts = prior_job.attempts + 1
-	if prior_job.attempts >= 4 then
-		kernel.log( ">  " .. new_barcode .. " DUP fix max attempts reached, sync will NOT be scheduled." )
-		return
-	else
-		prior_job.last_update = current_date
-	end
-	DuplicateSlotFixes[ new_barcode ] = prior_job
-
-	local duplicate_locations = {}
-	-- do not create the job if it already exists
-	local hardwarejobs = hardware_manager:get_hardware_jobs_by_program(
-		{"sync-locations" },
-		{"Errored", "Garbage" } )
-	local job_count = table_count( hardwarejobs )
-	if job_count > 0 then
-		for _, v in ipairs( hardwarejobs ) do
-			--kernel.log( tostring(v.program) .. " " .. tostring( v.label) ) --REMOVE ME
-			if v.label ~= nil and string.find( v.label, job_label ) ~= nil then
-				kernel.log( "> " .. job_label .. " already queued in HAL" )
-				return
-			end
-		end
-	end
-
-	-- add the new location to the list [HAL stack works in reverse, this will get done last]
-	local fields2 = {}
-	string.gsub(new_location_key, "@*(%w+)@*", function(values) table.insert(fields2,values) end )
-	local new_deck = fields2[1]
-	local new_slot = fields2[2]
-	table.insert(duplicate_locations, { deck=new_deck, slot=new_slot })
-
-	-- discover the old location [this will get done FIRST, which should clear the DUPLICATE condition]
-	local old_pos = "(not found)"
-	for pos, disc in BarcodePosition:pairs() do
-		local barcode = disc["barcode"]
-		if new_barcode == barcode and pos ~= new_location_key then
-			old_pos = pos
-			local fields = {}
-			string.gsub(pos, "@*(%w+)@*", function(values) table.insert(fields,values) end )
-			local old_deck = fields[1]
-			local old_slot = fields[2]
-			table.insert(duplicate_locations, { deck=old_deck, slot=old_slot })
-
-			break
-		end
-	end
-
-	-- schedule one job to fix both slots
-	local sync_schedule_time = newdatetime()
-	sync_schedule_time = sync_schedule_time - "00:05:00"
-	job_label = job_label .. " ORIG:" .. old_pos .. " NEW:" .. new_location_key
-	kernel.log( "> " .. job_label .. " submitted to HAL")
-	hardware_manager:hard_sync_by_location( job_label, sync_schedule_time.backing, duplicate_locations )
-
-end
+kernel.register_update_barcode_status_callback(update_barcode_status)
 
 function getdistincttitlescount()
 	local count = 0
@@ -727,37 +486,6 @@ function getdistincttitlescount()
 		end
 	end
 	return count
-end
-
-function getreservationscount()
-	local count = 0
-	for _, account_reservations in Reservations:pairs() do
-		for _, reservation in pairs(account_reservations) do
-			for _, barcode_list in pairs( reservation.barcodes ) do
-				for _, barcode in ipairs( barcode_list ) do
-					count = count + 1
-				end
-			end
-		end
-	end
-	kernel.log("Reserved Count total discs = ".. tostring(count))
-	return count
-end
-
-function barcodeisreserved( barcode )
-	local check_barcode = tostring( barcode )
-	for _, account_reservations in Reservations:pairs() do
-		for _, reservation in pairs(account_reservations) do
-			for _, barcode_list in pairs( reservation.barcodes ) do
-				for _, reserved_barcode in ipairs( barcode_list ) do
-					if check_barcode == tostring( reserved_barcode) then
-						return true
-					end
-				end
-			end
-		end
-	end
-	return false
 end
 
 function get_rebalance_barcodes( inside_vmz, outside_vmz, on_complete )
@@ -813,7 +541,7 @@ function barcodes_vmz_status ( inside_vmz, outside_vmz, barcode_list, on_complet
 					for _,v in ipairs( results ) do
 						if (inside_vmz == true  and v.code == "BarcodeInVMZ")
 						or (outside_vmz == true and v.code == "BarcodeOutsideVMZ") then
-							if not barcodeisreserved( v.item_id ) then
+							if not kernel.is_barcode_reserved( v.item_id ) then
 								table.insert( result_list, v )
 							end
 						end
@@ -826,16 +554,6 @@ function barcodes_vmz_status ( inside_vmz, outside_vmz, barcode_list, on_complet
 	elseif on_complete ~= nil then
 		on_complete( result_list )
 	end
-end
-
-function upgrade_product( product ) 
-    if product.title_rollup_product_group_id ~= nil then
-	    local group_prod = kernel.rental_get_title_rollup( product.title_rollup_product_group_id )
-	    if group_prod ~= nil then
-		    return group_prod
-	    end
-    end
-    return product
 end
 
 function get_rapid_status( barcode, default_status )

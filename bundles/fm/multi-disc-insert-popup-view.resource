@@ -7,7 +7,8 @@
 			clear="false"
 			width="1024"
 			height="768"
-			onEnter="multi_disc_insert_popup_view_enter">
+			onEnter="multi_disc_insert_popup_view_enter"
+      onLeave="multi_disc_insert_popup_view_leave">
 			
 			<actor
 				name="opacity_background"

@@ -4,10 +4,6 @@
 -- All Rights Reserved
 --
 
-if AlertManager == nil then
-	AlertManager = newalertmanager()
-end
-
 local is_valid_reboot_time = function( reboot_time )
 	if string.len( reboot_time ) ~= 5 then
 		return false
@@ -103,12 +99,13 @@ stats_run_daily_timer = function()
 	--Runs once per day
 	kernel.log( "STATS daily timer executing..." )
 	
-	--QuickReturn
-	if quick_return_is_running == true then
-		QuickReturnCounter:submit()
-		kernel.log("Got quick return stats")
-	end
-	
+    kernel.clean_fraud_images()
+    kernel.log( "clean old fraud images" )
+
+	--Send Hal Properties
+    kernel.enqueue_hardware_properties()
+	kernel.log( "Include Hardware Properties" )
+
 	--Kiosk Capacity
 	get_kiosk_capacity()
 	kernel.log("Got Kiosk Capacity")
@@ -153,7 +150,7 @@ stats_run_daily_timer = function()
 			", " .. "duplicate location " .. tostring( slot.duplicate_key) ..
 			"<br>"
 		end
-		AlertManager.send_alert(
+		kernel.hardware_alert_manager_send_alert(
 			"TitleEmpty",
 			"Alert from kiosk " .. tostring( kiosk_id ),
 			buffer,
@@ -191,4 +188,7 @@ stats_run_daily_timer = function()
 			end
 		end
 	)
+
+    --Update Mcafee
+    kernel.update_mcafee()
 end

@@ -4,8 +4,6 @@
 -- All Rights Reserved
 --
 
-AlertManager = newalertmanager()
-
 function run_soft_sync( on_complete )
     -- N.B. We need something more intelligent here
     --local result = kernel.hardwareisbusy()
@@ -33,9 +31,14 @@ function start_sync_timers()
 	kernel.timercreate(
 		"soft-sync-timer",
 		30000,
-		900000,
+		SoftSyncTimer,
 		function()
-            run_soft_sync()
+            local view_name = kernel.peekview()
+            if view_name == kernel.get_start_over_view_name()
+            or view_name == "maintenance_view"
+            or view_name == "maintenance_sync_view" then
+                run_soft_sync()
+            end
 		end )
 	kernel.timerstart( "soft-sync-timer" )
 
@@ -65,7 +68,7 @@ function run_initial_sync()
 	local hardware_manager = newhardwaremanager()
 	hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
         kernel.setmacro( "MaintenanceView:ErrorCode", "005PMXA" )
-        AlertManager.send_job_alert(
+        kernel.hardware_alert_manager_send_alert_job(
             "HardwareError",
 			"HAL script: check-picker-bounded.hs sent message MaxPutAwayAttemptsExceeded",
 			"Unable to put an item away after the configured number of slot retries. Placing the kiosk into maintenance mode",
@@ -96,7 +99,7 @@ function run_initial_sync()
 			nil,
 			nil,
 			function( job_result )
-				--AlertManager.send_alert2("Run Initial Sync", job_result.job_id)
+				--kernel.hardware_alert_manager_send_alert2("Run Initial Sync", job_result.job_id)
 				local send_alert = job_result.status == "Errored"
 				local error_messages = ""
 				for _, v in ipairs( job_result.results ) do
@@ -110,15 +113,15 @@ function run_initial_sync()
 							v.slot,
 							v.return_time)
 					else
-                        error_messages = error_messages .. AlertManager.format_jobresult( v )
+                        error_messages = error_messages .. kernel.hardware_alert_manager_format_job_result( v )
 						send_alert = true
 					end
 				end
 				if job_result.status == "Errored" then
-                    error_messages = error_messages .. AlertManager.format_errors( jobid )
+                    error_messages = error_messages .. kernel.hardware_alert_manager_format_errors( jobid )
 				end
 				if send_alert == true and stop_initial_sync == false then
-                    AlertManager.send_alert(
+                    kernel.hardware_alert_manager_send_alert(
 						"HardwareError",
 						"Run Initial Sync Failed",
 						"HAL Script: check-picker-bounded.hs was unable to put an item away for the following reasons:" ..
@@ -163,13 +166,13 @@ function schedule_initial_sync(stack, hardware_mgr)
 
 			for _, v in ipairs( job_result.results ) do
 				if v.code ~= "InventoryState" then
-                    error_messages = error_messages .. AlertManager.format_jobresult( v )
+                    error_messages = error_messages .. kernel.hardware_alert_manager_format_job_result( v )
 					send_alert = true
 				end
 			end
 
 			if job_result.status == "Errored" or job_result.status == "Garbage" then
-				error_messages = error_messages .. AlertManager.format_errors( jobid )
+				error_messages = error_messages .. kernel.hardware_alert_manager_format_errors( jobid )
 			end
 
 			if #job_result.results == 0 then
@@ -178,7 +181,7 @@ function schedule_initial_sync(stack, hardware_mgr)
 			end
 
 			if send_alert == true and stop_initial_sync == false then
-                AlertManager.send_alert(
+                kernel.hardware_alert_manager_send_alert(
 					"HardwareError",
 					"Run Initial Sync Failed",
 					"HAL Script: sync.hs was unable to complete for the following reasons:" ..

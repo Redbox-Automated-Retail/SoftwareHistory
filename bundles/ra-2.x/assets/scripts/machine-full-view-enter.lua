@@ -11,7 +11,7 @@ machine_full_idle_timer:initialize(
 	15000,
 	function()
 		view_analytics_event( "timeout", "machine_full_idle_timer" )
-		kernel.executescript( "start_over" )
+		kernel.close_open_session_and_start_new_rental_session()
 	end
 )
 machine_full_idle_timer:start()
@@ -20,7 +20,7 @@ kernel.registeractorhitnotify(
 	"machine_full_back_button",
 	function()
 		view_analytics_event( "buttonPress", "machine_full_back_button" )
-		kernel.executescript( "start_over" )
+		kernel.close_open_session_and_start_new_rental_session()
 	end )
 
 kernel.registeractorhitnotify(

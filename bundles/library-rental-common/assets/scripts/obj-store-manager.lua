@@ -5,6 +5,17 @@
 --
 
 
+kernel.register_get_store_return_time_callback(
+    function ()
+        if StoreManager ~= nil then
+            return StoreManager:get_return_time()
+        else
+            return nil
+        end
+    end
+)
+
+
 function newstoremanager()
 	local t = {}
 

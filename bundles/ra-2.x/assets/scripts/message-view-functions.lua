@@ -7,8 +7,7 @@
 function newmessageviewmanager(message_view_name)
 
 	local view_actor_prefix_map = {
-		["in_cart_offer_message_view"] = "in_cart_offer_",
-		["credit_message_view"]   = "credit_"
+		["in_cart_offer_message_view"] = "in_cart_offer_"
 	}
 
 	local actor_prefix = view_actor_prefix_map[message_view_name] or ""

@@ -10,11 +10,13 @@
 -- Do NOT allow the app to run if OutOfOrder mode is set
 --
 --************************************************
+
 if kernel.getmachinevalueordefault( "Store", "OutOfOrder", "false" ) == "true" then
 	kernel.applyunsafeshutdown()
 end
 
 kernel.register_view_definitions()
+kernel.register_environment_change_callback()
 
 if not in_maintenance_mode() then
     view_show("application_load_view")
@@ -43,7 +45,7 @@ function handle_disconnected_usb_card_reader()
 	kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "0072CDRR" ] or "image_red_diagonal_stripes" )
 	view_show( "maintenance_view" )
 	kernel.suspend_idle_timer( "idle_timer" )
-	--[[AlertManager.send_alert(
+	--[[kernel.hardware_alert_manager_send_alert(
 		"HardwareError",
 		"application-startup.lua",
 		"USB card swipe has been disconnected, entering maintenance mode.",
@@ -61,7 +63,7 @@ local function initialize_scheduled_tasks()
 
 	ReservationManager = newreservationmanager()
 	ReservationManager:init()
-	ReservationManager:sync_reservations()
+	kernel.sync_reservations()
 
 	start_sync_timers()
 	MaintenanceModeTimer = newmaintenancemodetimer()
@@ -278,10 +280,6 @@ end
 
 local function load_registry_key_values()
 	-- Load registry values into global variables
-	EnableOfflineBadCardList = kernel.getmachinevalueordefault(
-		"Remote Services\\Merchant Services",
-		"EnableOfflineBadCardList",
-		"True" ) == "True"
 	EnableOutOfStockDisplay = kernel.getmachinevalueordefault(
 		"Remote Services\\Inventory Services",
 		"EnableOutOfStockDisplay",
@@ -294,27 +292,10 @@ local function load_registry_key_values()
 		"Store",
 		"VerboseLogging",
 		"False" ) == "True"
-	EnableCreditsButton = kernel.config_getvalue(
-		"system",
-		"General",
-		"EnableCreditsButton" ) == true
-	--[[HideCreditsButtonOnPromoUse = kernel.config_getvalue(
-		"system",
-		"General",
-		"HideCreditsButtonOnPromoUse" ) == true]]
-	HideCreditsButtonOnPromoUse = true
-	PromptForCredits = kernel.config_getvalue(
-		"system",
-		"General",
-		"PromptForCredits" ) == true
 	ShowOptinForNormalCheckout = kernel.config_getvalue(
 		"system",
 		"General",
 		"ShowOptinForNormalCheckout" ) == true
-	ShowOptinForCreditsCheckout = kernel.config_getvalue(
-		"system",
-		"General",
-		"ShowOptinForCreditsCheckout" ) == true
 	FMAMaintenanceMode = kernel.getmachinevalueordefault(
 		"Field Maintenance",
 		"MaintenanceMode",
@@ -334,18 +315,10 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"MakeRoomBuffer" ) or 5 )
-	DiscActionLogging = kernel.config_getvalue(
-		"system",
-		"General",
-		"DiscAction" ) == true
 	MarketingOptInEnabled = kernel.config_getvalue(
 		"system",
 		"General",
 		"MarketingOptIn" ) == true
---	RecommendationOnPickup = kernel.config_getvalue(
---		"system",
---		"General",
---		"RecommendationOnPickup" ) == true
 	GiftCardsEnabled = kernel.config_getvalue(
 		"system",
 		"General",
@@ -414,18 +387,14 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"BluRayUpsellEnabled" ) == true
-	OfflineBlockListEnabled = kernel.config_getvalue(
-		"system",
-		"General",
-		"OfflineBlockListEnabled" ) == true
-	EnableDiscSecurity = kernel.config_getvalue(
-		"system",
-		"General",
-		"EnableDiscSecurity" ) == true
 	ShowAuthChangeMessage = kernel.config_getvalue(
 		"system",
 		"General",
 		"ShowAuthChangeMessage" ) == true
+    SoftSyncTimer = kernel.config_getvalue(
+		"system",
+		"General",
+		"SoftSyncTimer" ) or 3600000 -- one hour default
 end
 
 local function create_coming_soon_cache_tables()
@@ -461,6 +430,15 @@ local function create_coming_soon_cache_tables()
 		kernel.log( "Coming soon is up to date, skipping the cache build" )
 	end
 end
+
+local function register_get_coming_soon_products_callback( )
+    local get_coming_soon_products_callback = function ( )
+        return coming_soon_product_list
+    end
+
+    kernel.register_get_coming_soon_products_callback( get_coming_soon_products_callback )
+end
+
 
 local function register_default_hardware_handlers()
 	-- Hook up default hardware event handlers
@@ -503,7 +481,7 @@ local function register_default_hardware_handlers()
                     view_unwindtobottom( "clear maintenance view - card_reader_connected" )
 					kernel.close_open_session_and_start_new_rental_session( "card_reader_connected" )
 					kernel.resume_idle_timer( "idle_timer" )
-					--[[AlertManager.send_alert(
+					--[[kernel.hardware_alert_manager_send_alert(
 						"HardwareError",
 						"application-startup.lua",
 						"USB card swipe has been connected, leaving maintenance mode.",
@@ -524,10 +502,7 @@ local function register_default_hardware_handlers()
 					kernel.log( "Configuration value changed for Store ID: " .. value )
 					StoreManager:set_number( value )
 					ReservationManager:init()
-					ReservationManager:sync_reservations()
-				elseif path == "Remote Services\\Merchant Services" and key == "EnableOfflineBadCardList" then
-					kernel.log( "Configuration value changed for EnableOfflineBadCardList: " .. value )
-					EnableOfflineBadCardList = value == "True"
+					kernel.sync_reservations()
 				elseif path == "Remote Services\\Inventory Services" and key == "EnableOutOfStockDisplay" then
 					kernel.log( "Configuration value changed for EnableOutOfStockDisplay: " .. value )
 					EnableOutOfStockDisplay = value == "True"
@@ -542,10 +517,14 @@ end
 
 local function verify_hardware_status_before_launching_application()
 	schedule_time = newdatetime()
+    
 	HardwareManager:get_hardware_status(
 		schedule_time.backing,
 		function( job_result )
 			kernel.log( job_result )
+
+            kernel.refresh_hardware_state()
+
 			local hardware_status_ok = true
 			for k, v in ipairs( job_result.results ) do
 				if v.code ~= "HardwareStatusOk" then
@@ -590,7 +569,7 @@ local function verify_hardware_status_before_launching_application()
 				end
 				hardware_status_message = hardware_status_message.. "<br><br>Placing the kiosk into maintenance mode."
 
-				AlertManager.send_alert(
+				kernel.hardware_alert_manager_send_alert(
 					"HardwareError",
 					"hardware-status.hs returns MachineError",
 					hardware_status_message,
@@ -654,7 +633,7 @@ local function start_new_rental_session_callback()
 	    kernel.trimbitmapcache( 128 )
 	    local hardware_manager = newhardwaremanager()
 	    hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
-		    AlertManager.send_job_alert(
+		    kernel.hardware_alert_manager_send_alert_job(
 			    "HardwareError",
 			    "HAL script: check-picker.hs sent message MaxPutAwayAttemptsExceeded",
 			    "Unable to put an item away after the configured number of slot retries. Placing the kiosk into maintenance mode",
@@ -694,12 +673,26 @@ local function start_new_rental_session_callback()
 
 end
 
+-- callback from the .net side now that the start_idle_time is in .net
+function start_idle_timer_callback()
+    kernel.log("start idle timer callback")
+	-- Now that analytics are being tracked on the carousel, the session has to be restarted on idle timeout
+	if ShoppingCart ~= nil
+	and kernel.analyticssessionexists( ShoppingCart.session_id ) == true then
+        kernel.log("start view idle timer: closing analytics and abandoning cart ")
+		ShoppingCart:close_analytics( "True" )
+		ShoppingCart:abandon( "Start View User Idle Timeout" )
+		ShoppingCart = newshoppingcart()
+		ShoppingCart:start_new()
+		ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
+	end
+end
+
 --************************************************
 --
 -- Create Global class instances required for application function
 --
 --************************************************
-AlertManager = newalertmanager()
 StoreManager = newstoremanager()
 kernel.register_pricing_service( 
     -- pricing set changed callback
@@ -718,6 +711,10 @@ kernel.create_idle_timer( "idle_timer" )
 kernel.register_idle_timer_expire_session_callback(idle_timer_expire_session)
 -- kernel.register_get_email_address_and_register_email_reminder_callback(get_email_address_and_register_email_reminder)
 kernel.register_start_new_rental_session_callback(start_new_rental_session_callback)
+kernel.register_start_idle_timer_callback(start_idle_timer_callback)
+kernel.register_localization_reload_callback(localization_reload_resources)
+register_get_coming_soon_products_callback()
+
 --************************************************
 --
 -- Set Global variable values
@@ -758,7 +755,6 @@ end
 -- [Vaibhav Pingle] Moved this section of the code from the initialize_scheduled_tasks() method
 -- in order to be able to monitor the inventory sync jobs scheduled through the FMA, even though if
 -- the Initial Sync job is running on the kiosk.
-SyncAlertManager = newalertmanager()
 HardSyncMonitor = newhardsyncmonitor()
 HardSyncMonitor:start(10000, 30000)
 
@@ -773,7 +769,7 @@ kernel.timercreate(
 		if kernel.peekview() == "maintenance_view" then
 			local current = os.date( "*t" )
 			local current_string = string.format( "%4d%02d%02d%02d%02d", current.year, current.month, current.day, current.hour, current.min )
-			AlertManager.send_alert(
+			kernel.hardware_alert_manager_send_alert(
 				"HardwareError",
 				"KioskID: " .. StoreManager:get_number() .. " Credit Card Reader Communications Error &#150; Machine Down",
 				current_string .. " - Machine in maintenance mode.",
@@ -973,3 +969,7 @@ kernel.load_xps_document("document-faqs")
 
 -- force load of product images
 kernel.cache_product_images()
+
+kernel.create_schedule_fraud_sync_timer()
+
+kernel.sync_unknowns(qlm_deck, false)

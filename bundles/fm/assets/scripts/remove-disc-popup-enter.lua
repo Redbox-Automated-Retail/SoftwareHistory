@@ -37,33 +37,32 @@ local close_view = function()
 				end
 
 				-- build barcode_list from removed_items
-				if DiscActionLogging == true then
-					barcode_list = { }
-					local numBarcodes = 1
-					for i = 1, #removed_items, 1 do
-						local item = removed_items[i] --> 1@1 111222333
-						local item_split = split(item, " ") --> {"1@1", "111222333"}
-						if item_split[2] ~= nil and item_split[2] ~= "UNKNOWN" and item_split[2] ~= "" then
-							barcode_list[numBarcodes] = { tostring(item_split[2]), "1" } -- action 0=Inserted  1=Removed
-							numBarcodes = numBarcodes + 1
-						end
-					end
-					
-					local job_name = "vend"
-					if remove_disc_button_pressed_from_tab == "Unmatched" then
-						job_name = "MDV_Vend_Unmatched"
-					end
-					
-					-- Send DiscAction Message
-					if ( #barcode_list > 0 ) then
-						kernel.fmadiscaction(
-							StoreID,
-							username,
-							job_name,
-							os.date("%Y%m%d%H%M"), -- YearMonthDatHourMin ie: 201312242359
-							barcode_list)
+				barcode_list = { }
+				local numBarcodes = 1
+				for i = 1, #removed_items, 1 do
+					local item = removed_items[i] --> 1@1 111222333
+					local item_split = split(item, " ") --> {"1@1", "111222333"}
+					if item_split[2] ~= nil and item_split[2] ~= "UNKNOWN" and item_split[2] ~= "" then
+						barcode_list[numBarcodes] = { tostring(item_split[2]), "1" } -- action 0=Inserted  1=Removed
+						numBarcodes = numBarcodes + 1
 					end
 				end
+					
+				local job_name = "vend"
+				if remove_disc_button_pressed_from_tab == "Unmatched" then
+					job_name = "MDV_Vend_Unmatched"
+				end
+					
+				-- Send DiscAction Message
+				if ( #barcode_list > 0 ) then
+					kernel.fmadiscaction(
+						StoreID,
+						username,
+						job_name,
+						os.date("%Y%m%d%H%M"), -- YearMonthDatHourMin ie: 201312242359
+						barcode_list)
+				end
+
 				view_goback()
 		end,
 		{} )

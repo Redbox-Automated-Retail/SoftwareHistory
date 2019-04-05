@@ -742,35 +742,12 @@
 				visible="true"
 				onHit="read_fraud_disc"
 				hitFlags="Enabled" />
-
-      <!-- Verify Fraud Button -->
-      <actor
-				name="verify_fraud_button"
-				x="360"
-				y="440"
-				width="170"
-				height="90"
-				text="Verify&#10;Game Fraud"
-				font="medium_large_font"
-				verticalAlignment="center"
-				horizontalAlignment="center"
-				foregroundColor="white"
-				backgroundColor="DarkRed"
-				strokeWeight="3.0"
-				borderColor="White"
-				cornerSize="15,15"
-				optionFlags="Background, Text, TextShadow, DrawBorder"
-				visible="true"
-				enabled="true"
-				hitFlags="Enabled"
-				onHit="show_fraud_verify"
-				/>
-      
+			
 			<!-- Inventory Management Button -->
 			<actor
 				name="inv_mgmt_button"
 				x="360"
-				y="550"
+				y="440"
 				width="170"
 				height="90"
 				text="Inventory&#10;Management"

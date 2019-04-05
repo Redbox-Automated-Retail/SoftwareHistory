@@ -12,6 +12,11 @@ else
 	kernel.setactorforegroundcolor("schedule_unknowns_button", "white")
 end
 
+
+if kernel.supports_paper_fraud() or kernel.peeled_fraud_image_upload_enabled() then
+    kernel.showactor("schedule_fraud_sync_button")
+end
+
 reset_slots = function()
 	starting_slot = "1"
 	kernel.setactortext("start_slot_value", starting_slot)

@@ -375,7 +375,7 @@ reload_inventory = function()
 		["72"] = true
 	}
 	
-	local all_unmatched_multi_disc_barcodes = get_all_unmatched_multi_disc_barcodes()
+	local all_unmatched_multi_disc_barcodes = kernel.get_all_unmatched_multi_disc_barcodes()
 	local function is_unmatched( barcode )
 		for _, unmatched_barcode in ipairs( all_unmatched_multi_disc_barcodes ) do
 			if barcode == unmatched_barcode then

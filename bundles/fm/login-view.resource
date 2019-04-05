@@ -51,7 +51,7 @@
 			name="message_label"
 			x="269"
 			y="21"
-			width="499"
+			width="650"
 			height="29"
 			font="message_font"
 			verticalAlignment="center"

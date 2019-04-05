@@ -49,8 +49,7 @@ end
 if DataAccessAlreadySent ~= true then
 	BadCardList = getworktable( "local", "BadCardList" )
 	if DataAccessAlreadySent ~= true then
-		Reservations = getworktable( "local", "Reservation" )
-		Reservations:prime_cache_keys()
+
 		DuplicateBarcodes = getworktable( "local", "DuplicateBarcodes" )
 		RemovedQueue = getworktable( "local", "RemovedQueue" )
 		RemovedQueue:prime_cache_keys()
@@ -58,7 +57,6 @@ if DataAccessAlreadySent ~= true then
         BarcodeStatus = getworktable( "local", "BarcodeStatus" )
         BarcodeStatus:prime_cache_keys()
 	else
-		Reservations = {}
 		DuplicateBarcodes = {}
 		RemovedQueue = {}
 		BreakingNews = {}
@@ -66,7 +64,6 @@ if DataAccessAlreadySent ~= true then
 	end
 else 
 	BadCardList = {}
-	Reservations = {}
 	DuplicateBarcodes = {}
 	RemovedQueue = {}
 	BreakingNews = {}

@@ -5,7 +5,8 @@
 --
 
 local empty_slots = EmptySlots
-local inserted_discs = {}
+
+inserted_discs = {}
 local inserted_disc_starting_index = 1
 
 local hardware_manager = newhardwaremanager()
@@ -69,7 +70,17 @@ insert_disc = function()
 		nil,
 		function( job_result )
 			for _, v in ipairs( job_result.results ) do
-				if v.code == "ItemReturned"
+                if v.code == "NoFraudMarkersDetected" 
+                and v.item_id ~= nil
+                and v.item_id ~= ""
+                and v.item_id ~= "UNKNOWN"
+                and kernel.is_paper_fraud( v.item_id ) == true then
+                    if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
+                        BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
+                        kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = fraud inserted into barcodestatus" )
+                    end
+                    kernel.send_fraud_alert( v.item_id, true, v.time_stamp24 )
+				elseif v.code == "ItemReturned"
 				and v.item_id ~= nil
 				and trim( v.item_id ) ~= ""
 				and string.lower( v.item_id ) ~= "unknown"
@@ -93,16 +104,14 @@ insert_disc = function()
 					)
 					
 					-- Send DiscAction Message
-					if DiscActionLogging == true then
-						barcode_list = { }
-						barcode_list[1] = { tostring(v.item_id), "0" } -- action 0=Inserted  1=Removed
-						kernel.fmadiscaction(
-							StoreID,
-							username,
-							"return-unknown",
-							v.time_stamp24,
-							barcode_list)
-					end
+					barcode_list = { }
+					barcode_list[1] = { tostring(v.item_id), "0" } -- action 0=Inserted  1=Removed
+					kernel.fmadiscaction(
+						StoreID,
+						username,
+						"return-unknown",
+						v.time_stamp24,
+						barcode_list)
 
 					local product_name = "Unknown Title"
 					local product = BarcodeToProduct[v.item_id]
@@ -111,40 +120,8 @@ insert_disc = function()
 						if master_product ~= nil then
 							product_name = master_product.long_name
 						end
-						local history = ProductHistory[product.product_id]
-						if history ~= nil then
-							if ( history.ofr_count or 0 ) > 0 then
-								history.ofr_count = ( history.ofr_count or 0 ) - 1
-							end
-							history.on_hand_count = ( history.on_hand_count or 0 ) + 1
-							ProductHistory[product.product_id] = history
-						end
-						if product.status == "Fraud" then
-							kernel.updatefraudstatus(
-								StoreID,
-								v.item_id,
-								"false",
-								v.time_stamp,
-								function( result )
-									if result.success == true then
-                                        local new_status = get_rapid_status( v.item_id, "Known" )
-										local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
-										BarcodePosition[deck_slot_key] = { ["barcode"] = tostring( v.item_id ), ["status"] = new_status }
-
-										local barcodes = ProductToBarcode[product.product_id]
-										if barcodes ~= nil then
-											barcodes[v.item_id].status = new_status
-											ProductToBarcode[product.product_id] = barcodes
-										end
-										
-										product.status = new_status
-										reload_inventory()
-									end
-								end
-							)
-						end
-					end
-					
+				   end
+											
 					table.insert( inserted_discs, { title = product_name, barcode = tostring( v.item_id ), deck = tostring( v.deck ), slot = tostring( v.slot ) } )
 					reload_inventory()
 					decrement_and_display_empty_slots()

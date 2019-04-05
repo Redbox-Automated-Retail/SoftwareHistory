@@ -63,7 +63,6 @@
       <column name="oops">Oops!</column>
       <column name="coming_soon_email_optin_email_marketing_message">Redbox valora su privacidad y nunca vendería su dirección de correo electrónico. Se lo prometemos.</column>
 
-      <column name="disc_return_message">Por favor introduczca el disco.</column>
       <column name="inventory_full_message">En este momento el kiosko no puede&#10;aceptar devoluciones.&#10;&#10;Por favor, llame al servicio al cliente 1.866.REDBOX3 (1.866.733.2693).</column>
       <column name="inventory_updated_message">Por favor espere un segundo mientras lo aguardamos.&#10;&#10;¡Y quedase a ver las películas nuevas!</column>
       <column name="invalid_card_message">Lo sentimos, no pudo autorizar su tarjeta.  Por favor, intente de nuevo.</column>
@@ -265,7 +264,8 @@
       <column name="flag_price_test">{0} PRIMICIAS</column>
       <column name="flag_award_winner">GANADOR</column>
       <column name="flag_classics">CLÁSICO</column>
-	  <column name="flag_hot_deal">REBAJA</column>
+	    <column name="flag_hot_deal">REBAJA</column>
+      <column name="flag_award_nominee">NOMINADO</column>
 
       <column name="products_used">Disco Previavisto En Caja</column>
       <column name="products_new">Nuevos Productos</column>
@@ -277,27 +277,6 @@
       <column name="Friday">Viernes</column>
       <column name="Saturday">Sábado</column>
       <column name="Sunday">Domingo</column>
-
-      <column name="credit_balance_hi">Hola</column>
-      <column name="credit_balance_do_not_apply_1">Se aplican restricciones. Algunos créditos no se aplican a los: </column>
-      <column name="credit_balance_do_not_apply_2">. Revisa sus créditos en redbox.com/account.</column>
-      <column name="credit_balance_do_not_apply_DVDs">DVDs, </column>
-      <column name="credit_balance_do_not_apply_Blurays">Blu-rays, </column>
-      <column name="credit_balance_do_not_apply_Games">Juegos, </column>
-      <column name="credit_balance_do_not_apply_Purchases">Compras, </column>
-      <column name="credit_balance_credits_left">(tenga {0} créditos en seguida)</column>
-      <column name="credit_popup_header">Lo sentimos,</column>
-      <column name="credit_popup_not_recognized">No reconocemos créditos relacionado a su tarjeta. Visita y verifica sus tarjetas asociadas, o añade otras por redbox.com.</column>
-      <column name="credit_popup_offline">En este momento los créditos no son disponibles en este quiosco.&#10;&#10;¿Como quieres proceder?</column>
-      <column name="credit_popup_back">    CANCELA</column>
-      <column name="credit_popup_pay_with_card">USA MI TARJETA</column>
-
-      <column name="credits_remaining_singular_header">¡Tiene 1 crédito disponible!</column>
-      <column name="credits_remaining_singular_body">¿Quiere utilizarlo?</column>
-      <column name="credits_remaining_plural_header">¡Tiene {0} créditos disponible!</column>
-      <column name="credits_remaining_plural_body">¿Quiere utilizarlos?</column>
-      <column name="pay_with_credits_yes">SÍ, UTILIZA&#10;MIS CRÉDITO(S)</column>
-      <column name="pay_with_credits_no">NO, PAGO CON&#10;TARJETA</column>
 
       <column name="one_night_price_label">Alquila Por 1-Noche:</column>
 	  <column name="multi_night_price_label">Alquila Por Multi-Noche:</column>
@@ -403,20 +382,10 @@
       <column name="zip_code_auth_text">Al hacer uso A continuación, usted está de acuerdo a un período de retención de autorización de hasta {0} días por artículo en esta tarjeta. Sólo se le cobrará por el número real de días de alquiler más los impuestos aplicables para el cual mantiene sus artículos.</column>
 	  <column name="zip_code_next_button_text">CONTINUAR</column>
 
-      <column name="play_pass_prompt_message">GANA HASTA {0} PUNTOS*&#10;POR ESTE ALQUILER</column>
-      <column name="play_pass_prompt_disclaimer_message">*No se emitirán puntos si estás alquilando con un crédito o con un código promocional. Una vez ganado, el crédito para una noche de cine gratis se depositará en tu cuenta, y caducará 60 días luego de haber sido emitido. Se requiere tarjeta de crédito o débito para utilizar el crédito en tu cuenta. Al hacer clic en "Hacerse Miembro", estás aceptando todos los términos establecidos en el acuerdo, disponibles aquí y en www.redbox.com/redboxplaypass.</column>
-      <column name="play_pass_terms">Términos</column>
-      <column name="play_pass_join_now">ÚNETE AHORA</column>
-      <column name="play_pass_confirm_message">¡Bienvenido a Redbox Play Pass!&#10;Usted acaba de ganar {0} puntos*.</column>
-      <column name="play_pass_email_message">Un correo electrónico ha sido enviado a&#10;{0}&#10;con instrucciones sobre cómo canjear el noche de película.</column>
-      <column name="play_pass_confirm_disclaimer_message">*No se emitirán puntos si alquilaste con un crédito o con un código promocional. Los puntos pueden tardar hasta 24 horas en aparecer en tu cuenta. Al hacer clic en "Hacerse Miembro", estás aceptando todos los términos establecidos en el acuerdo, disponibles aquí y en www.redbox.com/redboxplaypass.</column>
-
       <column name="reservation_swipe_title">Deslice y recoge&#10;su reservación&#10;hecho en línea.</column>
       <column name="reservation_swipe_message">Deslice en cualquier dirección, no&#10;le importa si es por arriba o abajo.</column>
       <column name="regular_checkout_swipe_title">¿Listo?&#10;¡Deslice!</column>
       <column name="regular_checkout_swipe_message">Deslice en cualquier dirección, no&#10;le importa si es por arriba o abajo.</column>
-      <column name="credits_swipe_title">Enseñame&#10;mis créditos.</column>
-      <column name="credits_swipe_message">Paga con créditos por deslizar la tarjeta asociada&#10;a su cuenta en línea.&#10;&#10;Deslice en cualquier dirección, no le importa si es&#10;por arriba o abajo.</column>
       <column name="vending_disc_please_wait_title">SU DVD&#10;ESTA EN&#10;CAMINO</column>
       <column name="vending_disc_please_wait_message">REDBOX LE DA LAS GRACIAS.</column>
       <column name="vending_disc_rentals_on_their_way_title">Espere&#10;mientras&#10;recoge sus&#10;títulos.</column>
@@ -485,6 +454,12 @@
       <column name="out_of_stock_line3">*Textea “Locate” a 727272 y recibiría al máximo 2 mensajes. Reciba al máximo 2 mensajes por semana. Cargos de mensajes y de data se aplican. Textea STOP a quitarse de recibir mensajes, o HELP para recibir ayuda.</column>
 	  
 	  <column name="service_fee_disclaimer">Cada transacci&#243;n podr&#237;a estar sujeta a un Cargo por Servicio de {0}&#162;</column>
-	</row>
+
+      <column name="authorize_at_pickup_offline_header">Bueno, este es un desafortunado</column>
+      <column name="authorize_at_pickup_offline_message">No pudimos procesar su reservación. No te preocupes, lo hemos cancelado - y no te cobrarán. Mientras estés aquí, todavía puedes mirar alrededor y recoger algo.</column>
+
+      <column name="authorize_at_pickup_declined_header">Bueno, esto es desafortunado</column>
+      <column name="authorize_at_pickup_declined_message">Su tarjeta de crédito fue rechazada. No te preocupes, hemos cancelado cualquier reservación atada a esta tarjeta - y no se te cobrará. Mientras estés aquí, siempre puedes usar una tarjeta diferente para recoger algo.</column>
+    </row>
   </aspect>
 </resource>

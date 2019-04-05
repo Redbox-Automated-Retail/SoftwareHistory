@@ -116,7 +116,6 @@ kernel.registeractorhitnotify(
 )
 
 progress_manager:stop()
-FraudAlertManager = newalertmanager()
 
 local resume_result = nil
 --shutdown the scheduler service to prevent scheduled syncs, thin, etc from starting
@@ -251,7 +250,7 @@ function remove_fraud_discs()
 							)
 							
 							-- Send DiscAction Message
-							if DiscActionLogging == true and v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+							if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
 								barcode_list = { }
 								barcode_list[1] = { tostring(v.item_id), "1" } -- action 0=Inserted  1=Removed
 								kernel.fmadiscaction(

@@ -31,17 +31,26 @@ end
 responders.ReturnEndOnError = function(tokens)
 	set_text( "Insert failed" )
 end
-
+--no longer used?
 responders.ReturnBarcodeDisplay = function(tokens)
 	set_text( "Read barcode: " .. tokens[2] or "UNKNOWN")
 end
-
+--no longer used?
 responders.ItemReceivedBackwards = function(tokens)
 	set_text( "Disc was inserted backwards")
 end
 
 responders.ItemInsertError = function(tokens)
 	set_text( "Disc was inserted incorrectly")
+end
+
+responders.PhotocopyBarcode = function(tokens)
+    set_text( "Checking for fraud status" )
+    local value = kernel.is_paper_fraud( tokens[2] ) and 'continue' or 'reject'
+    local job_signal_command = 'JOB signal job: ' .. tostring( tokens[3] ) .. ' value: ' .. value
+    kernel.log( job_signal_command )
+    kernel.hardwareexecuteservicecommand( job_signal_command )
+        --kernel.process_return_unknown_event( tokens[2], tokens[3] )  --barcode, jobId
 end
 
 responders.ItemPlacementDone = function(tokens)
@@ -57,10 +66,13 @@ hardware_manager.default_status_change_handler = function( jobid, timestamp, mes
 		if #tokens <= 0 then
 			return
 		end
-		local responder = responders[tokens[1]]
+
+        local responder = responders[tokens[1]]
 		if responder == nil then
 			return
 		end
+
+        table.insert(tokens, #tokens+1, jobid)
 		responder( tokens )
 	end
 end
@@ -105,8 +117,18 @@ local result = hardware_manager:return_unknown(
 	function( job_result )
 		if job_result ~= nil then
 			for _, v in ipairs( job_result.results ) do
-				if v.code == "ItemReturned" and v.item_id ~= nil and v.item_id ~= "UNKNOWN" then
-					local product_name = "UNKNOWN"
+                if v.code == "NoFraudMarkersDetected" 
+                and v.item_id ~= nil
+                and v.item_id ~= ""
+                and v.item_id ~= "UNKNOWN"
+                and kernel.is_paper_fraud( v.item_id ) == true then
+                    if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
+                        BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
+                        kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = fraud inserted into barcodestatus" )
+                    end
+                    kernel.send_fraud_alert( v.item_id, true, v.time_stamp24 )
+				elseif v.code == "ItemReturned" and v.item_id ~= nil and v.item_id ~= "UNKNOWN" then
+					
 					if v.item_id ~= nil and trim(v.item_id) ~= "" then
 						kernel.invsvcs_return(
 							StoreID,
@@ -116,6 +138,7 @@ local result = hardware_manager:return_unknown(
 							v.slot,
 							v.return_time )
 					end
+
 					local deck_slot_string = " Deck: " .. tostring(v.deck) .. " Slot: " .. tostring(v.slot)
 					kernel.healthsvcs_sendauditevent(
 						StoreID,
@@ -125,7 +148,7 @@ local result = hardware_manager:return_unknown(
 						"Barcode: " .. tostring(v.item_id) .. deck_slot_string )
 					
 					-- Send DiscAction Message
-					if DiscActionLogging == true and v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+					if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
 						barcode_list = { }
 						barcode_list[1] = { tostring(v.item_id), "0" } -- action 0=Inserted  1=Removed
 						kernel.fmadiscaction(
@@ -135,42 +158,16 @@ local result = hardware_manager:return_unknown(
 							v.time_stamp24,
 							barcode_list)
 					end
-					
+		
+                    local product_name = "UNKNOWN"
                     local product = BarcodeToProduct[v.item_id]
                     if product ~= nil then
 						local master_product = MasterProductCatalog[product.product_id]
 						if master_product ~= nil then 
 							product_name = MasterProductCatalog[product.product_id].long_name 
 						end
-						local history = ProductHistory[product.product_id]
-						if history ~= nil then
-							if ( history.ofr_count or 0 ) > 0 then history.ofr_count = (history.ofr_count or 0 ) - 1 end
-							history.on_hand_count = (history.on_hand_count or 0 ) + 1
-							ProductHistory[product.product_id] = history
-						end
-						if product.status == "Fraud" then
-							kernel.updatefraudstatus(
-								StoreID,
-								v.item_id,
-								"false",
-								v.time_stamp,
-								function( result )
-									if result.success == true then
-										local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
-                                        local new_status = get_rapid_status( v.item_id, "Known" )
-										BarcodePosition[deck_slot_key] = { ["barcode"] = tostring( v.item_id ), ["status"] = new_status }
-										local barcodes = ProductToBarcode[product.product_id]
-										if barcodes ~= nil then
-											barcodes[v.item_id].status = new_status
-											ProductToBarcode[product.product_id] = barcodes
-										end
-										product.status = new_status
-										reload_inventory()
-									end
-								end
-							)
-						end
                     end
+
 					set_text( "'" .. product_name .. "' was added to inventory at" .. deck_slot_string )
 					kernel.logto( "FieldMaintenanceActionLog","Inserted Disc Barcode :".. tostring(v.item_id) )
 				elseif v.code == "ItemReturned" then
@@ -212,8 +209,3 @@ local result = hardware_manager:return_unknown(
 	function()
 		set_text( "Please Wait" )
 	end )
-
-
-
-
-

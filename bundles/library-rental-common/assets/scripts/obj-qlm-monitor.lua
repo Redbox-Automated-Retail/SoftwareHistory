@@ -138,10 +138,8 @@ local function qlm_unload_msg( job, result_table )
 	local unknownputaway = 0
 
 	-- build barcode_list for DiscAction messgage
-	if DiscActionLogging == true then
-		barcode_list = { }
-		time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDayHourMin ie: 201312242359
-	end
+	barcode_list = { }
+	time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDayHourMin ie: 201312242359
 				
 	for _, v in ipairs(results) do
 		log_result( v )
@@ -156,14 +154,13 @@ local function qlm_unload_msg( job, result_table )
 			sync_inventory( v )
 		end
 
-		if DiscActionLogging == true then
-			if v.code == "QlmUnloadBarcodeFromQlm" then
-				time_stamp = v.time_stamp24
-				if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
-					barcode_list[#barcode_list + 1] = { v.item_id, "0" } -- action 0=Inserted  1=Removed
-				end
+		if v.code == "QlmUnloadBarcodeFromQlm" then
+			time_stamp = v.time_stamp24
+			if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+				barcode_list[#barcode_list + 1] = { v.item_id, "0" } -- action 0=Inserted  1=Removed
 			end
 		end
+
 		result_msg = result_msg .. "&nbsp;&nbsp;&nbsp;&nbsp;" .. v.message
 		if v.deck ~= 0 and v.slot ~= 0 then
 			result_msg = result_msg .. " Deck: " .. v.deck .. " Slot: " .. v.slot
@@ -186,25 +183,23 @@ local function qlm_unload_msg( job, result_table )
 	msg = msg .. result_msg
 
 	-- Send DiscAction Message
-	if DiscActionLogging == true then
-		if ( #barcode_list > 0 ) then
-			-- Get the job name
-			local job_name = job.program
+	if ( #barcode_list > 0 ) then
+		-- Get the job name
+		local job_name = job.program
 			
-			-- VMZ machines use the same qlm-unload job
-			-- So for VMZ machines, change the job name to the fictitious job name
-			local VMZEnabledMachine = ( qlm_deck == nil or qlm_deck == 0 )
-			if VMZEnabledMachine == true then
-				job_name = "vmz-unload"
-			end
-			
-			kernel.fmadiscaction(
-				kernel.getmachinevalueordefault("Store","ID","N/A"),
-				tostring(extractUsernameFromLabel( job.label ) ),
-				job_name,
-				time_stamp,
-				barcode_list)
+		-- VMZ machines use the same qlm-unload job
+		-- So for VMZ machines, change the job name to the fictitious job name
+		local VMZEnabledMachine = ( qlm_deck == nil or qlm_deck == 0 )
+		if VMZEnabledMachine == true then
+			job_name = "vmz-unload"
 		end
+			
+		kernel.fmadiscaction(
+			kernel.getmachinevalueordefault("Store","ID","N/A"),
+			tostring(extractUsernameFromLabel( job.label ) ),
+			job_name,
+			time_stamp,
+			barcode_list)
 	end
 	
 	return msg
@@ -220,10 +215,8 @@ local function qlm_thin_msg( job, result_table )
 	local putaway = 0
 
 	-- build barcode_list for DiscAction messgage
-	if DiscActionLogging == true then
-		barcode_list = { }
-		time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDayHourMin ie: 201312242359
-	end
+	barcode_list = { }
+	time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDayHourMin ie: 201312242359
 	
 	for _, v in ipairs(results) do
 		log_result( v )
@@ -232,11 +225,9 @@ local function qlm_thin_msg( job, result_table )
 			--Need to update inventory REMOVED
 			sync_inventory( v )
 			
-			if DiscActionLogging == true then
-				time_stamp = v.time_stamp24
-				if  v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
-					barcode_list[#barcode_list + 1] = { v.item_id, "1" } -- action 0=Inserted  1=Removed
-				end
+			time_stamp = v.time_stamp24
+			if  v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+				barcode_list[#barcode_list + 1] = { v.item_id, "1" } -- action 0=Inserted  1=Removed
 			end
 		end
 		result_msg = result_msg .. "&nbsp;&nbsp;&nbsp;&nbsp;" .. v.message
@@ -262,16 +253,15 @@ local function qlm_thin_msg( job, result_table )
 	msg = msg .. result_msg
 	
 	-- Send DiscAction Message
-	if DiscActionLogging == true then
-		if ( #barcode_list > 0 ) then
-			kernel.fmadiscaction(
-				kernel.getmachinevalueordefault("Store","ID","N/A"),
-				tostring(extractUsernameFromLabel( job.label ) ),
-				job.program,
-				time_stamp,
-				barcode_list)
-		end
+	if ( #barcode_list > 0 ) then
+		kernel.fmadiscaction(
+			kernel.getmachinevalueordefault("Store","ID","N/A"),
+			tostring(extractUsernameFromLabel( job.label ) ),
+			job.program,
+			time_stamp,
+			barcode_list)
 	end
+
 	return msg
 end
 
@@ -289,10 +279,8 @@ local function qlm_unload_thin_msg( job, result_table )
 	local putaway_thin  = 0
 
 	-- build barcode_list for DiscAction messgage
-	if DiscActionLogging == true then
-		barcode_list = { }
-		time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDatHourMin ie: 201312242359
-	end
+	barcode_list = { }
+	time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDatHourMin ie: 201312242359
 	
 	for _, v in ipairs(results) do
 	log_result( v )
@@ -301,25 +289,22 @@ local function qlm_unload_thin_msg( job, result_table )
 		--Need to update inventory just ADDED
 		sync_inventory( v )
 
-
-		if DiscActionLogging == true then
-			time_stamp = v.time_stamp24
-			if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
-				barcode_list[#barcode_list + 1] = { v.item_id, "0" } -- action 0=Inserted  1=Removed
-			end
+		time_stamp = v.time_stamp24
+		if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+			barcode_list[#barcode_list + 1] = { v.item_id, "0" } -- action 0=Inserted  1=Removed
 		end
+
 	end
 	if v.code ==  "ThinTransferSuccessful" then
 		putaway_thin = putaway_thin + 1
 		--Need to update inventory just ADDED
 		sync_inventory( v )
 
-		if DiscActionLogging == true then
-			time_stamp = v.time_stamp24
-			if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
-				barcode_list[#barcode_list + 1] = { v.item_id, "1" } -- action 0=Inserted  1=Removed
-			end
+		time_stamp = v.time_stamp24
+		if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+			barcode_list[#barcode_list + 1] = { v.item_id, "1" } -- action 0=Inserted  1=Removed
 		end
+
 	end
 	result_msg = result_msg .. "&nbsp;&nbsp;&nbsp;&nbsp;" .. v.message
 	if v.deck ~= 0
@@ -341,16 +326,15 @@ local function qlm_unload_thin_msg( job, result_table )
 		msg = msg .. result_msg
 		
 	-- Send DiscAction Message
-	if DiscActionLogging == true then
-		if ( #barcode_list > 0 ) then
-			kernel.fmadiscaction(
-				kernel.getmachinevalueordefault("Store","ID","N/A"),
-				tostring(extractUsernameFromLabel( job.label ) ),
-				job.program,
-				time_stamp,
-				barcode_list)
-		end
+	if ( #barcode_list > 0 ) then
+		kernel.fmadiscaction(
+			kernel.getmachinevalueordefault("Store","ID","N/A"),
+			tostring(extractUsernameFromLabel( job.label ) ),
+			job.program,
+			time_stamp,
+			barcode_list)
 	end
+
 	return msg
 end
 
@@ -399,10 +383,8 @@ local function vmz_thin_msg( job, result_table )
 	local dumpbin = 0
 
 	-- build barcode_list for DiscAction messgage
-	if DiscActionLogging == true then
-		barcode_list = { }
-		time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDatHourMin ie: 201312242359
-	end
+	barcode_list = { }
+	time_stamp = os.date("%Y%m%d%H%M") -- YearMonthDatHourMin ie: 201312242359
 	
 	for _, v in ipairs(results) do
 		log_result( v )
@@ -410,12 +392,11 @@ local function vmz_thin_msg( job, result_table )
 			if v.deck == 0 and v.slot == 0 then
 				dumpbin = dumpbin + 1
 				
-				if DiscActionLogging == true then
-					time_stamp = v.time_stamp24
-					if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
-						barcode_list[#barcode_list + 1] = { v.item_id, "1" } -- action 0=Inserted  1=Removed
-					end
+				time_stamp = v.time_stamp24
+				if v.item_id ~= nil and v.item_id ~= "UNKNOWN" and v.item_id ~="" then
+					barcode_list[#barcode_list + 1] = { v.item_id, "1" } -- action 0=Inserted  1=Removed
 				end
+
 			else
 				putaway = putaway + 1
 			end
@@ -452,16 +433,14 @@ local function vmz_thin_msg( job, result_table )
 
 	msg = msg .. result_msg
 	
-	if DiscActionLogging == true then
-		-- Send DiscAction Message
-		if ( #barcode_list > 0 ) then
-			kernel.fmadiscaction(
-				kernel.getmachinevalueordefault("Store","ID","N/A"),
-				tostring(extractUsernameFromLabel( job.label ) ),
-				job.program,
-				time_stamp,
-				barcode_list)
-		end
+	-- Send DiscAction Message
+	if ( #barcode_list > 0 ) then
+		kernel.fmadiscaction(
+			kernel.getmachinevalueordefault("Store","ID","N/A"),
+			tostring(extractUsernameFromLabel( job.label ) ),
+			job.program,
+			time_stamp,
+			barcode_list)
 	end
 		
 	send_thin_rebalance_information()

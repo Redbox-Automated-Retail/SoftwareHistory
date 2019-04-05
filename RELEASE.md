@@ -1,17 +1,17 @@
-# Zelda SR2 (2018-05-21)
+# KISS 1.1 (2019-04-05)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2018-05-21
-- Store labels: kop-rental-bundles-ZeldaSR2
+- Date (first download in the snapshots): 2019-04-05
+- Store labels: kop-rental-bundles-KISS1.1
 - Package revisions:
-  - `kop-rental-bundles` revision 77 (`B548E8C1ED093BA76148FBEA359264232F30AC15`)
+  - `kop-rental-bundles` revision 107 (`26C1837CFB691FEECE2947FD15CA740E7C9954F0`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `6F75A21BBEE258455B007FDCAEC8AE887AB7EB59` | exact |
-| `fm.bundle` |  |  | `778D20BAD89F59869D98EC133CC77061BDEDDB0E` | exact |
-| `library-rental-common.bundle` |  |  | `E8D4ED15651F611384468BC5F0CDAF97BA241EA2` | exact |
-| `ra-2.x.bundle` |  |  | `14216F0360404D37CC14CACE6327A88377C00D1D` | exact |
+| `cp.bundle` |  |  | `042CF2179412608FA106E7E8DBB5153956604B5A` | exact |
+| `fm.bundle` |  |  | `28C393FBB7AFE85CB61DE03064457CC40F673FF3` | exact |
+| `library-rental-common.bundle` |  |  | `00BA2D23137294E0AABB548FEC383E45B503AC92` | exact |
+| `ra-2.x.bundle` |  |  | `F5687FEF41036F7907A20D14DC41223E628F3D08` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

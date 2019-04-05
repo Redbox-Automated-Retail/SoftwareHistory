@@ -12,7 +12,7 @@ if not kernel.timerexists( "rnf_idle_timer" ) then
 	rnf_idle_timer:initialize(
 		40000,
 		function()
-			kernel.executescript( "start_over" )
+			kernel.close_open_session_and_start_new_rental_session()
 		end )		
 end
 
@@ -22,6 +22,6 @@ rnf_idle_timer:start()
 kernel.registeractorhitnotify(
 	"reservation_not_found_ok_button",
 	function()
-		kernel.executescript( "start_over" )
+		kernel.close_open_session_and_start_new_rental_session()
 	end )
 
