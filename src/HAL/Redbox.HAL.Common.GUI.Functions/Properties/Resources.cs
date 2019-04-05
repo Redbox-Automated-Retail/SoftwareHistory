@@ -1,16 +1,15 @@
 ﻿using System.CodeDom.Compiler;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Globalization;
 using System.Resources;
 using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.Common.GUI.Functions.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [DebuggerNonUserCode]
 [CompilerGenerated]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 public class Resources
 {
 	private static ResourceManager resourceMan;
@@ -22,9 +21,10 @@ public class Resources
 	{
 		get
 		{
-			if (resourceMan == null)
+			if (object.ReferenceEquals(resourceMan, null))
 			{
-				resourceMan = new ResourceManager("Redbox.HAL.Common.GUI.Functions.Properties.Resources", typeof(Resources).Assembly);
+				ResourceManager resourceManager = new ResourceManager("Redbox.HAL.Common.GUI.Functions.Properties.Resources", typeof(Resources).Assembly);
+				resourceMan = resourceManager;
 			}
 			return resourceMan;
 		}
@@ -42,12 +42,6 @@ public class Resources
 			resourceCulture = value;
 		}
 	}
-
-	internal static Bitmap sortAscending2 => (Bitmap)ResourceManager.GetObject("sortAscending2", resourceCulture);
-
-	internal static Bitmap sortDescending2 => (Bitmap)ResourceManager.GetObject("sortDescending2", resourceCulture);
-
-	internal static Bitmap undo => (Bitmap)ResourceManager.GetObject("undo", resourceCulture);
 
 	internal Resources()
 	{

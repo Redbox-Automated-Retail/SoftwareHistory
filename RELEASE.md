@@ -1,12 +1,12 @@
 # KISS (1.12.1.52)
 
-- Product: HAL Utilities 1.12.1.52
+- Product: MS HAL Tester 1.12.1.52
 - Date (first download in the snapshots): 2019-04-05
-- Store labels: kop-tools-KISS
+- Store labels: kop-ms-hal-tester-KISS
 - Package revisions:
   - `kop-tools` revision 52 (`6D9C0BE246480B98976B16A827E80B635F3DF80D`)
   - `kop-hal-install` revision 53 (`20571A8E81C1A4F4113535CE7309266C2B4D5276`)
-  - `kop-ms-hal-tester` revision 44 (`34443AE8011771DAFFEC5D1F7583D30EADD66098`)
+  - `kop-ms-hal-tester` revision 53 (`29AE51BA3CA4E35A4243585FA7CEF68BA349A9ED`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `B0819F918CF273AA9B3DCC6CCA8CA25614F452F2` | exact |
 | `unload-thin.hs` |  |  | `821D229607A964D1329B5FB4C13336A1BE13D0A0` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.10.2.5 | `BDD3B053F48B9DAE5045FA64D45246C0064B32E9` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.12.1.52 | `41FABB6D4855094E24FEB362196FB636A7999D84` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

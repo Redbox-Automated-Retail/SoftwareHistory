@@ -18,10 +18,10 @@ public sealed class OneDiskQuickTest : JobExecutor
 		DeckCount = count;
 	}
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(DeckCount);
-		job.Push(SourceSlot);
-		job.Push(SourceDeck);
+		base.Job.Push(DeckCount);
+		base.Job.Push(SourceSlot);
+		base.Job.Push(SourceDeck);
 	}
 }

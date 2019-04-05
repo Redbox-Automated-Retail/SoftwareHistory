@@ -8,54 +8,83 @@ public static class CompositeFunctions
 {
 	public static void VendDisk(HardwareService service, OutputBox box)
 	{
-		using VendDiskInPickerJob vendDiskInPickerJob = new VendDiskInPickerJob(service);
-		vendDiskInPickerJob.Run();
-		foreach (ProgramResult result in vendDiskInPickerJob.Results)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0007: Expected O, but got Unknown
+		VendDiskInPickerJob val = new VendDiskInPickerJob(service);
+		try
 		{
-			box.Write(result.Code);
-			if (result.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
+			((JobExecutor)val).Run();
+			foreach (ProgramResult result in ((JobExecutor)val).Results)
 			{
-				box.Write("Disk was taken.");
-				return;
+				box.Write(result.Code);
+				if (result.Code.Equals("ItemVended", StringComparison.CurrentCultureIgnoreCase))
+				{
+					box.Write("Disk was taken.");
+					return;
+				}
+				if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
+				{
+					box.Write(result.Message);
+				}
 			}
-			if (result.Code.Equals("HardwareError", StringComparison.CurrentCultureIgnoreCase))
-			{
-				box.Write(result.Message);
-			}
+			box.Write("Disk not taken - pulled back in.");
 		}
-		box.Write("Disk not taken - pulled back in.");
+		finally
+		{
+			((IDisposable)val)?.Dispose();
+		}
 	}
 
 	public static bool GetItem(int deck, int slot, OutputBox box, HardwareService service)
 	{
-		using GetAndCenterResult getAndCenterResult = new GetAndCenterResult(service, deck, slot, center: false);
-		getAndCenterResult.Run();
-		box.Write("GetDVD ended with status {0}", getAndCenterResult.EndStatus.ToString());
-		int num = 0;
-		foreach (ProgramResult result in getAndCenterResult.Results)
+		//IL_0004: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000a: Expected O, but got Unknown
+		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		GetAndCenterResult val = new GetAndCenterResult(service, deck, slot, false);
+		try
 		{
-			if (result.Code == "ErrorMessage")
+			((JobExecutor)val).Run();
+			box.Write("GetDVD ended with status {0}", ((object)((JobExecutor)val).EndStatus/*cast due to constrained. prefix*/).ToString());
+			int num = 0;
+			foreach (ProgramResult result in ((JobExecutor)val).Results)
 			{
-				num++;
+				if (result.Code == "ErrorMessage")
+				{
+					num++;
+				}
+				box.Write(result.Message);
 			}
-			box.Write(result.Message);
+			return num == 0;
 		}
-		return num == 0;
+		finally
+		{
+			((IDisposable)val)?.Dispose();
+		}
 	}
 
 	public static bool PutItem(HardwareService service, int deck, int slot, OutputBox box)
 	{
-		using PutInLocationResult putInLocationResult = new PutInLocationResult(service, deck, slot);
-		putInLocationResult.Run();
-		int num = 0;
-		foreach (ProgramResult result in putInLocationResult.Results)
+		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0009: Expected O, but got Unknown
+		PutInLocationResult val = new PutInLocationResult(service, deck, slot);
+		try
 		{
-			if (result.Code == "JobError")
+			((JobExecutor)val).Run();
+			int num = 0;
+			foreach (ProgramResult result in ((JobExecutor)val).Results)
 			{
-				num++;
+				if (result.Code == "JobError")
+				{
+					num++;
+				}
+				box.Write(result.Message);
 			}
-			box.Write(result.Message);
+			return num == 0;
 		}
-		return num == 0;
+		finally
+		{
+			((IDisposable)val)?.Dispose();
+		}
 	}
 }

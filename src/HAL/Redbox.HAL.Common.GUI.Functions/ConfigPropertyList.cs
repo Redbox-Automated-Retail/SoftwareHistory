@@ -9,6 +9,7 @@ using Redbox.HAL.Client;
 using Redbox.HAL.Common.GUI.Functions.Properties;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Configuration;
+using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -123,7 +124,7 @@ public class ConfigPropertyList : UserControl, IDisposable
 		{
 			if (m_cameraConfig != null)
 			{
-				if (!Service.SetConfiguration("camera", m_camera.InnerXml).Success)
+				if (!((ClientCommandResult)(object)Service.SetConfiguration("camera", m_camera.InnerXml)).Success)
 				{
 					SaveFailed();
 					return;
@@ -135,7 +136,7 @@ public class ConfigPropertyList : UserControl, IDisposable
 			}
 			if (m_controllerConfig != null)
 			{
-				if (!Service.SetConfiguration("controller", m_controller.InnerXml).Success)
+				if (!((ClientCommandResult)(object)Service.SetConfiguration("controller", m_controller.InnerXml)).Success)
 				{
 					SaveFailed();
 					return;
@@ -186,14 +187,14 @@ public class ConfigPropertyList : UserControl, IDisposable
 	private XmlDocument LoadConfigurationInner(Configuration conf, List<ConfigItem> list)
 	{
 		HardwareCommandResult configuration = Service.GetConfiguration(conf.ToString());
-		if (!configuration.Success)
+		if (!((ClientCommandResult)(object)configuration).Success)
 		{
 			return null;
 		}
 		XmlDocument xmlDocument = new XmlDocument();
 		try
 		{
-			xmlDocument.LoadXml(configuration.CommandMessages[0]);
+			xmlDocument.LoadXml(((ClientCommandResult)(object)configuration).CommandMessages[0]);
 		}
 		catch (Exception e)
 		{

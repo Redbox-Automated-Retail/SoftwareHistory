@@ -28,13 +28,22 @@ public sealed class ReadBarcodeResult
 
 	public static ReadBarcodeResult ReadBarcodeOfDiskInPicker(HardwareService service)
 	{
-		using ReadDiskJob readDiskJob = new ReadDiskJob(service);
-		readDiskJob.Run();
-		if (readDiskJob.EndStatus == HardwareJobStatus.Errored || readDiskJob.Errors.ContainsError())
+		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Invalid comparison between Unknown and I4
+		ReadDiskJob readDiskJob = new ReadDiskJob(service);
+		try
 		{
-			return CreateErrorResult();
+			((JobExecutor)readDiskJob).Run();
+			if ((int)((JobExecutor)readDiskJob).EndStatus == 3 || ((JobExecutor)readDiskJob).Errors.ContainsError())
+			{
+				return CreateErrorResult();
+			}
+			return FromResults(((JobExecutor)readDiskJob).Results);
 		}
-		return FromResults(readDiskJob.Results);
+		finally
+		{
+			((IDisposable)readDiskJob)?.Dispose();
+		}
 	}
 
 	public static ReadBarcodeResult FromResults(List<ProgramResult> results)

@@ -8,7 +8,8 @@ internal sealed class TransferDisk
 
 	internal string Transfer(TransferLocation source, TransferLocation target)
 	{
-		if (!Service.ExecuteImmediate($"XFER SRC-DECK={source.Deck} SRC-SLOT={source.Slot} DEST-DECK={target.Deck} DEST-SLOT={target.Slot}", 120000, out var job).Success)
+		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate($"XFER SRC-DECK={source.Deck} SRC-SLOT={source.Slot} DEST-DECK={target.Deck} DEST-SLOT={target.Slot}", 120000, out var job);
+		if (!hardwareCommandResult.Success)
 		{
 			return "SERVICE COMM ERROR";
 		}

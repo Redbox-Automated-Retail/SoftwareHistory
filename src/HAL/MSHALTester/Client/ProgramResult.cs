@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Redbox.HAL.Client;
 
@@ -23,6 +25,8 @@ public sealed class ProgramResult
 
 	public ResultItem PreviousItem { get; internal set; }
 
+	public IDictionary<string, object> MessageData { get; internal set; }
+
 	public ProgramResult(Guid id, DateTime timeStamp, int deck, int slot, string code, string itemId, string message)
 	{
 		ID = id;
@@ -39,44 +43,47 @@ public sealed class ProgramResult
 		string[] array = value.Split("|".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 		if (string.Compare(array[0], "RESULT", ignoreCase: true) == 0 && array.Length >= 7)
 		{
-			ProgramResult programResult = new ProgramResult
-			{
-				ID = new Guid(array[1]),
-				TimeStamp = DateTime.Parse(array[2]),
-				Code = array[3].Trim()
-			};
+			ProgramResult programResult = new ProgramResult();
+			programResult.ID = new Guid(array[1]);
+			programResult.TimeStamp = DateTime.Parse(array[2]);
+			programResult.Code = array[3].Trim();
+			ProgramResult programResult2 = programResult;
 			string[] array2 = array[4].Trim().Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 			if (array2.Length == 2)
 			{
 				if (int.TryParse(array2[0], out var result))
 				{
-					programResult.Deck = result;
+					programResult2.Deck = result;
 				}
 				if (int.TryParse(array2[1], out result))
 				{
-					programResult.Slot = result;
+					programResult2.Slot = result;
 				}
 			}
 			string text = array[5].Trim();
 			if (text != "~")
 			{
-				programResult.ItemID = new ResultItem(text);
+				programResult2.ItemID = new ResultItem(text);
 			}
-			programResult.Message = array[6];
+			programResult2.Message = array[6];
+			if (!string.IsNullOrEmpty(programResult2.Message) && programResult2.Message.StartsWith("{"))
+			{
+				programResult2.MessageData = JsonConvert.DeserializeObject<IDictionary<string, object>>(programResult2.Message);
+			}
 			if (9 == array.Length)
 			{
 				string text2 = array[7].Trim();
 				if (text2 != "~")
 				{
-					programResult.ReturnTime = DateTime.Parse(text2);
+					programResult2.ReturnTime = DateTime.Parse(text2);
 				}
 				string text3 = array[8].Trim();
 				if (text3 != "~")
 				{
-					programResult.PreviousItem = new ResultItem(text3);
+					programResult2.PreviousItem = new ResultItem(text3);
 				}
 			}
-			return programResult;
+			return programResult2;
 		}
 		return null;
 	}

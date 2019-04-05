@@ -6,22 +6,22 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.MSHALTester.Properties;
 
-[CompilerGenerated]
 [GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
+[CompilerGenerated]
 public sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
 
 	public static Settings Default => defaultInstance;
 
-	[ApplicationScopedSetting]
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("rcp://127.0.0.1:7001")]
+	[DebuggerNonUserCode]
+	[ApplicationScopedSetting]
 	public string CommunicationURL => (string)this["CommunicationURL"];
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("70000")]
+	[ApplicationScopedSetting]
 	public int ImmediateMoveTimeout => (int)this["ImmediateMoveTimeout"];
 
 	[ApplicationScopedSetting]
@@ -29,24 +29,24 @@ public sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("True")]
 	public bool CheckForRunningHAL => (bool)this["CheckForRunningHAL"];
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("False")]
+	[ApplicationScopedSetting]
 	public bool AllowSessionDisplay => (bool)this["AllowSessionDisplay"];
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
+	[ApplicationScopedSetting]
 	[DefaultSettingValue("True")]
 	public bool UsbServiceDebug => (bool)this["UsbServiceDebug"];
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
+	[ApplicationScopedSetting]
 	[DefaultSettingValue("True")]
 	public bool TestCommOnStartup => (bool)this["TestCommOnStartup"];
 
 	[UserScopedSetting]
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log")]
+	[DebuggerNonUserCode]
 	public string CountersFile
 	{
 		get
@@ -59,20 +59,30 @@ public sealed class Settings : ApplicationSettingsBase
 		}
 	}
 
-	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
+	[ApplicationScopedSetting]
 	[DefaultSettingValue("5000")]
 	public int RouterRelayPause => (int)this["RouterRelayPause"];
 
 	[ApplicationScopedSetting]
-	[DebuggerNonUserCode]
 	[DefaultSettingValue("False")]
+	[DebuggerNonUserCode]
 	public bool DisplayEngineeringTab => (bool)this["DisplayEngineeringTab"];
+
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("c:\\Program Files\\Redbox\\HALService\\video")]
+	[ApplicationScopedSetting]
+	public string ImageDirectory => (string)this["ImageDirectory"];
 
 	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
-	[DefaultSettingValue("500")]
-	public int BootInitPause => (int)this["BootInitPause"];
+	[DefaultSettingValue("c:\\Program Files\\Redbox\\halservice\\bin\\CameraTuner.exe")]
+	public string TunerApplication => (string)this["TunerApplication"];
+
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("2500")]
+	[ApplicationScopedSetting]
+	public int TunerStartPause => (int)this["TunerStartPause"];
 
 	private void SettingChangingEventHandler(object sender, SettingChangingEventArgs e)
 	{

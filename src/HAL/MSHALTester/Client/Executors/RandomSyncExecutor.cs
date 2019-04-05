@@ -15,9 +15,9 @@ public sealed class RandomSyncExecutor : JobExecutor
 		VendFrequency = frequency;
 	}
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(VendTime);
-		job.Push(VendFrequency);
+		base.Job.Push(VendTime);
+		base.Job.Push(VendFrequency);
 	}
 }

@@ -8,6 +8,7 @@ using Redbox.HAL.Client;
 using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
+using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -58,9 +59,9 @@ public class ConfiguredDevicesForm : Form
 
 		protected override void SetupJob(HardwareJob job)
 		{
-			job.Push(IterationPause);
-			job.Push(ScanPause);
-			job.Push(Iterations);
+			job.Push(new object[1] { IterationPause });
+			job.Push(new object[1] { ScanPause });
+			job.Push(new object[1] { Iterations });
 		}
 
 		internal FraudStressTestExecutor(HardwareService service, int iterations, int scanPause, int iterationPause)
@@ -80,7 +81,7 @@ public class ConfiguredDevicesForm : Form
 
 		protected override void SetupJob(HardwareJob job)
 		{
-			job.Push(StartupPause);
+			job.Push(new object[1] { StartupPause });
 		}
 
 		internal FraudDetectionTestExecutor(HardwareService service, int startupPause)
@@ -431,6 +432,9 @@ public class ConfiguredDevicesForm : Form
 
 	public ConfiguredDevicesForm(HardwareService service)
 	{
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c4: Expected O, but got Unknown
+		base._002Ector();
 		InitializeComponent();
 		OutputBox = new ConfiguredDeviceOuptutBox(m_cortexStatusBox);
 		Service = service;
@@ -443,15 +447,20 @@ public class ConfiguredDevicesForm : Form
 		EngineeringOutput = new ConfiguredDeviceOuptutBox(m_engineeringOutput);
 		ExchangerState = new AirExchangerState(service);
 		IrOutput = new ConfiguredDeviceOuptutBox(m_irCameraOutput);
-		using (MachineConfiguration machineConfiguration = new MachineConfiguration(Service))
+		MachineConfiguration val = new MachineConfiguration(Service);
+		try
 		{
-			machineConfiguration.Run();
-			ExchangerState.Configure(machineConfiguration);
-			HasFraudSensor = machineConfiguration.HasFraudDevice;
-			HasCortexCamera = !machineConfiguration.LegacyCamera;
-			HasRouterPowerRelay = machineConfiguration.HasRouterPowerRelay;
-			ArcusResetConfigured = machineConfiguration.ArcusResetConfigured;
-			m_irConfigured = machineConfiguration.HasIRHardware;
+			((JobExecutor)val).Run();
+			ExchangerState.Configure(val);
+			HasFraudSensor = val.HasFraudDevice;
+			HasCortexCamera = !val.LegacyCamera;
+			HasRouterPowerRelay = val.HasRouterPowerRelay;
+			ArcusResetConfigured = val.ArcusResetConfigured;
+			m_irConfigured = val.HasIRHardware;
+		}
+		finally
+		{
+			((IDisposable)val)?.Dispose();
 		}
 		listView1.Columns.Add("Component", 200);
 		listView1.Columns.Add("Value", 200);
@@ -710,11 +719,12 @@ public class ConfiguredDevicesForm : Form
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine($"SETCFG \"EnableSecureDiskValidator\" \"{hasFraudSensor.ToString()}\" TYPE=CONTROLLER");
 			stringBuilder.AppendLine(" CLEAR");
-			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
-			if (!hardwareCommandResult.Success)
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val2);
+			if (!((ClientCommandResult)(object)val).Success)
 			{
 				FraudSensorOutput.Write("Failed to update configuration.");
-				FraudSensorOutput.Dump(hardwareCommandResult);
+				FraudSensorOutput.Dump(val);
 			}
 			else
 			{
@@ -755,14 +765,23 @@ public class ConfiguredDevicesForm : Form
 
 	private void button3_Click(object sender, EventArgs e)
 	{
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Expected O, but got Unknown
 		using (Manager.MakeAspect(sender))
 		{
-			using TakeDiskAtDoorJob takeDiskAtDoorJob = new TakeDiskAtDoorJob(Service);
-			takeDiskAtDoorJob.Run();
-			takeDiskAtDoorJob.Results.ForEach(delegate(ProgramResult res)
+			TakeDiskAtDoorJob val = new TakeDiskAtDoorJob(Service);
+			try
 			{
-				OutputBox.Write("Code: {0} Message: {1}", res.Code, res.Message);
-			});
+				((JobExecutor)val).Run();
+				((JobExecutor)val).Results.ForEach(delegate(ProgramResult res)
+				{
+					OutputBox.Write("Code: {0} Message: {1}", res.Code, res.Message);
+				});
+			}
+			finally
+			{
+				((IDisposable)val)?.Dispose();
+			}
 		}
 	}
 
@@ -811,17 +830,24 @@ public class ConfiguredDevicesForm : Form
 
 	private void RunStressTest()
 	{
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Expected O, but got Unknown
 		int integer = m_scanPauseTB.GetInteger("Scan Pause", FraudSensorOutput);
 		int integer2 = m_stressIterationsTB.GetInteger("iterations", FraudSensorOutput);
 		int integer3 = m_readPauseTB.GetInteger("Iteration Pause", FraudSensorOutput);
-		using (FraudStressTestExecutor fraudStressTestExecutor = new FraudStressTestExecutor(Service, integer2, integer, integer3))
+		FraudStressTestExecutor fraudStressTestExecutor = new FraudStressTestExecutor(Service, integer2, integer, integer3);
+		try
 		{
-			fraudStressTestExecutor.AddSink(ProcessPostEvent);
-			fraudStressTestExecutor.Run();
-			fraudStressTestExecutor.Results.ForEach(delegate(ProgramResult pr)
+			((JobExecutor)fraudStressTestExecutor).AddSink(new HardwareEvent(ProcessPostEvent));
+			((JobExecutor)fraudStressTestExecutor).Run();
+			((JobExecutor)fraudStressTestExecutor).Results.ForEach(delegate(ProgramResult pr)
 			{
 				FraudSensorOutput.Write("{0} : {1}", pr.Code, pr.Message);
 			});
+		}
+		finally
+		{
+			((IDisposable)fraudStressTestExecutor)?.Dispose();
 		}
 		BeginInvoke((MethodInvoker)delegate
 		{
@@ -842,8 +868,15 @@ public class ConfiguredDevicesForm : Form
 		int integer = m_scanPauseTB.GetInteger("Scan Pause", FraudSensorOutput);
 		using (Manager.MakeAspect(sender))
 		{
-			using FraudDetectionTestExecutor fraudDetectionTestExecutor = new FraudDetectionTestExecutor(Service, integer);
-			fraudDetectionTestExecutor.Run();
+			FraudDetectionTestExecutor fraudDetectionTestExecutor = new FraudDetectionTestExecutor(Service, integer);
+			try
+			{
+				((JobExecutor)fraudDetectionTestExecutor).Run();
+			}
+			finally
+			{
+				((IDisposable)fraudDetectionTestExecutor)?.Dispose();
+			}
 		}
 	}
 
@@ -970,12 +1003,13 @@ public class ConfiguredDevicesForm : Form
 
 	private void button16_Click_1(object sender, EventArgs e)
 	{
-		if (!Service.GetKioskFunctionCheckData(out var sessions).Success)
+		IList<IKioskFunctionCheckData> list = default(IList<IKioskFunctionCheckData>);
+		if (!((ClientCommandResult)(object)Service.GetKioskFunctionCheckData(ref list)).Success)
 		{
 			return;
 		}
 		int num = 1;
-		foreach (IKioskFunctionCheckData item in sessions)
+		foreach (IKioskFunctionCheckData item in list)
 		{
 			WriteSessionData(item, num++);
 		}
@@ -997,39 +1031,48 @@ public class ConfiguredDevicesForm : Form
 
 	private void button11_Click(object sender, EventArgs e1)
 	{
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Expected O, but got Unknown
 		using (Manager.MakeAspect(sender))
 		{
-			using HardwareSurveyExecutor hardwareSurveyExecutor = new HardwareSurveyExecutor(Service);
-			using ExecutionTimer executionTimer = new ExecutionTimer();
-			hardwareSurveyExecutor.Run();
-			AddItem("Timestamp", hardwareSurveyExecutor.Timestamp.ToString());
-			AddItem("Camera", hardwareSurveyExecutor.CameraVersion);
-			string col = hardwareSurveyExecutor.TouchscreenFirmware;
+			HardwareSurveyExecutor val = new HardwareSurveyExecutor(Service);
 			try
 			{
-				Version version = new Version(hardwareSurveyExecutor.TouchscreenFirmware);
-				bool flag = version.Major == 4 && version.Minor == 30;
-				col = string.Format("{0} ( {1} CURRENT )", hardwareSurveyExecutor.TouchscreenFirmware, flag ? "MOST" : "NOT MOST");
+				using ExecutionTimer executionTimer = new ExecutionTimer();
+				((JobExecutor)val).Run();
+				AddItem("Timestamp", val.Timestamp.ToString());
+				AddItem("Camera", val.CameraVersion);
+				string col = val.TouchscreenFirmware;
+				try
+				{
+					Version version = new Version(val.TouchscreenFirmware);
+					bool flag = version.Major == 4 && version.Minor == 30;
+					col = string.Format("{0} ( {1} CURRENT )", val.TouchscreenFirmware, flag ? "MOST" : "NOT MOST");
+				}
+				catch (Exception)
+				{
+				}
+				AddItem("Touchscreen firmware", col);
+				AddItem("Touchscreen model", val.Touchscreen);
+				AddItem("ABE device", val.ABEDevice.ToString());
+				AddItem("Fraud sensor", val.FraudDevice.ToString());
+				AddItem("AuxRelay board", val.HasAuxRelayBoard ? "Yes" : "No");
+				AddItem("Air exchanger", val.AirExchanger.ToString());
+				AddItem("Quick return", val.QuickReturn.ToString());
+				AddItem("Disk free space", $"{val.FreeDiskSpace >> 30} GB");
+				AddItem("Memory", $"{val.Memory >> 20} GB");
+				AddItem("PC Model", val.PcModel);
+				AddItem("PC Manufacturer", val.PcManufacturer);
+				AddItem("UPS", val.UpsModel);
+				AddItem("Monitor Model", val.Monitor);
+				AddItem("Serial controller version", val.SerialControllerVersion);
+				executionTimer.Stop();
+				LogHelper.Instance.Log("[{0}] Hardware survey execution time = {1}", GetType().Name, executionTimer.Elapsed);
 			}
-			catch (Exception)
+			finally
 			{
+				((IDisposable)val)?.Dispose();
 			}
-			AddItem("Touchscreen firmware", col);
-			AddItem("Touchscreen model", hardwareSurveyExecutor.Touchscreen);
-			AddItem("ABE device", hardwareSurveyExecutor.ABEDevice.ToString());
-			AddItem("Fraud sensor", hardwareSurveyExecutor.FraudDevice.ToString());
-			AddItem("AuxRelay board", hardwareSurveyExecutor.HasAuxRelayBoard ? "Yes" : "No");
-			AddItem("Air exchanger", hardwareSurveyExecutor.AirExchanger.ToString());
-			AddItem("Quick return", hardwareSurveyExecutor.QuickReturn.ToString());
-			AddItem("Disk free space", $"{hardwareSurveyExecutor.FreeDiskSpace >> 30} GB");
-			AddItem("Memory", $"{hardwareSurveyExecutor.Memory >> 20} GB");
-			AddItem("PC Model", hardwareSurveyExecutor.PcModel);
-			AddItem("PC Manufacturer", hardwareSurveyExecutor.PcManufacturer);
-			AddItem("UPS", hardwareSurveyExecutor.UpsModel);
-			AddItem("Monitor Model", hardwareSurveyExecutor.Monitor);
-			AddItem("Serial controller version", hardwareSurveyExecutor.SerialControllerVersion);
-			executionTimer.Stop();
-			LogHelper.Instance.Log("[{0}] Hardware survey execution time = {1}", GetType().Name, executionTimer.Elapsed);
 		}
 	}
 
@@ -1056,10 +1099,11 @@ public class ConfiguredDevicesForm : Form
 				stringBuilder.AppendLine("SETCFG \"TrackHardwareCorrections\" \"TRUE\" TYPE=CONTROLLER");
 			}
 			stringBuilder.AppendLine(" CLEAR");
-			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
-			if (!hardwareCommandResult.Success)
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val2);
+			if (!((ClientCommandResult)(object)val).Success)
 			{
-				HardwareStatsOutput.Dump(hardwareCommandResult);
+				HardwareStatsOutput.Dump(val);
 				HardwareStatsOutput.Write("Failed to update configuration.");
 			}
 			else
@@ -1086,28 +1130,49 @@ public class ConfiguredDevicesForm : Form
 
 	private void m_testRouterRelay_Click(object sender, EventArgs e)
 	{
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Expected O, but got Unknown
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Expected O, but got Unknown
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareCommandResult hardwareCommandResult = Service.PowerCycleRouter(new HardwareJobSchedule
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.PowerCycleRouter(new HardwareJobSchedule
 			{
-				Priority = HardwareJobPriority.High
-			}, out var job);
-			if (hardwareCommandResult.Success)
+				Priority = (HardwareJobPriority)2
+			}, ref val2);
+			if (((ClientCommandResult)(object)val).Success)
 			{
-				using (ClientHelper clientHelper = new ClientHelper(Service))
+				ClientHelper val3 = new ClientHelper(Service);
+				try
 				{
-					clientHelper.WaitForJob(job, out var endStatus);
-					HardwareStatsOutput.Write("Power cycle router job {0} ended with status {1}", job.ID, endStatus);
+					HardwareJobStatus val4 = default(HardwareJobStatus);
+					val3.WaitForJob(val2, ref val4);
+					HardwareStatsOutput.Write("Power cycle router job {0} ended with status {1}", val2.ID, val4);
 					return;
 				}
+				finally
+				{
+					((IDisposable)val3)?.Dispose();
+				}
 			}
-			HardwareStatsOutput.Dump(hardwareCommandResult);
+			HardwareStatsOutput.Dump(val);
 			HardwareStatsOutput.Write("Failed to schedule router power cycle job.");
 		}
 	}
 
 	private void button24_Click(object sender, EventArgs e)
 	{
+		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Expected O, but got Unknown
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009a: Expected O, but got Unknown
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0100: Invalid comparison between I4 and Unknown
+		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a9: Invalid comparison between I4 and Unknown
 		HardwareCorrectionStatistic hardwareCorrectionStatistic = HardwareCorrectionStatistic.None;
 		foreach (Control control in m_hwCorrectiontypeGB.Controls)
 		{
@@ -1123,29 +1188,41 @@ public class ConfiguredDevicesForm : Form
 		}
 		if (hardwareCorrectionStatistic != HardwareCorrectionStatistic.None)
 		{
-			using (GetHardwareCorrectionStatistics getHardwareCorrectionStatistics = new GetHardwareCorrectionStatistics(Service, hardwareCorrectionStatistic))
+			GetHardwareCorrectionStatistics val = new GetHardwareCorrectionStatistics(Service, hardwareCorrectionStatistic);
+			try
 			{
-				getHardwareCorrectionStatistics.Run();
-				if (HardwareJobStatus.Completed != getHardwareCorrectionStatistics.EndStatus)
+				((JobExecutor)val).Run();
+				if (6 != (int)((JobExecutor)val).EndStatus)
 				{
 					HardwareStatsOutput.Write("Failed to get statistics from service.");
 				}
 				else
 				{
-					DumpHardwareStats(getHardwareCorrectionStatistics.Stats);
+					DumpHardwareStats(val.Stats);
 				}
 				return;
 			}
+			finally
+			{
+				((IDisposable)val)?.Dispose();
+			}
 		}
-		using GetAllHardwareCorrectionStatistics getAllHardwareCorrectionStatistics = new GetAllHardwareCorrectionStatistics(Service);
-		getAllHardwareCorrectionStatistics.Run();
-		if (HardwareJobStatus.Completed != getAllHardwareCorrectionStatistics.EndStatus)
+		GetAllHardwareCorrectionStatistics val2 = new GetAllHardwareCorrectionStatistics(Service);
+		try
 		{
-			HardwareStatsOutput.Write("Failed to get statistics from service.");
+			((JobExecutor)val2).Run();
+			if (6 != (int)((JobExecutor)val2).EndStatus)
+			{
+				HardwareStatsOutput.Write("Failed to get statistics from service.");
+			}
+			else
+			{
+				DumpHardwareStats(val2.Stats);
+			}
 		}
-		else
+		finally
 		{
-			DumpHardwareStats(getAllHardwareCorrectionStatistics.Stats);
+			((IDisposable)val2)?.Dispose();
 		}
 	}
 
@@ -1182,32 +1259,51 @@ public class ConfiguredDevicesForm : Form
 
 	private void button26_Click(object sender, EventArgs e)
 	{
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Expected O, but got Unknown
+		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Expected O, but got Unknown
+		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Invalid comparison between Unknown and I4
+		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b2: Expected O, but got Unknown
 		using (Manager.MakeAspect(sender))
 		{
-			if (!Service.ScheduleJob("ms-take-disk-at-door", string.Empty, enableDebugging: false, new HardwareJobSchedule
+			HardwareJob val = default(HardwareJob);
+			if (!((ClientCommandResult)(object)Service.ScheduleJob("ms-take-disk-at-door", string.Empty, false, new HardwareJobSchedule
 			{
-				Priority = HardwareJobPriority.High
-			}, out var job).Success)
+				Priority = (HardwareJobPriority)2
+			}, ref val)).Success)
 			{
 				EngineeringOutput.Write("Failed to schedule job");
 				return;
 			}
-			job.Pend();
-			using ClientHelper clientHelper = new ClientHelper(Service);
-			clientHelper.WaitForJob(job, out var endStatus);
-			if (endStatus != HardwareJobStatus.Completed)
+			val.Pend();
+			ClientHelper val2 = new ClientHelper(Service);
+			try
 			{
-				return;
+				HardwareJobStatus val3 = default(HardwareJobStatus);
+				val2.WaitForJob(val, ref val3);
+				if ((int)val3 != 6)
+				{
+					return;
+				}
+				ProgramResult[] array = default(ProgramResult[]);
+				if (!((ClientCommandResult)(object)val.GetResults(ref array)).Success)
+				{
+					EngineeringOutput.Write("Failed to get program results. I'm sorry!");
+					return;
+				}
+				ProgramResult[] array2 = array;
+				foreach (ProgramResult val4 in array2)
+				{
+					EngineeringOutput.Write(val4.Message);
+				}
 			}
-			if (!job.GetResults(out var results).Success)
+			finally
 			{
-				EngineeringOutput.Write("Failed to get program results. I'm sorry!");
-				return;
-			}
-			ProgramResult[] array = results;
-			foreach (ProgramResult programResult in array)
-			{
-				EngineeringOutput.Write(programResult.Message);
+				((IDisposable)val2)?.Dispose();
 			}
 		}
 	}
@@ -1219,6 +1315,13 @@ public class ConfiguredDevicesForm : Form
 
 	private void button29_Click(object sender, EventArgs e)
 	{
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Expected O, but got Unknown
+		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009d: Expected O, but got Unknown
+		//IL_017a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0181: Expected O, but got Unknown
 		using (Manager.MakeAspect(sender))
 		{
 			int sourceDeck = SourceDeck;
@@ -1235,36 +1338,39 @@ public class ConfiguredDevicesForm : Form
 				EngineeringOutput.Write("Please specify destination deck/slot properly");
 				return;
 			}
-			SyncRange range = new SyncRange(sourceDeck, destinationDeck, new Range(sourceSlot, destinationSlot));
-			if (!Service.HardSync(range, new HardwareJobSchedule
+			SyncRange val = new SyncRange(sourceDeck, destinationDeck, new Range(sourceSlot, destinationSlot));
+			HardwareJob val2 = default(HardwareJob);
+			if (!((ClientCommandResult)(object)Service.HardSync(val, new HardwareJobSchedule
 			{
-				Priority = HardwareJobPriority.Highest
-			}, out var job).Success)
+				Priority = (HardwareJobPriority)1
+			}, ref val2)).Success)
 			{
 				EngineeringOutput.Write("Unable to communicate with HAL.");
 				return;
 			}
-			job.Pend();
-			job.WaitForCompletion(300000);
-			if (job.GetSymbols(out var symbols).Success)
+			val2.Pend();
+			val2.WaitForCompletion(300000);
+			IDictionary<string, string> dictionary = default(IDictionary<string, string>);
+			if (((ClientCommandResult)(object)val2.GetSymbols(ref dictionary)).Success)
 			{
-				foreach (string key in symbols.Keys)
+				foreach (string key in dictionary.Keys)
 				{
 					if (key.StartsWith("MSTESTER-SYMBOL"))
 					{
-						EngineeringOutput.Write(symbols[key]);
+						EngineeringOutput.Write(dictionary[key]);
 					}
 				}
 			}
-			if (!job.GetResults(out var results).Success)
+			ProgramResult[] array = default(ProgramResult[]);
+			if (!((ClientCommandResult)(object)val2.GetResults(ref array)).Success)
 			{
 				EngineeringOutput.Write("Failed to get program results. I'm sorry!");
 				return;
 			}
-			ProgramResult[] array = results;
-			foreach (ProgramResult programResult in array)
+			ProgramResult[] array2 = array;
+			foreach (ProgramResult val3 in array2)
 			{
-				EngineeringOutput.Write(programResult.Message);
+				EngineeringOutput.Write(val3.Message);
 			}
 		}
 	}
@@ -1291,6 +1397,15 @@ public class ConfiguredDevicesForm : Form
 
 	private void button30_Click(object sender, EventArgs e)
 	{
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Expected O, but got Unknown
+		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Expected O, but got Unknown
+		//IL_0159: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0160: Expected O, but got Unknown
 		using (Manager.MakeAspect(sender))
 		{
 			int sourceDeck = SourceDeck;
@@ -1300,7 +1415,7 @@ public class ConfiguredDevicesForm : Form
 				EngineeringOutput.Write("Please specify deck/slot properly");
 				return;
 			}
-			List<Location> locations = new List<Location>
+			List<Location> list = new List<Location>
 			{
 				new Location
 				{
@@ -1308,35 +1423,38 @@ public class ConfiguredDevicesForm : Form
 					Slot = sourceSlot
 				}
 			};
-			if (!Service.HardSync(locations, "Engineering Location Sync", new HardwareJobSchedule
+			HardwareJob val = default(HardwareJob);
+			if (!((ClientCommandResult)(object)Service.HardSync(list, "Engineering Location Sync", new HardwareJobSchedule
 			{
-				Priority = HardwareJobPriority.Highest
-			}, out var job).Success)
+				Priority = (HardwareJobPriority)1
+			}, ref val)).Success)
 			{
 				EngineeringOutput.Write("Unable to communicate with HAL.");
 				return;
 			}
-			job.Pend();
-			job.WaitForCompletion(300000);
-			if (job.GetSymbols(out var symbols).Success)
+			val.Pend();
+			val.WaitForCompletion(300000);
+			IDictionary<string, string> dictionary = default(IDictionary<string, string>);
+			if (((ClientCommandResult)(object)val.GetSymbols(ref dictionary)).Success)
 			{
-				foreach (string key in symbols.Keys)
+				foreach (string key in dictionary.Keys)
 				{
 					if (key.StartsWith("MSTESTER-SYMBOL"))
 					{
-						EngineeringOutput.Write(symbols[key]);
+						EngineeringOutput.Write(dictionary[key]);
 					}
 				}
 			}
-			if (!job.GetResults(out var results).Success)
+			ProgramResult[] array = default(ProgramResult[]);
+			if (!((ClientCommandResult)(object)val.GetResults(ref array)).Success)
 			{
 				EngineeringOutput.Write("Failed to get program results. I'm sorry!");
 				return;
 			}
-			ProgramResult[] array = results;
-			foreach (ProgramResult programResult in array)
+			ProgramResult[] array2 = array;
+			foreach (ProgramResult val2 in array2)
 			{
-				EngineeringOutput.Write(programResult.Message);
+				EngineeringOutput.Write(val2.Message);
 			}
 		}
 	}
@@ -1375,18 +1493,30 @@ public class ConfiguredDevicesForm : Form
 		}
 	}
 
-	private void m_restartTouchscreen_Click(object sender, EventArgs e)
+	private unsafe void m_restartTouchscreen_Click(object sender, EventArgs e)
 	{
-		if (Service.ResetTouchscreenController(new HardwareJobSchedule
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Expected O, but got Unknown
+		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002f: Expected O, but got Unknown
+		HardwareJob val = default(HardwareJob);
+		if (((ClientCommandResult)(object)Service.ResetTouchscreenController(new HardwareJobSchedule
 		{
-			Priority = HardwareJobPriority.High
-		}, out var job).Success)
+			Priority = (HardwareJobPriority)2
+		}, ref val)).Success)
 		{
-			using (ClientHelper clientHelper = new ClientHelper(Service))
+			ClientHelper val2 = new ClientHelper(Service);
+			try
 			{
-				clientHelper.WaitForJob(job, out var endStatus);
-				HardwareStatsOutput.Write("Reset touchscreen controller ended with status {0}", endStatus.ToString());
+				HardwareJobStatus val3 = default(HardwareJobStatus);
+				val2.WaitForJob(val, ref val3);
+				HardwareStatsOutput.Write("Reset touchscreen controller ended with status {0}", ((object)(*(HardwareJobStatus*)(&val3))/*cast due to constrained. prefix*/).ToString());
 				return;
+			}
+			finally
+			{
+				((IDisposable)val2)?.Dispose();
 			}
 		}
 		HardwareStatsOutput.Write("Unable to schedule reset touchscreen job.");
@@ -1394,18 +1524,29 @@ public class ConfiguredDevicesForm : Form
 
 	private void m_restartArcus_Click(object sender, EventArgs e)
 	{
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Expected O, but got Unknown
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Invalid comparison between Unknown and I4
 		using (Manager.MakeAspect(sender))
 		{
-			using ResetMotionControlExecutor resetMotionControlExecutor = new ResetMotionControlExecutor(Service);
-			resetMotionControlExecutor.Run();
-			if (resetMotionControlExecutor.EndStatus != HardwareJobStatus.Completed)
+			ResetMotionControlExecutor val = new ResetMotionControlExecutor(Service);
+			try
 			{
-				HardwareStatsOutput.Write("ERROR: reset-arcus failed.");
-				return;
+				((JobExecutor)val).Run();
+				if ((int)((JobExecutor)val).EndStatus != 6)
+				{
+					HardwareStatsOutput.Write("ERROR: reset-arcus failed.");
+					return;
+				}
+				foreach (ProgramResult result in ((JobExecutor)val).Results)
+				{
+					HardwareStatsOutput.Write(result.Message);
+				}
 			}
-			foreach (ProgramResult result in resetMotionControlExecutor.Results)
+			finally
 			{
-				HardwareStatsOutput.Write(result.Message);
+				((IDisposable)val)?.Dispose();
 			}
 		}
 	}
@@ -1422,10 +1563,11 @@ public class ConfiguredDevicesForm : Form
 				stringBuilder.AppendLine("SETCFG \"TrackHardwareCorrections\" \"TRUE\" TYPE=CONTROLLER");
 			}
 			stringBuilder.AppendLine("CLEAR");
-			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
-			if (!hardwareCommandResult.Success)
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val2);
+			if (!((ClientCommandResult)(object)val).Success)
 			{
-				HardwareStatsOutput.Dump(hardwareCommandResult);
+				HardwareStatsOutput.Dump(val);
 				HardwareStatsOutput.Write("Failed to update configuration.");
 			}
 			else
@@ -1448,10 +1590,11 @@ public class ConfiguredDevicesForm : Form
 				stringBuilder.AppendLine("SETCFG \"TrackHardwareCorrections\" \"TRUE\" TYPE=CONTROLLER");
 			}
 			stringBuilder.AppendLine(" CLEAR");
-			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
-			if (!hardwareCommandResult.Success)
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val2);
+			if (!((ClientCommandResult)(object)val).Success)
 			{
-				HardwareStatsOutput.Dump(hardwareCommandResult);
+				HardwareStatsOutput.Dump(val);
 				HardwareStatsOutput.Write("Failed to update configuration.");
 			}
 			else
@@ -1464,22 +1607,35 @@ public class ConfiguredDevicesForm : Form
 
 	private void button38_Click(object sender, EventArgs e)
 	{
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Expected O, but got Unknown
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Expected O, but got Unknown
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareCommandResult hardwareCommandResult = Service.PowerCycleRouter(new HardwareJobSchedule
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.PowerCycleRouter(new HardwareJobSchedule
 			{
-				Priority = HardwareJobPriority.High
-			}, out var job);
-			if (hardwareCommandResult.Success)
+				Priority = (HardwareJobPriority)2
+			}, ref val2);
+			if (((ClientCommandResult)(object)val).Success)
 			{
-				using (ClientHelper clientHelper = new ClientHelper(Service))
+				ClientHelper val3 = new ClientHelper(Service);
+				try
 				{
-					clientHelper.WaitForJob(job, out var endStatus);
-					HardwareStatsOutput.Write("Power cycle router job {0} ended with status {1}", job.ID, endStatus);
+					HardwareJobStatus val4 = default(HardwareJobStatus);
+					val3.WaitForJob(val2, ref val4);
+					HardwareStatsOutput.Write("Power cycle router job {0} ended with status {1}", val2.ID, val4);
 					return;
 				}
+				finally
+				{
+					((IDisposable)val3)?.Dispose();
+				}
 			}
-			HardwareStatsOutput.Dump(hardwareCommandResult);
+			HardwareStatsOutput.Dump(val);
 			HardwareStatsOutput.Write("Failed to schedule router power cycle job.");
 		}
 	}
@@ -1493,10 +1649,11 @@ public class ConfiguredDevicesForm : Form
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine(string.Format("SETCFG \"IRHardwareInstallDate\" \"{0}\" TYPE=CAMERA", flag ? dateTime.ToString() : "NONE"));
 			stringBuilder.AppendLine("CLEAR");
-			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
-			if (!hardwareCommandResult.Success)
+			HardwareJob val2 = default(HardwareJob);
+			HardwareCommandResult val = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val2);
+			if (!((ClientCommandResult)(object)val).Success)
 			{
-				IrOutput.Dump(hardwareCommandResult);
+				IrOutput.Dump(val);
 				IrOutput.Write("Failed to update configuration.");
 			}
 			else

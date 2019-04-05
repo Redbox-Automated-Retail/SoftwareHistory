@@ -18,8 +18,8 @@ public sealed class GetAndCenterResult : JobExecutor
 		Center = center;
 	}
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Center.ToString(), Deck, Slot);
+		base.Job.Push(Center.ToString(), Deck, Slot);
 	}
 }

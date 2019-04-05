@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Redbox.HAL.Client;
+using Redbox.HAL.Client.Services;
 using Redbox.HAL.Common.GUI.Functions;
 using Redbox.HAL.Component.Model;
 
@@ -97,7 +98,8 @@ public class AdvancedMode : Form
 	{
 		try
 		{
-			new DeckConfigurationForm(Service).ShowDialog();
+			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(Service);
+			deckConfigurationForm.ShowDialog();
 		}
 		catch (Exception e2)
 		{
@@ -116,7 +118,9 @@ public class AdvancedMode : Form
 			HardwareJob[] array = jobs;
 			foreach (HardwareJob nj in array)
 			{
-				HardwareJobAdapter hardwareJobAdapter = JobList.Find((HardwareJobAdapter each) => each.ID == nj.ID);
+				List<HardwareJobAdapter> jobList = JobList;
+				Predicate<HardwareJobAdapter> match = (HardwareJobAdapter each) => each.ID == nj.ID;
+				HardwareJobAdapter hardwareJobAdapter = jobList.Find(match);
 				if (hardwareJobAdapter == null)
 				{
 					BindingSource.Add(new HardwareJobAdapter(nj));
@@ -126,7 +130,8 @@ public class AdvancedMode : Form
 				hardwareJobAdapter.Removable = false;
 			}
 		}
-		foreach (HardwareJobAdapter item in JobList.FindAll((HardwareJobAdapter each) => each.Removable))
+		List<HardwareJobAdapter> list = JobList.FindAll((HardwareJobAdapter each) => each.Removable);
+		foreach (HardwareJobAdapter item in list)
 		{
 			BindingSource.Remove(item);
 		}
@@ -139,14 +144,13 @@ public class AdvancedMode : Form
 
 	private void button1_Click_1(object sender, EventArgs e)
 	{
-		Action<HardwareJobAdapter> action = delegate(HardwareJobAdapter j)
+		OnListAction(delegate(HardwareJobAdapter j)
 		{
 			if (j.Status != HardwareJobStatus.Suspended)
 			{
 				j.Job.Suspend();
 			}
-		};
-		OnListAction(action);
+		});
 	}
 
 	private void OnListAction(Action<HardwareJobAdapter> action)
@@ -160,14 +164,13 @@ public class AdvancedMode : Form
 
 	private void button3_Click(object sender, EventArgs e)
 	{
-		Action<HardwareJobAdapter> action = delegate(HardwareJobAdapter j)
+		OnListAction(delegate(HardwareJobAdapter j)
 		{
 			if (j.Status == HardwareJobStatus.Suspended)
 			{
 				j.Job.Pend();
 			}
-		};
-		OnListAction(action);
+		});
 	}
 
 	private void timer1_Tick(object sender, EventArgs e)

@@ -12,8 +12,8 @@ public sealed class VerticalSync : JobExecutor
 		Slot = slot;
 	}
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Slot);
+		base.Job.Push(Slot);
 	}
 }

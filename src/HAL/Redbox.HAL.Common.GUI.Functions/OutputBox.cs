@@ -1,6 +1,4 @@
 using System.Windows.Forms;
-using Redbox.HAL.Client;
-using Redbox.HAL.Component.Model;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -30,14 +28,6 @@ public class OutputBox
 	public void Clear()
 	{
 		TheBox.Items.Clear();
-	}
-
-	public void Dump(HardwareCommandResult r)
-	{
-		r.Errors.ForEach(delegate(Error err)
-		{
-			Write(err.ToString());
-		});
 	}
 
 	public OutputBox(ListBox box)

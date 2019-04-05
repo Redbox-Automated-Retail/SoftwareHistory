@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using Redbox.HAL.Client;
 using Redbox.HAL.Component.Model;
+using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -90,15 +91,16 @@ public sealed class CameraAdapter
 
 	public ISnapResult Snap()
 	{
-		if (!Service.ExecuteImmediateProgram(CameraSnapImmediate, out var job).Success)
+		HardwareJob val = default(HardwareJob);
+		if (!((ClientCommandResult)(object)Service.ExecuteImmediateProgram(CameraSnapImmediate, ref val)).Success)
 		{
 			return null;
 		}
 		_SnapResult snapResult = new _SnapResult();
-		string topOfStack = job.GetTopOfStack();
+		string topOfStack = HardwareJobExtensions.GetTopOfStack(val);
 		if ("SUCCESS" == topOfStack)
 		{
-			string[] stackEntries = job.GetStackEntries(2);
+			string[] stackEntries = HardwareJobExtensions.GetStackEntries(val, 2);
 			snapResult.SnapOk = true;
 			snapResult.Path = stackEntries[1];
 		}
@@ -107,8 +109,8 @@ public sealed class CameraAdapter
 
 	public bool ResetReturnCounter()
 	{
-		HardwareJob job;
-		return Service.ExecuteImmediate("CAMERA RESETRETURNCOUNTER", out job).Success;
+		HardwareJob val = default(HardwareJob);
+		return ((ClientCommandResult)(object)Service.ExecuteImmediate("CAMERA RESETRETURNCOUNTER", ref val)).Success;
 	}
 
 	public void LaunchAndWaitForTuner()
@@ -119,13 +121,14 @@ public sealed class CameraAdapter
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append("CAMERA STOP FORCE=TRUE" + Environment.NewLine);
 			stringBuilder.Append("RINGLIGHT ON" + Environment.NewLine);
-			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var job);
+			HardwareJob val = default(HardwareJob);
+			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val);
 			ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(5000);
 			Process.Start(text, string.Empty).WaitForExit();
 			stringBuilder = new StringBuilder();
 			stringBuilder.Append("RINGLIGHT OFF" + Environment.NewLine);
 			stringBuilder.Append("CAMERA START" + Environment.NewLine);
-			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out job);
+			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val);
 		}
 	}
 

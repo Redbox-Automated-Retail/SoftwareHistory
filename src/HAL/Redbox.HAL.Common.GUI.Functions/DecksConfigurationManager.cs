@@ -2,6 +2,7 @@ using System;
 using System.Xml;
 using Redbox.HAL.Client;
 using Redbox.HAL.Configuration;
+using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -42,23 +43,23 @@ public sealed class DecksConfigurationManager
 
 	public bool FlushChanges(bool refresh)
 	{
-		HardwareCommandResult hardwareCommandResult = Service.SetConfiguration("controller", Document.OuterXml);
-		if (hardwareCommandResult.Success & refresh)
+		HardwareCommandResult obj = Service.SetConfiguration("controller", Document.OuterXml);
+		if (((ClientCommandResult)(object)obj).Success & refresh)
 		{
 			LoadConfiguration();
 		}
-		return hardwareCommandResult.Success;
+		return ((ClientCommandResult)(object)obj).Success;
 	}
 
 	private void LoadConfiguration()
 	{
 		HardwareCommandResult configuration = Service.GetConfiguration("controller");
-		if (!configuration.Success)
+		if (!((ClientCommandResult)(object)configuration).Success)
 		{
 			throw new Exception("Unable to get configuration from HAL.");
 		}
 		Document = new XmlDocument();
-		Document.LoadXml(configuration.CommandMessages[0]);
+		Document.LoadXml(((ClientCommandResult)(object)configuration).CommandMessages[0]);
 		DecksNode = Document.DocumentElement.SelectSingleNode("property[@display-name='Decks']");
 	}
 }

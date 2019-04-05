@@ -1,15 +1,16 @@
 using System.CodeDom.Compiler;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.Resources;
 using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.MSHALTester.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 [DebuggerNonUserCode]
 [CompilerGenerated]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
 internal class Resources
 {
 	private static ResourceManager resourceMan;
@@ -21,9 +22,10 @@ internal class Resources
 	{
 		get
 		{
-			if (resourceMan == null)
+			if (object.ReferenceEquals(resourceMan, null))
 			{
-				resourceMan = new ResourceManager("Redbox.HAL.MSHALTester.Properties.Resources", typeof(Resources).Assembly);
+				ResourceManager resourceManager = new ResourceManager("Redbox.HAL.MSHALTester.Properties.Resources", typeof(Resources).Assembly);
+				resourceMan = resourceManager;
 			}
 			return resourceMan;
 		}
@@ -44,7 +46,34 @@ internal class Resources
 
 	internal static string DestDeckSlotInvalid => ResourceManager.GetString("DestDeckSlotInvalid", resourceCulture);
 
+	internal static Bitmap sortAscending2
+	{
+		get
+		{
+			object obj = ResourceManager.GetObject("sortAscending2", resourceCulture);
+			return (Bitmap)obj;
+		}
+	}
+
+	internal static Bitmap sortDescending2
+	{
+		get
+		{
+			object obj = ResourceManager.GetObject("sortDescending2", resourceCulture);
+			return (Bitmap)obj;
+		}
+	}
+
 	internal static string SourceDeckSlotInvalid => ResourceManager.GetString("SourceDeckSlotInvalid", resourceCulture);
+
+	internal static Bitmap undo
+	{
+		get
+		{
+			object obj = ResourceManager.GetObject("undo", resourceCulture);
+			return (Bitmap)obj;
+		}
+	}
 
 	internal Resources()
 	{

@@ -15,12 +15,12 @@ internal sealed class PickAtOffsetExecutor : JobExecutor
 
 	protected override string JobName => "pick-at-offset";
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Offset);
-		job.Push(Axis.ToString());
-		job.Push(Slot);
-		job.Push(Deck);
+		base.Job.Push(Offset);
+		base.Job.Push(Axis.ToString());
+		base.Job.Push(Slot);
+		base.Job.Push(Deck);
 	}
 
 	internal PickAtOffsetExecutor(HardwareService service, int deck, int slot, Axis axis, int offset)

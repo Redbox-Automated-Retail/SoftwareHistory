@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using Redbox.HAL.Component.Model.Threading;
 using Redbox.HAL.Core;
 
 namespace Redbox.HAL.MSHALTester;
@@ -39,7 +40,8 @@ public class Program : IDisposable
 				Console.WriteLine("Unrecognized option {0}", args[i]);
 			}
 		}
-		Application.Run(new Form1(secure, text));
+		Form1 mainForm = new Form1(secure, text);
+		Application.Run(mainForm);
 	}
 
 	public void Dispose()

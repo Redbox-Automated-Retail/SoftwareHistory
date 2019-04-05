@@ -237,7 +237,8 @@ public class EditSlotData : Form
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(RinglightActive ? "RINGLIGHT ON" : ("RINGLIGHT OFF" + Environment.NewLine));
 			stringBuilder.Append(SensorbarActive ? "SENSOR PICKER-ON" : ("SENSOR PICKER-OFF" + Environment.NewLine));
-			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			HardwareJob val = default(HardwareJob);
+			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val);
 			IncrementChange();
 			return true;
 		}
@@ -537,7 +538,8 @@ public class EditSlotData : Form
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append("RINGLIGHT OFF" + Environment.NewLine);
 			stringBuilder.Append("SENSOR PICKER-OFF" + Environment.NewLine);
-			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
+			HardwareJob val = default(HardwareJob);
+			Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), ref val);
 		}
 	}
 

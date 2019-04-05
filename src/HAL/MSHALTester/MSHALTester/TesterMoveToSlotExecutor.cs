@@ -10,10 +10,10 @@ internal sealed class TesterMoveToSlotExecutor : JobExecutor
 
 	protected override string JobName => "tester-move-to-slot";
 
-	protected override void SetupJob(HardwareJob job)
+	protected override void SetupJob()
 	{
-		job.Push(Slot);
-		job.Push(Deck);
+		base.Job.Push(Slot);
+		base.Job.Push(Deck);
 	}
 
 	internal TesterMoveToSlotExecutor(HardwareService service, int deck, int slot)

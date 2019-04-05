@@ -46,21 +46,21 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	protected override void SetupJob(HardwareJob job)
 	{
-		job.Push(UserIdentifier);
-		job.Push(Timestamp.ToString());
-		job.Push(TouchscreenDriverTestResult.ToString());
-		job.Push(CameraDriverTestResult.ToString());
-		job.Push(SnapDecodeTestResult.ToString());
-		job.Push(TrackTestResult.ToString());
-		job.Push(VendDoorTestResult.ToString());
-		job.Push(InitTestResult.ToString());
-		job.Push(VerticalSlotTestResult.ToString());
+		job.Push(new object[1] { UserIdentifier });
+		job.Push(new object[1] { Timestamp.ToString() });
+		job.Push(new object[1] { TouchscreenDriverTestResult.ToString() });
+		job.Push(new object[1] { CameraDriverTestResult.ToString() });
+		job.Push(new object[1] { SnapDecodeTestResult.ToString() });
+		job.Push(new object[1] { TrackTestResult.ToString() });
+		job.Push(new object[1] { VendDoorTestResult.ToString() });
+		job.Push(new object[1] { InitTestResult.ToString() });
+		job.Push(new object[1] { VerticalSlotTestResult.ToString() });
 	}
 
 	internal void SendData(string username)
 	{
 		UserIdentifier = username;
-		Run();
+		((JobExecutor)this).Run();
 		Box.Write("Report queued.");
 	}
 
@@ -78,19 +78,19 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 	internal TestState TestCameraSnap(int deck, int slot)
 	{
 		SnapDecodeStatus = TestState.Failure;
-		if (!CompositeFunctions.GetItem(deck, slot, Box, Service))
+		if (!CompositeFunctions.GetItem(deck, slot, Box, base.Service))
 		{
 			SnapDecodeStatus = TestState.Failure;
 		}
 		else
 		{
 			int num = (HasCortex ? 1 : 3);
-			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(Service);
+			ReadBarcodeResult readBarcodeResult = ReadBarcodeResult.ReadBarcodeOfDiskInPicker(base.Service);
 			Box.Write(string.Format("Found {0} barcodes ({1}), time={2} {3}", readBarcodeResult.Count, readBarcodeResult.Barcode, readBarcodeResult.ScanTime, readBarcodeResult.IsDuplicate ? "DUPLICATE" : string.Empty));
 			int num2 = int.Parse(readBarcodeResult.ScanTime.Split('.')[0]);
 			int num3 = int.Parse(readBarcodeResult.Count);
 			SnapDecodeStatus = ((num3 >= num && num2 <= 0) ? TestState.Success : TestState.Failure);
-			CompositeFunctions.PutItem(Service, deck, slot, Box);
+			CompositeFunctions.PutItem(base.Service, deck, slot, Box);
 		}
 		return SnapDecodeStatus;
 	}
@@ -98,7 +98,7 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 	internal TestState TestVendDoor()
 	{
 		VendDoorStatus = TestState.Failure;
-		using (new InstructionHelper(Service))
+		using (new InstructionHelper(base.Service))
 		{
 			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 			if (service.VendDoorRent().Success)
@@ -112,59 +112,83 @@ public sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	internal TestState RunVertialSlotTest(int slot)
 	{
-		using (VerticalSync verticalSync = new VerticalSync(Service, slot))
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000d: Expected O, but got Unknown
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001a: Invalid comparison between I4 and Unknown
+		VerticalSync val = new VerticalSync(base.Service, slot);
+		try
 		{
-			verticalSync.Run();
-			if (HardwareJobStatus.Completed == verticalSync.EndStatus)
+			((JobExecutor)val).Run();
+			if (6 == (int)((JobExecutor)val).EndStatus)
 			{
 				Box.Write("The job completed successfully.");
 				VerticalSlotTestStatus = TestState.Success;
 			}
 			else
 			{
-				foreach (ProgramResult result in verticalSync.Results)
+				foreach (ProgramResult result in ((JobExecutor)val).Results)
 				{
 					Box.Write($"Failure at Deck {result.Deck} Slot {result.Slot} MSG: {result.Message}");
 				}
 				VerticalSlotTestStatus = TestState.Failure;
 			}
 		}
+		finally
+		{
+			((IDisposable)val)?.Dispose();
+		}
 		return VerticalSlotTestStatus;
 	}
 
 	internal TestState RunInit()
 	{
-		using InitJob initJob = new InitJob(Service);
-		initJob.Run();
-		if (HardwareJobStatus.Completed == initJob.EndStatus)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000c: Expected O, but got Unknown
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Invalid comparison between I4 and Unknown
+		InitJob val = new InitJob(base.Service);
+		try
 		{
-			Box.Write("Init succeeded.");
-			InitStatus = TestState.Success;
-		}
-		else
-		{
-			InitStatus = TestState.Failure;
-			if (initJob.Errors.Count > 0)
+			((JobExecutor)val).Run();
+			if (6 == (int)((JobExecutor)val).EndStatus)
 			{
-				foreach (Error error in initJob.Errors)
-				{
-					Box.Write(error.Details);
-				}
-				Box.Write("Init didn't succeed; errors follow:");
+				Box.Write("Init succeeded.");
+				InitStatus = TestState.Success;
 			}
+			else
+			{
+				InitStatus = TestState.Failure;
+				if (((JobExecutor)val).Errors.Count > 0)
+				{
+					foreach (Error error in ((JobExecutor)val).Errors)
+					{
+						Box.Write(error.Details);
+					}
+					Box.Write("Init didn't succeed; errors follow:");
+				}
+			}
+			return InitStatus;
 		}
-		return InitStatus;
+		finally
+		{
+			((IDisposable)val)?.Dispose();
+		}
 	}
 
 	internal bool GetUnknownStats()
 	{
-		InventoryStatsJob inventoryStatsJob = new InventoryStatsJob(Service);
-		inventoryStatsJob.Run();
-		if (inventoryStatsJob.EndStatus != HardwareJobStatus.Completed)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000c: Expected O, but got Unknown
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Invalid comparison between Unknown and I4
+		InventoryStatsJob val = new InventoryStatsJob(base.Service);
+		((JobExecutor)val).Run();
+		if ((int)((JobExecutor)val).EndStatus != 6)
 		{
 			return false;
 		}
-		foreach (ProgramResult result in inventoryStatsJob.Results)
+		foreach (ProgramResult result in ((JobExecutor)val).Results)
 		{
 			if (result.Code == "TotalEmptyCount")
 			{

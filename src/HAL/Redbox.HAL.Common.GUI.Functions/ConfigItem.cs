@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
-using Redbox.HAL.Configuration;
+using Redbox.HAL.Component.Model.Extensions;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 

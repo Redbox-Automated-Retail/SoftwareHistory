@@ -1,6 +1,7 @@
 using Redbox.HAL.Client;
 using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
+using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -23,8 +24,9 @@ public sealed class AirExchangerState
 
 	public ExchangerFanStatus ToggleFan()
 	{
-		string statement = string.Format("{0} {1}", "AIRXCHGR", (ExchangerFanStatus.On == FanStatus) ? "FANOFF" : "FANON");
-		if (Service.ExecuteImmediate(statement, out var _).Success)
+		string text = string.Format("{0} {1}", "AIRXCHGR", (ExchangerFanStatus.On == FanStatus) ? "FANOFF" : "FANON");
+		HardwareJob val = default(HardwareJob);
+		if (((ClientCommandResult)(object)Service.ExecuteImmediate(text, ref val)).Success)
 		{
 			if (ExchangerFanStatus.On == FanStatus)
 			{
@@ -41,7 +43,8 @@ public sealed class AirExchangerState
 	public bool ToggleConfiguration()
 	{
 		bool configured = !Configured;
-		if (Service.ExecuteImmediate($"SETCFG \"EnableIceQubePolling\" \"{configured.ToString()}\" TYPE=CONTROLLER", out var _).Success)
+		HardwareJob val = default(HardwareJob);
+		if (((ClientCommandResult)(object)Service.ExecuteImmediate($"SETCFG \"EnableIceQubePolling\" \"{configured.ToString()}\" TYPE=CONTROLLER", ref val)).Success)
 		{
 			Configured = configured;
 			return true;

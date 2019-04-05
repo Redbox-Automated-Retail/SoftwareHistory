@@ -2,6 +2,7 @@ using System;
 using Redbox.HAL.Client;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Core;
+using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Common.GUI.Functions;
 
@@ -44,14 +45,14 @@ public struct InstructionHelper : IDisposable
 
 	public HardwareJob Execute(string instruction, int timeout)
 	{
-		HardwareJob job = null;
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(instruction, timeout, out job);
-		hardwareCommandResult.Dump();
-		if (!hardwareCommandResult.Success)
+		HardwareJob result = null;
+		HardwareCommandResult obj = Service.ExecuteImmediate(instruction, (int?)timeout, ref result);
+		obj.Dump();
+		if (!((ClientCommandResult)(object)obj).Success)
 		{
 			return null;
 		}
-		return job;
+		return result;
 	}
 
 	public ErrorCodes ExecuteErrorCode(string instruction)
@@ -87,14 +88,14 @@ public struct InstructionHelper : IDisposable
 
 	public string ExecuteGeneric(string instruction, int timeout)
 	{
-		HardwareJob job = null;
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(instruction, timeout, out job);
-		hardwareCommandResult.Dump();
-		if (!hardwareCommandResult.Success)
+		HardwareJob val = null;
+		HardwareCommandResult obj = Service.ExecuteImmediate(instruction, (int?)timeout, ref val);
+		obj.Dump();
+		if (!((ClientCommandResult)(object)obj).Success)
 		{
 			return string.Empty;
 		}
-		return job.GetTopOfStack();
+		return HardwareJobExtensions.GetTopOfStack(val);
 	}
 
 	private IControlResponse From(string serviceResponse)
