@@ -8,6 +8,8 @@ using Microsoft.Win32;
 using Redbox.HAL.Component.Model;
 using Redbox.HAL.Component.Model.Services;
 using Redbox.HAL.Configuration;
+using Redbox.HAL.Controller.Framework;
+using Redbox.HAL.DataMatrix.Framework;
 using Redbox.HAL.DataStorage;
 using Redbox.HAL.Script.Framework;
 
@@ -208,7 +210,7 @@ internal sealed class PackageInstaller : IDisposable
 	{
 		Writer.WriteLine("Register package handlers");
 		string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "*.dll");
-		string[] array = new string[1] { "CortexDecoder.dll" };
+		string[] array = new string[4] { "CortexDecoder.dll", "Hasp_windows_110892.dll", "CortexDecoderHasp.dll", "CDHelper.dll" };
 		string[] array2 = files;
 		foreach (string text in array2)
 		{
@@ -310,6 +312,8 @@ internal sealed class PackageInstaller : IDisposable
 			ServiceLocator.Instance.AddService<IPersistentMapService>(new PersistentMapService());
 			ConfigurationService configurationService = ConfigurationService.Make(installer.ConfigurationFullPath);
 			ServiceLocator.Instance.AddService<IConfigurationService>(configurationService);
+			configurationService.RegisterConfiguration(Configurations.Controller.ToString(), ControllerConfiguration.Instance);
+			configurationService.RegisterConfiguration(Configurations.Camera.ToString(), BarcodeConfiguration.MakeNewInstance2());
 			installer.RegisterHandlers();
 			if (File.Exists(installer.ConfigurationFullPath))
 			{

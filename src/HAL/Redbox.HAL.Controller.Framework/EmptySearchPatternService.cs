@@ -261,12 +261,12 @@ internal sealed class EmptySearchPatternService : IInventoryObserver, IEmptySear
 		{
 			AddLocation(deck, num7, ref idx);
 		}
-		deck = service.GetByNumber(7);
+		deck = service.GetByNumber(8);
 		for (int num8 = 16; num8 <= deck.NumberOfSlots; num8++)
 		{
 			AddLocation(deck, num8, ref idx);
 		}
-		deck = service.GetByNumber(8);
+		deck = service.GetByNumber(7);
 		for (int num9 = 16; num9 <= deck.NumberOfSlots; num9++)
 		{
 			AddLocation(deck, num9, ref idx);

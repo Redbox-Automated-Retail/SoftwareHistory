@@ -154,6 +154,7 @@ public sealed class ConfigurationService : IConfigurationService
 		{
 			return;
 		}
+		Load(errors);
 		foreach (string key in Configurations.Keys)
 		{
 			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
