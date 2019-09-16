@@ -43,6 +43,12 @@ public abstract class Base87CardReadModel : ResponseBaseModel
 
 	public CardSourceType CardSource { get; set; }
 
+	public FallbackStatusAction FallbackStatusAction { get; set; }
+
+	public FallbackType? FallbackReason { get; set; }
+
+	public string ErrorCode { get; set; }
+
 	public Base87CardReadModel()
 	{
 	}

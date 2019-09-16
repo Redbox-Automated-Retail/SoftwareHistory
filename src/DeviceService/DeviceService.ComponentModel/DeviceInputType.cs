@@ -10,9 +10,9 @@ public enum DeviceInputType
 	C = 2,
 	[Description("Please Insert Card")]
 	S = 4,
-	[Description("Please Swipe or Tap Card")]
+	[Description("Please Tap or Swipe Card")]
 	MC = 3,
-	[Description("Please Swipe or Insert Card")]
+	[Description("Please Insert or Swipe Card")]
 	MS = 5,
 	[Description("Please Tap or Insert Card")]
 	CS = 6,

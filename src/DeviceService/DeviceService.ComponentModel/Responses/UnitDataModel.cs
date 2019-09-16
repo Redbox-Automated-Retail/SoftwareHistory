@@ -45,4 +45,27 @@ public class UnitDataModel
 	public string ClessInteracKernelType { get; set; }
 
 	public string ClessInterfaceIsSupported { get; set; }
+
+	public string GetApplicationVersionString()
+	{
+		try
+		{
+			int length = ApplicationVersion.Length;
+			char minorVersion = ApplicationVersion[length - 1];
+			return $"{ApplicationVersion.Substring(0, 2)}.{ApplicationVersion.Substring(2, length - 3)}.{GetMinorVersionDecimal(minorVersion)}";
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	private static int GetMinorVersionDecimal(char minorVersion)
+	{
+		if (char.IsDigit(minorVersion))
+		{
+			return minorVersion - 48;
+		}
+		return minorVersion - 55;
+	}
 }

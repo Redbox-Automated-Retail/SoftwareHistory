@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace DeviceService.ComponentModel.Requests;
 
 public interface ICardReadRequest
@@ -6,5 +9,9 @@ public interface ICardReadRequest
 
 	DeviceInputType InputType { get; }
 
-	int Timeout { get; }
+	int Timeout { get; set; }
+
+	Guid? SessionId { get; set; }
+
+	IEnumerable<CardBrandAndSource> ExcludeCardBrandBySource { get; set; }
 }

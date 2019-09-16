@@ -19,11 +19,13 @@ public abstract class BaseReadCardJob : IReadCardJob
 
 	protected Action<BaseResponseEvent> _jobCompletedCallback;
 
+	protected Action<BaseResponseEvent> _readJobEvents;
+
 	protected int? _timeout;
 
 	public Guid RequestId => _readCardCommandRequestId;
 
-	public BaseReadCardJob(IDeviceServiceClient deviceServiceClient, Action<BaseResponseEvent> jobCompleteCallback, int? timeout)
+	public BaseReadCardJob(IDeviceServiceClient deviceServiceClient, Action<BaseResponseEvent> jobCompleteCallback, Action<BaseResponseEvent> readJobEvents, int? timeout)
 	{
 		BaseReadCardJob baseReadCardJob = this;
 		_deviceServiceClient = deviceServiceClient;
@@ -32,6 +34,7 @@ public abstract class BaseReadCardJob : IReadCardJob
 			baseReadCardJob._readCompleted = true;
 			jobCompleteCallback(baseResponseEvent);
 		};
+		_readJobEvents = readJobEvents;
 		_timeout = timeout;
 	}
 

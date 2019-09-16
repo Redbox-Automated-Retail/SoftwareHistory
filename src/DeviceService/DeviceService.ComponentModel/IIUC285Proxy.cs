@@ -10,6 +10,10 @@ public interface IIUC285Proxy
 {
 	bool IsConnected { get; }
 
+	UnitDataModel UnitData { get; }
+
+	bool SupportsEMV { get; }
+
 	event OnConnected OnConnectedHandler;
 
 	event OnDisconnected OnDisconnectedHandler;
@@ -18,15 +22,15 @@ public interface IIUC285Proxy
 
 	UnitHealthModel GetUnitHealth();
 
-	UnitDataModel GetUnitData();
+	Task<bool> ReadCard(ICardReadRequest request, CancellationToken token, Action<Base87CardReadModel> jobCompleted, Action<string, string> eventsCallback);
 
-	Task<bool> ReadCard(ICardReadRequest request, CancellationToken token, Action<Base87CardReadModel> jobCompleted);
+	bool ReadConfig(string group, string index, out string Data, bool sendOffline = true);
 
-	bool ReadConfig(string group, string index, out string Data);
-
-	bool WriteConfig(string group, string index, string Data);
+	bool WriteConfig(string group, string index, string Data, bool sendOffline = true);
 
 	Task<bool> WriteFile(string filePath, bool rebootAfterWrite = false);
+
+	bool Reconnect();
 
 	bool Reboot();
 
@@ -35,4 +39,14 @@ public interface IIUC285Proxy
 	string GetVariable_29(string varID);
 
 	InsertedStatus CheckIfCardInserted();
+
+	bool PingDevice();
+
+	void StartHealthTimer();
+
+	void StopHealthTimer();
+
+	Task<DeviceStatus> CheckDeviceStatus(long kioskId);
+
+	void SetAuthorizationResponse(bool success);
 }

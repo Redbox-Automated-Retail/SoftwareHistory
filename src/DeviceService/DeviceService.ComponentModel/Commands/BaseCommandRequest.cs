@@ -1,8 +1,9 @@
 using System;
+using Newtonsoft.Json;
 
 namespace DeviceService.ComponentModel.Commands;
 
-public class BaseCommandRequest
+public class BaseCommandRequest : IMessageScrub
 {
 	private Guid _guid = Guid.NewGuid();
 
@@ -44,5 +45,10 @@ public class BaseCommandRequest
 	{
 		CommandName = commandName;
 		DeviceServiceClientVersion = deviceServiceClientVersion;
+	}
+
+	public virtual object Scrub()
+	{
+		return JsonConvert.SerializeObject(this);
 	}
 }

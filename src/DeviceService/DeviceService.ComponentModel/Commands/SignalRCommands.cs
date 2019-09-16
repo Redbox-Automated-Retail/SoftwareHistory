@@ -2,11 +2,19 @@ namespace DeviceService.ComponentModel.Commands;
 
 public class SignalRCommands
 {
+	public const string ExecuteCancelCommand = "ExecuteCancelCommand";
+
+	public const string ExecuteDeviceServiceShutDownCommand = "ExecuteDeviceServiceShutDownCommand";
+
+	public const string ExecuteDeviceServiceCanShutDownCommand = "ExecuteDeviceServiceCanShutDownCommand";
+
+	public const string SendShutDownStartingEvent = "SendShutDownStartingEvent";
+
+	public const string SetCommandQueueState = "SetCommandQueueState";
+
 	public const string ExecuteCommand = "ExecuteCommand";
 
 	public const string ExecuteBaseCommand = "ExecuteBaseCommand";
-
-	public const string ExecuteCancelCommand = "ExecuteCancelCommand";
 
 	public const string ExecuteReadCardCommand = "ExecuteReadCardCommand";
 
@@ -17,4 +25,8 @@ public class SignalRCommands
 	public const string ExecuteReportAuthorizeResultCommand = "ExecuteReportAuthorizeResultCommand";
 
 	public const string ExecuteValidateVersionCommand = "ExecuteValidateVersionCommand";
+
+	public const string ExecuteCheckActivationCommand = "ExecuteCheckActivationCommand";
+
+	public const string ExecuteCheckDeviceStatusCommand = "ExecuteCheckDeviceStatusCommand";
 }

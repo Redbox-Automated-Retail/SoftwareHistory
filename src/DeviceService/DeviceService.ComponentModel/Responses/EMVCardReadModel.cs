@@ -4,6 +4,8 @@ namespace DeviceService.ComponentModel.Responses;
 
 public class EMVCardReadModel : EncryptedCardReadModel
 {
+	public bool CardRemoved { get; set; }
+
 	public override bool HasChip => true;
 
 	public IDictionary<string, string> Tags { get; set; }
@@ -25,9 +27,12 @@ public class EMVCardReadModel : EncryptedCardReadModel
 	{
 		if (Tags != null)
 		{
-			foreach (string item in new List<string>(Tags.Keys))
+			foreach (string eachTagEntryKey in new List<string>(Tags.Keys))
 			{
-				Tags[item] = ObfuscationHelper.ObfuscateValue(Tags[item]);
+				if (TagConstants.Details.Exists((TagDetails x) => x.Tag == eachTagEntryKey && x.IsPii))
+				{
+					Tags[eachTagEntryKey] = ObfuscationHelper.ObfuscateValue(Tags[eachTagEntryKey]);
+				}
 			}
 		}
 		base.ObfuscateSensitiveData();

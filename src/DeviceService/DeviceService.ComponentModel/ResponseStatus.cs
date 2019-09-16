@@ -8,5 +8,7 @@ public enum ResponseStatus
 	Innoperable,
 	CallAlreadyInProgress,
 	Timeout,
-	Cancelled
+	Cancelled,
+	Tampered,
+	Blocked
 }

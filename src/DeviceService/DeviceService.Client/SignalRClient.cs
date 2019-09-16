@@ -16,6 +16,18 @@ public class SignalRClient
 
 	public delegate void OnValidateVersionResponseEvent(ValidateVersionResponseEvent validateVersionResponseEvent);
 
+	public delegate void OnCheckActivationResponseEvent(CheckActivationResponseEvent checkActivationResponseEvent);
+
+	public delegate void OnCheckDeviceStatusResponseEvent(CheckDeviceStatusResponseEvent checkDeviceStatusResponseEvent);
+
+	public delegate void OnGetCardInsertedStatusResponseEvent(GetCardInsertedStatusResponseEvent getCardInsertedStatusResponseEvent);
+
+	public delegate void OnDeviceServiceShutDownResponseEvent(DeviceServiceShutDownResponseEvent deviceServiceShutDownResponseEvent);
+
+	public delegate void OnDeviceServiceShutDownStartingEvent(DeviceServiceShutDownStartingEvent deviceServiceShutDownStartingEvent);
+
+	public delegate void OnSupportsEMVResponseEvent(SupportsEMVResponseEvent supportsEMVResponseEvent);
+
 	public delegate void OnEvent(BaseEvent baseEvent);
 
 	private string _url;
@@ -56,6 +68,12 @@ public class SignalRClient
 
 	public event Action<SimpleResponseEvent> OnWriteConfigurationEventHandler;
 
+	public event Action<SimpleResponseEvent> OnCardRemovedEventHandler;
+
+	public event Action<SimpleResponseEvent> OnDeviceServiceCanShutDownEventHandler;
+
+	public event Action<BaseResponseEvent> OnCardReadEvent;
+
 	public event Action<CancelCommandResponseEvent> OnCancelCommandResponseEventHandler;
 
 	public event Action<RebootCardReaderResponseEvent> OnRebootCardReaderResponseEventHandler;
@@ -63,6 +81,18 @@ public class SignalRClient
 	public event Action<ReportAuthorizationResultResponseEvent> OnReportAuthorizationResultResponseEventHandler;
 
 	public event OnValidateVersionResponseEvent OnValidateVersionResponseEventHandler;
+
+	public event OnCheckActivationResponseEvent OnCheckActivationResponseEventHandler;
+
+	public event OnCheckDeviceStatusResponseEvent OnCheckDeviceStatusResponseEventHandler;
+
+	public event OnGetCardInsertedStatusResponseEvent OnGetCardInsertedStatusResponseEventHandler;
+
+	public event OnDeviceServiceShutDownResponseEvent OnDeviceServiceShutDownResponseEventHandler;
+
+	public event OnDeviceServiceShutDownStartingEvent OnDeviceServiceShutDownStartingEventHandler;
+
+	public event OnSupportsEMVResponseEvent OnSupportsEMVResponseEventHandler;
 
 	public async Task Connect(string url, int? connectionTimeout)
 	{
@@ -107,7 +137,7 @@ public class SignalRClient
 				{
 					if (_hubConnection.State == HubConnectionState.Disconnected)
 					{
-						Log("DeviceServiceClient SignalRCleint connection attempt timed out. ");
+						Log("DeviceServiceClient SignalRClient connection attempt timed out. ");
 					}
 				}
 				if (_hubConnection.State == HubConnectionState.Connected)
@@ -177,6 +207,18 @@ public class SignalRClient
 			{
 				OnWriteConfigurationEventHandler?.Invoke(response);
 			});
+			hubConnection.On("CardRemovedResponseEvent", delegate(SimpleResponseEvent response)
+			{
+				OnCardRemovedEventHandler?.Invoke(response);
+			});
+			hubConnection.On("CardProcessingStartedResponseEvent", delegate(SimpleResponseEvent response)
+			{
+				OnCardReadEvent?.Invoke(response);
+			});
+			hubConnection.On("DeviceServiceCanShutDownEvent", delegate(SimpleResponseEvent response)
+			{
+				OnDeviceServiceCanShutDownEventHandler?.Invoke(response);
+			});
 			hubConnection.On("CardReaderConnectedEvent", delegate(CardReaderConnectedEvent response)
 			{
 				OnCardReaderConnectedHandler?.Invoke(response);
@@ -201,6 +243,31 @@ public class SignalRClient
 			{
 				OnValidateVersionResponseEventHandler?.Invoke(response);
 			});
+			hubConnection.On("CheckActivationResponseEvent", delegate(CheckActivationResponseEvent response)
+			{
+				OnCheckActivationResponseEventHandler?.Invoke(response);
+			});
+			hubConnection.On("CheckDeviceStatusResponseEvent", delegate(CheckDeviceStatusResponseEvent response)
+			{
+				OnCheckDeviceStatusResponseEventHandler?.Invoke(response);
+			});
+			hubConnection.On("GetCardInsertedStatusResponseEvent", delegate(GetCardInsertedStatusResponseEvent response)
+			{
+				OnGetCardInsertedStatusResponseEventHandler?.Invoke(response);
+			});
+			hubConnection.On("DeviceServiceShutDownResponseEvent", delegate(DeviceServiceShutDownResponseEvent response)
+			{
+				OnDeviceServiceShutDownResponseEventHandler?.Invoke(response);
+			});
+			hubConnection.On("DeviceServiceShutDownStartingEvent", delegate(DeviceServiceShutDownStartingEvent response)
+			{
+				OnDeviceServiceShutDownStartingEventHandler?.Invoke(response);
+			});
+			hubConnection.On("SupportsEMVResponseEvent", delegate(SupportsEMVResponseEvent response)
+			{
+				Log("SignalRClient invoking OnSupportsEMVResponseEventHandler");
+				OnSupportsEMVResponseEventHandler?.Invoke(response);
+			});
 		}
 	}
 
@@ -213,11 +280,6 @@ public class SignalRClient
 	public void SendCommand(BaseCommandRequest baseCommandRequest)
 	{
 		_hubConnection.SendAsync(baseCommandRequest.SignalRCommand, baseCommandRequest);
-	}
-
-	public void SendCommand(CancelCommandRequest cancelCommandRequest)
-	{
-		_hubConnection.SendAsync(cancelCommandRequest.SignalRCommand, cancelCommandRequest);
 	}
 
 	private async void SendCommand(string commandName, object command)

@@ -15,6 +15,8 @@ public interface IDeviceServiceClient
 
 	Version AssemblyVersion { get; }
 
+	IDeviceServiceShutDownInfo DeviceServiceShutDownInfo { get; }
+
 	event LogHandler OnLog;
 
 	event OnConnected OnConnectedHandler;
@@ -24,6 +26,10 @@ public interface IDeviceServiceClient
 	event OnConnected OnCardReaderConnectedHandler;
 
 	event OnDisconnected OnCardReaderDisconnectedHandler;
+
+	event OnDeviceServiceCanShutDown OnDeviceServiceCanShutDownHandler;
+
+	event OnDeviceServiceShutDownInfoChange OnDeviceServiceShutDownInfoChangeHandler;
 
 	void StartConnectionToDeviceService(string url, int? connectionTimeout);
 
@@ -37,9 +43,9 @@ public interface IDeviceServiceClient
 
 	UnitHealthModel GetUnitHealth();
 
-	void ReadCard(Guid requestId, CardReadRequest request, Action<BaseResponseEvent> onComplete, int? timeout);
+	void ReadCard(Guid requestId, CardReadRequest request, Action<BaseResponseEvent> onComplete, Action<BaseResponseEvent> onJobEvent, int? timeout);
 
-	IReadCardJob CreateReadCardJob(CardReadRequest request, Action<BaseResponseEvent> readCardJobCompleteCallback, int? timeout);
+	IReadCardJob CreateReadCardJob(CardReadRequest request, Action<BaseResponseEvent> readCardJobCompleteCallback, Action<BaseResponseEvent> readCardEventCallback, int? timeout);
 
 	bool CancelCommand(Guid guid, Action<BaseResponseEvent> cancelCompleteCallback);
 
@@ -48,4 +54,14 @@ public interface IDeviceServiceClient
 	void ReportAuthorizeResult(bool success, Action<BaseResponseEvent> completeCallback);
 
 	ValidateVersionModel ValidateVersion();
+
+	bool CheckActivation(BluefinActivationRequest request);
+
+	bool CheckDeviceStatus(DeviceStatusRequest request);
+
+	bool GetCardInsertedStatus(Action<BaseResponseEvent> completeCallback);
+
+	bool ShutDownDeviceService(bool forceShutDown, ShutDownReason shutDownReason);
+
+	bool SupportsEMV();
 }

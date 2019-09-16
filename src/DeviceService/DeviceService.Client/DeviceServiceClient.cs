@@ -15,9 +15,18 @@ namespace DeviceService.Client;
 
 public class DeviceServiceClient : IDeviceServiceClient
 {
+	private class DeviceServiceShutDownInformation : IDeviceServiceShutDownInfo
+	{
+		public DateTime ShutDownTime { get; set; }
+
+		public ShutDownReason ShutDownReason { get; set; }
+	}
+
 	private class CommandData
 	{
 		public Action<BaseResponseEvent> CommandCompleteCallback;
+
+		public Action<BaseResponseEvent> EventCallback;
 
 		public BaseCommandRequest CommandRequest { get; set; }
 
@@ -36,6 +45,8 @@ public class DeviceServiceClient : IDeviceServiceClient
 			}
 		}
 	}
+
+	private IDeviceServiceShutDownInfo _deviceServiceShutDownInfo;
 
 	private Task _connectionTask;
 
@@ -62,6 +73,19 @@ public class DeviceServiceClient : IDeviceServiceClient
 	private DateTime? _lastCardReaderDisconnect;
 
 	private bool _autoReconnect;
+
+	public IDeviceServiceShutDownInfo DeviceServiceShutDownInfo
+	{
+		get
+		{
+			return _deviceServiceShutDownInfo;
+		}
+		private set
+		{
+			_deviceServiceShutDownInfo = value;
+			OnDeviceServiceShutDownInfoChangeHandler?.Invoke(_deviceServiceShutDownInfo);
+		}
+	}
 
 	public bool IsConnectedToDeviceService
 	{
@@ -113,7 +137,16 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	public event OnDisconnected OnCardReaderDisconnectedHandler;
 
+	public event OnDeviceServiceCanShutDown OnDeviceServiceCanShutDownHandler;
+
+	public event OnDeviceServiceShutDownInfoChange OnDeviceServiceShutDownInfoChangeHandler;
+
 	public DeviceServiceClient()
+	{
+		InitializeSignalRClient();
+	}
+
+	private void InitializeSignalRClient()
 	{
 		_signalRClient = new SignalRClient();
 		_signalRClient.OnLog += delegate(string logText)
@@ -127,27 +160,81 @@ public class DeviceServiceClient : IDeviceServiceClient
 		_signalRClient.OnIsConnectedResponseEventHandler += _signalRClient_OnIsConnectedResponseEventHandler;
 		_signalRClient.OnGetUnitHealthResponseEventHandler += _signalRClient_OnGetUnitHealthResponseEventHandler;
 		_signalRClient.OnCardReadResponseEventHandler += _signalRClient_OnCardReadResponseEventHandler;
-		_signalRClient.OnReadConfigurationEventHandler += _signalRClient_OnReadConfigurationResponseEventHandler;
-		_signalRClient.OnWriteConfigurationEventHandler += _signalRClient_OnWriteConfigurationResponseEventHandler;
+		_signalRClient.OnReadConfigurationEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnCardRemovedEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnCardReadEvent += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnWriteConfigurationEventHandler += _signalRClient_OnGeneralEventHandler;
 		_signalRClient.OnCancelCommandResponseEventHandler += _signalRClient_OnCancelCommandResponseEventHandler;
-		_signalRClient.OnRebootCardReaderResponseEventHandler += _signalRClient_OnRebootCardReaderResponseEventHandler;
-		_signalRClient.OnReportAuthorizationResultResponseEventHandler += _signalRClient_OnReportAuthorizationResultResponseEventHandler;
-		_signalRClient.OnValidateVersionResponseEventHandler += _signalRClient_OnValidateVersionResponseEventHandler;
+		_signalRClient.OnRebootCardReaderResponseEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnReportAuthorizationResultResponseEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnValidateVersionResponseEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnCheckActivationResponseEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnCheckDeviceStatusResponseEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnGetCardInsertedStatusResponseEventHandler += HandleAsyncCommandResponseEvent;
+		_signalRClient.OnDeviceServiceShutDownResponseEventHandler += _signalRClient_OnDeviceServiceShutDownResponseEventHandler;
+		_signalRClient.OnDeviceServiceCanShutDownEventHandler += _signalRClient_OnDeviceServiceCanShutDownEventHandler;
+		_signalRClient.OnDeviceServiceShutDownStartingEventHandler += _signalRClient_OnDeviceServiceShutDownStartingEventHandler;
+		_signalRClient.OnSupportsEMVResponseEventHandler += _signalRClient_OnGeneralEventHandler;
 	}
 
-	private void _signalRClient_OnValidateVersionResponseEventHandler(ValidateVersionResponseEvent validateVersionResponseEvent)
+	private void _signalRClient_OnDeviceServiceShutDownStartingEventHandler(DeviceServiceShutDownStartingEvent deviceServiceShutDownStartingEvent)
 	{
-		HandleResponseEvent(validateVersionResponseEvent);
+		HandleEvent(deviceServiceShutDownStartingEvent, delegate
+		{
+			if (deviceServiceShutDownStartingEvent != null)
+			{
+				Task.Run(delegate
+				{
+					DeviceServiceShutDownInfo = new DeviceServiceShutDownInformation
+					{
+						ShutDownReason = deviceServiceShutDownStartingEvent.ShutDownReason,
+						ShutDownTime = DateTime.Now
+					};
+				});
+			}
+		});
 	}
 
-	private void _signalRClient_OnReportAuthorizationResultResponseEventHandler(ReportAuthorizationResultResponseEvent reportAuthorizationResultResponseEvent)
+	private void _signalRClient_OnDeviceServiceCanShutDownEventHandler(SimpleResponseEvent baseEvent)
 	{
-		HandleAsyncCommandResponseEvent(reportAuthorizationResultResponseEvent);
+		HandleEvent(baseEvent, delegate
+		{
+			Task.Run(delegate
+			{
+				bool canShutDown = OnDeviceServiceCanShutDownHandler?.Invoke() ?? true;
+				CommandData commandData = new CommandData
+				{
+					CommandRequest = new DeviceServiceCanShutDownCommand(AssemblyVersion)
+					{
+						CanShutDown = canShutDown
+					}
+				};
+				SendCommand(commandData);
+			});
+		});
 	}
 
-	private void _signalRClient_OnRebootCardReaderResponseEventHandler(RebootCardReaderResponseEvent rebootCardReaderResponseEvent)
+	private void _signalRClient_OnDeviceServiceShutDownResponseEventHandler(DeviceServiceShutDownResponseEvent deviceServiceShutDownResponseEvent)
 	{
-		HandleResponseEvent(rebootCardReaderResponseEvent);
+		HandleResponseEvent(deviceServiceShutDownResponseEvent);
+	}
+
+	private void _signalRClient_OnGeneralEventHandler(BaseResponseEvent baseResponseEvent)
+	{
+		Task.Factory.StartNew(delegate
+		{
+			HandleResponseEvent(baseResponseEvent, delegate(CommandData commandData)
+			{
+				if (baseResponseEvent?.EventName != null)
+				{
+					string eventName = baseResponseEvent.EventName;
+					if (eventName == "CardProcessingStartedResponseEvent")
+					{
+						commandData?.EventCallback?.Invoke(baseResponseEvent);
+					}
+				}
+			});
+		}, TaskCreationOptions.LongRunning);
 	}
 
 	private void _signalRClient_OnCancelCommandResponseEventHandler(CancelCommandResponseEvent cancelCommandResponseEvent)
@@ -187,16 +274,6 @@ public class DeviceServiceClient : IDeviceServiceClient
 	{
 		LogEvent(baseEvent);
 		action?.Invoke();
-	}
-
-	private void _signalRClient_OnWriteConfigurationResponseEventHandler(SimpleResponseEvent evt)
-	{
-		HandleResponseEvent(evt);
-	}
-
-	private void _signalRClient_OnReadConfigurationResponseEventHandler(SimpleResponseEvent evt)
-	{
-		HandleResponseEvent(evt);
 	}
 
 	private void _signalRClient_OnCardReadResponseEventHandler(BaseResponseEvent crre)
@@ -258,19 +335,28 @@ public class DeviceServiceClient : IDeviceServiceClient
 		return (RunCommand(new BaseCommandRequest("RebootCardReader", AssemblyVersion)) as SimpleResponseEvent)?.Success ?? false;
 	}
 
+	public bool ShutDownDeviceService(bool forceShutDown, ShutDownReason shutDownReason)
+	{
+		return (RunCommand(new DeviceServiceShutDownCommand(AssemblyVersion)
+		{
+			ForceShutDown = forceShutDown,
+			Reason = shutDownReason
+		}) as DeviceServiceShutDownResponseEvent)?.Success ?? false;
+	}
+
 	public bool IsCardReaderConnected()
 	{
 		return (RunCommand(new BaseCommandRequest("IsConnected", AssemblyVersion)) as IsConnectedResponseEvent)?.IsConnected ?? false;
 	}
 
-	public void ReadCard(Guid requestId, CardReadRequest request, Action<BaseResponseEvent> completeCallback, int? timeout = null)
+	public void ReadCard(Guid requestId, CardReadRequest request, Action<BaseResponseEvent> completeCallback, Action<BaseResponseEvent> eventCallback, int? timeout = null)
 	{
-		RunAsyncReadCardCommand(requestId, request, timeout.HasValue ? timeout.Value : _defaultCommandTimeout, completeCallback);
+		RunAsyncReadCardCommand(requestId, request, timeout.HasValue ? timeout.Value : _defaultCommandTimeout, completeCallback, eventCallback);
 	}
 
-	public IReadCardJob CreateReadCardJob(CardReadRequest request, Action<BaseResponseEvent> readCardJobCompleteCallback, int? timeout = null)
+	public IReadCardJob CreateReadCardJob(CardReadRequest request, Action<BaseResponseEvent> readCardJobCompleteCallback, Action<BaseResponseEvent> jobEventCallback, int? timeout = null)
 	{
-		return new ReadCardJob(this, request, readCardJobCompleteCallback, timeout);
+		return new ReadCardJob(this, request, readCardJobCompleteCallback, jobEventCallback, timeout);
 	}
 
 	public void ReportAuthorizeResult(bool success, Action<BaseResponseEvent> completeCallback)
@@ -279,12 +365,17 @@ public class DeviceServiceClient : IDeviceServiceClient
 		{
 			Success = success
 		};
-		RunAsyncCommand(baseCommandRequest, completeCallback);
+		RunAsyncCommand(baseCommandRequest, completeCallback, null);
 	}
 
 	public UnitHealthModel GetUnitHealth()
 	{
 		return (RunCommand(new BaseCommandRequest("GetUnitHealth", AssemblyVersion)) as GetUnitHealthResponseEvent)?.UnitHealthModel;
+	}
+
+	public bool GetCardInsertedStatus(Action<BaseResponseEvent> completedCallback)
+	{
+		return RunAsyncCommand(new BaseCommandRequest("GetCardInsertedStatus", AssemblyVersion), completedCallback, null);
 	}
 
 	public string ReadConfig(string group, string index)
@@ -304,7 +395,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 			CommandToCancelRequestId = commandToCancelRequestId,
 			RequestId = Guid.NewGuid()
 		};
-		return RunAsyncCommand(baseCommandRequest, cancelCompleteCallback);
+		return RunAsyncCommand(baseCommandRequest, cancelCompleteCallback, null);
 	}
 
 	public ValidateVersionModel ValidateVersion()
@@ -324,6 +415,40 @@ public class DeviceServiceClient : IDeviceServiceClient
 			}
 		}
 		return result;
+	}
+
+	public bool SupportsEMV()
+	{
+		bool result = false;
+		if (RunCommand(new BaseCommandRequest("SupportsEMV", AssemblyVersion)) is SupportsEMVResponseEvent supportsEMVResponseEvent)
+		{
+			result = supportsEMVResponseEvent.SuportsEMV;
+		}
+		return result;
+	}
+
+	public bool CheckActivation(BluefinActivationRequest request)
+	{
+		if (request.KioskId > 0 && RunCommand(new CheckActivationCommand(AssemblyVersion)
+		{
+			Request = request
+		}) is CheckActivationResponseEvent checkActivationResponseEvent)
+		{
+			return checkActivationResponseEvent.Success;
+		}
+		return false;
+	}
+
+	public bool CheckDeviceStatus(DeviceStatusRequest request)
+	{
+		if (request.KioskId > 0 && RunCommand(new CheckDeviceStatusCommand(AssemblyVersion)
+		{
+			Request = request
+		}) is CheckDeviceStatusResponseEvent checkDeviceStatusResponseEvent)
+		{
+			return checkDeviceStatusResponseEvent.Success;
+		}
+		return false;
 	}
 
 	private void Log(string logText)
@@ -430,12 +555,12 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	private void LogCommand(BaseCommandRequest baseCommandRequest)
 	{
-		Log($">>> {baseCommandRequest.CommandName}: {JsonConvert.SerializeObject(baseCommandRequest)}");
+		Log($">>> {baseCommandRequest.CommandName}: {baseCommandRequest.Scrub()}");
 	}
 
 	private void LogCommandTimeout(BaseCommandRequest baseCommandRequest)
 	{
-		Log($"*** Timeout for {baseCommandRequest.CommandName}: {JsonConvert.SerializeObject(baseCommandRequest)}");
+		Log($"*** Timeout for {baseCommandRequest.CommandName}: {baseCommandRequest.Scrub()}");
 	}
 
 	private void LogResponseEvent(BaseResponseEvent responseEvent)
@@ -446,7 +571,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	private void LogEvent(BaseEvent baseEvent)
 	{
-		Log($"<<< {baseEvent.EventName}: {JsonConvert.SerializeObject(baseEvent)}");
+		Log($"<<< {baseEvent?.EventName}: {JsonConvert.SerializeObject(baseEvent)}");
 	}
 
 	private string ObfuscateEMVCardReadResponseEvent(EMVCardReadResponseEvent responseEvent, string logText)
@@ -525,6 +650,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 	{
 		ResetReconnectionInterval();
 		_lastCardReaderDisconnect = null;
+		DeviceServiceShutDownInfo = null;
 		Log("DeviceService connected.");
 		Task.Run(delegate
 		{
@@ -544,23 +670,23 @@ public class DeviceServiceClient : IDeviceServiceClient
 		});
 	}
 
-	private bool RunAsyncCommand(string commandName, Guid? requestId, int timeout, Action<BaseResponseEvent> commandCompleteCallback = null)
+	private bool RunAsyncCommand(string commandName, Guid? requestId, int timeout, Action<BaseResponseEvent> commandCompleteCallback = null, Action<BaseResponseEvent> eventCallback = null)
 	{
 		return RunAsyncCommand(new BaseCommandRequest(commandName, AssemblyVersion)
 		{
 			RequestId = (requestId ?? Guid.NewGuid()),
 			CommandTimeout = timeout
-		}, commandCompleteCallback);
+		}, commandCompleteCallback, eventCallback);
 	}
 
-	private bool RunAsyncReadCardCommand(Guid? requestId, CardReadRequest request, int timeout, Action<BaseResponseEvent> commandCompleteCallback = null)
+	private bool RunAsyncReadCardCommand(Guid? requestId, CardReadRequest request, int timeout, Action<BaseResponseEvent> commandCompleteCallback = null, Action<BaseResponseEvent> eventCallback = null)
 	{
 		return RunAsyncCommand(new ReadCardCommand(AssemblyVersion)
 		{
 			RequestId = (requestId ?? Guid.NewGuid()),
 			Request = request,
 			CommandTimeout = timeout
-		}, commandCompleteCallback);
+		}, commandCompleteCallback, eventCallback);
 	}
 
 	private BaseResponseEvent RunCommand(BaseCommandRequest baseCommandRequest)
@@ -581,16 +707,23 @@ public class DeviceServiceClient : IDeviceServiceClient
 		return commandData?.ResponseEvent;
 	}
 
-	private bool RunAsyncCommand(BaseCommandRequest baseCommandRequest, Action<BaseResponseEvent> commandCompleteCallback)
+	private bool RunAsyncCommand(BaseCommandRequest baseCommandRequest, Action<BaseResponseEvent> commandCompleteCallback, Action<BaseResponseEvent> eventCallback)
 	{
 		bool result = false;
-		if (baseCommandRequest != null && commandCompleteCallback != null)
+		if (baseCommandRequest != null && (commandCompleteCallback != null || eventCallback != null))
 		{
 			CommandData commandData = new CommandData
 			{
-				CommandRequest = baseCommandRequest,
-				CommandCompleteCallback = commandCompleteCallback
+				CommandRequest = baseCommandRequest
 			};
+			if (commandCompleteCallback != null)
+			{
+				commandData.CommandCompleteCallback = commandCompleteCallback;
+			}
+			if (eventCallback != null)
+			{
+				commandData.EventCallback = eventCallback;
+			}
 			SendCommand(commandData);
 			StartTimeoutTimer();
 			result = true;
@@ -604,11 +737,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		{
 			_activeCommands[commandData.CommandRequest.RequestId] = commandData;
 			LogCommand(commandData.CommandRequest);
-			if (commandData.CommandRequest is CancelCommandRequest cancelCommandRequest)
-			{
-				_signalRClient.SendCommand(cancelCommandRequest);
-			}
-			else if (commandData.CommandRequest != null)
+			if (commandData.CommandRequest != null)
 			{
 				_signalRClient.SendCommand(commandData.CommandRequest);
 			}

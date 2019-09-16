@@ -34,4 +34,13 @@ public class EncryptedCardReadModel : Base87CardReadModel, IEncryptedCardReadMod
 		: base(errors)
 	{
 	}
+
+	public override void ObfuscateSensitiveData()
+	{
+		base.ObfuscateSensitiveData();
+		KSN = ObfuscationHelper.ObfuscateValue(KSN);
+		ICEncData = ObfuscationHelper.ObfuscateValue(ICEncData);
+		AESPAN = ObfuscationHelper.ObfuscateValue(AESPAN);
+		LSEncData = ObfuscationHelper.ObfuscateValue(LSEncData);
+	}
 }

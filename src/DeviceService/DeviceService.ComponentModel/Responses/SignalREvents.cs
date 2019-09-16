@@ -35,4 +35,22 @@ public class SignalREvents
 	public const string ReportAuthorizationResultResponseEvent = "ReportAuthorizationResultResponseEvent";
 
 	public const string ValidateVersionReponseEvent = "ValidateVersionReponseEvent";
+
+	public const string CheckActivationResponseEvent = "CheckActivationResponseEvent";
+
+	public const string CheckDeviceStatusResponseEvent = "CheckDeviceStatusResponseEvent";
+
+	public const string CardRemovedResponseEvent = "CardRemovedResponseEvent";
+
+	public const string GetCardInsertedStatusResponseEvent = "GetCardInsertedStatusResponseEvent";
+
+	public const string CardProcessingStartedResponseEvent = "CardProcessingStartedResponseEvent";
+
+	public const string DeviceServiceShutDownResponseEvent = "DeviceServiceShutDownResponseEvent";
+
+	public const string DeviceServiceCanShutDownEvent = "DeviceServiceCanShutDownEvent";
+
+	public const string DeviceServiceShutDownStartingEvent = "DeviceServiceShutDownStartingEvent";
+
+	public const string SupportsEMVResponseEvent = "SupportsEMVResponseEvent";
 }
