@@ -10,8 +10,6 @@ public static class CardTypeHelper
 
 	private static RedboxGiftCard m_rbGiftCard = new RedboxGiftCard();
 
-	private static readonly DateTime _mcSeriesTwoStartDate = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
 	public static void Initialize(List<BinRange> rbGiftCardBinRanges)
 	{
 		if (!m_isInitialized)
@@ -60,7 +58,7 @@ public static class CardTypeHelper
 		{
 			return CardType.MasterCard;
 		}
-		if (now >= _mcSeriesTwoStartDate && NumberMatches(cardNumber, "^(222[1-9]|22[3-9]|23|24|25|26|27[0-1]|2720)", 16))
+		if (NumberMatches(cardNumber, "^(222[1-9]|22[3-9]|23|24|25|26|27[0-1]|2720)", 16))
 		{
 			return CardType.MasterCard;
 		}
@@ -71,11 +69,15 @@ public static class CardTypeHelper
 		return null;
 	}
 
-	private static bool NumberMatches(string cardNumber, string regex, int length)
+	private static bool NumberMatches(string cardNumber, string regex, int minLength, int maxLength = 19)
 	{
 		if (Regex.IsMatch(cardNumber, regex))
 		{
-			return cardNumber.Length == length;
+			if (cardNumber.Length >= minLength)
+			{
+				return cardNumber.Length <= maxLength;
+			}
+			return false;
 		}
 		return false;
 	}

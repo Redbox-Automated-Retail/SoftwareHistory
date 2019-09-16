@@ -39,7 +39,7 @@ public class ThreadExecutionTimer
 
 	private static long GetThreadTimes()
 	{
-		long threadTimes = GetThreadTimes(GetCurrentThread(), out long exitTime, out exitTime, out var kernelTime, out var userTime);
+		long threadTimes = GetThreadTimes(GetCurrentThread(), out long createionTime, out createionTime, out var kernelTime, out var userTime);
 		if (!Convert.ToBoolean(threadTimes))
 		{
 			throw new Exception($"failed to get timestamp. error code: {threadTimes}");

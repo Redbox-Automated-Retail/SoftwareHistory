@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace Redbox.Core;
 
@@ -181,6 +182,18 @@ public class LogHelper
 	public void LogException(string message, Exception e)
 	{
 		Log($"{CallingFunction} - {message}, {e.GetType()}, '{e.Message}'");
+	}
+
+	public void LogFullException(string message, Exception e)
+	{
+		Type type = e.GetType();
+		StringBuilder stringBuilder = new StringBuilder();
+		while (e != null)
+		{
+			stringBuilder.Append(e.Message);
+			e = e.InnerException;
+		}
+		Log($"{CallingFunction} - {message}, {type}, '{stringBuilder}'");
 	}
 
 	internal void LogError(string callingfunction, string code, string description)
