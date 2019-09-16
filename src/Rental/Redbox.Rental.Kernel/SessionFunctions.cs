@@ -35,7 +35,7 @@ public static class SessionFunctions
 	[KernelFunction(Name = "kernel.close_shopping_cart_analytics")]
 	public static void CloseShoppingCartAnalytics(string sessionId, string isSessionAbandoned)
 	{
-		OrchestrationService.CloseShoppingCartAnalytics((sessionId != null) ? new Guid(sessionId) : Guid.NewGuid(), isSessionAbandoned);
+		OrchestrationService.CloseShoppingCartAnalytics((sessionId != null) ? new Guid(sessionId) : Guid.NewGuid(), bool.Parse(isSessionAbandoned));
 	}
 
 	[KernelFunction(Name = "kernel.get_session_value")]

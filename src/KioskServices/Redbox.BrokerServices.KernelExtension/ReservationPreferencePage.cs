@@ -10,7 +10,7 @@ using Redbox.BrokerServices.Proxy;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.Environment;
+using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;

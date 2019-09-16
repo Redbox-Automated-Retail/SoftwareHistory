@@ -182,7 +182,7 @@ public class FraudService : IFraudService
 		return outputList;
 	}
 
-	public bool IsPaperFraud(string barcode)
+	public bool IsPaperFraudCandidate(string barcode)
 	{
 		if (!IsIRSecurityEnabled || !HardwareSupportsIRScan)
 		{
@@ -317,7 +317,7 @@ public class FraudService : IFraudService
 		service.EnqueueStatistic("FraudCleanSync", fraudBarcodes);
 	}
 
-	public void UploadDiscImage(string imageName, string barcode, long? transactionId, Action<IRemoteServiceResult> callback)
+	public void UploadDiscImage(string imageName, string barcode, long? transactionId, bool hardwareSupportsIRScan, string cpAccountNumber, Action<IRemoteServiceResult> callback)
 	{
 		if (string.IsNullOrWhiteSpace(barcode))
 		{
@@ -331,7 +331,7 @@ public class FraudService : IFraudService
 			return;
 		}
 		RemoteServiceCallback completeCallback = ((callback != null) ? new RemoteServiceCallback(callback.Invoke) : null);
-		ServiceLocator.Instance.GetService<IUploadDiscImageService>()?.UploadDiscImage(KioskId, barcode, ImageType.Full, transactionId, imageBytes, completeCallback);
+		ServiceLocator.Instance.GetService<IUploadDiscImageService>()?.UploadDiscImage(KioskId, barcode, ImageType.Full, transactionId, imageBytes, hardwareSupportsIRScan, cpAccountNumber, completeCallback);
 	}
 
 	public void UploadDiscImageFromSync(string imageName, string barcode)
@@ -345,7 +345,7 @@ public class FraudService : IFraudService
 			}
 			else if (titleType.HasValue && FraudPeelIncludeFormats.Any((TitleType x) => x == titleType))
 			{
-				UploadDiscImage(imageName, barcode, null, null);
+				UploadDiscImage(imageName, barcode, null, HardwareSupportsIRScan, null, null);
 			}
 			else
 			{
@@ -383,7 +383,7 @@ public class FraudService : IFraudService
 			List<string> list = new List<string>();
 			foreach (IHardwareResult item in hardwareResults)
 			{
-				if (!string.IsNullOrWhiteSpace(item.ItemID) && string.Compare(item.ItemID, "unknown", ignoreCase: true) != 0 && string.Compare(item.ItemID, "empty", ignoreCase: true) != 0 && item.Code == "NoFraudMarkersDetected" && IsPaperFraud(item.ItemID))
+				if (!string.IsNullOrWhiteSpace(item.ItemID) && string.Compare(item.ItemID, "unknown", ignoreCase: true) != 0 && string.Compare(item.ItemID, "empty", ignoreCase: true) != 0 && item.Code == "NoFraudMarkersDetected" && IsPaperFraudCandidate(item.ItemID))
 				{
 					list.Add(item.ItemID);
 					DateTime? returnDate = (DateTime.TryParse(item.ReturnTime, out var result) ? new DateTime?(result) : ((DateTime?)null));
@@ -417,7 +417,7 @@ public class FraudService : IFraudService
 		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
 		try
 		{
-			string arg = (IsPaperFraud(barcode) ? "reject" : "continue");
+			string arg = (IsPaperFraudCandidate(barcode) ? "reject" : "continue");
 			ErrorList errorList = service?.ExecuteServiceCommand($"JOB SIGNAL JOB: {jobId} value: {arg}");
 			if (errorList != null && errorList.Any())
 			{
@@ -467,12 +467,14 @@ public class FraudService : IFraudService
 			return;
 		}
 		string key = "TransactionId";
+		string key2 = "cpAccountNumber";
 		string s = ((!result.ContainsKey(key)) ? null : result[key]?.ToString());
 		long? transactionId = null;
 		if (long.TryParse(s, out var result2))
 		{
 			transactionId = result2;
 		}
+		string cpAccountNumber = ((!result.ContainsKey(key2)) ? null : result[key2]?.ToString());
 		GetTitleTypeByBarcode(returnMessageClientData.Barcode, out var titleType, out var titleId);
 		if (titleId.HasValue && titleId == 1139)
 		{
@@ -480,7 +482,7 @@ public class FraudService : IFraudService
 		}
 		else if (titleType.HasValue && FraudPeelIncludeFormats.Any((TitleType x) => x == titleType))
 		{
-			UploadDiscImage(returnMessageClientData.FileName, returnMessageClientData.Barcode, transactionId, null);
+			UploadDiscImage(returnMessageClientData.FileName, returnMessageClientData.Barcode, transactionId, HardwareSupportsIRScan, cpAccountNumber, null);
 		}
 		else
 		{

@@ -4,6 +4,10 @@ public class Constants
 {
 	public class Messages
 	{
+		public const string Authorize = "Authorize";
+
+		public const string GCAuthorize = "GCAuthorize";
+
 		public const string DiscAction = "DiscAction";
 
 		public const string DiscFraud = "DiscFraud";

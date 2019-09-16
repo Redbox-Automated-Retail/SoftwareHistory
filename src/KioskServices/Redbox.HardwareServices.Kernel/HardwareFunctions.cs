@@ -932,14 +932,21 @@ public static class HardwareFunctions
 	internal static void SyncUnknowns(int? qlm_deck, bool forceSync = false)
 	{
 		LogHelper.Instance.Log($"HardwareFunctions.SyncUnknowns called with forceSync = {forceSync.ToString()}");
-		SyncUnknownProcessor.Instance.StartJob(qlm_deck, forceSync);
+		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>().ScheduleJob(qlm_deck, forceSync);
+	}
+
+	[KernelFunction(Name = "kernel.sync_unknowns_complete")]
+	internal static void SyncUnknownsComplete(string jobId)
+	{
+		LogHelper.Instance.Log($"HardwareFunctions.SyncUnknownsComplete called for jobId = {jobId}");
+		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>().ProcessSyncLocationsComplete(jobId);
 	}
 
 	[KernelFunction(Name = "kernel.sync_empties")]
 	internal static void SyncEmpties()
 	{
 		LogHelper.Instance.Log("HardwareFunctions.SyncEmpties Called.");
-		SyncEmptiesProcessor.Instance.StartJob();
+		ServiceLocator.Instance.GetService<ISyncEmptiesProcessor>().ScheduleJob();
 	}
 
 	private static LuaTable CreateResultTable(string jobId, ErrorList errors)

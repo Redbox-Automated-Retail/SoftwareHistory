@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -204,11 +205,12 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		IIdleTimerService service = ServiceLocator.Instance.GetService<IIdleTimerService>();
-		int timeout = OrchestrationService.TTSGetTimeout("medium", 15000);
+		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
 		IIdleTimer obj = service?.CreateIdleTimer("RecommendedTitlesPopupViewTimer");
-		obj?.Initialize(timeout, delegate
+		obj?.Initialize(timeOut, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
+			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.ViewGoBackSafe("RecommendedTitlesPopupViewController time out", popOnly: false);
 		});
 		obj?.Start();
@@ -255,6 +257,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			if (_shownFromView == "option_selection_dialog_view")
 			{
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_title_details,{titleProduct.ProductId}");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedMoviesTitleDetails")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			if (titleProduct != null)
 			{
@@ -280,11 +283,13 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			if (_shownFromView == "option_selection_dialog_view")
 			{
 				ITitleProduct titleProduct2 = kioskProduct as ITitleProduct;
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_add_title,{titleProduct2.ProductId}");
+				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_add_title,{titleProduct2.ProductId}", ProductData.ToProductData(titleProduct2));
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedMoviesAddTitle")?.AddData(ProductData.ToProductData(titleProduct2));
 			}
 			else
 			{
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "recommended-titles-popup-add-item");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedAddItem");
 			}
 			OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(rollupProduct, isPurchase: false));
 			break;
@@ -294,11 +299,13 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 			if (_shownFromView == "option_selection_dialog_view")
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_add_title,{titleProduct.ProductId}");
+				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_add_title,{titleProduct.ProductId}", ProductData.ToProductData(titleProduct));
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedMoviesAddTitle")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			else
 			{
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "recommended-titles-popup-add-item");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedAddItem");
 			}
 			if (titleProduct.HasMultiNightPrice)
 			{
@@ -322,11 +329,13 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		if (_shownFromView == "option_selection_dialog_view")
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "related_movies_nothanks");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedNoThanks");
 			OrchestrationService.UnwindToSafe("browse_view", discard: true, "recommended_titles_popup_view");
 		}
 		else
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "recommended_titles_popup_no_thanks");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedNoThanks");
 			OrchestrationService.ViewGoBackSafe("RecommendedTitlesPopupViewController cancel", popOnly: false);
 		}
 	}

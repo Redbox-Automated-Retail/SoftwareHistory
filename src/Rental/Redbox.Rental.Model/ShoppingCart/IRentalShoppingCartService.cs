@@ -37,4 +37,6 @@ public interface IRentalShoppingCartService
 	void SendRentalShoppingCartToAnalytics(IRentalShoppingCart rentalShoppingCart);
 
 	List<string> AssignBarcodesToVend(IRentalShoppingCart rentalShoppingCart);
+
+	void RemovePromoOfferFromCart(Guid shoppingSessionId);
 }

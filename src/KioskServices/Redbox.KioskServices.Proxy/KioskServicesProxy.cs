@@ -108,7 +108,18 @@ public class KioskServicesProxy
 			}
 			if (dictionary.ContainsKey("CreditCard"))
 			{
-				ObfuscationHelper.ObfuscateDictionary((Dictionary<string, object>)dictionary["CreditCard"]);
+				Dictionary<string, object> dictionary3 = (Dictionary<string, object>)dictionary["CreditCard"];
+				ObfuscationHelper.ObfuscateDictionary(dictionary3);
+				if (dictionary3.ContainsKey("EmvTags") && dictionary3["EmvTags"] != null)
+				{
+					IDictionary<string, object> obj = (IDictionary<string, object>)dictionary3["EmvTags"];
+					Dictionary<string, object> dictionary4 = new Dictionary<string, object>();
+					foreach (KeyValuePair<string, object> item2 in obj)
+					{
+						dictionary4.Add(item2.Key, new string('x', ((string)item2.Value).Length));
+					}
+					dictionary3["EmvTags"] = dictionary4;
+				}
 			}
 			if (dictionary.ContainsKey("Image"))
 			{
@@ -163,18 +174,21 @@ public class KioskServicesProxy
 			dictionary["Hal Service"] = service["HALServiceVersion"] ?? "Not Found";
 			dictionary["Hal Client"] = service["HALVersion"] ?? "Not Found";
 		}
-		IKernelExtensionService service2 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-		if (service2 != null)
+		IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+		dictionary["Device Service"] = service2?.DeviceServiceVersion?.ToString() ?? "Not Found";
+		dictionary["Device Service Client"] = service2.DeviceServiceClientVersion?.ToString() ?? "Not Found";
+		IKernelExtensionService service3 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
+		if (service3 != null)
 		{
-			foreach (IKernelExtension extension in service2.Extensions)
+			foreach (IKernelExtension extension in service3.Extensions)
 			{
 				dictionary[extension.Name] = extension.Version;
 			}
 		}
-		IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (service3 != null)
+		IResourceBundleService service4 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		if (service4 != null)
 		{
-			foreach (IBundleSpecifier bundle in service3.Bundles)
+			foreach (IBundleSpecifier bundle in service4.Bundles)
 			{
 				dictionary[bundle.Name] = bundle.Version.ToString();
 			}

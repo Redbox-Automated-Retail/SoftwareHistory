@@ -216,16 +216,12 @@ public static class EnvironmentFunctions
 		return false;
 	}
 
-	[KernelFunction(Name = "kernel.registerhardwarechange")]
-	internal static void RegisterHardwareChangeHandler(HardwareChangeCallback callback)
+	[KernelFunction(Name = "kernel.checkreadervalidation")]
+	internal static void CheckReaderActivation()
 	{
-		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RegisterHardwareChangeCallback(callback);
-	}
-
-	[KernelFunction(Name = "kernel.unregisterhardwarechange")]
-	internal static void UnregisterHardwareChangeHandler()
-	{
-		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.UnregisterHardwareChangeCallback();
+		IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+		service?.CheckDeviceActivation();
+		service?.CheckDeviceStatus();
 	}
 
 	[KernelFunction(Name = "kernel.wait")]
@@ -233,5 +229,11 @@ public static class EnvironmentFunctions
 	{
 		LogHelper.Instance.Log($"Wait {delay}", LogEntryType.Info);
 		new ManualResetEvent(initialState: false).WaitOne(delay);
+	}
+
+	[KernelFunction(Name = "kernel.handle_disconnected_usb_card_reader")]
+	internal static void HandleDisconnectedCardReader()
+	{
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfDisconnectedCardReader();
 	}
 }

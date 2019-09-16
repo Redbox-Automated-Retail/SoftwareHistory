@@ -26,5 +26,7 @@ public class RentalShoppingCartFilterCriteria : IRentalShoppingCartFilterCriteri
 
 	public bool IncludeMultiNightPricedItems { get; set; }
 
+	public bool IncludeFlashDeals { get; set; }
+
 	public bool IncludeLoyaltyRedeemedItems { get; set; }
 }

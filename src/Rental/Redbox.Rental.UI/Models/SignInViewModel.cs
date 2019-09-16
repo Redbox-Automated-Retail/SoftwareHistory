@@ -18,7 +18,19 @@ public class SignInViewModel : DependencyObject
 
 	public string EmailAndPasswordButtonText { get; set; }
 
+	public string SignInOrLabelText { get; set; }
+
 	public string PhoneAndPinButtonText { get; set; }
+
+	public string SignInPointOnePartOneText { get; set; }
+
+	public string SignInPointOnePartTwoText { get; set; }
+
+	public string SignInPointOnePartThreeText { get; set; }
+
+	public string SignInPointTwoText { get; set; }
+
+	public string SignInPointThreeText { get; set; }
 
 	public string CancelButtonText { get; set; }
 
@@ -32,18 +44,12 @@ public class SignInViewModel : DependencyObject
 
 	public void ProcessOnPhoneAndPinButtonClicked()
 	{
-		if (OnPhoneAndPinButtonClicked != null)
-		{
-			OnPhoneAndPinButtonClicked();
-		}
+		OnPhoneAndPinButtonClicked?.Invoke();
 	}
 
 	public void ProcessOnCancelButtonClicked()
 	{
-		if (OnCancelButtonClicked != null)
-		{
-			OnCancelButtonClicked();
-		}
+		OnCancelButtonClicked?.Invoke();
 	}
 
 	public ISpeechControl ProcessGetSpeechControl()

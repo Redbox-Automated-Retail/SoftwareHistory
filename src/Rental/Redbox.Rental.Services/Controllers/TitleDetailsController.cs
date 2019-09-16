@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -96,23 +97,34 @@ public class TitleDetailsController : BaseViewController
 		browseProductControl.RowCount = 1;
 		browseProductControl.ColumnCount = 1;
 		browseProductControl.BrowseItems = Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseItemModels?.Where((IBrowseItemModel x) => x is DisplayProductModel).ToList() ?? new List<IBrowseItemModel>();
-		browseProductControl.BrowseItems.ForEach(delegate(IBrowseItemModel x)
-		{
-			DisplayProductModel obj = x as DisplayProductModel;
-			obj?.ConfigureForTitleDetail();
-			PopulateTitleDetailProperties(obj);
-		});
 		IKioskProduct selectedProduct = Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
 		bool isAda = BaseViewController.IsADAMode;
-		browseProductControl.SetPageNumber(browseProductControl.BrowseItems.FindIndex((IBrowseItemModel x) => (!isAda || !(selectedProduct is TitleRollupProduct)) ? (x.Data == selectedProduct) : TitleRollupUtilities.IsAdaDefaultTitle((ITitleProduct)x.Data, (TitleRollupProduct)selectedProduct)) + 1, PageChangeSource.None);
+		int num = browseProductControl.BrowseItems.FindIndex((IBrowseItemModel x) => (!isAda || !(selectedProduct is TitleRollupProduct)) ? (x.Data == selectedProduct) : TitleRollupUtilities.IsAdaDefaultTitle((ITitleProduct)x.Data, (TitleRollupProduct)selectedProduct)) + 1;
+		ConfigurePage(browseProductControl, num - 1);
+		ConfigurePage(browseProductControl, num);
+		ConfigurePage(browseProductControl, num + 1);
+		browseProductControl.SetPageNumber(num, PageChangeSource.None);
 		browseProductControl.OnPageChanged += delegate(int prevPageNumber, int newPageNumber, PageChangeSource pageSource)
 		{
 			string subItemValue = ((prevPageNumber < newPageNumber) ? "product-detail-page-next" : "product-detail-page-back");
 			BrowseState.BrowseSelectionSelectedProduct = browseProductControl.BrowseItems[newPageNumber - 1].Data as IKioskProduct;
+			if (newPageNumber > prevPageNumber)
+			{
+				ConfigurePage(browseProductControl, newPageNumber + 1);
+			}
+			else if (newPageNumber < prevPageNumber)
+			{
+				ConfigurePage(browseProductControl, newPageNumber - 1);
+			}
 			ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("pageChange", subItemValue);
+			ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent((prevPageNumber < newPageNumber) ? "TitleDetailsPageNext" : "TitleDetailsPageBack");
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = false;
 			ConfigureTTS();
 		};
+		if (selectedProduct is ITitleProduct)
+		{
+			ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddData(ProductData.ToProductData(selectedProduct as ITitleProduct));
+		}
 		if (browseProductControl.BrowseItems.FirstOrDefault((IBrowseItemModel x) => x.Data == Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct) is DisplayProductModel displayProductModel)
 		{
 			displayProductModel.ComingSoonButtonText = string.Format("{0}", BundleFunctions.GetDictionaryStringValue("strings", "email_optin_button_text"));
@@ -120,6 +132,16 @@ public class TitleDetailsController : BaseViewController
 		browseProductControl.BrowseControls = new List<Control>();
 		browseProductControl.BrowseControls.Add(new TitleDetailDisplayProductUserControl());
 		return browseProductControl;
+	}
+
+	private static void ConfigurePage(BrowseControlModel browseControlModel, int pageNumber)
+	{
+		if (browseControlModel?.BrowseItems != null && pageNumber >= 1 && pageNumber <= browseControlModel.BrowseItems.Count && browseControlModel.BrowseItems[pageNumber - 1] is DisplayProductModel displayProductModel)
+		{
+			BrowseViewController.ConfigureDisplayProductModel(displayProductModel.Data as IKioskProduct, displayProductModel, isADAMiniCart: false, displayProductModel.DisplayProductModelConstants);
+			displayProductModel?.ConfigureForTitleDetail();
+			PopulateTitleDetailProperties(displayProductModel);
+		}
 	}
 
 	private static void OnGoBack()
@@ -133,11 +155,13 @@ public class TitleDetailsController : BaseViewController
 		IKioskProduct kioskProduct = displayProductModel.Data as IKioskProduct;
 		if (kioskProduct is TitleRollupProduct { IsEmptyCase: false } titleRollupProduct)
 		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsBuy");
 			OrchestrationService.ViewShow("purchase_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase: true));
 			return;
 		}
 		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "buy," + titleProduct.ProductId);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsBuy")?.AddData(ProductData.ToProductData(titleProduct));
 		BrowseFunctions.AddProductToCart(titleProduct, isPurchase: true);
 	}
 
@@ -145,6 +169,7 @@ public class TitleDetailsController : BaseViewController
 	{
 		IComingSoonOptinInfo comingSoonOptinInfo = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ComingSoonOptInInfo;
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "see-related-collection");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsSeeRelatedCollection");
 		ITitleProduct titleProduct = model?.Data as ITitleProduct;
 		if (titleProduct == null)
 		{
@@ -193,30 +218,21 @@ public class TitleDetailsController : BaseViewController
 		if (!fromOosSelection)
 		{
 			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "rent," + titleProduct2.ProductId);
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsRentButton")?.AddData(ProductData.ToProductData(titleProduct2));
 			OnRent(titleProduct2.ProductId);
 		}
 		if (titleProduct2.InStock | fromOosSelection)
 		{
 			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
-			bool flag2 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock && titleProduct2.IsMovie;
-			bool flag3 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct2.IsSellableAndInStock && titleProduct2.IsMovie;
-			if ((titleProduct2.HasMultiNightPrice | flag2 | flag3) && !flag)
+			if ((titleProduct2.HasMultiNightPrice || (titleProduct2.IsSellableAndInStock && titleProduct2.IsMovie)) && !flag)
 			{
 				string viewAnalyticsName = "multi_night_pricing_popup_view";
-				if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "B" && titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
+				if (titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
 				{
 					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
 				}
-				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
-				}
-				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
-				}
-				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && !titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
+				else if (!titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
 				{
 					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
 				}
@@ -252,6 +268,7 @@ public class TitleDetailsController : BaseViewController
 		optionSelectionDialogInfo.CancelCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 		{
 			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_cancel");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOutofStockCancel");
 			GoBack("OutOfStockDialogCancel");
 		}, (Func<bool>)null);
 		optionSelectionDialogInfo.DescriptionText = Resources.out_of_stock_movie_message;
@@ -267,6 +284,7 @@ public class TitleDetailsController : BaseViewController
 				ButtonData item = new ButtonData((pricingRecord != null) ? string.Format("{0} ${1}", displayDescription, pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 				{
 					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_add_format");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOutofStockAddFormat");
 					OnRentProduct(displayProductModel, commandType, inStockFormat.TitleType, fromOosSelection: true);
 				}, (Func<bool>)null));
 				observableCollection.Add(item);
@@ -275,6 +293,7 @@ public class TitleDetailsController : BaseViewController
 		observableCollection.Add(new ButtonData(Resources.related_movies, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 		{
 			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_related_movies");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOutofStockRelatedMovies");
 			BrowseFunctions.ShowRelatedProductsDialog(selectedProduct);
 		}, (Func<bool>)null)));
 		optionSelectionDialogInfo.ButtonData = observableCollection;
@@ -289,10 +308,12 @@ public class TitleDetailsController : BaseViewController
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_rent_back");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsReserveOnlineRentBack");
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogBack", popOnly: false);
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_rent_gotit");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsReserveOnlineRentGotit");
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
 		});
@@ -306,10 +327,12 @@ public class TitleDetailsController : BaseViewController
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_back");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOnDemandRentBack");
 			OrchestrationService.ViewGoBackSafe("OnDemandRentBack", popOnly: false);
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_gotit");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOnDemandRentGotit");
 			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
 			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
 		});
@@ -318,6 +341,7 @@ public class TitleDetailsController : BaseViewController
 	private static void OnCollectionButton(IBrowseItemModel displayProductModel)
 	{
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "see-related-collection");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsSeeRelatedCollection");
 		BrowseState.CollectionsPopupShown = true;
 		long? num = (displayProductModel?.Data as ITitleProduct)?.Collections?.FirstOrDefault();
 		if (num.HasValue)
@@ -575,6 +599,7 @@ public class TitleDetailsController : BaseViewController
 	private static void ReviewButtonCommand_Execute(ITitleProduct titleProduct)
 	{
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "see_reviews");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsSeeReviews");
 		if (titleProduct != null)
 		{
 			OrchestrationService.ViewShow("review_popup_view", new ReviewPopupInfo

@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Timers;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Services;
@@ -12,6 +15,13 @@ namespace Redbox.Rental.Kernel;
 
 public static class DataServiceFunctions
 {
+	private static readonly Timer _cacheAlertTimer = new Timer(TimeSpan.FromDays(1.0).TotalMilliseconds)
+	{
+		AutoReset = true
+	};
+
+	private static bool _cacheAlertSent = false;
+
 	public static string CacheTableName = "cache";
 
 	public static string ProfileTableName = "profile";
@@ -255,6 +265,15 @@ public static class DataServiceFunctions
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log($"An unhandled exception occured - DataServiceFunctions.DataServiceSet({dataStore},{tableName},{keyName},{Convert.ToString(data)}).", e);
+			if (dataStore != null && dataStore.Equals(CacheTableName) && !_cacheAlertSent)
+			{
+				SendAlert(dataStore, tableName, keyName);
+				_cacheAlertSent = true;
+				if (!_cacheAlertTimer.Enabled)
+				{
+					StartCacheAlertTimer();
+				}
+			}
 		}
 	}
 
@@ -270,5 +289,21 @@ public static class DataServiceFunctions
 			LogHelper.Instance.Log($"An unhandled exception occured - DataServiceFunctions.RegisterImageFromCache({name},{cacheName}).", e);
 		}
 		return false;
+	}
+
+	private static void SendAlert(string dataStore, string tableName, string keyName)
+	{
+		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId.ToString(), "ApplicationCrash", "mm:DataStoreError, SOFT-FILE03", $"<h2>Kiosk Engine Data File Error</h2><p>Could not find key [ {keyName} ] in table [ {tableName} ] for data store [ {dataStore} ]</p>", DateTime.Now, null);
+	}
+
+	private static void StartCacheAlertTimer()
+	{
+		_cacheAlertTimer.Elapsed += ResetCacheAlertSent;
+		_cacheAlertTimer.Start();
+	}
+
+	private static void ResetCacheAlertSent(object sender, ElapsedEventArgs e)
+	{
+		_cacheAlertSent = false;
 	}
 }

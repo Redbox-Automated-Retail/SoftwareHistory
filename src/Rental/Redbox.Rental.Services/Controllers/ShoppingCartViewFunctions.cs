@@ -3,9 +3,11 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.Services.ViewDefinitions;
@@ -21,11 +23,13 @@ public class ShoppingCartViewFunctions
 
 	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
+	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
+
 	public static void ViewShoppingCart()
 	{
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.IsShoppingCartFullMessagesOpen = false;
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
-		if (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
 		{
 			BrowseState.ItemAddedFromView = null;
 			ShowInCartOfferMessage();
@@ -82,11 +86,12 @@ public class ShoppingCartViewFunctions
 				GetViewService()?.GoBackSafe("ShowInCartOfferMessage Timed out.", popOnly: true);
 				rentalShoppingCart.InCartPromoOfferCancel = true;
 				rentalShoppingCart.InCartTitleMarketing = false;
-				OrchestrationService.ExecuteScript("check_out");
+				CheckoutFunctions.BeginCheckout();
 			}
 		}, delegate
 		{
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-promo-decline");
+			AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartPromoDecline");
 			if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) == 1)
 			{
 				rentalShoppingCart.InCartPromoOfferCancel = true;
@@ -98,11 +103,12 @@ public class ShoppingCartViewFunctions
 				GetViewService()?.GoBackSafe("in_cart_offer_message_view:no_button.", popOnly: true);
 				rentalShoppingCart.InCartPromoOfferCancel = true;
 				rentalShoppingCart.InCartTitleMarketing = false;
-				OrchestrationService.ExecuteScript("check_out");
+				CheckoutFunctions.BeginCheckout();
 			}
 		}, delegate
 		{
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-promo-accept");
+			AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartPromoAccept");
 			if (PromotionService.Instance.IsFreeInCartOfferRunning)
 			{
 				PromotionService.Instance.SetFreeInCartPromo(rentalShoppingCart);
@@ -126,6 +132,7 @@ public class ShoppingCartViewFunctions
 					BrowseState.PageNumber = 1;
 					BrowseState.TitleType = inCartPromoActionRule.TitleType;
 					BrowseState.BrowseMode = BrowseViewFilter.All;
+					BrowseState.BrowsePriceRangeFilter = null;
 					if (inCartPromoActionRule.OfferAction == PromotionRule.Constants.OfferActionTitleMarketing)
 					{
 						rentalShoppingCart.InCartTitleMarketing = true;
@@ -169,11 +176,13 @@ public class ShoppingCartViewFunctions
 				{
 					LogHelper.Instance.Log("User cancelled remove item with back");
 					SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-removeitem-cancel");
+					AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemCancel");
 					GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning go back.");
 				}, delegate
 				{
 					LogHelper.Instance.Log("User confirmed remove item warning popup with continue");
 					SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-removeitem-confirm");
+					AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemConfirm");
 					RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
 					ClearInCart(rentalShoppingCart);
 					GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning continue.");
@@ -224,6 +233,7 @@ public class ShoppingCartViewFunctions
 	private static void RemoveItemFromShoppingCart(IRentalShoppingCart rentalShoppingCart, IRentalShoppingCartItem deleteRentalShoppingCartItem)
 	{
 		SessionAnalyticsService?.AddViewEvent("buttonPress", $"shopping-cart-remove-item,{deleteRentalShoppingCartItem.ProductId}");
+		AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsRemoveItem")?.AddData(ProductData.ToProductData(deleteRentalShoppingCartItem));
 		rentalShoppingCart.RemoveItem(deleteRentalShoppingCartItem, userRemoved: true);
 	}
 

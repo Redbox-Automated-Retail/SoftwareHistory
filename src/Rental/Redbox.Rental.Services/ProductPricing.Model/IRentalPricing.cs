@@ -2,6 +2,8 @@ namespace ProductPricing.Model;
 
 public interface IRentalPricing : IPricing
 {
+	short? Attributes { get; set; }
+
 	PriceLevelType PriceLevelType { get; set; }
 
 	string PriceLevelTypeValue { get; set; }

@@ -13,6 +13,7 @@ public class GeneralMessageViewController : BaseViewController
 		if (viewUserControl != null)
 		{
 			viewUserControl.DataContext = messageViewModel;
+			LogHelper.Instance.Log($"GeneralMessageView Message: {messageViewModel?.MessageText}");
 			if (messageViewModel != null && messageViewModel.DisableIdleTimer)
 			{
 				(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer("idle_timer"))?.Suspend();

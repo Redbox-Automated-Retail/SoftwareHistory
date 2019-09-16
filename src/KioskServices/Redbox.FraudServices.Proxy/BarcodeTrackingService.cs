@@ -122,7 +122,10 @@ public class BarcodeTrackingService : IBarcodeTrackingService
 			string jsonRequest = Encoding.ASCII.GetString(message.Data);
 			if (message.Type == "BarcodeTracking")
 			{
-				response = FraudServicesProxy.Instance.ExecuteMessage(message.Type, "api/Fraud/addbarcodetracking", jsonRequest);
+				bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.AwsBarcodeTrackingEnabled ?? false;
+				LogHelper.Instance.Log($"Use AWS for BarcodeTracking? {flag}");
+				string apiUri = (flag ? "api/frauddata/BarcodeTracking" : "api/Fraud/addbarcodetracking");
+				response = FraudServicesProxy.Instance.ExecuteMessage(message.Type, apiUri, jsonRequest, flag);
 			}
 			else
 			{

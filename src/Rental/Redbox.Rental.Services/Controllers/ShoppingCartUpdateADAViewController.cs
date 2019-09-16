@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -130,15 +131,19 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 	private static void RemoveItemFromShoppingCart(DisplayProductModel displayProductModel, object parameter)
 	{
 		BaseViewController.ProcessWPFHit();
-		object obj = displayProductModel?.Data;
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {(obj as IRentalShoppingCartItem)?.ProductId}");
-		ShoppingCartViewFunctions.RemoveItemFromShoppingCart(displayProductModel, parameter);
+		if (displayProductModel?.Data is IRentalShoppingCartItem rentalShoppingCartItem)
+		{
+			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {rentalShoppingCartItem?.ProductId}");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADADelete").AddData(ProductData.ToProductData(rentalShoppingCartItem));
+			ShoppingCartViewFunctions.RemoveItemFromShoppingCart(displayProductModel, parameter);
+		}
 	}
 
 	private static void ShowBrowseViewGames()
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "addgame");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADAAddGame");
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = TitleFamily.Games;
 		BaseViewController.GetViewService()?.UnwindToSafe("browse_view", discard: true, null);
@@ -148,6 +153,7 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "addmovie");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADAAddMovie");
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		BaseViewController.GetViewService()?.UnwindToSafe("browse_view", discard: true, null);
 	}
@@ -155,6 +161,7 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 	private static void ProcessGoBackCommand()
 	{
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "Okay");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADAOkay");
 		BaseViewController.ProcessWPFHit();
 		OrchestrationService.ViewGoBack("shopping_cart_update_ada_view", popOnly: false);
 	}

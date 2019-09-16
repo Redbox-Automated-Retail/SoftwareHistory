@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Input;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -28,6 +29,7 @@ public class CollectionMessageViewController : BaseViewController
 	{
 		ISessionAnalyticsService sessionAnalyticsService = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 		sessionAnalyticsService?.AddViewEvent("collectionspopupreason", reason);
+		BaseViewController.AnalyticsService?.AddData(new NameValueData("CollectionsPopupReason", reason));
 		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance?.BrowseState;
 		if (browseState != null)
 		{
@@ -66,11 +68,13 @@ public class CollectionMessageViewController : BaseViewController
 		collectionMessageModel.OnCancelDialog = delegate
 		{
 			sessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-collection-mesage-view");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("CollectionMessageCancel");
 			viewService?.GoBackSafe("collection message view cancelled", popOnly: false);
 		};
 		collectionMessageModel.OnSeeAllCollections = delegate
 		{
 			sessionAnalyticsService?.AddViewEvent("buttonPress", "see-all-collections");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("CollectionMessageSeeAll");
 			if (viewService.Peek(1) != "browse_view")
 			{
 				browseState.PushNonBrowseViewBrowseStateSet();
@@ -87,6 +91,7 @@ public class CollectionMessageViewController : BaseViewController
 		{
 			CollectionProduct collectionProduct = browseItemModel?.Data as CollectionProduct;
 			sessionAnalyticsService?.AddViewEvent("buttonPress", $"view-collection,{collectionProduct?.ProductName}");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("CollectionMessageView")?.AddData(new CollectionData(collectionProduct.Id, collectionProduct.ProductName));
 			if (viewService.Peek(1) != "browse_view")
 			{
 				browseState.PushNonBrowseViewBrowseStateSet();

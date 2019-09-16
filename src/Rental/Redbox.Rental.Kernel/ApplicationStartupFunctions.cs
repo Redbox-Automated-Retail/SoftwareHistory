@@ -1,6 +1,7 @@
 using System;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Services;
 
 namespace Redbox.Rental.Kernel;
@@ -65,5 +66,11 @@ public static class ApplicationStartupFunctions
 	public static void ResetApplicationIdleTimerTimeout()
 	{
 		OrchestrationService.ResetApplicationIdleTimerTimeout();
+	}
+
+	[KernelFunction(Name = "kernel.start_the_rental_application")]
+	public static void StartTheRentalApplication()
+	{
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.StartTheRentalApplication();
 	}
 }

@@ -35,6 +35,7 @@ public class BulletListPopupViewController : BaseViewController
 			bulletListPopupViewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_gotit");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("BulletListPopupReserveOnlineGotit", parameters?.ViewAnalyticsName);
 				OrchestrationService.ViewGoBackSafe("Bullet Point popup Back", popOnly: false);
 			}, (Func<bool>)null);
 			bulletListPopupViewModel.CancelButtonText = Resources.got_it_button;
@@ -79,6 +80,7 @@ public class BulletListPopupViewController : BaseViewController
 			bulletListPopupViewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "redbox_perks_gotit");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("BulletListPopupRedboxPerksGotit", parameters?.ViewAnalyticsName);
 				OrchestrationService.ViewGoBackSafe("Bullet Point popup Back", popOnly: false);
 			}, (Func<bool>)null);
 			bulletListPopupViewModel.CancelButtonText = Resources.got_it_button;

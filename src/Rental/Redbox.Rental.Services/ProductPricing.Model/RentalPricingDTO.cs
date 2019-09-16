@@ -4,6 +4,8 @@ public class RentalPricingDTO
 {
 	public long ProductPriceId { get; set; }
 
+	public short? Attributes { get; set; }
+
 	public decimal InitialNight { get; set; }
 
 	public int InitialDays { get; set; }
@@ -32,7 +34,8 @@ public class RentalPricingDTO
 			NonReturnPrice = rp.NonReturnPrice,
 			ExpirePrice = rp.ExpirePrice,
 			DefaultInitialNight = rp.InitialNight,
-			DefaultExtraNight = rp.ExtraNight
+			DefaultExtraNight = rp.ExtraNight,
+			Attributes = rp.Attributes
 		};
 	}
 
@@ -50,5 +53,14 @@ public class RentalPricingDTO
 			DefaultInitialNight = rp.InitialNight,
 			DefaultExtraNight = rp.ExtraNight
 		};
+	}
+
+	public bool HasAttribute(PricingAttributes pa)
+	{
+		if (!Attributes.HasValue)
+		{
+			return false;
+		}
+		return ((PricingAttributes)Attributes.Value).HasFlag(pa);
 	}
 }

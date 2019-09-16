@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Redbox.KioskEngine.ComponentModel.TrackData;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
@@ -11,6 +12,16 @@ public interface IEnvironmentNotificationService
 	bool CheckCardReader { get; set; }
 
 	int NullKioskId { get; set; }
+
+	bool IsClassicTrackDataServiceRegistered { get; }
+
+	bool IsDeviceServiceTrackDataServiceRegistered { get; }
+
+	bool IsTrackDataServiceRegistered { get; }
+
+	bool PreviousTrackDataServiceWasDeviceServiceTrackDataService { get; }
+
+	bool PreviousTrackDataServiceWasClassicTrackDataService { get; }
 
 	void Reset();
 
@@ -24,9 +35,13 @@ public interface IEnvironmentNotificationService
 
 	TouchScreenState TouchScreenStatus();
 
-	void RaiseValidReader();
+	void RaiseValidClassicCardReader();
 
-	void RaiseInvalidReader();
+	void RaiseInvalidClassicCardReader();
+
+	void RaiseValidDeviceServiceCardReader();
+
+	void RaiseInvalidDeviceServiceCardReader();
 
 	void LaunchSecureBrowser(IDictionary<string, string> approvedUrls, NavigateUrlCallback navigateUrlCallback);
 
@@ -36,15 +51,17 @@ public interface IEnvironmentNotificationService
 
 	void UnregisterConfigurationCallback(string name);
 
-	void UnregisterHardwareChangeCallback();
-
-	void RegisterHardwareChangeCallback(HardwareChangeCallback callback);
-
 	void UnRegisterCorruptDbCallback();
 
 	void RegisterCorruptDbCallback(CorruptDbCallback callback);
 
 	bool RaiseCorruptDb(string dbName);
 
-	EnvironmentNotificationType ProcessNotification(ref Message msg);
+	void RegisterCardReaderConnectedCallback(Action cardReaderConnectedCallback);
+
+	void RegisterCardReaderDisconnectedCallback(Action<ITrackDataService> cardReaderDisconnectedCallback);
+
+	EnvironmentNotificationType ProcessClassicCardReaderNotification(ref Message msg);
+
+	void DetectCardReaderAndRegisterTrackDataService();
 }

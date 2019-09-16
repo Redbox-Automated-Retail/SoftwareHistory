@@ -10,6 +10,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
+using Redbox.Rental.Model.Session;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -103,8 +104,9 @@ public class PromotionServicesProxy : IPromotionServices
 		}
 	}
 
-	public void KioskOptIn(string storeNumber, List<IOptInItem> optInItems, bool sendCardHash, RemoteServiceCallback callback)
+	public void KioskOptIn(string storeNumber, List<IOptInItem> optInItems, RemoteServiceCallback callback)
 	{
+		ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
@@ -114,12 +116,6 @@ public class PromotionServicesProxy : IPromotionServices
 				LogHelper.Instance.Log("Enqueue call to Remote IPromotionServices.KioskOptIn, URL: {0} ", KioskServicesProxy.Instance.Url);
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-				string cardHash = string.Empty;
-				string text = ServiceLocator.Instance.GetService<ITrackDataService>().GenerateCardHashId();
-				if (sendCardHash && text != null)
-				{
-					cardHash = text;
-				}
 				IEnumerable<IOptInItem> enumerable = (optInItems ?? new List<IOptInItem>()).Where((IOptInItem x) => !string.IsNullOrEmpty(x.OptInMethodData));
 				errorList = (enumerable.Any() ? service2.Enqueue(200, "KioskOptIn", new
 				{
@@ -129,7 +125,6 @@ public class PromotionServicesProxy : IPromotionServices
 					EngineVersion = service["EngineVersion"],
 					BundleVersion = service["ProductVersion"],
 					RequestDate = DateTime.Now,
-					CardHash = cardHash,
 					OptInItems = enumerable
 				}) : new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("U001", "No Valid Optins To Send", (optInItems?.Count() ?? 0) + " items were missing OptInMethodData") });
 			}

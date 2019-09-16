@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TrackData;
+using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.KioskEngine.IDE;
 using Redbox.USB;
 
@@ -10,13 +12,51 @@ namespace Redbox.KioskEngine.Environment;
 
 public class EnvironmentManager : IEnvironmentNotificationService
 {
-	private HardwareChangeCallback m_hardwareChangeCallback;
-
 	private CorruptDbCallback m_corruptDbCallback;
+
+	private object _trackDataServiceLockObject = new object();
+
+	private object _validDeviceServiceCardReaderLockObject = new object();
 
 	private readonly IDictionary<string, ConfigurationCallback> m_configurationCallbacks = new Dictionary<string, ConfigurationCallback>();
 
+	private Action _cardReaderConnectedCallback;
+
+	private Action<ITrackDataService> _cardReaderDisconnectedCallback;
+
 	public static EnvironmentManager Instance => Singleton<EnvironmentManager>.Instance;
+
+	private ITrackDataService _previousTrackDataService { get; set; }
+
+	public bool PreviousTrackDataServiceWasDeviceServiceTrackDataService => _previousTrackDataService is IDeviceServiceTrackDataService;
+
+	public bool PreviousTrackDataServiceWasClassicTrackDataService => _previousTrackDataService is IClassicTrackDataService;
+
+	private bool IsDeviceServiceCardReaderAttached
+	{
+		get
+		{
+			bool result = false;
+			IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+			if (service != null)
+			{
+				if (!service.IsConnectedToDeviceService)
+				{
+					service?.ConnectToDeviceService();
+				}
+				result = service?.IsCardReaderConnected ?? false;
+			}
+			return result;
+		}
+	}
+
+	private bool IsDeviceServiceClientValid => (ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.ValidateVersion())?.IsCompatible ?? false;
+
+	public bool IsDeviceServiceTrackDataServiceRegistered => ServiceLocator.Instance.GetService<ITrackDataService>() is IDeviceServiceTrackDataService;
+
+	public bool IsClassicTrackDataServiceRegistered => ServiceLocator.Instance.GetService<ITrackDataService>() is IClassicTrackDataService;
+
+	public bool IsTrackDataServiceRegistered => ServiceLocator.Instance.GetService<ITrackDataService>() != null;
 
 	public bool HasValidCardReader { get; internal set; }
 
@@ -62,7 +102,6 @@ public class EnvironmentManager : IEnvironmentNotificationService
 			LogHelper.Instance.Log("...Clear configuration callbacks.");
 			m_configurationCallbacks.Clear();
 			UnRegisterCorruptDbCallback();
-			UnregisterHardwareChangeCallback();
 		}
 		catch (Exception e)
 		{
@@ -75,21 +114,77 @@ public class EnvironmentManager : IEnvironmentNotificationService
 		ErrorList result = new ErrorList();
 		LogHelper.Instance.Log("Initialize environment manager.");
 		ServiceLocator.Instance.AddService(typeof(IEnvironmentNotificationService), Instance);
-		if (CheckCardReader)
+		DetectCardReaderAndRegisterTrackDataService();
+		return result;
+	}
+
+	public void DetectCardReaderAndRegisterTrackDataService()
+	{
+		LogHelper.Instance.Log("Check for valid credit card reader.");
+		if (IsDeviceServiceCardReaderAttached)
 		{
-			LogHelper.Instance.Log("Check for valid credit card reader.");
-			if (!CardReader.IsAttached())
+			LogHelper.Instance.Log("...Valid device service credit card reader found.");
+			if (IsDeviceServiceClientValid)
+			{
+				IDeviceServiceTrackDataService service = ServiceLocator.Instance.GetService<IDeviceServiceTrackDataService>();
+				SetTrackDataService(service);
+				HasValidCardReader = true;
+			}
+			else
+			{
+				LogHelper.Instance.Log("...DeviceServiceClient version is not compatible with DeviceService version.");
+				PollForCardReaderConnectionAndValidVersion();
+			}
+		}
+		else
+		{
+			_ = IsDeviceServiceClientValid;
+		}
+		if (!HasValidCardReader)
+		{
+			if (CardReaderDetector.IsUSBCardReaderAttached())
+			{
+				LogHelper.Instance.Log("...Valid credit card reader found.");
+				HasValidCardReader = true;
+				IClassicTrackDataService service2 = ServiceLocator.Instance.GetService<IClassicTrackDataService>();
+				SetTrackDataService(service2);
+			}
+			else if (CheckCardReader)
 			{
 				LogHelper.Instance.Log("...No valid credit card reader found.");
+				SetTrackDataService(null);
 				HasValidCardReader = false;
-				return result;
 			}
-			LogHelper.Instance.Log("...Valid credit card reader found.");
-			HasValidCardReader = true;
-			return result;
+			else
+			{
+				HasValidCardReader = true;
+				IClassicTrackDataService service3 = ServiceLocator.Instance.GetService<IClassicTrackDataService>();
+				SetTrackDataService(service3);
+			}
 		}
-		HasValidCardReader = true;
-		return result;
+	}
+
+	private void SetTrackDataService(ITrackDataService trackDataService)
+	{
+		lock (_trackDataServiceLockObject)
+		{
+			ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
+			if (service != null)
+			{
+				_previousTrackDataService = service;
+				ServiceLocator.Instance.RemoveService(typeof(ITrackDataService));
+			}
+			if (trackDataService != null)
+			{
+				ServiceLocator.Instance.AddService(typeof(ITrackDataService), trackDataService);
+			}
+			LogHelper.Instance.Log($"Setting track data service to type {trackDataService?.GetType()}");
+		}
+	}
+
+	private void PollForCardReaderConnectionAndValidVersion()
+	{
+		ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.PollForCardReaderConnectionAndValidVersion();
 	}
 
 	public void Register(IntPtr handle)
@@ -181,29 +276,29 @@ public class EnvironmentManager : IEnvironmentNotificationService
 		return result;
 	}
 
-	public void UnregisterHardwareChangeCallback()
+	public void RegisterCardReaderConnectedCallback(Action cardReaderConnectedCallback)
 	{
-		m_hardwareChangeCallback = null;
+		_cardReaderConnectedCallback = cardReaderConnectedCallback;
 	}
 
-	public void RegisterHardwareChangeCallback(HardwareChangeCallback callback)
+	public void RegisterCardReaderDisconnectedCallback(Action<ITrackDataService> cardReaderDisconnectedCallback)
 	{
-		m_hardwareChangeCallback = callback;
+		_cardReaderDisconnectedCallback = cardReaderDisconnectedCallback;
 	}
 
-	public EnvironmentNotificationType ProcessNotification(ref Message msg)
+	public EnvironmentNotificationType ProcessClassicCardReaderNotification(ref Message msg)
 	{
 		if (CheckCardReader)
 		{
 			NotificationEventType notificationEventType = UsbNotification.HandleMessage(ref msg);
 			if (HasValidCardReader)
 			{
-				if (notificationEventType == NotificationEventType.DeviceRemoved && !CardReader.IsAttached())
+				if ((IsClassicTrackDataServiceRegistered || !IsTrackDataServiceRegistered) && notificationEventType == NotificationEventType.DeviceRemoved && !CardReaderDetector.IsUSBCardReaderAttached())
 				{
 					return EnvironmentNotificationType.CreditCardReaderInvalid;
 				}
 			}
-			else if (notificationEventType == NotificationEventType.DeviceArrived && CardReader.IsAttached())
+			else if ((IsClassicTrackDataServiceRegistered || !IsTrackDataServiceRegistered) && notificationEventType == NotificationEventType.DeviceArrived && CardReaderDetector.IsUSBCardReaderAttached())
 			{
 				return EnvironmentNotificationType.CreditCardReaderValid;
 			}
@@ -231,36 +326,84 @@ public class EnvironmentManager : IEnvironmentNotificationService
 		new SecureBrowser(approvedUrls, navigateUrlCallback).Show();
 	}
 
-	public void RaiseValidReader()
+	public void RaiseValidClassicCardReader()
 	{
 		try
 		{
-			HasValidCardReader = true;
-			if (m_hardwareChangeCallback != null)
+			if (!IsTrackDataServiceRegistered || IsClassicTrackDataServiceRegistered)
 			{
-				m_hardwareChangeCallback("Card Reader", "Connected", "High");
+				IClassicTrackDataService service = ServiceLocator.Instance.GetService<IClassicTrackDataService>();
+				SetTrackDataService(service);
+				HasValidCardReader = true;
+				HandleConnectedCardReader();
 			}
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseValidReader.", e);
+			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseValidClassicCardReader.", e);
 		}
 	}
 
-	public void RaiseInvalidReader()
+	public void RaiseValidDeviceServiceCardReader()
 	{
 		try
 		{
-			HasValidCardReader = false;
-			if (m_hardwareChangeCallback != null)
+			lock (_validDeviceServiceCardReaderLockObject)
 			{
-				m_hardwareChangeCallback("Card Reader", "Disconnected", "High");
+				if (!IsTrackDataServiceRegistered || IsDeviceServiceTrackDataServiceRegistered)
+				{
+					IDeviceServiceTrackDataService service = ServiceLocator.Instance.GetService<IDeviceServiceTrackDataService>();
+					SetTrackDataService(service);
+					HasValidCardReader = true;
+					HandleConnectedCardReader();
+				}
 			}
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseInvalidReader.", e);
+			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseValidDeviceServiceCardReader.", e);
 		}
+	}
+
+	public void RaiseInvalidClassicCardReader()
+	{
+		try
+		{
+			if (IsClassicTrackDataServiceRegistered)
+			{
+				SetTrackDataService(null);
+				HasValidCardReader = false;
+				_cardReaderDisconnectedCallback?.Invoke(_previousTrackDataService);
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseInvalidClassicCardReader.", e);
+		}
+	}
+
+	public void RaiseInvalidDeviceServiceCardReader()
+	{
+		try
+		{
+			if (IsDeviceServiceTrackDataServiceRegistered)
+			{
+				SetTrackDataService(null);
+				HasValidCardReader = false;
+				_cardReaderDisconnectedCallback?.Invoke(_previousTrackDataService);
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseInvalidDeviceServiceCardReader.", e);
+		}
+	}
+
+	private void HandleConnectedCardReader()
+	{
+		LogHelper.Instance.Log("The card reader was connected, resuming operation.");
+		_cardReaderConnectedCallback?.Invoke();
+		LogHelper.Instance.LogTo("CardReaderLog", "Card Reader Re-Connected");
 	}
 
 	private EnvironmentManager()

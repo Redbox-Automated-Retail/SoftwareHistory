@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Redbox.BrokerServices.Proxy.ComponentModel;
@@ -13,11 +14,9 @@ public interface IMerchantServices
 
 	void ValidatePickup(string sessionId, List<long> referenceNumbers, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
 
-	void PreAuth(string sessionId, string CustomerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
+	void PreAuth(Guid sessionId, string CustomerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
 
-	void Authorize(string sessionId, string CustomerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
-
-	void GCAuthorize(string sessionId, string CustomerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
+	void Authorize(Guid sessionId, AuthorizeType authorizeType, string CustomerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
 
 	void ReservationAuthorize(string sessionId, string CustomerProfileNumber, long referenceNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback);
 

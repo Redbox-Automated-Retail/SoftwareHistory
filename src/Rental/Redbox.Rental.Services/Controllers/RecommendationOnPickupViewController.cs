@@ -84,6 +84,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				}, delegate
 				{
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "keep_browsing_button");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupKeepBrowsing");
 					OrchestrationService.ViewGoBackSafe("recommendation on pickup prompt - keep browsing", popOnly: false);
 				});
 			}
@@ -323,6 +324,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				{
 					recommendationOnPickupViewModel.HasPickupOrPayActionExecuted = true;
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pickup_button");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupPickup");
 					AddSecondaryMdvDiscsBackToShoppingCart(RentalShoppingCart, recommendationOnPickupViewModel);
 					if (_reservationValues.AuthorizeAtPickup)
 					{
@@ -347,6 +349,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				{
 					recommendationOnPickupViewModel.HasPickupOrPayActionExecuted = true;
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pay_button");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupPay");
 					AddSecondaryMdvDiscsBackToShoppingCart(RentalShoppingCart, recommendationOnPickupViewModel);
 					if (_reservationValues.AuthorizeAtPickup)
 					{
@@ -485,6 +488,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 			if (rentalShoppingCartItem2 != null)
 			{
 				BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-remove-item");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupShoppingCartRemoveItem");
 				RentalShoppingCart.RemoveItem(rentalShoppingCartItem2, userRemoved: true);
 			}
 		}

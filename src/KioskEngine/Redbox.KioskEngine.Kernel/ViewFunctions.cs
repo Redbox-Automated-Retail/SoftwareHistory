@@ -83,6 +83,12 @@ internal static class ViewFunctions
 		ServiceLocator.Instance.GetService<IViewService>()?.Show();
 	}
 
+	[KernelFunction(Name = "kernel.setanalyticsviewmessage")]
+	internal static void SetAnalyticsViewMessage(string text)
+	{
+		ServiceLocator.Instance.GetService<IViewService>()?.SetAnalyticsEventProperty("ViewMessage", text);
+	}
+
 	[KernelFunction(Name = "kernel.reenterview")]
 	internal static void ReenterView()
 	{

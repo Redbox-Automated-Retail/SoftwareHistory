@@ -25,7 +25,7 @@ public interface IFraudService
 
 	void AddToFraudStatistics(string count);
 
-	bool IsPaperFraud(string barcode);
+	bool IsPaperFraudCandidate(string barcode);
 
 	void ProcessJobResultsForFraud(string jobId, bool sendStatistic = false);
 

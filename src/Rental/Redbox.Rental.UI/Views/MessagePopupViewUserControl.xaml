@@ -30,24 +30,38 @@
     <Grid Name="DarkBackground" Background="#FF000000" Opacity="{Binding Path=BackgroundOpacity, FallbackValue=0.6}" />
     <Grid Margin="{Binding Path=MainGridMargin, FallbackValue='128,96,128,96'}">
       <Border Background="#FFFFFFFF" CornerRadius="28" BorderThickness="5" BorderBrush="{Binding Path=BorderBrushColor, FallbackValue=#E42045}" />
-      <StackPanel Orientation="Vertical">
-        <TextBlock Name="TitleText" TextWrapping="Wrap" Margin="55,46,55,10" Text="{Binding Path=Title, FallbackValue=Culture Specific Title}" Style="{Binding Path=TitleStyle, FallbackValue={StaticResource message_popup_dialog_title_style}}" />
-        <DockPanel Margin="62,5" LastChildFill="True">
-          <TextBlock Name="MessageText" DockPanel.Dock="Top" TextWrapping="Wrap" Text="{Binding Path=Message, FallbackValue=Culture Specific Message}" Style="{Binding Path=MessageStyle, FallbackValue={StaticResource message_popup_dialog_mesg_style}}" />
-          <Grid Name="UserControlContainer" />
-        </DockPanel>
-      </StackPanel>
-      <Grid Name="ButtonGrid" VerticalAlignment="Bottom" Height="80" Margin="0,0,0,21">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition />
-          <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <Redbox:RoundedButton Name="Button1" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{x:Static local:MessagePopupViewCommands.Button1}" Style="{Binding Path=Button1Style, FallbackValue={StaticResource button1_style}}" Visibility="{Binding Path=Button1Visibility, FallbackValue=Collapsed}">
-          <TextBlock Name="Button1_Text" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{Binding Path=Button1TextStyle, FallbackValue={StaticResource button1_text_style}}" Text="{Binding Path=Button1Text}" />
-        </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="Button2" Grid.Column="1" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{x:Static local:MessagePopupViewCommands.Button2}" Style="{Binding Path=Button2Style, FallbackValue={StaticResource button2_style}}" Visibility="{Binding Path=Button2Visibility, FallbackValue=Collapsed}">
-          <TextBlock Name="Button2_Text" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{Binding Path=Button2TextStyle, FallbackValue={StaticResource button2_text_style}}" Text="{Binding Path=Button2Text}" />
-        </Redbox:RoundedButton>
+      <Grid Name="InnerGrid" Style="{Binding Path=InnerGridStyle}">
+        <StackPanel Orientation="Vertical">
+          <TextBlock Name="TitleText" TextWrapping="Wrap" Text="{Binding Path=Title, FallbackValue=Culture Specific Title}" Style="{Binding Path=TitleStyle, FallbackValue={StaticResource message_popup_dialog_title_style}}" />
+          <DockPanel Name="MessageDockPanel" LastChildFill="True" Style="{Binding Path=MessageDockPanelStyle, FallbackValue={StaticResource message_popup_dialog_message_dock_panel_style}}">
+            <TextBlock Name="MessageText" DockPanel.Dock="Top" TextWrapping="Wrap" Text="{Binding Path=Message, FallbackValue=Culture Specific Message}" Style="{Binding Path=MessageStyle, FallbackValue={StaticResource message_popup_dialog_mesg_style}}" />
+            <Grid Name="UserControlContainer" />
+          </DockPanel>
+          <Grid Name="FloatingButtonGrid" Style="{Binding Path=FloatingButtonGridStyle, FallbackValue={StaticResource message_popup_dialog_floating_button_grid_style}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Redbox:RoundedButton Name="FloatingButton1" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{x:Static local:MessagePopupViewCommands.Button1}" Style="{Binding Path=Button1Style, FallbackValue={StaticResource button1_style}}" Visibility="{Binding Path=Button1Visibility, FallbackValue=Collapsed}">
+              <TextBlock Name="FloatingButton1_Text" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{Binding Path=Button1TextStyle, FallbackValue={StaticResource button1_text_style}}" Text="{Binding Path=Button1Text}" />
+            </Redbox:RoundedButton>
+            <Redbox:RoundedButton Name="FloatingButton2" Grid.Column="1" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{x:Static local:MessagePopupViewCommands.Button2}" Style="{Binding Path=Button2Style, FallbackValue={StaticResource button2_style}}" Visibility="{Binding Path=Button2Visibility, FallbackValue=Collapsed}">
+              <TextBlock Name="FloatingButton2_Text" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{Binding Path=Button2TextStyle, FallbackValue={StaticResource button2_text_style}}" Text="{Binding Path=Button2Text}" />
+            </Redbox:RoundedButton>
+          </Grid>
+        </StackPanel>
+        <Grid Name="ButtonGrid" Style="{Binding Path=ButtonGridStyle, FallbackValue={StaticResource message_popup_dialog_button_grid_style}}">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+          </Grid.ColumnDefinitions>
+          <Redbox:RoundedButton Name="Button1" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{x:Static local:MessagePopupViewCommands.Button1}" Style="{Binding Path=Button1Style, FallbackValue={StaticResource button1_style}}" Visibility="{Binding Path=Button1Visibility, FallbackValue=Collapsed}">
+            <TextBlock Name="Button1_Text" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{Binding Path=Button1TextStyle, FallbackValue={StaticResource button1_text_style}}" Text="{Binding Path=Button1Text}" />
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="Button2" Grid.Column="1" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{x:Static local:MessagePopupViewCommands.Button2}" Style="{Binding Path=Button2Style, FallbackValue={StaticResource button2_style}}" Visibility="{Binding Path=Button2Visibility, FallbackValue=Collapsed}">
+            <TextBlock Name="Button2_Text" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{Binding Path=Button2TextStyle, FallbackValue={StaticResource button2_text_style}}" Text="{Binding Path=Button2Text}" />
+          </Redbox:RoundedButton>
+        </Grid>
       </Grid>
     </Grid>
   </Grid>

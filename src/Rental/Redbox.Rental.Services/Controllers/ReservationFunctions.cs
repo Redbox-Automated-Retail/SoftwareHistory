@@ -7,10 +7,12 @@ using System.Text;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.Environment;
+using Redbox.KioskEngine.ComponentModel.TrackData;
+using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
@@ -384,6 +386,25 @@ public class ReservationFunctions
 			service.AddElement("session", "recommendedTitles", elementValue, rentalShoppingCart.ShoppingSessionId.ToString());
 			service.AddElement("session", "recommendedTitlesShown", recommendedProducts.Count.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
 		}
+		IAnalyticsService service2 = ServiceLocator.Instance.GetService<IAnalyticsService>();
+		if (rentalShoppingCart == null || service2 == null)
+		{
+			return;
+		}
+		List<ProductData> products = new List<ProductData>();
+		recommendedProducts.ForEach(delegate(IKioskProduct p)
+		{
+			ITitleProduct titleProduct = p as ITitleProduct;
+			if (p != null)
+			{
+				products.Add(ProductData.ToProductData(titleProduct));
+			}
+		});
+		service2?.CurrentSession?.AddData(new ROPRecommendedProducts
+		{
+			RecommendedProducts = products,
+			RecommendationsFlow = true
+		});
 	}
 
 	public static List<IKioskProduct> GetRecommendedProducts(List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
@@ -661,7 +682,6 @@ public class ReservationFunctions
 						PromotionItems = list
 					};
 					PromotionService.Instance.SetPromotion(promotion);
-					PromotionService.Instance.SetShoppingCartDiscount(rentalShoppingCart?.ShoppingSessionId.ToString(), promotion);
 					if (value != num2)
 					{
 						service.CurrentRentalShoppingCart.ValidateAndUpdatePromoCode();
@@ -732,13 +752,13 @@ public class ReservationFunctions
 		List<Redbox.Rental.Model.Reservation.IReservation> list = new List<Redbox.Rental.Model.Reservation.IReservation>();
 		if (Redbox.Rental.Services.Session.Session.Instance.ValidatedReservations == null)
 		{
-			ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
-			if (service != null && service.HasValidData())
+			ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
+			if (trackData != null && trackData.HasValidData())
 			{
 				List<Redbox.Rental.Model.Reservation.IReservation> allReservations = ServiceLocator.Instance.GetService<IDataService>()?.GetAllReservations();
-				string swipedhashedCardId = service?.GenerateCardHashId() ?? null;
-				string newHashedCardId = service?.GenerateReservationCardHashId();
-				list = GetReservationsForHashedCardId(swipedhashedCardId, newHashedCardId, allReservations);
+				string cardHashId = trackData.CardHashId;
+				string reservationHashId = trackData.ReservationHashId;
+				list = GetReservationsForHashedCardId(cardHashId, reservationHashId, allReservations);
 				if (runExpire)
 				{
 					ExpireReservations(list);
@@ -898,7 +918,7 @@ public class ReservationFunctions
 		}
 		if (rentalShoppingCart != null)
 		{
-			OrchestrationService.CloseAnalytics(rentalShoppingCart.ShoppingSessionId, false.ToString());
+			OrchestrationService.CloseAnalytics(rentalShoppingCart.ShoppingSessionId, isSessionAbandoned: false);
 		}
 		LogHelper.Instance.Log($"{logHeaderText} COMPLETE");
 	}
@@ -912,7 +932,6 @@ public class ReservationFunctions
 			if (shoppingSession != null)
 			{
 				UpdateRentalShoppingCartItemStatuses(vendResultList, rentalShoppingCart);
-				rentalShoppingCart?.SetShoppingCartGroups();
 				List<string> list = new List<string>();
 				ProcessRentalShoppingCartItems(rentalShoppingCart, shoppingSession, list);
 				List<Redbox.Rental.Model.Reservation.IReservation> accountReservations = GetAccountReservations();
@@ -924,7 +943,7 @@ public class ReservationFunctions
 					LogHelper.Instance.Log($"ReservationFunctions.ReservationPrepositionVend: resetting status to Known for {list.Count} discs");
 					UpdateBarcodeStatus(list, "Known");
 				}
-				OrchestrationService.CloseShoppingCartAnalytics(rentalShoppingCart.ShoppingSessionId, "False");
+				OrchestrationService.CloseShoppingCartAnalytics(rentalShoppingCart.ShoppingSessionId, isSessionAbandoned: false);
 				shoppingSession.End();
 			}
 			else
@@ -1374,7 +1393,6 @@ public class ReservationFunctions
 				barcodesToReset.Add(item.Barcode);
 			}
 			LogHelper.Instance.Log($"Session update Line Item: {item.Barcode} for {item.Action} Price:" + $" {item.Price} {item.TitleFamily} - {item.TitleType} source type: {item.SourceType}");
-			AddOldShoppingCartItem(session, item);
 			OrchestrationService.AnalyticsAddNode("onlinePickup", "cartItem", rentalShoppingCart.ShoppingSessionId);
 			Dictionary<string, string> attributes = new Dictionary<string, string>
 			{
@@ -1417,30 +1435,6 @@ public class ReservationFunctions
 		LogHelper.Instance.Log("ReservationFunctions.UpdateRentalShoppingCartItemStatuses - error vendResultList is null");
 	}
 
-	private static void AddOldShoppingCartItem(IShoppingSession session, IRentalShoppingCartItem rentalShoppingCartItem)
-	{
-		IShoppingCartLineItem shoppingCartLineItem = (session?.ShoppingCart?.GetGroup(rentalShoppingCartItem.Action.ToString())).AddLineItem(rentalShoppingCartItem.Barcode, rentalShoppingCartItem.Status, rentalShoppingCartItem.Price, rentalShoppingCartItem.Quantity, rentalShoppingCartItem.TitleFamily.ToString(), rentalShoppingCartItem.TitleType.ToString(), rentalShoppingCartItem.SourceType);
-		if (shoppingCartLineItem != null && rentalShoppingCartItem.PricingRecord != null)
-		{
-			AddPricesToLineItem(rentalShoppingCartItem.PricingRecord.ToDictionary(), shoppingCartLineItem);
-		}
-	}
-
-	private static void AddPricesToLineItem(Dictionary<string, object> prices, IShoppingCartLineItem lineItem)
-	{
-		if (prices == null)
-		{
-			return;
-		}
-		foreach (KeyValuePair<string, object> price in prices)
-		{
-			if (price.Key?.ToString() != "promo_value" && decimal.TryParse(prices[price.Key]?.ToString(), out var result))
-			{
-				lineItem.SetPrice(price.Key?.ToString(), result);
-			}
-		}
-	}
-
 	private static List<Redbox.Rental.Model.Reservation.IReservation> GetReservationsForHashedCardId(string swipedhashedCardId, string newHashedCardId, List<Redbox.Rental.Model.Reservation.IReservation> allReservations)
 	{
 		List<Redbox.Rental.Model.Reservation.IReservation> list = new List<Redbox.Rental.Model.Reservation.IReservation>();
@@ -1448,7 +1442,7 @@ public class ReservationFunctions
 		{
 			list.AddRange(allReservations.Where((Redbox.Rental.Model.Reservation.IReservation r) => r.HashedCardId == swipedhashedCardId));
 		}
-		if (!string.IsNullOrEmpty(newHashedCardId))
+		if (!string.IsNullOrEmpty(newHashedCardId) && newHashedCardId != swipedhashedCardId)
 		{
 			list.AddRange(allReservations.Where((Redbox.Rental.Model.Reservation.IReservation r) => r.HashedCardId == newHashedCardId));
 		}
@@ -1471,7 +1465,7 @@ public class ReservationFunctions
 						break;
 					}
 				}
-				if (!string.IsNullOrEmpty(newHashedCardId) && allReservation.ReservationDetails.CreditCardIds.Contains(newHashedCardId))
+				if (!string.IsNullOrEmpty(newHashedCardId) && newHashedCardId != swipedhashedCardId && allReservation.ReservationDetails.CreditCardIds.Contains(newHashedCardId))
 				{
 					LogHelper.Instance.Log($"swiped card ...{ObfuscateHashedCardId(newHashedCardId)} matches associated credit card");
 					list.Add(allReservation);

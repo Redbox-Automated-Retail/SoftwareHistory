@@ -74,22 +74,6 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 		}
 	}
 
-	public bool CollectionsPopUpOnComingSoon
-	{
-		get
-		{
-			if (!ShowCollectionsPopUp)
-			{
-				return false;
-			}
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.Collections, ConfigSetting.CollectionsPopUpOnComingSoon, out var value))
-			{
-				return value;
-			}
-			return false;
-		}
-	}
-
 	public int CollectionsPopUpTimer
 	{
 		get

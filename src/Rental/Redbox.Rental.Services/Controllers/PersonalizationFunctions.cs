@@ -6,6 +6,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
@@ -64,6 +65,8 @@ public class PersonalizationFunctions
 
 	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
+	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
+
 	public static void ShowEmailLogin(SignInCancelButtonTypes signInCancelButtonType)
 	{
 		LogHelper.Instance.Log("Starting login with email.");
@@ -107,10 +110,12 @@ public class PersonalizationFunctions
 		{
 			SessionAnalyticsService?.AddViewEvent("context", "SignOutDialog");
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "sign_out_back");
+			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsSignOutBack");
 			OrchestrationService.ViewGoBackSafe("Sign Out view:hide()", popOnly: false);
 		}, delegate
 		{
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "sign_out");
+			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsSignOut");
 			Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LogOut();
 			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart.ClearAllLoyaltyPointsRecords();
 			LogHelper.Instance.Log("User has signed out.  Closing session and returning to welcome screen.");
@@ -275,6 +280,7 @@ public class PersonalizationFunctions
 		{
 			SessionAnalyticsService?.AddViewEvent("context", "NotEnoughPointsDialog");
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "not_enough_points_gotit");
+			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsNotEnoughPointsGotit");
 			OrchestrationService.ViewGoBackSafe("Message button GotIt pressed", popOnly: false);
 		}, delegate
 		{

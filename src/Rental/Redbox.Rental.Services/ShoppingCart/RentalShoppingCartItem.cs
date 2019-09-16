@@ -71,6 +71,18 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 
 	public ITitleProduct TitleProduct => _titleProduct;
 
+	public bool HasDeal
+	{
+		get
+		{
+			if (_titleProduct != null)
+			{
+				return _titleProduct.HasDeal;
+			}
+			return false;
+		}
+	}
+
 	public RentalShoppingCartItem(ITitleProduct titleProduct)
 	{
 		_titleProduct = titleProduct;

@@ -6,6 +6,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Session;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -199,6 +200,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 
 	public void SendLiveCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
+		ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			LogHelper.Instance.Log("Live call to MerchantServices.MarketingOptinServices.");
@@ -209,7 +211,6 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 			{
 				Interlocked.Increment(ref m_working);
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 				Dictionary<string, object> dictionary = new Dictionary<string, object>();
 				DateTime now = DateTime.Now;
 				dictionary.Add("theDate", now.Ticks);
@@ -219,7 +220,6 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 				{
 					MessageType = "EmailConfirm",
 					TransactionDate = dictionary,
-					CardId = service2.GenerateCardHashId(),
 					Email = emailAddress,
 					AccountNumber = accountNumber,
 					MessageId = Guid.NewGuid(),

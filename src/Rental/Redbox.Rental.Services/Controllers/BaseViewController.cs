@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.Marketing;
@@ -22,6 +23,8 @@ public class BaseViewController
 	protected static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 
 	protected static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+
+	protected static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
 	protected static IApplicationState ApplicationState => ServiceLocator.Instance.GetService<IApplicationState>();
 
@@ -48,11 +51,6 @@ public class BaseViewController
 	protected static T GetViewModel<T>() where T : class
 	{
 		return GetViewUserControl()?.DataContext as T;
-	}
-
-	protected static void AnalyticsAddCurrentView()
-	{
-		OrchestrationService.AnalyticsAddCurrentView();
 	}
 
 	protected static void AnalyticsAddViewEvent(string subItemType, string subItemValue)

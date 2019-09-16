@@ -14,5 +14,7 @@ public class UploadDiscImageRequest
 
 	public Dictionary<string, string> PropertyBag { get; set; }
 
+	public bool? SupportsCameraFraudScan { get; set; }
+
 	public string Image { get; set; }
 }

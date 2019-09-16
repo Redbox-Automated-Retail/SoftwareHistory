@@ -18,7 +18,7 @@ public class FraudServiceFunctions
 	[KernelFunction(Name = "kernel.is_paper_fraud")]
 	internal static bool IsPaperFraudExcluded(string barcode)
 	{
-		return ServiceLocator.Instance.GetService<IFraudService>()?.IsPaperFraud(barcode) ?? false;
+		return ServiceLocator.Instance.GetService<IFraudService>()?.IsPaperFraudCandidate(barcode) ?? false;
 	}
 
 	[KernelFunction(Name = "kernel.send_fraud_alert")]

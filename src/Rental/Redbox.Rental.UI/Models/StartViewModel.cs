@@ -48,6 +48,8 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty AdaTurnedOnLabelVisibilityProperty = DependencyProperty.Register("AdaTurnedOnLabelVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty CarouselGridRowHeightProperty = DependencyProperty.Register("CarouselGridRowHeight", typeof(int), typeof(StartViewModel), new FrameworkPropertyMetadata(438));
+
 	public static readonly DependencyProperty BannerVisibilityProperty = DependencyProperty.Register("BannerVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty LoadingTitlesImageVisibilityProperty = DependencyProperty.Register("LoadingTitlesImageVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
@@ -678,6 +680,21 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(AdaTurnedOnLabelTextProperty, value);
+			});
+		}
+	}
+
+	public int CarouselGridRowHeight
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(CarouselGridRowHeightProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CarouselGridRowHeightProperty, value);
 			});
 		}
 	}

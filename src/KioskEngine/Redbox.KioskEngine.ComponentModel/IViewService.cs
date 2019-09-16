@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace Redbox.KioskEngine.ComponentModel;
 
@@ -13,6 +14,8 @@ public interface IViewService
 
 	object LastHitActorTag { get; set; }
 
+	TaskScheduler UITaskScheduler { get; set; }
+
 	event EventHandler ViewStateChanged;
 
 	void Reset();
@@ -20,6 +23,8 @@ public interface IViewService
 	void ShowFrameInDebug();
 
 	void Show();
+
+	void SetAnalyticsEventProperty(string name, object value);
 
 	string Pop();
 
@@ -32,6 +37,8 @@ public interface IViewService
 	string PopDiscard();
 
 	void EnterTopOfStock();
+
+	string GetCurrentViewAnalyticsName();
 
 	string GetLastShownView();
 
@@ -56,6 +63,8 @@ public interface IViewService
 	bool IsSafeToChangeView();
 
 	string GetStartOverViewName();
+
+	string GetMaintenanceViewName();
 
 	void GoBack(object context, bool popOnly);
 

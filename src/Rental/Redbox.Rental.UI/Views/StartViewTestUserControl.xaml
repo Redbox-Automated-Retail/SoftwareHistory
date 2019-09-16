@@ -16,17 +16,25 @@
   </UIElement.CommandBindings>
   <Grid>
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="92" />
-      <RowDefinition Height="438" />
+      <RowDefinition Height="{Binding Path=CarouselGridRowHeight, FallbackValue=438}" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
-    <Grid Row="0" Background="{StaticResource RubineToPurpleGradientBrush}">
+    <Grid Row="0" Width="1024" Height="98" Background="#FF000000" Visibility="{Binding Path=BannerVisibility, FallbackValue=Collapsed}">
+      <Image Stretch="None" Source="{Binding Path=BannerImage}">
+        <UIElement.InputBindings>
+          <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.BannerClickCommand}" />
+        </UIElement.InputBindings>
+      </Image>
+    </Grid>
+    <Grid Row="1" Background="{StaticResource RubineToPurpleGradientBrush}">
       <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logo@2x.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,28,0,0" Height="34" />
       <Redbox:RoundedButton Name="sign_in_button" CornerRadius="8" VerticalAlignment="Center" HorizontalAlignment="Right" Width="auto" Height="40" Focusable="False" Margin="0,0,30,0" Style="{StaticResource white_warmpurple_border_button_style}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding SignInVisibility}">
         <TextBlock Margin="24,0" Style="{StaticResource font_montserrat_semibold_18}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In}" />
       </Redbox:RoundedButton>
     </Grid>
-    <Grid Row="2" Background="{StaticResource DeepPurpleBrush}">
+    <Grid Row="3" Background="{StaticResource DeepPurpleBrush}">
       <Grid Margin="10,0,10,0">
         <Grid.RowDefinitions>
           <RowDefinition Height="127" />
@@ -140,7 +148,7 @@
         </StackPanel>
       </Grid>
     </Grid>
-    <Grid Row="1" Background="#FF808080">
+    <Grid Row="2" Background="#FF808080">
       <Border Height="18" Background="{StaticResource DeepPurpleBrush}" VerticalAlignment="Bottom" />
       <localControls:RedboxProductCarouselUserControl VerticalAlignment="Bottom" DataContext="{Binding Path=CarouselTestModel}" />
     </Grid>

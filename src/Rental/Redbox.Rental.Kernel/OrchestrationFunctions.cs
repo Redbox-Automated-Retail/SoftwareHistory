@@ -13,12 +13,6 @@ namespace Redbox.Rental.Kernel;
 
 public static class OrchestrationFunctions
 {
-	[KernelFunction(Name = "kernel.is_gift_card")]
-	internal static bool IsGiftCard()
-	{
-		return OrchestrationService.IsGiftCard();
-	}
-
 	[KernelFunction(Name = "kernel.is_card_blocklisted")]
 	internal static bool IsCardBlocklisted()
 	{
@@ -26,9 +20,9 @@ public static class OrchestrationFunctions
 	}
 
 	[KernelFunction(Name = "kernel.view_analytics_start")]
-	internal static void ViewAnalyticsStart(string sessionType)
+	internal static void ViewAnalyticsStart(string userTriggerAction, string sessionType)
 	{
-		OrchestrationService.CreateStartViewAnalytics(sessionType);
+		OrchestrationService.CreateStartViewAnalytics(userTriggerAction, sessionType);
 	}
 
 	[KernelFunction(Name = "kernel.register_pricing_service")]
@@ -71,6 +65,18 @@ public static class OrchestrationFunctions
 	internal static void RegisterContinueVendCallback(Action continueVendCallback)
 	{
 		OrchestrationService.RegisterContinueVendCallback(continueVendCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_process_authorize_result_callback")]
+	internal static void RegisterProcessAuthorizeResultCallback(Action<LuaTable> processAuthorizeResultCallback)
+	{
+		OrchestrationService.RegisterProcessAuthorizeResultCallback(processAuthorizeResultCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_preposition_vend_callback")]
+	internal static void RegisterPrepositionVendCallback(Action prepositionVendCallback)
+	{
+		OrchestrationService.RegisterPrepositionVendCallback(prepositionVendCallback);
 	}
 
 	[KernelFunction(Name = "kernel.register_is_vend_job_completed_callback")]

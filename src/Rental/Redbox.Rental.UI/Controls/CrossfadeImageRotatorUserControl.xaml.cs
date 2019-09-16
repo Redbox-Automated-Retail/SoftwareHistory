@@ -91,6 +91,8 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 		}
 	}
 
+	private MarketingScreenSaverModel MarketingScreenSaverModel => base.DataContext as MarketingScreenSaverModel;
+
 	public CrossfadeImageRotatorUserControl()
 	{
 		InitializeComponent();
@@ -144,7 +146,7 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 
 	private void Button_Click(object sender, RoutedEventArgs e)
 	{
-		if (!_isRotating && ImageModels != null && ImageModels.Count >= _currentImageIndex + 1)
+		if (!_isRotating && ImageModels != null && ImageModels.Count >= _currentImageIndex + 1 && ImageModels[_currentImageIndex].ClickAction != null)
 		{
 			StopTimer();
 			ImageModels[_currentImageIndex].ClickAction();
@@ -176,7 +178,14 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 	private void _timer_Tick(object sender, EventArgs e)
 	{
 		StopTimer();
-		AnimateImageRotation();
+		if ((MarketingScreenSaverModel?.WelcomeScreenTimingABTestVersion == "D" || MarketingScreenSaverModel?.WelcomeScreenTimingABTestVersion == "F") && _currentImageIndex >= ImageModels.Count - 1)
+		{
+			MarketingScreenSaverModel?.OnLeaveLastImage?.Invoke();
+		}
+		else
+		{
+			AnimateImageRotation();
+		}
 	}
 
 	private void AnimateImageRotation()

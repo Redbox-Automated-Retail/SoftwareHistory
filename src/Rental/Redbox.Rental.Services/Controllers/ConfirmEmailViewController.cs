@@ -193,6 +193,6 @@ public class ConfirmEmailViewController : BaseViewController
 				CampaignName = "MarketingOptInCampaign"
 			}
 		};
-		service?.KioskOptIn(optInItems: obj, storeNumber: service2?.KioskId.ToString() ?? "Unknown", sendCardHash: false, callback: null);
+		service?.KioskOptIn(optInItems: obj, storeNumber: service2?.KioskId.ToString() ?? "Unknown", callback: null);
 	}
 }

@@ -73,9 +73,10 @@ public class PerksOfferDetailsViewController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		int value = OrchestrationService.TTSGetTimeout("long", 40000);
-		(service?.CreateTimer("PerksOfferDetailsViewTimer", value, value, delegate
+		int timeOut = OrchestrationService.TTSGetTimeout("long", 40000);
+		(service?.CreateTimer("PerksOfferDetailsViewTimer", timeOut, timeOut, delegate
 		{
+			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("PerksOfferDetailsViewController time out", popOnly: false);
 		}))?.Start();
@@ -90,6 +91,7 @@ public class PerksOfferDetailsViewController : BaseViewController
 
 	private static void PerksOfferDetailsViewModel_OnCancelButtonClicked()
 	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PerksOfferDetailsCancel");
 		BaseViewController.AnalyticsAddViewEvent("buttonPress", "cancel");
 		OrchestrationService.ViewGoBackSafe("PerksOfferDetailsViewCancel", popOnly: false);
 	}

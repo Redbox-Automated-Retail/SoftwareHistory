@@ -25,5 +25,7 @@ public interface IRentalShoppingCartFilterCriteria
 
 	bool IncludeMultiNightPricedItems { get; set; }
 
+	bool IncludeFlashDeals { get; set; }
+
 	bool IncludeLoyaltyRedeemedItems { get; set; }
 }

@@ -3,5 +3,13 @@ namespace Redbox.Rental.UI.Views;
 public enum SwipeViewType
 {
 	RegularCheckOut,
-	ReservationPickup
+	ReservationPickup,
+	EncryptedSwipeRegularCheckOut,
+	EncryptedSwipeReservationPickup,
+	EMVInsertTapRegularCheckout,
+	EMVInsertTapReservationPickup,
+	EMVInsertRegularCheckout,
+	EMVInsertReservationPickup,
+	EMVTapRegularCheckout,
+	EMVTapReservationPickup
 }

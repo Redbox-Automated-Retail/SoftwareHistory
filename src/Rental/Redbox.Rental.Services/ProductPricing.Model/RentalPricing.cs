@@ -12,6 +12,8 @@ public class RentalPricing : IRentalPricing, IPricing
 
 	public DateTime? EndDate { get; set; }
 
+	public short? Attributes { get; set; }
+
 	public byte? DaysOfWeek { get; set; }
 
 	public TimeSpan? StartTime { get; set; }
@@ -55,6 +57,7 @@ public class RentalPricing : IRentalPricing, IPricing
 		ProductPriceId = drp.ProductPriceId;
 		StartDate = drp.StartDate;
 		EndDate = drp.EndDate;
+		Attributes = drp.Attributes;
 		DaysOfWeek = drp.DaysOfWeek;
 		StartTime = drp.StartTime;
 		EndTime = drp.EndTime;

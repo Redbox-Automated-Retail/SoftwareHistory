@@ -45,9 +45,9 @@ public interface IPromotionService
 
 	IPromotionRule GetInCartPromoActionRule();
 
+	void SetPromoFromCustomerOffer(IRentalShoppingCart rentalShoppingCart, CustomerOffer offer, IRentalShoppingCartItem applyToLineItem);
+
 	void ValidatePromoCodeOnServer(string promoCode, Action<IPromoCodeValidationResult> promoCodeValidationResultCallback);
 
 	string GetInCartPromoCode();
-
-	void SetShoppingCartDiscount(string shoppingSessionId, IPromotion newPromotion);
 }

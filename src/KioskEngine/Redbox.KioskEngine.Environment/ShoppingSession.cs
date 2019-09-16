@@ -54,31 +54,6 @@ internal sealed class ShoppingSession : IShoppingSession
 		}
 	}
 
-	public void AddError(string code, string description, string details)
-	{
-		LogHelper.Instance.Log("Added error to Shopping Session '{0}': code={1}, description={2}, details={3}", Id, code, description, details);
-		m_errors.Add(new ShoppingSessionError
-		{
-			Code = code,
-			Details = details,
-			TimeStamp = DateTime.Now,
-			Description = description
-		});
-	}
-
-	public void AddWarning(string code, string description, string details)
-	{
-		LogHelper.Instance.Log("Added warning to Shopping Session '{0}': code={1}, description={2}, details={3}", Id, code, description, details);
-		m_errors.Add(new ShoppingSessionError
-		{
-			Code = code,
-			Details = details,
-			TimeStamp = DateTime.Now,
-			Description = description,
-			IsWarning = true
-		});
-	}
-
 	public void End()
 	{
 		LogHelper.Instance.Log("Ending Shopping Session.");

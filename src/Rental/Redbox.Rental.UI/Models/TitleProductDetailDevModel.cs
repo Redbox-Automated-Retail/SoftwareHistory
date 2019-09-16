@@ -97,6 +97,16 @@ public class TitleProductDetailDevModel : BaseModel<TitleDetailDevModel>
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty AddProductWithCustomPriceButtonVisibilityProperty = DependencyProperty.Register("AddProductWithCustomPriceButtonVisibility", typeof(Visibility), typeof(TitleProductDetailDevModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DisplayAddProductWithCustomPriceButtonVisibilityProperty = DependencyProperty.Register("DisplayAddProductWithCustomPriceButtonVisibility", typeof(Visibility), typeof(TitleProductDetailDevModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
 	public bool HasRollup { get; set; }
 
 	public bool IsDvd { get; set; }
@@ -106,6 +116,8 @@ public class TitleProductDetailDevModel : BaseModel<TitleDetailDevModel>
 	public bool IsDigitalTitle { get; set; }
 
 	public bool Is4KUhdTitle { get; set; }
+
+	public long ProductId { get; set; }
 
 	public string DevTitle
 	{
@@ -598,6 +610,36 @@ public class TitleProductDetailDevModel : BaseModel<TitleDetailDevModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(TitleRollupProductGroupIdProperty, value);
+			});
+		}
+	}
+
+	public Visibility AddProductWithCustomPriceButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddProductWithCustomPriceButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AddProductWithCustomPriceButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility DisplayAddProductWithCustomPriceButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DisplayAddProductWithCustomPriceButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayAddProductWithCustomPriceButtonVisibilityProperty, value);
 			});
 		}
 	}

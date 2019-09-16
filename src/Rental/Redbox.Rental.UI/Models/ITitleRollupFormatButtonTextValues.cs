@@ -18,5 +18,7 @@ public interface ITitleRollupFormatButtonTextValues
 
 	string RentalPriceFormat { get; }
 
+	string RentalPriceFormatNoCurrency { get; }
+
 	string InCartFormat { get; }
 }

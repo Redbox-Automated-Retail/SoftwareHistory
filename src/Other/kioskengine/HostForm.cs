@@ -4,10 +4,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -16,14 +15,13 @@ using System.Windows.Shapes;
 using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.IDE;
-using Redbox.REDS.Framework;
-using Redbox.Rental.Model.KioskHealth;
 
 namespace Redbox.KioskEngine.Bootstrap;
 
-public class HostForm : Form, ITrackDataService
+public class HostForm : Form
 {
 	private struct COPYDATASTRUCT
 	{
@@ -35,14 +33,6 @@ public class HostForm : Form, ITrackDataService
 		public string lpData;
 	}
 
-	private int _keyId = 99999;
-
-	private bool _useStoreCertificate;
-
-	private const char TrackEnd = '?';
-
-	private const char TrackStart = '%';
-
 	private const int WM_USER = 1024;
 
 	private const int WM_COPYDATA = 74;
@@ -51,25 +41,26 @@ public class HostForm : Form, ITrackDataService
 
 	private DateTime _keyPressStartAfter = DateTime.MinValue;
 
+	private IClassicTrackDataService _classicTrackDataService;
+
 	private IContainer components;
 
-	public int KeyId => _keyId;
-
-	private SecureString TrackDataBuffer { get; set; }
-
-	private TrackData TrackDataContainer { get; set; }
-
-	private bool AllowTrackDataParsing { get; set; }
-
-	private Redbox.KioskEngine.ComponentModel.ErrorList TrackDataErrors { get; set; }
-
-	private bool ReceivingTrackData { get; set; }
-
-	public event EventHandler Notify;
+	private IClassicTrackDataService ClassicTrackDataService
+	{
+		get
+		{
+			if (_classicTrackDataService == null)
+			{
+				_classicTrackDataService = ServiceLocator.Instance.GetService<IClassicTrackDataService>();
+			}
+			return _classicTrackDataService;
+		}
+	}
 
 	public HostForm()
 	{
 		InitializeComponent();
+		ServiceLocator.Instance.GetService<IViewService>().UITaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 		IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
 		if (!Debugger.IsAttached && !service.GetValue("Core", "EnableMouseCursor", defaultValue: true))
 		{
@@ -85,241 +76,7 @@ public class HostForm : Form, ITrackDataService
 			base.ControlBox = true;
 			MaximumSize = System.Drawing.Size.Empty;
 		}
-		TrackDataBuffer = new SecureString();
 		EngineApplication.DisableProcessWindowsGhosting();
-	}
-
-	public int GetKeyId()
-	{
-		return _keyId;
-	}
-
-	private int GetBundleKeyId()
-	{
-		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
-		if (manifest == null || manifest["public_key"] == null)
-		{
-			return 99999;
-		}
-		string resourceName = (string)manifest["public_key"];
-		if (!ResourceBundleService.Instance.HasActiveBundle())
-		{
-			return 99999;
-		}
-		IResource resource = ResourceBundleService.Instance.GetResource(resourceName);
-		if (resource == null)
-		{
-			return 99999;
-		}
-		return (int)resource["key_id"];
-	}
-
-	public void RefreshCertificate()
-	{
-		int num = 0;
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (service != null && service.TryGetValue<int>("system", "General", "CertificateName", out var value))
-		{
-			num = value;
-		}
-		if (num == 0)
-		{
-			_keyId = GetBundleKeyId();
-			_useStoreCertificate = false;
-		}
-		else
-		{
-			_keyId = num;
-			_useStoreCertificate = true;
-		}
-		if (_useStoreCertificate && GetStoreCertificate() == null)
-		{
-			_keyId = GetBundleKeyId();
-			_useStoreCertificate = false;
-		}
-	}
-
-	private string Encrypt(SecureString value)
-	{
-		if (_useStoreCertificate)
-		{
-			X509Certificate2 storeCertificate = GetStoreCertificate();
-			if (value == null)
-			{
-				return null;
-			}
-			return CardHelper.EncryptCreditCardFromCertificate(value, storeCertificate);
-		}
-		string bundleCertificateXML = GetBundleCertificateXML();
-		if (bundleCertificateXML == null)
-		{
-			return null;
-		}
-		if (value == null)
-		{
-			return null;
-		}
-		return CardHelper.EncryptCreditCardFromXmlKey(value, bundleCertificateXML);
-	}
-
-	private X509Certificate2 GetStoreCertificate()
-	{
-		return Redbox.KioskEngine.Environment.CertificateHelper.GetCertificateBySubjectName(StoreName.My, StoreLocation.LocalMachine, _keyId.ToString());
-	}
-
-	private string GetBundleCertificateXML()
-	{
-		IResource manifest = ResourceBundleService.Instance.GetManifest(out var _);
-		if (manifest == null || manifest["public_key"] == null)
-		{
-			return null;
-		}
-		return ResourceBundleService.Instance.GetXml((string)manifest["public_key"]).InnerXml;
-	}
-
-	public void ClearNotify()
-	{
-		Notify = null;
-	}
-
-	public void ClearData()
-	{
-		TrackDataBuffer.Clear();
-		TrackDataContainer = null;
-		TrackDataErrors = null;
-	}
-
-	public string GetTrack1()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return Encrypt(TrackDataContainer.Track1);
-	}
-
-	public string GetTrack2()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return Encrypt(TrackDataContainer.Track2);
-	}
-
-	public string GetNumber()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return Encrypt(TrackDataContainer.AccountNumber);
-	}
-
-	public bool HasValidData()
-	{
-		if (TrackDataErrors != null && TrackDataContainer != null)
-		{
-			return !TrackDataErrors.ContainsError();
-		}
-		return false;
-	}
-
-	public string GetFirstName()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.FirstName;
-	}
-
-	public string GetLastName()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.LastName;
-	}
-
-	public string GetLastFour()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.LastFour;
-	}
-
-	public CardType? GetCardType()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.CardType;
-	}
-
-	public string GetExpiryMonth()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.ExpiryMonth;
-	}
-
-	public string GetExpiryYear()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return TrackDataContainer.ExpiryYear;
-	}
-
-	public void StopTrackParsing()
-	{
-		if (AllowTrackDataParsing)
-		{
-			AllowTrackDataParsing = false;
-			ServiceLocator.Instance.GetService<ICCReaderHealth>()?.EventOccurred(TrackDataContainer != null || TrackDataErrors != null, !HasValidData());
-		}
-	}
-
-	public void StartTrackParsing()
-	{
-		AllowTrackDataParsing = true;
-		ClearData();
-	}
-
-	public Redbox.KioskEngine.ComponentModel.ErrorList GetTrackErrors()
-	{
-		return TrackDataErrors ?? new Redbox.KioskEngine.ComponentModel.ErrorList();
-	}
-
-	public string GenerateCardHashId()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return CardHelper.GenerateCardId(TrackDataContainer.AccountNumber);
-	}
-
-	public string GenerateReservationCardHashId()
-	{
-		if (TrackDataContainer == null)
-		{
-			return null;
-		}
-		return CardHelper.GenerateReservationCardId(TrackDataContainer.AccountNumber);
-	}
-
-	public string HashString(string original)
-	{
-		return CardHelper.GenerateHash(original);
 	}
 
 	protected override void WndProc(ref Message m)
@@ -328,15 +85,15 @@ public class HostForm : Form, ITrackDataService
 		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
 		if (service != null)
 		{
-			environmentNotificationType = service.ProcessNotification(ref m);
+			environmentNotificationType = service.ProcessClassicCardReaderNotification(ref m);
 		}
 		if (environmentNotificationType == EnvironmentNotificationType.CreditCardReaderInvalid && service != null)
 		{
-			service.RaiseInvalidReader();
+			service.RaiseInvalidClassicCardReader();
 		}
 		else if (environmentNotificationType == EnvironmentNotificationType.CreditCardReaderValid && service != null)
 		{
-			service.RaiseValidReader();
+			service.RaiseValidClassicCardReader();
 		}
 		else
 		{
@@ -569,30 +326,16 @@ public class HostForm : Form, ITrackDataService
 			e.Handled = true;
 			return;
 		}
-		if (AllowTrackDataParsing && e.KeyChar == '%')
+		IClassicTrackDataService classicTrackDataService = ClassicTrackDataService;
+		if (classicTrackDataService != null && classicTrackDataService.AllowTrackDataParsing)
 		{
-			ReceivingTrackData = true;
-			TrackDataBuffer = new SecureString();
-		}
-		if (AllowTrackDataParsing && ReceivingTrackData)
-		{
-			TrackDataBuffer.AppendChar(e.KeyChar);
-			if (e.KeyChar == '?' && CardHelper.ExtractFromSecure(TrackDataBuffer).IndexOf(";") > 0)
+			e.Handled = ClassicTrackDataService.ProcessKey(e.KeyChar, delegate
 			{
-				ReceivingTrackData = false;
 				_keyPressStartAfter = DateTime.Now.AddSeconds(3.0);
-				TrackDataErrors = TrackData.Parse(TrackDataBuffer, out var trackData);
-				if (!TrackDataErrors.ContainsError())
-				{
-					TrackDataContainer = trackData;
-				}
-				if (Notify != null)
-				{
-					Notify(this, EventArgs.Empty);
-				}
-				TrackDataBuffer.Clear();
-			}
-			e.Handled = true;
+			});
+		}
+		if (e.Handled)
+		{
 			return;
 		}
 		if (e.KeyChar == '`')
@@ -605,22 +348,26 @@ public class HostForm : Form, ITrackDataService
 			}
 			e.Handled = true;
 		}
-		else if (AllowTrackDataParsing && service != null && service.Filter["environment"] != "Production")
+		else
 		{
-			switch (e.KeyChar)
+			IClassicTrackDataService classicTrackDataService2 = ClassicTrackDataService;
+			if (classicTrackDataService2 != null && classicTrackDataService2.AllowTrackDataParsing && service != null && service.Filter["environment"] != "Production")
 			{
-			case '~':
-				SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111111111=1608041103263?");
-				break;
-			case '!':
-				SendKeys.Send("{%}B24931070601{^}JOE/COOL                {^}1608041103263?;249931070601=1608041103263?");
-				break;
-			case '@':
-				SendKeys.Send("{%}B6010562000017685{^}REDBOX                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
-				break;
-			case '#':
-				SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111=1608041103263?");
-				break;
+				switch (e.KeyChar)
+				{
+				case '~':
+					SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111111111=1608041103263?");
+					break;
+				case '!':
+					SendKeys.Send("{%}B24931070601{^}JOE/COOL                {^}1608041103263?;249931070601=1608041103263?");
+					break;
+				case '@':
+					SendKeys.Send("{%}B6010562000017685{^}REDBOX                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
+					break;
+				case '#':
+					SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111=1608041103263?");
+					break;
+				}
 			}
 		}
 		if (DateTime.Now > _keyPressStartAfter)

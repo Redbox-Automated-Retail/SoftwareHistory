@@ -79,19 +79,19 @@ public interface IRentalShoppingCart
 
 	void ReValidatePromoCodeAfterVend();
 
-	void SetShoppingCartGroups();
-
 	void ClearLoyaltyPointsToBeEarned();
 
 	void ClearAllLoyaltyPointsRecords();
 
 	List<IRentalShoppingCartItem> GetItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria);
 
-	List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeLoyaltyRedeemedItems);
+	List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeFlashDeals, bool includeLoyaltyRedeemedItems);
 
 	void UpdateServiceFee();
 
 	void SetDefaultServiceFee(decimal defaultServiceFee);
 
 	void AddCartItemToAnalytics(IRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved, ISessionAnalyticsService analytics);
+
+	IRentalShoppingCart ShallowClone();
 }

@@ -277,6 +277,7 @@ public class KeyboardLogic : BaseLogic
 	public void CancelButtonCommand_Execute()
 	{
 		BaseLogic.AnalyticsAddViewEvent("buttonPress", "startbrowsing");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("KeyboardLogicStartBrowsing");
 		CancelButton_Execute();
 		BaseLogic.HandleWPFHit();
 	}
@@ -297,6 +298,7 @@ public class KeyboardLogic : BaseLogic
 	public void ContinueButtonCommand_Execute()
 	{
 		BaseLogic.AnalyticsAddViewEvent("buttonPress", "signin");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("KeyboardLogicStartBrowsing");
 		Model.KeyboardError = ContinueButtonExecute();
 		if (!string.IsNullOrEmpty(Model.KeyboardError))
 		{

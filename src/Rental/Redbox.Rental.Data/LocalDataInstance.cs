@@ -24,25 +24,28 @@ public class LocalDataInstance : ILocalDataInstance
 
 	public void UpdateAccountOnOfflineBadCardList(string hashId)
 	{
-		IBadCard value = null;
-		if (!BadCardList.TryGetValue(hashId, out value))
+		if (!string.IsNullOrEmpty(hashId))
 		{
-			value = new BadCard
+			IBadCard value = null;
+			if (!BadCardList.TryGetValue(hashId, out value))
 			{
-				HashId = hashId,
-				NumberOfAttempts = 0
-			};
-			BadCardList[hashId] = value;
+				value = new BadCard
+				{
+					HashId = hashId,
+					NumberOfAttempts = 0
+				};
+				BadCardList[hashId] = value;
+			}
+			value.NumberOfAttempts = ((!value.NumberOfAttempts.HasValue) ? new int?(1) : (value.NumberOfAttempts + 1));
+			value.LastAttempt = DateTime.Now;
+			_localData.UpdateBadCard(value);
 		}
-		value.NumberOfAttempts = ((!value.NumberOfAttempts.HasValue) ? new int?(1) : (value.NumberOfAttempts + 1));
-		value.LastAttempt = DateTime.Now;
-		_localData.UpdateBadCard(value);
 	}
 
 	public void RemoveAccountFromOfflineBadCardList(string hashId)
 	{
 		IBadCard value = null;
-		if (BadCardList.TryGetValue(hashId, out value))
+		if (!string.IsNullOrEmpty(hashId) && BadCardList.TryGetValue(hashId, out value))
 		{
 			BadCardList.Remove(hashId);
 			_localData.RemoveBadCard(value);

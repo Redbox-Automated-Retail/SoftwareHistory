@@ -389,7 +389,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 				}
 				if (!validationErrored)
 				{
-					ServiceLocator.Instance.GetService<IAnalyticsService>()?.WriteSessionToFile(sessionId, text);
+					ServiceLocator.Instance.GetService<IAnalyticsService>()?.WriteToFile(sessionId, text, "xml");
 					IConfiguration service3 = ServiceLocator.Instance.GetService<IConfiguration>();
 					if (service3 != null && service3.SendKioskAnalyticsToKioskDataService)
 					{

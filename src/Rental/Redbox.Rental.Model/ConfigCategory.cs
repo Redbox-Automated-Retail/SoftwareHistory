@@ -22,5 +22,11 @@ public static class ConfigCategory
 
 	public static string ABTestParameters = "AB Test Parameters";
 
+	public static string QueueService = "QueueService";
+
+	public static string Fraud = "Fraud";
+
+	public static string DeviceService = "DeviceService";
+
 	public static string KioskHealth = "KioskHealth";
 }

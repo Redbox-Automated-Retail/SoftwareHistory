@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
@@ -106,6 +107,8 @@ public class TitleRollupUtilities
 
 		public string RentalPriceFormat => "{0}\n{1:C}";
 
+		public string RentalPriceFormatNoCurrency => "{0}\n{1}";
+
 		public string OutOfStockText
 		{
 			get
@@ -195,7 +198,7 @@ public class TitleRollupUtilities
 		return titleRollupOverlayButtonProperties;
 	}
 
-	public static TitleRollupFormatButtonProperties GetRollupFormatButtonProperties(ITitleProduct titleProduct, bool isPurchase, ITitleRollupFormatButtonTextValues buttonTextValues, bool showOutOfStock = true)
+	public static TitleRollupFormatButtonProperties GetRollupFormatButtonProperties(ITitleProduct titleProduct, bool isPurchase, ITitleRollupFormatButtonTextValues buttonTextValues, bool showOutOfStock = true, Func<decimal, decimal> discountedPriceCalc = null)
 	{
 		TitleRollupFormatButtonProperties titleRollupFormatButtonProperties = new TitleRollupFormatButtonProperties();
 		titleRollupFormatButtonProperties.IsEnabled = false;
@@ -252,7 +255,30 @@ public class TitleRollupUtilities
 		else if (titleProduct.IsAvailable && (titleProduct.InStock || !showOutOfStock))
 		{
 			IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(titleProduct.ProductId);
-			titleRollupFormatButtonProperties.ButtonText = ((pricingRecord != null) ? string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormat, string.Format(buttonTextValues.Add, titleTypeText), pricingRecord.InitialNight) : string.Format(buttonTextValues.Add, titleTypeText));
+			if (pricingRecord != null)
+			{
+				decimal initialNight = pricingRecord.InitialNight;
+				if (discountedPriceCalc == null)
+				{
+					titleRollupFormatButtonProperties.ButtonText = string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormat, string.Format(buttonTextValues.Add, titleTypeText), initialNight);
+				}
+				else
+				{
+					decimal num = discountedPriceCalc(initialNight);
+					if (num > 0m)
+					{
+						titleRollupFormatButtonProperties.ButtonText = string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormat, string.Format(buttonTextValues.Add, titleTypeText), num);
+					}
+					else
+					{
+						titleRollupFormatButtonProperties.ButtonText = string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormatNoCurrency, string.Format(buttonTextValues.Add, titleTypeText), Resources.offer_info_free);
+					}
+				}
+			}
+			else
+			{
+				titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.Add, titleTypeText);
+			}
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
 			titleRollupFormatButtonProperties.IsEnabled = true;
 		}

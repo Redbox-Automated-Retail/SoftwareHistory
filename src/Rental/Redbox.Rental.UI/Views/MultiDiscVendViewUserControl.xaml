@@ -24,7 +24,7 @@
           <TextBlock TextWrapping="Wrap">
             <Span Style="{StaticResource span_font_montserrat_bold_18}" Foreground="{StaticResource WarmPurpleBrush}">
               <Run Name="NoteHeaderText" Text="{Binding Path=NoteHeaderText, FallbackValue=Important Note:}" />
-            </Span> <Span Style="{StaticResource span_font_montserrat_regular_18}" Foreground="{StaticResource WarmPurpleBrush}"><Run Name="NoteBodyText" Text="{Binding Path=NoteBodyText, FallbackValue=Your card will be charged the full nightly fee plus applicable taxes until all discs are returned. Please also return them together.}" /></Span></TextBlock>
+            </Span> <Span Style="{StaticResource span_font_montserrat_regular_18}" Foreground="{StaticResource WarmPurpleBrush}"><Run Name="NoteBodyText" Text="{Binding Path=NoteBodyText, FallbackValue=Your card will be charged the full nightly fee plus applicable taxes until all discs are returned. Please return them together.}" /></Span></TextBlock>
         </StackPanel>
         <Redbox:RoundedButton Name="OkayButton" Style="{StaticResource style_rb_purple_white_border_button}" UsedDefaultCornerRadius="True" HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="60" Width="170" Margin="0,0,0,55" Command="{x:Static localbase:Commands.GeneralClickCommand}">
           <TextBlock Name="OkayButtonText" Style="{StaticResource font_museo_slab_900_20}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="3,0,3,0" Text="{Binding Path=OkayButtonText, FallbackValue=Okay}" />

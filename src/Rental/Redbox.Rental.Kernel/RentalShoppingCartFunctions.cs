@@ -6,7 +6,6 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
 using Redbox.Lua;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
@@ -299,30 +298,6 @@ public static class RentalShoppingCartFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_has_item")]
-	public static bool HasItem(string sessionId, string productId)
-	{
-		bool result = false;
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(new Guid(sessionId));
-		if (rentalShoppingCart != null)
-		{
-			long result2 = 0L;
-			if (long.TryParse(productId, out result2))
-			{
-				result = rentalShoppingCart.HasItem(result2);
-			}
-			else
-			{
-				LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.HasItem.  Unable to parse product id  {0}", productId);
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.HasItem.  Unable to find RentalShoppingCart with id {0}", sessionId);
-		}
-		return result;
-	}
-
 	[KernelFunction(Name = "kernel.current_rental_shopping_cart_is_full")]
 	public static bool IsFull()
 	{
@@ -355,107 +330,6 @@ public static class RentalShoppingCartFunctions
 		if (service != null)
 		{
 			result = service.CurrentRentalShoppingCart.Count;
-		}
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_item_count")]
-	public static int ItemCount(string sessionId)
-	{
-		int result = 0;
-		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		if (service != null && sessionId != null)
-		{
-			result = (service?.GetRentalShoppingCart(new Guid(sessionId)))?.Count ?? 0;
-		}
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_item_count")]
-	public static int ItemCount(string sessionId, string productFamily, string actionCode)
-	{
-		int num = 0;
-		TitleFamily? titleFamily = null;
-		if (productFamily != null && Enum.TryParse<TitleFamily>(productFamily, out var result))
-		{
-			titleFamily = result;
-		}
-		RentalShoppingCartItemAction? rentalShoppingCartItemAction = null;
-		if (actionCode != null && Enum.TryParse<RentalShoppingCartItemAction>(actionCode, out var result2))
-		{
-			rentalShoppingCartItemAction = result2;
-		}
-		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		if (service != null && sessionId != null)
-		{
-			IList<IRentalShoppingCartItem> items = (service?.GetRentalShoppingCart(new Guid(sessionId))).Items;
-			if (items != null)
-			{
-				IDataService dataService = ServiceLocator.Instance.GetService(typeof(IDataService)) as IDataService;
-				foreach (IRentalShoppingCartItem item in items)
-				{
-					if ((!titleFamily.HasValue || item.TitleFamily == titleFamily) && (!rentalShoppingCartItemAction.HasValue || item.Action == rentalShoppingCartItemAction))
-					{
-						bool flag = true;
-						dataService.GetProduct(item.ProductId, excludeTitleRollup: true, out var kioskProduct);
-						if (kioskProduct != null && kioskProduct is ITitleProduct { DiscNumber: var discNumber } titleProduct)
-						{
-							flag = !discNumber.HasValue || titleProduct.DiscNumber == 1;
-						}
-						if (flag)
-						{
-							num++;
-						}
-					}
-				}
-			}
-		}
-		return num;
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_product_count")]
-	public static int ProductCount(string productId)
-	{
-		int result = 0;
-		long result2 = 0L;
-		if (long.TryParse(productId, out result2))
-		{
-			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-			if (service != null && service.CurrentRentalShoppingCart != null)
-			{
-				result = service.CurrentRentalShoppingCart.GetCount(result2);
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.ProductCount. Unable to parse product id {0}", productId);
-		}
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.current_rental_shopping_cart_has_item_with_action")]
-	public static bool HasItemWithAction(string productId, string actionCode)
-	{
-		bool result = false;
-		if (Enum.TryParse<RentalShoppingCartItemAction>(actionCode, out var result2))
-		{
-			long result3 = 0L;
-			if (long.TryParse(productId, out result3))
-			{
-				IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-				if (service != null && service.CurrentRentalShoppingCart != null)
-				{
-					result = service.CurrentRentalShoppingCart.HasItemWithAction(result3, result2);
-				}
-			}
-			else
-			{
-				LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.HasItemWithAction. Unable to parse product id {0}", productId);
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.HasItemWithAction. Unable to parse action code {0}", actionCode);
 		}
 		return result;
 	}
@@ -534,15 +408,6 @@ public static class RentalShoppingCartFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.rental_shopping_cart_set_session_cart_groups")]
-	public static void SetSessionCartGroups(string sessionId)
-	{
-		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			rentalShoppingCart.SetShoppingCartGroups();
-		});
-	}
-
 	[KernelFunction(Name = "kernel.rental_shopping_cart_clear_promo_code")]
 	public static void ClearPromoCode(string sessionId)
 	{
@@ -550,57 +415,6 @@ public static class RentalShoppingCartFunctions
 		{
 			rentalShoppingCart.ClearPromoCode();
 		});
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_get_total")]
-	public static LuaTable GetTotals(string sessionId)
-	{
-		LuaTable result = null;
-		ITotals totals = null;
-		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			totals = rentalShoppingCart.Totals;
-		});
-		if (totals != null)
-		{
-			result = new Dictionary<string, object>
-			{
-				{ "sub_total", totals.SubTotal },
-				{ "tax_amount", totals.TaxAmount },
-				{ "discount_amount_used", totals.DiscountAmountUsed },
-				{ "service_fee", totals.ServiceFee },
-				{ "grand_total", totals.GrandTotal }
-			}.ToLuaTable();
-		}
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_get_sub_total")]
-	public static LuaTable GetSubTotals(string sessionId)
-	{
-		LuaTable result = null;
-		ITotals totals = null;
-		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			totals = rentalShoppingCart.Totals;
-		});
-		if (totals != null)
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			foreach (ISubTotalGroup subTotalGroup in totals.SubTotalGroups)
-			{
-				Dictionary<string, object> dictionary2 = new Dictionary<string, object>();
-				dictionary2.Add("amount", subTotalGroup.Amount);
-				dictionary2.Add("tax_rate", subTotalGroup.TaxRate);
-				dictionary2.Add("discounted_amount", subTotalGroup.DiscountedAmount);
-				dictionary2.Add("tax_amount", subTotalGroup.TaxAmount);
-				dictionary2.Add("sub_total", subTotalGroup.SubTotal);
-				dictionary2.Add("grand_total", subTotalGroup.GrantTotal);
-				dictionary.Add(subTotalGroup.Action.ToString(), dictionary2.ToLuaTable());
-			}
-			result = dictionary.ToLuaTable();
-		}
-		return result;
 	}
 
 	[KernelFunction(Name = "kernel.rental_shopping_cart_send_cart_to_analytics")]

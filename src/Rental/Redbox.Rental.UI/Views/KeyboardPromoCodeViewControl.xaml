@@ -6,9 +6,9 @@
         <TextBlock Name="MessageTextElem" Margin="25,0" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource keyboard_prompt_message_style}" Text="{Binding Path=MessageText, FallbackValue=Message}" />
       </Grid>
       <Grid Row="1" HorizontalAlignment="Center">
-        <Redbox:BorderButton Name="PromoElem" BorderSize="350,64" HorizontalAlignment="Left" Style="{StaticResource border_button_style}" Click="PromoSelected">
+        <Redbox:BorderButton Name="PromoElem" BorderSize="490,64" HorizontalAlignment="Left" Style="{StaticResource border_button_style}" Click="PromoSelected">
           <Grid Background="#00FFFFFF">
-            <TextBlock Name="PromoTextElem" Height="32" Width="260" TextWrapping="NoWrap" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=KeyboardText}" />
+            <TextBlock Name="PromoTextElem" Height="32" Width="420" TextWrapping="NoWrap" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=KeyboardText}" />
             <TextBlock Name="PromoPromotTextElem" Height="32" Width="auto" Style="{StaticResource style_keyboard_input_text}" Foreground="{StaticResource PromptGrayBrush}" Text="{Binding Path=EmailPromptText, FallbackValue=promo code}" Visibility="{Binding ElementName=PromoTextElem, Path=Text, Converter={StaticResource TextVisibilityConverter}}" />
           </Grid>
         </Redbox:BorderButton>

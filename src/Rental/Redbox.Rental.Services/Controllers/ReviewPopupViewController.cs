@@ -41,6 +41,7 @@ public class ReviewPopupViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "star_ratings_back");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ReviewPopupPageStarRatingsBack");
 		OrchestrationService.ViewGoBackSafe("ReviewPopupView cancel", popOnly: false);
 	}
 
@@ -76,16 +77,19 @@ public class ReviewPopupViewController : BaseViewController
 
 	private static void AddPageNumberPressedAnalytics(int pageNumber)
 	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ReviewPopupPageChangeNumber");
 		BaseViewController.AnalyticsAddViewEvent("pageChange", $"reviews-page-{pageNumber.ToString()}");
 	}
 
 	private static void AddPreviousPagePressedAnalytics()
 	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ReviewPopupPageChangeBack");
 		BaseViewController.AnalyticsAddViewEvent("pageChange", "reviews-page-back");
 	}
 
 	private static void AddNextPagePressedAnalytics()
 	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ReviewPopupPageChangeNext");
 		BaseViewController.AnalyticsAddViewEvent("pageChange", "reviews-page-next");
 	}
 }

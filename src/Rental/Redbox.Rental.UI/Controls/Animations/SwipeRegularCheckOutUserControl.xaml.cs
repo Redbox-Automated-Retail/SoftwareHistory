@@ -10,30 +10,6 @@ public partial class SwipeRegularCheckOutUserControl : UserControl, ISwipeAnimat
 {
 	private bool m_isAnimated;
 
-	public string TitleText
-	{
-		get
-		{
-			return TitleTextBlock.Text;
-		}
-		set
-		{
-			TitleTextBlock.Text = value;
-		}
-	}
-
-	public string MessageText
-	{
-		get
-		{
-			return MessageTextBlock.Text;
-		}
-		set
-		{
-			MessageTextBlock.Text = value;
-		}
-	}
-
 	public bool IsAnimated
 	{
 		get

@@ -11,4 +11,10 @@ public interface IRedboxRental
 	void RegisterEnvironmentChangeCallback();
 
 	bool IsRentalSessionActive();
+
+	void StartTheRentalApplication();
+
+	void EnterMaintenanceModeBecauseOfDisconnectedCardReader();
+
+	void HandleUnremovedChipInCardReader();
 }

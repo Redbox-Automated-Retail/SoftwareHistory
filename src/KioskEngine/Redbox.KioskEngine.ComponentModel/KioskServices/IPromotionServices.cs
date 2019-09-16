@@ -18,7 +18,7 @@ public interface IPromotionServices
 
 	bool CanSwitch();
 
-	void KioskOptIn(string storeNumber, List<IOptInItem> optInItems, bool sendCardHash, RemoteServiceCallback callback);
+	void KioskOptIn(string storeNumber, List<IOptInItem> optInItems, RemoteServiceCallback callback);
 
 	IOptInItem NewOptInItem();
 

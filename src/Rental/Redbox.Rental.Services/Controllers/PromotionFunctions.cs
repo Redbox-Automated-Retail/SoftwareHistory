@@ -25,8 +25,7 @@ public class PromotionFunctions
 			DisableIdleTimer = true,
 			MessageText = Resources.promo_code_validating_message
 		});
-		OrchestrationService.AnalyticsAddNode("promoCodes", "promoCode");
-		OrchestrationService.AnalyticsAddAttribute("promoCode", "code", promoCode);
+		AddPromoCodeToAnalytics(promoCode);
 		if (promoCode == PromotionService.Instance?.GetInCartPromoCode())
 		{
 			LogHelper.Instance.Log("User manualy entered the InCartPromoCode - clearing!");
@@ -36,6 +35,12 @@ public class PromotionFunctions
 		{
 			ProcessPromoCodeValidationResult(result, doneCallback, afterErrorMessageCallback);
 		});
+	}
+
+	public static void AddPromoCodeToAnalytics(string promoCode)
+	{
+		OrchestrationService.AnalyticsAddNode("promoCodes", "promoCode");
+		OrchestrationService.AnalyticsAddAttribute("promoCode", "code", promoCode);
 	}
 
 	private static void ProcessPromoCodeValidationResult(IPromoCodeValidationResult promoCodeValidationResult, Action<IPromoCodeValidationResult> doneCallback, Action<IPromoCodeValidationResult> afterErrorMessageCallback)
@@ -83,9 +88,9 @@ public class PromotionFunctions
 					promoCodeValidationResult.Success = false;
 					promoCodeValidationResult.Response = "GameRequired";
 				}
-				else if (!promoCodeValidationInfo.IsCartValid && promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing)
+				else if (!promoCodeValidationInfo.IsCartValid && (promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing || promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal))
 				{
-					MessagePopupViewController.ShowMultiNightPricingPromoCodeInvalidWarning(action, action, promoCodeValidationInfo.Title);
+					MessagePopupViewController.ShowPromoCodeInvalidForCartItemsWarning(action, action, promoCodeValidationInfo.Title);
 				}
 				else if (promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.RxGx)
 				{

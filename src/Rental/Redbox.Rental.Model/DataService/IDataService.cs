@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.KioskProduct;
@@ -37,6 +38,8 @@ public interface IDataService
 	ErrorList GetTitleRollupProduct(long productGroupId, out IKioskProduct kioskProduct);
 
 	ErrorList GetCarouselProducts(bool showCollections, out List<IKioskProduct> products);
+
+	ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, out List<ITitleProduct> products);
 
 	ErrorList GetCollection(long collectionId, out ICollectionProduct collection);
 

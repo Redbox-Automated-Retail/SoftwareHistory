@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Markup;
-using System.Windows.Media;
 using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -18,8 +17,6 @@ namespace Redbox.Rental.UI.Views;
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "SwipeView")]
 public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, IComponentConnector
 {
-	public Func<ISpeechControl> OnGetSpeechControl;
-
 	private int m_timeout;
 
 	private DispatcherTimer m_dispatcherTimer;
@@ -29,62 +26,6 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 	private bool m_timerDisabled;
 
 	private Dictionary<SwipeViewType, Type> _swipeViewTypeAnimationControls;
-
-	public string TitleText
-	{
-		get
-		{
-			return SwipeAnimationControl?.TitleText;
-		}
-		set
-		{
-			ISwipeAnimationControl swipeAnimationControl = SwipeAnimationControl;
-			if (swipeAnimationControl != null)
-			{
-				swipeAnimationControl.TitleText = value;
-			}
-		}
-	}
-
-	public string MessageText
-	{
-		get
-		{
-			return SwipeAnimationControl?.MessageText;
-		}
-		set
-		{
-			ISwipeAnimationControl swipeAnimationControl = SwipeAnimationControl;
-			if (swipeAnimationControl != null)
-			{
-				swipeAnimationControl.MessageText = value;
-			}
-		}
-	}
-
-	public ImageSource AdImage
-	{
-		get
-		{
-			return ad_image.Source;
-		}
-		set
-		{
-			ad_image.Source = value;
-		}
-	}
-
-	public string BackButtonText
-	{
-		get
-		{
-			return ButtonGoBack_Text.Text;
-		}
-		set
-		{
-			ButtonGoBack_Text.Text = value;
-		}
-	}
 
 	public SwipeViewType SwipeType
 	{
@@ -159,9 +100,7 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		}
 	}
 
-	public event Action OnGoBack;
-
-	public event Action OnTimeOut;
+	private SwipeViewModel SwipeViewModel => base.DataContext as SwipeViewModel;
 
 	public SwipeViewUserControl()
 	{
@@ -172,7 +111,7 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 
 	public override ISpeechControl GetSpeechControl()
 	{
-		return OnGetSpeechControl?.Invoke();
+		return SwipeViewModel?.OnGetSpeechControl();
 	}
 
 	public void StopTimer()
@@ -190,7 +129,7 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		bool flag = false;
 		lock (m_lockObject)
 		{
-			m_dispatcherTimer.Stop();
+			m_dispatcherTimer?.Stop();
 			if (!m_timerDisabled)
 			{
 				m_timerDisabled = true;
@@ -202,18 +141,14 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		}
 		if (flag)
 		{
-			OnTimeOut();
+			SwipeViewModel?.OnTimeout?.Invoke();
 		}
 	}
 
 	private void GoBackCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		back_button.Visibility = Visibility.Hidden;
 		StopTimer(executeTimeoutEvent: false);
-		if (OnGoBack != null)
-		{
-			OnGoBack();
-		}
+		SwipeViewModel?.ProcessOnBackButtonClicked();
 		HandleWPFHit();
 	}
 
@@ -228,11 +163,39 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			{
 				SwipeViewType.ReservationPickup,
 				typeof(SwipeRegularCheckOutUserControl)
+			},
+			{
+				SwipeViewType.EncryptedSwipeReservationPickup,
+				typeof(EncryptedSwipeRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EncryptedSwipeRegularCheckOut,
+				typeof(EncryptedSwipeRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVInsertTapRegularCheckout,
+				typeof(EMVInsertAndTapRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVInsertTapReservationPickup,
+				typeof(EMVInsertAndTapRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVTapRegularCheckout,
+				typeof(EMVTapRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVTapReservationPickup,
+				typeof(EMVTapRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVInsertRegularCheckout,
+				typeof(EMVInsertRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVInsertReservationPickup,
+				typeof(EMVInsertRegularCheckoutUserControl)
 			}
 		};
-	}
-
-	private void SwipeRegularCheckOutUserControl_Loaded(object sender, RoutedEventArgs e)
-	{
 	}
 }

@@ -64,13 +64,20 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 	{
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(Button1);
+		obj?.SetStyle(FloatingButton1);
 		obj?.SetStyle(Button2);
+		obj?.SetStyle(FloatingButton2);
 	}
 
 	public void StopTimer()
 	{
 		Model.OnTimeOut = null;
 		StopTimer(executeTimeoutEvent: false);
+	}
+
+	public void ReenableTimer()
+	{
+		m_timerDisabled = false;
 	}
 
 	private void TimerTick(object sender, EventArgs e)
@@ -165,10 +172,12 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 			if (string.IsNullOrEmpty(Model.Button1Text))
 			{
 				ButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
+				FloatingButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
 			}
 			if (string.IsNullOrEmpty(Model.Button2Text))
 			{
 				ButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
+				FloatingButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
 			}
 		}
 	}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -26,6 +27,7 @@ public class PromoListLogic : BaseLogic
 	{
 		BaseLogic.ProcessWPFHit();
 		BaseLogic.AnalyticsAddViewEvent("pageChange", $"promos-page-{pageNumber.ToString()}");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicPageChangeNumber");
 		AddAnalyticsPromosShown();
 	}
 
@@ -33,6 +35,7 @@ public class PromoListLogic : BaseLogic
 	{
 		BaseLogic.ProcessWPFHit();
 		BaseLogic.AnalyticsAddViewEvent("pageChange", "promos-page-back");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicPageBack");
 		AddAnalyticsPromosShown();
 	}
 
@@ -40,6 +43,7 @@ public class PromoListLogic : BaseLogic
 	{
 		BaseLogic.ProcessWPFHit();
 		BaseLogic.AnalyticsAddViewEvent("pageChange", "promos-page-next");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicPageNext");
 		AddAnalyticsPromosShown();
 	}
 
@@ -49,10 +53,12 @@ public class PromoListLogic : BaseLogic
 		if (promoCodeModel.IsAdded)
 		{
 			BaseLogic.AnalyticsAddViewEvent("buttonPress", "cancelredeem," + promoCodeModel.PromoCode);
+			BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicCancelRedeem").AddData(new NameValueData("PromoCode", promoCodeModel.PromoCode));
 		}
 		else
 		{
 			BaseLogic.AnalyticsAddViewEvent("buttonPress", "redeem," + promoCodeModel.PromoCode);
+			BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicRedeem").AddData(new NameValueData("PromoCode", promoCodeModel.PromoCode));
 		}
 	}
 

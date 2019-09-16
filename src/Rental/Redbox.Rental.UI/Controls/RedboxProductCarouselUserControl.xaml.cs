@@ -57,13 +57,13 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private double originalHorizontalCenterOfCenterImage = 512.0;
 
-	private int _carouselPositionCount = 7;
+	private int _carouselPositionCount;
 
-	private int _carouselImagePadding = -100;
+	private int _carouselImagePadding;
 
 	private double _horizontalCenterOfCenterImage;
 
-	private double _verticalCenterOfCenterImage = 210.0;
+	private double _verticalCenterOfCenterImage;
 
 	private CarouselDirection _carouselDirection = CarouselDirection.Right;
 
@@ -90,6 +90,8 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 	private DispatcherTimer _timer;
 
 	private bool _timerStarted;
+
+	private bool _isStartViewAdABTest;
 
 	public bool IsRotating
 	{
@@ -660,9 +662,9 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private void InitializeCarouselPositions()
 	{
+		InitializeCarouselImageSizes();
 		_carouselPositions.Clear();
 		int num = _carouselPositionCount / 2;
-		InitializeCarouselImageSizes();
 		_horizontalCenterOfCenterImage = originalHorizontalCenterOfCenterImage;
 		double num2 = _horizontalCenterOfCenterImage - (_carouselImageLargeSize.X / 2.0 + (double)num * ((double)_carouselImagePadding + _carouselImageSmallSize.X) - _carouselImageSmallSize.X / 2.0);
 		_ = _verticalCenterOfCenterImage;
@@ -680,8 +682,12 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private void InitializeCarouselImageSizes()
 	{
-		_carouselImageSmallSize = new Point(303.0, 420.0);
-		_carouselImageLargeSize = new Point(334.0, 456.0);
+		_isStartViewAdABTest = (base.DataContext as CarouselTestModel)?.IsStartViewAdABTest ?? false;
+		_carouselImageSmallSize = (_isStartViewAdABTest ? new Point(232.0, 322.0) : new Point(303.0, 420.0));
+		_carouselImageLargeSize = (_isStartViewAdABTest ? new Point(262.0, 358.0) : new Point(334.0, 456.0));
+		_carouselPositionCount = (_isStartViewAdABTest ? 9 : 7);
+		_carouselImagePadding = (_isStartViewAdABTest ? (-77) : (-100));
+		_verticalCenterOfCenterImage = (_isStartViewAdABTest ? 161 : 210);
 	}
 
 	private void DisplayProductSelectedCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)

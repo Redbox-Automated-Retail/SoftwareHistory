@@ -49,5 +49,7 @@ public enum BrowseSelectedSort
 	[Display(Name = "Family")]
 	Family,
 	[Display(Name = "Horror")]
-	Horror
+	Horror,
+	[Display(Name = "$.99")]
+	_99Cents
 }

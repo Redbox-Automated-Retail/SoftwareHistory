@@ -1,17 +1,50 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
+using DeviceService.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskServices.Proxy.Requests;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskServices.Proxy.Request;
 
 internal class ProxyMessageHelper
 {
+	private static bool ChipEnabled
+	{
+		get
+		{
+			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+			if (service != null && service.ChipEnabled)
+			{
+				return service2?.SupportsEMV ?? false;
+			}
+			return false;
+		}
+	}
+
+	private static bool ContactlessEnabled
+	{
+		get
+		{
+			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+			if (service != null && service.ContactlessEnabled)
+			{
+				return service2?.SupportsEMV ?? false;
+			}
+			return false;
+		}
+	}
+
 	public static CartMessage CreateCartMessage(string customerProfileNumber, string messageType)
 	{
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
@@ -150,6 +183,12 @@ internal class ProxyMessageHelper
 		return shoppingCart;
 	}
 
+	internal static string CalcUtcOffset(DateTime now)
+	{
+		TimeSpan utcOffset = TimeZone.CurrentTimeZone.GetUtcOffset(now);
+		return string.Format("{0}:{1}", utcOffset.TotalHours.ToString("00"), utcOffset.Minutes.ToString("00"));
+	}
+
 	private static VendStatus ConvertToVendStatus(LineItemStatus status)
 	{
 		switch (status)
@@ -169,6 +208,112 @@ internal class ProxyMessageHelper
 			return VendStatus.Vended;
 		default:
 			return VendStatus.NotVended;
+		}
+	}
+
+	public static Dictionary<string, object> GetCreditCardData(IShoppingSession session, bool includeTrack2)
+	{
+		ISession session2 = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
+		ITrackData trackData = session2?.TrackData;
+		IUnencryptedTrackData unencryptedTrackData = trackData as IUnencryptedTrackData;
+		IEncryptedTrackData encryptedTrackData = trackData as IEncryptedTrackData;
+		IEMVTrackData iEMVTrackData = trackData as IEMVTrackData;
+		Dictionary<string, object> dictionary = new Dictionary<string, object>
+		{
+			{
+				"KeyId",
+				unencryptedTrackData?.EncryptionCerificateKeyId
+			},
+			{
+				"Number",
+				unencryptedTrackData?.EncryptedAccountNumber
+			},
+			{
+				"CardType",
+				trackData?.CardType
+			},
+			{
+				"CardId",
+				trackData?.CardHashId
+			},
+			{
+				"LastFour",
+				encryptedTrackData?.LastFour
+			},
+			{
+				"LastName",
+				trackData?.LastName
+			},
+			{
+				"FirstName",
+				trackData?.FirstName
+			},
+			{
+				"PostalCode",
+				session?.ShoppingCart?.PostalCode
+			},
+			{
+				"ExpirationYear",
+				trackData?.ExpiryYear
+			},
+			{
+				"ExpirationMonth",
+				trackData?.ExpiryMonth
+			},
+			{
+				"IsEncrypted",
+				encryptedTrackData != null
+			},
+			{
+				"BIN",
+				encryptedTrackData?.FirstSix
+			},
+			{
+				"KSN",
+				encryptedTrackData?.KSN
+			},
+			{
+				"ICEncryptedData",
+				encryptedTrackData?.ICEncData
+			},
+			{
+				"ReaderSerialNumber",
+				encryptedTrackData?.MfgSerialNumber
+			},
+			{
+				"EmvEnabledTerminal",
+				ChipEnabled || ContactlessEnabled
+			},
+			{
+				"EmvTags",
+				iEMVTrackData?.Tags
+			},
+			{
+				"FallbackType",
+				(int?)((trackData == null || !trackData.IsInTechnicalFallback || trackData.CardSourceType != CardSourceType.Swipe || !trackData.CardHasChip) ? ((FallbackType?)null) : session2?.LastFallbackType)
+			},
+			{
+				"CardSourceType",
+				(ChipEnabled || ContactlessEnabled) ? trackData.CardSourceType : CardSourceType.Unknown
+			},
+			{ "ContactlessEnabled", ContactlessEnabled }
+		};
+		if (includeTrack2)
+		{
+			dictionary["Track2"] = ExtractFromSecure(unencryptedTrackData?.EncryptedTrack2);
+		}
+		return dictionary;
+	}
+
+	private static string ExtractFromSecure(SecureString value)
+	{
+		try
+		{
+			return Marshal.PtrToStringBSTR(Marshal.SecureStringToBSTR(value));
+		}
+		catch
+		{
+			return string.Empty;
 		}
 	}
 }

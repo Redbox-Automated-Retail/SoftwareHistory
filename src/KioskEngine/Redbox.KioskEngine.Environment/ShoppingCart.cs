@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Security;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 
@@ -8,25 +7,11 @@ namespace Redbox.KioskEngine.Environment;
 
 internal sealed class ShoppingCart : IShoppingCart
 {
-	private readonly IDictionary<string, IShoppingCartLineItemGroup> m_groups = new Dictionary<string, IShoppingCartLineItemGroup>();
-
 	private readonly IDictionary<string, string> m_propertyBag = new Dictionary<string, string>();
 
 	public string Email { get; internal set; }
 
 	public bool Blocklisted { get; internal set; }
-
-	public string LastFour { get; internal set; }
-
-	public string LastName { get; internal set; }
-
-	public string FirstName { get; internal set; }
-
-	public SecureString TrackData { get; internal set; }
-
-	public string ExpiryYear { get; internal set; }
-
-	public string ExpiryMonth { get; internal set; }
 
 	public string PostalCode { get; internal set; }
 
@@ -34,17 +19,11 @@ internal sealed class ShoppingCart : IShoppingCart
 
 	public long? ReferenceNumber { get; internal set; }
 
-	public string DiscountCode { get; internal set; }
-
-	public decimal DiscountValue { get; internal set; }
-
 	public CreditElection UseCredits => CreditElection.OptedOut;
 
 	public ShoppingCartType Type { get; internal set; }
 
 	public Guid ShoppingSessionId { get; private set; }
-
-	public IDictionary<string, IShoppingCartLineItemGroup> Groups => m_groups;
 
 	public bool AuthAcceptFlag { get; internal set; }
 
@@ -66,20 +45,6 @@ internal sealed class ShoppingCart : IShoppingCart
 		ShoppingSessionId = shoppingSessionId;
 	}
 
-	public void SetDiscount(string code, decimal value)
-	{
-		LogHelper.Instance.Log("SetDiscount on Shopping Cart for Shopping Session '{0}': code={1}, value={2}", ShoppingSessionId, code, value);
-		DiscountCode = code;
-		DiscountValue = value;
-	}
-
-	public void ClearDiscount()
-	{
-		LogHelper.Instance.Log("ClearDiscount on Shopping Cart for Shopping Session '{0}'", ShoppingSessionId);
-		DiscountCode = null;
-		DiscountValue = 0m;
-	}
-
 	public void SetBlocklisted(bool value)
 	{
 		LogHelper.Instance.Log("SetBlocklisted on Shopping Cart for Shopping Session '{0}': value={1}", ShoppingSessionId, value);
@@ -96,111 +61,6 @@ internal sealed class ShoppingCart : IShoppingCart
 	{
 		LogHelper.Instance.Log("SetEmail on Shopping Cart for Shopping Session '{0}'", ShoppingSessionId);
 		Email = email;
-	}
-
-	public bool SetAccountData()
-	{
-		LogHelper.Instance.Log("SetAccountData on Shopping Cart for Shopping Session '{0}'", ShoppingSessionId);
-		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
-		if (service == null || !service.HasValidData())
-		{
-			LogHelper.Instance.Log("...No valid track data available.");
-			return false;
-		}
-		TrackData = CardHelper.CopyToSecure(service.GetTrack2());
-		LastName = service.GetLastName();
-		LastFour = service.GetLastFour();
-		FirstName = service.GetFirstName();
-		ExpiryYear = service.GetExpiryYear();
-		ExpiryMonth = service.GetExpiryMonth();
-		LogHelper.Instance.Log("...Track data transferred to account data.");
-		return true;
-	}
-
-	public void ClearAccountData()
-	{
-		TrackData.Clear();
-		TrackData.Dispose();
-		LastName = null;
-		LastFour = null;
-		FirstName = null;
-		ExpiryYear = null;
-		ExpiryMonth = null;
-		LogHelper.Instance.Log("Account Data on Shopping Cart cleared for Shopping Session '{0}'", ShoppingSessionId);
-	}
-
-	public void ClearTrackData()
-	{
-		TrackData.Clear();
-		TrackData.Dispose();
-	}
-
-	public IShoppingCartLineItemGroup GetGroup(string name)
-	{
-		LogHelper.Instance.Log("Get Group '{0}' on Shopping Cart for Shopping Session '{1}'", name, ShoppingSessionId);
-		if (!Groups.ContainsKey(name))
-		{
-			return null;
-		}
-		return Groups[name];
-	}
-
-	public void SetGroup(string groupName, decimal taxRate, decimal subTotal, decimal discountedSubtotal, decimal taxAmount, decimal grandTotal)
-	{
-		ShoppingCartLineItemGroup shoppingCartLineItemGroup;
-		if (!Groups.ContainsKey(groupName))
-		{
-			shoppingCartLineItemGroup = new ShoppingCartLineItemGroup();
-			Groups[groupName] = shoppingCartLineItemGroup;
-		}
-		else
-		{
-			shoppingCartLineItemGroup = (ShoppingCartLineItemGroup)Groups[groupName];
-		}
-		((ShoppingCartTotal)shoppingCartLineItemGroup.Totals).TaxRate = taxRate;
-		((ShoppingCartTotal)shoppingCartLineItemGroup.Totals).SubTotal = subTotal;
-		((ShoppingCartTotal)shoppingCartLineItemGroup.Totals).TaxAmount = taxAmount;
-		((ShoppingCartTotal)shoppingCartLineItemGroup.Totals).GrandTotal = grandTotal;
-		((ShoppingCartTotal)shoppingCartLineItemGroup.Totals).DiscountedSubtotal = discountedSubtotal;
-		LogHelper.Instance.Log("SetGroup on Shopping Cart for Shopping Session '{0}': taxRate={1}, subTotal={2}, taxAmount={3}, grandTotal={4}, discountedSubtotal={5}", ShoppingSessionId, taxRate, subTotal, taxAmount, grandTotal, discountedSubtotal);
-	}
-
-	public int GetLineItemCount()
-	{
-		int num = 0;
-		foreach (IShoppingCartLineItemGroup value in Groups.Values)
-		{
-			num += value.Items.Count;
-		}
-		LogHelper.Instance.Log("GetLineItemCount on Shopping Cart for Shopping Session '{0}': {1}", ShoppingSessionId, num);
-		return num;
-	}
-
-	public void RemoveLineItem(string barcode)
-	{
-		LogHelper.Instance.Log("Remove line item for barcode '{0}' on Shopping Cart for Shopping Session '{1}'.", barcode, ShoppingSessionId);
-		List<string> list = new List<string>();
-		foreach (KeyValuePair<string, IShoppingCartLineItemGroup> group in Groups)
-		{
-			foreach (IShoppingCartLineItem item in new List<IShoppingCartLineItem>(group.Value.Items))
-			{
-				if (string.Compare(item.Barcode, barcode, ignoreCase: true) == 0)
-				{
-					LogHelper.Instance.Log("...Removing line item for barcode '{0}'.", barcode);
-					group.Value.Items.Remove(item);
-				}
-			}
-			if (group.Value.Items.Count == 0)
-			{
-				LogHelper.Instance.Log("...Group '{0}' is empty, mark for removal.", group.Key);
-				list.Add(group.Key);
-			}
-		}
-		foreach (string item2 in list)
-		{
-			LogHelper.Instance.Log("...Remove group '{0}'.", item2);
-			Groups.Remove(item2);
-		}
 	}
 
 	public void SetPostalCode(string postalCode)

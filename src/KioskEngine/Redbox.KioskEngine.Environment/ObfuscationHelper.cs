@@ -52,6 +52,14 @@ public class ObfuscationHelper
 
 		public const string BirthDate = "BirthDate";
 
+		public const string BIN = "BIN";
+
+		public const string KSN = "KSN";
+
+		public const string ICEncryptedData = "ICEncryptedData";
+
+		public const string ReaderSerialNumber = "ReaderSerialNumber";
+
 		public const char X = 'x';
 
 		public const char PoundSign = '#';
@@ -182,6 +190,34 @@ public class ObfuscationHelper
 			Key = "BirthDate",
 			ReplacementCharacter = '#',
 			NumberOfNonObfuscatedLeadingCharacters = 1,
+			NumberOfNonObfuscatedTrailingCharacters = 0
+		},
+		new ObfuscationInstance
+		{
+			Key = "BIN",
+			ReplacementCharacter = '#',
+			NumberOfNonObfuscatedLeadingCharacters = 0,
+			NumberOfNonObfuscatedTrailingCharacters = 0
+		},
+		new ObfuscationInstance
+		{
+			Key = "KSN",
+			ReplacementCharacter = '#',
+			NumberOfNonObfuscatedLeadingCharacters = 0,
+			NumberOfNonObfuscatedTrailingCharacters = 0
+		},
+		new ObfuscationInstance
+		{
+			Key = "ICEncryptedData",
+			ReplacementCharacter = 'x',
+			NumberOfNonObfuscatedLeadingCharacters = 0,
+			NumberOfNonObfuscatedTrailingCharacters = 0
+		},
+		new ObfuscationInstance
+		{
+			Key = "ReaderSerialNumber",
+			ReplacementCharacter = 'x',
+			NumberOfNonObfuscatedLeadingCharacters = 0,
 			NumberOfNonObfuscatedTrailingCharacters = 0
 		}
 	};

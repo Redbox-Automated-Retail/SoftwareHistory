@@ -18,12 +18,16 @@ using Redbox.FraudServices.Proxy;
 using Redbox.FraudServices.Proxy.ComponentModel;
 using Redbox.GetOpts;
 using Redbox.HardwareServices.KernelExtension;
+using Redbox.HardwareServices.Proxy;
+using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskDataServices.Proxy;
 using Redbox.KioskDataServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.Bootstrap.Properties;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Drawing;
 using Redbox.KioskEngine.Environment;
+using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.KioskEngine.IDE;
 using Redbox.KioskEngine.Kernel;
 using Redbox.KioskServices.KernelExtension;
@@ -39,6 +43,7 @@ using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services;
 using Redbox.Rental.Services.Analytics;
 using Redbox.Rental.Services.Configuration;
@@ -48,6 +53,7 @@ using Redbox.Rental.Services.Loyalty;
 using Redbox.Rental.Services.Marketing;
 using Redbox.Rental.Services.Personalization;
 using Redbox.Rental.Services.Pricing;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.Services.ShoppingCart;
 using Redbox.UpdateServices.KernelExtension;
 using WindowsInput;
@@ -410,10 +416,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	public bool Run()
 	{
-		HostForm instance = (HostForm)(base.MainForm = new HostForm());
+		HostForm hostForm = new HostForm();
+		base.MainForm = hostForm;
 		base.MainForm.BackColor = RenderingService.Instance.BackgroundColor;
 		BufferedGraphicsManager.Current.MaximumBuffer = base.MainForm.DisplayRectangle.Size;
-		ServiceLocator.Instance.AddService(typeof(ITrackDataService), instance);
 		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>().Register(base.MainForm.Handle);
 		IRenderingService service = ServiceLocator.Instance.GetService<IRenderingService>();
 		ElementHost elementHost = new ElementHost
@@ -445,6 +451,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("E006", "Unable to load WPF resource dictionary.", e));
 		}
+		OrchestrationService.RegisterViewDefinitions();
 		if (!ResourceBundleService.Instance.IsPendingBundleSwitch() && ResourceBundleService.Instance.DefaultBundleName == null)
 		{
 			errorList.AddRange(SelectBundle());
@@ -579,13 +586,18 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.AddService(typeof(IFraudService), FraudService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IPromotionService), PromotionService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IConfiguration), Configuration.Instance);
-		ServiceLocator.Instance.AddService(typeof(IAnalyticsService), AnalyticsService.Instance);
-		ServiceLocator.Instance.GetService<IAnalyticsService>()?.Initialize();
+		ServiceLocator.Instance.AddService(typeof(IDeviceServiceClientHelper), DeviceServiceClientHelper.Instance);
+		ServiceLocator.Instance.AddService(typeof(IClassicTrackDataService), new ClassicTrackDataService());
+		ServiceLocator.Instance.AddService(typeof(IDeviceServiceTrackDataService), new DeviceServiceTrackDataService());
+		ServiceLocator.Instance.AddService(typeof(ITrackDataEncryptionService), new TrackDataEncryptionService());
+		ServiceLocator.Instance.AddService(typeof(IAfterSwipeOfferService), AfterSwipeOfferService.Instance);
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 		if (service2 != null && (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value) & value))
 		{
 			ServiceLocator.Instance.AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
 		}
+		AnalyticsService instance = new AnalyticsService(LogHelper.Instance, service2, this);
+		ServiceLocator.Instance.AddService(typeof(IAnalyticsService), instance);
 		InitializePreferencePages();
 		errorList.AddRange(SchedulerService.Instance.Initialize());
 		errorList.AddRange(DataStoreService.Instance.Initialize());
@@ -614,6 +626,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			errorList.AddRange(errorList2);
 		}
+		ServiceLocator.Instance.AddService(typeof(ISyncUnknownProcessor), SyncUnknownProcessor.Instance);
+		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>()?.Initialize();
+		ServiceLocator.Instance.AddService(typeof(ISyncEmptiesProcessor), SyncEmptiesProcessor.Instance);
+		ServiceLocator.Instance.GetService<ISyncEmptiesProcessor>()?.Initialize();
 		errorList.AddRange(InitializeRedboxRental());
 		errorList2 = ResourceBundleService.Instance.LoadBundles();
 		if (errorList2.ContainsError())
@@ -667,6 +683,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		try
 		{
+			ServiceLocator.Instance.AddService(typeof(IRentalSessionService), new RentalSessionService());
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 			ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();

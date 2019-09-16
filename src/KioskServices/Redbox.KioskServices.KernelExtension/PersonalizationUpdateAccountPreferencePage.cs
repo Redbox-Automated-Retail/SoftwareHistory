@@ -5,7 +5,7 @@ using System.Security;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.Environment;
+using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.Personalization;

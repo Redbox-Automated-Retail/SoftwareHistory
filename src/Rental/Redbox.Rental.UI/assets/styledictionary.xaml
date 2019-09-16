@@ -1019,9 +1019,21 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style x:Key="span_font_montserrat_bold_24" TargetType="{x:Type Span}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="24" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
   <Style x:Key="font_montserrat_bold_30" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_bold_32" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="32" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
@@ -1079,15 +1091,33 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
+  <Style x:Key="span_font_montserrat_semibold_24" TargetType="{x:Type Span}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
+    <Setter Property="FontSize" Value="24" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
   <Style x:Key="font_montserrat_semibold_26" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
     <Setter Property="FontSize" Value="26" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
+  <Style x:Key="font_montserrat_semibold_28" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
   <Style x:Key="font_montserrat_48" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="48" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_montserrat_regular_10" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="10" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
@@ -1228,6 +1258,18 @@
     <Setter Property="FontSize" Value="16" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="ExtraLight" />
+  </Style>
+  <Style x:Key="font_montserrat_medium_13" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat MediumItalic" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style x:Key="font_montserrat_medium_12" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat MediumItalic" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Medium" />
   </Style>
   <Style x:Key="font_montserrat_medium_16_italic" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat MediumItalic" />
@@ -1385,15 +1427,33 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
+  <Style x:Key="font_museo_slab_700_50" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
+    <Setter Property="FontSize" Value="50" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
   <Style x:Key="font_museo_slab_700_30" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
     <Setter Property="FontSize" Value="30" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
+  <Style x:Key="font_museo_slab_700_28" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
   <Style x:Key="font_museo_slab_700_26" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
     <Setter Property="FontSize" Value="26" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style x:Key="font_museo_slab_700_24" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
+    <Setter Property="FontSize" Value="24" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
@@ -2291,6 +2351,21 @@
       </Setter.Value>
     </Setter>
   </Style>
+  <Style x:Key="do_not_sign_style" TargetType="{x:Type UserControl}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type UserControl}">
+          <Grid>
+            <Ellipse Stroke="#FFFFFFFF" StrokeThickness="2" />
+            <Line Stroke="#FFFFFFFF" StrokeThickness="2" X1="0" X2="100" Y1="0" Y2="100" />
+            <UIElement.Clip>
+              <EllipseGeometry Center="50,50" RadiusX="50" RadiusY="50" />
+            </UIElement.Clip>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
   <Style x:Key="blue_flag_style" TargetType="{x:Type Redbox:Flag}" BasedOn="{StaticResource base_flag_style}">
     <Setter Property="Redbox:Flag.FlagColor" Value="#197DE0" />
     <Setter Property="Redbox:Flag.FlagGradientColor" Value="#197DE0" />
@@ -2798,6 +2873,10 @@
   <Style x:Key="font_montserrat_small_rbpurple" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_24}">
     <Setter Property="Foreground" Value="{StaticResource RbPurpleBrush}" />
   </Style>
+  <Style x:Key="font_montserrat_small_black" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_18}">
+    <Setter Property="Foreground" Value="#FF000000" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
   <Style x:Key="font_montserrat_medium_rbpurple" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_30}">
     <Setter Property="Foreground" Value="{StaticResource RbPurpleBrush}" />
   </Style>
@@ -2987,21 +3066,79 @@
   </Style>
   <Style x:Key="message_popup_dialog_title_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_large_overlays}">
     <Setter Property="Foreground" Value="#E42045" />
+    <Setter Property="Margin" Value="55,46,55,10" />
+  </Style>
+  <Style x:Key="message_popup_dialog_title_rbpurple_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_30}">
+    <Setter Property="Foreground" Value="{StaticResource RbPurpleBrush}" />
+    <Setter Property="Margin" Value="55,46,55,10" />
+  </Style>
+  <Style x:Key="message_popup_dialog_title_black_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_36}">
+    <Setter Property="Foreground" Value="#FF000000" />
+    <Setter Property="Margin" Value="55,46,55,10" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
   <Style x:Key="message_popup_dialog_mesg_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_small_overlays}">
     <Setter Property="Foreground" Value="#676565" />
   </Style>
+  <Style x:Key="message_popup_dialog_message_dock_panel_style" TargetType="{x:Type DockPanel}">
+    <Setter Property="Margin" Value="62,5" />
+  </Style>
+  <Style x:Key="message_popup_dialog_button_grid_style" TargetType="{x:Type Grid}">
+    <Setter Property="VerticalAlignment" Value="Bottom" />
+    <Setter Property="Height" Value="80" />
+    <Setter Property="Margin" Value="0,0,0,21" />
+  </Style>
+  <Style x:Key="message_popup_dialog_floating_button_grid_style" TargetType="{x:Type Grid}">
+    <Setter Property="Visibility" Value="Collapsed" />
+  </Style>
   <Style x:Key="message_popup_dialog_title_style2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_not_as_large_overlays}">
     <Setter Property="Foreground" Value="#E42045" />
+    <Setter Property="Margin" Value="55,46,55,10" />
   </Style>
   <Style x:Key="message_popup_dialog_mesg_style2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_smaller_overlays}">
     <Setter Property="Foreground" Value="#676565" />
   </Style>
   <Style x:Key="message_popup_dialog_title_style3" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_30}">
     <Setter Property="Foreground" Value="#792D8D" />
+    <Setter Property="Margin" Value="55,46,55,10" />
   </Style>
   <Style x:Key="message_popup_dialog_mesg_style3" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_24}">
     <Setter Property="Foreground" Value="#792D8D" />
+  </Style>
+  <Style x:Key="message_popup_dialog_title_style4" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_28}">
+    <Setter Property="Foreground" Value="#E42045" />
+    <Setter Property="TextBlock.TextAlignment" Value="Left" />
+    <Setter Property="Margin" Value="0,0,0,30" />
+  </Style>
+  <Style x:Key="message_popup_dialog_message_dock_panel_style4" TargetType="{x:Type DockPanel}">
+    <Setter Property="Margin" Value="0,0,0,0" />
+  </Style>
+  <Style x:Key="message_popup_dialog_message_dock_panel_style5" TargetType="{x:Type DockPanel}">
+    <Setter Property="Margin" Value="0,0,0,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="message_popup_dialog_mesg_style4" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_20}">
+    <Setter Property="Foreground" Value="#E42045" />
+    <Setter Property="TextBlock.TextAlignment" Value="Left" />
+  </Style>
+  <Style x:Key="message_popup_dialog_button_style4" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}">
+    <Setter Property="Width" Value="241" />
+    <Setter Property="Height" Value="50" />
+  </Style>
+  <Style x:Key="message_popup_dialog_button_grid_style4" TargetType="{x:Type Grid}">
+    <Setter Property="Visibility" Value="Collapsed" />
+  </Style>
+  <Style x:Key="message_popup_dialog_inner_grid_style4" TargetType="{x:Type Grid}">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="140,0,140,0" />
+  </Style>
+  <Style x:Key="message_popup_dialog_floating_button_grid_style4" TargetType="{x:Type Grid}">
+    <Setter Property="Height" Value="50" />
+    <Setter Property="Margin" Value="0,60,0,0" />
+  </Style>
+  <Style x:Key="message_popup_dialog_inner_grid_style5" TargetType="{x:Type Grid}">
+    <Setter Property="Margin" Value="0,180,0,0" />
   </Style>
   <Style x:Key="message_popup_warmpurple_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
     <Setter Property="Width" Value="211" />
@@ -3159,5 +3296,68 @@
     <Setter Property="Height" Value="36" />
     <Setter Property="Margin" Value="12,0,12,0" />
     <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/circle-checkmark.png" />
+  </Style>
+  <Style x:Key="offer_info_medium_1up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_36}">
+    <Setter Property="FontSize" Value="48" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_medium_header" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_24}">
+    <Setter Property="FontSize" Value="40" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_medium_2up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_1up}">
+    <Setter Property="FontSize" Value="32" />
+  </Style>
+  <Style x:Key="offer_info_medium_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_36}">
+    <Setter Property="FontSize" Value="52" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_medium_header_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_36}">
+    <Setter Property="FontSize" Value="64" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_big_bold_1up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
+    <Setter Property="FontSize" Value="170" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_big_bold_2up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_1up}">
+    <Setter Property="FontSize" Value="120" />
+    <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
+    <Setter Property="TextBlock.LineHeight" Value="110" />
+    <Setter Property="Margin" Value="0,20,0,0" />
+  </Style>
+  <Style x:Key="offer_info_less_big_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
+    <Setter Property="FontSize" Value="120" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_small_1up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_24}">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_small_serif" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_700_24}">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
   </Style>
 </ResourceDictionary>

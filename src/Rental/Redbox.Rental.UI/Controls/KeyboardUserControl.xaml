@@ -6,8 +6,20 @@
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <Grid Name="MainGridElem" Height="385" Width="858">
-    <Redbox:GridExt Name="SymbolsGridElem" NumberOfRows="4" NumberOfColumns="1" Height="308">
-      <Redbox:GridExt Name="SymbolKeysElem" Row="0" NumberOfColumns="12" Margin="33,0" Visibility="{Binding Path=SymbolKeysElem, FallbackValue=Collapsed}">
+    <Redbox:GridExt Name="SymbolsGridElem" NumberOfRows="5" NumberOfColumns="1">
+      <Redbox:GridExt Name="SymbolKeysElem" Row="0" NumberOfColumns="10" Margin="77,0" Visibility="{Binding Path=SymbolKeysElem, FallbackValue=Collapsed}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="1" />
+        <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="2" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="3" />
+        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="4" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="5" />
+        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="6" />
+        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="7" />
+        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="8" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="9" />
+        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="0" />
+      </Redbox:GridExt>
+      <Redbox:GridExt Row="1" NumberOfColumns="10" Margin="77,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="!" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="@" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="#" />
@@ -15,43 +27,49 @@
         <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="%" />
         <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="^" />
         <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&amp;" />
-        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="(" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content=")" />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="-" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="_" />
-        <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="~" />
+        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="*" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="(" />
+        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content=")" />
       </Redbox:GridExt>
-      <Redbox:GridExt Row="1" NumberOfColumns="12" Margin="33,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="=" />
+      <Redbox:GridExt Row="2" NumberOfColumns="9" Margin="110,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="~" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="+" />
-        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="\" />
-        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content=";" />
-        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content=":" />
-        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&quot;" />
-        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="*" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="=" />
+        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="{}{" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="}" />
+        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="[" />
+        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="]" />
+        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="|" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="\" />
+      </Redbox:GridExt>
+      <Redbox:GridExt Row="3" NumberOfColumns="8" Margin="143,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content=":" />
+        <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content=";" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&quot;" />
+        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="'" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&lt;" />
+        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&gt;" />
+        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="?" />
         <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="/" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="." />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="`" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&lt;" />
-        <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="'" />
       </Redbox:GridExt>
-      <Redbox:GridExt Row="2" NumberOfColumns="12" Margin="33,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Name="LettersElem" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="symbols" Grid.ColumnSpan="4" Click="SwitchToLettersPressed">
-          <TextBlock Name="SymbolButtonTextElem" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Back To ABC" />
+      <Redbox:GridExt Row="4" NumberOfColumns="12" Margin="33,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Name="LettersElem" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="symbols" Grid.ColumnSpan="2" Click="SwitchToLettersPressed">
+          <StackPanel Orientation="Horizontal">
+            <Image Width="21" Height="20" Margin="0,0,5,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/abc-key-up-arrow.png" />
+            <TextBlock Name="SymbolButtonTextElem" HorizontalAlignment="Center" VerticalAlignment="Center" Text="abc" />
+          </StackPanel>
         </Redbox:RoundedButton>
-        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="[" />
-        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="]" />
-        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="{}{" />
-        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="}" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="|" />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="," />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="?" />
-        <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="&gt;" />
-      </Redbox:GridExt>
-      <Redbox:GridExt Row="3" NumberOfColumns="12" Margin="33,0" Visibility="{Binding ElementName=SymbolKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
-        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="8" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="3" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
+        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="-" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="_" />
+        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="." />
+        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2">
+          <StackPanel Orientation="Horizontal">
+            <Image Width="27" Height="19" Margin="0,0,5,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/delete-key-back-arrow.png" />
+            <TextBlock Text="{Binding BackButtonText, FallbackValue=Delete}" />
+          </StackPanel>
+        </Redbox:RoundedButton>
       </Redbox:GridExt>
     </Redbox:GridExt>
     <Redbox:GridExt Name="EmailGridElem" NumberOfRows="5" NumberOfColumns="1">
@@ -85,7 +103,7 @@
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@gmail.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
-      <Redbox:GridExt Name="AEmailElements" Row="2" NumberOfColumns="13" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
+      <Redbox:GridExt Name="AEmailElements" Row="2" NumberOfColumns="9" Margin="33,0,230,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="a" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="s" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="d" />
@@ -95,12 +113,13 @@
         <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="j" />
         <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="k" />
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="l" />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="-" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain" Grid.ColumnSpan="3">
+      </Redbox:GridExt>
+      <Redbox:GridExt Name="AEmailElements2" Row="2" NumberOfColumns="1" Margin="660,0,0,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@hotmail.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
-      <Redbox:GridExt Name="ZEmailElements" Row="3" NumberOfColumns="13" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
+      <Redbox:GridExt Name="ZEmailElements" Row="3" NumberOfColumns="7" Margin="133,0,263,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="z" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="x" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="c" />
@@ -108,24 +127,33 @@
         <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="b" />
         <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="n" />
         <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="m" />
-        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="_" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="@" />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="." />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain" Grid.ColumnSpan="3">
+      </Redbox:GridExt>
+      <Redbox:GridExt Name="ZEmailElements2" Row="3" NumberOfColumns="1" Margin="660,0,0,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@aol.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
-      <Redbox:GridExt Row="4" NumberOfColumns="13" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
-        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="4" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="dotcom" Grid.ColumnSpan="3">
+      <Redbox:GridExt Row="4" NumberOfColumns="8" Margin="99,0,225,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="-" />
+        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="_" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="@" />
+        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="." />
+        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2">
+          <StackPanel Orientation="Horizontal">
+            <Image Width="27" Height="19" Margin="0,0,5,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/delete-key-back-arrow.png" />
+            <TextBlock Text="{Binding BackButtonText, FallbackValue=Delete}" />
+          </StackPanel>
+        </Redbox:RoundedButton>
+      </Redbox:GridExt>
+      <Redbox:GridExt Row="4" NumberOfColumns="1" Margin="660,0,0,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="dotcom">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text=".com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
     </Redbox:GridExt>
     <Redbox:GridExt Name="CodeGridElem" NumberOfRows="5" NumberOfColumns="1">
-      <Redbox:GridExt Name="CodeKeysElem" Row="0" NumberOfColumns="10" Width="680" Visibility="{Binding Path=CodeKeysElem, FallbackValue=Collapsed}">
+      <Redbox:GridExt Name="CodeKeysElem" Row="0" NumberOfColumns="10" Margin="77,0" Visibility="{Binding Path=CodeKeysElem, FallbackValue=Collapsed}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="1" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="2" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="3" />
@@ -137,7 +165,7 @@
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="9" />
         <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="0" />
       </Redbox:GridExt>
-      <Redbox:GridExt Name="QCodeElements" Row="1" NumberOfColumns="10" Width="680" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
+      <Redbox:GridExt Name="QCodeElements" Row="1" NumberOfColumns="10" Margin="77,0" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="q" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="w" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="e" />
@@ -149,38 +177,51 @@
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="o" />
         <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="p" />
       </Redbox:GridExt>
-      <Redbox:GridExt Name="ACodeElements" Row="2" NumberOfColumns="10" Width="680" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
+      <Redbox:GridExt Name="ACodeElements" Row="2" NumberOfColumns="9" Margin="110,0" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="a" />
         <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="s" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="d" />
         <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="f" />
         <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="g" />
-        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="h" Click="RoundedButton_Click" />
+        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="h" />
         <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="j" />
         <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="k" />
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="l" />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="." />
       </Redbox:GridExt>
-      <Redbox:GridExt Name="ZCodeElements" Row="3" NumberOfColumns="10" Width="680" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Name="SymbolButtonElem" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="symbols" Grid.ColumnSpan="3" Click="CodeSwitchToSymbolsPressed">
-          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding SymbolsButtonText, FallbackValue=Symbols}" />
+      <Redbox:GridExt Name="CaseKeysElem" Row="3" NumberOfColumns="1" Margin="75,0,650,0" Visibility="{Binding Path=CaseKeysElem, FallbackValue=Visible}">
+        <Redbox:RoundedButton Name="CapButton" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="cap_shift" State="{Binding KeyboardCapLock, Mode=TwoWay}" Click="CapButtonClicked">
+          <StackPanel Orientation="Horizontal">
+            <Image Width="21" Height="20" Margin="0,0,5,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/abc-key-up-arrow.png" />
+            <TextBlock Name="CapButtonText" HorizontalAlignment="Center" VerticalAlignment="Center" Text="ABC" />
+          </StackPanel>
         </Redbox:RoundedButton>
-        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="z" />
-        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="x" />
-        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="c" />
-        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="v" />
-        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="b" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="n" />
-        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="m" />
       </Redbox:GridExt>
-      <Redbox:GridExt Row="4" NumberOfColumns="13" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
+      <Redbox:GridExt Name="ZCodeElements" Row="3" NumberOfColumns="7" Margin="214,0,143,0" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="z" />
+        <Redbox:RoundedButton Grid.Column="1" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="x" />
+        <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="c" />
+        <Redbox:RoundedButton Grid.Column="3" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="v" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="b" />
+        <Redbox:RoundedButton Grid.Column="5" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="n" />
+        <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="m" />
+      </Redbox:GridExt>
+      <Redbox:GridExt Row="4" NumberOfColumns="12" Margin="33,0" Visibility="{Binding ElementName=CodeKeysElem, Path=Visibility}">
+        <Redbox:RoundedButton Name="SymbolButtonElem" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="symbols" Grid.ColumnSpan="2" Click="CodeSwitchToSymbolsPressed">
+          <StackPanel>
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_regular_14}" Text="# + =" />
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding SymbolsButtonText, FallbackValue=Symbols}" />
+          </StackPanel>
+        </Redbox:RoundedButton>
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
-        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="7" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="11" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
-      </Redbox:GridExt>
-      <Redbox:GridExt Name="CaseKeysElem" Row="4" NumberOfColumns="2" Width="134" HorizontalAlignment="Left" Margin="-2,0,0,0" Visibility="{Binding Path=CaseKeysElem, FallbackValue=Visible}">
-        <Redbox:RoundedButton Name="CapButton" Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="cap_shift" Grid.ColumnSpan="2" State="{Binding KeyboardCapLock, Mode=TwoWay}" Click="CapButtonClicked">
-          <TextBlock Name="CapButtonText" HorizontalAlignment="Center" VerticalAlignment="Center" Text="ABC" />
+        <Redbox:RoundedButton Grid.Column="4" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="3" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
+        <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="-" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="_" />
+        <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="." />
+        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2">
+          <StackPanel Orientation="Horizontal">
+            <Image Width="27" Height="19" Margin="0,0,5,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/delete-key-back-arrow.png" />
+            <TextBlock Text="{Binding BackButtonText, FallbackValue=Delete}" />
+          </StackPanel>
         </Redbox:RoundedButton>
       </Redbox:GridExt>
     </Redbox:GridExt>
@@ -232,7 +273,12 @@
       <Redbox:GridExt Row="4" NumberOfColumns="10" Margin="99,0,99,0" Visibility="{Binding ElementName=PromoCodeElem, Path=Visibility}">
         <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="clear" Grid.ColumnSpan="2" Content="{Binding ClearButtonText, FallbackValue=Clear All}" />
         <Redbox:RoundedButton Grid.Column="2" Style="{StaticResource style_keyboard_rounded_button}" Tag="space" Grid.ColumnSpan="6" Content="{Binding SpaceButtonText, FallbackValue=Space}" />
-        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2" Content="{Binding BackButtonText, FallbackValue=Delete}" />
+        <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_rounded_button}" Tag="back" Grid.ColumnSpan="2">
+          <StackPanel Orientation="Horizontal">
+            <Image Width="27" Height="19" Margin="0,0,5,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/delete-key-back-arrow.png" />
+            <TextBlock Text="{Binding BackButtonText, FallbackValue=Delete}" />
+          </StackPanel>
+        </Redbox:RoundedButton>
       </Redbox:GridExt>
     </Redbox:GridExt>
   </Grid>

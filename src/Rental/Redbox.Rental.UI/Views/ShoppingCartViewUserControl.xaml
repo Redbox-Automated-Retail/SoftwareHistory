@@ -36,7 +36,7 @@
         <Line Name="DividingLine" Y1="0" Y2="654" Fill="#979797" Margin="0,23,0,23" Stroke="#979797" StrokeThickness="2" HorizontalAlignment="Right" Opacity="0.22" />
         <DockPanel Name="LeftSideDockPanel" LastChildFill="True">
           <DockPanel Name="ButtonBar" Height="80" Dock="Bottom" Margin="36,0,23,0">
-            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Width="163" Height="59" UsedDefaultCornerRadius="True" VerticalAlignment="Center" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.GoBackCommand}">
+            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Width="163" Height="59" UsedDefaultCornerRadius="True" VerticalAlignment="Center" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.GoBackCommand}">
               <TextBlock Name="BackButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=BackButtonText, FallbackValue=Back}" />
             </Redbox:RoundedButton>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -100,7 +100,7 @@
                 <TextBlock Name="PromoCodeButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PromoCodeButtonText, FallbackValue=Add Promos}" />
               </Viewbox>
             </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="TermsAndPrivacyButton" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" Height="37" Width="315" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Margin="0,6,0,6">
+            <Redbox:RoundedButton Name="TermsAndPrivacyButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="37" Width="315" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Margin="0,6,0,6">
               <TextBlock Name="TermsAndPrivacyButtonText" Style="{StaticResource font_museo_slab_900_16}" Text="{Binding Path=TermsAndPrivacyButtonText, FallbackValue=Terms &amp; Privacy}" />
             </Redbox:RoundedButton>
             <TextBlock Name="TermsText" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#4a4a4a" Margin="5,7,5,13" TextWrapping="Wrap" HorizontalAlignment="Center" Text="{Binding Path=TermsText, FallbackValue=By pressing PAY Now you agree to the Terms}" />

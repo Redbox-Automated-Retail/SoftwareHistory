@@ -5,6 +5,7 @@ using System.Net.Mail;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Kernel.Views.Common;
+using Redbox.Rental.Model.Analytics;
 
 namespace Redbox.Rental.Kernel.Views.KeyBoardView;
 
@@ -481,6 +482,7 @@ internal class KeyboardViewUI
 					{ "subItemType", "buttonPress" },
 					{ "subItemValue", "ok_button" }
 				}, currentSession.Id.ToString());
+				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("KeyboardOk");
 			}
 		}
 		_next?.Invoke();
@@ -500,6 +502,7 @@ internal class KeyboardViewUI
 					{ "subItemType", "buttonPress" },
 					{ "subItemValue", "cancel_button" }
 				}, currentSession.Id.ToString());
+				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("KeyboardCancel");
 			}
 		}
 		if (_cancel != null)

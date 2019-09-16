@@ -55,5 +55,7 @@ public interface IRentalShoppingCartItem
 
 	ITitleProduct TitleProduct { get; }
 
+	bool HasDeal { get; }
+
 	new string ToString();
 }

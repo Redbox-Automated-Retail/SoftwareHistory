@@ -1,0 +1,462 @@
+namespace Redbox.Rental.Model.Analytics;
+
+public static class AnalyticsConstants
+{
+	public static class EventTypes
+	{
+		public const string ButtonPress = "ButtonPress";
+
+		public const string CheckBoxPressed = "CheckBoxPressed";
+
+		public const string CardRead = "CardRead";
+
+		public const string Timeout = "Timeout";
+	}
+
+	public static class SessionProperties
+	{
+		public const string CustomerProfileNumber = "CustomerProfileNumber";
+
+		public const string AccountNumber = "AccountNumber";
+
+		public const string TransactionId = "TransactionId";
+
+		public const string LoggedInCustomerProfileNumber = "LoggedInCustomerProfileNumber";
+
+		public const string Abandon = "Abandon";
+
+		public const string Market = "Market";
+
+		public const string Banner = "Banner";
+
+		public const string DefaultCulture = "DefaultCulture";
+
+		public const string Application = "Application";
+
+		public const string ApplicationVersion = "ApplicationVersion";
+
+		public const string CurrentCulture = "CurrentCulture";
+
+		public const string SessionType = "SessionType";
+	}
+
+	public static class EventProperties
+	{
+		public const string ViewMessage = "ViewMessage";
+
+		public const string ShowMessageActorTag = "ShowMessageActorTag";
+	}
+
+	public enum SessionType
+	{
+		None,
+		Browse,
+		Pickup,
+		Return
+	}
+
+	public static class ButtonNames
+	{
+		public const string ApplyPromoCancel = "ApplyPromoCancel";
+
+		public const string ApplyPromoEnterPromo = "ApplyPromoEnterPromo";
+
+		public const string BrowseFunctionsBuy = "BrowseFunctionsBuy";
+
+		public const string BrowseFunctionsShoppingCartAddItem = "BrowseFunctionsShoppingCartAddItem";
+
+		public const string BrowseFunctionsRelatedMoviesGotit = "BrowseFunctionsRelatedMoviesGotit";
+
+		public const string BrowseFunctionsOkay = "BrowseFunctionsOkay";
+
+		public const string BrowseFunctionsCancel = "BrowseFunctionsCancel";
+
+		public const string BrowseFunctionsGotit = "BrowseFunctionsGotit";
+
+		public const string BrowseFunctionsCancelDigitalCodeIncart = "BrowseFunctionsCancelDigitalCodeIncart";
+
+		public const string BrowseFunctionsOkDigitalCodeIncart = "BrowseFunctionsOkDigitalCodeIncart";
+
+		public const string BrowseAddItem = "BrowseAddItem";
+
+		public const string BrowseViewDisplayProductButton = "BrowseViewDisplayProductButton";
+
+		public const string BrowsePageBack = "BrowsePageBack";
+
+		public const string BrowsePageNext = "BrowsePageNext";
+
+		public const string BrowseMoreCollections = "BrowseMoreCollections";
+
+		public const string BrowseFilterChange = "browse-filter-change";
+
+		public const string BrowseStartOver = "BrowseStartOver";
+
+		public const string BrowseHome = "BrowseHome";
+
+		public const string BrowseFormat = "BrowseFormat";
+
+		public const string BrowsePriceFilter = "BrowsePriceFilter";
+
+		public const string BrowseCancel = "BrowseCancel";
+
+		public const string BrowseFilter = "BrowseFilter";
+
+		public const string BrowseReserveOnlineRentBack = "BrowseReserveOnlineRentBack";
+
+		public const string BrowseReserveOnlineRentGotit = "BrowseReserveOnlineRentGotit";
+
+		public const string BrowseOnDemandRentBack = "BrowseOnDemandRentBack";
+
+		public const string BrowseOnDemandRentGotit = "BrowseOnDemandRentGotit";
+
+		public const string BrowseSignIn = "BrowseSignIn";
+
+		public const string BrowseSignOut = "BrowseSignOut";
+
+		public const string BrowseMyPerks = "BrowseMyPerks";
+
+		public const string BrowseBack = "BrowseBack";
+
+		public const string BrowseCheckOut = "BrowseCheckOut";
+
+		public const string BrowseAddToCart = "BrowseAddToCart";
+
+		public const string BrowseOutOfStockCancel = "BrowseOutOfStockCancel";
+
+		public const string BrowseOutOfStockRelatedMovies = "BrowseOutOfStockRelatedMovies";
+
+		public const string BrowseShoppingCartRemoveItem = "BrowseShoppingCartRemoveItem";
+
+		public const string BulletListPopupReserveOnlineGotit = "BulletListPopupReserveOnlineGotit";
+
+		public const string BulletListPopupRedboxPerksGotit = "BulletListPopupRedboxPerksGotit";
+
+		public const string CollectionMessageCancel = "CollectionMessageCancel";
+
+		public const string CollectionMessageSeeAll = "CollectionMessageSeeAll";
+
+		public const string CollectionMessageView = "CollectionMessageView";
+
+		public const string FormatFilterPopupFilter = "FormatFilterPopupFilter";
+
+		public const string HelpBack = "HelpBack";
+
+		public const string HelpPageChange = "HelpPageChange";
+
+		public const string HelpSelectDocument = "HelpSelectDocument";
+
+		public const string KeyboardLogicSignIn = "KeyboardLogicStartBrowsing";
+
+		public const string KeyboardLogicStartSignIn = "KeyboardLogicSignIn";
+
+		public const string KeyboardOk = "KeyboardOk";
+
+		public const string KeyboardCancel = "KeyboardCancel";
+
+		public const string LoyaltySignUpJoinPerks = "LoyaltySignUpJoinPerks";
+
+		public const string LoyaltySignUpCreateAcccount = "LoyaltySignUpCreateAcccount";
+
+		public const string LoyaltySignUpCancel = "LoyaltySignUpCancel";
+
+		public const string LoyaltySignUpTerms = "LoyaltySignUpTerms";
+
+		public const string LoyaltySignUpJoinPerksMarketingOptin = "LoyaltySignUpJoinPerksMarketingOptin";
+
+		public const string LoyaltySignUpBack = "LoyaltySignUpBack";
+
+		public const string MemberPerksLogicPerks = "MemberPerksLogicPerks";
+
+		public const string MemberPerksLogicPromo = "MemberPerksLogicPromo";
+
+		public const string MemberPerksLogicBack = "MemberPerksLogicBack";
+
+		public const string MemberPerksLogicButtonValue = "MemberPerksLogicButtonValue";
+
+		public const string MemberPointsLogicCancel = "MemberPointsLogicCancel";
+
+		public const string MemberPointsLogicOkay = "MemberPointsLogicOkay";
+
+		public const string MemberPointsLogicRedeem = "MemberPointsLogicRedeem";
+
+		public const string MemberPointsLogicCancelRedeem = "MemberPointsLogicCancelRedeem";
+
+		public const string MessagePopupButton1 = "MessagePopupButton1";
+
+		public const string MessagePopupButton2 = "MessagePopupButton2";
+
+		public const string MultiDiscVendOkay = "MultiDiscVendOkay";
+
+		public const string MultiNightPopupOneNightRental = "MultiNightPopupOneNightRental";
+
+		public const string MultiNightPopupMultiNightRental = "MultiNightPopupMultiNightRental";
+
+		public const string MultiNightPopupPurchase = "MultiNightPopupPurchase";
+
+		public const string MultiNightPopupCancel = "MultiNightPopupCancel";
+
+		public const string PersonalizationFunctionsSignOutBack = "PersonalizationFunctionsSignOutBack";
+
+		public const string PersonalizationFunctionsSignOut = "PersonalizationFunctionsSignOut";
+
+		public const string PersonalizationFunctionsNotEnoughPointsGotit = "PersonalizationFunctionsNotEnoughPointsGotit";
+
+		public const string PhoneAndPinStartBrowsing = "PhoneAndPinStartBrowsing";
+
+		public const string PhoneAndPinSignIn = "PhoneAndPinSignIn";
+
+		public const string PhoneAndPinTerms = "PhoneAndPinTerms";
+
+		public const string PhoneAndPinMaybeLater = "PhoneAndPinMaybeLater";
+
+		public const string PhoneAndPinSignUp = "PhoneAndPinSignUp";
+
+		public const string PhoneAndPinTextClubOptin = "PhoneAndPinTextClubOptin";
+
+		public const string PresentOffersContinue = "PresentOffersContinue";
+
+		public const string PresentOffersCancel = "PresentOffersCancel";
+
+		public const string PromoListLogicPageChangeNumber = "PromoListLogicPageChangeNumber";
+
+		public const string PromoListLogicPageBack = "PromoListLogicPageBack";
+
+		public const string PromoListLogicPageNext = "PromoListLogicPageNext";
+
+		public const string PromoListLogicCancelRedeem = "PromoListLogicCancelRedeem";
+
+		public const string PromoListLogicRedeem = "PromoListLogicRedeem";
+
+		public const string PerksOfferDetailsCancel = "PerksOfferDetailsCancel";
+
+		public const string PromoConfirmationCancel = "PromoConfirmationCancel";
+
+		public const string PromoConfirmationApplyPromo = "PromoConfirmationApplyPromo";
+
+		public const string PurchaseFormatSelectionPopupAnalysisText = "PurchaseFormatSelectionPopupAnalysisText";
+
+		public const string PurchaseFormatSelectionPopupReserveOnlineRentBack = "PurchaseFormatSelectionPopupReserveOnlineRentBack";
+
+		public const string PurchaseFormatSelectionPopupReserveOnlineRentGotit = "PurchaseFormatSelectionPopupReserveOnlineRentGotit";
+
+		public const string PurchaseFormatSelectionPopupOnDemandRentBack = "PurchaseFormatSelectionPopupOnDemandRentBack";
+
+		public const string PurchaseFormatSelectionPopupOnDemandRentGotit = "PurchaseFormatSelectionPopupOnDemandRentGotit";
+
+		public const string PurchaseFormatSelectionPopupCancel = "PurchaseFormatSelectionPopupCancel";
+
+		public const string PurchaseFormatSelectionPopupDigitalCodeInformation = "PurchaseFormatSelectionPopupDigitalCodeInformation";
+
+		public const string PurchaseFormatSelectionPopupOutOfStockCancel = "PurchaseFormatSelectionPopupOutOfStockCancel";
+
+		public const string PurchaseFormatSelectionPopupOutOfStockAddFormat = "PurchaseFormatSelectionPopupOutOfStockAddFormat";
+
+		public const string PurchaseFormatSelectionPopupOutOfStockRelatedMovies = "PurchaseFormatSelectionPopupOutOfStockRelatedMovies";
+
+		public const string PurchaseFormatSelectionPopupCancelWhatDigitalCode = "PurchaseFormatSelectionPopupCancelWhatDigitalCode";
+
+		public const string PurchaseFormatSelectionPopupBuyWhatDigitalCode = "PurchaseFormatSelectionPopupBuyWhatDigitalCode";
+
+		public const string RecommendationOnPickupKeepBrowsing = "RecommendationOnPickupKeepBrowsing";
+
+		public const string RecommendationOnPickupPickup = "RecommendationOnPickupPickup";
+
+		public const string RecommendationOnPickupPay = "RecommendationOnPickupPay";
+
+		public const string RecommendationOnPickupShoppingCartRemoveItem = "RecommendationOnPickupShoppingCartRemoveItem";
+
+		public const string RecommendedTitlesPopupRelatedMoviesTitleDetails = "RecommendedTitlesPopupRelatedMoviesTitleDetails";
+
+		public const string RecommendedTitlesPopupRelatedMoviesAddTitle = "RecommendedTitlesPopupRelatedMoviesAddTitle";
+
+		public const string RecommendedTitlesPopupRecommendedAddItem = "RecommendedTitlesPopupRecommendedAddItem";
+
+		public const string RecommendedTitlesPopupRelatedNoThanks = "RecommendedTitlesPopupRelatedNoThanks";
+
+		public const string RecommendedTitlesPopupRecommendedNoThanks = "RecommendedTitlesPopupRecommendedNoThanks";
+
+		public const string ReservationDetailsOkay = "ReservationDetailsOkay";
+
+		public const string ReviewPopupPageChangeNumber = "ReviewPopupPageChangeNumber";
+
+		public const string ReviewPopupPageChangeBack = "ReviewPopupPageChangeBack";
+
+		public const string ReviewPopupPageChangeNext = "ReviewPopupPageChangeNext";
+
+		public const string ReviewPopupPageStarRatingsBack = "ReviewPopupPageStarRatingsBack";
+
+		public const string ShoppingCartUpdateADADelete = "ShoppingCartUpdateADADelete";
+
+		public const string ShoppingCartUpdateADAAddGame = "ShoppingCartUpdateADAAddGame";
+
+		public const string ShoppingCartUpdateADAAddMovie = "ShoppingCartUpdateADAAddMovie";
+
+		public const string ShoppingCartUpdateADAOkay = "ShoppingCartUpdateADAOkay";
+
+		public const string ShoppingCartPayNow = "ShoppingCartPayNow";
+
+		public const string ShoppingCartUsePoints = "ShoppingCartUsePoints";
+
+		public const string ShoppingCartSignIn = "ShoppingCartSignIn";
+
+		public const string ShoppingCartDelete = "ShoppingCartDelete";
+
+		public const string ShoppingCartAddPromos = "ShoppingCartAddPromos";
+
+		public const string ShoppingCartRemovePromo = "ShoppingCartRemovePromo";
+
+		public const string ShoppingCartKeepPromo = "ShoppingCartKeepPromo";
+
+		public const string ShoppingCartTermsAndPrivacy = "ShoppingCartTermsAndPrivacy";
+
+		public const string ShoppingCartBack = "ShoppingCartBack";
+
+		public const string ShoppingCartAddMovie = "ShoppingCartAddMovie";
+
+		public const string ShoppingCartAddGame = "ShoppingCartAddGame";
+
+		public const string ShoppingCartUpdateBag = "ShoppingCartUpdateBag";
+
+		public const string ShoppingCartViewFunctionsInCartPromoDecline = "ShoppingCartViewFunctionsInCartPromoDecline";
+
+		public const string ShoppingCartViewFunctionsInCartPromoAccept = "ShoppingCartViewFunctionsInCartPromoAccept";
+
+		public const string ShoppingCartViewFunctionsInCartRemoveItemCancel = "ShoppingCartViewFunctionsInCartRemoveItemCancel";
+
+		public const string ShoppingCartViewFunctionsInCartRemoveItemConfirm = "ShoppingCartViewFunctionsInCartRemoveItemConfirm";
+
+		public const string ShoppingCartViewFunctionsRemoveItem = "ShoppingCartViewFunctionsRemoveItem";
+
+		public const string SignInEmail = "SignInEmail";
+
+		public const string SignInPhone = "SignInPhone";
+
+		public const string SignInCancel = "SignInCancel";
+
+		public const string StartStartBrowsing = "StartStartBrowsing";
+
+		public const string StartADAOn = "StartADAOn";
+
+		public const string StartADAOff = "StartADAOff";
+
+		public const string StartReturn = "StartReturn";
+
+		public const string StartPressedButton = "StartPressedButton";
+
+		public const string StartLanguageToggle = "StartLanguageToggle";
+
+		public const string StartHelp = "StartHelp";
+
+		public const string StartCarouselCancelAddItem = "StartCarouselCancelAddItem";
+
+		public const string StartAddToCart = "StartAddToCart";
+
+		public const string StartCarouselArt = "StartCarouselArt";
+
+		public const string StartSignOut = "StartSignOut";
+
+		public const string StartSignIn = "StartSignIn";
+
+		public const string StartSignInHome = "StartSignInHome";
+
+		public const string StartBannerBluRays = "StartBannerBluRays";
+
+		public const string StartBannerGames = "StartBannerGames";
+
+		public const string StartBannerCollections = "StartBannerCollections";
+
+		public const string StartScreenSaverReserveOnlineLearnMore = "StartScreenSaverReserveOnlineLearnMore";
+
+		public const string StartScreenSaverRedboxPerksLearnMore = "StartScreenSaverRedboxPerksLearnMore";
+
+		public const string StartMovies = "StartMovies";
+
+		public const string StartBuyMovies = "StartBuyMovies";
+
+		public const string StartGames = "StartGames";
+
+		public const string StartBuyGames = "StartBuyGames";
+
+		public const string StartTV = "StartTV";
+
+		public const string StartScreenSaver99CentsMovies = "StartScreenSaver99CentsMovies";
+
+		public const string StartScreenSaverBuyMovies = "StartScreenSaverBuyMovies";
+
+		public const string StartScreenSaverGames = "StartScreenSaverGames";
+
+		public const string SwipeCardSwipeBack = "SwipeCardSwipeBack";
+
+		public const string TitleDetailsRentButton = "TitleDetailsRentButton";
+
+		public const string TitleDetailsOutofStockAddFormat = "TitleDetailsOutofStockAddFormat";
+
+		public const string TitleDetailsOutofStockRelatedMovies = "TitleDetailsOutofStockRelatedMovies";
+
+		public const string TitleDetailsReserveOnlineRentBack = "TitleDetailsReserveOnlineRentBack";
+
+		public const string TitleDetailsReserveOnlineRentGotit = "TitleDetailsReserveOnlineRentGotit";
+
+		public const string TitleDetailsOnDemandRentBack = "TitleDetailsOnDemandRentBack";
+
+		public const string TitleDetailsOnDemandRentGotit = "TitleDetailsOnDemandRentGotit";
+
+		public const string TitleDetailsSeeRelatedCollection = "TitleDetailsSeeRelatedCollection";
+
+		public const string TitleDetailsOutofStockCancel = "TitleDetailsOutofStockCancel";
+
+		public const string TitleDetailsSeeReviews = "TitleDetailsSeeReviews";
+
+		public const string TitleDetailsBuy = "TitleDetailsBuy";
+
+		public const string TitleDetailsBack = "TitleDetailsBack";
+
+		public const string TitleDetailsPageNext = "TitleDetailsPageNext";
+
+		public const string TitleDetailsPageBack = "TitleDetailsPageBack";
+
+		public const string UpsellUpgrade = "UpsellUpgrade";
+
+		public const string UpsellBack = "UpsellBack";
+
+		public const string UpsellNoThanks = "UpsellNoThanks";
+	}
+
+	public static class DataTypeNames
+	{
+		public const string Pricing = "Pricing";
+
+		public const string RentalPricing = "RentalPricing";
+
+		public const string PurchasePricing = "PurchasePricing";
+
+		public const string Product = "Product";
+
+		public const string ROPRecommendedProducts = "ROPRecommendedProducts";
+
+		public const string ShoppingCart = "ShoppingCart";
+
+		public const string Authorization = "Authorization";
+
+		public const string ShoppingCartItem = "ShoppingCartItem";
+
+		public const string NameValue = "NameValue";
+
+		public const string Collection = "Collection";
+
+		public const string MultiNightPopup = "MultiNightPopup";
+
+		public const string Offer = "Offer";
+
+		public const string Swipe = "Swipe";
+	}
+
+	public static class NameValueNames
+	{
+		public const string CollectionsPopupReason = "CollectionsPopupReason";
+
+		public const string MultipNightPopupShowBuyButton = "MultipNightPopupShowBuyButton";
+
+		public const string PromoCode = "PromoCode";
+	}
+}

@@ -9,6 +9,8 @@ public interface IPromoCodeValidationInfo
 
 	bool IsCartInvalidBecauseOfMultiNightPricing { get; set; }
 
+	bool IsCartInvalidBecauseOfFlashDeal { get; set; }
+
 	decimal Price { get; set; }
 
 	decimal Percent { get; set; }

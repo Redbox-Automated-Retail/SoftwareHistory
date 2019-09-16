@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.UI.Models;
@@ -42,6 +43,7 @@ public class MemberPointsLogic : BaseLogic
 		CancelAction?.Invoke();
 		BaseLogic.HandleWPFHit();
 		BaseLogic.AnalyticsAddViewEvent("buttonPress", "cancel");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicCancel");
 	}
 
 	public void ContinueButtonCommand_Execute()
@@ -49,6 +51,7 @@ public class MemberPointsLogic : BaseLogic
 		ContinueAction?.Invoke();
 		BaseLogic.HandleWPFHit();
 		BaseLogic.AnalyticsAddViewEvent("buttonPress", "okay");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicOkay");
 	}
 
 	public List<DisplayProductModel> GetSelectedCartItems()
@@ -147,6 +150,7 @@ public class MemberPointsLogic : BaseLogic
 				Model.SelectedProductIds.Add(shoppingCartItem.ProductId);
 				long productId = shoppingCartItem.ProductId;
 				BaseLogic.AnalyticsAddViewEvent("buttonPress", $"redeem,{productId}");
+				BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicRedeem")?.AddData(ProductData.ToProductData(shoppingCartItem));
 			}
 		}
 	}
@@ -161,6 +165,7 @@ public class MemberPointsLogic : BaseLogic
 				Model.SelectedProductIds.Remove(shoppingCartItem.ProductId);
 				long productId = shoppingCartItem.ProductId;
 				BaseLogic.AnalyticsAddViewEvent("buttonPress", $"cancelredeem,{productId}");
+				BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicCancelRedeem")?.AddData(ProductData.ToProductData(shoppingCartItem));
 			}
 		}
 	}

@@ -408,6 +408,26 @@ public class DataService : IDataService
 		return errorList;
 	}
 
+	public ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, out List<ITitleProduct> products)
+	{
+		WaitForFirstLoad();
+		products = null;
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				products = _kioskProductView.GetProductsForCustomerOffer(titleFamily, titleTypes, includeTitleTypes, include, exclude, includeOlderThan, isAdaView);
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetProducts", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
 	public List<IBarcodeForProductResult> GetBarcodesForProducts(List<ISearchBarcodeForProduct> searchProducts, List<string> excludeBarcodesList)
 	{
 		return _kioskProductView?.GetBarcodesForProducts(searchProducts, excludeBarcodesList);

@@ -3,17 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security;
 using System.Threading;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
+using Redbox.KioskEngine.Environment.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.KioskServices.Proxy.Request;
+using Redbox.KioskServices.Proxy.Requests;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Promotion;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskServices.Proxy;
@@ -391,17 +394,68 @@ public class MerchantServicesProxy : IMerchantServices
 
 	public void Reconcile(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
 	{
-		IMacroService macroService = ServiceLocator.Instance.GetService<IMacroService>();
-		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		IShoppingSession session = service.GetSession(sessionId);
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 		if (session == null)
 		{
 			LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
 			return;
 		}
-		IRentalShoppingCartService service2 = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		IRentalShoppingCart shoppingCart = service2.GetRentalShoppingCart(new Guid(sessionId));
-		IPromotion promotion = shoppingCart?.Promotion;
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId));
+		ISession session2 = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
+		IPromotion promo = rentalShoppingCart?.Promotion;
+		bool flag = session.ShoppingCart.Type == ShoppingCartType.Offline;
+		Guid messageId = Guid.NewGuid();
+		bool blocklisted = session.ShoppingCart.Blocklisted;
+		string email = session.ShoppingCart.Email;
+		string engineVersion = service["EngineVersion"];
+		string bundleVersion = service["ProductVersion"];
+		int kioskId = int.Parse(session.StoreNumber);
+		long? referenceNumber = session.ShoppingCart.ReferenceNumber;
+		Dictionary<string, object> creditCardData = ProxyMessageHelper.GetCreditCardData(session, flag);
+		DateTime now = DateTime.Now;
+		bool playPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted;
+		int playPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned;
+		IDictionary<string, string> propertyBag = session.ShoppingCart.PropertyBag;
+		ShoppingCart shoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo);
+		long? redeemedStoredOfferid;
+		if (session2?.PromoOfferState != null)
+		{
+			IPromoOfferState promoOfferState = session2.PromoOfferState;
+			if (promoOfferState != null && promoOfferState.SelectedOffer?.OfferScopeType == OfferScopeType.StoredRedeemable)
+			{
+				IPromoOfferState promoOfferState2 = session2.PromoOfferState;
+				if (promoOfferState2 != null && promoOfferState2.WasOfferAccepted)
+				{
+					redeemedStoredOfferid = session2.PromoOfferState.SelectedOffer.StoredOfferId;
+					goto IL_01aa;
+				}
+			}
+		}
+		redeemedStoredOfferid = null;
+		goto IL_01aa;
+		IL_01aa:
+		var reconcileRequest = new
+		{
+			MessageType = "Reconcile",
+			MessageId = messageId,
+			IsOffline = flag,
+			Blocklisted = blocklisted,
+			Email = email,
+			EngineVersion = engineVersion,
+			BundleVersion = bundleVersion,
+			KioskId = kioskId,
+			ReferenceNumber = referenceNumber,
+			CreditCard = creditCardData,
+			TransactionDate = now,
+			PlayPassPromptAccepted = playPassPromptAccepted,
+			PlayPassPointsEarned = playPassPointsEarned,
+			PropertyBag = propertyBag,
+			ShoppingCart = shoppingCart,
+			CustomerProfileNumber = customerProfileNumber,
+			RedeemedStoredOfferid = redeemedStoredOfferid,
+			UtcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now)
+		};
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
@@ -409,67 +463,7 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IMerchantServices.Reconcile, URL: {0}", KioskServicesProxy.Instance.Url);
-				ITrackDataService service3 = ServiceLocator.Instance.GetService<ITrackDataService>();
-				bool isOffline = session.ShoppingCart.Type == ShoppingCartType.Offline;
-				var message = new
-				{
-					MessageType = "Reconcile",
-					MessageId = Guid.NewGuid(),
-					IsOffline = isOffline,
-					Blocklisted = session.ShoppingCart.Blocklisted,
-					Email = session.ShoppingCart.Email,
-					EngineVersion = macroService["EngineVersion"],
-					BundleVersion = macroService["ProductVersion"],
-					KioskId = int.Parse(session.StoreNumber),
-					ReferenceNumber = session.ShoppingCart.ReferenceNumber,
-					CreditCard = new Dictionary<string, object>
-					{
-						{
-							"KeyId",
-							service3.GetKeyId()
-						},
-						{
-							"Number",
-							service3.GetNumber()
-						},
-						{
-							"CardType",
-							service3.GetCardType()
-						},
-						{
-							"CardId",
-							service3.GenerateCardHashId()
-						},
-						{ "LastFour", "9999" },
-						{
-							"LastName",
-							session.ShoppingCart.LastName
-						},
-						{
-							"FirstName",
-							session.ShoppingCart.FirstName
-						},
-						{
-							"PostalCode",
-							session.ShoppingCart.PostalCode
-						},
-						{
-							"ExpirationYear",
-							session.ShoppingCart.ExpiryYear
-						},
-						{
-							"ExpirationMonth",
-							session.ShoppingCart.ExpiryMonth
-						}
-					},
-					TransactionDate = DateTime.Now,
-					PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
-					PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
-					PropertyBag = session.ShoppingCart.PropertyBag,
-					ShoppingCart = ProxyMessageHelper.CreateShoppingCart(shoppingCart, promotion),
-					CustomerProfileNumber = customerProfileNumber
-				};
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Reconcile", message);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Reconcile", reconcileRequest);
 			}
 			catch (Exception e)
 			{
@@ -479,8 +473,8 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				try
 				{
-					ICallbackService service4 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service4 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -491,7 +485,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service4.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -507,14 +501,19 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void PreAuth(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	public void PreAuth(Guid sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+			IPreauthorizeResult preauthorizeResult = new PreauthorizeResult
+			{
+				SessionId = sessionId
+			};
+			remoteServiceResult.Properties["PreauthorizeResult"] = preauthorizeResult;
+			preauthorizeResult.IsOnline = true;
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId.ToString());
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -526,7 +525,6 @@ public class MerchantServicesProxy : IMerchantServices
 						{
 							LogHelper.Instance.Log("Live call to remote IMerchantServices.PreAuth, URL: {0}", KioskServicesProxy.Instance.Url);
 							IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-							ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 							var message = new
 							{
 								MessageType = "PreAuth",
@@ -534,79 +532,50 @@ public class MerchantServicesProxy : IMerchantServices
 								EngineVersion = service["EngineVersion"],
 								BundleVersion = service["ProductVersion"],
 								KioskId = int.Parse(session.StoreNumber),
-								CreditCard = new Dictionary<string, object>
-								{
-									{
-										"KeyId",
-										service2.GetKeyId()
-									},
-									{
-										"Number",
-										service2.GetNumber()
-									},
-									{
-										"CardType",
-										service2.GetCardType()
-									},
-									{
-										"CardId",
-										service2.GenerateCardHashId()
-									},
-									{
-										"Track2",
-										ExtractFromSecure(session.ShoppingCart.TrackData)
-									},
-									{ "LastFour", "9999" },
-									{
-										"LastName",
-										session.ShoppingCart.LastName
-									},
-									{
-										"FirstName",
-										session.ShoppingCart.FirstName
-									},
-									{
-										"PostalCode",
-										session.ShoppingCart.PostalCode
-									},
-									{
-										"ExpirationYear",
-										session.ShoppingCart.ExpiryYear
-									},
-									{
-										"ExpirationMonth",
-										session.ShoppingCart.ExpiryMonth
-									}
-								},
+								CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
 								TransactionDate = DateTime.Now,
 								UseCredits = session.ShoppingCart.UseCredits.ToString(),
 								ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
 								CustomerProfileNumber = customerProfileNumber
 							};
-							session.ShoppingCart.ClearTrackData();
 							IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 							remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-							if (dictionary.ContainsKey("ServerName"))
+							if (dictionary.ContainsKey("server_name"))
 							{
-								remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+								preauthorizeResult.ServerName = dictionary["server_name"]?.ToString();
 							}
-							remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
-							remoteServiceResult.Properties["prompt_required"] = dictionary.ContainsKey("PromptRequired") && (bool)dictionary["PromptRequired"];
-							remoteServiceResult.Properties["auth_rule_id"] = (dictionary.ContainsKey("AuthRuleId") ? dictionary["AuthRuleId"] : ((object)0));
-							remoteServiceResult.Properties["auth_amount"] = (dictionary.ContainsKey("AuthAmount") ? dictionary["AuthAmount"].ToString() : "0");
-							remoteServiceResult.Properties["auth_days"] = (dictionary.ContainsKey("AuthDays") ? dictionary["AuthDays"] : ((object)0));
-							remoteServiceResult.Properties["skip_auth_rule"] = !dictionary.ContainsKey("SkipAuthRule") || (bool)dictionary["SkipAuthRule"];
+							preauthorizeResult.IsOnline = !dictionary.ContainsKey("ExceptionRaised");
+							preauthorizeResult.PromptRequired = dictionary.ContainsKey("PromptRequired") && (bool)dictionary["PromptRequired"];
+							int result = 0;
+							if (dictionary.ContainsKey("AuthRuleId"))
+							{
+								int.TryParse(dictionary["AuthRuleId"]?.ToString(), out result);
+							}
+							preauthorizeResult.AuthRuleId = result;
+							decimal result2 = 0m;
+							if (dictionary.ContainsKey("AuthAmount"))
+							{
+								decimal.TryParse(dictionary["AuthAmount"]?.ToString(), out result2);
+							}
+							preauthorizeResult.AuthAmount = result2;
+							int result3 = 0;
+							if (dictionary.ContainsKey("AuthDays"))
+							{
+								int.TryParse(dictionary["AuthDays"]?.ToString(), out result3);
+							}
+							preauthorizeResult.AuthDays = result3;
+							preauthorizeResult.SkipAuthRule = !dictionary.ContainsKey("SkipAuthRule") || (bool)dictionary["SkipAuthRule"];
 						}
 						else
 						{
 							LogHelper.Instance.Log("In stand alone mode, skipping realtime call to PreAuth.", LogEntryType.Info);
 							remoteServiceResult.Success = true;
-							remoteServiceResult.Properties["is_online"] = false;
-							remoteServiceResult.Properties["prompt_required"] = false;
-							remoteServiceResult.Properties["auth_rule_id"] = 0;
-							remoteServiceResult.Properties["auth_amount"] = "0";
-							remoteServiceResult.Properties["auth_days"] = 0;
-							remoteServiceResult.Properties["skip_auth_rule"] = true;
+							preauthorizeResult.IsOnline = false;
+							preauthorizeResult.PromptRequired = false;
+							preauthorizeResult.AuthRuleId = 0;
+							preauthorizeResult.AuthAmount = 0m;
+							preauthorizeResult.AuthDays = 0;
+							preauthorizeResult.SkipAuthRule = true;
 							new AutoResetEvent(initialState: false).WaitOne(1000);
 						}
 					}
@@ -624,7 +593,7 @@ public class MerchantServicesProxy : IMerchantServices
 							};
 							remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 							remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
-							remoteServiceResult.Properties["is_online"] = false;
+							preauthorizeResult.IsOnline = false;
 						}
 						else if (SimulateCommunicationsFailure)
 						{
@@ -634,18 +603,18 @@ public class MerchantServicesProxy : IMerchantServices
 								Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 							};
 							remoteServiceResult.InnerInstructions.Add(item);
-							remoteServiceResult.Properties["is_online"] = false;
+							preauthorizeResult.IsOnline = false;
 						}
 						else
 						{
 							remoteServiceResult.Success = true;
-							remoteServiceResult.Properties["is_online"] = false;
+							preauthorizeResult.IsOnline = false;
 						}
-						remoteServiceResult.Properties["prompt_required"] = false;
-						remoteServiceResult.Properties["auth_rule_id"] = 0;
-						remoteServiceResult.Properties["auth_amount"] = "0";
-						remoteServiceResult.Properties["auth_days"] = 0;
-						remoteServiceResult.Properties["skip_auth_rule"] = true;
+						preauthorizeResult.PromptRequired = false;
+						preauthorizeResult.AuthRuleId = 0;
+						preauthorizeResult.AuthAmount = 0m;
+						preauthorizeResult.AuthDays = 0;
+						preauthorizeResult.SkipAuthRule = true;
 					}
 				}
 			}
@@ -653,25 +622,20 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				LogHelper.Instance.Log("An unhandled exception was raised in MerchantServicesProxy.PreAuth.", e);
 				remoteServiceResult.Success = false;
-				remoteServiceResult.Properties["is_online"] = false;
-				remoteServiceResult.Properties["prompt_required"] = false;
-				remoteServiceResult.Properties["auth_rule_id"] = 0;
-				remoteServiceResult.Properties["auth_amount"] = "0";
-				remoteServiceResult.Properties["auth_days"] = 0;
-				remoteServiceResult.Properties["skip_auth_rule"] = true;
+				preauthorizeResult.IsOnline = false;
+				preauthorizeResult.PromptRequired = false;
+				preauthorizeResult.AuthRuleId = 0;
+				preauthorizeResult.AuthAmount = 0m;
+				preauthorizeResult.AuthDays = 0;
+				preauthorizeResult.SkipAuthRule = true;
 			}
 			finally
 			{
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
-					{
-						Callback = completeCallback,
-						Result = remoteServiceResult,
-						Message = "Invoking completeCallback from MerchantServicesProxy.PreAuth."
-					});
+					preauthorizeResult.StandAlone = StoreServicesProxy.Instance.IsStandAlone;
+					completeCallback(remoteServiceResult);
 				}
 				finally
 				{
@@ -681,116 +645,101 @@ public class MerchantServicesProxy : IMerchantServices
 		});
 	}
 
-	public void Authorize(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	public void Authorize(Guid sessionId, AuthorizeType authorizeType, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
-			_ = ServiceLocator.Instance.GetService<IPersonalizationServices>()?.CustomerProfileNumber;
+			IAuthorizeResult authorizeResult = new AuthorizeResult
+			{
+				SessionId = sessionId,
+				AuthorizeType = authorizeType
+			};
+			remoteServiceResult.Properties["AuthorizeResult"] = authorizeResult;
+			authorizeResult.IsOnline = true;
+			ITrackData trackData = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession()?.TrackData;
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId.ToString());
+			bool flag = authorizeType == AuthorizeType.Authorize;
+			bool flag2 = authorizeType == AuthorizeType.GiftCardAuthorize;
+			string text = (flag ? "Authorize" : "GCAuthorize");
+			string response = (flag ? AuthorizeResponse.Approved.ToString() : GCAuthorizeResponse.Approved.ToString());
 			try
 			{
 				Interlocked.Increment(ref m_working);
+				string text2 = (flag ? AuthorizeResponse.Error.ToString() : GCAuthorizeResponse.Error.ToString());
 				if (session == null)
 				{
-					remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
+					authorizeResult.Response = text2;
 				}
-				else if (LiveCall)
+				else if ((flag && LiveCall) || (flag2 && GCLiveCall))
 				{
 					if (!StoreServicesProxy.Instance.IsStandAlone)
 					{
-						LogHelper.Instance.Log("Live call to remote IMerchantServices.Authorize, URL: {0}", KioskServicesProxy.Instance.Url);
+						LogHelper.Instance.Log($"Live call to remote IMerchantServices.{text}, URL: {KioskServicesProxy.Instance.Url}");
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-						var message = new
+						object message = null;
+						if (flag)
 						{
-							MessageType = "Authorize",
-							MessageId = Guid.NewGuid(),
-							EngineVersion = service["EngineVersion"],
-							BundleVersion = service["ProductVersion"],
-							KioskId = int.Parse(session.StoreNumber),
-							CreditCard = new Dictionary<string, object>
+							message = new
 							{
-								{
-									"KeyId",
-									service2.GetKeyId()
-								},
-								{
-									"Number",
-									service2.GetNumber()
-								},
-								{
-									"CardType",
-									service2.GetCardType()
-								},
-								{
-									"CardId",
-									service2.GenerateCardHashId()
-								},
-								{
-									"Track2",
-									ExtractFromSecure(session.ShoppingCart.TrackData)
-								},
-								{ "LastFour", "9999" },
-								{
-									"LastName",
-									session.ShoppingCart.LastName
-								},
-								{
-									"FirstName",
-									session.ShoppingCart.FirstName
-								},
-								{
-									"PostalCode",
-									session.ShoppingCart.PostalCode
-								},
-								{
-									"ExpirationYear",
-									session.ShoppingCart.ExpiryYear
-								},
-								{
-									"ExpirationMonth",
-									session.ShoppingCart.ExpiryMonth
-								}
-							},
-							TransactionDate = DateTime.Now,
-							UseCredits = session.ShoppingCart.UseCredits.ToString(),
-							AuthAcceptFlag = session.ShoppingCart.AuthAcceptFlag,
-							AuthRuleId = session.ShoppingCart.AuthRuleId,
-							AuthAmount = session.ShoppingCart.AuthAmount,
-							SkipAuthRule = session.ShoppingCart.SkipAuthRule,
-							PropertyBag = session.ShoppingCart.PropertyBag,
-							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
-							CustomerProfileNumber = customerProfileNumber
-						};
-						session.ShoppingCart.ClearTrackData();
+								MessageType = text,
+								MessageId = Guid.NewGuid(),
+								EngineVersion = service["EngineVersion"],
+								BundleVersion = service["ProductVersion"],
+								KioskId = int.Parse(session.StoreNumber),
+								CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
+								TransactionDate = DateTime.Now,
+								UseCredits = session.ShoppingCart.UseCredits.ToString(),
+								AuthAcceptFlag = session.ShoppingCart.AuthAcceptFlag,
+								AuthRuleId = session.ShoppingCart.AuthRuleId,
+								AuthAmount = session.ShoppingCart.AuthAmount,
+								SkipAuthRule = session.ShoppingCart.SkipAuthRule,
+								PropertyBag = session.ShoppingCart.PropertyBag,
+								ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+								CustomerProfileNumber = customerProfileNumber
+							};
+						}
+						else if (flag2)
+						{
+							message = new
+							{
+								MessageType = text,
+								MessageId = Guid.NewGuid(),
+								EngineVersion = service["EngineVersion"],
+								BundleVersion = service["ProductVersion"],
+								KioskId = int.Parse(session.StoreNumber),
+								CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
+								TransactionDate = DateTime.Now,
+								UseCredits = session.ShoppingCart.UseCredits.ToString(),
+								ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+								CustomerProfileNumber = customerProfileNumber
+							};
+						}
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-						if (dictionary.ContainsKey("ServerName"))
+						if (dictionary.ContainsKey("server_name"))
 						{
-							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+							authorizeResult.ServerName = dictionary["server_name"]?.ToString();
 						}
 						if (remoteServiceResult.Success && dictionary.ContainsKey("ReferenceNumber"))
 						{
 							session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(dictionary["ReferenceNumber"]));
 						}
-						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
-						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
-						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						authorizeResult.Response = response;
+						authorizeResult.IsOnline = !dictionary.ContainsKey("ExceptionRaised");
+						authorizeResult.Email = ((!dictionary.ContainsKey("Email")) ? string.Empty : dictionary["Email"]?.ToString());
+						authorizeResult.ReferenceNumber = ((!dictionary.ContainsKey("ReferenceNumber")) ? null : dictionary["ReferenceNumber"]?.ToString());
+						PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
 						if (dictionary2 != null)
 						{
-							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
-							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
-							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
+							authorizeResult.HasProfile = (bool)dictionary2["Valid"];
+							authorizeResult.FirstName = dictionary2["FirstName"]?.ToString();
+							authorizeResult.IsRBI = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						authorizeResult.ConfirmationStatus = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
 						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
 						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
 						if (arrayList != null)
@@ -802,248 +751,36 @@ public class MerchantServicesProxy : IMerchantServices
 								num++;
 							}
 						}
-						remoteServiceResult.Properties["offers"] = dictionary3;
-						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
-						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
-						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
+						authorizeResult.Offers = dictionary3;
+						if (flag2)
 						{
-							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList2 != null && arrayList2.Count > 0)
+							Dictionary<string, object> dictionary5 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
+							if (dictionary5 != null)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary5)
+								authorizeResult.GiftCardExists = (bool)dictionary5["Exists"];
+								authorizeResult.GiftCardStatus = (GiftCardStatus)dictionary5["Status"];
+								decimal result = 0m;
+								if (dictionary5.ContainsKey("Balance"))
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary5["Code"]);
-									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
+									decimal.TryParse(dictionary5["Balance"]?.ToString(), out result);
 								}
-							}
-							else
-							{
-								remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
-							}
-						}
-					}
-					else
-					{
-						LogHelper.Instance.Log("In stand alone mode, skipping realtime call to Authorize.", LogEntryType.Info);
-						remoteServiceResult.Success = true;
-						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
-						remoteServiceResult.Properties["is_online"] = false;
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						new AutoResetEvent(initialState: false).WaitOne(1000);
-					}
-				}
-				else
-				{
-					LogHelper.Instance.Log("Simulating call to IMerchantServices.Authorize.");
-					int num2 = new Random().Next(1, 3);
-					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
-					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
-					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
-					if (SimulateServerBusyError)
-					{
-						remoteServiceResult.Success = false;
-						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
-						{
-							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitAbsolute
-						};
-						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
-						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
-						remoteServiceResult.Properties["response"] = AuthorizeResponse.Error.ToString();
-						remoteServiceResult.Properties["is_online"] = false;
-					}
-					else if (SimulateCommunicationsFailure)
-					{
-						remoteServiceResult.Success = false;
-						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
-						{
-							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
-						};
-						remoteServiceResult.InnerInstructions.Add(item);
-						remoteServiceResult.Properties["response"] = "Communications Failure";
-						remoteServiceResult.Properties["is_online"] = false;
-					}
-					else
-					{
-						remoteServiceResult.Success = AuthorizeResponse == AuthorizeResponse.Approved;
-						remoteServiceResult.Properties["response"] = AuthorizeResponse.ToString();
-						remoteServiceResult.Properties["is_online"] = true;
-						remoteServiceResult.Properties["has_profile"] = HasCustomerProfile;
-						remoteServiceResult.Properties["email"] = EmailAddress;
-						remoteServiceResult.Properties["first_name"] = CPFirstName;
-						remoteServiceResult.Properties["last_name"] = CPLastName;
-						remoteServiceResult.Properties["is_rbi"] = IsRBI;
-						remoteServiceResult.Properties["reference_number"] = TransactionId;
-						remoteServiceResult.Properties["account_number"] = AccountNumber;
-						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
-						int num3 = 1;
-						string[] userOffers = UserOffers;
-						foreach (string value in userOffers)
-						{
-							dictionary6.Add("offer_" + num3, value);
-							num3++;
-						}
-						remoteServiceResult.Properties["offers"] = dictionary6;
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in MerchantServicesProxy.Authorize.", e);
-				remoteServiceResult.Success = true;
-				remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
-				remoteServiceResult.Properties["is_online"] = false;
-				remoteServiceResult.Properties["first_name"] = ((session != null) ? session.ShoppingCart.FirstName : "N/A");
-				remoteServiceResult.Properties["last_name"] = ((session != null) ? session.ShoppingCart.LastName : "N/A");
-			}
-			finally
-			{
-				try
-				{
-					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
-					{
-						Callback = completeCallback,
-						Result = remoteServiceResult,
-						Message = "Invoking completeCallback from MerchantServicesProxy.Authorize."
-					});
-				}
-				finally
-				{
-					Interlocked.Decrement(ref m_working);
-				}
-			}
-		});
-	}
-
-	public void GCAuthorize(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
-	{
-		ThreadPool.QueueUserWorkItem(delegate
-		{
-			using ExecutionTimer executionTimer = new ExecutionTimer();
-			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			remoteServiceResult.Properties["is_online"] = true;
-			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
-			try
-			{
-				Interlocked.Increment(ref m_working);
-				if (session == null)
-				{
-					remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Error.ToString();
-				}
-				else if (GCLiveCall)
-				{
-					if (!StoreServicesProxy.Instance.IsStandAlone)
-					{
-						LogHelper.Instance.Log("Live call to remote IMerchantServices.GCAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
-						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
-						var message = new
-						{
-							MessageType = "GCAuthorize",
-							MessageId = Guid.NewGuid(),
-							EngineVersion = service["EngineVersion"],
-							BundleVersion = service["ProductVersion"],
-							KioskId = int.Parse(session.StoreNumber),
-							CreditCard = new Dictionary<string, object>
-							{
+								authorizeResult.GiftCardBalance = result;
+								int result2 = 0;
+								if (dictionary5.ContainsKey("MaxDiscs"))
 								{
-									"KeyId",
-									service2.GetKeyId()
-								},
-								{
-									"Number",
-									service2.GetNumber()
-								},
-								{
-									"CardType",
-									service2.GetCardType()
-								},
-								{
-									"CardId",
-									service2.GenerateCardHashId()
-								},
-								{
-									"Track2",
-									ExtractFromSecure(session.ShoppingCart.TrackData)
-								},
-								{ "LastFour", "9999" },
-								{
-									"LastName",
-									session.ShoppingCart.LastName
-								},
-								{
-									"FirstName",
-									session.ShoppingCart.FirstName
-								},
-								{
-									"ExpirationYear",
-									session.ShoppingCart.ExpiryYear
-								},
-								{
-									"ExpirationMonth",
-									session.ShoppingCart.ExpiryMonth
+									int.TryParse(dictionary5["MaxDiscs"]?.ToString(), out result2);
 								}
-							},
-							TransactionDate = DateTime.Now,
-							UseCredits = session.ShoppingCart.UseCredits.ToString(),
-							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
-							CustomerProfileNumber = customerProfileNumber
-						};
-						session.ShoppingCart.ClearTrackData();
-						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
-						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-						if (dictionary.ContainsKey("ServerName"))
-						{
-							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
-						}
-						if (remoteServiceResult.Success && dictionary.ContainsKey("ReferenceNumber"))
-						{
-							session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(dictionary["ReferenceNumber"]));
-						}
-						remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Approved.ToString();
-						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
-						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
-						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
-						if (dictionary2 != null)
-						{
-							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
-							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
-							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
-						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
-						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
-						if (arrayList != null)
-						{
-							int num = 1;
-							foreach (Dictionary<string, object> item2 in arrayList)
-							{
-								dictionary3.Add("offer_" + num, item2["Name"]);
-								num++;
+								authorizeResult.GiftCardMaxDiscs = result2;
+								int result3 = 0;
+								if (dictionary5.ContainsKey("MaxGames"))
+								{
+									int.TryParse(dictionary5["MaxGames"]?.ToString(), out result3);
+								}
+								authorizeResult.GiftCardMaxGames = MaxGames;
 							}
 						}
-						remoteServiceResult.Properties["offers"] = dictionary3;
-						Dictionary<string, object> dictionary5 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
-						if (dictionary5 != null)
-						{
-							remoteServiceResult.Properties["gift_card_exists"] = (bool)dictionary5["Exists"];
-							remoteServiceResult.Properties["gift_card_status"] = ((GiftCardStatus)dictionary5["Status"]/*cast due to constrained. prefix*/).ToString();
-							remoteServiceResult.Properties["gift_card_balance"] = dictionary5["Balance"].ToString();
-							remoteServiceResult.Properties["gift_card_max_discs"] = dictionary5["MaxDiscs"];
-							remoteServiceResult.Properties["gift_card_max_games"] = dictionary5["MaxGames"];
-						}
-						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
-						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
+						authorizeResult.AccountNumber = ((!dictionary.ContainsKey("AccountNumber")) ? string.Empty : dictionary["AccountNumber"]?.ToString());
+						authorizeResult.CustomerProfileNumber = ((!dictionary.ContainsKey("CustomerProfileNumber")) ? string.Empty : dictionary["CustomerProfileNumber"]?.ToString());
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
 							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -1051,37 +788,35 @@ public class MerchantServicesProxy : IMerchantServices
 							{
 								if (arrayList2[0] is Dictionary<string, object> dictionary6)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(GCAuthorizeResponse?), (string)dictionary6["Code"]);
-									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : GCAuthorizeResponse.Error.ToString());
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(flag ? typeof(AuthorizeResponse?) : typeof(GCAuthorizeResponse?), (string)dictionary6["Code"]);
+									authorizeResult.Response = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : text2);
 								}
 							}
 							else
 							{
-								remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Error.ToString();
+								authorizeResult.Response = text2;
 							}
 						}
 					}
 					else
 					{
-						LogHelper.Instance.Log("In stand alone mode, skipping realtime call to GCAuthorize.", LogEntryType.Info);
+						LogHelper.Instance.Log($"In stand alone mode, skipping realtime call to {text}.", LogEntryType.Info);
 						remoteServiceResult.Success = true;
-						remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Approved.ToString();
-						remoteServiceResult.Properties["is_online"] = false;
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						authorizeResult.Response = response;
+						authorizeResult.IsOnline = false;
+						PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
+						authorizeResult.ConfirmationStatus = ConfirmationStatus.DoNotShow.ToString();
 						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
 				else
 				{
-					LogHelper.Instance.Log("Simulating call to IMerchantServices.GCAuthorize.");
+					LogHelper.Instance.Log($"Simulating call to IMerchantServices.{text}.");
 					int num2 = new Random().Next(1, 3);
 					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
-					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
-					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
-					if (GCSimulateServerBusyError)
+					authorizeResult.StoreNumber = session.StoreNumber;
+					PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
+					if ((flag && SimulateServerBusyError) || (flag2 && GCSimulateServerBusyError))
 					{
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction remoteServiceProviderInstruction = new RemoteServiceProviderInstruction
@@ -1090,10 +825,10 @@ public class MerchantServicesProxy : IMerchantServices
 						};
 						remoteServiceProviderInstruction.Parameters["wait_time"] = new TimeSpan(0, 0, 15, 0);
 						remoteServiceResult.InnerInstructions.Add(remoteServiceProviderInstruction);
-						remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Error.ToString();
-						remoteServiceResult.Properties["is_online"] = false;
+						authorizeResult.Response = text2;
+						authorizeResult.IsOnline = false;
 					}
-					else if (GCSimulateCommunicationsFailure)
+					else if ((flag && SimulateCommunicationsFailure) || (flag2 && GCSimulateCommunicationsFailure))
 					{
 						remoteServiceResult.Success = false;
 						RemoteServiceProviderInstruction item = new RemoteServiceProviderInstruction
@@ -1101,23 +836,23 @@ public class MerchantServicesProxy : IMerchantServices
 							Type = Redbox.KioskEngine.ComponentModel.KioskServices.InstructionType.WaitForSuccessfulPing
 						};
 						remoteServiceResult.InnerInstructions.Add(item);
-						remoteServiceResult.Properties["response"] = "Communications Failure";
-						remoteServiceResult.Properties["is_online"] = false;
+						authorizeResult.Response = "Communications Failure";
+						authorizeResult.IsOnline = false;
 					}
 					else
 					{
-						remoteServiceResult.Success = GCAuthorizeResponse == GCAuthorizeResponse.Approved;
-						remoteServiceResult.Properties["response"] = GCAuthorizeResponse.ToString();
-						remoteServiceResult.Properties["is_online"] = true;
-						remoteServiceResult.Properties["has_profile"] = HasCustomerProfile;
-						remoteServiceResult.Properties["email"] = EmailAddress;
-						remoteServiceResult.Properties["first_name"] = CPFirstName;
-						remoteServiceResult.Properties["last_name"] = CPLastName;
-						remoteServiceResult.Properties["is_rbi"] = IsRBI;
-						remoteServiceResult.Properties["reference_number"] = TransactionId;
-						remoteServiceResult.Properties["account_number"] = AccountNumber;
-						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						remoteServiceResult.Success = (flag ? (AuthorizeResponse == AuthorizeResponse.Approved) : (GCAuthorizeResponse == GCAuthorizeResponse.Approved));
+						authorizeResult.Response = (flag ? AuthorizeResponse.ToString() : GCAuthorizeResponse.ToString());
+						authorizeResult.IsOnline = true;
+						authorizeResult.HasProfile = HasCustomerProfile;
+						authorizeResult.Email = EmailAddress;
+						authorizeResult.FirstName = CPFirstName;
+						authorizeResult.LastName = CPLastName;
+						authorizeResult.IsRBI = IsRBI;
+						authorizeResult.ReferenceNumber = TransactionId;
+						authorizeResult.AccountNumber = AccountNumber;
+						authorizeResult.CustomerProfileNumber = CPAccountNumber;
+						authorizeResult.ConfirmationStatus = ConfirmationStatus.DoNotShow.ToString();
 						Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
 						int num3 = 1;
 						string[] userOffers = UserOffers;
@@ -1126,36 +861,36 @@ public class MerchantServicesProxy : IMerchantServices
 							dictionary7.Add("offer_" + num3, value);
 							num3++;
 						}
-						remoteServiceResult.Properties["offers"] = dictionary7;
-						remoteServiceResult.Properties["gift_card_exists"] = Exists;
-						remoteServiceResult.Properties["gift_card_status"] = GCStatusType.ToString();
-						remoteServiceResult.Properties["gift_card_balance"] = Balance;
-						remoteServiceResult.Properties["gift_card_max_discs"] = MaxDiscs;
-						remoteServiceResult.Properties["gift_card_max_games"] = MaxGames;
+						authorizeResult.Offers = dictionary7;
+						if (flag2)
+						{
+							authorizeResult.GiftCardExists = Exists;
+							authorizeResult.GiftCardStatus = GCStatusType;
+							decimal result4 = 0m;
+							decimal.TryParse(Balance, out result4);
+							authorizeResult.GiftCardBalance = result4;
+							authorizeResult.GiftCardMaxDiscs = MaxDiscs;
+							authorizeResult.GiftCardMaxGames = MaxGames;
+						}
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in MerchantServicesProxy.GCAuthorize.", e);
+				LogHelper.Instance.Log($"An unhandled exception was raised in MerchantServicesProxy.{text}.", e);
 				remoteServiceResult.Success = true;
-				remoteServiceResult.Properties["response"] = GCAuthorizeResponse.Approved.ToString();
-				remoteServiceResult.Properties["is_online"] = false;
-				remoteServiceResult.Properties["first_name"] = ((session != null) ? session.ShoppingCart.FirstName : "N/A");
-				remoteServiceResult.Properties["last_name"] = ((session != null) ? session.ShoppingCart.LastName : "N/A");
+				authorizeResult.Response = response;
+				authorizeResult.IsOnline = false;
+				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData, defaultToNA: true);
 			}
 			finally
 			{
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
-					{
-						Callback = completeCallback,
-						Result = remoteServiceResult,
-						Message = "Invoking completeCallback from MerchantServicesProxy.GCAuthorize."
-					});
+					authorizeResult.StandAlone = StoreServicesProxy.Instance.IsStandAlone;
+					authorizeResult.Success = remoteServiceResult.Success;
+					completeCallback(remoteServiceResult);
 				}
 				finally
 				{
@@ -1172,6 +907,7 @@ public class MerchantServicesProxy : IMerchantServices
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
+			ITrackData trackData = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession()?.TrackData;
 			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			try
 			{
@@ -1186,7 +922,6 @@ public class MerchantServicesProxy : IMerchantServices
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ReservationAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var message = new
 						{
 							MessageType = "ResvAuth",
@@ -1194,63 +929,19 @@ public class MerchantServicesProxy : IMerchantServices
 							EngineVersion = service["EngineVersion"],
 							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(session.StoreNumber),
-							CreditCard = new Dictionary<string, object>
-							{
-								{
-									"KeyId",
-									service2.GetKeyId()
-								},
-								{
-									"Number",
-									service2.GetNumber()
-								},
-								{
-									"CardType",
-									service2.GetCardType()
-								},
-								{
-									"CardId",
-									service2.GenerateCardHashId()
-								},
-								{
-									"Track2",
-									ExtractFromSecure(session.ShoppingCart.TrackData)
-								},
-								{ "LastFour", "9999" },
-								{
-									"LastName",
-									session.ShoppingCart.LastName
-								},
-								{
-									"FirstName",
-									session.ShoppingCart.FirstName
-								},
-								{
-									"PostalCode",
-									session.ShoppingCart.PostalCode
-								},
-								{
-									"ExpirationYear",
-									session.ShoppingCart.ExpiryYear
-								},
-								{
-									"ExpirationMonth",
-									session.ShoppingCart.ExpiryMonth
-								}
-							},
+							CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
 							TransactionDate = DateTime.Now,
 							UseCredits = session.ShoppingCart.UseCredits.ToString(),
 							ReferenceNumber = referenceNumber,
 							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
 							CustomerProfileNumber = customerProfileNumber
 						};
-						session.ShoppingCart.ClearTrackData();
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-						if (dictionary.ContainsKey("ServerName"))
+						if (dictionary.ContainsKey("server_name"))
 						{
-							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+							remoteServiceResult.Properties["server_name"] = dictionary["server_name"];
 						}
 						if (remoteServiceResult.Success && dictionary.ContainsKey("ReferenceNumber"))
 						{
@@ -1259,9 +950,8 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
 						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						remoteServiceResult.Properties["reference_number"] = ((!dictionary.ContainsKey("ReferenceNumber")) ? null : dictionary["ReferenceNumber"]?.ToString());
+						PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
 						if (dictionary2 != null)
 						{
@@ -1306,8 +996,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = true;
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = false;
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
 						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
@@ -1318,8 +1007,7 @@ public class MerchantServicesProxy : IMerchantServices
 					int num2 = new Random().Next(1, 3);
 					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
-					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+					PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 					if (ResvAuthSimulateServerBusyError)
 					{
 						remoteServiceResult.Success = false;
@@ -1374,8 +1062,7 @@ public class MerchantServicesProxy : IMerchantServices
 				remoteServiceResult.Success = true;
 				remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 				remoteServiceResult.Properties["is_online"] = false;
-				remoteServiceResult.Properties["first_name"] = ((session != null) ? session.ShoppingCart.FirstName : "N/A");
-				remoteServiceResult.Properties["last_name"] = ((session != null) ? session.ShoppingCart.LastName : "N/A");
+				PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData, defaultToNA: true);
 			}
 			finally
 			{
@@ -1405,6 +1092,7 @@ public class MerchantServicesProxy : IMerchantServices
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			remoteServiceResult.Properties["is_online"] = true;
+			ITrackData trackData = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession()?.TrackData;
 			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 			_ = ServiceLocator.Instance.GetService<IPersonalizationServices>()?.CustomerProfileNumber;
 			try
@@ -1420,7 +1108,6 @@ public class MerchantServicesProxy : IMerchantServices
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.PickupAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var message = new
 						{
 							MessageType = "PickupAuthorize",
@@ -1430,50 +1117,7 @@ public class MerchantServicesProxy : IMerchantServices
 							KioskId = int.Parse(session.StoreNumber),
 							ReferenceNumber = referenceNumber,
 							CartWasModified = cartWasModified,
-							CreditCard = new Dictionary<string, object>
-							{
-								{
-									"KeyId",
-									service2.GetKeyId()
-								},
-								{
-									"Number",
-									service2.GetNumber()
-								},
-								{
-									"CardType",
-									service2.GetCardType()
-								},
-								{
-									"CardId",
-									service2.GenerateCardHashId()
-								},
-								{
-									"Track2",
-									ExtractFromSecure(session.ShoppingCart.TrackData)
-								},
-								{ "LastFour", "9999" },
-								{
-									"LastName",
-									session.ShoppingCart.LastName
-								},
-								{
-									"FirstName",
-									session.ShoppingCart.FirstName
-								},
-								{
-									"PostalCode",
-									session.ShoppingCart.PostalCode
-								},
-								{
-									"ExpirationYear",
-									session.ShoppingCart.ExpiryYear
-								},
-								{
-									"ExpirationMonth",
-									session.ShoppingCart.ExpiryMonth
-								}
-							},
+							CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
 							TransactionDate = DateTime.Now,
 							UseCredits = session.ShoppingCart.UseCredits.ToString(),
 							AuthAcceptFlag = session.ShoppingCart.AuthAcceptFlag,
@@ -1484,13 +1128,12 @@ public class MerchantServicesProxy : IMerchantServices
 							ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
 							CustomerProfileNumber = customerProfileNumber
 						};
-						session.ShoppingCart.ClearTrackData();
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-						if (dictionary.ContainsKey("ServerName"))
+						if (dictionary.ContainsKey("server_name"))
 						{
-							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+							remoteServiceResult.Properties["server_name"] = dictionary["server_name"];
 						}
 						if (remoteServiceResult.Success && dictionary.ContainsKey("ReferenceNumber"))
 						{
@@ -1499,9 +1142,8 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
 						remoteServiceResult.Properties["email"] = (dictionary.ContainsKey("Email") ? dictionary["Email"] : string.Empty);
-						remoteServiceResult.Properties["reference_number"] = (dictionary.ContainsKey("ReferenceNumber") ? dictionary["ReferenceNumber"].ToString() : null);
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						remoteServiceResult.Properties["reference_number"] = ((!dictionary.ContainsKey("ReferenceNumber")) ? null : dictionary["ReferenceNumber"]?.ToString());
+						PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CustomerProfile") ? (dictionary["CustomerProfile"] as Dictionary<string, object>) : null);
 						if (dictionary2 != null)
 						{
@@ -1547,8 +1189,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Success = true;
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = false;
-						remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-						remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+						PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
 						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
@@ -1559,8 +1200,7 @@ public class MerchantServicesProxy : IMerchantServices
 					int num2 = new Random().Next(1, 3);
 					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
-					remoteServiceResult.Properties["first_name"] = session.ShoppingCart.FirstName;
-					remoteServiceResult.Properties["last_name"] = session.ShoppingCart.LastName;
+					PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 					if (SimulateServerBusyError)
 					{
 						remoteServiceResult.Success = false;
@@ -1616,8 +1256,7 @@ public class MerchantServicesProxy : IMerchantServices
 				remoteServiceResult.Success = true;
 				remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 				remoteServiceResult.Properties["is_online"] = false;
-				remoteServiceResult.Properties["first_name"] = ((session != null) ? session.ShoppingCart.FirstName : "N/A");
-				remoteServiceResult.Properties["last_name"] = ((session != null) ? session.ShoppingCart.LastName : "N/A");
+				PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData, defaultToNA: true);
 			}
 			finally
 			{
@@ -1661,7 +1300,6 @@ public class MerchantServicesProxy : IMerchantServices
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ValidatePickup, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 						var message = new
 						{
 							MessageType = "PickupValidation",
@@ -1669,60 +1307,16 @@ public class MerchantServicesProxy : IMerchantServices
 							EngineVersion = service["EngineVersion"],
 							BundleVersion = service["ProductVersion"],
 							KioskId = int.Parse(StoreServicesProxy.Instance.StoreNumber),
-							CreditCard = new Dictionary<string, object>
-							{
-								{
-									"KeyId",
-									service2.GetKeyId()
-								},
-								{
-									"Number",
-									service2.GetNumber()
-								},
-								{
-									"CardType",
-									service2.GetCardType()
-								},
-								{
-									"CardId",
-									service2.GenerateCardHashId()
-								},
-								{
-									"Track2",
-									ExtractFromSecure(session.ShoppingCart.TrackData)
-								},
-								{ "LastFour", "9999" },
-								{
-									"LastName",
-									session.ShoppingCart.LastName
-								},
-								{
-									"FirstName",
-									session.ShoppingCart.FirstName
-								},
-								{
-									"PostalCode",
-									session.ShoppingCart.PostalCode
-								},
-								{
-									"ExpirationYear",
-									session.ShoppingCart.ExpiryYear
-								},
-								{
-									"ExpirationMonth",
-									session.ShoppingCart.ExpiryMonth
-								}
-							},
+							CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
 							TransactionDate = DateTime.Now,
 							ReferenceNumbers = referenceNumbers
 						};
-						session.ShoppingCart.ClearTrackData();
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
 						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-						if (dictionary.ContainsKey("ServerName"))
+						if (dictionary.ContainsKey("server_name"))
 						{
-							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+							remoteServiceResult.Properties["server_name"] = dictionary["server_name"];
 						}
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = !dictionary.ContainsKey("ExceptionRaised");
@@ -1731,7 +1325,7 @@ public class MerchantServicesProxy : IMerchantServices
 							ArrayList arrayList = (ArrayList)dictionary["ReferenceNumbers"];
 							if (arrayList.Count > 0)
 							{
-								remoteServiceResult.Properties["reference_number"] = arrayList[0].ToString();
+								remoteServiceResult.Properties["reference_number"] = arrayList[0]?.ToString();
 								session.ShoppingCart.SetReferenceNumber(Convert.ToInt64(arrayList[0]));
 							}
 						}
@@ -1973,7 +1567,6 @@ public class MerchantServicesProxy : IMerchantServices
 		}
 		IPromotion promo = rentalShoppingCart?.Promotion;
 		bool isOffline = session.ShoppingCart.Type == ShoppingCartType.Offline;
-		ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
 		var reconcileRequest = new
 		{
 			MessageType = "PickupReconcile",
@@ -1987,46 +1580,7 @@ public class MerchantServicesProxy : IMerchantServices
 			ReferenceNumber = referenceNumber,
 			CartWasModified = rentalShoppingCart.PickupRecommendationsSelected,
 			PickupDateTime = DateTime.Now,
-			CreditCard = new Dictionary<string, object>
-			{
-				{
-					"KeyId",
-					service2.GetKeyId()
-				},
-				{
-					"Number",
-					service2.GetNumber()
-				},
-				{
-					"CardType",
-					service2.GetCardType()
-				},
-				{
-					"CardId",
-					service2.GenerateCardHashId()
-				},
-				{ "LastFour", "9999" },
-				{
-					"LastName",
-					session.ShoppingCart.LastName
-				},
-				{
-					"FirstName",
-					session.ShoppingCart.FirstName
-				},
-				{
-					"PostalCode",
-					session.ShoppingCart.PostalCode
-				},
-				{
-					"ExpirationYear",
-					session.ShoppingCart.ExpiryYear
-				},
-				{
-					"ExpirationMonth",
-					session.ShoppingCart.ExpiryMonth
-				}
-			},
+			CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: false),
 			TransactionDate = DateTime.Now,
 			PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
 			PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
@@ -2051,8 +1605,8 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
+					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (callback != null && service2 != null)
 					{
 						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 						{
@@ -2063,7 +1617,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Errors.AddRange(errorList);
 							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
 						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
+						service2.EnqueueCallback(new RemoteServiceCallbackEntry
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
@@ -2083,15 +1637,25 @@ public class MerchantServicesProxy : IMerchantServices
 	{
 	}
 
-	private string ExtractFromSecure(SecureString value)
+	private void PopulateFirstNameAndLastNameFromTrackData(IAuthorizeResult authorizeResult, ITrackData trackData)
 	{
-		try
-		{
-			return Marshal.PtrToStringBSTR(Marshal.SecureStringToBSTR(value));
-		}
-		catch
-		{
-			return string.Empty;
-		}
+		PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData, defaultToNA: false);
+	}
+
+	private void PopulateFirstNameAndLastNameFromTrackData(IAuthorizeResult authorizeResult, ITrackData trackData, bool defaultToNA)
+	{
+		authorizeResult.FirstName = (((trackData == null) & defaultToNA) ? "NA" : trackData?.FirstName);
+		authorizeResult.LastName = (((trackData == null) & defaultToNA) ? "NA" : trackData?.LastName);
+	}
+
+	private void PopulateFirstNameAndLastNameFromTrackData(RemoteServiceResult result, ITrackData trackData)
+	{
+		PopulateFirstNameAndLastNameFromTrackData(result, trackData, defaultToNA: false);
+	}
+
+	private void PopulateFirstNameAndLastNameFromTrackData(RemoteServiceResult result, ITrackData trackData, bool defaultToNA)
+	{
+		result.Properties["first_name"] = (((trackData == null) & defaultToNA) ? "NA" : trackData?.FirstName);
+		result.Properties["last_name"] = (((trackData == null) & defaultToNA) ? "NA" : trackData?.LastName);
 	}
 }

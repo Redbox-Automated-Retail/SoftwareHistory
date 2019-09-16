@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
+using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services.ShoppingCart;
 
@@ -195,6 +199,22 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 		LogHelper.Instance.Log("Error in RentalShoppingCartService.RemoveNonReservedProductsFromRentalShoppingCart.  Unable to find rental shopping cart with id: {0}", shoppingCartSessionId);
 	}
 
+	public void RemovePromoOfferFromCart(Guid shoppingSessionId)
+	{
+		IPromoOfferState promoOfferState = Redbox.Rental.Services.Session.Session.Instance.PromoOfferState;
+		if (promoOfferState != null && promoOfferState.WasOfferAccepted && promoOfferState.SelectedOffer != null)
+		{
+			if (promoOfferState.SelectedProduct != null)
+			{
+				RemoveItemFromRentalShoppingCartByProductId(shoppingSessionId, promoOfferState.SelectedProduct.ProductId, userRemoved: true);
+			}
+			ServiceLocator.Instance.GetService<IPromotionService>().ClearPromotion();
+			promoOfferState.SelectedOffer = null;
+			promoOfferState.SelectedProduct = null;
+			promoOfferState.WasOfferAccepted = false;
+		}
+	}
+
 	public IRentalShoppingCartItem CreateRentalShoppingCartItemFromProductId(long productId)
 	{
 		IRentalShoppingCartItem result = null;
@@ -275,7 +295,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 				RemoveItemFromRentalShoppingCart(rentalShoppingCart, rentalShoppingCartItem, userRemoved);
 				return;
 			}
-			LogHelper.Instance.Log("Error in RentalShoppingCartService.RemoveItemFromRentalShoppingCartByProductId.  Unable to find rental shopping cart item with product id {0}", rentalShoppingCartItem.ProductId);
+			LogHelper.Instance.Log("Error in RentalShoppingCartService.RemoveItemFromRentalShoppingCartByProductId.  Unable to find rental shopping cart item with product id {0}", productId);
 		}
 		else
 		{
@@ -304,6 +324,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 			num2 = rentalShoppingCart.Totals.TaxAmount;
 			num3 = rentalShoppingCart.Totals.GrandTotal;
 		}
+		ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddShoppingCart(rentalShoppingCart);
 		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 		if (service == null || !service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()) || !service.IsOpen(rentalShoppingCart.ShoppingSessionId.ToString()))
 		{

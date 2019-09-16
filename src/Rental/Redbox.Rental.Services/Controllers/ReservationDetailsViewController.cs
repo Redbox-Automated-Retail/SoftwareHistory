@@ -90,9 +90,21 @@ public class ReservationDetailsViewController : BaseViewController
 		reservationDetailsViewModel.BodyText = string.Format(Resources.reservation_pickup_body, arg);
 		reservationDetailsViewModel.DiscVendText = $"{num2} {Resources.disc_vend}";
 		reservationDetailsViewModel.NoteHeaderText = Resources.reservation_pickup_note_header;
-		reservationDetailsViewModel.NoteBodyText = string.Format(Resources.reservation_pickup_note_body, num2);
-		reservationDetailsViewModel.ReturnWarningText = Resources.reservation_pickup_return_warning;
-		reservationDetailsViewModel.OkayButtonText = Resources.okay;
+		reservationDetailsViewModel.OkayButtonText = Resources.reservation_details_okay;
+		string format;
+		string format2;
+		if (num3 == 1)
+		{
+			format = Resources.reservation_pickup_note_body_single_mdv;
+			format2 = Resources.reservation_pickup_return_warning_single_mdv;
+		}
+		else
+		{
+			format = Resources.reservation_pickup_note_body_multiple_mdv;
+			format2 = Resources.reservation_pickup_return_warning_multiple_mdv;
+		}
+		reservationDetailsViewModel.NoteBodyText = string.Format(format, num3, num2);
+		reservationDetailsViewModel.ReturnWarningText = string.Format(format2, num3, num2);
 	}
 
 	private static void ConfigureTTS(ReservationDetailsViewModel multiDiscVendViewModel)
@@ -185,6 +197,7 @@ public class ReservationDetailsViewController : BaseViewController
 				if (fromOkayButton)
 				{
 					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "okayButton");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("ReservationDetailsOkay");
 				}
 				_continueAction?.Invoke();
 			}

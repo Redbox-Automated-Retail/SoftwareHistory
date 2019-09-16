@@ -282,15 +282,43 @@ public class KioskProductView
 	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
-		if (titleFamily == TitleFamily.Movies && titleType != TitleType.All)
+		list = FilterByTitleFamily(browseFilter, titleFamily, new List<TitleType> { titleType }, list);
+		if (genreFilter.HasValue)
 		{
-			list.AddRange(from item in FilterToFormat(titleType, _movieProducts)
+			list = list.Where((ITitleProduct item) => ApplyGenreFilter(item, genreFilter.Value)).ToList();
+		}
+		if ((include != null && include.Count > 0) || (exclude != null && exclude.Count > 0))
+		{
+			list = FilterInCarts(list, include, exclude);
+		}
+		if (isADAView)
+		{
+			list = FilterToTitles(list);
+		}
+		if (browseFilter == BrowseViewFilter.ForSale && (priceRangeHigh.HasValue || priceRangeLow.HasValue))
+		{
+			list = list.Where((ITitleProduct item) => FilterByPrice(item, priceRangeLow, priceRangeHigh)).ToList();
+		}
+		if (browseFilter == BrowseViewFilter.All && priceRangeLow.HasValue && priceRangeHigh.HasValue)
+		{
+			list = list.Where((ITitleProduct item) => FilterByRentalPrice(item, priceRangeLow, priceRangeHigh)).ToList();
+		}
+		list = ApplyMainFilter(list, browseFilter);
+		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
+	}
+
+	private List<ITitleProduct> FilterByTitleFamily(BrowseViewFilter browseFilter, TitleFamily titleFamily, List<TitleType> titleTypes, List<ITitleProduct> list, bool includeTitleTypes = true)
+	{
+		bool flag = titleTypes == null || titleTypes.Count == 0 || titleTypes.Contains(TitleType.All);
+		if (titleFamily == TitleFamily.Movies && !flag)
+		{
+			list.AddRange(from item in FilterToFormat(titleTypes, _movieProducts, includeTitleTypes)
 				where ApplyMainFilter(item, browseFilter)
 				select (item));
 		}
-		else if (titleFamily == TitleFamily.TV && titleType != TitleType.All)
+		else if (titleFamily == TitleFamily.TV && !flag)
 		{
-			list.AddRange(from item in FilterToFormat(titleType, _tvProducts)
+			list.AddRange(from item in FilterToFormat(titleTypes, _tvProducts, includeTitleTypes)
 				where ApplyMainFilter(item, browseFilter)
 				select (item));
 		}
@@ -314,29 +342,44 @@ public class KioskProductView
 					where ApplyMainFilter(item, browseFilter)
 					select (item));
 			}
-			if (titleType != TitleType.All)
+			if (!flag)
 			{
-				list = list.Where((ITitleProduct item) => ApplyTitleTypeFilter(item, titleType)).ToList();
+				list = list.Where((ITitleProduct item) => ApplyTitleTypeFilter(item, titleTypes, includeTitleTypes)).ToList();
 			}
 		}
-		if (genreFilter.HasValue)
+		return list;
+	}
+
+	public List<ITitleProduct> GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView)
+	{
+		List<ITitleProduct> list = new List<ITitleProduct>();
+		if (include == null || include.Count == 0)
 		{
-			list = list.Where((ITitleProduct item) => ApplyGenreFilter(item, genreFilter.Value)).ToList();
+			list = FilterByTitleFamily(BrowseViewFilter.All, titleFamily, titleTypes, list, includeTitleTypes);
 		}
-		if ((include != null && include.Count > 0) || (exclude != null && exclude.Count > 0))
+		else
 		{
-			list = FilterInCarts(list, include, exclude);
+			list.AddRange(_movieProducts.Where((ITitleProduct p) => include.Contains(p.ProductId)));
+			list.AddRange(_gamesProducts.Where((ITitleProduct p) => include.Contains(p.ProductId)));
+			list.AddRange(_tvProducts.Where((ITitleProduct p) => include.Contains(p.ProductId)));
 		}
-		if (isADAView)
+		if (exclude != null && exclude.Count > 0)
+		{
+			list = list.Where((ITitleProduct i) => !exclude.Contains(i.ProductId)).ToList();
+		}
+		list = list.Where((ITitleProduct i) => i.InStock).ToList();
+		if (includeOlderThan.HasValue)
+		{
+			DateTime cutoffDate = DateTime.Now.Date.AddDays(-includeOlderThan.Value.Days);
+			list = list.Where((ITitleProduct i) => i.ReleaseDate < cutoffDate).ToList();
+		}
+		list.AddRange(list.Where((ITitleProduct i) => i.HasDeal && i is TitleRollupProduct).SelectMany((ITitleProduct r) => ((TitleRollupProduct)r).KioskProducts.Where((ITitleProduct k) => !k.HasDeal)).ToList());
+		list = list.Where((ITitleProduct i) => !i.HasDeal).ToList();
+		if (isAdaView)
 		{
 			list = FilterToTitles(list);
 		}
-		if (browseFilter == BrowseViewFilter.ForSale && (priceRangeHigh.HasValue || priceRangeLow.HasValue))
-		{
-			list = list.Where((ITitleProduct item) => FilterByPrice(item, priceRangeLow, priceRangeHigh)).ToList();
-		}
-		list = ApplyMainFilter(list, browseFilter);
-		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
+		return list.OrderList(BrowseSort.SortDate, BrowseViewFilter.All);
 	}
 
 	public List<IKioskProduct> GetCarouselProducts(bool showCollections)
@@ -527,18 +570,23 @@ public class KioskProductView
 
 	private List<ITitleProduct> FilterToFormat(TitleType titleType, List<ITitleProduct> kioskProducts)
 	{
+		return FilterToFormat(new List<TitleType> { titleType }, kioskProducts);
+	}
+
+	private List<ITitleProduct> FilterToFormat(List<TitleType> titleTypes, List<ITitleProduct> kioskProducts, bool includeTitleTypes = true)
+	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		kioskProducts.ForEach(delegate(ITitleProduct item)
 		{
 			if (item is TitleRollupProduct)
 			{
-				list.AddRange(FilterToFormat(titleType, ((TitleRollupProduct)item).KioskProducts));
+				list.AddRange(FilterToFormat(titleTypes, ((TitleRollupProduct)item).KioskProducts, includeTitleTypes));
 			}
-			if (item is MDVProduct && ((MDVProduct)item).TitleType == titleType)
+			if (item is MDVProduct && ((includeTitleTypes && titleTypes.Contains(((MDVProduct)item).TitleType)) || (!includeTitleTypes && !titleTypes.Contains(((MDVProduct)item).TitleType))))
 			{
 				list.Add(item);
 			}
-			if (item is TitleProduct && ((TitleProduct)item).TitleType == titleType)
+			if (item is TitleProduct && ((includeTitleTypes && titleTypes.Contains(((TitleProduct)item).TitleType)) || (!includeTitleTypes && !titleTypes.Contains(((TitleProduct)item).TitleType))))
 			{
 				list.Add(item);
 			}
@@ -546,9 +594,17 @@ public class KioskProductView
 		return list;
 	}
 
-	private bool ApplyTitleTypeFilter(ITitleProduct titleProduct, TitleType titleType)
+	private bool ApplyTitleTypeFilter(ITitleProduct titleProduct, List<TitleType> titleTypes, bool includeTitleTypes = true)
 	{
-		return titleProduct.TitleType == titleType;
+		if (!includeTitleTypes || !titleTypes.Contains(titleProduct.TitleType))
+		{
+			if (!includeTitleTypes)
+			{
+				return !titleTypes.Contains(titleProduct.TitleType);
+			}
+			return false;
+		}
+		return true;
 	}
 
 	private bool ApplyGenreFilter(ITitleProduct titleProduct, long genreFilter)
@@ -569,6 +625,25 @@ public class KioskProductView
 		else
 		{
 			flag = item.IsSellableAndInStock && item.PurchasePrice >= (priceRangeLow ?? 0.01m) && item.PurchasePrice <= (priceRangeHigh ?? decimal.MaxValue);
+		}
+		return flag;
+	}
+
+	private bool FilterByRentalPrice(ITitleProduct item, decimal? priceRangeLow, decimal? priceRangeHigh)
+	{
+		bool flag = false;
+		if (item is TitleRollupProduct titleRollupProduct)
+		{
+			foreach (ITitleProduct kioskProduct in titleRollupProduct.KioskProducts)
+			{
+				decimal num = ((kioskProduct.RentalPriceRecords != null && kioskProduct.RentalPriceRecords.Count > 0) ? kioskProduct.RentalPriceRecords[0].InitialNight : 0m);
+				flag = flag || (kioskProduct.IsRentableAndInStock && num >= (priceRangeLow ?? 0.01m) && num <= (priceRangeHigh ?? decimal.MaxValue));
+			}
+		}
+		else
+		{
+			decimal num2 = ((item.RentalPriceRecords != null && item.RentalPriceRecords.Count > 0) ? item.RentalPriceRecords[0].InitialNight : 0m);
+			flag = item.IsRentableAndInStock && num2 >= (priceRangeLow ?? 0.01m) && num2 <= (priceRangeHigh ?? decimal.MaxValue);
 		}
 		return flag;
 	}

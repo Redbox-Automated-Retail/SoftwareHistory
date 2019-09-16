@@ -129,10 +129,12 @@ public class FormatFilterPopupViewController : BaseViewController
 	private static void ProcessButtonClick(TitleType filterType, string analysisText)
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", analysisText);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("FormatFilterPopupFilter", filterType.ToString());
 		BrowseState.TitleType = filterType;
 		BrowseState.BrowseSelectedSort = TitleTypeToSelectedSort(filterType);
 		BrowseState.BrowseMode = ((filterType == TitleType.DigitalCode) ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
 		BrowseState.PageNumber = 1;
+		BrowseState.BrowsePriceRangeFilter = null;
 		OrchestrationService.ViewGoBackSafe($"FormatFilterPopupViewController {analysisText}", popOnly: false);
 	}
 
@@ -151,9 +153,11 @@ public class FormatFilterPopupViewController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		int value = OrchestrationService.TTSGetTimeout("medium", 15000);
-		(service?.CreateTimer("FormatFilterPopupViewTimer", value, value, delegate
+		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
+		ServiceLocator.Instance.GetService<IViewService>()?.GetCurrentViewAnalyticsName();
+		(service?.CreateTimer("FormatFilterPopupViewTimer", timeOut, timeOut, delegate
 		{
+			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("FormatFilterPopupViewController time out", popOnly: false);
 		}))?.Start();

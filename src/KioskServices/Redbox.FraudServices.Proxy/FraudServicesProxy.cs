@@ -12,13 +12,16 @@ namespace Redbox.FraudServices.Proxy;
 
 public class FraudServicesProxy
 {
+	private bool _awsFraudEnabled;
+
 	public static FraudServicesProxy Instance => Singleton<FraudServicesProxy>.Instance;
 
 	public Uri FraudServicesBaseUri
 	{
 		get
 		{
-			string text = ServiceLocator.Instance.GetService<IConfiguration>()?.FraudServicesUrl;
+			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+			string text = (_awsFraudEnabled ? service.AwsFraudServicesUrl : service?.FraudServicesUrl);
 			if (!text.EndsWith("/"))
 			{
 				text = $"{text}/";
@@ -27,10 +30,22 @@ public class FraudServicesProxy
 		}
 	}
 
-	private string AuthorizationKey => ServiceLocator.Instance.GetService<IConfiguration>()?.FraudServicesKey;
-
-	public IDictionary<string, object> ExecuteMessage(string messageType, string apiUri, string jsonRequest)
+	private string AuthorizationKey
 	{
+		get
+		{
+			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+			if (!_awsFraudEnabled)
+			{
+				return service?.FraudServicesKey;
+			}
+			return service.AwsFraudServicesKey;
+		}
+	}
+
+	public IDictionary<string, object> ExecuteMessage(string messageType, string apiUri, string jsonRequest, bool awsFraudEnabled)
+	{
+		_awsFraudEnabled = awsFraudEnabled;
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		Dictionary<string, object> dictionary = new Dictionary<string, object> { { "success", false } };
 		try
@@ -71,7 +86,17 @@ public class FraudServicesProxy
 			webRequest.Method = "POST";
 			webRequest.ContentType = "application/json";
 			webRequest.ContentLength = jsonRequest.Length;
-			webRequest.Headers.Add($"Authorization: Bearer {authorizationKey}");
+			ServiceLocator.Instance.GetService<IConfiguration>();
+			IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
+			if (_awsFraudEnabled && service != null)
+			{
+				webRequest.Headers.Add("x-api-key", authorizationKey);
+				webRequest.Headers.Add($"x-redbox-kioskid: {service.KioskId}");
+			}
+			else
+			{
+				webRequest.Headers.Add($"Authorization: Bearer {authorizationKey}");
+			}
 			LogHelper.Instance.Log("...Making remote call using HTTPS POST.");
 			Stream requestStream = webRequest.GetRequestStream();
 			requestStream.Write(Encoding.UTF8.GetBytes(jsonRequest), 0, jsonRequest.Length);

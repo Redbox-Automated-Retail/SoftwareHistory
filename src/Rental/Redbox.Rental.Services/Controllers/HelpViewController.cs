@@ -32,6 +32,7 @@ public class HelpViewController : BaseViewController
 		};
 		helpViewControllerParameters.GoBackAction = delegate
 		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpBack");
 			CreateAnalyticsEvent("buttonPress", "back");
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 			string obj = service?.Peek(1);
@@ -77,6 +78,7 @@ public class HelpViewController : BaseViewController
 		};
 		helpViewControllerParameters.GoBackAction = delegate
 		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpBack");
 			CreateAnalyticsEvent("buttonPress", "back");
 			OrchestrationService.ResetApplicationIdleTimerTimeout();
 			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
@@ -105,6 +107,7 @@ public class HelpViewController : BaseViewController
 		};
 		helpViewControllerParameters.GoBackAction = delegate
 		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpBack");
 			CreateAnalyticsEvent("buttonPress", "back");
 			OrchestrationService.StopIdleTimer("loyalty_help_view_timer");
 			OrchestrationService.RemoveIdleTimer("loyalty_help_view_timer");
@@ -218,6 +221,7 @@ public class HelpViewController : BaseViewController
 				SetTitle(viewModel);
 				viewModel.ShowContactText = viewModel.CurrentHelpDocument == HelpDocuments.Faq || viewModel.CurrentHelpDocument == HelpDocuments.MobileFaq;
 				CreateAnalyticsEvent("buttonPress", value2.AnalyticsButtonName);
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpSelectDocument", value2.AnalyticsButtonName);
 			}
 		};
 		viewModel.OnGoBack += parameters.GoBackAction;
@@ -227,6 +231,7 @@ public class HelpViewController : BaseViewController
 			string arg = ((source == "Left") ? "help-page-back," : "help-page-next,");
 			arg = $"{arg}{viewModel.TitleText}";
 			CreateAnalyticsEvent("pageChange", arg);
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpPageChange", arg);
 		};
 		if (service != null)
 		{

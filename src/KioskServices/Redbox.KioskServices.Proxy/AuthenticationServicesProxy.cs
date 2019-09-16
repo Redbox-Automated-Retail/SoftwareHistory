@@ -334,6 +334,7 @@ public class AuthenticationServicesProxy : IAuthenticationServices
 		RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 		remoteServiceResult.Success = false;
 		remoteServiceResult.Properties["response"] = AuthenticationResponse.AccountLocked.ToString();
+		remoteServiceResult.Properties["is_online"] = true;
 		completeCallback(remoteServiceResult);
 	}
 

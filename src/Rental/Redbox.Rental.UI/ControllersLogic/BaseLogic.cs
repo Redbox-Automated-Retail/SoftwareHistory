@@ -1,6 +1,7 @@
 using System.Security;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskHealth;
 
 namespace Redbox.Rental.UI.ControllersLogic;
@@ -8,6 +9,8 @@ namespace Redbox.Rental.UI.ControllersLogic;
 public class BaseLogic : DynamicRouting
 {
 	protected static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+
+	protected static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
 	public static SecureString CreateSecureString(string source)
 	{

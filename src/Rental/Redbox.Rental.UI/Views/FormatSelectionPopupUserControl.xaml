@@ -27,9 +27,9 @@
     <Grid Name="BackgroundGrid" Background="#FF000000" Opacity="0.6" />
     <Border Background="#FFFFFFFF" CornerRadius="28" Height="{Binding Path=DialogHeight, FallbackValue=443}" Width="{Binding Path=DialogWidth, FallbackValue=750}">
       <StackPanel Margin="0,55,0,0">
-        <TextBlock Name="HeaderText" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,0,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_regular_24}" Text="{Binding Path=HeaderText, FallbackValue=Pick your format}" />
-        <TextBlock Name="DescriptionText" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,10,0,0" Foreground="#782D8D" Style="{StaticResource DescriptionTextStyle}" Text="{Binding Path=DescriptionText, FallbackValue=How do you want to rent it?}" />
-        <ItemsControl Name="FormatButtonsItemsControl" ItemsSource="{Binding ButtonData}">
+        <TextBlock Name="HeaderText" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,0,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_bold_24}" Text="{Binding Path=HeaderText, FallbackValue=John Wick}" />
+        <TextBlock Name="DescriptionText" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,10,0,0" Foreground="#782D8D" Style="{StaticResource DescriptionTextStyle}" Text="{Binding Path=DescriptionText, FallbackValue=Pick your format}" />
+        <ItemsControl Name="FormatButtonsItemsControl" Margin="0,0,0,50" ItemsSource="{Binding ButtonData}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
               <WrapPanel HorizontalAlignment="Center" />

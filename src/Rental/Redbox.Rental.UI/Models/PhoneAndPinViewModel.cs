@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.UI.Properties;
@@ -181,7 +182,7 @@ public class PhoneAndPinViewModel : DependencyObject
 		set
 		{
 			_pinDisplayText = value;
-			SecurePinDisplayText = ((value == Resources.phone_and_pin_default_pin_display || string.IsNullOrWhiteSpace(value) || value.Length == 1) ? value : $"{new string('*', value.Length - 1)}{value.Substring(value.Length - 1)}");
+			SecurePinDisplayText = GenerateSecurePinString(value);
 		}
 	}
 
@@ -194,7 +195,7 @@ public class PhoneAndPinViewModel : DependencyObject
 		set
 		{
 			_pinConfirmDisplayText = value;
-			SecurePinConfirmDisplayText = ((value == Resources.phone_and_pin_default_pin_display || string.IsNullOrWhiteSpace(value) || value.Length == 1) ? value : $"{new string('*', value.Length - 1)}{value.Substring(value.Length - 1)}");
+			SecurePinConfirmDisplayText = GenerateSecurePinString(value);
 		}
 	}
 
@@ -474,18 +475,17 @@ public class PhoneAndPinViewModel : DependencyObject
 		IsStartButtonEnabled = true;
 	}
 
+	public void ObfuscatePins()
+	{
+		SecurePinDisplayText = string.Concat(SecurePinDisplayText.Select((char c) => (!char.IsDigit(c)) ? c : '*'));
+		SecurePinConfirmDisplayText = string.Concat(SecurePinConfirmDisplayText.Select((char c) => (!char.IsDigit(c)) ? c : '*'));
+	}
+
 	private static void MobilePhoneErrorMessageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		if (d is PhoneAndPinViewModel phoneAndPinViewModel)
 		{
-			if (string.IsNullOrEmpty(phoneAndPinViewModel.MobilePhoneErrorMessageText))
-			{
-				phoneAndPinViewModel.MobilePhoneErrorVisibility = Visibility.Collapsed;
-			}
-			else
-			{
-				phoneAndPinViewModel.MobilePhoneErrorVisibility = Visibility.Visible;
-			}
+			phoneAndPinViewModel.MobilePhoneErrorVisibility = (string.IsNullOrEmpty(phoneAndPinViewModel.MobilePhoneErrorMessageText) ? Visibility.Collapsed : Visibility.Visible);
 		}
 	}
 
@@ -495,5 +495,19 @@ public class PhoneAndPinViewModel : DependencyObject
 		{
 			phoneAndPinViewModel.OnTextClubClicked?.Invoke();
 		}
+	}
+
+	private static int ValidPinCharacters(string value)
+	{
+		return value?.Count((char c) => char.IsDigit(c) || c.Equals('*') || c.Equals('_')) ?? 0;
+	}
+
+	private string GenerateSecurePinString(string value)
+	{
+		if (!(value == Resources.phone_and_pin_default_pin_display) && !string.IsNullOrWhiteSpace(value) && value.Length != 1)
+		{
+			return string.Format("{0}{1}{2}", string.Concat(Enumerable.Repeat("* ", value.Length - 1)), value.Substring(value.Length - 1), string.Concat(Enumerable.Repeat(" _", PinRequiredLength - ValidPinCharacters(value))));
+		}
+		return string.Format("{0}{1}", value, string.Concat(Enumerable.Repeat(" _", PinRequiredLength - ValidPinCharacters(value))));
 	}
 }

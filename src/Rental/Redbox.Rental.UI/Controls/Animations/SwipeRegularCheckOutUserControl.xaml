@@ -4,8 +4,8 @@
     <local:RedChevronUserControl x:Name="RedChevron" VerticalAlignment="Top" HorizontalAlignment="Left" />
     <local:SwipeHandAndCardUserControl x:Name="Hand" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="675,20" />
     <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="75" TextBlock.Foreground="#FFFFFFFF" Width="550">
-      <TextBlock Name="TitleTextBlock" TextWrapping="Wrap" Style="{StaticResource font_target_medium_2}">Culture specific swipe title goes here at runtime</TextBlock>
-      <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_small}" Text="Culture specific swipe message&#xA; goes here at runtime" />
+      <TextBlock Name="TitleTextBlock" TextWrapping="Wrap" Style="{StaticResource font_target_medium_2}" Text="{Binding TitleText, FallbackValue=Culture specific swipe title goes here at runtime}" />
+      <TextBlock Name="MessageTextBlock" Style="{StaticResource font_target_small}" Text="{Binding MessageText, FallbackValue=specific swipe message&#xA; goes here at runtime}" />
     </StackPanel>
   </Grid>
 </UserControl>

@@ -35,6 +35,10 @@ public interface IConfiguration
 
 	bool EnableFlashDeals { get; }
 
+	List<decimal> FlashDealPrices { get; }
+
+	bool Show99CentsBrowseFilterButton { get; }
+
 	int OfflineItemsLimit { get; }
 
 	int OfflineGameRentalLimit { get; }
@@ -57,9 +61,11 @@ public interface IConfiguration
 
 	string WelcomeScreenABTestVersion { get; }
 
-	string PriceFiltersOnBrowseABTestVersion { get; }
+	string WelcomeScreenTimingABTestVersion { get; }
 
-	string PrmUpsellOnMnpABTestVersion { get; }
+	string StartViewAdABTestVersion { get; }
+
+	string PriceFiltersOnBrowseABTestVersion { get; }
 
 	int ScreenSaverTimeout { get; }
 
@@ -97,7 +103,59 @@ public interface IConfiguration
 
 	bool UseTimerToInvokeCallbackEntries { get; }
 
-	bool FlashDealFlagForGamesEnabled { get; }
+	bool AwsBarcodeTrackingEnabled { get; }
+
+	bool AwsUploadDiscImageEnabled { get; }
+
+	string AwsFraudServicesUrl { get; }
+
+	string AwsFraudServicesKey { get; }
+
+	string DeviceServiceClientUrl { get; }
+
+	bool ChipEnabled { get; }
+
+	bool ContactlessEnabled { get; }
+
+	int CardReadTechnicalFallbackCountLimit { get; }
+
+	bool CardReadTechnicalFallbackEnabled { get; }
+
+	int DeviceServicePleaseWaitDuration { get; }
+
+	bool ContactlessVisaEnabled { get; }
+
+	bool ContactlessAmexEnabled { get; }
+
+	bool ContactlessMasterCardEnabled { get; }
+
+	bool ContactlessDiscoverEnabled { get; }
+
+	bool VisaInsertChipEnabled { get; }
+
+	bool AmexInsertChipEnabled { get; }
+
+	bool MasterCardInsertChipEnabled { get; }
+
+	bool DiscoverInsertChipEnabled { get; }
+
+	string BluefinServiceUrl { get; }
+
+	string BluefinServiceApiKey { get; }
+
+	int BluefinServiceTimeout { get; }
+
+	bool BluefinAutoActivate { get; }
+
+	bool KioskAnalyticsJsonEnabled { get; }
+
+	bool GiftCardsEnabled { get; }
+
+	bool ShowAuthChangeMessage { get; }
+
+	bool ShowKMTInCartOffers { get; }
+
+	bool ShowAfterSwipePersonalizedOffers { get; }
 
 	void SessionReload();
 }

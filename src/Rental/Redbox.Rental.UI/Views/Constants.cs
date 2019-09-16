@@ -104,6 +104,18 @@ public class Constants
 		public const string MultiDiscVendView = "MultiDiscVendView";
 
 		public const string ReservationDetailsView = "ReservationDetailsView";
+
+		public const string MaintenanceView = "MaintenanceView";
+
+		public const string RemoveCardView = "RemoveCardView";
+
+		public const string PromoOfferBrowseView = "PromoOfferBrowseView";
+
+		public const string NewCartConfirmView = "NewCartConfirmView";
+
+		public const string OfferAbandonConfirmView = "OfferAbandonConfirmView";
+
+		public const string PresentOffersView = "PresentOffersView";
 	}
 
 	public class ViewNames
@@ -215,6 +227,18 @@ public class Constants
 		public const string MultiDiscVendView = "multi_disc_vend_view";
 
 		public const string ReservationDetailsView = "reservation_details_view";
+
+		public const string RemoveCardView = "remove_card_view";
+
+		public const string ZipCodeView = "zip_code_view";
+
+		public const string PromoOfferBrowseView = "promo_offer_browse_view";
+
+		public const string NewCartConfirmView = "new_cart_confirm_view";
+
+		public const string OfferAbandonConfirmView = "OfferAbandonConfirmView";
+
+		public const string PresentOffersView = "PresentOffersView";
 	}
 
 	public class ThemeNames
@@ -523,6 +547,58 @@ public class Constants
 				SubPlatforms.NunchuckRequired => NunchuckRequired, 
 				_ => null, 
 			};
+		}
+	}
+
+	public enum MaintenanceViewBackgroundColors
+	{
+		Red,
+		Orange,
+		Green
+	}
+
+	public class MaintenanceViewBackgroundImages
+	{
+		private static BitmapImage _redImage;
+
+		private static BitmapImage _orangeImage;
+
+		private static BitmapImage _greenImage;
+
+		public static BitmapImage RedBackground
+		{
+			get
+			{
+				if (_redImage == null)
+				{
+					_redImage = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "red-diagonal-stripes.png")));
+				}
+				return _redImage;
+			}
+		}
+
+		public static BitmapImage OrangeBackground
+		{
+			get
+			{
+				if (_orangeImage == null)
+				{
+					_orangeImage = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "orange-diagonal-stripes.png")));
+				}
+				return _orangeImage;
+			}
+		}
+
+		public static BitmapImage GreenBackground
+		{
+			get
+			{
+				if (_greenImage == null)
+				{
+					_greenImage = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "green-diagonal-stripes.png")));
+				}
+				return _greenImage;
+			}
 		}
 	}
 

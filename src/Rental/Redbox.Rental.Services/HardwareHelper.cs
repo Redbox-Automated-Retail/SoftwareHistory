@@ -42,16 +42,16 @@ public class HardwareHelper
 			string itemID = item.ItemID;
 			int scanAttempt = int.Parse((messageData?.FirstOrDefault((KeyValuePair<string, object> x) => x.Key == "ReadAttempts").Value ?? ((object)0)).ToString());
 			int barcodesRead = int.Parse((messageData?.FirstOrDefault((KeyValuePair<string, object> x) => x.Key == "BarcodesRead").Value ?? ((object)0)).ToString());
-			int secureBarcodesRead = int.Parse((messageData?.FirstOrDefault((KeyValuePair<string, object> x) => x.Key == "SecureCodesRead").Value ?? ((object)0)).ToString());
+			int num = int.Parse((messageData?.FirstOrDefault((KeyValuePair<string, object> x) => x.Key == "SecureCodesRead").Value ?? ((object)0)).ToString());
 			DateTime result3 = DateTime.MinValue;
 			DateTime.TryParse(item.Timestamp, out result3);
-			bool markedAsFraud = ServiceLocator.Instance.GetService<IFraudService>().IsPaperFraud(itemID);
+			bool markedAsFraud = ServiceLocator.Instance.GetService<IFraudService>().IsPaperFraudCandidate(itemID) && num == 0;
 			service2.AddBarcodeTrackingInfoToQueue(new BarcodeTrackingInfo
 			{
 				KioskId = kioskId,
 				Barcode = itemID,
 				BarcodesRead = barcodesRead,
-				SecureBarcodesRead = secureBarcodesRead,
+				SecureBarcodesRead = num,
 				ScanDateTime = result3,
 				CameraType = cameraType,
 				DecoderUsed = decoderUsed,

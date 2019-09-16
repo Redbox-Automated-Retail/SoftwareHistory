@@ -17,8 +17,6 @@ public interface IBrowseState
 
 	bool MovieMatureWarningShown { get; set; }
 
-	bool BluRayWarningShown { get; set; }
-
 	bool _4kWarningShown { get; set; }
 
 	bool MatureGameWarningShown { get; set; }

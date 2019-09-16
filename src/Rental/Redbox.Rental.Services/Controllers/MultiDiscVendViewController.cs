@@ -70,6 +70,7 @@ public class MultiDiscVendViewController : BaseViewController
 				if (fromOkayButton)
 				{
 					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "okayButton");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("MultiDiscVendOkay");
 				}
 				_continueAction?.Invoke();
 			}
@@ -85,12 +86,14 @@ public class MultiDiscVendViewController : BaseViewController
 		IRentalShoppingCart rentalShoppingCart = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart;
 		int num = 0;
 		List<string> list = new List<string>();
+		int num2 = 0;
 		if (rentalShoppingCart != null)
 		{
 			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items.Where((IRentalShoppingCartItem x) => x.MultiDisc && x.DiscNumber == 1))
 			{
 				if (item?.TitleProduct != null)
 				{
+					num2++;
 					string productDisplayName = BrowseFunctions.GetProductDisplayName(item.TitleProduct);
 					TitleTypeProperty value = null;
 					TitleTypeProperties.Properties.TryGetValue(item.TitleProduct.TitleType, out value);
@@ -102,14 +105,22 @@ public class MultiDiscVendViewController : BaseViewController
 				}
 			}
 		}
+		if (num2 == 1)
+		{
+			multiDiscVendViewModel.NoteBodyText = Resources.multi_disc_vend_note_body_single_mdv;
+			multiDiscVendViewModel.GrabDiscsText = Resources.multi_disc_vend_grab_discs_text_single_mdv;
+		}
+		else
+		{
+			multiDiscVendViewModel.NoteBodyText = Resources.multi_disc_vend_note_body_multiple_mdv;
+			multiDiscVendViewModel.GrabDiscsText = Resources.multi_disc_vend_grab_discs_text_multiple_mdv;
+		}
 		multiDiscVendViewModel.HeaderText = Resources.multi_disc_vend_header;
 		multiDiscVendViewModel.ProductListText = list.Join(", ");
-		multiDiscVendViewModel.GrabDiscsText = Resources.multi_disc_vend_grab_discs_text;
 		multiDiscVendViewModel.NoteHeaderText = Resources.multi_disc_vend_note_header;
-		multiDiscVendViewModel.NoteBodyText = Resources.multi_disc_vend_note_body;
 		multiDiscVendViewModel.DiscVendText = Resources.disc_vend;
 		multiDiscVendViewModel.NumberOfDiscsText = num.ToString();
-		multiDiscVendViewModel.OkayButtonText = Resources.okay;
+		multiDiscVendViewModel.OkayButtonText = Resources.multi_disc_vend_okay;
 	}
 
 	private static void ConfigureTTS(MultiDiscVendViewModel multiDiscVendViewModel)

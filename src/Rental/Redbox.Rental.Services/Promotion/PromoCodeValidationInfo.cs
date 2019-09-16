@@ -11,6 +11,8 @@ public class PromoCodeValidationInfo : IPromoCodeValidationInfo
 
 	public bool IsCartInvalidBecauseOfMultiNightPricing { get; set; }
 
+	public bool IsCartInvalidBecauseOfFlashDeal { get; set; }
+
 	public decimal Price { get; set; }
 
 	public decimal Percent { get; set; }

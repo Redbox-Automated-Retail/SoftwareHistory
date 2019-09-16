@@ -12,6 +12,8 @@ public class DefaultRentalPricing : IRentalPricing, IPricing
 
 	public DateTime? EndDate { get; set; }
 
+	public short? Attributes { get; set; }
+
 	public byte? DaysOfWeek { get; set; }
 
 	public TimeSpan? StartTime { get; set; }

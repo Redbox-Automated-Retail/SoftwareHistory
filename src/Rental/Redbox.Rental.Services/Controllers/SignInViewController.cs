@@ -20,7 +20,13 @@ public class SignInViewController : BaseViewController
 			SignInViewModel signInViewModel = new SignInViewModel();
 			signInViewModel.HeaderLabelText = Resources.sign_in_header_text;
 			signInViewModel.EmailAndPasswordButtonText = Resources.sign_in_email_and_password_button_text;
+			signInViewModel.SignInOrLabelText = Resources.sign_in_or_label;
 			signInViewModel.PhoneAndPinButtonText = Resources.sign_in_phone_and_pin_button_text;
+			signInViewModel.SignInPointOnePartOneText = Resources.sign_in_point_one_part_one_text;
+			signInViewModel.SignInPointOnePartTwoText = Resources.sign_in_point_one_part_two_text;
+			signInViewModel.SignInPointOnePartThreeText = Resources.sign_in_point_one_part_three_text;
+			signInViewModel.SignInPointTwoText = Resources.sign_in_point_two_text;
+			signInViewModel.SignInPointThreeText = Resources.sign_in_point_three_text;
 			signInViewModel.CancelButtonText = Resources.sign_in_cancel_button_text;
 			signInViewModel.OnEmailAndPasswordButtonClicked = (Action)Delegate.Combine(signInViewModel.OnEmailAndPasswordButtonClicked, new Action(SignInViewModel_OnEmailAndPasswordButtonClicked));
 			signInViewModel.OnPhoneAndPinButtonClicked = (Action)Delegate.Combine(signInViewModel.OnPhoneAndPinButtonClicked, new Action(SignInViewModel_OnPhoneAndPinButtonClicked));
@@ -52,6 +58,7 @@ public class SignInViewController : BaseViewController
 	private static void SignInViewModel_OnEmailAndPasswordButtonClicked()
 	{
 		BaseViewController.StopIdleTimer();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("SignInEmail");
 		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-email-browse");
 		OrchestrationService.ViewGoBackSafe("SignInViewController email sign in", popOnly: true);
 		PersonalizationFunctions.ShowEmailLogin(SignInCancelButtonTypes.Back);
@@ -60,6 +67,7 @@ public class SignInViewController : BaseViewController
 	private static void SignInViewModel_OnPhoneAndPinButtonClicked()
 	{
 		BaseViewController.StopIdleTimer();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("SignInPhone");
 		BaseViewController.AnalyticsAddViewEvent("buttonPress", "signnin-phone-browse");
 		OrchestrationService.ViewGoBackSafe("SignInViewController phone sign in", popOnly: true);
 		PersonalizationFunctions.ShowPhoneNumberLogin(SignInCancelButtonTypes.Back);
@@ -68,6 +76,7 @@ public class SignInViewController : BaseViewController
 	private static void SignInViewModel_OnCancelButtonClicked()
 	{
 		BaseViewController.StopIdleTimer();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("SignInCancel");
 		BaseViewController.AnalyticsAddViewEvent("buttonPress", "cancel");
 		OrchestrationService.ViewGoBackSafe("SignInViewController cancel", popOnly: false);
 	}

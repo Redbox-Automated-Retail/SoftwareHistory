@@ -34,12 +34,14 @@ public class PromoConfirmationViewController : BaseViewController
 			promoConfirmationViewModel.LegalText = string.Format(Resources.confirm_promo_legal_text, promoInfo.promoCodeModel.ExpirationDate.ToString("MM/dd/yyyy"));
 			promoConfirmationViewModel.CancelCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("PromoConfirmationCancel");
 				BaseViewController.AnalyticsAddViewEvent("buttonPress", "cancel");
 				OrchestrationService.ViewGoBackSafe("PromoConfirmCancel", popOnly: false);
 				promoInfo.CancelAction?.Invoke();
 			}, (Func<bool>)null);
 			promoConfirmationViewModel.ApplyCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(string p)
 			{
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("PromoConfirmationApplyPromo");
 				BaseViewController.AnalyticsAddViewEvent("buttonPress", "applypromo");
 				OrchestrationService.ViewGoBackSafe("PromoConfirmApply", popOnly: false);
 				promoInfo.ApplyPromoCodeAction?.Invoke(p);
@@ -77,9 +79,10 @@ public class PromoConfirmationViewController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		int value = OrchestrationService.TTSGetTimeout("long", 40000);
-		(service?.CreateTimer("PromoConfirmationViewTimer", value, value, delegate
+		int timeOut = OrchestrationService.TTSGetTimeout("long", 40000);
+		(service?.CreateTimer("PromoConfirmationViewTimer", timeOut, timeOut, delegate
 		{
+			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("PromoConfirmationViewController time out", popOnly: false);
 		}))?.Start();

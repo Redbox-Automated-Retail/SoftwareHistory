@@ -22,7 +22,5 @@ public interface IStoreManager
 
 	string GetAlternateCulture();
 
-	string GetWallpaperPath();
-
 	int GetSellThruDays();
 }

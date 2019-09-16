@@ -23,5 +23,6 @@ public enum BrowseFilterType
 	Horror,
 	Comedy,
 	Family,
-	PriceRange
+	PriceRange,
+	_99Cents
 }

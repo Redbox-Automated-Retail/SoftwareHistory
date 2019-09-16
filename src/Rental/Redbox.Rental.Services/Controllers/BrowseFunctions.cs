@@ -6,6 +6,7 @@ using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -51,6 +52,8 @@ public class BrowseFunctions
 
 	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
+	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
+
 	public static bool IsPurchase => (Redbox.Rental.Services.Session.Session.Instance?.BrowseState.BrowseMode ?? BrowseViewFilter.All) == BrowseViewFilter.ForSale;
 
 	private static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
@@ -74,10 +77,12 @@ public class BrowseFunctions
 			if (isPurchase)
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", $"buy,{titleProduct.ProductId}");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsBuy")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			else
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-add-item");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsShoppingCartAddItem");
 			}
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ItemAddedFromView = service?.Peek();
@@ -153,7 +158,9 @@ public class BrowseFunctions
 		}
 		if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
 		{
-			displayProductModel.FlagText = Resources.flag_flash_deal;
+			decimal num = ((titleProduct.RentalPriceRecords != null && titleProduct.RentalPriceRecords.Count > 0) ? titleProduct.RentalPriceRecords[0].InitialNight : 0m);
+			string text = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
+			displayProductModel.FlagText = ((num != 0m && displayProductModelConstants.FlashDealPrices.Contains(num)) ? text : Resources.flag_flash_deal);
 		}
 		else
 		{
@@ -170,9 +177,8 @@ public class BrowseFunctions
 		ProductFlags result = ProductFlags.None;
 		if (titleProduct != null)
 		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			bool flag = !titleProduct.IsGame || (service?.FlashDealFlagForGamesEnabled ?? true);
-			if ((titleProduct.HasDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.DigitalCode) & flag)
+			ServiceLocator.Instance.GetService<IConfiguration>();
+			if (titleProduct.HasDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.DigitalCode)
 			{
 				result = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.EnableFlashDeals) ? ProductFlags.HotDeal : ProductFlags.FlashDeal);
 			}
@@ -187,7 +193,7 @@ public class BrowseFunctions
 			else
 			{
 				double totalDays = (DateTime.Now - titleProduct.MerchandiseDate).TotalDays;
-				bool flag2 = ServiceLocator.Instance.GetService<IDataService>()?.GetIsProductThinned(titleProduct.ProductId) ?? false;
+				bool flag = ServiceLocator.Instance.GetService<IDataService>()?.GetIsProductThinned(titleProduct.ProductId) ?? false;
 				if (titleProduct.Genres.Contains(1025L) && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Games)
 				{
 					result = ProductFlags.BackAgain;
@@ -200,7 +206,7 @@ public class BrowseFunctions
 				{
 					result = ProductFlags.New;
 				}
-				else if ((totalDays >= 105.0 && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Games) & flag2)
+				else if ((totalDays >= 105.0 && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Games) & flag)
 				{
 					result = ProductFlags.LastChance;
 				}
@@ -307,7 +313,7 @@ public class BrowseFunctions
 
 	private static void AddProductToCartIfUserApprovesWarnings(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
-		if (CheckForADAPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForMatureRatingWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckFor4kWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForBluRayWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForSubPlatformWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForDigitalCodeWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForAdditionalDiscWarning(titleProduct, isPurchase, pricingRecord, itemSourceType))
+		if (CheckForADAPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForMatureRatingWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckFor4kWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForSubPlatformWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForDigitalCodeWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForAdditionalDiscWarning(titleProduct, isPurchase, pricingRecord, itemSourceType))
 		{
 			IRentalShoppingCartItem rentalShoppingCartItem = RentalShoppingCartService?.CreateRentalShoppingCartItemFromTitleProduct(titleProduct);
 			if (rentalShoppingCartItem != null)
@@ -389,6 +395,7 @@ public class BrowseFunctions
 			Action action = delegate
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "related_movies_gotit");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsRelatedMoviesGotit");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBack("RelatedMoviesGotIt", popOnly: false);
 			};
 			MessagePopupViewController.ShowRelatedTitlesNotFoundMessage(action, action);
@@ -462,6 +469,7 @@ public class BrowseFunctions
 				{
 					BrowseState._4kWarningShown = true;
 					SessionAnalyticsService?.AddViewEvent("buttonPress", "Okay");
+					AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkay");
 					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("multi_disc_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
 					AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 				}, "MultiDiscWarningDialog");
@@ -509,34 +517,6 @@ public class BrowseFunctions
 		return result;
 	}
 
-	private static bool CheckForBluRayWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
-	{
-		bool result = true;
-		if (titleProduct.TitleType == TitleType.Bluray && !BrowseState.BluRayWarningShown)
-		{
-			result = false;
-			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-			if (service != null)
-			{
-				service["MatureWarning:Header"] = BundleFunctions.GetDictionaryStringValue("strings", "blu_ray_alert_title");
-				service["Bluray:Message"] = BundleFunctions.GetDictionaryStringValue("strings", "blu_ray_alert");
-			}
-			MessagePopupViewController.ShowBlurayAlert(delegate
-			{
-				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
-			}, delegate
-			{
-				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("bluray_message_view:hide()", popOnly: false);
-			}, delegate
-			{
-				BrowseState.BluRayWarningShown = true;
-				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("bluray_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
-			});
-		}
-		return result;
-	}
-
 	private static bool CheckFor4kWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
 	{
 		bool result = true;
@@ -555,11 +535,13 @@ public class BrowseFunctions
 			}, delegate
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancel");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:hide()", popOnly: false);
 			}, delegate
 			{
 				BrowseState._4kWarningShown = true;
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "gotit");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsGotit");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
 				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 			}, "4KDialog");
@@ -666,11 +648,13 @@ public class BrowseFunctions
 			MessagePopupViewController.ShowDigitalCodeAlert(delegate
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-digitalcodeincart-mesage-view");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancelDigitalCodeIncart");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert back button", popOnly: false);
 			}, delegate
 			{
 				_digitalCodeWarningShown = true;
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "ok-digitalcodeincart-mesage-view");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkDigitalCodeIncart");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert ok button", popOnly: false);
 				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
 			}, delegate

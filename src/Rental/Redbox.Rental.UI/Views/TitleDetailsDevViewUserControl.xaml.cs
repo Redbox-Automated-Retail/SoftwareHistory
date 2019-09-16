@@ -105,4 +105,28 @@ public partial class TitleDetailsDevViewUserControl : RentalUserControl, IWPFAct
 			Model.On4KUhdButtonClicked();
 		}
 	}
+
+	private void DisplayAddCustomPriceInfo(object sender, RoutedEventArgs e)
+	{
+		ToggleAddCustomPrice(showPrice: true);
+	}
+
+	private void Add_product_with_custom_price_button_Click(object sender, RoutedEventArgs e)
+	{
+		if (Model?.CurrentProduct != null)
+		{
+			decimal? num = (decimal.TryParse(price_input.Text, out var result) ? new decimal?(result) : ((decimal?)null));
+			if (num.HasValue)
+			{
+				Model?.OnAddProductWithCustomPriceButtonClicked?.Invoke(Model.CurrentProduct.ProductId, num.Value);
+			}
+		}
+		ToggleAddCustomPrice(showPrice: false);
+	}
+
+	private void ToggleAddCustomPrice(bool showPrice)
+	{
+		Model.CurrentProduct.AddProductWithCustomPriceButtonVisibility = ((!showPrice) ? Visibility.Collapsed : Visibility.Visible);
+		Model.CurrentProduct.DisplayAddProductWithCustomPriceButtonVisibility = (showPrice ? Visibility.Collapsed : Visibility.Visible);
+	}
 }

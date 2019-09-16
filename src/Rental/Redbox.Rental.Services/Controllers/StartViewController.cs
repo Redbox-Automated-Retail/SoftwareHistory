@@ -10,6 +10,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.REDS.Framework;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -29,8 +30,47 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class StartViewController : BaseViewController
 {
-	private class Constants
+	public class Constants
 	{
+		public class SessionStartTriggerActions
+		{
+			public static string BluRayBannerClicked = "BluRayBannerClicked";
+
+			public static string GamesBannerClicked = "GamesBannerClicked";
+
+			public static string CollectionsBannerClicked = "CollectionsBannerClicked";
+
+			public static string TurnOffBurnInViewButtonClicked = "TurnOffBurnInViewButtonClicked";
+
+			public static string ADAModeButtonClicked = "ADAModeButtonClicked";
+
+			public static string LanguageButtonClicked = "LanguageButtonClicked";
+
+			public static string TitleRollupOverlayCancelClicked = "TitleRollupOverlayCancelClicked";
+
+			public static string CollectionsCarouselClicked = "CollectionsCarouselClicked";
+
+			public static string ProductCarouselClicked = "ProductCarouselClicked";
+
+			public static string AddProduct = "AddProduct";
+
+			public static string ShowStartViewFromScreenSaver = "ShowStartViewFromScreenSaver";
+
+			public static string ShowBrowseView = "ShowBrowseView";
+
+			public static string ShowReturnView = "ShowReturnView";
+
+			public static string ShowHelpView = "ShowHelpView";
+
+			public static string ShowReserveOnlinePopupView = "ShowReserveOnlinePopupView";
+
+			public static string ShowPerksInfoPopupView = "ShowPerksInfoPopupView";
+
+			public static string SignOut = "SignOut";
+
+			public static string PickupReservation = "PickupReservation";
+		}
+
 		public static string BurnInIdleTimerName = "burn-in-timer";
 
 		public static string BurnInViewDurationTimerName = "burn-in-view-duration-timer";
@@ -52,6 +92,8 @@ public class StartViewController : BaseViewController
 		public static int MaximumCarouselItems = 11;
 	}
 
+	private const decimal _rentalPrice = 0.99m;
+
 	private static IIdleTimerService IdleTimerService => ServiceLocator.Instance.GetService<IIdleTimerService>();
 
 	private static ITimerService TimerService => ServiceLocator.Instance.GetService<ITimerService>();
@@ -60,13 +102,17 @@ public class StartViewController : BaseViewController
 
 	private static string ABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.WelcomeScreenABTestVersion;
 
+	private static string WelcomeScreenTimingABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.WelcomeScreenTimingABTestVersion;
+
+	private static string StartViewAdABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewAdABTestVersion;
+
 	private static bool IsTestCarouselSelected
 	{
 		get
 		{
-			if (!(ABTestVersion == "C"))
+			if (!(ABTestVersion == "C") && !(ABTestVersion == "D"))
 			{
-				return ABTestVersion == "D";
+				return StartViewAdABTestVersion != "A";
 			}
 			return true;
 		}
@@ -78,9 +124,9 @@ public class StartViewController : BaseViewController
 	{
 		get
 		{
-			if (!(ABTestVersion == "B"))
+			if (!(ABTestVersion == "B") && !(ABTestVersion == "D") && !(WelcomeScreenTimingABTestVersion == "C") && !(WelcomeScreenTimingABTestVersion == "D") && !(WelcomeScreenTimingABTestVersion == "E"))
 			{
-				return ABTestVersion == "D";
+				return WelcomeScreenTimingABTestVersion == "F";
 			}
 			return true;
 		}
@@ -231,46 +277,50 @@ public class StartViewController : BaseViewController
 			GoToStartViewFromScreenSaver();
 		});
 		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages();
+		marketingScreenSaverModel.WelcomeScreenTimingABTestVersion = WelcomeScreenTimingABTestVersion;
+		marketingScreenSaverModel.OnLeaveLastImage = (Action)Delegate.Combine(marketingScreenSaverModel.OnLeaveLastImage, new Action(GoToStartViewFromScreenSaverLastImage));
 		startViewModel.ScreenSaverModel = marketingScreenSaverModel;
 	}
 
 	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages()
 	{
-		return new ObservableCollection<ClickableImageModel>
+		ObservableCollection<ClickableImageModel> observableCollection = new ObservableCollection<ClickableImageModel>();
+		observableCollection.Add(new ClickableImageModel
 		{
-			new ClickableImageModel
+			ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.1_KioskScreenTest_PRM-Screen_1024x576.jpg",
+			ClickAction = delegate
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.1_KioskScreenTest_PRM-Screen_1024x576.jpg",
-				ClickAction = delegate
-				{
-					GoToForSaleMovieBrowseViewFromScreenSaver();
-				}
-			},
-			new ClickableImageModel
+				GoToForSaleMovieBrowseViewFromScreenSaver();
+			}
+		});
+		observableCollection.Add(new ClickableImageModel
+		{
+			ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.5_KioskScreenTest_Perks_1024x576.jpg",
+			ClickAction = delegate
+			{
+				ShowPerksInfoPopupView();
+			}
+		});
+		if (WelcomeScreenTimingABTestVersion == "E" || WelcomeScreenTimingABTestVersion == "F")
+		{
+			observableCollection.Add(new ClickableImageModel
 			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.4_App_KioskScreenTest_App_1024x576.jpg",
 				ClickAction = delegate
 				{
 					ShowReserveOnlinePopupView();
 				}
-			},
-			new ClickableImageModel
+			});
+		}
+		if (WelcomeScreenTimingABTestVersion == "C" || WelcomeScreenTimingABTestVersion == "D")
+		{
+			observableCollection.Add(new ClickableImageModel
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.5_KioskScreenTest_Perks_1024x576.jpg",
-				ClickAction = delegate
-				{
-					ShowPerksInfoPopupView();
-				}
-			},
-			new ClickableImageModel
-			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.6_Games_KioskScreenTest_Vend_1024x576.jpg",
-				ClickAction = delegate
-				{
-					GoToGamesBrowseViewFromScreenSaver();
-				}
-			}
-		};
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/4118.1_DoorDash-Kiosk-Homescreen_Kiosk_VendScreen_1024x576_rev.jpg",
+				ClickAction = null
+			});
+		}
+		return observableCollection;
 	}
 
 	public static bool IsProductInCarousel(long productId)
@@ -384,6 +434,8 @@ public class StartViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.Bluray;
 			PrepareToLeaveStartView();
+			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.BluRayBannerClicked);
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerBluRays");
 			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 			break;
 		case StartViewBannerType.game:
@@ -391,6 +443,8 @@ public class StartViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
 			PrepareToLeaveStartView();
+			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.GamesBannerClicked);
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerGames");
 			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 			break;
 		case StartViewBannerType.collections:
@@ -411,6 +465,8 @@ public class StartViewController : BaseViewController
 				}
 			}
 			PrepareToLeaveStartView();
+			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.CollectionsBannerClicked);
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerCollections");
 			ShowCollectionBrowseView(collection);
 			break;
 		}
@@ -432,7 +488,8 @@ public class StartViewController : BaseViewController
 		BitmapImage bitmapImage = null;
 		if (MarketingAdService != null)
 		{
-			MarketingAd screenAd = MarketingAdService.GetScreenAd(MarketingAdLocation.Welcome, createImpression: true);
+			MarketingAdLocation marketingAdLocation = ((!(StartViewAdABTestVersion == "C")) ? MarketingAdLocation.Welcome : MarketingAdLocation.TitleDetail);
+			MarketingAd screenAd = MarketingAdService.GetScreenAd(marketingAdLocation, createImpression: true);
 			if (screenAd.Visible)
 			{
 				startViewBannerType = StartViewBannerType.ad;
@@ -489,7 +546,7 @@ public class StartViewController : BaseViewController
 			startViewModel.BannerCollectionId = text;
 			startViewModel.BannerType = startViewBannerType;
 			startViewModel.BannerImage = bitmapImage;
-			startViewModel.BannerVisibility = ((bitmapImage == null) ? Visibility.Collapsed : Visibility.Visible);
+			startViewModel.BannerVisibility = (((bitmapImage == null || !(ABTestVersion != "C") || !(ABTestVersion != "D") || !(StartViewAdABTestVersion != "B")) && !(StartViewAdABTestVersion == "C")) ? Visibility.Collapsed : Visibility.Visible);
 		}
 	}
 
@@ -574,8 +631,9 @@ public class StartViewController : BaseViewController
 		};
 		Action value = delegate
 		{
-			OrchestrationService.StarteUserInteraction();
+			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.TurnOffBurnInViewButtonClicked);
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "start_browsing_button");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartStartBrowsing");
 			turnOffBurnInView();
 		};
 		timerService.CreateTimer(Constants.BurnInViewDurationTimerName, Redbox.Rental.Services.Configuration.Configuration.Instance.BurnInViewDuration, Redbox.Rental.Services.Configuration.Configuration.Instance.BurnInViewDuration, delegate
@@ -601,8 +659,9 @@ public class StartViewController : BaseViewController
 			}
 			ConfigureCarousel(GetStartViewModelFromView());
 		}
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ADAModeButtonClicked);
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "ada_mode");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent(BaseViewController.ApplicationState.IsABEOn ? "StartADAOn" : "StartADAOff");
 	}
 
 	private static void TurnAdaOff()
@@ -637,8 +696,9 @@ public class StartViewController : BaseViewController
 	{
 		CloseTitleRollupOverlay();
 		LogHelper.Instance.Log("language_toggle, setting language_switch=true");
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.LanguageButtonClicked);
 		SessionAnalyticsService?.AddViewEvent("buttonPress", "language_toggle");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartLanguageToggle");
 		LogHelper.Instance.Log("Function:switch_language()");
 		ToggleLocalizationCulture();
 	}
@@ -681,10 +741,12 @@ public class StartViewController : BaseViewController
 		carouselTestModel.CarouselDisplayProductModels = list2;
 		carouselModel.IsAnimationOn = IsClassicCarouselSelected && !startViewModel.IsReturnOnlyMode;
 		carouselTestModel.IsAnimationOn = IsTestCarouselSelected && !startViewModel.IsReturnOnlyMode;
+		carouselTestModel.IsStartViewAdABTest = StartViewAdABTestVersion == "C";
 		if (startViewModel != null)
 		{
 			startViewModel.CarouselModel = carouselModel;
 			startViewModel.CarouselTestModel = carouselTestModel;
+			startViewModel.CarouselGridRowHeight = ((StartViewAdABTestVersion == "C") ? 340 : 438);
 			bool flag = (startViewModel?.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
 			startViewModel.LoadingTitlesImageVisibility = ((startViewModel.IsReturnOnlyMode | flag) ? Visibility.Collapsed : Visibility.Visible);
 		}
@@ -741,8 +803,9 @@ public class StartViewController : BaseViewController
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
 		if (startViewModelFromView != null)
 		{
-			OrchestrationService.StarteUserInteraction();
+			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.TitleRollupOverlayCancelClicked);
 			SessionAnalyticsService?.AddViewEvent("buttonPress", "carousel-cancel-add-item");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartCarouselCancelAddItem");
 			startViewModelFromView.CarouselModel.IsAnimationOn = IsClassicCarouselSelected;
 		}
 	}
@@ -772,8 +835,9 @@ public class StartViewController : BaseViewController
 			case KioskProductType.Collection:
 				startViewModelFromView.CarouselModel.IsAnimationOn = false;
 				startViewModelFromView.CarouselTestModel.IsAnimationOn = false;
-				OrchestrationService.StarteUserInteraction();
+				OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.CollectionsCarouselClicked);
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("StartAddToCart");
 				PrepareToLeaveStartView();
 				ShowCollectionBrowseView(kioskProduct);
 				break;
@@ -789,30 +853,21 @@ public class StartViewController : BaseViewController
 		{
 			return;
 		}
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.AddProduct);
 		SessionAnalyticsService?.AddViewEvent("buttonPress", "add_to_cart");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartAddToCart");
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductAddedFromCarousel = true;
 		SetBrowseFiltersBasedOnSelectedProduct(titleProduct);
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 		bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
-		bool flag2 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock && titleProduct.IsMovie;
-		bool flag3 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct.IsSellableAndInStock && titleProduct.IsMovie;
-		if ((titleProduct.HasMultiNightPrice | flag2 | flag3) && !flag)
+		if ((titleProduct.HasMultiNightPrice || (titleProduct.IsSellableAndInStock && titleProduct.IsMovie)) && !flag)
 		{
 			string viewAnalyticsName = "multi_night_pricing_popup_view";
-			if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "B" && titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+			if (titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
 			{
 				viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
 			}
-			else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-			{
-				viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
-			}
-			else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-			{
-				viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
-			}
-			else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+			else if (!titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
 			{
 				viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
 			}
@@ -846,31 +901,40 @@ public class StartViewController : BaseViewController
 			return;
 		}
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct = kioskProduct;
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ProductCarouselClicked);
 		SessionAnalyticsService?.AddViewEvent("buttonPress", "carousel_art_button");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartCarouselArt");
 		switch (kioskProduct.KioskProductType)
 		{
 		case KioskProductType.Title:
 		case KioskProductType.MDV:
 		case KioskProductType.TitleRollup:
-			if (kioskProduct is ITitleProduct browseFiltersBasedOnSelectedProduct)
+		{
+			if (!(kioskProduct is ITitleProduct browseFiltersBasedOnSelectedProduct))
 			{
-				StartViewModel startViewModelFromView = GetStartViewModelFromView();
-				if (startViewModelFromView != null)
+				break;
+			}
+			StartViewModel startViewModelFromView = GetStartViewModelFromView();
+			if (startViewModelFromView != null)
+			{
+				startViewModelFromView.CarouselModel.IsAnimationOn = false;
+				startViewModelFromView.CarouselTestModel.IsAnimationOn = false;
+				SetBrowseFiltersBasedOnSelectedProduct(browseFiltersBasedOnSelectedProduct);
+				OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = true;
+				IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductDetailShownFromView = service.Peek();
+				PrepareToLeaveStartView();
+				ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("context", ("productDisplayed," + ((ITitleProduct)kioskProduct)?.ProductId) ?? string.Empty);
+				IAnalyticsService service2 = ServiceLocator.Instance.GetService<IAnalyticsService>();
+				if ((ITitleProduct)kioskProduct != null)
 				{
-					startViewModelFromView.CarouselModel.IsAnimationOn = false;
-					startViewModelFromView.CarouselTestModel.IsAnimationOn = false;
-					SetBrowseFiltersBasedOnSelectedProduct(browseFiltersBasedOnSelectedProduct);
-					OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
-					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = true;
-					IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductDetailShownFromView = service.Peek();
-					PrepareToLeaveStartView();
-					ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("context", ("productDisplayed," + ((ITitleProduct)kioskProduct)?.ProductId) ?? string.Empty);
-					OrchestrationService.ViewShow("product_detail_view");
+					service2?.AddData(ProductData.ToProductData((ITitleProduct)kioskProduct));
 				}
+				OrchestrationService.ViewShow("product_detail_view");
 			}
 			break;
+		}
 		case KioskProductType.Collection:
 			PrepareToLeaveStartView();
 			ShowCollectionBrowseView(kioskProduct);
@@ -977,59 +1041,74 @@ public class StartViewController : BaseViewController
 	private static void GoToMovieBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("all_movies_button", TitleFamily.Movies);
+		GoToBrowseView("all_movies_button", TitleFamily.Movies, "StartMovies");
 	}
 
 	private static void GoToStartViewFromScreenSaver()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowStartViewFromScreenSaver);
 		PrepareToLeaveStartView();
 		ResetToStartView("start_browsing_button");
+	}
+
+	private static void GoToStartViewFromScreenSaverLastImage()
+	{
+		BaseViewController.ProcessWPFHit();
+		PrepareToLeaveStartView();
+		OrchestrationService.ResetCurrentView();
 	}
 
 	private static void GoToForSaleMovieBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("buy_movies_button", TitleFamily.Movies);
+		GoToBrowseView("buy_movies_button", TitleFamily.Movies, "StartBuyMovies");
+	}
+
+	private static void GoTo99CentsMoviesBrowseViewFromScreenSaver()
+	{
+		BaseViewController.ProcessWPFHit();
+		PrepareToLeaveStartView();
+		GoToBrowseView("screen_saver_99_cents_movies", TitleFamily.Movies, "StartScreenSaver99CentsMovies");
 	}
 
 	private static void GoToForSaleMovieBrowseViewFromScreenSaver()
 	{
 		BaseViewController.ProcessWPFHit();
 		PrepareToLeaveStartView();
-		GoToBrowseView("screen_saver_buy_movies", TitleFamily.Movies);
+		GoToBrowseView("screen_saver_buy_movies", TitleFamily.Movies, "StartScreenSaverBuyMovies");
 	}
 
 	private static void GoToForSaleGamesBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("buy_games_button", TitleFamily.Games);
+		GoToBrowseView("buy_games_button", TitleFamily.Games, "StartBuyGames");
 	}
 
 	private static void GoToGameView()
 	{
 		PrepareToLeaveStartView();
 		_ = Redbox.Rental.Services.Configuration.Configuration.Instance;
-		GoToBrowseView("games_button", TitleFamily.Games);
+		GoToBrowseView("games_button", TitleFamily.Games, "StartGames");
 	}
 
 	private static void GoToGamesBrowseViewFromScreenSaver()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("screen_saver_games", TitleFamily.Games);
+		GoToBrowseView("screen_saver_games", TitleFamily.Games, "StartScreenSaverGames");
 	}
 
 	private static void GoToTVBrowseView()
 	{
 		PrepareToLeaveStartView();
-		GoToBrowseView("tv_button", TitleFamily.TV);
+		GoToBrowseView("tv_button", TitleFamily.TV, "StartTV");
 	}
 
-	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily)
+	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily, string analyticsButtonName)
 	{
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowBrowseView);
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", pressedButtonName);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent(analyticsButtonName);
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleFamily;
 		switch (pressedButtonName)
@@ -1040,6 +1119,17 @@ public class StartViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ForSale;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.ForSale;
 			break;
+		case "screen_saver_99_cents_movies":
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.All;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort._99Cents;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.PageNumber = 1;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowsePriceRangeFilter = new BrowsePriceRangeParameter
+			{
+				PriceRangeLow = 0.99m,
+				PriceRangeHigh = 0.99m
+			};
+			break;
 		}
 		OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 	}
@@ -1047,6 +1137,7 @@ public class StartViewController : BaseViewController
 	private static void ResetToStartView(string pressedButtonName)
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", pressedButtonName);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartPressedButton", pressedButtonName);
 		OrchestrationService.ResetCurrentView();
 	}
 
@@ -1063,8 +1154,9 @@ public class StartViewController : BaseViewController
 		{
 			startViewModelFromView.ReturnButtonEnabled = false;
 			PrepareToLeaveStartView();
-			OrchestrationService.CreateStartViewAnalytics("Return");
+			OrchestrationService.CreateStartViewAnalytics(Constants.SessionStartTriggerActions.ShowReturnView, "Return");
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "return_button");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartReturn");
 			OrchestrationService.ExecuteScript("return_product");
 		}
 		else
@@ -1076,17 +1168,19 @@ public class StartViewController : BaseViewController
 	private static void GoToHelpDocumentView()
 	{
 		PrepareToLeaveStartView();
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowHelpView);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartHelp");
 		HelpViewController.ShowFullHelpView(allowFMA: true, restartTimer: true);
 	}
 
 	private static void ShowReserveOnlinePopupView()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowReserveOnlinePopupView);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverReserveOnlineLearnMore");
 		BulletListPopupParameters parameter = new BulletListPopupParameters
 		{
-			ViewAnalyticsName = "message_popup_view"
+			ViewAnalyticsName = "screen_saver_reserve_online"
 		};
 		OrchestrationService.ViewShow("reserve_online_popup_view", parameter);
 		PrepareToLeaveStartView();
@@ -1095,10 +1189,11 @@ public class StartViewController : BaseViewController
 	private static void ShowPerksInfoPopupView()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowPerksInfoPopupView);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverRedboxPerksLearnMore");
 		BulletListPopupParameters parameter = new BulletListPopupParameters
 		{
-			ViewAnalyticsName = "message_popup_view"
+			ViewAnalyticsName = "screen_saver_redbox_perks"
 		};
 		OrchestrationService.ViewShow("perks_info_popup_view", parameter);
 		PrepareToLeaveStartView();
@@ -1107,15 +1202,21 @@ public class StartViewController : BaseViewController
 	private static void ProcessSignInSignOutCommand()
 	{
 		PrepareToLeaveStartView();
-		OrchestrationService.StarteUserInteraction();
+		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.SignOut);
 		ISessionAnalyticsService sessionAnalyticsService = SessionAnalyticsService;
 		if (sessionAnalyticsService != null)
 		{
 			IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
 			sessionAnalyticsService.AddViewEvent("buttonPress", (personalizationSession != null && personalizationSession.IsLoggedIn) ? "SignOut" : "SignIn");
 		}
-		IPersonalizationSession personalizationSession2 = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
-		if (personalizationSession2 != null && personalizationSession2.IsLoggedIn)
+		IAnalyticsService analyticsService = BaseViewController.AnalyticsService;
+		if (analyticsService != null)
+		{
+			IPersonalizationSession personalizationSession2 = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+			analyticsService.AddButtonPressEvent((personalizationSession2 != null && personalizationSession2.IsLoggedIn) ? "StartSignOut" : "StartSignIn");
+		}
+		IPersonalizationSession personalizationSession3 = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+		if (personalizationSession3 != null && personalizationSession3.IsLoggedIn)
 		{
 			PersonalizationFunctions.ShowLogoutDialog();
 			return;
@@ -1123,6 +1224,7 @@ public class StartViewController : BaseViewController
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		SessionAnalyticsService?.AddViewEvent("buttonPress", "signnin-home");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartSignInHome");
 		service.Push("browse_view", BrowseFunctions.GetBrowseViewparameters());
 		OrchestrationService.ViewShow("sign_in_view");
 	}

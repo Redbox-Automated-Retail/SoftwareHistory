@@ -112,7 +112,9 @@ internal static class HealthServicesFunctions
 		{
 			foreach (IKernelExtension extension in service2.Extensions)
 			{
-				luaTable["[Extension] " + extension.Name] = extension.Version;
+				int num = extension.Name.LastIndexOf('.');
+				string key = "[Extension] " + extension.Name.Substring(num + 1);
+				luaTable[key] = extension.Version;
 			}
 		}
 		IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
@@ -120,9 +122,15 @@ internal static class HealthServicesFunctions
 		{
 			foreach (IBundleSpecifier bundle in service3.Bundles)
 			{
-				string key = "[" + bundle.Type.ToString() + " bundle] " + bundle.Name;
-				luaTable[key] = bundle.Version.ToString();
+				string key2 = "[" + bundle.Type.ToString() + " bundle] " + bundle.Name;
+				luaTable[key2] = bundle.Version.ToString();
 			}
+		}
+		IDeviceServiceClientHelper service4 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+		if (service != null)
+		{
+			service["DeviceServiceVersion"] = service4?.DeviceServiceVersion?.ToString() ?? "Not Found";
+			service["DeviceServiceClientVersion"] = service4?.DeviceServiceClientVersion?.ToString() ?? "Not Found";
 		}
 		return luaTable;
 	}

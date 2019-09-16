@@ -13,21 +13,21 @@
   </FrameworkElement.Resources>
   <Border Name="MainControl" Background="#FFFFFFFF" Height="768" Width="1024">
     <Redbox:GridExt Margin="60,20,60,10" RowHeights="40,70,10,70,*,405,100">
-      <Grid Row="0">
+      <Grid Row="0" HorizontalAlignment="Center">
         <TextBlock Name="MessageTextElem" Margin="50,0" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource keyboard_prompt_message_style}" Text="{Binding Path=MessageText, FallbackValue=Message}" />
       </Grid>
-      <Grid Row="1" Margin="25,0,0,0">
-        <Redbox:BorderButton Name="EmailElem" GroupName="SignInControl" IsSelected="True" Width="760" Height="64" HorizontalAlignment="Left" Style="{StaticResource border_button_style}" Click="EmailSelected">
+      <Grid Row="1" HorizontalAlignment="Center">
+        <Redbox:BorderButton Name="EmailElem" GroupName="SignInControl" IsSelected="True" Width="490" Height="64" HorizontalAlignment="Left" Style="{StaticResource border_button_style}" Click="EmailSelected">
           <Grid Background="#00FFFFFF">
-            <TextBlock Name="EmailTextElem" Height="32" Width="700" TextWrapping="NoWrap" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=KeyboardText}" />
+            <TextBlock Name="EmailTextElem" Height="32" Width="420" TextWrapping="NoWrap" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=KeyboardText}" />
             <TextBlock Name="EmailPromotTextElem" Height="32" Width="auto" Style="{StaticResource style_keyboard_input_text}" Foreground="{StaticResource PromptGrayBrush}" Text="{Binding Path=EmailPromptText, FallbackValue=email}" Visibility="{Binding ElementName=EmailTextElem, Path=Text, Converter={StaticResource TextVisibilityConverter}}" />
           </Grid>
         </Redbox:BorderButton>
       </Grid>
-      <Grid Row="3" Margin="25,0,0,0">
-        <Redbox:BorderButton Name="CodeElem" GroupName="SignInControl" IsSelected="False" Width="760" Height="64" HorizontalAlignment="Left" Style="{StaticResource border_button_style}" Click="CodeSelected">
+      <Grid Row="3" HorizontalAlignment="Center">
+        <Redbox:BorderButton Name="CodeElem" GroupName="SignInControl" IsSelected="False" Width="490" Height="64" HorizontalAlignment="Left" Style="{StaticResource border_button_style}" Click="CodeSelected">
           <Grid Background="#00FFFFFF">
-            <TextBlock Name="CodeTextElem" Height="32" Width="700" TextWrapping="NoWrap" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=KeyboardStars}" />
+            <TextBlock Name="CodeTextElem" Height="32" Width="420" TextWrapping="NoWrap" Style="{StaticResource style_keyboard_input_text}" Text="{Binding Path=KeyboardStars}" />
             <TextBlock Name="CodePromotTextElem" Height="32" Width="auto" Style="{StaticResource style_keyboard_input_text}" Foreground="{StaticResource PromptGrayBrush}" Text="{Binding Path=CodePromptText, FallbackValue=password}" Visibility="{Binding ElementName=CodeTextElem, Path=Text, Converter={StaticResource TextVisibilityConverter}}" />
           </Grid>
         </Redbox:BorderButton>

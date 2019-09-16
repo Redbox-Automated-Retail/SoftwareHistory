@@ -6,6 +6,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
+using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Services.KioskProduct;
@@ -42,7 +43,17 @@ public class TitleDevDetailsController : BaseViewController
 		titleDetailDevModel.OnDigitalButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.OnDigitalButtonClicked, new Action(DigitalCodeAction));
 		titleDetailDevModel.On4KUhdButtonClicked = (Action)Delegate.Combine(titleDetailDevModel.On4KUhdButtonClicked, new Action(FourKUhdAction));
 		SetTitleProductDetails(titleDetailDevModel, titleProductObj, service);
+		titleDetailDevModel.OnAddProductWithCustomPriceButtonClicked = OnAddProductWithCustomPriceButtonClicked;
 		return titleDetailDevModel;
+	}
+
+	private static void OnAddProductWithCustomPriceButtonClicked(long productId, decimal amount)
+	{
+		ServiceLocator.Instance.GetService<IDataService>().GetProduct(productId, excludeTitleRollup: true, out var kioskProduct);
+		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
+		IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>().GetOneDayProductPricingRecord(titleProduct).Clone();
+		pricingRecord.InitialNight = amount;
+		BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false, pricingRecord);
 	}
 
 	private static void SetTitleProductDetails(TitleDetailDevModel viewModel, ITitleProduct TitleProductObj, IPricingService pricingService)
@@ -86,6 +97,7 @@ public class TitleDevDetailsController : BaseViewController
 		ObservableCollection<BarcodeProduct> barCodes = new ObservableCollection<BarcodeProduct>(TitleProductObj.BarCodeProducts.Values.ToList());
 		IPricingRecord pricingRecord = pricingService?.GetOneDayProductPricingRecord(TitleProductObj.ProductId);
 		TitleProductDetailDevModel titleProductDetailDevModel = new TitleProductDetailDevModel();
+		titleProductDetailDevModel.ProductId = TitleProductObj.ProductId;
 		titleProductDetailDevModel.DevTitle = text + " - " + productName;
 		titleProductDetailDevModel.ComingSoonDays = TitleProductObj.ComingSoonDays;
 		DateTime dateTime = (TitleProductObj.NationalStreetDate.HasValue ? TitleProductObj.NationalStreetDate.Value : DateTime.MinValue);
@@ -125,6 +137,8 @@ public class TitleDevDetailsController : BaseViewController
 		titleProductDetailDevModel.Type = TitleProductObj.KioskProductType.ToString();
 		titleProductDetailDevModel.BarCodes = barCodes;
 		titleProductDetailDevModel.TitleRollupProductGroupId = TitleProductObj.TitleRollupProductGroupId;
+		titleProductDetailDevModel.DisplayAddProductWithCustomPriceButtonVisibility = ((!titleProductDetailDevModel.InStock) ? Visibility.Collapsed : Visibility.Visible);
+		titleProductDetailDevModel.AddProductWithCustomPriceButtonVisibility = Visibility.Collapsed;
 		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
 		titleProductDetailDevModel.ImgFile = service.GetBitmapImage(TitleProductObj.ImageFile);
 		return titleProductDetailDevModel;

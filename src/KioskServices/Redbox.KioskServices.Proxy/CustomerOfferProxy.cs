@@ -1,0 +1,616 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
+using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskServices.Proxy.Request;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Promotion;
+using Redbox.Rental.Model.ShoppingCart;
+
+namespace Redbox.KioskServices.Proxy;
+
+public class CustomerOfferProxy : ICustomerOfferService
+{
+	private int m_working;
+
+	public static CustomerOfferProxy Instance => Singleton<CustomerOfferProxy>.Instance;
+
+	public bool LiveCall
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "LiveCall", defaultValue: true);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "LiveCall", value);
+		}
+	}
+
+	public bool SimulateSuccess
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "SimulateSuccess", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "SimulateSuccess", value);
+		}
+	}
+
+	public bool IncludeFreeGameInCartOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeFreeGameInCartOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeFreeGameInCartOffer", value);
+		}
+	}
+
+	public bool IncludeMovieDiscountInCartOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeMovieDiscountInCartOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeMovieDiscountInCartOffer", value);
+		}
+	}
+
+	public bool IncludeFracRedeemableFreeMovieOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeFracRedeemableFreeMovieOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeFracRedeemableFreeMovieOffer", value);
+		}
+	}
+
+	public bool IncludeFracRedeemableDiscountedDiscOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeFracRedeemableDiscountedDiscOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeFracRedeemableDiscountedDiscOffer", value);
+		}
+	}
+
+	public bool IncludeFracStorableFreeMovieOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeFracStorableFreeMovieOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeFracStorableFreeMovieOffer", value);
+		}
+	}
+
+	public bool IncludeFracStorableDiscountedDiscOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeFracStorableDiscountedDiscOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeFracStorableDiscountedDiscOffer", value);
+		}
+	}
+
+	public List<long> TitleIds
+	{
+		get
+		{
+			List<long> list = new List<long>();
+			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "TitleIds", "");
+			if (!string.IsNullOrEmpty(value))
+			{
+				string[] array = value.Split(',');
+				for (int i = 0; i < array.Length; i++)
+				{
+					if (long.TryParse(array[i], out var result))
+					{
+						list.Add(result);
+					}
+				}
+			}
+			return list;
+		}
+		set
+		{
+			value.Join(",");
+			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
+			service.SetValue("Remote Services\\Customer Offer Services", "TitleIds", service);
+		}
+	}
+
+	public bool IncludeTitles
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludeTitles", defaultValue: true);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludeTitles", value);
+		}
+	}
+
+	public List<int> FormatIds
+	{
+		get
+		{
+			List<int> list = new List<int>();
+			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "ForamtIds", "");
+			if (!string.IsNullOrEmpty(value))
+			{
+				string[] array = value.Split(',');
+				for (int i = 0; i < array.Length; i++)
+				{
+					if (int.TryParse(array[i], out var result))
+					{
+						list.Add(result);
+					}
+				}
+			}
+			return list;
+		}
+		set
+		{
+			value.Join(",");
+			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
+			service.SetValue("Remote Services\\Customer Offer Services", "FormatIds", service);
+		}
+	}
+
+	public KioskLoginResponseErrors ResponseCode
+	{
+		get
+		{
+			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "KioskLoginResponseError", "Error");
+			return (KioskLoginResponseErrors)Enum.Parse(typeof(KioskLoginResponseErrors), value, ignoreCase: true);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "KioskLoginResponseError", value);
+		}
+	}
+
+	private CustomerOfferProxy()
+	{
+	}
+
+	public void GetOffers(string kioskId, string languageCode, string storefrontEventType, string sessionId, RemoteServiceCallback completeCallback)
+	{
+		if (LiveCall)
+		{
+			PerformGetOffersLiveCall(kioskId, languageCode, storefrontEventType, sessionId, completeCallback);
+		}
+		else
+		{
+			PerformGetOffersSimulatedCall(completeCallback);
+		}
+	}
+
+	private void PerformGetOffersLiveCall(string kioskId, string languageCode, string storefrontEventType, string sessionId, RemoteServiceCallback completeCallback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+			if (session == null)
+			{
+				LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
+				return;
+			}
+			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+			remoteServiceResult.Properties["is_online"] = true;
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				if (!StoreServicesProxy.Instance.IsStandAlone)
+				{
+					LogHelper.Instance.Log("Live call to remote ICustomerOfferProxy, URL: {0}", KioskServicesProxy.Instance.Url);
+					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId));
+					IPromotion promo = rentalShoppingCart?.Promotion;
+					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+					IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
+					{
+						KioskId = kioskId,
+						MessageId = Guid.NewGuid(),
+						MessageType = "GetCustomerOffers",
+						EngineVersion = service["EngineVersion"],
+						BundleVersion = service["ProductVersion"],
+						Lang = languageCode,
+						StorefrontEventType = storefrontEventType,
+						UtcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now),
+						CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
+						ShoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo)
+					});
+					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+					remoteServiceResult.Properties["CustomerProfileNumber"] = GetResponseValue(dictionary, "CustomerProfileNumber", null)?.ToString();
+					remoteServiceResult.Properties["AccountNumber"] = GetResponseValue(dictionary, "AccountNumber", null)?.ToString();
+					if (dictionary.ContainsKey("StoredOffers") && dictionary["StoredOffers"] != null)
+					{
+						ArrayList obj = (ArrayList)dictionary["StoredOffers"];
+						remoteServiceResult.Properties["StoredOffers"] = new List<CustomerOffer>();
+						List<CustomerOffer> list = new List<CustomerOffer>();
+						foreach (IDictionary<string, object> item in obj)
+						{
+							CustomerOffer customerOffer = new CustomerOffer();
+							ParseOffer(item, customerOffer);
+							list.Add(customerOffer);
+						}
+						remoteServiceResult.Properties["StoredOffers"] = list;
+					}
+					if (dictionary.ContainsKey("NewOffers") && dictionary["NewOffers"] != null)
+					{
+						ArrayList obj2 = (ArrayList)dictionary["NewOffers"];
+						remoteServiceResult.Properties["NewOffers"] = new List<CustomerOffer>();
+						List<CustomerOffer> list2 = new List<CustomerOffer>();
+						foreach (IDictionary<string, object> item2 in obj2)
+						{
+							CustomerOffer customerOffer2 = new CustomerOffer();
+							ParseOffer(item2, customerOffer2);
+							list2.Add(customerOffer2);
+						}
+						remoteServiceResult.Properties["NewOffers"] = list2;
+					}
+					if (!remoteServiceResult.Success)
+					{
+						ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+						if (arrayList != null && arrayList.Count > 0)
+						{
+							if (arrayList[0] is Dictionary<string, object> dictionary2)
+							{
+								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), (string)dictionary2["Code"]);
+								remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)KioskLoginResponseErrors.Error);
+							}
+						}
+						else
+						{
+							remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+						}
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("In stand alone mode, skipping call to login user.", LogEntryType.Info);
+					remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.LoyaltyIsDown;
+					remoteServiceResult.Properties["is_online"] = false;
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in CustomerOfferProxy.PerformGetOffersLiveCall.", e);
+				remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+			}
+			finally
+			{
+				try
+				{
+					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
+					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
+					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = completeCallback,
+						Result = remoteServiceResult,
+						Message = "Invoking completeCallback from CustomerOfferProxy.PerformGetOffersLiveCall."
+					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	private void ParseOffer(IDictionary<string, object> promo, CustomerOffer resultOffer)
+	{
+		object responseValue = GetResponseValue(promo, "OfferId", 0);
+		resultOffer.OfferId = long.Parse(responseValue.ToString());
+		object responseValue2 = GetResponseValue(promo, "StoredOfferId", null);
+		if (responseValue2 != null)
+		{
+			resultOffer.StoredOfferId = long.Parse(responseValue2.ToString());
+		}
+		resultOffer.PromotionCode = GetResponseValue(promo, "PromotionCode", string.Empty).ToString();
+		string value = GetResponseValue(promo, "DiscountType", null)?.ToString();
+		resultOffer.DiscountType = (OfferDiscountType)Enum.Parse(typeof(OfferDiscountType), value);
+		string text = GetResponseValue(promo, "OfferScopeType", null)?.ToString();
+		if (text != null)
+		{
+			resultOffer.OfferScopeType = (OfferScopeType)Enum.Parse(typeof(OfferScopeType), text);
+		}
+		string text2 = GetResponseValue(promo, "CustomerSegmentType", null)?.ToString();
+		if (text2 != null)
+		{
+			resultOffer.CustomerSegmentType = (CustomerSegmentType)Enum.Parse(typeof(CustomerSegmentType), text2);
+		}
+		resultOffer.TitleFamily = ParseTitileFamily(GetResponseValue(promo, "ProductType", null).ToString());
+		resultOffer.ExpirationDate = (DateTime)GetResponseValue(promo, "ExpirationDate", DateTime.Today);
+		resultOffer.IncludeOlderThan = GetResponseTimeSpan(promo, "ExcludeIfWithinRedboxReleaseDate", null);
+		resultOffer.Amount = GetResponseDecimal(promo, "DiscountAmount", 0m);
+		resultOffer.IncludeFormats = promo.ContainsKey("IncludeFormats") && ((ArrayList)promo["IncludeFormats"]).Count > 0;
+		string key = (resultOffer.IncludeFormats ? "IncludeFormats" : "ExcludeFormats");
+		ArrayList arrayList = (promo.ContainsKey(key) ? (promo[key] as ArrayList) : null);
+		if (arrayList != null)
+		{
+			List<int> list = new List<int>();
+			foreach (string item in arrayList)
+			{
+				if (int.TryParse(item, out var result))
+				{
+					list.Add(result);
+				}
+			}
+			resultOffer.FormatIds = list;
+		}
+		resultOffer.IncludeTitles = promo.ContainsKey("IncludeTitleIds") && ((ArrayList)promo["IncludeTitleIds"]).Count > 0;
+		string key2 = (resultOffer.IncludeTitles ? "IncludeTitleIds" : "ExcludeTitleIds");
+		ArrayList arrayList2 = (promo.ContainsKey(key2) ? (promo[key2] as ArrayList) : null);
+		if (arrayList2 == null)
+		{
+			return;
+		}
+		List<long> list2 = new List<long>();
+		foreach (object item2 in arrayList2)
+		{
+			if (item2 is int)
+			{
+				list2.Add((int)item2);
+			}
+			else if (item2 is long)
+			{
+				list2.Add((long)item2);
+			}
+		}
+		resultOffer.TitleIds = list2;
+	}
+
+	private TitleFamily? ParseTitileFamily(string productTypeString)
+	{
+		if (productTypeString == "Any")
+		{
+			return TitleFamily.All;
+		}
+		return (TitleFamily)Enum.Parse(typeof(TitleFamily), productTypeString);
+	}
+
+	private void PerformGetOffersSimulatedCall(RemoteServiceCallback completeCallback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+			remoteServiceResult.Properties["is_online"] = true;
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			try
+			{
+				LogHelper.Instance.Log("Simulate call to remote ICustomerOfferService.GetOffers");
+				remoteServiceResult.Success = SimulateSuccess;
+				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
+				List<CustomerOffer> list = new List<CustomerOffer>();
+				remoteServiceResult.Properties["NewOffers"] = list;
+				if (IncludeMovieDiscountInCartOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						DiscountType = OfferDiscountType.AmountOff,
+						Amount = 1m,
+						TitleFamily = TitleFamily.Movies,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						PromotionCode = "DVDONME",
+						CustomerSegmentType = CustomerSegmentType.BasketStretch
+					});
+				}
+				if (IncludeFreeGameInCartOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						DiscountType = OfferDiscountType.Free,
+						Amount = 0m,
+						TitleFamily = TitleFamily.Games,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 7, 25),
+						PromotionCode = "DVDONME",
+						CustomerSegmentType = CustomerSegmentType.BasketStretch
+					});
+				}
+				if (IncludeFracRedeemableFreeMovieOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 1L,
+						StoredOfferId = 3L,
+						DiscountType = OfferDiscountType.Free,
+						Amount = 0m,
+						TitleFamily = TitleFamily.Movies,
+						OfferScopeType = OfferScopeType.StoredRedeemable,
+						FormatIds = new List<int> { 1, 2, 19 },
+						IncludeFormats = true,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 7, 25),
+						PromotionCode = "DVDONME",
+						CustomerSegmentType = CustomerSegmentType.Frac
+					});
+				}
+				if (IncludeFracRedeemableDiscountedDiscOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 2L,
+						StoredOfferId = 4L,
+						DiscountType = OfferDiscountType.AmountOff,
+						Amount = 1.25m,
+						TitleFamily = TitleFamily.All,
+						OfferScopeType = OfferScopeType.StoredRedeemable,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 7, 5),
+						PromotionCode = "DVDONME",
+						CustomerSegmentType = CustomerSegmentType.Frac
+					});
+				}
+				if (IncludeFracStorableFreeMovieOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 5L,
+						DiscountType = OfferDiscountType.Free,
+						Amount = 0m,
+						TitleFamily = TitleFamily.Movies,
+						OfferScopeType = OfferScopeType.Storeable,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 7, 25),
+						PromotionCode = "DVDONME",
+						CustomerSegmentType = CustomerSegmentType.Frac
+					});
+				}
+				if (IncludeFracStorableDiscountedDiscOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 6L,
+						DiscountType = OfferDiscountType.AmountOff,
+						Amount = 1.25m,
+						TitleFamily = TitleFamily.All,
+						OfferScopeType = OfferScopeType.Storeable,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 7, 5),
+						PromotionCode = "DVDONME",
+						CustomerSegmentType = CustomerSegmentType.Frac
+					});
+				}
+				if (!SimulateSuccess)
+				{
+					remoteServiceResult.Properties["response"] = ResponseCode;
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in PersonalizationServicesProxy.PerformSimulatedLogin.", e);
+				remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+			}
+			finally
+			{
+				remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
+				remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+				LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
+				ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
+				{
+					Callback = completeCallback,
+					Result = remoteServiceResult,
+					Message = "Invoking completeCallback from PersonalizationServicesProxy.PerformSimulatedLogin."
+				});
+			}
+		});
+	}
+
+	private static object GetResponseValue(IDictionary<string, object> response, string key, object DefaultValue)
+	{
+		if (!response.ContainsKey(key) || response[key] == null)
+		{
+			return DefaultValue;
+		}
+		return response[key];
+	}
+
+	private DateTime GetDateTime(IDictionary<string, object> dateInfo)
+	{
+		object obj = dateInfo["theDate"];
+		DateTime result;
+		if (obj.GetType() == typeof(int) && (int)obj != 0)
+		{
+			result = new DateTime((int)dateInfo["theDate"]);
+		}
+		else if (obj.GetType() == typeof(long) && (long)obj != 0L)
+		{
+			result = new DateTime((long)dateInfo["theDate"]);
+		}
+		else
+		{
+			if (!((string)dateInfo["dateTimeKind"] != "Unspecified"))
+			{
+				return Convert.ToDateTime((string)dateInfo["dateString"]);
+			}
+			result = new DateTime((long)dateInfo["theDate"]);
+		}
+		return result;
+	}
+
+	private TimeSpan? GetTimeSpan(IDictionary<string, object> tsInfo)
+	{
+		TimeSpan? result = null;
+		object obj = tsInfo["theTimeSpan"];
+		if (obj.GetType() == typeof(int) && (int)obj != 0)
+		{
+			result = new TimeSpan((int)tsInfo["theTimeSpan"]);
+		}
+		else if (obj.GetType() == typeof(long) && (long)obj != 0L)
+		{
+			result = new TimeSpan((long)tsInfo["theTimeSpan"]);
+		}
+		else if ((string)tsInfo["dateTimeKind"] != "Unspecified")
+		{
+			result = new TimeSpan((long)tsInfo["theTimeSpan"]);
+		}
+		return result;
+	}
+
+	private DateTime? GetResponseDateTime(IDictionary<string, object> response, string key)
+	{
+		if (response.ContainsKey(key) && response[key] != null)
+		{
+			IDictionary<string, object> dateInfo = response[key] as IDictionary<string, object>;
+			return GetDateTime(dateInfo);
+		}
+		return null;
+	}
+
+	private TimeSpan? GetResponseTimeSpan(IDictionary<string, object> response, string key, TimeSpan? dflt)
+	{
+		if (response.ContainsKey(key) && response[key] != null)
+		{
+			IDictionary<string, object> tsInfo = response[key] as IDictionary<string, object>;
+			TimeSpan? timeSpan = GetTimeSpan(tsInfo);
+			if (timeSpan.HasValue)
+			{
+				return timeSpan;
+			}
+		}
+		return dflt;
+	}
+
+	private decimal GetResponseDecimal(IDictionary<string, object> response, string key, decimal dflt)
+	{
+		if (response.ContainsKey(key) && response[key] != null)
+		{
+			return Convert.ToDecimal(response[key]);
+		}
+		return dflt;
+	}
+}

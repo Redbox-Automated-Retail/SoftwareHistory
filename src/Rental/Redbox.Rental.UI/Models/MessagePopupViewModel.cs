@@ -88,6 +88,26 @@ public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty ButtonGridStyleProperty = DependencyProperty.Register("ButtonGridStyle", typeof(Style), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty InnerGridStyleProperty = DependencyProperty.Register("InnerGridStyle", typeof(Style), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty FloatingButtonGridStyleProperty = DependencyProperty.Register("FloatingButtonGridStyle", typeof(Style), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty MessageDockPanelStyleProperty = DependencyProperty.Register("MessageDockPanelStyle", typeof(Style), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
 	public int TimeOut { get; set; }
 
 	public UserControl ContentUserControl { get; set; }
@@ -283,6 +303,66 @@ public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(Button2StyleProperty, value);
+			});
+		}
+	}
+
+	public Style ButtonGridStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(ButtonGridStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ButtonGridStyleProperty, value);
+			});
+		}
+	}
+
+	public Style InnerGridStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(InnerGridStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(InnerGridStyleProperty, value);
+			});
+		}
+	}
+
+	public Style FloatingButtonGridStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(FloatingButtonGridStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FloatingButtonGridStyleProperty, value);
+			});
+		}
+	}
+
+	public Style MessageDockPanelStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(MessageDockPanelStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MessageDockPanelStyleProperty, value);
 			});
 		}
 	}

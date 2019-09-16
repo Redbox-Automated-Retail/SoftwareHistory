@@ -88,8 +88,6 @@ public class BrowseState : IBrowseState
 
 	public bool MovieMatureWarningShown { get; set; }
 
-	public bool BluRayWarningShown { get; set; }
-
 	public bool _4kWarningShown { get; set; }
 
 	public bool MatureGameWarningShown { get; set; }
@@ -389,5 +387,6 @@ public class BrowseState : IBrowseState
 		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
+		BrowsePriceRangeFilter = null;
 	}
 }

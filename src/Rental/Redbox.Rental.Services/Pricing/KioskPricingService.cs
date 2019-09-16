@@ -183,8 +183,16 @@ public class KioskPricingService : IKioskPricingService
 		{
 			return null;
 		}
-		activeServiceRentalPricing.DefaultInitialNight = activeServiceDefaultRentalPricing.InitialNight;
-		activeServiceRentalPricing.DefaultExtraNight = activeServiceDefaultRentalPricing.ExtraNight;
+		if (activeServiceRentalPricing.HasAttribute(PricingAttributes.PriceTest))
+		{
+			activeServiceRentalPricing.DefaultInitialNight = activeServiceRentalPricing.InitialNight;
+			activeServiceRentalPricing.DefaultExtraNight = activeServiceRentalPricing.ExtraNight;
+		}
+		else
+		{
+			activeServiceRentalPricing.DefaultInitialNight = activeServiceDefaultRentalPricing.InitialNight;
+			activeServiceRentalPricing.DefaultExtraNight = activeServiceDefaultRentalPricing.ExtraNight;
+		}
 		return activeServiceRentalPricing.ToPricingRecord(titleFamily, titleType);
 	}
 
@@ -276,31 +284,44 @@ public class KioskPricingService : IKioskPricingService
 		}
 		PriceLevelType priceLevel = GetPriceLevel(titleFamily, titleType);
 		DefaultRentalPricingDTO drp = GetActiveServiceDefaultRentalPricing(_pricingDataInstance.DefaultRentalPricing, _pricingDateTime, productId, priceLevel);
-		RentalPricingDTO rentalPricingDTO = GetActiveServiceRentalPricing(_pricingDataInstance.RentalPricing, _pricingDateTime, productId, priceLevel);
+		RentalPricingDTO rp = GetActiveServiceRentalPricing(_pricingDataInstance.RentalPricing, _pricingDateTime, productId, priceLevel);
 		List<RentalPricingDTO> activeMNPServiceRentalPricing = GetActiveMNPServiceRentalPricing(_pricingDataInstance.RentalPricing, _pricingDateTime, productId, priceLevel);
 		if (drp == null)
 		{
 			return null;
 		}
-		if (rentalPricingDTO == null)
+		if (rp == null)
 		{
-			rentalPricingDTO = RentalPricingDTO.CreateFromDefaultRentalPricing(drp);
+			rp = RentalPricingDTO.CreateFromDefaultRentalPricing(drp);
+		}
+		else if (rp.HasAttribute(PricingAttributes.PriceTest))
+		{
+			rp.DefaultInitialNight = rp.InitialNight;
+			rp.DefaultExtraNight = rp.ExtraNight;
 		}
 		else
 		{
-			rentalPricingDTO.DefaultInitialNight = drp.InitialNight;
-			rentalPricingDTO.DefaultExtraNight = drp.ExtraNight;
+			rp.DefaultInitialNight = drp.InitialNight;
+			rp.DefaultExtraNight = drp.ExtraNight;
 		}
 		if (activeMNPServiceRentalPricing != null && activeMNPServiceRentalPricing.Count > 0)
 		{
 			activeMNPServiceRentalPricing.ForEach(delegate(RentalPricingDTO x)
 			{
-				x.DefaultInitialNight = drp.InitialNight;
-				x.DefaultExtraNight = drp.ExtraNight;
+				if (rp.HasAttribute(PricingAttributes.PriceTest))
+				{
+					x.DefaultInitialNight = rp.InitialNight;
+					x.DefaultExtraNight = rp.ExtraNight;
+				}
+				else
+				{
+					x.DefaultInitialNight = drp.InitialNight;
+					x.DefaultExtraNight = drp.ExtraNight;
+				}
 			});
 		}
 		List<IPricingRecord> list = new List<IPricingRecord>();
-		list.Add(rentalPricingDTO.ToPricingRecord(TitleFamily.All, TitleType.All));
+		list.Add(rp.ToPricingRecord(TitleFamily.All, TitleType.All));
 		if (activeMNPServiceRentalPricing != null && activeMNPServiceRentalPricing.Count > 0)
 		{
 			list.Add(activeMNPServiceRentalPricing[0].ToPricingRecord(TitleFamily.All, TitleType.All));

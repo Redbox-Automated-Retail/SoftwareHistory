@@ -12,8 +12,6 @@ public interface IMarketingConfigurationManager
 
 	bool ShowCollectionsPopUp { get; }
 
-	bool CollectionsPopUpOnComingSoon { get; }
-
 	int CollectionsPopUpTimer { get; }
 
 	int CollectionsPopUpPaddleClicks { get; }

@@ -22,10 +22,6 @@ public interface IShoppingSession
 
 	void AddEvent(ShoppingSessionEventType type, string description);
 
-	void AddError(string code, string description, string details);
-
-	void AddWarning(string code, string description, string details);
-
 	void Commit(string reason);
 
 	void Abandon(string reason);

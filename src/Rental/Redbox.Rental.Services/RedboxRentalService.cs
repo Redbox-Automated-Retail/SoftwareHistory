@@ -1,15 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using DeviceService.ComponentModel;
 using Redbox.Core;
+using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
+using Redbox.REDS.Framework;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services;
@@ -22,11 +30,21 @@ public class RedboxRentalService : IRedboxRental
 		{
 			public const string ReservationExpireTimer = "reservation-expire-timer";
 		}
+
+		public const string DisconnectedCardReaderTimer = "disconnected_usb_card_reader_timer";
+
+		public const string CreditCardReaderErrorCode = "0072CDRR";
+
+		public const string CreditCardReaderCardNotRemovedErrorCode = "0100CDRR";
 	}
 
-	public ErrorList Initialize()
+	private IViewService ViewService => ServiceLocator.Instance.GetService<IViewService>();
+
+	private bool IsRentalApplicationRunning => ServiceLocator.Instance.GetService<IResourceBundleService>()?.IsRentalRunning ?? false;
+
+	public Redbox.KioskEngine.ComponentModel.ErrorList Initialize()
 	{
-		ErrorList errorList = new ErrorList();
+		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		try
 		{
 			InitializeDesktop();
@@ -43,56 +61,80 @@ public class RedboxRentalService : IRedboxRental
 		return OrchestrationService.IsRentalSessionActive();
 	}
 
+	public void StartTheRentalApplication()
+	{
+		IViewService viewService = ViewService;
+		if (viewService == null || !viewService.IsInMaintenanceMode())
+		{
+			OrchestrationService.SendHealthServicesMinutesInMaintenanceModeStatistics(0);
+		}
+	}
+
 	public void CloseOpenSessionAndStartNewRentalSession(string newSessionContext)
 	{
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 		if (rentalShoppingCart != null)
 		{
-			OrchestrationService.CloseShoppingCartAnalytics(rentalShoppingCart.ShoppingSessionId, true.ToString());
+			OrchestrationService.CloseShoppingCartAnalytics(rentalShoppingCart.ShoppingSessionId, isSessionAbandoned: true);
 			rentalShoppingCart.Abandon("User chose to abandon session.");
 			ApplicationState.Instance.IsADAAccessible = false;
 		}
+		Redbox.Rental.Services.Session.Session.Instance?.ClearTrackData();
 		StartNewRentalSession(newSessionContext);
 	}
 
 	private void StartNewRentalSession(string context)
 	{
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		if (service == null || !service.IsSafeToChangeView())
+		IViewService viewService = ViewService;
+		if (viewService == null || !viewService.IsSafeToChangeView())
 		{
-			LogHelper.Instance.Log($"Unable to start new session. view cannot be changed. Current view: {service?.Peek()}");
+			LogHelper.Instance.Log($"Unable to start new session. view cannot be changed. Current view: {ViewService?.Peek()}");
 			return;
 		}
-		LogHelper.Instance.Log($"Starting new session. context: {context}");
-		while ((service?.ViewStackCount ?? 0) > 0)
+		bool flag = true;
+		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		if (service != null && !service.HasValidCardReader)
 		{
-			service.Pop();
+			Redbox.Rental.Services.Session.Session.Instance = new Redbox.Rental.Services.Session.Session();
+			if (CanEnterMaintenanceMode())
+			{
+				flag = false;
+				EnterMaintenanceModeBecauseOfDisconnectedCardReader();
+			}
 		}
-		OrchestrationService.StartTimer("reservation-expire-timer");
-		OrchestrationService.StopIdleTimer("idle_timer");
-		Redbox.Rental.Services.Configuration.Configuration.Instance.SessionReload();
-		Redbox.Rental.Services.Session.Session.Instance = new Redbox.Rental.Services.Session.Session();
-		OrchestrationService.ResetApplicationIdleTimerTimeout();
-		ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
-		if ((service2 != null && service2.TTSEnabled) || ApplicationState.Instance.IsADAAccessible)
+		if (flag)
 		{
-			ApplicationState.Instance.IsADAAccessible = true;
+			LogHelper.Instance.Log($"Starting new session. context: {context}");
+			while ((ViewService?.ViewStackCount ?? 0) > 0)
+			{
+				ViewService.Pop();
+			}
+			OrchestrationService.StartTimer("reservation-expire-timer");
+			OrchestrationService.StopIdleTimer("idle_timer");
+			Redbox.Rental.Services.Configuration.Configuration.Instance.SessionReload();
+			Redbox.Rental.Services.Session.Session.Instance = new Redbox.Rental.Services.Session.Session();
+			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if ((service2 != null && service2.TTSEnabled) || ApplicationState.Instance.IsADAAccessible)
+			{
+				ApplicationState.Instance.IsADAAccessible = true;
+			}
+			if (ViewService != null)
+			{
+				ViewService.LastHitActorName = null;
+			}
+			IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance?.BrowseState;
+			if (browseState != null)
+			{
+				browseState.BrowseMode = BrowseViewFilter.All;
+				browseState.Genre = null;
+				browseState.IsShoppingCartFullMessagesOpen = false;
+				browseState.ShoppingCartFullMessagesShown = false;
+				browseState.TitleFamily = TitleFamily.Movies;
+			}
+			OrchestrationService.InvokeStartNewRentalSessionCallback();
+			OrchestrationService.ViewShow(ViewService.GetStartOverViewName());
 		}
-		if (service != null)
-		{
-			service.LastHitActorName = null;
-		}
-		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance?.BrowseState;
-		if (browseState != null)
-		{
-			browseState.BrowseMode = BrowseViewFilter.All;
-			browseState.Genre = null;
-			browseState.IsShoppingCartFullMessagesOpen = false;
-			browseState.ShoppingCartFullMessagesShown = false;
-			browseState.TitleFamily = TitleFamily.Movies;
-		}
-		OrchestrationService.InvokeStartNewRentalSessionCallback();
-		OrchestrationService.ViewShow(service.GetStartOverViewName());
 	}
 
 	private void InitializeDesktop()
@@ -128,6 +170,8 @@ public class RedboxRentalService : IRedboxRental
 				LogHelper.Instance.Log("Unable to set default theme to Redbox Classic", LogEntryType.Info);
 			}
 		}
+		RegisterEnvironmentServiceCallbacks();
+		RegisterDeviceServiceCanShutDownHandler();
 	}
 
 	public void RegisterEnvironmentChangeCallback()
@@ -146,13 +190,212 @@ public class RedboxRentalService : IRedboxRental
 		});
 	}
 
+	private void RegisterDeviceServiceCanShutDownHandler()
+	{
+		ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.RegisterOnDeviceServiceCanShutDownHandler(delegate
+		{
+			bool flag = true;
+			bool flag2 = Redbox.Rental.Services.Session.Session.Instance?.HasReceivedUserInteraction ?? false;
+			if (IsRentalApplicationRunning & flag2)
+			{
+				flag = false;
+			}
+			LogHelper.Instance.Log($"Device Service can shut down check: {flag}   Session start trigger action: {Redbox.Rental.Services.Session.Session.Instance?.SessionStartTriggerAction}");
+			return flag;
+		});
+	}
+
+	private void RegisterEnvironmentServiceCallbacks()
+	{
+		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		if (service != null)
+		{
+			service.RegisterCardReaderConnectedCallback(HandleCardReaderConnected);
+			service.RegisterCardReaderDisconnectedCallback(HandleCardReaderDisconnected);
+		}
+	}
+
+	private void HandleCardReaderDisconnected(ITrackDataService previousTrackDataService)
+	{
+		string arg = null;
+		if (previousTrackDataService is IDeviceServiceTrackDataService)
+		{
+			arg = "The Device Service card reader was disconnected.";
+		}
+		else if (previousTrackDataService is IClassicTrackDataService)
+		{
+			arg = "The USB card reader was disconnected.";
+		}
+		if (CanEnterPleaseWaitViewBecauseOfDisconnectedCardReader())
+		{
+			CheckoutFunctions.ShowPleaseWaitBecauseOfDisconnectedCardReader();
+		}
+		else if (CanEnterMaintenanceMode())
+		{
+			LogHelper.Instance.Log($"{arg} Attempting to enter maintenance mode.");
+			EnterMaintenanceModeBecauseOfDisconnectedCardReader();
+		}
+		else
+		{
+			LogHelper.Instance.Log($"{arg} Unable to enter maintenance mode.");
+		}
+	}
+
+	public void EnterMaintenanceModeBecauseOfDisconnectedCardReader()
+	{
+		if (ViewService?.UITaskScheduler != null)
+		{
+			Task.Factory.StartNew(delegate
+			{
+				ViewService?.Push(ViewService.GetMaintenanceViewName(), "0072CDRR");
+				ViewService?.Show();
+			}, CancellationToken.None, TaskCreationOptions.None, ViewService.UITaskScheduler);
+		}
+		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer("idle_timer"))?.Suspend();
+		CreateDisconnectedCardReaderTimer()?.Start();
+	}
+
+	public void HandleUnremovedChipInCardReader()
+	{
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession("Chip not removed from Card Reader");
+		string arg = DateTime.Now.ToString("yyyyMMddHHmm");
+		Store obj = ServiceLocator.Instance.GetService<IDataService>()?.GetStore();
+		ServiceLocator.Instance.GetService<IHardwareAlertManagerService>()?.SendAlert("HardwareError", $"KioskID: {obj?.StoreId} Credit Card Reader Error &#150; Card Not Removed from Credit Card Reader", $"{arg} - Credit Card Reader Card Not Removed.", null, null, string.Format("CardNotRemovedFromReader, {0}", "0100CDRR"));
+		LogHelper.Instance.LogTo("CardReaderLog", "Card Reader chip card not removed , Alert Sent");
+	}
+
+	private ITimer CreateDisconnectedCardReaderTimer()
+	{
+		IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+		int value = ((service != null && service.PreviousTrackDataServiceWasDeviceServiceTrackDataService) ? 90000 : 10000);
+		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
+		ITimer timer = timerService?.GetTimer("disconnected_usb_card_reader_timer");
+		if (timer == null)
+		{
+			timer = timerService?.CreateTimer("disconnected_usb_card_reader_timer", value, value, delegate
+			{
+				(timerService?.GetTimer("disconnected_usb_card_reader_timer"))?.Stop();
+				LogHelper.Instance.Log(string.Format("> {0} executing", "disconnected_usb_card_reader_timer"));
+				IViewService viewService = ViewService;
+				if (viewService == null || viewService.IsInMaintenanceMode())
+				{
+					string arg = DateTime.Now.ToString("yyyyMMddHHmm");
+					Store obj = ServiceLocator.Instance.GetService<IDataService>()?.GetStore();
+					ServiceLocator.Instance.GetService<IHardwareAlertManagerService>()?.SendAlert("HardwareError", $"KioskID: {obj?.StoreId} Credit Card Reader Communications Error &#150; Machine Down", $"{arg} - Machine in maintenance mode.", null, null, string.Format("mm:USBCardReaderOffline, {0}", "0072CDRR"));
+					LogHelper.Instance.LogTo("CardReaderLog", "Card Reader Disconnected, Alert Sent");
+				}
+				else
+				{
+					LogHelper.Instance.LogTo("CardReaderLog", "Card Reader Disconnected, Replug Event Occured Within Threshold, Alert Not Sent");
+				}
+			});
+		}
+		return timer;
+	}
+
+	private void HandleCardReaderConnected()
+	{
+		if (ViewService?.UITaskScheduler == null)
+		{
+			return;
+		}
+		Task.Factory.StartNew(delegate
+		{
+			if (IsRentalApplicationRunning)
+			{
+				ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+				if (instance != null && instance.WaitingForCardReaderConnection)
+				{
+					LogHelper.Instance.Log(string.Format("Done waiting for card reader connection.  Popping {0}", "please_wait_view"));
+					CheckoutFunctions.PopPleaseWaitViewBecauseCardReaderReconnected();
+					return;
+				}
+			}
+			if (IsRentalApplicationRunning)
+			{
+				IViewService viewService = ViewService;
+				if (viewService != null && viewService.IsInMaintenanceMode())
+				{
+					ViewService?.UnwindTo(ViewService.GetStartOverViewName(), discard: true, "clear maintenance view - card_reader_connected");
+					ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession("card_reader_connected");
+					return;
+				}
+			}
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			IManifestInfo manifestInfo = null;
+			service?.GetManifest(out manifestInfo);
+			LogHelper.Instance.Log($"Not starting a new rental session because the rental applicaiton is not running or not in maintenance mode.  Current application: {manifestInfo?.ProductName}");
+		}, CancellationToken.None, TaskCreationOptions.None, ViewService.UITaskScheduler).Wait();
+	}
+
+	private bool CanEnterPleaseWaitViewBecauseOfDisconnectedCardReader()
+	{
+		bool result = false;
+		if (IsRentalApplicationRunning && ViewService.Peek() == "swipe_view")
+		{
+			result = true;
+		}
+		return result;
+	}
+
+	private bool CanEnterMaintenanceMode()
+	{
+		bool flag = true;
+		string text = "No reason not to enter maintenance mode";
+		if (IsRentalApplicationRunning)
+		{
+			IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
+			if (service != null && !service.IsTrackDataServiceRegistered)
+			{
+				bool flag2 = ViewService?.Peek() == "swipe_view";
+				if (service.PreviousTrackDataServiceWasDeviceServiceTrackDataService)
+				{
+					IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+					if (service2?.DeviceServiceShutDownInfo != null)
+					{
+						text = $"Device Service was shut down for reason {service2?.DeviceServiceShutDownInfo?.ShutDownReason}";
+						if ((service2?.DeviceServiceShutDownInfo?.ShutDownReason ?? ShutDownReason.None) == ShutDownReason.SoftwareUpdate && !flag2)
+						{
+							flag = false;
+							text += string.Format(" and current view is not {0}", "swipe_view");
+						}
+					}
+					else
+					{
+						text = "Device Service card reader not connected";
+						if (!flag2)
+						{
+							flag = false;
+							text += string.Format(" and current view is not {0}", "swipe_view");
+						}
+					}
+				}
+				else if (service.PreviousTrackDataServiceWasClassicTrackDataService)
+				{
+					bool flag3 = Redbox.Rental.Services.Session.Session.Instance?.LastCardReadAttemptSuccess ?? false;
+					flag = !flag3;
+					text = $"ClassicTrackDataService last card read attempt success = {flag3}";
+				}
+			}
+		}
+		else
+		{
+			flag = false;
+			IManifestInfo manifestInfo = null;
+			ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetManifest(out manifestInfo);
+			text = $"Rental application is not running.  Current application: {manifestInfo?.ProductName}";
+		}
+		LogHelper.Instance.Log($"CanEnterMaintenanceMode = {flag}   Reason: {text}");
+		return flag;
+	}
+
 	private bool CanForceStartOfNewRentalSession()
 	{
 		bool result = true;
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		if (service != null)
 		{
-			result = service.Peek() != "maintenance_view" && service.Peek() != "maintenance_sync_view" && !service.Stack.Any((IViewFrameInstance x) => x?.ViewFrame?.ViewName == "swipe_view") && !(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.InReturnFlow ?? false);
+			result = service.Peek() != service.GetMaintenanceViewName() && service.Peek() != "maintenance_sync_view" && !service.Stack.Any((IViewFrameInstance x) => x?.ViewFrame?.ViewName == "swipe_view") && !(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.InReturnFlow ?? false);
 		}
 		return result;
 	}

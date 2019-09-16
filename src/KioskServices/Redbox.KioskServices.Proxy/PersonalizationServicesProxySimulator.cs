@@ -330,7 +330,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 		new AcceptedOffer
 		{
 			Status = "Active",
-			EndValueText = "500 points",
+			EndValueText = "5000 points",
 			Name = "Game Dash - Genre",
 			TimeToComplete = null,
 			Description = "Rent 6 Xbox or Playstation games in 14 days. ",

@@ -35,7 +35,7 @@ public class StoreManagerService : IStoreManager
 					string text = "ID";
 					string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
 					object value = Registry.GetValue(text2, text, "");
-					if (value == null)
+					if (value == null || string.IsNullOrEmpty(value.ToString()))
 					{
 						LogHelper.Instance.Log("Kiosk ID is not set in the registry at {0}\\{1}", text2, text);
 						return 0L;
@@ -226,21 +226,6 @@ public class StoreManagerService : IStoreManager
 	private bool IsCultureValid(string culture)
 	{
 		return CultureInfo.GetCultures(CultureTypes.SpecificCultures).Any((CultureInfo c) => c.Name.Equals(culture, StringComparison.CurrentCultureIgnoreCase));
-	}
-
-	public string GetWallpaperPath()
-	{
-		string result = string.Empty;
-		if (_configService.TryGetValue<string>(ConfigFile.System, ConfigCategory.Culture, ConfigSetting.DesktopBackground, out var value))
-		{
-			LogHelper.Instance.Log("Found desktop background image path in configuration file: {0}", value);
-			result = value;
-		}
-		else
-		{
-			LogHelper.Instance.Log("Desktop image background path was not found in configuration file");
-		}
-		return result;
 	}
 
 	public int GetSellThruDays()

@@ -43,10 +43,10 @@ public class PhoneAndPinViewController : BaseViewController
 		keypadModel2.OnClearAllButtonClicked = (Action)Delegate.Combine(keypadModel2.OnClearAllButtonClicked, new Action(KeypadModel_OnClearAllButtonClicked));
 		KeypadModel keypadModel3 = phoneAndPinViewModel.KeypadModel;
 		keypadModel3.OnBackButtonClicked = (Action)Delegate.Combine(keypadModel3.OnBackButtonClicked, new Action(KeypadModel_OnBackButtonClicked));
-		phoneAndPinViewModel.SetDefaultDisplays();
 		phoneAndPinViewModel.PhoneAndPinInfo = phoneAndPinInfo;
 		phoneAndPinViewModel.PhoneRequiredLength = 10;
 		phoneAndPinViewModel.PinRequiredLength = 4;
+		phoneAndPinViewModel.SetDefaultDisplays();
 		phoneAndPinViewModel.PhoneLabelText = Resources.phone_and_pin_phone_label_text;
 		phoneAndPinViewModel.PinLabelText = Resources.phone_and_pin_pin_label_text;
 		phoneAndPinViewModel.PinConfirmLabelText = Resources.phone_and_pin_confirm_pin_label_text;
@@ -303,6 +303,7 @@ public class PhoneAndPinViewController : BaseViewController
 		{
 			phoneAndPinViewModel.ErrorMessageText = "";
 			phoneAndPinViewModel.MobilePhoneErrorMessageText = "";
+			phoneAndPinViewModel.ObfuscatePins();
 			phoneAndPinViewModel.DisplayTypeFocus = displayType;
 			switch (displayType)
 			{
@@ -322,6 +323,7 @@ public class PhoneAndPinViewController : BaseViewController
 	private static void PhoneAndPinViewModel_OnStartButtonClicked()
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "startbrowsing");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinStartBrowsing");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		OrchestrationService.ViewGoBackSafe("Phone and pin login cancel", popOnly: false);
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction != null)
@@ -333,6 +335,7 @@ public class PhoneAndPinViewController : BaseViewController
 	private static void PhoneAndPinViewModel_OnSignInButtonClicked()
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "signin");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinSignIn");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
 		{
@@ -343,12 +346,14 @@ public class PhoneAndPinViewController : BaseViewController
 	private static void PhoneAndPinViewModel_OnTermsButtonClicked(string idleTimerName)
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "terms");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinTerms");
 		HelpViewController.ShowMobileFaqAndPrivacy("perks_terms", idleTimerName);
 	}
 
 	private static void OnMaybeLaterButtonClicked()
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "maybelater");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinMaybeLater");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction != null)
 		{
@@ -359,6 +364,7 @@ public class PhoneAndPinViewController : BaseViewController
 	private static void OnSignUpButtonClicked()
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "signup");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinSignUp");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
 		{
@@ -379,6 +385,7 @@ public class PhoneAndPinViewController : BaseViewController
 			{
 				OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", "textcluboptin,false");
 			}
+			BaseViewController.AnalyticsService?.AddCheckBoxEvent("PhoneAndPinTextClubOptin", phoneAndPinViewModel.SignUpForTextClub);
 		}
 	}
 }

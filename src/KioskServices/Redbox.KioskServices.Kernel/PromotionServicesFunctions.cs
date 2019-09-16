@@ -11,10 +11,10 @@ internal static class PromotionServicesFunctions
 	[KernelFunction(Name = "kernel.promosvcs_kioskoptin")]
 	internal static void KioskOptIn(string storeNumber, LuaTable optInItems, LuaFunction callback)
 	{
-		InnerKioskOptIn(storeNumber, optInItems, sendCardHash: false, callback);
+		InnerKioskOptIn(storeNumber, optInItems, callback);
 	}
 
-	private static void InnerKioskOptIn(string storeNumber, LuaTable optInItems, bool sendCardHash, LuaFunction callback)
+	private static void InnerKioskOptIn(string storeNumber, LuaTable optInItems, LuaFunction callback)
 	{
 		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
 		if (service == null)
@@ -57,7 +57,7 @@ internal static class PromotionServicesFunctions
 				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
-		service.KioskOptIn(storeNumber, list, sendCardHash, callback2);
+		service.KioskOptIn(storeNumber, list, callback2);
 		optInItems.Dispose();
 	}
 }

@@ -50,7 +50,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		formatSelectionPopupViewModel.CancelButtonText = Resources.cancel_button;
 		formatSelectionPopupViewModel.OnCancelButtonClicked = delegate
 		{
-			ProcessCancelButtonClick();
+			ProcessCancelButtonClick(parameter?.CancelAction);
 		};
 		if (parameter == null || parameter.RollupProduct == null)
 		{
@@ -60,10 +60,15 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		bool isPurchase = parameter.IsPurchase;
 		formatSelectionPopupViewModel.HeaderText = rollupProduct.LongName;
 		formatSelectionPopupViewModel.DescriptionText = (isPurchase ? Resources.purchase_format_dialog_description : Resources.rental_format_dialog_description);
+		if (parameter.DiscountedPriceCalc != null)
+		{
+			FormatSelectionPopupViewModel formatSelectionPopupViewModel2 = formatSelectionPopupViewModel;
+			formatSelectionPopupViewModel2.DescriptionText = formatSelectionPopupViewModel2.DescriptionText + " " + Resources.purchase_format_dialog_discount_message;
+		}
 		formatSelectionPopupViewModel.DigitalCodeInfoText = Resources.title_rollup_format_digital_code_info;
 		formatSelectionPopupViewModel.OnFormatButtonClicked = delegate(TitleType type)
 		{
-			ProcessButtonClick(rollupProduct, type, type.GetDisplayName(), isPurchase);
+			ProcessButtonClick(rollupProduct, type, type.GetDisplayName(), isPurchase, parameter.ShowMnp);
 		};
 		formatSelectionPopupViewModel.OnDigitalCodeInfoButtonClicked = delegate
 		{
@@ -71,16 +76,16 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		};
 		foreach (ITitleProduct item in rollupProduct.KioskProducts.OrderBy((ITitleProduct p) => (int)((p.TitleType != TitleType.DigitalCode) ? p.TitleType : ((TitleType)999))))
 		{
-			AddFormatButtonData(formatSelectionPopupViewModel, item, service, isPurchase);
+			AddFormatButtonData(formatSelectionPopupViewModel, item, service, isPurchase, parameter.DiscountedPriceCalc);
 		}
 		int count = formatSelectionPopupViewModel.ButtonData.Count;
 		if (count < 4)
 		{
-			formatSelectionPopupViewModel.DialogHeight = 350;
+			formatSelectionPopupViewModel.DialogHeight = 400;
 		}
 		else
 		{
-			formatSelectionPopupViewModel.DialogHeight = 443;
+			formatSelectionPopupViewModel.DialogHeight = 493;
 		}
 		if (formatSelectionPopupViewModel.DigitalCodeInfoVisibility == Visibility.Visible)
 		{
@@ -98,10 +103,10 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		viewUserControl.DataContext = formatSelectionPopupViewModel;
 	}
 
-	private static void AddFormatButtonData(FormatSelectionPopupViewModel viewModel, ITitleProduct kioskProduct, IPricingService pricingService, bool isPurchase)
+	private static void AddFormatButtonData(FormatSelectionPopupViewModel viewModel, ITitleProduct kioskProduct, IPricingService pricingService, bool isPurchase, Func<decimal, decimal> discountedPriceCalc)
 	{
 		bool showOutOfStock = !(Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion == "B") || kioskProduct.TitleFamily != TitleFamily.Movies || isPurchase;
-		TitleRollupFormatButtonProperties rollupFormatButtonProperties = TitleRollupUtilities.GetRollupFormatButtonProperties(kioskProduct, isPurchase, new TitleRollupOverlayButtonTextValues(), showOutOfStock);
+		TitleRollupFormatButtonProperties rollupFormatButtonProperties = TitleRollupUtilities.GetRollupFormatButtonProperties(kioskProduct, isPurchase, new TitleRollupOverlayButtonTextValues(), showOutOfStock, discountedPriceCalc);
 		if (rollupFormatButtonProperties.Visibility == Visibility.Visible)
 		{
 			if (kioskProduct.TitleType == TitleType.DigitalCode && rollupFormatButtonProperties.IsEnabled)
@@ -143,9 +148,10 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		return false;
 	}
 
-	private static void ProcessButtonClick(TitleRollupProduct rollupProduct, TitleType type, string analysisText, bool isPurchase)
+	private static void ProcessButtonClick(TitleRollupProduct rollupProduct, TitleType type, string analysisText, bool isPurchase, bool showMnp)
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", analysisText);
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupAnalysisText", analysisText);
 		OrchestrationService.ViewGoBackSafe($"RentalFormatSelectionPopupViewController {analysisText}", popOnly: false);
 		if (rollupProduct == null)
 		{
@@ -156,24 +162,14 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		{
 			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
-			bool flag2 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock && titleProduct.IsMovie;
-			bool flag3 = Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct.IsSellableAndInStock && titleProduct.IsMovie;
-			if ((titleProduct.HasMultiNightPrice | flag2 | flag3) && !isPurchase && !flag)
+			if (showMnp && (titleProduct.HasMultiNightPrice || (titleProduct.IsSellableAndInStock && titleProduct.IsMovie)) && !isPurchase && !flag)
 			{
 				string viewAnalyticsName = "multi_night_pricing_popup_view";
-				if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "B" && titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+				if (titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
 				{
 					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
 				}
-				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "C" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
-				}
-				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
-				}
-				else if (Redbox.Rental.Services.Configuration.Configuration.Instance.PrmUpsellOnMnpABTestVersion == "D" && !titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+				else if (!titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
 				{
 					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
 				}
@@ -191,11 +187,11 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		}
 		else
 		{
-			ShowOutOfStockOptionsDialog(rollupProduct, type);
+			ShowOutOfStockOptionsDialog(rollupProduct, type, showMnp);
 		}
 	}
 
-	private static void ShowOutOfStockOptionsDialog(ITitleProduct kioskProduct, TitleType titleType)
+	private static void ShowOutOfStockOptionsDialog(ITitleProduct kioskProduct, TitleType titleType, bool showMnp)
 	{
 		bool flag = kioskProduct is TitleRollupProduct;
 		ITitleProduct selectedProduct = (flag ? ((TitleRollupProduct)kioskProduct).KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == titleType) : kioskProduct);
@@ -209,6 +205,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		optionSelectionDialogInfo.CancelCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 		{
 			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_cancel");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOutOfStockCancel");
 			ServiceLocator.Instance.GetService<IViewService>()?.GoBack("OutOfStockDialogCancel", popOnly: false);
 		}, (Func<bool>)null);
 		optionSelectionDialogInfo.DescriptionText = Resources.out_of_stock_movie_message;
@@ -224,7 +221,8 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 				ButtonData item = new ButtonData((pricingRecord != null) ? string.Format("{0} ${1}", displayDescription, pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 				{
 					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_add_format");
-					ProcessButtonClick((TitleRollupProduct)kioskProduct, inStockFormat.TitleType, inStockFormat.TitleType.GetDisplayName(), isPurchase: false);
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOutOfStockAddFormat");
+					ProcessButtonClick((TitleRollupProduct)kioskProduct, inStockFormat.TitleType, inStockFormat.TitleType.GetDisplayName(), isPurchase: false, showMnp);
 				}, (Func<bool>)null));
 				observableCollection.Add(item);
 			}
@@ -232,6 +230,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		observableCollection.Add(new ButtonData(Resources.related_movies, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 		{
 			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "out_of_stock_related_movies");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOutOfStockRelatedMovies");
 			BrowseFunctions.ShowRelatedProductsDialog(selectedProduct);
 		}, (Func<bool>)null)));
 		optionSelectionDialogInfo.ButtonData = observableCollection;
@@ -247,9 +246,11 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_rent_back");
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogBack", popOnly: false);
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupReserveOnlineRentBack");
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_rent_gotit");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupReserveOnlineRentGotit");
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
 		});
@@ -263,24 +264,29 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_back");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOnDemandRentBack");
 			OrchestrationService.ViewGoBackSafe("OnDemandRentBack", popOnly: false);
 		}, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_gotit");
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOnDemandRentGotit");
 			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
 			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
 		});
 	}
 
-	private static void ProcessCancelButtonClick()
+	private static void ProcessCancelButtonClick(Action cancelAction)
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "cancel");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupCancel");
 		OrchestrationService.ViewGoBackSafe("RentalFormatSelectionPopupViewController cancel", popOnly: false);
+		cancelAction?.Invoke();
 	}
 
 	private static void ProcessDigitalCodeInfoClicked(TitleRollupProduct titleRollupProduct)
 	{
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "digitalcodeinformation");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupDigitalCodeInformation");
 		if (titleRollupProduct != null)
 		{
 			ITitleProduct product = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == TitleType.DigitalCode);
@@ -288,10 +294,12 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 			MessagePopupViewController.ShowMessagePopupViewDigitalCode($"{product.PurchasePrice:N2}", delegate
 			{
 				BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-whatdigitalcode-mesage-view");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupCancelWhatDigitalCode");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code info back button", popOnly: false);
 			}, delegate
 			{
 				BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "buy-whatdigitalcode-mesage-view");
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupBuyWhatDigitalCode");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code info buy button", popOnly: false);
 				BrowseFunctions.AddProductToCart(product, isPurchase: true);
 			}, delegate
@@ -304,10 +312,11 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		int value = OrchestrationService.TTSGetTimeout("medium", 15000);
-		(service?.CreateTimer("RentalFormatSelectionPopupViewTimer", value, value, delegate
+		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
+		(service?.CreateTimer("RentalFormatSelectionPopupViewTimer", timeOut, timeOut, delegate
 		{
 			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
+			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.ViewGoBackSafe("RentalFormatSelectionViewController time out", popOnly: false);
 		}))?.Start();
 	}

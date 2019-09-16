@@ -6,6 +6,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
@@ -34,19 +35,24 @@ public static class LoyaltySignUpController
 
 		internal void _003CShowJoinPerksPromptView_003Eb__4_4(AnalyticsTypes AnalyticsType)
 		{
+			IAnalyticsService service = ServiceLocator.Instance.GetService<IAnalyticsService>();
 			switch (AnalyticsType)
 			{
 			case AnalyticsTypes.context:
 				OrchestrationService.AnalyticsAddViewEvent("context", "JoinPerks");
+				service?.AddButtonPressEvent("LoyaltySignUpJoinPerks");
 				break;
 			case AnalyticsTypes.button1Press:
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "createaccount");
+				service?.AddButtonPressEvent("LoyaltySignUpCreateAcccount");
 				break;
 			case AnalyticsTypes.button2Press:
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "cancel");
+				service?.AddButtonPressEvent("LoyaltySignUpCancel");
 				break;
 			case AnalyticsTypes.button3Press:
 				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "terms");
+				service?.AddButtonPressEvent("LoyaltySignUpTerms");
 				break;
 			}
 		}
@@ -54,6 +60,7 @@ public static class LoyaltySignUpController
 		internal void _003CShowJoinPerksPromptView_003Eb__4_5(bool isChecked)
 		{
 			OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", $"marketingoptin,{isChecked.ToString()}");
+			ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddCheckBoxEvent("LoyaltySignUpJoinPerksMarketingOptin", isChecked);
 		}
 
 		internal void _003CShowJoinedPerksConfirmation_003Eb__5_2(AnalyticsTypes AnalyticsType)
@@ -243,25 +250,31 @@ public static class LoyaltySignUpController
 			UseIdleTimer = false,
 			AnalyticsAction = delegate(AnalyticsTypes AnalyticsType)
 			{
+				IAnalyticsService service = ServiceLocator.Instance.GetService<IAnalyticsService>();
 				switch (AnalyticsType)
 				{
 				case AnalyticsTypes.context:
 					OrchestrationService.AnalyticsAddViewEvent("context", "JoinPerks");
+					service?.AddButtonPressEvent("LoyaltySignUpJoinPerks");
 					break;
 				case AnalyticsTypes.button1Press:
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "createaccount");
+					service?.AddButtonPressEvent("LoyaltySignUpCreateAcccount");
 					break;
 				case AnalyticsTypes.button2Press:
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "cancel");
+					service?.AddButtonPressEvent("LoyaltySignUpCancel");
 					break;
 				case AnalyticsTypes.button3Press:
 					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "terms");
+					service?.AddButtonPressEvent("LoyaltySignUpTerms");
 					break;
 				}
 			},
 			CheckBoxChangedAction = delegate(bool isChecked)
 			{
 				OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", $"marketingoptin,{isChecked.ToString()}");
+				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddCheckBoxEvent("LoyaltySignUpJoinPerksMarketingOptin", isChecked);
 			}
 		};
 		simpleInfo.CancelAction = delegate
@@ -303,6 +316,7 @@ public static class LoyaltySignUpController
 					{
 						simpleInfo.HasActionExecuted = false;
 						IdleTimer.Start();
+						ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("LoyaltySignUpBack");
 						OrchestrationService.AnalyticsAddViewEvent("buttonPress", "back");
 						OrchestrationService.ViewGoBackSafe("ShowJoinPerks() back", popOnly: false);
 					});

@@ -158,6 +158,7 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 			EmailKeysElem.Visibility = Visibility.Collapsed;
 			PromoCodeElem.Visibility = Visibility.Collapsed;
 			CaseKeysElem.Visibility = Visibility.Visible;
+			CaseKeysElem.Margin = new Thickness(75.0, 0.0, 650.0, 0.0);
 			break;
 		case KeyboardMode.EMAIL_SYMBOLS:
 			SymbolButtonTextElem.Text = (CapKeyState ? CapButtonText.Text.ToUpper() : CapButtonText.Text.ToLower());
@@ -182,6 +183,7 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 			EmailKeysElem.Visibility = Visibility.Visible;
 			PromoCodeElem.Visibility = Visibility.Collapsed;
 			CaseKeysElem.Visibility = Visibility.Visible;
+			CaseKeysElem.Margin = new Thickness(0.0, 0.0, 730.0, 0.0);
 			break;
 		}
 	}
@@ -193,7 +195,9 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 		ConvertKeyboardKeyGroup(ZCodeElements, keyState);
 		ConvertKeyboardKeyGroup(QEmailElements, keyState);
 		ConvertKeyboardKeyGroup(AEmailElements, keyState);
+		ConvertKeyboardKeyGroup(AEmailElements2, keyState);
 		ConvertKeyboardKeyGroup(ZEmailElements, keyState);
+		ConvertKeyboardKeyGroup(ZEmailElements2, keyState);
 		string text = CapButtonText.Text;
 		if (keyState == KeyState.LOWER)
 		{

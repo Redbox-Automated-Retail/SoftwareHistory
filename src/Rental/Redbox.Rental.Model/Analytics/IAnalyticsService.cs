@@ -1,8 +1,48 @@
+using Redbox.Rental.Model.ShoppingCart;
+
 namespace Redbox.Rental.Model.Analytics;
 
 public interface IAnalyticsService
 {
-	void Initialize();
+	IAnalyticsSession CurrentSession { get; set; }
 
-	void WriteSessionToFile(string sessionId, string xml);
+	IAnalyticsSession Start(string sessionId, AnalyticsConstants.SessionType sessionType);
+
+	void End(string sessionId, bool isAbandoned);
+
+	void Remove(string sessionId);
+
+	IAnalyticsEvent AddView(string name);
+
+	IAnalyticsEvent AddViewEvent(string action, string name);
+
+	IAnalyticsData AddData(IAnalyticsData analyticsData);
+
+	IAnalyticsSession AddSessionProperty(string name, object value);
+
+	IAnalyticsSession AddSessionProperty(string name, object value, string sessionId);
+
+	IAnalyticsEvent AddEventProperty(string name, object value);
+
+	IAnalyticsSession AddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId, string sessionId);
+
+	IAnalyticsSession AddAuthTransactionInfo(IAnalyticsSession session, string customerProfileNumber, string accountNumber, string transactionId);
+
+	IAnalyticsSession AddROPFlowFalse();
+
+	AnalyticsShoppingCart AddShoppingCart(IRentalShoppingCart sc);
+
+	IAnalyticsEvent AddViewEvent(IAnalyticsEvent evt);
+
+	IAnalyticsEvent AddButtonPressEvent(string name, string eventSubType = null);
+
+	IAnalyticsEvent AddCheckBoxEvent(string name, bool isChecked);
+
+	IAnalyticsEvent AddTimeoutEvent(int timeOut);
+
+	void WriteToFile(string sessionId, string contents, string extension);
+
+	void SendToKioskDataService(string sessionId);
+
+	bool SessionExists(string sessionId);
 }

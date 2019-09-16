@@ -61,6 +61,7 @@ public class ApplyPromoViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "Cancel");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ApplyPromoCancel");
 		OrchestrationService.ViewGoBackSafe("ApplyPromoView cancel", popOnly: false);
 	}
 
@@ -112,6 +113,7 @@ public class ApplyPromoViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "EnterPromo");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("ApplyPromoEnterPromo");
 		OrchestrationService.ViewGoBackSafe("ApplyPromoView EnterPromoSelected", popOnly: false);
 		OrchestrationService.ViewShow("keyboard_promo_view", new KeyboardInfo
 		{

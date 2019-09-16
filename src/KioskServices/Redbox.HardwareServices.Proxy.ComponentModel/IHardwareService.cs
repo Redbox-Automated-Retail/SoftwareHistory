@@ -39,6 +39,8 @@ public interface IHardwareService
 
 	ErrorList SoftSync(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
+	ErrorList SoftSync(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, DateTime? startTime, string label, out string jobId);
+
 	ErrorList Sync(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, string label, DateTime? startTime, int startDeck, int startSlot, int endDeck, int endSlot, out string jobId);
 
 	ErrorList CheckPicker(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);

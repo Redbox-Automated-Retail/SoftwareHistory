@@ -95,7 +95,10 @@ public class UploadDiscImageService : IUploadDiscImageService
 			string jsonRequest = Encoding.ASCII.GetString(message.Data);
 			if (message.Type == "UploadDiscImage")
 			{
-				response = FraudServicesProxy.Instance.ExecuteMessage(message.Type, "api/Fraud/discimage", jsonRequest);
+				bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.AwsUploadDiscImageEnabled ?? false;
+				LogHelper.Instance.Log($"Use AWS for UploadDiscImage? {flag}");
+				string apiUri = (flag ? "api/frauddata/DiscImage" : "api/Fraud/discimage");
+				response = FraudServicesProxy.Instance.ExecuteMessage(message.Type, apiUri, jsonRequest, flag);
 			}
 			else
 			{
@@ -110,13 +113,13 @@ public class UploadDiscImageService : IUploadDiscImageService
 		}
 	}
 
-	public void UploadDiscImage(int kioskId, string barcode, ImageType imageType, long? transactionId, byte[] image, RemoteServiceCallback completeCallback)
+	public void UploadDiscImage(int kioskId, string barcode, ImageType imageType, long? transactionId, byte[] image, bool? hardwareSupportsIRScan, string cpAccountNumber, RemoteServiceCallback completeCallback)
 	{
 		if (_isActive)
 		{
 			if (barcode != null)
 			{
-				AddDiscImageToQueue(kioskId, barcode, imageType, transactionId, image, completeCallback);
+				AddDiscImageToQueue(kioskId, barcode, imageType, transactionId, image, hardwareSupportsIRScan, cpAccountNumber, completeCallback);
 			}
 			else
 			{
@@ -129,7 +132,7 @@ public class UploadDiscImageService : IUploadDiscImageService
 		}
 	}
 
-	private void AddDiscImageToQueue(int kioskId, string barcode, ImageType imageType, long? transactionId, byte[] image, RemoteServiceCallback completeCallback)
+	private void AddDiscImageToQueue(int kioskId, string barcode, ImageType imageType, long? transactionId, byte[] image, bool? hardwareSupportsIRScan, string cpAccountNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -137,7 +140,7 @@ public class UploadDiscImageService : IUploadDiscImageService
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 			try
 			{
-				errorList = AddDiscImageToMessageQueue(kioskId, barcode, imageType, transactionId, image);
+				errorList = AddDiscImageToMessageQueue(kioskId, barcode, imageType, transactionId, image, hardwareSupportsIRScan, cpAccountNumber);
 				if (!errorList.ContainsError())
 				{
 					LogHelper.Instance.Log($"Added barcode {barcode} image to the message queue.");
@@ -170,7 +173,7 @@ public class UploadDiscImageService : IUploadDiscImageService
 		});
 	}
 
-	private ErrorList AddDiscImageToMessageQueue(int kioskId, string barcode, ImageType imageType, long? transactionId, byte[] image)
+	private ErrorList AddDiscImageToMessageQueue(int kioskId, string barcode, ImageType imageType, long? transactionId, byte[] image, bool? hardwareSupportsIRScan, string cpAccountNumber)
 	{
 		ErrorList result = new ErrorList();
 		try
@@ -178,10 +181,12 @@ public class UploadDiscImageService : IUploadDiscImageService
 			LogHelper.Instance.Log($"Adding barcode {barcode} image to message queue.");
 			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 			ServiceLocator.Instance.GetService<IMacroService>();
-			byte priority = (byte)ServiceLocator.Instance.GetService<IConfiguration>().UploadDiscImageMessagePriority;
-			IHardwareState service2 = ServiceLocator.Instance.GetService<IHardwareState>();
-			int? num = service2?.CurrentCameraGeneration;
-			int? num2 = service2?.BarcodeDecoder;
+			IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
+			byte priority = (byte)service2.UploadDiscImageMessagePriority;
+			bool awsUploadDiscImageEnabled = service2.AwsUploadDiscImageEnabled;
+			IHardwareState service3 = ServiceLocator.Instance.GetService<IHardwareState>();
+			int? num = service3?.CurrentCameraGeneration;
+			int? num2 = service3?.BarcodeDecoder;
 			string image2 = Convert.ToBase64String(image);
 			UploadDiscImageRequest uploadDiscImageRequest = new UploadDiscImageRequest
 			{
@@ -190,7 +195,8 @@ public class UploadDiscImageService : IUploadDiscImageService
 				TransactionId = transactionId,
 				Image = image2,
 				ImageType = (byte)imageType,
-				PropertyBag = new Dictionary<string, string>()
+				PropertyBag = new Dictionary<string, string>(),
+				SupportsCameraFraudScan = hardwareSupportsIRScan
 			};
 			if (num.HasValue && num >= 3)
 			{
@@ -199,6 +205,10 @@ public class UploadDiscImageService : IUploadDiscImageService
 			if (num2.HasValue && num2 >= 1)
 			{
 				uploadDiscImageRequest.PropertyBag.Add("DecoderType", num2.ToString());
+			}
+			if (awsUploadDiscImageEnabled && transactionId.HasValue)
+			{
+				uploadDiscImageRequest.PropertyBag.Add("CPAccountNumber", cpAccountNumber?.ToString());
 			}
 			result = service?.Enqueue(priority, "UploadDiscImage", uploadDiscImageRequest);
 		}

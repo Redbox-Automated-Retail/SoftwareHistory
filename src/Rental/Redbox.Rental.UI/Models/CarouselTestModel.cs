@@ -12,6 +12,8 @@ public class CarouselTestModel : DependencyObject
 
 	public static readonly DependencyProperty IsAnimationOnProperty = DependencyProperty.Register("IsAnimationOn", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(true, OnIsAnimationOnPropertyChanged));
 
+	public static readonly DependencyProperty IsStartViewAdABTestProperty = DependencyProperty.Register("IsStartViewAdABTest", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(false));
+
 	public List<DisplayProductModel> CarouselDisplayProductModels
 	{
 		get
@@ -53,6 +55,21 @@ public class CarouselTestModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(IsAnimationOnProperty, value);
+			});
+		}
+	}
+
+	public bool IsStartViewAdABTest
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(IsStartViewAdABTestProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(IsStartViewAdABTestProperty, value);
 			});
 		}
 	}

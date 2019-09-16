@@ -9,6 +9,7 @@ using System.Windows.Media;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.UI.Controls;
@@ -19,6 +20,8 @@ namespace Redbox.Rental.UI.Views;
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "TitleDetailsView")]
 public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActor, IComponentConnector
 {
+	protected static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
+
 	private TitleDetailModel Model => base.DataContext as TitleDetailModel;
 
 	public TitleDetailsUserControl()
@@ -52,6 +55,7 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 
 	private void OnGoBack_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
+		AnalyticsService?.AddButtonPressEvent("TitleDetailsBack");
 		GoBack("go_back");
 		HandleWPFHit();
 	}

@@ -97,6 +97,7 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		{
 			ServiceLocator.Instance.AddService(typeof(IPersonalizationServices), PersonalizationServicesProxySimulator.Instance);
 		}
+		ServiceLocator.Instance.AddService(typeof(ICustomerOfferService), CustomerOfferProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(ILoyaltyServices), LoyaltyServicesProxy.Instance);
 		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
 		if (service != null)
@@ -115,6 +116,7 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.AddPreferencePage("KioskServices_PersonalizationLogin", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Login", PreferencePageTarget.LocalSystem, new PersonalizationPreferencePage());
 			service.AddPreferencePage("KioskServices_PersonalizationUpdateAccount", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Update Account", PreferencePageTarget.LocalSystem, new PersonalizationUpdateAccountPreferencePage());
 			service.AddPreferencePage("FraudService", "Local Services\\Fraud Services", "Kiosk Services/Fraud Services", PreferencePageTarget.LocalSystem, new FraudServicePreferencePage());
+			service.AddPreferencePage("CustomerOffers", "Local Services\\Customer Offers", "Kiosk Services/Customer Offers", PreferencePageTarget.LocalSystem, new CustomerOffersPreferencePage());
 		}
 		return result;
 	}

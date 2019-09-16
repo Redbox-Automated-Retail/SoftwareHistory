@@ -16,6 +16,8 @@ namespace Redbox.HardwareServices.Proxy;
 
 public class HardwareService : IHardwareService
 {
+	private static object _immediateLockObject = new object();
+
 	internal const int DefaultHardwareServiceTimeout = 600000;
 
 	internal const string DefaultHardwareServiceUrl = "rcp://localhost:7001";
@@ -557,11 +559,17 @@ public class HardwareService : IHardwareService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList SoftSync(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
 	{
+		return SoftSync(eventHandler, statusChangeHandler, null, null, out jobId);
+	}
+
+	public Redbox.KioskEngine.ComponentModel.ErrorList SoftSync(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, DateTime? startTime, string label, out string jobId)
+	{
 		jobId = null;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		HardwareCommandResult hardwareCommandResult = Service.SoftSync(new HardwareJobSchedule
 		{
-			Priority = HardwareJobPriority.Highest
+			Priority = HardwareJobPriority.Highest,
+			StartTime = startTime
 		}, out var job);
 		if (!hardwareCommandResult.Success)
 		{
@@ -570,6 +578,10 @@ public class HardwareService : IHardwareService
 		else
 		{
 			jobId = ConfigureJob(job, eventHandler, statusChangeHandler, errorList);
+			if (!string.IsNullOrEmpty(label))
+			{
+				job.SetLabel(label);
+			}
 		}
 		return errorList;
 	}
@@ -1079,38 +1091,41 @@ public class HardwareService : IHardwareService
 		{
 			try
 			{
-				HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(command, out var job);
-				if (eventHandler != null)
+				lock (_immediateLockObject)
 				{
-					List<string> errorList = new List<string>();
-					hardwareCommandResult.Errors.ForEach(delegate(Redbox.HAL.Component.Model.Error error)
+					HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(command, out var job);
+					if (eventHandler != null)
 					{
-						errorList.Add(error.Description);
-					});
-					Stack<string> stack = new Stack<string>();
-					if (job != null)
-					{
-						job.GetStack(out stack);
-						if (clearStack)
+						List<string> errorList = new List<string>();
+						hardwareCommandResult.Errors.ForEach(delegate(Redbox.HAL.Component.Model.Error error)
 						{
-							job.ClearStack();
-						}
-					}
-					IResourceBundleService service = Redbox.Core.ServiceLocator.Instance.GetService<IResourceBundleService>();
-					if (bundleName != null && bundleName != service.CurrentBundleName)
-					{
-						Redbox.Core.LogHelper.Instance.Log($"Bundle started on {bundleName} and attempted to execute on {service?.CurrentBundleName ?? string.Empty}");
-					}
-					else
-					{
-						Redbox.Core.ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new HardwareImmediateExecutionCallback
-						{
-							EventHandler = eventHandler,
-							Command = command,
-							Stack = stack,
-							Errors = errorList,
-							Success = hardwareCommandResult.Success
+							errorList.Add(error.Description);
 						});
+						Stack<string> stack = new Stack<string>();
+						if (job != null)
+						{
+							job.GetStack(out stack);
+							if (clearStack)
+							{
+								job.ClearStack();
+							}
+						}
+						IResourceBundleService service = Redbox.Core.ServiceLocator.Instance.GetService<IResourceBundleService>();
+						if (bundleName != null && bundleName != service.CurrentBundleName)
+						{
+							Redbox.Core.LogHelper.Instance.Log($"Bundle started on {bundleName} and attempted to execute on {service?.CurrentBundleName ?? string.Empty}");
+						}
+						else
+						{
+							Redbox.Core.ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new HardwareImmediateExecutionCallback
+							{
+								EventHandler = eventHandler,
+								Command = command,
+								Stack = stack,
+								Errors = errorList,
+								Success = hardwareCommandResult.Success
+							});
+						}
 					}
 				}
 			}

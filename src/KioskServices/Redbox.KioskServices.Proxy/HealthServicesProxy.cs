@@ -207,18 +207,21 @@ public class HealthServicesProxy : IHealthServices
 					anon.Versions["Hal Service"] = service2["HALServiceVersion"] ?? "Not Found";
 					anon.Versions["Hal Client"] = service2["HALVersion"] ?? "Not Found";
 					anon.Versions["Kiosk Engine"] = service2["EngineVersion"];
-					IKernelExtensionService service3 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-					if (service3 != null)
+					IDeviceServiceClientHelper service3 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+					anon.Versions["Device Service"] = service3?.DeviceServiceVersion?.ToString() ?? "Not Found";
+					anon.Versions["Device Service Client"] = service3?.DeviceServiceClientVersion?.ToString() ?? "Not Found";
+					IKernelExtensionService service4 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
+					if (service4 != null)
 					{
-						foreach (IKernelExtension extension in service3.Extensions)
+						foreach (IKernelExtension extension in service4.Extensions)
 						{
 							anon.Versions[extension.Name] = extension.Version;
 						}
 					}
-					IResourceBundleService service4 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-					if (service4 != null)
+					IResourceBundleService service5 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+					if (service5 != null)
 					{
-						foreach (IBundleSpecifier bundle in service4.Bundles)
+						foreach (IBundleSpecifier bundle in service5.Bundles)
 						{
 							anon.Versions[bundle.Name] = bundle.Version.ToString();
 						}
@@ -240,8 +243,8 @@ public class HealthServicesProxy : IHealthServices
 					UpdateOnlineStatus(response);
 					if (StoreServicesProxy.Instance.SynchronizeTimeToServer)
 					{
-						IEngineApplication service5 = ServiceLocator.Instance.GetService<IEngineApplication>();
-						if (service5 != null && service5.CanShutDown())
+						IEngineApplication service6 = ServiceLocator.Instance.GetService<IEngineApplication>();
+						if (service6 != null && service6.CanShutDown())
 						{
 							SynchronizeToServerTime(response);
 						}

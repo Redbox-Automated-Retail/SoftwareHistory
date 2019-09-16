@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskHealth;
 
 namespace Redbox.KioskEngine.Environment;
@@ -22,6 +24,8 @@ public class ViewService : IViewService
 	private bool m_isCriticalErrorViewOnStack;
 
 	public static ViewService Instance => Singleton<ViewService>.Instance;
+
+	public TaskScheduler UITaskScheduler { get; set; }
 
 	public int ViewStackCount => InnerStack.Count;
 
@@ -147,6 +151,7 @@ public class ViewService : IViewService
 					service5.AddAttributes("view", dictionary);
 					service5.AddNode("view", "viewEvents");
 				}
+				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddView(GetCurrentViewAnalyticsName());
 			}
 			if (!viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance))
 			{
@@ -166,6 +171,11 @@ public class ViewService : IViewService
 		{
 			LogHelper.Instance.Log("View not shown due to critical error mode.");
 		}
+	}
+
+	public void SetAnalyticsEventProperty(string name, object value)
+	{
+		ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddEventProperty(name, value);
 	}
 
 	private void TTSRunSpeech(IViewFrameInstance viewFrameInstance)
@@ -310,6 +320,26 @@ public class ViewService : IViewService
 		}
 	}
 
+	public string GetCurrentViewAnalyticsName()
+	{
+		IViewFrameInstance viewFrameInstance = InnerStack.Peek();
+		object obj = (viewFrameInstance?.Parameter as IViewAnalyticsName)?.ViewAnalyticsName;
+		if (obj == null)
+		{
+			if (viewFrameInstance == null)
+			{
+				return null;
+			}
+			IBaseViewFrame viewFrame = viewFrameInstance.ViewFrame;
+			if (viewFrame == null)
+			{
+				return null;
+			}
+			obj = viewFrame.ViewName;
+		}
+		return (string)obj;
+	}
+
 	public string GetLastShownView()
 	{
 		return m_lastShownView;
@@ -429,7 +459,7 @@ public class ViewService : IViewService
 
 	public bool IsInMaintenanceMode()
 	{
-		return Peek()?.Contains("maintenance_view") ?? false;
+		return Peek()?.Contains(GetMaintenanceViewName()) ?? false;
 	}
 
 	public bool IsSafeToChangeView()
@@ -440,6 +470,11 @@ public class ViewService : IViewService
 	public string GetStartOverViewName()
 	{
 		return "start_view";
+	}
+
+	public string GetMaintenanceViewName()
+	{
+		return "maintenance_view";
 	}
 
 	public void GoBack(object context, bool popOnly)

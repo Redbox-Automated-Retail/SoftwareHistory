@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using Microsoft.Win32;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
@@ -38,31 +37,6 @@ public class Program : IDisposable
 	private static readonly ILogger m_loggerControlPanelAction = LogHelper.Instance.CreateMultiLog4NetLogger("ControlPanelActionLog");
 
 	private static readonly ILogger m_loggerFieldMaintenanceAction = LogHelper.Instance.CreateMultiLog4NetLogger("FieldMaintenanceActionLog");
-
-	public static bool SetTls11
-	{
-		get
-		{
-			try
-			{
-				string text = "SetTls11";
-				string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Core";
-				object value = Registry.GetValue(text2, text, null);
-				if (value == null)
-				{
-					LogHelper.Instance.Log("SetTls11 is not set in the registry at {0}\\{1} - default is true", text2, text);
-					return true;
-				}
-				LogHelper.Instance.Log("SetTls11 registry key is set to {0}", value);
-				return Convert.ToBoolean(value);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("Unhandled exception occurred in Program.SetSecurityProtocolType", e);
-			}
-			return true;
-		}
-	}
 
 	private string KioskUnhandledExceptionFilePath
 	{
@@ -136,10 +110,8 @@ public class Program : IDisposable
 		LogHelper.Instance.Loggers.Add(m_loggerControlPanelAction);
 		LogHelper.Instance.Loggers.Add(m_loggerFieldMaintenanceAction);
 		LogHelper.Instance.Loggers.Add(m_loggerTestSvcs);
-		if (SetTls11)
-		{
-			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11;
-		}
+		LogHelper.Instance.Log("Setting System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12");
+		ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 		try
 		{
 			ErrorList errorList = EngineApplication.Instance.Initialize();

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -39,7 +40,7 @@ public class FraudServicePreferencePage : UserControl, IPreferencePageHost
 		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
 		lbl_error.Text = ((service == null) ? "FAILED TO LOAD FRAUD SERVICE" : string.Empty);
 		m_paperExclusionList.DataSource = service.FraudPaperExcludedFormats;
-		m_peeledInclusionList.DataSource = service.FraudPeelIncludeFormats;
+		m_peeledInclusionList.DataSource = service.FraudPeelIncludeFormats.ToList();
 		cb_irEnabled.Checked = service.HardwareSupportsIRScan;
 		cb_paperEnabled.Checked = service.IsIRSecurityEnabled;
 		cb_peeledEnabled.Checked = service.IsFraudImageEnabled;

@@ -5,24 +5,25 @@ using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
-public class ZipCodeViewController
+public class ZipCodeViewController : BaseViewController
 {
 	private static bool _hasNextBeenClicked;
 
-	public static void ConfigureZipCodeView(string note2LabelText, Action<string> nextAction)
+	public static void ConfigureZipCodeView(Action<string> nextAction)
 	{
 		_hasNextBeenClicked = false;
-		IActor actor = ActorFunctions.GetActor("ZipCodeViewUserControl");
-		if (actor == null || !(actor.WPFFrameworkElement is ZipCodeViewUserControl zipCodeViewUserControl))
+		if (!(BaseViewController.GetViewUserControl() is ZipCodeViewUserControl zipCodeViewUserControl))
 		{
 			return;
 		}
+		OrchestrationService.SetCurrentUICulture();
 		ZipCodeViewModel zipCodeViewModel = new ZipCodeViewModel();
 		zipCodeViewModel.KeypadModel = new KeypadModel();
 		zipCodeViewModel.KeypadModel.ClearAllButtonText = Resources.keypad_clear_all_button_text;
@@ -37,6 +38,11 @@ public class ZipCodeViewController
 		zipCodeViewModel.DisplayText = "";
 		zipCodeViewModel.HeaderLabelText = Resources.zip_code_header_text;
 		zipCodeViewModel.Note1LabelText = Resources.zip_code_note_text;
+		string note2LabelText = null;
+		if (Redbox.Rental.Services.Session.Session.Instance?.PreauthorizeResult?.PromptRequired ?? false)
+		{
+			note2LabelText = string.Format(Resources.zip_code_auth_text, ConvertAuthorizeDays(Redbox.Rental.Services.Session.Session.Instance.PreauthorizeResult.AuthDays));
+		}
 		zipCodeViewModel.Note2LabelText = note2LabelText;
 		zipCodeViewModel.NextButtonText = Resources.zip_code_next_button_text;
 		zipCodeViewModel.IsNextButtonEnabled = false;
@@ -50,13 +56,29 @@ public class ZipCodeViewController
 		};
 		ConfigureAdImage(zipCodeViewModel);
 		ConfigureTTS(zipCodeViewModel);
+		OrchestrationService.AnalyticsAddViewEvent("context", "postalCode");
+		OrchestrationService.StartIdleTimer("idle_timer");
 		zipCodeViewUserControl.DataContext = zipCodeViewModel;
+	}
+
+	private static string ConvertAuthorizeDays(int authorizeDays)
+	{
+		string text = null;
+		try
+		{
+			string name = $"number_{authorizeDays}";
+			text = Resources.ResourceManager.GetString(name);
+		}
+		catch
+		{
+			text = Resources.number_5;
+		}
+		return text?.ToLower();
 	}
 
 	private static ZipCodeViewModel GetZipCodeViewModel()
 	{
-		IActor actor = ActorFunctions.GetActor("ZipCodeViewUserControl");
-		if (actor != null && actor.WPFFrameworkElement is ZipCodeViewUserControl zipCodeViewUserControl)
+		if (BaseViewController.GetViewUserControl() is ZipCodeViewUserControl zipCodeViewUserControl)
 		{
 			return zipCodeViewUserControl.DataContext as ZipCodeViewModel;
 		}

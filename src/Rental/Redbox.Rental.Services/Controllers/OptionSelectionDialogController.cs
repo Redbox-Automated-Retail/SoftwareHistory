@@ -63,9 +63,10 @@ public class OptionSelectionDialogController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
-		int value = OrchestrationService.TTSGetTimeout("medium", 15000);
-		(service?.CreateTimer("OptionSelectionDialogViewTimer", value, value, delegate
+		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
+		(service?.CreateTimer("OptionSelectionDialogViewTimer", timeOut, timeOut, delegate
 		{
+			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("OptionSelectionDialogViewController time out", popOnly: false);
 		}))?.Start();
