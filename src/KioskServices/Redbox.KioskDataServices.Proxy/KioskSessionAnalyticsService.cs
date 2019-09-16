@@ -20,27 +20,21 @@ public class KioskSessionAnalyticsService : IKioskSessionAnalyticsService
 		RegisterWithQueueService();
 	}
 
-	private unsafe void RegisterWithQueueService()
+	private void RegisterWithQueueService()
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Expected O, but got Unknown
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			_queueMessageProcessorService = (IQueueMessageProcessorService)new QueueMessageProcessorService
+			_queueMessageProcessorService = new QueueMessageProcessorService
 			{
 				Name = "KioskSessionAnalyticsServices",
 				IsDefault = false,
 				BeforeMessageProcessing = null,
-				ProcessMessage = new ProcessMessageDelegate(null, (nint)(delegate*<IMessage, out IDictionary<string, object>, bool>)(&OnProcessMessage)),
+				ProcessMessage = OnProcessMessage,
 				MessageProcessed = null
 			};
 			_queueMessageProcessorService.SupportedMessageTypes.Add("AddKioskSession");
+			_queueMessageProcessorService.SupportedMessageTypes.Add("AddKioskSessionJson");
 			service.RegisterMessageProcessorService(_queueMessageProcessorService);
 		}
 		else
@@ -65,6 +59,11 @@ public class KioskSessionAnalyticsService : IKioskSessionAnalyticsService
 			{
 				string jsonRequest = Encoding.ASCII.GetString(message.Data);
 				response = KioskDataServicesProxy.Instance.ExecuteMessage(message.Type, "api/KioskData/AddKioskSession", jsonRequest);
+			}
+			else if (message.Type == "AddKioskSessionJson")
+			{
+				string jsonRequest2 = Encoding.ASCII.GetString(message.Data);
+				response = KioskDataServicesProxy.Instance.ExecuteMessage(message.Type, "api/KioskData/AddKioskSessionJson", jsonRequest2);
 			}
 			else
 			{

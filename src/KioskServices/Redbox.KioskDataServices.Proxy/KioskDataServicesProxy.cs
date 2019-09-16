@@ -64,6 +64,16 @@ public class KioskDataServicesProxy
 			webRequest.ContentType = "application/json";
 			webRequest.ContentLength = jsonRequest.Length;
 			webRequest.Headers.Add($"Authorization: Bearer {authorizationKey}");
+			IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
+			if (service != null)
+			{
+				webRequest.Headers.Add($"x-redbox-kioskid: {service.KioskId}");
+				LogHelper.Instance.Log($"Added x-redbox-kioskid header where KioskId = '{service.KioskId}'");
+			}
+			else
+			{
+				LogHelper.Instance.Log("Could not add x-redbox-kioskid header; Store Manager is null.");
+			}
 			LogHelper.Instance.Log("...Making remote call using HTTPS POST.");
 			Stream requestStream = webRequest.GetRequestStream();
 			requestStream.Write(Encoding.UTF8.GetBytes(jsonRequest), 0, jsonRequest.Length);
