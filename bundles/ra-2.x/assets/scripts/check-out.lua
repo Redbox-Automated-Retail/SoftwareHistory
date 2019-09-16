@@ -5,78 +5,6 @@
 --
 
 result_holder_item = nil
-check_email_address = false
-if not ShoppingCart:check_out() then
-	return
-end
-
-kernel.disableactor( "my_rentals_button" )
-
-swipe_view_cancel_func = function()
-	view_unwindto_safe( "shopping_cart_view", false, "check_out:swipe_view_cancel_func" )
-end
-
-swipe_view_next_func = function()
-    kernel.rental_shopping_cart_add_multi_disc_discs( ShoppingCart.session_id )
-	ShoppingCart:prepos_vend()
-	if kernel.current_rental_shopping_cart_item_count() > 0 then
-		if kernel.is_gift_card() == true then
-			if GiftCardsEnabled == true then
-				gc_authorize_func()
-			else
-				local message_view_manager = newmessageviewmanager()
-				
-				local auth_retry = function()
-					message_view_manager:hide( true )
-					kernel.view_shopping_cart()
-				end
-				
-				message_view_manager:show()
-				message_view_manager:hide_first_button()
-				message_view_manager:show_second_button( strings.continue_button, auth_retry )
-				message_view_manager:start_timer( auth_retry )
-				message_view_manager:set_message_header( strings.gc_not_available_title )
-				message_view_manager:set_message( strings.gc_not_available )
-			end
-		else
-            if ShowAuthChangeMessage == true then
-	            ShoppingCart:preauth(
-		            function( result )
-                        ShoppingCart.prompt_required = result.properties.prompt_required
-                        ShoppingCart.auth_days = result.properties.auth_days
-                        kernel.sessionsetvariableauthvalues( ShoppingCart.session_id, result.properties.prompt_required, result.properties.auth_rule_id, result.properties.auth_amount, result.properties.skip_auth_rule )
-                        view_show_safe("zip_code_view")
-		            end
-	            )
-            else
-                ShoppingCart.prompt_required = false
-                ShoppingCart.auth_days = 0
-                kernel.sessionsetvariableauthvalues( ShoppingCart.session_id, false, 0, 0, true )
-                view_show_safe("zip_code_view")
-            end
-		end
-	else
-		view_unwindto_safe( "shopping_cart_view", false, "check_out:INVENTORY ERROR no barcodes, cart cleared" )
-	end
-end
-
-key_pad_next_authorize_func = function()
-	view_goback_safe( "called from key_pad_next_authorize_func", true )
-	ShoppingCart:authorize(
-		function( result )
-			process_authorize_result( result )
-		end
-	)
-end
-
-gc_authorize_func = function()
-	view_goback_safe( "called from gc_authorize_func", true )
-	ShoppingCart:gc_authorize(
-		function( result )
-			process_authorize_result( result )
-		end
-	)
-end
 
 check_for_campaign_opt_in = function()
 	if kernel.get_session_value("UserInfo.Email") ~= nil
@@ -163,6 +91,7 @@ end
 function ShowEmailReceiptIfNeeded()
 	local result = result_holder_item
 	kernel.analyticsaddelement( "session", "hasCheckout", "True", ShoppingCart.session_id )
+
     -- If user has a profile and email - continue the vend process
 	if ( (result.properties.has_profile == true) and (result.properties.email ~= nil) ) then
 		kernel.set_session_value("UserInfo.Email", result.properties.email)
@@ -174,6 +103,7 @@ function ShowEmailReceiptIfNeeded()
 end
 
 function process_authorize_result( result )
+	kernel.set_read_card_attempt_authorize_result(result);
 	if result.properties.is_online == false
 	    or result.properties.stand_alone == true 
     then
@@ -203,7 +133,6 @@ function process_authorize_result( result )
 
 		-- Partial Reconcile
 		ShoppingCart:set_items_to_not_vended()
-		ShoppingCart:set_session_cart_groups()
 		kernel.merchsvcs_reconcile( ShoppingCart.session_id )
 		
 		local blocklisted_complete = function()
@@ -279,9 +208,13 @@ end
 
 kernel.register_marketing_opt_in_flow_callback(marketing_opt_in_flow)
 kernel.register_continue_vend_callback(continue_vend)
+kernel.register_process_authorize_result_callback(process_authorize_result)
+kernel.register_preposition_vend_callback(
+	function()
+		ShoppingCart:prepos_vend()
+	end
+	)
 
--- setup the WPF swipe view
-kernel.set_swipe_view_parameters(swipe_view_cancel_func, swipe_view_next_func, "RegularCheckOut")
 
 view_show_safe( "swipe_view" )
 view_analytics_event( "context", "checkout" )

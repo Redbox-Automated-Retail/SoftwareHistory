@@ -1,17 +1,17 @@
-# KISS 1.1 (2019-04-05)
+# Oasis SR (2019-09-16)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2019-04-05
-- Store labels: kop-rental-bundles-KISS1.1
+- Date (first download in the snapshots): 2019-09-16
+- Store labels: kop-rental-bundles-OasisSR
 - Package revisions:
-  - `kop-rental-bundles` revision 107 (`26C1837CFB691FEECE2947FD15CA740E7C9954F0`)
+  - `kop-rental-bundles` revision 111 (`F3A6B5CDB02E2AA7C55DB852493C4C98AA45E64E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `042CF2179412608FA106E7E8DBB5153956604B5A` | exact |
-| `fm.bundle` |  |  | `28C393FBB7AFE85CB61DE03064457CC40F673FF3` | exact |
-| `library-rental-common.bundle` |  |  | `00BA2D23137294E0AABB548FEC383E45B503AC92` | exact |
-| `ra-2.x.bundle` |  |  | `F5687FEF41036F7907A20D14DC41223E628F3D08` | exact |
+| `cp.bundle` |  |  | `CAB6076426DCB9FDBB20B21E55C6586050FF3900` | exact |
+| `fm.bundle` |  |  | `4E139B0F92487176E966B214948EFE95BC138A5A` | exact |
+| `library-rental-common.bundle` |  |  | `399DF7A4C9249A80222FD93609BAFBBB13038F46` | exact |
+| `ra-2.x.bundle` |  |  | `C63121DDCDF5954D0EEFA69AE2A0FE540E9174FE` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

@@ -28,6 +28,7 @@ function newerrormessageviewmanager()
 		end,
 
 		set_message = function( self, text )
+			kernel.setanalyticsviewmessage(text)
 			kernel.setmacro( "MessageText", text )
 			kernel.markactordirty( "message_label" )
 			if kernel.ttsenabled() == true then

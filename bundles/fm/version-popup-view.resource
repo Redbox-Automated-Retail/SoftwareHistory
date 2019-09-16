@@ -7,12 +7,12 @@
       cached="false"
 	  clear="false"
       onEnter="version_popup_enter"
-      viewWindow="162,68,1024,768" >
+      viewWindow="162,28,1024,768" >
 
 		<actor
 		name="lightbox"
 		x="-162"
-		y="-68"
+		y="-28"
 		height="768"
 		width="1024"
 		backgroundColor="black"
@@ -25,7 +25,7 @@
 		x="0"
 		y="0"
 		width="726"
-		height="662"
+		height="707"
 		backgroundColor="Gray"
 		strokeWeight="3.0"
 		borderColor="192,192,192"
@@ -40,7 +40,7 @@
 		y="2"
 		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
 		backgroundColor="DarkRed"
-		text="  Software Versions - KISS 1.1"
+		text="  Software Versions - Oasis"
 		foregroundColor="White"
 		verticalAlignment="center"
 		font="medium_larger_font"
@@ -137,10 +137,34 @@
 		optionFlags="Text, TextShadow"
 		text="Srvc(${HALServiceVersion}) Client DLL(${HALVersion})" />
 
-		<actor
+      <actor
+      name="device_service_version_label"
+      x="40"
+      y="135"
+      width="133"
+      height="25"
+      foregroundColor="white"
+      horizontalAlignment="near"
+      font="medium_font"
+      optionFlags="Text, TextShadow"
+      text="Device Service: " />
+
+      <actor
+      name="device_service_versions"
+      x="270"
+      y="135"
+      width="400"
+      height="25"
+      horizontalAlignment="near"
+      foregroundColor="white"
+      font="medium_font"
+      optionFlags="Text, TextShadow"
+      text="Srvc(${DeviceServiceVersion}) Client DLL(${DeviceServiceClientVersion})" /> 
+      
+      <actor
 		name="inventory_version_label"
 		x="40"
-		y="135"
+		y="160"
 		width="133"
 		height="25"
 		foregroundColor="white"
@@ -152,7 +176,7 @@
 		<actor
 		name="inventory_version"
 		x="270"
-		y="135"
+		y="160"
 		width="400"
 		height="25"
 		horizontalAlignment="near"
@@ -164,7 +188,7 @@
 		<actor
 		name="profile_version_label"
 		x="40"
-		y="160"
+		y="185"
 		width="110"
 		height="25"
 		foregroundColor="white"
@@ -176,7 +200,7 @@
 		<actor
 		name="profile_version"
 		x="270"
-		y="160"
+		y="185"
 		width="400"
 		height="25"
 		horizontalAlignment="near"
@@ -188,7 +212,7 @@
 		<actor
 		name="rapid_status_version_label"
 		x="40"
-		y="185"
+		y="210"
 		width="400"
 		height="25"
 		foregroundColor="white"
@@ -200,7 +224,7 @@
 		<actor
 		name="rapid_status_version"
 		x="270"
-		y="185"
+		y="210"
 		width="400"
 		height="25"
 		horizontalAlignment="near"
@@ -212,7 +236,7 @@
 		<actor
 		name="inventory_action_version_label"
 		x="40"
-		y="210"
+		y="235"
 		width="400"
 		height="25"
 		foregroundColor="white"
@@ -224,7 +248,7 @@
 		<actor
 		name="inventory_action_version"
 		x="270"
-		y="210"
+		y="235"
 		width="400"
 		height="25"
 		horizontalAlignment="near"

@@ -57,9 +57,7 @@ function show_maintenance_view( script_name, alert_type, jobid, sub_type, screen
 
 	if show_maint_view then
 		view_unwindtobottom( "show_maintenance_view" ) -- ok to unwind to bottom here because we are about to show the maintenance_view
-		kernel.setmacro( "MaintenanceView:ErrorCode", screen_code )
-		kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ screen_code ] or "image_red_diagonal_stripes" )
-		view_show( "maintenance_view" )
+		kernel.show_maintenance_view(screen_code)
 
 		if quick_return_is_running == true then
 			local hardwarejobs = HardwareManager:get_hardware_jobs_by_program( { "quick-return-daemon" }, { } )

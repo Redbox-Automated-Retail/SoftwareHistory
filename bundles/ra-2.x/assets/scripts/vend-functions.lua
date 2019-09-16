@@ -156,12 +156,16 @@ function newvendmanager()
 						elseif v.code == "VendError" then
 							status_code = "InventoryError"
 							kernel.analyticsaddview( ShoppingCart.session_id, "message_view" )
+
+							kernel.analyticsserviceaddeventviewshown( ShoppingCart.session_id )
 							view_analytics_event( "context", "transactionError" )
 							should_run_soft_sync = true
 							table.insert( bad_codes, v.code )
 						elseif v.code == "UnclaimedVend" then
 							status_code = "ItemNotTaken"
 							kernel.analyticsaddview( ShoppingCart.session_id, "message_view" )
+
+							kernel.analyticsserviceaddeventviewshown( ShoppingCart.session_id )
 							view_analytics_event( "context", "transactionError" )
 							table.insert( bad_codes, v.code )
 						elseif v.code == "MachineFull" then
@@ -172,6 +176,8 @@ function newvendmanager()
 							status_code = v.code
 						elseif v.code == "EmptyStuckThresholdExceeded" then
 							kernel.analyticsaddview( ShoppingCart.session_id, "message_view" )
+
+							kernel.analyticsserviceaddeventviewshown( ShoppingCart.session_id )
 							view_analytics_event( "context", "transactionError" )
 							table.insert( bad_codes, v.code )
 							local msg = "HAL Job ID: " .. tostring( job_result.job_id )
@@ -211,6 +217,8 @@ function newvendmanager()
 							or v.code == "MoveFailure"
 							then
 								kernel.analyticsaddview( ShoppingCart.session_id, "message_view" )
+
+								kernel.analyticsserviceaddeventviewshown( ShoppingCart.session_id )
 								view_analytics_event( "context", "transactionError" )
 								status_code = "HardwareError"
 							end

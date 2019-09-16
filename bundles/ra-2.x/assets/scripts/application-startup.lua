@@ -15,7 +15,6 @@ if kernel.getmachinevalueordefault( "Store", "OutOfOrder", "false" ) == "true" t
 	kernel.applyunsafeshutdown()
 end
 
-kernel.register_view_definitions()
 kernel.register_environment_change_callback()
 
 if not in_maintenance_mode() then
@@ -40,22 +39,6 @@ end
 -- Define function calls used later in the script
 --
 --************************************************
-function handle_disconnected_usb_card_reader()
-	kernel.setmacro( "MaintenanceView:ErrorCode", "0072CDRR" )
-	kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "0072CDRR" ] or "image_red_diagonal_stripes" )
-	view_show( "maintenance_view" )
-	kernel.suspend_idle_timer( "idle_timer" )
-	--[[kernel.hardware_alert_manager_send_alert(
-		"HardwareError",
-		"application-startup.lua",
-		"USB card swipe has been disconnected, entering maintenance mode.",
-		nil,
-		nil,
-		"mm:USBCardReaderOffline, 0072CDRR"
-	)]]
-	kernel.timerstart( "disconnected_usb_card_reader_timer" )
-
-end
 
 local function initialize_scheduled_tasks()
 	QLMMonitor = newqlmmonitor()
@@ -66,8 +49,6 @@ local function initialize_scheduled_tasks()
 	kernel.sync_reservations()
 
 	start_sync_timers()
-	MaintenanceModeTimer = newmaintenancemodetimer()
-	MaintenanceModeTimer.clear()
 
 	if quick_return_is_running == true then
 		QuickReturnTimer = newquickreturntimer()
@@ -149,7 +130,7 @@ local function start_the_application()
 		if not kernel.hasvalidcardreader() then
 			--kernel.pushview replaced with view_show function which will inturn call the kernel.pushview
             kernel.close_open_session_and_start_new_rental_session()
-			handle_disconnected_usb_card_reader()
+			kernel.handle_disconnected_usb_card_reader()
 		else
 			if not in_maintenance_mode() then
                 kernel.close_open_session_and_start_new_rental_session()
@@ -173,6 +154,8 @@ local function start_the_application()
 			kernel.healthsvcs_enqueuestatistic( "Deck" .. tostring( i ), tostring( max_slots ) )
 		end
 	end
+
+	kernel.start_the_rental_application()
 end
 
 local function get_excluded_slots()
@@ -387,10 +370,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"BluRayUpsellEnabled" ) == true
-	ShowAuthChangeMessage = kernel.config_getvalue(
-		"system",
-		"General",
-		"ShowAuthChangeMessage" ) == true
     SoftSyncTimer = kernel.config_getvalue(
 		"system",
 		"General",
@@ -455,43 +434,16 @@ local function register_default_hardware_handlers()
 		end )
 	kernel.registershowmaintenanceview(
 		function()
-			kernel.setmacro( "MaintenanceView:ErrorCode", "0096KRNL" )
-			kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "0096KRNL" ] or "image_red_diagonal_stripes" )
-			view_show( "maintenance_view" )
+			kernel.show_maintenance_view("0096KRNL")
 			return true
 		end )
 	kernel.registercorruptdb(
 		function( db_name )
-			kernel.setmacro( "MaintenanceView:ErrorCode", "SOFT-FILE01" )
-			kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND["SOFT-FILE01"] or "image_green_diagonal_stripes"  )
 			if kernel.peekview() ~= "maintenance_view" then
     			kernel.log( "> Corrupt Db detected, processing." )
-				view_show( "maintenance_view" )
+   				kernel.show_maintenance_view("SOFT-FILE01")
 			end
 			return true
-		end )
-	kernel.registerhardwarechange(
-		function( component, action, risk_level )
-			if  component == "Card Reader" then
-				if action == "Disconnected" then
-					kernel.log( "The USB card reader was disconnected, going into maintenance mode." )
-					handle_disconnected_usb_card_reader()
-				elseif action == "Connected" then
-					kernel.log( "The USB card reader was connected, resuming operation." )
-                    view_unwindtobottom( "clear maintenance view - card_reader_connected" )
-					kernel.close_open_session_and_start_new_rental_session( "card_reader_connected" )
-					kernel.resume_idle_timer( "idle_timer" )
-					--[[kernel.hardware_alert_manager_send_alert(
-						"HardwareError",
-						"application-startup.lua",
-						"USB card swipe has been connected, leaving maintenance mode.",
-						nil,
-						nil,
-						"USBCardReaderOnline"
-					)]]
-					kernel.logto( "CardReaderLog", "Card Reader Re-Connected" )
-				end
-			end
 		end )
 	kernel.registerconfigurationcallback(
 		"watch-config",
@@ -538,9 +490,7 @@ local function verify_hardware_status_before_launching_application()
 			else
 				kernel.log( "Hardware Status: Failed... Putting kiosk in Maintenance Mode." )
 				if not in_maintenance_mode() then
-					kernel.setmacro( "MaintenanceView:ErrorCode", "HALSTS-043" )
-					kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "HALSTS-043" ] or "image_red_diagonal_stripes" )
-					view_show( "maintenance_view" )
+					kernel.show_maintenance_view("HALSTS-043")
 				end
 
 				-- Create the message to be sent as a part of the Alert if the Hardware Status is Failure.
@@ -641,9 +591,7 @@ local function start_new_rental_session_callback()
 			    "mm:MaxPutAwayAttemptsExceeded, 005PMXA"
 		    )
 		    if not in_maintenance_mode() then
-			    kernel.setmacro( "MaintenanceView:ErrorCode", "005PMXA" )
-			    kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "005PMXA" ] or "red_diagonal_stripes" )
-			    view_show( "maintenance_view" )
+				kernel.show_maintenance_view("005PMXA")
 		    end
 	    end
 	    local jobs = hardware_manager:get_hardware_jobs_by_program(
@@ -678,7 +626,7 @@ function start_idle_timer_callback()
     kernel.log("start idle timer callback")
 	-- Now that analytics are being tracked on the carousel, the session has to be restarted on idle timeout
 	if ShoppingCart ~= nil
-	and kernel.analyticssessionexists( ShoppingCart.session_id ) == true then
+	and ( kernel.analyticssessionexists( ShoppingCart.session_id ) == true or kernel.analyticsservicesessionexists( ShoppingCart.session_id ) == true ) then
         kernel.log("start view idle timer: closing analytics and abandoning cart ")
 		ShoppingCart:close_analytics( "True" )
 		ShoppingCart:abandon( "Start View User Idle Timeout" )
@@ -758,32 +706,6 @@ end
 HardSyncMonitor = newhardsyncmonitor()
 HardSyncMonitor:start(10000, 30000)
 
--- timer for new unplugged usb card reader, started in handle_disconnected_usb_card_reader()
-kernel.timercreate(
-	"disconnected_usb_card_reader_timer",
-	10000,
-	10000,
-	function()
-		kernel.timerstop( "disconnected_usb_card_reader_timer" )
-		kernel.log( "> disconnected_usb_card_reader_timer executing" )
-		if kernel.peekview() == "maintenance_view" then
-			local current = os.date( "*t" )
-			local current_string = string.format( "%4d%02d%02d%02d%02d", current.year, current.month, current.day, current.hour, current.min )
-			kernel.hardware_alert_manager_send_alert(
-				"HardwareError",
-				"KioskID: " .. StoreManager:get_number() .. " Credit Card Reader Communications Error &#150; Machine Down",
-				current_string .. " - Machine in maintenance mode.",
-				nil,
-				nil,
-				"mm:USBCardReaderOffline, 0072CDRR"
-			)
-			kernel.logto( "CardReaderLog", "Card Reader Disconnected, Alert Sent" )
-		else
-			kernel.logto( "CardReaderLog", "Card Reader Disconnected, Replug Event Occured Within Threshold, Alert Not Sent" )
-		end
-	end )
-
-
 -- Run immediate thin job if secret <redacted> key is set (which includes rebalances)
 if kernel.getmachinevalueordefault( "Store", "RemoteThinWithRebalRequested", "False" ) == "True" then
     kernel.timercreate(
@@ -855,9 +777,7 @@ kernel.timercreate(
 			verify_hardware_status_before_launching_application()
 		elseif initstatus["status"] == nil then
 			if not in_maintenance_mode() then
-				kernel.setmacro( "MaintenanceView:ErrorCode", "HALSVCNR" )
-				kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "HALSVCNR" ] or "image_red_diagonal_stripes" )
-				view_show( "maintenance_view" )
+				kernel.show_maintenance_view("HALSVCNR")
 			end
 		end
 	end )
@@ -971,5 +891,7 @@ kernel.load_xps_document("document-faqs")
 kernel.cache_product_images()
 
 kernel.create_schedule_fraud_sync_timer()
+
+kernel.checkreadervalidation()
 
 kernel.sync_unknowns(qlm_deck, false)

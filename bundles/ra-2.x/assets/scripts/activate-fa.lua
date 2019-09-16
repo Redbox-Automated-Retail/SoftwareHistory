@@ -6,5 +6,7 @@
 
 if ShoppingCart ~= nil then
 	kernel.analyticsdisposesession( ShoppingCart.session_id )
+
+	--kernel.analyticsserviceremove( ShoppingCart.session_id )
 end
 kernel.activatebundle( "Field Maintenance Application", "*" )

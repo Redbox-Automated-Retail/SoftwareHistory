@@ -19,10 +19,8 @@ kernel.registerdatastoreerrorhandler(
 		else
 			local store_id = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
 			kernel.setmacro( "StoreNumber", store_id )
-			kernel.setmacro( "MaintenanceView:ZipCode", "Error" )
-			kernel.setmacro( "MaintenanceView:ErrorCode", "SOFT-FILE01" )
-			kernel.setmacro( "MaintenanceView:BackgroundImage", MAINTENANCE_MODE_BACKGROUND[ "SOFT-FILE01" ] or "image_red_diagonal_stripes" )
-			view_show( "maintenance_view" )
+			--kernel.setmacro( "MaintenanceView:ZipCode", "Error" )
+			kernel.show_maintenance_view("SOFT-FILE01")
 
 			local datafilename = "unknown"
 			if dataStoreName ~= nil then

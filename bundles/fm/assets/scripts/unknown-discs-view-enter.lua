@@ -5,6 +5,9 @@
 
 progress_manager:stop()
 
+unknown_discs_attempted = true
+unknown_discs_not_completed = true
+
 local resume_result = nil
 --shutdown the scheduler service to prevent scheduled syncs, thin, etc from starting
 scheduler_services.shutdown()
@@ -891,6 +894,8 @@ kernel.registeractorhitnotify(
 		kernel.logto( "FieldMaintenanceActionLog", "Remove Unknowns: User hits 'Confirm Unknown Task Completed'" )
 		idle_timer:reset()
 		
+		unknown_discs_not_completed = false
+
 		if #unknowns == 0 then
 			completion_summary.exit_method = "User pressed the Confirm Unknown Task Completed button."
 			send_summary_alert()
@@ -921,6 +926,7 @@ kernel.registeractorhitnotify(
 				messagebox.IconTypeQuestion,
 				callbacks )
 		else
+			unknown_discs_not_completed = false
 			send_summary_alert()
 			soft_sync_and_resume_services()
 		end

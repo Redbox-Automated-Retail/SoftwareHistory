@@ -82,6 +82,11 @@ function newhardsyncmonitor()
 					kernel.hardware_alert_manager_send_alert2("FMA-Sync", v.id)
 				elseif is_sync_type( v.label, "New Install Sync") then
 					kernel.hardware_alert_manager_send_alert2("New Install Sync", v.id)
+				elseif is_sync_type( v.label, "SyncUnknownLocations") then
+					kernel.sync_unknowns_complete(v.id)
+					kernel.hardware_alert_manager_send_alert2(v.label, v.id)
+				elseif is_sync_type( v.label, "SyncEmptyLocations") then
+					kernel.hardware_alert_manager_send_alert2(v.label, v.id)
 				else
 					kernel.hardware_alert_manager_send_alert2(v.label, v.id)
 				end

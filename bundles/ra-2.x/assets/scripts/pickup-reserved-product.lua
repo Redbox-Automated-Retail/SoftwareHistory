@@ -14,8 +14,9 @@ ShoppingCart:start_new()
 ShoppingCartList[ ShoppingCart.session_id ] = ShoppingCart
 
 -- Start an analytics session if it does not already exist and capture button press on start_view
-kernel.view_analytics_start("OnlinePickup")
+kernel.view_analytics_start("PickupReservation", "OnlinePickup")
 view_analytics_event( "buttonPress", "pickup_reservation_button" )
+kernel.analyticsserviceaddbuttonpressevent("StartPickUp")
 
 local function reservation_error_handler()
 	local function continue_func()
@@ -42,7 +43,8 @@ show_customer_blacklisted_message = function( on_ok_or_timerexpired )
 end
 
 swipe_view_cancel_func = function()
-	view_goback_safe( "swipe_view:back_button", false )
+	kernel.analyticsserviceaddbuttonpressevent("PickUpBack")
+	kernel.close_open_session_and_start_new_rental_session("pick_up_back")
 end
 
 swipe_view_next_func = function()
@@ -238,6 +240,8 @@ swipe_view_next_func = function()
 			if result.success == true then
 				kernel.shopping_cart_commit(ShoppingCart.session_id, "Pickup Authorize Successful." )
 				kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+
+				kernel.analyticsserviceaddropflowfalse()
                 kernel.show_reservation_details_view(continue_func)
 			elseif result.properties.is_online == false or result.properties.stand_alone == true then
 				cancel_reservation_for_offline(reference_number)
@@ -448,6 +452,8 @@ swipe_view_next_func = function()
 			if result.success == true then
 				kernel.shopping_cart_commit(ShoppingCart.session_id, "Pickup Authorize Successful." )
 				kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+
+				kernel.analyticsserviceaddropflowfalse()
                 kernel.show_reservation_details_view(continue_func)
 			elseif result.properties.response == "ReservationCancelled" then
 				kernel.cancel_reservation( reference_number )
@@ -460,6 +466,8 @@ swipe_view_next_func = function()
 
 				kernel.shopping_cart_commit(ShoppingCart.session_id, "Pickup Authorize Successful." )
 				kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+
+				kernel.analyticsserviceaddropflowfalse()
                 kernel.show_reservation_details_view(continue_func)
 			else
 				kernel.cancel_reservation( reference_number )
@@ -594,6 +602,8 @@ swipe_view_next_func = function()
 							show_recommendation_on_pickup_view()
 						else
 							kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+
+							kernel.analyticsserviceaddropflowfalse()
 							if #rap_reference_numbers == 1 then
 								kernel.set_session_value("UserInfo.PostalCode", '99999')
 								kernel.populate_shopping_cart_with_reservation_items(ShoppingCart.session_id, rap_reference_numbers[1])
@@ -629,6 +639,8 @@ swipe_view_next_func = function()
 					else
 						cancel_all_account_reservations()
 						kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+
+						kernel.analyticsserviceaddropflowfalse()
 						show_customer_blacklisted_message( on_pickup_validation_failure )
 					end
 				end

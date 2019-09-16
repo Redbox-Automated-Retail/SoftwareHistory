@@ -83,10 +83,13 @@ function view_unwindtobottom_safe( context )
 end
 
 function view_analytics_event( subItemType, subItemValue )
-    kernel.analyticsaddviewevent(subItemType, subItemValue )
+    kernel.analyticsaddviewevent( subItemType, subItemValue )
+
+	--kernel.analyticsserviceaddeventviewevent( subItemType, subItemValue )
 end
 
 function view_analytics_event2( subItemType, subItemValue, session_id )
     kernel.analyticsaddviewevent2( subItemType, subItemValue, session_id )
-end
 
+	--kernel.analyticsserviceaddeventviewevent( session_id, subItemType, subItemValue )
+end

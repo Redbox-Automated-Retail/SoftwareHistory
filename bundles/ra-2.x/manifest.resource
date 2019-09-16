@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Rental Application" />
-  <property name="product_version" value="3.11.1.2" />
+  <property name="product_version" value="3.15.0.10" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
     <value>Content Pricing,*</value>

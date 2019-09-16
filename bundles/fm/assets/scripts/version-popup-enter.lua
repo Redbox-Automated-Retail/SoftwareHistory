@@ -111,7 +111,7 @@ end
 
 -- Set starting location of first actor
 local x = 40
-local y = 255
+local y = 280
 
 local versions = kernel.getsoftwareversions()
 local rows = {}
