@@ -40,7 +40,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		{
 			get
 			{
-				double value = (CommandRequest.CommandTimeout.HasValue ? CommandRequest.CommandTimeout.Value : 180000);
+				double value = CommandRequest.CommandTimeout ?? 180000;
 				return CommandRequest.CreatedDate.AddMilliseconds(value) < DateTime.Now;
 			}
 		}
@@ -54,9 +54,9 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	private System.Timers.Timer _asyncCommandTimeoutTimer;
 
-	private object _lockConnectionObject = new object();
+	private readonly object _lockConnectionObject = new object();
 
-	private object _lockSendCommand = new object();
+	private readonly object _lockSendCommand = new object();
 
 	private AutoResetEvent _connectionAutoResetEvent;
 
@@ -66,7 +66,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	private int _connectionTimeout;
 
-	private ConcurrentDictionary<Guid, CommandData> _activeCommands = new ConcurrentDictionary<Guid, CommandData>();
+	private readonly ConcurrentDictionary<Guid, CommandData> _activeCommands = new ConcurrentDictionary<Guid, CommandData>();
 
 	private SignalRClient _signalRClient;
 
@@ -139,7 +139,11 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	public event OnDeviceServiceCanShutDown OnDeviceServiceCanShutDownHandler;
 
+	public event OnCardReaderState OnCardReaderStateHandler;
+
 	public event OnDeviceServiceShutDownInfoChange OnDeviceServiceShutDownInfoChangeHandler;
+
+	public event Action OnDeviceTamperedEventHandler;
 
 	public DeviceServiceClient()
 	{
@@ -175,6 +179,19 @@ public class DeviceServiceClient : IDeviceServiceClient
 		_signalRClient.OnDeviceServiceCanShutDownEventHandler += _signalRClient_OnDeviceServiceCanShutDownEventHandler;
 		_signalRClient.OnDeviceServiceShutDownStartingEventHandler += _signalRClient_OnDeviceServiceShutDownStartingEventHandler;
 		_signalRClient.OnSupportsEMVResponseEventHandler += _signalRClient_OnGeneralEventHandler;
+		_signalRClient.OnDeviceTamperedEventHandler += _signalRClient_OnDeviceTamperedHandler;
+		_signalRClient.OnCardReaderStateEventHandler += _signalRClient_OnCardReaderStateEventHandler;
+	}
+
+	private void _signalRClient_OnCardReaderStateEventHandler(CardReaderStateEvent cardReaderStateEvent)
+	{
+		HandleEvent(cardReaderStateEvent, delegate
+		{
+			Task.Run(delegate
+			{
+				OnCardReaderStateHandler?.Invoke(cardReaderStateEvent?.CardReaderState);
+			});
+		});
 	}
 
 	private void _signalRClient_OnDeviceServiceShutDownStartingEventHandler(DeviceServiceShutDownStartingEvent deviceServiceShutDownStartingEvent)
@@ -270,6 +287,17 @@ public class DeviceServiceClient : IDeviceServiceClient
 		});
 	}
 
+	private void _signalRClient_OnDeviceTamperedHandler(BaseEvent baseEvent)
+	{
+		HandleEvent(baseEvent, delegate
+		{
+			Task.Run(delegate
+			{
+				OnDeviceTamperedEventHandler?.Invoke();
+			});
+		});
+	}
+
 	private void HandleEvent(BaseEvent baseEvent, Action action = null)
 	{
 		LogEvent(baseEvent);
@@ -301,7 +329,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 	public void StartConnectionToDeviceService(string url, int? connectionTimeout)
 	{
 		_url = url;
-		_connectionTimeout = (connectionTimeout.HasValue ? connectionTimeout.Value : ((_connectionTimeout != 0) ? _connectionTimeout : _defaultCommandTimeout));
+		_connectionTimeout = connectionTimeout ?? ((_connectionTimeout != 0) ? _connectionTimeout : _defaultCommandTimeout);
 		if (_connectionTask == null || _connectionTask.IsCompleted)
 		{
 			Log($"Begin Connecting to DeviceService at url: {_url}   timeout: {_connectionTimeout}");
@@ -417,6 +445,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		return result;
 	}
 
+	[Obsolete("Supports is deprecated, please get this value from the ONCardReaderState event.")]
 	public bool SupportsEMV()
 	{
 		bool result = false;
@@ -565,8 +594,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	private void LogResponseEvent(BaseResponseEvent responseEvent)
 	{
-		string logText = null;
-		Log(string.Format(arg1: (!(responseEvent is EMVCardReadResponseEvent responseEvent2)) ? ((!(responseEvent is EncryptedCardReadResponseEvent responseEvent3)) ? ((!(responseEvent is UnencryptedCardReadResponseEvent responseEvent4)) ? JsonConvert.SerializeObject(responseEvent) : ObfuscateUnencryptedCardReadResponseEvent(responseEvent4, logText)) : ObfuscateEncryptedCardReadResponseEvent(responseEvent3, logText)) : ObfuscateEMVCardReadResponseEvent(responseEvent2, logText), format: "<<< {0}: {1}", arg0: responseEvent.EventName));
+		Log(string.Format(arg1: (!(responseEvent is EMVCardReadResponseEvent responseEvent2)) ? ((!(responseEvent is EncryptedCardReadResponseEvent responseEvent3)) ? ((!(responseEvent is UnencryptedCardReadResponseEvent responseEvent4)) ? JsonConvert.SerializeObject(responseEvent) : ObfuscateUnencryptedCardReadResponseEvent(responseEvent4)) : ObfuscateEncryptedCardReadResponseEvent(responseEvent3)) : ObfuscateEMVCardReadResponseEvent(responseEvent2), format: "<<< {0}: {1}", arg0: responseEvent.EventName));
 	}
 
 	private void LogEvent(BaseEvent baseEvent)
@@ -574,7 +602,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		Log($"<<< {baseEvent?.EventName}: {JsonConvert.SerializeObject(baseEvent)}");
 	}
 
-	private string ObfuscateEMVCardReadResponseEvent(EMVCardReadResponseEvent responseEvent, string logText)
+	private string ObfuscateEMVCardReadResponseEvent(EMVCardReadResponseEvent responseEvent)
 	{
 		return CreateResponseEventLogText(responseEvent, delegate(string json)
 		{
@@ -593,7 +621,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		});
 	}
 
-	private string ObfuscateEncryptedCardReadResponseEvent(EncryptedCardReadResponseEvent responseEvent, string logText)
+	private string ObfuscateEncryptedCardReadResponseEvent(EncryptedCardReadResponseEvent responseEvent)
 	{
 		return CreateResponseEventLogText(responseEvent, delegate(string json)
 		{
@@ -612,7 +640,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		});
 	}
 
-	private string ObfuscateUnencryptedCardReadResponseEvent(UnencryptedCardReadResponseEvent responseEvent, string logText)
+	private string ObfuscateUnencryptedCardReadResponseEvent(UnencryptedCardReadResponseEvent responseEvent)
 	{
 		return CreateResponseEventLogText(responseEvent, delegate(string json)
 		{
@@ -639,9 +667,9 @@ public class DeviceServiceClient : IDeviceServiceClient
 			string arg = JsonConvert.SerializeObject(responseEvent);
 			result = JsonConvert.SerializeObject(ObfuscateJsonAction(arg));
 		}
-		catch (Exception)
+		catch (Exception arg2)
 		{
-			Log("Unhandled exception in DeviceServiceClient.CreateResponseEventLogText while deserializing a CardReadResponseEvent");
+			Log($"Unhandled exception in DeviceServiceClient.CreateResponseEventLogText while deserializing a CardReadResponseEvent: {arg2}");
 		}
 		return result;
 	}
@@ -660,23 +688,6 @@ public class DeviceServiceClient : IDeviceServiceClient
 		{
 			_connectionAutoResetEvent.Set();
 		}
-	}
-
-	private BaseResponseEvent RunCommand(string commandName, Guid? requestId)
-	{
-		return RunCommand(new BaseCommandRequest(commandName, AssemblyVersion)
-		{
-			RequestId = (requestId ?? Guid.NewGuid())
-		});
-	}
-
-	private bool RunAsyncCommand(string commandName, Guid? requestId, int timeout, Action<BaseResponseEvent> commandCompleteCallback = null, Action<BaseResponseEvent> eventCallback = null)
-	{
-		return RunAsyncCommand(new BaseCommandRequest(commandName, AssemblyVersion)
-		{
-			RequestId = (requestId ?? Guid.NewGuid()),
-			CommandTimeout = timeout
-		}, commandCompleteCallback, eventCallback);
 	}
 
 	private bool RunAsyncReadCardCommand(Guid? requestId, CardReadRequest request, int timeout, Action<BaseResponseEvent> commandCompleteCallback = null, Action<BaseResponseEvent> eventCallback = null)
@@ -752,9 +763,11 @@ public class DeviceServiceClient : IDeviceServiceClient
 	{
 		if (_asyncCommandTimeoutTimer == null)
 		{
-			_asyncCommandTimeoutTimer = new System.Timers.Timer();
-			_asyncCommandTimeoutTimer.Interval = 60000.0;
-			_asyncCommandTimeoutTimer.AutoReset = true;
+			_asyncCommandTimeoutTimer = new System.Timers.Timer
+			{
+				Interval = 60000.0,
+				AutoReset = true
+			};
 			_asyncCommandTimeoutTimer.Elapsed += AsyncCommandTimeoutTimer_Elapsed;
 		}
 		if (!_asyncCommandTimeoutTimer.Enabled)

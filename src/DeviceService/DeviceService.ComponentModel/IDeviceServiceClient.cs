@@ -31,6 +31,10 @@ public interface IDeviceServiceClient
 
 	event OnDeviceServiceShutDownInfoChange OnDeviceServiceShutDownInfoChangeHandler;
 
+	event Action OnDeviceTamperedEventHandler;
+
+	event OnCardReaderState OnCardReaderStateHandler;
+
 	void StartConnectionToDeviceService(string url, int? connectionTimeout);
 
 	bool ConnectToDeviceService(string url);

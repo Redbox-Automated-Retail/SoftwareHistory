@@ -53,4 +53,8 @@ public class SignalREvents
 	public const string DeviceServiceShutDownStartingEvent = "DeviceServiceShutDownStartingEvent";
 
 	public const string SupportsEMVResponseEvent = "SupportsEMVResponseEvent";
+
+	public const string DeviceTamperedEvent = "DeviceTamperedEvent";
+
+	public const string CardReaderStateEvent = "CardReaderStateEvent";
 }

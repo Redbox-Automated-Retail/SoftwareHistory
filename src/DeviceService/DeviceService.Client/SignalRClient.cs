@@ -28,6 +28,8 @@ public class SignalRClient
 
 	public delegate void OnSupportsEMVResponseEvent(SupportsEMVResponseEvent supportsEMVResponseEvent);
 
+	public delegate void OnCardReaderStateEvent(CardReaderStateEvent cardReaderStateEvent);
+
 	public delegate void OnEvent(BaseEvent baseEvent);
 
 	private string _url;
@@ -94,6 +96,10 @@ public class SignalRClient
 
 	public event OnSupportsEMVResponseEvent OnSupportsEMVResponseEventHandler;
 
+	public event OnEvent OnDeviceTamperedEventHandler;
+
+	public event OnCardReaderStateEvent OnCardReaderStateEventHandler;
+
 	public async Task Connect(string url, int? connectionTimeout)
 	{
 		_url = url;
@@ -108,7 +114,7 @@ public class SignalRClient
 				bool timedout = false;
 				Task task = Task.Run(delegate
 				{
-					int num = (connectionTimeout.HasValue ? connectionTimeout.Value : 5000);
+					int num = connectionTimeout ?? 5000;
 					int num2 = 0;
 					while (!cancellationToken.IsCancellationRequested && num2 < num)
 					{
@@ -268,6 +274,14 @@ public class SignalRClient
 				Log("SignalRClient invoking OnSupportsEMVResponseEventHandler");
 				OnSupportsEMVResponseEventHandler?.Invoke(response);
 			});
+			hubConnection.On("DeviceTamperedEvent", delegate(DeviceTamperedEvent response)
+			{
+				OnDeviceTamperedEventHandler?.Invoke(response);
+			});
+			hubConnection.On("CardReaderStateEvent", delegate(CardReaderStateEvent response)
+			{
+				OnCardReaderStateEventHandler?.Invoke(response);
+			});
 		}
 	}
 
@@ -280,10 +294,5 @@ public class SignalRClient
 	public void SendCommand(BaseCommandRequest baseCommandRequest)
 	{
 		_hubConnection.SendAsync(baseCommandRequest.SignalRCommand, baseCommandRequest);
-	}
-
-	private async void SendCommand(string commandName, object command)
-	{
-		await _hubConnection.SendAsync(commandName, command);
 	}
 }

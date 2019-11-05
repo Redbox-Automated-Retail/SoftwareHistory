@@ -1,3 +1,5 @@
+using System;
+
 namespace DeviceService.ComponentModel.Responses;
 
 public class UnitDataModel
@@ -45,6 +47,8 @@ public class UnitDataModel
 	public string ClessInteracKernelType { get; set; }
 
 	public string ClessInterfaceIsSupported { get; set; }
+
+	public bool IsTampered => ManufacturingSerialNumber?.Equals("ALERT", StringComparison.OrdinalIgnoreCase) ?? false;
 
 	public string GetApplicationVersionString()
 	{

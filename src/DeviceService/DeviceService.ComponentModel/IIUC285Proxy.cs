@@ -49,4 +49,6 @@ public interface IIUC285Proxy
 	Task<DeviceStatus> CheckDeviceStatus(long kioskId);
 
 	void SetAuthorizationResponse(bool success);
+
+	CardReaderState GetCardReaderState();
 }

@@ -12,6 +12,8 @@ public class SignalRCommands
 
 	public const string SetCommandQueueState = "SetCommandQueueState";
 
+	public const string SendCardReaderStateEvent = "SendCardReaderStateEvent";
+
 	public const string ExecuteCommand = "ExecuteCommand";
 
 	public const string ExecuteBaseCommand = "ExecuteBaseCommand";
@@ -29,4 +31,6 @@ public class SignalRCommands
 	public const string ExecuteCheckActivationCommand = "ExecuteCheckActivationCommand";
 
 	public const string ExecuteCheckDeviceStatusCommand = "ExecuteCheckDeviceStatusCommand";
+
+	public const string SendDeviceTamperedEvent = "SendDeviceTamperedEvent";
 }
