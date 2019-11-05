@@ -31,6 +31,10 @@ public interface IDeviceServiceClient
 
 	event OnDeviceServiceShutDownInfoChange OnDeviceServiceShutDownInfoChangeHandler;
 
+	event Action OnDeviceTamperedEventHandler;
+
+	event OnCardReaderState OnCardReaderStateHandler;
+
 	void StartConnectionToDeviceService(string url, int? connectionTimeout);
 
 	bool ConnectToDeviceService(string url);
@@ -59,7 +63,7 @@ public interface IDeviceServiceClient
 
 	bool CheckDeviceStatus(DeviceStatusRequest request);
 
-	InsertedStatus GetCardInsertedStatus();
+	bool GetCardInsertedStatus(Action<BaseResponseEvent> completeCallback);
 
 	bool ShutDownDeviceService(bool forceShutDown, ShutDownReason shutDownReason);
 

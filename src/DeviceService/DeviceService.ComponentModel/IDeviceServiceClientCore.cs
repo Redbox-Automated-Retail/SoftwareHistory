@@ -1,3 +1,5 @@
+using DeviceService.ComponentModel.Responses;
+
 namespace DeviceService.ComponentModel;
 
 public interface IDeviceServiceClientCore
@@ -18,6 +20,8 @@ public interface IDeviceServiceClientCore
 
 	void SendCardReaderConnectedEvent();
 
+	void SendCardReaderStateEvent(CardReaderState cardReaderState);
+
 	void SendCardReaderDisconnectedEvent();
 
 	void SendDeviceServiceCanShutDownEvent();
@@ -25,4 +29,6 @@ public interface IDeviceServiceClientCore
 	void SendDeviceServiceShutDownStartingEvent(ShutDownReason shutDownReason);
 
 	void SetCommandQueueState(bool commandQueuePaused);
+
+	void SendDeviceTamperedEvent();
 }

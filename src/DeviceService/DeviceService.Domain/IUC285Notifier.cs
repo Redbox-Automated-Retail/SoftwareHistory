@@ -1,6 +1,7 @@
 using System;
 using DeviceService.Client.Core;
 using DeviceService.ComponentModel;
+using DeviceService.ComponentModel.Responses;
 using Microsoft.Extensions.Logging;
 
 namespace DeviceService.Domain;
@@ -83,6 +84,14 @@ public class IUC285Notifier : IIUC285Notifier
 		}
 	}
 
+	public void SendCardReaderStateEvent(CardReaderState cardReaderState)
+	{
+		if (ConnectToDeviceServiceClient())
+		{
+			_deviceServiceClient.SendCardReaderStateEvent(cardReaderState);
+		}
+	}
+
 	public void SendCardReaderDisconnectedEvent(Exception exception)
 	{
 		if (ConnectToDeviceServiceClient())
@@ -112,6 +121,14 @@ public class IUC285Notifier : IIUC285Notifier
 		if (ConnectToDeviceServiceClient())
 		{
 			_deviceServiceClient.SetCommandQueueState(commandQueuePaused);
+		}
+	}
+
+	public void SendDeviceTamperedEvent()
+	{
+		if (ConnectToDeviceServiceClient())
+		{
+			_deviceServiceClient.SendDeviceTamperedEvent();
 		}
 	}
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Ports;
@@ -25,183 +24,19 @@ namespace DeviceService.Domain;
 
 public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 {
-	private class ReadCardContext
+	public class Constants
 	{
-		private bool CompleteCallbackSent;
+		public const string EMVClessFileName = "emvcless.xml";
 
-		public ICardReadRequest Request { get; set; }
+		public const string EMVContactFileName = "emvcontact.xml";
 
-		public int TimeRemainingUntilTimeout => Math.Max(0, (int)((Request?.Timeout ?? 30000) - (Watch?.ElapsedMilliseconds ?? 0)));
-
-		public CancellationToken CancelToken { get; set; }
-
-		public Action<Base87CardReadModel> JobCompletedCallback { get; set; }
-
-		public Action<string, string> EventsCallback { get; set; }
-
-		public CardSourceType CardSource { get; set; }
-
-		public Stopwatch Watch { get; set; }
-
-		public IList<Error> Errors { get; set; } = new List<Error>();
-
-		public ReadCardContextState State { get; set; }
-
-		public Base87CardReadModel ResponseDataModel { get; set; }
-
-		public bool CardRemoved { get; set; }
-
-		public CardBrandEnum CardBrand { get; set; }
-
-		public CardStats CardStats { get; set; }
-
-		public UnitDataModel UnitData { get; set; }
-
-		public CardReadExitType ExitType { get; set; }
-
-		public ReadCardContext()
-		{
-			Watch = new Stopwatch();
-			Watch.Start();
-		}
-
-		public void SendCompletedCallback(Action<bool> authResponseCallback = null)
-		{
-			if (CompleteCallbackSent)
-			{
-				return;
-			}
-			CompleteCallbackSent = true;
-			Log($"Send Card Read Model - Callback Exists: {JobCompletedCallback != null}, Model Exists: {ResponseDataModel != null}");
-			Watch.Stop();
-			if (ResponseDataModel == null || CardBrandAndSourceIsDeactivated())
-			{
-				switch (CardSource)
-				{
-				case CardSourceType.EMVContact:
-				case CardSourceType.QuickChip:
-					ResponseDataModel = new EMVCardReadModel();
-					break;
-				case CardSourceType.EMVContactless:
-				case CardSourceType.Mobile:
-					ResponseDataModel = new EMVCardReadModel();
-					break;
-				default:
-					ResponseDataModel = new EncryptedCardReadModel();
-					break;
-				}
-				switch (State)
-				{
-				case ReadCardContextState.Tampered:
-					Errors.Add(new Error
-					{
-						Code = "TAMPERED",
-						Message = "Device is reporting Tampered Alert."
-					});
-					ResponseDataModel.Status = ResponseStatus.Tampered;
-					break;
-				case ReadCardContextState.Cancelled:
-					Errors.Add(new Error
-					{
-						Code = "CANCELLED",
-						Message = "Command Was Cancelled."
-					});
-					ResponseDataModel.Status = ResponseStatus.Cancelled;
-					break;
-				case ReadCardContextState.Timeout:
-					Errors.Add(new Error
-					{
-						Code = "TIMEOUT",
-						Message = $"Command Timed Out.  Exceeded {Request?.Timeout ?? 30000} Timeout"
-					});
-					ResponseDataModel.Status = ResponseStatus.Timeout;
-					break;
-				case ReadCardContextState.Blocked:
-					Errors.Add(new Error
-					{
-						Code = "BLOCKED",
-						Message = $"Card brand {CardBrand.ToString()} and it's source {CardSource} is disabled in system.config"
-					});
-					ResponseDataModel.Status = ResponseStatus.Blocked;
-					break;
-				default:
-					ResponseDataModel.Status = ResponseStatus.Errored;
-					Errors.Add(new Error
-					{
-						Code = "SCC001",
-						Message = "Sending Default Error, ResponseDataModel Missing."
-					});
-					break;
-				}
-			}
-			if (ResponseDataModel is EMVCardReadModel)
-			{
-				((EMVCardReadModel)ResponseDataModel).CardRemoved = CardRemoved;
-			}
-			ResponseDataModel.TimeTaken = Watch.Elapsed;
-			ResponseDataModel.AddErrors(Errors);
-			ResponseDataModel.CardSource = CardSource;
-			CardStats = new CardStats
-			{
-				SessionId = Request?.SessionId,
-				Id = Guid.NewGuid(),
-				CardBrand = CardBrand,
-				ManufacturerSerialNumber = UnitData.ManufacturingSerialNumber,
-				RBAVersion = UnitData?.GetApplicationVersionString(),
-				ReadResult = ExitType,
-				SourceType = CardSource,
-				ErrorCode = ResponseDataModel.ErrorCode
-			};
-			JobCompletedCallback?.Invoke(ResponseDataModel);
-		}
-
-		public void SendCardRemoved()
-		{
-			CardRemoved = true;
-			EventsCallback?.Invoke("CardRemovedResponseEvent", null);
-		}
-
-		public void SendCardProcessing()
-		{
-			EventsCallback?.Invoke("CardProcessingStartedResponseEvent", CardSource.ToString());
-		}
-
-		public bool CardBrandAndSourceIsDeactivated()
-		{
-			if (Request.ExcludeCardBrandBySource == null)
-			{
-				return false;
-			}
-			bool flag = false;
-			CardBrandAndSource? cardBrandAndSource = null;
-			foreach (CardBrandAndSource item in Request.ExcludeCardBrandBySource)
-			{
-				GeneralSourceType generalSourceType = item.GetGeneralSourceType();
-				GeneralSourceType generalSourceType2 = CardSource.GetGeneralSourceType();
-				if (generalSourceType == generalSourceType2 && generalSourceType != GeneralSourceType.None && item.GetBrand() == CardBrand)
-				{
-					flag = true;
-					cardBrandAndSource = item;
-					break;
-				}
-			}
-			if (flag)
-			{
-				State = ReadCardContextState.Blocked;
-				Log($"{cardBrandAndSource} is deactivated in system.config");
-			}
-			return flag;
-		}
+		public const string DeviceFilesPath = "/HOST/";
 	}
 
-	private enum ReadCardContextState
+	private enum RetrieveFileDataFormat
 	{
-		Continue,
-		Stop,
-		Timeout,
-		Cancelled,
-		Tampered,
-		Blocked
+		Text,
+		Base64
 	}
 
 	private class ConfigDefault
@@ -257,15 +92,15 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private bool _isInitialized;
 
-	private System.Timers.Timer _reconnectTimer;
+	private readonly System.Timers.Timer _reconnectTimer;
 
-	private System.Timers.Timer _healthTimer;
+	private readonly System.Timers.Timer _healthTimer;
 
 	private UnitDataModel _unitData;
 
 	private static int _continuousResultTimeouts = 0;
 
-	private KioskData _kioskData;
+	private readonly KioskData _kioskData;
 
 	private readonly IKioskDataServiceClient _statusClient;
 
@@ -281,9 +116,9 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private static int _connectInProgress = 0;
 
-	private AutoResetEvent _areWaitForReconnect = new AutoResetEvent(initialState: false);
+	private readonly AutoResetEvent _areWaitForReconnect = new AutoResetEvent(initialState: false);
 
-	private IEnumerable<ConfigDefault> _configDefaults = new List<ConfigDefault>
+	private readonly IEnumerable<ConfigDefault> _configDefaults = new List<ConfigDefault>
 	{
 		new ConfigDefault
 		{
@@ -362,6 +197,12 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			Group = "0007",
 			Index = "0039",
 			Value = "0"
+		},
+		new ConfigDefault
+		{
+			Group = "0007",
+			Index = "0022",
+			Value = "0"
 		}
 	};
 
@@ -387,7 +228,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private static bool _authSuccessful;
 
-	private static List<string> _ingenicoTags = new List<string>
+	private static readonly List<string> _ingenicoTags = new List<string>
 	{
 		"1000", "1001", "1002", "1003", "1004", "1005", "1006", "1007", "1008", "1009",
 		"100A", "100B", "100C", "100D", "100E", "100F", "1010", "1011", "1012", "1013",
@@ -400,6 +241,10 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 	private DateTime? _deviceRebootTime;
 
 	private Task _rebootTask;
+
+	public Version EMVClessVersion { get; private set; }
+
+	public Version EMVContactVersion { get; private set; }
 
 	public UnitDataModel UnitData
 	{
@@ -531,6 +376,8 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		_continuousResultTimeouts = 0;
 		_deviceRebootTime = null;
 		UnitData = GetUnitData();
+		EMVClessVersion = GetXMLVersion("emvcless.xml");
+		EMVContactVersion = GetXMLVersion("emvcontact.xml");
 		_rebootTask = StartRebootCountdown();
 		RebootStatus rebootStatus = GetRebootStatus();
 		_statusClient?.PostRebootStatus(rebootStatus);
@@ -539,6 +386,53 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		Log($"Connected after {_connectAttempts} attempts.");
 		StartHealthTimer();
 		_areWaitForReconnect.Set();
+		UnitDataModel unitData = UnitData;
+		if (unitData != null && unitData.IsTampered)
+		{
+			_iuc285Notifier?.SendDeviceTamperedEvent();
+		}
+		_iuc285Notifier?.SendCardReaderStateEvent(GetCardReaderState());
+	}
+
+	public CardReaderState GetCardReaderState()
+	{
+		return new CardReaderState
+		{
+			SupportsEMV = SupportsEMV
+		};
+	}
+
+	private Version GetXMLVersion(string fileName)
+	{
+		Version result = null;
+		try
+		{
+			using Stream stream = RetrieveFile(RetrieveFileDataFormat.Text, Path.Combine("/HOST/", fileName));
+			if (stream != null)
+			{
+				StreamReader streamReader = new StreamReader(stream);
+				bool flag = false;
+				while (!flag && !streamReader.EndOfStream)
+				{
+					string text = streamReader?.ReadLine()?.Trim();
+					if (!string.IsNullOrEmpty(text) && text.StartsWith("<!--") && text.ToUpper().Contains("VERSION") && text.EndsWith("-->"))
+					{
+						flag = true;
+						Version.TryParse(new Regex("\\d+(\\.\\d+)+").Match(text)?.Value, out result);
+					}
+				}
+			}
+			else
+			{
+				Log($"Unable to read file {fileName} to extract version.");
+			}
+		}
+		catch (Exception arg)
+		{
+			Log($"Error in GetXMLVersion. {arg}");
+		}
+		Log($"Extracted version: {result} from XML file: {fileName}");
+		return result;
 	}
 
 	private void OnReconnect(object s, EventArgs e)
@@ -695,15 +589,17 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	public UnitHealthModel GetUnitHealth()
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P08_REQ_REQUEST_TYPE, "0");
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M08_HEALTH_STAT);
+		_rba_api.SetParam(PARAMETER_ID.P08_REQ_REQUEST_TYPE, "0");
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M08_HEALTH_STAT);
 		HandleAndLogResult(eRROR_ID, "08 Health Stat");
 		if (eRROR_ID != ERROR_ID.RESULT_SUCCESS)
 		{
 			return null;
 		}
-		UnitHealthModel unitHealthModel = new UnitHealthModel();
-		unitHealthModel.MSRSwipeCount = _rba_api.GetParam(PARAMETER_ID.P08_RES_COUNT_MSR_SWIPES);
+		UnitHealthModel unitHealthModel = new UnitHealthModel
+		{
+			MSRSwipeCount = _rba_api.GetParam(PARAMETER_ID.P08_RES_COUNT_MSR_SWIPES)
+		};
 		Log($"P08_RES_COUNT_MSR_SWIPES: {unitHealthModel.MSRSwipeCount}");
 		unitHealthModel.BadTrack1Reads = _rba_api.GetParam(PARAMETER_ID.P08_RES_COUNT_BAD_TRACK1_READS);
 		Log($"P08_RES_COUNT_BAD_TRACK1_READS: {unitHealthModel.BadTrack1Reads}");
@@ -756,8 +652,10 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		{
 			return null;
 		}
-		UnitDataModel unitDataModel = new UnitDataModel();
-		unitDataModel.Manufacture = _rba_api.GetParam(PARAMETER_ID.P07_RES_MANUFACTURE);
+		UnitDataModel unitDataModel = new UnitDataModel
+		{
+			Manufacture = _rba_api.GetParam(PARAMETER_ID.P07_RES_MANUFACTURE)
+		};
 		Log($"P07_RES_MANUFACTURE: {unitDataModel.Manufacture}");
 		unitDataModel.DeviceType = _rba_api.GetParam(PARAMETER_ID.P07_RES_DEVICE);
 		Log($"P07_RES_DEVICE: {unitDataModel.DeviceType}");
@@ -841,7 +739,8 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		{
 			return;
 		}
-		if (_unitData?.ManufacturingSerialNumber?.Equals("ALERT", StringComparison.OrdinalIgnoreCase) ?? false)
+		UnitDataModel unitData = _unitData;
+		if (unitData != null && unitData.IsTampered)
 		{
 			context.State = ReadCardContextState.Tampered;
 			return;
@@ -866,7 +765,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 	{
 		InitializeReadCard();
 		IUC285Proxy iUC285Proxy = this;
-		ReadCardContext obj = new ReadCardContext
+		ReadCardContext obj = new ReadCardContext(_logger)
 		{
 			Request = request,
 			CancelToken = cancel,
@@ -1089,6 +988,86 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		return flag;
 	}
 
+	private Stream RetrieveFile(RetrieveFileDataFormat dataFormat, string filename)
+	{
+		Stream stream = null;
+		Log($"Starting RetrieveFile for filename {filename}");
+		try
+		{
+			string text = "";
+			ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P65_REQ_RECORD_TYPE, "1");
+			IRBA_API rba_api = _rba_api;
+			int num = (int)dataFormat;
+			eRROR_ID = rba_api.SetParam(PARAMETER_ID.P65_REQ_DATA_TYPE, num.ToString());
+			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P65_REQ_FILE_NAME, filename);
+			eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M65_RETRIEVE_FILE);
+			Log($"ProcessMessage 65. {eRROR_ID}");
+			string param = _rba_api.GetParam(PARAMETER_ID.P65_RES_RESULT);
+			Log($"P65_RES_RESULT: {param}");
+			switch (param)
+			{
+			case "0":
+			{
+				int num2 = Convert.ToInt32(_rba_api.GetParam(PARAMETER_ID.P65_RES_TOTAL_NUMBER_OF_BLOCKS));
+				Log($"Total number of blocks: {num2}");
+				Log($"CRC: {_rba_api.GetParam(PARAMETER_ID.P65_RES_CRC)}");
+				Log($"Data type: {_rba_api.GetParam(PARAMETER_ID.P65_RES_DATA_TYPE)}");
+				Log($"# of blocks downloaded: {_rba_api.GetParam(PARAMETER_ID.P65_RES_BLOCK_NUMBER)}");
+				string param2 = _rba_api.GetParam(PARAMETER_ID.P65_RES_DATA);
+				text += param2;
+				if (num2 > 1)
+				{
+					for (int i = 1; i < num2; i++)
+					{
+						eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P65_REQ_RECORD_TYPE, "0");
+						IRBA_API rba_api2 = _rba_api;
+						num = (int)dataFormat;
+						eRROR_ID = rba_api2.SetParam(PARAMETER_ID.P65_REQ_DATA_TYPE, num.ToString());
+						eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P65_REQ_FILE_NAME, filename);
+						eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M65_RETRIEVE_FILE);
+						param = _rba_api.GetParam(PARAMETER_ID.P65_RES_RESULT);
+						if (param == "0")
+						{
+							Log($"# of blocks downloaded: {_rba_api.GetParam(PARAMETER_ID.P65_RES_BLOCK_NUMBER)}");
+							param2 = _rba_api.GetParam(PARAMETER_ID.P65_RES_DATA);
+							text += param2;
+						}
+					}
+				}
+				try
+				{
+					stream = new MemoryStream();
+					StreamWriter streamWriter = new StreamWriter(stream);
+					streamWriter.Write(text);
+					streamWriter.Flush();
+					stream.Position = 0L;
+					Log($"File successfully read into memeory stream {filename}");
+				}
+				catch (Exception arg)
+				{
+					Log($"Exception: {arg}");
+				}
+				break;
+			}
+			case "1":
+				Log($"File not found: {filename}");
+				break;
+			case "2":
+				Log("Error while converting original data to Base64 format");
+				break;
+			default:
+				Log("Format change error");
+				break;
+			}
+		}
+		catch (Exception arg2)
+		{
+			Log($"Error in RetrieveFile. {arg2}");
+		}
+		Log($"Ending RetrieveFile for filename {filename}");
+		return stream;
+	}
+
 	public async Task<bool> WriteFile(string fullPath, bool rebootAfterWrite = false)
 	{
 		if (string.IsNullOrEmpty(fullPath))
@@ -1228,12 +1207,12 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	public InsertedStatus CheckIfCardInserted()
 	{
-		ERROR_ID eRROR_ID = _rba_api.ResetParam(PARAMETER_ID.P_ALL_PARAMS);
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_01_REQ_STATUS, "00");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_01_REQ_EMVH_CURRENT_PACKET_NBR, "0");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_01_REQ_EMVH_PACKET_TYPE, "0");
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M33_01_EMV_STATUS);
-		HandleAndLogResult(eRROR_ID, "3301CardStatus");
+		_rba_api.ResetParam(PARAMETER_ID.P_ALL_PARAMS);
+		_rba_api.SetParam(PARAMETER_ID.P33_01_REQ_STATUS, "00");
+		_rba_api.SetParam(PARAMETER_ID.P33_01_REQ_EMVH_CURRENT_PACKET_NBR, "0");
+		_rba_api.SetParam(PARAMETER_ID.P33_01_REQ_EMVH_PACKET_TYPE, "0");
+		ERROR_ID result = _rba_api.ProcessMessage(MESSAGE_ID.M33_01_EMV_STATUS);
+		HandleAndLogResult(result, "3301CardStatus");
 		return M3301Status();
 	}
 
@@ -1263,6 +1242,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 				string text = $"Error when retrieving status when Getting Parameter {parameter} from EMV Message {messageId}";
 				eMVCardReadModel.AddError("D001", text);
 				Log(text);
+				ReadCardContextData.State = ReadCardContextState.Stop;
 			}
 			ParseTags parseTags = new ParseTags();
 			while (true)
@@ -1283,13 +1263,21 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			}
 			if (parseTags.Tag9F27CryptogramDeclined)
 			{
-				ReadCardContextData.ResponseDataModel = null;
 				ReadCardContextData.Errors.Add(new Error
 				{
 					Code = "EMVCardDecline",
 					Message = "Card Declined Transaction."
 				});
-				return;
+				ReadCardContextData.State = ReadCardContextState.Stop;
+			}
+			if (!string.IsNullOrEmpty(parseTags.ErrorCode))
+			{
+				ReadCardContextData.Errors.Add(new Error
+				{
+					Code = parseTags.ErrorCode,
+					Message = "Error During Read."
+				});
+				ReadCardContextData.State = ReadCardContextState.Stop;
 			}
 			eMVCardReadModel.FirstSix = parseTags.First6;
 			eMVCardReadModel.LastFour = parseTags.Last4;
@@ -1342,6 +1330,12 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		catch (Exception e)
 		{
 			LogException("EMVDataFromDevice", e);
+			ReadCardContextData.Errors.Add(new Error
+			{
+				Code = "EMVDataError",
+				Message = "Error Reading EMV Data From Device."
+			});
+			ReadCardContextData.State = ReadCardContextState.Stop;
 		}
 	}
 
@@ -1384,7 +1378,13 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 					return true;
 				default:
 					_are09CardRemoved.Set();
-					Log("Unhandled Card Source Type provided.");
+					Log($"Unhandled Card Source Type: {ReadCardContextData.CardSource}");
+					ReadCardContextData.Errors.Add(new Error
+					{
+						Code = "UnknownCardSource",
+						Message = $"Unhandled Card Source Type: {ReadCardContextData.CardSource}"
+					});
+					ReadCardContextData.State = ReadCardContextState.Stop;
 					return false;
 				}
 				_are09CardRemoved.Set();
@@ -1397,16 +1397,29 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			Log("P87_RES_CARD_DATA: " + text);
 			if (text.Length <= 0)
 			{
+				ReadCardContextData.Errors.Add(new Error
+				{
+					Code = "SwipeHasNoData",
+					Message = "Card Swipe has no data."
+				});
+				ReadCardContextData.State = ReadCardContextState.Stop;
 				return false;
 			}
 			Base87CardReadModel responseDataModel = ParseOnGuardData(text);
 			ReadCardContextData.ResponseDataModel = responseDataModel;
+			return true;
 		}
 		catch (Exception ex)
 		{
 			Log("Exception occurred" + ex.ToString());
+			ReadCardContextData.Errors.Add(new Error
+			{
+				Code = "87ReadCardUnhandled",
+				Message = "Unhandled exception occured in 87 - Read Card Encrypted Response from device."
+			});
+			ReadCardContextData.State = ReadCardContextState.Stop;
 		}
-		return true;
+		return false;
 	}
 
 	private void TerminalMessageHandler(MESSAGE_ID messageId)
@@ -1449,47 +1462,23 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private string ExitCodeText(string exitType)
 	{
-		string result = string.Empty;
-		switch (exitType)
+		string empty = string.Empty;
+		return exitType switch
 		{
-		case "0":
-			result = "Good Read";
-			break;
-		case "1":
-			result = "Bad Read";
-			break;
-		case "2":
-			result = "Cancelled";
-			break;
-		case "3":
-			result = "Button Pressed";
-			break;
-		case "4":
-			result = "Cless Card Floor Limit Exceeded";
-			break;
-		case "5":
-			result = "Max Cless FLoor Limit Exceeded";
-			break;
-		case "6":
-			result = "Invalid Prompt";
-			break;
-		case "7":
-			result = "Encryption Failed";
-			break;
-		case "8":
-			result = "Bad Key card";
-			break;
-		case "9":
-			result = "Bad Format of 23";
-			break;
-		case "A":
-			result = "Amount was not set and the contactless reader was not enabled";
-			break;
-		case "R":
-			result = "At least one specified reader is disabled";
-			break;
-		}
-		return result;
+			"0" => "Good Read", 
+			"1" => "Bad Read", 
+			"2" => "Cancelled", 
+			"3" => "Button Pressed", 
+			"4" => "Cless Card Floor Limit Exceeded", 
+			"5" => "Max Cless FLoor Limit Exceeded", 
+			"6" => "Invalid Prompt", 
+			"7" => "Encryption Failed", 
+			"8" => "Bad Key card", 
+			"9" => "Bad Format of 23", 
+			"A" => "Amount was not set and the contactless reader was not enabled", 
+			"R" => "At least one specified reader is disabled", 
+			_ => "Not performed or unknown exit type", 
+		};
 	}
 
 	private CardSourceType ParseCardSourceType(string sourceType)
@@ -1737,32 +1726,9 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	public bool SetAmount(string amount)
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P13_REQ_AMOUNT, amount);
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M13_AMOUNT);
+		_rba_api.SetParam(PARAMETER_ID.P13_REQ_AMOUNT, amount);
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M13_AMOUNT);
 		HandleAndLogResult(eRROR_ID, $"13 Set Amount: {amount}");
-		return eRROR_ID == ERROR_ID.RESULT_SUCCESS;
-	}
-
-	private bool CardReadRequestUnencrypted(DeviceInputType inputs = DeviceInputType.M)
-	{
-		string text = "COD.K3Z";
-		ERROR_ID eRROR_ID;
-		if (!string.IsNullOrEmpty(text))
-		{
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P23_REQ_FORM_NAME, text);
-		}
-		string description = inputs.GetDescription();
-		if (!string.IsNullOrEmpty(description))
-		{
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P23_REQ_PROMPT_INDEX, description);
-		}
-		string text2 = inputs.ToString();
-		if (!string.IsNullOrEmpty(text2))
-		{
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P23_REQ_ENABLE_DEVICES, text2);
-		}
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M23_CARD_READ);
-		HandleAndLogResult(eRROR_ID, "M23 General Card Read");
 		return eRROR_ID == ERROR_ID.RESULT_SUCCESS;
 	}
 
@@ -1798,6 +1764,15 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			};
 			return false;
 		}
+		if (context.ExitType != CardReadExitType.GoodRead)
+		{
+			context.Errors.Add(new Error
+			{
+				Code = "BadExitType",
+				Message = $"({context.ExitType}) - {ExitCodeText(context.ExitType.ToString())}"
+			});
+			Log("Exit Type Not Good Read.");
+		}
 		if ((context.CardSource != CardSourceType.Swipe || context.ResponseDataModel == null) && context.CardSource != CardSourceType.QuickChip && context.CardSource != CardSourceType.EMVContact)
 		{
 			return context.CardSource == CardSourceType.EMVContactless;
@@ -1812,50 +1787,44 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			inputs = DeviceInputType.M;
 		}
 		string text = "COD.K3Z";
-		ERROR_ID eRROR_ID;
 		if (!string.IsNullOrEmpty(text))
 		{
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P87_REQ_FORM_NAME, text);
+			_rba_api.SetParam(PARAMETER_ID.P87_REQ_FORM_NAME, text);
 		}
 		string description = inputs.GetDescription();
 		if (!string.IsNullOrEmpty(description))
 		{
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P87_REQ_PROMPT_INDEX, description);
+			_rba_api.SetParam(PARAMETER_ID.P87_REQ_PROMPT_INDEX, description);
 		}
 		string text2 = inputs.ToString();
 		if (!string.IsNullOrEmpty(text2))
 		{
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P87_REQ_ENABLE_DEVICES, text2);
+			_rba_api.SetParam(PARAMETER_ID.P87_REQ_ENABLE_DEVICES, text2);
 		}
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M87_E2EE_CARD_READ);
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M87_E2EE_CARD_READ);
 		HandleAndLogResult(eRROR_ID, "87 OnGuard Card Read");
 		return eRROR_ID == ERROR_ID.RESULT_SUCCESS;
 	}
 
-	private string GetPrompt(DeviceInputType inputs)
-	{
-		return inputs.GetDescription();
-	}
-
 	private void SetVariable_28(string varID, string varData)
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P28_REQ_RESPONSE_TYPE, "1");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P28_REQ_VARIABLE_ID, varID);
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P28_REQ_VARIABLE_DATA, varData);
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M28_SET_VARIABLE);
+		_rba_api.SetParam(PARAMETER_ID.P28_REQ_RESPONSE_TYPE, "1");
+		_rba_api.SetParam(PARAMETER_ID.P28_REQ_VARIABLE_ID, varID);
+		_rba_api.SetParam(PARAMETER_ID.P28_REQ_VARIABLE_DATA, varData);
+		ERROR_ID result = _rba_api.ProcessMessage(MESSAGE_ID.M28_SET_VARIABLE);
 		string param = _rba_api.GetParam(PARAMETER_ID.P28_RES_STATUS);
 		string statusText = GetStatusText(param);
-		HandleAndLogResult(eRROR_ID, $"28 Set Variable ID: {varID}, Data: {varData} - P28_RES_STATUS: {param} - {statusText} -");
+		HandleAndLogResult(result, $"28 Set Variable ID: {varID}, Data: {varData} - P28_RES_STATUS: {param} - {statusText} -");
 	}
 
 	public string GetVariable_29(string varID)
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P29_REQ_VARIABLE_ID, varID);
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M29_GET_VARIABLE);
+		_rba_api.SetParam(PARAMETER_ID.P29_REQ_VARIABLE_ID, varID);
+		ERROR_ID result = _rba_api.ProcessMessage(MESSAGE_ID.M29_GET_VARIABLE);
 		string param = _rba_api.GetParam(PARAMETER_ID.P29_RES_STATUS);
 		string statusText = GetStatusText(param);
 		string param2 = _rba_api.GetParam(PARAMETER_ID.P29_RES_VARIABLE_DATA);
-		HandleAndLogResult(eRROR_ID, $"29 Get Variable ID: {varID}, Data: {param2} - P29_RES_STATUS: ({param}) - {statusText} -");
+		HandleAndLogResult(result, $"29 Get Variable ID: {varID}, Data: {param2} - P29_RES_STATUS: ({param}) - {statusText} -");
 		return param2;
 	}
 
@@ -1916,11 +1885,11 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private bool EMVTransInitiation()
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_00_REQ_STATUS, "00");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_00_REQ_EMVH_CURRENT_PACKET_NBR, "0");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_00_REQ_EMVH_PACKET_TYPE, "0");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_00_REQ_RESEND_TIMER, "5000");
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M33_00_EMV_TRANSACTION_INITIATION);
+		_rba_api.SetParam(PARAMETER_ID.P33_00_REQ_STATUS, "00");
+		_rba_api.SetParam(PARAMETER_ID.P33_00_REQ_EMVH_CURRENT_PACKET_NBR, "0");
+		_rba_api.SetParam(PARAMETER_ID.P33_00_REQ_EMVH_PACKET_TYPE, "0");
+		_rba_api.SetParam(PARAMETER_ID.P33_00_REQ_RESEND_TIMER, "5000");
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M33_00_EMV_TRANSACTION_INITIATION);
 		HandleAndLogResult(eRROR_ID, "33.00 EMV Transaction Initiation");
 		return eRROR_ID == ERROR_ID.RESULT_SUCCESS;
 	}
@@ -1946,10 +1915,10 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private bool SetPaymentType_04(string paymentType, string amount)
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P04_REQ_FORCE_PAYMENT_TYPE, "0");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P04_REQ_PAYMENT_TYPE, paymentType);
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P04_REQ_AMOUNT, amount);
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M04_SET_PAYMENT_TYPE);
+		_rba_api.SetParam(PARAMETER_ID.P04_REQ_FORCE_PAYMENT_TYPE, "0");
+		_rba_api.SetParam(PARAMETER_ID.P04_REQ_PAYMENT_TYPE, paymentType);
+		_rba_api.SetParam(PARAMETER_ID.P04_REQ_AMOUNT, amount);
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M04_SET_PAYMENT_TYPE);
 		Log($"ProcessMessage 04. {eRROR_ID}");
 		string param = _rba_api.GetParam(PARAMETER_ID.P04_RES_FORCE_PAYMENT_TYPE);
 		string arg = string.Empty;
@@ -1999,12 +1968,12 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	private void SendAuthorizationReponse(bool success = true)
 	{
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_04_RES_STATUS, "00");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_04_RES_EMVH_CURRENT_PACKET_NBR, "0");
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P33_04_RES_EMVH_PACKET_TYPE, "0");
-		eRROR_ID = _rba_api.AddTagParam(MESSAGE_ID.M33_04_EMV_AUTHORIZATION_RESPONSE, 138, success ? "00" : "05");
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M33_04_EMV_AUTHORIZATION_RESPONSE);
-		HandleAndLogResult(eRROR_ID, $"33.04 EMV Auth Response: {success}");
+		_rba_api.SetParam(PARAMETER_ID.P33_04_RES_STATUS, "00");
+		_rba_api.SetParam(PARAMETER_ID.P33_04_RES_EMVH_CURRENT_PACKET_NBR, "0");
+		_rba_api.SetParam(PARAMETER_ID.P33_04_RES_EMVH_PACKET_TYPE, "0");
+		_rba_api.AddTagParam(MESSAGE_ID.M33_04_EMV_AUTHORIZATION_RESPONSE, 138, success ? "00" : "05");
+		ERROR_ID result = _rba_api.ProcessMessage(MESSAGE_ID.M33_04_EMV_AUTHORIZATION_RESPONSE);
+		HandleAndLogResult(result, $"33.04 EMV Auth Response: {success}");
 	}
 
 	public bool ReadConfig(string group, string index, out string Data, bool sendOffline = true)
@@ -2014,9 +1983,9 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			Offline();
 		}
 		_rba_api.ResetParam(PARAMETER_ID.P_ALL_PARAMS);
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P61_REQ_GROUP_NUM, group);
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P61_REQ_INDEX_NUM, index);
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M61_CONFIGURATION_READ);
+		_rba_api.SetParam(PARAMETER_ID.P61_REQ_GROUP_NUM, group);
+		_rba_api.SetParam(PARAMETER_ID.P61_REQ_INDEX_NUM, index);
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M61_CONFIGURATION_READ);
 		string param = _rba_api.GetParam(PARAMETER_ID.P61_RES_STATUS);
 		string param2 = _rba_api.GetParam(PARAMETER_ID.P61_RES_GROUP_NUM);
 		string param3 = _rba_api.GetParam(PARAMETER_ID.P61_RES_INDEX_NUM);
@@ -2032,10 +2001,10 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			Offline();
 		}
 		_rba_api.ResetParam(PARAMETER_ID.P_ALL_PARAMS);
-		ERROR_ID eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P60_REQ_GROUP_NUM, group.PadLeft(4, '0'));
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P60_REQ_INDEX_NUM, index.PadLeft(4, '0'));
-		eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P60_REQ_DATA_CONFIG_PARAM, value);
-		eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M60_CONFIGURATION_WRITE);
+		_rba_api.SetParam(PARAMETER_ID.P60_REQ_GROUP_NUM, group.PadLeft(4, '0'));
+		_rba_api.SetParam(PARAMETER_ID.P60_REQ_INDEX_NUM, index.PadLeft(4, '0'));
+		_rba_api.SetParam(PARAMETER_ID.P60_REQ_DATA_CONFIG_PARAM, value);
+		ERROR_ID eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M60_CONFIGURATION_WRITE);
 		string param = _rba_api.GetParam(PARAMETER_ID.P60_RES_STATUS);
 		HandleAndLogResult(eRROR_ID, $"60 Configuration Write Group#: {group}, Index#: {index}, Data: {value} - P60_RES_STATUS: ({param}) - {ConfigStatusText(param)} -");
 		return eRROR_ID == ERROR_ID.RESULT_SUCCESS;
@@ -2087,9 +2056,9 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		List<byte> list = new List<byte>(4074);
 		byte item = byte.MaxValue;
 		int num = -1;
-		byte b = 0;
 		do
 		{
+			byte b;
 			try
 			{
 				int num2 = ist.ReadByte();
@@ -2137,20 +2106,20 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			_rba_api.ResetParam(PARAMETER_ID.P_ALL_PARAMS);
 			int num = (int)recordType;
 			string data2 = num.ToString();
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_RECORD_TYPE, data2);
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_ENCODING_FORMAT, "8");
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_RECORD_TYPE, data2);
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_ENCODING_FORMAT, "8");
 			string data3 = $"{segmentNumber:D2}";
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_SEGMENT_NBR, data3);
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_SEGMENT_NBR, data3);
 			num = (int)unpackFlag;
 			string data4 = num.ToString();
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_UNPACK_FLAG, data4);
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_FAST_DOWNLOAD, "1");
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_UNPACK_FLAG, data4);
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_FAST_DOWNLOAD, "1");
 			if (recordType == WriteFileRecordType.NewFileFull || recordType == WriteFileRecordType.NewFileInitialMulti)
 			{
-				eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_FILE_NAME, fileName);
+				_rba_api.SetParam(PARAMETER_ID.P62_REQ_FILE_NAME, fileName);
 			}
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_FILE_DATA, data.EncData);
-			eRROR_ID = _rba_api.SetParam(PARAMETER_ID.P62_REQ_LAST_MESSAGE_TIMEOUT_SEC, "180");
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_FILE_DATA, data.EncData);
+			_rba_api.SetParam(PARAMETER_ID.P62_REQ_LAST_MESSAGE_TIMEOUT_SEC, "180");
 			eRROR_ID = _rba_api.ProcessMessage(MESSAGE_ID.M62_FILE_WRITE);
 			HandleAndLogResult(eRROR_ID, $"62 FileWrite: {fileName} - Record Type: {recordType} - Segment: {segmentNumber} - Length: {data.DataLength} - Result Status: {_rba_api.GetParam(PARAMETER_ID.P62_RES_STATUS)}");
 		}
@@ -2172,11 +2141,6 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			return WriteFileRecordType.LastRecord;
 		}
 		return WriteFileRecordType.Continuation;
-	}
-
-	private bool IsOGZFile(string fileName)
-	{
-		return Path.GetExtension(fileName).ToUpper() == ".OGZ";
 	}
 
 	private async Task<bool> WriteStreamInner(Stream stream, string fileName, bool rebootAfterWrite)
@@ -2278,7 +2242,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 
 	public bool Disconnect()
 	{
-		ERROR_ID eRROR_ID = ERROR_ID.RESULT_SUCCESS;
+		ERROR_ID eRROR_ID;
 		try
 		{
 			eRROR_ID = _rba_api.Disconnect();
@@ -2361,7 +2325,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			text = GetVariable_29("202") + GetVariable_29("201");
 			return DateTime.ParseExact(text, "MMddyyHHmmss", CultureInfo.InvariantCulture);
 		}
-		catch (Exception)
+		catch
 		{
 			_logger?.LogInformation($"GetDeviceTime: Could not parse date from deviceTimeString - '{text}'");
 			return null;
@@ -2434,6 +2398,8 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			MfgSerial = _unitData?.ManufacturingSerialNumber,
 			RBA = _unitData?.GetApplicationVersionString(),
 			Assembly = Assembly.GetExecutingAssembly().GetName().Version.ToString(),
+			EMVClessVersion = EMVClessVersion?.ToString(),
+			EMVContactVersion = EMVContactVersion?.ToString(),
 			LocalTime = DateTime.Now,
 			RevisionNumber = GetFileUpdateRevisionNumber()
 		};

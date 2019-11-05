@@ -8,10 +8,8 @@ public class DeviceService
 {
 	public static List<Version> CompatibleClientVersions = new List<Version>
 	{
-		new Version(1, 0),
-		new Version(1, 1),
-		new Version(1, 2),
-		new Version(1, 3)
+		new Version(1, 3),
+		new Version(1, 4)
 	};
 
 	public static Version AssemblyVersion => Assembly.GetExecutingAssembly().GetName().Version;

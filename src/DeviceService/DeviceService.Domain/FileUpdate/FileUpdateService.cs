@@ -370,6 +370,7 @@ public class FileUpdateService : IFileUpdateService
 								if (activeZipFileUpdateResult?.UpdateFileManifestProperties != null && FileUpdater.SetFileUpdateRevisionNumber(activeZipFileUpdateResult.UpdateFileManifestProperties.Revision))
 								{
 									CompleteUpdate(activeZipFileUpdateResult);
+									FileUpdater?.PostDeviceStatus();
 								}
 								else
 								{
@@ -391,7 +392,6 @@ public class FileUpdateService : IFileUpdateService
 				{
 					Log("Completing file updates.");
 					FileUpdater?.CompleteFileUpdates();
-					FileUpdater?.PostDeviceStatus();
 				}
 			}
 		}

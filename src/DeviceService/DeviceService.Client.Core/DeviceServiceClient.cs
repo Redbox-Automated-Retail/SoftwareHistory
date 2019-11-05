@@ -81,6 +81,14 @@ public class DeviceServiceClient : IDeviceServiceClientCore
 		SendSimpleEvent(new CardReaderConnectedEvent());
 	}
 
+	public void SendCardReaderStateEvent(CardReaderState cardReaderState)
+	{
+		_signalRClient.SendCardReaderStateEvent(new CardReaderStateEvent
+		{
+			CardReaderState = cardReaderState
+		});
+	}
+
 	public void SendCardReaderDisconnectedEvent()
 	{
 		SendSimpleEvent(new CardReaderDisconnectedEvent());
@@ -97,6 +105,11 @@ public class DeviceServiceClient : IDeviceServiceClientCore
 		{
 			ShutDownReason = shutDownReason
 		});
+	}
+
+	public void SendDeviceTamperedEvent()
+	{
+		SendSimpleEvent(new DeviceTamperedEvent());
 	}
 
 	public void SetCommandQueueState(bool commandQueuePaused)

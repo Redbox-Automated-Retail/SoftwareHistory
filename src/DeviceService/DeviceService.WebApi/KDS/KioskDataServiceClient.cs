@@ -76,6 +76,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		StandardResponse standardResponse;
 		try
 		{
+			_logger.LogInformation("Preparing to send PostCardStats to Kiosk Data Service");
 			HttpRequestMessage request = _httpService.GenerateRequest("CardStats", cardStats, HttpMethod.Post, "Authorization", "Bearer " + _apiKey, _apiUrl + "/api/KioskData");
 			standardResponse = JsonConvert.DeserializeObject<StandardResponse>(await ((await _httpService.SendRequest(request, 5000)).Content?.ReadAsStringAsync()));
 		}

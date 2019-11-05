@@ -8,7 +8,7 @@ namespace DeviceService.Domain;
 
 public class ParseTags
 {
-	public CardBrandEnum CardBrand = CardBrandEnum.Unknown;
+	public CardBrandEnum CardBrand;
 
 	public FallbackType? FallbackReason;
 

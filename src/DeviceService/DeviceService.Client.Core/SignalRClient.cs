@@ -66,6 +66,16 @@ public class SignalRClient
 		_hubConnection.SendAsync("SendShutDownStartingEvent", deviceServiceShutDownStartingEvent);
 	}
 
+	public void SendCardReaderStateEvent(CardReaderStateEvent cardReaderStateEvent)
+	{
+		_hubConnection.SendAsync("SendCardReaderStateEvent", cardReaderStateEvent);
+	}
+
+	public void SendDeviceTamperedEvent(DeviceTamperedEvent deviceTamperedEvent)
+	{
+		_hubConnection.SendAsync("SendDeviceTamperedEvent", deviceTamperedEvent);
+	}
+
 	public void SetCommandQueueState(SetCommandQueueStateCommand setCommandQueueStateCommand)
 	{
 		_hubConnection.SendAsync("SetCommandQueueState", setCommandQueueStateCommand);

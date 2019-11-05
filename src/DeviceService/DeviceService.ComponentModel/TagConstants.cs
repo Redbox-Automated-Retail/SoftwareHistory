@@ -50,6 +50,11 @@ public class TagConstants
 		},
 		new TagDetails
 		{
+			Tag = "8E",
+			Description = "Cardholder Verification Method (CVM) List"
+		},
+		new TagDetails
+		{
 			Tag = "91",
 			Description = "Issuer Authentication Data"
 		},
