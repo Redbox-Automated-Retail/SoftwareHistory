@@ -167,7 +167,7 @@ public static class DataServiceFunctions
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log($"An unhandled exception occured - DataServiceFunctions.DataServiceGetKeys({dataStore},{tableName}).", e);
-			ServiceLocator.Instance.GetService<IEngineApplication>()?.CorruptDbDetected(dataStore);
+			ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RaiseCorruptDb();
 			return null;
 		}
 	}

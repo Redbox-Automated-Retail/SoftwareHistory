@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Redbox.KioskEngine.ComponentModel;
@@ -9,6 +10,12 @@ namespace Redbox.Rental.Model.Analytics;
 public class AnalyticsShoppingCartItem
 {
 	public long ProductId { get; set; }
+
+	public string TivoQueryId { get; set; }
+
+	public string OfferCode { get; set; }
+
+	public List<string> Tags { get; set; }
 
 	[JsonConverter(typeof(StringEnumConverter))]
 	public RentalShoppingCartItemAction Action { get; set; }
@@ -64,7 +71,10 @@ public class AnalyticsShoppingCartItem
 			ExtraNight = ((rentalShoppingCartItem.Action != RentalShoppingCartItemAction.purchase) ? rentalShoppingCartItem.PricingRecord.ExtraNight.ToString() : null),
 			InitialDays = ((rentalShoppingCartItem.Action != RentalShoppingCartItemAction.purchase) ? rentalShoppingCartItem.PricingRecord.InitialDays : ((int?)null)),
 			DefaultInitialNightPrice = ((rentalShoppingCartItem.Action != RentalShoppingCartItemAction.purchase) ? rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice : ((decimal?)null)),
-			DefaultExtraNightPrice = ((rentalShoppingCartItem.Action != RentalShoppingCartItemAction.purchase) ? rentalShoppingCartItem.PricingRecord.DefaultExtraNightPrice : ((decimal?)null))
+			DefaultExtraNightPrice = ((rentalShoppingCartItem.Action != RentalShoppingCartItemAction.purchase) ? rentalShoppingCartItem.PricingRecord.DefaultExtraNightPrice : ((decimal?)null)),
+			TivoQueryId = rentalShoppingCartItem.TivoQueryId,
+			OfferCode = rentalShoppingCartItem.OfferCode,
+			Tags = rentalShoppingCartItem.Tags
 		};
 	}
 }

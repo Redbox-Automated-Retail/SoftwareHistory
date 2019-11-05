@@ -266,7 +266,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
 			if (service != null && service.ChipEnabled && (service == null || service.CardReadTechnicalFallbackEnabled) && service2 != null && service2.SupportsEMV)
 			{
-				trackData.errors.Add(CardHelper.ErrorCodes.NewAmexCannotFallbackError());
+				trackData.Errors.Add(CardHelper.ErrorCodes.NewAmexCannotFallbackError());
 				trackData.FallbackStatusAction = FallbackStatusAction.ResetFallbackCounter;
 			}
 		}
@@ -280,7 +280,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
 			if (service != null && service.ChipEnabled && service2 != null && service2.SupportsEMV)
 			{
-				trackData.errors.Add(CardHelper.ErrorCodes.NewSwipedCardIsChipEnabledError());
+				trackData.Errors.Add(CardHelper.ErrorCodes.NewSwipedCardIsChipEnabledError());
 			}
 		}
 	}
@@ -396,6 +396,11 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		trackData.CardSourceType = baseCardReadModel.CardSource;
 		trackData.FirstSix = baseCardReadModel?.FirstSix;
 		trackData.LastFour = baseCardReadModel?.LastFour;
+		baseCardReadModel?.Errors?.ForEach(delegate(DeviceService.ComponentModel.Error x)
+		{
+			trackData.Errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DeviceServiceError", x.Code, x.Message));
+		});
+		trackData.ReadStatus = baseCardReadModel.Status;
 		if (string.IsNullOrEmpty(trackData.LastName))
 		{
 			CardHelper.ParseNameData(baseCardReadModel?.Name, trackData);
@@ -415,6 +420,15 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 			trackData.ExpiryYear = ((baseCardReadModel != null && baseCardReadModel.Expiry != null && baseCardReadModel.Expiry.Length == 4) ? baseCardReadModel.Expiry.Substring(0, 2) : null);
 			trackData.ExpiryMonth = ((baseCardReadModel != null && baseCardReadModel.Expiry != null && baseCardReadModel.Expiry.Length == 4) ? baseCardReadModel.Expiry.Substring(2, 2) : null);
 		}
+		AddTamperedCardReadErrorsToTrackData(trackData, baseCardReadModel);
+	}
+
+	private void AddTamperedCardReadErrorsToTrackData(ITrackData trackData, Base87CardReadModel baseCardReadModel)
+	{
+		if (trackData != null && baseCardReadModel != null)
+		{
+			trackData.Errors.AddRange(baseCardReadModel.GetTamperedErrors());
+		}
 	}
 
 	private ITrackData GetTrackDataFromCardReadUnencryptedResponseEvent(BaseResponseEvent baseResponseEvent)
@@ -422,7 +436,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		ITrackData result = null;
 		if (baseResponseEvent is UnencryptedCardReadResponseEvent { Data: not null } unencryptedCardReadResponseEvent)
 		{
-			result = GenerateTrackDataFromTrack1AndTrack2(unencryptedCardReadResponseEvent?.Data.Track1, unencryptedCardReadResponseEvent?.Data.Track2);
+			result = GenerateTrackDataFromTrack1AndTrack2(unencryptedCardReadResponseEvent.Data.Track1, unencryptedCardReadResponseEvent.Data.Track2);
 		}
 		return result;
 	}
@@ -439,6 +453,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 				secureString.AppendChar(c);
 			}
 			result = CardHelper.Parse(secureString);
+			secureString.Dispose();
 		}
 		return result;
 	}

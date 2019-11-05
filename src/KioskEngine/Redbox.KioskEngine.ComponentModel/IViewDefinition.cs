@@ -8,6 +8,10 @@ public interface IViewDefinition
 
 	bool ActiveFlag { get; }
 
+	bool IsStartOverView { get; }
+
+	bool IsMaintenanceModeView { get; }
+
 	string ControlName { get; }
 
 	Action<IViewFrameInstance> OnEnter { get; }

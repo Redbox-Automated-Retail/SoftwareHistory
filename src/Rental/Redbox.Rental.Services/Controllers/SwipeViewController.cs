@@ -27,6 +27,8 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class SwipeViewController : BaseViewController
 {
+	private delegate void ShowMessage(Action timeout, Action goBack);
+
 	private static Action _cancelAction;
 
 	private static Action _continueAction;
@@ -481,24 +483,23 @@ public class SwipeViewController : BaseViewController
 			}
 			stringBuilder.Append($" Start Time: {item.StartDateTime}, ");
 			stringBuilder.Append($" Available Input Type(s): {item.DeviceInputType}, ");
-			stringBuilder.Append($" Track Data Type: {item.TrackData?.GetType()?.Name}, ");
-			stringBuilder.Append($" Card Source Type: {item?.TrackData?.CardSourceType}, ");
-			if (item.TrackData is IEncryptedTrackData encryptedTrackData)
+			ITrackData trackData = item.TrackData;
+			if (trackData != null)
 			{
-				stringBuilder.Append($" Has Valid Data: {encryptedTrackData.HasValidData()}, ");
-			}
-			if (item.TrackData is IUnencryptedTrackData unencryptedTrackData)
-			{
-				stringBuilder.Append($" Has Valid Data: {unencryptedTrackData.HasValidData()}, ");
-			}
-			if (item?.TrackData?.errors != null && item != null && item.TrackData?.errors.Count > 0)
-			{
-				List<string> list = new List<string>();
-				foreach (Redbox.KioskEngine.ComponentModel.Error item2 in item?.TrackData?.errors)
+				stringBuilder.Append($" Track Data Type: {trackData.GetType().Name}, ");
+				stringBuilder.Append($" Card Source Type: {trackData.CardSourceType}, ");
+				if (trackData is IEncryptedTrackData encryptedTrackData)
 				{
-					list.Add(item2.Code);
+					stringBuilder.Append($" Has Valid Data: {encryptedTrackData.HasValidData()}, ");
 				}
-				stringBuilder.Append(string.Format(" Error Codes: {0},", string.Join(",", item.TrackData.errors.Select((Redbox.KioskEngine.ComponentModel.Error x) => $"{x.Code} - {x.Description}"))));
+				if (trackData is IUnencryptedTrackData unencryptedTrackData)
+				{
+					stringBuilder.Append($" Has Valid Data: {unencryptedTrackData.HasValidData()}, ");
+				}
+				if (trackData.Errors.IsNotNullOrEmpty())
+				{
+					stringBuilder.Append(string.Format(" Error Codes: {0},", string.Join(",", trackData.Errors.Select((Redbox.KioskEngine.ComponentModel.Error x) => $"{x.Code} - {x.Description}"))));
+				}
 			}
 			if (item?.AuthorizeResult != null)
 			{
@@ -541,6 +542,7 @@ public class SwipeViewController : BaseViewController
 	{
 		try
 		{
+			LogHelper.Instance.Log("Starting SwipeViewController.OnCardReadCompleteHandler");
 			StopTimer();
 			if (Redbox.Rental.Services.Session.Session.Instance != null)
 			{
@@ -551,6 +553,7 @@ public class SwipeViewController : BaseViewController
 			{
 				Task.Factory.StartNew(delegate
 				{
+					LogHelper.Instance.Log("Starting UI update in SwipeViewController.OnCardReadCompleteHandler");
 					try
 					{
 						UpdateCardReadAttemptWithTrackDataResult(trackData);
@@ -571,62 +574,77 @@ public class SwipeViewController : BaseViewController
 							{
 								cardReadEvent.CardReadValid = false;
 								AddAttribute("cardSwipe", "result", "invalid", ShoppingCartSessionId);
-								Action timeOutAction = delegate
+								Action action = delegate
 								{
 									MessagePopupViewController.ReenableTimer();
 									viewService.Push("idle_timeout_message_view");
 									viewService.Show();
 								};
+								cardReadEvent.Action = "bad_swipe_action";
+								Action action2 = delegate
+								{
+									GoBackSafe("bad_swipe_action");
+								};
+								ShowMessage showMessage = MessagePopupViewController.ShowMessagePopupViewCardNotRecognized;
 								ITrackData trackData2 = trackData;
 								if (trackData2 != null && trackData2.NextCardReadIsInTechnicalFallback)
 								{
-									Action continueAction = delegate
+									cardReadEvent.Action = "technical_fallback";
+									action2 = delegate
 									{
 										GoBackSafe("technical_fallback");
 									};
-									cardReadEvent.Action = "technical_fallback";
-									BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-									MessagePopupViewController.ShowMessagePopupViewCardNotRecognizedTechnicalFallback(timeOutAction, continueAction);
+									showMessage = MessagePopupViewController.ShowMessagePopupViewCardNotRecognizedTechnicalFallback;
 								}
-								else if (trackData?.errors != null && trackData.errors.ContainsCode("T020"))
+								else if (trackData.HasErrors())
 								{
-									Action continueAction2 = delegate
+									if (trackData.HasSwipedCardIsChipEnabledError())
 									{
-										GoBackSafe("swiped_card_is_chip_enabled");
-									};
-									cardReadEvent.Action = "swiped_card_is_chip_enabled";
-									BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-									MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled(timeOutAction, continueAction2);
+										cardReadEvent.Action = "swiped_card_is_chip_enabled";
+										action2 = delegate
+										{
+											GoBackSafe("swiped_card_is_chip_enabled");
+										};
+										showMessage = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
+									}
+									else if (trackData.HasTamperedError())
+									{
+										cardReadEvent.Action = "tampered_card_reader";
+										action2 = delegate
+										{
+											GoBackSafe("tampered_card_reader");
+											ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
+										};
+										action = action2;
+										showMessage = MessagePopupViewController.ShowMessagePopupViewCardReaderTampered;
+									}
+									else if (trackData.CardSourceTypeIsEMVContactOrQuickChip())
+									{
+										cardReadEvent.Action = "bad_chip_read_action";
+										action2 = delegate
+										{
+											GoBackSafe("bad_chip_read_action");
+										};
+										showMessage = MessagePopupViewController.ShowMessagePopupViewBadChipReadError;
+									}
+									else if (trackData.CardSourceTypeIsEMVContactlessOrMobileOrMSDContactless())
+									{
+										cardReadEvent.Action = "bad_contactless_read_action";
+										action2 = delegate
+										{
+											GoBackSafe("bad_contactless_read_action");
+										};
+										showMessage = MessagePopupViewController.ShowMessagePopupViewBadContactlessReadError;
+									}
 								}
-								else if (trackData?.errors != null && trackData.errors.Count > 0 && (trackData.CardSourceType == CardSourceType.EMVContact || trackData.CardSourceType == CardSourceType.QuickChip))
+								if (action != null && action2 != null && showMessage != null)
 								{
-									Action continueAction3 = delegate
-									{
-										GoBackSafe("bad_chip_read_action");
-									};
-									cardReadEvent.Action = "bad_chip_read_action";
+									showMessage(action, action2);
 									BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-									MessagePopupViewController.ShowMessagePopupViewBadChipReadError(timeOutAction, continueAction3);
-								}
-								else if (trackData?.errors != null && trackData.errors.Count > 0 && (trackData.CardSourceType == CardSourceType.EMVContactless || trackData.CardSourceType == CardSourceType.MSDContactless || trackData.CardSourceType == CardSourceType.Mobile))
-								{
-									Action continueAction4 = delegate
-									{
-										GoBackSafe("bad_contactless_read_action");
-									};
-									cardReadEvent.Action = "bad_contactless_read_action";
-									BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-									MessagePopupViewController.ShowMessagePopupViewBadContactlessReadError(timeOutAction, continueAction4);
 								}
 								else
 								{
-									Action continueAction5 = delegate
-									{
-										GoBackSafe("bad_swipe_action");
-									};
-									cardReadEvent.Action = "bad_swipe_action";
-									BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-									MessagePopupViewController.ShowMessagePopupViewCardNotRecognized(timeOutAction, continueAction5);
+									LogHelper.Instance.Log("OnCardReadCompleteHandler missing action.");
 								}
 							}
 							else

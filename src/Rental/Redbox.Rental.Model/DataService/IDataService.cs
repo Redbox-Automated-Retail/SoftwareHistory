@@ -55,8 +55,6 @@ public interface IDataService
 
 	List<ProductType> GetProductTypes();
 
-	List<Review> GetReviews(long titleId);
-
 	bool IsAccountOnOfflineBadCardList(string hashId);
 
 	void UpdateAccountOnOfflineBadCardList(string hashId);

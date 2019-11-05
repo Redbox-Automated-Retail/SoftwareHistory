@@ -113,6 +113,23 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 		}
 	}
 
+	public bool? EmailVerified
+	{
+		get
+		{
+			bool? result = null;
+			if (bool.TryParse(ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue<string>("Remote Services\\Marketing Optin Services", "EmailVerified", null), out var result2))
+			{
+				result = result2;
+			}
+			return result;
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Marketing Optin Services", "EmailVerified", value.ToString());
+		}
+	}
+
 	public void SendEmailConfirm(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
 		if (LiveCall)
@@ -148,6 +165,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 					remoteServiceResult.Properties["server_busy"] = true;
 					remoteServiceResult.Properties["is_online"] = false;
 					remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+					remoteServiceResult.Properties["email_verified"] = null;
 				}
 				else
 				{
@@ -159,6 +177,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 					remoteServiceResult.Properties["prompt_for_perks"] = PromptForPerks;
 					remoteServiceResult.Properties["prompt_for_early_id"] = PromptForEarlyId;
 					remoteServiceResult.Properties["text_club_enabled"] = TextClubEnabled;
+					remoteServiceResult.Properties["email_verified"] = EmailVerified;
 					remoteServiceResult.Properties["server_name"] = "Simulated";
 					remoteServiceResult.Properties["server_busy"] = false;
 					remoteServiceResult.Properties["is_online"] = true;
@@ -235,6 +254,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 				remoteServiceResult.Properties["prompt_for_perks"] = dictionary2.ContainsKey("PromptForPerks") && (bool)dictionary2["PromptForPerks"];
 				remoteServiceResult.Properties["prompt_for_early_id"] = dictionary2.ContainsKey("PromptForEarlyId") && (bool)dictionary2["PromptForEarlyId"];
 				remoteServiceResult.Properties["text_club_enabled"] = dictionary2.ContainsKey("TextClubEnabled") && (bool)dictionary2["TextClubEnabled"];
+				remoteServiceResult.Properties["email_verified"] = (dictionary2.ContainsKey("EmailVerified") ? ((bool?)dictionary2["EmailVerified"]) : ((bool?)null));
 			}
 			catch (Exception e)
 			{

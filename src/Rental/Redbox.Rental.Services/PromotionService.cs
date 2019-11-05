@@ -5,6 +5,7 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
@@ -729,6 +730,7 @@ public class PromotionService : IPromotionService
 			IPromotion promotion = new Redbox.Rental.Services.Promotion.Promotion
 			{
 				Name = inCartPromoCode,
+				DiscountType = DiscountType.PromotionCode,
 				OriginalPrice = promoValue,
 				Price = promoValue,
 				Quantity = 1,
@@ -756,7 +758,8 @@ public class PromotionService : IPromotionService
 			{
 				IPromotion promotion = new Redbox.Rental.Services.Promotion.Promotion
 				{
-					Name = offer.PromotionCode,
+					Name = (offer.PromotionCode ?? offer.OfferDiscountCode),
+					DiscountType = ((offer.PromotionCode != null) ? DiscountType.PromotionCode : DiscountType.Discount),
 					OriginalPrice = num,
 					Price = num,
 					Quantity = 1,
@@ -780,13 +783,14 @@ public class PromotionService : IPromotionService
 			}
 			else
 			{
-				Redbox.Rental.Model.PromotionIntentCode intent = ((offer.DiscountType == OfferDiscountType.Free) ? Redbox.Rental.Model.PromotionIntentCode.FirstNightFreeItem : Redbox.Rental.Model.PromotionIntentCode.FixedValue);
+				Redbox.Rental.Model.PromotionIntentCode intent = ((offer.DiscountType == OfferDiscountType.Free) ? Redbox.Rental.Model.PromotionIntentCode.FirstNightFreeItem : ((offer.DiscountType == OfferDiscountType.MultiNightPrice) ? Redbox.Rental.Model.PromotionIntentCode.MultiNightItem : Redbox.Rental.Model.PromotionIntentCode.FixedValue));
 				decimal num2 = ((offer.DiscountType == OfferDiscountType.Free) ? 0m : offer.Amount);
 				IPromotion promotion2 = new Redbox.Rental.Services.Promotion.Promotion
 				{
-					Name = offer.PromotionCode,
-					OriginalPrice = num2,
+					Name = (offer.PromotionCode ?? offer.OfferDiscountCode),
+					DiscountType = ((offer.PromotionCode != null) ? DiscountType.PromotionCode : DiscountType.Discount),
 					Price = num2,
+					OriginalPrice = num2,
 					Quantity = 1,
 					Intent = intent,
 					OriginalPercent = 0m,
@@ -797,8 +801,7 @@ public class PromotionService : IPromotionService
 					GetFormat = null,
 					CampaignTitles = new CampaignTitles
 					{
-						Include = offer.IncludeTitles,
-						Titles = offer.TitleIds
+						Include = offer.IncludeTitles
 					},
 					ProductTypeId = (int)offer.TitleFamily.Value,
 					FormatIds = (offer.IncludeFormats ? offer.FormatIds : GetFilteredFormatIds(offer.FormatIds))

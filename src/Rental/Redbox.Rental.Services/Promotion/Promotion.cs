@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.Promotion;
@@ -47,24 +48,30 @@ public class Promotion : IPromotion
 				if (Intent == PromotionIntentCode.FixedValue)
 				{
 					ICampaignTitles campaignTitles = CampaignTitles;
-					if (campaignTitles == null)
+					if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
 					{
-						return false;
+						goto IL_0061;
 					}
-					return campaignTitles.Titles?.Count > 0;
 				}
-				return false;
+				return Intent == PromotionIntentCode.MultiNightItem;
 			}
+			goto IL_0061;
+			IL_0061:
 			return true;
 		}
 	}
 
 	public bool IsValidatedPostVend { get; set; }
 
+	public DiscountType DiscountType { get; set; }
+
+	public bool IsExternallyValidated => Intent == PromotionIntentCode.MultiNightItem;
+
 	public Promotion()
 	{
 		QualifyingItems = new List<IRentalShoppingCartItem>();
 		PromotionItems = new List<IPromotionItem>();
 		IsValidatedPostVend = false;
+		DiscountType = DiscountType.PromotionCode;
 	}
 }

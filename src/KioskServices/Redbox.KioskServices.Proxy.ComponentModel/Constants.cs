@@ -20,4 +20,9 @@ public class Constants
 
 		public const string SoftSync = "SoftSync";
 	}
+
+	public class PropertyNames
+	{
+		public const string OfferDiscountCode = "OfferDiscountCode";
+	}
 }

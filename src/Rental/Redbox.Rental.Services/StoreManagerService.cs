@@ -158,7 +158,7 @@ public class StoreManagerService : IStoreManager
 	public string GetDefaultCulture()
 	{
 		string text = GetDefaultCultureByCountry();
-		if (_configService.TryGetValue<string>(ConfigFile.System, ConfigCategory.Culture, ConfigSetting.DefaultCulture, out var value))
+		if (_configService.TryGetValue<string>("system", "Culture", "DefaultCulture", out var value))
 		{
 			LogHelper.Instance.Log("Found default culture in configuration file: {0}", value);
 			if (IsCultureValid(value))
@@ -180,7 +180,7 @@ public class StoreManagerService : IStoreManager
 	public string GetAlternateCulture()
 	{
 		string text = GetDefaultAlternateCultureByCountry();
-		if (_configService.TryGetValue<string>(ConfigFile.System, ConfigCategory.Culture, ConfigSetting.AlternateCulture, out var value))
+		if (_configService.TryGetValue<string>("system", "Culture", "AlternateCulture", out var value))
 		{
 			LogHelper.Instance.Log("Found alternate culture in configuration file: {0}", value);
 			if (IsCultureValid(value))
@@ -231,7 +231,7 @@ public class StoreManagerService : IStoreManager
 	public int GetSellThruDays()
 	{
 		int result = 30;
-		if (_configService.TryGetValue<int>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SellThruDays, out var value))
+		if (_configService.TryGetValue<int>("system", "General", "SellThruDays", out var value))
 		{
 			result = value;
 		}
@@ -241,7 +241,7 @@ public class StoreManagerService : IStoreManager
 	private bool GetSellThruOfUsed()
 	{
 		bool result = true;
-		if (_configService.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SellThruOfUsed, out var value))
+		if (_configService.TryGetValue<bool>("system", "General", "SellThruOfUsed", out var value))
 		{
 			result = value;
 		}
@@ -251,7 +251,7 @@ public class StoreManagerService : IStoreManager
 	private bool GetGamesSellThru()
 	{
 		bool result = true;
-		if (_configService.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GamesSellThru, out var value))
+		if (_configService.TryGetValue<bool>("system", "General", "GamesSellThru", out var value))
 		{
 			result = value;
 		}

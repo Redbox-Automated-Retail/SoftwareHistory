@@ -5,7 +5,7 @@ namespace Redbox.KioskEngine.ComponentModel.TrackData;
 
 public interface ITrackData
 {
-	ErrorList errors { get; set; }
+	ErrorList Errors { get; set; }
 
 	string FirstSix { get; set; }
 
@@ -32,6 +32,8 @@ public interface ITrackData
 	FallbackType? FallbackReason { get; set; }
 
 	FallbackType? LastFallbackReason { get; set; }
+
+	ResponseStatus? ReadStatus { get; set; }
 
 	bool IsInTechnicalFallback { get; set; }
 

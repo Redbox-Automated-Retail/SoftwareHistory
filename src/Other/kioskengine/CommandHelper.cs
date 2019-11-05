@@ -91,13 +91,6 @@ internal static class CommandHelper
 		}
 	}
 
-	[EngineCommand(Name = "ActivateKioskOfflineView")]
-	internal static void ActivateKioskOfflineView(string[] parms)
-	{
-		LogHelper.Instance.Log("WM_COPYDATA: ActivateKioskOfflineView");
-		EnvironmentFunctions.ShowMaintenanceView();
-	}
-
 	[EngineCommand(Name = "BringToFront")]
 	internal static void BringToFront(string[] parms)
 	{

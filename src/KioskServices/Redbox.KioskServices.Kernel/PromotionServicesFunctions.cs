@@ -29,7 +29,7 @@ internal static class PromotionServicesFunctions
 			{
 				IOptInItem optInItem = service.NewOptInItem();
 				optInItem.ItemId = long.Parse((string)luaTable["item_id"]);
-				optInItem.Item_Type = Enum<Item_Type>.Parse((string)luaTable["item_type"]);
+				optInItem.Item_Type = Enum<KioskOptIntItemType>.Parse((string)luaTable["item_type"]);
 				optInItem.OptInMethodType = Enum<OptInMethodType>.Parse((string)luaTable["optin_method_type"]);
 				optInItem.OptInMethodData = (string)luaTable["optin_method_data"];
 				optInItem.TemplateName = (string)luaTable["template_name"];

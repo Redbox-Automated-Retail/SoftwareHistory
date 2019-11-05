@@ -4,5 +4,5 @@ public enum DiscountType
 {
 	PromotionCode = 1,
 	Loyalty,
-	Credit
+	Discount
 }

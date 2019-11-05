@@ -102,31 +102,6 @@ internal static class MerchantServicesFunctions
 		});
 	}
 
-	[KernelFunction(Name = "kernel.merchsvcs_emaillookup")]
-	internal static void EmailLookup(string storeNumber, string emailAddress, string accountNumber, LuaFunction completeCallback)
-	{
-		IMarketingOptinServices service = ServiceLocator.Instance.GetService<IMarketingOptinServices>();
-		if (service == null)
-		{
-			return;
-		}
-		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
-		if (callbackService != null)
-		{
-			service.SendEmailConfirm(storeNumber, emailAddress, accountNumber, delegate(IRemoteServiceResult r)
-			{
-				ICallbackService callbackService2 = callbackService;
-				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
-				{
-					Function = completeCallback
-				};
-				object[] parameters = new LuaTable[1] { r.AsTable() };
-				resultCallbackEntry.Parameters = parameters;
-				callbackService2.EnqueueCallback(resultCallbackEntry);
-			});
-		}
-	}
-
 	[KernelFunction(Name = "kernel.merchsvcs_pickupauthorize")]
 	internal static void PickupAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, bool cartWasModified, LuaFunction callback)
 	{

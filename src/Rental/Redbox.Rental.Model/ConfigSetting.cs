@@ -2,17 +2,19 @@ namespace Redbox.Rental.Model;
 
 public static class ConfigSetting
 {
-	public static string SellThruOfUsed = "SellThruOfUsed";
+	public const string SellThruOfUsed = "SellThruOfUsed";
 
-	public static string GamesSellThru = "GamesSellThru";
+	public const string GamesSellThru = "GamesSellThru";
 
-	public static string SellThruDays = "SellThruDays";
+	public const string SellThruDays = "SellThruDays";
 
-	public static string SendAppCrashAlert = "SendAppCrashAlert";
+	public const string SendAppCrashAlert = "SendAppCrashAlert";
 
-	public static string GiftCardsEnabled = "GiftCardsEnabled";
+	public const string GiftCardsEnabled = "GiftCardsEnabled";
 
-	public static string GenerateOutOfStockAnaltyics = "GenerateOutOfStockAnalytics";
+	public const string GenerateOutOfStockAnaltyics = "GenerateOutOfStockAnalytics";
+
+	public const string AnimatedDiscReturnEnabled = "AnimatedDiscReturnEnabled";
 
 	public const string BurnInTimeout = "BurnInTimeout";
 
@@ -23,6 +25,10 @@ public static class ConfigSetting
 	public const string UseLowestPriceSortOrder = "UserLowestPriceSortOrder";
 
 	public const string ComingSoonOptInEnabled = "ComingSoonOptIn";
+
+	public const string MarketingOptInEnabled = "MarketingOptInEnabled";
+
+	public const string ShowOptinForNormalCheckout = "ShowOptinForNormalCheckout";
 
 	public const string ServiceFeeEnabled = "ServiceFeeEnabled";
 
@@ -52,111 +58,115 @@ public static class ConfigSetting
 
 	public const string KioskAnalyticsJsonEnabled = "KioskAnalyticsJsonEnabled";
 
-	public static string MaxUnknownSyncs = "MaxUnknownSyncs";
+	public const string MaxUnknownSyncs = "MaxUnknownSyncs";
 
-	public static string SyncUnknownEnabled = "SyncUnknownEnabled";
+	public const string SyncUnknownEnabled = "SyncUnknownEnabled";
 
-	public static string SyncUnknownStartTimeRangeBegin = "SyncUnknownStartTimeRangeBegin";
+	public const string SyncUnknownStartTimeRangeBegin = "SyncUnknownStartTimeRangeBegin";
 
-	public static string SyncUnknownStartTimeRangeEnd = "SyncUnknownStartTimeRangeEnd";
+	public const string SyncUnknownStartTimeRangeEnd = "SyncUnknownStartTimeRangeEnd";
 
-	public static string SyncEmptyEnabled = "SyncEmptyEnabled";
+	public const string SyncEmptyEnabled = "SyncEmptyEnabled";
 
-	public static string SyncEmptyStartTimeRangeBegin = "SyncEmptyStartTimeRangeBegin";
+	public const string SyncEmptyStartTimeRangeBegin = "SyncEmptyStartTimeRangeBegin";
 
-	public static string SyncEmptyStartTimeRangeEnd = "SyncEmptyStartTimeRangeEnd";
+	public const string SyncEmptyStartTimeRangeEnd = "SyncEmptyStartTimeRangeEnd";
 
-	public static string ShowKMTInCartOffers = "ShowKMTInCartOffers";
+	public const string ShowKMTInCartOffers = "ShowKMTInCartOffers";
 
-	public static string ShowAuthChangeMessage = "ShowAuthChangeMessage";
+	public const string UseDiscountsForPmnpOffers = "UseDiscountsForPmnpOffers";
 
-	public static string GameEnableXbox360 = "GameEnableXbox360";
+	public const string ShowAuthChangeMessage = "ShowAuthChangeMessage";
 
-	public static string GameEnableXboxOne = "GameEnableXboxOne";
+	public const string GameEnableXbox360 = "GameEnableXbox360";
 
-	public static string GameEnablePS3 = "GameEnablePS3";
+	public const string GameEnableXboxOne = "GameEnableXboxOne";
 
-	public static string GameEnablePS4 = "GameEnablePS4";
+	public const string GameEnablePS3 = "GameEnablePS3";
 
-	public static string GameEnableWii = "GameEnableWii";
+	public const string GameEnablePS4 = "GameEnablePS4";
 
-	public static string GameEnableWiiU = "GameEnableWiiU";
+	public const string GameEnableWii = "GameEnableWii";
 
-	public static string GameEnableNintendoSwitch = "GameEnableNintendoSwitch";
+	public const string GameEnableWiiU = "GameEnableWiiU";
 
-	public static string DefaultCulture = "DefaultCulture";
+	public const string GameEnableNintendoSwitch = "GameEnableNintendoSwitch";
 
-	public static string AlternateCulture = "AlternateCulture";
+	public const string DefaultCulture = "DefaultCulture";
 
-	public static string ShowGameBanner = "ShowGameBanner";
+	public const string AlternateCulture = "AlternateCulture";
 
-	public static string ShowBlurayBrowse = "ShowBlurayBrowse";
+	public const string ShowGameBanner = "ShowGameBanner";
 
-	public static string ShowCollections = "ShowCollections";
+	public const string ShowBlurayBrowse = "ShowBlurayBrowse";
 
-	public static string ShowCollectionsBanner = "ShowCollectionsBanner";
+	public const string ShowCollections = "ShowCollections";
 
-	public static string ShowCollectionsPopUp = "ShowCollectionsPopUp";
+	public const string ShowCollectionsBanner = "ShowCollectionsBanner";
 
-	public static string CollectionsPopUpTimer = "CollectionsPopUpTimer";
+	public const string ShowCollectionsPopUp = "ShowCollectionsPopUp";
 
-	public static string CollectionsPopUpPaddleClicks = "CollectionsPopUpPaddleClicks";
+	public const string CollectionsPopUpTimer = "CollectionsPopUpTimer";
 
-	public static string EnableMarketingAds = "EnableMarketingAds";
+	public const string CollectionsPopUpPaddleClicks = "CollectionsPopUpPaddleClicks";
 
-	public static string EnableFlashDeals = "EnableFlashDeals";
+	public const string EnableMarketingAds = "EnableMarketingAds";
 
-	public static string FlashDealPrices = "FlashDealPrices";
+	public const string EnableFlashDeals = "EnableFlashDeals";
 
-	public static string Show99CentsBrowseFilterButton = "Show99CentsBrowseFilterButton";
+	public const string FlashDealPrices = "FlashDealPrices";
 
-	public static string ShowFAQUpdated = "ShowFAQUpdated";
+	public const string Show99CentsBrowseFilterButton = "Show99CentsBrowseFilterButton";
 
-	public static string ShowTermsUpdated = "ShowTermsUpdated";
+	public const string ShowFAQUpdated = "ShowFAQUpdated";
 
-	public static string ShowRedboxCardUpdated = "ShowRedboxCardUpdated";
+	public const string ShowTermsUpdated = "ShowTermsUpdated";
 
-	public static string ShowPrivacyUpdated = "ShowPrivacyUpdated";
+	public const string ShowRedboxCardUpdated = "ShowRedboxCardUpdated";
 
-	public static string ShowPerksUpdated = "ShowPerksUpdated";
+	public const string ShowPrivacyUpdated = "ShowPrivacyUpdated";
 
-	public static string ShowMobileFaqUpdated = "ShowMobileFAQUpdated";
+	public const string ShowPerksUpdated = "ShowPerksUpdated";
 
-	public static string FAQDocument = "FAQDocument";
+	public const string ShowMobileFaqUpdated = "ShowMobileFAQUpdated";
 
-	public static string TermsDocument = "TermsDocument";
+	public const string FAQDocument = "FAQDocument";
 
-	public static string RedboxCardDocument = "RedboxCardDocument";
+	public const string TermsDocument = "TermsDocument";
 
-	public static string PrivacyDocument = "PrivacyDocument";
+	public const string RedboxCardDocument = "RedboxCardDocument";
 
-	public static string PerksDocument = "PerksDocument";
+	public const string PrivacyDocument = "PrivacyDocument";
 
-	public static string MobileFaqDocument = "MobileFAQDocument";
+	public const string PerksDocument = "PerksDocument";
+
+	public const string MobileFaqDocument = "MobileFAQDocument";
 
 	public const string ABTestOffValue = "OFF";
 
 	public const string ABTestDefaultValue = "A";
 
-	public static string WelcomeScreen = "WelcomeScreen";
+	public const string WelcomeScreen = "WelcomeScreen";
 
-	public static string WelcomeScreenTiming = "WelcomeScreenTiming";
+	public const string WelcomeScreenTiming = "WelcomeScreenTiming";
 
-	public static string StartViewAd = "StartViewAd";
+	public const string StartViewAd = "StartViewAd";
 
-	public static string PriceFiltersOnBrowse = "PriceFiltersOnBrowse";
+	public const string StartViewRentAndBuy = "StartViewRentAndBuy";
 
-	public static string ScreenSaverTimer = "ScreenSaverTimer";
+	public const string PriceFiltersOnBrowse = "PriceFiltersOnBrowse";
 
-	public static string OutOfStockTitleDetails = "OutOfStockTitleDetails";
+	public const string ScreenSaverTimer = "ScreenSaverTimer";
 
-	public static string StarRatingTitleDetails = "StarRatingTitleDetails";
+	public const string OutOfStockTitleDetails = "OutOfStockTitleDetails";
 
-	public static string TVEnabled = "TVEnabled";
+	public const string TVEnabled = "TVEnabled";
 
-	public static string TVTitleIds = "TVTitleIds";
+	public const string TVTitleIds = "TVTitleIds";
 
-	public static string ShowAfterSwipePersonalizedOffers = "ShowAfterSwipePersonalizedOffers";
+	public const string ShoppingCartLayout = "ShoppingCartLayout";
+
+	public const string ShowAfterSwipePersonalizedOffers = "ShowAfterSwipePersonalizedOffers";
 
 	public const string UploadDiscImageMessagePriority = "UploadDiscImageMessagePriority";
 
@@ -206,39 +216,39 @@ public static class ConfigSetting
 
 	public const string LoyaltySignUpAfterSwipeStartEndTime = "SignUpAfterSwipeStartEndTime";
 
-	public static string DeviceServiceClientUrl = "DeviceServiceClientUrl";
+	public const string DeviceServiceClientUrl = "DeviceServiceClientUrl";
 
-	public static string ChipEnabled = "ChipEnabled";
+	public const string ChipEnabled = "ChipEnabled";
 
-	public static string ContactlessEnabled = "ContactlessEnabled";
+	public const string ContactlessEnabled = "ContactlessEnabled";
 
-	public static string CardReadTechnicalFallbackEnabled = "CardReadTechnicalFallbackEnabled";
+	public const string CardReadTechnicalFallbackEnabled = "CardReadTechnicalFallbackEnabled";
 
-	public static string CardReadTechnicalFallbackCountLimit = "CardReadTechnicalFallbackCountLimit";
+	public const string CardReadTechnicalFallbackCountLimit = "CardReadTechnicalFallbackCountLimit";
 
-	public static string DeviceServicePleaseWaitDuration = "DeviceServicePleaseWaitDuration";
+	public const string DeviceServicePleaseWaitDuration = "DeviceServicePleaseWaitDuration";
 
-	public static string ContactlessVisaEnabled = "ContactlessVisaEnabled";
+	public const string ContactlessVisaEnabled = "ContactlessVisaEnabled";
 
-	public static string ContactlessAmexEnabled = "ContactlessAmexEnabled";
+	public const string ContactlessAmexEnabled = "ContactlessAmexEnabled";
 
-	public static string ContactlessMasterCardEnabled = "ContactlessMasterCardEnabled";
+	public const string ContactlessMasterCardEnabled = "ContactlessMasterCardEnabled";
 
-	public static string ContactlessDiscoverEnabled = "ContactlessDiscoverEnabled";
+	public const string ContactlessDiscoverEnabled = "ContactlessDiscoverEnabled";
 
-	public static string VisaInsertChipEnabled = "VisaInsertChipEnabled";
+	public const string VisaInsertChipEnabled = "VisaInsertChipEnabled";
 
-	public static string AmexInsertChipEnabled = "AmexInsertChipEnabled";
+	public const string AmexInsertChipEnabled = "AmexInsertChipEnabled";
 
-	public static string MasterCardInsertChipEnabled = "MasterCardInsertChipEnabled";
+	public const string MasterCardInsertChipEnabled = "MasterCardInsertChipEnabled";
 
-	public static string DiscoverInsertChipEnabled = "DiscoverInsertChipEnabled";
+	public const string DiscoverInsertChipEnabled = "DiscoverInsertChipEnabled";
 
-	public static string BluefinAutoActivate = "BluefinAutoActivate";
+	public const string BluefinAutoActivate = "BluefinAutoActivate";
 
-	public static string BluefinServiceUrl = "BluefinServiceUrl";
+	public const string BluefinServiceUrl = "BluefinServiceUrl";
 
-	public static string BluefinServiceApiKey = "BluefinServiceApiKey";
+	public const string BluefinServiceApiKey = "BluefinServiceApiKey";
 
-	public static string BluefinServiceTimeout = "BluefinServiceTimeout";
+	public const string BluefinServiceTimeout = "BluefinServiceTimeout";
 }

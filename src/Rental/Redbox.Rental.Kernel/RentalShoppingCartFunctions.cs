@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.Environment;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services;
-using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Kernel;
 
@@ -366,30 +363,6 @@ public static class RentalShoppingCartFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.get_rental_shopping_marketing_opt_in_confirmation_status")]
-	public static string GetMarketingOptInConfirmationStatus(string id)
-	{
-		OptInConfirmationStatus result = OptInConfirmationStatus.DoNotShow;
-		ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			result = rentalShoppingCart.MarketingOptInConfirmationStatus;
-		});
-		return result.ToString();
-	}
-
-	[KernelFunction(Name = "kernel.set_rental_shopping_marketing_opt_in_confirmation_status")]
-	public static void SetMarketingOptInConfirmationStatus(string id, string value)
-	{
-		OptInConfirmationStatus newMarketingOptInConfirmationStatus = OptInConfirmationStatus.DoNotShow;
-		if (Enum.TryParse<OptInConfirmationStatus>(value, ignoreCase: true, out newMarketingOptInConfirmationStatus))
-		{
-			ProcessRentalShoppingCartAction(id, delegate(IRentalShoppingCart rentalShoppingCart)
-			{
-				rentalShoppingCart.MarketingOptInConfirmationStatus = newMarketingOptInConfirmationStatus;
-			});
-		}
-	}
-
 	[KernelFunction(Name = "kernel.get_rental_shopping_cart_items")]
 	public static LuaTable GetRentalShoppingCartItems(string id)
 	{
@@ -425,69 +398,6 @@ public static class RentalShoppingCartFunctions
 		{
 			rentalShoppingCartService?.SendRentalShoppingCartToAnalytics(rentalShoppingCart);
 		});
-	}
-
-	[KernelFunction(Name = "kernel.show_check_out_keyboard_view")]
-	public static void showCheckOutKeyboardView(string emailAddress, Action<string> LuaContinueCallback, Action LuaCancelCallback)
-	{
-		object lockObject = new object();
-		bool hasActionExecuted = false;
-		OrchestrationService.ViewShow("keyboard_email_receipt_view", new KeyboardInfo
-		{
-			MaxLength = 64,
-			KeyboardText = (string.IsNullOrEmpty(emailAddress) ? "" : emailAddress),
-			IsValidEntry = ValidationServices.IsValidEmailAddress,
-			CancelAction = delegate
-			{
-				LockHelper.TryLockObject(lockObject, delegate
-				{
-					if (!hasActionExecuted)
-					{
-						hasActionExecuted = true;
-						if (LuaCancelCallback != null)
-						{
-							LuaCancelCallback();
-						}
-					}
-				}, "showCheckOutKeyboardView cancel action");
-			},
-			ContinueAction = delegate(string keyboardText)
-			{
-				LockHelper.TryLockObject(lockObject, delegate
-				{
-					if (!hasActionExecuted)
-					{
-						hasActionExecuted = true;
-						if (LuaContinueCallback != null)
-						{
-							LuaContinueCallback(keyboardText);
-						}
-					}
-				}, "showCheckOutKeyboardView continue action");
-			}
-		});
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_service_fee_enabled")]
-	public static bool ServiceFeeEnabled(string sessionId)
-	{
-		bool result = false;
-		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			result = rentalShoppingCart.ServiceFeeEnabled;
-		});
-		return result;
-	}
-
-	[KernelFunction(Name = "kernel.rental_shopping_cart_default_service_fee_cents")]
-	public static int DefaultServiceFeeCents(string sessionId)
-	{
-		int result = 0;
-		ProcessRentalShoppingCartAction(sessionId, delegate(IRentalShoppingCart rentalShoppingCart)
-		{
-			result = (int)(rentalShoppingCart.DefaultServiceFee * 100m);
-		});
-		return result;
 	}
 
 	private static Dictionary<string, object> CreateLuaTableFromRentalShoppingCartItem(IRentalShoppingCart rentalShoppingCart, IRentalShoppingCartItem rentalShoppingCartItem)

@@ -61,4 +61,10 @@ public interface IKioskHealthConfiguration
 	bool CCReaderSendBadDataEvents { get; }
 
 	int CCReaderBadDataAttemptsToAlert { get; }
+
+	bool EMVReaderActive { get; }
+
+	bool EMVReaderTrackMultipleFallbacks { get; }
+
+	int EMVReaderMultipleFallbacksThreshold { get; }
 }

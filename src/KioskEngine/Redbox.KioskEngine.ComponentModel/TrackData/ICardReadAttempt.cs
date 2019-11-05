@@ -4,7 +4,7 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 
 namespace Redbox.KioskEngine.ComponentModel.TrackData;
 
-public interface ICardReadAttempt
+public interface ICardReadAttempt : ITechnicalFallbackTracking
 {
 	Guid CardReadJobCommandRequestId { get; set; }
 

@@ -205,7 +205,7 @@ public class PromotionServicesProxy : IPromotionServices
 				if (kioskEventsMessage != null)
 				{
 					LogHelper.Instance.Log("Enqueue call to remote HealthServicesProxy.SendKioskEvents, URL: {0}", KioskServicesProxy.Instance.Url);
-					ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskEvents", kioskEventsMessage);
+					ServiceLocator.Instance.GetService<IQueueService>().EnqueueKioskEvent(kioskEventsMessage);
 				}
 			}
 			catch (Exception e)

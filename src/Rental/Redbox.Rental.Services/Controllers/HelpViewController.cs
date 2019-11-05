@@ -244,7 +244,7 @@ public class HelpViewController : BaseViewController
 		viewModel.CloseButtonText = Resources.close_button;
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 		bool value = false;
-		service2.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GiftCardsEnabled, out value);
+		service2.TryGetValue<bool>("system", "General", "GiftCardsEnabled", out value);
 		BuildHelpDocInfoList(value, viewModel, service2);
 		HelpDocuments helpDocuments = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocument ?? HelpDocuments.Faq;
 		BuildHelpDocButtons(parameters, viewModel, service2, helpDocuments);
@@ -262,7 +262,7 @@ public class HelpViewController : BaseViewController
 		viewModel.HelpButtonList = new ObservableCollection<HelpButtonData>();
 		if (parameters.ShowFaq)
 		{
-			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowFAQUpdated, out var value);
+			config.TryGetValue<bool>("system", "Documents", "ShowFAQUpdated", out var value);
 			viewModel.HelpButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.faq_button,
@@ -275,7 +275,7 @@ public class HelpViewController : BaseViewController
 		if (parameters.ShowTerms)
 		{
 			bool value = false;
-			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowTermsUpdated, out value);
+			config.TryGetValue<bool>("system", "Documents", "ShowTermsUpdated", out value);
 			viewModel.HelpButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.transaction_terms_button,
@@ -288,11 +288,11 @@ public class HelpViewController : BaseViewController
 		if (parameters.ShowRedboxCard)
 		{
 			bool value2 = false;
-			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GiftCardsEnabled, out value2);
+			config.TryGetValue<bool>("system", "General", "GiftCardsEnabled", out value2);
 			if (value2)
 			{
 				bool value = false;
-				config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowRedboxCardUpdated, out value);
+				config.TryGetValue<bool>("system", "Documents", "ShowRedboxCardUpdated", out value);
 				viewModel.HelpButtonList.Add(new HelpButtonData
 				{
 					ButtonText = Resources.terms_redbox_card_button,
@@ -306,7 +306,7 @@ public class HelpViewController : BaseViewController
 		if (parameters.ShowPrivacy)
 		{
 			bool value = false;
-			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPrivacyUpdated, out value);
+			config.TryGetValue<bool>("system", "Documents", "ShowPrivacyUpdated", out value);
 			viewModel.HelpButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.privacy_button,
@@ -319,7 +319,7 @@ public class HelpViewController : BaseViewController
 		if (parameters.ShowPerks && ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-perks") != null)
 		{
 			bool value = false;
-			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowPerksUpdated, out value);
+			config.TryGetValue<bool>("system", "Documents", "ShowPerksUpdated", out value);
 			viewModel.HelpButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.play_pass_button,
@@ -332,7 +332,7 @@ public class HelpViewController : BaseViewController
 		if (parameters.ShowMobileFaq && ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("document-mobile-faqs") != null)
 		{
 			bool value = false;
-			config.TryGetValue<bool>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.ShowMobileFaqUpdated, out value);
+			config.TryGetValue<bool>("system", "Documents", "ShowMobileFAQUpdated", out value);
 			viewModel.HelpButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.mobile_faq_button,
@@ -352,27 +352,27 @@ public class HelpViewController : BaseViewController
 		string documentName4 = "document-privacy-policy";
 		string documentName5 = "document-perks";
 		string documentName6 = "document-mobile-faqs";
-		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.FAQDocument, out var value))
+		if (config.TryGetValue<string>("system", "Documents", "FAQDocument", out var value))
 		{
 			documentName = value;
 		}
-		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.TermsDocument, out value))
+		if (config.TryGetValue<string>("system", "Documents", "TermsDocument", out value))
 		{
 			documentName2 = value;
 		}
-		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.RedboxCardDocument, out value))
+		if (config.TryGetValue<string>("system", "Documents", "RedboxCardDocument", out value))
 		{
 			documentName3 = value;
 		}
-		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PrivacyDocument, out value))
+		if (config.TryGetValue<string>("system", "Documents", "PrivacyDocument", out value))
 		{
 			documentName4 = value;
 		}
-		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.PerksDocument, out value))
+		if (config.TryGetValue<string>("system", "Documents", "PerksDocument", out value))
 		{
 			documentName5 = value;
 		}
-		if (config.TryGetValue<string>(ConfigFile.System, ConfigCategory.Documents, ConfigSetting.MobileFaqDocument, out value))
+		if (config.TryGetValue<string>("system", "Documents", "MobileFAQDocument", out value))
 		{
 			documentName6 = value;
 		}

@@ -208,13 +208,13 @@ public class AnalyticsSession : IAnalyticsSession
 	{
 		try
 		{
-			if (!_configuration.GetSettingNames(ConfigFile.Marketing, ConfigCategory.ABTesting, out var list))
+			if (!_configuration.GetSettingNames("marketing", "AB Testing", out var list))
 			{
 				return;
 			}
 			foreach (string item in list)
 			{
-				if (_configuration.TryGetValue<string>(ConfigFile.Marketing, ConfigCategory.ABTesting, item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
+				if (_configuration.TryGetValue<string>("marketing", "AB Testing", item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
 				{
 					ABTests.Add(new ABTest
 					{

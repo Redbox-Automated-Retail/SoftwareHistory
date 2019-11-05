@@ -996,31 +996,31 @@ public class KioskProductView
 		{
 			{
 				TitleType.Xbox360,
-				GetGameConfig(service, ConfigSetting.GameEnableXbox360)
+				GetGameConfig(service, "GameEnableXbox360")
 			},
 			{
 				TitleType.XboxOne,
-				GetGameConfig(service, ConfigSetting.GameEnableXboxOne)
+				GetGameConfig(service, "GameEnableXboxOne")
 			},
 			{
 				TitleType.PS3,
-				GetGameConfig(service, ConfigSetting.GameEnablePS3)
+				GetGameConfig(service, "GameEnablePS3")
 			},
 			{
 				TitleType.PS4,
-				GetGameConfig(service, ConfigSetting.GameEnablePS4)
+				GetGameConfig(service, "GameEnablePS4")
 			},
 			{
 				TitleType.Wii,
-				GetGameConfig(service, ConfigSetting.GameEnableWii)
+				GetGameConfig(service, "GameEnableWii")
 			},
 			{
 				TitleType.WiiU,
-				GetGameConfig(service, ConfigSetting.GameEnableWiiU)
+				GetGameConfig(service, "GameEnableWiiU")
 			},
 			{
 				TitleType.NintendoSwitch,
-				GetGameConfig(service, ConfigSetting.GameEnableNintendoSwitch)
+				GetGameConfig(service, "GameEnableNintendoSwitch")
 			}
 		};
 	}

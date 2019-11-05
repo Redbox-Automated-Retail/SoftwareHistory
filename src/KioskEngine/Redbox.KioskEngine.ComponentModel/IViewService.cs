@@ -58,7 +58,7 @@ public interface IViewService
 
 	IBaseViewFrame GetViewFrame(string viewName);
 
-	bool IsInMaintenanceMode();
+	bool IsMaintenanceViewShowing();
 
 	bool IsSafeToChangeView();
 

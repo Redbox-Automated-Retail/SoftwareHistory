@@ -8,7 +8,7 @@
       <Grid.RowDefinitions>
         <RowDefinition Height="76" />
         <RowDefinition Height="*" />
-        <RowDefinition Height="30" />
+        <RowDefinition Height="20" />
       </Grid.RowDefinitions>
       <Grid Name="Header">
         <Panel.Background>
@@ -27,11 +27,6 @@
         </Grid.ColumnDefinitions>
         <Line Name="DividingLine" Y1="0" Y2="654" Fill="#979797" Margin="0,23,0,23" Stroke="#979797" StrokeThickness="2" HorizontalAlignment="Right" Opacity="0.22" />
         <DockPanel Name="LeftSideDockPanel" LastChildFill="True">
-          <DockPanel Name="ButtonBar" Height="80" Dock="Bottom" Margin="36,0,23,0">
-            <Redbox:RoundedButton Name="AdaBackButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Width="330" Height="59" UsedDefaultCornerRadius="True" VerticalAlignment="Bottom" HorizontalAlignment="Right" Command="{Binding CancelButtonCommand}" Visibility="{Binding AdaSkipOfferButtonVisibility}">
-              <TextBlock Name="AdaBackButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=BackButtonText, FallbackValue=Skip Offer}" />
-            </Redbox:RoundedButton>
-          </DockPanel>
           <StackPanel Name="LeftSideTopPanel" Orientation="Vertical" Margin="36,14,23,0">
             <ItemsControl ItemsSource="{Binding DisplayProductModels}">
               <ItemsControl.ItemsPanel>
@@ -41,7 +36,7 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <localControls:DisplayProductCheckoutUserControl Width="590" Height="94" DataContext="{Binding}" />
+                  <localControls:DisplayProductCheckoutUserControl Width="590" MinHeight="94" DataContext="{Binding}" />
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>

@@ -35,8 +35,6 @@ public interface IProfileDataInstance
 
 	Dictionary<long, Vendor> Vendors { get; set; }
 
-	Dictionary<long, ReviewList> Reviews { get; set; }
-
 	List<ProfileVersion> ProfileVersion { get; set; }
 
 	string OriginMachine { get; set; }

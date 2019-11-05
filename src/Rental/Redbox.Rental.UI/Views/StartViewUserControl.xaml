@@ -50,8 +50,10 @@
               <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/movieicon.png" HorizontalAlignment="Left" Margin="28,12,0,12" Width="60" />
             </DockPanel>
             <StackPanel VerticalAlignment="Center" Margin="100,0,0,0">
-              <TextBlock Name="all_movies_button_text_line1" Style="{StaticResource font_montserrat_regular_26}" Foreground="#FF000000" Text="{Binding Path=AllMoviesButtonTextLine1, FallbackValue=RENT}" />
-              <TextBlock Name="all_movies_button_text_line2" Style="{Binding Path=AllMoviesButtonTextLine2Style, FallbackValue={StaticResource font_museo_slab_900_32}}" Text="{Binding Path=AllMoviesButtonTextLine2, FallbackValue=MOVIES}" />
+              <TextBlock Name="all_movies_button_text_line1" Style="{StaticResource font_montserrat_regular_26}" Foreground="#FF000000" Text="{Binding Path=AllMoviesButtonTextLine1, FallbackValue=RENT}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
+              <TextBlock Name="all_movies_button_text_line2" Style="{Binding Path=AllMoviesButtonTextLine2Style, FallbackValue={StaticResource font_museo_slab_900_32}}" Text="{Binding Path=AllMoviesButtonTextLine2, FallbackValue=MOVIES}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
+              <TextBlock Style="{StaticResource font_museo_slab_900_36}" Text="MOVIES" Visibility="{Binding Path=RentAndBuyMoviesGamesTextVisibility, FallbackValue=Collapsed}" />
+              <TextBlock Style="{StaticResource font_montserrat_regular_22}" Text="RENT &amp; BUY" Foreground="#303438" Visibility="{Binding Path=RentAndBuyMoviesGamesTextVisibility, FallbackValue=Collapsed}" />
             </StackPanel>
           </Grid>
         </Redbox:RoundedButton>
@@ -70,8 +72,10 @@
               </Image>
             </DockPanel>
             <StackPanel VerticalAlignment="Center" Margin="100,0,0,0">
-              <TextBlock Name="games_button_text_line1" Style="{StaticResource font_montserrat_regular_26}" Foreground="#FF000000" TextWrapping="Wrap" Text="{Binding Path=GamesButtonTextLine1, FallbackValue=RENT}" />
-              <TextBlock Name="games_button_text_line2" Style="{StaticResource font_museo_slab_900_32}" Text="{Binding Path=GamesButtonTextLine2, FallbackValue=GAMES}" />
+              <TextBlock Name="games_button_text_line1" Style="{StaticResource font_montserrat_regular_26}" Foreground="#FF000000" TextWrapping="Wrap" Text="{Binding Path=GamesButtonTextLine1, FallbackValue=RENT}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
+              <TextBlock Name="games_button_text_line2" Style="{StaticResource font_museo_slab_900_32}" Text="{Binding Path=GamesButtonTextLine2, FallbackValue=GAMES}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
+              <TextBlock Style="{StaticResource font_museo_slab_900_36}" Text="GAMES" Visibility="{Binding Path=RentAndBuyMoviesGamesTextVisibility, FallbackValue=Collapsed}" />
+              <TextBlock Style="{StaticResource font_montserrat_regular_22}" Text="RENT &amp; BUY" Foreground="#303438" Visibility="{Binding Path=RentAndBuyMoviesGamesTextVisibility, FallbackValue=Collapsed}" />
             </StackPanel>
           </Grid>
         </Redbox:RoundedButton>

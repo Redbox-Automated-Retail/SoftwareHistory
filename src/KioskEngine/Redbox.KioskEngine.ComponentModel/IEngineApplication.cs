@@ -4,8 +4,6 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IEngineApplication
 {
-	bool HasCorruptedDatabase { get; }
-
 	bool AppStarting { get; set; }
 
 	string DataPath { get; }
@@ -21,6 +19,4 @@ public interface IEngineApplication
 	void FlagForSafeShutdown();
 
 	void ShutDown();
-
-	void CorruptDbDetected(string dbName);
 }

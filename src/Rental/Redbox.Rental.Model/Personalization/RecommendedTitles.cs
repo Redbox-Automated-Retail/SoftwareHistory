@@ -19,6 +19,8 @@ public class RecommendedTitles : IRecommendedTitles, IList<IRecommendedTitleId>,
 		}
 	}
 
+	public string TivoQueryId { get; set; }
+
 	public string OfferCode { get; set; }
 
 	private IList<IRecommendedTitleId> Ids { get; }

@@ -1147,7 +1147,7 @@ public class BrowseViewController
 					Name = $"product_{num + 1}"
 				});
 			}
-			else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
+			else if (((Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "C" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "E" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "F" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "H") && BrowseState.BrowseMode == BrowseViewFilter.All && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games)) || (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games)))
 			{
 				browseProductControl.BrowseControls.Add(new DisplayProductWithPriceBrowseUserControl
 				{
@@ -1504,25 +1504,6 @@ public class BrowseViewController
 		});
 	}
 
-	private static void ShowOnDemandMessage(decimal price)
-	{
-		MessagePopupViewController.ShowOnDemandMessage(price, delegate
-		{
-			OrchestrationService.ViewGoBackSafe("OnDemandRentTimeout", popOnly: false);
-		}, delegate
-		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_back");
-			AnalyticsService?.AddButtonPressEvent("BrowseOnDemandRentBack");
-			OrchestrationService.ViewGoBackSafe("OnDemandRentBack", popOnly: false);
-		}, delegate
-		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_gotit");
-			AnalyticsService?.AddButtonPressEvent("BrowseOnDemandRentGotit");
-			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
-			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
-		});
-	}
-
 	private static void ProcessComingSoonOptin(IBrowseItemModel browseItemModel)
 	{
 		IKioskProduct kioskProduct = browseItemModel.Data as IKioskProduct;
@@ -1792,7 +1773,6 @@ public class BrowseViewController
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
 		obj.IsInCartBrowse = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 		obj.OutOfStockTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion;
-		obj.StarRatingTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.StarRatingTitleDetailsABTestVersion;
 		obj.FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices;
 		return obj;
 	}
@@ -1826,24 +1806,51 @@ public class BrowseViewController
 				}
 				string arg2 = ((titleProduct is MDVProduct mDVProduct) ? $" ({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text})" : null);
 				string header = $"{productDisplayName}{arg}{arg2}";
-				DisplayProductModel displayProductModel = ((BrowseState.BrowseMode != BrowseViewFilter.ForSale || (BrowseState.TitleFamily != TitleFamily.Movies && BrowseState.TitleFamily != TitleFamily.Games)) ? new DisplayProductModel
+				DisplayProductModel displayProductModel;
+				if ((Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "C" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "E" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "F" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "H") && BrowseState.BrowseMode == BrowseViewFilter.All && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
 				{
-					Name = kioskProduct.ProductName,
-					Data = kioskProduct,
-					Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
-					LockAspectRatio = true,
-					Header = header,
-					DisplayProductModelConstants = displayProductModelConstants
-				} : new DisplayProductWithPriceModel
+					string rentalPriceText = GetRentalPriceText(titleProduct);
+					rentalPriceText = (string.IsNullOrEmpty(rentalPriceText) ? "" : $"{Resources.browse_view_rent_and_buy_rent_text}: {rentalPriceText}");
+					string purchasePriceText = GetPurchasePriceText(titleProduct);
+					purchasePriceText = (string.IsNullOrEmpty(purchasePriceText) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}: {purchasePriceText}");
+					displayProductModel = new DisplayProductWithPriceModel
+					{
+						Name = kioskProduct.ProductName,
+						Data = kioskProduct,
+						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
+						LockAspectRatio = true,
+						Header = header,
+						DisplayProductModelConstants = displayProductModelConstants,
+						PriceText = $"{rentalPriceText}\n{purchasePriceText}"
+					};
+				}
+				else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
 				{
-					Name = kioskProduct.ProductName,
-					Data = kioskProduct,
-					Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
-					LockAspectRatio = true,
-					Header = header,
-					DisplayProductModelConstants = displayProductModelConstants,
-					PriceText = GetForSalePriceText(titleProduct)
-				});
+					string purchasePriceText2 = GetPurchasePriceText(titleProduct);
+					purchasePriceText2 = (string.IsNullOrEmpty(purchasePriceText2) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}: {purchasePriceText2}");
+					displayProductModel = new DisplayProductWithPriceModel
+					{
+						Name = kioskProduct.ProductName,
+						Data = kioskProduct,
+						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
+						LockAspectRatio = true,
+						Header = header,
+						DisplayProductModelConstants = displayProductModelConstants,
+						PriceText = $"{purchasePriceText2}"
+					};
+				}
+				else
+				{
+					displayProductModel = new DisplayProductModel
+					{
+						Name = kioskProduct.ProductName,
+						Data = kioskProduct,
+						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
+						LockAspectRatio = true,
+						Header = header,
+						DisplayProductModelConstants = displayProductModelConstants
+					};
+				}
 				if (num3 >= num && num3 < num2)
 				{
 					ConfigureDisplayProductModel(kioskProduct, displayProductModel, isADAMiniCart, displayProductModelConstants);
@@ -2576,7 +2583,29 @@ public class BrowseViewController
 		return true;
 	}
 
-	private static string GetForSalePriceText(ITitleProduct titleProduct)
+	private static string GetRentalPriceText(ITitleProduct titleProduct)
+	{
+		List<ITitleProduct> list = ((titleProduct is ITitleRollupProduct) ? ((ITitleRollupProduct)titleProduct).KioskProducts : new List<ITitleProduct> { titleProduct }).Where((ITitleProduct tp) => tp.IsRentableAndInStock).ToList();
+		if (list.Count == 0)
+		{
+			return string.Empty;
+		}
+		decimal? price = list.Min((ITitleProduct tp) => (ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(tp.ProductId))?.InitialNight);
+		bool flag = list.Count == 1 || list.All(delegate(ITitleProduct tp)
+		{
+			IPricingRecord obj = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(tp.ProductId);
+			if (obj == null)
+			{
+				return !price.HasValue;
+			}
+			decimal initialNight = obj.InitialNight;
+			decimal? num = price;
+			return initialNight == num.GetValueOrDefault() && num.HasValue;
+		});
+		return string.Format("${0:F2}{1}", price, flag ? "" : "+");
+	}
+
+	private static string GetPurchasePriceText(ITitleProduct titleProduct)
 	{
 		List<ITitleProduct> list = ((titleProduct is ITitleRollupProduct) ? ((ITitleRollupProduct)titleProduct).KioskProducts : new List<ITitleProduct> { titleProduct }).Where((ITitleProduct tp) => tp.IsSellableAndInStock).ToList();
 		if (list.Count == 0)

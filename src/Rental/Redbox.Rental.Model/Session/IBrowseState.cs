@@ -25,6 +25,8 @@ public interface IBrowseState
 
 	bool ShoppingCartFullMessagesShown { get; set; }
 
+	bool EmailOptInCampaignShown { get; set; }
+
 	int PaddleClickCount { get; set; }
 
 	string BrowseFilterMode { get; set; }

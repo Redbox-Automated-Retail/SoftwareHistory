@@ -41,8 +41,6 @@ public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor,
 
 	public new event WPFHitHandler OnWPFHit;
 
-	public event Action OnGoBack;
-
 	public ReturnViewUserControl()
 	{
 		InitializeComponent();
@@ -50,8 +48,10 @@ public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor,
 
 	public override ISpeechControl GetSpeechControl()
 	{
-		ISpeechControl result = new SpeechControl();
-		result.Name = "tts_return_view";
+		ISpeechControl result = new SpeechControl
+		{
+			Name = "tts_return_view"
+		};
 		AddSpeechPartInstructions(result);
 		result.SpeechParts.ForEach(delegate(ISpeechPart x)
 		{
@@ -91,13 +91,5 @@ public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor,
 			});
 		};
 		result.SpeechParts.Add(speechPart);
-	}
-
-	private new void HandleWPFHit()
-	{
-		if (OnWPFHit != null)
-		{
-			OnWPFHit(Actor);
-		}
 	}
 }

@@ -12,7 +12,7 @@ public interface IReservationServices
 
 	void Reset();
 
-	void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback);
+	void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback, string v);
 
 	void Expire(string storeNumber, long referenceNumber, RemoteServiceCallback callback);
 

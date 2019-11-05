@@ -5,8 +5,10 @@ using Redbox.KioskEngine.ComponentModel.TrackData;
 
 namespace Redbox.KioskEngine.Environment.CardDataReader;
 
-public class CardReadAttempt : ICardReadAttempt
+public class CardReadAttempt : ICardReadAttempt, ITechnicalFallbackTracking
 {
+	private ITrackData _trackData;
+
 	public Guid CardReadJobCommandRequestId { get; set; }
 
 	public DateTime? StartDateTime { get; set; }
@@ -28,11 +30,30 @@ public class CardReadAttempt : ICardReadAttempt
 		}
 	}
 
-	public ITrackData TrackData { get; set; }
+	public ITrackData TrackData
+	{
+		get
+		{
+			return _trackData;
+		}
+		set
+		{
+			_trackData = value;
+			if (_trackData != null)
+			{
+				SupportsTechnicalFallbackTracking = _trackData.CardSourceType.IsEmvContactlessOrQuickChip();
+				IsInTrackableTechnicalFallback = _trackData.NextCardReadIsInTechnicalFallback;
+			}
+		}
+	}
 
 	public CardReadAttemptStatus CardReadAttemptStatus { get; set; }
 
 	public bool AttemptedCancel { get; set; }
 
 	public IAuthorizeResult AuthorizeResult { get; set; }
+
+	public bool SupportsTechnicalFallbackTracking { get; private set; }
+
+	public bool IsInTrackableTechnicalFallback { get; private set; }
 }

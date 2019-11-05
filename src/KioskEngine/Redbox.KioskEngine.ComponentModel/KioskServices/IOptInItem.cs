@@ -4,7 +4,7 @@ public interface IOptInItem
 {
 	long ItemId { get; set; }
 
-	Item_Type Item_Type { get; set; }
+	KioskOptIntItemType Item_Type { get; set; }
 
 	OptInMethodType OptInMethodType { get; set; }
 

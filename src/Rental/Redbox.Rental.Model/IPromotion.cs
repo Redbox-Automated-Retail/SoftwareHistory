@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Model;
 
 public interface IPromotion
 {
+	DiscountType DiscountType { get; set; }
+
 	string Name { get; set; }
 
 	decimal OriginalPrice { get; set; }
@@ -40,4 +43,6 @@ public interface IPromotion
 	bool IsProductSpecific { get; }
 
 	bool IsValidatedPostVend { get; set; }
+
+	bool IsExternallyValidated { get; }
 }

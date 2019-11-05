@@ -5,6 +5,11 @@ namespace Redbox.Rental.UI.Models;
 
 public class DisplayCheckoutProductModel : DisplayProductModel
 {
+	public static readonly DependencyProperty OfferActionVisibilityProperty = DependencyProperty.Register("OfferActionVisibility", typeof(Visibility), typeof(DisplayCheckoutProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty TopCancelButtonVisibilityProperty = DependencyProperty.Register("TopCancelButtonVisibility", typeof(Visibility), typeof(DisplayCheckoutProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
 	{
 		AffectsRender = true
@@ -35,6 +40,8 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 	public string ProductTitleText { get; set; }
 
 	public string ProductCartPriceText { get; set; }
+
+	public DisplayProductCheckoutSpecialOfferActionModel OfferActionModel { get; set; }
 
 	public Visibility TopCancelButtonVisibility
 	{
@@ -111,6 +118,21 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 		}
 	}
 
+	public Visibility OfferActionVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(OfferActionVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OfferActionVisibilityProperty, value);
+			});
+		}
+	}
+
 	public void ConfigureForCheckout()
 	{
 		base.FlagVisibility = Visibility.Collapsed;
@@ -124,5 +146,7 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 		base.CornerAddButtonVisibility = Visibility.Collapsed;
 		base.AddButtonVisibility = Visibility.Collapsed;
 		base.ADAMiniCartAddButtonVisibility = Visibility.Collapsed;
+		OfferActionVisibility = Visibility.Collapsed;
+		OfferActionModel = new DisplayProductCheckoutSpecialOfferActionModel();
 	}
 }

@@ -8,6 +8,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
+using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
@@ -179,7 +180,7 @@ public class CheckoutFunctions
 
 	private static void GetZipCodeIfRequired()
 	{
-		_ = (Redbox.Rental.Services.Session.Session.Instance?.CardReadAttemptCollection?.GetMostRecent())?.TrackData;
+		Redbox.Rental.Services.Session.Session.Instance?.CardReadAttemptCollection?.GetMostRecent();
 		OrchestrationService.ViewShow("zip_code_view", new ZipCodeViewParameter
 		{
 			ContinueAction = ProcessZipCodeEntry
@@ -231,19 +232,28 @@ public class CheckoutFunctions
 		}
 	}
 
-	public static void ProcessAuthError(LuaTable properties, string shoppingCartId)
+	public static void ProcessAuthError(IAuthorizeResult authorizeResult, IRentalShoppingCart rentalShoppingCart)
 	{
+		if (authorizeResult == null)
+		{
+			LogHelper.Instance.Log("Error in ProcessAuthError.  authorizeResult is null");
+			return;
+		}
+		if (rentalShoppingCart == null)
+		{
+			LogHelper.Instance.Log("Error in ProcessAuthError.  rentalShoppingCart is null");
+			return;
+		}
 		IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
 		int offlineItemsLimit = instance.OfflineItemsLimit;
 		int offlineGameRentalLimit = instance.OfflineGameRentalLimit;
 		int offlineGamePurchaseLimit = instance.OfflineGamePurchaseLimit;
-		string text = (string)properties["response"];
+		string response = authorizeResult.Response;
 		Action action = ShoppingCartViewFunctions.ViewShoppingCart;
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(new Guid(shoppingCartId));
 		OrchestrationService.SetCurrentUICulture();
-		if (ServiceLocator.Instance.GetService<IApplicationState>().EnableOfflineBadCardList && (bool)properties["is_online"] && !(bool)properties["stand_alone"])
+		if (ServiceLocator.Instance.GetService<IApplicationState>().EnableOfflineBadCardList && authorizeResult.IsOnline && !authorizeResult.StandAlone)
 		{
-			switch (text)
+			switch (response)
 			{
 			case "GameLimitExceeded":
 			case "RentalLimitExceeded":
@@ -258,32 +268,32 @@ public class CheckoutFunctions
 		string empty = string.Empty;
 		string empty2 = string.Empty;
 		string got_it_button = Resources.got_it_button;
-		string text2 = null;
+		string text = null;
 		string offline_game_limit_exceeded_message_game = Resources.offline_game_limit_exceeded_message_game;
-		switch (text)
+		switch (response)
 		{
 		case "OfflineItemsLimitZero":
-			text2 = "OfflineItemsLimitZero";
+			text = "OfflineItemsLimitZero";
 			empty = Resources.oops;
 			empty2 = Resources.offline_items_limit_zero_message;
 			break;
 		case "OfflineGameRentalAndPurchaseLimitZero":
-			text2 = "OfflineGameRentalAndPurchaseLimitZero";
+			text = "OfflineGameRentalAndPurchaseLimitZero";
 			empty = Resources.oops;
 			empty2 = string.Format(Resources.offline_game_rental_and_purchase_limit_zero_message, offlineItemsLimit);
 			break;
 		case "OfflineGameRentalLimitZero":
-			text2 = "OfflineGameRentalLimitZero";
+			text = "OfflineGameRentalLimitZero";
 			empty = Resources.oops;
 			empty2 = string.Format(Resources.offline_game_rental_limit_zero_message, offlineItemsLimit);
 			break;
 		case "OfflineGamePurchaseLimitZero":
-			text2 = "OfflineGamePurchaseLimitZero";
+			text = "OfflineGamePurchaseLimitZero";
 			empty = Resources.oops;
 			empty2 = string.Format(Resources.offline_game_purchase_limit_zero_message, offlineItemsLimit);
 			break;
 		case "OfflineGameRentalLimitExceeded":
-			text2 = "offlineGameRentalLimitExceeded";
+			text = "offlineGameRentalLimitExceeded";
 			empty = Resources.offline_game_rental_limit_exceeded_message_header;
 			offline_game_limit_exceeded_message_game = Resources.offline_game_limit_exceeded_message_game;
 			if (offlineGameRentalLimit > 1)
@@ -293,7 +303,7 @@ public class CheckoutFunctions
 			empty2 = string.Format(Resources.offline_game_rental_limit_exceeded_message, offlineItemsLimit, offlineGameRentalLimit, offline_game_limit_exceeded_message_game);
 			break;
 		case "OfflineGamePurchaseLimitExceeded":
-			text2 = "offlineGamePurchaseLimitExceeded";
+			text = "offlineGamePurchaseLimitExceeded";
 			empty = Resources.offline_game_purchase_limit_exceeded_message_header;
 			offline_game_limit_exceeded_message_game = Resources.offline_game_limit_exceeded_message_game;
 			if (offlineGamePurchaseLimit > 1)
@@ -303,33 +313,33 @@ public class CheckoutFunctions
 			empty2 = string.Format(Resources.offline_game_purchase_limit_exceeded_message, offlineItemsLimit, offlineGamePurchaseLimit, offline_game_limit_exceeded_message_game);
 			break;
 		case "OfflineItemsLimitExceeded":
-			text2 = "offlineItemsLimitExceeded";
+			text = "offlineItemsLimitExceeded";
 			empty = Resources.offline_items_limit_exceeded_message_header;
 			empty2 = string.Format(Resources.offline_items_limit_exceeded_message, offlineItemsLimit);
 			break;
 		case "GameLimitExceeded":
 			empty = Resources.game_limit_exceeded_message_header;
-			text2 = "gameLimitExceededOnline";
+			text = "gameLimitExceededOnline";
 			empty2 = Resources.game_limit_exceeded_message;
 			break;
 		case "RentalLimitExceeded":
 			empty = Resources.rental_limit_exceeded_message_header;
-			text2 = "rentalLimitExceededOnline";
+			text = "rentalLimitExceededOnline";
 			empty2 = Resources.rental_limit_exceeded_message;
 			break;
 		case "NewCustomerRentalLimitExceeded":
 			empty = Resources.rental_limit_exceeded_message_header;
-			text2 = "newCustomerRentalLimitExceededOnline";
+			text = "newCustomerRentalLimitExceededOnline";
 			empty2 = Resources.rental_limit_exceeded_new_customer_message;
 			break;
 		case "AvsFailure":
-			text2 = "cardNotAuthorized";
+			text = "cardNotAuthorized";
 			empty = null;
 			empty2 = Resources.postal_code_mismatch_message;
 			break;
 		case "CodeNotValid":
 			rentalShoppingCart.ClearPromoCode();
-			text2 = "promoNotValid";
+			text = "promoNotValid";
 			empty = Resources.promo_code_not_valid_message_title;
 			empty2 = Resources.promo_code_not_valid_message;
 			break;
@@ -341,13 +351,13 @@ public class CheckoutFunctions
 				rentalShoppingCart.InCartPromoOfferCancel = false;
 			}
 			rentalShoppingCart.ClearPromoCode();
-			text2 = "promoAlreadyUsed";
+			text = "promoAlreadyUsed";
 			empty = Resources.promo_code_already_used_message_title;
 			empty2 = Resources.promo_code_already_used_message;
 			break;
 		case "CodeNotValidAtThisLocation":
 			rentalShoppingCart.ClearPromoCode();
-			text2 = "promoInvalidLocation";
+			text = "promoInvalidLocation";
 			empty = Resources.promo_code_error_title;
 			empty2 = Resources.promo_code_not_valid_location_message;
 			break;
@@ -361,19 +371,19 @@ public class CheckoutFunctions
 			empty2 = Resources.sell_thru_new_offline_denied;
 			break;
 		case "OfflineGCDeclined":
-			text2 = "redboxCardKioskOffline";
+			text = "redboxCardKioskOffline";
 			empty = Resources.gc_offline_declined_title;
 			empty2 = Resources.gc_offline_declined;
 			break;
 		case "GCInsufficientBalance":
-			text2 = "redboxCardInsufficientFunds";
+			text = "redboxCardInsufficientFunds";
 			empty = Resources.gc_insufficient_balance_title;
-			empty2 = string.Format(Resources.gc_insufficient_balance, properties["gift_card_balance"]);
+			empty2 = string.Format(Resources.gc_insufficient_balance, authorizeResult.GiftCardBalance);
 			break;
 		case "GCRentalLimitExceeded":
-			text2 = "redboxCardRentalLimitExceeded";
+			text = "redboxCardRentalLimitExceeded";
 			empty = Resources.gc_rental_limit_exceeded_title;
-			empty2 = string.Format(Resources.gc_rental_limit_exceeded, properties["gift_card_max_discs"]);
+			empty2 = string.Format(Resources.gc_rental_limit_exceeded, authorizeResult.GiftCardMaxDiscs);
 			break;
 		case "GCDeclined":
 		case "Declined":
@@ -381,20 +391,20 @@ public class CheckoutFunctions
 			empty2 = Resources.gc_declined;
 			break;
 		case "EnforceAccertify":
-			text2 = "accertifyRejectedGames";
+			text = "accertifyRejectedGames";
 			empty = Resources.accertify_enforce_accertify_header;
 			empty2 = Resources.accertify_enforce_accertify_message;
 			break;
 		default:
-			text2 = "cardNotAuthorized";
+			text = "cardNotAuthorized";
 			empty = null;
 			empty2 = Resources.authorization_failure_message;
 			break;
 		}
 		List<string> list = new List<string> { "authorizationDecline" };
-		if (!string.IsNullOrWhiteSpace(text2))
+		if (!string.IsNullOrWhiteSpace(text))
 		{
-			list.Add(text2);
+			list.Add(text);
 		}
 		MessagePopupViewController.ShowAuthErrorMessage(empty, empty2, got_it_button, action, action, list);
 	}
@@ -511,6 +521,11 @@ public class CheckoutFunctions
 		}
 	}
 
+	public static IAuthorizeResult GetMostRecentCardReadAttemptAuthorizeResult()
+	{
+		return (Redbox.Rental.Services.Session.Session.Instance?.CardReadAttemptCollection?.GetMostRecent())?.AuthorizeResult;
+	}
+
 	public static void ShowPleaseWaitBecauseOfDisconnectedCardReader()
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
@@ -586,6 +601,7 @@ public class CheckoutFunctions
 		{
 			LogHelper.Instance.Log($"Session add Line Item: {item?.Barcode}  for  {item?.Action} Price: {item.Price} {item?.TitleFamily}-{item?.TitleType} {item?.SourceType} ");
 		}
+		OrchestrationService.SetCurrentUICulture();
 		OrchestrationService.ViewShow("general_message_view", new GeneralMessageViewModel
 		{
 			DisableIdleTimer = false,
@@ -673,6 +689,7 @@ public class CheckoutFunctions
 					flag = true;
 				}
 			}
+			OrchestrationService.SetCurrentUICulture();
 			OrchestrationService.ViewShow("general_message_view", new GeneralMessageViewModel
 			{
 				DisableIdleTimer = false,
@@ -712,8 +729,8 @@ public class CheckoutFunctions
 				IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 				if (rentalShoppingCart != null && rentalShoppingCart.ShoppingSessionId == authorizeResult.SessionId)
 				{
-					IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-					if (service == null || !service.IsInMaintenanceMode())
+					IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
+					if (service == null || !service.IsInMaintenanceMode)
 					{
 						bool num = authorizeResult.AuthorizeType == AuthorizeType.Authorize;
 						bool flag = authorizeResult.AuthorizeType == AuthorizeType.GiftCardAuthorize;
@@ -776,15 +793,288 @@ public class CheckoutFunctions
 
 	private static void ProcessAuthorizeResult(IAuthorizeResult authorizeResult)
 	{
-		LuaTable authorizeResultLuaTable = ConvertAuthorizeResultToLuaTable(authorizeResult);
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		LogHelper.Instance.Log("ProcessAuthorizeResult");
+		if (authorizeResult == null)
+		{
+			LogHelper.Instance.Log("Error in ProcessAuthorizeResult.  authorizeResult is null");
+			return;
+		}
+		SetReadCardAttemptAuthorizeResult(authorizeResult);
+		if (!authorizeResult.IsOnline || authorizeResult.StandAlone)
+		{
+			PrcoessOfflineOrStandAloneAuthorizeResult(authorizeResult);
+		}
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		OptInConfirmationStatus result = OptInConfirmationStatus.DoNotShow;
+		if (rentalShoppingCart != null && Enum.TryParse<OptInConfirmationStatus>(authorizeResult.ConfirmationStatus, ignoreCase: true, out result))
+		{
+			rentalShoppingCart.MarketingOptInConfirmationStatus = result;
+		}
+		if (Redbox.Rental.Services.Session.Session.Instance?.UserInfo != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.UserInfo.CustomerProfileNumber = authorizeResult?.CustomerProfileNumber;
+			Redbox.Rental.Services.Session.Session.Instance.UserInfo.AccountNumber = authorizeResult?.AccountNumber;
+		}
+		LogHelper.Instance.Log($"setting UserInfo.CustomerProfileNumber to {authorizeResult?.CustomerProfileNumber}");
+		LogHelper.Instance.Log($"setting UserInfo.AccountNumber to {authorizeResult?.AccountNumber}");
+		IViewService viewService = ServiceLocator.Instance.GetService<IViewService>();
 		Task.Factory.StartNew(delegate
 		{
-			OrchestrationService.InvokeProcessAuthorizeResultCallback(authorizeResultLuaTable);
-		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
+			if (authorizeResult.Success)
+			{
+				ProcessAuthorizeSuccessResult(authorizeResult);
+			}
+			else if (authorizeResult.Response == "OfflineCardBlocklisted")
+			{
+				OrchestrationService.InvokePrepositionVendAbortCallback();
+				ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent("context", "blocklisted");
+				if (rentalShoppingCart != null)
+				{
+					foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+					{
+						item.Status = LineItemStatus.NotVended;
+					}
+					rentalShoppingCart?.ReValidatePromoCodeAfterVend();
+					ServiceLocator.Instance.GetService<IMerchantServices>()?.Reconcile(rentalShoppingCart?.ShoppingSessionId.ToString(), null, null);
+					Action action = delegate
+					{
+						viewService.UnwindToSafe("shopping_cart_view", discard: false, "blocklisted complete");
+					};
+					MessagePopupViewController.ShowAuthErrorMessage(null, Resources.authorization_failure_message, Resources.continue_button, action, action);
+				}
+			}
+			else
+			{
+				OrchestrationService.InvokePrepositionVendAbortCallback();
+				ProcessAuthError(authorizeResult, rentalShoppingCart);
+			}
+		}, CancellationToken.None, TaskCreationOptions.None, viewService?.UITaskScheduler);
 	}
 
-	private static LuaTable ConvertAuthorizeResultToLuaTable(IAuthorizeResult authorizeResult)
+	private static void ProcessAuthorizeSuccessResult(IAuthorizeResult authorizeResult)
+	{
+		LogHelper.Instance.Log("ProcessAuthorizeSuccessResult");
+		ApplicationState instance = ApplicationState.Instance;
+		if (instance != null && instance.EnableOfflineBadCardList && authorizeResult != null && authorizeResult.IsOnline && !authorizeResult.StandAlone)
+		{
+			RemoveAccountFromOfflineBadCardList();
+		}
+		OrchestrationService.StopIdleTimer("idle_timer");
+		ShowMultiDiscVendViewIfNeeded(delegate
+		{
+			CheckIfEmailEntryIsNeeded(authorizeResult);
+		});
+	}
+
+	private static void CheckIfEmailEntryIsNeeded(IAuthorizeResult authorizeResult)
+	{
+		if (authorizeResult != null && authorizeResult.HasProfile && !string.IsNullOrEmpty(authorizeResult.Email))
+		{
+			ShowEmailReceiptIfNeeded(authorizeResult);
+		}
+		else
+		{
+			PromptForEmailAddress(authorizeResult, authorizeResult?.Email, null);
+		}
+	}
+
+	private static void PromptForEmailAddress(IAuthorizeResult authorizeResult, string defaultEmailAddress, string errorMessage)
+	{
+		Action<string> continueCallback = delegate(string enteredEmailAddress)
+		{
+			bool flag = authorizeResult != null && authorizeResult.Email != enteredEmailAddress;
+			if (Redbox.Rental.Services.Session.Session.Instance?.UserInfo != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email = enteredEmailAddress;
+			}
+			LogHelper.Instance.Log($"Email changed: {flag}");
+			bool flag2 = ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
+			if (flag && !flag2)
+			{
+				OrchestrationService.SuspendIdleTimer("idle_timer");
+				ServiceLocator.Instance.GetService<IViewService>();
+				OrchestrationService.ViewShowSafe("please_wait_message_view");
+				ServiceLocator.Instance.GetService<IMarketingOptinServices>().SendEmailConfirm(completeCallback: delegate(IRemoteServiceResult remoteServiceResult)
+				{
+					OrchestrationService.ResumeIdleTimer("idle_timer");
+					string property = remoteServiceResult.GetProperty<string>("confirmation_status");
+					bool? property2 = remoteServiceResult.GetProperty<bool?>("email_verified");
+					OptInConfirmationStatus optInConfirmationStatus = OptInConfirmationStatus.DoNotShow;
+					if (Enum.TryParse<OptInConfirmationStatus>(property, out var result))
+					{
+						optInConfirmationStatus = result;
+					}
+					if (property2.HasValue && property2 == false)
+					{
+						LogHelper.Instance.Log($"EmailConfirm email verified = {property2}. Reprompt for email address.");
+						OrchestrationService.UnwindToSafe("general_message_view", discard: false, "");
+						OrchestrationService.SetCurrentUICulture();
+						PromptForEmailAddress(authorizeResult, enteredEmailAddress, Resources.receipt_email_error);
+					}
+					else
+					{
+						MarketingOptInFlow(optInConfirmationStatus);
+					}
+				}, storeNumber: (ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString(), emailAddress: enteredEmailAddress, accountNumber: Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.AccountNumber);
+			}
+			else
+			{
+				ShowEmailReceiptIfNeeded(authorizeResult);
+			}
+		};
+		Action cancelCallback = delegate
+		{
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			if (rentalShoppingCart != null)
+			{
+				rentalShoppingCart.MarketingOptInConfirmationStatus = OptInConfirmationStatus.DoNotShow;
+			}
+			ShowEmailReceiptIfNeeded(authorizeResult);
+		};
+		ShowCheckOutKeyboardView(defaultEmailAddress, continueCallback, cancelCallback, errorMessage);
+	}
+
+	public static void ShowCheckOutKeyboardView(string emailAddress, Action<string> continueCallback, Action cancelCallback, string errorMessage)
+	{
+		object lockObject = new object();
+		bool hasActionExecuted = false;
+		OrchestrationService.ViewShow("keyboard_email_receipt_view", new KeyboardInfo
+		{
+			MaxLength = 64,
+			KeyboardText = (string.IsNullOrEmpty(emailAddress) ? "" : emailAddress),
+			IsValidEntry = ValidationServices.IsValidEmailAddress,
+			ErrorMessage = errorMessage,
+			KeepKeyboardTextOnInitialErrorMessage = true,
+			CancelAction = delegate
+			{
+				LockHelper.TryLockObject(lockObject, delegate
+				{
+					if (!hasActionExecuted)
+					{
+						hasActionExecuted = true;
+						if (cancelCallback != null)
+						{
+							cancelCallback();
+						}
+					}
+				}, "showCheckOutKeyboardView cancel action");
+			},
+			ContinueAction = delegate(string keyboardText)
+			{
+				LockHelper.TryLockObject(lockObject, delegate
+				{
+					if (!hasActionExecuted)
+					{
+						hasActionExecuted = true;
+						if (continueCallback != null)
+						{
+							continueCallback(keyboardText);
+						}
+					}
+				}, "showCheckOutKeyboardView continue action");
+			}
+		});
+	}
+
+	private static void ShowEmailReceiptIfNeeded(IAuthorizeResult authorizeResult)
+	{
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+		if (service != null && service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()))
+		{
+			service.AddElement("session", "hasCheckout", "True", rentalShoppingCart?.ShoppingSessionId.ToString());
+		}
+		if (authorizeResult != null && authorizeResult.HasProfile && !string.IsNullOrEmpty(authorizeResult.Email))
+		{
+			if (Redbox.Rental.Services.Session.Session.Instance?.UserInfo != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email = authorizeResult.Email;
+			}
+			PersonalizationFunctions.ShowEmailReceiptAddress(Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email);
+			return;
+		}
+		OptInConfirmationStatus optInConfirmationStatus = OptInConfirmationStatus.DoNotShow;
+		if (rentalShoppingCart != null)
+		{
+			optInConfirmationStatus = rentalShoppingCart.MarketingOptInConfirmationStatus;
+		}
+		MarketingOptInFlow(optInConfirmationStatus);
+	}
+
+	public static void MarketingOptInFlow(OptInConfirmationStatus optInConfirmationStatus)
+	{
+		bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.MarketingOptInEnabled ?? false;
+		LogHelper.Instance.Log($"Entering marketing_opt_in_flow with status=  {optInConfirmationStatus} and MarketingOptInEnabled: {flag}");
+		bool flag2 = ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
+		if (flag && !flag2 && (optInConfirmationStatus == OptInConfirmationStatus.SubscribedNotConfirmed || optInConfirmationStatus == OptInConfirmationStatus.NotSubscribedConfirmed || optInConfirmationStatus == OptInConfirmationStatus.NotSubscribedNotConfirmed))
+		{
+			if (optInConfirmationStatus == OptInConfirmationStatus.SubscribedNotConfirmed && Redbox.Rental.Services.Session.Session.Instance?.BrowseState != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.NeedMarketingConfirm = true;
+			}
+			OrchestrationService.ViewShowSafe("confirm_email_view");
+			return;
+		}
+		bool flag3 = GetMostRecentCardReadAttemptAuthorizeResult()?.HasProfile ?? false;
+		if (flag && !flag2 && !flag3 && optInConfirmationStatus == OptInConfirmationStatus.NewCustomer)
+		{
+			SendKioskOptinForMarketingCampaign(KioskOptIntItemType.MarketingSubscribe, KioskOptInItemId.Yes, Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email);
+			OrchestrationService.ViewShowSafe("optin_thank_you_view");
+		}
+		else
+		{
+			ContinueVend();
+		}
+	}
+
+	public static void SendKioskOptinForMarketingCampaign(KioskOptIntItemType itemType, KioskOptInItemId itemId, string email)
+	{
+		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
+		IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
+		IOptInItem optInItem = service.NewOptInItem();
+		optInItem.Item_Type = itemType;
+		optInItem.ItemId = (long)itemId;
+		optInItem.OptInMethodData = email;
+		optInItem.OptInMethodType = OptInMethodType.EmailAddress;
+		optInItem.TemplateName = "MarketingOptInTemplate";
+		optInItem.CampaignName = "MarketingOptInCampaign";
+		List<IOptInItem> obj = new List<IOptInItem> { optInItem };
+		service?.KioskOptIn(optInItems: obj, storeNumber: service2?.KioskId.ToString() ?? "Unknown", callback: null);
+	}
+
+	public static void ContinueVend()
+	{
+		if (NeedToShowEmailOptInCampaign() && Redbox.Rental.Services.Session.Session.Instance?.BrowseState != null && !Redbox.Rental.Services.Session.Session.Instance.BrowseState.EmailOptInCampaignShown)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.EmailOptInCampaignShown = true;
+			OrchestrationService.ViewShowSafe("email_optin_view");
+		}
+		else
+		{
+			LoyaltySignUpController.BeginAfterSwipeLoyaltySignUpFlow(delegate
+			{
+				OrchestrationService.InvokeFinishVendCallback();
+			});
+		}
+	}
+
+	private static void PrcoessOfflineOrStandAloneAuthorizeResult(IAuthorizeResult authorizeResult)
+	{
+		authorizeResult.Success = true;
+		(ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetCurrentSession())?.ShoppingCart?.SetType(ShoppingCartType.Offline);
+		if (!CheckOfflineValidations(out var response))
+		{
+			authorizeResult.Success = false;
+			authorizeResult.Response = response;
+			LogHelper.Instance.Log($"processing offline validation results.Setting sucees = false; response = {response}");
+		}
+		else
+		{
+			LogHelper.Instance.Log("passed offline validations");
+		}
+	}
+
+	public static LuaTable ConvertAuthorizeResultToLuaTable(IAuthorizeResult authorizeResult)
 	{
 		return new Dictionary<string, object>
 		{
@@ -834,5 +1124,21 @@ public class CheckoutFunctions
 	private static void AnalyticsAddAuthAccountInfo(IAuthorizeResult authorizeResult)
 	{
 		ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddAuthTransactionInfo(authorizeResult.CustomerProfileNumber, authorizeResult.AccountNumber, authorizeResult.ReferenceNumber, authorizeResult.SessionId.ToString());
+	}
+
+	public static bool NeedToShowEmailOptInCampaign()
+	{
+		bool flag = false;
+		if (!string.IsNullOrEmpty(Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email) && !OrchestrationService.TTSEnabled && ApplicationState.Instance?.EmailOptInCampaign != null)
+		{
+			bool flag2 = ServiceLocator.Instance.GetService<IConfiguration>()?.ShowOptinForNormalCheckout ?? false;
+			LogHelper.Instance.Log($"ShowOptinForNormalCheckout: {flag2}");
+			if (flag2)
+			{
+				flag = true;
+			}
+		}
+		LogHelper.Instance.Log($"NeedToShowEmailOptInCampaign: {flag}");
+		return flag;
 	}
 }

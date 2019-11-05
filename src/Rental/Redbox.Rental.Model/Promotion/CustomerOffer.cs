@@ -35,4 +35,8 @@ public class CustomerOffer
 	public CustomerSegmentType CustomerSegmentType { get; set; }
 
 	public long? StoredOfferId { get; set; }
+
+	public List<OfferProduct> OfferProducts { get; set; }
+
+	public string OfferDiscountCode { get; set; }
 }

@@ -709,19 +709,6 @@ public class DataService : IDataService
 		return store;
 	}
 
-	public List<Review> GetReviews(long titleId)
-	{
-		List<Review> list = new List<Review>();
-		if (_dataServiceInstance?.ProfileDataInstance?.Reviews != null && _dataServiceInstance.ProfileDataInstance.Reviews.ContainsKey(titleId))
-		{
-			foreach (Review review in _dataServiceInstance.ProfileDataInstance.Reviews[titleId].Reviews)
-			{
-				list.Add(review);
-			}
-		}
-		return list;
-	}
-
 	private ErrorList PerformActionWhileLocked(Action action)
 	{
 		ErrorList errorList = new ErrorList();

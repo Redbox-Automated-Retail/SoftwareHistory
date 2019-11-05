@@ -101,12 +101,6 @@ internal static class ViewFunctions
 		return ServiceLocator.Instance.GetService<IViewService>()?.GetLastShownView();
 	}
 
-	[KernelFunction(Name = "kernel.in_maintenance_mode")]
-	internal static bool InMaintenanceMode()
-	{
-		return ServiceLocator.Instance.GetService<IViewService>()?.IsInMaintenanceMode() ?? false;
-	}
-
 	[KernelFunction(Name = "kernel.safe_to_change_view")]
 	internal static bool SafeToChangeView()
 	{

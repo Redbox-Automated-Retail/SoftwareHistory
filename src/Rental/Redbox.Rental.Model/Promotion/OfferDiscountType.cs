@@ -7,5 +7,6 @@ public enum OfferDiscountType
 	Treatment,
 	Loyalty,
 	Vip,
-	Free
+	Free,
+	MultiNightPrice
 }

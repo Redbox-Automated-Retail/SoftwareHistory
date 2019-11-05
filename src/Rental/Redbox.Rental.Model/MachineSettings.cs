@@ -2,17 +2,17 @@ namespace Redbox.Rental.Model;
 
 public static class MachineSettings
 {
-	public static string GameHasContentXbox360 = "GameHasContentXbox360";
+	public const string GameHasContentXbox360 = "GameHasContentXbox360";
 
-	public static string GameHasContentXboxOne = "GameHasContentXboxOne";
+	public const string GameHasContentXboxOne = "GameHasContentXboxOne";
 
-	public static string GameHasContentPS3 = "GameHasContentPS3";
+	public const string GameHasContentPS3 = "GameHasContentPS3";
 
-	public static string GameHasContentPS4 = "GameHasContentPS4";
+	public const string GameHasContentPS4 = "GameHasContentPS4";
 
-	public static string GameHasContentWii = "GameHasContentWii";
+	public const string GameHasContentWii = "GameHasContentWii";
 
-	public static string GameHasContentWiiU = "GameHasContentWiiU";
+	public const string GameHasContentWiiU = "GameHasContentWiiU";
 
-	public static string GameHasContentNintendoSwitch = "GameHasContentNintendoSwitch";
+	public const string GameHasContentNintendoSwitch = "GameHasContentNintendoSwitch";
 }

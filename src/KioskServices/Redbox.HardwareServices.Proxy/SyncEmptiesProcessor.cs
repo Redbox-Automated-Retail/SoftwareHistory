@@ -5,7 +5,6 @@ using System.Timers;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Rental.Model;
 
 namespace Redbox.HardwareServices.Proxy;
 
@@ -30,15 +29,15 @@ public class SyncEmptiesProcessor : LocationSyncJobProcessorBase, ISyncEmptiesPr
 			return;
 		}
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (!service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SyncEmptyEnabled, out _isEnabled))
+		if (!service.TryGetValue<bool>("system", "General", "SyncEmptyEnabled", out _isEnabled))
 		{
 			_isEnabled = true;
 		}
-		if (!service.TryGetValue<string>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SyncEmptyStartTimeRangeBegin, out var value))
+		if (!service.TryGetValue<string>("system", "General", "SyncEmptyStartTimeRangeBegin", out var value))
 		{
 			value = "1:00";
 		}
-		if (!service.TryGetValue<string>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SyncEmptyStartTimeRangeEnd, out var value2))
+		if (!service.TryGetValue<string>("system", "General", "SyncEmptyStartTimeRangeEnd", out var value2))
 		{
 			value2 = "3:00";
 		}

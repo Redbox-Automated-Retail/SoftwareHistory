@@ -206,8 +206,6 @@ public class ProfileDataInstance : IProfileDataInstance
 		}
 	}
 
-	public Dictionary<long, ReviewList> Reviews { get; set; } = new Dictionary<long, ReviewList>();
-
 	public string OriginMachine { get; set; }
 
 	public DateTime GeneratedOn { get; set; }

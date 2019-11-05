@@ -8,11 +8,13 @@ using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
+using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.KioskProduct;
+using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services.ShoppingCart;
@@ -136,6 +138,8 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 							rentalShoppingCartItem.Action = RentalShoppingCartItemAction.rental;
 							rentalShoppingCartItem.Quantity = 1m;
 							rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(titleProduct);
+							rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(titleProduct);
+							rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(titleProduct);
 							rentalShoppingCart.AddItem(rentalShoppingCartItem);
 							LogHelper.Instance.Log("MDV - adding product id {0}", titleProduct.ProductId);
 						}
@@ -208,10 +212,28 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 			{
 				RemoveItemFromRentalShoppingCartByProductId(shoppingSessionId, promoOfferState.SelectedProduct.ProductId, userRemoved: true);
 			}
-			ServiceLocator.Instance.GetService<IPromotionService>().ClearPromotion();
+			IPromotionService service = ServiceLocator.Instance.GetService<IPromotionService>();
+			RemoveOfferDiscountsFromCart(shoppingSessionId, promoOfferState);
+			service.ClearPromotion();
 			promoOfferState.SelectedOffer = null;
 			promoOfferState.SelectedProduct = null;
 			promoOfferState.WasOfferAccepted = false;
+		}
+	}
+
+	private void RemoveOfferDiscountsFromCart(Guid shoppingSessionId, IPromoOfferState offerState)
+	{
+		IRentalShoppingCart rentalShoppingCart = GetRentalShoppingCart(shoppingSessionId);
+		if (rentalShoppingCart == null)
+		{
+			return;
+		}
+		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+		{
+			if (offerState.SelectedOffer.DiscountType == OfferDiscountType.MultiNightPrice)
+			{
+				RemoveMultiNightOfferFromItem(item);
+			}
 		}
 	}
 
@@ -387,6 +409,97 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 	private IShoppingSession GetCurrentShoppingSession()
 	{
 		return ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetCurrentSession();
+	}
+
+	public void AddMultiNightOfferToItem(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
+	{
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		{
+			LogHelper.Instance.Log("The UseDiscountsForPmnpOffers config setting is true, creating a discount for the item");
+			AddMultiNightDiscountPromo(rentalShoppingCartItem, selectedOffer);
+		}
+		else
+		{
+			LogHelper.Instance.Log("The UseDiscountsForPmnpOffers config setting is false, setting the mnp price for the item");
+			SetMultiNightPriceForOffer(rentalShoppingCartItem, selectedOffer);
+		}
+	}
+
+	private void AddMultiNightDiscountPromo(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
+	{
+		IPromotion promotion = ServiceLocator.Instance.GetService<IPromotionService>().GetPromotion();
+		if (promotion == null)
+		{
+			LogHelper.Instance.LogError("", "Unable to add Multi Night Offer to item when no Promotion has been assigned.");
+			return;
+		}
+		OfferProduct offerProd = selectedOffer.OfferProducts.FirstOrDefault((OfferProduct o) => o.ProductId == rentalShoppingCartItem.ProductId);
+		if (offerProd != null && offerProd.NumberOfNights.HasValue && offerProd.DiscountedPrice.HasValue && !promotion.PromotionItems.Any((IPromotionItem d) => d.RentalShoppingCartItem.ProductId == offerProd.ProductId))
+		{
+			rentalShoppingCartItem.PricingRecord.InitialDays = offerProd.NumberOfNights;
+			decimal num = rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice.Value + rentalShoppingCartItem.PricingRecord.ExtraNight * (decimal)(offerProd.NumberOfNights.Value - 1);
+			rentalShoppingCartItem.PricingRecord.InitialNight = num;
+			rentalShoppingCartItem.Price = num;
+			promotion.PromotionItems.Add(new PromotionItem
+			{
+				RentalShoppingCartItem = rentalShoppingCartItem,
+				PromotionAmount = rentalShoppingCartItem.PricingRecord.ExtraNight * (decimal)(offerProd.NumberOfNights.Value - 1) - offerProd.DiscountedPrice.Value
+			});
+			promotion.Price = promotion.PromotionItems.Sum((IPromotionItem x) => x.PromotionAmount);
+		}
+	}
+
+	private void SetMultiNightPriceForOffer(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
+	{
+		OfferProduct offerProduct = selectedOffer?.OfferProducts?.FirstOrDefault((OfferProduct o) => o.ProductId == rentalShoppingCartItem.ProductId);
+		if (offerProduct != null && offerProduct.NumberOfNights.HasValue && offerProduct.DiscountedPrice.HasValue)
+		{
+			IRentalShoppingCartItem rentalShoppingCartItem2 = rentalShoppingCartItem;
+			if (rentalShoppingCartItem2 != null && rentalShoppingCartItem2.PricingRecord?.InitialDays == 1)
+			{
+				rentalShoppingCartItem.PricingRecord.InitialDays = offerProduct.NumberOfNights;
+				decimal num = rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice.Value + offerProduct.DiscountedPrice.Value * (decimal)(offerProduct.NumberOfNights.Value - 1);
+				rentalShoppingCartItem.PricingRecord.InitialNight = num;
+				rentalShoppingCartItem.Price = num;
+			}
+		}
+	}
+
+	public void RemoveMultiNightOfferFromItem(IRentalShoppingCartItem rentalShoppingCartItem)
+	{
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		{
+			RemoveMultiNightDiscountPromo(rentalShoppingCartItem);
+		}
+		else
+		{
+			RemoveMultiNightPriceForOffer(rentalShoppingCartItem);
+		}
+	}
+
+	private void RemoveMultiNightDiscountPromo(IRentalShoppingCartItem rentalShoppingCartItem)
+	{
+		IPromotion promotion = ServiceLocator.Instance.GetService<IPromotionService>().GetPromotion();
+		if (promotion == null)
+		{
+			return;
+		}
+		rentalShoppingCartItem.PricingRecord.InitialDays = 1;
+		rentalShoppingCartItem.PricingRecord.InitialNight = rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice.Value;
+		rentalShoppingCartItem.Price = rentalShoppingCartItem.PricingRecord.InitialNight;
+		IPromotionItem promotionItem = promotion.PromotionItems.FirstOrDefault((IPromotionItem d) => d.RentalShoppingCartItem.ProductId == rentalShoppingCartItem.ProductId);
+		if (promotionItem != null)
+		{
+			promotion.PromotionItems.Remove(promotionItem);
+			promotion.Price = promotion.PromotionItems.Sum((IPromotionItem x) => x.PromotionAmount);
+		}
+	}
+
+	private void RemoveMultiNightPriceForOffer(IRentalShoppingCartItem rentalShoppingCartItem)
+	{
+		rentalShoppingCartItem.PricingRecord.InitialDays = 1;
+		rentalShoppingCartItem.PricingRecord.InitialNight = rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice.Value;
+		rentalShoppingCartItem.Price = rentalShoppingCartItem.PricingRecord.InitialNight;
 	}
 
 	private RentalShoppingCartService()

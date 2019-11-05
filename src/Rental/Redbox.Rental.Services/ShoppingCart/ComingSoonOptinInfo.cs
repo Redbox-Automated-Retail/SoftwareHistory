@@ -20,7 +20,7 @@ public class ComingSoonOptinInfo : IComingSoonOptinInfo
 		if (optInItem != null)
 		{
 			optInItem.ItemId = productId;
-			optInItem.Item_Type = Item_Type.KioskRentalTitleID;
+			optInItem.Item_Type = KioskOptIntItemType.KioskRentalTitleID;
 			optInItem.OptInMethodType = OptInMethodType.EmailAddress;
 			optInItem.OptInMethodData = EmailAddress;
 			optInItem.TemplateName = "EmailTemplate";

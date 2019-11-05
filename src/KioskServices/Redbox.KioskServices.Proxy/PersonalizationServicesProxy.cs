@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography;
@@ -154,16 +155,19 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 						{
 							RecommendedTitles recommendedTitles = new RecommendedTitles
 							{
-								OfferCode = GetResponseValue(item, "OfferCode", string.Empty)?.ToString()
+								OfferCode = GetResponseValue(item, "OfferCode", string.Empty)?.ToString(),
+								TivoQueryId = GetResponseValue(item, "QueryId", string.Empty)?.ToString()
 							};
 							foreach (IDictionary<string, object> item2 in (ArrayList)GetResponseValue(item, "TitleIds", new ArrayList()))
 							{
 								RecommendedTitlesIdType idType = (RecommendedTitlesIdType)GetResponseValue(item2, "IdType", RecommendedTitlesIdType.ProductGroupID);
 								int num = (int)GetResponseValue(item2, "Id", -1);
+								ArrayList source = (ArrayList)GetResponseValue(item2, "Tags", new ArrayList());
 								recommendedTitles.Add(new RecommendedTitleId
 								{
 									Id = num,
-									IdType = idType
+									IdType = idType,
+									Tags = source.Cast<string>().ToList()
 								});
 							}
 							((List<IRecommendedTitles>)remoteServiceResult.Properties["RecommendedTitles"]).Add(recommendedTitles);

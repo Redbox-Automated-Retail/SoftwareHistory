@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Web;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
@@ -90,13 +89,12 @@ public class ProfileData : IProfileData
 				LoadSubPlatform(vistaDBDatabaseProvider, profileDataInstance);
 				LoadVendors(vistaDBDatabaseProvider, profileDataInstance);
 				LoadVersion(vistaDBDatabaseProvider, profileDataInstance);
-				LoadReviews(vistaDBDatabaseProvider, profileDataInstance);
 				ExtractImages(vistaDBDatabaseProvider, profileDataInstance);
 				vistaDBDatabaseProvider.Close();
 			}
 			else
 			{
-				ServiceLocator.Instance.GetService<IEngineApplication>()?.CorruptDbDetected("Profile.Data");
+				ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RaiseCorruptDb();
 			}
 		}
 		profileDataInstance.ProfileLuaView = new ProfileLuaView(profileDataInstance);
@@ -165,7 +163,6 @@ public class ProfileData : IProfileData
 				Key = key,
 				Value = value,
 				ProductId = dictionary.ToInt64("product_id"),
-				Stars = dictionary.ToInt32("stars"),
 				RunningTime = dictionary.ToString("running_time"),
 				Starring = dictionary.ToListString("starring"),
 				ProductTypeId = dictionary.ToInt32("product_type_id"),
@@ -427,38 +424,6 @@ public class ProfileData : IProfileData
 				profileVersion.VersionValue = dictionary.ToString("date");
 			}
 			instance.ProfileVersion.Add(profileVersion);
-		});
-	}
-
-	private void LoadReviews(VistaDBDatabaseProvider db, ProfileDataInstance instance)
-	{
-		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Review"));
-		ConvertToList(sqlData, "LoadReviews", delegate(string key, string value)
-		{
-			Dictionary<string, object> data = value.ParseLuaValue();
-			ReviewList item = new ReviewList
-			{
-				Key = key,
-				Value = value,
-				TitleId = long.Parse(key)
-			};
-			item.Reviews = new List<Review>();
-			data.ToDictionaryObject("reviews").ForEach(delegate(object r)
-			{
-				if (r is KeyValuePair<string, object> keyValuePair)
-				{
-					Dictionary<string, object> dictionary = (Dictionary<string, object>)keyValuePair.Value;
-					item.Reviews.Add(new Review
-					{
-						TitleId = dictionary.ToInt64("title_id"),
-						DisplayName = dictionary.ToString("display_name"),
-						ReviewDate = dictionary.ToDateTime("date_rated_cst", DateTime.MinValue).Value,
-						Stars = dictionary.ToInt32("rating"),
-						ReviewText = HttpUtility.HtmlDecode(dictionary.ToString("review_text"))
-					});
-				}
-			});
-			instance.Reviews[item.TitleId] = item;
 		});
 	}
 

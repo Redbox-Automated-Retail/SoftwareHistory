@@ -35,8 +35,6 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public long ProductId => _title.ProductId;
 
-	public int Stars => _title.Stars;
-
 	public string RunningTime => _title.RunningTime;
 
 	public List<string> Starring => _title.Starring;
@@ -94,6 +92,8 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	public bool IsEmptyCase => ProductId == 1139;
 
 	public List<long> RequiredAdditionalTitles { get; private set; }
+
+	public string TivoQueryId { get; set; }
 
 	public bool IsSellable
 	{

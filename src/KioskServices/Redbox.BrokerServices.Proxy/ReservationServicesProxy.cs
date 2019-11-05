@@ -8,6 +8,7 @@ using System.Threading;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.Request;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Services.KioskBrokerServices.KioskShared.DomainObjects;
 
@@ -80,53 +81,60 @@ public class ReservationServicesProxy : IReservationServices
 		BrokerServicesProxy.Instance.Reset();
 	}
 
-	public void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback)
+	public void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback, string sessionId)
 	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+		if (session == null)
+		{
+			LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
+			return;
+		}
+		var pickupRequest = new
+		{
+			MessageType = "Pickup",
+			MessageId = Guid.NewGuid(),
+			EngineVersion = service["EngineVersion"],
+			BundleVersion = service["ProductVersion"],
+			Email = emailAddress,
+			KioskId = int.Parse(storeNumber),
+			ReferenceNumber = referenceNumber,
+			Blocklisted = isBlocklisted,
+			PickupDateTime = DateTime.Now,
+			Items = new Dictionary<string, object>(),
+			CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true)
+		};
+		foreach (KeyValuePair<string, ReadOnlyCollection<IProductItem>> pickupResult in pickupResults)
+		{
+			var anon = new
+			{
+				Items = new List<object>()
+			};
+			foreach (IProductItem item2 in pickupResult.Value)
+			{
+				var item = new
+				{
+					Barcode = item2.Barcode,
+					MultiDisc = item2.MultiDisc,
+					VendStatus = item2.Status.ToVendStatus()
+				};
+				anon.Items.Add(item);
+			}
+			pickupRequest.Items[pickupResult.Key] = anon;
+		}
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				IObjectCacheService service = ServiceLocator.Instance.GetService<IObjectCacheService>();
-				if (service != null)
+				IObjectCacheService service2 = ServiceLocator.Instance.GetService<IObjectCacheService>();
+				if (service2 != null)
 				{
-					IServiceProxy serviceProxy = service.GetObject<IServiceProxy>("Kiosk Services Proxy");
+					IServiceProxy serviceProxy = service2.GetObject<IServiceProxy>("Kiosk Services Proxy");
 					LogHelper.Instance.Log("Enqueue call to remote IReservationServices.Pickup, URL: {0}", serviceProxy.GetProperty<string>("Url"));
 				}
-				IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-				var anon = new
-				{
-					MessageType = "Pickup",
-					MessageId = Guid.NewGuid(),
-					EngineVersion = service2["EngineVersion"],
-					BundleVersion = service2["ProductVersion"],
-					Email = emailAddress,
-					KioskId = int.Parse(storeNumber),
-					ReferenceNumber = referenceNumber,
-					Blocklisted = isBlocklisted,
-					PickupDateTime = DateTime.Now,
-					Items = new Dictionary<string, object>()
-				};
-				foreach (KeyValuePair<string, ReadOnlyCollection<IProductItem>> pickupResult in pickupResults)
-				{
-					var anon2 = new
-					{
-						Items = new List<object>()
-					};
-					foreach (IProductItem item2 in pickupResult.Value)
-					{
-						var item = new
-						{
-							Barcode = item2.Barcode,
-							MultiDisc = item2.MultiDisc,
-							VendStatus = item2.Status.ToVendStatus()
-						};
-						anon2.Items.Add(item);
-					}
-					anon.Items[pickupResult.Key] = anon2;
-				}
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Pickup", anon);
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Pickup", pickupRequest);
 			}
 			catch (Exception e)
 			{

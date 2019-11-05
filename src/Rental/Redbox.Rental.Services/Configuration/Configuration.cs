@@ -15,11 +15,17 @@ public class Configuration : IConfiguration
 
 	private Dictionary<TitleType, bool> _gameHasContentTypes;
 
+	private bool _animatedDiscReturnEnabled;
+
 	private int _burnInTimeout;
 
 	private int _burnInViewDuration;
 
 	private bool _comingSoonOptInEnabled;
+
+	private bool _marketingOptInEnabled;
+
+	private bool _showOptinForNormalCheckout;
 
 	private bool _earlyIdEnabled;
 
@@ -101,17 +107,19 @@ public class Configuration : IConfiguration
 
 	private string _startViewAdABTestVersion;
 
+	private string _startViewRentAndBuyABTestVersion;
+
 	private string _priceFiltersOnBrowseABTestVersion;
 
 	private string _oosTitleDetailsABTestVersion;
 
 	private int _screenSaverTimeout;
 
-	private string _starRatingTitleDetailsABTestVersion;
-
 	private string _tvEnabledABTestVersion;
 
 	private List<long> _tvTitleIds;
+
+	private string _shoppingCartLayoutABTestVersion;
 
 	private int _keepHalImagesForNumberOfDays;
 
@@ -175,6 +183,10 @@ public class Configuration : IConfiguration
 
 	private bool _showKmtInCartOffers;
 
+	private bool _useDiscountsForPmnpOffers;
+
+	private bool? _cachedIsDefaultCulture;
+
 	public static IConfiguration Instance => Singleton<Configuration>.Instance;
 
 	public Dictionary<TitleType, bool> EnabledGameTypes
@@ -185,13 +197,13 @@ public class Configuration : IConfiguration
 			{
 				IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 				_enabledGameTypes = new Dictionary<TitleType, bool>();
-				_enabledGameTypes.Add(TitleType.Xbox360, GetGameConfig(service, ConfigSetting.GameEnableXbox360));
-				_enabledGameTypes.Add(TitleType.XboxOne, GetGameConfig(service, ConfigSetting.GameEnableXboxOne));
-				_enabledGameTypes.Add(TitleType.PS3, GetGameConfig(service, ConfigSetting.GameEnablePS3));
-				_enabledGameTypes.Add(TitleType.PS4, GetGameConfig(service, ConfigSetting.GameEnablePS4));
-				_enabledGameTypes.Add(TitleType.Wii, GetGameConfig(service, ConfigSetting.GameEnableWii));
-				_enabledGameTypes.Add(TitleType.WiiU, GetGameConfig(service, ConfigSetting.GameEnableWiiU));
-				_enabledGameTypes.Add(TitleType.NintendoSwitch, GetGameConfig(service, ConfigSetting.GameEnableNintendoSwitch));
+				_enabledGameTypes.Add(TitleType.Xbox360, GetGameConfig(service, "GameEnableXbox360"));
+				_enabledGameTypes.Add(TitleType.XboxOne, GetGameConfig(service, "GameEnableXboxOne"));
+				_enabledGameTypes.Add(TitleType.PS3, GetGameConfig(service, "GameEnablePS3"));
+				_enabledGameTypes.Add(TitleType.PS4, GetGameConfig(service, "GameEnablePS4"));
+				_enabledGameTypes.Add(TitleType.Wii, GetGameConfig(service, "GameEnableWii"));
+				_enabledGameTypes.Add(TitleType.WiiU, GetGameConfig(service, "GameEnableWiiU"));
+				_enabledGameTypes.Add(TitleType.NintendoSwitch, GetGameConfig(service, "GameEnableNintendoSwitch"));
 			}
 			return _enabledGameTypes;
 		}
@@ -205,13 +217,13 @@ public class Configuration : IConfiguration
 			{
 				IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
 				_gameHasContentTypes = new Dictionary<TitleType, bool>();
-				_gameHasContentTypes.Add(TitleType.Xbox360, GetMachineSetting(service, MachineSettings.GameHasContentXbox360));
-				_gameHasContentTypes.Add(TitleType.XboxOne, GetMachineSetting(service, MachineSettings.GameHasContentXboxOne));
-				_gameHasContentTypes.Add(TitleType.PS3, GetMachineSetting(service, MachineSettings.GameHasContentPS3));
-				_gameHasContentTypes.Add(TitleType.PS4, GetMachineSetting(service, MachineSettings.GameHasContentPS4));
-				_gameHasContentTypes.Add(TitleType.Wii, GetMachineSetting(service, MachineSettings.GameHasContentWii));
-				_gameHasContentTypes.Add(TitleType.WiiU, GetMachineSetting(service, MachineSettings.GameHasContentWiiU));
-				_gameHasContentTypes.Add(TitleType.NintendoSwitch, GetMachineSetting(service, MachineSettings.GameHasContentNintendoSwitch));
+				_gameHasContentTypes.Add(TitleType.Xbox360, GetMachineSetting(service, "GameHasContentXbox360"));
+				_gameHasContentTypes.Add(TitleType.XboxOne, GetMachineSetting(service, "GameHasContentXboxOne"));
+				_gameHasContentTypes.Add(TitleType.PS3, GetMachineSetting(service, "GameHasContentPS3"));
+				_gameHasContentTypes.Add(TitleType.PS4, GetMachineSetting(service, "GameHasContentPS4"));
+				_gameHasContentTypes.Add(TitleType.Wii, GetMachineSetting(service, "GameHasContentWii"));
+				_gameHasContentTypes.Add(TitleType.WiiU, GetMachineSetting(service, "GameHasContentWiiU"));
+				_gameHasContentTypes.Add(TitleType.NintendoSwitch, GetMachineSetting(service, "GameHasContentNintendoSwitch"));
 			}
 			return _gameHasContentTypes;
 		}
@@ -223,6 +235,8 @@ public class Configuration : IConfiguration
 
 	public bool ShowAuthChangeMessage => _showAuthChangeMessage;
 
+	public bool AnimatedDiscReturnEnabled => _animatedDiscReturnEnabled;
+
 	public int BurnInTimeout => _burnInTimeout;
 
 	public int BurnInViewDuration => _burnInViewDuration;
@@ -230,6 +244,10 @@ public class Configuration : IConfiguration
 	public bool EarlyIdEnabled => _earlyIdEnabled;
 
 	public bool ComingSoonOptInEnabled => _comingSoonOptInEnabled;
+
+	public bool MarketingOptInEnabled => _marketingOptInEnabled;
+
+	public bool ShowOptinForNormalCheckout => _showOptinForNormalCheckout;
 
 	public bool LoyaltyEnabled => _loyaltyEnabled;
 
@@ -343,23 +361,25 @@ public class Configuration : IConfiguration
 
 	public bool DiscoverInsertChipEnabled => _discoverInsertChipEnabled;
 
-	public string WelcomeScreenABTestVersion => DefaultIfAlternateCulture(_welcomeScreenABTestVersion, "A");
+	public string WelcomeScreenABTestVersion => GetCultureBasedValue(_welcomeScreenABTestVersion, "A");
 
-	public string WelcomeScreenTimingABTestVersion => DefaultIfAlternateCulture(_welcomeScreenTimingABTestVersion, "A");
+	public string WelcomeScreenTimingABTestVersion => GetCultureBasedValue(_welcomeScreenTimingABTestVersion, "A");
 
-	public string StartViewAdABTestVersion => DefaultIfAlternateCulture(_startViewAdABTestVersion, "A");
+	public string StartViewAdABTestVersion => GetCultureBasedValue(_startViewAdABTestVersion, "A");
 
-	public string PriceFiltersOnBrowseABTestVersion => DefaultIfAlternateCulture(_priceFiltersOnBrowseABTestVersion, "A");
+	public string StartViewRentAndBuyABTestVersion => GetCultureBasedValue(_startViewRentAndBuyABTestVersion, "A");
+
+	public string PriceFiltersOnBrowseABTestVersion => GetCultureBasedValue(_priceFiltersOnBrowseABTestVersion, "A");
 
 	public int ScreenSaverTimeout => _screenSaverTimeout;
 
-	public string OutOfStockTitleDetailsABTestVersion => DefaultIfAlternateCulture(_oosTitleDetailsABTestVersion, "A");
-
-	public string StarRatingTitleDetailsABTestVersion => DefaultIfAlternateCulture(_starRatingTitleDetailsABTestVersion, "A");
+	public string OutOfStockTitleDetailsABTestVersion => GetCultureBasedValue(_oosTitleDetailsABTestVersion, "A");
 
 	public string TVEnabledABTestVersion => _tvEnabledABTestVersion;
 
 	public List<long> TVTitleIds => _tvTitleIds;
+
+	public string ShoppingCartLayoutABTestVersion => GetCultureBasedValue(_shoppingCartLayoutABTestVersion, "A");
 
 	public bool ShowAfterSwipePersonalizedOffers => _afterSwipePersonalizedOffers;
 
@@ -385,22 +405,24 @@ public class Configuration : IConfiguration
 
 	public bool ShowKMTInCartOffers => _showKmtInCartOffers;
 
-	public bool SendReturnImageForTitle(ITitleProduct title)
+	public bool UseDiscountsForPmnpOffers => _useDiscountsForPmnpOffers;
+
+	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
-		if (!_sendReturnImageTitleTypes.Contains(title.TitleType))
+		if (!_cachedIsDefaultCulture.HasValue)
 		{
-			return _sendReturnImageProductIds.Contains(title.ProductId);
+			_cachedIsDefaultCulture = OrchestrationService.GetCulture() == OrchestrationService.GetDefaultCulture();
 		}
-		return true;
+		if (_cachedIsDefaultCulture.HasValue && !_cachedIsDefaultCulture.Value)
+		{
+			return alternateCultureValue;
+		}
+		return defaultCultureValue;
 	}
 
-	private string DefaultIfAlternateCulture(string setting, string defaultValue)
+	public void ResetCachedIsDefaultCulture()
 	{
-		if (!(OrchestrationService.GetCulture() == OrchestrationService.GetDefaultCulture()))
-		{
-			return defaultValue;
-		}
-		return setting;
+		_cachedIsDefaultCulture = null;
 	}
 
 	private Configuration()
@@ -410,93 +432,100 @@ public class Configuration : IConfiguration
 
 	private void Initialize()
 	{
+		ResetCachedIsDefaultCulture();
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		_burnInTimeout = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "BurnInTimeout", 1800000);
-		_burnInViewDuration = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "BurnInViewDuration", 30000);
-		_signInTimeout = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Personalization, "SignInTimeout", 20000);
-		_signInADATimeout = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Personalization, "SignInADATimeout", 90000);
-		_enablePricingEngine = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "EnablePricingEngine", defaultValue: true);
-		_deviceServiceClientUrl = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.DeviceServiceClientUrl, "http://localhost:9000/CardReaderEvents");
+		_burnInTimeout = ConfigGetValue(service, "system", "General", "BurnInTimeout", 1800000);
+		_burnInViewDuration = ConfigGetValue(service, "system", "General", "BurnInViewDuration", 30000);
+		_signInTimeout = ConfigGetValue(service, "system", "Personalization", "SignInTimeout", 20000);
+		_signInADATimeout = ConfigGetValue(service, "system", "Personalization", "SignInADATimeout", 90000);
+		_enablePricingEngine = ConfigGetValue(service, "system", "General", "EnablePricingEngine", defaultValue: true);
+		_deviceServiceClientUrl = ConfigGetValue(service, "system", "DeviceService", "DeviceServiceClientUrl", "http://localhost:9000/CardReaderEvents");
 		SessionReload();
 	}
 
 	public void SessionReload()
 	{
+		ResetCachedIsDefaultCulture();
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		_comingSoonOptInEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "ComingSoonOptIn", defaultValue: true);
-		_earlyIdEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Personalization, "EarlyIDEnabled", defaultValue: false);
-		_loyaltyEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Personalization, "LoyaltyEnabled", defaultValue: false);
-		_serviceFeeEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "ServiceFeeEnabled", defaultValue: false);
-		_blurayUpsellEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "BluRayUpsellEnabled", defaultValue: false);
-		__4KUpsellEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "4KUpsellEnabled", defaultValue: false);
-		_offlineItemsLimit = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "OfflineItemsLimit", 3);
-		_offlineGameRentalLimit = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "OfflineGameRentalLimit", 1);
-		_offlineGamePurchaseLimit = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "OfflineGamePurchaseLimit", 2);
-		_offlineBlockListEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "OfflineBlockListEnabled", defaultValue: true);
-		_uploadDiscImageMessagePriority = ConfigGetValue(service, ConfigFile.System, ConfigCategory.QueueService, "UploadDiscImageMessagePriority", 60);
-		_kioskAnalyticsMessagePriority = ConfigGetValue(service, ConfigFile.System, ConfigCategory.QueueService, "KioskAnalyticsMessagePriority", 0);
-		_useTimerToInvokeCallbackEntries = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "UseTimerToInvokeCallbackEntries", defaultValue: true);
-		_giftCardsEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, ConfigSetting.GiftCardsEnabled, defaultValue: true);
-		_showAuthChangeMessage = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, ConfigSetting.ShowAuthChangeMessage, defaultValue: true);
-		_useLowestPriceSortOrder = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "UserLowestPriceSortOrder", defaultValue: false);
-		_enableFlashDeals = ConfigGetValue(service, ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.EnableFlashDeals, defaultValue: false);
-		_flashDealPrices = ParseFlashDealPrices(ConfigGetValue<string>(service, ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.FlashDealPrices, null));
-		_show99CentsBrowseFilterButton = ConfigGetValue(service, ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.Show99CentsBrowseFilterButton, defaultValue: false);
-		_afterSwipePersonalizedOffers = ConfigGetValue(service, ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.ShowAfterSwipePersonalizedOffers, defaultValue: false);
-		_showKmtInCartOffers = ConfigGetValue(service, ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.ShowKMTInCartOffers, defaultValue: true);
-		_loyaltySignupEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Personalization, "LoyaltySignUpEnabled", defaultValue: false);
-		_loyaltySignupAfterSwipeEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Personalization, "LoyaltySignUpAfterSwipeEnabled", defaultValue: false);
-		string timeSpan = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.Personalization, "SignUpStartEndTime", null);
+		_animatedDiscReturnEnabled = ConfigGetValue(service, "system", "General", "AnimatedDiscReturnEnabled", defaultValue: false);
+		_comingSoonOptInEnabled = ConfigGetValue(service, "system", "General", "ComingSoonOptIn", defaultValue: true);
+		_marketingOptInEnabled = ConfigGetValue(service, "system", "General", "MarketingOptInEnabled", defaultValue: true);
+		_showOptinForNormalCheckout = ConfigGetValue(service, "system", "General", "ShowOptinForNormalCheckout", defaultValue: true);
+		_earlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
+		_loyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
+		_serviceFeeEnabled = ConfigGetValue(service, "system", "General", "ServiceFeeEnabled", defaultValue: false);
+		_blurayUpsellEnabled = ConfigGetValue(service, "system", "General", "BluRayUpsellEnabled", defaultValue: false);
+		__4KUpsellEnabled = ConfigGetValue(service, "system", "General", "4KUpsellEnabled", defaultValue: false);
+		_offlineItemsLimit = ConfigGetValue(service, "system", "General", "OfflineItemsLimit", 3);
+		_offlineGameRentalLimit = ConfigGetValue(service, "system", "General", "OfflineGameRentalLimit", 1);
+		_offlineGamePurchaseLimit = ConfigGetValue(service, "system", "General", "OfflineGamePurchaseLimit", 2);
+		_offlineBlockListEnabled = ConfigGetValue(service, "system", "General", "OfflineBlockListEnabled", defaultValue: true);
+		_uploadDiscImageMessagePriority = ConfigGetValue(service, "system", "QueueService", "UploadDiscImageMessagePriority", 60);
+		_kioskAnalyticsMessagePriority = ConfigGetValue(service, "system", "QueueService", "KioskAnalyticsMessagePriority", 0);
+		_useTimerToInvokeCallbackEntries = ConfigGetValue(service, "system", "General", "UseTimerToInvokeCallbackEntries", defaultValue: true);
+		_giftCardsEnabled = ConfigGetValue(service, "system", "General", "GiftCardsEnabled", defaultValue: true);
+		_showAuthChangeMessage = ConfigGetValue(service, "system", "General", "ShowAuthChangeMessage", defaultValue: true);
+		_useLowestPriceSortOrder = ConfigGetValue(service, "system", "General", "UserLowestPriceSortOrder", defaultValue: false);
+		_enableFlashDeals = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableFlashDeals", defaultValue: false);
+		_flashDealPrices = ParseFlashDealPrices(ConfigGetValue<string>(service, "marketing", "MarketingGeneral", "FlashDealPrices", null));
+		_show99CentsBrowseFilterButton = ConfigGetValue(service, "marketing", "MarketingGeneral", "Show99CentsBrowseFilterButton", defaultValue: false);
+		_afterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
+		_showKmtInCartOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKMTInCartOffers", defaultValue: true);
+		_useDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
+		_loyaltySignupEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltySignUpEnabled", defaultValue: false);
+		_loyaltySignupAfterSwipeEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltySignUpAfterSwipeEnabled", defaultValue: false);
+		string timeSpan = ConfigGetValue<string>(service, "system", "Personalization", "SignUpStartEndTime", null);
 		ParseTimeRange(timeSpan, out _loyaltySignupStartTime, out _loyaltySignupEndTime, "SignUpStartEndTime");
-		string timeSpan2 = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.Personalization, "SignUpAfterSwipeStartEndTime", null);
+		string timeSpan2 = ConfigGetValue<string>(service, "system", "Personalization", "SignUpAfterSwipeStartEndTime", null);
 		ParseTimeRange(timeSpan2, out _loyaltySignupAfterSwipeStartTime, out _loyaltySignupAfterSwipeEndTime, "SignUpAfterSwipeStartEndTime");
-		_fraudServicesUrl = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.Fraud, "FraudServicesUrl", null);
-		_fraudServicesKey = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.Fraud, "FraudServicesKey", null);
-		_barcodeTrackingMaxBatchSize = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "BarcodeTrackingMaxBatchSize", 10);
-		_barcodeTrackingTimerDuration = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "BarcodeTrackingTimerDuration", 3600000);
-		_barcodeTrackingMessagePriority = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "BarcodeTrackingMessagePriority", 110);
-		_monitorBarcodeTracking = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "MonitorBarcodeTracking", defaultValue: false);
-		_enableIRSecurity = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "EnableIRSecurity", defaultValue: false);
-		_enableImageSecurity = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "EnableImageSecurity", defaultValue: false);
-		string sendImageTypes = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "SendReturnImageTypes", TitleFamily.Games.ToString());
+		_fraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "FraudServicesUrl", null);
+		_fraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "FraudServicesKey", null);
+		_barcodeTrackingMaxBatchSize = ConfigGetValue(service, "system", "Fraud", "BarcodeTrackingMaxBatchSize", 10);
+		_barcodeTrackingTimerDuration = ConfigGetValue(service, "system", "Fraud", "BarcodeTrackingTimerDuration", 3600000);
+		_barcodeTrackingMessagePriority = ConfigGetValue(service, "system", "Fraud", "BarcodeTrackingMessagePriority", 110);
+		_monitorBarcodeTracking = ConfigGetValue(service, "system", "Fraud", "MonitorBarcodeTracking", defaultValue: false);
+		_enableIRSecurity = ConfigGetValue(service, "system", "Fraud", "EnableIRSecurity", defaultValue: false);
+		_enableImageSecurity = ConfigGetValue(service, "system", "Fraud", "EnableImageSecurity", defaultValue: false);
+		string sendImageTypes = ConfigGetValue(service, "system", "Fraud", "SendReturnImageTypes", TitleFamily.Games.ToString());
 		ParseImageTypes(sendImageTypes);
-		_keepHalImagesForNumberOfDays = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "KeepHalImagesForNumberOfDays", 30);
-		_awsBarcodeTrackingEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "AwsBarcodeTrackingEnabled", defaultValue: false);
-		_awsUploadDiscImageEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.Fraud, "AwsUploadDiscImageEnabled", defaultValue: false);
-		_awsFraudServicesUrl = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.Fraud, "AwsFraudServicesUrl", null);
-		_awsFraudServicesKey = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.Fraud, "AwsFraudServicesKey", null);
-		_welcomeScreenABTestVersion = GetABTestValue(service, ConfigSetting.WelcomeScreen, ConfigCategory.ABTesting);
-		_welcomeScreenTimingABTestVersion = GetABTestValue(service, ConfigSetting.WelcomeScreenTiming, ConfigCategory.ABTesting);
-		_startViewAdABTestVersion = GetABTestValue(service, ConfigSetting.StartViewAd, ConfigCategory.ABTesting);
-		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, ConfigSetting.PriceFiltersOnBrowse, ConfigCategory.MarketingGeneral);
-		_oosTitleDetailsABTestVersion = GetABTestValue(service, ConfigSetting.OutOfStockTitleDetails, ConfigCategory.ABTesting);
-		_screenSaverTimeout = ConfigGetValue(service, ConfigFile.Marketing, ConfigCategory.ABTestParameters, ConfigSetting.ScreenSaverTimer, 25000);
-		_starRatingTitleDetailsABTestVersion = GetABTestValue(service, ConfigSetting.StarRatingTitleDetails, ConfigCategory.ABTesting);
-		_tvEnabledABTestVersion = GetABTestValue(service, ConfigSetting.TVEnabled, ConfigCategory.ABTesting);
-		_tvTitleIds = ParseTVTitleIds(ConfigGetValue<string>(service, ConfigFile.Marketing, ConfigCategory.ABTestParameters, ConfigSetting.TVTitleIds, null));
-		_authorizeAtPickup = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "AuthorizeAtPickup", defaultValue: false);
-		_kioskAnalyticsEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "KioskAnalytics", defaultValue: false);
-		_sendKioskAnalyticsToKioskDataService = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "SendKioskAnalyticsToKioskDataService", defaultValue: false);
-		_kioskAnalyticsJsonEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.General, "KioskAnalyticsJsonEnabled", defaultValue: false);
-		_kioskDataServicesUrl = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.General, "KioskDataServicesUrl", null);
-		_kioskDataServicesKey = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.General, "KioskDataServicesKey", null);
-		_chipEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.ChipEnabled, defaultValue: false);
-		_contactlessEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.ContactlessEnabled, defaultValue: false);
-		_cardReadTechnicalFallbackEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.CardReadTechnicalFallbackEnabled, defaultValue: true);
-		_cardReadTechnicalFallbackCountLimit = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.CardReadTechnicalFallbackCountLimit, 3);
-		_deviceServicePleaseWaitDuration = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.DeviceServicePleaseWaitDuration, 90000);
-		_contactlessVisaEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.ContactlessVisaEnabled, defaultValue: true);
-		_contactlessAmexEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.ContactlessAmexEnabled, defaultValue: true);
-		_contactlessMasterCardEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.ContactlessMasterCardEnabled, defaultValue: true);
-		_contactlessDiscoverEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.ContactlessDiscoverEnabled, defaultValue: true);
-		_visaInsertChipEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.VisaInsertChipEnabled, defaultValue: true);
-		_amexInsertChipEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.AmexInsertChipEnabled, defaultValue: true);
-		_masterCardInsertChipEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.MasterCardInsertChipEnabled, defaultValue: true);
-		_discoverInsertChipEnabled = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.DiscoverInsertChipEnabled, defaultValue: true);
-		_bluefinAutoActivate = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.BluefinAutoActivate, defaultValue: false);
-		_bluefinServiceUrl = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.BluefinServiceUrl, null);
-		_bluefinServiceApiKey = ConfigGetValue<string>(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.BluefinServiceApiKey, null);
-		_bluefinServiceTimeout = ConfigGetValue(service, ConfigFile.System, ConfigCategory.DeviceService, ConfigSetting.BluefinServiceTimeout, 5000);
+		_keepHalImagesForNumberOfDays = ConfigGetValue(service, "system", "Fraud", "KeepHalImagesForNumberOfDays", 30);
+		_awsBarcodeTrackingEnabled = ConfigGetValue(service, "system", "Fraud", "AwsBarcodeTrackingEnabled", defaultValue: false);
+		_awsUploadDiscImageEnabled = ConfigGetValue(service, "system", "Fraud", "AwsUploadDiscImageEnabled", defaultValue: false);
+		_awsFraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesUrl", null);
+		_awsFraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesKey", null);
+		_welcomeScreenABTestVersion = GetABTestValue(service, "WelcomeScreen", "AB Testing");
+		_welcomeScreenTimingABTestVersion = GetABTestValue(service, "WelcomeScreenTiming", "AB Testing");
+		_startViewAdABTestVersion = GetABTestValue(service, "StartViewAd", "AB Testing");
+		_startViewRentAndBuyABTestVersion = GetABTestValue(service, "StartViewRentAndBuy", "AB Testing");
+		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, "PriceFiltersOnBrowse", "MarketingGeneral");
+		_oosTitleDetailsABTestVersion = GetABTestValue(service, "OutOfStockTitleDetails", "AB Testing");
+		_screenSaverTimeout = ConfigGetValue(service, "marketing", "AB Test Parameters", "ScreenSaverTimer", 25000);
+		_tvEnabledABTestVersion = GetABTestValue(service, "TVEnabled", "AB Testing");
+		_tvTitleIds = ParseTVTitleIds(ConfigGetValue<string>(service, "marketing", "AB Test Parameters", "TVTitleIds", null));
+		_shoppingCartLayoutABTestVersion = GetABTestValue(service, "ShoppingCartLayout", "AB Testing");
+		_authorizeAtPickup = ConfigGetValue(service, "system", "General", "AuthorizeAtPickup", defaultValue: false);
+		_kioskAnalyticsEnabled = ConfigGetValue(service, "system", "General", "KioskAnalytics", defaultValue: false);
+		_sendKioskAnalyticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskAnalyticsToKioskDataService", defaultValue: false);
+		_kioskAnalyticsJsonEnabled = ConfigGetValue(service, "system", "General", "KioskAnalyticsJsonEnabled", defaultValue: false);
+		_kioskDataServicesUrl = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesUrl", null);
+		_kioskDataServicesKey = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesKey", null);
+		_chipEnabled = ConfigGetValue(service, "system", "DeviceService", "ChipEnabled", defaultValue: false);
+		_contactlessEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessEnabled", defaultValue: false);
+		_cardReadTechnicalFallbackEnabled = ConfigGetValue(service, "system", "DeviceService", "CardReadTechnicalFallbackEnabled", defaultValue: true);
+		_cardReadTechnicalFallbackCountLimit = ConfigGetValue(service, "system", "DeviceService", "CardReadTechnicalFallbackCountLimit", 3);
+		_deviceServicePleaseWaitDuration = ConfigGetValue(service, "system", "DeviceService", "DeviceServicePleaseWaitDuration", 90000);
+		_contactlessVisaEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessVisaEnabled", defaultValue: true);
+		_contactlessAmexEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessAmexEnabled", defaultValue: true);
+		_contactlessMasterCardEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessMasterCardEnabled", defaultValue: true);
+		_contactlessDiscoverEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessDiscoverEnabled", defaultValue: true);
+		_visaInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "VisaInsertChipEnabled", defaultValue: true);
+		_amexInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "AmexInsertChipEnabled", defaultValue: true);
+		_masterCardInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "MasterCardInsertChipEnabled", defaultValue: true);
+		_discoverInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "DiscoverInsertChipEnabled", defaultValue: true);
+		_bluefinAutoActivate = ConfigGetValue(service, "system", "DeviceService", "BluefinAutoActivate", defaultValue: false);
+		_bluefinServiceUrl = ConfigGetValue<string>(service, "system", "DeviceService", "BluefinServiceUrl", null);
+		_bluefinServiceApiKey = ConfigGetValue<string>(service, "system", "DeviceService", "BluefinServiceApiKey", null);
+		_bluefinServiceTimeout = ConfigGetValue(service, "system", "DeviceService", "BluefinServiceTimeout", 5000);
 	}
 
 	private bool GetMachineSetting(IMachineSettingsStore machineSettingStore, string key)
@@ -531,7 +560,7 @@ public class Configuration : IConfiguration
 
 	private string GetABTestValue(IConfigurationService configService, string testName, string categoryName)
 	{
-		string text = ConfigGetValue(configService, ConfigFile.Marketing, categoryName, testName, "A");
+		string text = ConfigGetValue(configService, "marketing", categoryName, testName, "A");
 		if (string.IsNullOrEmpty(text) || text == "OFF")
 		{
 			text = "A";

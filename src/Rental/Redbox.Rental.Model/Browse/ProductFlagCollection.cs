@@ -85,6 +85,12 @@ public class ProductFlagCollection : List<ProductFlag>
 						Flag = ProductFlags.AwardNominee,
 						TextKeyName = "flag_award_nominee",
 						FlagStyleName = "warm_purple_flag_style"
+					},
+					new ProductFlag
+					{
+						Flag = ProductFlags.WishList,
+						TextKeyName = "flag_wish_list",
+						FlagStyleName = "rubine_flag_style"
 					}
 				};
 			}

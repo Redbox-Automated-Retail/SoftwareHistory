@@ -12,7 +12,6 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
-using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
@@ -24,6 +23,7 @@ using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
+using Redbox.Rental.Services.EmailOptinCampaign;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Views;
 
@@ -39,17 +39,13 @@ public static class OrchestrationService
 
 	private static Action _localizationReloadCallback;
 
-	private static Action<string> _marketingOptInFlowCallback;
-
-	private static Action _continueVendCallback;
+	private static Action _finishVendCallback;
 
 	private static Action _prepositionVendCallback;
 
-	private static Action _finishVendCallback;
+	private static Action _prepositionVendAbortCallback;
 
 	private static Func<bool> _getVendJobCompleteCallback;
-
-	private static Action<LuaTable> _processAuthorizeResultCallback;
 
 	public static bool TTSEnabled => ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
 
@@ -147,32 +143,14 @@ public static class OrchestrationService
 		_localizationReloadCallback = localizationReloadCallback;
 	}
 
-	public static void RegisterMarketingOptInFlowCallback(Action<string> marketingOptInFlowCallback)
+	public static void RegisterFinishVendCallback(Action finishVendCallback)
 	{
-		_marketingOptInFlowCallback = marketingOptInFlowCallback;
+		_finishVendCallback = finishVendCallback;
 	}
 
-	public static void RegisterContinueVendCallback(Action continueVendCallback)
+	public static void InvokeFinishVendCallback()
 	{
-		_continueVendCallback = continueVendCallback;
-	}
-
-	public static void InvokeContinueVendCallback()
-	{
-		if (_continueVendCallback != null)
-		{
-			_continueVendCallback();
-		}
-	}
-
-	public static void RegisterProcessAuthorizeResultCallback(Action<LuaTable> processAuthorizeResultCallback)
-	{
-		_processAuthorizeResultCallback = processAuthorizeResultCallback;
-	}
-
-	public static void InvokeProcessAuthorizeResultCallback(LuaTable authorizeResult)
-	{
-		_processAuthorizeResultCallback?.Invoke(authorizeResult);
+		_finishVendCallback?.Invoke();
 	}
 
 	public static void RegisterPrepositionVendCallback(Action prepositionVendCallback)
@@ -183,6 +161,16 @@ public static class OrchestrationService
 	public static void InvokePrepositionVendCallback()
 	{
 		_prepositionVendCallback?.Invoke();
+	}
+
+	public static void RegisterPrepositionVendAbortCallback(Action prepositionVendAbortCallback)
+	{
+		_prepositionVendAbortCallback = prepositionVendAbortCallback;
+	}
+
+	public static void InvokePrepositionVendAbortCallback()
+	{
+		_prepositionVendAbortCallback?.Invoke();
 	}
 
 	public static void RegisterIsVendJobCompletedCallback(Func<bool> getVendJobCompleteCallback)
@@ -234,14 +222,6 @@ public static class OrchestrationService
 		if (_localizationReloadCallback != null)
 		{
 			_localizationReloadCallback();
-		}
-	}
-
-	public static void InvokeMarketingOptInFlowCallback(string optInConfirmationStatus)
-	{
-		if (_marketingOptInFlowCallback != null)
-		{
-			_marketingOptInFlowCallback(optInConfirmationStatus);
 		}
 	}
 
@@ -510,9 +490,26 @@ public static class OrchestrationService
 
 	public static void ViewShow(string viewName)
 	{
+		ViewShow(viewName, showSafe: false);
+	}
+
+	private static void ViewShow(string viewName, bool showSafe)
+	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		service?.Push(viewName);
-		service?.Show();
+		if (!showSafe || (service != null && service.IsSafeToChangeView()))
+		{
+			service?.Push(viewName);
+			service?.Show();
+		}
+		else
+		{
+			LogHelper.Instance.Log($"ViewShowSafe {viewName} denied.");
+		}
+	}
+
+	public static void ViewShowSafe(string viewName)
+	{
+		ViewShow(viewName, showSafe: true);
 	}
 
 	public static void ViewShow(string viewName, object parameter)
@@ -892,6 +889,11 @@ public static class OrchestrationService
 			}
 			session.End();
 		}
+	}
+
+	public static void LoadEmailOptInCampaign()
+	{
+		ApplicationState.Instance.EmailOptInCampaign = EmailOptInCampaignService.LoadEmailOptInCampaign();
 	}
 
 	public static void SendHealthServicesMinutesInMaintenanceModeStatistics(int minutesInMaintenanceMode)

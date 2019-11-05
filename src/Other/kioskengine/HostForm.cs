@@ -342,38 +342,54 @@ public class HostForm : Form
 		{
 			ResourceBundleService.Instance.GetManifest(out var manifestInfo);
 			string text = ResourceBundleService.Instance.Filter["view_name"];
-			if (manifestInfo.ProductName != "Rental Application" || (manifestInfo.ProductName == "Rental Application" && (text == "start_view" || text == "welcome_view")))
+			if (!(manifestInfo.ProductName != "Rental Application"))
 			{
-				EngineApplication.Instance.SelectBundle();
-			}
-			e.Handled = true;
-		}
-		else
-		{
-			IClassicTrackDataService classicTrackDataService2 = ClassicTrackDataService;
-			if (classicTrackDataService2 != null && classicTrackDataService2.AllowTrackDataParsing && service != null && service.Filter["environment"] != "Production")
-			{
-				switch (e.KeyChar)
+				if (!(manifestInfo.ProductName == "Rental Application"))
 				{
-				case '~':
-					SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111111111=1608041103263?");
+					goto IL_00ea;
+				}
+				switch (text)
+				{
+				case "start_view":
+				case "welcome_view":
+				case "maintenance_view":
 					break;
-				case '!':
-					SendKeys.Send("{%}B24931070601{^}JOE/COOL                {^}1608041103263?;249931070601=1608041103263?");
-					break;
-				case '@':
-					SendKeys.Send("{%}B6010562000017685{^}REDBOX                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
-					break;
-				case '#':
-					SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111=1608041103263?");
-					break;
+				default:
+					goto IL_00ea;
 				}
 			}
+			EngineApplication.Instance.SelectBundle();
+			goto IL_00ea;
 		}
+		IClassicTrackDataService classicTrackDataService2 = ClassicTrackDataService;
+		if (classicTrackDataService2 != null && classicTrackDataService2.AllowTrackDataParsing && service != null && service.Filter["environment"] != "Production")
+		{
+			switch (e.KeyChar)
+			{
+			case '~':
+				SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111111111=1608041103263?");
+				break;
+			case '!':
+				SendKeys.Send("{%}B24931070601{^}JOE/COOL                {^}1608041103263?;249931070601=1608041103263?");
+				break;
+			case '@':
+				SendKeys.Send("{%}B6010562000017685{^}REDBOX                {^}00010004000060013779?;6010562000017685=00010004000060013779?");
+				break;
+			case '#':
+				SendKeys.Send("{%}B4111111111111111{^}JOE/COOL                {^}1608041103263?;4111111111=1608041103263?");
+				break;
+			}
+		}
+		goto IL_0179;
+		IL_0179:
 		if (DateTime.Now > _keyPressStartAfter)
 		{
 			EngineApplication.Instance.ActivateKeyPressHandlers(new KeyPressEventArgsEx(e, System.Windows.Forms.Control.ModifierKeys));
 		}
+		return;
+		IL_00ea:
+		e.Handled = true;
+		goto IL_0179;
 	}
 
 	private void OnActivated(object sender, EventArgs e)

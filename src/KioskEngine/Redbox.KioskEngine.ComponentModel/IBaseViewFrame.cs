@@ -12,6 +12,10 @@ public interface IBaseViewFrame
 
 	bool Clear { get; set; }
 
+	bool IsMaintenanceModeView { get; set; }
+
+	bool IsStartOverView { get; set; }
+
 	void UpdateScene(IViewFrameInstance viewFrameInstance);
 
 	bool RaiseOnEnter(IViewFrameInstance viewFrameInstance);

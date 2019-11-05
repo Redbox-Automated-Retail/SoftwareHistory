@@ -1053,7 +1053,16 @@ public class Actor : IActor, IDisposable
 		if ((OptionFlags & RenderOptionFlags.Text) != RenderOptionFlags.None && !string.IsNullOrEmpty(Text))
 		{
 			using SolidBrush brush2 = new SolidBrush(GetAlphaRampedColor(ForegroundColor, Opacity));
-			StringFormat stringFormat = (StringFormat)StringFormat.GenericTypographic.Clone();
+			StringFormat stringFormat;
+			if ((OptionFlags & RenderOptionFlags.ElideText) != RenderOptionFlags.None)
+			{
+				stringFormat = (StringFormat)StringFormat.GenericDefault.Clone();
+				stringFormat.Trimming |= StringTrimming.EllipsisCharacter;
+			}
+			else
+			{
+				stringFormat = (StringFormat)StringFormat.GenericTypographic.Clone();
+			}
 			stringFormat.Alignment = HorizontalAlignment;
 			stringFormat.LineAlignment = VerticalAlignment;
 			if ((OptionFlags & RenderOptionFlags.DisableAntiAlias) == 0)
@@ -1064,10 +1073,6 @@ public class Actor : IActor, IDisposable
 			if (TabStops != null && TabStops.Length != 0)
 			{
 				stringFormat.SetTabStops(0f, TabStops);
-			}
-			if ((OptionFlags & RenderOptionFlags.ElideText) != RenderOptionFlags.None)
-			{
-				stringFormat.Trimming |= StringTrimming.EllipsisCharacter;
 			}
 			Rectangle textRegion = GetTextRegion(hasValue2);
 			string s = ServiceLocator.Instance.GetService<IMacroService>().ExpandProperties(Text);

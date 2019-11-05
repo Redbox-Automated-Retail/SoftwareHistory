@@ -11,6 +11,7 @@ public class MaintenanceViewDefinition : BaseViewDefinition, IViewDefinition
 	{
 		base.ViewName = "maintenance_view";
 		base.ActiveFlag = true;
+		base.IsMaintenanceModeView = true;
 		base.ControlName = "MaintenanceView";
 		base.OnEnter = delegate(IViewFrameInstance viewFrameInstance)
 		{

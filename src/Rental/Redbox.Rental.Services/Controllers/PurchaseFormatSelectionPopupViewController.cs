@@ -158,6 +158,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 			return;
 		}
 		ITitleProduct titleProduct = rollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == type);
+		titleProduct.TivoQueryId = titleProduct.TivoQueryId ?? rollupProduct.TivoQueryId;
 		if (titleProduct.InStock | isPurchase)
 		{
 			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
@@ -253,25 +254,6 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupReserveOnlineRentGotit");
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
 			OrchestrationService.ViewGoBackSafe("ReserveOnlineRentDialogGotIt", popOnly: false);
-		});
-	}
-
-	private static void ShowOnDemandMessage(decimal price)
-	{
-		MessagePopupViewController.ShowOnDemandMessage(price, delegate
-		{
-			OrchestrationService.ViewGoBackSafe("OnDemandRentTimeout", popOnly: false);
-		}, delegate
-		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_back");
-			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOnDemandRentBack");
-			OrchestrationService.ViewGoBackSafe("OnDemandRentBack", popOnly: false);
-		}, delegate
-		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_gotit");
-			BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOnDemandRentGotit");
-			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
-			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
 		});
 	}
 

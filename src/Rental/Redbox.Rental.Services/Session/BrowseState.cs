@@ -96,6 +96,8 @@ public class BrowseState : IBrowseState
 
 	public bool ShoppingCartFullMessagesShown { get; set; }
 
+	public bool EmailOptInCampaignShown { get; set; }
+
 	public int PaddleClickCount { get; set; }
 
 	public BrowsePriceRangeParameter BrowsePriceRangeFilter { get; set; }

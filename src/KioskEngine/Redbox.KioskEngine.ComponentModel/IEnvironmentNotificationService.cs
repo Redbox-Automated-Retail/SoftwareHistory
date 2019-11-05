@@ -51,11 +51,13 @@ public interface IEnvironmentNotificationService
 
 	void UnregisterConfigurationCallback(string name);
 
-	void UnRegisterCorruptDbCallback();
-
 	void RegisterCorruptDbCallback(CorruptDbCallback callback);
 
-	bool RaiseCorruptDb(string dbName);
+	void RaiseCorruptDb();
+
+	void RegisterTamperedCardReaderCallback(TamperedCardReaderCallback callback);
+
+	void RaiseTamperedCardReader();
 
 	void RegisterCardReaderConnectedCallback(Action cardReaderConnectedCallback);
 

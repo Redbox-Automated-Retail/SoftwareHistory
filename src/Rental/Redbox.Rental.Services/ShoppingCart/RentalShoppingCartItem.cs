@@ -49,6 +49,10 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 
 	public string OfferCode { get; set; }
 
+	public string TivoQueryId { get; set; }
+
+	public List<string> Tags { get; set; }
+
 	public decimal Price { get; set; }
 
 	public decimal ExtendedPrice => Price * Quantity;

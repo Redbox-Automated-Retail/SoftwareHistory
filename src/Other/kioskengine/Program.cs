@@ -197,7 +197,7 @@ public class Program : IDisposable
 		if (service3 != null)
 		{
 			bool flag = true;
-			if (service3.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.SendAppCrashAlert, out var value))
+			if (service3.TryGetValue<bool>("system", "General", "SendAppCrashAlert", out var value))
 			{
 				flag = value;
 			}

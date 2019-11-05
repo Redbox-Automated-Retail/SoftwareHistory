@@ -6,9 +6,13 @@
       <ColumnDefinition Width="63*" />
       <ColumnDefinition Width="24*" />
     </Grid.ColumnDefinitions>
-    <local:DisplayProductUserControl Height="78" VerticalAlignment="Center" />
-    <Line Name="SeparatorLine" Grid.ColumnSpan="3" X2="1000" Fill="#979797" Margin="0,0,0,0" Stroke="#979797" StrokeThickness="2" Opacity="0.22" VerticalAlignment="Bottom" />
-    <StackPanel Name="ProductDescriptionTextPanel" Grid.Column="1" Margin="3,0,0,0" VerticalAlignment="Center">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <local:DisplayProductUserControl Grid.Column="0" Grid.RowSpan="2" Height="78" VerticalAlignment="Center" Margin="10,0" />
+    <Line Name="SeparatorLine" Grid.Row="1" Grid.ColumnSpan="3" X2="1000" Fill="#979797" Margin="0,0,0,0" Stroke="#979797" StrokeThickness="2" Opacity="0.22" VerticalAlignment="Bottom" />
+    <StackPanel Name="ProductDescriptionTextPanel" Grid.Row="0" Grid.Column="1" Margin="3,10,0,0" VerticalAlignment="Center">
       <TextBlock TextWrapping="Wrap">
         <Span Style="{StaticResource span_font_montserrat_bold_13}" Foreground="#FF000000">
           <Run Name="ProductTitleText" Text="{Binding Path=ProductTitleText, FallbackValue=Star Wars The Force Awakens}" />
@@ -22,25 +26,17 @@
         <TextBlock Name="MDVDiscVendText" Style="{StaticResource font_montserrat_regular_13}" VerticalAlignment="Center" Margin="2,0,0,0" Text="{Binding Path=MDVDiscVendText, FallbackValue=2 DISC VEND}" Visibility="{Binding Path=MDVFieldVisibility}" />
       </StackPanel>
     </StackPanel>
+    <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2">
+      <local:DisplayProductCheckoutSpecialOfferActionUserControl Margin="2,10,0,5" DataContext="{Binding Path=OfferActionModel}" Visibility="{Binding Path=DataContext.OfferActionVisibility, FallbackValue=Visible, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+      <Redbox:RoundedButton Name="RemoveButton" Height="30" Width="120" Margin="-10,0,0,12" Style="{StaticResource transparent_button_style}" VerticalAlignment="Center" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" Visibility="{Binding Path=TopCancelButtonVisibility, FallbackValue=Visible}">
+        <StackPanel Orientation="Horizontal">
+          <Image Name="RemoveButtonImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/remove-x.png" Width="12" Height="12" Margin="0,0,7,0" />
+          <TextBlock Name="RemoveButtonText" Style="{StaticResource font_montserrat_bold_16}" TextDecorations="Underline" Foreground="#e42045" LineHeight="20" Text="{Binding Path=RemoveButtonText, FallbackValue=REMOVE}" />
+        </StackPanel>
+      </Redbox:RoundedButton>
+    </StackPanel>
     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
       <TextBlock Name="ProductCartPriceText" Grid.Column="2" Style="{StaticResource font_montserrat_bold_16}" VerticalAlignment="Center" Foreground="#FF000000" Margin="5,0,5,0" Text="{Binding Path=ProductCartPriceText, FallbackValue=$2.00}" />
-      <Redbox:RoundedButton Name="TopCancelButton" Grid.Column="2" Style="{StaticResource light_gray_white_border_button_with_dropshadow_style}" DropShadowOpacity="0.4" Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" BorderThickness="2" VerticalAlignment="Center" UsedDefaultCornerRadius="True" Width="40" Height="40" Margin="35,0,7,0" Visibility="{Binding Path=TopCancelButtonVisibility, FallbackValue=Visible}">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="5*" />
-            <RowDefinition Height="90*" />
-            <RowDefinition Height="5*" />
-          </Grid.RowDefinitions>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5*" />
-            <ColumnDefinition Width="90*" />
-            <ColumnDefinition Width="5*" />
-          </Grid.ColumnDefinitions>
-          <Viewbox Grid.Row="1" Grid.Column="1">
-            <UserControl Style="{StaticResource delete_x_style}" />
-          </Viewbox>
-        </Grid>
-      </Redbox:RoundedButton>
     </StackPanel>
     <Redbox:RoundedButton Name="BottomCancelButton" Style="{StaticResource classic_gray_button_style}" Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" BorderColor="White" BorderGradientColor="White" BorderThickness="2" HorizontalAlignment="Right" VerticalAlignment="Top" UsedDefaultCornerRadius="True" Width="43" Height="43" Margin="0,-75,-15,0" Visibility="{Binding Path=BottomCancelButtonVisibility, FallbackValue=Collapsed}">
       <Grid>

@@ -7,6 +7,8 @@ public class Constants
 {
 	public class ControlNames
 	{
+		public const string AnimatedDiscReturnView = "AnimatedDiscReturnViewUserControl";
+
 		public const string StartView = "StartView";
 
 		public const string BrowseView = "BrowseView";
@@ -42,6 +44,8 @@ public class Constants
 		public const string PromptSignInView = "PromptSignInView";
 
 		public const string PleaseWaitView = "PleaseWaitView";
+
+		public const string PleaseWaitMessageView = "PleaseWaitMessageView";
 
 		public const string PhoneAndPinView = "PhoneAndPinView";
 
@@ -99,8 +103,6 @@ public class Constants
 
 		public const string BulletListPopupView = "BulletListPopupView";
 
-		public const string ReviewPopupView = "ReviewPopupView";
-
 		public const string MultiDiscVendView = "MultiDiscVendView";
 
 		public const string ReservationDetailsView = "ReservationDetailsView";
@@ -116,10 +118,20 @@ public class Constants
 		public const string OfferAbandonConfirmView = "OfferAbandonConfirmView";
 
 		public const string PresentOffersView = "PresentOffersView";
+
+		public const string OptInThankYouView = "OptInThankYouView";
+
+		public const string EmailOptInView = "EmailOptInView";
+
+		public const string ReservationNotFoundView = "ReservationNotFoundView";
+
+		public const string NewCartConfirmADAActionUpdateView = "NewCartConfirmADAActionUpdateView";
 	}
 
 	public class ViewNames
 	{
+		public const string AnimatedDiscReturnView = "animated_disc_return";
+
 		public const string BrowseView = "browse_view";
 
 		public const string AdaBrowseView = "browse_view_ada_accessible";
@@ -151,6 +163,8 @@ public class Constants
 		public const string PromptSignInView = "prompt_sign_in_view";
 
 		public const string PleaseWaitView = "please_wait_view";
+
+		public const string PleaseWaitMessageView = "please_wait_message_view";
 
 		public const string PhoneAndPinView = "phone_and_pin_view";
 
@@ -220,8 +234,6 @@ public class Constants
 
 		public const string PerksInfoPopupView = "perks_info_popup_view";
 
-		public const string ReviewPopupView = "review_popup_view";
-
 		public const string ConfirmEmailView = "confirm_email_view";
 
 		public const string MultiDiscVendView = "multi_disc_vend_view";
@@ -239,6 +251,14 @@ public class Constants
 		public const string OfferAbandonConfirmView = "OfferAbandonConfirmView";
 
 		public const string PresentOffersView = "PresentOffersView";
+
+		public const string OptinThankYouView = "optin_thank_you_view";
+
+		public const string EmailOptInView = "email_optin_view";
+
+		public const string ReservationNotFoundView = "reservation_not_found_view";
+
+		public const string NewCartConfirmADAActionUpdateView = "new_cart_confirm_ada_action_update_view";
 	}
 
 	public class ThemeNames

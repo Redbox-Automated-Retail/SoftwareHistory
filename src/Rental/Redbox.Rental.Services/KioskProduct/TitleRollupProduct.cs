@@ -93,18 +93,6 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 		}
 	}
 
-	public int Stars
-	{
-		get
-		{
-			if (_primaryTitle != null)
-			{
-				return _primaryTitle.Stars;
-			}
-			return 0;
-		}
-	}
-
 	public string RunningTime
 	{
 		get
@@ -485,6 +473,8 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 	public long TitleRollupProductGroupId { get; set; }
 
 	public List<long> RequiredAdditionalTitles { get; private set; }
+
+	public string TivoQueryId { get; set; }
 
 	public decimal? DigitalRentPrice => KioskProducts.FirstOrDefault()?.DigitalRentPrice;
 

@@ -34,6 +34,10 @@ public class Commands
 
 	public static readonly RoutedCommand BannerClickCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand RentAndBuyMoviesCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand RentAndBuyGamesCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand CollectionCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand MoreInfoCommand = new RoutedCommand();
@@ -159,4 +163,6 @@ public class Commands
 	public static readonly DynamicRoutedCommand PointsExcludeCommand = new DynamicRoutedCommand();
 
 	public static readonly RoutedCommand PickupCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand OkCommand = new RoutedCommand();
 }

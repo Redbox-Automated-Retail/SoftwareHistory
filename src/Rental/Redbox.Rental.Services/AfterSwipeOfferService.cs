@@ -133,12 +133,27 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 	{
 		foreach (CustomerOffer newOffer in newOffers)
 		{
-			if (newOffer.CustomerSegmentType == CustomerSegmentType.BasketStretch)
+			if (newOffer.CustomerSegmentType == CustomerSegmentType.BasketStretch && newOffer.DiscountType != OfferDiscountType.MultiNightPrice)
 			{
 				SetApplicableProducts(newOffer);
 				if (newOffer.ApplicableProducts.Count > 0)
 				{
 					_offerList.Add(newOffer);
+				}
+				else
+				{
+					LogHelper.Instance.Log($"AfterSwipeOfferService: No applicable products found for offer Id {newOffer.OfferId}");
+				}
+			}
+			else if (newOffer.DiscountType == OfferDiscountType.MultiNightPrice)
+			{
+				if ((newOffer.OfferProducts?.Count ?? 0) > 0)
+				{
+					_offerList.Add(newOffer);
+				}
+				else
+				{
+					LogHelper.Instance.Log($"AfterSwipeOfferService: No offer products returned for offer Id {newOffer.OfferId}");
 				}
 			}
 			else
@@ -153,7 +168,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		_selectedOffer = offer;
 		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedOffer = offer;
 		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasOfferAccepted = true;
-		if (offer.CustomerSegmentType == CustomerSegmentType.BasketStretch)
+		if (offer.CustomerSegmentType == CustomerSegmentType.BasketStretch && offer.DiscountType != OfferDiscountType.MultiNightPrice)
 		{
 			SelectProductForOffer(offer);
 		}
@@ -193,43 +208,48 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		};
 	}
 
-	private void AddNewProductToCart(ITitleProduct newProduct)
-	{
-		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		service.RemoveMultiDiscDiscsFromRentalShoppingCart(service.CurrentRentalShoppingCart.ShoppingSessionId);
-		IRentalShoppingCart currentRentalShoppingCart = service.CurrentRentalShoppingCart;
-		IRentalShoppingCartItem rentalShoppingCartItem = service.CreateRentalShoppingCartItemFromTitleProduct(newProduct);
-		rentalShoppingCartItem.SourceType = ItemSourceType.Browse;
-		rentalShoppingCartItem.Action = RentalShoppingCartItemAction.rental;
-		rentalShoppingCartItem.Quantity = 1m;
-		rentalShoppingCartItem.Status = LineItemStatus.Pending;
-		rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(newProduct);
-		currentRentalShoppingCart.AddItem(rentalShoppingCartItem);
-		_newProduct = newProduct;
-	}
-
 	private void CreateAndShowNewCart(ITitleProduct newProduct)
 	{
 		_newProduct = newProduct;
 		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedProduct = newProduct;
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		service.RemoveMultiDiscDiscsFromRentalShoppingCart(service.CurrentRentalShoppingCart.ShoppingSessionId);
-		SetPromoForSelectedOffer(newProduct, service.CurrentRentalShoppingCart);
+		SetPromoForSelectedOffer(newProduct, service);
 		NewCartConfirmviewParameters parameter = new NewCartConfirmviewParameters
 		{
 			NewCart = service.CurrentRentalShoppingCart,
 			promoProduct = newProduct,
 			CancelAction = ContinueWithOriginalCart,
 			ContinueAction = ContinueWithCurrentCart,
-			TimeoutAction = ContinueWithOriginalCart
+			TimeoutAction = ContinueWithOriginalCart,
+			RemoveOfferAction = ResetCartOffer,
+			SelectedOffer = _selectedOffer
 		};
 		OrchestrationService.ViewShow("new_cart_confirm_view", parameter);
 	}
 
-	private void SetPromoForSelectedOffer(ITitleProduct newProduct, IRentalShoppingCart shoppingCart)
+	private void SetMnpPriceForApplicableItems(CustomerOffer offer, IRentalShoppingCart shoppingCart)
 	{
-		IRentalShoppingCartItem applyToLineItem = shoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem i) => i.ProductId == newProduct?.ProductId);
-		ServiceLocator.Instance.GetService<IPromotionService>().SetPromoFromCustomerOffer(shoppingCart, _selectedOffer, applyToLineItem);
+		foreach (IRentalShoppingCartItem item in shoppingCart.Items)
+		{
+			ServiceLocator.Instance.GetService<IRentalShoppingCartService>().AddMultiNightOfferToItem(item, offer);
+		}
+	}
+
+	private void SetPromoForSelectedOffer(ITitleProduct newProduct, IRentalShoppingCartService shoppingCartService)
+	{
+		IRentalShoppingCart currentRentalShoppingCart = shoppingCartService.CurrentRentalShoppingCart;
+		IRentalShoppingCartItem applyToLineItem = currentRentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem i) => i.ProductId == newProduct?.ProductId);
+		IPromotionService service = ServiceLocator.Instance.GetService<IPromotionService>();
+		if (_selectedOffer.DiscountType != OfferDiscountType.MultiNightPrice || Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		{
+			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Creating promo for the offer.");
+			service.SetPromoFromCustomerOffer(currentRentalShoppingCart, _selectedOffer, applyToLineItem);
+		}
+		if (_selectedOffer.DiscountType == OfferDiscountType.MultiNightPrice)
+		{
+			SetMnpPriceForApplicableItems(_selectedOffer, shoppingCartService.CurrentRentalShoppingCart);
+		}
 	}
 
 	private decimal CalcPromoAmount(decimal? itemPrice)
@@ -291,25 +311,31 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 	private void ContinueWithCurrentCart()
 	{
 		_offerList = null;
-		if (_selectedOffer != null && _selectedOffer.PromotionCode != null)
+		if (_selectedOffer != null && (_selectedOffer.PromotionCode != null || _selectedOffer.OfferDiscountCode != null))
 		{
-			PromotionFunctions.AddPromoCodeToAnalytics(_selectedOffer.PromotionCode);
+			PromotionFunctions.AddPromoCodeToAnalytics(_selectedOffer.PromotionCode ?? _selectedOffer.OfferDiscountCode);
 		}
 		_continueAction(obj: true);
 	}
 
 	private void ContinueWithOriginalCart()
 	{
-		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasOfferAccepted = false;
 		_offerList = null;
+		ResetCartOffer();
+		_continueAction(obj: true);
+	}
+
+	private void ResetCartOffer()
+	{
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		if (_newProduct != null)
 		{
 			service.RemoveItemFromRentalShoppingCartByProductId(service.CurrentRentalShoppingCart.ShoppingSessionId, _newProduct.ProductId, userRemoved: true);
 			_newProduct = null;
 		}
+		service.RemovePromoOfferFromCart(service.CurrentRentalShoppingCart.ShoppingSessionId);
+		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasOfferAccepted = false;
 		ServiceLocator.Instance.GetService<IPromotionService>().SetPromotion(_previousPromotion);
-		_continueAction(obj: true);
 	}
 
 	private List<ITitleProduct> GetProductsForOffer()

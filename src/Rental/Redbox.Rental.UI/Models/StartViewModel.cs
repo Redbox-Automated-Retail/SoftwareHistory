@@ -98,6 +98,8 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty UseTestStartViewProperty = DependencyProperty.Register("UseTestStartView", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
+	public static readonly DependencyProperty UseRentAndBuyTestStartViewProperty = DependencyProperty.Register("UseRentAndBuyTestStartView", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
+
 	public static readonly DependencyProperty UseTestScreenSaverProperty = DependencyProperty.Register("UseTestScreenSaver", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
 	public static readonly DependencyProperty IsReturnOnlyModeProperty = DependencyProperty.Register("IsReturnOnlyMode", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
@@ -109,6 +111,18 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty GamesButtonHeightProperty = DependencyProperty.Register("GamesButtonHeight", typeof(int), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty GamesButtonCornerRadiusProperty = DependencyProperty.Register("GamesButtonCornerRadius", typeof(int), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty SecondaryButtonsColumnProperty = DependencyProperty.Register("SecondaryButtonsColumn", typeof(int), typeof(StartViewModel), new FrameworkPropertyMetadata(2));
+
+	public static readonly DependencyProperty SecondaryButtonsMarginProperty = DependencyProperty.Register("SecondaryButtonsMargin", typeof(Thickness), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RentAndBuyMoviesButtonTextVisibilityProperty = DependencyProperty.Register("RentAndBuyMoviesButtonTextVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty RentAndBuyGamesButtonTextVisibilityProperty = DependencyProperty.Register("RentAndBuyGamesButtonTextVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty RentMoviesGamesTextVisibilityProperty = DependencyProperty.Register("RentMoviesGamesTextVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty RentAndBuyMoviesGamesTextVisibilityProperty = DependencyProperty.Register("RentAndBuyMoviesGamesTextVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	private string _abTestVersion = "A";
 
@@ -140,6 +154,21 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(UseTestStartViewProperty, value);
+			});
+		}
+	}
+
+	public bool UseRentAndBuyTestStartView
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(UseRentAndBuyTestStartViewProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(UseRentAndBuyTestStartViewProperty, value);
 			});
 		}
 	}
@@ -594,6 +623,96 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
+	public int SecondaryButtonsColumn
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(SecondaryButtonsColumnProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SecondaryButtonsColumnProperty, value);
+			});
+		}
+	}
+
+	public Thickness SecondaryButtonsMargin
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(SecondaryButtonsMarginProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SecondaryButtonsMarginProperty, value);
+			});
+		}
+	}
+
+	public Visibility RentAndBuyMoviesButtonTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RentAndBuyMoviesButtonTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RentAndBuyMoviesButtonTextVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RentAndBuyGamesButtonTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RentAndBuyGamesButtonTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RentAndBuyGamesButtonTextVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RentMoviesGamesTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RentMoviesGamesTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RentMoviesGamesTextVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RentAndBuyMoviesGamesTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RentAndBuyMoviesGamesTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RentAndBuyMoviesGamesTextVisibilityProperty, value);
+			});
+		}
+	}
+
 	public string ToggleLanguageButtonText
 	{
 		get
@@ -880,6 +999,10 @@ public class StartViewModel : DependencyObject
 
 	public event Action OnBuyGamesButtonClicked;
 
+	public event Action OnRentAndBuyMoviesButtonClicked;
+
+	public event Action OnRentAndBuyGamesButtonClicked;
+
 	public event Action OnPickupButtonClicked;
 
 	public event Action OnReturnButtonClicked;
@@ -939,6 +1062,16 @@ public class StartViewModel : DependencyObject
 	public void ProcessBuyGamesButtonClick()
 	{
 		OnBuyGamesButtonClicked?.Invoke();
+	}
+
+	public void ProcessRentAndBuyMoviesButtonClick()
+	{
+		OnRentAndBuyMoviesButtonClicked?.Invoke();
+	}
+
+	public void ProcessRentAndBuyGamesButtonClick()
+	{
+		OnRentAndBuyGamesButtonClicked?.Invoke();
 	}
 
 	public void ProcessPickupButtonClick()

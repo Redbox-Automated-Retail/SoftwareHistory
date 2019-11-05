@@ -76,6 +76,11 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 		KeyboardModel keyboardModel = base.DataContext as KeyboardModel;
 		RoundedButton roundedButton = sender as RoundedButton;
 		object content = roundedButton.Content;
+		if (CapKeyState)
+		{
+			CapKeyState = false;
+			ConvertKeyboardKeys(KeyState.LOWER);
+		}
 		if (keyboardModel == null || content == null)
 		{
 			return;

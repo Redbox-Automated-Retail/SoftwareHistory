@@ -10,7 +10,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 	{
 		get
 		{
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.Banner, ConfigSetting.ShowGameBanner, out var value))
+			if (_configService.TryGetValue<bool>("marketing", "Banner", "ShowGameBanner", out var value))
 			{
 				return value;
 			}
@@ -22,7 +22,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 	{
 		get
 		{
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.Banner, ConfigSetting.ShowBlurayBrowse, out var value))
+			if (_configService.TryGetValue<bool>("marketing", "Banner", "ShowBlurayBrowse", out var value))
 			{
 				return value;
 			}
@@ -34,7 +34,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 	{
 		get
 		{
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.Collections, ConfigSetting.ShowCollections, out var value))
+			if (_configService.TryGetValue<bool>("marketing", "Collections", "ShowCollections", out var value))
 			{
 				return value;
 			}
@@ -50,7 +50,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 			{
 				return false;
 			}
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.Collections, ConfigSetting.ShowCollectionsBanner, out var value))
+			if (_configService.TryGetValue<bool>("marketing", "Collections", "ShowCollectionsBanner", out var value))
 			{
 				return value;
 			}
@@ -66,7 +66,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 			{
 				return false;
 			}
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.Collections, ConfigSetting.ShowCollectionsPopUp, out var value))
+			if (_configService.TryGetValue<bool>("marketing", "Collections", "ShowCollectionsPopUp", out var value))
 			{
 				return value;
 			}
@@ -82,7 +82,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 			{
 				return 0;
 			}
-			if (_configService.TryGetValue<int>(ConfigFile.Marketing, ConfigCategory.Collections, ConfigSetting.CollectionsPopUpTimer, out var value))
+			if (_configService.TryGetValue<int>("marketing", "Collections", "CollectionsPopUpTimer", out var value))
 			{
 				return value;
 			}
@@ -98,7 +98,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 			{
 				return 0;
 			}
-			if (_configService.TryGetValue<int>(ConfigFile.Marketing, ConfigCategory.Collections, ConfigSetting.CollectionsPopUpPaddleClicks, out var value))
+			if (_configService.TryGetValue<int>("marketing", "Collections", "CollectionsPopUpPaddleClicks", out var value))
 			{
 				return value;
 			}
@@ -110,7 +110,7 @@ public class MarketingConfigurationManager : IMarketingConfigurationManager
 	{
 		get
 		{
-			if (_configService.TryGetValue<bool>(ConfigFile.Marketing, ConfigCategory.MarketingGeneral, ConfigSetting.EnableMarketingAds, out var value))
+			if (_configService.TryGetValue<bool>("marketing", "MarketingGeneral", "EnableMarketingAds", out var value))
 			{
 				return value;
 			}

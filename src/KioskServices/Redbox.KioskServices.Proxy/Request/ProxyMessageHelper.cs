@@ -15,7 +15,7 @@ using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskServices.Proxy.Request;
 
-internal class ProxyMessageHelper
+public class ProxyMessageHelper
 {
 	private static bool ChipEnabled
 	{
@@ -100,7 +100,7 @@ internal class ProxyMessageHelper
 					shoppingCart.Discounts.Add(new Discount
 					{
 						Amount = x.PromotionAmount,
-						DiscountType = DiscountType.PromotionCode,
+						DiscountType = (DiscountType)rentalShoppingCart.Promotion.DiscountType,
 						PromotionCode = promo.Name,
 						PromotionCodeValue = promo.OriginalPrice,
 						PromotionIntentCode = promo.Intent,
@@ -154,7 +154,9 @@ internal class ProxyMessageHelper
 							ProductPriceId = (int)(pricingRecord?.ProductPricingId ?? 0),
 							Purchase = (pricingRecord?.Purchase ?? 0m)
 						},
-						VendStatus = ConvertToVendStatus(item2.Status)
+						VendStatus = ConvertToVendStatus(item2.Status),
+						TivoQueryId = item2.TivoQueryId,
+						Tags = item2.Tags
 					});
 				}
 				ISubTotalGroup subTotalGroup = rentalShoppingCart.Totals.SubTotalGroups.FirstOrDefault((ISubTotalGroup y) => item.Key == y.Action);
@@ -238,7 +240,7 @@ internal class ProxyMessageHelper
 			},
 			{
 				"LastFour",
-				encryptedTrackData?.LastFour
+				encryptedTrackData?.LastFour ?? trackData?.LastFour
 			},
 			{
 				"LastName",
@@ -266,7 +268,7 @@ internal class ProxyMessageHelper
 			},
 			{
 				"BIN",
-				encryptedTrackData?.FirstSix
+				trackData?.FirstSix
 			},
 			{
 				"KSN",
@@ -294,7 +296,7 @@ internal class ProxyMessageHelper
 			},
 			{
 				"CardSourceType",
-				(ChipEnabled || ContactlessEnabled) ? trackData.CardSourceType : CardSourceType.Unknown
+				(!ChipEnabled && !ContactlessEnabled) ? new CardSourceType?(CardSourceType.Unknown) : trackData?.CardSourceType
 			},
 			{ "ContactlessEnabled", ContactlessEnabled }
 		};

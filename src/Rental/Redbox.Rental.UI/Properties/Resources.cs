@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.Rental.UI.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
 [DebuggerNonUserCode]
 [CompilerGenerated]
 public class Resources
@@ -156,6 +156,10 @@ public class Resources
 
 	public static string browse_view_control_page_mask => ResourceManager.GetString("browse_view_control_page_mask", resourceCulture);
 
+	public static string browse_view_rent_and_buy_purchase_text => ResourceManager.GetString("browse_view_rent_and_buy_purchase_text", resourceCulture);
+
+	public static string browse_view_rent_and_buy_rent_text => ResourceManager.GetString("browse_view_rent_and_buy_rent_text", resourceCulture);
+
 	public static string burn_in_view_label => ResourceManager.GetString("burn_in_view_label", resourceCulture);
 
 	public static string button_sign_in => ResourceManager.GetString("button_sign_in", resourceCulture);
@@ -178,6 +182,10 @@ public class Resources
 
 	public static string cancel_signup_button => ResourceManager.GetString("cancel_signup_button", resourceCulture);
 
+	public static string card_reader_tampered_message_body => ResourceManager.GetString("card_reader_tampered_message_body", resourceCulture);
+
+	public static string card_reader_tampered_message_title => ResourceManager.GetString("card_reader_tampered_message_title", resourceCulture);
+
 	public static string carousel_add_button_label => ResourceManager.GetString("carousel_add_button_label", resourceCulture);
 
 	public static string carousel_add_item_to_cart_button_for_collection => ResourceManager.GetString("carousel_add_item_to_cart_button_for_collection", resourceCulture);
@@ -191,6 +199,20 @@ public class Resources
 	public static string cart_full_body => ResourceManager.GetString("cart_full_body", resourceCulture);
 
 	public static string cart_full_header => ResourceManager.GetString("cart_full_header", resourceCulture);
+
+	public static string cart_offer_add_button_text => ResourceManager.GetString("cart_offer_add_button_text", resourceCulture);
+
+	public static string cart_offer_applied_text_line_1 => ResourceManager.GetString("cart_offer_applied_text_line_1", resourceCulture);
+
+	public static string cart_offer_applied_text_line_2 => ResourceManager.GetString("cart_offer_applied_text_line_2", resourceCulture);
+
+	public static string cart_offer_not_applicable => ResourceManager.GetString("cart_offer_not_applicable", resourceCulture);
+
+	public static string cart_offer_remove_button_text => ResourceManager.GetString("cart_offer_remove_button_text", resourceCulture);
+
+	public static string cart_offer_removed_text_line_1 => ResourceManager.GetString("cart_offer_removed_text_line_1", resourceCulture);
+
+	public static string cart_offer_removed_text_line_2 => ResourceManager.GetString("cart_offer_removed_text_line_2", resourceCulture);
 
 	public static string cart_purchase => ResourceManager.GetString("cart_purchase", resourceCulture);
 
@@ -286,7 +308,17 @@ public class Resources
 
 	public static string disc => ResourceManager.GetString("disc", resourceCulture);
 
+	public static string disc_return_error_message => ResourceManager.GetString("disc_return_error_message", resourceCulture);
+
+	public static string disc_return_error_title => ResourceManager.GetString("disc_return_error_title", resourceCulture);
+
 	public static string disc_return_message => ResourceManager.GetString("disc_return_message", resourceCulture);
+
+	public static string disc_return_tutorial_part1 => ResourceManager.GetString("disc_return_tutorial_part1", resourceCulture);
+
+	public static string disc_return_tutorial_part2 => ResourceManager.GetString("disc_return_tutorial_part2", resourceCulture);
+
+	public static string disc_return_tutorial_part3 => ResourceManager.GetString("disc_return_tutorial_part3", resourceCulture);
 
 	public static string disc_vend => ResourceManager.GetString("disc_vend", resourceCulture);
 
@@ -407,6 +439,8 @@ public class Resources
 	public static string flag_points => ResourceManager.GetString("flag_points", resourceCulture);
 
 	public static string flag_price_test => ResourceManager.GetString("flag_price_test", resourceCulture);
+
+	public static string flag_wish_list => ResourceManager.GetString("flag_wish_list", resourceCulture);
 
 	public static string flash_deal_text => ResourceManager.GetString("flash_deal_text", resourceCulture);
 
@@ -806,11 +840,17 @@ public class Resources
 
 	public static string number_9 => ResourceManager.GetString("number_9", resourceCulture);
 
+	public static string offer_choice_header_text => ResourceManager.GetString("offer_choice_header_text", resourceCulture);
+
 	public static string offer_expires_message => ResourceManager.GetString("offer_expires_message", resourceCulture);
 
 	public static string offer_info_1_night_rental => ResourceManager.GetString("offer_info_1_night_rental", resourceCulture);
 
 	public static string offer_info_add_a_one_night_rental => ResourceManager.GetString("offer_info_add_a_one_night_rental", resourceCulture);
+
+	public static string offer_info_add_night => ResourceManager.GetString("offer_info_add_night", resourceCulture);
+
+	public static string offer_info_add_night_discount => ResourceManager.GetString("offer_info_add_night_discount", resourceCulture);
 
 	public static string offer_info_amount_off => ResourceManager.GetString("offer_info_amount_off", resourceCulture);
 
@@ -824,15 +864,23 @@ public class Resources
 
 	public static string offer_info_hold_up => ResourceManager.GetString("offer_info_hold_up", resourceCulture);
 
+	public static string offer_info_mnp_continue_button_text => ResourceManager.GetString("offer_info_mnp_continue_button_text", resourceCulture);
+
 	public static string offer_info_next_1_night_rental => ResourceManager.GetString("offer_info_next_1_night_rental", resourceCulture);
 
 	public static string offer_info_percent_off => ResourceManager.GetString("offer_info_percent_off", resourceCulture);
+
+	public static string offer_info_single_banner_text => ResourceManager.GetString("offer_info_single_banner_text", resourceCulture);
 
 	public static string offer_info_still_want_question => ResourceManager.GetString("offer_info_still_want_question", resourceCulture);
 
 	public static string offer_legal_text => ResourceManager.GetString("offer_legal_text", resourceCulture);
 
+	public static string offer_legal_text_short => ResourceManager.GetString("offer_legal_text_short", resourceCulture);
+
 	public static string offer_legal_text_with_expiration_date => ResourceManager.GetString("offer_legal_text_with_expiration_date", resourceCulture);
+
+	public static string offer_mnp_message => ResourceManager.GetString("offer_mnp_message", resourceCulture);
 
 	public static string offer_next_visit_header => ResourceManager.GetString("offer_next_visit_header", resourceCulture);
 
@@ -874,15 +922,11 @@ public class Resources
 
 	public static string okay_button => ResourceManager.GetString("okay_button", resourceCulture);
 
-	public static string on_demand_button => ResourceManager.GetString("on_demand_button", resourceCulture);
-
-	public static string on_demand_dialog_message => ResourceManager.GetString("on_demand_dialog_message", resourceCulture);
-
-	public static string on_demand_dialog_title => ResourceManager.GetString("on_demand_dialog_title", resourceCulture);
-
 	public static string one_night_price_label => ResourceManager.GetString("one_night_price_label", resourceCulture);
 
 	public static string oops => ResourceManager.GetString("oops", resourceCulture);
+
+	public static string opt_in_thank_you_view_image => ResourceManager.GetString("opt_in_thank_you_view_image", resourceCulture);
 
 	public static string or => ResourceManager.GetString("or", resourceCulture);
 
@@ -1104,11 +1148,11 @@ public class Resources
 
 	public static string play_pass_title_abe => ResourceManager.GetString("play_pass_title_abe", resourceCulture);
 
+	public static string please_wait_message => ResourceManager.GetString("please_wait_message", resourceCulture);
+
 	public static string points_cancel_btn => ResourceManager.GetString("points_cancel_btn", resourceCulture);
 
 	public static string points_cannot_redeem => ResourceManager.GetString("points_cannot_redeem", resourceCulture);
-
-	public static string points_cannot_redeem_message => ResourceManager.GetString("points_cannot_redeem_message", resourceCulture);
 
 	public static string points_estimate_end => ResourceManager.GetString("points_estimate_end", resourceCulture);
 
@@ -1340,6 +1384,12 @@ public class Resources
 
 	public static string reservation_error_message => ResourceManager.GetString("reservation_error_message", resourceCulture);
 
+	public static string reservation_not_found_view_image => ResourceManager.GetString("reservation_not_found_view_image", resourceCulture);
+
+	public static string reservation_not_found_view_message_text => ResourceManager.GetString("reservation_not_found_view_message_text", resourceCulture);
+
+	public static string reservation_not_found_view_title_text => ResourceManager.GetString("reservation_not_found_view_title_text", resourceCulture);
+
 	public static string reservation_pickup_body => ResourceManager.GetString("reservation_pickup_body", resourceCulture);
 
 	public static string reservation_pickup_header => ResourceManager.GetString("reservation_pickup_header", resourceCulture);
@@ -1374,10 +1424,6 @@ public class Resources
 
 	public static string return_time_label => ResourceManager.GetString("return_time_label", resourceCulture);
 
-	public static string reviews_button_text => ResourceManager.GetString("reviews_button_text", resourceCulture);
-
-	public static string reviews_title => ResourceManager.GetString("reviews_title", resourceCulture);
-
 	public static string rop_auth_fail_header => ResourceManager.GetString("rop_auth_fail_header", resourceCulture);
 
 	public static string rop_auth_fail_message_line_one => ResourceManager.GetString("rop_auth_fail_message_line_one", resourceCulture);
@@ -1395,6 +1441,14 @@ public class Resources
 	public static string service_fee_label => ResourceManager.GetString("service_fee_label", resourceCulture);
 
 	public static string service_fee_text => ResourceManager.GetString("service_fee_text", resourceCulture);
+
+	public static string shopping_cart_pay_button_text => ResourceManager.GetString("shopping_cart_pay_button_text", resourceCulture);
+
+	public static string shopping_cart_remove_button_text => ResourceManager.GetString("shopping_cart_remove_button_text", resourceCulture);
+
+	public static string shopping_cart_terms_text1 => ResourceManager.GetString("shopping_cart_terms_text1", resourceCulture);
+
+	public static string shopping_cart_terms_text2 => ResourceManager.GetString("shopping_cart_terms_text2", resourceCulture);
 
 	public static string sign_in => ResourceManager.GetString("sign_in", resourceCulture);
 
@@ -1449,6 +1503,14 @@ public class Resources
 	public static string starring_label => ResourceManager.GetString("starring_label", resourceCulture);
 
 	public static string start_over_button => ResourceManager.GetString("start_over_button", resourceCulture);
+
+	public static string start_view_rent_and_buy_button => ResourceManager.GetString("start_view_rent_and_buy_button", resourceCulture);
+
+	public static string start_view_rent_and_buy_games_button => ResourceManager.GetString("start_view_rent_and_buy_games_button", resourceCulture);
+
+	public static string start_view_rent_and_buy_movies_button => ResourceManager.GetString("start_view_rent_and_buy_movies_button", resourceCulture);
+
+	public static string start_view_rent_and_buy_toggle_language_button => ResourceManager.GetString("start_view_rent_and_buy_toggle_language_button", resourceCulture);
 
 	public static string start_view_title => ResourceManager.GetString("start_view_title", resourceCulture);
 

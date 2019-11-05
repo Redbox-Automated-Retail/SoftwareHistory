@@ -159,7 +159,7 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 				{
 					_readErrorCount++;
 					_inactivityOccurred = true;
-					KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, KioskEventSubType.KioskHealth_CCReaderReadError, success: false, null, null, new
+					KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, 601, success: false, null, null, new
 					{
 						ReadErrors = _readErrorCount
 					}.ToJson());
@@ -179,7 +179,7 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 				{
 					if (_inactivityOccurred && _CCReaderSendNoDataEvents)
 					{
-						_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, KioskEventSubType.KioskHealth_CCReaderActivity, success: true, null, _relatedId));
+						_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, 602, success: true, null, _relatedId));
 					}
 					Reset();
 				}
@@ -189,7 +189,7 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 			_inactivityOccurred = true;
 			if (_CCReaderSendNoDataEvents)
 			{
-				KioskEvent kioskEvent2 = KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, KioskEventSubType.KioskHealth_CCReaderInactivity, success: true, null, null, new
+				KioskEvent kioskEvent2 = KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, 600, success: true, null, null, new
 				{
 					FailedReadAttempts = _failedAttemptCount
 				}.ToJson());

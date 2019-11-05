@@ -26,6 +26,8 @@ public class LoyaltySignupFlowValues : ILoginEmailProvider
 
 	public bool TextClubEnabled { get; set; }
 
+	public bool? EmailVerified { get; set; }
+
 	public bool SignUpForPerks { get; set; }
 
 	public bool SignUpForEarlyID { get; set; }

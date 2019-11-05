@@ -35,6 +35,12 @@ public class BrowseFunctions
 			public const string KeyboardIdleTimerName = "keyboard_idle_timer";
 
 			public const string ShoppingCartUpdateADAIdleTimerName = "shopping_cart_update_ada_idle_timer";
+
+			public const string OptInThankYouTimer = "optin_thank_you_timer";
+
+			public const string OptInViewTimer = "optin_view_timer";
+
+			public const string ReservationNotFoundTimer = "reservation_not_found_timer";
 		}
 
 		public static string ComingSoon = "ComingSoon";
@@ -82,7 +88,7 @@ public class BrowseFunctions
 			else
 			{
 				SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-add-item");
-				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsShoppingCartAddItem");
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsShoppingCartAddItem")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ItemAddedFromView = service?.Peek();
@@ -149,26 +155,29 @@ public class BrowseFunctions
 	public static void ConfigureProductFlag(DisplayProductModel displayProductModel, ProductFlags productFlags, bool hideFlag, FrameworkElement frameworkElementToGetStyleFrom, ITitleProduct titleProduct, DisplayProductModelConstants displayProductModelConstants)
 	{
 		ProductFlag productFlag = ProductFlagCollection.Instance.FirstOrDefault((ProductFlag x) => x.Flag == productFlags);
-		displayProductModel.FlagVisibility = ((hideFlag || productFlag == null || productFlag.Flag == ProductFlags.None) ? Visibility.Collapsed : Visibility.Visible);
-		displayProductModel.FlagStyle = WPFFunctions.GetStyle(frameworkElementToGetStyleFrom, productFlag?.FlagStyleName);
-		if (displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B" && productFlag != null && productFlag.Flag == ProductFlags.OutOfStock && titleProduct.TitleFamily == TitleFamily.Movies)
+		if (displayProductModel != null)
 		{
-			displayProductModel.FlagVisibility = Visibility.Collapsed;
-			displayProductModel.FlagStyle = null;
-		}
-		if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
-		{
-			decimal num = ((titleProduct.RentalPriceRecords != null && titleProduct.RentalPriceRecords.Count > 0) ? titleProduct.RentalPriceRecords[0].InitialNight : 0m);
-			string text = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
-			displayProductModel.FlagText = ((num != 0m && displayProductModelConstants.FlashDealPrices.Contains(num)) ? text : Resources.flag_flash_deal);
-		}
-		else
-		{
-			displayProductModel.FlagText = BundleFunctions.GetDictionaryStringValue("strings", productFlag?.TextKeyName);
-		}
-		if (displayProductModel.FlagVisibility == Visibility.Visible)
-		{
-			displayProductModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
+			displayProductModel.FlagVisibility = ((hideFlag || productFlag == null || productFlag.Flag == ProductFlags.None) ? Visibility.Collapsed : Visibility.Visible);
+			displayProductModel.FlagStyle = WPFFunctions.GetStyle(frameworkElementToGetStyleFrom, productFlag?.FlagStyleName);
+			if (displayProductModelConstants?.OutOfStockTitleDetailsABTestVersion == "B" && productFlag != null && productFlag.Flag == ProductFlags.OutOfStock && titleProduct.TitleFamily == TitleFamily.Movies)
+			{
+				displayProductModel.FlagVisibility = Visibility.Collapsed;
+				displayProductModel.FlagStyle = null;
+			}
+			if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
+			{
+				decimal num = ((titleProduct?.RentalPriceRecords != null && titleProduct.RentalPriceRecords.Count > 0 && titleProduct.RentalPriceRecords[0] != null) ? titleProduct.RentalPriceRecords[0].InitialNight : 0m);
+				string text = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
+				displayProductModel.FlagText = ((num != 0m && displayProductModelConstants?.FlashDealPrices != null && displayProductModelConstants.FlashDealPrices.Contains(num)) ? text : Resources.flag_flash_deal);
+			}
+			else
+			{
+				displayProductModel.FlagText = BundleFunctions.GetDictionaryStringValue("strings", productFlag?.TextKeyName);
+			}
+			if (displayProductModel.FlagVisibility == Visibility.Visible)
+			{
+				displayProductModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
+			}
 		}
 	}
 
@@ -323,6 +332,8 @@ public class BrowseFunctions
 				rentalShoppingCartItem.Quantity = 1m;
 				rentalShoppingCartItem.Status = LineItemStatus.Pending;
 				rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(titleProduct);
+				rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(titleProduct);
+				rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(titleProduct);
 				RentalShoppingCartService?.CurrentRentalShoppingCart?.AddItem(rentalShoppingCartItem, pricingRecord);
 			}
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();

@@ -12,6 +12,10 @@ public abstract class BaseViewFrame : IBaseViewFrame
 
 	public string ActiveFlag { get; set; }
 
+	public bool IsMaintenanceModeView { get; set; }
+
+	public bool IsStartOverView { get; set; }
+
 	public IScene Scene { get; set; }
 
 	public bool Clear

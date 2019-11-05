@@ -11,6 +11,7 @@ public class StartViewDefinition : BaseViewDefinition, IViewDefinition
 	{
 		base.ViewName = "start_view";
 		base.ActiveFlag = true;
+		base.IsStartOverView = true;
 		base.ControlName = "StartView";
 		base.Clear = false;
 		base.OnEnter = delegate

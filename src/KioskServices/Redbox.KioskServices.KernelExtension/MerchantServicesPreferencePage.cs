@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -31,16 +30,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 	private CheckBox m_liveCallCheckBox;
 
 	private Label m_headerLabel;
-
-	private Button m_deleteOfferButton;
-
-	private ListBox m_offersListBox;
-
-	private Button m_addOfferButton;
-
-	private TextBox m_addOfferTextBox;
-
-	private Label m_OffersLabel;
 
 	private CheckBox m_customerProfileCheckBox;
 
@@ -121,12 +110,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 			m_confirmationStatusComboBox.Items.Add(item2);
 		}
 		m_confirmationStatusComboBox.SelectedIndex = m_confirmationStatusComboBox.FindString(MerchantServicesProxy.Instance.ConfirmationStatus.ToString());
-		m_offersListBox.Items.Clear();
-		names = MerchantServicesProxy.Instance.UserOffers;
-		foreach (string item3 in names)
-		{
-			m_offersListBox.Items.Add(item3);
-		}
 		m_CancelledReservations.Text = MerchantServicesProxy.Instance.CancelledReservations;
 		m_InvalidReservations.Text = MerchantServicesProxy.Instance.InvalidReservations;
 		m_isLoaded = true;
@@ -220,26 +203,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
-	private void m_addOfferButton_Click(object sender, EventArgs e)
-	{
-		if (m_isLoaded && !string.IsNullOrEmpty(m_addOfferTextBox.Text))
-		{
-			m_offersListBox.Items.Add(m_addOfferTextBox.Text);
-			MerchantServicesProxy.Instance.UserOffers = (from object offer in m_offersListBox.Items
-				select offer.ToString()).ToArray();
-		}
-	}
-
-	private void m_deleteOfferButton_Click(object sender, EventArgs e)
-	{
-		if (m_isLoaded && m_offersListBox.SelectedIndex != -1)
-		{
-			m_offersListBox.Items.RemoveAt(m_offersListBox.SelectedIndex);
-			MerchantServicesProxy.Instance.UserOffers = (from object offer in m_offersListBox.Items
-				select offer.ToString()).ToArray();
-		}
-	}
-
 	private void m_cpAccountNumberTextBox_Leave(object sender, EventArgs e)
 	{
 		if (m_isLoaded)
@@ -320,11 +283,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_simulateCommunicationsFailureCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_liveCallCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_headerLabel = new System.Windows.Forms.Label();
-		this.m_OffersLabel = new System.Windows.Forms.Label();
-		this.m_addOfferTextBox = new System.Windows.Forms.TextBox();
-		this.m_addOfferButton = new System.Windows.Forms.Button();
-		this.m_offersListBox = new System.Windows.Forms.ListBox();
-		this.m_deleteOfferButton = new System.Windows.Forms.Button();
 		this.m_customerProfileCheckBox = new System.Windows.Forms.CheckBox();
 		this.m_cpFirstNameTextBox = new System.Windows.Forms.TextBox();
 		this.label3 = new System.Windows.Forms.Label();
@@ -403,36 +361,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_headerLabel.TabIndex = 41;
 		this.m_headerLabel.Text = "  Kiosk Services: Payment Auth. && Customer Lookup";
 		this.m_headerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-		this.m_OffersLabel.AutoSize = true;
-		this.m_OffersLabel.Location = new System.Drawing.Point(23, 438);
-		this.m_OffersLabel.Name = "m_OffersLabel";
-		this.m_OffersLabel.Size = new System.Drawing.Size(38, 13);
-		this.m_OffersLabel.TabIndex = 42;
-		this.m_OffersLabel.Text = "Offers:";
-		this.m_addOfferTextBox.Location = new System.Drawing.Point(67, 435);
-		this.m_addOfferTextBox.Name = "m_addOfferTextBox";
-		this.m_addOfferTextBox.Size = new System.Drawing.Size(330, 20);
-		this.m_addOfferTextBox.TabIndex = 43;
-		this.m_addOfferButton.Location = new System.Drawing.Point(408, 435);
-		this.m_addOfferButton.Name = "m_addOfferButton";
-		this.m_addOfferButton.Size = new System.Drawing.Size(75, 23);
-		this.m_addOfferButton.TabIndex = 44;
-		this.m_addOfferButton.Text = "Add Offer";
-		this.m_addOfferButton.UseVisualStyleBackColor = true;
-		this.m_addOfferButton.Click += new System.EventHandler(m_addOfferButton_Click);
-		this.m_offersListBox.FormattingEnabled = true;
-		this.m_offersListBox.Location = new System.Drawing.Point(67, 461);
-		this.m_offersListBox.Name = "m_offersListBox";
-		this.m_offersListBox.ScrollAlwaysVisible = true;
-		this.m_offersListBox.Size = new System.Drawing.Size(330, 69);
-		this.m_offersListBox.TabIndex = 45;
-		this.m_deleteOfferButton.Location = new System.Drawing.Point(408, 507);
-		this.m_deleteOfferButton.Name = "m_deleteOfferButton";
-		this.m_deleteOfferButton.Size = new System.Drawing.Size(75, 23);
-		this.m_deleteOfferButton.TabIndex = 46;
-		this.m_deleteOfferButton.Text = "Delete Offer";
-		this.m_deleteOfferButton.UseVisualStyleBackColor = true;
-		this.m_deleteOfferButton.Click += new System.EventHandler(m_deleteOfferButton_Click);
 		this.m_customerProfileCheckBox.AutoSize = true;
 		this.m_customerProfileCheckBox.Location = new System.Drawing.Point(30, 226);
 		this.m_customerProfileCheckBox.Name = "m_customerProfileCheckBox";
@@ -572,11 +500,6 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		base.Controls.Add(this.label3);
 		base.Controls.Add(this.m_cpFirstNameTextBox);
 		base.Controls.Add(this.m_customerProfileCheckBox);
-		base.Controls.Add(this.m_deleteOfferButton);
-		base.Controls.Add(this.m_offersListBox);
-		base.Controls.Add(this.m_addOfferButton);
-		base.Controls.Add(this.m_addOfferTextBox);
-		base.Controls.Add(this.m_OffersLabel);
 		base.Controls.Add(this.m_headerLabel);
 		base.Controls.Add(this.m_enableOfflineBadCardListCheckBox);
 		base.Controls.Add(this.m_authorizeResponseTypeComboBox);

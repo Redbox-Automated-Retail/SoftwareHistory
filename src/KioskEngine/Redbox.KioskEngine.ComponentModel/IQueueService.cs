@@ -14,6 +14,8 @@ public interface IQueueService : IDisposable
 
 	ErrorList Enqueue(byte priority, string type, object message);
 
+	ErrorList EnqueueKioskEvent(object message);
+
 	ErrorList EnqueueOnlyOne(byte priority, string type, object message, out int newMessageId);
 
 	ErrorList Update(int id, string message);

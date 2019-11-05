@@ -41,7 +41,7 @@ public abstract class TrackData : ITrackData
 
 	protected bool _isDataLocked;
 
-	public ErrorList errors
+	public ErrorList Errors
 	{
 		get
 		{
@@ -275,14 +275,16 @@ public abstract class TrackData : ITrackData
 		}
 	}
 
+	public ResponseStatus? ReadStatus { get; set; }
+
 	public TrackData()
 	{
-		errors = new ErrorList();
+		Errors = new ErrorList();
 	}
 
 	public virtual bool HasValidData()
 	{
-		if (_errors != null && !_errors.ContainsError() && !string.IsNullOrEmpty(FirstSix))
+		if ((!ReadStatus.HasValue || ReadStatus == ResponseStatus.Success) && Errors != null && !Errors.ContainsError() && !string.IsNullOrEmpty(FirstSix))
 		{
 			return !string.IsNullOrEmpty(LastFour);
 		}

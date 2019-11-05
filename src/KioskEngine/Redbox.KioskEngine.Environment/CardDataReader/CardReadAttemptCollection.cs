@@ -6,7 +6,7 @@ using Redbox.KioskEngine.ComponentModel.TrackData;
 
 namespace Redbox.KioskEngine.Environment.CardDataReader;
 
-public class CardReadAttemptCollection : List<ICardReadAttempt>, ICardReadAttemptCollection, IList<ICardReadAttempt>, ICollection<ICardReadAttempt>, IEnumerable<ICardReadAttempt>, IEnumerable
+public class CardReadAttemptCollection : List<ICardReadAttempt>, ICardReadAttemptCollection, IList<ICardReadAttempt>, ICollection<ICardReadAttempt>, IEnumerable<ICardReadAttempt>, IEnumerable, ITechnicalFallbackTracking
 {
 	public int CancelledCount => this.Count((ICardReadAttempt x) => x.CardReadAttemptStatus == CardReadAttemptStatus.Cancelled);
 
@@ -15,6 +15,10 @@ public class CardReadAttemptCollection : List<ICardReadAttempt>, ICardReadAttemp
 	public int SuccessCount => this.Count((ICardReadAttempt x) => x.CardReadAttemptStatus == CardReadAttemptStatus.Success);
 
 	public int ErrorCount => this.Count((ICardReadAttempt x) => x.CardReadAttemptStatus == CardReadAttemptStatus.Error);
+
+	public bool SupportsTechnicalFallbackTracking => this.Any((ICardReadAttempt x) => x.SupportsTechnicalFallbackTracking);
+
+	public bool IsInTrackableTechnicalFallback => this.Any((ICardReadAttempt x) => x.IsInTrackableTechnicalFallback);
 
 	public ICardReadAttempt GetMostRecent()
 	{

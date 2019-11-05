@@ -20,4 +20,6 @@ public interface IPromoOfferState
 	List<IKioskProduct> BrowseProductsShown { get; set; }
 
 	List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }
+
+	List<IDiscOfferCode> DiscOfferCodes { get; set; }
 }

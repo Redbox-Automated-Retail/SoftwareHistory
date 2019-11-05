@@ -1,5 +1,7 @@
 using System;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Kernel.Views;
@@ -21,7 +23,15 @@ public class MessagePopupViewFunctions
 	[KernelFunction(Name = "kernel.show_message_popup_view_return_backward_inserted")]
 	internal static void ShowMessagePopupViewReturnBackwardInserted(Action timeOutAction, Action continueAction)
 	{
-		MessagePopupViewController.ShowMessagePopupViewReturnBackwardInserted(timeOutAction, continueAction);
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		if (service != null && service.AnimatedDiscReturnEnabled)
+		{
+			AnimatedDiscReturnViewController.ShowAnimatedDiscReturnView(timeOutAction, continueAction);
+		}
+		else
+		{
+			MessagePopupViewController.ShowMessagePopupViewReturnBackwardInserted(timeOutAction, continueAction);
+		}
 	}
 
 	[KernelFunction(Name = "kernel.show_message_popup_view_return_unrecognized_barcode")]

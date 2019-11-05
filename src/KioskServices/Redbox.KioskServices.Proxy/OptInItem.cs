@@ -6,7 +6,7 @@ public class OptInItem : IOptInItem
 {
 	public long ItemId { get; set; }
 
-	public Item_Type Item_Type { get; set; }
+	public KioskOptIntItemType Item_Type { get; set; }
 
 	public OptInMethodType OptInMethodType { get; set; }
 

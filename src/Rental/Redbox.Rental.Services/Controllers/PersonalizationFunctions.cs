@@ -185,6 +185,8 @@ public class PersonalizationFunctions
 						Email = loginResult.PersonalizationSession.LoginEmailAddress
 					};
 					CheckCartForOfferCodes();
+					CheckCartForTivoQueryId();
+					CheckCartForTags();
 					OrchestrationService.AnalyticsAddLoggedInCustomerProfileNumber(loginResult.PersonalizationSession?.CustomerProfileNumber);
 				}
 				OrchestrationService.ResetApplicationIdleTimerTimeout();
@@ -274,6 +276,32 @@ public class PersonalizationFunctions
 		}
 	}
 
+	private static void CheckCartForTivoQueryId()
+	{
+		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
+		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
+		{
+			return;
+		}
+		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
+		{
+			item.TivoQueryId = GetTivoQueryId(item.TitleProduct);
+		}
+	}
+
+	private static void CheckCartForTags()
+	{
+		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
+		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
+		{
+			return;
+		}
+		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
+		{
+			item.Tags = GetTags(item.TitleProduct);
+		}
+	}
+
 	public static void ShowMyPointsError()
 	{
 		MessagePopupViewController.ShowSimpleMessage(Resources.my_points_error_title, Resources.my_points_error_message, Resources.my_points_error_btn_text, delegate
@@ -301,7 +329,22 @@ public class PersonalizationFunctions
 
 	public static string GetLoyaltyOfferCode(ITitleProduct titleProduct)
 	{
-		string result = null;
+		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => x.OfferCode);
+	}
+
+	public static string GetTivoQueryId(ITitleProduct titleProduct)
+	{
+		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => x.TivoQueryId);
+	}
+
+	public static List<string> GetTags(ITitleProduct titleProduct)
+	{
+		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => y.Tags);
+	}
+
+	private static T GetDataFromRecommendedTitlesForGivenTitleProduct<T>(ITitleProduct titleProduct, Func<IRecommendedTitles, IRecommendedTitleId, T> dataToGet)
+	{
+		T result = default(T);
 		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
 		if (personalizationSession != null && personalizationSession.RecommendedTitles != null)
 		{
@@ -313,13 +356,13 @@ public class PersonalizationFunctions
 					{
 						if (item.Id == titleProduct.TitleRollupProductGroupId)
 						{
-							result = recommendedTitle.OfferCode;
+							result = dataToGet(recommendedTitle, item);
 							break;
 						}
 					}
 					else if (item.Id == titleProduct.ProductId)
 					{
-						result = recommendedTitle.OfferCode;
+						result = dataToGet(recommendedTitle, item);
 						break;
 					}
 				}
@@ -351,7 +394,7 @@ public class PersonalizationFunctions
 					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 					if (rentalShoppingCart != null)
 					{
-						OrchestrationService.InvokeMarketingOptInFlowCallback(rentalShoppingCart.MarketingOptInConfirmationStatus.ToString());
+						CheckoutFunctions.MarketingOptInFlow(rentalShoppingCart.MarketingOptInConfirmationStatus);
 					}
 				}
 			}

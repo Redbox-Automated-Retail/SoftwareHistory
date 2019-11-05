@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Timers;
@@ -99,21 +102,19 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	private TimeSpan m_idleLoggingTargetInterval = TimeSpan.FromSeconds(15.0);
 
-	private string m_corruptDbName;
-
-	private bool m_enableMaintenanceMode;
-
-	private bool m_appStarting = true;
-
 	private bool checkMainFormStatus;
 
-	private NamedLock m_instanceLock;
+	private NamedLock m_instanceLockWin7;
+
+	private Mutex m_instanceLockWin10;
 
 	private CommandLine m_commandLine;
 
 	private readonly AutoResetEvent m_resetEvent = new AutoResetEvent(initialState: false);
 
-	private static Guid m_applicationGuid = new Guid("{FB5E48FF-4677-4cfa-8ED1-265114D7564C}");
+	private static readonly Guid m_applicationGuidWin7 = new Guid("{FB5E48FF-4677-4cfa-8ED1-265114D7564C}");
+
+	private static readonly Guid m_applicationGuidWin10 = new Guid("{2E14AC6E-F57C-4221-9BCA-D1FB6DD11FE0}");
 
 	private readonly IDictionary<string, IdleEventHandler> m_idleHandlers = new Dictionary<string, IdleEventHandler>();
 
@@ -138,8 +139,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			return m_commandLine;
 		}
 	}
-
-	public bool HasCorruptedDatabase => !string.IsNullOrEmpty(m_corruptDbName);
 
 	public string DataPath
 	{
@@ -178,17 +177,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		}
 	}
 
-	public bool AppStarting
-	{
-		get
-		{
-			return m_appStarting;
-		}
-		set
-		{
-			m_appStarting = value;
-		}
-	}
+	public bool AppStarting { get; set; } = true;
 
 	public void Reset()
 	{
@@ -529,18 +518,22 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	public Redbox.KioskEngine.ComponentModel.ErrorList Initialize()
 	{
 		FirewallHelper.CreateFirewallExemptions();
-		m_enableMaintenanceMode = false;
-		m_corruptDbName = "";
 		ConfigureDefaultMacros();
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		LogHelper.Instance.Log("Engine start up.");
 		LogHelper.Instance.Log(service.ExpandProperties("Engine: ${ProductName} ${ProductVersion}"));
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		m_instanceLock = new NamedLock(m_applicationGuid.ToString(), LockScope.Local);
-		if (!m_instanceLock.Exists())
+		m_instanceLockWin7 = new NamedLock(m_applicationGuidWin7.ToString(), LockScope.Local);
+		if (!m_instanceLockWin7.Exists())
 		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("INSTANCE", service.ExpandProperties("Only one instance of ${ProductName} ${ProductVersion} may be run at a time."), service.ExpandProperties("Another instance of ${ProductName} ${ProductVersion} is already running.")));
-			return errorList;
+			return SingleInstanceError(service);
+		}
+		string name = string.Format(CultureInfo.InvariantCulture, "Global\\{0}", new object[1] { m_applicationGuidWin10 });
+		new MutexSecurity().AddAccessRule(new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), MutexRights.FullControl, AccessControlType.Allow));
+		m_instanceLockWin10 = new Mutex(initiallyOwned: true, name, out var createdNew);
+		if (!createdNew)
+		{
+			return SingleInstanceError(service);
 		}
 		if (CommandLine.Errors.Count > 0)
 		{
@@ -694,6 +687,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			}
 			ControlPanelService instance = new ControlPanelService();
 			ServiceLocator.Instance.AddService(typeof(IControlPanelService), instance);
+			FieldMaintenanceService instance2 = new FieldMaintenanceService();
+			ServiceLocator.Instance.AddService(typeof(IFieldMaintenanceService), instance2);
 			MarketingConfigurationManager marketingConfigurationManager = new MarketingConfigurationManager(service2);
 			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), marketingConfigurationManager);
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
@@ -703,19 +698,19 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			KioskEventService kioskEventService = new KioskEventService(storeManagerService, kioskHealthConfiguration);
 			kioskEventService.Start();
 			ServiceLocator.Instance.AddService(typeof(IKioskEventService), kioskEventService);
-			RentalHealthService instance2 = new RentalHealthService();
-			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance2);
+			RentalHealthService instance3 = new RentalHealthService();
+			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance3);
 			KernelHelperService kernelHelperService = new KernelHelperService();
 			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
 			BlockListData blockListData = new BlockListData(service);
 			ServiceLocator.Instance.AddService(typeof(IBlockListData), blockListData);
-			BlockListService instance3 = new BlockListService(storeManagerService, blockListData);
-			ServiceLocator.Instance.AddService(typeof(IBlockList), instance3);
+			BlockListService instance4 = new BlockListService(storeManagerService, blockListData);
+			ServiceLocator.Instance.AddService(typeof(IBlockList), instance4);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IInventoryData), inventoryData);
-			InventoryService instance4 = new InventoryService(inventoryData);
-			ServiceLocator.Instance.AddService(typeof(IInventory), instance4);
+			InventoryService instance5 = new InventoryService(inventoryData);
+			ServiceLocator.Instance.AddService(typeof(IInventory), instance5);
 			PricingService pricingService = new PricingService(service, storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IPricingService), pricingService);
 			pricingService.Start();
@@ -729,8 +724,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			MarketingAdImpressionService marketingAdImpressionService = new MarketingAdImpressionService(storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IMarketingAdImpressionService), marketingAdImpressionService);
 			marketingAdImpressionService.Start();
-			MarketingAdService instance5 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service5);
-			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance5);
+			MarketingAdService instance6 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service5);
+			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance6);
 			RentalShoppingCartService.Instance.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IPersonalizationService), new PersonalizationService());
 			ServiceLocator.Instance.AddService(typeof(ILoyaltyService), new LoyaltyService());
@@ -756,6 +751,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			CCReaderHealth cCReaderHealth = new CCReaderHealth(kioskHealthConfiguration, kioskEventService);
 			ServiceLocator.Instance.AddService(typeof(ICCReaderHealth), cCReaderHealth);
 			kioskHealthService.AddHealthItem(cCReaderHealth);
+			EMVReaderHealth eMVReaderHealth = new EMVReaderHealth(kioskHealthConfiguration, kioskEventService);
+			ServiceLocator.Instance.AddService(typeof(IEMVReaderHealth), eMVReaderHealth);
+			kioskHealthService.AddHealthItem(eMVReaderHealth);
 			kioskHealthService.Start();
 		}
 		catch (Exception ex)
@@ -792,19 +790,17 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		EnvironmentFunctions.FlagForSafeShutdown();
 	}
 
-	public void CorruptDbDetected(string dbName)
-	{
-		m_corruptDbName = dbName;
-		m_enableMaintenanceMode = true;
-	}
-
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing)
 		{
-			if (m_instanceLock != null)
+			if (m_instanceLockWin7 != null)
 			{
-				m_instanceLock.Dispose();
+				m_instanceLockWin7.Dispose();
+			}
+			if (m_instanceLockWin10 != null)
+			{
+				m_instanceLockWin10.Dispose();
 			}
 			CommandLine.Dispose();
 		}
@@ -959,14 +955,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				{
 					while (executionTimer.ElapsedMilliseconds < 10 && CallbackService.Instance.InvokeNextCallback())
 					{
-					}
-				}
-				if (m_enableMaintenanceMode)
-				{
-					IEnvironmentNotificationService service = ServiceLocator.Instance.GetService<IEnvironmentNotificationService>();
-					if (service != null && m_corruptDbName.Length > 0)
-					{
-						service.RaiseCorruptDb(m_corruptDbName);
 					}
 				}
 				RenderScene();
@@ -1165,7 +1153,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 					service.Add(name, file.FullName, "default", null, null, delegate
 					{
 						LogHelper.Instance.Log("A new {0} file was loaded.", Path.GetFileName(file.Name));
-						if (name.Equals(ConfigFile.KioskHealth, StringComparison.CurrentCultureIgnoreCase))
+						if (name.Equals("kioskhealth", StringComparison.CurrentCultureIgnoreCase))
 						{
 							IKioskEventService service2 = ServiceLocator.Instance.GetService<IKioskEventService>();
 							if (service2 == null)
@@ -1196,5 +1184,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			}
 		}
 		return errorList;
+	}
+
+	private static Redbox.KioskEngine.ComponentModel.ErrorList SingleInstanceError(IMacroService macroService)
+	{
+		return new Redbox.KioskEngine.ComponentModel.ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("INSTANCE", macroService.ExpandProperties("Only one instance of ${ProductName} ${ProductVersion} may be run at a time."), macroService.ExpandProperties("Another instance of ${ProductName} ${ProductVersion} is already running.")) };
 	}
 }

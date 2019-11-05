@@ -14,5 +14,6 @@ public enum ProductFlags
 	FlashDeal,
 	Points,
 	Excluded,
-	AwardNominee
+	AwardNominee,
+	WishList
 }

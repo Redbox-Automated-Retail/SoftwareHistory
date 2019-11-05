@@ -38,6 +38,10 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 
 	private CheckBox cbTextClubEnabled;
 
+	private ComboBox cbEmailVerified;
+
+	private Label labelEmailVerified;
+
 	public MarketingOptinPreferencesPage()
 	{
 		InitializeComponent();
@@ -51,6 +55,12 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		instance.PromptForEarlyId = cbPromptForEarlyId.Checked;
 		instance.PromptForPerks = cbPromptForPerks.Checked;
 		instance.TextClubEnabled = cbTextClubEnabled.Checked;
+		bool? emailVerified = null;
+		if (bool.TryParse(cbEmailVerified?.Text, out var result))
+		{
+			emailVerified = result;
+		}
+		instance.EmailVerified = emailVerified;
 		return true;
 	}
 
@@ -72,6 +82,7 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		cbPromptForEarlyId.Checked = instance.PromptForEarlyId;
 		cbPromptForPerks.Checked = instance.PromptForPerks;
 		cbTextClubEnabled.Checked = instance.TextClubEnabled;
+		cbEmailVerified.Text = ((!instance.EmailVerified.HasValue) ? "null" : instance.EmailVerified.ToString());
 		UpdateSimulatedOptions();
 		m_isLoaded = true;
 	}
@@ -95,6 +106,7 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		cbPromptForEarlyId.Enabled = !liveCall;
 		cbPromptForPerks.Enabled = !liveCall;
 		cbTextClubEnabled.Enabled = !liveCall;
+		cbEmailVerified.Enabled = !liveCall;
 	}
 
 	private void OnCommFailureCheckChanged(object sender, EventArgs e)
@@ -111,6 +123,10 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		{
 			MarketingOptinServicesProxy.Instance.ConfirmationStatusCode = (ConfirmationStatus)Enum.Parse(typeof(ConfirmationStatus), (string)m_confirmationStatusComboBox.SelectedItem, ignoreCase: true);
 		}
+	}
+
+	private void MarketingOptinPreferencesPage_Load(object sender, EventArgs e)
+	{
 	}
 
 	protected override void Dispose(bool disposing)
@@ -136,6 +152,8 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		this.cbPromptForPerks = new System.Windows.Forms.CheckBox();
 		this.cbPromptForEarlyId = new System.Windows.Forms.CheckBox();
 		this.cbTextClubEnabled = new System.Windows.Forms.CheckBox();
+		this.cbEmailVerified = new System.Windows.Forms.ComboBox();
+		this.labelEmailVerified = new System.Windows.Forms.Label();
 		base.SuspendLayout();
 		this.m_confirmationStatusComboBox.FormattingEnabled = true;
 		this.m_confirmationStatusComboBox.Location = new System.Drawing.Point(144, 75);
@@ -196,28 +214,42 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		this.label2.TabIndex = 58;
 		this.label2.Text = "Mobile Phone Number:";
 		this.cbPromptForPerks.AutoSize = true;
-		this.cbPromptForPerks.Location = new System.Drawing.Point(144, 154);
+		this.cbPromptForPerks.Location = new System.Drawing.Point(144, 180);
 		this.cbPromptForPerks.Name = "cbPromptForPerks";
 		this.cbPromptForPerks.Size = new System.Drawing.Size(107, 17);
 		this.cbPromptForPerks.TabIndex = 60;
 		this.cbPromptForPerks.Text = "Prompt For Perks";
 		this.cbPromptForPerks.UseVisualStyleBackColor = true;
 		this.cbPromptForEarlyId.AutoSize = true;
-		this.cbPromptForEarlyId.Location = new System.Drawing.Point(144, 177);
+		this.cbPromptForEarlyId.Location = new System.Drawing.Point(144, 203);
 		this.cbPromptForEarlyId.Name = "cbPromptForEarlyId";
 		this.cbPromptForEarlyId.Size = new System.Drawing.Size(117, 17);
 		this.cbPromptForEarlyId.TabIndex = 61;
 		this.cbPromptForEarlyId.Text = "Prompt For Early ID";
 		this.cbPromptForEarlyId.UseVisualStyleBackColor = true;
 		this.cbTextClubEnabled.AutoSize = true;
-		this.cbTextClubEnabled.Location = new System.Drawing.Point(144, 200);
+		this.cbTextClubEnabled.Location = new System.Drawing.Point(144, 226);
 		this.cbTextClubEnabled.Name = "cbTextClubEnabled";
 		this.cbTextClubEnabled.Size = new System.Drawing.Size(113, 17);
 		this.cbTextClubEnabled.TabIndex = 62;
 		this.cbTextClubEnabled.Text = "Text Club Enabled";
 		this.cbTextClubEnabled.UseVisualStyleBackColor = true;
+		this.cbEmailVerified.FormattingEnabled = true;
+		this.cbEmailVerified.Items.AddRange(new object[3] { "null", "True", "False" });
+		this.cbEmailVerified.Location = new System.Drawing.Point(144, 154);
+		this.cbEmailVerified.Name = "comboBoxEmailVerified";
+		this.cbEmailVerified.Size = new System.Drawing.Size(262, 21);
+		this.cbEmailVerified.TabIndex = 63;
+		this.labelEmailVerified.AutoSize = true;
+		this.labelEmailVerified.Location = new System.Drawing.Point(12, 157);
+		this.labelEmailVerified.Name = "labelEmailVerified";
+		this.labelEmailVerified.Size = new System.Drawing.Size(70, 13);
+		this.labelEmailVerified.TabIndex = 64;
+		this.labelEmailVerified.Text = "Email Verified";
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.labelEmailVerified);
+		base.Controls.Add(this.cbEmailVerified);
 		base.Controls.Add(this.cbTextClubEnabled);
 		base.Controls.Add(this.cbPromptForEarlyId);
 		base.Controls.Add(this.cbPromptForPerks);
@@ -232,6 +264,7 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		base.Controls.Add(this.m_confirmationStatusComboBox);
 		base.Name = "MarketingOptinPreferencesPage";
 		base.Size = new System.Drawing.Size(519, 382);
+		base.Load += new System.EventHandler(MarketingOptinPreferencesPage_Load);
 		base.ResumeLayout(false);
 		base.PerformLayout();
 	}

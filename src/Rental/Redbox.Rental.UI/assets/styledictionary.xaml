@@ -24,6 +24,7 @@
   <Color x:Key="FlagGrayShadow">#5C5C5C</Color>
   <Color x:Key="FlagRubineColor">#E42045</Color>
   <Color x:Key="FlagRubineShadow">#AB1733</Color>
+  <Color x:Key="LightGrayBackground">#EBEBEB</Color>
   <SolidColorBrush x:Key="RubineRedBrush" Color="{StaticResource RubineRed}" />
   <SolidColorBrush x:Key="DarkishPinkBrush" Color="{StaticResource DarkishPink}" />
   <SolidColorBrush x:Key="InactiveBrush" Color="{StaticResource Inactive}" />
@@ -44,6 +45,7 @@
   <SolidColorBrush x:Key="LightPurpleBrush" Color="{StaticResource LightPurple}" />
   <SolidColorBrush x:Key="SelectedPurpleBrush" Color="{StaticResource SelectedPurple}" />
   <SolidColorBrush x:Key="DeepPurpleBrush" Color="{StaticResource DeepPurple}" />
+  <SolidColorBrush x:Key="LightGrayBackgroundBrush" Color="{StaticResource LightGrayBackground}" />
   <LinearGradientBrush x:Key="RubineRedGradientBrush" StartPoint="0,0.5" EndPoint="1,0.5">
     <GradientBrush.GradientStops>
       <GradientStopCollection>
@@ -1367,6 +1369,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
+  <Style x:Key="font_museo_slab_900_40" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
+    <Setter Property="FontSize" Value="40" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
   <Style x:Key="font_museo_slab_900_32" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
     <Setter Property="FontSize" Value="32" />
@@ -1430,6 +1438,12 @@
   <Style x:Key="font_museo_slab_700_50" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
     <Setter Property="FontSize" Value="50" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style x:Key="font_museo_slab_700_36" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
+    <Setter Property="FontSize" Value="36" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
@@ -2114,6 +2128,36 @@
       </Setter.Value>
     </Setter>
   </Style>
+  <Style x:Key="BannerPentagon" TargetType="{x:Type UserControl}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type UserControl}">
+          <Grid>
+            <Path Fill="#FFFFFF">
+              <Path.Data>
+                <PathGeometry>
+                  <PathGeometry.Figures>
+                    <PathFigure StartPoint="0,0">
+                      <PathFigure.Segments>
+                        <PathSegmentCollection>
+                          <LineSegment Point="0,88" />
+                          <ArcSegment Size="12,12" Point="10,98" IsLargeArc="False" RotationAngle="0" SweepDirection="Counterclockwise" />
+                          <LineSegment Point="158,131" />
+                          <LineSegment Point="306,98" />
+                          <ArcSegment Size="12,12" Point="316,88" IsLargeArc="False" RotationAngle="0" SweepDirection="Counterclockwise" />
+                          <LineSegment Point="316,0" />
+                        </PathSegmentCollection>
+                      </PathFigure.Segments>
+                    </PathFigure>
+                  </PathGeometry.Figures>
+                </PathGeometry>
+              </Path.Data>
+            </Path>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
   <LinearGradientBrush x:Key="banner_bluray_background" StartPoint="0,0.5" EndPoint="1,0.5">
     <GradientStop Color="#03539E" Offset="0" />
     <GradientStop Color="#0C87CA" Offset="0.5" />
@@ -2716,16 +2760,6 @@
     <Setter Property="FontSize" Value="37.3" />
     <Setter Property="Foreground" Value="#E42045" />
   </Style>
-  <Style x:Key="english_add_movie_button_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource base_add_movie_and_game_button_style}" />
-  <Style x:Key="spanish_add_movie_button_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource base_add_movie_and_game_button_style}">
-    <Setter Property="FontSize" Value="26" />
-  </Style>
-  <Style x:Key="english_add_game_button_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource base_add_movie_and_game_button_style}">
-    <Setter Property="Foreground" Value="#782D8D" />
-  </Style>
-  <Style x:Key="spanish_add_game_button_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource english_add_game_button_style}">
-    <Setter Property="FontSize" Value="26" />
-  </Style>
   <Style x:Key="rubine_button_with_gray_disabled_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource classic_rubine_radio_button_style}">
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
@@ -2990,6 +3024,7 @@
   <Style x:Key="rb_purple_regular_center_center_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_24}">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{StaticResource RbPurpleBrush}" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
@@ -3304,15 +3339,21 @@
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
   </Style>
-  <Style x:Key="offer_info_medium_header" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_24}">
+  <Style x:Key="offer_info_medium_header" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_light_18}">
     <Setter Property="FontSize" Value="40" />
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,-20,0,0" />
   </Style>
   <Style x:Key="offer_info_medium_2up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_1up}">
     <Setter Property="FontSize" Value="32" />
+  </Style>
+  <Style x:Key="offer_info_medium_3up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_1up}">
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="Margin" Value="20,10,0,0" />
   </Style>
   <Style x:Key="offer_info_medium_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_36}">
     <Setter Property="FontSize" Value="52" />
@@ -3335,11 +3376,38 @@
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
   </Style>
+  <Style x:Key="offer_info_big_bold_mnp" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+  </Style>
+  <Style x:Key="offer_info_multi_mnp" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_40}">
+    <Setter Property="FontSize" Value="44" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Setter Property="Margin" Value="30,0,30,0" />
+  </Style>
+  <Style x:Key="offer_info_3up_mnp" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_40}">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Setter Property="Margin" Value="30,0,30,0" />
+  </Style>
   <Style x:Key="offer_info_big_bold_2up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_1up}">
     <Setter Property="FontSize" Value="120" />
     <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
     <Setter Property="TextBlock.LineHeight" Value="110" />
     <Setter Property="Margin" Value="0,20,0,0" />
+  </Style>
+  <Style x:Key="offer_info_big_bold_3up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_1up}">
+    <Setter Property="FontSize" Value="34" />
+    <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
+    <Setter Property="Margin" Value="20,0,0,0" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
   <Style x:Key="offer_info_less_big_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
     <Setter Property="FontSize" Value="120" />

@@ -16,7 +16,6 @@ public class ReturnViewController : BaseViewController
 		OrchestrationService.SuspendIdleTimer("idle_timer");
 		if (BaseViewController.GetViewUserControl() is ReturnViewUserControl returnViewUserControl)
 		{
-			returnViewUserControl.OnGoBack += goBackAction;
 			_ = Resources.back_button;
 			string disc_return_message = Resources.disc_return_message;
 			returnViewUserControl.MessageText = disc_return_message;

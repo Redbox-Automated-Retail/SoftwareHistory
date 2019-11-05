@@ -14,8 +14,6 @@ public class DisplayProductModel : BrowseItemModel
 		OverhangLowerLeftCorner
 	}
 
-	public static readonly DependencyProperty StarRatingProperty = DependencyProperty.Register("StarRating", typeof(int?), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty HeaderProperty = DependencyProperty.Register("Header", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty DescriptionProperty = DependencyProperty.Register("Description", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -75,8 +73,6 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty RatingDescriptionProperty = DependencyProperty.Register("RatingDescription", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RatingVisibilityProperty = DependencyProperty.Register("RatingVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty ReviewButtonVisibilityProperty = DependencyProperty.Register("ReviewButtonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty FormatVisibilityProperty = DependencyProperty.Register("FormatVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -324,6 +320,8 @@ public class DisplayProductModel : BrowseItemModel
 	{
 		AffectsRender = true
 	});
+
+	public static readonly DependencyProperty RemoveButtonTextProperty = DependencyProperty.Register("RemoveButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public bool TitleDetailPropertiesInitialized;
 
@@ -1360,21 +1358,6 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public Visibility ReviewButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ReviewButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(ReviewButtonVisibilityProperty, value);
-			});
-		}
-	}
-
 	public Visibility FormatVisibility
 	{
 		get
@@ -1825,24 +1808,20 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public int? StarRating
+	public string RemoveButtonText
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (int?)GetValue(StarRatingProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(RemoveButtonTextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(StarRatingProperty, value);
+				SetValue(RemoveButtonTextProperty, value);
 			});
 		}
 	}
-
-	public string ReviewsButtonText { get; set; }
-
-	public DynamicRoutedCommand ReviewsButtonCommand { get; set; }
 
 	public DisplayProductModelConstants DisplayProductModelConstants { get; set; }
 
@@ -1983,7 +1962,7 @@ public class DisplayProductModel : BrowseItemModel
 		AddButtonOpacity = 1.0;
 		base.CanAdd = true;
 		BannerVisibility = Visibility.Collapsed;
-		FlagVisibility = Visibility.Collapsed;
+		FlagVisibility = Visibility.Visible;
 		ShowBuy = Visibility.Collapsed;
 		AddButtonBarVisibility = Visibility.Visible;
 		OutOfStockVisibility = Visibility.Collapsed;

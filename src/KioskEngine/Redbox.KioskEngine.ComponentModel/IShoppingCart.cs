@@ -50,4 +50,6 @@ public interface IShoppingCart
 	string GetPropertyBagEntry(string key);
 
 	void SetPropertyBagEntry(string key, string value);
+
+	void RemovePropertyBagEntry(string key);
 }

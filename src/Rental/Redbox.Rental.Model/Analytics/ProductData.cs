@@ -15,6 +15,8 @@ public class ProductData : AnalyticsData
 
 	public int? ProductTypeId { get; set; }
 
+	public string TivoQueryId { get; set; }
+
 	[JsonConverter(typeof(StringEnumConverter))]
 	public TitleFamily? TitleFamily { get; set; }
 
@@ -38,7 +40,8 @@ public class ProductData : AnalyticsData
 			TitleRollupProductGroupId = titleProduct.TitleRollupProductGroupId,
 			ProductTypeId = titleProduct.ProductTypeId,
 			TitleFamily = titleProduct.TitleFamily,
-			TitleType = titleProduct.TitleType
+			TitleType = titleProduct.TitleType,
+			TivoQueryId = titleProduct.TivoQueryId
 		};
 	}
 

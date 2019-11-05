@@ -1,6 +1,6 @@
 namespace Redbox.KioskServices.Proxy.ComponentModel;
 
-public class AlertTypes
+public static class AlertTypes
 {
 	public const string ApplicationCrash = "ApplicationCrash";
 

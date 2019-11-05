@@ -50,12 +50,6 @@ public class MessagePopupViewController : BaseViewController
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.sign_out_dialog_title, "message_popup_dialog_title_rbpurple_style", Resources.sign_out_dialog_message, "font_montserrat_small_rbpurple", Resources.back_button, "font_museoslab_900_28_rubine", "message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style", Resources.sign_out_button, "font_museoslab_900_28_white", "message_popup_warmpurple_button_style", (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(30000, "long"), backAction, continueAction, timeOutAction, "SignOutWarningMessage", (UserControl)null, "Transparent", new Thickness(233.0, 208.0, 233.0, 208.0), (string)null, (string)null));
 	}
 
-	public static void ShowOnDemandMessage(decimal price, Action timeOutAction, Action backAction, Action continueAction)
-	{
-		LogHelper.Instance.Log("Showing OnDemand message");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.on_demand_dialog_title, "message_popup_dialog_title_rbpurple_style", string.Format(Resources.on_demand_dialog_message, price.ToString("0.00")), "font_montserrat_small_rbpurple", Resources.back_button, "font_museo_slab_900_20", "message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style", Resources.got_it_button, "font_museo_slab_900_20", "message_popup_warmpurple_button_style", null, null, null, null, GetDefaultMessageTimeOut(30000, "long"), backAction, continueAction, timeOutAction, "OnDemandMessage", null, "Transparent", new Thickness(186.0, 220.0, 186.0, 220.0), "onDemandRentDialog"));
-	}
-
 	public static void ShowSimpleOkMessage(string cultureSpecificTitle, string cultureSpecificMessage, Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Ok Message: {0}", cultureSpecificTitle);
@@ -262,6 +256,12 @@ public class MessagePopupViewController : BaseViewController
 	{
 		LogHelper.Instance.Log("Showing Card Not Recognized message popup");
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(null, Resources.invalid_card_message, null, Resources.continue_button, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewCardNotRecognized", "cardNotRecognized"));
+	}
+
+	public static void ShowMessagePopupViewCardReaderTampered(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing Swiped Card is chip enabled message popup");
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.card_reader_tampered_message_title, "message_popup_dialog_title_style4", Resources.card_reader_tampered_message_body, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewSwipedCardIsChipEnabled", null, "Transparent", default(Thickness), "swipedCardIsChipEnabled"));
 	}
 
 	public static void ShowMessagePopupViewSwipedCardIsChipEnabled(Action timeOutAction, Action continueAction)

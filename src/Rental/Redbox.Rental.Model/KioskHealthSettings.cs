@@ -2,61 +2,67 @@ namespace Redbox.Rental.Model;
 
 public static class KioskHealthSettings
 {
-	public static string KioskHealthActive = "KioskHealthActive";
+	public const string KioskHealthActive = "KioskHealthActive";
 
-	public static string KioskEventsUnloadInterval = "KioskEventsUnloadInterval";
+	public const string KioskEventsUnloadInterval = "KioskEventsUnloadInterval";
 
-	public static string TouchScreenActive = "TouchScreenActive";
+	public const string TouchScreenActive = "TouchScreenActive";
 
-	public static string TouchScreenReporting = "TouchScreenReporting";
+	public const string TouchScreenReporting = "TouchScreenReporting";
 
-	public static string TouchScreenHealing = "TouchScreenHealing";
+	public const string TouchScreenHealing = "TouchScreenHealing";
 
-	public static string TouchScreenStartCheck = "TouchScreenStartCheck";
+	public const string TouchScreenStartCheck = "TouchScreenStartCheck";
 
-	public static string TouchScreenEndCheck = "TouchScreenEndCheck";
+	public const string TouchScreenEndCheck = "TouchScreenEndCheck";
 
-	public static string TouchScreenInActivity = "TouchScreenInActivity";
+	public const string TouchScreenInActivity = "TouchScreenInActivity";
 
-	public static string TouchScreenResetsToAlert = "TouchScreenResetsToAlert";
+	public const string TouchScreenResetsToAlert = "TouchScreenResetsToAlert";
 
-	public static string ArcusActive = "ArcusActive";
+	public const string ArcusActive = "ArcusActive";
 
-	public static string ArcusReporting = "ArcusReporting";
+	public const string ArcusReporting = "ArcusReporting";
 
-	public static string RouterActive = "RouterActive";
+	public const string RouterActive = "RouterActive";
 
-	public static string RouterReporting = "RouterReporting";
+	public const string RouterReporting = "RouterReporting";
 
-	public static string RouterHealing = "RouterHealing";
+	public const string RouterHealing = "RouterHealing";
 
-	public static string RouterResetRetryMinutes = "RouterResetRetryMinutes";
+	public const string RouterResetRetryMinutes = "RouterResetRetryMinutes";
 
-	public static string RouterResetAfterXMessageFailures = "RouterResetAfterXMessageFailures";
+	public const string RouterResetAfterXMessageFailures = "RouterResetAfterXMessageFailures";
 
-	public static string RouterResetMaxAttempts = "RouterResetMaxAttempts";
+	public const string RouterResetMaxAttempts = "RouterResetMaxAttempts";
 
-	public static string HardwareCorrectionStatsActive = "HardwareCorrectionStatsActive";
+	public const string HardwareCorrectionStatsActive = "HardwareCorrectionStatsActive";
 
-	public static string HardwareCorrectionStatsReporting = "HardwareCorrectionStatsReporting";
+	public const string HardwareCorrectionStatsReporting = "HardwareCorrectionStatsReporting";
 
-	public static string ViewActive = "ViewActive";
+	public const string ViewActive = "ViewActive";
 
-	public static string ViewReporting = "ViewReporting";
+	public const string ViewReporting = "ViewReporting";
 
-	public static string ViewHealingType = "ViewHealingType";
+	public const string ViewHealingType = "ViewHealingType";
 
-	public static string ViewInActivity = "ViewInActivity";
+	public const string ViewInActivity = "ViewInActivity";
 
-	public static string ViewInActivityABEMode = "ViewInActivityABEMode";
+	public const string ViewInActivityABEMode = "ViewInActivityABEMode";
 
-	public static string CCReaderActive = "CCReaderActive";
+	public const string CCReaderActive = "CCReaderActive";
 
-	public static string CCReaderSendNoDataEvents = "CCReaderSendNoDataEvents";
+	public const string CCReaderSendNoDataEvents = "CCReaderSendNoDataEvents";
 
-	public static string CCReaderNoDataAttemptsToAlert = "CCReaderNoDataAttemptsToAlert";
+	public const string CCReaderNoDataAttemptsToAlert = "CCReaderNoDataAttemptsToAlert";
 
-	public static string CCReaderSendBadDataEvents = "CCReaderSendBadDataEvents";
+	public const string CCReaderSendBadDataEvents = "CCReaderSendBadDataEvents";
 
-	public static string CCReaderBadDataAttemptsToAlert = "CCReaderBadDataAttemptsToAlert";
+	public const string CCReaderBadDataAttemptsToAlert = "CCReaderBadDataAttemptsToAlert";
+
+	public const string EMVReaderActive = "EMVReaderActive";
+
+	public const string EMVReaderTrackMultipleFallbacks = "EMVReaderTrackMultipleFallbacks";
+
+	public const string EMVReaderMultipleFallbacksThreshold = "EMVReaderMultipleFallbacksThreshold";
 }

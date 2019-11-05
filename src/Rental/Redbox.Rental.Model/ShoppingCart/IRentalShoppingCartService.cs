@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Promotion;
 
 namespace Redbox.Rental.Model.ShoppingCart;
 
@@ -39,4 +40,8 @@ public interface IRentalShoppingCartService
 	List<string> AssignBarcodesToVend(IRentalShoppingCart rentalShoppingCart);
 
 	void RemovePromoOfferFromCart(Guid shoppingSessionId);
+
+	void AddMultiNightOfferToItem(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer);
+
+	void RemoveMultiNightOfferFromItem(IRentalShoppingCartItem rentalShoppingCartItem);
 }

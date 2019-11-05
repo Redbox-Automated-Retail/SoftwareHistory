@@ -107,4 +107,12 @@ internal sealed class ShoppingCart : IShoppingCart
 		}
 		return m_propertyBag[key];
 	}
+
+	public void RemovePropertyBagEntry(string key)
+	{
+		if (m_propertyBag.ContainsKey(key))
+		{
+			m_propertyBag.Remove(key);
+		}
+	}
 }

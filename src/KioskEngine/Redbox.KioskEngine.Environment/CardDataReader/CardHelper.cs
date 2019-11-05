@@ -95,6 +95,7 @@ public static class CardHelper
 		SHA256Managed sHA256Managed = new SHA256Managed();
 		string result = Convert.ToBase64String(sHA256Managed.ComputeHash(sHA256Managed.ComputeHash(Encoding.UTF8.GetBytes(ExtractFromSecure(cardNumber)))));
 		sHA256Managed.Clear();
+		sHA256Managed.Dispose();
 		return result;
 	}
 
@@ -110,6 +111,7 @@ public static class CardHelper
 		SHA256Managed sHA256Managed = new SHA256Managed();
 		string result = Convert.ToBase64String(sHA256Managed.ComputeHash(sHA256Managed.ComputeHash(Encoding.UTF8.GetBytes(sourcString))));
 		sHA256Managed.Clear();
+		sHA256Managed.Dispose();
 		return result;
 	}
 
@@ -155,7 +157,11 @@ public static class CardHelper
 		}
 		finally
 		{
-			rSACryptoServiceProvider?.Clear();
+			if (rSACryptoServiceProvider != null)
+			{
+				rSACryptoServiceProvider.Clear();
+				rSACryptoServiceProvider.Dispose();
+			}
 		}
 		return null;
 	}
@@ -242,9 +248,9 @@ public static class CardHelper
 
 	private static void AddErrorMessageIfNotDuplicate(ITrackData trackData, Redbox.KioskEngine.ComponentModel.Error error)
 	{
-		if (error != null && trackData?.errors != null && !trackData.errors.ContainsCode(error.Code))
+		if (error != null && trackData?.Errors != null && !trackData.Errors.ContainsCode(error.Code))
 		{
-			trackData.errors.Add(error);
+			trackData.Errors.Add(error);
 		}
 	}
 
@@ -306,7 +312,7 @@ public static class CardHelper
 	public static IUnencryptedTrackData Parse(SecureString value)
 	{
 		IUnencryptedTrackData unencryptedTrackData = new UnencryptedTrackData();
-		ErrorList errors = unencryptedTrackData.errors;
+		ErrorList errors = unencryptedTrackData.Errors;
 		try
 		{
 			string[] array = ExtractFromSecure(value).Split(';');

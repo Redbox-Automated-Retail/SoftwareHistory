@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Threading;
 using Redbox.Core;
@@ -259,6 +260,18 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 		}
 	}
 
+	public string TivoQueryId
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "TivoQueryId", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "TivoQueryId", value);
+		}
+	}
+
 	public RecommendedTitlesIdType RecommendedTitlesIdType
 	{
 		get
@@ -286,6 +299,18 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 		set
 		{
 			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "RecommendedTitleIds", value);
+		}
+	}
+
+	public string RecommendedTitleIdTags
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "RecommendedTitleIdTags", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "RecommendedTitleIdTags", value);
 		}
 	}
 
@@ -384,21 +409,31 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
 				RecommendedTitles recommendedTitles = new RecommendedTitles
 				{
+					TivoQueryId = TivoQueryId,
 					OfferCode = RecommendedTitlesOfferCode
 				};
-				if (!string.IsNullOrEmpty(RecommendedTitleIds))
+				string[] array = RecommendedTitleIdTags.Split(new char[3] { '[', ']', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				int num = 0;
+				if (!string.IsNullOrWhiteSpace(RecommendedTitleIds))
 				{
-					string[] array = RecommendedTitleIds.Split(',');
-					for (int i = 0; i < array.Length; i++)
+					string[] array2 = RecommendedTitleIds.Split(',');
+					for (int i = 0; i < array2.Length; i++)
 					{
-						if (long.TryParse(array[i], out var result))
+						if (long.TryParse(array2[i], out var result))
 						{
+							string[] source = new string[0];
+							if (num < array.Length)
+							{
+								source = array[num].Split(',');
+							}
 							recommendedTitles.Add(new RecommendedTitleId
 							{
 								Id = result,
-								IdType = RecommendedTitlesIdType
+								IdType = RecommendedTitlesIdType,
+								Tags = source.ToList()
 							});
 						}
+						num++;
 					}
 				}
 				remoteServiceResult.Properties["RecommendedTitles"] = new List<IRecommendedTitles> { recommendedTitles };

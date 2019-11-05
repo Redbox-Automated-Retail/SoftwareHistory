@@ -11,6 +11,10 @@ public class BaseViewDefinition
 
 	public bool ActiveFlag { get; set; }
 
+	public bool IsStartOverView { get; set; }
+
+	public bool IsMaintenanceModeView { get; set; }
+
 	public string ControlName { get; set; }
 
 	public Action<IViewFrameInstance> OnEnter { get; set; }

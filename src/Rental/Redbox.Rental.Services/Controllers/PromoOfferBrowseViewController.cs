@@ -261,6 +261,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 				rentalShoppingCartItem.Quantity = 1m;
 				rentalShoppingCartItem.Status = LineItemStatus.Pending;
 				rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(_selectedTitle);
+				rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(_selectedTitle);
+				rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(_selectedTitle);
 				currentRentalShoppingCart.AddItem(rentalShoppingCartItem);
 				UpdateBrowseDisplay();
 			}
@@ -521,14 +523,17 @@ public class PromoOfferBrowseViewController : BaseViewController
 				}
 			}
 		}
-		if (!AreProductListsIdentical(list, PromoOfferState.BrowseProductsShown))
+		if (!AreProductListsIdentical(list, PromoOfferState?.BrowseProductsShown))
 		{
-			if (list.Count > 0)
+			if ((list?.Count ?? 0) > 0)
 			{
 				BaseViewController.SessionAnalyticsService?.AddViewEvent("productsShown", list.Count.ToString());
 			}
-			PromoOfferState.BrowseProductsShown = list;
-			PromoOfferState.TTSBrowseItemModelsShown = list2;
+			if (PromoOfferState != null)
+			{
+				PromoOfferState.BrowseProductsShown = list;
+				PromoOfferState.TTSBrowseItemModelsShown = list2;
+			}
 		}
 	}
 

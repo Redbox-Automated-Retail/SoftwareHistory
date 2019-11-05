@@ -8,6 +8,7 @@ using System.Xml;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.IDE;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -15,8 +16,6 @@ public class QueueService : IQueueService, IDisposable
 {
 	private class QueueServicePriority : IQueueServicePriority
 	{
-		private List<IQueueServicePriority> _excludeTimeRanges = new List<IQueueServicePriority>();
-
 		public QueueServicePriorityType PriorityType { get; set; }
 
 		public string Description { get; set; }
@@ -29,7 +28,7 @@ public class QueueService : IQueueService, IDisposable
 
 		public TimeSpan? EndTime { get; set; }
 
-		public List<IQueueServicePriority> ExcludeTimeRanges => _excludeTimeRanges;
+		public List<IQueueServicePriority> ExcludeTimeRanges => new List<IQueueServicePriority>();
 
 		public bool IsInTimeRange(TimeSpan timeSpan)
 		{
@@ -65,9 +64,9 @@ public class QueueService : IQueueService, IDisposable
 
 	private IQueueServiceData _queueServiceData;
 
-	private List<QueueServicePriority> _queueServicePriorities = new List<QueueServicePriority>();
+	private readonly List<QueueServicePriority> _queueServicePriorities = new List<QueueServicePriority>();
 
-	private List<IQueueMessageProcessorService> _queueMessageProcessorServices = new List<IQueueMessageProcessorService>();
+	private readonly List<IQueueMessageProcessorService> _queueMessageProcessorServices = new List<IQueueMessageProcessorService>();
 
 	private Timer m_queueTimer;
 
@@ -300,6 +299,11 @@ public class QueueService : IQueueService, IDisposable
 	public void Dispose()
 	{
 		_queueServiceData?.Dispose();
+		if (m_queueTimer != null)
+		{
+			m_queueTimer.Dispose();
+			m_queueTimer = null;
+		}
 	}
 
 	public ErrorList Clear()
@@ -321,6 +325,11 @@ public class QueueService : IQueueService, IDisposable
 			HandleCorruptDatabase();
 		}
 		return obj;
+	}
+
+	public ErrorList EnqueueKioskEvent(object message)
+	{
+		return _queueServiceData?.Enqueue(200, "KioskEvents", ToEncryptedMessage(message)) ?? new ErrorList();
 	}
 
 	public ErrorList EnqueueOnlyOne(byte priority, string type, object message, out int newMessageId)
@@ -523,9 +532,7 @@ public class QueueService : IQueueService, IDisposable
 	private void GetQueueServiceConfigurationValues()
 	{
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		TimeSpan? startTime = null;
-		TimeSpan? endTime = null;
-		if (service.TryGetTimeSpanRangeValue("system", "QueueService", "PeakPriorityOnlyTimeRange", out startTime, out endTime))
+		if (service.TryGetTimeSpanRangeValue("system", "QueueService", "PeakPriorityOnlyTimeRange", out var startTime, out var endTime))
 		{
 			_peakPriorityStartTime = startTime.Value;
 			_peakPriorityEndTime = endTime.Value;
@@ -562,16 +569,11 @@ public class QueueService : IQueueService, IDisposable
 
 	private void HandleCorruptDatabase()
 	{
-		IEngineApplication service = ServiceLocator.Instance.GetService<IEngineApplication>();
-		if (service == null)
-		{
-			return;
-		}
-		IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-		IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		bool hasCorruptedDatabase = service.HasCorruptedDatabase;
-		service.CorruptDbDetected("message.data");
-		if (hasCorruptedDatabase)
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		bool num = ServiceLocator.Instance.GetService<IApplicationState>()?.HasMaintenanceModeReason(MaintenanceModeSource.Database, "SOFT-FILE01") ?? false;
+		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RaiseCorruptDb();
+		if (num)
 		{
 			return;
 		}
@@ -581,11 +583,11 @@ public class QueueService : IQueueService, IDisposable
 			{
 				MessageType = "KioskAlert",
 				MessageId = Guid.NewGuid(),
-				KioskId = int.Parse(service3.Filter["store_number"]),
-				EngineVersion = service2["EngineVersion"],
-				BundleVersion = service2["ProductVersion"],
-				SubType = "mm:DataStoreError, SOFT-FILE01",
-				Detail = "<h2>Kiosk Engine Data File Error</h2><p>There was an error accessing or updating the database: [ message.data ] <br><br>Placing Kiosk into Maintenance Mode.<br>SOFT-FILE01</p>",
+				KioskId = int.Parse(service2.Filter["store_number"]),
+				EngineVersion = service["EngineVersion"],
+				BundleVersion = service["ProductVersion"],
+				SubType = string.Format("mm:DataStoreError, {0}", "SOFT-FILE01"),
+				Detail = string.Format("<h2>Kiosk Engine Data File Error</h2><p>There was an error accessing or updating the database: [ message.data ] <br><br>Placing Kiosk into Maintenance Mode.<br>{0}</p>", "SOFT-FILE01"),
 				Type = "ApplicationCrash",
 				Time = DateTime.Now
 			};
@@ -617,6 +619,7 @@ public class QueueService : IQueueService, IDisposable
 		RNGCryptoServiceProvider rNGCryptoServiceProvider = new RNGCryptoServiceProvider();
 		byte[] array = new byte[4];
 		rNGCryptoServiceProvider.GetBytes(array);
+		rNGCryptoServiceProvider.Dispose();
 		int num = BitConverter.ToInt32(array, 0);
 		if (min != max)
 		{

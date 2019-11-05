@@ -9,6 +9,8 @@ public interface IConfiguration
 
 	Dictionary<TitleType, bool> GameHasContentTypes { get; }
 
+	bool AnimatedDiscReturnEnabled { get; }
+
 	int BurnInTimeout { get; }
 
 	int BurnInViewDuration { get; }
@@ -26,6 +28,8 @@ public interface IConfiguration
 	bool UseLowestPriceSortOrder { get; }
 
 	bool ComingSoonOptInEnabled { get; }
+
+	bool MarketingOptInEnabled { get; }
 
 	bool ServiceFeeEnabled { get; }
 
@@ -65,17 +69,19 @@ public interface IConfiguration
 
 	string StartViewAdABTestVersion { get; }
 
+	string StartViewRentAndBuyABTestVersion { get; }
+
 	string PriceFiltersOnBrowseABTestVersion { get; }
 
 	int ScreenSaverTimeout { get; }
 
 	string OutOfStockTitleDetailsABTestVersion { get; }
 
-	string StarRatingTitleDetailsABTestVersion { get; }
-
 	string TVEnabledABTestVersion { get; }
 
 	List<long> TVTitleIds { get; }
+
+	string ShoppingCartLayoutABTestVersion { get; }
 
 	bool MonitorBarcodeTracking { get; }
 
@@ -157,5 +163,11 @@ public interface IConfiguration
 
 	bool ShowAfterSwipePersonalizedOffers { get; }
 
+	bool UseDiscountsForPmnpOffers { get; }
+
+	bool ShowOptinForNormalCheckout { get; }
+
 	void SessionReload();
+
+	void ResetCachedIsDefaultCulture();
 }

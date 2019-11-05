@@ -14,7 +14,6 @@ using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
-using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
@@ -319,25 +318,6 @@ public class TitleDetailsController : BaseViewController
 		});
 	}
 
-	private static void ShowOnDemandMessage(decimal price)
-	{
-		MessagePopupViewController.ShowOnDemandMessage(price, delegate
-		{
-			OrchestrationService.ViewGoBackSafe("OnDemandRentTimeout", popOnly: false);
-		}, delegate
-		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_back");
-			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOnDemandRentBack");
-			OrchestrationService.ViewGoBackSafe("OnDemandRentBack", popOnly: false);
-		}, delegate
-		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "onDemand_rent_gotit");
-			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOnDemandRentGotit");
-			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
-			OrchestrationService.ViewGoBackSafe("OnDemandRentDialogGotIt", popOnly: false);
-		});
-	}
-
 	private static void OnCollectionButton(IBrowseItemModel displayProductModel)
 	{
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "see-related-collection");
@@ -383,15 +363,11 @@ public class TitleDetailsController : BaseViewController
 		RatingsProperties.Properties.TryGetValue((Ratings)(titleProduct?.RatingId ?? 0), out value);
 		TitleTypeProperty value2 = null;
 		string format = null;
-		ITitleProduct titleProduct2 = titleProduct;
-		if (titleProduct2 != null)
+		if (titleProduct != null)
 		{
-			_ = titleProduct2.TitleType;
-			if (true)
-			{
-				TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value2);
-				format = value2?.GetName(Resources.ResourceManager);
-			}
+			_ = titleProduct.TitleType;
+			TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value2);
+			format = value2?.GetName(Resources.ResourceManager);
 		}
 		string ratingLabel = string.Empty;
 		string ratingDescription = string.Empty;
@@ -418,8 +394,7 @@ public class TitleDetailsController : BaseViewController
 		{
 			ratingVisibility = Visibility.Collapsed;
 		}
-		ITitleProduct titleProduct3 = titleProduct;
-		Visibility showCollections = ((titleProduct3 == null || titleProduct3.ComingSoon || !displayProductModel.DisplayProductModelConstants.ShowCollections || ((!(titleProduct?.Collections?.Any())) ?? true)) ? Visibility.Collapsed : Visibility.Visible);
+		Visibility showCollections = ((titleProduct == null || titleProduct.ComingSoon || !displayProductModel.DisplayProductModelConstants.ShowCollections || ((!(titleProduct?.Collections?.Any())) ?? true)) ? Visibility.Collapsed : Visibility.Visible);
 		IList<IPricingRecord> list = displayProductModel.DisplayProductModelConstants.PricingService?.GetProductPricingRecords(titleProduct.ProductId);
 		bool flag = list != null && list.Count > 1;
 		IRentalShoppingCart rentalShoppingCart = displayProductModel.DisplayProductModelConstants.RentalShoppingCartService?.CurrentRentalShoppingCart;
@@ -430,25 +405,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.Format = format;
 		displayProductModel.RunningTime = titleProduct?.RunningTime;
 		displayProductModel.ReleaseYear = titleProduct?.NationalStreetDate?.Year.ToString();
-		ITitleProduct titleProduct4 = titleProduct;
-		int cCSupported;
-		if (titleProduct4 != null && !titleProduct4.IsEmptyCase)
-		{
-			ITitleProduct titleProduct5 = titleProduct;
-			if (titleProduct5 != null && titleProduct5.IsMovie)
-			{
-				ITitleProduct titleProduct6 = titleProduct;
-				if (titleProduct6 != null && titleProduct6.ClosedCaptioned)
-				{
-					cCSupported = 0;
-					goto IL_033b;
-				}
-			}
-		}
-		cCSupported = 2;
-		goto IL_033b;
-		IL_033b:
-		displayProductModel.CCSupported = (Visibility)cCSupported;
+		displayProductModel.CCSupported = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsMovie || titleProduct == null || !titleProduct.ClosedCaptioned) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.Starring = string.Join(", ", titleProduct?.Starring ?? new List<string>());
 		displayProductModel.StarringLabel = displayProductModel.DisplayProductModelConstants?.StarringLabel;
 		displayProductModel.Genres = GetGenreText(titleProduct?.Genres);
@@ -472,141 +429,44 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.MultiNightReturnTimeVisibility = ((!flag || flag2 || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.DealText = GetDealText(titleProduct);
 		displayProductModel.HotDealTextVisibility = ((!titleProduct.HasDeal) ? Visibility.Collapsed : Visibility.Visible);
-		ITitleProduct titleProduct7 = titleProduct;
-		int runningTimeVisibility;
-		if (titleProduct7 != null && !titleProduct7.IsEmptyCase)
-		{
-			ITitleProduct titleProduct8 = titleProduct;
-			if (titleProduct8 != null && titleProduct8.IsMovie && !string.IsNullOrEmpty(titleProduct?.RunningTime))
-			{
-				runningTimeVisibility = 0;
-				goto IL_0615;
-			}
-		}
-		runningTimeVisibility = 2;
-		goto IL_0615;
-		IL_0615:
-		displayProductModel.RunningTimeVisibility = (Visibility)runningTimeVisibility;
-		ITitleProduct titleProduct9 = titleProduct;
+		displayProductModel.RunningTimeVisibility = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsMovie || string.IsNullOrEmpty(titleProduct?.RunningTime)) ? Visibility.Collapsed : Visibility.Visible);
 		int releaseYearVisibility;
-		if (titleProduct9 != null && !titleProduct9.IsEmptyCase)
+		if (titleProduct != null && !titleProduct.IsEmptyCase && titleProduct != null)
 		{
-			ITitleProduct titleProduct10 = titleProduct;
-			if (titleProduct10 != null)
+			DateTime? nationalStreetDate = titleProduct.NationalStreetDate;
+			if (nationalStreetDate.HasValue)
 			{
-				DateTime? nationalStreetDate = titleProduct10.NationalStreetDate;
-				if (nationalStreetDate.HasValue)
+				_ = nationalStreetDate.GetValueOrDefault().Year;
+				if (true)
 				{
-					_ = nationalStreetDate.GetValueOrDefault().Year;
-					if (true)
-					{
-						releaseYearVisibility = 0;
-						goto IL_066a;
-					}
+					releaseYearVisibility = 0;
+					goto IL_0565;
 				}
 			}
 		}
 		releaseYearVisibility = 2;
-		goto IL_066a;
-		IL_066a:
+		goto IL_0565;
+		IL_0565:
 		displayProductModel.ReleaseYearVisibility = (Visibility)releaseYearVisibility;
-		ITitleProduct titleProduct11 = titleProduct;
-		int formatVisibility;
-		if (titleProduct11 != null && !titleProduct11.IsEmptyCase)
-		{
-			ITitleProduct titleProduct12 = titleProduct;
-			if (titleProduct12 != null && titleProduct12.IsGame)
-			{
-				formatVisibility = 0;
-				goto IL_069f;
-			}
-		}
-		formatVisibility = 2;
-		goto IL_069f;
-		IL_069f:
-		displayProductModel.FormatVisibility = (Visibility)formatVisibility;
+		displayProductModel.FormatVisibility = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsGame) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.AdImageVisibility = ((displayProductModel.DisplayProductModelConstants.AdImage == null) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.AdImage = displayProductModel.DisplayProductModelConstants.AdImage;
 		displayProductModel.AdHeight = displayProductModel.DisplayProductModelConstants.AdHeight;
 		displayProductModel.MainHeight = displayProductModel.DisplayProductModelConstants.MainHeight;
-		ITitleProduct titleProduct13 = titleProduct;
-		displayProductModel.NotEmptyCaseVisibility = ((titleProduct13 != null && titleProduct13.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
-		ITitleProduct titleProduct14 = titleProduct;
-		displayProductModel.SubPlatformImage = ((titleProduct14 != null && titleProduct14.IsGame) ? GetSubPlatformBitmapImage(titleProduct) : null);
-		ITitleProduct titleProduct15 = titleProduct;
-		int subPlatformVisibility;
-		if (titleProduct15 != null && titleProduct15.IsGame)
-		{
-			ITitleProduct titleProduct16 = titleProduct;
-			if (titleProduct16 != null && titleProduct16.SubPlatformId.HasValue)
-			{
-				subPlatformVisibility = 0;
-				goto IL_076a;
-			}
-		}
-		subPlatformVisibility = 2;
-		goto IL_076a;
-		IL_076a:
-		displayProductModel.SubPlatformVisibility = (Visibility)subPlatformVisibility;
+		displayProductModel.NotEmptyCaseVisibility = ((titleProduct != null && titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.SubPlatformImage = ((titleProduct != null && titleProduct.IsGame) ? GetSubPlatformBitmapImage(titleProduct) : null);
+		displayProductModel.SubPlatformVisibility = ((titleProduct == null || !titleProduct.IsGame || titleProduct == null || !titleProduct.SubPlatformId.HasValue) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.ShowCollections = showCollections;
 		displayProductModel.CollectionsEnabled = titleProduct?.Collections?.Any() ?? false;
 		displayProductModel.CollectionTextLine1 = displayProductModel.DisplayProductModelConstants.CollectionTextLine1;
 		displayProductModel.BuyText = displayProductModel.DisplayProductModelConstants.BuyText;
 		displayProductModel.BuyButtonTextStyle = displayProductModel.DisplayProductModelConstants.FontMuseo20Style;
 		displayProductModel.BuyPriceText = GetBuyPriceText(titleProduct);
-		ITitleProduct titleProduct17 = titleProduct;
-		int starringVisibility;
-		if (titleProduct17 != null && titleProduct17.IsMovie)
-		{
-			ITitleProduct titleProduct18 = titleProduct;
-			if (titleProduct18 != null && !titleProduct18.IsEmptyCase)
-			{
-				starringVisibility = 0;
-				goto IL_083b;
-			}
-		}
-		starringVisibility = 2;
-		goto IL_083b;
-		IL_083b:
-		displayProductModel.StarringVisibility = (Visibility)starringVisibility;
-		string comingSoonLabel = displayProductModel.DisplayProductModelConstants.ComingSoonLabel;
-		ITitleProduct titleProduct19 = titleProduct;
-		displayProductModel.ComingSoonLabelText = comingSoonLabel + " " + ((titleProduct19 != null && titleProduct19.ReleaseDate.HasValue) ? titleProduct.ReleaseDate.Value.ToString("MM/dd") : string.Empty);
+		displayProductModel.StarringVisibility = ((titleProduct == null || !titleProduct.IsMovie || titleProduct == null || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.ComingSoonLabelText = displayProductModel.DisplayProductModelConstants.ComingSoonLabel + " " + ((titleProduct != null && titleProduct.ReleaseDate.HasValue) ? titleProduct.ReleaseDate.Value.ToString("MM/dd") : string.Empty);
 		displayProductModel.OutOfStockLine1Text = displayProductModel.DisplayProductModelConstants.OutOfStockLine1Text;
-		string outOfStockLine2Text = displayProductModel.DisplayProductModelConstants.OutOfStockLine2Text;
-		ITitleProduct titleProduct20 = titleProduct;
-		displayProductModel.OutOfStockLine2Text = string.Format(outOfStockLine2Text, (titleProduct20 != null && titleProduct20.IsMovie) ? displayProductModel.DisplayProductModelConstants.Movie : displayProductModel.DisplayProductModelConstants.Game);
+		displayProductModel.OutOfStockLine2Text = string.Format(displayProductModel.DisplayProductModelConstants.OutOfStockLine2Text, (titleProduct != null && titleProduct.IsMovie) ? displayProductModel.DisplayProductModelConstants.Movie : displayProductModel.DisplayProductModelConstants.Game);
 		displayProductModel.OutOfStockLine3Text = displayProductModel.DisplayProductModelConstants.OutOfStockLine3Text;
-		displayProductModel.ReviewsButtonText = Resources.reviews_button_text;
-		if (titleProduct.IsMovie && displayProductModel.DisplayProductModelConstants.StarRatingTitleDetailsABTestVersion != "A")
-		{
-			List<Review> reviews = ServiceLocator.Instance.GetService<IDataService>().GetReviews(titleProduct.ProductId);
-			displayProductModel.StarRating = ((titleProduct.Stars > 0) ? new int?(titleProduct.Stars) : ((int?)null));
-			displayProductModel.ReviewsButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
-			{
-				ReviewButtonCommand_Execute(titleProduct);
-			}, (Func<bool>)null);
-			displayProductModel.ReviewButtonVisibility = ((titleProduct.Stars <= 0 || (reviews?.Count ?? 0) <= 0) ? Visibility.Collapsed : Visibility.Visible);
-		}
-		else
-		{
-			displayProductModel.StarRating = null;
-			displayProductModel.ReviewsButtonCommand = null;
-			displayProductModel.ReviewButtonVisibility = Visibility.Collapsed;
-		}
-	}
-
-	private static void ReviewButtonCommand_Execute(ITitleProduct titleProduct)
-	{
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "see_reviews");
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsSeeReviews");
-		if (titleProduct != null)
-		{
-			OrchestrationService.ViewShow("review_popup_view", new ReviewPopupInfo
-			{
-				TitleProduct = titleProduct
-			});
-		}
 	}
 
 	private static string GetGenreText(List<long> genres)

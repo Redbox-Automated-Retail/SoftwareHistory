@@ -7,5 +7,6 @@ public enum KioskEventType
 	KioskHealthRouter,
 	KioskHealthHardwareCorrectionStat,
 	KioskHealthView,
-	KioskHealthCCReader
+	KioskHealthCCReader,
+	KioskHealthEMVReader
 }

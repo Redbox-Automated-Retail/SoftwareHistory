@@ -206,6 +206,7 @@ public static class LoyaltySignUpController
 			signUpFlowData.PromptForPerks = result.GetProperty<bool>("prompt_for_perks");
 			signUpFlowData.PromptForEarlyId = result.GetProperty<bool>("prompt_for_early_id");
 			signUpFlowData.TextClubEnabled = result.GetProperty<bool>("text_club_enabled");
+			signUpFlowData.EmailVerified = result.GetProperty<bool?>("email_verified");
 			ConfigureIdleTimer(signUpFlowData);
 			if (string.IsNullOrEmpty(signUpFlowData.CustomerProfileNumber) && signUpFlowData.PromptForPerks)
 			{

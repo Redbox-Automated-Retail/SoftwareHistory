@@ -108,7 +108,7 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 	{
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 		bool value = false;
-		if (!service.TryGetValue<bool>(ConfigFile.System, ConfigCategory.General, ConfigSetting.GenerateOutOfStockAnaltyics, out value) || !value)
+		if (!service.TryGetValue<bool>("system", "General", "GenerateOutOfStockAnalytics", out value) || !value)
 		{
 			return;
 		}
@@ -163,14 +163,14 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 	private void AddABTestingElement()
 	{
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (!service.GetSettingNames(ConfigFile.Marketing, ConfigCategory.ABTesting, out var list))
+		if (!service.GetSettingNames("marketing", "AB Testing", out var list))
 		{
 			return;
 		}
 		bool flag = false;
 		foreach (string item in list)
 		{
-			if (service.TryGetValue<string>(ConfigFile.Marketing, ConfigCategory.ABTesting, item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
+			if (service.TryGetValue<string>("marketing", "AB Testing", item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
 			{
 				if (flag)
 				{
@@ -186,14 +186,14 @@ public class SessionAnalyticsService : ISessionAnalyticsService
 	private void AddConfiguredABTestsElement()
 	{
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		if (!service.GetSettingNames(ConfigFile.Marketing, ConfigCategory.ABTesting, out var list))
+		if (!service.GetSettingNames("marketing", "AB Testing", out var list))
 		{
 			return;
 		}
 		AddNode("session", "configuredABTests");
 		foreach (string item in list)
 		{
-			if (service.TryGetValue<string>(ConfigFile.Marketing, ConfigCategory.ABTesting, item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
+			if (service.TryGetValue<string>("marketing", "AB Testing", item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
 			{
 				AddElement("configuredABTests", "test", item + "-" + value);
 			}

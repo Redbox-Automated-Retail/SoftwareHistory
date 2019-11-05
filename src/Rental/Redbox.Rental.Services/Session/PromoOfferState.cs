@@ -21,4 +21,6 @@ public class PromoOfferState : IPromoOfferState
 	public List<IKioskProduct> BrowseProductsShown { get; set; }
 
 	public List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }
+
+	public List<IDiscOfferCode> DiscOfferCodes { get; set; }
 }

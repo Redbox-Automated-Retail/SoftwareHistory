@@ -36,6 +36,7 @@ promos</value></data>
   <data name="promo_perks_circle1" xml:space="preserve"><value>Earn a free
 DVD rental</value></data>
   <data name="drama_filter_button" xml:space="preserve"><value>Drama</value></data>
+  <data name="cart_offer_not_applicable" xml:space="preserve"><value>This item doesn't qualify</value></data>
   <data name="passive_sale_note" xml:space="preserve"><value>*Daily rental charges don't include applicable tax. Discs kept after 9 p.m. the next day, and each day after, are subject to additional daily rental charges. If you keep a disc for the maximum rental period, it's yours to keep, and no further charges apply. See complete Terms for the rules for renting from Redbox. All Digital Code sales are final.</value></data>
   <data name="promo_code_continue_btn" xml:space="preserve"><value>Apply</value></data>
   <data name="alpha_sort" xml:space="preserve"><value>by Alphabet</value></data>
@@ -43,8 +44,9 @@ DVD rental</value></data>
   <data name="upgrade" xml:space="preserve"><value>Upgrade</value></data>
   <data name="try_again_button" xml:space="preserve"><value>TRY AGAIN</value></data>
   <data name="help_updated_button" xml:space="preserve"><value>UPDATED</value></data>
-  <data name="offer_info_add_a_one_night_rental" xml:space="preserve"><value>ADD A 1-NIGHT
-{0} RENTAL FOR</value></data>
+  <data name="shopping_cart_pay_button_text" xml:space="preserve"><value>Accept &amp; Pay</value></data>
+  <data name="offer_info_add_a_one_night_rental" xml:space="preserve"><value>Add a 1-night
+{0} rental for</value></data>
   <data name="phone_and_pin_ada_pin_button_text" xml:space="preserve"><value>PIN</value></data>
   <data name="loyalty_retrieving_points" xml:space="preserve"><value> | Retrieving points...</value></data>
   <data name="promo_code_error_invalid_cart_items" xml:space="preserve"><value>Uh oh, that code doesn’t work with what’s in your cart.</value></data>
@@ -87,6 +89,7 @@ Bag</value></data>
 Please remove discs from your cart to continue.</value></data>
   <data name="check_out_button_text" xml:space="preserve"><value>Check Out ({0})</value></data>
   <data name="loyalty_offer_details_button_text" xml:space="preserve"><value>Details</value></data>
+  <data name="offer_info_add_night" xml:space="preserve"><value>Upgrade to a {0}-night rental for ONLY {1} a disc</value></data>
   <data name="rental_limit_exceeded_message" xml:space="preserve"><value>You can rent 5 discs at a time – and only 2 of those can be games. 
  
 Update your bag to continue.</value></data>
@@ -100,10 +103,10 @@ Update your bag to continue.</value></data>
   <data name="upsell_from_Bluray_message" xml:space="preserve"><value>Don’t forget – you’ll need a 4K UHD Player for it to work. 
 With the right setup, you’re ready for exceptional image quality 
 that’s four times better than Blu-ray.</value></data>
-  <data name="on_demand_dialog_message" xml:space="preserve"><value>Stream this movie instantly for ${0} from Redbox.com or our Android app</value></data>
   <data name="just_a_sec_label" xml:space="preserve"><value>Just a sec</value></data>
   <data name="digital_code_alert_title" xml:space="preserve"><value>Digital Code In Cart</value></data>
   <data name="blu_ray" xml:space="preserve"><value>Blu-ray</value></data>
+  <data name="start_view_rent_and_buy_games_button" xml:space="preserve"><value>Games</value></data>
   <data name="add_more" xml:space="preserve"><value>ADD MORE?</value></data>
   <data name="add_to_cart" xml:space="preserve"><value>ADD TO CART</value></data>
   <data name="perks_level0_message" xml:space="preserve"><value>Keep renting &amp; purchasing
@@ -133,8 +136,10 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="Monday" xml:space="preserve"><value>Monday</value></data>
   <data name="Movies" xml:space="preserve"><value>Movies</value></data>
   <data name="offline_game_purchase_limit_zero_message" xml:space="preserve"><value>At this time, we are temporarily unable to allow the purchase of games.  So please remove them from your cart and continue on to rent up to {0} new release movies!  See you back here at the cart soon.</value></data>
+  <data name="offer_choice_header_text" xml:space="preserve"><value>Choose the deal you'd like to use</value></data>
   <data name="price_range_low_button" xml:space="preserve"><value>${0} and Under</value></data>
   <data name="charged_once" xml:space="preserve"><value>Your card will only be charged once.</value></data>
+  <data name="start_view_rent_and_buy_movies_button" xml:space="preserve"><value>Movies</value></data>
   <data name="extra_night" xml:space="preserve"><value>Extra night</value></data>
   <data name="apply_promo_title" xml:space="preserve"><value>Apply a promo code</value></data>
   <data name="keyboard_continue_button_text" xml:space="preserve"><value>Sign In</value></data>
@@ -187,6 +192,7 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="number_7" xml:space="preserve"><value>SEVEN</value></data>
   <data name="number_6" xml:space="preserve"><value>SIX</value></data>
   <data name="night_rental" xml:space="preserve"><value>night rental</value></data>
+  <data name="shopping_cart_remove_button_text" xml:space="preserve"><value>REMOVE</value></data>
   <data name="bluray_tm" xml:space="preserve"><value>Blu-ray™</value></data>
   <data name="perks_level2_message" xml:space="preserve"><value>Looks like you're on a roll!</value></data>
   <data name="pickup_movie" xml:space="preserve"><value>You have {0} movie ready for pickup:</value></data>
@@ -240,11 +246,13 @@ Card or Phone</value></data>
   <data name="perks_info_bullet_1" xml:space="preserve"><value>Rack up points for renting &amp; purchasing</value></data>
   <data name="perks_info_bullet_3" xml:space="preserve"><value>Save big with members-only promo codes</value></data>
   <data name="perks_info_bullet_2" xml:space="preserve"><value>Score bonus points for doing a bunch of things</value></data>
+  <data name="offer_mnp_message" xml:space="preserve"><value>Keep your qualifying disc rental(s) for {0} nights for {1:C} more per disc. You’ll be charged the full nightly rental fee + tax for additional nights you keep each disc. See bag for details.</value></data>
   <data name="reservation_pickup_note_body_multiple_mdv" xml:space="preserve"><value>{0} of your picks have {1} discs! Be sure to grab them all before leaving.</value></data>
   <data name="out_of_stock_violator_small_moniker" xml:space="preserve"><value>out_of_stock_violator_small_en_US</value></data>
   <data name="upsell_from_DVD_message" xml:space="preserve"><value>Upgrade to Blu-ray™ for just a few cents more</value></data>
   <data name="sign_in_email_and_password_button_text" xml:space="preserve"><value>Email &amp; Password</value></data>
   <data name="multi_disc_vend_grab_discs_text_single_mdv" xml:space="preserve"><value> includes separate discs. Be sure to grab them all before leaving!</value></data>
+  <data name="browse_view_rent_and_buy_rent_text" xml:space="preserve"><value>Rent</value></data>
   <data name="out_of_stock_movie_message" xml:space="preserve"><value>This movie is temporarily out of stock, but here are some more options.</value></data>
   <data name="tsp_invalid_header" xml:space="preserve"><value>That promo code is not valid.</value></data>
   <data name="digital_code_popup_buy_button" xml:space="preserve"><value>BUY DIGITAL CODE ${0}</value></data>
@@ -260,6 +268,10 @@ We see some exciting offers in your future.</value></data>
   <data name="offline_items_limit_exceeded_message_header" xml:space="preserve"><value>You're at the limit!</value></data>
   <data name="maintenance_view_footnote" xml:space="preserve"><value>*Message and data rates may apply. Text STOP to quit. HELP for help.</value></data>
   <data name="totals_added_discs" xml:space="preserve"><value>Added discs:</value></data>
+  <data name="card_reader_tampered_message_body" xml:space="preserve"><value>Don’t worry. Your card was not charged.
+Please come back at another time.
+
+Sorry for the inconvenience.</value></data>
   <data name="nonstandered_priced_item_header" xml:space="preserve"><value>Heads Up: {0} Firsts</value></data>
   <data name="update_bag" xml:space="preserve"><value>Update Bag</value></data>
   <data name="submit_button" xml:space="preserve"><value>Submit</value></data>
@@ -268,7 +280,6 @@ We see some exciting offers in your future.</value></data>
   <data name="title_rollup_overlay_buy_text" xml:space="preserve"><value>{0} {1}{2}</value></data>
   <data name="browse_family_tv" xml:space="preserve"><value>Browsing: TV</value></data>
   <data name="price_range_mid_button_short" xml:space="preserve"><value>${0}...</value></data>
-  <data name="reviews_button_text" xml:space="preserve"><value>See Reviews &gt;</value></data>
   <data name="purchase_warning" xml:space="preserve"><value>Heads up! You're about to buy a used product, which will come in a durable Redbox rental case, not the original packaging.</value></data>
   <data name="promo_code_new_customer_only_message" xml:space="preserve"><value>Sorry this promo code is only valid for new customers, and it looks like you've used Redbox before.</value></data>
   <data name="inventory_full_message" xml:space="preserve"><value>The Redbox kiosk is unable to accept your return at this time.
@@ -323,6 +334,9 @@ Please remove discs from your cart to continue.</value></data>
   <data name="terms_of_use_title_abe" xml:space="preserve"><value>Transaction Terms</value></data>
   <data name="coming_soon_email_optin_email_prompt_message" xml:space="preserve"><value>What email address would you like your reminder sent to? If you ask for other reminders during this visit, we'll send them here too.</value></data>
   <data name="joined_texing_comment" xml:space="preserve"><value /></data>
+  <data name="disc_return_tutorial_part2" xml:space="preserve"><value>Barcode should show through the case</value></data>
+  <data name="disc_return_tutorial_part3" xml:space="preserve"><value>Arrows point towards the kiosk</value></data>
+  <data name="disc_return_tutorial_part1" xml:space="preserve"><value>Place disc with barcode and title facing you</value></data>
   <data name="disc_vend" xml:space="preserve"><value>DISC VEND</value></data>
   <data name="title_type_alternate_names_xboxone" xml:space="preserve"><value>XB1,XB1 X360</value></data>
   <data name="title_type_alternate_names_xbox360" xml:space="preserve"><value>X360</value></data>
@@ -355,6 +369,7 @@ Dolby Digital and DTS Digital to Dolby TrueHD and DTS-HD.</value></data>
   <data name="related_movies_popup_offer" xml:space="preserve"><value>Based on your pick, here are some other movies you might like.</value></data>
   <data name="sign_out_dialog_message" xml:space="preserve"><value>If you sign out, you could miss earning free stuff - which would be a huge bummer.</value></data>
   <data name="phone_and_pin_start_button_text" xml:space="preserve"><value>Start Browsing</value></data>
+  <data name="browse_view_rent_and_buy_purchase_text" xml:space="preserve"><value>Own</value></data>
   <data name="keyboard_space_button_text" xml:space="preserve"><value>Space</value></data>
   <data name="sign_in_or_label" xml:space="preserve"><value>or</value></data>
   <data name="app_info_title" xml:space="preserve"><value>Get the Redbox app</value></data>
@@ -397,12 +412,16 @@ And then stick around to see what's new to rent!</value></data>
   <data name="personalization_service_error_KLI0004" xml:space="preserve"><value>Whoops, something went wrong.</value></data>
   <data name="personalization_service_error_KLI0001" xml:space="preserve"><value>Uh oh, you’ve tried to sign in too many times. You can try again in 30 mins.</value></data>
   <data name="continue_button_mixed_case" xml:space="preserve"><value>Continue</value></data>
+  <data name="start_view_rent_and_buy_button" xml:space="preserve"><value>Rent &amp; Buy</value></data>
   <data name="price_range_select_button" xml:space="preserve"><value>Price</value></data>
+  <data name="cart_offer_applied_text_line_1" xml:space="preserve"><value>Upgraded to {0} nights for +{1}</value></data>
+  <data name="cart_offer_applied_text_line_2" xml:space="preserve"><value>You'll be charged the full nightly rental fee + tax (except where tax isn't charged) for additional nights you keep your disc beyond the promotional rental period.</value></data>
   <data name="points_cannot_redeem" xml:space="preserve"><value>Excluded*</value></data>
   <data name="multi_disc_vend_discs_text" xml:space="preserve"><value>Discs</value></data>
   <data name="offer_next_visit_header" xml:space="preserve"><value>Come back
 for this deal!</value></data>
   <data name="offer_legal_text" xml:space="preserve"><value>Valid for stated discount off the fee for a 1 day rental of a disc. 1 use, 1 code/per transaction. Your payment card, necessary for a rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for add’l discs + tax (except where tax isn’t charged) for the 1st rental day. You’re charged the full daily rental fee + tax for add’l days you keep each disc. Can’t be combined with other offers, prior rentals or redeemed for cash. May be cancelled/changed at any time. Void where prohibited.</value></data>
+  <data name="disc_return_error_title" xml:space="preserve"><value>Disc Return Error</value></data>
   <data name="promo_added_to_bag" xml:space="preserve"><value>APPLIED TO BAG!</value></data>
   <data name="confirm_button" xml:space="preserve"><value>CONFIRM</value></data>
   <data name="keyboard_change_marketing" xml:space="preserve"><value>Redbox will never sell your email to third parties, so no worries there. And since all Coming Soon notifications come directly from us, you can still count on getting those.</value></data>
@@ -423,6 +442,8 @@ Be sure to add the other discs to your bag now.</value></data>
   <data name="filter_tv_empty" xml:space="preserve"><value>Sorry, nothing matches that search.
 Touch another button for more tv.</value></data>
   <data name="action_filter_button" xml:space="preserve"><value>Action</value></data>
+  <data name="cart_offer_removed_text_line_2" xml:space="preserve"><value /></data>
+  <data name="cart_offer_removed_text_line_1" xml:space="preserve"><value>Deal removed</value></data>
   <data name="zip_code_note_text" xml:space="preserve"><value>The zip code associated with your credit card is needed for verification purpose only.</value></data>
   <data name="Games_ALL" xml:space="preserve"><value>ALL GAMES</value></data>
   <data name="disc_return_message" xml:space="preserve"><value>Please insert your disc.</value></data>
@@ -435,6 +456,7 @@ within 48 hours – and you can use them on your next rental.</value></data>
   <data name="offer_timeout_message" xml:space="preserve"><value>If not, tap “No Thanks” and your original order will be processed.</value></data>
   <data name="bad_contactless_read_message" xml:space="preserve"><value>Please try a different payment option or tap your card or device again.</value></data>
   <data name="perks_level1_message" xml:space="preserve"><value>Your perks are powering up!</value></data>
+  <data name="reservation_not_found_view_image" xml:space="preserve"><value>pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/phone_graphic.png</value></data>
   <data name="sign_in_point_one_part_two_text" xml:space="preserve"><value>FREE 1-night</value></data>
   <data name="title_type_name_bluray" xml:space="preserve"><value>Blu-ray</value></data>
   <data name="add_game_button_text" xml:space="preserve"><value>Add Game</value></data>
@@ -448,7 +470,7 @@ receive Redbox emails and special offers.</value></data>
   <data name="email_receipt_btn_text" xml:space="preserve"><value>Next</value></data>
   <data name="joined_perks_btn_text" xml:space="preserve"><value>Okay</value></data>
   <data name="rental_limit_exceeded_message_header" xml:space="preserve"><value>Hmm, you’re all maxed out</value></data>
-  <data name="points_message" xml:space="preserve"><value>You have {0:N0} Perk points. Select title(s) to redeem your points:</value></data>
+  <data name="points_message" xml:space="preserve"><value>You have {0:N0} Redbox Perks points. Select title(s) to use your points:</value></data>
   <data name="perks_level1_message2" xml:space="preserve"><value>Free 1-night rental in your b-day month</value></data>
   <data name="perks_level1_message3" xml:space="preserve"><value>2 free Blu-ray upgrades per year</value></data>
   <data name="perks_level1_message1" xml:space="preserve"><value>Additional promos for special savings</value></data>
@@ -476,8 +498,10 @@ receive Redbox emails and special offers.</value></data>
   <data name="reservation_emv_insert_tap_title" xml:space="preserve"><value>Tap or insert your card to pick up your reservation</value></data>
   <data name="perks_dont_miss" xml:space="preserve"><value>Don't miss your perks!</value></data>
   <data name="carousel_add_button_label" xml:space="preserve"><value>RENT IT NOW!</value></data>
+  <data name="offer_legal_text_short" xml:space="preserve"><value>Payment card required. Charges apply for add'l nights. Can't be combined with other offers. Subject to additional terms.</value></data>
   <data name="Collections" xml:space="preserve"><value>COLLECTIONS</value></data>
   <data name="sign_in_point_one_part_three_text" xml:space="preserve"><value> disc rentals</value></data>
+  <data name="card_reader_tampered_message_title" xml:space="preserve"><value>This kiosk is temporarily unavailable</value></data>
   <data name="reserve_online_title" xml:space="preserve"><value>Reserve Online</value></data>
   <data name="promo_code_not_valid_location_message" xml:space="preserve"><value>Sorry, your promo code is only valid at certain locations, and this isn't one of them.</value></data>
   <data name="email_standard_assurance" xml:space="preserve"><value>Redbox will never sell your email address to any third parties. We promise. This does not affect any of your coming soon notifications.</value></data>
@@ -541,7 +565,6 @@ If you have any questions, please contact the Redbox Customer Care team at 1.866
   <data name="pay" xml:space="preserve"><value>PAY</value></data>
   <data name="promo_code_rxgx_title" xml:space="preserve"><value>You have entered a promo code for Rent {0} {1} Get {2} {3}.</value></data>
   <data name="sorry" xml:space="preserve"><value>Sorry</value></data>
-  <data name="on_demand_dialog_title" xml:space="preserve"><value>On Demand</value></data>
   <data name="Games" xml:space="preserve"><value>Games</value></data>
   <data name="hot_deal_text" xml:space="preserve"><value>Extra nights for Hot Deals are {0}. Our Hot Deal can change at any time. It only shows up for specific titles, locations, and dates - so you're in luck.</value></data>
   <data name="Movie" xml:space="preserve"><value>movie</value></data>
@@ -571,8 +594,8 @@ this {0}.*</value></data>
   <data name="movie_button_rent_label" xml:space="preserve"><value>Rent</value></data>
   <data name="okay_button" xml:space="preserve"><value>OK</value></data>
   <data name="loyalty_earning_points" xml:space="preserve"><value> | Earning {0}+ pts</value></data>
-  <data name="reviews_title" xml:space="preserve"><value>Reviews</value></data>
   <data name="redbox_card_terms_title_abe" xml:space="preserve"><value>Redbox Card Terms</value></data>
+  <data name="cart_offer_add_button_text" xml:space="preserve"><value>Undo</value></data>
   <data name="joined_texing_message" xml:space="preserve"><value>Text us back to confirm it’s all good</value></data>
   <data name="esrb_everyone" xml:space="preserve"><value>EVERYONE</value></data>
   <data name="promo_code_not_valid_message_title" xml:space="preserve"><value>We can't find that promo code.</value></data>
@@ -582,9 +605,10 @@ this {0}.*</value></data>
   <data name="perks_perks_rentals" xml:space="preserve"><value>rentals per year</value></data>
   <data name="add_to_cart_ada_label" xml:space="preserve"><value>To rent a disc, touch its picture or its number above.</value></data>
   <data name="flag_back_again" xml:space="preserve"><value>BACK AGAIN</value></data>
+  <data name="please_wait_message" xml:space="preserve"><value>Please Wait...</value></data>
+  <data name="opt_in_thank_you_view_image" xml:space="preserve"><value>pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Email_Opt-In_KioskScreen_R4_Full__1_.jpg</value></data>
   <data name="esrb_everyone_10_plus" xml:space="preserve"><value>EVERYONE 10+</value></data>
   <data name="no_button" xml:space="preserve"><value>NO</value></data>
-  <data name="points_cannot_redeem_message" xml:space="preserve"><value>*Can’t use points on 4K UHD, but you’re still in for a treat.</value></data>
   <data name="phone_and_pin_confirm_pin_label_text" xml:space="preserve"><value>Confirm 4-digit PIN</value></data>
   <data name="buy_games_line1" xml:space="preserve"><value>Buy</value></data>
   <data name="buy_games_line2" xml:space="preserve"><value>Games</value></data>
@@ -650,7 +674,6 @@ Please swipe a credit card or try again later.</value></data>
   <data name="keyboard_sign_in_password_prompt" xml:space="preserve"><value>password</value></data>
   <data name="out_of_stock_format_message" xml:space="preserve"><value>This movie is temporarily out of stock on {0}, but here are some more options.</value></data>
   <data name="multi_disc_vend_header" xml:space="preserve"><value>Don't Forget</value></data>
-  <data name="on_demand_button" xml:space="preserve"><value>On Demand ${0}</value></data>
   <data name="reserve_online" xml:space="preserve"><value>Reserve Online</value></data>
   <data name="promo_percent_off_browse_title_text" xml:space="preserve"><value>Add a {0} below for {1}% OFF your 1-night rental</value></data>
   <data name="flag_flash_deal_price_cents" xml:space="preserve"><value>{0:F0}¢ DEAL</value></data>
@@ -665,6 +688,7 @@ Update your bag to continue.</value></data>
   <data name="vend_error_title" xml:space="preserve"><value>Sorry, something went wrong.</value></data>
   <data name="until_label" xml:space="preserve"><value>UNTIL</value></data>
   <data name="discount_label" xml:space="preserve"><value>Discounts</value></data>
+  <data name="offer_info_mnp_continue_button_text" xml:space="preserve"><value>Add To Bag</value></data>
   <data name="price_for" xml:space="preserve"><value>for</value></data>
   <data name="coming_soon_email_optin_email_marketing_message" xml:space="preserve"><value>Redbox will never sell your email address to any third parties. We promise.</value></data>
   <data name="got_it_button" xml:space="preserve"><value>Got It</value></data>
@@ -685,6 +709,7 @@ To purchase ADA compatible seating call 1-866-REDBOX3 or visit redbox.com.</valu
   <data name="multi_night_pricing_popup_buy_button_text" xml:space="preserve"><value>to own it</value></data>
   <data name="offer_skipped_message" xml:space="preserve"><value>Okay. We saved this offer
 for your next visit until it expires.</value></data>
+  <data name="offer_info_single_banner_text" xml:space="preserve"><value>Just for you</value></data>
   <data name="ada_purchase_price_message" xml:space="preserve"><value>Buy {0} {1}{2}</value></data>
   <data name="family_filter_button" xml:space="preserve"><value>Family</value></data>
   <data name="flag_points" xml:space="preserve"><value>{0:N0} Points</value></data>
@@ -714,6 +739,7 @@ To confirm that you would like make this purchase, press OK to continue. If not,
   <data name="select_a_platform" xml:space="preserve"><value>Select a platform</value></data>
   <data name="vending_serving_discs" xml:space="preserve"><value>Serving up your discs</value></data>
   <data name="promo_code_button" xml:space="preserve"><value>Add Promos</value></data>
+  <data name="flag_wish_list" xml:space="preserve"><value>Wish List</value></data>
   <data name="promo_code_validation_failure_message" xml:space="preserve"><value>We can't process this promo code right now. It's our fault, not yours.
 
 Please try the code later on or at a different box.</value></data>
@@ -732,6 +758,7 @@ These temporary authorizations will disappear in 7-30 days.</value></data>
   <data name="has_text" xml:space="preserve"><value>has</value></data>
   <data name="email_cancel_message" xml:space="preserve"><value>NO THANKS</value></data>
   <data name="gc_not_available_title" xml:space="preserve"><value>Sorry, we're having some trouble.</value></data>
+  <data name="disc_return_error_message" xml:space="preserve"><value>Follow these steps to return your disc</value></data>
   <data name="subtotal_label" xml:space="preserve"><value>Subtotal</value></data>
   <data name="perks_snapshot_maintain_number" xml:space="preserve"><value>[{0:n0}]</value></data>
   <data name="title_rollup_format_digital_code_info" xml:space="preserve"><value>*What is a digital code?</value></data>
@@ -748,6 +775,7 @@ These temporary authorizations will disappear in 7-30 days.</value></data>
   <data name="esrb_rating_pending" xml:space="preserve"><value>RATING PENDING</value></data>
   <data name="title_type_name_ds" xml:space="preserve"><value>DS</value></data>
   <data name="title_type_name_pc" xml:space="preserve"><value>PC</value></data>
+  <data name="cart_offer_remove_button_text" xml:space="preserve"><value>Remove deal</value></data>
   <data name="promo_code_tag" xml:space="preserve"><value>PROMO CODE</value></data>
   <data name="accertify_enforce_accertify_header" xml:space="preserve"><value>Card not approved for games.</value></data>
   <data name="promo_code_input_prompt" xml:space="preserve"><value>promo code</value></data>
@@ -774,6 +802,8 @@ These temporary authorizations will disappear in 7-30 days.</value></data>
 are on
 their way!</value></data>
   <data name="reservation_pickup_return_warning_single_mdv" xml:space="preserve"><value>Your card will be charged the full nightly fee plus applicable taxes for each pick, until both discs are returned. Please return them together.</value></data>
+  <data name="reservation_not_found_view_title_text" xml:space="preserve"><value>Your reservation is waiting.
+Let us find it for you!</value></data>
   <data name="bad_contactless_read_title" xml:space="preserve"><value>Sorry, we’re having trouble reading your card</value></data>
   <data name="subplatform_for" xml:space="preserve"><value>for</value></data>
   <data name="return_time_label" xml:space="preserve"><value>Return: </value></data>
@@ -802,8 +832,18 @@ your card</value></data>
   <data name="products_new" xml:space="preserve"><value>New Products</value></data>
   <data name="reservation_pickup_body" xml:space="preserve"><value>You have {0} reserved</value></data>
   <data name="browse_view_control_page_mask" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="reservation_not_found_view_message_text" xml:space="preserve"><value>This box doesn't have a reservation for you. That might be because:
+
+-    You may have reserved at a different
+      location nearby.
+
+-    You may have used a different card
+      to reserve than you're using now.
+</value></data>
   <data name="esrb_mature_name" xml:space="preserve"><value>{0}-rated movie in cart</value></data>
   <data name="promo_perks_btn2_text" xml:space="preserve"><value>No Thanks</value></data>
+  <data name="shopping_cart_terms_text2" xml:space="preserve"><value>By pressing "Accept &amp; Pay" you are agreeing to the Redbox Terms of Use, Privacy Policy, and Transaction Terms and Conditions.</value></data>
+  <data name="shopping_cart_terms_text1" xml:space="preserve"><value>By pressing "Pay Now" you agree to the</value></data>
   <data name="gc_not_available" xml:space="preserve"><value>Your card could not be authorized.
 
 Please swipe another card or try again later.</value></data>
@@ -883,6 +923,7 @@ Touch another button for more games.</value></data>
   <data name="in_cart_remove_item_warning_message" xml:space="preserve"><value>If you remove that disc from your cart, you won't qualify anymore for the special pricing on your other cart item(s).
 
 Do you still want to remove it?</value></data>
+  <data name="offer_info_add_night_discount" xml:space="preserve"><value>for ONLY {0} a disc</value></data>
   <data name="email_prompt_message" xml:space="preserve"><value>Want a receipt in your inbox?</value></data>
   <data name="multi_disc_vend_note_body_single_mdv" xml:space="preserve"><value>Your card will be charged the full nightly fee plus applicable taxes until both discs are returned. Please return them together.</value></data>
   <data name="customer_black_list_title" xml:space="preserve"><value>Your Rental Can't Be Completed</value></data>
@@ -894,6 +935,7 @@ reservation</value></data>
   <data name="digital_code" xml:space="preserve"><value>Digital Code</value></data>
   <data name="error_points_down" xml:space="preserve"><value>Our points system is in maintenance at the moment. Don’t worry – your points are still there.</value></data>
   <data name="coming_soon_button" xml:space="preserve"><value>Coming Soon</value></data>
+  <data name="start_view_rent_and_buy_toggle_language_button" xml:space="preserve"><value>Español</value></data>
   <data name="purchase_label" xml:space="preserve"><value>Purchase</value></data>
   <data name="gc_rental_limit_exceeded_title" xml:space="preserve"><value>You've reached the limit.</value></data>
   <data name="title_detail_collection_text" xml:space="preserve"><value>SEE RELATED

@@ -2,31 +2,31 @@ namespace Redbox.Rental.Model;
 
 public static class ConfigCategory
 {
-	public static string Banner = "Banner";
+	public const string Banner = "Banner";
 
-	public static string General = "General";
+	public const string General = "General";
 
-	public static string Culture = "Culture";
+	public const string Culture = "Culture";
 
-	public static string Collections = "Collections";
+	public const string Collections = "Collections";
 
-	public static string Games = "Games";
+	public const string Games = "Games";
 
-	public static string MarketingGeneral = "MarketingGeneral";
+	public const string MarketingGeneral = "MarketingGeneral";
 
-	public static string Documents = "Documents";
+	public const string Documents = "Documents";
 
-	public static string Personalization = "Personalization";
+	public const string Personalization = "Personalization";
 
-	public static string ABTesting = "AB Testing";
+	public const string ABTesting = "AB Testing";
 
-	public static string ABTestParameters = "AB Test Parameters";
+	public const string ABTestParameters = "AB Test Parameters";
 
-	public static string QueueService = "QueueService";
+	public const string QueueService = "QueueService";
 
-	public static string Fraud = "Fraud";
+	public const string Fraud = "Fraud";
 
-	public static string DeviceService = "DeviceService";
+	public const string DeviceService = "DeviceService";
 
-	public static string KioskHealth = "KioskHealth";
+	public const string KioskHealth = "KioskHealth";
 }

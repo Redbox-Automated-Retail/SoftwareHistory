@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskHealth;
 
@@ -13,6 +14,10 @@ namespace Redbox.KioskEngine.Environment;
 
 public class ViewService : IViewService
 {
+	private string _startOverViewName;
+
+	private string _maintenanceViewName;
+
 	private string m_lastShownView;
 
 	private DateTime? m_viewShownOn;
@@ -89,14 +94,15 @@ public class ViewService : IViewService
 
 	public void Show()
 	{
-		if (IsInMaintenanceMode() || !m_isCriticalErrorViewShown)
+		IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
+		if ((service != null && service.IsInMaintenanceMode) || !m_isCriticalErrorViewShown)
 		{
-			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
 			IShoppingSession shoppingSession = null;
-			IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			if (service2 != null)
+			IShoppingSessionService service3 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+			if (service3 != null)
 			{
-				shoppingSession = service2.GetCurrentSession();
+				shoppingSession = service3.GetCurrentSession();
 				if (shoppingSession != null)
 				{
 					shoppingSession.ViewsShown++;
@@ -104,35 +110,35 @@ public class ViewService : IViewService
 			}
 			if (shoppingSession != null && m_viewShownOn.HasValue)
 			{
-				ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-				if (service3 != null)
+				ISessionAnalyticsService service4 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+				if (service4 != null)
 				{
-					service3.AddAttribute("view", "viewEnd", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
+					service4.AddAttribute("view", "viewEnd", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
 					DateTime now = DateTime.Now;
 					DateTime? viewShownOn = m_viewShownOn;
-					service3.AddAttribute("view", "viewDuration", (now - viewShownOn).ToString());
+					service4.AddAttribute("view", "viewDuration", (now - viewShownOn).ToString());
 				}
 				m_lastShownView = null;
 			}
-			IRenderingService service4 = ServiceLocator.Instance.GetService<IRenderingService>();
+			IRenderingService service5 = ServiceLocator.Instance.GetService<IRenderingService>();
 			if (InnerStack.Peek() == null)
 			{
 				LogHelper.Instance.Log("View stack is empty.");
-				service.Filter["view_name"] = null;
-				service4.ActiveScene.SuspendDrawing();
-				service4.ActiveScene.Clear();
-				service4.ActiveScene.ResumeDrawing();
+				service2.Filter["view_name"] = null;
+				service5.ActiveScene.SuspendDrawing();
+				service5.ActiveScene.Clear();
+				service5.ActiveScene.ResumeDrawing();
 				shoppingSession?.AddEvent(ShoppingSessionEventType.ShowView, "View stack empty.");
 				return;
 			}
 			IViewFrameInstance viewFrameInstance = InnerStack.Peek();
-			service.Filter["view_name"] = viewFrameInstance?.ViewFrame?.ViewName;
+			service2.Filter["view_name"] = viewFrameInstance?.ViewFrame?.ViewName;
 			LogShowViewFrameInstance(viewFrameInstance);
 			viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
 			if (shoppingSession != null)
 			{
-				ISessionAnalyticsService service5 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-				if (service5 != null)
+				ISessionAnalyticsService service6 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+				if (service6 != null)
 				{
 					IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
 					Dictionary<string, string> dictionary = new Dictionary<string, string>();
@@ -145,11 +151,11 @@ public class ViewService : IViewService
 					dictionary.Add("viewSequence", shoppingSession.ViewsShown.ToString());
 					dictionary.Add("viewVersion", viewFrame?.ViewVersion ?? "not defined");
 					dictionary.Add("activeFlag", viewFrameInstance?.ViewFrame?.ActiveFlag ?? "not defined");
-					dictionary.Add("viewCulture", service.Filter["culture"] ?? string.Empty);
+					dictionary.Add("viewCulture", service2.Filter["culture"] ?? string.Empty);
 					dictionary.Add("viewStart", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
-					service5.AddNode("views", "view");
-					service5.AddAttributes("view", dictionary);
-					service5.AddNode("view", "viewEvents");
+					service6.AddNode("views", "view");
+					service6.AddAttributes("view", dictionary);
+					service6.AddNode("view", "viewEvents");
 				}
 				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddView(GetCurrentViewAnalyticsName());
 			}
@@ -378,7 +384,7 @@ public class ViewService : IViewService
 
 	public void Push(string viewName, object parameter, bool isCriticalErrorView = false)
 	{
-		if ((!m_isCriticalErrorViewOnStack | isCriticalErrorView) || viewName.Contains("maintenance_view"))
+		if ((!m_isCriticalErrorViewOnStack | isCriticalErrorView) || viewName == GetMaintenanceViewName())
 		{
 			m_isCriticalErrorViewOnStack = m_isCriticalErrorViewShown | isCriticalErrorView;
 			IViewFrameInstance viewFrameInstance = InnerStack.Peek();
@@ -457,24 +463,48 @@ public class ViewService : IViewService
 		return baseViewFrame;
 	}
 
-	public bool IsInMaintenanceMode()
+	public bool IsMaintenanceViewShowing()
 	{
-		return Peek()?.Contains(GetMaintenanceViewName()) ?? false;
+		return PeekViewFrame()?.ViewFrame?.IsMaintenanceModeView ?? false;
 	}
 
 	public bool IsSafeToChangeView()
 	{
-		return !IsInMaintenanceMode();
+		return !(ServiceLocator.Instance.GetService<IApplicationState>()?.IsInMaintenanceMode ?? false);
 	}
 
 	public string GetStartOverViewName()
 	{
-		return "start_view";
+		if (_startOverViewName == null && m_viewFrameCache != null)
+		{
+			foreach (KeyValuePair<string, IBaseViewFrame> item in m_viewFrameCache)
+			{
+				IBaseViewFrame value = item.Value;
+				if (value != null && value.IsStartOverView)
+				{
+					_startOverViewName = item.Value.ViewName;
+					break;
+				}
+			}
+		}
+		return _startOverViewName;
 	}
 
 	public string GetMaintenanceViewName()
 	{
-		return "maintenance_view";
+		if (_maintenanceViewName == null && m_viewFrameCache != null)
+		{
+			foreach (KeyValuePair<string, IBaseViewFrame> item in m_viewFrameCache)
+			{
+				IBaseViewFrame value = item.Value;
+				if (value != null && value.IsMaintenanceModeView)
+				{
+					_maintenanceViewName = item.Value.ViewName;
+					break;
+				}
+			}
+		}
+		return _maintenanceViewName;
 	}
 
 	public void GoBack(object context, bool popOnly)

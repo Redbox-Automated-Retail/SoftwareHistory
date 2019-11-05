@@ -11,6 +11,8 @@ public interface IDeviceServiceClientHelper
 
 	bool IsCardReaderConnected { get; }
 
+	bool IsCardReaderTampered { get; set; }
+
 	Version DeviceServiceClientVersion { get; }
 
 	Version DeviceServiceVersion { get; }
@@ -40,4 +42,6 @@ public interface IDeviceServiceClientHelper
 	bool ShutDownDeviceService(bool forceShutdown, ShutDownReason shutDownReason);
 
 	void CheckDeviceStatus();
+
+	void SendTamperedCardReaderKioskAlertMessage();
 }

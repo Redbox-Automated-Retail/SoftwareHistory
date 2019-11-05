@@ -84,10 +84,10 @@ public class ArcusHealth : IArcusHealth, IKioskHealthItem
 		}
 		else if (_arcusReporting)
 		{
-			int kioskEventSubType = KioskEventSubType.KioskHealth_ArcusReset;
+			int kioskEventSubType = 200;
 			if (eventType == "HardwareCorrectionVendSuccess" || eventType == "HardwareCorrectionVendFailure")
 			{
-				kioskEventSubType = KioskEventSubType.KisokHealth_ArcusResetVendStatus;
+				kioskEventSubType = 201;
 			}
 			bool success = eventType == "HardwareCorrectionVendSuccess" || eventType == "HardwareCorrectionSuccess";
 			elapsed = (int)(DateTime.Now - _lastReportedStartTime.Value).TotalMilliseconds;

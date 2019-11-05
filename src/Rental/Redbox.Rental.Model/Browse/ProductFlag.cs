@@ -52,6 +52,8 @@ public class ProductFlag
 		public const string ExcludedKey = "flag_excluded";
 
 		public const string AwardNomineeKey = "flag_award_nominee";
+
+		public const string WishListKey = "flag_wish_list";
 	}
 
 	public ProductFlags Flag { get; set; }

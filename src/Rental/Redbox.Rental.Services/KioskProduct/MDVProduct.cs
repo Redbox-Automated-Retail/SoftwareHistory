@@ -87,18 +87,6 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public int Stars
-	{
-		get
-		{
-			if (_primaryTitle != null)
-			{
-				return _primaryTitle.Stars;
-			}
-			return 0;
-		}
-	}
-
 	public string RunningTime
 	{
 		get
@@ -566,6 +554,8 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 			throw new NotImplementedException();
 		}
 	}
+
+	public string TivoQueryId { get; set; }
 
 	public MDVProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, IProfileDataInstance profile, Store store)
 		: base(store)

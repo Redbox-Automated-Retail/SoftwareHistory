@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Input;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.Rental.Model;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
@@ -15,35 +13,13 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class ConfirmEmailViewController : BaseViewController
 {
-	private enum ItemId
-	{
-		No,
-		Yes,
-		Timeout
-	}
-
-	private class OptinItem : IOptInItem
-	{
-		public long ItemId { get; set; }
-
-		public Item_Type Item_Type { get; set; }
-
-		public OptInMethodType OptInMethodType { get; set; }
-
-		public string OptInMethodData { get; set; }
-
-		public string TemplateName { get; set; }
-
-		public string CampaignName { get; set; }
-	}
-
 	private static object _lockObject = new object();
 
 	private static Action Callback { get; set; }
 
 	private static IIdleTimer IdleTimer { get; set; }
 
-	private static Item_Type ItemType { get; set; }
+	private static KioskOptIntItemType ItemType { get; set; }
 
 	private static string Email { get; set; }
 
@@ -55,11 +31,11 @@ public class ConfirmEmailViewController : BaseViewController
 	public static void ConfigureView()
 	{
 		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
-		ItemType = ((instance != null && instance.BrowseState.NeedMarketingConfirm) ? Item_Type.MarketingConfirm : Item_Type.MarketingSubscribe);
+		ItemType = ((instance != null && instance.BrowseState.NeedMarketingConfirm) ? KioskOptIntItemType.MarketingConfirm : KioskOptIntItemType.MarketingSubscribe);
 		Email = Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email;
 		Callback = delegate
 		{
-			OrchestrationService.InvokeContinueVendCallback();
+			CheckoutFunctions.ContinueVend();
 		};
 		ConfirmEmailModel confirmEmailModel = CreateConfirmEmailModel();
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
@@ -119,7 +95,7 @@ public class ConfirmEmailViewController : BaseViewController
 			if (modelFromView != null && !modelFromView.HasActionExecuted)
 			{
 				modelFromView.HasActionExecuted = true;
-				SendKioskOptin(1L, ItemType);
+				CheckoutFunctions.SendKioskOptinForMarketingCampaign(ItemType, KioskOptInItemId.Yes, Email);
 				IdleTimer?.Stop();
 				RemoveTimer();
 				OrchestrationService.ViewShow("optin_thank_you_view");
@@ -139,7 +115,7 @@ public class ConfirmEmailViewController : BaseViewController
 			if (modelFromView != null && !modelFromView.HasActionExecuted)
 			{
 				modelFromView.HasActionExecuted = true;
-				SendKioskOptin(0L, ItemType);
+				CheckoutFunctions.SendKioskOptinForMarketingCampaign(ItemType, KioskOptInItemId.No, Email);
 				IdleTimer?.Stop();
 				RemoveTimer();
 				Callback?.Invoke();
@@ -159,7 +135,7 @@ public class ConfirmEmailViewController : BaseViewController
 			if (modelFromView != null && !modelFromView.HasActionExecuted)
 			{
 				modelFromView.HasActionExecuted = true;
-				SendKioskOptin(2L, ItemType);
+				CheckoutFunctions.SendKioskOptinForMarketingCampaign(ItemType, KioskOptInItemId.Timeout, Email);
 				IdleTimer?.Stop();
 				RemoveTimer();
 				Callback?.Invoke();
@@ -174,25 +150,5 @@ public class ConfirmEmailViewController : BaseViewController
 	private static void RemoveTimer()
 	{
 		ServiceLocator.Instance.GetService<IIdleTimerService>().RemoveIdleTimer("confirm_email_timer");
-	}
-
-	private static void SendKioskOptin(long itemId, Item_Type itemType)
-	{
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
-		IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
-		ServiceLocator.Instance.GetService<IShoppingCart>();
-		List<IOptInItem> obj = new List<IOptInItem>
-		{
-			new OptinItem
-			{
-				ItemId = itemId,
-				Item_Type = itemType,
-				OptInMethodType = OptInMethodType.EmailAddress,
-				OptInMethodData = Email,
-				TemplateName = "MarketingOptInTemplate",
-				CampaignName = "MarketingOptInCampaign"
-			}
-		};
-		service?.KioskOptIn(optInItems: obj, storeNumber: service2?.KioskId.ToString() ?? "Unknown", callback: null);
 	}
 }

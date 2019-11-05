@@ -5,10 +5,12 @@ using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
@@ -30,6 +32,12 @@ public class NewCartConfirmViewController : BaseViewController
 
 	private static Action _timeoutAction;
 
+	private static Action _removeOfferAction;
+
+	private static CustomerOffer _selectedOffer;
+
+	private static bool _isMultiNightOffer;
+
 	public static void ConfigureView(NewCartConfirmviewParameters parameters)
 	{
 		BaseViewController.StopIdleTimer();
@@ -40,13 +48,16 @@ public class NewCartConfirmViewController : BaseViewController
 			NewCartConfirmViewModel newCartConfirmViewModel = new NewCartConfirmViewModel();
 			_parameters = parameters;
 			_viewModel = newCartConfirmViewModel;
+			_cancelAction = parameters.CancelAction;
+			_continueAction = parameters.ContinueAction;
+			_timeoutAction = parameters.TimeoutAction;
+			_removeOfferAction = parameters.RemoveOfferAction;
+			_selectedOffer = parameters.SelectedOffer;
+			_isMultiNightOffer = _selectedOffer.DiscountType == OfferDiscountType.MultiNightPrice;
 			ConfigureTextAndVisibility(newCartConfirmViewModel, parameters);
 			ConfigureCommands(newCartConfirmViewModel, parameters);
 			ConfigureShoppingCartDisplay(newCartConfirmViewModel, parameters);
 			ConfigureTTS(newCartConfirmViewModel, parameters);
-			_cancelAction = parameters.CancelAction;
-			_continueAction = parameters.ContinueAction;
-			_timeoutAction = parameters.TimeoutAction;
 			viewUserControl.DataContext = newCartConfirmViewModel;
 		}
 	}
@@ -57,7 +68,7 @@ public class NewCartConfirmViewController : BaseViewController
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (service != null && service.TTSEnabled && viewUserControl != null)
 		{
-			viewModel.OnGetSpeechControl = () => NewCartConfirmViewTextToSpeech.GetSpeechControl(GetShoppingCartViewModelFromView);
+			viewModel.OnGetSpeechControl = () => NewCartConfirmViewTextToSpeech.GetSpeechControl(GetShoppingCartViewModelFromView, parameters);
 		}
 	}
 
@@ -99,14 +110,14 @@ public class NewCartConfirmViewController : BaseViewController
 					PopulateDisplayCheckoutProductModel(displayCheckoutProductModel, flag);
 					if (flag)
 					{
-						displayCheckoutProductModel.TopCancelButtonVisibility = (BaseViewController.IsADAMode ? Visibility.Hidden : Visibility.Visible);
-						displayCheckoutProductModel.BottomCancelButtonVisibility = ((!BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
+						displayCheckoutProductModel.TopCancelButtonVisibility = (_isMultiNightOffer ? Visibility.Collapsed : (BaseViewController.IsADAMode ? Visibility.Hidden : Visibility.Visible));
+						displayCheckoutProductModel.BottomCancelButtonVisibility = (_isMultiNightOffer ? Visibility.Collapsed : ((!BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible));
 						list.Insert(0, displayCheckoutProductModel);
 					}
 					else
 					{
-						displayCheckoutProductModel.TopCancelButtonVisibility = (BaseViewController.IsADAMode ? Visibility.Hidden : Visibility.Hidden);
-						displayCheckoutProductModel.BottomCancelButtonVisibility = (BaseViewController.IsADAMode ? Visibility.Hidden : Visibility.Collapsed);
+						displayCheckoutProductModel.TopCancelButtonVisibility = (_isMultiNightOffer ? Visibility.Collapsed : (BaseViewController.IsADAMode ? Visibility.Hidden : Visibility.Hidden));
+						displayCheckoutProductModel.BottomCancelButtonVisibility = (_isMultiNightOffer ? Visibility.Collapsed : (BaseViewController.IsADAMode ? Visibility.Hidden : Visibility.Collapsed));
 						list.Add(displayCheckoutProductModel);
 					}
 				}
@@ -118,57 +129,135 @@ public class NewCartConfirmViewController : BaseViewController
 	private static void PopulateDisplayCheckoutProductModel(DisplayCheckoutProductModel displayCheckoutProductModel, bool isSelectedProduct)
 	{
 		IRentalShoppingCartItem eachRentalShoppingCartItem = displayCheckoutProductModel?.Data as IRentalShoppingCartItem;
-		if (eachRentalShoppingCartItem != null)
+		if (eachRentalShoppingCartItem == null)
 		{
-			displayCheckoutProductModel.ConfigureForCheckout();
-			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			IKioskProduct kioskProduct = null;
-			service.GetProduct(eachRentalShoppingCartItem.ProductId, excludeTitleRollup: false, out kioskProduct);
-			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-			displayCheckoutProductModel.ProductTitleText = BrowseFunctions.GetProductDisplayName(titleProduct);
-			MDVProduct mDVProduct = titleProduct as MDVProduct;
-			displayCheckoutProductModel.MDVFieldVisibility = ((mDVProduct == null) ? Visibility.Collapsed : Visibility.Visible);
-			displayCheckoutProductModel.MDVNumberOfDiscsText = ((mDVProduct != null) ? $"({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text_all_caps})**" : null);
-			displayCheckoutProductModel.MDVDiscVendText = ((mDVProduct != null) ? $"{mDVProduct.TitleProducts.Count} {Resources.disc_vend}" : null);
-			TitleTypeProperty value = null;
-			TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value);
-			string productTypeText = $" - {value?.GetName(Resources.ResourceManager)}";
-			displayCheckoutProductModel.ProductTypeText = productTypeText;
-			string text = null;
-			if (eachRentalShoppingCartItem.Action == RentalShoppingCartItemAction.purchase)
-			{
-				text = Resources.cart_purchase;
-			}
-			else
-			{
-				string arg = $"{eachRentalShoppingCartItem?.PricingRecord?.InitialDays ?? 1}-{Resources.night_rental}";
-				string arg2 = $"{Resources.extra_night} {eachRentalShoppingCartItem?.PricingRecord.ExtraNight:C}";
-				text = $"{arg} | {arg2}";
-			}
-			displayCheckoutProductModel.ProductDescriptionLine2Text = text;
-			IPromotionService service2 = ServiceLocator.Instance.GetService<IPromotionService>();
-			bool flag = service2.GetPromotion()?.PromotionItems.Any((IPromotionItem i) => i.RentalShoppingCartItem.ProductId == eachRentalShoppingCartItem.ProductId) ?? false;
-			if (isSelectedProduct | flag)
-			{
-				decimal price = service2.GetPromotion().Price;
-				displayCheckoutProductModel.ProductDescriptionLine3Text = string.Format(Resources.discount_applied_text, price);
-				displayCheckoutProductModel.ProductCartPriceText = $"{eachRentalShoppingCartItem.Price - price:C}";
-			}
-			else
-			{
-				displayCheckoutProductModel.ProductDescriptionLine3Text = "";
-				displayCheckoutProductModel.ProductCartPriceText = $"{eachRentalShoppingCartItem.Price:C}";
-			}
-			displayCheckoutProductModel.ProductDescriptionLine3TextVisibility = (string.IsNullOrEmpty(displayCheckoutProductModel.ProductDescriptionLine3Text) ? Visibility.Collapsed : Visibility.Visible);
+			return;
 		}
+		displayCheckoutProductModel.ConfigureForCheckout();
+		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+		IKioskProduct kioskProduct = null;
+		service.GetProduct(eachRentalShoppingCartItem.ProductId, excludeTitleRollup: false, out kioskProduct);
+		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
+		displayCheckoutProductModel.ProductTitleText = BrowseFunctions.GetProductDisplayName(titleProduct);
+		MDVProduct mDVProduct = titleProduct as MDVProduct;
+		displayCheckoutProductModel.MDVFieldVisibility = ((mDVProduct == null) ? Visibility.Collapsed : Visibility.Visible);
+		displayCheckoutProductModel.MDVNumberOfDiscsText = ((mDVProduct != null) ? $"({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text_all_caps})**" : null);
+		displayCheckoutProductModel.MDVDiscVendText = ((mDVProduct != null) ? $"{mDVProduct.TitleProducts.Count} {Resources.disc_vend}" : null);
+		TitleTypeProperty value = null;
+		TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value);
+		string productTypeText = $" - {value?.GetName(Resources.ResourceManager)}";
+		displayCheckoutProductModel.ProductTypeText = productTypeText;
+		string text = null;
+		if (eachRentalShoppingCartItem.Action == RentalShoppingCartItemAction.purchase)
+		{
+			text = Resources.cart_purchase;
+		}
+		else
+		{
+			string arg = $"{eachRentalShoppingCartItem?.PricingRecord?.InitialDays ?? 1}-{Resources.night_rental}";
+			string arg2 = $"{Resources.extra_night} {eachRentalShoppingCartItem?.PricingRecord.ExtraNight:C}";
+			text = $"{arg} | {arg2}";
+		}
+		displayCheckoutProductModel.ProductDescriptionLine2Text = text;
+		IPromotionService service2 = ServiceLocator.Instance.GetService<IPromotionService>();
+		bool flag = service2.GetPromotion()?.PromotionItems.Any((IPromotionItem i) => i.RentalShoppingCartItem.ProductId == eachRentalShoppingCartItem.ProductId) ?? false;
+		decimal num = (service2.GetPromotion()?.PromotionItems.FirstOrDefault((IPromotionItem i) => i.RentalShoppingCartItem.ProductId == eachRentalShoppingCartItem.ProductId))?.PromotionAmount ?? 0m;
+		if (isSelectedProduct || (flag && !_isMultiNightOffer))
+		{
+			displayCheckoutProductModel.ProductDescriptionLine3Text = string.Format(Resources.discount_applied_text, num);
+		}
+		else
+		{
+			displayCheckoutProductModel.ProductDescriptionLine3Text = "";
+		}
+		displayCheckoutProductModel.ProductDescriptionLine3TextVisibility = (string.IsNullOrEmpty(displayCheckoutProductModel.ProductDescriptionLine3Text) ? Visibility.Collapsed : Visibility.Visible);
+		displayCheckoutProductModel.RemoveButtonText = Resources.shopping_cart_remove_button_text;
+		if (_isMultiNightOffer)
+		{
+			OfferProduct offerProduct = _selectedOffer.OfferProducts.FirstOrDefault((OfferProduct o) => o.ProductId == titleProduct.ProductId);
+			bool num2 = offerProduct != null;
+			bool flag2 = num2 && eachRentalShoppingCartItem.PricingRecord.InitialDays == offerProduct.NumberOfNights;
+			decimal? num3 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers) ? new decimal?(0m) : ((decimal?)(eachRentalShoppingCartItem.PricingRecord.InitialDays - 1) * (decimal?)eachRentalShoppingCartItem.PricingRecord.ExtraNight - (decimal?)(offerProduct?.DiscountedPrice ?? 0m)));
+			displayCheckoutProductModel.OfferActionVisibility = Visibility.Visible;
+			decimal price = eachRentalShoppingCartItem.Price;
+			decimal? obj = (flag2 ? num3 : new decimal?(0m));
+			displayCheckoutProductModel.ProductCartPriceText = $"{(decimal?)price - obj:C}";
+			DisplayProductCheckoutSpecialOfferActionModel displayProductCheckoutSpecialOfferActionModel = new DisplayProductCheckoutSpecialOfferActionModel();
+			if (num2)
+			{
+				if (flag2)
+				{
+					displayProductCheckoutSpecialOfferActionModel.TextLine1 = string.Format(Resources.cart_offer_applied_text_line_1, offerProduct.NumberOfNights, offerProduct.DiscountedPrice.Value.ToCurrencyString(useCentSign: true));
+					displayProductCheckoutSpecialOfferActionModel.TextLine2 = string.Format(Resources.cart_offer_applied_text_line_2, num3);
+					displayProductCheckoutSpecialOfferActionModel.ButtonText = Resources.cart_offer_remove_button_text;
+					displayProductCheckoutSpecialOfferActionModel.ButtonVisibility = (BaseViewController.IsADAMode ? Visibility.Collapsed : Visibility.Visible);
+					displayProductCheckoutSpecialOfferActionModel.ButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+					{
+						RemoveMultiNightCommand_Execute(eachRentalShoppingCartItem, _selectedOffer.OfferId);
+					}, (Func<bool>)null);
+				}
+				else
+				{
+					displayProductCheckoutSpecialOfferActionModel.TextLine1 = string.Format(Resources.cart_offer_removed_text_line_1, _selectedOffer.Amount);
+					displayProductCheckoutSpecialOfferActionModel.TextLine2 = string.Empty;
+					displayProductCheckoutSpecialOfferActionModel.ButtonText = Resources.cart_offer_add_button_text;
+					displayProductCheckoutSpecialOfferActionModel.ButtonVisibility = (BaseViewController.IsADAMode ? Visibility.Collapsed : Visibility.Visible);
+					displayProductCheckoutSpecialOfferActionModel.ButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+					{
+						AddMultiNightCommand_Execute(eachRentalShoppingCartItem, _selectedOffer);
+					}, (Func<bool>)null);
+				}
+			}
+			else
+			{
+				displayProductCheckoutSpecialOfferActionModel.TextLine1 = Resources.cart_offer_not_applicable;
+				displayProductCheckoutSpecialOfferActionModel.TextLine2 = string.Empty;
+				displayProductCheckoutSpecialOfferActionModel.ButtonText = string.Empty;
+				displayProductCheckoutSpecialOfferActionModel.ButtonVisibility = Visibility.Collapsed;
+				displayProductCheckoutSpecialOfferActionModel.ButtonCommand = null;
+			}
+			displayCheckoutProductModel.OfferActionModel = displayProductCheckoutSpecialOfferActionModel;
+		}
+		else
+		{
+			displayCheckoutProductModel.ProductCartPriceText = $"{eachRentalShoppingCartItem.Price - num:C}";
+		}
+		BannerType productBannerType = BrowseFunctions.GetProductBannerType(titleProduct);
+		BrowseFunctions.ConfigureBanner(displayCheckoutProductModel, titleProduct, hideBanner: false, productBannerType, BaseViewController.GetViewUserControl());
+	}
+
+	private static void AddMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"Remove offer from {rentalShoppingCartItem?.ProductId}");
+		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().AddMultiNightOfferToItem(rentalShoppingCartItem, selectedOffer);
+		UpdateCartDisplay();
+	}
+
+	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, long offerId)
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {rentalShoppingCartItem?.ProductId}");
+		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().RemoveMultiNightOfferFromItem(rentalShoppingCartItem);
+		UpdateCartDisplay();
 	}
 
 	private static void ConfigureCommands(NewCartConfirmViewModel viewModel, NewCartConfirmviewParameters parameters)
 	{
-		viewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+		if (_isMultiNightOffer)
 		{
-			CancelCommand_Execute(parameters.CancelAction);
-		}, (Func<bool>)null);
+			viewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+			{
+				ModifyCartAction_Execute();
+			}, (Func<bool>)null);
+		}
+		else
+		{
+			viewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+			{
+				CancelCommand_Execute(parameters.CancelAction);
+			}, (Func<bool>)null);
+		}
 		viewModel.SubmitButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 		{
 			SubmitCommand_Execute(parameters.ContinueAction);
@@ -176,12 +265,19 @@ public class NewCartConfirmViewController : BaseViewController
 		viewModel.OnCancelBrowseItemModel += ViewModel_OnCancelBrowseItemModel;
 	}
 
+	private static void ModifyCartAction_Execute()
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "modify_cart");
+		OrchestrationService.ViewShow("new_cart_confirm_ada_action_update_view", _selectedOffer);
+	}
+
 	private static void ViewModel_OnCancelBrowseItemModel(DisplayProductModel model, object arg2)
 	{
+		BaseViewController.ProcessWPFHit();
 		object obj = model?.Data;
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {(obj as IRentalShoppingCartItem)?.ProductId}");
-		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		service.RemovePromoOfferFromCart(service.CurrentRentalShoppingCart.ShoppingSessionId);
+		_removeOfferAction();
 		UpdateCartDisplay();
 	}
 
@@ -193,6 +289,7 @@ public class NewCartConfirmViewController : BaseViewController
 
 	private static void SubmitCommand_Execute(Action continueAction)
 	{
+		BaseViewController.ProcessWPFHit();
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "submit");
 		OrchestrationService.ViewGoBackSafe("NewCartConfirm_Submit", popOnly: false);
 		continueAction();
@@ -200,6 +297,7 @@ public class NewCartConfirmViewController : BaseViewController
 
 	private static void CancelCommand_Execute(Action cancelAction)
 	{
+		BaseViewController.ProcessWPFHit();
 		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "skip_offer");
 		OrchestrationService.ViewGoBackSafe("NewCartConfirm_SkipOffer", popOnly: false);
 		CancelWithConfirm(cancelAction);
@@ -207,7 +305,9 @@ public class NewCartConfirmViewController : BaseViewController
 
 	private static void CancelWithConfirm(Action cancelAction)
 	{
-		if (Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedOffer.CustomerSegmentType != CustomerSegmentType.BasketStretch)
+		BaseViewController.ProcessWPFHit();
+		CustomerOffer selectedOffer = Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedOffer;
+		if (selectedOffer != null && selectedOffer.OfferScopeType == OfferScopeType.StoredRedeemable)
 		{
 			OrchestrationService.ViewShow("OfferAbandonConfirmView", new OfferAbandonConfirmInfo
 			{
@@ -230,7 +330,14 @@ public class NewCartConfirmViewController : BaseViewController
 			_ = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
 			viewModel.LabelTop = Resources.my_bag;
 			viewModel.PriceHeaderText = Resources.summary;
-			viewModel.BackButtonText = Resources.skip_offer_button_text;
+			if (_isMultiNightOffer)
+			{
+				viewModel.BackButtonText = Resources.update_bag;
+			}
+			else
+			{
+				viewModel.BackButtonText = Resources.skip_offer_button_text;
+			}
 			viewModel.PassiveSaleNote = Resources.passive_sale_note;
 			viewModel.MDVFootnoteVisibility = ((!newCart.Items.Any((IRentalShoppingCartItem x) => x.MultiDisc)) ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.MDVFootnote = (newCart.Items.Any((IRentalShoppingCartItem x) => x.MultiDisc) ? Resources.multi_disc_vend_footnote : null);
@@ -247,6 +354,7 @@ public class NewCartConfirmViewController : BaseViewController
 			viewModel.PricingModel.TaxLineVisibility = ((text == "SC" || text == "MD") ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.PricingModel.TaxValueText = $"{newCart?.Totals?.TaxAmount:C}";
 			viewModel.PricingModel.TotalValueText = $"{newCart?.Totals?.GrandTotal:f2}";
+			LogHelper.Instance.Log($"NewCartConfirmViewController: cart discount amount: {newCart?.Totals?.DiscountAmountUsed ?? 0m} ");
 			string text2 = $"{((!((newCart?.Totals?.DiscountAmountUsed ?? 0m) != 0m)) ? ((decimal?)null) : newCart?.Totals?.DiscountAmountUsed):C}";
 			if (!string.IsNullOrEmpty(text2))
 			{
@@ -257,8 +365,7 @@ public class NewCartConfirmViewController : BaseViewController
 			viewModel.PricingModel.ServiceFeeValueText = $"{newCart?.Totals?.ServiceFee:C}";
 			viewModel.PricingModel.ServiceFeeLineVisibility = ((!((newCart?.Totals?.ServiceFee ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.SubmitButtonText = Resources.submit_button;
-			viewModel.AdaSkipOfferButtonVisibility = ((!BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
-			viewModel.SkipOfferButtonVisibility = ((BaseViewController.IsADAMode || parameters.promoProduct != null) ? Visibility.Collapsed : Visibility.Visible);
+			viewModel.SkipOfferButtonVisibility = ((!BaseViewController.IsADAMode && (parameters.promoProduct != null || _isMultiNightOffer)) ? Visibility.Collapsed : Visibility.Visible);
 		}
 	}
 

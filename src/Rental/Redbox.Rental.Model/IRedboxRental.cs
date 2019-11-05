@@ -16,5 +16,7 @@ public interface IRedboxRental
 
 	void EnterMaintenanceModeBecauseOfDisconnectedCardReader();
 
+	void EnterMaintenanceModeBecauseOfTamperedCardReader();
+
 	void HandleUnremovedChipInCardReader();
 }

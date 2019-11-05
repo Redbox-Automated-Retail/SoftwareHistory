@@ -14,6 +14,8 @@ public class EnvironmentManager : IEnvironmentNotificationService
 {
 	private CorruptDbCallback m_corruptDbCallback;
 
+	private TamperedCardReaderCallback m_tamperedCardReaderCallback;
+
 	private object _trackDataServiceLockObject = new object();
 
 	private object _validDeviceServiceCardReaderLockObject = new object();
@@ -101,7 +103,6 @@ public class EnvironmentManager : IEnvironmentNotificationService
 			}
 			LogHelper.Instance.Log("...Clear configuration callbacks.");
 			m_configurationCallbacks.Clear();
-			UnRegisterCorruptDbCallback();
 		}
 		catch (Exception e)
 		{
@@ -248,32 +249,38 @@ public class EnvironmentManager : IEnvironmentNotificationService
 		m_configurationCallbacks.Remove(name);
 	}
 
-	public void UnRegisterCorruptDbCallback()
-	{
-		m_corruptDbCallback = null;
-	}
-
 	public void RegisterCorruptDbCallback(CorruptDbCallback callback)
 	{
 		m_corruptDbCallback = callback;
 	}
 
-	public bool RaiseCorruptDb(string dbName)
+	public void RaiseCorruptDb()
 	{
-		bool result = false;
 		try
 		{
-			if (m_corruptDbCallback != null)
-			{
-				m_corruptDbCallback(dbName);
-				result = true;
-			}
+			m_corruptDbCallback?.Invoke();
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseCorruptDb.", e);
 		}
-		return result;
+	}
+
+	public void RegisterTamperedCardReaderCallback(TamperedCardReaderCallback callback)
+	{
+		m_tamperedCardReaderCallback = callback;
+	}
+
+	public void RaiseTamperedCardReader()
+	{
+		try
+		{
+			m_tamperedCardReaderCallback?.Invoke();
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in EnvironmentManager.RaiseTamperedCardReaderCallback.", e);
+		}
 	}
 
 	public void RegisterCardReaderConnectedCallback(Action cardReaderConnectedCallback)

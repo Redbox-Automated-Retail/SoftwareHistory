@@ -94,7 +94,6 @@ public class MemberPointsViewController : BaseLoyaltyController
 		{
 			return;
 		}
-		bool flag = false;
 		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
 		{
 			IKioskProduct kioskProduct = null;
@@ -111,10 +110,6 @@ public class MemberPointsViewController : BaseLoyaltyController
 				ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 				BannerType productBannerType = BrowseFunctions.GetProductBannerType(titleProduct);
 				BrowseFunctions.ConfigureBanner(displayProductModel, titleProduct, hideBanner: false, productBannerType, BaseViewController.GetViewUserControl());
-				if (BaseLoyaltyController.GetItemTitleType(item) == TitleType._4KUHD)
-				{
-					flag = true;
-				}
 				displayProductModel.CancelButtonVisibility = Visibility.Collapsed;
 				ConfigureProductFlag(displayProductModel, ProductFlags.Points);
 				model.DisplayProductModels.Add(displayProductModel);
@@ -126,7 +121,6 @@ public class MemberPointsViewController : BaseLoyaltyController
 				item.LoyaltyPointsRecord.ToBeRedeemed = false;
 			}
 		}
-		model.PointsCartMessage = (flag ? Resources.points_cannot_redeem_message : string.Empty);
 	}
 
 	private static void ProcessRedemptionPoints(PointsMemberInfo pointsInfo)
@@ -171,10 +165,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 		{
 			return;
 		}
-		IRentalShoppingCartItem rentalShoppingCartItem = displayProductModel.Data as IRentalShoppingCartItem;
-		bool flag = TitleType._4KUHD == BaseLoyaltyController.GetItemTitleType(rentalShoppingCartItem);
-		bool flag2 = pointsRecord != null && !pointsRecord.CanRedeem;
-		if (flag | flag2)
+		if (pointsRecord != null && !pointsRecord.CanRedeem)
 		{
 			productFlags = ProductFlags.Excluded;
 		}
@@ -190,7 +181,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 		{
 			displayProductModel.CornerContainerVisibility = BaseViewController.BoolToVisibility(show: true);
 			bool canRedeem = pointsRecord.CanRedeem;
-			if (canRedeem && !flag)
+			if (canRedeem)
 			{
 				displayProductModel.FlagText = string.Format(Resources.flag_points, pointsRecord.PointsToRedeem);
 			}

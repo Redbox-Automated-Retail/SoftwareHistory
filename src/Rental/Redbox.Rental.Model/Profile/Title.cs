@@ -11,8 +11,6 @@ public class Title : ILuaKeyValue
 
 	public long ProductId { get; set; }
 
-	public int Stars { get; set; }
-
 	public string RunningTime { get; set; }
 
 	public List<string> Starring { get; set; }

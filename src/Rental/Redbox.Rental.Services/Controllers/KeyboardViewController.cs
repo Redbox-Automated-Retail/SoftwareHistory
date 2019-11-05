@@ -63,8 +63,11 @@ public class KeyboardViewController : BaseViewController
 		if (!string.IsNullOrEmpty(keyboardInfo.ErrorMessage))
 		{
 			keyboardModel.KeyboardError = keyboardInfo.ErrorMessage;
-			keyboardModel.KeyboardText = string.Empty;
-			keyboardModel.KeyboardCode = string.Empty;
+			if (!keyboardInfo.KeepKeyboardTextOnInitialErrorMessage)
+			{
+				keyboardModel.KeyboardText = string.Empty;
+				keyboardModel.KeyboardCode = string.Empty;
+			}
 		}
 		keyboardControl.DataContext = keyboardModel;
 		switch (keyboardInfo.KeyboardMode)

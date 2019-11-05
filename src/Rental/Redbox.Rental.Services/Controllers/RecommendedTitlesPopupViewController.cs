@@ -10,6 +10,7 @@ using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Controls;
@@ -155,6 +156,10 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 				{
 					continue;
 				}
+				if (kioskProduct is ITitleProduct)
+				{
+					((ITitleProduct)kioskProduct).TivoQueryId = recommendedTitles.TivoQueryId;
+				}
 				DisplayProductModel displayProductModel = new DisplayProductModel
 				{
 					Name = kioskProduct.ProductName,
@@ -164,6 +169,11 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 					DisplayProductModelConstants = GetDisplayProductModelConstants(),
 					AddButtonStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "classic_rubine_button_style")
 				};
+				if (recommendedTitle.IsWishList)
+				{
+					displayProductModel.FlagStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "rubine_flag_style");
+					displayProductModel.FlagText = Resources.flag_wish_list;
+				}
 				displayProductModel.ConfigureForRecommendedTitlesPopup();
 				displayProductModel.ButtonData.Clear();
 				if (titleRollupProduct != null)
@@ -372,7 +382,8 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			Night = Resources.night,
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
-			IsInCartBrowse = false
+			IsInCartBrowse = false,
+			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices
 		};
 	}
 

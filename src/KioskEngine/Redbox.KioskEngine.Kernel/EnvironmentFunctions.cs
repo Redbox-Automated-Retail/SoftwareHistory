@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
+using Redbox.REDS.Framework;
 using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Kernel;
@@ -11,12 +12,6 @@ namespace Redbox.KioskEngine.Kernel;
 public static class EnvironmentFunctions
 {
 	private static bool m_safeShutdownFlagged;
-
-	private static LuaFunction m_canShutdownHandler;
-
-	private static LuaFunction m_canRestartHandler;
-
-	private static LuaFunction m_showMaintenanceViewHandler;
 
 	private static LuaFunction m_dataStoreErrorHandler;
 
@@ -26,19 +21,22 @@ public static class EnvironmentFunctions
 		{
 			return false;
 		}
-		if (m_canShutdownHandler == null)
+		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+		IManifestInfo manifestInfo = null;
+		service?.GetManifest(out manifestInfo);
+		if (manifestInfo?.ProductName == "Field Maintenance Application" || manifestInfo?.ProductName == "Control Panel Application")
 		{
-			LogHelper.Instance.Log("EnvironmentFunctions.CanShutdown() returns: The handler specified; returning true.");
-			return true;
+			LogHelper.Instance.Log(manifestInfo?.ProductName);
+			LogHelper.Instance.Log("Kiosk Engine is requesting a shut-down");
+			return false;
 		}
-		ReadOnlyCollection<object> readOnlyCollection = m_canShutdownHandler.Call();
-		if (readOnlyCollection != null && readOnlyCollection.Count > 0)
+		LogHelper.Instance.Log("Kiosk Engine is requesting a shut-down");
+		IApplicationState service2 = ServiceLocator.Instance.GetService<IApplicationState>();
+		IRedboxRental service3 = ServiceLocator.Instance.GetService<IRedboxRental>();
+		if (service3 == null || service3.IsRentalSessionActive())
 		{
-			bool flag = (bool)readOnlyCollection[0];
-			LogHelper.Instance.Log("EnvironmentFunctions.CanShutdown() returns: {0}", flag);
-			return flag;
+			return service2?.IsInMaintenanceMode ?? false;
 		}
-		LogHelper.Instance.Log("EnvironmentFunctions.CanShutdown() returns: The handler returned nil; returning true.");
 		return true;
 	}
 
@@ -48,20 +46,13 @@ public static class EnvironmentFunctions
 		{
 			return false;
 		}
-		if (m_canRestartHandler == null)
+		LogHelper.Instance.Log("Kiosk Engine is requesting a restart");
+		IRedboxRental service = ServiceLocator.Instance.GetService<IRedboxRental>();
+		if (service == null)
 		{
-			LogHelper.Instance.Log("EnvironmentFunctions.CanRestart() returns: The handler specified; returning true.");
-			return true;
+			return false;
 		}
-		ReadOnlyCollection<object> readOnlyCollection = m_canRestartHandler.Call();
-		if (readOnlyCollection != null && readOnlyCollection.Count > 0)
-		{
-			bool flag = (bool)readOnlyCollection[0];
-			LogHelper.Instance.Log("EnvironmentFunctions.CanRestart() returns: {0}", flag);
-			return flag;
-		}
-		LogHelper.Instance.Log("EnvironmentFunctions.CanRestart() returns: The handler returned nil; returning true.");
-		return true;
+		return !service.IsRentalSessionActive();
 	}
 
 	public static bool CanSwitch()
@@ -89,20 +80,6 @@ public static class EnvironmentFunctions
 		return flag2;
 	}
 
-	public static bool ShowMaintenanceView()
-	{
-		if (m_showMaintenanceViewHandler == null)
-		{
-			return false;
-		}
-		ReadOnlyCollection<object> readOnlyCollection = m_showMaintenanceViewHandler.Call();
-		if (readOnlyCollection == null || readOnlyCollection.Count <= 0)
-		{
-			return false;
-		}
-		return (bool)readOnlyCollection[0];
-	}
-
 	public static bool HandleDataStoreErrors(string dataStore)
 	{
 		if (m_dataStoreErrorHandler == null)
@@ -125,18 +102,6 @@ public static class EnvironmentFunctions
 	public static void Reset()
 	{
 		LogHelper.Instance.Log("Reset EnvironmentFunctions");
-		if (m_canShutdownHandler != null)
-		{
-			LogHelper.Instance.Log("...Reset shutdown handler.");
-			m_canShutdownHandler.Dispose();
-			m_canShutdownHandler = null;
-		}
-		if (m_showMaintenanceViewHandler != null)
-		{
-			LogHelper.Instance.Log("...Reset show maintenance view handler.");
-			m_showMaintenanceViewHandler.Dispose();
-			m_showMaintenanceViewHandler = null;
-		}
 		if (m_dataStoreErrorHandler != null)
 		{
 			LogHelper.Instance.Log("...Reset data store errors handler.");
@@ -163,36 +128,6 @@ public static class EnvironmentFunctions
 	{
 		LogHelper.Instance.Log("kernel.applyunsafeshutdown; calling Application.Exit().");
 		Application.Exit();
-	}
-
-	[KernelFunction(Name = "kernel.registercanshutdown")]
-	internal static void RegisterCanShutdownHandler(LuaFunction canShutdown)
-	{
-		m_canShutdownHandler = canShutdown;
-	}
-
-	[KernelFunction(Name = "kernel.registercanrestart")]
-	internal static void RegisterCanRestartHandler(LuaFunction canRestart)
-	{
-		m_canRestartHandler = canRestart;
-	}
-
-	[KernelFunction(Name = "kernel.registershowmaintenanceview")]
-	internal static void RegisterShowMaintenanceViewHandler(LuaFunction showMaintenanceView)
-	{
-		m_showMaintenanceViewHandler = showMaintenanceView;
-	}
-
-	[KernelFunction(Name = "kernel.registercorruptdb")]
-	internal static void RegisterCorruptDbHandler(CorruptDbCallback callback)
-	{
-		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RegisterCorruptDbCallback(callback);
-	}
-
-	[KernelFunction(Name = "kernel.unregistercorruptdb")]
-	internal static void UnRegisterCorruptDbHandler()
-	{
-		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.UnRegisterCorruptDbCallback();
 	}
 
 	[KernelFunction(Name = "kernel.registerdatastoreerrorhandler")]

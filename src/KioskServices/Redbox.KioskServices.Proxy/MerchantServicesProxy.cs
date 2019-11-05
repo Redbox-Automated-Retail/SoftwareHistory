@@ -243,18 +243,6 @@ public class MerchantServicesProxy : IMerchantServices
 		}
 	}
 
-	public string[] UserOffers
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "UserOffers", new List<string>().ToArray());
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "UserOffers", value);
-		}
-	}
-
 	public bool GCLiveCall
 	{
 		get
@@ -454,7 +442,8 @@ public class MerchantServicesProxy : IMerchantServices
 			ShoppingCart = shoppingCart,
 			CustomerProfileNumber = customerProfileNumber,
 			RedeemedStoredOfferid = redeemedStoredOfferid,
-			UtcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now)
+			UtcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now),
+			DiscOfferCodes = session2.PromoOfferState?.DiscOfferCodes
 		};
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -740,41 +729,29 @@ public class MerchantServicesProxy : IMerchantServices
 							authorizeResult.IsRBI = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
 						authorizeResult.ConfirmationStatus = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
-						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
-						if (arrayList != null)
-						{
-							int num = 1;
-							foreach (Dictionary<string, object> item2 in arrayList)
-							{
-								dictionary3.Add("offer_" + num, item2["Name"]);
-								num++;
-							}
-						}
-						authorizeResult.Offers = dictionary3;
 						if (flag2)
 						{
-							Dictionary<string, object> dictionary5 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
-							if (dictionary5 != null)
+							Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
+							if (dictionary3 != null)
 							{
-								authorizeResult.GiftCardExists = (bool)dictionary5["Exists"];
-								authorizeResult.GiftCardStatus = (GiftCardStatus)dictionary5["Status"];
+								authorizeResult.GiftCardExists = (bool)dictionary3["Exists"];
+								authorizeResult.GiftCardStatus = (GiftCardStatus)dictionary3["Status"];
 								decimal result = 0m;
-								if (dictionary5.ContainsKey("Balance"))
+								if (dictionary3.ContainsKey("Balance"))
 								{
-									decimal.TryParse(dictionary5["Balance"]?.ToString(), out result);
+									decimal.TryParse(dictionary3["Balance"]?.ToString(), out result);
 								}
 								authorizeResult.GiftCardBalance = result;
 								int result2 = 0;
-								if (dictionary5.ContainsKey("MaxDiscs"))
+								if (dictionary3.ContainsKey("MaxDiscs"))
 								{
-									int.TryParse(dictionary5["MaxDiscs"]?.ToString(), out result2);
+									int.TryParse(dictionary3["MaxDiscs"]?.ToString(), out result2);
 								}
 								authorizeResult.GiftCardMaxDiscs = result2;
 								int result3 = 0;
-								if (dictionary5.ContainsKey("MaxGames"))
+								if (dictionary3.ContainsKey("MaxGames"))
 								{
-									int.TryParse(dictionary5["MaxGames"]?.ToString(), out result3);
+									int.TryParse(dictionary3["MaxGames"]?.ToString(), out result3);
 								}
 								authorizeResult.GiftCardMaxGames = MaxGames;
 							}
@@ -783,12 +760,12 @@ public class MerchantServicesProxy : IMerchantServices
 						authorizeResult.CustomerProfileNumber = ((!dictionary.ContainsKey("CustomerProfileNumber")) ? string.Empty : dictionary["CustomerProfileNumber"]?.ToString());
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
-							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList2 != null && arrayList2.Count > 0)
+							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList != null && arrayList.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary6)
+								if (arrayList[0] is Dictionary<string, object> dictionary4)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(flag ? typeof(AuthorizeResponse?) : typeof(GCAuthorizeResponse?), (string)dictionary6["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(flag ? typeof(AuthorizeResponse?) : typeof(GCAuthorizeResponse?), (string)dictionary4["Code"]);
 									authorizeResult.Response = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : text2);
 								}
 							}
@@ -812,8 +789,8 @@ public class MerchantServicesProxy : IMerchantServices
 				else
 				{
 					LogHelper.Instance.Log($"Simulating call to IMerchantServices.{text}.");
-					int num2 = new Random().Next(1, 3);
-					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
+					int num = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 					authorizeResult.StoreNumber = session.StoreNumber;
 					PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 					if ((flag && SimulateServerBusyError) || (flag2 && GCSimulateServerBusyError))
@@ -853,15 +830,6 @@ public class MerchantServicesProxy : IMerchantServices
 						authorizeResult.AccountNumber = AccountNumber;
 						authorizeResult.CustomerProfileNumber = CPAccountNumber;
 						authorizeResult.ConfirmationStatus = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary7 = new Dictionary<string, object>();
-						int num3 = 1;
-						string[] userOffers = UserOffers;
-						foreach (string value in userOffers)
-						{
-							dictionary7.Add("offer_" + num3, value);
-							num3++;
-						}
-						authorizeResult.Offers = dictionary7;
 						if (flag2)
 						{
 							authorizeResult.GiftCardExists = Exists;
@@ -959,28 +927,16 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
 						}
 						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
-						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
-						if (arrayList != null)
-						{
-							int num = 1;
-							foreach (Dictionary<string, object> item2 in arrayList)
-							{
-								dictionary3.Add("offer_" + num, item2["Name"]);
-								num++;
-							}
-						}
-						remoteServiceResult.Properties["offers"] = dictionary3;
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
-							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList2 != null && arrayList2.Count > 0)
+							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList != null && arrayList.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary5)
+								if (arrayList[0] is Dictionary<string, object> dictionary3)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary5["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary3["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
 								}
 							}
@@ -1004,8 +960,8 @@ public class MerchantServicesProxy : IMerchantServices
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.ReservationAuthorize.");
-					int num2 = new Random().Next(1, 3);
-					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
+					int num = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 					if (ResvAuthSimulateServerBusyError)
@@ -1044,15 +1000,6 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
-						int num3 = 1;
-						string[] userOffers = UserOffers;
-						foreach (string value in userOffers)
-						{
-							dictionary6.Add("offer_" + num3, value);
-							num3++;
-						}
-						remoteServiceResult.Properties["offers"] = dictionary6;
 					}
 				}
 			}
@@ -1152,28 +1099,16 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
 						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
-						ArrayList arrayList = (dictionary.ContainsKey("Offers") ? (dictionary["Offers"] as ArrayList) : null);
-						Dictionary<string, object> dictionary3 = new Dictionary<string, object>();
-						if (arrayList != null)
-						{
-							int num = 1;
-							foreach (Dictionary<string, object> item2 in arrayList)
-							{
-								dictionary3.Add("offer_" + num, item2["Name"]);
-								num++;
-							}
-						}
-						remoteServiceResult.Properties["offers"] = dictionary3;
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
-							ArrayList arrayList2 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList2 != null && arrayList2.Count > 0)
+							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList != null && arrayList.Count > 0)
 							{
-								if (arrayList2[0] is Dictionary<string, object> dictionary5)
+								if (arrayList[0] is Dictionary<string, object> dictionary3)
 								{
-									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary5["Code"]);
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary3["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
 								}
 							}
@@ -1197,8 +1132,8 @@ public class MerchantServicesProxy : IMerchantServices
 				else
 				{
 					LogHelper.Instance.Log("Simulating call to IMerchantServices.PickupAuthorize.");
-					int num2 = new Random().Next(1, 3);
-					new AutoResetEvent(initialState: false).WaitOne(num2 * 1000);
+					int num = new Random().Next(1, 3);
+					new AutoResetEvent(initialState: false).WaitOne(num * 1000);
 					remoteServiceResult.Properties["store_number"] = session.StoreNumber;
 					PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
 					if (SimulateServerBusyError)
@@ -1238,15 +1173,6 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
-						Dictionary<string, object> dictionary6 = new Dictionary<string, object>();
-						int num3 = 1;
-						string[] userOffers = UserOffers;
-						foreach (string value in userOffers)
-						{
-							dictionary6.Add("offer_" + num3, value);
-							num3++;
-						}
-						remoteServiceResult.Properties["offers"] = dictionary6;
 					}
 				}
 			}
@@ -1352,6 +1278,7 @@ public class MerchantServicesProxy : IMerchantServices
 							}
 						}
 						remoteServiceResult.Properties["cancelled_reservations"] = list.ToLuaTable();
+						remoteServiceResult.Properties["allow_rop"] = (dictionary.ContainsKey("AllowRop") ? dictionary["AllowRop"] : ((object)remoteServiceResult.Success));
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
 							ArrayList arrayList3 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -1421,6 +1348,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
 						string[] array = CancelledReservations.Split(',');
 						string[] source = InvalidReservations.Split(',');
+						remoteServiceResult.Properties["allow_rop"] = true;
 						List<long> list2 = new List<long>();
 						string[] array2 = array;
 						for (int i = 0; i < array2.Length; i++)
@@ -1473,6 +1401,28 @@ public class MerchantServicesProxy : IMerchantServices
 
 	public void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
 	{
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+		if (session == null)
+		{
+			LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
+			return;
+		}
+		var pickupRequest = new
+		{
+			MessageType = "ModResvPickup",
+			MessageId = Guid.NewGuid(),
+			EngineVersion = service["EngineVersion"],
+			BundleVersion = service["ProductVersion"],
+			Email = emailAddress,
+			KioskId = int.Parse(storeNumber),
+			ReferenceNumber = referenceNumber,
+			Items = new Dictionary<string, object>(),
+			PickupDate = DateTime.Now,
+			ModifiedCart = modifiedCart,
+			ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId),
+			CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true)
+		};
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
@@ -1480,29 +1430,7 @@ public class MerchantServicesProxy : IMerchantServices
 			{
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IMerchantServices.ModResvPickup, URL: {0}", KioskServicesProxy.Instance.Url);
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				if (ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId) == null)
-				{
-					LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
-				}
-				else
-				{
-					var message = new
-					{
-						MessageType = "ModResvPickup",
-						MessageId = Guid.NewGuid(),
-						EngineVersion = service["EngineVersion"],
-						BundleVersion = service["ProductVersion"],
-						Email = emailAddress,
-						KioskId = int.Parse(storeNumber),
-						ReferenceNumber = referenceNumber,
-						Items = new Dictionary<string, object>(),
-						PickupDate = DateTime.Now,
-						ModifiedCart = modifiedCart,
-						ShoppingCart = ProxyMessageHelper.CreateShoppingCart(sessionId)
-					};
-					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "ModResvPickup", message);
-				}
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "ModResvPickup", pickupRequest);
 			}
 			catch (Exception e)
 			{
@@ -1580,7 +1508,7 @@ public class MerchantServicesProxy : IMerchantServices
 			ReferenceNumber = referenceNumber,
 			CartWasModified = rentalShoppingCart.PickupRecommendationsSelected,
 			PickupDateTime = DateTime.Now,
-			CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: false),
+			CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
 			TransactionDate = DateTime.Now,
 			PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
 			PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,

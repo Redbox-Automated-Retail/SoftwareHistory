@@ -427,8 +427,7 @@ public class ReservationFunctions
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		foreach (string item in GetReservedBarcodesToVend(reservations))
 		{
-			IKioskProduct kioskProduct = null;
-			service.GetProductByBarcode(item, out kioskProduct);
+			service.GetProductByBarcode(item, out var kioskProduct);
 			if (kioskProduct is ITitleProduct titleProduct)
 			{
 				excludeProducts.Add(titleProduct.ProductId);
@@ -518,12 +517,12 @@ public class ReservationFunctions
 
 	public static IReservationDetails PopulateShoppingCartWithReservationItems(IRentalShoppingCart rentalShoppingCart, string referenceNumber = null, bool clearCart = true)
 	{
-		//IL_02d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02d9: Invalid comparison between Unknown and I4
-		//IL_030b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0311: Invalid comparison between Unknown and I4
-		//IL_0435: Unknown result type (might be due to invalid IL or missing references)
-		//IL_043b: Invalid comparison between Unknown and I4
+		//IL_02f6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02fc: Invalid comparison between Unknown and I4
+		//IL_032e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0334: Invalid comparison between Unknown and I4
+		//IL_0458: Unknown result type (might be due to invalid IL or missing references)
+		//IL_045e: Invalid comparison between Unknown and I4
 		IReservationDetails reservationDetails = null;
 		try
 		{
@@ -552,8 +551,7 @@ public class ReservationFunctions
 				foreach (IReservedTitle reservedTitle2 in reservationDetails.ReservedTitles)
 				{
 					string barcode = reservedTitle2.Barcode;
-					IKioskProduct kioskProduct = null;
-					ErrorList product = service2.GetProduct(reservedTitle2.TitleId, excludeTitleRollup: false, out kioskProduct);
+					ErrorList product = service2.GetProduct(reservedTitle2.TitleId, excludeTitleRollup: false, out var kioskProduct);
 					if (product == null || product.Count == 0)
 					{
 						if (kioskProduct == null)
@@ -586,6 +584,8 @@ public class ReservationFunctions
 								rentalShoppingCartItem.Quantity = 1m;
 								rentalShoppingCartItem.Status = LineItemStatus.Pending;
 								rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(rentalShoppingCartItem.TitleProduct);
+								rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(rentalShoppingCartItem.TitleProduct);
+								rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(rentalShoppingCartItem.TitleProduct);
 								LogHelper.Instance.Log($"Checking discounts for reserved title Id {titleProduct.ProductId}");
 								if ((int)reservedTitle.DiscountType == 2)
 								{
@@ -884,8 +884,7 @@ public class ReservationFunctions
 				LogHelper.Instance.Log($"Reservation {accountReservation?.ReferenceNumber} had 0 barcodes, skipping Pickup()/PickupReconcile() call");
 				continue;
 			}
-			long result2 = 0L;
-			long.TryParse(accountReservation?.ReferenceNumber, out result2);
+			long.TryParse(accountReservation?.ReferenceNumber, out var result2);
 			IDictionary<string, ReadOnlyCollection<IProductItem>> dictionary2 = new Dictionary<string, ReadOnlyCollection<IProductItem>>();
 			foreach (string key3 in dictionary.Keys)
 			{
@@ -906,7 +905,7 @@ public class ReservationFunctions
 				LogHelper.Instance.Log($"{logHeaderText}: Calling ReservationServices.Pickup()");
 				IReservationServices service3 = ServiceLocator.Instance.GetService<IReservationServices>();
 				bool? obj = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(rentalShoppingCart?.ShoppingSessionId.ToString())?.ShoppingCart.Blocklisted;
-				service3?.Pickup(isBlocklisted: obj ?? false, storeNumber: (service?.GetStore()?.StoreId ?? (-1)).ToString(), emailAddress: accountReservation.ReservationDetails?.EmailAddress, referenceNumber: result2, pickupResults: dictionary2, callback: null);
+				service3?.Pickup(isBlocklisted: obj ?? false, storeNumber: (service?.GetStore()?.StoreId ?? (-1)).ToString(), emailAddress: accountReservation.ReservationDetails?.EmailAddress, referenceNumber: result2, pickupResults: dictionary2, callback: null, v: rentalShoppingCart?.ShoppingSessionId.ToString());
 			}
 			LogHelper.Instance.Log($"{logHeaderText}: Removing reservation for reference nuber... {accountReservation.ReferenceNumber}");
 			DeleteReservation(accountReservation.ReferenceNumber);
@@ -933,7 +932,7 @@ public class ReservationFunctions
 			{
 				UpdateRentalShoppingCartItemStatuses(vendResultList, rentalShoppingCart);
 				List<string> list = new List<string>();
-				ProcessRentalShoppingCartItems(rentalShoppingCart, shoppingSession, list);
+				ProcessRentalShoppingCartItems(rentalShoppingCart, list);
 				List<Redbox.Rental.Model.Reservation.IReservation> accountReservations = GetAccountReservations();
 				CallMerchantService(referenceNumber, modifiedCart, rentalShoppingCart, shoppingSession, accountReservations);
 				LogHelper.Instance.Log($"ReservationFunctions.ReservationPrepositionVend: Removing reservations for reference number...{referenceNumber}");
@@ -1357,8 +1356,7 @@ public class ReservationFunctions
 		{
 			return;
 		}
-		long result = 0L;
-		long.TryParse(referenceNumber, out result);
+		long.TryParse(referenceNumber, out var result);
 		if (IsAuthorizeAtPickup(referenceNumber, reservations))
 		{
 			LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling MerchantServices.PickupReconcile()");
@@ -1377,7 +1375,7 @@ public class ReservationFunctions
 		LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling MerchantServices.ModResvPickup() complete");
 	}
 
-	private static void ProcessRentalShoppingCartItems(IRentalShoppingCart rentalShoppingCart, IShoppingSession session, List<string> barcodesToReset)
+	private static void ProcessRentalShoppingCartItems(IRentalShoppingCart rentalShoppingCart, List<string> barcodesToReset)
 	{
 		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
 		{

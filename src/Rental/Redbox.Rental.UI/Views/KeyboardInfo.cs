@@ -42,5 +42,7 @@ public class KeyboardInfo
 
 	public string ErrorMessage { get; set; }
 
+	public bool KeepKeyboardTextOnInitialErrorMessage { get; set; }
+
 	public SignInCancelButtonTypes SignInCancelButtonType { get; set; }
 }

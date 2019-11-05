@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.KioskServices.Proxy.Requests;
@@ -25,4 +26,8 @@ public class LineItem
 	public string OfferCode { get; set; }
 
 	public int? DiscNumber { get; set; }
+
+	public string TivoQueryId { get; set; }
+
+	public List<string> Tags { get; set; }
 }

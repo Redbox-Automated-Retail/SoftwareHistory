@@ -55,28 +55,22 @@ public static class OrchestrationFunctions
 		OrchestrationService.RegisterLocalizationReloadCallback(callback);
 	}
 
-	[KernelFunction(Name = "kernel.register_marketing_opt_in_flow_callback")]
-	internal static void RegisterMarketingOptInFlowCallback(Action<string> marketingOptInFlowCallback)
+	[KernelFunction(Name = "kernel.register_finish_vend_callback")]
+	internal static void RegisterFinishVendCallback(Action finishVendCallback)
 	{
-		OrchestrationService.RegisterMarketingOptInFlowCallback(marketingOptInFlowCallback);
-	}
-
-	[KernelFunction(Name = "kernel.register_continue_vend_callback")]
-	internal static void RegisterContinueVendCallback(Action continueVendCallback)
-	{
-		OrchestrationService.RegisterContinueVendCallback(continueVendCallback);
-	}
-
-	[KernelFunction(Name = "kernel.register_process_authorize_result_callback")]
-	internal static void RegisterProcessAuthorizeResultCallback(Action<LuaTable> processAuthorizeResultCallback)
-	{
-		OrchestrationService.RegisterProcessAuthorizeResultCallback(processAuthorizeResultCallback);
+		OrchestrationService.RegisterFinishVendCallback(finishVendCallback);
 	}
 
 	[KernelFunction(Name = "kernel.register_preposition_vend_callback")]
 	internal static void RegisterPrepositionVendCallback(Action prepositionVendCallback)
 	{
 		OrchestrationService.RegisterPrepositionVendCallback(prepositionVendCallback);
+	}
+
+	[KernelFunction(Name = "kernel.register_preposition_vend_abort_callback")]
+	internal static void RegisterPrepositionVendAbortCallback(Action prepositionVendAbortCallback)
+	{
+		OrchestrationService.RegisterPrepositionVendAbortCallback(prepositionVendAbortCallback);
 	}
 
 	[KernelFunction(Name = "kernel.register_is_vend_job_completed_callback")]
@@ -270,5 +264,11 @@ public static class OrchestrationFunctions
 	internal static void ShoppingCartEndSession(string sessionId)
 	{
 		OrchestrationService.ShoppingCartEndSession(sessionId);
+	}
+
+	[KernelFunction(Name = "kernel.load_email_optin_campaign")]
+	internal static void LoadEmailOptInCampaign()
+	{
+		OrchestrationService.LoadEmailOptInCampaign();
 	}
 }

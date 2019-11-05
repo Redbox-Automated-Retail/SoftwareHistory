@@ -57,10 +57,6 @@
               <Border Margin="10,0,0,0" BorderThickness="2" BorderBrush="#B7ADA5" Visibility="{Binding CCSupported, FallbackValue=Collapsed}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_regular_12}" FontWeight="Bold" Foreground="#8A7666" Margin="8,4,8,4" Text="CC" />
               </Border>
-              <localControls:StarRatingUserControl Margin="20,0,0,0" NumberOfStars="{Binding StarRating, Mode=OneWay, FallbackValue=5}" Visibility="{Binding StarRating, Converter={StaticResource NullToVisibilityConverter}}" />
-              <Button Style="{StaticResource TransparentButton}" Command="{Binding ReviewsButtonCommand}" Visibility="{Binding ReviewButtonVisibility, FallbackValue=Collapsed}">
-                <TextBlock Margin="25,0,0,0" Style="{StaticResource font_montserrat_regular_13}" TextDecorations="Underline" Foreground="{StaticResource WarmPurpleBrush}" VerticalAlignment="Center" Text="{Binding ReviewsButtonText, FallbackValue=See Reviews &gt;}" Visibility="{Binding StarRating, Converter={StaticResource NullToVisibilityConverter}}" />
-              </Button>
             </StackPanel>
             <StackPanel Name="ProductDetails" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Margin="-10,0,0,2" Visibility="{Binding NotEmptyCaseVisibility, FallbackValue=Visible}">
               <Rectangle Height="3" Width="Auto" Stroke="#792D8D" StrokeThickness="0" RadiusX="0" RadiusY="0" Fill="#792D8D" Margin="0,2,50,0" />

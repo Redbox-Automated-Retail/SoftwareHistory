@@ -9,8 +9,6 @@ public interface ITitleProduct : IKioskProduct
 {
 	long ProductId { get; }
 
-	int Stars { get; }
-
 	string RunningTime { get; }
 
 	List<string> Starring { get; }
@@ -114,4 +112,6 @@ public interface ITitleProduct : IKioskProduct
 	decimal? DigitalRentPrice { get; }
 
 	List<long> RequiredAdditionalTitles { get; }
+
+	string TivoQueryId { get; set; }
 }

@@ -1,6 +1,6 @@
 namespace Redbox.KioskServices.Proxy.ComponentModel;
 
-public class StatisticNames
+public static class StatisticNames
 {
 	public const string MinutesInMaintenance = "MinutesInMaintenance";
 

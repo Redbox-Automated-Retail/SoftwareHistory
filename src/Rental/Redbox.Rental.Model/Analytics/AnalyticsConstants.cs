@@ -11,6 +11,8 @@ public static class AnalyticsConstants
 		public const string CardRead = "CardRead";
 
 		public const string Timeout = "Timeout";
+
+		public const string OfferDisplayed = "offerDisplayed";
 	}
 
 	public static class SessionProperties
@@ -57,6 +59,8 @@ public static class AnalyticsConstants
 
 	public static class ButtonNames
 	{
+		public const string AnimatedDiscReturnGotIt = "AnimatedDiscReturnGotIt";
+
 		public const string ApplyPromoCancel = "ApplyPromoCancel";
 
 		public const string ApplyPromoEnterPromo = "ApplyPromoEnterPromo";
@@ -104,10 +108,6 @@ public static class AnalyticsConstants
 		public const string BrowseReserveOnlineRentBack = "BrowseReserveOnlineRentBack";
 
 		public const string BrowseReserveOnlineRentGotit = "BrowseReserveOnlineRentGotit";
-
-		public const string BrowseOnDemandRentBack = "BrowseOnDemandRentBack";
-
-		public const string BrowseOnDemandRentGotit = "BrowseOnDemandRentGotit";
 
 		public const string BrowseSignIn = "BrowseSignIn";
 
@@ -239,10 +239,6 @@ public static class AnalyticsConstants
 
 		public const string PurchaseFormatSelectionPopupReserveOnlineRentGotit = "PurchaseFormatSelectionPopupReserveOnlineRentGotit";
 
-		public const string PurchaseFormatSelectionPopupOnDemandRentBack = "PurchaseFormatSelectionPopupOnDemandRentBack";
-
-		public const string PurchaseFormatSelectionPopupOnDemandRentGotit = "PurchaseFormatSelectionPopupOnDemandRentGotit";
-
 		public const string PurchaseFormatSelectionPopupCancel = "PurchaseFormatSelectionPopupCancel";
 
 		public const string PurchaseFormatSelectionPopupDigitalCodeInformation = "PurchaseFormatSelectionPopupDigitalCodeInformation";
@@ -276,14 +272,6 @@ public static class AnalyticsConstants
 		public const string RecommendedTitlesPopupRecommendedNoThanks = "RecommendedTitlesPopupRecommendedNoThanks";
 
 		public const string ReservationDetailsOkay = "ReservationDetailsOkay";
-
-		public const string ReviewPopupPageChangeNumber = "ReviewPopupPageChangeNumber";
-
-		public const string ReviewPopupPageChangeBack = "ReviewPopupPageChangeBack";
-
-		public const string ReviewPopupPageChangeNext = "ReviewPopupPageChangeNext";
-
-		public const string ReviewPopupPageStarRatingsBack = "ReviewPopupPageStarRatingsBack";
 
 		public const string ShoppingCartUpdateADADelete = "ShoppingCartUpdateADADelete";
 
@@ -373,9 +361,13 @@ public static class AnalyticsConstants
 
 		public const string StartBuyMovies = "StartBuyMovies";
 
+		public const string StartRentAndBuyMovies = "StartRentAndBuyMovies";
+
 		public const string StartGames = "StartGames";
 
 		public const string StartBuyGames = "StartBuyGames";
+
+		public const string StartRentAndBuyGames = "StartRentAndBuyGames";
 
 		public const string StartTV = "StartTV";
 
@@ -397,15 +389,9 @@ public static class AnalyticsConstants
 
 		public const string TitleDetailsReserveOnlineRentGotit = "TitleDetailsReserveOnlineRentGotit";
 
-		public const string TitleDetailsOnDemandRentBack = "TitleDetailsOnDemandRentBack";
-
-		public const string TitleDetailsOnDemandRentGotit = "TitleDetailsOnDemandRentGotit";
-
 		public const string TitleDetailsSeeRelatedCollection = "TitleDetailsSeeRelatedCollection";
 
 		public const string TitleDetailsOutofStockCancel = "TitleDetailsOutofStockCancel";
-
-		public const string TitleDetailsSeeReviews = "TitleDetailsSeeReviews";
 
 		public const string TitleDetailsBuy = "TitleDetailsBuy";
 
@@ -420,6 +406,10 @@ public static class AnalyticsConstants
 		public const string UpsellBack = "UpsellBack";
 
 		public const string UpsellNoThanks = "UpsellNoThanks";
+
+		public const string EmailOptInRejectOptIn = "EmailOptInRejectOptIn";
+
+		public const string EmailOptInAcceptOptIn = "EmailOptInAcceptOptIn";
 	}
 
 	public static class DataTypeNames

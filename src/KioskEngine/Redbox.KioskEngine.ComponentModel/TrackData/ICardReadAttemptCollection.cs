@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Redbox.KioskEngine.ComponentModel.TrackData;
 
-public interface ICardReadAttemptCollection : IList<ICardReadAttempt>, ICollection<ICardReadAttempt>, IEnumerable<ICardReadAttempt>, IEnumerable
+public interface ICardReadAttemptCollection : IList<ICardReadAttempt>, ICollection<ICardReadAttempt>, IEnumerable<ICardReadAttempt>, IEnumerable, ITechnicalFallbackTracking
 {
 	int CancelledCount { get; }
 

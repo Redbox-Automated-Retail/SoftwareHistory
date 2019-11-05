@@ -87,6 +87,8 @@ public class WPFViewFrame : BaseViewFrame, IWPFViewFrame, IBaseViewFrame
 						{
 							ViewName = viewDefinition.ViewName,
 							ActiveFlag = viewDefinition.ActiveFlag.ToString(),
+							IsStartOverView = viewDefinition.IsStartOverView,
+							IsMaintenanceModeView = viewDefinition.IsMaintenanceModeView,
 							Clear = viewDefinition.Clear,
 							ViewDefinition = viewDefinition,
 							Scene = service2?.GetScene("Default")

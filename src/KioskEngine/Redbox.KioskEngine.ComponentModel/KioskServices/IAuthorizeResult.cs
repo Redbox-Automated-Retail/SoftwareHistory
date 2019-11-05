@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace Redbox.KioskEngine.ComponentModel.KioskServices;
 
@@ -38,8 +37,6 @@ public interface IAuthorizeResult
 	string CustomerProfileNumber { get; set; }
 
 	string StoreNumber { get; set; }
-
-	Dictionary<string, object> Offers { get; set; }
 
 	bool GiftCardExists { get; set; }
 
