@@ -19,8 +19,7 @@ kernel.registerdatastoreerrorhandler(
 		else
 			local store_id = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
 			kernel.setmacro( "StoreNumber", store_id )
-			--kernel.setmacro( "MaintenanceView:ZipCode", "Error" )
-			kernel.show_maintenance_view("SOFT-FILE01")
+			kernel.add_maintenance_mode_reason("Database", "SOFT-FILE01")
 
 			local datafilename = "unknown"
 			if dataStoreName ~= nil then

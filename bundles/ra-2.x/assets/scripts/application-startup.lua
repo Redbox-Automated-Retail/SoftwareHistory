@@ -275,10 +275,6 @@ local function load_registry_key_values()
 		"Store",
 		"VerboseLogging",
 		"False" ) == "True"
-	ShowOptinForNormalCheckout = kernel.config_getvalue(
-		"system",
-		"General",
-		"ShowOptinForNormalCheckout" ) == true
 	FMAMaintenanceMode = kernel.getmachinevalueordefault(
 		"Field Maintenance",
 		"MaintenanceMode",
@@ -298,10 +294,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"MakeRoomBuffer" ) or 5 )
-	MarketingOptInEnabled = kernel.config_getvalue(
-		"system",
-		"General",
-		"MarketingOptIn" ) == true
 	GiftCardsEnabled = kernel.config_getvalue(
 		"system",
 		"General",
@@ -422,29 +414,6 @@ end
 local function register_default_hardware_handlers()
 	-- Hook up default hardware event handlers
 	kernel.storesvcs_shouldreboot() --prime registry value; does not actually reboot the PC
-	kernel.registercanshutdown(
-		function()
-			kernel.log( "Kiosk Engine is requesting a shut-down" )
-			return kernel.is_rental_session_active() == false or kernel.peekview() == "maintenance_view"
-		end )
-	kernel.registercanrestart(
-		function()
-			kernel.log( "Kiosk Engine is requesting a restart" )
-			return kernel.is_rental_session_active() == false
-		end )
-	kernel.registershowmaintenanceview(
-		function()
-			kernel.show_maintenance_view("0096KRNL")
-			return true
-		end )
-	kernel.registercorruptdb(
-		function( db_name )
-			if kernel.peekview() ~= "maintenance_view" then
-    			kernel.log( "> Corrupt Db detected, processing." )
-   				kernel.show_maintenance_view("SOFT-FILE01")
-			end
-			return true
-		end )
 	kernel.registerconfigurationcallback(
 		"watch-config",
 		function( store, action, path, key, value )
@@ -489,9 +458,7 @@ local function verify_hardware_status_before_launching_application()
 				get_hardware_info_then_start_application()
 			else
 				kernel.log( "Hardware Status: Failed... Putting kiosk in Maintenance Mode." )
-				if not in_maintenance_mode() then
-					kernel.show_maintenance_view("HALSTS-043")
-				end
+				kernel.add_maintenance_mode_reason("HAL", "HALSTS-043")
 
 				-- Create the message to be sent as a part of the Alert if the Hardware Status is Failure.
 				local alert_code_table = {
@@ -590,9 +557,7 @@ local function start_new_rental_session_callback()
 			    jobid,
 			    "mm:MaxPutAwayAttemptsExceeded, 005PMXA"
 		    )
-		    if not in_maintenance_mode() then
-				kernel.show_maintenance_view("005PMXA")
-		    end
+			kernel.add_maintenance_mode_reason("HAL", "005PMXA")
 	    end
 	    local jobs = hardware_manager:get_hardware_jobs_by_program(
 		    { "check-picker" },
@@ -769,16 +734,10 @@ kernel.timercreate(
 		if initstatus["status"] == "COMPLETED" or initstatus["status"] == "ERRORED" then
 			kernel.log( "HAL init Completed, resuming Rental Application launch." )
 			kernel.timerremove( "hal_init_status_check_timer" )
-            local maintenance_view_error_code = kernel.getmacro("MaintenanceView:ErrorCode")
-            -- don't remove the maintenance view if there is a data error
-			if kernel.peekview() == "maintenance_view" and maintenance_view_error_code ~= "SOFT-FILE01" then
-				view_popview( "remove maintenance_view from the stack." ) --won't actually change the view since there is nothing underneath it to render yet, but when start view is pushed it'll refresh
-			end
+			kernel.clear_hal_maintenance_mode()
 			verify_hardware_status_before_launching_application()
 		elseif initstatus["status"] == nil then
-			if not in_maintenance_mode() then
-				kernel.show_maintenance_view("HALSVCNR")
-			end
+			kernel.add_maintenance_mode_reason("HAL", "HALSVCNR")
 		end
 	end )
 kernel.timerstart("hal_init_status_check_timer")

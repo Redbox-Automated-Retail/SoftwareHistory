@@ -31,6 +31,7 @@ UnloadDelayMinutes = tonumber( kernel.config_getvalue(
 	"UnloadDelayMinutes" ) or 60 )		
 kernel.log("UnloadDelayMinutes: "..UnloadDelayMinutes)
 
+SafetyTipsPopupShown = false
 
 kernel.registerconfigurationcallback(
 	"Watch-StoreID",
@@ -42,13 +43,6 @@ kernel.registerconfigurationcallback(
 			kernel.log( "Configuration value changed for StoreNumber: " .. value )
 			StoreID = value
 		end
-	end )
-
-kernel.registercanshutdown(
-	function()
-		kernel.log( "Field Maintenance Application" )
-		kernel.log( ">  Kiosk Engine is requesting a shut-down" )
-		return false
 	end )
 
 idle_timer = newidletimer()

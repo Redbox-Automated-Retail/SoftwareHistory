@@ -253,6 +253,7 @@ swipe_view_next_func = function()
 		local first_rap_reservation_on_complete
 		local middle_rap_reservation_on_complete
 		local last_rap_reservation_on_complete
+		local rap_auth_success = false
 
 		local function get_next_rap_reference_number( current_reference_number )
 			kernel.log("get_next_rap_reference_number called for reference number " .. current_reference_number)
@@ -287,6 +288,7 @@ swipe_view_next_func = function()
 		first_rap_reservation_on_complete = function( reference_number, result )
 			kernel.log("first_rap_reservation_on_complete called for reference number " .. reference_number)
 			if result.success == true then
+				rap_auth_success = true
 				--next rap reservation
 				local next_rap_reference_number = get_next_rap_reference_number( reference_number )
 				local next_rap_on_complete = get_rap_on_complete( next_rap_reference_number )
@@ -380,6 +382,7 @@ swipe_view_next_func = function()
 		middle_rap_reservation_on_complete = function( reference_number, result )
 			kernel.log("middle_rap_reservation_on_complete called for reference number " .. reference_number)
 			if result.success == true then
+				rap_auth_success = true
 				--next rap reservation
 				local next_rap_reference_number = get_next_rap_reference_number( reference_number )
 				local next_rap_on_complete = get_rap_on_complete( next_rap_reference_number )
@@ -406,12 +409,18 @@ swipe_view_next_func = function()
 					pickup_authorize(next_rap_reference_number, false, next_rap_on_complete)
 				end
 			else
+			        kernel.log("middle_rap_reservation_on_complete rap_reference_numbers: ")
+					for ref_num, v in pairs(rap_reference_numbers) do
+						kernel.log(tostring(v))
+					end
+
 				local current_index = 0
 				for index, ref in ipairs( rap_reference_numbers ) do
-					if ref == reference_number then
+					if tostring(ref) == tostring(reference_number) then
 						current_index = index
 					end
 				end
+				kernel.log("current_index:" .. current_index)
 				if current_index ~= 0 then
 					for index, ref in ipairs( rap_reference_numbers ) do
 						if index >= current_index then
@@ -431,7 +440,9 @@ swipe_view_next_func = function()
 					if continue_func ~= nil then
 						continue_func()
 					end
-					kernel.close_open_session_and_start_new_rental_session()
+					if rap_auth_success == false then
+						kernel.close_open_session_and_start_new_rental_session()
+					end
 				end
 						
 				message_view_manager:show()
@@ -483,7 +494,9 @@ swipe_view_next_func = function()
 					if continue_func ~= nil then
 						continue_func()
 					end
-					kernel.close_open_session_and_start_new_rental_session()
+					if rap_auth_success == false then
+						kernel.close_open_session_and_start_new_rental_session()
+					end
 				end
 						
 				message_view_manager:show()
@@ -594,6 +607,7 @@ swipe_view_next_func = function()
 						RecommendationOnPickup = kernel.config_getvalue( "system", "General", "RecommendationOnPickup" ) == true
 
 						if RecommendationOnPickup == true and 
+							result.properties.allow_rop == true and
 							is_live and 
 							kernel.is_qualified_for_recommendation_on_pickup() and 
 							kernel.ttsenabled() == false then

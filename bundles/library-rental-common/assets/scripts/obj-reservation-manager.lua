@@ -32,7 +32,8 @@ function newreservationmanager()
 				"CheckoutReservedFalseInventory", 
 				"barcodes_to_vend is empty", 
 				"0032RSVB", 
-				false )
+				false,
+				"HAL")
             return
         end
 

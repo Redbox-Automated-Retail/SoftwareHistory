@@ -57,7 +57,7 @@ function newreturnmanager( shopping_cart )
 		if screen_code == nil then
 			screen_code = "RPCSSM"
 		end
-		show_maintenance_view( "return.hs", alert_type, jobid, error_code, screen_code, true )
+		show_maintenance_view( "return.hs", alert_type, jobid, error_code, screen_code, true, "HAL" )
 	end
 
 	t.show_success_message = function( self, item_id, job_id )

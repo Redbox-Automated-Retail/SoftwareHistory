@@ -312,3 +312,8 @@ else
 	end
 	kernel.setactortext( "info_label", tostring( qlm_info ) )
 end
+
+if SafetyTipsPopupShown == false then
+	SafetyTipsPopupShown = true
+	view_show( "safety_tips_popup_view" )
+end

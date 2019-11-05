@@ -9,11 +9,6 @@ function newshoppingcart()
 
 	t.vend_manager = newvendmanager()
 
-	t.alternate_optin = false
-	t.alternate_optin_not_shown = true
-	
-	t.has_customer_profile = false
-	
 	t.abandon = function( self, reason )
         kernel.abandon_rental_shopping_cart( self.session_id, reason )
 	end
@@ -209,7 +204,8 @@ function newshoppingcart()
 				"VendFalseInventory",
 				"barcodes_to_vend is empty",
 				"0064SCBE",
-				false )
+				false,
+				"HAL")
 			-- Remove all the items from the cart since none of them have inventory
 			kernel.rental_shopping_cart_clear( self.session_id )
 			return
@@ -282,7 +278,8 @@ function newshoppingcart()
 				"HALJobNotCreated",
 				"failed to create prepos_vend job in HAL",
 				"0064SCBE",
-				true )
+				true,
+				"HAL")
 			-- Remove all the items from the cart since none of them have inventory
 			kernel.rental_shopping_cart_clear( self.session_id )
 			return
@@ -312,7 +309,8 @@ function newshoppingcart()
 				"VendFalseInventory",
 				"barcodes_to_vend is empty",
 				"0064SCBE",
-				false )
+				false,
+				"HAL")
 			-- since something has gone terribly wrong abort the session to prevent stuck vend or stuck queue
             kernel.log("Aborting reservation pickup session because reserved barcode(s) were not found in the shopping cart.")
 			kernel.close_open_session_and_start_new_rental_session()
@@ -320,7 +318,7 @@ function newshoppingcart()
 		end
 		
 		self.vend_manager:prepos_vend(
-			barcodes_to_vend,
+			barcodes_to_vend,	
 			function( vend_results )
                 kernel.recommendation_on_pickup_preposition_vend_complete(vend_results, reference_number, modified_cart)
 			end
@@ -331,31 +329,6 @@ function newshoppingcart()
 	
 	t.get_barcodes_to_vend = function( self )
         return kernel.rental_shopping_cart_assign_barcodes_to_vend(self.session_id)
-	end
-
-	local function trim_spaces(s)
-	  local i1,i2 = string.find(s,'^%s*')
-	  if i2 >= i1 then s = string.sub(s,i2+1) end
-	  local i1,i2 = string.find(s,'%s*$')
-	  if i2 >= i1 then s = string.sub(s,1,i1-1) end
-	  return s
-	end
-
-	t.set_items_to_not_vended = function( self )
-        local shopping_cart_items = kernel.get_rental_shopping_cart_items( self.session_id )
-        for k, v in ipairs( shopping_cart_items ) do
-            -- update status in the lua object and on the .net side 
-			v.status = "NotVended"
-            kernel.rental_shopping_cart_update_item_status( self.session_id, k, "NotVended" )
-		end
-	end
-	
-	t.service_fee_enabled = function( self )
-		return kernel.rental_shopping_cart_service_fee_enabled( self.session_id )
-	end
-
-	t.default_service_fee_cents = function( self )
-		return kernel.rental_shopping_cart_default_service_fee_cents( self.session_id )
 	end
 
 	t.get_pickup_recommendations_shown = function( self )

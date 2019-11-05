@@ -5,7 +5,7 @@
 --
 
 function in_maintenance_mode()
-    return kernel.in_maintenance_mode()
+    return kernel.is_in_maintenance_mode()
 end
 
 function safe_to_change_view()

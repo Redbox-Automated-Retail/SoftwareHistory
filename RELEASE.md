@@ -1,17 +1,17 @@
-# Oasis SR (2019-09-16)
+# Primus (2019-11-05)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2019-09-16
-- Store labels: kop-rental-bundles-OasisSR
+- Date (first download in the snapshots): 2019-11-05
+- Store labels: kop-rental-bundles-Primus
 - Package revisions:
-  - `kop-rental-bundles` revision 111 (`F3A6B5CDB02E2AA7C55DB852493C4C98AA45E64E`)
+  - `kop-rental-bundles` revision 116 (`02499EB3D5CE8BAFDF04A216710D1D77DFAA7BDF`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `CAB6076426DCB9FDBB20B21E55C6586050FF3900` | exact |
-| `fm.bundle` |  |  | `4E139B0F92487176E966B214948EFE95BC138A5A` | exact |
-| `library-rental-common.bundle` |  |  | `399DF7A4C9249A80222FD93609BAFBBB13038F46` | exact |
-| `ra-2.x.bundle` |  |  | `C63121DDCDF5954D0EEFA69AE2A0FE540E9174FE` | exact |
+| `cp.bundle` |  |  | `A1CF9C95CB9CE0906371B8B059F8CFA245C9C09C` | exact |
+| `fm.bundle` |  |  | `7C8788E867CD6BA98333D59799DD8B5A1FB0EBF2` | exact |
+| `library-rental-common.bundle` |  |  | `4D77402E3F74C8A247FBF5FE5918566634065DBC` | exact |
+| `ra-2.x.bundle` |  |  | `31CB3522D77A5989580E81D4A085381919ED6CE0` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

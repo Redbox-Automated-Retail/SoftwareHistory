@@ -35,7 +35,7 @@ function start_sync_timers()
 		function()
             local view_name = kernel.peekview()
             if view_name == kernel.get_start_over_view_name()
-            or view_name == "maintenance_view"
+            or kernel.is_in_maintenance_mode()
             or view_name == "maintenance_sync_view" then
                 run_soft_sync()
             end

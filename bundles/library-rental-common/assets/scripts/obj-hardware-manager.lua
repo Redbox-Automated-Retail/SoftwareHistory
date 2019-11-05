@@ -36,7 +36,7 @@ local function enqueue_inventory_updates_for_job( jobid )
 	enqueue_inventory_updates( job_result )
 end
 
-function show_maintenance_view( script_name, alert_type, jobid, sub_type, screen_code, show_maint_view )
+function show_maintenance_view( script_name, alert_type, jobid, sub_type, screen_code, show_maint_view, maintenance_mode_source )
 	local message = ""
 	local subtype_with_code = ""
 	if screen_code ~= nil and string.len( screen_code ) > 0 and screen_code ~= "RPCSSM" then
@@ -57,7 +57,7 @@ function show_maintenance_view( script_name, alert_type, jobid, sub_type, screen
 
 	if show_maint_view then
 		view_unwindtobottom( "show_maintenance_view" ) -- ok to unwind to bottom here because we are about to show the maintenance_view
-		kernel.show_maintenance_view(screen_code)
+		kernel.add_maintenance_mode_reason(maintenance_mode_source, screen_code)
 
 		if quick_return_is_running == true then
 			local hardwarejobs = HardwareManager:get_hardware_jobs_by_program( { "quick-return-daemon" }, { } )
@@ -79,7 +79,8 @@ function handle_critical_hardware_errors( job_type, jobid, bad_codes )
                     jobid,
 					hal_code .. ", Customer Return",
 					screen_code,
-					show_maint_view)
+					show_maint_view,
+					"HAL")
             end,
             codes = {
                 ["ItemStuckInGripper"] = { id=1, code="001ISTG", maint_mode=true },
@@ -95,7 +96,8 @@ function handle_critical_hardware_errors( job_type, jobid, bad_codes )
                     jobid,
 					hal_code .. ", Customer Vend",
 					screen_code,
-					show_maint_view)
+					show_maint_view,
+					"HAL")
             end,
             codes = {
                 ["ItemStuckInGripper"] = { id=1, code="001ISTG", maint_mode=true },

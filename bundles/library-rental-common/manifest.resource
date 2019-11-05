@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Library Rental Common" />
-  <property name="product_version" value="3.15.0.10" />
+  <property name="product_version" value="3.16.0.21" />
   <property name="bundle_type" value="Library" />
   <aspect name="schema">
     <resourceType name="root">
